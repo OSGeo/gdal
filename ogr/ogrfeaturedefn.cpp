@@ -483,6 +483,48 @@ OGRErr OGRFeatureDefn::DeleteFieldDefn(int iField)
 }
 
 /************************************************************************/
+/*                          StealGeomFieldDefn()                       */
+/************************************************************************/
+
+OGRGeomFieldDefn *OGRFeatureDefn::StealGeomFieldDefn(int iField)
+{
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFeatureDefn::StealGeomFieldDefn() not allowed on a sealed "
+                 "object");
+        return nullptr;
+    }
+    if (iField < 0 || iField >= GetGeomFieldCount())
+        return nullptr;
+
+    OGRGeomFieldDefn *poFieldDef{apoGeomFieldDefn.at(iField).release()};
+    apoGeomFieldDefn.erase(apoGeomFieldDefn.begin() + iField);
+    return poFieldDef;
+}
+
+/************************************************************************/
+/*                          StealFieldDefn()                           */
+/************************************************************************/
+
+OGRFieldDefn *OGRFeatureDefn::StealFieldDefn(int iField)
+{
+    if (m_bSealed)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "OGRFeatureDefn::StealFieldDefn() not allowed on a sealed object");
+        return nullptr;
+    }
+    if (iField < 0 || iField >= GetFieldCount())
+        return nullptr;
+
+    OGRFieldDefn *poFDef{apoFieldDefn.at(iField).release()};
+    apoFieldDefn.erase(apoFieldDefn.begin() + iField);
+    return poFDef;
+}
+
+/************************************************************************/
 /*                       OGR_FD_DeleteFieldDefn()                       */
 /************************************************************************/
 
@@ -533,7 +575,6 @@ OGRErr OGR_FD_DeleteFieldDefn(OGRFeatureDefnH hDefn, int iField)
  */
 
 OGRErr OGRFeatureDefn::ReorderFieldDefns(const int *panMap)
-
 {
     if (m_bSealed)
     {

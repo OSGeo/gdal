@@ -119,6 +119,12 @@ class CPL_DLL OGRFieldDefn
     explicit OGRFieldDefn(const OGRFieldDefn *);
     ~OGRFieldDefn();
 
+    // Copy constructor
+    OGRFieldDefn(const OGRFieldDefn &oOther);
+
+    // Copy assignment operator
+    OGRFieldDefn &operator=(const OGRFieldDefn &oOther);
+
     void SetName(const char *);
 
     const char *GetNameRef() const
@@ -279,9 +285,6 @@ class CPL_DLL OGRFieldDefn
     /*! @endcond */
 
     TemporaryUnsealer GetTemporaryUnsealer();
-
-  private:
-    CPL_DISALLOW_COPY_ASSIGN(OGRFieldDefn)
 };
 
 #ifdef GDAL_COMPILATION
@@ -348,6 +351,12 @@ class CPL_DLL OGRGeomFieldDefn
     OGRGeomFieldDefn(const char *pszNameIn, OGRwkbGeometryType eGeomTypeIn);
     explicit OGRGeomFieldDefn(const OGRGeomFieldDefn *);
     virtual ~OGRGeomFieldDefn();
+
+    // Copy constructor
+    OGRGeomFieldDefn(const OGRGeomFieldDefn &oOther);
+
+    // Copy assignment operator
+    OGRGeomFieldDefn &operator=(const OGRGeomFieldDefn &oOther);
 
     void SetName(const char *);
 
@@ -442,9 +451,6 @@ class CPL_DLL OGRGeomFieldDefn
     /*! @endcond */
 
     TemporaryUnsealer GetTemporaryUnsealer();
-
-  private:
-    CPL_DISALLOW_COPY_ASSIGN(OGRGeomFieldDefn)
 };
 
 #ifdef GDAL_COMPILATION
@@ -643,7 +649,30 @@ class CPL_DLL OGRFeatureDefn
 
     virtual void AddFieldDefn(const OGRFieldDefn *);
     virtual OGRErr DeleteFieldDefn(int iField);
+
+    /**
+     * @brief StealFieldDefn takes ownership of the field definition at index detaching
+     *        it from the feature definition.
+     * This is a mechanism for the application to take over ownership of the field definition from the feature definition without copying.
+     * @param iField index of the field definition to detach.
+     * @return a pointer to the detached field definition or nullptr if the index is out of range.
+     * @note The caller is responsible for deleting the returned field definition.
+     * @since GDAL 3.11
+     */
+    virtual OGRFieldDefn *StealFieldDefn(int iField);
+
     virtual OGRErr ReorderFieldDefns(const int *panMap);
+
+    /**
+     * @brief StealGeomFieldDefn takes ownership of the the geometry field definition at index
+     *        detaching it from the feature definition .
+     * This is a mechanism for the application to take over ownership of the geometry field definition from the feature definition without copying.
+     * @param iField index of the geometry field definition to detach.
+     * @return a pointer to the detached geometry field definition or nullptr if the index is out of range.
+     * @note The caller is responsible for deleting the returned field definition.
+     * @since GDAL 3.11
+     */
+    virtual OGRGeomFieldDefn *StealGeomFieldDefn(int iField);
 
     virtual int GetGeomFieldCount() const;
     virtual OGRGeomFieldDefn *GetGeomFieldDefn(int i);

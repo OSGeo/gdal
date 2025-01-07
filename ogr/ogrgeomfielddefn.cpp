@@ -124,6 +124,49 @@ OGRGeomFieldDefn::~OGRGeomFieldDefn()
 }
 
 /************************************************************************/
+/*                          OGRGeomFieldDefn::OGRGeomFieldDefn()        */
+/************************************************************************/
+
+/**
+ * @brief OGRGeomFieldDefn::OGRGeomFieldDefn Copy constructor
+ * @param oOther the OGRGeomFieldDefn to copy.
+ * @since GDAL 3.11
+ */
+OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn &oOther)
+    : pszName(CPLStrdup(oOther.pszName)), eGeomType(oOther.eGeomType),
+      poSRS(nullptr), bNullable(oOther.bNullable), m_bSealed(false),
+      m_oCoordPrecision(oOther.m_oCoordPrecision)
+{
+    if (oOther.poSRS)
+    {
+        poSRS = oOther.poSRS->Clone();
+    }
+}
+
+/************************************************************************/
+/*                          OGRGeomFieldDefn::operator=()               */
+/************************************************************************/
+
+/**
+ * Copy assignment operator
+ * @param oOther the OGRGeomFieldDefn to copy.
+ * @return a reference to the current object.
+ * @since GDAL 3.11
+ */
+OGRGeomFieldDefn &OGRGeomFieldDefn::operator=(const OGRGeomFieldDefn &oOther)
+{
+    if (&oOther != this)
+    {
+        SetName(oOther.pszName);
+        SetType(oOther.eGeomType);
+        SetSpatialRef(oOther.poSRS);
+        SetNullable(oOther.bNullable);
+        m_oCoordPrecision = oOther.m_oCoordPrecision;
+    }
+    return *this;
+}
+
+/************************************************************************/
 /*                         OGR_GFld_Destroy()                           */
 /************************************************************************/
 /**

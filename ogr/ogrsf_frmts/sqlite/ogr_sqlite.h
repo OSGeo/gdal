@@ -191,6 +191,32 @@ class OGRSQLiteLayer CPL_NON_FINAL : public OGRLayer,
 
     bool m_bAllowMultipleGeomFields = false;
 
+    enum class FieldChangeType : char
+    {
+        ADD,
+        ALTER,
+        DELETE
+    };
+
+    // Store changes to the fields that happened inside a transaction
+    template <typename T> struct FieldDefnChange
+    {
+
+        FieldDefnChange(std::unique_ptr<T> &&poFieldDefnIn, int iFieldIn,
+                        FieldChangeType eChangeTypeIn)
+            : poFieldDefn(std::move(poFieldDefnIn)), iField(iFieldIn),
+              eChangeType(eChangeTypeIn)
+        {
+        }
+
+        std::unique_ptr<T> poFieldDefn;
+        int iField;
+        FieldChangeType eChangeType;
+    };
+
+    std::vector<FieldDefnChange<OGRFieldDefn>> m_apoFieldDefnChanges{};
+    std::vector<FieldDefnChange<OGRGeomFieldDefn>> m_apoGeomFieldDefnChanges{};
+
     static CPLString FormatSpatialFilterFromRTree(
         OGRGeometry *poFilterGeom, const char *pszRowIDName,
         const char *pszEscapedTable, const char *pszEscapedGeomCol);
@@ -231,6 +257,10 @@ class OGRSQLiteLayer CPL_NON_FINAL : public OGRLayer,
     virtual OGRErr StartTransaction() override;
     virtual OGRErr CommitTransaction() override;
     virtual OGRErr RollbackTransaction() override;
+
+    // Keep field definitions in sync with transactions
+    void PrepareStartTransaction();
+    void FinishRollbackTransaction();
 
     virtual void InvalidateCachedFeatureCountAndExtent()
     {
@@ -777,6 +807,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     virtual OGRErr StartTransaction(int bForce = FALSE) override;
     virtual OGRErr CommitTransaction() override;
     virtual OGRErr RollbackTransaction() override;
+    bool IsInTransaction() const;
 
     virtual char **GetMetadata(const char *pszDomain = "") override;
 

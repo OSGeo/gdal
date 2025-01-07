@@ -4041,6 +4041,8 @@ OGRErr OGRSQLiteDataSource::StartTransaction(int bForce)
                 cpl::down_cast<OGRSQLiteTableLayer *>(poLayer.get());
             poTableLayer->RunDeferredCreationIfNecessary();
         }
+
+        poLayer->PrepareStartTransaction();
     }
 
     return OGRSQLiteBaseDataSource::StartTransaction(bForce);
@@ -4120,12 +4122,18 @@ OGRErr OGRSQLiteDataSource::RollbackTransaction()
 
         for (auto &poLayer : m_apoLayers)
         {
+            poLayer->FinishRollbackTransaction();
             poLayer->InvalidateCachedFeatureCountAndExtent();
             poLayer->ResetReading();
         }
     }
 
     return OGRSQLiteBaseDataSource::RollbackTransaction();
+}
+
+bool OGRSQLiteDataSource::IsInTransaction() const
+{
+    return nSoftTransactionLevel > 0;
 }
 
 /************************************************************************/

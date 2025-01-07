@@ -1613,6 +1613,13 @@ OGRErr OGRSQLiteTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
     /* -------------------------------------------------------------------- */
     m_poFeatureDefn->AddFieldDefn(&oField);
 
+    if (m_poDS->IsInTransaction())
+    {
+        m_apoFieldDefnChanges.emplace_back(
+            std::make_unique<OGRFieldDefn>(oField),
+            m_poFeatureDefn->GetFieldCount() - 1, FieldChangeType::ADD);
+    }
+
     if (m_pszFIDColumn != nullptr && EQUAL(oField.GetNameRef(), m_pszFIDColumn))
     {
         m_iFIDAsRegularColumnIndex = m_poFeatureDefn->GetFieldCount() - 1;
@@ -1708,6 +1715,13 @@ OGRSQLiteTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
         {
             return OGRERR_FAILURE;
         }
+    }
+
+    if (m_poDS->IsInTransaction())
+    {
+        m_apoGeomFieldDefnChanges.emplace_back(
+            std::make_unique<OGRGeomFieldDefn>(*poGeomField),
+            m_poFeatureDefn->GetGeomFieldCount(), FieldChangeType::ADD);
     }
 
     m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomField));
@@ -2150,7 +2164,27 @@ OGRErr OGRSQLiteTableLayer::DeleteField(int iFieldToDelete)
         eErr = m_poDS->SoftCommitTransaction();
         if (eErr == OGRERR_NONE)
         {
-            eErr = m_poFeatureDefn->DeleteFieldDefn(iFieldToDelete);
+
+            if (m_poDS->IsInTransaction())
+            {
+                std::unique_ptr<OGRFieldDefn> poFieldDefn;
+                poFieldDefn.reset(
+                    m_poFeatureDefn->StealFieldDefn(iFieldToDelete));
+                if (poFieldDefn != nullptr)
+                {
+                    m_apoFieldDefnChanges.emplace_back(std::move(poFieldDefn),
+                                                       iFieldToDelete,
+                                                       FieldChangeType::DELETE);
+                }
+                else
+                {
+                    eErr = OGRERR_FAILURE;
+                }
+            }
+            else
+            {
+                eErr = m_poFeatureDefn->DeleteFieldDefn(iFieldToDelete);
+            }
 
             RecomputeOrdinals();
 
@@ -2372,6 +2406,13 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn(int iFieldToAlter,
     /* -------------------------------------------------------------------- */
 
     OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn(iFieldToAlter);
+
+    if (m_poDS->IsInTransaction())
+    {
+        m_apoFieldDefnChanges.emplace_back(
+            std::make_unique<OGRFieldDefn>(poFieldDefn), iFieldToAlter,
+            FieldChangeType::ALTER);
+    }
 
     if (nActualFlags & ALTER_TYPE_FLAG)
     {
