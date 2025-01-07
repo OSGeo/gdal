@@ -323,6 +323,7 @@ RUN date
 
 RUN apk add --no-cache \
         armadillo \
+        bash-completion \
         basisu \
         blosc \
         brotli-libs \
@@ -418,3 +419,5 @@ COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build_gdal_python/usr/ /usr/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
+
+CMD ["/bin/bash", "-l"]
