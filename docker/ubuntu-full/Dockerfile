@@ -527,7 +527,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         wget curl unzip ca-certificates \
     # GDAL dependencies
     && apt-get install -y \
-        libopenjp2-7 libcairo2 python3-numpy \
+        bash-completion libopenjp2-7 libcairo2 python3-numpy \
         libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos3.12.1 libgeos-c1v5 \
         libxml2 libexpat1 \
         libxerces-c3.2 libnetcdf-c++4-1 netcdf-bin libpoppler134 libspatialite8 librasterlite2-1 gpsbabel \
@@ -619,3 +619,7 @@ RUN ldconfig
 RUN if test "$(uname -p)" = "x86_64"; then \
     ogrinfo ADBC::memory: -oo ADBC_DRIVER=duckdb -oo PRELUDE_STATEMENTS="INSTALL spatial"; \
     fi
+
+RUN echo "source /usr/share/bash-completion/bash_completion" >> /root/.bashrc
+
+CMD ["/bin/bash", "-l"]

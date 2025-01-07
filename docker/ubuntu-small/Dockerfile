@@ -235,7 +235,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         curl unzip ca-certificates \
     # GDAL dependencies
     && apt-get install -y --no-install-recommends \
-        python3-numpy libpython3.12 \
+        bash-completion python3-numpy libpython3.12 \
         libjpeg-turbo8 libgeos3.12.1 libgeos-c1v5 \
         libexpat1 \
         libxerces-c3.2 \
@@ -265,3 +265,7 @@ COPY --from=builder  /build_gdal_python/usr/ /usr/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 
 RUN ldconfig
+
+RUN echo "source /usr/share/bash-completion/bash_completion" >> /root/.bashrc
+
+CMD ["/bin/bash", "-l"]
