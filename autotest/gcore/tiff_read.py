@@ -5575,3 +5575,10 @@ def test_tiff_read_corrupted_vat_dbf(tmp_vsimem):
         band = ds.GetRasterBand(1)
         with pytest.raises(Exception):
             band.GetDefaultRAT()
+
+
+def test_tiff_read_corrupted_lzw():
+
+    ds = gdal.Open("data/gtiff/lzw_corrupted.tif")
+    with pytest.raises(Exception):
+        ds.ReadRaster()

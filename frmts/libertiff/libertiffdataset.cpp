@@ -1403,6 +1403,8 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
 
                 if (tlsState.m_tiff.tif_decodestrip)
                 {
+                    tlsState.m_tiff.tif_name =
+                        const_cast<char *>(GetDescription());
                     tlsState.m_tiff.tif_dir.td_sampleformat =
                         static_cast<uint16_t>(m_image->sampleFormat());
                     tlsState.m_tiff.tif_dir.td_bitspersample =

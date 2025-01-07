@@ -859,3 +859,10 @@ def test_libertiff_read_geomatrix():
 def test_libertiff_num_threads_saturated():
 
     libertiff_open("data/byte.tif", open_options=["NUM_THREADS=10000"])
+
+
+def test_libertiff_corrupted_lzw():
+
+    ds = libertiff_open("data/gtiff/lzw_corrupted.tif")
+    with pytest.raises(Exception):
+        ds.ReadRaster()
