@@ -14,12 +14,10 @@
 ###############################################################################
 
 import gdaltest
-
 from osgeo import gdal
 
 ###############################################################################
 # Helper to make gcps
-
 
 def _list2gcps(src_list):
     gcp_list = []
@@ -32,10 +30,8 @@ def _list2gcps(src_list):
         gcp_list.append(gcp)
     return gcp_list
 
-
 ###############################################################################
 # Test simple exact case of turning GCPs into a GeoTransform.
-
 
 def test_gcps2gt_1():
 
@@ -52,10 +48,8 @@ def test_gcps2gt_1():
         gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001
     )
 
-
 ###############################################################################
 # Similar but non-exact.
-
 
 def test_gcps2gt_2():
 
@@ -73,14 +67,12 @@ def test_gcps2gt_2():
         gt, (400000.0, 100.0, 0.0, 370000.0025, -5e-05, -9.999975), 0.000001
     )
 
-
 ###############################################################################
 # bApproxOK false, and no good solution.
 
-
 def test_gcps2gt_3():
 
-    approx_ok = 0
+    approx_ok = False
     gt = gdal.GCPsToGeoTransform(
         _list2gcps(
             [
@@ -94,10 +86,8 @@ def test_gcps2gt_3():
     )
     assert gt is None, "Expected failure when no good solution."
 
-
 ###############################################################################
 # Single point - Should return None.
-
 
 def test_gcps2gt_4():
 
@@ -110,10 +100,8 @@ def test_gcps2gt_4():
     )
     assert gt is None, "Expected failure for single GCP."
 
-
 ###############################################################################
 # Two points - simple offset and scale, no rotation.
-
 
 def test_gcps2gt_5():
 
@@ -129,10 +117,8 @@ def test_gcps2gt_5():
         gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001
     )
 
-
 ###############################################################################
 # Special case for four points in a particular order.  Exact result.
-
 
 def test_gcps2gt_6():
 
@@ -148,10 +134,8 @@ def test_gcps2gt_6():
     )
     gdaltest.check_geotransform(gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001)
 
-
 ###############################################################################
 # Try a case that is hard to do without normalization.
-
 
 def test_gcps2gt_7():
 
@@ -167,10 +151,8 @@ def test_gcps2gt_7():
     )
     gdaltest.check_geotransform(gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001)
 
-
 ###############################################################################
 # A fairly messy real world case without a easy to predict result.
-
 
 def test_gcps2gt_8():
 
