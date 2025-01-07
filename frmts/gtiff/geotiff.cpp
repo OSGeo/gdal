@@ -965,8 +965,10 @@ static const struct
     {COMPRESSION_LERC, "LERC_DEFLATE", true},
     {COMPRESSION_LERC, "LERC_ZSTD", true},
     COMPRESSION_ENTRY(WEBP, true),
-    COMPRESSION_ENTRY(JXL, true),
-    COMPRESSION_ENTRY(JXL_DNG_1_7, true),
+    // COMPRESSION_JXL_DNG_1_7 must be *before* COMPRESSION_JXL
+    {COMPRESSION_JXL_DNG_1_7, "JXL", true},
+    {COMPRESSION_JXL, "JXL",
+     true},  // deprecated. No longer used for writing since GDAL 3.11
 
     // Compression methods in read-only
     COMPRESSION_ENTRY(OJPEG, false),
