@@ -210,7 +210,9 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
               m_nPhotometric != PHOTOMETRIC_SEPARATED)) ||
             (m_nCompression == COMPRESSION_WEBP &&
              EQUAL(aosTokens[0], "WEBP")) ||
-            (m_nCompression == COMPRESSION_JXL && EQUAL(aosTokens[0], "JXL")))
+            ((m_nCompression == COMPRESSION_JXL ||
+              m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
+             EQUAL(aosTokens[0], "JXL")))
         {
             std::string osDetailedFormat = aosTokens[0];
 
@@ -987,6 +989,7 @@ bool GTiffDataset::IsMultiThreadedReadCompatible() const
             m_nCompression == COMPRESSION_ZSTD ||
             m_nCompression == COMPRESSION_LERC ||
             m_nCompression == COMPRESSION_JXL ||
+            m_nCompression == COMPRESSION_JXL_DNG_1_7 ||
             m_nCompression == COMPRESSION_WEBP ||
             m_nCompression == COMPRESSION_JPEG);
 }
@@ -5576,7 +5579,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     m_dfMaxZErrorOverview = CPLAtof(pszValue);
                 }
 #if HAVE_JXL
-                else if (m_nCompression == COMPRESSION_JXL &&
+                else if ((m_nCompression == COMPRESSION_JXL ||
+                          m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
                          EQUAL(pszKey, "COMPRESSION_REVERSIBILITY"))
                 {
                     if (EQUAL(pszValue, "LOSSLESS"))
@@ -5584,7 +5588,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     else if (EQUAL(pszValue, "LOSSY"))
                         m_bJXLLossless = false;
                 }
-                else if (m_nCompression == COMPRESSION_JXL &&
+                else if ((m_nCompression == COMPRESSION_JXL ||
+                          m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
                          EQUAL(pszKey, "JXL_DISTANCE"))
                 {
                     const double dfVal = CPLAtof(pszValue);
@@ -5597,7 +5602,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                         m_fJXLDistance = static_cast<float>(dfVal);
                     }
                 }
-                else if (m_nCompression == COMPRESSION_JXL &&
+                else if ((m_nCompression == COMPRESSION_JXL ||
+                          m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
                          EQUAL(pszKey, "JXL_ALPHA_DISTANCE"))
                 {
                     const double dfVal = CPLAtof(pszValue);
@@ -5609,7 +5615,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                         m_fJXLAlphaDistance = static_cast<float>(dfVal);
                     }
                 }
-                else if (m_nCompression == COMPRESSION_JXL &&
+                else if ((m_nCompression == COMPRESSION_JXL ||
+                          m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
                          EQUAL(pszKey, "JXL_EFFORT"))
                 {
                     const int nEffort = atoi(pszValue);
@@ -5786,7 +5793,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
             }
         }
 #ifdef HAVE_JXL
-        else if (m_nCompression == COMPRESSION_JXL)
+        else if (m_nCompression == COMPRESSION_JXL ||
+                 m_nCompression == COMPRESSION_JXL_DNG_1_7)
         {
             const char *pszReversibility =
                 GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
@@ -6381,7 +6389,8 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
     if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
     {
         if ((m_nCompression == COMPRESSION_WEBP ||
-             m_nCompression == COMPRESSION_JXL) &&
+             m_nCompression == COMPRESSION_JXL ||
+             m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
             EQUAL(pszName, "COMPRESSION_REVERSIBILITY") &&
             m_oGTiffMDMD.GetMetadataItem("COMPRESSION_REVERSIBILITY",
                                          "IMAGE_STRUCTURE") == nullptr)
