@@ -685,6 +685,7 @@ const char *CPLFormFilename(const char *pszPath, const char *pszBasename,
             }
             else
             {
+                // cppcheck redundantAssignment
                 pszBasename = pszBasenameOri;
                 nLenPath = nLenPathOri;
                 if (pszAddedPathSep[0] == 0)
