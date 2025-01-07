@@ -273,7 +273,11 @@ class gdal_ext(build_ext):
         global include_dirs, library_dirs
 
         try:
-            library_version = self.get_gdal_config("version").replace("dev", "")
+            library_version = self.get_gdal_config("version")
+            for suffix in ("dev", "beta", "RC"):
+                pos = library_version.find(suffix)
+                if pos > 0:
+                    library_version = library_version[0:pos]
             library_version_num = [int(x) for x in library_version.split('.')]
             gdal_python_version = [int(x) for x in version.split('.')]
             if library_version_num < gdal_python_version:
