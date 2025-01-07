@@ -92,25 +92,25 @@ inline bool isHostLittleEndian()
 template <class T> inline T byteSwap(T v);
 
 /** Byte-swap a uint8_t */
-template <> uint8_t byteSwap(uint8_t v)
+template <> inline uint8_t byteSwap(uint8_t v)
 {
     return v;
 }
 
 /** Byte-swap a int8_t */
-template <> int8_t byteSwap(int8_t v)
+template <> inline int8_t byteSwap(int8_t v)
 {
     return v;
 }
 
 /** Byte-swap a uint16_t */
-template <> uint16_t byteSwap(uint16_t v)
+template <> inline uint16_t byteSwap(uint16_t v)
 {
     return uint16_t((v >> 8) | ((v & 0xff) << 8));
 }
 
 /** Byte-swap a int16_t */
-template <> int16_t byteSwap(int16_t v)
+template <> inline int16_t byteSwap(int16_t v)
 {
     uint16_t u;
     LIBERTIFF_STATIC_ASSERT(sizeof(v) == sizeof(u));
@@ -121,14 +121,14 @@ template <> int16_t byteSwap(int16_t v)
 }
 
 /** Byte-swap a uint32_t */
-template <> uint32_t byteSwap(uint32_t v)
+template <> inline uint32_t byteSwap(uint32_t v)
 {
     return (v >> 24) | (((v >> 16) & 0xff) << 8) | (((v >> 8) & 0xff) << 16) |
            ((v & 0xff) << 24);
 }
 
 /** Byte-swap a int32_t */
-template <> int32_t byteSwap(int32_t v)
+template <> inline int32_t byteSwap(int32_t v)
 {
     uint32_t u;
     LIBERTIFF_STATIC_ASSERT(sizeof(v) == sizeof(u));
@@ -139,14 +139,14 @@ template <> int32_t byteSwap(int32_t v)
 }
 
 /** Byte-swap a uint64_t */
-template <> uint64_t byteSwap(uint64_t v)
+template <> inline uint64_t byteSwap(uint64_t v)
 {
     return (uint64_t(byteSwap(uint32_t(v & ~(0U)))) << 32) |
            byteSwap(uint32_t(v >> 32));
 }
 
 /** Byte-swap a int64_t */
-template <> int64_t byteSwap(int64_t v)
+template <> inline int64_t byteSwap(int64_t v)
 {
     uint64_t u;
     std::memcpy(&u, &v, sizeof(u));
@@ -156,7 +156,7 @@ template <> int64_t byteSwap(int64_t v)
 }
 
 /** Byte-swap a float */
-template <> float byteSwap(float v)
+template <> inline float byteSwap(float v)
 {
     uint32_t u;
     LIBERTIFF_STATIC_ASSERT(sizeof(v) == sizeof(u));
@@ -167,7 +167,7 @@ template <> float byteSwap(float v)
 }
 
 /** Byte-swap a double */
-template <> double byteSwap(double v)
+template <> inline double byteSwap(double v)
 {
     uint64_t u;
     LIBERTIFF_STATIC_ASSERT(sizeof(v) == sizeof(u));
@@ -600,10 +600,7 @@ constexpr PhotometricInterpretationType ITULab = 10;
     case PhotometricInterpretation::x:                                         \
         return #x
 
-const char *photometricInterpretationName(
-    PhotometricInterpretationType photometricInterpretation);
-
-const char *photometricInterpretationName(
+inline const char *photometricInterpretationName(
     PhotometricInterpretationType photometricInterpretation)
 {
     switch (photometricInterpretation)
@@ -833,20 +830,20 @@ inline std::vector<T> readTagAsVectorInternal(const ReadContext &rc,
 }
 
 template <class T>
-std::vector<T> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                               bool &ok);
+inline std::vector<T> readTagAsVector(const ReadContext &rc,
+                                      const TagEntry &tag, bool &ok);
 
 template <>
-std::vector<int8_t> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                                    bool &ok)
+inline std::vector<int8_t> readTagAsVector(const ReadContext &rc,
+                                           const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::SByte,
                                    tag.int8Values.data(), ok);
 }
 
 template <>
-std::vector<uint8_t> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                                     bool &ok)
+inline std::vector<uint8_t> readTagAsVector(const ReadContext &rc,
+                                            const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(
         rc, tag, tag.type == TagType::Undefined ? tag.type : TagType::Byte,
@@ -854,64 +851,64 @@ std::vector<uint8_t> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
 }
 
 template <>
-std::vector<int16_t> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                                     bool &ok)
+inline std::vector<int16_t> readTagAsVector(const ReadContext &rc,
+                                            const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::SShort,
                                    tag.int16Values.data(), ok);
 }
 
 template <>
-std::vector<uint16_t> readTagAsVector(const ReadContext &rc,
-                                      const TagEntry &tag, bool &ok)
+inline std::vector<uint16_t> readTagAsVector(const ReadContext &rc,
+                                             const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::Short,
                                    tag.uint16Values.data(), ok);
 }
 
 template <>
-std::vector<int32_t> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                                     bool &ok)
+inline std::vector<int32_t> readTagAsVector(const ReadContext &rc,
+                                            const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::SLong,
                                    tag.int32Values.data(), ok);
 }
 
 template <>
-std::vector<uint32_t> readTagAsVector(const ReadContext &rc,
-                                      const TagEntry &tag, bool &ok)
+inline std::vector<uint32_t> readTagAsVector(const ReadContext &rc,
+                                             const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::Long,
                                    tag.uint32Values.data(), ok);
 }
 
 template <>
-std::vector<int64_t> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                                     bool &ok)
+inline std::vector<int64_t> readTagAsVector(const ReadContext &rc,
+                                            const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::SLong8,
                                    tag.int64Values.data(), ok);
 }
 
 template <>
-std::vector<uint64_t> readTagAsVector(const ReadContext &rc,
-                                      const TagEntry &tag, bool &ok)
+inline std::vector<uint64_t> readTagAsVector(const ReadContext &rc,
+                                             const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::Long8,
                                    tag.uint64Values.data(), ok);
 }
 
 template <>
-std::vector<float> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                                   bool &ok)
+inline std::vector<float> readTagAsVector(const ReadContext &rc,
+                                          const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::Float,
                                    tag.float32Values.data(), ok);
 }
 
 template <>
-std::vector<double> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                                    bool &ok)
+inline std::vector<double> readTagAsVector(const ReadContext &rc,
+                                           const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::Double,
                                    tag.float64Values.data(), ok);

@@ -31,7 +31,7 @@
 #include "gdal_thread_pool.h"
 #include "memdataset.h"
 
-#define LIBERTIFF_NS GDALLibertiffDataset
+#define LIBERTIFF_NS GDAL_libertiff
 #include "libertiff.hpp"
 
 #include "libtiff_codecs.h"
