@@ -6634,3 +6634,93 @@ def test_netcdf_var_with_geoloc_array_but_no_coordinates_attr():
         got_md["X_DATASET"]
         == 'NETCDF:"data/netcdf/var_with_geoloc_array_but_no_coordinates_attr.nc":lon'
     )
+
+
+###############################################################################
+# Test reporting of values of an extra dimension which is unlimited
+
+
+def test_netcdf_var_extra_dim_unlimited():
+
+    ds = gdal.Open("data/netcdf/extra_dim_unlimited.nc")
+    assert ds.GetMetadataItem("NETCDF_DIM_time_VALUES") == "{17927,17955}"
+
+    with gdal.config_option("GDAL_NETCDF_REPORT_EXTRA_DIM_VALUES", "YES"):
+        ds = gdal.Open("data/netcdf/extra_dim_unlimited.nc")
+    assert ds.GetMetadataItem("NETCDF_DIM_time_VALUES") == "{17927,17955}"
+
+    with gdal.config_option("GDAL_NETCDF_REPORT_EXTRA_DIM_VALUES", "NO"):
+        ds = gdal.Open("data/netcdf/extra_dim_unlimited.nc")
+    assert ds.GetMetadataItem("NETCDF_DIM_time_VALUES") is None
+
+
+###############################################################################
+# Test reporting of values of an extra dimension which is unlimited
+
+
+@pytest.mark.require_curl()
+@pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
+def test_netcdf_var_extra_dim_unlimited_network():
+
+    import webserver
+
+    webserver_process = None
+    webserver_port = 0
+
+    (webserver_process, webserver_port) = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    if webserver_port == 0:
+        pytest.skip()
+
+    filename = "data/netcdf/extra_dim_unlimited.nc"
+
+    gdal.VSICurlClearCache()
+
+    try:
+        filesize = gdal.VSIStatL(filename).size
+        handler = webserver.SequentialHandler()
+        handler.add("HEAD", "/test.nc", 200, {"Content-Length": "%d" % filesize})
+
+        def method(request):
+            # sys.stderr.write('%s\n' % str(request.headers))
+
+            if request.headers["Range"].startswith("bytes="):
+                rng = request.headers["Range"][len("bytes=") :]
+                assert len(rng.split("-")) == 2
+                start = int(rng.split("-")[0])
+                end = int(rng.split("-")[1])
+
+                request.protocol_version = "HTTP/1.1"
+                request.send_response(206)
+                request.send_header("Content-type", "application/octet-stream")
+                request.send_header(
+                    "Content-Range", "bytes %d-%d/%d" % (start, end, filesize)
+                )
+                request.send_header("Content-Length", end - start + 1)
+                request.send_header("Connection", "close")
+                request.end_headers()
+                with open(filename, "rb") as f:
+                    f.seek(start, 0)
+                    request.wfile.write(f.read(end - start + 1))
+
+        handler.add("GET", "/test.nc", custom_method=method)
+
+        handler.add("HEAD", "/test.nc.aux.xml", 404)
+        handler.add("GET", "/", 404)
+        handler.add("HEAD", "/test.aux", 404)
+        handler.add("HEAD", "/test.AUX", 404)
+        handler.add("HEAD", "/test.nc.aux", 404)
+        handler.add("HEAD", "/test.nc.AUX", 404)
+
+        with webserver.install_http_handler(handler):
+            with gdal.quiet_errors():
+                ds = gdal.Open("/vsicurl/http://127.0.0.1:%d/test.nc" % webserver_port)
+            if ds is None:
+                pytest.skip("cannot open /vsicurl/ netCDF file")
+            assert ds.GetMetadataItem("NETCDF_DIM_time_VALUES") is None
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
