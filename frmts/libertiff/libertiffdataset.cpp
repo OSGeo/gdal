@@ -2173,6 +2173,13 @@ bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
     }
 
     const GDALDataType eDT = ComputeGDALDataType();
+    if (eDT == GDT_Unknown)
+    {
+        CPLDebug("LIBERTIFF",
+                 "BitsPerSample = %u and SampleFormat=%u unhandled",
+                 m_image->bitsPerSample(), m_image->sampleFormat());
+        return false;
+    }
 
     // Deal with Predictor tag
     if (m_image->predictor() == 2)
