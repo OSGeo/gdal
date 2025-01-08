@@ -4454,6 +4454,41 @@ TEST_F(test_gdal, gdal_gcp_class)
     }
 }
 
+TEST_F(test_gdal, RasterIO_gdt_unknown)
+{
+    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
+                                  ->Create("", 1, 1, 1, GDT_Float64, nullptr));
+    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+    GByte b = 0;
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    EXPECT_EQ(poDS->RasterIO(GF_Read, 0, 0, 1, 1, &b, 1, 1, GDT_Unknown, 1,
+                             nullptr, 0, 0, 0, &sExtraArg),
+              CE_Failure);
+    EXPECT_EQ(poDS->RasterIO(GF_Read, 0, 0, 1, 1, &b, 1, 1, GDT_TypeCount, 1,
+                             nullptr, 0, 0, 0, &sExtraArg),
+              CE_Failure);
+    EXPECT_EQ(poDS->GetRasterBand(1)->RasterIO(GF_Read, 0, 0, 1, 1, &b, 1, 1,
+                                               GDT_Unknown, 0, 0, &sExtraArg),
+              CE_Failure);
+    EXPECT_EQ(poDS->GetRasterBand(1)->RasterIO(GF_Read, 0, 0, 1, 1, &b, 1, 1,
+                                               GDT_TypeCount, 0, 0, &sExtraArg),
+              CE_Failure);
+}
+
+TEST_F(test_gdal, CopyWords_gdt_unknown)
+{
+    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+    GByte b = 0;
+    GByte b2 = 0;
+    CPLErrorReset();
+    GDALCopyWords(&b, GDT_Byte, 0, &b2, GDT_Unknown, 0, 1);
+    EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    CPLErrorReset();
+    GDALCopyWords(&b, GDT_Unknown, 0, &b2, GDT_Byte, 0, 1);
+    EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+}
+
 // Test GDALRasterBand::ReadRaster
 TEST_F(test_gdal, ReadRaster)
 {
@@ -4774,6 +4809,318 @@ TEST_F(test_gdal, ReadRaster)
         std::fill(res.begin(), res.end(), 0);
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
+    }
+}
+
+// Test GDALComputeRasterMinMaxLocation
+TEST_F(test_gdal, GDALComputeRasterMinMaxLocation)
+{
+    GDALDatasetH hDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
+    ASSERT_NE(hDS, nullptr);
+    GDALRasterBandH hBand = GDALGetRasterBand(hDS, 1);
+    {
+        double dfMin = 0;
+        double dfMax = 0;
+        int nMinX = -1;
+        int nMinY = -1;
+        int nMaxX = -1;
+        int nMaxY = -1;
+        EXPECT_EQ(GDALComputeRasterMinMaxLocation(hBand, &dfMin, &dfMax, &nMinX,
+                                                  &nMinY, &nMaxX, &nMaxY),
+                  CE_None);
+        EXPECT_EQ(dfMin, 74.0);
+        EXPECT_EQ(dfMax, 255.0);
+        EXPECT_EQ(nMinX, 9);
+        EXPECT_EQ(nMinY, 17);
+        EXPECT_EQ(nMaxX, 2);
+        EXPECT_EQ(nMaxY, 18);
+        GByte val = 0;
+        EXPECT_EQ(GDALRasterIO(hBand, GF_Read, nMinX, nMinY, 1, 1, &val, 1, 1,
+                               GDT_Byte, 0, 0),
+                  CE_None);
+        EXPECT_EQ(val, 74);
+        EXPECT_EQ(GDALRasterIO(hBand, GF_Read, nMaxX, nMaxY, 1, 1, &val, 1, 1,
+                               GDT_Byte, 0, 0),
+                  CE_None);
+        EXPECT_EQ(val, 255);
+    }
+    {
+        int nMinX = -1;
+        int nMinY = -1;
+        EXPECT_EQ(GDALComputeRasterMinMaxLocation(hBand, nullptr, nullptr,
+                                                  &nMinX, &nMinY, nullptr,
+                                                  nullptr),
+                  CE_None);
+        EXPECT_EQ(nMinX, 9);
+        EXPECT_EQ(nMinY, 17);
+    }
+    {
+        int nMaxX = -1;
+        int nMaxY = -1;
+        EXPECT_EQ(GDALComputeRasterMinMaxLocation(hBand, nullptr, nullptr,
+                                                  nullptr, nullptr, &nMaxX,
+                                                  &nMaxY),
+                  CE_None);
+        EXPECT_EQ(nMaxX, 2);
+        EXPECT_EQ(nMaxY, 18);
+    }
+    {
+        EXPECT_EQ(GDALComputeRasterMinMaxLocation(hBand, nullptr, nullptr,
+                                                  nullptr, nullptr, nullptr,
+                                                  nullptr),
+                  CE_None);
+    }
+    GDALClose(hDS);
+}
+
+// Test GDALComputeRasterMinMaxLocation
+TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_byte_min_max_optim)
+{
+    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
+                                  ->Create("", 1, 4, 1, GDT_Byte, nullptr));
+    std::array<uint8_t, 4> buffer = {
+        1,    //////////////////////////////////////////////////////////
+        0,    //////////////////////////////////////////////////////////
+        255,  //////////////////////////////////////////////////////////
+        1,    //////////////////////////////////////////////////////////
+    };
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    EXPECT_EQ(poDS->GetRasterBand(1)->RasterIO(
+                  GF_Write, 0, 0, 1, 4, buffer.data(), 1, 4, GDT_Byte,
+                  sizeof(uint8_t), 1 * sizeof(uint8_t), &sExtraArg),
+              CE_None);
+
+    double dfMin = 0;
+    double dfMax = 0;
+    int nMinX = -1;
+    int nMinY = -1;
+    int nMaxX = -1;
+    int nMaxY = -1;
+    EXPECT_EQ(poDS->GetRasterBand(1)->ComputeRasterMinMaxLocation(
+                  &dfMin, &dfMax, &nMinX, &nMinY, &nMaxX, &nMaxY),
+              CE_None);
+    EXPECT_EQ(dfMin, 0);
+    EXPECT_EQ(dfMax, 255);
+    EXPECT_EQ(nMinX, 0);
+    EXPECT_EQ(nMinY, 1);
+    EXPECT_EQ(nMaxX, 0);
+    EXPECT_EQ(nMaxY, 2);
+}
+
+// Test GDALComputeRasterMinMaxLocation
+TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_with_mask)
+{
+    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
+                                  ->Create("", 2, 2, 1, GDT_Byte, nullptr));
+    std::array<uint8_t, 6> buffer = {
+        2, 10,  //////////////////////////////////////////////////////////
+        4, 20,  //////////////////////////////////////////////////////////
+    };
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    EXPECT_EQ(poDS->GetRasterBand(1)->RasterIO(
+                  GF_Write, 0, 0, 2, 2, buffer.data(), 2, 2, GDT_Byte,
+                  sizeof(uint8_t), 2 * sizeof(uint8_t), &sExtraArg),
+              CE_None);
+
+    poDS->GetRasterBand(1)->CreateMaskBand(0);
+    std::array<uint8_t, 6> buffer_mask = {
+        0, 255,  //////////////////////////////////////////////////////////
+        255, 0,  //////////////////////////////////////////////////////////
+    };
+    EXPECT_EQ(poDS->GetRasterBand(1)->GetMaskBand()->RasterIO(
+                  GF_Write, 0, 0, 2, 2, buffer_mask.data(), 2, 2, GDT_Byte,
+                  sizeof(uint8_t), 2 * sizeof(uint8_t), &sExtraArg),
+              CE_None);
+
+    double dfMin = 0;
+    double dfMax = 0;
+    int nMinX = -1;
+    int nMinY = -1;
+    int nMaxX = -1;
+    int nMaxY = -1;
+    EXPECT_EQ(poDS->GetRasterBand(1)->ComputeRasterMinMaxLocation(
+                  &dfMin, &dfMax, &nMinX, &nMinY, &nMaxX, &nMaxY),
+              CE_None);
+    EXPECT_EQ(dfMin, 4);
+    EXPECT_EQ(dfMax, 10);
+    EXPECT_EQ(nMinX, 0);
+    EXPECT_EQ(nMinY, 1);
+    EXPECT_EQ(nMaxX, 1);
+    EXPECT_EQ(nMaxY, 0);
+}
+
+TEST_F(test_gdal, GDALTranspose2D)
+{
+    constexpr int COUNT = 6;
+    const GByte abyData[] = {1, 2, 3, 4, 5, 6};
+    GByte abySrcData[COUNT * 2 * sizeof(double)];
+    GByte abyDstData[COUNT * 2 * sizeof(double)];
+    GByte abyDstAsByteData[COUNT * 2 * sizeof(double)];
+    for (int eSrcDTInt = GDT_Byte; eSrcDTInt < GDT_TypeCount; ++eSrcDTInt)
+    {
+        const auto eSrcDT = static_cast<GDALDataType>(eSrcDTInt);
+        GDALCopyWords(abyData, GDT_Byte, 1, abySrcData, eSrcDT,
+                      GDALGetDataTypeSizeBytes(eSrcDT), COUNT);
+        for (int eDstDTInt = GDT_Byte; eDstDTInt < GDT_TypeCount; ++eDstDTInt)
+        {
+            const auto eDstDT = static_cast<GDALDataType>(eDstDTInt);
+            memset(abyDstData, 0, sizeof(abyDstData));
+            GDALTranspose2D(abySrcData, eSrcDT, abyDstData, eDstDT, 3, 2);
+
+            memset(abyDstAsByteData, 0, sizeof(abyDstAsByteData));
+            GDALCopyWords(abyDstData, eDstDT, GDALGetDataTypeSizeBytes(eDstDT),
+                          abyDstAsByteData, GDT_Byte, 1, COUNT);
+
+            EXPECT_EQ(abyDstAsByteData[0], 1)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[1], 4)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[2], 2)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[3], 5)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[4], 3)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[5], 6)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+        }
+    }
+}
+
+TEST_F(test_gdal, GDALTranspose2D_Byte_optims)
+{
+    std::vector<GByte> in;
+    for (int i = 0; i < 19 * 17; ++i)
+        in.push_back(static_cast<GByte>(i % 256));
+
+    std::vector<GByte> out(in.size());
+
+    // SSSE3 optim (16x16) blocks
+    {
+        constexpr int W = 19;
+        constexpr int H = 17;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // Optim H = 2 with W < 16
+    {
+        constexpr int W = 15;
+        constexpr int H = 2;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // Optim H = 2 with W >= 16
+    {
+        constexpr int W = 19;
+        constexpr int H = 2;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // SSSE3 optim H = 3 with W < 16
+    {
+        constexpr int W = 15;
+        constexpr int H = 3;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // SSSE3 optim H = 3 with W >= 16
+    {
+        constexpr int W = 19;
+        constexpr int H = 3;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // Optim H = 4 with H < 16
+    {
+        constexpr int W = 15;
+        constexpr int H = 4;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // Optim H = 4 with H >= 16
+    {
+        constexpr int W = 19;
+        constexpr int H = 4;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // SSSE3 optim H = 5 with W < 16
+    {
+        constexpr int W = 15;
+        constexpr int H = 5;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // SSSE3 optim H = 5 with W >= 16
+    {
+        constexpr int W = 19;
+        constexpr int H = 5;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
     }
 }
 

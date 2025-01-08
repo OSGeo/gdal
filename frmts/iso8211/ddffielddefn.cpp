@@ -380,6 +380,7 @@ void DDFFieldDefn::Dump(FILE *fp)
 
 {
     const char *pszValue = "";
+    CPL_IGNORE_RET_VAL(pszValue);  // Make CSA happy
 
     fprintf(fp, "  DDFFieldDefn:\n");
     fprintf(fp, "      Tag = `%s'\n", pszTag);

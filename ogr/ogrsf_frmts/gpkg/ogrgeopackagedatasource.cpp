@@ -188,12 +188,6 @@ static const char *pszCREATE_GPKG_GEOMETRY_COLUMNS =
     "(srs_id)"
     ")";
 
-/* Only recent versions of SQLite will let us muck with application_id */
-/* via a PRAGMA statement, so we have to write directly into the */
-/* file header here. */
-/* We do this at the *end* of initialization so that there is */
-/* data to write down to a file, and we will have a writable file */
-/* once we close the SQLite connection */
 OGRErr GDALGeoPackageDataset::SetApplicationAndUserVersionId()
 {
     CPLAssert(hDB != nullptr);
@@ -1679,8 +1673,10 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
                      "is_in_gpkg_contents, 'table' AS object_type "
                      "FROM gpkgext_relations WHERE "
                      "lower(mapping_table_name) NOT IN (SELECT "
-                     "lower(table_name) FROM "
-                     "gpkg_contents)";
+                     "lower(table_name) FROM gpkg_contents) AND "
+                     "EXISTS (SELECT 1 FROM sqlite_master WHERE "
+                     "type IN ('table', 'view') AND "
+                     "lower(name) = lower(mapping_table_name))";
         }
         if (EQUAL(pszListAllTables, "YES") ||
             (!bHasASpatialOrAttributes && EQUAL(pszListAllTables, "AUTO")))
@@ -2185,7 +2181,9 @@ void GDALGeoPackageDataset::LoadRelationshipsUsingRelatedTablesExtension() const
             const int nMappingTableCount = SQLGetInteger(hDB, pszSQL, nullptr);
             sqlite3_free(pszSQL);
 
-            if (nMappingTableCount < 1)
+            if (nMappingTableCount < 1 &&
+                !const_cast<GDALGeoPackageDataset *>(this)->GetLayerByName(
+                    pszMappingTableName))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Relationship mapping table %s does not exist",
@@ -6005,6 +6003,21 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
                                                GDALProgressFunc pfnProgress,
                                                void *pProgressData)
 {
+    const int nBands = poSrcDS->GetRasterCount();
+    if (nBands == 0)
+    {
+        GDALDataset *poDS = nullptr;
+        GDALDriver *poThisDriver =
+            GDALDriver::FromHandle(GDALGetDriverByName("GPKG"));
+        if (poThisDriver != nullptr)
+        {
+            poDS = poThisDriver->DefaultCreateCopy(pszFilename, poSrcDS,
+                                                   bStrict, papszOptions,
+                                                   pfnProgress, pProgressData);
+        }
+        return poDS;
+    }
+
     const char *pszTilingScheme =
         CSLFetchNameValueDef(papszOptions, "TILING_SCHEME", "CUSTOM");
 
@@ -6018,7 +6031,6 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
         apszUpdatedOptions.SetNameValue("RASTER_TABLE", osBasename);
     }
 
-    const int nBands = poSrcDS->GetRasterCount();
     if (nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -6045,7 +6057,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
 
         GDALGeoPackageDataset *poDS = nullptr;
         GDALDriver *poThisDriver =
-            reinterpret_cast<GDALDriver *>(GDALGetDriverByName("GPKG"));
+            GDALDriver::FromHandle(GDALGetDriverByName("GPKG"));
         if (poThisDriver != nullptr)
         {
             apszUpdatedOptions.SetNameValue("SKIP_HOLES", "YES");
@@ -7710,6 +7722,25 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
     {
         SoftRollbackTransaction();
         return nullptr;
+    }
+
+    else if (STARTS_WITH_CI(osSQLCommand, "DELETE FROM "))
+    {
+        // Optimize truncation of a table, especially if it has a spatial
+        // index.
+        const CPLStringList aosTokens(SQLTokenize(osSQLCommand));
+        if (aosTokens.size() == 3)
+        {
+            const char *pszTableName = aosTokens[2];
+            OGRGeoPackageTableLayer *poLayer =
+                dynamic_cast<OGRGeoPackageTableLayer *>(
+                    GetLayerByName(SQLUnescape(pszTableName)));
+            if (poLayer)
+            {
+                poLayer->Truncate();
+                return nullptr;
+            }
+        }
     }
 
     else if (pszDialect != nullptr && EQUAL(pszDialect, "INDIRECT_SQLITE"))

@@ -1476,13 +1476,13 @@ will take in a CSV filename and return a full path to the file. The
 returned string should be to an internal static buffer so that the
 caller doesn't have to free the result.
 
-<b>Example:</b><br>
+Example:
 
 The listgeo utility uses the following override function if the user
 specified a CSV file directory with the -t commandline switch (argument
-put into CSVDirName).  <p>
+put into CSVDirName).
 
-<pre>
+\code{.cpp}
 
     ...
     SetCSVFilenameHook( CSVFileOverride );
@@ -1497,7 +1497,7 @@ static const char *CSVFileOverride( const char * pszInput )
 
     return szPath;
 }
-</pre>
+\endcode
 
 */
 

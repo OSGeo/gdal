@@ -288,6 +288,17 @@ The following layer creation options are supported:
       name, it can be supplied with the GEOMETRY_NAME layer creation
       option.
 
+-  .. lco:: TIMESTAMP_WITH_TIME_ZONE
+      :choices: YES, NO
+      :default: NO
+      :since: 3.10.1
+
+      Whether DateTime fields should be created with TIMESTAMP WITH TIME ZONE
+      Oracle type (otherwise without timezone).
+      When creating a field, if it advertises a known or mixed time zone,
+      TIMESTAMP_WITH_TIME_ZONE will default to YES, otherwise it will default to
+      NO.
+
 Layer Open Options
 ~~~~~~~~~~~~~~~~~~
 

@@ -397,7 +397,7 @@ CPLErr GTiffDataset::FillEmptyTiles()
                 }
 
                 vsi_l_offset nOffset = 0;
-                if (!IsBlockAvailable(iBlock, &nOffset, &nRawSize))
+                if (!IsBlockAvailable(iBlock, &nOffset, &nRawSize, nullptr))
                     break;
 
                 // When using compression, get back the compressed block
@@ -614,7 +614,7 @@ bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
     /* -------------------------------------------------------------------- */
     if (!m_bWriteEmptyTiles && IsFirstPixelEqualToNoData(pabyData))
     {
-        if (!IsBlockAvailable(tile))
+        if (!IsBlockAvailable(tile, nullptr, nullptr, nullptr))
         {
             const int nComponents =
                 m_nPlanarConfig == PLANARCONFIG_CONTIG ? nBands : 1;
@@ -800,7 +800,7 @@ bool GTiffDataset::WriteEncodedStrip(uint32_t strip, GByte *pabyData,
     /* -------------------------------------------------------------------- */
     if (!m_bWriteEmptyTiles && IsFirstPixelEqualToNoData(pabyData))
     {
-        if (!IsBlockAvailable(strip))
+        if (!IsBlockAvailable(strip, nullptr, nullptr, nullptr))
         {
             const int nComponents =
                 m_nPlanarConfig == PLANARCONFIG_CONTIG ? nBands : 1;
@@ -1357,6 +1357,7 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
                                 m_nCompression == COMPRESSION_ZSTD ||
                                 m_nCompression == COMPRESSION_LERC ||
                                 m_nCompression == COMPRESSION_JXL ||
+                                m_nCompression == COMPRESSION_JXL_DNG_1_7 ||
                                 m_nCompression == COMPRESSION_WEBP ||
                                 m_nCompression == COMPRESSION_JPEG))
     {
@@ -2709,7 +2710,10 @@ bool GTiffDataset::GetOverviewParameters(
     /* -------------------------------------------------------------------- */
     /*      Determine photometric tag                                       */
     /* -------------------------------------------------------------------- */
-    nPhotometric = m_nPhotometric;
+    if (m_nPhotometric == PHOTOMETRIC_YCBCR && nCompression != COMPRESSION_JPEG)
+        nPhotometric = PHOTOMETRIC_RGB;
+    else
+        nPhotometric = m_nPhotometric;
     const char *pszPhotometric =
         GetOptionValue("PHOTOMETRIC", "PHOTOMETRIC_OVERVIEW", &pszOptionKey);
     if (!GTIFFUpdatePhotometric(pszPhotometric, pszOptionKey, nCompression,
@@ -5252,10 +5256,12 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     }
 
 #ifdef HAVE_JXL
-    if (l_nCompression == COMPRESSION_JXL)
+    if ((l_nCompression == COMPRESSION_JXL ||
+         l_nCompression == COMPRESSION_JXL_DNG_1_7) &&
+        eType != GDT_Float32)
     {
         // Reflects tif_jxl's GetJXLDataType()
-        if (eType != GDT_Byte && eType != GDT_UInt16 && eType != GDT_Float32)
+        if (eType != GDT_Byte && eType != GDT_UInt16)
         {
             ReportError(pszFilename, CE_Failure, CPLE_NotSupported,
                         "Data type %s not supported for JXL compression. Only "
@@ -5271,7 +5277,6 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         } asSupportedDTBitsPerSample[] = {
             {GDT_Byte, 8},
             {GDT_UInt16, 16},
-            {GDT_Float32, 32},
         };
 
         for (const auto &sSupportedDTBitsPerSample : asSupportedDTBitsPerSample)
@@ -5298,9 +5303,22 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         nPredictor = atoi(pszValue);
     }
 
-    // Do early checks as libtiff will only error out when starting to write.
     if (nPredictor != PREDICTOR_NONE &&
-        CPLTestBool(CPLGetConfigOption("GDAL_GTIFF_PREDICTOR_CHECKS", "YES")))
+        l_nCompression != COMPRESSION_ADOBE_DEFLATE &&
+        l_nCompression != COMPRESSION_LZW &&
+        l_nCompression != COMPRESSION_LZMA &&
+        l_nCompression != COMPRESSION_ZSTD)
+    {
+        ReportError(pszFilename, CE_Warning, CPLE_NotSupported,
+                    "PREDICTOR option is ignored for COMPRESS=%s. "
+                    "Only valid for DEFLATE, LZW, LZMA or ZSTD",
+                    CSLFetchNameValueDef(papszParamList, "COMPRESS", "NONE"));
+    }
+
+    // Do early checks as libtiff will only error out when starting to write.
+    else if (nPredictor != PREDICTOR_NONE &&
+             CPLTestBool(
+                 CPLGetConfigOption("GDAL_GTIFF_PREDICTOR_CHECKS", "YES")))
     {
 #if (TIFFLIB_VERSION > 20210416) || defined(INTERNAL_LIBTIFF)
 #define HAVE_PREDICTOR_2_FOR_64BIT
@@ -5324,15 +5342,23 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                 else
 #endif
                 {
+                    const int nBITSHint = (l_nBitsPerSample < 8)    ? 8
+                                          : (l_nBitsPerSample < 16) ? 16
+                                          : (l_nBitsPerSample < 32) ? 32
+                                                                    : 64;
                     ReportError(pszFilename, CE_Failure, CPLE_AppDefined,
 #ifdef HAVE_PREDICTOR_2_FOR_64BIT
                                 "PREDICTOR=2 is only supported with 8/16/32/64 "
-                                "bit samples."
+                                "bit samples. You can specify the NBITS=%d "
+                                "creation option to promote to the closest "
+                                "supported bits per sample value.",
 #else
                                 "PREDICTOR=2 is only supported with 8/16/32 "
-                                "bit samples."
+                                "bit samples. You can specify the NBITS=%d "
+                                "creation option to promote to the closest "
+                                "supported bits per sample value.",
 #endif
-                    );
+                                nBITSHint);
                 }
                 return nullptr;
             }
@@ -5876,7 +5902,8 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         TIFFSetField(l_hTIFF, TIFFTAG_LERC_MAXZERROR, l_dfMaxZError);
     }
 #if HAVE_JXL
-    if (l_nCompression == COMPRESSION_JXL)
+    if (l_nCompression == COMPRESSION_JXL ||
+        l_nCompression == COMPRESSION_JXL_DNG_1_7)
     {
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_LOSSYNESS,
                      l_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);
@@ -7056,10 +7083,10 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             CPLMalloc(nExtraSamples * sizeof(uint16_t)));
         memcpy(pasNewExtraSamples, extraSamples,
                nExtraSamples * sizeof(uint16_t));
-        uint16_t nAlpha = GTiffGetAlphaValue(
-            CPLGetConfigOption("GTIFF_ALPHA",
-                               CSLFetchNameValue(papszOptions, "ALPHA")),
-            DEFAULT_ALPHA_TYPE);
+        const char *pszAlpha = CPLGetConfigOption(
+            "GTIFF_ALPHA", CSLFetchNameValue(papszOptions, "ALPHA"));
+        const uint16_t nAlpha =
+            GTiffGetAlphaValue(pszAlpha, DEFAULT_ALPHA_TYPE);
         const int nBaseSamples = l_nBands - nExtraSamples;
         for (int iExtraBand = nBaseSamples + 1; iExtraBand <= l_nBands;
              iExtraBand++)
@@ -7068,6 +7095,16 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                 GCI_AlphaBand)
             {
                 pasNewExtraSamples[iExtraBand - nBaseSamples - 1] = nAlpha;
+                if (!pszAlpha)
+                {
+                    // Use the ALPHA metadata item from the source band, when
+                    // present, if no explicit ALPHA creation option
+                    pasNewExtraSamples[iExtraBand - nBaseSamples - 1] =
+                        GTiffGetAlphaValue(
+                            poSrcDS->GetRasterBand(iExtraBand)
+                                ->GetMetadataItem("ALPHA", "IMAGE_STRUCTURE"),
+                            nAlpha);
+                }
             }
         }
         TIFFSetField(l_hTIFF, TIFFTAG_EXTRASAMPLES, nExtraSamples,
@@ -7850,7 +7887,8 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         TIFFSetField(l_hTIFF, TIFFTAG_LERC_MAXZERROR, poDS->m_dfMaxZError);
     }
 #if HAVE_JXL
-    if (l_nCompression == COMPRESSION_JXL)
+    if (l_nCompression == COMPRESSION_JXL ||
+        l_nCompression == COMPRESSION_JXL_DNG_1_7)
     {
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_LOSSYNESS,
                      poDS->m_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);

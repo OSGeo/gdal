@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  DTED Translator
  * Purpose:  Implementation of DTEDCreate() portion of DTED API.

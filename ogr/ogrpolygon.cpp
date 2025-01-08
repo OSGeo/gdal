@@ -71,7 +71,16 @@ OGRPolygon &OGRPolygon::operator=(const OGRPolygon &other)
 OGRPolygon *OGRPolygon::clone() const
 
 {
-    return new (std::nothrow) OGRPolygon(*this);
+    auto ret = new (std::nothrow) OGRPolygon(*this);
+    if (ret)
+    {
+        if (ret->WkbSize() != WkbSize())
+        {
+            delete ret;
+            ret = nullptr;
+        }
+    }
+    return ret;
 }
 
 /************************************************************************/

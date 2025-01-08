@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GPX Translator
  * Purpose:  Definition of classes for OGR .gpx driver.

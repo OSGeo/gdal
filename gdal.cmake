@@ -40,6 +40,13 @@ option(GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE "Set ON to produce -fPIC 
 # Option to set preferred C# compiler
 option(CSHARP_MONO "Whether to force the C# compiler to be Mono" OFF)
 
+if (SSE2NEON_COMPILES)
+  option(GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS "Set ON to use ARM Neon FPU optimizations" ON)
+  if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
+      message(STATUS "Using ARM Neon optimizations")
+  endif()
+endif()
+
 # This line must be kept early in the CMake instructions. At time of writing,
 # this file is populated only be scripts/install_bash_completions.cmake.in
 install(CODE "file(REMOVE \"${PROJECT_BINARY_DIR}/install_manifest_extra.txt\")")
@@ -189,6 +196,10 @@ if (MINGW AND BUILD_SHARED_LIBS)
     set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES SUFFIX "-${GDAL_SOVERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif ()
 
+# Some of the types in our public headers are dependent on whether GDAL_DEBUG
+# is defined or not
+target_compile_definitions(${GDAL_LIB_TARGET_NAME} PUBLIC $<$<CONFIG:DEBUG>:GDAL_DEBUG>)
+
 # Install properties
 if (GDAL_ENABLE_MACOSX_FRAMEWORK)
   set(FRAMEWORK_VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR})
@@ -252,6 +263,45 @@ else ()
 endif ()
 
 set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
+
+function (is_sharp_embed_available res)
+    if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.21 AND
+        ((CMAKE_C_COMPILER_ID STREQUAL "GNU") OR (CMAKE_C_COMPILER_ID STREQUAL "Clang")))
+        # CMAKE_C_STANDARD=23 only supported since CMake 3.21
+        set(TEST_SHARP_EMBED
+          "static const unsigned char embedded[] = {\n#embed __FILE__\n};\nint main() { (void)embedded; return 0;}"
+        )
+        set(CMAKE_C_STANDARD_BACKUP "${CMAKE_C_STANDARD}")
+        set(CMAKE_C_STANDARD "23")
+        check_c_source_compiles("${TEST_SHARP_EMBED}" _TEST_SHARP_EMBED)
+        set(CMAKE_C_STANDARD "${CMAKE_C_STANDARD_BACKUP}")
+        if (_TEST_SHARP_EMBED)
+            set(${res} ON PARENT_SCOPE)
+        else()
+            set(${res} OFF PARENT_SCOPE)
+        endif()
+    else()
+        set(${res} OFF PARENT_SCOPE)
+    endif()
+endfunction()
+
+is_sharp_embed_available(IS_SHARP_EMBED_AVAILABLE_RES)
+if (NOT BUILD_SHARED_LIBS AND IS_SHARP_EMBED_AVAILABLE_RES)
+    set(DEFAULT_EMBED_RESOURCE_FILES ON)
+else()
+    set(DEFAULT_EMBED_RESOURCE_FILES OFF)
+endif()
+option(EMBED_RESOURCE_FILES "Whether resource files should be embedded into the GDAL library (only available with a C23 compatible compiler)" ${DEFAULT_EMBED_RESOURCE_FILES})
+
+if (EMBED_RESOURCE_FILES AND NOT IS_SHARP_EMBED_AVAILABLE_RES)
+  message(FATAL_ERROR "C23 #embed not available with this compiler")
+endif()
+
+option(USE_ONLY_EMBEDDED_RESOURCE_FILES "Whether embedded resource files should be used (should nominally be used together with EMBED_RESOURCE_FILES=ON, otherwise this will result in non-functional builds)" OFF)
+
+if (USE_ONLY_EMBEDDED_RESOURCE_FILES AND NOT EMBED_RESOURCE_FILES)
+  message(WARNING "USE_ONLY_EMBEDDED_RESOURCE_FILES=ON set but EMBED_RESOURCE_FILES=OFF: some drivers will lack required resource files")
+endif()
 
 # Configure internal libraries
 if (GDAL_USE_ZLIB_INTERNAL)
@@ -322,6 +372,23 @@ if(OGR_ENABLE_DRIVER_TAB AND
    NOT DEFINED OGR_ENABLE_DRIVER_TAB_PLUGIN AND
    GDAL_ENABLE_PLUGINS_NO_DEPS)
     option(OGR_ENABLE_DRIVER_TAB_PLUGIN "Set ON to build OGR MapInfo TAB and MIF/MID driver as plugin" ON)
+endif()
+
+# Precompiled header
+if (USE_PRECOMPILED_HEADERS)
+  include(GdalStandardIncludes)
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/gcore/empty_c.c" "")
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/gcore/empty.cpp" "")
+  add_library(gdal_priv_header OBJECT "${CMAKE_CURRENT_BINARY_DIR}/gcore/empty_c.c" "${CMAKE_CURRENT_BINARY_DIR}/gcore/empty.cpp")
+  gdal_standard_includes(gdal_priv_header)
+  add_dependencies(gdal_priv_header generate_gdal_version_h)
+  target_compile_options(gdal_priv_header PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX}> $<$<COMPILE_LANGUAGE:C>:${GDAL_C_WARNING_FLAGS}>)
+  target_compile_definitions(gdal_priv_header PUBLIC $<$<CONFIG:DEBUG>:GDAL_DEBUG>)
+  set_property(TARGET gdal_priv_header PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+  target_precompile_headers(gdal_priv_header PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/gcore/gdal_priv.h>
+    $<$<COMPILE_LANGUAGE:C>:${CMAKE_CURRENT_SOURCE_DIR}/port/cpl_port.h>
+  )
 endif()
 
 # Core components
@@ -408,9 +475,6 @@ target_include_directories(
 if (MSVC)
   target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE gcore/Version.rc)
   source_group("Resource Files" FILES gcore/Version.rc)
-  if (CMAKE_CL_64)
-    set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
-  endif ()
 endif ()
 
 get_property(_plugins GLOBAL PROPERTY PLUGIN_MODULES)
@@ -511,11 +575,11 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   endif ()
 
   include(CMakePackageConfigHelpers)
-  # SameMinorVersion as our C++ ABI remains stable only among major.minor.XXX patch releases
+  # SameMajorVersion as the C++ ABI stability is not relevant for new linking and there are only a few breaking API changes.
   write_basic_package_version_file(
     GDALConfigVersion.cmake
     VERSION ${GDAL_VERSION}
-    COMPATIBILITY SameMinorVersion)
+    COMPATIBILITY SameMajorVersion)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/template/GDALConfig.cmake.in
                  ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake @ONLY)

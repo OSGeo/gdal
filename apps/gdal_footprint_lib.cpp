@@ -1028,7 +1028,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
             CPLAssert(poGeom);
             if (poGeom->getGeometryType() == wkbPolygon)
             {
-                poMP->addGeometryDirectly(poGeom.release());
+                poMP->addGeometry(std::move(poGeom));
             }
         }
         poMemLayer = std::make_unique<OGRMemLayer>("", nullptr, wkbUnknown);
@@ -1095,7 +1095,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
                         }
                     }
                     if (!poNewPoly->IsEmpty())
-                        poMP->addGeometryDirectly(poNewPoly.release());
+                        poMP->addGeometry(std::move(poNewPoly));
                 }
                 poGeom = std::move(poMP);
             }

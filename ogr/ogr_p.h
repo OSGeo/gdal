@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Some private helper functions and stuff for OGR implementation.
@@ -187,7 +186,8 @@ OGRErr CPL_DLL OGRCheckPermutation(const int *panPermutation, int nSize);
 OGRGeometry CPL_DLL *GML2OGRGeometry_XMLNode(
     const CPLXMLNode *psNode, int nPseudoBoolGetSecondaryGeometryOption,
     int nRecLevel = 0, int nSRSDimension = 0, bool bIgnoreGSG = false,
-    bool bOrientation = true, bool bFaceHoleNegative = false);
+    bool bOrientation = true, bool bFaceHoleNegative = false,
+    const char *pszId = nullptr);
 
 /************************************************************************/
 /*                        PostGIS EWKB encoding                         */
@@ -320,5 +320,14 @@ inline void OGRRoundCoordinatesIEEE754(int nBitsPrecision, GByte *pabyBase,
         }
     }
 }
+
+/* -------------------------------------------------------------------- */
+/*      helper functions for string escaping.                           */
+/* -------------------------------------------------------------------- */
+
+/** Replace all occurrences of ch by it repeated twice.
+ * Typically used for SQL string literal or identifier escaping.
+ */
+std::string CPL_DLL OGRDuplicateCharacter(const std::string &osStr, char ch);
 
 #endif /* ndef OGR_P_H_INCLUDED */

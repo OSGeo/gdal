@@ -1,6 +1,4 @@
 /******************************************************************************
- * $Id$
- *
  * Project:  APP ENVISAT Support
  * Purpose:  time difference class for handling of Envisat MJD time
  * Author:   Martin Paces, martin.paces@eox.at

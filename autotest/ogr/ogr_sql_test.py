@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test various OGR SQL support options.
@@ -1952,6 +1951,13 @@ def get_available_dialects():
         ("(NOT intfield = 0) AND NOT (intfield IS NULL)", 1),
         ("NOT (intfield = 0 OR intfield IS NOT NULL)", 0),
         ("(NOT intfield = 0) AND NOT (intfield IS NOT NULL)", 0),
+        ("intfield <> 0 AND intfield <> 2", 1),
+        ("intfield IS NOT NULL AND intfield NOT IN (2)", 1),
+        ("NOT(intfield NOT IN (1) AND NULL NOT IN (1))", 1),
+        ("NOT(intfield IS NOT NULL AND intfield NOT IN (2))", 1),
+        ("NOT(NOT(intfield IS NOT NULL AND intfield NOT IN (2)))", 1),
+        ("NOT (intfield = 0 AND intfield = 0)", 1),
+        ("(intfield NOT IN (1) AND NULL NOT IN (1)) IS NULL", 1),
         # realfield
         ("1 + realfield >= 0", 1),
         ("realfield = 0", 0),

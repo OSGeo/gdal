@@ -1198,15 +1198,27 @@ int TIFFMergeFieldInfo(TIFF *tif, const TIFFFieldInfo info[], uint32_t n)
     {
         tp->field_tag = info[i].field_tag;
         if (info[i].field_readcount < TIFF_VARIABLE2 ||
-            info[i].field_readcount == 0 ||
-            info[i].field_writecount < TIFF_VARIABLE2 ||
-            info[i].field_writecount == 0)
+            info[i].field_writecount < TIFF_VARIABLE2)
         {
             /* The fields (field_readcount) and (field_writecount) may use the
              * values TIFF_VARIABLE (-1), TIFF_SPP (-2), TIFF_VARIABLE2 (-3). */
-            TIFFErrorExtR(tif, module,
-                          "The value of field_readcount and field_writecount "
-                          "must be greater than or equal to -3 and not zero.");
+            TIFFErrorExtR(
+                tif, module,
+                "The value of field_readcount %d and field_writecount %d "
+                "must be greater than or equal to -3.",
+                info[i].field_readcount, info[i].field_writecount);
+            return -1;
+        }
+        if ((info[i].field_readcount == 0 || info[i].field_writecount == 0) &&
+            info[i].field_bit != FIELD_IGNORE)
+        {
+            /* The fields (field_readcount) and (field_writecount) may only
+            be zero for pseudo_tags or ignored tags. */
+            TIFFErrorExtR(
+                tif, module,
+                "The value of field_readcount %d and field_writecount %d "
+                "may only be zero for field_bit = 0 (i.e. ignored tags).",
+                info[i].field_readcount, info[i].field_writecount);
             return -1;
         }
         tp->field_readcount = info[i].field_readcount;
@@ -1222,14 +1234,18 @@ int TIFFMergeFieldInfo(TIFF *tif, const TIFFFieldInfo info[], uint32_t n)
         tp->field_bit = info[i].field_bit;
         tp->field_oktochange = info[i].field_oktochange;
         tp->field_passcount = info[i].field_passcount;
+        /* Define an empty static string to be passed as field_name where a NULL
+         * pointer is passed in. Otherwise, this will lead to buffer overflow
+         * furtheron. */
         if (info[i].field_name == NULL)
         {
-            TIFFErrorExtR(tif, module,
-                          "Field_name of %d.th allocation tag %d is NULL", i,
-                          info[i].field_tag);
-            return -1;
+            static const char *string_static_empty = "";
+            tp->field_name = (char *)string_static_empty;
         }
-        tp->field_name = info[i].field_name;
+        else
+        {
+            tp->field_name = info[i].field_name;
+        }
         tp->field_subfields = NULL;
         tp++;
     }

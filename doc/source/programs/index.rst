@@ -4,8 +4,65 @@
 Programs
 ================================================================================
 
+"gdal" application
+------------------
+
+Starting with GDAL 3.11, parts of the GDAL utilities are available from a new
+single :program:`gdal` program that accepts commands and subcommands.
+
+.. warning::
+
+    The :program:`gdal` command is provisionally provided as an alternative
+    interface to GDAL and OGR command line utilities. The project reserves the
+    right to modify, rename, reorganize, and change the behavior of the utility
+    until it is officially frozen via PSC vote in a future major GDAL release.
+    The utility needs time to mature, benefit from incremental feedback, and
+    explore enhancements without carrying the burden of full backward compatibility.
+    Your usage of it should have no expectation of compatibility until that time.
+
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   gdal
+   gdal_info
+   gdal_convert
+   gdal_raster
+   gdal_raster_buildvrt
+   gdal_raster_info
+   gdal_raster_convert
+   gdal_raster_edit
+   gdal_raster_pipeline
+   gdal_raster_reproject
+   gdal_vector
+   gdal_vector_info
+   gdal_vector_convert
+   gdal_vector_pipeline
+
+.. only:: html
+
+    - :ref:`gdal_program`: Main "gdal" entry point
+    - :ref:`gdal_info_command`: Get information on a dataset
+    - :ref:`gdal_convert_command`: Convert a dataset
+    - :ref:`gdal_raster_command`: Entry point for raster commands
+    - :ref:`gdal_raster_buildvrt_subcommand`: buildvrt:  Build a virtual dataset (VRT)
+    - :ref:`gdal_raster_info_subcommand`: Get information on a raster dataset
+    - :ref:`gdal_raster_convert_subcommand`: Convert a raster dataset
+    - :ref:`gdal_raster_edit_subcommand`: Edit in place a raster dataset
+    - :ref:`gdal_raster_pipeline_subcommand`: Process a raster dataset
+    - :ref:`gdal_raster_reproject_subcommand`: Reproject a raster dataset
+    - :ref:`gdal_vector_command`: Entry point for vector commands
+    - :ref:`gdal_vector_info_subcommand`: Get information on a vector dataset
+    - :ref:`gdal_vector_convert_subcommand`: Convert a vector dataset
+    - :ref:`gdal_vector_pipeline_subcommand`: Process a vector dataset
+
+
+"Traditional" applications
+--------------------------
+
 General
--------
++++++++
 
 .. toctree::
    :maxdepth: 1
@@ -17,8 +74,9 @@ General
 
     - :ref:`argument_syntax`
 
+
 Raster programs
----------------
++++++++++++++++
 
 .. toctree::
    :maxdepth: 1
@@ -50,6 +108,7 @@ Raster programs
    gdalbuildvrt
    gdalcompare
    gdaldem
+   gdalenhance
    gdalinfo
    gdallocationinfo
    gdalmanage
@@ -89,6 +148,7 @@ Raster programs
     - :ref:`gdalbuildvrt`: Builds a VRT from a list of datasets.
     - :ref:`gdalcompare`: Compare two images.
     - :ref:`gdaldem`: Tools to analyze and visualize DEMs.
+    - :ref:`gdalenhance`: Enhance an image with LUT-based contrast enhancement
     - :ref:`gdalinfo`: Lists information about a raster dataset.
     - :ref:`gdallocationinfo`: Raster query tool
     - :ref:`gdalmanage`: Identify, delete, rename and copy raster data files.
@@ -102,7 +162,7 @@ Raster programs
     - :ref:`rgb2pct`: Convert a 24bit RGB image to 8bit paletted.
 
 Multidimensional Raster programs
---------------------------------
+++++++++++++++++++++++++++++++++
 
 .. toctree::
    :maxdepth: 1
@@ -117,7 +177,7 @@ Multidimensional Raster programs
     - :ref:`gdalmdimtranslate`: Converts multidimensional data between different formats, and perform subsetting.
 
 Vector programs
----------------
++++++++++++++++
 
 .. toctree::
    :maxdepth: 1
@@ -142,7 +202,7 @@ Vector programs
     - :ref:`ogr_layer_algebra`: Performs various Vector layer algebraic operations.
 
 Geographic network programs
----------------------------
++++++++++++++++++++++++++++
 
 .. toctree::
    :maxdepth: 1
@@ -157,7 +217,7 @@ Geographic network programs
     - :ref:`gnmanalyse`: Analyses networks
 
 Other utilities
----------------
++++++++++++++++
 
 .. toctree::
    :maxdepth: 1

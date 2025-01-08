@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GXF Reader
  * Purpose:  GXF-3 access function declarations.

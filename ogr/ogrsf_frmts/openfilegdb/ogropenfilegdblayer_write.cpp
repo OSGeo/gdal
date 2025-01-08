@@ -862,6 +862,7 @@ static CPLXMLNode *CreateXMLFieldDefinition(const OGRFieldDefn *poFieldDefn,
         }
     }
     const char *pszFieldType = "";
+    CPL_IGNORE_RET_VAL(pszFieldType);  // Make CSA happy
     int nLength = 0;
     switch (poGDBFieldDefn->GetType())
     {

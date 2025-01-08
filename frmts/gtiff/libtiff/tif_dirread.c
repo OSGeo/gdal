@@ -4403,10 +4403,13 @@ int TIFFReadDirectory(TIFF *tif)
             TIFFReadDirectoryFindFieldInfo(tif, dp->tdir_tag, &fii);
             if (fii == FAILED_FII)
             {
-                TIFFWarningExtR(tif, module,
-                                "Unknown field with tag %" PRIu16 " (0x%" PRIx16
-                                ") encountered",
-                                dp->tdir_tag, dp->tdir_tag);
+                if (tif->tif_warn_about_unknown_tags)
+                {
+                    TIFFWarningExtR(tif, module,
+                                    "Unknown field with tag %" PRIu16
+                                    " (0x%" PRIx16 ") encountered",
+                                    dp->tdir_tag, dp->tdir_tag);
+                }
                 /* the following knowingly leaks the
                    anonymous field structure */
                 const TIFFField *fld = _TIFFCreateAnonField(
@@ -5344,18 +5347,25 @@ int TIFFReadCustomDirectory(TIFF *tif, toff_t diroff,
         TIFFReadDirectoryFindFieldInfo(tif, dp->tdir_tag, &fii);
         if (fii == FAILED_FII)
         {
-            TIFFWarningExtR(tif, module,
-                            "Unknown field with tag %" PRIu16 " (0x%" PRIx16
-                            ") encountered",
-                            dp->tdir_tag, dp->tdir_tag);
+            if (tif->tif_warn_about_unknown_tags)
+            {
+                TIFFWarningExtR(tif, module,
+                                "Unknown field with tag %" PRIu16 " (0x%" PRIx16
+                                ") encountered",
+                                dp->tdir_tag, dp->tdir_tag);
+            }
             const TIFFField *fld = _TIFFCreateAnonField(
                 tif, dp->tdir_tag, (TIFFDataType)dp->tdir_type);
             if (fld == NULL || !_TIFFMergeFields(tif, fld, 1))
             {
-                TIFFWarningExtR(tif, module,
-                                "Registering anonymous field with tag %" PRIu16
-                                " (0x%" PRIx16 ") failed",
-                                dp->tdir_tag, dp->tdir_tag);
+                if (tif->tif_warn_about_unknown_tags)
+                {
+                    TIFFWarningExtR(
+                        tif, module,
+                        "Registering anonymous field with tag %" PRIu16
+                        " (0x%" PRIx16 ") failed",
+                        dp->tdir_tag, dp->tdir_tag);
+                }
                 dp->tdir_ignore = TRUE;
             }
             else

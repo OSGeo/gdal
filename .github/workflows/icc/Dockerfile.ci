@@ -1,11 +1,11 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.04@sha256:3d1556a8a18cf5307b121e0a98e93f1ddf1f3f8e092f1fddfd941254785b95d7
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y \
  && apt-get install -y cmake gcc ccache libproj-dev wget python3-dev python3-numpy python3-pip swig
 
-RUN wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/bb99984f-370f-413d-bbec-38928d2458f2/l_dpcpp-cpp-compiler_p_2024.0.2.29_offline.sh \
+RUN WGET_CMD=wget && $WGET_CMD https://registrationcenter-download.intel.com/akdlm/IRC_NAS/bb99984f-370f-413d-bbec-38928d2458f2/l_dpcpp-cpp-compiler_p_2024.0.2.29_offline.sh \
     && sh l_dpcpp-cpp-compiler_p_2024.0.2.29_offline.sh -a -s --eula accept
 
 # It appears to be necessary to install python dependencies _before_
@@ -14,7 +14,7 @@ RUN wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/bb99984f-37
 # cpython-38-x86_64-linux-gnu.so: undefined symbol: __intel_sse2_strcpy
 
 COPY requirements.txt /tmp/
-RUN python3 -m pip install -U -r /tmp/requirements.txt
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U -r /tmp/requirements.txt
 
 # Intel uses a script to set numerous environment variables.
 # Sourcing a script in the Dockerfile does not persist the variables

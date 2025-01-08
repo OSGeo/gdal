@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     cpl.i
  * Project:  GDAL Python Interface
@@ -740,6 +739,14 @@ void CopyFileRestartable(const char* pszSource,
 }
 #endif
 
+}
+
+%rename (MoveFile) wrapper_MoveFile;
+%inline {
+int wrapper_MoveFile(const char* pszSource, const char* pszTarget)
+{
+    return CPLMoveFile(pszTarget, pszSource);
+}
 }
 
 %clear (const char* pszSource);

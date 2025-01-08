@@ -213,7 +213,15 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 #else
     const char *pszGDALFilename = GDAL_FILENAME;
 #endif
-    GDALDatasetH hDS = GDALOpen(pszGDALFilename, GA_ReadOnly);
+
+#ifdef DRIVER_NAME
+    const char *const apszAllowedDrivers[] = {DRIVER_NAME, nullptr};
+#else
+    const char *const *apszAllowedDrivers = nullptr;
+#endif
+
+    GDALDatasetH hDS = GDALOpenEx(pszGDALFilename, GDAL_OF_RASTER,
+                                  apszAllowedDrivers, nullptr, nullptr);
     if (hDS)
     {
         const int nTotalBands = GDALGetRasterCount(hDS);

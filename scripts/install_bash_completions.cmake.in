@@ -1,5 +1,6 @@
 # All but gdalinfo
 set(PROGRAMS
+    gdal
     gdal2tiles.py
     gdal2xyz.py
     gdaladdo

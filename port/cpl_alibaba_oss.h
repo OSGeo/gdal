@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_alibaba_oss.h
  * Project:  CPL - Common Portability Library

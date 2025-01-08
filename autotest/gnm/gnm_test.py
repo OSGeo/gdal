@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic GNMGdalNetwork class functionality.
@@ -36,7 +35,7 @@ def test_gnm_filenetwork_create():
         pass
 
     drv = gdal.GetDriverByName("GNMFile")
-    ds = drv.Create(
+    with drv.Create(
         "tmp/",
         0,
         0,
@@ -47,17 +46,15 @@ def test_gnm_filenetwork_create():
             "net_description=Test file based GNM",
             "net_srs=EPSG:4326",
         ],
-    )
-    # cast to GNM
-    dn = gnm.CastToNetwork(ds)
-    assert dn is not None
-    assert dn.GetVersion() == 100, "GNM: Check GNM version failed"
-    assert dn.GetName() == "test_gnm", "GNM: Check GNM name failed"
-    assert (
-        dn.GetDescription() == "Test file based GNM"
-    ), "GNM: Check GNM description failed"
-
-    dn = None
+    ) as ds:
+        # cast to GNM
+        dn = gnm.CastToNetwork(ds)
+        assert dn is not None
+        assert dn.GetVersion() == 100, "GNM: Check GNM version failed"
+        assert dn.GetName() == "test_gnm", "GNM: Check GNM name failed"
+        assert (
+            dn.GetDescription() == "Test file based GNM"
+        ), "GNM: Check GNM description failed"
 
 
 ###############################################################################

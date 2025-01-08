@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  OpenFileGDB driver testing.
@@ -2943,3 +2942,19 @@ def test_ogr_openfilegdb_arc_interior_point_bug_line():
             f,
             "MULTILINESTRING ((37252520.1717 7431529.9154,38549084.9654 758964.7573))",
         )
+
+
+###############################################################################
+# Test https://github.com/OSGeo/gdal/issues/11295 where .gdbindexes contains
+# entry with unusual (corrupted ? disabled?) entries
+
+
+def test_ogr_openfilegdb_weird_gdbindexes():
+
+    # File a00000009.gdbindexes has been replaced by file a00000029.gdbindexes
+    # from attachment of https://github.com/OSGeo/gdal/issues/11295#issuecomment-2491158506
+    with ogr.Open("data/filegdb/corrupted_gdbindexes.gdb") as ds:
+        lyr = ds.GetLayer(0)
+        lyr.SetAttributeFilter("id = '1'")
+        f = lyr.GetNextFeature()
+        assert f

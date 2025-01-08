@@ -297,15 +297,17 @@
 			</Histogram_Band>
 		</Histogram_Band_List>
 		<Radiometric_Calibration>
+          <Instrument_Calibration>
+           <Band_Measurement_List>
 			<Band_Spectral_Range>
 				<BAND_ID>R</BAND_ID>
 				<CALIBRATION_DATE>2019-05-20T09:07:00Z</CALIBRATION_DATE>
 				<MEASURE_DESC>Spectral Range values of raw radiometric Band</MEASURE_DESC>
-				<MEASURE_UNIT>micrometer</MEASURE_UNIT>
+				<MEASURE_UNIT>nanometer</MEASURE_UNIT>
 				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
 				<FWHM>
-					<MIN>0.619</MIN>
-					<MAX>0.69</MAX>
+					<MIN>619</MIN>
+					<MAX>690</MAX>
 				</FWHM>
 				<GAIN>0</GAIN>
 				<BIAS>0</BIAS>
@@ -621,6 +623,8 @@
 				<GAIN>10000</GAIN>
 				<BIAS>0</BIAS>
 			</Band_Reflectance>
+           </Band_Measurement_List>
+          </Instrument_Calibration>
 		</Radiometric_Calibration>
 		<Bad_Columns></Bad_Columns>
 	</Radiometric_Data>

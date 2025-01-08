@@ -34,6 +34,7 @@ set(POTENTIAL_GIF_LIBS gif libgif ungif libungif giflib giflib4)
 
 find_library(GIF_LIBRARY
   NAMES ${POTENTIAL_GIF_LIBS}
+  NAMES_PER_DIR
   HINTS ${GIF_ROOT}
   PATH_SUFFIXES lib)
 

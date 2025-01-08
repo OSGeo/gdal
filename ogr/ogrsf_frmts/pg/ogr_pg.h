@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Private definitions for OGR/PostgreSQL driver.
@@ -444,6 +443,8 @@ class OGRPGTableLayer final : public OGRPGLayer
                                              int &nEntryCountOut,
                                              GDALProgressFunc pfnProgress,
                                              void *pProgressData) override;
+
+    int FindFieldIndex(const char *pszFieldName, int bExactMatch) override;
 
     // follow methods are not base class overrides
     void SetLaunderFlag(int bFlag)

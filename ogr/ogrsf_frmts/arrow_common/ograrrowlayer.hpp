@@ -5490,6 +5490,24 @@ inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
         return true;
     }
 
+    if (m_aosArrowArrayStreamOptions.FetchBool(GAS_OPT_DATETIME_AS_STRING,
+                                               false))
+    {
+        const int nFieldCount = m_poFeatureDefn->GetFieldCount();
+        for (int i = 0; i < nFieldCount; ++i)
+        {
+            const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
+            if (!poFieldDefn->IsIgnored() &&
+                poFieldDefn->GetType() == OFTDateTime)
+            {
+                CPLDebug("ARROW",
+                         "DATETIME_AS_STRING=YES not compatible of fast "
+                         "Arrow implementation");
+                return true;
+            }
+        }
+    }
+
     if (EQUAL(m_aosArrowArrayStreamOptions.FetchNameValueDef(
                   "GEOMETRY_ENCODING", ""),
               "WKB"))

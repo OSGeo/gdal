@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR
 # Purpose:  Test compliance of GeoPackage database w.r.t GeoPackage spec
@@ -65,7 +64,7 @@ class GPKGCheckException(Exception):
     pass
 
 
-class GPKGChecker(object):
+class GPKGChecker:
 
     BASE_GEOM_TYPES = (
         "GEOMETRY",

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR samples
 # Purpose:  Merge the content of several vector datasets into a single one.
@@ -97,7 +96,7 @@ def _Esc(x):
     return gdal.EscapeString(x, gdal.CPLES_XML).decode("UTF-8")
 
 
-class XMLWriter(object):
+class XMLWriter:
     def __init__(self, f):
         self.f = f
         self.inc = 0

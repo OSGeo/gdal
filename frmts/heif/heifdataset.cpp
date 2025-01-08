@@ -284,6 +284,10 @@ bool GDALHEIFDataset::Init(GDALOpenInfo *poOpenInfo)
 
 void GDALHEIFDataset::ReadMetadata()
 {
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+    processProperties();
+    ReadUserDescription();
+#endif
     const int nMDBlocks = heif_image_handle_get_number_of_metadata_blocks(
         m_hImageHandle, nullptr);
     if (nMDBlocks <= 0)
@@ -407,6 +411,118 @@ void GDALHEIFDataset::ReadMetadata()
         }
     }
 }
+
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+static bool GetPropertyData(heif_context *m_hCtxt, heif_item_id item_id,
+                            heif_property_id prop_id,
+                            std::shared_ptr<std::vector<GByte>> &data)
+{
+    size_t size;
+    heif_error err =
+        heif_item_get_property_raw_size(m_hCtxt, item_id, prop_id, &size);
+    if (err.code != 0)
+    {
+        return false;
+    }
+    if (size == 0)
+    {
+        return false;
+    }
+    data = std::make_shared<std::vector<uint8_t>>(size);
+    err = heif_item_get_property_raw_data(m_hCtxt, item_id, prop_id,
+                                          data->data());
+    if (err.code != 0)
+    {
+        return false;
+    }
+    return true;
+}
+
+void GDALHEIFDataset::processProperties()
+{
+    constexpr heif_item_property_type TIEP_4CC =
+        (heif_item_property_type)heif_fourcc('t', 'i', 'e', 'p');
+    constexpr heif_item_property_type MTXF_4CC =
+        (heif_item_property_type)heif_fourcc('m', 't', 'x', 'f');
+    constexpr heif_item_property_type MCRS_4CC =
+        (heif_item_property_type)heif_fourcc('m', 'c', 'r', 's');
+    constexpr int MAX_PROPERTIES_REQUIRED = 50;
+    heif_property_id prop_ids[MAX_PROPERTIES_REQUIRED];
+    heif_item_id item_id = heif_image_handle_get_item_id(m_hImageHandle);
+    int num_props = heif_item_get_properties_of_type(
+        m_hCtxt, item_id, heif_item_property_type_invalid, &prop_ids[0],
+        MAX_PROPERTIES_REQUIRED);
+    for (int i = 0; i < num_props; i++)
+    {
+        heif_item_property_type prop_type =
+            heif_item_get_property_type(m_hCtxt, item_id, prop_ids[i]);
+        if (prop_type == TIEP_4CC)
+        {
+            std::shared_ptr<std::vector<uint8_t>> data;
+            if (!GetPropertyData(m_hCtxt, item_id, prop_ids[i], data))
+            {
+                continue;
+            }
+            geoHEIF.addGCPs(data->data(), data->size());
+        }
+        else if (prop_type == MTXF_4CC)
+        {
+            std::shared_ptr<std::vector<uint8_t>> data;
+            if (!GetPropertyData(m_hCtxt, item_id, prop_ids[i], data))
+            {
+                continue;
+            }
+            geoHEIF.setModelTransformation(data->data(), data->size());
+        }
+        else if (prop_type == MCRS_4CC)
+        {
+            std::shared_ptr<std::vector<uint8_t>> data;
+            if (!GetPropertyData(m_hCtxt, item_id, prop_ids[i], data))
+            {
+                continue;
+            }
+            geoHEIF.extractSRS(data->data(), data->size());
+        }
+    }
+}
+
+/************************************************************************/
+/*                      ReadUserDescription()                           */
+/************************************************************************/
+void GDALHEIFDataset::ReadUserDescription()
+{
+    constexpr int MAX_PROPERTIES = 50;
+    heif_item_id item_id = heif_image_handle_get_item_id(m_hImageHandle);
+    heif_property_id properties[MAX_PROPERTIES];
+    int nProps = heif_item_get_properties_of_type(
+        m_hCtxt, item_id, heif_item_property_type_user_description, properties,
+        MAX_PROPERTIES);
+
+    heif_property_user_description *user_description = nullptr;
+    for (int i = 0; i < nProps; i++)
+    {
+        heif_error err = heif_item_get_property_user_description(
+            m_hCtxt, item_id, properties[i], &user_description);
+        if (err.code == 0)
+        {
+            std::string domain = "DESCRIPTION";
+            if (strlen(user_description->lang) != 0)
+            {
+                domain += "_";
+                domain += user_description->lang;
+            }
+            SetMetadataItem("NAME", user_description->name, domain.c_str());
+            SetMetadataItem("DESCRIPTION", user_description->description,
+                            domain.c_str());
+            if (strlen(user_description->tags) != 0)
+            {
+                SetMetadataItem("TAGS", user_description->tags, domain.c_str());
+            }
+            heif_property_user_description_release(user_description);
+        }
+    }
+}
+#endif
 
 /************************************************************************/
 /*                         OpenThumbnails()                             */
@@ -775,6 +891,40 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
 }
 #endif
 
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr GDALHEIFDataset::GetGeoTransform(double *padfTransform)
+{
+    return geoHEIF.GetGeoTransform(padfTransform);
+}
+
+/************************************************************************/
+/*                          GetSpatialRef()                             */
+/************************************************************************/
+const OGRSpatialReference *GDALHEIFDataset::GetSpatialRef() const
+{
+    return geoHEIF.GetSpatialRef();
+}
+
+int GDALHEIFDataset::GetGCPCount()
+{
+    return geoHEIF.GetGCPCount();
+}
+
+const GDAL_GCP *GDALHEIFDataset::GetGCPs()
+{
+    return geoHEIF.GetGCPs();
+}
+
+const OGRSpatialReference *GDALHEIFDataset::GetGCPSpatialRef() const
+{
+    return this->GetSpatialRef();
+}
+#endif
+
 /************************************************************************/
 /*                       GDALRegister_HEIF()                            */
 /************************************************************************/
@@ -876,6 +1026,9 @@ void GDALRegister_HEIF()
 #endif
 #ifdef LIBHEIF_SUPPORTS_TILES
         poDriver->SetMetadataItem("SUPPORTS_TILES", "YES", "HEIF");
+#endif
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+        poDriver->SetMetadataItem("SUPPORTS_GEOHEIF", "YES", "HEIF");
 #endif
         poDriver->pfnOpen = GDALHEIFDataset::OpenHEIF;
 

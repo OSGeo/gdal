@@ -650,8 +650,9 @@ void GDALPansharpenOperation::WeightedBrovey3(
 
 /* We restrict to 64bit processors because they are guaranteed to have SSE2 */
 /* Could possibly be used too on 32bit, but we would need to check at runtime */
-#if defined(__x86_64) || defined(_M_X64)
+#if defined(__x86_64) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
 
+#define USE_SSE2
 #include "gdalsse_priv.h"
 
 template <class T, int NINPUT, int NOUTPUT>
@@ -1463,7 +1464,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                 nBandBitDepth = atoi(pszNBITS);
             if (nBandBitDepth < nBitDepth)
             {
-                if (eWorkDataType == GDT_Byte)
+                if (eWorkDataType == GDT_Byte && nBitDepth >= 0 &&
+                    nBitDepth <= 8)
                 {
                     ClampValues(
                         reinterpret_cast<GByte *>(pUpsampledSpectralBuffer) +
@@ -1471,7 +1473,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                         static_cast<size_t>(nXSize) * nYSize,
                         static_cast<GByte>((1 << nBitDepth) - 1));
                 }
-                else if (eWorkDataType == GDT_UInt16)
+                else if (eWorkDataType == GDT_UInt16 && nBitDepth >= 0 &&
+                         nBitDepth <= 16)
                 {
                     ClampValues(
                         reinterpret_cast<GUInt16 *>(pUpsampledSpectralBuffer) +
@@ -1492,7 +1495,9 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
         }
     }
 
-    GUInt32 nMaxValue = (1 << nBitDepth) - 1;
+    const GUInt32 nMaxValue = (nBitDepth >= 0 && nBitDepth <= 31)
+                                  ? (1U << nBitDepth) - 1
+                                  : UINT32_MAX;
 
     double *padfTempBuffer = nullptr;
     GDALDataType eBufDataTypeOri = eBufDataType;

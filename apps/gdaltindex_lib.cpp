@@ -275,6 +275,11 @@ static std::unique_ptr<GDALArgumentParser> GDALTileIndexAppOptionsGetParser(
         .scan<'g', double>()
         .help(_("Set target extent in SRS unit."));
 
+    argParser->add_argument("-ot")
+        .metavar("<datatype>")
+        .store_into(psOptions->osDataType)
+        .help(_("Output data type."));
+
     argParser->add_argument("-bandcount")
         .metavar("<val>")
         .store_into(psOptions->osBandCount)
@@ -1269,7 +1274,7 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
         auto poRing = std::make_unique<OGRLinearRing>();
         for (int k = 0; k < 5; k++)
             poRing->addPoint(adfX[k], adfY[k]);
-        poPoly->addRingDirectly(poRing.release());
+        poPoly->addRing(std::move(poRing));
         poFeature->SetGeometryDirectly(poPoly.release());
 
         if (poLayer->CreateFeature(poFeature.get()) != OGRERR_NONE)

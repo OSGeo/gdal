@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GXF Reader
  * Purpose:  Majority of Geosoft GXF reading code.

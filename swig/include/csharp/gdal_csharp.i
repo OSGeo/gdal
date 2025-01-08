@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     gdal_csharp.i
  * Project:  GDAL CSharp Interface
@@ -378,3 +377,20 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
    }
 
 %}
+
+%rename (GetMemFileBuffer) wrapper_VSIGetMemFileBuffer;
+
+%typemap(cstype) (vsi_l_offset *pnDataLength) "out ulong";
+%typemap(imtype) (vsi_l_offset *pnDataLength) "out ulong";
+%apply (unsigned long long *OUTPUT) {(vsi_l_offset *pnDataLength)}
+%typemap(cstype) (int bUnlinkAndSeize) "bool";
+%typemap(csin) (int bUnlinkAndSeize) "$csinput ? 1 : 0";
+
+%inline {
+GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_path, vsi_l_offset *pnDataLength, int bUnlinkAndSeize)
+{
+    return VSIGetMemFileBuffer(utf8_path, pnDataLength, bUnlinkAndSeize);
+}
+}
+
+%clear (vsi_l_offset *pnDataLength);

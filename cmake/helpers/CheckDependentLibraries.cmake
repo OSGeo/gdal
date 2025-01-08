@@ -489,11 +489,12 @@ option(GDAL_USE_PUBLICDECOMPWT
 
 # proprietary libraries KAKADU
 include(CheckDependentLibrariesKakadu)
-gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
 
 include(CheckDependentLibrariesArrowParquet)
 
 gdal_check_package(OpenDrive "Enable libOpenDRIVE" CONFIG CAN_DISABLE)
+
+gdal_check_package(AdbcDriverManager "Enable ADBC" CONFIG CAN_DISABLE)
 
 # bindings
 

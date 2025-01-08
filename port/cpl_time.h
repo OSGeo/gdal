@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_time.h
  * Project:  CPL - Common Portability Library

@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic read support for a all datatypes from a TIFF file.
@@ -73,6 +72,7 @@ init_list = [
     ("empty1bit.tif", 1, 0),
     ("gtiff/int64_full_range.tif", 1, 65535),
     ("gtiff/uint64_full_range.tif", 1, 1),
+    ("gtiff/float32_lzw_predictor_3_big_endian.tif", 1, 4672),
 ]
 
 
@@ -2128,6 +2128,10 @@ def test_tiff_read_md1():
         md["ACQUISITIONDATETIME"] == "2010-04-01 12:00:00"
     ), "bad value for IMAGERY[ACQUISITIONDATETIME]"
 
+    # Check that IMD metadata domain is not sorted (https://github.com/OSGeo/gdal/issues/11470)
+    md = ds.GetMetadata_List("IMD")
+    assert md[0] == 'version="24.06"'
+
     ds = None
 
     assert not os.path.exists("data/md_dg.tif.aux.xml")
@@ -3266,7 +3270,7 @@ def test_tiff_read_gcp_internal_and_auxxml(
 # Test reading .tif + .aux
 
 
-class myHandlerClass(object):
+class myHandlerClass:
     def __init__(self):
         self.msg = None
 
@@ -4678,6 +4682,28 @@ def test_tiff_jxl_read_for_files_created_before_6393():
 
 
 ###############################################################################
+# Test reading Compression=50002 deprecated value
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL")
+def test_tiff_read_jxl_deprecated_50002():
+    ds = gdal.Open("data/gtiff/byte_jxl_deprecated_50002.tif")
+    assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "JXL"
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+# Test reading Compression=52546 value used in DNG 1.7
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL")
+def test_tiff_read_jxl_dng_1_7_52546():
+    ds = gdal.Open("data/gtiff/byte_jxl_dng_1_7_52546.tif")
+    assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "JXL"
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
 # Test multi-threaded decoding
 
 
@@ -5131,6 +5157,92 @@ def test_tiff_read_multi_threaded_vsicurl_window_not_aligned_on_blocks():
 
 
 ###############################################################################
+# Test that we honor GDAL_DISABLE_READDIR_ON_OPEN when working on a dataset opened with OVERVIEW_LEVEL open option
+
+
+@pytest.mark.require_curl()
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 0, 11),
+    reason="libtiff >= 4.0.11 required",
+)
+def test_tiff_read_multi_threaded_vsicurl_error_in_IsBlocksAvailable(
+    tmp_path,
+):
+
+    webserver_process = None
+    webserver_port = 0
+
+    (webserver_process, webserver_port) = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    if webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    try:
+        tmp_filename = str(tmp_path / "test.tif")
+        ds = gdal.GetDriverByName("GTiff").Create(
+            tmp_filename, 2001, 10000, 1, options=["SPARSE_OK=YES", "BLOCKYSIZE=1"]
+        )
+        ds.GetRasterBand(1).SetNoDataValue(255)
+        ds.GetRasterBand(1).Fill(255)
+        ds.Close()
+
+        filesize = gdal.VSIStatL(tmp_filename).size
+        handler = webserver.SequentialHandler()
+        handler.add("HEAD", "/test.tif", 200, {"Content-Length": "%d" % filesize})
+
+        def method(request):
+            # sys.stderr.write('%s\n' % str(request.headers))
+
+            if request.headers["Range"].startswith("bytes="):
+                rng = request.headers["Range"][len("bytes=") :]
+                assert len(rng.split("-")) == 2
+                start = int(rng.split("-")[0])
+                end = int(rng.split("-")[1])
+
+                request.protocol_version = "HTTP/1.1"
+                request.send_response(206)
+                request.send_header("Content-type", "application/octet-stream")
+                request.send_header(
+                    "Content-Range", "bytes %d-%d/%d" % (start, end, filesize)
+                )
+                request.send_header("Content-Length", end - start + 1)
+                request.send_header("Connection", "close")
+                request.end_headers()
+                with open(tmp_filename, "rb") as f:
+                    f.seek(start, 0)
+                    request.wfile.write(f.read(end - start + 1))
+
+        for i in range(2):
+            handler.add("GET", "/test.tif", custom_method=method)
+        handler.add("GET", "/test.tif", 404)
+
+        with gdaltest.config_options(
+            {
+                "GDAL_NUM_THREADS": "2",
+                "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif",
+                "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
+            }
+        ):
+            with webserver.install_http_handler(handler):
+                ds = gdal.OpenEx(
+                    "/vsicurl/http://127.0.0.1:%d/test.tif" % webserver_port,
+                )
+                with pytest.raises(
+                    Exception,
+                    match="_TIFFPartialReadStripArray:Cannot read offset/size for strile",
+                ):
+                    ds.GetRasterBand(1).ReadRaster()
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
+
+
+###############################################################################
 # Test that a user receives a warning when it queries
 # GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE")
 
@@ -5358,3 +5470,115 @@ def test_tiff_read_ovr_dimap_pleiades(tmp_path):
     ds = None
     # Check that cleaning overviews did not suppress the DIMAP XML file
     assert os.path.exists(tmp_path / "bundle" / "DIM_foo.XML")
+
+
+###############################################################################
+# Test reading ArcGIS .tif.vat.dbf auxiliary file
+
+
+@pytest.mark.parametrize("GDAL_DISABLE_READDIR_ON_OPEN", ["NO", "YES", "EMPTY_DIR"])
+def test_tiff_read_vat_dbf(GDAL_DISABLE_READDIR_ON_OPEN):
+
+    with gdal.config_option(
+        "GDAL_DISABLE_READDIR_ON_OPEN", GDAL_DISABLE_READDIR_ON_OPEN
+    ):
+        with gdal.Open("data/gtiff/testrat.tif") as ds:
+            band = ds.GetRasterBand(1)
+            rat = band.GetDefaultRAT()
+
+            if GDAL_DISABLE_READDIR_ON_OPEN == "EMPTY_DIR":
+                assert rat is None
+                return
+
+            assert rat
+            assert rat.GetColumnCount() == 9
+            assert rat.GetRowCount() == 2
+            assert [rat.GetNameOfCol(i) for i in range(9)] == [
+                "VALUE",
+                "COUNT",
+                "CLASS",
+                "Red",
+                "Green",
+                "Blue",
+                "OtherInt",
+                "OtherReal",
+                "OtherStr",
+            ]
+            assert [rat.GetUsageOfCol(i) for i in range(9)] == [
+                gdal.GFU_MinMax,
+                gdal.GFU_PixelCount,
+                gdal.GFU_Name,
+                gdal.GFU_Red,
+                gdal.GFU_Green,
+                gdal.GFU_Blue,
+                gdal.GFU_Generic,
+                gdal.GFU_Generic,
+                gdal.GFU_Generic,
+            ]
+            assert [rat.GetTypeOfCol(i) for i in range(9)] == [
+                gdal.GFT_Integer,
+                gdal.GFT_Integer,
+                gdal.GFT_String,
+                gdal.GFT_Integer,
+                gdal.GFT_Integer,
+                gdal.GFT_Integer,
+                gdal.GFT_Integer,
+                gdal.GFT_Real,
+                gdal.GFT_String,
+            ]
+            assert rat.GetValueAsInt(0, 0) == 1
+            assert rat.GetValueAsInt(0, 1) == 10
+            assert rat.GetValueAsString(0, 2) == "my class"
+            assert rat.GetValueAsInt(0, 3) == 26
+            assert rat.GetValueAsInt(0, 4) == 51
+            assert rat.GetValueAsInt(0, 5) == 128
+            assert rat.GetValueAsInt(0, 6) == 2
+            assert rat.GetValueAsDouble(0, 7) == 2.5
+            assert rat.GetValueAsString(0, 8) == "foo"
+
+            assert rat.GetValueAsInt(1, 0) == 2
+            assert rat.GetValueAsString(1, 2) == "my class2"
+            assert rat.GetValueAsString(1, 8) == "foo2"
+
+            rat = band.GetDefaultRAT()
+            assert rat
+            assert rat.GetColumnCount() == 9
+
+
+###############################################################################
+# Test reading absent ArcGIS .tif.vat.dbf auxiliary file
+
+
+@pytest.mark.parametrize("GDAL_DISABLE_READDIR_ON_OPEN", ["NO", "YES", "EMPTY_DIR"])
+def test_tiff_read_no_vat_dbf(GDAL_DISABLE_READDIR_ON_OPEN):
+
+    with gdal.config_option(
+        "GDAL_DISABLE_READDIR_ON_OPEN", GDAL_DISABLE_READDIR_ON_OPEN
+    ):
+        with gdal.Open("data/byte.tif") as ds:
+            band = ds.GetRasterBand(1)
+            assert band.GetDefaultRAT() is None
+
+
+###############################################################################
+# Test reading corrupted ArcGIS .tif.vat.dbf auxiliary file
+
+
+def test_tiff_read_corrupted_vat_dbf(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.tif")
+    gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    vat_dbf_filename = filename + ".vat.dbf"
+    gdal.FileFromMemBuffer(vat_dbf_filename, "")
+
+    with gdal.Open(filename) as ds:
+        band = ds.GetRasterBand(1)
+        with pytest.raises(Exception):
+            band.GetDefaultRAT()
+
+
+def test_tiff_read_corrupted_lzw():
+
+    ds = gdal.Open("data/gtiff/lzw_corrupted.tif")
+    with pytest.raises(Exception):
+        ds.ReadRaster()

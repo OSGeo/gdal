@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  ContourGenerate() testing
@@ -446,3 +445,28 @@ cellsize     1
     f = lyr.GetNextFeature()
     assert f["ELEV"] == 3
     ogrtest.check_feature_geometry(f, "LINESTRING (1.5 0.0,1.5 0.5,1.5 1.5,1.5 2.0)")
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/11340
+
+
+def test_contour_constant_raster_value(tmp_vsimem):
+
+    ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbLineString)
+    lyr.CreateField(ogr.FieldDefn("ID", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("ELEV", ogr.OFTReal))
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    assert (
+        gdal.ContourGenerateEx(
+            src_ds.GetRasterBand(1),
+            lyr,
+            options=["LEVEL_INTERVAL=10", "ID_FIELD=0", "ELEV_FIELD=1"],
+        )
+        == gdal.CE_None
+    )
+
+    f = lyr.GetNextFeature()
+    assert f is None

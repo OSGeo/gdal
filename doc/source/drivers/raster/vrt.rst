@@ -186,7 +186,7 @@ VRTRasterBand
 The attributes for VRTRasterBand are:
 
 - **dataType** (optional): type of the pixel data associated with this band (use
-  names Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, CInt16, CInt32, CFloat32 or CFloat64).
+  names Byte, Int8, UInt16, Int16, UInt32, Int32, UInt64, Int64, Float32, Float64, CInt16, CInt32, CFloat32 or CFloat64).
   If not specified, defaults to 1
 
 - **band** (optional): band number this element represents (1 based).
@@ -404,6 +404,31 @@ cubicspline,lanczos,average,mode.
       <SrcRect xOff="0" yOff="0" xSize="256" ySize="256"/>
       <DstRect xOff="0" yOff="0" xSize="128" ySize="128"/>
     </SimpleSource>
+
+
+Starting with GDAL 3.11, it is also possible to use a in-line VRTDataset as
+the source by using the VRTDataset element instead of SourceFilename.
+
+.. code-block:: xml
+
+    <SimpleSource>
+      <VRTDataset rasterXSize="20" rasterYSize="20">
+        <VRTRasterBand dataType="Byte" band="1">
+          <SimpleSource>
+            <SourceFilename relativeToVRT="1">../byte.tif</SourceFilename>
+            <SourceBand>1</SourceBand>
+            <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+            <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+            <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+          </SimpleSource>
+        </VRTRasterBand>
+      </VRTDataset>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+    </SimpleSource>
+
 
 ComplexSource
 ~~~~~~~~~~~~~
@@ -1605,7 +1630,7 @@ Given the following :file:`mandelbrot.py` file :
         #print('Using numba')
         g_max_iterations = 100
     except Exception:
-        class jit(object):
+        class jit:
             def __init__(self, nopython = True, nogil = True):
                 pass
 

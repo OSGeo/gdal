@@ -33,6 +33,8 @@ Driver capabilities
 
 .. supports_createcopy
 
+.. supports_georeferencing::
+
 Color Profile Metadata
 ----------------------
 
@@ -40,6 +42,15 @@ GDAL can deal with the following color profile
 metadata in the COLOR_PROFILE domain:
 
 -  SOURCE_ICC_PROFILE (Base64 encoded ICC profile embedded in file.)
+
+Georeferencing
+--------------
+
+AVIF provides experimental read-only support for GeoHEIF internal referencing,
+based on the draft OGC 24-038 design. There is no support for writing
+at this time.
+
+This requires at least libavif 1.2.0 (currently unreleased).
 
 Creation options
 ----------------

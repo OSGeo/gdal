@@ -7,6 +7,7 @@
 #include "ogrlibjsonutils.h"
 
 #include "cpl_string.h"
+#include "ogr_geometry.h"
 #include "ogr_p.h"
 
 #include <cmath>
@@ -132,22 +133,28 @@ static int OGR_json_double_with_precision_to_string(struct json_object *jso,
         json_object_get_userdata(jso);
 #endif
     // Precision is stored as a uintptr_t content casted to void*
-    const uintptr_t nPrecision = reinterpret_cast<uintptr_t>(userData);
-    char szBuffer[75] = {};
+    const uintptr_t nPrecisionIn = reinterpret_cast<uintptr_t>(userData);
     const double dfVal = json_object_get_double(jso);
     if (fabs(dfVal) > 1e50 && !std::isinf(dfVal))
     {
-        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.17g", dfVal);
+        char szBuffer[75] = {};
+        const size_t nLen =
+            CPLsnprintf(szBuffer, sizeof(szBuffer), "%.17g", dfVal);
+        return printbuf_memappend(pb, szBuffer, static_cast<int>(nLen));
     }
     else
     {
         const bool bPrecisionIsNegative =
-            (nPrecision >> (8 * sizeof(nPrecision) - 1)) != 0;
-        OGRFormatDouble(szBuffer, sizeof(szBuffer), dfVal, '.',
-                        bPrecisionIsNegative ? 15
-                                             : static_cast<int>(nPrecision));
+            (nPrecisionIn >> (8 * sizeof(nPrecisionIn) - 1)) != 0;
+        const int nPrecision =
+            bPrecisionIsNegative ? 15 : static_cast<int>(nPrecisionIn);
+        OGRWktOptions opts(nPrecision, /* round = */ true);
+        opts.format = OGRWktFormat::F;
+
+        const std::string s = OGRFormatDouble(dfVal, opts, 1);
+
+        return printbuf_memappend(pb, s.data(), static_cast<int>(s.size()));
     }
-    return printbuf_memappend(pb, szBuffer, static_cast<int>(strlen(szBuffer)));
 }
 
 /************************************************************************/

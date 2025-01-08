@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # ******************************************************************************
-#  $Id$
 #
 #  Project:  GDAL
 #  Purpose:  Build a JPEG2000 file from the XML structure dumped by dump_jp2.py
@@ -420,7 +419,7 @@ def parse_jp2file(inpath, xml_tree, out_f):
 # Wrapper class for GDAL VSI*L API with class Python file interface
 
 
-class VSILFile(object):
+class VSILFile:
     def __init__(self, filename, access):
         self.f = gdal.VSIFOpenL(filename, access)
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     Band.i
  * Project:  GDAL Python Interface
@@ -664,6 +663,23 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     if (pdfRealValue) *pdfRealValue = 0;
     if (pdfImagValue) *pdfImagValue = 0;
     return GDALRasterInterpolateAtPoint( self, pixel, line, interpolation, pdfRealValue, pdfImagValue );
+  }
+#if !defined(SWIGPYTHON)
+%clear (CPLErr);
+#endif
+
+%apply (double *OUTPUT){double *pdfMin, double *pdfMax};
+%apply (int *OUTPUT){int *pnMinX, int *pnMinY};
+%apply (int *OUTPUT){int *pnMaxX, int *pnMaxY};
+#if !defined(SWIGPYTHON)
+%apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
+#endif
+  CPLErr ComputeMinMaxLocation( double *pdfMin, double *pdfMax,
+                                int *pnMinX, int *pnMinY,
+                                int *pnMaxX, int *pnMaxY ) {
+    return GDALComputeRasterMinMaxLocation( self, pdfMin, pdfMax,
+                                            pnMinX, pnMinY,
+                                            pnMaxX, pnMaxY );
   }
 #if !defined(SWIGPYTHON)
 %clear (CPLErr);

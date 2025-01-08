@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     multireadtest.java
  * Project:  GDAL Java Interface

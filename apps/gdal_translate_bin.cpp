@@ -194,6 +194,7 @@ MAIN_START(argc, argv)
         else
         {
             char **papszSubdatasets = GDALGetMetadata(hDataset, "SUBDATASETS");
+            const int nSubdatasets = CSLCount(papszSubdatasets) / 2;
             char *pszSubDest = static_cast<char *>(
                 CPLMalloc(strlen(sOptionsForBinary.osDest.c_str()) + 32));
 
@@ -205,11 +206,11 @@ MAIN_START(argc, argv)
             CPLString osTemp;
 
             const char *pszFormat = nullptr;
-            if (CSLCount(papszSubdatasets) / 2 < 10)
+            if (nSubdatasets < 10)
             {
                 pszFormat = "%s_%d";
             }
-            else if (CSLCount(papszSubdatasets) / 2 < 100)
+            else if (nSubdatasets < 100)
             {
                 pszFormat = "%s_%002d";
             }

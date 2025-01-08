@@ -108,6 +108,12 @@ for the shared lib, *e.g.* ``set (GDAL_LIB_OUTPUT_NAME gdal_x64 CACHE STRING "" 
 
 Refer to :ref:`using_gdal_in_cmake` for how to use GDAL in a CMake project.
 
+To uninstall GDAL, from the build directory (be careful: this does not restore the files that pre-existed to the last installation, but just removes the last installed files!)
+
+.. code-block:: bash
+
+    cmake --build . --target uninstall
+
 Building on Windows
 +++++++++++++++++++
 
@@ -223,6 +229,47 @@ All cached entries can be viewed using ``cmake -LAH`` from a build directory.
     variable, and assumes that the
     `CMAKE_SKIP_INSTALL_RPATH <https://cmake.org/cmake/help/latest/variable/CMAKE_SKIP_INSTALL_RPATH.html>`__
     variable is not set.
+
+.. option:: USE_CCACHE=ON
+
+    Whether cached build using `ccache <https://ccache.dev/>`__ should be enabled.
+    This defaults to ON when :program:`ccache` is found.
+
+.. option:: USE_PRECOMPILED_HEADER=OFF
+
+    Whether builds with precompiled headers should be enabled. This may speed
+    up the build process. This is still a bit experimental, so it is disabled by
+    default. It also cannot be enabled when using the Visual Studio C++ compiler.
+
+Resource files embedding
+++++++++++++++++++++++++
+
+Starting with GDAL 3.11, if a C23-compatible compiler is used, such as
+clang >= 19 or GCC >= 15, it is possible to embed resource files inside
+the GDAL library, without relying on resource files to be available on the file
+system (such resource files are located through an hard-coded
+path at build time in ``${CMAKE_INSTALL_PREFIX}/share/gdal``, or at run-time
+through the :config:`GDAL_DATA` configuration option).
+
+The following CMake options control that behavior:
+
+.. option:: EMBED_RESOURCE_FILES=ON/OFF
+
+    .. versionadded:: 3.11
+
+    Default is OFF for shared library builds (BUILD_SHARED_LIBS=ON), and ON
+    for static library builds (BUILD_SHARED_LIBS=OFF).
+    When ON, resource files needed by GDAL will be embedded into the GDAL library
+    and/or relevant plugins.
+
+.. option:: USE_ONLY_EMBEDDED_RESOURCE_FILES=ON/OFF
+
+    .. versionadded:: 3.11
+
+    Even if EMBED_RESOURCE_FILES=ON, GDAL will still try to locate resource
+    files on the file system by default , and fallback to the embedded version if
+    not found. By setting USE_ONLY_EMBEDDED_RESOURCE_FILES=ON, no attempt
+    at locating resource files on the file system is made. Default is OFF.
 
 CMake package dependent options
 +++++++++++++++++++++++++++++++
@@ -1200,27 +1247,6 @@ capabilities in GMLJP2v2 generation.
 .. option:: GDAL_USE_LIBXML2=ON/OFF
 
     Control whether to use LibXml2. Defaults to ON when LibXml2 is found.
-
-
-LURATECH
-********
-
-The Luratech JPEG2000 SDK (closed source/proprietary) is required for the
-:ref:`raster.jp2lura` driver.
-
-LURATECH_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
-
-.. option:: LURATECH_INCLUDE_DIR
-
-    Path to the include directory with the ``lwf_jp2.h`` header file.
-
-.. option:: LURATECH_LIBRARY
-
-    Path to library file lib_lwf_jp2.a / lwf_jp2.lib
-
-.. option:: GDAL_USE_LURATECH=ON/OFF
-
-    Control whether to use LURATECH. Defaults to ON when LURATECH is found.
 
 
 LZ4

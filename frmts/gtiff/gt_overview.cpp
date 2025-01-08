@@ -521,7 +521,8 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
             nPlanarConfig = PLANARCONFIG_CONTIG;
         }
         else if (nCompression == COMPRESSION_WEBP ||
-                 nCompression == COMPRESSION_JXL)
+                 nCompression == COMPRESSION_JXL ||
+                 nCompression == COMPRESSION_JXL_DNG_1_7)
         {
             nPlanarConfig = PLANARCONFIG_CONTIG;
         }
@@ -1036,12 +1037,13 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
     }
 
 #if HAVE_JXL
-    if (nCompression == COMPRESSION_JXL)
+    if (nCompression == COMPRESSION_JXL ||
+        nCompression == COMPRESSION_JXL_DNG_1_7)
     {
         if (const char *pszJXLLossLess =
                 GetOptionValue("JXL_LOSSLESS", "JXL_LOSSLESS_OVERVIEW"))
         {
-            const double bJXLLossless = CPLTestBool(pszJXLLossLess);
+            const bool bJXLLossless = CPLTestBool(pszJXLLossLess);
             TIFFSetField(hTIFF, TIFFTAG_JXL_LOSSYNESS,
                          bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);
             GTIFFSetJXLLossless(GDALDataset::ToHandle(hODS), bJXLLossless);

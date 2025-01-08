@@ -80,7 +80,7 @@ def test_gcps2gt_2():
 
 def test_gcps2gt_3():
 
-    approx_ok = 0
+    approx_ok = False
     gt = gdal.GCPsToGeoTransform(
         _list2gcps(
             [

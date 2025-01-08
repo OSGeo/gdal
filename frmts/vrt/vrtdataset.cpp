@@ -1601,6 +1601,13 @@ VRTDataset *VRTDataset::OpenXML(const char *pszXML, const char *pszVRTPath,
 CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
 
 {
+    if (eType == GDT_Unknown || eType == GDT_TypeCount)
+    {
+        ReportError(CE_Failure, CPLE_IllegalArg,
+                    "Illegal GDT_Unknown/GDT_TypeCount argument");
+        return CE_Failure;
+    }
+
     SetNeedsFlush();
 
     /* ==================================================================== */
@@ -3071,8 +3078,19 @@ std::string VRTDataset::BuildSourceFilename(const char *pszFilename,
             }
             if (!bDone)
             {
+                std::string osVRTPath = pszVRTPath;
+                if (!CPLIsFilenameRelative(pszVRTPath))
+                {
+                    // Simplify path by replacing "foo/a/../b" with "foo/b"
+                    while (STARTS_WITH(pszFilename, "../"))
+                    {
+                        osVRTPath = CPLGetPath(osVRTPath.c_str());
+                        pszFilename += strlen("../");
+                    }
+                }
+
                 osSrcDSName =
-                    CPLProjectRelativeFilename(pszVRTPath, pszFilename);
+                    CPLProjectRelativeFilename(osVRTPath.c_str(), pszFilename);
             }
         }
     }

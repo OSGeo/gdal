@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # *****************************************************************************
-# $Id$
 #
 # Project:  GDAL Utilities
 # Purpose:  Python port of Commandline application to list info about a file.

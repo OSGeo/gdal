@@ -24,25 +24,31 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: alpine-small
-            arch: linux/amd64
+          - name: alpine-small-amd64
+            image_name: alpine-small
+            arch: amd64
 
-          - name: alpine-normal
-            arch: linux/amd64
+          - name: alpine-normal-amd64
+            image_name: alpine-small
+            arch: amd64
 
-          - name: ubuntu-small
-            arch: linux/amd64
+          - name: ubuntu-small-amd64
+            image_name: ubuntu-small
+            arch: amd64
 
-          - name: ubuntu-small
-            arch: linux/arm64
+          - name: ubuntu-small-arm64
+            image_name: ubuntu-small
+            arch: arm64
 
-          - name: ubuntu-full
-            arch: linux/amd64
+          - name: ubuntu-full-amd64-proprietary-sdks
+            image_name: ubuntu-full
+            arch: amd64
 
-          - name: ubuntu-full
-            arch: linux/arm64
+          - name: ubuntu-full-arm64
+            image_name: ubuntu-full
+            arch: arm64
 
-    name: ${{ matrix.name }}-${{ matrix.arch }}
+    name: ${{ matrix.name }}
 
     runs-on: ubuntu-latest
 
@@ -54,5 +60,11 @@ jobs:
         shell: bash -l {0}
         run: |
           docker run --rm --privileged linuxkit/binfmt:v0.8
-          cd docker/${{ matrix.name }}
-          ./build.sh --platform ${{ matrix.arch }}
+          cd docker/${{ matrix.image_name }}
+          if test "${{ matrix.name }}" = "ubuntu-full-amd64-proprietary-sdks"; then
+            ./build.sh --platform linux/${{ matrix.arch }} --with-oracle --with-mrsid --with-ecw
+          else
+            ./build.sh --platform linux/${{ matrix.arch }}
+          fi
+          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.image_name }}-latest-${{ matrix.arch }} gdalinfo --formats
+          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.image_name }}-latest-${{ matrix.arch }} ogrinfo --formats

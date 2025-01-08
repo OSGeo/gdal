@@ -7,6 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2020, Defence Research and Development Canada (DRDC) Ottawa Research Centre
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
@@ -36,6 +37,49 @@ static bool IsValidXMLFile(const char *pszPath, const char *pszLut)
     CPLFree(pszLutFile);
 
     return psLut.get() != nullptr;
+}
+
+// Check that the referenced dataset for each band has the
+// correct data type and returns whether a 2 band I+Q dataset should
+// be mapped onto a single complex band.
+// Returns BANDERROR for error, STRAIGHT for 1:1 mapping, TWOBANDCOMPLEX for 2
+// bands -> 1 complex band
+typedef enum
+{
+    BANDERROR,
+    STRAIGHT,
+    TWOBANDCOMPLEX
+} BandMapping;
+
+static BandMapping GetBandFileMapping(GDALDataType eDataType,
+                                      GDALDataset *poBandFile)
+{
+
+    GDALRasterBand *poBand1 = poBandFile->GetRasterBand(1);
+    GDALDataType eBandDataType1 = poBand1->GetRasterDataType();
+
+    // if there is one band and it has the same datatype, the band file gets
+    // passed straight through
+    if (poBandFile->GetRasterCount() == 1 && eDataType == eBandDataType1)
+        return STRAIGHT;
+
+    // if the band file has 2 bands, they should represent I+Q
+    // and be a compatible data type
+    if (poBandFile->GetRasterCount() == 2 && GDALDataTypeIsComplex(eDataType))
+    {
+        GDALRasterBand *band2 = poBandFile->GetRasterBand(2);
+
+        if (eBandDataType1 != band2->GetRasterDataType())
+            return BANDERROR;  // both bands must be same datatype
+
+        // check compatible types - there are 4 complex types in GDAL
+        if ((eDataType == GDT_CInt16 && eBandDataType1 == GDT_Int16) ||
+            (eDataType == GDT_CInt32 && eBandDataType1 == GDT_Int32) ||
+            (eDataType == GDT_CFloat32 && eBandDataType1 == GDT_Float32) ||
+            (eDataType == GDT_CFloat64 && eBandDataType1 == GDT_Float64))
+            return TWOBANDCOMPLEX;
+    }
+    return BANDERROR;  // don't accept any other combinations
 }
 
 /************************************************************************/
@@ -93,11 +137,16 @@ class RS2Dataset final : public GDALPamDataset
 
 class RS2RasterBand final : public GDALPamRasterBand
 {
-    GDALDataset *poBandFile;
+    GDALDataset *poBandFile = nullptr;
+
+    // 2 bands representing I+Q -> one complex band
+    // otherwise poBandFile is passed straight through
+    bool bIsTwoBandComplex = false;
 
   public:
     RS2RasterBand(RS2Dataset *poDSIn, GDALDataType eDataTypeIn,
-                  const char *pszPole, GDALDataset *poBandFile);
+                  const char *pszPole, GDALDataset *poBandFile,
+                  bool bTwoBandComplex = false);
     virtual ~RS2RasterBand();
 
     virtual CPLErr IReadBlock(int, int, void *) override;
@@ -110,7 +159,8 @@ class RS2RasterBand final : public GDALPamRasterBand
 /************************************************************************/
 
 RS2RasterBand::RS2RasterBand(RS2Dataset *poDSIn, GDALDataType eDataTypeIn,
-                             const char *pszPole, GDALDataset *poBandFileIn)
+                             const char *pszPole, GDALDataset *poBandFileIn,
+                             bool bTwoBandComplex)
     : poBandFile(poBandFileIn)
 {
     poDS = poDSIn;
@@ -120,6 +170,8 @@ RS2RasterBand::RS2RasterBand(RS2Dataset *poDSIn, GDALDataType eDataTypeIn,
     poSrcBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
     eDataType = eDataTypeIn;
+
+    bIsTwoBandComplex = bTwoBandComplex;
 
     if (*pszPole != '\0')
         SetMetadataItem("POLARIMETRIC_INTERP", pszPole);
@@ -400,6 +452,31 @@ CPLErr RS2CalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
         CPLFree(pnImageTmp);
     }
+    // If the underlying file is NITF CFloat32
+    else if (eDataType == GDT_CFloat32 &&
+             m_poBandDataset->GetRasterCount() == 1)
+    {
+        eErr = m_poBandDataset->RasterIO(
+            GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
+            nBlockXSize, nRequestYSize, pImage, nBlockXSize, nRequestYSize,
+            GDT_CFloat32, 1, nullptr, 2 * static_cast<int>(sizeof(float)),
+            nBlockXSize * 2 * static_cast<GSpacing>(sizeof(float)), 0, nullptr);
+
+        /* calibrate the complex values */
+        for (int i = 0; i < nBlockYSize; i++)
+        {
+            for (int j = 0; j < nBlockXSize; j++)
+            {
+                /* calculate pixel offset in memory*/
+                const int nPixOff = 2 * (i * nBlockXSize + j);
+
+                reinterpret_cast<float *>(pImage)[nPixOff] /=
+                    m_nfTable[nBlockXOff * nBlockXSize + j];
+                reinterpret_cast<float *>(pImage)[nPixOff + 1] /=
+                    m_nfTable[nBlockXOff * nBlockXSize + j];
+            }
+        }
+    }
     else if (m_eType == GDT_UInt16)
     {
         /* read in detected values */
@@ -558,11 +635,8 @@ int RS2Dataset::Identify(GDALOpenInfo *poOpenInfo)
         CPLString osMDFilename =
             CPLFormCIFilename(poOpenInfo->pszFilename, "product.xml", nullptr);
 
-        VSIStatBufL sStat;
-        if (VSIStatL(osMDFilename, &sStat) == 0)
-            return TRUE;
-
-        return FALSE;
+        GDALOpenInfo oOpenInfo(osMDFilename.c_str(), GA_ReadOnly);
+        return Identify(&oOpenInfo);
     }
 
     /* otherwise, do our normal stuff */
@@ -738,6 +812,10 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     GDALDataType eDataType;
     if (nBitsPerSample == 16 && EQUAL(pszDataType, "Complex"))
         eDataType = GDT_CInt16;
+    else if (nBitsPerSample == 32 &&
+             EQUAL(pszDataType,
+                   "Complex"))  // NITF datasets can come in this configuration
+        eDataType = GDT_CFloat32;
     else if (nBitsPerSample == 16 && STARTS_WITH_CI(pszDataType, "Mag"))
         eDataType = GDT_UInt16;
     else if (nBitsPerSample == 8 && STARTS_WITH_CI(pszDataType, "Mag"))
@@ -888,6 +966,16 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
             continue;
         }
 
+        /* Some CFloat32 NITF files have nBitsPerSample incorrectly reported */
+        /* as 16, and get misinterpreted as CInt16.  Check the underlying NITF
+         */
+        /* and override if this is the case. */
+        if (poBandFile->GetRasterBand(1)->GetRasterDataType() == GDT_CFloat32)
+            eDataType = GDT_CFloat32;
+
+        BandMapping b = GetBandFileMapping(eDataType, poBandFile);
+        const bool twoBandComplex = b == TWOBANDCOMPLEX;
+
         poDS->papszExtraFiles =
             CSLAddString(poDS->papszExtraFiles, pszFullname);
 
@@ -899,8 +987,8 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         if (eCalib == None || eCalib == Uncalib)
         {
             RS2RasterBand *poBand = new RS2RasterBand(
-                poDS, eDataType, CPLGetXMLValue(psNode, "pole", ""),
-                poBandFile);
+                poDS, eDataType, CPLGetXMLValue(psNode, "pole", ""), poBandFile,
+                twoBandComplex);
 
             poDS->SetBand(poDS->GetRasterCount() + 1, poBand);
         }
@@ -1155,6 +1243,11 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         oLL.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         oPrj.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
+        const char *pszGeodeticTerrainHeight =
+            CPLGetXMLValue(psEllipsoid, "geodeticTerrainHeight", "UNK");
+        poDS->SetMetadataItem("GEODETIC_TERRAIN_HEIGHT",
+                              pszGeodeticTerrainHeight);
+
         const char *pszEllipsoidName =
             CPLGetXMLValue(psEllipsoid, "ellipsoidName", "");
         double minor_axis =
@@ -1171,7 +1264,8 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
             oLL.SetWellKnownGeogCS("WGS84");
             oPrj.SetWellKnownGeogCS("WGS84");
         }
-        else if (EQUAL(pszEllipsoidName, "WGS84"))
+        else if (EQUAL(pszEllipsoidName, "WGS84") ||
+                 EQUAL(pszEllipsoidName, "WGS 1984"))
         {
             oLL.SetWellKnownGeogCS("WGS84");
             oPrj.SetWellKnownGeogCS("WGS84");

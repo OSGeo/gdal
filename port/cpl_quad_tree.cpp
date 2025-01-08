@@ -416,9 +416,14 @@ static bool CPLQuadTreeRemoveInternal(QuadTreeNode *psNode, void *hFeature,
                 CPLQuadTreeNodeDestroy(psNode->apSubNode[i]);
                 if (i < psNode->nNumSubNodes - 1)
                 {
+#ifdef CSA_BUILD
+                    for (int j = 0; j < psNode->nNumSubNodes - 1 - i; ++j)
+                        psNode->apSubNode[i + j] = psNode->apSubNode[i + j + 1];
+#else
                     memmove(psNode->apSubNode + i, psNode->apSubNode + i + 1,
                             (psNode->nNumSubNodes - 1 - i) *
                                 sizeof(QuadTreeNode *));
+#endif
                 }
                 i--;
                 psNode->nNumSubNodes--;

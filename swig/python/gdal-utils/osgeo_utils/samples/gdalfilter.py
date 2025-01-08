@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-# $Id$
 #
 # Project:  OGR Python samples
 # Purpose:  Filter an input file, producing an output file.

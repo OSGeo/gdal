@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL Python samples
 # Purpose:  Script to produce a shaded relief image from elevation data

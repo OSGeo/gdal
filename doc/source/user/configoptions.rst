@@ -68,6 +68,20 @@ they can be limited to only the current thread with
 For boolean options, the values YES, TRUE or ON can be used to turn the option on;
 NO, FALSE or OFF to turn it off.
 
+How to detect if the passed configuration option is known to GDAL
+-----------------------------------------------------------------
+
+By default GDAL will not warn if the name of the configuration option is unknown.
+Starting with GDAL 3.11, if you set the :config:`CPL_DEBUG` configuration
+option to ``ON`` (or any value that is not ``OFF``, ``FALSE``, ``NO``), a GDAL
+warning will be emitted for unknown configuration options.
+
+.. code-block:: shell
+
+    $ gdalinfo --config BAD_OPTION=TEST --debug on --version
+    Warning 1: CPLSetConfigOption() called with key=BAD_OPTION, which is unknown to GDAL
+    [...]
+
 
 .. _gdal_configuration_file:
 

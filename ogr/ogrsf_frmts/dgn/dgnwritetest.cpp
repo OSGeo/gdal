@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Microstation DGN Access Library
  * Purpose:  Test program for use of write api.

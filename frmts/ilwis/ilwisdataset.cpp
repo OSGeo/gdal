@@ -696,7 +696,8 @@ GDALDataset *ILWISDataset::Open(GDALOpenInfo *poOpenInfo)
     if (ilwistype.empty())
         return nullptr;
 
-    const char *pszFileType = "";  // map or map list
+    const char *pszFileType = "";     // map or map list
+    CPL_IGNORE_RET_VAL(pszFileType);  // Make CSA happy
     int iBandCount;
     std::string mapsize;
     const std::string maptype =

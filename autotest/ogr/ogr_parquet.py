@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for OGR Parquet driver.
@@ -3356,6 +3355,27 @@ def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata(use_dataset):
 
 
 @gdaltest.enable_exceptions()
+@pytest.mark.require_curl
+def test_ogr_parquet_overture_from_azure():
+
+    if not _has_arrow_dataset():
+        pytest.skip("Test requires build with ArrowDataset")
+
+    url = "https://overturemapswestus2.blob.core.windows.net/release?comp=list&delimiter=%2F&prefix=2024-11-13.0%2Ftheme%3Ddivisions%2Ftype%3Ddivision_area%2F&restype=container"
+    if gdaltest.gdalurlopen(url, timeout=5) is None:
+        pytest.skip(reason=f"{url} is down")
+
+    with ogr.Open(
+        "PARQUET:/vsicurl/https://overturemapswestus2.blob.core.windows.net/release/2024-11-13.0/theme=divisions/type=division_area"
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() > 0
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
 def test_ogr_parquet_write_arrow(tmp_vsimem):
 
     src_ds = ogr.Open("data/parquet/test.parquet")
@@ -4100,6 +4120,7 @@ def test_ogr_parquet_ignored_fields_bounding_box_column_arrow_dataset(tmp_path):
 
 
 @gdaltest.enable_exceptions()
+@pytest.mark.require_driver("ARROW")
 def test_ogr_parquet_vsi_arrow_file_system():
 
     version = int(
@@ -4150,3 +4171,43 @@ def test_ogr_parquet_IsArrowSchemaSupported_arrow_15_types(
         success, error_msg = dst_lyr.IsArrowSchemaSupported(schema)
         assert not success
         assert error_msg == expected_error_msg
+
+
+###############################################################################
+
+
+def test_ogr_parquet_ogr2ogr_reprojection(tmp_vsimem):
+
+    outfilename = str(tmp_vsimem / "test.parquet")
+    gdal.VectorTranslate(
+        outfilename,
+        "data/parquet/poly.parquet",
+        srcSRS="EPSG:32632",
+        dstSRS="EPSG:4326",
+    )
+    with ogr.Open(outfilename) as ds:
+        assert ds.GetLayer(0).GetExtent() == pytest.approx(
+            (8.73380363499761, 8.774681944824946, 43.01833481785084, 43.04292637071279)
+        )
+
+
+###############################################################################
+# Test DATETIME_AS_STRING=YES GetArrowStream() option
+
+
+def test_ogr_parquet_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    with gdal.OpenEx(
+        "data/parquet/test.parquet", gdal.OF_VECTOR, allowed_drivers=["Parquet"]
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        stream = lyr.GetArrowStreamAsNumPy(
+            options=["USE_MASKED_ARRAYS=NO", "DATETIME_AS_STRING=YES"]
+        )
+        batches = [batch for batch in stream]
+        batch = batches[0]
+        assert (
+            batch["timestamp_ms_gmt_minus_0215"][0] == b"2019-01-01T14:00:00.500-02:15"
+        )

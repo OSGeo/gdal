@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     gdalmultidim.cpp
  * Project:  GDAL Core
@@ -67,10 +66,10 @@ class GDALMDArrayUnscaled final : public GDALPamMDArray
         m_abyRawNoData.resize(m_dt.GetSize());
         const auto eNonComplexDT =
             GDALGetNonComplexDataType(m_dt.GetNumericDataType());
-        GDALCopyWords(&dfOverriddenDstNodata, GDT_Float64, 0,
-                      m_abyRawNoData.data(), eNonComplexDT,
-                      GDALGetDataTypeSizeBytes(eNonComplexDT),
-                      GDALDataTypeIsComplex(m_dt.GetNumericDataType()) ? 2 : 1);
+        GDALCopyWords64(
+            &dfOverriddenDstNodata, GDT_Float64, 0, m_abyRawNoData.data(),
+            eNonComplexDT, GDALGetDataTypeSizeBytes(eNonComplexDT),
+            GDALDataTypeIsComplex(m_dt.GetNumericDataType()) ? 2 : 1);
     }
 
     bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -1624,8 +1623,8 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
     if (srcType.GetClass() == GEDTC_NUMERIC &&
         dstType.GetClass() == GEDTC_NUMERIC)
     {
-        GDALCopyWords(pSrc, srcType.GetNumericDataType(), 0, pDst,
-                      dstType.GetNumericDataType(), 0, 1);
+        GDALCopyWords64(pSrc, srcType.GetNumericDataType(), 0, pDst,
+                        dstType.GetNumericDataType(), 0, 1);
         return true;
     }
     if (srcType.GetClass() == GEDTC_STRING &&
@@ -1734,8 +1733,8 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
         {
             // FIXME GDT_UInt64
             const double dfVal = srcStrPtr == nullptr ? 0 : CPLAtof(srcStrPtr);
-            GDALCopyWords(&dfVal, GDT_Float64, 0, pDst,
-                          dstType.GetNumericDataType(), 0, 1);
+            GDALCopyWords64(&dfVal, GDT_Float64, 0, pDst,
+                            dstType.GetNumericDataType(), 0, 1);
         }
         return true;
     }
@@ -2622,8 +2621,8 @@ double GDALMDArray::GetNoDataValueAsDouble(bool *pbHasNoData) const
     const bool ok = pNoData != nullptr && eDT.GetClass() == GEDTC_NUMERIC;
     if (ok)
     {
-        GDALCopyWords(pNoData, eDT.GetNumericDataType(), 0, &dfNoData,
-                      GDT_Float64, 0, 1);
+        GDALCopyWords64(pNoData, eDT.GetNumericDataType(), 0, &dfNoData,
+                        GDT_Float64, 0, 1);
     }
     if (pbHasNoData)
         *pbHasNoData = ok;
@@ -2653,8 +2652,8 @@ int64_t GDALMDArray::GetNoDataValueAsInt64(bool *pbHasNoData) const
     const bool ok = pNoData != nullptr && eDT.GetClass() == GEDTC_NUMERIC;
     if (ok)
     {
-        GDALCopyWords(pNoData, eDT.GetNumericDataType(), 0, &nNoData, GDT_Int64,
-                      0, 1);
+        GDALCopyWords64(pNoData, eDT.GetNumericDataType(), 0, &nNoData,
+                        GDT_Int64, 0, 1);
     }
     if (pbHasNoData)
         *pbHasNoData = ok;
@@ -2684,8 +2683,8 @@ uint64_t GDALMDArray::GetNoDataValueAsUInt64(bool *pbHasNoData) const
     const bool ok = pNoData != nullptr && eDT.GetClass() == GEDTC_NUMERIC;
     if (ok)
     {
-        GDALCopyWords(pNoData, eDT.GetNumericDataType(), 0, &nNoData,
-                      GDT_UInt64, 0, 1);
+        GDALCopyWords64(pNoData, eDT.GetNumericDataType(), 0, &nNoData,
+                        GDT_UInt64, 0, 1);
     }
     if (pbHasNoData)
         *pbHasNoData = ok;
@@ -4683,33 +4682,6 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                          Transpose2D()                               */
-/************************************************************************/
-
-template <class T>
-static void Transpose2D(T *dst, const T *src, size_t src_height,
-                        size_t src_width)
-{
-    constexpr size_t blocksize = 32;
-    for (size_t i = 0; i < src_height; i += blocksize)
-    {
-        for (size_t j = 0; j < src_width; j += blocksize)
-        {
-            // transpose the block beginning at [i,j]
-            const size_t max_k = std::min(i + blocksize, src_height);
-            for (size_t k = i; k < max_k; ++k)
-            {
-                const size_t max_l = std::min(j + blocksize, src_width);
-                for (size_t l = j; l < max_l; ++l)
-                {
-                    dst[k + l * src_height] = src[l + k * src_width];
-                }
-            }
-        }
-    }
-}
-
-/************************************************************************/
 /*                      TransposeLast2Dims()                            */
 /************************************************************************/
 
@@ -4728,38 +4700,10 @@ static bool TransposeLast2Dims(void *pDstBuffer,
     GByte *pabyDstBuffer = static_cast<GByte *>(pDstBuffer);
     for (size_t i = 0; i < nEltsNonLast2Dims; ++i)
     {
-        if (nDTSize == 1)
-        {
-            Transpose2D(
-                static_cast<uint8_t *>(pTempBufferForLast2DimsTranspose),
-                reinterpret_cast<const uint8_t *>(pabyDstBuffer),
-                count[nDims - 2], count[nDims - 1]);
-        }
-        else if (nDTSize == 2)
-        {
-            Transpose2D(
-                static_cast<uint16_t *>(pTempBufferForLast2DimsTranspose),
-                reinterpret_cast<const uint16_t *>(pabyDstBuffer),
-                count[nDims - 2], count[nDims - 1]);
-        }
-        else if (nDTSize == 4)
-        {
-            Transpose2D(
-                static_cast<uint32_t *>(pTempBufferForLast2DimsTranspose),
-                reinterpret_cast<const uint32_t *>(pabyDstBuffer),
-                count[nDims - 2], count[nDims - 1]);
-        }
-        else if (nDTSize == 8)
-        {
-            Transpose2D(
-                static_cast<uint64_t *>(pTempBufferForLast2DimsTranspose),
-                reinterpret_cast<const uint64_t *>(pabyDstBuffer),
-                count[nDims - 2], count[nDims - 1]);
-        }
-        else
-        {
-            CPLAssert(false);
-        }
+        GDALTranspose2D(pabyDstBuffer, eDT.GetNumericDataType(),
+                        pTempBufferForLast2DimsTranspose,
+                        eDT.GetNumericDataType(), count[nDims - 1],
+                        count[nDims - 2]);
         memcpy(pabyDstBuffer, pTempBufferForLast2DimsTranspose,
                nDTSize * nEltsLast2Dims);
         pabyDstBuffer += nDTSize * nEltsLast2Dims;
@@ -6388,8 +6332,8 @@ bool GDALMDArrayUnscaled::IWrite(const GUInt64 *arrayStartIdx,
     double dfNoData = 0;
     if (m_bHasNoData)
     {
-        GDALCopyWords(m_abyRawNoData.data(), m_dt.GetNumericDataType(), 0,
-                      &dfNoData, GDT_Float64, 0, 1);
+        GDALCopyWords64(m_abyRawNoData.data(), m_dt.GetNumericDataType(), 0,
+                        &dfNoData, GDT_Float64, 0, 1);
     }
 
     double adfSrcNoData[2] = {0, 0};
@@ -6553,10 +6497,10 @@ lbl_next_depth:
         // Remaining elements
         for (size_t i = 1; i < nElts; ++i)
         {
-            GDALCopyWords(static_cast<GByte *>(pTempBuffer) + i * nDTSize,
-                          eNumericDT, 0,
-                          static_cast<GByte *>(pTempBuffer) + i * nParentDTSize,
-                          eParentNumericDT, 0, 1);
+            GDALCopyWords64(
+                static_cast<GByte *>(pTempBuffer) + i * nDTSize, eNumericDT, 0,
+                static_cast<GByte *>(pTempBuffer) + i * nParentDTSize,
+                eParentNumericDT, 0, 1);
         }
     }
 
@@ -8552,6 +8496,15 @@ struct MetadataItem
     std::string osDefinition{};
     bool bDefinitionUsesPctForG = false;
 };
+
+struct BandImageryMetadata
+{
+    std::shared_ptr<GDALMDArray> poCentralWavelengthArray{};
+    double dfCentralWavelengthToMicrometer = 1.0;
+    std::shared_ptr<GDALMDArray> poFWHMArray{};
+    double dfFWHMToMicrometer = 1.0;
+};
+
 }  // namespace
 
 class GDALRasterBandFromArray final : public GDALPamRasterBand
@@ -8575,6 +8528,7 @@ class GDALRasterBandFromArray final : public GDALPamRasterBand
         const std::vector<GUInt64> &anOtherDimCoord,
         const std::vector<std::vector<MetadataItem>>
             &aoBandParameterMetadataItems,
+        const std::vector<BandImageryMetadata> &aoBandImageryMetadata,
         double dfDelay, time_t nStartTime, bool &bHasWarned);
 
     double GetNoDataValue(int *pbHasNoData) override;
@@ -8708,6 +8662,7 @@ class GDALDatasetFromArray final : public GDALPamDataset
 GDALRasterBandFromArray::GDALRasterBandFromArray(
     GDALDatasetFromArray *poDSIn, const std::vector<GUInt64> &anOtherDimCoord,
     const std::vector<std::vector<MetadataItem>> &aoBandParameterMetadataItems,
+    const std::vector<BandImageryMetadata> &aoBandImageryMetadata,
     double dfDelay, time_t nStartTime, bool &bHasWarned)
 {
     const auto &poArray(poDSIn->m_poArray);
@@ -8877,6 +8832,51 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                 }
                 if (!osVal.empty())
                     SetMetadataItem(oItem.osName.c_str(), osVal);
+            }
+
+            if (aoBandImageryMetadata[j].poCentralWavelengthArray)
+            {
+                auto &poCentralWavelengthArray =
+                    aoBandImageryMetadata[j].poCentralWavelengthArray;
+                size_t nCount = 1;
+                const auto &dt(poCentralWavelengthArray->GetDataType());
+                std::vector<GByte> abyTmp(dt.GetSize());
+                if (poCentralWavelengthArray->Read(&(anOtherDimCoord[j]),
+                                                   &nCount, nullptr, nullptr,
+                                                   dt, &abyTmp[0]))
+                {
+                    double dfVal = 0;
+                    GDALExtendedDataType::CopyValue(
+                        &abyTmp[0], dt, &dfVal,
+                        GDALExtendedDataType::Create(GDT_Float64));
+                    SetMetadataItem(
+                        "CENTRAL_WAVELENGTH_UM",
+                        CPLSPrintf(
+                            "%g", dfVal * aoBandImageryMetadata[j]
+                                              .dfCentralWavelengthToMicrometer),
+                        "IMAGERY");
+                }
+            }
+
+            if (aoBandImageryMetadata[j].poFWHMArray)
+            {
+                auto &poFWHMArray = aoBandImageryMetadata[j].poFWHMArray;
+                size_t nCount = 1;
+                const auto &dt(poFWHMArray->GetDataType());
+                std::vector<GByte> abyTmp(dt.GetSize());
+                if (poFWHMArray->Read(&(anOtherDimCoord[j]), &nCount, nullptr,
+                                      nullptr, dt, &abyTmp[0]))
+                {
+                    double dfVal = 0;
+                    GDALExtendedDataType::CopyValue(
+                        &abyTmp[0], dt, &dfVal,
+                        GDALExtendedDataType::Create(GDT_Float64));
+                    SetMetadataItem(
+                        "FWHM_UM",
+                        CPLSPrintf("%g", dfVal * aoBandImageryMetadata[j]
+                                                     .dfFWHMToMicrometer),
+                        "IMAGERY");
+                }
             }
 
             m_anOffset[i] = anOtherDimCoord[j];
@@ -9162,12 +9162,22 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
         }
     }
 
+    std::map<std::string, size_t> oMapArrayDimNameToExtraDimIdx;
+    for (size_t i = 0, j = 0; i < nDimCount; ++i)
+    {
+        if (i != iXDim && !(nDimCount >= 2 && i == iYDim))
+        {
+            oMapArrayDimNameToExtraDimIdx[dims[i]->GetName()] = j;
+            ++j;
+        }
+    }
+
+    const size_t nNewDimCount = nDimCount >= 2 ? nDimCount - 2 : 0;
+
     const char *pszBandMetadata =
         CSLFetchNameValue(papszOptions, "BAND_METADATA");
-    const size_t nNewDimCount = nDimCount >= 2 ? nDimCount - 2 : 0;
     std::vector<std::vector<MetadataItem>> aoBandParameterMetadataItems(
         nNewDimCount);
-
     if (pszBandMetadata)
     {
         if (!poRootGroup)
@@ -9189,16 +9199,6 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Value of BAND_METADATA should be an array");
             return nullptr;
-        }
-
-        std::map<std::string, size_t> oMapArrayDimNameToExtraDimIdx;
-        for (size_t i = 0, j = 0; i < nDimCount; ++i)
-        {
-            if (i != iXDim && !(nDimCount >= 2 && i == iYDim))
-            {
-                oMapArrayDimNameToExtraDimIdx[dims[i]->GetName()] = j;
-                ++j;
-            }
         }
 
         auto oArray = oRoot.ToArray();
@@ -9383,6 +9383,155 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
         }
     }
 
+    std::vector<BandImageryMetadata> aoBandImageryMetadata(nNewDimCount);
+    const char *pszBandImageryMetadata =
+        CSLFetchNameValue(papszOptions, "BAND_IMAGERY_METADATA");
+    if (pszBandImageryMetadata)
+    {
+        if (!poRootGroup)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Root group should be provided when BAND_IMAGERY_METADATA "
+                     "is set");
+            return nullptr;
+        }
+        CPLJSONDocument oDoc;
+        if (!oDoc.LoadMemory(pszBandImageryMetadata))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid JSON content for BAND_IMAGERY_METADATA");
+            return nullptr;
+        }
+        auto oRoot = oDoc.GetRoot();
+        if (oRoot.GetType() != CPLJSONObject::Type::Object)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Value of BAND_IMAGERY_METADATA should be an object");
+            return nullptr;
+        }
+        for (const auto &oJsonItem : oRoot.GetChildren())
+        {
+            if (oJsonItem.GetName() == "CENTRAL_WAVELENGTH_UM" ||
+                oJsonItem.GetName() == "FWHM_UM")
+            {
+                auto osBandArrayFullname = oJsonItem.GetString("array");
+                if (osBandArrayFullname.empty())
+                {
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "BAND_IMAGERY_METADATA[\"%s\"][\"array\"] is missing",
+                        oJsonItem.GetName().c_str());
+                    return nullptr;
+                }
+                auto poArray =
+                    poRootGroup->OpenMDArrayFromFullname(osBandArrayFullname);
+                if (!poArray)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Array %s cannot be found",
+                             osBandArrayFullname.c_str());
+                    return nullptr;
+                }
+                if (poArray->GetDimensionCount() != 1)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Array %s is not a 1D array",
+                             osBandArrayFullname.c_str());
+                    return nullptr;
+                }
+                const auto &osAuxArrayDimName =
+                    poArray->GetDimensions()[0]->GetName();
+                auto oIter =
+                    oMapArrayDimNameToExtraDimIdx.find(osAuxArrayDimName);
+                if (oIter == oMapArrayDimNameToExtraDimIdx.end())
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Dimension \"%s\" of array \"%s\" is not a "
+                             "non-X/Y dimension of array \"%s\"",
+                             osAuxArrayDimName.c_str(),
+                             osBandArrayFullname.c_str(),
+                             array->GetName().c_str());
+                    return nullptr;
+                }
+                const size_t iExtraDimIdx = oIter->second;
+                CPLAssert(iExtraDimIdx < nNewDimCount);
+
+                std::string osUnit = oJsonItem.GetString("unit", "um");
+                if (STARTS_WITH(osUnit.c_str(), "${"))
+                {
+                    if (osUnit.back() != '}')
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Value of "
+                                 "BAND_IMAGERY_METADATA[\"%s\"][\"unit\"] = "
+                                 "%s is invalid",
+                                 oJsonItem.GetName().c_str(), osUnit.c_str());
+                        return nullptr;
+                    }
+                    const auto osAttrName = osUnit.substr(2, osUnit.size() - 3);
+                    auto poAttr = poArray->GetAttribute(osAttrName);
+                    if (!poAttr)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Value of "
+                                 "BAND_IMAGERY_METADATA[\"%s\"][\"unit\"] = "
+                                 "%s is invalid: %s is not an attribute of %s",
+                                 oJsonItem.GetName().c_str(), osUnit.c_str(),
+                                 osAttrName.c_str(),
+                                 osBandArrayFullname.c_str());
+                        return nullptr;
+                    }
+                    const char *pszValue = poAttr->ReadAsString();
+                    if (!pszValue)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Cannot get value of attribute %s of %s as a "
+                                 "string",
+                                 osAttrName.c_str(),
+                                 osBandArrayFullname.c_str());
+                        return nullptr;
+                    }
+                    osUnit = pszValue;
+                }
+                double dfConvToUM = 1.0;
+                if (osUnit == "nm" || osUnit == "nanometre" ||
+                    osUnit == "nanometres" || osUnit == "nanometer" ||
+                    osUnit == "nanometers")
+                {
+                    dfConvToUM = 1e-3;
+                }
+                else if (!(osUnit == "um" || osUnit == "micrometre" ||
+                           osUnit == "micrometres" || osUnit == "micrometer" ||
+                           osUnit == "micrometers"))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unhandled value for "
+                             "BAND_IMAGERY_METADATA[\"%s\"][\"unit\"] = %s",
+                             oJsonItem.GetName().c_str(), osUnit.c_str());
+                    return nullptr;
+                }
+
+                BandImageryMetadata &item = aoBandImageryMetadata[iExtraDimIdx];
+                if (oJsonItem.GetName() == "CENTRAL_WAVELENGTH_UM")
+                {
+                    item.poCentralWavelengthArray = std::move(poArray);
+                    item.dfCentralWavelengthToMicrometer = dfConvToUM;
+                }
+                else
+                {
+                    item.poFWHMArray = std::move(poArray);
+                    item.dfFWHMToMicrometer = dfConvToUM;
+                }
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Ignored member \"%s\" in BAND_IMAGERY_METADATA",
+                         oJsonItem.GetName().c_str());
+            }
+        }
+    }
+
     auto poDS = std::make_unique<GDALDatasetFromArray>(array, iXDim, iYDim);
 
     poDS->eAccess = array->IsWritable() ? GA_Update : GA_ReadOnly;
@@ -9463,10 +9612,11 @@ lbl_next_depth:
     }
     else
     {
-        poDS->SetBand(nCurBand, new GDALRasterBandFromArray(
-                                    poDS.get(), anOtherDimCoord,
-                                    aoBandParameterMetadataItems, dfDelay,
-                                    nStartTime, bHasWarned));
+        poDS->SetBand(nCurBand,
+                      new GDALRasterBandFromArray(
+                          poDS.get(), anOtherDimCoord,
+                          aoBandParameterMetadataItems, aoBandImageryMetadata,
+                          dfDelay, nStartTime, bHasWarned));
         ++nCurBand;
     }
     if (iDim > 0)
@@ -9514,7 +9664,7 @@ lbl_next_depth:
  * @param iYDim Index of the dimension that will be used as the Y/height axis.
  *              Ignored if the dimension count is 1.
  * @param poRootGroup (Added in GDAL 3.8) Root group. Used with the BAND_METADATA
- *                    option.
+ *                    and BAND_IMAGERY_METADATA option.
  * @param papszOptions (Added in GDAL 3.8) Null-terminated list of options, or
  *                     nullptr. Current supported options are:
  *                     <ul>
@@ -9556,6 +9706,47 @@ lbl_next_depth:
  *                              "item_value": "${units}"
  *                            }
  *                         ]
+ *                     </li>
+ *                     <li>BAND_IMAGERY_METADATA: (GDAL >= 3.11)
+ *                         JSON serialized object defining which arrays of the
+ *                         poRootGroup, indexed by non-X and Y dimensions,
+ *                         should be mapped as band metadata items in the
+ *                         band IMAGERY domain.
+ *                         The object currently accepts 2 members:
+ *                         - "CENTRAL_WAVELENGTH_UM": Central Wavelength in
+ *                           micrometers.
+ *                         - "FWHM_UM": Full-width half-maximum
+ *                           in micrometers.
+ *                         The value of each member should be an object with the
+ *                         following members:
+ *                         - "array": (required) full name of a band parameter
+ *                           array.
+ *                           Such array must be a one dimensional array, and its
+ *                           dimension must be one of the dimensions of the
+ *                           array on which the method is called
+ *                           (excluding the X and Y dimensons).
+ *                         - "unit": (optional) unit of the values pointed in
+ *                           the above array.
+ *                           Can be a literal string or a string of the form
+ *                           "${attribute_name}" to point to an attribute for
+ *                           the array.
+ *                           Accepted values are "um", "micrometer"
+ *                           (with UK vs US spelling, singular or plural), "nm",
+ *                           "nanometer" (with UK vs US spelling, singular or
+ *                           plural)
+ *                           If not provided, micrometer is assumed.
+ *
+ *                         Example for EMIT datasets:
+ *                         {
+ *                            "CENTRAL_WAVELENGTH_UM": {
+ *                                "array": "/sensor_band_parameters/wavelengths",
+ *                                "unit": "${units}"
+ *                            },
+ *                            "FWHM_UM": {
+ *                                "array": "/sensor_band_parameters/fwhm",
+ *                                "unit": "${units}"
+ *                            }
+ *                         }
  *                     </li>
  *                     <li>LOAD_EXTRA_DIM_METADATA_DELAY: Maximum delay in
  *                         seconds allowed to set the DIM_{dimname}_VALUE band
@@ -10043,7 +10234,8 @@ GDALExtendedDataType::operator=(GDALExtendedDataType &&other)
  *
  * This is the same as the C function GDALExtendedDataTypeCreate()
  *
- * @param eType Numeric data type.
+ * @param eType Numeric data type. Must be different from GDT_Unknown and
+ * GDT_TypeCount
  */
 GDALExtendedDataType GDALExtendedDataType::Create(GDALDataType eType)
 {
@@ -10471,12 +10663,19 @@ void GDALDimension::ParentDeleted()
  *
  * The returned handle should be freed with GDALExtendedDataTypeRelease().
  *
- * @param eType Numeric data type.
+ * @param eType Numeric data type. Must be different from GDT_Unknown and
+ * GDT_TypeCount
  *
  * @return a new GDALExtendedDataTypeH handle, or nullptr.
  */
 GDALExtendedDataTypeH GDALExtendedDataTypeCreate(GDALDataType eType)
 {
+    if (CPL_UNLIKELY(eType == GDT_Unknown || eType == GDT_TypeCount))
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Illegal GDT_Unknown/GDT_TypeCount argument");
+        return nullptr;
+    }
     return new GDALExtendedDataTypeHS(
         new GDALExtendedDataType(GDALExtendedDataType::Create(eType)));
 }
@@ -13587,7 +13786,8 @@ GDALDatasetH GDALMDArrayAsClassicDataset(GDALMDArrayH hArray, size_t iXDim,
  * @param iXDim Index of the dimension that will be used as the X/width axis.
  * @param iYDim Index of the dimension that will be used as the Y/height axis.
  *              Ignored if the dimension count is 1.
- * @param hRootGroup Root group, or NULL. Used with the BAND_METADATA option.
+ * @param hRootGroup Root group, or NULL. Used with the BAND_METADATA and
+ *                   BAND_IMAGERY_METADATA option.
  * @param papszOptions Cf GDALMDArray::AsClassicDataset()
  * @return a new GDALDataset that must be freed with GDALClose(), or nullptr
  * @since GDAL 3.8

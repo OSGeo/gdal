@@ -13,6 +13,7 @@
 #include "cpl_port.h"
 #include "cpl_http.h"
 #include "cpl_minixml.h"
+#include "cpl_json.h"
 #include "cpl_vsil_curl_priv.h"
 #include "cpl_vsil_curl_class.h"
 
@@ -331,6 +332,124 @@ char **VSIGSFSHandler::GetFileMetadata(const char *pszFilename,
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return nullptr;
 
+    if (pszDomain == nullptr)
+    {
+        // Handle case of requesting GetFileMetadata() on the bucket root
+        std::string osFilename(pszFilename);
+        if (osFilename.back() == '/')
+            osFilename.pop_back();
+        if (osFilename.find('/', GetFSPrefix().size()) == std::string::npos)
+        {
+            const std::string osBucket =
+                osFilename.substr(GetFSPrefix().size());
+            const std::string osResource =
+                std::string("storage/v1/b/").append(osBucket);
+
+            auto poHandleHelper = std::unique_ptr<VSIGSHandleHelper>(
+                VSIGSHandleHelper::BuildFromURI(osResource.c_str(),
+                                                GetFSPrefix().c_str(),
+                                                osBucket.c_str()));
+            if (!poHandleHelper)
+                return nullptr;
+
+            // The JSON API cannot be used with HMAC keys
+            if (poHandleHelper->UsesHMACKey())
+            {
+                CPLDebug(GetDebugKey(),
+                         "GetFileMetadata() on bucket "
+                         "only available for OAuth2 authentication");
+                return VSICurlFilesystemHandlerBase::GetFileMetadata(
+                    pszFilename, pszDomain, papszOptions);
+            }
+
+            NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
+            NetworkStatisticsAction oContextAction("GetFileMetadata");
+
+            const CPLStringList aosHTTPOptions(
+                CPLHTTPGetOptionsFromEnv(pszFilename));
+            const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
+            CPLHTTPRetryContext oRetryContext(oRetryParameters);
+
+            bool bRetry;
+            CPLStringList aosResult;
+            do
+            {
+                bRetry = false;
+                CURL *hCurlHandle = curl_easy_init();
+
+                struct curl_slist *headers =
+                    static_cast<struct curl_slist *>(CPLHTTPSetOptions(
+                        hCurlHandle, poHandleHelper->GetURL().c_str(),
+                        aosHTTPOptions.List()));
+                headers = VSICurlMergeHeaders(
+                    headers, poHandleHelper->GetCurlHeaders("GET", headers));
+
+                CurlRequestHelper requestHelper;
+                const long response_code = requestHelper.perform(
+                    hCurlHandle, headers, this, poHandleHelper.get());
+
+                NetworkStatisticsLogger::LogGET(
+                    requestHelper.sWriteFuncData.nSize);
+
+                if (response_code != 200 ||
+                    requestHelper.sWriteFuncData.pBuffer == nullptr)
+                {
+                    // Look if we should attempt a retry
+                    if (oRetryContext.CanRetry(
+                            static_cast<int>(response_code),
+                            requestHelper.sWriteFuncHeaderData.pBuffer,
+                            requestHelper.szCurlErrBuf))
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "HTTP error code: %d - %s. "
+                                 "Retrying again in %.1f secs",
+                                 static_cast<int>(response_code),
+                                 poHandleHelper->GetURL().c_str(),
+                                 oRetryContext.GetCurrentDelay());
+                        CPLSleep(oRetryContext.GetCurrentDelay());
+                        bRetry = true;
+                    }
+                    else
+                    {
+                        CPLDebug(GetDebugKey(), "%s",
+                                 requestHelper.sWriteFuncData.pBuffer
+                                     ? requestHelper.sWriteFuncData.pBuffer
+                                     : "(null)");
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "GetFileMetadata failed");
+                    }
+                }
+                else
+                {
+                    CPLJSONDocument oDoc;
+                    if (oDoc.LoadMemory(
+                            reinterpret_cast<const GByte *>(
+                                requestHelper.sWriteFuncData.pBuffer),
+                            static_cast<int>(
+                                requestHelper.sWriteFuncData.nSize)) &&
+                        oDoc.GetRoot().GetType() == CPLJSONObject::Type::Object)
+                    {
+                        for (const auto &oObj : oDoc.GetRoot().GetChildren())
+                        {
+                            aosResult.SetNameValue(oObj.GetName().c_str(),
+                                                   oObj.ToString().c_str());
+                        }
+                    }
+                    else
+                    {
+                        // Shouldn't happen normally
+                        aosResult.SetNameValue(
+                            "DATA", requestHelper.sWriteFuncData.pBuffer);
+                    }
+                }
+
+                curl_easy_cleanup(hCurlHandle);
+            } while (bRetry);
+
+            return aosResult.StealList();
+        }
+    }
+
     if (pszDomain == nullptr || !EQUAL(pszDomain, "ACL"))
     {
         return VSICurlFilesystemHandlerBase::GetFileMetadata(
@@ -404,7 +523,7 @@ char **VSIGSFSHandler::GetFileMetadata(const char *pszFilename,
 
         curl_easy_cleanup(hCurlHandle);
     } while (bRetry);
-    return CSLDuplicate(aosResult.List());
+    return aosResult.StealList();
 }
 
 /************************************************************************/

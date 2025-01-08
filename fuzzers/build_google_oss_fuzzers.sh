@@ -69,6 +69,8 @@ build_gdal_specialized_fuzzer()
 
 build_fuzzer gtiff_mmap $(dirname $0)/gdal_fuzzer.cpp -DREGISTER_FUNC=GDALRegister_GTiff -DGTIFF_USE_MMAP
 
+build_fuzzer libertiff $(dirname $0)/gdal_fuzzer.cpp -DREGISTER_FUNC=GDALRegister_LIBERTIFF -DDRIVER_NAME="\"LIBERTIFF\""
+
 fuzzerFiles="$(dirname $0)/*.cpp"
 for F in $fuzzerFiles; do
     if test $F != "$(dirname $0)/fuzzingengine.cpp"; then

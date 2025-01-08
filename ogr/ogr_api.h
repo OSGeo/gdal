@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  C API for OGR Geometry, Feature, Layers, DataSource and drivers.
@@ -43,7 +42,7 @@ bool CPL_DLL OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch);
 /*! @cond Doxygen_Suppress */
 #define DEFINEH_OGRGeometryH
 /*! @endcond */
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 typedef struct OGRGeometryHS *OGRGeometryH;
 #else
 /** Opaque type for a geometry */
@@ -57,7 +56,7 @@ typedef void *OGRGeometryH;
 /*! @endcond */
 
 #ifndef DOXYGEN_XML
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 typedef struct OGRSpatialReferenceHS *OGRSpatialReferenceH;
 typedef struct OGRCoordinateTransformationHS *OGRCoordinateTransformationH;
 #else
@@ -396,7 +395,7 @@ int CPL_DLL OGRPreparedGeometryContains(OGRPreparedGeometryH hPreparedGeom,
 /*! @cond Doxygen_Suppress */
 #define DEFINE_OGRFeatureH
 /*! @endcond */
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 typedef struct OGRFieldDefnHS *OGRFieldDefnH;
 typedef struct OGRFeatureDefnHS *OGRFeatureDefnH;
 typedef struct OGRFeatureHS *OGRFeatureH;
@@ -457,7 +456,9 @@ const char CPL_DLL *OGR_Fld_GetComment(OGRFieldDefnH hDefn);
 void CPL_DLL OGR_Fld_SetComment(OGRFieldDefnH hDefn, const char *);
 
 const char CPL_DLL *OGR_GetFieldTypeName(OGRFieldType);
+OGRFieldType CPL_DLL OGR_GetFieldTypeByName(const char *);
 const char CPL_DLL *OGR_GetFieldSubTypeName(OGRFieldSubType);
+OGRFieldSubType CPL_DLL OGR_GetFieldSubTypeByName(const char *);
 int CPL_DLL OGR_AreTypeSubTypeCompatible(OGRFieldType eType,
                                          OGRFieldSubType eSubType);
 
@@ -667,7 +668,7 @@ const char CPL_DLL *OGR_GlobFldDomain_GetGlob(OGRFieldDomainH);
 /*      ogrsf_frmts.h                                                   */
 /* -------------------------------------------------------------------- */
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 typedef struct OGRLayerHS *OGRLayerH;
 typedef struct OGRDataSourceHS *OGRDataSourceH;
 typedef struct OGRDriverHS *OGRSFDriverH;
@@ -727,7 +728,7 @@ OGRFeatureH CPL_DLL OGR_L_GetNextFeature(OGRLayerH) CPL_WARN_UNUSED_RESULT;
 /** Conveniency macro to iterate over features of a layer.
  *
  * Typical usage is:
- * <pre>
+ * \code{.cpp}
  * OGR_FOR_EACH_FEATURE_BEGIN(hFeat, hLayer)
  * {
  *      // Do something, including continue, break;
@@ -735,14 +736,14 @@ OGRFeatureH CPL_DLL OGR_L_GetNextFeature(OGRLayerH) CPL_WARN_UNUSED_RESULT;
  *      // outside of the loop, in which case use OGR_F_Destroy(hFeat))
  * }
  * OGR_FOR_EACH_FEATURE_END(hFeat)
- * </pre>
+ * \endcode
  *
  * In C++, you might want to use instead range-based loop:
- * <pre>
+ * \code{.cpp}
  * for( auto&& poFeature: poLayer )
  * {
  * }
- * </pre>
+ * \endcode
  *
  * @param hFeat variable name for OGRFeatureH. The variable will be declared
  *              inside the macro body.
@@ -949,7 +950,7 @@ void CPL_DLL OGRCleanupAll(void);
 /*      ogrsf_featurestyle.h                                            */
 /* -------------------------------------------------------------------- */
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 typedef struct OGRStyleMgrHS *OGRStyleMgrH;
 typedef struct OGRStyleToolHS *OGRStyleToolH;
 #else

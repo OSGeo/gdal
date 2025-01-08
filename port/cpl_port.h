@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Author:   Frank Warmerdam, warmerdam@pobox.com
@@ -1177,6 +1176,17 @@ typedef const char *const *CSLConstList;
 /** Type of a constant null-terminated list of nul terminated strings.
  * Seen as char** from C and const char* const* from C++ */
 typedef char **CSLConstList;
+#endif
+
+#if defined(__cplusplus) && defined(GDAL_COMPILATION)
+#if defined(__GNUC__) && !defined(DOXYGEN_SKIP)
+/** Macro that evaluates to (cond), and possibly gives a hint to the compiler
+ * than (cond) is unlikely to be true.
+ */
+#define CPL_UNLIKELY(cond) __builtin_expect(static_cast<bool>(cond), 0)
+#else
+#define CPL_UNLIKELY(cond) (cond)
+#endif
 #endif
 
 #endif /* ndef CPL_BASE_H_INCLUDED */

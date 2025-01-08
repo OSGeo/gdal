@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL SWIG Interfaces.
  * Purpose:  GDAL transformer related declarations.

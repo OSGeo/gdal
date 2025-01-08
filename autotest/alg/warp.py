@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test the image reprojection functions. Try to test as many
@@ -262,6 +261,17 @@ def test_warp_5_downsize():
 
     ds = gdal.Open("data/utmsmall_lanczos_2.vrt")
     ref_ds = gdal.Open("data/utmsmall_lanczos_2.tif")
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+
+    assert maxdiff <= 1, "Image too different from reference"
+
+
+def test_warp_lanczos_downsize_50_75():
+
+    ds = gdal.Open("data/utmsmall_lanczos_50_75.vrt")
+    ref_ds = gdal.Open("data/utmsmall_lanczos_50_75.tif")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ds = None
     ref_ds = None

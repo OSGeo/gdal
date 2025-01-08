@@ -446,8 +446,11 @@ NWT_GRDDataset::~NWT_GRDDataset()
     {
         NWT_GRDDataset::FlushCache(true);
     }
-    pGrd->fp = nullptr;  // this prevents nwtCloseGrid from closing the fp
-    nwtCloseGrid(pGrd);
+    if (pGrd)
+    {
+        pGrd->fp = nullptr;  // this prevents nwtCloseGrid from closing the fp
+        nwtCloseGrid(pGrd);
+    }
     if (m_poSRS)
         m_poSRS->Release();
 
@@ -461,7 +464,7 @@ NWT_GRDDataset::~NWT_GRDDataset()
 CPLErr NWT_GRDDataset::FlushCache(bool bAtClosing)
 {
     // Ensure the header and TAB file are up to date
-    if (bUpdateHeader)
+    if (bUpdateHeader && pGrd)
     {
 #ifndef NO_MITAB_SUPPORT
         UpdateHeader();
@@ -625,6 +628,11 @@ GDALDataset *NWT_GRDDataset::Open(GDALOpenInfo *poOpenInfo)
     VSIFSeekL(poDS->fp, 0, SEEK_SET);
     VSIFReadL(poDS->abyHeader, 1, 1024, poDS->fp);
     poDS->pGrd = reinterpret_cast<NWT_GRID *>(calloc(1, sizeof(NWT_GRID)));
+    if (!poDS->pGrd)
+    {
+        delete poDS;
+        return nullptr;
+    }
 
     poDS->pGrd->fp = poDS->fp;
 
@@ -902,6 +910,11 @@ GDALDataset *NWT_GRDDataset::Create(const char *pszFilename, int nXSize,
     NWT_GRDDataset *poDS = new NWT_GRDDataset();
     poDS->eAccess = GA_Update;
     poDS->pGrd = static_cast<NWT_GRID *>(calloc(1, sizeof(NWT_GRID)));
+    if (!poDS->pGrd)
+    {
+        delete poDS;
+        return nullptr;
+    }
 
     // We currently only support GRD grid types (could potentially support GRC
     // in the papszParamList). Also only support GDT_Float32 as the data type.

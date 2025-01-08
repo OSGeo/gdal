@@ -15,10 +15,6 @@
 
 #include "cpl_error.h"
 
-#ifndef _WIN32
-#include <unistd.h>  // isatty()
-#endif
-
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
@@ -594,11 +590,18 @@ static void CPLvDebug(const char *pszCategory,
     /* -------------------------------------------------------------------- */
     /*      Does this message pass our current criteria?                    */
     /* -------------------------------------------------------------------- */
-    if (pszDebug == nullptr)
-        return;
-
-    if (!EQUAL(pszDebug, "ON") && !EQUAL(pszDebug, ""))
+    if (pszDebug == nullptr || EQUAL(pszDebug, "NO") ||
+        EQUAL(pszDebug, "OFF") || EQUAL(pszDebug, "FALSE") ||
+        EQUAL(pszDebug, "0"))
     {
+        return;
+    }
+
+    if (!EQUAL(pszDebug, "ON") && !EQUAL(pszDebug, "YES") &&
+        !EQUAL(pszDebug, "TRUE") && !EQUAL(pszDebug, "1") &&
+        !EQUAL(pszDebug, ""))
+    {
+        // check if value of CPL_DEBUG contains the category
         const size_t nLen = strlen(pszCategory);
 
         size_t i = 0;
@@ -627,7 +630,7 @@ static void CPLvDebug(const char *pszCategory,
 
     pszMessage[0] = '\0';
 #ifdef TIMESTAMP_DEBUG
-    if (CPLGetConfigOption("CPL_TIMESTAMP", nullptr) != nullptr)
+    if (CPLTestBool(CPLGetConfigOption("CPL_TIMESTAMP", "NO")))
     {
         static struct CPLTimeVal tvStart;
         static const auto unused = CPLGettimeofday(&tvStart, nullptr);
@@ -1052,7 +1055,7 @@ void CPL_STDCALL CPLDefaultErrorHandler(CPLErr eErrClass, CPLErrorNum nError,
 #ifndef _WIN32
         CPLErrorContext *psCtx = CPLGetErrorContext();
         if (psCtx != nullptr && !IS_PREFEFINED_ERROR_CTX(psCtx) &&
-            fpLog == stderr && isatty(static_cast<int>(fileno(stderr))))
+            fpLog == stderr && CPLIsInteractive(stderr))
         {
             if (psCtx->bProgressMode)
             {
@@ -1260,9 +1263,9 @@ CPLSetErrorHandlerEx(CPLErrorHandler pfnErrorHandlerNew, void *pUserData)
  * Allow the library's user to specify an error handler function.
  * A valid error handler is a C function with the following prototype:
  *
- * <pre>
+ * \code{.cpp}
  *     void MyErrorHandler(CPLErr eErrClass, int err_no, const char *msg)
- * </pre>
+ * \endcode
  *
  * Pass NULL to come back to the default behavior.  The default behavior
  * (CPLDefaultErrorHandler()) is to write the message to stderr.

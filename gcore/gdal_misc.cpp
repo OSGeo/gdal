@@ -35,6 +35,9 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
 #include "gdal_version_full/gdal_version.h"
 #include "gdal.h"
 #include "gdal_mdreader.h"
@@ -2798,6 +2801,12 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 #ifdef CMAKE_UNITY_BUILD
         osBuildInfo += "CMAKE_UNITY_BUILD=YES\n";
 #endif
+#ifdef EMBED_RESOURCE_FILES
+        osBuildInfo += "EMBED_RESOURCE_FILES=YES\n";
+#endif
+#ifdef USE_ONLY_EMBEDDED_RESOURCE_FILES
+        osBuildInfo += "USE_ONLY_EMBEDDED_RESOURCE_FILES=YES\n";
+#endif
 
 #undef STRINGIFY_HELPER
 #undef STRINGIFY
@@ -2813,6 +2822,9 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
     /* -------------------------------------------------------------------- */
     if (pszRequest != nullptr && EQUAL(pszRequest, "LICENSE"))
     {
+#if defined(EMBED_RESOURCE_FILES) && defined(USE_ONLY_EMBEDDED_RESOURCE_FILES)
+        return GDALGetEmbeddedLicense();
+#else
         char *pszResultLicence =
             reinterpret_cast<char *>(CPLGetTLS(CTLS_VERSIONINFO_LICENCE));
         if (pszResultLicence != nullptr)
@@ -2820,12 +2832,14 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
             return pszResultLicence;
         }
 
-        const char *pszFilename = CPLFindFile("etc", "LICENSE.TXT");
         VSILFILE *fp = nullptr;
-
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
+#ifdef EMBED_RESOURCE_FILES
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+#endif
+        const char *pszFilename = CPLFindFile("etc", "LICENSE.TXT");
         if (pszFilename != nullptr)
             fp = VSIFOpenL(pszFilename, "r");
-
         if (fp != nullptr)
         {
             if (VSIFSeekL(fp, 0, SEEK_END) == 0)
@@ -2845,6 +2859,14 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 
             CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         }
+#endif
+
+#ifdef EMBED_RESOURCE_FILES
+        if (!fp)
+        {
+            return GDALGetEmbeddedLicense();
+        }
+#endif
 
         if (!pszResultLicence)
         {
@@ -2856,6 +2878,7 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 
         CPLSetTLS(CTLS_VERSIONINFO_LICENCE, pszResultLicence, TRUE);
         return pszResultLicence;
+#endif
     }
 
     /* -------------------------------------------------------------------- */
@@ -3461,6 +3484,64 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
     /* ==================================================================== */
     /*      Loop over all arguments.                                        */
     /* ==================================================================== */
+
+    // Start with --debug, so that "my_command --config UNKNOWN_CONFIG_OPTION --debug on"
+    // detects and warns about a unknown config option.
+    for (iArg = 1; iArg < nArgc; iArg++)
+    {
+        if (EQUAL(papszArgv[iArg], "--config") && iArg + 2 < nArgc &&
+            EQUAL(papszArgv[iArg + 1], "CPL_DEBUG"))
+        {
+            if (iArg + 1 >= nArgc)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "--config option given without a key=value argument.");
+                return -1;
+            }
+
+            const char *pszArg = papszArgv[iArg + 1];
+            if (strchr(pszArg, '=') != nullptr)
+            {
+                char *pszKey = nullptr;
+                const char *pszValue = CPLParseNameValue(pszArg, &pszKey);
+                if (pszKey && !EQUAL(pszKey, "CPL_DEBUG") && pszValue)
+                {
+                    CPLSetConfigOption(pszKey, pszValue);
+                }
+                CPLFree(pszKey);
+                ++iArg;
+            }
+            else
+            {
+                if (iArg + 2 >= nArgc)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "--config option given without a key and value "
+                             "argument.");
+                    return -1;
+                }
+
+                if (!EQUAL(papszArgv[iArg + 1], "CPL_DEBUG"))
+                    CPLSetConfigOption(papszArgv[iArg + 1],
+                                       papszArgv[iArg + 2]);
+
+                iArg += 2;
+            }
+        }
+        else if (EQUAL(papszArgv[iArg], "--debug"))
+        {
+            if (iArg + 1 >= nArgc)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "--debug option given without debug level.");
+                return -1;
+            }
+
+            CPLSetConfigOption("CPL_DEBUG", papszArgv[iArg + 1]);
+            iArg += 1;
+        }
+    }
+
     for (iArg = 1; iArg < nArgc; iArg++)
     {
         /* --------------------------------------------------------------------
@@ -3515,7 +3596,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             {
                 char *pszKey = nullptr;
                 const char *pszValue = CPLParseNameValue(pszArg, &pszKey);
-                if (pszKey && pszValue)
+                if (pszKey && !EQUAL(pszKey, "CPL_DEBUG") && pszValue)
                 {
                     CPLSetConfigOption(pszKey, pszValue);
                 }
@@ -3532,7 +3613,9 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                     return -1;
                 }
 
-                CPLSetConfigOption(papszArgv[iArg + 1], papszArgv[iArg + 2]);
+                if (!EQUAL(papszArgv[iArg + 1], "CPL_DEBUG"))
+                    CPLSetConfigOption(papszArgv[iArg + 1],
+                                       papszArgv[iArg + 2]);
 
                 iArg += 2;
             }
@@ -3608,7 +3691,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 return -1;
             }
 
-            CPLSetConfigOption("CPL_DEBUG", papszArgv[iArg + 1]);
             iArg += 1;
         }
 
@@ -3696,15 +3778,17 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
         /*      --formats */
         /* --------------------------------------------------------------------
          */
-        else if (EQUAL(papszArgv[iArg], "--formats"))
+        else if (EQUAL(papszArgv[iArg], "--formats") ||
+                 EQUAL(papszArgv[iArg], "--drivers"))
         {
             if (nOptions == 0)
                 nOptions = GDAL_OF_RASTER;
 
-            bool bJSON = false;
+            bool bJSON = EQUAL(papszArgv[iArg], "--drivers");
             for (int i = 1; i < nArgc; i++)
             {
-                if (strcmp(papszArgv[i], "-json") == 0)
+                if (strcmp(papszArgv[i], "-json") == 0 ||
+                    strcmp(papszArgv[i], "--json") == 0)
                 {
                     bJSON = true;
                     break;

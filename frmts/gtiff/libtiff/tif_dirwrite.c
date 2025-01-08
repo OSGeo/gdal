@@ -562,6 +562,8 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
             tif->tif_dir.td_dirdatasize_write = 0;
         if (isimage)
         {
+            /*-- Step 1: Process named tags for an image with FIELD bits
+             *           assocciated. --*/
             if (TIFFFieldSet(tif, FIELD_IMAGEDIMENSIONS))
             {
                 if (!TIFFWriteDirectoryTagShortLong(tif, &ndir, dir,
@@ -860,6 +862,10 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                 if (!TIFFWriteDirectoryTagSubifd(tif, &ndir, dir))
                     goto bad;
             }
+            /*-- Step 2: Process named tags for an image with FIELD bits
+                         added by a codec.
+                         Attention: There is only code for some field_types,
+                         which are actually used by current codecs. --*/
             {
                 uint32_t n;
                 for (n = 0; n < tif->tif_nfields; n++)
@@ -879,7 +885,7 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                                 assert(o->field_readcount == TIFF_VARIABLE);
                                 assert(o->field_passcount == 0);
                                 TIFFGetField(tif, o->field_tag, &pb);
-                                pa = (uint32_t)(strlen(pb));
+                                pa = (uint32_t)(strlen(pb) + 1);
                                 if (!TIFFWriteDirectoryTagAscii(
                                         tif, &ndir, dir, (uint16_t)o->field_tag,
                                         pa, pb))
@@ -938,6 +944,8 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                 }
             }
         }
+        /*-- Step 3: Process custom tags without FIELD bit for an image
+         *           or for custom IFDs (e.g. EXIF) with !isimage. --*/
         for (m = 0; m < (uint32_t)(tif->tif_dir.td_customValueCount); m++)
         {
             uint16_t tag =

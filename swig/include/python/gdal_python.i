@@ -1,5 +1,4 @@
 /*
- * $Id$
  *
  * python specific code for gdal bindings.
  */
@@ -1624,13 +1623,29 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         self._child_references.add(val)
 %}
 
-%feature("pythonprepend") Close %{
-    self._invalidate_children()
-%}
+%feature("shadow") Close %{
+    def Close(self, *args):
+        r"""
+        Close(Dataset self) -> CPLErr
 
-%feature("pythonappend") Close %{
-    self.thisown = 0
-    self.this = None
+        Closes opened dataset and releases allocated resources.
+
+        This method can be used to force the dataset to close
+        when one more references to the dataset are still
+        reachable. If :py:meth:`Close` is never called, the dataset will
+        be closed automatically during garbage collection.
+
+        In most cases, it is preferable to open or create a dataset
+        using a context manager instead of calling :py:meth:`Close`
+        directly.
+        """
+
+        self._invalidate_children()
+        try:
+            return _gdal.Dataset_Close(self, *args)
+        finally:
+            self.thisown = 0
+            self.this = None
 %}
 
 %feature("shadow") ExecuteSQL %{
@@ -2507,6 +2522,7 @@ def TranslateOptions(options=None, format=None,
               noData=None, rgbExpand=None,
               stats = False, rat = True, xmp = True, resampleAlg=None,
               overviewLevel = 'AUTO',
+              colorInterpretation=None,
               callback=None, callback_data=None,
               domainMetadataOptions = None):
     """Create a TranslateOptions() object that can be passed to gdal.Translate()
@@ -2577,6 +2593,8 @@ def TranslateOptions(options=None, format=None,
         resampling mode
     overviewLevel:
         To specify which overview level of source files must be used
+    colorInterpretation:
+        Band color interpretation, as a single value or a list, of the following values ("red", "green", "blue", "alpha", "grey", "undefined", etc.) or their GCI_xxxx symbolic names
     callback:
         callback method
     callback_data:
@@ -2694,6 +2712,13 @@ def TranslateOptions(options=None, format=None,
                 overviewLevel = str(overviewLevel)
         else:
             overviewLevel = None
+        if colorInterpretation is not None:
+            def colorInterpAsString(x):
+                return GetColorInterpretationName(x) if isinstance(x, int) else x
+            if isinstance(colorInterpretation, list):
+                new_options += ['-colorinterp', ','.join([colorInterpAsString(x) for x in colorInterpretation])]
+            else:
+                new_options += ['-colorinterp', colorInterpAsString(colorInterpretation)]
 
         if overviewLevel is not None and overviewLevel != 'AUTO':
             new_options += ['-ovr', overviewLevel]
@@ -3051,6 +3076,7 @@ def VectorTranslateOptions(options=None, format=None,
          coordinateOperation=None,
          SQLStatement=None, SQLDialect=None, where=None, selectFields=None,
          addFields=False,
+         relaxedFieldNameMatch=False,
          forceNullable=False,
          emptyStrAsNull=False,
          spatFilter=None, spatSRS=None,
@@ -3117,6 +3143,8 @@ def VectorTranslateOptions(options=None, format=None,
     addFields:
         whether to add new fields found in source layers (to be used with
         accessMode == 'append' or 'upsert')
+    relaxedFieldNameMatch:
+        Do field name matching between source and existing target layer in a more relaxed way if the target driver has an implementation for it.
     forceNullable:
         whether to drop NOT NULL constraints on newly created fields
     emptyStrAsNull:
@@ -3263,6 +3291,8 @@ def VectorTranslateOptions(options=None, format=None,
                 raise Exception('unhandled accessMode')
         if addFields:
             new_options += ['-addfields']
+        if relaxedFieldNameMatch:
+            new_options += ['-relaxedFieldNameMatch']
         if forceNullable:
             new_options += ['-forceNullable']
         if emptyStrAsNull:
@@ -4536,7 +4566,7 @@ def TileIndexOptions(options=None,
     outputBounds:
         output bounds as [minx, miny, maxx, maxy]
     colorInterpretation:
-        tile color interpretation, as a single value or a list, of the following values: "red", "green", "blue", "alpha", "grey", "undefined"
+        Tile color interpretation, as a single value or a list, of the following values ("red", "green", "blue", "alpha", "grey", "undefined", etc.) or their GCI_xxxx symbolic names
     noData:
         tile nodata value, as a single value or a list
     bandCount:
@@ -4609,10 +4639,12 @@ def TileIndexOptions(options=None,
         if outputBounds is not None:
             new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
         if colorInterpretation is not None:
-            if isinstance(noData, list):
-                new_options += ['-colorinterp', ','.join(colorInterpretation)]
+            def colorInterpAsString(x):
+                return GetColorInterpretationName(x) if isinstance(x, int) else x
+            if isinstance(colorInterpretation, list):
+                new_options += ['-colorinterp', ','.join([colorInterpAsString(x) for x in colorInterpretation])]
             else:
-                new_options += ['-colorinterp', colorInterpretation]
+                new_options += ['-colorinterp', colorInterpAsString(colorInterpretation)]
         if noData is not None:
             if isinstance(noData, list):
                 new_options += ['-nodata', ','.join([_strHighPrec(x) for x in noData])]
@@ -4991,3 +5023,207 @@ def InterpolateAtPoint(self, *args, **kwargs):
     else:
         return ret[1]
 %}
+
+%feature("shadow") ComputeMinMaxLocation %{
+def ComputeMinMaxLocation(self, *args, **kwargs):
+    """Compute the min/max values for a band, and their location.
+
+       Pixels whose value matches the nodata value or are masked by the mask
+       band are ignored.
+
+       If the minimum or maximum value is hit in several locations, it is not
+       specified which one will be returned.
+
+       This is a mapping of :cpp:func:`GDALRasterBand::ComputeRasterMinMaxLocation`.
+
+       Parameters
+       ----------
+       None
+
+       Returns
+       -------
+       a named tuple (min, max, minX, minY, maxX, maxY) or or ``None``
+       in case of error or no valid pixel.
+    """
+
+    ret = $action(self, *args, **kwargs)
+    if ret[0] != CE_None:
+        return None
+
+    import collections
+    tuple = collections.namedtuple('ComputeMinMaxLocationResult',
+            ['min',
+             'max',
+             'minX',
+             'minY',
+             'maxX',
+             'maxY',
+             ])
+    tuple.min = ret[1]
+    tuple.max = ret[2]
+    tuple.minX = ret[3]
+    tuple.minY = ret[4]
+    tuple.maxX = ret[5]
+    tuple.maxY = ret[6]
+    return tuple
+%}
+
+%pythoncode %{
+
+# VSIFile: Copyright (c) 2024, Dan Baston <dbaston at gmail.com>
+
+from io import BytesIO
+
+class VSIFile(BytesIO):
+    """Class wrapping a GDAL VSILFILE instance as a Python BytesIO instance
+
+       :since: GDAL 3.11
+    """
+
+    def __init__(self, path, mode, encoding="utf-8"):
+        self._path = path
+        self._mode = mode
+
+        self._binary = "b" in mode
+        self._encoding = encoding
+
+        self._fp = VSIFOpenExL(self._path, self._mode, True)
+        if self._fp is None:
+            self._closed = True
+            raise OSError(VSIGetLastErrorMsg())
+
+        self._closed = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        line = CPLReadLineL(self._fp)
+        if line is None:
+            raise StopIteration
+        if self._binary:
+            return line.encode()
+        return line
+
+    def close(self):
+        if self._closed:
+            return
+
+        self._closed = True
+        VSIFCloseL(self._fp)
+
+    def read(self, size=-1):
+        if size == -1:
+            pos = self.tell()
+            self.seek(0, 2)
+            size = self.tell()
+            self.seek(pos)
+
+        raw = VSIFReadL(1, size, self._fp)
+
+        if self._binary:
+            return bytes(raw)
+        else:
+            return raw.decode(self._encoding)
+
+    def write(self, x):
+
+        if self._binary:
+            assert type(x) in (bytes, bytearray, memoryview)
+        else:
+            assert type(x) is str
+            x = x.encode(self._encoding)
+
+        planned_write = len(x)
+        actual_write = VSIFWriteL(x, 1, planned_write, self._fp)
+
+        if planned_write != actual_write:
+            raise OSError(
+                f"Expected to write {planned_write} bytes but {actual_write} were written"
+            )
+
+    def seek(self, offset, whence=0):
+        # We redefine the docstring since otherwise breathe would complain on the one coming from BytesIO.seek()
+        """Change stream position.
+
+           Seek to byte offset pos relative to position indicated by whence:
+
+           - 0: Start of stream (the default).  pos should be >= 0;
+           - 1: Current position - pos may be negative;
+           - 2: End of stream - pos usually negative.
+
+           Returns the new absolute position.
+        """
+
+        if VSIFSeekL(self._fp, offset, whence) != 0:
+            raise OSError(VSIGetLastErrorMsg())
+
+    def tell(self):
+        return VSIFTellL(self._fp)
+%}
+
+/* -------------------------------------------------------------------- */
+/* GDALAlgorithmArgHS                                                   */
+/* -------------------------------------------------------------------- */
+
+%extend GDALAlgorithmArgHS {
+%pythoncode %{
+
+    def Get(self):
+        type = self.GetType()
+        if type == GAAT_BOOLEAN:
+            return self.GetAsBoolean()
+        if type == GAAT_STRING:
+            return self.GetAsString()
+        if type == GAAT_INTEGER:
+            return self.GetAsInteger()
+        if type == GAAT_REAL:
+            return self.GetAsDouble()
+        if type == GAAT_DATASET:
+            return self.GetAsDatasetValue()
+        if type == GAAT_STRING_LIST:
+            return self.GetAsStringList()
+        if type == GAAT_INTEGER_LIST:
+            return self.GetAsIntegerList()
+        if type == GAAT_REAL_LIST:
+            return self.GetAsDoubleList()
+        raise Exception("Unhandled algorithm argument data type")
+
+    def Set(self, value):
+        type = self.GetType()
+        if type == GAAT_BOOLEAN:
+            return self.SetAsBoolean(value)
+        if type == GAAT_STRING:
+            return self.SetAsString(value)
+        if type == GAAT_INTEGER:
+            return self.SetAsInteger(value)
+        if type == GAAT_REAL:
+            return self.SetAsDouble(value)
+        if type == GAAT_DATASET:
+            if isinstance(value, str):
+                return self.GetAsDatasetValue().SetName(value)
+            elif isinstance(value, Dataset):
+                return self.GetAsDatasetValue().SetDataset(value)
+            else:
+                return self.SetAsDatasetValue(value)
+        if type == GAAT_STRING_LIST:
+            return self.SetAsStringList(value)
+        if type == GAAT_INTEGER_LIST:
+            return self.SetAsIntegerList(value)
+        if type == GAAT_REAL_LIST:
+            return self.SetAsDoubleList(value)
+        if type == GAAT_DATASET_LIST:
+            if isinstance(value[0], str):
+                return self.SetDatasetNames(value)
+            elif isinstance(value[0], Dataset):
+                return self.SetDatasets(value)
+        raise Exception("Unhandled algorithm argument data type")
+
+%}
+}

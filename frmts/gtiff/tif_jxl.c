@@ -98,8 +98,16 @@ static int GetJXLDataType(TIFF *tif)
         return JXL_TYPE_FLOAT;
     }
 
-    TIFFErrorExtR(tif, module,
-                  "Unsupported combination of SampleFormat and BitsPerSample");
+    if (td->td_sampleformat == SAMPLEFORMAT_IEEEFP &&
+        td->td_bitspersample == 16)
+    {
+        return JXL_TYPE_FLOAT16;
+    }
+
+    TIFFErrorExtR(
+        tif, module,
+        "Unsupported combination of SampleFormat(=%d) and BitsPerSample(=%d)",
+        td->td_sampleformat, td->td_bitspersample);
     return -1;
 }
 
@@ -113,6 +121,8 @@ static int GetJXLDataTypeSize(JxlDataType dtype)
             return 2;
         case JXL_TYPE_FLOAT:
             return 4;
+        case JXL_TYPE_FLOAT16:
+            return 2;
         default:
             return 0;
     }
@@ -811,7 +821,10 @@ static int JXLPostEncode(TIFF *tif)
     basic_info.orientation = JXL_ORIENT_IDENTITY;
     if (td->td_sampleformat == SAMPLEFORMAT_IEEEFP)
     {
-        basic_info.exponent_bits_per_sample = 8;
+        if (td->td_bitspersample == 32)
+            basic_info.exponent_bits_per_sample = 8;
+        else
+            basic_info.exponent_bits_per_sample = 5;
     }
     else
     {
@@ -1275,7 +1288,7 @@ int TIFFInitJXL(TIFF *tif, int scheme)
     JXLState *sp;
 
     (void)scheme;
-    assert(scheme == COMPRESSION_JXL);
+    assert(scheme == COMPRESSION_JXL || scheme == COMPRESSION_JXL_DNG_1_7);
 
     /*
      * Merge codec-specific tag information.

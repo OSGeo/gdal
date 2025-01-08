@@ -2,7 +2,7 @@
 # so any change in dependencies locations might have to be reflected in
 # coverity_scan/build/sh as well
 
-FROM ubuntu:20.04
+FROM ubuntu:20.04@sha256:8e5c4f0285ecbb4ead070431d29b576a530d3166df73ec44affc1cd27555141b
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -200,7 +200,7 @@ RUN curl -v -j -k -s -L -H "Cookie: eula_3_2_agreed=tools.hana.ondemand.com/deve
   && rm hanaclient*
 ENV PATH=/usr/sap/hdbclient:$PATH
 
-RUN python3 -m pip install hdbcli
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install hdbcli
 
 # Download and compile odbc-cpp-wrapper
 ENV ODBCCPP_VERSION=1.1
@@ -224,7 +224,7 @@ RUN wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | 
  && apt-get install -y -V libarrow-dev libparquet-dev libarrow-dataset-dev \
  && rm ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
  && rm -rf /var/lib/apt/lists/* \
- && python3 -m pip install pyarrow==11.0.0
+ && PYTHON_CMD=python3 && $PYTHON_CMD -m pip install pyarrow==11.0.0
 
 # Build libQB3
 # Used by the MRF driver
@@ -277,4 +277,4 @@ RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
 RUN ldconfig
 
 COPY requirements.txt /tmp/
-RUN python3 -m pip install -U -r /tmp/requirements.txt
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U -r /tmp/requirements.txt

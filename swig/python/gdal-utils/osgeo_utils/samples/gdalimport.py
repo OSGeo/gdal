@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # ******************************************************************************
-#  $Id$
 #
 #  Name:     gdalimport
 #  Project:  GDAL Python Interface

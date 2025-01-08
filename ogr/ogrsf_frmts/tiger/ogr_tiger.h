@@ -1,6 +1,5 @@
 /*-*-C++-*-*/
 /******************************************************************************
- * $Id$
  *
  * Project:  TIGER/Line Translator
  * Purpose:  Main declarations for Tiger translator.

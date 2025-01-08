@@ -1380,6 +1380,9 @@ GDALDriver *GDALPluginDriverProxy::GetRealDriver()
     }
     else
     {
+#ifdef GDAL_NO_AUTOLOAD
+        return nullptr;
+#else
         CPLString osFuncName;
         if (STARTS_WITH(m_osPluginFileName.c_str(), "gdal_"))
         {
@@ -1443,6 +1446,7 @@ GDALDriver *GDALPluginDriverProxy::GetRealDriver()
                 poDriverManager->m_oMapRealDrivers.erase(oIter);
             }
         }
+#endif  // GDAL_NO_AUTOLOAD
     }
 
     if (m_poRealDriver)
@@ -1668,6 +1672,19 @@ void GDALDriverManager::DeclareDeferredPluginDriver(
 
     if (osFullPath.empty())
     {
+        // Do not try to re-register a non-existent deferred plugin
+        // This would cause memory leaks in case of repeated calls to GDALAllRegister()
+        // Cf https://github.com/rasterio/rasterio/issues/3250
+        for (const auto &poDriver : m_aoHiddenDrivers)
+        {
+            if (EQUAL(poDriver->GetDescription(),
+                      poProxyDriver->GetDescription()))
+            {
+                delete poProxyDriver;
+                return;
+            }
+        }
+
         CPLDebug("GDAL",
                  "Proxy driver %s *not* registered due to %s not being found",
                  poProxyDriver->GetDescription(), pszPluginFileName);

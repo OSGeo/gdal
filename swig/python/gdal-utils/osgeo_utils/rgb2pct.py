@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # ******************************************************************************
-#  $Id$
 #
 #  Name:     rgb2pct
 #  Project:  GDAL Python Interface

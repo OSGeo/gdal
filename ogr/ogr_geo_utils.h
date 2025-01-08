@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  X-Plane aeronautical data reader
  * Purpose:  Definition of geo-computation functions

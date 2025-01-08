@@ -147,10 +147,10 @@ curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.13.2.tar.
 rm -rf poppler
 # Poppler git server is too unreliable. Use a snapshot of a given version
 #git clone --depth 1 https://anongit.freedesktop.org/git/poppler/poppler.git poppler
-curl -L https://poppler.freedesktop.org/poppler-24.09.0.tar.xz > poppler-24.09.0.tar.xz && \
-    tar xJf poppler-24.09.0.tar.xz && \
-    mv poppler-24.09.0 poppler && \
-    rm poppler-24.09.0.tar.xz
+curl -L https://poppler.freedesktop.org/poppler-24.10.0.tar.xz > poppler-24.10.0.tar.xz && \
+    tar xJf poppler-24.10.0.tar.xz && \
+    mv poppler-24.10.0 poppler && \
+    rm poppler-24.10.0.tar.xz
 
 # Build xerces-c from source to avoid upstream bugs
 rm -rf xerces-c

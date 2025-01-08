@@ -1,0 +1,9 @@
+!table
+!version 300
+!charset Neutral
+
+Definition Table
+  Type DBF Charset "Neutral"
+  Fields 2
+    id Integer (9) ;
+    str Char (80) ;

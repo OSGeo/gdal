@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # ******************************************************************************
-#  $Id$
 #
 #  Project:  GDAL
 #  Purpose:  Convert GCPs to a point layer.

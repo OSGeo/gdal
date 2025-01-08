@@ -111,8 +111,6 @@ static bool KEACopyRasterData(GDALRasterBand *pBand,
     return true;
 }
 
-constexpr int RAT_CHUNKSIZE = 1000;
-
 // copies the raster attribute table
 static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO,
                        int nBand)
@@ -233,12 +231,12 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO,
         int numRows = gdalAtt->GetRowCount();
         keaAtt->addRows(numRows);
 
-        int *pnIntBuffer = new int[RAT_CHUNKSIZE];
-        int64_t *pnInt64Buffer = new int64_t[RAT_CHUNKSIZE];
-        double *pfDoubleBuffer = new double[RAT_CHUNKSIZE];
-        for (int ni = 0; ni < numRows; ni += RAT_CHUNKSIZE)
+        int *pnIntBuffer = new int[kealib::KEA_ATT_CHUNK_SIZE];
+        int64_t *pnInt64Buffer = new int64_t[kealib::KEA_ATT_CHUNK_SIZE];
+        double *pfDoubleBuffer = new double[kealib::KEA_ATT_CHUNK_SIZE];
+        for (int ni = 0; ni < numRows; ni += kealib::KEA_ATT_CHUNK_SIZE)
         {
-            int nLength = RAT_CHUNKSIZE;
+            int nLength = kealib::KEA_ATT_CHUNK_SIZE;
             if ((ni + nLength) > numRows)
             {
                 nLength = numRows - ni;

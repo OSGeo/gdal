@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Component: ODS formula Engine
  * Purpose: Implementation of the ods_formula_node class used to represent a

@@ -40,6 +40,10 @@ constexpr double VICAR_NULL3 = -32768.0;
 #include <limits>
 #include <string>
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 #if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
 /* GeoTIFF 1.0 geokeys */
 
@@ -1649,6 +1653,7 @@ void VICARDataset::BuildLabel()
 
     const auto eType = GetRasterBand(1)->GetRasterDataType();
     const char *pszFormat = "";
+    CPL_IGNORE_RET_VAL(pszFormat);  // Make CSA happy
     switch (eType)
     {
         case GDT_Byte:
@@ -2645,7 +2650,20 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
     if (nNBB != 0)
     {
         const char *pszBLType = poDS->GetKeyword("BLTYPE", nullptr);
+#ifdef USE_ONLY_EMBEDDED_RESOURCE_FILES
+        const char *pszVicarConf = nullptr;
+#else
         const char *pszVicarConf = CPLFindFile("gdal", "vicar.json");
+#endif
+        CPLJSONDocument oDoc;
+        if (!pszVicarConf || EQUAL(pszVicarConf, "vicar.json"))
+        {
+#ifdef EMBED_RESOURCE_FILES
+            oDoc.LoadMemory(VICARGetEmbeddedConf());
+            pszVicarConf = "__embedded__";
+#endif
+        }
+
         if (pszBLType && pszVicarConf && poDS->m_nRecordSize > 0)
         {
 
@@ -2687,8 +2705,7 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
                          "BREALFMT=%s layout not supported.", value);
             }
 
-            CPLJSONDocument oDoc;
-            if (oDoc.Load(pszVicarConf))
+            if (EQUAL(pszVicarConf, "__embedded__") || oDoc.Load(pszVicarConf))
             {
                 const auto oRoot = oDoc.GetRoot();
                 if (oRoot.GetType() == CPLJSONObject::Type::Object)

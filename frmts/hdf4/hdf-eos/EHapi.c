@@ -1,5 +1,4 @@
 /*****************************************************************************
- * $Id$
  *
  * This module has a number of additions and improvements over the original
  * implementation to be suitable for usage in GDAL HDF driver.
@@ -10,9 +9,9 @@
 /*
 Copyright (C) 1996 Hughes and Applied Research Corporation
 
-Permission to use, modify, and distribute this software and its documentation 
-for any purpose without fee is hereby granted, provided that the above 
-copyright notice appear in all copies and that both that copyright notice and 
+Permission to use, modify, and distribute this software and its documentation
+for any purpose without fee is hereby granted, provided that the above
+copyright notice appear in all copies and that both that copyright notice and
 this permission notice appear in supporting documentation.
 */
 
@@ -30,10 +29,10 @@ static int32 *EHXfidTable = NULL;
 static int32 *EHXsdTable = NULL;
 
 /* define a macro for the string size of the utility strings and some dimension
-   list strings. The value in previous versions of this code may not be 
-   enough in some cases. The length now is 512 which seems to be more than 
+   list strings. The value in previous versions of this code may not be
+   enough in some cases. The length now is 512 which seems to be more than
    enough to hold larger strings. */
-   
+
 #define UTLSTR_MAX_SIZE 512
 #define UTLSTRSIZE  32000
 
@@ -46,7 +45,6 @@ static int32 *EHXsdTable = NULL;
 #define MAX_RETRIES 10
 
 /* Function Prototypes */
-static intn EHmetalist(const char *, char *);
 static intn EHreset_maxopenfiles(intn);
 static intn EHget_maxopenfiles(intn *, intn *);
 static intn EHget_numfiles(void);
@@ -198,7 +196,7 @@ EHopen(const char *filename, intn access)
 		    /* ------------------------- */
 		    metabuf = (char *) calloc(32000, 1);
 		    if(metabuf == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"EHopen", __FILE__, __LINE__);
 			return(-1);
 		    }
@@ -237,7 +235,7 @@ EHopen(const char *filename, intn access)
 		/* Get HDF file ID */
 		/* --------------- */
 #ifndef _PGS_OLDNFS
-/* The following loop around the function Hopen is intended to deal with the NFS cache 
+/* The following loop around the function Hopen is intended to deal with the NFS cache
    problem when opening file fails with errno = 150 or 151. When NFS cache is updated,
    this part of change is no longer necessary.              10/18/1999   */
                 retryCount = 0;
@@ -271,7 +269,7 @@ EHopen(const char *filename, intn access)
                     {
                        /* Set HDFEOS version number in file */
                        /* --------------------------------- */
-		      
+
 		      attrIndex = SDfindattr(sdInterfaceID, "HDFEOSVersion");
 		      if (attrIndex == -1)
 			{
@@ -294,7 +292,7 @@ EHopen(const char *filename, intn access)
 		       {
 			  metabuf = (char *) calloc(32000, 1);
 			  if(metabuf == NULL)
-			  { 
+			  {
 			      HEpush(DFE_NOSPACE,"EHopen", __FILE__, __LINE__);
 			      return(-1);
 			  }
@@ -344,7 +342,7 @@ EHopen(const char *filename, intn access)
 		/* Get HDF file ID */
 		/* --------------- */
 #ifndef _PGS_OLDNFS
-/* The following loop around the function Hopen is intended to deal with the NFS cache 
+/* The following loop around the function Hopen is intended to deal with the NFS cache
    problem when opening file fails with errno = 150 or 151. When NFS cache is updated,
    this part of change is no longer necessary.              10/18/1999   */
                 retryCount = 0;
@@ -371,10 +369,7 @@ EHopen(const char *filename, intn access)
 		    fid = -1;
 		    status = -1;
 		    HEpush(DFE_FNF, "EHopen", __FILE__, __LINE__);
-		    strcpy(errbuf, "\"");
-		    strcat(errbuf, filename);
-		    strcat(errbuf, "\" (opened for READONLY access)");
-		    strcat(errbuf, " does not exist.");
+            snprintf(errbuf, sizeof(errbuf), "\"%s\" (opened for READONLY access) does not exist.", filename);
 		    HEreport("%s\n", errbuf);
 		} else
 		{
@@ -386,7 +381,7 @@ EHopen(const char *filename, intn access)
                         /* ------------------------- */
                         if (sdInterfaceID != -1)
                         {
- 
+
 		           /* Set open access to read-only */
 		           /* ---------------------------- */
 		           acs = 0;
@@ -581,53 +576,6 @@ EHidinfo(int32 fid, int32 * HDFfid, int32 * sdInterfaceID)
 
     return (status);
 }
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: EHfilename                                                       |
-|                                                                             |
-|  DESCRIPTION: Returns HDF filename                                          |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  fid            int32               HDF-EOS file id                         |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|  filename       char                HDF-EOS file name                       |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Sep 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-EHfilename(int32 fid, char *filename)
-{
-    intn            status = 0;	/* routine return status variable */
-    intn            dum;	/* Dummy variable */
-
-    char           *fname;	/* Pointer to filename */
-
-    /* Get point to filename from Hfidinquire */
-    /* -------------------------------------- */
-    Hfidinquire(EHXfidTable[fid % EHIDOFFSET], &fname, &dum, &dum);
-    strcpy(filename, fname);
-
-    return (status);
-}
-
-
 
 
 /*----------------------------------------------------------------------------|
@@ -1012,13 +960,13 @@ EHstrwithin(const char *target, const char *search, const char delim)
     /* ----------------------------------------- */
     ptr = (char **) calloc(nentries, sizeof(char *));
     if(ptr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHstrwithin", __FILE__, __LINE__);
 	return(-1);
     }
     slen = (int32 *) calloc(nentries, sizeof(int32));
     if(slen == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHstrwithin", __FILE__, __LINE__);
 	free(ptr);
 	return(-1);
@@ -1200,13 +1148,13 @@ EHgetid(int32 fid, int32 vgid, const char *objectname, intn code,
 	/* ---------------------------------- */
 	tags = (int32 *) malloc(sizeof(int32) * nObjects);
 	if(tags == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"EHgetid", __FILE__, __LINE__);
 	    return(-1);
 	}
 	refs = (int32 *) malloc(sizeof(int32) * nObjects);
 	if(refs == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"EHgetid", __FILE__, __LINE__);
 	    free(tags);
 	    return(-1);
@@ -1332,7 +1280,7 @@ EHrevflds(const char *dimlist, char *revdimlist)
     /* ------------------------------ */
     tempdimlist = (char *) malloc(strlen(dimlist) + 1);
     if(tempdimlist == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHrevflds", __FILE__, __LINE__);
 	return(-1);
     }
@@ -1348,14 +1296,14 @@ EHrevflds(const char *dimlist, char *revdimlist)
     /* ----------------------------------------- */
     ptr = (char **) calloc(nentries, sizeof(char *));
     if(ptr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHrevflds", __FILE__, __LINE__);
 	free(tempdimlist);
 	return(-1);
     }
     slen = (int32 *) calloc(nentries, sizeof(int32));
     if(slen == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHrevflds", __FILE__, __LINE__);
 	free(ptr);
 	free(tempdimlist);
@@ -1397,975 +1345,6 @@ EHrevflds(const char *dimlist, char *revdimlist)
 
     return (status);
 }
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: EHcntOBJECT                                                      |
-|                                                                             |
-|  DESCRIPTION: Determines number of OBJECTs in metadata GROUP                |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  count          int32               Number of OBJECTs in GROUP              |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  metabuf        char                Begin & end metadata pointer array      |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|             None                                                            |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Sep 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-int32
-EHcntOBJECT(char *metabuf[])
-{
-    int32           count = 0;	/* Counter */
-
-    char           *metaptr;	/* Beginning of metadata section */
-    char           *endptr;	/* End of metadata section */
-    char           *tempptr;	/* Pointer within metadata section */
-
-
-    /* Get Pointers to beginning and ending of metadata section */
-    /* -------------------------------------------------------- */
-    metaptr = metabuf[0];
-    endptr = metabuf[1];
-
-
-    /* Find number of "END_OBJECT" strings within section */
-    /* -------------------------------------------------- */
-    tempptr = metaptr;
-    while (tempptr < endptr && tempptr != NULL)
-    {
-	tempptr = strstr(tempptr + 1, "END_OBJECT");
-	count++;
-    }
-    count--;
-
-    return (count);
-}
-
-
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: EHcntGROUP                                                       |
-|                                                                             |
-|  DESCRIPTION: Determines number of GROUPs in metadata GROUP                 |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  count          int32               Number of GROUPs in GROUP               |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  metabuf        char                Begin & end metadata pointer array      |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|             None                                                            |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Sep 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-int32
-EHcntGROUP(char *metabuf[])
-{
-    int32           count = 0;	/* Counter */
-
-    char           *metaptr;	/* Beginning of metadata section */
-    char           *endptr;	/* End of metadata section */
-    char           *tempptr;	/* Pointer within metadata section */
-
-
-    /* Get Pointers to beginning and ending of metadata section */
-    /* -------------------------------------------------------- */
-    metaptr = metabuf[0];
-    endptr = metabuf[1];
-
-
-    /* Find number of "END_GROUP" strings within section */
-    /* ------------------------------------------------- */
-    tempptr = metaptr;
-    while (tempptr < endptr && tempptr != NULL)
-    {
-	tempptr = strstr(tempptr + 1, "END_GROUP");
-	count++;
-    }
-    count--;
-
-    return (count);
-}
-
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: EHmetalist                                                       |
-|                                                                             |
-|  DESCRIPTION: Converts string list to metadata list                         |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  instring       char                Input string list                       |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|  outstring      char                Output metadata string                  |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Jun 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-EHmetalist(const char *instring, char *outstring)
-{
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
-
-    int32           nentries;	/* Number of entries in search string */
-    int32           listlen = 1;/* String list length */
-    int32          *slen;	/* Pointer to string length array */
-
-    char          **ptr;	/* Pointer to string pointer array */
-
-
-    /* Count number of entries in search string list */
-    /* --------------------------------------------- */
-    nentries = EHparsestr(instring, ',', NULL, NULL);
-
-
-    /* Allocate string pointer and length arrays */
-    /* ----------------------------------------- */
-    ptr = (char **) calloc(nentries, sizeof(char *));
-    if(ptr == NULL)
-    { 
-	HEpush(DFE_NOSPACE,"EHmetalist", __FILE__, __LINE__);
-	return(-1);
-    }
-    slen = (int32 *) calloc(nentries, sizeof(int32));
-    if(slen == NULL)
-    { 
-	HEpush(DFE_NOSPACE,"EHmetalist", __FILE__, __LINE__);
-	free(ptr);
-	return(-1);
-    }
-
-
-    /* Parse input string */
-    /* ------------------ */
-    nentries = EHparsestr(instring, ',', ptr, slen);
-
-
-    /* Start output string with leading "(" */
-    /* ------------------------------------ */
-    strcpy(outstring, "(");
-
-
-    /* Loop through all entries */
-    /* ------------------------ */
-    for (i = 0; i < nentries; i++)
-    {
-	/* Add double quote (") to output string */
-	/* ------------------------------------- */
-	strcat(outstring, "\"");
-	listlen++;
-
-	/* Add input string entry to output string */
-	/* --------------------------------------- */
-	memcpy(outstring + listlen, ptr[i], slen[i]);
-	listlen += slen[i];
-	outstring[listlen] = 0;
-
-
-	/* Add closing double quote (") to output string */
-	/* --------------------------------------------- */
-	strcat(outstring, "\"");
-	listlen++;
-	outstring[listlen] = 0;
-
-
-	/* Add comma delimiter to output string */
-	/* ------------------------------------ */
-	if (i != (nentries - 1))
-	{
-	    strcat(outstring, ",");
-	    listlen++;
-	}
-	/* Place null terminator in output string */
-	/* -------------------------------------- */
-	outstring[listlen] = 0;
-    }
-
-
-    /* End output string with trailing ")" */
-    /* ----------------------------------- */
-    strcat(outstring, ")");
-
-    free(ptr);
-    free(slen);
-
-    return (status);
-}
-
-
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: EHinsertmeta                                                     |
-|                                                                             |
-|  DESCRIPTION: Writes metadata                                               |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  sdInterfaceID  int32               SDS interface ID                        |
-|  structname     char                HDF-EOS structure name                  |
-|  structcode     char                Structure code ("s/g/p")                |
-|  metacode       int32               Metadata code type                      |
-|  metastr        char                Metadata input string                   |
-|  metadata       int32               Metadata utility array                  |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|             None                                                            |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Jun 96   Joel Gales    Original Programmer                                 |
-|  Aug 96   Joel Gales    Make metadata ODL compliant                         |
-|  Sep 96   Joel Gales    Allow new metadata object to be written in          |
-|                         old metadata.                                       |
-|  Dec 96   Joel Gales    Fix Point metadata problem                          |
-|  Oct 98   David Wynne   Change utlstr/utlstr2 to dynamic allocation from    |
-|                         static                                              |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-EHinsertmeta(int32 sdInterfaceID, const char *structname, const char *structcode,
-	     int32 metacode, char *metastr, int32 metadata[])
-{
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
-
-    int32           attrIndex;	/* Structural metadata attribute index */
-    int32           slen[8];	/* String length array (for dim map parsing) */
-    int32           nmeta;	/* Number of 32000 byte metadata sections */
-    int32           metalen;	/* Length of structural metadata */
-    int32           seglen;	/* Length of metadata string to insert */
-    int32           count;	/* Objects/Groups counter */
-    int32           offset;	/* Offset insertion position of new metadata
-				 * section within existing metadata */
-
-    char           *metabuf;	/* Pointer (handle) to structural metadata */
-    char           *begptr;	/* Pointer to beginning of metadata section */
-    char           *metaptr;	/* Metadata pointer */
-    char           *prevmetaptr;/* Previous position of metadata pointer */
-    char           *ptr[8];	/* String pointer array (for dim map parsing) */
-    char            type[32];	/* Number type descriptor string */
-    char           *metaArr[2];	/* Array of metadata positions */
-    char           *colon;	/* Colon position */
-    char           *colon2;	/* 2nd colon position */
-    char           *slash;	/* Slash position */
-    char           *utlstr;	/* Utility string */
-    char           *utlstr2;	/* Utility string 2 */
-
-
-    /* Allocate space for utility strings */
-    /* ---------------------------------- */
-    utlstr = (char *) calloc(UTLSTRSIZE, sizeof(char));
-    if(utlstr == NULL)
-    { 
-	HEpush(DFE_NOSPACE,"EHinsertmeta", __FILE__, __LINE__);
-	return(-1);
-    }
-
-    utlstr2 = (char *) calloc(UTLSTRSIZE, sizeof(char));
-    if(utlstr2 == NULL)
-    { 
-	HEpush(DFE_NOSPACE,"EHinsertmeta", __FILE__, __LINE__);
-	free(utlstr);
-	return(-1);
-    }
-
-    /* Determine number of structural metadata "sections" */
-    /* -------------------------------------------------- */
-    nmeta = 0;
-    while (1)
-    {
-	/* Search for "StructMetadata.x" attribute */
-	/* --------------------------------------- */
-	snprintf(utlstr, UTLSTRSIZE, "%s%d", "StructMetadata.", (int)nmeta);
-	attrIndex = SDfindattr(sdInterfaceID, utlstr);
-
-
-	/* If found then increment metadata section counter else exit loop */
-	/* --------------------------------------------------------------- */
-	if (attrIndex != -1)
-	{
-	    nmeta++;
-	} else
-	{
-	    break;
-	}
-    }
-
-
-    /* Allocate space for metadata (in units of 32000 bytes) */
-    /* ----------------------------------------------------- */
-    metabuf = (char *) calloc(32000 * nmeta, 1);
-    if(metabuf == NULL)
-    { 
-	HEpush(DFE_NOSPACE,"EHinsertmeta", __FILE__, __LINE__);
-	free(utlstr);
-	free(utlstr2);
-	return(-1);
-    }
-
-
-    /* Read structural metadata */
-    /* ------------------------ */
-    for (i = 0; i < nmeta; i++)
-    {
-	snprintf(utlstr, UTLSTRSIZE, "%s%d", "StructMetadata.", i);
-	attrIndex = SDfindattr(sdInterfaceID, utlstr);
-	metalen = (int)strlen(metabuf);
-	SDreadattr(sdInterfaceID, attrIndex, metabuf + metalen);
-    }
-
-    /* Determine length (# of characters) of metadata */
-    /* ---------------------------------------------- */
-    metalen = (int)strlen(metabuf);
-
-
-
-    /* Find HDF-EOS structure "root" group in metadata */
-    /* ----------------------------------------------- */
-
-    /* Setup proper search string */
-    /* -------------------------- */
-    if (strcmp(structcode, "s") == 0)
-    {
-	strcpy(utlstr, "GROUP=SwathStructure");
-    } else if (strcmp(structcode, "g") == 0)
-    {
-	strcpy(utlstr, "GROUP=GridStructure");
-    } else if (strcmp(structcode, "p") == 0)
-    {
-	strcpy(utlstr, "GROUP=PointStructure");
-    }
-    /* Use string search routine (strstr) to move through metadata */
-    /* ----------------------------------------------------------- */
-    metaptr = strstr(metabuf, utlstr);
-
-
-
-    /* Find specific (named) structure */
-    /* ------------------------------- */
-    if (metacode < 1000)
-    {
-	/* Save current metadata pointer */
-	/* ----------------------------- */
-	prevmetaptr = metaptr;
-
-
-	/* First loop for "old-style" (non-ODL) metadata string */
-	/* ---------------------------------------------------- */
-	if (strcmp(structcode, "s") == 0)
-	{
-	    snprintf(utlstr, UTLSTRSIZE, "%s%s", "SwathName=\"", structname);
-	} else if (strcmp(structcode, "g") == 0)
-	{
-	    snprintf(utlstr, UTLSTRSIZE, "%s%s", "GridName=\"", structname);
-	} else if (strcmp(structcode, "p") == 0)
-	{
-	    snprintf(utlstr, UTLSTRSIZE, "%s%s", "PointName=\"", structname);
-	}
-	/* Do string search */
-	/* ---------------- */
-	metaptr = strstr(metaptr, utlstr);
-
-
-	/*
-	 * If not found then return to previous position in metadata and look
-	 * for "new-style" (ODL) metadata string
-	 */
-	if (metaptr == NULL)
-	{
-	    snprintf(utlstr, UTLSTRSIZE, "%s%s", "GROUP=\"", structname);
-	    metaptr = strstr(prevmetaptr, utlstr);
-	}
-    }
-    /*
-     * If searching for geo fields (3), data fields (4), or point fields (11)
-     * convert type code to string designator.
-     */
-    if (metacode == 3 || metacode == 4 || metacode == 11)
-    {
-	switch (metadata[0])
-	{
-	case 3:
-	    strcpy(type, "DFNT_UCHAR8");
-	    break;
-	case 4:
-	    strcpy(type, "DFNT_CHAR8");
-	    break;
-	case 5:
-	    strcpy(type, "DFNT_FLOAT32");
-	    break;
-	case 6:
-	    strcpy(type, "DFNT_FLOAT64");
-	    break;
-	case 20:
-	    strcpy(type, "DFNT_INT8");
-	    break;
-	case 21:
-	    strcpy(type, "DFNT_UINT8");
-	    break;
-	case 22:
-	    strcpy(type, "DFNT_INT16");
-	    break;
-	case 23:
-	    strcpy(type, "DFNT_UINT16");
-	    break;
-	case 24:
-	    strcpy(type, "DFNT_INT32");
-	    break;
-	case 25:
-	    strcpy(type, "DFNT_UINT32");
-	    break;
-	}
-    }
-    /* Metadata Section Switch */
-    /* ----------------------- */
-    switch (abs(metacode))
-    {
-
-    case 0:
-	/* Dimension Section */
-	/* ----------------- */
-
-	/* Find beginning and ending of metadata section */
-	/* --------------------------------------------- */
-	strcpy(utlstr, "\t\tGROUP=Dimension");
-	begptr = strstr(metaptr, utlstr);
-
-	strcpy(utlstr, "\t\tEND_GROUP=Dimension");
-	metaptr = strstr(metaptr, utlstr);
-
-
-	/* Count number of existing entries and increment */
-	/* ---------------------------------------------- */
-	metaArr[0] = begptr;
-	metaArr[1] = metaptr;
-	count = EHcntOBJECT(metaArr) + 1;
-
-
-	/* Build metadata entry string */
-	/* --------------------------- */
-	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%d%s%d%s",
-                "\t\t\tOBJECT=Dimension_", (int)count,
-		"\n\t\t\t\tDimensionName=\"", &metastr[0],
-		"\"\n\t\t\t\tSize=", (int)metadata[0],
-		"\n\t\t\tEND_OBJECT=Dimension_", (int)count, "\n");
-	break;
-
-
-    case 1:
-	/* Dimension Map Section */
-	/* --------------------- */
-
-	/* Find beginning and ending of metadata section */
-	/* --------------------------------------------- */
-	strcpy(utlstr, "\t\tGROUP=DimensionMap");
-	begptr = strstr(metaptr, utlstr);
-
-	strcpy(utlstr, "\t\tEND_GROUP=DimensionMap");
-	metaptr = strstr(metaptr, utlstr);
-
-
-	/* Count number of existing entries and increment */
-	/* ---------------------------------------------- */
-	metaArr[0] = begptr;
-	metaArr[1] = metaptr;
-	count = EHcntOBJECT(metaArr) + 1;
-
-
-	/* Find slash within input mapping string and replace with NULL */
-	/* ------------------------------------------------------------ */
-	EHparsestr(metastr, '/', ptr, slen);
-	metastr[slen[0]] = 0;
-
-
-	/* Build metadata entry string */
-	/* --------------------------- */
-	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%s%s%d%s%d%s%d%s",
-		"\t\t\tOBJECT=DimensionMap_", (int)count,
-		"\n\t\t\t\tGeoDimension=\"", &metastr[0],
-		"\"\n\t\t\t\tDataDimension=\"", &metastr[slen[0] + 1],
-		"\"\n\t\t\t\tOffset=", (int)metadata[0],
-		"\n\t\t\t\tIncrement=", (int)metadata[1],
-		"\n\t\t\tEND_OBJECT=DimensionMap_", (int)count, "\n");
-	break;
-
-
-    case 2:
-	/* Index Dimension Map Section */
-	/* --------------------------- */
-
-	/* Find beginning and ending of metadata section */
-	/* --------------------------------------------- */
-	strcpy(utlstr, "\t\tGROUP=IndexDimensionMap");
-	begptr = strstr(metaptr, utlstr);
-
-	strcpy(utlstr, "\t\tEND_GROUP=IndexDimensionMap");
-	metaptr = strstr(metaptr, utlstr);
-
-
-	/* Count number of existing entries and increment */
-	/* ---------------------------------------------- */
-	metaArr[0] = begptr;
-	metaArr[1] = metaptr;
-	count = EHcntOBJECT(metaArr) + 1;
-
-
-	/* Find slash within input mapping string and replace with NULL */
-	/* ------------------------------------------------------------ */
-	EHparsestr(metastr, '/', ptr, slen);
-	metastr[slen[0]] = 0;
-
-
-	/* Build metadata entry string */
-	/* --------------------------- */
-	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%s%s%d%s",
-		"\t\t\tOBJECT=IndexDimensionMap_", (int)count,
-		"\n\t\t\t\tGeoDimension=\"", &metastr[0],
-		"\"\n\t\t\t\tDataDimension=\"", &metastr[slen[0] + 1],
-		"\"\n\t\t\tEND_OBJECT=IndexDimensionMap_", (int)count, "\n");
-	break;
-
-
-    case 3:
-	/* Geolocation Field Section */
-	/* ------------------------- */
-
-	/* Find beginning and ending of metadata section */
-	/* --------------------------------------------- */
-	strcpy(utlstr, "\t\tGROUP=GeoField");
-	begptr = strstr(metaptr, utlstr);
-
-	strcpy(utlstr, "\t\tEND_GROUP=GeoField");
-	metaptr = strstr(metaptr, utlstr);
-
-
-	/* Count number of existing entries and increment */
-	/* ---------------------------------------------- */
-	metaArr[0] = begptr;
-	metaArr[1] = metaptr;
-	count = EHcntOBJECT(metaArr) + 1;
-
-
-	/* Find colon (parse off field name) */
-	/* --------------------------------- */
-	colon = strchr(metastr, ':');
-	*colon = 0;
-
-
-	/* Search for next colon (compression and/or tiling parameters) */
-	/* ------------------------------------------------------------ */
-	colon2 = strchr(colon + 1, ':');
-	if (colon2 != NULL)
-	{
-	    *colon2 = 0;
-	}
-	/* Make metadata string list for dimension list */
-	/* -------------------------------------------- */
-	EHmetalist(colon + 1, utlstr2);
-
-
-	/* Build metadata entry string */
-	/* --------------------------- */
-	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%s%s%s",
-		"\t\t\tOBJECT=GeoField_", (int)count,
-		"\n\t\t\t\tGeoFieldName=\"", metastr,
-		"\"\n\t\t\t\tDataType=", type,
-		"\n\t\t\t\tDimList=", utlstr2);
-
-
-	/* If compression and/or tiling parameters add to string */
-	/* ----------------------------------------------------- */
-	if (colon2 != NULL)
-	{
-	    strcat(utlstr, colon2 + 1);
-	}
-	/* Add END_OBJECT terminator to metadata string */
-	/* -------------------------------------------- */
-	snprintf(utlstr2, UTLSTRSIZE, "%s%d%s",
-		"\n\t\t\tEND_OBJECT=GeoField_", (int)count, "\n");
-	strcat(utlstr, utlstr2);
-
-	break;
-
-
-    case 4:
-	/* Data Field Section */
-	/* ------------------ */
-
-	/* Find beginning and ending of metadata section */
-	/* --------------------------------------------- */
-	strcpy(utlstr, "\t\tGROUP=DataField");
-	begptr = strstr(metaptr, utlstr);
-
-	strcpy(utlstr, "\t\tEND_GROUP=DataField");
-	metaptr = strstr(metaptr, utlstr);
-
-
-	/* Count number of existing entries and increment */
-	/* ---------------------------------------------- */
-	metaArr[0] = begptr;
-	metaArr[1] = metaptr;
-	count = EHcntOBJECT(metaArr) + 1;
-
-
-	/* Find colon (parse off field name) */
-	/* --------------------------------- */
-	colon = strchr(metastr, ':');
-	*colon = 0;
-
-
-	/* Search for next colon (compression and/or tiling parameters) */
-	/* ------------------------------------------------------------ */
-	colon2 = strchr(colon + 1, ':');
-	if (colon2 != NULL)
-	{
-	    *colon2 = 0;
-	}
-	/* Make metadata string list from dimension list */
-	/* --------------------------------------------- */
-	EHmetalist(colon + 1, utlstr2);
-
-
-	/* Build metadata entry string */
-	/* --------------------------- */
-	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%s%s%s",
-		"\t\t\tOBJECT=DataField_", (int)count,
-		"\n\t\t\t\tDataFieldName=\"", metastr,
-		"\"\n\t\t\t\tDataType=", type,
-		"\n\t\t\t\tDimList=", utlstr2);
-
-
-	/* If compression and/or tiling parameters add to string */
-	/* ----------------------------------------------------- */
-	if (colon2 != NULL)
-	{
-	    strcat(utlstr, colon2 + 1);
-	}
-	/* Add END_OBJECT terminator to metadata string */
-	/* -------------------------------------------- */
-	snprintf(utlstr2, UTLSTRSIZE, "%s%d%s",
-		"\n\t\t\tEND_OBJECT=DataField_", (int)count, "\n");
-	strcat(utlstr, utlstr2);
-
-	break;
-
-
-    case 6:
-	/* Merged Field Section */
-	/* -------------------- */
-
-	/* Find beginning and ending of metadata section */
-	/* --------------------------------------------- */
-	strcpy(utlstr, "\t\tGROUP=MergedFields");
-	begptr = strstr(metaptr, utlstr);
-
-	strcpy(utlstr, "\t\tEND_GROUP=MergedFields");
-	metaptr = strstr(metaptr, utlstr);
-
-
-	/* Count number of existing entries and increment */
-	/* ---------------------------------------------- */
-	metaArr[0] = begptr;
-	metaArr[1] = metaptr;
-	count = EHcntOBJECT(metaArr) + 1;
-
-
-	/* Find colon (parse off merged fieldname) */
-	/* --------------------------------------- */
-	colon = strchr(metastr, ':');
-
-
-	/* Make metadata string list from field list */
-	/* ----------------------------------------- */
-	EHmetalist(colon + 1, utlstr2);
-	*colon = 0;
-
-
-	/* Build metadata entry string */
-	/* --------------------------- */
-	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%s%s%s%d%s",
-		"\t\t\tOBJECT=MergedFields_", (int)count,
-		"\n\t\t\t\tMergedFieldName=\"", metastr, "\"",
-		"\n\t\t\t\tFieldList=", utlstr2,
-		"\n\t\t\tEND_OBJECT=MergedFields_", (int)count, "\n");
-	break;
-
-
-    case 10:
-	/* Point Level Section */
-	/* ------------------- */
-
-	/* Find beginning and ending of metadata section */
-	/* --------------------------------------------- */
-	strcpy(utlstr, "\t\tGROUP=Level");
-	begptr = strstr(metaptr, utlstr);
-
-	strcpy(utlstr, "\n\t\tEND_GROUP=Level");
-	metaptr = strstr(metaptr, utlstr) + 1;
-
-
-	/* Count number of existing entries and increment */
-	/* ---------------------------------------------- */
-	metaArr[0] = begptr;
-	metaArr[1] = metaptr;
-	count = EHcntGROUP(metaArr);
-
-
-	/* Build metadata entry string */
-	/* --------------------------- */
-	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%d%s",
-		"\t\t\tGROUP=Level_", (int)count,
-		"\n\t\t\t\tLevelName=\"", metastr,
-		"\"\n\t\t\tEND_GROUP=Level_", (int)count, "\n");
-	break;
-
-
-    case 11:
-	/* Point Field Section */
-	/* ------------------- */
-
-	/* Find colon (parse off point field name) */
-	/* --------------------------------------- */
-	colon = strchr(metastr, ':');
-	*colon = 0;
-
-
-	/* Find beginning and ending of metadata section */
-	/* --------------------------------------------- */
-	strcpy(utlstr, "\t\t\t\tLevelName=\"");
-	strcat(utlstr, colon + 1);
-	begptr = strstr(metaptr, utlstr);
-
-	strcpy(utlstr, "\t\t\tEND_GROUP=Level_");
-	metaptr = strstr(begptr, utlstr);
-
-
-	/* Count number of existing entries and increment */
-	/* ---------------------------------------------- */
-	metaArr[0] = begptr;
-	metaArr[1] = metaptr;
-	count = EHcntOBJECT(metaArr) + 1;
-
-
-	/* Build metadata entry string */
-	/* --------------------------- */
-	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%s%s%d%s%d%s",
-		"\t\t\t\tOBJECT=PointField_", (int)count,
-		"\n\t\t\t\t\tPointFieldName=\"", metastr,
-		"\"\n\t\t\t\t\tDataType=", type,
-		"\n\t\t\t\t\tOrder=", (int)metadata[1],
-		"\n\t\t\t\tEND_OBJECT=PointField_", (int)count, "\n");
-	break;
-
-
-
-    case 12:
-	/* Level Link Section */
-	/* ------------------ */
-
-	/* Find beginning and ending of metadata section */
-	/* --------------------------------------------- */
-	strcpy(utlstr, "\t\tGROUP=LevelLink");
-	begptr = strstr(metaptr, utlstr);
-
-	strcpy(utlstr, "\t\tEND_GROUP=LevelLink");
-	metaptr = strstr(metaptr, utlstr);
-
-
-	/* Count number of existing entries and increment */
-	/* ---------------------------------------------- */
-	metaArr[0] = begptr;
-	metaArr[1] = metaptr;
-	count = EHcntOBJECT(metaArr) + 1;
-
-
-	/* Find colon (parse off parent/child level names from link field) */
-	/* --------------------------------------------------------------- */
-	colon = strchr(metastr, ':');
-	*colon = 0;
-
-
-	/* Find slash (divide parent and child levels) */
-	/* ------------------------------------------- */
-	slash = strchr(metastr, '/');
-	*slash = 0;
-
-
-	/* Build metadata entry string */
-	/* --------------------------- */
-	snprintf(utlstr, UTLSTRSIZE, "%s%d%s%s%s%s%s%s%s%d%s",
-		"\t\t\tOBJECT=LevelLink_", (int)count,
-		"\n\t\t\t\tParent=\"", metastr,
-		"\"\n\t\t\t\tChild=\"", slash + 1,
-		"\"\n\t\t\t\tLinkField=\"", colon + 1,
-		"\"\n\t\t\tEND_OBJECT=LevelLink_", (int)count, "\n");
-
-	break;
-
-
-    case 101:
-	/* Position metadata pointer for Grid proj parms, pix reg, origin */
-	/* -------------------------------------------------------------- */
-	strcpy(utlstr, "\t\tGROUP=Dimension");
-	metaptr = strstr(metaptr, utlstr);
-	strcpy(utlstr, metastr);
-
-	break;
-
-
-    case 1001:
-	/* Position metadata pointer for new swath structure (SWcreate) */
-	/* ------------------------------------------------------------ */
-	strcpy(utlstr, "END_GROUP=SwathStructure");
-	metaptr = strstr(metaptr, utlstr);
-	strcpy(utlstr, metastr);
-	break;
-
-
-    case 1002:
-	/* Position metadata pointer for new grid structure (GDcreate) */
-	/* ----------------------------------------------------------- */
-	strcpy(utlstr, "END_GROUP=GridStructure");
-	metaptr = strstr(metaptr, utlstr);
-	strcpy(utlstr, metastr);
-	break;
-
-
-    case 1003:
-	/* Position metadata pointer for new point structure (PTcreate) */
-	/* ------------------------------------------------------------ */
-	strcpy(utlstr, "END_GROUP=PointStructure");
-	metaptr = strstr(metaptr, utlstr);
-	strcpy(utlstr, metastr);
-	break;
-    }
-
-
-
-    /* Get length of metadata string to insert */
-    /* --------------------------------------- */
-    seglen = (int)strlen(utlstr);
-
-    /* Get offset of entry position within existing metadata */
-    /* ----------------------------------------------------- */
-    offset = (int)(metaptr - metabuf);
-
-
-    /* If end of new metadata string outside of current metadata buffer ... */
-    /* -------------------------------------------------------------------- */
-    if (metalen + seglen > 32000 * nmeta - 1)
-    {
-	/* Reallocate metadata buffer with additional 32000 bytes */
-	/* ------------------------------------------------------ */
-	metabuf = (char *) realloc((void *) metabuf, 32000 * (nmeta + 1));
-	if(metabuf == NULL)
-	{ 
-	    HEpush(DFE_NOSPACE,"EHinsertmeta", __FILE__, __LINE__);
-	    free(utlstr);
-	    free(utlstr2);
-	    return(-1);
-	}
-
-	/* Increment metadata section counter */
-	/* ---------------------------------- */
-	nmeta++;
-
-	/* Reposition metadata pointer (entry position) */
-	/* -------------------------------------------- */
-	metaptr = metabuf + offset;
-    }
-    /* Move metadata following entry point to its new position */
-    /* ------------------------------------------------------- */
-    for (i = metalen - 1; i > offset - 1; i--)
-    {
-	*(metabuf + seglen + i) = *(metabuf + i);
-    }
-
-    /* Copy new metadata string (utlstr) into metadata */
-    /* ---------------------------------------------- */
-    memcpy(metaptr, utlstr, seglen);
-
-    /* set to null character remaining of the metabuf */
-
-    memset((metabuf + metalen + seglen), '\0', (nmeta*32000 -1 - (metalen +
-								  seglen)));
-    /* Add new null string terminator */
-    /* ------------------------------ */
-    metabuf[metalen + seglen] = 0;
-
-
-    /* Write Back to Global Attribute(s) */
-    /* --------------------------------- */
-    for (i = 0; i < nmeta; i++)
-    {
-	snprintf(utlstr, UTLSTRSIZE, "%s%d", "StructMetadata.", i);
-	SDsetattr(sdInterfaceID, utlstr, DFNT_CHAR8,
-		  32000, metabuf + i * 32000);
-    }
-
-    free(metabuf);
-    free(utlstr);
-    free(utlstr2);
-
-    return (status);
-}
-
 
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
@@ -2434,6 +1413,11 @@ EHgetmetavalue(char *metaptrs[], const char *parameter, char *retstr)
 	/* Find newline "\n" character */
 	/* --------------------------- */
 	newline = strchr(metaptrs[0], '\n');
+	if (newline == NULL)
+	{
+		retstr[0] = 0;
+		return -1;
+	}
 
 	/* Copy from "=" to "\n" (exclusive) into return string */
 	/* ---------------------------------------------------- */
@@ -2500,7 +1484,7 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
     int32           metalen;	/* Length of structural metadata */
 
     char           *metabuf;	/* Pointer (handle) to structural metadata */
-    char           *endptr;	/* Pointer to end of metadata section */
+    char           *endptr = NULL;	/* Pointer to end of metadata section */
     char           *metaptr;	/* Metadata pointer */
     char           *prevmetaptr;/* Previous position of metadata pointer */
     char           *utlstr;     /* Utility string */
@@ -2511,9 +1495,9 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
      /* ---------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE,sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
         HEpush(DFE_NOSPACE,"EHEHmetagroup", __FILE__, __LINE__);
-	
+
         return( NULL);
     }
     /* Determine number of structural metadata "sections" */
@@ -2542,14 +1526,14 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
     /* Allocate space for metadata (in units of 32000 bytes) */
     /* ----------------------------------------------------- */
     metabuf = (char *) calloc(32000 * nmeta, 1);
-    
+
     if(metabuf == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHmetagroup", __FILE__, __LINE__);
 	free(utlstr);
 	return(metabuf);
     }
-    
+
 
     /* Read structural metadata */
     /* ------------------------ */
@@ -2607,7 +1591,8 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
     }
     /* Do string search */
     /* ---------------- */
-    metaptr = strstr(metaptr, utlstr);
+    if (metaptr)
+        metaptr = strstr(metaptr, utlstr);
 
 
     /*
@@ -2621,14 +1606,17 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
     }
     /* Find group within structure */
     /* --------------------------- */
-    if (groupname != NULL)
+    if (metaptr && groupname != NULL)
     {
 	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s", "GROUP=", groupname);
 	metaptr = strstr(metaptr, utlstr);
 
 	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s", "\t\tEND_GROUP=", groupname);
-	endptr = strstr(metaptr, utlstr);
-    } else
+	if (metaptr)
+	    endptr = strstr(metaptr, utlstr);
+	else
+	    endptr = NULL;
+    } else if (metaptr)
     {
 	/* If groupname == NULL then find end of structure in metadata */
 	/* ----------------------------------------------------------- */
@@ -2646,389 +1634,6 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
 
     return (metabuf);
 }
-
-
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: EHfillfld                                                        |
-|                                                                             |
-|  DESCRIPTION: Fills field with fill value                                   |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  sdid           int32               SD element ID                           |
-|  rank           int32               Rank of field                           |
-|  truerank       int32               True rank of field (merging)            |
-|  size           int32               size of fill element                    |
-|  off            int32               Offset of field within merged field     |
-|  dims           int32               Dimensions of field                     |
-|  fillval        void                fill value                              |
-|                                                                             |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|             None                                                            |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Jun 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-EHfillfld(int32 sdid, int32 rank, CPL_UNUSED int32 truerank, int32 size, int32 off,
-	  int32 dims[], VOIDP fillval)
-{
-    intn            i;		/* Loop index */
-    intn            j;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
-
-    int32           n;		/* Max number of planes or rows in fill
-				 * buffer */
-    int32           start[3] = {0, 0, 0};	/* Start array (SDwritedata) */
-    int32           edge[3];	/* Edge (count) array (SDwritedata) */
-    int32           totN;	/* Total number of elements in field */
-    int32           planeN;	/* Number of elements in plane */
-
-    char           *fillbuf;	/* Fill buffer */
-
-
-    /* Get total number of elements in field */
-    /* ------------------------------------- */
-    totN = dims[0];
-    for (i = 1; i < rank; i++)
-    {
-	totN *= dims[i];
-    }
-
-
-    /* Get number of elements in a plane of the field */
-    /* ---------------------------------------------- */
-    planeN = dims[1] * dims[2];
-
-
-
-    /* Allocate & Write Fill buffer */
-    /* ---------------------------- */
-    if (totN * size < HDFE_MAXMEMBUF)
-    {
-	/* Entire field size (in bytes) smaller than max fill buffer */
-	/* --------------------------------------------------------- */
-
-
-	/* Allocate fill buffer */
-	/* -------------------- */
-	fillbuf = (char *) malloc(totN * size);
-	if(fillbuf == NULL)
-	{ 
-	    HEpush(DFE_NOSPACE,"EHfillfld", __FILE__, __LINE__);
-	    return(-1);
-	}
-	
-
-	/* Fill buffer with fill value */
-	/* --------------------------- */
-	for (i = 0; i < totN; i++)
-	{
-	    memcpy(fillbuf + i * size, fillval, size);
-	}
-
-
-	/* Write fill buffer to field */
-	/* -------------------------- */
-	start[0] = off;
-	edge[0] = dims[0];
-	edge[1] = dims[1];
-	edge[2] = dims[2];
-	status = SDwritedata(sdid, start, NULL, edge,
-			     (VOIDP) fillbuf);
-
-	free(fillbuf);
-
-    } else if (planeN * size < HDFE_MAXMEMBUF)
-    {
-	/* Single plane size (in bytes) smaller than max fill buffer */
-	/* --------------------------------------------------------- */
-
-
-	/* Compute number of planes that can be written at one time */
-	/* -------------------------------------------------------- */
-	n = HDFE_MAXMEMBUF / (planeN * size);
-
-
-	/* Allocate fill buffer */
-	/* -------------------- */
-	fillbuf = (char *) malloc(planeN * size * n);
-	if(fillbuf == NULL)
-	{ 
-	    HEpush(DFE_NOSPACE,"EHfillfld", __FILE__, __LINE__);
-	    return(-1);
-	}
-
-
-	/* Fill buffer with fill value */
-	/* --------------------------- */
-	for (i = 0; i < planeN * n; i++)
-	{
-	    memcpy(fillbuf + i * size, fillval, size);
-	}
-
-
-	/* Write (full) fill buffer to field */
-	/* --------------------------------- */
-	for (i = 0; i < (dims[0] / n); i++)
-	{
-	    start[0] = off + i * n;
-	    edge[0] = n;
-	    edge[1] = dims[1];
-	    edge[2] = dims[2];
-	    status = SDwritedata(sdid, start, NULL, edge,
-				 (VOIDP) fillbuf);
-	}
-
-
-	/* Write (partial) last fill buffer to field (if necessary) */
-	/* -------------------------------------------------------- */
-	if (i * n != dims[0])
-	{
-	    start[0] = off + i * n;
-	    edge[0] = dims[0] - i * n;
-	    edge[1] = dims[1];
-	    edge[2] = dims[2];
-	    status = SDwritedata(sdid, start, NULL, edge,
-				 (VOIDP) fillbuf);
-	}
-	free(fillbuf);
-
-    } else
-    {
-	/* Single plane size (in bytes) greater than max fill buffer */
-	/* --------------------------------------------------------- */
-
-
-	/* Compute number of "rows" than can be written at one time */
-	/* -------------------------------------------------------- */
-	n = HDFE_MAXMEMBUF / (dims[rank - 1] * size);
-
-
-	/* Allocate fill buffer */
-	/* -------------------- */
-	fillbuf = (char *) malloc(dims[rank - 1] * size * n);
-	if(fillbuf == NULL)
-	{ 
-	    HEpush(DFE_NOSPACE,"EHfillfld", __FILE__, __LINE__);
-	    return(-1);
-	}
-
-
-	/* Fill buffer with fill value */
-	/* --------------------------- */
-	for (i = 0; i < dims[rank - 1] * n; i++)
-	{
-	    memcpy(fillbuf + i * size, fillval, size);
-	}
-
-
-	/* For every plane in field ... */
-	/* ---------------------------- */
-	for (j = 0; j < dims[0]; j++)
-	{
-
-	    /* Write (full) fill buffer to field */
-	    /* --------------------------------- */
-	    for (i = 0; i < (dims[1] / n); i++)
-	    {
-		start[0] = off + j;
-		start[1] = i * n;
-		edge[0] = 1;
-		edge[1] = n;
-		edge[2] = dims[2];
-		status = SDwritedata(sdid, start, NULL, edge,
-				     (VOIDP) fillbuf);
-	    }
-
-
-	    /* Write (partial) last fill buffer to field (if necessary) */
-	    /* -------------------------------------------------------- */
-	    if (i * n != dims[1])
-	    {
-		start[0] = off + j;
-		start[1] = i * n;
-		edge[0] = 1;
-		edge[1] = dims[1] - i * n;
-		edge[2] = dims[2];
-		status = SDwritedata(sdid, start, NULL, edge,
-				     (VOIDP) fillbuf);
-	    }
-	}
-
-	free(fillbuf);
-
-    }
-
-    return (status);
-}
-
-
-
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: EHbisect                                                         |
-|                                                                             |
-|  DESCRIPTION: Finds root of function using bisection                        |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  func()         float64             Function to bisect                      |
-|  funcParms      float64             Function parameters (fixed)             |
-|  nParms         int32               Number of function parameters           |
-|  limLft         float64             Lower limit of function argument       |
-|  limRgt         float64             Upper limit of function argument       |
-|  convCrit       float64             Convergence criterion                   |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|  root           float64             Function root                           |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Nov 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-EHbisect(float64(*func) (float64[]), float64 funcParms[], int32 nParms,
-	 float64 limLft, float64 limRgt, float64 convCrit, float64 * root)
-{
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
-
-    float64         midPnt;	/* Mid-point value */
-    float64         newmidPnt;	/* New mid-point value */
-    float64         funcLft;	/* Function value at left-hand limit */
-    float64         funcMid;	/* Function value at mid-point */
-    float64         funcRgt;	/* Function value at right-hand limit */
-    float64        *parms;	/* Function parameters */
-
-
-    /* Allocate space for function parameters */
-    /* -------------------------------------- */
-    parms = (float64 *) calloc(nParms + 1, sizeof(float64));
-    if(parms == NULL)
-    { 
-	HEpush(DFE_NOSPACE, "EHbisect", __FILE__, __LINE__);
-	return(-1);
-    }
-
-
-    /* Copy (fixed) function parameters */
-    /* -------------------------------- */
-    for (i = 0; i < nParms; i++)
-    {
-	parms[i + 1] = funcParms[i];
-    }
-
-
-    /* Copy left-hand limit to "floating" parameter */
-    /* -------------------------------------------- */
-    parms[0] = limLft;
-
-
-    /* Determine function value */
-    /* ------------------------ */
-    funcLft = (*func) (parms);
-
-
-    /* Copy right-hand limit to "floating" parameter */
-    /* --------------------------------------------- */
-    parms[0] = limRgt;
-
-
-    /* Determine function value */
-    /* ------------------------ */
-    funcRgt = (*func) (parms);
-
-
-    /* If left and right limits function values of same sign then no root */
-    /* ------------------------------------------------------------------ */
-    if (funcLft * funcRgt > 0)
-    {
-	free(parms);
-	return (-1);
-    }
-    /* Compute (initial) mid-point */
-    /* --------------------------- */
-    newmidPnt = 0.5 * (limLft + limRgt);
-
-
-    /* Bisection Loop */
-    /* -------------- */
-    while (1)
-    {
-	/* Compute function at new mid-point */
-	/* --------------------------------- */
-	midPnt = newmidPnt;
-	parms[0] = midPnt;
-	funcMid = (*func) (parms);
-
-
-	/* If left limit same sign as mid-point move it to mid-point */
-	/* --------------------------------------------------------- */
-	if (funcLft * funcMid > 0.0)
-	{
-	    limLft = midPnt;
-	} else
-	{
-	    /* Otherwise move over right-hand limit */
-	    /* ------------------------------------ */
-	    limRgt = midPnt;
-	}
-
-
-	/* Compute new mid-point */
-	/* --------------------- */
-	newmidPnt = 0.5 * (limLft + limRgt);
-
-
-	/* If relative change in midpoint < convergence crit then exit loop */
-	/* ---------------------------------------------------------------- */
-	if (fabs((newmidPnt - midPnt) / midPnt) < convCrit)
-	{
-	    break;
-	}
-    }
-
-    /* Save root */
-    /* --------- */
-    *root = newmidPnt;
-
-
-    free(parms);
-
-    return (status);
-}
-
-
 
 
 /*----------------------------------------------------------------------------|
@@ -3272,13 +1877,13 @@ EHattrcat(int32 fid, int32 attrVgrpID, char *attrnames, int32 * strbufsize)
 	/* ------------------------------------------- */
 	tags = (int32 *) malloc(sizeof(int32) * nObjects);
 	if(tags == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"EHattrcat", __FILE__, __LINE__);
 	    return(-1);
 	}
 	refs = (int32 *) malloc(sizeof(int32) * nObjects);
 	if(refs == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"EHattrcat", __FILE__, __LINE__);
 	    free(tags);
 	    return(-1);

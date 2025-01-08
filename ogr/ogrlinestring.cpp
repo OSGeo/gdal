@@ -61,6 +61,31 @@ OGRSimpleCurve::OGRSimpleCurve(const OGRSimpleCurve &other)
 }
 
 /************************************************************************/
+/*                OGRSimpleCurve( OGRSimpleCurve&& )                    */
+/************************************************************************/
+
+/**
+ * \brief Move constructor.
+ *
+ * @since GDAL 3.11
+ */
+
+// cppcheck-suppress-begin accessMoved
+OGRSimpleCurve::OGRSimpleCurve(OGRSimpleCurve &&other)
+    : OGRCurve(std::move(other)), nPointCount(other.nPointCount),
+      m_nPointCapacity(other.m_nPointCapacity), paoPoints(other.paoPoints),
+      padfZ(other.padfZ), padfM(other.padfM)
+{
+    other.nPointCount = 0;
+    other.m_nPointCapacity = 0;
+    other.paoPoints = nullptr;
+    other.padfZ = nullptr;
+    other.padfM = nullptr;
+}
+
+// cppcheck-suppress-end accessMoved
+
+/************************************************************************/
 /*                          ~OGRSimpleCurve()                           */
 /************************************************************************/
 
@@ -73,7 +98,7 @@ OGRSimpleCurve::~OGRSimpleCurve()
 }
 
 /************************************************************************/
-/*                       operator=( const OGRPoint& )                   */
+/*                 operator=(const OGRSimpleCurve &other)               */
 /************************************************************************/
 
 /**
@@ -94,6 +119,43 @@ OGRSimpleCurve &OGRSimpleCurve::operator=(const OGRSimpleCurve &other)
 
     setPoints(other.nPointCount, other.paoPoints, other.padfZ, other.padfM);
     flags = other.flags;
+
+    return *this;
+}
+
+/************************************************************************/
+/*                     operator=(OGRSimpleCurve &&other)                */
+/************************************************************************/
+
+/**
+ * \brief Move assignment operator.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRSimpleCurve &OGRSimpleCurve::operator=(OGRSimpleCurve &&other)
+{
+    if (this != &other)
+    {
+        // cppcheck-suppress-begin accessMoved
+        OGRCurve::operator=(std::move(other));
+
+        nPointCount = other.nPointCount;
+        m_nPointCapacity = other.m_nPointCapacity;
+        CPLFree(paoPoints);
+        paoPoints = other.paoPoints;
+        CPLFree(padfZ);
+        padfZ = other.padfZ;
+        CPLFree(padfM);
+        padfM = other.padfM;
+        flags = other.flags;
+        other.nPointCount = 0;
+        other.m_nPointCapacity = 0;
+        other.paoPoints = nullptr;
+        other.padfZ = nullptr;
+        other.padfM = nullptr;
+        // cppcheck-suppress-end accessMoved
+    }
 
     return *this;
 }
@@ -2694,15 +2756,17 @@ bool OGRSimpleCurve::segmentize(double dfMaxLength)
                 sqrt(dfSquareDist / dfSquareMaxLength) - REL_EPSILON_ROUND);
             const int nIntermediatePoints =
                 DoubleToIntClamp(dfIntermediatePoints);
+            const double dfRatioX =
+                dfX / (static_cast<double>(nIntermediatePoints) + 1);
+            const double dfRatioY =
+                dfY / (static_cast<double>(nIntermediatePoints) + 1);
 
             for (int j = 1; j <= nIntermediatePoints; j++)
             {
                 // coverity[overflow_const]
                 const int newI = nNewPointCount + j - 1;
-                paoNewPoints[newI].x =
-                    paoPoints[i].x + j * dfX / (nIntermediatePoints + 1);
-                paoNewPoints[newI].y =
-                    paoPoints[i].y + j * dfY / (nIntermediatePoints + 1);
+                paoNewPoints[newI].x = paoPoints[i].x + j * dfRatioX;
+                paoNewPoints[newI].y = paoPoints[i].y + j * dfRatioY;
                 if (padfZ != nullptr)
                 {
                     // No interpolation.
@@ -2807,6 +2871,18 @@ OGRPointIterator *OGRSimpleCurve::getPointIterator() const
 OGRLineString::OGRLineString(const OGRLineString &) = default;
 
 /************************************************************************/
+/*                  OGRLineString( OGRLineString&& )                    */
+/************************************************************************/
+
+/**
+ * \brief Move constructor.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRLineString::OGRLineString(OGRLineString &&) = default;
+
+/************************************************************************/
 /*                    operator=( const OGRLineString& )                 */
 /************************************************************************/
 
@@ -2824,6 +2900,25 @@ OGRLineString &OGRLineString::operator=(const OGRLineString &other)
     if (this != &other)
     {
         OGRSimpleCurve::operator=(other);
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*                    operator=( OGRLineString&& )                      */
+/************************************************************************/
+
+/**
+ * \brief Move assignment operator.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRLineString &OGRLineString::operator=(OGRLineString &&other)
+{
+    if (this != &other)
+    {
+        OGRSimpleCurve::operator=(std::move(other));
     }
     return *this;
 }
@@ -2977,7 +3072,16 @@ OGRLinearRing *OGRLineString::CastToLinearRing(OGRLineString *poLS)
 
 OGRLineString *OGRLineString::clone() const
 {
-    return new (std::nothrow) OGRLineString(*this);
+    auto ret = new (std::nothrow) OGRLineString(*this);
+    if (ret)
+    {
+        if (ret->getNumPoints() != getNumPoints())
+        {
+            delete ret;
+            ret = nullptr;
+        }
+    }
+    return ret;
 }
 
 //! @cond Doxygen_Suppress

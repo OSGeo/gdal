@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ASI CEOS Translator
  * Purpose:  CEOS field layout recipes.

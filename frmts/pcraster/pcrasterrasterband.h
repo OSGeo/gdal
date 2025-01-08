@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PCRaster Integration
  * Purpose:  PCRaster raster band declaration.

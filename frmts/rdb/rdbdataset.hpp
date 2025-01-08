@@ -1,6 +1,4 @@
 /******************************************************************************
- * $Id$
- *
  * Project:  RIEGL RDB 2 driver
  * Purpose:  Add support for reading *.mpx RDB 2 files.
  * Author:   RIEGL Laser Measurement Systems GmbH (support@riegl.com)

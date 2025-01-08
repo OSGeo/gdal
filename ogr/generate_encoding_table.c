@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR
  * Purpose:  Generate a mapping table from a 1-byte encoding to unicode,

@@ -7,7 +7,7 @@
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.20
+ARG ALPINE_VERSION=3.21
 FROM alpine:${ALPINE_VERSION} AS builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -172,6 +172,7 @@ RUN date
 
 RUN apk add --no-cache \
         libstdc++ \
+        bash-completion \
         sqlite-libs \
         libcurl tiff \
         zlib zstd-libs lz4-libs libdeflate libarchive \
@@ -191,6 +192,9 @@ COPY --from=builder  /build_proj/usr/include/ /usr/include/
 COPY --from=builder  /build_proj/usr/bin/ /usr/bin/
 COPY --from=builder  /build_proj/usr/lib/ /usr/lib/
 
+COPY --from=builder  /build/usr/share/bash-completion/ /usr/share/bash-completion/
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
+
+CMD ["/bin/bash", "-l"]

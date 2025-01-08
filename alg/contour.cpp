@@ -710,7 +710,7 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
         }
     }
 
-    bool ok = false;
+    bool ok = true;
 
     try
     {
@@ -878,6 +878,11 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
         {
             ok = false;
         }
+    }
+
+    if (ok)
+    {
+        pfnProgress(1.0, "", pProgressArg);
     }
 
     return ok ? CE_None : CE_Failure;

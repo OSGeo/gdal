@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL
 # Purpose:  Script to translate GDAL supported raster into XYZ ASCII

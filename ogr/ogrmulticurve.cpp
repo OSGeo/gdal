@@ -64,7 +64,16 @@ OGRMultiCurve &OGRMultiCurve::operator=(const OGRMultiCurve &other)
 OGRMultiCurve *OGRMultiCurve::clone() const
 
 {
-    return new (std::nothrow) OGRMultiCurve(*this);
+    auto ret = new (std::nothrow) OGRMultiCurve(*this);
+    if (ret)
+    {
+        if (ret->WkbSize() != WkbSize())
+        {
+            delete ret;
+            ret = nullptr;
+        }
+    }
+    return ret;
 }
 
 /************************************************************************/

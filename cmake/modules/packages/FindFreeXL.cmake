@@ -45,6 +45,7 @@ find_path(FREEXL_INCLUDE_DIR
           HINTS ${PC_FREEXL_INCLUDE_DIRS})
 find_library(FREEXL_LIBRARY
              NAMES freexl_i freexl
+             NAMES_PER_DIR
              HINTS ${PC_FREEXL_LIBRARY_DIRS})
 
 mark_as_advanced(FREEXL_INCLUDE_DIR FREEXL_LIBRARY)

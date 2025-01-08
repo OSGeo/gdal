@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Private utilities within OGR OGRGeoJSON Driver.
@@ -16,6 +15,7 @@
 #include "ogr_core.h"
 
 #include "cpl_json_header.h"
+#include "cpl_http.h"
 #include "cpl_vsi.h"
 #include "gdal_priv.h"
 
@@ -55,5 +55,11 @@ bool JSONFGIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
 
 OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject,
                                               int &nTZFlag);
+
+/************************************************************************/
+/*                  GeoJSONHTTPFetchWithContentTypeHeader               */
+/************************************************************************/
+
+CPLHTTPResult *GeoJSONHTTPFetchWithContentTypeHeader(const char *pszURL);
 
 #endif  // OGR_GEOJSONUTILS_H_INCLUDED

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Convenience functions declarations.
@@ -36,6 +35,8 @@ CPL_C_START
 void CPL_DLL CPLVerifyConfiguration(void);
 /*! @endcond */
 
+bool CPL_DLL CPLIsDebugEnabled(void);
+
 const char CPL_DLL *CPL_STDCALL CPLGetConfigOption(const char *, const char *)
     CPL_WARN_UNUSED_RESULT;
 const char CPL_DLL *CPL_STDCALL CPLGetThreadLocalConfigOption(
@@ -45,6 +46,9 @@ CPLGetGlobalConfigOption(const char *, const char *) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL CPL_STDCALL CPLSetConfigOption(const char *, const char *);
 void CPL_DLL CPL_STDCALL CPLSetThreadLocalConfigOption(const char *pszKey,
                                                        const char *pszValue);
+void CPL_DLL CPLDeclareKnownConfigOption(const char *pszKey,
+                                         const char *pszDefinition);
+char CPL_DLL **CPLGetKnownConfigOptions(void);
 
 /** Callback for CPLSubscribeToSetConfigOption() */
 typedef void (*CPLSetConfigOptionSubscriber)(const char *pszKey,
@@ -308,6 +312,12 @@ void CPLCleanupSetlocaleMutex(void);
     @return TRUE if i is power of two otherwise return FALSE
 */
 int CPL_DLL CPLIsPowerOfTwo(unsigned int i);
+
+/* -------------------------------------------------------------------- */
+/*      Terminal related                                                */
+/* -------------------------------------------------------------------- */
+
+bool CPL_DLL CPLIsInteractive(FILE *f);
 
 CPL_C_END
 

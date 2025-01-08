@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Classes related to format registration, and file opening.
@@ -739,6 +738,9 @@ void CPL_DLL RegisterOGRJSONFG();
 void CPL_DLL RegisterOGRMiraMon();
 void CPL_DLL RegisterOGRXODR();
 void DeclareDeferredOGRXODRPlugin();
+void CPL_DLL RegisterOGRADBC();
+void DeclareDeferredOGRADBCPlugin();
+void CPL_DLL RegisterOGRAIVector();
 // @endcond
 
 CPL_C_END

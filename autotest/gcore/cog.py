@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  COG driver testing
@@ -13,6 +12,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import struct
 import sys
 
@@ -558,7 +558,7 @@ def test_cog_byte_to_web_mercator():
     filename2 = directory + "/cog2.tif"
     src_ds = gdal.Open(filename)
 
-    class my_error_handler(object):
+    class my_error_handler:
         def __init__(self):
             self.debug_msg_list = []
             self.other_msg_list = []
@@ -1935,3 +1935,58 @@ def test_cog_mask_band_overviews(tmp_vsimem):
     assert ds.GetRasterBand(1).IsMaskBand()
     assert ds.GetRasterBand(1).GetOverview(0).IsMaskBand()
     assert ds.GetRasterBand(1).GetOverview(1).IsMaskBand()
+
+
+###############################################################################
+# Verify that we can generate an output that is byte-identical to the expected golden file.
+
+
+@pytest.mark.parametrize(
+    "src_filename,creation_options",
+    [
+        ("data/cog/byte_little_endian_golden.tif", []),
+        (
+            "data/cog/byte_little_endian_blocksize_16_predictor_standard_golden.tif",
+            ["BLOCKSIZE=16", "PREDICTOR=STANDARD"],
+        ),
+    ],
+)
+def test_cog_write_check_golden_file(tmp_path, src_filename, creation_options):
+
+    out_filename = str(tmp_path / "test.tif")
+    with gdal.config_option("GDAL_TIFF_ENDIANNESS", "LITTLE"):
+        with gdal.Open(src_filename) as src_ds:
+            gdal.GetDriverByName("COG").CreateCopy(
+                out_filename, src_ds, options=creation_options
+            )
+    assert os.stat(src_filename).st_size == os.stat(out_filename).st_size
+    assert open(src_filename, "rb").read() == open(out_filename, "rb").read()
+
+
+###############################################################################
+
+
+def test_cog_preserve_ALPHA_PREMULTIPLIED_on_copy(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "src.tif")
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        src_filename, 1, 1, 4, options=["ALPHA=PREMULTIPLIED", "PROFILE=BASELINE"]
+    )
+    src_ds.SetGeoTransform([500000, 1, 0, 4500000, 0, -1])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    src_ds.SetProjection(srs.ExportToWkt())
+
+    out_filename = str(tmp_vsimem / "out.tif")
+    gdal.GetDriverByName("COG").CreateCopy(
+        out_filename,
+        src_ds,
+        options=[
+            "TILING_SCHEME=GoogleMapsCompatible",
+        ],
+    )
+    with gdal.Open(out_filename) as ds:
+        assert (
+            ds.GetRasterBand(4).GetMetadataItem("ALPHA", "IMAGE_STRUCTURE")
+            == "PREMULTIPLIED"
+        )

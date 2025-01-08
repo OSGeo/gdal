@@ -75,10 +75,13 @@ add_executable(
   test_cpl.cpp
   test_gdal.cpp
   test_gdal_aaigrid.cpp
+  test_gdal_algorithm.cpp
   test_gdal_dted.cpp
   test_gdal_gtiff.cpp
+  test_gdal_minmax_element.cpp
   test_gdal_pixelfn.cpp
   test_gdal_typetraits.cpp
+  test_gdal_vectorx.cpp
   test_ogr.cpp
   test_ogr_organize_polygons.cpp
   test_ogr_geometry_stealing.cpp
@@ -108,7 +111,7 @@ gdal_standard_includes(gdal_unit_test)
 target_compile_options(gdal_unit_test PRIVATE ${GDAL_CXX_WARNING_FLAGS})
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
 target_include_directories(
-  gdal_unit_test PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_DIR> $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>)
+  gdal_unit_test PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_DIR> $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 if (GDAL_USE_SQLITE3)
   target_compile_definitions(gdal_unit_test PRIVATE -DHAVE_SQLITE3)
   target_include_directories(

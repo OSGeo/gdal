@@ -51,6 +51,7 @@
 #include "ogr_feature.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
+#include "ogr_schema_override.h"
 #include "ogrsf_frmts.h"
 #include "sqlite3.h"
 
@@ -244,6 +245,121 @@ void OGRSQLiteDriverUnload(GDALDriver *)
     }
 #endif
 #endif
+}
+
+/************************************************************************/
+/*                      DealWithOgrSchemaOpenOption()                   */
+/************************************************************************/
+bool OGRSQLiteBaseDataSource::DealWithOgrSchemaOpenOption(
+    CSLConstList papszOpenOptionsIn)
+{
+    std::string osFieldsSchemaOverrideParam =
+        CSLFetchNameValueDef(papszOpenOptionsIn, "OGR_SCHEMA", "");
+
+    if (!osFieldsSchemaOverrideParam.empty())
+    {
+        if (GetUpdate())
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "OGR_SCHEMA open option is not supported in update mode.");
+            return false;
+        }
+
+        OGRSchemaOverride osSchemaOverride;
+        if (!osSchemaOverride.LoadFromJSON(osFieldsSchemaOverrideParam) ||
+            !osSchemaOverride.IsValid())
+        {
+            return false;
+        }
+
+        const auto &oLayerOverrides = osSchemaOverride.GetLayerOverrides();
+        for (const auto &oLayer : oLayerOverrides)
+        {
+            const auto &oLayerName = oLayer.first;
+            const auto &oLayerFieldOverride = oLayer.second;
+            const bool bIsFullOverride{oLayerFieldOverride.IsFullOverride()};
+            auto oFieldOverrides = oLayerFieldOverride.GetFieldOverrides();
+            std::vector<OGRFieldDefn *> aoFields;
+
+            CPLDebug("SQLite", "Applying schema override for layer %s",
+                     oLayerName.c_str());
+
+            // Fail if the layer name does not exist
+            auto poLayer = GetLayerByName(oLayerName.c_str());
+            if (poLayer == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Layer %s not found in SQLite DB", oLayerName.c_str());
+                return false;
+            }
+
+            // Patch field definitions
+            auto poLayerDefn = poLayer->GetLayerDefn();
+            for (int i = 0; i < poLayerDefn->GetFieldCount(); i++)
+            {
+                auto poFieldDefn = poLayerDefn->GetFieldDefn(i);
+                auto oFieldOverride =
+                    oFieldOverrides.find(poFieldDefn->GetNameRef());
+                if (oFieldOverride != oFieldOverrides.cend())
+                {
+                    if (oFieldOverride->second.GetFieldType().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetType(
+                                oFieldOverride->second.GetFieldType().value());
+                    if (oFieldOverride->second.GetFieldWidth().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetWidth(
+                                oFieldOverride->second.GetFieldWidth().value());
+                    if (oFieldOverride->second.GetFieldPrecision().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetPrecision(
+                                oFieldOverride->second.GetFieldPrecision()
+                                    .value());
+                    if (oFieldOverride->second.GetFieldSubType().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetSubType(
+                                oFieldOverride->second.GetFieldSubType()
+                                    .value());
+                    if (oFieldOverride->second.GetFieldName().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetName(oFieldOverride->second.GetFieldName()
+                                          .value()
+                                          .c_str());
+
+                    if (bIsFullOverride)
+                    {
+                        aoFields.push_back(poFieldDefn);
+                    }
+                    oFieldOverrides.erase(oFieldOverride);
+                }
+            }
+
+            // Error if any field override is not found
+            if (!oFieldOverrides.empty())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s not found in layer %s",
+                         oFieldOverrides.cbegin()->first.c_str(),
+                         oLayerName.c_str());
+                return false;
+            }
+
+            // Remove fields not in the override
+            if (bIsFullOverride)
+            {
+                for (int i = poLayerDefn->GetFieldCount() - 1; i >= 0; i--)
+                {
+                    auto poFieldDefn = poLayerDefn->GetFieldDefn(i);
+                    if (std::find(aoFields.begin(), aoFields.end(),
+                                  poFieldDefn) == aoFields.end())
+                    {
+                        whileUnsealing(poLayerDefn)->DeleteFieldDefn(i);
+                    }
+                }
+            }
+        }
+    }
+    return true;
 }
 
 /************************************************************************/
@@ -2458,8 +2574,17 @@ bool OGRSQLiteDataSource::Open(GDALOpenInfo *poOpenInfo)
                 continue;
 
             if (GDALDataset::GetLayerByName(pszTableName) == nullptr)
-                OpenTable(pszTableName, true, false,
-                          /* bMayEmitError = */ true);
+            {
+                const bool bRet = OpenTable(pszTableName, true, false,
+                                            /* bMayEmitError = */ true);
+                if (!bRet)
+                {
+                    CPLDebug("SQLITE", "Failed to open layer %s", pszTableName);
+                    sqlite3_free_table(papszResult);
+                    CPLHashSetDestroy(hSet);
+                    return false;
+                }
+            }
 
             if (bListAllTables)
                 CPLHashSetInsert(hSet, CPLStrdup(pszTableName));
@@ -2911,6 +3036,13 @@ bool OGRSQLiteDataSource::OpenTable(const char *pszTableName, bool bIsTable,
     /*      Add layer to data source layer list.                            */
     /* -------------------------------------------------------------------- */
     m_apoLayers.push_back(std::move(poLayer));
+
+    // Remove in case of error in the schema processing
+    if (!DealWithOgrSchemaOpenOption(papszOpenOptions))
+    {
+        m_apoLayers.pop_back();
+        return false;
+    }
 
     return true;
 }

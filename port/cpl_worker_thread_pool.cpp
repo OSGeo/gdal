@@ -503,6 +503,7 @@ CPLWorkerThreadPool::GetNextJob(CPLWorkerThread *psWorkerThread)
         std::unique_lock<std::mutex> oGuardThisThread(psWorkerThread->m_mutex);
         // coverity[uninit_use_in_call]
         oGuard.unlock();
+        // coverity[wait_not_in_locked_loop]
         psWorkerThread->m_cv.wait(oGuardThisThread);
     }
 }
@@ -581,14 +582,14 @@ bool CPLJobQueue::SubmitJob(std::function<void()> task)
         m_nPendingJobs++;
     }
 
-    // cppcheck-suppress knownConditionTrueFalse
     // coverity[uninit_member,copy_constructor_call]
-    return m_poPool->SubmitJob(
-        [this, task]
-        {
-            task();
-            DeclareJobFinished();
-        });
+    const auto lambda = [this, task]
+    {
+        task();
+        DeclareJobFinished();
+    };
+    // cppcheck-suppress knownConditionTrueFalse
+    return m_poPool->SubmitJob(lambda);
 }
 
 /************************************************************************/

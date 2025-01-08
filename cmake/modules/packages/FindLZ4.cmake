@@ -65,7 +65,7 @@ NOTE: The variables above should not usually be used in CMakeLists.txt files!
 ### Find library ##############################################################
 
 if(NOT LZ4_LIBRARY)
-  find_library(LZ4_LIBRARY_RELEASE NAMES lz4 liblz4)
+  find_library(LZ4_LIBRARY_RELEASE NAMES lz4 liblz4 NAMES_PER_DIR)
   find_library(LZ4_LIBRARY_DEBUG NAMES lz4d)
 
   include(SelectLibraryConfigurations)

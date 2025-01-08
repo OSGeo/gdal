@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     testgetpoints.java
  * Project:  OGR Java Interface

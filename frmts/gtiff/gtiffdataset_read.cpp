@@ -43,6 +43,8 @@
 #include "tifvsi.h"
 #include "xtiffio.h"
 
+#include "tiff_common.h"
+
 /************************************************************************/
 /*                        GetJPEGOverviewCount()                        */
 /************************************************************************/
@@ -142,7 +144,7 @@ CPLStringList GTiffDataset::GetCompressionFormats(int nXOff, int nYOff,
 
         vsi_l_offset nOffset = 0;
         vsi_l_offset nSize = 0;
-        if (IsBlockAvailable(nBlockId, &nOffset, &nSize) &&
+        if (IsBlockAvailable(nBlockId, &nOffset, &nSize, nullptr) &&
             nSize <
                 static_cast<vsi_l_offset>(std::numeric_limits<tmsize_t>::max()))
         {
@@ -210,7 +212,9 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
               m_nPhotometric != PHOTOMETRIC_SEPARATED)) ||
             (m_nCompression == COMPRESSION_WEBP &&
              EQUAL(aosTokens[0], "WEBP")) ||
-            (m_nCompression == COMPRESSION_JXL && EQUAL(aosTokens[0], "JXL")))
+            ((m_nCompression == COMPRESSION_JXL ||
+              m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
+             EQUAL(aosTokens[0], "JXL")))
         {
             std::string osDetailedFormat = aosTokens[0];
 
@@ -222,7 +226,7 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
 
             vsi_l_offset nOffset = 0;
             vsi_l_offset nSize = 0;
-            if (IsBlockAvailable(nBlockId, &nOffset, &nSize) &&
+            if (IsBlockAvailable(nBlockId, &nOffset, &nSize, nullptr) &&
                 nSize < static_cast<vsi_l_offset>(
                             std::numeric_limits<tmsize_t>::max()))
             {
@@ -987,6 +991,7 @@ bool GTiffDataset::IsMultiThreadedReadCompatible() const
             m_nCompression == COMPRESSION_ZSTD ||
             m_nCompression == COMPRESSION_LERC ||
             m_nCompression == COMPRESSION_JXL ||
+            m_nCompression == COMPRESSION_JXL_DNG_1_7 ||
             m_nCompression == COMPRESSION_WEBP ||
             m_nCompression == COMPRESSION_JPEG);
 }
@@ -1305,6 +1310,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                     nBlockId +=
                         asJobs[iJob].iSrcBandIdxSeparate * m_nBlocksPerBand;
 
+                bool bErrorInIsBlockAvailable = false;
                 if (!sContext.bHasPRead)
                 {
                     // Taking the mutex here is only needed when bHasPRead ==
@@ -1314,13 +1320,22 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                     std::lock_guard<std::recursive_mutex> oLock(
                         sContext.oMutex);
 
-                    IsBlockAvailable(nBlockId, &asJobs[iJob].nOffset,
-                                     &asJobs[iJob].nSize);
+                    CPL_IGNORE_RET_VAL(IsBlockAvailable(
+                        nBlockId, &asJobs[iJob].nOffset, &asJobs[iJob].nSize,
+                        &bErrorInIsBlockAvailable));
                 }
                 else
                 {
-                    IsBlockAvailable(nBlockId, &asJobs[iJob].nOffset,
-                                     &asJobs[iJob].nSize);
+                    CPL_IGNORE_RET_VAL(IsBlockAvailable(
+                        nBlockId, &asJobs[iJob].nOffset, &asJobs[iJob].nSize,
+                        &bErrorInIsBlockAvailable));
+                }
+                if (bErrorInIsBlockAvailable)
+                {
+                    std::lock_guard<std::recursive_mutex> oLock(
+                        sContext.oMutex);
+                    sContext.bSuccess = false;
+                    return CE_Failure;
                 }
 
                 // Sanity check on block size
@@ -1344,7 +1359,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                         std::lock_guard<std::recursive_mutex> oLock(
                             sContext.oMutex);
                         sContext.bSuccess = false;
-                        break;
+                        return CE_Failure;
                     }
                 }
 
@@ -5219,88 +5234,10 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
     }
     else
     {
-        m_poColorTable = std::make_unique<GDALColorTable>();
-
         const int nColorCount = 1 << m_nBitsPerSample;
-
-        if (m_nColorTableMultiplier == 0)
-        {
-            // TIFF color maps are in the [0, 65535] range, so some remapping must
-            // be done to get values in the [0, 255] range, but it is not clear
-            // how to do that exactly. Since GDAL 2.3.0 we have standardized on
-            // using a 257 multiplication factor (https://github.com/OSGeo/gdal/commit/eeec5b62e385d53e7f2edaba7b73c7c74bc2af39)
-            // but other software uses 256 (cf https://github.com/OSGeo/gdal/issues/10310)
-            // Do a first pass to check if all values are multiples of 256 or 257.
-            bool bFoundNonZeroEntry = false;
-            bool bAllValuesMultipleOf256 = true;
-            bool bAllValuesMultipleOf257 = true;
-            unsigned short nMaxColor = 0;
-            for (int iColor = 0; iColor < nColorCount; ++iColor)
-            {
-                if (panRed[iColor] > 0 || panGreen[iColor] > 0 ||
-                    panBlue[iColor] > 0)
-                {
-                    bFoundNonZeroEntry = true;
-                }
-                if ((panRed[iColor] % 256) != 0 ||
-                    (panGreen[iColor] % 256) != 0 ||
-                    (panBlue[iColor] % 256) != 0)
-                {
-                    bAllValuesMultipleOf256 = false;
-                }
-                if ((panRed[iColor] % 257) != 0 ||
-                    (panGreen[iColor] % 257) != 0 ||
-                    (panBlue[iColor] % 257) != 0)
-                {
-                    bAllValuesMultipleOf257 = false;
-                }
-
-                nMaxColor = std::max(nMaxColor, panRed[iColor]);
-                nMaxColor = std::max(nMaxColor, panGreen[iColor]);
-                nMaxColor = std::max(nMaxColor, panBlue[iColor]);
-            }
-
-            if (nMaxColor > 0 && nMaxColor < 256)
-            {
-                // Bug 1384 - Some TIFF files are generated with color map entry
-                // values in range 0-255 instead of 0-65535 - try to handle these
-                // gracefully.
-                m_nColorTableMultiplier = 1;
-                CPLDebug("GTiff",
-                         "TIFF ColorTable seems to be improperly scaled with "
-                         "values all in [0,255] range, fixing up.");
-            }
-            else
-            {
-                if (!bAllValuesMultipleOf256 && !bAllValuesMultipleOf257)
-                {
-                    CPLDebug("GTiff",
-                             "The color map contains entries which are not "
-                             "multiple of 256 or 257, so we don't know for "
-                             "sure how to remap them to [0, 255]. Default to "
-                             "using a 257 multiplication factor");
-                }
-                m_nColorTableMultiplier =
-                    (bFoundNonZeroEntry && bAllValuesMultipleOf256)
-                        ? 256
-                        : DEFAULT_COLOR_TABLE_MULTIPLIER_257;
-            }
-        }
-        CPLAssert(m_nColorTableMultiplier > 0);
-        CPLAssert(m_nColorTableMultiplier <= 257);
-        for (int iColor = nColorCount - 1; iColor >= 0; iColor--)
-        {
-            const GDALColorEntry oEntry = {
-                static_cast<short>(panRed[iColor] / m_nColorTableMultiplier),
-                static_cast<short>(panGreen[iColor] / m_nColorTableMultiplier),
-                static_cast<short>(panBlue[iColor] / m_nColorTableMultiplier),
-                static_cast<short>(
-                    m_bNoDataSet && static_cast<int>(m_dfNoDataValue) == iColor
-                        ? 0
-                        : 255)};
-
-            m_poColorTable->SetColorEntry(iColor, &oEntry);
-        }
+        m_poColorTable = gdal::tiff_common::TIFFColorMapTagToColorTable(
+            panRed, panGreen, panBlue, nColorCount, m_nColorTableMultiplier,
+            DEFAULT_COLOR_TABLE_MULTIPLIER_257, m_bNoDataSet, m_dfNoDataValue);
     }
 
     /* -------------------------------------------------------------------- */
@@ -5566,7 +5503,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     m_dfMaxZErrorOverview = CPLAtof(pszValue);
                 }
 #if HAVE_JXL
-                else if (m_nCompression == COMPRESSION_JXL &&
+                else if ((m_nCompression == COMPRESSION_JXL ||
+                          m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
                          EQUAL(pszKey, "COMPRESSION_REVERSIBILITY"))
                 {
                     if (EQUAL(pszValue, "LOSSLESS"))
@@ -5574,7 +5512,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     else if (EQUAL(pszValue, "LOSSY"))
                         m_bJXLLossless = false;
                 }
-                else if (m_nCompression == COMPRESSION_JXL &&
+                else if ((m_nCompression == COMPRESSION_JXL ||
+                          m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
                          EQUAL(pszKey, "JXL_DISTANCE"))
                 {
                     const double dfVal = CPLAtof(pszValue);
@@ -5587,7 +5526,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                         m_fJXLDistance = static_cast<float>(dfVal);
                     }
                 }
-                else if (m_nCompression == COMPRESSION_JXL &&
+                else if ((m_nCompression == COMPRESSION_JXL ||
+                          m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
                          EQUAL(pszKey, "JXL_ALPHA_DISTANCE"))
                 {
                     const double dfVal = CPLAtof(pszValue);
@@ -5599,7 +5539,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                         m_fJXLAlphaDistance = static_cast<float>(dfVal);
                     }
                 }
-                else if (m_nCompression == COMPRESSION_JXL &&
+                else if ((m_nCompression == COMPRESSION_JXL ||
+                          m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
                          EQUAL(pszKey, "JXL_EFFORT"))
                 {
                     const int nEffort = atoi(pszValue);
@@ -5776,7 +5717,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
             }
         }
 #ifdef HAVE_JXL
-        else if (m_nCompression == COMPRESSION_JXL)
+        else if (m_nCompression == COMPRESSION_JXL ||
+                 m_nCompression == COMPRESSION_JXL_DNG_1_7)
         {
             const char *pszReversibility =
                 GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
@@ -6371,7 +6313,8 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
     if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
     {
         if ((m_nCompression == COMPRESSION_WEBP ||
-             m_nCompression == COMPRESSION_JXL) &&
+             m_nCompression == COMPRESSION_JXL ||
+             m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
             EQUAL(pszName, "COMPRESSION_REVERSIBILITY") &&
             m_oGTiffMDMD.GetMetadataItem("COMPRESSION_REVERSIBILITY",
                                          "IMAGE_STRUCTURE") == nullptr)
@@ -6383,7 +6326,7 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
             {
                 vsi_l_offset nOffset = 0;
                 vsi_l_offset nSize = 0;
-                IsBlockAvailable(0, &nOffset, &nSize);
+                IsBlockAvailable(0, &nOffset, &nSize, nullptr);
                 if (nSize > 0)
                 {
                     const std::string osSubfile(

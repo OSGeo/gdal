@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  SSE2 helper
@@ -23,12 +22,17 @@
 #if (defined(__x86_64) || defined(_M_X64) || defined(USE_SSE2)) &&             \
     !defined(USE_SSE2_EMULATION)
 
-/* Requires SSE2 */
-#include <emmintrin.h>
 #include <string.h>
 
-#ifdef __SSE4_1__
+#ifdef USE_NEON_OPTIMIZATIONS
+#include "include_sse2neon.h"
+#else
+/* Requires SSE2 */
+#include <emmintrin.h>
+
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
 #include <smmintrin.h>
+#endif
 #endif
 
 #include "gdal_priv_templates.hpp"
@@ -216,7 +220,7 @@ class XMMReg2Double
     inline void nsLoad2Val(const unsigned char *ptr)
     {
         __m128i xmm_i = GDALCopyInt16ToXMM(ptr);
-#ifdef __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
         xmm_i = _mm_cvtepu8_epi32(xmm_i);
 #else
         xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
@@ -228,7 +232,7 @@ class XMMReg2Double
     inline void nsLoad2Val(const short *ptr)
     {
         __m128i xmm_i = GDALCopyInt32ToXMM(ptr);
-#ifdef __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
         xmm_i = _mm_cvtepi16_epi32(xmm_i);
 #else
         xmm_i = _mm_unpacklo_epi16(
@@ -242,7 +246,7 @@ class XMMReg2Double
     inline void nsLoad2Val(const unsigned short *ptr)
     {
         __m128i xmm_i = GDALCopyInt32ToXMM(ptr);
-#ifdef __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
         xmm_i = _mm_cvtepu16_epi32(xmm_i);
 #else
         xmm_i = _mm_unpacklo_epi16(
@@ -256,7 +260,7 @@ class XMMReg2Double
                                 XMMReg2Double &high)
     {
         __m128i xmm_i = GDALCopyInt32ToXMM(ptr);
-#ifdef __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
         xmm_i = _mm_cvtepu8_epi32(xmm_i);
 #else
         xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());

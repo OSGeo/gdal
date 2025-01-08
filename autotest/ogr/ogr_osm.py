@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for OGR OSM driver.
@@ -920,6 +919,13 @@ def test_ogr_osm_tags_json_special_characters():
 
 
 def test_ogr_osmconf_ini():
+
+    if "EMBED_RESOURCE_FILES=YES" in gdal.VersionInfo(
+        "BUILD_INFO"
+    ) or "USE_ONLY_EMBEDDED_RESOURCE_FILES=YES" in gdal.VersionInfo("BUILD_INFO"):
+        pytest.skip(
+            "Test cannot work with EMBED_RESOURCE_FILES=YES/USE_ONLY_EMBEDDED_RESOURCE_FILES=YES"
+        )
 
     import configparser
 

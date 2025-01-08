@@ -42,7 +42,8 @@ driver with the following main differences:
 * Contrary to the VRT driver, the GTI driver does not enable to alter
   characteristics of referenced tiles, such as their georeferencing, nodata value,
   etc. If such behavior is desired, the tiles must be for example wrapped
-  individually in a VRT file before being referenced in the GTI index.
+  individually in a VRT file (or `vrt://` connection string) before being referenced
+  in the GTI index.
 
 Connection strings
 ------------------
@@ -80,7 +81,7 @@ STAC GeoParquet support
 
 The driver can support `STAC GeoParquet catalogs <https://stac-utils.github.io/stac-geoparquet/latest/spec/stac-geoparquet-spec>`_,
 provided GDAL is built with :ref:`vector.parquet` support.
-It can make use of fields ``proj:epsg`` and ``proj:transform`` from the
+It can make use of fields (``proj:code``, ``proj:epsg``, ``proj:wkt2``, or ``proj:projson``) and ``proj:transform`` from the
 `Projection Extension Specification <https://github.com/stac-extensions/projection/>`_,
 to correctly infer the appropriate projection and resolution.
 
@@ -442,6 +443,12 @@ also defined as layer metadata items or in the .gti XML file
       :choices: <float>
 
       Resolution along Y axis in SRS units / pixel.
+
+-  .. oo:: SRS
+      :choices: <string>
+
+      Override/sets the Spatial Reference System in one of the formats supported
+      by :cpp:func:`OGRSpatialReference::SetFromUserInput`.
 
 -  .. oo:: MINX
       :choices: <float>

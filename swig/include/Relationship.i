@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     Relationship.i
  * Project:  GDAL Python Interface

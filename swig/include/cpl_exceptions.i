@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Code for Optional Exception Handling through UseExceptions(),
  * DontUseExceptions()

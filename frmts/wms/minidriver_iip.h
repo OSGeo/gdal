@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Mini driver for Internet Imaging Protocol (IIP)

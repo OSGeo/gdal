@@ -223,8 +223,8 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
     auto pRawNoDataValue = GetRawNoDataValue();
     std::vector<GByte> abyNoData(16);
     if (pRawNoDataValue)
-        GDALCopyWords(pRawNoDataValue, GetDataType().GetNumericDataType(), 0,
-                      abyNoData.data(), eBufferDT, 0, 1);
+        GDALCopyWords64(pRawNoDataValue, GetDataType().GetNumericDataType(), 0,
+                        abyNoData.data(), eBufferDT, 0, 1);
 
     const auto nBufferDTSize = bufferDataType.GetSize();
     const int nCopyWordsDstStride =
@@ -246,8 +246,9 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
                     static_cast<GByte *>(pDstBuffer) +
                     (iY * bufferStride[0] + iX * bufferStride[1]) *
                         static_cast<int>(nBufferDTSize);
-                GDALCopyWords(abyNoData.data(), eBufferDT, 0, pabyDstBuffer,
-                              eBufferDT, nCopyWordsDstStride, nCopyWordsCount);
+                GDALCopyWords64(abyNoData.data(), eBufferDT, 0, pabyDstBuffer,
+                                eBufferDT, nCopyWordsDstStride,
+                                nCopyWordsCount);
             }
         }
     };
@@ -401,9 +402,10 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
                 const GByte *pabySrcBuffer =
                     parentValues.data() +
                     (iSrcY * nXCount + iSrcX) * nBandCount * nBufferDTSize;
-                GDALCopyWords(pabySrcBuffer, eBufferDT,
-                              static_cast<int>(nBufferDTSize), pabyDstBuffer,
-                              eBufferDT, nCopyWordsDstStride, nCopyWordsCount);
+                GDALCopyWords64(pabySrcBuffer, eBufferDT,
+                                static_cast<int>(nBufferDTSize), pabyDstBuffer,
+                                eBufferDT, nCopyWordsDstStride,
+                                nCopyWordsCount);
                 if (bSomeBandInvalids)
                 {
                     for (size_t i = 0; i < count[2]; ++i)
@@ -412,18 +414,19 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
                             arrayStartIdx[2] + i * arrayStep[2]);
                         if (!m_abyBandValidity[iBand])
                         {
-                            GDALCopyWords(abyNoData.data(), eBufferDT, 0,
-                                          pabyDstBuffer +
-                                              i * nCopyWordsDstStride,
-                                          eBufferDT, 0, 1);
+                            GDALCopyWords64(abyNoData.data(), eBufferDT, 0,
+                                            pabyDstBuffer +
+                                                i * nCopyWordsDstStride,
+                                            eBufferDT, 0, 1);
                         }
                     }
                 }
             }
             else
             {
-                GDALCopyWords(abyNoData.data(), eBufferDT, 0, pabyDstBuffer,
-                              eBufferDT, nCopyWordsDstStride, nCopyWordsCount);
+                GDALCopyWords64(abyNoData.data(), eBufferDT, 0, pabyDstBuffer,
+                                eBufferDT, nCopyWordsDstStride,
+                                nCopyWordsCount);
             }
         }
     }

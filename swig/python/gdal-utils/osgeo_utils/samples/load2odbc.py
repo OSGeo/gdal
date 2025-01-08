@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-# $Id$
 #
 # Project:  OGR Python samples
 # Purpose:  Load ODBC table to an ODBC datastore.  Uses direct SQL

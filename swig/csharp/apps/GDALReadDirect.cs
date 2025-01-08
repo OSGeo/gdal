@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     GDALReadDirect.cs
  * Project:  GDAL CSharp Interface

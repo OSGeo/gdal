@@ -2552,8 +2552,8 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         {
             CPLString osMsg;
             osMsg.Printf("Processing %s [%d/%d]",
-                         GDALGetDescription(pahSrcDS[iSrc]), iSrc + 1,
-                         nSrcCount);
+                         CPLGetFilename(GDALGetDescription(pahSrcDS[iSrc])),
+                         iSrc + 1, nSrcCount);
             return pfnExternalProgress((iSrc + dfComplete) / nSrcCount,
                                        osMsg.c_str(), pExternalProgressData);
         }
@@ -3427,7 +3427,7 @@ static CPLErr LoadCutline(const std::string &osCutlineDSNameOrWKT,
         OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
 
         if (eType == wkbPolygon)
-            poMultiPolygon->addGeometryDirectly(poGeom.release());
+            poMultiPolygon->addGeometry(std::move(poGeom));
         else if (eType == wkbMultiPolygon)
         {
             for (const auto *poSubGeom : poGeom->toMultiPolygon())
@@ -4712,6 +4712,21 @@ static GDALDatasetH GDALWarpCreateOutput(
             aosCreateOptions.FetchNameValue("PHOTOMETRIC") == nullptr)
         {
             aosCreateOptions.SetNameValue("PHOTOMETRIC", "RGB");
+
+            // Preserve potential ALPHA=PREMULTIPLIED from source alpha band
+            if (aosCreateOptions.FetchNameValue("ALPHA") == nullptr &&
+                apeColorInterpretations.size() == 4 &&
+                apeColorInterpretations[3] == GCI_AlphaBand &&
+                GDALGetRasterCount(pahSrcDS[0]) == 4)
+            {
+                const char *pszAlpha =
+                    GDALGetMetadataItem(GDALGetRasterBand(pahSrcDS[0], 4),
+                                        "ALPHA", "IMAGE_STRUCTURE");
+                if (pszAlpha)
+                {
+                    aosCreateOptions.SetNameValue("ALPHA", pszAlpha);
+                }
+            }
         }
 
         /* The GTiff driver now supports writing band color interpretation */
@@ -5401,7 +5416,7 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
     {
         const double dfCutlineBlendDist = CPLAtof(CSLFetchNameValueDef(
             *ppapszWarpOptions, "CUTLINE_BLEND_DIST", "0"));
-        OGRLinearRing *poRing = new OGRLinearRing();
+        auto poRing = std::make_unique<OGRLinearRing>();
         poRing->addPoint(-dfCutlineBlendDist, -dfCutlineBlendDist);
         poRing->addPoint(-dfCutlineBlendDist,
                          dfCutlineBlendDist + poSrcDS->GetRasterYSize());
@@ -5411,7 +5426,7 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
                          -dfCutlineBlendDist);
         poRing->addPoint(-dfCutlineBlendDist, -dfCutlineBlendDist);
         OGRPolygon oSrcDSFootprint;
-        oSrcDSFootprint.addRingDirectly(poRing);
+        oSrcDSFootprint.addRing(std::move(poRing));
         OGREnvelope sSrcDSEnvelope;
         oSrcDSFootprint.getEnvelope(&sSrcDSEnvelope);
         OGREnvelope sCutlineEnvelope;

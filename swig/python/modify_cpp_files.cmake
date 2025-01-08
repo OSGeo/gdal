@@ -60,4 +60,8 @@ string(REPLACE "if (--interpreter_counter != 0) // another sub-interpreter may s
                "/* Even Rouault / GDAL hack for SWIG >= 4.1 related to objects not being freed. See swig/python/modify_cpp_files.cmake for more details */\nif( 1 )"
        _CONTENTS "${_CONTENTS}")
 
+# Works around https://github.com/swig/swig/issues/3061
+string(REPLACE "# define SWIG_HEAPTYPES" "// Below is disabled because of https://github.com/swig/swig/issues/3061\n// # define SWIG_HEAPTYPES"
+       _CONTENTS "${_CONTENTS}")
+
 file(WRITE ${FILE} "${_CONTENTS}")

@@ -41,6 +41,18 @@
 #include "memdataset.h"
 #include "vrtdataset.h"
 
+#if defined(__x86_64) || defined(_M_X64)
+#include <emmintrin.h>
+#define HAVE_SSE2
+#elif defined(USE_NEON_OPTIMIZATIONS)
+#include "include_sse2neon.h"
+#define HAVE_SSE2
+#endif
+
+#ifdef HAVE_SSSE3_AT_COMPILE_TIME
+#include "rasterio_ssse3.h"
+#endif
+
 static void GDALFastCopyByte(const GByte *CPL_RESTRICT pSrcData,
                              int nSrcPixelStride, GByte *CPL_RESTRICT pDstData,
                              int nDstPixelStride, GPtrDiff_t nWordCount);
@@ -149,8 +161,8 @@ static bool DownsamplingIntegerXFactor(
         else
         {
             // Type to type conversion ...
-            GDALCopyWords(pabySrcData, eDataType, nIncSrcOffset, pabyDstData,
-                          eBufType, nPixelSpace, std::max(1, nIters));
+            GDALCopyWords64(pabySrcData, eDataType, nIncSrcOffset, pabyDstData,
+                            eBufType, nPixelSpace, std::max(1, nIters));
             if (nIters > 1)
             {
                 pabySrcData +=
@@ -318,18 +330,18 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 // Type to type conversion.
 
                 if (eRWFlag == GF_Read)
-                    GDALCopyWords(
+                    GDALCopyWords64(
                         pabySrcBlock + nSrcByteOffset, eDataType, nBandDataSize,
                         static_cast<GByte *>(pData) +
                             static_cast<GPtrDiff_t>(iBufYOff) * nLineSpace,
                         eBufType, static_cast<int>(nPixelSpace), nBufXSize);
                 else
-                    GDALCopyWords(static_cast<GByte *>(pData) +
-                                      static_cast<GPtrDiff_t>(iBufYOff) *
-                                          nLineSpace,
-                                  eBufType, static_cast<int>(nPixelSpace),
-                                  pabySrcBlock + nSrcByteOffset, eDataType,
-                                  nBandDataSize, nBufXSize);
+                    GDALCopyWords64(static_cast<GByte *>(pData) +
+                                        static_cast<GPtrDiff_t>(iBufYOff) *
+                                            nLineSpace,
+                                    eBufType, static_cast<int>(nPixelSpace),
+                                    pabySrcBlock + nSrcByteOffset, eDataType,
+                                    nBandDataSize, nBufXSize);
             }
 
             if (psExtraArg->pfnProgress != nullptr &&
@@ -515,7 +527,7 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     {
                         /* type to type conversion */
                         if (eRWFlag == GF_Read)
-                            GDALCopyWords(
+                            GDALCopyWords64(
                                 pabySrcBlock + iSrcOffset, eDataType,
                                 nBandDataSize,
                                 static_cast<GByte *>(pData) + iBufOffset +
@@ -523,7 +535,7 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 eBufType, static_cast<int>(nPixelSpace),
                                 nXSpan);
                         else
-                            GDALCopyWords(
+                            GDALCopyWords64(
                                 static_cast<GByte *>(pData) + iBufOffset +
                                     static_cast<GPtrDiff_t>(k) * nLineSpace,
                                 eBufType, static_cast<int>(nPixelSpace),
@@ -701,9 +713,9 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     /* type to type conversion ... ouch, this is expensive way
                     of handling single words */
 
-                    GDALCopyWords(static_cast<GByte *>(pData) + iBufOffset,
-                                  eBufType, 0, pabyDstBlock + iDstOffset,
-                                  eDataType, 0, 1);
+                    GDALCopyWords64(static_cast<GByte *>(pData) + iBufOffset,
+                                    eBufType, 0, pabyDstBlock + iDstOffset,
+                                    eDataType, 0, 1);
                 }
             }
 
@@ -913,9 +925,10 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                         // Type to type conversion ...
                         GPtrDiff_t iSrcOffset =
                             (nDiffX + iSrcOffsetCst) * nBandDataSize;
-                        GDALCopyWords(pabySrcBlock + iSrcOffset, eDataType, 0,
-                                      static_cast<GByte *>(pData) + iBufOffset,
-                                      eBufType, 0, 1);
+                        GDALCopyWords64(pabySrcBlock + iSrcOffset, eDataType, 0,
+                                        static_cast<GByte *>(pData) +
+                                            iBufOffset,
+                                        eBufType, 0, 1);
                     }
 
                     iBufOffset += static_cast<int>(nPixelSpace);
@@ -1381,12 +1394,13 @@ CPLErr GDALRasterBand::RasterIOResampled(
                         {
                             for (int j = 0; j < nDstYCount; j++)
                             {
-                                GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
-                                              static_cast<GByte *>(pDataMem) +
-                                                  nLSMem * (j + nDstYOff) +
-                                                  nDstXOff * nPSMem,
-                                              eDTMem, static_cast<int>(nPSMem),
-                                              nDstXCount);
+                                GDALCopyWords64(&dfNoDataValue, GDT_Float64, 0,
+                                                static_cast<GByte *>(pDataMem) +
+                                                    nLSMem * (j + nDstYOff) +
+                                                    nDstXOff * nPSMem,
+                                                eDTMem,
+                                                static_cast<int>(nPSMem),
+                                                nDstXCount);
                             }
                             bSkipResample = true;
                         }
@@ -1844,7 +1858,7 @@ CPLErr GDALDataset::RasterIOResampled(
                             {
                                 for (int j = 0; j < nDstYCount; j++)
                                 {
-                                    GDALCopyWords(
+                                    GDALCopyWords64(
                                         abyZero, GDT_Byte, 0,
                                         static_cast<GByte *>(pData) +
                                             iBand * nBandSpace +
@@ -2217,9 +2231,7 @@ static void inline GDALCopyWordsT_8atatime(
     }
 }
 
-#if defined(__x86_64) || defined(_M_X64)
-
-#include <emmintrin.h>
+#ifdef HAVE_SSE2
 
 template <class Tout>
 void GDALCopyWordsByteTo16Bit(const GByte *const CPL_RESTRICT pSrcData,
@@ -2630,7 +2642,7 @@ void GDALCopyWordsT(const double *const CPL_RESTRICT pSrcData,
                             nDstPixelStride, nWordCount);
 }
 
-#endif  // defined(__x86_64) || defined(_M_X64)
+#endif  // HAVE_SSE2
 
 template <>
 void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
@@ -2945,7 +2957,7 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
      */
     // Let the general translation case do the necessary conversions
     // on the first destination element.
-    GDALCopyWords(pSrcData, eSrcType, 0, pDstData, eDstType, 0, 1);
+    GDALCopyWords64(pSrcData, eSrcType, 0, pDstData, eDstType, 0, 1);
 
     // Now copy the first element to the nWordCount - 1 following destination
     // elements.
@@ -3068,13 +3080,7 @@ static inline void GDALUnrolledCopy(T *CPL_RESTRICT pDest,
     GDALUnrolledCopyGeneric<T, srcStride, dstStride>(pDest, pSrc, nIters);
 }
 
-#if (defined(__x86_64) || defined(_M_X64))
-
-#ifdef HAVE_SSSE3_AT_COMPILE_TIME
-
-#include "rasterio_ssse3.h"
-
-#endif
+#ifdef HAVE_SSE2
 
 template <>
 void GDALUnrolledCopy<GByte, 2, 1>(GByte *CPL_RESTRICT pDest,
@@ -3175,7 +3181,7 @@ void GDALUnrolledCopy<GByte, 4, 1>(GByte *CPL_RESTRICT pDest,
         pSrc += 4;
     }
 }
-#endif  // defined(__x86_64) || defined(_M_X64)
+#endif  // HAVE_SSE2
 
 /************************************************************************/
 /*                         GDALFastCopy()                               */
@@ -3353,11 +3359,16 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
     // On platforms where alignment matters, be careful
     const int nSrcDataTypeSize = GDALGetDataTypeSizeBytes(eSrcType);
     const int nDstDataTypeSize = GDALGetDataTypeSizeBytes(eDstType);
-    assert(nSrcDataTypeSize != 0);
-    assert(nDstDataTypeSize != 0);
+    if (CPL_UNLIKELY(nSrcDataTypeSize == 0 || nDstDataTypeSize == 0))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "GDALCopyWords64(): unsupported GDT_Unknown/GDT_TypeCount "
+                 "argument");
+        return;
+    }
     if (!(eSrcType == eDstType && nSrcPixelStride == nDstPixelStride) &&
-        ((reinterpret_cast<GPtrDiff_t>(pSrcData) % nSrcDataTypeSize) != 0 ||
-         (reinterpret_cast<GPtrDiff_t>(pDstData) % nDstDataTypeSize) != 0 ||
+        ((reinterpret_cast<uintptr_t>(pSrcData) % nSrcDataTypeSize) != 0 ||
+         (reinterpret_cast<uintptr_t>(pDstData) % nDstDataTypeSize) != 0 ||
          (nSrcPixelStride % nSrcDataTypeSize) != 0 ||
          (nDstPixelStride % nDstDataTypeSize) != 0))
     {
@@ -3373,14 +3384,22 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
         }
         else
         {
-#define ALIGN_PTR(ptr, align)                                                  \
-    ((ptr) + ((align) - (reinterpret_cast<size_t>(ptr) % (align))) % (align))
+            const auto getAlignedPtr = [](GByte *ptr, int align)
+            {
+                return ptr +
+                       ((align - (reinterpret_cast<uintptr_t>(ptr) % align)) %
+                        align);
+            };
+
             // The largest we need is for CFloat64 (16 bytes), so 32 bytes to
             // be sure to get correctly aligned pointer.
-            GByte abySrcBuffer[32];
-            GByte abyDstBuffer[32];
-            GByte *pabySrcBuffer = ALIGN_PTR(abySrcBuffer, nSrcDataTypeSize);
-            GByte *pabyDstBuffer = ALIGN_PTR(abyDstBuffer, nDstDataTypeSize);
+            constexpr size_t SIZEOF_CFLOAT64 = 2 * sizeof(double);
+            GByte abySrcBuffer[2 * SIZEOF_CFLOAT64];
+            GByte abyDstBuffer[2 * SIZEOF_CFLOAT64];
+            GByte *pabySrcBuffer =
+                getAlignedPtr(abySrcBuffer, nSrcDataTypeSize);
+            GByte *pabyDstBuffer =
+                getAlignedPtr(abyDstBuffer, nDstDataTypeSize);
             for (decltype(nWordCount) i = 0; i < nWordCount; i++)
             {
                 memcpy(pabySrcBuffer,
@@ -4296,15 +4315,15 @@ CPLErr GDALDataset::BlockBasedRasterIO(
                        of handling single words */
 
                     if (eRWFlag == GF_Read)
-                        GDALCopyWords(pabySrcBlock + iSrcOffset, eDataType, 0,
-                                      static_cast<GByte *>(pData) +
-                                          iBandBufOffset,
-                                      eBufType, 0, 1);
+                        GDALCopyWords64(pabySrcBlock + iSrcOffset, eDataType, 0,
+                                        static_cast<GByte *>(pData) +
+                                            iBandBufOffset,
+                                        eBufType, 0, 1);
                     else
-                        GDALCopyWords(static_cast<const GByte *>(pData) +
-                                          iBandBufOffset,
-                                      eBufType, 0, pabySrcBlock + iSrcOffset,
-                                      eDataType, 0, 1);
+                        GDALCopyWords64(static_cast<const GByte *>(pData) +
+                                            iBandBufOffset,
+                                        eBufType, 0, pabySrcBlock + iSrcOffset,
+                                        eDataType, 0, 1);
                 }
             }
 
@@ -5299,13 +5318,7 @@ bool GDALBufferHasOnlyNoData(const void *pBuffer, double dfNoDataValue,
     return false;
 }
 
-#if defined(__x86_64) || defined(_M_X64)
-
-#include <emmintrin.h>
-
-#ifdef HAVE_SSSE3_AT_COMPILE_TIME
-#include "rasterio_ssse3.h"
-#endif
+#ifdef HAVE_SSE2
 
 /************************************************************************/
 /*                    GDALDeinterleave3Byte()                           */
@@ -5319,6 +5332,12 @@ GDALDeinterleave3Byte(const GByte *CPL_RESTRICT pabySrc,
                       GByte *CPL_RESTRICT pabyDest0,
                       GByte *CPL_RESTRICT pabyDest1,
                       GByte *CPL_RESTRICT pabyDest2, size_t nIters)
+#ifdef USE_NEON_OPTIMIZATIONS
+{
+    return GDALDeinterleave3Byte_SSSE3(pabySrc, pabyDest0, pabyDest1, pabyDest2,
+                                       nIters);
+}
+#else
 {
 #ifdef HAVE_SSSE3_AT_COMPILE_TIME
     if (CPLHaveRuntimeSSSE3())
@@ -5366,6 +5385,7 @@ GDALDeinterleave3Byte(const GByte *CPL_RESTRICT pabySrc,
         pabyDest2[i] = pabySrc[3 * i + 2];
     }
 }
+#endif
 
 /************************************************************************/
 /*                    GDALDeinterleave4Byte()                           */
@@ -5421,6 +5441,12 @@ static void GDALDeinterleave4Byte(const GByte *CPL_RESTRICT pabySrc,
                                   GByte *CPL_RESTRICT pabyDest1,
                                   GByte *CPL_RESTRICT pabyDest2,
                                   GByte *CPL_RESTRICT pabyDest3, size_t nIters)
+#ifdef USE_NEON_OPTIMIZATIONS
+{
+    return GDALDeinterleave4Byte_SSSE3(pabySrc, pabyDest0, pabyDest1, pabyDest2,
+                                       pabyDest3, nIters);
+}
+#else
 {
 #ifdef HAVE_SSSE3_AT_COMPILE_TIME
     if (CPLHaveRuntimeSSSE3())
@@ -5469,6 +5495,7 @@ static void GDALDeinterleave4Byte(const GByte *CPL_RESTRICT pabySrc,
         pabyDest3[i] = pabySrc[4 * i + 3];
     }
 }
+#endif
 #else
 // GCC autovectorizer does an excellent job
 __attribute__((optimize("tree-vectorize"))) static void GDALDeinterleave4Byte(
@@ -5561,7 +5588,7 @@ void GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
 {
     if (eSourceDT == eDestDT)
     {
-        if (eSourceDT == GDT_Byte)
+        if (eSourceDT == GDT_Byte || eSourceDT == GDT_Int8)
         {
             if (nComponents == 3)
             {
@@ -5596,8 +5623,7 @@ void GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
         }
 #if ((defined(__GNUC__) && !defined(__clang__)) ||                             \
      defined(__INTEL_CLANG_COMPILER)) &&                                       \
-    (defined(__x86_64) || defined(_M_X64)) &&                                  \
-    defined(HAVE_SSSE3_AT_COMPILE_TIME)
+    defined(HAVE_SSE2) && defined(HAVE_SSSE3_AT_COMPILE_TIME)
         else if ((eSourceDT == GDT_Int16 || eSourceDT == GDT_UInt16) &&
                  CPLHaveRuntimeSSSE3())
         {
@@ -5648,4 +5674,466 @@ void GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
                         eSourceDT, nComponents * nSourceDTSize,
                         ppDestBuffer[iComp], eDestDT, nDestDTSize, nIters);
     }
+}
+
+/************************************************************************/
+/*                    GDALTranspose2DSingleToSingle()                   */
+/************************************************************************/
+/**
+ * Transpose a 2D array of non-complex values, in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of height = nSrcHeight and width = nSrcWidth.
+ * @param pDst Destination transposed array of height = nSrcWidth and width = nSrcHeight.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ */
+
+template <class DST, class SRC>
+void GDALTranspose2DSingleToSingle(const SRC *CPL_RESTRICT pSrc,
+                                   DST *CPL_RESTRICT pDst, size_t nSrcWidth,
+                                   size_t nSrcHeight)
+{
+    constexpr size_t blocksize = 32;
+    for (size_t i = 0; i < nSrcHeight; i += blocksize)
+    {
+        const size_t max_k = std::min(i + blocksize, nSrcHeight);
+        for (size_t j = 0; j < nSrcWidth; j += blocksize)
+        {
+            // transpose the block beginning at [i,j]
+            const size_t max_l = std::min(j + blocksize, nSrcWidth);
+            for (size_t k = i; k < max_k; ++k)
+            {
+                for (size_t l = j; l < max_l; ++l)
+                {
+                    GDALCopyWord(pSrc[l + k * nSrcWidth],
+                                 pDst[k + l * nSrcHeight]);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                   GDALTranspose2DComplexToComplex()                  */
+/************************************************************************/
+/**
+ * Transpose a 2D array of complex values into an array of complex values,
+ * in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of height = nSrcHeight and width = nSrcWidth.
+ * @param pDst Destination transposed array of height = nSrcWidth and width = nSrcHeight.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ */
+template <class DST, class SRC>
+void GDALTranspose2DComplexToComplex(const SRC *CPL_RESTRICT pSrc,
+                                     DST *CPL_RESTRICT pDst, size_t nSrcWidth,
+                                     size_t nSrcHeight)
+{
+    constexpr size_t blocksize = 32;
+    for (size_t i = 0; i < nSrcHeight; i += blocksize)
+    {
+        const size_t max_k = std::min(i + blocksize, nSrcHeight);
+        for (size_t j = 0; j < nSrcWidth; j += blocksize)
+        {
+            // transpose the block beginning at [i,j]
+            const size_t max_l = std::min(j + blocksize, nSrcWidth);
+            for (size_t k = i; k < max_k; ++k)
+            {
+                for (size_t l = j; l < max_l; ++l)
+                {
+                    GDALCopyWord(pSrc[2 * (l + k * nSrcWidth) + 0],
+                                 pDst[2 * (k + l * nSrcHeight) + 0]);
+                    GDALCopyWord(pSrc[2 * (l + k * nSrcWidth) + 1],
+                                 pDst[2 * (k + l * nSrcHeight) + 1]);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                   GDALTranspose2DComplexToSingle()                  */
+/************************************************************************/
+/**
+ * Transpose a 2D array of complex values into an array of non-complex values,
+ * in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of height = nSrcHeight and width = nSrcWidth.
+ * @param pDst Destination transposed array of height = nSrcWidth and width = nSrcHeight.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ */
+template <class DST, class SRC>
+void GDALTranspose2DComplexToSingle(const SRC *CPL_RESTRICT pSrc,
+                                    DST *CPL_RESTRICT pDst, size_t nSrcWidth,
+                                    size_t nSrcHeight)
+{
+    constexpr size_t blocksize = 32;
+    for (size_t i = 0; i < nSrcHeight; i += blocksize)
+    {
+        const size_t max_k = std::min(i + blocksize, nSrcHeight);
+        for (size_t j = 0; j < nSrcWidth; j += blocksize)
+        {
+            // transpose the block beginning at [i,j]
+            const size_t max_l = std::min(j + blocksize, nSrcWidth);
+            for (size_t k = i; k < max_k; ++k)
+            {
+                for (size_t l = j; l < max_l; ++l)
+                {
+                    GDALCopyWord(pSrc[2 * (l + k * nSrcWidth) + 0],
+                                 pDst[k + l * nSrcHeight]);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                   GDALTranspose2DSingleToComplex()                  */
+/************************************************************************/
+/**
+ * Transpose a 2D array of non-complex values into an array of complex values,
+ * in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of height = nSrcHeight and width = nSrcWidth.
+ * @param pDst Destination transposed array of height = nSrcWidth and width = nSrcHeight.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ */
+template <class DST, class SRC>
+void GDALTranspose2DSingleToComplex(const SRC *CPL_RESTRICT pSrc,
+                                    DST *CPL_RESTRICT pDst, size_t nSrcWidth,
+                                    size_t nSrcHeight)
+{
+    constexpr size_t blocksize = 32;
+    for (size_t i = 0; i < nSrcHeight; i += blocksize)
+    {
+        const size_t max_k = std::min(i + blocksize, nSrcHeight);
+        for (size_t j = 0; j < nSrcWidth; j += blocksize)
+        {
+            // transpose the block beginning at [i,j]
+            const size_t max_l = std::min(j + blocksize, nSrcWidth);
+            for (size_t k = i; k < max_k; ++k)
+            {
+                for (size_t l = j; l < max_l; ++l)
+                {
+                    GDALCopyWord(pSrc[l + k * nSrcWidth],
+                                 pDst[2 * (k + l * nSrcHeight) + 0]);
+                    pDst[2 * (k + l * nSrcHeight) + 1] = 0;
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                        GDALTranspose2D()                             */
+/************************************************************************/
+
+template <class DST, bool DST_IS_COMPLEX>
+static void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, DST *pDst,
+                            size_t nSrcWidth, size_t nSrcHeight)
+{
+#define CALL_GDALTranspose2D_internal(SRC_TYPE)                                \
+    do                                                                         \
+    {                                                                          \
+        if constexpr (DST_IS_COMPLEX)                                          \
+        {                                                                      \
+            GDALTranspose2DSingleToComplex(                                    \
+                static_cast<const SRC_TYPE *>(pSrc), pDst, nSrcWidth,          \
+                nSrcHeight);                                                   \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            GDALTranspose2DSingleToSingle(static_cast<const SRC_TYPE *>(pSrc), \
+                                          pDst, nSrcWidth, nSrcHeight);        \
+        }                                                                      \
+    } while (0)
+
+#define CALL_GDALTranspose2DComplex_internal(SRC_TYPE)                         \
+    do                                                                         \
+    {                                                                          \
+        if constexpr (DST_IS_COMPLEX)                                          \
+        {                                                                      \
+            GDALTranspose2DComplexToComplex(                                   \
+                static_cast<const SRC_TYPE *>(pSrc), pDst, nSrcWidth,          \
+                nSrcHeight);                                                   \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            GDALTranspose2DComplexToSingle(                                    \
+                static_cast<const SRC_TYPE *>(pSrc), pDst, nSrcWidth,          \
+                nSrcHeight);                                                   \
+        }                                                                      \
+    } while (0)
+
+    // clang-format off
+    switch (eSrcType)
+    {
+        case GDT_Byte:     CALL_GDALTranspose2D_internal(uint8_t); break;
+        case GDT_Int8:     CALL_GDALTranspose2D_internal(int8_t); break;
+        case GDT_UInt16:   CALL_GDALTranspose2D_internal(uint16_t); break;
+        case GDT_Int16:    CALL_GDALTranspose2D_internal(int16_t); break;
+        case GDT_UInt32:   CALL_GDALTranspose2D_internal(uint32_t); break;
+        case GDT_Int32:    CALL_GDALTranspose2D_internal(int32_t); break;
+        case GDT_UInt64:   CALL_GDALTranspose2D_internal(uint64_t); break;
+        case GDT_Int64:    CALL_GDALTranspose2D_internal(int64_t); break;
+        case GDT_Float32:  CALL_GDALTranspose2D_internal(float); break;
+        case GDT_Float64:  CALL_GDALTranspose2D_internal(double); break;
+        case GDT_CInt16:   CALL_GDALTranspose2DComplex_internal(int16_t); break;
+        case GDT_CInt32:   CALL_GDALTranspose2DComplex_internal(int32_t); break;
+        case GDT_CFloat32: CALL_GDALTranspose2DComplex_internal(float); break;
+        case GDT_CFloat64: CALL_GDALTranspose2DComplex_internal(double); break;
+        case GDT_Unknown:
+        case GDT_TypeCount:
+            break;
+    }
+        // clang-format on
+
+#undef CALL_GDALTranspose2D_internal
+#undef CALL_GDALTranspose2DComplex_internal
+}
+
+/************************************************************************/
+/*                      GDALInterleave2Byte()                           */
+/************************************************************************/
+
+#if defined(HAVE_SSE2) &&                                                      \
+    (!defined(__GNUC__) || defined(__INTEL_CLANG_COMPILER))
+
+// ICC autovectorizer doesn't do a good job at generating good SSE code,
+// at least with icx 2024.0.2.20231213, but it nicely unrolls the below loop.
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave2Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+    size_t i = 0;
+    constexpr size_t VALS_PER_ITER = 16;
+    for (i = 0; i + VALS_PER_ITER <= nIters; i += VALS_PER_ITER)
+    {
+        __m128i xmm0 =
+            _mm_loadu_si128(reinterpret_cast<__m128i const *>(pSrc + i));
+        __m128i xmm1 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + nIters));
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(pDst + 2 * i),
+                         _mm_unpacklo_epi8(xmm0, xmm1));
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 2 * i + VALS_PER_ITER),
+            _mm_unpackhi_epi8(xmm0, xmm1));
+    }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
+    for (; i < nIters; ++i)
+    {
+        pDst[2 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[2 * i + 1] = pSrc[i + 1 * nIters];
+    }
+}
+
+#else
+
+#if defined(__GNUC__) && !defined(__clang__)
+__attribute__((optimize("tree-vectorize")))
+#endif
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave2Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+#pragma clang loop vectorize(enable)
+#endif
+    for (size_t i = 0; i < nIters; ++i)
+    {
+        pDst[2 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[2 * i + 1] = pSrc[i + 1 * nIters];
+    }
+}
+
+#endif
+
+/************************************************************************/
+/*                      GDALInterleave4Byte()                           */
+/************************************************************************/
+
+#if defined(HAVE_SSE2) &&                                                      \
+    (!defined(__GNUC__) || defined(__INTEL_CLANG_COMPILER))
+
+// ICC autovectorizer doesn't do a good job at generating good SSE code,
+// at least with icx 2024.0.2.20231213, but it nicely unrolls the below loop.
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave4Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+    size_t i = 0;
+    constexpr size_t VALS_PER_ITER = 16;
+    for (i = 0; i + VALS_PER_ITER <= nIters; i += VALS_PER_ITER)
+    {
+        __m128i xmm0 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 0 * nIters));
+        __m128i xmm1 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 1 * nIters));
+        __m128i xmm2 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 2 * nIters));
+        __m128i xmm3 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 3 * nIters));
+        auto tmp0 = _mm_unpacklo_epi8(
+            xmm0,
+            xmm1);  // (xmm0_0, xmm1_0, xmm0_1, xmm1_1, xmm0_2, xmm1_2, ...)
+        auto tmp1 = _mm_unpackhi_epi8(
+            xmm0,
+            xmm1);  // (xmm0_8, xmm1_8, xmm0_9, xmm1_9, xmm0_10, xmm1_10, ...)
+        auto tmp2 = _mm_unpacklo_epi8(
+            xmm2,
+            xmm3);  // (xmm2_0, xmm3_0, xmm2_1, xmm3_1, xmm2_2, xmm3_2, ...)
+        auto tmp3 = _mm_unpackhi_epi8(
+            xmm2,
+            xmm3);  // (xmm2_8, xmm3_8, xmm2_9, xmm3_9, xmm2_10, xmm3_10, ...)
+        auto tmp2_0 = _mm_unpacklo_epi16(
+            tmp0,
+            tmp2);  // (xmm0_0, xmm1_0, xmm2_0, xmm3_0, xmm0_1, xmm1_1, xmm2_1, xmm3_1, ...)
+        auto tmp2_1 = _mm_unpackhi_epi16(tmp0, tmp2);
+        auto tmp2_2 = _mm_unpacklo_epi16(tmp1, tmp3);
+        auto tmp2_3 = _mm_unpackhi_epi16(tmp1, tmp3);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 0 * VALS_PER_ITER),
+            tmp2_0);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 1 * VALS_PER_ITER),
+            tmp2_1);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 2 * VALS_PER_ITER),
+            tmp2_2);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 3 * VALS_PER_ITER),
+            tmp2_3);
+    }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
+    for (; i < nIters; ++i)
+    {
+        pDst[4 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[4 * i + 1] = pSrc[i + 1 * nIters];
+        pDst[4 * i + 2] = pSrc[i + 2 * nIters];
+        pDst[4 * i + 3] = pSrc[i + 3 * nIters];
+    }
+}
+
+#else
+
+#if defined(__GNUC__) && !defined(__clang__)
+__attribute__((optimize("tree-vectorize")))
+#endif
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave4Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+#pragma clang loop vectorize(enable)
+#endif
+    for (size_t i = 0; i < nIters; ++i)
+    {
+        pDst[4 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[4 * i + 1] = pSrc[i + 1 * nIters];
+        pDst[4 * i + 2] = pSrc[i + 2 * nIters];
+        pDst[4 * i + 3] = pSrc[i + 3 * nIters];
+    }
+}
+
+#endif
+
+/************************************************************************/
+/*                        GDALTranspose2D()                             */
+/************************************************************************/
+
+/**
+ * Transpose a 2D array in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of width = nSrcWidth and height = nSrcHeight.
+ * @param eSrcType Data type of pSrc.
+ * @param pDst Destination transposed array of width = nSrcHeight and height = nSrcWidth.
+ * @param eDstType Data type of pDst.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ * @since GDAL 3.11
+ */
+
+void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, void *pDst,
+                     GDALDataType eDstType, size_t nSrcWidth, size_t nSrcHeight)
+{
+    if (eSrcType == eDstType && (eSrcType == GDT_Byte || eSrcType == GDT_Int8))
+    {
+        if (nSrcHeight == 2)
+        {
+            GDALInterleave2Byte(static_cast<const uint8_t *>(pSrc),
+                                static_cast<uint8_t *>(pDst), nSrcWidth);
+            return;
+        }
+        if (nSrcHeight == 4)
+        {
+            GDALInterleave4Byte(static_cast<const uint8_t *>(pSrc),
+                                static_cast<uint8_t *>(pDst), nSrcWidth);
+            return;
+        }
+#if (defined(HAVE_SSSE3_AT_COMPILE_TIME) &&                                    \
+     (defined(__x86_64) || defined(_M_X64)))
+        if (CPLHaveRuntimeSSSE3())
+        {
+            GDALTranspose2D_Byte_SSSE3(static_cast<const uint8_t *>(pSrc),
+                                       static_cast<uint8_t *>(pDst), nSrcWidth,
+                                       nSrcHeight);
+            return;
+        }
+#elif defined(USE_NEON_OPTIMIZATIONS)
+        {
+            GDALTranspose2D_Byte_SSSE3(static_cast<const uint8_t *>(pSrc),
+                                       static_cast<uint8_t *>(pDst), nSrcWidth,
+                                       nSrcHeight);
+            return;
+        }
+#endif
+    }
+
+#define CALL_GDALTranspose2D_internal(DST_TYPE, DST_IS_COMPLEX)                \
+    GDALTranspose2D<DST_TYPE, DST_IS_COMPLEX>(                                 \
+        pSrc, eSrcType, static_cast<DST_TYPE *>(pDst), nSrcWidth, nSrcHeight)
+
+    // clang-format off
+    switch (eDstType)
+    {
+        case GDT_Byte:     CALL_GDALTranspose2D_internal(uint8_t, false); break;
+        case GDT_Int8:     CALL_GDALTranspose2D_internal(int8_t, false); break;
+        case GDT_UInt16:   CALL_GDALTranspose2D_internal(uint16_t, false); break;
+        case GDT_Int16:    CALL_GDALTranspose2D_internal(int16_t, false); break;
+        case GDT_UInt32:   CALL_GDALTranspose2D_internal(uint32_t, false); break;
+        case GDT_Int32:    CALL_GDALTranspose2D_internal(int32_t, false); break;
+        case GDT_UInt64:   CALL_GDALTranspose2D_internal(uint64_t, false); break;
+        case GDT_Int64:    CALL_GDALTranspose2D_internal(int64_t, false); break;
+        case GDT_Float32:  CALL_GDALTranspose2D_internal(float, false); break;
+        case GDT_Float64:  CALL_GDALTranspose2D_internal(double, false); break;
+        case GDT_CInt16:   CALL_GDALTranspose2D_internal(int16_t, true); break;
+        case GDT_CInt32:   CALL_GDALTranspose2D_internal(int32_t, true); break;
+        case GDT_CFloat32: CALL_GDALTranspose2D_internal(float, true); break;
+        case GDT_CFloat64: CALL_GDALTranspose2D_internal(double, true); break;
+        case GDT_Unknown:
+        case GDT_TypeCount:
+            break;
+    }
+        // clang-format on
+
+#undef CALL_GDALTranspose2D_internal
 }

@@ -25,6 +25,9 @@ file, such as YCbCr color model files, are automatically translated into
 RGBA (red, green, blue, alpha) form, and treated as four eight bit
 bands.
 
+For an alternative which offers thread-safe read-only capabilities, consult
+:ref:`raster.libertiff`.
+
 Driver capabilities
 -------------------
 
@@ -178,7 +181,7 @@ metadata :
 -  TIFFTAG_RESOLUTIONUNIT
 -  TIFFTAG_MINSAMPLEVALUE (read only)
 -  TIFFTAG_MAXSAMPLEVALUE (read only)
--  `GEO_METADATA <https://www.awaresystems.be/imaging/tiff/tifftags/geo_metadata.html>`__:
+-  `GEO_METADATA <https://portal.dgiwg.org/files/70843>`__:
    This tag may be used for embedding XML-encoded instance documents
    prepared using 19139-based schema (GeoTIFF DGIWG) (GDAL >= 2.3)
 -  `TIFF_RSID <https://www.awaresystems.be/imaging/tiff/tifftags/tiff_rsid.html>`__:
@@ -245,6 +248,13 @@ ASCII tag (code 42113) for files created with the default profile
 GDALGeoTIFF. Note that all bands must use the same nodata value. When
 BASELINE or GeoTIFF profile are used, the nodata value is stored into a
 PAM .aux.xml file.
+
+Raster Attribute Table
+----------------------
+
+Starting with GDAL 3.11, Raster attribute tables stored in auxiliary
+.tif.vat.dbf files, as written by ArcGIS, can be read as GDAL Raster Attribute
+Table.
 
 Sparse files
 ------------
@@ -487,7 +497,7 @@ This driver supports the following creation options:
       * ``JXL`` is for JPEG-XL, and is only available when using internal libtiff and building GDAL against
         https://github.com/libjxl/libjxl . It is recommended to use JXL compression with the ``TILED=YES`` creation
         option and block size of 256x256, 512x512, or 1024x1024 pixels. Supported data types are ``Byte``,
-        ``UInt16`` and ``Float32`` only. For GDAL < 3.6.0, JXL compression may only be used alongside 
+        ``UInt16`` and ``Float32`` only. For GDAL < 3.6.0, JXL compression may only be used alongside
         ``INTERLEAVE=PIXEL`` (the default) on datasets with 4 bands or less.
 
       * ``NONE`` is the default.

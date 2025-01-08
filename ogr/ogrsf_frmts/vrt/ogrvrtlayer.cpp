@@ -461,24 +461,22 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
     }
 
     // Do we have a SrcRegion?
-    const char *pszSrcRegion = CPLGetXMLValue(psNode, "SrcRegion", nullptr);
-    if (pszSrcRegion == nullptr && poProps == apoGeomFieldProps[0])
-        pszSrcRegion = CPLGetXMLValue(psNodeParent, "SrcRegion", nullptr);
+    const CPLXMLNode *psSrcRegionNode = CPLGetXMLNode(psNode, "SrcRegion");
+    if (psSrcRegionNode == nullptr && poProps == apoGeomFieldProps[0])
+        psSrcRegionNode = CPLGetXMLNode(psNodeParent, "SrcRegion");
+    const char *pszSrcRegion = CPLGetXMLValue(psSrcRegionNode, "", nullptr);
     if (pszSrcRegion != nullptr)
     {
         OGRGeometryFactory::createFromWkt(pszSrcRegion, nullptr,
                                           &poProps->poSrcRegion);
-        if (poProps->poSrcRegion == nullptr ||
-            wkbFlatten(poProps->poSrcRegion->getGeometryType()) != wkbPolygon)
+        if (poProps->poSrcRegion == nullptr)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Ignoring SrcRegion. It must be a valid WKT polygon");
-            delete poProps->poSrcRegion;
-            poProps->poSrcRegion = nullptr;
+                     "Ignoring SrcRegion. It must be a valid WKT geometry");
         }
 
         poProps->bSrcClip =
-            CPLTestBool(CPLGetXMLValue(psNode, "SrcRegion.clip", "FALSE"));
+            CPLTestBool(CPLGetXMLValue(psSrcRegionNode, "clip", "FALSE"));
     }
 
     // Set Extent if provided.
@@ -1211,9 +1209,9 @@ bool OGRVRTLayer::ResetSourceReading()
                     }
                     else
                     {
-                        OGRGeometry *poIntersection =
+                        auto poIntersection = std::unique_ptr<OGRGeometry>(
                             apoGeomFieldProps[i]->poSrcRegion->Intersection(
-                                m_poFilterGeom);
+                                m_poFilterGeom));
                         if (poIntersection && !poIntersection->IsEmpty())
                         {
                             poIntersection->getEnvelope(&sEnvelope);
@@ -1225,7 +1223,6 @@ bool OGRVRTLayer::ResetSourceReading()
                             sEnvelope.MinY = 0;
                             sEnvelope.MaxY = 0;
                         }
-                        delete poIntersection;
                     }
                 }
                 else
@@ -1318,63 +1315,54 @@ bool OGRVRTLayer::ResetSourceReading()
 
     CPLFree(pszFilter);
 
+    m_bEmptyResultSet = false;
+
     // Clear spatial filter (to be safe) for non direct geometries
     // and reset reading.
     if (m_iGeomFieldFilter < static_cast<int>(apoGeomFieldProps.size()) &&
         apoGeomFieldProps[m_iGeomFieldFilter]->eGeometryStyle == VGS_Direct &&
         apoGeomFieldProps[m_iGeomFieldFilter]->iGeomField >= 0)
     {
-        OGRGeometry *poSpatialGeom = nullptr;
+        OGRGeometry *poNewSpatialGeom = nullptr;
         OGRGeometry *poSrcRegion =
             apoGeomFieldProps[m_iGeomFieldFilter]->poSrcRegion;
-        bool bToDelete = false;
+        std::unique_ptr<OGRGeometry> poIntersection;
 
         if (poSrcRegion == nullptr)
         {
-            poSpatialGeom = m_poFilterGeom;
+            poNewSpatialGeom = m_poFilterGeom;
         }
         else if (m_poFilterGeom == nullptr)
         {
-            poSpatialGeom = poSrcRegion;
+            poNewSpatialGeom = poSrcRegion;
         }
         else
         {
-            if (wkbFlatten(m_poFilterGeom->getGeometryType()) != wkbPolygon)
+            bool bDoIntersection = true;
+            if (m_bFilterIsEnvelope)
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Spatial filter should be polygon when a SrcRegion is "
-                         "defined. Ignoring it");
-                poSpatialGeom = poSrcRegion;
+                OGREnvelope sEnvelope;
+                m_poFilterGeom->getEnvelope(&sEnvelope);
+                if (std::isinf(sEnvelope.MinX) && std::isinf(sEnvelope.MinY) &&
+                    std::isinf(sEnvelope.MaxX) && std::isinf(sEnvelope.MaxY) &&
+                    sEnvelope.MinX < 0 && sEnvelope.MinY < 0 &&
+                    sEnvelope.MaxX > 0 && sEnvelope.MaxY > 0)
+                {
+                    poNewSpatialGeom = poSrcRegion;
+                    bDoIntersection = false;
+                }
             }
-            else
+            if (bDoIntersection)
             {
-                bool bDoIntersection = true;
-                if (m_bFilterIsEnvelope)
-                {
-                    OGREnvelope sEnvelope;
-                    m_poFilterGeom->getEnvelope(&sEnvelope);
-                    if (std::isinf(sEnvelope.MinX) &&
-                        std::isinf(sEnvelope.MinY) &&
-                        std::isinf(sEnvelope.MaxX) &&
-                        std::isinf(sEnvelope.MaxY) && sEnvelope.MinX < 0 &&
-                        sEnvelope.MinY < 0 && sEnvelope.MaxX > 0 &&
-                        sEnvelope.MaxY > 0)
-                    {
-                        poSpatialGeom = poSrcRegion;
-                        bDoIntersection = false;
-                    }
-                }
-                if (bDoIntersection)
-                {
-                    poSpatialGeom = m_poFilterGeom->Intersection(poSrcRegion);
-                    bToDelete = true;
-                }
+                poIntersection.reset(m_poFilterGeom->Intersection(poSrcRegion));
+                poNewSpatialGeom = poIntersection.get();
+                if (!poIntersection)
+                    m_bEmptyResultSet = true;
             }
         }
         poSrcLayer->SetSpatialFilter(
-            apoGeomFieldProps[m_iGeomFieldFilter]->iGeomField, poSpatialGeom);
-        if (bToDelete)
-            delete poSpatialGeom;
+            apoGeomFieldProps[m_iGeomFieldFilter]->iGeomField,
+            poNewSpatialGeom);
     }
     else
     {
@@ -1393,6 +1381,8 @@ bool OGRVRTLayer::ResetSourceReading()
 OGRFeature *OGRVRTLayer::GetNextFeature()
 
 {
+    if (m_bEmptyResultSet)
+        return nullptr;
     if (!bHasFullInitialized)
         FullInitialize();
     if (!poSrcLayer || poDS->GetRecursionDetected())
@@ -2218,6 +2208,8 @@ OGRErr OGRVRTLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
 GIntBig OGRVRTLayer::GetFeatureCount(int bForce)
 
 {
+    if (m_bEmptyResultSet)
+        return 0;
     if (nFeatureCount >= 0 && m_poFilterGeom == nullptr &&
         m_poAttrQuery == nullptr)
     {

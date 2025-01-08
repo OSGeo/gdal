@@ -9,7 +9,7 @@
  * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Portions Copyright (c) Her majesty the Queen in right of Canada as
- * represented by the Minister of National Defence, 2006.
+ * represented by the Minister of National Defence, 2006, 2020
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
@@ -46,6 +46,10 @@
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
                                  GUIntBig nImageOffset, GIntBig nPixelCount,
                                  const char *pszIC, vsi_l_offset nICOffset,
@@ -62,7 +66,7 @@ static bool NITFWriteJPEGImage(GDALDataset *, VSILFILE *, vsi_l_offset, char **,
 #endif
 
 static void SetBandMetadata(NITFImage *psImage, GDALRasterBand *poBand,
-                            int nBand);
+                            int nBand, bool bReportISUBCAT);
 
 /************************************************************************/
 /* ==================================================================== */
@@ -380,12 +384,12 @@ static char **ExtractEsriMD(char **papszMD)
 /************************************************************************/
 
 static void SetBandMetadata(NITFImage *psImage, GDALRasterBand *poBand,
-                            int nBand)
+                            int nBand, bool bReportISUBCAT)
 {
     const NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
 
     /* The ISUBCAT is particularly valuable for interpreting SAR bands */
-    if (strlen(psBandInfo->szISUBCAT) > 0)
+    if (bReportISUBCAT && strlen(psBandInfo->szISUBCAT) > 0)
     {
         poBand->SetMetadataItem("NITF_ISUBCAT", psBandInfo->szISUBCAT);
     }
@@ -745,6 +749,12 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     /*      Create band information objects.                                */
     /* -------------------------------------------------------------------- */
 
+    /* Keep temporary non-based dataset bands */
+    bool bIsTempBandUsed = false;
+    GDALDataType dtFirstBand = GDT_Unknown;
+    GDALDataType dtSecondBand = GDT_Unknown;
+    std::vector<GDALRasterBand *> apoNewBands(nUsableBands);
+
     GDALDataset *poBaseDS = nullptr;
     if (poDS->poJ2KDataset != nullptr)
         poBaseDS = poDS->poJ2KDataset;
@@ -757,7 +767,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         {
             GDALRasterBand *poBaseBand = poBaseDS->GetRasterBand(iBand + 1);
 
-            SetBandMetadata(psImage, poBaseBand, iBand + 1);
+            SetBandMetadata(psImage, poBaseBand, iBand + 1, true);
 
             NITFWrapperRasterBand *poBand =
                 new NITFWrapperRasterBand(poDS, poBaseBand, iBand + 1);
@@ -791,19 +801,93 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
             }
 
             poDS->SetBand(iBand + 1, poBand);
+
+            if (iBand == 0)
+                dtFirstBand = poBand->GetRasterDataType();
+            else if (iBand == 1)
+                dtSecondBand = poBand->GetRasterDataType();
         }
         else
         {
-            GDALRasterBand *poBand = new NITFRasterBand(poDS, iBand + 1);
+            bIsTempBandUsed = true;
+
+            NITFRasterBand *poBand = new NITFRasterBand(poDS, iBand + 1);
             if (poBand->GetRasterDataType() == GDT_Unknown)
             {
+                for (auto *poOtherBand : apoNewBands)
+                    delete poOtherBand;
                 delete poBand;
                 delete poDS;
                 return nullptr;
             }
 
-            SetBandMetadata(psImage, poBand, iBand + 1);
+            apoNewBands[iBand] = poBand;
 
+            if (iBand == 0)
+                dtFirstBand = poBand->GetRasterDataType();
+            if (iBand == 1)
+                dtSecondBand = poBand->GetRasterDataType();
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      SAR images may store complex data in 2 bands (I and Q)          */
+    /*      Map onto a GDAL complex raster band                             */
+    /* -------------------------------------------------------------------- */
+    bool bIsTempBandSet = false;
+    if (!bOpenForCreate && psImage &&
+        EQUAL(psImage->szICAT, "SAR")  //SAR image...
+        && bIsTempBandUsed &&
+        nUsableBands == psImage->nBands
+        //...with 2 bands ... (modified to allow an even number - spec seems to indicate only 2 bands allowed?)
+        && (nUsableBands % 2) == 0 &&
+        dtFirstBand == dtSecondBand  //...that have the same datatype...
+        && !GDALDataTypeIsComplex(dtFirstBand)  //...and are not complex...
+        //..and can be mapped directly to a complex type
+        && (dtFirstBand == GDT_Int16 || dtFirstBand == GDT_Int32 ||
+            dtFirstBand == GDT_Float32 || dtFirstBand == GDT_Float64) &&
+        CPLTestBool(CPLGetConfigOption("NITF_SAR_AS_COMPLEX_TYPE", "YES")))
+    {
+        bool allBandsIQ = true;
+        for (int i = 0; i < nUsableBands; i += 2)
+        {
+            const NITFBandInfo *psBandInfo1 = psImage->pasBandInfo + i;
+            const NITFBandInfo *psBandInfo2 = psImage->pasBandInfo + i + 1;
+
+            //check that the ISUBCAT is labelled "I" and "Q" on the 2 bands
+            if (!EQUAL(psBandInfo1->szISUBCAT, "I") ||
+                !EQUAL(psBandInfo2->szISUBCAT, "Q"))
+            {
+                allBandsIQ = false;
+                break;
+            }
+        }
+
+        if (allBandsIQ)
+        {
+            poDS->m_bHasComplexRasterBand = true;
+            for (int i = 0; i < (nUsableBands / 2); i++)
+            {
+                //wrap the I and Q bands into a single complex band
+                const int iBandIndex = 2 * i;
+                const int qBandIndex = 2 * i + 1;
+                NITFComplexRasterBand *poBand = new NITFComplexRasterBand(
+                    poDS, apoNewBands[iBandIndex], apoNewBands[qBandIndex],
+                    iBandIndex + 1, qBandIndex + 1);
+                SetBandMetadata(psImage, poBand, i + 1, false);
+                poDS->SetBand(i + 1, poBand);
+                bIsTempBandSet = true;
+            }
+        }
+    }
+
+    if (bIsTempBandUsed && !bIsTempBandSet)
+    {
+        // Reset properly bands that are not complex
+        for (int iBand = 0; iBand < nUsableBands; iBand++)
+        {
+            GDALRasterBand *poBand = apoNewBands[iBand];
+            SetBandMetadata(psImage, poBand, iBand + 1, true);
             poDS->SetBand(iBand + 1, poBand);
         }
     }
@@ -1770,12 +1854,37 @@ static OGRErr LoadDODDatum(OGRSpatialReference *poSRS, const char *pszDatumName)
         return OGRERR_NONE;
     }
 
+#if defined(USE_ONLY_EMBEDDED_RESOURCE_FILES) && !defined(EMBED_RESOURCE_FILES)
+    return OGRERR_FAILURE;
+#else
+
     /* -------------------------------------------------------------------- */
     /*      All the rest we will try and load from gt_datum.csv             */
     /*      (Geotrans datum file).                                          */
     /* -------------------------------------------------------------------- */
     char szExpanded[6];
-    const char *pszGTDatum = CSVFilename("gt_datum.csv");
+    const char *pszGTDatum = nullptr;
+    CPL_IGNORE_RET_VAL(pszGTDatum);
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
+    pszGTDatum = CSVFilename("gt_datum.csv");
+#endif
+#ifdef EMBED_RESOURCE_FILES
+    std::string osTmpFilename;
+    // CSVFilename() returns the same content as pszFilename if it does not
+    // find the file.
+    if (!pszGTDatum || strcmp(pszGTDatum, "gt_datum.csv") == 0)
+    {
+        osTmpFilename = VSIMemGenerateHiddenFilename("gt_datum.csv");
+        const char *pszFileContent = NITFGetGTDatum();
+        VSIFCloseL(VSIFileFromMemBuffer(
+            osTmpFilename.c_str(),
+            const_cast<GByte *>(
+                reinterpret_cast<const GByte *>(pszFileContent)),
+            static_cast<int>(strlen(pszFileContent)),
+            /* bTakeOwnership = */ false));
+        pszGTDatum = osTmpFilename.c_str();
+    }
+#endif
 
     strncpy(szExpanded, pszDatumName, 3);
     szExpanded[3] = '\0';
@@ -1795,6 +1904,14 @@ static OGRErr LoadDODDatum(OGRSpatialReference *poSRS, const char *pszDatumName)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed to find datum %s/%s in gt_datum.csv.", pszDatumName,
                  szExpanded);
+
+#ifdef EMBED_RESOURCE_FILES
+        if (!osTmpFilename.empty())
+        {
+            CSVDeaccess(osTmpFilename.c_str());
+            VSIUnlink(osTmpFilename.c_str());
+        }
+#endif
         return OGRERR_FAILURE;
     }
 
@@ -1807,10 +1924,40 @@ static OGRErr LoadDODDatum(OGRSpatialReference *poSRS, const char *pszDatumName)
     double dfDeltaZ = CPLAtof(
         CSVGetField(pszGTDatum, "CODE", szExpanded, CC_ApproxString, "DELTAZ"));
 
+#ifdef EMBED_RESOURCE_FILES
+    if (!osTmpFilename.empty())
+    {
+        CSVDeaccess(osTmpFilename.c_str());
+        VSIUnlink(osTmpFilename.c_str());
+        osTmpFilename.clear();
+    }
+#endif
+
     /* -------------------------------------------------------------------- */
     /*      Lookup the ellipse code.                                        */
     /* -------------------------------------------------------------------- */
-    const char *pszGTEllipse = CSVFilename("gt_ellips.csv");
+    const char *pszGTEllipse = nullptr;
+    CPL_IGNORE_RET_VAL(pszGTEllipse);
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
+    pszGTEllipse = CSVFilename("gt_ellips.csv");
+#endif
+
+#ifdef EMBED_RESOURCE_FILES
+    // CSVFilename() returns the same content as pszFilename if it does not
+    // find the file.
+    if (!pszGTEllipse || strcmp(pszGTEllipse, "gt_ellips.csv") == 0)
+    {
+        osTmpFilename = VSIMemGenerateHiddenFilename("gt_ellips");
+        const char *pszFileContent = NITFGetGTEllips();
+        VSIFCloseL(VSIFileFromMemBuffer(
+            osTmpFilename.c_str(),
+            const_cast<GByte *>(
+                reinterpret_cast<const GByte *>(pszFileContent)),
+            static_cast<int>(strlen(pszFileContent)),
+            /* bTakeOwnership = */ false));
+        pszGTEllipse = osTmpFilename.c_str();
+    }
+#endif
 
     CPLString osEName = CSVGetField(pszGTEllipse, "CODE", osEllipseCode,
                                     CC_ApproxString, "NAME");
@@ -1820,6 +1967,14 @@ static OGRErr LoadDODDatum(OGRSpatialReference *poSRS, const char *pszDatumName)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed to find datum %s in gt_ellips.csv.",
                  osEllipseCode.c_str());
+
+#ifdef EMBED_RESOURCE_FILES
+        if (!osTmpFilename.empty())
+        {
+            CSVDeaccess(osTmpFilename.c_str());
+            VSIUnlink(osTmpFilename.c_str());
+        }
+#endif
         return OGRERR_FAILURE;
     }
 
@@ -1835,7 +1990,17 @@ static OGRErr LoadDODDatum(OGRSpatialReference *poSRS, const char *pszDatumName)
 
     poSRS->SetTOWGS84(dfDeltaX, dfDeltaY, dfDeltaZ);
 
+#ifdef EMBED_RESOURCE_FILES
+    if (!osTmpFilename.empty())
+    {
+        CSVDeaccess(osTmpFilename.c_str());
+        VSIUnlink(osTmpFilename.c_str());
+        osTmpFilename.clear();
+    }
+#endif
+
     return OGRERR_NONE;
+#endif
 }
 
 /************************************************************************/
@@ -2053,7 +2218,8 @@ CPLErr NITFDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                                char **papszOptions)
 
 {
-    if (poJ2KDataset == nullptr)
+    //go through GDALDataset::AdviseRead for the complex SAR
+    if (poJ2KDataset == nullptr || m_bHasComplexRasterBand)
         return GDALDataset::AdviseRead(nXOff, nYOff, nXSize, nYSize, nBufXSize,
                                        nBufYSize, eDT, nBandCount, panBandList,
                                        papszOptions);
@@ -2080,12 +2246,13 @@ CPLErr NITFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                               GDALRasterIOExtraArg *psExtraArg)
 
 {
-    if (poJ2KDataset != nullptr)
+    //go through GDALDataset::IRasterIO for the complex SAR
+    if (poJ2KDataset != nullptr && !m_bHasComplexRasterBand)
         return poJ2KDataset->RasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                       pData, nBufXSize, nBufYSize, eBufType,
                                       nBandCount, panBandMap, nPixelSpace,
                                       nLineSpace, nBandSpace, psExtraArg);
-    else if (poJPEGDataset != nullptr)
+    else if (poJPEGDataset != nullptr && !m_bHasComplexRasterBand)
         return poJPEGDataset->RasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                        pData, nBufXSize, nBufYSize, eBufType,
                                        nBandCount, panBandMap, nPixelSpace,
@@ -3371,7 +3538,24 @@ int NITFDataset::CheckForRSets(const char *pszNITFFilename,
     }
 
     if (aosRSetFilenames.empty())
-        return FALSE;
+    {
+        //try for remoteview RRDS (with .rv%d extension)
+        for (int i = 1; i <= 7; i++)
+        {
+            CPLString osTarget;
+            VSIStatBufL sStat;
+
+            osTarget.Printf("%s.rv%d", pszNITFFilename, i);
+
+            if (VSIStatL(osTarget, &sStat) != 0)
+                break;
+
+            aosRSetFilenames.push_back(osTarget);
+        }
+
+        if (aosRSetFilenames.empty())
+            return FALSE;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      We do, so try to create a wrapping VRT file.                    */

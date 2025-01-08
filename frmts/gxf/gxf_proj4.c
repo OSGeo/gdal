@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GXF Reader
  * Purpose:  Handle GXF to PROJ.4 projection transformation.

@@ -195,8 +195,8 @@ GDALDataset *GDALDriver::Create(const char *pszFilename, int nXSize, int nYSize,
     /*      Does this format support creation.                              */
     /* -------------------------------------------------------------------- */
     pfnCreate = GetCreateCallback();
-    if (pfnCreate == nullptr && pfnCreateEx == nullptr &&
-        pfnCreateVectorOnly == nullptr)
+    if (CPL_UNLIKELY(pfnCreate == nullptr && pfnCreateEx == nullptr &&
+                     pfnCreateVectorOnly == nullptr))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "GDALDriver::Create() ... no create method implemented"
@@ -207,7 +207,7 @@ GDALDataset *GDALDriver::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     /*      Do some rudimentary argument checking.                          */
     /* -------------------------------------------------------------------- */
-    if (nBands < 0)
+    if (CPL_UNLIKELY(nBands < 0))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to create dataset with %d bands is illegal,"
@@ -216,14 +216,22 @@ GDALDataset *GDALDriver::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
     }
 
-    if (GetMetadataItem(GDAL_DCAP_RASTER) != nullptr &&
-        GetMetadataItem(GDAL_DCAP_VECTOR) == nullptr &&
-        (nXSize < 1 || nYSize < 1))
+    if (CPL_UNLIKELY(GetMetadataItem(GDAL_DCAP_RASTER) != nullptr &&
+                     GetMetadataItem(GDAL_DCAP_VECTOR) == nullptr &&
+                     (nXSize < 1 || nYSize < 1)))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to create %dx%d dataset is illegal,"
                  "sizes must be larger than zero.",
                  nXSize, nYSize);
+        return nullptr;
+    }
+
+    if (CPL_UNLIKELY(nBands != 0 &&
+                     (eType == GDT_Unknown || eType == GDT_TypeCount)))
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Illegal GDT_Unknown/GDT_TypeCount argument");
         return nullptr;
     }
 
@@ -1470,6 +1478,28 @@ bool GDALDriver::CanVectorTranslateFrom(
     return bRet;
 }
 
+bool GDALDriver::HasOpenOption(const char *pszOpenOptionName) const
+{
+    if (pszOpenOptionName == nullptr)
+        return false;
+
+    // Const cast is safe here since we are only reading the metadata
+    auto pszOOMd{const_cast<GDALDriver *>(this)->GetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST)};
+    if (pszOOMd == nullptr)
+        return false;
+
+    const CPLXMLTreeCloser oXml{CPLParseXMLString(pszOOMd)};
+    for (CPLXMLNode *option = oXml->psChild; option != nullptr;
+         option = option->psNext)
+    {
+        if (EQUAL(CPLGetXMLValue(CPLGetXMLNode(option, "name"), nullptr, ""),
+                  pszOpenOptionName))
+            return true;
+    }
+    return false;
+}
+
 /************************************************************************/
 /*                         VectorTranslateFrom()                        */
 /************************************************************************/
@@ -1975,6 +2005,23 @@ CPLErr CPL_STDCALL GDALCopyDatasetFiles(GDALDriverH hDriver,
     }
 
     return GDALDriver::FromHandle(hDriver)->CopyFiles(pszNewName, pszOldName);
+}
+
+/************************************************************************/
+/*                       GDALDriverHasOpenOption()                      */
+/************************************************************************/
+
+/**
+ * \brief Returns TRUE if the given open option is supported by the driver.
+ * @param hDriver the handle of the driver
+ * @param pszOpenOptionName name of the open option to be checked
+ * @return TRUE if the driver supports the open option
+ * @since GDAL 3.11
+ */
+bool GDALDriverHasOpenOption(GDALDriverH hDriver, const char *pszOpenOptionName)
+{
+    VALIDATE_POINTER1(hDriver, "GDALDriverHasOpenOption", false);
+    return GDALDriver::FromHandle(hDriver)->HasOpenOption(pszOpenOptionName);
 }
 
 /************************************************************************/

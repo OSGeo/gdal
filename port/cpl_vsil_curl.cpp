@@ -189,10 +189,6 @@ static void VSICURLReadGlobalEnvVariables()
                         nCacheSize);
                 }
             }
-            else
-            {
-                nCacheSize = CACHE_SIZE_DEFAULT;
-            }
 
             const auto nMaxRAM = CPLGetUsablePhysicalRAM();
             const auto nMinVal = DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY;
@@ -356,6 +352,7 @@ static std::string VSICurlGetURLFromFilename(
         }
 
         std::string osURL;
+        std::string osHeaders;
         for (int i = 0; papszTokens[i]; i++)
         {
             char *pszKey = nullptr;
@@ -397,9 +394,6 @@ static std::string VSICurlGetURLFromFilename(
                 }
                 else if (EQUAL(pszKey, "empty_dir"))
                 {
-                    /* Undocumented. Used by PLScenes driver */
-                    /* This more or less emulates the behavior of
-                     * GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR */
                     if (pbEmptyDir)
                         *pbEmptyDir = CPLTestBool(pszValue);
                 }
@@ -440,6 +434,13 @@ static std::string VSICurlGetURLFromFilename(
                         *ppszPlanetaryComputerCollection = CPLStrdup(pszValue);
                     }
                 }
+                else if (STARTS_WITH(pszKey, "header."))
+                {
+                    osHeaders += (pszKey + strlen("header."));
+                    osHeaders += ':';
+                    osHeaders += pszValue;
+                    osHeaders += "\r\n";
+                }
                 else
                 {
                     CPLError(CE_Warning, CPLE_NotSupported,
@@ -448,6 +449,9 @@ static std::string VSICurlGetURLFromFilename(
             }
             CPLFree(pszKey);
         }
+
+        if (paosHTTPOptions && !osHeaders.empty())
+            paosHTTPOptions->SetNameValue("HEADERS", osHeaders.c_str());
 
         CSLDestroy(papszTokens);
         if (osURL.empty())
@@ -955,9 +959,6 @@ namespace cpl
 
 void VSICurlHandle::ManagePlanetaryComputerSigning() const
 {
-    if (!m_bPlanetaryComputerURLSigning)
-        return;
-
     // Take global lock
     static std::mutex goMutex;
     std::lock_guard<std::mutex> oLock(goMutex);
@@ -1074,6 +1075,43 @@ void VSICurlHandle::ManagePlanetaryComputerSigning() const
 }
 
 /************************************************************************/
+/*                        UpdateQueryString()                           */
+/************************************************************************/
+
+void VSICurlHandle::UpdateQueryString() const
+{
+    if (m_bPlanetaryComputerURLSigning)
+    {
+        ManagePlanetaryComputerSigning();
+    }
+    else
+    {
+        const char *pszQueryString = VSIGetPathSpecificOption(
+            m_osFilename.c_str(), "VSICURL_QUERY_STRING", nullptr);
+        if (pszQueryString)
+        {
+            if (m_osFilename.back() == '?')
+            {
+                if (pszQueryString[0] == '?')
+                    m_osQueryString = pszQueryString + 1;
+                else
+                    m_osQueryString = pszQueryString;
+            }
+            else
+            {
+                if (pszQueryString[0] == '?')
+                    m_osQueryString = pszQueryString;
+                else
+                {
+                    m_osQueryString = "?";
+                    m_osQueryString.append(pszQueryString);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                     GetFileSizeOrHeaders()                           */
 /************************************************************************/
 
@@ -1091,7 +1129,7 @@ vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders(bool bSetError,
 
     CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
 
-    ManagePlanetaryComputerSigning();
+    UpdateQueryString();
 
     std::string osURL(m_pszURL + m_osQueryString);
     bool bRetryWithGet = false;
@@ -1352,49 +1390,6 @@ retry:
         if (sWriteFuncHeaderData.pBuffer != nullptr &&
             (response_code == 200 || response_code == 206))
         {
-            const char *pzETag =
-                strstr(sWriteFuncHeaderData.pBuffer, "ETag: \"");
-            if (pzETag)
-            {
-                pzETag += strlen("ETag: \"");
-                const char *pszEndOfETag = strchr(pzETag, '"');
-                if (pszEndOfETag)
-                {
-                    oFileProp.ETag.assign(pzETag, pszEndOfETag - pzETag);
-                }
-            }
-
-            // Azure Data Lake Storage
-            const char *pszPermissions =
-                strstr(sWriteFuncHeaderData.pBuffer, "x-ms-permissions: ");
-            if (pszPermissions)
-            {
-                pszPermissions += strlen("x-ms-permissions: ");
-                const char *pszEOL = strstr(pszPermissions, "\r\n");
-                if (pszEOL)
-                {
-                    bool bIsDir =
-                        strstr(sWriteFuncHeaderData.pBuffer,
-                               "x-ms-resource-type: directory\r\n") != nullptr;
-                    bool bIsFile =
-                        strstr(sWriteFuncHeaderData.pBuffer,
-                               "x-ms-resource-type: file\r\n") != nullptr;
-                    if (bIsDir || bIsFile)
-                    {
-                        oFileProp.bIsDirectory = bIsDir;
-                        std::string osPermissions;
-                        osPermissions.assign(pszPermissions,
-                                             pszEOL - pszPermissions);
-                        if (bIsDir)
-                            oFileProp.nMode = S_IFDIR;
-                        else
-                            oFileProp.nMode = S_IFREG;
-                        oFileProp.nMode |=
-                            VSICurlParseUnixPermissions(osPermissions.c_str());
-                    }
-                }
-            }
-
             {
                 char **papszHeaders =
                     CSLTokenizeString2(sWriteFuncHeaderData.pBuffer, "\r\n", 0);
@@ -1415,6 +1410,44 @@ retry:
                                 "CPL_VSIL_CURL_HONOR_CACHE_CONTROL", "YES")))
                         {
                             m_bCached = false;
+                        }
+
+                        else if (EQUAL(pszKey, "ETag"))
+                        {
+                            std::string osValue(pszValue);
+                            if (osValue.size() >= 2 && osValue.front() == '"' &&
+                                osValue.back() == '"')
+                                osValue = osValue.substr(1, osValue.size() - 2);
+                            oFileProp.ETag = std::move(osValue);
+                        }
+
+                        // Azure Data Lake Storage
+                        else if (EQUAL(pszKey, "x-ms-resource-type"))
+                        {
+                            if (EQUAL(pszValue, "file"))
+                            {
+                                oFileProp.nMode |= S_IFREG;
+                            }
+                            else if (EQUAL(pszValue, "directory"))
+                            {
+                                oFileProp.bIsDirectory = true;
+                                oFileProp.nMode |= S_IFDIR;
+                            }
+                        }
+                        else if (EQUAL(pszKey, "x-ms-permissions"))
+                        {
+                            oFileProp.nMode |=
+                                VSICurlParseUnixPermissions(pszValue);
+                        }
+
+                        // https://overturemapswestus2.blob.core.windows.net/release/2024-11-13.0/theme%3Ddivisions/type%3Ddivision_area
+                        // returns a x-ms-meta-hdi_isfolder: true header
+                        else if (EQUAL(pszKey, "x-ms-meta-hdi_isfolder") &&
+                                 EQUAL(pszValue, "true"))
+                        {
+                            oFileProp.bIsAzureFolder = true;
+                            oFileProp.bIsDirectory = true;
+                            oFileProp.nMode |= S_IFDIR;
                         }
                     }
                     CPLFree(pszKey);
@@ -1869,7 +1902,7 @@ std::string VSICurlHandle::DownloadRegion(const vsi_l_offset startOffset,
 begin:
     CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
 
-    ManagePlanetaryComputerSigning();
+    UpdateQueryString();
 
     bool bHasExpired = false;
 
@@ -2444,7 +2477,7 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
                                                 panSizes);
     }
 
-    ManagePlanetaryComputerSigning();
+    UpdateQueryString();
 
     bool bHasExpired = false;
 
@@ -3110,7 +3143,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     std::string osURL;
     {
         std::lock_guard<std::mutex> oLock(m_oMutex);
-        ManagePlanetaryComputerSigning();
+        UpdateQueryString();
         bool bHasExpired;
         osURL = GetRedirectURLIfValid(bHasExpired, aosHTTPOptions);
     }
@@ -3275,7 +3308,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
         nMaxSize += panSizes[i];
     }
 
-    ManagePlanetaryComputerSigning();
+    UpdateQueryString();
 
     bool bHasExpired = false;
     CPLStringList aosHTTPOptions(m_aosHTTPOptions);
@@ -3347,6 +3380,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
              static_cast<unsigned>(m_aoAdviseReadRanges.size()));
 #endif
 
+    // coverity[uninit_member,copy_constructor_call]
     const auto task = [this, aosHTTPOptions](const std::string &osURL)
     {
         CURLM *hMultiHandle = curl_multi_init();
@@ -4896,6 +4930,37 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
     if (!bListDir)
         return nullptr;
 
+    // Deal with publicly visible Azure directories.
+    if (STARTS_WITH(osURL.c_str(), "https://"))
+    {
+        const char *pszBlobCore =
+            strstr(osURL.c_str(), ".blob.core.windows.net/");
+        if (pszBlobCore)
+        {
+            FileProp cachedFileProp;
+            GetCachedFileProp(osURL.c_str(), cachedFileProp);
+            if (cachedFileProp.bIsAzureFolder)
+            {
+                const char *pszURLWithoutHTTPS =
+                    osURL.c_str() + strlen("https://");
+                const std::string osStorageAccount(
+                    pszURLWithoutHTTPS, pszBlobCore - pszURLWithoutHTTPS);
+                CPLConfigOptionSetter oSetter1("AZURE_NO_SIGN_REQUEST", "YES",
+                                               false);
+                CPLConfigOptionSetter oSetter2("AZURE_STORAGE_ACCOUNT",
+                                               osStorageAccount.c_str(), false);
+                const std::string osVSIAZ(std::string("/vsiaz/").append(
+                    pszBlobCore + strlen(".blob.core.windows.net/")));
+                char **papszFileList = VSIReadDirEx(osVSIAZ.c_str(), nMaxFiles);
+                if (papszFileList)
+                {
+                    *pbGotFileList = true;
+                    return papszFileList;
+                }
+            }
+        }
+    }
+
     // HACK (optimization in fact) for MBTiles driver.
     if (strstr(pszDirname, ".tiles.mapbox.com") != nullptr)
         return nullptr;
@@ -6275,6 +6340,13 @@ void VSICurlClearCache(void)
  * mechanisms can prevent opening new files, or give an outdated version of
  * them.
  *
+ * The filename prefix must start with the name of a known virtual file system
+ * (such as "/vsicurl/", "/vsis3/")
+ *
+ * VSICurlPartialClearCache("/vsis3/b") will clear all cached state for any file
+ * or directory starting with that prefix, so potentially "/vsis3/bucket",
+ * "/vsis3/basket/" or "/vsis3/basket/object".
+ *
  * @param pszFilenamePrefix Filename prefix
  * @since GDAL 2.4.0
  */
@@ -6324,7 +6396,7 @@ void VSINetworkStatsReset(void)
  * the CPL_VSIL_SHOW_NETWORK_STATS configuration option is set to YES.
  *
  * Example of output:
- * <pre>
+ * \code{.js}
  * {
  *   "methods":{
  *     "GET":{
@@ -6394,8 +6466,7 @@ void VSINetworkStatsReset(void)
  *     }
  *   }
  * }
-
- * </pre>
+ * \endcode
  *
  * @param papszOptions Unused.
  * @return a JSON serialized string to free with VSIFree(), or nullptr

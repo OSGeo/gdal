@@ -97,15 +97,14 @@ int OGRPGeoDataSource::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (STARTS_WITH_CI(pszNewName, "PGEO:"))
     {
-        char *pszDSN = CPLStrdup(pszNewName + 5);
-        CPLDebug("PGeo", "EstablishSession(%s)", pszDSN);
-        if (!oSession.EstablishSession(pszDSN, nullptr, nullptr))
+        const std::string osDSN = pszNewName + 5;
+        CPLDebug("PGeo", "EstablishSession(%s)", osDSN.c_str());
+        if (!oSession.EstablishSession(osDSN.c_str(), nullptr, nullptr))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unable to initialize ODBC connection to DSN for %s,\n"
                      "%s",
-                     pszDSN, oSession.GetLastError());
-            CPLFree(pszDSN);
+                     osDSN.c_str(), oSession.GetLastError());
             return FALSE;
         }
     }

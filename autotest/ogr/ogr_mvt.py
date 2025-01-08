@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR MVT driver functionality.
@@ -1221,7 +1220,9 @@ def test_ogr_mvt_write_mbtiles():
 
 @pytest.mark.require_driver("SQLite")
 @pytest.mark.require_geos
-def test_ogr_mvt_write_limitations_max_size():
+@pytest.mark.parametrize("implicit_limitation", [True, False])
+@gdaltest.enable_exceptions()
+def test_ogr_mvt_write_limitations_max_size(implicit_limitation, tmp_path):
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
@@ -1245,10 +1246,22 @@ def test_ogr_mvt_write_limitations_max_size():
         out_ds = gdal.VectorTranslate(
             "/vsimem/out.mbtiles",
             src_ds,
-            datasetCreationOptions=["MAX_SIZE=100", "SIMPLIFICATION=1"],
+            datasetCreationOptions=[
+                "@MAX_SIZE_FOR_TEST=101" if implicit_limitation else "MAX_SIZE=101",
+                "SIMPLIFICATION=1",
+            ],
         )
     assert out_ds is not None
-    out_ds = None
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        out_ds.Close()
+    if implicit_limitation:
+        assert (
+            gdal.GetLastErrorMsg()
+            == "At least one tile exceeded the default maximum tile size of 101 bytes and was encoded at lower resolution"
+        )
+    else:
+        assert gdal.GetLastErrorMsg() == ""
 
     out_ds = ogr.Open("/vsimem/out.mbtiles")
     assert out_ds is not None
@@ -1442,7 +1455,9 @@ def test_ogr_mvt_write_limitations_max_size_polygon():
 
 @pytest.mark.require_driver("SQLite")
 @pytest.mark.require_geos
-def test_ogr_mvt_write_limitations_max_features():
+@pytest.mark.parametrize("implicit_limitation", [True, False])
+@gdaltest.enable_exceptions()
+def test_ogr_mvt_write_limitations_max_features(implicit_limitation):
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
@@ -1463,10 +1478,21 @@ def test_ogr_mvt_write_limitations_max_features():
         "/vsimem/out.mbtiles",
         src_ds,
         format="MVT",
-        datasetCreationOptions=["MAX_FEATURES=1"],
+        datasetCreationOptions=[
+            "@MAX_FEATURES_FOR_TEST=1" if implicit_limitation else "MAX_FEATURES=1"
+        ],
     )
     assert out_ds is not None
-    out_ds = None
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        out_ds.Close()
+    if implicit_limitation:
+        assert (
+            gdal.GetLastErrorMsg()
+            == "At least one tile exceeded the default maximum number of features per tile (1) and was truncated to satisfy it."
+        )
+    else:
+        assert gdal.GetLastErrorMsg() == ""
 
     out_ds = ogr.Open("/vsimem/out.mbtiles")
     assert out_ds is not None

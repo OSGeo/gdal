@@ -71,11 +71,11 @@ def test_ogr_sxf_2():
 # Open SXF datasource with custom RSC file.
 
 
-def test_ogr_sxf_3():
+def test_ogr_sxf_3(tmp_path):
 
     lyr_names = ["SYSTEM", "Not_Classified"]
-    sxf_name = "tmp/test_ogr_sxf_3.sxf"
-    rsc_name = "tmp/test_ogr_sxf_3.rsc"
+    sxf_name = str(tmp_path / "test_ogr_sxf_3.sxf")
+    rsc_name = str(tmp_path / "test_ogr_sxf_3.rsc")
     fake_rsc = open(rsc_name, "w")
     fake_rsc.close()
     shutil.copy("data/sxf/100_test.sxf", sxf_name)

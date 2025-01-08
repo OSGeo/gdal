@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NITF Read/Write Library
  * Purpose:  Simple test mainline to dump info about NITF file.

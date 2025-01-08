@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     python_strings.i
  * Project:  GDAL Python Interface

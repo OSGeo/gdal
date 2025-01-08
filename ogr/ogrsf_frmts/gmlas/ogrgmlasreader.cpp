@@ -349,8 +349,7 @@ void GMLASReader::Context::Dump() const
     CPLDebug("GMLAS", "Context");
     CPLDebug("GMLAS", "  m_nLevel = %d", m_nLevel);
     CPLDebug("GMLAS", "  m_poFeature = %p", m_poFeature);
-    const char *pszDebug = CPLGetConfigOption("CPL_DEBUG", "OFF");
-    if (EQUAL(pszDebug, "ON") || EQUAL(pszDebug, "GMLAS"))
+    if (CPLIsDebugEnabled())
     {
         if (m_poFeature)
             m_poFeature->DumpReadable(stderr);

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Definition of classes and functions used by SQLite and GPKG drivers
@@ -148,6 +147,8 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
     int nSoftTransactionLevel = 0;
 
     OGRErr DoTransactionCommand(const char *pszCommand);
+
+    bool DealWithOgrSchemaOpenOption(CSLConstList papszOpenOptionsIn);
 
     CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteBaseDataSource)
 

@@ -255,6 +255,9 @@ void OGRRegisterAllInternal()
 #ifdef XODR_ENABLED
     RegisterOGRXODR();
 #endif
+#ifdef ADBC_ENABLED
+    RegisterOGRADBC();
+#endif
 
     // NOTE: you need to generally insert your own driver before that line.
 
@@ -268,6 +271,11 @@ void OGRRegisterAllInternal()
 #ifdef AVC_ENABLED
     RegisterOGRAVCBin();
     RegisterOGRAVCE00();
+#endif
+
+    // Last but not the least
+#ifdef AIVECTOR_ENABLED
+    RegisterOGRAIVector();
 #endif
 
 } /* OGRRegisterAll */

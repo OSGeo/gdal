@@ -84,10 +84,13 @@ ogr_optional_driver(jml JML)
 ogr_optional_driver(vdv "VDV-451/VDV-452/INTREST Data Format")
 ogr_optional_driver(flatgeobuf FlatGeobuf)
 ogr_optional_driver(mapml MapML)
+ogr_optional_driver(adbc ADBC)
 
 if( NOT WORDS_BIGENDIAN )
     ogr_optional_driver(miramon "MiraMonVector")
 endif()
+
+ogr_optional_driver(aivector AIVector)
 
 # ######################################################################################################################
 #

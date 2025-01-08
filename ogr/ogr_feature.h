@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Class for representing a whole feature, and layer schemas.
@@ -37,7 +36,7 @@
 /*! @cond Doxygen_Suppress */
 #define DEFINE_OGRFeatureH
 /*! @endcond */
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 typedef struct OGRFieldDefnHS *OGRFieldDefnH;
 typedef struct OGRFeatureDefnHS *OGRFeatureDefnH;
 typedef struct OGRFeatureHS *OGRFeatureH;
@@ -141,6 +140,7 @@ class CPL_DLL OGRFieldDefn
 
     void SetType(OGRFieldType eTypeIn);
     static const char *GetFieldTypeName(OGRFieldType);
+    static OGRFieldType GetFieldTypeByName(const char *);
 
     OGRFieldSubType GetSubType() const
     {
@@ -149,6 +149,7 @@ class CPL_DLL OGRFieldDefn
 
     void SetSubType(OGRFieldSubType eSubTypeIn);
     static const char *GetFieldSubTypeName(OGRFieldSubType);
+    static OGRFieldSubType GetFieldSubTypeByName(const char *);
 
     OGRJustification GetJustify() const
     {
@@ -1136,13 +1137,13 @@ class CPL_DLL OGRFeature
      * (dereference) more than one iterator step at a time, since you will get
      * a reference to the same object (FieldValue) at each iteration step.
      *
-     * <pre>
+     * \code{.cpp}
      * for( auto&& oField: poFeature )
      * {
      *      std::cout << oField.GetIndex() << "," << oField.GetName()<< ": " <<
      * oField.GetAsString() << std::endl;
      * }
-     * </pre>
+     * \endcode
      *
      * @since GDAL 2.3
      */
@@ -1178,6 +1179,7 @@ class CPL_DLL OGRFeature
 
     OGRErr SetGeometryDirectly(OGRGeometry *);
     OGRErr SetGeometry(const OGRGeometry *);
+    OGRErr SetGeometry(std::unique_ptr<OGRGeometry>);
     OGRGeometry *GetGeometryRef();
     const OGRGeometry *GetGeometryRef() const;
     OGRGeometry *StealGeometry() CPL_WARN_UNUSED_RESULT;
@@ -1209,6 +1211,7 @@ class CPL_DLL OGRFeature
     const OGRGeometry *GetGeomFieldRef(const char *pszFName) const;
     OGRErr SetGeomFieldDirectly(int iField, OGRGeometry *);
     OGRErr SetGeomField(int iField, const OGRGeometry *);
+    OGRErr SetGeomField(int iField, std::unique_ptr<OGRGeometry>);
 
     void Reset();
 

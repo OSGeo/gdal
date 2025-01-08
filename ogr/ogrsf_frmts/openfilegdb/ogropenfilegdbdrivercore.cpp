@@ -165,7 +165,8 @@ static int OGROpenFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo)
 void OGROpenFileGDBDriverSetCommonMetadata(GDALDriver *poDriver)
 {
     poDriver->SetDescription(DRIVER_NAME);
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "ESRI FileGDB");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "ESRI FileGeodatabase (using OpenFileGDB)");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "gdb");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
                               "drivers/vector/openfilegdb.html");

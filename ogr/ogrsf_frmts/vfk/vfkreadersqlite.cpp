@@ -442,24 +442,29 @@ int64_t VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
         StoreInfo2DB();
 
         /* Insert VFK data records into DB */
-        nDataRecords += VFKReader::ReadDataRecords(poDataBlock);
-
-        /* update VFK_DB_TABLE table */
-        poDataBlockCurrent = nullptr;
-        for (int iDataBlock = 0; iDataBlock < GetDataBlockCount(); iDataBlock++)
+        const int64_t nExtraRecords = VFKReader::ReadDataRecords(poDataBlock);
+        if (nExtraRecords >= 0)
         {
-            poDataBlockCurrent = GetDataBlock(iDataBlock);
+            nDataRecords += nExtraRecords;
 
-            if (poDataBlock && poDataBlock != poDataBlockCurrent)
-                continue;
+            /* update VFK_DB_TABLE table */
+            poDataBlockCurrent = nullptr;
+            for (int iDataBlock = 0; iDataBlock < GetDataBlockCount();
+                 iDataBlock++)
+            {
+                poDataBlockCurrent = GetDataBlock(iDataBlock);
 
-            /* update number of records in metadata table */
-            osSQL.Printf("UPDATE %s SET num_records = %d WHERE "
-                         "table_name = '%s'",
-                         VFK_DB_TABLE, poDataBlockCurrent->GetRecordCount(),
-                         poDataBlockCurrent->GetName());
+                if (poDataBlock && poDataBlock != poDataBlockCurrent)
+                    continue;
 
-            ExecuteSQL(osSQL);
+                /* update number of records in metadata table */
+                osSQL.Printf("UPDATE %s SET num_records = %d WHERE "
+                             "table_name = '%s'",
+                             VFK_DB_TABLE, poDataBlockCurrent->GetRecordCount(),
+                             poDataBlockCurrent->GetName());
+
+                ExecuteSQL(osSQL);
+            }
         }
 
         /* create indices if not exist */

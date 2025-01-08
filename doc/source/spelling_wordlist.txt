@@ -19,6 +19,7 @@ acl
 ACL
 actinia
 ActiveX
+adbc
 addalpha
 addCurve
 addfields
@@ -369,6 +370,7 @@ cid
 CInt
 circularstrings
 ClampRequests
+clang
 ClassificationCode
 Clayers
 CleanTimeout
@@ -557,6 +559,7 @@ Datums
 dawson
 Daylon
 dBASE
+dbaston
 dbf
 dbfopen
 DBit
@@ -1018,6 +1021,7 @@ GDALThreadLocalDatasetCache
 gdaltindex
 gdaltransform
 gdalvirtualmem
+gdalvsi
 gdalwarp
 gdalwmscache
 gdb
@@ -1353,6 +1357,7 @@ IdentificationTolerance
 identificator
 Identificator
 IDisposable
+idofic
 Idrisi
 iDriver
 idx
@@ -1678,8 +1683,6 @@ LSB
 lsbf
 Lucena
 Luminance
-Luratech
-Lurawave
 luts
 lvbag
 lwf
@@ -1782,6 +1785,7 @@ minY
 MinZ
 Mipmaps
 MiraD
+miramon
 mis
 mitab
 mkdir
@@ -2409,6 +2413,7 @@ Placemark
 plaintext
 Plessis
 plmosaic
+plscenes
 plscenesconf
 pM
 pnBufferSize
@@ -2841,6 +2846,7 @@ RPF
 rpr
 RRaster
 rrd
+rsc
 rsiz
 rst
 rsync
@@ -3070,6 +3076,8 @@ subclassed
 Subclassed
 subclasses
 Subclasses
+subcommand
+subcommands
 subdataset
 Subdataset
 subdatasets
@@ -3142,6 +3150,7 @@ swi
 Swif
 swiftclient
 swq
+sxf
 sym
 symlinked
 syntaxes
@@ -3413,6 +3422,7 @@ vcpkg
 vct
 vcvars
 vdc
+vdv
 vecror
 VectorInfo
 VectorInfoOptions
@@ -3455,6 +3465,7 @@ vsiaz
 vsicached
 vsicrypt
 vsicurl
+VSIFile
 VSIFOpen
 vsigs
 vsigz

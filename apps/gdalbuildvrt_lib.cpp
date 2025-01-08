@@ -436,6 +436,21 @@ static CPLString GetProjectionName(const char *pszProjection)
 /*                           AnalyseRaster()                            */
 /************************************************************************/
 
+static void checkNoDataValues(const std::vector<BandProperty> &asProperties)
+{
+    for (const auto &oProps : asProperties)
+    {
+        if (oProps.bHasNoData && GDALDataTypeIsInteger(oProps.dataType) &&
+            !GDALIsValueExactAs(oProps.noDataValue, oProps.dataType))
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Band data type of %s cannot represent the specified "
+                     "NoData value of %g",
+                     GDALGetDataTypeName(oProps.dataType), oProps.noDataValue);
+        }
+    }
+}
+
 std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                                       DatasetProperty *psDatasetProperties)
 {
@@ -964,6 +979,8 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
             ns_res = std::min(ns_res, padfGeoTransform[GEOTRSFRM_NS_RES]);
         }
     }
+
+    checkNoDataValues(asBandProperties);
 
     return "";
 }

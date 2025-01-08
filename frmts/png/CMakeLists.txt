@@ -21,3 +21,7 @@ if (GDAL_USE_ZLIB_INTERNAL)
 else ()
   gdal_target_link_libraries(gdal_PNG PRIVATE ZLIB::ZLIB)
 endif ()
+
+if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
+  target_compile_definitions(gdal_PNG PRIVATE -DUSE_NEON_OPTIMIZATIONS)
+endif()

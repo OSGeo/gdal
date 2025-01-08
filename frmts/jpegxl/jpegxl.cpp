@@ -475,6 +475,12 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
                 else if (info.bits_per_sample <= 16)
                     eDT = GDT_UInt16;
             }
+            else if (info.exponent_bits_per_sample == 5)
+            {
+                // Float16
+                CPLDebug("JXL", "16-bit floating point data");
+                eDT = GDT_Float32;
+            }
             else if (info.exponent_bits_per_sample == 8)
             {
                 eDT = GDT_Float32;

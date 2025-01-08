@@ -26,6 +26,9 @@ constexpr const char *EXTENSION_NAME_OGC_WKB = "ogc.wkb";
 constexpr const char *EXTENSION_NAME_GEOARROW_WKB = "geoarrow.wkb";
 constexpr const char *EXTENSION_NAME_ARROW_JSON = "arrow.json";
 
+// GetArrowStream(GAS) options
+constexpr const char *GAS_OPT_DATETIME_AS_STRING = "DATETIME_AS_STRING";
+
 std::map<std::string, std::string>
     CPL_DLL OGRParseArrowMetadata(const char *pabyMetadata);
 
@@ -90,6 +93,8 @@ class OGRArrowArrayStream
         {
             clear();
             memcpy(&m_stream, &(other.m_stream), sizeof(m_stream));
+            // Reset other content, in particular its "release" member
+            // as per https://arrow.apache.org/docs/format/CDataInterface.html#moving-an-array
             memset(&(other.m_stream), 0, sizeof(m_stream));
         }
         return *this;
