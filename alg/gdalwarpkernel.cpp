@@ -1240,13 +1240,8 @@ CPLErr GDALWarpKernel::PerformWarp()
         if (pafUnifiedSrcDensity != nullptr)
         {
             // Typically if there's a cutline or an alpha band
-            static bool bHasWarned = false;
-            if (!bHasWarned)
-            {
-                bHasWarned = true;
-                CPLDebug("WARP", "pafUnifiedSrcDensity is not null, "
+            CPLDebugOnce("WARP", "pafUnifiedSrcDensity is not null, "
                                  "hence OpenCL warper cannot be used");
-            }
         }
         else
         {

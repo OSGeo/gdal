@@ -176,12 +176,7 @@ bool GMLASXSDCache::CacheAllGML321()
     CPLHTTPDestroyResult(psResult);
     if (!bSuccess)
     {
-        static bool bHasWarned = false;
-        if (!bHasWarned)
-        {
-            bHasWarned = true;
-            CPLDebug("GMLAS", "Cannot get GML schemas from %s", pszHTTPZIP);
-        }
+        CPLDebugOnce("GMLAS", "Cannot get GML schemas from %s", pszHTTPZIP);
     }
     return bSuccess;
 }
@@ -248,12 +243,7 @@ bool GMLASXSDCache::CacheAllISO20070417()
     CPLHTTPDestroyResult(psResult);
     if (!bSuccess)
     {
-        static bool bHasWarned = false;
-        if (!bHasWarned)
-        {
-            bHasWarned = true;
-            CPLDebug("GMLAS", "Cannot get ISO schemas from %s", pszHTTPZIP);
-        }
+        CPLDebugOnce("GMLAS", "Cannot get ISO schemas from %s", pszHTTPZIP);
     }
     return bSuccess;
 }

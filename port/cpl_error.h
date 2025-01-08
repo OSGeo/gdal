@@ -125,6 +125,23 @@ typedef int CPLErrorNum;
 void CPL_DLL CPLError(CPLErr eErrClass, CPLErrorNum err_no,
                       CPL_FORMAT_STRING(const char *fmt), ...)
     CPL_PRINT_FUNC_FORMAT(3, 4);
+
+/** Similar to CPLError(), but only execute it once during the life-time
+ * of a process.
+ *
+ * @since 3.11
+ */
+#define CPLErrorOnce(...)                                                      \
+    do                                                                         \
+    {                                                                          \
+        static bool lbCPLErrorOnce = false;                                    \
+        if (!lbCPLErrorOnce)                                                   \
+        {                                                                      \
+            lbCPLErrorOnce = true;                                             \
+            CPLError(__VA_ARGS__);                                             \
+        }                                                                      \
+    } while (0)
+
 void CPL_DLL CPLErrorV(CPLErr, CPLErrorNum, const char *, va_list);
 void CPL_DLL CPLEmergencyError(const char *) CPL_NO_RETURN;
 void CPL_DLL CPL_STDCALL CPLErrorReset(void);
@@ -171,11 +188,39 @@ void CPL_DLL CPL_STDCALL CPLPopErrorHandler(void);
     do                                                                         \
     {                                                                          \
     } while (0) /* Eat all CPLDebugProgress calls. */
+
+/** Similar to CPLDebug(), but only execute it once during the life-time
+ * of a process.
+ *
+ * @since 3.11
+ */
+#define CPLDebugOnce(...)                                                      \
+    do                                                                         \
+    {                                                                          \
+    } while (0)
+
 #else
 void CPL_DLL CPLDebug(const char *, CPL_FORMAT_STRING(const char *), ...)
     CPL_PRINT_FUNC_FORMAT(2, 3);
 void CPL_DLL CPLDebugProgress(const char *, CPL_FORMAT_STRING(const char *),
                               ...) CPL_PRINT_FUNC_FORMAT(2, 3);
+
+/** Similar to CPLDebug(), but only execute it once during the life-time
+ * of a process.
+ *
+ * @since 3.11
+ */
+#define CPLDebugOnce(...)                                                      \
+    do                                                                         \
+    {                                                                          \
+        static bool lbCPLErrorOnce = false;                                    \
+        if (!lbCPLErrorOnce)                                                   \
+        {                                                                      \
+            lbCPLErrorOnce = true;                                             \
+            CPLDebug(__VA_ARGS__);                                             \
+        }                                                                      \
+    } while (0)
+
 #endif
 
 #if defined(DEBUG) || defined(GDAL_DEBUG)

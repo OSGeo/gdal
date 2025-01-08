@@ -2028,16 +2028,11 @@ static int HFAGetOverviewBlockSize()
     if (nOvrBlockSize < 32 || nOvrBlockSize > 2048 ||
         !CPLIsPowerOfTwo(nOvrBlockSize))
     {
-        static bool bHasWarned = false;
-        if (!bHasWarned)
-        {
-            CPLError(CE_Warning, CPLE_NotSupported,
+        CPLErrorOnce(CE_Warning, CPLE_NotSupported,
                      "Wrong value for GDAL_HFA_OVR_BLOCKSIZE : %s. "
                      "Should be a power of 2 between 32 and 2048. "
                      "Defaulting to 64",
                      pszVal);
-            bHasWarned = true;
-        }
         nOvrBlockSize = 64;
     }
 

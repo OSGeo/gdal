@@ -5987,12 +5987,9 @@ SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer, bool bTransform,
             }
             else
             {
-                static bool bHasWarned = false;
-                if (!bHasWarned)
-                    CPLError(CE_Failure, CPLE_IllegalArg,
+                CPLErrorOnce(CE_Failure, CPLE_IllegalArg,
                              "-wrapdateline option only works when "
                              "reprojecting to a geographic SRS");
-                bHasWarned = true;
             }
 
             psInfo->m_aoReprojectionInfo[iGeom].m_aosTransformOptions.Assign(

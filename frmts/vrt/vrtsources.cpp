@@ -3535,13 +3535,8 @@ CPLErr VRTComplexSource::RasterIOInternal(
                     }
                     else
                     {
-                        static bool bHasWarned = false;
-                        if (!bHasWarned)
-                        {
-                            bHasWarned = true;
-                            CPLError(CE_Failure, CPLE_AppDefined,
+                        CPLErrorOnce(CE_Failure, CPLE_AppDefined,
                                      "No entry %d.", static_cast<int>(fResult));
-                        }
                         continue;
                     }
                 }
