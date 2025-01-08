@@ -18,6 +18,7 @@
 
 #ifndef SWIG
 #include "ogr_core.h"
+#include "gdal_fwd.h"
 
 CPL_C_START
 
@@ -420,22 +421,6 @@ const char CPL_DLL *OSRAxisEnumToName(OGRAxisOrientation eOrientation);
 /* -------------------------------------------------------------------- */
 /*      C Wrappers for C++ objects and methods.                         */
 /* -------------------------------------------------------------------- */
-#ifndef DEFINED_OGRSpatialReferenceH
-/*! @cond Doxygen_Suppress */
-#define DEFINED_OGRSpatialReferenceH
-/*! @endcond */
-
-#if defined(DEBUG) || defined(GDAL_DEBUG)
-typedef struct OGRSpatialReferenceHS *OGRSpatialReferenceH;
-typedef struct OGRCoordinateTransformationHS *OGRCoordinateTransformationH;
-#else
-/** Opaque type for a Spatial Reference object */
-typedef void *OGRSpatialReferenceH;
-/** Opaque type for a coordinate transformation object */
-typedef void *OGRCoordinateTransformationH;
-#endif
-
-#endif
 
 void CPL_DLL OSRSetPROJSearchPaths(const char *const *papszPaths);
 char CPL_DLL **OSRGetPROJSearchPaths(void);
@@ -1011,10 +996,6 @@ char CPL_DLL **OSRGetAuthorityListFromDatabase(void);
 /* -------------------------------------------------------------------- */
 OGRCoordinateTransformationH CPL_DLL CPL_STDCALL OCTNewCoordinateTransformation(
     OGRSpatialReferenceH hSourceSRS, OGRSpatialReferenceH hTargetSRS);
-
-/** Coordinate transformation options. */
-typedef struct OGRCoordinateTransformationOptions
-    *OGRCoordinateTransformationOptionsH;
 
 OGRCoordinateTransformationOptionsH CPL_DLL
 OCTNewCoordinateTransformationOptions(void);
