@@ -58,16 +58,11 @@ struct LIBERTIFFDatasetFileReader final : public LIBERTIFF_NS::FileReader
 
     uint64_t size() const override
     {
-        // coverity[missing_lock,lock_evasion]
+        std::lock_guard oLock(m_oMutex);
         if (m_nFileSize == 0)
         {
-            std::lock_guard oLock(m_oMutex);
-            // cppcheck-suppress identicalInnerCondition
-            if (m_nFileSize == 0)
-            {
-                m_fp->Seek(0, SEEK_END);
-                m_nFileSize = m_fp->Tell();
-            }
+            m_fp->Seek(0, SEEK_END);
+            m_nFileSize = m_fp->Tell();
         }
         return m_nFileSize;
     }
