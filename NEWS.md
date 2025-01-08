@@ -10,7 +10,6 @@ GDAL 3.10.1 is a bugfix release.
   -fno-finite-math-only (#11286)
 * Set GDAL_DEV_SUFFIX to the pre-release suffix if a corresponding Git tag was
   found.
-* CMake: Export -DGDAL_DEBUG as PUBLIC for debug builds (#11311)
 * PDF: fix build issue on CondaForge build infrastructure (gcc 13.3)
 * Fix issues in cpl_vsil_win32.cpp with latest mingw64
 
@@ -165,6 +164,7 @@ GeoJSON driver:
 GML driver:
  * add support for AIXM ElevatedCurve (#4600, #11425)
  * honour SWAP_COORDINATES=YES even when the geometry has no SRS (#11491)
+ * gml:CircleByCenterPoint: correctly take into account radius.uom for projected CRS
 
 GPKG driver:
  * make CreateCopy() work on vector datasets (#11282)
@@ -203,6 +203,7 @@ OGR VRT:
 
 * add a colorInterpretation argument to gdal.Translate() and fixes a copy&paste
   issue in the similar argument of gdal.TileIndex()
+* swig/python/setup.py.in: fix exception when building a RC git tag
 
 ## Java bindings
 
