@@ -4493,6 +4493,14 @@ int CPL_DLL GDALReadTabFile2(const char *pszBaseFilename,
 void CPL_DLL GDALCopyRasterIOExtraArg(GDALRasterIOExtraArg *psDestArg,
                                       GDALRasterIOExtraArg *psSrcArg);
 
+void CPL_DLL GDALExpandPackedBitsToByteAt0Or1(
+    const GByte *CPL_RESTRICT pabyInput, GByte *CPL_RESTRICT pabyOutput,
+    size_t nInputBits);
+
+void CPL_DLL GDALExpandPackedBitsToByteAt0Or255(
+    const GByte *CPL_RESTRICT pabyInput, GByte *CPL_RESTRICT pabyOutput,
+    size_t nInputBits);
+
 CPL_C_END
 
 std::unique_ptr<GDALDataset> CPL_DLL
