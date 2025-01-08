@@ -33,6 +33,9 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_info
    gdal_raster_convert
    gdal_raster_edit
+   gdal_raster_overview
+   gdal_raster_overview_add
+   gdal_raster_overview_delete
    gdal_raster_pipeline
    gdal_raster_reproject
    gdal_vector
@@ -50,6 +53,9 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_info_subcommand`: Get information on a raster dataset
     - :ref:`gdal_raster_convert_subcommand`: Convert a raster dataset
     - :ref:`gdal_raster_edit_subcommand`: Edit in place a raster dataset
+    - :ref:`gdal_raster_overview_subcommand`: Manage overviews of a raster dataset
+    - :ref:`gdal_raster_overview_add_subcommand`: Add overviews to a raster dataset
+    - :ref:`gdal_raster_overview_delete_subcommand`: Remove overviews of a raster dataset
     - :ref:`gdal_raster_pipeline_subcommand`: Process a raster dataset
     - :ref:`gdal_raster_reproject_subcommand`: Reproject a raster dataset
     - :ref:`gdal_vector_command`: Entry point for vector commands

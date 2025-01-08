@@ -22,6 +22,7 @@ Synopsis
       - buildvrt:  Build a virtual dataset (VRT).
       - convert: Convert a raster dataset.
       - info:    Return information on a raster dataset.
+      - overview:  Manage overviews of a raster dataset.
       - pipeline:  Process a raster dataset.
       - reproject: Reproject a raster dataset.
 
@@ -31,6 +32,7 @@ Available sub-commands
 - :ref:`gdal_raster_buildvrt_subcommand`
 - :ref:`gdal_raster_info_subcommand`
 - :ref:`gdal_raster_convert_subcommand`
+- :ref:`gdal_raster_overview_subcommand`
 - :ref:`gdal_raster_pipeline_subcommand`
 - :ref:`gdal_raster_reproject_subcommand`
 
