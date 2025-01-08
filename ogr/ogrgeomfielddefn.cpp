@@ -134,8 +134,8 @@ OGRGeomFieldDefn::~OGRGeomFieldDefn()
  */
 OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn &oOther)
     : pszName(CPLStrdup(oOther.pszName)), eGeomType(oOther.eGeomType),
-      poSRS(nullptr), bNullable(oOther.bNullable), m_bSealed(false),
-      m_oCoordPrecision(oOther.m_oCoordPrecision)
+      poSRS(nullptr), bIgnore(oOther.bIgnore), bNullable(oOther.bNullable),
+      m_bSealed(oOther.m_bSealed), m_oCoordPrecision(oOther.m_oCoordPrecision)
 {
     if (oOther.poSRS)
     {
@@ -162,6 +162,8 @@ OGRGeomFieldDefn &OGRGeomFieldDefn::operator=(const OGRGeomFieldDefn &oOther)
         SetSpatialRef(oOther.poSRS);
         SetNullable(oOther.bNullable);
         m_oCoordPrecision = oOther.m_oCoordPrecision;
+        m_bSealed = oOther.m_bSealed;
+        bIgnore = oOther.bIgnore;
     }
     return *this;
 }
@@ -563,16 +565,16 @@ OGRSpatialReferenceH OGR_GFld_GetSpatialRef(OGRGeomFieldDefnH hDefn)
  */
 void OGRGeomFieldDefn::SetSpatialRef(const OGRSpatialReference *poSRSIn)
 {
-    if (poSRS == poSRSIn)
-    {
-        return;
-    }
-
     if (m_bSealed)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
             "OGRGeomFieldDefn::SetSpatialRef() not allowed on a sealed object");
+        return;
+    }
+
+    if (poSRS == poSRSIn)
+    {
         return;
     }
 

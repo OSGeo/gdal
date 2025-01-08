@@ -3581,6 +3581,7 @@ void OGRSQLiteLayer::FinishRollbackTransaction()
          i--)
     {
         auto &oFieldChange = m_apoFieldDefnChanges[i];
+        CPLAssert(oFieldChange.poFieldDefn);
         const char *pszName = oFieldChange.poFieldDefn->GetNameRef();
         const int iField = oFieldChange.iField;
         if (iField >= 0)

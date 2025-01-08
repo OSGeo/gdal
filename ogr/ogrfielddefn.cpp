@@ -124,7 +124,8 @@ OGRFieldDefn::OGRFieldDefn(const OGRFieldDefn &oOther)
       nPrecision(oOther.nPrecision), pszDefault(CPLStrdup(oOther.pszDefault)),
       bIgnore(oOther.bIgnore), eSubType(oOther.eSubType),
       bNullable(oOther.bNullable), bUnique(oOther.bUnique),
-      m_nTZFlag(oOther.m_nTZFlag)
+      m_osDomainName(oOther.m_osDomainName), m_osComment(oOther.m_osComment),
+      m_nTZFlag(oOther.m_nTZFlag), m_bSealed(oOther.m_bSealed)
 {
 }
 
@@ -159,6 +160,7 @@ OGRFieldDefn &OGRFieldDefn::operator=(const OGRFieldDefn &oOther)
         m_osDomainName = oOther.m_osDomainName;
         m_osComment = oOther.m_osComment;
         m_nTZFlag = oOther.m_nTZFlag;
+        m_bSealed = oOther.m_bSealed;
     }
     return *this;
 }
