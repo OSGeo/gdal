@@ -3595,19 +3595,18 @@ void OGRSQLiteLayer::FinishRollbackTransaction()
                     // Now move the field to the right place
                     // from the last position to its original position
                     const int iFieldCount = GetLayerDefn()->GetFieldCount();
-                    int *panOrder =
-                        static_cast<int *>(CPLCalloc(iFieldCount, sizeof(int)));
+                    std::vector<int> anOrder(iFieldCount);
                     for (int j = 0; j < oFieldChange.iField; j++)
                     {
-                        panOrder[j] = j;
+                        anOrder[j] = j;
                     }
                     for (int j = oFieldChange.iField + 1; j < iFieldCount; j++)
                     {
-                        panOrder[j] = j - 1;
+                        anOrder[j] = j - 1;
                     }
-                    panOrder[oFieldChange.iField] = iFieldCount - 1;
+                    anOrder[oFieldChange.iField] = iFieldCount - 1;
                     if (OGRERR_NONE ==
-                        GetLayerDefn()->ReorderFieldDefns(panOrder))
+                        GetLayerDefn()->ReorderFieldDefns(anOrder.data()))
                     {
                         toBeRemoved.push_back(idx);
                     }
@@ -3616,7 +3615,6 @@ void OGRSQLiteLayer::FinishRollbackTransaction()
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "Failed to restore deleted field %s", pszName);
                     }
-                    CPLFree(panOrder);
                     break;
                 }
                 case FieldChangeType::ALTER:
@@ -3637,10 +3635,11 @@ void OGRSQLiteLayer::FinishRollbackTransaction()
                 }
                 case FieldChangeType::ADD:
                 {
-                    if (OGRFieldDefn *poFieldDef =
-                            GetLayerDefn()->StealFieldDefn(oFieldChange.iField))
+                    std::unique_ptr<OGRFieldDefn> poFieldDef =
+                        GetLayerDefn()->StealFieldDefn(oFieldChange.iField);
+                    if (poFieldDef)
                     {
-                        oFieldChange.poFieldDefn.reset(poFieldDef);
+                        oFieldChange.poFieldDefn = std::move(poFieldDef);
                     }
                     else
                     {
@@ -3685,11 +3684,13 @@ void OGRSQLiteLayer::FinishRollbackTransaction()
                 }
                 case FieldChangeType::ADD:
                 {
-                    if (OGRGeomFieldDefn *poGeomFieldDef =
-                            GetLayerDefn()->StealGeomFieldDefn(
-                                oGeomFieldChange.iField))
+                    std::unique_ptr<OGRGeomFieldDefn> poGeomFieldDef =
+                        GetLayerDefn()->StealGeomFieldDefn(
+                            oGeomFieldChange.iField);
+                    if (poGeomFieldDef)
                     {
-                        oGeomFieldChange.poFieldDefn.reset(poGeomFieldDef);
+                        oGeomFieldChange.poFieldDefn =
+                            std::move(poGeomFieldDef);
                     }
                     else
                     {

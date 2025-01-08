@@ -486,7 +486,7 @@ OGRErr OGRFeatureDefn::DeleteFieldDefn(int iField)
 /*                          StealGeomFieldDefn()                       */
 /************************************************************************/
 
-OGRGeomFieldDefn *OGRFeatureDefn::StealGeomFieldDefn(int iField)
+std::unique_ptr<OGRGeomFieldDefn> OGRFeatureDefn::StealGeomFieldDefn(int iField)
 {
     if (m_bSealed)
     {
@@ -498,7 +498,8 @@ OGRGeomFieldDefn *OGRFeatureDefn::StealGeomFieldDefn(int iField)
     if (iField < 0 || iField >= GetGeomFieldCount())
         return nullptr;
 
-    OGRGeomFieldDefn *poFieldDef{apoGeomFieldDefn.at(iField).release()};
+    std::unique_ptr<OGRGeomFieldDefn> poFieldDef =
+        std::move(apoGeomFieldDefn.at(iField));
     apoGeomFieldDefn.erase(apoGeomFieldDefn.begin() + iField);
     return poFieldDef;
 }
@@ -507,7 +508,7 @@ OGRGeomFieldDefn *OGRFeatureDefn::StealGeomFieldDefn(int iField)
 /*                          StealFieldDefn()                           */
 /************************************************************************/
 
-OGRFieldDefn *OGRFeatureDefn::StealFieldDefn(int iField)
+std::unique_ptr<OGRFieldDefn> OGRFeatureDefn::StealFieldDefn(int iField)
 {
     if (m_bSealed)
     {
@@ -519,7 +520,7 @@ OGRFieldDefn *OGRFeatureDefn::StealFieldDefn(int iField)
     if (iField < 0 || iField >= GetFieldCount())
         return nullptr;
 
-    OGRFieldDefn *poFDef{apoFieldDefn.at(iField).release()};
+    std::unique_ptr<OGRFieldDefn> poFDef = std::move(apoFieldDefn.at(iField));
     apoFieldDefn.erase(apoFieldDefn.begin() + iField);
     return poFDef;
 }

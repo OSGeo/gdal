@@ -1717,6 +1717,8 @@ OGRSQLiteTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
         }
     }
 
+    // Add to the list of changes BEFORE adding it to the feature definition
+    // because poGeomField is a unique ptr.
     if (m_poDS->IsInTransaction())
     {
         m_apoGeomFieldDefnChanges.emplace_back(
@@ -2165,12 +2167,13 @@ OGRErr OGRSQLiteTableLayer::DeleteField(int iFieldToDelete)
         if (eErr == OGRERR_NONE)
         {
 
+            // Keep the field definition alive until a new transaction is started
+            // or the layer is destroyed.
             if (m_poDS->IsInTransaction())
             {
                 std::unique_ptr<OGRFieldDefn> poFieldDefn;
-                poFieldDefn.reset(
-                    m_poFeatureDefn->StealFieldDefn(iFieldToDelete));
-                if (poFieldDefn != nullptr)
+                poFieldDefn = m_poFeatureDefn->StealFieldDefn(iFieldToDelete);
+                if (poFieldDefn)
                 {
                     m_apoFieldDefnChanges.emplace_back(std::move(poFieldDefn),
                                                        iFieldToDelete,

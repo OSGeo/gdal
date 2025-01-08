@@ -563,6 +563,11 @@ OGRSpatialReferenceH OGR_GFld_GetSpatialRef(OGRGeomFieldDefnH hDefn)
  */
 void OGRGeomFieldDefn::SetSpatialRef(const OGRSpatialReference *poSRSIn)
 {
+    if (poSRS == poSRSIn)
+    {
+        return;
+    }
+
     if (m_bSealed)
     {
         CPLError(
@@ -570,9 +575,12 @@ void OGRGeomFieldDefn::SetSpatialRef(const OGRSpatialReference *poSRSIn)
             "OGRGeomFieldDefn::SetSpatialRef() not allowed on a sealed object");
         return;
     }
+
     if (poSRS != nullptr)
         const_cast<OGRSpatialReference *>(poSRS)->Release();
+
     poSRS = poSRSIn;
+
     if (poSRS != nullptr)
         const_cast<OGRSpatialReference *>(poSRS)->Reference();
 }
