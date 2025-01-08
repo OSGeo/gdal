@@ -45,7 +45,7 @@
  * @since GDAL 2.0
  */
 
-#if defined(DEBUG) || defined(GDAL_DEBUG)
+#ifdef DEBUG
 #define OGRAPISPY_ENABLED
 #endif
 

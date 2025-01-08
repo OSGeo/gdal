@@ -426,7 +426,7 @@ const char CPL_DLL *OSRAxisEnumToName(OGRAxisOrientation eOrientation);
 #define DEFINED_OGRSpatialReferenceH
 /*! @endcond */
 
-#if defined(DEBUG) || defined(GDAL_DEBUG)
+#ifdef DEBUG
 typedef struct OGRSpatialReferenceHS *OGRSpatialReferenceH;
 typedef struct OGRCoordinateTransformationHS *OGRCoordinateTransformationH;
 #else

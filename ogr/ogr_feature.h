@@ -37,7 +37,7 @@
 /*! @cond Doxygen_Suppress */
 #define DEFINE_OGRFeatureH
 /*! @endcond */
-#if defined(DEBUG) || defined(GDAL_DEBUG)
+#ifdef DEBUG
 typedef struct OGRFieldDefnHS *OGRFieldDefnH;
 typedef struct OGRFeatureDefnHS *OGRFeatureDefnH;
 typedef struct OGRFeatureHS *OGRFeatureH;
