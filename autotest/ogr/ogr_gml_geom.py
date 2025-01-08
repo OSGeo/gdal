@@ -2296,6 +2296,36 @@ def test_gml_ArcByCenterPoint():
         geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (1 4,-1 2,1 0)")
     )
 
+    gml = "<gml:ArcByCenterPoint><gml:pos>1 2</gml:pos><gml:radius uom='km'>0.002</gml:radius><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>"
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    ogrtest.check_feature_geometry(
+        geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (1 4,-1 2,1 0)")
+    )
+
+    gml = "<gml:ArcByCenterPoint srsName='http://www.opengis.net/def/crs/EPSG/0/25832'><gml:pos>1 2</gml:pos><gml:radius uom='km'>0.002</gml:radius><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>"
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    ogrtest.check_feature_geometry(
+        geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (1 4,-1 2,1 0)")
+    )
+
+    # EPSG:2222 : unit is ft
+    gml = "<gml:ArcByCenterPoint srsName='http://www.opengis.net/def/crs/EPSG/0/2222'><gml:pos>1 2</gml:pos><gml:radius uom='m'>0.6096</gml:radius><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>"
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    ogrtest.check_feature_geometry(
+        geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (1 4,-1 2,1 0)")
+    )
+
+    # EPSG:2222 : unit is ft
+    gml = "<gml:ArcByCenterPoint srsName='http://www.opengis.net/def/crs/EPSG/0/2222'><gml:pos>1 2</gml:pos><gml:radius uom='ft'>2</gml:radius><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>"
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    ogrtest.check_feature_geometry(
+        geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (1 4,-1 2,1 0)")
+    )
+
 
 ###############################################################################
 # Test compound curve of ArcByCenterPoint whose ends don't exactly match

@@ -811,25 +811,25 @@ static bool GML2OGRGeometry_AddToMultiSurface(
 }
 
 /************************************************************************/
-/*                        GetDistanceInMetre()                          */
+/*                        GetUOMInMetre()                               */
 /************************************************************************/
 
-static double GetDistanceInMetre(double dfDistance, const char *pszUnits)
+static double GetUOMInMetre(const char *pszUnits)
 {
-    if (EQUAL(pszUnits, "m"))
-        return dfDistance;
+    if (!pszUnits || EQUAL(pszUnits, "m"))
+        return 1.0;
 
     if (EQUAL(pszUnits, "km"))
-        return dfDistance * 1000;
+        return 1000.0;
 
     if (EQUAL(pszUnits, "nm") || EQUAL(pszUnits, "[nmi_i]"))
-        return dfDistance * CPLAtof(SRS_UL_INTL_NAUT_MILE_CONV);
+        return CPLAtof(SRS_UL_INTL_NAUT_MILE_CONV);
 
     if (EQUAL(pszUnits, "mi"))
-        return dfDistance * CPLAtof(SRS_UL_INTL_STAT_MILE_CONV);
+        return CPLAtof(SRS_UL_INTL_STAT_MILE_CONV);
 
     if (EQUAL(pszUnits, "ft"))
-        return dfDistance * CPLAtof(SRS_UL_INTL_FOOT_CONV);
+        return CPLAtof(SRS_UL_INTL_FOOT_CONV);
 
     CPLDebug("GML2OGRGeometry", "Unhandled unit: %s", pszUnits);
     return -1;
@@ -1159,8 +1159,12 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
         const CPLXMLNode *psRadius = FindBareXMLChild(psChild, "radius");
         if (psRadius && psRadius->eType == CXT_Element)
         {
-            double dfRadius = CPLAtof(CPLGetXMLValue(psRadius, nullptr, "0"));
             const char *pszUnits = CPLGetXMLValue(psRadius, "uom", nullptr);
+            const double dfUOMConv = GetUOMInMetre(pszUnits);
+            const double dfRadiusRaw =
+                CPLAtof(CPLGetXMLValue(psRadius, nullptr, "0"));
+            const double dfRadius =
+                dfUOMConv > 0 ? dfRadiusRaw * dfUOMConv : dfRadiusRaw;
             bool bSRSUnitIsDegree = false;
             bool bInvertedAxisOrder = false;
             if (l_pszSRSName != nullptr)
@@ -1179,8 +1183,8 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                     }
                 }
             }
-            if (bSRSUnitIsDegree && pszUnits != nullptr &&
-                (dfRadius = GetDistanceInMetre(dfRadius, pszUnits)) > 0)
+
+            if (bSRSUnitIsDegree && dfUOMConv > 0)
             {
                 bIsApproximateArc = true;
                 dfLastCurveApproximateArcRadius = dfRadius;
@@ -1759,8 +1763,11 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
             CPLError(CE_Failure, CPLE_AppDefined, "Missing radius element.");
             return nullptr;
         }
-        const double dfRadius = CPLAtof(CPLGetXMLValue(psChild, nullptr, "0"));
         const char *pszUnits = CPLGetXMLValue(psChild, "uom", nullptr);
+        const double dfUOMConv = GetUOMInMetre(pszUnits);
+        const double dfRadiusRaw =
+            CPLAtof(CPLGetXMLValue(psChild, nullptr, "0"));
+        double dfRadius = dfUOMConv > 0 ? dfRadiusRaw * dfUOMConv : dfRadiusRaw;
 
         psChild = FindBareXMLChild(psNode, "startAngle");
         if (psChild == nullptr || psChild->eType != CXT_Element)
@@ -1808,6 +1815,11 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                     dfSemiMajor = GetSemiMajor(&oSRS);
                     bInvertedAxisOrder =
                         CPL_TO_BOOL(oSRS.EPSGTreatsAsNorthingEasting());
+
+                    const double dfSRSUnitsToMetre =
+                        oSRS.GetLinearUnits(nullptr);
+                    if (dfSRSUnitsToMetre > 0)
+                        dfRadius /= dfSRSUnitsToMetre;
                 }
             }
         }
@@ -1815,9 +1827,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
         double dfCenterX = p.getX();
         double dfCenterY = p.getY();
 
-        double dfDistance;
-        if (bSRSUnitIsDegree && pszUnits != nullptr &&
-            (dfDistance = GetDistanceInMetre(dfRadius, pszUnits)) > 0)
+        if (bSRSUnitIsDegree && dfUOMConv > 0)
         {
             auto poLS = std::make_unique<OGRLineString>();
             // coverity[tainted_data]
@@ -1833,7 +1843,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                 if (bInvertedAxisOrder)
                 {
                     OGR_GreatCircle_ExtendPosition(
-                        dfCenterX, dfCenterY, dfDistance,
+                        dfCenterX, dfCenterY, dfRadius,
                         // See
                         // https://ext.eurocontrol.int/aixm_confluence/display/ACG/ArcByCenterPoint+Interpretation+Summary
                         dfAngle, dfSemiMajor, &dfLat, &dfLong);
@@ -1843,7 +1853,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                 else
                 {
                     OGR_GreatCircle_ExtendPosition(
-                        dfCenterY, dfCenterX, dfDistance, 90 - dfAngle,
+                        dfCenterY, dfCenterX, dfRadius, 90 - dfAngle,
                         dfSemiMajor, &dfLat, &dfLong);
                     p.setX(dfLong);
                     p.setY(dfLat);
@@ -1855,7 +1865,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
             double dfLat = 0.0;
             if (bInvertedAxisOrder)
             {
-                OGR_GreatCircle_ExtendPosition(dfCenterX, dfCenterY, dfDistance,
+                OGR_GreatCircle_ExtendPosition(dfCenterX, dfCenterY, dfRadius,
                                                dfEndAngle, dfSemiMajor, &dfLat,
                                                &dfLong);
                 p.setX(dfLat);  // yes, external code will do the swap later
@@ -1863,7 +1873,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
             }
             else
             {
-                OGR_GreatCircle_ExtendPosition(dfCenterY, dfCenterX, dfDistance,
+                OGR_GreatCircle_ExtendPosition(dfCenterY, dfCenterX, dfRadius,
                                                90 - dfEndAngle, dfSemiMajor,
                                                &dfLat, &dfLong);
                 p.setX(dfLong);
@@ -1906,8 +1916,11 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
             CPLError(CE_Failure, CPLE_AppDefined, "Missing radius element.");
             return nullptr;
         }
-        const double dfRadius = CPLAtof(CPLGetXMLValue(psChild, nullptr, "0"));
         const char *pszUnits = CPLGetXMLValue(psChild, "uom", nullptr);
+        const double dfUOMConv = GetUOMInMetre(pszUnits);
+        const double dfRadiusRaw =
+            CPLAtof(CPLGetXMLValue(psChild, nullptr, "0"));
+        double dfRadius = dfUOMConv > 0 ? dfRadiusRaw * dfUOMConv : dfRadiusRaw;
 
         OGRPoint p;
         if (!ParseGMLCoordinates(psNode, &p, nSRSDimension))
@@ -1936,6 +1949,11 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                     dfSemiMajor = GetSemiMajor(&oSRS);
                     bInvertedAxisOrder =
                         CPL_TO_BOOL(oSRS.EPSGTreatsAsNorthingEasting());
+
+                    const double dfSRSUnitsToMetre =
+                        oSRS.GetLinearUnits(nullptr);
+                    if (dfSRSUnitsToMetre > 0)
+                        dfRadius /= dfSRSUnitsToMetre;
                 }
             }
         }
@@ -1943,9 +1961,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
         double dfCenterX = p.getX();
         double dfCenterY = p.getY();
 
-        double dfDistance;
-        if (bSRSUnitIsDegree && pszUnits != nullptr &&
-            (dfDistance = GetDistanceInMetre(dfRadius, pszUnits)) > 0)
+        if (bSRSUnitIsDegree && dfUOMConv > 0)
         {
             auto poLS = std::make_unique<OGRLineString>();
             const double dfStep =
@@ -1957,7 +1973,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                 if (bInvertedAxisOrder)
                 {
                     OGR_GreatCircle_ExtendPosition(
-                        dfCenterX, dfCenterY, dfDistance, dfAngle, dfSemiMajor,
+                        dfCenterX, dfCenterY, dfRadius, dfAngle, dfSemiMajor,
                         &dfLat, &dfLong);
                     p.setX(dfLat);  // yes, external code will do the swap later
                     p.setY(dfLong);
@@ -1965,7 +1981,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                 else
                 {
                     OGR_GreatCircle_ExtendPosition(
-                        dfCenterY, dfCenterX, dfDistance, dfAngle, dfSemiMajor,
+                        dfCenterY, dfCenterX, dfRadius, dfAngle, dfSemiMajor,
                         &dfLat, &dfLong);
                     p.setX(dfLong);
                     p.setY(dfLat);
