@@ -1418,6 +1418,14 @@ class Image
         {
             // Out-of-line values. We read a file offset
             entry.value_offset = m_rc->read<DataOrOffsetType>(offset, ok);
+            if (entry.value_offset == 0)
+            {
+                // value_offset = 0 for a out-of-line tag is obviously
+                // wrong and would cause later confusion in readTagAsVector<>,
+                // so better reject the file.
+                ok = false;
+                return;
+            }
             if (dataTypeSize >
                 std::numeric_limits<uint64_t>::max() / entry.count)
             {
