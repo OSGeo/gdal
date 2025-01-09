@@ -653,10 +653,9 @@ class CPL_DLL OGRFeatureDefn
     /**
      * @brief StealFieldDefn takes ownership of the field definition at index detaching
      *        it from the feature definition.
-     * This is a mechanism for the application to take over ownership of the field definition from the feature definition without copying.
+     * This is an advanced method designed to be only used for driver implementations.
      * @param iField index of the field definition to detach.
      * @return a unique pointer to the detached field definition or nullptr if the index is out of range.
-     * @note The caller is responsible for deleting the returned field definition.
      * @since GDAL 3.11
      */
     virtual std::unique_ptr<OGRFieldDefn> StealFieldDefn(int iField);
@@ -665,11 +664,10 @@ class CPL_DLL OGRFeatureDefn
 
     /**
      * @brief StealGeomFieldDefn takes ownership of the the geometry field definition at index
-     *        detaching it from the feature definition .
-     * This is a mechanism for the application to take over ownership of the geometry field definition from the feature definition without copying.
+     *        detaching it from the feature definition.
+     * This is an advanced method designed to be only used for driver implementations.
      * @param iField index of the geometry field definition to detach.
      * @return a unique pointer to the detached geometry field definition or nullptr if the index is out of range.
-     * @note The caller is responsible for deleting the returned field definition.
      * @since GDAL 3.11
      */
     virtual std::unique_ptr<OGRGeomFieldDefn> StealGeomFieldDefn(int iField);

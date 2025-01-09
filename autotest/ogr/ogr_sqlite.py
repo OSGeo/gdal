@@ -4619,9 +4619,6 @@ def test_field_rollback(tmp_path):
     del lyr
     del ds
 
-    # Bisect the test to avoid a crash on Windows/MacOS
-    return
-
     # Reopen the database.
     ds = ogr.Open(temp_file, update=True)
     lyr = ds.GetLayerByName("testlyr")

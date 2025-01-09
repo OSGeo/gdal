@@ -3574,7 +3574,6 @@ void OGRSQLiteLayer::FinishRollbackTransaction()
 
     // Deleted fields can be safely removed from the storage after being restored.
     std::vector<int> toBeRemoved;
-    int idx{0};
 
     // Loop through all changed fields and reset them to their previous state.
     for (int i = static_cast<int>(m_apoFieldDefnChanges.size()) - 1; i >= 0;
@@ -3596,20 +3595,22 @@ void OGRSQLiteLayer::FinishRollbackTransaction()
                     // Now move the field to the right place
                     // from the last position to its original position
                     const int iFieldCount = GetLayerDefn()->GetFieldCount();
+                    CPLAssert(iFieldCount > 0);
+                    CPLAssert(iFieldCount > iField);
                     std::vector<int> anOrder(iFieldCount);
-                    for (int j = 0; j < oFieldChange.iField; j++)
+                    for (int j = 0; j < iField; j++)
                     {
                         anOrder[j] = j;
                     }
-                    for (int j = oFieldChange.iField + 1; j < iFieldCount; j++)
+                    for (int j = iField + 1; j < iFieldCount; j++)
                     {
                         anOrder[j] = j - 1;
                     }
-                    anOrder[oFieldChange.iField] = iFieldCount - 1;
+                    anOrder[iField] = iFieldCount - 1;
                     if (OGRERR_NONE ==
                         GetLayerDefn()->ReorderFieldDefns(anOrder.data()))
                     {
-                        toBeRemoved.push_back(idx);
+                        toBeRemoved.push_back(i);
                     }
                     else
                     {
@@ -3625,7 +3626,7 @@ void OGRSQLiteLayer::FinishRollbackTransaction()
                     if (poFieldDefn)
                     {
                         *poFieldDefn = *oFieldChange.poFieldDefn;
-                        toBeRemoved.push_back(idx);
+                        toBeRemoved.push_back(i);
                     }
                     else
                     {
@@ -3637,7 +3638,7 @@ void OGRSQLiteLayer::FinishRollbackTransaction()
                 case FieldChangeType::ADD:
                 {
                     std::unique_ptr<OGRFieldDefn> poFieldDef =
-                        GetLayerDefn()->StealFieldDefn(oFieldChange.iField);
+                        GetLayerDefn()->StealFieldDefn(iField);
                     if (poFieldDef)
                     {
                         oFieldChange.poFieldDefn = std::move(poFieldDef);
@@ -3650,13 +3651,12 @@ void OGRSQLiteLayer::FinishRollbackTransaction()
                     break;
                 }
             }
-            ++idx;
         }
         else
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Failed to restore field %s (field not found at index %d)",
-                     pszName, oFieldChange.iField);
+                     pszName, iField);
         }
     }
 
@@ -3702,7 +3702,6 @@ void OGRSQLiteLayer::FinishRollbackTransaction()
                     break;
                 }
             }
-            ++idx;
         }
         else
         {
