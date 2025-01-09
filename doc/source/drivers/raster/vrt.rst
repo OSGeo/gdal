@@ -1919,7 +1919,7 @@ pseudo panchromatic intensity, but not bound to an output band.
                 <SourceFilename relativeToVRT="1">world_rgbnir.tif</SourceFilename>
                 <SourceBand>2</SourceBand>
             </SpectralBand>
-                <SpectralBand dstBand="4">
+            <SpectralBand dstBand="4">
                 <SourceFilename relativeToVRT="1">world_rgbnir.tif</SourceFilename>
                 <SourceBand>3</SourceBand>
             </SpectralBand>
