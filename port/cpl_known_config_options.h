@@ -475,6 +475,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GRIB_CACHEMAX", // from gribdataset.cpp
    "GRIB_DEFAULT_SEMI_MAJOR", // from gribdataset.cpp
    "GRIB_DEFAULT_SEMI_MINOR", // from gribdataset.cpp
+   "GRIB_LATITUDE_OF_FIRST_GRID_POINT_IS_SOUTHERN_MOST", // from gribdataset.cpp
    "GRIB_NORMALIZE_UNITS", // from gribdataset.cpp
    "GRIB_PDS_ALL_BANDS", // from gribdataset.cpp
    "GRIB_RESOURCE_DIR", // from metaname.cpp
