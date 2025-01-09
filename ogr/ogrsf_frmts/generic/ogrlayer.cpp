@@ -1931,7 +1931,7 @@ void OGRLayer::FinishRollbackTransaction()
         {
             switch (oFieldChange.eChangeType)
             {
-                case FieldChangeType::DELETE:
+                case FieldChangeType::DELETE_FIELD:
                 {
                     // Transfer ownership of the field to the layer
                     whileUnsealing(GetLayerDefn())
@@ -1964,7 +1964,7 @@ void OGRLayer::FinishRollbackTransaction()
                     }
                     break;
                 }
-                case FieldChangeType::ALTER:
+                case FieldChangeType::ALTER_FIELD:
                 {
                     OGRFieldDefn *poFieldDefn =
                         GetLayerDefn()->GetFieldDefn(iField);
@@ -1980,7 +1980,7 @@ void OGRLayer::FinishRollbackTransaction()
                     }
                     break;
                 }
-                case FieldChangeType::ADD:
+                case FieldChangeType::ADD_FIELD:
                 {
                     std::unique_ptr<OGRFieldDefn> poFieldDef =
                         GetLayerDefn()->StealFieldDefn(iField);
@@ -2022,13 +2022,13 @@ void OGRLayer::FinishRollbackTransaction()
         {
             switch (oGeomFieldChange.eChangeType)
             {
-                case FieldChangeType::DELETE:
-                case FieldChangeType::ALTER:
+                case FieldChangeType::DELETE_FIELD:
+                case FieldChangeType::ALTER_FIELD:
                 {
                     // Currently not handled by OGR for geometry fields
                     break;
                 }
-                case FieldChangeType::ADD:
+                case FieldChangeType::ADD_FIELD:
                 {
                     std::unique_ptr<OGRGeomFieldDefn> poGeomFieldDef =
                         GetLayerDefn()->StealGeomFieldDefn(

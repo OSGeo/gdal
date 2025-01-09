@@ -1617,7 +1617,7 @@ OGRErr OGRSQLiteTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
     {
         m_apoFieldDefnChanges.emplace_back(
             std::make_unique<OGRFieldDefn>(oField),
-            m_poFeatureDefn->GetFieldCount() - 1, FieldChangeType::ADD);
+            m_poFeatureDefn->GetFieldCount() - 1, FieldChangeType::ADD_FIELD);
     }
 
     if (m_pszFIDColumn != nullptr && EQUAL(oField.GetNameRef(), m_pszFIDColumn))
@@ -1723,7 +1723,7 @@ OGRSQLiteTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     {
         m_apoGeomFieldDefnChanges.emplace_back(
             std::make_unique<OGRGeomFieldDefn>(*poGeomField),
-            m_poFeatureDefn->GetGeomFieldCount(), FieldChangeType::ADD);
+            m_poFeatureDefn->GetGeomFieldCount(), FieldChangeType::ADD_FIELD);
     }
 
     m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomField));
@@ -2175,9 +2175,9 @@ OGRErr OGRSQLiteTableLayer::DeleteField(int iFieldToDelete)
                 poFieldDefn = m_poFeatureDefn->StealFieldDefn(iFieldToDelete);
                 if (poFieldDefn)
                 {
-                    m_apoFieldDefnChanges.emplace_back(std::move(poFieldDefn),
-                                                       iFieldToDelete,
-                                                       FieldChangeType::DELETE);
+                    m_apoFieldDefnChanges.emplace_back(
+                        std::move(poFieldDefn), iFieldToDelete,
+                        FieldChangeType::DELETE_FIELD);
                 }
                 else
                 {
@@ -2414,7 +2414,7 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn(int iFieldToAlter,
     {
         m_apoFieldDefnChanges.emplace_back(
             std::make_unique<OGRFieldDefn>(poFieldDefn), iFieldToAlter,
-            FieldChangeType::ALTER);
+            FieldChangeType::ALTER_FIELD);
     }
 
     if (nActualFlags & ALTER_TYPE_FLAG)

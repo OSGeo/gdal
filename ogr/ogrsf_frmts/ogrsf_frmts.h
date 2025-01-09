@@ -404,9 +404,9 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     enum class FieldChangeType : char
     {
-        ADD,
-        ALTER,
-        DELETE
+        ADD_FIELD,
+        ALTER_FIELD,
+        DELETE_FIELD
     };
 
     // Store changes to the fields that happened inside a transaction

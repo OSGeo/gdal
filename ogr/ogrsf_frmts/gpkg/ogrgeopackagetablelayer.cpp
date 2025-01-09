@@ -1849,7 +1849,7 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
     {
         m_apoFieldDefnChanges.emplace_back(
             std::make_unique<OGRFieldDefn>(oFieldDefn),
-            m_poFeatureDefn->GetFieldCount() - 1, FieldChangeType::ADD);
+            m_poFeatureDefn->GetFieldCount() - 1, FieldChangeType::ADD_FIELD);
     }
 
     m_abGeneratedColumns.resize(m_poFeatureDefn->GetFieldCount());
@@ -2029,7 +2029,7 @@ OGRGeoPackageTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     {
         m_apoGeomFieldDefnChanges.emplace_back(
             std::make_unique<OGRGeomFieldDefn>(oGeomField),
-            m_poFeatureDefn->GetGeomFieldCount(), FieldChangeType::ADD);
+            m_poFeatureDefn->GetGeomFieldCount(), FieldChangeType::ADD_FIELD);
     }
 
     whileUnsealing(m_poFeatureDefn)->AddGeomFieldDefn(&oGeomField);
@@ -6588,9 +6588,9 @@ OGRErr OGRGeoPackageTableLayer::DeleteField(int iFieldToDelete)
                                      ->StealFieldDefn(iFieldToDelete)};
                 if (poFieldDefn)
                 {
-                    m_apoFieldDefnChanges.emplace_back(std::move(poFieldDefn),
-                                                       iFieldToDelete,
-                                                       FieldChangeType::DELETE);
+                    m_apoFieldDefnChanges.emplace_back(
+                        std::move(poFieldDefn), iFieldToDelete,
+                        FieldChangeType::DELETE_FIELD);
                 }
                 else
                 {
@@ -7098,7 +7098,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
             {
                 m_apoFieldDefnChanges.emplace_back(
                     std::make_unique<OGRFieldDefn>(poFieldDefnToAlter),
-                    iFieldToAlter, FieldChangeType::ALTER);
+                    iFieldToAlter, FieldChangeType::ALTER_FIELD);
             }
 
             auto oTemporaryUnsealer(poFieldDefnToAlter->GetTemporaryUnsealer());
