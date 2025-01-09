@@ -429,7 +429,7 @@ void OGRFeatureDefn::AddFieldDefn(const OGRFieldDefn *poNewDefn)
  * @param poNewDefn the definition of the new field.
  */
 
-void OGRFeatureDefn::AddFieldDefn(std::unique_ptr<OGRFieldDefn> &&poFieldDefn)
+void OGRFeatureDefn::AddFieldDefn(std::unique_ptr<OGRFieldDefn> &&poNewDefn)
 {
     if (m_bSealed)
     {
@@ -438,7 +438,7 @@ void OGRFeatureDefn::AddFieldDefn(std::unique_ptr<OGRFieldDefn> &&poFieldDefn)
             "OGRFeatureDefn::AddFieldDefn() not allowed on a sealed object");
         return;
     }
-    apoFieldDefn.push_back(std::move(poFieldDefn));
+    apoFieldDefn.push_back(std::move(poNewDefn));
 }
 
 /************************************************************************/
