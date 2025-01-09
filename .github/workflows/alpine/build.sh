@@ -39,3 +39,12 @@ else
   echo "DeclareDeferredFOO() has NOT been run"
   exit 1
 fi
+
+#
+echo "Validating gdal --json-usage output"
+apps/gdal --json-usage > out.json
+export PYTHON_CMD=python3
+$PYTHON_CMD -m venv myvenv
+source myvenv/bin/activate
+$PYTHON_CMD -m pip install -U check-jsonschema
+check-jsonschema --schemafile data/gdal_algorithm.schema.json out.json
