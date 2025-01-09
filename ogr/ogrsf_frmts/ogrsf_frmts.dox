@@ -3072,7 +3072,7 @@ form depending on the limitations of the format driver.
  f = new OGRFeature(lyr->GetLayerDefn());
  ...
  delete f;
- \encode
+ \endcode
 
  @return OGRERR_NONE on success.
 
