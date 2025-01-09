@@ -724,6 +724,9 @@ class VRTProcessedDataset final : public VRTDataset
     //! Directory of the VRT
     std::string m_osVRTPath{};
 
+    //! Source of source dataset generated with GDALTranslate
+    std::unique_ptr<GDALDataset> m_poVRTSrcDS{};
+
     //! Source dataset
     std::unique_ptr<GDALDataset> m_poSrcDS{};
 
@@ -769,9 +772,6 @@ class VRTProcessedDataset final : public VRTDataset
 
     //! Value of CPLGetUsablePhysicalRAM() / 10 * 4
     GIntBig m_nAllowedRAMUsage = 0;
-
-    //! Whether to apply a scale and offset if defined by the input dataset
-    bool m_bUnscale = true;
 
     CPLErr Init(const CPLXMLNode *, const char *,
                 const VRTProcessedDataset *poParentDS,

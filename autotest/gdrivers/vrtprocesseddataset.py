@@ -1533,7 +1533,9 @@ def test_vrtprocesseddataset_RasterIO(tmp_vsimem):
 # Test reading input datasets with scale and offset
 
 
-@pytest.mark.parametrize("input_scaled", (True, False))
+@pytest.mark.parametrize(
+    "input_scaled", (True, False), ids=lambda x: f"input scaled={x}"
+)
 @pytest.mark.parametrize("unscale", (True, False, "auto"), ids=lambda x: f"unscale={x}")
 @pytest.mark.parametrize(
     "dtype", (gdal.GDT_Int16, gdal.GDT_Float32), ids=gdal.GetDataTypeName
