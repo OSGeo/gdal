@@ -33,10 +33,9 @@
 
 #include "gnm.h"
 
-CPL_C_START
+#include "gdal_fwd.h"
 
-typedef void *GNMNetworkH;
-typedef void *GNMGenericNetworkH;
+CPL_C_START
 
 const char CPL_DLL *CPL_STDCALL GNMGetName(GNMNetworkH hNet);
 

@@ -1030,7 +1030,7 @@ public:
 
   %newobject GetSpatialRef;
   OSRSpatialReferenceShadow *GetSpatialRef() {
-    return GDALMDArrayGetSpatialRef(self);
+    return (OSRSpatialReferenceShadow*) GDALMDArrayGetSpatialRef(self);
   }
 #endif
 

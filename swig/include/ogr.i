@@ -4047,7 +4047,7 @@ public:
 
   %newobject Value;
   OGRGeometryShadow* Value(double dfDistance) {
-    return OGR_G_Value(self, dfDistance);
+    return (OGRGeometryShadow*)OGR_G_Value(self, dfDistance);
   }
 
   %newobject Transform;

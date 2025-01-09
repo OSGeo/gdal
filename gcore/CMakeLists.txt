@@ -213,6 +213,7 @@ target_public_header(
   HEADERS
   ${CMAKE_CURRENT_BINARY_DIR}/gdal_version_full/gdal_version.h
   gdal.h
+  gdal_fwd.h
   gdalalgorithm.h
   gdaljp2metadata.h
   gdaljp2abstractdataset.h

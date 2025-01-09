@@ -17,6 +17,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_json.h"
+#include "gdal_fwd.h"
 #include "ogr_core.h"
 #include "ogr_geomcoordinateprecision.h"
 #include "ogr_spatialref.h"
@@ -31,17 +32,6 @@
  *
  * Simple feature geometry classes.
  */
-
-/*! @cond Doxygen_Suppress */
-#ifndef DEFINEH_OGRGeometryH
-#define DEFINEH_OGRGeometryH
-#if defined(DEBUG) || defined(GDAL_DEBUG)
-typedef struct OGRGeometryHS *OGRGeometryH;
-#else
-typedef void *OGRGeometryH;
-#endif
-#endif /* DEFINEH_OGRGeometryH */
-/*! @endcond */
 
 /// WKT Output formatting options.
 enum class OGRWktFormat
