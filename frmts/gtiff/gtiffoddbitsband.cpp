@@ -515,60 +515,6 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-static void ExpandPacked8ToByte1(const GByte *const CPL_RESTRICT pabySrc,
-                                 GByte *const CPL_RESTRICT pabyDest,
-                                 GPtrDiff_t nBytes)
-{
-    for (decltype(nBytes) i = 0, j = 0; i < nBytes; i++, j += 8)
-    {
-        const GByte byVal = pabySrc[i];
-        pabyDest[j + 0] = (byVal >> 7) & 0x1;
-        pabyDest[j + 1] = (byVal >> 6) & 0x1;
-        pabyDest[j + 2] = (byVal >> 5) & 0x1;
-        pabyDest[j + 3] = (byVal >> 4) & 0x1;
-        pabyDest[j + 4] = (byVal >> 3) & 0x1;
-        pabyDest[j + 5] = (byVal >> 2) & 0x1;
-        pabyDest[j + 6] = (byVal >> 1) & 0x1;
-        pabyDest[j + 7] = (byVal >> 0) & 0x1;
-    }
-}
-
-#if defined(__GNUC__) || defined(_MSC_VER)
-// Signedness of char implementation dependent, so be explicit.
-// Assumes 2-complement integer types and sign extension of right shifting
-// GCC guarantees such:
-// https://gcc.gnu.org/onlinedocs/gcc/Integers-implementation.html#Integers-implementation
-static inline GByte ExtractBitAndConvertTo255(GByte byVal, int nBit)
-{
-    return static_cast<GByte>(static_cast<signed char>(byVal << (7 - nBit)) >>
-                              7);
-}
-#else
-// Portable way
-static inline GByte ExtractBitAndConvertTo255(GByte byVal, int nBit)
-{
-    return (byVal & (1 << nBit)) ? 255 : 0;
-}
-#endif
-
-static void ExpandPacked8ToByte255(const GByte *const CPL_RESTRICT pabySrc,
-                                   GByte *const CPL_RESTRICT pabyDest,
-                                   GPtrDiff_t nBytes)
-{
-    for (decltype(nBytes) i = 0, j = 0; i < nBytes; i++, j += 8)
-    {
-        const GByte byVal = pabySrc[i];
-        pabyDest[j + 0] = ExtractBitAndConvertTo255(byVal, 7);
-        pabyDest[j + 1] = ExtractBitAndConvertTo255(byVal, 6);
-        pabyDest[j + 2] = ExtractBitAndConvertTo255(byVal, 5);
-        pabyDest[j + 3] = ExtractBitAndConvertTo255(byVal, 4);
-        pabyDest[j + 4] = ExtractBitAndConvertTo255(byVal, 3);
-        pabyDest[j + 5] = ExtractBitAndConvertTo255(byVal, 2);
-        pabyDest[j + 6] = ExtractBitAndConvertTo255(byVal, 1);
-        pabyDest[j + 7] = ExtractBitAndConvertTo255(byVal, 0);
-    }
-}
-
 CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                     void *pImage)
 
@@ -608,43 +554,24 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         (m_poGDS->nBands == 1 ||
          m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE))
     {
-        /* --------------------------------------------------------------------
-         */
-        /*      Translate 1bit data to eight bit. */
-        /* --------------------------------------------------------------------
-         */
-        GPtrDiff_t iDstOffset = 0;
-        const GByte *const CPL_RESTRICT m_pabyBlockBuf =
-            m_poGDS->m_pabyBlockBuf;
+        // Translate 1bit data to eight bit.
+        const GByte *CPL_RESTRICT pabySrc = m_poGDS->m_pabyBlockBuf;
         GByte *CPL_RESTRICT pabyDest = static_cast<GByte *>(pImage);
 
         for (int iLine = 0; iLine < nBlockYSize; ++iLine)
         {
-            GPtrDiff_t iSrcOffsetByte =
-                static_cast<GPtrDiff_t>((nBlockXSize + 7) >> 3) * iLine;
-
-            if (!m_poGDS->m_bPromoteTo8Bits)
+            if (m_poGDS->m_bPromoteTo8Bits)
             {
-                ExpandPacked8ToByte1(m_pabyBlockBuf + iSrcOffsetByte,
-                                     pabyDest + iDstOffset, nBlockXSize / 8);
+                GDALExpandPackedBitsToByteAt0Or255(pabySrc, pabyDest,
+                                                   nBlockXSize);
             }
             else
             {
-                ExpandPacked8ToByte255(m_pabyBlockBuf + iSrcOffsetByte,
-                                       pabyDest + iDstOffset, nBlockXSize / 8);
+                GDALExpandPackedBitsToByteAt0Or1(pabySrc, pabyDest,
+                                                 nBlockXSize);
             }
-            GPtrDiff_t iSrcOffsetBit = (iSrcOffsetByte + nBlockXSize / 8) * 8;
-            iDstOffset += nBlockXSize & ~0x7;
-            const GByte bSetVal = m_poGDS->m_bPromoteTo8Bits ? 255 : 1;
-            for (int iPixel = nBlockXSize & ~0x7; iPixel < nBlockXSize;
-                 ++iPixel, ++iSrcOffsetBit)
-            {
-                if (m_pabyBlockBuf[iSrcOffsetBit >> 3] &
-                    (0x80 >> (iSrcOffsetBit & 0x7)))
-                    static_cast<GByte *>(pImage)[iDstOffset++] = bSetVal;
-                else
-                    static_cast<GByte *>(pImage)[iDstOffset++] = 0;
-            }
+            pabySrc += (nBlockXSize + 7) / 8;
+            pabyDest += nBlockXSize;
         }
     }
     /* -------------------------------------------------------------------- */

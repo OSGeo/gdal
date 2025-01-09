@@ -51,6 +51,9 @@
 
 #ifdef HAVE_SSSE3_AT_COMPILE_TIME
 #include "rasterio_ssse3.h"
+#ifdef __SSSE3__
+#include <tmmintrin.h>
+#endif
 #endif
 
 static void GDALFastCopyByte(const GByte *CPL_RESTRICT pSrcData,
@@ -6136,4 +6139,195 @@ void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, void *pDst,
         // clang-format on
 
 #undef CALL_GDALTranspose2D_internal
+}
+
+/************************************************************************/
+/*                     ExtractBitAndConvertTo255()                      */
+/************************************************************************/
+
+#if defined(__GNUC__) || defined(_MSC_VER)
+// Signedness of char implementation dependent, so be explicit.
+// Assumes 2-complement integer types and sign extension of right shifting
+// GCC guarantees such:
+// https://gcc.gnu.org/onlinedocs/gcc/Integers-implementation.html#Integers-implementation
+static inline GByte ExtractBitAndConvertTo255(GByte byVal, int nBit)
+{
+    return static_cast<GByte>(static_cast<signed char>(byVal << (7 - nBit)) >>
+                              7);
+}
+#else
+// Portable way
+static inline GByte ExtractBitAndConvertTo255(GByte byVal, int nBit)
+{
+    return (byVal & (1 << nBit)) ? 255 : 0;
+}
+#endif
+
+/************************************************************************/
+/*                   ExpandEightPackedBitsToByteAt255()                 */
+/************************************************************************/
+
+static inline void ExpandEightPackedBitsToByteAt255(GByte byVal,
+                                                    GByte abyOutput[8])
+{
+    abyOutput[0] = ExtractBitAndConvertTo255(byVal, 7);
+    abyOutput[1] = ExtractBitAndConvertTo255(byVal, 6);
+    abyOutput[2] = ExtractBitAndConvertTo255(byVal, 5);
+    abyOutput[3] = ExtractBitAndConvertTo255(byVal, 4);
+    abyOutput[4] = ExtractBitAndConvertTo255(byVal, 3);
+    abyOutput[5] = ExtractBitAndConvertTo255(byVal, 2);
+    abyOutput[6] = ExtractBitAndConvertTo255(byVal, 1);
+    abyOutput[7] = ExtractBitAndConvertTo255(byVal, 0);
+}
+
+/************************************************************************/
+/*                GDALExpandPackedBitsToByteAt0Or255()                  */
+/************************************************************************/
+
+/** Expand packed-bits (ordered from most-significant bit to least one)
+  into a byte each, where a bit at 0 is expanded to a byte at 0, and a bit
+  at 1 to a byte at 255.
+
+ The function does (in a possibly more optimized way) the following:
+ \code{.cpp}
+ for (size_t i = 0; i < nInputBits; ++i )
+ {
+     pabyOutput[i] = (pabyInput[i / 8] & (1 << (7 - (i % 8)))) ? 255 : 0;
+ }
+ \endcode
+
+ @param pabyInput Input array of (nInputBits + 7) / 8 bytes.
+ @param pabyOutput Output array of nInputBits bytes.
+ @param nInputBits Number of valid bits in pabyInput.
+
+ @since 3.11
+*/
+
+void GDALExpandPackedBitsToByteAt0Or255(const GByte *CPL_RESTRICT pabyInput,
+                                        GByte *CPL_RESTRICT pabyOutput,
+                                        size_t nInputBits)
+{
+    const size_t nInputWholeBytes = nInputBits / 8;
+    size_t iByte = 0;
+
+#ifdef HAVE_SSE2
+    // Mask to isolate each bit
+    const __m128i bit_mask = _mm_set_epi8(1, 2, 4, 8, 16, 32, 64, -128, 1, 2, 4,
+                                          8, 16, 32, 64, -128);
+    const __m128i zero = _mm_setzero_si128();
+    const __m128i all_ones = _mm_set1_epi8(-1);
+#ifdef __SSSE3__
+    const __m128i dispatch_two_bytes =
+        _mm_set_epi8(1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0);
+#endif
+    constexpr size_t SSE_REG_SIZE = sizeof(bit_mask);
+    for (; iByte + SSE_REG_SIZE <= nInputWholeBytes; iByte += SSE_REG_SIZE)
+    {
+        __m128i reg_ori = _mm_loadu_si128(
+            reinterpret_cast<const __m128i *>(pabyInput + iByte));
+
+        constexpr int NUM_PROCESSED_BYTES_PER_REG = 2;
+        for (size_t k = 0; k < SSE_REG_SIZE / NUM_PROCESSED_BYTES_PER_REG; ++k)
+        {
+            // Given reg_ori = (A, B, ... 14 other bytes ...),
+            // expand to (A, A, A, A, A, A, A, A, B, B, B, B, B, B, B, B)
+#ifdef __SSSE3__
+            __m128i reg = _mm_shuffle_epi8(reg_ori, dispatch_two_bytes);
+#else
+            __m128i reg = _mm_unpacklo_epi8(reg_ori, reg_ori);
+            reg = _mm_unpacklo_epi16(reg, reg);
+            reg = _mm_unpacklo_epi32(reg, reg);
+#endif
+
+            // Test if bits of interest are set
+            reg = _mm_and_si128(reg, bit_mask);
+
+            // Now test if those bits are set, by comparing to zero. So the
+            // result will be that bytes where bits are set will be at 0, and
+            // ones where they are cleared will be at 0xFF. So the inverse of
+            // the end result we want!
+            reg = _mm_cmpeq_epi8(reg, zero);
+
+            // Invert the result
+            reg = _mm_andnot_si128(reg, all_ones);
+
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pabyOutput), reg);
+
+            pabyOutput += SSE_REG_SIZE;
+
+            // Right-shift of 2 bytes
+            reg_ori = _mm_bsrli_si128(reg_ori, NUM_PROCESSED_BYTES_PER_REG);
+        }
+    }
+
+#endif  // HAVE_SSE2
+
+    for (; iByte < nInputWholeBytes; ++iByte)
+    {
+        ExpandEightPackedBitsToByteAt255(pabyInput[iByte], pabyOutput);
+        pabyOutput += 8;
+    }
+    for (int iBit = 0; iBit < static_cast<int>(nInputBits % 8); ++iBit)
+    {
+        *pabyOutput = ExtractBitAndConvertTo255(pabyInput[iByte], 7 - iBit);
+        ++pabyOutput;
+    }
+}
+
+/************************************************************************/
+/*                   ExpandEightPackedBitsToByteAt1()                   */
+/************************************************************************/
+
+static inline void ExpandEightPackedBitsToByteAt1(GByte byVal,
+                                                  GByte abyOutput[8])
+{
+    abyOutput[0] = (byVal >> 7) & 0x1;
+    abyOutput[1] = (byVal >> 6) & 0x1;
+    abyOutput[2] = (byVal >> 5) & 0x1;
+    abyOutput[3] = (byVal >> 4) & 0x1;
+    abyOutput[4] = (byVal >> 3) & 0x1;
+    abyOutput[5] = (byVal >> 2) & 0x1;
+    abyOutput[6] = (byVal >> 1) & 0x1;
+    abyOutput[7] = (byVal >> 0) & 0x1;
+}
+
+/************************************************************************/
+/*                GDALExpandPackedBitsToByteAt0Or1()                    */
+/************************************************************************/
+
+/** Expand packed-bits (ordered from most-significant bit to least one)
+  into a byte each, where a bit at 0 is expanded to a byte at 0, and a bit
+  at 1 to a byte at 1.
+
+ The function does (in a possibly more optimized way) the following:
+ \code{.cpp}
+ for (size_t i = 0; i < nInputBits; ++i )
+ {
+     pabyOutput[i] = (pabyInput[i / 8] & (1 << (7 - (i % 8)))) ? 1 : 0;
+ }
+ \endcode
+
+ @param pabyInput Input array of (nInputBits + 7) / 8 bytes.
+ @param pabyOutput Output array of nInputBits bytes.
+ @param nInputBits Number of valid bits in pabyInput.
+
+ @since 3.11
+*/
+
+void GDALExpandPackedBitsToByteAt0Or1(const GByte *CPL_RESTRICT pabyInput,
+                                      GByte *CPL_RESTRICT pabyOutput,
+                                      size_t nInputBits)
+{
+    const size_t nInputWholeBytes = nInputBits / 8;
+    size_t iByte = 0;
+    for (; iByte < nInputWholeBytes; ++iByte)
+    {
+        ExpandEightPackedBitsToByteAt1(pabyInput[iByte], pabyOutput);
+        pabyOutput += 8;
+    }
+    for (int iBit = 0; iBit < static_cast<int>(nInputBits % 8); ++iBit)
+    {
+        *pabyOutput = (pabyInput[iByte] >> (7 - iBit)) & 0x1;
+        ++pabyOutput;
+    }
 }
