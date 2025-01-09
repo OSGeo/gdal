@@ -1876,9 +1876,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
         if (bSRSUnitIsDegree && dfUOMConv > 0)
         {
             auto poLS = std::make_unique<OGRLineString>();
-            // coverity[tainted_data]
-            const double dfStep =
-                CPLAtof(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4"));
+            const double dfStep = OGRGeometryFactory::GetDefaultArcStepSize();
             const double dfSign = dfStartAngle < dfEndAngle ? 1 : -1;
             for (double dfAngle = dfStartAngle;
                  (dfAngle - dfEndAngle) * dfSign < 0;
@@ -2010,8 +2008,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
         if (bSRSUnitIsDegree && dfUOMConv > 0)
         {
             auto poLS = std::make_unique<OGRLineString>();
-            const double dfStep =
-                CPLAtof(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4"));
+            const double dfStep = OGRGeometryFactory::GetDefaultArcStepSize();
             for (double dfAngle = 0; dfAngle < 360; dfAngle += dfStep)
             {
                 double dfLong = 0.0;

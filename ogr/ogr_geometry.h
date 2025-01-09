@@ -4381,6 +4381,8 @@ class CPL_DLL OGRGeometryFactory
         char **papszOptions,
         const TransformWithOptionsCache &cache = TransformWithOptionsCache());
 
+    static double GetDefaultArcStepSize();
+
     static OGRGeometry *
     approximateArcAngles(double dfX, double dfY, double dfZ,
                          double dfPrimaryRadius, double dfSecondaryAxis,

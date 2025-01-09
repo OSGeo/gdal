@@ -444,12 +444,9 @@ OGRErr OGRILI1Layer::CreateField(const OGRFieldDefn *poField,
 void OGRILI1Layer::JoinGeomLayers()
 {
     bGeomsJoined = true;
-    bool bResetConfigOption = false;
-    if (EQUAL(CPLGetConfigOption("OGR_ARC_STEPSIZE", ""), ""))
-    {
-        bResetConfigOption = true;
-        CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", "0.96");
-    }
+
+    CPLConfigOptionSetter oSetter("OGR_ARC_STEPSIZE", "0.96",
+                                  /* bSetOnlyIfUndefined = */ true);
 
     for (GeomFieldInfos::const_iterator it = oGeomFieldInfos.begin();
          it != oGeomFieldInfos.end(); ++it)
@@ -477,9 +474,6 @@ void OGRILI1Layer::JoinGeomLayers()
             }
         }
     }
-
-    if (bResetConfigOption)
-        CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", nullptr);
 }
 
 void OGRILI1Layer::JoinSurfaceLayer(OGRILI1Layer *poSurfaceLineLayer,

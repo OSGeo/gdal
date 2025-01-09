@@ -574,7 +574,7 @@ static void ProcessCurve(OGRFeature *poFeature, const CPLString &osPen,
         else
             poSC = new OGRLineString();
         const double dfArcStepSize =
-            CPLAtofM(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4"));
+            OGRGeometryFactory::GetDefaultArcStepSize();
         if (!ellipse.isNull())
         {
             nPoints = std::max(2, static_cast<int>(360 / dfArcStepSize));
