@@ -10908,3 +10908,14 @@ def test_ogr_gpkg_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
         assert batch["datetime"][1] == b"2022-05-31T12:34:56.789Z"
         assert batch["datetime"][2] == b"2022-05-31T12:34:56.000"
         assert batch["datetime"][3] == b"2022-05-31T12:34:56.000+12:30"
+
+
+###############################################################################
+# Test field operations rolling back changes.
+
+
+def test_ogr_gpkg_field_operations_rollback(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(filename) as ds:
+        ogrtest.check_transaction_rollback(ds, test_geometry=False)

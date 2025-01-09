@@ -417,6 +417,30 @@ void OGRFeatureDefn::AddFieldDefn(const OGRFieldDefn *poNewDefn)
     apoFieldDefn.emplace_back(std::make_unique<OGRFieldDefn>(poNewDefn));
 }
 
+/**
+ * \brief Add a new field definition taking ownership of the passed field.
+ *
+ * To add a new field definition to a layer definition, do not use this
+ * function directly, but use OGRLayer::CreateField() instead.
+ *
+ * This method should only be called while there are no OGRFeature
+ * objects in existence based on this OGRFeatureDefn.
+ *
+ * @param poNewDefn the definition of the new field.
+ */
+
+void OGRFeatureDefn::AddFieldDefn(std::unique_ptr<OGRFieldDefn> &&poFieldDefn)
+{
+    if (m_bSealed)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "OGRFeatureDefn::AddFieldDefn() not allowed on a sealed object");
+        return;
+    }
+    apoFieldDefn.push_back(std::move(poFieldDefn));
+}
+
 /************************************************************************/
 /*                        OGR_FD_AddFieldDefn()                         */
 /************************************************************************/
@@ -510,13 +534,6 @@ std::unique_ptr<OGRGeomFieldDefn> OGRFeatureDefn::StealGeomFieldDefn(int iField)
 
 std::unique_ptr<OGRFieldDefn> OGRFeatureDefn::StealFieldDefn(int iField)
 {
-    if (m_bSealed)
-    {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "OGRFeatureDefn::StealFieldDefn() not allowed on a sealed object");
-        return nullptr;
-    }
     if (iField < 0 || iField >= GetFieldCount())
         return nullptr;
 

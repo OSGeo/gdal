@@ -660,6 +660,8 @@ class CPL_DLL OGRFeatureDefn
      */
     virtual std::unique_ptr<OGRFieldDefn> StealFieldDefn(int iField);
 
+    virtual void AddFieldDefn(std::unique_ptr<OGRFieldDefn> &&poFieldDefn);
+
     virtual OGRErr ReorderFieldDefns(const int *panMap);
 
     /**

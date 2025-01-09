@@ -4102,6 +4102,14 @@ OGRErr OGRSQLiteBaseDataSource::RollbackTransaction()
 
     bUserTransactionActive = false;
     CPLAssert(nSoftTransactionLevel == 1);
+
+    // Loop through all layers and finish transaction
+    for (int i = 0; i < GetLayerCount(); i++)
+    {
+        OGRLayer *poLayer = GetLayer(i);
+        poLayer->FinishRollbackTransaction();
+    }
+
     return SoftRollbackTransaction();
 }
 
@@ -4122,7 +4130,6 @@ OGRErr OGRSQLiteDataSource::RollbackTransaction()
 
         for (auto &poLayer : m_apoLayers)
         {
-            poLayer->FinishRollbackTransaction();
             poLayer->InvalidateCachedFeatureCountAndExtent();
             poLayer->ResetReading();
         }
