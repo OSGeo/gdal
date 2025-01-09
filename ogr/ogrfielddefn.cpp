@@ -153,7 +153,7 @@ OGRFieldDefn &OGRFieldDefn::operator=(const OGRFieldDefn &oOther)
         nWidth = oOther.nWidth;
         nPrecision = oOther.nPrecision;
         CPLFree(pszDefault);
-        pszDefault = CPLStrdup(oOther.pszDefault);
+        pszDefault = oOther.pszDefault ? CPLStrdup(oOther.pszDefault) : nullptr;
         bIgnore = oOther.bIgnore;
         eSubType = oOther.eSubType;
         bNullable = oOther.bNullable;
