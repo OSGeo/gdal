@@ -4024,15 +4024,10 @@ OGRGeometry *OGRGeometryFactory::transformWithOptions(
         if (poDstGeom->getSpatialReference() &&
             !poDstGeom->getSpatialReference()->IsGeographic())
         {
-            static bool bHasWarned = false;
-            if (!bHasWarned)
-            {
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
-                    "WRAPDATELINE is without effect when reprojecting to a "
-                    "non-geographic CRS");
-                bHasWarned = true;
-            }
+            CPLErrorOnce(
+                CE_Warning, CPLE_AppDefined,
+                "WRAPDATELINE is without effect when reprojecting to a "
+                "non-geographic CRS");
             return poDstGeom.release();
         }
         // TODO and we should probably also test that the axis order + data axis
@@ -4214,27 +4209,17 @@ double OGRGeometryFactory::GetDefaultArcStepSize()
     constexpr double MIN_VAL = 1e-2;
     if (dfVal < MIN_VAL)
     {
-        static bool bWarned = false;
-        if (!bWarned)
-        {
-            bWarned = true;
-            CPLError(CE_Warning, CPLE_AppDefined,
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
                      "Too small value for OGR_ARC_STEPSIZE. Clamping it to %f",
                      MIN_VAL);
-        }
         return MIN_VAL;
     }
     constexpr double MAX_VAL = 180;
     if (dfVal > MAX_VAL)
     {
-        static bool bWarned = false;
-        if (!bWarned)
-        {
-            bWarned = true;
-            CPLError(CE_Warning, CPLE_AppDefined,
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
                      "Too large value for OGR_ARC_STEPSIZE. Clamping it to %f",
                      MAX_VAL);
-        }
         return MAX_VAL;
     }
     return dfVal;

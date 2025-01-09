@@ -184,14 +184,9 @@ int CPL_STDCALL GDALGetCacheMax()
     GIntBig nRes = GDALGetCacheMax64();
     if (nRes > INT_MAX)
     {
-        static bool bHasWarned = false;
-        if (!bHasWarned)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
                      "Cache max value doesn't fit on a 32 bit integer. "
                      "Call GDALGetCacheMax64() instead");
-            bHasWarned = true;
-        }
         nRes = INT_MAX;
     }
     return static_cast<int>(nRes);
@@ -280,14 +275,9 @@ int CPL_STDCALL GDALGetCacheUsed()
 {
     if (nCacheUsed > INT_MAX)
     {
-        static bool bHasWarned = false;
-        if (!bHasWarned)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
                      "Cache used value doesn't fit on a 32 bit integer. "
                      "Call GDALGetCacheUsed64() instead");
-            bHasWarned = true;
-        }
         return INT_MAX;
     }
     return static_cast<int>(nCacheUsed);

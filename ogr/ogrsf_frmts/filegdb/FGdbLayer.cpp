@@ -1302,16 +1302,11 @@ OGRErr FGdbLayer::PopulateRowWithFeature(Row &fgdb_row, OGRFeature *poFeature)
             {
                 if (fldvalue < -32768 || fldvalue > 32767)
                 {
-                    static int bHasWarned = FALSE;
-                    if (!bHasWarned)
-                    {
-                        bHasWarned = TRUE;
-                        CPLError(CE_Warning, CPLE_NotSupported,
+                    CPLErrorOnce(CE_Warning, CPLE_NotSupported,
                                  "Value %d for field %s does not fit into a "
                                  "short and will be clamped. "
                                  "This warning will not be emitted any more",
                                  fldvalue, field_name.c_str());
-                    }
                     if (fldvalue < -32768)
                         fldvalue = -32768;
                     else

@@ -2405,16 +2405,11 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                 else if (env.MinX < -180 || env.MinY < -90 || env.MaxX > 180 ||
                          env.MaxY > 90)
                 {
-                    static bool bHasWarned = false;
-                    if (!bHasWarned)
-                    {
-                        bHasWarned = true;
-                        CPLError(
-                            CE_Warning, CPLE_AppDefined,
-                            "At least one geometry has a bounding box outside "
-                            "of [-180,180] longitude range and/or [-90,90] "
-                            "latitude range. Undefined behavior");
-                    }
+                    CPLErrorOnce(
+                        CE_Warning, CPLE_AppDefined,
+                        "At least one geometry has a bounding box outside "
+                        "of [-180,180] longitude range and/or [-90,90] "
+                        "latitude range. Undefined behavior");
                 }
 
                 std::vector<CPLString> aosPath = m_aaosGeomFieldPaths[i];
