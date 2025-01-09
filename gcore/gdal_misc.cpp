@@ -3242,6 +3242,13 @@ int CPL_STDCALL GDALGCPsToGeoTransform(int nGCPCount, const GDAL_GCP *pasGCPs,
     GDALComposeGeoTransforms(pl_normalize, gt_normalized, gt1p2);
     GDALComposeGeoTransforms(gt1p2, inv_geo_normalize, padfGeoTransform);
 
+    // "Hour-glass" like shape of GCPs. Cf https://github.com/OSGeo/gdal/issues/11618
+    if (std::abs(padfGeoTransform[1]) <= 1e-15 ||
+        std::abs(padfGeoTransform[5]) <= 1e-15)
+    {
+        return FALSE;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Now check if any of the input points fit this poorly.           */
     /* -------------------------------------------------------------------- */

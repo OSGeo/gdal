@@ -195,3 +195,34 @@ def test_gcps2gt_8():
         1.596921026218e-05,
     )
     gdaltest.check_geotransform(gt, gt_expected, 0.00001)
+
+
+###############################################################################
+# Test case of https://github.com/OSGeo/gdal/issues/11618
+
+
+def test_gcps2gt_broken_hour_glass():
+
+    gt = gdal.GCPsToGeoTransform(
+        _list2gcps(
+            [
+                (0, 0, 0, 0),
+                (0, 10, 0, 10),
+                (10, 0, 10, 10),
+                (10, 10, 10, 0),
+            ]
+        )
+    )
+    assert gt is None
+
+    gt = gdal.GCPsToGeoTransform(
+        _list2gcps(
+            [
+                (0, 0, 0, 0),
+                (0, 10, 10, 0),
+                (10, 0, 0, 10),
+                (10, 10, 10, 10),
+            ]
+        )
+    )
+    assert gt is None
