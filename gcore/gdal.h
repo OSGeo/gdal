@@ -1247,6 +1247,10 @@ CPLErr CPL_DLL GDALSetSpatialRef(GDALDatasetH, OGRSpatialReferenceH);
 CPLErr CPL_DLL CPL_STDCALL GDALGetGeoTransform(GDALDatasetH, double *);
 CPLErr CPL_DLL CPL_STDCALL GDALSetGeoTransform(GDALDatasetH, double *);
 
+CPLErr CPL_DLL GDALDatasetGeolocationToPixelLine(
+    GDALDatasetH, double dfGeolocX, double dfGeolocY, OGRSpatialReferenceH hSRS,
+    double *pdfPixel, double *pdfLine, CSLConstList papszTransformerOptions);
+
 int CPL_DLL CPL_STDCALL GDALGetGCPCount(GDALDatasetH);
 const char CPL_DLL *CPL_STDCALL GDALGetGCPProjection(GDALDatasetH);
 OGRSpatialReferenceH CPL_DLL GDALGetGCPSpatialRef(GDALDatasetH);
@@ -1702,6 +1706,12 @@ CPLErr CPL_DLL GDALRasterInterpolateAtPoint(GDALRasterBandH hBand,
                                             GDALRIOResampleAlg eInterpolation,
                                             double *pdfRealValue,
                                             double *pdfImagValue);
+
+CPLErr CPL_DLL GDALRasterInterpolateAtGeolocation(
+    GDALRasterBandH hBand, double dfGeolocX, double dfGeolocY,
+    OGRSpatialReferenceH hSRS, GDALRIOResampleAlg eInterpolation,
+    double *pdfRealValue, double *pdfImagValue,
+    CSLConstList papszTransformerOptions);
 
 /** Generic pointer for the working structure of VRTProcessedDataset
  * function. */
