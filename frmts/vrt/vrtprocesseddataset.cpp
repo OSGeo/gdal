@@ -206,6 +206,27 @@ CPLErr VRTProcessedDataset::XMLInit(const CPLXMLNode *psTree,
     return CE_None;
 }
 
+static bool HasScaleOffset(GDALDataset &oSrcDS)
+{
+    for (int i = 1; i <= oSrcDS.GetRasterCount(); i++)
+    {
+        int pbSuccess;
+        GDALRasterBand &oBand = *oSrcDS.GetRasterBand(i);
+        double scale = oBand.GetScale(&pbSuccess);
+        if (pbSuccess && scale != 1)
+        {
+            return true;
+        }
+        double offset = oBand.GetOffset(&pbSuccess);
+        if (pbSuccess && offset != 0)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /** Instantiate object from XML tree */
 CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
                                  const char *pszVRTPathIn,
@@ -259,6 +280,27 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
 
     if (!m_poSrcDS)
         return CE_Failure;
+
+    const char *pszUnscale = CPLGetXMLValue(psInput, "unscale", "auto");
+    if (EQUAL(pszUnscale, "AUTO"))
+    {
+        m_bUnscale = HasScaleOffset(*m_poSrcDS);
+    }
+    else if (EQUAL(pszUnscale, "NO") || EQUAL(pszUnscale, "OFF") ||
+             EQUAL(pszUnscale, "FALSE") || EQUAL(pszUnscale, "0"))
+    {
+        m_bUnscale = false;
+    }
+    else if (EQUAL(pszUnscale, "YES") || EQUAL(pszUnscale, "ON") ||
+             EQUAL(pszUnscale, "TRUE") || EQUAL(pszUnscale, "1"))
+    {
+        m_bUnscale = true;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid value of 'unscale'");
+        return CE_Failure;
+    }
 
     if (nRasterXSize == 0 && nRasterYSize == 0)
     {
@@ -437,17 +479,23 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
         return CE_Failure;
     }
 
-    const auto eInDT = poSrcFirstBand->GetRasterDataType();
-    for (int i = 1; i < m_poSrcDS->GetRasterCount(); ++i)
+    const auto eInDT =
+        m_bUnscale ? GDT_Float64 : poSrcFirstBand->GetRasterDataType();
+    if (!m_bUnscale)
     {
-        const auto eDT = m_poSrcDS->GetRasterBand(i + 1)->GetRasterDataType();
-        if (eDT != eInDT)
+        for (int i = 1; i < m_poSrcDS->GetRasterCount(); ++i)
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Not all bands of the input dataset have the same data "
-                     "type. The data type of the first band will be used as "
-                     "the reference one.");
-            break;
+            const auto eDT =
+                m_poSrcDS->GetRasterBand(i + 1)->GetRasterDataType();
+            if (eDT != eInDT)
+            {
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Not all bands of the input dataset have the same data "
+                    "type. The data type of the first band will be used as "
+                    "the reference one.");
+                break;
+            }
         }
     }
 
@@ -455,13 +503,21 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
     int nCurrentBandCount = m_poSrcDS->GetRasterCount();
 
     std::vector<double> adfNoData;
-    for (int i = 1; i <= nCurrentBandCount; ++i)
+    if (m_bUnscale)
     {
-        int bHasVal = FALSE;
-        const double dfVal =
-            m_poSrcDS->GetRasterBand(i)->GetNoDataValue(&bHasVal);
-        adfNoData.emplace_back(
-            bHasVal ? dfVal : std::numeric_limits<double>::quiet_NaN());
+        adfNoData.resize(nCurrentBandCount,
+                         std::numeric_limits<double>::quiet_NaN());
+    }
+    else
+    {
+        for (int i = 1; i <= nCurrentBandCount; ++i)
+        {
+            int bHasVal = FALSE;
+            const double dfVal =
+                m_poSrcDS->GetRasterBand(i)->GetNoDataValue(&bHasVal);
+            adfNoData.emplace_back(
+                bHasVal ? dfVal : std::numeric_limits<double>::quiet_NaN());
+        }
     }
 
     int nStepCount = 0;
@@ -654,10 +710,18 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
         {
             const auto poSrcBand = m_poSrcDS->GetRasterBand(i + 1);
             const GDALDataType eOutputBandType =
-                GetOutputBandType(poSrcBand->GetRasterDataType());
+                m_bUnscale ? GDT_Float64
+                           : GetOutputBandType(poSrcBand->GetRasterDataType());
             auto poBand =
                 new VRTProcessedRasterBand(this, i + 1, eOutputBandType);
             poBand->CopyCommonInfoFrom(poSrcBand);
+            if (m_bUnscale)
+            {
+                poBand->SetScale(1);
+                poBand->SetOffset(0);
+                poBand->SetNoDataValue(
+                    std::numeric_limits<double>::quiet_NaN());
+            }
             SetBand(i + 1, poBand);
         }
     }
@@ -1137,7 +1201,8 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
 
     const char *pszInterleave =
         m_poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
-    if (nFirstBandCount > 1 && (!pszInterleave || EQUAL(pszInterleave, "BAND")))
+    if (m_bUnscale || (nFirstBandCount > 1 &&
+                       (!pszInterleave || EQUAL(pszInterleave, "BAND"))))
     {
         // If there are several bands and the source dataset organization
         // is apparently band interleaved, then first acquire data in
@@ -1145,7 +1210,9 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
         // data type.
         // And then transpose it and convert it to the expected data type
         // of the first step.
-        const auto eSrcDT = m_poSrcDS->GetRasterBand(1)->GetRasterDataType();
+        const auto eSrcDT =
+            m_bUnscale ? eFirstDT
+                       : m_poSrcDS->GetRasterBand(1)->GetRasterDataType();
         try
         {
             abyInput.resize(nPixelCount * nFirstBandCount *
@@ -1187,6 +1254,40 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
         GDALDestroyScaledProgress(sArg.pProgressData);
         if (!bOK)
             return false;
+
+        if (m_bUnscale)
+        {
+            double *pdfValue = reinterpret_cast<double *>(abyInput.data());
+            for (int nBand = 0; nBand < nFirstBandCount; nBand++)
+            {
+                auto poBand = m_poSrcDS->GetRasterBand(nBand + 1);
+                const double dfScale = poBand->GetScale(nullptr);
+                const double dfOffset = poBand->GetOffset(nullptr);
+                int bHasNoData;
+                const double dfNoData = poBand->GetNoDataValue(&bHasNoData);
+                const double *pdfEnd = pdfValue + nPixelCount;
+
+                if (bHasNoData)
+                {
+                    while (pdfValue != pdfEnd)
+                    {
+                        *pdfValue =
+                            (*pdfValue != dfNoData)
+                                ? (*pdfValue * dfScale + dfOffset)
+                                : std::numeric_limits<double>::quiet_NaN();
+                        pdfValue++;
+                    }
+                }
+                else
+                {
+                    while (pdfValue != pdfEnd)
+                    {
+                        *pdfValue = *pdfValue * dfScale + dfOffset;
+                        pdfValue++;
+                    }
+                }
+            }
+        }
 
         CPLDebugOnly("VRT", "ProcessRegion(): start GDALTranspose2D()");
         GDALTranspose2D(abyInput.data(), eSrcDT, abyOutput.data(), eFirstDT,

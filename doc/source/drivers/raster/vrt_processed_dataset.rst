@@ -121,7 +121,7 @@ The following child elements of ``VRTDataset`` may be defined: ``SRS``, ``GeoTra
 
 The ``VRTDataset`` root element must also have the 2 following child elements:
 
-- ``Input``, which must have one and only one of the following ``SourceFilename`` or ``VRTDataset`` as child elements, to define the input dataset to which to apply the processing steps.
+- ``Input``, which must have one and only one of the following ``SourceFilename`` or ``VRTDataset`` as child elements, to define the input dataset to which to apply the processing steps. Starting with GDAL 3.11, values from the input dataset will be automatically unscaled; this can be disabled by setting the ``unscale`` attribute of ``Input`` to ``false``.
 
 - ``ProcessingSteps``, with at least one child ``Step`` element.
 

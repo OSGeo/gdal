@@ -770,6 +770,9 @@ class VRTProcessedDataset final : public VRTDataset
     //! Value of CPLGetUsablePhysicalRAM() / 10 * 4
     GIntBig m_nAllowedRAMUsage = 0;
 
+    //! Whether to apply a scale and offset if defined by the input dataset
+    bool m_bUnscale = true;
+
     CPLErr Init(const CPLXMLNode *, const char *,
                 const VRTProcessedDataset *poParentDS,
                 GDALDataset *poParentSrcDS, int iOvrLevel);
