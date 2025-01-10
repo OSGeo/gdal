@@ -13,6 +13,7 @@ add_library(
   gdalalg_raster.cpp
   gdalalg_raster_buildvrt.cpp
   gdalalg_raster_info.cpp
+  gdalalg_raster_clip.cpp
   gdalalg_raster_convert.cpp
   gdalalg_raster_edit.cpp
   gdalalg_raster_pipeline.cpp
