@@ -2262,7 +2262,7 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         // This is tricky, because it expects the rest of the image
         // with this buffer width to be read. The preferred way to
-        // achieve this behaviour would be to call AdviseRead before
+        // achieve this behavior would be to call AdviseRead before
         // call IRasterIO.  The logic could be improved to detect
         // successive pattern of single line reading before doing an
         // AdviseRead.
@@ -3142,7 +3142,7 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
         poDS->SetMetadataItem("GML_JP2_DATA", (bGML) ? "TRUE" : "FALSE",
                               JPEG2000_DOMAIN_NAME);
 
-#else 	
+#else
         // comments
         char *csComments = nullptr;
         poDS->poFileView->GetParameter((char *)"JPC:DECOMPRESS:COMMENTS",
@@ -3346,7 +3346,7 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
         poDS->poFileView->GetParameter((char *)"JP2:GML:JP2:BOX:EXISTS", &bGML);
         poDS->SetMetadataItem("GML_JP2_DATA", (bGML) ? "TRUE" : "FALSE",
                               JPEG2000_DOMAIN_NAME);
-#endif  //ECWSDK_VERSION>=60							  
+#endif  //ECWSDK_VERSION>=60
     }
 #endif  // ECWSDK_VERSION>=51
     if (!bIsJPEG2000 && poDS->psFileInfo->nFormatVersion >= 3)
@@ -3612,7 +3612,7 @@ void ECWDataset::ECW2WKTProjection()
     /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
 
-    /* For backward-compatible with previous behaviour. Should we only */
+    /* For backward-compatible with previous behavior. Should we only */
     /* restrict to those 2 values ? */
     if (psFileInfo->eCellSizeUnits != ECW_CELL_UNITS_METERS &&
         psFileInfo->eCellSizeUnits != ECW_CELL_UNITS_FEET)
@@ -3878,17 +3878,17 @@ void ECWInitialize()
     if (!CPLTestBool(CPLGetConfigOption("CONVERT_YCBCR_TO_RGB", "YES")))
 #if ECWSDK_VERSION >= 60
         NCS::SDK::CFileBase::sConfig().SetManageICC(false);
-#else	
+#else
         NCSecwSetConfig(NCSCFG_JP2_MANAGE_ICC, FALSE);
-#endif		
+#endif
 #if ECWSDK_VERSION >= 50
-    #if ECWSDK_VERSION >= 60
-        NCS::SDK::CFileBase::sConfig().SetEcwpClientHttpUserAgent(
-            "ECW GDAL Driver/" NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
-    #else
+#if ECWSDK_VERSION >= 60
+    NCS::SDK::CFileBase::sConfig().SetEcwpClientHttpUserAgent(
+        "ECW GDAL Driver/" NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
+#else
     NCSecwSetConfig(NCSCFG_ECWP_CLIENT_HTTP_USER_AGENT,
                     "ECW GDAL Driver/" NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
-	#endif					
+#endif
 #endif
     /* -------------------------------------------------------------------- */
     /*      Initialize cache memory limit.  Default is apparently 1/4 RAM.  */
@@ -3902,26 +3902,26 @@ void ECWInitialize()
 #if ECWSDK_VERSION >= 60
         NCS::SDK::CFileBase::sConfig().SetCacheMaxmem(
             (UINT64)atoi(pszEcwCacheSize));
-#else	
+#else
         NCSecwSetConfig(NCSCFG_CACHE_MAXMEM, (UINT32)atoi(pszEcwCacheSize));
-#endif		
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Version 3.x and 4.x of the ECWJP2 SDK did not resolve datum and */
 /*      projection to EPSG code using internal mapping.                 */
 /*      Version 5.x do so we provide means to achieve old               */
-/*      behaviour.                                                      */
+/*      behavior.                                                      */
 /* -------------------------------------------------------------------- */
 #if ECWSDK_VERSION >= 50
     if (CPLTestBool(CPLGetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION",
                                        "NO")) == TRUE)
-        #if ECWSDK_VERSION >= 60
-                NCS::SDK::CFileBase::sConfig().SetProjectionFormat(
-                    NCS_PROJECTION_ERMAPPER_FORMAT);
-        #else									   
-	        NCSecwSetConfig(NCSCFG_PROJECTION_FORMAT,
-	                        NCS_PROJECTION_ERMAPPER_FORMAT);
-		#endif						
+#if ECWSDK_VERSION >= 60
+        NCS::SDK::CFileBase::sConfig().SetProjectionFormat(
+            NCS_PROJECTION_ERMAPPER_FORMAT);
+#else
+        NCSecwSetConfig(NCSCFG_PROJECTION_FORMAT,
+                        NCS_PROJECTION_ERMAPPER_FORMAT);
+#endif
 #endif
     /* -------------------------------------------------------------------- */
     /*      Allow configuration of a local cache based on configuration     */
@@ -3933,25 +3933,24 @@ void ECWInitialize()
 #if ECWSDK_VERSION >= 40
     pszOpt = CPLGetConfigOption("ECWP_CACHE_SIZE_MB", nullptr);
     if (pszOpt)
-        #if ECWSDK_VERSION >= 60
-                        NCS::SDK::CFileBase::sConfig().SetEcwpCacheSizeMb(
-                            (INT32)atoi(pszOpt));
-        #else	
-        	NCSecwSetConfig(NCSCFG_ECWP_CACHE_SIZE_MB, (INT32)atoi(pszOpt));
-		#endif		
+#if ECWSDK_VERSION >= 60
+        NCS::SDK::CFileBase::sConfig().SetEcwpCacheSizeMb((INT32)atoi(pszOpt));
+#else
+        NCSecwSetConfig(NCSCFG_ECWP_CACHE_SIZE_MB, (INT32)atoi(pszOpt));
+#endif
 
     pszOpt = CPLGetConfigOption("ECWP_CACHE_LOCATION", nullptr);
     if (pszOpt)
     {
-        #if ECWSDK_VERSION >= 60
-                        NCS::SDK::CFileBase::sConfig().SetEcwpCacheLocation(pszOpt);
-                        NCS::SDK::CFileBase::sConfig().SetEcwpCacheEnabled(true);
-        #else	
-	        NCSecwSetConfig(NCSCFG_ECWP_CACHE_LOCATION, pszOpt);
-	        NCSecwSetConfig(NCSCFG_ECWP_CACHE_ENABLED, (BOOLEAN)TRUE);
-		#endif			
+#if ECWSDK_VERSION >= 60
+        NCS::SDK::CFileBase::sConfig().SetEcwpCacheLocation(pszOpt);
+        NCS::SDK::CFileBase::sConfig().SetEcwpCacheEnabled(true);
+#else
+        NCSecwSetConfig(NCSCFG_ECWP_CACHE_LOCATION, pszOpt);
+        NCSecwSetConfig(NCSCFG_ECWP_CACHE_ENABLED, (BOOLEAN)TRUE);
+#endif
     }
-#endif	//ECWSDK_VERSION >=40
+#endif  //ECWSDK_VERSION >=40
 
     /* -------------------------------------------------------------------- */
     /*      Various other configuration items.                              */
@@ -3959,32 +3958,30 @@ void ECWInitialize()
 #if ECWSDK_VERSION >= 60
     pszOpt = CPLGetConfigOption("ECWP_BLOCKING_TIME_MS", nullptr);
     if (pszOpt)
-                        NCS::SDK::CFileBase::sConfig().SetBlockingTimeMS(
-                            (NCSTimeStampMs)atoi(pszOpt));
+        NCS::SDK::CFileBase::sConfig().SetBlockingTimeMS(
+            (NCSTimeStampMs)atoi(pszOpt));
 
     // I believe 10s means we wait for complete data back from
     // ECWP almost all the time which is good for our blocking model.
     pszOpt = CPLGetConfigOption("ECWP_REFRESH_TIME_MS", "10000");
     if (pszOpt)
-                        NCS::SDK::CFileBase::sConfig().SetRefreshTimeMS(
-                            (NCSTimeStampMs)atoi(pszOpt));
+        NCS::SDK::CFileBase::sConfig().SetRefreshTimeMS(
+            (NCSTimeStampMs)atoi(pszOpt));
 
     pszOpt = CPLGetConfigOption("ECW_TEXTURE_DITHER", nullptr);
     if (pszOpt)
-                        NCS::SDK::CFileBase::sConfig().SetTextureDitherEnabled(
-                            CPLTestBool(pszOpt));
+        NCS::SDK::CFileBase::sConfig().SetTextureDitherEnabled(
+            CPLTestBool(pszOpt));
 
     pszOpt = CPLGetConfigOption("ECW_FORCE_FILE_REOPEN", nullptr);
     if (pszOpt)
-                        NCS::SDK::CFileBase::sConfig().SetForceFileReopen(
-                            CPLTestBool(pszOpt));
+        NCS::SDK::CFileBase::sConfig().SetForceFileReopen(CPLTestBool(pszOpt));
 
     pszOpt = CPLGetConfigOption("ECW_CACHE_MAXOPEN", nullptr);
     if (pszOpt)
-                        NCS::SDK::CFileBase::sConfig().SetCacheMaxopen(
-                            (UINT32)atoi(pszOpt));
+        NCS::SDK::CFileBase::sConfig().SetCacheMaxopen((UINT32)atoi(pszOpt));
 
-#else	
+#else
     pszOpt = CPLGetConfigOption("ECWP_BLOCKING_TIME_MS", nullptr);
     if (pszOpt)
         NCSecwSetConfig(NCSCFG_BLOCKING_TIME_MS, (NCSTimeStampMs)atoi(pszOpt));
@@ -4006,36 +4003,35 @@ void ECWInitialize()
     pszOpt = CPLGetConfigOption("ECW_CACHE_MAXOPEN", nullptr);
     if (pszOpt)
         NCSecwSetConfig(NCSCFG_CACHE_MAXOPEN, (UINT32)atoi(pszOpt));
-#endif		
+#endif
 
 #if ECWSDK_VERSION >= 40
-    #if ECWSDK_VERSION >= 60
-        pszOpt = CPLGetConfigOption("ECW_OPTIMIZE_USE_NEAREST_NEIGHBOUR", nullptr);
-        if (pszOpt)
-                            NCS::SDK::CFileBase::sConfig()
-                                .SetOptimizeUseNearestNeighbour(
-                                    CPLTestBool(pszOpt));
+#if ECWSDK_VERSION >= 60
+    pszOpt = CPLGetConfigOption("ECW_OPTIMIZE_USE_NEAREST_NEIGHBOUR", nullptr);
+    if (pszOpt)
+        NCS::SDK::CFileBase::sConfig().SetOptimizeUseNearestNeighbour(
+            CPLTestBool(pszOpt));
 
-        pszOpt = CPLGetConfigOption("ECW_RESILIENT_DECODING", nullptr);
-        if (pszOpt)
-                            NCS::SDK::CFileBase::sConfig()
-                                .SetResilientDecodingEnabled(CPLTestBool(pszOpt));
+    pszOpt = CPLGetConfigOption("ECW_RESILIENT_DECODING", nullptr);
+    if (pszOpt)
+        NCS::SDK::CFileBase::sConfig().SetResilientDecodingEnabled(
+            CPLTestBool(pszOpt));
 
-    #else
-	    pszOpt = CPLGetConfigOption("ECW_AUTOGEN_J2I", nullptr);
-	    if (pszOpt)
-	        NCSecwSetConfig(NCSCFG_JP2_AUTOGEN_J2I, (BOOLEAN)CPLTestBool(pszOpt));
+#else
+    pszOpt = CPLGetConfigOption("ECW_AUTOGEN_J2I", nullptr);
+    if (pszOpt)
+        NCSecwSetConfig(NCSCFG_JP2_AUTOGEN_J2I, (BOOLEAN)CPLTestBool(pszOpt));
 
-	    pszOpt = CPLGetConfigOption("ECW_OPTIMIZE_USE_NEAREST_NEIGHBOUR", nullptr);
-	    if (pszOpt)
-	        NCSecwSetConfig(NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR,
-	                        (BOOLEAN)CPLTestBool(pszOpt));
+    pszOpt = CPLGetConfigOption("ECW_OPTIMIZE_USE_NEAREST_NEIGHBOUR", nullptr);
+    if (pszOpt)
+        NCSecwSetConfig(NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR,
+                        (BOOLEAN)CPLTestBool(pszOpt));
 
-	    pszOpt = CPLGetConfigOption("ECW_RESILIENT_DECODING", nullptr);
-	    if (pszOpt)
-	        NCSecwSetConfig(NCSCFG_RESILIENT_DECODING,
-	                        (BOOLEAN)CPLTestBool(pszOpt));
-    #endif						
+    pszOpt = CPLGetConfigOption("ECW_RESILIENT_DECODING", nullptr);
+    if (pszOpt)
+        NCSecwSetConfig(NCSCFG_RESILIENT_DECODING,
+                        (BOOLEAN)CPLTestBool(pszOpt));
+#endif
 #endif
 }
 

@@ -893,7 +893,7 @@ CPLErr GDALECWCompressor::Initialize(
         else if (pszOption != nullptr && EQUAL(pszOption, "RPCL"))
             parameters->jp2.compress.SetPrecinctProgressionOrder(
                 NCS::JPC::CProgressionOrderType::Type::RPCL);
-#else	
+#else
         pszOption = CSLFetchNameValue(papszOptions, "PROFILE");
         if (pszOption != nullptr && EQUAL(pszOption, "BASELINE_0"))
             SetParameter(CNCSJP2FileView::JP2_COMPRESS_PROFILE_BASELINE_0);
@@ -1005,7 +1005,7 @@ CPLErr GDALECWCompressor::Initialize(
             SetParameter(
                 CNCSJP2FileView::JPC_DECOMPRESS_RECONSTRUCTION_PARAMETER,
                 (IEEE4)CPLAtof(pszOption));
-#endif				
+#endif
     }
 
     /* -------------------------------------------------------------------- */
