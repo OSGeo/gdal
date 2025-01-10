@@ -405,3 +405,141 @@ def spatial_filter(lyr, *args):
         yield
     finally:
         lyr.SetSpatialFilter(None)
+
+
+###############################################################################
+# Check transactions rollback, to be called with a freshly created datasource
+
+
+def check_transaction_rollback(ds, test_geometry=False):
+
+    lyr = ds.CreateLayer("test", options=["GEOMETRY_NAME=geom"])
+    lyr.CreateField(ogr.FieldDefn("fld1", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("fld2", ogr.OFTString))
+
+    # Insert a feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("fld1", "value1")
+    f.SetField("fld2", "value2")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+    fld1 = lyr.GetLayerDefn().GetFieldDefn(0)
+    fld2 = lyr.GetLayerDefn().GetFieldDefn(1)
+
+    def verify(lyr, fld1, fld2):
+        assert lyr.GetGeometryColumn() == "geom"
+        assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld1"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "fld2"
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
+        # Test do not crash
+        assert fld1.GetName() == "fld1"
+        assert fld2.GetName() == "fld2"
+
+    # Test deleting a field
+    ds.StartTransaction()
+    lyr.DeleteField(0)
+    # Test do not crash
+    assert fld1.GetName() == "fld1"
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld2"
+    ds.RollbackTransaction()
+    verify(lyr, fld1, fld2)
+
+    # Test deleting the second field
+    ds.StartTransaction()
+    lyr.DeleteField(1)
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld1"
+    ds.RollbackTransaction()
+    verify(lyr, fld1, fld2)
+
+    # Test renaming and changing the type of a field
+    fld1 = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fld1.GetName() == "fld1"
+    ds.StartTransaction()
+    assert (
+        lyr.AlterFieldDefn(
+            0, ogr.FieldDefn("fld1_renamed", ogr.OFTInteger), ogr.ALTER_ALL_FLAG
+        )
+        == ogr.OGRERR_NONE
+    )
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld1_renamed"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
+    assert fld1.GetName() == "fld1_renamed"
+    ds.RollbackTransaction()
+    verify(lyr, fld1, fld2)
+
+    # Test adding a field
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    ds.StartTransaction()
+    fld = ogr.FieldDefn("fld3", ogr.OFTInteger)
+    assert lyr.CreateField(fld) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldCount() == 3
+    fld3 = lyr.GetLayerDefn().GetFieldDefn(2)
+    assert fld3.GetName() == "fld3"
+    ds.RollbackTransaction()
+    verify(lyr, fld1, fld2)
+    # Test fld3 does not crash
+    assert fld3.GetName() == "fld3"
+
+    # Test multiple operations
+    ds.StartTransaction()
+    lyr.DeleteField(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld2"
+    # Add a field
+    fld = ogr.FieldDefn("fld3", ogr.OFTInteger)
+    assert lyr.CreateField(fld) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "fld3"
+    # Rename fld2
+    assert (
+        lyr.AlterFieldDefn(
+            0, ogr.FieldDefn("fld2_renamed", ogr.OFTInteger), ogr.ALTER_ALL_FLAG
+        )
+        == ogr.OGRERR_NONE
+    )
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld2_renamed"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "fld3"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTInteger
+    ds.RollbackTransaction()
+    verify(lyr, fld1, fld2)
+
+    if not test_geometry:
+        return
+
+    # Start a transaction and add a geometry column.
+    assert ds.StartTransaction() == ogr.OGRERR_NONE
+    assert (
+        lyr.CreateGeomField(ogr.GeomFieldDefn("GEOMETRY_2", ogr.wkbPoint))
+        == ogr.OGRERR_NONE
+    )
+    assert lyr.GetGeometryColumn() == "geom"
+    assert lyr.GetLayerDefn().GetGeomFieldCount() == 2
+
+    # Create a feature.
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("fld1", "value1-2")
+    feat.SetField("fld2", "value2-2")
+    feat.SetGeomFieldDirectly("geom", ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    feat.SetGeomFieldDirectly("GEOMETRY_2", ogr.CreateGeometryFromWkt("POINT(3 4)"))
+    lyr.CreateFeature(feat)
+
+    # Verify the feature.
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    assert feat.GetField("fld1") == "value1-2"
+    assert feat.GetField("fld2") == "value2-2"
+    assert feat.GetGeomFieldRef(0).ExportToWkt() == "POINT (1 2)"
+    assert feat.GetGeomFieldRef(1).ExportToWkt() == "POINT (3 4)"
+    assert ds.RollbackTransaction() == ogr.OGRERR_NONE
+
+    # Verify that we have not added GEOMETRY_2 field.
+    assert lyr.GetGeometryColumn() == "geom"
+    assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+
+    verify(lyr, fld1, fld2)

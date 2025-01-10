@@ -109,6 +109,64 @@ OGRFieldDefn::~OGRFieldDefn()
 }
 
 /************************************************************************/
+/*                             OGRFieldDefn::OGRFieldDefn()             */
+/************************************************************************/
+
+/**
+ * @brief OGRFieldDefn::OGRFieldDefn copy constructor.
+ * @param oOther the object to copy.
+ * @since GDAL 3.11
+ */
+OGRFieldDefn::OGRFieldDefn(const OGRFieldDefn &oOther)
+    : pszName(CPLStrdup(oOther.pszName)),
+      pszAlternativeName(CPLStrdup(oOther.pszAlternativeName)),
+      eType(oOther.eType), eJustify(oOther.eJustify), nWidth(oOther.nWidth),
+      nPrecision(oOther.nPrecision),
+      pszDefault(oOther.pszDefault ? CPLStrdup(oOther.pszDefault) : nullptr),
+      bIgnore(oOther.bIgnore), eSubType(oOther.eSubType),
+      bNullable(oOther.bNullable), bUnique(oOther.bUnique),
+      m_osDomainName(oOther.m_osDomainName), m_osComment(oOther.m_osComment),
+      m_nTZFlag(oOther.m_nTZFlag), m_bSealed(oOther.m_bSealed)
+{
+}
+
+/************************************************************************/
+/*                           OGRFieldDefn::operator=()                  */
+/************************************************************************/
+
+/**
+ * @brief OGRFieldDefn::operator = assignment operator.
+ * @param oOther the object to copy.
+ * @return the current object.
+ * @since GDAL 3.11
+ */
+OGRFieldDefn &OGRFieldDefn::operator=(const OGRFieldDefn &oOther)
+{
+    if (&oOther != this)
+    {
+        CPLFree(pszName);
+        pszName = CPLStrdup(oOther.pszName);
+        CPLFree(pszAlternativeName);
+        pszAlternativeName = CPLStrdup(oOther.pszAlternativeName);
+        eType = oOther.eType;
+        eJustify = oOther.eJustify;
+        nWidth = oOther.nWidth;
+        nPrecision = oOther.nPrecision;
+        CPLFree(pszDefault);
+        pszDefault = oOther.pszDefault ? CPLStrdup(oOther.pszDefault) : nullptr;
+        bIgnore = oOther.bIgnore;
+        eSubType = oOther.eSubType;
+        bNullable = oOther.bNullable;
+        bUnique = oOther.bUnique;
+        m_osDomainName = oOther.m_osDomainName;
+        m_osComment = oOther.m_osComment;
+        m_nTZFlag = oOther.m_nTZFlag;
+        m_bSealed = oOther.m_bSealed;
+    }
+    return *this;
+}
+
+/************************************************************************/
 /*                          OGR_Fld_Destroy()                           */
 /************************************************************************/
 /**

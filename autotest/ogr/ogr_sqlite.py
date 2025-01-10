@@ -4536,3 +4536,17 @@ def test_ogr_sqlite_schema_override(
                 assert (
                     gdal.GetLastErrorMsg().find(expected_warning) != -1
                 ), f"Warning {expected_warning} not found, got {gdal.GetLastErrorMsg()} instead"
+
+
+######################################################################
+# Test field operations rolling back changes.
+#
+
+
+def test_field_rollback(tmp_path):
+
+    filename = str(tmp_path / "test_field_rollback.db")
+
+    # Create a new database.
+    with ogr.GetDriverByName("SQLite").CreateDataSource(filename) as ds:
+        ogrtest.check_transaction_rollback(ds, test_geometry=True)

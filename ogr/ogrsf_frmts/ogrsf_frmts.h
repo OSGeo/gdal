@@ -283,6 +283,12 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual OGRErr CommitTransaction() CPL_WARN_UNUSED_RESULT;
     virtual OGRErr RollbackTransaction();
 
+    //! @cond Doxygen_Suppress
+    // Keep field definitions in sync with transactions
+    void PrepareStartTransaction();
+    void FinishRollbackTransaction();
+    //! @endcond
+
     virtual const char *GetFIDColumn();
     virtual const char *GetGeometryColumn();
 
@@ -395,6 +401,33 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
   protected:
     //! @cond Doxygen_Suppress
+
+    enum class FieldChangeType : char
+    {
+        ADD_FIELD,
+        ALTER_FIELD,
+        DELETE_FIELD
+    };
+
+    // Store changes to the fields that happened inside a transaction
+    template <typename T> struct FieldDefnChange
+    {
+
+        FieldDefnChange(std::unique_ptr<T> &&poFieldDefnIn, int iFieldIn,
+                        FieldChangeType eChangeTypeIn)
+            : poFieldDefn(std::move(poFieldDefnIn)), iField(iFieldIn),
+              eChangeType(eChangeTypeIn)
+        {
+        }
+
+        std::unique_ptr<T> poFieldDefn;
+        int iField;
+        FieldChangeType eChangeType;
+    };
+
+    std::vector<FieldDefnChange<OGRFieldDefn>> m_apoFieldDefnChanges{};
+    std::vector<FieldDefnChange<OGRGeomFieldDefn>> m_apoGeomFieldDefnChanges{};
+
     OGRStyleTable *m_poStyleTable;
     OGRFeatureQuery *m_poAttrQuery;
     char *m_pszAttrQueryString;

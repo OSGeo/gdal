@@ -1845,6 +1845,13 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
 
     whileUnsealing(m_poFeatureDefn)->AddFieldDefn(&oFieldDefn);
 
+    if (m_poDS->IsInTransaction())
+    {
+        m_apoFieldDefnChanges.emplace_back(
+            std::make_unique<OGRFieldDefn>(oFieldDefn),
+            m_poFeatureDefn->GetFieldCount() - 1, FieldChangeType::ADD_FIELD);
+    }
+
     m_abGeneratedColumns.resize(m_poFeatureDefn->GetFieldCount());
 
     if (m_pszFidColumn != nullptr &&
@@ -1967,7 +1974,7 @@ OGRGeoPackageTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     if (m_poFeatureDefn->GetGeomFieldCount() == 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot create more than on geometry field in GeoPackage");
+                 "Cannot create more than one geometry field in GeoPackage");
         return OGRERR_FAILURE;
     }
 
@@ -2016,6 +2023,13 @@ OGRGeoPackageTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
         OGRErr err = SQLCommand(m_poDS->GetDB(), osSQL);
         if (err != OGRERR_NONE)
             return err;
+    }
+
+    if (m_poDS->IsInTransaction())
+    {
+        m_apoGeomFieldDefnChanges.emplace_back(
+            std::make_unique<OGRGeomFieldDefn>(oGeomField),
+            m_poFeatureDefn->GetGeomFieldCount(), FieldChangeType::ADD_FIELD);
     }
 
     whileUnsealing(m_poFeatureDefn)->AddGeomFieldDefn(&oGeomField);
@@ -6567,8 +6581,27 @@ OGRErr OGRGeoPackageTableLayer::DeleteField(int iFieldToDelete)
         eErr = m_poDS->SoftCommitTransaction();
         if (eErr == OGRERR_NONE)
         {
-            eErr = whileUnsealing(m_poFeatureDefn)
-                       ->DeleteFieldDefn(iFieldToDelete);
+
+            if (m_poDS->IsInTransaction())
+            {
+                auto poFieldDefn{whileUnsealing(m_poFeatureDefn)
+                                     ->StealFieldDefn(iFieldToDelete)};
+                if (poFieldDefn)
+                {
+                    m_apoFieldDefnChanges.emplace_back(
+                        std::move(poFieldDefn), iFieldToDelete,
+                        FieldChangeType::DELETE_FIELD);
+                }
+                else
+                {
+                    eErr = OGRERR_FAILURE;
+                }
+            }
+            else
+            {
+                eErr = whileUnsealing(m_poFeatureDefn)
+                           ->DeleteFieldDefn(iFieldToDelete);
+            }
 
             if (eErr == OGRERR_NONE)
             {
@@ -7014,6 +7047,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
     /* -------------------------------------------------------------------- */
     if (eErr == OGRERR_NONE)
     {
+
         eErr = m_poDS->SoftCommitTransaction();
 
         // We need to force database reopening due to schema change
@@ -7059,6 +7093,14 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
 
         if (eErr == OGRERR_NONE)
         {
+
+            if (m_poDS->IsInTransaction())
+            {
+                m_apoFieldDefnChanges.emplace_back(
+                    std::make_unique<OGRFieldDefn>(poFieldDefnToAlter),
+                    iFieldToAlter, FieldChangeType::ALTER_FIELD);
+            }
+
             auto oTemporaryUnsealer(poFieldDefnToAlter->GetTemporaryUnsealer());
             bool bNeedsEntryInGpkgDataColumns = false;
 

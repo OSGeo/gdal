@@ -4041,6 +4041,8 @@ OGRErr OGRSQLiteDataSource::StartTransaction(int bForce)
                 cpl::down_cast<OGRSQLiteTableLayer *>(poLayer.get());
             poTableLayer->RunDeferredCreationIfNecessary();
         }
+
+        poLayer->PrepareStartTransaction();
     }
 
     return OGRSQLiteBaseDataSource::StartTransaction(bForce);
@@ -4100,6 +4102,14 @@ OGRErr OGRSQLiteBaseDataSource::RollbackTransaction()
 
     bUserTransactionActive = false;
     CPLAssert(nSoftTransactionLevel == 1);
+
+    // Loop through all layers and finish transaction
+    for (int i = 0; i < GetLayerCount(); i++)
+    {
+        OGRLayer *poLayer = GetLayer(i);
+        poLayer->FinishRollbackTransaction();
+    }
+
     return SoftRollbackTransaction();
 }
 
@@ -4126,6 +4136,11 @@ OGRErr OGRSQLiteDataSource::RollbackTransaction()
     }
 
     return OGRSQLiteBaseDataSource::RollbackTransaction();
+}
+
+bool OGRSQLiteDataSource::IsInTransaction() const
+{
+    return nSoftTransactionLevel > 0;
 }
 
 /************************************************************************/
