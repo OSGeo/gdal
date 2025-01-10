@@ -17,9 +17,7 @@
 #include "cpl_port.h"
 
 #include <stdarg.h>
-CPL_C_START
 #include <stdbool.h>
-CPL_C_END
 #include <stddef.h>
 
 /*=====================================================================
