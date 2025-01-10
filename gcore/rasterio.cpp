@@ -2067,7 +2067,6 @@ void CPL_STDCALL GDALSwapWords(void *pData, int nWordSize, int nWordCount,
 
         case 8:
             CPLAssert(nWordSkip >= 8 || nWordCount == 1);
-#ifdef CPL_HAS_GINT64
             if (CPL_IS_ALIGNED(pabyData, 8) && (nWordSkip % 8) == 0)
             {
                 for (int i = 0; i < nWordCount; i++)
@@ -2078,7 +2077,6 @@ void CPL_STDCALL GDALSwapWords(void *pData, int nWordSize, int nWordCount,
                 }
             }
             else
-#endif
             {
                 for (int i = 0; i < nWordCount; i++)
                 {
