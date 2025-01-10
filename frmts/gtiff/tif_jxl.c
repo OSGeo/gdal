@@ -413,8 +413,8 @@ static int JXLPreDecode(TIFF *tif, uint16_t s)
             if (buffer_size != channel_size)
             {
                 TIFFErrorExtR(tif, module,
-                              "JxlDecoderExtraChannelBufferSize returned %ld, "
-                              "expecting %u",
+                              "JxlDecoderExtraChannelBufferSize returned "
+                              "%" TIFF_SIZE_FORMAT ", expecting %u",
                               buffer_size, channel_size);
                 _TIFFfreeExt(tif, extra_channel_buffer);
                 return 0;
