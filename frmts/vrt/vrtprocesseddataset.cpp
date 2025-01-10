@@ -316,7 +316,9 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
         auto *poArgs = GDALTranslateOptionsNew(oArgs.List(), nullptr);
         int pbUsageError;
         CPLAssert(poArgs);
-        m_poVRTSrcDS = std::move(m_poSrcDS);
+        m_poVRTSrcDS.reset(m_poSrcDS.release());
+        // https://trac.cppcheck.net/ticket/11325
+        // cppcheck-suppress accessMoved
         m_poSrcDS.reset(GDALDataset::FromHandle(
             GDALTranslate("", m_poVRTSrcDS.get(), poArgs, &pbUsageError)));
         GDALTranslateOptionsFree(poArgs);
