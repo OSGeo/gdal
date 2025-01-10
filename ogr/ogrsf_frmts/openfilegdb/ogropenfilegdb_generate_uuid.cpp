@@ -77,7 +77,9 @@ std::string OFGDBGenerateUUID(bool bInit)
     // from the same seed on all platforms.
     const auto reproducibleRand = [&nCounterLocal]()
     {
-        nCounterLocal = nCounterLocal * 1103515245U + 12345U;
+        nCounterLocal = static_cast<uint32_t>(
+            (static_cast<uint64_t>(nCounterLocal) * 1103515245U + 12345U) &
+            UINT32_MAX);
         return (nCounterLocal / 65536U) % 32768U;
     };
 
