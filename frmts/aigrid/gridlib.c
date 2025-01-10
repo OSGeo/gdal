@@ -13,8 +13,6 @@
 
 #include "aigrid.h"
 
-#include <stdbool.h>
-
 #ifndef CPL_IGNORE_RET_VAL_INT_defined
 #define CPL_IGNORE_RET_VAL_INT_defined
 
