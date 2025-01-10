@@ -2848,9 +2848,9 @@ def WarpOptions(options=None, format=None,
     transformerOptions:
         list or dict of transformer options
     cutlineDSName:
-        cutline dataset name (mutually exclusive with cutlineDSName)
+        cutline dataset name (mutually exclusive with cutlineWKT)
     cutlineWKT:
-        cutline WKT geometry (POLYGON or MULTIPOLYGON) (mutually exclusive with cutlineWKT)
+        cutline WKT geometry (POLYGON or MULTIPOLYGON) (mutually exclusive with cutlineDSName)
     cutlineSRS:
         set/override cutline SRS
     cutlineLayer:
