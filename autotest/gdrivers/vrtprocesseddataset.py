@@ -10,10 +10,14 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
+
 import gdaltest
 import pytest
 
 from osgeo import gdal
+
+from .vrtderived import _validate
 
 pytestmark = pytest.mark.skipif(
     not gdaltest.vrt_has_open_support(),
@@ -1527,6 +1531,23 @@ def test_vrtprocesseddataset_RasterIO(tmp_vsimem):
         assert ds.GetRasterBand(1).GetBlockSize() == [1, 1]
         with pytest.raises(Exception):
             ds.ReadAsArray()
+
+
+###############################################################################
+# Validate processed datasets according to xsd
+
+
+@pytest.mark.parametrize(
+    "fname",
+    [
+        f
+        for f in os.listdir(os.path.join(os.path.dirname(__file__), "data/vrt"))
+        if f.startswith("processed")
+    ],
+)
+def test_vrt_processeddataset_validate(fname):
+    with open(os.path.join("data/vrt", fname)) as f:
+        _validate(f.read())
 
 
 ###############################################################################
