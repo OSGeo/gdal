@@ -10,10 +10,14 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
+
 import gdaltest
 import pytest
 
 from osgeo import gdal
+
+from .vrtderived import _validate
 
 pytestmark = pytest.mark.skipif(
     not gdaltest.vrt_has_open_support(),
@@ -21,7 +25,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 np = pytest.importorskip("numpy")
-pytest.importorskip("osgeo.gdal_array")
+gdal_array = pytest.importorskip("osgeo.gdal_array")
 
 ###############################################################################
 # Test error cases in general VRTProcessedDataset XML structure
@@ -72,6 +76,16 @@ def test_vrtprocesseddataset_errors(tmp_vsimem):
     src_ds.GetRasterBand(2).Fill(2)
     src_ds.GetRasterBand(3).Fill(3)
     src_ds.Close()
+
+    with pytest.raises(Exception, match="Invalid value of 'unscale'"):
+        gdal.Open(
+            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        <Input unscale="maybe">
+            <SourceFilename>{src_filename}</SourceFilename>
+        </Input>
+        </VRTDataset>
+            """
+        )
 
     with pytest.raises(Exception, match="ProcessingSteps element missing"):
         gdal.Open(
@@ -1216,7 +1230,7 @@ def test_vrtprocesseddataset_serialize(tmp_vsimem):
     vrt_filename = str(tmp_vsimem / "the.vrt")
     content = f"""<VRTDataset subclass='VRTProcessedDataset'>
     <VRTRasterBand subClass='VRTProcessedRasterBand' dataType='Byte'/>
-    <Input>
+    <Input unscale="true">
         <SourceFilename>{src_filename}</SourceFilename>
     </Input>
     <ProcessingSteps>
@@ -1517,3 +1531,120 @@ def test_vrtprocesseddataset_RasterIO(tmp_vsimem):
         assert ds.GetRasterBand(1).GetBlockSize() == [1, 1]
         with pytest.raises(Exception):
             ds.ReadAsArray()
+
+
+###############################################################################
+# Validate processed datasets according to xsd
+
+
+@pytest.mark.parametrize(
+    "fname",
+    [
+        f
+        for f in os.listdir(os.path.join(os.path.dirname(__file__), "data/vrt"))
+        if f.startswith("processed")
+    ],
+)
+def test_vrt_processeddataset_validate(fname):
+    with open(os.path.join("data/vrt", fname)) as f:
+        _validate(f.read())
+
+
+###############################################################################
+# Test reading input datasets with scale and offset
+
+
+@pytest.mark.parametrize(
+    "input_scaled", (True, False), ids=lambda x: f"input scaled={x}"
+)
+@pytest.mark.parametrize("unscale", (True, False, "auto"), ids=lambda x: f"unscale={x}")
+@pytest.mark.parametrize(
+    "dtype", (gdal.GDT_Int16, gdal.GDT_Float32), ids=gdal.GetDataTypeName
+)
+def test_vrtprocesseddataset_scaled_inputs(tmp_vsimem, input_scaled, dtype, unscale):
+
+    src_filename = tmp_vsimem / "src.tif"
+
+    nx = 2
+    ny = 3
+    nz = 2
+
+    if dtype == gdal.GDT_Float32:
+        nodata = float("nan")
+    else:
+        nodata = 99
+
+    np_type = gdal_array.GDALTypeCodeToNumericTypeCode(dtype)
+
+    data = np.arange(nx * ny * nz, dtype=np_type).reshape(nz, ny, nx)
+    data[:, 2, 1] = nodata
+
+    if input_scaled:
+        offsets = [i + 2 for i in range(nz)]
+        scales = [(i + 1) / 4 for i in range(nz)]
+    else:
+        offsets = [0 for i in range(nz)]
+        scales = [1 for i in range(nz)]
+
+    with gdal.GetDriverByName("GTiff").Create(
+        src_filename, nx, ny, nz, eType=dtype
+    ) as src_ds:
+        src_ds.WriteArray(data)
+        for i in range(src_ds.RasterCount):
+            bnd = src_ds.GetRasterBand(i + 1)
+            bnd.SetOffset(offsets[i])
+            bnd.SetScale(scales[i])
+            bnd.SetNoDataValue(nodata)
+
+    ds = gdal.Open(
+        f"""
+    <VRTDataset subclass='VRTProcessedDataset'>
+    <Input unscale="{unscale}">
+        <SourceFilename>{src_filename}</SourceFilename>
+    </Input>
+    <ProcessingSteps>
+        <Step>
+            <Algorithm>BandAffineCombination</Algorithm>
+            <Argument name="coefficients_1">0,1,0</Argument>
+            <Argument name="coefficients_2">0,0,1</Argument>
+        </Step>
+    </ProcessingSteps>
+    </VRTDataset>"""
+    )
+
+    assert ds.RasterCount == nz
+
+    if unscale is True or (unscale == "auto" and input_scaled):
+        for i in range(ds.RasterCount):
+            bnd = ds.GetRasterBand(i + 1)
+            assert bnd.DataType == gdal.GDT_Float64
+            assert bnd.GetScale() in (None, 1)
+            assert bnd.GetOffset() in (None, 0)
+    else:
+        for i in range(ds.RasterCount):
+            bnd = ds.GetRasterBand(i + 1)
+            assert bnd.DataType == dtype
+            assert bnd.GetScale() == scales[i]
+            assert bnd.GetOffset() == offsets[i]
+            assert (
+                np.isnan(bnd.GetNoDataValue())
+                if np.isnan(nodata)
+                else bnd.GetNoDataValue() == nodata
+            )
+
+    result = np.ma.stack(
+        [ds.GetRasterBand(i + 1).ReadAsMaskedArray() for i in range(ds.RasterCount)]
+    )
+
+    if unscale:
+        expected = np.ma.masked_array(
+            np.stack([data[i, :, :] * scales[i] + offsets[i] for i in range(nz)]),
+            np.isnan(data) if np.isnan(nodata) else data == nodata,
+        )
+    else:
+        expected = np.ma.masked_array(
+            data, np.isnan(data) if np.isnan(nodata) else data == nodata
+        )
+
+    np.testing.assert_array_equal(result.mask, expected.mask)
+    np.testing.assert_array_equal(result[~result.mask], expected[~expected.mask])

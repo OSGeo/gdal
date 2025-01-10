@@ -12,6 +12,7 @@
 
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "gdal_utils.h"
 #include "vrtdataset.h"
 
 #include <algorithm>
@@ -206,6 +207,27 @@ CPLErr VRTProcessedDataset::XMLInit(const CPLXMLNode *psTree,
     return CE_None;
 }
 
+static bool HasScaleOffset(GDALDataset &oSrcDS)
+{
+    for (int i = 1; i <= oSrcDS.GetRasterCount(); i++)
+    {
+        int pbSuccess;
+        GDALRasterBand &oBand = *oSrcDS.GetRasterBand(i);
+        double scale = oBand.GetScale(&pbSuccess);
+        if (pbSuccess && scale != 1)
+        {
+            return true;
+        }
+        double offset = oBand.GetOffset(&pbSuccess);
+        if (pbSuccess && offset != 0)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /** Instantiate object from XML tree */
 CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
                                  const char *pszVRTPathIn,
@@ -259,6 +281,53 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
 
     if (!m_poSrcDS)
         return CE_Failure;
+
+    const char *pszUnscale = CPLGetXMLValue(psInput, "unscale", "AUTO");
+    bool bUnscale = false;
+    if (EQUAL(pszUnscale, "AUTO"))
+    {
+        if (HasScaleOffset(*m_poSrcDS))
+        {
+            bUnscale = true;
+        }
+    }
+    else if (EQUAL(pszUnscale, "YES") || EQUAL(pszUnscale, "ON") ||
+             EQUAL(pszUnscale, "TRUE") || EQUAL(pszUnscale, "1"))
+    {
+        bUnscale = true;
+    }
+    else if (!(EQUAL(pszUnscale, "NO") || EQUAL(pszUnscale, "OFF") ||
+               EQUAL(pszUnscale, "FALSE") || EQUAL(pszUnscale, "0")))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid value of 'unscale'");
+        return CE_Failure;
+    }
+
+    if (bUnscale)
+    {
+        CPLStringList oArgs;
+        oArgs.AddString("-unscale");
+        oArgs.AddString("-ot");
+        oArgs.AddString("Float64");
+        oArgs.AddString("-of");
+        oArgs.AddString("VRT");
+        oArgs.AddString("-a_nodata");
+        oArgs.AddString("nan");
+        auto *poArgs = GDALTranslateOptionsNew(oArgs.List(), nullptr);
+        int pbUsageError;
+        CPLAssert(poArgs);
+        m_poVRTSrcDS.reset(m_poSrcDS.release());
+        // https://trac.cppcheck.net/ticket/11325
+        // cppcheck-suppress accessMoved
+        m_poSrcDS.reset(GDALDataset::FromHandle(
+            GDALTranslate("", m_poVRTSrcDS.get(), poArgs, &pbUsageError)));
+        GDALTranslateOptionsFree(poArgs);
+
+        if (pbUsageError || !m_poSrcDS)
+        {
+            return CE_Failure;
+        }
+    }
 
     if (nRasterXSize == 0 && nRasterYSize == 0)
     {

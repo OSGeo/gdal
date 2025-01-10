@@ -724,6 +724,9 @@ class VRTProcessedDataset final : public VRTDataset
     //! Directory of the VRT
     std::string m_osVRTPath{};
 
+    //! Source of source dataset generated with GDALTranslate
+    std::unique_ptr<GDALDataset> m_poVRTSrcDS{};
+
     //! Source dataset
     std::unique_ptr<GDALDataset> m_poSrcDS{};
 
