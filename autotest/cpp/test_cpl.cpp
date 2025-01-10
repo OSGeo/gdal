@@ -1640,36 +1640,36 @@ TEST_F(test_cpl, CPLSM_unsigned)
     {
     }
 
-    ASSERT_EQ((CPLSM(static_cast<GUInt64>(2) * 1000 * 1000 * 1000) +
-               CPLSM(static_cast<GUInt64>(3) * 1000 * 1000 * 1000))
+    ASSERT_EQ((CPLSM(static_cast<uint64_t>(2) * 1000 * 1000 * 1000) +
+               CPLSM(static_cast<uint64_t>(3) * 1000 * 1000 * 1000))
                   .v(),
-              static_cast<GUInt64>(5) * 1000 * 1000 * 1000);
-    ASSERT_EQ((CPLSM(std::numeric_limits<GUInt64>::max() - 1) +
-               CPLSM(static_cast<GUInt64>(1)))
+              static_cast<uint64_t>(5) * 1000 * 1000 * 1000);
+    ASSERT_EQ((CPLSM(std::numeric_limits<uint64_t>::max() - 1) +
+               CPLSM(static_cast<uint64_t>(1)))
                   .v(),
-              std::numeric_limits<GUInt64>::max());
+              std::numeric_limits<uint64_t>::max());
     try
     {
-        (CPLSM(std::numeric_limits<GUInt64>::max()) +
-         CPLSM(static_cast<GUInt64>(1)));
+        (CPLSM(std::numeric_limits<uint64_t>::max()) +
+         CPLSM(static_cast<uint64_t>(1)));
     }
     catch (...)
     {
     }
 
-    ASSERT_EQ((CPLSM(static_cast<GUInt64>(2) * 1000 * 1000 * 1000) *
-               CPLSM(static_cast<GUInt64>(3) * 1000 * 1000 * 1000))
+    ASSERT_EQ((CPLSM(static_cast<uint64_t>(2) * 1000 * 1000 * 1000) *
+               CPLSM(static_cast<uint64_t>(3) * 1000 * 1000 * 1000))
                   .v(),
-              static_cast<GUInt64>(6) * 1000 * 1000 * 1000 * 1000 * 1000 *
+              static_cast<uint64_t>(6) * 1000 * 1000 * 1000 * 1000 * 1000 *
                   1000);
-    ASSERT_EQ((CPLSM(std::numeric_limits<GUInt64>::max()) *
-               CPLSM(static_cast<GUInt64>(1)))
+    ASSERT_EQ((CPLSM(std::numeric_limits<uint64_t>::max()) *
+               CPLSM(static_cast<uint64_t>(1)))
                   .v(),
-              std::numeric_limits<GUInt64>::max());
+              std::numeric_limits<uint64_t>::max());
     try
     {
-        (CPLSM(std::numeric_limits<GUInt64>::max()) *
-         CPLSM(static_cast<GUInt64>(2)));
+        (CPLSM(std::numeric_limits<uint64_t>::max()) *
+         CPLSM(static_cast<uint64_t>(2)));
     }
     catch (...)
     {

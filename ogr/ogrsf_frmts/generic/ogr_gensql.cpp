@@ -1653,7 +1653,8 @@ std::unique_ptr<OGRFeature> OGRGenSQLResultsLayer::TranslateFeature(
             case SWQ_BOOLEAN:
             case SWQ_INTEGER:
             case SWQ_INTEGER64:
-                poDstFeat->SetField(iRegularField++, poResult->int_value);
+                poDstFeat->SetField(iRegularField++,
+                                    static_cast<GIntBig>(poResult->int_value));
                 break;
 
             case SWQ_FLOAT:

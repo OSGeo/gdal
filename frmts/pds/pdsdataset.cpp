@@ -1201,7 +1201,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
     int nPixelOffset;
     vsi_l_offset nBandOffset;
 
-    const auto CPLSM64 = [](int x) { return CPLSM(static_cast<GInt64>(x)); };
+    const auto CPLSM64 = [](int x) { return CPLSM(static_cast<int64_t>(x)); };
 
     try
     {

@@ -4987,8 +4987,6 @@ CPLErr CPL_STDCALL GDALGetRasterStatistics(GDALRasterBandH hBand, int bApproxOK,
                                  pdfStdDev);
 }
 
-#ifdef CPL_HAS_GINT64
-
 /************************************************************************/
 /*                         GDALUInt128                                  */
 /************************************************************************/
@@ -6021,8 +6019,6 @@ struct ComputeStatisticsInternal<GUInt16, COMPUTE_OTHER_STATS>
 // (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) ||
 // defined(_MSC_VER))
 
-#endif  // CPL_HAS_GINT64
-
 /************************************************************************/
 /*                          GetPixelValue()                             */
 /************************************************************************/
@@ -6431,7 +6427,6 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         if (nSampleRate == 1)
             bApproxOK = false;
 
-#ifdef CPL_HAS_GINT64
         // Particular case for GDT_Byte that only use integral types for all
         // intermediate computations. Only possible if the number of pixels
         // explored is lower than GUINTBIG_MAX / (255*255), so that nSumSquare
@@ -6580,7 +6575,6 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                         "in sampling.");
             return CE_Failure;
         }
-#endif
 
         GByte *pabyMaskData = nullptr;
         if (poMaskBand)

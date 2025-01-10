@@ -132,10 +132,10 @@ class VICARDataset final : public RawDataset
 
     static GDALDataType GetDataTypeFromFormat(const char *pszFormat);
     static bool GetSpacings(const VICARKeywordHandler &keywords,
-                            GUInt64 &nPixelOffset, GUInt64 &nLineOffset,
-                            GUInt64 &nBandOffset,
-                            GUInt64 &nImageOffsetWithoutNBB, GUInt64 &nNBB,
-                            GUInt64 &nImageSize);
+                            uint64_t &nPixelOffset, uint64_t &nLineOffset,
+                            uint64_t &nBandOffset,
+                            uint64_t &nImageOffsetWithoutNBB, uint64_t &nNBB,
+                            uint64_t &nImageSize);
 };
 
 #endif  // VICARDATASET_H

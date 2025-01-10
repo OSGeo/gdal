@@ -18,6 +18,7 @@
 #include "parsexsd.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <memory>
 #include <vector>
 #include <set>
@@ -2626,7 +2627,7 @@ CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node *poNode)
                 CPLString osRet(osEscapedFieldName);
                 osRet += "=";
                 osRet +=
-                    CPLSPrintf(CPL_FRMT_GIB, poNode->papoSubExpr[1]->int_value);
+                    CPLSPrintf("%" PRId64, poNode->papoSubExpr[1]->int_value);
                 return osRet;
             }
         }
@@ -2806,7 +2807,7 @@ CPLString OGROAPIFLayer::BuildFilterCQLText(const swq_expr_node *poNode)
                 poNode->papoSubExpr[1]->field_type == SWQ_INTEGER64)
             {
                 osRet +=
-                    CPLSPrintf(CPL_FRMT_GIB, poNode->papoSubExpr[1]->int_value);
+                    CPLSPrintf("%" PRId64, poNode->papoSubExpr[1]->int_value);
                 return osRet;
             }
             if (poNode->papoSubExpr[1]->field_type == SWQ_FLOAT)
@@ -2993,7 +2994,7 @@ CPLString OGROAPIFLayer::BuildFilterJSONFilterExpr(const swq_expr_node *poNode)
         if (poNode->field_type == SWQ_INTEGER ||
             poNode->field_type == SWQ_INTEGER64)
         {
-            return CPLSPrintf(CPL_FRMT_GIB, poNode->int_value);
+            return CPLSPrintf("%" PRId64, poNode->int_value);
         }
         if (poNode->field_type == SWQ_FLOAT)
         {
