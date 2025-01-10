@@ -11998,18 +11998,12 @@ def test_tiff_write_warn_ignore_predictor_option(tmp_vsimem):
 @pytest.mark.parametrize("COPY_SRC_OVERVIEWS", ["YES", "NO"])
 def test_tiff_write_interleave_tile(tmp_vsimem, COPY_SRC_OVERVIEWS):
     out_filename = str(tmp_vsimem / "out.tif")
-    with pytest.raises(
-        Exception, match="INTERLEAVE=TILE is only supported for CreateCopy"
-    ):
-        gdal.GetDriverByName("GTiff").Create(
-            out_filename, 1, 1, 2, options=["INTERLEAVE=TILE"]
-        )
 
     ds = gdal.GetDriverByName("GTiff").CreateCopy(
         out_filename,
         gdal.Open("data/rgbsmall.tif"),
         options=[
-            "INTERLEAVE=TILE",
+            "@TILE_INTERLEAVE=YES",
             "TILED=YES",
             "BLOCKXSIZE=32",
             "BLOCKYSIZE=32",

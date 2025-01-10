@@ -423,7 +423,7 @@ This driver supports the following creation options:
       RPC information is available.
 
 -  .. co:: INTERLEAVE
-      :choices: BAND, PIXEL, TILE
+      :choices: BAND, PIXEL
 
       Set the interleaving to use
 
@@ -481,41 +481,15 @@ This driver supports the following creation options:
           end_for
 
 
-      * ``TILE`` (added in 3.11, only for CreateCopy()): this is a sort of
-        compromise between PIXEL and BAND, using the ``separate`` configuration,
-        but where data for a same spatial block is written for all bands, before
-        the data of the next spatial block.
-        When the block height is 1, this is also known as a
-        ``BIL (Band Interleaved per Line)`` organization.
-
-        Such a layout may be useful for writing hyperspectral datasets (several
-        hundred of bands), to get a compromise between efficient spatial query,
-        and partial band selection.
-
-        Assuming a pixel[band][y][x] indexed array, when using CreateCopy(),
-        the pseudo code for the file disposition is:
-
-        ::
-
-          for y in 0 ... numberOfBlocksInHeight - 1:
-              for x in 0 ... numberOfTilesInWidth - 1:
-                  for band in 0 ... numberBands -1:
-                      start_new_strip_or_tile()
-                      for j in 0 ... blockHeight - 1:
-                          for i in 0 ... blockWidth -1:
-                              write(pixel[band][y*blockHeight+j][x*blockWidth+i])
-                          end_for
-                      end_for
-                      end_new_strip_or_tile()
-                  end_for
-              end_for
-          end_for
-
-
       Starting with GDAL 3.5, when copying from a source dataset with multiple bands
       which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
       is not specified, the source dataset INTERLEAVE will be automatically taken
       into account, unless the COMPRESS creation option is specified.
+
+      .. note::
+
+          Starting with GDAL 3.11, a ``TILE`` interleaving is available,
+          but only when using the :ref:`raster.cog` driver.
 
 -  .. co:: TILED
       :choices: YES, NO

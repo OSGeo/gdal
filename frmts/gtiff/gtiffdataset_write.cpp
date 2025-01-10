@@ -4284,9 +4284,9 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
     if (CPLTestBool(
             CPLGetConfigOption("GTIFF_WRITE_IMAGE_STRUCTURE_METADATA", "YES")))
     {
-        const char *pszInterleave =
-            CSLFetchNameValue(papszCreationOptions, "INTERLEAVE");
-        if (pszInterleave && EQUAL(pszInterleave, "TILE"))
+        const char *pszTileInterleave =
+            CSLFetchNameValue(papszCreationOptions, "@TILE_INTERLEAVE");
+        if (pszTileInterleave && CPLTestBool(pszTileInterleave))
         {
             AppendMetadataItem(&psRoot, &psTail, "INTERLEAVE", "TILE", 0,
                                nullptr, "IMAGE_STRUCTURE");
@@ -5121,46 +5121,43 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     }
 
     int nPlanar = 0;
-    pszValue = CSLFetchNameValue(papszParamList, "INTERLEAVE");
-    if (pszValue != nullptr)
+
+    // Hidden @TILE_INTERLEAVE=YES parameter used by the COG driver
+    if (bCreateCopy &&
+        (pszValue = CSLFetchNameValue(papszParamList, "@TILE_INTERLEAVE")) &&
+        CPLTestBool(pszValue))
     {
-        if (EQUAL(pszValue, "PIXEL"))
-            nPlanar = PLANARCONFIG_CONTIG;
-        else if (EQUAL(pszValue, "BAND"))
+        bTileInterleavingOut = true;
+        nPlanar = PLANARCONFIG_SEPARATE;
+    }
+    else
+    {
+        pszValue = CSLFetchNameValue(papszParamList, "INTERLEAVE");
+        if (pszValue != nullptr)
         {
-            nPlanar = PLANARCONFIG_SEPARATE;
-        }
-        else if (EQUAL(pszValue, "BAND"))
-        {
-            nPlanar = PLANARCONFIG_SEPARATE;
-        }
-        else if (EQUAL(pszValue, "TILE"))
-        {
-            bTileInterleavingOut = true;
-            nPlanar = PLANARCONFIG_SEPARATE;
-            if (!bCreateCopy)
+            if (EQUAL(pszValue, "PIXEL"))
+                nPlanar = PLANARCONFIG_CONTIG;
+            else if (EQUAL(pszValue, "BAND"))
             {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "INTERLEAVE=TILE is only supported for CreateCopy(), "
-                         "not Create()");
+                nPlanar = PLANARCONFIG_SEPARATE;
+            }
+            else if (EQUAL(pszValue, "BAND"))
+            {
+                nPlanar = PLANARCONFIG_SEPARATE;
+            }
+            else
+            {
+                ReportError(
+                    pszFilename, CE_Failure, CPLE_IllegalArg,
+                    "INTERLEAVE=%s unsupported, value must be PIXEL or BAND.",
+                    pszValue);
                 return nullptr;
             }
         }
         else
         {
-            ReportError(
-                pszFilename, CE_Failure, CPLE_IllegalArg,
-                bCreateCopy
-                    ? "INTERLEAVE=%s unsupported, value must be PIXEL, BAND or "
-                      "TILE."
-                    : "INTERLEAVE=%s unsupported, value must be PIXEL or BAND.",
-                pszValue);
-            return nullptr;
+            nPlanar = PLANARCONFIG_CONTIG;
         }
-    }
-    else
-    {
-        nPlanar = PLANARCONFIG_CONTIG;
     }
 
     int l_nCompression = COMPRESSION_NONE;

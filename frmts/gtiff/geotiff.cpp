@@ -1340,7 +1340,6 @@ void GDALRegister_GTiff()
         "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
         "       <Value>BAND</Value>"
         "       <Value>PIXEL</Value>"
-        "       <Value remark='Only for CreateCopy()'>TILE</Value>"
         "   </Option>"
         "   <Option name='TILED' type='boolean' description='Switch to tiled "
         "format'/>"

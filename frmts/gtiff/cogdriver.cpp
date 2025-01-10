@@ -1361,7 +1361,15 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         aosOptions.AddNameValue("SRC_MDD", *papszSrcMDDIter);
     CSLDestroy(papszSrcMDD);
 
-    aosOptions.SetNameValue("INTERLEAVE", pszInterleave);
+    if (EQUAL(pszInterleave, "TILE"))
+    {
+        aosOptions.SetNameValue("INTERLEAVE", "BAND");
+        aosOptions.SetNameValue("@TILE_INTERLEAVE", "YES");
+    }
+    else
+    {
+        aosOptions.SetNameValue("INTERLEAVE", pszInterleave);
+    }
 
     CPLDebug("COG", "Generating final product: start");
     auto poRet =
