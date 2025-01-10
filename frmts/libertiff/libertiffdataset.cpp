@@ -328,7 +328,7 @@ class LIBERTIFFBand final : public GDALPamRasterBand
 
     // We could do a smarter implementation by manually managing blocks in
     // the TLS structure, but given we should rarely use that method, the
-    // current approach with a mutex should be good enouh
+    // current approach with a mutex should be good enough
     GDALRasterBlock *GetLockedBlockRef(int nXBlockOff, int nYBlockOff,
                                        int bJustInitialize = FALSE) override
     {
