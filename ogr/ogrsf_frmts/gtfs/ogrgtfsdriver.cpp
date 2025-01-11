@@ -607,7 +607,7 @@ GDALDataset *OGRGTFSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     const std::string osBaseDir(
         (!STARTS_WITH(pszGTFSFilename, "/vsizip/") &&
-         EQUAL(CPLGetExtension(pszGTFSFilename), "zip"))
+         EQUAL(CPLGetExtensionSafe(pszGTFSFilename).c_str(), "zip"))
             ? std::string("/vsizip/{").append(pszGTFSFilename).append("}")
             : std::string(pszGTFSFilename));
 
@@ -618,7 +618,7 @@ GDALDataset *OGRGTFSDataset::Open(GDALOpenInfo *poOpenInfo)
     std::string osShapesFilename;
     for (const char *pszFilename : cpl::Iterate(aosFilenames))
     {
-        if (!EQUAL(CPLGetExtension(pszFilename), "txt"))
+        if (!EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "txt"))
             continue;
         for (const char *pszFilenameInDir : apszRequiredFiles)
         {

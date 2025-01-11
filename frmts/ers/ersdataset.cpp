@@ -1350,7 +1350,7 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     CPLString osBinFile, osErsFile;
 
-    if (EQUAL(CPLGetExtension(pszFilename), "ers"))
+    if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "ers"))
     {
         osErsFile = pszFilename;
         osBinFile = osErsFile.substr(0, osErsFile.length() - 4);

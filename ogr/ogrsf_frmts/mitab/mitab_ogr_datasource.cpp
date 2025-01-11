@@ -68,8 +68,8 @@ int OGRTABDataSource::Create(const char *pszName, char **papszOptions)
     const char *pszOpt = CSLFetchNameValue(papszOptions, "FORMAT");
     if (pszOpt != nullptr && EQUAL(pszOpt, "MIF"))
         m_bCreateMIF = TRUE;
-    else if (EQUAL(CPLGetExtension(pszName), "mif") ||
-             EQUAL(CPLGetExtension(pszName), "mid"))
+    else if (EQUAL(CPLGetExtensionSafe(pszName).c_str(), "mif") ||
+             EQUAL(CPLGetExtensionSafe(pszName).c_str(), "mid"))
         m_bCreateMIF = TRUE;
 
     if ((pszOpt = CSLFetchNameValue(papszOptions, "SPATIAL_INDEX_MODE")) !=

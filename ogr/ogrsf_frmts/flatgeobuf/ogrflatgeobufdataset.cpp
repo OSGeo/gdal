@@ -335,7 +335,7 @@ GDALDataset *OGRFlatGeobufDataset::Create(const char *pszName, int /* nBands */,
     }
 
     bool bIsDir = false;
-    if (!EQUAL(CPLGetExtension(pszName), "fgb"))
+    if (!EQUAL(CPLGetExtensionSafe(pszName).c_str(), "fgb"))
     {
         if (VSIMkdir(pszName, 0755) != 0)
         {

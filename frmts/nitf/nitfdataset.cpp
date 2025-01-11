@@ -3502,7 +3502,7 @@ int NITFDataset::CheckForRSets(const char *pszNITFFilename,
                                char **papszSiblingFiles)
 
 {
-    bool isR0File = EQUAL(CPLGetExtension(pszNITFFilename), "r0");
+    bool isR0File = EQUAL(CPLGetExtensionSafe(pszNITFFilename).c_str(), "r0");
 
     /* -------------------------------------------------------------------- */
     /*      Check to see if we have RSets.                                  */

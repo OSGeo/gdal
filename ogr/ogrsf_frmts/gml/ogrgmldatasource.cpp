@@ -429,7 +429,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     // it transparently with /vsigzip/.
     if (static_cast<GByte>(szHeader[0]) == 0x1f &&
         static_cast<GByte>(szHeader[1]) == 0x8b &&
-        EQUAL(CPLGetExtension(pszFilename), "gz") &&
+        EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "gz") &&
         !STARTS_WITH(pszFilename, "/vsigzip/"))
     {
         if (fpToClose)
@@ -1902,7 +1902,7 @@ bool OGRGMLDataSource::Create(const char *pszFilename, char **papszOptions)
     }
     else if (STARTS_WITH(pszFilename, "/vsizip/"))
     {
-        if (EQUAL(CPLGetExtension(pszFilename), "zip"))
+        if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "zip"))
         {
             SetDescription(CPLFormFilename(pszFilename, "out.gml", nullptr));
         }

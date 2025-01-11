@@ -176,7 +176,7 @@ static GDALDataset *OGRXLSXDriverCreate(const char *pszName, int /* nXSize */,
                                         char **papszOptions)
 
 {
-    if (!EQUAL(CPLGetExtension(pszName), "XLSX"))
+    if (!EQUAL(CPLGetExtensionSafe(pszName).c_str(), "XLSX"))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "File extension should be XLSX");
         return nullptr;

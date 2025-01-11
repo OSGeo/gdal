@@ -1696,7 +1696,7 @@ GDALDataset *ADRGDataset::Create(const char *pszFilename, int nXSize,
                  nYSize);
     }
 
-    if (!EQUAL(CPLGetExtension(pszFilename), "gen"))
+    if (!EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "gen"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Invalid filename. Must be ABCDEF01.GEN");

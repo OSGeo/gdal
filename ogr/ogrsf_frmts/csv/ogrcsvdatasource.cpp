@@ -657,7 +657,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
         if (EQUAL(papszNames[i], ".") || EQUAL(papszNames[i], ".."))
             continue;
 
-        if (EQUAL(CPLGetExtension(oSubFilename), "csvt"))
+        if (EQUAL(CPLGetExtensionSafe(oSubFilename).c_str(), "csvt"))
             continue;
 
         if (VSIStatL(oSubFilename, &sStatBuf) != 0 ||
@@ -667,7 +667,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
             continue;
         }
 
-        if (EQUAL(CPLGetExtension(oSubFilename), "csv"))
+        if (EQUAL(CPLGetExtensionSafe(oSubFilename).c_str(), "csv"))
         {
             if (!OpenTable(oSubFilename, papszOpenOptionsIn))
             {

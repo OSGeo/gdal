@@ -999,7 +999,8 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
         /* GML is a special case. It needs the .xsd file that has been saved */
         /* as file.xsd, so we cannot used the attachment filename */
         else if (pszAttachmentFilename &&
-                 !EQUAL(CPLGetExtension(pszAttachmentFilename), "GML"))
+                 !EQUAL(CPLGetExtensionSafe(pszAttachmentFilename).c_str(),
+                        "GML"))
         {
             osTmpFileName = m_osTmpDir + "/";
             osTmpFileName += pszAttachmentFilename;

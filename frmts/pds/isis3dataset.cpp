@@ -2124,7 +2124,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
 
         // Sanity checks in case the external raw file appears to be a
         // TIFF file
-        if (EQUAL(CPLGetExtension(osQubeFile), "tif"))
+        if (EQUAL(CPLGetExtensionSafe(osQubeFile).c_str(), "tif"))
         {
             GDALDataset *poTIF_DS =
                 GDALDataset::FromHandle(GDALOpen(osQubeFile, GA_ReadOnly));
@@ -3972,7 +3972,7 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
     const int nBlockYSize = std::max(
         1, atoi(CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", "256")));
     if (!EQUAL(pszDataLocation, "LABEL") &&
-        !EQUAL(CPLGetExtension(pszFilename), "LBL"))
+        !EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "LBL"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "For DATA_LOCATION=%s, "

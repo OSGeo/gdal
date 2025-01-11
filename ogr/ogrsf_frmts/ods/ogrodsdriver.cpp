@@ -170,7 +170,7 @@ static GDALDataset *OGRODSDriverCreate(const char *pszName, int /* nXSize */,
                                        char **papszOptions)
 
 {
-    if (!EQUAL(CPLGetExtension(pszName), "ODS"))
+    if (!EQUAL(CPLGetExtensionSafe(pszName).c_str(), "ODS"))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "File extension should be ODS");
         return nullptr;

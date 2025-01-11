@@ -1528,13 +1528,13 @@ int OGRLIBKMLDataSource::Open(const char *pszFilename, int bUpdateIn)
     }
 
     /***** kml *****/
-    if (EQUAL(CPLGetExtension(pszFilename), "kml"))
+    if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "kml"))
     {
         return OpenKml(pszFilename, bUpdate);
     }
 
     /***** kmz *****/
-    if (EQUAL(CPLGetExtension(pszFilename), "kmz"))
+    if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "kmz"))
     {
         return OpenKmz(pszFilename, bUpdate);
     }
@@ -1949,11 +1949,11 @@ int OGRLIBKMLDataSource::Create(const char *pszFilename, char **papszOptions)
     /***** kml *****/
     if (strcmp(pszFilename, "/vsistdout/") == 0 ||
         STARTS_WITH(pszFilename, "/vsigzip/") ||
-        EQUAL(CPLGetExtension(pszFilename), "kml"))
+        EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "kml"))
         return CreateKml(pszFilename, papszOptions);
 
     /***** kmz *****/
-    if (EQUAL(CPLGetExtension(pszFilename), "kmz"))
+    if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "kmz"))
         return CreateKmz(pszFilename, papszOptions);
 
     /***** dir *****/

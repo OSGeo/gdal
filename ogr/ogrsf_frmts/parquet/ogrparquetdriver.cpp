@@ -362,7 +362,8 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
                 const CPLStringList aosFiles(VSIReadDir(osBasePath.c_str()));
                 for (const char *pszFilename : cpl::Iterate(aosFiles))
                 {
-                    if (EQUAL(CPLGetExtension(pszFilename), "parquet"))
+                    if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(),
+                              "parquet"))
                     {
                         bLikelyParquetDataset = true;
                         break;

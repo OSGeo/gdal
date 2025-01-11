@@ -1315,7 +1315,8 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO(
                     else
                     {
                         const char *pszBaseFilename = osFilename.c_str();
-                        if (EQUAL(CPLGetExtension(pszBaseFilename), "kmz") &&
+                        if (EQUAL(CPLGetExtensionSafe(pszBaseFilename).c_str(),
+                                  "kmz") &&
                             !STARTS_WITH(pszBaseFilename, "/vsizip/"))
                         {
                             osSubFilename = "/vsizip/";
@@ -1332,7 +1333,8 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO(
                     }
 
                     KmlSuperOverlayReadDataset *poSubImageDS = nullptr;
-                    if (EQUAL(CPLGetExtension(osSubFilename), "kml"))
+                    if (EQUAL(CPLGetExtensionSafe(osSubFilename).c_str(),
+                              "kml"))
                     {
                         KmlSuperOverlayReadDataset *poRoot =
                             poParent ? poParent : this;
@@ -2650,7 +2652,8 @@ KmlSuperOverlayReadDataset::Open(const char *pszFilename,
     if (psLink != nullptr)
     {
         const char *pszHref = CPLGetXMLValue(psLink, "href", nullptr);
-        if (pszHref == nullptr || !EQUAL(CPLGetExtension(pszHref), "kml"))
+        if (pszHref == nullptr ||
+            !EQUAL(CPLGetExtensionSafe(pszHref).c_str(), "kml"))
         {
             CPLDestroyXMLNode(psNode);
             return nullptr;

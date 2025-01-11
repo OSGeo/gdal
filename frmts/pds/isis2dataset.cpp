@@ -913,7 +913,7 @@ GDALDataset *ISIS2Dataset::Create(const char *pszFilename, int nXSize,
             sExtension = pszExtension;
         }
 
-        if (EQUAL(CPLGetExtension(pszFilename), sExtension))
+        if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), sExtension))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "IMAGE_EXTENSION (%s) cannot match LABEL file extension.",

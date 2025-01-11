@@ -218,8 +218,9 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     const bool bIsSQLite3 =
         (pszADBCDriverName && EQUAL(pszADBCDriverName, "adbc_driver_sqlite")) ||
         OGRADBCDriverIsSQLite3(poOpenInfo);
-    bool bIsParquet = OGRADBCDriverIsParquet(poOpenInfo) ||
-                      EQUAL(CPLGetExtension(pszFilename), "parquet");
+    bool bIsParquet =
+        OGRADBCDriverIsParquet(poOpenInfo) ||
+        EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "parquet");
     const char *pszSQL = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SQL");
     if (!bIsParquet && pszSQL)
     {

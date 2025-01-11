@@ -1277,7 +1277,7 @@ bool OGROpenFileGDBDataSource::CreateGDBItemRelationshipTypes()
 bool OGROpenFileGDBDataSource::Create(const char *pszName)
 {
 
-    if (!EQUAL(CPLGetExtension(pszName), "gdb"))
+    if (!EQUAL(CPLGetExtensionSafe(pszName).c_str(), "gdb"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Extension of the directory should be gdb");

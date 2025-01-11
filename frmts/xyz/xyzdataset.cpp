@@ -707,7 +707,7 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
     nCommentLineCount = 0;
 
     CPLString osFilename(poOpenInfo->pszFilename);
-    if (EQUAL(CPLGetExtension(osFilename), "GRA") &&
+    if (EQUAL(CPLGetExtensionSafe(osFilename).c_str(), "GRA") &&
         !poOpenInfo->IsSingleAllowedDriver("XYZ"))
     {
         // IGNFHeightASCIIGRID .GRA

@@ -5956,7 +5956,8 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
     }
 
     const char *pszFormat = CSLFetchNameValue(papszOptions, "FORMAT");
-    const bool bMBTILESExt = EQUAL(CPLGetExtension(pszFilename), "mbtiles");
+    const bool bMBTILESExt =
+        EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "mbtiles");
     if (pszFormat == nullptr && bMBTILESExt)
     {
         pszFormat = "MBTILES";

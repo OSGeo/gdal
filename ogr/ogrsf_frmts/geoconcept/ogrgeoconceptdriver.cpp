@@ -85,8 +85,8 @@ static GDALDataset *OGRGeoconceptDriverCreate(const char *pszName,
     /*      Does it end with the extension .gxt indicating the user likely  */
     /*      wants to create a single file set?                              */
     /* -------------------------------------------------------------------- */
-    else if (EQUAL(CPLGetExtension(pszName), "gxt") ||
-             EQUAL(CPLGetExtension(pszName), "txt"))
+    else if (EQUAL(CPLGetExtensionSafe(pszName).c_str(), "gxt") ||
+             EQUAL(CPLGetExtensionSafe(pszName).c_str(), "txt"))
     {
         /* bSingleNewFile = TRUE; */
     }
@@ -124,8 +124,8 @@ static CPLErr OGRGeoconceptDriverDelete(const char *pszDataSource)
     }
 
     if (VSI_ISREG(sStatBuf.st_mode) &&
-        (EQUAL(CPLGetExtension(pszDataSource), "gxt") ||
-         EQUAL(CPLGetExtension(pszDataSource), "txt")))
+        (EQUAL(CPLGetExtensionSafe(pszDataSource).c_str(), "gxt") ||
+         EQUAL(CPLGetExtensionSafe(pszDataSource).c_str(), "txt")))
     {
         for (int iExt = 0; apszExtensions[iExt] != nullptr; iExt++)
         {

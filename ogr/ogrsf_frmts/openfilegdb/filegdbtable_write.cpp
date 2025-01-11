@@ -68,7 +68,7 @@ bool FileGDBTable::Create(const char *pszFilename, int nTablxOffsetSize,
     m_bGeomTypeHasM = bGeomTypeHasM;
     m_bHasReadGDBIndexes = TRUE;
 
-    if (!EQUAL(CPLGetExtension(pszFilename), "gdbtable"))
+    if (!EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "gdbtable"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "FileGDB table extension must be gdbtable");

@@ -3369,7 +3369,7 @@ bool S57Reader::FindAndApplyUpdates(const char *pszPath)
     if (pszPath == nullptr)
         pszPath = pszModuleName;
 
-    if (!EQUAL(CPLGetExtension(pszPath), "000"))
+    if (!EQUAL(CPLGetExtensionSafe(pszPath).c_str(), "000"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Can't apply updates to a base file with a different\n"

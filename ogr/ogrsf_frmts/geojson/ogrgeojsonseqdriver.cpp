@@ -912,7 +912,7 @@ bool OGRGeoJSONSeqDataSource::Create(const char *pszName,
 
     eAccess = GA_Update;
 
-    m_bIsRSSeparated = EQUAL(CPLGetExtension(pszName), "GEOJSONS");
+    m_bIsRSSeparated = EQUAL(CPLGetExtensionSafe(pszName).c_str(), "GEOJSONS");
 
     return true;
 }

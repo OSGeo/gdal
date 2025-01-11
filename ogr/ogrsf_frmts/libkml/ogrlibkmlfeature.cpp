@@ -662,7 +662,7 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
         link->set_href(pszURL);
 
         // Collada 3D file?
-        if (EQUAL(CPLGetExtension(pszURL), "dae") &&
+        if (EQUAL(CPLGetExtensionSafe(pszURL).c_str(), "dae") &&
             CPLTestBool(CPLGetConfigOption("LIBKML_ADD_RESOURCE_MAP", "TRUE")))
         {
             VSILFILE *fp = nullptr;
