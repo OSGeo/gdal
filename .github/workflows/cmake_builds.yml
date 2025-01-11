@@ -434,7 +434,7 @@ jobs:
             cfitsio freexl geotiff libjpeg-turbo libpq libspatialite libwebp-base pcre pcre2 postgresql \
             sqlite tiledb zstd cryptopp cgal doxygen librttopo openssl liblzma-devel \
             openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc libarchive \
-            libarrow pyarrow libaec libheif libavif cmake fsspec
+            libarrow pyarrow libaec libheif libavif muparser cmake fsspec
     - name: Check CMake version
       shell: bash -l {0}
       run: |
