@@ -336,6 +336,14 @@ class CPL_DLL GDALOpenInfo
 
     bool IsSingleAllowedDriver(const char *pszDriverName) const;
 
+    /** Return whether the extension of the file is equal to pszExt, using
+     * case-insensitive comparison.
+     * @since 3.11 */
+    inline bool IsExtensionEqualToCI(const char *pszExt) const
+    {
+        return EQUAL(osExtension.c_str(), pszExt);
+    }
+
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALOpenInfo)
 };
