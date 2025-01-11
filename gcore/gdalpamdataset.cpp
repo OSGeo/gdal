@@ -1576,21 +1576,26 @@ const char *GDALPamDataset::GetMetadataItem(const char *pszName,
     else if (pszDomain != nullptr && EQUAL(pszDomain, "OVERVIEWS") &&
              EQUAL(pszName, "OVERVIEW_FILE"))
     {
-        const char *pszOverviewFile =
-            GDALDataset::GetMetadataItem(pszName, pszDomain);
+        if (m_osOverviewFile.empty())
+        {
+            const char *pszOverviewFile =
+                GDALDataset::GetMetadataItem(pszName, pszDomain);
 
-        if (pszOverviewFile == nullptr ||
-            !STARTS_WITH_CI(pszOverviewFile, ":::BASE:::"))
-            return pszOverviewFile;
+            if (pszOverviewFile == nullptr ||
+                !STARTS_WITH_CI(pszOverviewFile, ":::BASE:::"))
+                return pszOverviewFile;
 
-        CPLString osPath;
+            std::string osPath;
 
-        if (strlen(GetPhysicalFilename()) > 0)
-            osPath = CPLGetPath(GetPhysicalFilename());
-        else
-            osPath = CPLGetPath(GetDescription());
+            if (strlen(GetPhysicalFilename()) > 0)
+                osPath = CPLGetPath(GetPhysicalFilename());
+            else
+                osPath = CPLGetPath(GetDescription());
 
-        return CPLFormFilename(osPath, pszOverviewFile + 10, nullptr);
+            m_osOverviewFile = CPLFormFilenameSafe(
+                osPath.c_str(), pszOverviewFile + 10, nullptr);
+        }
+        return m_osOverviewFile.c_str();
     }
 
     /* -------------------------------------------------------------------- */

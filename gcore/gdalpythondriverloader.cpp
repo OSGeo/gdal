@@ -1956,22 +1956,22 @@ void GDALDriverManager::AutoLoadPythonDrivers()
     const int nSearchPaths = CSLCount(papszSearchPaths);
     for (int iDir = 0; iDir < nSearchPaths; ++iDir)
     {
-        CPLString osABISpecificDir =
-            CPLFormFilename(papszSearchPaths[iDir], osABIVersion, nullptr);
+        std::string osABISpecificDir =
+            CPLFormFilenameSafe(papszSearchPaths[iDir], osABIVersion, nullptr);
 
         VSIStatBufL sStatBuf;
-        if (VSIStatL(osABISpecificDir, &sStatBuf) != 0)
+        if (VSIStatL(osABISpecificDir.c_str(), &sStatBuf) != 0)
             osABISpecificDir = papszSearchPaths[iDir];
 
-        char **papszFiles = CPLReadDir(osABISpecificDir);
+        char **papszFiles = CPLReadDir(osABISpecificDir.c_str());
         for (int i = 0; papszFiles && papszFiles[i]; i++)
         {
             if ((STARTS_WITH_CI(papszFiles[i], "gdal_") ||
                  STARTS_WITH_CI(papszFiles[i], "ogr_")) &&
                 EQUAL(CPLGetExtension(papszFiles[i]), "py"))
             {
-                aosPythonFiles.push_back(
-                    CPLFormFilename(osABISpecificDir, papszFiles[i], nullptr));
+                aosPythonFiles.push_back(CPLFormFilenameSafe(
+                    osABISpecificDir.c_str(), papszFiles[i], nullptr));
             }
         }
         CSLDestroy(papszFiles);

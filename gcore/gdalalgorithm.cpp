@@ -2012,7 +2012,7 @@ GDALAlgorithm::AddInputDatasetArg(GDALArgDatasetValue *pValue,
                             if (osDir.empty())
                                 osVal = psEntry->pszName;
                             else
-                                osVal = CPLFormFilename(
+                                osVal = CPLFormFilenameSafe(
                                     osDir.c_str(), psEntry->pszName, nullptr);
                             if (VSI_ISDIR(psEntry->nMode))
                                 osVal += osSep;

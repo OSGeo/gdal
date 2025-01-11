@@ -366,8 +366,8 @@ void GDALDefaultOverviews::OverviewScan()
             {
                 const CPLString osPath = CPLGetPath(poDS->GetDescription());
 
-                osOvrFilename =
-                    CPLFormFilename(osPath, pszProxyOvrFilename + 10, nullptr);
+                osOvrFilename = CPLFormFilenameSafe(
+                    osPath, pszProxyOvrFilename + 10, nullptr);
             }
             else
             {

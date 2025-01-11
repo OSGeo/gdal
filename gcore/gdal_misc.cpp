@@ -3655,13 +3655,14 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 if (EQUAL(papszFiles[i], ".") || EQUAL(papszFiles[i], ".."))
                     continue;
 
-                CPLString osOldPath, osNewPath;
-                osOldPath = CPLFormFilename(papszArgv[iArg + 1], papszFiles[i],
-                                            nullptr);
+                std::string osOldPath;
+                CPLString osNewPath;
+                osOldPath = CPLFormFilenameSafe(papszArgv[iArg + 1],
+                                                papszFiles[i], nullptr);
                 osNewPath.Printf("/vsimem/%s", papszFiles[i]);
 
                 VSIStatBufL sStatBuf;
-                if (VSIStatL(osOldPath, &sStatBuf) != 0 ||
+                if (VSIStatL(osOldPath.c_str(), &sStatBuf) != 0 ||
                     VSI_ISDIR(sStatBuf.st_mode))
                 {
                     CPLDebug("VSI", "Skipping preload of %s.",
@@ -3672,7 +3673,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 CPLDebug("VSI", "Preloading %s to %s.", osOldPath.c_str(),
                          osNewPath.c_str());
 
-                if (CPLCopyFile(osNewPath, osOldPath) != 0)
+                if (CPLCopyFile(osNewPath, osOldPath.c_str()) != 0)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Failed to copy %s to /vsimem", osOldPath.c_str());

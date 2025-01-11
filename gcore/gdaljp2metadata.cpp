@@ -2930,12 +2930,13 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                         else if (CSLCount(papszTokens) == 2 &&
                                  CPLIsFilenameRelative(papszTokens[1]) &&
                                  VSIStatL(
-                                     CPLFormFilename(
+                                     CPLFormFilenameSafe(
                                          CPLGetDirname(aoGMLFiles[i].osFile),
-                                         papszTokens[1], nullptr),
+                                         papszTokens[1], nullptr)
+                                         .c_str(),
                                      &sStat) == 0)
                         {
-                            osXSD = CPLFormFilename(
+                            osXSD = CPLFormFilenameSafe(
                                 CPLGetDirname(aoGMLFiles[i].osFile),
                                 papszTokens[1], nullptr);
                         }
