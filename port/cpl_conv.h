@@ -178,6 +178,21 @@ const char CPL_DLL *CPLExtractRelativePath(const char *, const char *, int *)
     CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 const char CPL_DLL *
 CPLCleanTrailingSlash(const char *) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+extern "C++"
+{
+    std::string CPL_DLL CPLFormFilenameSafe(
+        const char *pszPath, const char *pszBasename,
+        const char *pszExtension = nullptr) CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLFormCIFilenameSafe(
+        const char *pszPath, const char *pszBasename,
+        const char *pszExtension = nullptr) CPL_WARN_UNUSED_RESULT;
+}
+
+#endif  // defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
 char CPL_DLL **
 CPLCorrespondingPaths(const char *pszOldFilename, const char *pszNewFilename,
                       char **papszFileList) CPL_WARN_UNUSED_RESULT;

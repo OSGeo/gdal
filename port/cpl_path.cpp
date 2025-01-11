@@ -564,7 +564,7 @@ const char *CPLResetExtension(const char *pszPath, const char *pszExt)
 }
 
 /************************************************************************/
-/*                          CPLFormFilename()                           */
+/*                        CPLFormFilenameSafe()                         */
 /************************************************************************/
 
 /**
@@ -574,11 +574,11 @@ const char *CPLResetExtension(const char *pszPath, const char *pszExt)
  * an extension if desired.
  *
  * \code{.cpp}
- * CPLFormFilename("abc/xyz", "def", ".dat" ) == "abc/xyz/def.dat"
- * CPLFormFilename(NULL,"def", NULL ) == "def"
- * CPLFormFilename(NULL, "abc/def.dat", NULL ) == "abc/def.dat"
- * CPLFormFilename("/abc/xyz/", "def.dat", NULL ) == "/abc/xyz/def.dat"
- * CPLFormFilename("/a/b/c", "../d", NULL ) == "/a/b/d" (since 3.10.1)
+ * CPLFormFilenameSafe("abc/xyz", "def", ".dat" ) == "abc/xyz/def.dat"
+ * CPLFormFilenameSafe(NULL,"def", NULL ) == "def"
+ * CPLFormFilenameSafe(NULL, "abc/def.dat", NULL ) == "abc/def.dat"
+ * CPLFormFilenameSafe("/abc/xyz/", "def.dat", NULL ) == "/abc/xyz/def.dat"
+ * CPLFormFilenameSafe("/a/b/c", "../d", NULL ) == "/a/b/d" (since 3.10.1)
  * \endcode
  *
  * @param pszPath directory path to the directory containing the file.  This
@@ -591,24 +591,15 @@ const char *CPLResetExtension(const char *pszPath, const char *pszExt)
  * @param pszExtension file extension, optionally including the period.  May
  * be NULL.
  *
- * @return a fully formed filename in an internal static string.  Do not
- * modify or free the returned string.  The string may be destroyed by the
- * next CPL call.
+ * @return a fully formed filename.
+ *
+ * @since 3.11
  */
 
-const char *CPLFormFilename(const char *pszPath, const char *pszBasename,
-                            const char *pszExtension)
+std::string CPLFormFilenameSafe(const char *pszPath, const char *pszBasename,
+                                const char *pszExtension)
 
 {
-    char *pszStaticResult = CPLGetStaticResult();
-    if (pszStaticResult == nullptr)
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    CPLAssert(!(pszPath >= pszStaticResult &&
-                pszPath < pszStaticResult + CPL_PATH_BUF_SIZE));
-    CPLAssert(!(pszBasename >= pszStaticResult &&
-                pszBasename < pszStaticResult + CPL_PATH_BUF_SIZE));
-
     if (pszBasename[0] == '.' &&
         (pszBasename[1] == '/' || pszBasename[1] == '\\'))
         pszBasename += 2;
@@ -708,33 +699,173 @@ const char *CPLFormFilename(const char *pszPath, const char *pszBasename,
     else if (pszExtension[0] != '.' && strlen(pszExtension) > 0)
         pszAddedExtSep = ".";
 
-    if (nLenPath >= static_cast<size_t>(CPL_PATH_BUF_SIZE))
-        return CPLStaticBufferTooSmall(pszStaticResult);
+    std::string osRes;
+    osRes.reserve(nLenPath + strlen(pszAddedPathSep) + strlen(pszBasename) +
+                  strlen(pszAddedExtSep) + strlen(pszExtension) +
+                  (nSuffixPos ? strlen(pszPath + nSuffixPos) : 0));
+    osRes.assign(pszPath, nLenPath);
+    osRes += pszAddedPathSep;
+    osRes += pszBasename;
+    osRes += pszAddedExtSep;
+    osRes += pszExtension;
 
-    // coverity[overrun-buffer-arg]
-    memcpy(pszStaticResult, pszPath, nLenPath);
-    pszStaticResult[nLenPath] = 0;
-
-    if (CPLStrlcat(pszStaticResult, pszAddedPathSep, CPL_PATH_BUF_SIZE) >=
-            static_cast<size_t>(CPL_PATH_BUF_SIZE) ||
-        CPLStrlcat(pszStaticResult, pszBasename, CPL_PATH_BUF_SIZE) >=
-            static_cast<size_t>(CPL_PATH_BUF_SIZE) ||
-        CPLStrlcat(pszStaticResult, pszAddedExtSep, CPL_PATH_BUF_SIZE) >=
-            static_cast<size_t>(CPL_PATH_BUF_SIZE) ||
-        CPLStrlcat(pszStaticResult, pszExtension, CPL_PATH_BUF_SIZE) >=
-            static_cast<size_t>(CPL_PATH_BUF_SIZE))
+    if (nSuffixPos)
     {
-        return CPLStaticBufferTooSmall(pszStaticResult);
+        osRes += (pszPath + nSuffixPos);
     }
 
-    if (nSuffixPos &&
-        CPLStrlcat(pszStaticResult, pszPath + nSuffixPos, CPL_PATH_BUF_SIZE) >=
-            static_cast<size_t>(CPL_PATH_BUF_SIZE))
+    return osRes;
+}
+
+/************************************************************************/
+/*                          CPLFormFilename()                           */
+/************************************************************************/
+
+/**
+ * Build a full file path from a passed path, file basename and extension.
+ *
+ * The path, and extension are optional.  The basename may in fact contain
+ * an extension if desired.
+ *
+ * \code{.cpp}
+ * CPLFormFilename("abc/xyz", "def", ".dat" ) == "abc/xyz/def.dat"
+ * CPLFormFilename(NULL,"def", NULL ) == "def"
+ * CPLFormFilename(NULL, "abc/def.dat", NULL ) == "abc/def.dat"
+ * CPLFormFilename("/abc/xyz/", "def.dat", NULL ) == "/abc/xyz/def.dat"
+ * CPLFormFilename("/a/b/c", "../d", NULL ) == "/a/b/d" (since 3.10.1)
+ * \endcode
+ *
+ * @param pszPath directory path to the directory containing the file.  This
+ * may be relative or absolute, and may have a trailing path separator or
+ * not.  May be NULL.
+ *
+ * @param pszBasename file basename.  May optionally have path and/or
+ * extension.  Must *NOT* be NULL.
+ *
+ * @param pszExtension file extension, optionally including the period.  May
+ * be NULL.
+ *
+ * @return a fully formed filename in an internal static string.  Do not
+ * modify or free the returned string.  The string may be destroyed by the
+ * next CPL call.
+ *
+ * @deprecated If using C++, prefer using CPLFormFilenameSafe() instead
+ */
+const char *CPLFormFilename(const char *pszPath, const char *pszBasename,
+                            const char *pszExtension)
+
+{
+    const std::string osRes(
+        CPLFormFilenameSafe(pszPath, pszBasename, pszExtension));
+    if (osRes.size() >= CPL_PATH_BUF_SIZE)
     {
-        return CPLStaticBufferTooSmall(pszStaticResult);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too long result for CPLFormFilename()");
+        return "";
     }
 
+    char *pszStaticResult = CPLGetStaticResult();
+    if (pszStaticResult == nullptr)
+        return CPLStaticBufferTooSmall(pszStaticResult);
+    memcpy(pszStaticResult, osRes.c_str(), osRes.size() + 1);
     return pszStaticResult;
+}
+
+/************************************************************************/
+/*                       CPLFormCIFilenameSafe()                        */
+/************************************************************************/
+
+/**
+ * Case insensitive file searching, returning full path.
+ *
+ * This function tries to return the path to a file regardless of
+ * whether the file exactly matches the basename, and extension case, or
+ * is all upper case, or all lower case.  The path is treated as case
+ * sensitive.  This function is equivalent to CPLFormFilename() on
+ * case insensitive file systems (like Windows).
+ *
+ * @param pszPath directory path to the directory containing the file.  This
+ * may be relative or absolute, and may have a trailing path separator or
+ * not.  May be NULL.
+ *
+ * @param pszBasename file basename.  May optionally have path and/or
+ * extension.  May not be NULL.
+ *
+ * @param pszExtension file extension, optionally including the period.  May
+ * be NULL.
+ *
+ * @return a fully formed filename.
+ *
+ * @since 3.11
+ */
+
+std::string CPLFormCIFilenameSafe(const char *pszPath, const char *pszBasename,
+                                  const char *pszExtension)
+
+{
+    // On case insensitive filesystems, just default to CPLFormFilename().
+    if (!VSIIsCaseSensitiveFS(pszPath))
+        return CPLFormFilenameSafe(pszPath, pszBasename, pszExtension);
+
+    const char *pszAddedExtSep = "";
+    size_t nLen = strlen(pszBasename) + 2;
+
+    if (pszExtension != nullptr)
+        nLen += strlen(pszExtension);
+
+    char *pszFilename = static_cast<char *>(VSI_MALLOC_VERBOSE(nLen));
+    if (pszFilename == nullptr)
+        return "";
+
+    if (pszExtension == nullptr)
+        pszExtension = "";
+    else if (pszExtension[0] != '.' && strlen(pszExtension) > 0)
+        pszAddedExtSep = ".";
+
+    snprintf(pszFilename, nLen, "%s%s%s", pszBasename, pszAddedExtSep,
+             pszExtension);
+
+    std::string osRet = CPLFormFilenameSafe(pszPath, pszFilename, nullptr);
+    VSIStatBufL sStatBuf;
+    int nStatRet = VSIStatExL(osRet.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG);
+
+    if (nStatRet != 0)
+    {
+        for (size_t i = 0; pszFilename[i] != '\0'; i++)
+        {
+            pszFilename[i] = static_cast<char>(CPLToupper(pszFilename[i]));
+        }
+
+        std::string osTmpPath(
+            CPLFormFilenameSafe(pszPath, pszFilename, nullptr));
+        nStatRet =
+            VSIStatExL(osTmpPath.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG);
+        if (nStatRet == 0)
+            osRet = std::move(osTmpPath);
+    }
+
+    if (nStatRet != 0)
+    {
+        for (size_t i = 0; pszFilename[i] != '\0'; i++)
+        {
+            pszFilename[i] = static_cast<char>(
+                CPLTolower(static_cast<unsigned char>(pszFilename[i])));
+        }
+
+        std::string osTmpPath(
+            CPLFormFilenameSafe(pszPath, pszFilename, nullptr));
+        nStatRet =
+            VSIStatExL(osTmpPath.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG);
+        if (nStatRet == 0)
+            osRet = std::move(osTmpPath);
+    }
+
+    if (nStatRet != 0)
+        osRet = CPLFormFilenameSafe(pszPath, pszBasename, pszExtension);
+
+    CPLFree(pszFilename);
+
+    return osRet;
 }
 
 /************************************************************************/
@@ -763,74 +894,28 @@ const char *CPLFormFilename(const char *pszPath, const char *pszBasename,
  * @return a fully formed filename in an internal static string.  Do not
  * modify or free the returned string.  The string may be destroyed by the
  * next CPL call.
- */
+ *
+ * @deprecated If using C++, prefer using CPLFormCIFilenameSafe() instead
+*/
 
 const char *CPLFormCIFilename(const char *pszPath, const char *pszBasename,
                               const char *pszExtension)
 
 {
-    // On case insensitive filesystems, just default to CPLFormFilename().
-    if (!VSIIsCaseSensitiveFS(pszPath))
-        return CPLFormFilename(pszPath, pszBasename, pszExtension);
-
-    const char *pszAddedExtSep = "";
-    size_t nLen = strlen(pszBasename) + 2;
-
-    if (pszExtension != nullptr)
-        nLen += strlen(pszExtension);
-
-    char *pszFilename = static_cast<char *>(VSI_MALLOC_VERBOSE(nLen));
-    if (pszFilename == nullptr)
+    const std::string osRes(
+        CPLFormCIFilenameSafe(pszPath, pszBasename, pszExtension));
+    if (osRes.size() >= CPL_PATH_BUF_SIZE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too long result for CPLFormCIFilename()");
         return "";
-
-    if (pszExtension == nullptr)
-        pszExtension = "";
-    else if (pszExtension[0] != '.' && strlen(pszExtension) > 0)
-        pszAddedExtSep = ".";
-
-    snprintf(pszFilename, nLen, "%s%s%s", pszBasename, pszAddedExtSep,
-             pszExtension);
-
-    const char *pszFullPath = CPLFormFilename(pszPath, pszFilename, nullptr);
-    VSIStatBufL sStatBuf;
-    int nStatRet = VSIStatExL(pszFullPath, &sStatBuf, VSI_STAT_EXISTS_FLAG);
-    if (nStatRet != 0)
-    {
-        for (size_t i = 0; pszFilename[i] != '\0'; i++)
-        {
-            pszFilename[i] = static_cast<char>(CPLToupper(pszFilename[i]));
-        }
-
-        const std::string osTmpPath(
-            CPLFormFilename(pszPath, pszFilename, nullptr));
-        nStatRet =
-            VSIStatExL(osTmpPath.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG);
-        if (nStatRet == 0)
-            pszFullPath = CPLFormFilename(pszPath, pszFilename, nullptr);
     }
 
-    if (nStatRet != 0)
-    {
-        for (size_t i = 0; pszFilename[i] != '\0'; i++)
-        {
-            pszFilename[i] = static_cast<char>(
-                CPLTolower(static_cast<unsigned char>(pszFilename[i])));
-        }
-
-        const std::string osTmpPath(
-            CPLFormFilename(pszPath, pszFilename, nullptr));
-        nStatRet =
-            VSIStatExL(osTmpPath.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG);
-        if (nStatRet == 0)
-            pszFullPath = CPLFormFilename(pszPath, pszFilename, nullptr);
-    }
-
-    if (nStatRet != 0)
-        pszFullPath = CPLFormFilename(pszPath, pszBasename, pszExtension);
-
-    CPLFree(pszFilename);
-
-    return pszFullPath;
+    char *pszStaticResult = CPLGetStaticResult();
+    if (pszStaticResult == nullptr)
+        return CPLStaticBufferTooSmall(pszStaticResult);
+    memcpy(pszStaticResult, osRes.c_str(), osRes.size() + 1);
+    return pszStaticResult;
 }
 
 /************************************************************************/
