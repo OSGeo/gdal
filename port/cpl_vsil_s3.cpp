@@ -2912,9 +2912,9 @@ int IVSIS3LikeFSHandler::Rename(const char *oldpath, const char *newpath)
         for (int i = 0; i < aosList.size(); i++)
         {
             const std::string osSrc =
-                CPLFormFilename(oldpath, aosList[i], nullptr);
+                CPLFormFilenameSafe(oldpath, aosList[i], nullptr);
             const std::string osTarget =
-                CPLFormFilename(newpath, aosList[i], nullptr);
+                CPLFormFilenameSafe(newpath, aosList[i], nullptr);
             if (Rename(osSrc.c_str(), osTarget.c_str()) != 0)
             {
                 return -1;
@@ -4235,8 +4235,8 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         osTargetDir = pszTarget;
         if (osSource.back() != '/' && osSource.back() != '\\')
         {
-            osTargetDir = CPLFormFilename(osTargetDir.c_str(),
-                                          CPLGetFilename(pszSource), nullptr);
+            osTargetDir = CPLFormFilenameSafe(
+                osTargetDir.c_str(), CPLGetFilename(pszSource), nullptr);
         }
 
         if (!poSourceDir)
@@ -4300,7 +4300,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                 if (oSetTargetSubdirs.find(osDstName) ==
                     oSetTargetSubdirs.end())
                 {
-                    const std::string osTargetSubdir(CPLFormFilename(
+                    const std::string osTargetSubdir(CPLFormFilenameSafe(
                         osTargetDir.c_str(), osDstName.c_str(), nullptr));
                     aoSetDirsToCreate.insert(osTargetSubdir);
                 }
@@ -4368,9 +4368,9 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
             if (chunk.nStartOffset != 0)
                 continue;
             const std::string osSubSource(
-                CPLFormFilename(osSourceWithoutSlash.c_str(),
-                                chunk.osSrcFilename.c_str(), nullptr));
-            const std::string osSubTarget(CPLFormFilename(
+                CPLFormFilenameSafe(osSourceWithoutSlash.c_str(),
+                                    chunk.osSrcFilename.c_str(), nullptr));
+            const std::string osSubTarget(CPLFormFilenameSafe(
                 osTargetDir.c_str(), chunk.osDstFilename.c_str(), nullptr));
             bool bSkip = false;
             const auto oIterExistingTarget =
@@ -4492,9 +4492,9 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                 const auto &chunk = aoChunksToCopy[iChunk];
                 CPLAssert(chunk.nStartOffset == 0);
                 const std::string osSubSource(
-                    CPLFormFilename(osSourceWithoutSlash.c_str(),
-                                    chunk.osSrcFilename.c_str(), nullptr));
-                const std::string osSubTarget(CPLFormFilename(
+                    CPLFormFilenameSafe(osSourceWithoutSlash.c_str(),
+                                        chunk.osSrcFilename.c_str(), nullptr));
+                const std::string osSubTarget(CPLFormFilenameSafe(
                     osTargetDir.c_str(), chunk.osDstFilename.c_str(), nullptr));
                 // coverity[divide_by_zero]
                 void *pScaledProgress = GDALCreateScaledProgress(
@@ -4530,8 +4530,8 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
             bTargetIsFile = true;
             if (VSI_ISDIR(sTarget.st_mode))
             {
-                osTarget = CPLFormFilename(osTarget.c_str(),
-                                           CPLGetFilename(pszSource), nullptr);
+                osTarget = CPLFormFilenameSafe(
+                    osTarget.c_str(), CPLGetFilename(pszSource), nullptr);
                 bTargetIsFile = VSIStatL(osTarget.c_str(), &sTarget) == 0 &&
                                 !CPL_TO_BOOL(VSI_ISDIR(sTarget.st_mode));
             }
@@ -4794,14 +4794,16 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                 queue->aoChunksToCopy[queue->anIndexToCopy[idx]];
             const std::string osSubSource(
                 queue->osTargetDir.empty()
-                    ? queue->osSource.c_str()
-                    : CPLFormFilename(queue->osSourceDir.c_str(),
-                                      chunk.osSrcFilename.c_str(), nullptr));
+                    ? queue->osSource
+                    : CPLFormFilenameSafe(queue->osSourceDir.c_str(),
+                                          chunk.osSrcFilename.c_str(),
+                                          nullptr));
             const std::string osSubTarget(
                 queue->osTargetDir.empty()
-                    ? queue->osTarget.c_str()
-                    : CPLFormFilename(queue->osTargetDir.c_str(),
-                                      chunk.osDstFilename.c_str(), nullptr));
+                    ? queue->osTarget
+                    : CPLFormFilenameSafe(queue->osTargetDir.c_str(),
+                                          chunk.osDstFilename.c_str(),
+                                          nullptr));
 
             ProgressData progressData;
             progressData.nFileSize = chunk.nSize;

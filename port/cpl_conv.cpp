@@ -2481,9 +2481,12 @@ void CPLLoadConfigOptionsFromPredefinedFiles()
     else
     {
 #ifdef SYSCONFDIR
-        pszFile = CPLFormFilename(CPLFormFilename(SYSCONFDIR, "gdal", nullptr),
-                                  "gdalrc", nullptr);
-        CPLLoadConfigOptionsFromFile(pszFile, false);
+        CPLLoadConfigOptionsFromFile(
+            CPLFormFilenameSafe(
+                CPLFormFilenameSafe(SYSCONFDIR, "gdal", nullptr).c_str(),
+                "gdalrc", nullptr)
+                .c_str(),
+            false);
 #endif
 
 #ifdef _WIN32
@@ -2493,9 +2496,12 @@ void CPLLoadConfigOptionsFromPredefinedFiles()
 #endif
         if (pszHome != nullptr)
         {
-            pszFile = CPLFormFilename(
-                CPLFormFilename(pszHome, ".gdal", nullptr), "gdalrc", nullptr);
-            CPLLoadConfigOptionsFromFile(pszFile, false);
+            CPLLoadConfigOptionsFromFile(
+                CPLFormFilenameSafe(
+                    CPLFormFilenameSafe(pszHome, ".gdal", nullptr).c_str(),
+                    "gdalrc", nullptr)
+                    .c_str(),
+                false);
         }
     }
 }
@@ -3106,7 +3112,7 @@ int CPLUnlinkTree(const char *pszPath)
                 continue;
 
             const std::string osSubPath =
-                CPLFormFilename(pszPath, papszItems[i], nullptr);
+                CPLFormFilenameSafe(pszPath, papszItems[i], nullptr);
 
             const int nErr = CPLUnlinkTree(osSubPath.c_str());
 
@@ -3197,9 +3203,9 @@ int CPLCopyTree(const char *pszNewPath, const char *pszOldPath)
                 continue;
 
             const std::string osNewSubPath =
-                CPLFormFilename(pszNewPath, papszItems[i], nullptr);
+                CPLFormFilenameSafe(pszNewPath, papszItems[i], nullptr);
             const std::string osOldSubPath =
-                CPLFormFilename(pszOldPath, papszItems[i], nullptr);
+                CPLFormFilenameSafe(pszOldPath, papszItems[i], nullptr);
 
             const int nErr =
                 CPLCopyTree(osNewSubPath.c_str(), osOldSubPath.c_str());

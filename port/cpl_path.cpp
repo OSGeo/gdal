@@ -1262,13 +1262,14 @@ char **CPLCorrespondingPaths(const char *pszOldFilename,
     {
         const CPLString osOldFilename = CPLGetFilename(papszFileList[i]);
 
-        const CPLString osNewFilename =
+        const std::string osNewFilename =
             osOldBasename == osNewBasename
-                ? CPLFormFilename(osNewPath, osOldFilename, nullptr)
-                : CPLFormFilename(osNewPath, osNewBasename,
-                                  osOldFilename.c_str() + osOldBasename.size());
+                ? CPLFormFilenameSafe(osNewPath, osOldFilename, nullptr)
+                : CPLFormFilenameSafe(osNewPath, osNewBasename,
+                                      osOldFilename.c_str() +
+                                          osOldBasename.size());
 
-        papszNewList = CSLAddString(papszNewList, osNewFilename);
+        papszNewList = CSLAddString(papszNewList, osNewFilename.c_str());
     }
 
     return papszNewList;

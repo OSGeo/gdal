@@ -456,7 +456,7 @@ VSIVirtualHandle *VSISparseFileFilesystemHandler::Open(
         {
             const CPLString osSFPath = CPLGetPath(osSparseFilePath);
             oRegion.osFilename =
-                CPLFormFilename(osSFPath, oRegion.osFilename, nullptr);
+                CPLFormFilenameSafe(osSFPath, oRegion.osFilename, nullptr);
         }
 
         // TODO(schwehr): Symbolic constant and an explanation for 32.
