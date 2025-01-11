@@ -1241,7 +1241,8 @@ void VSIAzureWriteHandle::InvalidateParentDirectory()
     std::string osFilenameWithoutSlash(m_osFilename);
     if (!osFilenameWithoutSlash.empty() && osFilenameWithoutSlash.back() == '/')
         osFilenameWithoutSlash.pop_back();
-    m_poFS->InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
+    m_poFS->InvalidateDirContent(
+        CPLGetDirnameSafe(osFilenameWithoutSlash.c_str()));
 }
 
 /************************************************************************/
@@ -1456,7 +1457,7 @@ void VSIAzureFSHandler::InvalidateRecursive(const std::string &osDirnameIn)
     {
         InvalidateDirContent(osDirname.c_str());
         InvalidateCachedData(GetURLFromFilename(osDirname.c_str()).c_str());
-        osDirname = CPLGetDirname(osDirname.c_str());
+        osDirname = CPLGetDirnameSafe(osDirname.c_str());
     }
 }
 
@@ -1470,7 +1471,7 @@ int VSIAzureFSHandler::Unlink(const char *pszFilename)
     if (ret != 0)
         return ret;
 
-    InvalidateRecursive(CPLGetDirname(pszFilename));
+    InvalidateRecursive(CPLGetDirnameSafe(pszFilename));
     return 0;
 }
 
@@ -1736,7 +1737,7 @@ int VSIAzureFSHandler::MkdirInternal(const char *pszDirname, long /* nMode */,
     InvalidateCachedData(GetURLFromFilename(osDirname.c_str()).c_str());
     InvalidateCachedData(
         GetURLFromFilename(osDirnameWithoutEndSlash.c_str()).c_str());
-    InvalidateDirContent(CPLGetDirname(osDirnameWithoutEndSlash.c_str()));
+    InvalidateDirContent(CPLGetDirnameSafe(osDirnameWithoutEndSlash.c_str()));
 
     VSILFILE *fp = VSIFOpenL((osDirname + GDAL_MARKER_FOR_DIR).c_str(), "wb");
     if (fp != nullptr)
@@ -1898,7 +1899,7 @@ int VSIAzureFSHandler::Rmdir(const char *pszDirname)
     InvalidateCachedData(GetURLFromFilename(osDirname.c_str()).c_str());
     InvalidateCachedData(
         GetURLFromFilename(osDirnameWithoutEndSlash.c_str()).c_str());
-    InvalidateRecursive(CPLGetDirname(osDirnameWithoutEndSlash.c_str()));
+    InvalidateRecursive(CPLGetDirnameSafe(osDirnameWithoutEndSlash.c_str()));
     if (osDirnameWithoutEndSlash.find('/', GetFSPrefix().size()) ==
         std::string::npos)
     {
@@ -2168,7 +2169,8 @@ int VSIAzureFSHandler::CopyObject(const char *oldpath, const char *newpath,
                 osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() -
                                               1);
 
-            InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
+            InvalidateDirContent(
+                CPLGetDirnameSafe(osFilenameWithoutSlash.c_str()));
         }
 
         curl_easy_cleanup(hCurlHandle);

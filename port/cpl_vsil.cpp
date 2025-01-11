@@ -659,7 +659,7 @@ int VSIMkdirRecursive(const char *pszPathname, long mode)
     {
         return VSI_ISDIR(sStat.st_mode) ? 0 : -1;
     }
-    const CPLString osParentPath(CPLGetPath(osPathname));
+    const std::string osParentPath(CPLGetPathSafe(osPathname));
 
     // Prevent crazy paths from recursing forever.
     if (osParentPath == osPathname ||
@@ -668,9 +668,9 @@ int VSIMkdirRecursive(const char *pszPathname, long mode)
         return -1;
     }
 
-    if (VSIStatL(osParentPath, &sStat) != 0)
+    if (VSIStatL(osParentPath.c_str(), &sStat) != 0)
     {
-        if (VSIMkdirRecursive(osParentPath, mode) != 0)
+        if (VSIMkdirRecursive(osParentPath.c_str(), mode) != 0)
             return -1;
     }
 

@@ -957,7 +957,7 @@ std::string IVSIS3LikeFSHandlerWithMultipartUpload::InitiateMultipartUpload(
         else
         {
             InvalidateCachedData(poS3HandleHelper->GetURL().c_str());
-            InvalidateDirContent(CPLGetDirname(osFilename.c_str()));
+            InvalidateDirContent(CPLGetDirnameSafe(osFilename.c_str()));
 
             CPLXMLNode *psNode =
                 CPLParseXMLString(requestHelper.sWriteFuncData.pBuffer);
@@ -1188,7 +1188,8 @@ void VSIMultipartWriteHandle::InvalidateParentDirectory()
     std::string osFilenameWithoutSlash(m_osFilename);
     if (!osFilenameWithoutSlash.empty() && osFilenameWithoutSlash.back() == '/')
         osFilenameWithoutSlash.pop_back();
-    m_poFS->InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
+    m_poFS->InvalidateDirContent(
+        CPLGetDirnameSafe(osFilenameWithoutSlash.c_str()));
 }
 
 /************************************************************************/
@@ -1831,7 +1832,7 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
         // If there's directory content for the directory where this file
         // belongs to, use it to detect if the object does not exist
         CachedDirList cachedDirList;
-        const std::string osDirname(CPLGetDirname(pszFilename));
+        const std::string osDirname(CPLGetDirnameSafe(pszFilename));
         if (STARTS_WITH_CI(osDirname.c_str(), GetFSPrefix().c_str()) &&
             GetCachedDirList(osDirname.c_str(), cachedDirList) &&
             cachedDirList.bGotFileList)
@@ -2260,7 +2261,7 @@ std::set<std::string> VSIS3FSHandler::DeleteObjects(const char *pszBucket,
                             InvalidateCachedData(
                                 (poS3HandleHelper->GetURL() + osKey).c_str());
 
-                            InvalidateDirContent(CPLGetDirname(
+                            InvalidateDirContent(CPLGetDirnameSafe(
                                 (GetFSPrefix() + pszBucket + "/" + osKey)
                                     .c_str()));
                         }
@@ -2628,7 +2629,8 @@ int IVSIS3LikeFSHandler::MkdirInternal(const char *pszDirname, long /*nMode*/,
         std::string osDirnameWithoutEndSlash(osDirname);
         osDirnameWithoutEndSlash.pop_back();
 
-        InvalidateDirContent(CPLGetDirname(osDirnameWithoutEndSlash.c_str()));
+        InvalidateDirContent(
+            CPLGetDirnameSafe(osDirnameWithoutEndSlash.c_str()));
 
         FileProp cachedFileProp;
         GetCachedFileProp(GetURLFromFilename(osDirname.c_str()).c_str(),
@@ -2742,7 +2744,8 @@ int IVSIS3LikeFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
     // If there's directory content for the directory where this file belongs
     // to, use it to detect if the object does not exist
     CachedDirList cachedDirList;
-    const std::string osDirname(CPLGetDirname(osFilenameWithoutSlash.c_str()));
+    const std::string osDirname(
+        CPLGetDirnameSafe(osFilenameWithoutSlash.c_str()));
     if (STARTS_WITH_CI(osDirname.c_str(), GetFSPrefix().c_str()) &&
         GetCachedDirList(osDirname.c_str(), cachedDirList) &&
         cachedDirList.bGotFileList)
@@ -3066,7 +3069,8 @@ int IVSIS3LikeFSHandler::CopyObject(const char *oldpath, const char *newpath,
                 osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() -
                                               1);
 
-            InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
+            InvalidateDirContent(
+                CPLGetDirnameSafe(osFilenameWithoutSlash.c_str()));
         }
 
         curl_easy_cleanup(hCurlHandle);
@@ -3166,7 +3170,8 @@ int IVSIS3LikeFSHandler::DeleteObject(const char *pszFilename)
                 osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() -
                                               1);
 
-            InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
+            InvalidateDirContent(
+                CPLGetDirnameSafe(osFilenameWithoutSlash.c_str()));
         }
 
         curl_easy_cleanup(hCurlHandle);
@@ -4966,7 +4971,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                     oSetKeysToRemove.insert(kv.first);
 
                     InvalidateCachedData(poS3HandleHelper->GetURL().c_str());
-                    InvalidateDirContent(CPLGetDirname(kv.first.c_str()));
+                    InvalidateDirContent(CPLGetDirnameSafe(kv.first.c_str()));
                 }
             }
         }

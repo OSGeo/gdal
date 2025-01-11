@@ -667,14 +667,14 @@ VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
     // Create.
     if (poFile == nullptr)
     {
-        const char *pszFileDir = CPLGetPath(osFilename.c_str());
-        if (VSIMkdirRecursive(pszFileDir, 0755) == -1)
+        const std::string osFileDir = CPLGetPathSafe(osFilename.c_str());
+        if (VSIMkdirRecursive(osFileDir.c_str(), 0755) == -1)
         {
             if (bSetError)
             {
                 VSIError(VSIE_FileError,
                          "Could not create directory %s for writing",
-                         pszFileDir);
+                         osFileDir.c_str());
             }
             errno = ENOENT;
             return nullptr;
@@ -1223,11 +1223,12 @@ VSILFILE *VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
     // ownership of pabyData.
     if (!osFilename.empty())
     {
-        const char *pszFileDir = CPLGetPath(osFilename.c_str());
-        if (VSIMkdirRecursive(pszFileDir, 0755) == -1)
+        const std::string osFileDir = CPLGetPathSafe(osFilename.c_str());
+        if (VSIMkdirRecursive(osFileDir.c_str(), 0755) == -1)
         {
             VSIError(VSIE_FileError,
-                     "Could not create directory %s for writing", pszFileDir);
+                     "Could not create directory %s for writing",
+                     osFileDir.c_str());
             errno = ENOENT;
             return nullptr;
         }

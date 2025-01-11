@@ -153,7 +153,8 @@ std::string CPLGetPathSafe(const char *pszFilename)
                 char *pszUnescaped =
                     CPLUnescapeString(aosTokens[i], nullptr, CPLES_URL);
                 char *pszPath = CPLEscapeString(
-                    CPLGetPath(pszUnescaped + strlen("url=")), -1, CPLES_URL);
+                    CPLGetPathSafe(pszUnescaped + strlen("url=")).c_str(), -1,
+                    CPLES_URL);
                 osRet += "url=";
                 osRet += pszPath;
                 CPLFree(pszPath);
@@ -1325,9 +1326,9 @@ char **CPLCorrespondingPaths(const char *pszOldFilename,
         return CSLAddString(nullptr, pszNewFilename);
     }
 
-    const CPLString osOldPath = CPLGetPath(pszOldFilename);
-    const CPLString osOldBasename = CPLGetBasename(pszOldFilename);
-    const CPLString osNewBasename = CPLGetBasename(pszNewFilename);
+    const std::string osOldPath = CPLGetPathSafe(pszOldFilename);
+    const std::string osOldBasename = CPLGetBasenameSafe(pszOldFilename);
+    const std::string osNewBasename = CPLGetBasenameSafe(pszNewFilename);
 
     /* -------------------------------------------------------------------- */
     /*      If the basename is changing, verify that all source files       */
@@ -1337,14 +1338,15 @@ char **CPLCorrespondingPaths(const char *pszOldFilename,
     {
         for (int i = 0; papszFileList[i] != nullptr; i++)
         {
-            if (osOldBasename == CPLGetBasename(papszFileList[i]))
+            if (osOldBasename == CPLGetBasenameSafe(papszFileList[i]))
                 continue;
 
-            const CPLString osFilePath = CPLGetPath(papszFileList[i]);
-            const CPLString osFileName = CPLGetFilename(papszFileList[i]);
+            const std::string osFilePath = CPLGetPathSafe(papszFileList[i]);
+            const std::string osFileName = CPLGetFilename(papszFileList[i]);
 
-            if (!EQUALN(osFileName, osOldBasename, osOldBasename.size()) ||
-                !EQUAL(osFilePath, osOldPath) ||
+            if (!EQUALN(osFileName.c_str(), osOldBasename.c_str(),
+                        osOldBasename.size()) ||
+                !EQUAL(osFilePath.c_str(), osOldPath.c_str()) ||
                 osFileName[osOldBasename.size()] != '.')
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1360,9 +1362,9 @@ char **CPLCorrespondingPaths(const char *pszOldFilename,
     /* -------------------------------------------------------------------- */
     if (osOldBasename != osNewBasename)
     {
-        const CPLString osOldExtra =
+        const std::string osOldExtra =
             CPLGetFilename(pszOldFilename) + osOldBasename.size();
-        const CPLString osNewExtra =
+        const std::string osNewExtra =
             CPLGetFilename(pszNewFilename) + osNewBasename.size();
 
         if (osOldExtra != osNewExtra)
@@ -1378,16 +1380,17 @@ char **CPLCorrespondingPaths(const char *pszOldFilename,
     /*      Generate the new filenames.                                     */
     /* -------------------------------------------------------------------- */
     char **papszNewList = nullptr;
-    const CPLString osNewPath = CPLGetPath(pszNewFilename);
+    const std::string osNewPath = CPLGetPathSafe(pszNewFilename);
 
     for (int i = 0; papszFileList[i] != nullptr; i++)
     {
-        const CPLString osOldFilename = CPLGetFilename(papszFileList[i]);
+        const std::string osOldFilename = CPLGetFilename(papszFileList[i]);
 
         const std::string osNewFilename =
             osOldBasename == osNewBasename
-                ? CPLFormFilenameSafe(osNewPath, osOldFilename, nullptr)
-                : CPLFormFilenameSafe(osNewPath, osNewBasename,
+                ? CPLFormFilenameSafe(osNewPath.c_str(), osOldFilename.c_str(),
+                                      nullptr)
+                : CPLFormFilenameSafe(osNewPath.c_str(), osNewBasename.c_str(),
                                       osOldFilename.c_str() +
                                           osOldBasename.size());
 
