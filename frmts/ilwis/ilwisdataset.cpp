@@ -684,9 +684,11 @@ GDALDataset *ILWISDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 1)
         return nullptr;
 
-    std::string sExt = CPLGetExtension(poOpenInfo->pszFilename);
-    if (!EQUAL(sExt.c_str(), "mpr") && !EQUAL(sExt.c_str(), "mpl"))
-        return nullptr;
+    {
+        const std::string &sExt = poOpenInfo->osExtension;
+        if (!EQUAL(sExt.c_str(), "mpr") && !EQUAL(sExt.c_str(), "mpl"))
+            return nullptr;
+    }
 
     if (!CheckASCII(poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes))
         return nullptr;
@@ -736,8 +738,8 @@ GDALDataset *ILWISDataset::Open(GDALOpenInfo *poOpenInfo)
             // of ILWIS raster maps,
             std::string sMapStoreName =
                 ReadElement("MapStore", "Data", sBandName);
-            sExt = CPLGetExtension(sMapStoreName.c_str());
-            if (!STARTS_WITH_CI(sExt.c_str(), "mp#"))
+            if (!STARTS_WITH_CI(
+                    CPLGetExtensionSafe(sMapStoreName.c_str()).c_str(), "mp#"))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Unsupported ILWIS data file. \n"

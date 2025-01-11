@@ -1405,7 +1405,7 @@ static CPLString FixupTableFilename(const CPLString &osFilename)
     {
         return osFilename;
     }
-    CPLString osExt = CPLGetExtension(osFilename);
+    CPLString osExt = CPLGetExtensionSafe(osFilename);
     if (!osExt.empty())
     {
         CPLString osTry(osFilename);

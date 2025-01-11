@@ -1873,7 +1873,7 @@ HFAHandle HFACreateLL(const char *pszFilename)
 
     // If an .ige or .rrd file exists with the same base name,
     // delete them.  (#1784)
-    CPLString osExtension = CPLGetExtension(pszFilename);
+    CPLString osExtension = CPLGetExtensionSafe(pszFilename);
     if (!EQUAL(osExtension, "rrd") && !EQUAL(osExtension, "aux"))
     {
         CPLString osPath = CPLGetPath(pszFilename);
@@ -2906,7 +2906,7 @@ const char *HFAGetIGEFilename(HFAHandle hHFA)
                 if (VSIStatL(osFullFilename, &sStatBuf) != 0)
                 {
                     const CPLString osExtension =
-                        CPLGetExtension(pszRawFilename);
+                        CPLGetExtensionSafe(pszRawFilename);
                     const CPLString osBasename =
                         CPLGetBasename(hHFA->pszFilename);
                     osFullFilename =
@@ -2955,10 +2955,11 @@ bool HFACreateSpillStack(HFAInfo_t *psInfo, int nXSize, int nYSize, int nLayers,
 
     if (psInfo->pszIGEFilename == nullptr)
     {
-        if (EQUAL(CPLGetExtension(psInfo->pszFilename), "rrd"))
+        const auto osExt = CPLGetExtensionSafe(psInfo->pszFilename);
+        if (EQUAL(osExt.c_str(), "rrd"))
             psInfo->pszIGEFilename =
                 CPLStrdup(CPLResetExtension(psInfo->pszFilename, "rde"));
-        else if (EQUAL(CPLGetExtension(psInfo->pszFilename), "aux"))
+        else if (EQUAL(osExt.c_str(), "aux"))
             psInfo->pszIGEFilename =
                 CPLStrdup(CPLResetExtension(psInfo->pszFilename, "axe"));
         else

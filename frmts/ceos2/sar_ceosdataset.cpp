@@ -1824,7 +1824,8 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     char *pszPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
     char *pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
-    char *pszExtension = CPLStrdup(CPLGetExtension(poOpenInfo->pszFilename));
+    char *pszExtension =
+        CPLStrdup(CPLGetExtensionSafe(poOpenInfo->pszFilename).c_str());
 
     int nBand;
     if (strlen(pszBasename) > 4)

@@ -6586,7 +6586,7 @@ void GTiffDataset::LoadMetadata()
         return;
     m_bIMDRPCMetadataLoaded = true;
 
-    if (EQUAL(CPLGetExtension(GetDescription()), "ovr"))
+    if (EQUAL(CPLGetExtensionSafe(GetDescription()).c_str(), "ovr"))
     {
         // Do not attempt to retrieve metadata files on .tif.ovr files.
         // For example the Pleiades metadata reader might wrongly associate a

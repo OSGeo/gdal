@@ -1134,7 +1134,8 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
                         {
                             while (*ptrDir)
                             {
-                                if (EQUAL(CPLGetExtension(*ptrDir), "GEN"))
+                                if (EQUAL(CPLGetExtensionSafe(*ptrDir).c_str(),
+                                          "GEN"))
                                 {
                                     bFound = 1;
                                     osGENFileName = CPLFormFilename(
@@ -1160,7 +1161,8 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
                         {
                             while (*ptrDir)
                             {
-                                if (EQUAL(CPLGetExtension(*ptrDir), "GEN") &&
+                                if (EQUAL(CPLGetExtensionSafe(*ptrDir).c_str(),
+                                          "GEN") &&
                                     EQUALN(CPLGetBasename(*ptrDir), osName, 6))
                                 {
                                     bFound = 1;
@@ -1480,7 +1482,7 @@ GDALDataset *SRPDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         CPLString osFileName(poOpenInfo->pszFilename);
 
-        if (EQUAL(CPLGetExtension(osFileName.c_str()), "THF"))
+        if (EQUAL(CPLGetExtensionSafe(osFileName.c_str()).c_str(), "THF"))
         {
 
             CPLDebug("SRP", "Read THF");
@@ -1521,7 +1523,7 @@ GDALDataset *SRPDataset::Open(GDALOpenInfo *poOpenInfo)
 
         if (bTHFWithSingleGEN
 #ifdef OPEN_GEN
-            || EQUAL(CPLGetExtension(osFileName.c_str()), "GEN")
+            || EQUAL(CPLGetExtensionSafe(osFileName.c_str()).c_str(), "GEN")
 #endif
         )
         {
@@ -1550,7 +1552,7 @@ GDALDataset *SRPDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
-        if (EQUAL(CPLGetExtension(osFileName.c_str()), "IMG"))
+        if (EQUAL(CPLGetExtensionSafe(osFileName.c_str()).c_str(), "IMG"))
         {
 
             osIMGFileName = osFileName;

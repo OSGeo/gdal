@@ -692,7 +692,7 @@ GDALDataset *JP2KAKDataset::Open(GDALOpenInfo *poOpenInfo)
     KakaduInitialize();
 
     // Handle setting up datasource for JPIP.
-    const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExtension = poOpenInfo->osExtension.c_str();
     std::vector<GByte> abySubfileHeader(16);  // leave in this scope
     if (poOpenInfo->nHeaderBytes < 16)
     {

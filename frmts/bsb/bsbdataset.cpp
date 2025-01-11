@@ -568,11 +568,11 @@ void BSBDataset::ScanForGCPs(bool isNos, const char *pszFilename)
 
 void BSBDataset::ScanForGCPsNos(const char *pszFilename)
 {
-    const char *extension = CPLGetExtension(pszFilename);
+    const std::string extension = CPLGetExtensionSafe(pszFilename);
 
     // pseudointelligently try and guess whether we want a .geo or a .GEO
     const char *geofile = nullptr;
-    if (extension[1] == 'O')
+    if (extension.size() >= 2 && extension[1] == 'O')
     {
         geofile = CPLResetExtension(pszFilename, "GEO");
     }

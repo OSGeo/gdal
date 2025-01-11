@@ -259,7 +259,7 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
         PIXEL
     } eInterleave = UNKNOWN;
 
-    const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExtension = poOpenInfo->osExtension.c_str();
     if (strcmp(pszExtension, "raw") == 0)
     {
         /* ------------------------------------------------------------ */
@@ -506,7 +506,7 @@ int ROIPACDataset::Identify(GDALOpenInfo *poOpenInfo)
     /*      Check if:                                                       */
     /*      * 1. The data file extension is known                           */
     /* -------------------------------------------------------------------- */
-    const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExtension = poOpenInfo->osExtension.c_str();
     if (strcmp(pszExtension, "raw") == 0)
     {
         /* Since gdal do not read natively CInt8, more work is needed
@@ -548,7 +548,8 @@ GDALDataset *ROIPACDataset::Create(const char *pszFilename, int nXSize,
     /* -------------------------------------------------------------------- */
     /*      Verify input options.                                           */
     /* -------------------------------------------------------------------- */
-    const char *pszExtension = CPLGetExtension(pszFilename);
+    const std::string osExtension = CPLGetExtensionSafe(pszFilename);
+    const char *pszExtension = osExtension.c_str();
     if (strcmp(pszExtension, "int") == 0 || strcmp(pszExtension, "slc") == 0)
     {
         if (nBandsIn != 1 || eType != GDT_CFloat32)

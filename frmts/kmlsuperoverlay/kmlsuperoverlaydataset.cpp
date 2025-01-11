@@ -569,7 +569,8 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     }
     else
     {
-        const char *extension = CPLGetExtension(pszFilename);
+        const std::string osExtension = CPLGetExtensionSafe(pszFilename);
+        const char *extension = osExtension.c_str();
         if (!EQUAL(extension, "kml") && !EQUAL(extension, "kmz"))
         {
             CPLError(CE_Failure, CPLE_None,
@@ -1681,7 +1682,7 @@ static int KmlSuperOverlayFindRegionStart(CPLXMLNode *psNode,
 int KmlSuperOverlayReadDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
-    const char *pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExt = poOpenInfo->osExtension.c_str();
     if (EQUAL(pszExt, "kmz"))
         return -1;
     if (poOpenInfo->nHeaderBytes == 0)
@@ -1746,7 +1747,8 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(GDALOpenInfo *poOpenInfo)
 static std::unique_ptr<GDALDataset>
 KmlSuperOverlayLoadIcon(const char *pszBaseFilename, const char *pszIcon)
 {
-    const char *pszExt = CPLGetExtension(pszIcon);
+    const std::string osExt = CPLGetExtensionSafe(pszIcon);
+    const char *pszExt = osExt.c_str();
     if (!EQUAL(pszExt, "png") && !EQUAL(pszExt, "jpg") &&
         !EQUAL(pszExt, "jpeg"))
     {
@@ -1812,8 +1814,7 @@ static bool KmlSuperOverlayComputeDepth(const std::string &osFilename,
             CPLGetXMLNode(psIter, "Region") != nullptr &&
             (pszHref = CPLGetXMLValue(psIter, "Link.href", nullptr)) != nullptr)
         {
-            const char *pszExt = CPLGetExtension(pszHref);
-            if (EQUAL(pszExt, "kml"))
+            if (EQUAL(CPLGetExtensionSafe(pszHref).c_str(), "kml"))
             {
                 CPLString osSubFilename;
                 if (STARTS_WITH(pszHref, "http"))
@@ -2580,8 +2581,7 @@ KmlSuperOverlayReadDataset::Open(const char *pszFilename,
     if (nRec == 2)
         return nullptr;
     CPLString osFilename(pszFilename);
-    const char *pszExt = CPLGetExtension(pszFilename);
-    if (EQUAL(pszExt, "kmz"))
+    if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "kmz"))
     {
         if (!STARTS_WITH(pszFilename, "/vsizip/"))
             osFilename = CPLSPrintf("/vsizip/%s", pszFilename);
@@ -2591,8 +2591,7 @@ KmlSuperOverlayReadDataset::Open(const char *pszFilename,
         char **papszIter = papszFiles;
         for (; *papszIter != nullptr; papszIter++)
         {
-            pszExt = CPLGetExtension(*papszIter);
-            if (EQUAL(pszExt, "kml"))
+            if (EQUAL(CPLGetExtensionSafe(*papszIter).c_str(), "kml"))
             {
                 osFilename = CPLFormFilename(osFilename, *papszIter, nullptr);
                 osFilename = KMLRemoveSlash(osFilename);

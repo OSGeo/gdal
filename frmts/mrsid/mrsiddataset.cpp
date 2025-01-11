@@ -1307,7 +1307,7 @@ CPLErr MrSIDDataset::OpenZoomLevel(lt_int32 iZoom)
     /*      projection                                                      */
     /* -------------------------------------------------------------------- */
     if (iZoom == 0 && m_oSRS.IsEmpty() &&
-        EQUAL(CPLGetExtension(GetDescription()), "sid"))
+        EQUAL(CPLGetExtensionSafe(GetDescription()).c_str(), "sid"))
     {
         const char *pszMETFilename = CPLResetExtension(GetDescription(), "met");
         VSILFILE *fp = VSIFOpenL(pszMETFilename, "rb");

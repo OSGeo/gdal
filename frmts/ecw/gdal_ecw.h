@@ -220,10 +220,11 @@ class VSIIOStream final : public CNCSJPCIOStream
         {
             osFilenameUsed = CPLGenerateTempFilename(nullptr);
             // try to preserve the extension.
-            if (strlen(CPLGetExtension(pszFilename)) > 0)
+            const auto osExt = CPLGetExtensionSafe(pszFilename);
+            if (!osExt.empty())
             {
                 osFilenameUsed += ".";
-                osFilenameUsed += CPLGetExtension(pszFilename);
+                osFilenameUsed += osExt;
             }
             CPLDebug("ECW",
                      "Using filename '%s' for temporary directory "

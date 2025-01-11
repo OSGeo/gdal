@@ -2119,7 +2119,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     // In case, there is no interleave keyword, we try to derive it from the
     // file extension.
     CPLString osInterleave = poDS->m_aosHeader.FetchNameValueDef(
-        "interleave", CPLGetExtension(poOpenInfo->pszFilename));
+        "interleave", poOpenInfo->osExtension.c_str());
 
     if (!STARTS_WITH_CI(osInterleave, "BSQ") &&
         !STARTS_WITH_CI(osInterleave, "BIP") &&

@@ -217,7 +217,7 @@ VSILFILE *FASTDataset::FOpenChannel(const char *pszBandname, int iBand,
 {
     const char *pszChannelFilename = nullptr;
     char *pszPrefix = CPLStrdup(CPLGetBasename(pszFilename));
-    char *pszSuffix = CPLStrdup(CPLGetExtension(pszFilename));
+    char *pszSuffix = CPLStrdup(CPLGetExtensionSafe(pszFilename).c_str());
 
     fpChannels[iBand] = nullptr;
 
@@ -663,7 +663,8 @@ GDALDataset *FASTDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 // See appendix F in
                 // http://www.euromap.de/download/p5fast_20050301.pdf
-                const CPLString osSuffix = CPLGetExtension(poDS->pszFilename);
+                const CPLString osSuffix =
+                    CPLGetExtensionSafe(poDS->pszFilename);
                 const char *papszBasenames[] = {"BANDF", "bandf", "BANDA",
                                                 "banda"};
                 for (int i = 0; i < 4; i++)

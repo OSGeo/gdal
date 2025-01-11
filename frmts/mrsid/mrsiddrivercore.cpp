@@ -48,7 +48,7 @@ int MrSIDJP2Identify(GDALOpenInfo *poOpenInfo)
 
     if (memcmp(poOpenInfo->pabyHeader, jpc_header, sizeof(jpc_header)) == 0)
     {
-        const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+        const char *pszExtension = poOpenInfo->osExtension.c_str();
 
         if (!EQUAL(pszExtension, "jpc") && !EQUAL(pszExtension, "j2k") &&
             !EQUAL(pszExtension, "jp2") && !EQUAL(pszExtension, "jpx") &&

@@ -329,7 +329,7 @@ char **SAGADataset::GetFileList()
     // Main data file, etc.
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    if (!EQUAL(CPLGetExtension(GetDescription()), "sg-grd-z"))
+    if (!EQUAL(CPLGetExtensionSafe(GetDescription()).c_str(), "sg-grd-z"))
     {
         // Header file.
         CPLString osFilename = CPLFormCIFilename(osPath, osName, ".sgrd");
@@ -409,16 +409,17 @@ GDALDataset *SAGADataset::Open(GDALOpenInfo *poOpenInfo)
     /*  We assume the user is pointing to the binary (i.e. .sdat) file or a */
     /*  compressed raster (.sg-grd-z) file.                                 */
     /* -------------------------------------------------------------------- */
-    CPLString osExtension(CPLGetExtension(poOpenInfo->pszFilename));
+    const auto &osExtension = poOpenInfo->osExtension;
 
-    if (!EQUAL(osExtension, "sdat") && !EQUAL(osExtension, "sg-grd-z"))
+    if (!EQUAL(osExtension.c_str(), "sdat") &&
+        !EQUAL(osExtension.c_str(), "sg-grd-z"))
     {
         return nullptr;
     }
 
     CPLString osPath, osFullname, osName, osHDRFilename;
 
-    if (EQUAL(osExtension, "sg-grd-z") &&
+    if (EQUAL(osExtension.c_str(), "sg-grd-z") &&
         !STARTS_WITH(poOpenInfo->pszFilename, "/vsizip"))
     {
         osPath = "/vsizip/{";
@@ -432,7 +433,7 @@ GDALDataset *SAGADataset::Open(GDALOpenInfo *poOpenInfo)
         CPLString file;
         for (int iFile = 0; filesinzip[iFile] != nullptr; iFile++)
         {
-            if (EQUAL(CPLGetExtension(filesinzip[iFile]), "sdat"))
+            if (EQUAL(CPLGetExtensionSafe(filesinzip[iFile]).c_str(), "sdat"))
             {
                 file = filesinzip[iFile];
                 break;

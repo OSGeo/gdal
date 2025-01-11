@@ -105,7 +105,7 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
         if (bCheckExt)
         {
             // Check by default.
-            const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+            const char *pszExtension = poOpenInfo->osExtension.c_str();
             if (!(EQUAL(pszExtension, "nc") || EQUAL(pszExtension, "cdf") ||
                   EQUAL(pszExtension, "nc2") || EQUAL(pszExtension, "nc4") ||
                   EQUAL(pszExtension, "nc3") || EQUAL(pszExtension, "grd") ||
@@ -154,7 +154,7 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
 
     // The HDF5 signature of netCDF 4 files can be at offsets 512, 1024, 2048,
     // etc.
-    const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExtension = poOpenInfo->osExtension.c_str();
     if (poOpenInfo->fpL != nullptr &&
         (!bCheckExt || EQUAL(pszExtension, "nc") ||
          EQUAL(pszExtension, "cdf") || EQUAL(pszExtension, "nc4") ||

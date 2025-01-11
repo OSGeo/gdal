@@ -1332,7 +1332,8 @@ char **ADRGDataset::GetGENListFromTHF(const char *pszFileName)
                 char *c = (char *)strchr(osSubFileName.c_str(), ' ');
                 if (c)
                     *c = 0;
-                if (EQUAL(CPLGetExtension(osSubFileName.c_str()), "GEN"))
+                if (EQUAL(CPLGetExtensionSafe(osSubFileName.c_str()).c_str(),
+                          "GEN"))
                 {
                     CPLDebug("ADRG", "Found GEN file in THF : %s",
                              osSubFileName.c_str());
@@ -1551,7 +1552,7 @@ GDALDataset *ADRGDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
 
         CPLString osFileName(poOpenInfo->pszFilename);
-        if (EQUAL(CPLGetExtension(osFileName.c_str()), "THF"))
+        if (EQUAL(CPLGetExtensionSafe(osFileName.c_str()).c_str(), "THF"))
         {
             char **papszFileNames = GetGENListFromTHF(osFileName.c_str());
             if (papszFileNames == nullptr)
@@ -1583,7 +1584,7 @@ GDALDataset *ADRGDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
-        if (EQUAL(CPLGetExtension(osFileName.c_str()), "GEN"))
+        if (EQUAL(CPLGetExtensionSafe(osFileName.c_str()).c_str(), "GEN"))
         {
             osGENFileName = osFileName;
 

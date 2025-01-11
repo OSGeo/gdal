@@ -133,8 +133,7 @@ int JP2KAKDatasetIdentify(GDALOpenInfo *poOpenInfo)
     else if (memcmp(poOpenInfo->pabyHeader, jpc_header, sizeof(jpc_header)) ==
              0)
     {
-        const char *const pszExtension =
-            CPLGetExtension(poOpenInfo->pszFilename);
+        const char *const pszExtension = poOpenInfo->osExtension.c_str();
         if (EQUAL(pszExtension, "jpc") || EQUAL(pszExtension, "j2k") ||
             EQUAL(pszExtension, "jp2") || EQUAL(pszExtension, "jpx") ||
             EQUAL(pszExtension, "j2c") || EQUAL(pszExtension, "jhc"))

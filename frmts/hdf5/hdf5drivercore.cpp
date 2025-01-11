@@ -34,7 +34,7 @@ int HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo)
     if (!poOpenInfo->pabyHeader)
         return FALSE;
 
-    const CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    const CPLString osExt(poOpenInfo->osExtension);
 
     const auto IsRecognizedByNetCDFDriver = [&osExt, poOpenInfo]()
     {

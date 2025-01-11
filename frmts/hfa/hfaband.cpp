@@ -233,7 +233,8 @@ CPLErr HFABand::LoadOverviews()
     HFAEntry *poBandProxyNode = poNode;
     HFAInfo_t *psOvHFA = psInfo;
 
-    if (nOverviews == 0 && EQUAL(CPLGetExtension(psInfo->pszFilename), "aux"))
+    if (nOverviews == 0 &&
+        EQUAL(CPLGetExtensionSafe(psInfo->pszFilename).c_str(), "aux"))
     {
         const CPLString osRRDFilename =
             CPLResetExtension(psInfo->pszFilename, "rrd");

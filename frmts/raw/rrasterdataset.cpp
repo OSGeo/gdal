@@ -1178,7 +1178,7 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
 
     CPLString osDirname(CPLGetDirname(poOpenInfo->pszFilename));
     CPLString osBasename(CPLGetBasename(poOpenInfo->pszFilename));
-    CPLString osGRDExtension(CPLGetExtension(poOpenInfo->pszFilename));
+    CPLString osGRDExtension(poOpenInfo->osExtension);
     CPLString osGRIExtension((osGRDExtension[0] == 'g') ? "gri" : "GRI");
     char **papszSiblings = poOpenInfo->GetSiblingFiles();
     if (papszSiblings)
@@ -1420,7 +1420,7 @@ GDALDataset *RRASTERDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    CPLString osGRDExtension(CPLGetExtension(pszFilename));
+    CPLString osGRDExtension(CPLGetExtensionSafe(pszFilename));
     if (!EQUAL(osGRDExtension, "grd"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,

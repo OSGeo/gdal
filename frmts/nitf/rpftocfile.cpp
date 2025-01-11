@@ -579,8 +579,9 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
         // some CADRG maps have legend name smaller than 8.3 then the extension
         // has blanks (0x20) at the end -> check only the first 3 letters of the
         // extension.
-        const char *fileExt = CPLGetExtension(frameEntry->filename);
-        if (EQUALN(fileExt, "ovr", 3) || EQUALN(fileExt, "lgd", 3))
+        const std::string fileExt = CPLGetExtensionSafe(frameEntry->filename);
+        if (EQUALN(fileExt.c_str(), "ovr", 3) ||
+            EQUALN(fileExt.c_str(), "lgd", 3))
         {
             entry->isOverviewOrLegend = TRUE;
         }

@@ -798,8 +798,6 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
     int nSkipped = 0;
     for (int nRawBand = 0; true; nRawBand++)
     {
-        const char *pszExtension = nullptr;
-
         /* Find the next raw band file. */
 
         int i = 0;  // Used after for.
@@ -808,11 +806,12 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
             if (!EQUAL(CPLGetBasename(papszDirFiles[i]), pszTargetBase))
                 continue;
 
-            pszExtension = CPLGetExtension(papszDirFiles[i]);
-            if (strlen(pszExtension) >= 2 &&
-                isdigit(static_cast<unsigned char>(pszExtension[1])) &&
-                atoi(pszExtension + 1) == nRawBand &&
-                strchr("bBcCiIjJrRxXzZ", pszExtension[0]) != nullptr)
+            const std::string osExtension =
+                CPLGetExtensionSafe(papszDirFiles[i]);
+            if (osExtension.size() >= 2 &&
+                isdigit(static_cast<unsigned char>(osExtension[1])) &&
+                atoi(osExtension.c_str() + 1) == nRawBand &&
+                strchr("bBcCiIjJrRxXzZ", osExtension[0]) != nullptr)
                 break;
         }
 
@@ -840,7 +839,7 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
             CSLAddString(poDS->m_papszFileList, pszRawFilename);
 
         GDALDataType eDataType = GDT_Unknown;
-        pszExtension = CPLGetExtension(papszDirFiles[i]);
+        const std::string osExt = CPLGetExtensionSafe(papszDirFiles[i]);
         if (pszRefinedType != nullptr)
         {
             if (EQUAL(pszRefinedType, "C*4"))
@@ -888,23 +887,23 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
                 continue;
             }
         }
-        else if (STARTS_WITH_CI(pszExtension, "b"))
+        else if (STARTS_WITH_CI(osExt.c_str(), "b"))
         {
             eDataType = GDT_Byte;
         }
-        else if (STARTS_WITH_CI(pszExtension, "i"))
+        else if (STARTS_WITH_CI(osExt.c_str(), "i"))
         {
             eDataType = GDT_UInt16;
         }
-        else if (STARTS_WITH_CI(pszExtension, "j"))
+        else if (STARTS_WITH_CI(osExt.c_str(), "j"))
         {
             eDataType = GDT_CInt16;
         }
-        else if (STARTS_WITH_CI(pszExtension, "r"))
+        else if (STARTS_WITH_CI(osExt.c_str(), "r"))
         {
             eDataType = GDT_Float32;
         }
-        else if (STARTS_WITH_CI(pszExtension, "x"))
+        else if (STARTS_WITH_CI(osExt.c_str(), "x"))
         {
             eDataType = GDT_CFloat32;
         }
@@ -913,7 +912,7 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLError(CE_Warning, CPLE_OpenFailed,
                      "Unable to open band %d because extension %s is not "
                      "handled.  Skipping.",
-                     nRawBand + 1, pszExtension);
+                     nRawBand + 1, osExt.c_str());
             nSkipped++;
             CPL_IGNORE_RET_VAL(VSIFCloseL(fpRaw));
             continue;

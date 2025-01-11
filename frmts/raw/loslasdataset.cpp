@@ -153,7 +153,7 @@ int LOSLASDataset::Identify(GDALOpenInfo *poOpenInfo)
         return FALSE;
 
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    const char *pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExt = poOpenInfo->osExtension.c_str();
     if (!EQUAL(pszExt, "las") && !EQUAL(pszExt, "los") && !EQUAL(pszExt, "geo"))
         return FALSE;
 #endif

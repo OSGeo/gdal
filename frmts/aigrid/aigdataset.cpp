@@ -659,8 +659,8 @@ GDALDataset *AIGDataset::Open(GDALOpenInfo *poOpenInfo)
     for (int iFile = 0; papszFiles != nullptr && papszFiles[iFile] != nullptr;
          iFile++)
     {
-        if (!EQUAL(CPLGetExtension(papszFiles[iFile]), "clr") &&
-            !EQUAL(CPLGetExtension(papszFiles[iFile]), "CLR"))
+        const std::string osExt = CPLGetExtensionSafe(papszFiles[iFile]);
+        if (!EQUAL(osExt.c_str(), "clr") && !EQUAL(osExt.c_str(), "CLR"))
             continue;
 
         osClrFilename =
@@ -874,12 +874,12 @@ static CPLErr AIGRename(const char *pszNewName, const char *pszOldName)
     /* -------------------------------------------------------------------- */
     CPLString osOldPath, osNewPath;
 
-    if (strlen(CPLGetExtension(pszNewName)) > 0)
+    if (!CPLGetExtensionSafe(pszNewName).empty())
         osNewPath = CPLGetPath(pszNewName);
     else
         osNewPath = pszNewName;
 
-    if (strlen(CPLGetExtension(pszOldName)) > 0)
+    if (!CPLGetExtensionSafe(pszOldName).empty())
         osOldPath = CPLGetPath(pszOldName);
     else
         osOldPath = pszOldName;
