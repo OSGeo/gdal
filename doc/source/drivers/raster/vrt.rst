@@ -1592,7 +1592,7 @@ configuration options:
 Linking mechanism to a Python interpreter
 *****************************************
 
-Currently only CPython 2 and 3 is supported. The GDAL shared object
+Currently only CPython 3 is supported. The GDAL shared object
 is not explicitly linked at build time to any of the CPython library. When GDAL
 will need to run Python code, it will first determine if the Python interpreter
 is loaded in the current process (which is the case if the program is a Python
@@ -1609,7 +1609,7 @@ directories of the PATH and will try to determine the related shared object
 (it will retry with "python3" if no "python" has been found). If the above
 was not successful, then a predefined list of shared objects names
 will be tried. At the time of writing, the order of versions searched is
-3.8, 3.9, 3.10, 3.11, 3.12, 3.7, 3.6, 3.5, 3.4, 3.3, 3.2. Enabling debug information (:config:`CPL_DEBUG=ON`) will
+3.8, 3.9, 3.10, 3.11, 3.12, 3.13, 3.7, 3.6, 3.5, 3.4, 3.3, 3.2. Enabling debug information (:config:`CPL_DEBUG=ON`) will
 show which Python version is used.
 
 Just-in-time compilation
