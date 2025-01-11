@@ -1675,14 +1675,16 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                                            &adfValuesForPixel[iSource++]);
         }
     }
-    CPLString osExpression(pszExpression);
-    if (osExpression.find("BANDS") != std::string::npos)
+
+    if (strstr(pszExpression, "BANDS"))
     {
         poExpression->RegisterVector("BANDS", &adfValuesForPixel);
     }
 
-    double *padfResults =
-        static_cast<double *>(CPLMalloc(nXSize * sizeof(double)));
+    std::unique_ptr<double, VSIFreeReleaser> padfResults(
+        static_cast<double *>(VSI_MALLOC2_VERBOSE(nXSize, sizeof(double))));
+    if (!padfResults)
+        return CE_Failure;
 
     /* ---- Set pixels ---- */
     size_t ii = 0;
@@ -1703,17 +1705,15 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
             }
             else
             {
-                padfResults[iCol] = poExpression->Results()[0];
+                padfResults.get()[iCol] = poExpression->Results()[0];
             }
         }
 
-        GDALCopyWords(padfResults, GDT_Float64, sizeof(double),
+        GDALCopyWords(padfResults.get(), GDT_Float64, sizeof(double),
                       static_cast<GByte *>(pData) +
                           static_cast<GSpacing>(nLineSpace) * iLine,
                       eBufType, nPixelSpace, nXSize);
     }
-
-    CPLFree(padfResults);
 
     /* ---- Return success ---- */
     return CE_None;
