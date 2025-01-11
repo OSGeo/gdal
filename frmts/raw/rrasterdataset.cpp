@@ -918,7 +918,7 @@ int RRASTERDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
     if (poOpenInfo->nHeaderBytes < 40 || poOpenInfo->fpL == nullptr ||
-        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "grd"))
+        !poOpenInfo->IsExtensionEqualToCI("grd"))
     {
         return FALSE;
     }

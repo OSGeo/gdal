@@ -28,7 +28,7 @@ int KEADriverIdentify(GDALOpenInfo *poOpenInfo)
         return 0;
     }
 
-    return EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "KEA");
+    return poOpenInfo->IsExtensionEqualToCI("KEA");
 }
 
 /************************************************************************/

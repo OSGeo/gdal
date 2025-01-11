@@ -150,7 +150,7 @@ int MAPDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
     if (poOpenInfo->nHeaderBytes < 200 ||
-        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MAP"))
+        !poOpenInfo->IsExtensionEqualToCI("MAP"))
         return FALSE;
 
     if (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),

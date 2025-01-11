@@ -648,7 +648,7 @@ int OGCAPIDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:"))
         return TRUE;
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "moaw"))
+    if (poOpenInfo->IsExtensionEqualToCI("moaw"))
         return TRUE;
     if (poOpenInfo->IsSingleAllowedDriver("OGCAPI"))
     {

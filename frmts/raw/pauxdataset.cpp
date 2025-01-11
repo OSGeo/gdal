@@ -597,7 +597,7 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
 
     CPLString osTarget = poOpenInfo->pszFilename;
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "aux") &&
+    if (poOpenInfo->IsExtensionEqualToCI("aux") &&
         STARTS_WITH_CI(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
                        "AuxilaryTarget: "))
     {

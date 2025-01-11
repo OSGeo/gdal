@@ -28,7 +28,7 @@ static GDALDataset *OGRSXFDriverOpen(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
 
     VSIStatBufL sStatBuf;
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "sxf") ||
+    if (!poOpenInfo->IsExtensionEqualToCI("sxf") ||
         VSIStatL(poOpenInfo->pszFilename, &sStatBuf) != 0 ||
         !VSI_ISREG(sStatBuf.st_mode))
         return nullptr;
@@ -51,8 +51,8 @@ static GDALDataset *OGRSXFDriverOpen(GDALOpenInfo *poOpenInfo)
 
 static int OGRSXFDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "sxf") ||
-        !poOpenInfo->bStatOK || poOpenInfo->bIsDirectory)
+    if (!poOpenInfo->IsExtensionEqualToCI("sxf") || !poOpenInfo->bStatOK ||
+        poOpenInfo->bIsDirectory)
     {
         return GDAL_IDENTIFY_FALSE;
     }

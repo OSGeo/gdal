@@ -2455,7 +2455,7 @@ static int GDALTileIndexDatasetIdentify(GDALOpenInfo *poOpenInfo)
             return GDAL_IDENTIFY_UNKNOWN;
         }
         else if (poOpenInfo->IsSingleAllowedDriver("GTI") &&
-                 EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "gpkg"))
+                 poOpenInfo->IsExtensionEqualToCI("gpkg"))
         {
             return true;
         }
@@ -2472,8 +2472,8 @@ static int GDALTileIndexDatasetIdentify(GDALOpenInfo *poOpenInfo)
             return true;
         }
         else if (poOpenInfo->IsSingleAllowedDriver("GTI") &&
-                 (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "fgb") ||
-                  EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "parquet")))
+                 (poOpenInfo->IsExtensionEqualToCI("fgb") ||
+                  poOpenInfo->IsExtensionEqualToCI("parquet")))
         {
             return true;
         }

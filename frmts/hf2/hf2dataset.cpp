@@ -381,7 +381,7 @@ int HF2Dataset::Identify(GDALOpenInfo *poOpenInfo)
     /*  GZipped .hf2 files are common, so automagically open them */
     /*  if the /vsigzip/ has not been explicitly passed */
     CPLString osFilename;  // keep in that scope
-    if ((EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "hfz") ||
+    if ((poOpenInfo->IsExtensionEqualToCI("hfz") ||
          (strlen(poOpenInfo->pszFilename) > 6 &&
           EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 6,
                 "hf2.gz"))) &&
@@ -425,7 +425,7 @@ GDALDataset *HF2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /*  GZipped .hf2 files are common, so automagically open them */
     /*  if the /vsigzip/ has not been explicitly passed */
     CPLString osFilename(poOpenInfo->pszFilename);
-    if ((EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "hfz") ||
+    if ((poOpenInfo->IsExtensionEqualToCI("hfz") ||
          (strlen(poOpenInfo->pszFilename) > 6 &&
           EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 6,
                 "hf2.gz"))) &&

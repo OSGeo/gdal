@@ -541,8 +541,7 @@ IdrisiDataset::~IdrisiDataset()
 GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
 {
     if ((poOpenInfo->fpL == nullptr) ||
-        (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), extRST) ==
-         FALSE))  // modified
+        (poOpenInfo->IsExtensionEqualToCI(extRST) == FALSE))  // modified
         return nullptr;
 
     // --------------------------------------------------------------------

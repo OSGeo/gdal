@@ -18,7 +18,7 @@
 
 static int OGRAVCE00DriverIdentify(GDALOpenInfo *poOpenInfo)
 {
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "E00"))
+    if (!poOpenInfo->IsExtensionEqualToCI("E00"))
         return FALSE;
 
     if (poOpenInfo->nHeaderBytes == 0)

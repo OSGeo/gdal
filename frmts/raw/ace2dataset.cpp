@@ -190,7 +190,7 @@ char **ACE2RasterBand::GetCategoryNames()
 int ACE2Dataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (!(EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ACE2") ||
+    if (!(poOpenInfo->IsExtensionEqualToCI("ACE2") ||
           strstr(poOpenInfo->pszFilename, ".ACE2.gz") ||
           strstr(poOpenInfo->pszFilename, ".ace2.gz")))
         return FALSE;

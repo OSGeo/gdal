@@ -2084,7 +2084,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     }
 
     // Has the user selected the .hdr file to open?
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "hdr"))
+    if (poOpenInfo->IsExtensionEqualToCI("hdr"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The selected file is an ENVI header file, but to "
@@ -2097,7 +2097,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     }
 
     // Has the user selected the .sta (stats) file to open?
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "sta"))
+    if (poOpenInfo->IsExtensionEqualToCI("sta"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The selected file is an ENVI statistics file. "

@@ -169,11 +169,11 @@ int PhPrfDataset::Identify(GDALOpenInfo *poOpenInfo)
         return FALSE;
     }
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), PH_PRF_EXT))
+    if (poOpenInfo->IsExtensionEqualToCI(PH_PRF_EXT))
     {
         return TRUE;
     }
-    else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), PH_DEM_EXT))
+    else if (poOpenInfo->IsExtensionEqualToCI(PH_DEM_EXT))
     {
         return TRUE;
     }
@@ -355,11 +355,11 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
 {
     ph_format eFormat;
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), PH_PRF_EXT))
+    if (poOpenInfo->IsExtensionEqualToCI(PH_PRF_EXT))
     {
         eFormat = ph_megatiff;
     }
-    else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), PH_DEM_EXT))
+    else if (poOpenInfo->IsExtensionEqualToCI(PH_DEM_EXT))
     {
         eFormat = ph_xdem;
     }

@@ -931,8 +931,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     const CPLString osName = CPLGetBasename(poOpenInfo->pszFilename);
 
     const char *pszHeaderExt = "hdr";
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "SRC") &&
-        osName.size() == 7 &&
+    if (poOpenInfo->IsExtensionEqualToCI("SRC") && osName.size() == 7 &&
         (osName[0] == 'e' || osName[0] == 'E' || osName[0] == 'w' ||
          osName[0] == 'W') &&
         (osName[4] == 'n' || osName[4] == 'N' || osName[4] == 's' ||
@@ -1159,7 +1158,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     // If the extension is FLT it is likely a floating point file.
     if (chPixelType == 'N')
     {
-        if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "FLT"))
+        if (poOpenInfo->IsExtensionEqualToCI("FLT"))
             chPixelType = 'F';
     }
 

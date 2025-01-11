@@ -40,7 +40,7 @@ int ECWDatasetIdentifyECW(GDALOpenInfo *poOpenInfo)
     /*      This has to either be a file on disk ending in .ecw or a        */
     /*      ecwp: protocol url.                                             */
     /* -------------------------------------------------------------------- */
-    if ((!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ecw") ||
+    if ((!poOpenInfo->IsExtensionEqualToCI("ecw") ||
          poOpenInfo->nHeaderBytes == 0) &&
         !STARTS_WITH_CI(poOpenInfo->pszFilename, "ecwp:") &&
         !STARTS_WITH_CI(poOpenInfo->pszFilename, "ecwps:"))

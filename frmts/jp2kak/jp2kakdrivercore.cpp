@@ -109,7 +109,7 @@ int JP2KAKDatasetIdentify(GDALOpenInfo *poOpenInfo)
         if ((STARTS_WITH_CI(poOpenInfo->pszFilename, "http://") ||
              STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") ||
              STARTS_WITH_CI(poOpenInfo->pszFilename, "jpip://")) &&
-            EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "jp2"))
+            poOpenInfo->IsExtensionEqualToCI("jp2"))
         {
 #ifdef USE_JPIP
             return TRUE;

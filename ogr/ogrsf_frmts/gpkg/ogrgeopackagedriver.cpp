@@ -216,7 +216,7 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
              && !EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input")
 #endif
              && !(STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") &&
-                  EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "zip")) &&
+                  poOpenInfo->IsExtensionEqualToCI("zip")) &&
              !STARTS_WITH(poOpenInfo->pszFilename, "/vsigzip/"))
     {
         if (bEmitWarning)

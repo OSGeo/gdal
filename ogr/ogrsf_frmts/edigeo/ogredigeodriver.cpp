@@ -27,7 +27,7 @@ static int OGREDIGEODriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
     return poOpenInfo->fpL != nullptr &&
-           EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "thf");
+           poOpenInfo->IsExtensionEqualToCI("thf");
 }
 
 /************************************************************************/

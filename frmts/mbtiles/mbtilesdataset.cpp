@@ -2015,7 +2015,7 @@ int MBTilesDataset::Identify(GDALOpenInfo *poOpenInfo)
     }
 #endif
 
-    if ((EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") ||
+    if ((poOpenInfo->IsExtensionEqualToCI("MBTILES") ||
          // Allow direct Amazon S3 signed URLs that contains .mbtiles in the
          // middle of the URL
          strstr(poOpenInfo->pszFilename, ".mbtiles") != nullptr) &&

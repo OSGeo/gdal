@@ -204,7 +204,7 @@ int GTXDataset::Identify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 40)
         return FALSE;
 
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "gtx"))
+    if (!poOpenInfo->IsExtensionEqualToCI("gtx"))
         return FALSE;
 
     return TRUE;

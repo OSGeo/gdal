@@ -667,7 +667,7 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 17 || poOpenInfo->fpL == nullptr)
         return nullptr;
 
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "hdr"))
+    if (!poOpenInfo->IsExtensionEqualToCI("hdr"))
         return nullptr;
 
     /* -------------------------------------------------------------------- */

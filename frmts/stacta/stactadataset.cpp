@@ -648,8 +648,7 @@ int STACTADataset::Identify(GDALOpenInfo *poOpenInfo)
 
     if (
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        (!bIsSingleDriver &&
-         !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "json")) ||
+        (!bIsSingleDriver && !poOpenInfo->IsExtensionEqualToCI("json")) ||
 #endif
         poOpenInfo->nHeaderBytes == 0)
     {

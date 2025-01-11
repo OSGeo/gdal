@@ -205,7 +205,7 @@ int JPEGXLDataset::Identify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->fpL == nullptr)
         return false;
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "jxl"))
+    if (poOpenInfo->IsExtensionEqualToCI("jxl"))
         return true;
 
     // See

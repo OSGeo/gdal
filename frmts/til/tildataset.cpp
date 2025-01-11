@@ -174,7 +174,7 @@ int TILDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
     if (poOpenInfo->nHeaderBytes < 200 ||
-        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "TIL"))
+        !poOpenInfo->IsExtensionEqualToCI("TIL"))
         return FALSE;
 
     if (strstr((const char *)poOpenInfo->pabyHeader, "numTiles") == nullptr)

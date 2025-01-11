@@ -547,7 +547,7 @@ int OGRGTFSDataset::Identify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
 
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "zip"))
+    if (!poOpenInfo->IsExtensionEqualToCI("zip"))
         return FALSE;
 
     // Check first filename in ZIP
