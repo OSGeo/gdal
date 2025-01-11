@@ -100,7 +100,7 @@ static int CPLFindFilenameStart(const char *pszFilename, size_t nStart = 0)
 }
 
 /************************************************************************/
-/*                             CPLGetPath()                             */
+/*                          CPLGetPathSafe()                            */
 /************************************************************************/
 
 /**
@@ -111,27 +111,23 @@ static int CPLFindFilenameStart(const char *pszFilename, size_t nStart = 0)
  * will be returned (not NULL).
  *
  * \code{.cpp}
- * CPLGetPath( "abc/def.xyz" ) == "abc"
- * CPLGetPath( "/abc/def/" ) == "/abc/def"
- * CPLGetPath( "/" ) == "/"
- * CPLGetPath( "/abc/def" ) == "/abc"
- * CPLGetPath( "abc" ) == ""
+ * CPLGetPathSafe( "abc/def.xyz" ) == "abc"
+ * CPLGetPathSafe( "/abc/def/" ) == "/abc/def"
+ * CPLGetPathSafe( "/" ) == "/"
+ * CPLGetPathSafe( "/abc/def" ) == "/abc"
+ * CPLGetPathSafe( "abc" ) == ""
  * \endcode
  *
  * @param pszFilename the filename potentially including a path.
  *
- *  @return Path in an internal string which must not be freed.  The string
- * may be destroyed by the next CPL filename handling call.  The returned
- * will generally not contain a trailing path separator.
+ * @return Path.
+ *
+ * @since 3.11
  */
 
-const char *CPLGetPath(const char *pszFilename)
+std::string CPLGetPathSafe(const char *pszFilename)
 
 {
-    char *pszStaticResult = CPLGetStaticResult();
-    if (pszStaticResult == nullptr)
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
     size_t nSuffixPos = 0;
     if (STARTS_WITH(pszFilename, "/vsicurl/http"))
     {
@@ -168,37 +164,71 @@ const char *CPLGetPath(const char *pszFilename)
                 osRet += aosTokens[i];
             }
         }
-        CPLStrlcpy(pszStaticResult, osRet.c_str(), CPL_PATH_BUF_SIZE);
-        return pszStaticResult;
+        return osRet;
     }
 
     const int iFileStart = CPLFindFilenameStart(pszFilename, nSuffixPos);
-    if (iFileStart >= CPL_PATH_BUF_SIZE)
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    CPLAssert(!(pszFilename >= pszStaticResult &&
-                pszFilename < pszStaticResult + CPL_PATH_BUF_SIZE));
-
     if (iFileStart == 0)
     {
-        strcpy(pszStaticResult, "");
-        return pszStaticResult;
+        return std::string();
     }
 
-    CPLStrlcpy(pszStaticResult, pszFilename,
-               static_cast<size_t>(iFileStart) + 1);
+    std::string osRet(pszFilename, iFileStart);
 
-    if (iFileStart > 1 && (pszStaticResult[iFileStart - 1] == '/' ||
-                           pszStaticResult[iFileStart - 1] == '\\'))
-        pszStaticResult[iFileStart - 1] = '\0';
+    if (iFileStart > 1 && (osRet.back() == '/' || osRet.back() == '\\'))
+        osRet.pop_back();
 
     if (nSuffixPos)
     {
-        if (CPLStrlcat(pszStaticResult, pszFilename + nSuffixPos,
-                       CPL_PATH_BUF_SIZE) >= CPL_PATH_BUF_SIZE)
-            return CPLStaticBufferTooSmall(pszStaticResult);
+        osRet += (pszFilename + nSuffixPos);
     }
 
+    return osRet;
+}
+
+/************************************************************************/
+/*                             CPLGetPath()                             */
+/************************************************************************/
+
+/**
+ * Extract directory path portion of filename.
+ *
+ * Returns a string containing the directory path portion of the passed
+ * filename.  If there is no path in the passed filename an empty string
+ * will be returned (not NULL).
+ *
+ * \code{.cpp}
+ * CPLGetPath( "abc/def.xyz" ) == "abc"
+ * CPLGetPath( "/abc/def/" ) == "/abc/def"
+ * CPLGetPath( "/" ) == "/"
+ * CPLGetPath( "/abc/def" ) == "/abc"
+ * CPLGetPath( "abc" ) == ""
+ * \endcode
+ *
+ * @param pszFilename the filename potentially including a path.
+ *
+ * @return Path in an internal string which must not be freed.  The string
+ * may be destroyed by the next CPL filename handling call.  The returned
+ * will generally not contain a trailing path separator.
+ *
+ * @deprecated If using C++, prefer using CPLGetPathSafe() instead
+ */
+
+const char *CPLGetPath(const char *pszFilename)
+
+{
+    const std::string osRes(CPLGetPathSafe(pszFilename));
+    if (osRes.size() >= CPL_PATH_BUF_SIZE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too long result for CPLGetPath()");
+        return "";
+    }
+
+    char *pszStaticResult = CPLGetStaticResult();
+    if (pszStaticResult == nullptr)
+        return CPLStaticBufferTooSmall(pszStaticResult);
+    memcpy(pszStaticResult, osRes.c_str(), osRes.size() + 1);
     return pszStaticResult;
 }
 
@@ -214,27 +244,23 @@ const char *CPLGetPath(const char *pszFilename)
  * returned.  It is the only difference from CPLGetPath().
  *
  * \code{.cpp}
- * CPLGetDirname( "abc/def.xyz" ) == "abc"
- * CPLGetDirname( "/abc/def/" ) == "/abc/def"
- * CPLGetDirname( "/" ) == "/"
- * CPLGetDirname( "/abc/def" ) == "/abc"
- * CPLGetDirname( "abc" ) == "."
+ * CPLGetDirnameSafe( "abc/def.xyz" ) == "abc"
+ * CPLGetDirnameSafe( "/abc/def/" ) == "/abc/def"
+ * CPLGetDirnameSafe( "/" ) == "/"
+ * CPLGetDirnameSafe( "/abc/def" ) == "/abc"
+ * CPLGetDirnameSafe( "abc" ) == "."
  * \endcode
  *
  * @param pszFilename the filename potentially including a path.
  *
- * @return Path in an internal string which must not be freed.  The string
- * may be destroyed by the next CPL filename handling call.  The returned
- * will generally not contain a trailing path separator.
+ * @return Path
+ *
+ * @since 3.11
  */
 
-const char *CPLGetDirname(const char *pszFilename)
+std::string CPLGetDirnameSafe(const char *pszFilename)
 
 {
-    char *pszStaticResult = CPLGetStaticResult();
-    if (pszStaticResult == nullptr)
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
     size_t nSuffixPos = 0;
     if (STARTS_WITH(pszFilename, "/vsicurl/http"))
     {
@@ -272,37 +298,69 @@ const char *CPLGetDirname(const char *pszFilename)
                 osRet += aosTokens[i];
             }
         }
-        CPLStrlcpy(pszStaticResult, osRet.c_str(), CPL_PATH_BUF_SIZE);
-        return pszStaticResult;
+        return osRet;
     }
 
     const int iFileStart = CPLFindFilenameStart(pszFilename, nSuffixPos);
-    if (iFileStart >= CPL_PATH_BUF_SIZE)
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    CPLAssert(!(pszFilename >= pszStaticResult &&
-                pszFilename < pszStaticResult + CPL_PATH_BUF_SIZE));
-
     if (iFileStart == 0)
     {
-        strcpy(pszStaticResult, ".");
-        return pszStaticResult;
+        return std::string(".");
     }
 
-    CPLStrlcpy(pszStaticResult, pszFilename,
-               static_cast<size_t>(iFileStart) + 1);
+    std::string osRet(pszFilename, iFileStart);
 
-    if (iFileStart > 1 && (pszStaticResult[iFileStart - 1] == '/' ||
-                           pszStaticResult[iFileStart - 1] == '\\'))
-        pszStaticResult[iFileStart - 1] = '\0';
+    if (iFileStart > 1 && (osRet.back() == '/' || osRet.back() == '\\'))
+        osRet.pop_back();
 
     if (nSuffixPos)
     {
-        if (CPLStrlcat(pszStaticResult, pszFilename + nSuffixPos,
-                       CPL_PATH_BUF_SIZE) >= CPL_PATH_BUF_SIZE)
-            return CPLStaticBufferTooSmall(pszStaticResult);
+        osRet += (pszFilename + nSuffixPos);
     }
 
+    return osRet;
+}
+
+/************************************************************************/
+/*                             CPLGetDirname()                          */
+/************************************************************************/
+
+/**
+ * Extract directory path portion of filename.
+ *
+ * Returns a string containing the directory path portion of the passed
+ * filename.  If there is no path in the passed filename the dot will be
+ * returned.  It is the only difference from CPLGetPath().
+ *
+ * \code{.cpp}
+ * CPLGetDirname( "abc/def.xyz" ) == "abc"
+ * CPLGetDirname( "/abc/def/" ) == "/abc/def"
+ * CPLGetDirname( "/" ) == "/"
+ * CPLGetDirname( "/abc/def" ) == "/abc"
+ * CPLGetDirname( "abc" ) == "."
+ * \endcode
+ *
+ * @param pszFilename the filename potentially including a path.
+ *
+ * @return Path in an internal string which must not be freed.  The string
+ * may be destroyed by the next CPL filename handling call.  The returned
+ * will generally not contain a trailing path separator.
+ */
+
+const char *CPLGetDirname(const char *pszFilename)
+
+{
+    const std::string osRes(CPLGetDirnameSafe(pszFilename));
+    if (osRes.size() >= CPL_PATH_BUF_SIZE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too long result for CPLGetDirname()");
+        return "";
+    }
+
+    char *pszStaticResult = CPLGetStaticResult();
+    if (pszStaticResult == nullptr)
+        return CPLStaticBufferTooSmall(pszStaticResult);
+    memcpy(pszStaticResult, osRes.c_str(), osRes.size() + 1);
     return pszStaticResult;
 }
 
@@ -338,6 +396,49 @@ const char *CPLGetFilename(const char *pszFullFilename)
 }
 
 /************************************************************************/
+/*                       CPLGetBasenameSafe()                           */
+/************************************************************************/
+
+/**
+ * Extract basename (non-directory, non-extension) portion of filename.
+ *
+ * Returns a string containing the file basename portion of the passed
+ * name.  If there is no basename (passed value ends in trailing directory
+ * separator, or filename starts with a dot) an empty string is returned.
+ *
+ * \code{.cpp}
+ * CPLGetBasename( "abc/def.xyz" ) == "def"
+ * CPLGetBasename( "abc/def" ) == "def"
+ * CPLGetBasename( "abc/def/" ) == ""
+ * \endcode
+ *
+ * @param pszFullFilename the full filename potentially including a path.
+ *
+ * @return just the non-directory, non-extension portion of the path
+ *
+ * @since 3.11
+ */
+
+std::string CPLGetBasenameSafe(const char *pszFullFilename)
+
+{
+    const size_t iFileStart =
+        static_cast<size_t>(CPLFindFilenameStart(pszFullFilename));
+
+    size_t iExtStart = strlen(pszFullFilename);
+    for (; iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
+         iExtStart--)
+    {
+    }
+
+    if (iExtStart == iFileStart)
+        iExtStart = strlen(pszFullFilename);
+
+    const size_t nLength = iExtStart - iFileStart;
+    return std::string(pszFullFilename + iFileStart, nLength);
+}
+
+/************************************************************************/
 /*                           CPLGetBasename()                           */
 /************************************************************************/
 
@@ -359,20 +460,59 @@ const char *CPLGetFilename(const char *pszFullFilename)
  * @return just the non-directory, non-extension portion of the path in
  * an internal string which must not be freed.  The string
  * may be destroyed by the next CPL filename handling call.
+ *
+ * @deprecated If using C++, prefer using CPLGetBasenameSafe() instead
  */
 
 const char *CPLGetBasename(const char *pszFullFilename)
 
 {
-    const size_t iFileStart =
-        static_cast<size_t>(CPLFindFilenameStart(pszFullFilename));
+    const std::string osRes(CPLGetBasenameSafe(pszFullFilename));
+    if (osRes.size() >= CPL_PATH_BUF_SIZE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too long result for CPLGetBasename()");
+        return "";
+    }
+
     char *pszStaticResult = CPLGetStaticResult();
     if (pszStaticResult == nullptr)
         return CPLStaticBufferTooSmall(pszStaticResult);
+    memcpy(pszStaticResult, osRes.c_str(), osRes.size() + 1);
+    return pszStaticResult;
+}
 
-    CPLAssert(!(pszFullFilename >= pszStaticResult &&
-                pszFullFilename < pszStaticResult + CPL_PATH_BUF_SIZE));
+/************************************************************************/
+/*                        CPLGetExtensionSafe()                         */
+/************************************************************************/
 
+/**
+ * Extract filename extension from full filename.
+ *
+ * Returns a string containing the extension portion of the passed
+ * name.  If there is no extension (the filename has no dot) an empty string
+ * is returned.  The returned extension will not include the period.
+ *
+ * \code{.cpp}
+ * CPLGetExtensionSafe( "abc/def.xyz" ) == "xyz"
+ * CPLGetExtensionSafe( "abc/def" ) == ""
+ * \endcode
+ *
+ * @param pszFullFilename the full filename potentially including a path.
+ *
+ * @return just the extension portion of the path.
+ *
+ * @since 3.11
+ */
+
+std::string CPLGetExtensionSafe(const char *pszFullFilename)
+
+{
+    if (pszFullFilename[0] == '\0')
+        return std::string();
+
+    size_t iFileStart =
+        static_cast<size_t>(CPLFindFilenameStart(pszFullFilename));
     size_t iExtStart = strlen(pszFullFilename);
     for (; iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
          iExtStart--)
@@ -380,16 +520,15 @@ const char *CPLGetBasename(const char *pszFullFilename)
     }
 
     if (iExtStart == iFileStart)
-        iExtStart = strlen(pszFullFilename);
+        iExtStart = strlen(pszFullFilename) - 1;
 
-    const size_t nLength = iExtStart - iFileStart;
+    // If the extension is too long, it is very much likely not an extension,
+    // but another component of the path
+    const size_t knMaxExtensionSize = 10;
+    if (strlen(pszFullFilename + iExtStart + 1) > knMaxExtensionSize)
+        return "";
 
-    if (nLength >= static_cast<size_t>(CPL_PATH_BUF_SIZE))
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    CPLStrlcpy(pszStaticResult, pszFullFilename + iFileStart, nLength + 1);
-
-    return pszStaticResult;
+    return std::string(pszFullFilename + iExtStart + 1);
 }
 
 /************************************************************************/
@@ -413,42 +552,25 @@ const char *CPLGetBasename(const char *pszFullFilename)
  * @return just the extension portion of the path in
  * an internal string which must not be freed.  The string
  * may be destroyed by the next CPL filename handling call.
+ *
+ * @deprecated If using C++, prefer using CPLGetExtensionSafe() instead
  */
 
 const char *CPLGetExtension(const char *pszFullFilename)
 
 {
-    if (pszFullFilename[0] == '\0')
+    const std::string osRes(CPLGetExtensionSafe(pszFullFilename));
+    if (osRes.size() >= CPL_PATH_BUF_SIZE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too long result for CPLGetExtension()");
         return "";
+    }
 
-    size_t iFileStart =
-        static_cast<size_t>(CPLFindFilenameStart(pszFullFilename));
     char *pszStaticResult = CPLGetStaticResult();
     if (pszStaticResult == nullptr)
         return CPLStaticBufferTooSmall(pszStaticResult);
-
-    CPLAssert(!(pszFullFilename >= pszStaticResult &&
-                pszFullFilename < pszStaticResult + CPL_PATH_BUF_SIZE));
-
-    size_t iExtStart = strlen(pszFullFilename);
-    for (; iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
-         iExtStart--)
-    {
-    }
-
-    if (iExtStart == iFileStart)
-        iExtStart = strlen(pszFullFilename) - 1;
-
-    // If the extension is too long, it is very much likely not an extension,
-    // but another component of the path
-    const size_t knMaxExtensionSize = 10;
-    if (strlen(pszFullFilename + iExtStart + 1) > knMaxExtensionSize)
-        return "";
-
-    if (CPLStrlcpy(pszStaticResult, pszFullFilename + iExtStart + 1,
-                   CPL_PATH_BUF_SIZE) >= static_cast<size_t>(CPL_PATH_BUF_SIZE))
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
+    memcpy(pszStaticResult, osRes.c_str(), osRes.size() + 1);
     return pszStaticResult;
 }
 

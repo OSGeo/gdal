@@ -183,6 +183,11 @@ CPLCleanTrailingSlash(const char *) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 
 extern "C++"
 {
+    std::string CPL_DLL CPLGetPathSafe(const char *) CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLGetDirnameSafe(const char *) CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLGetBasenameSafe(const char *) CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLGetExtensionSafe(const char *)
+        CPL_WARN_UNUSED_RESULT;
     std::string CPL_DLL CPLFormFilenameSafe(
         const char *pszPath, const char *pszBasename,
         const char *pszExtension = nullptr) CPL_WARN_UNUSED_RESULT;
