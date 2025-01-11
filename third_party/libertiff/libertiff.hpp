@@ -1217,6 +1217,12 @@ class Image
         uint64_t offset = imageOffset;
         if LIBERTIFF_CONSTEXPR (isBigTIFF)
         {
+            // To prevent unsigned integer overflows in later additions. The
+            // theoretical max should be much closer to UINT64_MAX, but half of
+            // it is already more than needed in practice :-)
+            if (offset >= std::numeric_limits<uint64_t>::max() / 2)
+                return nullptr;
+
             const auto tagCount64Bit = rc->read<uint64_t>(offset, ok);
             // Artificially limit to the same number of entries as ClassicTIFF
             if (tagCount64Bit > std::numeric_limits<uint16_t>::max())
