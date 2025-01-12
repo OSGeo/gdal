@@ -1416,7 +1416,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     // XML
     std::string osNoiseLevelsValues;
 
-    const CPLString osPath = CPLGetPath(osMDFilename);
+    const CPLString osPath = CPLGetPathSafe(osMDFilename);
 
     /* Get a list of all polarizations */
     CPLXMLNode *psSourceAttrs =

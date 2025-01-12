@@ -768,7 +768,7 @@ bool ZarrV3Array::FlushDirtyTile() const
 
     if (m_osDimSeparator == "/")
     {
-        std::string osDir = CPLGetDirname(osFilename.c_str());
+        std::string osDir = CPLGetDirnameSafe(osFilename.c_str());
         VSIStatBufL sStat;
         if (VSIStatL(osDir.c_str(), &sStat) != 0)
         {

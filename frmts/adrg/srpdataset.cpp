@@ -579,8 +579,9 @@ bool SRPDataset::GetFromRecord(const char *pszFileName, DDFRecord *record)
     /*      Open the .IMG file.  Try to recover gracefully if the case      */
     /*      of the filename is wrong.                                       */
     /* -------------------------------------------------------------------- */
-    const CPLString osDirname = CPLGetDirname(pszFileName);
-    const CPLString osImgName = CPLFormCIFilename(osDirname, osBAD, nullptr);
+    const CPLString osDirname = CPLGetDirnameSafe(pszFileName);
+    const CPLString osImgName =
+        CPLFormCIFilenameSafe(osDirname, osBAD, nullptr);
 
     fdIMG = VSIFOpenL(osImgName, "rb");
     if (fdIMG == nullptr)
@@ -670,7 +671,7 @@ bool SRPDataset::GetFromRecord(const char *pszFileName, DDFRecord *record)
     /* -------------------------------------------------------------------- */
     /*      Try to collect a color map from the .QAL file.                  */
     /* -------------------------------------------------------------------- */
-    const CPLString osBasename = CPLGetBasename(pszFileName);
+    const CPLString osBasename = CPLGetBasenameSafe(pszFileName);
     osQALFileName = CPLFormCIFilename(osDirname, osBasename, "QAL");
 
     DDFModule oQALModule;
@@ -1584,7 +1585,7 @@ GDALDataset *SRPDataset::Open(GDALOpenInfo *poOpenInfo)
             // --------------------------------------------------------------------
             VSIStatBufL sStatBuf;
 
-            CPLString basename = CPLGetBasename(osFileName);
+            CPLString basename = CPLGetBasenameSafe(osFileName);
             if (basename.size() != 8)
             {
                 CPLDebug("SRP", "Invalid basename file");
@@ -1593,7 +1594,7 @@ GDALDataset *SRPDataset::Open(GDALOpenInfo *poOpenInfo)
 
             nRecordIndex = static_cast<int>(CPLScanLong(basename + 6, 2));
 
-            CPLString path = CPLGetDirname(osFileName);
+            CPLString path = CPLGetDirnameSafe(osFileName);
             CPLString basename01 = ResetTo01(basename);
             osFileName = CPLFormFilename(path, basename01, ".IMG");
 

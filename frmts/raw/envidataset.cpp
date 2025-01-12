@@ -2034,7 +2034,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     else
     {
         // Now we need to tear apart the filename to form a .HDR filename.
-        CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
+        CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
         CPLString osName = CPLGetFilename(poOpenInfo->pszFilename);
 
         // First try hdr as an extra extension

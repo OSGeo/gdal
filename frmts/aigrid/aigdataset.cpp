@@ -653,7 +653,7 @@ GDALDataset *AIGDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     char **papszFiles = VSIReadDir(psInfo->pszCoverName);
     CPLString osClrFilename;
-    CPLString osCleanPath = CPLCleanTrailingSlash(psInfo->pszCoverName);
+    CPLString osCleanPath = CPLCleanTrailingSlashSafe(psInfo->pszCoverName);
 
     // first check for any .clr in coverage dir.
     for (int iFile = 0; papszFiles != nullptr && papszFiles[iFile] != nullptr;

@@ -647,7 +647,8 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
                         }
                         else
                         {
-                            CPLString osPath = CPLGetPath(osMDFilename.c_str());
+                            CPLString osPath =
+                                CPLGetPathSafe(osMDFilename.c_str());
                             osDIMAPFilename =
                                 CPLFormFilename(osPath, pszHref, nullptr);
                         }
@@ -659,7 +660,8 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
                         if (strlen(pszDataFileHref) > 0)
                         {
-                            CPLString osPath = CPLGetPath(osMDFilename.c_str());
+                            CPLString osPath =
+                                CPLGetPathSafe(osMDFilename.c_str());
                             osImageDSFilename = CPLFormFilename(
                                 osPath, pszDataFileHref, nullptr);
                         }
@@ -709,7 +711,8 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
                     if (strlen(pszHref) > 0)  // STRIP product found.
                     {
-                        CPLString osPath = CPLGetPath(osDIMAPFilename.c_str());
+                        CPLString osPath =
+                            CPLGetPathSafe(osDIMAPFilename.c_str());
                         osSTRIPFilename =
                             CPLFormCIFilename(osPath, pszHref, nullptr);
                         if (VSIStatL(osSTRIPFilename, &sStat) == 0)
@@ -740,7 +743,8 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
                     if (strlen(pszHref) > 0)  // RPC product found.
                     {
-                        CPLString osPath = CPLGetPath(osDIMAPFilename.c_str());
+                        CPLString osPath =
+                            CPLGetPathSafe(osDIMAPFilename.c_str());
                         osRPCFilename =
                             CPLFormCIFilename(osPath, pszHref, nullptr);
 
@@ -803,8 +807,8 @@ int DIMAPDataset::ReadImageInformation()
 
     const char *pszHref =
         CPLGetXMLValue(psDoc, "Data_Access.Data_File.DATA_FILE_PATH.href", "");
-    CPLString osPath = CPLGetPath(osMDFilename);
-    CPLString osImageFilename = CPLFormFilename(osPath, pszHref, nullptr);
+    CPLString osPath = CPLGetPathSafe(osMDFilename);
+    CPLString osImageFilename = CPLFormFilenameSafe(osPath, pszHref, nullptr);
 
     /* -------------------------------------------------------------------- */
     /*      Try and open the file.                                          */
@@ -1154,7 +1158,7 @@ int DIMAPDataset::ReadImageInformation2()
     int nImageDSRow = 1, nImageDSCol = 1;
     if (psDataFiles)
     {
-        const CPLString osPath = CPLGetPath(osDIMAPFilename);
+        const CPLString osPath = CPLGetPathSafe(osDIMAPFilename);
         for (int nPart = 0; psDataFiles != nullptr;
              psDataFiles = psDataFiles->psNext, nPart++)
         {

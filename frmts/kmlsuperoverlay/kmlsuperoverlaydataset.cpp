@@ -2383,7 +2383,7 @@ GDALDataset *KmlSingleDocRasterDataset::Open(const char *pszFilename,
         return nullptr;
 
     std::vector<KmlSingleDocRasterTilesDesc> aosDescs;
-    CPLString osDirname = CPLGetPath(osFilename);
+    CPLString osDirname = CPLGetPathSafe(osFilename);
     KmlSingleDocCollectTiles(psRootFolder, aosDescs, osDirname);
     if (aosDescs.empty())
         return nullptr;

@@ -117,7 +117,7 @@ static CPLString getXMLFilename(GDALOpenInfo *poOpenInfo)
         /*      We need to tear apart the filename to form a .xml       */
         /*      filename.                                               */
         /* ------------------------------------------------------------ */
-        const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
+        const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
         const CPLString osName = CPLGetFilename(poOpenInfo->pszFilename);
 
         const int iFile =

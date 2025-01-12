@@ -204,7 +204,7 @@ GDALDataset *TILDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    CPLString osDirname = CPLGetDirname(poOpenInfo->pszFilename);
+    CPLString osDirname = CPLGetDirnameSafe(poOpenInfo->pszFilename);
 
     // get metadata reader
 
@@ -291,7 +291,7 @@ GDALDataset *TILDataset::Open(GDALOpenInfo *poOpenInfo)
     if (pszFilename[strlen(pszFilename) - 1] == '"')
         const_cast<char *>(pszFilename)[strlen(pszFilename) - 1] = '\0';
 
-    CPLString osFilename = CPLFormFilename(osDirname, pszFilename, nullptr);
+    CPLString osFilename = CPLFormFilenameSafe(osDirname, pszFilename, nullptr);
     GDALDataset *poTemplateDS =
         GDALDataset::FromHandle(GDALOpen(osFilename, GA_ReadOnly));
     if (poTemplateDS == nullptr || poTemplateDS->GetRasterCount() == 0)

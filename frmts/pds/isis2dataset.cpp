@@ -232,7 +232,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (pszQube[0] == '"')
     {
-        const CPLString osTPath = CPLGetPath(poOpenInfo->pszFilename);
+        const CPLString osTPath = CPLGetPathSafe(poOpenInfo->pszFilename);
         CPLString osFilename = pszQube;
         poDS->CleanString(osFilename);
         osTargetFile = CPLFormCIFilename(osTPath, osFilename, nullptr);
@@ -240,7 +240,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else if (pszQube[0] == '(')
     {
-        const CPLString osTPath = CPLGetPath(poOpenInfo->pszFilename);
+        const CPLString osTPath = CPLGetPathSafe(poOpenInfo->pszFilename);
         CPLString osFilename = poDS->GetKeywordSub("^QUBE", 1, "");
         poDS->CleanString(osFilename);
         osTargetFile = CPLFormCIFilename(osTPath, osFilename, nullptr);
@@ -714,8 +714,8 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for a .prj file. For isis2 I would like to keep this in   */
     /* -------------------------------------------------------------------- */
-    const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
-    const CPLString osName = CPLGetBasename(poOpenInfo->pszFilename);
+    const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
+    const CPLString osName = CPLGetBasenameSafe(poOpenInfo->pszFilename);
     const char *pszPrjFile = CPLFormCIFilename(osPath, osName, "prj");
 
     VSILFILE *fp = VSIFOpenL(pszPrjFile, "r");

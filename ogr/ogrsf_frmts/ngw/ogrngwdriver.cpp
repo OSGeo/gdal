@@ -277,7 +277,7 @@ static GDALDataset *OGRNGWDriverCreateCopy(const char *pszFilename,
         // Compress to minimize network transfer.
         const char *apszOptions[] = {"COMPRESS=LZW", "NUM_THREADS=ALL_CPUS",
                                      nullptr};
-        std::string osTempFilename = CPLGenerateTempFilename("ngw_tmp");
+        std::string osTempFilename = CPLGenerateTempFilenameSafe("ngw_tmp");
         osTempFilename += ".tif";
         GDALDataset *poTmpDS = poDriver->CreateCopy(
             osTempFilename.c_str(), poSrcDS, bStrict,

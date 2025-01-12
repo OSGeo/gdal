@@ -278,7 +278,7 @@ HFAInfo_t *HFACreateDependent(HFAInfo_t *psBase)
         return psBase->psDependent;
 
     // Create desired RRD filename.
-    const CPLString oBasename = CPLGetBasename(psBase->pszFilename);
+    const CPLString oBasename = CPLGetBasenameSafe(psBase->pszFilename);
     const CPLString oRRDFilename =
         CPLFormFilename(psBase->pszPath, oBasename, "rrd");
 
@@ -1876,10 +1876,10 @@ HFAHandle HFACreateLL(const char *pszFilename)
     CPLString osExtension = CPLGetExtensionSafe(pszFilename);
     if (!EQUAL(osExtension, "rrd") && !EQUAL(osExtension, "aux"))
     {
-        CPLString osPath = CPLGetPath(pszFilename);
-        CPLString osBasename = CPLGetBasename(pszFilename);
+        CPLString osPath = CPLGetPathSafe(pszFilename);
+        CPLString osBasename = CPLGetBasenameSafe(pszFilename);
         VSIStatBufL sStatBuf;
-        CPLString osSupFile = CPLFormCIFilename(osPath, osBasename, "rrd");
+        CPLString osSupFile = CPLFormCIFilenameSafe(osPath, osBasename, "rrd");
 
         if (VSIStatL(osSupFile, &sStatBuf) == 0)
             VSIUnlink(osSupFile);

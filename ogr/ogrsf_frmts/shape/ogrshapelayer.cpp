@@ -1876,7 +1876,7 @@ OGRErr OGRShapeLayer::CreateField(const OGRFieldDefn *poFieldDefn,
     bool bDBFJustCreated = false;
     if (hDBF == nullptr)
     {
-        const CPLString osFilename = CPLResetExtension(pszFullName, "dbf");
+        const CPLString osFilename = CPLResetExtensionSafe(pszFullName, "dbf");
         hDBF = DBFCreate(osFilename);
 
         if (hDBF == nullptr)
@@ -3762,7 +3762,7 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
     CPLStringList oFileList;
     AddToFileList(oFileList);
 
-    const std::string osDirname = CPLGetPath(pszFullName);
+    const std::string osDirname = CPLGetPathSafe(pszFullName);
     for (int i = 0; i < oFileList.size(); ++i)
     {
         const std::string osRenamedFile =

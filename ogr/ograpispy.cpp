@@ -530,7 +530,8 @@ void OGRAPISpyOpen(const char *pszName, int bUpdate, int iSnapshot,
     {
         CPLString osBaseDir = CPLFormFilename(
             osSnapshotPath, CPLSPrintf("snapshot_%d", iSnapshot), nullptr);
-        CPLString osWorkingDir = CPLFormFilename(osBaseDir, "working", nullptr);
+        CPLString osWorkingDir =
+            CPLFormFilenameSafe(osBaseDir, "working", nullptr);
         osName =
             CPLFormFilename(osWorkingDir, CPLGetFilename(pszName), nullptr);
         pszName = osName.c_str();

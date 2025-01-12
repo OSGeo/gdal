@@ -2446,8 +2446,8 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for a .prj file. For ISIS3 I would like to keep this in   */
     /* -------------------------------------------------------------------- */
-    const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
-    const CPLString osName = CPLGetBasename(poOpenInfo->pszFilename);
+    const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
+    const CPLString osName = CPLGetBasenameSafe(poOpenInfo->pszFilename);
     const char *pszPrjFile = CPLFormCIFilename(osPath, osName, "prj");
 
     VSILFILE *fp = VSIFOpenL(pszPrjFile, "r");

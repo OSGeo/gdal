@@ -1745,7 +1745,7 @@ GDALDataset *ADRGDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    CPLString osImgFilename = CPLResetExtension(pszFilename, "IMG");
+    CPLString osImgFilename = CPLResetExtensionSafe(pszFilename, "IMG");
     VSILFILE *fdIMG = VSIFOpenL(osImgFilename.c_str(), "w+b");
     if (fdIMG == nullptr)
     {

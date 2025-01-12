@@ -146,7 +146,7 @@ bool OGRPDSDataSource::LoadTable(const char *pszFilename, int nRecordSize,
                      osTableLink.c_str());
             return false;
         }
-        CPLString osTPath = CPLGetPath(pszFilename);
+        CPLString osTPath = CPLGetPathSafe(pszFilename);
         CleanString(osTableFilename);
         osTableFilename = CPLFormCIFilename(osTPath, osTableFilename, nullptr);
     }
@@ -178,7 +178,7 @@ bool OGRPDSDataSource::LoadTable(const char *pszFilename, int nRecordSize,
         }
         else
         {
-            CPLString osTPath = CPLGetPath(pszFilename);
+            CPLString osTPath = CPLGetPathSafe(pszFilename);
             CleanString(osTableFilename);
             osTableFilename =
                 CPLFormCIFilename(osTPath, osTableFilename, nullptr);
@@ -229,7 +229,7 @@ bool OGRPDSDataSource::LoadTable(const char *pszFilename, int nRecordSize,
         oKeywords.GetKeyword(MakeAttr(osTableID, "^STRUCTURE"), "");
     if (!osTableStructure.empty())
     {
-        CPLString osTPath = CPLGetPath(pszFilename);
+        CPLString osTPath = CPLGetPathSafe(pszFilename);
         CleanString(osTableStructure);
         osTableStructure =
             CPLFormCIFilename(osTPath, osTableStructure, nullptr);

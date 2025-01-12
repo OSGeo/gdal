@@ -469,7 +469,7 @@ int OGRSelafinDataSource::OpenTable(const char *pszFilename)
     } */
 
     // Get layer base name
-    CPLString osBaseLayerName = CPLGetBasename(pszFilename);
+    CPLString osBaseLayerName = CPLGetBasenameSafe(pszFilename);
 
     // Read header of file to get common information for all layers
     // poHeader now owns fp

@@ -85,7 +85,7 @@ static CPLString getRscFilename(GDALOpenInfo *poOpenInfo)
     /*      We need to tear apart the filename to form a .rsc       */
     /*      filename.                                               */
     /* ------------------------------------------------------------ */
-    const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
+    const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
     const CPLString osName = CPLGetFilename(poOpenInfo->pszFilename);
 
     int iFile = CSLFindString(papszSiblingFiles,

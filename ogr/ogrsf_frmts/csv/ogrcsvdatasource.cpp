@@ -476,7 +476,7 @@ OGRLayer *OGRCSVDataSource::GetLayer(int iLayer)
 
 CPLString OGRCSVDataSource::GetRealExtension(CPLString osFilename)
 {
-    const CPLString osExt = CPLGetExtension(osFilename);
+    const CPLString osExt = CPLGetExtensionSafe(osFilename);
     if (STARTS_WITH(osFilename, "/vsigzip/") && EQUAL(osExt, "gz"))
     {
         if (osFilename.size() > 7 &&
@@ -868,8 +868,8 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
         strstr(pszFilename, "/vsizip/") == nullptr)
         fp = VSICreateBufferedReaderHandle(fp);
 
-    CPLString osLayerName = CPLGetBasename(pszFilename);
-    CPLString osExt = CPLGetExtension(pszFilename);
+    CPLString osLayerName = CPLGetBasenameSafe(pszFilename);
+    CPLString osExt = CPLGetExtensionSafe(pszFilename);
     if (STARTS_WITH(pszFilename, "/vsigzip/") && EQUAL(osExt, "gz"))
     {
         if (strlen(pszFilename) > 7 &&

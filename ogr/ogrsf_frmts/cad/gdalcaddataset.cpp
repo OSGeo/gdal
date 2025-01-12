@@ -226,7 +226,7 @@ int GDALCADDataset::Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
         {
             // TODO: Add support clipping region in neatline
             CPLString osImgFilename = pImage->getFilePath();
-            CPLString osImgPath = CPLGetPath(osImgFilename);
+            CPLString osImgPath = CPLGetPathSafe(osImgFilename);
             if (osImgPath.empty())
             {
                 osImgFilename =

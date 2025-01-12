@@ -679,8 +679,8 @@ void PDSDataset::ParseSRS()
     /*      Check for a .prj and world file to override the georeferencing. */
     /* ==================================================================== */
     {
-        const CPLString osPath = CPLGetPath(pszFilename);
-        const CPLString osName = CPLGetBasename(pszFilename);
+        const CPLString osPath = CPLGetPathSafe(pszFilename);
+        const CPLString osName = CPLGetBasenameSafe(pszFilename);
         const char *pszPrjFile = CPLFormCIFilename(osPath, osName, "prj");
 
         VSILFILE *fp = VSIFOpenL(pszPrjFile, "r");
@@ -846,7 +846,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
         }
         else
         {
-            CPLString osTPath = CPLGetPath(GetDescription());
+            CPLString osTPath = CPLGetPathSafe(GetDescription());
             m_osImageFilename = CPLFormCIFilename(osTPath, osFilename, nullptr);
             osExternalCube = m_osImageFilename;
         }
@@ -1330,7 +1330,7 @@ int PDSDataset::ParseCompressedImage()
     const CPLString osFileName =
         CleanString(GetKeyword("COMPRESSED_FILE.FILE_NAME", ""));
 
-    const CPLString osPath = CPLGetPath(GetDescription());
+    const CPLString osPath = CPLGetPathSafe(GetDescription());
     const CPLString osFullFileName =
         CPLFormFilename(osPath, osFileName, nullptr);
 
@@ -1425,7 +1425,7 @@ GDALDataset *PDSDataset::Open(GDALOpenInfo *poOpenInfo)
     if (EQUAL(osEncodingType, "ZIP") && !osCompressedFilename.empty() &&
         !osUncompressedFilename.empty())
     {
-        const CPLString osPath = CPLGetPath(poDS->GetDescription());
+        const CPLString osPath = CPLGetPathSafe(poDS->GetDescription());
         osCompressedFilename =
             CPLFormFilename(osPath, osCompressedFilename, nullptr);
         osUncompressedFilename =

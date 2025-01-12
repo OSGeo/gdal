@@ -4894,8 +4894,8 @@ CPLErr HFADataset::Rename(const char *pszNewName, const char *pszOldName)
         return eErr;
 
     // Now try to go into the .img file and update RRDNames[] lists.
-    CPLString osOldBasename = CPLGetBasename(pszOldName);
-    CPLString osNewBasename = CPLGetBasename(pszNewName);
+    CPLString osOldBasename = CPLGetBasenameSafe(pszOldName);
+    CPLString osNewBasename = CPLGetBasenameSafe(pszNewName);
 
     if (osOldBasename != osNewBasename)
     {
@@ -4936,8 +4936,8 @@ CPLErr HFADataset::CopyFiles(const char *pszNewName, const char *pszOldName)
         return eErr;
 
     // Now try to go into the .img file and update RRDNames[] lists.
-    CPLString osOldBasename = CPLGetBasename(pszOldName);
-    CPLString osNewBasename = CPLGetBasename(pszNewName);
+    CPLString osOldBasename = CPLGetBasenameSafe(pszOldName);
+    CPLString osNewBasename = CPLGetBasenameSafe(pszNewName);
 
     if (osOldBasename != osNewBasename)
     {

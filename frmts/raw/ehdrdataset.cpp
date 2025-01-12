@@ -476,7 +476,7 @@ void EHdrDataset::ResetKeyValue(const char *pszKey, const char *pszValue)
 void EHdrDataset::RewriteCLR(GDALRasterBand *poBand) const
 
 {
-    CPLString osCLRFilename = CPLResetExtension(GetDescription(), "clr");
+    CPLString osCLRFilename = CPLResetExtensionSafe(GetDescription(), "clr");
     GDALColorTable *poTable = poBand->GetColorTable();
     GDALRasterAttributeTable *poRAT = poBand->GetDefaultRAT();
     if (poTable || poRAT)
@@ -568,7 +568,8 @@ CPLErr EHdrDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
     if (pszESRI_SRS)
     {
         // Write to .prj file.
-        CPLString osPrjFilename = CPLResetExtension(GetDescription(), "prj");
+        CPLString osPrjFilename =
+            CPLResetExtensionSafe(GetDescription(), "prj");
         VSILFILE *fp = VSIFOpenL(osPrjFilename.c_str(), "wt");
         if (fp != nullptr)
         {
@@ -657,8 +658,8 @@ CPLErr EHdrDataset::SetGeoTransform(double *padfGeoTransform)
 CPLErr EHdrDataset::RewriteHDR()
 
 {
-    const CPLString osPath = CPLGetPath(GetDescription());
-    const CPLString osName = CPLGetBasename(GetDescription());
+    const CPLString osPath = CPLGetPathSafe(GetDescription());
+    const CPLString osName = CPLGetBasenameSafe(GetDescription());
     const CPLString osHDRFilename =
         CPLFormCIFilename(osPath, osName, osHeaderExt);
 
@@ -697,9 +698,10 @@ CPLErr EHdrDataset::RewriteHDR()
 
 CPLErr EHdrDataset::RewriteSTX() const
 {
-    const CPLString osPath = CPLGetPath(GetDescription());
-    const CPLString osName = CPLGetBasename(GetDescription());
-    const CPLString osSTXFilename = CPLFormCIFilename(osPath, osName, "stx");
+    const CPLString osPath = CPLGetPathSafe(GetDescription());
+    const CPLString osName = CPLGetBasenameSafe(GetDescription());
+    const CPLString osSTXFilename =
+        CPLFormCIFilenameSafe(osPath, osName, "stx");
 
     VSILFILE *fp = VSIFOpenL(osSTXFilename, "wt");
     if (fp == nullptr)
@@ -739,9 +741,10 @@ CPLErr EHdrDataset::RewriteSTX() const
 
 CPLErr EHdrDataset::ReadSTX() const
 {
-    const CPLString osPath = CPLGetPath(GetDescription());
-    const CPLString osName = CPLGetBasename(GetDescription());
-    const CPLString osSTXFilename = CPLFormCIFilename(osPath, osName, "stx");
+    const CPLString osPath = CPLGetPathSafe(GetDescription());
+    const CPLString osName = CPLGetBasenameSafe(GetDescription());
+    const CPLString osSTXFilename =
+        CPLFormCIFilenameSafe(osPath, osName, "stx");
 
     VSILFILE *fp = VSIFOpenL(osSTXFilename, "rt");
     if (fp == nullptr)
@@ -822,9 +825,10 @@ CPLErr EHdrDataset::ReadSTX() const
 CPLString EHdrDataset::GetImageRepFilename(const char *pszFilename)
 {
 
-    const CPLString osPath = CPLGetPath(pszFilename);
-    const CPLString osName = CPLGetBasename(pszFilename);
-    const CPLString osREPFilename = CPLFormCIFilename(osPath, osName, "rep");
+    const CPLString osPath = CPLGetPathSafe(pszFilename);
+    const CPLString osName = CPLGetBasenameSafe(pszFilename);
+    const CPLString osREPFilename =
+        CPLFormCIFilenameSafe(osPath, osName, "rep");
 
     VSIStatBufL sStatBuf;
     if (VSIStatExL(osREPFilename.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0)
@@ -877,14 +881,14 @@ CPLString EHdrDataset::GetImageRepFilename(const char *pszFilename)
 char **EHdrDataset::GetFileList()
 
 {
-    const CPLString osPath = CPLGetPath(GetDescription());
-    const CPLString osName = CPLGetBasename(GetDescription());
+    const CPLString osPath = CPLGetPathSafe(GetDescription());
+    const CPLString osName = CPLGetBasenameSafe(GetDescription());
 
     // Main data file, etc.
     char **papszFileList = GDALPamDataset::GetFileList();
 
     // Header file.
-    CPLString osFilename = CPLFormCIFilename(osPath, osName, osHeaderExt);
+    CPLString osFilename = CPLFormCIFilenameSafe(osPath, osName, osHeaderExt);
     papszFileList = CSLAddString(papszFileList, osFilename);
 
     // Statistics file
@@ -928,8 +932,8 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         return nullptr;
 
     // Tear apart the filename to form a .HDR filename.
-    const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
-    const CPLString osName = CPLGetBasename(poOpenInfo->pszFilename);
+    const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
+    const CPLString osName = CPLGetBasenameSafe(poOpenInfo->pszFilename);
 
     const char *pszHeaderExt = "hdr";
     if (poOpenInfo->IsExtensionEqualToCI("SRC") && osName.size() == 7 &&

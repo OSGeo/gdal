@@ -85,7 +85,8 @@ bool FileGDBTable::Create(const char *pszFilename, int nTablxOffsetSize,
         return false;
     }
 
-    const std::string osTableXName = CPLResetExtension(pszFilename, "gdbtablx");
+    const std::string osTableXName =
+        CPLResetExtensionSafe(pszFilename, "gdbtablx");
     m_fpTableX = VSIFOpenL(osTableXName.c_str(), "wb+");
     if (m_fpTableX == nullptr)
     {

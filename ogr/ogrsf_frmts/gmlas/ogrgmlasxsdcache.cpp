@@ -39,7 +39,7 @@ bool GMLASResourceCache::RecursivelyCreateDirectoryIfNeeded(
         return true;
     }
 
-    std::string osParent = CPLGetDirname(osDirname.c_str());
+    std::string osParent = CPLGetDirnameSafe(osDirname.c_str());
     if (!osParent.empty() && osParent != ".")
     {
         if (!RecursivelyCreateDirectoryIfNeeded(osParent.c_str()))

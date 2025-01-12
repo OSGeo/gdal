@@ -2944,13 +2944,14 @@ bool OGROpenFileGDBLayer::BeginEmulatedTransaction()
 
     bool bRet = true;
 
-    const std::string osThisDirname = CPLGetPath(m_osGDBFilename.c_str());
-    const std::string osThisBasename = CPLGetBasename(m_osGDBFilename.c_str());
+    const std::string osThisDirname = CPLGetPathSafe(m_osGDBFilename.c_str());
+    const std::string osThisBasename =
+        CPLGetBasenameSafe(m_osGDBFilename.c_str());
     char **papszFiles = VSIReadDir(osThisDirname.c_str());
     for (char **papszIter = papszFiles;
          papszIter != nullptr && *papszIter != nullptr; ++papszIter)
     {
-        const std::string osBasename = CPLGetBasename(*papszIter);
+        const std::string osBasename = CPLGetBasenameSafe(*papszIter);
         if (osBasename == osThisBasename)
         {
             std::string osDestFilename = CPLFormFilename(
@@ -3019,8 +3020,9 @@ bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
 
     bool bRet = true;
 
-    const std::string osThisDirname = CPLGetPath(m_osGDBFilename.c_str());
-    const std::string osThisBasename = CPLGetBasename(m_osGDBFilename.c_str());
+    const std::string osThisDirname = CPLGetPathSafe(m_osGDBFilename.c_str());
+    const std::string osThisBasename =
+        CPLGetBasenameSafe(m_osGDBFilename.c_str());
 
     // Delete files in working directory that match our basename
     {
@@ -3028,7 +3030,7 @@ bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
         for (char **papszIter = papszFiles;
              papszIter != nullptr && *papszIter != nullptr; ++papszIter)
         {
-            const std::string osBasename = CPLGetBasename(*papszIter);
+            const std::string osBasename = CPLGetBasenameSafe(*papszIter);
             if (osBasename == osThisBasename)
             {
                 std::string osDestFilename =
@@ -3046,7 +3048,7 @@ bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
         for (char **papszIter = papszFiles;
              papszIter != nullptr && *papszIter != nullptr; ++papszIter)
         {
-            const std::string osBasename = CPLGetBasename(*papszIter);
+            const std::string osBasename = CPLGetBasenameSafe(*papszIter);
             if (osBasename == osThisBasename)
             {
                 bBackupFound = true;

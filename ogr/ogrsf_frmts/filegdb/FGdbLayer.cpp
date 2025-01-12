@@ -198,7 +198,7 @@ int FGdbLayer::EditIndexesForFIDHack(const char *pszRadixTablename)
 {
     // Fix FIDs in .gdbtablx, .spx and .atx's
 
-    CPLString osGDBTablX = CPLResetExtension(pszRadixTablename, "gdbtablx");
+    CPLString osGDBTablX = CPLResetExtensionSafe(pszRadixTablename, "gdbtablx");
     CPLString osNewGDBTablX =
         CPLResetExtension(pszRadixTablename, "gdbtablx.new");
 

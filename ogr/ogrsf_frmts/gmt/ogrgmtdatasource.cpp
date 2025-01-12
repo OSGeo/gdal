@@ -113,7 +113,7 @@ OGRGmtDataSource::ICreateLayer(const char *pszLayerName,
     /*      layer name with the name from the gmt.                          */
     /* -------------------------------------------------------------------- */
 
-    CPLString osPath = CPLGetPath(GetDescription());
+    CPLString osPath = CPLGetPathSafe(GetDescription());
     CPLString osFilename(GetDescription());
     const char *pszFlags = "wb+";
 

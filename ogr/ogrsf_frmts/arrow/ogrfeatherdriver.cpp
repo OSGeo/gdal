@@ -216,7 +216,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
         const bool bSeekable =
             !STARTS_WITH_CI(poOpenInfo->pszFilename, "ARROW_IPC_STREAM:") &&
             strcmp(poOpenInfo->pszFilename, "/vsistdin/") != 0;
-        std::string osLayername = CPLGetBasename(poOpenInfo->pszFilename);
+        std::string osLayername = CPLGetBasenameSafe(poOpenInfo->pszFilename);
         if (osLayername.empty())
             osLayername = "layer";
         auto poLayer = std::make_unique<OGRFeatherLayer>(

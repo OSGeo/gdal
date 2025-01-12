@@ -621,7 +621,7 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Now we need to tear apart the filename to form a .aux           */
     /*      filename.                                                       */
     /* -------------------------------------------------------------------- */
-    CPLString osAuxFilename = CPLResetExtension(osTarget, "aux");
+    CPLString osAuxFilename = CPLResetExtensionSafe(osTarget, "aux");
 
     /* -------------------------------------------------------------------- */
     /*      Do we have a .aux file?                                         */

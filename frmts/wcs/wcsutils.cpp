@@ -297,7 +297,7 @@ bool MakeDir(const std::string &dirname)
     VSIStatBufL stat;
     if (VSIStatL(dirname.c_str(), &stat) != 0)
     {
-        std::string parent = CPLGetDirname(dirname.c_str());
+        std::string parent = CPLGetDirnameSafe(dirname.c_str());
         if (!parent.empty() && parent != ".")
         {
             if (!MakeDir(parent))
@@ -432,7 +432,7 @@ bool SetupCache(std::string &cache, bool clear)
         CSLDestroy(folder);
     }
     // make sure the index exists and is writable
-    std::string db = CPLFormFilename(cache.c_str(), "db", nullptr);
+    std::string db = CPLFormFilenameSafe(cache.c_str(), "db", nullptr);
     VSILFILE *f = VSIFOpenL(db.c_str(), "r");
     if (f)
     {
@@ -465,7 +465,7 @@ static bool CompareStrings(const std::string &a, const std::string &b)
 std::vector<std::string> ReadCache(const std::string &cache)
 {
     std::vector<std::string> contents;
-    std::string db = CPLFormFilename(cache.c_str(), "db", nullptr);
+    std::string db = CPLFormFilenameSafe(cache.c_str(), "db", nullptr);
     char **data = CSLLoad(db.c_str());
     if (data)
     {
@@ -502,7 +502,7 @@ bool DeleteEntryFromCache(const std::string &cache, const std::string &key,
 {
     // Depending on which one of key and value is not "" delete the relevant
     // entry.
-    std::string db = CPLFormFilename(cache.c_str(), "db", nullptr);
+    std::string db = CPLFormFilenameSafe(cache.c_str(), "db", nullptr);
     char **data =
         CSLLoad(db.c_str());  // returns NULL in error and for empty files
     char **data2 = CSLAddNameValue(nullptr, "foo", "bar");
@@ -575,7 +575,7 @@ CPLErr SearchCache(const std::string &cache, const std::string &url,
                    std::string &filename, const std::string &ext, bool &found)
 {
     found = false;
-    std::string db = CPLFormFilename(cache.c_str(), "db", nullptr);
+    std::string db = CPLFormFilenameSafe(cache.c_str(), "db", nullptr);
     VSILFILE *f = VSIFOpenL(db.c_str(), "r");
     if (!f)
     {
@@ -624,7 +624,7 @@ CPLErr AddEntryToCache(const std::string &cache, const std::string &url,
     // todo: lock the cache
     // assuming the url is not in the cache
     const std::string store = filename;
-    const std::string db = CPLFormFilename(cache.c_str(), "db", nullptr);
+    const std::string db = CPLFormFilenameSafe(cache.c_str(), "db", nullptr);
     VSILFILE *f = VSIFOpenL(db.c_str(), "a");
     if (!f)
     {

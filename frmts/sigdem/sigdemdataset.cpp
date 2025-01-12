@@ -262,7 +262,7 @@ GDALDataset *SIGDEMDataset::CreateCopy(const char *pszFilename,
     {
         if (!EQUAL(pszProjection, ""))
         {
-            CPLString osPrjFilename = CPLResetExtension(pszFilename, "prj");
+            CPLString osPrjFilename = CPLResetExtensionSafe(pszFilename, "prj");
             VSILFILE *fpProj = VSIFOpenL(osPrjFilename, "wt");
             if (fpProj != nullptr)
             {

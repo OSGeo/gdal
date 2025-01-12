@@ -2969,8 +2969,8 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    CPLString osY = CPLGetBasename(osFilename);
-    CPLString osX = CPLGetBasename(CPLGetPathSafe(osFilename).c_str());
+    CPLString osY = CPLGetBasenameSafe(osFilename);
+    CPLString osX = CPLGetBasenameSafe(CPLGetPathSafe(osFilename).c_str());
     CPLString osZ =
         CPLGetBasename(CPLGetPathSafe(CPLGetPath(osFilename)).c_str());
     size_t nPos = osY.find('.');

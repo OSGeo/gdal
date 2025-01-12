@@ -19,7 +19,8 @@
 static bool CheckExistenceOfOneZarrFile(const char *pszFilename)
 {
 
-    CPLString osMDFilename = CPLFormFilename(pszFilename, ".zarray", nullptr);
+    CPLString osMDFilename =
+        CPLFormFilenameSafe(pszFilename, ".zarray", nullptr);
 
     VSIStatBufL sStat;
     if (VSIStatL(osMDFilename, &sStat) == 0)

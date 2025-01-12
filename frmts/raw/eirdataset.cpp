@@ -280,9 +280,9 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLStringList aosHDR;
 
     // default raster file: same name with no extension
-    const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
-    const CPLString osName = CPLGetBasename(poOpenInfo->pszFilename);
-    CPLString osRasterFilename = CPLFormCIFilename(osPath, osName, "");
+    const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
+    const CPLString osName = CPLGetBasenameSafe(poOpenInfo->pszFilename);
+    CPLString osRasterFilename = CPLFormCIFilenameSafe(osPath, osName, "");
 
     // parse the header file
     const char *pszLine = nullptr;

@@ -1788,7 +1788,7 @@ PDS4DelimitedTable::~PDS4DelimitedTable()
 
 void PDS4DelimitedTable::GenerateVRT()
 {
-    CPLString osVRTFilename = CPLResetExtension(m_osFilename, "vrt");
+    CPLString osVRTFilename = CPLResetExtensionSafe(m_osFilename, "vrt");
     if (m_bCreation)
     {
         // In creation mode, generate the VRT, unless explicitly disabled by
@@ -2466,7 +2466,7 @@ void PDS4DelimitedTable::RefreshFileAreaObservational(CPLXMLNode *psFAO)
 char **PDS4DelimitedTable::GetFileList() const
 {
     auto papszFileList = PDS4TableBaseLayer::GetFileList();
-    CPLString osVRTFilename = CPLResetExtension(m_osFilename, "vrt");
+    CPLString osVRTFilename = CPLResetExtensionSafe(m_osFilename, "vrt");
     VSIStatBufL sStat;
     if (VSIStatL(osVRTFilename, &sStat) == 0)
     {

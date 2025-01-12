@@ -291,7 +291,7 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            CPLString osBasePath = CPLGetPath(poOpenInfo->pszFilename);
+            CPLString osBasePath = CPLGetPathSafe(poOpenInfo->pszFilename);
             osFilename = CPLFormFilename(osBasePath, osFilename, nullptr);
         }
 

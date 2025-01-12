@@ -4040,7 +4040,7 @@ char **NITFDataset::AddFile(char **papszFileList, const char *EXTENSION,
                             const char *extension)
 {
     VSIStatBufL sStatBuf;
-    CPLString osTarget = CPLResetExtension(osNITFFilename, EXTENSION);
+    CPLString osTarget = CPLResetExtensionSafe(osNITFFilename, EXTENSION);
     if (oOvManager.GetSiblingFiles() != nullptr)
     {
         if (CSLFindStringCaseSensitive(oOvManager.GetSiblingFiles(),

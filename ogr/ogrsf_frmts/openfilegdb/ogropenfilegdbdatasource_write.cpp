@@ -1495,7 +1495,8 @@ OGRErr OGROpenFileGDBDataSource::DeleteLayer(int iLayer)
         }
     }
 
-    const std::string osDirname = CPLGetPath(poLayer->GetFilename().c_str());
+    const std::string osDirname =
+        CPLGetPathSafe(poLayer->GetFilename().c_str());
     const std::string osFilenameBase =
         CPLGetBasename(poLayer->GetFilename().c_str());
 
@@ -2398,7 +2399,7 @@ bool OGROpenFileGDBDataSource::BackupSystemTablesForTransaction()
     for (char **papszIter = papszFiles;
          papszIter != nullptr && *papszIter != nullptr; ++papszIter)
     {
-        const std::string osBasename = CPLGetBasename(*papszIter);
+        const std::string osBasename = CPLGetBasenameSafe(*papszIter);
         if (osBasename.size() == strlen("a00000001") &&
             osBasename.compare(0, 8, "a0000000") == 0 && osBasename[8] >= '1' &&
             osBasename[8] <= '8')
@@ -2474,7 +2475,7 @@ OGRErr OGROpenFileGDBDataSource::RollbackTransaction()
         for (char **papszIter = papszFiles;
              papszIter != nullptr && *papszIter != nullptr; ++papszIter)
         {
-            const std::string osBasename = CPLGetBasename(*papszIter);
+            const std::string osBasename = CPLGetBasenameSafe(*papszIter);
             if (osBasename.size() == strlen("a00000001") &&
                 osBasename.compare(0, 8, "a0000000") == 0 &&
                 osBasename[8] >= '1' && osBasename[8] <= '8')
@@ -2510,7 +2511,7 @@ OGRErr OGROpenFileGDBDataSource::RollbackTransaction()
         for (char **papszIter = papszFiles;
              papszIter != nullptr && *papszIter != nullptr; ++papszIter)
         {
-            const std::string osBasename = CPLGetBasename(*papszIter);
+            const std::string osBasename = CPLGetBasenameSafe(*papszIter);
             if (osBasename == osThisBasename)
             {
                 std::string osDestFilename =

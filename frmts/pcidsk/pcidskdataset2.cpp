@@ -853,7 +853,7 @@ char **PCIDSK2Dataset::GetFileList()
 
 {
     char **papszFileList = GDALPamDataset::GetFileList();
-    CPLString osBaseDir = CPLGetPath(GetDescription());
+    CPLString osBaseDir = CPLGetPathSafe(GetDescription());
 
     try
     {

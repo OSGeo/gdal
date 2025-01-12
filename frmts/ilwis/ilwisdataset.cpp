@@ -570,7 +570,7 @@ void ILWISDataset::WriteGeoReference()
             double dURLat = (adfGeoTransform[3]);
             double dURLong = (adfGeoTransform[0] + nXSize * adfGeoTransform[1]);
 
-            std::string grFileName = CPLResetExtension(osFileName, "grf");
+            std::string grFileName = CPLResetExtensionSafe(osFileName, "grf");
             WriteElement("Ilwis", "Type", grFileName, "GeoRef");
             WriteElement("GeoRef", "lines", grFileName, nYSize);
             WriteElement("GeoRef", "columns", grFileName, nXSize);
@@ -1204,7 +1204,7 @@ GDALDataset *ILWISDataset::CreateCopy(const char *pszFilename,
         /* --------------------------------------------------------------------
          */
         // For file name for raw data, and create binary files.
-        // std::string pszDataFileName = CPLResetExtension(pszODFName.c_str(),
+        // std::string pszDataFileName = CPLResetExtensionSafe(pszODFName.c_str(),
         // "mp#" );
 
         fpData = desBand->fpRaw;
