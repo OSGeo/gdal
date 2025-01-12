@@ -1064,7 +1064,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             if (nSubdatasets > 0)
             {
                 bool bFound = false;
-                for (int j = 0; j < nSubdatasets; j += 2)
+                for (int j = 0; j < nSubdatasets && papszSubdatasets[j]; j += 2)
                 {
                     const std::string osSubdatasetSource(
                         strstr(papszSubdatasets[j], "=") + 1);
