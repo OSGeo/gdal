@@ -316,6 +316,12 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                                config, "Rsets.scale",
                                CPLOPrintf("%d", panOverviewList[0]).c_str()),
                            nullptr);
+                if (scale == 0.0)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid Rsets.scale value");
+                    throw CE_Failure;
+                }
 
                 if (static_cast<int>(scale) != 2 &&
                     (EQUALN("Avg", pszResampling, 3) ||
