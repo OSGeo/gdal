@@ -7422,13 +7422,13 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
             const int nNewSRID = m_poDS->GetSrsId(poNewSRS.get());
 
             // Replace the old SRID by the new ones in geometry blobs
-            uint32_t nNewSRID_LSB = nNewSRID;
+            int32_t nNewSRID_LSB = nNewSRID;
             CPL_LSBPTR32(&nNewSRID_LSB);
             GByte abySRID_LSB[5] = {0, 0, 0, 0};
             memcpy(abySRID_LSB, &nNewSRID_LSB, 4);
             char *pszSRID_LSB_HEX = CPLBinaryToHex(4, abySRID_LSB);
 
-            uint32_t nNewSRID_MSB = nNewSRID;
+            int32_t nNewSRID_MSB = nNewSRID;
             CPL_MSBPTR32(&nNewSRID_MSB);
             GByte abySRID_MSB[5] = {0, 0, 0, 0};
             memcpy(abySRID_MSB, &nNewSRID_MSB, 4);
