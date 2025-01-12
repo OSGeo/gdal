@@ -766,6 +766,7 @@ static CPLErr DivPixelFunc(void **papoSources, int nSources, void *pData,
             for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
             {
                 const double dfVal = GetSrcVal(papoSources[1], eSrcType, ii);
+                // coverity[divide_by_zero]
                 double dfPixVal =
                     dfVal == 0
                         ? std::numeric_limits<double>::infinity()
@@ -914,6 +915,7 @@ static CPLErr InvPixelFunc(void **papoSources, int nSources, void *pData,
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 // Not complex.
                 const double dfVal = GetSrcVal(papoSources[0], eSrcType, ii);
+                // coverity[divide_by_zero]
                 const double dfPixVal =
                     dfVal == 0 ? std::numeric_limits<double>::infinity()
                                : dfK / dfVal;
@@ -1482,6 +1484,7 @@ static CPLErr NormDiffPixelFunc(void **papoSources, int nSources, void *pData,
 
             const double dfDenom = (dfLeftVal + dfRightVal);
 
+            // coverity[divide_by_zero]
             const double dfPixVal =
                 dfDenom == 0 ? std::numeric_limits<double>::infinity()
                              : (dfLeftVal - dfRightVal) / dfDenom;
