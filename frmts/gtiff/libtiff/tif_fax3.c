@@ -535,6 +535,15 @@ static int Fax3SetupState(TIFF *tif)
                       "Bits/sample must be 1 for Group 3/4 encoding/decoding");
         return (0);
     }
+    if (td->td_samplesperpixel != 1 &&
+        td->td_planarconfig != PLANARCONFIG_SEPARATE)
+    {
+        TIFFErrorExtR(
+            tif, module,
+            "Samples/pixel shall be 1 for Group 3/4 encoding/decoding, "
+            "or PlanarConfiguration must be set to Separate.");
+        return 0;
+    }
     /*
      * Calculate the scanline/tile widths.
      */
@@ -1275,24 +1284,23 @@ static void Fax3Cleanup(TIFF *tif)
 #define FIELD_OPTIONS (FIELD_CODEC + 7)
 
 static const TIFFField faxFields[] = {
-    {TIFFTAG_FAXMODE, 0, 0, TIFF_ANY, 0, TIFF_SETGET_INT, TIFF_SETGET_UNDEFINED,
-     FIELD_PSEUDO, FALSE, FALSE, "FaxMode", NULL},
-    {TIFFTAG_FAXFILLFUNC, 0, 0, TIFF_ANY, 0, TIFF_SETGET_OTHER,
-     TIFF_SETGET_UNDEFINED, FIELD_PSEUDO, FALSE, FALSE, "FaxFillFunc", NULL},
+    {TIFFTAG_FAXMODE, 0, 0, TIFF_ANY, 0, TIFF_SETGET_INT, FIELD_PSEUDO, FALSE,
+     FALSE, "FaxMode", NULL},
+    {TIFFTAG_FAXFILLFUNC, 0, 0, TIFF_ANY, 0, TIFF_SETGET_OTHER, FIELD_PSEUDO,
+     FALSE, FALSE, "FaxFillFunc", NULL},
     {TIFFTAG_BADFAXLINES, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32,
-     TIFF_SETGET_UINT32, FIELD_BADFAXLINES, TRUE, FALSE, "BadFaxLines", NULL},
+     FIELD_BADFAXLINES, TRUE, FALSE, "BadFaxLines", NULL},
     {TIFFTAG_CLEANFAXDATA, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16,
-     TIFF_SETGET_UINT16, FIELD_CLEANFAXDATA, TRUE, FALSE, "CleanFaxData", NULL},
+     FIELD_CLEANFAXDATA, TRUE, FALSE, "CleanFaxData", NULL},
     {TIFFTAG_CONSECUTIVEBADFAXLINES, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32,
-     TIFF_SETGET_UINT32, FIELD_BADFAXRUN, TRUE, FALSE, "ConsecutiveBadFaxLines",
-     NULL}};
+     FIELD_BADFAXRUN, TRUE, FALSE, "ConsecutiveBadFaxLines", NULL}};
 static const TIFFField fax3Fields[] = {
     {TIFFTAG_GROUP3OPTIONS, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32,
-     TIFF_SETGET_UINT32, FIELD_OPTIONS, FALSE, FALSE, "Group3Options", NULL},
+     FIELD_OPTIONS, FALSE, FALSE, "Group3Options", NULL},
 };
 static const TIFFField fax4Fields[] = {
     {TIFFTAG_GROUP4OPTIONS, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32,
-     TIFF_SETGET_UINT32, FIELD_OPTIONS, FALSE, FALSE, "Group4Options", NULL},
+     FIELD_OPTIONS, FALSE, FALSE, "Group4Options", NULL},
 };
 
 static int Fax3VSetField(TIFF *tif, uint32_t tag, va_list ap)
