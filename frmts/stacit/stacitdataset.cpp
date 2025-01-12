@@ -458,6 +458,12 @@ bool STACITDataset::SetupDataset(
     }
 
     // Set raster size
+    if (dfXRes == 0 || dfYRes == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid computed dataset dimensions");
+        return false;
+    }
     double dfXSize = std::round((dfXMax - dfXMin) / dfXRes);
     double dfYSize = std::round((dfYMax - dfYMin) / dfYRes);
     if (dfXSize <= 0 || dfYSize <= 0 || dfXSize > INT_MAX || dfYSize > INT_MAX)
