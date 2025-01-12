@@ -2153,7 +2153,9 @@ int ValueRange::iRaw(double rValueIn) const
 {
     if (rValueIn == rUNDEF)  // || !fContains(rValue))
         return iUNDEF;
-    const double rEpsilon = _rStep == 0.0 ? 1e-6 : _rStep / 3.0;
+    if (_rStep == 0.0)
+        return iUNDEF;
+    const double rEpsilon = _rStep / 3.0;
     if (rValueIn - get_rLo() < -rEpsilon)  // take a little rounding tolerance
         return iUNDEF;
     else if (rValueIn - get_rHi() >
