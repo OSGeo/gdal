@@ -402,8 +402,8 @@ bool OGRLIBKMLDataSource::WriteKmz()
         EQUAL(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", ""),
               "FORCED"))
     {
-        osTmpFilename =
-            CPLGenerateTempFilename(CPLGetBasename(GetDescription()));
+        osTmpFilename = CPLGenerateTempFilename(
+            CPLGetBasenameSafe(GetDescription()).c_str());
     }
 
     void *hZIP = CPLCreateZip(osTmpFilename.empty() ? GetDescription()
@@ -1123,7 +1123,7 @@ int OGRLIBKMLDataSource::OpenKml(const char *pszFilename, int bUpdateIn)
     /***** if there is placemarks in the root its a layer *****/
     if (nPlacemarks)
     {
-        std::string layername_default(CPLGetBasename(pszFilename));
+        std::string layername_default(CPLGetBasenameSafe(pszFilename));
 
         if (m_poKmlDSContainer->has_name())
         {
@@ -1327,7 +1327,7 @@ int OGRLIBKMLDataSource::OpenKmz(const char *pszFilename, int bUpdateIn)
         /***** if there is placemarks in the root its a layer *****/
         if (nPlacemarks)
         {
-            std::string layername_default(CPLGetBasename(pszFilename));
+            std::string layername_default(CPLGetBasenameSafe(pszFilename));
 
             if (poKmlContainer->has_name())
             {
@@ -1376,7 +1376,7 @@ int OGRLIBKMLDataSource::OpenDir(const char *pszFilename, int bUpdateIn)
     for (int iFile = 0; iFile < nFiles; iFile++)
     {
         /***** make sure its a .kml file *****/
-        if (!EQUAL(CPLGetExtension(papszDirList[iFile]), "kml"))
+        if (!EQUAL(CPLGetExtensionSafe(papszDirList[iFile]).c_str(), "kml"))
             continue;
 
         /***** read the file *****/
@@ -1454,7 +1454,7 @@ int OGRLIBKMLDataSource::OpenDir(const char *pszFilename, int bUpdateIn)
         const std::string osLayerName =
             poKmlContainer->has_name()
                 ? poKmlContainer->get_name()
-                : std::string(CPLGetBasename(osFilePath.c_str()));
+                : std::string(CPLGetBasenameSafe(osFilePath.c_str()));
 
         /***** create the layer *****/
         AddLayer(osLayerName.c_str(), wkbUnknown, nullptr, this,
@@ -1493,7 +1493,7 @@ static bool CheckIsKMZ(const char *pszFilename)
     bool bFoundKML = false;
     while (papszIter && *papszIter)
     {
-        if (EQUAL(CPLGetExtension(*papszIter), "kml"))
+        if (EQUAL(CPLGetExtensionSafe(*papszIter).c_str(), "kml"))
         {
             bFoundKML = true;
             break;

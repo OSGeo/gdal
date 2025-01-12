@@ -858,8 +858,8 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
     {
         if (STARTS_WITH(osURLTemplate, "./"))
             osURLTemplate = osURLTemplate.substr(2);
-        osURLTemplate = CPLProjectRelativeFilename(CPLGetDirname(osFilename),
-                                                   osURLTemplate);
+        osURLTemplate = CPLProjectRelativeFilename(
+            CPLGetDirnameSafe(osFilename).c_str(), osURLTemplate);
     }
 
     // Parse optional tile matrix set limits

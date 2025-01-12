@@ -147,8 +147,9 @@ bool GMLRegistryFeatureType::Parse(const char *pszRegistryFilename,
             !STARTS_WITH(pszSchemaLocation, "https://") &&
             CPLIsFilenameRelative(pszSchemaLocation))
         {
-            pszSchemaLocation = CPLFormFilename(CPLGetPath(pszRegistryFilename),
-                                                pszSchemaLocation, nullptr);
+            pszSchemaLocation =
+                CPLFormFilename(CPLGetPathSafe(pszRegistryFilename).c_str(),
+                                pszSchemaLocation, nullptr);
         }
         osSchemaLocation = pszSchemaLocation;
     }

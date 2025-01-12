@@ -37,7 +37,7 @@ OGRGmtLayer::OGRGmtLayer(GDALDataset *poDS, const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Create the feature definition                                   */
     /* -------------------------------------------------------------------- */
-    poFeatureDefn = new OGRFeatureDefn(CPLGetBasename(pszFilename));
+    poFeatureDefn = new OGRFeatureDefn(CPLGetBasenameSafe(pszFilename).c_str());
     SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
 

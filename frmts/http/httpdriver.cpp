@@ -174,7 +174,8 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
         CPLString osTempFilename;
 
 #ifdef _WIN32
-        const char *pszPath = CPLGetPath(CPLGenerateTempFilename(NULL));
+        const char *pszPath =
+            CPLGetPath(CPLGenerateTempFilenameSafe(NULL).c_str());
 #else
         const char *pszPath = "/tmp";
 #endif

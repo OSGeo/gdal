@@ -349,7 +349,8 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     if (eErr == CE_None)
                     {
                         CPLString osName = CPLString().Printf(
-                            "%s", CPLGetBasename(poAttrDS->GetDescription()));
+                            "%s", CPLGetBasenameSafe(poAttrDS->GetDescription())
+                                      .c_str());
 
                         SetBuffer(poQuery.get(), eAttrType, osName, pAttrBlock,
                                   nValues);
@@ -1240,7 +1241,7 @@ CPLErr TileDBRasterDataset::TryLoadCachedXML(CSLConstList /*papszSiblingFiles*/,
         /* --------------------------------------------------------------------
          */
 
-        CPLString osPath(CPLGetPath(psPam->pszPamFilename));
+        CPLString osPath(CPLGetPathSafe(psPam->pszPamFilename));
         const CPLErr eErr = XMLInit(psTree, osPath);
 
         CPLDestroyXMLNode(psTree);
@@ -1391,7 +1392,8 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     osAux.Printf("%s.tdb", pszArrayName);
 
     // aux file is in array folder
-    poDS->SetPhysicalFilename(CPLFormFilename(osURI, osAux, nullptr));
+    poDS->SetPhysicalFilename(
+        CPLFormFilenameSafe(osURI, osAux, nullptr).c_str());
     // Initialize any PAM information.
     poDS->SetDescription(osURI);
 

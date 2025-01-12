@@ -160,7 +160,7 @@ CPLErr VRTFlushCacheStruct<T>::FlushCache(T &obj, bool bAtClosing)
     obj.m_bNeedsFlush = false;
 
     // Serialize XML representation to disk
-    const std::string osVRTPath(CPLGetPath(obj.GetDescription()));
+    const std::string osVRTPath(CPLGetPathSafe(obj.GetDescription()));
     CPLXMLNode *psDSTree = obj.T::SerializeToXML(osVRTPath.c_str());
     if (!CPLSerializeXMLTreeToFile(psDSTree, obj.GetDescription()))
         eErr = CE_Failure;
@@ -856,9 +856,10 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
 #endif  // HAVE_READLINK && HAVE_LSTAT
 
         if (osInitialCurrentVrtFilename == currentVrtFilename)
-            pszVRTPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+            pszVRTPath =
+                CPLStrdup(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
         else
-            pszVRTPath = CPLStrdup(CPLGetPath(currentVrtFilename));
+            pszVRTPath = CPLStrdup(CPLGetPathSafe(currentVrtFilename).c_str());
 
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     }
@@ -1675,7 +1676,8 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
         VRTRawRasterBand *poBand =
             new VRTRawRasterBand(this, GetRasterCount() + 1, eType);
 
-        char *l_pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
+        char *l_pszVRTPath =
+            CPLStrdup(CPLGetPathSafe(GetDescription()).c_str());
         if (EQUAL(l_pszVRTPath, ""))
         {
             CPLFree(l_pszVRTPath);

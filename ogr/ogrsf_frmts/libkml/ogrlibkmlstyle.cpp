@@ -792,9 +792,10 @@ static StyleSelectorPtr StyleFromStyleURL(const StyleMapPtr &stylemap,
 
             /***** try it as a url then a file *****/
             VSILFILE *fp = nullptr;
-            if ((fp =
-                     VSIFOpenL(CPLFormFilename("/vsicurl/", pszUrlTmp, nullptr),
-                               "r")) != nullptr ||
+            if ((fp = VSIFOpenL(
+                     CPLFormFilenameSafe("/vsicurl/", pszUrlTmp, nullptr)
+                         .c_str(),
+                     "r")) != nullptr ||
                 (fp = VSIFOpenL(pszUrlTmp, "r")) != nullptr)
             {
                 char szbuf[1025] = {};

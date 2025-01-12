@@ -201,7 +201,7 @@ HFAHandle HFAOpen(const char *pszFilename, const char *pszAccess)
         static_cast<HFAInfo_t *>(CPLCalloc(sizeof(HFAInfo_t), 1));
 
     psInfo->pszFilename = CPLStrdup(CPLGetFilename(pszFilename));
-    psInfo->pszPath = CPLStrdup(CPLGetPath(pszFilename));
+    psInfo->pszPath = CPLStrdup(CPLGetPathSafe(pszFilename).c_str());
     psInfo->fp = fp;
     if (EQUAL(pszAccess, "r") || EQUAL(pszAccess, "rb"))
         psInfo->eAccess = HFA_ReadOnly;
@@ -340,8 +340,8 @@ HFAInfo_t *HFAGetDependent(HFAInfo_t *psBase, const char *pszFilename)
     // Try to open the dependent file.
     const char *pszMode = psBase->eAccess == HFA_Update ? "r+b" : "rb";
 
-    char *pszDependent =
-        CPLStrdup(CPLFormFilename(psBase->pszPath, pszFilename, nullptr));
+    char *pszDependent = CPLStrdup(
+        CPLFormFilenameSafe(psBase->pszPath, pszFilename, nullptr).c_str());
 
     VSILFILE *fp = VSIFOpenL(pszDependent, pszMode);
     if (fp != nullptr)
@@ -1808,7 +1808,7 @@ HFAHandle HFACreateLL(const char *pszFilename)
     psInfo->pProParameters = nullptr;
     psInfo->bTreeDirty = false;
     psInfo->pszFilename = CPLStrdup(CPLGetFilename(pszFilename));
-    psInfo->pszPath = CPLStrdup(CPLGetPath(pszFilename));
+    psInfo->pszPath = CPLStrdup(CPLGetPathSafe(pszFilename).c_str());
 
     // Write out the Ehfa_HeaderTag.
     bool bRet = VSIFWriteL((void *)"EHFA_HEADER_TAG", 1, 16, fp) > 0;
@@ -2957,14 +2957,14 @@ bool HFACreateSpillStack(HFAInfo_t *psInfo, int nXSize, int nYSize, int nLayers,
     {
         const auto osExt = CPLGetExtensionSafe(psInfo->pszFilename);
         if (EQUAL(osExt.c_str(), "rrd"))
-            psInfo->pszIGEFilename =
-                CPLStrdup(CPLResetExtension(psInfo->pszFilename, "rde"));
+            psInfo->pszIGEFilename = CPLStrdup(
+                CPLResetExtensionSafe(psInfo->pszFilename, "rde").c_str());
         else if (EQUAL(osExt.c_str(), "aux"))
-            psInfo->pszIGEFilename =
-                CPLStrdup(CPLResetExtension(psInfo->pszFilename, "axe"));
+            psInfo->pszIGEFilename = CPLStrdup(
+                CPLResetExtensionSafe(psInfo->pszFilename, "axe").c_str());
         else
-            psInfo->pszIGEFilename =
-                CPLStrdup(CPLResetExtension(psInfo->pszFilename, "ige"));
+            psInfo->pszIGEFilename = CPLStrdup(
+                CPLResetExtensionSafe(psInfo->pszFilename, "ige").c_str());
     }
 
     char *pszFullFilename = CPLStrdup(

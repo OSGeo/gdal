@@ -2109,8 +2109,8 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     double dfYMax = adfGeoTransform[3];
     double dfYMin = dfYMax + adfGeoTransform[5] * poSrcDS->GetRasterYSize();
 
-    CPLString osSectionName(
-        CSLFetchNameValueDef(papszOptions, "SECTION", CPLGetBasename(pszName)));
+    CPLString osSectionName(CSLFetchNameValueDef(
+        papszOptions, "SECTION", CPLGetBasenameSafe(pszName).c_str()));
     const bool bPyramidize = CPLFetchBool(papszOptions, "PYRAMIDIZE", false);
     RasterLite2CallbackData cbk_data;
     cbk_data.poSrcDS = poSrcDS;

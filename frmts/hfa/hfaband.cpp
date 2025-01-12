@@ -174,10 +174,10 @@ CPLErr HFABand::LoadOverviews()
             if (psHFA == nullptr)
             {
                 char *pszBasename =
-                    CPLStrdup(CPLGetBasename(psInfo->pszFilename));
+                    CPLStrdup(CPLGetBasenameSafe(psInfo->pszFilename).c_str());
 
-                pszJustFilename =
-                    CPLStrdup(CPLFormFilename(nullptr, pszBasename, "rrd"));
+                pszJustFilename = CPLStrdup(
+                    CPLFormFilenameSafe(nullptr, pszBasename, "rrd").c_str());
                 CPLDebug("HFA",
                          "Failed to find overview file with "
                          "expected name, try %s instead.",

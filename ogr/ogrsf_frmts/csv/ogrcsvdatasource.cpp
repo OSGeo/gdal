@@ -84,7 +84,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
     const CPLString osLayerName(m_poCSVLayer->GetName());
     const CPLString osFilename(m_poCSVLayer->GetFilename());
     const bool bCreateCSVT = m_poCSVLayer->GetCreateCSVT();
-    const CPLString osCSVTFilename(CPLResetExtension(osFilename, "csvt"));
+    const CPLString osCSVTFilename(CPLResetExtensionSafe(osFilename, "csvt"));
     VSIStatBufL sStatBuf;
     const bool bHasCSVT = VSIStatL(osCSVTFilename, &sStatBuf) == 0;
     CPLString osTmpFilename(osFilename);
@@ -248,7 +248,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
         CPLError(CE_Failure, CPLE_AppDefined, "Error while creating %s",
                  osTmpFilename.c_str());
         VSIUnlink(osTmpFilename);
-        VSIUnlink(CPLResetExtension(osTmpFilename, "csvt"));
+        VSIUnlink(CPLResetExtensionSafe(osTmpFilename, "csvt").c_str());
         return eErr;
     }
 
@@ -631,7 +631,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
     {
         char **papszFiles = VSIReadDir(osFilename);
         if (CSLCount(papszFiles) != 1 ||
-            !EQUAL(CPLGetExtension(papszFiles[0]), "CSV"))
+            !EQUAL(CPLGetExtensionSafe(papszFiles[0]).c_str(), "CSV"))
         {
             CSLDestroy(papszFiles);
             return FALSE;
@@ -679,7 +679,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
         // GNIS specific.
         else if (strlen(papszNames[i]) > 2 &&
                  STARTS_WITH_CI(papszNames[i] + 2, "_Features_") &&
-                 EQUAL(CPLGetExtension(papszNames[i]), "txt"))
+                 EQUAL(CPLGetExtensionSafe(papszNames[i]).c_str(), "txt"))
         {
             bool bRet =
                 OpenTable(oSubFilename, papszOpenOptionsIn, nullptr, "PRIM");
@@ -695,7 +695,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
         // GNIS specific.
         else if (strlen(papszNames[i]) > 2 &&
                  STARTS_WITH_CI(papszNames[i] + 2, "_FedCodes_") &&
-                 EQUAL(CPLGetExtension(papszNames[i]), "txt"))
+                 EQUAL(CPLGetExtensionSafe(papszNames[i]).c_str(), "txt"))
         {
             if (!OpenTable(oSubFilename, papszOpenOptionsIn, nullptr,
                            "PRIMARY"))
@@ -1228,8 +1228,8 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
             poSpatialRef->exportToWkt(&pszWKT);
             if (pszWKT)
             {
-                VSILFILE *fpPRJ =
-                    VSIFOpenL(CPLResetExtension(osFilename, "prj"), "wb");
+                VSILFILE *fpPRJ = VSIFOpenL(
+                    CPLResetExtensionSafe(osFilename, "prj").c_str(), "wb");
                 if (fpPRJ)
                 {
                     CPL_IGNORE_RET_VAL(VSIFPrintfL(fpPRJ, "%s\n", pszWKT));

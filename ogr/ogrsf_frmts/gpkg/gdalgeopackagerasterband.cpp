@@ -2918,7 +2918,7 @@ GDALGPKGMBTilesLikePseudoDataset::DoPartialFlushOfPartialTilesIfNecessary()
     {
         m_nLastSpaceCheckTimestamp = nCurTimeStamp;
         GIntBig nFreeSpace =
-            VSIGetDiskFreeSpace(CPLGetDirname(m_osTempDBFilename));
+            VSIGetDiskFreeSpace(CPLGetDirnameSafe(m_osTempDBFilename).c_str());
         bool bTryFreeing = false;
         if (nFreeSpace >= 0 && nFreeSpace < 1024 * 1024 * 1024)
         {

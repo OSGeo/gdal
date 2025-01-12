@@ -1913,8 +1913,8 @@ bool OGRSQLiteDataSource::Create(const char *pszNameIn, char **papszOptions)
     if (bUseTempFile)
     {
         m_osFinalFilename = pszNameIn;
-        m_pszFilename =
-            CPLStrdup(CPLGenerateTempFilename(CPLGetFilename(pszNameIn)));
+        m_pszFilename = CPLStrdup(
+            CPLGenerateTempFilenameSafe(CPLGetFilename(pszNameIn)).c_str());
         CPLDebug("SQLITE", "Creating temporary file %s", m_pszFilename);
     }
     else

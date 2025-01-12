@@ -196,8 +196,8 @@ int OGRILI2DataSource::Create(const char *pszFilename,
     {
         if (EQUAL(CPLGetExtensionSafe(pszName).c_str(), "zip"))
         {
-            char *pszNewName =
-                CPLStrdup(CPLFormFilename(pszName, "out.xtf", nullptr));
+            char *pszNewName = CPLStrdup(
+                CPLFormFilenameSafe(pszName, "out.xtf", nullptr).c_str());
             CPLFree(pszName);
             pszName = pszNewName;
         }

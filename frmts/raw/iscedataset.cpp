@@ -120,8 +120,9 @@ static CPLString getXMLFilename(GDALOpenInfo *poOpenInfo)
         const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
         const CPLString osName = CPLGetFilename(poOpenInfo->pszFilename);
 
-        const int iFile = CSLFindString(
-            papszSiblingFiles, CPLFormFilename(nullptr, osName, "xml"));
+        const int iFile =
+            CSLFindString(papszSiblingFiles,
+                          CPLFormFilenameSafe(nullptr, osName, "xml").c_str());
         if (iFile >= 0)
         {
             osXMLFilename =

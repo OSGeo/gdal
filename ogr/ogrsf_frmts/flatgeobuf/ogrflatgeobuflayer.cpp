@@ -2455,8 +2455,8 @@ void OGRFlatGeobufLayer::ResetReading()
 std::string OGRFlatGeobufLayer::GetTempFilePath(const CPLString &fileName,
                                                 CSLConstList papszOptions)
 {
-    const CPLString osDirname(CPLGetPath(fileName.c_str()));
-    const CPLString osBasename(CPLGetBasename(fileName.c_str()));
+    const CPLString osDirname(CPLGetPathSafe(fileName.c_str()));
+    const CPLString osBasename(CPLGetBasenameSafe(fileName.c_str()));
     const char *pszTempDir = CSLFetchNameValue(papszOptions, "TEMPORARY_DIR");
     std::string osTempFile =
         pszTempDir ? CPLFormFilename(pszTempDir, osBasename, nullptr)

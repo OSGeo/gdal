@@ -744,7 +744,7 @@ void FileGDBTable::DeleteFreeList()
 {
     m_bFreelistCanBeDeleted = false;
     m_nHasFreeList = -1;
-    VSIUnlink(CPLResetExtension(m_osFilename.c_str(), "freelist"));
+    VSIUnlink(CPLResetExtensionSafe(m_osFilename.c_str(), "freelist").c_str());
 }
 
 } /* namespace OpenFileGDB */

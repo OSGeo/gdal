@@ -141,8 +141,9 @@ int OGRIdrisiDataSource::Open(const char *pszFilename)
     const char *pszMinY = CSLFetchNameValue(papszVDC, "min. Y");
     const char *pszMaxY = CSLFetchNameValue(papszVDC, "max. Y");
 
-    OGRIdrisiLayer *poLayer = new OGRIdrisiLayer(
-        pszFilename, CPLGetBasename(pszFilename), fpVCT, eType, pszWTKString);
+    OGRIdrisiLayer *poLayer =
+        new OGRIdrisiLayer(pszFilename, CPLGetBasenameSafe(pszFilename).c_str(),
+                           fpVCT, eType, pszWTKString);
     papoLayers = static_cast<OGRLayer **>(CPLMalloc(sizeof(OGRLayer *)));
     papoLayers[nLayers++] = poLayer;
 

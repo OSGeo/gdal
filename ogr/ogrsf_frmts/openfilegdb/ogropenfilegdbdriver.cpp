@@ -57,9 +57,10 @@ static GDALDataset *OGROpenFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
         {
             if (strcmp(papszFiles[i], CPLGetFilename(osOrigFilename)) != 0)
             {
-                CPLCopyFile(CPLFormFilename(CPLGetPath(osOrigFilename),
-                                            papszFiles[i], NULL),
-                            CPLFormFilename(pszSrcDir, papszFiles[i], NULL));
+                CPLCopyFile(
+                    CPLFormFilename(CPLGetPathSafe(osOrigFilename).c_str(),
+                                    papszFiles[i], NULL),
+                    CPLFormFilename(pszSrcDir, papszFiles[i], NULL));
             }
         }
         CSLDestroy(papszFiles);

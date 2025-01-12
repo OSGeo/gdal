@@ -461,7 +461,7 @@ void netCDFDataset::ProcessSentinel3_SRAL_MWR()
         NCDF_ERR(status);
         if (status != NC_NOERR)
             break;
-        std::string name(CPLGetBasename(GetDescription()));
+        std::string name(CPLGetBasenameSafe(GetDescription()));
         name += '_';
         name += szDimName;
         std::shared_ptr<OGRLayer> poLayer(

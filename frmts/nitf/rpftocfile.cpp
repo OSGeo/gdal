@@ -661,7 +661,7 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
             // Check if it was not intended to be "./X/" instead.
             VSIStatBufL sStatBuf;
             if (frameEntry->directory[0] == '/' &&
-                VSIStatL(CPLFormFilename(CPLGetDirname(pszFilename),
+                VSIStatL(CPLFormFilename(CPLGetDirnameSafe(pszFilename).c_str(),
                                          frameEntry->directory + 1, nullptr),
                          &sStatBuf) == 0 &&
                 VSI_ISDIR(sStatBuf.st_mode))
@@ -672,7 +672,7 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
         }
 
         {
-            char *baseDir = CPLStrdup(CPLGetDirname(pszFilename));
+            char *baseDir = CPLStrdup(CPLGetDirnameSafe(pszFilename).c_str());
             VSIStatBufL sStatBuf;
             char *subdir = nullptr;
             if (CPLIsFilenameRelative(frameEntry->directory) == FALSE)

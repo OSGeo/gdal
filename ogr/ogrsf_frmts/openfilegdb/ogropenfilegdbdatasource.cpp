@@ -193,12 +193,12 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
         m_osDirName = CPLGetPath(m_osDirName);
     }
 
-    if (EQUAL(CPLGetExtension(m_osDirName), "zip") &&
+    if (EQUAL(CPLGetExtensionSafe(m_osDirName).c_str(), "zip") &&
         !STARTS_WITH(m_osDirName, "/vsizip/"))
     {
         m_osDirName = "/vsizip/" + m_osDirName;
     }
-    else if (EQUAL(CPLGetExtension(m_osDirName), "tar") &&
+    else if (EQUAL(CPLGetExtensionSafe(m_osDirName).c_str(), "tar") &&
              !STARTS_WITH(m_osDirName, "/vsitar/"))
     {
         m_osDirName = "/vsitar/" + m_osDirName;
@@ -213,7 +213,7 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
         for (int i = 0; papszDir && papszDir[i] != nullptr; i++)
         {
             VSIStatBufL sStat;
-            if (EQUAL(CPLGetExtension(papszDir[i]), "gdb") &&
+            if (EQUAL(CPLGetExtensionSafe(papszDir[i]).c_str(), "gdb") &&
                 VSIStatL(CPLSPrintf("%s/%s", m_osDirName.c_str(), papszDir[i]),
                          &sStat) == 0 &&
                 VSI_ISDIR(sStat.st_mode))

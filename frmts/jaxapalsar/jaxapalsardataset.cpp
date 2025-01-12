@@ -578,7 +578,8 @@ GDALDataset *PALSARJaxaDataset::Open(GDALOpenInfo *poOpenInfo)
 
     /* Try to read each of the polarizations */
     const size_t nImgFileLen =
-        strlen(CPLGetDirname(poOpenInfo->pszFilename)) + strlen(pszSuffix) + 8;
+        strlen(CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str()) +
+        strlen(pszSuffix) + 8;
     char *pszImgFile = (char *)CPLMalloc(nImgFileLen);
 
     int nBandNum = 1;
@@ -650,7 +651,8 @@ GDALDataset *PALSARJaxaDataset::Open(GDALOpenInfo *poOpenInfo)
 
     /* read metadata from Leader file. */
     const size_t nLeaderFilenameLen =
-        strlen(CPLGetDirname(poOpenInfo->pszFilename)) + strlen(pszSuffix) + 5;
+        strlen(CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str()) +
+        strlen(pszSuffix) + 5;
     char *pszLeaderFilename = (char *)CPLMalloc(nLeaderFilenameLen);
     snprintf(pszLeaderFilename, nLeaderFilenameLen, "%s%sLED%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix);

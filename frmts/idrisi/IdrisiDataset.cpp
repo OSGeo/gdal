@@ -2393,8 +2393,9 @@ CPLErr IdrisiGeoReference2Wkt(const char *pszFilename, const char *pszRefSystem,
     //  Search for georeference file <RefSystem>.ref
     // ------------------------------------------------------------------
 
-    const char *pszFName = CPLSPrintf("%s%c%s.ref", CPLGetDirname(pszFilename),
-                                      PATHDELIM, pszRefSystem);
+    const char *pszFName =
+        CPLSPrintf("%s%c%s.ref", CPLGetDirnameSafe(pszFilename).c_str(),
+                   PATHDELIM, pszRefSystem);
 
     if (!FileExists(pszFName))
     {
@@ -3129,10 +3130,10 @@ CPLErr IdrisiDataset::Wkt2GeoReference(const OGRSpatialReference &oSRS,
         papszRef =
             CSLAddNameValue(papszRef, refSTANDL_2, CPLSPrintf("%.9g", dfStdP2));
     myCSLSetNameValueSeparator(papszRef, ": ");
-    SaveAsCRLF(papszRef, CPLResetExtension(pszFilename, extREF));
+    SaveAsCRLF(papszRef, CPLResetExtensionSafe(pszFilename, extREF).c_str());
     CSLDestroy(papszRef);
 
-    *pszRefSystem = CPLStrdup(CPLGetBasename(pszFilename));
+    *pszRefSystem = CPLStrdup(CPLGetBasenameSafe(pszFilename).c_str());
     *pszRefUnit = CPLStrdup(pszLinearUnit);
 
     CPLFree(pszGeorefName);

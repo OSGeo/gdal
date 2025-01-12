@@ -51,7 +51,8 @@ OGRSelafinLayer::OGRSelafinLayer(GDALDataset *poDS, const char *pszLayerNameP,
                                  SelafinTypeDef eTypeP)
     : m_poDS(poDS), eType(eTypeP), bUpdate(CPL_TO_BOOL(bUpdateP)),
       nStepNumber(nStepNumberP), poHeader(poHeaderP),
-      poFeatureDefn(new OGRFeatureDefn(CPLGetBasename(pszLayerNameP))),
+      poFeatureDefn(
+          new OGRFeatureDefn(CPLGetBasenameSafe(pszLayerNameP).c_str())),
       poSpatialRef(nullptr), nCurrentId(-1)
 {
 #ifdef DEBUG_VERBOSE

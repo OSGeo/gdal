@@ -644,7 +644,7 @@ GDALDataset *OGRGTFSDataset::Open(GDALOpenInfo *poOpenInfo)
                 {
                     poDS->m_apoLayers.emplace_back(
                         std::make_unique<OGRGTFSLayer>(
-                            osBaseDir, CPLGetBasename(pszFilename),
+                            osBaseDir, CPLGetBasenameSafe(pszFilename).c_str(),
                             std::move(poCSVDataset)));
                 }
             }

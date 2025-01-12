@@ -833,13 +833,14 @@ CPLString EHdrDataset::GetImageRepFilename(const char *pszFilename)
     if (EQUAL(CPLGetFilename(pszFilename), "imspatio.bil") ||
         EQUAL(CPLGetFilename(pszFilename), "haspatio.bil"))
     {
-        CPLString osImageRepFilename(CPLFormCIFilename(osPath, "image", "rep"));
+        CPLString osImageRepFilename(
+            CPLFormCIFilenameSafe(osPath, "image", "rep"));
         if (VSIStatExL(osImageRepFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG) ==
             0)
             return osImageRepFilename;
 
         // Try in the upper directories if not found in the BIL image directory.
-        CPLString dirName(CPLGetDirname(osPath));
+        CPLString dirName(CPLGetDirnameSafe(osPath));
         if (CPLIsFilenameRelative(osPath.c_str()))
         {
             char *cwd = CPLGetCurrentDir();
@@ -863,7 +864,7 @@ CPLString EHdrDataset::GetImageRepFilename(const char *pszFilename)
             {
                 break;
             }
-            dirName = CPLString(CPLGetDirname(dirName));
+            dirName = CPLString(CPLGetDirnameSafe(dirName));
         }
     }
     return CPLString();
@@ -947,7 +948,8 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     if (papszSiblingFiles)
     {
         const int iFile = CSLFindString(
-            papszSiblingFiles, CPLFormFilename(nullptr, osName, pszHeaderExt));
+            papszSiblingFiles,
+            CPLFormFilenameSafe(nullptr, osName, pszHeaderExt).c_str());
         if (iFile < 0)  // Return if there is no corresponding .hdr file.
             return nullptr;
 
@@ -1677,7 +1679,7 @@ GDALDataset *EHdrDataset::Create(const char *pszFilename, int nXSize,
 
     // Create the hdr filename.
     char *const pszHdrFilename =
-        CPLStrdup(CPLResetExtension(pszFilename, "hdr"));
+        CPLStrdup(CPLResetExtensionSafe(pszFilename, "hdr").c_str());
 
     // Open the file.
     fp = VSIFOpenL(pszHdrFilename, "wt");

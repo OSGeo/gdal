@@ -503,11 +503,11 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
          STARTS_WITH_CI(pszJustFilename, "S2B_USER_PRD_MSI")) &&
         EQUAL(CPLGetExtensionSafe(pszJustFilename).c_str(), "zip"))
     {
-        const CPLString osBasename(CPLGetBasename(pszJustFilename));
+        const CPLString osBasename(CPLGetBasenameSafe(pszJustFilename));
         CPLString osFilename(poOpenInfo->pszFilename);
         CPLString osMTD(osBasename);
         // Normally given above constraints, osMTD.size() should be >= 16
-        // but if pszJustFilename is too long, CPLGetBasename() will return
+        // but if pszJustFilename is too long, CPLGetBasenameSafe().c_str() will return
         // an empty string.
         if (osMTD.size() < 16)
             return nullptr;
@@ -529,7 +529,7 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
               STARTS_WITH_CI(pszJustFilename, "S2B_MSIL1C_")) &&
              EQUAL(CPLGetExtensionSafe(pszJustFilename).c_str(), "zip"))
     {
-        const CPLString osBasename(CPLGetBasename(pszJustFilename));
+        const CPLString osBasename(CPLGetBasenameSafe(pszJustFilename));
         CPLString osFilename(poOpenInfo->pszFilename);
         CPLString osSAFE(osBasename);
         // S2B_MSIL1C_20171004T233419_N0206_R001_T54DWM_20171005T001811.SAFE.zip
@@ -548,7 +548,7 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
               STARTS_WITH_CI(pszJustFilename, "S2B_MSIL2A_")) &&
              EQUAL(CPLGetExtensionSafe(pszJustFilename).c_str(), "zip"))
     {
-        const CPLString osBasename(CPLGetBasename(pszJustFilename));
+        const CPLString osBasename(CPLGetBasenameSafe(pszJustFilename));
         CPLString osFilename(poOpenInfo->pszFilename);
         CPLString osSAFE(osBasename);
         // S2B_MSIL1C_20171004T233419_N0206_R001_T54DWM_20171005T001811.SAFE.zip
@@ -935,7 +935,7 @@ static bool SENTINEL2GetGranuleList(
         return false;
     }
 
-    CPLString osDirname(CPLGetDirname(pszFilename));
+    CPLString osDirname(CPLGetDirnameSafe(pszFilename));
 #ifdef HAVE_READLINK
     char szPointerFilename[2048];
     int nBytes = static_cast<int>(
@@ -1727,8 +1727,8 @@ SENTINEL2GetMainMTDFilenameFromGranuleMTD(const char *pszFilename)
 {
     // Look for product MTD file
     CPLString osTopDir(CPLFormFilename(
-        CPLFormFilename(CPLGetDirname(pszFilename), "..", nullptr), "..",
-        nullptr));
+        CPLFormFilename(CPLGetDirnameSafe(pszFilename).c_str(), "..", nullptr),
+        "..", nullptr));
 
     // Workaround to avoid long filenames on Windows
     if (CPLIsFilenameRelative(pszFilename))
@@ -1737,7 +1737,7 @@ SENTINEL2GetMainMTDFilenameFromGranuleMTD(const char *pszFilename)
         const char *pszPath = CPLGetPath(pszFilename);
         if (strchr(pszPath, '/') || strchr(pszPath, '\\'))
         {
-            osTopDir = CPLGetPath(CPLGetPath(pszPath));
+            osTopDir = CPLGetPath(CPLGetPathSafe(pszPath).c_str());
             if (osTopDir == "")
                 osTopDir = ".";
         }
@@ -1816,9 +1816,9 @@ static void SENTINEL2GetResolutionSetAndMainMDFromGranule(
             if (atoi(osBandName) < 10)
                 osBandName = "0" + osBandName;
 
-            CPLString osTile(SENTINEL2GetTilename(CPLGetPath(pszFilename),
-                                                  CPLGetBasename(pszFilename),
-                                                  osBandName));
+            CPLString osTile(
+                SENTINEL2GetTilename(CPLGetPathSafe(pszFilename).c_str(),
+                                     CPLGetBasename(pszFilename), osBandName));
             VSIStatBufL sStat;
             if (VSIStatExL(osTile, &sStat, VSI_STAT_EXISTS_FLAG) == 0)
             {
@@ -2050,9 +2050,9 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset(GDALOpenInfo *poOpenInfo)
     {
         for (size_t i = 0; i < aosBands.size(); i++)
         {
-            CPLString osTile(SENTINEL2GetTilename(CPLGetPath(osFilename),
-                                                  CPLGetBasename(osFilename),
-                                                  aosBands[i]));
+            CPLString osTile(
+                SENTINEL2GetTilename(CPLGetPathSafe(osFilename).c_str(),
+                                     CPLGetBasename(osFilename), aosBands[i]));
             if (SENTINEL2GetTileInfo(osTile, &nCols, &nRows, &nBits))
             {
                 if (nBits <= 16)
@@ -2161,7 +2161,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset(GDALOpenInfo *poOpenInfo)
             osBandName = aosBands[0];
 
         CPLString osTile(SENTINEL2GetTilename(
-            CPLGetPath(osFilename), CPLGetBasename(osFilename), osBandName));
+            CPLGetPath(osFilename), CPLGetBasenameSafe(osFilename).c_str(),
+            osBandName));
 
         bool bTileFound = false;
         if (nValMax == 0)
@@ -2326,7 +2327,7 @@ static bool SENTINEL2GetGranuleList_L1CSafeCompact(
         return false;
     }
 
-    CPLString osDirname(CPLGetDirname(pszFilename));
+    CPLString osDirname(CPLGetDirnameSafe(pszFilename));
 #ifdef HAVE_READLINK
     char szPointerFilename[2048];
     int nBytes = static_cast<int>(
@@ -2371,9 +2372,10 @@ static bool SENTINEL2GetGranuleList_L1CSafeCompact(
                                           3);  // strip B12
             // GRANULE/L1C_T30TXT_A007999_20170102T111441/IMG_DATA/T30TXT_20170102T111442_B12
             // --> GRANULE/L1C_T30TXT_A007999_20170102T111441/MTD_TL.xml
-            oDesc.osMTDTLPath = osDirname + chSeparator +
-                                CPLGetDirname(CPLGetDirname(pszImageFile)) +
-                                chSeparator + "MTD_TL.xml";
+            oDesc.osMTDTLPath =
+                osDirname + chSeparator +
+                CPLGetDirname(CPLGetDirnameSafe(pszImageFile).c_str()) +
+                chSeparator + "MTD_TL.xml";
             osList.push_back(oDesc);
         }
     }
@@ -2417,7 +2419,7 @@ static bool SENTINEL2GetGranuleList_L2ASafeCompact(
         }
     }
 
-    CPLString osDirname(CPLGetDirname(pszFilename));
+    CPLString osDirname(CPLGetDirnameSafe(pszFilename));
 #ifdef HAVE_READLINK
     char szPointerFilename[2048];
     int nBytes = static_cast<int>(
@@ -2471,8 +2473,9 @@ static bool SENTINEL2GetGranuleList_L2ASafeCompact(
             oDesc.osBandPrefixPath.resize(oDesc.osBandPrefixPath.size() - 36);
             // GRANULE/L1C_T30TXT_A007999_20170102T111441/IMG_DATA/T30TXT_20170102T111442_B12_60m
             // --> GRANULE/L1C_T30TXT_A007999_20170102T111441/MTD_TL.xml
-            oDesc.osMTDTLPath = osDirname + chSeparator +
-                                CPLGetDirname(CPLGetDirname(pszImageFile));
+            oDesc.osMTDTLPath =
+                osDirname + chSeparator +
+                CPLGetDirname(CPLGetDirnameSafe(pszImageFile).c_str());
             if (oDesc.osMTDTLPath.size() < 9)
             {
                 CPLDebug("SENTINEL2", "MTDTL path too short");

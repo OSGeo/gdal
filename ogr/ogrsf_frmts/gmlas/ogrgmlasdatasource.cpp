@@ -558,9 +558,9 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
                 (osXSDFilename.find("http://") != 0 &&
                  osXSDFilename.find("https://") != 0 &&
                  CPLIsFilenameRelative(osXSDFilename))
-                    ? CPLString(
-                          CPLFormFilename(CPLGetDirname(osAbsoluteGMLFilename),
-                                          osXSDFilename, nullptr))
+                    ? CPLString(CPLFormFilename(
+                          CPLGetDirnameSafe(osAbsoluteGMLFilename).c_str(),
+                          osXSDFilename, nullptr))
                     : osXSDFilename);
             oFeature.SetField(szVALUE, osAbsoluteXSDFilename.c_str());
             CPL_IGNORE_RET_VAL(
@@ -652,7 +652,8 @@ OGRGMLASDataSource::BuildXSDVector(const CPLString &osXSDFilenames)
             CPLIsFilenameRelative(papszTokens[i]) && pszCurDir != nullptr)
         {
             aoXSDs.push_back(PairURIFilename(
-                "", CPLFormFilename(pszCurDir, papszTokens[i], nullptr)));
+                "", CPLFormFilenameSafe(pszCurDir, papszTokens[i], nullptr)
+                        .c_str()));
         }
         else
         {
@@ -859,9 +860,9 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
                                             szHANDLE_MULTIPLE_IMPORTS_OPTION,
                                             m_oConf.m_bHandleMultipleImports);
 
-    bool bRet =
-        oAnalyzer.Analyze(m_oCache, CPLGetDirname(m_osGMLFilename), aoXSDs,
-                          m_bSchemaFullChecking, m_bHandleMultipleImports);
+    bool bRet = oAnalyzer.Analyze(
+        m_oCache, CPLGetDirnameSafe(m_osGMLFilename).c_str(), aoXSDs,
+        m_bSchemaFullChecking, m_bHandleMultipleImports);
     if (!bRet)
     {
         return false;

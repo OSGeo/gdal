@@ -1531,10 +1531,10 @@ GDALDataset *HKVDataset::Create(const char *pszFilenameIn, int nXSize,
     /* -------------------------------------------------------------------- */
     char *pszBaseDir = nullptr;
 
-    if (strlen(CPLGetPath(pszFilenameIn)) == 0)
+    if (strlen(CPLGetPathSafe(pszFilenameIn).c_str()) == 0)
         pszBaseDir = CPLStrdup(".");
     else
-        pszBaseDir = CPLStrdup(CPLGetPath(pszFilenameIn));
+        pszBaseDir = CPLStrdup(CPLGetPathSafe(pszFilenameIn).c_str());
 
     VSIStatBuf sStat;
     if (CPLStat(pszBaseDir, &sStat) != 0 || !VSI_ISDIR(sStat.st_mode))

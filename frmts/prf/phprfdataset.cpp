@@ -385,7 +385,7 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
     int nSizeY = 0;
     int nBandCount = 0;
     GDALDataType eResultDatatype = GDT_Unknown;
-    CPLString osPartsBasePath(CPLGetPath(poOpenInfo->pszFilename));
+    CPLString osPartsBasePath(CPLGetPathSafe(poOpenInfo->pszFilename));
     CPLString osPartsPath(osPartsBasePath + "/" +
                           CPLGetBasename(poOpenInfo->pszFilename));
     CPLString osPartsExt;

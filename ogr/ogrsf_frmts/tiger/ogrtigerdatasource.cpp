@@ -339,7 +339,7 @@ int OGRTigerDataSource::Open(const char *pszFilename, int bTestOpen,
             return FALSE;
         }
 
-        pszPath = CPLStrdup(CPLGetPath(pszFilename));
+        pszPath = CPLStrdup(CPLGetPathSafe(pszFilename).c_str());
 
         strncpy(szModule, CPLGetFilename(pszFilename), sizeof(szModule) - 1);
         /* Make sure the buffer is 0 terminated */

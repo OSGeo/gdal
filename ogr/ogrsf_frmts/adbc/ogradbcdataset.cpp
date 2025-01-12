@@ -233,7 +233,8 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
             if (iPos2 != std::string::npos)
             {
                 const std::string osFilename = osSQL.substr(iPos, iPos2 - iPos);
-                if (EQUAL(CPLGetExtension(osFilename.c_str()), "parquet"))
+                if (EQUAL(CPLGetExtensionSafe(osFilename.c_str()).c_str(),
+                          "parquet"))
                 {
                     m_osParquetFilename = osFilename;
                     bIsParquet = true;
@@ -405,8 +406,8 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
             m_osParquetFilename = pszFilename;
         osLayerName = CPLGetBasename(m_osParquetFilename.c_str());
         if (osLayerName == "*")
-            osLayerName =
-                CPLGetBasename(CPLGetDirname(m_osParquetFilename.c_str()));
+            osLayerName = CPLGetBasename(
+                CPLGetDirnameSafe(m_osParquetFilename.c_str()).c_str());
         if (!pszSQL)
         {
             osSQL =

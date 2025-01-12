@@ -190,8 +190,8 @@ void OGRIDFDataSource::Parse()
             }
             else
             {
-                osTmpFilename =
-                    CPLGenerateTempFilename(CPLGetBasename(m_osFilename));
+                osTmpFilename = CPLGenerateTempFilename(
+                    CPLGetBasenameSafe(m_osFilename).c_str());
                 osTmpFilename += ".gpkg";
             }
             VSIUnlink(osTmpFilename);
@@ -1185,7 +1185,7 @@ GDALDataset *OGRVDVDataSource::Open(GDALOpenInfo *poOpenInfo)
             if (EQUAL(*papszIter, ".") || EQUAL(*papszIter, ".."))
                 continue;
             nFiles++;
-            const std::string osExtension(CPLGetExtension(*papszIter));
+            const std::string osExtension(CPLGetExtensionSafe(*papszIter));
             int nCount = ++oMapOtherExtensions[osExtension];
             if (osMajorityExtension == "" ||
                 nCount > oMapOtherExtensions[osMajorityExtension])
@@ -1225,7 +1225,8 @@ GDALDataset *OGRVDVDataSource::Open(GDALOpenInfo *poOpenInfo)
         for (char **papszIter = papszFiles; papszIter && *papszIter;
              ++papszIter)
         {
-            if (!EQUAL(CPLGetExtension(*papszIter), osMajorityExtension))
+            if (!EQUAL(CPLGetExtensionSafe(*papszIter).c_str(),
+                       osMajorityExtension))
                 continue;
             VSILFILE *fp = VSIFOpenL(
                 CPLFormFilename(poOpenInfo->pszFilename, *papszIter, nullptr),
@@ -1235,8 +1236,9 @@ GDALDataset *OGRVDVDataSource::Open(GDALOpenInfo *poOpenInfo)
             poDS->m_papoLayers = static_cast<OGRLayer **>(
                 CPLRealloc(poDS->m_papoLayers,
                            sizeof(OGRLayer *) * (poDS->m_nLayerCount + 1)));
-            poDS->m_papoLayers[poDS->m_nLayerCount] = new OGRVDVLayer(
-                poDS, CPLGetBasename(*papszIter), fp, true, false, 0);
+            poDS->m_papoLayers[poDS->m_nLayerCount] =
+                new OGRVDVLayer(poDS, CPLGetBasenameSafe(*papszIter).c_str(),
+                                fp, true, false, 0);
             poDS->m_nLayerCount++;
         }
         CSLDestroy(papszFiles);

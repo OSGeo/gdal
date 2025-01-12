@@ -983,9 +983,9 @@ static void CPLXMLSchemaResolveInclude(const char *pszMainSchemaLocation,
                         !STARTS_WITH(pszSchemaLocation, "https://") &&
                         CPLIsFilenameRelative(pszSchemaLocation))
                     {
-                        pszSchemaLocation =
-                            CPLFormFilename(CPLGetPath(pszMainSchemaLocation),
-                                            pszSchemaLocation, nullptr);
+                        pszSchemaLocation = CPLFormFilename(
+                            CPLGetPathSafe(pszMainSchemaLocation).c_str(),
+                            pszSchemaLocation, nullptr);
                     }
 
                     CPLXMLNode *psIncludedXSDTree =

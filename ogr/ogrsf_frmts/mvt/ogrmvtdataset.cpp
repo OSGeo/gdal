@@ -1973,9 +1973,9 @@ static int OGRMVTDriverIdentify(GDALOpenInfo *poOpenInfo)
             {
                 // tileserver-gl metadata file:
                 // If opening /path/to/foo/0, try looking for /path/to/foo.json
-                CPLString osParentDir(CPLGetPath(poOpenInfo->pszFilename));
+                CPLString osParentDir(CPLGetPathSafe(poOpenInfo->pszFilename));
                 osMetadataFile =
-                    CPLFormFilename(CPLGetPath(osParentDir),
+                    CPLFormFilename(CPLGetPathSafe(osParentDir).c_str(),
                                     CPLGetFilename(osParentDir), "json");
                 if (VSIStatL(osMetadataFile, &sStat) == 0)
                 {
@@ -1999,7 +1999,8 @@ static int OGRMVTDriverIdentify(GDALOpenInfo *poOpenInfo)
                     poOpenInfo->papszOpenOptions, "TILE_EXTENSION", "pbf"));
                 for (int i = 0; i < aosSubDirContent.Count(); i++)
                 {
-                    if (CPLGetValueType(CPLGetBasename(aosSubDirContent[i])) ==
+                    if (CPLGetValueType(
+                            CPLGetBasenameSafe(aosSubDirContent[i]).c_str()) ==
                         CPL_VALUE_INTEGER)
                     {
                         CPLString osExtension(
@@ -2582,9 +2583,10 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                     // tileserver-gl metadata file:
                     // If opening /path/to/foo/0, try looking for
                     // /path/to/foo.json
-                    CPLString osParentDir(CPLGetPath(poOpenInfo->pszFilename));
+                    CPLString osParentDir(
+                        CPLGetPathSafe(poOpenInfo->pszFilename));
                     osMetadataFile =
-                        CPLFormFilename(CPLGetPath(osParentDir),
+                        CPLFormFilename(CPLGetPathSafe(osParentDir).c_str(),
                                         CPLGetFilename(osParentDir), "json");
                     continue;
                 }
@@ -2606,7 +2608,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
         {
             // tileserver-gl metadata file:
             // If opening /path/to/foo/0, try looking for /path/to/foo.json
-            CPLString osParentDir(CPLGetPath(poOpenInfo->pszFilename));
+            CPLString osParentDir(CPLGetPathSafe(poOpenInfo->pszFilename));
             osMetadataFile = CPLFormFilename(
                 CPLGetPath(osParentDir), CPLGetFilename(osParentDir), "json");
             bMetadataFileExists = (VSIStatL(osMetadataFile, &sStat) == 0);
@@ -2661,7 +2663,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
             {
                 if (bTryToListDir)
                 {
-                    if (CPLGetValueType(CPLGetBasename(aosSubDirContent[j])) !=
+                    if (CPLGetValueType(
+                            CPLGetBasenameSafe(aosSubDirContent[j]).c_str()) !=
                         CPL_VALUE_INTEGER)
                     {
                         continue;
@@ -2967,8 +2970,9 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     CPLString osY = CPLGetBasename(osFilename);
-    CPLString osX = CPLGetBasename(CPLGetPath(osFilename));
-    CPLString osZ = CPLGetBasename(CPLGetPath(CPLGetPath(osFilename)));
+    CPLString osX = CPLGetBasename(CPLGetPathSafe(osFilename).c_str());
+    CPLString osZ =
+        CPLGetBasename(CPLGetPathSafe(CPLGetPath(osFilename)).c_str());
     size_t nPos = osY.find('.');
     if (nPos != std::string::npos)
         osY.resize(nPos);
@@ -2983,9 +2987,9 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
              CPLGetValueType(osY) == CPL_VALUE_INTEGER &&
              CPLGetValueType(osZ) == CPL_VALUE_INTEGER)
     {
-        osMetadataFile =
-            CPLFormFilename(CPLGetPath(CPLGetPath(CPLGetPath(osFilename))),
-                            "metadata.json", nullptr);
+        osMetadataFile = CPLFormFilename(
+            CPLGetPath(CPLGetPathSafe(CPLGetPath(osFilename)).c_str()),
+            "metadata.json", nullptr);
         if (osMetadataFile.find("/vsigzip/") == 0)
         {
             osMetadataFile = osMetadataFile.substr(strlen("/vsigzip/"));
@@ -3093,7 +3097,8 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
         int nX = 0;
         int nY = 0;
         int nZ = 0;
-        CPLString osBasename(CPLGetBasename(CPLGetBasename(osFilename)));
+        CPLString osBasename(
+            CPLGetBasenameSafe(CPLGetBasenameSafe(osFilename).c_str()));
         if (sscanf(osBasename, "%d-%d-%d", &nZ, &nX, &nY) == 3 ||
             sscanf(osBasename, "%d_%d_%d", &nZ, &nX, &nY) == 3)
         {
@@ -6134,8 +6139,8 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
         }
     }
 
-    poDS->m_osName =
-        CSLFetchNameValueDef(papszOptions, "NAME", CPLGetBasename(pszFilename));
+    poDS->m_osName = CSLFetchNameValueDef(
+        papszOptions, "NAME", CPLGetBasenameSafe(pszFilename).c_str());
     poDS->m_osDescription = CSLFetchNameValueDef(papszOptions, "DESCRIPTION",
                                                  poDS->m_osDescription.c_str());
     poDS->m_osType =

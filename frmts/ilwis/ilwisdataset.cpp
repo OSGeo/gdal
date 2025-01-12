@@ -496,8 +496,9 @@ void ILWISDataset::CollectTransformCoef(std::string &pszRefName)
     if (!georef.empty() && !EQUAL(georef.c_str(), "none"))
     {
         // Form the geo-referencing name
-        std::string osBaseName = std::string(CPLGetBasename(georef.c_str()));
-        std::string osPath = std::string(CPLGetPath(osFileName));
+        std::string osBaseName =
+            std::string(CPLGetBasenameSafe(georef.c_str()));
+        std::string osPath = std::string(CPLGetPathSafe(osFileName));
         pszRefName = std::string(
             CPLFormFilename(osPath.c_str(), osBaseName.c_str(), "grf"));
 
@@ -583,8 +584,8 @@ void ILWISDataset::WriteGeoReference()
 
             // Re-write the GeoRef property to raster ODF
             // Form band file name
-            std::string sBaseName = std::string(CPLGetBasename(osFileName));
-            std::string sPath = std::string(CPLGetPath(osFileName));
+            std::string sBaseName = std::string(CPLGetBasenameSafe(osFileName));
+            std::string sPath = std::string(CPLGetPathSafe(osFileName));
             if (nBands == 1)
             {
                 WriteElement("Map", "GeoRef", osFileName, sBaseName + ".grf");
@@ -705,8 +706,9 @@ GDALDataset *ILWISDataset::Open(GDALOpenInfo *poOpenInfo)
     const std::string maptype =
         ReadElement("BaseMap", "Type", poOpenInfo->pszFilename);
     // const std::string sBaseName =
-    // std::string(CPLGetBasename(poOpenInfo->pszFilename) );
-    const std::string sPath = std::string(CPLGetPath(poOpenInfo->pszFilename));
+    // std::string(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str() );
+    const std::string sPath =
+        std::string(CPLGetPathSafe(poOpenInfo->pszFilename));
 
     // Verify whether it is a map list or a map
     if (EQUAL(ilwistype.c_str(), "MapList"))
@@ -724,9 +726,9 @@ GDALDataset *ILWISDataset::Open(GDALOpenInfo *poOpenInfo)
             std::string sBandName = ReadElement(
                 "MapList", std::string(cBandName), poOpenInfo->pszFilename);
             std::string pszBandBaseName =
-                std::string(CPLGetBasename(sBandName.c_str()));
+                std::string(CPLGetBasenameSafe(sBandName.c_str()));
             std::string pszBandPath =
-                std::string(CPLGetPath(sBandName.c_str()));
+                std::string(CPLGetPathSafe(sBandName.c_str()));
             if (pszBandPath.empty())
             {
                 sBandName = std::string(CPLFormFilename(
@@ -833,8 +835,9 @@ GDALDataset *ILWISDataset::Open(GDALOpenInfo *poOpenInfo)
                 !(STARTS_WITH_CI(csy.c_str(), "LatlonWGS84.csy")))
             {
                 std::string osBaseName =
-                    std::string(CPLGetBasename(csy.c_str()));
-                std::string osPath = std::string(CPLGetPath(poDS->osFileName));
+                    std::string(CPLGetBasenameSafe(csy.c_str()));
+                std::string osPath =
+                    std::string(CPLGetPathSafe(poDS->osFileName));
                 csy = std::string(
                     CPLFormFilename(osPath.c_str(), osBaseName.c_str(), "csy"));
                 pszProj = ReadElement("CoordSystem", "Type", csy);
@@ -924,8 +927,8 @@ GDALDataset *ILWISDataset::Create(const char *pszFilename, int nXSize,
              EQUAL(sStoreType.c_str(), "float"))
         stepsize = 0;
 
-    const std::string osBaseName = std::string(CPLGetBasename(pszFilename));
-    const std::string osPath = std::string(CPLGetPath(pszFilename));
+    const std::string osBaseName = std::string(CPLGetBasenameSafe(pszFilename));
+    const std::string osPath = std::string(CPLGetPathSafe(pszFilename));
 
     /* -------------------------------------------------------------------- */
     /*      Write out object definition file for each band                  */
@@ -1094,8 +1097,8 @@ GDALDataset *ILWISDataset::CreateCopy(const char *pszFilename,
 
     if (poDS == nullptr)
         return nullptr;
-    const std::string osBaseName = std::string(CPLGetBasename(pszFilename));
-    const std::string osPath = std::string(CPLGetPath(pszFilename));
+    const std::string osBaseName = std::string(CPLGetBasenameSafe(pszFilename));
+    const std::string osPath = std::string(CPLGetPathSafe(pszFilename));
 
     /* -------------------------------------------------------------------- */
     /*  Copy and geo-transform and projection information.                  */
@@ -1166,7 +1169,7 @@ GDALDataset *ILWISDataset::CreateCopy(const char *pszFilename,
             snprintf(szName, sizeof(szName), "%s_band_%d", osBaseName.c_str(),
                      iBand + 1);
             pszODFName =
-                std::string(CPLFormFilename(osPath.c_str(), szName, "mpr"));
+                std::string(CPLFormFilenameSafe(osPath.c_str(), szName, "mpr"));
             // pszDataBaseName = std::string(szName);
         }
         /* --------------------------------------------------------------------
@@ -1324,10 +1327,11 @@ ILWISRasterBand::ILWISRasterBand(ILWISDataset *poDSIn, int nBandIn,
         {
             sBandName = sBandNameIn;
         }
-        std::string sInputPath = std::string(CPLGetPath(poDSIn->osFileName));
-        std::string sBandPath = std::string(CPLGetPath(sBandName.c_str()));
+        std::string sInputPath =
+            std::string(CPLGetPathSafe(poDSIn->osFileName));
+        std::string sBandPath = std::string(CPLGetPathSafe(sBandName.c_str()));
         std::string sBandBaseName =
-            std::string(CPLGetBasename(sBandName.c_str()));
+            std::string(CPLGetBasenameSafe(sBandName.c_str()));
         if (sBandPath.empty())
             sBandName = std::string(CPLFormFilename(
                 sInputPath.c_str(), sBandBaseName.c_str(), "mpr"));
@@ -1396,7 +1400,7 @@ void ILWISRasterBand::ILWISOpen(const std::string &pszFileName)
 {
     ILWISDataset *dataset = (ILWISDataset *)poDS;
     std::string pszDataFile =
-        std::string(CPLResetExtension(pszFileName.c_str(), "mp#"));
+        std::string(CPLResetExtensionSafe(pszFileName.c_str(), "mp#"));
 
     fpRaw = VSIFOpenL(pszDataFile.c_str(),
                       (dataset->eAccess == GA_Update) ? "rb+" : "rb");
@@ -1482,8 +1486,9 @@ CPLErr ILWISRasterBand::GetILWISInfo(const std::string &pszFileName)
 
     const std::string domName =
         ReadElement("BaseMap", "Domain", pszFileName.c_str());
-    const std::string osBaseName = std::string(CPLGetBasename(domName.c_str()));
-    const std::string osPath = std::string(CPLGetPath(pszFileName.c_str()));
+    const std::string osBaseName =
+        std::string(CPLGetBasenameSafe(domName.c_str()));
+    const std::string osPath = std::string(CPLGetPathSafe(pszFileName.c_str()));
 
     // Check against all "system-domains"
     if (EQUAL(osBaseName.c_str(),

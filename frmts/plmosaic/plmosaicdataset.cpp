@@ -328,7 +328,7 @@ PLMosaicDataset::PLMosaicDataset()
     adfGeoTransform[5] = 1;
 
     SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
-    osCachePathRoot = CPLGetPath(CPLGenerateTempFilename(""));
+    osCachePathRoot = CPLGetPath(CPLGenerateTempFilenameSafe("").c_str());
 }
 
 /************************************************************************/

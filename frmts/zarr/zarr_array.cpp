@@ -2668,7 +2668,7 @@ bool ZarrArray::Rename(const std::string &osNewName)
     }
 
     const std::string osRootDirectoryName(
-        CPLGetDirname(CPLGetDirname(m_osFilename.c_str())));
+        CPLGetDirname(CPLGetDirnameSafe(m_osFilename.c_str()).c_str()));
     const std::string osOldDirectoryName =
         CPLFormFilename(osRootDirectoryName.c_str(), m_osName.c_str(), nullptr);
     const std::string osNewDirectoryName = CPLFormFilename(

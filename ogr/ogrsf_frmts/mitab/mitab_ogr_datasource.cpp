@@ -86,7 +86,7 @@ int OGRTABDataSource::Create(const char *pszName, char **papszOptions)
     // Create a new empty directory.
     VSIStatBufL sStat;
 
-    if (strlen(CPLGetExtension(pszName)) == 0)
+    if (strlen(CPLGetExtensionSafe(pszName).c_str()) == 0)
     {
         if (VSIStatL(pszName, &sStat) == 0)
         {
@@ -145,7 +145,7 @@ int OGRTABDataSource::Create(const char *pszName, char **papszOptions)
         m_papoLayers = static_cast<IMapInfoFile **>(CPLMalloc(sizeof(void *)));
         m_papoLayers[0] = poFile;
 
-        m_pszDirectory = CPLStrdup(CPLGetPath(pszName));
+        m_pszDirectory = CPLStrdup(CPLGetPathSafe(pszName).c_str());
         m_bSingleFile = TRUE;
     }
 
@@ -178,7 +178,8 @@ int OGRTABDataSource::Open(GDALOpenInfo *poOpenInfo, int bTestOpen)
         m_papoLayers = static_cast<IMapInfoFile **>(CPLMalloc(sizeof(void *)));
         m_papoLayers[0] = poFile;
 
-        m_pszDirectory = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+        m_pszDirectory =
+            CPLStrdup(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
 
         m_bSingleFile = TRUE;
         m_bSingleLayerAlreadyCreated = TRUE;
@@ -325,8 +326,9 @@ OGRTABDataSource::ICreateLayer(const char *pszLayerName,
     {
         if (m_bCreateMIF)
         {
-            pszFullFilename =
-                CPLStrdup(CPLFormFilename(m_pszDirectory, pszLayerName, "mif"));
+            pszFullFilename = CPLStrdup(
+                CPLFormFilenameSafe(m_pszDirectory, pszLayerName, "mif")
+                    .c_str());
 
             poFile = new MIFFile(this);
 
@@ -339,8 +341,9 @@ OGRTABDataSource::ICreateLayer(const char *pszLayerName,
         }
         else
         {
-            pszFullFilename =
-                CPLStrdup(CPLFormFilename(m_pszDirectory, pszLayerName, "tab"));
+            pszFullFilename = CPLStrdup(
+                CPLFormFilenameSafe(m_pszDirectory, pszLayerName, "tab")
+                    .c_str());
 
             TABFile *poTABFile = new TABFile(this);
 
@@ -481,8 +484,8 @@ char **OGRTABDataSource::GetFileList()
         static const char *const apszTABExtensions[] = {"tab", "map", "ind",
                                                         "dat", "id",  nullptr};
         const char *const *papszExtensions = nullptr;
-        if (EQUAL(CPLGetExtension(GetDescription()), "mif") ||
-            EQUAL(CPLGetExtension(GetDescription()), "mid"))
+        if (EQUAL(CPLGetExtensionSafe(GetDescription()).c_str(), "mif") ||
+            EQUAL(CPLGetExtensionSafe(GetDescription()).c_str(), "mid"))
         {
             papszExtensions = apszMIFExtensions;
         }

@@ -100,20 +100,23 @@ char **S57FileCollector(const char *pszDataset)
     /*      correct name for the ENC_ROOT directory if available and        */
     /*      build a base path for our purposes.                             */
     /* -------------------------------------------------------------------- */
-    char *pszCatDir = CPLStrdup(CPLGetPath(pszDataset));
+    char *pszCatDir = CPLStrdup(CPLGetPathSafe(pszDataset).c_str());
     char *pszRootDir = nullptr;
 
-    if (CPLStat(CPLFormFilename(pszCatDir, "ENC_ROOT", nullptr), &sStatBuf) ==
-            0 &&
+    if (CPLStat(CPLFormFilenameSafe(pszCatDir, "ENC_ROOT", nullptr).c_str(),
+                &sStatBuf) == 0 &&
         VSI_ISDIR(sStatBuf.st_mode))
     {
-        pszRootDir = CPLStrdup(CPLFormFilename(pszCatDir, "ENC_ROOT", nullptr));
+        pszRootDir = CPLStrdup(
+            CPLFormFilenameSafe(pszCatDir, "ENC_ROOT", nullptr).c_str());
     }
-    else if (CPLStat(CPLFormFilename(pszCatDir, "enc_root", nullptr),
-                     &sStatBuf) == 0 &&
+    else if (CPLStat(
+                 CPLFormFilenameSafe(pszCatDir, "enc_root", nullptr).c_str(),
+                 &sStatBuf) == 0 &&
              VSI_ISDIR(sStatBuf.st_mode))
     {
-        pszRootDir = CPLStrdup(CPLFormFilename(pszCatDir, "enc_root", nullptr));
+        pszRootDir = CPLStrdup(
+            CPLFormFilenameSafe(pszCatDir, "enc_root", nullptr).c_str());
     }
 
     if (pszRootDir)

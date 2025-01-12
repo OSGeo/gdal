@@ -261,7 +261,8 @@ void GMLASBaseEntityResolver::notifyClosing(const CPLString &osFilename)
 {
     CPLDebug("GMLAS", "Closing %s", osFilename.c_str());
 
-    CPLAssert(m_aosPathStack.back() == CPLString(CPLGetDirname(osFilename)));
+    CPLAssert(m_aosPathStack.back() ==
+              CPLString(CPLGetDirnameSafe(osFilename)));
     m_aosPathStack.pop_back();
 }
 
@@ -334,7 +335,7 @@ GMLASBaseEntityResolver::resolveEntity(const XMLCh *const /*publicId*/,
         DoExtraSchemaProcessing(osNewPath, fp);
     }
 
-    m_aosPathStack.push_back(CPLGetDirname(osNewPath));
+    m_aosPathStack.push_back(CPLGetDirnameSafe(osNewPath).c_str());
     GMLASInputSource *poIS = new GMLASInputSource(osNewPath, fp);
     poIS->SetClosingCallback(this);
     return poIS;
@@ -449,7 +450,8 @@ bool GMLASReader::LoadXSDInParser(
         (osXSDFilename.find("http://") != 0 &&
          osXSDFilename.find("https://") != 0 &&
          CPLIsFilenameRelative(osXSDFilename))
-            ? CPLString(CPLFormFilename(osBaseDirname, osXSDFilename, nullptr))
+            ? CPLString(
+                  CPLFormFilenameSafe(osBaseDirname, osXSDFilename, nullptr))
             : osXSDFilename);
 
     for (int iPass = 0; iPass <= 1; ++iPass)
@@ -469,7 +471,7 @@ bool GMLASReader::LoadXSDInParser(
                              bHandleMultipleImports);
 
         // Install a temporary entity resolved based on the current XSD
-        CPLString osXSDDirname(CPLGetDirname(osModifXSDFilename));
+        CPLString osXSDDirname(CPLGetDirnameSafe(osModifXSDFilename));
         if (osXSDFilename.find("http://") == 0 ||
             osXSDFilename.find("https://") == 0)
         {
@@ -640,7 +642,7 @@ bool GMLASReader::Init(const char *pszFilename,
         m_poSAXReader->setFeature(XMLUni::fgXercesValidationErrorAsFatal,
                                   false);
 
-        CPLString osBaseDirname(CPLGetDirname(pszFilename));
+        CPLString osBaseDirname(CPLGetDirnameSafe(pszFilename));
 
         // In the case the schemas are explicitly passed, we must do special
         // processing

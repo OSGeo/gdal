@@ -444,7 +444,8 @@ GDALDataset *SAGADataset::Open(GDALOpenInfo *poOpenInfo)
 
         osFullname = CPLFormFilename(osPath, file, nullptr);
         osName = CPLGetBasename(file);
-        osHDRFilename = CPLFormFilename(osPath, CPLGetBasename(file), "sgrd");
+        osHDRFilename =
+            CPLFormFilename(osPath, CPLGetBasenameSafe(file).c_str(), "sgrd");
     }
     else
     {
@@ -452,7 +453,8 @@ GDALDataset *SAGADataset::Open(GDALOpenInfo *poOpenInfo)
         osPath = CPLGetPath(poOpenInfo->pszFilename);
         osName = CPLGetBasename(poOpenInfo->pszFilename);
         osHDRFilename = CPLFormCIFilename(
-            osPath, CPLGetBasename(poOpenInfo->pszFilename), "sgrd");
+            osPath, CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str(),
+            "sgrd");
     }
 
     VSILFILE *fp = VSIFOpenL(osHDRFilename, "r");
@@ -787,7 +789,7 @@ CPLErr SAGADataset::WriteHeader(CPLString osHDRFilename, GDALDataType eType,
         return CE_Failure;
     }
 
-    VSIFPrintfL(fp, "NAME\t= %s\n", CPLGetBasename(osHDRFilename));
+    VSIFPrintfL(fp, "NAME\t= %s\n", CPLGetBasenameSafe(osHDRFilename).c_str());
     VSIFPrintfL(fp, "DESCRIPTION\t=\n");
     VSIFPrintfL(fp, "UNIT\t=\n");
     VSIFPrintfL(fp, "DATAFILE_OFFSET\t= 0\n");

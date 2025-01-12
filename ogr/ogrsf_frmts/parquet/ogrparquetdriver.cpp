@@ -47,8 +47,8 @@ static GDALDataset *OpenFromDatasetFactory(
     const bool bIsVSI = STARTS_WITH(osBasePath.c_str(), "/vsi");
     auto poDS = std::make_unique<OGRParquetDataset>(poMemoryPool);
     auto poLayer = std::make_unique<OGRParquetDatasetLayer>(
-        poDS.get(), CPLGetBasename(osBasePath.c_str()), bIsVSI, dataset,
-        papszOpenOptions);
+        poDS.get(), CPLGetBasenameSafe(osBasePath.c_str()).c_str(), bIsVSI,
+        dataset, papszOpenOptions);
     poDS->SetLayer(std::move(poLayer));
     poDS->SetFileSystem(fs);
     return poDS.release();
@@ -459,7 +459,7 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
 
         auto poDS = std::make_unique<OGRParquetDataset>(poMemoryPool);
         auto poLayer = std::make_unique<OGRParquetLayer>(
-            poDS.get(), CPLGetBasename(osFilename.c_str()),
+            poDS.get(), CPLGetBasenameSafe(osFilename.c_str()).c_str(),
             std::move(arrow_reader), poOpenInfo->papszOpenOptions);
 
         // For debug purposes: return a layer with the extent of each row group

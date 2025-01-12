@@ -84,7 +84,8 @@ bool OGRPMTilesWriterDataset::Create(const char *pszFilename,
     osTmpFile += ".tmp.mbtiles";
 
     if (!aosOptions.FetchNameValue("NAME"))
-        aosOptions.SetNameValue("NAME", CPLGetBasename(pszFilename));
+        aosOptions.SetNameValue("NAME",
+                                CPLGetBasenameSafe(pszFilename).c_str());
 
     m_poMBTilesWriterDataset.reset(OGRMVTWriterDatasetCreate(
         osTmpFile.c_str(), 0, 0, 0, GDT_Unknown, aosOptions.List()));

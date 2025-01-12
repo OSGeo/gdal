@@ -45,7 +45,7 @@ static int OGRSQLiteDriverIdentify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
 
-    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    CPLString osExt(CPLGetExtensionSafe(poOpenInfo->pszFilename));
     if (EQUAL(osExt, "gpkg") && GDALGetDriverByName("GPKG") != nullptr)
     {
         return FALSE;

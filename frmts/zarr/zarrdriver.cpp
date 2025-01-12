@@ -1089,7 +1089,8 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
 
         if (bAppendSubDS)
         {
-            VSIRmdir(CPLFormFilename(pszName, pszArrayName, nullptr));
+            VSIRmdir(
+                CPLFormFilenameSafe(pszName, pszArrayName, nullptr).c_str());
         }
         else
         {
@@ -1104,18 +1105,22 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
                 {
                     if (pszArrayName && strcmp(pszFile, pszArrayName) == 0)
                     {
-                        VSIRmdir(CPLFormFilename(pszName, pszFile, nullptr));
+                        VSIRmdir(CPLFormFilenameSafe(pszName, pszFile, nullptr)
+                                     .c_str());
                     }
                     else if (!pszArrayName &&
-                             strcmp(pszFile, CPLGetBasename(pszName)) == 0)
+                             strcmp(pszFile,
+                                    CPLGetBasenameSafe(pszName).c_str()) == 0)
                     {
-                        VSIRmdir(CPLFormFilename(pszName, pszFile, nullptr));
+                        VSIRmdir(CPLFormFilenameSafe(pszName, pszFile, nullptr)
+                                     .c_str());
                     }
                     else if (strcmp(pszFile, ".zgroup") == 0 ||
                              strcmp(pszFile, ".zmetadata") == 0 ||
                              strcmp(pszFile, "zarr.json") == 0)
                     {
-                        VSIUnlink(CPLFormFilename(pszName, pszFile, nullptr));
+                        VSIUnlink(CPLFormFilenameSafe(pszName, pszFile, nullptr)
+                                      .c_str());
                     }
                 }
                 VSIRmdir(pszName);

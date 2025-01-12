@@ -996,8 +996,8 @@ CPLErr ILWISDataset::WriteProjection()
     OGRSpatialReference *poGeogSRS = nullptr;
 
     std::string csFileName = CPLResetExtension(osFileName, "csy");
-    std::string pszBaseName = std::string(CPLGetBasename(osFileName));
-    // std::string pszPath = std::string(CPLGetPath( osFileName ));
+    std::string pszBaseName = std::string(CPLGetBasenameSafe(osFileName));
+    // std::string pszPath = std::string(CPLGetPathSafe( osFileName ));
     const bool bHaveSRS = !m_oSRS.IsEmpty();
 
     const IlwisDatums *piwDatum = iwDatums;

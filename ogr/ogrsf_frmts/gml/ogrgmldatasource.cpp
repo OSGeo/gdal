@@ -755,8 +755,8 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     {
         // When no option is given or is not recognised,
         // use the same file name with the extension changed to .resolved.gml
-        pszXlinkResolvedFilename =
-            CPLStrdup(CPLResetExtension(pszFilename, "resolved.gml"));
+        pszXlinkResolvedFilename = CPLStrdup(
+            CPLResetExtensionSafe(pszFilename, "resolved.gml").c_str());
 
         // Check if the file already exists.
         VSIStatBufL sResStatBuf, sGMLStatBuf;
@@ -1904,7 +1904,8 @@ bool OGRGMLDataSource::Create(const char *pszFilename, char **papszOptions)
     {
         if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "zip"))
         {
-            SetDescription(CPLFormFilename(pszFilename, "out.gml", nullptr));
+            SetDescription(
+                CPLFormFilenameSafe(pszFilename, "out.gml", nullptr).c_str());
         }
 
         fpOutput = VSIFOpenExL(GetDescription(), "wb", true);
@@ -1959,13 +1960,15 @@ bool OGRGMLDataSource::Create(const char *pszFilename, char **papszOptions)
     }
     else if (pszSchemaOpt == nullptr || EQUAL(pszSchemaOpt, "EXTERNAL"))
     {
-        char *pszBasename = CPLStrdup(CPLGetBasename(GetDescription()));
+        char *pszBasename =
+            CPLStrdup(CPLGetBasenameSafe(GetDescription()).c_str());
 
         PrintLine(
             fpOutput,
             "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
         PrintLine(fpOutput, "     xsi:schemaLocation=\"%s %s\"",
-                  pszTargetNameSpace, CPLResetExtension(pszBasename, "xsd"));
+                  pszTargetNameSpace,
+                  CPLResetExtensionSafe(pszBasename, "xsd").c_str());
         CPLFree(pszBasename);
     }
 

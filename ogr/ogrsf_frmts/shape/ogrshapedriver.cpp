@@ -48,7 +48,7 @@ static int OGRShapeDriverIdentify(GDALOpenInfo *poOpenInfo)
     {
         return FALSE;
     }
-    const std::string osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    const std::string osExt(CPLGetExtensionSafe(poOpenInfo->pszFilename));
     if (EQUAL(osExt.c_str(), "SHP") || EQUAL(osExt.c_str(), "SHX"))
     {
         return poOpenInfo->nHeaderBytes >= 4 &&
@@ -118,7 +118,7 @@ static GDALDataset *OGRShapeDriverOpen(GDALOpenInfo *poOpenInfo)
     }
 #endif
 
-    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    CPLString osExt(CPLGetExtensionSafe(poOpenInfo->pszFilename));
     if (!STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") &&
         (EQUAL(osExt, "shz") ||
          (EQUAL(osExt, "zip") &&
@@ -163,7 +163,7 @@ static GDALDataset *OGRShapeDriverCreate(const char *pszName, int /* nBands */,
                                          char ** /* papszOptions */)
 {
     bool bSingleNewFile = false;
-    CPLString osExt(CPLGetExtension(pszName));
+    CPLString osExt(CPLGetExtensionSafe(pszName));
 
     /* -------------------------------------------------------------------- */
     /*      Is the target a valid existing directory?                       */
@@ -253,7 +253,7 @@ static CPLErr OGRShapeDriverDelete(const char *pszDataSource)
         return CE_Failure;
     }
 
-    CPLString osExt(CPLGetExtension(pszDataSource));
+    CPLString osExt(CPLGetExtensionSafe(pszDataSource));
     if (VSI_ISREG(sStatBuf.st_mode) &&
         (EQUAL(osExt, "shz") ||
          (EQUAL(osExt, "zip") &&

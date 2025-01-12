@@ -216,7 +216,7 @@ VSILFILE *FASTDataset::FOpenChannel(const char *pszBandname, int iBand,
                                     int iFASTBand)
 {
     const char *pszChannelFilename = nullptr;
-    char *pszPrefix = CPLStrdup(CPLGetBasename(pszFilename));
+    char *pszPrefix = CPLStrdup(CPLGetBasenameSafe(pszFilename).c_str());
     char *pszSuffix = CPLStrdup(CPLGetExtensionSafe(pszFilename).c_str());
 
     fpChannels[iBand] = nullptr;
@@ -573,7 +573,8 @@ GDALDataset *FASTDataset::Open(GDALOpenInfo *poOpenInfo)
     std::swap(poDS->fpHeader, poOpenInfo->fpL);
 
     poDS->pszFilename = poOpenInfo->pszFilename;
-    poDS->pszDirname = CPLStrdup(CPLGetDirname(poOpenInfo->pszFilename));
+    poDS->pszDirname =
+        CPLStrdup(CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str());
 
     /* -------------------------------------------------------------------- */
     /*  Read the administrative record.                                     */

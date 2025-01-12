@@ -815,12 +815,12 @@ std::string ZarrV3Array::BuildTileFilename(const uint64_t *tileIndices) const
 {
     if (m_aoDims.empty())
     {
-        return CPLFormFilename(CPLGetDirname(m_osFilename.c_str()),
+        return CPLFormFilename(CPLGetDirnameSafe(m_osFilename.c_str()).c_str(),
                                m_bV2ChunkKeyEncoding ? "0" : "c", nullptr);
     }
     else
     {
-        std::string osFilename(CPLGetDirname(m_osFilename.c_str()));
+        std::string osFilename(CPLGetDirnameSafe(m_osFilename.c_str()));
         osFilename += '/';
         if (!m_bV2ChunkKeyEncoding)
         {
@@ -842,7 +842,7 @@ std::string ZarrV3Array::BuildTileFilename(const uint64_t *tileIndices) const
 
 std::string ZarrV3Array::GetDataDirectory() const
 {
-    return std::string(CPLGetDirname(m_osFilename.c_str()));
+    return std::string(CPLGetDirnameSafe(m_osFilename.c_str()));
 }
 
 /************************************************************************/

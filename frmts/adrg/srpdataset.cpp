@@ -1058,7 +1058,7 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
     if (!module.Open(pszFileName, TRUE))
         return papszFileNames;
 
-    CPLString osDirName(CPLGetDirname(pszFileName));
+    CPLString osDirName(CPLGetDirnameSafe(pszFileName));
 
     while (true)
     {
@@ -1163,7 +1163,8 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
                             {
                                 if (EQUAL(CPLGetExtensionSafe(*ptrDir).c_str(),
                                           "GEN") &&
-                                    EQUALN(CPLGetBasename(*ptrDir), osName, 6))
+                                    EQUALN(CPLGetBasenameSafe(*ptrDir).c_str(),
+                                           osName, 6))
                                 {
                                     bFound = 1;
                                     osGENFileName = CPLFormFilename(
@@ -1401,7 +1402,7 @@ char **SRPDataset::GetIMGListFromGEN(const char *pszFileName,
             CPLDebug("SRP", "BAD=%s", osBAD.c_str());
 
             /* Build full IMG file name from BAD value */
-            const CPLString osGENDir(CPLGetDirname(pszFileName));
+            const CPLString osGENDir(CPLGetDirnameSafe(pszFileName));
 
             const CPLString osFileName =
                 CPLFormFilename(osGENDir.c_str(), osBAD.c_str(), nullptr);

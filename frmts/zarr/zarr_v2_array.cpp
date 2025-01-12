@@ -987,7 +987,7 @@ std::string ZarrV2Array::BuildTileFilename(const uint64_t *tileIndices) const
         }
     }
 
-    return CPLFormFilename(CPLGetDirname(m_osFilename.c_str()),
+    return CPLFormFilename(CPLGetDirnameSafe(m_osFilename.c_str()).c_str(),
                            osFilename.c_str(), nullptr);
 }
 
@@ -997,7 +997,7 @@ std::string ZarrV2Array::BuildTileFilename(const uint64_t *tileIndices) const
 
 std::string ZarrV2Array::GetDataDirectory() const
 {
-    return std::string(CPLGetDirname(m_osFilename.c_str()));
+    return std::string(CPLGetDirnameSafe(m_osFilename.c_str()));
 }
 
 /************************************************************************/

@@ -713,12 +713,13 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
                                 {
                                     if (STARTS_WITH(pszURL, "http"))
                                         alias->set_targethref(CPLSPrintf(
-                                            "%s/%s", CPLGetPath(pszURL),
+                                            "%s/%s",
+                                            CPLGetPathSafe(pszURL).c_str(),
                                             osImage.c_str()));
                                     else
-                                        alias->set_targethref(
-                                            CPLFormFilename(CPLGetPath(pszURL),
-                                                            osImage, nullptr));
+                                        alias->set_targethref(CPLFormFilename(
+                                            CPLGetPathSafe(pszURL).c_str(),
+                                            osImage, nullptr));
                                 }
                                 else
                                     alias->set_targethref(osImage);

@@ -30,7 +30,8 @@ typedef enum eCalibration_t
 static bool IsValidXMLFile(const char *pszPath, const char *pszLut)
 {
     /* Return true for valid xml file, false otherwise */
-    char *pszLutFile = VSIStrdup(CPLFormFilename(pszPath, pszLut, nullptr));
+    char *pszLutFile =
+        VSIStrdup(CPLFormFilenameSafe(pszPath, pszLut, nullptr).c_str());
 
     CPLXMLTreeCloser psLut(CPLParseXMLFile(pszLutFile));
 
@@ -846,7 +847,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     CPLString osGammaLUT;
     CPLString osSigma0LUT;
 
-    char *pszPath = CPLStrdup(CPLGetPath(osMDFilename));
+    char *pszPath = CPLStrdup(CPLGetPathSafe(osMDFilename).c_str());
     const int nFLen = static_cast<int>(osMDFilename.size());
 
     CPLXMLNode *psNode = psImageAttributes->psChild;
@@ -944,8 +945,8 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         /*      Form full filename (path of product.xml + basename). */
         /* --------------------------------------------------------------------
          */
-        char *pszFullname =
-            CPLStrdup(CPLFormFilename(pszPath, pszBasename, nullptr));
+        char *pszFullname = CPLStrdup(
+            CPLFormFilenameSafe(pszPath, pszBasename, nullptr).c_str());
 
         /* --------------------------------------------------------------------
          */
@@ -1012,7 +1013,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
             }
             RS2CalibRasterBand *poBand = new RS2CalibRasterBand(
                 poDS, CPLGetXMLValue(psNode, "pole", ""), eDataType, poBandFile,
-                eCalib, CPLFormFilename(pszPath, pszLUT, nullptr));
+                eCalib, CPLFormFilenameSafe(pszPath, pszLUT, nullptr).c_str());
             poDS->SetBand(poDS->GetRasterCount() + 1, poBand);
         }
 

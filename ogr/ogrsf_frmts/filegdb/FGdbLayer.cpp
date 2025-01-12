@@ -210,15 +210,15 @@ int FGdbLayer::EditIndexesForFIDHack(const char *pszRadixTablename)
         return FALSE;
     }
 
-    CPLString osDirectory(CPLGetPath(pszRadixTablename));
+    CPLString osDirectory(CPLGetPathSafe(pszRadixTablename));
     char **papszFiles = VSIReadDir(osDirectory);
-    CPLString osBasename(CPLGetBasename(pszRadixTablename));
+    CPLString osBasename(CPLGetBasenameSafe(pszRadixTablename));
     int bRet = TRUE;
     for (char **papszIter = papszFiles; papszIter && *papszIter; papszIter++)
     {
         if (strncmp(*papszIter, osBasename.c_str(), osBasename.size()) == 0 &&
-            (EQUAL(CPLGetExtension(*papszIter), "atx") ||
-             EQUAL(CPLGetExtension(*papszIter), "spx")))
+            (EQUAL(CPLGetExtensionSafe(*papszIter).c_str(), "atx") ||
+             EQUAL(CPLGetExtensionSafe(*papszIter).c_str(), "spx")))
         {
             CPLString osIndex(
                 CPLFormFilename(osDirectory, *papszIter, nullptr));

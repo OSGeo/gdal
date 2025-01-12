@@ -684,7 +684,8 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
             tileBundlesPath.erase(0, 2);
         }
 
-        ds->dname.Printf("%s/%s", CPLGetDirname(poOpenInfo->pszFilename),
+        ds->dname.Printf("%s/%s",
+                         CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str(),
                          tileBundlesPath.c_str());
         CPLErr error = ds->InitializeFromJSON(oRoot);
         if (CE_None != error)

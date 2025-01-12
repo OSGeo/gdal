@@ -997,7 +997,7 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
     if (psManifest == nullptr)
         return nullptr;
 
-    CPLString osPath(CPLGetPath(osMDFilename));
+    CPLString osPath(CPLGetPathSafe(osMDFilename));
 
     /* -------------------------------------------------------------------- */
     /*      Confirm the requested access is supported.                      */

@@ -408,8 +408,9 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     char **papszSiblingFiles = poOpenInfo->GetSiblingFiles();
     if (papszSiblingFiles)
     {
-        const int iFile = CSLFindString(
-            papszSiblingFiles, CPLFormFilename(nullptr, osName, "hdr"));
+        const int iFile =
+            CSLFindString(papszSiblingFiles,
+                          CPLFormFilenameSafe(nullptr, osName, "hdr").c_str());
         if (iFile < 0)  // return if there is no corresponding .hdr file
             return nullptr;
 

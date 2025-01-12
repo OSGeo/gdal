@@ -256,7 +256,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
         }
         auto poRecordBatchReader = *result;
         auto poLayer = std::make_unique<OGRFeatherLayer>(
-            poDS.get(), CPLGetBasename(poOpenInfo->pszFilename),
+            poDS.get(), CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str(),
             poRecordBatchReader);
         poDS->SetLayer(std::move(poLayer));
     }

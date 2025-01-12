@@ -77,7 +77,7 @@ GDALDataset *OGRLVBAGDriverOpen(GDALOpenInfo *poOpenInfo)
         char **papszNames = VSIReadDir(pszFilename);
         for (int i = 0; papszNames != nullptr && papszNames[i] != nullptr; ++i)
         {
-            if (!EQUAL(CPLGetExtension(papszNames[i]), "xml"))
+            if (!EQUAL(CPLGetExtensionSafe(papszNames[i]).c_str(), "xml"))
                 continue;
 
             const CPLString oSubFilename =

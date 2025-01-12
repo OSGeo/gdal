@@ -393,8 +393,9 @@ GDALDataset *COASPDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->pszFileName = VSIStrdup(poOpenInfo->pszFilename);
 
     /* determine the file name prefix */
-    char *pszBaseName = VSIStrdup(CPLGetBasename(poDS->pszFileName));
-    char *pszDir = VSIStrdup(CPLGetPath(poDS->pszFileName));
+    char *pszBaseName =
+        VSIStrdup(CPLGetBasenameSafe(poDS->pszFileName).c_str());
+    char *pszDir = VSIStrdup(CPLGetPathSafe(poDS->pszFileName).c_str());
     const char *pszExt = "rc";
     int nNull = static_cast<int>(strlen(pszBaseName)) - 1;
     if (nNull <= 0)

@@ -106,19 +106,21 @@ GDALIdentifyEnum OGROpenFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo,
     }
 #ifdef FOR_FUSIL
     /* To be able to test fuzzer on any auxiliary files used (indexes, etc.) */
-    else if (strlen(CPLGetBasename(pszFilename)) == 9 &&
+    else if (strlen(CPLGetBasenameSafe(pszFilename).c_str()) == 9 &&
              CPLGetBasename(pszFilename)[0] == 'a')
     {
-        pszFilename = CPLFormFilename(CPLGetPath(pszFilename),
+        pszFilename = CPLFormFilename(CPLGetPathSafe(pszFilename).c_str(),
                                       CPLGetBasename(pszFilename), "gdbtable");
         return GDAL_IDENTIFY_TRUE;
     }
-    else if (strlen(CPLGetBasename(CPLGetBasename(pszFilename))) == 9 &&
-             CPLGetBasename(CPLGetBasename(pszFilename))[0] == 'a')
+    else if (strlen(CPLGetBasenameSafe(CPLGetBasename(pszFilename)).c_str()) ==
+                 9 &&
+             CPLGetBasename(CPLGetBasenameSafe(pszFilename).c_str())[0] == 'a')
     {
         pszFilename = CPLFormFilename(
             CPLGetPath(pszFilename),
-            CPLGetBasename(CPLGetBasename(pszFilename)), "gdbtable");
+            CPLGetBasename(CPLGetBasenameSafe(pszFilename).c_str()),
+            "gdbtable");
         return GDAL_IDENTIFY_TRUE;
     }
 #endif

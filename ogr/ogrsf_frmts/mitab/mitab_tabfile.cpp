@@ -552,7 +552,7 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
             if (!bHasIndex)
             {
                 const char *pszIndFilename = CPLFormCIFilename(
-                    CPLGetPath(pszFname), CPLGetBasename(pszFname),
+                    CPLGetPath(pszFname), CPLGetBasenameSafe(pszFname).c_str(),
                     (bUpperCase) ? "IND" : "ind");
                 VSIStatBufL sStat;
                 if (VSIStatL(pszIndFilename, &sStat) == 0)

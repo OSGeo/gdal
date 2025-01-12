@@ -471,11 +471,13 @@ OGRErr FGdbTransactionManager::CommitTransaction(GDALDataset *&poDSInOut,
                 continue;
             VSIStatBufL sStat;
             if ((*papszIter)[0] == 'a' &&
-                VSIStatL(CPLFormFilename(osEditedName, *papszIter, nullptr),
+                VSIStatL(CPLFormFilenameSafe(osEditedName, *papszIter, nullptr)
+                             .c_str(),
                          &sStat) != 0)
             {
                 if (EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") ||
-                    VSIRename(CPLFormFilename(osName, *papszIter, nullptr),
+                    VSIRename(CPLFormFilenameSafe(osName, *papszIter, nullptr)
+                                  .c_str(),
                               CPLFormFilename(osName, *papszIter, "tmp")) != 0)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -498,7 +500,8 @@ OGRErr FGdbTransactionManager::CommitTransaction(GDALDataset *&poDSInOut,
             if (strcmp(*papszIter, ".") == 0 || strcmp(*papszIter, "..") == 0)
                 continue;
             struct stat sStat;
-            if (lstat(CPLFormFilename(osEditedName, *papszIter, nullptr),
+            if (lstat(CPLFormFilenameSafe(osEditedName, *papszIter, nullptr)
+                          .c_str(),
                       &sStat) != 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Cannot stat %s",
@@ -509,14 +512,16 @@ OGRErr FGdbTransactionManager::CommitTransaction(GDALDataset *&poDSInOut,
             {
                 // If there was such a file in original directory, first rename
                 // it as a temporary file
-                if (lstat(CPLFormFilename(osName, *papszIter, nullptr),
+                if (lstat(CPLFormFilenameSafe(osName, *papszIter, nullptr)
+                              .c_str(),
                           &sStat) == 0)
                 {
                     if (EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""),
                               "CASE2") ||
-                        VSIRename(CPLFormFilename(osName, *papszIter, nullptr),
-                                  CPLFormFilename(osName, *papszIter, "tmp")) !=
-                            0)
+                        VSIRename(
+                            CPLFormFilenameSafe(osName, *papszIter, nullptr)
+                                .c_str(),
+                            CPLFormFilename(osName, *papszIter, "tmp")) != 0)
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "Cannot rename %s to %s",

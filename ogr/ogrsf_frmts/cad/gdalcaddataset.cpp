@@ -229,8 +229,9 @@ int GDALCADDataset::Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
             CPLString osImgPath = CPLGetPath(osImgFilename);
             if (osImgPath.empty())
             {
-                osImgFilename = CPLFormFilename(CPLGetPath(osCADFilename),
-                                                osImgFilename, nullptr);
+                osImgFilename =
+                    CPLFormFilename(CPLGetPathSafe(osCADFilename).c_str(),
+                                    osImgFilename, nullptr);
             }
 
             if (!CPLCheckForFile(const_cast<char *>(osImgFilename.c_str()),

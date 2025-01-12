@@ -576,8 +576,9 @@ GDALDataset *LANDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for a trailer file with a colormap in it.                 */
     /* -------------------------------------------------------------------- */
-    char *pszPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
-    char *pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
+    char *pszPath = CPLStrdup(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
+    char *pszBasename =
+        CPLStrdup(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str());
     const char *pszTRLFilename = CPLFormCIFilename(pszPath, pszBasename, "trl");
     VSILFILE *fpTRL = VSIFOpenL(pszTRLFilename, "rb");
     if (fpTRL != nullptr)

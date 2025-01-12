@@ -5771,7 +5771,7 @@ CSLConstList GTiffDataset::GetSiblingFiles()
     const int nMaxFiles =
         atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
     CPLStringList aosSiblingFiles(
-        VSIReadDirEx(CPLGetDirname(m_pszFilename), nMaxFiles));
+        VSIReadDirEx(CPLGetDirnameSafe(m_pszFilename).c_str(), nMaxFiles));
     if (nMaxFiles > 0 && aosSiblingFiles.size() > nMaxFiles)
     {
         CPLDebug("GTiff", "GDAL_READDIR_LIMIT_ON_OPEN reached on %s",

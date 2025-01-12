@@ -740,9 +740,10 @@ GDALDataset *LCPDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Try to read projection file.                                    */
     /* -------------------------------------------------------------------- */
-    char *const pszDirname = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+    char *const pszDirname =
+        CPLStrdup(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
     char *const pszBasename =
-        CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
+        CPLStrdup(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str());
 
     poDS->osPrjFilename = CPLFormFilename(pszDirname, pszBasename, "prj");
     VSIStatBufL sStatBuf;
@@ -1603,10 +1604,12 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
         poSrcSRS->exportToWkt(&pszESRIProjection, apszOptions);
         if (pszESRIProjection)
         {
-            char *const pszDirname = CPLStrdup(CPLGetPath(pszFilename));
-            char *const pszBasename = CPLStrdup(CPLGetBasename(pszFilename));
-            char *pszPrjFilename =
-                CPLStrdup(CPLFormFilename(pszDirname, pszBasename, "prj"));
+            char *const pszDirname =
+                CPLStrdup(CPLGetPathSafe(pszFilename).c_str());
+            char *const pszBasename =
+                CPLStrdup(CPLGetBasenameSafe(pszFilename).c_str());
+            char *pszPrjFilename = CPLStrdup(
+                CPLFormFilenameSafe(pszDirname, pszBasename, "prj").c_str());
             fp = VSIFOpenL(pszPrjFilename, "wt");
             if (fp != nullptr)
             {

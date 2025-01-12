@@ -1306,7 +1306,8 @@ bool OGROpenFileGDBDataSource::Create(const char *pszName)
 
     {
         // Write "gdb" file
-        const std::string osFilename(CPLFormFilename(pszName, "gdb", nullptr));
+        const std::string osFilename(
+            CPLFormFilenameSafe(pszName, "gdb", nullptr));
         VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "wb");
         if (!fp)
             return false;
@@ -1524,7 +1525,9 @@ OGRErr OGROpenFileGDBDataSource::DeleteLayer(int iLayer)
     {
         if (STARTS_WITH(*papszIter, osFilenameBase.c_str()))
         {
-            VSIUnlink(CPLFormFilename(osDirname.c_str(), *papszIter, nullptr));
+            VSIUnlink(
+                CPLFormFilenameSafe(osDirname.c_str(), *papszIter, nullptr)
+                    .c_str());
         }
     }
     CSLDestroy(papszFiles);

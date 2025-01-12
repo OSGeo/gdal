@@ -582,7 +582,7 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             isKmz = true;
         }
 
-        output_dir = CPLStrdup(CPLGetPath(pszFilename));
+        output_dir = CPLStrdup(CPLGetPathSafe(pszFilename).c_str());
         if (strcmp(output_dir, "") == 0)
         {
             CPLFree(output_dir);
@@ -1760,8 +1760,8 @@ KmlSuperOverlayLoadIcon(const char *pszBaseFilename, const char *pszIcon)
         osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszIcon);
     else
     {
-        osSubFilename =
-            CPLFormFilename(CPLGetPath(pszBaseFilename), pszIcon, nullptr);
+        osSubFilename = CPLFormFilename(CPLGetPathSafe(pszBaseFilename).c_str(),
+                                        pszIcon, nullptr);
         osSubFilename = KMLRemoveSlash(osSubFilename);
     }
 
@@ -2526,7 +2526,7 @@ GDALDataset *KmlSingleOverlayRasterDataset::Open(const char *pszFilename,
     if (!KmlSuperOverlayGetBoundingBox(psGO, adfExtents))
         return nullptr;
     const char *pszImageFilename =
-        CPLFormFilename(CPLGetPath(osFilename), pszHref, nullptr);
+        CPLFormFilename(CPLGetPathSafe(osFilename).c_str(), pszHref, nullptr);
     GDALDataset *poImageDS =
         GDALDataset::FromHandle(GDALOpenShared(pszImageFilename, GA_ReadOnly));
     if (poImageDS == nullptr)
@@ -2663,8 +2663,8 @@ KmlSuperOverlayReadDataset::Open(const char *pszFilename,
             osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszHref);
         else
         {
-            osSubFilename =
-                CPLFormFilename(CPLGetPath(osFilename), pszHref, nullptr);
+            osSubFilename = CPLFormFilename(CPLGetPathSafe(osFilename).c_str(),
+                                            pszHref, nullptr);
             osSubFilename = KMLRemoveSlash(osSubFilename);
         }
 
@@ -2675,7 +2675,8 @@ KmlSuperOverlayReadDataset::Open(const char *pszFilename,
             const char *pszOverlayName =
                 CPLGetXMLValue(psDocument, "name", nullptr);
             if (pszOverlayName != nullptr &&
-                strcmp(pszOverlayName, CPLGetBasename(pszFilename)) != 0)
+                strcmp(pszOverlayName,
+                       CPLGetBasenameSafe(pszFilename).c_str()) != 0)
             {
                 osOverlayName = pszOverlayName;
             }

@@ -156,8 +156,8 @@ VSILFILE *OGREDIGEODataSource::OpenFile(const char *pszType,
                                         const CPLString &osExt)
 {
     CPLString osTmp = osLON + pszType;
-    CPLString osFilename = CPLFormCIFilename(CPLGetPath(GetDescription()),
-                                             osTmp.c_str(), osExt.c_str());
+    CPLString osFilename = CPLFormCIFilename(
+        CPLGetPathSafe(GetDescription()).c_str(), osTmp.c_str(), osExt.c_str());
     VSILFILE *fp = VSIFOpenL(osFilename, "rb");
     if (fp == nullptr)
     {

@@ -573,7 +573,8 @@ bool GMLReader::ResolveXlinks(const char *pszFile, bool *pbOutIsTempFile,
 
         if (bTryWithTempFile)
         {
-            pszTmpName = CPLStrdup(CPLGenerateTempFilename("ResolvedGML"));
+            pszTmpName =
+                CPLStrdup(CPLGenerateTempFilenameSafe("ResolvedGML").c_str());
             if (!CPLSerializeXMLTreeToFile(papsSrcTree[0], pszTmpName))
             {
                 CPLError(CE_Failure, CPLE_FileIO,

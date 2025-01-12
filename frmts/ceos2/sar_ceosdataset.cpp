@@ -1822,8 +1822,9 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Try the various filenames.                                      */
     /* -------------------------------------------------------------------- */
-    char *pszPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
-    char *pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
+    char *pszPath = CPLStrdup(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
+    char *pszBasename =
+        CPLStrdup(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str());
     char *pszExtension =
         CPLStrdup(CPLGetExtensionSafe(poOpenInfo->pszFilename).c_str());
 

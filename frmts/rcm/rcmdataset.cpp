@@ -1871,8 +1871,8 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         /*      Form full filename (path of product.xml + basename). */
         /* --------------------------------------------------------------------
          */
-        char *pszFullname =
-            CPLStrdup(CPLFormFilename(osPath, pszBasedFilename, nullptr));
+        char *pszFullname = CPLStrdup(
+            CPLFormFilenameSafe(osPath, pszBasedFilename, nullptr).c_str());
 
         /* --------------------------------------------------------------------
          */

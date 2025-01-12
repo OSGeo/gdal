@@ -76,7 +76,7 @@ class GDALWMSFileCache : public GDALWMSCacheImpl
     {
         // Warns if it fails to write, but returns success
         CPLString soFilePath = GetFilePath(pszKey);
-        MakeDirs(CPLGetDirname(soFilePath));
+        MakeDirs(CPLGetDirnameSafe(soFilePath).c_str());
         if (CPLCopyFile(soFilePath, osFileName) == CE_None)
             return CE_None;
         // Warn if it fails after folder creation
@@ -247,9 +247,9 @@ CPLErr GDALWMSCache::Initialize(const char *pszUrl, CPLXMLNode *pConfig)
 #endif
         if (pszHome)
         {
-            m_osCachePath =
-                CPLFormFilename(CPLFormFilename(pszHome, ".cache", nullptr),
-                                "gdalwmscache", nullptr);
+            m_osCachePath = CPLFormFilename(
+                CPLFormFilenameSafe(pszHome, ".cache", nullptr).c_str(),
+                "gdalwmscache", nullptr);
         }
         else
         {

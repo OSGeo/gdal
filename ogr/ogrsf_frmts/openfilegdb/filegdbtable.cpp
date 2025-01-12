@@ -875,7 +875,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
                       !CPLTestBool(CPLGetConfigOption(
                           "OPENFILEGDB_IGNORE_GDBTABLX", "false"))))
     {
-        osTableXName = CPLFormFilename(CPLGetPath(pszFilename),
+        osTableXName = CPLFormFilename(CPLGetPathSafe(pszFilename).c_str(),
                                        CPLGetBasename(pszFilename), "gdbtablx");
         m_fpTableX = VSIFOpenL(osTableXName, m_bUpdate ? "r+b" : "rb");
         if (m_fpTableX == nullptr)
@@ -2479,7 +2479,7 @@ int FileGDBTable::GetIndexCount()
     m_bHasReadGDBIndexes = TRUE;
 
     const char *pszIndexesName =
-        CPLFormFilename(CPLGetPath(m_osFilename.c_str()),
+        CPLFormFilename(CPLGetPathSafe(m_osFilename.c_str()).c_str(),
                         CPLGetBasename(m_osFilename.c_str()), "gdbindexes");
     VSILFILE *fpIndexes = VSIFOpenL(pszIndexesName, "rb");
     VSIStatBufL sStat;
@@ -2670,7 +2670,7 @@ bool FileGDBTable::HasSpatialIndex()
     if (m_nHasSpatialIndex < 0)
     {
         const char *pszSpxName =
-            CPLFormFilename(CPLGetPath(m_osFilename.c_str()),
+            CPLFormFilename(CPLGetPathSafe(m_osFilename.c_str()).c_str(),
                             CPLGetBasename(m_osFilename.c_str()), "spx");
         VSIStatBufL sStat;
         m_nHasSpatialIndex =

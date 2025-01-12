@@ -1628,9 +1628,9 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
             if (oFilename.GetType() == CPLJSONObject::Type::String)
             {
                 VSIStatBufL sStat;
-                CPLString osFilename(
-                    CPLFormFilename(CPLGetPath(poOpenInfo->pszFilename),
-                                    oFilename.ToString().c_str(), nullptr));
+                CPLString osFilename(CPLFormFilename(
+                    CPLGetPathSafe(poOpenInfo->pszFilename).c_str(),
+                    oFilename.ToString().c_str(), nullptr));
                 if (VSIStatL(osFilename, &sStat) == 0)
                 {
                     poDS->m_aosAdditionalFiles.AddString(osFilename);
@@ -1682,8 +1682,8 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     const CPLString osQubeFile(
         EQUAL(pszCore, "")
             ? poOpenInfo->pszFilename
-            : CPLFormFilename(CPLGetPath(poOpenInfo->pszFilename), pszCore,
-                              nullptr));
+            : CPLFormFilename(CPLGetPathSafe(poOpenInfo->pszFilename).c_str(),
+                              pszCore, nullptr));
     if (!EQUAL(pszCore, ""))
     {
         poDS->m_osExternalFilename = osQubeFile;
@@ -3039,7 +3039,7 @@ void ISIS3Dataset::BuildLabel()
         oHistory.Add("Bytes", static_cast<GIntBig>(m_osHistory.size()));
         if (!m_osExternalFilename.empty())
         {
-            CPLString osFilename(CPLGetBasename(GetDescription()));
+            CPLString osFilename(CPLGetBasenameSafe(GetDescription()));
             osFilename += ".History.IsisCube";
             oHistory.Add("^History", osFilename);
         }
@@ -3117,7 +3117,7 @@ void ISIS3Dataset::BuildLabel()
             {
                 VSIStatBufL sStat;
                 const CPLString osSrcFilename(
-                    CPLFormFilename(CPLGetPath(osLabelSrcFilename),
+                    CPLFormFilename(CPLGetPathSafe(osLabelSrcFilename).c_str(),
                                     oFilenameCap.ToString().c_str(), nullptr));
                 if (VSIStatL(osSrcFilename, &sStat) == 0)
                 {
@@ -3151,7 +3151,7 @@ void ISIS3Dataset::BuildLabel()
 
             if (!m_osExternalFilename.empty())
             {
-                CPLString osDstFilename(CPLGetBasename(GetDescription()));
+                CPLString osDstFilename(CPLGetBasenameSafe(GetDescription()));
                 osDstFilename += ".";
                 osDstFilename += osContainerName;
                 if (!osName.empty())
@@ -3275,8 +3275,8 @@ void ISIS3Dataset::BuildHistory()
         char szFullFilename[2048] = {0};
         if (!CPLGetExecPath(szFullFilename, sizeof(szFullFilename) - 1))
             strcpy(szFullFilename, "unknown_program");
-        const CPLString osProgram(CPLGetBasename(szFullFilename));
-        const CPLString osPath(CPLGetPath(szFullFilename));
+        const CPLString osProgram(CPLGetBasenameSafe(szFullFilename));
+        const CPLString osPath(CPLGetPathSafe(szFullFilename));
 
         CPLJSONObject oObj;
         oHistoryObj.Add(osProgram, oObj);
@@ -3521,10 +3521,10 @@ void ISIS3Dataset::WriteLabel()
         }
         else
         {
-            CPLString osFilename(CPLGetBasename(GetDescription()));
+            CPLString osFilename(CPLGetBasenameSafe(GetDescription()));
             osFilename += ".History.IsisCube";
-            osFilename = CPLFormFilename(CPLGetPath(GetDescription()),
-                                         osFilename, nullptr);
+            osFilename = CPLFormFilename(
+                CPLGetPathSafe(GetDescription()).c_str(), osFilename, nullptr);
             VSILFILE *fp = VSIFOpenL(osFilename, "wb");
             if (fp)
             {

@@ -2355,7 +2355,8 @@ OGRErr OGRShapeLayer::AlterGeomFieldDefn(
     {
         if (poFieldDefn->GetPrjFilename().empty())
         {
-            poFieldDefn->SetPrjFilename(CPLResetExtension(pszFullName, "prj"));
+            poFieldDefn->SetPrjFilename(
+                CPLResetExtensionSafe(pszFullName, "prj").c_str());
         }
 
         const auto poNewSRSRef = poNewGeomFieldDefn->GetSpatialRef();
@@ -2716,7 +2717,8 @@ OGRErr OGRShapeLayer::CreateSpatialIndex(int nMaxDepth)
     /* -------------------------------------------------------------------- */
     /*      Dump tree to .qix file.                                         */
     /* -------------------------------------------------------------------- */
-    char *pszQIXFilename = CPLStrdup(CPLResetExtension(pszFullName, "qix"));
+    char *pszQIXFilename =
+        CPLStrdup(CPLResetExtensionSafe(pszFullName, "qix").c_str());
 
     CPLDebug("SHAPE", "Creating index file %s", pszQIXFilename);
 
@@ -2835,8 +2837,8 @@ OGRErr OGRShapeLayer::Repack()
     /* -------------------------------------------------------------------- */
     /*      Find existing filenames with exact case (see #3293).            */
     /* -------------------------------------------------------------------- */
-    const CPLString osDirname(CPLGetPath(pszFullName));
-    const CPLString osBasename(CPLGetBasename(pszFullName));
+    const CPLString osDirname(CPLGetPathSafe(pszFullName));
+    const CPLString osBasename(CPLGetBasenameSafe(pszFullName));
 
     CPLString osDBFName;
     CPLString osSHPName;
@@ -3763,8 +3765,9 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
     const std::string osDirname = CPLGetPath(pszFullName);
     for (int i = 0; i < oFileList.size(); ++i)
     {
-        const std::string osRenamedFile = CPLFormFilename(
-            osDirname.c_str(), pszNewName, CPLGetExtension(oFileList[i]));
+        const std::string osRenamedFile =
+            CPLFormFilename(osDirname.c_str(), pszNewName,
+                            CPLGetExtensionSafe(oFileList[i]).c_str());
         VSIStatBufL sStat;
         if (VSIStatL(osRenamedFile.c_str(), &sStat) == 0)
         {
@@ -3778,8 +3781,9 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
 
     for (int i = 0; i < oFileList.size(); ++i)
     {
-        const std::string osRenamedFile = CPLFormFilename(
-            osDirname.c_str(), pszNewName, CPLGetExtension(oFileList[i]));
+        const std::string osRenamedFile =
+            CPLFormFilename(osDirname.c_str(), pszNewName,
+                            CPLGetExtensionSafe(oFileList[i]).c_str());
         if (VSIRename(oFileList[i], osRenamedFile.c_str()) != 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot rename %s to %s",
@@ -3798,8 +3802,9 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
             CPLGetExtension(poGeomFieldDefn->GetPrjFilename().c_str())));
     }
 
-    char *pszNewFullName = CPLStrdup(CPLFormFilename(
-        osDirname.c_str(), pszNewName, CPLGetExtension(pszFullName)));
+    char *pszNewFullName =
+        CPLStrdup(CPLFormFilename(osDirname.c_str(), pszNewName,
+                                  CPLGetExtensionSafe(pszFullName).c_str()));
     CPLFree(pszFullName);
     pszFullName = pszNewFullName;
 

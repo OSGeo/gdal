@@ -288,7 +288,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     /*      to look in to find the external files.  Normally this is the    */
     /*      directory holding the hdf file.                                 */
     /* -------------------------------------------------------------------- */
-    HXsetdir(CPLGetPath(poGDS->pszFilename));
+    HXsetdir(CPLGetPathSafe(poGDS->pszFilename).c_str());
 
     /* -------------------------------------------------------------------- */
     /*      Handle different configurations.                                */

@@ -91,7 +91,8 @@ static CPLErr OGRFlatGoBufDriverDelete(const char *pszDataSource)
              papszDirEntries != nullptr && papszDirEntries[iFile] != nullptr;
              iFile++)
         {
-            if (EQUAL(CPLGetExtension(papszDirEntries[iFile]), "fgb"))
+            if (EQUAL(CPLGetExtensionSafe(papszDirEntries[iFile]).c_str(),
+                      "fgb"))
             {
                 VSIUnlink(CPLFormFilename(pszDataSource, papszDirEntries[iFile],
                                           nullptr));
@@ -245,7 +246,7 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             if (strcmp(aosFiles[i], ".") == 0 || strcmp(aosFiles[i], "..") == 0)
                 continue;
-            if (EQUAL(CPLGetExtension(aosFiles[i]), "fgb"))
+            if (EQUAL(CPLGetExtensionSafe(aosFiles[i]).c_str(), "fgb"))
                 nCountFGB++;
             else
                 nCountNonFGB++;
@@ -258,7 +259,7 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         for (int i = 0; i < aosFiles.size(); i++)
         {
-            if (EQUAL(CPLGetExtension(aosFiles[i]), "fgb"))
+            if (EQUAL(CPLGetExtensionSafe(aosFiles[i]).c_str(), "fgb"))
             {
                 CPLString osFilename(CPLFormFilename(poOpenInfo->pszFilename,
                                                      aosFiles[i], nullptr));
@@ -379,7 +380,7 @@ int OGRFlatGeobufDataset::TestCapability(const char *pszCap)
 
 static CPLString LaunderLayerName(const char *pszLayerName)
 {
-    std::string osRet(CPLLaunderForFilename(pszLayerName, nullptr));
+    std::string osRet(CPLLaunderForFilenameSafe(pszLayerName, nullptr));
     if (osRet != pszLayerName)
     {
         CPLError(CE_Warning, CPLE_AppDefined,

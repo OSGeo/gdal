@@ -1176,8 +1176,8 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    CPLString osDirname(CPLGetDirname(poOpenInfo->pszFilename));
-    CPLString osBasename(CPLGetBasename(poOpenInfo->pszFilename));
+    CPLString osDirname(CPLGetDirnameSafe(poOpenInfo->pszFilename));
+    CPLString osBasename(CPLGetBasenameSafe(poOpenInfo->pszFilename));
     CPLString osGRDExtension(poOpenInfo->osExtension);
     CPLString osGRIExtension((osGRDExtension[0] == 'g') ? "gri" : "GRI");
     char **papszSiblings = poOpenInfo->GetSiblingFiles();

@@ -784,10 +784,12 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Read the directory to find matching band files.                 */
     /* -------------------------------------------------------------------- */
-    char *const pszTargetPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+    char *const pszTargetPath =
+        CPLStrdup(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
     char *const pszTargetBase =
-        CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
-    char **papszDirFiles = VSIReadDir(CPLGetPath(poOpenInfo->pszFilename));
+        CPLStrdup(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str());
+    char **papszDirFiles =
+        VSIReadDir(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
     if (papszDirFiles == nullptr)
     {
         CPLFree(pszTargetPath);
@@ -803,7 +805,8 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
         int i = 0;  // Used after for.
         for (; papszDirFiles[i] != nullptr; i++)
         {
-            if (!EQUAL(CPLGetBasename(papszDirFiles[i]), pszTargetBase))
+            if (!EQUAL(CPLGetBasenameSafe(papszDirFiles[i]).c_str(),
+                       pszTargetBase))
                 continue;
 
             const std::string osExtension =

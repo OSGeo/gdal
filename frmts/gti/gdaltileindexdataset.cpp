@@ -591,15 +591,16 @@ static std::string GetAbsoluteFileName(const char *pszTileName,
             const std::string osRet =
                 CPLIsFilenameRelative(osPath.c_str())
                     ? oSubDSInfo->ModifyPathComponent(
-                          CPLProjectRelativeFilename(CPLGetPath(pszVRTName),
-                                                     osPath.c_str()))
+                          CPLProjectRelativeFilename(
+                              CPLGetPathSafe(pszVRTName).c_str(),
+                              osPath.c_str()))
                     : std::string(pszTileName);
             GDALDestroySubdatasetInfo(oSubDSInfo);
             return osRet;
         }
 
-        const std::string osRelativeMadeAbsolute =
-            CPLProjectRelativeFilename(CPLGetPath(pszVRTName), pszTileName);
+        const std::string osRelativeMadeAbsolute = CPLProjectRelativeFilename(
+            CPLGetPathSafe(pszVRTName).c_str(), pszTileName);
         VSIStatBufL sStat;
         if (VSIStatL(osRelativeMadeAbsolute.c_str(), &sStat) == 0)
             return osRelativeMadeAbsolute;
