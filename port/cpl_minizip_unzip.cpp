@@ -1508,6 +1508,7 @@ extern int ZEXPORT cpl_unzOpenCurrentFile3(unzFile file, int *method,
             pfile_in_zip_read_info->stream_initialised = 1;
         else
         {
+            TRYFREE(pfile_in_zip_read_info->read_buffer);
             TRYFREE(pfile_in_zip_read_info);
             return err;
         }
