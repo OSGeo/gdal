@@ -697,12 +697,12 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
                         {
                             CPLString osImage(pszInitFrom);
                             osImage.resize(pszInitFromEnd - pszInitFrom);
-                            const char *const pszExtension =
-                                CPLGetExtension(osImage);
-                            if (EQUAL(pszExtension, "jpg") ||
-                                EQUAL(pszExtension, "jpeg") ||
-                                EQUAL(pszExtension, "png") ||
-                                EQUAL(pszExtension, "gif"))
+                            const std::string osExtension =
+                                CPLGetExtensionSafe(osImage);
+                            if (EQUAL(osExtension.c_str(), "jpg") ||
+                                EQUAL(osExtension.c_str(), "jpeg") ||
+                                EQUAL(osExtension.c_str(), "png") ||
+                                EQUAL(osExtension.c_str(), "gif"))
                             {
                                 if (!resourceMap)
                                     resourceMap =

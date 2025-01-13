@@ -81,7 +81,7 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
     /* http://opengis.github.io/geopackage/#_file_extension_name */
     /* But be tolerant, if the GPKG application id is found, because some */
     /* producers don't necessarily honour that requirement (#6396) */
-    const char *pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExt = poOpenInfo->osExtension.c_str();
     const bool bIsRecognizedExtension =
         EQUAL(pszExt, "GPKG") || EQUAL(pszExt, "GPKX");
 
@@ -364,16 +364,16 @@ static GDALDataset *OGRGeoPackageDriverCreate(const char *pszFilename,
         }
         else
         {
-            const char *pszExt = CPLGetExtension(pszFilename);
+            const std::string osExt = CPLGetExtensionSafe(pszFilename);
             const bool bIsRecognizedExtension =
-                EQUAL(pszExt, "GPKG") || EQUAL(pszExt, "GPKX");
+                EQUAL(osExt.c_str(), "GPKG") || EQUAL(osExt.c_str(), "GPKX");
             if (!bIsRecognizedExtension)
             {
                 CPLError(
                     CE_Warning, CPLE_AppDefined,
                     "The filename extension should be 'gpkg' instead of '%s' "
                     "to conform to the GPKG specification.",
-                    pszExt);
+                    osExt.c_str());
             }
         }
     }

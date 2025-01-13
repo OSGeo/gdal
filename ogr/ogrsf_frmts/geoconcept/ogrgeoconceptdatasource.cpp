@@ -120,8 +120,7 @@ int OGRGeoconceptDataSource::LoadFile(const char *pszMode)
 {
     if (_pszExt == nullptr)
     {
-        const char *pszExtension = CPLGetExtension(GetDescription());
-        _pszExt = CPLStrdup(pszExtension);
+        _pszExt = CPLStrdup(CPLGetExtensionSafe(GetDescription()).c_str());
     }
     CPLStrlwr(_pszExt);
 

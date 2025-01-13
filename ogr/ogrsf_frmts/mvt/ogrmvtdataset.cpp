@@ -1986,18 +1986,17 @@ static int OGRMVTDriverIdentify(GDALOpenInfo *poOpenInfo)
             }
 
             // At least 3 files, to include the dummy . and ..
-            CPLStringList aosDirContent(
-                VSIReadDirEx(poOpenInfo->pszFilename, 3));
-            aosDirContent = StripDummyEntries(aosDirContent);
+            const CPLStringList aosDirContent = StripDummyEntries(
+                CPLStringList(VSIReadDirEx(poOpenInfo->pszFilename, 3)));
             if (!aosDirContent.empty() &&
                 CPLGetValueType(aosDirContent[0]) == CPL_VALUE_INTEGER)
             {
-                CPLString osSubDir = CPLFormFilename(poOpenInfo->pszFilename,
-                                                     aosDirContent[0], nullptr);
+                const std::string osSubDir = CPLFormFilenameSafe(
+                    poOpenInfo->pszFilename, aosDirContent[0], nullptr);
                 // At least 3 files, to include the dummy . and ..
-                CPLStringList aosSubDirContent(VSIReadDirEx(osSubDir, 10));
-                aosSubDirContent = StripDummyEntries(aosSubDirContent);
-                CPLString osTileExtension(CSLFetchNameValueDef(
+                const CPLStringList aosSubDirContent = StripDummyEntries(
+                    CPLStringList(VSIReadDirEx(osSubDir.c_str(), 10)));
+                const std::string osTileExtension(CSLFetchNameValueDef(
                     poOpenInfo->papszOpenOptions, "TILE_EXTENSION", "pbf"));
                 for (int i = 0; i < aosSubDirContent.Count(); i++)
                 {
@@ -2005,10 +2004,11 @@ static int OGRMVTDriverIdentify(GDALOpenInfo *poOpenInfo)
                             CPLGetBasenameSafe(aosSubDirContent[i]).c_str()) ==
                         CPL_VALUE_INTEGER)
                     {
-                        CPLString osExtension(
-                            CPLGetExtension(aosSubDirContent[i]));
-                        if (EQUAL(osExtension, osTileExtension) ||
-                            EQUAL(osExtension, "mvt"))
+                        const std::string osExtension(
+                            CPLGetExtensionSafe(aosSubDirContent[i]));
+                        if (EQUAL(osExtension.c_str(),
+                                  osTileExtension.c_str()) ||
+                            EQUAL(osExtension.c_str(), "mvt"))
                         {
                             return TRUE;
                         }

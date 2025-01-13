@@ -305,8 +305,8 @@ static GDALDataset *OGRNGWDriverCreateCopy(const char *pszFilename,
         for (int i = 0; i < oaFiles.size(); ++i)
         {
             // Check extension tif
-            const char *pszExt = CPLGetExtension(oaFiles[i]);
-            if (pszExt && EQUALN(pszExt, "tif", 3))
+            const std::string osExt = CPLGetExtensionSafe(oaFiles[i]);
+            if (EQUALN(osExt.c_str(), "tif", 3))
             {
                 osFilename = oaFiles[i];
                 break;

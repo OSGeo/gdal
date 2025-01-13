@@ -3663,10 +3663,11 @@ void OGRShapeLayer::AddToFileList(CPLStringList &oFileList)
     {
         const char *pszSHPFilename = VSI_SHP_GetFilename(hSHP->fpSHP);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(pszSHPFilename));
-        const char *pszSHPExt = CPLGetExtension(pszSHPFilename);
-        const char *pszSHXFilename = CPLResetExtension(
-            pszSHPFilename, (pszSHPExt[0] == 's') ? "shx" : "SHX");
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(pszSHXFilename));
+        const std::string osSHPExt = CPLGetExtensionSafe(pszSHPFilename);
+        const std::string osSHXFilename = CPLResetExtensionSafe(
+            pszSHPFilename, (osSHPExt[0] == 's') ? "shx" : "SHX");
+        oFileList.AddStringDirectly(
+            VSIGetCanonicalFilename(osSHXFilename.c_str()));
     }
 
     if (hDBF)
@@ -3675,11 +3676,11 @@ void OGRShapeLayer::AddToFileList(CPLStringList &oFileList)
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(pszDBFFilename));
         if (hDBF->pszCodePage != nullptr && hDBF->iLanguageDriver == 0)
         {
-            const char *pszDBFExt = CPLGetExtension(pszDBFFilename);
-            const char *pszCPGFilename = CPLResetExtension(
-                pszDBFFilename, (pszDBFExt[0] == 'd') ? "cpg" : "CPG");
+            const std::string osDBFExt = CPLGetExtensionSafe(pszDBFFilename);
+            const std::string osCPGFilename = CPLResetExtensionSafe(
+                pszDBFFilename, (osDBFExt[0] == 'd') ? "cpg" : "CPG");
             oFileList.AddStringDirectly(
-                VSIGetCanonicalFilename(pszCPGFilename));
+                VSIGetCanonicalFilename(osCPGFilename.c_str()));
         }
     }
 
@@ -3797,14 +3798,18 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
         OGRShapeGeomFieldDefn *poGeomFieldDefn =
             cpl::down_cast<OGRShapeGeomFieldDefn *>(
                 GetLayerDefn()->GetGeomFieldDefn(0));
-        poGeomFieldDefn->SetPrjFilename(CPLFormFilename(
-            osDirname.c_str(), pszNewName,
-            CPLGetExtension(poGeomFieldDefn->GetPrjFilename().c_str())));
+        poGeomFieldDefn->SetPrjFilename(
+            CPLFormFilenameSafe(
+                osDirname.c_str(), pszNewName,
+                CPLGetExtensionSafe(poGeomFieldDefn->GetPrjFilename().c_str())
+                    .c_str())
+                .c_str());
     }
 
     char *pszNewFullName =
-        CPLStrdup(CPLFormFilename(osDirname.c_str(), pszNewName,
-                                  CPLGetExtensionSafe(pszFullName).c_str()));
+        CPLStrdup(CPLFormFilenameSafe(osDirname.c_str(), pszNewName,
+                                      CPLGetExtensionSafe(pszFullName).c_str())
+                      .c_str());
     CPLFree(pszFullName);
     pszFullName = pszNewFullName;
 

@@ -39,7 +39,7 @@ static int OGRXLSXDriverIdentify(GDALOpenInfo *poOpenInfo)
     if (STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") ||
         STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/"))
     {
-        const char *pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+        const char *pszExt = poOpenInfo->osExtension.c_str();
         return EQUAL(pszExt, "XLSX") || EQUAL(pszExt, "XLSM") ||
                EQUAL(pszExt, "XLSX}") || EQUAL(pszExt, "XLSM}");
     }
@@ -62,7 +62,7 @@ static int OGRXLSXDriverIdentify(GDALOpenInfo *poOpenInfo)
         {
             return TRUE;
         }
-        const char *pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+        const char *pszExt = poOpenInfo->osExtension.c_str();
         if (EQUAL(pszExt, "XLSX") || EQUAL(pszExt, "XLSM"))
         {
             CPLDebug(

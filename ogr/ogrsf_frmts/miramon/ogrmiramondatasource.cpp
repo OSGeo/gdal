@@ -146,12 +146,12 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     /*       of the file is where to write, and the layer name is the       */
     /*       dataset name (without extension).                              */
     /* -------------------------------------------------------------------- */
-    const char *pszExtension = CPLGetExtension(m_osRootName.c_str());
+    const std::string osExtension = CPLGetExtensionSafe(m_osRootName.c_str());
     std::string osFullMMLayerName;
-    if (EQUAL(pszExtension, "pol") || EQUAL(pszExtension, "arc") ||
-        EQUAL(pszExtension, "pnt"))
+    if (EQUAL(osExtension.c_str(), "pol") ||
+        EQUAL(osExtension.c_str(), "arc") || EQUAL(osExtension.c_str(), "pnt"))
     {
-        osFullMMLayerName = CPLResetExtension(m_osRootName.c_str(), "");
+        osFullMMLayerName = CPLResetExtensionSafe(m_osRootName.c_str(), "");
         if (!osFullMMLayerName.empty())
             osFullMMLayerName.pop_back();
 
@@ -173,7 +173,7 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     else
     {
         osFullMMLayerName =
-            CPLFormFilename(m_osRootName.c_str(), pszLayerName, "");
+            CPLFormFilenameSafe(m_osRootName.c_str(), pszLayerName, "");
 
         /* -------------------------------------------------------------------- */
         /*      Let's create the folder if it's not already created.            */

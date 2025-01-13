@@ -136,8 +136,8 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
         while (const auto psEntry = VSIGetNextDirEntry(psDir))
         {
             if (!bParquetFound)
-                bParquetFound =
-                    EQUAL(CPLGetExtension(psEntry->pszName), "parquet");
+                bParquetFound = EQUAL(
+                    CPLGetExtensionSafe(psEntry->pszName).c_str(), "parquet");
 
             const std::string osFilename =
                 select.base_dir + '/' + psEntry->pszName;

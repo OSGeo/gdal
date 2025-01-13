@@ -388,10 +388,11 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
 bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
 
 {
-    const char *pszExtension = CPLGetExtension(pszNewName);
+    const std::string osExtension = CPLGetExtensionSafe(pszNewName);
 
-    if (!EQUAL(pszExtension, "shp") && !EQUAL(pszExtension, "shx") &&
-        !EQUAL(pszExtension, "dbf"))
+    if (!EQUAL(osExtension.c_str(), "shp") &&
+        !EQUAL(osExtension.c_str(), "shx") &&
+        !EQUAL(osExtension.c_str(), "dbf"))
         return false;
 
     /* -------------------------------------------------------------------- */
@@ -1640,11 +1641,9 @@ bool OGRShapeDataSource::RecompressIfNeeded(
                       return false;
                   if (iA != INT_MAX)
                   {
-                      const char *pszExtA = CPLGetExtension(a);
-                      const char *pszExtB = CPLGetExtension(b);
-                      if (EQUAL(pszExtA, "shp"))
+                      if (EQUAL(CPLGetExtensionSafe(a).c_str(), "shp"))
                           return true;
-                      if (EQUAL(pszExtB, "shp"))
+                      if (EQUAL(CPLGetExtensionSafe(b).c_str(), "shp"))
                           return false;
                   }
                   return a < b;

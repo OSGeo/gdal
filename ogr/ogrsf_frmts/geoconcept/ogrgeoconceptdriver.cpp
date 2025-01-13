@@ -27,8 +27,9 @@ static GDALDataset *OGRGeoconceptDriverOpen(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      We will only consider .gxt and .txt files.                      */
     /* -------------------------------------------------------------------- */
-    const char *pszExtension = CPLGetExtension(pszFilename);
-    if (!EQUAL(pszExtension, "gxt") && !EQUAL(pszExtension, "txt"))
+    const std::string osExtension = CPLGetExtensionSafe(pszFilename);
+    if (!EQUAL(osExtension.c_str(), "gxt") &&
+        !EQUAL(osExtension.c_str(), "txt"))
     {
         return nullptr;
     }
@@ -129,10 +130,10 @@ static CPLErr OGRGeoconceptDriverDelete(const char *pszDataSource)
     {
         for (int iExt = 0; apszExtensions[iExt] != nullptr; iExt++)
         {
-            const char *pszFile =
-                CPLResetExtension(pszDataSource, apszExtensions[iExt]);
-            if (VSIStatL(pszFile, &sStatBuf) == 0)
-                VSIUnlink(pszFile);
+            const std::string osFile =
+                CPLResetExtensionSafe(pszDataSource, apszExtensions[iExt]);
+            if (VSIStatL(osFile.c_str(), &sStatBuf) == 0)
+                VSIUnlink(osFile.c_str());
         }
     }
     else if (VSI_ISDIR(sStatBuf.st_mode))
@@ -143,11 +144,13 @@ static CPLErr OGRGeoconceptDriverDelete(const char *pszDataSource)
              papszDirEntries != nullptr && papszDirEntries[iFile] != nullptr;
              iFile++)
         {
-            if (CSLFindString(const_cast<char **>(apszExtensions),
-                              CPLGetExtension(papszDirEntries[iFile])) != -1)
+            if (CSLFindString(
+                    const_cast<char **>(apszExtensions),
+                    CPLGetExtensionSafe(papszDirEntries[iFile]).c_str()) != -1)
             {
-                VSIUnlink(CPLFormFilename(pszDataSource, papszDirEntries[iFile],
-                                          nullptr));
+                VSIUnlink(CPLFormFilenameSafe(pszDataSource,
+                                              papszDirEntries[iFile], nullptr)
+                              .c_str());
             }
         }
 

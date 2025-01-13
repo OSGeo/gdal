@@ -39,7 +39,7 @@ static int OGRODSDriverIdentify(GDALOpenInfo *poOpenInfo)
                       "<office:document-content") != nullptr;
     }
 
-    const char *pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExt = poOpenInfo->osExtension.c_str();
     if (!EQUAL(pszExt, "ODS") && !EQUAL(pszExt, "ODS}"))
         return FALSE;
 

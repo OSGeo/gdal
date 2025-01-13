@@ -192,8 +192,8 @@ OGRFileGDBDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     /* Only accept names of form "filename.gdb" and */
     /* also .gdb.zip to be able to return FGDB with MapServer OGR output (#4199)
      */
-    const char *pszExt = CPLGetExtension(pszName);
-    if (!(EQUAL(pszExt, "gdb") || EQUAL(pszExt, "zip")))
+    const std::string osExt = CPLGetExtensionSafe(pszName);
+    if (!(EQUAL(osExt.c_str(), "gdb") || EQUAL(osExt.c_str(), "zip")))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "FGDB data source name must use 'gdb' extension.\n");

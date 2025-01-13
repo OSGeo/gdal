@@ -197,13 +197,17 @@ int OGRTABDataSource::Open(GDALOpenInfo *poOpenInfo, int bTestOpen)
              papszFileList != nullptr && papszFileList[iFile] != nullptr;
              iFile++)
         {
-            const char *pszExtension = CPLGetExtension(papszFileList[iFile]);
+            const std::string osExtension =
+                CPLGetExtensionSafe(papszFileList[iFile]);
 
-            if (!EQUAL(pszExtension, "tab") && !EQUAL(pszExtension, "mif"))
+            if (!EQUAL(osExtension.c_str(), "tab") &&
+                !EQUAL(osExtension.c_str(), "mif"))
                 continue;
 
-            char *pszSubFilename = CPLStrdup(
-                CPLFormFilename(m_pszDirectory, papszFileList[iFile], nullptr));
+            char *pszSubFilename =
+                CPLStrdup(CPLFormFilenameSafe(m_pszDirectory,
+                                              papszFileList[iFile], nullptr)
+                              .c_str());
 
             IMapInfoFile *poFile = IMapInfoFile::SmartOpen(
                 this, pszSubFilename, GetUpdate(), bTestOpen);
@@ -468,8 +472,9 @@ char **OGRTABDataSource::GetFileList()
              papszDirEntries != nullptr && papszDirEntries[iFile] != nullptr;
              iFile++)
         {
-            if (CSLFindString(apszExtensions,
-                              CPLGetExtension(papszDirEntries[iFile])) != -1)
+            if (CSLFindString(
+                    apszExtensions,
+                    CPLGetExtensionSafe(papszDirEntries[iFile]).c_str()) != -1)
             {
                 osList.AddString(CPLFormFilename(
                     GetDescription(), papszDirEntries[iFile], nullptr));
@@ -496,19 +501,19 @@ char **OGRTABDataSource::GetFileList()
         const char *const *papszIter = papszExtensions;
         while (*papszIter)
         {
-            const char *pszFile =
-                CPLResetExtension(GetDescription(), *papszIter);
-            if (VSIStatL(pszFile, &sStatBuf) != 0)
+            std::string osFile =
+                CPLResetExtensionSafe(GetDescription(), *papszIter);
+            if (VSIStatL(osFile.c_str(), &sStatBuf) != 0)
             {
-                pszFile = CPLResetExtension(GetDescription(),
-                                            CPLString(*papszIter).toupper());
-                if (VSIStatL(pszFile, &sStatBuf) != 0)
+                osFile = CPLResetExtensionSafe(GetDescription(),
+                                               CPLString(*papszIter).toupper());
+                if (VSIStatL(osFile.c_str(), &sStatBuf) != 0)
                 {
-                    pszFile = nullptr;
+                    osFile.clear();
                 }
             }
-            if (pszFile)
-                osList.AddString(pszFile);
+            if (!osFile.empty())
+                osList.AddString(osFile.c_str());
             papszIter++;
         }
     }
