@@ -2061,6 +2061,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
     /* -------------------------------------------------------------------- */
     if (EQUAL(pszBaseGeometry, "PointType") ||
         EQUAL(pszBaseGeometry, "Point") ||
+        EQUAL(pszBaseGeometry, "ElevatedPoint") ||
         EQUAL(pszBaseGeometry, "ConnectionPoint"))
     {
         auto poPoint = std::make_unique<OGRPoint>();
