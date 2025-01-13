@@ -799,8 +799,12 @@ const char *CPLFormCIFilename(const char *pszPath, const char *pszBasename,
             pszFilename[i] = static_cast<char>(CPLToupper(pszFilename[i]));
         }
 
-        pszFullPath = CPLFormFilename(pszPath, pszFilename, nullptr);
-        nStatRet = VSIStatExL(pszFullPath, &sStatBuf, VSI_STAT_EXISTS_FLAG);
+        const std::string osTmpPath(
+            CPLFormFilename(pszPath, pszFilename, nullptr));
+        nStatRet =
+            VSIStatExL(osTmpPath.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG);
+        if (nStatRet == 0)
+            pszFullPath = CPLFormFilename(pszPath, pszFilename, nullptr);
     }
 
     if (nStatRet != 0)
@@ -811,8 +815,12 @@ const char *CPLFormCIFilename(const char *pszPath, const char *pszBasename,
                 CPLTolower(static_cast<unsigned char>(pszFilename[i])));
         }
 
-        pszFullPath = CPLFormFilename(pszPath, pszFilename, nullptr);
-        nStatRet = VSIStatExL(pszFullPath, &sStatBuf, VSI_STAT_EXISTS_FLAG);
+        const std::string osTmpPath(
+            CPLFormFilename(pszPath, pszFilename, nullptr));
+        nStatRet =
+            VSIStatExL(osTmpPath.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG);
+        if (nStatRet == 0)
+            pszFullPath = CPLFormFilename(pszPath, pszFilename, nullptr);
     }
 
     if (nStatRet != 0)
