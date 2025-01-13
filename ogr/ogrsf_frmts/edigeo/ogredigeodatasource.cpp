@@ -162,8 +162,9 @@ VSILFILE *OGREDIGEODataSource::OpenFile(const char *pszType,
     if (fp == nullptr)
     {
         const CPLString osExtLower = CPLString(osExt).tolower();
-        const CPLString osFilename2 = CPLFormCIFilename(
-            CPLGetPath(GetDescription()), osTmp.c_str(), osExtLower.c_str());
+        const CPLString osFilename2 =
+            CPLFormCIFilenameSafe(CPLGetPathSafe(GetDescription()).c_str(),
+                                  osTmp.c_str(), osExtLower.c_str());
         fp = VSIFOpenL(osFilename2, "rb");
         if (fp == nullptr)
         {

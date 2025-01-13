@@ -182,7 +182,7 @@ char **VRTDataset::GetMetadata(const char *pszDomain)
         const char *pszDescription = GetDescription();
         char *l_pszVRTPath = CPLStrdup(
             pszDescription[0] && !STARTS_WITH(pszDescription, "<VRTDataset")
-                ? CPLGetPath(pszDescription)
+                ? CPLGetPathSafe(pszDescription).c_str()
                 : "");
         CPLXMLNode *psDSTree = SerializeToXML(l_pszVRTPath);
         char *pszXML = CPLSerializeXMLTree(psDSTree);
@@ -3089,7 +3089,7 @@ std::string VRTDataset::BuildSourceFilename(const char *pszFilename,
                     // Simplify path by replacing "foo/a/../b" with "foo/b"
                     while (STARTS_WITH(pszFilename, "../"))
                     {
-                        osVRTPath = CPLGetPath(osVRTPath.c_str());
+                        osVRTPath = CPLGetPathSafe(osVRTPath.c_str());
                         pszFilename += strlen("../");
                     }
                 }

@@ -1321,14 +1321,15 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO(
                             !STARTS_WITH(pszBaseFilename, "/vsizip/"))
                         {
                             osSubFilename = "/vsizip/";
-                            osSubFilename += CPLGetPath(pszBaseFilename);
+                            osSubFilename += CPLGetPathSafe(pszBaseFilename);
                             osSubFilename += "/";
                             osSubFilename += pszHref;
                         }
                         else
                         {
-                            osSubFilename = CPLFormFilename(
-                                CPLGetPath(pszBaseFilename), pszHref, nullptr);
+                            osSubFilename = CPLFormFilenameSafe(
+                                CPLGetPathSafe(pszBaseFilename).c_str(),
+                                pszHref, nullptr);
                         }
                         osSubFilename = KMLRemoveSlash(osSubFilename);
                     }
@@ -1822,8 +1823,9 @@ static bool KmlSuperOverlayComputeDepth(const std::string &osFilename,
                         CPLSPrintf("/vsicurl_streaming/%s", pszHref);
                 else
                 {
-                    osSubFilename = CPLFormFilename(
-                        CPLGetPath(osFilename.c_str()), pszHref, nullptr);
+                    osSubFilename = CPLFormFilenameSafe(
+                        CPLGetPathSafe(osFilename.c_str()).c_str(), pszHref,
+                        nullptr);
                     osSubFilename = KMLRemoveSlash(osSubFilename);
                 }
 
@@ -2292,7 +2294,7 @@ KmlSingleDocCollectTiles(CPLXMLNode *psNode,
         const char *pszHref = CPLGetXMLValue(psNode, "", "");
         if (STARTS_WITH(pszHref, "http"))
         {
-            osURLBase = CPLGetPath(pszHref);
+            osURLBase = CPLGetPathSafe(pszHref);
         }
         if (sscanf(CPLGetFilename(pszHref), "kml_image_L%d_%d_%d.%3s", &level,
                    &j, &i, szExt) == 4)

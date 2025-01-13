@@ -3160,8 +3160,9 @@ void ISIS3Dataset::BuildLabel()
                     osDstFilename += osName;
                 }
 
-                oSection.osDstFilename = CPLFormFilename(
-                    CPLGetPath(GetDescription()), osDstFilename, nullptr);
+                oSection.osDstFilename = CPLFormFilenameSafe(
+                    CPLGetPathSafe(GetDescription()).c_str(), osDstFilename,
+                    nullptr);
 
                 oObj.Set(osKeyFilename, osDstFilename);
             }
@@ -3202,8 +3203,8 @@ void ISIS3Dataset::BuildHistory()
             CPLJSONObject oHistoryFilename = oHistory["^History"];
             if (oHistoryFilename.GetType() == CPLJSONObject::Type::String)
             {
-                osHistoryFilename = CPLFormFilename(
-                    CPLGetPath(osSrcFilename),
+                osHistoryFilename = CPLFormFilenameSafe(
+                    CPLGetPathSafe(osSrcFilename).c_str(),
                     oHistoryFilename.ToString().c_str(), nullptr);
             }
 

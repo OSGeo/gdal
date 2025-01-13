@@ -119,7 +119,7 @@ GDALIdentifyEnum OGROpenFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo,
              CPLGetBasename(CPLGetBasenameSafe(pszFilename).c_str())[0] == 'a')
     {
         pszFilename = CPLFormFilename(
-            CPLGetPath(pszFilename),
+            CPLGetPathSafe(pszFilename).c_str(),
             CPLGetBasename(CPLGetBasenameSafe(pszFilename).c_str()),
             "gdbtable");
         return GDAL_IDENTIFY_TRUE;

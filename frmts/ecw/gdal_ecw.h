@@ -214,7 +214,7 @@ class VSIIOStream final : public CNCSJPCIOStream
         CPLString osFilenameUsed = pszFilename;
 
 #if ECWSDK_VERSION < 55
-        CPLString osPath = CPLGetPath(pszFilename);
+        CPLString osPath = CPLGetPathSafe(pszFilename);
         struct stat sStatBuf;
         if (!osPath.empty() && stat(osPath, &sStatBuf) != 0)
         {

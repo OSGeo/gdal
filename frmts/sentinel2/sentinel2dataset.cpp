@@ -1734,10 +1734,11 @@ SENTINEL2GetMainMTDFilenameFromGranuleMTD(const char *pszFilename)
     if (CPLIsFilenameRelative(pszFilename))
     {
         // GRANULE/bla/bla.xml
-        const char *pszPath = CPLGetPath(pszFilename);
-        if (strchr(pszPath, '/') || strchr(pszPath, '\\'))
+        const std::string osPath = CPLGetPathSafe(pszFilename);
+        if (osPath.find('/') != std::string::npos ||
+            osPath.find('\\') != std::string::npos)
         {
-            osTopDir = CPLGetPath(CPLGetPathSafe(pszPath).c_str());
+            osTopDir = CPLGetPathSafe(CPLGetPathSafe(osPath.c_str()).c_str());
             if (osTopDir == "")
                 osTopDir = ".";
         }
@@ -1752,7 +1753,7 @@ SENTINEL2GetMainMTDFilenameFromGranuleMTD(const char *pszFilename)
              STARTS_WITH_CI(*papszIter, "S2B_")) &&
             EQUALN(*papszIter + strlen("S2A_XXXX"), "_MTD", 4))
         {
-            osMainMTD = CPLFormFilename(osTopDir, *papszIter, nullptr);
+            osMainMTD = CPLFormFilenameSafe(osTopDir, *papszIter, nullptr);
             break;
         }
     }
@@ -2161,8 +2162,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset(GDALOpenInfo *poOpenInfo)
             osBandName = aosBands[0];
 
         CPLString osTile(SENTINEL2GetTilename(
-            CPLGetPath(osFilename), CPLGetBasenameSafe(osFilename).c_str(),
-            osBandName));
+            CPLGetPathSafe(osFilename).c_str(),
+            CPLGetBasenameSafe(osFilename).c_str(), osBandName));
 
         bool bTileFound = false;
         if (nValMax == 0)
@@ -3582,7 +3583,7 @@ SENTINEL2Dataset *SENTINEL2Dataset::CreateL1CL2ADataset(
                 dfMinY = dfLRY;
 
             SENTINEL2GranuleInfo oGranuleInfo;
-            oGranuleInfo.osPath = CPLGetPath(aosGranuleList[i]);
+            oGranuleInfo.osPath = CPLGetPathSafe(aosGranuleList[i]);
             if (bIsSafeCompact)
             {
                 oGranuleInfo.osBandPrefixPath =

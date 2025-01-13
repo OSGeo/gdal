@@ -1955,8 +1955,9 @@ static int OGRMVTDriverIdentify(GDALOpenInfo *poOpenInfo)
             CPL_VALUE_INTEGER)
         {
             VSIStatBufL sStat;
-            CPLString osMetadataFile(CPLFormFilename(
-                CPLGetPath(poOpenInfo->pszFilename), "metadata.json", nullptr));
+            CPLString osMetadataFile(CPLFormFilenameSafe(
+                CPLGetPathSafe(poOpenInfo->pszFilename).c_str(),
+                "metadata.json", nullptr));
             const char *pszMetadataFile = CSLFetchNameValue(
                 poOpenInfo->papszOpenOptions, "METADATA_FILE");
             if (pszMetadataFile)
@@ -2542,8 +2543,9 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
     if (nZ < 0 || nZ > 30)
         return nullptr;
 
-    CPLString osMetadataFile(CPLFormFilename(
-        CPLGetPath(poOpenInfo->pszFilename), "metadata.json", nullptr));
+    CPLString osMetadataFile(
+        CPLFormFilenameSafe(CPLGetPathSafe(poOpenInfo->pszFilename).c_str(),
+                            "metadata.json", nullptr));
     const char *pszMetadataFile =
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "METADATA_FILE");
     if (pszMetadataFile)
@@ -2610,8 +2612,9 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
             // tileserver-gl metadata file:
             // If opening /path/to/foo/0, try looking for /path/to/foo.json
             CPLString osParentDir(CPLGetPathSafe(poOpenInfo->pszFilename));
-            osMetadataFile = CPLFormFilename(
-                CPLGetPath(osParentDir), CPLGetFilename(osParentDir), "json");
+            osMetadataFile =
+                CPLFormFilenameSafe(CPLGetPathSafe(osParentDir).c_str(),
+                                    CPLGetFilename(osParentDir), "json");
             bMetadataFileExists = (VSIStatL(osMetadataFile, &sStat) == 0);
         }
     }
@@ -2972,8 +2975,8 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
 
     CPLString osY = CPLGetBasenameSafe(osFilename);
     CPLString osX = CPLGetBasenameSafe(CPLGetPathSafe(osFilename).c_str());
-    CPLString osZ =
-        CPLGetBasename(CPLGetPathSafe(CPLGetPath(osFilename)).c_str());
+    CPLString osZ = CPLGetBasename(
+        CPLGetPathSafe(CPLGetPathSafe(osFilename).c_str()).c_str());
     size_t nPos = osY.find('.');
     if (nPos != std::string::npos)
         osY.resize(nPos);
@@ -2988,8 +2991,10 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
              CPLGetValueType(osY) == CPL_VALUE_INTEGER &&
              CPLGetValueType(osZ) == CPL_VALUE_INTEGER)
     {
-        osMetadataFile = CPLFormFilename(
-            CPLGetPath(CPLGetPathSafe(CPLGetPath(osFilename)).c_str()),
+        osMetadataFile = CPLFormFilenameSafe(
+            CPLGetPathSafe(
+                CPLGetPathSafe(CPLGetPathSafe(osFilename).c_str()).c_str())
+                .c_str(),
             "metadata.json", nullptr);
         if (osMetadataFile.find("/vsigzip/") == 0)
         {

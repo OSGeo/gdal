@@ -875,12 +875,12 @@ static CPLErr AIGRename(const char *pszNewName, const char *pszOldName)
     CPLString osOldPath, osNewPath;
 
     if (!CPLGetExtensionSafe(pszNewName).empty())
-        osNewPath = CPLGetPath(pszNewName);
+        osNewPath = CPLGetPathSafe(pszNewName);
     else
         osNewPath = pszNewName;
 
     if (!CPLGetExtensionSafe(pszOldName).empty())
-        osOldPath = CPLGetPath(pszOldName);
+        osOldPath = CPLGetPathSafe(pszOldName);
     else
         osOldPath = pszOldName;
 

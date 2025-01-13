@@ -1032,16 +1032,19 @@ void L1BDataset::FetchMetadata()
         return;
     }
 
-    const char *pszDir = CPLGetConfigOption("L1B_METADATA_DIRECTORY", nullptr);
-    if (pszDir == nullptr)
+    std::string osDir = CPLGetConfigOption("L1B_METADATA_DIRECTORY", "");
+    if (osDir.empty())
     {
-        pszDir = CPLGetPath(GetDescription());
-        if (pszDir[0] == '\0')
-            pszDir = ".";
+        osDir = CPLGetPathSafe(GetDescription());
+        if (osDir.empty())
+            osDir = ".";
     }
-    CPLString osMetadataFile(CPLSPrintf("%s/%s_metadata.csv", pszDir,
-                                        CPLGetFilename(GetDescription())));
-    VSILFILE *fpCSV = VSIFOpenL(osMetadataFile, "wb");
+    const std::string osMetadataFile =
+        std::string(osDir)
+            .append("/")
+            .append(CPLGetFilename(GetDescription()))
+            .append("_metadata.csv");
+    VSILFILE *fpCSV = VSIFOpenL(osMetadataFile.c_str(), "wb");
     if (fpCSV == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1138,16 +1141,19 @@ void L1BDataset::FetchMetadata()
 void L1BDataset::FetchMetadataNOAA15()
 {
     int i, j;
-    const char *pszDir = CPLGetConfigOption("L1B_METADATA_DIRECTORY", nullptr);
-    if (pszDir == nullptr)
+    std::string osDir = CPLGetConfigOption("L1B_METADATA_DIRECTORY", "");
+    if (osDir.empty())
     {
-        pszDir = CPLGetPath(GetDescription());
-        if (pszDir[0] == '\0')
-            pszDir = ".";
+        osDir = CPLGetPathSafe(GetDescription());
+        if (osDir.empty())
+            osDir = ".";
     }
-    CPLString osMetadataFile(CPLSPrintf("%s/%s_metadata.csv", pszDir,
-                                        CPLGetFilename(GetDescription())));
-    VSILFILE *fpCSV = VSIFOpenL(osMetadataFile, "wb");
+    const std::string osMetadataFile =
+        std::string(osDir)
+            .append("/")
+            .append(CPLGetFilename(GetDescription()))
+            .append("_metadata.csv");
+    VSILFILE *fpCSV = VSIFOpenL(osMetadataFile.c_str(), "wb");
     if (fpCSV == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,

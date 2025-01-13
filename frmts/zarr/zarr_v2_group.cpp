@@ -415,8 +415,9 @@ bool ZarrV2Group::InitFromZGroup(const CPLJSONObject &obj)
         if (!obj["_NCZARR_SUPERBLOCK"].IsValid() &&
             m_poParent.lock() == nullptr)
         {
-            const std::string osParentGroupFilename(CPLFormFilename(
-                CPLGetPath(m_osDirectoryName.c_str()), ".zgroup", nullptr));
+            const std::string osParentGroupFilename(CPLFormFilenameSafe(
+                CPLGetPathSafe(m_osDirectoryName.c_str()).c_str(), ".zgroup",
+                nullptr));
             VSIStatBufL sStat;
             if (VSIStatL(osParentGroupFilename.c_str(), &sStat) == 0)
             {
@@ -427,7 +428,7 @@ bool ZarrV2Group::InitFromZGroup(const CPLJSONObject &obj)
                         m_poSharedResource, std::string(), std::string());
                     poParent->m_bDirectoryExplored = true;
                     poParent->SetDirectoryName(
-                        CPLGetPath(m_osDirectoryName.c_str()));
+                        CPLGetPathSafe(m_osDirectoryName.c_str()));
                     poParent->InitFromZGroup(oDoc.GetRoot());
                     m_poParentStrongRef = poParent;
                     m_poParent = poParent;

@@ -190,7 +190,7 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
         sscanf(pszFilenameWithoutPath, "a%08x.gdbtable", &unInterestTable) == 1)
     {
         nInterestTable = static_cast<int>(unInterestTable);
-        m_osDirName = CPLGetPath(m_osDirName);
+        m_osDirName = CPLGetPathSafe(m_osDirName);
     }
 
     if (EQUAL(CPLGetExtensionSafe(m_osDirName).c_str(), "zip") &&
