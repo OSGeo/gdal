@@ -5944,6 +5944,11 @@ __attribute__((optimize("tree-vectorize")))
 #if defined(__GNUC__)
 __attribute__((noinline))
 #endif
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+// clang++ -O2 -fsanitize=undefined fails to vectorize, ignore that warning
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpass-failed"
+#endif
 static void
 GDALInterleave2Byte(const uint8_t *CPL_RESTRICT pSrc,
                     uint8_t *CPL_RESTRICT pDst, size_t nIters)
@@ -5957,6 +5962,9 @@ GDALInterleave2Byte(const uint8_t *CPL_RESTRICT pSrc,
         pDst[2 * i + 1] = pSrc[i + 1 * nIters];
     }
 }
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+#pragma clang diagnostic pop
+#endif
 
 #endif
 
@@ -6039,6 +6047,11 @@ __attribute__((optimize("tree-vectorize")))
 #if defined(__GNUC__)
 __attribute__((noinline))
 #endif
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+// clang++ -O2 -fsanitize=undefined fails to vectorize, ignore that warning
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpass-failed"
+#endif
 static void
 GDALInterleave4Byte(const uint8_t *CPL_RESTRICT pSrc,
                     uint8_t *CPL_RESTRICT pDst, size_t nIters)
@@ -6054,6 +6067,9 @@ GDALInterleave4Byte(const uint8_t *CPL_RESTRICT pSrc,
         pDst[4 * i + 3] = pSrc[i + 3 * nIters];
     }
 }
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+#pragma clang diagnostic pop
+#endif
 
 #endif
 
