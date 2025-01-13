@@ -268,8 +268,7 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
         for (int iCan = 0; iCan < nCandidateCount; iCan++)
         {
             const char *pszCandidate = papszCandidates[iCan];
-            const char *pszLayerName = CPLGetBasename(pszCandidate);
-            CPLString osLayerName(pszLayerName);
+            CPLString osLayerName(CPLGetBasenameSafe(pszCandidate));
 #ifdef _WIN32
             // On Windows, as filenames are case insensitive, a shapefile layer
             // can be made of foo.shp and FOO.DBF, so to detect unique layer
@@ -310,8 +309,8 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
         for (int iCan = 0; iCan < nCandidateCount; iCan++)
         {
             const char *pszCandidate = papszCandidates[iCan];
-            const char *pszLayerName = CPLGetBasename(pszCandidate);
-            CPLString osLayerName(pszLayerName);
+            const std::string osLayerNameOri = CPLGetBasenameSafe(pszCandidate);
+            CPLString osLayerName(osLayerNameOri);
 #ifdef _WIN32
             osLayerName.toupper();
 #endif
@@ -336,8 +335,9 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
             {
                 const char *pszCandidate2 = papszCandidates[iCan2];
 
-                if (EQUALN(pszCandidate2, pszLayerName, strlen(pszLayerName)) &&
-                    EQUAL(pszCandidate2 + strlen(pszLayerName), ".tab"))
+                if (EQUALN(pszCandidate2, osLayerNameOri.c_str(),
+                           osLayerNameOri.size()) &&
+                    EQUAL(pszCandidate2 + osLayerNameOri.size(), ".tab"))
                     bFoundTAB = true;
             }
 
@@ -969,12 +969,12 @@ int OGRShapeDataSource::GetLayerCount()
         for (size_t i = 0; i < oVectorLayerName.size(); i++)
         {
             const char *pszFilename = oVectorLayerName[i].c_str();
-            const char *pszLayerName = CPLGetBasename(pszFilename);
+            const std::string osLayerName = CPLGetBasenameSafe(pszFilename);
 
             int j = 0;  // Used after for.
             for (; j < nLayers; j++)
             {
-                if (strcmp(papoLayers[j]->GetName(), pszLayerName) == 0)
+                if (papoLayers[j]->GetName() == osLayerName)
                     break;
             }
             if (j < nLayers)
@@ -1034,16 +1034,16 @@ OGRLayer *OGRShapeDataSource::GetLayerByName(const char *pszLayerNameIn)
             for (size_t i = 0; i < oVectorLayerName.size(); i++)
             {
                 const char *pszFilename = oVectorLayerName[i].c_str();
-                const char *pszLayerName = CPLGetBasename(pszFilename);
+                const std::string osLayerName = CPLGetBasenameSafe(pszFilename);
 
                 if (j == 0)
                 {
-                    if (strcmp(pszLayerName, pszLayerNameIn) != 0)
+                    if (osLayerName != pszLayerNameIn)
                         continue;
                 }
                 else
                 {
-                    if (!EQUAL(pszLayerName, pszLayerNameIn))
+                    if (!EQUAL(osLayerName.c_str(), pszLayerNameIn))
                         continue;
                 }
 

@@ -444,17 +444,17 @@ GDALDataset *SAGADataset::Open(GDALOpenInfo *poOpenInfo)
 
         CSLDestroy(filesinzip);
 
-        osFullname = CPLFormFilename(osPath, file, nullptr);
-        osName = CPLGetBasename(file);
-        osHDRFilename =
-            CPLFormFilename(osPath, CPLGetBasenameSafe(file).c_str(), "sgrd");
+        osFullname = CPLFormFilenameSafe(osPath, file, nullptr);
+        osName = CPLGetBasenameSafe(file);
+        osHDRFilename = CPLFormFilenameSafe(
+            osPath, CPLGetBasenameSafe(file).c_str(), "sgrd");
     }
     else
     {
         osFullname = poOpenInfo->pszFilename;
-        osPath = CPLGetPath(poOpenInfo->pszFilename);
-        osName = CPLGetBasename(poOpenInfo->pszFilename);
-        osHDRFilename = CPLFormCIFilename(
+        osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
+        osName = CPLGetBasenameSafe(poOpenInfo->pszFilename);
+        osHDRFilename = CPLFormCIFilenameSafe(
             osPath, CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str(),
             "sgrd");
     }

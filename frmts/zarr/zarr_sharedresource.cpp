@@ -99,7 +99,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
                 }
             }
             const std::string osArrayName(
-                CPLGetBasename(m_osRootDirectoryName.c_str()));
+                CPLGetBasenameSafe(m_osRootDirectoryName.c_str()));
             if (!poRG->LoadArray(osArrayName, osZarrayFilename, oRoot, false,
                                  CPLJSONObject()))
                 return nullptr;
@@ -165,7 +165,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
         if (osNodeType == "array")
         {
             const std::string osArrayName(
-                CPLGetBasename(m_osRootDirectoryName.c_str()));
+                CPLGetBasenameSafe(m_osRootDirectoryName.c_str()));
             poRG_V3->SetExplored();
             if (!poRG_V3->LoadArray(osArrayName, osZarrJsonFilename, oRoot))
                 return nullptr;

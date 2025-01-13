@@ -404,9 +404,9 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     {
         if (m_osParquetFilename.empty())
             m_osParquetFilename = pszFilename;
-        osLayerName = CPLGetBasename(m_osParquetFilename.c_str());
+        osLayerName = CPLGetBasenameSafe(m_osParquetFilename.c_str());
         if (osLayerName == "*")
-            osLayerName = CPLGetBasename(
+            osLayerName = CPLGetBasenameSafe(
                 CPLGetDirnameSafe(m_osParquetFilename.c_str()).c_str());
         if (!pszSQL)
         {

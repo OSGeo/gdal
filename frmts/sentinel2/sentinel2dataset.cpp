@@ -1816,9 +1816,9 @@ static void SENTINEL2GetResolutionSetAndMainMDFromGranule(
             if (atoi(osBandName) < 10)
                 osBandName = "0" + osBandName;
 
-            CPLString osTile(
-                SENTINEL2GetTilename(CPLGetPathSafe(pszFilename).c_str(),
-                                     CPLGetBasename(pszFilename), osBandName));
+            CPLString osTile(SENTINEL2GetTilename(
+                CPLGetPathSafe(pszFilename).c_str(),
+                CPLGetBasenameSafe(pszFilename).c_str(), osBandName));
             VSIStatBufL sStat;
             if (VSIStatExL(osTile, &sStat, VSI_STAT_EXISTS_FLAG) == 0)
             {
@@ -2050,9 +2050,9 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset(GDALOpenInfo *poOpenInfo)
     {
         for (size_t i = 0; i < aosBands.size(); i++)
         {
-            CPLString osTile(
-                SENTINEL2GetTilename(CPLGetPathSafe(osFilename).c_str(),
-                                     CPLGetBasename(osFilename), aosBands[i]));
+            CPLString osTile(SENTINEL2GetTilename(
+                CPLGetPathSafe(osFilename).c_str(),
+                CPLGetBasenameSafe(osFilename).c_str(), aosBands[i]));
             if (SENTINEL2GetTileInfo(osTile, &nCols, &nRows, &nBits))
             {
                 if (nBits <= 16)

@@ -2908,13 +2908,15 @@ const char *HFAGetIGEFilename(HFAHandle hHFA)
                     const CPLString osExtension =
                         CPLGetExtensionSafe(pszRawFilename);
                     const CPLString osBasename =
-                        CPLGetBasename(hHFA->pszFilename);
-                    osFullFilename =
-                        CPLFormFilename(hHFA->pszPath, osBasename, osExtension);
+                        CPLGetBasenameSafe(hHFA->pszFilename);
+                    osFullFilename = CPLFormFilenameSafe(
+                        hHFA->pszPath, osBasename, osExtension);
 
                     if (VSIStatL(osFullFilename, &sStatBuf) == 0)
-                        hHFA->pszIGEFilename = CPLStrdup(
-                            CPLFormFilename(nullptr, osBasename, osExtension));
+                        hHFA->pszIGEFilename =
+                            CPLStrdup(CPLFormFilenameSafe(nullptr, osBasename,
+                                                          osExtension)
+                                          .c_str());
                     else
                         hHFA->pszIGEFilename = CPLStrdup(pszRawFilename);
                 }

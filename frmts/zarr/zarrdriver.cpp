@@ -1180,8 +1180,8 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
                                     nBandsIn)
             : nullptr);
 
-    const char *pszNonNullArrayName =
-        pszArrayName ? pszArrayName : CPLGetBasename(pszName);
+    const std::string osNonNullArrayName =
+        pszArrayName ? std::string(pszArrayName) : CPLGetBasenameSafe(pszName);
     if (poBandDim)
     {
         const std::vector<std::shared_ptr<GDALDimension>> apoDims(
@@ -1192,8 +1192,8 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
                 : std::vector<std::shared_ptr<GDALDimension>>{
                       poDS->m_poDimY, poDS->m_poDimX, poBandDim});
         poDS->m_poSingleArray = poRG->CreateMDArray(
-            pszNonNullArrayName, apoDims, GDALExtendedDataType::Create(eType),
-            papszOptions);
+            osNonNullArrayName.c_str(), apoDims,
+            GDALExtendedDataType::Create(eType), papszOptions);
         if (!poDS->m_poSingleArray)
         {
             CleanupCreatedFiles();
@@ -1215,7 +1215,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
         for (int i = 0; i < nBandsIn; i++)
         {
             auto poArray = poRG->CreateMDArray(
-                nBandsIn == 1  ? pszNonNullArrayName
+                nBandsIn == 1  ? osNonNullArrayName.c_str()
                 : pszArrayName ? CPLSPrintf("%s_band%d", pszArrayName, i + 1)
                                : CPLSPrintf("Band%d", i + 1),
                 apoDims, GDALExtendedDataType::Create(eType), papszOptions);

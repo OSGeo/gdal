@@ -405,7 +405,7 @@ GDALDataset *RasterliteCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     if (nTokens == 0)
     {
         osDBName = pszFilenameWithoutPrefix;
-        osTableName = CPLGetBasename(pszFilenameWithoutPrefix);
+        osTableName = CPLGetBasenameSafe(pszFilenameWithoutPrefix);
     }
     else
     {
@@ -439,7 +439,7 @@ GDALDataset *RasterliteCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                      "specified");
             return nullptr;
         }
-        osTableName = CPLGetBasename(osDBName.c_str());
+        osTableName = CPLGetBasenameSafe(osDBName.c_str());
     }
 
     CPLString osRasterLayer;

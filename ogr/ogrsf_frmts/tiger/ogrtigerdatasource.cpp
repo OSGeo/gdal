@@ -363,8 +363,9 @@ int OGRTigerDataSource::Open(const char *pszFilename, int bTestOpen,
             size_t nCandidateLen = strlen(candidateFileList[i]);
 
             if (papszLimitedFileList != nullptr &&
-                CSLFindString(papszLimitedFileList,
-                              CPLGetBasename(candidateFileList[i])) == -1)
+                CSLFindString(
+                    papszLimitedFileList,
+                    CPLGetBasenameSafe(candidateFileList[i]).c_str()) == -1)
             {
                 continue;
             }

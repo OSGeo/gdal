@@ -239,10 +239,10 @@ CPLErr ISCEDataset::FlushCache(bool bAtClosing)
     CPLAddXMLAttributeAndValue(psTmpNode, "name", "ACCESS_MODE");
     CPLCreateXMLElementAndValue(psTmpNode, "value", "read");
 
-    const char *pszFilename = CPLGetBasename(pszXMLFilename);
     psTmpNode = CPLCreateXMLNode(psDocNode, CXT_Element, "property");
     CPLAddXMLAttributeAndValue(psTmpNode, "name", "FILE_NAME");
-    CPLCreateXMLElementAndValue(psTmpNode, "value", pszFilename);
+    CPLCreateXMLElementAndValue(psTmpNode, "value",
+                                CPLGetBasenameSafe(pszXMLFilename).c_str());
 
     /* -------------------------------------------------------------------- */
     /*      Then, add the ISCE domain metadata.                             */

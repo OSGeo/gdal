@@ -229,8 +229,9 @@ GDALDataset *OGRTileDBDataset::Open(GDALOpenInfo *poOpenInfo,
     {
         auto poLayer = std::make_unique<OGRTileDBLayer>(
             poDS.get(), osLayerFilename.c_str(),
-            osLayerName.has_value() ? (*osLayerName).c_str()
-                                    : CPLGetBasename(osLayerFilename.c_str()),
+            osLayerName.has_value()
+                ? (*osLayerName).c_str()
+                : CPLGetBasenameSafe(osLayerFilename.c_str()).c_str(),
             wkbUnknown, nullptr);
         poLayer->m_bUpdatable = poOpenInfo->eAccess == GA_Update;
         if (!poLayer->InitFromStorage(poDS->m_ctx.get(), nTimestamp,

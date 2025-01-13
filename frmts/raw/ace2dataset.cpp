@@ -208,7 +208,8 @@ GDALDataset *ACE2Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (!Identify(poOpenInfo))
         return nullptr;
 
-    const char *pszBasename = CPLGetBasename(poOpenInfo->pszFilename);
+    const std::string osBasename = CPLGetBasenameSafe(poOpenInfo->pszFilename);
+    const char *pszBasename = osBasename.c_str();
 
     if (strlen(pszBasename) < 7)
         return nullptr;

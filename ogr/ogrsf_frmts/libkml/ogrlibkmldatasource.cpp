@@ -1289,8 +1289,7 @@ int OGRLIBKMLDataSource::OpenKmz(const char *pszFilename, int bUpdateIn)
                 const std::string osLayerName =
                     poKmlNetworkLink->has_name()
                         ? poKmlNetworkLink->get_name()
-                        : std::string(
-                              CPLGetBasename(oKmlHref.get_path().c_str()));
+                        : CPLGetBasenameSafe(oKmlHref.get_path().c_str());
 
                 AddLayer(osLayerName.c_str(), wkbUnknown, nullptr, this,
                          std::move(poKmlLyrRoot), poKmlLyrContainer,

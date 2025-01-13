@@ -168,15 +168,15 @@ static int GenerateRootKml(const char *filename, const char *kmlfilename,
     }
     int minlodpixels = tilesize / 2;
 
-    const char *tmpfilename = CPLGetBasename(kmlfilename);
-    if (pszOverlayName == nullptr)
-        pszOverlayName = tmpfilename;
+    const std::string osOverlayName = pszOverlayName
+                                          ? std::string(pszOverlayName)
+                                          : CPLGetBasenameSafe(kmlfilename);
 
     // If we have not written any features yet, output the layer's schema.
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(fp, "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
     VSIFPrintfL(fp, "\t<Document>\n");
-    char *pszEncoded = CPLEscapeString(pszOverlayName, -1, CPLES_XML);
+    char *pszEncoded = CPLEscapeString(osOverlayName.c_str(), -1, CPLES_XML);
     VSIFPrintfL(fp, "\t\t<name>%s</name>\n", pszEncoded);
     CPLFree(pszEncoded);
     if (pszOverlayDescription == nullptr)

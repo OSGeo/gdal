@@ -2128,12 +2128,12 @@ bool FileGDBTable::WholeFileRewriter::Begin()
 #endif
                                        ));
 
-    m_osGdbTablx = CPLFormFilename(
-        CPLGetPath(m_oTable.m_osFilename.c_str()),
-        CPLGetBasename(m_oTable.m_osFilename.c_str()), "gdbtablx");
+    m_osGdbTablx = CPLFormFilenameSafe(
+        CPLGetPathSafe(m_oTable.m_osFilename.c_str()).c_str(),
+        CPLGetBasenameSafe(m_oTable.m_osFilename.c_str()).c_str(), "gdbtablx");
 
-    m_osBackupGdbTable =
-        CPLResetExtension(m_oTable.m_osFilename.c_str(), "_backup.gdbtable");
+    m_osBackupGdbTable = CPLResetExtensionSafe(m_oTable.m_osFilename.c_str(),
+                                               "_backup.gdbtable");
     VSIStatBufL sStat;
     if (VSIStatL(m_osBackupGdbTable.c_str(), &sStat) == 0)
     {
@@ -2144,7 +2144,7 @@ bool FileGDBTable::WholeFileRewriter::Begin()
     }
 
     m_osBackupGdbTablx =
-        CPLResetExtension(m_osGdbTablx.c_str(), "_backup.gdbtablx");
+        CPLResetExtensionSafe(m_osGdbTablx.c_str(), "_backup.gdbtablx");
 
     if (m_bModifyInPlace)
     {

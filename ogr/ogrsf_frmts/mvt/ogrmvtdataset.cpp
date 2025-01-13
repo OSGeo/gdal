@@ -1668,8 +1668,9 @@ void OGRMVTDirectoryLayer::OpenTileIfNeeded()
         if (m_bUseReadDir)
         {
             while (m_nYIndex < m_aosSubDirContent.Count() &&
-                   (CPLGetValueType(CPLGetBasename(
-                        m_aosSubDirContent[m_nYIndex])) != CPL_VALUE_INTEGER ||
+                   (CPLGetValueType(
+                        CPLGetBasenameSafe(m_aosSubDirContent[m_nYIndex])
+                            .c_str()) != CPL_VALUE_INTEGER ||
                     !IsBetween(atoi(m_aosSubDirContent[m_nYIndex]),
                                m_nFilterMinY, m_nFilterMaxY)))
             {

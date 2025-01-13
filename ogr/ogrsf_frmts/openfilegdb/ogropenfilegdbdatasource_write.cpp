@@ -1498,7 +1498,7 @@ OGRErr OGROpenFileGDBDataSource::DeleteLayer(int iLayer)
     const std::string osDirname =
         CPLGetPathSafe(poLayer->GetFilename().c_str());
     const std::string osFilenameBase =
-        CPLGetBasename(poLayer->GetFilename().c_str());
+        CPLGetBasenameSafe(poLayer->GetFilename().c_str());
 
     if (m_bInTransaction)
     {
@@ -2504,7 +2504,7 @@ OGRErr OGROpenFileGDBDataSource::RollbackTransaction()
     for (auto poLayer : m_oSetLayersCreatedInTransaction)
     {
         const std::string osThisBasename =
-            CPLGetBasename(poLayer->GetFilename().c_str());
+            CPLGetBasenameSafe(poLayer->GetFilename().c_str());
         poLayer->Close();
 
         char **papszFiles = VSIReadDir(m_osDirName.c_str());

@@ -387,7 +387,7 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
     GDALDataType eResultDatatype = GDT_Unknown;
     CPLString osPartsBasePath(CPLGetPathSafe(poOpenInfo->pszFilename));
     CPLString osPartsPath(osPartsBasePath + "/" +
-                          CPLGetBasename(poOpenInfo->pszFilename));
+                          CPLGetBasenameSafe(poOpenInfo->pszFilename));
     CPLString osPartsExt;
     double adfGeoTrans[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     bool bGeoTransOk = false;

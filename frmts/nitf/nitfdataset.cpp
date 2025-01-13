@@ -1422,23 +1422,24 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     /* -------------------------------------------------------------------- */
 
     // get _rpc.txt file
-    const char *pszDirName = CPLGetDirname(pszFilename);
-    const char *pszBaseName = CPLGetBasename(pszFilename);
-    const char *pszRPCTXTFilename =
-        CPLFormFilename(pszDirName, CPLSPrintf("%s_rpc", pszBaseName), "txt");
-    if (CPLCheckForFile((char *)pszRPCTXTFilename,
-                        poOpenInfo->GetSiblingFiles()))
+    const std::string osDirName = CPLGetDirnameSafe(pszFilename);
+    const std::string osBaseName = CPLGetBasenameSafe(pszFilename);
+    std::string osRPCTXTFilename = CPLFormFilenameSafe(
+        osDirName.c_str(), std::string(osBaseName).append("_rpc").c_str(),
+        "txt");
+    if (CPLCheckForFile(osRPCTXTFilename.data(), poOpenInfo->GetSiblingFiles()))
     {
-        poDS->m_osRPCTXTFilename = pszRPCTXTFilename;
+        poDS->m_osRPCTXTFilename = osRPCTXTFilename;
     }
     else
     {
-        pszRPCTXTFilename = CPLFormFilename(
-            pszDirName, CPLSPrintf("%s_RPC", pszBaseName), "TXT");
-        if (CPLCheckForFile((char *)pszRPCTXTFilename,
+        osRPCTXTFilename = CPLFormFilenameSafe(
+            osDirName.c_str(), std::string(osBaseName).append("_RPC").c_str(),
+            "TXT");
+        if (CPLCheckForFile(osRPCTXTFilename.data(),
                             poOpenInfo->GetSiblingFiles()))
         {
-            poDS->m_osRPCTXTFilename = pszRPCTXTFilename;
+            poDS->m_osRPCTXTFilename = osRPCTXTFilename;
         }
     }
     bool bHasLoadedRPCTXT = false;

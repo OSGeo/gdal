@@ -4169,8 +4169,8 @@ OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
     if (bSameDirectory)
     {
         osFullFilename =
-            CPLFormFilename(CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(),
-                            osBasename.c_str(), pszExt);
+            CPLFormFilenameSafe(CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(),
+                                osBasename.c_str(), pszExt);
         VSIStatBufL sStat;
         if (VSIStatL(osFullFilename, &sStat) == 0)
         {
@@ -4183,9 +4183,9 @@ OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
     }
     else
     {
-        CPLString osDirectory =
-            CPLFormFilename(CPLGetPathSafe(m_osXMLFilename).c_str(),
-                            CPLGetBasename(m_osXMLFilename), nullptr);
+        CPLString osDirectory = CPLFormFilenameSafe(
+            CPLGetPathSafe(m_osXMLFilename).c_str(),
+            CPLGetBasenameSafe(m_osXMLFilename).c_str(), nullptr);
         VSIStatBufL sStat;
         if (VSIStatL(osDirectory, &sStat) != 0 &&
             VSIMkdir(osDirectory, 0755) != 0)
@@ -4195,7 +4195,7 @@ OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
             return nullptr;
         }
         osFullFilename =
-            CPLFormFilename(osDirectory, osBasename.c_str(), pszExt);
+            CPLFormFilenameSafe(osDirectory, osBasename.c_str(), pszExt);
     }
 
     if (EQUAL(pszTableType, "DELIMITED"))

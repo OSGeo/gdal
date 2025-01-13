@@ -142,7 +142,7 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
     SetMetadataItem("SOURCE_ENCODING", osEncoding, "SHAPEFILE");
 
     poFeatureDefn = SHPReadOGRFeatureDefn(
-        CPLGetBasename(pszFullName), hSHP, hDBF, osEncoding,
+        CPLGetBasenameSafe(pszFullName).c_str(), hSHP, hDBF, osEncoding,
         CPLFetchBool(poDS->GetOpenOptions(), "ADJUST_TYPE", false));
 
     // To make sure that
@@ -2849,9 +2849,9 @@ OGRErr OGRShapeLayer::Repack()
     while (papszCandidates != nullptr && papszCandidates[i] != nullptr)
     {
         const CPLString osCandidateBasename =
-            CPLGetBasename(papszCandidates[i]);
+            CPLGetBasenameSafe(papszCandidates[i]);
         const CPLString osCandidateExtension =
-            CPLGetExtension(papszCandidates[i]);
+            CPLGetExtensionSafe(papszCandidates[i]);
 #ifdef _WIN32
         // On Windows, as filenames are case insensitive, a shapefile layer can
         // be made of foo.shp and FOO.DBF, so use case insensitive comparison.

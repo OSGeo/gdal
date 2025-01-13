@@ -789,13 +789,13 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
     {
         if (pszUnprefixedFilename != poOpenInfo->pszFilename)
         {
-            osLayerName = CPLGetBasename(pszUnprefixedFilename);
+            osLayerName = CPLGetBasenameSafe(pszUnprefixedFilename);
             m_fp = VSIFOpenL(pszUnprefixedFilename,
                              poOpenInfo->eAccess == GA_Update ? "rb+" : "rb");
         }
         else
         {
-            osLayerName = CPLGetBasename(poOpenInfo->pszFilename);
+            osLayerName = CPLGetBasenameSafe(poOpenInfo->pszFilename);
             std::swap(m_fp, poOpenInfo->fpL);
         }
     }

@@ -901,7 +901,7 @@ static bool IsGdalinfoInteractive()
             osPath.resize(1024);
             if (CPLGetExecPath(&osPath[0], static_cast<int>(osPath.size())))
             {
-                osPath = CPLGetBasename(osPath.c_str());
+                osPath = CPLGetBasenameSafe(osPath.c_str());
             }
             return osPath == "gdalinfo";
         }
