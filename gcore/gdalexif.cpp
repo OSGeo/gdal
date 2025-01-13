@@ -974,23 +974,32 @@ static GByte *ParseUndefined(const char *pszVal, GUInt32 *pnLength)
 }
 
 /************************************************************************/
-/*                           EXIFTagSort()                              */
+/*                             TagValue                                 */
 /************************************************************************/
 
 struct TagValue
 {
-    GUInt16 tag;
-    GDALEXIFTIFFDataType datatype;
-    GByte *pabyVal;
-    GUInt32 nLength;
-    GUInt32 nLengthBytes;
-    int nRelOffset;
-};
+    GUInt16 tag = 0;
+    GDALEXIFTIFFDataType datatype = TIFF_NOTYPE;
+    std::unique_ptr<GByte, VSIFreeReleaser> pabyVal{};
+    GUInt32 nLength = 0;
+    GUInt32 nLengthBytes = 0;
+    int nRelOffset = 0;
 
-static bool EXIFTagSort(const TagValue &a, const TagValue &b)
-{
-    return a.tag <= b.tag;
-}
+    TagValue() = default;
+
+    TagValue(TagValue &&) = default;
+    TagValue &operator=(TagValue &&) = default;
+
+    bool operator<(const TagValue &other) const
+    {
+        return tag < other.tag;
+    }
+
+  private:
+    TagValue(const TagValue &) = delete;
+    TagValue &operator=(const TagValue &) = delete;
+};
 
 /************************************************************************/
 /*                        GetNumDenomFromDouble()                       */
@@ -1149,9 +1158,6 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
             TagValue tag;
             tag.tag = tagdescArray[i].tag;
             tag.datatype = tagdescArray[i].datatype;
-            tag.pabyVal = nullptr;
-            tag.nLength = 0;
-            tag.nLengthBytes = 0;
             tag.nRelOffset = -1;
 
             if (tag.datatype == TIFF_ASCII)
@@ -1159,8 +1165,8 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                 if (tagdescArray[i].length == 0 ||
                     strlen(pszValue) + 1 == tagdescArray[i].length)
                 {
-                    tag.pabyVal =
-                        reinterpret_cast<GByte *>(CPLStrdup(pszValue));
+                    tag.pabyVal.reset(
+                        reinterpret_cast<GByte *>(CPLStrdup(pszValue)));
                     tag.nLength = 1 + static_cast<int>(strlen(pszValue));
                 }
                 else if (strlen(pszValue) >= tagdescArray[i].length)
@@ -1168,20 +1174,20 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Value of %s will be truncated",
                              tagdescArray[i].name);
-                    tag.pabyVal = reinterpret_cast<GByte *>(
-                        CPLMalloc(tagdescArray[i].length));
-                    memcpy(tag.pabyVal, pszValue, tagdescArray[i].length);
+                    tag.pabyVal.reset(reinterpret_cast<GByte *>(
+                        CPLMalloc(tagdescArray[i].length)));
+                    memcpy(tag.pabyVal.get(), pszValue, tagdescArray[i].length);
                     tag.nLength = tagdescArray[i].length;
-                    tag.pabyVal[tag.nLength - 1] = '\0';
+                    (tag.pabyVal.get())[tag.nLength - 1] = '\0';
                 }
                 else
                 {
-                    tag.pabyVal = reinterpret_cast<GByte *>(
-                        CPLMalloc(tagdescArray[i].length));
-                    memset(tag.pabyVal, ' ', tagdescArray[i].length);
-                    memcpy(tag.pabyVal, pszValue, strlen(pszValue));
+                    tag.pabyVal.reset(reinterpret_cast<GByte *>(
+                        CPLMalloc(tagdescArray[i].length)));
+                    memset(tag.pabyVal.get(), ' ', tagdescArray[i].length);
+                    memcpy(tag.pabyVal.get(), pszValue, strlen(pszValue));
                     tag.nLength = tagdescArray[i].length;
-                    tag.pabyVal[tag.nLength - 1] = '\0';
+                    (tag.pabyVal.get())[tag.nLength - 1] = '\0';
                 }
                 tag.nLengthBytes = tag.nLength;
             }
@@ -1189,7 +1195,8 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                      tag.datatype == TIFF_UNDEFINED)
             {
                 GUInt32 nValLength = 0;
-                GByte *pabyVal = ParseUndefined(pszValue, &nValLength);
+                std::unique_ptr<GByte, VSIFreeReleaser> pabyVal(
+                    ParseUndefined(pszValue, &nValLength));
                 if (tagdescArray[i].length == 0 ||
                     nValLength == tagdescArray[i].length)
                 {
@@ -1197,20 +1204,19 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                         strncmp(pszValue, "0x", 2) != 0)  // EXIF_UserComment
                     {
                         const char *pszRealVal =
-                            reinterpret_cast<char *>(pabyVal);
+                            reinterpret_cast<const char *>(pabyVal.get());
                         const int nValueLen =
                             static_cast<int>(strlen(pszRealVal));
                         // 8 first bytes are the character code
                         // Set them to 0 to mean undefined
-                        tag.pabyVal =
-                            static_cast<GByte *>(CPLCalloc(1, 8 + nValueLen));
+                        tag.pabyVal.reset(
+                            static_cast<GByte *>(CPLCalloc(1, 8 + nValueLen)));
                         tag.nLength = 8 + nValueLen;
-                        memcpy(tag.pabyVal + 8, pszRealVal, nValueLen);
-                        CPLFree(pabyVal);
+                        memcpy(tag.pabyVal.get() + 8, pszRealVal, nValueLen);
                     }
                     else
                     {
-                        tag.pabyVal = pabyVal;
+                        tag.pabyVal = std::move(pabyVal);
                         tag.nLength = nValLength;
                     }
                 }
@@ -1219,14 +1225,14 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Value of %s will be truncated",
                              tagdescArray[i].name);
-                    tag.pabyVal = pabyVal;
+                    tag.pabyVal = std::move(pabyVal);
                     tag.nLength = tagdescArray[i].length;
                 }
                 else
                 {
-                    tag.pabyVal = reinterpret_cast<GByte *>(
-                        CPLRealloc(pabyVal, tagdescArray[i].length));
-                    memset(tag.pabyVal + nValLength, '\0',
+                    tag.pabyVal.reset(reinterpret_cast<GByte *>(
+                        CPLRealloc(pabyVal.release(), tagdescArray[i].length)));
+                    memset(tag.pabyVal.get() + nValLength, '\0',
                            tagdescArray[i].length - nValLength);
                     tag.nLength = tagdescArray[i].length;
                 }
@@ -1260,18 +1266,18 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                 tag.nLength = (tagdescArray[i].length == 0)
                                   ? nTokens
                                   : tagdescArray[i].length;
-                tag.pabyVal = reinterpret_cast<GByte *>(CPLCalloc(
-                    1, cpl::fits_on<int>(nDataTypeSize * tag.nLength)));
+                tag.pabyVal.reset(reinterpret_cast<GByte *>(CPLCalloc(
+                    1, cpl::fits_on<int>(nDataTypeSize * tag.nLength))));
 
                 GUInt32 nOffset = 0;
                 for (GUInt32 j = 0; j < std::min(nTokens, tag.nLength); j++)
                 {
                     GUInt32 nVal = atoi(papszTokens[j]);
                     if (tag.datatype == TIFF_SHORT)
-                        WriteLEUInt16(tag.pabyVal, nOffset,
+                        WriteLEUInt16(tag.pabyVal.get(), nOffset,
                                       static_cast<GUInt16>(nVal));
                     else
-                        WriteLEUInt32(tag.pabyVal, nOffset, nVal);
+                        WriteLEUInt32(tag.pabyVal.get(), nOffset, nVal);
                 }
                 CSLDestroy(papszTokens);
 
@@ -1305,8 +1311,8 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                 tag.nLength = (tagdescArray[i].length == 0)
                                   ? nTokens
                                   : tagdescArray[i].length;
-                tag.pabyVal = reinterpret_cast<GByte *>(
-                    CPLCalloc(1, nDataTypeSize * tag.nLength));
+                tag.pabyVal.reset(reinterpret_cast<GByte *>(
+                    CPLCalloc(1, nDataTypeSize * tag.nLength)));
 
                 GUInt32 nOffset = 0;
                 for (GUInt32 j = 0; j < std::min(nTokens, tag.nLength); j++)
@@ -1324,8 +1330,8 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                                  tagdescArray[i].name);
                     }
 
-                    WriteLEUInt32(tag.pabyVal, nOffset, nNum);
-                    WriteLEUInt32(tag.pabyVal, nOffset, nDenom);
+                    WriteLEUInt32(tag.pabyVal.get(), nOffset, nNum);
+                    WriteLEUInt32(tag.pabyVal.get(), nOffset, nDenom);
                 }
                 CSLDestroy(papszTokens);
 
@@ -1346,14 +1352,14 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                     tag.nRelOffset = nRelOffset;
                     nRelOffset += tag.nLengthBytes + (tag.nLengthBytes % 1);
                 }
-                tags.push_back(tag);
+                tags.push_back(std::move(tag));
             }
         }
         CPLFree(pszKey);
     }
 
     // Sort tags by ascending order
-    std::sort(tags.begin(), tags.end(), EXIFTagSort);
+    std::sort(tags.begin(), tags.end());
 
 #ifdef notdef
     if (location == EXIF_IFD &&
@@ -1363,11 +1369,11 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
         TagValue tag;
         tag.tag = EXIF_VERSION;
         tag.datatype = TIFF_UNDEFINED;
-        tag.pabyVal = reinterpret_cast<GByte *>(CPLStrdup("0231"));
+        tag.pabyVal.reset(reinterpret_cast<GByte *>(CPLStrdup("0231")));
         tag.nLength = 4;
         tag.nLengthBytes = 4;
         tag.nRelOffset = -1;
-        tags.push_back(tag);
+        tags.push_back(std::move(tag));
     }
 #endif
 
@@ -1404,27 +1410,15 @@ static void WriteTags(GByte *pabyData, GUInt32 &nBufferOff,
         if (tag.nRelOffset < 0)
         {
             CPLAssert(tag.nLengthBytes <= 4);
-            memcpy(pabyData + nBufferOff, tag.pabyVal, tag.nLengthBytes);
+            memcpy(pabyData + nBufferOff, tag.pabyVal.get(), tag.nLengthBytes);
             nBufferOff += 4;
         }
         else
         {
             WriteLEUInt32(pabyData, nBufferOff, tag.nRelOffset + offsetIFDData);
             memcpy(pabyData + EXIF_HEADER_SIZE + tag.nRelOffset + offsetIFDData,
-                   tag.pabyVal, tag.nLengthBytes);
+                   tag.pabyVal.get(), tag.nLengthBytes);
         }
-    }
-}
-
-/************************************************************************/
-/*                            FreeTags()                                */
-/************************************************************************/
-
-static void FreeTags(std::vector<TagValue> &tags)
-{
-    for (auto &tag : tags)
-    {
-        CPLFree(tag.pabyVal);
     }
 }
 
@@ -1516,9 +1510,6 @@ GByte *EXIFCreate(char **papszEXIFMetadata, GByte *pabyThumbnail,
     }
     if (pabyData == nullptr)
     {
-        FreeTags(mainTags);
-        FreeTags(exifTags);
-        FreeTags(gpsTags);
         return nullptr;
     }
 
@@ -1639,10 +1630,6 @@ GByte *EXIFCreate(char **papszEXIFMetadata, GByte *pabyThumbnail,
     CPLAssert(nBufferOff + nThumbnailSize == nBufferSize);
     if (pabyThumbnail != nullptr && nThumbnailSize)
         memcpy(pabyData + nBufferOff, pabyThumbnail, nThumbnailSize);
-
-    FreeTags(mainTags);
-    FreeTags(exifTags);
-    FreeTags(gpsTags);
 
     *pnOutBufferSize = nBufferSize;
     return pabyData;

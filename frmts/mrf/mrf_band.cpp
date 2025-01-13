@@ -208,7 +208,10 @@ static int ZPack(const buf_mgr &src, buf_mgr &dst, int flags)
 
     err = deflateInit2(&stream, level, Z_DEFLATED, wb, memlevel, strategy);
     if (err != Z_OK)
+    {
+        deflateEnd(&stream);
         return err;
+    }
 
     err = deflate(&stream, Z_FINISH);
     if (err != Z_STREAM_END)

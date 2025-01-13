@@ -1277,7 +1277,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     const bool bOutsizeExplicitlySet =
         !(psOptions->nOXSizePixel == 0 && psOptions->dfOXSizePct == 0.0 &&
           psOptions->nOYSizePixel == 0 && psOptions->dfOYSizePct == 0.0);
-    if (psOptions->dfXRes != 0.0)
+    if (psOptions->dfXRes != 0.0 && psOptions->dfYRes != 0.0)
     {
         if (!(bHasSrcGeoTransform && psOptions->nGCPCount == 0 &&
               adfSrcGeoTransform[2] == 0.0 && adfSrcGeoTransform[4] == 0.0))

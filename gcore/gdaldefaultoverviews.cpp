@@ -830,9 +830,16 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
         0, (HaveMaskFile() && poMaskDS) ? double(nBands) / (nBands + 1) : 1,
         pfnProgress, pProgressData);
 
+    const auto AvoidZero = [](double x)
+    {
+        if (x == 0)
+            return 1.0;
+        return x;
+    };
+
     void *pScaledProgress = GDALCreateScaledProgress(
-        0, dfAreaNewOverviews / dfAreaRefreshedOverviews, GDALScaledProgress,
-        pScaledOverviewWithoutMask);
+        0, dfAreaNewOverviews / AvoidZero(dfAreaRefreshedOverviews),
+        GDALScaledProgress, pScaledOverviewWithoutMask);
     if (bOvrIsAux)
     {
 #ifdef NO_HFA_SUPPORT
@@ -973,7 +980,7 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
         if (nNewOverviews > 0)
         {
             const double dfOffset =
-                dfAreaNewOverviews / dfAreaRefreshedOverviews;
+                dfAreaNewOverviews / AvoidZero(dfAreaRefreshedOverviews);
             const double dfScale = 1.0 - dfOffset;
             pScaledProgress = GDALCreateScaledProgress(
                 dfOffset + dfScale * iBand / nBands,

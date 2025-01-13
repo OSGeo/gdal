@@ -1093,7 +1093,13 @@ static OGRErr GetPosition(OGRLayer *const poPkLayer, double dfX, double dfY,
     // Get real distance
     const double dfRealDist = Project(pCloserPart, &pt);
     delete pCloserPart;
+    if (dfScale == 0)
+    {
+        fprintf(stderr, _("dfScale == 0.\n"));
+        return OGRERR_FAILURE;
+    }
     // Compute reference distance
+    // coverity[divide_by_zero]
     const double dfRefDist = dfBeg + dfRealDist / dfScale;
     if (bQuiet)
     {

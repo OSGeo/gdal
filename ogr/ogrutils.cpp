@@ -2176,12 +2176,15 @@ OGRErr OGRReadWKBGeometryType(const unsigned char *pabyData,
             iRawType = wkbMultiSurface;
     }
 
+    // Below additions cannot occur due to clearing higher bits previously
     if (bIs3D)
     {
+        // coverity[overflow_const]
         iRawType += 1000;
     }
     if (bIsMeasured)
     {
+        // coverity[overflow_const]
         iRawType += 2000;
     }
 

@@ -4383,7 +4383,9 @@ static void GWKComputeWeights(GDALResampleAlg eResample, int iMin, int iMax,
 
     int i = iMin;  // Used after for.
     int iC = 0;    // Used after for.
-    double dfAccumulatorWeightHorizontal = 0.0;
+    // Not zero, but as close as possible to it, to avoid potential division by
+    // zero at end of function
+    double dfAccumulatorWeightHorizontal = std::numeric_limits<double>::min();
     for (; i + 2 < iMax; i += 4, iC += 4)
     {
         padfWeightsHorizontal[iC] = (i - dfDeltaX) * dfXScale;
@@ -4404,7 +4406,9 @@ static void GWKComputeWeights(GDALResampleAlg eResample, int iMin, int iMax,
 
     int j = jMin;  // Used after for.
     int jC = 0;    // Used after for.
-    double dfAccumulatorWeightVertical = 0.0;
+    // Not zero, but as close as possible to it, to avoid potential division by
+    // zero at end of function
+    double dfAccumulatorWeightVertical = std::numeric_limits<double>::min();
     for (; j + 2 < jMax; j += 4, jC += 4)
     {
         padfWeightsVertical[jC] = (j - dfDeltaY) * dfYScale;

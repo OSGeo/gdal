@@ -412,7 +412,7 @@ GXFHandle GXFOpen(const char *pszFilename)
 void GXFClose(GXFHandle hGXF)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
 
     CPLFree(psGXF->panRawLineOffset);
     CPLFree(psGXF->pszUnitName);
@@ -633,7 +633,7 @@ static CPLErr GXFReadRawScanlineFrom(GXFInfo_t *psGXF, vsi_l_offset iOffset,
 CPLErr GXFGetScanline(GXFHandle hGXF, int iScanline, double *padfLineBuf)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
     CPLErr nErr;
     int iRawScanline;
 
@@ -698,7 +698,7 @@ CPLErr GXFGetScanline(GXFHandle hGXF, int iScanline, double *padfLineBuf)
 CPLErr GXFGetRawScanline(GXFHandle hGXF, int iScanline, double *padfLineBuf)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
     CPLErr eErr;
 
     /* -------------------------------------------------------------------- */
@@ -754,7 +754,7 @@ CPLErr GXFGetRawScanline(GXFHandle hGXF, int iScanline, double *padfLineBuf)
 static void GXFScanForZMinMax(GXFHandle hGXF)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
     int iLine, iPixel;
     double *padfScanline;
 
@@ -841,7 +841,7 @@ CPLErr GXFGetRawInfo(GXFHandle hGXF, int *pnXSize, int *pnYSize, int *pnSense,
                      double *pdfZMin, double *pdfZMax, double *pdfDummy)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
 
     if (pnXSize != NULL)
         *pnXSize = psGXF->nRawXSize;
@@ -889,7 +889,7 @@ CPLErr GXFGetRawInfo(GXFHandle hGXF, int *pnXSize, int *pnYSize, int *pnSense,
 char **GXFGetMapProjection(GXFHandle hGXF)
 
 {
-    return (((GXFInfo_t *)hGXF)->papszMapProjection);
+    return ((hGXF)->papszMapProjection);
 }
 
 /************************************************************************/
@@ -911,7 +911,7 @@ char **GXFGetMapProjection(GXFHandle hGXF)
 char **GXFGetMapDatumTransform(GXFHandle hGXF)
 
 {
-    return (((GXFInfo_t *)hGXF)->papszMapDatumTransform);
+    return ((hGXF)->papszMapDatumTransform);
 }
 
 /************************************************************************/
@@ -948,7 +948,7 @@ CPLErr GXFGetRawPosition(GXFHandle hGXF, double *pdfXOrigin, double *pdfYOrigin,
                          double *pdfRotation)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
 
     if (pdfXOrigin != NULL)
         *pdfXOrigin = psGXF->dfXOrigin;
@@ -1004,7 +1004,7 @@ CPLErr GXFGetPosition(GXFHandle hGXF, double *pdfXOrigin, double *pdfYOrigin,
                       double *pdfRotation)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
     double dfCXOrigin, dfCYOrigin, dfCXPixelSize, dfCYPixelSize;
 
     switch (psGXF->nSense)
