@@ -37,36 +37,9 @@ static GDALDataset *OGROpenFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
     const char *pszFilename = poOpenInfo->pszFilename;
-#ifdef FOR_FUSIL
-    CPLString osOrigFilename(pszFilename);
-#endif
     if (OGROpenFileGDBDriverIdentify(poOpenInfo, pszFilename) ==
         GDAL_IDENTIFY_FALSE)
         return nullptr;
-
-#ifdef FOR_FUSIL
-    const char *pszSrcDir = CPLGetConfigOption("FUSIL_SRC_DIR", NULL);
-    if (pszSrcDir != NULL && VSIStatL(osOrigFilename, &stat) == 0 &&
-        VSI_ISREG(stat.st_mode))
-    {
-        /* Copy all files from FUSIL_SRC_DIR to directory of pszFilename */
-        /* except pszFilename itself */
-        CPLString osSave(pszFilename);
-        char **papszFiles = VSIReadDir(pszSrcDir);
-        for (int i = 0; papszFiles[i] != NULL; i++)
-        {
-            if (strcmp(papszFiles[i], CPLGetFilename(osOrigFilename)) != 0)
-            {
-                CPLCopyFile(
-                    CPLFormFilename(CPLGetPathSafe(osOrigFilename).c_str(),
-                                    papszFiles[i], NULL),
-                    CPLFormFilename(pszSrcDir, papszFiles[i], NULL));
-            }
-        }
-        CSLDestroy(papszFiles);
-        pszFilename = CPLFormFilename("", osSave.c_str(), NULL);
-    }
-#endif
 
 #ifdef DEBUG
     /* For AFL, so that .cur_input is detected as the archive filename */

@@ -27,11 +27,6 @@ GDALIdentifyEnum OGROpenFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo,
     if (STARTS_WITH(pszFilename, "OpenFileGDB:"))
         return GDAL_IDENTIFY_TRUE;
 
-        // FUSIL is a fuzzer
-#ifdef FOR_FUSIL
-    CPLString osOrigFilename(pszFilename);
-#endif
-
     // First check if we have to do any work.
     size_t nLen = strlen(pszFilename);
     if (ENDS_WITH(pszFilename, nLen, ".gdb") ||
@@ -104,27 +99,6 @@ GDALIdentifyEnum OGROpenFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo,
     {
         return GDAL_IDENTIFY_TRUE;
     }
-#ifdef FOR_FUSIL
-    /* To be able to test fuzzer on any auxiliary files used (indexes, etc.) */
-    else if (CPLGetBasenameSafe(pszFilename).size() == 9 &&
-             CPLGetBasenameSafe(pszFilename)[0] == 'a')
-    {
-        pszFilename = CPLFormFilename(CPLGetPathSafe(pszFilename).c_str(),
-                                      CPLGetBasenameSafe(pszFilename).c_str(),
-                                      "gdbtable");
-        return GDAL_IDENTIFY_TRUE;
-    }
-    else if (strlen(CPLGetBasenameSafe(CPLGetBasename(pszFilename)).c_str()) ==
-                 9 &&
-             CPLGetBasename(CPLGetBasenameSafe(pszFilename).c_str())[0] == 'a')
-    {
-        pszFilename = CPLFormFilename(
-            CPLGetPathSafe(pszFilename).c_str(),
-            CPLGetBasename(CPLGetBasenameSafe(pszFilename).c_str()),
-            "gdbtable");
-        return GDAL_IDENTIFY_TRUE;
-    }
-#endif
 
 #ifdef DEBUG
     /* For AFL, so that .cur_input is detected as the archive filename */
