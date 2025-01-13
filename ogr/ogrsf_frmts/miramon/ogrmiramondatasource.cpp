@@ -157,7 +157,7 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 
         // Checking that the folder where to write exists
         const std::string osDestFolder =
-            CPLGetDirname(osFullMMLayerName.c_str());
+            CPLGetDirnameSafe(osFullMMLayerName.c_str());
         if (!STARTS_WITH(osDestFolder.c_str(), "/vsimem"))
         {
             VSIStatBufL sStat;

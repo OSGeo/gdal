@@ -85,9 +85,9 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
             {
                 // If opening a NCZarr array, initialize its group from NCZarr
                 // metadata.
-                const std::string osGroupFilename(CPLFormFilename(
-                    CPLGetDirname(m_osRootDirectoryName.c_str()), ".zgroup",
-                    nullptr));
+                const std::string osGroupFilename(CPLFormFilenameSafe(
+                    CPLGetDirnameSafe(m_osRootDirectoryName.c_str()).c_str(),
+                    ".zgroup", nullptr));
                 if (VSIStatL(osGroupFilename.c_str(), &sStat) == 0)
                 {
                     CPLJSONDocument oDocGroup;

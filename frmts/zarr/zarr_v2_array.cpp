@@ -127,8 +127,9 @@ void ZarrV2Array::Flush()
 
         CPLJSONDocument oDoc;
         oDoc.SetRoot(oAttrs);
-        const std::string osAttrFilename = CPLFormFilename(
-            CPLGetDirname(m_osFilename.c_str()), ".zattrs", nullptr);
+        const std::string osAttrFilename =
+            CPLFormFilenameSafe(CPLGetDirnameSafe(m_osFilename.c_str()).c_str(),
+                                ".zattrs", nullptr);
         oDoc.Save(osAttrFilename);
         m_poSharedResource->SetZMetadataItem(osAttrFilename, oAttrs);
     }
@@ -987,8 +988,8 @@ std::string ZarrV2Array::BuildTileFilename(const uint64_t *tileIndices) const
         }
     }
 
-    return CPLFormFilename(CPLGetDirnameSafe(m_osFilename.c_str()).c_str(),
-                           osFilename.c_str(), nullptr);
+    return CPLFormFilenameSafe(CPLGetDirnameSafe(m_osFilename.c_str()).c_str(),
+                               osFilename.c_str(), nullptr);
 }
 
 /************************************************************************/
@@ -997,7 +998,7 @@ std::string ZarrV2Array::BuildTileFilename(const uint64_t *tileIndices) const
 
 std::string ZarrV2Array::GetDataDirectory() const
 {
-    return std::string(CPLGetDirnameSafe(m_osFilename.c_str()));
+    return CPLGetDirnameSafe(m_osFilename.c_str());
 }
 
 /************************************************************************/
@@ -1328,8 +1329,9 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
     if (!bLoadedFromZMetadata)
     {
         CPLJSONDocument oDoc;
-        const std::string osZattrsFilename(CPLFormFilename(
-            CPLGetDirname(osZarrayFilename.c_str()), ".zattrs", nullptr));
+        const std::string osZattrsFilename(CPLFormFilenameSafe(
+            CPLGetDirnameSafe(osZarrayFilename.c_str()).c_str(), ".zattrs",
+            nullptr));
         CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         if (oDoc.Load(osZattrsFilename))
         {

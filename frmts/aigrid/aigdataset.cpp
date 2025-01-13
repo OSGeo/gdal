@@ -533,7 +533,7 @@ GDALDataset *AIGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (osCoverName.size() > 4 &&
         EQUAL(osCoverName.c_str() + osCoverName.size() - 4, ".adf"))
     {
-        osCoverName = CPLGetDirname(poOpenInfo->pszFilename);
+        osCoverName = CPLGetDirnameSafe(poOpenInfo->pszFilename);
         if (osCoverName == "")
             osCoverName = ".";
     }

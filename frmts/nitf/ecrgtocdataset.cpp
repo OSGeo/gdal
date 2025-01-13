@@ -471,7 +471,7 @@ bool ECRGTOCSource::ValidateOpenedBand(GDALRasterBand *poBand) const
 /*                           BuildFullName()                            */
 /************************************************************************/
 
-static const char *BuildFullName(const char *pszTOCFilename,
+static std::string BuildFullName(const char *pszTOCFilename,
                                  const char *pszFramePath,
                                  const char *pszFrameName)
 {
@@ -486,24 +486,25 @@ static const char *BuildFullName(const char *pszTOCFilename,
         if (pszPath[i] == '\\')
             pszPath[i] = '/';
     }
-    const char *pszName = CPLFormFilename(pszPath, pszFrameName, nullptr);
+    const std::string osName =
+        CPLFormFilenameSafe(pszPath, pszFrameName, nullptr);
     CPLFree(pszPath);
     pszPath = nullptr;
-    const char *pszTOCPath = CPLGetDirname(pszTOCFilename);
-    const char *pszFirstSlashInName = strchr(pszName, '/');
-    if (pszFirstSlashInName != nullptr)
+    std::string osTOCPath = CPLGetDirnameSafe(pszTOCFilename);
+    const auto nPosFirstSlashInName = osName.find('/');
+    if (nPosFirstSlashInName != std::string::npos)
     {
-        int nFirstDirLen = static_cast<int>(pszFirstSlashInName - pszName);
-        if (static_cast<int>(strlen(pszTOCPath)) >= nFirstDirLen + 1 &&
-            (pszTOCPath[strlen(pszTOCPath) - (nFirstDirLen + 1)] == '/' ||
-             pszTOCPath[strlen(pszTOCPath) - (nFirstDirLen + 1)] == '\\') &&
-            strncmp(pszTOCPath + strlen(pszTOCPath) - nFirstDirLen, pszName,
-                    nFirstDirLen) == 0)
+        if (osTOCPath.size() >= nPosFirstSlashInName + 1 &&
+            (osTOCPath[osTOCPath.size() - (nPosFirstSlashInName + 1)] == '/' ||
+             osTOCPath[osTOCPath.size() - (nPosFirstSlashInName + 1)] ==
+                 '\\') &&
+            strncmp(osTOCPath.c_str() + osTOCPath.size() - nPosFirstSlashInName,
+                    osName.c_str(), nPosFirstSlashInName) == 0)
         {
-            pszTOCPath = CPLGetDirname(pszTOCPath);
+            osTOCPath = CPLGetDirnameSafe(osTOCPath.c_str());
         }
     }
-    return CPLProjectRelativeFilename(pszTOCPath, pszName);
+    return CPLProjectRelativeFilenameSafe(osTOCPath.c_str(), osName.c_str());
 }
 
 /************************************************************************/
@@ -571,7 +572,7 @@ GDALDataset *ECRGTOCSubDataset::Build(
 
     for (int i = 0; i < static_cast<int>(aosFrameDesc.size()); i++)
     {
-        const char *pszName = BuildFullName(
+        const std::string osName = BuildFullName(
             pszTOCFilename, aosFrameDesc[i].pszPath, aosFrameDesc[i].pszName);
 
         double dfMinX = 0.0;
@@ -590,7 +591,7 @@ GDALDataset *ECRGTOCSubDataset::Build(
             static_cast<int>((dfMaxY - dfMinY) / dfPixelYSize + 0.5);
 
         poVirtualDS->papszFileList =
-            CSLAddString(poVirtualDS->papszFileList, pszName);
+            CSLAddString(poVirtualDS->papszFileList, osName.c_str());
 
         for (int j = 0; j < 3; j++)
         {
@@ -599,7 +600,7 @@ GDALDataset *ECRGTOCSubDataset::Build(
                     poVirtualDS->GetRasterBand(j + 1));
             /* Place the raster band at the right position in the VRT */
             auto poSource = new ECRGTOCSource(
-                pszName, j + 1, nFrameXSize, nFrameYSize,
+                osName.c_str(), j + 1, nFrameXSize, nFrameYSize,
                 static_cast<int>((dfMinX - dfGlobalMinX) / dfGlobalPixelXSize +
                                  0.5),
                 static_cast<int>((dfGlobalMaxY - dfMaxY) / dfGlobalPixelYSize +
@@ -849,10 +850,10 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
 
                     nValidFrames++;
 
-                    const char *pszFullName = BuildFullName(
+                    const std::string osFullName = BuildFullName(
                         pszTOCFilename, pszFramePath, pszFrameName);
                     poDS->papszFileList =
-                        CSLAddString(poDS->papszFileList, pszFullName);
+                        CSLAddString(poDS->papszFileList, osFullName.c_str());
 
                     if (!bGlobalExtentValid)
                     {

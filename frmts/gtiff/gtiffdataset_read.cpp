@@ -5770,12 +5770,12 @@ CSLConstList GTiffDataset::GetSiblingFiles()
     m_bHasGotSiblingFiles = true;
     const int nMaxFiles =
         atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
-    CPLStringList aosSiblingFiles(
-        VSIReadDirEx(CPLGetDirnameSafe(m_pszFilename).c_str(), nMaxFiles));
+    const std::string osDirname = CPLGetDirnameSafe(m_pszFilename);
+    CPLStringList aosSiblingFiles(VSIReadDirEx(osDirname.c_str(), nMaxFiles));
     if (nMaxFiles > 0 && aosSiblingFiles.size() > nMaxFiles)
     {
         CPLDebug("GTiff", "GDAL_READDIR_LIMIT_ON_OPEN reached on %s",
-                 CPLGetDirname(m_pszFilename));
+                 osDirname.c_str());
         aosSiblingFiles.clear();
     }
     oOvManager.TransferSiblingFiles(aosSiblingFiles.StealList());

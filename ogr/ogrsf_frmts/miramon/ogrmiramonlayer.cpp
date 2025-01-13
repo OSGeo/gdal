@@ -3001,36 +3001,51 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
         CPLStrlcpy(szAuxFile, osBaseArcName.c_str(), MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "A.rel" : "A.REL",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(szCompleteArcFileName).c_str(), szAuxFile,
+                nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + A.dbf
         CPLStrlcpy(szAuxFile, osBaseArcName.c_str(), MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "A.dbf" : "A.DBF",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(szCompleteArcFileName).c_str(), szAuxFile,
+                nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + .nod
         CPLStrlcpy(szAuxFile, osBaseArcName.c_str(), MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? ".nod" : ".NOD",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(szCompleteArcFileName).c_str(), szAuxFile,
+                nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + N.rel
         CPLStrlcpy(szAuxFile, osBaseArcName.c_str(), MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "N.rel" : "N.REL",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(szCompleteArcFileName).c_str(), szAuxFile,
+                nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + N.dbf
         CPLStrlcpy(szAuxFile, osBaseArcName.c_str(), MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "N.dbf" : "N.DBF",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(szCompleteArcFileName).c_str(), szAuxFile,
+                nullptr)
+                .c_str()));
     }
     CPLFree(pszMMExt);
 }

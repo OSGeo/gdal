@@ -579,15 +579,16 @@ GDALDataset *PALSARJaxaDataset::Open(GDALOpenInfo *poOpenInfo)
 
     /* Try to read each of the polarizations */
     const size_t nImgFileLen =
-        strlen(CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str()) +
-        strlen(pszSuffix) + 8;
+        CPLGetDirnameSafe(poOpenInfo->pszFilename).size() + strlen(pszSuffix) +
+        8;
     char *pszImgFile = (char *)CPLMalloc(nImgFileLen);
 
     int nBandNum = 1;
 
     /* HH */
     snprintf(pszImgFile, nImgFileLen, "%s%sIMG-HH%s",
-             CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix);
+             CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str(), SEP_STRING,
+             pszSuffix);
     VSILFILE *fpHH = VSIFOpenL(pszImgFile, "rb");
     if (fpHH != nullptr)
     {
@@ -597,7 +598,8 @@ GDALDataset *PALSARJaxaDataset::Open(GDALOpenInfo *poOpenInfo)
 
     /* HV */
     snprintf(pszImgFile, nImgFileLen, "%s%sIMG-HV%s",
-             CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix);
+             CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str(), SEP_STRING,
+             pszSuffix);
     VSILFILE *fpHV = VSIFOpenL(pszImgFile, "rb");
     if (fpHV != nullptr)
     {
@@ -607,7 +609,8 @@ GDALDataset *PALSARJaxaDataset::Open(GDALOpenInfo *poOpenInfo)
 
     /* VH */
     snprintf(pszImgFile, nImgFileLen, "%s%sIMG-VH%s",
-             CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix);
+             CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str(), SEP_STRING,
+             pszSuffix);
     VSILFILE *fpVH = VSIFOpenL(pszImgFile, "rb");
     if (fpVH != nullptr)
     {
@@ -617,7 +620,8 @@ GDALDataset *PALSARJaxaDataset::Open(GDALOpenInfo *poOpenInfo)
 
     /* VV */
     snprintf(pszImgFile, nImgFileLen, "%s%sIMG-VV%s",
-             CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix);
+             CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str(), SEP_STRING,
+             pszSuffix);
     VSILFILE *fpVV = VSIFOpenL(pszImgFile, "rb");
     if (fpVV != nullptr)
     {
@@ -656,7 +660,8 @@ GDALDataset *PALSARJaxaDataset::Open(GDALOpenInfo *poOpenInfo)
         strlen(pszSuffix) + 5;
     char *pszLeaderFilename = (char *)CPLMalloc(nLeaderFilenameLen);
     snprintf(pszLeaderFilename, nLeaderFilenameLen, "%s%sLED%s",
-             CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix);
+             CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str(), SEP_STRING,
+             pszSuffix);
 
     VSILFILE *fpLeader = VSIFOpenL(pszLeaderFilename, "rb");
     /* check if the leader is actually present */

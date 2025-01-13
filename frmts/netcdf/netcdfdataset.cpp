@@ -9223,8 +9223,9 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
         // Works around bug of msys2 netCDF 4.9.0 package where nc_create()
         // crashes
         VSIStatBuf sStat;
-        const char *pszDir = CPLGetDirname(osFilenameForNCCreate.c_str());
-        if (VSIStat(pszDir, &sStat) != 0)
+        const std::string osDirname =
+            CPLGetDirnameSafe(osFilenameForNCCreate.c_str());
+        if (VSIStat(osDirname.c_str(), &sStat) != 0)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Unable to create netCDF file %s: non existing output "

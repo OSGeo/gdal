@@ -182,8 +182,7 @@ class GDALWMSFileCache : public GDALWMSCacheImpl
             return;
         }
         // Recursive makedirs, ignoring errors
-        const char *pszDirPath = CPLGetDirname(pszPath);
-        MakeDirs(pszDirPath);
+        MakeDirs(CPLGetDirnameSafe(pszPath).c_str());
 
         VSIMkdir(pszPath, 0744);
     }

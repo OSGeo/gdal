@@ -797,8 +797,8 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
         pszXML = reinterpret_cast<char *>(pabyOut);
 
         char *pszCurDir = CPLGetCurrentDir();
-        const char *currentVrtFilename =
-            CPLProjectRelativeFilename(pszCurDir, poOpenInfo->pszFilename);
+        std::string currentVrtFilename =
+            CPLProjectRelativeFilenameSafe(pszCurDir, poOpenInfo->pszFilename);
         CPLString osInitialCurrentVrtFilename(currentVrtFilename);
         CPLFree(pszCurDir);
 
@@ -808,7 +808,7 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
         while (true)
         {
             VSIStatBuf statBuffer;
-            int lstatCode = lstat(currentVrtFilename, &statBuffer);
+            int lstatCode = lstat(currentVrtFilename.c_str(), &statBuffer);
             if (lstatCode == -1)
             {
                 if (errno == ENOENT)
@@ -821,7 +821,7 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
                     CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
                     CPLFree(pszXML);
                     CPLError(CE_Failure, CPLE_FileIO, "Failed to lstat %s: %s",
-                             currentVrtFilename, VSIStrerror(errno));
+                             currentVrtFilename.c_str(), VSIStrerror(errno));
                     return nullptr;
                 }
             }
@@ -831,8 +831,9 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
                 break;
             }
 
-            const int bufferSize = static_cast<int>(readlink(
-                currentVrtFilename, filenameBuffer, sizeof(filenameBuffer)));
+            const int bufferSize = static_cast<int>(
+                readlink(currentVrtFilename.c_str(), filenameBuffer,
+                         sizeof(filenameBuffer)));
             if (bufferSize != -1)
             {
                 filenameBuffer[std::min(
@@ -840,8 +841,9 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
                     0;
                 // The filename in filenameBuffer might be a relative path
                 // from the linkfile resolve it before looping
-                currentVrtFilename = CPLProjectRelativeFilename(
-                    CPLGetDirname(currentVrtFilename), filenameBuffer);
+                currentVrtFilename = CPLProjectRelativeFilenameSafe(
+                    CPLGetDirnameSafe(currentVrtFilename.c_str()).c_str(),
+                    filenameBuffer);
             }
             else
             {
@@ -849,7 +851,7 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
                 CPLFree(pszXML);
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Failed to read filename from symlink %s: %s",
-                         currentVrtFilename, VSIStrerror(errno));
+                         currentVrtFilename.c_str(), VSIStrerror(errno));
                 return nullptr;
             }
         }
@@ -859,7 +861,8 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
             pszVRTPath =
                 CPLStrdup(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
         else
-            pszVRTPath = CPLStrdup(CPLGetPathSafe(currentVrtFilename).c_str());
+            pszVRTPath =
+                CPLStrdup(CPLGetPathSafe(currentVrtFilename.c_str()).c_str());
 
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     }

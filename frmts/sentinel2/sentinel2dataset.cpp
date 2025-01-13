@@ -945,7 +945,7 @@ static bool SENTINEL2GetGranuleList(
         const int nOffset =
             std::min(nBytes, static_cast<int>(sizeof(szPointerFilename) - 1));
         szPointerFilename[nOffset] = '\0';
-        osDirname = CPLGetDirname(szPointerFilename);
+        osDirname = CPLGetDirnameSafe(szPointerFilename);
     }
 #endif
 
@@ -2337,7 +2337,7 @@ static bool SENTINEL2GetGranuleList_L1CSafeCompact(
         const int nOffset =
             std::min(nBytes, static_cast<int>(sizeof(szPointerFilename) - 1));
         szPointerFilename[nOffset] = '\0';
-        osDirname = CPLGetDirname(szPointerFilename);
+        osDirname = CPLGetDirnameSafe(szPointerFilename);
     }
 #endif
 
@@ -2374,7 +2374,7 @@ static bool SENTINEL2GetGranuleList_L1CSafeCompact(
             // --> GRANULE/L1C_T30TXT_A007999_20170102T111441/MTD_TL.xml
             oDesc.osMTDTLPath =
                 osDirname + chSeparator +
-                CPLGetDirname(CPLGetDirnameSafe(pszImageFile).c_str()) +
+                CPLGetDirnameSafe(CPLGetDirnameSafe(pszImageFile).c_str()) +
                 chSeparator + "MTD_TL.xml";
             osList.push_back(oDesc);
         }
@@ -2429,7 +2429,7 @@ static bool SENTINEL2GetGranuleList_L2ASafeCompact(
         const int nOffset =
             std::min(nBytes, static_cast<int>(sizeof(szPointerFilename) - 1));
         szPointerFilename[nOffset] = '\0';
-        osDirname = CPLGetDirname(szPointerFilename);
+        osDirname = CPLGetDirnameSafe(szPointerFilename);
     }
 #endif
 
@@ -2475,7 +2475,7 @@ static bool SENTINEL2GetGranuleList_L2ASafeCompact(
             // --> GRANULE/L1C_T30TXT_A007999_20170102T111441/MTD_TL.xml
             oDesc.osMTDTLPath =
                 osDirname + chSeparator +
-                CPLGetDirname(CPLGetDirnameSafe(pszImageFile).c_str());
+                CPLGetDirnameSafe(CPLGetDirnameSafe(pszImageFile).c_str());
             if (oDesc.osMTDTLPath.size() < 9)
             {
                 CPLDebug("SENTINEL2", "MTDTL path too short");

@@ -633,8 +633,7 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
             return nullptr;
         }
         auto ds = new ECDataset();
-        ds->dname.Printf("%s/_alllayers",
-                         CPLGetDirname(poOpenInfo->pszFilename));
+        ds->dname = CPLGetDirnameSafe(poOpenInfo->pszFilename) + "/_alllayers";
         CPLErr error = ds->Initialize(CacheInfo);
         CPLDestroyXMLNode(config);
         if (CE_None != error)

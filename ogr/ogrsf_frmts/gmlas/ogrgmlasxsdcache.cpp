@@ -268,12 +268,12 @@ VSILFILE *GMLASXSDCache::Open(const std::string &osResource,
                 STARTS_WITH(osResourceModified.c_str(), "..\\")) &&
                !osBasePathModified.empty())
         {
-            osBasePathModified = CPLGetDirname(osBasePathModified.c_str());
+            osBasePathModified = CPLGetDirnameSafe(osBasePathModified.c_str());
             osResourceModified = osResourceModified.substr(3);
         }
 
-        osOutFilename = CPLFormFilename(osBasePathModified.c_str(),
-                                        osResourceModified.c_str(), nullptr);
+        osOutFilename = CPLFormFilenameSafe(
+            osBasePathModified.c_str(), osResourceModified.c_str(), nullptr);
     }
 
     CPLDebug("GMLAS", "Resolving %s (%s) to %s", osResource.c_str(),
