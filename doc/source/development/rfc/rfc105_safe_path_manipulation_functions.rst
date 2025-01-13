@@ -26,7 +26,7 @@ Motivation
 ----------
 
 Above mentioned functions return a ``const char *`` string, which is owned by
-a thread-locale rotating buffer of 10 strings of up to 2048 bytes each, managed
+a thread-local rotating buffer of 10 strings of up to 2048 bytes each, managed
 by the `CPLGetStaticResult() <https://github.com/OSGeo/gdal/blob/ea26bd087b3e34b91ef0315ca3889f39445f2e1f/port/cpl_path.cpp#L53>`__
 function of port/cpl_path.cpp
 
@@ -79,7 +79,7 @@ oss-fuzz, and probably latent ones still uncovered.
 The later in date is https://issues.oss-fuzz.com/issues/388868487 , fixed
 by https://github.com/OSGeo/gdal/pull/11638 , and shows how subtle those bugs
 can be. In that instance, the issue is due to complex chains of calls where we
-end up using more than 10 instances of the thread-locale storage.
+end up using more than 10 instances of the thread-local storage.
 
 Implementation
 --------------
@@ -89,12 +89,12 @@ systematic approach to suppress their root case:
 
 - Start from the implementation of the CPLXXXX() functions, copy them to
   C++ CPLXXXXSafe() functions that return a ``std::string`` instead of a ``const char *``,
-  and modify them to no longer use thread-locale rotating buffer of strings,
+  and modify them to no longer use thread-local rotating buffer of strings,
   but rely on std::string natural concatenation routines instead
   of the convoluted C concatenation logic, resulting in clearer code.
 
 - make the now superseded CPLXXXX() functions call the Safe versions, and store
-  the result in the thread-locale rotating buffer of strings. So those functions
+  the result in the thread-local rotating buffer of strings. So those functions
   will mostly behave as their current implementation
 
   That is a simple as:
@@ -186,7 +186,7 @@ Out-of-scope (for the candidate implementation related to this RFC)
 -------------------------------------------------------------------
 
 We have exactly the same issue with ``const char* CPLSPrintf(const char* pszFmt, ....)``
-which uses its own thread-locale rotating buffer of 10 strings of size up to
+which uses its own thread-local rotating buffer of 10 strings of size up to
 8000 bytes each.
 
 The safer alternative exists as ``CPLString::Printf()`` and it would be worth
