@@ -2461,8 +2461,8 @@ std::string OGRFlatGeobufLayer::GetTempFilePath(const CPLString &fileName,
     std::string osTempFile =
         pszTempDir ? CPLFormFilename(pszTempDir, osBasename, nullptr)
         : (STARTS_WITH(fileName, "/vsi") && !STARTS_WITH(fileName, "/vsimem/"))
-            ? CPLGenerateTempFilename(osBasename)
-            : CPLFormFilename(osDirname, osBasename, nullptr);
+            ? CPLGenerateTempFilenameSafe(osBasename)
+            : CPLFormFilenameSafe(osDirname, osBasename, nullptr);
     osTempFile += "_temp.fgb";
     return osTempFile;
 }

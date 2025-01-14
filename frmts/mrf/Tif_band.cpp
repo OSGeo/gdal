@@ -57,7 +57,7 @@ static CPLString uniq_memfname(const char *prefix)
     // Define MRF_LOCAL_TMP to use local files instead of RAM
     // #define MRF_LOCAL_TMP
 #if defined(MRF_LOCAL_TMP)
-    return CPLGenerateTempFilename(prefix);
+    return CPLGenerateTempFilenameSafe(prefix);
 #else
     return VSIMemGenerateHiddenFilename(prefix);
 #endif

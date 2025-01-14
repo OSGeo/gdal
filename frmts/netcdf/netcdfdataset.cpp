@@ -8058,7 +8058,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         if (poDS->osFilename.empty())
         {
             poDS->bFileToDestroyAtClosing = true;
-            poDS->osFilename = CPLGenerateTempFilename("netcdf_tmp");
+            poDS->osFilename = CPLGenerateTempFilenameSafe("netcdf_tmp");
         }
         if (!netCDFDatasetCreateTempFile(eTmpFormat, poDS->osFilename,
                                          poOpenInfo->fpL))

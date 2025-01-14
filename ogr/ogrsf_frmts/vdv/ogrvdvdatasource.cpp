@@ -190,7 +190,7 @@ void OGRIDFDataSource::Parse()
             }
             else
             {
-                osTmpFilename = CPLGenerateTempFilename(
+                osTmpFilename = CPLGenerateTempFilenameSafe(
                     CPLGetBasenameSafe(m_osFilename).c_str());
                 osTmpFilename += ".gpkg";
             }

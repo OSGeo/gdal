@@ -218,7 +218,7 @@ class VSIIOStream final : public CNCSJPCIOStream
         struct stat sStatBuf;
         if (!osPath.empty() && stat(osPath, &sStatBuf) != 0)
         {
-            osFilenameUsed = CPLGenerateTempFilename(nullptr);
+            osFilenameUsed = CPLGenerateTempFilenameSafe(nullptr);
             // try to preserve the extension.
             const auto osExt = CPLGetExtensionSafe(pszFilename);
             if (!osExt.empty())

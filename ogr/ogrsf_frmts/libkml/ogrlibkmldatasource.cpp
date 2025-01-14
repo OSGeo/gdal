@@ -402,7 +402,7 @@ bool OGRLIBKMLDataSource::WriteKmz()
         EQUAL(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", ""),
               "FORCED"))
     {
-        osTmpFilename = CPLGenerateTempFilename(
+        osTmpFilename = CPLGenerateTempFilenameSafe(
             CPLGetBasenameSafe(GetDescription()).c_str());
     }
 
