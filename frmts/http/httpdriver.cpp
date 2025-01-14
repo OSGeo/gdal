@@ -174,13 +174,13 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
         CPLString osTempFilename;
 
 #ifdef _WIN32
-        const char *pszPath =
-            CPLGetPath(CPLGenerateTempFilenameSafe(NULL).c_str());
+        const std::string osPath =
+            CPLGetPathSafe(CPLGenerateTempFilenameSafe(NULL).c_str());
 #else
-        const char *pszPath = "/tmp";
+        const std::string osPath = "/tmp";
 #endif
         osTempFilename = CPLFormFilenameSafe(
-            pszPath, CPLGetFilename(osResultFilename), nullptr);
+            osPath.c_str(), CPLGetFilename(osResultFilename), nullptr);
         if (CPLCopyFile(osTempFilename, osResultFilename) != 0)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,

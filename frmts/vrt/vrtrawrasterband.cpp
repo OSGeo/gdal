@@ -494,9 +494,9 @@ void VRTRawRasterBand::GetFileList(char ***ppapszFileList, int *pnSize,
     /* -------------------------------------------------------------------- */
     CPLString osSourceFilename;
     if (m_bRelativeToVRT && strlen(poDS->GetDescription()) > 0)
-        osSourceFilename =
-            CPLFormFilename(CPLGetDirnameSafe(poDS->GetDescription()).c_str(),
-                            m_pszSourceFilename, nullptr);
+        osSourceFilename = CPLFormFilenameSafe(
+            CPLGetDirnameSafe(poDS->GetDescription()).c_str(),
+            m_pszSourceFilename, nullptr);
     else
         osSourceFilename = m_pszSourceFilename;
 

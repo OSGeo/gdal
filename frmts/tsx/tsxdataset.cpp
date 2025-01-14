@@ -595,9 +595,9 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
          psComponent != nullptr; psComponent = psComponent->psNext)
     {
         const char *pszType = nullptr;
-        const char *pszPath =
-            CPLFormFilename(CPLGetDirnameSafe(osFilename).c_str(),
-                            GetFilePath(psComponent, &pszType).c_str(), "");
+        const std::string osPath =
+            CPLFormFilenameSafe(CPLGetDirnameSafe(osFilename).c_str(),
+                                GetFilePath(psComponent, &pszType).c_str(), "");
         const char *pszPolLayer = CPLGetXMLValue(psComponent, "polLayer", " ");
 
         if (!STARTS_WITH_CI(pszType, " "))
@@ -605,13 +605,13 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
             if (STARTS_WITH_CI(pszType, "MAPPING_GRID"))
             {
                 /* the mapping grid... save as a metadata item this path */
-                poDS->SetMetadataItem("MAPPING_GRID", pszPath);
+                poDS->SetMetadataItem("MAPPING_GRID", osPath.c_str());
             }
             else if (STARTS_WITH_CI(pszType, "GEOREF"))
             {
                 /* save the path to the georef data for later use */
                 CPLFree(pszGeorefFile);
-                pszGeorefFile = CPLStrdup(pszPath);
+                pszGeorefFile = CPLStrdup(osPath.c_str());
             }
         }
         else if (!STARTS_WITH_CI(pszPolLayer, " ") &&
@@ -642,7 +642,7 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
 
             /* try opening the file that represents that band */
             GDALDataset *poBandData =
-                GDALDataset::FromHandle(GDALOpen(pszPath, GA_ReadOnly));
+                GDALDataset::FromHandle(GDALOpen(osPath.c_str(), GA_ReadOnly));
             if (poBandData != nullptr)
             {
                 TSXRasterBand *poBand =

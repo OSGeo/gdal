@@ -2531,10 +2531,10 @@ GDALDataset *KmlSingleOverlayRasterDataset::Open(const char *pszFilename,
     std::array<double, 4> adfExtents = {0, 0, 0, 0};
     if (!KmlSuperOverlayGetBoundingBox(psGO, adfExtents))
         return nullptr;
-    const char *pszImageFilename =
-        CPLFormFilename(CPLGetPathSafe(osFilename).c_str(), pszHref, nullptr);
-    GDALDataset *poImageDS =
-        GDALDataset::FromHandle(GDALOpenShared(pszImageFilename, GA_ReadOnly));
+    const std::string osImageFilename = CPLFormFilenameSafe(
+        CPLGetPathSafe(osFilename).c_str(), pszHref, nullptr);
+    GDALDataset *poImageDS = GDALDataset::FromHandle(
+        GDALOpenShared(osImageFilename.c_str(), GA_ReadOnly));
     if (poImageDS == nullptr)
         return nullptr;
 
@@ -2670,8 +2670,8 @@ KmlSuperOverlayReadDataset::Open(const char *pszFilename,
             osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszHref);
         else
         {
-            osSubFilename = CPLFormFilename(CPLGetPathSafe(osFilename).c_str(),
-                                            pszHref, nullptr);
+            osSubFilename = CPLFormFilenameSafe(
+                CPLGetPathSafe(osFilename).c_str(), pszHref, nullptr);
             osSubFilename = KMLRemoveSlash(osSubFilename);
         }
 
