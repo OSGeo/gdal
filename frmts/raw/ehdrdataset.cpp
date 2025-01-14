@@ -850,7 +850,7 @@ CPLString EHdrDataset::GetImageRepFilename(const char *pszFilename)
             char *cwd = CPLGetCurrentDir();
             if (cwd)
             {
-                dirName = CPLFormFilename(cwd, dirName.c_str(), nullptr);
+                dirName = CPLFormFilenameSafe(cwd, dirName.c_str(), nullptr);
                 CPLFree(cwd);
             }
         }
@@ -958,7 +958,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
             return nullptr;
 
         osHDRFilename =
-            CPLFormFilename(osPath, papszSiblingFiles[iFile], nullptr);
+            CPLFormFilenameSafe(osPath, papszSiblingFiles[iFile], nullptr);
     }
     else
     {

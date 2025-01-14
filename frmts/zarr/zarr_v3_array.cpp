@@ -815,8 +815,9 @@ std::string ZarrV3Array::BuildTileFilename(const uint64_t *tileIndices) const
 {
     if (m_aoDims.empty())
     {
-        return CPLFormFilename(CPLGetDirnameSafe(m_osFilename.c_str()).c_str(),
-                               m_bV2ChunkKeyEncoding ? "0" : "c", nullptr);
+        return CPLFormFilenameSafe(
+            CPLGetDirnameSafe(m_osFilename.c_str()).c_str(),
+            m_bV2ChunkKeyEncoding ? "0" : "c", nullptr);
     }
     else
     {
@@ -1239,10 +1240,11 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
             std::string osDirName = m_osDirectoryName;
             while (true)
             {
-                const std::string osArrayFilenameDim =
-                    CPLFormFilename(CPLFormFilename(osDirName.c_str(),
-                                                    osDimName.c_str(), nullptr),
-                                    "zarr.json", nullptr);
+                const std::string osArrayFilenameDim = CPLFormFilenameSafe(
+                    CPLFormFilenameSafe(osDirName.c_str(), osDimName.c_str(),
+                                        nullptr)
+                        .c_str(),
+                    "zarr.json", nullptr);
                 VSIStatBufL sStat;
                 if (VSIStatL(osArrayFilenameDim.c_str(), &sStat) == 0)
                 {

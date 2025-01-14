@@ -477,9 +477,9 @@ GDALDataset *COASPDataset::Open(GDALOpenInfo *poOpenInfo)
     /* Horizontal transmit, horizontal receive */
     psChan[0] = 'h';
     psChan[1] = 'h';
-    const char *pszFilename = CPLFormFilename(pszDir, pszBase, pszExt);
+    std::string osFilename = CPLFormFilenameSafe(pszDir, pszBase, pszExt);
 
-    poDS->fpBinHH = VSIFOpenL(pszFilename, "r");
+    poDS->fpBinHH = VSIFOpenL(osFilename.c_str(), "r");
 
     if (poDS->fpBinHH != nullptr)
     {
@@ -491,9 +491,9 @@ GDALDataset *COASPDataset::Open(GDALOpenInfo *poOpenInfo)
     /* Horizontal transmit, vertical receive */
     psChan[0] = 'h';
     psChan[1] = 'v';
-    pszFilename = CPLFormFilename(pszDir, pszBase, pszExt);
+    osFilename = CPLFormFilenameSafe(pszDir, pszBase, pszExt);
 
-    poDS->fpBinHV = VSIFOpenL(pszFilename, "r");
+    poDS->fpBinHV = VSIFOpenL(osFilename.c_str(), "r");
 
     if (poDS->fpBinHV != nullptr)
     {
@@ -504,9 +504,9 @@ GDALDataset *COASPDataset::Open(GDALOpenInfo *poOpenInfo)
     /* Vertical transmit, horizontal receive */
     psChan[0] = 'v';
     psChan[1] = 'h';
-    pszFilename = CPLFormFilename(pszDir, pszBase, pszExt);
+    osFilename = CPLFormFilenameSafe(pszDir, pszBase, pszExt);
 
-    poDS->fpBinVH = VSIFOpenL(pszFilename, "r");
+    poDS->fpBinVH = VSIFOpenL(osFilename.c_str(), "r");
 
     if (poDS->fpBinVH != nullptr)
     {
@@ -517,9 +517,9 @@ GDALDataset *COASPDataset::Open(GDALOpenInfo *poOpenInfo)
     /* Vertical transmit, vertical receive */
     psChan[0] = 'v';
     psChan[1] = 'v';
-    pszFilename = CPLFormFilename(pszDir, pszBase, pszExt);
+    osFilename = CPLFormFilenameSafe(pszDir, pszBase, pszExt);
 
-    poDS->fpBinVV = VSIFOpenL(pszFilename, "r");
+    poDS->fpBinVV = VSIFOpenL(osFilename.c_str(), "r");
 
     if (poDS->fpBinVV != nullptr)
     {

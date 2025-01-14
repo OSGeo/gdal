@@ -417,9 +417,9 @@ std::string S100ReadMetadata(GDALDataset *poDS, const std::string &osFilename,
             const char *pszVal = poAttr->ReadAsString();
             if (pszVal && pszVal[0])
             {
-                osMetadataFile =
-                    CPLFormFilename(CPLGetPathSafe(osFilename.c_str()).c_str(),
-                                    pszVal, nullptr);
+                osMetadataFile = CPLFormFilenameSafe(
+                    CPLGetPathSafe(osFilename.c_str()).c_str(), pszVal,
+                    nullptr);
                 VSIStatBufL sStat;
                 if (VSIStatL(osMetadataFile.c_str(), &sStat) != 0)
                 {
@@ -428,7 +428,7 @@ std::string S100ReadMetadata(GDALDataset *poDS, const std::string &osFilename,
                     // but the actual filename does not start with "MD_"...
                     if (STARTS_WITH(pszVal, "MD_"))
                     {
-                        osMetadataFile = CPLFormFilename(
+                        osMetadataFile = CPLFormFilenameSafe(
                             CPLGetPathSafe(osFilename.c_str()).c_str(),
                             pszVal + strlen("MD_"), nullptr);
                         if (VSIStatL(osMetadataFile.c_str(), &sStat) != 0)

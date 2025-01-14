@@ -337,7 +337,8 @@ char **AIGDataset::GetFileList()
 
         papszFileList = CSLAddString(
             papszFileList,
-            CPLFormFilename(GetDescription(), papszCoverFiles[i], nullptr));
+            CPLFormFilenameSafe(GetDescription(), papszCoverFiles[i], nullptr)
+                .c_str());
     }
     CSLDestroy(papszCoverFiles);
 
@@ -663,8 +664,8 @@ GDALDataset *AIGDataset::Open(GDALOpenInfo *poOpenInfo)
         if (!EQUAL(osExt.c_str(), "clr") && !EQUAL(osExt.c_str(), "CLR"))
             continue;
 
-        osClrFilename =
-            CPLFormFilename(psInfo->pszCoverName, papszFiles[iFile], nullptr);
+        osClrFilename = CPLFormFilenameSafe(psInfo->pszCoverName,
+                                            papszFiles[iFile], nullptr);
         break;
     }
 

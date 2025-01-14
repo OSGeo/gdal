@@ -717,9 +717,10 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
                                             CPLGetPathSafe(pszURL).c_str(),
                                             osImage.c_str()));
                                     else
-                                        alias->set_targethref(CPLFormFilename(
-                                            CPLGetPathSafe(pszURL).c_str(),
-                                            osImage, nullptr));
+                                        alias->set_targethref(
+                                            CPLFormFilenameSafe(
+                                                CPLGetPathSafe(pszURL).c_str(),
+                                                osImage, nullptr));
                                 }
                                 else
                                     alias->set_targethref(osImage);

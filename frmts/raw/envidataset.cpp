@@ -2008,13 +2008,13 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     {
         // First try hdr as an extra extension
         osHdrFilename =
-            CPLFormFilename(nullptr, poOpenInfo->pszFilename, "hdr");
+            CPLFormFilenameSafe(nullptr, poOpenInfo->pszFilename, "hdr");
         fpHeader = VSIFOpenL(osHdrFilename, pszMode);
 
         if (fpHeader == nullptr && VSIIsCaseSensitiveFS(osHdrFilename))
         {
             osHdrFilename =
-                CPLFormFilename(nullptr, poOpenInfo->pszFilename, "HDR");
+                CPLFormFilenameSafe(nullptr, poOpenInfo->pszFilename, "HDR");
             fpHeader = VSIFOpenL(osHdrFilename, pszMode);
         }
 
@@ -2053,7 +2053,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         if (iFile >= 0)
         {
             osHdrFilename =
-                CPLFormFilename(osPath, papszSiblingFiles[iFile], nullptr);
+                CPLFormFilenameSafe(osPath, papszSiblingFiles[iFile], nullptr);
             fpHeader = VSIFOpenL(osHdrFilename, pszMode);
         }
     }

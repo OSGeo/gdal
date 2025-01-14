@@ -415,7 +415,7 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
 
         osHDRFilename =
-            CPLFormFilename(osPath, papszSiblingFiles[iFile], nullptr);
+            CPLFormFilenameSafe(osPath, papszSiblingFiles[iFile], nullptr);
     }
     else
     {

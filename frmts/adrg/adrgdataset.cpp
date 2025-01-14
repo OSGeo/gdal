@@ -1354,9 +1354,9 @@ char **ADRGDataset::GetGENListFromTHF(const char *pszFileName)
                             {
                                 if (EQUAL(*ptrDir, *ptr))
                                 {
-                                    osGENFileName =
-                                        CPLFormFilename(osGENFileName.c_str(),
-                                                        *ptrDir, nullptr);
+                                    osGENFileName = CPLFormFilenameSafe(
+                                        osGENFileName.c_str(), *ptrDir,
+                                        nullptr);
                                     CPLDebug("ADRG",
                                              "Building GEN full file name : %s",
                                              osGENFileName.c_str());
@@ -1475,7 +1475,7 @@ char **ADRGDataset::GetIMGListFromGEN(const char *pszFileName,
             CPLString osGENDir(CPLGetDirnameSafe(pszFileName));
 
             const CPLString osFileName =
-                CPLFormFilename(osGENDir.c_str(), osBAD.c_str(), nullptr);
+                CPLFormFilenameSafe(osGENDir.c_str(), osBAD.c_str(), nullptr);
             VSIStatBufL sStatBuf;
             if (VSIStatL(osFileName, &sStatBuf) == 0)
             {
@@ -1498,8 +1498,8 @@ char **ADRGDataset::GetIMGListFromGEN(const char *pszFileName,
                 {
                     if (EQUAL(*ptrDir, osBAD.c_str()))
                     {
-                        osBAD =
-                            CPLFormFilename(osGENDir.c_str(), *ptrDir, nullptr);
+                        osBAD = CPLFormFilenameSafe(osGENDir.c_str(), *ptrDir,
+                                                    nullptr);
                         CPLDebug("ADRG", "Building IMG full file name : %s",
                                  osBAD.c_str());
                         break;
@@ -1735,7 +1735,7 @@ GDALDataset *ADRGDataset::Create(const char *pszFilename, int nXSize,
 
     CPLString osDirname(CPLGetDirnameSafe(pszFilename));
     CPLString osTransh01THF(
-        CPLFormFilename(osDirname.c_str(), "TRANSH01.THF", nullptr));
+        CPLFormFilenameSafe(osDirname.c_str(), "TRANSH01.THF", nullptr));
     VSILFILE *fdTHF = VSIFOpenL(osTransh01THF.c_str(), "wb");
     if (fdTHF == nullptr)
     {

@@ -104,7 +104,7 @@ static CPLString getXMLFilename(GDALOpenInfo *poOpenInfo)
     if (papszSiblingFiles == nullptr)
     {
         osXMLFilename =
-            CPLFormFilename(nullptr, poOpenInfo->pszFilename, "xml");
+            CPLFormFilenameSafe(nullptr, poOpenInfo->pszFilename, "xml");
         VSIStatBufL psXMLStatBuf;
         if (VSIStatL(osXMLFilename, &psXMLStatBuf) != 0)
         {
@@ -126,7 +126,7 @@ static CPLString getXMLFilename(GDALOpenInfo *poOpenInfo)
         if (iFile >= 0)
         {
             osXMLFilename =
-                CPLFormFilename(osPath, papszSiblingFiles[iFile], nullptr);
+                CPLFormFilenameSafe(osPath, papszSiblingFiles[iFile], nullptr);
         }
     }
 
@@ -812,8 +812,9 @@ GDALDataset *ISCEDataset::Create(const char *pszFilename, int nXSize,
     /* -------------------------------------------------------------------- */
     /*      Write the XML file.                                             */
     /* -------------------------------------------------------------------- */
-    const char *pszXMLFilename = CPLFormFilename(nullptr, pszFilename, "xml");
-    CPLSerializeXMLTreeToFile(psDocNode, pszXMLFilename);
+    const std::string osXMLFilename =
+        CPLFormFilenameSafe(nullptr, pszFilename, "xml");
+    CPLSerializeXMLTreeToFile(psDocNode, osXMLFilename.c_str());
 
     /* -------------------------------------------------------------------- */
     /*      Free the XML Doc.                                               */

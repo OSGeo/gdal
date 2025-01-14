@@ -1146,9 +1146,9 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
 
             // open Annotation XML file
             const CPLString osAnnotationFilePath =
-                CPLFormFilename(osPath, pszAnnotation, nullptr);
+                CPLFormFilenameSafe(osPath, pszAnnotation, nullptr);
             const CPLString osCalibrationFilePath =
-                CPLFormFilename(osPath, pszCalibration, nullptr);
+                CPLFormFilenameSafe(osPath, pszCalibration, nullptr);
 
             CPLXMLTreeCloser psAnnotation(
                 CPLParseXMLFile(osAnnotationFilePath));
@@ -1292,7 +1292,7 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
             /* --------------------------------------------------------------------
              */
             const std::string osFullFilename(
-                CPLFormFilename(osPath, pszMeasurement, nullptr));
+                CPLFormFilenameSafe(osPath, pszMeasurement, nullptr));
 
             /* --------------------------------------------------------------------
              */

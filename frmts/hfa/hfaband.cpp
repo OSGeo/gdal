@@ -464,8 +464,8 @@ CPLErr HFABand::LoadExternalBlockInfo()
     nLayerStackIndex = poDMS->GetIntField("layerStackIndex");
 
     // Open raw data file.
-    const char *pszFullFilename = HFAGetIGEFilename(psInfo);
-    if (pszFullFilename == nullptr)
+    const std::string osFullFilename = HFAGetIGEFilename(psInfo);
+    if (osFullFilename.empty())
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Cannot find external data file name");
@@ -473,13 +473,14 @@ CPLErr HFABand::LoadExternalBlockInfo()
     }
 
     if (psInfo->eAccess == HFA_ReadOnly)
-        fpExternal = VSIFOpenL(pszFullFilename, "rb");
+        fpExternal = VSIFOpenL(osFullFilename.c_str(), "rb");
     else
-        fpExternal = VSIFOpenL(pszFullFilename, "r+b");
+        fpExternal = VSIFOpenL(osFullFilename.c_str(), "r+b");
     if (fpExternal == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Unable to open external data file: %s", pszFullFilename);
+                 "Unable to open external data file: %s",
+                 osFullFilename.c_str());
         return CE_Failure;
     }
 
@@ -490,7 +491,8 @@ CPLErr HFABand::LoadExternalBlockInfo()
         !STARTS_WITH(szHeader, "ERDAS_IMG_EXTERNAL_RASTER"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Raw data file %s appears to be corrupt.", pszFullFilename);
+                 "Raw data file %s appears to be corrupt.",
+                 osFullFilename.c_str());
         return CE_Failure;
     }
 

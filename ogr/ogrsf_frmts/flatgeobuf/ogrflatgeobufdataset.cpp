@@ -94,8 +94,9 @@ static CPLErr OGRFlatGoBufDriverDelete(const char *pszDataSource)
             if (EQUAL(CPLGetExtensionSafe(papszDirEntries[iFile]).c_str(),
                       "fgb"))
             {
-                VSIUnlink(CPLFormFilename(pszDataSource, papszDirEntries[iFile],
-                                          nullptr));
+                VSIUnlink(CPLFormFilenameSafe(pszDataSource,
+                                              papszDirEntries[iFile], nullptr)
+                              .c_str());
             }
         }
 
@@ -261,8 +262,8 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             if (EQUAL(CPLGetExtensionSafe(aosFiles[i]).c_str(), "fgb"))
             {
-                CPLString osFilename(CPLFormFilename(poOpenInfo->pszFilename,
-                                                     aosFiles[i], nullptr));
+                const CPLString osFilename(CPLFormFilenameSafe(
+                    poOpenInfo->pszFilename, aosFiles[i], nullptr));
                 VSILFILE *fp = VSIFOpenL(osFilename, "rb");
                 if (fp)
                 {
@@ -425,7 +426,7 @@ OGRFlatGeobufDataset::ICreateLayer(const char *pszLayerName,
     CPLString osFilename;
 
     if (m_bIsDir)
-        osFilename = CPLFormFilename(
+        osFilename = CPLFormFilenameSafe(
             GetDescription(), LaunderLayerName(pszLayerName).c_str(), "fgb");
     else
         osFilename = GetDescription();

@@ -1628,7 +1628,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
             if (oFilename.GetType() == CPLJSONObject::Type::String)
             {
                 VSIStatBufL sStat;
-                CPLString osFilename(CPLFormFilename(
+                const CPLString osFilename(CPLFormFilenameSafe(
                     CPLGetPathSafe(poOpenInfo->pszFilename).c_str(),
                     oFilename.ToString().c_str(), nullptr));
                 if (VSIStatL(osFilename, &sStat) == 0)
@@ -1681,9 +1681,10 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     const char *pszCore = poDS->GetKeyword("IsisCube.Core.^Core");
     const CPLString osQubeFile(
         EQUAL(pszCore, "")
-            ? poOpenInfo->pszFilename
-            : CPLFormFilename(CPLGetPathSafe(poOpenInfo->pszFilename).c_str(),
-                              pszCore, nullptr));
+            ? CPLString(poOpenInfo->pszFilename)
+            : CPLFormFilenameSafe(
+                  CPLGetPathSafe(poOpenInfo->pszFilename).c_str(), pszCore,
+                  nullptr));
     if (!EQUAL(pszCore, ""))
     {
         poDS->m_osExternalFilename = osQubeFile;
@@ -3116,9 +3117,9 @@ void ISIS3Dataset::BuildLabel()
             if (oFilenameCap.GetType() == CPLJSONObject::Type::String)
             {
                 VSIStatBufL sStat;
-                const CPLString osSrcFilename(
-                    CPLFormFilename(CPLGetPathSafe(osLabelSrcFilename).c_str(),
-                                    oFilenameCap.ToString().c_str(), nullptr));
+                const CPLString osSrcFilename(CPLFormFilenameSafe(
+                    CPLGetPathSafe(osLabelSrcFilename).c_str(),
+                    oFilenameCap.ToString().c_str(), nullptr));
                 if (VSIStatL(osSrcFilename, &sStat) == 0)
                 {
                     oSection.osSrcFilename = osSrcFilename;
@@ -3524,7 +3525,7 @@ void ISIS3Dataset::WriteLabel()
         {
             CPLString osFilename(CPLGetBasenameSafe(GetDescription()));
             osFilename += ".History.IsisCube";
-            osFilename = CPLFormFilename(
+            osFilename = CPLFormFilenameSafe(
                 CPLGetPathSafe(GetDescription()).c_str(), osFilename, nullptr);
             VSILFILE *fp = VSIFOpenL(osFilename, "wb");
             if (fp)

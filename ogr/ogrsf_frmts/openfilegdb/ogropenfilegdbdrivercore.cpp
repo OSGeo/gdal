@@ -44,7 +44,8 @@ GDALIdentifyEnum OGROpenFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo,
             VSIStatBufL stat;
             if (!(STARTS_WITH(pszFilename, "/vsicurl/") &&
                   VSIStatL(
-                      CPLFormFilename(pszFilename, "a00000001", "gdbtable"),
+                      CPLFormFilenameSafe(pszFilename, "a00000001", "gdbtable")
+                          .c_str(),
                       &stat) == 0))
             {
                 return GDAL_IDENTIFY_FALSE;

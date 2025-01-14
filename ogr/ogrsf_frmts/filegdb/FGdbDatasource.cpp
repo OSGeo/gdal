@@ -162,17 +162,18 @@ int FGdbDataSource::FixIndexes()
         m_pConnection->CloseGeodatabase();
 
         const char *const apszDrivers[2] = {"OpenFileGDB", nullptr};
-        const char *pszSystemCatalog =
-            CPLFormFilename(m_osFSName, "a00000001.gdbtable", nullptr);
-        auto poOpenFileGDBDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-            pszSystemCatalog, GDAL_OF_VECTOR, apszDrivers, nullptr, nullptr));
+        const std::string osSystemCatalog =
+            CPLFormFilenameSafe(m_osFSName, "a00000001.gdbtable", nullptr);
+        auto poOpenFileGDBDS = std::unique_ptr<GDALDataset>(
+            GDALDataset::Open(osSystemCatalog.c_str(), GDAL_OF_VECTOR,
+                              apszDrivers, nullptr, nullptr));
         if (poOpenFileGDBDS == nullptr ||
             poOpenFileGDBDS->GetLayer(0) == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot open %s with OpenFileGDB driver. "
                      "Should not happen. Some layers will be corrupted",
-                     pszSystemCatalog);
+                     osSystemCatalog.c_str());
             bRet = FALSE;
         }
         else
@@ -202,9 +203,12 @@ int FGdbDataSource::FixIndexes()
                 }
                 else
                 {
-                    if (!poFgdbLayer->EditIndexesForFIDHack(CPLFormFilename(
-                            m_osFSName, CPLSPrintf("a%08x", (int)poF->GetFID()),
-                            nullptr)))
+                    if (!poFgdbLayer->EditIndexesForFIDHack(
+                            CPLFormFilenameSafe(
+                                m_osFSName,
+                                CPLSPrintf("a%08x", (int)poF->GetFID()),
+                                nullptr)
+                                .c_str()))
                     {
                         bRet = FALSE;
                     }
@@ -499,12 +503,13 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
     // they exist (despite ArcGIS itself showing them!)
     int iGDBItems = -1;
     const char *const apszDrivers[2] = {"OpenFileGDB", nullptr};
-    const char *pszSystemCatalog =
-        CPLFormFilename(m_osFSName, "a00000001", "gdbtable");
+    const std::string osSystemCatalog =
+        CPLFormFilenameSafe(m_osFSName, "a00000001", "gdbtable");
     if (m_bUseOpenFileGDB)
     {
-        m_poOpenFileGDBDS.reset(GDALDataset::Open(
-            pszSystemCatalog, GDAL_OF_VECTOR, apszDrivers, nullptr, nullptr));
+        m_poOpenFileGDBDS.reset(GDALDataset::Open(osSystemCatalog.c_str(),
+                                                  GDAL_OF_VECTOR, apszDrivers,
+                                                  nullptr, nullptr));
     }
     if (m_poOpenFileGDBDS != nullptr &&
         m_poOpenFileGDBDS->GetLayer(0) != nullptr)
@@ -547,10 +552,10 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
     // it's too slow!
     if (iGDBItems >= 0)
     {
-        const char *pszGDBItems = CPLFormFilename(
+        const std::string osGDBItems = CPLFormFilenameSafe(
             m_osFSName, CPLSPrintf("a%08x", iGDBItems + 1), "gdbtable");
         std::unique_ptr<GDALDataset> poGDBItems(GDALDataset::Open(
-            pszGDBItems, GDAL_OF_VECTOR, apszDrivers, nullptr, nullptr));
+            osGDBItems.c_str(), GDAL_OF_VECTOR, apszDrivers, nullptr, nullptr));
         if (poGDBItems != nullptr && poGDBItems->GetLayer(0) != nullptr)
         {
             if (OGRLayer *poItemsLayer = poGDBItems->GetLayer(0))

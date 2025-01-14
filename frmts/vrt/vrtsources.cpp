@@ -439,15 +439,15 @@ void VRTSimpleSource::AddSourceFilenameNode(const char *pszVRTPath,
             !CPLIsFilenameRelative(osVRTFilename.c_str()) &&
             pszCurDir != nullptr)
         {
-            osSourceDataset =
-                CPLFormFilename(pszCurDir, osSourceDataset.c_str(), nullptr);
+            osSourceDataset = CPLFormFilenameSafe(
+                pszCurDir, osSourceDataset.c_str(), nullptr);
         }
         else if (!CPLIsFilenameRelative(osSourceDataset.c_str()) &&
                  CPLIsFilenameRelative(osVRTFilename.c_str()) &&
                  pszCurDir != nullptr)
         {
             osVRTFilename =
-                CPLFormFilename(pszCurDir, osVRTFilename.c_str(), nullptr);
+                CPLFormFilenameSafe(pszCurDir, osVRTFilename.c_str(), nullptr);
         }
         CPLFree(pszCurDir);
         osSourceFilename = CPLExtractRelativePath(

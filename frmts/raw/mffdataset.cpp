@@ -822,24 +822,24 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
             break;
 
         /* open the file for required level of access */
-        const char *pszRawFilename =
-            CPLFormFilename(pszTargetPath, papszDirFiles[i], nullptr);
+        const std::string osRawFilename =
+            CPLFormFilenameSafe(pszTargetPath, papszDirFiles[i], nullptr);
 
         VSILFILE *fpRaw = nullptr;
         if (poOpenInfo->eAccess == GA_Update)
-            fpRaw = VSIFOpenL(pszRawFilename, "rb+");
+            fpRaw = VSIFOpenL(osRawFilename.c_str(), "rb+");
         else
-            fpRaw = VSIFOpenL(pszRawFilename, "rb");
+            fpRaw = VSIFOpenL(osRawFilename.c_str(), "rb");
 
         if (fpRaw == nullptr)
         {
             CPLError(CE_Warning, CPLE_OpenFailed,
-                     "Unable to open %s ... skipping.", pszRawFilename);
+                     "Unable to open %s ... skipping.", osRawFilename.c_str());
             nSkipped++;
             continue;
         }
         poDS->m_papszFileList =
-            CSLAddString(poDS->m_papszFileList, pszRawFilename);
+            CSLAddString(poDS->m_papszFileList, osRawFilename.c_str());
 
         GDALDataType eDataType = GDT_Unknown;
         const std::string osExt = CPLGetExtensionSafe(papszDirFiles[i]);
@@ -1100,13 +1100,14 @@ GDALDataset *MFFDataset::Create(const char *pszFilenameIn, int nXSize,
     /* -------------------------------------------------------------------- */
     /*      Create the header file.                                         */
     /* -------------------------------------------------------------------- */
-    const char *pszFilename = CPLFormFilename(nullptr, pszBaseFilename, "hdr");
+    std::string osFilename =
+        CPLFormFilenameSafe(nullptr, pszBaseFilename, "hdr");
 
-    VSILFILE *fp = VSIFOpenL(pszFilename, "wt");
+    VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "wt");
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Couldn't create %s.\n",
-                 pszFilename);
+                 osFilename.c_str());
         CPLFree(pszBaseFilename);
         return nullptr;
     }
@@ -1145,12 +1146,12 @@ GDALDataset *MFFDataset::Create(const char *pszFilenameIn, int nXSize,
         else if (eType == GDT_CFloat32)
             CPLsnprintf(szExtension, sizeof(szExtension), "x%02d", iBand);
 
-        pszFilename = CPLFormFilename(nullptr, pszBaseFilename, szExtension);
-        fp = VSIFOpenL(pszFilename, "wb");
+        osFilename = CPLFormFilenameSafe(nullptr, pszBaseFilename, szExtension);
+        fp = VSIFOpenL(osFilename.c_str(), "wb");
         if (fp == nullptr)
         {
             CPLError(CE_Failure, CPLE_OpenFailed, "Couldn't create %s.\n",
-                     pszFilename);
+                     osFilename.c_str());
             CPLFree(pszBaseFilename);
             return nullptr;
         }
@@ -1171,7 +1172,7 @@ GDALDataset *MFFDataset::Create(const char *pszFilenameIn, int nXSize,
     /* -------------------------------------------------------------------- */
     strcat(pszBaseFilename, ".hdr");
     GDALDataset *poDS =
-        static_cast<GDALDataset *>(GDALOpen(pszBaseFilename, GA_Update));
+        GDALDataset::Open(pszBaseFilename, GDAL_OF_RASTER | GDAL_OF_UPDATE);
     CPLFree(pszBaseFilename);
 
     return poDS;
@@ -1313,14 +1314,14 @@ GDALDataset *MFFDataset::CreateCopy(const char *pszFilename,
             break;
     }
 
-    const char *pszFilenameGEO =
-        CPLFormFilename(nullptr, pszBaseFilename, "hdr");
+    const std::string osFilenameGEO =
+        CPLFormFilenameSafe(nullptr, pszBaseFilename, "hdr");
 
-    VSILFILE *fp = VSIFOpenL(pszFilenameGEO, "at");
+    VSILFILE *fp = VSIFOpenL(osFilenameGEO.c_str(), "at");
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Couldn't open %s for appending.\n", pszFilenameGEO);
+                 "Couldn't open %s for appending.\n", osFilenameGEO.c_str());
         CPLFree(pszBaseFilename);
         return nullptr;
     }

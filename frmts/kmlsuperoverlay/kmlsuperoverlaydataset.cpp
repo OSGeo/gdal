@@ -562,13 +562,15 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
     // correct the file and get the directory
     char *output_dir = nullptr;
+    std::string osFilename;
     if (pszFilename == nullptr)
     {
         output_dir = CPLGetCurrentDir();
-        pszFilename = CPLFormFilename(output_dir, "doc", "kml");
+        osFilename = CPLFormFilenameSafe(output_dir, "doc", "kml");
     }
     else
     {
+        osFilename = pszFilename;
         const std::string osExtension = CPLGetExtensionSafe(pszFilename);
         const char *extension = osExtension.c_str();
         if (!EQUAL(extension, "kml") && !EQUAL(extension, "kmz"))
@@ -589,6 +591,8 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             output_dir = CPLGetCurrentDir();
         }
     }
+    pszFilename = osFilename.c_str();
+
     CPLString outDir = output_dir ? output_dir : "";
     CPLFree(output_dir);
     output_dir = nullptr;
@@ -739,7 +743,7 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
     if (isKmz)
     {
-        tmpFileName = CPLFormFilename(outDir, "doc.kml", nullptr);
+        tmpFileName = CPLFormFilenameSafe(outDir, "doc.kml", nullptr);
         nRet = GenerateRootKml(tmpFileName.c_str(), pszFilename, north, south,
                                east, west, static_cast<int>(tilexsize),
                                pszOverlayName, pszOverlayDescription);
@@ -1761,8 +1765,8 @@ KmlSuperOverlayLoadIcon(const char *pszBaseFilename, const char *pszIcon)
         osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszIcon);
     else
     {
-        osSubFilename = CPLFormFilename(CPLGetPathSafe(pszBaseFilename).c_str(),
-                                        pszIcon, nullptr);
+        osSubFilename = CPLFormFilenameSafe(
+            CPLGetPathSafe(pszBaseFilename).c_str(), pszIcon, nullptr);
         osSubFilename = KMLRemoveSlash(osSubFilename);
     }
 
@@ -2004,12 +2008,12 @@ static bool KmlSingleDocGetDimensions(const CPLString &osDirname,
                                       int nLevel, int nTileSize, int &nXSize,
                                       int &nYSize, int &nBands, int &bHasCT)
 {
-    const char *pszImageFilename = CPLFormFilename(
+    std::string osImageFilename = CPLFormFilenameSafe(
         osDirname,
         CPLSPrintf("kml_image_L%d_%d_%d", nLevel, oDesc.nMaxJ_j, oDesc.nMaxJ_i),
         oDesc.szExtJ);
     auto poImageDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-        pszImageFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
+        osImageFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
     if (!poImageDS)
     {
         return false;
@@ -2025,13 +2029,13 @@ static bool KmlSingleDocGetDimensions(const CPLString &osDirname,
     }
     else
     {
-        pszImageFilename =
-            CPLFormFilename(osDirname,
-                            CPLSPrintf("kml_image_L%d_%d_%d", nLevel,
-                                       oDesc.nMaxI_j, oDesc.nMaxI_i),
-                            oDesc.szExtI);
+        osImageFilename =
+            CPLFormFilenameSafe(osDirname,
+                                CPLSPrintf("kml_image_L%d_%d_%d", nLevel,
+                                           oDesc.nMaxI_j, oDesc.nMaxI_i),
+                                oDesc.szExtI);
         poImageDS.reset(GDALDataset::Open(
-            pszImageFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
+            osImageFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
         if (!poImageDS)
         {
             return false;
@@ -2118,18 +2122,18 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 {
     KmlSingleDocRasterDataset *poGDS =
         cpl::down_cast<KmlSingleDocRasterDataset *>(poDS);
-    const char *pszImageFilename =
-        CPLFormFilename(poGDS->osDirname,
-                        CPLSPrintf("kml_image_L%d_%d_%d", poGDS->nLevel,
-                                   nBlockYOff, nBlockXOff),
-                        poGDS->osNominalExt);
+    const std::string osImageFilename =
+        CPLFormFilenameSafe(poGDS->osDirname,
+                            CPLSPrintf("kml_image_L%d_%d_%d", poGDS->nLevel,
+                                       nBlockYOff, nBlockXOff),
+                            poGDS->osNominalExt);
     if (poGDS->poCurTileDS == nullptr ||
         strcmp(CPLGetFilename(poGDS->poCurTileDS->GetDescription()),
-               CPLGetFilename(pszImageFilename)) != 0)
+               CPLGetFilename(osImageFilename.c_str())) != 0)
     {
         CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
         poGDS->poCurTileDS.reset(
-            GDALDataset::Open(pszImageFilename, GDAL_OF_RASTER));
+            GDALDataset::Open(osImageFilename.c_str(), GDAL_OF_RASTER));
     }
     GDALDataset *poImageDS = poGDS->poCurTileDS.get();
     if (poImageDS == nullptr)
@@ -2150,7 +2154,7 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     if (nXSize != nReqXSize || nYSize != nReqYSize)
     {
         CPLDebug("KMLSUPEROVERLAY", "Tile %s, dimensions %dx%d, expected %dx%d",
-                 pszImageFilename, nXSize, nYSize, nReqXSize, nReqYSize);
+                 osImageFilename.c_str(), nXSize, nYSize, nReqXSize, nReqYSize);
         return CE_Failure;
     }
 
@@ -2395,13 +2399,13 @@ GDALDataset *KmlSingleDocRasterDataset::Open(const char *pszFilename,
             return nullptr;
     }
 
-    const char *pszImageFilename =
-        CPLFormFilename(osDirname,
-                        CPLSPrintf("kml_image_L%d_%d_%d",
-                                   static_cast<int>(aosDescs.size()), 0, 0),
-                        aosDescs.back().szExtI);
+    const std::string osImageFilename =
+        CPLFormFilenameSafe(osDirname,
+                            CPLSPrintf("kml_image_L%d_%d_%d",
+                                       static_cast<int>(aosDescs.size()), 0, 0),
+                            aosDescs.back().szExtI);
     auto poImageDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-        pszImageFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
+        osImageFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
     if (poImageDS == nullptr)
     {
         return nullptr;

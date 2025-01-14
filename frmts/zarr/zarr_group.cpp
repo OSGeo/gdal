@@ -107,7 +107,7 @@ bool ZarrGroupBase::DeleteGroup(const std::string &osName,
     }
 
     const std::string osSubDirName =
-        CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+        CPLFormFilenameSafe(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
     if (VSIRmdirRecursive(osSubDirName.c_str()) != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot delete %s",
@@ -252,7 +252,7 @@ bool ZarrGroupBase::DeleteMDArray(const std::string &osName,
     }
 
     const std::string osSubDirName =
-        CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+        CPLFormFilenameSafe(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
     if (VSIRmdirRecursive(osSubDirName.c_str()) != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot delete %s",
@@ -527,8 +527,8 @@ void ZarrGroupBase::ParentRenamed(const std::string &osNewParentFullName)
     // The parent necessarily exist, since it notified us
     CPLAssert(pParent);
 
-    m_osDirectoryName = CPLFormFilename(pParent->m_osDirectoryName.c_str(),
-                                        m_osName.c_str(), nullptr);
+    m_osDirectoryName = CPLFormFilenameSafe(pParent->m_osDirectoryName.c_str(),
+                                            m_osName.c_str(), nullptr);
 
     GDALGroup::ParentRenamed(osNewParentFullName);
 }

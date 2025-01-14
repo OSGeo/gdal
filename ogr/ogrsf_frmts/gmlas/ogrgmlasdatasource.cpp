@@ -468,7 +468,8 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
                 {
                     oFeature.SetField(
                         szVALUE,
-                        CPLFormFilename(pszCurDir, osConfigFile, nullptr));
+                        CPLFormFilenameSafe(pszCurDir, osConfigFile, nullptr)
+                            .c_str());
                 }
                 else
                 {
@@ -520,7 +521,7 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
             CPLIsFilenameRelative(m_osGMLFilename) && pszCurDir != nullptr)
         {
             osAbsoluteGMLFilename =
-                CPLFormFilename(pszCurDir, m_osGMLFilename, nullptr);
+                CPLFormFilenameSafe(pszCurDir, m_osGMLFilename, nullptr);
         }
         else
             osAbsoluteGMLFilename = m_osGMLFilename;
@@ -534,7 +535,7 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
     for (int i = 0; i < static_cast<int>(aoXSDs.size()); i++)
     {
         const CPLString osURI(aoXSDs[i].first);
-        const CPLString osXSDFilename(aoXSDs[i].second);
+        const std::string osXSDFilename(aoXSDs[i].second);
 
         oSetVisitedURI.insert(osURI);
 
@@ -557,10 +558,10 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
             const CPLString osAbsoluteXSDFilename(
                 (osXSDFilename.find("http://") != 0 &&
                  osXSDFilename.find("https://") != 0 &&
-                 CPLIsFilenameRelative(osXSDFilename))
-                    ? CPLString(CPLFormFilename(
+                 CPLIsFilenameRelative(osXSDFilename.c_str()))
+                    ? CPLFormFilenameSafe(
                           CPLGetDirnameSafe(osAbsoluteGMLFilename).c_str(),
-                          osXSDFilename, nullptr))
+                          osXSDFilename.c_str(), nullptr)
                     : osXSDFilename);
             oFeature.SetField(szVALUE, osAbsoluteXSDFilename.c_str());
             CPL_IGNORE_RET_VAL(

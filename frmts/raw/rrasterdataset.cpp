@@ -1183,18 +1183,18 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
     char **papszSiblings = poOpenInfo->GetSiblingFiles();
     if (papszSiblings)
     {
-        int iFile =
-            CSLFindString(papszSiblings,
-                          CPLFormFilename(nullptr, osBasename, osGRIExtension));
+        int iFile = CSLFindString(
+            papszSiblings,
+            CPLFormFilenameSafe(nullptr, osBasename, osGRIExtension).c_str());
         if (iFile < 0)
             return nullptr;
         poDS->m_osGriFilename =
-            CPLFormFilename(osDirname, papszSiblings[iFile], nullptr);
+            CPLFormFilenameSafe(osDirname, papszSiblings[iFile], nullptr);
     }
     else
     {
         poDS->m_osGriFilename =
-            CPLFormFilename(osDirname, osBasename, osGRIExtension);
+            CPLFormFilenameSafe(osDirname, osBasename, osGRIExtension);
     }
 
     VSILFILE *fpImage =

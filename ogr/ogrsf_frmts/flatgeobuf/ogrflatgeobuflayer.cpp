@@ -2459,7 +2459,7 @@ std::string OGRFlatGeobufLayer::GetTempFilePath(const CPLString &fileName,
     const CPLString osBasename(CPLGetBasenameSafe(fileName.c_str()));
     const char *pszTempDir = CSLFetchNameValue(papszOptions, "TEMPORARY_DIR");
     std::string osTempFile =
-        pszTempDir ? CPLFormFilename(pszTempDir, osBasename, nullptr)
+        pszTempDir ? CPLFormFilenameSafe(pszTempDir, osBasename, nullptr)
         : (STARTS_WITH(fileName, "/vsi") && !STARTS_WITH(fileName, "/vsimem/"))
             ? CPLGenerateTempFilenameSafe(osBasename)
             : CPLFormFilenameSafe(osDirname, osBasename, nullptr);

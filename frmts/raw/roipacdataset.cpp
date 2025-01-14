@@ -72,7 +72,7 @@ static CPLString getRscFilename(GDALOpenInfo *poOpenInfo)
     if (papszSiblingFiles == nullptr)
     {
         const CPLString osRscFilename =
-            CPLFormFilename(nullptr, poOpenInfo->pszFilename, "rsc");
+            CPLFormFilenameSafe(nullptr, poOpenInfo->pszFilename, "rsc");
         VSIStatBufL psRscStatBuf;
         if (VSIStatL(osRscFilename, &psRscStatBuf) != 0)
         {
@@ -88,11 +88,11 @@ static CPLString getRscFilename(GDALOpenInfo *poOpenInfo)
     const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
     const CPLString osName = CPLGetFilename(poOpenInfo->pszFilename);
 
-    int iFile = CSLFindString(papszSiblingFiles,
-                              CPLFormFilename(nullptr, osName, "rsc"));
+    int iFile = CSLFindString(
+        papszSiblingFiles, CPLFormFilenameSafe(nullptr, osName, "rsc").c_str());
     if (iFile >= 0)
     {
-        return CPLFormFilename(osPath, papszSiblingFiles[iFile], nullptr);
+        return CPLFormFilenameSafe(osPath, papszSiblingFiles[iFile], nullptr);
     }
 
     return "";
@@ -638,12 +638,13 @@ GDALDataset *ROIPACDataset::Create(const char *pszFilename, int nXSize,
     /* -------------------------------------------------------------------- */
     /*      Open the RSC file.                                              */
     /* -------------------------------------------------------------------- */
-    const char *pszRSCFilename = CPLFormFilename(nullptr, pszFilename, "rsc");
-    fp = VSIFOpenL(pszRSCFilename, "wt");
+    const std::string osRSCFilename =
+        CPLFormFilenameSafe(nullptr, pszFilename, "rsc");
+    fp = VSIFOpenL(osRSCFilename.c_str(), "wt");
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Attempt to create file `%s' failed.", pszRSCFilename);
+                 "Attempt to create file `%s' failed.", osRSCFilename.c_str());
         return nullptr;
     }
 

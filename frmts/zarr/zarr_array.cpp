@@ -2633,10 +2633,11 @@ void ZarrArray::ParentRenamed(const std::string &osNewParentFullName)
     // The parent necessarily exist, since it notified us
     CPLAssert(poParent);
 
-    m_osFilename =
-        CPLFormFilename(CPLFormFilename(poParent->GetDirectoryName().c_str(),
-                                        m_osName.c_str(), nullptr),
-                        CPLGetFilename(m_osFilename.c_str()), nullptr);
+    m_osFilename = CPLFormFilenameSafe(
+        CPLFormFilenameSafe(poParent->GetDirectoryName().c_str(),
+                            m_osName.c_str(), nullptr)
+            .c_str(),
+        CPLGetFilename(m_osFilename.c_str()), nullptr);
 }
 
 /************************************************************************/
@@ -2668,9 +2669,9 @@ bool ZarrArray::Rename(const std::string &osNewName)
     }
 
     const std::string osRootDirectoryName(
-        CPLGetDirname(CPLGetDirnameSafe(m_osFilename.c_str()).c_str()));
-    const std::string osOldDirectoryName =
-        CPLFormFilename(osRootDirectoryName.c_str(), m_osName.c_str(), nullptr);
+        CPLGetDirnameSafe(CPLGetDirnameSafe(m_osFilename.c_str()).c_str()));
+    const std::string osOldDirectoryName = CPLFormFilenameSafe(
+        osRootDirectoryName.c_str(), m_osName.c_str(), nullptr);
     const std::string osNewDirectoryName = CPLFormFilenameSafe(
         osRootDirectoryName.c_str(), osNewName.c_str(), nullptr);
 
@@ -2685,8 +2686,8 @@ bool ZarrArray::Rename(const std::string &osNewName)
                                                  osNewDirectoryName);
 
     m_osFilename =
-        CPLFormFilename(osNewDirectoryName.c_str(),
-                        CPLGetFilename(m_osFilename.c_str()), nullptr);
+        CPLFormFilenameSafe(osNewDirectoryName.c_str(),
+                            CPLGetFilename(m_osFilename.c_str()), nullptr);
 
     if (poParent)
     {

@@ -1139,7 +1139,7 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
                                           "GEN"))
                                 {
                                     bFound = 1;
-                                    osGENFileName = CPLFormFilename(
+                                    osGENFileName = CPLFormFilenameSafe(
                                         osDatasetDir.c_str(), *ptrDir, nullptr);
                                     CPLDebug("SRP",
                                              "Building GEN full file name : %s",
@@ -1168,7 +1168,7 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
                                            osName, 6))
                                 {
                                     bFound = 1;
-                                    osGENFileName = CPLFormFilename(
+                                    osGENFileName = CPLFormFilenameSafe(
                                         osDirName.c_str(), *ptrDir, nullptr);
                                     CPLDebug("SRP",
                                              "Building GEN full file name : %s",
@@ -1406,7 +1406,7 @@ char **SRPDataset::GetIMGListFromGEN(const char *pszFileName,
             const CPLString osGENDir(CPLGetDirnameSafe(pszFileName));
 
             const CPLString osFileName =
-                CPLFormFilename(osGENDir.c_str(), osBAD.c_str(), nullptr);
+                CPLFormFilenameSafe(osGENDir.c_str(), osBAD.c_str(), nullptr);
             VSIStatBufL sStatBuf;
             if (VSIStatL(osFileName, &sStatBuf) == 0)
             {
@@ -1429,8 +1429,8 @@ char **SRPDataset::GetIMGListFromGEN(const char *pszFileName,
                 {
                     if (EQUAL(*ptrDir, osBAD.c_str()))
                     {
-                        osBAD =
-                            CPLFormFilename(osGENDir.c_str(), *ptrDir, nullptr);
+                        osBAD = CPLFormFilenameSafe(osGENDir.c_str(), *ptrDir,
+                                                    nullptr);
                         CPLDebug("SRP", "Building IMG full file name : %s",
                                  osBAD.c_str());
                         break;

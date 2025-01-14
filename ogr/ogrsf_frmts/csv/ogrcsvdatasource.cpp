@@ -652,7 +652,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
     for (int i = 0; papszNames != nullptr && papszNames[i] != nullptr; i++)
     {
         const CPLString oSubFilename =
-            CPLFormFilename(osFilename, papszNames[i], nullptr);
+            CPLFormFilenameSafe(osFilename, papszNames[i], nullptr);
 
         if (EQUAL(papszNames[i], ".") || EQUAL(papszNames[i], ".."))
             continue;

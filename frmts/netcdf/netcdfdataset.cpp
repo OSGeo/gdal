@@ -6662,8 +6662,8 @@ OGRLayer *netCDFDataset::ICreateLayer(const char *pszName,
         papszDatasetOptions = CSLSetNameValue(
             papszDatasetOptions, "WRITE_GDAL_TAGS",
             CSLFetchNameValue(papszCreationOptions, "WRITE_GDAL_TAGS"));
-        CPLString osLayerFilename(
-            CPLFormFilename(osFilename, osNetCDFLayerName, "nc"));
+        const CPLString osLayerFilename(
+            CPLFormFilenameSafe(osFilename, osNetCDFLayerName, "nc"));
         CPLAcquireMutex(hNCMutex, 1000.0);
         poLayerDataset =
             CreateLL(osLayerFilename, 0, 0, 0, papszDatasetOptions);

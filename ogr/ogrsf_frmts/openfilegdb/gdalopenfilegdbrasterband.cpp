@@ -52,9 +52,9 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
 
     FileGDBTable oTable;
 
-    const CPLString osBndFilename(CPLFormFilename(
+    const std::string osBndFilename(CPLFormFilenameSafe(
         m_osDirName, CPLSPrintf("a%08x.gdbtable", nBndIdx), nullptr));
-    if (!oTable.Open(osBndFilename, false))
+    if (!oTable.Open(osBndFilename.c_str(), false))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open table %s",
                  osBndTableName.c_str());
@@ -454,9 +454,9 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
 
             FileGDBTable oTableMain;
 
-            const CPLString osTableMain(CPLFormFilename(
+            const std::string osTableMain(CPLFormFilenameSafe(
                 m_osDirName, CPLSPrintf("a%08x.gdbtable", nTableIdx), nullptr));
-            if (oTableMain.Open(osTableMain, false))
+            if (oTableMain.Open(osTableMain.c_str(), false))
             {
                 const int iRasterFieldIdx = oTableMain.GetFieldIdx("RASTER");
                 if (iRasterFieldIdx >= 0)

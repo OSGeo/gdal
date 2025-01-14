@@ -1072,8 +1072,8 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
         for (int i = 0; papszFileList != nullptr && papszFileList[i] != nullptr;
              i++)
         {
-            CPLString osFullFilename =
-                CPLFormFilename(osTmpFileName, papszFileList[i], nullptr);
+            const CPLString osFullFilename =
+                CPLFormFilenameSafe(osTmpFileName, papszFileList[i], nullptr);
             hDrv = GDALIdentifyDriver(osFullFilename, nullptr);
             if (hDrv != nullptr && hDrv == GDALGetDriverByName("GML"))
                 papszOpenOptions = apszGMLOpenOptions;

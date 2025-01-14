@@ -131,7 +131,7 @@ static CPLErr OGROpenFileGDBDriverDelete(const char *pszFilename)
         if (strcmp(aosFiles[i], ".") != 0 && strcmp(aosFiles[i], "..") != 0)
         {
             const std::string osFilename(
-                CPLFormFilename(pszFilename, aosFiles[i], nullptr));
+                CPLFormFilenameSafe(pszFilename, aosFiles[i], nullptr));
             if (VSIUnlink(osFilename.c_str()) != 0)
             {
                 CPLError(CE_Failure, CPLE_FileIO, "Cannot delete %s",

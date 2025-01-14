@@ -331,8 +331,8 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
         VSIStatBufL sStat;
         if (!osBasePath.empty() && osBasePath.back() == '/')
             osBasePath.pop_back();
-        std::string osMetadataPath =
-            CPLFormFilename(osBasePath.c_str(), "_metadata", nullptr);
+        const std::string osMetadataPath =
+            CPLFormFilenameSafe(osBasePath.c_str(), "_metadata", nullptr);
         if (CPLTestBool(
                 CPLGetConfigOption("OGR_PARQUET_USE_METADATA_FILE", "YES")) &&
             VSIStatL((osMetadataPath + osQueryParameters).c_str(), &sStat) == 0)
@@ -371,8 +371,9 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
                     else if (strchr(pszFilename, '='))
                     {
                         // HIVE partitioning
-                        if (VSIStatL(CPLFormFilename(osBasePath.c_str(),
-                                                     pszFilename, nullptr),
+                        if (VSIStatL(CPLFormFilenameSafe(osBasePath.c_str(),
+                                                         pszFilename, nullptr)
+                                         .c_str(),
                                      &sStat) == 0 &&
                             VSI_ISDIR(sStat.st_mode))
                         {

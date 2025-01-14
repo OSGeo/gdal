@@ -1589,11 +1589,11 @@ void OGRMVTDirectoryLayer::ReadNewSubDir()
                          : (1 << m_nZ)))
     {
         m_aosSubDirName =
-            CPLFormFilename(m_osDirName,
-                            (m_bUseReadDir || !m_aosDirContent.empty())
-                                ? m_aosDirContent[m_nXIndex]
-                                : CPLSPrintf("%d", m_nXIndex),
-                            nullptr);
+            CPLFormFilenameSafe(m_osDirName,
+                                (m_bUseReadDir || !m_aosDirContent.empty())
+                                    ? m_aosDirContent[m_nXIndex]
+                                    : CPLSPrintf("%d", m_nXIndex),
+                                nullptr);
         if (m_bUseReadDir)
         {
             m_aosSubDirContent =
@@ -1851,7 +1851,7 @@ OGRFeature *OGRMVTDirectoryLayer::GetFeature(GIntBig nFID)
     const int nY = static_cast<int>((nFID >> m_nZ) & ((1 << m_nZ) - 1));
     const GIntBig nTileFID = nFID >> (2 * m_nZ);
     const CPLString osFilename = CPLFormFilenameSafe(
-        CPLFormFilename(m_osDirName, CPLSPrintf("%d", nX), nullptr),
+        CPLFormFilenameSafe(m_osDirName, CPLSPrintf("%d", nX), nullptr).c_str(),
         CPLSPrintf("%d.%s", nY, m_poDS->m_osTileExtension.c_str()), nullptr);
     GDALOpenInfo oOpenInfo(("MVT:" + osFilename).c_str(), GA_ReadOnly);
     oOpenInfo.papszOpenOptions = CSLSetNameValue(
@@ -1977,8 +1977,8 @@ static int OGRMVTDriverIdentify(GDALOpenInfo *poOpenInfo)
                 // If opening /path/to/foo/0, try looking for /path/to/foo.json
                 CPLString osParentDir(CPLGetPathSafe(poOpenInfo->pszFilename));
                 osMetadataFile =
-                    CPLFormFilename(CPLGetPathSafe(osParentDir).c_str(),
-                                    CPLGetFilename(osParentDir), "json");
+                    CPLFormFilenameSafe(CPLGetPathSafe(osParentDir).c_str(),
+                                        CPLGetFilename(osParentDir), "json");
                 if (VSIStatL(osMetadataFile, &sStat) == 0)
                 {
                     return TRUE;
@@ -2588,9 +2588,9 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                     // /path/to/foo.json
                     CPLString osParentDir(
                         CPLGetPathSafe(poOpenInfo->pszFilename));
-                    osMetadataFile =
-                        CPLFormFilename(CPLGetPathSafe(osParentDir).c_str(),
-                                        CPLGetFilename(osParentDir), "json");
+                    osMetadataFile = CPLFormFilenameSafe(
+                        CPLGetPathSafe(osParentDir).c_str(),
+                        CPLGetFilename(osParentDir), "json");
                     continue;
                 }
             }
@@ -2674,7 +2674,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                         continue;
                     }
                 }
-                CPLString osFilename(CPLFormFilename(
+                const std::string osFilename(CPLFormFilenameSafe(
                     osSubDir,
                     bTryToListDir
                         ? aosSubDirContent[j]
@@ -5290,24 +5290,25 @@ bool OGRMVTWriterDataset::CreateOutput()
         }
         else
         {
-            CPLString osZDirname(CPLFormFilename(
+            const std::string osZDirname(CPLFormFilenameSafe(
                 GetDescription(), CPLSPrintf("%d", nZ), nullptr));
-            CPLString osXDirname(
-                CPLFormFilename(osZDirname, CPLSPrintf("%d", nX), nullptr));
+            const std::string osXDirname(CPLFormFilenameSafe(
+                osZDirname.c_str(), CPLSPrintf("%d", nX), nullptr));
             if (nZ != nLastZ)
             {
-                VSIMkdir(osZDirname, 0755);
+                VSIMkdir(osZDirname.c_str(), 0755);
                 nLastZ = nZ;
                 nLastX = -1;
             }
             if (nX != nLastX)
             {
-                VSIMkdir(osXDirname, 0755);
+                VSIMkdir(osXDirname.c_str(), 0755);
                 nLastX = nX;
             }
-            CPLString osTileFilename(CPLFormFilename(
-                osXDirname, CPLSPrintf("%d", nY), m_osExtension.c_str()));
-            VSILFILE *fpOut = VSIFOpenL(osTileFilename, "wb");
+            const std::string osTileFilename(
+                CPLFormFilenameSafe(osXDirname.c_str(), CPLSPrintf("%d", nY),
+                                    m_osExtension.c_str()));
+            VSILFILE *fpOut = VSIFOpenL(osTileFilename.c_str(), "wb");
             if (fpOut)
             {
                 const size_t nRet = VSIFWriteL(oTileBuffer.data(), 1,
@@ -5699,7 +5700,7 @@ bool OGRMVTWriterDataset::GenerateMetadata(
     }
 
     return oDoc.Save(
-        CPLFormFilename(GetDescription(), "metadata.json", nullptr));
+        CPLFormFilenameSafe(GetDescription(), "metadata.json", nullptr));
 }
 
 /************************************************************************/

@@ -806,8 +806,10 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
         // So technically, we will not be any longer a single file
         // datasource ... Ahem ahem.
         char *pszPath = CPLStrdup(CPLGetPathSafe(GetDescription()).c_str());
-        pszFilenameWithoutExt = CPLStrdup(CPLFormFilename(
-            pszPath, LaunderLayerName(pszLayerName).c_str(), nullptr));
+        pszFilenameWithoutExt = CPLStrdup(
+            CPLFormFilenameSafe(pszPath, LaunderLayerName(pszLayerName).c_str(),
+                                nullptr)
+                .c_str());
         CPLFree(pszPath);
     }
     else
@@ -815,8 +817,10 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
         const std::string osDir(m_osTemporaryUnzipDir.empty()
                                     ? std::string(GetDescription())
                                     : m_osTemporaryUnzipDir);
-        pszFilenameWithoutExt = CPLStrdup(CPLFormFilename(
-            osDir.c_str(), LaunderLayerName(pszLayerName).c_str(), nullptr));
+        pszFilenameWithoutExt = CPLStrdup(
+            CPLFormFilenameSafe(osDir.c_str(),
+                                LaunderLayerName(pszLayerName).c_str(), nullptr)
+                .c_str());
     }
 
     /* -------------------------------------------------------------------- */
@@ -1525,8 +1529,8 @@ bool OGRShapeDataSource::UncompressIfNeeded()
         const char *pszFilename = aosFiles[i];
         if (!EQUAL(pszFilename, ".") && !EQUAL(pszFilename, ".."))
         {
-            CPLString osSrcFile(
-                CPLFormFilename(osVSIZipDirname, pszFilename, nullptr));
+            const CPLString osSrcFile(
+                CPLFormFilenameSafe(osVSIZipDirname, pszFilename, nullptr));
             VSIStatBufL sStat;
             if (VSIStatL(osSrcFile, &sStat) == 0)
             {
@@ -1557,10 +1561,10 @@ bool OGRShapeDataSource::UncompressIfNeeded()
         const char *pszFilename = aosFiles[i];
         if (!EQUAL(pszFilename, ".") && !EQUAL(pszFilename, ".."))
         {
-            CPLString osSrcFile(
-                CPLFormFilename(osVSIZipDirname, pszFilename, nullptr));
-            CPLString osDestFile(
-                CPLFormFilename(osTemporaryDir, pszFilename, nullptr));
+            const CPLString osSrcFile(
+                CPLFormFilenameSafe(osVSIZipDirname, pszFilename, nullptr));
+            const CPLString osDestFile(
+                CPLFormFilenameSafe(osTemporaryDir, pszFilename, nullptr));
             if (CPLCopyFile(osDestFile, osSrcFile) != 0)
             {
                 VSIRmdirRecursive(osTemporaryDir);
@@ -1612,8 +1616,8 @@ bool OGRShapeDataSource::RecompressIfNeeded(
     for (int i = 0; i < aosFiles.size(); i++)
     {
         sortedFiles.emplace_back(aosFiles[i]);
-        CPLString osSrcFile(
-            CPLFormFilename(m_osTemporaryUnzipDir, aosFiles[i], nullptr));
+        const CPLString osSrcFile(
+            CPLFormFilenameSafe(m_osTemporaryUnzipDir, aosFiles[i], nullptr));
         VSIStatBufL sStat;
         if (VSIStatL(osSrcFile, &sStat) == 0)
         {
@@ -1668,10 +1672,10 @@ bool OGRShapeDataSource::RecompressIfNeeded(
         const char *pszFilename = osFilename.c_str();
         if (!EQUAL(pszFilename, ".") && !EQUAL(pszFilename, ".."))
         {
-            CPLString osSrcFile(
-                CPLFormFilename(m_osTemporaryUnzipDir, pszFilename, nullptr));
-            CPLString osDestFile(
-                CPLFormFilename(osTmpZipWithVSIZip, pszFilename, nullptr));
+            const CPLString osSrcFile(CPLFormFilenameSafe(
+                m_osTemporaryUnzipDir, pszFilename, nullptr));
+            const CPLString osDestFile(
+                CPLFormFilenameSafe(osTmpZipWithVSIZip, pszFilename, nullptr));
             if (CPLCopyFile(osDestFile, osSrcFile) != 0)
             {
                 VSIFCloseL(fpZIP);

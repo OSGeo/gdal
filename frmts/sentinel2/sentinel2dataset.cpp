@@ -878,7 +878,7 @@ static bool SENTINEL2GetGranuleInfo(
 /************************************************************************/
 
 // For the sake of simplifying our unit tests, we limit the use of \\ to when
-// it is strictly necessary. Otherwise we could use CPLFormFilename()...
+// it is strictly necessary. Otherwise we could use CPLFormFilenameSafe()...
 static char SENTINEL2GetPathSeparator(const char *pszBasename)
 {
     if (STARTS_WITH_CI(pszBasename, "\\\\?\\"))
@@ -1726,8 +1726,10 @@ static CPLString
 SENTINEL2GetMainMTDFilenameFromGranuleMTD(const char *pszFilename)
 {
     // Look for product MTD file
-    CPLString osTopDir(CPLFormFilename(
-        CPLFormFilename(CPLGetDirnameSafe(pszFilename).c_str(), "..", nullptr),
+    CPLString osTopDir(CPLFormFilenameSafe(
+        CPLFormFilenameSafe(CPLGetDirnameSafe(pszFilename).c_str(), "..",
+                            nullptr)
+            .c_str(),
         "..", nullptr));
 
     // Workaround to avoid long filenames on Windows

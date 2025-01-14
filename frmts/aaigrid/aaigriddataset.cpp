@@ -1223,7 +1223,7 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
     char *const pszBasename =
         CPLStrdup(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str());
 
-    poDS->osPrjFilename = CPLFormFilename(pszDirname, pszBasename, "prj");
+    poDS->osPrjFilename = CPLFormFilenameSafe(pszDirname, pszBasename, "prj");
     int nRet = 0;
     {
         VSIStatBufL sStatBuf;
@@ -1231,7 +1231,8 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
     }
     if (nRet != 0 && VSIIsCaseSensitiveFS(poDS->osPrjFilename))
     {
-        poDS->osPrjFilename = CPLFormFilename(pszDirname, pszBasename, "PRJ");
+        poDS->osPrjFilename =
+            CPLFormFilenameSafe(pszDirname, pszBasename, "PRJ");
 
         VSIStatBufL sStatBuf;
         nRet = VSIStatL(poDS->osPrjFilename, &sStatBuf);

@@ -2863,16 +2863,16 @@ OGRErr OGRShapeLayer::Repack()
         {
             if (EQUAL(osCandidateExtension, "dbf"))
                 osDBFName =
-                    CPLFormFilename(osDirname, papszCandidates[i], nullptr);
+                    CPLFormFilenameSafe(osDirname, papszCandidates[i], nullptr);
             else if (EQUAL(osCandidateExtension, "shp"))
                 osSHPName =
-                    CPLFormFilename(osDirname, papszCandidates[i], nullptr);
+                    CPLFormFilenameSafe(osDirname, papszCandidates[i], nullptr);
             else if (EQUAL(osCandidateExtension, "shx"))
                 osSHXName =
-                    CPLFormFilename(osDirname, papszCandidates[i], nullptr);
+                    CPLFormFilenameSafe(osDirname, papszCandidates[i], nullptr);
             else if (EQUAL(osCandidateExtension, "cpg"))
                 osCPGName =
-                    CPLFormFilename(osDirname, papszCandidates[i], nullptr);
+                    CPLFormFilenameSafe(osDirname, papszCandidates[i], nullptr);
         }
 
         i++;
@@ -2927,7 +2927,7 @@ OGRErr OGRShapeLayer::Repack()
         CPLDebug("Shape", "REPACK: repacking .dbf");
         bMustReopenDBF = true;
 
-        oTempFileDBF = CPLFormFilename(osDirname, osBasename, nullptr);
+        oTempFileDBF = CPLFormFilenameSafe(osDirname, osBasename, nullptr);
         oTempFileDBF += "_packed.dbf";
 
         DBFHandle hNewDBF = DBFCloneEmpty(hDBF, oTempFileDBF);
@@ -2942,7 +2942,7 @@ OGRErr OGRShapeLayer::Repack()
         if (!osCPGName.empty())
         {
             CPLString oCPGTempFile =
-                CPLFormFilename(osDirname, osBasename, nullptr);
+                CPLFormFilenameSafe(osDirname, osBasename, nullptr);
             oCPGTempFile += "_packed.cpg";
             ForceDeleteFile(oCPGTempFile);
         }
@@ -3013,9 +3013,9 @@ OGRErr OGRShapeLayer::Repack()
     {
         CPLDebug("Shape", "REPACK: repacking .shp + .shx");
 
-        oTempFileSHP = CPLFormFilename(osDirname, osBasename, nullptr);
+        oTempFileSHP = CPLFormFilenameSafe(osDirname, osBasename, nullptr);
         oTempFileSHP += "_packed.shp";
-        oTempFileSHX = CPLFormFilename(osDirname, osBasename, nullptr);
+        oTempFileSHX = CPLFormFilenameSafe(osDirname, osBasename, nullptr);
         oTempFileSHX += "_packed.shx";
 
         SHPHandle hNewSHP = SHPCreate(oTempFileSHP, hSHP->nShapeType);
@@ -3732,14 +3732,17 @@ void OGRShapeLayer::UpdateFollowingDeOrRecompression()
         OGRShapeGeomFieldDefn *poGeomFieldDefn =
             cpl::down_cast<OGRShapeGeomFieldDefn *>(
                 GetLayerDefn()->GetGeomFieldDefn(0));
-        poGeomFieldDefn->SetPrjFilename(CPLFormFilename(
-            osDSDir.c_str(),
-            CPLGetFilename(poGeomFieldDefn->GetPrjFilename().c_str()),
-            nullptr));
+        poGeomFieldDefn->SetPrjFilename(
+            CPLFormFilenameSafe(
+                osDSDir.c_str(),
+                CPLGetFilename(poGeomFieldDefn->GetPrjFilename().c_str()),
+                nullptr)
+                .c_str());
     }
 
     char *pszNewFullName = CPLStrdup(
-        CPLFormFilename(osDSDir, CPLGetFilename(pszFullName), nullptr));
+        CPLFormFilenameSafe(osDSDir, CPLGetFilename(pszFullName), nullptr)
+            .c_str());
     CPLFree(pszFullName);
     pszFullName = pszNewFullName;
     CloseUnderlyingLayer();
@@ -3771,8 +3774,8 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
     for (int i = 0; i < oFileList.size(); ++i)
     {
         const std::string osRenamedFile =
-            CPLFormFilename(osDirname.c_str(), pszNewName,
-                            CPLGetExtensionSafe(oFileList[i]).c_str());
+            CPLFormFilenameSafe(osDirname.c_str(), pszNewName,
+                                CPLGetExtensionSafe(oFileList[i]).c_str());
         VSIStatBufL sStat;
         if (VSIStatL(osRenamedFile.c_str(), &sStat) == 0)
         {
@@ -3787,8 +3790,8 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
     for (int i = 0; i < oFileList.size(); ++i)
     {
         const std::string osRenamedFile =
-            CPLFormFilename(osDirname.c_str(), pszNewName,
-                            CPLGetExtensionSafe(oFileList[i]).c_str());
+            CPLFormFilenameSafe(osDirname.c_str(), pszNewName,
+                                CPLGetExtensionSafe(oFileList[i]).c_str());
         if (VSIRename(oFileList[i], osRenamedFile.c_str()) != 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot rename %s to %s",

@@ -476,7 +476,7 @@ char **OGRTABDataSource::GetFileList()
                     apszExtensions,
                     CPLGetExtensionSafe(papszDirEntries[iFile]).c_str()) != -1)
             {
-                osList.AddString(CPLFormFilename(
+                osList.push_back(CPLFormFilenameSafe(
                     GetDescription(), papszDirEntries[iFile], nullptr));
             }
         }

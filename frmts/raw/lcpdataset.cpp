@@ -745,13 +745,14 @@ GDALDataset *LCPDataset::Open(GDALOpenInfo *poOpenInfo)
     char *const pszBasename =
         CPLStrdup(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str());
 
-    poDS->osPrjFilename = CPLFormFilename(pszDirname, pszBasename, "prj");
+    poDS->osPrjFilename = CPLFormFilenameSafe(pszDirname, pszBasename, "prj");
     VSIStatBufL sStatBuf;
     int nRet = VSIStatL(poDS->osPrjFilename, &sStatBuf);
 
     if (nRet != 0 && VSIIsCaseSensitiveFS(poDS->osPrjFilename))
     {
-        poDS->osPrjFilename = CPLFormFilename(pszDirname, pszBasename, "PRJ");
+        poDS->osPrjFilename =
+            CPLFormFilenameSafe(pszDirname, pszBasename, "PRJ");
         nRet = VSIStatL(poDS->osPrjFilename, &sStatBuf);
     }
 

@@ -81,7 +81,7 @@ GDALDataset *OGRLVBAGDriverOpen(GDALOpenInfo *poOpenInfo)
                 continue;
 
             const CPLString oSubFilename =
-                CPLFormFilename(pszFilename, papszNames[i], nullptr);
+                CPLFormFilenameSafe(pszFilename, papszNames[i], nullptr);
 
             if (EQUAL(papszNames[i], ".") || EQUAL(papszNames[i], ".."))
                 continue;

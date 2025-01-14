@@ -1550,7 +1550,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     if (pszIncidenceAngleFileName != nullptr)
     {
         CPLString osIncidenceAngleFilePath = CPLFormFilenameSafe(
-            CPLFormFilename(osPath, CALIBRATION_FOLDER, nullptr),
+            CPLFormFilenameSafe(osPath, CALIBRATION_FOLDER, nullptr).c_str(),
             pszIncidenceAngleFileName, nullptr);
 
         /* Check if the file exist */
@@ -1662,7 +1662,8 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                  */
 
                 const CPLString oNoiseLevelPath = CPLFormFilenameSafe(
-                    CPLFormFilename(osPath, CALIBRATION_FOLDER, nullptr),
+                    CPLFormFilenameSafe(osPath, CALIBRATION_FOLDER, nullptr)
+                        .c_str(),
                     pszNoiseLevelFile, nullptr);
                 if (IsValidXMLFile(oNoiseLevelPath))
                 {
@@ -1718,7 +1719,8 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 /* --------------------------------------------------------------------
                  */
                 const CPLString osLUTFilePath = CPLFormFilenameSafe(
-                    CPLFormFilename(osPath, CALIBRATION_FOLDER, nullptr),
+                    CPLFormFilenameSafe(osPath, CALIBRATION_FOLDER, nullptr)
+                        .c_str(),
                     pszLUTFile, nullptr);
 
                 if (EQUAL(pszLUTType, "Beta Nought") &&

@@ -663,7 +663,7 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
                         {
                             CPLString osPath =
                                 CPLGetPathSafe(osMDFilename.c_str());
-                            osImageDSFilename = CPLFormFilename(
+                            osImageDSFilename = CPLFormFilenameSafe(
                                 osPath, pszDataFileHref, nullptr);
                         }
                     }

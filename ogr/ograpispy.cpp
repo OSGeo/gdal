@@ -476,7 +476,7 @@ int OGRAPISpyOpenTakeSnapshot(const char *pszName, int bUpdate)
             CPLString osWorkingDir;
             while (true)
             {
-                osBaseDir = CPLFormFilename(
+                osBaseDir = CPLFormFilenameSafe(
                     osSnapshotPath, CPLSPrintf("snapshot_%d", i), nullptr);
                 if (VSIStatL(osBaseDir, &sStat) != 0)
                     break;
@@ -533,7 +533,7 @@ void OGRAPISpyOpen(const char *pszName, int bUpdate, int iSnapshot,
         CPLString osWorkingDir =
             CPLFormFilenameSafe(osBaseDir, "working", nullptr);
         osName =
-            CPLFormFilename(osWorkingDir, CPLGetFilename(pszName), nullptr);
+            CPLFormFilenameSafe(osWorkingDir, CPLGetFilename(pszName), nullptr);
         pszName = osName.c_str();
 
         if (*phDS != nullptr)

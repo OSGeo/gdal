@@ -866,7 +866,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
                 CPLGetXMLValue(psNode, "incidenceAngleCorrection", "");
             const char *pszLUTFile = CPLGetXMLValue(psNode, "", "");
             CPLString osLUTFilePath =
-                CPLFormFilename(pszPath, pszLUTFile, nullptr);
+                CPLFormFilenameSafe(pszPath, pszLUTFile, nullptr);
 
             if (EQUAL(pszLUTType, ""))
                 continue;

@@ -661,9 +661,11 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
             // Check if it was not intended to be "./X/" instead.
             VSIStatBufL sStatBuf;
             if (frameEntry->directory[0] == '/' &&
-                VSIStatL(CPLFormFilename(CPLGetDirnameSafe(pszFilename).c_str(),
-                                         frameEntry->directory + 1, nullptr),
-                         &sStatBuf) == 0 &&
+                VSIStatL(
+                    CPLFormFilenameSafe(CPLGetDirnameSafe(pszFilename).c_str(),
+                                        frameEntry->directory + 1, nullptr)
+                        .c_str(),
+                    &sStatBuf) == 0 &&
                 VSI_ISDIR(sStatBuf.st_mode))
             {
                 memmove(frameEntry->directory, frameEntry->directory + 1,
@@ -682,7 +684,8 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
                 subdir = CPLStrdup(baseDir);
             else
                 subdir = CPLStrdup(
-                    CPLFormFilename(baseDir, frameEntry->directory, nullptr));
+                    CPLFormFilenameSafe(baseDir, frameEntry->directory, nullptr)
+                        .c_str());
 #if !defined(_WIN32) && !defined(_WIN32_CE)
             if (VSIStatL(subdir, &sStatBuf) != 0 &&
                 strlen(subdir) > strlen(baseDir))
@@ -697,7 +700,8 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
             }
 #endif
             frameEntry->fullFilePath = CPLStrdup(
-                CPLFormFilename(subdir, frameEntry->filename, nullptr));
+                CPLFormFilenameSafe(subdir, frameEntry->filename, nullptr)
+                    .c_str());
             if (VSIStatL(frameEntry->fullFilePath, &sStatBuf) != 0)
             {
 #if !defined(_WIN32) && !defined(_WIN32_CE)

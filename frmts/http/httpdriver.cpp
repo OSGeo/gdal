@@ -179,8 +179,8 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
 #else
         const char *pszPath = "/tmp";
 #endif
-        osTempFilename =
-            CPLFormFilename(pszPath, CPLGetFilename(osResultFilename), nullptr);
+        osTempFilename = CPLFormFilenameSafe(
+            pszPath, CPLGetFilename(osResultFilename), nullptr);
         if (CPLCopyFile(osTempFilename, osResultFilename) != 0)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,

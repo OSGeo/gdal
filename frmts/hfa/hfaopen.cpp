@@ -280,7 +280,7 @@ HFAInfo_t *HFACreateDependent(HFAInfo_t *psBase)
     // Create desired RRD filename.
     const CPLString oBasename = CPLGetBasenameSafe(psBase->pszFilename);
     const CPLString oRRDFilename =
-        CPLFormFilename(psBase->pszPath, oBasename, "rrd");
+        CPLFormFilenameSafe(psBase->pszPath, oBasename, "rrd");
 
     // Does this file already exist?  If so, re-use it.
     VSILFILE *fp = VSIFOpenL(oRRDFilename, "rb");
@@ -531,8 +531,9 @@ CPLErr HFADelete(const char *pszFilename)
                 poDMS->GetStringField("fileName.string");
 
             if (pszRawFilename != nullptr)
-                HFARemove(
-                    CPLFormFilename(psInfo->pszPath, pszRawFilename, nullptr));
+                HFARemove(CPLFormFilenameSafe(psInfo->pszPath, pszRawFilename,
+                                              nullptr)
+                              .c_str());
         }
 
         CPL_IGNORE_RET_VAL(HFAClose(psInfo));
@@ -2881,7 +2882,7 @@ CPLErr HFASetMetadata(HFAHandle hHFA, int nBand, char **papszMD)
 /*      NOTE: Returns full path, not just the filename portion.         */
 /************************************************************************/
 
-const char *HFAGetIGEFilename(HFAHandle hHFA)
+std::string HFAGetIGEFilename(HFAHandle hHFA)
 
 {
     if (hHFA->pszIGEFilename == nullptr)
@@ -2900,10 +2901,10 @@ const char *HFAGetIGEFilename(HFAHandle hHFA)
             if (pszRawFilename != nullptr)
             {
                 VSIStatBufL sStatBuf;
-                CPLString osFullFilename =
-                    CPLFormFilename(hHFA->pszPath, pszRawFilename, nullptr);
+                std::string osFullFilename =
+                    CPLFormFilenameSafe(hHFA->pszPath, pszRawFilename, nullptr);
 
-                if (VSIStatL(osFullFilename, &sStatBuf) != 0)
+                if (VSIStatL(osFullFilename.c_str(), &sStatBuf) != 0)
                 {
                     const CPLString osExtension =
                         CPLGetExtensionSafe(pszRawFilename);
@@ -2912,7 +2913,7 @@ const char *HFAGetIGEFilename(HFAHandle hHFA)
                     osFullFilename = CPLFormFilenameSafe(
                         hHFA->pszPath, osBasename, osExtension);
 
-                    if (VSIStatL(osFullFilename, &sStatBuf) == 0)
+                    if (VSIStatL(osFullFilename.c_str(), &sStatBuf) == 0)
                         hHFA->pszIGEFilename =
                             CPLStrdup(CPLFormFilenameSafe(nullptr, osBasename,
                                                           osExtension)
@@ -2930,9 +2931,10 @@ const char *HFAGetIGEFilename(HFAHandle hHFA)
 
     // Return the full filename.
     if (hHFA->pszIGEFilename)
-        return CPLFormFilename(hHFA->pszPath, hHFA->pszIGEFilename, nullptr);
+        return CPLFormFilenameSafe(hHFA->pszPath, hHFA->pszIGEFilename,
+                                   nullptr);
 
-    return nullptr;
+    return std::string();
 }
 
 /************************************************************************/
@@ -2970,7 +2972,8 @@ bool HFACreateSpillStack(HFAInfo_t *psInfo, int nXSize, int nYSize, int nLayers,
     }
 
     char *pszFullFilename = CPLStrdup(
-        CPLFormFilename(psInfo->pszPath, psInfo->pszIGEFilename, nullptr));
+        CPLFormFilenameSafe(psInfo->pszPath, psInfo->pszIGEFilename, nullptr)
+            .c_str());
 
     // Try and open it.  If we fail, create it and write the magic header.
     static const char *const pszMagick = "ERDAS_IMG_EXTERNAL_RASTER";

@@ -1420,10 +1420,11 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
             std::string osDirName = m_osDirectoryName;
             while (true)
             {
-                const std::string osArrayFilenameDim =
-                    CPLFormFilename(CPLFormFilename(osDirName.c_str(),
-                                                    osDimName.c_str(), nullptr),
-                                    ".zarray", nullptr);
+                const std::string osArrayFilenameDim = CPLFormFilenameSafe(
+                    CPLFormFilenameSafe(osDirName.c_str(), osDimName.c_str(),
+                                        nullptr)
+                        .c_str(),
+                    ".zarray", nullptr);
                 VSIStatBufL sStat;
                 if (VSIStatL(osArrayFilenameDim.c_str(), &sStat) == 0)
                 {
@@ -1898,8 +1899,9 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
         if (m_oMapMDArrays.find(gridMappingName) == m_oMapMDArrays.end())
         {
             const std::string osArrayFilenameDim = CPLFormFilenameSafe(
-                CPLFormFilename(m_osDirectoryName.c_str(),
-                                gridMappingName.c_str(), nullptr),
+                CPLFormFilenameSafe(m_osDirectoryName.c_str(),
+                                    gridMappingName.c_str(), nullptr)
+                    .c_str(),
                 ".zarray", nullptr);
             VSIStatBufL sStat;
             if (VSIStatL(osArrayFilenameDim.c_str(), &sStat) == 0)

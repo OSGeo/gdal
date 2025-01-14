@@ -1206,8 +1206,9 @@ GDALDataset *OGRVDVDataSource::Open(GDALOpenInfo *poOpenInfo)
         // And check that one of those files is a VDV one if it isn't .x10
         if (osMajorityExtension != "x10")
         {
-            GDALOpenInfo oOpenInfo(CPLFormFilename(poOpenInfo->pszFilename,
-                                                   osMajorityFile, nullptr),
+            GDALOpenInfo oOpenInfo(CPLFormFilenameSafe(poOpenInfo->pszFilename,
+                                                       osMajorityFile, nullptr)
+                                       .c_str(),
                                    GA_ReadOnly);
             if (OGRVDVDriverIdentify(&oOpenInfo) != TRUE)
             {
@@ -1228,9 +1229,11 @@ GDALDataset *OGRVDVDataSource::Open(GDALOpenInfo *poOpenInfo)
             if (!EQUAL(CPLGetExtensionSafe(*papszIter).c_str(),
                        osMajorityExtension))
                 continue;
-            VSILFILE *fp = VSIFOpenL(
-                CPLFormFilename(poOpenInfo->pszFilename, *papszIter, nullptr),
-                "rb");
+            VSILFILE *fp =
+                VSIFOpenL(CPLFormFilenameSafe(poOpenInfo->pszFilename,
+                                              *papszIter, nullptr)
+                              .c_str(),
+                          "rb");
             if (fp == nullptr)
                 continue;
             poDS->m_papoLayers = static_cast<OGRLayer **>(
@@ -1915,8 +1918,8 @@ OGRVDVDataSource::ICreateLayer(const char *pszLayerName,
     {
         CPLString osExtension =
             CSLFetchNameValueDef(papszOptions, "EXTENSION", "x10");
-        CPLString osFilename =
-            CPLFormFilename(m_osFilename, pszLayerName, osExtension);
+        const CPLString osFilename =
+            CPLFormFilenameSafe(m_osFilename, pszLayerName, osExtension);
         fpL = VSIFOpenL(osFilename, "wb");
         if (fpL == nullptr)
         {

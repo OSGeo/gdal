@@ -388,8 +388,8 @@ int OGRSelafinDataSource::Open(const char *pszFilename, int bUpdateIn,
     char **papszNames = VSIReadDir(osFilename);
     for (i = 0; papszNames != NULL && papszNames[i] != NULL; i++)
     {
-        CPLString oSubFilename =
-            CPLFormFilename(osFilename, papszNames[i], NULL);
+        const CPLString oSubFilename =
+            CPLFormFilenameSafe(osFilename, papszNames[i], NULL);
         if (EQUAL(papszNames[i], ".") || EQUAL(papszNames[i], ".."))
             continue;
         if (VSIStatL(oSubFilename, &sStatBuf) != 0 ||

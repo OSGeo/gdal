@@ -2871,9 +2871,11 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "T.rel" : "T.REL",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
-            szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.pnt --> FILE_NAME_WITHOUT_EXTENSION + T.dbf
         CPLStrlcpy(szAuxFile,
@@ -2881,9 +2883,11 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "T.dbf" : "T.DBF",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
-            szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
     }
     else if (phMiraMonLayer->bIsArc && !phMiraMonLayer->bIsPolygon)
     {
@@ -2895,9 +2899,11 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? "A.rel" : "A.REL",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
-            szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + A.dbf
         CPLStrlcpy(szAuxFile,
@@ -2905,9 +2911,11 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? "A.dbf" : "A.DBF",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
-            szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + .nod
         CPLStrlcpy(szAuxFile,
@@ -2915,9 +2923,11 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? ".nod" : ".NOD",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
-            szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + N.rel
         CPLStrlcpy(szAuxFile,
@@ -2925,9 +2935,11 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? "N.rel" : "N.REL",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
-            szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + N.dbf
         CPLStrlcpy(szAuxFile,
@@ -2935,14 +2947,15 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? "N.dbf" : "N.DBF",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
-            szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
     }
     else if (phMiraMonLayer->bIsPolygon)
     {
         // As it's explicit on documentation a point has also eight more files:
-        const char *szCompleteArcFileName;
         char szArcFileName[MM_CPL_PATH_BUF_SIZE];
 
         // FILE_NAME_WITHOUT_EXTENSION.pol --> FILE_NAME_WITHOUT_EXTENSION + P.rel
@@ -2951,15 +2964,18 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "P.rel" : "P.REL",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
-            szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // The name of the arc is in THIS metadata file
         char *pszArcLayerName = MMReturnValueFromSectionINIFile(
-            CPLFormFilename(
+            CPLFormFilenameSafe(
                 CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
-                szAuxFile, nullptr),
+                szAuxFile, nullptr)
+                .c_str(),
             SECTION_OVVW_ASPECTES_TECNICS, KEY_ArcSource);
         if (!pszArcLayerName)
         {
@@ -2977,13 +2993,13 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
 
         CPLFree(pszArcLayerName);
 
-        szCompleteArcFileName = CPLFormFilename(
+        const std::string osCompleteArcFileName = CPLFormFilenameSafe(
             CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
             szArcFileName, nullptr);
 
         // The arc that has the coordinates of the polygon
         oFileList.AddStringDirectly(
-            VSIGetCanonicalFilename(szCompleteArcFileName));
+            VSIGetCanonicalFilename(osCompleteArcFileName.c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.pol --> FILE_NAME_WITHOUT_EXTENSION + P.dbf
         CPLStrlcpy(szAuxFile,
@@ -2991,20 +3007,22 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "P.dbf" : "P.DBF",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
-            szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + A.rel
         const std::string osBaseArcName =
-            CPLGetBasenameSafe(szCompleteArcFileName);
+            CPLGetBasenameSafe(osCompleteArcFileName.c_str());
         CPLStrlcpy(szAuxFile, osBaseArcName.c_str(), MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "A.rel" : "A.REL",
                    MM_CPL_PATH_BUF_SIZE);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(
             CPLFormFilenameSafe(
-                CPLGetDirnameSafe(szCompleteArcFileName).c_str(), szAuxFile,
-                nullptr)
+                CPLGetDirnameSafe(osCompleteArcFileName.c_str()).c_str(),
+                szAuxFile, nullptr)
                 .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + A.dbf
@@ -3013,8 +3031,8 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
                    MM_CPL_PATH_BUF_SIZE);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(
             CPLFormFilenameSafe(
-                CPLGetDirnameSafe(szCompleteArcFileName).c_str(), szAuxFile,
-                nullptr)
+                CPLGetDirnameSafe(osCompleteArcFileName.c_str()).c_str(),
+                szAuxFile, nullptr)
                 .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + .nod
@@ -3023,8 +3041,8 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
                    MM_CPL_PATH_BUF_SIZE);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(
             CPLFormFilenameSafe(
-                CPLGetDirnameSafe(szCompleteArcFileName).c_str(), szAuxFile,
-                nullptr)
+                CPLGetDirnameSafe(osCompleteArcFileName.c_str()).c_str(),
+                szAuxFile, nullptr)
                 .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + N.rel
@@ -3033,8 +3051,8 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
                    MM_CPL_PATH_BUF_SIZE);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(
             CPLFormFilenameSafe(
-                CPLGetDirnameSafe(szCompleteArcFileName).c_str(), szAuxFile,
-                nullptr)
+                CPLGetDirnameSafe(osCompleteArcFileName.c_str()).c_str(),
+                szAuxFile, nullptr)
                 .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + N.dbf
@@ -3043,8 +3061,8 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
                    MM_CPL_PATH_BUF_SIZE);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(
             CPLFormFilenameSafe(
-                CPLGetDirnameSafe(szCompleteArcFileName).c_str(), szAuxFile,
-                nullptr)
+                CPLGetDirnameSafe(osCompleteArcFileName.c_str()).c_str(),
+                szAuxFile, nullptr)
                 .c_str()));
     }
     CPLFree(pszMMExt);

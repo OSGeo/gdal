@@ -115,8 +115,8 @@ std::string GMLASResourceCache::GetCachedFilename(const std::string &osResource)
                  osLaunderedName.c_str());
     }
 
-    return CPLFormFilename(m_osCacheDirectory.c_str(), osLaunderedName.c_str(),
-                           nullptr);
+    return CPLFormFilenameSafe(m_osCacheDirectory.c_str(),
+                               osLaunderedName.c_str(), nullptr);
 }
 
 /************************************************************************/

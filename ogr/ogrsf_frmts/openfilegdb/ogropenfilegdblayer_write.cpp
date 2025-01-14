@@ -2954,10 +2954,10 @@ bool OGROpenFileGDBLayer::BeginEmulatedTransaction()
         const std::string osBasename = CPLGetBasenameSafe(*papszIter);
         if (osBasename == osThisBasename)
         {
-            std::string osDestFilename = CPLFormFilenameSafe(
+            const std::string osDestFilename = CPLFormFilenameSafe(
                 m_poDS->GetBackupDirName().c_str(), *papszIter, nullptr);
-            std::string osSourceFilename =
-                CPLFormFilename(osThisDirname.c_str(), *papszIter, nullptr);
+            const std::string osSourceFilename =
+                CPLFormFilenameSafe(osThisDirname.c_str(), *papszIter, nullptr);
             if (CPLCopyFile(osDestFilename.c_str(), osSourceFilename.c_str()) !=
                 0)
             {
@@ -3033,8 +3033,8 @@ bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
             const std::string osBasename = CPLGetBasenameSafe(*papszIter);
             if (osBasename == osThisBasename)
             {
-                std::string osDestFilename =
-                    CPLFormFilename(osThisDirname.c_str(), *papszIter, nullptr);
+                const std::string osDestFilename = CPLFormFilenameSafe(
+                    osThisDirname.c_str(), *papszIter, nullptr);
                 VSIUnlink(osDestFilename.c_str());
             }
         }
@@ -3052,9 +3052,9 @@ bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
             if (osBasename == osThisBasename)
             {
                 bBackupFound = true;
-                std::string osDestFilename =
-                    CPLFormFilename(osThisDirname.c_str(), *papszIter, nullptr);
-                std::string osSourceFilename = CPLFormFilenameSafe(
+                const std::string osDestFilename = CPLFormFilenameSafe(
+                    osThisDirname.c_str(), *papszIter, nullptr);
+                const std::string osSourceFilename = CPLFormFilenameSafe(
                     m_poDS->GetBackupDirName().c_str(), *papszIter, nullptr);
                 if (CPLCopyFile(osDestFilename.c_str(),
                                 osSourceFilename.c_str()) != 0)

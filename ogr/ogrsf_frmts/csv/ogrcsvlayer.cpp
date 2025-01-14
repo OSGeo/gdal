@@ -1990,7 +1990,8 @@ OGRErr OGRCSVLayer::WriteHeader()
             char *pszBaseName =
                 CPLStrdup(CPLGetBasenameSafe(pszFilename).c_str());
             fpCSVT = VSIFOpenL(
-                CPLFormFilename(pszDirName, pszBaseName, ".csvt"), "wb");
+                CPLFormFilenameSafe(pszDirName, pszBaseName, ".csvt").c_str(),
+                "wb");
             CPLFree(pszDirName);
             CPLFree(pszBaseName);
         }

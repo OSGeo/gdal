@@ -584,10 +584,10 @@ bool OGRLIBKMLDataSource::WriteDir()
         std::string oKmlOut = kmldom::SerializePretty(m_poKmlDocKmlRoot);
         OGRLIBKMLPostProcessOutput(oKmlOut);
 
-        const char *pszOutfile =
-            CPLFormFilename(GetDescription(), "doc.kml", nullptr);
+        const std::string osOutfile =
+            CPLFormFilenameSafe(GetDescription(), "doc.kml", nullptr);
 
-        VSILFILE *fp = VSIFOpenExL(pszOutfile, "wb", true);
+        VSILFILE *fp = VSIFOpenExL(osOutfile.c_str(), "wb", true);
         if (fp == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Error writing %s to %s: %s",
@@ -634,10 +634,10 @@ bool OGRLIBKMLDataSource::WriteDir()
         std::string oKmlOut = kmldom::SerializePretty(poKmlKml);
         OGRLIBKMLPostProcessOutput(oKmlOut);
 
-        const char *pszOutfile = CPLFormFilename(
+        const std::string osOutfile = CPLFormFilenameSafe(
             GetDescription(), papoLayers[iLayer]->GetFileName(), nullptr);
 
-        VSILFILE *fp = VSIFOpenL(pszOutfile, "wb");
+        VSILFILE *fp = VSIFOpenL(osOutfile.c_str(), "wb");
         if (fp == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "ERROR Writing %s to %s",
@@ -660,10 +660,10 @@ bool OGRLIBKMLDataSource::WriteDir()
         std::string oKmlOut = kmldom::SerializePretty(poKmlKml);
         OGRLIBKMLPostProcessOutput(oKmlOut);
 
-        const char *pszOutfile =
-            CPLFormFilename(GetDescription(), "style.kml", nullptr);
+        const std::string osOutfile =
+            CPLFormFilenameSafe(GetDescription(), "style.kml", nullptr);
 
-        VSILFILE *fp = VSIFOpenL(pszOutfile, "wb");
+        VSILFILE *fp = VSIFOpenL(osOutfile.c_str(), "wb");
         if (fp == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "ERROR Writing %s to %s",
@@ -1382,8 +1382,8 @@ int OGRLIBKMLDataSource::OpenDir(const char *pszFilename, int bUpdateIn)
         std::string oKmlKml;
         char szBuffer[1024 + 1] = {};
 
-        CPLString osFilePath =
-            CPLFormFilename(pszFilename, papszDirList[iFile], nullptr);
+        const CPLString osFilePath =
+            CPLFormFilenameSafe(pszFilename, papszDirList[iFile], nullptr);
 
         VSILFILE *fp = VSIFOpenL(osFilePath, "rb");
         if (fp == nullptr)
@@ -2114,16 +2114,16 @@ OGRErr OGRLIBKMLDataSource::DeleteLayer(int iLayer)
         DeleteLayerKmz(iLayer);
 
         /***** delete the file the layer corresponds to *****/
-        const char *pszFilePath = CPLFormFilename(
+        const std::string osFilePath = CPLFormFilenameSafe(
             GetDescription(), papoLayers[iLayer]->GetFileName(), nullptr);
         VSIStatBufL oStatBufL;
-        if (!VSIStatL(pszFilePath, &oStatBufL))
+        if (!VSIStatL(osFilePath.c_str(), &oStatBufL))
         {
-            if (VSIUnlink(pszFilePath))
+            if (VSIUnlink(osFilePath.c_str()))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "ERROR Deleting Layer %s from filesystem as %s",
-                         papoLayers[iLayer]->GetName(), pszFilePath);
+                         papoLayers[iLayer]->GetName(), osFilePath.c_str());
             }
         }
     }
@@ -2236,9 +2236,10 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz(
             OGRLIBKMLGetSanitizedNCName(pszLayerName).c_str());
     }
 
-    OGRLIBKMLLayer *poOgrLayer = AddLayer(
-        pszLayerName, eGType, poSRS, this, nullptr, poKmlDocument,
-        CPLFormFilename(nullptr, pszLayerName, ".kml"), TRUE, bUpdate, 1);
+    OGRLIBKMLLayer *poOgrLayer =
+        AddLayer(pszLayerName, eGType, poSRS, this, nullptr, poKmlDocument,
+                 CPLFormFilenameSafe(nullptr, pszLayerName, ".kml").c_str(),
+                 TRUE, bUpdate, 1);
 
     /***** add the layer name as a <Name> *****/
     if (!m_poKmlUpdate)
