@@ -608,8 +608,9 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    const char *pszPrj = CPLResetExtension(poOpenInfo->pszFilename, "prj");
-    VSILFILE *const fp = VSIFOpenL(pszPrj, "rt");
+    const std::string osPrj =
+        CPLResetExtensionSafe(poOpenInfo->pszFilename, "prj");
+    VSILFILE *const fp = VSIFOpenL(osPrj.c_str(), "rt");
     if (fp != nullptr)
     {
         const size_t nBufMax = 100000;

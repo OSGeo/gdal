@@ -962,20 +962,20 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
         /* If nfw found, try looking for a header with projection info */
         /* in space imaging style format                               */
-        const char *pszHDR = CPLResetExtension(pszFilename, "hdr");
+        std::string osHDR = CPLResetExtensionSafe(pszFilename, "hdr");
 
-        VSILFILE *fpHDR = VSIFOpenL(pszHDR, "rt");
+        VSILFILE *fpHDR = VSIFOpenL(osHDR.c_str(), "rt");
 
-        if (fpHDR == nullptr && VSIIsCaseSensitiveFS(pszHDR))
+        if (fpHDR == nullptr && VSIIsCaseSensitiveFS(osHDR.c_str()))
         {
-            pszHDR = CPLResetExtension(pszFilename, "HDR");
-            fpHDR = VSIFOpenL(pszHDR, "rt");
+            osHDR = CPLResetExtensionSafe(pszFilename, "HDR");
+            fpHDR = VSIFOpenL(osHDR.c_str(), "rt");
         }
 
         if (fpHDR != nullptr)
         {
             CPL_IGNORE_RET_VAL(VSIFCloseL(fpHDR));
-            char **papszLines = CSLLoad2(pszHDR, 16, 200, nullptr);
+            char **papszLines = CSLLoad2(osHDR.c_str(), 16, 200, nullptr);
             if (CSLCount(papszLines) == 16)
             {
 

@@ -91,9 +91,10 @@ static CPLErr OGRSXFDriverDelete(const char *pszName)
 
     for (int iExt = 0; apszExtensions[iExt] != nullptr; iExt++)
     {
-        const char *pszFile = CPLResetExtension(pszName, apszExtensions[iExt]);
-        if (VSIStatL(pszFile, &sStatBuf) == 0)
-            VSIUnlink(pszFile);
+        const std::string osFile =
+            CPLResetExtensionSafe(pszName, apszExtensions[iExt]);
+        if (VSIStatL(osFile.c_str(), &sStatBuf) == 0)
+            VSIUnlink(osFile.c_str());
     }
 
     return CE_None;

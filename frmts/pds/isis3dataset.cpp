@@ -2486,7 +2486,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         if (poDS->m_bGotTransform)
         {
             poDS->m_aosAdditionalFiles.AddString(
-                CPLResetExtension(poOpenInfo->pszFilename, "cbw"));
+                CPLResetExtensionSafe(poOpenInfo->pszFilename, "cbw").c_str());
         }
     }
 
@@ -2497,7 +2497,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         if (poDS->m_bGotTransform)
         {
             poDS->m_aosAdditionalFiles.AddString(
-                CPLResetExtension(poOpenInfo->pszFilename, "wld"));
+                CPLResetExtensionSafe(poOpenInfo->pszFilename, "wld").c_str());
         }
     }
 
@@ -3998,9 +3998,9 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
     bool bGeoTIFFAsRegularExternal = false;
     if (EQUAL(pszDataLocation, "EXTERNAL"))
     {
-        osExternalFilename =
-            CSLFetchNameValueDef(papszOptions, "EXTERNAL_FILENAME",
-                                 CPLResetExtension(pszFilename, "cub"));
+        osExternalFilename = CSLFetchNameValueDef(
+            papszOptions, "EXTERNAL_FILENAME",
+            CPLResetExtensionSafe(pszFilename, "cub").c_str());
         fpImage = VSIFOpenExL(osExternalFilename.c_str(), pszPermission, true);
         if (fpImage == nullptr)
         {
@@ -4012,9 +4012,9 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
     }
     else if (EQUAL(pszDataLocation, "GEOTIFF"))
     {
-        osExternalFilename =
-            CSLFetchNameValueDef(papszOptions, "EXTERNAL_FILENAME",
-                                 CPLResetExtension(pszFilename, "tif"));
+        osExternalFilename = CSLFetchNameValueDef(
+            papszOptions, "EXTERNAL_FILENAME",
+            CPLResetExtensionSafe(pszFilename, "tif").c_str());
         GDALDriver *poDrv =
             static_cast<GDALDriver *>(GDALGetDriverByName("GTiff"));
         if (poDrv == nullptr)
@@ -4197,9 +4197,9 @@ GDALDataset *ISIS3Dataset::CreateCopy(const char *pszFilename,
         poSrcUnderlyingDS = poSrcDS;
     if (EQUAL(pszDataLocation, "GEOTIFF") &&
         strcmp(poSrcUnderlyingDS->GetDescription(),
-               CSLFetchNameValueDef(papszOptions, "EXTERNAL_FILENAME",
-                                    CPLResetExtension(pszFilename, "tif"))) ==
-            0)
+               CSLFetchNameValueDef(
+                   papszOptions, "EXTERNAL_FILENAME",
+                   CPLResetExtensionSafe(pszFilename, "tif").c_str())) == 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Output file has same name as input file");

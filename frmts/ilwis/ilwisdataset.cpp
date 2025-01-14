@@ -990,8 +990,8 @@ GDALDataset *ILWISDataset::Create(const char *pszFilename, int nXSize,
         ODFFile.SetKeyValue("Map", "Type", "MapStore");
 
         ODFFile.SetKeyValue("BaseMap", "Domain", sDomain);
-        std::string pszDataName = pszDataBaseName + ".mp#";
-        ODFFile.SetKeyValue("MapStore", "Data", pszDataName);
+        std::string osDataName = pszDataBaseName + ".mp#";
+        ODFFile.SetKeyValue("MapStore", "Data", osDataName.c_str());
         ODFFile.SetKeyValue("MapStore", "Structure", "Line");
         // sStoreType is used by ILWISRasterBand constructor to determine
         // eDataType
@@ -1015,14 +1015,14 @@ GDALDataset *ILWISDataset::Create(const char *pszFilename, int nXSize,
         /*      Try to create the data file. */
         /* --------------------------------------------------------------------
          */
-        pszDataName = CPLResetExtension(pszODFName.c_str(), "mp#");
+        osDataName = CPLResetExtensionSafe(pszODFName.c_str(), "mp#");
 
-        VSILFILE *fp = VSIFOpenL(pszDataName.c_str(), "wb");
+        VSILFILE *fp = VSIFOpenL(osDataName.c_str(), "wb");
 
         if (fp == nullptr)
         {
             CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create file %s.\n",
-                     pszDataName.c_str());
+                     osDataName.c_str());
             return nullptr;
         }
         VSIFCloseL(fp);

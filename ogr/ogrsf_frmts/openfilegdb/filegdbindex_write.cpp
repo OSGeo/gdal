@@ -59,9 +59,10 @@ void FileGDBTable::RemoveIndices()
         }
         else
         {
-            VSIUnlink(
-                CPLResetExtension(m_osFilename.c_str(),
-                                  (poIndex->GetIndexName() + ".atx").c_str()));
+            VSIUnlink(CPLResetExtensionSafe(
+                          m_osFilename.c_str(),
+                          (poIndex->GetIndexName() + ".atx").c_str())
+                          .c_str());
         }
     }
 
@@ -1273,7 +1274,7 @@ bool FileGDBTable::CreateSpatialIndex()
     }
 
     const std::string osSPXFilename(
-        CPLResetExtension(m_osFilename.c_str(), "spx"));
+        CPLResetExtensionSafe(m_osFilename.c_str(), "spx"));
     VSILFILE *fp = VSIFOpenL(osSPXFilename.c_str(), "wb");
     if (fp == nullptr)
         return false;
@@ -1316,7 +1317,7 @@ bool FileGDBTable::CreateAttributeIndex(const FileGDBIndex *poIndex)
         return false;
     }
 
-    const std::string osIdxFilename(CPLResetExtension(
+    const std::string osIdxFilename(CPLResetExtensionSafe(
         m_osFilename.c_str(), (poIndex->GetIndexName() + ".atx").c_str()));
     VSILFILE *fp = VSIFOpenL(osIdxFilename.c_str(), "wb");
     if (fp == nullptr)

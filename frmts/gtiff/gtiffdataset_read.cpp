@@ -4236,7 +4236,7 @@ void GTiffDataset::LookForProjectionFromXML()
         return;
 
     const std::string osXMLFilenameLowerCase =
-        CPLResetExtension(m_pszFilename, "xml");
+        CPLResetExtensionSafe(m_pszFilename, "xml");
 
     CPLString osXMLFilename;
     if (papszSiblingFiles &&
@@ -4270,7 +4270,7 @@ void GTiffDataset::LookForProjectionFromXML()
         else if (VSIIsCaseSensitiveFS(osXMLFilenameLowerCase.c_str()))
         {
             const std::string osXMLFilenameUpperCase =
-                CPLResetExtension(m_pszFilename, "XML");
+                CPLResetExtensionSafe(m_pszFilename, "XML");
             bGotXML = VSIStatExL(osXMLFilenameUpperCase.c_str(), &sStatBuf,
                                  VSI_STAT_EXISTS_FLAG) == 0;
             if (bGotXML)

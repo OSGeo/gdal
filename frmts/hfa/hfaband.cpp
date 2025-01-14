@@ -237,9 +237,9 @@ CPLErr HFABand::LoadOverviews()
         EQUAL(CPLGetExtensionSafe(psInfo->pszFilename).c_str(), "aux"))
     {
         const CPLString osRRDFilename =
-            CPLResetExtension(psInfo->pszFilename, "rrd");
+            CPLResetExtensionSafe(psInfo->pszFilename, "rrd");
         const CPLString osFullRRD =
-            CPLFormFilename(psInfo->pszPath, osRRDFilename, nullptr);
+            CPLFormFilenameSafe(psInfo->pszPath, osRRDFilename, nullptr);
         VSIStatBufL sStatBuf;
 
         if (VSIStatL(osFullRRD, &sStatBuf) == 0)

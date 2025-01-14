@@ -589,9 +589,9 @@ bool OGRShapeLayer::CheckForQIX()
     if (bCheckedForQIX)
         return hQIX != nullptr;
 
-    const char *pszQIXFilename = CPLResetExtension(pszFullName, "qix");
+    const std::string osQIXFilename = CPLResetExtensionSafe(pszFullName, "qix");
 
-    hQIX = SHPOpenDiskTree(pszQIXFilename, nullptr);
+    hQIX = SHPOpenDiskTree(osQIXFilename.c_str(), nullptr);
 
     bCheckedForQIX = true;
 
@@ -608,9 +608,9 @@ bool OGRShapeLayer::CheckForSBN()
     if (bCheckedForSBN)
         return hSBN != nullptr;
 
-    const char *pszSBNFilename = CPLResetExtension(pszFullName, "sbn");
+    const std::string osSBNFilename = CPLResetExtensionSafe(pszFullName, "sbn");
 
-    hSBN = SBNOpenDiskTree(pszSBNFilename, nullptr);
+    hSBN = SBNOpenDiskTree(osSBNFilename.c_str(), nullptr);
 
     bCheckedForSBN = true;
 
@@ -2424,20 +2424,20 @@ const OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
     /* -------------------------------------------------------------------- */
     /*      Is there an associated .prj file we can read?                   */
     /* -------------------------------------------------------------------- */
-    const char *pszPrjFile = CPLResetExtension(pszFullName, "prj");
+    std::string l_osPrjFile = CPLResetExtensionSafe(pszFullName, "prj");
 
     char *apszOptions[] = {
         const_cast<char *>("EMIT_ERROR_IF_CANNOT_OPEN_FILE=FALSE"), nullptr};
-    char **papszLines = CSLLoad2(pszPrjFile, -1, -1, apszOptions);
+    char **papszLines = CSLLoad2(l_osPrjFile.c_str(), -1, -1, apszOptions);
     if (papszLines == nullptr)
     {
-        pszPrjFile = CPLResetExtension(pszFullName, "PRJ");
-        papszLines = CSLLoad2(pszPrjFile, -1, -1, apszOptions);
+        l_osPrjFile = CPLResetExtensionSafe(pszFullName, "PRJ");
+        papszLines = CSLLoad2(l_osPrjFile.c_str(), -1, -1, apszOptions);
     }
 
     if (papszLines != nullptr)
     {
-        osPrjFile = pszPrjFile;
+        osPrjFile = std::move(l_osPrjFile);
 
         auto poSRSNonConst = new OGRSpatialReference();
         poSRSNonConst->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -2640,13 +2640,14 @@ OGRErr OGRShapeLayer::DropSpatialIndex()
 
     if (bHadQIX)
     {
-        const char *pszQIXFilename = CPLResetExtension(pszFullName, "qix");
-        CPLDebug("SHAPE", "Unlinking index file %s", pszQIXFilename);
+        const std::string osQIXFilename =
+            CPLResetExtensionSafe(pszFullName, "qix");
+        CPLDebug("SHAPE", "Unlinking index file %s", osQIXFilename.c_str());
 
-        if (VSIUnlink(pszQIXFilename) != 0)
+        if (VSIUnlink(osQIXFilename.c_str()) != 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to delete file %s.\n%s", pszQIXFilename,
+                     "Failed to delete file %s.\n%s", osQIXFilename.c_str(),
                      VSIStrerror(errno));
             return OGRERR_FAILURE;
         }
@@ -2657,15 +2658,15 @@ OGRErr OGRShapeLayer::DropSpatialIndex()
         const char papszExt[2][4] = {"sbn", "sbx"};
         for (int i = 0; i < 2; i++)
         {
-            const char *pszIndexFilename =
-                CPLResetExtension(pszFullName, papszExt[i]);
+            const std::string osIndexFilename =
+                CPLResetExtensionSafe(pszFullName, papszExt[i]);
             CPLDebug("SHAPE", "Trying to unlink index file %s",
-                     pszIndexFilename);
+                     osIndexFilename.c_str());
 
-            if (VSIUnlink(pszIndexFilename) != 0)
+            if (VSIUnlink(osIndexFilename.c_str()) != 0)
             {
                 CPLDebug("SHAPE", "Failed to delete file %s.\n%s",
-                         pszIndexFilename, VSIStrerror(errno));
+                         osIndexFilename.c_str(), VSIStrerror(errno));
             }
         }
     }
@@ -3608,7 +3609,7 @@ bool OGRShapeLayer::ReopenFileDescriptors()
         if (hDBF == nullptr)
         {
             CPLError(CE_Failure, CPLE_OpenFailed, "Cannot reopen %s",
-                     CPLResetExtension(pszFullName, "dbf"));
+                     CPLResetExtensionSafe(pszFullName, "dbf").c_str());
             eFileDescriptorsState = FD_CANNOT_REOPEN;
             return false;
         }
@@ -3696,18 +3697,21 @@ void OGRShapeLayer::AddToFileList(CPLStringList &oFileList)
         }
         if (CheckForQIX())
         {
-            const char *pszQIXFilename = CPLResetExtension(pszFullName, "qix");
+            const std::string osQIXFilename =
+                CPLResetExtensionSafe(pszFullName, "qix");
             oFileList.AddStringDirectly(
-                VSIGetCanonicalFilename(pszQIXFilename));
+                VSIGetCanonicalFilename(osQIXFilename.c_str()));
         }
         else if (CheckForSBN())
         {
-            const char *pszSBNFilename = CPLResetExtension(pszFullName, "sbn");
+            const std::string osSBNFilename =
+                CPLResetExtensionSafe(pszFullName, "sbn");
             oFileList.AddStringDirectly(
-                VSIGetCanonicalFilename(pszSBNFilename));
-            const char *pszSBXFilename = CPLResetExtension(pszFullName, "sbx");
+                VSIGetCanonicalFilename(osSBNFilename.c_str()));
+            const std::string osSBXFilename =
+                CPLResetExtensionSafe(pszFullName, "sbx");
             oFileList.AddStringDirectly(
-                VSIGetCanonicalFilename(pszSBXFilename));
+                VSIGetCanonicalFilename(osSBXFilename.c_str()));
         }
     }
 }

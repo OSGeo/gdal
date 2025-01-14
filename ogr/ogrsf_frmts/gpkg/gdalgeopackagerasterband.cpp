@@ -2989,7 +2989,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(
         const char *pszBaseFilename =
             m_poParentDS ? m_poParentDS->IGetFilename() : IGetFilename();
         m_osTempDBFilename =
-            CPLResetExtension(pszBaseFilename, "partial_tiles.db");
+            CPLResetExtensionSafe(pszBaseFilename, "partial_tiles.db");
         CPLPushErrorHandler(CPLQuietErrorHandler);
         VSIUnlink(m_osTempDBFilename);
         CPLPopErrorHandler();

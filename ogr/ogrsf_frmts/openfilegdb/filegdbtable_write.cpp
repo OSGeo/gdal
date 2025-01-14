@@ -2189,10 +2189,10 @@ bool FileGDBTable::WholeFileRewriter::Begin()
     }
     else
     {
-        m_osTmpGdbTable = CPLResetExtension(m_oTable.m_osFilename.c_str(),
-                                            "_compress.gdbtable");
+        m_osTmpGdbTable = CPLResetExtensionSafe(m_oTable.m_osFilename.c_str(),
+                                                "_compress.gdbtable");
         m_osTmpGdbTablx =
-            CPLResetExtension(m_osGdbTablx.c_str(), "_compress.gdbtablx");
+            CPLResetExtensionSafe(m_osGdbTablx.c_str(), "_compress.gdbtablx");
 
         m_fpOldGdbtable = m_oTable.m_fpTable;
         m_fpOldGdbtablx = m_oTable.m_fpTableX;

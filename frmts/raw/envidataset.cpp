@@ -2040,13 +2040,14 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         CPLString osName = CPLGetFilename(poOpenInfo->pszFilename);
 
         // First try hdr as an extra extension
-        int iFile = CSLFindString(papszSiblingFiles,
-                                  CPLFormFilename(nullptr, osName, "hdr"));
+        int iFile =
+            CSLFindString(papszSiblingFiles,
+                          CPLFormFilenameSafe(nullptr, osName, "hdr").c_str());
         if (iFile < 0)
         {
             // Otherwise, try .hdr as a replacement extension
             iFile = CSLFindString(papszSiblingFiles,
-                                  CPLResetExtension(osName, "hdr"));
+                                  CPLResetExtensionSafe(osName, "hdr").c_str());
         }
 
         if (iFile >= 0)
@@ -2749,19 +2750,19 @@ GDALDataset *ENVIDataset::Create(const char *pszFilename, int nXSize,
     }
 
     // Create the .hdr filename.
-    const char *pszHDRFilename = nullptr;
+    std::string osHDRFilename;
     const char *pszSuffix = CSLFetchNameValue(papszOptions, "SUFFIX");
     if (pszSuffix && STARTS_WITH_CI(pszSuffix, "ADD"))
-        pszHDRFilename = CPLFormFilename(nullptr, pszFilename, "hdr");
+        osHDRFilename = CPLFormFilenameSafe(nullptr, pszFilename, "hdr");
     else
-        pszHDRFilename = CPLResetExtension(pszFilename, "hdr");
+        osHDRFilename = CPLResetExtensionSafe(pszFilename, "hdr");
 
     // Open the file.
-    fp = VSIFOpenL(pszHDRFilename, "wt");
+    fp = VSIFOpenL(osHDRFilename.c_str(), "wt");
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Attempt to create file `%s' failed.", pszHDRFilename);
+                 "Attempt to create file `%s' failed.", osHDRFilename.c_str());
         return nullptr;
     }
 

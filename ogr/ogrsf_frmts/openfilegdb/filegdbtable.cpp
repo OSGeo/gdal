@@ -2522,8 +2522,8 @@ int FileGDBTable::GetIndexCount()
         const int iBlockKeyFieldIdx = GetFieldIdx("block_key");
         if (iBlockKeyFieldIdx >= 0)
         {
-            std::string osAtxFilename =
-                CPLResetExtension(m_osFilename.c_str(), "blk_key_index.atx");
+            const std::string osAtxFilename = CPLResetExtensionSafe(
+                m_osFilename.c_str(), "blk_key_index.atx");
             if (VSIStatExL(osAtxFilename.c_str(), &sStat,
                            VSI_STAT_EXISTS_FLAG) == 0)
             {

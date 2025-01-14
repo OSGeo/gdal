@@ -883,12 +883,14 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
                 bHaveSchema = poReader->LoadClasses(osGFSFilename);
                 if (bHaveSchema)
                 {
-                    pszXSDFilenameTmp = CPLResetExtension(pszFilename, "xsd");
-                    if (VSIStatExL(pszXSDFilenameTmp, &sGMLStatBuf,
+                    const std::string osXSDFilenameTmp =
+                        CPLResetExtensionSafe(pszFilename, "xsd");
+                    if (VSIStatExL(osXSDFilenameTmp.c_str(), &sGMLStatBuf,
                                    VSI_STAT_EXISTS_FLAG) == 0)
                     {
                         CPLDebug("GML", "Using %s file, ignoring %s",
-                                 osGFSFilename.c_str(), pszXSDFilenameTmp);
+                                 osGFSFilename.c_str(),
+                                 osXSDFilenameTmp.c_str());
                     }
                 }
             }
@@ -2366,14 +2368,15 @@ void OGRGMLDataSource::InsertHeader()
     VSILFILE *fpSchema = nullptr;
     if (pszSchemaOpt == nullptr || EQUAL(pszSchemaOpt, "EXTERNAL"))
     {
-        const char *pszXSDFilename = CPLResetExtension(GetDescription(), "xsd");
+        const std::string l_osXSDFilename =
+            CPLResetExtensionSafe(GetDescription(), "xsd");
 
-        fpSchema = VSIFOpenL(pszXSDFilename, "wt");
+        fpSchema = VSIFOpenL(l_osXSDFilename.c_str(), "wt");
         if (fpSchema == nullptr)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Failed to open file %.500s for schema output.",
-                     pszXSDFilename);
+                     l_osXSDFilename.c_str());
             return;
         }
         PrintLine(fpSchema, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>");

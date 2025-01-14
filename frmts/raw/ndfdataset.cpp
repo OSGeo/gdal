@@ -287,7 +287,7 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
             snprintf(szBandExtension, sizeof(szBandExtension), "I%d",
                      iBand + 1);
             osFilename =
-                CPLResetExtension(poOpenInfo->pszFilename, szBandExtension);
+                CPLResetExtensionSafe(poOpenInfo->pszFilename, szBandExtension);
         }
         else
         {

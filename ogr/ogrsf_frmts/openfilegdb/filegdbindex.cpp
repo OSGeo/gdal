@@ -1026,9 +1026,9 @@ static const char *FileGDBValueToStr(OGRFieldType eOGRFieldType,
 
 int FileGDBIndex::GetMaxWidthInBytes(const FileGDBTable *poTable) const
 {
-    const char *pszAtxName = CPLResetExtension(
+    const std::string osAtxName = CPLResetExtensionSafe(
         poTable->GetFilename().c_str(), (GetIndexName() + ".atx").c_str());
-    VSILFILE *fpCurIdx = VSIFOpenL(pszAtxName, "rb");
+    VSILFILE *fpCurIdx = VSIFOpenL(osAtxName.c_str(), "rb");
     if (fpCurIdx == nullptr)
         return 0;
 

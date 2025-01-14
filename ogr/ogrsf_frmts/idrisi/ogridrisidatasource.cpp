@@ -60,12 +60,12 @@ int OGRIdrisiDataSource::Open(const char *pszFilename)
     // --------------------------------------------------------------------
     //      Look for .vdc file
     // --------------------------------------------------------------------
-    const char *pszVDCFilename = CPLResetExtension(pszFilename, "vdc");
-    VSILFILE *fpVDC = VSIFOpenL(pszVDCFilename, "rb");
+    std::string osVDCFilename = CPLResetExtensionSafe(pszFilename, "vdc");
+    VSILFILE *fpVDC = VSIFOpenL(osVDCFilename.c_str(), "rb");
     if (fpVDC == nullptr)
     {
-        pszVDCFilename = CPLResetExtension(pszFilename, "VDC");
-        fpVDC = VSIFOpenL(pszVDCFilename, "rb");
+        osVDCFilename = CPLResetExtensionSafe(pszFilename, "VDC");
+        fpVDC = VSIFOpenL(osVDCFilename.c_str(), "rb");
     }
 
     char **papszVDC = nullptr;
@@ -75,7 +75,7 @@ int OGRIdrisiDataSource::Open(const char *pszFilename)
         fpVDC = nullptr;
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        papszVDC = CSLLoad2(pszVDCFilename, 1024, 256, nullptr);
+        papszVDC = CSLLoad2(osVDCFilename.c_str(), 1024, 256, nullptr);
         CPLPopErrorHandler();
         CPLErrorReset();
     }

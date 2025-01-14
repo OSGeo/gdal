@@ -454,19 +454,19 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
                 for (int i = 0; i < 2; i++)
                 {
                     VSIStatBufL sStat;
-                    const char *pszDBFName =
-                        CPLResetExtension(pszNewName, (i == 0) ? "dbf" : "DBF");
+                    const std::string osDBFName = CPLResetExtensionSafe(
+                        pszNewName, (i == 0) ? "dbf" : "DBF");
                     VSILFILE *fp = nullptr;
-                    if (VSIStatExL(pszDBFName, &sStat, VSI_STAT_EXISTS_FLAG) ==
-                        0)
+                    if (VSIStatExL(osDBFName.c_str(), &sStat,
+                                   VSI_STAT_EXISTS_FLAG) == 0)
                     {
-                        fp = VSIFOpenL(pszDBFName, "r+");
+                        fp = VSIFOpenL(osDBFName.c_str(), "r+");
                         if (fp == nullptr)
                         {
                             CPLError(CE_Failure, CPLE_OpenFailed,
                                      "%s exists, "
                                      "but cannot be opened in update mode",
-                                     pszDBFName);
+                                     osDBFName.c_str());
                             SHPClose(hSHP);
                             return false;
                         }
@@ -1323,11 +1323,11 @@ OGRErr OGRShapeDataSource::DeleteLayer(int iLayer)
         OGRShapeDataSource::GetExtensionsForDeletion();
     for (int iExt = 0; papszExtensions[iExt] != nullptr; iExt++)
     {
-        const char *pszFile =
-            CPLResetExtension(pszFilename, papszExtensions[iExt]);
+        const std::string osFile =
+            CPLResetExtensionSafe(pszFilename, papszExtensions[iExt]);
         VSIStatBufL sStatBuf;
-        if (VSIStatL(pszFile, &sStatBuf) == 0)
-            VSIUnlink(pszFile);
+        if (VSIStatL(osFile.c_str(), &sStatBuf) == 0)
+            VSIUnlink(osFile.c_str());
     }
 
     CPLFree(pszFilename);

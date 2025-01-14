@@ -280,9 +280,9 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
             auto poLayer = std::make_unique<OGROpenFileGDBLayer>(
                 this, poOpenInfo->pszFilename, pszLyrName, "", "",
                 eAccess == GA_Update);
-            const char *pszTablX =
-                CPLResetExtension(poOpenInfo->pszFilename, "gdbtablx");
-            if ((!FileExists(pszTablX) &&
+            const std::string osTablX =
+                CPLResetExtensionSafe(poOpenInfo->pszFilename, "gdbtablx");
+            if ((!FileExists(osTablX.c_str()) &&
                  poLayer->GetLayerDefn()->GetFieldCount() == 0 &&
                  poLayer->GetFeatureCount() == 0) ||
                 !poLayer->IsValidLayerDefn())
@@ -519,8 +519,8 @@ OGRLayer *OGROpenFileGDBDataSource::AddLayer(
     {
         m_osMapNameToIdx.erase(oIter);
 
-        CPLString osFilename =
-            CPLFormFilename(m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable");
+        CPLString osFilename = CPLFormFilenameSafe(
+            m_osDirName, CPLOPrintf("a%08x", idx).c_str(), "gdbtable");
         if (FileExists(osFilename))
         {
             nCandidateLayers++;
@@ -528,9 +528,9 @@ OGRLayer *OGROpenFileGDBDataSource::AddLayer(
             if (m_papszFiles != nullptr)
             {
                 const CPLString osSDC =
-                    CPLResetExtension(osFilename, "gdbtable.sdc");
+                    CPLResetExtensionSafe(osFilename, "gdbtable.sdc");
                 const CPLString osCDF =
-                    CPLResetExtension(osFilename, "gdbtable.cdf");
+                    CPLResetExtensionSafe(osFilename, "gdbtable.cdf");
                 if (FileExists(osCDF))
                 {
                     nLayersCDF++;

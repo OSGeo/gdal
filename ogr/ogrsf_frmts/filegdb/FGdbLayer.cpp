@@ -198,9 +198,10 @@ int FGdbLayer::EditIndexesForFIDHack(const char *pszRadixTablename)
 {
     // Fix FIDs in .gdbtablx, .spx and .atx's
 
-    CPLString osGDBTablX = CPLResetExtensionSafe(pszRadixTablename, "gdbtablx");
-    CPLString osNewGDBTablX =
-        CPLResetExtension(pszRadixTablename, "gdbtablx.new");
+    const CPLString osGDBTablX =
+        CPLResetExtensionSafe(pszRadixTablename, "gdbtablx");
+    const CPLString osNewGDBTablX =
+        CPLResetExtensionSafe(pszRadixTablename, "gdbtablx.new");
 
     if (!EditGDBTablX(osGDBTablX, osNewGDBTablX))
     {
@@ -212,7 +213,7 @@ int FGdbLayer::EditIndexesForFIDHack(const char *pszRadixTablename)
 
     CPLString osDirectory(CPLGetPathSafe(pszRadixTablename));
     char **papszFiles = VSIReadDir(osDirectory);
-    CPLString osBasename(CPLGetBasenameSafe(pszRadixTablename));
+    const CPLString osBasename(CPLGetBasenameSafe(pszRadixTablename));
     int bRet = TRUE;
     for (char **papszIter = papszFiles; papszIter && *papszIter; papszIter++)
     {
@@ -220,8 +221,8 @@ int FGdbLayer::EditIndexesForFIDHack(const char *pszRadixTablename)
             (EQUAL(CPLGetExtensionSafe(*papszIter).c_str(), "atx") ||
              EQUAL(CPLGetExtensionSafe(*papszIter).c_str(), "spx")))
         {
-            CPLString osIndex(
-                CPLFormFilename(osDirectory, *papszIter, nullptr));
+            const CPLString osIndex(
+                CPLFormFilenameSafe(osDirectory, *papszIter, nullptr));
             if (!EditATXOrSPX(osIndex))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,

@@ -124,17 +124,18 @@ void OGROCILoaderLayer::WriteLoaderHeader()
     }
     else if (nLDRMode == LDRM_VARIABLE)
     {
-        const char *pszDataFilename =
-            CPLResetExtension(pszLoaderFilename, "dat");
-        fpData = VSIFOpen(pszDataFilename, "wb");
+        const std::string osDataFilename =
+            CPLResetExtensionSafe(pszLoaderFilename, "dat");
+        fpData = VSIFOpen(osDataFilename.c_str(), "wb");
         if (fpData == nullptr)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
-                     "Unable to open data output file `%s'.", pszDataFilename);
+                     "Unable to open data output file `%s'.",
+                     osDataFilename.c_str());
             return;
         }
 
-        VSIFPrintf(fpLoader, "INFILE %s \"var 8\"\n", pszDataFilename);
+        VSIFPrintf(fpLoader, "INFILE %s \"var 8\"\n", osDataFilename.c_str());
     }
     const char *pszExpectedFIDName = CPLGetConfigOption("OCI_FID", "OGR_FID");
 

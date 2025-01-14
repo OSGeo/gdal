@@ -4674,9 +4674,9 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
         poSrcUnderlyingDS = poSrcDS;
     if (EQUAL(pszImageFormat, "GEOTIFF") &&
         strcmp(poSrcUnderlyingDS->GetDescription(),
-               CSLFetchNameValueDef(papszOptions, "IMAGE_FILENAME",
-                                    CPLResetExtension(pszFilename, "tif"))) ==
-            0)
+               CSLFetchNameValueDef(
+                   papszOptions, "IMAGE_FILENAME",
+                   CPLResetExtensionSafe(pszFilename, "tif").c_str())) == 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Output file has same name as input file");
