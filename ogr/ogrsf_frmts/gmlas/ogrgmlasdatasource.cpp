@@ -736,10 +736,10 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
         m_oConf.m_nMaximumFieldsForFlattening);
     oAnalyzer.SetAlwaysGenerateOGRId(m_oConf.m_bAlwaysGenerateOGRId);
 
-    m_osGMLFilename =
-        STARTS_WITH_CI(poOpenInfo->pszFilename, szGMLAS_PREFIX)
-            ? CPLExpandTilde(poOpenInfo->pszFilename + strlen(szGMLAS_PREFIX))
-            : poOpenInfo->pszFilename;
+    m_osGMLFilename = STARTS_WITH_CI(poOpenInfo->pszFilename, szGMLAS_PREFIX)
+                          ? CPLExpandTildeSafe(poOpenInfo->pszFilename +
+                                               strlen(szGMLAS_PREFIX))
+                          : poOpenInfo->pszFilename;
 
     CPLString osXSDFilenames =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, szXSD_OPTION, "");
