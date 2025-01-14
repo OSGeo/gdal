@@ -84,7 +84,7 @@ void ZarrV2Group::ExploreDirectory() const
             // https://github.com/OSGeo/gdal/issues/8192
             aosFiles[i][strlen(aosFiles[i]) - 1] != '/')
         {
-            const std::string osSubDir = CPLFormFilename(
+            const std::string osSubDir = CPLFormFilenameSafe(
                 m_osDirectoryName.c_str(), aosFiles[i], nullptr);
             VSIStatBufL sStat;
             std::string osFilename =
@@ -310,7 +310,7 @@ void ZarrV2Group::InitFromZMetadata(const CPLJSONObject &obj)
             nLastSlashPos == std::string::npos
                 ? osArrayFullname
                 : osArrayFullname.substr(nLastSlashPos + 1);
-        const std::string osZarrayFilename = CPLFormFilename(
+        const std::string osZarrayFilename = CPLFormFilenameSafe(
             CPLFormFilename(poBelongingGroup->m_osDirectoryName.c_str(),
                             osArrayName.c_str(), nullptr),
             ".zarray", nullptr);

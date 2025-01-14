@@ -1120,7 +1120,7 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
                      * characters */
                     CPLString osDirDataset = pszNAM;
                     osDirDataset.resize(6);
-                    CPLString osDatasetDir = CPLFormFilename(
+                    CPLString osDatasetDir = CPLFormFilenameSafe(
                         osDirName.c_str(), osDirDataset.c_str(), nullptr);
 
                     CPLString osGENFileName = "";

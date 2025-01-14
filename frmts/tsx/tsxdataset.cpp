@@ -252,7 +252,7 @@ int TSXDataset::Identify(GDALOpenInfo *poOpenInfo)
     {
         if (poOpenInfo->bIsDirectory)
         {
-            const CPLString osFilename = CPLFormCIFilename(
+            const CPLString osFilename = CPLFormCIFilenameSafe(
                 poOpenInfo->pszFilename,
                 CPLGetFilename(poOpenInfo->pszFilename), "xml");
 

@@ -599,8 +599,9 @@ static std::string GetAbsoluteFileName(const char *pszTileName,
             return osRet;
         }
 
-        const std::string osRelativeMadeAbsolute = CPLProjectRelativeFilename(
-            CPLGetPathSafe(pszVRTName).c_str(), pszTileName);
+        const std::string osRelativeMadeAbsolute =
+            CPLProjectRelativeFilenameSafe(CPLGetPathSafe(pszVRTName).c_str(),
+                                           pszTileName);
         VSIStatBufL sStat;
         if (VSIStatL(osRelativeMadeAbsolute.c_str(), &sStat) == 0)
             return osRelativeMadeAbsolute;

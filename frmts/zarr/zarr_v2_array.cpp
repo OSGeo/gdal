@@ -1897,7 +1897,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
         const std::string gridMappingName = gridMapping.ToString();
         if (m_oMapMDArrays.find(gridMappingName) == m_oMapMDArrays.end())
         {
-            const std::string osArrayFilenameDim = CPLFormFilename(
+            const std::string osArrayFilenameDim = CPLFormFilenameSafe(
                 CPLFormFilename(m_osDirectoryName.c_str(),
                                 gridMappingName.c_str(), nullptr),
                 ".zarray", nullptr);

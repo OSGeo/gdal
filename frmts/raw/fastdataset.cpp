@@ -670,7 +670,7 @@ GDALDataset *FASTDataset::Open(GDALOpenInfo *poOpenInfo)
                                                 "banda"};
                 for (int i = 0; i < 4; i++)
                 {
-                    const CPLString osChannelFilename = CPLFormFilename(
+                    const CPLString osChannelFilename = CPLFormFilenameSafe(
                         poDS->pszDirname, papszBasenames[i], osSuffix);
                     if (poDS->OpenChannel(osChannelFilename, 0))
                     {

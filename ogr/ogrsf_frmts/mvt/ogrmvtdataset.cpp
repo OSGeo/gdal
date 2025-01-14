@@ -1625,7 +1625,7 @@ void OGRMVTDirectoryLayer::OpenTile()
     m_poCurrentTile = nullptr;
     if (m_nYIndex < (m_bUseReadDir ? m_aosSubDirContent.Count() : (1 << m_nZ)))
     {
-        CPLString osFilename = CPLFormFilename(
+        CPLString osFilename = CPLFormFilenameSafe(
             m_aosSubDirName,
             m_bUseReadDir ? m_aosSubDirContent[m_nYIndex]
                           : CPLSPrintf("%d.%s", m_nYIndex,
@@ -1850,7 +1850,7 @@ OGRFeature *OGRMVTDirectoryLayer::GetFeature(GIntBig nFID)
     const int nX = static_cast<int>(nFID & ((1 << m_nZ) - 1));
     const int nY = static_cast<int>((nFID >> m_nZ) & ((1 << m_nZ) - 1));
     const GIntBig nTileFID = nFID >> (2 * m_nZ);
-    const CPLString osFilename = CPLFormFilename(
+    const CPLString osFilename = CPLFormFilenameSafe(
         CPLFormFilename(m_osDirName, CPLSPrintf("%d", nX), nullptr),
         CPLSPrintf("%d.%s", nY, m_poDS->m_osTileExtension.c_str()), nullptr);
     GDALOpenInfo oOpenInfo(("MVT:" + osFilename).c_str(), GA_ReadOnly);
@@ -2651,7 +2651,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                     continue;
                 }
             }
-            CPLString osSubDir = CPLFormFilename(
+            CPLString osSubDir = CPLFormFilenameSafe(
                 poOpenInfo->pszFilename,
                 bTryToListDir ? aosDirContent[i] : CPLSPrintf("%d", i),
                 nullptr);
@@ -2975,7 +2975,7 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
 
     CPLString osY = CPLGetBasenameSafe(osFilename);
     CPLString osX = CPLGetBasenameSafe(CPLGetPathSafe(osFilename).c_str());
-    CPLString osZ = CPLGetBasename(
+    CPLString osZ = CPLGetBasenameSafe(
         CPLGetPathSafe(CPLGetPathSafe(osFilename).c_str()).c_str());
     size_t nPos = osY.find('.');
     if (nPos != std::string::npos)

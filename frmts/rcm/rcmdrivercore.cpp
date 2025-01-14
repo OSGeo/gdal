@@ -69,7 +69,7 @@ int RCMDatasetIdentify(GDALOpenInfo *poOpenInfo)
         /* If not, check for directory extra 'metadata' access when there is a
         product.xml file in the directory. */
 
-        CPLString osMDFilenameMetadata = CPLFormCIFilename(
+        CPLString osMDFilenameMetadata = CPLFormCIFilenameSafe(
             poOpenInfo->pszFilename, GetMetadataProduct(), nullptr);
 
         VSIStatBufL sStatMetadata;

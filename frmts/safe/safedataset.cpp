@@ -777,8 +777,8 @@ int SAFEDataset::Identify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->bIsDirectory)
     {
         VSIStatBufL sStat;
-        CPLString osMDFilename = CPLFormCIFilename(poOpenInfo->pszFilename,
-                                                   "manifest.safe", nullptr);
+        CPLString osMDFilename = CPLFormCIFilenameSafe(
+            poOpenInfo->pszFilename, "manifest.safe", nullptr);
 
         if (VSIStatL(osMDFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode))
         {

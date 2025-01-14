@@ -2404,7 +2404,7 @@ bool OGROpenFileGDBDataSource::BackupSystemTablesForTransaction()
             osBasename.compare(0, 8, "a0000000") == 0 && osBasename[8] >= '1' &&
             osBasename[8] <= '8')
         {
-            std::string osDestFilename = CPLFormFilename(
+            std::string osDestFilename = CPLFormFilenameSafe(
                 m_osTransactionBackupDirname.c_str(), *papszIter, nullptr);
             std::string osSourceFilename =
                 CPLFormFilename(m_osDirName.c_str(), *papszIter, nullptr);
@@ -2482,7 +2482,7 @@ OGRErr OGROpenFileGDBDataSource::RollbackTransaction()
             {
                 std::string osDestFilename =
                     CPLFormFilename(m_osDirName.c_str(), *papszIter, nullptr);
-                std::string osSourceFilename = CPLFormFilename(
+                std::string osSourceFilename = CPLFormFilenameSafe(
                     m_osTransactionBackupDirname.c_str(), *papszIter, nullptr);
                 if (CPLCopyFile(osDestFilename.c_str(),
                                 osSourceFilename.c_str()) != 0)

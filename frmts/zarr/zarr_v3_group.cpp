@@ -106,7 +106,7 @@ void ZarrV3Group::ExploreDirectory() const
     {
         if (VSI_ISDIR(psEntry->nMode))
         {
-            const std::string osSubDir = CPLFormFilename(
+            const std::string osSubDir = CPLFormFilenameSafe(
                 m_osDirectoryName.c_str(), psEntry->pszName, nullptr);
             VSIStatBufL sStat;
             std::string osZarrJsonFilename =
