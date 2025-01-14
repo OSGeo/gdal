@@ -2207,7 +2207,7 @@ int TIFFSetSubDirectory(TIFF *tif, uint64_t diroff)
             _TIFFCleanupIFDOffsetAndNumberMaps(tif);
             tif->tif_curdir = 0; /* first directory of new chain */
             /* add this offset to new IFD list */
-            _TIFFCheckDirNumberAndOffset(tif, tif->tif_curdir, diroff);
+            retval = _TIFFCheckDirNumberAndOffset(tif, tif->tif_curdir, diroff);
         }
         /* To be able to return from SubIFD or custom-IFD to main-IFD */
         tif->tif_setdirectory_force_absolute = TRUE;
