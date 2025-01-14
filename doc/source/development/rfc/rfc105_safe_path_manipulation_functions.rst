@@ -17,7 +17,7 @@ Summary
 
 This RFC adds safe versions, for use by C++ code, of all functions of
 cpl_path.cpp (such as CPLGetPath(), CPLGetDirname(), CPLGetBasename(), CPLGetExtension(),
-CPLGetFormFilename(), CPLGetFormCIFilename(), etc.), that returns a result stored
+CPLFormFilename(), CPLFormCIFilename(), etc.), that returns a result stored
 in more or less ephemeral storage, to avoid potential security issues related
 to their mis-use. It also covers converting most of the code base to the safer
 alternatives.
