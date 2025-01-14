@@ -148,7 +148,8 @@ bool OGRPDSDataSource::LoadTable(const char *pszFilename, int nRecordSize,
         }
         CPLString osTPath = CPLGetPathSafe(pszFilename);
         CleanString(osTableFilename);
-        osTableFilename = CPLFormCIFilename(osTPath, osTableFilename, nullptr);
+        osTableFilename =
+            CPLFormCIFilenameSafe(osTPath, osTableFilename, nullptr);
     }
     else
     {

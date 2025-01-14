@@ -1884,7 +1884,7 @@ HFAHandle HFACreateLL(const char *pszFilename)
         if (VSIStatL(osSupFile, &sStatBuf) == 0)
             VSIUnlink(osSupFile);
 
-        osSupFile = CPLFormCIFilename(osPath, osBasename, "ige");
+        osSupFile = CPLFormCIFilenameSafe(osPath, osBasename, "ige");
 
         if (VSIStatL(osSupFile, &sStatBuf) == 0)
             VSIUnlink(osSupFile);

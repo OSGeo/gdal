@@ -359,7 +359,8 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
     std::string osFilename = GetDescription();
     if (!m_osGroupName.empty())
     {
-        osFilename = CPLFormFilename(m_osGroupName.c_str(), "layers", nullptr);
+        osFilename =
+            CPLFormFilenameSafe(m_osGroupName.c_str(), "layers", nullptr);
         if (!STARTS_WITH(m_osGroupName.c_str(), "s3://") &&
             !STARTS_WITH(m_osGroupName.c_str(), "gcs://"))
         {
@@ -367,7 +368,7 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
             if (VSIStatL(osFilename.c_str(), &sStat) != 0)
                 VSIMkdir(osFilename.c_str(), 0755);
         }
-        osFilename = CPLFormFilename(osFilename.c_str(), pszName, nullptr);
+        osFilename = CPLFormFilenameSafe(osFilename.c_str(), pszName, nullptr);
     }
     auto poLayer = std::make_unique<OGRTileDBLayer>(
         this, osFilename.c_str(), pszName, eGType, poSpatialRef);

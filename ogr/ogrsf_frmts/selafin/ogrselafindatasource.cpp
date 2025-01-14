@@ -373,7 +373,7 @@ int OGRSelafinDataSource::Open(const char *pszFilename, int bUpdateIn,
             CSLDestroy(papszFiles);
             return FALSE;
         }
-        osFilename = CPLFormFilename(osFilename, papszFiles[0], nullptr);
+        osFilename = CPLFormFilenameSafe(osFilename, papszFiles[0], nullptr);
         CSLDestroy(papszFiles);
         return OpenTable(osFilename);
     }

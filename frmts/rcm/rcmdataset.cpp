@@ -1105,7 +1105,8 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         /* Check for directory access when there is a product.xml file in the
         directory. */
-        osMDFilename = CPLFormCIFilename(pszFilename, "product.xml", nullptr);
+        osMDFilename =
+            CPLFormCIFilenameSafe(pszFilename, "product.xml", nullptr);
 
         VSIStatBufL sStat;
         if (VSIStatL(osMDFilename, &sStat) != 0)

@@ -170,7 +170,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
             char *pszCurDir = CPLGetCurrentDir();
             if (pszCurDir == nullptr)
                 return nullptr;
-            osPath = CPLFormFilename(pszCurDir, osPath.c_str(), nullptr);
+            osPath = CPLFormFilenameSafe(pszCurDir, osPath.c_str(), nullptr);
             CPLFree(pszCurDir);
         }
 

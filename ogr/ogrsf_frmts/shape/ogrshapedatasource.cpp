@@ -881,7 +881,8 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
     OGRSpatialReference *poSRSClone = nullptr;
     if (poSRS != nullptr)
     {
-        osPrjFilename = CPLFormFilename(nullptr, pszFilenameWithoutExt, "prj");
+        osPrjFilename =
+            CPLFormFilenameSafe(nullptr, pszFilenameWithoutExt, "prj");
         poSRSClone = poSRS->Clone();
 
         char *pszWKT = nullptr;

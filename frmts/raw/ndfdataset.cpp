@@ -292,7 +292,7 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
         else
         {
             CPLString osBasePath = CPLGetPathSafe(poOpenInfo->pszFilename);
-            osFilename = CPLFormFilename(osBasePath, osFilename, nullptr);
+            osFilename = CPLFormFilenameSafe(osBasePath, osFilename, nullptr);
         }
 
         VSILFILE *fpRaw = VSIFOpenL(osFilename, "rb");

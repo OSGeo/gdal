@@ -672,7 +672,7 @@ bool SRPDataset::GetFromRecord(const char *pszFileName, DDFRecord *record)
     /*      Try to collect a color map from the .QAL file.                  */
     /* -------------------------------------------------------------------- */
     const CPLString osBasename = CPLGetBasenameSafe(pszFileName);
-    osQALFileName = CPLFormCIFilename(osDirname, osBasename, "QAL");
+    osQALFileName = CPLFormCIFilenameSafe(osDirname, osBasename, "QAL");
 
     DDFModule oQALModule;
 
@@ -1596,12 +1596,12 @@ GDALDataset *SRPDataset::Open(GDALOpenInfo *poOpenInfo)
 
             CPLString path = CPLGetDirnameSafe(osFileName);
             CPLString basename01 = ResetTo01(basename);
-            osFileName = CPLFormFilename(path, basename01, ".IMG");
+            osFileName = CPLFormFilenameSafe(path, basename01, ".IMG");
 
-            osFileName = CPLResetExtension(osFileName, "GEN");
+            osFileName = CPLResetExtensionSafe(osFileName, "GEN");
             if (VSIStatL(osFileName, &sStatBuf) != 0)
             {
-                osFileName = CPLResetExtension(osFileName, "gen");
+                osFileName = CPLResetExtensionSafe(osFileName, "gen");
                 if (VSIStatL(osFileName, &sStatBuf) != 0)
                     return nullptr;
             }

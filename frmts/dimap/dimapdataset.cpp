@@ -542,7 +542,8 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
     std::string osMDFilename(osFilename);
     if (VSIStatL(osFilename.c_str(), &sStat) == 0 && VSI_ISDIR(sStat.st_mode))
     {
-        osMDFilename = CPLFormCIFilename(osFilename, "METADATA.DIM", nullptr);
+        osMDFilename =
+            CPLFormCIFilenameSafe(osFilename, "METADATA.DIM", nullptr);
 
         /* DIMAP2 */
         if (VSIStatL(osMDFilename.c_str(), &sStat) != 0)

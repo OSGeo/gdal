@@ -235,7 +235,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         const CPLString osTPath = CPLGetPathSafe(poOpenInfo->pszFilename);
         CPLString osFilename = pszQube;
         poDS->CleanString(osFilename);
-        osTargetFile = CPLFormCIFilename(osTPath, osFilename, nullptr);
+        osTargetFile = CPLFormCIFilenameSafe(osTPath, osFilename, nullptr);
         poDS->osExternalCube = osTargetFile;
     }
     else if (pszQube[0] == '(')
@@ -243,7 +243,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         const CPLString osTPath = CPLGetPathSafe(poOpenInfo->pszFilename);
         CPLString osFilename = poDS->GetKeywordSub("^QUBE", 1, "");
         poDS->CleanString(osFilename);
-        osTargetFile = CPLFormCIFilename(osTPath, osFilename, nullptr);
+        osTargetFile = CPLFormCIFilenameSafe(osTPath, osFilename, nullptr);
         poDS->osExternalCube = osTargetFile;
 
         nQube = atoi(poDS->GetKeywordSub("^QUBE", 2, "1"));
@@ -922,7 +922,7 @@ GDALDataset *ISIS2Dataset::Create(const char *pszFilename, int nXSize,
         }
 
         osLabelFile = pszFilename;
-        osRasterFile = CPLResetExtension(osLabelFile, sExtension);
+        osRasterFile = CPLResetExtensionSafe(osLabelFile, sExtension);
         osOutFile = osLabelFile;
     }
 

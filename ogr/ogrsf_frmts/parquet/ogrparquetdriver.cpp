@@ -86,7 +86,7 @@ GetFileSystem(std::string &osBasePathInOut,
             char *pszCurDir = CPLGetCurrentDir();
             if (pszCurDir == nullptr)
                 return {nullptr, osFSFilename};
-            osPath = CPLFormFilename(pszCurDir, osPath.c_str(), nullptr);
+            osPath = CPLFormFilenameSafe(pszCurDir, osPath.c_str(), nullptr);
             CPLFree(pszCurDir);
         }
         PARQUET_ASSIGN_OR_THROW(

@@ -892,18 +892,18 @@ char **EHdrDataset::GetFileList()
     papszFileList = CSLAddString(papszFileList, osFilename);
 
     // Statistics file
-    osFilename = CPLFormCIFilename(osPath, osName, "stx");
+    osFilename = CPLFormCIFilenameSafe(osPath, osName, "stx");
     VSIStatBufL sStatBuf;
     if (VSIStatExL(osFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0)
         papszFileList = CSLAddString(papszFileList, osFilename);
 
     // color table file.
-    osFilename = CPLFormCIFilename(osPath, osName, "clr");
+    osFilename = CPLFormCIFilenameSafe(osPath, osName, "clr");
     if (VSIStatExL(osFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0)
         papszFileList = CSLAddString(papszFileList, osFilename);
 
     // projections file.
-    osFilename = CPLFormCIFilename(osPath, osName, "prj");
+    osFilename = CPLFormCIFilenameSafe(osPath, osName, "prj");
     if (VSIStatExL(osFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0)
         papszFileList = CSLAddString(papszFileList, osFilename);
 
@@ -962,7 +962,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     }
     else
     {
-        osHDRFilename = CPLFormCIFilename(osPath, osName, pszHeaderExt);
+        osHDRFilename = CPLFormCIFilenameSafe(osPath, osName, pszHeaderExt);
     }
 
     const bool bSelectedHDR = EQUAL(osHDRFilename, poOpenInfo->pszFilename);

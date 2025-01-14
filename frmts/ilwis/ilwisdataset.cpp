@@ -947,11 +947,13 @@ GDALDataset *ILWISDataset::Create(const char *pszFilename, int nXSize,
         pszODFName = std::string(
             CPLFormFilename(osPath.c_str(), osBaseName.c_str(), "mpr"));
         pszDataBaseName = osBaseName;
-        osFilename = CPLFormFilename(osPath.c_str(), osBaseName.c_str(), "mpr");
+        osFilename =
+            CPLFormFilenameSafe(osPath.c_str(), osBaseName.c_str(), "mpr");
     }
     else
     {
-        osFilename = CPLFormFilename(osPath.c_str(), osBaseName.c_str(), "mpl");
+        osFilename =
+            CPLFormFilenameSafe(osPath.c_str(), osBaseName.c_str(), "mpl");
         auto iniFile = new IniFile(std::string(osFilename));
         iniFile->SetKeyValue("Ilwis", "Type", "MapList");
         iniFile->SetKeyValue("MapList", "GeoRef", "none.grf");

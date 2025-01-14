@@ -614,7 +614,7 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
         szAuxTarget[sizeof(szAuxTarget) - 1] = '\0';
 
         const std::string osPath(CPLGetPathSafe(poOpenInfo->pszFilename));
-        osTarget = CPLFormFilename(osPath.c_str(), szAuxTarget, nullptr);
+        osTarget = CPLFormFilenameSafe(osPath.c_str(), szAuxTarget, nullptr);
     }
 
     /* -------------------------------------------------------------------- */
@@ -636,7 +636,7 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
     VSILFILE *fp = VSIFOpenL(osAuxFilename, "r");
     if (fp == nullptr)
     {
-        osAuxFilename = CPLResetExtension(osTarget, "AUX");
+        osAuxFilename = CPLResetExtensionSafe(osTarget, "AUX");
         fp = VSIFOpenL(osAuxFilename, "r");
     }
 

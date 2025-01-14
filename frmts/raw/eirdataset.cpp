@@ -327,7 +327,7 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else if (EQUAL(aosTokens[0], "PIXEL_FILES"))
         {
-            osRasterFilename = CPLFormCIFilename(osPath, aosTokens[1], "");
+            osRasterFilename = CPLFormCIFilenameSafe(osPath, aosTokens[1], "");
         }
         else if (EQUAL(aosTokens[0], "FORMAT"))
         {

@@ -2595,7 +2595,8 @@ KmlSuperOverlayReadDataset::Open(const char *pszFilename,
         {
             if (EQUAL(CPLGetExtensionSafe(*papszIter).c_str(), "kml"))
             {
-                osFilename = CPLFormFilename(osFilename, *papszIter, nullptr);
+                osFilename =
+                    CPLFormFilenameSafe(osFilename, *papszIter, nullptr);
                 osFilename = KMLRemoveSlash(osFilename);
                 break;
             }

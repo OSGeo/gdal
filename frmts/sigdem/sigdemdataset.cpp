@@ -358,7 +358,8 @@ GDALDataset *SIGDEMDataset::Open(GDALOpenInfo *poOpenInfo)
         int nRet = VSIStatL(osPrjFilename, &sStatBuf);
         if (nRet != 0 && VSIIsCaseSensitiveFS(osPrjFilename))
         {
-            osPrjFilename = CPLResetExtension(poOpenInfo->pszFilename, "PRJ");
+            osPrjFilename =
+                CPLResetExtensionSafe(poOpenInfo->pszFilename, "PRJ");
             nRet = VSIStatL(osPrjFilename, &sStatBuf);
         }
 

@@ -636,7 +636,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
             CSLDestroy(papszFiles);
             return FALSE;
         }
-        osFilename = CPLFormFilename(osFilename, papszFiles[0], nullptr);
+        osFilename = CPLFormFilenameSafe(osFilename, papszFiles[0], nullptr);
         CSLDestroy(papszFiles);
         return OpenTable(osFilename, papszOpenOptionsIn);
     }
@@ -1090,12 +1090,12 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
     }
     else if (osDefaultCSVName != "")
     {
-        osFilename = CPLFormFilename(pszName, osDefaultCSVName, nullptr);
+        osFilename = CPLFormFilenameSafe(pszName, osDefaultCSVName, nullptr);
         osDefaultCSVName = "";
     }
     else
     {
-        osFilename = CPLFormFilename(pszName, pszLayerName, "csv");
+        osFilename = CPLFormFilenameSafe(pszName, pszLayerName, "csv");
     }
 
     // Does this directory/file already exist?

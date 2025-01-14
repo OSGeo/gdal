@@ -710,7 +710,8 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     CPLString osMDFilename;
     if (poOpenInfo->bIsDirectory)
     {
-        osMDFilename = CPLFormCIFilename(pszFilename, "product.xml", nullptr);
+        osMDFilename =
+            CPLFormCIFilenameSafe(pszFilename, "product.xml", nullptr);
     }
     else
         osMDFilename = pszFilename;

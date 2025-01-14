@@ -123,7 +123,7 @@ OGRGmtDataSource::ICreateLayer(const char *pszLayerName,
     if (STARTS_WITH(osFilename, "/vsistdout"))
         pszFlags = "wb";
     else if (!EQUAL(CPLGetExtensionSafe(GetDescription()).c_str(), "gmt"))
-        osFilename = CPLFormFilename(osPath, pszLayerName, "gmt");
+        osFilename = CPLFormFilenameSafe(osPath, pszLayerName, "gmt");
 
     /* -------------------------------------------------------------------- */
     /*      Open the file.                                                  */

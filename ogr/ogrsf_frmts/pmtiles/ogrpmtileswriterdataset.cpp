@@ -79,7 +79,7 @@ bool OGRPMTilesWriterDataset::Create(const char *pszFilename,
     std::string osTmpFile(pszFilename);
     if (!VSIIsLocal(pszFilename))
     {
-        osTmpFile = CPLGenerateTempFilename(CPLGetFilename(pszFilename));
+        osTmpFile = CPLGenerateTempFilenameSafe(CPLGetFilename(pszFilename));
     }
     osTmpFile += ".tmp.mbtiles";
 

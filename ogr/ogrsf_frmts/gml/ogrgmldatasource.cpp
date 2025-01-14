@@ -857,7 +857,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     CPLString osGFSFilename;
     if (!bIsWFSFromServer)
     {
-        osGFSFilename = CPLResetExtension(pszFilename, "gfs");
+        osGFSFilename = CPLResetExtensionSafe(pszFilename, "gfs");
         if (STARTS_WITH(osGFSFilename, "/vsigzip/"))
             osGFSFilename = osGFSFilename.substr(strlen("/vsigzip/"));
     }
@@ -909,7 +909,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
         VSIStatBufL sXSDStatBuf;
         if (osXSDFilename.empty())
         {
-            osXSDFilename = CPLResetExtension(pszFilename, "xsd");
+            osXSDFilename = CPLResetExtensionSafe(pszFilename, "xsd");
             if (bCheckAuxFile && VSIStatExL(osXSDFilename, &sXSDStatBuf,
                                             VSI_STAT_EXISTS_FLAG) == 0)
             {

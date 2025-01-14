@@ -378,7 +378,7 @@ GDALDataset *TILDataset::Open(GDALOpenInfo *poOpenInfo)
             pszFilename++;
         if (pszFilename[strlen(pszFilename) - 1] == '"')
             const_cast<char *>(pszFilename)[strlen(pszFilename) - 1] = '\0';
-        osFilename = CPLFormFilename(osDirname, pszFilename, nullptr);
+        osFilename = CPLFormFilenameSafe(osDirname, pszFilename, nullptr);
         poDS->m_aosFilenames.push_back(osFilename);
 
         osKey.Printf("TILE_%d.ULColOffset", iTile);

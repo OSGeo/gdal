@@ -127,7 +127,7 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 #endif
     if (bUseTempFilename)
     {
-        osTempFilename = CPLGenerateTempFilename(nullptr);
+        osTempFilename = CPLGenerateTempFilenameSafe(nullptr);
         CPLDebug("KTX2", "Using temporary file %s", osTempFilename.c_str());
         params.m_out_filename = osTempFilename;
     }

@@ -4049,7 +4049,7 @@ char **NITFDataset::AddFile(char **papszFileList, const char *EXTENSION,
             papszFileList = CSLAddString(papszFileList, osTarget);
         else
         {
-            osTarget = CPLResetExtension(osNITFFilename, extension);
+            osTarget = CPLResetExtensionSafe(osNITFFilename, extension);
             if (CSLFindStringCaseSensitive(oOvManager.GetSiblingFiles(),
                                            CPLGetFilename(osTarget)) >= 0)
                 papszFileList = CSLAddString(papszFileList, osTarget);
@@ -4061,7 +4061,7 @@ char **NITFDataset::AddFile(char **papszFileList, const char *EXTENSION,
             papszFileList = CSLAddString(papszFileList, osTarget);
         else
         {
-            osTarget = CPLResetExtension(osNITFFilename, extension);
+            osTarget = CPLResetExtensionSafe(osNITFFilename, extension);
             if (VSIStatL(osTarget, &sStatBuf) == 0)
                 papszFileList = CSLAddString(papszFileList, osTarget);
         }

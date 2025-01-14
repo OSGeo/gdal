@@ -484,9 +484,9 @@ int OGRAPISpyOpenTakeSnapshot(const char *pszName, int bUpdate)
             }
             VSIMkdir(osSnapshotPath, 0777);
             VSIMkdir(osBaseDir, 0777);
-            osSrcDir = CPLFormFilename(osBaseDir, "source", nullptr);
+            osSrcDir = CPLFormFilenameSafe(osBaseDir, "source", nullptr);
             VSIMkdir(osSrcDir, 0777);
-            osWorkingDir = CPLFormFilename(osBaseDir, "working", nullptr);
+            osWorkingDir = CPLFormFilenameSafe(osBaseDir, "working", nullptr);
             VSIMkdir(osWorkingDir, 0777);
 
             OGRAPISpyFileReopen();

@@ -794,13 +794,13 @@ void LANDataset::CheckForStatistics()
     /* -------------------------------------------------------------------- */
     /*      Do we have a statistics file?                                   */
     /* -------------------------------------------------------------------- */
-    osSTAFilename = CPLResetExtension(GetDescription(), "sta");
+    osSTAFilename = CPLResetExtensionSafe(GetDescription(), "sta");
 
     VSILFILE *fpSTA = VSIFOpenL(osSTAFilename, "r");
 
     if (fpSTA == nullptr && VSIIsCaseSensitiveFS(osSTAFilename))
     {
-        osSTAFilename = CPLResetExtension(GetDescription(), "STA");
+        osSTAFilename = CPLResetExtensionSafe(GetDescription(), "STA");
         fpSTA = VSIFOpenL(osSTAFilename, "r");
     }
 

@@ -1782,7 +1782,7 @@ static unsigned byteSwapUInt(unsigned swapMe)
 
 void ENVIDataset::ProcessStatsFile()
 {
-    osStaFilename = CPLResetExtension(pszHDRFilename, "sta");
+    osStaFilename = CPLResetExtensionSafe(pszHDRFilename, "sta");
     VSILFILE *fpStaFile = VSIFOpenL(osStaFilename, "rb");
 
     if (!fpStaFile)
@@ -2021,13 +2021,15 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         // Otherwise, try .hdr as a replacement extension
         if (fpHeader == nullptr)
         {
-            osHdrFilename = CPLResetExtension(poOpenInfo->pszFilename, "hdr");
+            osHdrFilename =
+                CPLResetExtensionSafe(poOpenInfo->pszFilename, "hdr");
             fpHeader = VSIFOpenL(osHdrFilename, pszMode);
         }
 
         if (fpHeader == nullptr && VSIIsCaseSensitiveFS(osHdrFilename))
         {
-            osHdrFilename = CPLResetExtension(poOpenInfo->pszFilename, "HDR");
+            osHdrFilename =
+                CPLResetExtensionSafe(poOpenInfo->pszFilename, "HDR");
             fpHeader = VSIFOpenL(osHdrFilename, pszMode);
         }
     }

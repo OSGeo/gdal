@@ -337,7 +337,7 @@ char **SAGADataset::GetFileList()
         papszFileList = CSLAddString(papszFileList, osFilename);
 
         // projections file.
-        osFilename = CPLFormCIFilename(osPath, osName, "prj");
+        osFilename = CPLFormCIFilenameSafe(osPath, osName, "prj");
         VSIStatBufL sStatBuf;
         if (VSIStatExL(osFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0)
             papszFileList = CSLAddString(papszFileList, osFilename);
