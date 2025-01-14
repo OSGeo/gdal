@@ -568,6 +568,7 @@ CPLErr VRTSimpleSource::XMLInit(const CPLXMLNode *psSrc, const char *pszVRTPath,
     m_poMapSharedSources = &oMapSharedSources;
 
     m_osResampling = CPLGetXMLValue(psSrc, "resampling", "");
+    m_osName = CPLGetXMLValue(psSrc, "name", "");
 
     /* -------------------------------------------------------------------- */
     /*      Prepare filename.                                               */

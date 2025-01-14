@@ -15,6 +15,7 @@ cmake "${GDAL_SOURCE_DIR:=..}" \
     -DCMAKE_INSTALL_PREFIX=/tmp/install-gdal \
     -DGDAL_USE_TIFF_INTERNAL=OFF \
     -DGDAL_USE_GEOTIFF_INTERNAL=OFF \
+    -DGDAL_USE_EXPRTK=ON \
     -DECW_ROOT=/opt/libecwj2-3.3 \
     -DMRSID_ROOT=/usr/local \
     -DFileGDB_ROOT=/usr/local/FileGDB_API \

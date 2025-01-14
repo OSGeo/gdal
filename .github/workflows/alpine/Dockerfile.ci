@@ -41,6 +41,7 @@ RUN apk add \
     lz4-dev \
     make \
     mariadb-connector-c-dev \
+    muparser-dev \
     netcdf-dev \
     odbc-cpp-wrapper-dev \
     ogdi-dev \

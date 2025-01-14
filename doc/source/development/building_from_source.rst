@@ -277,7 +277,7 @@ CMake package dependent options
 .. Put packages in alphabetic order.
 
 Generally speaking, packages (external dependencies) will be automatically found if
-they are in default locations used by CMake. This can be also tuned for example
+they are in default locations used by CMake. This can also be tuned for example
 with the ``CMAKE_PREFIX_PATH`` variable.
 
 Starting with CMake 3.12, it is also possible to use a
@@ -615,6 +615,22 @@ the XercesC library.
 
     Control whether to use EXPAT. Defaults to ON when EXPAT is found.
 
+
+ExprTk
+******
+
+`ExprTk <https://www.partow.net/programming/exprtk/index.html>`__ is a
+mathematical expression parser and evaluation engine. It can be used by the
+:ref:`raster.vrt` driver. Building with ExprTk may increase the size of the
+GDAL library by several megabytes.
+
+.. option:: GDAL_USE_EXPRTK=ON/OFF
+
+   Control whether to use ExprTk. Defaults to OFF even if ExprTk is found.
+
+.. option:: EXPRTK_INCLUDE_DIR
+
+    Path to the include directory with the :file:`exprtk.hpp` header file.
 
 FileGDB
 *******
@@ -1377,6 +1393,24 @@ The library is normally found if installed in standard location, and at version 
 
     Control whether to use MSSQL_ODBC. Defaults to ON when MSSQL_ODBC is found.
 
+
+muparser
+********
+
+`muparser <https://beltoforion.de/en/muparser/>`__ is a mathematical expression
+parser and evaluation engine. It can be used by the :ref:`raster.vrt` driver.
+
+.. option:: GDAL_USE_MUPARSER=ON/OFF
+
+   Control whether to use muparser. Defaults to ON when muparser is found.
+
+.. option:: MUPARSER_INCLUDE_DIR
+
+   Path to directory with muparser headers.
+
+.. option:: MUPARSER_LIBRARY
+
+   Path to library to be linked.
 
 MYSQL
 *****
