@@ -3780,9 +3780,7 @@ retry:
         char **papszOptionsToValidate = const_cast<char **>(papszOpenOptions);
         if (CSLFetchNameValue(papszOpenOptionsCleaned, "OVERVIEW_LEVEL") !=
                 nullptr &&
-            (poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST) == nullptr ||
-             CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST))
-                     .ifind("OVERVIEW_LEVEL") == std::string::npos))
+            !poDriver->HasOpenOption("OVERVIEW_LEVEL"))
         {
             papszTmpOpenOptions = CSLDuplicate(papszOpenOptionsCleaned);
             papszTmpOpenOptions =
@@ -3886,10 +3884,7 @@ retry:
             // driver specific.
             if (CSLFetchNameValue(papszOpenOptions, "OVERVIEW_LEVEL") !=
                     nullptr &&
-                (poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST) ==
-                     nullptr ||
-                 CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST))
-                         .ifind("OVERVIEW_LEVEL") == std::string::npos))
+                !poDriver->HasOpenOption("OVERVIEW_LEVEL"))
             {
                 CPLString osVal(
                     CSLFetchNameValue(papszOpenOptions, "OVERVIEW_LEVEL"));
