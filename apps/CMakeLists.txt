@@ -70,7 +70,12 @@ target_public_header(TARGET ${GDAL_LIB_TARGET_NAME} HEADERS gdal_utils.h)
 
 if (BUILD_APPS)
   # Default Apps
-  add_executable(gdal gdal_utils_priv.h gdal.cpp)
+
+  # MSBuild has case-insensitive target names, so as GDAL is used as the
+  # target name for the library, we cannot reuse it for the "gdal" binary.
+  add_executable(gdal_app gdal_utils_priv.h gdal.cpp)
+  set_target_properties(gdal_app PROPERTIES OUTPUT_NAME gdal)
+
   add_executable(gdalinfo gdal_utils_priv.h gdalinfo_bin.cpp)
   add_executable(gdalbuildvrt gdal_utils_priv.h gdalbuildvrt_bin.cpp)
   add_executable(gdaladdo gdal_utils_priv.h gdaladdo.cpp)
@@ -111,7 +116,7 @@ if (BUILD_APPS)
   add_dependencies(utils_common generate_gdal_version_h)
 
   set(APPS_TARGETS
-      gdal
+      gdal_app
       gdalinfo
       gdalbuildvrt
       gdaladdo
