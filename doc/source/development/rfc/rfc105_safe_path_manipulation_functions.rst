@@ -108,47 +108,24 @@ systematic approach to suppress their root case:
 
 
 - deprecate the use of the legacy CPLXXXX() functions in C++ code and replace
-  wherever possible their use by the use of the new CPLXXXXSafe() functions.
+  their use by the use of the new CPLXXXXSafe() functions.
 
-After some preliminary work in https://github.com/OSGeo/gdal/pull/11639, the
-status of remaining unsafe calls is:
-
-::
-
-    $ grep -r CPLGetBasename frmts ogr | grep -v Safe | wc -l
-    66
-    $ grep -r CPLGetDirname frmts ogr | grep -v Safe | wc -l
-    29
-    $ grep -r CPLGetPath frmts ogr | grep -v Safe | wc -l
-    43
-    $ grep -r CPLGetExtension frmts ogr | grep -v Safe | wc -l
-    33
-    $ grep -r CPLFormFilename frmts ogr | grep -v Safe | wc -l
-    415
-    $ grep -r CPLFormCIFilename frmts ogr | grep -v Safe | wc -l
-    53
-    $ grep -r CPLResetExtension frmts ogr | grep -v Safe | wc -l
-    112
-    $ grep -r CPLProjectRelativeFilename frmts ogr | grep -v Safe | wc -l
-    19
-    $ grep -r CPLGenerateTempFilename frmts ogr | grep -v Safe | wc -l
-    23
-
-
-That is after automating a number of replacements for patterns like the following
-ones ``some_func(CPLGetBasename(x))``, to be replaced by
-``some_func(CPLGetBasenameSafe(x).c_str())``.
+Most of the unsafe calls can be automatically replaced by the safer alternatives
+for patterns like the following ones ``some_func(CPLGetBasename(x))``, to be replaced by
+``some_func(CPLGetBasenameSafe(x).c_str())``, using ``sed``.
 
 Patterns like ``variable_name = CPLGetBasename(x)`` will however require manual
 intervention. If variable_name is a ``std::string`` or ``CPLString``, then
 replacing by ``variable_name = CPLGetBasenameSafe(x)`` is appropriate. If
-variable_name is a ``const char*``, case-by-case analysis will have to be done,
+variable_name is a ``const char*``, case-by-case analysis has to be done,
 to either change its type to std::string / CPLString, or create a temporary
 std::string, and have variable_name be assigned to std_string_temp.c_str().
 
-A Continuous Integration script check will be added to verify that use of the
-unsafe functions is not re-added in parts of the code base where they have
-been eliminated.
+All in all, during development of the candidate implementation, several hundreds
+manual replacements have been made.
+
+A ``#define`` based protection will prevent any GDAL C++ code from accidentally
+re-using the unsafe functions.
 
 Although most call sites can benefit from the safe alternatives, we cannot
 remove completely the legacy functions,
@@ -162,11 +139,6 @@ remove completely the legacy functions,
   thus could eventually migrate to the CPLXXXXSafe() functions when they are
   released.
 
-- even within GDAL, there are situations where we cannot easily use the
-  safe alternatives. For example other functions or methods returning themselves
-  a ``const char *``. However, in some situations, particularly for C++ methods,
-  we can in some cases add a std::string member variable to store the result
-  of the safe methods and return its C-string.
 
 Impact on performance
 ---------------------
@@ -201,7 +173,8 @@ a worthwhile goal to pursue besides it.
 Risks
 -----
 
-Due to the amount of changes, there is a non-zero risk of causing regressions,
+Due to the amount of changes, in particular for replacements that could not be
+automated, there is a non-zero risk of causing regressions,
 in particular in drivers with poor coverage of our regression test suite.
 
 Backward compatibility
@@ -224,7 +197,7 @@ Related issues and PRs
 
 * Bug that triggered this PR: https://github.com/OSGeo/gdal/pull/11638
 
-* Candidate implementation (WIP): https://github.com/OSGeo/gdal/pull/11639
+* Candidate implementation: https://github.com/OSGeo/gdal/pull/11639
 
 Funding
 -------
