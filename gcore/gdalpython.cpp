@@ -317,8 +317,9 @@ static bool LoadPythonAPI()
                                     {
                                         osResolvedFullLink =
                                             CPLFormFilenameSafe(
-                                                CPLGetPath(
-                                                    osPythonBinary.c_str()),
+                                                CPLGetPathSafe(
+                                                    osPythonBinary.c_str())
+                                                    .c_str(),
                                                 osFilename, nullptr);
                                     }
                                     else
@@ -555,7 +556,8 @@ static bool LoadPythonAPI()
                                  STARTS_WITH_CI(pszFilename, "libpython3.")) &&
                                 // do not load minimum API dll
                                 !EQUAL(pszFilename, "python3.dll") &&
-                                EQUAL(CPLGetExtension(pszFilename), "dll"))
+                                EQUAL(CPLGetExtensionSafe(pszFilename).c_str(),
+                                      "dll"))
                             {
                                 osDLLName = CPLFormFilenameSafe(
                                     pszPathPart, pszFilename, nullptr);
@@ -575,7 +577,8 @@ static bool LoadPythonAPI()
                         for (const char *pszFilename : aosFiles)
                         {
                             if (STARTS_WITH_CI(pszFilename, "python") &&
-                                EQUAL(CPLGetExtension(pszFilename), "dll"))
+                                EQUAL(CPLGetExtensionSafe(pszFilename).c_str(),
+                                      "dll"))
                             {
                                 osDLLName = CPLFormFilenameSafe(
                                     osDLLsDir.c_str(), pszFilename, nullptr);
@@ -650,12 +653,13 @@ static bool LoadPythonAPI()
 #ifdef _WIN32
     if (!osPythonBinaryUsed.empty() && getenv("PYTHONHOME") == nullptr)
     {
-        const char *pszPythonHome = CPLGetDirname(osPythonBinaryUsed.c_str());
+        std::string osPythonHome =
+            CPLGetDirnameSafe(osPythonBinaryUsed.c_str());
         VSIStatBufL sStat;
         bool bOK = false;
         // Test Windows Conda layout
         std::string osDirEncodings =
-            CPLFormFilenameSafe(pszPythonHome, "lib/encodings", nullptr);
+            CPLFormFilenameSafe(osPythonHome.c_str(), "lib/encodings", nullptr);
         if (VSIStatL(osDirEncodings.c_str(), &sStat) == 0)
         {
             bOK = true;
@@ -667,9 +671,9 @@ static bool LoadPythonAPI()
                 CSLTokenizeString2(osPythonVersion.c_str(), ".", 0));
             if (aosVersionTokens.size() >= 3)
             {
-                pszPythonHome = CPLGetDirname(pszPythonHome);
+                osPythonHome = CPLGetDirnameSafe(osPythonHome.c_str());
                 osDirEncodings = CPLFormFilenameSafe(
-                    pszPythonHome,
+                    osPythonHome.c_str(),
                     CPLSPrintf("lib/python%s.%s/encodings", aosVersionTokens[0],
                                aosVersionTokens[1]),
                     nullptr);
@@ -682,12 +686,13 @@ static bool LoadPythonAPI()
         if (bOK)
         {
             static wchar_t wszPythonHome[4096];
-            wchar_t *pwszPythonHome =
-                CPLRecodeToWChar(pszPythonHome, CPL_ENC_UTF8, CPL_ENC_UCS2);
+            wchar_t *pwszPythonHome = CPLRecodeToWChar(
+                osPythonHome.c_str(), CPL_ENC_UTF8, CPL_ENC_UCS2);
             const size_t nLength = wcslen(pwszPythonHome) + 1;
             if (nLength <= sizeof(wszPythonHome))
             {
-                CPLDebug("GDAL", "Call Py_SetPythonHome(%s)", pszPythonHome);
+                CPLDebug("GDAL", "Call Py_SetPythonHome(%s)",
+                         osPythonHome.c_str());
                 memcpy(wszPythonHome, pwszPythonHome,
                        nLength * sizeof(wchar_t));
                 // The string must reside in static storage

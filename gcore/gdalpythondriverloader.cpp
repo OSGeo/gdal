@@ -1617,7 +1617,7 @@ bool PythonPluginDriver::LoadPlugin()
                  GetPyExceptionString().c_str());
         return false;
     }
-    const CPLString osPluginModuleName(CPLGetBasename(m_osFilename));
+    const CPLString osPluginModuleName(CPLGetBasenameSafe(m_osFilename));
     PyObject *poModule =
         PyImport_ExecCodeModule(osPluginModuleName, poCompiledString);
     Py_DecRef(poCompiledString);
@@ -1968,7 +1968,7 @@ void GDALDriverManager::AutoLoadPythonDrivers()
         {
             if ((STARTS_WITH_CI(papszFiles[i], "gdal_") ||
                  STARTS_WITH_CI(papszFiles[i], "ogr_")) &&
-                EQUAL(CPLGetExtension(papszFiles[i]), "py"))
+                EQUAL(CPLGetExtensionSafe(papszFiles[i]).c_str(), "py"))
             {
                 aosPythonFiles.push_back(CPLFormFilenameSafe(
                     osABISpecificDir.c_str(), papszFiles[i], nullptr));

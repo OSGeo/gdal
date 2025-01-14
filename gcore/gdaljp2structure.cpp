@@ -251,7 +251,7 @@ static void DumpGeoTIFFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         if (poDS)
         {
             const CPLString osTmpVRTFilename(
-                CPLResetExtension(osTmpFilename.c_str(), "vrt"));
+                CPLResetExtensionSafe(osTmpFilename.c_str(), "vrt"));
             GDALDataset *poVRTDS = poVRTDriver->CreateCopy(
                 osTmpVRTFilename, poDS, FALSE, nullptr, nullptr, nullptr);
             GDALClose(poVRTDS);

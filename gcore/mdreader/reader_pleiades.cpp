@@ -35,17 +35,19 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
     : GDALMDReaderBase(pszPath, papszSiblingFiles), m_osBaseFilename(pszPath),
       m_osIMDSourceFilename(CPLString()), m_osRPBSourceFilename(CPLString())
 {
-    const CPLString osBaseName = CPLGetBasename(pszPath);
+    const CPLString osBaseName = CPLGetBasenameSafe(pszPath);
     const size_t nBaseNameLen = osBaseName.size();
     if (nBaseNameLen < 4 || nBaseNameLen > 511)
         return;
 
-    const CPLString osDirName = CPLGetDirname(pszPath);
+    const CPLString osDirName = CPLGetDirnameSafe(pszPath);
 
-    std::string osIMDSourceFilename = CPLFormFilename(
-        osDirName, CPLSPrintf("DIM_%s", osBaseName.c_str() + 4), "XML");
-    std::string osRPBSourceFilename = CPLFormFilename(
-        osDirName, CPLSPrintf("RPC_%s", osBaseName.c_str() + 4), "XML");
+    std::string osIMDSourceFilename = CPLFormFilenameSafe(
+        osDirName, (std::string("DIM_") + (osBaseName.c_str() + 4)).c_str(),
+        "XML");
+    std::string osRPBSourceFilename = CPLFormFilenameSafe(
+        osDirName, (std::string("RPC_") + (osBaseName.c_str() + 4)).c_str(),
+        "XML");
 
     // find last underline
     char sBaseName[512];
@@ -83,8 +85,8 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
     }
     else
     {
-        osIMDSourceFilename =
-            CPLFormFilename(osDirName, CPLSPrintf("DIM_%s", sBaseName), "XML");
+        osIMDSourceFilename = CPLFormFilenameSafe(
+            osDirName, ("DIM_" + std::string(sBaseName)).c_str(), "XML");
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
             m_osIMDSourceFilename = std::move(osIMDSourceFilename);
@@ -97,8 +99,8 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
     }
     else
     {
-        osRPBSourceFilename =
-            CPLFormFilename(osDirName, CPLSPrintf("RPC_%s", sBaseName), "XML");
+        osRPBSourceFilename = CPLFormFilenameSafe(
+            osDirName, ("RPC_" + std::string(sBaseName)).c_str(), "XML");
         if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
         {
             m_osRPBSourceFilename = std::move(osRPBSourceFilename);

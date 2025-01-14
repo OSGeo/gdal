@@ -33,8 +33,8 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
     : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
 
-    const CPLString osBaseName = CPLGetBasename(pszPath);
-    const CPLString osDirName = CPLGetDirname(pszPath);
+    const CPLString osBaseName = CPLGetBasenameSafe(pszPath);
+    const CPLString osDirName = CPLGetDirnameSafe(pszPath);
 
     // get _metadata.txt file
 
@@ -47,7 +47,7 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
         osRadixMetadataName.resize(i);
 
     // form metadata file name
-    std::string osIMDSourceFilename = CPLFormFilename(
+    std::string osIMDSourceFilename = CPLFormFilenameSafe(
         osDirName, (osRadixMetadataName + "_metadata.txt").c_str(), nullptr);
     if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
@@ -55,7 +55,7 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
     }
     else
     {
-        osIMDSourceFilename = CPLFormFilename(
+        osIMDSourceFilename = CPLFormFilenameSafe(
             osDirName, (osRadixMetadataName + "_METADATA.txt").c_str(),
             nullptr);
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
@@ -67,15 +67,15 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
     // get _rpc.txt file
 
     std::string osRPBSourceFilename =
-        CPLFormFilename(osDirName, (osBaseName + "_rpc").c_str(), "txt");
+        CPLFormFilenameSafe(osDirName, (osBaseName + "_rpc").c_str(), "txt");
     if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
     {
         m_osRPBSourceFilename = std::move(osRPBSourceFilename);
     }
     else
     {
-        osRPBSourceFilename =
-            CPLFormFilename(osDirName, (osBaseName + "_RPC").c_str(), "TXT");
+        osRPBSourceFilename = CPLFormFilenameSafe(
+            osDirName, (osBaseName + "_RPC").c_str(), "TXT");
         if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
         {
             m_osRPBSourceFilename = std::move(osRPBSourceFilename);

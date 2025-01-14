@@ -806,10 +806,9 @@ char **GDALDriverManager::GetSearchPaths(const char *pszGDAL_DRIVER_PATH)
 
         if (CPLGetExecPath(szExecPath, sizeof(szExecPath)))
         {
-            char szPluginDir[sizeof(szExecPath) + 50];
-            strcpy(szPluginDir, CPLGetDirname(szExecPath));
-            strcat(szPluginDir, "\\gdalplugins");
-            papszSearchPaths = CSLAddString(papszSearchPaths, szPluginDir);
+            papszSearchPaths = CSLAddString(
+                papszSearchPaths,
+                (CPLGetDirnameSafe(szExecPath) + "\\gdalplugins").c_str());
         }
         else
         {
@@ -1024,10 +1023,11 @@ void GDALDriverManager::AutoLoadDrivers()
 
         for (int iFile = 0; iFile < nFileCount; ++iFile)
         {
-            const char *pszExtension = CPLGetExtension(papszFiles[iFile]);
+            const CPLString osExtension =
+                CPLGetExtensionSafe(papszFiles[iFile]);
 
-            if (!EQUAL(pszExtension, "dll") && !EQUAL(pszExtension, "so") &&
-                !EQUAL(pszExtension, "dylib"))
+            if (!EQUAL(osExtension, "dll") && !EQUAL(osExtension, "so") &&
+                !EQUAL(osExtension, "dylib"))
             {
                 if (strcmp(papszFiles[iFile], "drivers.ini") == 0)
                 {
@@ -1045,15 +1045,17 @@ void GDALDriverManager::AutoLoadDrivers()
             CPLString osFuncName;
             if (STARTS_WITH_CI(papszFiles[iFile], "gdal_"))
             {
-                osFuncName.Printf("GDALRegister_%s",
-                                  CPLGetBasename(papszFiles[iFile]) +
-                                      strlen("gdal_"));
+                osFuncName.Printf(
+                    "GDALRegister_%s",
+                    CPLGetBasenameSafe(papszFiles[iFile]).c_str() +
+                        strlen("gdal_"));
             }
             else if (STARTS_WITH_CI(papszFiles[iFile], "ogr_"))
             {
-                osFuncName.Printf("RegisterOGR%s",
-                                  CPLGetBasename(papszFiles[iFile]) +
-                                      strlen("ogr_"));
+                osFuncName.Printf(
+                    "RegisterOGR%s",
+                    CPLGetBasenameSafe(papszFiles[iFile]).c_str() +
+                        strlen("ogr_"));
             }
             else
                 continue;

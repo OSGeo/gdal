@@ -5431,7 +5431,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     }
                     if (osTmpFilename.empty())
                     {
-                        osTmpFilename = CPLGenerateTempFilename(nullptr);
+                        osTmpFilename = CPLGenerateTempFilenameSafe(nullptr);
                         osTmpFilename += ".tif";
                     }
                     CPLDebug("GDAL",

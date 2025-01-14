@@ -405,7 +405,7 @@ char **GDALOpenInfo::GetSiblingFiles()
         return papszSiblingFiles;
     }
 
-    CPLString osDir = CPLGetDirname(pszFilename);
+    const CPLString osDir = CPLGetDirnameSafe(pszFilename);
     const int nMaxFiles = atoi(VSIGetPathSpecificOption(
         pszFilename, "GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
     papszSiblingFiles = VSIReadDirEx(osDir, nMaxFiles);

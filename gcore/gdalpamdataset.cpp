@@ -955,7 +955,7 @@ CPLErr GDALPamDataset::TryLoadXML(CSLConstList papszSiblingFiles)
     /*      Initialize ourselves from this XML tree.                        */
     /* -------------------------------------------------------------------- */
 
-    CPLString osVRTPath(CPLGetPath(psPam->pszPamFilename));
+    CPLString osVRTPath(CPLGetPathSafe(psPam->pszPamFilename));
     const CPLErr eErr = XMLInit(psTree, osVRTPath);
 
     CPLDestroyXMLNode(psTree);
@@ -1588,9 +1588,9 @@ const char *GDALPamDataset::GetMetadataItem(const char *pszName,
             std::string osPath;
 
             if (strlen(GetPhysicalFilename()) > 0)
-                osPath = CPLGetPath(GetPhysicalFilename());
+                osPath = CPLGetPathSafe(GetPhysicalFilename());
             else
-                osPath = CPLGetPath(GetDescription());
+                osPath = CPLGetPathSafe(GetDescription());
 
             m_osOverviewFile = CPLFormFilenameSafe(
                 osPath.c_str(), pszOverviewFile + 10, nullptr);
@@ -1646,7 +1646,7 @@ CPLErr GDALPamDataset::TryLoadAux(CSLConstList papszSiblingFiles)
 
     if (papszSiblingFiles && GDALCanReliablyUseSiblingFileList(pszPhysicalFile))
     {
-        CPLString osAuxFilename = CPLResetExtension(pszPhysicalFile, "aux");
+        CPLString osAuxFilename = CPLResetExtensionSafe(pszPhysicalFile, "aux");
         int iSibling =
             CSLFindString(papszSiblingFiles, CPLGetFilename(osAuxFilename));
         if (iSibling < 0)

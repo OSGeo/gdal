@@ -33,19 +33,19 @@ GDALMDReaderOrbView::GDALMDReaderOrbView(const char *pszPath,
           GDALFindAssociatedFile(pszPath, "PVL", papszSiblingFiles, 0)),
       m_osRPBSourceFilename(CPLString())
 {
-    const char *pszBaseName = CPLGetBasename(pszPath);
-    const char *pszDirName = CPLGetDirname(pszPath);
+    const std::string osBaseName = CPLGetBasenameSafe(pszPath);
+    const std::string osDirName = CPLGetDirnameSafe(pszPath);
 
-    std::string osRPBSourceFilename =
-        CPLFormFilename(pszDirName, CPLSPrintf("%s_rpc", pszBaseName), "txt");
+    std::string osRPBSourceFilename = CPLFormFilenameSafe(
+        osDirName.c_str(), (osBaseName + "_rpc").c_str(), "txt");
     if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
     {
         m_osRPBSourceFilename = std::move(osRPBSourceFilename);
     }
     else
     {
-        osRPBSourceFilename = CPLFormFilename(
-            pszDirName, CPLSPrintf("%s_RPC", pszBaseName), "TXT");
+        osRPBSourceFilename = CPLFormFilenameSafe(
+            osDirName.c_str(), (osBaseName + "_RPC").c_str(), "TXT");
         if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
         {
             m_osRPBSourceFilename = std::move(osRPBSourceFilename);
