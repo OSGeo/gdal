@@ -1417,7 +1417,8 @@ CPLErr VRTWarpedDataset::XMLInit(const CPLXMLNode *psTree,
 
     if (bRelativeToVRT)
         pszAbsolutePath = CPLStrdup(
-            CPLProjectRelativeFilename(pszVRTPathIn, pszRelativePath));
+            CPLProjectRelativeFilenameSafe(pszVRTPathIn, pszRelativePath)
+                .c_str());
     else
         pszAbsolutePath = CPLStrdup(pszRelativePath);
 

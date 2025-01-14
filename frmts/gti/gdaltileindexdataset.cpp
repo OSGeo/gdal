@@ -591,7 +591,7 @@ static std::string GetAbsoluteFileName(const char *pszTileName,
             const std::string osRet =
                 CPLIsFilenameRelative(osPath.c_str())
                     ? oSubDSInfo->ModifyPathComponent(
-                          CPLProjectRelativeFilename(
+                          CPLProjectRelativeFilenameSafe(
                               CPLGetPathSafe(pszVRTName).c_str(),
                               osPath.c_str()))
                     : std::string(pszTileName);

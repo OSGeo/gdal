@@ -858,7 +858,7 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
     {
         if (STARTS_WITH(osURLTemplate, "./"))
             osURLTemplate = osURLTemplate.substr(2);
-        osURLTemplate = CPLProjectRelativeFilename(
+        osURLTemplate = CPLProjectRelativeFilenameSafe(
             CPLGetDirnameSafe(osFilename).c_str(), osURLTemplate);
     }
 

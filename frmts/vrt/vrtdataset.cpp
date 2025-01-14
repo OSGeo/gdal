@@ -3025,7 +3025,8 @@ std::string VRTDataset::BuildSourceFilename(const char *pszFilename,
         {
             auto path{oSubDSInfo->GetPathComponent()};
             osSrcDSName = oSubDSInfo->ModifyPathComponent(
-                CPLProjectRelativeFilename(pszVRTPath, path.c_str()));
+                CPLProjectRelativeFilenameSafe(pszVRTPath, path.c_str())
+                    .c_str());
             GDALDestroySubdatasetInfo(oSubDSInfo);
         }
         else
@@ -3052,8 +3053,8 @@ std::string VRTDataset::BuildSourceFilename(const char *pszFilename,
                         CPLString osPrefixFilename = pszFilename;
                         osPrefixFilename.resize(pszLastPart - pszFilename);
                         osSrcDSName =
-                            osPrefixFilename +
-                            CPLProjectRelativeFilename(pszVRTPath, pszLastPart);
+                            osPrefixFilename + CPLProjectRelativeFilenameSafe(
+                                                   pszVRTPath, pszLastPart);
                         bDone = true;
                     }
                     else if (STARTS_WITH_CI(pszSyntax + osPrefix.size(),
@@ -3072,7 +3073,7 @@ std::string VRTDataset::BuildSourceFilename(const char *pszFilename,
                             const CPLString osSuffix = osFilename.substr(nPos);
                             osFilename.resize(nPos);
                             osSrcDSName = osPrefix +
-                                          CPLProjectRelativeFilename(
+                                          CPLProjectRelativeFilenameSafe(
                                               pszVRTPath, osFilename) +
                                           osSuffix;
                             bDone = true;
@@ -3094,8 +3095,8 @@ std::string VRTDataset::BuildSourceFilename(const char *pszFilename,
                     }
                 }
 
-                osSrcDSName =
-                    CPLProjectRelativeFilename(osVRTPath.c_str(), pszFilename);
+                osSrcDSName = CPLProjectRelativeFilenameSafe(osVRTPath.c_str(),
+                                                             pszFilename);
             }
         }
     }

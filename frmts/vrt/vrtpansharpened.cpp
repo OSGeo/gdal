@@ -317,9 +317,8 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
             return CE_Failure;
         }
 
-        const char *pszSourceFilename =
-            CPLGetXMLValue(psPanchroBand, "SourceFilename", nullptr);
-        if (pszSourceFilename == nullptr)
+        osSourceFilename = CPLGetXMLValue(psPanchroBand, "SourceFilename", "");
+        if (osSourceFilename.empty())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "PanchroBand.SourceFilename missing");
@@ -329,12 +328,11 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
             psPanchroBand, "SourceFilename.relativetoVRT", "0")));
         if (bRelativeToVRT)
         {
-            const char *pszAbs =
-                CPLProjectRelativeFilename(pszVRTPathIn, pszSourceFilename);
-            m_oMapToRelativeFilenames[pszAbs] = pszSourceFilename;
-            pszSourceFilename = pszAbs;
+            const std::string osAbs = CPLProjectRelativeFilenameSafe(
+                pszVRTPathIn, osSourceFilename.c_str());
+            m_oMapToRelativeFilenames[osAbs] = osSourceFilename;
+            osSourceFilename = osAbs;
         }
-        osSourceFilename = pszSourceFilename;
 
         const CPLStringList aosOpenOptions(
             GDALDeserializeOpenOptionsFromXML(psPanchroBand));
@@ -518,9 +516,8 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
         }
         else
         {
-            const char *pszSourceFilename =
-                CPLGetXMLValue(psIter, "SourceFilename", nullptr);
-            if (pszSourceFilename == nullptr)
+            osSourceFilename = CPLGetXMLValue(psIter, "SourceFilename", "");
+            if (osSourceFilename.empty())
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "SpectralBand.SourceFilename missing");
@@ -530,12 +527,11 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
                 CPLGetXMLValue(psIter, "SourceFilename.relativetoVRT", "0"));
             if (bRelativeToVRT)
             {
-                const char *pszAbs =
-                    CPLProjectRelativeFilename(pszVRTPathIn, pszSourceFilename);
-                m_oMapToRelativeFilenames[pszAbs] = pszSourceFilename;
-                pszSourceFilename = pszAbs;
+                const std::string osAbs = CPLProjectRelativeFilenameSafe(
+                    pszVRTPathIn, osSourceFilename.c_str());
+                m_oMapToRelativeFilenames[osAbs] = osSourceFilename;
+                osSourceFilename = osAbs;
             }
-            osSourceFilename = pszSourceFilename;
             poDataset = oMapNamesToDataset[osSourceFilename];
             if (poDataset == nullptr)
             {
@@ -933,15 +929,12 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
         }
         else
         {
-            const char *pszSourceFilename =
-                CPLGetXMLValue(psIter, "SourceFilename", nullptr);
-            CPLAssert(pszSourceFilename);
+            osSourceFilename = CPLGetXMLValue(psIter, "SourceFilename", "");
             const bool bRelativeToVRT = CPL_TO_BOOL(atoi(
                 CPLGetXMLValue(psIter, "SourceFilename.relativetoVRT", "0")));
             if (bRelativeToVRT)
-                pszSourceFilename =
-                    CPLProjectRelativeFilename(pszVRTPathIn, pszSourceFilename);
-            osSourceFilename = pszSourceFilename;
+                osSourceFilename = CPLProjectRelativeFilenameSafe(
+                    pszVRTPathIn, osSourceFilename.c_str());
             poDataset = oMapNamesToDataset[osSourceFilename];
             CPLAssert(poDataset);
             const char *pszSourceBand =

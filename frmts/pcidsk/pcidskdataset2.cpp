@@ -871,7 +871,8 @@ char **PCIDSK2Dataset::GetFileList()
             {
                 papszFileList = CSLAddString(
                     papszFileList,
-                    CPLProjectRelativeFilename(osBaseDir, osChanFilename));
+                    CPLProjectRelativeFilenameSafe(osBaseDir, osChanFilename)
+                        .c_str());
             }
         }
 
