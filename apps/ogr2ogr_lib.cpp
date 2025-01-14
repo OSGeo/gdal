@@ -2212,7 +2212,7 @@ GDALVectorTranslateCreateCopy(GDALDriver *poDriver, const char *pszDest,
             EQUAL(GDALGetDescription(hIdentifyingDriver), "GML"))
         {
             VSIUnlink(pszDest);
-            VSIUnlink(CPLResetExtension(pszDest, "gfs"));
+            VSIUnlink(CPLResetExtensionSafe(pszDest, "gfs").c_str());
         }
     }
 
@@ -2730,7 +2730,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         {
             if (aoDrivers.empty())
             {
-                if (EQUAL(CPLGetExtension(pszDest), ""))
+                if (CPLGetExtensionSafe(pszDest).empty())
                 {
                     psOptions->osFormat = "ESRI Shapefile";
                 }
@@ -2747,7 +2747,8 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Several drivers matching %s extension. Using %s",
-                             CPLGetExtension(pszDest), aoDrivers[0].c_str());
+                             CPLGetExtensionSafe(pszDest).c_str(),
+                             aoDrivers[0].c_str());
                 }
                 psOptions->osFormat = aoDrivers[0];
             }
@@ -2833,7 +2834,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             (psOptions->aosLayers.size() > 1 ||
              (psOptions->aosLayers.empty() && poDS->GetLayerCount() > 1)) &&
             psOptions->osNewLayerName.empty() &&
-            EQUAL(CPLGetExtension(osDestFilename), "SHP") &&
+            EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "SHP") &&
             VSIStatL(osDestFilename, &sStat) != 0)
         {
             if (VSIMkdir(osDestFilename, 0755) != 0)
@@ -3191,11 +3192,11 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                 psOptions->osNewLayerName.empty() &&
                 VSIStatL(osDestFilename, &sStat) == 0 &&
                 VSI_ISREG(sStat.st_mode) &&
-                (EQUAL(CPLGetExtension(osDestFilename), "shp") ||
-                 EQUAL(CPLGetExtension(osDestFilename), "shz") ||
-                 EQUAL(CPLGetExtension(osDestFilename), "dbf")))
+                (EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "shp") ||
+                 EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "shz") ||
+                 EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "dbf")))
             {
-                psOptions->osNewLayerName = CPLGetBasename(osDestFilename);
+                psOptions->osNewLayerName = CPLGetBasenameSafe(osDestFilename);
             }
 
             auto psInfo = oSetup.Setup(poPassedLayer,
@@ -3271,11 +3272,11 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             (psOptions->aosLayers.size() == 1 || nSrcLayerCount == 1) &&
             psOptions->osNewLayerName.empty() &&
             VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode) &&
-            (EQUAL(CPLGetExtension(osDestFilename), "shp") ||
-             EQUAL(CPLGetExtension(osDestFilename), "shz") ||
-             EQUAL(CPLGetExtension(osDestFilename), "dbf")))
+            (EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "shp") ||
+             EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "shz") ||
+             EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "dbf")))
         {
-            psOptions->osNewLayerName = CPLGetBasename(osDestFilename);
+            psOptions->osNewLayerName = CPLGetBasenameSafe(osDestFilename);
         }
 
         GDALProgressFunc pfnProgress = nullptr;
@@ -3550,11 +3551,11 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
             nLayerCount == 1 && psOptions->osNewLayerName.empty() &&
             VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode) &&
-            (EQUAL(CPLGetExtension(osDestFilename), "shp") ||
-             EQUAL(CPLGetExtension(osDestFilename), "shz") ||
-             EQUAL(CPLGetExtension(osDestFilename), "dbf")))
+            (EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "shp") ||
+             EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "shz") ||
+             EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "dbf")))
         {
-            psOptions->osNewLayerName = CPLGetBasename(osDestFilename);
+            psOptions->osNewLayerName = CPLGetBasenameSafe(osDestFilename);
         }
 
         std::vector<GIntBig> anLayerCountFeatures;

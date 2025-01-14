@@ -509,7 +509,8 @@ bool GDALNearblackFloodFillAlg::Process()
     }
     else
     {
-        osVisitedDataset = CPLGenerateTempFilename(osVisitedDataset.c_str());
+        osVisitedDataset =
+            CPLGenerateTempFilenameSafe(osVisitedDataset.c_str());
     }
     CPLStringList aosOptions;
     if (strcmp(pszTmpDriver, "GTiff") == 0)

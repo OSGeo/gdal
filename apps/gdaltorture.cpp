@@ -204,7 +204,7 @@ static void ProcessTortureTarget(const char *pszTarget, char **papszSiblingList,
             continue;
 
         const CPLString osSubTarget =
-            CPLFormFilename(pszTarget, papszSiblingList[i], nullptr);
+            CPLFormFilenameSafe(pszTarget, papszSiblingList[i], nullptr);
 
         ProcessTortureTarget(osSubTarget, papszSiblingList, bRecursive,
                              bReportFailures, bReadWriteOperations);

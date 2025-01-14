@@ -264,7 +264,7 @@ MAIN_START(nArgc, papszArgv)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Several drivers matching %s extension. Using %s",
-                             CPLGetExtension(osOutputName.c_str()),
+                             CPLGetExtensionSafe(osOutputName.c_str()).c_str(),
                              aoDrivers[0].c_str());
                 }
                 osFormat = aoDrivers[0];
@@ -493,8 +493,9 @@ MAIN_START(nArgc, papszArgv)
         if (bWriteAbsolutePath && CPLIsFilenameRelative(srcDataSet.c_str()) &&
             VSIStat(srcDataSet.c_str(), &sStatBuf) == 0)
         {
-            fileNameToWrite = CPLStrdup(
-                CPLProjectRelativeFilename(pszCurrentPath, srcDataSet.c_str()));
+            fileNameToWrite = CPLStrdup(CPLProjectRelativeFilenameSafe(
+                                            pszCurrentPath, srcDataSet.c_str())
+                                            .c_str());
         }
         else
         {

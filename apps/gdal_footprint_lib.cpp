@@ -568,7 +568,8 @@ GetOutputLayerAndUpdateDstDS(const char *pszDest, GDALDatasetH &hDstDS,
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Several drivers matching %s extension. Using %s",
-                             CPLGetExtension(pszDest), aoDrivers[0].c_str());
+                             CPLGetExtensionSafe(pszDest).c_str(),
+                             aoDrivers[0].c_str());
                 }
                 osFormat = aoDrivers[0];
             }
@@ -633,7 +634,7 @@ GetOutputLayerAndUpdateDstDS(const char *pszDest, GDALDatasetH &hDstDS,
             if (poDstDS->GetDriver() &&
                 EQUAL(poDstDS->GetDriver()->GetDescription(), "ESRI Shapefile"))
             {
-                osDestLayerName = CPLGetBasename(pszDest);
+                osDestLayerName = CPLGetBasenameSafe(pszDest);
             }
             else
             {
@@ -1187,8 +1188,8 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
                 char *pszCurDir = CPLGetCurrentDir();
                 if (pszCurDir)
                 {
-                    osFilename = CPLProjectRelativeFilename(pszCurDir,
-                                                            osFilename.c_str());
+                    osFilename = CPLProjectRelativeFilenameSafe(
+                        pszCurDir, osFilename.c_str());
                     CPLFree(pszCurDir);
                 }
             }
