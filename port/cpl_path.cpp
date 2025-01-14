@@ -11,6 +11,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#define ALLOW_DEPRECATED_CPL_PATH_FUNCTIONS
+
 #include "cpl_port.h"
 #include "cpl_conv.h"
 
