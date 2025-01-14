@@ -1787,7 +1787,7 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
             return nullptr;
         }
 
-        const std::string osTmpFilename(CPLGenerateTempFilename(nullptr));
+        const std::string osTmpFilename(CPLGenerateTempFilenameSafe(nullptr));
         if (strchr(pszAccess, 'r'))
         {
             auto poExistingFile =
