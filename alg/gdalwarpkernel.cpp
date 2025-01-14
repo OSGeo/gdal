@@ -989,7 +989,8 @@ GDALWarpKernel::GDALWarpKernel()
       nDstXOff(0), nDstYOff(0), pfnTransformer(nullptr),
       pTransformerArg(nullptr), pfnProgress(GDALDummyProgress),
       pProgress(nullptr), dfProgressBase(0.0), dfProgressScale(1.0),
-      padfDstNoDataReal(nullptr), psThreadData(nullptr)
+      padfDstNoDataReal(nullptr), psThreadData(nullptr),
+      eTieStrategy(GWKTS_First)
 {
 }
 
@@ -6870,6 +6871,9 @@ static void GWKAverageOrModeThread(void *pData)
     // Only used with nAlgo = 6.
     float quant = 0.5;
 
+    // Only used for GRA_Mode
+    const GWKTieStrategy eTieStrategy = poWK->eTieStrategy;
+
     // To control array allocation only when data type is complex
     const bool bIsComplex = GDALDataTypeIsComplex(poWK->eWorkingDataType) != 0;
 
@@ -7599,13 +7603,44 @@ static void GWKAverageOrModeThread(void *pData)
 
                                     // Check array for existing entry.
                                     for (i = 0; i < iMaxInd; ++i)
-                                        if (pafRealVals[i] == fVal &&
-                                            ++panRealSums[i] >
-                                                panRealSums[iMaxVal])
+                                    {
+                                        if (pafRealVals[i] == fVal)
                                         {
-                                            iMaxVal = i;
+                                            bool bValIsMax =
+                                                (++panRealSums[i] >
+                                                 panRealSums[iMaxVal]);
+
+                                            if (!bValIsMax &&
+                                                panRealSums[i] ==
+                                                    panRealSums[iMaxVal])
+                                            {
+                                                switch (eTieStrategy)
+                                                {
+                                                    case GWKTS_First:
+                                                        break;
+                                                    case GWKTS_Min:
+                                                        bValIsMax =
+                                                            fVal <
+                                                            pafRealVals
+                                                                [iMaxVal];
+                                                        break;
+                                                    case GWKTS_Max:
+                                                        bValIsMax =
+                                                            fVal >
+                                                            pafRealVals
+                                                                [iMaxVal];
+                                                        break;
+                                                }
+                                            }
+
+                                            if (bValIsMax)
+                                            {
+                                                iMaxVal = i;
+                                            }
+
                                             break;
                                         }
+                                    }
 
                                     // Add to arr if entry not already there.
                                     if (i == iMaxInd)
@@ -7676,7 +7711,25 @@ static void GWKAverageOrModeThread(void *pData)
                                 {
                                     const int nVal =
                                         static_cast<int>(dfValueRealTmp);
-                                    if (++panVals[nVal + nBinsOffset] > nMaxVal)
+
+                                    bool bValIsMax =
+                                        ++panVals[nVal + nBinsOffset] > nMaxVal;
+                                    if (!bValIsMax &&
+                                        panVals[nVal + nBinsOffset] == nMaxVal)
+                                    {
+                                        switch (eTieStrategy)
+                                        {
+                                            case GWKTS_First:
+                                                break;
+                                            case GWKTS_Min:
+                                                bValIsMax = nVal < iMaxInd;
+                                                break;
+                                            case GWKTS_Max:
+                                                bValIsMax = nVal > iMaxInd;
+                                                break;
+                                        }
+                                    }
+                                    if (bValIsMax)
                                     {
                                         // Sum the density.
                                         // Is it the most common value so far?
