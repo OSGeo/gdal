@@ -1066,17 +1066,17 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 bool bFound = false;
                 for (int j = 0; j < nSubdatasets && papszSubdatasets[j]; j += 2)
                 {
-                    const std::string osSubdatasetSource(
-                        strstr(papszSubdatasets[j], "=") + 1);
-                    if (osSubdatasetSource.empty())
+                    const char *pszEqual = strchr(papszSubdatasets[j], '=');
+                    if (!pszEqual)
                     {
                         CPLError(CE_Failure, CPLE_IllegalArg,
                                  "'sd_name:' failed to obtain "
                                  "subdataset string ");
                         return nullptr;
                     }
+                    const char *pszSubdatasetSource = pszEqual + 1;
                     GDALSubdatasetInfoH info =
-                        GDALGetSubdatasetInfo(osSubdatasetSource.c_str());
+                        GDALGetSubdatasetInfo(pszSubdatasetSource);
                     char *component =
                         info ? GDALSubdatasetInfoGetSubdatasetComponent(info)
                              : nullptr;
@@ -1088,7 +1088,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                     if (bFound)
                     {
                         poSrcDS.reset(GDALDataset::Open(
-                            osSubdatasetSource.c_str(),
+                            pszSubdatasetSource,
                             GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
                             aosAllowedDrivers.List(), aosOpenOptions.List(),
                             nullptr));
