@@ -2448,19 +2448,19 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
     const CPLString osName = CPLGetBasenameSafe(poOpenInfo->pszFilename);
-    const char *pszPrjFile = CPLFormCIFilename(osPath, osName, "prj");
+    const std::string osPrjFile = CPLFormCIFilenameSafe(osPath, osName, "prj");
 
-    VSILFILE *fp = VSIFOpenL(pszPrjFile, "r");
+    VSILFILE *fp = VSIFOpenL(osPrjFile.c_str(), "r");
     if (fp != nullptr)
     {
         VSIFCloseL(fp);
 
-        char **papszLines = CSLLoad(pszPrjFile);
+        char **papszLines = CSLLoad(osPrjFile.c_str());
 
         OGRSpatialReference oSRS2;
         if (oSRS2.importFromESRI(papszLines) == OGRERR_NONE)
         {
-            poDS->m_aosAdditionalFiles.AddString(pszPrjFile);
+            poDS->m_aosAdditionalFiles.AddString(osPrjFile.c_str());
             poDS->m_oSRS = std::move(oSRS2);
             poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }

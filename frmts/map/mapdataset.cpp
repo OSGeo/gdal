@@ -233,7 +233,7 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
     if (CPLIsFilenameRelative(poDS->osImgFilename))
     {
         poDS->osImgFilename =
-            CPLFormCIFilename(osPath, poDS->osImgFilename, nullptr);
+            CPLFormCIFilenameSafe(osPath, poDS->osImgFilename, nullptr);
     }
     else
     {
@@ -242,7 +242,7 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             poDS->osImgFilename = CPLGetFilename(poDS->osImgFilename);
             poDS->osImgFilename =
-                CPLFormCIFilename(osPath, poDS->osImgFilename, nullptr);
+                CPLFormCIFilenameSafe(osPath, poDS->osImgFilename, nullptr);
         }
     }
 

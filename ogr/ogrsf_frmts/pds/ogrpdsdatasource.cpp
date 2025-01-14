@@ -182,7 +182,7 @@ bool OGRPDSDataSource::LoadTable(const char *pszFilename, int nRecordSize,
             CPLString osTPath = CPLGetPathSafe(pszFilename);
             CleanString(osTableFilename);
             osTableFilename =
-                CPLFormCIFilename(osTPath, osTableFilename, nullptr);
+                CPLFormCIFilenameSafe(osTPath, osTableFilename, nullptr);
             nStartBytes = 0;
         }
     }
@@ -233,7 +233,7 @@ bool OGRPDSDataSource::LoadTable(const char *pszFilename, int nRecordSize,
         CPLString osTPath = CPLGetPathSafe(pszFilename);
         CleanString(osTableStructure);
         osTableStructure =
-            CPLFormCIFilename(osTPath, osTableStructure, nullptr);
+            CPLFormCIFilenameSafe(osTPath, osTableStructure, nullptr);
     }
 
     GByte *pabyRecord = (GByte *)VSI_MALLOC_VERBOSE(nRecordSize + 1);

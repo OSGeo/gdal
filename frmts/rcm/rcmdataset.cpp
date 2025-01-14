@@ -1113,8 +1113,8 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             /* If not, check for directory extra 'metadata' access when there is
             a product.xml file in the directory. */
-            osMDFilename =
-                CPLFormCIFilename(pszFilename, GetMetadataProduct(), nullptr);
+            osMDFilename = CPLFormCIFilenameSafe(pszFilename,
+                                                 GetMetadataProduct(), nullptr);
         }
     }
     else

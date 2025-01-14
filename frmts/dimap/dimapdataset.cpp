@@ -457,8 +457,8 @@ int DIMAPDataset::Identify(GDALOpenInfo *poOpenInfo)
     else if (poOpenInfo->bIsDirectory)
     {
         // DIMAP file.
-        CPLString osMDFilename =
-            CPLFormCIFilename(poOpenInfo->pszFilename, "METADATA.DIM", nullptr);
+        CPLString osMDFilename = CPLFormCIFilenameSafe(poOpenInfo->pszFilename,
+                                                       "METADATA.DIM", nullptr);
 
         VSIStatBufL sStat;
         if (VSIStatL(osMDFilename, &sStat) == 0)
@@ -477,15 +477,15 @@ int DIMAPDataset::Identify(GDALOpenInfo *poOpenInfo)
         else
         {
             // DIMAP 2 file.
-            osMDFilename = CPLFormCIFilename(poOpenInfo->pszFilename,
-                                             "VOL_PHR.XML", nullptr);
+            osMDFilename = CPLFormCIFilenameSafe(poOpenInfo->pszFilename,
+                                                 "VOL_PHR.XML", nullptr);
 
             if (VSIStatL(osMDFilename, &sStat) == 0)
                 return TRUE;
 
             // DIMAP VHR2020 file.
-            osMDFilename = CPLFormCIFilename(poOpenInfo->pszFilename,
-                                             "VOL_PNEO.XML", nullptr);
+            osMDFilename = CPLFormCIFilenameSafe(poOpenInfo->pszFilename,
+                                                 "VOL_PNEO.XML", nullptr);
 
             if (VSIStatL(osMDFilename, &sStat) == 0)
                 return TRUE;
@@ -549,12 +549,12 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
         if (VSIStatL(osMDFilename.c_str(), &sStat) != 0)
         {
             osMDFilename =
-                CPLFormCIFilename(osFilename, "VOL_PHR.XML", nullptr);
+                CPLFormCIFilenameSafe(osFilename, "VOL_PHR.XML", nullptr);
             if (VSIStatL(osMDFilename.c_str(), &sStat) != 0)
             {
                 // DIMAP VHR2020 file.
                 osMDFilename =
-                    CPLFormCIFilename(osFilename, "VOL_PNEO.XML", nullptr);
+                    CPLFormCIFilenameSafe(osFilename, "VOL_PNEO.XML", nullptr);
             }
         }
     }
@@ -643,7 +643,7 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
                     {
                         if (poOpenInfo->bIsDirectory)
                         {
-                            osDIMAPFilename = CPLFormCIFilename(
+                            osDIMAPFilename = CPLFormCIFilenameSafe(
                                 poOpenInfo->pszFilename, pszHref, nullptr);
                         }
                         else
@@ -651,7 +651,7 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
                             CPLString osPath =
                                 CPLGetPathSafe(osMDFilename.c_str());
                             osDIMAPFilename =
-                                CPLFormFilename(osPath, pszHref, nullptr);
+                                CPLFormFilenameSafe(osPath, pszHref, nullptr);
                         }
 
                         // Data file might be specified there.
@@ -715,7 +715,7 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
                         CPLString osPath =
                             CPLGetPathSafe(osDIMAPFilename.c_str());
                         osSTRIPFilename =
-                            CPLFormCIFilename(osPath, pszHref, nullptr);
+                            CPLFormCIFilenameSafe(osPath, pszHref, nullptr);
                         if (VSIStatL(osSTRIPFilename, &sStat) == 0)
                         {
                             psProductStrip = CPLParseXMLFile(osSTRIPFilename);
@@ -747,7 +747,7 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
                         CPLString osPath =
                             CPLGetPathSafe(osDIMAPFilename.c_str());
                         osRPCFilename =
-                            CPLFormCIFilename(osPath, pszHref, nullptr);
+                            CPLFormCIFilenameSafe(osPath, pszHref, nullptr);
 
                         break;
                     }
@@ -1184,7 +1184,7 @@ int DIMAPDataset::ReadImageInformation2()
                             return false;
                         }
                         const CPLString osTileFilename(
-                            CPLFormCIFilename(osPath, pszHref, nullptr));
+                            CPLFormCIFilenameSafe(osPath, pszHref, nullptr));
                         if ((nRow == 1 && nCol == 1 && nPart == 0) ||
                             osImageDSFilename.empty())
                         {

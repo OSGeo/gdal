@@ -985,8 +985,8 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->bIsDirectory)
     {
-        osMDFilename =
-            CPLFormCIFilename(osMDFilename.c_str(), "manifest.safe", nullptr);
+        osMDFilename = CPLFormCIFilenameSafe(osMDFilename.c_str(),
+                                             "manifest.safe", nullptr);
     }
 
     /* -------------------------------------------------------------------- */

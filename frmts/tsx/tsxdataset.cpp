@@ -465,9 +465,9 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->bIsDirectory)
     {
-        osFilename =
-            CPLFormCIFilename(poOpenInfo->pszFilename,
-                              CPLGetFilename(poOpenInfo->pszFilename), "xml");
+        osFilename = CPLFormCIFilenameSafe(
+            poOpenInfo->pszFilename, CPLGetFilename(poOpenInfo->pszFilename),
+            "xml");
     }
     else
         osFilename = poOpenInfo->pszFilename;

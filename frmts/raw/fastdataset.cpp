@@ -215,9 +215,9 @@ int FASTDataset::OpenChannel(const char *pszFilenameIn, int iBand)
 VSILFILE *FASTDataset::FOpenChannel(const char *pszBandname, int iBand,
                                     int iFASTBand)
 {
-    const char *pszChannelFilename = nullptr;
-    char *pszPrefix = CPLStrdup(CPLGetBasenameSafe(pszFilename).c_str());
-    char *pszSuffix = CPLStrdup(CPLGetExtensionSafe(pszFilename).c_str());
+    std::string osChannelFilename;
+    const std::string osPrefix = CPLGetBasenameSafe(pszFilename);
+    const std::string osSuffix = CPLGetExtensionSafe(pszFilename);
 
     fpChannels[iBand] = nullptr;
 
@@ -226,78 +226,80 @@ VSILFILE *FASTDataset::FOpenChannel(const char *pszBandname, int iBand,
         case LANDSAT:
             if (pszBandname && !EQUAL(pszBandname, ""))
             {
-                pszChannelFilename =
-                    CPLFormCIFilename(pszDirname, pszBandname, nullptr);
-                if (OpenChannel(pszChannelFilename, iBand))
+                osChannelFilename =
+                    CPLFormCIFilenameSafe(pszDirname, pszBandname, nullptr);
+                if (OpenChannel(osChannelFilename.c_str(), iBand))
                     break;
-                pszChannelFilename = CPLFormFilename(
-                    pszDirname, CPLSPrintf("%s.b%02d", pszPrefix, iFASTBand),
+                osChannelFilename = CPLFormFilenameSafe(
+                    pszDirname,
+                    CPLSPrintf("%s.b%02d", osPrefix.c_str(), iFASTBand),
                     nullptr);
-                CPL_IGNORE_RET_VAL(OpenChannel(pszChannelFilename, iBand));
+                CPL_IGNORE_RET_VAL(
+                    OpenChannel(osChannelFilename.c_str(), iBand));
             }
             break;
         case IRS:
         default:
-            pszChannelFilename = CPLFormFilename(
-                pszDirname, CPLSPrintf("%s.%d", pszPrefix, iFASTBand),
-                pszSuffix);
-            if (OpenChannel(pszChannelFilename, iBand))
+            osChannelFilename = CPLFormFilenameSafe(
+                pszDirname, CPLSPrintf("%s.%d", osPrefix.c_str(), iFASTBand),
+                osSuffix.c_str());
+            if (OpenChannel(osChannelFilename.c_str(), iBand))
                 break;
-            pszChannelFilename = CPLFormFilename(
-                pszDirname, CPLSPrintf("IMAGERY%d", iFASTBand), pszSuffix);
-            if (OpenChannel(pszChannelFilename, iBand))
+            osChannelFilename = CPLFormFilenameSafe(
+                pszDirname, CPLSPrintf("IMAGERY%d", iFASTBand),
+                osSuffix.c_str());
+            if (OpenChannel(osChannelFilename.c_str(), iBand))
                 break;
-            pszChannelFilename = CPLFormFilename(
-                pszDirname, CPLSPrintf("imagery%d", iFASTBand), pszSuffix);
-            if (OpenChannel(pszChannelFilename, iBand))
+            osChannelFilename = CPLFormFilenameSafe(
+                pszDirname, CPLSPrintf("imagery%d", iFASTBand),
+                osSuffix.c_str());
+            if (OpenChannel(osChannelFilename.c_str(), iBand))
                 break;
-            pszChannelFilename = CPLFormFilename(
+            osChannelFilename = CPLFormFilenameSafe(
                 pszDirname, CPLSPrintf("IMAGERY%d.DAT", iFASTBand), nullptr);
-            if (OpenChannel(pszChannelFilename, iBand))
+            if (OpenChannel(osChannelFilename.c_str(), iBand))
                 break;
-            pszChannelFilename = CPLFormFilename(
+            osChannelFilename = CPLFormFilenameSafe(
                 pszDirname, CPLSPrintf("imagery%d.dat", iFASTBand), nullptr);
-            if (OpenChannel(pszChannelFilename, iBand))
+            if (OpenChannel(osChannelFilename.c_str(), iBand))
                 break;
-            pszChannelFilename = CPLFormFilename(
+            osChannelFilename = CPLFormFilenameSafe(
                 pszDirname, CPLSPrintf("IMAGERY%d.dat", iFASTBand), nullptr);
-            if (OpenChannel(pszChannelFilename, iBand))
+            if (OpenChannel(osChannelFilename.c_str(), iBand))
                 break;
-            pszChannelFilename = CPLFormFilename(
+            osChannelFilename = CPLFormFilenameSafe(
                 pszDirname, CPLSPrintf("imagery%d.DAT", iFASTBand), nullptr);
-            if (OpenChannel(pszChannelFilename, iBand))
+            if (OpenChannel(osChannelFilename.c_str(), iBand))
                 break;
-            pszChannelFilename = CPLFormFilename(
-                pszDirname, CPLSPrintf("BAND%d", iFASTBand), pszSuffix);
-            if (OpenChannel(pszChannelFilename, iBand))
+            osChannelFilename = CPLFormFilenameSafe(
+                pszDirname, CPLSPrintf("BAND%d", iFASTBand), osSuffix.c_str());
+            if (OpenChannel(osChannelFilename.c_str(), iBand))
                 break;
-            pszChannelFilename = CPLFormFilename(
-                pszDirname, CPLSPrintf("band%d", iFASTBand), pszSuffix);
-            if (OpenChannel(pszChannelFilename, iBand))
+            osChannelFilename = CPLFormFilenameSafe(
+                pszDirname, CPLSPrintf("band%d", iFASTBand), osSuffix.c_str());
+            if (OpenChannel(osChannelFilename.c_str(), iBand))
                 break;
-            pszChannelFilename = CPLFormFilename(
+            osChannelFilename = CPLFormFilenameSafe(
                 pszDirname, CPLSPrintf("BAND%d.DAT", iFASTBand), nullptr);
-            if (OpenChannel(pszChannelFilename, iBand))
+            if (OpenChannel(osChannelFilename.c_str(), iBand))
                 break;
-            pszChannelFilename = CPLFormFilename(
+            osChannelFilename = CPLFormFilenameSafe(
                 pszDirname, CPLSPrintf("band%d.dat", iFASTBand), nullptr);
-            if (OpenChannel(pszChannelFilename, iBand))
+            if (OpenChannel(osChannelFilename.c_str(), iBand))
                 break;
-            pszChannelFilename = CPLFormFilename(
+            osChannelFilename = CPLFormFilenameSafe(
                 pszDirname, CPLSPrintf("BAND%d.dat", iFASTBand), nullptr);
-            if (OpenChannel(pszChannelFilename, iBand))
+            if (OpenChannel(osChannelFilename.c_str(), iBand))
                 break;
-            pszChannelFilename = CPLFormFilename(
+            osChannelFilename = CPLFormFilenameSafe(
                 pszDirname, CPLSPrintf("band%d.DAT", iFASTBand), nullptr);
-            CPL_IGNORE_RET_VAL(OpenChannel(pszChannelFilename, iBand));
+            CPL_IGNORE_RET_VAL(OpenChannel(osChannelFilename.c_str(), iBand));
             break;
     }
 
     CPLDebug("FAST", "Band %d filename=%s", iBand + 1,
-             pszChannelFilename ? pszChannelFilename : "(null)");
+             osChannelFilename.c_str());
 
-    CPLFree(pszPrefix);
-    CPLFree(pszSuffix);
     return fpChannels[iBand];
 }
 

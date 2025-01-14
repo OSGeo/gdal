@@ -707,14 +707,14 @@ GDALDataset *AIGDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Try to read projection file.                                    */
     /* -------------------------------------------------------------------- */
-    const char *pszPrjFilename =
-        CPLFormCIFilename(psInfo->pszCoverName, "prj", "adf");
-    if (VSIStatL(pszPrjFilename, &sStatBuf) == 0)
+    const std::string osPrjFilename =
+        CPLFormCIFilenameSafe(psInfo->pszCoverName, "prj", "adf");
+    if (VSIStatL(osPrjFilename.c_str(), &sStatBuf) == 0)
     {
         OGRSpatialReference oSRS;
         oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-        poDS->papszPrj = CSLLoad(pszPrjFilename);
+        poDS->papszPrj = CSLLoad(osPrjFilename.c_str());
 
         if (oSRS.importFromESRI(poDS->papszPrj) == OGRERR_NONE)
         {

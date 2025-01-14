@@ -664,15 +664,16 @@ GDALDataset *SAGADataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for a .prj file.                                          */
     /* -------------------------------------------------------------------- */
-    const char *pszPrjFilename = CPLFormCIFilename(osPath, osName, "prj");
+    const std::string osPrjFilename =
+        CPLFormCIFilenameSafe(osPath, osName, "prj");
 
-    fp = VSIFOpenL(pszPrjFilename, "r");
+    fp = VSIFOpenL(osPrjFilename.c_str(), "r");
 
     if (fp != nullptr)
     {
         VSIFCloseL(fp);
 
-        char **papszLines = CSLLoad(pszPrjFilename);
+        char **papszLines = CSLLoad(osPrjFilename.c_str());
 
         poDS->m_oSRS.importFromESRI(papszLines);
 

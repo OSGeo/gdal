@@ -579,8 +579,9 @@ GDALDataset *LANDataset::Open(GDALOpenInfo *poOpenInfo)
     char *pszPath = CPLStrdup(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
     char *pszBasename =
         CPLStrdup(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str());
-    const char *pszTRLFilename = CPLFormCIFilename(pszPath, pszBasename, "trl");
-    VSILFILE *fpTRL = VSIFOpenL(pszTRLFilename, "rb");
+    const std::string osTRLFilename =
+        CPLFormCIFilenameSafe(pszPath, pszBasename, "trl");
+    VSILFILE *fpTRL = VSIFOpenL(osTRLFilename.c_str(), "rb");
     if (fpTRL != nullptr)
     {
         char szTRLData[896] = {'\0'};

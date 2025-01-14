@@ -681,14 +681,15 @@ void PDSDataset::ParseSRS()
     {
         const CPLString osPath = CPLGetPathSafe(pszFilename);
         const CPLString osName = CPLGetBasenameSafe(pszFilename);
-        const char *pszPrjFile = CPLFormCIFilename(osPath, osName, "prj");
+        const std::string osPrjFile =
+            CPLFormCIFilenameSafe(osPath, osName, "prj");
 
-        VSILFILE *fp = VSIFOpenL(pszPrjFile, "r");
+        VSILFILE *fp = VSIFOpenL(osPrjFile.c_str(), "r");
         if (fp != nullptr)
         {
             VSIFCloseL(fp);
 
-            char **papszLines = CSLLoad(pszPrjFile);
+            char **papszLines = CSLLoad(osPrjFile.c_str());
 
             m_oSRS.importFromESRI(papszLines);
             CSLDestroy(papszLines);
@@ -847,7 +848,8 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
         else
         {
             CPLString osTPath = CPLGetPathSafe(GetDescription());
-            m_osImageFilename = CPLFormCIFilename(osTPath, osFilename, nullptr);
+            m_osImageFilename =
+                CPLFormCIFilenameSafe(osTPath, osFilename, nullptr);
             osExternalCube = m_osImageFilename;
         }
     }
@@ -1332,7 +1334,7 @@ int PDSDataset::ParseCompressedImage()
 
     const CPLString osPath = CPLGetPathSafe(GetDescription());
     const CPLString osFullFileName =
-        CPLFormFilename(osPath, osFileName, nullptr);
+        CPLFormFilenameSafe(osPath, osFileName, nullptr);
 
     poCompressedDS =
         GDALDataset::FromHandle(GDALOpen(osFullFileName, GA_ReadOnly));
@@ -1427,9 +1429,9 @@ GDALDataset *PDSDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         const CPLString osPath = CPLGetPathSafe(poDS->GetDescription());
         osCompressedFilename =
-            CPLFormFilename(osPath, osCompressedFilename, nullptr);
+            CPLFormFilenameSafe(osPath, osCompressedFilename, nullptr);
         osUncompressedFilename =
-            CPLFormFilename(osPath, osUncompressedFilename, nullptr);
+            CPLFormFilenameSafe(osPath, osUncompressedFilename, nullptr);
         if (VSIStatExL(osCompressedFilename, &sStat, VSI_STAT_EXISTS_FLAG) ==
                 0 &&
             VSIStatExL(osUncompressedFilename, &sStat, VSI_STAT_EXISTS_FLAG) !=

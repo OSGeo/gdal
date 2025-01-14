@@ -633,8 +633,8 @@ int RS2Dataset::Identify(GDALOpenInfo *poOpenInfo)
        directory. */
     if (poOpenInfo->bIsDirectory)
     {
-        CPLString osMDFilename =
-            CPLFormCIFilename(poOpenInfo->pszFilename, "product.xml", nullptr);
+        const CPLString osMDFilename = CPLFormCIFilenameSafe(
+            poOpenInfo->pszFilename, "product.xml", nullptr);
 
         GDALOpenInfo oOpenInfo(osMDFilename.c_str(), GA_ReadOnly);
         return Identify(&oOpenInfo);

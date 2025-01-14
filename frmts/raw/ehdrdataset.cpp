@@ -661,7 +661,7 @@ CPLErr EHdrDataset::RewriteHDR()
     const CPLString osPath = CPLGetPathSafe(GetDescription());
     const CPLString osName = CPLGetBasenameSafe(GetDescription());
     const CPLString osHDRFilename =
-        CPLFormCIFilename(osPath, osName, osHeaderExt);
+        CPLFormCIFilenameSafe(osPath, osName, osHeaderExt);
 
     // Write .hdr file.
     VSILFILE *fp = VSIFOpenL(osHDRFilename, "wt");
@@ -858,7 +858,7 @@ CPLString EHdrDataset::GetImageRepFilename(const char *pszFilename)
                EQUAL(dirName, "/") == FALSE)
         {
             osImageRepFilename =
-                CPLFormCIFilename(dirName.c_str(), "image", "rep");
+                CPLFormCIFilenameSafe(dirName.c_str(), "image", "rep");
             if (VSIStatExL(osImageRepFilename.c_str(), &sStatBuf,
                            VSI_STAT_EXISTS_FLAG) == 0)
                 return osImageRepFilename;
@@ -1355,16 +1355,16 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
             poOpenInfo->pszFilename, "wld", poDS->adfGeoTransform));
 
     // Check for a .prj file.
-    const char *pszPrjFilename = CPLFormCIFilename(osPath, osName, "prj");
+    std::string osPrjFilename = CPLFormCIFilenameSafe(osPath, osName, "prj");
 
-    fp = VSIFOpenL(pszPrjFilename, "r");
+    fp = VSIFOpenL(osPrjFilename.c_str(), "r");
 
     // .hdr files from http://www.worldclim.org/futdown.htm have the projection
     // info in the .hdr file itself.
     if (fp == nullptr && bHasInternalProjection)
     {
-        pszPrjFilename = osHDRFilename;
-        fp = VSIFOpenL(pszPrjFilename, "r");
+        osPrjFilename = osHDRFilename;
+        fp = VSIFOpenL(osPrjFilename.c_str(), "r");
     }
 
     if (fp != nullptr)
@@ -1372,7 +1372,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         fp = nullptr;
 
-        char **papszLines = CSLLoad(pszPrjFilename);
+        char **papszLines = CSLLoad(osPrjFilename.c_str());
 
         if (poDS->m_oSRS.importFromESRI(papszLines) == OGRERR_NONE)
         {
@@ -1532,11 +1532,12 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     }
 
     // Check for a color table.
-    const char *pszCLRFilename = CPLFormCIFilename(osPath, osName, "clr");
+    const std::string osCLRFilename =
+        CPLFormCIFilenameSafe(osPath, osName, "clr");
 
     // Only read the .clr for byte, int16 or uint16 bands.
     if (nItemSize <= 2)
-        fp = VSIFOpenL(pszCLRFilename, "r");
+        fp = VSIFOpenL(osCLRFilename.c_str(), "r");
     else
         fp = nullptr;
 
