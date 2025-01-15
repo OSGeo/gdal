@@ -282,6 +282,33 @@ def test_gdal_calc_py_4b(script_path, tmp_path, stefan_full_rgba):
         assert ds.GetRasterBand(band + 1).GetNoDataValue() == 999
 
 
+def test_gdal_calc_py_allbands(tmp_vsimem):
+    """test --allBands option (simple calc)"""
+
+    input1 = tmp_vsimem / "in1.tif"
+    input2 = tmp_vsimem / "in2.tif"
+    out = tmp_vsimem / "out.tif"
+
+    with gdal.GetDriverByName("GTiff").Create(input1, 3, 3, bands=3) as ds:
+        ds.GetRasterBand(1).Fill(9)
+        ds.GetRasterBand(2).Fill(13)
+        ds.GetRasterBand(3).Fill(17)
+        ds.SetGeoTransform((0, 1, 0, 3, 0, -1))
+
+    with gdal.GetDriverByName("GTiff").Create(input2, 3, 3, bands=3) as ds:
+        ds.GetRasterBand(1).Fill(3)
+        ds.GetRasterBand(2).Fill(5)
+        ds.GetRasterBand(3).Fill(7)
+        ds.SetGeoTransform((0, 1, 0, 3, 0, -1))
+
+    # 3 bands * 1 band
+    ds_out = gdal_calc.Calc(
+        A=input1, B=input2, B_band=1, allBands="A", calc="A*B", outfile=out, quiet=True
+    )
+    assert ds_out.RasterCount == 3
+    np.testing.assert_array_equal(ds_out.ReadAsArray()[:, 0, 0], [27, 39, 51])
+
+
 def test_gdal_calc_py_5a(tmp_vsimem, stefan_full_rgba):
     """test python interface, basic copy"""
 
