@@ -452,12 +452,7 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 
     const std::vector<CPLString> oExtensions = GetExtensions();
     int nAttempts = 0;
-    // If we are called with pszFilename being one of the TLS buffers returned
-    // by cpl_path.cpp functions, then a call to Stat() in the loop (and its
-    // cascaded calls to other cpl_path.cpp functions) might lead to altering
-    // the buffer to be altered, hence take a copy
-    const std::string osFilenameCopy(pszFilename);
-    while (i < static_cast<int>(osFilenameCopy.size()))
+    while (pszFilename[i])
     {
         int nToSkip = 0;
 
@@ -465,7 +460,7 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
              iter != oExtensions.end(); ++iter)
         {
             const CPLString &osExtension = *iter;
-            if (EQUALN(osFilenameCopy.c_str() + i, osExtension.c_str(),
+            if (EQUALN(pszFilename + i, osExtension.c_str(),
                        osExtension.size()))
             {
                 nToSkip = static_cast<int>(osExtension.size());
@@ -475,8 +470,7 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 
 #ifdef DEBUG
         // For AFL, so that .cur_input is detected as the archive filename.
-        if (EQUALN(osFilenameCopy.c_str() + i, ".cur_input",
-                   strlen(".cur_input")))
+        if (EQUALN(pszFilename + i, ".cur_input", strlen(".cur_input")))
         {
             nToSkip = static_cast<int>(strlen(".cur_input"));
         }
@@ -492,7 +486,7 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
                 break;
             }
             VSIStatBufL statBuf;
-            char *archiveFilename = CPLStrdup(osFilenameCopy.c_str());
+            char *archiveFilename = CPLStrdup(pszFilename);
             bool bArchiveFileExists = false;
 
             if (IsEitherSlash(archiveFilename[i + nToSkip]))
@@ -533,11 +527,10 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 
             if (bArchiveFileExists)
             {
-                if (IsEitherSlash(osFilenameCopy[i + nToSkip]) &&
-                    i + nToSkip + 1 < static_cast<int>(osFilenameCopy.size()))
+                if (IsEitherSlash(pszFilename[i + nToSkip]))
                 {
-                    osFileInArchive = CompactFilename(osFilenameCopy.c_str() +
-                                                      i + nToSkip + 1);
+                    osFileInArchive =
+                        CompactFilename(pszFilename + i + nToSkip + 1);
                 }
                 else
                 {
@@ -549,13 +542,8 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
                 {
                     const char lastC = osFileInArchive.back();
                     if (IsEitherSlash(lastC))
-                        osFileInArchive.pop_back();
+                        osFileInArchive.resize(osFileInArchive.size() - 1);
                 }
-
-                // Messy! Restore the TLS buffer if it has been altered
-                if (osFilenameCopy != pszFilename)
-                    strcpy(const_cast<char *>(pszFilename),
-                           osFilenameCopy.c_str());
 
                 return archiveFilename;
             }
@@ -563,11 +551,6 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
         }
         i++;
     }
-
-    // Messy! Restore the TLS buffer if it has been altered
-    if (osFilenameCopy != pszFilename)
-        strcpy(const_cast<char *>(pszFilename), osFilenameCopy.c_str());
-
     return nullptr;
 }
 
