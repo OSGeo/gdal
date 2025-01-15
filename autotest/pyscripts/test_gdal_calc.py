@@ -666,7 +666,7 @@ def test_gdal_calc_py_extent(tmp_vsimem):
         ds.SetGeoTransform((1, 1, 0, 4, 0, -1))
 
     # default: ignore the geotransforms
-    out_ds = gdal_calc.Calc(a=input1, b=input2, calc="a+b", outfile=out)
+    out_ds = gdal_calc.Calc(a=input1, b=input2, calc="a+b", outfile=out, quiet=True)
     assert out_ds.RasterXSize == 3
     assert out_ds.RasterYSize == 3
     assert out_ds.GetGeoTransform() == (1, 1, 0, 4, 0, -1)  # why?
@@ -675,11 +675,13 @@ def test_gdal_calc_py_extent(tmp_vsimem):
     # extent=fail
     with pytest.raises(Exception, match="incompatible"):
         out_ds = gdal_calc.Calc(
-            a=input1, b=input2, calc="a+b", outfile=out, extent="fail"
+            a=input1, b=input2, calc="a+b", outfile=out, extent="fail", quiet=True
         )
 
     # extent=union
-    out_ds = gdal_calc.Calc(a=input1, b=input2, calc="a+b", outfile=out, extent="union")
+    out_ds = gdal_calc.Calc(
+        a=input1, b=input2, calc="a+b", outfile=out, extent="union", quiet=True
+    )
     assert out_ds.RasterXSize == 4
     assert out_ds.RasterYSize == 4
     assert out_ds.GetGeoTransform() == (0, 1, 0, 4, 0, -1)
@@ -694,9 +696,53 @@ def test_gdal_calc_py_extent(tmp_vsimem):
 
     # extent=intersect
     out_ds = gdal_calc.Calc(
-        a=input1, b=input2, calc="a+b", outfile=out, extent="intersect"
+        a=input1,
+        b=input2,
+        calc="a+b",
+        outfile=out,
+        extent="intersect",
+        quiet=True,
     )
     assert out_ds.RasterXSize == 2
     assert out_ds.RasterYSize == 2
     assert out_ds.GetGeoTransform() == (1, 1, 0, 3, 0, -1)
     assert np.all(out_ds.ReadAsArray() == 8)
+
+    # specifying extent and projwin causes extent to be ignored, apparently
+    out_ds = gdal_calc.Calc(
+        a=input1,
+        b=input2,
+        calc="a+b",
+        outfile=out,
+        extent="intersect",
+        projwin=(0, 3, 2.999, 0.001),
+        quiet=True,
+    )
+    assert out_ds.RasterXSize == 3
+    assert out_ds.RasterYSize == 3
+    assert out_ds.GetGeoTransform() == (0, 1, 0, 3, 0, -1)
+    np.testing.assert_array_equal(
+        out_ds.ReadAsArray(),
+        np.array(np.array([[5, 8, 8], [5, 8, 8], [5, 5, 5]], dtype=np.uint8)),
+    )
+
+
+def test_gdal_calc_py_projwin(tmp_vsimem):
+
+    input = tmp_vsimem / "in2.tif"
+    out = tmp_vsimem / "out.tif"
+
+    # input1: (0, 0) to (3, 3)
+    with gdal.GetDriverByName("GTiff").Create(input, 3, 3, 1) as ds:
+        ds.GetRasterBand(1).Fill(5)
+        ds.SetGeoTransform((0, 1, 0, 3, 0, -1))
+
+    # projwin does not behave the same as projWin in gdal.Translate
+    # shrink the window a bit to get the (0, 4, 4, 0) that we actually want
+    out_ds = gdal_calc.Calc(
+        a=input, calc="2*a", outfile=out, projwin=(0, 4, 3.9999, 0.0001), quiet=True
+    )
+
+    assert out_ds.RasterXSize == 4
+    assert out_ds.RasterYSize == 4
+    assert out_ds.GetGeoTransform() == (0, 1, 0, 4, 0, -1)
