@@ -1115,6 +1115,17 @@ def test_ogr2ogr_lib_clipsrc_datasource(tmp_vsimem):
     f.SetField("filter_field", "exact_overlap_full_result")
     f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0, 0 2, 2 2, 2 0, 0 0))"))
     clip_layer.CreateFeature(f)
+    # Clip geometry envelope contains envelope of input geometry, but does not intersect it
+    f = ogr.Feature(clip_layer.GetLayerDefn())
+    f.SetField(
+        "filter_field", "clip_geometry_envelope_contains_envelope_but_no_intersect"
+    )
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON ((-2 -1,-2 4,4 4,4 -1,3 -1,3 3,-1 3,-1 -1,-2 -1))"
+        )
+    )
+    clip_layer.CreateFeature(f)
     clip_ds = None
 
     # Test clip with 'half_overlap_line_result' using sql statement
@@ -1155,6 +1166,19 @@ def test_ogr2ogr_lib_clipsrc_datasource(tmp_vsimem):
         format="GPKG",
         clipSrc=clip_path,
         clipSrcWhere="filter_field = 'no_overlap_no_result'",
+    )
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 0
+    dst_ds = None
+    gdal.Unlink(dst_filename)
+
+    # Test clip with the "clip_geometry_envelope_contains_envelope_but_no_intersect" using only clipSrcWhere
+    dst_ds = gdal.VectorTranslate(
+        dst_filename,
+        src_filename,
+        format="GPKG",
+        clipSrc=clip_path,
+        clipSrcWhere="filter_field = 'clip_geometry_envelope_contains_envelope_but_no_intersect'",
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 0
@@ -1389,6 +1413,17 @@ def test_ogr2ogr_lib_clipdst_datasource(tmp_vsimem):
     f.SetField("filter_field", "exact_overlap_full_result")
     f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0, 0 2, 2 2, 2 0, 0 0))"))
     clip_layer.CreateFeature(f)
+    # Clip geometry envelope contains envelope of input geometry, but does not intersect it
+    f = ogr.Feature(clip_layer.GetLayerDefn())
+    f.SetField(
+        "filter_field", "clip_geometry_envelope_contains_envelope_but_no_intersect"
+    )
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON ((-2 -1,-2 4,4 4,4 -1,3 -1,3 3,-1 3,-1 -1,-2 -1))"
+        )
+    )
+    clip_layer.CreateFeature(f)
     clip_ds = None
 
     # Test clip with 'half_overlap_line_result' using sql statement
@@ -1429,6 +1464,19 @@ def test_ogr2ogr_lib_clipdst_datasource(tmp_vsimem):
         format="GPKG",
         clipDst=clip_path,
         clipDstWhere="filter_field = 'no_overlap_no_result'",
+    )
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 0
+    dst_ds = None
+    gdal.Unlink(dst_filename)
+
+    # Test clip with the "clip_geometry_envelope_contains_envelope_but_no_intersect" using only clipSrcWhere
+    dst_ds = gdal.VectorTranslate(
+        dst_filename,
+        src_filename,
+        format="GPKG",
+        clipDst=clip_path,
+        clipDstWhere="filter_field = 'clip_geometry_envelope_contains_envelope_but_no_intersect'",
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 0
