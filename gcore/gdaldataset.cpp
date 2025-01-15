@@ -36,6 +36,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "cpl_vsi_error.h"
+#include "gdal_alg.h"
 #include "ogr_api.h"
 #include "ogr_attrind.h"
 #include "ogr_core.h"
@@ -10296,3 +10297,129 @@ GDALDataset::Clone(int nScopeFlags, [[maybe_unused]] bool bCanShareState) const
 }
 
 //! @endcond
+
+/************************************************************************/
+/*                    GeolocationToPixelLine()                          */
+/************************************************************************/
+
+/** Transform georeferenced coordinates to pixel/line coordinates.
+ *
+ * When poSRS is null, those georeferenced coordinates (dfGeolocX, dfGeolocY)
+ * must be in the "natural" SRS of the dataset, that is the one returned by
+ * GetSpatialRef() if there is a geotransform, GetGCPSpatialRef() if there are
+ * GCPs, WGS 84 if there are RPC coefficients, or the SRS of the geolocation
+ * array (generally WGS 84) if there is a geolocation array.
+ * If that natural SRS is a geographic one, dfGeolocX must be a longitude, and
+ * dfGeolocY a latitude. If that natural SRS is a projected one, dfGeolocX must
+ * be a easting, and dfGeolocY a northing.
+ *
+ * When poSRS is set to a non-null value, (dfGeolocX, dfGeolocY) must be
+ * expressed in that CRS, and that tuple must be conformant with the
+ * data-axis-to-crs-axis setting of poSRS, that is the one returned by
+ * the OGRSpatialReference::GetDataAxisToSRSAxisMapping(). If you want to be sure
+ * of the axis order, then make sure to call poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER)
+ * before calling this method, and in that case, dfGeolocX must be a longitude
+ * or an easting value, and dfGeolocX a latitude or a northing value.
+ *
+ * This method uses GDALCreateGenImgProjTransformer2() underneath.
+ *
+ * @param dfGeolocX X coordinate of the position (longitude or easting if poSRS
+ * is null, otherwise consistent with poSRS data-axis-to-crs-axis mapping),
+ * where interpolation should be done.
+ * @param dfGeolocY Y coordinate of the position (latitude or northing if poSRS
+ * is null, otherwise consistent with poSRS data-axis-to-crs-axis mapping),
+ * where interpolation should be done.
+ * @param poSRS If set, override the natural CRS in which dfGeolocX, dfGeolocY are expressed
+ * @param[out] pdfPixel Pointer to the variable where to the store the pixel/column coordinate.
+ * @param[out] pdfLine Pointer to the variable where to the store the line coordinate.
+ * @param papszTransformerOptions Options accepted by GDALCreateGenImgProjTransformer2(), or nullptr.
+ *
+ * @return CE_None on success, or an error code on failure.
+ * @since GDAL 3.11
+ */
+
+CPLErr
+GDALDataset::GeolocationToPixelLine(double dfGeolocX, double dfGeolocY,
+                                    const OGRSpatialReference *poSRS,
+                                    double *pdfPixel, double *pdfLine,
+                                    CSLConstList papszTransformerOptions) const
+{
+    CPLStringList aosTO(papszTransformerOptions);
+
+    if (poSRS)
+    {
+        const char *const apszOptions[] = {"FORMAT=WKT2", nullptr};
+        const std::string osWKT = poSRS->exportToWkt(apszOptions);
+        aosTO.SetNameValue("DST_SRS", osWKT.c_str());
+        const auto eAxisMappingStrategy = poSRS->GetAxisMappingStrategy();
+        if (eAxisMappingStrategy == OAMS_TRADITIONAL_GIS_ORDER)
+            aosTO.SetNameValue("DST_SRS_AXIS_MAPPING_STRATEGY",
+                               "TRADITIONAL_GIS_ORDER");
+        else if (eAxisMappingStrategy == OAMS_AUTHORITY_COMPLIANT)
+            aosTO.SetNameValue("DST_SRS_AXIS_MAPPING_STRATEGY",
+                               "AUTHORITY_COMPLIANT");
+        else
+        {
+            const auto &anValues = poSRS->GetDataAxisToSRSAxisMapping();
+            std::string osVal;
+            for (int v : anValues)
+            {
+                if (!osVal.empty())
+                    osVal += ',';
+                osVal += std::to_string(v);
+            }
+            aosTO.SetNameValue("DST_SRS_DATA_AXIS_TO_SRS_AXIS_MAPPING",
+                               osVal.c_str());
+        }
+    }
+
+    auto hTransformer = GDALCreateGenImgProjTransformer2(
+        GDALDataset::ToHandle(const_cast<GDALDataset *>(this)), nullptr,
+        aosTO.List());
+    if (hTransformer == nullptr)
+    {
+        return CE_Failure;
+    }
+
+    double z = 0;
+    int bSuccess = 0;
+    GDALGenImgProjTransform(hTransformer, TRUE, 1, &dfGeolocX, &dfGeolocY, &z,
+                            &bSuccess);
+    GDALDestroyTransformer(hTransformer);
+    if (bSuccess)
+    {
+        if (pdfPixel)
+            *pdfPixel = dfGeolocX;
+        if (pdfLine)
+            *pdfLine = dfGeolocY;
+        return CE_None;
+    }
+    else
+    {
+        return CE_Failure;
+    }
+}
+
+/************************************************************************/
+/*                  GDALDatasetGeolocationToPixelLine()                 */
+/************************************************************************/
+
+/** Transform georeferenced coordinates to pixel/line coordinates.
+ *
+ * @see GDALDataset::GeolocationToPixelLine()
+ * @since GDAL 3.11
+ */
+
+CPLErr GDALDatasetGeolocationToPixelLine(GDALDatasetH hDS, double dfGeolocX,
+                                         double dfGeolocY,
+                                         OGRSpatialReferenceH hSRS,
+                                         double *pdfPixel, double *pdfLine,
+                                         CSLConstList papszTransformerOptions)
+{
+    VALIDATE_POINTER1(hDS, "GDALDatasetGeolocationToPixelLine", CE_Failure);
+
+    GDALDataset *poDS = GDALDataset::FromHandle(hDS);
+    return poDS->GeolocationToPixelLine(
+        dfGeolocX, dfGeolocY, OGRSpatialReference::FromHandle(hSRS), pdfPixel,
+        pdfLine, papszTransformerOptions);
+}

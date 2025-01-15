@@ -715,6 +715,11 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual CPLErr GetGeoTransform(double *padfTransform);
     virtual CPLErr SetGeoTransform(double *padfTransform);
 
+    CPLErr GeolocationToPixelLine(
+        double dfGeolocX, double dfGeolocY, const OGRSpatialReference *poSRS,
+        double *pdfPixel, double *pdfLine,
+        CSLConstList papszTransformerOptions = nullptr) const;
+
     virtual CPLErr AddBand(GDALDataType eType, char **papszOptions = nullptr);
 
     virtual void *GetInternalHandle(const char *pszHandleName);
@@ -1873,6 +1878,12 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                               double *pdfDataPct = nullptr);
 
     std::shared_ptr<GDALMDArray> AsMDArray() const;
+
+    CPLErr InterpolateAtGeolocation(
+        double dfGeolocX, double dfGeolocY, const OGRSpatialReference *poSRS,
+        GDALRIOResampleAlg eInterpolation, double *pdfRealValue,
+        double *pdfImagValue = nullptr,
+        CSLConstList papszTransfomerOptions = nullptr) const;
 
     virtual CPLErr InterpolateAtPoint(double dfPixel, double dfLine,
                                       GDALRIOResampleAlg eInterpolation,

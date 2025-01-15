@@ -15,7 +15,7 @@
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 ###############################################################################
 # Test some cases of InterpolateAtPoint
@@ -353,3 +353,83 @@ def test_interpolateatpoint_big_complex():
     assert res == pytest.approx((182 + 122j), 1e-6)
     res = ds.GetRasterBand(1).InterpolateAtPoint(255.5, 63.5, gdal.GRIORA_Cubic)
     assert res == pytest.approx((182 + 122j), 1e-6)
+
+
+###############################################################################
+# Test InterpolateAtGeolocation
+
+
+def test_interpolateatgeolocation_1():
+
+    ds = gdal.Open("data/byte.tif")
+
+    gt = ds.GetGeoTransform()
+    X = gt[0] + 10 * gt[1]
+    Y = gt[3] + 12 * gt[5]
+
+    got_nearest = ds.GetRasterBand(1).InterpolateAtGeolocation(
+        X, Y, None, gdal.GRIORA_NearestNeighbour
+    )
+    assert got_nearest == pytest.approx(173, 1e-6)
+    got_bilinear = ds.GetRasterBand(1).InterpolateAtGeolocation(
+        X, Y, None, gdal.GRIORA_Bilinear
+    )
+    assert got_bilinear == pytest.approx(139.75, 1e-6)
+    got_cubic = ds.GetRasterBand(1).InterpolateAtGeolocation(
+        X, Y, None, gdal.GRIORA_CubicSpline
+    )
+    assert got_cubic == pytest.approx(138.02, 1e-2)
+    got_cubic = ds.GetRasterBand(1).InterpolateAtGeolocation(
+        X, Y, None, gdal.GRIORA_Cubic
+    )
+    assert got_cubic == pytest.approx(145.57, 1e-2)
+
+    wgs84_srs_auth_compliant = osr.SpatialReference()
+    wgs84_srs_auth_compliant.SetFromUserInput("WGS84")
+    wgs84_srs_auth_compliant.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+    ct = osr.CoordinateTransformation(ds.GetSpatialRef(), wgs84_srs_auth_compliant)
+    wgs84_lat, wgs84_lon, _ = ct.TransformPoint(X, Y, 0)
+
+    got_nearest = ds.GetRasterBand(1).InterpolateAtGeolocation(
+        wgs84_lat, wgs84_lon, wgs84_srs_auth_compliant, gdal.GRIORA_NearestNeighbour
+    )
+    assert got_nearest == pytest.approx(173, 1e-6)
+
+    wgs84_trad_gis_order = osr.SpatialReference()
+    wgs84_trad_gis_order.SetFromUserInput("WGS84")
+    wgs84_trad_gis_order.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    got_nearest = ds.GetRasterBand(1).InterpolateAtGeolocation(
+        wgs84_lon, wgs84_lat, wgs84_trad_gis_order, gdal.GRIORA_NearestNeighbour
+    )
+    assert got_nearest == pytest.approx(173, 1e-6)
+
+    wgs84_lon_lat_srs = osr.SpatialReference()
+    wgs84_lon_lat_srs.SetFromUserInput("WGS84")
+    wgs84_lon_lat_srs.SetDataAxisToSRSAxisMapping([2, 1])
+    got_nearest = ds.GetRasterBand(1).InterpolateAtGeolocation(
+        wgs84_lon, wgs84_lat, wgs84_lon_lat_srs, gdal.GRIORA_NearestNeighbour
+    )
+    assert got_nearest == pytest.approx(173, 1e-6)
+
+    wgs84_lat_lon_srs = osr.SpatialReference()
+    wgs84_lat_lon_srs.SetFromUserInput("WGS84")
+    wgs84_lat_lon_srs.SetDataAxisToSRSAxisMapping([1, 2])
+    got_nearest = ds.GetRasterBand(1).InterpolateAtGeolocation(
+        wgs84_lat, wgs84_lon, wgs84_lat_lon_srs, gdal.GRIORA_NearestNeighbour
+    )
+    assert got_nearest == pytest.approx(173, 1e-6)
+
+    X = gt[0] + -1 * gt[1]
+    Y = gt[3] + -1 * gt[5]
+    assert (
+        ds.GetRasterBand(1).InterpolateAtGeolocation(
+            X, Y, None, gdal.GRIORA_NearestNeighbour
+        )
+        is None
+    )
+
+    ungeoreferenced_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    with pytest.raises(Exception, match="Unable to compute a transformation"):
+        assert ungeoreferenced_ds.GetRasterBand(1).InterpolateAtGeolocation(
+            0, 0, None, gdal.GRIORA_NearestNeighbour
+        )
