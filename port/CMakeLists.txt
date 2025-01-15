@@ -337,9 +337,7 @@ if (NOT CMAKE_CROSSCOMPILING AND BUILD_VSIPRELOAD AND "${CMAKE_SYSTEM}" MATCHES 
     add_library(vsipreload MODULE vsipreload.cpp)
     set_target_properties(vsipreload PROPERTIES PREFIX "")
     target_link_libraries(vsipreload PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> ${CMAKE_DL_LIBS})
-    if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-      set_property(SOURCE vsipreload.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
-    endif ()
+    set_property(SOURCE vsipreload.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
 
     # For musl / Alpine
     foreach(_header IN ITEMS stdio.h fcntl.h unistd.h dirent.h sys/stat.h)
