@@ -20,6 +20,7 @@ git clone  https://github.com/conda-forge/gdal-feedstock.git
 cd gdal-feedstock
 
 patch -p1 < ../ci/travis/conda/libgdal-adbc.patch
+patch -p1 < ../ci/travis/conda/muparser.patch
 
 cat > recipe/recipe_clobber.yaml <<EOL
 source:
