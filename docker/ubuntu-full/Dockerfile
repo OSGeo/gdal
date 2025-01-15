@@ -81,7 +81,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libbrotli-dev${APT_ARCH_SUFFIX} \
        libarchive-dev${APT_ARCH_SUFFIX} \
        libaec-dev${APT_ARCH_SUFFIX} \
-       libavif-dev${APT_ARCH_SUFFIX}
+       libavif-dev${APT_ARCH_SUFFIX} \
+       libmuparser-dev${APT_ARCH_SUFFIX}
 
 ARG RSYNC_REMOTE
 ARG WITH_CCACHE
@@ -493,6 +494,10 @@ RUN --mount=type=cache,id=ubuntu-full-proj,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && /buildscripts/bh-proj.sh
 
+# Download exprtk
+RUN curl -LO -fsS https://github.com/ArashPartow/exprtk/raw/refs/heads/master/exprtk.hpp \
+    && mv exprtk.hpp /usr/include
+
 # Build GDAL
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
@@ -543,6 +548,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libaec0 \
         libavif16 \
         libspdlog1.12 libmagic1t64 \
+        libmuparser2v5 \
         python-is-python3 \
         # pil for antialias option of gdal2tiles
         python3-pil \

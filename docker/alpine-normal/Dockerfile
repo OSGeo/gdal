@@ -65,6 +65,7 @@ RUN apk add --no-cache \
     lz4-dev \
     make \
     mariadb-connector-c-dev \
+    muparser-dev \
     netcdf-dev \
     ninja-build \
     odbc-cpp-wrapper-dev \
@@ -230,6 +231,10 @@ RUN --mount=type=cache,id=alpine-normal-spatialite,target=$HOME/.cache \
         mkdir -p /build_spatialite/usr/lib; \
     fi
 
+# Download exprtk
+RUN curl -LO -fsS https://github.com/ArashPartow/exprtk/raw/refs/heads/master/exprtk.hpp \
+    && mv exprtk.hpp /usr/include
+
 # Build GDAL
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
@@ -280,6 +285,7 @@ RUN --mount=type=cache,id=alpine-normal-gdal,target=$HOME/.cache \
         -DBUILD_TESTING=OFF \
         -DOpenDrive_DIR=/usr/lib/ \
         -DOGR_ENABLE_DRIVER_XODR_PLUGIN=TRUE \
+        -DGDAL_USE_EXPRTK:BOOL=ON \
     && ninja \
     && DESTDIR="/build" ninja install \
     && (ninja multireadtest && cp apps/multireadtest /build/usr/bin) \
@@ -364,6 +370,7 @@ RUN apk add --no-cache \
         libxml2 \
         lz4-libs \
         mariadb-connector-c \
+        muparser \
         netcdf \
         minizip \
         musl \
