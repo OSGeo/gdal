@@ -647,45 +647,66 @@ CSVReadParseLineGeneric(void *fp, const char *(*pfnReadLine)(void *, size_t),
         return CSVSplitLine(pszLine, pszDelimiter, bKeepLeadingAndClosingQuotes,
                             bMergeDelimiter);
 
+    const size_t nDelimiterLength = strlen(pszDelimiter);
+    bool bInString = false;           // keep in that scope !
+    std::string osWorkLine(pszLine);  // keep in that scope !
+    size_t i = 0;                     // keep in that scope !
+
     try
     {
-        // We must now count the quotes in our working string, and as
-        // long as it is odd, keep adding new lines.
-        std::string osWorkLine(pszLine);
-
-        size_t i = 0;
-        int nCount = 0;
-
         while (true)
         {
-            for (; i < osWorkLine.size(); i++)
+            for (; i < osWorkLine.size(); ++i)
             {
                 if (osWorkLine[i] == '\"')
-                    nCount++;
+                {
+                    if (!bInString)
+                    {
+                        // Only consider " as the start of a quoted string
+                        // if it is the first character of the line, or
+                        // if it is immediately after the field delimiter.
+                        if (i == 0 ||
+                            (i >= nDelimiterLength &&
+                             osWorkLine.compare(i - nDelimiterLength,
+                                                nDelimiterLength, pszDelimiter,
+                                                nDelimiterLength) == 0))
+                        {
+                            bInString = true;
+                        }
+                    }
+                    else if (i + 1 < osWorkLine.size() &&
+                             osWorkLine[i + 1] == '"')
+                    {
+                        // Escaped double quote in a quoted string
+                        ++i;
+                    }
+                    else
+                    {
+                        bInString = false;
+                    }
+                }
             }
 
-            if (nCount % 2 == 0)
-                break;
+            if (!bInString)
+            {
+                return CSVSplitLine(osWorkLine.c_str(), pszDelimiter,
+                                    bKeepLeadingAndClosingQuotes,
+                                    bMergeDelimiter);
+            }
 
-            pszLine = pfnReadLine(fp, nMaxLineSize);
-            if (pszLine == nullptr)
+            const char *pszNewLine = pfnReadLine(fp, nMaxLineSize);
+            if (pszNewLine == nullptr)
                 break;
 
             osWorkLine.append("\n");
-            osWorkLine.append(pszLine);
+            osWorkLine.append(pszNewLine);
         }
-
-        char **papszReturn =
-            CSVSplitLine(osWorkLine.c_str(), pszDelimiter,
-                         bKeepLeadingAndClosingQuotes, bMergeDelimiter);
-
-        return papszReturn;
     }
     catch (const std::exception &e)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
-        return nullptr;
     }
+    return nullptr;
 }
 
 /************************************************************************/
