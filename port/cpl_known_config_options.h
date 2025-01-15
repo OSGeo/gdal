@@ -362,7 +362,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_PDF_LIMIT_PAGE_COUNT", // from pdfdataset.cpp
    "GDAL_PDF_NEATLINE", // from pdfdrivercore.cpp
    "GDAL_PDF_OGC_BP_READ_WKT", // from pdfdataset.cpp
-   "GDAL_PDF_OGC_BP_WRITE_WKT", // from pdfcreatecopy.cpp, pdfcreatefromcomposition.cpp
    "GDAL_PDF_PRINT_COMMANDS", // from pdfdataset.cpp
    "GDAL_PDF_RENDERING_OPTIONS", // from pdfdrivercore.cpp
    "GDAL_PDF_USE_SPAWN", // from pdfdataset.cpp
