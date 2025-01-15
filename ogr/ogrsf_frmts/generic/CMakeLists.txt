@@ -38,7 +38,6 @@ add_library(
   ogrlayerpool.cpp
   ogrlayerdecorator.cpp
   ogreditablelayer.cpp
-  ogremulatedtransaction.cpp
   ogrmutexeddatasource.cpp
   ogrmutexedlayer.cpp
   ograrrowarrayhelper.cpp)
