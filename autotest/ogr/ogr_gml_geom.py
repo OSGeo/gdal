@@ -3085,3 +3085,22 @@ def test_gml_OrientableCurve():
     )
     assert g is not None
     assert g.ExportToWkt() == "LINESTRING (2 3,0 1)"
+
+
+###############################################################################
+#
+
+
+def test_gml_aixm_ElevatedPoint():
+
+    geom = ogr.CreateGeometryFromGML(
+        """<aixm:ElevatedPoint srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>49 2</gml:pos>
+            <aixm:elevation uom="M">10</aixm:elevation> <!-- ignored -->
+        </aixm:ElevatedPoint>"""
+    )
+
+    ogrtest.check_feature_geometry(
+        geom,
+        "POINT (49 2)",
+    )
