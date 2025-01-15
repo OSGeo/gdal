@@ -216,13 +216,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "ES_OVERWRITE", // from ogrelasticdatasource.cpp
    "ES_WRITEMAP", // from ogrelasticdatasource.cpp
    "ESRI_XML_PAM", // from gtiffdataset.cpp, gtiffdataset_write.cpp
-   "FGDB_BULK_LOAD", // from FGdbLayer.cpp
-   "FGDB_PER_LAYER_COPYING_TRANSACTION", // from FGdbDatasource.cpp
-   "FGDB_RESYNC_THRESHOLD", // from FGdbLayer.cpp
-   "FGDB_SIMUL_FAIL", // from FGdbDriver.cpp
-   "FGDB_SIMUL_FAIL_REOPEN", // from FGdbDatasource.cpp
    "FGDB_STRING_WIDTH", // from FGdbUtils.cpp
-   "FILEGDB_DISABLE_SPARSE_PAGES", // from FGdbLayer.cpp
    "FORCE_BLOCKSIZE", // from hfaopen.cpp
    "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", // from JPEG_band.cpp, jpgdataset.cpp
    "GDAL_BAG_BLOCK_SIZE", // from bagdataset.cpp
