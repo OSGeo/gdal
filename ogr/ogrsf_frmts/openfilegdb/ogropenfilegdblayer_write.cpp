@@ -386,6 +386,12 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
     const auto eFlattenType = wkbFlatten(OGR_GT_GetLinear(m_eGeomType));
     if (eFlattenType == wkbNone)
         eTableGeomType = FGTGT_NONE;
+    else if (CPLTestBool(m_aosCreationOptions.FetchNameValueDef(
+                 "CREATE_MULTIPATCH", "FALSE")))
+    {
+        // For compatibility with FileGDB driver
+        eTableGeomType = FGTGT_MULTIPATCH;
+    }
     else if (eFlattenType == wkbPoint)
         eTableGeomType = FGTGT_POINT;
     else if (eFlattenType == wkbMultiPoint)
@@ -2159,11 +2165,21 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
                     eFlattenType != wkbPolyhedralSurface &&
                     eFlattenType != wkbGeometryCollection)
                 {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "Can only insert a "
-                             "TIN/PolyhedralSurface/GeometryCollection in a "
-                             "esriGeometryMultiPatch layer");
-                    return false;
+                    if (CPLTestBool(m_aosCreationOptions.FetchNameValueDef(
+                            "CREATE_MULTIPATCH", "FALSE")) &&
+                        eFlattenType == wkbMultiPolygon)
+                    {
+                        // ok
+                    }
+                    else
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_NotSupported,
+                            "Can only insert a "
+                            "TIN/PolyhedralSurface/GeometryCollection in a "
+                            "esriGeometryMultiPatch layer");
+                        return false;
+                    }
                 }
                 break;
             }
