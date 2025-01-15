@@ -395,16 +395,17 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
     {
         eTableGeomType = FGTGT_LINE;
     }
-    else if (OGR_GT_IsSurface(eFlattenType) ||
-             OGR_GT_IsSubClassOf(eFlattenType, wkbMultiSurface))
-    {
-        eTableGeomType = FGTGT_POLYGON;
-    }
-    else if (eFlattenType == wkbTIN || eFlattenType == wkbPolyhedralSurface ||
+    else if (wkbFlatten(m_eGeomType) == wkbTIN ||
+             wkbFlatten(m_eGeomType) == wkbPolyhedralSurface ||
              m_eGeomType == wkbGeometryCollection25D ||
              m_eGeomType == wkbSetZ(wkbUnknown))
     {
         eTableGeomType = FGTGT_MULTIPATCH;
+    }
+    else if (OGR_GT_IsSurface(eFlattenType) ||
+             OGR_GT_IsSubClassOf(eFlattenType, wkbMultiSurface))
+    {
+        eTableGeomType = FGTGT_POLYGON;
     }
     else
     {
