@@ -746,3 +746,37 @@ def test_gdal_calc_py_projwin(tmp_vsimem):
     assert out_ds.RasterXSize == 4
     assert out_ds.RasterYSize == 4
     assert out_ds.GetGeoTransform() == (0, 1, 0, 4, 0, -1)
+
+
+def test_gdal_calc_py_projection_check(tmp_vsimem):
+
+    input1 = tmp_vsimem / "in1.tif"
+    input2 = tmp_vsimem / "in2.tif"
+    out = tmp_vsimem / "out.tif"
+
+    with gdal.GetDriverByName("GTiff").Create(input1, 3, 3, 1) as ds:
+        ds.GetRasterBand(1).Fill(5)
+        ds.SetGeoTransform((0, 1, 0, 3, 0, -1))
+        assert ds.SetProjection("EPSG:4326") == gdal.CE_None
+
+    with gdal.GetDriverByName("GTiff").Create(input2, 3, 3, 1) as ds:
+        ds.GetRasterBand(1).Fill(3)
+        ds.SetGeoTransform((1, 1, 0, 3, 0, -1))
+        assert ds.SetProjection("EPSG:32145") == gdal.CE_None
+
+    # Default: WGS84 + VT state plane? Why not?
+    out_ds = gdal_calc.Calc(a=input1, b=input2, calc="a+b", outfile=out, quiet=True)
+    assert out_ds.RasterXSize == 3
+    assert out_ds.RasterYSize == 3
+    assert np.all(out_ds.ReadAsArray() == 8)
+
+    # Unless...
+    with pytest.raises(Exception, match="Projection"):
+        gdal_calc.Calc(
+            a=input1,
+            b=input2,
+            calc="a+b",
+            outfile=out,
+            quiet=True,
+            projectionCheck=True,
+        )
