@@ -129,8 +129,8 @@ def test_gdal_calc_py_1(script_path, tmp_path, stefan_full_rgba):
         f"-Z {infile} --Z_band=2 --calc=Z --overwrite --format GTiff --outfile {out[2]}",
     )
 
-    for i, checksum in zip(
-        range(test_count), (input_checksum[0], input_checksum[1], input_checksum[1])
+    for i, checksum in enumerate(
+        (input_checksum[0], input_checksum[1], input_checksum[1])
     ):
         check_file(out[i], checksum, i + 1)
 
@@ -182,7 +182,7 @@ def test_gdal_calc_py_2(script_path, tmp_path, stefan_full_rgba):
         f"--overwrite --outfile {out[2]}",
     )
 
-    for i, checksum in zip(range(test_count), (12368, 62785, 47132)):
+    for i, checksum in enumerate((12368, 62785, 47132)):
         check_file(out[i], checksum, i + 1)
 
 
@@ -199,7 +199,7 @@ def test_gdal_calc_py_3(script_path, tmp_path, stefan_full_rgba):
     )
 
     bnd_count = 4
-    for i, checksum in zip(range(bnd_count), input_checksum[0:bnd_count]):
+    for i, checksum in enumerate(input_checksum[0:bnd_count]):
         check_file(out, checksum, 1, bnd_idx=i + 1)
 
 
@@ -221,8 +221,7 @@ def test_gdal_calc_py_4(script_path, tmp_path, stefan_full_rgba):
         f"--overwrite --outfile {out[1]}",
     )
 
-    bnd_count = 3
-    for i, checksum in zip(range(bnd_count), (29935, 13128, 59092)):
+    for i, checksum in enumerate((29935, 13128, 59092)):
         check_file(out[1], checksum, 2, bnd_idx=i + 1)
         # also check NoDataValue
         ds = gdal.Open(out[1])
@@ -236,8 +235,7 @@ def test_gdal_calc_py_4(script_path, tmp_path, stefan_full_rgba):
         f"--overwrite --outfile {out[2]}",
     )
 
-    bnd_count = 3
-    for i, checksum in zip(range(bnd_count), (10025, 62785, 10621)):
+    for i, checksum in enumerate((10025, 62785, 10621)):
         check_file(out[2], checksum, 3, bnd_idx=i + 1)
         # also check NoDataValue
         ds = gdal.Open(out[2])
@@ -264,13 +262,12 @@ def test_gdal_calc_py_5(script_path, tmp_path, stefan_full_rgba):
         outfile=out[3],
     )
 
-    for i, checksum in zip(
-        range(test_count), (input_checksum[0], input_checksum[1], input_checksum[1])
+    for i, checksum in enumerate(
+        (input_checksum[0], input_checksum[1], input_checksum[1])
     ):
         check_file(out[i], checksum, i + 1)
 
-    bnd_count = 2
-    for i, checksum in zip(range(bnd_count), (input_checksum[0], input_checksum[1])):
+    for i, checksum in enumerate((input_checksum[0], input_checksum[1])):
         check_file(out[3], checksum, 4, bnd_idx=i + 1)
 
 
@@ -289,7 +286,7 @@ def test_gdal_calc_py_6(script_path, tmp_path):
         "A", A=out[0], overwrite=True, quiet=True, outfile=out[1], NoDataValue=1
     )
 
-    for i, checksum in zip(range(test_count), (4672, 4673)):
+    for i, checksum in enumerate((4672, 4673)):
         ds = check_file(out[i], checksum, i + 1)
         if i == 1:
             result = ds.GetRasterBand(1).ComputeRasterMinMax()
@@ -335,8 +332,7 @@ def test_gdal_calc_py_7(script_path, tmp_path, stefan_full_rgba):
         for i in opts:
             f.write(i + "\n")
     for opt_prefix in ["--optfile ", "@"]:
-        for i, checksum in zip(
-            range(test_count),
+        for i, checksum in enumerate(
             (
                 input_checksum[0],
                 input_checksum[1],
@@ -363,9 +359,8 @@ def test_gdal_calc_py_8(script_path, tmp_path, stefan_full_rgba):
         f"--overwrite --outfile {out}",
     )
 
-    bnd_count = 3
-    for i, checksum in zip(
-        range(bnd_count), (input_checksum[0], input_checksum[1], input_checksum[1])
+    for i, checksum in enumerate(
+        (input_checksum[0], input_checksum[1], input_checksum[1])
     ):
         check_file(out, checksum, 1, bnd_idx=i + 1)
 
