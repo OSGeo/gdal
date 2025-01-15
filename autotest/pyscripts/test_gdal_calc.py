@@ -17,7 +17,6 @@
 
 import os
 import shutil
-from copy import copy
 
 import pytest
 import test_py_scripts
@@ -90,10 +89,12 @@ def check_file(filename_or_ds, checksum, i=None, bnd_idx=1):
 input_checksum = (12603, 58561, 36064, 10807)
 
 
-@pytest.fixture()
-def stefan_full_rgba(tmp_path):
+@pytest.fixture(scope="module")
+def stefan_full_rgba(tmp_path_factory):
 
-    infile = str(tmp_path / "stefan_full_rgba.tif")
+    tmpdir = tmp_path_factory.mktemp("gdal_calc")
+
+    infile = tmpdir / "stefan_full_rgba.tif"
 
     if not os.path.isfile(infile):
         shutil.copy(
@@ -107,83 +108,114 @@ def test_gdal_calc_py_1(script_path, tmp_path, stefan_full_rgba):
     """test basic copy"""
 
     infile = stefan_full_rgba
-    test_count = 3
-    out = [tmp_path / f"out_{i}.tif" for i in range(test_count)]
+    out = tmp_path / "out.tif"
 
     _, err = test_py_scripts.run_py_script(
         script_path,
         "gdal_calc",
-        f"-A {infile} --calc=A --overwrite --outfile {out[0]}",
+        f"-A {infile} --calc=A --overwrite --outfile {out}",
         return_stderr=True,
     )
     assert "UseExceptions" not in err
 
-    test_py_scripts.run_py_script(
-        script_path,
-        "gdal_calc",
-        f"-A {infile} --A_band=2 --calc=A --overwrite --outfile {out[1]}",
-    )
-    test_py_scripts.run_py_script(
-        script_path,
-        "gdal_calc",
-        f"-Z {infile} --Z_band=2 --calc=Z --overwrite --format GTiff --outfile {out[2]}",
-    )
-
-    for i, checksum in enumerate(
-        (input_checksum[0], input_checksum[1], input_checksum[1])
-    ):
-        check_file(out[i], checksum, i + 1)
-
-    # Test update
-    ds = gdal.Open(out[2], gdal.GA_Update)
-    ds.GetRasterBand(1).Fill(0)
-    ds = None
-    test_py_scripts.run_py_script(
-        script_path, "gdal_calc", f"-Z {infile} --Z_band=2 --calc=Z --outfile {out[2]}"
-    )
-    check_file(out[2], input_checksum[1])
-
-    # Test un-intended updated
-    ds = gdal.Open(out[2], gdal.GA_Update)
-    ds.GetRasterBand(1).Fill(0)
-    zero_cs = ds.GetRasterBand(1).Checksum()
-    ds = None
-    test_py_scripts.run_py_script(
-        script_path,
-        "gdal_calc",
-        f"-Z {infile} --Z_band=2 --calc=Z --format GTiff --outfile {out[2]}",
-    )
-    check_file(out[2], zero_cs)
+    check_file(out, input_checksum[0])
 
 
-def test_gdal_calc_py_2(script_path, tmp_path, stefan_full_rgba):
-    """test simple formulas"""
+def test_gdal_calc_py_1b(script_path, tmp_path, stefan_full_rgba):
 
     infile = stefan_full_rgba
-    test_count = 3
-    out = [tmp_path / f"out_{i}.tif" for i in range(test_count)]
+    out = tmp_path / "out.tif"
+
+    test_py_scripts.run_py_script(
+        script_path,
+        "gdal_calc",
+        f"-A {infile} --A_band=2 --calc=A --overwrite --outfile {out}",
+    )
+
+    check_file(out, input_checksum[1])
+
+
+def test_gdal_calc_py_1c(script_path, tmp_path, stefan_full_rgba):
+
+    infile = stefan_full_rgba
+    out = tmp_path / "out.tif"
+
+    test_py_scripts.run_py_script(
+        script_path,
+        "gdal_calc",
+        f"-Z {infile} --Z_band=2 --calc=Z --overwrite --format GTiff --outfile {out}",
+    )
+
+    check_file(out, input_checksum[1])
+
+    # Test update
+    with gdal.Open(out, gdal.GA_Update) as ds:
+        ds.GetRasterBand(1).Fill(0)
+
+    test_py_scripts.run_py_script(
+        script_path, "gdal_calc", f"-Z {infile} --Z_band=2 --calc=Z --outfile {out}"
+    )
+    check_file(out, input_checksum[1])
+
+    # Test failed overwrite (missing --overwrite)
+    with gdal.Open(out, gdal.GA_Update) as ds:
+        ds.GetRasterBand(1).Fill(0)
+        zero_cs = ds.GetRasterBand(1).Checksum()
+
+    test_py_scripts.run_py_script(
+        script_path,
+        "gdal_calc",
+        f"-Z {infile} --Z_band=2 --calc=Z --format GTiff --outfile {out}",
+    )
+    check_file(out, zero_cs)
+
+
+def test_gdal_calc_py_2a(script_path, tmp_path, stefan_full_rgba):
+    """test simple formula: A+B"""
+
+    infile = stefan_full_rgba
+    out = tmp_path / "out.tif"
 
     test_py_scripts.run_py_script(
         script_path,
         "gdal_calc",
         f"-A {infile} --A_band 1 -B {infile} --B_band 2 --calc=A+B "
-        f"--overwrite --outfile {out[0]}",
+        f"--overwrite --outfile {out}",
     )
+
+    check_file(out, 12368, 1)
+
+
+def test_gdal_calc_py_2b(script_path, tmp_path, stefan_full_rgba):
+    """test simple formula: A*B"""
+
+    infile = stefan_full_rgba
+    out = tmp_path / "out.tif"
+
     test_py_scripts.run_py_script(
         script_path,
         "gdal_calc",
         f"-A {infile} --A_band 1 -B {infile} --B_band 2 --calc=A*B "
-        f"--overwrite --outfile {out[1]}",
+        f"--overwrite --outfile {out}",
     )
+
+    check_file(out, 62785, 1)
+
+
+def test_gdal_calc_py_2c(script_path, tmp_path, stefan_full_rgba):
+    """test simple formula: sqrt(A)"""
+
+    infile = stefan_full_rgba
+    out = tmp_path / "out.tif"
+
     test_py_scripts.run_py_script(
         script_path,
         "gdal_calc",
         f'-A {infile} --A_band 1 --calc="sqrt(A)" --type=Float32 '
-        f"--overwrite --outfile {out[2]}",
+        f"--overwrite --outfile {out}",
     )
 
-    for i, checksum in enumerate((12368, 62785, 47132)):
-        check_file(out[i], checksum, i + 1)
+    check_file(out, 47132, 1)
 
 
 def test_gdal_calc_py_3(script_path, tmp_path, stefan_full_rgba):
@@ -203,55 +235,92 @@ def test_gdal_calc_py_3(script_path, tmp_path, stefan_full_rgba):
         check_file(out, checksum, 1, bnd_idx=i + 1)
 
 
-def test_gdal_calc_py_4(script_path, tmp_path, stefan_full_rgba):
+def test_gdal_calc_py_4a(script_path, tmp_path, stefan_full_rgba):
     """test --allBands option (simple calc)"""
 
     infile = stefan_full_rgba
-    test_count = 3
-    out = [tmp_path / f"out_{i}.tif" for i in range(test_count)]
+    ones = tmp_path / "ones.tif"
+    out = tmp_path / "out.tif"
 
     # some values are clipped to 255, but this doesn't matter... small values were visually checked
     test_py_scripts.run_py_script(
-        script_path, "gdal_calc", f"-A {infile} --calc=1 --overwrite --outfile {out[0]}"
+        script_path, "gdal_calc", f"-A {infile} --calc=1 --overwrite --outfile {ones}"
     )
+
     test_py_scripts.run_py_script(
         script_path,
         "gdal_calc",
-        f"-A {infile} -B {out[0]} --B_band 1 --allBands A --calc=A+B --NoDataValue=999 "
-        f"--overwrite --outfile {out[1]}",
+        f"-A {infile} -B {ones} --B_band 1 --allBands A --calc=A+B --NoDataValue=999 "
+        f"--overwrite --outfile {out}",
     )
 
-    for i, checksum in enumerate((29935, 13128, 59092)):
-        check_file(out[1], checksum, 2, bnd_idx=i + 1)
+    for band, checksum in enumerate((29935, 13128, 59092)):
+        ds = check_file(out, checksum, 2, bnd_idx=band + 1)
         # also check NoDataValue
-        ds = gdal.Open(out[1])
-        assert ds.GetRasterBand(i + 1).GetNoDataValue() == 999
+        ds = gdal.Open(out)
+        assert ds.GetRasterBand(band + 1).GetNoDataValue() == 999
+
+
+def test_gdal_calc_py_4b(script_path, tmp_path, stefan_full_rgba):
+    """test --allBands option (simple calc)"""
+
+    infile = stefan_full_rgba
+    out = tmp_path / "out.tif"
 
     # these values were not tested
     test_py_scripts.run_py_script(
         script_path,
         "gdal_calc",
         f"-A {infile} -B {infile} --B_band 1 --allBands A --calc=A*B --NoDataValue=999 "
-        f"--overwrite --outfile {out[2]}",
+        f"--overwrite --outfile {out}",
     )
 
-    for i, checksum in enumerate((10025, 62785, 10621)):
-        check_file(out[2], checksum, 3, bnd_idx=i + 1)
+    for band, checksum in enumerate((10025, 62785, 10621)):
+        check_file(out, checksum, 3, bnd_idx=band + 1)
         # also check NoDataValue
-        ds = gdal.Open(out[2])
-        assert ds.GetRasterBand(i + 1).GetNoDataValue() == 999
+        ds = gdal.Open(out)
+        assert ds.GetRasterBand(band + 1).GetNoDataValue() == 999
 
 
-def test_gdal_calc_py_5(script_path, tmp_path, stefan_full_rgba):
+def test_gdal_calc_py_5a(tmp_vsimem, stefan_full_rgba):
     """test python interface, basic copy"""
 
     infile = stefan_full_rgba
-    test_count = 4
-    out = [tmp_path / f"out_{i}.tif" for i in range(test_count)]
+    out = tmp_vsimem / "out.tif"
 
-    gdal_calc.Calc("A", A=infile, overwrite=True, quiet=True, outfile=out[0])
-    gdal_calc.Calc("A", A=infile, A_band=2, overwrite=True, quiet=True, outfile=out[1])
-    gdal_calc.Calc("Z", Z=infile, Z_band=2, overwrite=True, quiet=True, outfile=out[2])
+    gdal_calc.Calc("A", A=infile, overwrite=True, quiet=True, outfile=out)
+
+    check_file(out, input_checksum[0])
+
+
+def test_gdal_calc_py_5b(tmp_vsimem, stefan_full_rgba):
+    """test python interface, basic copy"""
+
+    infile = stefan_full_rgba
+    out = tmp_vsimem / "out.tif"
+
+    gdal_calc.Calc("A", A=infile, A_band=2, overwrite=True, quiet=True, outfile=out)
+
+    check_file(out, input_checksum[1])
+
+
+def test_gdal_calc_py_5c(tmp_vsimem, stefan_full_rgba):
+    """test python interface, basic copy"""
+
+    infile = stefan_full_rgba
+    out = tmp_vsimem / "out.tif"
+
+    gdal_calc.Calc("Z", Z=infile, Z_band=2, overwrite=True, quiet=True, outfile=out)
+
+    check_file(out, input_checksum[1])
+
+
+def test_gdal_calc_py_5d(tmp_vsimem, stefan_full_rgba):
+    """test python interface, basic copy"""
+
+    infile = stefan_full_rgba
+    out = tmp_vsimem / "out.tif"
+
     gdal_calc.Calc(
         ["A", "Z"],
         A=infile,
@@ -259,56 +328,74 @@ def test_gdal_calc_py_5(script_path, tmp_path, stefan_full_rgba):
         Z_band=2,
         overwrite=True,
         quiet=True,
-        outfile=out[3],
+        outfile=out,
     )
 
-    for i, checksum in enumerate(
-        (input_checksum[0], input_checksum[1], input_checksum[1])
-    ):
-        check_file(out[i], checksum, i + 1)
-
-    for i, checksum in enumerate((input_checksum[0], input_checksum[1])):
-        check_file(out[3], checksum, 4, bnd_idx=i + 1)
+    check_file(out, input_checksum[0], bnd_idx=1)
+    check_file(out, input_checksum[1], bnd_idx=2)
 
 
-def test_gdal_calc_py_6(script_path, tmp_path):
+def test_gdal_calc_py_6(tmp_path):
     """test nodata"""
 
-    test_count = 2
-    out = [tmp_path / f"out_{i}.tif" for i in range(test_count)]
+    infile = tmp_path / "byte_nd74.tif"
+    out = tmp_path / "out.tif"
 
     gdal.Translate(
-        out[0],
+        infile,
         test_py_scripts.get_data_path("gcore") + "byte.tif",
         options="-a_nodata 74",
     )
+
+    check_file(infile, 4672)
+
     gdal_calc.Calc(
-        "A", A=out[0], overwrite=True, quiet=True, outfile=out[1], NoDataValue=1
+        "A", A=infile, overwrite=True, quiet=True, outfile=out, NoDataValue=1
     )
 
-    for i, checksum in enumerate((4672, 4673)):
-        ds = check_file(out[i], checksum, i + 1)
-        if i == 1:
-            result = ds.GetRasterBand(1).ComputeRasterMinMax()
-            assert result == (90, 255), "Error! min/max not correct!"
-        ds = None
+    ds = check_file(out, 4673)
+    result = ds.GetRasterBand(1).ComputeRasterMinMax()
+    assert result == (90, 255), "Error! min/max not correct!"
 
 
-def test_gdal_calc_py_7(script_path, tmp_path, stefan_full_rgba):
+@pytest.mark.parametrize("opt_prefix", ("--optfile ", "@"))
+def test_gdal_calc_py_7a(script_path, tmp_path, stefan_full_rgba, opt_prefix):
     """test --optfile"""
 
     infile = stefan_full_rgba
-    test_count = 4
-    out = [tmp_path / f"out_{i}.tif" for i in range(test_count)]
-    opt_files = [tmp_path / f"opt_{i}" for i in range(test_count)]
+    out = tmp_path / "out.tif"
+    opt_file = tmp_path / "opt"
 
-    with open(opt_files[0], "w") as f:
-        f.write(f"-A {infile} --calc=A --overwrite --outfile {out[0]}")
+    with open(opt_file, "w") as f:
+        f.write(f"-A {infile} --calc=A --overwrite --outfile {out}")
+
+    test_py_scripts.run_py_script(script_path, "gdal_calc", f"{opt_prefix}{opt_file}")
+    check_file(out, input_checksum[0])
+
+
+def test_gdal_calc_py_7b(script_path, tmp_path, stefan_full_rgba):
+    """test --optfile"""
+
+    infile = stefan_full_rgba
+    out = tmp_path / "out.tif"
+    opt_file = tmp_path / "opt"
 
     # Lines in optfiles beginning with '#' should be ignored
-    with open(opt_files[1], "w") as f:
-        f.write(f"-A {infile} --A_band=2 --calc=A --overwrite --outfile {out[1]}")
+    with open(opt_file, "w") as f:
+        f.write(f"-A {infile} --A_band=2 --calc=A --overwrite --outfile {out}")
         f.write("\n# -A_band=1")
+
+    test_py_scripts.run_py_script(script_path, "gdal_calc", f"--optfile {opt_file}")
+
+    check_file(out, input_checksum[1])
+
+
+def test_gdal_calc_py_7c(script_path, tmp_path, stefan_full_rgba):
+    """test --optfile"""
+
+    infile = stefan_full_rgba
+    out = tmp_path / "out.tif"
+    opt_file = tmp_path / "opt"
 
     # options on separate lines should work, too
     opts = (
@@ -316,34 +403,37 @@ def test_gdal_calc_py_7(script_path, tmp_path, stefan_full_rgba):
         "--Z_band=2",
         "--calc=Z",
         "--overwrite",
-        f"--outfile  {out[2]}",
+        f"--outfile {out}",
     )
-    with open(opt_files[2], "w") as f:
+    with open(opt_file, "w") as f:
         for i in opts:
             f.write(i + "\n")
+
+    test_py_scripts.run_py_script(script_path, "gdal_calc", f"--optfile {opt_file}")
+
+    check_file(out, input_checksum[1])
+
+
+def test_gdal_calc_py_7d(script_path, tmp_path, stefan_full_rgba):
+    """test --optfile"""
+
+    infile = stefan_full_rgba
+    out = tmp_path / "out.tif"
+    opt_file = tmp_path / "opt"
 
     # double-quoted options should be read as single arguments. Mixed numbers of arguments per line should work.
     opts = (
         f"-Z {infile} --Z_band=2",
         '--calc "Z + 0"',
-        f"--overwrite --outfile {out[3]}",
+        f"--overwrite --outfile {out}",
     )
-    with open(opt_files[3], "w") as f:
+    with open(opt_file, "w") as f:
         for i in opts:
             f.write(i + "\n")
-    for opt_prefix in ["--optfile ", "@"]:
-        for i, checksum in enumerate(
-            (
-                input_checksum[0],
-                input_checksum[1],
-                input_checksum[1],
-                input_checksum[1],
-            ),
-        ):
-            test_py_scripts.run_py_script(
-                script_path, "gdal_calc", f"{opt_prefix}{opt_files[i]}"
-            )
-            check_file(out[i], checksum, i + 1)
+
+    test_py_scripts.run_py_script(script_path, "gdal_calc", f"--optfile {opt_file}")
+
+    check_file(out, input_checksum[1])
 
 
 def test_gdal_calc_py_8(script_path, tmp_path, stefan_full_rgba):
@@ -365,155 +455,151 @@ def test_gdal_calc_py_8(script_path, tmp_path, stefan_full_rgba):
         check_file(out, checksum, 1, bnd_idx=i + 1)
 
 
-def my_sum(a, gdal_dt=None):
-    """sum using numpy"""
-    np_dt = GDALTypeCodeToNumericTypeCode(gdal_dt)
-    concatenate = np.stack(a)
-    ret = concatenate.sum(axis=0, dtype=np_dt)
-    return ret
+def test_gdal_calc_py_numpy_max_1(tmp_vsimem, stefan_full_rgba):
 
+    out = tmp_vsimem / "out.tif"
 
-def my_max(a):
-    """max using numpy"""
-    concatenate = np.stack(a)
-    ret = concatenate.max(axis=0)
-    return ret
-
-
-def test_gdal_calc_py_9(script_path, tmp_path, stefan_full_rgba):
-    """
-    test calculating sum in different ways. testing the following features:
-    * noDataValue
-    * user_namespace
-    * using output ds
-    * mem driver (no output file)
-    * single alpha for multiple datasets
-    * extent = 'fail'
-    """
-    infile = stefan_full_rgba
-    test_count = 9
-    out = [tmp_path / f"out_{i}.tif" for i in range(test_count)]
-
-    common_kwargs = {
-        "hideNoData": True,
-        "overwrite": True,
-        "extent": "fail",
+    kwargs = {
+        "a": gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[1]),
+        "b": gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[2]),
+        "c": gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[3]),
     }
-    inputs0 = dict()
-    inputs0["a"] = infile
 
-    total_bands = 3
-    checksums = [input_checksum[0], input_checksum[1], input_checksum[2]]
-    inputs = []
-    keep_ds = [True, False, False]
-    for i in range(total_bands):
-        bnd_idx = i + 1
-        inputs0["a_band"] = bnd_idx
-        outfile = out[i]
-        return_ds = keep_ds[i]
-        kwargs = copy(common_kwargs)
-        kwargs.update(inputs0)
-        ds = gdal_calc.Calc(calc="a", outfile=outfile, **kwargs)
-        assert ds.GetRasterBand(1).GetNoDataValue() is None
-        if return_ds:
-            input_file = ds
-        else:
-            # the dataset must be closed if we are to read it again
-            del ds
-            input_file = outfile
-        inputs.append(input_file)
-
-        check_file(input_file, checksums[i], i + 1)
-
-    inputs1 = dict()
-    inputs1["a"] = inputs[0]
-    inputs1["b"] = inputs[1]
-    inputs1["c"] = inputs[2]
-
-    inputs2 = {"a": inputs}
-
-    write_output = True
-    outfile = [out[i] if write_output else None for i in range(test_count)]
-
-    i = total_bands
-
-    checksum = 13256
-    kwargs = copy(common_kwargs)
-    kwargs.update(inputs1)
-    check_file(
-        gdal_calc.Calc(calc="numpy.max((a,b,c),axis=0)", outfile=outfile[i], **kwargs),
-        checksum,
-        i,
-    )
-    i += 1
-    kwargs = copy(common_kwargs)
-    kwargs.update(inputs2)
-    check_file(
-        gdal_calc.Calc(calc="numpy.max(a,axis=0)", outfile=outfile[i], **kwargs),
-        checksum,
-        i,
-    )
-    i += 1
-    kwargs = copy(common_kwargs)
-    kwargs.update(inputs2)
     check_file(
         gdal_calc.Calc(
-            calc="my_neat_max(a)",
-            outfile=outfile[i],
-            user_namespace={"my_neat_max": my_max},
-            **kwargs,
+            calc="numpy.max((a,b,c),axis=0)", outfile=out, quiet=True, **kwargs
         ),
-        checksum,
-        i,
+        13256,
     )
-    i += 1
 
+
+def test_gdal_calc_py_numpy_max_2(tmp_vsimem, stefan_full_rgba):
+
+    out = tmp_vsimem / "out.tif"
+
+    kwargs = {
+        "a": [
+            gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[1]),
+            gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[2]),
+            gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[3]),
+        ]
+    }
+
+    check_file(
+        gdal_calc.Calc(calc="numpy.max(a,axis=0)", outfile=out, quiet=True, **kwargs),
+        13256,
+    )
+
+
+def test_gdal_calc_py_sum_overflow(tmp_vsimem, stefan_full_rgba):
     # for summing 3 bytes we'll use GDT_UInt16
+    out = tmp_vsimem / "out.tif"
+
+    gdal_dt = gdal.GDT_UInt16
+
+    # sum with overflow
+
+    kwargs = {
+        "a": gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[1]),
+        "b": gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[2]),
+        "c": gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[3]),
+    }
+
+    check_file(
+        gdal_calc.Calc(calc="a+b+c", type=gdal_dt, outfile=out, quiet=True, **kwargs),
+        12261,
+    )
+
+
+def test_gdal_calc_py_numpy_sum(tmp_vsimem, stefan_full_rgba):
+    # sum with numpy function, no overflow
+    out = tmp_vsimem / "out.tif"
+
     gdal_dt = gdal.GDT_UInt16
     np_dt = GDALTypeCodeToNumericTypeCode(gdal_dt)
 
-    # sum with overflow
-    checksum = 12261
-    kwargs = copy(common_kwargs)
-    kwargs.update(inputs1)
-    check_file(
-        gdal_calc.Calc(calc="a+b+c", type=gdal_dt, outfile=outfile[i], **kwargs),
-        checksum,
-        i,
-    )
-    i += 1
+    kwargs = {
+        "a": [
+            gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[1]),
+            gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[2]),
+            gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[3]),
+        ]
+    }
 
-    # sum with numpy function, no overflow
-    checksum = 12789
-    kwargs = copy(common_kwargs)
-    kwargs.update(inputs2)
     check_file(
         gdal_calc.Calc(
             calc="numpy.sum(a,axis=0,dtype=np_dt)",
             type=gdal_dt,
-            outfile=outfile[i],
+            outfile=out,
             user_namespace={"np_dt": np_dt},
+            quiet=True,
             **kwargs,
         ),
-        checksum,
-        i,
+        12789,
     )
-    i += 1
-    # sum with my custom numpy function
-    kwargs = copy(common_kwargs)
-    kwargs.update(inputs2)
+
+
+def test_gdal_calc_py_user_namespace_1(tmp_vsimem, stefan_full_rgba):
+
+    out = tmp_vsimem / "out.tif"
+
+    kwargs = {
+        "a": [
+            gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[1]),
+            gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[2]),
+            gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[3]),
+        ]
+    }
+
+    def my_max(a):
+        """max using numpy"""
+        concatenate = np.stack(a)
+        ret = concatenate.max(axis=0)
+        return ret
+
+    check_file(
+        gdal_calc.Calc(
+            calc="my_neat_max(a)",
+            outfile=out,
+            user_namespace={"my_neat_max": my_max},
+            quiet=True,
+            **kwargs,
+        ),
+        13256,
+    )
+
+
+def test_gdal_calc_py_user_namespace_2(tmp_vsimem, stefan_full_rgba):
+    out = tmp_vsimem / "out.tif"
+
+    gdal_dt = gdal.GDT_UInt16
+
+    kwargs = {
+        "a": [
+            gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[1]),
+            gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[2]),
+            gdal.Translate("", stefan_full_rgba, format="MEM", bandList=[3]),
+        ]
+    }
+
+    def my_sum(a, gdal_dt=None):
+        """sum using numpy"""
+        np_dt = GDALTypeCodeToNumericTypeCode(gdal_dt)
+        concatenate = np.stack(a)
+        ret = concatenate.sum(axis=0, dtype=np_dt)
+        return ret
+
     check_file(
         gdal_calc.Calc(
             calc="my_neat_sum(a, out_dt)",
             type=gdal_dt,
-            outfile=outfile[i],
+            outfile=out,
             user_namespace={"my_neat_sum": my_sum, "out_dt": gdal_dt},
+            quiet=True,
             **kwargs,
         ),
-        checksum,
-        i,
+        12789,
     )
-    i += 1
 
 
 def test_gdal_calc_py_10(script_path, tmp_path, stefan_full_rgba):
