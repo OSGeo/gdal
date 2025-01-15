@@ -1161,6 +1161,36 @@ def test_warp_weighted_average():
 
 
 ###############################################################################
+# test weighted mode
+
+
+@pytest.mark.parametrize(
+    "dtype", (gdal.GDT_Int16, gdal.GDT_Int32), ids=gdal.GetDataTypeName
+)
+def test_warp_weighted_mode(dtype):
+
+    np = pytest.importorskip("numpy")
+
+    with gdal.GetDriverByName("MEM").Create("", 3, 3, eType=dtype) as src_ds:
+        src_ds.SetGeoTransform([0, 1, 0, 3, 0, -1])
+        src_ds.WriteArray(np.array([[1, 1, 1], [-1, -1, -1], [3, 3, 3]]))
+
+        dst_ds = gdal.Warp(
+            "",
+            src_ds,
+            format="MEM",
+            resampleAlg="mode",
+            width=1,
+            height=1,
+            outputBounds=(0.5, 0.5, 2.5, 2.5),
+        )
+
+    result = dst_ds.ReadAsArray()[0, 0]
+
+    assert result == -1
+
+
+###############################################################################
 # test weighted average, with src offset (fix for #2665)
 
 
