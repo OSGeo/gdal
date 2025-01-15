@@ -647,3 +647,56 @@ def test_gdal_calc_py_multiple_inputs_same_alpha(script_path, tmp_path):
     ds = None
 
     assert cs == cs_ref
+
+
+def test_gdal_calc_py_extent(tmp_vsimem):
+
+    input1 = tmp_vsimem / "in1.tif"
+    input2 = tmp_vsimem / "in2.tif"
+    out = tmp_vsimem / "out.tif"
+
+    # input1: (0, 0) to (3, 3)
+    with gdal.GetDriverByName("GTiff").Create(input1, 3, 3, 1) as ds:
+        ds.GetRasterBand(1).Fill(5)
+        ds.SetGeoTransform((0, 1, 0, 3, 0, -1))
+
+    # input2: (1, 1) to (4, 4)
+    with gdal.GetDriverByName("GTiff").Create(input2, 3, 3, 1) as ds:
+        ds.GetRasterBand(1).Fill(3)
+        ds.SetGeoTransform((1, 1, 0, 4, 0, -1))
+
+    # default: ignore the geotransforms
+    out_ds = gdal_calc.Calc(a=input1, b=input2, calc="a+b", outfile=out)
+    assert out_ds.RasterXSize == 3
+    assert out_ds.RasterYSize == 3
+    assert out_ds.GetGeoTransform() == (1, 1, 0, 4, 0, -1)  # why?
+    assert np.all(out_ds.ReadAsArray() == 8)
+
+    # extent=fail
+    with pytest.raises(Exception, match="incompatible"):
+        out_ds = gdal_calc.Calc(
+            a=input1, b=input2, calc="a+b", outfile=out, extent="fail"
+        )
+
+    # extent=union
+    out_ds = gdal_calc.Calc(a=input1, b=input2, calc="a+b", outfile=out, extent="union")
+    assert out_ds.RasterXSize == 4
+    assert out_ds.RasterYSize == 4
+    assert out_ds.GetGeoTransform() == (0, 1, 0, 4, 0, -1)
+
+    # default value is zero where an input is missing
+    np.testing.assert_array_equal(
+        out_ds.ReadAsArray(),
+        np.array(
+            [[0, 3, 3, 3], [5, 8, 8, 3], [5, 8, 8, 3], [5, 5, 5, 0]], dtype=np.uint8
+        ),
+    )
+
+    # extent=intersect
+    out_ds = gdal_calc.Calc(
+        a=input1, b=input2, calc="a+b", outfile=out, extent="intersect"
+    )
+    assert out_ds.RasterXSize == 2
+    assert out_ds.RasterYSize == 2
+    assert out_ds.GetGeoTransform() == (1, 1, 0, 3, 0, -1)
+    assert np.all(out_ds.ReadAsArray() == 8)
