@@ -581,12 +581,14 @@ class LayerTranslator
     std::unique_ptr<OGRGeometry> m_poClipSrcReprojectedToSrcSRS{};
     const OGRSpatialReference *m_poClipSrcReprojectedToSrcSRS_SRS = nullptr;
     OGREnvelope m_oClipSrcEnv{};
+    bool m_bClipSrcIsRectangle = false;
 
     OGRGeometry *m_poClipDstOri = nullptr;
     bool m_bWarnedClipDstSRS = false;
     std::unique_ptr<OGRGeometry> m_poClipDstReprojectedToDstSRS{};
     const OGRSpatialReference *m_poClipDstReprojectedToDstSRS_SRS = nullptr;
     OGREnvelope m_oClipDstEnv{};
+    bool m_bClipDstIsRectangle = false;
 
     bool m_bExplodeCollections = false;
     bool m_bNativeData = false;
@@ -600,10 +602,15 @@ class LayerTranslator
                    const GDALVectorTranslateOptions *psOptions);
 
   private:
-    std::pair<const OGRGeometry *, const OGREnvelope *>
-    GetDstClipGeom(const OGRSpatialReference *poGeomSRS);
-    std::pair<const OGRGeometry *, const OGREnvelope *>
-    GetSrcClipGeom(const OGRSpatialReference *poGeomSRS);
+    struct ClipGeomDesc
+    {
+        const OGRGeometry *poGeom = nullptr;
+        const OGREnvelope *poEnv = nullptr;
+        bool bGeomIsRectangle = false;
+    };
+
+    ClipGeomDesc GetDstClipGeom(const OGRSpatialReference *poGeomSRS);
+    ClipGeomDesc GetSrcClipGeom(const OGRSpatialReference *poGeomSRS);
 };
 
 static OGRLayer *GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
@@ -6317,16 +6324,17 @@ bool LayerTranslator::Translate(
                     if (poStolenGeometry->IsEmpty())
                         goto end_loop;
 
-                    const auto [poClipGeom, poClipGeomEnvelope] =
+                    const auto clipGeomDesc =
                         GetSrcClipGeom(poStolenGeometry->getSpatialReference());
 
-                    if (poClipGeom && poClipGeomEnvelope)
+                    if (clipGeomDesc.poGeom && clipGeomDesc.poEnv)
                     {
                         OGREnvelope oEnv;
                         poStolenGeometry->getEnvelope(&oEnv);
-                        if (!poClipGeomEnvelope->Contains(oEnv) &&
-                            !(poClipGeomEnvelope->Intersects(oEnv) &&
-                              poClipGeom->Intersects(poStolenGeometry.get())))
+                        if (!clipGeomDesc.poEnv->Contains(oEnv) &&
+                            !(clipGeomDesc.poEnv->Intersects(oEnv) &&
+                              clipGeomDesc.poGeom->Intersects(
+                                  poStolenGeometry.get())))
                         {
                             goto end_loop;
                         }
@@ -6568,22 +6576,23 @@ bool LayerTranslator::Translate(
                     if (poDstGeometry->IsEmpty())
                         goto end_loop;
 
-                    const auto [poClipGeom, poClipGeomEnvelope] =
+                    const auto clipGeomDesc =
                         GetSrcClipGeom(poDstGeometry->getSpatialReference());
 
-                    if (!(poClipGeom && poClipGeomEnvelope))
+                    if (!(clipGeomDesc.poGeom && clipGeomDesc.poEnv))
                         goto end_loop;
 
                     OGREnvelope oDstEnv;
                     poDstGeometry->getEnvelope(&oDstEnv);
 
-                    if (!poClipGeomEnvelope->Contains(oDstEnv))
+                    if (!(clipGeomDesc.bGeomIsRectangle &&
+                          clipGeomDesc.poEnv->Contains(oDstEnv)))
                     {
                         std::unique_ptr<OGRGeometry> poClipped;
-                        if (poClipGeomEnvelope->Intersects(oDstEnv))
+                        if (clipGeomDesc.poEnv->Intersects(oDstEnv))
                         {
-                            poClipped.reset(
-                                poClipGeom->Intersection(poDstGeometry.get()));
+                            poClipped.reset(clipGeomDesc.poGeom->Intersection(
+                                poDstGeometry.get()));
                         }
                         if (poClipped == nullptr || poClipped->IsEmpty())
                         {
@@ -6750,9 +6759,9 @@ bool LayerTranslator::Translate(
                         if (poDstGeometry->IsEmpty())
                             goto end_loop;
 
-                        auto [poClipGeom, poClipGeomEnvelope] = GetDstClipGeom(
+                        const auto clipGeomDesc = GetDstClipGeom(
                             poDstGeometry->getSpatialReference());
-                        if (!poClipGeom || !poClipGeomEnvelope)
+                        if (!clipGeomDesc.poGeom || !clipGeomDesc.poEnv)
                         {
                             goto end_loop;
                         }
@@ -6760,13 +6769,15 @@ bool LayerTranslator::Translate(
                         OGREnvelope oDstEnv;
                         poDstGeometry->getEnvelope(&oDstEnv);
 
-                        if (!poClipGeomEnvelope->Contains(oDstEnv))
+                        if (!(clipGeomDesc.bGeomIsRectangle &&
+                              clipGeomDesc.poEnv->Contains(oDstEnv)))
                         {
                             std::unique_ptr<OGRGeometry> poClipped;
-                            if (poClipGeomEnvelope->Intersects(oDstEnv))
+                            if (clipGeomDesc.poEnv->Intersects(oDstEnv))
                             {
-                                poClipped.reset(poClipGeom->Intersection(
-                                    poDstGeometry.get()));
+                                poClipped.reset(
+                                    clipGeomDesc.poGeom->Intersection(
+                                        poDstGeometry.get()));
                             }
 
                             if (poClipped == nullptr || poClipped->IsEmpty())
@@ -6975,7 +6986,7 @@ bool LayerTranslator::Translate(
  *                  expressed.
  * @return the destination clip geometry and its envelope, or (nullptr, nullptr)
  */
-std::pair<const OGRGeometry *, const OGREnvelope *>
+LayerTranslator::ClipGeomDesc
 LayerTranslator::GetDstClipGeom(const OGRSpatialReference *poGeomSRS)
 {
     if (m_poClipDstReprojectedToDstSRS_SRS != poGeomSRS)
@@ -6988,7 +6999,7 @@ LayerTranslator::GetDstClipGeom(const OGRSpatialReference *poGeomSRS)
             if (m_poClipDstReprojectedToDstSRS->transformTo(poGeomSRS) !=
                 OGRERR_NONE)
             {
-                return std::make_pair(nullptr, nullptr);
+                return ClipGeomDesc();
             }
             m_poClipDstReprojectedToDstSRS_SRS = poGeomSRS;
         }
@@ -7014,8 +7025,13 @@ LayerTranslator::GetDstClipGeom(const OGRSpatialReference *poGeomSRS)
     if (poGeom && !m_oClipDstEnv.IsInit())
     {
         poGeom->getEnvelope(&m_oClipDstEnv);
+        m_bClipDstIsRectangle = poGeom->IsRectangle();
     }
-    return std::make_pair(poGeom, poGeom ? &m_oClipDstEnv : nullptr);
+    ClipGeomDesc ret;
+    ret.poGeom = poGeom;
+    ret.poEnv = poGeom ? &m_oClipDstEnv : nullptr;
+    ret.bGeomIsRectangle = m_bClipDstIsRectangle;
+    return ret;
 }
 
 /************************************************************************/
@@ -7028,7 +7044,7 @@ LayerTranslator::GetDstClipGeom(const OGRSpatialReference *poGeomSRS)
  *                  expressed.
  * @return the source clip geometry and its envelope, or (nullptr, nullptr)
  */
-std::pair<const OGRGeometry *, const OGREnvelope *>
+LayerTranslator::ClipGeomDesc
 LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
 {
     if (m_poClipSrcReprojectedToSrcSRS_SRS != poGeomSRS)
@@ -7041,7 +7057,7 @@ LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
             if (m_poClipSrcReprojectedToSrcSRS->transformTo(poGeomSRS) !=
                 OGRERR_NONE)
             {
-                return std::make_pair(nullptr, nullptr);
+                return ClipGeomDesc();
             }
             m_poClipSrcReprojectedToSrcSRS_SRS = poGeomSRS;
         }
@@ -7066,8 +7082,13 @@ LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
     if (poGeom && !m_oClipSrcEnv.IsInit())
     {
         poGeom->getEnvelope(&m_oClipSrcEnv);
+        m_bClipSrcIsRectangle = poGeom->IsRectangle();
     }
-    return std::make_pair(poGeom, poGeom ? &m_oClipSrcEnv : nullptr);
+    ClipGeomDesc ret;
+    ret.poGeom = poGeom;
+    ret.poEnv = poGeom ? &m_oClipSrcEnv : nullptr;
+    ret.bGeomIsRectangle = m_bClipDstIsRectangle;
+    return ret;
 }
 
 /************************************************************************/
