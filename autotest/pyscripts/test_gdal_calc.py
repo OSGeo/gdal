@@ -807,3 +807,35 @@ def test_gdal_calc_py_projection_check(tmp_vsimem):
             quiet=True,
             projectionCheck=True,
         )
+
+
+def test_gdal_calc_py_mem_output(tmp_vsimem):
+
+    input = tmp_vsimem / "in.tif"
+
+    with gdal.GetDriverByName("GTiff").Create(input, 3, 3, 1) as ds:
+        ds.GetRasterBand(1).Fill(5)
+
+    out_ds = gdal_calc.Calc(A=input, calc="A+1", format="MEM", quiet=True)
+    assert np.all(out_ds.ReadAsArray() == 6)
+
+
+def test_gdal_calc_py_hidenodata(tmp_vsimem):
+
+    input = tmp_vsimem / "in.tif"
+    data = np.arange(9).reshape(3, 3)
+
+    with gdal.GetDriverByName("GTiff").Create(input, 3, 3, 1) as ds:
+        ds.GetRasterBand(1).WriteArray(data)
+        ds.GetRasterBand(1).SetNoDataValue(7)
+
+    out_ds = gdal_calc.Calc(A=input, calc="A+1", format="MEM", quiet=True)
+    out_arr = out_ds.GetRasterBand(1).ReadAsMaskedArray()
+    np.testing.assert_array_equal(out_arr.mask, data == 7)
+
+    out_ds = gdal_calc.Calc(
+        A=input, calc="A+1", format="MEM", hideNoData=True, quiet=True
+    )
+    out_arr = out_ds.GetRasterBand(1).ReadAsMaskedArray()
+    assert not np.any(out_arr.mask)
+    np.testing.assert_array_equal(out_arr, data + 1)
