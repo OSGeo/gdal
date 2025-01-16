@@ -1284,6 +1284,10 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * EXCLUDED_VALUES_PCT_THRESHOLD.
  * Only taken into account by Average currently.</li>
  *
+ * <li>MODE_TIES=FIRST/MIN/MAX: (GDAL >= 3.11) Strategy to use when breaking
+ * ties with MODE resampling. By default, the first value encountered will be used.
+ * Alternatively, the minimum or maximum value can be selected.</li>
+ *
  * </ul>
  */
 
@@ -1305,6 +1309,7 @@ GDALWarpOptions *CPL_STDCALL GDALCreateWarpOptions()
     psOptions->eResampleAlg = GRA_NearestNeighbour;
     psOptions->pfnProgress = GDALDummyProgress;
     psOptions->eWorkingDataType = GDT_Unknown;
+    psOptions->eTieStrategy = GWKTS_First;
 
     return psOptions;
 }
