@@ -889,8 +889,12 @@ bool GDALAlgorithm::ParseArgument(
         case GAAT_STRING:
         {
             const auto &choices = arg->GetChoices();
-            if (!choices.empty() && std::find(choices.begin(), choices.end(),
-                                              value) == choices.end())
+            const auto &hiddenChoices = arg->GetHiddenChoices();
+            if (!choices.empty() &&
+                std::find(choices.begin(), choices.end(), value) ==
+                    choices.end() &&
+                std::find(hiddenChoices.begin(), hiddenChoices.end(), value) ==
+                    hiddenChoices.end())
             {
                 std::string expected;
                 for (const auto &choice : choices)
@@ -966,11 +970,14 @@ bool GDALAlgorithm::ParseArgument(
             auto &valueVector =
                 std::get<std::vector<std::string>>(inConstructionValues[arg]);
             const auto &choices = arg->GetChoices();
+            const auto &hiddenChoices = arg->GetHiddenChoices();
             for (const char *v : aosTokens)
             {
                 if (!choices.empty() &&
                     std::find(choices.begin(), choices.end(), v) ==
-                        choices.end())
+                        choices.end() &&
+                    std::find(hiddenChoices.begin(), hiddenChoices.end(),
+                              value) == hiddenChoices.end())
                 {
                     std::string expected;
                     for (const auto &choice : choices)
@@ -1504,6 +1511,13 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
             flags |= GDAL_OF_VERBOSE_ERROR;
         if ((arg == outputArg || !outputArg) && update)
             flags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
+
+        const auto readOnlyArg = algForOutput->GetArg(GDAL_ARG_NAME_READ_ONLY);
+        const bool readOnly =
+            (readOnlyArg && readOnlyArg->GetType() == GAAT_BOOLEAN &&
+             readOnlyArg->Get<bool>());
+        if (readOnly)
+            flags &= ~GDAL_OF_UPDATE;
 
         CPLStringList aosOpenOptions;
         CPLStringList aosAllowedDrivers;

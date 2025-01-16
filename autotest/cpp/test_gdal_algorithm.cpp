@@ -1130,7 +1130,9 @@ TEST_F(test_gdal_algorithm, string_choices)
 
         MyAlgorithm()
         {
-            AddArg("val", 0, "", &m_val).SetChoices("foo", "bar");
+            AddArg("val", 0, "", &m_val)
+                .SetChoices("foo", "bar")
+                .SetHiddenChoices("baz");
         }
     };
 
@@ -1140,6 +1142,14 @@ TEST_F(test_gdal_algorithm, string_choices)
 
         EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=foo"}));
         EXPECT_STREQ(alg.m_val.c_str(), "foo");
+    }
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=baz"}));
+        EXPECT_STREQ(alg.m_val.c_str(), "baz");
     }
 
     {

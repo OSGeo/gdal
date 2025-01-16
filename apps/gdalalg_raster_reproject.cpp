@@ -36,9 +36,10 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
         .SetIsCRSArg()
         .AddHiddenAlias("t_srs");
     AddArg("resampling", 'r', _("Resampling method"), &m_resampling)
-        .SetChoices("near", "bilinear", "cubic", "cubicspline", "lanczos",
+        .SetChoices("nearest", "bilinear", "cubic", "cubicspline", "lanczos",
                     "average", "rms", "mode", "min", "max", "med", "q1", "q3",
-                    "sum");
+                    "sum")
+        .SetHiddenChoices("near");
 
     auto &resArg =
         AddArg("resolution", 0,

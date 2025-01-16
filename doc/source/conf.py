@@ -244,6 +244,20 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_overview_add",
+        "gdal-raster-overview-add",
+        "Add overviews to a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_overview_delete",
+        "gdal-raster-overview-delete",
+        "Delete overviews of a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_pipeline",
         "gdal-raster-pipeline",
         "Process a raster dataset",

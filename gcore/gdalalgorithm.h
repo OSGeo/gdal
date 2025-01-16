@@ -300,6 +300,9 @@ constexpr const char *GDAL_ARG_NAME_OUTPUT = "output";
 /** Name of the argument for update. */
 constexpr const char *GDAL_ARG_NAME_UPDATE = "update";
 
+/** Name of the argument for read-only. */
+constexpr const char *GDAL_ARG_NAME_READ_ONLY = "read-only";
+
 /************************************************************************/
 /*                           GDALArgDatasetValue                        */
 /************************************************************************/
@@ -665,6 +668,25 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return *this;
     }
 
+    //! @cond Doxygen_Suppress
+    GDALAlgorithmArgDecl &SetHiddenChoices()
+    {
+        return *this;
+    }
+
+    //! @endcond
+
+    /** Declares the, hidden, allowed values (as strings) for the argument.
+     * Only honored for GAAT_STRING and GAAT_STRING_LIST types.
+     */
+    template <typename T, typename... U>
+    GDALAlgorithmArgDecl &SetHiddenChoices(T &&first, U &&...rest)
+    {
+        m_hiddenChoices.push_back(std::forward<T>(first));
+        SetHiddenChoices(std::forward<U>(rest)...);
+        return *this;
+    }
+
     /** Declare that the argument must not be mentioned in CLI usage.
      * For example, "output-value" for "gdal raster info", which is only
      * meant when the algorithm is used from a non-CLI context.
@@ -806,6 +828,14 @@ class CPL_DLL GDALAlgorithmArgDecl final
     inline const std::vector<std::string> &GetChoices() const
     {
         return m_choices;
+    }
+
+    /** Return the allowed hidden values (as strings) for the argument.
+     * Only honored for GAAT_STRING and GAAT_STRING_LIST types.
+     */
+    inline const std::vector<std::string> &GetHiddenChoices() const
+    {
+        return m_hiddenChoices;
     }
 
     /** Return whether the argument is required. Defaults to false.
@@ -1002,6 +1032,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     std::vector<std::string> m_aliases{};
     std::vector<std::string> m_hiddenAliases{};
     std::vector<std::string> m_choices{};
+    std::vector<std::string> m_hiddenChoices{};
     std::variant<bool, std::string, int, double, std::vector<std::string>,
                  std::vector<int>, std::vector<double>>
         m_defaultValue{};
@@ -1125,6 +1156,12 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     inline const std::vector<std::string> &GetChoices() const
     {
         return m_decl.GetChoices();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::GetHiddenChoices() */
+    inline const std::vector<std::string> &GetHiddenChoices() const
+    {
+        return m_decl.GetHiddenChoices();
     }
 
     /** Return auto completion choices, if a auto completion function has been
@@ -1534,6 +1571,15 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     GDALInConstructionAlgorithmArg &SetChoices(T &&first, U &&...rest)
     {
         m_decl.SetChoices(std::forward<T>(first), std::forward<U>(rest)...);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetHiddenChoices() */
+    template <typename T, typename... U>
+    GDALInConstructionAlgorithmArg &SetHiddenChoices(T &&first, U &&...rest)
+    {
+        m_decl.SetHiddenChoices(std::forward<T>(first),
+                                std::forward<U>(rest)...);
         return *this;
     }
 
