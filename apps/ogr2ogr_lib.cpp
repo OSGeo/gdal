@@ -4048,6 +4048,12 @@ static void DoFieldTypeConversion(GDALDataset *poDstDS,
             }
             oFieldDefn.SetType(OFTReal);
         }
+        else if (oFieldDefn.GetType() == OFTDateTime && poDstDriver &&
+                 EQUAL(poDstDriver->GetDescription(), "ESRI Shapefile"))
+        {
+            // Just be silent. The shapefile driver will itself emit a
+            // warning mentionning it converts DateTime to String.
+        }
         else if (!bQuiet)
         {
             CPLError(
@@ -6518,7 +6524,10 @@ bool LayerTranslator::Translate(
                 }
 
                 poDstFeature->Reset();
-                if (poDstFeature->SetFrom(poFeature.get(), panMap, TRUE) !=
+
+                if (poDstFeature->SetFrom(
+                        poFeature.get(), panMap, /* bForgiving = */ TRUE,
+                        /* bUseISO8601ForDateTimeAsString = */ true) !=
                     OGRERR_NONE)
                 {
                     if (psOptions->nGroupTransactions)
