@@ -219,7 +219,7 @@ Examples
 
     This would create a single polygonal contour between 10 and 20 meters from the DEM data in :file:`test.asc`
     and produce a GeoJSON output with the contour min and max elevations in the ``min`` and ``max`` attributes.
-.
+
 
     If the minimum and maximum values from the raster are desired, the special values `MIN`` and `MAX``
     (case insensitive) can be used:
@@ -239,7 +239,7 @@ Examples
 
     This would create three polygonal contours from the DEM data in :file:`test.asc` and produce a GeoJSON output
     with the contour min and max elevations in the ``min`` and ``max`` attributes, the values of these fields will
-    be: (4.0, 10.0), (10, 20.0) and (20, 36.0).
+    be: (4.0, 10.0), (10, 20.0) and (20.0, 36.0).
 
 .. example::
 
@@ -258,8 +258,9 @@ Examples
 
         $ gdal_contour test.asc -f GeoJSON /vsistdout/ -i 10 -fl 15 -p -amin min -amax max
 
-    This would create 10-meter polygonal contours from the DEM data in :file:`test.asc` and produce a GeoJSON output
-    with the contour min and max elevations in the ``min`` and ``max`` attributes, the values of these fields will
-    be: (4.0, 10.0), (10, 15.0), (15, 20.0)  and (20, 36.0).
+    Creates contours at regular 10 meter intervals and adds extra contour for a fixed 15 m level.
+    Finally turns areas between the contours into polygons  with the contour min and max elevations
+    in the ``min`` and ``max`` attributes, the values of these fields will be:
+    (4.0, 10.0), (10, 15.0), (15, 20.0), (20.0, 30.0)  and (30.0, 36.0).
 
 
