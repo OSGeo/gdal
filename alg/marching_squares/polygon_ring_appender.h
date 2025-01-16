@@ -137,10 +137,14 @@ template <typename PolygonWriter> class PolygonRingAppender
 
     void addLine(double level, LineString &ls, bool)
     {
+        auto &levelRings = rings_[level];
+        if (ls.empty())
+        {
+            return;
+        }
         // Create a new ring from the LineString
         Ring newRing;
         newRing.points.swap(ls);
-        auto &levelRings = rings_[level];
         // This queue holds the rings to be checked
         std::deque<Ring *> queue;
         std::transform(levelRings.begin(), levelRings.end(),

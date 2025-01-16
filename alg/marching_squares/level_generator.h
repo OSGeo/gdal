@@ -118,6 +118,11 @@ class FixedLevelRangeIterator
         return minLevel_;
     }
 
+    size_t levelsCount() const
+    {
+        return count_;
+    }
+
   private:
     const double *levels_;
     size_t count_;

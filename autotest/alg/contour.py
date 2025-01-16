@@ -211,6 +211,78 @@ def test_contour_real_world_case():
 
 
 # Test with -p option (polygonize)
+@pytest.mark.parametrize(
+    "fixed_levels, expected_min, expected_max",
+    [
+        ("10,20", [10], [20]),
+        ("0,20", [0], [20]),
+        ("20,1000", [20], [1000]),
+        ("20", [], []),  # Nothing to do here!
+        ("min,20", [1], [20]),
+        ("min,max", [1], [25]),
+        ("min,25", [1], [25]),
+        ("min,10,max", [1, 10], [10, 25]),
+    ],
+)
+def test_contour_polygonize(
+    input_tif, tmp_path, fixed_levels, expected_min, expected_max
+):
+    """This tests the min/max values of the polygonize option in simple cases
+    without testing the geometry itself."""
+
+    output_shp = str(tmp_path / "contour_polygonize.shp")
+    ogr_ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(output_shp)
+    ogr_lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbMultiPolygon)
+    field_defn = ogr.FieldDefn("ID", ogr.OFTInteger)
+    ogr_lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn("elevMin", ogr.OFTReal)
+    ogr_lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn("elevMax", ogr.OFTReal)
+    ogr_lyr.CreateField(field_defn)
+
+    ds = gdal.Open(input_tif)
+    gdal.ContourGenerateEx(
+        ds.GetRasterBand(1),
+        ogr_lyr,
+        options=[
+            "FIXED_LEVELS=" + fixed_levels,
+            "ID_FIELD=0",
+            "ELEV_FIELD_MIN=1",
+            "ELEV_FIELD_MAX=2",
+            "POLYGONIZE=TRUE",
+        ],
+    )
+    ds = None
+
+    with ogr_ds.ExecuteSQL(
+        "select * from contour_polygonize order by elevMin asc"
+    ) as lyr:
+
+        # Get the values from the layer
+        values = [[], [], []]
+        for feat in lyr:
+            values[0].append(feat.GetField("elevMin"))
+            values[1].append(feat.GetField("elevMax"))
+            values[2].append(feat.GetGeometryRef().GetEnvelope())
+
+        assert len(values[0]) == len(expected_min), (
+            values[0],
+            values[1],
+            values[2],
+            expected_min,
+            expected_max,
+        )
+
+        i = 0
+        for valMin, valMax in zip(values[0], values[1]):
+
+            assert valMin == pytest.approx(
+                expected_min[i], abs=precision / 2 * 1.001
+            ), i
+            assert valMax == pytest.approx(
+                expected_max[i], abs=precision / 2 * 1.001
+            ), i
+            i = i + 1
 
 
 @pytest.mark.parametrize(
@@ -220,13 +292,12 @@ def test_contour_real_world_case():
         ("-10,0,10,20,25,30", [0, 10, 20, 25], [10, 20, 25, 30]),
         ("0,10,20,25,30", [0, 10, 20, 25], [10, 20, 25, 30]),
         ("1,10,20,25,30", [1, 10, 20, 25], [10, 20, 25, 30]),
-        ("10,20,25,30", [1, 10, 20, 25], [10, 20, 25, 30]),
-        ("10,20,24", [1, 10, 20, 24], [10, 20, 24, 25]),
-        ("10,20,25", [1, 10, 20, 25], [10, 20, 25, 25]),
-        ("0,10,20", [0, 10, 20], [10, 20, 25]),
+        ("0,10,20,24,25", [0, 10, 20, 24], [10, 20, 24, 25]),
+        ("0,10,20,25", [0, 10, 20], [10, 20, 25]),
     ],
 )
 def test_contour_3(input_tif, tmp_path, fixed_levels, expected_min, expected_max):
+    """This tests the min/max values of the polygonize option and the geometry itself."""
 
     output_shp = str(tmp_path / "contour.shp")
 
@@ -273,6 +344,7 @@ def test_contour_3(input_tif, tmp_path, fixed_levels, expected_min, expected_max
 
         i = 0
         for feat in lyr:
+
             assert feat.GetField("elevMin") == pytest.approx(
                 expected_min[i], abs=precision / 2 * 1.001
             ), i
@@ -470,3 +542,68 @@ def test_contour_constant_raster_value(tmp_vsimem):
 
     f = lyr.GetNextFeature()
     assert f is None
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/11564
+
+
+@pytest.mark.parametrize(
+    "options, polygonize, expected_elev_values",
+    [
+        (["LEVEL_INTERVAL=10"], "TRUE", [(4, 10), (10, 20), (20, 30), (30, 36)]),
+        (
+            ["FIXED_LEVELS=15", "LEVEL_INTERVAL=10"],
+            "TRUE",
+            [(4, 10), (10, 15), (15, 20), (20, 30), (30, 36)],
+        ),
+    ],
+)
+@pytest.mark.require_driver("AAIGRID")
+def test_contour_lowest_fixed_value(
+    tmp_vsimem, options, polygonize, expected_elev_values
+):
+
+    content = """ncols        2
+nrows        2
+xllcorner    0
+yllcorner    0
+cellsize     1
+4 15
+25 36"""
+
+    srcfilename = str(tmp_vsimem / "test.asc")
+
+    def _create_output_ds():
+        ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+        lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbLineString)
+        lyr.CreateField(ogr.FieldDefn("ID", ogr.OFTInteger))
+        lyr.CreateField(ogr.FieldDefn("ELEV_MIN", ogr.OFTReal))
+        lyr.CreateField(ogr.FieldDefn("ELEV_MAX", ogr.OFTReal))
+        return ogr_ds, lyr
+
+    with gdaltest.tempfile(srcfilename, content):
+
+        src_ds = gdal.Open(srcfilename)
+        ogr_ds, lyr = _create_output_ds()
+
+        options.extend(
+            [
+                "ID_FIELD=0",
+                "ELEV_FIELD_MIN=1",
+                "ELEV_FIELD_MAX=2",
+                f"POLYGONIZE={polygonize}",
+            ]
+        )
+
+        assert (
+            gdal.ContourGenerateEx(src_ds.GetRasterBand(1), lyr, options=options)
+            == gdal.CE_None
+        )
+
+        # Get all elev values
+        elev_values = []
+        for f in lyr:
+            elev_values.append((f["ELEV_MIN"], f["ELEV_MAX"]))
+
+        assert elev_values == expected_elev_values, (elev_values, expected_elev_values)
