@@ -49,6 +49,21 @@ Potential steps are:
       --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
       --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
 
+* clip [OPTIONS]
+
+.. code-block::
+
+    Clip a raster dataset.
+
+    Options:
+      --bbox <BBOX>                                        Clipping bounding box as xmin,ymin,xmax,ymax
+                                                           Mutually exclusive with --like
+      --bbox-crs <BBOX-CRS>                                CRS of clipping bounding box
+      --like <DATASET>                                     Raster dataset to use as a template for bounds
+                                                           Mutually exclusive with --bbox
+
+Details for options can be found in :ref:`gdal_raster_clip_subcommand`.
+
 * edit [OPTIONS]
 
 .. code-block::

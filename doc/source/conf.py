@@ -230,6 +230,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_clip",
+        "gdal-raster-clip",
+        "Clip a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_convert",
         "gdal-raster-convert",
         "Convert a raster dataset",
