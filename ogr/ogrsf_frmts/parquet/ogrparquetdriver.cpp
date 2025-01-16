@@ -447,6 +447,11 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
         std::unique_ptr<parquet::arrow::FileReader> arrow_reader;
         auto poMemoryPool = std::shared_ptr<arrow::MemoryPool>(
             arrow::MemoryPool::CreateDefault().release());
+#if ARROW_VERSION_MAJOR >= 19
+        PARQUET_ASSIGN_OR_THROW(
+            arrow_reader,
+            parquet::arrow::OpenFile(std::move(infile), poMemoryPool.get()));
+#else
         auto st = parquet::arrow::OpenFile(std::move(infile),
                                            poMemoryPool.get(), &arrow_reader);
         if (!st.ok())
@@ -455,6 +460,7 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
                      "parquet::arrow::OpenFile() failed");
             return nullptr;
         }
+#endif
 
         auto poDS = std::make_unique<OGRParquetDataset>(poMemoryPool);
         auto poLayer = std::make_unique<OGRParquetLayer>(
