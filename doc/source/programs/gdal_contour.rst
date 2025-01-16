@@ -185,7 +185,7 @@ Examples
 
     This would create 10-meter polygonal contours from the DEM data in :file:`test.asc`
     and produce a GeoJSON output with the contour min and max elevations in the ``min``
-    and ``max`` attributes, not including the minimum and maximum values from the raster.
+    and ``max`` attributes, including the minimum and maximum values from the raster.
 
     .. code-block:: bash
 
