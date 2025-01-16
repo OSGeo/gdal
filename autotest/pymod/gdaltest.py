@@ -2140,20 +2140,4 @@ def error_raised(type, match=""):
 
 @functools.lru_cache()
 def gdal_has_vrt_expression_dialect(dialect):
-    with disable_exceptions(), gdal.quiet_errors():
-        vrt = f"""<VRTDataset rasterXSize="20" rasterYSize="20">
-          <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
-            <PixelFunctionType>expression</PixelFunctionType>
-            <PixelFunctionArguments expression="B1 + 5" dialect="{dialect}"/>
-            <ArraySource>
-                <Array name="test">
-                    <DataType>Float64</DataType>
-                    <Dimension name="Y" size="20"/>
-                    <Dimension name="X" size="20"/>
-                    <ConstantValue>10</ConstantValue>
-                </Array>
-            </ArraySource>
-          </VRTRasterBand>
-        </VRTDataset>"""
-        ds = gdal.Open(vrt)
-        return ds.ReadRaster() is not None
+    return dialect in gdal.GetDriverByName("VRT").GetMetadataItem("ExpressionDialects")
