@@ -63,6 +63,11 @@ else()
 
     add_library(gtest_for_gdal ALIAS gtest)
 
+    # Force CXX_STANDARD=14 otherwise with clang 19.1.6, one gets
+    # In file included from /home/runner/work/gdal/gdal/build-fedora_rawhide/autotest/cpp/googletest-src/googletest/include/gtest/internal/gtest-port.h:295:
+    # /usr/bin/../lib/gcc/x86_64-redhat-linux/15/../../../../include/c++/15/ciso646:46:4: error: "<ciso646> is deprecated in C++17, use <version> to detect implementation-specific macros" [-Werror,-W#warnings]
+    set_target_properties(gtest PROPERTIES CXX_STANDARD 14)
+
 endif()  # USE_EXTERNAL_GTEST
 
 
