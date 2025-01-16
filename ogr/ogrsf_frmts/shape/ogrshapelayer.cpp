@@ -2086,11 +2086,11 @@ OGRErr OGRShapeLayer::CreateField(const OGRFieldDefn *poFieldDefn,
         case OFTDateTime:
             CPLError(
                 CE_Warning, CPLE_NotSupported,
-                "Field %s create as date field, though DateTime requested.",
+                "Field %s created as String field, though DateTime requested.",
                 szNewFieldName);
-            chType = 'D';
-            nWidth = 8;
-            oModFieldDefn.SetType(OFTDate);
+            chType = 'C';
+            nWidth = static_cast<int>(strlen("YYYY-MM-DDTHH:MM:SS.sss+HH:MM"));
+            oModFieldDefn.SetType(OFTString);
             break;
 
         default:
