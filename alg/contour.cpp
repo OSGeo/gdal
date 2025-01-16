@@ -517,7 +517,9 @@ an averaged value from the two nearby points (in this case (12+3+5)/3).
  *   FIXED_LEVELS=f[,f]*
  *
  * The list of fixed contour levels at which contours should be generated.
- * This option has precedence on LEVEL_INTERVAL
+ * This option has precedence on LEVEL_INTERVAL. MIN and MAX can be used
+ * as special values to represent the minimum and maximum values of the
+ * raster.
  *
  *   NODATA=f
  *
