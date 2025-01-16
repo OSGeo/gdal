@@ -80,7 +80,6 @@ Proprietary license / Other
 - `CARTO <http://www.carto.com>`_ A cloud mapping platform to analyze and visualize geospatial data.
 - `CatchmentSIM <https://csse.com.au/index.php/products/catchmentsim>`_  A Windows terrain analysis model for hydrologic applications.
 - `Daylon Leveller <https://www.daylongraphics.com/products/leveller.php>`_ A terrain/heightfield/bumpmap modeler
-- `Eonfusion <http://www.eonfusion.com>`_  Analysis and visualization of time-varying spatial datasets integrated via true data fusion.
 - `ERDAS ER Viewer  <https://hexagon.com/products/other-geospatial-products>`_ Image viewer for very large JPEG 2000 and ECW files.
 - `ESRI ArcGIS Pro <http://www.esri.com>`_  A popular GIS platform.
 - `Eternix Blaze <http://www.eternix.co.il>`_ Advanced geo-spatial visualization application and SDK.
