@@ -80,10 +80,10 @@ jobs:
         path: ./gdal-feedstock/packages/
 
     - name: Deploy to gdal-master Conda channel
-      if: github.ref == 'refs/heads/master'
+      if: github.repository == 'OSGeo/GDAL' && github.ref == 'refs/heads/master'
       shell: bash -l {0}
       env:
         ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
       run: |
-          source ../ci/travis/conda/upload.sh || true
+          source ../ci/travis/conda/upload.sh
       working-directory: ./gdal-feedstock
