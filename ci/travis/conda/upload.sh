@@ -1,20 +1,22 @@
 #!/bin/bash
 
+set -e
 
 if [ -z "${ANACONDA_TOKEN+x}" ]
 then
-    echo "Anaconda token is not set, not uploading"
-    exit 0;
+    echo "Anaconda token is not set!"
+    exit 1
 fi
 
 ls
 pwd
 find .
 
-if [ -z "${ANACONDA_TOKEN}" ]
-then
-    echo "Anaconda token is empty, not uploading"
-    exit 0;
+if [[ -n $(find . -name "*gdal*.conda") ]]; then
+  echo "Found packages to upload"
+else
+  echo "No packages matching *gdal*.conda to upload found"
+  exit 1
 fi
 
 echo "Anaconda token is available, attempting to upload"
