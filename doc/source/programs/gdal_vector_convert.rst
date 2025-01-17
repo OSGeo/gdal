@@ -59,7 +59,7 @@ Standard options
 
 .. include:: gdal_options/of_vector.rst
 
-.. include:: gdal_options/co.rst
+.. include:: gdal_options/co_vector.rst
 
 .. include:: gdal_options/overwrite.rst
 
