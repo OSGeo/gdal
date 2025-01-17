@@ -2716,6 +2716,8 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     /** Create an empty polygon. */
     OGRPolygon() = default;
 
+    OGRPolygon(double x1, double y1, double x2, double y2);
+
     OGRPolygon(const OGRPolygon &other);
     /** Move constructor */
     OGRPolygon(OGRPolygon &&other) = default;

@@ -4628,4 +4628,13 @@ TEST_F(test_ogr, GetDefaultArcStepSize)
     }
 }
 
+TEST_F(test_ogr, OGRPolygon_two_vertex_constructor)
+{
+    OGRPolygon p(1, 2, 3, 4);
+    char *outWKT = nullptr;
+    p.exportToWkt(&outWKT, wkbVariantIso);
+    EXPECT_STREQ(outWKT, "POLYGON ((1 2,1 4,3 4,3 2,1 2))");
+    CPLFree(outWKT);
+}
+
 }  // namespace
