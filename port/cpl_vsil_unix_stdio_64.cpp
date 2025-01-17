@@ -1006,7 +1006,7 @@ bool VSIUnixStdioFilesystemHandler::SupportsSequentialWrite(
     VSIStatBufL sStat;
     if (VSIStatL(pszPath, &sStat) == 0)
         return access(pszPath, W_OK) == 0;
-    return access(CPLGetDirname(pszPath), W_OK) == 0;
+    return access(CPLGetDirnameSafe(pszPath).c_str(), W_OK) == 0;
 }
 
 /************************************************************************/

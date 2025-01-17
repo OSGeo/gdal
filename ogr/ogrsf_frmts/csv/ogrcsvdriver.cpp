@@ -203,13 +203,13 @@ OGRCSVDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     // If the target is not a simple .csv then create it as a directory.
     CPLString osDirName;
 
-    if (EQUAL(CPLGetExtension(pszName), "csv"))
+    if (EQUAL(CPLGetExtensionSafe(pszName).c_str(), "csv"))
     {
-        osDirName = CPLGetPath(pszName);
+        osDirName = CPLGetPathSafe(pszName);
         if (osDirName == "")
             osDirName = ".";
 
-        // HACK: CPLGetPath("/vsimem/foo.csv") = "/vsimem", but this is not
+        // HACK: CPLGetPathSafe("/vsimem/foo.csv") = "/vsimem", but this is not
         // recognized afterwards as a valid directory name.
         if (osDirName == "/vsimem")
             osDirName = "/vsimem/";
@@ -233,7 +233,7 @@ OGRCSVDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     // Force it to open as a datasource.
     auto poDS = std::make_unique<OGRCSVDataSource>();
 
-    if (EQUAL(CPLGetExtension(pszName), "csv"))
+    if (EQUAL(CPLGetExtensionSafe(pszName).c_str(), "csv"))
     {
         poDS->CreateForSingleFile(osDirName, pszName);
     }

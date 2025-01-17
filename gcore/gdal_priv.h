@@ -290,9 +290,9 @@ class CPL_DLL GDALDefaultOverviews
 /** Class for dataset open functions. */
 class CPL_DLL GDALOpenInfo
 {
-    bool bHasGotSiblingFiles;
-    char **papszSiblingFiles;
-    int nHeaderBytesTried;
+    bool bHasGotSiblingFiles = false;
+    char **papszSiblingFiles = nullptr;
+    int nHeaderBytesTried = 0;
 
   public:
     GDALOpenInfo(const char *pszFile, int nOpenFlagsIn,
@@ -300,30 +300,34 @@ class CPL_DLL GDALOpenInfo
     ~GDALOpenInfo(void);
 
     /** Filename */
-    char *pszFilename;
+    char *pszFilename = nullptr;
+
+    /** Result of CPLGetExtension(pszFilename); */
+    std::string osExtension{};
+
     /** Open options */
-    char **papszOpenOptions;
+    char **papszOpenOptions = nullptr;
 
     /** Access flag */
-    GDALAccess eAccess;
+    GDALAccess eAccess = GA_ReadOnly;
     /** Open flags */
-    int nOpenFlags;
+    int nOpenFlags = 0;
 
     /** Whether stat()'ing the file was successful */
-    int bStatOK;
+    bool bStatOK = false;
     /** Whether the file is a directory */
-    int bIsDirectory;
+    bool bIsDirectory = false;
 
     /** Pointer to the file */
-    VSILFILE *fpL;
+    VSILFILE *fpL = nullptr;
 
     /** Number of bytes in pabyHeader */
-    int nHeaderBytes;
+    int nHeaderBytes = 0;
     /** Buffer with first bytes of the file */
-    GByte *pabyHeader;
+    GByte *pabyHeader = nullptr;
 
     /** Allowed drivers (NULL for all) */
-    const char *const *papszAllowedDrivers;
+    const char *const *papszAllowedDrivers = nullptr;
 
     int TryToIngest(int nBytes);
     char **GetSiblingFiles();
@@ -331,6 +335,14 @@ class CPL_DLL GDALOpenInfo
     bool AreSiblingFilesLoaded() const;
 
     bool IsSingleAllowedDriver(const char *pszDriverName) const;
+
+    /** Return whether the extension of the file is equal to pszExt, using
+     * case-insensitive comparison.
+     * @since 3.11 */
+    inline bool IsExtensionEqualToCI(const char *pszExt) const
+    {
+        return EQUAL(osExtension.c_str(), pszExt);
+    }
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALOpenInfo)

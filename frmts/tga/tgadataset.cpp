@@ -158,7 +158,7 @@ int GDALTGADataset::Identify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
 
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "tga"))
+    if (!poOpenInfo->IsExtensionEqualToCI("tga"))
         return FALSE;
     return TRUE;
 }

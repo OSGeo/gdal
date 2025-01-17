@@ -198,9 +198,10 @@ int FGdbLayer::EditIndexesForFIDHack(const char *pszRadixTablename)
 {
     // Fix FIDs in .gdbtablx, .spx and .atx's
 
-    CPLString osGDBTablX = CPLResetExtension(pszRadixTablename, "gdbtablx");
-    CPLString osNewGDBTablX =
-        CPLResetExtension(pszRadixTablename, "gdbtablx.new");
+    const CPLString osGDBTablX =
+        CPLResetExtensionSafe(pszRadixTablename, "gdbtablx");
+    const CPLString osNewGDBTablX =
+        CPLResetExtensionSafe(pszRadixTablename, "gdbtablx.new");
 
     if (!EditGDBTablX(osGDBTablX, osNewGDBTablX))
     {
@@ -210,18 +211,18 @@ int FGdbLayer::EditIndexesForFIDHack(const char *pszRadixTablename)
         return FALSE;
     }
 
-    CPLString osDirectory(CPLGetPath(pszRadixTablename));
+    CPLString osDirectory(CPLGetPathSafe(pszRadixTablename));
     char **papszFiles = VSIReadDir(osDirectory);
-    CPLString osBasename(CPLGetBasename(pszRadixTablename));
+    const CPLString osBasename(CPLGetBasenameSafe(pszRadixTablename));
     int bRet = TRUE;
     for (char **papszIter = papszFiles; papszIter && *papszIter; papszIter++)
     {
         if (strncmp(*papszIter, osBasename.c_str(), osBasename.size()) == 0 &&
-            (EQUAL(CPLGetExtension(*papszIter), "atx") ||
-             EQUAL(CPLGetExtension(*papszIter), "spx")))
+            (EQUAL(CPLGetExtensionSafe(*papszIter).c_str(), "atx") ||
+             EQUAL(CPLGetExtensionSafe(*papszIter).c_str(), "spx")))
         {
-            CPLString osIndex(
-                CPLFormFilename(osDirectory, *papszIter, nullptr));
+            const CPLString osIndex(
+                CPLFormFilenameSafe(osDirectory, *papszIter, nullptr));
             if (!EditATXOrSPX(osIndex))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -4232,15 +4233,15 @@ int FGdbLayer::CreateRealCopy()
     char *apszDrivers[2] = {nullptr};
     apszDrivers[0] = (char *)"OpenFileGDB";
     apszDrivers[1] = nullptr;
-    const char *pszSystemCatalog =
-        CPLFormFilename(m_pDS->GetFSName(), "a00000001.gdbtable", nullptr);
-    GDALDataset *poOpenFileGDBDS = (GDALDataset *)GDALOpenEx(
-        pszSystemCatalog, GDAL_OF_VECTOR, apszDrivers, nullptr, nullptr);
+    const std::string osSystemCatalog =
+        CPLFormFilenameSafe(m_pDS->GetFSName(), "a00000001.gdbtable", nullptr);
+    GDALDataset *poOpenFileGDBDS = GDALDataset::Open(
+        osSystemCatalog.c_str(), GDAL_OF_VECTOR, apszDrivers, nullptr, nullptr);
     if (poOpenFileGDBDS == nullptr || poOpenFileGDBDS->GetLayer(0) == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot open %s with OpenFileGDB driver. Should not happen.",
-                 pszSystemCatalog);
+                 osSystemCatalog.c_str());
         GDALClose(poOpenFileGDBDS);
         return FALSE;
     }
@@ -4277,9 +4278,10 @@ int FGdbLayer::CreateRealCopy()
         if (strncmp(*papszIter, osBasename.c_str(), osBasename.size()) == 0)
         {
             if (CPLCopyFile(
-                    CPLFormFilename(m_pDS->GetFSName(), *papszIter, "tmp"),
-                    CPLFormFilename(m_pDS->GetFSName(), *papszIter, nullptr)) !=
-                0)
+                    CPLFormFilenameSafe(m_pDS->GetFSName(), *papszIter, "tmp")
+                        .c_str(),
+                    CPLFormFilenameSafe(m_pDS->GetFSName(), *papszIter, nullptr)
+                        .c_str()) != 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Cannot copy %s",
                          *papszIter);
@@ -4294,11 +4296,14 @@ int FGdbLayer::CreateRealCopy()
     // Rename the .tmp into normal filenames
     for (size_t i = 0; !bError && i < aoFiles.size(); i++)
     {
-        if (VSIUnlink(CPLFormFilename(m_pDS->GetFSName(), aoFiles[i],
-                                      nullptr)) != 0 ||
+        if (VSIUnlink(
+                CPLFormFilenameSafe(m_pDS->GetFSName(), aoFiles[i], nullptr)
+                    .c_str()) != 0 ||
             VSIRename(
-                CPLFormFilename(m_pDS->GetFSName(), aoFiles[i], "tmp"),
-                CPLFormFilename(m_pDS->GetFSName(), aoFiles[i], nullptr)) != 0)
+                CPLFormFilenameSafe(m_pDS->GetFSName(), aoFiles[i], "tmp")
+                    .c_str(),
+                CPLFormFilenameSafe(m_pDS->GetFSName(), aoFiles[i], nullptr)
+                    .c_str()) != 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot rename %s.tmp",
                      aoFiles[i].c_str());

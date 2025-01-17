@@ -859,9 +859,11 @@ bool FileGDBTable::DeleteField(int iField)
 
                 if (iField != m_iObjectIdField)
                 {
-                    VSIUnlink(CPLResetExtension(
-                        m_osFilename.c_str(),
-                        (m_apoIndexes[i]->GetIndexName() + ".atx").c_str()));
+                    VSIUnlink(
+                        CPLResetExtensionSafe(
+                            m_osFilename.c_str(),
+                            (m_apoIndexes[i]->GetIndexName() + ".atx").c_str())
+                            .c_str());
                 }
 
                 m_apoIndexes.erase(m_apoIndexes.begin() + i);

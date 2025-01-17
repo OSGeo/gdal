@@ -337,7 +337,8 @@ char **AIGDataset::GetFileList()
 
         papszFileList = CSLAddString(
             papszFileList,
-            CPLFormFilename(GetDescription(), papszCoverFiles[i], nullptr));
+            CPLFormFilenameSafe(GetDescription(), papszCoverFiles[i], nullptr)
+                .c_str());
     }
     CSLDestroy(papszCoverFiles);
 
@@ -533,7 +534,7 @@ GDALDataset *AIGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (osCoverName.size() > 4 &&
         EQUAL(osCoverName.c_str() + osCoverName.size() - 4, ".adf"))
     {
-        osCoverName = CPLGetDirname(poOpenInfo->pszFilename);
+        osCoverName = CPLGetDirnameSafe(poOpenInfo->pszFilename);
         if (osCoverName == "")
             osCoverName = ".";
     }
@@ -653,18 +654,18 @@ GDALDataset *AIGDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     char **papszFiles = VSIReadDir(psInfo->pszCoverName);
     CPLString osClrFilename;
-    CPLString osCleanPath = CPLCleanTrailingSlash(psInfo->pszCoverName);
+    CPLString osCleanPath = CPLCleanTrailingSlashSafe(psInfo->pszCoverName);
 
     // first check for any .clr in coverage dir.
     for (int iFile = 0; papszFiles != nullptr && papszFiles[iFile] != nullptr;
          iFile++)
     {
-        if (!EQUAL(CPLGetExtension(papszFiles[iFile]), "clr") &&
-            !EQUAL(CPLGetExtension(papszFiles[iFile]), "CLR"))
+        const std::string osExt = CPLGetExtensionSafe(papszFiles[iFile]);
+        if (!EQUAL(osExt.c_str(), "clr") && !EQUAL(osExt.c_str(), "CLR"))
             continue;
 
-        osClrFilename =
-            CPLFormFilename(psInfo->pszCoverName, papszFiles[iFile], nullptr);
+        osClrFilename = CPLFormFilenameSafe(psInfo->pszCoverName,
+                                            papszFiles[iFile], nullptr);
         break;
     }
 
@@ -707,14 +708,14 @@ GDALDataset *AIGDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Try to read projection file.                                    */
     /* -------------------------------------------------------------------- */
-    const char *pszPrjFilename =
-        CPLFormCIFilename(psInfo->pszCoverName, "prj", "adf");
-    if (VSIStatL(pszPrjFilename, &sStatBuf) == 0)
+    const std::string osPrjFilename =
+        CPLFormCIFilenameSafe(psInfo->pszCoverName, "prj", "adf");
+    if (VSIStatL(osPrjFilename.c_str(), &sStatBuf) == 0)
     {
         OGRSpatialReference oSRS;
         oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-        poDS->papszPrj = CSLLoad(pszPrjFilename);
+        poDS->papszPrj = CSLLoad(osPrjFilename.c_str());
 
         if (oSRS.importFromESRI(poDS->papszPrj) == OGRERR_NONE)
         {
@@ -874,13 +875,13 @@ static CPLErr AIGRename(const char *pszNewName, const char *pszOldName)
     /* -------------------------------------------------------------------- */
     CPLString osOldPath, osNewPath;
 
-    if (strlen(CPLGetExtension(pszNewName)) > 0)
-        osNewPath = CPLGetPath(pszNewName);
+    if (!CPLGetExtensionSafe(pszNewName).empty())
+        osNewPath = CPLGetPathSafe(pszNewName);
     else
         osNewPath = pszNewName;
 
-    if (strlen(CPLGetExtension(pszOldName)) > 0)
-        osOldPath = CPLGetPath(pszOldName);
+    if (!CPLGetExtensionSafe(pszOldName).empty())
+        osOldPath = CPLGetPathSafe(pszOldName);
     else
         osOldPath = pszOldName;
 

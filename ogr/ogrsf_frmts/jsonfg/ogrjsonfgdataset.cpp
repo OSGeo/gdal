@@ -199,7 +199,7 @@ bool OGRJSONFGDataset::Open(GDALOpenInfo *poOpenInfo,
             return false;
         }
         SetDescription(pszUnprefixed);
-        osDefaultLayerName = CPLGetBasename(pszUnprefixed);
+        osDefaultLayerName = CPLGetBasenameSafe(pszUnprefixed);
         eAccess = poOpenInfo->eAccess;
 
         // Ingests the first bytes of the file in pszGeoData_

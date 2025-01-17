@@ -453,7 +453,8 @@ int VSISwiftFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
     if (std::count(osFilename.begin(), osFilename.end(), '/') < 2)
         return -1;
 
-    char **papszContents = VSIReadDir(CPLGetPath(osFilename.c_str()));
+    char **papszContents =
+        VSIReadDir(CPLGetPathSafe(osFilename.c_str()).c_str());
     int nRet = CSLFindStringCaseSensitive(
                    papszContents, CPLGetFilename(osFilename.c_str())) >= 0
                    ? 0

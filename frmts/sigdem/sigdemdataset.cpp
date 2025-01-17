@@ -262,7 +262,8 @@ GDALDataset *SIGDEMDataset::CreateCopy(const char *pszFilename,
     {
         if (!EQUAL(pszProjection, ""))
         {
-            CPLString osPrjFilename = CPLResetExtension(pszFilename, "prj");
+            const CPLString osPrjFilename =
+                CPLResetExtensionSafe(pszFilename, "prj");
             VSILFILE *fpProj = VSIFOpenL(osPrjFilename, "wt");
             if (fpProj != nullptr)
             {
@@ -353,12 +354,13 @@ GDALDataset *SIGDEMDataset::Open(GDALOpenInfo *poOpenInfo)
     else
     {
         CPLString osPrjFilename =
-            CPLResetExtension(poOpenInfo->pszFilename, "prj");
+            CPLResetExtensionSafe(poOpenInfo->pszFilename, "prj");
         VSIStatBufL sStatBuf;
         int nRet = VSIStatL(osPrjFilename, &sStatBuf);
         if (nRet != 0 && VSIIsCaseSensitiveFS(osPrjFilename))
         {
-            osPrjFilename = CPLResetExtension(poOpenInfo->pszFilename, "PRJ");
+            osPrjFilename =
+                CPLResetExtensionSafe(poOpenInfo->pszFilename, "PRJ");
             nRet = VSIStatL(osPrjFilename, &sStatBuf);
         }
 

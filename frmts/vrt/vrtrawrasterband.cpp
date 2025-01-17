@@ -179,8 +179,8 @@ CPLErr VRTRawRasterBand::SetRawLink(const char *pszFilename,
     char *pszExpandedFilename = nullptr;
     if (pszVRTPath != nullptr && bRelativeToVRTIn)
     {
-        pszExpandedFilename =
-            CPLStrdup(CPLProjectRelativeFilename(pszVRTPath, pszFilename));
+        pszExpandedFilename = CPLStrdup(
+            CPLProjectRelativeFilenameSafe(pszVRTPath, pszFilename).c_str());
     }
     else
     {
@@ -494,9 +494,9 @@ void VRTRawRasterBand::GetFileList(char ***ppapszFileList, int *pnSize,
     /* -------------------------------------------------------------------- */
     CPLString osSourceFilename;
     if (m_bRelativeToVRT && strlen(poDS->GetDescription()) > 0)
-        osSourceFilename =
-            CPLFormFilename(CPLGetDirname(poDS->GetDescription()),
-                            m_pszSourceFilename, nullptr);
+        osSourceFilename = CPLFormFilenameSafe(
+            CPLGetDirnameSafe(poDS->GetDescription()).c_str(),
+            m_pszSourceFilename, nullptr);
     else
         osSourceFilename = m_pszSourceFilename;
 

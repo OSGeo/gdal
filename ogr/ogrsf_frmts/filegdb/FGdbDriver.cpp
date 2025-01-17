@@ -192,8 +192,8 @@ OGRFileGDBDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     /* Only accept names of form "filename.gdb" and */
     /* also .gdb.zip to be able to return FGDB with MapServer OGR output (#4199)
      */
-    const char *pszExt = CPLGetExtension(pszName);
-    if (!(EQUAL(pszExt, "gdb") || EQUAL(pszExt, "zip")))
+    const std::string osExt = CPLGetExtensionSafe(pszName);
+    if (!(EQUAL(osExt.c_str(), "gdb") || EQUAL(osExt.c_str(), "zip")))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "FGDB data source name must use 'gdb' extension.\n");
@@ -327,8 +327,10 @@ OGRErr FGdbTransactionManager::StartTransaction(GDALDataset *&poDSInOut,
                 EQUAL(*papszIter, "gdb") || EQUAL(*papszIter, "timestamps"))
             {
                 if (CPLCopyFile(
-                        CPLFormFilename(osEditedName, *papszIter, nullptr),
-                        CPLFormFilename(osName, *papszIter, nullptr)) != 0)
+                        CPLFormFilenameSafe(osEditedName, *papszIter, nullptr)
+                            .c_str(),
+                        CPLFormFilenameSafe(osName, *papszIter, nullptr)
+                            .c_str()) != 0)
                 {
                     bError = TRUE;
                     CPLError(CE_Failure, CPLE_AppDefined, "Cannot copy %s",
@@ -339,15 +341,16 @@ OGRErr FGdbTransactionManager::StartTransaction(GDALDataset *&poDSInOut,
             {
                 CPLString osSourceFile;
                 if (CPLIsFilenameRelative(osName))
-                    osSourceFile = CPLFormFilename(
+                    osSourceFile = CPLFormFilenameSafe(
                         CPLSPrintf("../%s", CPLGetFilename(osName.c_str())),
                         *papszIter, nullptr);
                 else
                     osSourceFile = osName;
                 if (EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") ||
                     CPLSymlink(osSourceFile,
-                               CPLFormFilename(osEditedName.c_str(), *papszIter,
-                                               nullptr),
+                               CPLFormFilenameSafe(osEditedName.c_str(),
+                                                   *papszIter, nullptr)
+                                   .c_str(),
                                nullptr) != 0)
                 {
                     bError = TRUE;
@@ -471,22 +474,26 @@ OGRErr FGdbTransactionManager::CommitTransaction(GDALDataset *&poDSInOut,
                 continue;
             VSIStatBufL sStat;
             if ((*papszIter)[0] == 'a' &&
-                VSIStatL(CPLFormFilename(osEditedName, *papszIter, nullptr),
+                VSIStatL(CPLFormFilenameSafe(osEditedName, *papszIter, nullptr)
+                             .c_str(),
                          &sStat) != 0)
             {
                 if (EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") ||
-                    VSIRename(CPLFormFilename(osName, *papszIter, nullptr),
-                              CPLFormFilename(osName, *papszIter, "tmp")) != 0)
+                    VSIRename(CPLFormFilenameSafe(osName, *papszIter, nullptr)
+                                  .c_str(),
+                              CPLFormFilenameSafe(osName, *papszIter, "tmp")
+                                  .c_str()) != 0)
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Cannot rename %s to %s",
-                             CPLFormFilename(osName, *papszIter, nullptr),
-                             CPLFormFilename(osName, *papszIter, "tmp"));
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined, "Cannot rename %s to %s",
+                        CPLFormFilenameSafe(osName, *papszIter, nullptr)
+                            .c_str(),
+                        CPLFormFilenameSafe(osName, *papszIter, "tmp").c_str());
                     bError = TRUE;
                 }
                 else
                     aosTmpFilesToClean.push_back(
-                        CPLFormFilename(osName, *papszIter, "tmp"));
+                        CPLFormFilenameSafe(osName, *papszIter, "tmp"));
             }
         }
         CSLDestroy(papszFiles);
@@ -498,56 +505,72 @@ OGRErr FGdbTransactionManager::CommitTransaction(GDALDataset *&poDSInOut,
             if (strcmp(*papszIter, ".") == 0 || strcmp(*papszIter, "..") == 0)
                 continue;
             struct stat sStat;
-            if (lstat(CPLFormFilename(osEditedName, *papszIter, nullptr),
+            if (lstat(CPLFormFilenameSafe(osEditedName, *papszIter, nullptr)
+                          .c_str(),
                       &sStat) != 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Cannot stat %s",
-                         CPLFormFilename(osEditedName, *papszIter, nullptr));
+                         CPLFormFilenameSafe(osEditedName, *papszIter, nullptr)
+                             .c_str());
                 bError = TRUE;
             }
             else if (!S_ISLNK(sStat.st_mode))
             {
                 // If there was such a file in original directory, first rename
                 // it as a temporary file
-                if (lstat(CPLFormFilename(osName, *papszIter, nullptr),
+                if (lstat(CPLFormFilenameSafe(osName, *papszIter, nullptr)
+                              .c_str(),
                           &sStat) == 0)
                 {
                     if (EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""),
                               "CASE2") ||
-                        VSIRename(CPLFormFilename(osName, *papszIter, nullptr),
-                                  CPLFormFilename(osName, *papszIter, "tmp")) !=
-                            0)
+                        VSIRename(
+                            CPLFormFilenameSafe(osName, *papszIter, nullptr)
+                                .c_str(),
+                            CPLFormFilenameSafe(osName, *papszIter, "tmp")
+                                .c_str()) != 0)
                     {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Cannot rename %s to %s",
-                                 CPLFormFilename(osName, *papszIter, nullptr),
-                                 CPLFormFilename(osName, *papszIter, "tmp"));
+                        CPLError(
+                            CE_Failure, CPLE_AppDefined,
+                            "Cannot rename %s to %s",
+                            CPLFormFilenameSafe(osName, *papszIter, nullptr)
+                                .c_str(),
+                            CPLFormFilenameSafe(osName, *papszIter, "tmp")
+                                .c_str());
                         bError = TRUE;
                     }
                     else
                         aosTmpFilesToClean.push_back(
-                            CPLFormFilename(osName, *papszIter, "tmp"));
+                            CPLFormFilenameSafe(osName, *papszIter, "tmp"));
                 }
                 if (!bError)
                 {
                     if (EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""),
                               "CASE3") ||
                         CPLMoveFile(
-                            CPLFormFilename(osName, *papszIter, nullptr),
-                            CPLFormFilename(osEditedName, *papszIter,
-                                            nullptr)) != 0)
+                            CPLFormFilenameSafe(osName, *papszIter, nullptr)
+                                .c_str(),
+                            CPLFormFilenameSafe(osEditedName, *papszIter,
+                                                nullptr)
+                                .c_str()) != 0)
                     {
                         CPLError(
                             CE_Failure, CPLE_AppDefined, "Cannot move %s to %s",
-                            CPLFormFilename(osEditedName, *papszIter, nullptr),
-                            CPLFormFilename(osName, *papszIter, nullptr));
+                            CPLFormFilenameSafe(osEditedName, *papszIter,
+                                                nullptr)
+                                .c_str(),
+                            CPLFormFilenameSafe(osName, *papszIter, nullptr)
+                                .c_str());
                         bError = TRUE;
                     }
                     else
                         CPLDebug(
                             "FileGDB", "Move %s to %s",
-                            CPLFormFilename(osEditedName, *papszIter, nullptr),
-                            CPLFormFilename(osName, *papszIter, nullptr));
+                            CPLFormFilenameSafe(osEditedName, *papszIter,
+                                                nullptr)
+                                .c_str(),
+                            CPLFormFilenameSafe(osName, *papszIter, nullptr)
+                                .c_str());
                 }
             }
         }

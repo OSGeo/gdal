@@ -30,9 +30,9 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
                                          char **papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
-    const char *pszBaseName = CPLGetBasename(pszPath);
-    const char *pszDirName = CPLGetDirname(pszPath);
-    size_t nBaseNameLen = strlen(pszBaseName);
+    const std::string osBaseName = CPLGetBasenameSafe(pszPath);
+    const std::string osDirName = CPLGetDirnameSafe(pszPath);
+    size_t nBaseNameLen = osBaseName.size();
     if (nBaseNameLen > 511)
         return;
 
@@ -41,9 +41,8 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     size_t i;
     for (i = 0; i < nBaseNameLen; i++)
     {
-        szMetadataName[i] = pszBaseName[i];
-        if (STARTS_WITH_CI(pszBaseName + i, "_B") ||
-            STARTS_WITH_CI(pszBaseName + i, "_b"))
+        szMetadataName[i] = osBaseName[i];
+        if (STARTS_WITH_CI(osBaseName.c_str() + i, "_B"))
         {
             break;
         }
@@ -53,7 +52,7 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     CPLStrlcpy(szMetadataName + i, "_MTL.txt", 9);
 
     std::string osIMDSourceFilename =
-        CPLFormFilename(pszDirName, szMetadataName, nullptr);
+        CPLFormFilenameSafe(osDirName.c_str(), szMetadataName, nullptr);
     if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
         m_osIMDSourceFilename = std::move(osIMDSourceFilename);
@@ -62,7 +61,7 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     {
         CPLStrlcpy(szMetadataName + i, "_MTL.TXT", 9);
         osIMDSourceFilename =
-            CPLFormFilename(pszDirName, szMetadataName, nullptr);
+            CPLFormFilenameSafe(osDirName.c_str(), szMetadataName, nullptr);
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
             m_osIMDSourceFilename = std::move(osIMDSourceFilename);

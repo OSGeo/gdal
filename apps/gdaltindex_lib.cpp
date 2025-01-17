@@ -458,8 +458,8 @@ struct GDALTileIndexTileIterator
                     continue;
             }
 
-            const std::string osFilename =
-                CPLFormFilename(osCurDir.c_str(), psEntry->pszName, nullptr);
+            const std::string osFilename = CPLFormFilenameSafe(
+                osCurDir.c_str(), psEntry->pszName, nullptr);
             if (VSI_ISDIR(psEntry->nMode))
             {
                 auto poSrcDS = std::unique_ptr<GDALDataset>(
@@ -607,7 +607,8 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Several drivers matching %s extension. Using %s",
-                             CPLGetExtension(pszDest), aoDrivers[0].c_str());
+                             CPLGetExtensionSafe(pszDest).c_str(),
+                             aoDrivers[0].c_str());
                 }
                 osFormat = aoDrivers[0];
             }
@@ -647,7 +648,7 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
             if (EQUAL(osFormat.c_str(), "ESRI Shapefile") ||
                 VSIStat(pszDest, &sStat) == 0)
             {
-                osLayerName = CPLGetBasename(pszDest);
+                osLayerName = CPLGetBasenameSafe(pszDest);
             }
             else
             {
@@ -999,7 +1000,7 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
             CPLIsFilenameRelative(osSrcFilename.c_str()) &&
             VSIStat(osSrcFilename.c_str(), &sStatBuf) == 0)
         {
-            osFileNameToWrite = CPLProjectRelativeFilename(
+            osFileNameToWrite = CPLProjectRelativeFilenameSafe(
                 osCurrentPath.c_str(), osSrcFilename.c_str());
         }
         else

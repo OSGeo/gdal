@@ -247,8 +247,9 @@ void kml2featurestyle(FeaturePtr poKmlFeature, OGRLIBKMLDataSource *poOgrDS,
                     }
                     else if (CPLIsFilenameRelative(osUrlTmp.c_str()))
                     {
-                        osUrlTmp = CPLFormFilename(
-                            CPLGetDirname(poOgrDS->GetDescription()),
+                        osUrlTmp = CPLFormFilenameSafe(
+                            CPLGetDirnameSafe(poOgrDS->GetDescription())
+                                .c_str(),
                             osUrlTmp.c_str(), nullptr);
                     }
                     CPLDebug("LIBKML", "Trying to resolve style %s",

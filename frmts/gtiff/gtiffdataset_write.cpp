@@ -5515,7 +5515,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         CPLTestBool(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")))
     {
         GIntBig nFreeDiskSpace =
-            VSIGetDiskFreeSpace(CPLGetDirname(pszFilename));
+            VSIGetDiskFreeSpace(CPLGetDirnameSafe(pszFilename).c_str());
         if (nFreeDiskSpace >= 0 && nFreeDiskSpace < dfUncompressedImageSize)
         {
             ReportError(pszFilename, CE_Failure, CPLE_FileIO,

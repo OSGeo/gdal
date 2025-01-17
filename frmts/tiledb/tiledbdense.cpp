@@ -348,8 +348,8 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
                     if (eErr == CE_None)
                     {
-                        CPLString osName = CPLString().Printf(
-                            "%s", CPLGetBasename(poAttrDS->GetDescription()));
+                        CPLString osName =
+                            CPLGetBasenameSafe(poAttrDS->GetDescription());
 
                         SetBuffer(poQuery.get(), eAttrType, osName, pAttrBlock,
                                   nValues);
@@ -1240,7 +1240,7 @@ CPLErr TileDBRasterDataset::TryLoadCachedXML(CSLConstList /*papszSiblingFiles*/,
         /* --------------------------------------------------------------------
          */
 
-        CPLString osPath(CPLGetPath(psPam->pszPamFilename));
+        CPLString osPath(CPLGetPathSafe(psPam->pszPamFilename));
         const CPLErr eErr = XMLInit(psTree, osPath);
 
         CPLDestroyXMLNode(psTree);
@@ -1352,7 +1352,6 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         poDS->nTimestamp = std::strtoull(pszTimestamp, nullptr, 10);
 
     CPLString osURI;
-    CPLString osAux;
     CPLString osSubdataset;
 
     std::string osAttrNameTmp;
@@ -1387,11 +1386,12 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         osURI = TileDBDataset::VSI_to_tiledb_uri(poOpenInfo->pszFilename);
     }
 
-    const char *pszArrayName = CPLGetBasename(osURI);
-    osAux.Printf("%s.tdb", pszArrayName);
+    CPLString osAux = CPLGetBasenameSafe(osURI);
+    osAux += ".tdb";
 
     // aux file is in array folder
-    poDS->SetPhysicalFilename(CPLFormFilename(osURI, osAux, nullptr));
+    poDS->SetPhysicalFilename(
+        CPLFormFilenameSafe(osURI, osAux, nullptr).c_str());
     // Initialize any PAM information.
     poDS->SetDescription(osURI);
 
@@ -1401,7 +1401,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         poDS->m_bDatasetInGroup = true;
 
         // Full resolution raster array
-        poDS->m_osArrayURI = CPLFormFilename(osURI.c_str(), "l_0", nullptr);
+        poDS->m_osArrayURI = CPLFormFilenameSafe(osURI.c_str(), "l_0", nullptr);
     }
 
     const tiledb_query_type_t eMode =
@@ -2111,7 +2111,8 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
             }
 
             // Full resolution raster array
-            poDS->m_osArrayURI = CPLFormFilename(pszFilename, "l_0", nullptr);
+            poDS->m_osArrayURI =
+                CPLFormFilenameSafe(pszFilename, "l_0", nullptr);
         }
         else
         {
@@ -2157,12 +2158,11 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
             }
         }
 
-        CPLString osAux;
-        const char *pszArrayName = CPLGetBasename(pszFilename);
-        osAux.Printf("%s.tdb", pszArrayName);
+        CPLString osAux = CPLGetBasenameSafe(pszFilename);
+        osAux += ".tdb";
 
         poDS->SetPhysicalFilename(
-            CPLFormFilename(pszFilename, osAux.c_str(), nullptr));
+            CPLFormFilenameSafe(pszFilename, osAux.c_str(), nullptr).c_str());
 
         // Initialize PAM information.
         poDS->SetDescription(pszFilename);
@@ -2285,13 +2285,13 @@ bool TileDBRasterDataset::DeferredCreate(bool bCreateArray)
         // be reported as subdatasets on future reads
         for (const auto &poAttrDS : m_lpoAttributeDS)
         {
-            const char *pszAttrName =
-                CPLGetBasename(poAttrDS->GetDescription());
+            const std::string osAttrName =
+                CPLGetBasenameSafe(poAttrDS->GetDescription());
             GDALRasterBand *poAttrBand = poAttrDS->GetRasterBand(1);
             int bHasNoData = false;
             const double dfNoData = poAttrBand->GetNoDataValue(&bHasNoData);
-            CreateAttribute(poAttrBand->GetRasterDataType(), pszAttrName, 1,
-                            CPL_TO_BOOL(bHasNoData), dfNoData);
+            CreateAttribute(poAttrBand->GetRasterDataType(), osAttrName.c_str(),
+                            1, CPL_TO_BOOL(bHasNoData), dfNoData);
         }
 
         if (bCreateArray)
@@ -2602,7 +2602,7 @@ TileDBRasterDataset *TileDBRasterDataset::Create(const char *pszFilename,
             {
                 aosImageStruct.SetNameValue(
                     CPLString().Printf("TILEDB_ATTRIBUTE_%i", ++i),
-                    CPLGetBasename(poAttrDS->GetDescription()));
+                    CPLGetBasenameSafe(poAttrDS->GetDescription()).c_str());
             }
         }
         poDS->SetMetadata(aosImageStruct.List(), "IMAGE_STRUCTURE");
@@ -2809,8 +2809,8 @@ void TileDBRasterDataset::LoadOverviews()
     for (int i = 0; i < m_nOverviewCountFromMetadata; ++i)
     {
         const std::string osArrayName = CPLSPrintf("l_%d", 1 + i);
-        std::string osOvrDatasetName =
-            CPLFormFilename(GetDescription(), osArrayName.c_str(), nullptr);
+        const std::string osOvrDatasetName =
+            CPLFormFilenameSafe(GetDescription(), osArrayName.c_str(), nullptr);
 
         GDALOpenInfo oOpenInfo(osOvrDatasetName.c_str(), eAccess);
         oOpenInfo.papszOpenOptions = aosOpenOptions.List();
@@ -3012,8 +3012,8 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
 
             const std::string osArrayName =
                 CPLSPrintf("l_%d", 1 + int(m_apoOverviewDS.size()));
-            std::string osOvrDatasetName =
-                CPLFormFilename(GetDescription(), osArrayName.c_str(), nullptr);
+            const std::string osOvrDatasetName = CPLFormFilenameSafe(
+                GetDescription(), osArrayName.c_str(), nullptr);
 
             auto poOvrDS = std::unique_ptr<TileDBRasterDataset>(
                 Create(osOvrDatasetName.c_str(), nOXSize, nOYSize, nBands,

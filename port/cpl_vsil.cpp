@@ -659,7 +659,7 @@ int VSIMkdirRecursive(const char *pszPathname, long mode)
     {
         return VSI_ISDIR(sStat.st_mode) ? 0 : -1;
     }
-    const CPLString osParentPath(CPLGetPath(osPathname));
+    const std::string osParentPath(CPLGetPathSafe(osPathname));
 
     // Prevent crazy paths from recursing forever.
     if (osParentPath == osPathname ||
@@ -668,9 +668,9 @@ int VSIMkdirRecursive(const char *pszPathname, long mode)
         return -1;
     }
 
-    if (VSIStatL(osParentPath, &sStat) != 0)
+    if (VSIStatL(osParentPath.c_str(), &sStat) != 0)
     {
-        if (VSIMkdirRecursive(osParentPath, mode) != 0)
+        if (VSIMkdirRecursive(osParentPath.c_str(), mode) != 0)
             return -1;
     }
 
@@ -2087,18 +2087,18 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
 
     if (VSI_ISDIR(sSource.st_mode))
     {
-        CPLString osTargetDir(pszTarget);
+        std::string osTargetDir(pszTarget);
         if (osSource.back() != '/' && osSource.back() != '\\')
         {
-            osTargetDir = CPLFormFilename(osTargetDir,
-                                          CPLGetFilename(pszSource), nullptr);
+            osTargetDir = CPLFormFilenameSafe(
+                osTargetDir.c_str(), CPLGetFilename(pszSource), nullptr);
         }
 
         VSIStatBufL sTarget;
         bool ret = true;
-        if (VSIStatL(osTargetDir, &sTarget) < 0)
+        if (VSIStatL(osTargetDir.c_str(), &sTarget) < 0)
         {
-            if (VSIMkdirRecursive(osTargetDir, 0755) < 0)
+            if (VSIMkdirRecursive(osTargetDir.c_str(), 0755) < 0)
             {
                 CPLError(CE_Failure, CPLE_FileIO, "Cannot create directory %s",
                          osTargetDir.c_str());
@@ -2131,17 +2131,17 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
                 {
                     continue;
                 }
-                CPLString osSubSource(
-                    CPLFormFilename(osSourceWithoutSlash, *iter, nullptr));
-                CPLString osSubTarget(
-                    CPLFormFilename(osTargetDir, *iter, nullptr));
+                const std::string osSubSource(CPLFormFilenameSafe(
+                    osSourceWithoutSlash.c_str(), *iter, nullptr));
+                const std::string osSubTarget(
+                    CPLFormFilenameSafe(osTargetDir.c_str(), *iter, nullptr));
                 // coverity[divide_by_zero]
                 void *pScaledProgress = GDALCreateScaledProgress(
                     double(iFile) / nFileCount, double(iFile + 1) / nFileCount,
                     pProgressFunc, pProgressData);
-                ret = Sync((osSubSource + SOURCE_SEP).c_str(), osSubTarget,
-                           aosChildOptions.List(), GDALScaledProgress,
-                           pScaledProgress, nullptr);
+                ret = Sync((osSubSource + SOURCE_SEP).c_str(),
+                           osSubTarget.c_str(), aosChildOptions.List(),
+                           GDALScaledProgress, pScaledProgress, nullptr);
                 GDALDestroyScaledProgress(pScaledProgress);
                 if (!ret)
                 {
@@ -2154,15 +2154,15 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
     }
 
     VSIStatBufL sTarget;
-    CPLString osTarget(pszTarget);
-    if (VSIStatL(osTarget, &sTarget) == 0)
+    std::string osTarget(pszTarget);
+    if (VSIStatL(osTarget.c_str(), &sTarget) == 0)
     {
         bool bTargetIsFile = true;
         if (VSI_ISDIR(sTarget.st_mode))
         {
-            osTarget =
-                CPLFormFilename(osTarget, CPLGetFilename(pszSource), nullptr);
-            bTargetIsFile = VSIStatL(osTarget, &sTarget) == 0 &&
+            osTarget = CPLFormFilenameSafe(osTarget.c_str(),
+                                           CPLGetFilename(pszSource), nullptr);
+            bTargetIsFile = VSIStatL(osTarget.c_str(), &sTarget) == 0 &&
                             !CPL_TO_BOOL(VSI_ISDIR(sTarget.st_mode));
         }
         if (bTargetIsFile)

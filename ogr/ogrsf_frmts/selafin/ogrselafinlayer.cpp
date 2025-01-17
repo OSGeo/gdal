@@ -51,7 +51,8 @@ OGRSelafinLayer::OGRSelafinLayer(GDALDataset *poDS, const char *pszLayerNameP,
                                  SelafinTypeDef eTypeP)
     : m_poDS(poDS), eType(eTypeP), bUpdate(CPL_TO_BOOL(bUpdateP)),
       nStepNumber(nStepNumberP), poHeader(poHeaderP),
-      poFeatureDefn(new OGRFeatureDefn(CPLGetBasename(pszLayerNameP))),
+      poFeatureDefn(
+          new OGRFeatureDefn(CPLGetBasenameSafe(pszLayerNameP).c_str())),
       poSpatialRef(nullptr), nCurrentId(-1)
 {
 #ifdef DEBUG_VERBOSE
@@ -595,19 +596,19 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature)
     // Now comes the real insertion. Since values have to be inserted nearly
     // everywhere in the file and we don't want to store everything in memory to
     // overwrite it, we create a new copy of it where we write the new values
-    const char *pszTempfile = CPLGenerateTempFilename(nullptr);
-    VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
+    const std::string osTempfile = CPLGenerateTempFilenameSafe(nullptr);
+    VSILFILE *fpNew = VSIFOpenL(osTempfile.c_str(), "wb+");
     if (fpNew == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed to open temporary file %s with write access, %s.",
-                 pszTempfile, VSIStrerror(errno));
+                 osTempfile.c_str(), VSIStrerror(errno));
         return OGRERR_FAILURE;
     }
     if (Selafin::write_header(fpNew, poHeader) == 0)
     {
         VSIFCloseL(fpNew);
-        VSIUnlink(pszTempfile);
+        VSIUnlink(osTempfile.c_str());
         return OGRERR_FAILURE;
     }
     for (int i = 0; i < poHeader->nSteps; ++i)
@@ -622,7 +623,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature)
             Selafin::write_integer(fpNew, 4) == 0)
         {
             VSIFCloseL(fpNew);
-            VSIUnlink(pszTempfile);
+            VSIUnlink(osTempfile.c_str());
             return OGRERR_FAILURE;
         }
         for (int j = 0; j < poHeader->nVar; ++j)
@@ -632,7 +633,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature)
                                          poHeader->nFileSize) == -1)
             {
                 VSIFCloseL(fpNew);
-                VSIUnlink(pszTempfile);
+                VSIUnlink(osTempfile.c_str());
                 return OGRERR_FAILURE;
             }
             padfValues = (double *)CPLRealloc(
@@ -640,7 +641,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature)
             if (padfValues == nullptr)
             {
                 VSIFCloseL(fpNew);
-                VSIUnlink(pszTempfile);
+                VSIUnlink(osTempfile.c_str());
                 return OGRERR_FAILURE;
             }
             if (eType == POINTS)
@@ -653,7 +654,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature)
             {
                 CPLFree(padfValues);
                 VSIFCloseL(fpNew);
-                VSIUnlink(pszTempfile);
+                VSIUnlink(osTempfile.c_str());
                 return OGRERR_FAILURE;
             }
             CPLFree(padfValues);
@@ -664,7 +665,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature)
     // the old one. This way, even if something goes bad, we can still recover
     // the layer. The copy process is format-agnostic.
     MoveOverwrite(poHeader->fp, fpNew);
-    VSIUnlink(pszTempfile);
+    VSIUnlink(osTempfile.c_str());
     poHeader->UpdateFileSize();
     return OGRERR_NONE;
 }
@@ -721,19 +722,19 @@ OGRErr OGRSelafinLayer::CreateField(const OGRFieldDefn *poField,
     // Now comes the real insertion. Since values have to be inserted nearly
     // everywhere in the file and we don't want to store everything in memory to
     // overwrite it, we create a new copy of it where we write the new values
-    const char *pszTempfile = CPLGenerateTempFilename(nullptr);
-    VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
+    const std::string osTempfile = CPLGenerateTempFilenameSafe(nullptr);
+    VSILFILE *fpNew = VSIFOpenL(osTempfile.c_str(), "wb+");
     if (fpNew == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed to open temporary file %s with write access, %s.",
-                 pszTempfile, VSIStrerror(errno));
+                 osTempfile.c_str(), VSIStrerror(errno));
         return OGRERR_FAILURE;
     }
     if (Selafin::write_header(fpNew, poHeader) == 0)
     {
         VSIFCloseL(fpNew);
-        VSIUnlink(pszTempfile);
+        VSIUnlink(osTempfile.c_str());
         return OGRERR_FAILURE;
     }
     for (int i = 0; i < poHeader->nSteps; ++i)
@@ -748,7 +749,7 @@ OGRErr OGRSelafinLayer::CreateField(const OGRFieldDefn *poField,
             Selafin::write_integer(fpNew, 4) == 0)
         {
             VSIFCloseL(fpNew);
-            VSIUnlink(pszTempfile);
+            VSIUnlink(osTempfile.c_str());
             return OGRERR_FAILURE;
         }
         double *padfValues = nullptr;
@@ -758,7 +759,7 @@ OGRErr OGRSelafinLayer::CreateField(const OGRFieldDefn *poField,
                                          poHeader->nFileSize) == -1)
             {
                 VSIFCloseL(fpNew);
-                VSIUnlink(pszTempfile);
+                VSIUnlink(osTempfile.c_str());
                 return OGRERR_FAILURE;
             }
             if (Selafin::write_floatarray(fpNew, padfValues,
@@ -766,7 +767,7 @@ OGRErr OGRSelafinLayer::CreateField(const OGRFieldDefn *poField,
             {
                 CPLFree(padfValues);
                 VSIFCloseL(fpNew);
-                VSIUnlink(pszTempfile);
+                VSIUnlink(osTempfile.c_str());
                 return OGRERR_FAILURE;
             }
             CPLFree(padfValues);
@@ -780,13 +781,13 @@ OGRErr OGRSelafinLayer::CreateField(const OGRFieldDefn *poField,
         {
             CPLFree(padfValues);
             VSIFCloseL(fpNew);
-            VSIUnlink(pszTempfile);
+            VSIUnlink(osTempfile.c_str());
             return OGRERR_FAILURE;
         }
         CPLFree(padfValues);
     }
     MoveOverwrite(poHeader->fp, fpNew);
-    VSIUnlink(pszTempfile);
+    VSIUnlink(osTempfile.c_str());
     poHeader->UpdateFileSize();
     return OGRERR_NONE;
 }
@@ -812,19 +813,19 @@ OGRErr OGRSelafinLayer::DeleteField(int iField)
     // Now comes the real deletion. Since values have to be deleted nearly
     // everywhere in the file and we don't want to store everything in memory to
     // overwrite it, we create a new copy of it where we write the new values
-    const char *pszTempfile = CPLGenerateTempFilename(nullptr);
-    VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
+    const std::string osTempfile = CPLGenerateTempFilenameSafe(nullptr);
+    VSILFILE *fpNew = VSIFOpenL(osTempfile.c_str(), "wb+");
     if (fpNew == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed to open temporary file %s with write access, %s.",
-                 pszTempfile, VSIStrerror(errno));
+                 osTempfile.c_str(), VSIStrerror(errno));
         return OGRERR_FAILURE;
     }
     if (Selafin::write_header(fpNew, poHeader) == 0)
     {
         VSIFCloseL(fpNew);
-        VSIUnlink(pszTempfile);
+        VSIUnlink(osTempfile.c_str());
         return OGRERR_FAILURE;
     }
     for (int i = 0; i < poHeader->nSteps; ++i)
@@ -839,7 +840,7 @@ OGRErr OGRSelafinLayer::DeleteField(int iField)
             Selafin::write_integer(fpNew, 4) == 0)
         {
             VSIFCloseL(fpNew);
-            VSIUnlink(pszTempfile);
+            VSIUnlink(osTempfile.c_str());
             return OGRERR_FAILURE;
         }
         for (int j = 0; j < poHeader->nVar; ++j)
@@ -849,7 +850,7 @@ OGRErr OGRSelafinLayer::DeleteField(int iField)
                                          poHeader->nFileSize) == -1)
             {
                 VSIFCloseL(fpNew);
-                VSIUnlink(pszTempfile);
+                VSIUnlink(osTempfile.c_str());
                 return OGRERR_FAILURE;
             }
             if (j != iField)
@@ -859,7 +860,7 @@ OGRErr OGRSelafinLayer::DeleteField(int iField)
                 {
                     CPLFree(padfValues);
                     VSIFCloseL(fpNew);
-                    VSIUnlink(pszTempfile);
+                    VSIUnlink(osTempfile.c_str());
                     return OGRERR_FAILURE;
                 }
             }
@@ -867,7 +868,7 @@ OGRErr OGRSelafinLayer::DeleteField(int iField)
         }
     }
     MoveOverwrite(poHeader->fp, fpNew);
-    VSIUnlink(pszTempfile);
+    VSIUnlink(osTempfile.c_str());
     poHeader->UpdateFileSize();
     return OGRERR_NONE;
 }
@@ -890,19 +891,19 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap)
     poFeatureDefn->ReorderFieldDefns(panMap);
 
     // Now comes the real change.
-    const char *pszTempfile = CPLGenerateTempFilename(nullptr);
-    VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
+    const std::string osTempfile = CPLGenerateTempFilenameSafe(nullptr);
+    VSILFILE *fpNew = VSIFOpenL(osTempfile.c_str(), "wb+");
     if (fpNew == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed to open temporary file %s with write access, %s.",
-                 pszTempfile, VSIStrerror(errno));
+                 osTempfile.c_str(), VSIStrerror(errno));
         return OGRERR_FAILURE;
     }
     if (Selafin::write_header(fpNew, poHeader) == 0)
     {
         VSIFCloseL(fpNew);
-        VSIUnlink(pszTempfile);
+        VSIUnlink(osTempfile.c_str());
         return OGRERR_FAILURE;
     }
     double *padfValues = nullptr;
@@ -918,7 +919,7 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap)
             Selafin::write_integer(fpNew, 4) == 0)
         {
             VSIFCloseL(fpNew);
-            VSIUnlink(pszTempfile);
+            VSIUnlink(osTempfile.c_str());
             return OGRERR_FAILURE;
         }
         for (int j = 0; j < poHeader->nVar; ++j)
@@ -929,7 +930,7 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap)
                                          poHeader->nFileSize) == -1)
             {
                 VSIFCloseL(fpNew);
-                VSIUnlink(pszTempfile);
+                VSIUnlink(osTempfile.c_str());
                 return OGRERR_FAILURE;
             }
             if (Selafin::write_floatarray(fpNew, padfValues,
@@ -937,14 +938,14 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap)
             {
                 CPLFree(padfValues);
                 VSIFCloseL(fpNew);
-                VSIUnlink(pszTempfile);
+                VSIUnlink(osTempfile.c_str());
                 return OGRERR_FAILURE;
             }
             CPLFree(padfValues);
         }
     }
     MoveOverwrite(poHeader->fp, fpNew);
-    VSIUnlink(pszTempfile);
+    VSIUnlink(osTempfile.c_str());
     poHeader->UpdateFileSize();
     return OGRERR_NONE;
 }
@@ -1015,19 +1016,19 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID)
     }
 
     // Now we perform the deletion by creating a new temporary layer
-    const char *pszTempfile = CPLGenerateTempFilename(nullptr);
-    VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
+    const std::string osTempfile = CPLGenerateTempFilenameSafe(nullptr);
+    VSILFILE *fpNew = VSIFOpenL(osTempfile.c_str(), "wb+");
     if (fpNew == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed to open temporary file %s with write access, %s.",
-                 pszTempfile, VSIStrerror(errno));
+                 osTempfile.c_str(), VSIStrerror(errno));
         return OGRERR_FAILURE;
     }
     if (Selafin::write_header(fpNew, poHeader) == 0)
     {
         VSIFCloseL(fpNew);
-        VSIUnlink(pszTempfile);
+        VSIUnlink(osTempfile.c_str());
         return OGRERR_FAILURE;
     }
     for (int i = 0; i < poHeader->nSteps; ++i)
@@ -1042,7 +1043,7 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID)
             Selafin::write_integer(fpNew, 4) == 0)
         {
             VSIFCloseL(fpNew);
-            VSIUnlink(pszTempfile);
+            VSIUnlink(osTempfile.c_str());
             return OGRERR_FAILURE;
         }
         for (int j = 0; j < poHeader->nVar; ++j)
@@ -1052,7 +1053,7 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID)
                                          poHeader->nFileSize) == -1)
             {
                 VSIFCloseL(fpNew);
-                VSIUnlink(pszTempfile);
+                VSIUnlink(osTempfile.c_str());
                 return OGRERR_FAILURE;
             }
             if (eType == POINTS)
@@ -1065,7 +1066,7 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID)
             {
                 CPLFree(padfValues);
                 VSIFCloseL(fpNew);
-                VSIUnlink(pszTempfile);
+                VSIUnlink(osTempfile.c_str());
                 return OGRERR_FAILURE;
             }
             CPLFree(padfValues);
@@ -1076,7 +1077,7 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID)
     // the old one. This way, even if something goes bad, we can still recover
     // the layer. The copy process is format-agnostic.
     MoveOverwrite(poHeader->fp, fpNew);
-    VSIUnlink(pszTempfile);
+    VSIUnlink(osTempfile.c_str());
     poHeader->UpdateFileSize();
 
     return OGRERR_NONE;

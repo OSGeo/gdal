@@ -1149,7 +1149,9 @@ static bool RPCInverseTransformPoint(GDALRPCTransformInfo *psTransform,
     if (psTransform->pszRPCInverseLog)
     {
         fpLog = VSIFOpenL(
-            CPLResetExtension(psTransform->pszRPCInverseLog, "csvt"), "wb");
+            CPLResetExtensionSafe(psTransform->pszRPCInverseLog, "csvt")
+                .c_str(),
+            "wb");
         if (fpLog != nullptr)
         {
             VSIFPrintfL(fpLog, "Integer,Real,Real,Real,String,Real,Real\n");

@@ -60,12 +60,12 @@ int OGRIdrisiDataSource::Open(const char *pszFilename)
     // --------------------------------------------------------------------
     //      Look for .vdc file
     // --------------------------------------------------------------------
-    const char *pszVDCFilename = CPLResetExtension(pszFilename, "vdc");
-    VSILFILE *fpVDC = VSIFOpenL(pszVDCFilename, "rb");
+    std::string osVDCFilename = CPLResetExtensionSafe(pszFilename, "vdc");
+    VSILFILE *fpVDC = VSIFOpenL(osVDCFilename.c_str(), "rb");
     if (fpVDC == nullptr)
     {
-        pszVDCFilename = CPLResetExtension(pszFilename, "VDC");
-        fpVDC = VSIFOpenL(pszVDCFilename, "rb");
+        osVDCFilename = CPLResetExtensionSafe(pszFilename, "VDC");
+        fpVDC = VSIFOpenL(osVDCFilename.c_str(), "rb");
     }
 
     char **papszVDC = nullptr;
@@ -75,7 +75,7 @@ int OGRIdrisiDataSource::Open(const char *pszFilename)
         fpVDC = nullptr;
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        papszVDC = CSLLoad2(pszVDCFilename, 1024, 256, nullptr);
+        papszVDC = CSLLoad2(osVDCFilename.c_str(), 1024, 256, nullptr);
         CPLPopErrorHandler();
         CPLErrorReset();
     }
@@ -141,8 +141,9 @@ int OGRIdrisiDataSource::Open(const char *pszFilename)
     const char *pszMinY = CSLFetchNameValue(papszVDC, "min. Y");
     const char *pszMaxY = CSLFetchNameValue(papszVDC, "max. Y");
 
-    OGRIdrisiLayer *poLayer = new OGRIdrisiLayer(
-        pszFilename, CPLGetBasename(pszFilename), fpVCT, eType, pszWTKString);
+    OGRIdrisiLayer *poLayer =
+        new OGRIdrisiLayer(pszFilename, CPLGetBasenameSafe(pszFilename).c_str(),
+                           fpVCT, eType, pszWTKString);
     papoLayers = static_cast<OGRLayer **>(CPLMalloc(sizeof(OGRLayer *)));
     papoLayers[nLayers++] = poLayer;
 

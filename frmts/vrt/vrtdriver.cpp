@@ -187,7 +187,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         /*      Convert tree to a single block of XML text. */
         /* --------------------------------------------------------------------
          */
-        char *pszVRTPath = CPLStrdup(CPLGetPath(pszFilename));
+        char *pszVRTPath = CPLStrdup(CPLGetPathSafe(pszFilename).c_str());
         poSrcVRTDS->UnsetPreservedRelativeFilenames();
         CPLXMLNode *psDSTree = poSrcVRTDS->SerializeToXML(pszVRTPath);
 

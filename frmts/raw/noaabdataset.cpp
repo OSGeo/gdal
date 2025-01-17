@@ -132,7 +132,7 @@ int NOAA_B_Dataset::IdentifyEx(GDALOpenInfo *poOpenInfo, bool &bBigEndianOut)
         return FALSE;
 
 #if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "b"))
+    if (!poOpenInfo->IsExtensionEqualToCI("b"))
         return FALSE;
 #endif
 

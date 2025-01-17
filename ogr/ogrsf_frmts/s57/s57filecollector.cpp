@@ -52,7 +52,8 @@ char **S57FileCollector(const char *pszDataset)
              iFile++)
         {
             char *pszFullFile = CPLStrdup(
-                CPLFormFilename(pszDataset, papszDirFiles[iFile], nullptr));
+                CPLFormFilenameSafe(pszDataset, papszDirFiles[iFile], nullptr)
+                    .c_str());
 
             // Add to list if it is an S-57 _data_ file.
             if (VSIStat(pszFullFile, &sStatBuf) == 0 &&
@@ -100,20 +101,23 @@ char **S57FileCollector(const char *pszDataset)
     /*      correct name for the ENC_ROOT directory if available and        */
     /*      build a base path for our purposes.                             */
     /* -------------------------------------------------------------------- */
-    char *pszCatDir = CPLStrdup(CPLGetPath(pszDataset));
+    char *pszCatDir = CPLStrdup(CPLGetPathSafe(pszDataset).c_str());
     char *pszRootDir = nullptr;
 
-    if (CPLStat(CPLFormFilename(pszCatDir, "ENC_ROOT", nullptr), &sStatBuf) ==
-            0 &&
+    if (CPLStat(CPLFormFilenameSafe(pszCatDir, "ENC_ROOT", nullptr).c_str(),
+                &sStatBuf) == 0 &&
         VSI_ISDIR(sStatBuf.st_mode))
     {
-        pszRootDir = CPLStrdup(CPLFormFilename(pszCatDir, "ENC_ROOT", nullptr));
+        pszRootDir = CPLStrdup(
+            CPLFormFilenameSafe(pszCatDir, "ENC_ROOT", nullptr).c_str());
     }
-    else if (CPLStat(CPLFormFilename(pszCatDir, "enc_root", nullptr),
-                     &sStatBuf) == 0 &&
+    else if (CPLStat(
+                 CPLFormFilenameSafe(pszCatDir, "enc_root", nullptr).c_str(),
+                 &sStatBuf) == 0 &&
              VSI_ISDIR(sStatBuf.st_mode))
     {
-        pszRootDir = CPLStrdup(CPLFormFilename(pszCatDir, "enc_root", nullptr));
+        pszRootDir = CPLStrdup(
+            CPLFormFilenameSafe(pszCatDir, "enc_root", nullptr).c_str());
     }
 
     if (pszRootDir)
@@ -135,14 +139,15 @@ char **S57FileCollector(const char *pszDataset)
             // Often there is an extra ENC_ROOT in the path, try finding
             // this file.
 
-            const char *pszWholePath =
-                CPLFormFilename(pszCatDir, pszFile, nullptr);
-            if (CPLStat(pszWholePath, &sStatBuf) != 0 && pszRootDir != nullptr)
+            std::string osWholePath =
+                CPLFormFilenameSafe(pszCatDir, pszFile, nullptr);
+            if (CPLStat(osWholePath.c_str(), &sStatBuf) != 0 &&
+                pszRootDir != nullptr)
             {
-                pszWholePath = CPLFormFilename(pszRootDir, pszFile, nullptr);
+                osWholePath = CPLFormFilenameSafe(pszRootDir, pszFile, nullptr);
             }
 
-            if (CPLStat(pszWholePath, &sStatBuf) != 0)
+            if (CPLStat(osWholePath.c_str(), &sStatBuf) != 0)
             {
                 CPLError(CE_Warning, CPLE_OpenFailed,
                          "Can't find file %s from catalog %s.", pszFile,
@@ -150,8 +155,8 @@ char **S57FileCollector(const char *pszDataset)
                 continue;
             }
 
-            papszRetList = CSLAddString(papszRetList, pszWholePath);
-            CPLDebug("S57", "Got path %s from CATALOG.", pszWholePath);
+            papszRetList = CSLAddString(papszRetList, osWholePath.c_str());
+            CPLDebug("S57", "Got path %s from CATALOG.", osWholePath.c_str());
         }
     }
 

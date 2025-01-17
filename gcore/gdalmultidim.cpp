@@ -4420,7 +4420,7 @@ bool GDALMDArray::Read(const GUInt64 *arrayStartIdx, const size_t *count,
         {
             const auto &osFilename = GetFilename();
             if (!osFilename.empty() &&
-                !EQUAL(CPLGetExtension(osFilename.c_str()), "gmac"))
+                !EQUAL(CPLGetExtensionSafe(osFilename.c_str()).c_str(), "gmac"))
             {
                 std::string osCacheFilename;
                 auto poRG = GetCacheRootGroup(false, osCacheFilename);

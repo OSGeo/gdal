@@ -1332,11 +1332,12 @@ char **ADRGDataset::GetGENListFromTHF(const char *pszFileName)
                 char *c = (char *)strchr(osSubFileName.c_str(), ' ');
                 if (c)
                     *c = 0;
-                if (EQUAL(CPLGetExtension(osSubFileName.c_str()), "GEN"))
+                if (EQUAL(CPLGetExtensionSafe(osSubFileName.c_str()).c_str(),
+                          "GEN"))
                 {
                     CPLDebug("ADRG", "Found GEN file in THF : %s",
                              osSubFileName.c_str());
-                    CPLString osGENFileName(CPLGetDirname(pszFileName));
+                    CPLString osGENFileName(CPLGetDirnameSafe(pszFileName));
                     char **tokens =
                         CSLTokenizeString2(osSubFileName.c_str(), "/\"", 0);
                     char **ptr = tokens;
@@ -1353,9 +1354,9 @@ char **ADRGDataset::GetGENListFromTHF(const char *pszFileName)
                             {
                                 if (EQUAL(*ptrDir, *ptr))
                                 {
-                                    osGENFileName =
-                                        CPLFormFilename(osGENFileName.c_str(),
-                                                        *ptrDir, nullptr);
+                                    osGENFileName = CPLFormFilenameSafe(
+                                        osGENFileName.c_str(), *ptrDir,
+                                        nullptr);
                                     CPLDebug("ADRG",
                                              "Building GEN full file name : %s",
                                              osGENFileName.c_str());
@@ -1471,10 +1472,10 @@ char **ADRGDataset::GetIMGListFromGEN(const char *pszFileName,
             CPLDebug("ADRG", "BAD=%s", osBAD.c_str());
 
             /* Build full IMG file name from BAD value */
-            CPLString osGENDir(CPLGetDirname(pszFileName));
+            CPLString osGENDir(CPLGetDirnameSafe(pszFileName));
 
             const CPLString osFileName =
-                CPLFormFilename(osGENDir.c_str(), osBAD.c_str(), nullptr);
+                CPLFormFilenameSafe(osGENDir.c_str(), osBAD.c_str(), nullptr);
             VSIStatBufL sStatBuf;
             if (VSIStatL(osFileName, &sStatBuf) == 0)
             {
@@ -1497,8 +1498,8 @@ char **ADRGDataset::GetIMGListFromGEN(const char *pszFileName,
                 {
                     if (EQUAL(*ptrDir, osBAD.c_str()))
                     {
-                        osBAD =
-                            CPLFormFilename(osGENDir.c_str(), *ptrDir, nullptr);
+                        osBAD = CPLFormFilenameSafe(osGENDir.c_str(), *ptrDir,
+                                                    nullptr);
                         CPLDebug("ADRG", "Building IMG full file name : %s",
                                  osBAD.c_str());
                         break;
@@ -1551,7 +1552,7 @@ GDALDataset *ADRGDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
 
         CPLString osFileName(poOpenInfo->pszFilename);
-        if (EQUAL(CPLGetExtension(osFileName.c_str()), "THF"))
+        if (EQUAL(CPLGetExtensionSafe(osFileName.c_str()).c_str(), "THF"))
         {
             char **papszFileNames = GetGENListFromTHF(osFileName.c_str());
             if (papszFileNames == nullptr)
@@ -1583,7 +1584,7 @@ GDALDataset *ADRGDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
-        if (EQUAL(CPLGetExtension(osFileName.c_str()), "GEN"))
+        if (EQUAL(CPLGetExtensionSafe(osFileName.c_str()).c_str(), "GEN"))
         {
             osGENFileName = osFileName;
 
@@ -1696,14 +1697,14 @@ GDALDataset *ADRGDataset::Create(const char *pszFilename, int nXSize,
                  nYSize);
     }
 
-    if (!EQUAL(CPLGetExtension(pszFilename), "gen"))
+    if (!EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "gen"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Invalid filename. Must be ABCDEF01.GEN");
         return nullptr;
     }
 
-    CPLString osBaseFileName(CPLGetBasename(pszFilename));
+    CPLString osBaseFileName(CPLGetBasenameSafe(pszFilename));
     if (osBaseFileName.size() != 8 || osBaseFileName[6] != DIGIT_ZERO ||
         osBaseFileName[7] != '1')
     {
@@ -1732,9 +1733,9 @@ GDALDataset *ADRGDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    CPLString osDirname(CPLGetDirname(pszFilename));
+    CPLString osDirname(CPLGetDirnameSafe(pszFilename));
     CPLString osTransh01THF(
-        CPLFormFilename(osDirname.c_str(), "TRANSH01.THF", nullptr));
+        CPLFormFilenameSafe(osDirname.c_str(), "TRANSH01.THF", nullptr));
     VSILFILE *fdTHF = VSIFOpenL(osTransh01THF.c_str(), "wb");
     if (fdTHF == nullptr)
     {
@@ -1744,7 +1745,7 @@ GDALDataset *ADRGDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    CPLString osImgFilename = CPLResetExtension(pszFilename, "IMG");
+    CPLString osImgFilename = CPLResetExtensionSafe(pszFilename, "IMG");
     VSILFILE *fdIMG = VSIFOpenL(osImgFilename.c_str(), "w+b");
     if (fdIMG == nullptr)
     {

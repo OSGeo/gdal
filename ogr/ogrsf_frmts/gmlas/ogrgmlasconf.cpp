@@ -35,7 +35,7 @@ CPLString GMLASConfiguration::GetBaseCacheDirectory()
 #endif
     if (pszHome != nullptr)
     {
-        return CPLFormFilename(pszHome, ".gdal", nullptr);
+        return CPLFormFilenameSafe(pszHome, ".gdal", nullptr);
     }
     else
     {
@@ -53,8 +53,8 @@ CPLString GMLASConfiguration::GetBaseCacheDirectory()
 
         if (pszDir != nullptr && pszUsername != nullptr)
         {
-            return CPLFormFilename(pszDir, CPLSPrintf(".gdal_%s", pszUsername),
-                                   nullptr);
+            return CPLFormFilenameSafe(
+                pszDir, CPLSPrintf(".gdal_%s", pszUsername), nullptr);
         }
     }
     return CPLString();
@@ -76,8 +76,8 @@ void GMLASConfiguration::Finalize()
         }
         else
         {
-            m_osXSDCacheDirectory = CPLFormFilename(m_osXSDCacheDirectory,
-                                                    "gmlas_xsd_cache", nullptr);
+            m_osXSDCacheDirectory = CPLFormFilenameSafe(
+                m_osXSDCacheDirectory, "gmlas_xsd_cache", nullptr);
             CPLDebug("GMLAS", "XSD cache directory: %s",
                      m_osXSDCacheDirectory.c_str());
         }
@@ -564,7 +564,7 @@ bool GMLASXLinkResolutionConf::LoadFromXML(CPLXMLNode *psRoot)
         m_osCacheDirectory = GMLASConfiguration::GetBaseCacheDirectory();
         if (!m_osCacheDirectory.empty())
         {
-            m_osCacheDirectory = CPLFormFilename(
+            m_osCacheDirectory = CPLFormFilenameSafe(
                 m_osCacheDirectory, "xlink_resolved_cache", nullptr);
         }
     }

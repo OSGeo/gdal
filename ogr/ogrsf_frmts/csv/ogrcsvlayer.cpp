@@ -327,11 +327,10 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
     if (!bNew)
     {
         // Only try to read .csvt from files that have an extension
-        const char *pszExt = CPLGetExtension(pszFilename);
-        if (pszExt[0])
+        if (!CPLGetExtensionSafe(pszFilename).empty())
         {
             const std::string osCSVTFilename =
-                CPLResetExtension(pszFilename, "csvt");
+                CPLResetExtensionSafe(pszFilename, "csvt");
             VSILFILE *fpCSVT = VSIFOpenL(osCSVTFilename.c_str(), "r");
             if (fpCSVT != nullptr)
             {
@@ -778,7 +777,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
         poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef() == nullptr)
     {
         VSILFILE *fpPRJ =
-            VSIFOpenL(CPLResetExtension(pszFilename, "prj"), "rb");
+            VSIFOpenL(CPLResetExtensionSafe(pszFilename, "prj").c_str(), "rb");
         if (fpPRJ != nullptr)
         {
             GByte *pabyRet = nullptr;
@@ -1986,10 +1985,13 @@ OGRErr OGRCSVLayer::WriteHeader()
         VSILFILE *fpCSVT = nullptr;
         if (bCreateCSVT && iFile == 0)
         {
-            char *pszDirName = CPLStrdup(CPLGetDirname(pszFilename));
-            char *pszBaseName = CPLStrdup(CPLGetBasename(pszFilename));
+            char *pszDirName =
+                CPLStrdup(CPLGetDirnameSafe(pszFilename).c_str());
+            char *pszBaseName =
+                CPLStrdup(CPLGetBasenameSafe(pszFilename).c_str());
             fpCSVT = VSIFOpenL(
-                CPLFormFilename(pszDirName, pszBaseName, ".csvt"), "wb");
+                CPLFormFilenameSafe(pszDirName, pszBaseName, ".csvt").c_str(),
+                "wb");
             CPLFree(pszDirName);
             CPLFree(pszBaseName);
         }

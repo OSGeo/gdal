@@ -429,7 +429,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     // it transparently with /vsigzip/.
     if (static_cast<GByte>(szHeader[0]) == 0x1f &&
         static_cast<GByte>(szHeader[1]) == 0x8b &&
-        EQUAL(CPLGetExtension(pszFilename), "gz") &&
+        EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "gz") &&
         !STARTS_WITH(pszFilename, "/vsigzip/"))
     {
         if (fpToClose)
@@ -755,8 +755,8 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     {
         // When no option is given or is not recognised,
         // use the same file name with the extension changed to .resolved.gml
-        pszXlinkResolvedFilename =
-            CPLStrdup(CPLResetExtension(pszFilename, "resolved.gml"));
+        pszXlinkResolvedFilename = CPLStrdup(
+            CPLResetExtensionSafe(pszFilename, "resolved.gml").c_str());
 
         // Check if the file already exists.
         VSIStatBufL sResStatBuf, sGMLStatBuf;
@@ -857,7 +857,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     CPLString osGFSFilename;
     if (!bIsWFSFromServer)
     {
-        osGFSFilename = CPLResetExtension(pszFilename, "gfs");
+        osGFSFilename = CPLResetExtensionSafe(pszFilename, "gfs");
         if (STARTS_WITH(osGFSFilename, "/vsigzip/"))
             osGFSFilename = osGFSFilename.substr(strlen("/vsigzip/"));
     }
@@ -883,12 +883,14 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
                 bHaveSchema = poReader->LoadClasses(osGFSFilename);
                 if (bHaveSchema)
                 {
-                    pszXSDFilenameTmp = CPLResetExtension(pszFilename, "xsd");
-                    if (VSIStatExL(pszXSDFilenameTmp, &sGMLStatBuf,
+                    const std::string osXSDFilenameTmp =
+                        CPLResetExtensionSafe(pszFilename, "xsd");
+                    if (VSIStatExL(osXSDFilenameTmp.c_str(), &sGMLStatBuf,
                                    VSI_STAT_EXISTS_FLAG) == 0)
                     {
                         CPLDebug("GML", "Using %s file, ignoring %s",
-                                 osGFSFilename.c_str(), pszXSDFilenameTmp);
+                                 osGFSFilename.c_str(),
+                                 osXSDFilenameTmp.c_str());
                     }
                 }
             }
@@ -909,7 +911,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
         VSIStatBufL sXSDStatBuf;
         if (osXSDFilename.empty())
         {
-            osXSDFilename = CPLResetExtension(pszFilename, "xsd");
+            osXSDFilename = CPLResetExtensionSafe(pszFilename, "xsd");
             if (bCheckAuxFile && VSIStatExL(osXSDFilename, &sXSDStatBuf,
                                             VSI_STAT_EXISTS_FLAG) == 0)
             {
@@ -1902,9 +1904,10 @@ bool OGRGMLDataSource::Create(const char *pszFilename, char **papszOptions)
     }
     else if (STARTS_WITH(pszFilename, "/vsizip/"))
     {
-        if (EQUAL(CPLGetExtension(pszFilename), "zip"))
+        if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "zip"))
         {
-            SetDescription(CPLFormFilename(pszFilename, "out.gml", nullptr));
+            SetDescription(
+                CPLFormFilenameSafe(pszFilename, "out.gml", nullptr).c_str());
         }
 
         fpOutput = VSIFOpenExL(GetDescription(), "wb", true);
@@ -1959,13 +1962,15 @@ bool OGRGMLDataSource::Create(const char *pszFilename, char **papszOptions)
     }
     else if (pszSchemaOpt == nullptr || EQUAL(pszSchemaOpt, "EXTERNAL"))
     {
-        char *pszBasename = CPLStrdup(CPLGetBasename(GetDescription()));
+        char *pszBasename =
+            CPLStrdup(CPLGetBasenameSafe(GetDescription()).c_str());
 
         PrintLine(
             fpOutput,
             "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
         PrintLine(fpOutput, "     xsi:schemaLocation=\"%s %s\"",
-                  pszTargetNameSpace, CPLResetExtension(pszBasename, "xsd"));
+                  pszTargetNameSpace,
+                  CPLResetExtensionSafe(pszBasename, "xsd").c_str());
         CPLFree(pszBasename);
     }
 
@@ -2363,14 +2368,15 @@ void OGRGMLDataSource::InsertHeader()
     VSILFILE *fpSchema = nullptr;
     if (pszSchemaOpt == nullptr || EQUAL(pszSchemaOpt, "EXTERNAL"))
     {
-        const char *pszXSDFilename = CPLResetExtension(GetDescription(), "xsd");
+        const std::string l_osXSDFilename =
+            CPLResetExtensionSafe(GetDescription(), "xsd");
 
-        fpSchema = VSIFOpenL(pszXSDFilename, "wt");
+        fpSchema = VSIFOpenL(l_osXSDFilename.c_str(), "wt");
         if (fpSchema == nullptr)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Failed to open file %.500s for schema output.",
-                     pszXSDFilename);
+                     l_osXSDFilename.c_str());
             return;
         }
         PrintLine(fpSchema, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>");

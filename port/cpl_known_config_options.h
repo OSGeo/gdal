@@ -224,7 +224,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "FGDB_STRING_WIDTH", // from FGdbUtils.cpp
    "FILEGDB_DISABLE_SPARSE_PAGES", // from FGdbLayer.cpp
    "FORCE_BLOCKSIZE", // from hfaopen.cpp
-   "FUSIL_SRC_DIR", // from ogropenfilegdbdriver.cpp
    "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", // from JPEG_band.cpp, jpgdataset.cpp
    "GDAL_BAG_BLOCK_SIZE", // from bagdataset.cpp
    "GDAL_BAG_MAX_SIZE_VARRES_MAP", // from bagdataset.cpp

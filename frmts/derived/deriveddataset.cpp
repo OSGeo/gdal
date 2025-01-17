@@ -172,10 +172,10 @@ GDALDataset *DerivedDataset::Open(GDALOpenInfo *poOpenInfo)
     VSIStatBufL sStat;
     if (VSIStatL(odFilename, &sStat) == 0)
     {
-        CPLString path = CPLGetPath(odFilename);
+        CPLString path = CPLGetPathSafe(odFilename);
         CPLString ovrFileName = "DERIVED_DATASET_" + odDerivedName + "_" +
                                 CPLGetFilename(odFilename);
-        CPLString ovrFilePath = CPLFormFilename(path, ovrFileName, nullptr);
+        CPLString ovrFilePath = CPLFormFilenameSafe(path, ovrFileName, nullptr);
 
         poDS->oOvManager.Initialize(poDS, ovrFilePath);
     }

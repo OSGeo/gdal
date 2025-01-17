@@ -792,7 +792,7 @@ int NWT_GRDDataset::UpdateHeader()
 int NWT_GRDDataset::WriteTab()
 {
     // Create the filename for the .tab file.
-    const std::string sTabFile(CPLResetExtension(pGrd->szFileName, "tab"));
+    const std::string sTabFile(CPLResetExtensionSafe(pGrd->szFileName, "tab"));
 
     VSILFILE *tabfp = VSIFOpenL(sTabFile.c_str(), "wt");
     if (tabfp == nullptr)

@@ -330,7 +330,7 @@ bool OGRPMTilesConvertFromMBTiles(const char *pszDestName,
     std::string osTmpFile(std::string(pszDestName) + ".tmp");
     if (!VSIIsLocal(pszDestName))
     {
-        osTmpFile = CPLGenerateTempFilename(CPLGetFilename(pszDestName));
+        osTmpFile = CPLGenerateTempFilenameSafe(CPLGetFilename(pszDestName));
     }
 
     auto poTmpFile =

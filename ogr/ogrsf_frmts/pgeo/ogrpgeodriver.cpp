@@ -24,7 +24,7 @@ static int OGRPGeoDriverIdentify(GDALOpenInfo *poOpenInfo)
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "PGEO:"))
         return TRUE;
 
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "mdb"))
+    if (!poOpenInfo->IsExtensionEqualToCI("mdb"))
         return FALSE;
 
     // Could potentially be a PGeo or generic ODBC database

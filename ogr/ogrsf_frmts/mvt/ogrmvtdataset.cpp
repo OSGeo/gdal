@@ -1589,11 +1589,11 @@ void OGRMVTDirectoryLayer::ReadNewSubDir()
                          : (1 << m_nZ)))
     {
         m_aosSubDirName =
-            CPLFormFilename(m_osDirName,
-                            (m_bUseReadDir || !m_aosDirContent.empty())
-                                ? m_aosDirContent[m_nXIndex]
-                                : CPLSPrintf("%d", m_nXIndex),
-                            nullptr);
+            CPLFormFilenameSafe(m_osDirName,
+                                (m_bUseReadDir || !m_aosDirContent.empty())
+                                    ? m_aosDirContent[m_nXIndex]
+                                    : CPLSPrintf("%d", m_nXIndex),
+                                nullptr);
         if (m_bUseReadDir)
         {
             m_aosSubDirContent =
@@ -1625,7 +1625,7 @@ void OGRMVTDirectoryLayer::OpenTile()
     m_poCurrentTile = nullptr;
     if (m_nYIndex < (m_bUseReadDir ? m_aosSubDirContent.Count() : (1 << m_nZ)))
     {
-        CPLString osFilename = CPLFormFilename(
+        CPLString osFilename = CPLFormFilenameSafe(
             m_aosSubDirName,
             m_bUseReadDir ? m_aosSubDirContent[m_nYIndex]
                           : CPLSPrintf("%d.%s", m_nYIndex,
@@ -1668,8 +1668,9 @@ void OGRMVTDirectoryLayer::OpenTileIfNeeded()
         if (m_bUseReadDir)
         {
             while (m_nYIndex < m_aosSubDirContent.Count() &&
-                   (CPLGetValueType(CPLGetBasename(
-                        m_aosSubDirContent[m_nYIndex])) != CPL_VALUE_INTEGER ||
+                   (CPLGetValueType(
+                        CPLGetBasenameSafe(m_aosSubDirContent[m_nYIndex])
+                            .c_str()) != CPL_VALUE_INTEGER ||
                     !IsBetween(atoi(m_aosSubDirContent[m_nYIndex]),
                                m_nFilterMinY, m_nFilterMaxY)))
             {
@@ -1849,8 +1850,8 @@ OGRFeature *OGRMVTDirectoryLayer::GetFeature(GIntBig nFID)
     const int nX = static_cast<int>(nFID & ((1 << m_nZ) - 1));
     const int nY = static_cast<int>((nFID >> m_nZ) & ((1 << m_nZ) - 1));
     const GIntBig nTileFID = nFID >> (2 * m_nZ);
-    const CPLString osFilename = CPLFormFilename(
-        CPLFormFilename(m_osDirName, CPLSPrintf("%d", nX), nullptr),
+    const CPLString osFilename = CPLFormFilenameSafe(
+        CPLFormFilenameSafe(m_osDirName, CPLSPrintf("%d", nX), nullptr).c_str(),
         CPLSPrintf("%d.%s", nY, m_poDS->m_osTileExtension.c_str()), nullptr);
     GDALOpenInfo oOpenInfo(("MVT:" + osFilename).c_str(), GA_ReadOnly);
     oOpenInfo.papszOpenOptions = CSLSetNameValue(
@@ -1954,8 +1955,9 @@ static int OGRMVTDriverIdentify(GDALOpenInfo *poOpenInfo)
             CPL_VALUE_INTEGER)
         {
             VSIStatBufL sStat;
-            CPLString osMetadataFile(CPLFormFilename(
-                CPLGetPath(poOpenInfo->pszFilename), "metadata.json", nullptr));
+            CPLString osMetadataFile(CPLFormFilenameSafe(
+                CPLGetPathSafe(poOpenInfo->pszFilename).c_str(),
+                "metadata.json", nullptr));
             const char *pszMetadataFile = CSLFetchNameValue(
                 poOpenInfo->papszOpenOptions, "METADATA_FILE");
             if (pszMetadataFile)
@@ -1973,10 +1975,10 @@ static int OGRMVTDriverIdentify(GDALOpenInfo *poOpenInfo)
             {
                 // tileserver-gl metadata file:
                 // If opening /path/to/foo/0, try looking for /path/to/foo.json
-                CPLString osParentDir(CPLGetPath(poOpenInfo->pszFilename));
+                CPLString osParentDir(CPLGetPathSafe(poOpenInfo->pszFilename));
                 osMetadataFile =
-                    CPLFormFilename(CPLGetPath(osParentDir),
-                                    CPLGetFilename(osParentDir), "json");
+                    CPLFormFilenameSafe(CPLGetPathSafe(osParentDir).c_str(),
+                                        CPLGetFilename(osParentDir), "json");
                 if (VSIStatL(osMetadataFile, &sStat) == 0)
                 {
                     return TRUE;
@@ -1984,28 +1986,29 @@ static int OGRMVTDriverIdentify(GDALOpenInfo *poOpenInfo)
             }
 
             // At least 3 files, to include the dummy . and ..
-            CPLStringList aosDirContent(
-                VSIReadDirEx(poOpenInfo->pszFilename, 3));
-            aosDirContent = StripDummyEntries(aosDirContent);
+            const CPLStringList aosDirContent = StripDummyEntries(
+                CPLStringList(VSIReadDirEx(poOpenInfo->pszFilename, 3)));
             if (!aosDirContent.empty() &&
                 CPLGetValueType(aosDirContent[0]) == CPL_VALUE_INTEGER)
             {
-                CPLString osSubDir = CPLFormFilename(poOpenInfo->pszFilename,
-                                                     aosDirContent[0], nullptr);
+                const std::string osSubDir = CPLFormFilenameSafe(
+                    poOpenInfo->pszFilename, aosDirContent[0], nullptr);
                 // At least 3 files, to include the dummy . and ..
-                CPLStringList aosSubDirContent(VSIReadDirEx(osSubDir, 10));
-                aosSubDirContent = StripDummyEntries(aosSubDirContent);
-                CPLString osTileExtension(CSLFetchNameValueDef(
+                const CPLStringList aosSubDirContent = StripDummyEntries(
+                    CPLStringList(VSIReadDirEx(osSubDir.c_str(), 10)));
+                const std::string osTileExtension(CSLFetchNameValueDef(
                     poOpenInfo->papszOpenOptions, "TILE_EXTENSION", "pbf"));
                 for (int i = 0; i < aosSubDirContent.Count(); i++)
                 {
-                    if (CPLGetValueType(CPLGetBasename(aosSubDirContent[i])) ==
+                    if (CPLGetValueType(
+                            CPLGetBasenameSafe(aosSubDirContent[i]).c_str()) ==
                         CPL_VALUE_INTEGER)
                     {
-                        CPLString osExtension(
-                            CPLGetExtension(aosSubDirContent[i]));
-                        if (EQUAL(osExtension, osTileExtension) ||
-                            EQUAL(osExtension, "mvt"))
+                        const std::string osExtension(
+                            CPLGetExtensionSafe(aosSubDirContent[i]));
+                        if (EQUAL(osExtension.c_str(),
+                                  osTileExtension.c_str()) ||
+                            EQUAL(osExtension.c_str(), "mvt"))
                         {
                             return TRUE;
                         }
@@ -2540,8 +2543,9 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
     if (nZ < 0 || nZ > 30)
         return nullptr;
 
-    CPLString osMetadataFile(CPLFormFilename(
-        CPLGetPath(poOpenInfo->pszFilename), "metadata.json", nullptr));
+    CPLString osMetadataFile(
+        CPLFormFilenameSafe(CPLGetPathSafe(poOpenInfo->pszFilename).c_str(),
+                            "metadata.json", nullptr));
     const char *pszMetadataFile =
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "METADATA_FILE");
     if (pszMetadataFile)
@@ -2582,10 +2586,11 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                     // tileserver-gl metadata file:
                     // If opening /path/to/foo/0, try looking for
                     // /path/to/foo.json
-                    CPLString osParentDir(CPLGetPath(poOpenInfo->pszFilename));
-                    osMetadataFile =
-                        CPLFormFilename(CPLGetPath(osParentDir),
-                                        CPLGetFilename(osParentDir), "json");
+                    CPLString osParentDir(
+                        CPLGetPathSafe(poOpenInfo->pszFilename));
+                    osMetadataFile = CPLFormFilenameSafe(
+                        CPLGetPathSafe(osParentDir).c_str(),
+                        CPLGetFilename(osParentDir), "json");
                     continue;
                 }
             }
@@ -2606,9 +2611,10 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
         {
             // tileserver-gl metadata file:
             // If opening /path/to/foo/0, try looking for /path/to/foo.json
-            CPLString osParentDir(CPLGetPath(poOpenInfo->pszFilename));
-            osMetadataFile = CPLFormFilename(
-                CPLGetPath(osParentDir), CPLGetFilename(osParentDir), "json");
+            CPLString osParentDir(CPLGetPathSafe(poOpenInfo->pszFilename));
+            osMetadataFile =
+                CPLFormFilenameSafe(CPLGetPathSafe(osParentDir).c_str(),
+                                    CPLGetFilename(osParentDir), "json");
             bMetadataFileExists = (VSIStatL(osMetadataFile, &sStat) == 0);
         }
     }
@@ -2645,7 +2651,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                     continue;
                 }
             }
-            CPLString osSubDir = CPLFormFilename(
+            CPLString osSubDir = CPLFormFilenameSafe(
                 poOpenInfo->pszFilename,
                 bTryToListDir ? aosDirContent[i] : CPLSPrintf("%d", i),
                 nullptr);
@@ -2661,13 +2667,14 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
             {
                 if (bTryToListDir)
                 {
-                    if (CPLGetValueType(CPLGetBasename(aosSubDirContent[j])) !=
+                    if (CPLGetValueType(
+                            CPLGetBasenameSafe(aosSubDirContent[j]).c_str()) !=
                         CPL_VALUE_INTEGER)
                     {
                         continue;
                     }
                 }
-                CPLString osFilename(CPLFormFilename(
+                const std::string osFilename(CPLFormFilenameSafe(
                     osSubDir,
                     bTryToListDir
                         ? aosSubDirContent[j]
@@ -2966,9 +2973,10 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    CPLString osY = CPLGetBasename(osFilename);
-    CPLString osX = CPLGetBasename(CPLGetPath(osFilename));
-    CPLString osZ = CPLGetBasename(CPLGetPath(CPLGetPath(osFilename)));
+    CPLString osY = CPLGetBasenameSafe(osFilename);
+    CPLString osX = CPLGetBasenameSafe(CPLGetPathSafe(osFilename).c_str());
+    CPLString osZ = CPLGetBasenameSafe(
+        CPLGetPathSafe(CPLGetPathSafe(osFilename).c_str()).c_str());
     size_t nPos = osY.find('.');
     if (nPos != std::string::npos)
         osY.resize(nPos);
@@ -2983,9 +2991,11 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
              CPLGetValueType(osY) == CPL_VALUE_INTEGER &&
              CPLGetValueType(osZ) == CPL_VALUE_INTEGER)
     {
-        osMetadataFile =
-            CPLFormFilename(CPLGetPath(CPLGetPath(CPLGetPath(osFilename))),
-                            "metadata.json", nullptr);
+        osMetadataFile = CPLFormFilenameSafe(
+            CPLGetPathSafe(
+                CPLGetPathSafe(CPLGetPathSafe(osFilename).c_str()).c_str())
+                .c_str(),
+            "metadata.json", nullptr);
         if (osMetadataFile.find("/vsigzip/") == 0)
         {
             osMetadataFile = osMetadataFile.substr(strlen("/vsigzip/"));
@@ -3093,7 +3103,8 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
         int nX = 0;
         int nY = 0;
         int nZ = 0;
-        CPLString osBasename(CPLGetBasename(CPLGetBasename(osFilename)));
+        CPLString osBasename(
+            CPLGetBasenameSafe(CPLGetBasenameSafe(osFilename).c_str()));
         if (sscanf(osBasename, "%d-%d-%d", &nZ, &nX, &nY) == 3 ||
             sscanf(osBasename, "%d_%d_%d", &nZ, &nX, &nY) == 3)
         {
@@ -5279,24 +5290,25 @@ bool OGRMVTWriterDataset::CreateOutput()
         }
         else
         {
-            CPLString osZDirname(CPLFormFilename(
+            const std::string osZDirname(CPLFormFilenameSafe(
                 GetDescription(), CPLSPrintf("%d", nZ), nullptr));
-            CPLString osXDirname(
-                CPLFormFilename(osZDirname, CPLSPrintf("%d", nX), nullptr));
+            const std::string osXDirname(CPLFormFilenameSafe(
+                osZDirname.c_str(), CPLSPrintf("%d", nX), nullptr));
             if (nZ != nLastZ)
             {
-                VSIMkdir(osZDirname, 0755);
+                VSIMkdir(osZDirname.c_str(), 0755);
                 nLastZ = nZ;
                 nLastX = -1;
             }
             if (nX != nLastX)
             {
-                VSIMkdir(osXDirname, 0755);
+                VSIMkdir(osXDirname.c_str(), 0755);
                 nLastX = nX;
             }
-            CPLString osTileFilename(CPLFormFilename(
-                osXDirname, CPLSPrintf("%d", nY), m_osExtension.c_str()));
-            VSILFILE *fpOut = VSIFOpenL(osTileFilename, "wb");
+            const std::string osTileFilename(
+                CPLFormFilenameSafe(osXDirname.c_str(), CPLSPrintf("%d", nY),
+                                    m_osExtension.c_str()));
+            VSILFILE *fpOut = VSIFOpenL(osTileFilename.c_str(), "wb");
             if (fpOut)
             {
                 const size_t nRet = VSIFWriteL(oTileBuffer.data(), 1,
@@ -5688,7 +5700,7 @@ bool OGRMVTWriterDataset::GenerateMetadata(
     }
 
     return oDoc.Save(
-        CPLFormFilename(GetDescription(), "metadata.json", nullptr));
+        CPLFormFilenameSafe(GetDescription(), "metadata.json", nullptr));
 }
 
 /************************************************************************/
@@ -5956,7 +5968,8 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
     }
 
     const char *pszFormat = CSLFetchNameValue(papszOptions, "FORMAT");
-    const bool bMBTILESExt = EQUAL(CPLGetExtension(pszFilename), "mbtiles");
+    const bool bMBTILESExt =
+        EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "mbtiles");
     if (pszFormat == nullptr && bMBTILESExt)
     {
         pszFormat = "MBTILES";
@@ -6133,8 +6146,8 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
         }
     }
 
-    poDS->m_osName =
-        CSLFetchNameValueDef(papszOptions, "NAME", CPLGetBasename(pszFilename));
+    poDS->m_osName = CSLFetchNameValueDef(
+        papszOptions, "NAME", CPLGetBasenameSafe(pszFilename).c_str());
     poDS->m_osDescription = CSLFetchNameValueDef(papszOptions, "DESCRIPTION",
                                                  poDS->m_osDescription.c_str());
     poDS->m_osType =

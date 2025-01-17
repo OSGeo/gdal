@@ -373,9 +373,9 @@ CPLErr HKVDataset::Close()
 
         if (bGeorefChanged)
         {
-            const char *pszFilename =
-                CPLFormFilename(pszPath, "georef", nullptr);
-            CSLSave(papszGeoref, pszFilename);
+            const std::string osFilename =
+                CPLFormFilenameSafe(pszPath, "georef", nullptr);
+            CSLSave(papszGeoref, osFilename.c_str());
         }
 
         if (bNoDataChanged)
@@ -430,13 +430,14 @@ CPLErr SaveHKVAttribFile(const char *pszFilenameIn, int nXSize, int nYSize,
                          double dfNoDataValue)
 
 {
-    const char *pszFilename = CPLFormFilename(pszFilenameIn, "attrib", nullptr);
+    const std::string osFilename =
+        CPLFormFilenameSafe(pszFilenameIn, "attrib", nullptr);
 
-    FILE *fp = VSIFOpen(pszFilename, "wt");
+    FILE *fp = VSIFOpen(osFilename.c_str(), "wt");
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Couldn't create %s.",
-                 pszFilename);
+                 osFilename.c_str());
         return CE_Failure;
     }
 
@@ -1254,23 +1255,25 @@ GDALDataset *HKVDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!poOpenInfo->bIsDirectory)
         return nullptr;
 
-    const char *pszFilename =
-        CPLFormFilename(poOpenInfo->pszFilename, "image_data", nullptr);
+    std::string osFilename =
+        CPLFormFilenameSafe(poOpenInfo->pszFilename, "image_data", nullptr);
     VSIStatBuf sStat;
-    if (VSIStat(pszFilename, &sStat) != 0)
-        pszFilename = CPLFormFilename(poOpenInfo->pszFilename, "blob", nullptr);
-    if (VSIStat(pszFilename, &sStat) != 0)
+    if (VSIStat(osFilename.c_str(), &sStat) != 0)
+        osFilename =
+            CPLFormFilenameSafe(poOpenInfo->pszFilename, "blob", nullptr);
+    if (VSIStat(osFilename.c_str(), &sStat) != 0)
         return nullptr;
 
-    pszFilename = CPLFormFilename(poOpenInfo->pszFilename, "attrib", nullptr);
-    if (VSIStat(pszFilename, &sStat) != 0)
+    osFilename =
+        CPLFormFilenameSafe(poOpenInfo->pszFilename, "attrib", nullptr);
+    if (VSIStat(osFilename.c_str(), &sStat) != 0)
         return nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Load the attrib file, and boil white space away from around     */
     /*      the equal sign.                                                 */
     /* -------------------------------------------------------------------- */
-    char **papszAttrib = CSLLoad(pszFilename);
+    char **papszAttrib = CSLLoad(osFilename.c_str());
     if (papszAttrib == nullptr)
         return nullptr;
 
@@ -1420,26 +1423,28 @@ GDALDataset *HKVDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Open the blob file.                                             */
     /* -------------------------------------------------------------------- */
-    pszFilename = CPLFormFilename(poDS->pszPath, "image_data", nullptr);
-    if (VSIStat(pszFilename, &sStat) != 0)
-        pszFilename = CPLFormFilename(poDS->pszPath, "blob", nullptr);
+    osFilename = CPLFormFilenameSafe(poDS->pszPath, "image_data", nullptr);
+    if (VSIStat(osFilename.c_str(), &sStat) != 0)
+        osFilename = CPLFormFilenameSafe(poDS->pszPath, "blob", nullptr);
     if (poOpenInfo->eAccess == GA_ReadOnly)
     {
-        poDS->fpBlob = VSIFOpenL(pszFilename, "rb");
+        poDS->fpBlob = VSIFOpenL(osFilename.c_str(), "rb");
         if (poDS->fpBlob == nullptr)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
-                     "Unable to open file %s for read access.", pszFilename);
+                     "Unable to open file %s for read access.",
+                     osFilename.c_str());
             return nullptr;
         }
     }
     else
     {
-        poDS->fpBlob = VSIFOpenL(pszFilename, "rb+");
+        poDS->fpBlob = VSIFOpenL(osFilename.c_str(), "rb+");
         if (poDS->fpBlob == nullptr)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
-                     "Unable to open file %s for update access.", pszFilename);
+                     "Unable to open file %s for update access.",
+                     osFilename.c_str());
             return nullptr;
         }
     }
@@ -1447,7 +1452,7 @@ GDALDataset *HKVDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Build the overview filename, as blob file = "_ovr".             */
     /* -------------------------------------------------------------------- */
-    std::string osOvrFilename(pszFilename);
+    std::string osOvrFilename(osFilename);
     osOvrFilename += "_ovr";
 
     /* -------------------------------------------------------------------- */
@@ -1476,9 +1481,9 @@ GDALDataset *HKVDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Process the georef file if there is one.                        */
     /* -------------------------------------------------------------------- */
-    pszFilename = CPLFormFilename(poDS->pszPath, "georef", nullptr);
-    if (VSIStat(pszFilename, &sStat) == 0)
-        poDS->ProcessGeoref(pszFilename);
+    osFilename = CPLFormFilenameSafe(poDS->pszPath, "georef", nullptr);
+    if (VSIStat(osFilename.c_str(), &sStat) == 0)
+        poDS->ProcessGeoref(osFilename.c_str());
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */
@@ -1531,10 +1536,10 @@ GDALDataset *HKVDataset::Create(const char *pszFilenameIn, int nXSize,
     /* -------------------------------------------------------------------- */
     char *pszBaseDir = nullptr;
 
-    if (strlen(CPLGetPath(pszFilenameIn)) == 0)
+    if (strlen(CPLGetPathSafe(pszFilenameIn).c_str()) == 0)
         pszBaseDir = CPLStrdup(".");
     else
-        pszBaseDir = CPLStrdup(CPLGetPath(pszFilenameIn));
+        pszBaseDir = CPLStrdup(CPLGetPathSafe(pszFilenameIn).c_str());
 
     VSIStatBuf sStat;
     if (CPLStat(pszBaseDir, &sStat) != 0 || !VSI_ISDIR(sStat.st_mode))
@@ -1570,13 +1575,13 @@ GDALDataset *HKVDataset::Create(const char *pszFilenameIn, int nXSize,
     /*      Create the blob file.                                           */
     /* -------------------------------------------------------------------- */
 
-    const char *pszFilename =
-        CPLFormFilename(pszFilenameIn, "image_data", nullptr);
-    FILE *fp = VSIFOpen(pszFilename, "wb");
+    const std::string osFilename =
+        CPLFormFilenameSafe(pszFilenameIn, "image_data", nullptr);
+    FILE *fp = VSIFOpen(osFilename.c_str(), "wb");
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Couldn't create %s.\n",
-                 pszFilename);
+                 osFilename.c_str());
         return nullptr;
     }
 
@@ -1620,14 +1625,14 @@ CPLErr HKVDataset::Delete(const char *pszName)
         if (EQUAL(papszFiles[i], ".") || EQUAL(papszFiles[i], ".."))
             continue;
 
-        const char *pszTarget =
-            CPLFormFilename(pszName, papszFiles[i], nullptr);
-        if (VSIUnlink(pszTarget) != 0)
+        const std::string osTarget =
+            CPLFormFilenameSafe(pszName, papszFiles[i], nullptr);
+        if (VSIUnlink(osTarget.c_str()) != 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unable to delete file %s,"
                      "HKVDataset Delete(%s) failed.",
-                     pszTarget, pszName);
+                     osTarget.c_str(), pszName);
             CSLDestroy(papszFiles);
             return CE_Failure;
         }

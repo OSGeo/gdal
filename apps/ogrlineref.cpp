@@ -66,8 +66,9 @@ static OGRLayer *SetupTargetLayer(OGRLayer *poSrcLayer, GDALDataset *poDstDS,
                                   const char *pszOutputSepFieldName = nullptr)
 {
     const CPLString szLayerName =
-        pszNewLayerName == nullptr ? CPLGetBasename(poDstDS->GetDescription())
-                                   : pszNewLayerName;
+        pszNewLayerName == nullptr
+            ? CPLGetBasenameSafe(poDstDS->GetDescription())
+            : pszNewLayerName;
 
     /* -------------------------------------------------------------------- */
     /*      Get other info.                                                 */
@@ -218,7 +219,8 @@ static OGRLayer *SetupTargetLayer(OGRLayer *poSrcLayer, GDALDataset *poDstDS,
 static void CheckDestDataSourceNameConsistency(const char *pszDestFilename,
                                                const char *pszDriverName)
 {
-    char *pszDestExtension = CPLStrdup(CPLGetExtension(pszDestFilename));
+    char *pszDestExtension =
+        CPLStrdup(CPLGetExtensionSafe(pszDestFilename).c_str());
 
     // TODO: Would be good to have driver metadata like for GDAL drivers.
     static const char *apszExtensions[][2] = {{"shp", "ESRI Shapefile"},

@@ -127,7 +127,7 @@ int OGRSVGDataSource::Open(const char *pszFilename)
     /*      Try to open the file.                                           */
     /* -------------------------------------------------------------------- */
     CPLString osFilename;  // keep in that scope
-    if (EQUAL(CPLGetExtension(pszFilename), "svgz") &&
+    if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "svgz") &&
         strstr(pszFilename, "/vsigzip/") == nullptr)
     {
         osFilename = CPLString("/vsigzip/") + pszFilename;

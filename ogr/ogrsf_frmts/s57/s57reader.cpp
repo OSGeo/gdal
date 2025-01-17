@@ -3369,7 +3369,7 @@ bool S57Reader::FindAndApplyUpdates(const char *pszPath)
     if (pszPath == nullptr)
         pszPath = pszModuleName;
 
-    if (!EQUAL(CPLGetExtension(pszPath), "000"))
+    if (!EQUAL(CPLGetExtensionSafe(pszPath).c_str(), "000"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Can't apply updates to a base file with a different\n"
@@ -3412,8 +3412,8 @@ bool S57Reader::FindAndApplyUpdates(const char *pszPath)
         DDFModule oUpdateModule;
 
         // trying current dir first
-        char *pszUpdateFilename =
-            CPLStrdup(CPLResetExtension(pszPath, extension.c_str()));
+        char *pszUpdateFilename = CPLStrdup(
+            CPLResetExtensionSafe(pszPath, extension.c_str()).c_str());
 
         VSILFILE *file = VSIFOpenL(pszUpdateFilename, "r");
         if (file)
@@ -3430,14 +3430,16 @@ bool S57Reader::FindAndApplyUpdates(const char *pszPath)
         }
         else  // File is store on Primar generated CD.
         {
-            char *pszBaseFileDir = CPLStrdup(CPLGetDirname(pszPath));
-            char *pszFileDir = CPLStrdup(CPLGetDirname(pszBaseFileDir));
+            char *pszBaseFileDir =
+                CPLStrdup(CPLGetDirnameSafe(pszPath).c_str());
+            char *pszFileDir =
+                CPLStrdup(CPLGetDirnameSafe(pszBaseFileDir).c_str());
 
             CPLString remotefile(pszFileDir);
             remotefile.append("/");
             remotefile.append(dirname);
             remotefile.append("/");
-            remotefile.append(CPLGetBasename(pszPath));
+            remotefile.append(CPLGetBasenameSafe(pszPath).c_str());
             remotefile.append(".");
             remotefile.append(extension);
             bSuccess =

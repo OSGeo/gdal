@@ -821,7 +821,7 @@ CPLErr GDALWriteRPCTXTFile(const char *pszFilename, char **papszMD)
 CPLErr GDALWriteRPBFile(const char *pszFilename, char **papszMD)
 
 {
-    CPLString osRPBFilename = CPLResetExtension(pszFilename, "RPB");
+    const CPLString osRPBFilename = CPLResetExtensionSafe(pszFilename, "RPB");
     if (papszMD == nullptr)
     {
         VSIUnlink(osRPBFilename);
@@ -1106,7 +1106,7 @@ static void GDALWriteIMDMultiLine(VSILFILE *fp, const char *pszValue)
 CPLErr GDALWriteIMDFile(const char *pszFilename, char **papszMD)
 
 {
-    CPLString osRPBFilename = CPLResetExtension(pszFilename, "IMD");
+    const CPLString osRPBFilename = CPLResetExtensionSafe(pszFilename, "IMD");
 
     /* -------------------------------------------------------------------- */
     /*      Read file and parse.                                            */

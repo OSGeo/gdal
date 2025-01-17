@@ -196,6 +196,9 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALPamDataset)
+
+    // cached return of GetMetadataItem("OVERVIEW_FILE", "OVERVIEWS")
+    std::string m_osOverviewFile{};
 };
 
 //! @cond Doxygen_Suppress

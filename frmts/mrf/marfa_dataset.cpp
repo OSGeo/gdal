@@ -623,7 +623,7 @@ GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
         else if (poOpenInfo->eAccess == GA_ReadOnly && fn.size() > 600 &&
                  (fn[262] == 0 || fn[262] == 32) &&
                  STARTS_WITH(fn.c_str() + 257, "ustar") &&
-                 strlen(CPLGetPath(fn.c_str())) == 0 &&
+                 strlen(CPLGetPathSafe(fn.c_str()).c_str()) == 0 &&
                  STARTS_WITH(fn.c_str() + 512, "<MRF_META>"))
         {  // An MRF inside a tar
             insidefn = string("/vsitar/") + pszFileName + "/" + pszHeader;

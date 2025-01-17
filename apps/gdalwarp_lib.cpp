@@ -1476,7 +1476,7 @@ static bool CheckOptions(const char *pszDest, GDALDatasetH hDstDS,
     }
 
     if ((psOptions->osFormat.empty() &&
-         EQUAL(CPLGetExtension(pszDest), "VRT")) ||
+         EQUAL(CPLGetExtensionSafe(pszDest).c_str(), "VRT")) ||
         (EQUAL(psOptions->osFormat.c_str(), "VRT")))
     {
         if (hDstDS != nullptr)

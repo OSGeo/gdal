@@ -957,7 +957,7 @@ std::string IVSIS3LikeFSHandlerWithMultipartUpload::InitiateMultipartUpload(
         else
         {
             InvalidateCachedData(poS3HandleHelper->GetURL().c_str());
-            InvalidateDirContent(CPLGetDirname(osFilename.c_str()));
+            InvalidateDirContent(CPLGetDirnameSafe(osFilename.c_str()));
 
             CPLXMLNode *psNode =
                 CPLParseXMLString(requestHelper.sWriteFuncData.pBuffer);
@@ -1188,7 +1188,8 @@ void VSIMultipartWriteHandle::InvalidateParentDirectory()
     std::string osFilenameWithoutSlash(m_osFilename);
     if (!osFilenameWithoutSlash.empty() && osFilenameWithoutSlash.back() == '/')
         osFilenameWithoutSlash.pop_back();
-    m_poFS->InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
+    m_poFS->InvalidateDirContent(
+        CPLGetDirnameSafe(osFilenameWithoutSlash.c_str()));
 }
 
 /************************************************************************/
@@ -1786,7 +1787,7 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
             return nullptr;
         }
 
-        const std::string osTmpFilename(CPLGenerateTempFilename(nullptr));
+        const std::string osTmpFilename(CPLGenerateTempFilenameSafe(nullptr));
         if (strchr(pszAccess, 'r'))
         {
             auto poExistingFile =
@@ -1831,7 +1832,7 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
         // If there's directory content for the directory where this file
         // belongs to, use it to detect if the object does not exist
         CachedDirList cachedDirList;
-        const std::string osDirname(CPLGetDirname(pszFilename));
+        const std::string osDirname(CPLGetDirnameSafe(pszFilename));
         if (STARTS_WITH_CI(osDirname.c_str(), GetFSPrefix().c_str()) &&
             GetCachedDirList(osDirname.c_str(), cachedDirList) &&
             cachedDirList.bGotFileList)
@@ -2260,7 +2261,7 @@ std::set<std::string> VSIS3FSHandler::DeleteObjects(const char *pszBucket,
                             InvalidateCachedData(
                                 (poS3HandleHelper->GetURL() + osKey).c_str());
 
-                            InvalidateDirContent(CPLGetDirname(
+                            InvalidateDirContent(CPLGetDirnameSafe(
                                 (GetFSPrefix() + pszBucket + "/" + osKey)
                                     .c_str()));
                         }
@@ -2628,7 +2629,8 @@ int IVSIS3LikeFSHandler::MkdirInternal(const char *pszDirname, long /*nMode*/,
         std::string osDirnameWithoutEndSlash(osDirname);
         osDirnameWithoutEndSlash.pop_back();
 
-        InvalidateDirContent(CPLGetDirname(osDirnameWithoutEndSlash.c_str()));
+        InvalidateDirContent(
+            CPLGetDirnameSafe(osDirnameWithoutEndSlash.c_str()));
 
         FileProp cachedFileProp;
         GetCachedFileProp(GetURLFromFilename(osDirname.c_str()).c_str(),
@@ -2742,7 +2744,8 @@ int IVSIS3LikeFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
     // If there's directory content for the directory where this file belongs
     // to, use it to detect if the object does not exist
     CachedDirList cachedDirList;
-    const std::string osDirname(CPLGetDirname(osFilenameWithoutSlash.c_str()));
+    const std::string osDirname(
+        CPLGetDirnameSafe(osFilenameWithoutSlash.c_str()));
     if (STARTS_WITH_CI(osDirname.c_str(), GetFSPrefix().c_str()) &&
         GetCachedDirList(osDirname.c_str(), cachedDirList) &&
         cachedDirList.bGotFileList)
@@ -2912,9 +2915,9 @@ int IVSIS3LikeFSHandler::Rename(const char *oldpath, const char *newpath)
         for (int i = 0; i < aosList.size(); i++)
         {
             const std::string osSrc =
-                CPLFormFilename(oldpath, aosList[i], nullptr);
+                CPLFormFilenameSafe(oldpath, aosList[i], nullptr);
             const std::string osTarget =
-                CPLFormFilename(newpath, aosList[i], nullptr);
+                CPLFormFilenameSafe(newpath, aosList[i], nullptr);
             if (Rename(osSrc.c_str(), osTarget.c_str()) != 0)
             {
                 return -1;
@@ -3066,7 +3069,8 @@ int IVSIS3LikeFSHandler::CopyObject(const char *oldpath, const char *newpath,
                 osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() -
                                               1);
 
-            InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
+            InvalidateDirContent(
+                CPLGetDirnameSafe(osFilenameWithoutSlash.c_str()));
         }
 
         curl_easy_cleanup(hCurlHandle);
@@ -3166,7 +3170,8 @@ int IVSIS3LikeFSHandler::DeleteObject(const char *pszFilename)
                 osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() -
                                               1);
 
-            InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
+            InvalidateDirContent(
+                CPLGetDirnameSafe(osFilenameWithoutSlash.c_str()));
         }
 
         curl_easy_cleanup(hCurlHandle);
@@ -4235,8 +4240,8 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         osTargetDir = pszTarget;
         if (osSource.back() != '/' && osSource.back() != '\\')
         {
-            osTargetDir = CPLFormFilename(osTargetDir.c_str(),
-                                          CPLGetFilename(pszSource), nullptr);
+            osTargetDir = CPLFormFilenameSafe(
+                osTargetDir.c_str(), CPLGetFilename(pszSource), nullptr);
         }
 
         if (!poSourceDir)
@@ -4300,7 +4305,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                 if (oSetTargetSubdirs.find(osDstName) ==
                     oSetTargetSubdirs.end())
                 {
-                    const std::string osTargetSubdir(CPLFormFilename(
+                    const std::string osTargetSubdir(CPLFormFilenameSafe(
                         osTargetDir.c_str(), osDstName.c_str(), nullptr));
                     aoSetDirsToCreate.insert(osTargetSubdir);
                 }
@@ -4368,9 +4373,9 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
             if (chunk.nStartOffset != 0)
                 continue;
             const std::string osSubSource(
-                CPLFormFilename(osSourceWithoutSlash.c_str(),
-                                chunk.osSrcFilename.c_str(), nullptr));
-            const std::string osSubTarget(CPLFormFilename(
+                CPLFormFilenameSafe(osSourceWithoutSlash.c_str(),
+                                    chunk.osSrcFilename.c_str(), nullptr));
+            const std::string osSubTarget(CPLFormFilenameSafe(
                 osTargetDir.c_str(), chunk.osDstFilename.c_str(), nullptr));
             bool bSkip = false;
             const auto oIterExistingTarget =
@@ -4492,9 +4497,9 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                 const auto &chunk = aoChunksToCopy[iChunk];
                 CPLAssert(chunk.nStartOffset == 0);
                 const std::string osSubSource(
-                    CPLFormFilename(osSourceWithoutSlash.c_str(),
-                                    chunk.osSrcFilename.c_str(), nullptr));
-                const std::string osSubTarget(CPLFormFilename(
+                    CPLFormFilenameSafe(osSourceWithoutSlash.c_str(),
+                                        chunk.osSrcFilename.c_str(), nullptr));
+                const std::string osSubTarget(CPLFormFilenameSafe(
                     osTargetDir.c_str(), chunk.osDstFilename.c_str(), nullptr));
                 // coverity[divide_by_zero]
                 void *pScaledProgress = GDALCreateScaledProgress(
@@ -4530,8 +4535,8 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
             bTargetIsFile = true;
             if (VSI_ISDIR(sTarget.st_mode))
             {
-                osTarget = CPLFormFilename(osTarget.c_str(),
-                                           CPLGetFilename(pszSource), nullptr);
+                osTarget = CPLFormFilenameSafe(
+                    osTarget.c_str(), CPLGetFilename(pszSource), nullptr);
                 bTargetIsFile = VSIStatL(osTarget.c_str(), &sTarget) == 0 &&
                                 !CPL_TO_BOOL(VSI_ISDIR(sTarget.st_mode));
             }
@@ -4794,14 +4799,16 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                 queue->aoChunksToCopy[queue->anIndexToCopy[idx]];
             const std::string osSubSource(
                 queue->osTargetDir.empty()
-                    ? queue->osSource.c_str()
-                    : CPLFormFilename(queue->osSourceDir.c_str(),
-                                      chunk.osSrcFilename.c_str(), nullptr));
+                    ? queue->osSource
+                    : CPLFormFilenameSafe(queue->osSourceDir.c_str(),
+                                          chunk.osSrcFilename.c_str(),
+                                          nullptr));
             const std::string osSubTarget(
                 queue->osTargetDir.empty()
-                    ? queue->osTarget.c_str()
-                    : CPLFormFilename(queue->osTargetDir.c_str(),
-                                      chunk.osDstFilename.c_str(), nullptr));
+                    ? queue->osTarget
+                    : CPLFormFilenameSafe(queue->osTargetDir.c_str(),
+                                          chunk.osDstFilename.c_str(),
+                                          nullptr));
 
             ProgressData progressData;
             progressData.nFileSize = chunk.nSize;
@@ -4964,7 +4971,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                     oSetKeysToRemove.insert(kv.first);
 
                     InvalidateCachedData(poS3HandleHelper->GetURL().c_str());
-                    InvalidateDirContent(CPLGetDirname(kv.first.c_str()));
+                    InvalidateDirContent(CPLGetDirnameSafe(kv.first.c_str()));
                 }
             }
         }

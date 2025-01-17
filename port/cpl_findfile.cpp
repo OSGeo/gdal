@@ -139,12 +139,12 @@ const char *CPLDefaultFindFile(const char *pszClass, const char *pszBasename)
 
     for (int i = nLocations - 1; i >= 0; i--)
     {
-        const char *pszResult = CPLFormFilename(
+        const std::string osResult = CPLFormFilenameSafe(
             pTLSData->papszFinderLocations[i], pszBasename, nullptr);
 
         VSIStatBufL sStat;
-        if (VSIStatL(pszResult, &sStat) == 0)
-            return pszResult;
+        if (VSIStatL(osResult.c_str(), &sStat) == 0)
+            return CPLSPrintf("%s", osResult.c_str());
     }
 
     if (EQUAL(pszClass, "gdal") && !CPLGetConfigOption("GDAL_DATA", nullptr))

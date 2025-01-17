@@ -2624,9 +2624,9 @@ CPLErr HFARasterBand::CleanOverviews()
     // this.
     if (hHFA->psDependent != hHFA && hHFA->psDependent != nullptr)
     {
-        CPLString osFilename =
-            CPLFormFilename(hHFA->psDependent->pszPath,
-                            hHFA->psDependent->pszFilename, nullptr);
+        const CPLString osFilename =
+            CPLFormFilenameSafe(hHFA->psDependent->pszPath,
+                                hHFA->psDependent->pszFilename, nullptr);
 
         CPL_IGNORE_RET_VAL(HFAClose(hHFA->psDependent));
         hHFA->psDependent = nullptr;
@@ -4727,11 +4727,12 @@ const GDAL_GCP *HFADataset::GetGCPs()
 char **HFADataset::GetFileList()
 
 {
-    char **papszFileList = GDALPamDataset::GetFileList();
+    CPLStringList oFileList(GDALPamDataset::GetFileList());
 
-    if (HFAGetIGEFilename(hHFA) != nullptr)
+    const std::string osIGEFilename = HFAGetIGEFilename(hHFA);
+    if (!osIGEFilename.empty())
     {
-        papszFileList = CSLAddString(papszFileList, HFAGetIGEFilename(hHFA));
+        oFileList.push_back(osIGEFilename);
     }
 
     // Request an overview to force opening of dependent overview files.
@@ -4742,16 +4743,15 @@ char **HFADataset::GetFileList()
     {
         HFAInfo_t *psDep = hHFA->psDependent;
 
-        papszFileList = CSLAddString(
-            papszFileList,
-            CPLFormFilename(psDep->pszPath, psDep->pszFilename, nullptr));
+        oFileList.push_back(
+            CPLFormFilenameSafe(psDep->pszPath, psDep->pszFilename, nullptr));
 
-        if (HFAGetIGEFilename(psDep) != nullptr)
-            papszFileList =
-                CSLAddString(papszFileList, HFAGetIGEFilename(psDep));
+        const std::string osIGEFilenameDep = HFAGetIGEFilename(psDep);
+        if (!osIGEFilenameDep.empty())
+            oFileList.push_back(osIGEFilenameDep);
     }
 
-    return papszFileList;
+    return oFileList.StealList();
 }
 
 /************************************************************************/
@@ -4894,8 +4894,8 @@ CPLErr HFADataset::Rename(const char *pszNewName, const char *pszOldName)
         return eErr;
 
     // Now try to go into the .img file and update RRDNames[] lists.
-    CPLString osOldBasename = CPLGetBasename(pszOldName);
-    CPLString osNewBasename = CPLGetBasename(pszNewName);
+    CPLString osOldBasename = CPLGetBasenameSafe(pszOldName);
+    CPLString osNewBasename = CPLGetBasenameSafe(pszNewName);
 
     if (osOldBasename != osNewBasename)
     {
@@ -4936,8 +4936,8 @@ CPLErr HFADataset::CopyFiles(const char *pszNewName, const char *pszOldName)
         return eErr;
 
     // Now try to go into the .img file and update RRDNames[] lists.
-    CPLString osOldBasename = CPLGetBasename(pszOldName);
-    CPLString osNewBasename = CPLGetBasename(pszNewName);
+    CPLString osOldBasename = CPLGetBasenameSafe(pszOldName);
+    CPLString osNewBasename = CPLGetBasenameSafe(pszNewName);
 
     if (osOldBasename != osNewBasename)
     {

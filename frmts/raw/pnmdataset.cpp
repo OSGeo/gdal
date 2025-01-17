@@ -328,7 +328,7 @@ GDALDataset *PNMDataset::Create(const char *pszFilename, int nXSize, int nYSize,
 
         return nullptr;
     }
-    const CPLString osExt(CPLGetExtension(pszFilename));
+    const CPLString osExt(CPLGetExtensionSafe(pszFilename));
     if (nBandsIn == 1)
     {
         if (!EQUAL(osExt, "PGM"))

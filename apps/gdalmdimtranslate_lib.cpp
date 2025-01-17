@@ -1794,7 +1794,7 @@ GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     {
         if (osFormat.empty())
         {
-            if (EQUAL(CPLGetExtension(pszDest), "nc"))
+            if (EQUAL(CPLGetExtensionSafe(pszDest).c_str(), "nc"))
                 osFormat = "netCDF";
             else
                 osFormat = GetOutputDriverForRaster(pszDest);

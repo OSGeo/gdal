@@ -34,7 +34,7 @@ CPLString TileDBDataset::VSI_to_tiledb_uri(const char *pszUri)
         {
             char *pszCurDir = CPLGetCurrentDir();
             if (pszCurDir)
-                osUri = CPLFormFilename(pszCurDir, pszUri, nullptr);
+                osUri = CPLFormFilenameSafe(pszCurDir, pszUri, nullptr);
             CPLFree(pszCurDir);
         }
     }

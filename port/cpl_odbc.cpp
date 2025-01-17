@@ -167,11 +167,8 @@ bool CPLODBCDriverInstaller::FindMdbToolsDriverLib(CPLString &osDriverFile)
         if (VSIStat(pszDrvCfg, &sStatBuf) == 0 && VSI_ISDIR(sStatBuf.st_mode))
         {
             // Find default library in custom directory
-            const char *pszDriverFile =
-                CPLFormFilename(pszDrvCfg, "libmdbodbc.so", nullptr);
-            CPLAssert(nullptr != pszDriverFile);
-
-            strLibPath = pszDriverFile;
+            strLibPath =
+                CPLFormFilenameSafe(pszDrvCfg, "libmdbodbc.so", nullptr);
         }
 
         if (LibraryExists(strLibPath.c_str()))
@@ -216,14 +213,12 @@ bool CPLODBCDriverInstaller::FindMdbToolsDriverLib(CPLString &osDriverFile)
     {
         for (const char *pszLibName : apszLibNames)
         {
-            const char *pszDriverFile =
-                CPLFormFilename(pszPath, pszLibName, nullptr);
-            CPLAssert(nullptr != pszDriverFile);
-
-            if (LibraryExists(pszDriverFile))
+            const std::string osDriverFileAttempt =
+                CPLFormFilenameSafe(pszPath, pszLibName, nullptr);
+            if (LibraryExists(osDriverFileAttempt.c_str()))
             {
                 // Save default driver path
-                osDriverFile = pszDriverFile;
+                osDriverFile = osDriverFileAttempt;
                 return true;
             }
         }

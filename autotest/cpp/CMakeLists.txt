@@ -115,6 +115,7 @@ endif()
 gdal_standard_includes(gdal_unit_test)
 target_compile_options(gdal_unit_test PRIVATE ${GDAL_CXX_WARNING_FLAGS})
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
+target_compile_definitions(gdal_unit_test PRIVATE ALLOW_DEPRECATED_CPL_PATH_FUNCTIONS)
 target_include_directories(
   gdal_unit_test PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_DIR> $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 if (GDAL_USE_SQLITE3)

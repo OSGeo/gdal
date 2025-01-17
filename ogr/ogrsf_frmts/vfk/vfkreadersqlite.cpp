@@ -54,7 +54,7 @@ VFKReaderSQLite::VFKReaderSQLite(const GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            osDbName = CPLResetExtension(m_pszFilename, "db");
+            osDbName = CPLResetExtensionSafe(m_pszFilename, "db");
         }
         nLen = osDbName.length();
         if (nLen > 2048)

@@ -1684,7 +1684,7 @@ static bool add_file_to_list(const char *filename, const char *tile_index,
                              CPLStringList &aosList)
 {
 
-    if (EQUAL(CPLGetExtension(filename), "SHP"))
+    if (EQUAL(CPLGetExtensionSafe(filename).c_str(), "SHP"))
     {
         /* Handle gdaltindex Shapefile as a special case */
         auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(filename));

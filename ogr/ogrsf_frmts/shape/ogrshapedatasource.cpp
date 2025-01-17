@@ -155,7 +155,8 @@ bool OGRShapeDataSource::OpenZip(GDALOpenInfo *poOpenInfo,
     SetDescription(pszOriFilename);
 
     m_bIsZip = true;
-    m_bSingleLayerZip = EQUAL(CPLGetExtension(pszOriFilename), "shz");
+    m_bSingleLayerZip =
+        EQUAL(CPLGetExtensionSafe(pszOriFilename).c_str(), "shz");
 
     if (!m_bSingleLayerZip)
     {
@@ -188,7 +189,8 @@ bool OGRShapeDataSource::CreateZip(const char *pszOriFilename)
         return false;
     eAccess = GA_Update;
     m_bIsZip = true;
-    m_bSingleLayerZip = EQUAL(CPLGetExtension(pszOriFilename), "shz");
+    m_bSingleLayerZip =
+        EQUAL(CPLGetExtensionSafe(pszOriFilename).c_str(), "shz");
     return true;
 }
 
@@ -266,8 +268,7 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
         for (int iCan = 0; iCan < nCandidateCount; iCan++)
         {
             const char *pszCandidate = papszCandidates[iCan];
-            const char *pszLayerName = CPLGetBasename(pszCandidate);
-            CPLString osLayerName(pszLayerName);
+            CPLString osLayerName(CPLGetBasenameSafe(pszCandidate));
 #ifdef _WIN32
             // On Windows, as filenames are case insensitive, a shapefile layer
             // can be made of foo.shp and FOO.DBF, so to detect unique layer
@@ -282,8 +283,8 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
                 !EQUAL(pszCandidate + strlen(pszCandidate) - 4, ".shp"))
                 continue;
 
-            char *pszFilename =
-                CPLStrdup(CPLFormFilename(pszNewName, pszCandidate, nullptr));
+            char *pszFilename = CPLStrdup(
+                CPLFormFilenameSafe(pszNewName, pszCandidate, nullptr).c_str());
 
             osLayerNameSet.insert(osLayerName);
 #ifdef IMMEDIATE_OPENING
@@ -308,8 +309,8 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
         for (int iCan = 0; iCan < nCandidateCount; iCan++)
         {
             const char *pszCandidate = papszCandidates[iCan];
-            const char *pszLayerName = CPLGetBasename(pszCandidate);
-            CPLString osLayerName(pszLayerName);
+            const std::string osLayerNameOri = CPLGetBasenameSafe(pszCandidate);
+            CPLString osLayerName(osLayerNameOri);
 #ifdef _WIN32
             osLayerName.toupper();
 #endif
@@ -334,16 +335,17 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
             {
                 const char *pszCandidate2 = papszCandidates[iCan2];
 
-                if (EQUALN(pszCandidate2, pszLayerName, strlen(pszLayerName)) &&
-                    EQUAL(pszCandidate2 + strlen(pszLayerName), ".tab"))
+                if (EQUALN(pszCandidate2, osLayerNameOri.c_str(),
+                           osLayerNameOri.size()) &&
+                    EQUAL(pszCandidate2 + osLayerNameOri.size(), ".tab"))
                     bFoundTAB = true;
             }
 
             if (bFoundTAB)
                 continue;
 
-            char *pszFilename =
-                CPLStrdup(CPLFormFilename(pszNewName, pszCandidate, nullptr));
+            char *pszFilename = CPLStrdup(
+                CPLFormFilenameSafe(pszNewName, pszCandidate, nullptr).c_str());
 
             osLayerNameSet.insert(osLayerName);
 
@@ -386,10 +388,11 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
 bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
 
 {
-    const char *pszExtension = CPLGetExtension(pszNewName);
+    const std::string osExtension = CPLGetExtensionSafe(pszNewName);
 
-    if (!EQUAL(pszExtension, "shp") && !EQUAL(pszExtension, "shx") &&
-        !EQUAL(pszExtension, "dbf"))
+    if (!EQUAL(osExtension.c_str(), "shp") &&
+        !EQUAL(osExtension.c_str(), "shx") &&
+        !EQUAL(osExtension.c_str(), "dbf"))
         return false;
 
     /* -------------------------------------------------------------------- */
@@ -412,7 +415,7 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
 
     const bool bRestoreSHX =
         CPLTestBool(CPLGetConfigOption("SHAPE_RESTORE_SHX", "FALSE"));
-    if (bRestoreSHX && EQUAL(CPLGetExtension(pszNewName), "dbf") &&
+    if (bRestoreSHX && EQUAL(CPLGetExtensionSafe(pszNewName).c_str(), "dbf") &&
         CPLGetLastErrorMsg()[0] != '\0')
     {
         CPLString osMsg = CPLGetLastErrorMsg();
@@ -422,7 +425,7 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
     else
     {
         if (hSHP == nullptr &&
-            (!EQUAL(CPLGetExtension(pszNewName), "dbf") ||
+            (!EQUAL(CPLGetExtensionSafe(pszNewName).c_str(), "dbf") ||
              strstr(CPLGetLastErrorMsg(), ".shp") == nullptr))
         {
             CPLString osMsg = CPLGetLastErrorMsg();
@@ -440,7 +443,8 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
     /*      file or has to refer to the actual .dbf file.                   */
     /* -------------------------------------------------------------------- */
     DBFHandle hDBF = nullptr;
-    if (hSHP != nullptr || EQUAL(CPLGetExtension(pszNewName), "dbf"))
+    if (hSHP != nullptr ||
+        EQUAL(CPLGetExtensionSafe(pszNewName).c_str(), "dbf"))
     {
         if (bRealUpdateAccess)
         {
@@ -450,19 +454,19 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
                 for (int i = 0; i < 2; i++)
                 {
                     VSIStatBufL sStat;
-                    const char *pszDBFName =
-                        CPLResetExtension(pszNewName, (i == 0) ? "dbf" : "DBF");
+                    const std::string osDBFName = CPLResetExtensionSafe(
+                        pszNewName, (i == 0) ? "dbf" : "DBF");
                     VSILFILE *fp = nullptr;
-                    if (VSIStatExL(pszDBFName, &sStat, VSI_STAT_EXISTS_FLAG) ==
-                        0)
+                    if (VSIStatExL(osDBFName.c_str(), &sStat,
+                                   VSI_STAT_EXISTS_FLAG) == 0)
                     {
-                        fp = VSIFOpenL(pszDBFName, "r+");
+                        fp = VSIFOpenL(osDBFName.c_str(), "r+");
                         if (fp == nullptr)
                         {
                             CPLError(CE_Failure, CPLE_OpenFailed,
                                      "%s exists, "
                                      "but cannot be opened in update mode",
-                                     pszDBFName);
+                                     osDBFName.c_str());
                             SHPClose(hSHP);
                             return false;
                         }
@@ -536,7 +540,7 @@ void OGRShapeDataSource::AddLayer(OGRShapeLayer *poLayer)
 
 static CPLString LaunderLayerName(const char *pszLayerName)
 {
-    std::string osRet(CPLLaunderForFilename(pszLayerName, nullptr));
+    std::string osRet(CPLLaunderForFilenameSafe(pszLayerName, nullptr));
     if (osRet != pszLayerName)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -783,11 +787,12 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
 
     if (bSingleFileDataSource && nLayers == 0)
     {
-        char *pszPath = CPLStrdup(CPLGetPath(GetDescription()));
-        char *pszFBasename = CPLStrdup(CPLGetBasename(GetDescription()));
+        char *pszPath = CPLStrdup(CPLGetPathSafe(GetDescription()).c_str());
+        char *pszFBasename =
+            CPLStrdup(CPLGetBasenameSafe(GetDescription()).c_str());
 
-        pszFilenameWithoutExt =
-            CPLStrdup(CPLFormFilename(pszPath, pszFBasename, nullptr));
+        pszFilenameWithoutExt = CPLStrdup(
+            CPLFormFilenameSafe(pszPath, pszFBasename, nullptr).c_str());
 
         CPLFree(pszFBasename);
         CPLFree(pszPath);
@@ -800,9 +805,11 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
         // directory as 'foo.shp'
         // So technically, we will not be any longer a single file
         // datasource ... Ahem ahem.
-        char *pszPath = CPLStrdup(CPLGetPath(GetDescription()));
-        pszFilenameWithoutExt = CPLStrdup(CPLFormFilename(
-            pszPath, LaunderLayerName(pszLayerName).c_str(), nullptr));
+        char *pszPath = CPLStrdup(CPLGetPathSafe(GetDescription()).c_str());
+        pszFilenameWithoutExt = CPLStrdup(
+            CPLFormFilenameSafe(pszPath, LaunderLayerName(pszLayerName).c_str(),
+                                nullptr)
+                .c_str());
         CPLFree(pszPath);
     }
     else
@@ -810,8 +817,10 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
         const std::string osDir(m_osTemporaryUnzipDir.empty()
                                     ? std::string(GetDescription())
                                     : m_osTemporaryUnzipDir);
-        pszFilenameWithoutExt = CPLStrdup(CPLFormFilename(
-            osDir.c_str(), LaunderLayerName(pszLayerName).c_str(), nullptr));
+        pszFilenameWithoutExt = CPLStrdup(
+            CPLFormFilenameSafe(osDir.c_str(),
+                                LaunderLayerName(pszLayerName).c_str(), nullptr)
+                .c_str());
     }
 
     /* -------------------------------------------------------------------- */
@@ -824,8 +833,8 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
 
     if (nShapeType != SHPT_NULL)
     {
-        char *pszFilename =
-            CPLStrdup(CPLFormFilename(nullptr, pszFilenameWithoutExt, "shp"));
+        char *pszFilename = CPLStrdup(
+            CPLFormFilenameSafe(nullptr, pszFilenameWithoutExt, "shp").c_str());
 
         hSHP = SHPCreateLL(pszFilename, nShapeType,
                            const_cast<SAHooks *>(VSI_SHP_GetHook(l_b2GBLimit)));
@@ -850,8 +859,8 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Create a DBF file.                                              */
     /* -------------------------------------------------------------------- */
-    char *pszFilename =
-        CPLStrdup(CPLFormFilename(nullptr, pszFilenameWithoutExt, "dbf"));
+    char *pszFilename = CPLStrdup(
+        CPLFormFilenameSafe(nullptr, pszFilenameWithoutExt, "dbf").c_str());
 
     DBFHandle hDBF =
         DBFCreateLL(pszFilename, (pszLDID != nullptr) ? pszLDID : "LDID/87",
@@ -876,7 +885,8 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
     OGRSpatialReference *poSRSClone = nullptr;
     if (poSRS != nullptr)
     {
-        osPrjFilename = CPLFormFilename(nullptr, pszFilenameWithoutExt, "prj");
+        osPrjFilename =
+            CPLFormFilenameSafe(nullptr, pszFilenameWithoutExt, "prj");
         poSRSClone = poSRS->Clone();
 
         char *pszWKT = nullptr;
@@ -898,8 +908,8 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
     // OGRShapeLayer constructor expects a filename with an extension (that
     // could be random actually), otherwise this is going to cause problems with
     // layer names that have a dot (not speaking about the one before the shp)
-    pszFilename =
-        CPLStrdup(CPLFormFilename(nullptr, pszFilenameWithoutExt, "shp"));
+    pszFilename = CPLStrdup(
+        CPLFormFilenameSafe(nullptr, pszFilenameWithoutExt, "shp").c_str());
 
     OGRShapeLayer *poLayer =
         new OGRShapeLayer(this, pszFilename, hSHP, hDBF, poSRSClone,
@@ -965,12 +975,12 @@ int OGRShapeDataSource::GetLayerCount()
         for (size_t i = 0; i < oVectorLayerName.size(); i++)
         {
             const char *pszFilename = oVectorLayerName[i].c_str();
-            const char *pszLayerName = CPLGetBasename(pszFilename);
+            const std::string osLayerName = CPLGetBasenameSafe(pszFilename);
 
             int j = 0;  // Used after for.
             for (; j < nLayers; j++)
             {
-                if (strcmp(papoLayers[j]->GetName(), pszLayerName) == 0)
+                if (papoLayers[j]->GetName() == osLayerName)
                     break;
             }
             if (j < nLayers)
@@ -1030,16 +1040,16 @@ OGRLayer *OGRShapeDataSource::GetLayerByName(const char *pszLayerNameIn)
             for (size_t i = 0; i < oVectorLayerName.size(); i++)
             {
                 const char *pszFilename = oVectorLayerName[i].c_str();
-                const char *pszLayerName = CPLGetBasename(pszFilename);
+                const std::string osLayerName = CPLGetBasenameSafe(pszFilename);
 
                 if (j == 0)
                 {
-                    if (strcmp(pszLayerName, pszLayerNameIn) != 0)
+                    if (osLayerName != pszLayerNameIn)
                         continue;
                 }
                 else
                 {
-                    if (!EQUAL(pszLayerName, pszLayerNameIn))
+                    if (!EQUAL(osLayerName.c_str(), pszLayerNameIn))
                         continue;
                 }
 
@@ -1317,11 +1327,11 @@ OGRErr OGRShapeDataSource::DeleteLayer(int iLayer)
         OGRShapeDataSource::GetExtensionsForDeletion();
     for (int iExt = 0; papszExtensions[iExt] != nullptr; iExt++)
     {
-        const char *pszFile =
-            CPLResetExtension(pszFilename, papszExtensions[iExt]);
+        const std::string osFile =
+            CPLResetExtensionSafe(pszFilename, papszExtensions[iExt]);
         VSIStatBufL sStatBuf;
-        if (VSIStatL(pszFile, &sStatBuf) == 0)
-            VSIUnlink(pszFile);
+        if (VSIStatL(osFile.c_str(), &sStatBuf) == 0)
+            VSIUnlink(osFile.c_str());
     }
 
     CPLFree(pszFilename);
@@ -1519,8 +1529,8 @@ bool OGRShapeDataSource::UncompressIfNeeded()
         const char *pszFilename = aosFiles[i];
         if (!EQUAL(pszFilename, ".") && !EQUAL(pszFilename, ".."))
         {
-            CPLString osSrcFile(
-                CPLFormFilename(osVSIZipDirname, pszFilename, nullptr));
+            const CPLString osSrcFile(
+                CPLFormFilenameSafe(osVSIZipDirname, pszFilename, nullptr));
             VSIStatBufL sStat;
             if (VSIStatL(osSrcFile, &sStat) == 0)
             {
@@ -1551,10 +1561,10 @@ bool OGRShapeDataSource::UncompressIfNeeded()
         const char *pszFilename = aosFiles[i];
         if (!EQUAL(pszFilename, ".") && !EQUAL(pszFilename, ".."))
         {
-            CPLString osSrcFile(
-                CPLFormFilename(osVSIZipDirname, pszFilename, nullptr));
-            CPLString osDestFile(
-                CPLFormFilename(osTemporaryDir, pszFilename, nullptr));
+            const CPLString osSrcFile(
+                CPLFormFilenameSafe(osVSIZipDirname, pszFilename, nullptr));
+            const CPLString osDestFile(
+                CPLFormFilenameSafe(osTemporaryDir, pszFilename, nullptr));
             if (CPLCopyFile(osDestFile, osSrcFile) != 0)
             {
                 VSIRmdirRecursive(osTemporaryDir);
@@ -1606,8 +1616,8 @@ bool OGRShapeDataSource::RecompressIfNeeded(
     for (int i = 0; i < aosFiles.size(); i++)
     {
         sortedFiles.emplace_back(aosFiles[i]);
-        CPLString osSrcFile(
-            CPLFormFilename(m_osTemporaryUnzipDir, aosFiles[i], nullptr));
+        const CPLString osSrcFile(
+            CPLFormFilenameSafe(m_osTemporaryUnzipDir, aosFiles[i], nullptr));
         VSIStatBufL sStat;
         if (VSIStatL(osSrcFile, &sStat) == 0)
         {
@@ -1621,11 +1631,13 @@ bool OGRShapeDataSource::RecompressIfNeeded(
               [&oMapLayerOrder](const CPLString &a, const CPLString &b)
               {
                   int iA = INT_MAX;
-                  auto oIterA = oMapLayerOrder.find(CPLGetBasename(a));
+                  auto oIterA =
+                      oMapLayerOrder.find(CPLGetBasenameSafe(a).c_str());
                   if (oIterA != oMapLayerOrder.end())
                       iA = oIterA->second;
                   int iB = INT_MAX;
-                  auto oIterB = oMapLayerOrder.find(CPLGetBasename(b));
+                  auto oIterB =
+                      oMapLayerOrder.find(CPLGetBasenameSafe(b).c_str());
                   if (oIterB != oMapLayerOrder.end())
                       iB = oIterB->second;
                   if (iA < iB)
@@ -1634,11 +1646,9 @@ bool OGRShapeDataSource::RecompressIfNeeded(
                       return false;
                   if (iA != INT_MAX)
                   {
-                      const char *pszExtA = CPLGetExtension(a);
-                      const char *pszExtB = CPLGetExtension(b);
-                      if (EQUAL(pszExtA, "shp"))
+                      if (EQUAL(CPLGetExtensionSafe(a).c_str(), "shp"))
                           return true;
-                      if (EQUAL(pszExtB, "shp"))
+                      if (EQUAL(CPLGetExtensionSafe(b).c_str(), "shp"))
                           return false;
                   }
                   return a < b;
@@ -1662,10 +1672,10 @@ bool OGRShapeDataSource::RecompressIfNeeded(
         const char *pszFilename = osFilename.c_str();
         if (!EQUAL(pszFilename, ".") && !EQUAL(pszFilename, ".."))
         {
-            CPLString osSrcFile(
-                CPLFormFilename(m_osTemporaryUnzipDir, pszFilename, nullptr));
-            CPLString osDestFile(
-                CPLFormFilename(osTmpZipWithVSIZip, pszFilename, nullptr));
+            const CPLString osSrcFile(CPLFormFilenameSafe(
+                m_osTemporaryUnzipDir, pszFilename, nullptr));
+            const CPLString osDestFile(
+                CPLFormFilenameSafe(osTmpZipWithVSIZip, pszFilename, nullptr));
             if (CPLCopyFile(osDestFile, osSrcFile) != 0)
             {
                 VSIFCloseL(fpZIP);

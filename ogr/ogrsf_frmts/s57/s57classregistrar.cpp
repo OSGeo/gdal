@@ -79,20 +79,21 @@ bool S57ClassRegistrar::FindFile(const char *pszTarget,
                                  VSILFILE **pfp)
 
 {
-    const char *pszFilename = nullptr;
+    std::string osFilename;
 
     *pfp = nullptr;
 
     if (pszDirectory == nullptr)
     {
 #if defined(USE_ONLY_EMBEDDED_RESOURCE_FILES)
-        pszFilename = pszTarget;
+        const char *pszFilename = pszTarget;
 #else
-        pszFilename = CPLFindFile("s57", pszTarget);
+        const char *pszFilename = CPLFindFile("s57", pszTarget);
         if (pszFilename == nullptr)
             pszFilename = pszTarget;
 #endif
-        if (EQUAL(pszFilename, pszTarget))
+        osFilename = pszFilename;
+        if (EQUAL(osFilename.c_str(), pszTarget))
         {
 #ifdef EMBED_RESOURCE_FILES
             const char *pszContent = S57GetEmbeddedCSV(pszTarget);
@@ -111,21 +112,21 @@ bool S57ClassRegistrar::FindFile(const char *pszTarget,
     }
     else
     {
-        pszFilename = CPLFormFilename(pszDirectory, pszTarget, nullptr);
+        osFilename = CPLFormFilenameSafe(pszDirectory, pszTarget, nullptr);
     }
 
 #ifdef EMBED_RESOURCE_FILES
     if (!(*pfp))
 #endif
     {
-        *pfp = VSIFOpenL(pszFilename, "rb");
+        *pfp = VSIFOpenL(osFilename.c_str(), "rb");
     }
 
     if (*pfp == nullptr)
     {
         if (bReportErr)
             CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open %s.\n",
-                     pszFilename);
+                     osFilename.c_str());
         return FALSE;
     }
 

@@ -2711,8 +2711,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
             CPLXMLTreeCloser psGMLFile(nullptr);
             if (!aoGMLFiles[i].osFile.empty())
             {
-                if (EQUAL(CPLGetExtension(aoGMLFiles[i].osFile), "gml") ||
-                    EQUAL(CPLGetExtension(aoGMLFiles[i].osFile), "xml"))
+                const CPLString osExt =
+                    CPLGetExtensionSafe(aoGMLFiles[i].osFile);
+                if (EQUAL(osExt, "gml") || EQUAL(osExt, "xml"))
                 {
                     psGMLFile =
                         CPLXMLTreeCloser(CPLParseXMLFile(aoGMLFiles[i].osFile));
@@ -2751,9 +2752,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                                                      nullptr, nullptr, nullptr);
                     if (hSrcDS)
                     {
-                        CPLString osTmpFile =
-                            CPLSPrintf("%s/%d/%s.gml", osTmpDir.c_str(), i,
-                                       CPLGetBasename(aoGMLFiles[i].osFile));
+                        const CPLString osTmpFile =
+                            osTmpDir + "/" + std::to_string(i) + "/" +
+                            CPLGetBasenameSafe(aoGMLFiles[i].osFile) + ".gml";
                         char **papszOptions = nullptr;
                         papszOptions =
                             CSLSetNameValue(papszOptions, "FORMAT", "GML3.2");
@@ -2859,10 +2860,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                 if (!aoGMLFiles[i].bInline ||
                     !aoGMLFiles[i].osRemoteResource.empty())
                 {
-                    osTmpFile =
-                        CPLSPrintf("%s/%d/%s.gml", osTmpDir.c_str(), i,
-                                   CPLGetBasename(aoGMLFiles[i].osFile));
-
+                    osTmpFile = osTmpDir + "/" + std::to_string(i) + "/" +
+                                CPLGetBasenameSafe(aoGMLFiles[i].osFile) +
+                                ".gml";
                     GMLJP2V2BoxDesc oDesc;
                     oDesc.osFile = osTmpFile;
                     oDesc.osLabel = CPLGetFilename(oDesc.osFile);
@@ -2930,13 +2930,15 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                         else if (CSLCount(papszTokens) == 2 &&
                                  CPLIsFilenameRelative(papszTokens[1]) &&
                                  VSIStatL(
-                                     CPLFormFilename(
-                                         CPLGetDirname(aoGMLFiles[i].osFile),
-                                         papszTokens[1], nullptr),
+                                     CPLFormFilenameSafe(
+                                         CPLGetDirnameSafe(aoGMLFiles[i].osFile)
+                                             .c_str(),
+                                         papszTokens[1], nullptr)
+                                         .c_str(),
                                      &sStat) == 0)
                         {
-                            osXSD = CPLFormFilename(
-                                CPLGetDirname(aoGMLFiles[i].osFile),
+                            osXSD = CPLFormFilenameSafe(
+                                CPLGetDirnameSafe(aoGMLFiles[i].osFile).c_str(),
                                 papszTokens[1], nullptr);
                         }
                         if (!osXSD.empty())
@@ -3001,7 +3003,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
         {
             // Is the file already a KML file?
             CPLXMLTreeCloser psKMLFile(nullptr);
-            if (EQUAL(CPLGetExtension(aoAnnotations[i].osFile), "kml"))
+            if (EQUAL(CPLGetExtensionSafe(aoAnnotations[i].osFile).c_str(),
+                      "kml"))
                 psKMLFile =
                     CPLXMLTreeCloser(CPLParseXMLFile(aoAnnotations[i].osFile));
             GDALDriverH hDrv = nullptr;
@@ -3039,9 +3042,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                                                  nullptr, nullptr, nullptr);
                 if (hSrcDS)
                 {
-                    CPLString osTmpFile =
-                        CPLSPrintf("%s/%d/%s.kml", osTmpDir.c_str(), i,
-                                   CPLGetBasename(aoAnnotations[i].osFile));
+                    const CPLString osTmpFile =
+                        osTmpDir + "/" + std::to_string(i) + "/" +
+                        CPLGetBasenameSafe(aoAnnotations[i].osFile) + ".kml";
                     char **papszOptions = nullptr;
                     if (aoAnnotations.size() > 1)
                     {

@@ -48,7 +48,7 @@ static int OGRShapeDriverIdentify(GDALOpenInfo *poOpenInfo)
     {
         return FALSE;
     }
-    const std::string osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    const std::string &osExt = poOpenInfo->osExtension;
     if (EQUAL(osExt.c_str(), "SHP") || EQUAL(osExt.c_str(), "SHX"))
     {
         return poOpenInfo->nHeaderBytes >= 4 &&
@@ -118,7 +118,7 @@ static GDALDataset *OGRShapeDriverOpen(GDALOpenInfo *poOpenInfo)
     }
 #endif
 
-    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    CPLString osExt(CPLGetExtensionSafe(poOpenInfo->pszFilename));
     if (!STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") &&
         (EQUAL(osExt, "shz") ||
          (EQUAL(osExt, "zip") &&
@@ -163,7 +163,7 @@ static GDALDataset *OGRShapeDriverCreate(const char *pszName, int /* nBands */,
                                          char ** /* papszOptions */)
 {
     bool bSingleNewFile = false;
-    CPLString osExt(CPLGetExtension(pszName));
+    CPLString osExt(CPLGetExtensionSafe(pszName));
 
     /* -------------------------------------------------------------------- */
     /*      Is the target a valid existing directory?                       */
@@ -253,7 +253,7 @@ static CPLErr OGRShapeDriverDelete(const char *pszDataSource)
         return CE_Failure;
     }
 
-    CPLString osExt(CPLGetExtension(pszDataSource));
+    CPLString osExt(CPLGetExtensionSafe(pszDataSource));
     if (VSI_ISREG(sStatBuf.st_mode) &&
         (EQUAL(osExt, "shz") ||
          (EQUAL(osExt, "zip") &&
@@ -272,10 +272,10 @@ static CPLErr OGRShapeDriverDelete(const char *pszDataSource)
     {
         for (int iExt = 0; papszExtensions[iExt] != nullptr; iExt++)
         {
-            const char *pszFile =
-                CPLResetExtension(pszDataSource, papszExtensions[iExt]);
-            if (VSIStatL(pszFile, &sStatBuf) == 0)
-                VSIUnlink(pszFile);
+            const std::string osFile =
+                CPLResetExtensionSafe(pszDataSource, papszExtensions[iExt]);
+            if (VSIStatL(osFile.c_str(), &sStatBuf) == 0)
+                VSIUnlink(osFile.c_str());
         }
     }
     else if (VSI_ISDIR(sStatBuf.st_mode))
@@ -286,11 +286,13 @@ static CPLErr OGRShapeDriverDelete(const char *pszDataSource)
              papszDirEntries != nullptr && papszDirEntries[iFile] != nullptr;
              iFile++)
         {
-            if (CSLFindString(papszExtensions,
-                              CPLGetExtension(papszDirEntries[iFile])) != -1)
+            if (CSLFindString(
+                    papszExtensions,
+                    CPLGetExtensionSafe(papszDirEntries[iFile]).c_str()) != -1)
             {
-                VSIUnlink(CPLFormFilename(pszDataSource, papszDirEntries[iFile],
-                                          nullptr));
+                VSIUnlink(CPLFormFilenameSafe(pszDataSource,
+                                              papszDirEntries[iFile], nullptr)
+                              .c_str());
             }
         }
 

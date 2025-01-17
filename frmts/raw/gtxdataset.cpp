@@ -204,7 +204,7 @@ int GTXDataset::Identify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 40)
         return FALSE;
 
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "gtx"))
+    if (!poOpenInfo->IsExtensionEqualToCI("gtx"))
         return FALSE;
 
     return TRUE;
@@ -396,7 +396,7 @@ GDALDataset *GTXDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
     }
 
-    if (!EQUAL(CPLGetExtension(pszFilename), "gtx"))
+    if (!EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "gtx"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to create gtx file with extension other than gtx.");

@@ -62,7 +62,8 @@ static CPLString GetTmpFilename(const char *pszFilename, const char *pszExt)
     if (!bSupportsRandomWrite ||
         CPLGetConfigOption("CPL_TMPDIR", nullptr) != nullptr)
     {
-        osTmpFilename = CPLGenerateTempFilename(CPLGetBasename(pszFilename));
+        osTmpFilename = CPLGenerateTempFilenameSafe(
+            CPLGetBasenameSafe(pszFilename).c_str());
     }
     else
         osTmpFilename = pszFilename;

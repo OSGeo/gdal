@@ -30,12 +30,12 @@ static int OGRTABDriverIdentify(GDALOpenInfo *poOpenInfo)
         return -1;  // Unsure.
     if (poOpenInfo->fpL == nullptr)
         return FALSE;
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MIF") ||
-        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MID"))
+    if (poOpenInfo->IsExtensionEqualToCI("MIF") ||
+        poOpenInfo->IsExtensionEqualToCI("MID"))
     {
         return TRUE;
     }
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "TAB"))
+    if (poOpenInfo->IsExtensionEqualToCI("TAB"))
     {
         for (int i = 0; i < poOpenInfo->nHeaderBytes; i++)
         {
@@ -72,8 +72,8 @@ static GDALDataset *OGRTABDriverOpen(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MIF") ||
-        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MID"))
+    if (poOpenInfo->IsExtensionEqualToCI("MIF") ||
+        poOpenInfo->IsExtensionEqualToCI("MID"))
     {
         if (poOpenInfo->eAccess == GA_Update)
             return nullptr;

@@ -240,7 +240,7 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char **papszOptions)
 
     const char *pszCacheFilename = OGRGeocodeGetParameter(
         papszOptions, "CACHE_FILE", DEFAULT_CACHE_SQLITE);
-    CPLString osExt = CPLGetExtension(pszCacheFilename);
+    CPLString osExt = CPLGetExtensionSafe(pszCacheFilename);
     if (!(STARTS_WITH_CI(pszCacheFilename, "PG:") || EQUAL(osExt, "csv") ||
           EQUAL(osExt, "sqlite")))
     {
@@ -394,7 +394,7 @@ static OGRLayer *OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
                                          int *pnIdxBlob)
 {
     GDALDataset *poDS = hSession->poDS;
-    CPLString osExt = CPLGetExtension(hSession->pszCacheFilename);
+    CPLString osExt = CPLGetExtensionSafe(hSession->pszCacheFilename);
 
     if (poDS == nullptr)
     {

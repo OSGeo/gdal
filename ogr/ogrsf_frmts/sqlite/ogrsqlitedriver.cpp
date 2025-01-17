@@ -45,7 +45,7 @@ static int OGRSQLiteDriverIdentify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
 
-    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    CPLString osExt(CPLGetExtensionSafe(poOpenInfo->pszFilename));
     if (EQUAL(osExt, "gpkg") && GDALGetDriverByName("GPKG") != nullptr)
     {
         return FALSE;
@@ -179,11 +179,11 @@ static GDALDataset *OGRSQLiteDriverOpen(GDALOpenInfo *poOpenInfo)
         if (pszLastDot)
             *pszLastDot = '\0';
 
-        const char *pszTableName = CPLGetBasename(pszSQLiteFilename);
+        const std::string osTableName = CPLGetBasenameSafe(pszSQLiteFilename);
 
         char *pszSQL = CPLStrdup(CPLSPrintf(
             "CREATE VIRTUAL TABLE %s USING VirtualShape(%s, CP1252, -1)",
-            pszTableName, pszSQLiteFilename));
+            osTableName.c_str(), pszSQLiteFilename));
         poDS->ExecuteSQL(pszSQL, nullptr, nullptr);
         CPLFree(pszSQL);
         CPLFree(pszSQLiteFilename);

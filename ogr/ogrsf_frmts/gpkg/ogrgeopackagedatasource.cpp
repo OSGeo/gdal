@@ -5131,8 +5131,8 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
         {
             m_osFinalFilename = pszFilename;
         }
-        m_pszFilename =
-            CPLStrdup(CPLGenerateTempFilename(CPLGetFilename(pszFilename)));
+        m_pszFilename = CPLStrdup(
+            CPLGenerateTempFilenameSafe(CPLGetFilename(pszFilename)).c_str());
         CPLDebug("GPKG", "Creating temporary file %s", m_pszFilename);
     }
     else
@@ -5555,9 +5555,9 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
 
     if (nBandsIn != 0)
     {
-        const char *pszTableName = CPLGetBasename(m_pszFilename);
-        m_osRasterTable =
-            CSLFetchNameValueDef(papszOptions, "RASTER_TABLE", pszTableName);
+        const std::string osTableName = CPLGetBasenameSafe(m_pszFilename);
+        m_osRasterTable = CSLFetchNameValueDef(papszOptions, "RASTER_TABLE",
+                                               osTableName.c_str());
         if (m_osRasterTable.empty())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -6026,9 +6026,9 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
             CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) &&
         CSLFetchNameValue(papszOptions, "RASTER_TABLE") == nullptr)
     {
-        CPLString osBasename(
-            CPLGetBasename(GetUnderlyingDataset(poSrcDS)->GetDescription()));
-        apszUpdatedOptions.SetNameValue("RASTER_TABLE", osBasename);
+        const std::string osBasename(CPLGetBasenameSafe(
+            GetUnderlyingDataset(poSrcDS)->GetDescription()));
+        apszUpdatedOptions.SetNameValue("RASTER_TABLE", osBasename.c_str());
     }
 
     if (nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4)

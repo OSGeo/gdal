@@ -1842,8 +1842,8 @@ bool GMLReader::ParseXMLHugeFile(const char *pszOutputFilename,
     /* -------------------------------------------------------------------- */
     /*      Creating/Opening the SQLite DB file                             */
     /* -------------------------------------------------------------------- */
-    const CPLString osSQLiteFilename =
-        CPLResetExtension(m_pszFilename, "sqlite");
+    const std::string osSQLiteFilename =
+        CPLResetExtensionSafe(m_pszFilename, "sqlite");
     const char *pszSQLiteFilename = osSQLiteFilename.c_str();
 
     VSIStatBufL statBufL;

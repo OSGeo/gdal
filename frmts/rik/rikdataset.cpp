@@ -714,7 +714,7 @@ int RIKDataset::Identify(GDALOpenInfo *poOpenInfo)
                 return FALSE;
         }
 
-        if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "rik"))
+        if (poOpenInfo->IsExtensionEqualToCI("rik"))
             return TRUE;
 
         // We really need Open to be able to conclude
