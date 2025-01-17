@@ -17,6 +17,7 @@
 
 import os
 import shutil
+import sys
 
 import pytest
 import test_py_scripts
@@ -388,6 +389,9 @@ def test_gdal_calc_py_6(tmp_path):
 @pytest.mark.parametrize("opt_prefix", ("--optfile ", "@"))
 def test_gdal_calc_py_7a(script_path, tmp_path, stefan_full_rgba, opt_prefix):
     """test --optfile"""
+
+    if opt_prefix == "@" and sys.platform == "win32":
+        pytest.skip("@optfile is not read correctly on Windows")
 
     infile = stefan_full_rgba
     out = tmp_path / "out.tif"
