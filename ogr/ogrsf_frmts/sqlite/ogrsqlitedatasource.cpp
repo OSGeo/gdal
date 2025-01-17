@@ -4023,6 +4023,12 @@ OGRErr OGRSQLiteBaseDataSource::StartTransaction(CPL_UNUSED int bForce)
         return OGRERR_FAILURE;
     }
 
+    for (int i = 0; i < GetLayerCount(); i++)
+    {
+        OGRLayer *poLayer = GetLayer(i);
+        poLayer->PrepareStartTransaction();
+    }
+
     OGRErr eErr = SoftStartTransaction();
     if (eErr != OGRERR_NONE)
         return eErr;
@@ -4041,8 +4047,6 @@ OGRErr OGRSQLiteDataSource::StartTransaction(int bForce)
                 cpl::down_cast<OGRSQLiteTableLayer *>(poLayer.get());
             poTableLayer->RunDeferredCreationIfNecessary();
         }
-
-        poLayer->PrepareStartTransaction();
     }
 
     return OGRSQLiteBaseDataSource::StartTransaction(bForce);
