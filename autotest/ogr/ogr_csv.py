@@ -2801,6 +2801,26 @@ def test_ogr_csv_double_quotes_in_middle_of_field():
 
 
 ###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/11660
+
+
+def test_ogr_csv_double_quotes_in_middle_of_field_bis():
+
+    ds = ogr.Open("data/csv/double_quotes_in_middle_of_field_bis.csv")
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetNextFeature()
+    assert f["first"] == "1"
+    assert f["second"] == """two"with quote"""
+    assert f["third"] == "3"
+
+    f = lyr.GetNextFeature()
+    assert f["first"] == "10"
+    assert f["second"] == """twenty"with quote"""
+    assert f["third"] == "30"
+
+
+###############################################################################
 
 
 def test_ogr_csv_single_column():
