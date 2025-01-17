@@ -8,7 +8,7 @@ RFC 105: Add and use safe path manipulation functions
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2025-01-11
-Status:        Draft
+Status:        Adopte, implemented in 3.11
 Target:        GDAL 3.11
 ============== =============================================
 
@@ -207,7 +207,7 @@ Funded by GDAL Sponsorship Program (GSP).
 Voting history
 --------------
 
-TODO
++1 from PSC members HowardB, JukkaR, KurtS, JavierJS, DanB and EvenR
 
 
 
