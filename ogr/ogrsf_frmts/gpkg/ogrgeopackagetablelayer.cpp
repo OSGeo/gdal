@@ -1849,10 +1849,12 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
     {
         m_apoFieldDefnChanges.emplace_back(
             std::make_unique<OGRFieldDefn>(oFieldDefn),
-            m_poFeatureDefn->GetFieldCount() - 1, FieldChangeType::ADD_FIELD);
+            m_poFeatureDefn->GetFieldCount() - 1, FieldChangeType::ADD_FIELD,
+            /* bGenerated */ false);
     }
 
     m_abGeneratedColumns.resize(m_poFeatureDefn->GetFieldCount());
+    m_abGeneratedColumns.back() = false;  // explicit is better than implicit
 
     if (m_pszFidColumn != nullptr &&
         EQUAL(oFieldDefn.GetNameRef(), m_pszFidColumn))
@@ -2029,7 +2031,8 @@ OGRGeoPackageTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     {
         m_apoGeomFieldDefnChanges.emplace_back(
             std::make_unique<OGRGeomFieldDefn>(oGeomField),
-            m_poFeatureDefn->GetGeomFieldCount(), FieldChangeType::ADD_FIELD);
+            m_poFeatureDefn->GetGeomFieldCount(), FieldChangeType::ADD_FIELD,
+            /* bGenerated */ false);
     }
 
     whileUnsealing(m_poFeatureDefn)->AddGeomFieldDefn(&oGeomField);
@@ -3811,6 +3814,43 @@ bool OGRGeoPackageTableLayer::DoJobAtTransactionRollback()
         SyncToDisk();
         m_bDeferredSpatialIndexCreation = bDeferredSpatialIndexCreationBackup;
     }
+
+    // If we are restoring any deleted field or removing any added one we have to
+    // rebuild the array of generated fields
+    for (int i = static_cast<int>(m_apoFieldDefnChanges.size()) - 1; i >= 0;
+         i--)
+    {
+        auto &oFieldChange = m_apoFieldDefnChanges[i];
+        switch (oFieldChange.eChangeType)
+        {
+            case FieldChangeType::ADD_FIELD:
+            {
+                CPLAssert(oFieldChange.iField <
+                          static_cast<int>(m_abGeneratedColumns.size()));
+                m_abGeneratedColumns.erase(m_abGeneratedColumns.begin() +
+                                           oFieldChange.iField);
+                break;
+            };
+            case FieldChangeType::DELETE_FIELD:
+            {
+                CPLAssert(oFieldChange.iField <=
+                          static_cast<int>(m_abGeneratedColumns.size()));
+                m_abGeneratedColumns.insert(m_abGeneratedColumns.begin() +
+                                                oFieldChange.iField,
+                                            oFieldChange.bGenerated);
+                break;
+            };
+            case FieldChangeType::ALTER_FIELD:
+            {
+                CPLAssert(oFieldChange.iField <
+                          static_cast<int>(m_abGeneratedColumns.size()));
+                m_abGeneratedColumns[oFieldChange.iField] =
+                    oFieldChange.bGenerated;
+                break;
+            };
+        }
+    }
+
     ResetReading();
     return true;
 }
@@ -6590,7 +6630,8 @@ OGRErr OGRGeoPackageTableLayer::DeleteField(int iFieldToDelete)
                 {
                     m_apoFieldDefnChanges.emplace_back(
                         std::move(poFieldDefn), iFieldToDelete,
-                        FieldChangeType::DELETE_FIELD);
+                        FieldChangeType::DELETE_FIELD,
+                        m_abGeneratedColumns[iFieldToDelete]);
                 }
                 else
                 {
@@ -6606,6 +6647,8 @@ OGRErr OGRGeoPackageTableLayer::DeleteField(int iFieldToDelete)
             if (eErr == OGRERR_NONE)
             {
 #if SQLITE_VERSION_NUMBER >= 3035005L
+                CPLAssert(iFieldToDelete <
+                          static_cast<int>(m_abGeneratedColumns.size()));
                 m_abGeneratedColumns.erase(m_abGeneratedColumns.begin() +
                                            iFieldToDelete);
 #else
@@ -7098,7 +7141,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
             {
                 m_apoFieldDefnChanges.emplace_back(
                     std::make_unique<OGRFieldDefn>(poFieldDefnToAlter),
-                    iFieldToAlter, FieldChangeType::ALTER_FIELD);
+                    iFieldToAlter, FieldChangeType::ALTER_FIELD,
+                    m_abGeneratedColumns[iFieldToAlter]);
             }
 
             auto oTemporaryUnsealer(poFieldDefnToAlter->GetTemporaryUnsealer());

@@ -9721,7 +9721,8 @@ OGRErr GDALGeoPackageDataset::RollbackTransaction()
         }
     }
 
-    OGRErr eErr = OGRSQLiteBaseDataSource::RollbackTransaction();
+    const OGRErr eErr = OGRSQLiteBaseDataSource::RollbackTransaction();
+
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     if (!abAddTriggers.empty())
     {

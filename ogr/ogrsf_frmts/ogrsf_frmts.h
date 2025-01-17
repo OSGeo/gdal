@@ -285,8 +285,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     //! @cond Doxygen_Suppress
     // Keep field definitions in sync with transactions
-    void PrepareStartTransaction();
-    void FinishRollbackTransaction();
+    virtual void PrepareStartTransaction();
+    virtual void FinishRollbackTransaction();
     //! @endcond
 
     virtual const char *GetFIDColumn();
@@ -414,15 +414,17 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     {
 
         FieldDefnChange(std::unique_ptr<T> &&poFieldDefnIn, int iFieldIn,
-                        FieldChangeType eChangeTypeIn)
+                        FieldChangeType eChangeTypeIn, bool bGeneratedIn)
             : poFieldDefn(std::move(poFieldDefnIn)), iField(iFieldIn),
-              eChangeType(eChangeTypeIn)
+              eChangeType(eChangeTypeIn), bGenerated(bGeneratedIn)
         {
         }
 
         std::unique_ptr<T> poFieldDefn;
         int iField;
         FieldChangeType eChangeType;
+        // Used by drivers (GPKG) to track generated fields
+        bool bGenerated;
     };
 
     std::vector<FieldDefnChange<OGRFieldDefn>> m_apoFieldDefnChanges{};
