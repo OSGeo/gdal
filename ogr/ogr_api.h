@@ -258,6 +258,7 @@ OGRGeometryH CPL_DLL OGR_G_SetPrecision(OGRGeometryH, double dfGridSize,
                                         int nFlags) CPL_WARN_UNUSED_RESULT;
 
 OGRGeometryH CPL_DLL OGR_G_Polygonize(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_BuildArea(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
 
 /*! @cond Doxygen_Suppress */
 /* backward compatibility (non-standard methods) */
