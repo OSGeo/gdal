@@ -6910,7 +6910,7 @@ OGRGeometryH OGR_G_Polygonize(OGRGeometryH hTarget)
  * @return a newly allocated geometry now owned by the caller,
  *         or NULL on failure.
  *
- * @since OGR 3.8.4
+ * @since OGR 3.11
  */
 
 OGRGeometry *OGRGeometry::BuildArea() const
@@ -6968,7 +6968,7 @@ OGRGeometry *OGRGeometry::BuildArea() const
  * @return a handle on newly allocated geometry now owned by the caller,
  *         or NULL on failure.
  *
- * @since OGR 3.8.4
+ * @since OGR 3.11
  */
 
 OGRGeometryH OGR_G_BuildArea(OGRGeometryH hGeom)
