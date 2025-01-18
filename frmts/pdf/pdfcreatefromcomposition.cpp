@@ -763,13 +763,7 @@ bool GDALPDFComposerWriter::GenerateGeoreferencing(
             georeferencing.m_adfGT[2] = 0;
             georeferencing.m_adfGT[4] = 0;
         }
-        if (georeferencing.m_adfGT[2] != 0 || georeferencing.m_adfGT[4] != 0 ||
-            georeferencing.m_adfGT[5] < 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Geotransform should define a north-up non rotated area.");
-            return false;
-        }
+
         georeferencing.m_osID = pszId;
         georeferencing.m_oSRS = *(poSRS.get());
         georeferencing.m_bboxX1 = bboxX1;
