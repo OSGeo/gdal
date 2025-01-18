@@ -23,7 +23,8 @@ patch -p1 < ../ci/travis/conda/libgdal-adbc.patch
 patch -p1 < ../ci/travis/conda/muparser.patch
 
 # Patch version = "X.Y.Z" to "X.Y.99"
-sed -i -E 's/set version = "([0-9]+)\.([0-9]+)\.([0-9]+)"/set version = "\1.\2.99"/' recipe/meta.yaml
+sed 's/version = "\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\)"/version = "\1.\2.99"/' < recipe/recipe.yaml > recipe.yaml
+mv recipe.yaml recipe/recipe.yaml
 
 cat > recipe/recipe_clobber.yaml <<EOL
 source:
