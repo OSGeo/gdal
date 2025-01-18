@@ -97,7 +97,7 @@ if (ECW_VERSION_STRING VERSION_GREATER_EQUAL 5.5)
                                 INTERFACE_COMPILE_DEFINITIONS "${ECW_INTERFACE_COMPILE_DEFINITIONS}"
                                 IMPORTED_LINK_INTERFACE_LANGUAGES "C"
                                 IMPORTED_LOCATION "${ECW_LIBRARY}"
-                                INTERFACE_LINK_LIBRARIES ${ECW_EXTRA_LINK_LIBRARIES})
+                                INTERFACE_LINK_LIBRARIES "${ECW_EXTRA_LINK_LIBRARIES}")
         endif()
     endif()
 elseif(ECW_VERSION_STRING VERSION_GREATER_EQUAL 4.0)
