@@ -521,6 +521,7 @@ cvs
 Cxx
 Cygwin
 dall
+DanB
 DanielM
 danlittle
 dat
