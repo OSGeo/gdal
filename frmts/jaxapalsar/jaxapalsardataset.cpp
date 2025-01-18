@@ -513,10 +513,13 @@ int PALSARJaxaDataset::Identify(GDALOpenInfo *poOpenInfo)
         return 0;
 
     /* First, check that this is a PALSAR image indeed */
-    if (!STARTS_WITH_CI((char *)(poOpenInfo->pabyHeader + 60), "AL") ||
-        !STARTS_WITH_CI(
-            CPLGetBasenameSafe(poOpenInfo->pszFilename).substr(4).c_str(),
-            "ALPSR"))
+    if (!STARTS_WITH_CI((char *)(poOpenInfo->pabyHeader + 60), "AL"))
+    {
+        return 0;
+    }
+    const std::string osBasename = CPLGetBasenameSafe(poOpenInfo->pszFilename);
+    if (osBasename.size() < 9 ||
+        !STARTS_WITH_CI(osBasename.c_str() + 4, "ALPSR"))
     {
         return 0;
     }
