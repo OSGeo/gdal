@@ -720,14 +720,13 @@ std::string CPLFormFilenameSafe(const char *pszPath, const char *pszBasename,
         pszPath = "";
     size_t nLenPath = strlen(pszPath);
 
-    size_t nSuffixPos = 0;
+    const char *pszQuestionMark = nullptr;
     if (STARTS_WITH_CI(pszPath, "/vsicurl/http"))
     {
-        const char *pszQuestionMark = strchr(pszPath, '?');
+        pszQuestionMark = strchr(pszPath, '?');
         if (pszQuestionMark)
         {
-            nSuffixPos = static_cast<size_t>(pszQuestionMark - pszPath);
-            nLenPath = nSuffixPos;
+            nLenPath = pszQuestionMark - pszPath;
         }
         pszAddedPathSep = "/";
     }
@@ -811,16 +810,16 @@ std::string CPLFormFilenameSafe(const char *pszPath, const char *pszBasename,
     std::string osRes;
     osRes.reserve(nLenPath + strlen(pszAddedPathSep) + strlen(pszBasename) +
                   strlen(pszAddedExtSep) + strlen(pszExtension) +
-                  (nSuffixPos ? strlen(pszPath + nSuffixPos) : 0));
+                  (pszQuestionMark ? strlen(pszQuestionMark) : 0));
     osRes.assign(pszPath, nLenPath);
     osRes += pszAddedPathSep;
     osRes += pszBasename;
     osRes += pszAddedExtSep;
     osRes += pszExtension;
 
-    if (nSuffixPos)
+    if (pszQuestionMark)
     {
-        osRes += (pszPath + nSuffixPos);
+        osRes += pszQuestionMark;
     }
 
     return osRes;
