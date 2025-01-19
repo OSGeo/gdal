@@ -3758,6 +3758,11 @@ public:
     return (OGRGeometryShadow*) OGR_G_Polygonize(self);
   }
 
+  %newobject BuildArea;
+  OGRGeometryShadow* BuildArea() {
+    return (OGRGeometryShadow*) OGR_G_BuildArea(self);
+  }
+
   %newobject Boundary;
   OGRGeometryShadow* Boundary() {
     return (OGRGeometryShadow*) OGR_G_Boundary(self);

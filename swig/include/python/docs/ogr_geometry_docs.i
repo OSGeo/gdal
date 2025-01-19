@@ -874,6 +874,17 @@ Geometry:
     A new geometry or None on failure.
 ";
 
+%feature("docstring")  BuildArea "
+Polygonize a linework assuming inner polygons are holes.
+
+For more details: :cpp:func:`OGR_G_BuildArea`
+
+Returns
+--------
+Geometry:
+    A new geometry or None on failure.
+";
+
 %feature("docstring")  SwapXY "
 Swap x and y coordinates.
 
