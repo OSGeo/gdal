@@ -15,29 +15,36 @@ Synopsis
 
 .. code-block::
 
+   gdal_translate [--help] [--long-usage] [--help-general]
+                  [-ot Byte|Int8|[U]Int{16|32|64}|CInt{16|32}|[C]Float{32|64}]
+                  [-if <format>]... [-of <output_format>] [--quiet]
+                  [-b <band>]... [-mask <mask>] [-expand gray|rgb|rgba]
+                  [[-strict]|[-not_strict]]
+                  [-outsize <xsize[%]|0> <ysize[%]|0>] [-tr <xres> <yes>]
+                  [-ovr <level>|AUTO|AUTO-<n>|NONE] [-sds]
+                  [-r nearest,bilinear,cubic,cubicspline,lanczos,average,mode]
+                  [[-scale [<src_min> <src_max> [<dst_min> <dst_max>]]]...|
+                  [-scale_X [<src_min> <src_max> [<dst_min> <dst_max>]]]...|
+                  [-unscale]]
+                  [[-exponent <value>]|[-exponent_X <value>]...]
+                  [-srcwin <xoff> <yoff> <xsize> <ysize>]
+                  [-projwin <ulx> <uly> <lrx> <lry>]
+                  [-projwin_srs <srs_def>] [-epo] [-eco] [-a_srs <srs_def>]
+                  [-a_coord_epoch <epoch>] [-a_ullr <ulx> <uly> <lrx> <lry>]
+                  [-a_nodata <value>|none]
+                  [-a_gt <gt(0)> <gt(1)> <gt(2)> <gt(3)> <gt(4)> <gt(5)>]
+                  [-a_scale <value>] [-a_offset <value>] [-nogcp]
+                  [-gcp <pixel> <line> <easting> <northing> [<elevation>]]...
+                  [-colorinterp {red|green|blue|alpha|gray|undefined|pan|
+                                 coastal|rededge|nir|swir|mwir|lwir|...},...]
+                  [-colorinterp_X {red|green|blue|alpha|gray|undefined|pan|
+                                   coastal|rededge|nir|swir|mwir|lwir|...}]...
+                  [[-stats]|[-approx_stats]]
+                  [-norat] [-noxmp] [-co <NAME>=<VALUE>]...
+                  [-mo <NAME>=<VALUE>]... [-dmo <DOMAIN>:<KEY>=<VALUE>]...
+                  [-oo <NAME>=<VALUE>]...
+                  <input_file> <output_file>
 
-    gdal_translate [--help] [--help-general] [--long-usage]
-       [-ot {Byte/Int8/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/
-             CInt16/CInt32/CFloat32/CFloat64}] [-strict]
-       [-if <format>]... [-of <format>]
-       [-b <band>] [-mask <band>] [-expand {gray|rgb|rgba}]
-       [-outsize <xsize>[%]|0 <ysize>[%]|0] [-tr <xres> <yres>]
-       [-ovr <level>|AUTO|AUTO-<n>|NONE]
-       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
-       [-unscale] [-scale[_bn] [<src_min> <src_max> [<dst_min> <dst_max>]]]... [-exponent[_bn] <exp_val>]...
-       [-srcwin <xoff> <yoff> <xsize> <ysize>] [-epo] [-eco]
-       [-projwin <ulx> <uly> <lrx> <lry>] [-projwin_srs <srs_def>]
-       [-a_srs <srs_def>] [-a_coord_epoch <epoch>]
-       [-a_ullr <ulx> <uly> <lrx> <lry>] [-a_nodata <value>]
-       [-a_gt <gt0> <gt1> <gt2> <gt3> <gt4> <gt5>]
-       [-a_scale <value>] [-a_offset <value>]
-       [-nogcp] [-gcp <pixel> <line> <easting> <northing> [<elevation>]]...
-       |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...}]
-       |-colorinterp {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...},...]
-       [-mo <META-TAG>=<VALUE>]... [-dmo "DOMAIN:META-TAG=VALUE"]... [-q] [-sds]
-       [-co <NAME>=<VALUE>]... [-stats] [-norat] [-noxmp]
-       [-oo <NAME>=<VALUE>]...
-       <src_dataset> <dst_dataset>
 
 Description
 -----------

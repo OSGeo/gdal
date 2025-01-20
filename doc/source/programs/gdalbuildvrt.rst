@@ -15,23 +15,23 @@ Synopsis
 
 .. code-block::
 
-    gdalbuildvrt [--help] [--help-general]
-                 [-tileindex <field_name>]
-                 [-resolution {highest|lowest|average|user}]
-                 [-te <xmin> <ymin> <xmax> <ymax>] [-tr <xres> <yres>] [-tap]
-                 [-separate] [-b <band>]... [-sd <n>]
-                 [-allow_projection_difference] [-q]
-                 [-addalpha] [-hidenodata]
-                 [-srcnodata "<value>[ <value>]..."] [-vrtnodata "<value>[ <value>]..."
-                 [-ignore_srcmaskband]
-                 [-nodata_max_mask_threshold <threshold>]
-                 [-a_srs <srs_def>]
-                 [-r {nearest|bilinear|cubic|cubicspline|lanczos|average|mode}]
-                 [-oo <NAME>=<VALUE>]...
-                 [-co <NAME>=<VALUE>]...
-                 [-input_file_list <filename>] [-overwrite]
-                 [-strict | -non_strict]
-                 <output_filename.vrt> <input_raster> [<input_raster>]...
+   gdalbuildvrt [--help] [--long-usage] [--help-general]
+                [--quiet]
+                [[-strict]|[-non_strict]]
+                [-tile_index <field_name>]
+                [-resolution user|average|highest|lowest] [-tr <xres> <yes>]
+                [-input_file_list <filename>] [-separate]
+                [-allow_projection_difference] [-sd <n>] [-tap]
+                [-te <xmin> <ymin> <xmax> <ymax>] [-addalpha] [-b <band>]...
+                [-hidenodata] [-overwrite]
+                [-srcnodata "<value>[ <value>]..."]
+                [-vrtnodata "<value>[ <value>]..."] [-a_srs <srs_def>]
+                [-r nearest|bilinear|cubic|cubicspline|lanczos|average|mode]
+                [-oo <NAME>=<VALUE>]... [-co <NAME>=<VALUE>]...
+                [-ignore_srcmaskband]
+                [-nodata_max_mask_threshold <threshold>]
+                <vrt_dataset_name> [<src_dataset_name>]...
+
 
 Description
 -----------
