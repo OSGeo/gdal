@@ -15,6 +15,69 @@
 
 #include "ogrdxf_polyline_smooth.h"
 
+void OGRDWGLayer::AddSRSIfPresent()
+{
+    if(!poDS) return;
+
+    OdDbDatabasePtr pDb = poDS->GetDB();
+    if (pDb.isNull())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid DWG database pointer.");
+        return;
+    }
+
+    // Get the GeoData object ID from the database
+    OdDbObjectId objId;
+    oddbGetGeoDataObjId(pDb, objId);
+    if (objId.isNull())
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "No GeoData found in DWG file.");
+        return;
+    }
+
+    // Open the GeoData object
+    OdDbGeoDataPtr pGeoData = objId.openObject();
+    if (pGeoData.isNull())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open GeoData object.");
+        return;
+    }
+
+    // Extract coordinate system string
+    OdDbGeoCoordinateSystemPtr pCS;
+    OdDbGeoCoordinateSystem::create(pGeoData->coordinateSystem(), pCS);
+    if (pCS.isNull())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create GeoCoordinateSystem.");
+        return;
+    }
+
+    // Retrieve the WKT representation of the coordinate system
+    OdString sWktId;
+    if (pCS->getWktRepresentation(sWktId) == eOk)
+    {
+        // CPLDebug("DWG", "Extracted WKT: %s", sWktId.c_str());
+        // Store the WKT in OGR layer's spatial reference
+        OGRSpatialReference *poSRS = new OGRSpatialReference();
+        if (poSRS->importFromWkt(TextUnescape(sWktId, false)) == OGRERR_NONE)
+        {
+            poFeatureDefn->SetGeomType(wkbUnknown);  // presumably, as I think DWG layers might fix geometries of different kind
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+            poSRS->Release();
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Invalid WKT format extracted.");
+        }
+    }else
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "Cannot get WKT Representation ");
+    }
+
+
+}
+
 /************************************************************************/
 /*                            OGRDWGLayer()                             */
 /************************************************************************/
@@ -31,6 +94,8 @@ OGRDWGLayer::OGRDWGLayer(OGRDWGDataSource *poDSIn)
     poFeatureDefn->Reference();
 
     poDS->AddStandardFields(poFeatureDefn);
+
+    AddSRSIfPresent();
 
     if (!poDS->InlineBlocks())
     {

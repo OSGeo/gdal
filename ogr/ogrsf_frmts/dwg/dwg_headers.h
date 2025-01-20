@@ -72,4 +72,6 @@
 #include "RxDynamicModule.h"
 #include "FdField.h"
 
+#include "DbGeoData.h"
+
 #endif  // TEIGHA_HEADERS_H
