@@ -89,7 +89,10 @@ Standard options
 
 .. option:: --like <DATASET>
 
-    Raster dataset to use as a template for bounds. This option is mutually
+    Raster dataset to use as a template for bounds, forming a rectangular shape
+    following the geotransformation matrix (and thus potentially including
+    nodata collar).
+    This option is mutually
     exclusive with :option:`--bbox` and :option:`--bbox-crs`.
 
 Advanced options
