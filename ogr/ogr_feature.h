@@ -196,7 +196,10 @@ class CPL_DLL OGRFieldDefn
     }
 
     /**
-     * @brief IsGenerated
+     * @brief Return whether the field is a generated field.
+     *
+     * At time of writing, only the GeoPackage and PG drivers fill that information. Consequently,
+     * only a returned value equal to TRUE can be fully trusted.
      * @return TRUE if the field is a generated field, FALSE otherwise.
      * @since GDAL 3.11
      */

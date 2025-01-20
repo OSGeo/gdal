@@ -1597,6 +1597,9 @@ int OGRFeature::IsFieldSet(int iField) const
 /**
  * \brief Test if a field is a generated field.
  *
+ * At time of writing, only the GeoPackage and PG drivers fill that information. Consequently,
+ * only a returned value equal to TRUE can be fully trusted.
+ *
  * This method is the same as the C function OGR_F_IsFieldGenerated().
  *
  * @param iField the field to test.
@@ -1620,6 +1623,8 @@ bool OGRFeature::IsFieldGenerated(int iField) const
 /**
  * \brief Test if a field is a generated field.
  *
+ * At time of writing, only the GeoPackage driver fills that information. Consequently,
+ * only a returned value equal to TRUE can be fully trusted.
  * This function is the same as the C++ method OGRFeature::IsFieldGenerated().
  *
  * @param hFeat handle to the feature on which the field is.
