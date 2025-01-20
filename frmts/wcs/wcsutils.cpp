@@ -427,7 +427,7 @@ bool SetupCache(std::string &cache, bool clear)
             }
             const std::string filepath =
                 CPLFormFilenameSafe(cache.c_str(), folder[i], nullptr);
-            remove(filepath.c_str());
+            CPL_IGNORE_RET_VAL(VSIUnlink(filepath.c_str()));
         }
         CSLDestroy(folder);
     }
