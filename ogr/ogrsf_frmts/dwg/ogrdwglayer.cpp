@@ -60,7 +60,7 @@ void OGRDWGLayer::AddSRSIfPresent()
         OGRSpatialReference *poSRS = new OGRSpatialReference();
         if (poSRS->importFromWkt(TextUnescape(sWktId, false)) == OGRERR_NONE)
         {
-            poFeatureDefn->SetGeomType(wkbUnknown);  // presumably, as I think DWG layers might fix geometries of different kind
+            poFeatureDefn->SetGeomType(wkbUnknown);
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
             poSRS->Release();
