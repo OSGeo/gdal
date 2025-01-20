@@ -82,6 +82,9 @@ class CPL_DLL OGRFieldDefn
     int bNullable;
     int bUnique;
 
+    // Used by drivers (GPKG) to track generated fields
+    bool m_bGenerated = false;
+
     std::string m_osDomainName{};  // field domain name. Might be empty
 
     std::string m_osComment{};  // field comment. Might be empty
@@ -190,6 +193,16 @@ class CPL_DLL OGRFieldDefn
     int IsUnique() const
     {
         return bUnique;
+    }
+
+    bool IsGenerated() const
+    {
+        return m_bGenerated;
+    }
+
+    void SetGenerated(bool bGeneratedIn)
+    {
+        m_bGenerated = bGeneratedIn;
     }
 
     void SetUnique(int bUniqueIn);
@@ -1243,6 +1256,8 @@ class CPL_DLL OGRFeature
     }
 
     int IsFieldSet(int iField) const;
+
+    bool IsFieldGenerated(int iField) const;
 
     void UnsetField(int iField);
 

@@ -7723,7 +7723,56 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
         SoftRollbackTransaction();
         return nullptr;
     }
-
+    else if (STARTS_WITH_CI(osSQLCommand, "SAVEPOINT"))
+    {
+        const CPLStringList aosTokens(SQLTokenize(osSQLCommand));
+        if (aosTokens.size() == 2)
+        {
+            const char *pszSavepointName = aosTokens[1];
+            StartSavepoint(pszSavepointName);
+            return nullptr;
+        }
+    }
+    else if (STARTS_WITH_CI(osSQLCommand, "RELEASE"))
+    {
+        const CPLStringList aosTokens(SQLTokenize(osSQLCommand));
+        if (aosTokens.size() == 2)
+        {
+            const char *pszSavepointName = aosTokens[1];
+            ReleaseSavepoint(pszSavepointName);
+            return nullptr;
+        }
+        else if (aosTokens.size() == 3 && EQUAL(aosTokens[1], "SAVEPOINT"))
+        {
+            const char *pszSavepointName = aosTokens[2];
+            ReleaseSavepoint(pszSavepointName);
+            return nullptr;
+        }
+    }
+    else if (STARTS_WITH_CI(osSQLCommand, "ROLLBACK"))
+    {
+        const CPLStringList aosTokens(SQLTokenize(osSQLCommand));
+        if (aosTokens.size() == 2)
+        {
+            if (EQUAL(aosTokens[1], "TRANSACTION"))
+            {
+                SoftRollbackTransaction();
+                return nullptr;
+            }
+            else
+            {
+                const char *pszSavepointName = aosTokens[1];
+                RollbackToSavepoint(pszSavepointName);
+                return nullptr;
+            }
+        }
+        else if (aosTokens.size() > 1)  // Savepoint name is last token
+        {
+            const char *pszSavepointName = aosTokens[aosTokens.size() - 1];
+            RollbackToSavepoint(pszSavepointName);
+            return nullptr;
+        }
+    }
     else if (STARTS_WITH_CI(osSQLCommand, "DELETE FROM "))
     {
         // Optimize truncation of a table, especially if it has a spatial
@@ -9678,7 +9727,7 @@ GDALGeoPackageDataset::GetLayerWithGetSpatialWhereByName(const char *pszName)
 OGRErr GDALGeoPackageDataset::CommitTransaction()
 
 {
-    if (nSoftTransactionLevel == 1)
+    if (m_nSoftTransactionLevel == 1)
     {
         FlushMetadata();
         for (int i = 0; i < m_nLayers; i++)
@@ -9701,7 +9750,7 @@ OGRErr GDALGeoPackageDataset::RollbackTransaction()
     std::vector<bool> abAddTriggers;
     std::vector<bool> abTriggersDeletedInTransaction;
 #endif
-    if (nSoftTransactionLevel == 1)
+    if (m_nSoftTransactionLevel == 1)
     {
         FlushMetadata();
         for (int i = 0; i < m_nLayers; i++)

@@ -380,6 +380,8 @@ int CPL_DLL OGR_Fld_IsIgnored(OGRFieldDefnH hDefn);
 void CPL_DLL OGR_Fld_SetIgnored(OGRFieldDefnH hDefn, int);
 int CPL_DLL OGR_Fld_IsNullable(OGRFieldDefnH hDefn);
 void CPL_DLL OGR_Fld_SetNullable(OGRFieldDefnH hDefn, int);
+void CPL_DLL OGR_Fld_SetGenerated(OGRFieldDefnH hDefn, int);
+int CPL_DLL OGR_Fld_IsGenerated(OGRFieldDefnH hDefn);
 int CPL_DLL OGR_Fld_IsUnique(OGRFieldDefnH hDefn);
 void CPL_DLL OGR_Fld_SetUnique(OGRFieldDefnH hDefn, int);
 const char CPL_DLL *OGR_Fld_GetDefault(OGRFieldDefnH hDefn);
@@ -478,6 +480,7 @@ OGRFieldDefnH CPL_DLL OGR_F_GetFieldDefnRef(OGRFeatureH, int);
 int CPL_DLL OGR_F_GetFieldIndex(OGRFeatureH, const char *);
 
 int CPL_DLL OGR_F_IsFieldSet(OGRFeatureH, int);
+int CPL_DLL OGR_F_IsFieldGenerated(OGRFeatureH, int);
 void CPL_DLL OGR_F_UnsetField(OGRFeatureH, int);
 
 int CPL_DLL OGR_F_IsFieldNull(OGRFeatureH, int);

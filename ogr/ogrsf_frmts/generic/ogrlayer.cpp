@@ -1913,17 +1913,32 @@ void OGRLayer::PrepareStartTransaction()
 /*                          FinishRollbackTransaction()                 */
 /************************************************************************/
 
-void OGRLayer::FinishRollbackTransaction()
+void OGRLayer::FinishRollbackTransaction(const std::string &osSavepointName)
 {
 
     // Deleted fields can be safely removed from the storage after being restored.
     std::vector<int> toBeRemoved;
+
+    bool bSavepointFound = false;
 
     // Loop through all changed fields and reset them to their previous state.
     for (int i = static_cast<int>(m_apoFieldDefnChanges.size()) - 1; i >= 0;
          i--)
     {
         auto &oFieldChange = m_apoFieldDefnChanges[i];
+
+        if (!osSavepointName.empty())
+        {
+            if (oFieldChange.osSavepointName == osSavepointName)
+            {
+                bSavepointFound = true;
+            }
+            else if (bSavepointFound)
+            {
+                continue;
+            }
+        }
+
         CPLAssert(oFieldChange.poFieldDefn);
         const char *pszName = oFieldChange.poFieldDefn->GetNameRef();
         const int iField = oFieldChange.iField;
@@ -2011,11 +2026,29 @@ void OGRLayer::FinishRollbackTransaction()
         m_apoFieldDefnChanges.erase(m_apoFieldDefnChanges.begin() + i);
     }
 
+    /**********************************************************************/
+    /* Reset geometry fields to their previous state.                    */
+    /**********************************************************************/
+
+    bSavepointFound = false;
+
     // Loop through all changed geometry fields and reset them to their previous state.
     for (int i = static_cast<int>(m_apoGeomFieldDefnChanges.size()) - 1; i >= 0;
          i--)
     {
         auto &oGeomFieldChange = m_apoGeomFieldDefnChanges[i];
+
+        if (!osSavepointName.empty())
+        {
+            if (oGeomFieldChange.osSavepointName == osSavepointName)
+            {
+                bSavepointFound = true;
+            }
+            else if (bSavepointFound)
+            {
+                continue;
+            }
+        }
         const char *pszName = oGeomFieldChange.poFieldDefn->GetNameRef();
         const int iGeomField = oGeomFieldChange.iField;
         if (iGeomField >= 0)

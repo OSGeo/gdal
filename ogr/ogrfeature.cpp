@@ -1591,6 +1591,61 @@ int OGRFeature::IsFieldSet(int iField) const
 }
 
 /************************************************************************/
+/*                             IsFieldGenerated()                       */
+/************************************************************************/
+
+/**
+ * \brief Test if a field is a generated field.
+ *
+ * This method is the same as the C function OGR_F_IsFieldGenerated().
+ *
+ * @param iField the field to test.
+ *
+ * @return TRUE if the field has been generated, otherwise false.
+ *
+ * @since GDAL 3.11
+ */
+
+bool OGRFeature::IsFieldGenerated(int iField) const
+
+{
+    const auto oFieldDefn = poDefn->GetFieldDefn(iField);
+    return oFieldDefn ? oFieldDefn->IsGenerated() : false;
+}
+
+/************************************************************************/
+/*                          OGR_F_IsFieldGenerated()                    */
+/************************************************************************/
+
+/**
+ * \brief Test if a field is a generated field.
+ *
+ * This function is the same as the C++ method OGRFeature::IsFieldGenerated().
+ *
+ * @param hFeat handle to the feature on which the field is.
+ * @param iField the field to test.
+ *
+ * @return TRUE if the field has been generated, otherwise false.
+ *
+ * @since GDAL 3.11
+ */
+
+int OGR_F_IsFieldGenerated(OGRFeatureH hFeat, int iField)
+
+{
+    VALIDATE_POINTER1(hFeat, "OGR_F_IsFieldGenerated", 0);
+
+    const OGRFeature *poFeature = OGRFeature::FromHandle(hFeat);
+    if (iField < 0 || iField >= poFeature->GetFieldCount())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid index : %d", iField);
+        return FALSE;
+    }
+
+    return poFeature->IsFieldGenerated(iField);
+}
+
+/************************************************************************/
 /*                          OGR_F_IsFieldSet()                          */
 /************************************************************************/
 

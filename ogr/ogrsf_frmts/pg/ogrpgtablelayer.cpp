@@ -827,10 +827,10 @@ int OGRPGTableLayer::ReadTableDefinition()
         if (pszDescription)
             oField.SetComment(pszDescription);
 
+        oField.SetGenerated(pszGenerated != nullptr && pszGenerated[0] != '\0');
+
         // CPLDebug("PG", "name=%s, type=%s", oField.GetNameRef(), pszType);
         poFeatureDefn->AddFieldDefn(&oField);
-        m_abGeneratedColumns.push_back(pszGenerated != nullptr &&
-                                       pszGenerated[0] != '\0');
     }
 
     OGRPGClearResult(hResult);
@@ -1574,7 +1574,7 @@ OGRErr OGRPGTableLayer::IUpdateFeature(OGRFeature *poFeature,
             continue;
         if (!poFeature->IsFieldSet(iField))
             continue;
-        if (m_abGeneratedColumns[iField])
+        if (poFeature->IsFieldGenerated(iField))
             continue;
 
         if (bNeedComma)
@@ -1934,7 +1934,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
             continue;
         if (!poFeature->IsFieldSet(i))
             continue;
-        if (m_abGeneratedColumns[i])
+        if (poFeature->IsFieldGenerated(i))
             continue;
 
         if (!bNeedComma)
@@ -2058,7 +2058,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
             continue;
         if (!poFeature->IsFieldSet(i))
             continue;
-        if (m_abGeneratedColumns[i])
+        if (poFeature->IsFieldGenerated(i))
             continue;
 
         if (bNeedComma)
@@ -2204,9 +2204,9 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
         }
     }
 
-    std::vector<bool> abFieldsToInclude(m_abGeneratedColumns.size(), true);
+    std::vector<bool> abFieldsToInclude(poFeature->GetFieldCount(), true);
     for (size_t i = 0; i < abFieldsToInclude.size(); i++)
-        abFieldsToInclude[i] = !m_abGeneratedColumns[i];
+        abFieldsToInclude[i] = !poFeature->IsFieldGenerated(i);
 
     if (bFIDColumnInCopyFields)
     {
@@ -2481,7 +2481,6 @@ OGRErr OGRPGTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
     }
 
     whileUnsealing(poFeatureDefn)->AddFieldDefn(&oField);
-    m_abGeneratedColumns.resize(poFeatureDefn->GetFieldCount());
 
     if (pszFIDColumn != nullptr && EQUAL(oField.GetNameRef(), pszFIDColumn))
     {
@@ -2738,8 +2737,6 @@ OGRErr OGRPGTableLayer::DeleteField(int iField)
     }
 
     OGRPGClearResult(hResult);
-
-    m_abGeneratedColumns.erase(m_abGeneratedColumns.begin() + iField);
 
     return whileUnsealing(poFeatureDefn)->DeleteFieldDefn(iField);
 }
@@ -3584,7 +3581,8 @@ CPLString OGRPGTableLayer::BuildCopyFields()
     {
         if (i == nFIDIndex)
             continue;
-        if (m_abGeneratedColumns[i])
+
+        if (poFeatureDefn->GetFieldDefn(i)->IsGenerated())
             continue;
 
         const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
