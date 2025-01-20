@@ -2280,12 +2280,6 @@ public:
       return false;
   }
 
-  /* ---- IsFieldGenerated --------------------- */
-
-  bool IsFieldGenerated(int id) {
-      return (OGR_F_IsFieldGenerated(self, id) > 0);
-  }
-
   /* ------------------------------------------- */
 
   /* ---- IsFieldNull --------------------------- */

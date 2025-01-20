@@ -7703,75 +7703,14 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
         CSLDestroy(papszTokens);
     }
 
+    if (ProcessTransactionSQL(osSQLCommand))
+    {
+        return nullptr;
+    }
+
     if (EQUAL(osSQLCommand, "VACUUM"))
     {
         ResetReadingAllLayers();
-    }
-
-    if (EQUAL(osSQLCommand, "BEGIN"))
-    {
-        SoftStartTransaction();
-        return nullptr;
-    }
-    else if (EQUAL(osSQLCommand, "COMMIT"))
-    {
-        SoftCommitTransaction();
-        return nullptr;
-    }
-    else if (EQUAL(osSQLCommand, "ROLLBACK"))
-    {
-        SoftRollbackTransaction();
-        return nullptr;
-    }
-    else if (STARTS_WITH_CI(osSQLCommand, "SAVEPOINT"))
-    {
-        const CPLStringList aosTokens(SQLTokenize(osSQLCommand));
-        if (aosTokens.size() == 2)
-        {
-            const char *pszSavepointName = aosTokens[1];
-            StartSavepoint(pszSavepointName);
-            return nullptr;
-        }
-    }
-    else if (STARTS_WITH_CI(osSQLCommand, "RELEASE"))
-    {
-        const CPLStringList aosTokens(SQLTokenize(osSQLCommand));
-        if (aosTokens.size() == 2)
-        {
-            const char *pszSavepointName = aosTokens[1];
-            ReleaseSavepoint(pszSavepointName);
-            return nullptr;
-        }
-        else if (aosTokens.size() == 3 && EQUAL(aosTokens[1], "SAVEPOINT"))
-        {
-            const char *pszSavepointName = aosTokens[2];
-            ReleaseSavepoint(pszSavepointName);
-            return nullptr;
-        }
-    }
-    else if (STARTS_WITH_CI(osSQLCommand, "ROLLBACK"))
-    {
-        const CPLStringList aosTokens(SQLTokenize(osSQLCommand));
-        if (aosTokens.size() == 2)
-        {
-            if (EQUAL(aosTokens[1], "TRANSACTION"))
-            {
-                SoftRollbackTransaction();
-                return nullptr;
-            }
-            else
-            {
-                const char *pszSavepointName = aosTokens[1];
-                RollbackToSavepoint(pszSavepointName);
-                return nullptr;
-            }
-        }
-        else if (aosTokens.size() > 1)  // Savepoint name is last token
-        {
-            const char *pszSavepointName = aosTokens[aosTokens.size() - 1];
-            RollbackToSavepoint(pszSavepointName);
-            return nullptr;
-        }
     }
     else if (STARTS_WITH_CI(osSQLCommand, "DELETE FROM "))
     {
@@ -7791,7 +7730,6 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
             }
         }
     }
-
     else if (pszDialect != nullptr && EQUAL(pszDialect, "INDIRECT_SQLITE"))
         return GDALDataset::ExecuteSQL(osSQLCommand, poSpatialFilter, "SQLITE");
     else if (pszDialect != nullptr && !EQUAL(pszDialect, "") &&

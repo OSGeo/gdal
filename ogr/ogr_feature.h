@@ -1270,8 +1270,6 @@ class CPL_DLL OGRFeature
 
     int IsFieldSet(int iField) const;
 
-    bool IsFieldGenerated(int iField) const;
-
     void UnsetField(int iField);
 
     bool IsFieldNull(int iField) const;

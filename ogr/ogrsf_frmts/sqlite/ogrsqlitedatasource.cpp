@@ -3444,70 +3444,9 @@ OGRLayer *OGRSQLiteDataSource::ExecuteSQL(const char *pszSQLCommand,
             }
         }
     }
-    else if (EQUAL(pszSQLCommand, "BEGIN"))
+    else if (ProcessTransactionSQL(pszSQLCommand))
     {
-        SoftStartTransaction();
         return nullptr;
-    }
-    else if (EQUAL(pszSQLCommand, "COMMIT"))
-    {
-        SoftCommitTransaction();
-        return nullptr;
-    }
-    else if (EQUAL(pszSQLCommand, "ROLLBACK"))
-    {
-        SoftRollbackTransaction();
-        return nullptr;
-    }
-    else if (STARTS_WITH_CI(pszSQLCommand, "SAVEPOINT"))
-    {
-        const CPLStringList aosTokens(SQLTokenize(pszSQLCommand));
-        if (aosTokens.size() == 2)
-        {
-            const char *pszSavepointName = aosTokens[1];
-            StartSavepoint(pszSavepointName);
-            return nullptr;
-        }
-    }
-    else if (STARTS_WITH_CI(pszSQLCommand, "RELEASE"))
-    {
-        const CPLStringList aosTokens(SQLTokenize(pszSQLCommand));
-        if (aosTokens.size() == 2)
-        {
-            const char *pszSavepointName = aosTokens[1];
-            ReleaseSavepoint(pszSavepointName);
-            return nullptr;
-        }
-        else if (aosTokens.size() == 3 && EQUAL(aosTokens[1], "SAVEPOINT"))
-        {
-            const char *pszSavepointName = aosTokens[2];
-            ReleaseSavepoint(pszSavepointName);
-            return nullptr;
-        }
-    }
-    else if (STARTS_WITH_CI(pszSQLCommand, "ROLLBACK"))
-    {
-        const CPLStringList aosTokens(SQLTokenize(pszSQLCommand));
-        if (aosTokens.size() == 2)
-        {
-            if (EQUAL(aosTokens[1], "TRANSACTION"))
-            {
-                SoftRollbackTransaction();
-                return nullptr;
-            }
-            else
-            {
-                const char *pszSavepointName = aosTokens[1];
-                RollbackToSavepoint(pszSavepointName);
-                return nullptr;
-            }
-        }
-        else if (aosTokens.size() > 1)  // Savepoint name is last token
-        {
-            const char *pszSavepointName = aosTokens[aosTokens.size() - 1];
-            RollbackToSavepoint(pszSavepointName);
-            return nullptr;
-        }
     }
     else if (!STARTS_WITH_CI(pszSQLCommand, "SELECT ") &&
              !STARTS_WITH_CI(pszSQLCommand, "CREATE TABLE ") &&
@@ -4410,6 +4349,86 @@ OGRErr OGRSQLiteBaseDataSource::RollbackToSavepoint(const std::string &osName)
     }
 
     return eErr;
+}
+
+/************************************************************************/
+/*                          ProcessTransactionSQL()                     */
+/************************************************************************/
+bool OGRSQLiteBaseDataSource::ProcessTransactionSQL(
+    const std::string &osSQLCommand)
+{
+    bool retVal = true;
+
+    if (EQUAL(osSQLCommand.c_str(), "BEGIN"))
+    {
+        SoftStartTransaction();
+    }
+    else if (EQUAL(osSQLCommand.c_str(), "COMMIT"))
+    {
+        SoftCommitTransaction();
+    }
+    else if (EQUAL(osSQLCommand.c_str(), "ROLLBACK"))
+    {
+        SoftRollbackTransaction();
+    }
+    else if (STARTS_WITH_CI(osSQLCommand.c_str(), "SAVEPOINT"))
+    {
+        const CPLStringList aosTokens(SQLTokenize(osSQLCommand.c_str()));
+        if (aosTokens.size() == 2)
+        {
+            const char *pszSavepointName = aosTokens[1];
+            StartSavepoint(pszSavepointName);
+        }
+        else
+        {
+            retVal = false;
+        }
+    }
+    else if (STARTS_WITH_CI(osSQLCommand.c_str(), "RELEASE"))
+    {
+        const CPLStringList aosTokens(SQLTokenize(osSQLCommand.c_str()));
+        if (aosTokens.size() == 2)
+        {
+            const char *pszSavepointName = aosTokens[1];
+            ReleaseSavepoint(pszSavepointName);
+        }
+        else if (aosTokens.size() == 3 && EQUAL(aosTokens[1], "SAVEPOINT"))
+        {
+            const char *pszSavepointName = aosTokens[2];
+            ReleaseSavepoint(pszSavepointName);
+        }
+        else
+        {
+            retVal = false;
+        }
+    }
+    else if (STARTS_WITH_CI(osSQLCommand.c_str(), "ROLLBACK"))
+    {
+        const CPLStringList aosTokens(SQLTokenize(osSQLCommand.c_str()));
+        if (aosTokens.size() == 2)
+        {
+            if (EQUAL(aosTokens[1], "TRANSACTION"))
+            {
+                SoftRollbackTransaction();
+            }
+            else
+            {
+                const char *pszSavepointName = aosTokens[1];
+                RollbackToSavepoint(pszSavepointName);
+            }
+        }
+        else if (aosTokens.size() > 1)  // Savepoint name is last token
+        {
+            const char *pszSavepointName = aosTokens[aosTokens.size() - 1];
+            RollbackToSavepoint(pszSavepointName);
+        }
+    }
+    else
+    {
+        retVal = false;
+    }
+
+    return retVal;
 }
 
 /************************************************************************/

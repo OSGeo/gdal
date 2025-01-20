@@ -1574,7 +1574,7 @@ OGRErr OGRPGTableLayer::IUpdateFeature(OGRFeature *poFeature,
             continue;
         if (!poFeature->IsFieldSet(iField))
             continue;
-        if (poFeature->IsFieldGenerated(iField))
+        if (poFeature->GetDefnRef()->GetFieldDefn(iField)->IsGenerated())
             continue;
 
         if (bNeedComma)
@@ -1934,7 +1934,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
             continue;
         if (!poFeature->IsFieldSet(i))
             continue;
-        if (poFeature->IsFieldGenerated(i))
+        if (poFeature->GetDefnRef()->GetFieldDefn(i)->IsGenerated())
             continue;
 
         if (!bNeedComma)
@@ -2058,7 +2058,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
             continue;
         if (!poFeature->IsFieldSet(i))
             continue;
-        if (poFeature->IsFieldGenerated(i))
+        if (poFeature->GetDefnRef()->GetFieldDefn(i)->IsGenerated())
             continue;
 
         if (bNeedComma)
@@ -2206,8 +2206,9 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
 
     std::vector<bool> abFieldsToInclude(poFeature->GetFieldCount(), true);
     for (size_t i = 0; i < abFieldsToInclude.size(); i++)
-        abFieldsToInclude[i] =
-            !poFeature->IsFieldGenerated(static_cast<int>(i));
+        abFieldsToInclude[i] = !poFeature->GetDefnRef()
+                                    ->GetFieldDefn(static_cast<int>(i))
+                                    ->IsGenerated();
 
     if (bFIDColumnInCopyFields)
     {

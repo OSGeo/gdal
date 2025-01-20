@@ -480,7 +480,6 @@ OGRFieldDefnH CPL_DLL OGR_F_GetFieldDefnRef(OGRFeatureH, int);
 int CPL_DLL OGR_F_GetFieldIndex(OGRFeatureH, const char *);
 
 int CPL_DLL OGR_F_IsFieldSet(OGRFeatureH, int);
-int CPL_DLL OGR_F_IsFieldGenerated(OGRFeatureH, int);
 void CPL_DLL OGR_F_UnsetField(OGRFeatureH, int);
 
 int CPL_DLL OGR_F_IsFieldNull(OGRFeatureH, int);

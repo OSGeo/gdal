@@ -219,6 +219,12 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
     OGRErr ReleaseSavepoint(const std::string &osName);
     OGRErr RollbackToSavepoint(const std::string &osName);
 
+    /**
+     *  Execute a SQL transaction command (BEGIN, COMMIT, ROLLBACK, SAVEPOINT)
+     *  @return TRUE if the osSQLCommand was recognized as a transaction command
+     */
+    bool ProcessTransactionSQL(const std::string &osSQLCommand);
+
     OGRErr PragmaCheck(const char *pszPragma, const char *pszExpected,
                        int nRowsExpected);
 

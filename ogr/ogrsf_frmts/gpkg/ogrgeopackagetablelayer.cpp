@@ -3255,7 +3255,7 @@ std::string OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL(
     {
         const int iField = panUpdatedFieldsIdx[i];
         if (iField == m_iFIDAsRegularColumnIndex ||
-            poFeature->IsFieldGenerated(iField))
+            poFeatureDefn->GetFieldDefn(iField)->IsGenerated())
             continue;
         if (!poFeature->IsFieldSet(iField))
             continue;

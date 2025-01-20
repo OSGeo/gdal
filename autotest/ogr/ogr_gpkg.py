@@ -9193,8 +9193,8 @@ def test_ogr_gpkg_read_generated_column(tmp_vsimem):
     assert f["strfield"] == "foo"
     assert f["strfield_generated"] == "foo_generated"
     assert f["intfield_generated_stored"] == 5
-    assert f.IsFieldGenerated(2)
-    assert f.IsFieldGenerated(3)
+    assert f.GetFieldDefnRef(2).IsGenerated()
+    assert f.GetFieldDefnRef(3).IsGenerated()
 
     assert lyr.SetFeature(f) == ogr.OGRERR_NONE
     lyr.ResetReading()
