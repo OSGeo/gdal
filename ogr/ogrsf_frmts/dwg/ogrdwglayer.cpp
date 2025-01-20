@@ -31,7 +31,6 @@ void OGRDWGLayer::AddSRSIfPresent()
     oddbGetGeoDataObjId(pDb, objId);
     if (objId.isNull())
     {
-        CPLError(CE_Warning, CPLE_AppDefined, "No GeoData found in DWG file.");
         return;
     }
 
