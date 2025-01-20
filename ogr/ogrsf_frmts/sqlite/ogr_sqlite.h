@@ -777,7 +777,6 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     virtual OGRErr StartTransaction(int bForce = FALSE) override;
     virtual OGRErr CommitTransaction() override;
     virtual OGRErr RollbackTransaction() override;
-    bool IsInTransaction() const;
 
     virtual char **GetMetadata(const char *pszDomain = "") override;
 

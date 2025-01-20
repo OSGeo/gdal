@@ -82,6 +82,9 @@ class CPL_DLL OGRFieldDefn
     int bNullable;
     int bUnique;
 
+    // Used by drivers (GPKG) to track generated fields
+    bool m_bGenerated = false;
+
     std::string m_osDomainName{};  // field domain name. Might be empty
 
     std::string m_osComment{};  // field comment. Might be empty
@@ -190,6 +193,29 @@ class CPL_DLL OGRFieldDefn
     int IsUnique() const
     {
         return bUnique;
+    }
+
+    /**
+     * @brief Return whether the field is a generated field.
+     *
+     * At time of writing, only the GeoPackage and PG drivers fill that information. Consequently,
+     * only a returned value equal to TRUE can be fully trusted.
+     * @return TRUE if the field is a generated field, FALSE otherwise.
+     * @since GDAL 3.11
+     */
+    bool IsGenerated() const
+    {
+        return m_bGenerated;
+    }
+
+    /**
+     * @brief SetGenerated set the field generated status.
+     * @param bGeneratedIn TRUE if the field is a generated field, FALSE otherwise.
+     * @since GDAL 3.11
+     */
+    void SetGenerated(bool bGeneratedIn)
+    {
+        m_bGenerated = bGeneratedIn;
     }
 
     void SetUnique(int bUniqueIn);

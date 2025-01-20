@@ -3004,7 +3004,8 @@ bool OGRSQLiteDataSource::OpenVirtualTable(const char *pszName,
         {
             OGRGeometry *poGeom = poFeature->GetGeometryRef();
             if (poGeom)
-                poLayer->GetLayerDefn()->SetGeomType(poGeom->getGeometryType());
+                whileUnsealing(poLayer->GetLayerDefn())
+                    ->SetGeomType(poGeom->getGeometryType());
             delete poFeature;
         }
         poLayer->ResetReading();
@@ -3443,9 +3444,11 @@ OGRLayer *OGRSQLiteDataSource::ExecuteSQL(const char *pszSQLCommand,
             }
         }
     }
+    else if (ProcessTransactionSQL(pszSQLCommand))
+    {
+        return nullptr;
+    }
     else if (!STARTS_WITH_CI(pszSQLCommand, "SELECT ") &&
-             !EQUAL(pszSQLCommand, "BEGIN") &&
-             !EQUAL(pszSQLCommand, "COMMIT") &&
              !STARTS_WITH_CI(pszSQLCommand, "CREATE TABLE ") &&
              !STARTS_WITH_CI(pszSQLCommand, "PRAGMA "))
     {
@@ -4016,24 +4019,26 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
 
 OGRErr OGRSQLiteBaseDataSource::StartTransaction(CPL_UNUSED int bForce)
 {
-    if (bUserTransactionActive || nSoftTransactionLevel != 0)
+    if (m_bUserTransactionActive || m_nSoftTransactionLevel != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Transaction already established");
         return OGRERR_FAILURE;
     }
 
-    for (int i = 0; i < GetLayerCount(); i++)
+    // Check if we are in a SAVEPOINT transaction
+    if (m_aosSavepoints.size() > 0)
     {
-        OGRLayer *poLayer = GetLayer(i);
-        poLayer->PrepareStartTransaction();
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot start a transaction within a SAVEPOINT");
+        return OGRERR_FAILURE;
     }
 
     OGRErr eErr = SoftStartTransaction();
     if (eErr != OGRERR_NONE)
         return eErr;
 
-    bUserTransactionActive = true;
+    m_bUserTransactionActive = true;
     return OGRERR_NONE;
 }
 
@@ -4060,21 +4065,22 @@ OGRErr OGRSQLiteDataSource::StartTransaction(int bForce)
 
 OGRErr OGRSQLiteBaseDataSource::CommitTransaction()
 {
-    if (!bUserTransactionActive)
+    if (!m_bUserTransactionActive && !m_bImplicitTransactionOpened)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Transaction not established");
         return OGRERR_FAILURE;
     }
 
-    bUserTransactionActive = false;
-    CPLAssert(nSoftTransactionLevel == 1);
+    m_bUserTransactionActive = false;
+    m_bImplicitTransactionOpened = false;
+    CPLAssert(m_nSoftTransactionLevel == 1);
     return SoftCommitTransaction();
 }
 
 OGRErr OGRSQLiteDataSource::CommitTransaction()
 
 {
-    if (nSoftTransactionLevel == 1)
+    if (m_nSoftTransactionLevel == 1)
     {
         for (auto &poLayer : m_apoLayers)
         {
@@ -4098,21 +4104,14 @@ OGRErr OGRSQLiteDataSource::CommitTransaction()
 
 OGRErr OGRSQLiteBaseDataSource::RollbackTransaction()
 {
-    if (!bUserTransactionActive)
+    if (!m_bUserTransactionActive)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Transaction not established");
         return OGRERR_FAILURE;
     }
 
-    bUserTransactionActive = false;
-    CPLAssert(nSoftTransactionLevel == 1);
-
-    // Loop through all layers and finish transaction
-    for (int i = 0; i < GetLayerCount(); i++)
-    {
-        OGRLayer *poLayer = GetLayer(i);
-        poLayer->FinishRollbackTransaction();
-    }
+    m_bUserTransactionActive = false;
+    CPLAssert(m_nSoftTransactionLevel == 1);
 
     return SoftRollbackTransaction();
 }
@@ -4120,7 +4119,7 @@ OGRErr OGRSQLiteBaseDataSource::RollbackTransaction()
 OGRErr OGRSQLiteDataSource::RollbackTransaction()
 
 {
-    if (nSoftTransactionLevel == 1)
+    if (m_nSoftTransactionLevel == 1)
     {
         for (auto &poLayer : m_apoLayers)
         {
@@ -4142,9 +4141,9 @@ OGRErr OGRSQLiteDataSource::RollbackTransaction()
     return OGRSQLiteBaseDataSource::RollbackTransaction();
 }
 
-bool OGRSQLiteDataSource::IsInTransaction() const
+bool OGRSQLiteBaseDataSource::IsInTransaction() const
 {
-    return nSoftTransactionLevel > 0;
+    return m_nSoftTransactionLevel > 0;
 }
 
 /************************************************************************/
@@ -4158,11 +4157,17 @@ bool OGRSQLiteDataSource::IsInTransaction() const
 OGRErr OGRSQLiteBaseDataSource::SoftStartTransaction()
 
 {
-    nSoftTransactionLevel++;
+    m_nSoftTransactionLevel++;
 
     OGRErr eErr = OGRERR_NONE;
-    if (nSoftTransactionLevel == 1)
+    if (m_nSoftTransactionLevel == 1)
     {
+        for (int i = 0; i < GetLayerCount(); i++)
+        {
+            OGRLayer *poLayer = GetLayer(i);
+            poLayer->PrepareStartTransaction();
+        }
+
         eErr = DoTransactionCommand("BEGIN");
     }
 
@@ -4185,15 +4190,15 @@ OGRErr OGRSQLiteBaseDataSource::SoftCommitTransaction()
     // CPLDebug("SQLite", "%p->SoftCommitTransaction() : %d",
     //          this, nSoftTransactionLevel);
 
-    if (nSoftTransactionLevel <= 0)
+    if (m_nSoftTransactionLevel <= 0)
     {
         CPLAssert(false);
         return OGRERR_FAILURE;
     }
 
     OGRErr eErr = OGRERR_NONE;
-    nSoftTransactionLevel--;
-    if (nSoftTransactionLevel == 0)
+    m_nSoftTransactionLevel--;
+    if (m_nSoftTransactionLevel == 0)
     {
         eErr = DoTransactionCommand("COMMIT");
     }
@@ -4214,20 +4219,216 @@ OGRErr OGRSQLiteBaseDataSource::SoftRollbackTransaction()
     // CPLDebug("SQLite", "%p->SoftRollbackTransaction() : %d",
     //          this, nSoftTransactionLevel);
 
-    if (nSoftTransactionLevel <= 0)
+    while (!m_aosSavepoints.empty())
+    {
+        if (RollbackToSavepoint(m_aosSavepoints.back()) != OGRERR_NONE)
+        {
+            return OGRERR_FAILURE;
+        }
+        m_aosSavepoints.pop_back();
+    }
+
+    if (m_nSoftTransactionLevel <= 0)
     {
         CPLAssert(false);
         return OGRERR_FAILURE;
     }
 
     OGRErr eErr = OGRERR_NONE;
-    nSoftTransactionLevel--;
-    if (nSoftTransactionLevel == 0)
+    m_nSoftTransactionLevel--;
+    if (m_nSoftTransactionLevel == 0)
     {
         eErr = DoTransactionCommand("ROLLBACK");
+        if (eErr == OGRERR_NONE)
+        {
+            for (int i = 0; i < GetLayerCount(); i++)
+            {
+                OGRLayer *poLayer = GetLayer(i);
+                poLayer->FinishRollbackTransaction("");
+            }
+        }
     }
 
     return eErr;
+}
+
+OGRErr OGRSQLiteBaseDataSource::StartSavepoint(const std::string &osName)
+{
+
+    // A SAVEPOINT implicity starts a transaction, let's fake one
+    if (!IsInTransaction())
+    {
+        m_bImplicitTransactionOpened = true;
+        m_nSoftTransactionLevel++;
+        for (int i = 0; i < GetLayerCount(); i++)
+        {
+            OGRLayer *poLayer = GetLayer(i);
+            poLayer->PrepareStartTransaction();
+        }
+    }
+
+    const std::string osCommand = "SAVEPOINT " + osName;
+    const auto eErr = DoTransactionCommand(osCommand.c_str());
+
+    if (eErr == OGRERR_NONE)
+    {
+        m_aosSavepoints.push_back(osName);
+    }
+
+    return eErr;
+}
+
+OGRErr OGRSQLiteBaseDataSource::ReleaseSavepoint(const std::string &osName)
+{
+    if (m_aosSavepoints.empty() ||
+        std::find(m_aosSavepoints.cbegin(), m_aosSavepoints.cend(), osName) ==
+            m_aosSavepoints.cend())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Savepoint %s not found",
+                 osName.c_str());
+        return OGRERR_FAILURE;
+    }
+
+    const std::string osCommand = "RELEASE SAVEPOINT " + osName;
+    const auto eErr = DoTransactionCommand(osCommand.c_str());
+
+    if (eErr == OGRERR_NONE)
+    {
+        // If the savepoint is the outer most, this is the same as COMMIT
+        // and the transaction is closed
+        if (m_bImplicitTransactionOpened &&
+            m_aosSavepoints.front().compare(osName) == 0)
+        {
+            m_bImplicitTransactionOpened = false;
+            m_bUserTransactionActive = false;
+            m_nSoftTransactionLevel = 0;
+            m_aosSavepoints.clear();
+        }
+        else
+        {
+            // Find all savepoints up to the target one and remove them
+            while (!m_aosSavepoints.empty() && m_aosSavepoints.back() != osName)
+            {
+                m_aosSavepoints.pop_back();
+            }
+            m_aosSavepoints.pop_back();
+        }
+    }
+    return eErr;
+}
+
+OGRErr OGRSQLiteBaseDataSource::RollbackToSavepoint(const std::string &osName)
+{
+    if (m_aosSavepoints.empty() ||
+        std::find(m_aosSavepoints.cbegin(), m_aosSavepoints.cend(), osName) ==
+            m_aosSavepoints.cend())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Savepoint %s not found",
+                 osName.c_str());
+        return OGRERR_FAILURE;
+    }
+
+    const std::string osCommand = "ROLLBACK TO SAVEPOINT " + osName;
+    const auto eErr = DoTransactionCommand(osCommand.c_str());
+
+    if (eErr == OGRERR_NONE)
+    {
+
+        // The target savepoint should become the last one in the list
+        // and does not need to be removed because ROLLBACK TO SAVEPOINT
+        while (!m_aosSavepoints.empty() && m_aosSavepoints.back() != osName)
+        {
+            m_aosSavepoints.pop_back();
+        }
+    }
+
+    for (int i = 0; i < GetLayerCount(); i++)
+    {
+        OGRLayer *poLayer = GetLayer(i);
+        poLayer->FinishRollbackTransaction(osName);
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                          ProcessTransactionSQL()                     */
+/************************************************************************/
+bool OGRSQLiteBaseDataSource::ProcessTransactionSQL(
+    const std::string &osSQLCommand)
+{
+    bool retVal = true;
+
+    if (EQUAL(osSQLCommand.c_str(), "BEGIN"))
+    {
+        SoftStartTransaction();
+    }
+    else if (EQUAL(osSQLCommand.c_str(), "COMMIT"))
+    {
+        SoftCommitTransaction();
+    }
+    else if (EQUAL(osSQLCommand.c_str(), "ROLLBACK"))
+    {
+        SoftRollbackTransaction();
+    }
+    else if (STARTS_WITH_CI(osSQLCommand.c_str(), "SAVEPOINT"))
+    {
+        const CPLStringList aosTokens(SQLTokenize(osSQLCommand.c_str()));
+        if (aosTokens.size() == 2)
+        {
+            const char *pszSavepointName = aosTokens[1];
+            StartSavepoint(pszSavepointName);
+        }
+        else
+        {
+            retVal = false;
+        }
+    }
+    else if (STARTS_WITH_CI(osSQLCommand.c_str(), "RELEASE"))
+    {
+        const CPLStringList aosTokens(SQLTokenize(osSQLCommand.c_str()));
+        if (aosTokens.size() == 2)
+        {
+            const char *pszSavepointName = aosTokens[1];
+            ReleaseSavepoint(pszSavepointName);
+        }
+        else if (aosTokens.size() == 3 && EQUAL(aosTokens[1], "SAVEPOINT"))
+        {
+            const char *pszSavepointName = aosTokens[2];
+            ReleaseSavepoint(pszSavepointName);
+        }
+        else
+        {
+            retVal = false;
+        }
+    }
+    else if (STARTS_WITH_CI(osSQLCommand.c_str(), "ROLLBACK"))
+    {
+        const CPLStringList aosTokens(SQLTokenize(osSQLCommand.c_str()));
+        if (aosTokens.size() == 2)
+        {
+            if (EQUAL(aosTokens[1], "TRANSACTION"))
+            {
+                SoftRollbackTransaction();
+            }
+            else
+            {
+                const char *pszSavepointName = aosTokens[1];
+                RollbackToSavepoint(pszSavepointName);
+            }
+        }
+        else if (aosTokens.size() > 1)  // Savepoint name is last token
+        {
+            const char *pszSavepointName = aosTokens[aosTokens.size() - 1];
+            RollbackToSavepoint(pszSavepointName);
+        }
+    }
+    else
+    {
+        retVal = false;
+    }
+
+    return retVal;
 }
 
 /************************************************************************/

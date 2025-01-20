@@ -225,6 +225,7 @@ void OGRSQLiteTableLayer::SetCreationParameters(const char *pszFIDColumnName,
         poGeomFieldDefn->SetSpatialRef(poSRS);
         m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
     }
+    m_poFeatureDefn->Seal(/* bSealFields */ true);
 }
 
 /************************************************************************/
@@ -851,6 +852,8 @@ OGRFeatureDefn *OGRSQLiteTableLayer::GetLayerDefn()
     }
     else
         LoadStatistics();
+
+    m_poFeatureDefn->Seal(/* bSealFields */ true);
 
     return m_poFeatureDefn;
 }
@@ -1611,14 +1614,14 @@ OGRErr OGRSQLiteTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
     /* -------------------------------------------------------------------- */
     /*      Add the field to the OGRFeatureDefn.                            */
     /* -------------------------------------------------------------------- */
-    m_poFeatureDefn->AddFieldDefn(&oField);
+    whileUnsealing(m_poFeatureDefn)->AddFieldDefn(&oField);
 
     if (m_poDS->IsInTransaction())
     {
         m_apoFieldDefnChanges.emplace_back(
             std::make_unique<OGRFieldDefn>(oField),
             m_poFeatureDefn->GetFieldCount() - 1, FieldChangeType::ADD_FIELD,
-            /* bGenerated */ false);
+            m_poDS->GetCurrentSavepoint());
     }
 
     if (m_pszFIDColumn != nullptr && EQUAL(oField.GetNameRef(), m_pszFIDColumn))
@@ -1724,8 +1727,7 @@ OGRSQLiteTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     {
         m_apoGeomFieldDefnChanges.emplace_back(
             std::make_unique<OGRGeomFieldDefn>(*poGeomField),
-            m_poFeatureDefn->GetGeomFieldCount(), FieldChangeType::ADD_FIELD,
-            /* bGenerated */ false);
+            m_poFeatureDefn->GetGeomFieldCount(), FieldChangeType::ADD_FIELD);
     }
 
     m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomField));
@@ -2174,12 +2176,14 @@ OGRErr OGRSQLiteTableLayer::DeleteField(int iFieldToDelete)
             if (m_poDS->IsInTransaction())
             {
                 std::unique_ptr<OGRFieldDefn> poFieldDefn;
-                poFieldDefn = m_poFeatureDefn->StealFieldDefn(iFieldToDelete);
+                poFieldDefn = whileUnsealing(m_poFeatureDefn)
+                                  ->StealFieldDefn(iFieldToDelete);
                 if (poFieldDefn)
                 {
                     m_apoFieldDefnChanges.emplace_back(
                         std::move(poFieldDefn), iFieldToDelete,
-                        FieldChangeType::DELETE_FIELD, false);
+                        FieldChangeType::DELETE_FIELD,
+                        m_poDS->GetCurrentSavepoint());
                 }
                 else
                 {
@@ -2188,7 +2192,8 @@ OGRErr OGRSQLiteTableLayer::DeleteField(int iFieldToDelete)
             }
             else
             {
-                eErr = m_poFeatureDefn->DeleteFieldDefn(iFieldToDelete);
+                eErr = whileUnsealing(m_poFeatureDefn)
+                           ->DeleteFieldDefn(iFieldToDelete);
             }
 
             RecomputeOrdinals();
@@ -2410,13 +2415,14 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn(int iFieldToAlter,
     /*      Finish                                                          */
     /* -------------------------------------------------------------------- */
 
+    auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
     OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn(iFieldToAlter);
 
     if (m_poDS->IsInTransaction())
     {
         m_apoFieldDefnChanges.emplace_back(
             std::make_unique<OGRFieldDefn>(poFieldDefn), iFieldToAlter,
-            FieldChangeType::ALTER_FIELD, /* bGenerated */ false);
+            FieldChangeType::ALTER_FIELD, m_poDS->GetCurrentSavepoint());
     }
 
     if (nActualFlags & ALTER_TYPE_FLAG)
@@ -2587,7 +2593,7 @@ OGRErr OGRSQLiteTableLayer::ReorderFields(int *panMap)
     /*      Finish                                                          */
     /* -------------------------------------------------------------------- */
 
-    eErr = m_poFeatureDefn->ReorderFieldDefns(panMap);
+    eErr = whileUnsealing(m_poFeatureDefn)->ReorderFieldDefns(panMap);
 
     RecomputeOrdinals();
 

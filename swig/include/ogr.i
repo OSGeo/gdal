@@ -2977,6 +2977,14 @@ public:
     OGR_Fld_SetUnique( self, bUnique );
   }
 
+  int IsGenerated() {
+    return OGR_Fld_IsGenerated( self );
+  }
+
+  void SetGenerated(int bGenerated ) {
+    OGR_Fld_SetGenerated( self, bGenerated );
+  }
+
   const char* GetDefault() {
     return OGR_Fld_GetDefault( self );
   }

@@ -7703,27 +7703,15 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
         CSLDestroy(papszTokens);
     }
 
+    if (ProcessTransactionSQL(osSQLCommand))
+    {
+        return nullptr;
+    }
+
     if (EQUAL(osSQLCommand, "VACUUM"))
     {
         ResetReadingAllLayers();
     }
-
-    if (EQUAL(osSQLCommand, "BEGIN"))
-    {
-        SoftStartTransaction();
-        return nullptr;
-    }
-    else if (EQUAL(osSQLCommand, "COMMIT"))
-    {
-        SoftCommitTransaction();
-        return nullptr;
-    }
-    else if (EQUAL(osSQLCommand, "ROLLBACK"))
-    {
-        SoftRollbackTransaction();
-        return nullptr;
-    }
-
     else if (STARTS_WITH_CI(osSQLCommand, "DELETE FROM "))
     {
         // Optimize truncation of a table, especially if it has a spatial
@@ -7742,7 +7730,6 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
             }
         }
     }
-
     else if (pszDialect != nullptr && EQUAL(pszDialect, "INDIRECT_SQLITE"))
         return GDALDataset::ExecuteSQL(osSQLCommand, poSpatialFilter, "SQLITE");
     else if (pszDialect != nullptr && !EQUAL(pszDialect, "") &&
@@ -9678,7 +9665,7 @@ GDALGeoPackageDataset::GetLayerWithGetSpatialWhereByName(const char *pszName)
 OGRErr GDALGeoPackageDataset::CommitTransaction()
 
 {
-    if (nSoftTransactionLevel == 1)
+    if (m_nSoftTransactionLevel == 1)
     {
         FlushMetadata();
         for (int i = 0; i < m_nLayers; i++)
@@ -9701,7 +9688,7 @@ OGRErr GDALGeoPackageDataset::RollbackTransaction()
     std::vector<bool> abAddTriggers;
     std::vector<bool> abTriggersDeletedInTransaction;
 #endif
-    if (nSoftTransactionLevel == 1)
+    if (m_nSoftTransactionLevel == 1)
     {
         FlushMetadata();
         for (int i = 0; i < m_nLayers; i++)
