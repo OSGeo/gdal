@@ -2593,7 +2593,7 @@ OGRErr OGRSQLiteTableLayer::ReorderFields(int *panMap)
     /*      Finish                                                          */
     /* -------------------------------------------------------------------- */
 
-    eErr = m_poFeatureDefn->ReorderFieldDefns(panMap);
+    eErr = whileUnsealing(m_poFeatureDefn)->ReorderFieldDefns(panMap);
 
     RecomputeOrdinals();
 
