@@ -2206,7 +2206,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
 
     std::vector<bool> abFieldsToInclude(poFeature->GetFieldCount(), true);
     for (size_t i = 0; i < abFieldsToInclude.size(); i++)
-        abFieldsToInclude[i] = !poFeature->IsFieldGenerated(i);
+        abFieldsToInclude[i] =
+            !poFeature->IsFieldGenerated(static_cast<int>(i));
 
     if (bFIDColumnInCopyFields)
     {
