@@ -15,7 +15,6 @@ body:
       value: |
 
         - [ ] I'm using LLM/AI-suggested procedures
-        - [ ] AI (Copilot or something similar) supported my development of this PR
 
         Using GDAL still requires thinking. While LLMs can sometimes provide useful guidance about how to use GDAL, the most precise documentation is the source code itself, with the test suite being the next most useful place for discovering how to use a feature. Please tell us in the ticket if you are using LLM-suggested procedures.
 
