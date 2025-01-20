@@ -195,11 +195,21 @@ class CPL_DLL OGRFieldDefn
         return bUnique;
     }
 
+    /**
+     * @brief IsGenerated
+     * @return TRUE if the field is a generated field, FALSE otherwise.
+     * @since GDAL 3.11
+     */
     bool IsGenerated() const
     {
         return m_bGenerated;
     }
 
+    /**
+     * @brief SetGenerated set the field generated status.
+     * @param bGeneratedIn TRUE if the field is a generated field, FALSE otherwise.
+     * @since GDAL 3.11
+     */
     void SetGenerated(bool bGeneratedIn)
     {
         m_bGenerated = bGeneratedIn;
