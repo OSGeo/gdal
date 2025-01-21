@@ -4311,7 +4311,10 @@ OGRErr OGRSQLiteBaseDataSource::ReleaseSavepoint(const std::string &osName)
             {
                 m_aosSavepoints.pop_back();
             }
-            m_aosSavepoints.pop_back();
+            if (!m_aosSavepoints.empty())  // should always be true
+            {
+                m_aosSavepoints.pop_back();
+            }
         }
     }
     return eErr;
