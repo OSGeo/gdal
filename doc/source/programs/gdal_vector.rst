@@ -19,6 +19,7 @@ Synopsis
 
     Usage: gdal vector <SUBCOMMAND>
     where <SUBCOMMAND> is one of:
+      - clip:      Clip a vector dataset.
       - convert:   Convert a vector dataset.
       - filter:    Filter a vector dataset.
       - info:      Return information on a vector dataset.
@@ -28,8 +29,9 @@ Synopsis
 Available sub-commands
 ----------------------
 
-- :ref:`gdal_vector_info_subcommand`
+- :ref:`gdal_vector_clip_subcommand`
 - :ref:`gdal_vector_convert_subcommand`
+- :ref:`gdal_vector_info_subcommand`
 - :ref:`gdal_vector_pipeline_subcommand`
 
 Examples
