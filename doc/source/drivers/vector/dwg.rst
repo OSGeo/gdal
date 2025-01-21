@@ -14,8 +14,9 @@ DWG driver work similarly to the OGR DXF driver which shares a common
 data model. The entire contents of the .dwg file is represented as a
 single layer named "entities".
 
-DWG files are considered to have no georeferencing information through
-OGR. Features will all have the following generic attributes:
+DWG files georeferencing information can be retrieved through OGR using ODA ; when CSMap dictionaries for ODA are correctly set up (see :ref:`ODA platform support <vector.oda>` "Adding ODA Geodata capabilities" section).
+
+Features will all have the following generic attributes:
 
 -  Layer: The name of the DXF layer. The default layer is "0".
 -  SubClasses: Where available, a list of classes to which an element
