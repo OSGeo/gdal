@@ -73,5 +73,6 @@
 #include "FdField.h"
 
 #include "DbGeoData.h"
+#include "DynamicLinker.h"
 
 #endif  // TEIGHA_HEADERS_H

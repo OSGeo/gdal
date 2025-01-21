@@ -19,6 +19,21 @@ void OGRDWGLayer::AddSRSIfPresent()
 {
     if(!poDS) return;
 
+    OdRxModulePtr pOdSpatialReferenceModule = odrxDynamicLinker()->loadModule(L"OdSpatialReference");
+    if (pOdSpatialReferenceModule.isNull())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot load OdSpatialReference.tx The setup of MENTOR_DICTIONARY_PATH (or CS_MAP_DIR) is probably missing");
+        return;
+    }
+
+    OdRxModulePtr pOdGeoDataModule = odrxDynamicLinker()->loadModule(L"OdGeoData");
+    if (pOdGeoDataModule.isNull())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot load OdGeoData.tx . GEO Protocol Extension (PE) interfaces couldn't have been loaded");
+        return;
+    }
+
+
     OdDbDatabasePtr pDb = poDS->GetDB();
     if (pDb.isNull())
     {
