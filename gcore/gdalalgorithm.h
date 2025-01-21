@@ -423,7 +423,7 @@ class CPL_DLL GDALArgDatasetValue final
     /** Set dataset name */
     void Set(const std::string &name);
 
-    /** Transfer dataset to this instance (does not affect is reference
+    /** Transfer dataset to this instance (does not affect its reference
      * counter). */
     void Set(std::unique_ptr<GDALDataset> poDS);
 
