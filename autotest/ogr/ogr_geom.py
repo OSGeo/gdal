@@ -4559,12 +4559,34 @@ def test_ogr_geom_GeodesicArea():
 @gdaltest.enable_exceptions()
 def test_ogr_geom_GeodesicLength():
 
+    # Lat, lon order, not forming a polygon
+    g = ogr.CreateGeometryFromWkt("LINESTRING(49 2,49 3)")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    l1 = g.GeodesicLength()
+    assert l1 == pytest.approx(73171.26435678436)
+
+    g = ogr.CreateGeometryFromWkt("LINESTRING(49 3,48 3)")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    l2 = g.GeodesicLength()
+    assert l2 == pytest.approx(111200.0367623785)
+
+    g = ogr.CreateGeometryFromWkt("LINESTRING(48 3,49 2)")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    l3 = g.GeodesicLength()
+    assert l3 == pytest.approx(133514.4852804854)
+
     # Lat, lon order
     g = ogr.CreateGeometryFromWkt("LINESTRING(49 2,49 3,48 3,49 2)")
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     g.AssignSpatialReference(srs)
-    assert g.GeodesicLength() == pytest.approx(317885.78639964823)
+    assert g.GeodesicLength() == pytest.approx(l1 + l2 + l3)
 
     # Lat, lon order
     g = ogr.CreateGeometryFromWkt("POLYGON((49 2,49 3,48 3,49 2))")

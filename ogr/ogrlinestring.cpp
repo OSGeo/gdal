@@ -3124,12 +3124,14 @@ double OGRLineString::get_Area() const
 }
 
 /************************************************************************/
-/*                        GetGeodesicAreaOrLength()                     */
+/*                           GetGeodesicInputs()                        */
 /************************************************************************/
 
-static bool GetGeodesicAreaOrLength(const OGRLineString *poLS,
-                                    const OGRSpatialReference *poSRSOverride,
-                                    double *pdfArea, double *pdfLength)
+static bool GetGeodesicInputs(const OGRLineString *poLS,
+                              const OGRSpatialReference *poSRSOverride,
+                              const char *pszComputationType, geod_geodesic &g,
+                              std::vector<double> &adfLat,
+                              std::vector<double> &adfLon)
 {
     if (!poSRSOverride)
         poSRSOverride = poLS->getSpatialReference();
@@ -3138,7 +3140,7 @@ static bool GetGeodesicAreaOrLength(const OGRLineString *poLS,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot compute %s on ellipsoid due to missing SRS",
-                 pdfArea ? "area" : "length");
+                 pszComputationType);
         return false;
     }
 
@@ -3150,12 +3152,9 @@ static bool GetGeodesicAreaOrLength(const OGRLineString *poLS,
     if (eErr != OGRERR_NONE)
         return false;
 
-    geod_geodesic g;
     geod_init(&g, dfSemiMajor,
               dfInvFlattening != 0 ? 1.0 / dfInvFlattening : 0.0);
 
-    std::vector<double> adfLat;
-    std::vector<double> adfLon;
     const int nPointCount = poLS->getNumPoints();
     adfLat.reserve(nPointCount);
     adfLon.reserve(nPointCount);
@@ -3208,8 +3207,6 @@ static bool GetGeodesicAreaOrLength(const OGRLineString *poLS,
         adfLat[i] *= dfToDegrees;
     }
 
-    geod_polygonarea(&g, adfLat.data(), adfLon.data(),
-                     static_cast<int>(adfLat.size()), pdfArea, pdfLength);
     return true;
 }
 
@@ -3220,9 +3217,14 @@ static bool GetGeodesicAreaOrLength(const OGRLineString *poLS,
 double
 OGRLineString::get_GeodesicArea(const OGRSpatialReference *poSRSOverride) const
 {
-    double dfArea = 0;
-    if (!GetGeodesicAreaOrLength(this, poSRSOverride, &dfArea, nullptr))
+    geod_geodesic g;
+    std::vector<double> adfLat;
+    std::vector<double> adfLon;
+    if (!GetGeodesicInputs(this, poSRSOverride, "area", g, adfLat, adfLon))
         return -1.0;
+    double dfArea = -1.0;
+    geod_polygonarea(&g, adfLat.data(), adfLon.data(),
+                     static_cast<int>(adfLat.size()), &dfArea, nullptr);
     return std::fabs(dfArea);
 }
 
@@ -3233,9 +3235,19 @@ OGRLineString::get_GeodesicArea(const OGRSpatialReference *poSRSOverride) const
 double OGRLineString::get_GeodesicLength(
     const OGRSpatialReference *poSRSOverride) const
 {
+    geod_geodesic g;
+    std::vector<double> adfLat;
+    std::vector<double> adfLon;
+    if (!GetGeodesicInputs(this, poSRSOverride, "length", g, adfLat, adfLon))
+        return -1.0;
     double dfLength = 0;
-    if (!GetGeodesicAreaOrLength(this, poSRSOverride, nullptr, &dfLength))
-        return -1;
+    for (size_t i = 0; i + 1 < adfLon.size(); ++i)
+    {
+        double dfSegmentLength = 0;
+        geod_inverse(&g, adfLat[i], adfLon[i], adfLat[i + 1], adfLon[i + 1],
+                     &dfSegmentLength, nullptr, nullptr);
+        dfLength += dfSegmentLength;
+    }
     return dfLength;
 }
 
