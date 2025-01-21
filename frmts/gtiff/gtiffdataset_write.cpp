@@ -598,7 +598,6 @@ void GTiffDataset::WriteDealWithLercAndNan(T *pBuffer, int nActualBlockWidth,
 bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
                                     int bPreserveDataBuffer)
 {
-
     const int iColumn = (tile % m_nBlocksPerBand) % m_nBlocksPerRow;
     const int iRow = (tile % m_nBlocksPerBand) / m_nBlocksPerRow;
 
@@ -4285,6 +4284,14 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
     if (CPLTestBool(
             CPLGetConfigOption("GTIFF_WRITE_IMAGE_STRUCTURE_METADATA", "YES")))
     {
+        const char *pszTileInterleave =
+            CSLFetchNameValue(papszCreationOptions, "@TILE_INTERLEAVE");
+        if (pszTileInterleave && CPLTestBool(pszTileInterleave))
+        {
+            AppendMetadataItem(&psRoot, &psTail, "INTERLEAVE", "TILE", 0,
+                               nullptr, "IMAGE_STRUCTURE");
+        }
+
         const char *pszCompress =
             CSLFetchNameValue(papszCreationOptions, "COMPRESS");
         if (pszCompress && EQUAL(pszCompress, "WEBP"))
@@ -5038,9 +5045,12 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                              int l_nBands, GDALDataType eType,
                              double dfExtraSpaceForOverviews,
                              int nColorTableMultiplier, char **papszParamList,
-                             VSILFILE **pfpL, CPLString &l_osTmpFilename)
+                             VSILFILE **pfpL, CPLString &l_osTmpFilename,
+                             bool bCreateCopy, bool &bTileInterleavingOut)
 
 {
+    bTileInterleavingOut = false;
+
     GTiffOneTimeInit();
 
     /* -------------------------------------------------------------------- */
@@ -5111,27 +5121,43 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     }
 
     int nPlanar = 0;
-    pszValue = CSLFetchNameValue(papszParamList, "INTERLEAVE");
-    if (pszValue != nullptr)
+
+    // Hidden @TILE_INTERLEAVE=YES parameter used by the COG driver
+    if (bCreateCopy &&
+        (pszValue = CSLFetchNameValue(papszParamList, "@TILE_INTERLEAVE")) &&
+        CPLTestBool(pszValue))
     {
-        if (EQUAL(pszValue, "PIXEL"))
-            nPlanar = PLANARCONFIG_CONTIG;
-        else if (EQUAL(pszValue, "BAND"))
-        {
-            nPlanar = PLANARCONFIG_SEPARATE;
-        }
-        else
-        {
-            ReportError(
-                pszFilename, CE_Failure, CPLE_IllegalArg,
-                "INTERLEAVE=%s unsupported, value must be PIXEL or BAND.",
-                pszValue);
-            return nullptr;
-        }
+        bTileInterleavingOut = true;
+        nPlanar = PLANARCONFIG_SEPARATE;
     }
     else
     {
-        nPlanar = PLANARCONFIG_CONTIG;
+        pszValue = CSLFetchNameValue(papszParamList, "INTERLEAVE");
+        if (pszValue != nullptr)
+        {
+            if (EQUAL(pszValue, "PIXEL"))
+                nPlanar = PLANARCONFIG_CONTIG;
+            else if (EQUAL(pszValue, "BAND"))
+            {
+                nPlanar = PLANARCONFIG_SEPARATE;
+            }
+            else if (EQUAL(pszValue, "BAND"))
+            {
+                nPlanar = PLANARCONFIG_SEPARATE;
+            }
+            else
+            {
+                ReportError(
+                    pszFilename, CE_Failure, CPLE_IllegalArg,
+                    "INTERLEAVE=%s unsupported, value must be PIXEL or BAND.",
+                    pszValue);
+                return nullptr;
+            }
+        }
+        else
+        {
+            nPlanar = PLANARCONFIG_CONTIG;
+        }
     }
 
     int l_nCompression = COMPRESSION_NONE;
@@ -6176,10 +6202,11 @@ int GTiffDataset::GuessJPEGQuality(bool &bOutHasQuantizationTable,
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
         CPLString osTmp;
-        TIFF *hTIFFTmp =
-            CreateLL(osTmpFilenameIn, 16, 16, (nBands <= 4) ? nBands : 1,
-                     GetRasterBand(1)->GetRasterDataType(), 0.0, 0,
-                     papszLocalParameters, &fpTmp, osTmp);
+        bool bTileInterleaving;
+        TIFF *hTIFFTmp = CreateLL(
+            osTmpFilenameIn, 16, 16, (nBands <= 4) ? nBands : 1,
+            GetRasterBand(1)->GetRasterDataType(), 0.0, 0, papszLocalParameters,
+            &fpTmp, osTmp, /* bCreateCopy=*/false, bTileInterleaving);
         CPLPopErrorHandler();
         if (!hTIFFTmp)
         {
@@ -6338,9 +6365,11 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     /* -------------------------------------------------------------------- */
     /*      Create the underlying TIFF file.                                */
     /* -------------------------------------------------------------------- */
-    TIFF *l_hTIFF = CreateLL(pszFilename, nXSize, nYSize, l_nBands, eType, 0,
-                             nColorTableMultiplier, papszParamList, &l_fpL,
-                             l_osTmpFilename);
+    bool bTileInterleaving;
+    TIFF *l_hTIFF =
+        CreateLL(pszFilename, nXSize, nYSize, l_nBands, eType, 0,
+                 nColorTableMultiplier, papszParamList, &l_fpL, l_osTmpFilename,
+                 /* bCreateCopy=*/false, bTileInterleaving);
     const bool bStreaming = !l_osTmpFilename.empty();
 
     if (l_hTIFF == nullptr)
@@ -6572,19 +6601,15 @@ CPLErr GTiffDataset::CopyImageryAndMask(GTiffDataset *poDstDS,
     const auto eType = poDstDS->GetRasterBand(1)->GetRasterDataType();
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eType);
     const int l_nBands = poDstDS->GetRasterCount();
-    void *pBlockBuffer =
+    GByte *pBlockBuffer = static_cast<GByte *>(
         VSI_MALLOC3_VERBOSE(poDstDS->m_nBlockXSize, poDstDS->m_nBlockYSize,
-                            cpl::fits_on<int>(l_nBands * nDataTypeSize));
+                            cpl::fits_on<int>(l_nBands * nDataTypeSize)));
     if (pBlockBuffer == nullptr)
     {
         eErr = CE_Failure;
     }
     const int nYSize = poDstDS->nRasterYSize;
     const int nXSize = poDstDS->nRasterXSize;
-    const int nBlocks = poDstDS->m_nBlocksPerBand;
-
-    CPLAssert(l_nBands == 1 || poDstDS->m_nPlanarConfig == PLANARCONFIG_CONTIG);
-
     const bool bIsOddBand =
         dynamic_cast<GTiffOddBitsBand *>(poDstDS->GetRasterBand(1)) != nullptr;
 
@@ -6594,134 +6619,276 @@ CPLErr GTiffDataset::CopyImageryAndMask(GTiffDataset *poDstDS,
         CPLAssert(poDstDS->m_poMaskDS->m_nBlockYSize == poDstDS->m_nBlockYSize);
     }
 
-    int iBlock = 0;
-    for (int iY = 0, nYBlock = 0; iY < nYSize && eErr == CE_None;
-         iY = ((nYSize - iY < poDstDS->m_nBlockYSize)
-                   ? nYSize
-                   : iY + poDstDS->m_nBlockYSize),
-             nYBlock++)
+    if (poDstDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE &&
+        !poDstDS->m_bTileInterleave)
     {
-        const int nReqYSize = std::min(nYSize - iY, poDstDS->m_nBlockYSize);
-        for (int iX = 0, nXBlock = 0; iX < nXSize && eErr == CE_None;
-             iX = ((nXSize - iX < poDstDS->m_nBlockXSize)
-                       ? nXSize
-                       : iX + poDstDS->m_nBlockXSize),
-                 nXBlock++)
+        int iBlock = 0;
+        const int nBlocks = poDstDS->m_nBlocksPerBand *
+                            (l_nBands + (poDstDS->m_poMaskDS ? 1 : 0));
+        for (int i = 0; eErr == CE_None && i < l_nBands; i++)
         {
-            const int nReqXSize = std::min(nXSize - iX, poDstDS->m_nBlockXSize);
-            if (nReqXSize < poDstDS->m_nBlockXSize ||
-                nReqYSize < poDstDS->m_nBlockYSize)
+            for (int iY = 0, nYBlock = 0; iY < nYSize && eErr == CE_None;
+                 iY = ((nYSize - iY < poDstDS->m_nBlockYSize)
+                           ? nYSize
+                           : iY + poDstDS->m_nBlockYSize),
+                     nYBlock++)
             {
-                memset(pBlockBuffer, 0,
-                       static_cast<size_t>(poDstDS->m_nBlockXSize) *
-                           poDstDS->m_nBlockYSize * l_nBands * nDataTypeSize);
-            }
-
-            if (!bIsOddBand)
-            {
-                eErr = poSrcDS->RasterIO(
-                    GF_Read, iX, iY, nReqXSize, nReqYSize, pBlockBuffer,
-                    nReqXSize, nReqYSize, eType, l_nBands, nullptr,
-                    static_cast<GSpacing>(nDataTypeSize) * l_nBands,
-                    static_cast<GSpacing>(nDataTypeSize) * l_nBands *
-                        poDstDS->m_nBlockXSize,
-                    nDataTypeSize, nullptr);
-                if (eErr == CE_None)
+                const int nReqYSize =
+                    std::min(nYSize - iY, poDstDS->m_nBlockYSize);
+                for (int iX = 0, nXBlock = 0; iX < nXSize && eErr == CE_None;
+                     iX = ((nXSize - iX < poDstDS->m_nBlockXSize)
+                               ? nXSize
+                               : iX + poDstDS->m_nBlockXSize),
+                         nXBlock++)
                 {
-                    eErr = poDstDS->WriteEncodedTileOrStrip(
-                        iBlock, pBlockBuffer, false);
-                }
-            }
-            else
-            {
-                // In the odd bit case, this is a bit messy to ensure
-                // the strile gets written synchronously.
-                // We load the content of the n-1 bands in the cache,
-                // and for the last band we invoke WriteBlock() directly
-                // We also force FlushBlockBuf()
-                std::vector<GDALRasterBlock *> apoLockedBlocks;
-                for (int i = 0; eErr == CE_None && i < l_nBands - 1; i++)
-                {
-                    auto poBlock =
-                        poDstDS->GetRasterBand(i + 1)->GetLockedBlockRef(
-                            nXBlock, nYBlock, TRUE);
-                    if (poBlock)
+                    const int nReqXSize =
+                        std::min(nXSize - iX, poDstDS->m_nBlockXSize);
+                    if (nReqXSize < poDstDS->m_nBlockXSize ||
+                        nReqYSize < poDstDS->m_nBlockYSize)
                     {
-                        eErr = poSrcDS->GetRasterBand(i + 1)->RasterIO(
-                            GF_Read, iX, iY, nReqXSize, nReqYSize,
-                            poBlock->GetDataRef(), nReqXSize, nReqYSize, eType,
-                            nDataTypeSize,
-                            static_cast<GSpacing>(nDataTypeSize) *
-                                poDstDS->m_nBlockXSize,
-                            nullptr);
-                        poBlock->MarkDirty();
-                        apoLockedBlocks.emplace_back(poBlock);
+                        memset(pBlockBuffer, 0,
+                               static_cast<size_t>(poDstDS->m_nBlockXSize) *
+                                   poDstDS->m_nBlockYSize * nDataTypeSize);
                     }
-                    else
-                    {
-                        eErr = CE_Failure;
-                    }
-                }
-                if (eErr == CE_None)
-                {
-                    eErr = poSrcDS->GetRasterBand(l_nBands)->RasterIO(
+                    eErr = poSrcDS->GetRasterBand(i + 1)->RasterIO(
                         GF_Read, iX, iY, nReqXSize, nReqYSize, pBlockBuffer,
                         nReqXSize, nReqYSize, eType, nDataTypeSize,
                         static_cast<GSpacing>(nDataTypeSize) *
                             poDstDS->m_nBlockXSize,
                         nullptr);
-                }
-                if (eErr == CE_None)
-                {
-                    // Avoid any attempt to load from disk
-                    poDstDS->m_nLoadedBlock = iBlock;
-                    eErr = poDstDS->GetRasterBand(l_nBands)->WriteBlock(
-                        nXBlock, nYBlock, pBlockBuffer);
                     if (eErr == CE_None)
-                        eErr = poDstDS->FlushBlockBuf();
-                }
-                for (auto poBlock : apoLockedBlocks)
-                {
-                    poBlock->MarkClean();
-                    poBlock->DropLock();
+                    {
+                        eErr = poDstDS->WriteEncodedTileOrStrip(
+                            iBlock, pBlockBuffer, false);
+                    }
+
+                    iBlock++;
+                    if (pfnProgress &&
+                        !pfnProgress(static_cast<double>(iBlock) / nBlocks,
+                                     nullptr, pProgressData))
+                    {
+                        eErr = CE_Failure;
+                    }
+
+                    if (poDstDS->m_bWriteError)
+                        eErr = CE_Failure;
                 }
             }
-
-            if (eErr == CE_None && poDstDS->m_poMaskDS)
+        }
+        if (poDstDS->m_poMaskDS && eErr == CE_None)
+        {
+            int iBlockMask = 0;
+            for (int iY = 0, nYBlock = 0; iY < nYSize && eErr == CE_None;
+                 iY = ((nYSize - iY < poDstDS->m_nBlockYSize)
+                           ? nYSize
+                           : iY + poDstDS->m_nBlockYSize),
+                     nYBlock++)
             {
+                const int nReqYSize =
+                    std::min(nYSize - iY, poDstDS->m_nBlockYSize);
+                for (int iX = 0, nXBlock = 0; iX < nXSize && eErr == CE_None;
+                     iX = ((nXSize - iX < poDstDS->m_nBlockXSize)
+                               ? nXSize
+                               : iX + poDstDS->m_nBlockXSize),
+                         nXBlock++)
+                {
+                    const int nReqXSize =
+                        std::min(nXSize - iX, poDstDS->m_nBlockXSize);
+                    if (nReqXSize < poDstDS->m_nBlockXSize ||
+                        nReqYSize < poDstDS->m_nBlockYSize)
+                    {
+                        memset(pBlockBuffer, 0,
+                               static_cast<size_t>(poDstDS->m_nBlockXSize) *
+                                   poDstDS->m_nBlockYSize * nDataTypeSize);
+                    }
+                    eErr = poSrcMaskBand->RasterIO(
+                        GF_Read, iX, iY, nReqXSize, nReqYSize, pBlockBuffer,
+                        nReqXSize, nReqYSize, eType, nDataTypeSize,
+                        static_cast<GSpacing>(nDataTypeSize) *
+                            poDstDS->m_nBlockXSize,
+                        nullptr);
+                    if (eErr == CE_None)
+                    {
+                        eErr = poDstDS->m_poMaskDS->WriteEncodedTileOrStrip(
+                            iBlockMask, pBlockBuffer, false);
+                    }
+
+                    iBlockMask++;
+                    if (pfnProgress &&
+                        !pfnProgress(static_cast<double>(iBlock + iBlockMask) /
+                                         nBlocks,
+                                     nullptr, pProgressData))
+                    {
+                        eErr = CE_Failure;
+                    }
+
+                    if (poDstDS->m_poMaskDS->m_bWriteError)
+                        eErr = CE_Failure;
+                }
+            }
+        }
+    }
+    else
+    {
+        int iBlock = 0;
+        const int nBlocks = poDstDS->m_nBlocksPerBand;
+        for (int iY = 0, nYBlock = 0; iY < nYSize && eErr == CE_None;
+             iY = ((nYSize - iY < poDstDS->m_nBlockYSize)
+                       ? nYSize
+                       : iY + poDstDS->m_nBlockYSize),
+                 nYBlock++)
+        {
+            const int nReqYSize = std::min(nYSize - iY, poDstDS->m_nBlockYSize);
+            for (int iX = 0, nXBlock = 0; iX < nXSize && eErr == CE_None;
+                 iX = ((nXSize - iX < poDstDS->m_nBlockXSize)
+                           ? nXSize
+                           : iX + poDstDS->m_nBlockXSize),
+                     nXBlock++)
+            {
+                const int nReqXSize =
+                    std::min(nXSize - iX, poDstDS->m_nBlockXSize);
                 if (nReqXSize < poDstDS->m_nBlockXSize ||
                     nReqYSize < poDstDS->m_nBlockYSize)
                 {
                     memset(pBlockBuffer, 0,
                            static_cast<size_t>(poDstDS->m_nBlockXSize) *
-                               poDstDS->m_nBlockYSize);
+                               poDstDS->m_nBlockYSize * l_nBands *
+                               nDataTypeSize);
                 }
-                eErr = poSrcMaskBand->RasterIO(
-                    GF_Read, iX, iY, nReqXSize, nReqYSize, pBlockBuffer,
-                    nReqXSize, nReqYSize, GDT_Byte, 1, poDstDS->m_nBlockXSize,
-                    nullptr);
-                if (eErr == CE_None)
-                {
-                    // Avoid any attempt to load from disk
-                    poDstDS->m_poMaskDS->m_nLoadedBlock = iBlock;
-                    eErr = poDstDS->m_poMaskDS->GetRasterBand(1)->WriteBlock(
-                        nXBlock, nYBlock, pBlockBuffer);
-                    if (eErr == CE_None)
-                        eErr = poDstDS->m_poMaskDS->FlushBlockBuf();
-                }
-            }
-            if (poDstDS->m_bWriteError)
-                eErr = CE_Failure;
 
-            iBlock++;
-            if (pfnProgress &&
-                !pfnProgress(static_cast<double>(iBlock) / nBlocks, nullptr,
-                             pProgressData))
-            {
-                eErr = CE_Failure;
+                if (poDstDS->m_bTileInterleave)
+                {
+                    eErr = poSrcDS->RasterIO(
+                        GF_Read, iX, iY, nReqXSize, nReqYSize, pBlockBuffer,
+                        nReqXSize, nReqYSize, eType, l_nBands, nullptr,
+                        nDataTypeSize,
+                        static_cast<GSpacing>(nDataTypeSize) *
+                            poDstDS->m_nBlockXSize,
+                        static_cast<GSpacing>(nDataTypeSize) *
+                            poDstDS->m_nBlockXSize * poDstDS->m_nBlockYSize,
+                        nullptr);
+                    if (eErr == CE_None)
+                    {
+                        for (int i = 0; eErr == CE_None && i < l_nBands; i++)
+                        {
+                            eErr = poDstDS->WriteEncodedTileOrStrip(
+                                iBlock + i * poDstDS->m_nBlocksPerBand,
+                                pBlockBuffer + static_cast<size_t>(i) *
+                                                   poDstDS->m_nBlockXSize *
+                                                   poDstDS->m_nBlockYSize *
+                                                   nDataTypeSize,
+                                false);
+                        }
+                    }
+                }
+                else if (!bIsOddBand)
+                {
+                    eErr = poSrcDS->RasterIO(
+                        GF_Read, iX, iY, nReqXSize, nReqYSize, pBlockBuffer,
+                        nReqXSize, nReqYSize, eType, l_nBands, nullptr,
+                        static_cast<GSpacing>(nDataTypeSize) * l_nBands,
+                        static_cast<GSpacing>(nDataTypeSize) * l_nBands *
+                            poDstDS->m_nBlockXSize,
+                        nDataTypeSize, nullptr);
+                    if (eErr == CE_None)
+                    {
+                        eErr = poDstDS->WriteEncodedTileOrStrip(
+                            iBlock, pBlockBuffer, false);
+                    }
+                }
+                else
+                {
+                    // In the odd bit case, this is a bit messy to ensure
+                    // the strile gets written synchronously.
+                    // We load the content of the n-1 bands in the cache,
+                    // and for the last band we invoke WriteBlock() directly
+                    // We also force FlushBlockBuf()
+                    std::vector<GDALRasterBlock *> apoLockedBlocks;
+                    for (int i = 0; eErr == CE_None && i < l_nBands - 1; i++)
+                    {
+                        auto poBlock =
+                            poDstDS->GetRasterBand(i + 1)->GetLockedBlockRef(
+                                nXBlock, nYBlock, TRUE);
+                        if (poBlock)
+                        {
+                            eErr = poSrcDS->GetRasterBand(i + 1)->RasterIO(
+                                GF_Read, iX, iY, nReqXSize, nReqYSize,
+                                poBlock->GetDataRef(), nReqXSize, nReqYSize,
+                                eType, nDataTypeSize,
+                                static_cast<GSpacing>(nDataTypeSize) *
+                                    poDstDS->m_nBlockXSize,
+                                nullptr);
+                            poBlock->MarkDirty();
+                            apoLockedBlocks.emplace_back(poBlock);
+                        }
+                        else
+                        {
+                            eErr = CE_Failure;
+                        }
+                    }
+                    if (eErr == CE_None)
+                    {
+                        eErr = poSrcDS->GetRasterBand(l_nBands)->RasterIO(
+                            GF_Read, iX, iY, nReqXSize, nReqYSize, pBlockBuffer,
+                            nReqXSize, nReqYSize, eType, nDataTypeSize,
+                            static_cast<GSpacing>(nDataTypeSize) *
+                                poDstDS->m_nBlockXSize,
+                            nullptr);
+                    }
+                    if (eErr == CE_None)
+                    {
+                        // Avoid any attempt to load from disk
+                        poDstDS->m_nLoadedBlock = iBlock;
+                        eErr = poDstDS->GetRasterBand(l_nBands)->WriteBlock(
+                            nXBlock, nYBlock, pBlockBuffer);
+                        if (eErr == CE_None)
+                            eErr = poDstDS->FlushBlockBuf();
+                    }
+                    for (auto poBlock : apoLockedBlocks)
+                    {
+                        poBlock->MarkClean();
+                        poBlock->DropLock();
+                    }
+                }
+
+                if (eErr == CE_None && poDstDS->m_poMaskDS)
+                {
+                    if (nReqXSize < poDstDS->m_nBlockXSize ||
+                        nReqYSize < poDstDS->m_nBlockYSize)
+                    {
+                        memset(pBlockBuffer, 0,
+                               static_cast<size_t>(poDstDS->m_nBlockXSize) *
+                                   poDstDS->m_nBlockYSize);
+                    }
+                    eErr = poSrcMaskBand->RasterIO(
+                        GF_Read, iX, iY, nReqXSize, nReqYSize, pBlockBuffer,
+                        nReqXSize, nReqYSize, GDT_Byte, 1,
+                        poDstDS->m_nBlockXSize, nullptr);
+                    if (eErr == CE_None)
+                    {
+                        // Avoid any attempt to load from disk
+                        poDstDS->m_poMaskDS->m_nLoadedBlock = iBlock;
+                        eErr =
+                            poDstDS->m_poMaskDS->GetRasterBand(1)->WriteBlock(
+                                nXBlock, nYBlock, pBlockBuffer);
+                        if (eErr == CE_None)
+                            eErr = poDstDS->m_poMaskDS->FlushBlockBuf();
+                    }
+                }
+                if (poDstDS->m_bWriteError)
+                    eErr = CE_Failure;
+
+                iBlock++;
+                if (pfnProgress &&
+                    !pfnProgress(static_cast<double>(iBlock) / nBlocks, nullptr,
+                                 pProgressData))
+                {
+                    eErr = CE_Failure;
+                }
             }
         }
     }
+
     poDstDS->FlushCache(false);  // mostly to wait for thread completion
     VSIFree(pBlockBuffer);
 
@@ -7044,9 +7211,11 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                      papszOptions, "COLOR_TABLE_MULTIPLIER",
                      CPLSPrintf("%d", DEFAULT_COLOR_TABLE_MULTIPLIER_257)))));
 
+    bool bTileInterleaving = false;
     TIFF *l_hTIFF = CreateLL(pszFilename, nXSize, nYSize, l_nBands, eType,
                              dfExtraSpaceForOverviews, nColorTableMultiplier,
-                             papszCreateOptions, &l_fpL, l_osTmpFilename);
+                             papszCreateOptions, &l_fpL, l_osTmpFilename,
+                             /* bCreateCopy = */ true, bTileInterleaving);
     const bool bStreaming = !l_osTmpFilename.empty();
 
     CSLDestroy(papszCreateOptions);
@@ -7258,13 +7427,20 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     const int nMaskFlags = poSrcDS->GetRasterBand(1)->GetMaskFlags();
     bool bCreateMask = false;
     CPLString osHiddenStructuralMD;
-    if ((l_nBands == 1 || l_nPlanarConfig == PLANARCONFIG_CONTIG) &&
-        bCopySrcOverviews)
+    const char *pszInterleave =
+        CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "PIXEL");
+    if (bCopySrcOverviews)
     {
         osHiddenStructuralMD += "LAYOUT=IFDS_BEFORE_DATA\n";
         osHiddenStructuralMD += "BLOCK_ORDER=ROW_MAJOR\n";
         osHiddenStructuralMD += "BLOCK_LEADER=SIZE_AS_UINT4\n";
         osHiddenStructuralMD += "BLOCK_TRAILER=LAST_4_BYTES_REPEATED\n";
+        if (l_nBands > 1 && !EQUAL(pszInterleave, "PIXEL"))
+        {
+            osHiddenStructuralMD += "INTERLEAVE=";
+            osHiddenStructuralMD += CPLString(pszInterleave).toupper();
+            osHiddenStructuralMD += "\n";
+        }
         osHiddenStructuralMD +=
             "KNOWN_INCOMPATIBLE_EDITION=NO\n ";  // Final space intended, so
                                                  // this can be replaced by YES
@@ -7274,7 +7450,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     {
         bCreateMask = true;
         if (GTiffDataset::MustCreateInternalMask() &&
-            !osHiddenStructuralMD.empty())
+            !osHiddenStructuralMD.empty() && EQUAL(pszInterleave, "PIXEL"))
         {
             osHiddenStructuralMD += "MASK_INTERLEAVED_WITH_IMAGERY=YES\n";
         }
@@ -7627,6 +7803,13 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     poDS->m_fpL = l_fpL;
     poDS->m_bIMDRPCMetadataLoaded = true;
     poDS->m_nColorTableMultiplier = nColorTableMultiplier;
+    poDS->m_bTileInterleave = bTileInterleaving;
+
+    if (bTileInterleaving)
+    {
+        poDS->m_oGTiffMDMD.SetMetadataItem("INTERLEAVE", "TILE",
+                                           "IMAGE_STRUCTURE");
+    }
 
     const bool bAppend = CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false);
     if (poDS->OpenOffset(l_hTIFF,
@@ -8060,10 +8243,6 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                 }
             }
 
-            char *papszCopyWholeRasterOptions[2] = {nullptr, nullptr};
-            if (l_nCompression != COMPRESSION_NONE)
-                papszCopyWholeRasterOptions[0] =
-                    const_cast<char *>("COMPRESSED=YES");
             // Now copy the imagery.
             // Begin with the smallest overview.
             for (int iOvrLevel = nSrcOverviews - 1;
@@ -8099,6 +8278,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                 poDstDS->m_bFillEmptyTilesAtClosing =
                     poDS->m_bFillEmptyTilesAtClosing;
                 poDstDS->m_bWriteEmptyTiles = poDS->m_bWriteEmptyTiles;
+                poDstDS->m_bTileInterleave = poDS->m_bTileInterleave;
                 GDALRasterBand *poSrcMaskBand = nullptr;
                 if (poDstDS->m_poMaskDS)
                 {
@@ -8120,68 +8300,22 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                             : poSrcOvrBand->GetMaskBand();
                 }
 
-                if (l_nBands == 1 ||
-                    poDstDS->m_nPlanarConfig == PLANARCONFIG_CONTIG)
+                if (poDstDS->m_poMaskDS)
                 {
-                    if (poDstDS->m_poMaskDS)
-                    {
-                        dfNextCurPixels +=
-                            static_cast<double>(poSrcOvrBand->GetXSize()) *
-                            poSrcOvrBand->GetYSize();
-                    }
-                    void *pScaledData = GDALCreateScaledProgress(
-                        dfCurPixels / dfTotalPixels,
-                        dfNextCurPixels / dfTotalPixels, pfnProgress,
-                        pProgressData);
-
-                    eErr =
-                        CopyImageryAndMask(poDstDS, poSrcOvrDS, poSrcMaskBand,
-                                           GDALScaledProgress, pScaledData);
-
-                    dfCurPixels = dfNextCurPixels;
-                    GDALDestroyScaledProgress(pScaledData);
+                    dfNextCurPixels +=
+                        static_cast<double>(poSrcOvrBand->GetXSize()) *
+                        poSrcOvrBand->GetYSize();
                 }
-                else
-                {
-                    void *pScaledData = GDALCreateScaledProgress(
-                        dfCurPixels / dfTotalPixels,
-                        dfNextCurPixels / dfTotalPixels, pfnProgress,
-                        pProgressData);
+                void *pScaledData =
+                    GDALCreateScaledProgress(dfCurPixels / dfTotalPixels,
+                                             dfNextCurPixels / dfTotalPixels,
+                                             pfnProgress, pProgressData);
 
-                    eErr = GDALDatasetCopyWholeRaster(
-                        GDALDataset::ToHandle(poSrcOvrDS),
-                        GDALDataset::ToHandle(poDstDS),
-                        papszCopyWholeRasterOptions, GDALScaledProgress,
-                        pScaledData);
+                eErr = CopyImageryAndMask(poDstDS, poSrcOvrDS, poSrcMaskBand,
+                                          GDALScaledProgress, pScaledData);
 
-                    dfCurPixels = dfNextCurPixels;
-                    GDALDestroyScaledProgress(pScaledData);
-
-                    poDstDS->FlushCache(false);
-
-                    // Copy mask of the overview.
-                    if (eErr == CE_None &&
-                        (poMaskOvrDS ||
-                         poSrcOvrBand->GetMaskFlags() == GMF_PER_DATASET) &&
-                        poDstDS->m_poMaskDS != nullptr)
-                    {
-                        dfNextCurPixels +=
-                            static_cast<double>(poSrcOvrBand->GetXSize()) *
-                            poSrcOvrBand->GetYSize();
-                        pScaledData = GDALCreateScaledProgress(
-                            dfCurPixels / dfTotalPixels,
-                            dfNextCurPixels / dfTotalPixels, pfnProgress,
-                            pProgressData);
-                        eErr = GDALRasterBandCopyWholeRaster(
-                            poSrcMaskBand,
-                            poDstDS->m_poMaskDS->GetRasterBand(1),
-                            papszCopyWholeRasterOptions, GDALScaledProgress,
-                            pScaledData);
-                        dfCurPixels = dfNextCurPixels;
-                        GDALDestroyScaledProgress(pScaledData);
-                        poDstDS->m_poMaskDS->FlushCache(false);
-                    }
-                }
+                dfCurPixels = dfNextCurPixels;
+                GDALDestroyScaledProgress(pScaledData);
 
                 if (poSrcOvrDS != poOvrDS.get())
                     delete poSrcOvrDS;
@@ -8336,6 +8470,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         {
             papszCopyWholeRasterOptions[iNextOption++] = "COMPRESSED=YES";
         }
+
         // For streaming with separate, we really want that bands are written
         // after each other, even if the source is pixel interleaved.
         else if (bStreaming && poDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
@@ -8343,21 +8478,17 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             papszCopyWholeRasterOptions[iNextOption++] = "INTERLEAVE=BAND";
         }
 
-        if (bCopySrcOverviews &&
-            (l_nBands == 1 || poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG))
+        if (bCopySrcOverviews || bTileInterleaving)
         {
             poDS->m_bBlockOrderRowMajor = true;
-            poDS->m_bLeaderSizeAsUInt4 = true;
-            poDS->m_bTrailerRepeatedLast4BytesRepeated = true;
+            poDS->m_bLeaderSizeAsUInt4 = bCopySrcOverviews;
+            poDS->m_bTrailerRepeatedLast4BytesRepeated = bCopySrcOverviews;
             if (poDS->m_poMaskDS)
             {
                 poDS->m_poMaskDS->m_bBlockOrderRowMajor = true;
-                poDS->m_poMaskDS->m_bLeaderSizeAsUInt4 = true;
-                poDS->m_poMaskDS->m_bTrailerRepeatedLast4BytesRepeated = true;
-            }
-
-            if (poDS->m_poMaskDS)
-            {
+                poDS->m_poMaskDS->m_bLeaderSizeAsUInt4 = bCopySrcOverviews;
+                poDS->m_poMaskDS->m_bTrailerRepeatedLast4BytesRepeated =
+                    bCopySrcOverviews;
                 GDALDestroyScaledProgress(pScaledData);
                 pScaledData =
                     GDALCreateScaledProgress(dfCurPixels / dfTotalPixels, 1.0,

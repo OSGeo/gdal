@@ -425,15 +425,71 @@ This driver supports the following creation options:
 -  .. co:: INTERLEAVE
       :choices: BAND, PIXEL
 
-      By default TIFF files with pixel
-      interleaving (PLANARCONFIG_CONTIG in TIFF terminology) are created.
-      These are slightly less efficient than BAND interleaving for some
-      purposes, but some applications only support pixel interleaved TIFF
-      files.
+      Set the interleaving to use
+
+      * ``PIXEL``: for each spatial block, one TIFF tile/strip gathering values for
+        all bands is used . This matches the ``contiguous`` planar configuration in
+        TIFF terminology.
+        This is also known as a ``BIP (Band Interleaved Per Pixel)`` organization.
+        Such method is the default, and may be slightly less
+        efficient than BAND interleaving for some purposes, but some applications
+        only support pixel interleaved TIFF files. On the other hand, image-based
+        compression methods may perform better using PIXEL interleaving. For JPEG
+        PHOTOMETRIC=YCbCr, pixel interleaving is required. It is also required for
+        WebP compression.
+
+        Assuming a pixel[band][y][x] indexed array, when using CreateCopy(),
+        the pseudo code for the file disposition is:
+
+        ::
+
+          for y in 0 ... numberOfBlocksInHeight - 1:
+              for x in 0 ... numberOfTilesInWidth - 1:
+                  for j in 0 ... blockHeight - 1:
+                      for i in 0 ... blockWidth -1:
+                          start_new_strip_or_tile()
+                          for band in 0 ... numberBands -1:
+                              write(pixel[band][y*blockHeight+j][x*blockWidth+i])
+                          end_new_strip_or_tile()
+                      end_for
+                  end_for
+              end_for
+          end_for
+
+
+      * ``BAND``: for each spatial block, one TIFF tile/strip is used for each band.
+        This matches the contiguous ``separate`` configuration in TIFF terminology.
+        This is also known as a ``BSQ (Band SeQuential)`` organization.
+
+        In addition to that, when using CreateCopy(), data for the first band is
+        written first, followed by data for the second band, etc.
+        The pseudo code for the file disposition is:
+
+        ::
+
+          for y in 0 ... numberOfBlocksInHeight - 1:
+              for x in 0 ... numberOfTilesInWidth - 1:
+                  start_new_strip_or_tile()
+                  for band in 0 ... numberBands -1:
+                      for j in 0 ... blockHeight - 1:
+                          for i in 0 ... blockWidth -1:
+                              write(pixel[band][y*blockHeight+j][x*blockWidth+i])
+                          end_for
+                      end_for
+                  end_new_strip_or_tile()
+              end_for
+          end_for
+
+
       Starting with GDAL 3.5, when copying from a source dataset with multiple bands
       which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
       is not specified, the source dataset INTERLEAVE will be automatically taken
       into account, unless the COMPRESS creation option is specified.
+
+      .. note::
+
+          Starting with GDAL 3.11, a ``TILE`` interleaving is available,
+          but only when using the :ref:`raster.cog` driver.
 
 -  .. co:: TILED
       :choices: YES, NO

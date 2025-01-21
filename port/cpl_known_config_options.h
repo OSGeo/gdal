@@ -321,7 +321,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_MAX_CONNECTIONS", // from gdalogcapidataset.cpp, gdalwmsdataset.cpp
    "GDAL_MAX_DATASET_POOL_RAM_USAGE", // from gdalproxypool.cpp
    "GDAL_MAX_DATASET_POOL_SIZE", // from gdal_translate_bin.cpp, gdalproxypool.cpp, gdalwarp_bin.cpp
-   "GDAL_MAX_RAW_BLOCK_CACHE_SIZE", // from gtiffrasterband_read.cpp
+   "GDAL_MAX_RAW_BLOCK_CACHE_SIZE", // from gtiffdataset_read.cpp
    "GDAL_MEM_ENABLE_OPEN", // from memdataset.cpp
    "GDAL_NETCDF_ASSUME_LONGLAT", // from netcdfdataset.cpp
    "GDAL_NETCDF_BOTTOMUP", // from netcdfdataset.cpp
