@@ -423,7 +423,7 @@ def test_ogr_dxf_11():
 
 
 ###############################################################################
-# Write a simple file with a polygon and a line, and read back.
+# Write a simple file with a few geometries of different types, and read back.
 
 
 def test_ogr_dxf_12(tmp_path):
@@ -463,6 +463,14 @@ def test_ogr_dxf_12(tmp_path):
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(
         ogr.CreateGeometryFromWkt("LINESTRING(1 2 -10,3 4 10)")
+    )
+    lyr.CreateFeature(dst_feat)
+    dst_feat = None
+
+    # Test multipoint
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
+    dst_feat.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt("MULTIPOINT((10 40),(40 30))")
     )
     lyr.CreateFeature(dst_feat)
     dst_feat = None
@@ -514,8 +522,23 @@ def test_ogr_dxf_12(tmp_path):
     ), feat.GetGeometryRef().ExportToWkt()
     feat = None
 
+    # Check 5th feature (1st multipoint part)
+    feat = lyr.GetNextFeature()
+
+    ogrtest.check_feature_geometry(
+        feat, "POINT(10 40)"
+    ), feat.GetGeometryRef().ExportToWkt()
+    feat = None
+
+    # Check 6th feature (2nd multipoint part)
+    feat = lyr.GetNextFeature()
+
+    ogrtest.check_feature_geometry(
+        feat, "POINT(40 30)"
+    ), feat.GetGeometryRef().ExportToWkt()
+    feat = None
+
     lyr = None
-    ds = None
     ds = None
 
 
