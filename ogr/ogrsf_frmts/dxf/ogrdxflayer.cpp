@@ -3167,7 +3167,7 @@ bool OGRDXFLayer::TranslateINSERT()
 
             case 70:
                 m_oInsertState.m_nColumnCount = atoi(szLineBuf);
-                if (m_oInsertState.m_nColumnCount <= 0)
+                if (m_oInsertState.m_nColumnCount < 0)
                 {
                     DXF_LAYER_READER_ERROR();
                     m_oInsertState.m_nRowCount = 0;
@@ -3178,7 +3178,7 @@ bool OGRDXFLayer::TranslateINSERT()
 
             case 71:
                 m_oInsertState.m_nRowCount = atoi(szLineBuf);
-                if (m_oInsertState.m_nRowCount <= 0)
+                if (m_oInsertState.m_nRowCount < 0)
                 {
                     DXF_LAYER_READER_ERROR();
                     m_oInsertState.m_nRowCount = 0;
@@ -3203,6 +3203,14 @@ bool OGRDXFLayer::TranslateINSERT()
         m_oInsertState.m_nRowCount = 0;
         m_oInsertState.m_nColumnCount = 0;
         return false;
+    }
+
+    if (m_oInsertState.m_nRowCount == 0 || m_oInsertState.m_nColumnCount == 0)
+    {
+        // AutoCad doesn't allow setting to 0 in its UI, but interprets 0
+        // as 1 (but other software such as LibreCAD interpret 0 as 0)
+        m_oInsertState.m_nRowCount = 1;
+        m_oInsertState.m_nColumnCount = 1;
     }
 
     /* -------------------------------------------------------------------- */

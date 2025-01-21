@@ -4147,3 +4147,22 @@ def test_ogr_dxf_write_MEASUREMENT(tmp_vsimem):
             pass
     with ogr.Open(filename) as ds:
         assert ds.GetMetadataItem("$MEASUREMENT", "DXF_HEADER_VARIABLES") == "     0"
+
+
+###############################################################################
+# Use case of https://github.com/OSGeo/gdal/issues/11591
+# Test reading a INSERT block whose column count is zero.
+# Interpretating it as 1, as AutoCAD does
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_dxf_insert_col_count_zero():
+
+    with ogr.Open("data/dxf/insert_only_col_count_zero.dxf") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+
+    with gdal.config_option("DXF_INLINE_BLOCKS", "NO"):
+        with ogr.Open("data/dxf/insert_only_col_count_zero.dxf") as ds:
+            lyr = ds.GetLayerByName("blocks")
+            assert lyr.GetFeatureCount() == 1
