@@ -3207,8 +3207,10 @@ bool OGRDXFLayer::TranslateINSERT()
 
     if (m_oInsertState.m_nRowCount == 0 || m_oInsertState.m_nColumnCount == 0)
     {
-        m_oInsertState.m_nRowCount = 0;
-        m_oInsertState.m_nColumnCount = 0;
+        // AutoCad doesn't allow setting to 0 in its UI, but interprets 0
+        // as 1 (but other software such as LibreCAD interpret 0 as 0)
+        m_oInsertState.m_nRowCount = 1;
+        m_oInsertState.m_nColumnCount = 1;
     }
 
     /* -------------------------------------------------------------------- */
