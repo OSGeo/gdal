@@ -2069,6 +2069,21 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
 
     std::string osEndpoint = VSIGetPathSpecificOption(
         osPathForOption.c_str(), "AWS_S3_ENDPOINT", "s3.amazonaws.com");
+    bool bForceHTTP = false;
+    bool bForceHTTPS = false;
+    if (STARTS_WITH(osEndpoint.c_str(), "http://"))
+    {
+        bForceHTTP = true;
+        osEndpoint = osEndpoint.substr(strlen("http://"));
+    }
+    else if (STARTS_WITH(osEndpoint.c_str(), "https://"))
+    {
+        bForceHTTPS = true;
+        osEndpoint = osEndpoint.substr(strlen("https://"));
+    }
+    if (!osEndpoint.empty() && osEndpoint.back() == '/')
+        osEndpoint.pop_back();
+
     if (!osRegion.empty() && osEndpoint == "s3.amazonaws.com")
     {
         osEndpoint = "s3." + osRegion + ".amazonaws.com";
@@ -2083,8 +2098,10 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
     {
         return nullptr;
     }
-    const bool bUseHTTPS = CPLTestBool(
-        VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_HTTPS", "YES"));
+    const bool bUseHTTPS =
+        bForceHTTPS ||
+        (!bForceHTTP && CPLTestBool(VSIGetPathSpecificOption(
+                            osPathForOption.c_str(), "AWS_HTTPS", "YES")));
     const bool bIsValidNameForVirtualHosting =
         osBucket.find('.') == std::string::npos;
     const bool bUseVirtualHosting = CPLTestBool(CSLFetchNameValueDef(
