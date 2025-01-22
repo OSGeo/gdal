@@ -79,6 +79,7 @@ See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
   libkml, libpoppler, pdfium, openexr, libheif, libdeflate, libparquet, libjxl,
   muparser, exprtk
 * GDAL Python (Python 3.8 for Ubuntu 20.04, Python 3.10 for Ubuntu 22.04, Python 3.12 for Ubuntu 24.04)
+* GDAL Java JNI bindings
 * *All* PROJ grid packages (equivalent of latest of proj-data-X.zip from http://download.osgeo.org/proj/ at time of generation, > 500 MB)
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive
 
