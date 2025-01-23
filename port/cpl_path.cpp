@@ -11,6 +11,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#define ALLOW_DEPRECATED_CPL_PATH_FUNCTIONS
+
 #include "cpl_port.h"
 #include "cpl_conv.h"
 
@@ -82,6 +84,27 @@ static char *CPLGetStaticResult()
 }
 
 /************************************************************************/
+/*                        CPLPathReturnTLSString()                      */
+/************************************************************************/
+
+static const char *CPLPathReturnTLSString(const std::string &osRes,
+                                          const char *pszFuncName)
+{
+    if (osRes.size() >= CPL_PATH_BUF_SIZE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too long result for %s()",
+                 pszFuncName);
+        return "";
+    }
+
+    char *pszStaticResult = CPLGetStaticResult();
+    if (pszStaticResult == nullptr)
+        return CPLStaticBufferTooSmall(pszStaticResult);
+    memcpy(pszStaticResult, osRes.c_str(), osRes.size() + 1);
+    return pszStaticResult;
+}
+
+/************************************************************************/
 /*                        CPLFindFilenameStart()                        */
 /************************************************************************/
 
@@ -100,7 +123,7 @@ static int CPLFindFilenameStart(const char *pszFilename, size_t nStart = 0)
 }
 
 /************************************************************************/
-/*                             CPLGetPath()                             */
+/*                          CPLGetPathSafe()                            */
 /************************************************************************/
 
 /**
@@ -111,27 +134,23 @@ static int CPLFindFilenameStart(const char *pszFilename, size_t nStart = 0)
  * will be returned (not NULL).
  *
  * \code{.cpp}
- * CPLGetPath( "abc/def.xyz" ) == "abc"
- * CPLGetPath( "/abc/def/" ) == "/abc/def"
- * CPLGetPath( "/" ) == "/"
- * CPLGetPath( "/abc/def" ) == "/abc"
- * CPLGetPath( "abc" ) == ""
+ * CPLGetPathSafe( "abc/def.xyz" ) == "abc"
+ * CPLGetPathSafe( "/abc/def/" ) == "/abc/def"
+ * CPLGetPathSafe( "/" ) == "/"
+ * CPLGetPathSafe( "/abc/def" ) == "/abc"
+ * CPLGetPathSafe( "abc" ) == ""
  * \endcode
  *
  * @param pszFilename the filename potentially including a path.
  *
- *  @return Path in an internal string which must not be freed.  The string
- * may be destroyed by the next CPL filename handling call.  The returned
- * will generally not contain a trailing path separator.
+ * @return Path.
+ *
+ * @since 3.11
  */
 
-const char *CPLGetPath(const char *pszFilename)
+std::string CPLGetPathSafe(const char *pszFilename)
 
 {
-    char *pszStaticResult = CPLGetStaticResult();
-    if (pszStaticResult == nullptr)
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
     size_t nSuffixPos = 0;
     if (STARTS_WITH(pszFilename, "/vsicurl/http"))
     {
@@ -157,7 +176,8 @@ const char *CPLGetPath(const char *pszFilename)
                 char *pszUnescaped =
                     CPLUnescapeString(aosTokens[i], nullptr, CPLES_URL);
                 char *pszPath = CPLEscapeString(
-                    CPLGetPath(pszUnescaped + strlen("url=")), -1, CPLES_URL);
+                    CPLGetPathSafe(pszUnescaped + strlen("url=")).c_str(), -1,
+                    CPLES_URL);
                 osRet += "url=";
                 osRet += pszPath;
                 CPLFree(pszPath);
@@ -168,38 +188,60 @@ const char *CPLGetPath(const char *pszFilename)
                 osRet += aosTokens[i];
             }
         }
-        CPLStrlcpy(pszStaticResult, osRet.c_str(), CPL_PATH_BUF_SIZE);
-        return pszStaticResult;
+        return osRet;
     }
 
     const int iFileStart = CPLFindFilenameStart(pszFilename, nSuffixPos);
-    if (iFileStart >= CPL_PATH_BUF_SIZE)
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    CPLAssert(!(pszFilename >= pszStaticResult &&
-                pszFilename < pszStaticResult + CPL_PATH_BUF_SIZE));
-
     if (iFileStart == 0)
     {
-        strcpy(pszStaticResult, "");
-        return pszStaticResult;
+        return std::string();
     }
 
-    CPLStrlcpy(pszStaticResult, pszFilename,
-               static_cast<size_t>(iFileStart) + 1);
+    std::string osRet(pszFilename, iFileStart);
 
-    if (iFileStart > 1 && (pszStaticResult[iFileStart - 1] == '/' ||
-                           pszStaticResult[iFileStart - 1] == '\\'))
-        pszStaticResult[iFileStart - 1] = '\0';
+    if (iFileStart > 1 && (osRet.back() == '/' || osRet.back() == '\\'))
+        osRet.pop_back();
 
     if (nSuffixPos)
     {
-        if (CPLStrlcat(pszStaticResult, pszFilename + nSuffixPos,
-                       CPL_PATH_BUF_SIZE) >= CPL_PATH_BUF_SIZE)
-            return CPLStaticBufferTooSmall(pszStaticResult);
+        osRet += (pszFilename + nSuffixPos);
     }
 
-    return pszStaticResult;
+    return osRet;
+}
+
+/************************************************************************/
+/*                             CPLGetPath()                             */
+/************************************************************************/
+
+/**
+ * Extract directory path portion of filename.
+ *
+ * Returns a string containing the directory path portion of the passed
+ * filename.  If there is no path in the passed filename an empty string
+ * will be returned (not NULL).
+ *
+ * \code{.cpp}
+ * CPLGetPath( "abc/def.xyz" ) == "abc"
+ * CPLGetPath( "/abc/def/" ) == "/abc/def"
+ * CPLGetPath( "/" ) == "/"
+ * CPLGetPath( "/abc/def" ) == "/abc"
+ * CPLGetPath( "abc" ) == ""
+ * \endcode
+ *
+ * @param pszFilename the filename potentially including a path.
+ *
+ * @return Path in an internal string which must not be freed.  The string
+ * may be destroyed by the next CPL filename handling call.  The returned
+ * will generally not contain a trailing path separator.
+ *
+ * @deprecated If using C++, prefer using CPLGetPathSafe() instead
+ */
+
+const char *CPLGetPath(const char *pszFilename)
+
+{
+    return CPLPathReturnTLSString(CPLGetPathSafe(pszFilename), __FUNCTION__);
 }
 
 /************************************************************************/
@@ -214,27 +256,23 @@ const char *CPLGetPath(const char *pszFilename)
  * returned.  It is the only difference from CPLGetPath().
  *
  * \code{.cpp}
- * CPLGetDirname( "abc/def.xyz" ) == "abc"
- * CPLGetDirname( "/abc/def/" ) == "/abc/def"
- * CPLGetDirname( "/" ) == "/"
- * CPLGetDirname( "/abc/def" ) == "/abc"
- * CPLGetDirname( "abc" ) == "."
+ * CPLGetDirnameSafe( "abc/def.xyz" ) == "abc"
+ * CPLGetDirnameSafe( "/abc/def/" ) == "/abc/def"
+ * CPLGetDirnameSafe( "/" ) == "/"
+ * CPLGetDirnameSafe( "/abc/def" ) == "/abc"
+ * CPLGetDirnameSafe( "abc" ) == "."
  * \endcode
  *
  * @param pszFilename the filename potentially including a path.
  *
- * @return Path in an internal string which must not be freed.  The string
- * may be destroyed by the next CPL filename handling call.  The returned
- * will generally not contain a trailing path separator.
+ * @return Path
+ *
+ * @since 3.11
  */
 
-const char *CPLGetDirname(const char *pszFilename)
+std::string CPLGetDirnameSafe(const char *pszFilename)
 
 {
-    char *pszStaticResult = CPLGetStaticResult();
-    if (pszStaticResult == nullptr)
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
     size_t nSuffixPos = 0;
     if (STARTS_WITH(pszFilename, "/vsicurl/http"))
     {
@@ -272,38 +310,58 @@ const char *CPLGetDirname(const char *pszFilename)
                 osRet += aosTokens[i];
             }
         }
-        CPLStrlcpy(pszStaticResult, osRet.c_str(), CPL_PATH_BUF_SIZE);
-        return pszStaticResult;
+        return osRet;
     }
 
     const int iFileStart = CPLFindFilenameStart(pszFilename, nSuffixPos);
-    if (iFileStart >= CPL_PATH_BUF_SIZE)
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    CPLAssert(!(pszFilename >= pszStaticResult &&
-                pszFilename < pszStaticResult + CPL_PATH_BUF_SIZE));
-
     if (iFileStart == 0)
     {
-        strcpy(pszStaticResult, ".");
-        return pszStaticResult;
+        return std::string(".");
     }
 
-    CPLStrlcpy(pszStaticResult, pszFilename,
-               static_cast<size_t>(iFileStart) + 1);
+    std::string osRet(pszFilename, iFileStart);
 
-    if (iFileStart > 1 && (pszStaticResult[iFileStart - 1] == '/' ||
-                           pszStaticResult[iFileStart - 1] == '\\'))
-        pszStaticResult[iFileStart - 1] = '\0';
+    if (iFileStart > 1 && (osRet.back() == '/' || osRet.back() == '\\'))
+        osRet.pop_back();
 
     if (nSuffixPos)
     {
-        if (CPLStrlcat(pszStaticResult, pszFilename + nSuffixPos,
-                       CPL_PATH_BUF_SIZE) >= CPL_PATH_BUF_SIZE)
-            return CPLStaticBufferTooSmall(pszStaticResult);
+        osRet += (pszFilename + nSuffixPos);
     }
 
-    return pszStaticResult;
+    return osRet;
+}
+
+/************************************************************************/
+/*                             CPLGetDirname()                          */
+/************************************************************************/
+
+/**
+ * Extract directory path portion of filename.
+ *
+ * Returns a string containing the directory path portion of the passed
+ * filename.  If there is no path in the passed filename the dot will be
+ * returned.  It is the only difference from CPLGetPath().
+ *
+ * \code{.cpp}
+ * CPLGetDirname( "abc/def.xyz" ) == "abc"
+ * CPLGetDirname( "/abc/def/" ) == "/abc/def"
+ * CPLGetDirname( "/" ) == "/"
+ * CPLGetDirname( "/abc/def" ) == "/abc"
+ * CPLGetDirname( "abc" ) == "."
+ * \endcode
+ *
+ * @param pszFilename the filename potentially including a path.
+ *
+ * @return Path in an internal string which must not be freed.  The string
+ * may be destroyed by the next CPL filename handling call.  The returned
+ * will generally not contain a trailing path separator.
+ */
+
+const char *CPLGetDirname(const char *pszFilename)
+
+{
+    return CPLPathReturnTLSString(CPLGetDirnameSafe(pszFilename), __FUNCTION__);
 }
 
 /************************************************************************/
@@ -338,6 +396,49 @@ const char *CPLGetFilename(const char *pszFullFilename)
 }
 
 /************************************************************************/
+/*                       CPLGetBasenameSafe()                           */
+/************************************************************************/
+
+/**
+ * Extract basename (non-directory, non-extension) portion of filename.
+ *
+ * Returns a string containing the file basename portion of the passed
+ * name.  If there is no basename (passed value ends in trailing directory
+ * separator, or filename starts with a dot) an empty string is returned.
+ *
+ * \code{.cpp}
+ * CPLGetBasename( "abc/def.xyz" ) == "def"
+ * CPLGetBasename( "abc/def" ) == "def"
+ * CPLGetBasename( "abc/def/" ) == ""
+ * \endcode
+ *
+ * @param pszFullFilename the full filename potentially including a path.
+ *
+ * @return just the non-directory, non-extension portion of the path
+ *
+ * @since 3.11
+ */
+
+std::string CPLGetBasenameSafe(const char *pszFullFilename)
+
+{
+    const size_t iFileStart =
+        static_cast<size_t>(CPLFindFilenameStart(pszFullFilename));
+
+    size_t iExtStart = strlen(pszFullFilename);
+    for (; iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
+         iExtStart--)
+    {
+    }
+
+    if (iExtStart == iFileStart)
+        iExtStart = strlen(pszFullFilename);
+
+    const size_t nLength = iExtStart - iFileStart;
+    return std::string(pszFullFilename + iFileStart, nLength);
+}
+
+/************************************************************************/
 /*                           CPLGetBasename()                           */
 /************************************************************************/
 
@@ -359,20 +460,48 @@ const char *CPLGetFilename(const char *pszFullFilename)
  * @return just the non-directory, non-extension portion of the path in
  * an internal string which must not be freed.  The string
  * may be destroyed by the next CPL filename handling call.
+ *
+ * @deprecated If using C++, prefer using CPLGetBasenameSafe() instead
  */
 
 const char *CPLGetBasename(const char *pszFullFilename)
 
 {
-    const size_t iFileStart =
+    return CPLPathReturnTLSString(CPLGetBasenameSafe(pszFullFilename),
+                                  __FUNCTION__);
+}
+
+/************************************************************************/
+/*                        CPLGetExtensionSafe()                         */
+/************************************************************************/
+
+/**
+ * Extract filename extension from full filename.
+ *
+ * Returns a string containing the extension portion of the passed
+ * name.  If there is no extension (the filename has no dot) an empty string
+ * is returned.  The returned extension will not include the period.
+ *
+ * \code{.cpp}
+ * CPLGetExtensionSafe( "abc/def.xyz" ) == "xyz"
+ * CPLGetExtensionSafe( "abc/def" ) == ""
+ * \endcode
+ *
+ * @param pszFullFilename the full filename potentially including a path.
+ *
+ * @return just the extension portion of the path.
+ *
+ * @since 3.11
+ */
+
+std::string CPLGetExtensionSafe(const char *pszFullFilename)
+
+{
+    if (pszFullFilename[0] == '\0')
+        return std::string();
+
+    size_t iFileStart =
         static_cast<size_t>(CPLFindFilenameStart(pszFullFilename));
-    char *pszStaticResult = CPLGetStaticResult();
-    if (pszStaticResult == nullptr)
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    CPLAssert(!(pszFullFilename >= pszStaticResult &&
-                pszFullFilename < pszStaticResult + CPL_PATH_BUF_SIZE));
-
     size_t iExtStart = strlen(pszFullFilename);
     for (; iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
          iExtStart--)
@@ -380,16 +509,15 @@ const char *CPLGetBasename(const char *pszFullFilename)
     }
 
     if (iExtStart == iFileStart)
-        iExtStart = strlen(pszFullFilename);
+        iExtStart = strlen(pszFullFilename) - 1;
 
-    const size_t nLength = iExtStart - iFileStart;
+    // If the extension is too long, it is very much likely not an extension,
+    // but another component of the path
+    const size_t knMaxExtensionSize = 10;
+    if (strlen(pszFullFilename + iExtStart + 1) > knMaxExtensionSize)
+        return "";
 
-    if (nLength >= static_cast<size_t>(CPL_PATH_BUF_SIZE))
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    CPLStrlcpy(pszStaticResult, pszFullFilename + iFileStart, nLength + 1);
-
-    return pszStaticResult;
+    return std::string(pszFullFilename + iExtStart + 1);
 }
 
 /************************************************************************/
@@ -413,43 +541,15 @@ const char *CPLGetBasename(const char *pszFullFilename)
  * @return just the extension portion of the path in
  * an internal string which must not be freed.  The string
  * may be destroyed by the next CPL filename handling call.
+ *
+ * @deprecated If using C++, prefer using CPLGetExtensionSafe() instead
  */
 
 const char *CPLGetExtension(const char *pszFullFilename)
 
 {
-    if (pszFullFilename[0] == '\0')
-        return "";
-
-    size_t iFileStart =
-        static_cast<size_t>(CPLFindFilenameStart(pszFullFilename));
-    char *pszStaticResult = CPLGetStaticResult();
-    if (pszStaticResult == nullptr)
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    CPLAssert(!(pszFullFilename >= pszStaticResult &&
-                pszFullFilename < pszStaticResult + CPL_PATH_BUF_SIZE));
-
-    size_t iExtStart = strlen(pszFullFilename);
-    for (; iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
-         iExtStart--)
-    {
-    }
-
-    if (iExtStart == iFileStart)
-        iExtStart = strlen(pszFullFilename) - 1;
-
-    // If the extension is too long, it is very much likely not an extension,
-    // but another component of the path
-    const size_t knMaxExtensionSize = 10;
-    if (strlen(pszFullFilename + iExtStart + 1) > knMaxExtensionSize)
-        return "";
-
-    if (CPLStrlcpy(pszStaticResult, pszFullFilename + iExtStart + 1,
-                   CPL_PATH_BUF_SIZE) >= static_cast<size_t>(CPL_PATH_BUF_SIZE))
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    return pszStaticResult;
+    return CPLPathReturnTLSString(CPLGetExtensionSafe(pszFullFilename),
+                                  __FUNCTION__);
 }
 
 /************************************************************************/
@@ -511,56 +611,218 @@ char *CPLGetCurrentDir()
  * @param pszPath the input path, this string is not altered.
  * @param pszExt the new extension to apply to the given path.
  *
- * @return an altered filename with the new extension.    Do not
- * modify or free the returned string.  The string may be destroyed by the
- * next CPL call.
+ * @return an altered filename with the new extension.
+ *
+ * @since 3.11
  */
 
-const char *CPLResetExtension(const char *pszPath, const char *pszExt)
+std::string CPLResetExtensionSafe(const char *pszPath, const char *pszExt)
 
 {
-    char *pszStaticResult = CPLGetStaticResult();
-    if (pszStaticResult == nullptr)
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    CPLAssert(!(pszPath >= pszStaticResult &&
-                pszPath < pszStaticResult + CPL_PATH_BUF_SIZE));
+    std::string osRet(pszPath);
 
     /* -------------------------------------------------------------------- */
     /*      First, try and strip off any existing extension.                */
     /* -------------------------------------------------------------------- */
-    if (CPLStrlcpy(pszStaticResult, pszPath, CPL_PATH_BUF_SIZE) >=
-        static_cast<size_t>(CPL_PATH_BUF_SIZE))
-        return CPLStaticBufferTooSmall(pszStaticResult);
 
-    if (*pszStaticResult)
+    for (size_t i = osRet.size(); i > 0;)
     {
-        for (size_t i = strlen(pszStaticResult) - 1; i > 0; i--)
+        --i;
+        if (osRet[i] == '.')
         {
-            if (pszStaticResult[i] == '.')
-            {
-                pszStaticResult[i] = '\0';
-                break;
-            }
-
-            if (pszStaticResult[i] == '/' || pszStaticResult[i] == '\\' ||
-                pszStaticResult[i] == ':')
-                break;
+            osRet.resize(i);
+            break;
+        }
+        else if (osRet[i] == '/' || osRet[i] == '\\' || osRet[i] == ':')
+        {
+            break;
         }
     }
 
     /* -------------------------------------------------------------------- */
     /*      Append the new extension.                                       */
     /* -------------------------------------------------------------------- */
-    if (CPLStrlcat(pszStaticResult, ".", CPL_PATH_BUF_SIZE) >=
-            static_cast<size_t>(CPL_PATH_BUF_SIZE) ||
-        CPLStrlcat(pszStaticResult, pszExt, CPL_PATH_BUF_SIZE) >=
-            static_cast<size_t>(CPL_PATH_BUF_SIZE))
+    osRet += '.';
+    osRet += pszExt;
+
+    return osRet;
+}
+
+/************************************************************************/
+/*                         CPLResetExtension()                          */
+/************************************************************************/
+
+/**
+ * Replace the extension with the provided one.
+ *
+ * @param pszPath the input path, this string is not altered.
+ * @param pszExt the new extension to apply to the given path.
+ *
+ * @return an altered filename with the new extension.    Do not
+ * modify or free the returned string.  The string may be destroyed by the
+ * next CPL call.
+ *
+ * @deprecated If using C++, prefer using CPLResetExtensionSafe() instead
+ */
+
+const char *CPLResetExtension(const char *pszPath, const char *pszExt)
+
+{
+    return CPLPathReturnTLSString(CPLResetExtensionSafe(pszPath, pszExt),
+                                  __FUNCTION__);
+}
+
+/************************************************************************/
+/*                        CPLFormFilenameSafe()                         */
+/************************************************************************/
+
+/**
+ * Build a full file path from a passed path, file basename and extension.
+ *
+ * The path, and extension are optional.  The basename may in fact contain
+ * an extension if desired.
+ *
+ * \code{.cpp}
+ * CPLFormFilenameSafe("abc/xyz", "def", ".dat" ) == "abc/xyz/def.dat"
+ * CPLFormFilenameSafe(NULL,"def", NULL ) == "def"
+ * CPLFormFilenameSafe(NULL, "abc/def.dat", NULL ) == "abc/def.dat"
+ * CPLFormFilenameSafe("/abc/xyz/", "def.dat", NULL ) == "/abc/xyz/def.dat"
+ * CPLFormFilenameSafe("/a/b/c", "../d", NULL ) == "/a/b/d" (since 3.10.1)
+ * \endcode
+ *
+ * @param pszPath directory path to the directory containing the file.  This
+ * may be relative or absolute, and may have a trailing path separator or
+ * not.  May be NULL.
+ *
+ * @param pszBasename file basename.  May optionally have path and/or
+ * extension.  Must *NOT* be NULL.
+ *
+ * @param pszExtension file extension, optionally including the period.  May
+ * be NULL.
+ *
+ * @return a fully formed filename.
+ *
+ * @since 3.11
+ */
+
+std::string CPLFormFilenameSafe(const char *pszPath, const char *pszBasename,
+                                const char *pszExtension)
+
+{
+    if (pszBasename[0] == '.' &&
+        (pszBasename[1] == '/' || pszBasename[1] == '\\'))
+        pszBasename += 2;
+
+    const char *pszAddedPathSep = "";
+    const char *pszAddedExtSep = "";
+
+    if (pszPath == nullptr)
+        pszPath = "";
+    size_t nLenPath = strlen(pszPath);
+
+    const char *pszQuestionMark = nullptr;
+    if (STARTS_WITH_CI(pszPath, "/vsicurl/http"))
     {
-        return CPLStaticBufferTooSmall(pszStaticResult);
+        pszQuestionMark = strchr(pszPath, '?');
+        if (pszQuestionMark)
+        {
+            nLenPath = pszQuestionMark - pszPath;
+        }
+        pszAddedPathSep = "/";
     }
 
-    return pszStaticResult;
+    if (!CPLIsFilenameRelative(pszPath) && pszBasename[0] == '.' &&
+        pszBasename[1] == '.' &&
+        (pszBasename[2] == 0 || pszBasename[2] == '\\' ||
+         pszBasename[2] == '/'))
+    {
+        // "/a/b/" + "..[/something]" --> "/a[/something]"
+        // "/a/b" + "..[/something]" --> "/a[/something]"
+        if (pszPath[nLenPath - 1] == '\\' || pszPath[nLenPath - 1] == '/')
+            nLenPath--;
+        while (true)
+        {
+            const char *pszBasenameOri = pszBasename;
+            const size_t nLenPathOri = nLenPath;
+            while (nLenPath > 0 && pszPath[nLenPath - 1] != '\\' &&
+                   pszPath[nLenPath - 1] != '/')
+            {
+                nLenPath--;
+            }
+            if (nLenPath == 1 && pszPath[0] == '/')
+            {
+                pszBasename += 2;
+                if (pszBasename[0] == '/' || pszBasename[0] == '\\')
+                    pszBasename++;
+                if (*pszBasename == '.')
+                {
+                    pszBasename = pszBasenameOri;
+                    nLenPath = nLenPathOri;
+                    if (pszAddedPathSep[0] == 0)
+                        pszAddedPathSep =
+                            pszPath[0] == '/'
+                                ? "/"
+                                : VSIGetDirectorySeparator(pszPath);
+                }
+                break;
+            }
+            else if ((nLenPath > 1 && pszPath[0] == '/') ||
+                     (nLenPath > 2 && pszPath[1] == ':') ||
+                     (nLenPath > 6 && strncmp(pszPath, "\\\\$\\", 4) == 0))
+            {
+                nLenPath--;
+                pszBasename += 2;
+                if ((pszBasename[0] == '/' || pszBasename[0] == '\\') &&
+                    pszBasename[1] == '.' && pszBasename[2] == '.')
+                {
+                    pszBasename++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            else
+            {
+                // cppcheck-suppress redundantAssignment
+                pszBasename = pszBasenameOri;
+                nLenPath = nLenPathOri;
+                if (pszAddedPathSep[0] == 0)
+                    pszAddedPathSep = pszPath[0] == '/'
+                                          ? "/"
+                                          : VSIGetDirectorySeparator(pszPath);
+                break;
+            }
+        }
+    }
+    else if (nLenPath > 0 && pszPath[nLenPath - 1] != '/' &&
+             pszPath[nLenPath - 1] != '\\')
+    {
+        if (pszAddedPathSep[0] == 0)
+            pszAddedPathSep = VSIGetDirectorySeparator(pszPath);
+    }
+
+    if (pszExtension == nullptr)
+        pszExtension = "";
+    else if (pszExtension[0] != '.' && strlen(pszExtension) > 0)
+        pszAddedExtSep = ".";
+
+    std::string osRes;
+    osRes.reserve(nLenPath + strlen(pszAddedPathSep) + strlen(pszBasename) +
+                  strlen(pszAddedExtSep) + strlen(pszExtension) +
+                  (pszQuestionMark ? strlen(pszQuestionMark) : 0));
+    osRes.assign(pszPath, nLenPath);
+    osRes += pszAddedPathSep;
+    osRes += pszBasename;
+    osRes += pszAddedExtSep;
+    osRes += pszExtension;
+
+    if (pszQuestionMark)
+    {
+        osRes += pszQuestionMark;
+    }
+
+    return osRes;
 }
 
 /************************************************************************/
@@ -578,6 +840,7 @@ const char *CPLResetExtension(const char *pszPath, const char *pszExt)
  * CPLFormFilename(NULL,"def", NULL ) == "def"
  * CPLFormFilename(NULL, "abc/def.dat", NULL ) == "abc/def.dat"
  * CPLFormFilename("/abc/xyz/", "def.dat", NULL ) == "/abc/xyz/def.dat"
+ * CPLFormFilename("/a/b/c", "../d", NULL ) == "/a/b/d" (since 3.10.1)
  * \endcode
  *
  * @param pszPath directory path to the directory containing the file.  This
@@ -593,112 +856,112 @@ const char *CPLResetExtension(const char *pszPath, const char *pszExt)
  * @return a fully formed filename in an internal static string.  Do not
  * modify or free the returned string.  The string may be destroyed by the
  * next CPL call.
+ *
+ * @deprecated If using C++, prefer using CPLFormFilenameSafe() instead
  */
-
 const char *CPLFormFilename(const char *pszPath, const char *pszBasename,
                             const char *pszExtension)
 
 {
-    char *pszStaticResult = CPLGetStaticResult();
-    if (pszStaticResult == nullptr)
-        return CPLStaticBufferTooSmall(pszStaticResult);
+    return CPLPathReturnTLSString(
+        CPLFormFilenameSafe(pszPath, pszBasename, pszExtension), __FUNCTION__);
+}
 
-    CPLAssert(!(pszPath >= pszStaticResult &&
-                pszPath < pszStaticResult + CPL_PATH_BUF_SIZE));
-    CPLAssert(!(pszBasename >= pszStaticResult &&
-                pszBasename < pszStaticResult + CPL_PATH_BUF_SIZE));
+/************************************************************************/
+/*                       CPLFormCIFilenameSafe()                        */
+/************************************************************************/
 
-    if (pszBasename[0] == '.' &&
-        (pszBasename[1] == '/' || pszBasename[1] == '\\'))
-        pszBasename += 2;
+/**
+ * Case insensitive file searching, returning full path.
+ *
+ * This function tries to return the path to a file regardless of
+ * whether the file exactly matches the basename, and extension case, or
+ * is all upper case, or all lower case.  The path is treated as case
+ * sensitive.  This function is equivalent to CPLFormFilename() on
+ * case insensitive file systems (like Windows).
+ *
+ * @param pszPath directory path to the directory containing the file.  This
+ * may be relative or absolute, and may have a trailing path separator or
+ * not.  May be NULL.
+ *
+ * @param pszBasename file basename.  May optionally have path and/or
+ * extension.  May not be NULL.
+ *
+ * @param pszExtension file extension, optionally including the period.  May
+ * be NULL.
+ *
+ * @return a fully formed filename.
+ *
+ * @since 3.11
+ */
 
-    const char *pszAddedPathSep = "";
+std::string CPLFormCIFilenameSafe(const char *pszPath, const char *pszBasename,
+                                  const char *pszExtension)
+
+{
+    // On case insensitive filesystems, just default to CPLFormFilename().
+    if (!VSIIsCaseSensitiveFS(pszPath))
+        return CPLFormFilenameSafe(pszPath, pszBasename, pszExtension);
+
     const char *pszAddedExtSep = "";
+    size_t nLen = strlen(pszBasename) + 2;
 
-    if (pszPath == nullptr)
-        pszPath = "";
-    size_t nLenPath = strlen(pszPath);
+    if (pszExtension != nullptr)
+        nLen += strlen(pszExtension);
 
-    size_t nSuffixPos = 0;
-    if (STARTS_WITH_CI(pszPath, "/vsicurl/http"))
-    {
-        const char *pszQuestionMark = strchr(pszPath, '?');
-        if (pszQuestionMark)
-        {
-            nSuffixPos = static_cast<size_t>(pszQuestionMark - pszPath);
-            nLenPath = nSuffixPos;
-        }
-        pszAddedPathSep = "/";
-    }
-
-    if (!CPLIsFilenameRelative(pszPath) && strcmp(pszBasename, "..") == 0)
-    {
-        // /a/b + .. --> /a
-        if (pszPath[nLenPath - 1] == '\\' || pszPath[nLenPath - 1] == '/')
-            nLenPath--;
-        size_t nLenPathOri = nLenPath;
-        while (nLenPath > 0 && pszPath[nLenPath - 1] != '\\' &&
-               pszPath[nLenPath - 1] != '/')
-        {
-            nLenPath--;
-        }
-        if (nLenPath == 1 && pszPath[0] == '/')
-        {
-            pszBasename = "";
-        }
-        else if ((nLenPath > 1 && pszPath[0] == '/') ||
-                 (nLenPath > 2 && pszPath[1] == ':') ||
-                 (nLenPath > 6 && strncmp(pszPath, "\\\\$\\", 4) == 0))
-        {
-            nLenPath--;
-            pszBasename = "";
-        }
-        else
-        {
-            nLenPath = nLenPathOri;
-            if (pszAddedPathSep[0] == 0)
-                pszAddedPathSep = VSIGetDirectorySeparator(pszPath);
-        }
-    }
-    else if (nLenPath > 0 && pszPath[nLenPath - 1] != '/' &&
-             pszPath[nLenPath - 1] != '\\')
-    {
-        if (pszAddedPathSep[0] == 0)
-            pszAddedPathSep = VSIGetDirectorySeparator(pszPath);
-    }
+    char *pszFilename = static_cast<char *>(VSI_MALLOC_VERBOSE(nLen));
+    if (pszFilename == nullptr)
+        return "";
 
     if (pszExtension == nullptr)
         pszExtension = "";
     else if (pszExtension[0] != '.' && strlen(pszExtension) > 0)
         pszAddedExtSep = ".";
 
-    if (nLenPath >= static_cast<size_t>(CPL_PATH_BUF_SIZE))
-        return CPLStaticBufferTooSmall(pszStaticResult);
+    snprintf(pszFilename, nLen, "%s%s%s", pszBasename, pszAddedExtSep,
+             pszExtension);
 
-    // coverity[overrun-buffer-arg]
-    memcpy(pszStaticResult, pszPath, nLenPath);
-    pszStaticResult[nLenPath] = 0;
+    std::string osRet = CPLFormFilenameSafe(pszPath, pszFilename, nullptr);
+    VSIStatBufL sStatBuf;
+    int nStatRet = VSIStatExL(osRet.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG);
 
-    if (CPLStrlcat(pszStaticResult, pszAddedPathSep, CPL_PATH_BUF_SIZE) >=
-            static_cast<size_t>(CPL_PATH_BUF_SIZE) ||
-        CPLStrlcat(pszStaticResult, pszBasename, CPL_PATH_BUF_SIZE) >=
-            static_cast<size_t>(CPL_PATH_BUF_SIZE) ||
-        CPLStrlcat(pszStaticResult, pszAddedExtSep, CPL_PATH_BUF_SIZE) >=
-            static_cast<size_t>(CPL_PATH_BUF_SIZE) ||
-        CPLStrlcat(pszStaticResult, pszExtension, CPL_PATH_BUF_SIZE) >=
-            static_cast<size_t>(CPL_PATH_BUF_SIZE))
+    if (nStatRet != 0)
     {
-        return CPLStaticBufferTooSmall(pszStaticResult);
+        for (size_t i = 0; pszFilename[i] != '\0'; i++)
+        {
+            pszFilename[i] = static_cast<char>(CPLToupper(pszFilename[i]));
+        }
+
+        std::string osTmpPath(
+            CPLFormFilenameSafe(pszPath, pszFilename, nullptr));
+        nStatRet =
+            VSIStatExL(osTmpPath.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG);
+        if (nStatRet == 0)
+            osRet = std::move(osTmpPath);
     }
 
-    if (nSuffixPos &&
-        CPLStrlcat(pszStaticResult, pszPath + nSuffixPos, CPL_PATH_BUF_SIZE) >=
-            static_cast<size_t>(CPL_PATH_BUF_SIZE))
+    if (nStatRet != 0)
     {
-        return CPLStaticBufferTooSmall(pszStaticResult);
+        for (size_t i = 0; pszFilename[i] != '\0'; i++)
+        {
+            pszFilename[i] = static_cast<char>(
+                CPLTolower(static_cast<unsigned char>(pszFilename[i])));
+        }
+
+        std::string osTmpPath(
+            CPLFormFilenameSafe(pszPath, pszFilename, nullptr));
+        nStatRet =
+            VSIStatExL(osTmpPath.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG);
+        if (nStatRet == 0)
+            osRet = std::move(osTmpPath);
     }
 
-    return pszStaticResult;
+    if (nStatRet != 0)
+        osRet = CPLFormFilenameSafe(pszPath, pszBasename, pszExtension);
+
+    CPLFree(pszFilename);
+
+    return osRet;
 }
 
 /************************************************************************/
@@ -727,66 +990,68 @@ const char *CPLFormFilename(const char *pszPath, const char *pszBasename,
  * @return a fully formed filename in an internal static string.  Do not
  * modify or free the returned string.  The string may be destroyed by the
  * next CPL call.
- */
+ *
+ * @deprecated If using C++, prefer using CPLFormCIFilenameSafe() instead
+*/
 
 const char *CPLFormCIFilename(const char *pszPath, const char *pszBasename,
                               const char *pszExtension)
 
 {
-    // On case insensitive filesystems, just default to CPLFormFilename().
-    if (!VSIIsCaseSensitiveFS(pszPath))
-        return CPLFormFilename(pszPath, pszBasename, pszExtension);
+    return CPLPathReturnTLSString(
+        CPLFormCIFilenameSafe(pszPath, pszBasename, pszExtension),
+        __FUNCTION__);
+}
 
-    const char *pszAddedExtSep = "";
-    size_t nLen = strlen(pszBasename) + 2;
+/************************************************************************/
+/*                   CPLProjectRelativeFilenameSafe()                   */
+/************************************************************************/
 
-    if (pszExtension != nullptr)
-        nLen += strlen(pszExtension);
+/**
+ * Find a file relative to a project file.
+ *
+ * Given the path to a "project" directory, and a path to a secondary file
+ * referenced from that project, build a path to the secondary file
+ * that the current application can use.  If the secondary path is already
+ * absolute, rather than relative, then it will be returned unaltered.
+ *
+ * Examples:
+ * \code{.cpp}
+ * CPLProjectRelativeFilenameSafe("abc/def", "tmp/abc.gif") == "abc/def/tmp/abc.gif"
+ * CPLProjectRelativeFilenameSafe("abc/def", "/tmp/abc.gif") == "/tmp/abc.gif"
+ * CPLProjectRelativeFilenameSafe("/xy", "abc.gif") == "/xy/abc.gif"
+ * CPLProjectRelativeFilenameSafe("/abc/def", "../abc.gif") == "/abc/def/../abc.gif"
+ * CPLProjectRelativeFilenameSafe("C:\WIN", "abc.gif") == "C:\WIN\abc.gif"
+ * \endcode
+ *
+ * @param pszProjectDir the directory relative to which the secondary files
+ * path should be interpreted.
+ * @param pszSecondaryFilename the filename (potentially with path) that
+ * is to be interpreted relative to the project directory.
+ *
+ * @return a composed path to the secondary file.
+ *
+ * @since 3.11
+ */
 
-    char *pszFilename = static_cast<char *>(VSI_MALLOC_VERBOSE(nLen));
-    if (pszFilename == nullptr)
-        return "";
+std::string CPLProjectRelativeFilenameSafe(const char *pszProjectDir,
+                                           const char *pszSecondaryFilename)
 
-    if (pszExtension == nullptr)
-        pszExtension = "";
-    else if (pszExtension[0] != '.' && strlen(pszExtension) > 0)
-        pszAddedExtSep = ".";
-
-    snprintf(pszFilename, nLen, "%s%s%s", pszBasename, pszAddedExtSep,
-             pszExtension);
-
-    const char *pszFullPath = CPLFormFilename(pszPath, pszFilename, nullptr);
-    VSIStatBufL sStatBuf;
-    int nStatRet = VSIStatExL(pszFullPath, &sStatBuf, VSI_STAT_EXISTS_FLAG);
-    if (nStatRet != 0)
+{
+    if (pszProjectDir == nullptr || pszProjectDir[0] == 0 ||
+        !CPLIsFilenameRelative(pszSecondaryFilename))
     {
-        for (size_t i = 0; pszFilename[i] != '\0'; i++)
-        {
-            pszFilename[i] = static_cast<char>(CPLToupper(pszFilename[i]));
-        }
-
-        pszFullPath = CPLFormFilename(pszPath, pszFilename, nullptr);
-        nStatRet = VSIStatExL(pszFullPath, &sStatBuf, VSI_STAT_EXISTS_FLAG);
+        return pszSecondaryFilename;
     }
 
-    if (nStatRet != 0)
+    std::string osRes(pszProjectDir);
+    if (osRes.back() != '/' && osRes.back() != '\\')
     {
-        for (size_t i = 0; pszFilename[i] != '\0'; i++)
-        {
-            pszFilename[i] = static_cast<char>(
-                CPLTolower(static_cast<unsigned char>(pszFilename[i])));
-        }
-
-        pszFullPath = CPLFormFilename(pszPath, pszFilename, nullptr);
-        nStatRet = VSIStatExL(pszFullPath, &sStatBuf, VSI_STAT_EXISTS_FLAG);
+        osRes += VSIGetDirectorySeparator(pszProjectDir);
     }
 
-    if (nStatRet != 0)
-        pszFullPath = CPLFormFilename(pszPath, pszBasename, pszExtension);
-
-    CPLFree(pszFilename);
-
-    return pszFullPath;
+    osRes += pszSecondaryFilename;
+    return osRes;
 }
 
 /************************************************************************/
@@ -818,45 +1083,17 @@ const char *CPLFormCIFilename(const char *pszPath, const char *pszBasename,
  * @return a composed path to the secondary file.  The returned string is
  * internal and should not be altered, freed, or depending on past the next
  * CPL call.
+ *
+ * @deprecated If using C++, prefer using CPLProjectRelativeFilenameSafe() instead
  */
 
 const char *CPLProjectRelativeFilename(const char *pszProjectDir,
                                        const char *pszSecondaryFilename)
 
 {
-    char *pszStaticResult = CPLGetStaticResult();
-    if (pszStaticResult == nullptr)
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    CPLAssert(!(pszProjectDir >= pszStaticResult &&
-                pszProjectDir < pszStaticResult + CPL_PATH_BUF_SIZE));
-    CPLAssert(!(pszSecondaryFilename >= pszStaticResult &&
-                pszSecondaryFilename < pszStaticResult + CPL_PATH_BUF_SIZE));
-
-    if (!CPLIsFilenameRelative(pszSecondaryFilename))
-        return pszSecondaryFilename;
-
-    if (pszProjectDir == nullptr || strlen(pszProjectDir) == 0)
-        return pszSecondaryFilename;
-
-    if (CPLStrlcpy(pszStaticResult, pszProjectDir, CPL_PATH_BUF_SIZE) >=
-        static_cast<size_t>(CPL_PATH_BUF_SIZE))
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    if (pszProjectDir[strlen(pszProjectDir) - 1] != '/' &&
-        pszProjectDir[strlen(pszProjectDir) - 1] != '\\')
-    {
-        const char *pszAddedPathSep = VSIGetDirectorySeparator(pszProjectDir);
-        if (CPLStrlcat(pszStaticResult, pszAddedPathSep, CPL_PATH_BUF_SIZE) >=
-            static_cast<size_t>(CPL_PATH_BUF_SIZE))
-            return CPLStaticBufferTooSmall(pszStaticResult);
-    }
-
-    if (CPLStrlcat(pszStaticResult, pszSecondaryFilename, CPL_PATH_BUF_SIZE) >=
-        static_cast<size_t>(CPL_PATH_BUF_SIZE))
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    return pszStaticResult;
+    return CPLPathReturnTLSString(
+        CPLProjectRelativeFilenameSafe(pszProjectDir, pszSecondaryFilename),
+        __FUNCTION__);
 }
 
 /************************************************************************/
@@ -983,6 +1220,41 @@ const char *CPLExtractRelativePath(const char *pszBaseDir,
 }
 
 /************************************************************************/
+/*                      CPLCleanTrailingSlashSafe()                     */
+/************************************************************************/
+
+/**
+ * Remove trailing forward/backward slash from the path for UNIX/Windows resp.
+ *
+ * Returns a string containing the portion of the passed path string with
+ * trailing slash removed. If there is no path in the passed filename
+ * an empty string will be returned (not NULL).
+ *
+ * \code{.cpp}
+ * CPLCleanTrailingSlashSafe( "abc/def/" ) == "abc/def"
+ * CPLCleanTrailingSlashSafe( "abc/def" ) == "abc/def"
+ * CPLCleanTrailingSlashSafe( "c:\\abc\\def\\" ) == "c:\\abc\\def"
+ * CPLCleanTrailingSlashSafe( "c:\\abc\\def" ) == "c:\\abc\\def"
+ * CPLCleanTrailingSlashSafe( "abc" ) == "abc"
+ * \endcode
+ *
+ * @param pszPath the path to be cleaned up
+ *
+ * @return Path
+ *
+ * @since 3.11
+ */
+
+std::string CPLCleanTrailingSlashSafe(const char *pszPath)
+
+{
+    std::string osRes(pszPath);
+    if (!osRes.empty() && (osRes.back() == '\\' || osRes.back() == '/'))
+        osRes.pop_back();
+    return osRes;
+}
+
+/************************************************************************/
 /*                            CPLCleanTrailingSlash()                   */
 /************************************************************************/
 
@@ -1005,28 +1277,15 @@ const char *CPLExtractRelativePath(const char *pszBaseDir,
  *
  * @return Path in an internal string which must not be freed.  The string
  * may be destroyed by the next CPL filename handling call.
+ *
+ * @deprecated If using C++, prefer using CPLCleanTrailingSlashSafe() instead
  */
 
 const char *CPLCleanTrailingSlash(const char *pszPath)
 
 {
-    char *pszStaticResult = CPLGetStaticResult();
-    if (pszStaticResult == nullptr)
-        return CPLStaticBufferTooSmall(pszStaticResult);
-    CPLAssert(!(pszPath >= pszStaticResult &&
-                pszPath < pszStaticResult + CPL_PATH_BUF_SIZE));
-
-    const size_t iPathLength = strlen(pszPath);
-    if (iPathLength >= static_cast<size_t>(CPL_PATH_BUF_SIZE))
-        return CPLStaticBufferTooSmall(pszStaticResult);
-
-    CPLStrlcpy(pszStaticResult, pszPath, iPathLength + 1);
-
-    if (iPathLength > 0 && (pszStaticResult[iPathLength - 1] == '\\' ||
-                            pszStaticResult[iPathLength - 1] == '/'))
-        pszStaticResult[iPathLength - 1] = '\0';
-
-    return pszStaticResult;
+    return CPLPathReturnTLSString(CPLCleanTrailingSlashSafe(pszPath),
+                                  __FUNCTION__);
 }
 
 /************************************************************************/
@@ -1074,9 +1333,9 @@ char **CPLCorrespondingPaths(const char *pszOldFilename,
         return CSLAddString(nullptr, pszNewFilename);
     }
 
-    const CPLString osOldPath = CPLGetPath(pszOldFilename);
-    const CPLString osOldBasename = CPLGetBasename(pszOldFilename);
-    const CPLString osNewBasename = CPLGetBasename(pszNewFilename);
+    const std::string osOldPath = CPLGetPathSafe(pszOldFilename);
+    const std::string osOldBasename = CPLGetBasenameSafe(pszOldFilename);
+    const std::string osNewBasename = CPLGetBasenameSafe(pszNewFilename);
 
     /* -------------------------------------------------------------------- */
     /*      If the basename is changing, verify that all source files       */
@@ -1086,14 +1345,15 @@ char **CPLCorrespondingPaths(const char *pszOldFilename,
     {
         for (int i = 0; papszFileList[i] != nullptr; i++)
         {
-            if (osOldBasename == CPLGetBasename(papszFileList[i]))
+            if (osOldBasename == CPLGetBasenameSafe(papszFileList[i]))
                 continue;
 
-            const CPLString osFilePath = CPLGetPath(papszFileList[i]);
-            const CPLString osFileName = CPLGetFilename(papszFileList[i]);
+            const std::string osFilePath = CPLGetPathSafe(papszFileList[i]);
+            const std::string osFileName = CPLGetFilename(papszFileList[i]);
 
-            if (!EQUALN(osFileName, osOldBasename, osOldBasename.size()) ||
-                !EQUAL(osFilePath, osOldPath) ||
+            if (!EQUALN(osFileName.c_str(), osOldBasename.c_str(),
+                        osOldBasename.size()) ||
+                !EQUAL(osFilePath.c_str(), osOldPath.c_str()) ||
                 osFileName[osOldBasename.size()] != '.')
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1109,9 +1369,9 @@ char **CPLCorrespondingPaths(const char *pszOldFilename,
     /* -------------------------------------------------------------------- */
     if (osOldBasename != osNewBasename)
     {
-        const CPLString osOldExtra =
+        const std::string osOldExtra =
             CPLGetFilename(pszOldFilename) + osOldBasename.size();
-        const CPLString osNewExtra =
+        const std::string osNewExtra =
             CPLGetFilename(pszNewFilename) + osNewBasename.size();
 
         if (osOldExtra != osNewExtra)
@@ -1127,26 +1387,28 @@ char **CPLCorrespondingPaths(const char *pszOldFilename,
     /*      Generate the new filenames.                                     */
     /* -------------------------------------------------------------------- */
     char **papszNewList = nullptr;
-    const CPLString osNewPath = CPLGetPath(pszNewFilename);
+    const std::string osNewPath = CPLGetPathSafe(pszNewFilename);
 
     for (int i = 0; papszFileList[i] != nullptr; i++)
     {
-        const CPLString osOldFilename = CPLGetFilename(papszFileList[i]);
+        const std::string osOldFilename = CPLGetFilename(papszFileList[i]);
 
-        const CPLString osNewFilename =
+        const std::string osNewFilename =
             osOldBasename == osNewBasename
-                ? CPLFormFilename(osNewPath, osOldFilename, nullptr)
-                : CPLFormFilename(osNewPath, osNewBasename,
-                                  osOldFilename.c_str() + osOldBasename.size());
+                ? CPLFormFilenameSafe(osNewPath.c_str(), osOldFilename.c_str(),
+                                      nullptr)
+                : CPLFormFilenameSafe(osNewPath.c_str(), osNewBasename.c_str(),
+                                      osOldFilename.c_str() +
+                                          osOldBasename.size());
 
-        papszNewList = CSLAddString(papszNewList, osNewFilename);
+        papszNewList = CSLAddString(papszNewList, osNewFilename.c_str());
     }
 
     return papszNewList;
 }
 
 /************************************************************************/
-/*                      CPLGenerateTempFilename()                       */
+/*                   CPLGenerateTempFilenameSafe()                      */
 /************************************************************************/
 
 /**
@@ -1158,10 +1420,12 @@ char **CPLCorrespondingPaths(const char *pszOldFilename,
  *
  * @param pszStem if non-NULL this will be part of the filename.
  *
- * @return a filename which is valid till the next CPL call in this thread.
+ * @return a filename
+ *
+ * @since 3.11
  */
 
-const char *CPLGenerateTempFilename(const char *pszStem)
+std::string CPLGenerateTempFilenameSafe(const char *pszStem)
 
 {
     const char *pszDir = CPLGetConfigOption("CPL_TMPDIR", nullptr);
@@ -1183,7 +1447,61 @@ const char *CPLGenerateTempFilename(const char *pszStem)
     osFilename.Printf("%s_%d_%d", pszStem, CPLGetCurrentProcessID(),
                       CPLAtomicInc(&nTempFileCounter));
 
-    return CPLFormFilename(pszDir, osFilename, nullptr);
+    return CPLFormFilenameSafe(pszDir, osFilename.c_str(), nullptr);
+}
+
+/************************************************************************/
+/*                      CPLGenerateTempFilename()                       */
+/************************************************************************/
+
+/**
+ * Generate temporary file name.
+ *
+ * Returns a filename that may be used for a temporary file.  The location
+ * of the file tries to follow operating system semantics but may be
+ * forced via the CPL_TMPDIR configuration option.
+ *
+ * @param pszStem if non-NULL this will be part of the filename.
+ *
+ * @return a filename which is valid till the next CPL call in this thread.
+ *
+ * @deprecated If using C++, prefer using CPLCleanTrailingSlashSafe() instead
+ */
+
+const char *CPLGenerateTempFilename(const char *pszStem)
+
+{
+    return CPLPathReturnTLSString(CPLGenerateTempFilenameSafe(pszStem),
+                                  __FUNCTION__);
+}
+
+/************************************************************************/
+/*                        CPLExpandTildeSafe()                          */
+/************************************************************************/
+
+/**
+ * Expands ~/ at start of filename.
+ *
+ * Assumes that the HOME configuration option is defined.
+ *
+ * @param pszFilename filename potentially starting with ~/
+ *
+ * @return an expanded filename.
+ *
+ * @since GDAL 3.11
+ */
+
+std::string CPLExpandTildeSafe(const char *pszFilename)
+
+{
+    if (!STARTS_WITH_CI(pszFilename, "~/"))
+        return pszFilename;
+
+    const char *pszHome = CPLGetConfigOption("HOME", nullptr);
+    if (pszHome == nullptr)
+        return pszFilename;
+
+    return CPLFormFilenameSafe(pszHome, pszFilename + 2, nullptr);
 }
 
 /************************************************************************/
@@ -1200,19 +1518,15 @@ const char *CPLGenerateTempFilename(const char *pszStem)
  * @return an expanded filename.
  *
  * @since GDAL 2.2
+ *
+ * @deprecated If using C++, prefer using CPLExpandTildeSafe() instead
  */
 
 const char *CPLExpandTilde(const char *pszFilename)
 
 {
-    if (!STARTS_WITH_CI(pszFilename, "~/"))
-        return pszFilename;
-
-    const char *pszHome = CPLGetConfigOption("HOME", nullptr);
-    if (pszHome == nullptr)
-        return pszFilename;
-
-    return CPLFormFilename(pszHome, pszFilename + 2, nullptr);
+    return CPLPathReturnTLSString(CPLExpandTildeSafe(pszFilename),
+                                  __FUNCTION__);
 }
 
 /************************************************************************/
@@ -1241,6 +1555,37 @@ const char *CPLGetHomeDir()
 }
 
 /************************************************************************/
+/*                      CPLLaunderForFilenameSafe()                     */
+/************************************************************************/
+
+/**
+ * Launder a string to be compatible of a filename.
+ *
+ * @param pszName The input string to launder.
+ * @param pszOutputPath The directory where the file would be created.
+ *                      Unused for now. May be NULL.
+ * @return the laundered name.
+ *
+ * @since GDAL 3.11
+ */
+
+std::string CPLLaunderForFilenameSafe(const char *pszName,
+                                      CPL_UNUSED const char *pszOutputPath)
+{
+    std::string osRet(pszName);
+    for (char &ch : osRet)
+    {
+        // https://docs.microsoft.com/en-us/windows/desktop/fileio/naming-a-file
+        if (ch == '<' || ch == '>' || ch == ':' || ch == '"' || ch == '/' ||
+            ch == '\\' || ch == '?' || ch == '*')
+        {
+            ch = '_';
+        }
+    }
+    return osRet;
+}
+
+/************************************************************************/
 /*                        CPLLaunderForFilename()                       */
 /************************************************************************/
 
@@ -1253,20 +1598,13 @@ const char *CPLGetHomeDir()
  * @return the laundered name.
  *
  * @since GDAL 3.1
+ *
+ * @deprecated If using C++, prefer using CPLLaunderForFilenameSafe() instead
  */
 
 const char *CPLLaunderForFilename(const char *pszName,
-                                  CPL_UNUSED const char *pszOutputPath)
+                                  const char *pszOutputPath)
 {
-    std::string osRet(pszName);
-    for (char &ch : osRet)
-    {
-        // https://docs.microsoft.com/en-us/windows/desktop/fileio/naming-a-file
-        if (ch == '<' || ch == '>' || ch == ':' || ch == '"' || ch == '/' ||
-            ch == '\\' || ch == '?' || ch == '*')
-        {
-            ch = '_';
-        }
-    }
-    return CPLSPrintf("%s", osRet.c_str());
+    return CPLPathReturnTLSString(
+        CPLLaunderForFilenameSafe(pszName, pszOutputPath), __FUNCTION__);
 }

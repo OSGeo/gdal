@@ -183,7 +183,8 @@ double SRTMHGTRasterBand::GetNoDataValue(int *pbSuccess)
 
 const char *SRTMHGTRasterBand::GetUnitType()
 {
-    const char *pszExt = CPLGetExtension(poDS->GetDescription());
+    const std::string osExt = CPLGetExtensionSafe(poDS->GetDescription());
+    const char *pszExt = osExt.c_str();
     if (EQUAL(pszExt, "err") || EQUAL(pszExt, "img") || EQUAL(pszExt, "num") ||
         EQUAL(pszExt, "swb"))
     {

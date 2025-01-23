@@ -1899,6 +1899,198 @@ bool OGRLayer::FilterWKBGeometry(const GByte *pabyWKB, size_t nWKBSize,
     return false;
 }
 
+/************************************************************************/
+/*                          PrepareStartTransaction()                   */
+/************************************************************************/
+
+void OGRLayer::PrepareStartTransaction()
+{
+    m_apoFieldDefnChanges.clear();
+    m_apoGeomFieldDefnChanges.clear();
+}
+
+/************************************************************************/
+/*                          FinishRollbackTransaction()                 */
+/************************************************************************/
+
+void OGRLayer::FinishRollbackTransaction(const std::string &osSavepointName)
+{
+
+    // Deleted fields can be safely removed from the storage after being restored.
+    std::vector<int> toBeRemoved;
+
+    bool bSavepointFound = false;
+
+    // Loop through all changed fields and reset them to their previous state.
+    for (int i = static_cast<int>(m_apoFieldDefnChanges.size()) - 1; i >= 0;
+         i--)
+    {
+        auto &oFieldChange = m_apoFieldDefnChanges[i];
+
+        if (!osSavepointName.empty())
+        {
+            if (oFieldChange.osSavepointName == osSavepointName)
+            {
+                bSavepointFound = true;
+            }
+            else if (bSavepointFound)
+            {
+                continue;
+            }
+        }
+
+        CPLAssert(oFieldChange.poFieldDefn);
+        const char *pszName = oFieldChange.poFieldDefn->GetNameRef();
+        const int iField = oFieldChange.iField;
+        if (iField >= 0)
+        {
+            switch (oFieldChange.eChangeType)
+            {
+                case FieldChangeType::DELETE_FIELD:
+                {
+                    // Transfer ownership of the field to the layer
+                    whileUnsealing(GetLayerDefn())
+                        ->AddFieldDefn(std::move(oFieldChange.poFieldDefn));
+
+                    // Now move the field to the right place
+                    // from the last position to its original position
+                    const int iFieldCount = GetLayerDefn()->GetFieldCount();
+                    CPLAssert(iFieldCount > 0);
+                    CPLAssert(iFieldCount > iField);
+                    std::vector<int> anOrder(iFieldCount);
+                    for (int j = 0; j < iField; j++)
+                    {
+                        anOrder[j] = j;
+                    }
+                    for (int j = iField + 1; j < iFieldCount; j++)
+                    {
+                        anOrder[j] = j - 1;
+                    }
+                    anOrder[iField] = iFieldCount - 1;
+                    if (OGRERR_NONE == whileUnsealing(GetLayerDefn())
+                                           ->ReorderFieldDefns(anOrder.data()))
+                    {
+                        toBeRemoved.push_back(i);
+                    }
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Failed to restore deleted field %s", pszName);
+                    }
+                    break;
+                }
+                case FieldChangeType::ALTER_FIELD:
+                {
+                    OGRFieldDefn *poFieldDefn =
+                        GetLayerDefn()->GetFieldDefn(iField);
+                    if (poFieldDefn)
+                    {
+                        *poFieldDefn = *oFieldChange.poFieldDefn;
+                        toBeRemoved.push_back(i);
+                    }
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Failed to restore altered field %s", pszName);
+                    }
+                    break;
+                }
+                case FieldChangeType::ADD_FIELD:
+                {
+                    std::unique_ptr<OGRFieldDefn> poFieldDef =
+                        GetLayerDefn()->StealFieldDefn(iField);
+                    if (poFieldDef)
+                    {
+                        oFieldChange.poFieldDefn = std::move(poFieldDef);
+                    }
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Failed to delete added field %s", pszName);
+                    }
+                    break;
+                }
+            }
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to restore field %s (field not found at index %d)",
+                     pszName, iField);
+        }
+    }
+
+    // Remove from the storage the deleted fields that have been restored
+    for (const auto &i : toBeRemoved)
+    {
+        m_apoFieldDefnChanges.erase(m_apoFieldDefnChanges.begin() + i);
+    }
+
+    /**********************************************************************/
+    /* Reset geometry fields to their previous state.                    */
+    /**********************************************************************/
+
+    bSavepointFound = false;
+
+    // Loop through all changed geometry fields and reset them to their previous state.
+    for (int i = static_cast<int>(m_apoGeomFieldDefnChanges.size()) - 1; i >= 0;
+         i--)
+    {
+        auto &oGeomFieldChange = m_apoGeomFieldDefnChanges[i];
+
+        if (!osSavepointName.empty())
+        {
+            if (oGeomFieldChange.osSavepointName == osSavepointName)
+            {
+                bSavepointFound = true;
+            }
+            else if (bSavepointFound)
+            {
+                continue;
+            }
+        }
+        const char *pszName = oGeomFieldChange.poFieldDefn->GetNameRef();
+        const int iGeomField = oGeomFieldChange.iField;
+        if (iGeomField >= 0)
+        {
+            switch (oGeomFieldChange.eChangeType)
+            {
+                case FieldChangeType::DELETE_FIELD:
+                case FieldChangeType::ALTER_FIELD:
+                {
+                    // Currently not handled by OGR for geometry fields
+                    break;
+                }
+                case FieldChangeType::ADD_FIELD:
+                {
+                    std::unique_ptr<OGRGeomFieldDefn> poGeomFieldDef =
+                        GetLayerDefn()->StealGeomFieldDefn(
+                            oGeomFieldChange.iField);
+                    if (poGeomFieldDef)
+                    {
+                        oGeomFieldChange.poFieldDefn =
+                            std::move(poGeomFieldDef);
+                    }
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Failed to delete added geometry field %s",
+                                 pszName);
+                    }
+                    break;
+                }
+            }
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to restore geometry field %s (field not found at "
+                     "index %d)",
+                     pszName, oGeomFieldChange.iField);
+        }
+    }
+}
+
 //! @endcond
 
 /************************************************************************/

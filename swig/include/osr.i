@@ -1165,7 +1165,7 @@ public:
 
 %newobject ConvertToOtherProjection;
   OSRSpatialReferenceShadow* ConvertToOtherProjection(const char* other_projection, char **options = NULL) {
-    return OSRConvertToOtherProjection(self, other_projection, options);
+    return (OSRSpatialReferenceShadow*)OSRConvertToOtherProjection(self, other_projection, options);
   }
 
 %clear const char* name;
@@ -1246,7 +1246,7 @@ public:
 
   OSRCoordinateTransformationShadow( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options ) {
     return (OSRCoordinateTransformationShadow*)
-        options ? OCTNewCoordinateTransformationEx( src, dst, options ) : OCTNewCoordinateTransformation(src, dst);
+        (options ? OCTNewCoordinateTransformationEx( src, dst, options ) : OCTNewCoordinateTransformation(src, dst));
   }
 
   ~OSRCoordinateTransformationShadow() {
@@ -1255,7 +1255,7 @@ public:
 
   %newobject GetInverse;
   OSRCoordinateTransformationShadow* GetInverse() {
-    return OCTGetInverse(self);
+    return (OSRCoordinateTransformationShadow*) OCTGetInverse(self);
   }
 
 // Need to apply argin typemap second so the numinputs=1 version gets applied
@@ -1399,7 +1399,7 @@ void TransformBounds(
 %inline %{
   OSRCoordinateTransformationShadow *CreateCoordinateTransformation( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options = NULL ) {
     return (OSRCoordinateTransformationShadow*)
-        options ? OCTNewCoordinateTransformationEx( src, dst, options ) : OCTNewCoordinateTransformation(src, dst);
+        (options ? OCTNewCoordinateTransformationEx( src, dst, options ) : OCTNewCoordinateTransformation(src, dst));
 }
 %}
 

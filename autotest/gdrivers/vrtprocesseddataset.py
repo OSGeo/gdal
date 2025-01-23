@@ -10,10 +10,15 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import math
+import os
+
 import gdaltest
 import pytest
 
 from osgeo import gdal
+
+from .vrtderived import _validate
 
 pytestmark = pytest.mark.skipif(
     not gdaltest.vrt_has_open_support(),
@@ -21,7 +26,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 np = pytest.importorskip("numpy")
-pytest.importorskip("osgeo.gdal_array")
+gdal_array = pytest.importorskip("osgeo.gdal_array")
 
 ###############################################################################
 # Test error cases in general VRTProcessedDataset XML structure
@@ -73,6 +78,16 @@ def test_vrtprocesseddataset_errors(tmp_vsimem):
     src_ds.GetRasterBand(3).Fill(3)
     src_ds.Close()
 
+    with pytest.raises(Exception, match="Invalid value of 'unscale'"):
+        gdal.Open(
+            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        <Input unscale="maybe">
+            <SourceFilename>{src_filename}</SourceFilename>
+        </Input>
+        </VRTDataset>
+            """
+        )
+
     with pytest.raises(Exception, match="ProcessingSteps element missing"):
         gdal.Open(
             f"""<VRTDataset subclass='VRTProcessedDataset'>
@@ -123,10 +138,13 @@ def test_vrtprocesseddataset_errors(tmp_vsimem):
 # Test nominal cases of BandAffineCombination algorithm
 
 
-def test_vrtprocesseddataset_affine_combination_nominal(tmp_vsimem):
+@pytest.mark.parametrize("INTERLEAVE", ["PIXEL", "BAND"])
+def test_vrtprocesseddataset_affine_combination_nominal(tmp_vsimem, INTERLEAVE):
 
     src_filename = str(tmp_vsimem / "src.tif")
-    src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 2, 1, 3)
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        src_filename, 2, 1, 3, options=["INTERLEAVE=" + INTERLEAVE]
+    )
     src_ds.GetRasterBand(1).WriteArray(np.array([[1, 3]]))
     src_ds.GetRasterBand(2).WriteArray(np.array([[2, 6]]))
     src_ds.GetRasterBand(3).WriteArray(np.array([[3, 3]]))
@@ -1199,6 +1217,291 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
 
 
 ###############################################################################
+# Test expressions
+
+
+@pytest.mark.parametrize(
+    "dialect,expression,src,expected,error,env",
+    [
+        pytest.param(
+            "exprtk",
+            "return [BANDS[1], BANDS[2]]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[[3, 4]], [[5, 6]]]),
+            None,
+            {},
+            id="multiple bands in, multiple bands out (1)",
+        ),
+        pytest.param(
+            "exprtk",
+            "return [BANDS]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            None,
+            {},
+            id="multiple bands in, multiple bands out (2)",
+        ),
+        pytest.param(
+            "muparser",
+            "B2, B3",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[[3, 4]], [[5, 6]]]),
+            None,
+            {},
+            id="multiple bands in, multiple bands out (3)",
+        ),
+        pytest.param(
+            "muparser",
+            "BANDS",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            None,
+            {},
+            id="multiple bands in, multiple bands out (4)",
+        ),
+        pytest.param(
+            "exprtk",
+            """
+             // Reduce every 10 bands of input into a single
+             // band of output, using avg()
+             const var chunksize := 10;
+             const var outsize := BANDS[] / chunksize;
+
+             var chunk[chunksize];
+             var out[outsize];
+
+             for (var i := 0; i < out[]; i += 1) {
+                for (var j := 0; j < chunk[]; j += 1) {
+                    chunk[j] := BANDS[i * chunk[] + j];
+                };
+                out[i] := avg(chunk);
+             };
+             return [out];
+             """,
+            np.arange(100).reshape(50, 1, 2),
+            np.array([[[9, 10]], [[29, 30]], [[49, 50]], [[69, 70]], [[89, 90]]]),
+            None,
+            {},
+            id="procedural",
+        ),
+        pytest.param(
+            "exprtk",
+            "B1",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            None,
+            {},
+            id="multiple bands in, single band out (1)",
+        ),
+        pytest.param(
+            "muparser",
+            "B1",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            None,
+            {},
+            id="multiple bands in, single band out (2)",
+        ),
+        pytest.param(
+            "exprtk",
+            "BANDS[0]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            None,
+            {},
+            id="multiple bands in, single band out (3)",
+        ),
+        pytest.param(
+            "exprtk",
+            "return [B1];",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            None,
+            {},
+            id="multiple bands in, single band out (4)",
+        ),
+        pytest.param(
+            "exprtk",
+            "return [B1, B2]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            "returned 2 values but 1 output band",
+            {},
+            id="return wrong number of bands",
+        ),
+        pytest.param(
+            "exprtk",
+            "return [BANDS, B2]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            "must return a vector or a list of scalars",
+            {},
+            id="return wrong number of bands",
+        ),
+        pytest.param(
+            "exprtk",
+            """
+             var out[3];
+             for (var i := 0; i < 100; i += 1) {
+                out[i] := i;
+             };
+             return [out];
+             """,
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[[1, 1]], [[2, 2]], [[3, 3]]]),
+            "Attempted to access index 3",
+            {},
+            id="out of bounds vector access",
+        ),
+        pytest.param(
+            "exprtk",
+            """
+             var out[5];
+             return [out];
+             """,
+            np.array([[[1, 2]]]),
+            np.array([[[1, 1]]]),
+            "Failed to parse expression",
+            {"GDAL_EXPRTK_MAX_VECTOR_LENGTH": "4"},
+            id="vector too large",
+        ),
+        pytest.param(
+            "exprtk",
+            """
+             var out[3];
+             for (var i := 0; i < out[]; i += 1) {
+                out[i] := i;
+             };
+             return [out];
+             """,
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[[1, 1]], [[2, 2]], [[3, 3]]]),
+            "Failed to parse expression",
+            {"GDAL_EXPRTK_ENABLE_LOOPS": "NO"},
+            id="loops disabled",
+        ),
+        pytest.param(
+            "exprtk",
+            """
+             for (var i := 0; i < 20000; i += 1) {
+                sleep(0.2/20000); // we only check runtime every 10,000 iterations
+             };
+             return [B1];
+             """,
+            np.array([[[1, 2]]]),
+            np.array([[1, 2]]),
+            "time exceeded maximum",
+            {"GDAL_EXPRTK_TIMEOUT_SECONDS": "0.1"},
+            id="loop evaluation timeout",
+        ),
+    ],
+)
+def test_vrtprocesseddataset_expression(
+    request, tmp_vsimem, expression, src, dialect, expected, env, error
+):
+    if not gdaltest.gdal_has_vrt_expression_dialect(dialect):
+        pytest.skip(f"{dialect} not available")
+
+    if "timeout" in request.node.name and "debug" not in gdal.VersionInfo(""):
+        pytest.skip("Timeout tests only work on debug builds")
+
+    src_filename = tmp_vsimem / "src.tif"
+
+    num_input_bands = 1 if len(src.shape) == 2 else src.shape[0]
+    expected_output_bands = 1 if len(expected.shape) == 2 else expected.shape[0]
+
+    with gdal.GetDriverByName("GTiff").Create(
+        src_filename, 2, 1, num_input_bands
+    ) as src_ds:
+        src_ds.WriteArray(src)
+        src_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
+
+    output_band_xml = "".join(
+        f"""<VRTRasterBand band="{i + 1}" dataType="Float32" subClass="VRTProcessedRasterBand"/>"""
+        for i in range(expected_output_bands)
+    )
+
+    vrt_xml = f"""<VRTDataset subclass='VRTProcessedDataset'>
+            <Input>
+                <SourceFilename>{src_filename}</SourceFilename>
+            </Input>
+            <ProcessingSteps>
+                <Step>
+                    <Algorithm>Expression</Algorithm>
+                    <Argument name="expression">{expression.replace('<', '&lt;').replace('>', '&gt;')}</Argument>
+                    <Argument name="dialect">{dialect}</Argument>
+                </Step>
+            </ProcessingSteps>
+                {output_band_xml}
+            </VRTDataset>
+                """
+
+    with gdal.config_options(env):
+        if error:
+            with pytest.raises(Exception, match=error):
+                ds = gdal.Open(vrt_xml)
+                result = ds.ReadAsArray()
+        else:
+            ds = gdal.Open(vrt_xml)
+            result = ds.ReadAsArray()
+            np.testing.assert_equal(result, expected)
+
+
+@pytest.mark.parametrize(
+    "batch_size",
+    (
+        pytest.param(13, id="batch size greater than input"),
+        pytest.param(1, id="batch size=1"),
+        pytest.param(3, id="input bands are multiple of batch size"),
+        pytest.param(5, id="input bands are not a multiple of batch size"),
+    ),
+)
+def test_vrtprocesseddataset_expression_batchsize(tmp_vsimem, batch_size):
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("muparser not available")
+
+    src_filename = tmp_vsimem / "in.tif"
+
+    inputs = np.arange(12)
+    inputs = inputs.reshape(inputs.size, 1, 1)
+
+    with gdal.GetDriverByName("GTiff").Create(
+        src_filename,
+        1,
+        1,
+        bands=inputs.size,
+    ) as src_ds:
+        src_ds.WriteArray(inputs)
+        src_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
+
+    num_chunks = math.ceil(inputs.size / batch_size)
+    chunks = [np.arange(batch_size) + r * batch_size for r in range(num_chunks)]
+    expected = np.array([inputs[chunk[chunk < inputs.size]].sum() for chunk in chunks])
+
+    vrt_xml = f"""<VRTDataset subclass='VRTProcessedDataset'>
+            <Input>
+                <SourceFilename>{src_filename}</SourceFilename>
+            </Input>
+            <ProcessingSteps>
+                <Step>
+                    <Algorithm>Expression</Algorithm>
+                    <Argument name="expression">sum(BANDS)</Argument>
+                    <Argument name="dialect">muparser</Argument>
+                    <Argument name="batch_size">{batch_size}</Argument>
+                </Step>
+            </ProcessingSteps>
+            <OutputBands count="FROM_LAST_STEP" dataType="Float32" />
+            </VRTDataset>
+                """
+
+    with gdal.Open(vrt_xml) as ds:
+        actual = ds.ReadAsArray().flatten()
+
+    np.testing.assert_equal(actual, expected)
+
+
+###############################################################################
 # Test that serialization (for example due to statistics computation) properly
 # works
 
@@ -1213,7 +1516,7 @@ def test_vrtprocesseddataset_serialize(tmp_vsimem):
     vrt_filename = str(tmp_vsimem / "the.vrt")
     content = f"""<VRTDataset subclass='VRTProcessedDataset'>
     <VRTRasterBand subClass='VRTProcessedRasterBand' dataType='Byte'/>
-    <Input>
+    <Input unscale="true">
         <SourceFilename>{src_filename}</SourceFilename>
     </Input>
     <ProcessingSteps>
@@ -1323,3 +1626,311 @@ def test_vrtprocesseddataset_OutputBands():
         match="Invalid value for OutputBands.dataType",
     ):
         gdal.Open("data/vrt/processed_OutputBands_USER_PROVIDED_invalid_type.vrt")
+
+
+###############################################################################
+# Test VRTProcessedDataset::RasterIO()
+
+
+def test_vrtprocesseddataset_RasterIO(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "src.tif")
+    src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 2, 3, 4)
+    src_ds.GetRasterBand(1).WriteArray(np.array([[1, 2], [3, 4], [5, 6]]))
+    src_ds.GetRasterBand(2).WriteArray(np.array([[7, 8], [9, 10], [11, 12]]))
+    src_ds.GetRasterBand(3).WriteArray(np.array([[13, 14], [15, 16], [17, 18]]))
+    src_ds.GetRasterBand(4).WriteArray(np.array([[19, 20], [21, 22], [23, 24]]))
+    src_ds.BuildOverviews("NEAR", [2])
+    src_ds = None
+
+    vrt_content = f"""<VRTDataset subclass='VRTProcessedDataset'>
+    <Input>
+        <SourceFilename>{src_filename}</SourceFilename>
+    </Input>
+    <ProcessingSteps>
+        <Step name="Affine combination of band values">
+            <Algorithm>BandAffineCombination</Algorithm>
+            <Argument name="coefficients_1">0,0,1,0,0</Argument>
+            <Argument name="coefficients_2">0,0,0,1,0</Argument>
+            <Argument name="coefficients_3">0,0,0,0,1</Argument>
+            <Argument name="coefficients_4">0,1,0,0,0</Argument>
+        </Step>
+    </ProcessingSteps>
+    </VRTDataset>
+        """
+
+    ds = gdal.Open(vrt_content)
+    assert ds.RasterXSize == 2
+    assert ds.RasterYSize == 3
+    assert ds.RasterCount == 4
+
+    # Optimized code path with INTERLEAVE=BAND
+    np.testing.assert_equal(
+        ds.ReadAsArray(),
+        np.array(
+            [
+                [[7, 8], [9, 10], [11, 12]],
+                [[13, 14], [15, 16], [17, 18]],
+                [[19, 20], [21, 22], [23, 24]],
+                [[1, 2], [3, 4], [5, 6]],
+            ]
+        ),
+    )
+
+    # Optimized code path with INTERLEAVE=BAND but buf_type != native type
+    np.testing.assert_equal(
+        ds.ReadAsArray(buf_type=gdal.GDT_Int16),
+        np.array(
+            [
+                [[7, 8], [9, 10], [11, 12]],
+                [[13, 14], [15, 16], [17, 18]],
+                [[19, 20], [21, 22], [23, 24]],
+                [[1, 2], [3, 4], [5, 6]],
+            ]
+        ),
+    )
+
+    # Optimized code path with INTERLEAVE=BAND
+    np.testing.assert_equal(
+        ds.ReadAsArray(1, 2, 1, 1),
+        np.array([[[12]], [[18]], [[24]], [[6]]]),
+    )
+
+    # Optimized code path with INTERLEAVE=PIXEL
+    np.testing.assert_equal(
+        ds.ReadAsArray(interleave="PIXEL"),
+        np.array(
+            [
+                [[7, 13, 19, 1], [8, 14, 20, 2]],
+                [[9, 15, 21, 3], [10, 16, 22, 4]],
+                [[11, 17, 23, 5], [12, 18, 24, 6]],
+            ]
+        ),
+    )
+
+    # Optimized code path with INTERLEAVE=PIXEL but buf_type != native type
+    np.testing.assert_equal(
+        ds.ReadAsArray(interleave="PIXEL", buf_type=gdal.GDT_Int16),
+        np.array(
+            [
+                [[7, 13, 19, 1], [8, 14, 20, 2]],
+                [[9, 15, 21, 3], [10, 16, 22, 4]],
+                [[11, 17, 23, 5], [12, 18, 24, 6]],
+            ]
+        ),
+    )
+
+    # Optimized code path with INTERLEAVE=PIXEL
+    np.testing.assert_equal(
+        ds.ReadAsArray(1, 2, 1, 1, interleave="PIXEL"),
+        np.array([[[12, 18, 24, 6]]]),
+    )
+
+    # Not optimized INTERLEAVE=BAND because not enough bands
+    np.testing.assert_equal(
+        ds.ReadAsArray(band_list=[1, 2, 3]),
+        np.array(
+            [
+                [[7, 8], [9, 10], [11, 12]],
+                [[13, 14], [15, 16], [17, 18]],
+                [[19, 20], [21, 22], [23, 24]],
+            ]
+        ),
+    )
+
+    # Not optimized INTERLEAVE=BAND because of out-of-order band list
+    np.testing.assert_equal(
+        ds.ReadAsArray(band_list=[4, 1, 2, 3]),
+        np.array(
+            [
+                [[1, 2], [3, 4], [5, 6]],
+                [[7, 8], [9, 10], [11, 12]],
+                [[13, 14], [15, 16], [17, 18]],
+                [[19, 20], [21, 22], [23, 24]],
+            ]
+        ),
+    )
+
+    # Not optimized INTERLEAVE=PIXEL because of out-of-order band list
+    np.testing.assert_equal(
+        ds.ReadAsArray(interleave="PIXEL", band_list=[4, 1, 2, 3]),
+        np.array(
+            [
+                [[1, 7, 13, 19], [2, 8, 14, 20]],
+                [[3, 9, 15, 21], [4, 10, 16, 22]],
+                [[5, 11, 17, 23], [6, 12, 18, 24]],
+            ]
+        ),
+    )
+
+    # Optimized code path with overviews
+    assert ds.GetRasterBand(1).GetOverview(0).XSize == 1
+    assert ds.GetRasterBand(1).GetOverview(0).YSize == 2
+    np.testing.assert_equal(
+        ds.ReadAsArray(buf_xsize=1, buf_ysize=2),
+        np.array([[[7], [11]], [[13], [17]], [[19], [23]], [[1], [5]]]),
+    )
+
+    # Non-optimized code path with overviews
+    np.testing.assert_equal(
+        ds.ReadAsArray(buf_xsize=1, buf_ysize=1),
+        np.array([[[11]], [[17]], [[23]], [[5]]]),
+    )
+
+    # Test buffer splitting
+    with gdal.config_option("VRT_PROCESSED_DATASET_ALLOWED_RAM_USAGE", "96"):
+        ds = gdal.Open(vrt_content)
+
+    # Optimized code path with INTERLEAVE=BAND
+    np.testing.assert_equal(
+        ds.ReadAsArray(),
+        np.array(
+            [
+                [[7, 8], [9, 10], [11, 12]],
+                [[13, 14], [15, 16], [17, 18]],
+                [[19, 20], [21, 22], [23, 24]],
+                [[1, 2], [3, 4], [5, 6]],
+            ]
+        ),
+    )
+
+    # I/O error
+    gdal.GetDriverByName("GTiff").Create(
+        src_filename, 1024, 1024, 4, options=["TILED=YES"]
+    )
+    f = gdal.VSIFOpenL(src_filename, "rb+")
+    gdal.VSIFTruncateL(f, 4096)
+    gdal.VSIFCloseL(f)
+
+    ds = gdal.Open(vrt_content)
+
+    # Error in INTERLEAVE=BAND optimized code path
+    with pytest.raises(Exception):
+        ds.ReadAsArray()
+
+    # Error in INTERLEAVE=PIXEL optimized code path
+    with pytest.raises(Exception):
+        ds.ReadAsArray(interleave="PIXEL")
+
+    with gdal.config_option("VRT_PROCESSED_DATASET_ALLOWED_RAM_USAGE", "96"):
+        ds = gdal.Open(vrt_content)
+        assert ds.GetRasterBand(1).GetBlockSize() == [1, 1]
+        with pytest.raises(Exception):
+            ds.ReadAsArray()
+
+
+###############################################################################
+# Validate processed datasets according to xsd
+
+
+@pytest.mark.parametrize(
+    "fname",
+    [
+        f
+        for f in os.listdir(os.path.join(os.path.dirname(__file__), "data/vrt"))
+        if f.startswith("processed")
+    ],
+)
+def test_vrt_processeddataset_validate(fname):
+    with open(os.path.join("data/vrt", fname)) as f:
+        _validate(f.read())
+
+
+###############################################################################
+# Test reading input datasets with scale and offset
+
+
+@pytest.mark.parametrize(
+    "input_scaled", (True, False), ids=lambda x: f"input scaled={x}"
+)
+@pytest.mark.parametrize("unscale", (True, False, "auto"), ids=lambda x: f"unscale={x}")
+@pytest.mark.parametrize(
+    "dtype", (gdal.GDT_Int16, gdal.GDT_Float32), ids=gdal.GetDataTypeName
+)
+def test_vrtprocesseddataset_scaled_inputs(tmp_vsimem, input_scaled, dtype, unscale):
+
+    src_filename = tmp_vsimem / "src.tif"
+
+    nx = 2
+    ny = 3
+    nz = 2
+
+    if dtype == gdal.GDT_Float32:
+        nodata = float("nan")
+    else:
+        nodata = 99
+
+    np_type = gdal_array.GDALTypeCodeToNumericTypeCode(dtype)
+
+    data = np.arange(nx * ny * nz, dtype=np_type).reshape(nz, ny, nx)
+    data[:, 2, 1] = nodata
+
+    if input_scaled:
+        offsets = [i + 2 for i in range(nz)]
+        scales = [(i + 1) / 4 for i in range(nz)]
+    else:
+        offsets = [0 for i in range(nz)]
+        scales = [1 for i in range(nz)]
+
+    with gdal.GetDriverByName("GTiff").Create(
+        src_filename, nx, ny, nz, eType=dtype
+    ) as src_ds:
+        src_ds.WriteArray(data)
+        for i in range(src_ds.RasterCount):
+            bnd = src_ds.GetRasterBand(i + 1)
+            bnd.SetOffset(offsets[i])
+            bnd.SetScale(scales[i])
+            bnd.SetNoDataValue(nodata)
+
+    ds = gdal.Open(
+        f"""
+    <VRTDataset subclass='VRTProcessedDataset'>
+    <Input unscale="{unscale}">
+        <SourceFilename>{src_filename}</SourceFilename>
+    </Input>
+    <ProcessingSteps>
+        <Step>
+            <Algorithm>BandAffineCombination</Algorithm>
+            <Argument name="coefficients_1">0,1,0</Argument>
+            <Argument name="coefficients_2">0,0,1</Argument>
+        </Step>
+    </ProcessingSteps>
+    </VRTDataset>"""
+    )
+
+    assert ds.RasterCount == nz
+
+    if unscale is True or (unscale == "auto" and input_scaled):
+        for i in range(ds.RasterCount):
+            bnd = ds.GetRasterBand(i + 1)
+            assert bnd.DataType == gdal.GDT_Float64
+            assert bnd.GetScale() in (None, 1)
+            assert bnd.GetOffset() in (None, 0)
+    else:
+        for i in range(ds.RasterCount):
+            bnd = ds.GetRasterBand(i + 1)
+            assert bnd.DataType == dtype
+            assert bnd.GetScale() == scales[i]
+            assert bnd.GetOffset() == offsets[i]
+            assert (
+                np.isnan(bnd.GetNoDataValue())
+                if np.isnan(nodata)
+                else bnd.GetNoDataValue() == nodata
+            )
+
+    result = np.ma.stack(
+        [ds.GetRasterBand(i + 1).ReadAsMaskedArray() for i in range(ds.RasterCount)]
+    )
+
+    if unscale:
+        expected = np.ma.masked_array(
+            np.stack([data[i, :, :] * scales[i] + offsets[i] for i in range(nz)]),
+            np.isnan(data) if np.isnan(nodata) else data == nodata,
+        )
+    else:
+        expected = np.ma.masked_array(
+            data, np.isnan(data) if np.isnan(nodata) else data == nodata
+        )
+
+    np.testing.assert_array_equal(result.mask, expected.mask)
+    np.testing.assert_array_equal(result[~result.mask], expected[~expected.mask])

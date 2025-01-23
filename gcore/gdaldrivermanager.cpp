@@ -806,10 +806,9 @@ char **GDALDriverManager::GetSearchPaths(const char *pszGDAL_DRIVER_PATH)
 
         if (CPLGetExecPath(szExecPath, sizeof(szExecPath)))
         {
-            char szPluginDir[sizeof(szExecPath) + 50];
-            strcpy(szPluginDir, CPLGetDirname(szExecPath));
-            strcat(szPluginDir, "\\gdalplugins");
-            papszSearchPaths = CSLAddString(papszSearchPaths, szPluginDir);
+            papszSearchPaths = CSLAddString(
+                papszSearchPaths,
+                (CPLGetDirnameSafe(szExecPath) + "\\gdalplugins").c_str());
         }
         else
         {
@@ -880,11 +879,11 @@ CPLErr GDALDriverManager::LoadPlugin(const char *name)
     const int nSearchPaths = aosSearchPaths.size();
     for (int iDir = 0; iDir < nSearchPaths; ++iDir)
     {
-        CPLString osABISpecificDir =
-            CPLFormFilename(aosSearchPaths[iDir], osABIVersion, nullptr);
+        std::string osABISpecificDir =
+            CPLFormFilenameSafe(aosSearchPaths[iDir], osABIVersion, nullptr);
 
         VSIStatBufL sStatBuf;
-        if (VSIStatL(osABISpecificDir, &sStatBuf) != 0)
+        if (VSIStatL(osABISpecificDir.c_str(), &sStatBuf) != 0)
             osABISpecificDir = aosSearchPaths[iDir];
 
         CPLString gdal_or_ogr[2] = {"gdal_", "ogr_"};
@@ -894,10 +893,10 @@ CPLErr GDALDriverManager::LoadPlugin(const char *name)
         {
             for (const CPLString &extension : platformExtensions)
             {
-                const char *pszFilename = CPLFormFilename(
-                    osABISpecificDir, CPLSPrintf("%s%s", prefix.c_str(), name),
-                    extension);
-                if (VSIStatL(pszFilename, &sStatBuf) != 0)
+                const std::string osFilename = CPLFormFilenameSafe(
+                    osABISpecificDir.c_str(),
+                    CPLSPrintf("%s%s", prefix.c_str(), name), extension);
+                if (VSIStatL(osFilename.c_str(), &sStatBuf) != 0)
                     continue;
 
                 CPLString osFuncName;
@@ -911,13 +910,13 @@ CPLErr GDALDriverManager::LoadPlugin(const char *name)
                 }
                 CPLErrorReset();
                 CPLPushErrorHandler(CPLQuietErrorHandler);
-                void *pRegister = CPLGetSymbol(pszFilename, osFuncName);
+                void *pRegister = CPLGetSymbol(osFilename.c_str(), osFuncName);
                 CPLPopErrorHandler();
                 if (pRegister == nullptr)
                 {
                     CPLString osLastErrorMsg(CPLGetLastErrorMsg());
                     osFuncName = "GDALRegisterMe";
-                    pRegister = CPLGetSymbol(pszFilename, osFuncName);
+                    pRegister = CPLGetSymbol(osFilename.c_str(), osFuncName);
                     if (pRegister == nullptr)
                     {
                         CPLError(CE_Failure, CPLE_AppDefined, "%s",
@@ -926,7 +925,7 @@ CPLErr GDALDriverManager::LoadPlugin(const char *name)
                     }
                 }
                 CPLDebug("GDAL", "Registering %s using %s in %s", name,
-                         osFuncName.c_str(), pszFilename);
+                         osFuncName.c_str(), osFilename.c_str());
                 CPLErrorReset();
                 reinterpret_cast<void (*)()>(pRegister)();
                 if (CPLGetErrorCounter() > 0)
@@ -1012,27 +1011,28 @@ void GDALDriverManager::AutoLoadDrivers()
     bool bFoundOnePlugin = false;
     for (int iDir = 0; iDir < nSearchPaths; ++iDir)
     {
-        CPLString osABISpecificDir =
-            CPLFormFilename(papszSearchPaths[iDir], osABIVersion, nullptr);
+        std::string osABISpecificDir =
+            CPLFormFilenameSafe(papszSearchPaths[iDir], osABIVersion, nullptr);
 
         VSIStatBufL sStatBuf;
-        if (VSIStatL(osABISpecificDir, &sStatBuf) != 0)
+        if (VSIStatL(osABISpecificDir.c_str(), &sStatBuf) != 0)
             osABISpecificDir = papszSearchPaths[iDir];
 
-        char **papszFiles = VSIReadDir(osABISpecificDir);
+        char **papszFiles = VSIReadDir(osABISpecificDir.c_str());
         const int nFileCount = CSLCount(papszFiles);
 
         for (int iFile = 0; iFile < nFileCount; ++iFile)
         {
-            const char *pszExtension = CPLGetExtension(papszFiles[iFile]);
+            const CPLString osExtension =
+                CPLGetExtensionSafe(papszFiles[iFile]);
 
-            if (!EQUAL(pszExtension, "dll") && !EQUAL(pszExtension, "so") &&
-                !EQUAL(pszExtension, "dylib"))
+            if (!EQUAL(osExtension, "dll") && !EQUAL(osExtension, "so") &&
+                !EQUAL(osExtension, "dylib"))
             {
                 if (strcmp(papszFiles[iFile], "drivers.ini") == 0)
                 {
-                    m_osDriversIniPath = CPLFormFilename(
-                        osABISpecificDir, papszFiles[iFile], nullptr);
+                    m_osDriversIniPath = CPLFormFilenameSafe(
+                        osABISpecificDir.c_str(), papszFiles[iFile], nullptr);
                 }
                 continue;
             }
@@ -1045,31 +1045,33 @@ void GDALDriverManager::AutoLoadDrivers()
             CPLString osFuncName;
             if (STARTS_WITH_CI(papszFiles[iFile], "gdal_"))
             {
-                osFuncName.Printf("GDALRegister_%s",
-                                  CPLGetBasename(papszFiles[iFile]) +
-                                      strlen("gdal_"));
+                osFuncName.Printf(
+                    "GDALRegister_%s",
+                    CPLGetBasenameSafe(papszFiles[iFile]).c_str() +
+                        strlen("gdal_"));
             }
             else if (STARTS_WITH_CI(papszFiles[iFile], "ogr_"))
             {
-                osFuncName.Printf("RegisterOGR%s",
-                                  CPLGetBasename(papszFiles[iFile]) +
-                                      strlen("ogr_"));
+                osFuncName.Printf(
+                    "RegisterOGR%s",
+                    CPLGetBasenameSafe(papszFiles[iFile]).c_str() +
+                        strlen("ogr_"));
             }
             else
                 continue;
 
-            const char *pszFilename =
-                CPLFormFilename(osABISpecificDir, papszFiles[iFile], nullptr);
+            const std::string osFilename = CPLFormFilenameSafe(
+                osABISpecificDir.c_str(), papszFiles[iFile], nullptr);
 
             CPLErrorReset();
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            void *pRegister = CPLGetSymbol(pszFilename, osFuncName);
+            void *pRegister = CPLGetSymbol(osFilename.c_str(), osFuncName);
             CPLPopErrorHandler();
             if (pRegister == nullptr)
             {
                 CPLString osLastErrorMsg(CPLGetLastErrorMsg());
                 osFuncName = "GDALRegisterMe";
-                pRegister = CPLGetSymbol(pszFilename, osFuncName);
+                pRegister = CPLGetSymbol(osFilename.c_str(), osFuncName);
                 if (pRegister == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined, "%s",
@@ -1080,8 +1082,8 @@ void GDALDriverManager::AutoLoadDrivers()
             if (pRegister != nullptr)
             {
                 bFoundOnePlugin = true;
-                CPLDebug("GDAL", "Auto register %s using %s.", pszFilename,
-                         osFuncName.c_str());
+                CPLDebug("GDAL", "Auto register %s using %s.",
+                         osFilename.c_str(), osFuncName.c_str());
 
                 reinterpret_cast<void (*)()>(pRegister)();
             }
@@ -1570,12 +1572,12 @@ std::string GDALDriverManager::GetPluginFullPath(const char *pszFilename) const
 {
     if (!m_osLastTriedDirectory.empty())
     {
-        const char *pszFullFilename = CPLFormFilename(
+        std::string osFullFilename = CPLFormFilenameSafe(
             m_osLastTriedDirectory.c_str(), pszFilename, nullptr);
         VSIStatBufL sStatBuf;
-        if (VSIStatL(pszFullFilename, &sStatBuf) == 0)
+        if (VSIStatL(osFullFilename.c_str(), &sStatBuf) == 0)
         {
-            return pszFullFilename;
+            return osFullFilename;
         }
     }
 
@@ -1614,18 +1616,18 @@ std::string GDALDriverManager::GetPluginFullPath(const char *pszFilename) const
     for (int iDir = 0; iDir < nSearchPaths; ++iDir)
     {
         std::string osABISpecificDir =
-            CPLFormFilename(aosSearchPaths[iDir], osABIVersion, nullptr);
+            CPLFormFilenameSafe(aosSearchPaths[iDir], osABIVersion, nullptr);
 
         VSIStatBufL sStatBuf;
         if (VSIStatL(osABISpecificDir.c_str(), &sStatBuf) != 0)
             osABISpecificDir = aosSearchPaths[iDir];
 
-        const char *pszFullFilename =
-            CPLFormFilename(osABISpecificDir.c_str(), pszFilename, nullptr);
-        if (VSIStatL(pszFullFilename, &sStatBuf) == 0)
+        std::string osFullFilename =
+            CPLFormFilenameSafe(osABISpecificDir.c_str(), pszFilename, nullptr);
+        if (VSIStatL(osFullFilename.c_str(), &sStatBuf) == 0)
         {
             m_osLastTriedDirectory = std::move(osABISpecificDir);
-            return pszFullFilename;
+            return osFullFilename;
         }
     }
 

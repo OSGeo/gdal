@@ -78,9 +78,10 @@ MAIN_START(argc, argv)
             if (hDriver &&
                 !(EQUAL(GDALGetDriverShortName(hDriver), "VRT") ||
                   (EQUAL(GDALGetDriverShortName(hDriver), "API_PROXY") &&
-                   EQUAL(
-                       CPLGetExtension(sOptionsForBinary.osDstFilename.c_str()),
-                       "VRT"))))
+                   EQUAL(CPLGetExtensionSafe(
+                             sOptionsForBinary.osDstFilename.c_str())
+                             .c_str(),
+                         "VRT"))))
             {
                 fprintf(
                     stderr,

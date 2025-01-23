@@ -28,7 +28,7 @@ static GDALDataset *OGRSXFDriverOpen(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
 
     VSIStatBufL sStatBuf;
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "sxf") ||
+    if (!poOpenInfo->IsExtensionEqualToCI("sxf") ||
         VSIStatL(poOpenInfo->pszFilename, &sStatBuf) != 0 ||
         !VSI_ISREG(sStatBuf.st_mode))
         return nullptr;
@@ -51,8 +51,8 @@ static GDALDataset *OGRSXFDriverOpen(GDALOpenInfo *poOpenInfo)
 
 static int OGRSXFDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "sxf") ||
-        !poOpenInfo->bStatOK || poOpenInfo->bIsDirectory)
+    if (!poOpenInfo->IsExtensionEqualToCI("sxf") || !poOpenInfo->bStatOK ||
+        poOpenInfo->bIsDirectory)
     {
         return GDAL_IDENTIFY_FALSE;
     }
@@ -91,9 +91,10 @@ static CPLErr OGRSXFDriverDelete(const char *pszName)
 
     for (int iExt = 0; apszExtensions[iExt] != nullptr; iExt++)
     {
-        const char *pszFile = CPLResetExtension(pszName, apszExtensions[iExt]);
-        if (VSIStatL(pszFile, &sStatBuf) == 0)
-            VSIUnlink(pszFile);
+        const std::string osFile =
+            CPLResetExtensionSafe(pszName, apszExtensions[iExt]);
+        if (VSIStatL(osFile.c_str(), &sStatBuf) == 0)
+            VSIUnlink(osFile.c_str());
     }
 
     return CE_None;

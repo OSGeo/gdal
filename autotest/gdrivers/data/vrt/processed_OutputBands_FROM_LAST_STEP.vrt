@@ -1,5 +1,5 @@
 <VRTDataset subClass="VRTProcessedDataset">
-  <Input>
+  <Input unscale="AUTO">
     <SourceFilename relativeToVRT="1">../byte.tif</SourceFilename>
   </Input>
   <OutputBands count="FROM_LAST_STEP" dataType="FROM_LAST_STEP"/>

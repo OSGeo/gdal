@@ -928,7 +928,7 @@ static int PredictorEncodeTile(TIFF *tif, uint8_t *bp0, tmsize_t cc0,
 
 static const TIFFField predictFields[] = {
     {TIFFTAG_PREDICTOR, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16,
-     TIFF_SETGET_UINT16, FIELD_PREDICTOR, FALSE, FALSE, "Predictor", NULL},
+     FIELD_PREDICTOR, FALSE, FALSE, "Predictor", NULL},
 };
 
 static int PredictorVSetField(TIFF *tif, uint32_t tag, va_list ap)

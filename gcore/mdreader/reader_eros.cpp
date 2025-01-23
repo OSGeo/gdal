@@ -30,8 +30,8 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
                                    char **papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
-    CPLString osBaseName = CPLGetBasename(pszPath);
-    CPLString osDirName = CPLGetDirname(pszPath);
+    const CPLString osBaseName = CPLGetBasenameSafe(pszPath);
+    const CPLString osDirName = CPLGetDirnameSafe(pszPath);
     char szMetadataName[512] = {0};
     size_t i;
     if (osBaseName.size() > 511)
@@ -41,7 +41,7 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
         if (STARTS_WITH_CI(osBaseName + i, "."))
         {
             std::string osPassFileName =
-                CPLFormFilename(osDirName, szMetadataName, "pass");
+                CPLFormFilenameSafe(osDirName, szMetadataName, "pass");
             if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
             {
                 m_osIMDSourceFilename = std::move(osPassFileName);
@@ -50,7 +50,7 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
             else
             {
                 osPassFileName =
-                    CPLFormFilename(osDirName, szMetadataName, "PASS");
+                    CPLFormFilenameSafe(osDirName, szMetadataName, "PASS");
                 if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
                 {
                     m_osIMDSourceFilename = std::move(osPassFileName);
@@ -64,14 +64,15 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
     if (m_osIMDSourceFilename.empty())
     {
         std::string osPassFileName =
-            CPLFormFilename(osDirName, szMetadataName, "pass");
+            CPLFormFilenameSafe(osDirName, szMetadataName, "pass");
         if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
         {
             m_osIMDSourceFilename = std::move(osPassFileName);
         }
         else
         {
-            osPassFileName = CPLFormFilename(osDirName, szMetadataName, "PASS");
+            osPassFileName =
+                CPLFormFilenameSafe(osDirName, szMetadataName, "PASS");
             if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
             {
                 m_osIMDSourceFilename = std::move(osPassFileName);
@@ -80,14 +81,14 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
     }
 
     std::string osRPCFileName =
-        CPLFormFilename(osDirName, szMetadataName, "rpc");
+        CPLFormFilenameSafe(osDirName, szMetadataName, "rpc");
     if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
     {
         m_osRPBSourceFilename = std::move(osRPCFileName);
     }
     else
     {
-        osRPCFileName = CPLFormFilename(osDirName, szMetadataName, "RPC");
+        osRPCFileName = CPLFormFilenameSafe(osDirName, szMetadataName, "RPC");
         if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
             m_osRPBSourceFilename = std::move(osRPCFileName);

@@ -14,6 +14,7 @@
 #include <bit>  // std::endian
 #endif
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstring>
@@ -91,25 +92,25 @@ inline bool isHostLittleEndian()
 template <class T> inline T byteSwap(T v);
 
 /** Byte-swap a uint8_t */
-template <> uint8_t byteSwap(uint8_t v)
+template <> inline uint8_t byteSwap(uint8_t v)
 {
     return v;
 }
 
 /** Byte-swap a int8_t */
-template <> int8_t byteSwap(int8_t v)
+template <> inline int8_t byteSwap(int8_t v)
 {
     return v;
 }
 
 /** Byte-swap a uint16_t */
-template <> uint16_t byteSwap(uint16_t v)
+template <> inline uint16_t byteSwap(uint16_t v)
 {
     return uint16_t((v >> 8) | ((v & 0xff) << 8));
 }
 
 /** Byte-swap a int16_t */
-template <> int16_t byteSwap(int16_t v)
+template <> inline int16_t byteSwap(int16_t v)
 {
     uint16_t u;
     LIBERTIFF_STATIC_ASSERT(sizeof(v) == sizeof(u));
@@ -120,14 +121,14 @@ template <> int16_t byteSwap(int16_t v)
 }
 
 /** Byte-swap a uint32_t */
-template <> uint32_t byteSwap(uint32_t v)
+template <> inline uint32_t byteSwap(uint32_t v)
 {
     return (v >> 24) | (((v >> 16) & 0xff) << 8) | (((v >> 8) & 0xff) << 16) |
            ((v & 0xff) << 24);
 }
 
 /** Byte-swap a int32_t */
-template <> int32_t byteSwap(int32_t v)
+template <> inline int32_t byteSwap(int32_t v)
 {
     uint32_t u;
     LIBERTIFF_STATIC_ASSERT(sizeof(v) == sizeof(u));
@@ -138,14 +139,14 @@ template <> int32_t byteSwap(int32_t v)
 }
 
 /** Byte-swap a uint64_t */
-template <> uint64_t byteSwap(uint64_t v)
+template <> inline uint64_t byteSwap(uint64_t v)
 {
     return (uint64_t(byteSwap(uint32_t(v & ~(0U)))) << 32) |
            byteSwap(uint32_t(v >> 32));
 }
 
 /** Byte-swap a int64_t */
-template <> int64_t byteSwap(int64_t v)
+template <> inline int64_t byteSwap(int64_t v)
 {
     uint64_t u;
     std::memcpy(&u, &v, sizeof(u));
@@ -155,7 +156,7 @@ template <> int64_t byteSwap(int64_t v)
 }
 
 /** Byte-swap a float */
-template <> float byteSwap(float v)
+template <> inline float byteSwap(float v)
 {
     uint32_t u;
     LIBERTIFF_STATIC_ASSERT(sizeof(v) == sizeof(u));
@@ -166,7 +167,7 @@ template <> float byteSwap(float v)
 }
 
 /** Byte-swap a double */
-template <> double byteSwap(double v)
+template <> inline double byteSwap(double v)
 {
     uint64_t u;
     LIBERTIFF_STATIC_ASSERT(sizeof(v) == sizeof(u));
@@ -378,8 +379,8 @@ typedef uint16_t TagCodeType;
 /** TIFF tag codes */
 namespace TagCode
 {
-constexpr TagCodeType NewSubfileType = 254;
-constexpr TagCodeType SubfileType = 255;
+constexpr TagCodeType SubFileType = 254;
+constexpr TagCodeType OldSubFileType = 255;
 
 // Base line and extended TIFF tags
 constexpr TagCodeType ImageWidth = 256;
@@ -387,23 +388,33 @@ constexpr TagCodeType ImageLength = 257;
 constexpr TagCodeType BitsPerSample = 258;
 constexpr TagCodeType Compression = 259;
 constexpr TagCodeType PhotometricInterpretation = 262;
+constexpr TagCodeType DocumentName = 269;
 constexpr TagCodeType ImageDescription = 270;
 constexpr TagCodeType StripOffsets = 273;
 constexpr TagCodeType SamplesPerPixel = 277;
 constexpr TagCodeType RowsPerStrip = 278;
 constexpr TagCodeType StripByteCounts = 279;
 constexpr TagCodeType PlanarConfiguration = 284;
+constexpr TagCodeType Software = 305;
+constexpr TagCodeType DateTime = 306;
 constexpr TagCodeType Predictor = 317;
+constexpr TagCodeType ColorMap = 320;
 constexpr TagCodeType TileWidth = 322;
 constexpr TagCodeType TileLength = 323;
 constexpr TagCodeType TileOffsets = 324;
 constexpr TagCodeType TileByteCounts = 325;
+constexpr TagCodeType ExtraSamples = 338;
 constexpr TagCodeType SampleFormat = 339;
+constexpr TagCodeType JPEGTables = 347;
+
+constexpr TagCodeType Copyright = 33432;
 
 // GeoTIFF tags
 constexpr TagCodeType GeoTIFFPixelScale = 33550;
 constexpr TagCodeType GeoTIFFTiePoints = 33922;
+constexpr TagCodeType GeoTIFFGeoTransMatrix = 34264;
 constexpr TagCodeType GeoTIFFGeoKeyDirectory = 34735;
+constexpr TagCodeType GeoTIFFDoubleParams = 34736;
 constexpr TagCodeType GeoTIFFAsciiParams = 34737;
 
 // GDAL tags
@@ -413,7 +424,19 @@ constexpr TagCodeType GDAL_NODATA = 42113;
 // GeoTIFF related
 constexpr TagCodeType RPCCoefficients = 50844;
 
+// LERC compression related
+constexpr TagCodeType LERCParameters =
+    50674; /* Stores LERC version and additional compression method */
+
 }  // namespace TagCode
+
+/** Binary or'ed value of SubFileType flags */
+namespace SubFileTypeFlags
+{
+constexpr uint32_t ReducedImage = 0x1; /* reduced resolution version */
+constexpr uint32_t Page = 0x2;         /* one page of many */
+constexpr uint32_t Mask = 0x4;         /* transparency mask */
+}  // namespace SubFileTypeFlags
 
 #define LIBERTIFF_CASE_TAGCODE_STR(x)                                          \
     case TagCode::x:                                                           \
@@ -423,32 +446,42 @@ inline const char *tagCodeName(TagCodeType tagCode)
 {
     switch (tagCode)
     {
-        LIBERTIFF_CASE_TAGCODE_STR(NewSubfileType);
-        LIBERTIFF_CASE_TAGCODE_STR(SubfileType);
+        LIBERTIFF_CASE_TAGCODE_STR(SubFileType);
+        LIBERTIFF_CASE_TAGCODE_STR(OldSubFileType);
         LIBERTIFF_CASE_TAGCODE_STR(ImageWidth);
         LIBERTIFF_CASE_TAGCODE_STR(ImageLength);
         LIBERTIFF_CASE_TAGCODE_STR(BitsPerSample);
         LIBERTIFF_CASE_TAGCODE_STR(Compression);
         LIBERTIFF_CASE_TAGCODE_STR(PhotometricInterpretation);
+        LIBERTIFF_CASE_TAGCODE_STR(DocumentName);
         LIBERTIFF_CASE_TAGCODE_STR(ImageDescription);
         LIBERTIFF_CASE_TAGCODE_STR(StripOffsets);
         LIBERTIFF_CASE_TAGCODE_STR(SamplesPerPixel);
         LIBERTIFF_CASE_TAGCODE_STR(RowsPerStrip);
         LIBERTIFF_CASE_TAGCODE_STR(StripByteCounts);
         LIBERTIFF_CASE_TAGCODE_STR(PlanarConfiguration);
+        LIBERTIFF_CASE_TAGCODE_STR(Software);
+        LIBERTIFF_CASE_TAGCODE_STR(DateTime);
         LIBERTIFF_CASE_TAGCODE_STR(Predictor);
+        LIBERTIFF_CASE_TAGCODE_STR(ColorMap);
         LIBERTIFF_CASE_TAGCODE_STR(TileWidth);
         LIBERTIFF_CASE_TAGCODE_STR(TileLength);
         LIBERTIFF_CASE_TAGCODE_STR(TileOffsets);
         LIBERTIFF_CASE_TAGCODE_STR(TileByteCounts);
+        LIBERTIFF_CASE_TAGCODE_STR(ExtraSamples);
         LIBERTIFF_CASE_TAGCODE_STR(SampleFormat);
+        LIBERTIFF_CASE_TAGCODE_STR(Copyright);
+        LIBERTIFF_CASE_TAGCODE_STR(JPEGTables);
         LIBERTIFF_CASE_TAGCODE_STR(GeoTIFFPixelScale);
         LIBERTIFF_CASE_TAGCODE_STR(GeoTIFFTiePoints);
+        LIBERTIFF_CASE_TAGCODE_STR(GeoTIFFGeoTransMatrix);
         LIBERTIFF_CASE_TAGCODE_STR(GeoTIFFGeoKeyDirectory);
+        LIBERTIFF_CASE_TAGCODE_STR(GeoTIFFDoubleParams);
         LIBERTIFF_CASE_TAGCODE_STR(GeoTIFFAsciiParams);
         LIBERTIFF_CASE_TAGCODE_STR(GDAL_METADATA);
         LIBERTIFF_CASE_TAGCODE_STR(GDAL_NODATA);
         LIBERTIFF_CASE_TAGCODE_STR(RPCCoefficients);
+        LIBERTIFF_CASE_TAGCODE_STR(LERCParameters);
         default:
             break;
     }
@@ -567,10 +600,7 @@ constexpr PhotometricInterpretationType ITULab = 10;
     case PhotometricInterpretation::x:                                         \
         return #x
 
-const char *photometricInterpretationName(
-    PhotometricInterpretationType photometricInterpretation);
-
-const char *photometricInterpretationName(
+inline const char *photometricInterpretationName(
     PhotometricInterpretationType photometricInterpretation)
 {
     switch (photometricInterpretation)
@@ -606,7 +636,23 @@ constexpr CompressionType CCITT_FAX4 = 4;
 constexpr CompressionType LZW = 5;
 constexpr CompressionType OldJPEG = 6;
 constexpr CompressionType JPEG = 7;
-constexpr CompressionType Deflate = 8;
+constexpr CompressionType Deflate =
+    8; /* Deflate compression, as recognized by Adobe */
+constexpr CompressionType PackBits = 32773;
+constexpr CompressionType LegacyDeflate =
+    32946;                              /* Deflate compression, legacy tag */
+constexpr CompressionType JBIG = 34661; /* ISO JBIG */
+constexpr CompressionType LERC =
+    34887; /* ESRI Lerc codec: https://github.com/Esri/lerc */
+constexpr CompressionType LZMA = 34925; /* LZMA2 */
+constexpr CompressionType ZSTD =
+    50000; /* ZSTD: WARNING not registered in Adobe-maintained registry */
+constexpr CompressionType WEBP =
+    50001; /* WEBP: WARNING not registered in Adobe-maintained registry */
+constexpr CompressionType JXL =
+    50002; /* JPEGXL: WARNING not registered in Adobe-maintained registry */
+constexpr CompressionType JXL_DNG_1_7 =
+    52546; /* JPEGXL from DNG 1.7 specification */
 }  // namespace Compression
 
 #define LIBERTIFF_CASE_COMPRESSION_STR(x)                                      \
@@ -625,6 +671,15 @@ inline const char *compressionName(CompressionType compression)
         LIBERTIFF_CASE_COMPRESSION_STR(OldJPEG);
         LIBERTIFF_CASE_COMPRESSION_STR(JPEG);
         LIBERTIFF_CASE_COMPRESSION_STR(Deflate);
+        LIBERTIFF_CASE_COMPRESSION_STR(PackBits);
+        LIBERTIFF_CASE_COMPRESSION_STR(LegacyDeflate);
+        LIBERTIFF_CASE_COMPRESSION_STR(JBIG);
+        LIBERTIFF_CASE_COMPRESSION_STR(LERC);
+        LIBERTIFF_CASE_COMPRESSION_STR(LZMA);
+        LIBERTIFF_CASE_COMPRESSION_STR(ZSTD);
+        LIBERTIFF_CASE_COMPRESSION_STR(WEBP);
+        LIBERTIFF_CASE_COMPRESSION_STR(JXL);
+        LIBERTIFF_CASE_COMPRESSION_STR(JXL_DNG_1_7);
         default:
             break;
     }
@@ -668,6 +723,17 @@ inline const char *sampleFormatName(SampleFormatType sampleFormat)
 }
 
 #undef LIBERTIFF_CASE_SAMPLE_FORMAT_STR
+
+/** Type of a ExtraSamples value */
+typedef uint32_t ExtraSamplesType;
+
+/** Values of the ExtraSamples tag */
+namespace ExtraSamples
+{
+constexpr ExtraSamplesType Unspecified = 0;
+constexpr ExtraSamplesType AssociatedAlpha = 1;   /* premultiplied */
+constexpr ExtraSamplesType UnAssociatedAlpha = 2; /* unpremultiplied */
+}  // namespace ExtraSamples
 
 /** Content of a tag entry in a Image File Directory (IFD) */
 struct TagEntry
@@ -764,20 +830,20 @@ inline std::vector<T> readTagAsVectorInternal(const ReadContext &rc,
 }
 
 template <class T>
-std::vector<T> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                               bool &ok);
+inline std::vector<T> readTagAsVector(const ReadContext &rc,
+                                      const TagEntry &tag, bool &ok);
 
 template <>
-std::vector<int8_t> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                                    bool &ok)
+inline std::vector<int8_t> readTagAsVector(const ReadContext &rc,
+                                           const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::SByte,
                                    tag.int8Values.data(), ok);
 }
 
 template <>
-std::vector<uint8_t> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                                     bool &ok)
+inline std::vector<uint8_t> readTagAsVector(const ReadContext &rc,
+                                            const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(
         rc, tag, tag.type == TagType::Undefined ? tag.type : TagType::Byte,
@@ -785,64 +851,64 @@ std::vector<uint8_t> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
 }
 
 template <>
-std::vector<int16_t> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                                     bool &ok)
+inline std::vector<int16_t> readTagAsVector(const ReadContext &rc,
+                                            const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::SShort,
                                    tag.int16Values.data(), ok);
 }
 
 template <>
-std::vector<uint16_t> readTagAsVector(const ReadContext &rc,
-                                      const TagEntry &tag, bool &ok)
+inline std::vector<uint16_t> readTagAsVector(const ReadContext &rc,
+                                             const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::Short,
                                    tag.uint16Values.data(), ok);
 }
 
 template <>
-std::vector<int32_t> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                                     bool &ok)
+inline std::vector<int32_t> readTagAsVector(const ReadContext &rc,
+                                            const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::SLong,
                                    tag.int32Values.data(), ok);
 }
 
 template <>
-std::vector<uint32_t> readTagAsVector(const ReadContext &rc,
-                                      const TagEntry &tag, bool &ok)
+inline std::vector<uint32_t> readTagAsVector(const ReadContext &rc,
+                                             const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::Long,
                                    tag.uint32Values.data(), ok);
 }
 
 template <>
-std::vector<int64_t> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                                     bool &ok)
+inline std::vector<int64_t> readTagAsVector(const ReadContext &rc,
+                                            const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::SLong8,
                                    tag.int64Values.data(), ok);
 }
 
 template <>
-std::vector<uint64_t> readTagAsVector(const ReadContext &rc,
-                                      const TagEntry &tag, bool &ok)
+inline std::vector<uint64_t> readTagAsVector(const ReadContext &rc,
+                                             const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::Long8,
                                    tag.uint64Values.data(), ok);
 }
 
 template <>
-std::vector<float> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                                   bool &ok)
+inline std::vector<float> readTagAsVector(const ReadContext &rc,
+                                          const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::Float,
                                    tag.float32Values.data(), ok);
 }
 
 template <>
-std::vector<double> readTagAsVector(const ReadContext &rc, const TagEntry &tag,
-                                    bool &ok)
+inline std::vector<double> readTagAsVector(const ReadContext &rc,
+                                           const TagEntry &tag, bool &ok)
 {
     return readTagAsVectorInternal(rc, tag, TagType::Double,
                                    tag.float64Values.data(), ok);
@@ -891,6 +957,12 @@ class Image
     inline uint64_t nextImageOffset() const
     {
         return m_nextImageOffset;
+    }
+
+    /** Return value of SubFileType tag */
+    inline uint32_t subFileType() const
+    {
+        return m_subFileType;
     }
 
     /** Return width of the image in pixels */
@@ -951,6 +1023,12 @@ class Image
     inline uint32_t rowsPerStrip() const
     {
         return m_rowsPerStrip;
+    }
+
+    /** Return the sanitized number of rows per strip */
+    inline uint32_t rowsPerStripSanitized() const
+    {
+        return std::min(m_rowsPerStrip, m_height);
     }
 
     /** Return the number of strips/tiles.
@@ -1139,6 +1217,12 @@ class Image
         uint64_t offset = imageOffset;
         if LIBERTIFF_CONSTEXPR (isBigTIFF)
         {
+            // To prevent unsigned integer overflows in later additions. The
+            // theoretical max should be much closer to UINT64_MAX, but half of
+            // it is already more than needed in practice :-)
+            if (offset >= std::numeric_limits<uint64_t>::max() / 2)
+                return nullptr;
+
             const auto tagCount64Bit = rc->read<uint64_t>(offset, ok);
             // Artificially limit to the same number of entries as ClassicTIFF
             if (tagCount64Bit > std::numeric_limits<uint16_t>::max())
@@ -1234,6 +1318,7 @@ class Image
     std::set<uint64_t> m_alreadyVisitedImageOffsets{};
     uint64_t m_offset = 0;
     uint64_t m_nextImageOffset = 0;
+    uint32_t m_subFileType = 0;
     uint32_t m_width = 0;
     uint32_t m_height = 0;
     uint32_t m_bitsPerSample = 0;
@@ -1268,6 +1353,10 @@ class Image
         {
             switch (entry.tag)
             {
+                case TagCode::SubFileType:
+                    m_subFileType = singleValue;
+                    break;
+
                 case TagCode::ImageWidth:
                     m_width = singleValue;
                     break;
@@ -1442,6 +1531,14 @@ class Image
         {
             // Out-of-line values. We read a file offset
             entry.value_offset = m_rc->read<DataOrOffsetType>(offset, ok);
+            if (entry.value_offset == 0)
+            {
+                // value_offset = 0 for a out-of-line tag is obviously
+                // wrong and would cause later confusion in readTagAsVector<>,
+                // so better reject the file.
+                ok = false;
+                return;
+            }
             if (dataTypeSize >
                 std::numeric_limits<uint64_t>::max() / entry.count)
             {

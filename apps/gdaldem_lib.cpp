@@ -2321,7 +2321,7 @@ static CPLErr GDALGenerateVRTColorRelief(const char *pszDstFilename,
     GDALGetBlockSize(hSrcBand, &nBlockXSize, &nBlockYSize);
 
     int bRelativeToVRT = FALSE;
-    CPLString osPath = CPLGetPath(pszDstFilename);
+    const CPLString osPath = CPLGetPathSafe(pszDstFilename);
     char *pszSourceFilename = CPLStrdup(CPLExtractRelativePath(
         osPath.c_str(), GDALGetDescription(hSrcDataset), &bRelativeToVRT));
 

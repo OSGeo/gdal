@@ -180,23 +180,23 @@ long CADHandle::getAsLong( const CADHandle& ref_handle ) const
         {
             case 0x06:
             {
-                return static_cast<long>((CPLSM(static_cast<GInt64>(getAsLong(ref_handle.handleOrOffset))) +
-                        CPLSM(static_cast<GInt64>(1))).v());
+                return static_cast<long>((CPLSM(static_cast<int64_t>(getAsLong(ref_handle.handleOrOffset))) +
+                        CPLSM(static_cast<int64_t>(1))).v());
             }
             case 0x08:
             {
-                return static_cast<long>((CPLSM(static_cast<GInt64>(getAsLong(ref_handle.handleOrOffset))) -
-                        CPLSM(static_cast<GInt64>(1))).v());
+                return static_cast<long>((CPLSM(static_cast<int64_t>(getAsLong(ref_handle.handleOrOffset))) -
+                        CPLSM(static_cast<int64_t>(1))).v());
             }
             case 0x0A:
             {
-                return static_cast<long>((CPLSM(static_cast<GInt64>(getAsLong(ref_handle.handleOrOffset))) +
-                        CPLSM(static_cast<GInt64>(getAsLong(handleOrOffset)))).v());
+                return static_cast<long>((CPLSM(static_cast<int64_t>(getAsLong(ref_handle.handleOrOffset))) +
+                        CPLSM(static_cast<int64_t>(getAsLong(handleOrOffset)))).v());
             }
             case 0x0C:
             {
-                return static_cast<long>((CPLSM(static_cast<GInt64>(getAsLong(ref_handle.handleOrOffset))) -
-                        CPLSM(static_cast<GInt64>(getAsLong(handleOrOffset)))).v());
+                return static_cast<long>((CPLSM(static_cast<int64_t>(getAsLong(ref_handle.handleOrOffset))) -
+                        CPLSM(static_cast<int64_t>(getAsLong(handleOrOffset)))).v());
             }
         }
     }

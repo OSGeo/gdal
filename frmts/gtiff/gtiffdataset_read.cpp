@@ -43,6 +43,8 @@
 #include "tifvsi.h"
 #include "xtiffio.h"
 
+#include "tiff_common.h"
+
 /************************************************************************/
 /*                        GetJPEGOverviewCount()                        */
 /************************************************************************/
@@ -142,7 +144,7 @@ CPLStringList GTiffDataset::GetCompressionFormats(int nXOff, int nYOff,
 
         vsi_l_offset nOffset = 0;
         vsi_l_offset nSize = 0;
-        if (IsBlockAvailable(nBlockId, &nOffset, &nSize) &&
+        if (IsBlockAvailable(nBlockId, &nOffset, &nSize, nullptr) &&
             nSize <
                 static_cast<vsi_l_offset>(std::numeric_limits<tmsize_t>::max()))
         {
@@ -210,7 +212,9 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
               m_nPhotometric != PHOTOMETRIC_SEPARATED)) ||
             (m_nCompression == COMPRESSION_WEBP &&
              EQUAL(aosTokens[0], "WEBP")) ||
-            (m_nCompression == COMPRESSION_JXL && EQUAL(aosTokens[0], "JXL")))
+            ((m_nCompression == COMPRESSION_JXL ||
+              m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
+             EQUAL(aosTokens[0], "JXL")))
         {
             std::string osDetailedFormat = aosTokens[0];
 
@@ -222,7 +226,7 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
 
             vsi_l_offset nOffset = 0;
             vsi_l_offset nSize = 0;
-            if (IsBlockAvailable(nBlockId, &nOffset, &nSize) &&
+            if (IsBlockAvailable(nBlockId, &nOffset, &nSize, nullptr) &&
                 nSize < static_cast<vsi_l_offset>(
                             std::numeric_limits<tmsize_t>::max()))
             {
@@ -987,6 +991,7 @@ bool GTiffDataset::IsMultiThreadedReadCompatible() const
             m_nCompression == COMPRESSION_ZSTD ||
             m_nCompression == COMPRESSION_LERC ||
             m_nCompression == COMPRESSION_JXL ||
+            m_nCompression == COMPRESSION_JXL_DNG_1_7 ||
             m_nCompression == COMPRESSION_WEBP ||
             m_nCompression == COMPRESSION_JPEG);
 }
@@ -1305,6 +1310,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                     nBlockId +=
                         asJobs[iJob].iSrcBandIdxSeparate * m_nBlocksPerBand;
 
+                bool bErrorInIsBlockAvailable = false;
                 if (!sContext.bHasPRead)
                 {
                     // Taking the mutex here is only needed when bHasPRead ==
@@ -1314,13 +1320,22 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                     std::lock_guard<std::recursive_mutex> oLock(
                         sContext.oMutex);
 
-                    IsBlockAvailable(nBlockId, &asJobs[iJob].nOffset,
-                                     &asJobs[iJob].nSize);
+                    CPL_IGNORE_RET_VAL(IsBlockAvailable(
+                        nBlockId, &asJobs[iJob].nOffset, &asJobs[iJob].nSize,
+                        &bErrorInIsBlockAvailable));
                 }
                 else
                 {
-                    IsBlockAvailable(nBlockId, &asJobs[iJob].nOffset,
-                                     &asJobs[iJob].nSize);
+                    CPL_IGNORE_RET_VAL(IsBlockAvailable(
+                        nBlockId, &asJobs[iJob].nOffset, &asJobs[iJob].nSize,
+                        &bErrorInIsBlockAvailable));
+                }
+                if (bErrorInIsBlockAvailable)
+                {
+                    std::lock_guard<std::recursive_mutex> oLock(
+                        sContext.oMutex);
+                    sContext.bSuccess = false;
+                    return CE_Failure;
                 }
 
                 // Sanity check on block size
@@ -1344,7 +1359,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                         std::lock_guard<std::recursive_mutex> oLock(
                             sContext.oMutex);
                         sContext.bSuccess = false;
-                        break;
+                        return CE_Failure;
                     }
                 }
 
@@ -3893,13 +3908,20 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->m_bBlockOrderRowMajor =
             strstr(pszStructuralMD, "BLOCK_ORDER=ROW_MAJOR") != nullptr;
         poDS->m_bLeaderSizeAsUInt4 =
-            strstr(pszStructuralMD, "BLOCK_LEADER=SIZE_AS_UINT4") != nullptr;
+            strstr(pszStructuralMD, "BLOCK_LEADER=SIZE_AS_UINT4") != nullptr &&
+            (strstr(pszStructuralMD, "INTERLEAVE=") == nullptr ||
+             strstr(pszStructuralMD, "INTERLEAVE=BAND") != nullptr ||
+             strstr(pszStructuralMD, "INTERLEAVE=TILE") != nullptr);
         poDS->m_bTrailerRepeatedLast4BytesRepeated =
             strstr(pszStructuralMD, "BLOCK_TRAILER=LAST_4_BYTES_REPEATED") !=
-            nullptr;
+                nullptr &&
+            (strstr(pszStructuralMD, "INTERLEAVE=") == nullptr ||
+             strstr(pszStructuralMD, "INTERLEAVE=BAND") != nullptr ||
+             strstr(pszStructuralMD, "INTERLEAVE=TILE") != nullptr);
         poDS->m_bMaskInterleavedWithImagery =
             strstr(pszStructuralMD, "MASK_INTERLEAVED_WITH_IMAGERY=YES") !=
-            nullptr;
+                nullptr &&
+            strstr(pszStructuralMD, "INTERLEAVE=") == nullptr;
         poDS->m_bKnownIncompatibleEdition =
             strstr(pszStructuralMD, "KNOWN_INCOMPATIBLE_EDITION=YES") !=
             nullptr;
@@ -4221,7 +4243,7 @@ void GTiffDataset::LookForProjectionFromXML()
         return;
 
     const std::string osXMLFilenameLowerCase =
-        CPLResetExtension(m_pszFilename, "xml");
+        CPLResetExtensionSafe(m_pszFilename, "xml");
 
     CPLString osXMLFilename;
     if (papszSiblingFiles &&
@@ -4255,7 +4277,7 @@ void GTiffDataset::LookForProjectionFromXML()
         else if (VSIIsCaseSensitiveFS(osXMLFilenameLowerCase.c_str()))
         {
             const std::string osXMLFilenameUpperCase =
-                CPLResetExtension(m_pszFilename, "XML");
+                CPLResetExtensionSafe(m_pszFilename, "XML");
             bGotXML = VSIStatExL(osXMLFilenameUpperCase.c_str(), &sStatBuf,
                                  VSI_STAT_EXISTS_FLAG) == 0;
             if (bGotXML)
@@ -5219,88 +5241,10 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
     }
     else
     {
-        m_poColorTable = std::make_unique<GDALColorTable>();
-
         const int nColorCount = 1 << m_nBitsPerSample;
-
-        if (m_nColorTableMultiplier == 0)
-        {
-            // TIFF color maps are in the [0, 65535] range, so some remapping must
-            // be done to get values in the [0, 255] range, but it is not clear
-            // how to do that exactly. Since GDAL 2.3.0 we have standardized on
-            // using a 257 multiplication factor (https://github.com/OSGeo/gdal/commit/eeec5b62e385d53e7f2edaba7b73c7c74bc2af39)
-            // but other software uses 256 (cf https://github.com/OSGeo/gdal/issues/10310)
-            // Do a first pass to check if all values are multiples of 256 or 257.
-            bool bFoundNonZeroEntry = false;
-            bool bAllValuesMultipleOf256 = true;
-            bool bAllValuesMultipleOf257 = true;
-            unsigned short nMaxColor = 0;
-            for (int iColor = 0; iColor < nColorCount; ++iColor)
-            {
-                if (panRed[iColor] > 0 || panGreen[iColor] > 0 ||
-                    panBlue[iColor] > 0)
-                {
-                    bFoundNonZeroEntry = true;
-                }
-                if ((panRed[iColor] % 256) != 0 ||
-                    (panGreen[iColor] % 256) != 0 ||
-                    (panBlue[iColor] % 256) != 0)
-                {
-                    bAllValuesMultipleOf256 = false;
-                }
-                if ((panRed[iColor] % 257) != 0 ||
-                    (panGreen[iColor] % 257) != 0 ||
-                    (panBlue[iColor] % 257) != 0)
-                {
-                    bAllValuesMultipleOf257 = false;
-                }
-
-                nMaxColor = std::max(nMaxColor, panRed[iColor]);
-                nMaxColor = std::max(nMaxColor, panGreen[iColor]);
-                nMaxColor = std::max(nMaxColor, panBlue[iColor]);
-            }
-
-            if (nMaxColor > 0 && nMaxColor < 256)
-            {
-                // Bug 1384 - Some TIFF files are generated with color map entry
-                // values in range 0-255 instead of 0-65535 - try to handle these
-                // gracefully.
-                m_nColorTableMultiplier = 1;
-                CPLDebug("GTiff",
-                         "TIFF ColorTable seems to be improperly scaled with "
-                         "values all in [0,255] range, fixing up.");
-            }
-            else
-            {
-                if (!bAllValuesMultipleOf256 && !bAllValuesMultipleOf257)
-                {
-                    CPLDebug("GTiff",
-                             "The color map contains entries which are not "
-                             "multiple of 256 or 257, so we don't know for "
-                             "sure how to remap them to [0, 255]. Default to "
-                             "using a 257 multiplication factor");
-                }
-                m_nColorTableMultiplier =
-                    (bFoundNonZeroEntry && bAllValuesMultipleOf256)
-                        ? 256
-                        : DEFAULT_COLOR_TABLE_MULTIPLIER_257;
-            }
-        }
-        CPLAssert(m_nColorTableMultiplier > 0);
-        CPLAssert(m_nColorTableMultiplier <= 257);
-        for (int iColor = nColorCount - 1; iColor >= 0; iColor--)
-        {
-            const GDALColorEntry oEntry = {
-                static_cast<short>(panRed[iColor] / m_nColorTableMultiplier),
-                static_cast<short>(panGreen[iColor] / m_nColorTableMultiplier),
-                static_cast<short>(panBlue[iColor] / m_nColorTableMultiplier),
-                static_cast<short>(
-                    m_bNoDataSet && static_cast<int>(m_dfNoDataValue) == iColor
-                        ? 0
-                        : 255)};
-
-            m_poColorTable->SetColorEntry(iColor, &oEntry);
-        }
+        m_poColorTable = gdal::tiff_common::TIFFColorMapTagToColorTable(
+            panRed, panGreen, panBlue, nColorCount, m_nColorTableMultiplier,
+            DEFAULT_COLOR_TABLE_MULTIPLIER_257, m_bNoDataSet, m_dfNoDataValue);
     }
 
     /* -------------------------------------------------------------------- */
@@ -5532,8 +5476,24 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                 continue;
             if (EQUAL(pszDomain, "IMAGE_STRUCTURE"))
             {
-                if (m_nCompression == COMPRESSION_WEBP &&
-                    EQUAL(pszKey, "COMPRESSION_REVERSIBILITY"))
+                if (EQUAL(pszKey, "INTERLEAVE"))
+                {
+                    if (EQUAL(pszValue, "TILE"))
+                    {
+                        m_bTileInterleave = true;
+                        m_oGTiffMDMD.SetMetadataItem("INTERLEAVE", "TILE",
+                                                     "IMAGE_STRUCTURE");
+                    }
+                    else
+                    {
+                        CPLDebug("GTiff",
+                                 "Unhandled INTERLEAVE=%s found in "
+                                 "GDAL_METADATA tag",
+                                 pszValue);
+                    }
+                }
+                else if (m_nCompression == COMPRESSION_WEBP &&
+                         EQUAL(pszKey, "COMPRESSION_REVERSIBILITY"))
                 {
                     if (EQUAL(pszValue, "LOSSLESS"))
                         m_bWebPLossless = true;
@@ -5566,7 +5526,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     m_dfMaxZErrorOverview = CPLAtof(pszValue);
                 }
 #if HAVE_JXL
-                else if (m_nCompression == COMPRESSION_JXL &&
+                else if ((m_nCompression == COMPRESSION_JXL ||
+                          m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
                          EQUAL(pszKey, "COMPRESSION_REVERSIBILITY"))
                 {
                     if (EQUAL(pszValue, "LOSSLESS"))
@@ -5574,7 +5535,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     else if (EQUAL(pszValue, "LOSSY"))
                         m_bJXLLossless = false;
                 }
-                else if (m_nCompression == COMPRESSION_JXL &&
+                else if ((m_nCompression == COMPRESSION_JXL ||
+                          m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
                          EQUAL(pszKey, "JXL_DISTANCE"))
                 {
                     const double dfVal = CPLAtof(pszValue);
@@ -5587,7 +5549,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                         m_fJXLDistance = static_cast<float>(dfVal);
                     }
                 }
-                else if (m_nCompression == COMPRESSION_JXL &&
+                else if ((m_nCompression == COMPRESSION_JXL ||
+                          m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
                          EQUAL(pszKey, "JXL_ALPHA_DISTANCE"))
                 {
                     const double dfVal = CPLAtof(pszValue);
@@ -5599,7 +5562,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                         m_fJXLAlphaDistance = static_cast<float>(dfVal);
                     }
                 }
-                else if (m_nCompression == COMPRESSION_JXL &&
+                else if ((m_nCompression == COMPRESSION_JXL ||
+                          m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
                          EQUAL(pszKey, "JXL_EFFORT"))
                 {
                     const int nEffort = atoi(pszValue);
@@ -5776,7 +5740,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
             }
         }
 #ifdef HAVE_JXL
-        else if (m_nCompression == COMPRESSION_JXL)
+        else if (m_nCompression == COMPRESSION_JXL ||
+                 m_nCompression == COMPRESSION_JXL_DNG_1_7)
         {
             const char *pszReversibility =
                 GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
@@ -5828,12 +5793,12 @@ CSLConstList GTiffDataset::GetSiblingFiles()
     m_bHasGotSiblingFiles = true;
     const int nMaxFiles =
         atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
-    CPLStringList aosSiblingFiles(
-        VSIReadDirEx(CPLGetDirname(m_pszFilename), nMaxFiles));
+    const std::string osDirname = CPLGetDirnameSafe(m_pszFilename);
+    CPLStringList aosSiblingFiles(VSIReadDirEx(osDirname.c_str(), nMaxFiles));
     if (nMaxFiles > 0 && aosSiblingFiles.size() > nMaxFiles)
     {
         CPLDebug("GTiff", "GDAL_READDIR_LIMIT_ON_OPEN reached on %s",
-                 CPLGetDirname(m_pszFilename));
+                 osDirname.c_str());
         aosSiblingFiles.clear();
     }
     oOvManager.TransferSiblingFiles(aosSiblingFiles.StealList());
@@ -6371,7 +6336,8 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
     if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
     {
         if ((m_nCompression == COMPRESSION_WEBP ||
-             m_nCompression == COMPRESSION_JXL) &&
+             m_nCompression == COMPRESSION_JXL ||
+             m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
             EQUAL(pszName, "COMPRESSION_REVERSIBILITY") &&
             m_oGTiffMDMD.GetMetadataItem("COMPRESSION_REVERSIBILITY",
                                          "IMAGE_STRUCTURE") == nullptr)
@@ -6383,7 +6349,7 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
             {
                 vsi_l_offset nOffset = 0;
                 vsi_l_offset nSize = 0;
-                IsBlockAvailable(0, &nOffset, &nSize);
+                IsBlockAvailable(0, &nOffset, &nSize, nullptr);
                 if (nSize > 0)
                 {
                     const std::string osSubfile(
@@ -6643,7 +6609,7 @@ void GTiffDataset::LoadMetadata()
         return;
     m_bIMDRPCMetadataLoaded = true;
 
-    if (EQUAL(CPLGetExtension(GetDescription()), "ovr"))
+    if (EQUAL(CPLGetExtensionSafe(GetDescription()).c_str(), "ovr"))
     {
         // Do not attempt to retrieve metadata files on .tif.ovr files.
         // For example the Pleiades metadata reader might wrongly associate a
@@ -6700,4 +6666,496 @@ bool GTiffDataset::HasOptimizedReadMultiRange()
         || CPLTestBool(CPLGetConfigOption(
                "GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE", "NO")));
     return m_nHasOptimizedReadMultiRange != 0;
+}
+
+/************************************************************************/
+/*                         CacheMultiRange()                            */
+/************************************************************************/
+
+static bool CheckTrailer(const GByte *strileData, vsi_l_offset nStrileSize)
+{
+    GByte abyTrailer[4];
+    memcpy(abyTrailer, strileData + nStrileSize, 4);
+    GByte abyLastBytes[4] = {};
+    if (nStrileSize >= 4)
+        memcpy(abyLastBytes, strileData + nStrileSize - 4, 4);
+    else
+    {
+        // The last bytes will be zero due to the above {} initialization,
+        // and that's what should be in abyTrailer too when the trailer is
+        // correct.
+        memcpy(abyLastBytes, strileData, static_cast<size_t>(nStrileSize));
+    }
+    return memcmp(abyTrailer, abyLastBytes, 4) == 0;
+}
+
+void *GTiffDataset::CacheMultiRange(int nXOff, int nYOff, int nXSize,
+                                    int nYSize, int nBufXSize, int nBufYSize,
+                                    const int *panBandMap, int nBandCount,
+                                    GDALRasterIOExtraArg *psExtraArg)
+{
+    void *pBufferedData = nullptr;
+    // Same logic as in GDALRasterBand::IRasterIO()
+    double dfXOff = nXOff;
+    double dfYOff = nYOff;
+    double dfXSize = nXSize;
+    double dfYSize = nYSize;
+    if (psExtraArg->bFloatingPointWindowValidity)
+    {
+        dfXOff = psExtraArg->dfXOff;
+        dfYOff = psExtraArg->dfYOff;
+        dfXSize = psExtraArg->dfXSize;
+        dfYSize = psExtraArg->dfYSize;
+    }
+    const double dfSrcXInc = dfXSize / static_cast<double>(nBufXSize);
+    const double dfSrcYInc = dfYSize / static_cast<double>(nBufYSize);
+    const double EPS = 1e-10;
+    const int nBlockX1 =
+        static_cast<int>(std::max(0.0, (0 + 0.5) * dfSrcXInc + dfXOff + EPS)) /
+        m_nBlockXSize;
+    const int nBlockY1 =
+        static_cast<int>(std::max(0.0, (0 + 0.5) * dfSrcYInc + dfYOff + EPS)) /
+        m_nBlockYSize;
+    const int nBlockX2 =
+        static_cast<int>(
+            std::min(static_cast<double>(nRasterXSize - 1),
+                     (nBufXSize - 1 + 0.5) * dfSrcXInc + dfXOff + EPS)) /
+        m_nBlockXSize;
+    const int nBlockY2 =
+        static_cast<int>(
+            std::min(static_cast<double>(nRasterYSize - 1),
+                     (nBufYSize - 1 + 0.5) * dfSrcYInc + dfYOff + EPS)) /
+        m_nBlockYSize;
+
+    struct StrileData
+    {
+        vsi_l_offset nOffset;
+        vsi_l_offset nByteCount;
+        bool bTryMask;
+    };
+
+    std::map<int, StrileData> oMapStrileToOffsetByteCount;
+
+    // Dedicated method to retrieved the offset and size in an efficient way
+    // when m_bBlockOrderRowMajor and m_bLeaderSizeAsUInt4 conditions are
+    // met.
+    // Except for the last block, we just read the offset from the TIFF offset
+    // array, and retrieve the size in the leader 4 bytes that come before the
+    // payload.
+    auto OptimizedRetrievalOfOffsetSize =
+        [&](int nBand, int nBlockId, vsi_l_offset &nOffset, vsi_l_offset &nSize,
+            size_t nTotalSize, size_t nMaxRawBlockCacheSize)
+    {
+        bool bTryMask = m_bMaskInterleavedWithImagery;
+        nOffset = TIFFGetStrileOffset(m_hTIFF, nBlockId);
+        if (nOffset >= 4)
+        {
+            if ((m_nPlanarConfig == PLANARCONFIG_CONTIG &&
+                 nBlockId == m_nBlocksPerBand - 1) ||
+                (m_nPlanarConfig == PLANARCONFIG_SEPARATE &&
+                 nBlockId == m_nBlocksPerBand * nBands - 1))
+            {
+                // Special case for the last block. As there is no next block
+                // from which to retrieve an offset, use the good old method
+                // that consists in reading the ByteCount array.
+                if (m_nPlanarConfig == PLANARCONFIG_CONTIG && bTryMask &&
+                    GetRasterBand(1)->GetMaskBand() && m_poMaskDS)
+                {
+                    auto nMaskOffset =
+                        TIFFGetStrileOffset(m_poMaskDS->m_hTIFF, nBlockId);
+                    if (nMaskOffset)
+                    {
+                        nSize = nMaskOffset +
+                                TIFFGetStrileByteCount(m_poMaskDS->m_hTIFF,
+                                                       nBlockId) -
+                                nOffset;
+                    }
+                    else
+                    {
+                        bTryMask = false;
+                    }
+                }
+                if (nSize == 0)
+                {
+                    nSize = TIFFGetStrileByteCount(m_hTIFF, nBlockId);
+                }
+                if (nSize && m_bTrailerRepeatedLast4BytesRepeated)
+                {
+                    nSize += 4;
+                }
+            }
+            else
+            {
+                const auto nNextBlockId =
+                    (m_bTileInterleave && nBand < nBands)
+                        ? nBlockId + m_nBlocksPerBand
+                    : (m_bTileInterleave && nBand == nBands)
+                        ? nBlockId - (nBand - 1) * m_nBlocksPerBand + 1
+                        : nBlockId + 1;
+                auto nOffsetNext = TIFFGetStrileOffset(m_hTIFF, nNextBlockId);
+                if (nOffsetNext > nOffset)
+                {
+                    nSize = nOffsetNext - nOffset;
+                }
+                else
+                {
+                    // Shouldn't happen for a compliant file
+                    if (nOffsetNext != 0)
+                    {
+                        CPLDebug("GTiff", "Tile %d is not located after %d",
+                                 nNextBlockId, nBlockId);
+                    }
+                    bTryMask = false;
+                    nSize = TIFFGetStrileByteCount(m_hTIFF, nBlockId);
+                    if (m_bTrailerRepeatedLast4BytesRepeated)
+                        nSize += 4;
+                }
+            }
+            if (nSize)
+            {
+                nOffset -= 4;
+                nSize += 4;
+                if (nTotalSize + nSize < nMaxRawBlockCacheSize)
+                {
+                    StrileData data;
+                    data.nOffset = nOffset;
+                    data.nByteCount = nSize;
+                    data.bTryMask = bTryMask;
+                    oMapStrileToOffsetByteCount[nBlockId] = data;
+                }
+            }
+        }
+        else
+        {
+            // Sparse tile
+            StrileData data;
+            data.nOffset = 0;
+            data.nByteCount = 0;
+            data.bTryMask = false;
+            oMapStrileToOffsetByteCount[nBlockId] = data;
+        }
+    };
+
+    // This lambda fills m_poDS->m_oCacheStrileToOffsetByteCount (and
+    // m_poDS->m_poMaskDS->m_oCacheStrileToOffsetByteCount, when there is a
+    // mask) from the temporary oMapStrileToOffsetByteCount.
+    auto FillCacheStrileToOffsetByteCount =
+        [&](const std::vector<vsi_l_offset> &anOffsets,
+            const std::vector<size_t> &anSizes,
+            const std::vector<void *> &apData)
+    {
+        CPLAssert(m_bLeaderSizeAsUInt4);
+        size_t i = 0;
+        vsi_l_offset nLastOffset = 0;
+        for (const auto &entry : oMapStrileToOffsetByteCount)
+        {
+            const auto nBlockId = entry.first;
+            const auto nOffset = entry.second.nOffset;
+            const auto nSize = entry.second.nByteCount;
+            if (nOffset == 0)
+            {
+                // Sparse tile
+                m_oCacheStrileToOffsetByteCount.insert(nBlockId,
+                                                       std::pair(0, 0));
+                continue;
+            }
+
+            if (nOffset < nLastOffset)
+            {
+                // shouldn't happen normally if tiles are sorted
+                i = 0;
+            }
+            nLastOffset = nOffset;
+            while (i < anOffsets.size() &&
+                   !(nOffset >= anOffsets[i] &&
+                     nOffset + nSize <= anOffsets[i] + anSizes[i]))
+            {
+                i++;
+            }
+            CPLAssert(i < anOffsets.size());
+            CPLAssert(nOffset >= anOffsets[i]);
+            CPLAssert(nOffset + nSize <= anOffsets[i] + anSizes[i]);
+            GUInt32 nSizeFromLeader;
+            memcpy(&nSizeFromLeader,
+                   // cppcheck-suppress containerOutOfBounds
+                   static_cast<GByte *>(apData[i]) + nOffset - anOffsets[i],
+                   sizeof(nSizeFromLeader));
+            CPL_LSBPTR32(&nSizeFromLeader);
+            bool bOK = true;
+            constexpr int nLeaderSize = 4;
+            const int nTrailerSize =
+                (m_bTrailerRepeatedLast4BytesRepeated ? 4 : 0);
+            if (nSizeFromLeader > nSize - nLeaderSize - nTrailerSize)
+            {
+                CPLDebug("GTiff",
+                         "Inconsistent block size from in leader of block %d",
+                         nBlockId);
+                bOK = false;
+            }
+            else if (m_bTrailerRepeatedLast4BytesRepeated)
+            {
+                // Check trailer consistency
+                const GByte *strileData = static_cast<GByte *>(apData[i]) +
+                                          nOffset - anOffsets[i] + nLeaderSize;
+                if (!CheckTrailer(strileData, nSizeFromLeader))
+                {
+                    CPLDebug("GTiff", "Inconsistent trailer of block %d",
+                             nBlockId);
+                    bOK = false;
+                }
+            }
+            if (!bOK)
+            {
+                return false;
+            }
+
+            {
+                const vsi_l_offset nRealOffset = nOffset + nLeaderSize;
+                const vsi_l_offset nRealSize = nSizeFromLeader;
+#ifdef DEBUG_VERBOSE
+                CPLDebug("GTiff",
+                         "Block %d found at offset " CPL_FRMT_GUIB
+                         " with size " CPL_FRMT_GUIB,
+                         nBlockId, nRealOffset, nRealSize);
+#endif
+                m_oCacheStrileToOffsetByteCount.insert(
+                    nBlockId, std::pair(nRealOffset, nRealSize));
+            }
+
+            // Processing of mask
+            if (!(entry.second.bTryMask && m_bMaskInterleavedWithImagery &&
+                  GetRasterBand(1)->GetMaskBand() && m_poMaskDS))
+            {
+                continue;
+            }
+
+            bOK = false;
+            const vsi_l_offset nMaskOffsetWithLeader =
+                nOffset + nLeaderSize + nSizeFromLeader + nTrailerSize;
+            if (nMaskOffsetWithLeader + nLeaderSize <=
+                anOffsets[i] + anSizes[i])
+            {
+                GUInt32 nMaskSizeFromLeader;
+                memcpy(&nMaskSizeFromLeader,
+                       static_cast<GByte *>(apData[i]) + nMaskOffsetWithLeader -
+                           anOffsets[i],
+                       sizeof(nMaskSizeFromLeader));
+                CPL_LSBPTR32(&nMaskSizeFromLeader);
+                if (nMaskOffsetWithLeader + nLeaderSize + nMaskSizeFromLeader +
+                        nTrailerSize <=
+                    anOffsets[i] + anSizes[i])
+                {
+                    bOK = true;
+                    if (m_bTrailerRepeatedLast4BytesRepeated)
+                    {
+                        // Check trailer consistency
+                        const GByte *strileMaskData =
+                            static_cast<GByte *>(apData[i]) + nOffset -
+                            anOffsets[i] + nLeaderSize + nSizeFromLeader +
+                            nTrailerSize + nLeaderSize;
+                        if (!CheckTrailer(strileMaskData, nMaskSizeFromLeader))
+                        {
+                            CPLDebug("GTiff",
+                                     "Inconsistent trailer of mask of block %d",
+                                     nBlockId);
+                            bOK = false;
+                        }
+                    }
+                }
+                if (bOK)
+                {
+                    const vsi_l_offset nRealOffset = nOffset + nLeaderSize +
+                                                     nSizeFromLeader +
+                                                     nTrailerSize + nLeaderSize;
+                    const vsi_l_offset nRealSize = nMaskSizeFromLeader;
+#ifdef DEBUG_VERBOSE
+                    CPLDebug("GTiff",
+                             "Mask of block %d found at offset " CPL_FRMT_GUIB
+                             " with size " CPL_FRMT_GUIB,
+                             nBlockId, nRealOffset, nRealSize);
+#endif
+
+                    m_poMaskDS->m_oCacheStrileToOffsetByteCount.insert(
+                        nBlockId, std::pair(nRealOffset, nRealSize));
+                }
+            }
+            if (!bOK)
+            {
+                CPLDebug("GTiff",
+                         "Mask for block %d is not properly interleaved with "
+                         "imagery block",
+                         nBlockId);
+            }
+        }
+        return true;
+    };
+
+    thandle_t th = TIFFClientdata(m_hTIFF);
+    if (!VSI_TIFFHasCachedRanges(th))
+    {
+        std::vector<std::pair<vsi_l_offset, size_t>> aOffsetSize;
+        size_t nTotalSize = 0;
+        const unsigned int nMaxRawBlockCacheSize = atoi(
+            CPLGetConfigOption("GDAL_MAX_RAW_BLOCK_CACHE_SIZE", "10485760"));
+        bool bGoOn = true;
+        for (int iBand = 0; iBand < nBandCount; ++iBand)
+        {
+            const int nBand = panBandMap[iBand];
+            GTiffRasterBand *poBand =
+                cpl::down_cast<GTiffRasterBand *>(papoBands[nBand - 1]);
+            for (int iY = nBlockY1; bGoOn && iY <= nBlockY2; iY++)
+            {
+                for (int iX = nBlockX1; bGoOn && iX <= nBlockX2; iX++)
+                {
+                    GDALRasterBlock *poBlock =
+                        poBand->TryGetLockedBlockRef(iX, iY);
+                    if (poBlock != nullptr)
+                    {
+                        poBlock->DropLock();
+                        continue;
+                    }
+                    int nBlockId = iX + iY * m_nBlocksPerRow;
+                    if (m_nPlanarConfig == PLANARCONFIG_SEPARATE)
+                        nBlockId += (nBand - 1) * m_nBlocksPerBand;
+                    vsi_l_offset nOffset = 0;
+                    vsi_l_offset nSize = 0;
+
+                    if (!m_bStreamingIn && m_bBlockOrderRowMajor &&
+                        m_bLeaderSizeAsUInt4)
+                    {
+                        OptimizedRetrievalOfOffsetSize(nBand, nBlockId, nOffset,
+                                                       nSize, nTotalSize,
+                                                       nMaxRawBlockCacheSize);
+                    }
+                    else
+                    {
+                        CPL_IGNORE_RET_VAL(IsBlockAvailable(nBlockId, &nOffset,
+                                                            &nSize, nullptr));
+                    }
+                    if (nSize)
+                    {
+                        if (nTotalSize + nSize < nMaxRawBlockCacheSize)
+                        {
+#ifdef DEBUG_VERBOSE
+                            CPLDebug(
+                                "GTiff",
+                                "Precaching for block (%d, %d), " CPL_FRMT_GUIB
+                                "-" CPL_FRMT_GUIB,
+                                iX, iY, nOffset,
+                                nOffset + static_cast<size_t>(nSize) - 1);
+#endif
+                            aOffsetSize.push_back(
+                                std::pair(nOffset, static_cast<size_t>(nSize)));
+                            nTotalSize += static_cast<size_t>(nSize);
+                        }
+                        else
+                        {
+                            bGoOn = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        std::sort(aOffsetSize.begin(), aOffsetSize.end());
+
+        if (nTotalSize > 0)
+        {
+            pBufferedData = VSI_MALLOC_VERBOSE(nTotalSize);
+            if (pBufferedData)
+            {
+                std::vector<vsi_l_offset> anOffsets;
+                std::vector<size_t> anSizes;
+                std::vector<void *> apData;
+                anOffsets.push_back(aOffsetSize[0].first);
+                apData.push_back(static_cast<GByte *>(pBufferedData));
+                size_t nChunkSize = aOffsetSize[0].second;
+                size_t nAccOffset = 0;
+                // Try to merge contiguous or slightly overlapping ranges
+                for (size_t i = 0; i < aOffsetSize.size() - 1; i++)
+                {
+                    if (aOffsetSize[i].first < aOffsetSize[i + 1].first &&
+                        aOffsetSize[i].first + aOffsetSize[i].second >=
+                            aOffsetSize[i + 1].first)
+                    {
+                        const auto overlap = aOffsetSize[i].first +
+                                             aOffsetSize[i].second -
+                                             aOffsetSize[i + 1].first;
+                        // That should always be the case for well behaved
+                        // TIFF files.
+                        if (aOffsetSize[i + 1].second > overlap)
+                        {
+                            nChunkSize += static_cast<size_t>(
+                                aOffsetSize[i + 1].second - overlap);
+                        }
+                    }
+                    else
+                    {
+                        // terminate current block
+                        anSizes.push_back(nChunkSize);
+#ifdef DEBUG_VERBOSE
+                        CPLDebug("GTiff",
+                                 "Requesting range [" CPL_FRMT_GUIB
+                                 "-" CPL_FRMT_GUIB "]",
+                                 anOffsets.back(),
+                                 anOffsets.back() + anSizes.back() - 1);
+#endif
+                        nAccOffset += nChunkSize;
+                        // start a new range
+                        anOffsets.push_back(aOffsetSize[i + 1].first);
+                        apData.push_back(static_cast<GByte *>(pBufferedData) +
+                                         nAccOffset);
+                        nChunkSize = aOffsetSize[i + 1].second;
+                    }
+                }
+                // terminate last block
+                anSizes.push_back(nChunkSize);
+#ifdef DEBUG_VERBOSE
+                CPLDebug(
+                    "GTiff",
+                    "Requesting range [" CPL_FRMT_GUIB "-" CPL_FRMT_GUIB "]",
+                    anOffsets.back(), anOffsets.back() + anSizes.back() - 1);
+#endif
+
+                VSILFILE *fp = VSI_TIFFGetVSILFile(th);
+
+                // An error in VSIFReadMultiRangeL() will not be critical,
+                // as this method is an optimization, and if it fails,
+                // tile-by-tile data acquisition will be done, so we can
+                // temporary turn failures into warnings.
+                CPLTurnFailureIntoWarning(true);
+                const bool ok =
+                    VSIFReadMultiRangeL(static_cast<int>(anSizes.size()),
+                                        &apData[0], &anOffsets[0], &anSizes[0],
+                                        fp) == 0;
+                CPLTurnFailureIntoWarning(false);
+                if (ok)
+                {
+                    if (!oMapStrileToOffsetByteCount.empty() &&
+                        !FillCacheStrileToOffsetByteCount(anOffsets, anSizes,
+                                                          apData))
+                    {
+                        // Retry without optimization
+                        CPLFree(pBufferedData);
+                        m_bLeaderSizeAsUInt4 = false;
+                        void *pRet = CacheMultiRange(
+                            nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
+                            panBandMap, nBandCount, psExtraArg);
+                        m_bLeaderSizeAsUInt4 = true;
+                        return pRet;
+                    }
+
+                    VSI_TIFFSetCachedRanges(
+                        th, static_cast<int>(anSizes.size()), &apData[0],
+                        &anOffsets[0], &anSizes[0]);
+                }
+                else
+                {
+                    CPLFree(pBufferedData);
+                    pBufferedData = nullptr;
+                }
+            }
+        }
+    }
+    return pBufferedData;
 }

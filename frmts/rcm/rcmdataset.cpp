@@ -1105,15 +1105,16 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         /* Check for directory access when there is a product.xml file in the
         directory. */
-        osMDFilename = CPLFormCIFilename(pszFilename, "product.xml", nullptr);
+        osMDFilename =
+            CPLFormCIFilenameSafe(pszFilename, "product.xml", nullptr);
 
         VSIStatBufL sStat;
         if (VSIStatL(osMDFilename, &sStat) != 0)
         {
             /* If not, check for directory extra 'metadata' access when there is
             a product.xml file in the directory. */
-            osMDFilename =
-                CPLFormCIFilename(pszFilename, GetMetadataProduct(), nullptr);
+            osMDFilename = CPLFormCIFilenameSafe(pszFilename,
+                                                 GetMetadataProduct(), nullptr);
         }
     }
     else
@@ -1416,7 +1417,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     // XML
     std::string osNoiseLevelsValues;
 
-    const CPLString osPath = CPLGetPath(osMDFilename);
+    const CPLString osPath = CPLGetPathSafe(osMDFilename);
 
     /* Get a list of all polarizations */
     CPLXMLNode *psSourceAttrs =
@@ -1548,8 +1549,8 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (pszIncidenceAngleFileName != nullptr)
     {
-        CPLString osIncidenceAngleFilePath = CPLFormFilename(
-            CPLFormFilename(osPath, CALIBRATION_FOLDER, nullptr),
+        CPLString osIncidenceAngleFilePath = CPLFormFilenameSafe(
+            CPLFormFilenameSafe(osPath, CALIBRATION_FOLDER, nullptr).c_str(),
             pszIncidenceAngleFileName, nullptr);
 
         /* Check if the file exist */
@@ -1660,8 +1661,9 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 /* --------------------------------------------------------------------
                  */
 
-                const CPLString oNoiseLevelPath = CPLFormFilename(
-                    CPLFormFilename(osPath, CALIBRATION_FOLDER, nullptr),
+                const CPLString oNoiseLevelPath = CPLFormFilenameSafe(
+                    CPLFormFilenameSafe(osPath, CALIBRATION_FOLDER, nullptr)
+                        .c_str(),
                     pszNoiseLevelFile, nullptr);
                 if (IsValidXMLFile(oNoiseLevelPath))
                 {
@@ -1716,8 +1718,9 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 /*      called 'calibration' from the 'metadata' folder */
                 /* --------------------------------------------------------------------
                  */
-                const CPLString osLUTFilePath = CPLFormFilename(
-                    CPLFormFilename(osPath, CALIBRATION_FOLDER, nullptr),
+                const CPLString osLUTFilePath = CPLFormFilenameSafe(
+                    CPLFormFilenameSafe(osPath, CALIBRATION_FOLDER, nullptr)
+                        .c_str(),
                     pszLUTFile, nullptr);
 
                 if (EQUAL(pszLUTType, "Beta Nought") &&
@@ -1871,8 +1874,8 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         /*      Form full filename (path of product.xml + basename). */
         /* --------------------------------------------------------------------
          */
-        char *pszFullname =
-            CPLStrdup(CPLFormFilename(osPath, pszBasedFilename, nullptr));
+        char *pszFullname = CPLStrdup(
+            CPLFormFilenameSafe(osPath, pszBasedFilename, nullptr).c_str());
 
         /* --------------------------------------------------------------------
          */

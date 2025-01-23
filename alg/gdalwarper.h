@@ -130,6 +130,14 @@ CPLErr CPL_DLL GDALWarpCutlineMaskerEx(void *pMaskFuncArg, int nBandCount,
 
 /*! @endcond */
 
+/*! GWKMode tie-breaking strategy */
+typedef enum
+{
+    /* Choose the first value encountered */ GWKTS_First = 1,
+    /* Choose the minimal value */ GWKTS_Min = 2,
+    /* Choose the maximum value */ GWKTS_Max = 3,
+} GWKTieStrategy;
+
 /************************************************************************/
 /*                           GDALWarpOptions                            */
 /************************************************************************/
@@ -243,6 +251,8 @@ typedef struct
      * zero. */
     double dfCutlineBlendDist;
 
+    /** Tie-breaking method */
+    GWKTieStrategy eTieStrategy;
 } GDALWarpOptions;
 
 GDALWarpOptions CPL_DLL *CPL_STDCALL GDALCreateWarpOptions(void);
@@ -450,6 +460,8 @@ class CPL_DLL GDALWarpKernel
     // be ignored as contributing source pixels during resampling. Only taken into account by
     // Average currently
     std::vector<std::vector<double>> m_aadfExcludedValues{};
+
+    GWKTieStrategy eTieStrategy;
 
     /*! @endcond */
 

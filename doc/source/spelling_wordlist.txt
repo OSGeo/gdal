@@ -521,6 +521,7 @@ cvs
 Cxx
 Cygwin
 dall
+DanB
 DanielM
 danlittle
 dat
@@ -639,6 +640,8 @@ dfCutlineBlendDist
 dfCxtX
 dfDistance
 dfErrorThreshold
+dfGeolocX
+dfGeolocY
 dfInvisibleVal
 dfLLX
 dfMax
@@ -1065,6 +1068,8 @@ geoloc
 geolocated
 geolocation
 Geolocation
+geolocX
+geolocY
 Géologiques
 Geomatics
 Geomedia
@@ -1873,6 +1878,7 @@ multithreaded
 multithreading
 Multithreading
 mundialis
+muparser
 Mutatie
 mutex
 Mutex
@@ -2127,6 +2133,7 @@ nYSize
 nYStride
 nz
 nZStride
+OAMS
 oauth
 OAuth
 objdir
@@ -2910,6 +2917,7 @@ ServerUrl
 setAccessControl
 setAccessControlRecursive
 setargv
+SetAxisMappingStrategy
 setCoordinateDimension
 setfeature
 SetFeature

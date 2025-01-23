@@ -66,8 +66,9 @@ static OGRLayer *SetupTargetLayer(OGRLayer *poSrcLayer, GDALDataset *poDstDS,
                                   const char *pszOutputSepFieldName = nullptr)
 {
     const CPLString szLayerName =
-        pszNewLayerName == nullptr ? CPLGetBasename(poDstDS->GetDescription())
-                                   : pszNewLayerName;
+        pszNewLayerName == nullptr
+            ? CPLGetBasenameSafe(poDstDS->GetDescription())
+            : pszNewLayerName;
 
     /* -------------------------------------------------------------------- */
     /*      Get other info.                                                 */
@@ -218,7 +219,8 @@ static OGRLayer *SetupTargetLayer(OGRLayer *poSrcLayer, GDALDataset *poDstDS,
 static void CheckDestDataSourceNameConsistency(const char *pszDestFilename,
                                                const char *pszDriverName)
 {
-    char *pszDestExtension = CPLStrdup(CPLGetExtension(pszDestFilename));
+    char *pszDestExtension =
+        CPLStrdup(CPLGetExtensionSafe(pszDestFilename).c_str());
 
     // TODO: Would be good to have driver metadata like for GDAL drivers.
     static const char *apszExtensions[][2] = {{"shp", "ESRI Shapefile"},
@@ -1093,7 +1095,13 @@ static OGRErr GetPosition(OGRLayer *const poPkLayer, double dfX, double dfY,
     // Get real distance
     const double dfRealDist = Project(pCloserPart, &pt);
     delete pCloserPart;
+    if (dfScale == 0)
+    {
+        fprintf(stderr, _("dfScale == 0.\n"));
+        return OGRERR_FAILURE;
+    }
     // Compute reference distance
+    // coverity[divide_by_zero]
     const double dfRefDist = dfBeg + dfRealDist / dfScale;
     if (bQuiet)
     {
@@ -1393,7 +1401,7 @@ MAIN_START(argc, argv)
 
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
 
-    if (argc < 2)
+    if (argc < 1)
     {
         try
         {
@@ -1406,7 +1414,6 @@ MAIN_START(argc, argv)
             CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
                      err.what());
         }
-        CSLDestroy(argv);
         exit(1);
     }
 

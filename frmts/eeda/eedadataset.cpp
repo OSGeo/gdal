@@ -19,6 +19,7 @@
 #include "eeda.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <vector>
 #include <map>
 #include <set>
@@ -778,7 +779,7 @@ CPLString GDALEEDALayer::BuildFilter(swq_expr_node *poNode, bool bIsAndTopLevel)
             poNode->papoSubExpr[1]->field_type == SWQ_INTEGER64)
         {
             osFilter +=
-                CPLSPrintf(CPL_FRMT_GIB, poNode->papoSubExpr[1]->int_value);
+                CPLSPrintf("%" PRId64, poNode->papoSubExpr[1]->int_value);
         }
         else if (poNode->papoSubExpr[1]->field_type == SWQ_FLOAT)
         {
@@ -869,7 +870,7 @@ CPLString GDALEEDALayer::BuildFilter(swq_expr_node *poNode, bool bIsAndTopLevel)
                 poNode->papoSubExpr[i]->field_type == SWQ_INTEGER64)
             {
                 osFilter +=
-                    CPLSPrintf(CPL_FRMT_GIB, poNode->papoSubExpr[i]->int_value);
+                    CPLSPrintf("%" PRId64, poNode->papoSubExpr[i]->int_value);
             }
             else if (poNode->papoSubExpr[i]->field_type == SWQ_FLOAT)
             {

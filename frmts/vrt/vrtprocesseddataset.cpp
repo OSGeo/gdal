@@ -12,6 +12,7 @@
 
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "gdal_utils.h"
 #include "vrtdataset.h"
 
 #include <algorithm>
@@ -206,6 +207,27 @@ CPLErr VRTProcessedDataset::XMLInit(const CPLXMLNode *psTree,
     return CE_None;
 }
 
+static bool HasScaleOffset(GDALDataset &oSrcDS)
+{
+    for (int i = 1; i <= oSrcDS.GetRasterCount(); i++)
+    {
+        int pbSuccess;
+        GDALRasterBand &oBand = *oSrcDS.GetRasterBand(i);
+        double scale = oBand.GetScale(&pbSuccess);
+        if (pbSuccess && scale != 1)
+        {
+            return true;
+        }
+        double offset = oBand.GetOffset(&pbSuccess);
+        if (pbSuccess && offset != 0)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /** Instantiate object from XML tree */
 CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
                                  const char *pszVRTPathIn,
@@ -260,6 +282,53 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
     if (!m_poSrcDS)
         return CE_Failure;
 
+    const char *pszUnscale = CPLGetXMLValue(psInput, "unscale", "AUTO");
+    bool bUnscale = false;
+    if (EQUAL(pszUnscale, "AUTO"))
+    {
+        if (HasScaleOffset(*m_poSrcDS))
+        {
+            bUnscale = true;
+        }
+    }
+    else if (EQUAL(pszUnscale, "YES") || EQUAL(pszUnscale, "ON") ||
+             EQUAL(pszUnscale, "TRUE") || EQUAL(pszUnscale, "1"))
+    {
+        bUnscale = true;
+    }
+    else if (!(EQUAL(pszUnscale, "NO") || EQUAL(pszUnscale, "OFF") ||
+               EQUAL(pszUnscale, "FALSE") || EQUAL(pszUnscale, "0")))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid value of 'unscale'");
+        return CE_Failure;
+    }
+
+    if (bUnscale)
+    {
+        CPLStringList oArgs;
+        oArgs.AddString("-unscale");
+        oArgs.AddString("-ot");
+        oArgs.AddString("Float64");
+        oArgs.AddString("-of");
+        oArgs.AddString("VRT");
+        oArgs.AddString("-a_nodata");
+        oArgs.AddString("nan");
+        auto *poArgs = GDALTranslateOptionsNew(oArgs.List(), nullptr);
+        int pbUsageError;
+        CPLAssert(poArgs);
+        m_poVRTSrcDS.reset(m_poSrcDS.release());
+        // https://trac.cppcheck.net/ticket/11325
+        // cppcheck-suppress accessMoved
+        m_poSrcDS.reset(GDALDataset::FromHandle(
+            GDALTranslate("", m_poVRTSrcDS.get(), poArgs, &pbUsageError)));
+        GDALTranslateOptionsFree(poArgs);
+
+        if (pbUsageError || !m_poSrcDS)
+        {
+            return CE_Failure;
+        }
+    }
+
     if (nRasterXSize == 0 && nRasterYSize == 0)
     {
         nRasterXSize = m_poSrcDS->GetRasterXSize();
@@ -301,12 +370,29 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
 
     const auto poSrcFirstBand = m_poSrcDS->GetRasterBand(1);
     poSrcFirstBand->GetBlockSize(&m_nBlockXSize, &m_nBlockYSize);
+    bool bUserBlockSize = false;
     if (const char *pszBlockXSize =
             CPLGetXMLValue(psTree, "BlockXSize", nullptr))
+    {
+        bUserBlockSize = true;
         m_nBlockXSize = atoi(pszBlockXSize);
+        if (m_nBlockXSize <= 1)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid BlockXSize");
+            return CE_Failure;
+        }
+    }
     if (const char *pszBlockYSize =
             CPLGetXMLValue(psTree, "BlockYSize", nullptr))
+    {
+        bUserBlockSize = true;
         m_nBlockYSize = atoi(pszBlockYSize);
+        if (m_nBlockYSize <= 1)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid BlockYSize");
+            return CE_Failure;
+        }
+    }
 
     // Initialize all the general VRT stuff.
     if (VRTDataset::XMLInit(psTree, pszVRTPathIn) != CE_None)
@@ -521,6 +607,73 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
         return CE_Failure;
     }
 
+    int nLargestInDTSizeTimesBand = 1;
+    int nLargestOutDTSizeTimesBand = 1;
+    for (const auto &oStep : m_aoSteps)
+    {
+        const int nInDTSizeTimesBand =
+            GDALGetDataTypeSizeBytes(oStep.eInDT) * oStep.nInBands;
+        nLargestInDTSizeTimesBand =
+            std::max(nLargestInDTSizeTimesBand, nInDTSizeTimesBand);
+        const int nOutDTSizeTimesBand =
+            GDALGetDataTypeSizeBytes(oStep.eOutDT) * oStep.nOutBands;
+        nLargestOutDTSizeTimesBand =
+            std::max(nLargestOutDTSizeTimesBand, nOutDTSizeTimesBand);
+    }
+    m_nWorkingBytesPerPixel =
+        nLargestInDTSizeTimesBand + nLargestOutDTSizeTimesBand;
+
+    // Use only up to 40% of RAM to acquire source bands and generate the output
+    // buffer.
+    m_nAllowedRAMUsage = CPLGetUsablePhysicalRAM() / 10 * 4;
+    // Only for tests now
+    const char *pszMAX_RAM = "VRT_PROCESSED_DATASET_ALLOWED_RAM_USAGE";
+    if (const char *pszVal = CPLGetConfigOption(pszMAX_RAM, nullptr))
+    {
+        CPL_IGNORE_RET_VAL(
+            CPLParseMemorySize(pszVal, &m_nAllowedRAMUsage, nullptr));
+    }
+
+    if (m_nAllowedRAMUsage > 0)
+    {
+        bool bBlockSizeModified = false;
+        while ((m_nBlockXSize >= 2 || m_nBlockYSize >= 2) &&
+               static_cast<GIntBig>(m_nBlockXSize) * m_nBlockYSize >
+                   m_nAllowedRAMUsage / m_nWorkingBytesPerPixel)
+        {
+            if ((m_nBlockXSize == nRasterXSize ||
+                 m_nBlockYSize >= m_nBlockXSize) &&
+                m_nBlockYSize >= 2)
+            {
+                m_nBlockYSize /= 2;
+            }
+            else
+            {
+                m_nBlockXSize /= 2;
+            }
+            bBlockSizeModified = true;
+        }
+        if (bBlockSizeModified)
+        {
+            if (bUserBlockSize)
+            {
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Reducing block size to %d x %d to avoid consuming too "
+                    "much RAM",
+                    m_nBlockXSize, m_nBlockYSize);
+            }
+            else
+            {
+                CPLDebug(
+                    "VRT",
+                    "Reducing block size to %d x %d to avoid consuming too "
+                    "much RAM",
+                    m_nBlockXSize, m_nBlockYSize);
+            }
+        }
+    }
+
     if (m_outputBandCountProvenance == ValueProvenance::FROM_LAST_STEP)
     {
         nOutputBandCount = nCurrentBandCount;
@@ -530,9 +683,11 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
         // Should not happen frequently as pixel init functions are expected
         // to validate that they can accept the number of output bands provided
         // to them
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Number of output bands of last step is not consistent with "
-                 "number of VRTProcessedRasterBand's");
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Number of output bands of last step (%d) is not consistent with "
+            "number of VRTProcessedRasterBand's (%d)",
+            nCurrentBandCount, nBands);
         return CE_Failure;
     }
 
@@ -1035,10 +1190,14 @@ void VRTProcessedDataset::GetBlockSize(int *pnBlockXSize,
  * The output is stored in m_abyInput in a pixel-interleaved way.
  */
 bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
-                                        int nBufYSize)
+                                        int nBufYSize,
+                                        GDALProgressFunc pfnProgress,
+                                        void *pProgressData)
 {
 
     CPLAssert(!m_aoSteps.empty());
+
+    const size_t nPixelCount = static_cast<size_t>(nBufXSize) * nBufYSize;
 
     const int nFirstBandCount = m_aoSteps.front().nInBands;
     CPLAssert(nFirstBandCount == m_poSrcDS->GetRasterCount());
@@ -1046,26 +1205,102 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
     const int nFirstDTSize = GDALGetDataTypeSizeBytes(eFirstDT);
     auto &abyInput = m_abyInput;
     auto &abyOutput = m_abyOutput;
-    try
-    {
-        abyInput.resize(static_cast<size_t>(nBufXSize) * nBufYSize *
-                        nFirstBandCount * nFirstDTSize);
-    }
-    catch (const std::bad_alloc &)
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Out of memory allocating working buffer");
-        return false;
-    }
 
-    if (m_poSrcDS->RasterIO(
-            GF_Read, nXOff, nYOff, nBufXSize, nBufYSize, abyInput.data(),
-            nBufXSize, nBufYSize, eFirstDT, nFirstBandCount, nullptr,
-            static_cast<GSpacing>(nFirstDTSize) * nFirstBandCount,
-            static_cast<GSpacing>(nFirstDTSize) * nFirstBandCount * nBufXSize,
-            nFirstDTSize, nullptr) != CE_None)
+    const char *pszInterleave =
+        m_poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+    if (nFirstBandCount > 1 && (!pszInterleave || EQUAL(pszInterleave, "BAND")))
     {
-        return false;
+        // If there are several bands and the source dataset organization
+        // is apparently band interleaved, then first acquire data in
+        // a BSQ organization in the abyInput array use in the native
+        // data type.
+        // And then transpose it and convert it to the expected data type
+        // of the first step.
+        const auto eSrcDT = m_poSrcDS->GetRasterBand(1)->GetRasterDataType();
+        try
+        {
+            abyInput.resize(nPixelCount * nFirstBandCount *
+                            GDALGetDataTypeSizeBytes(eSrcDT));
+        }
+        catch (const std::bad_alloc &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory allocating working buffer");
+            return false;
+        }
+
+        try
+        {
+            abyOutput.resize(nPixelCount * nFirstBandCount * nFirstDTSize);
+        }
+        catch (const std::bad_alloc &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory allocating working buffer");
+            return false;
+        }
+
+        GDALRasterIOExtraArg sArg;
+        INIT_RASTERIO_EXTRA_ARG(sArg);
+        sArg.pfnProgress = GDALScaledProgress;
+        sArg.pProgressData =
+            GDALCreateScaledProgress(0, 0.5, pfnProgress, pProgressData);
+        if (sArg.pProgressData == nullptr)
+            sArg.pfnProgress = nullptr;
+
+        CPLDebugOnly("VRT", "ProcessRegion(): start RasterIO()");
+        const bool bOK =
+            m_poSrcDS->RasterIO(GF_Read, nXOff, nYOff, nBufXSize, nBufYSize,
+                                abyInput.data(), nBufXSize, nBufYSize, eSrcDT,
+                                nFirstBandCount, nullptr, 0, 0, 0,
+                                &sArg) == CE_None;
+        CPLDebugOnly("VRT", "ProcessRegion(): end RasterIO()");
+        GDALDestroyScaledProgress(sArg.pProgressData);
+        if (!bOK)
+            return false;
+
+        CPLDebugOnly("VRT", "ProcessRegion(): start GDALTranspose2D()");
+        GDALTranspose2D(abyInput.data(), eSrcDT, abyOutput.data(), eFirstDT,
+                        static_cast<size_t>(nBufXSize) * nBufYSize,
+                        nFirstBandCount);
+        CPLDebugOnly("VRT", "ProcessRegion(): end GDALTranspose2D()");
+
+        // Swap arrays
+        std::swap(abyInput, abyOutput);
+    }
+    else
+    {
+        try
+        {
+            abyInput.resize(nPixelCount * nFirstBandCount * nFirstDTSize);
+        }
+        catch (const std::bad_alloc &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory allocating working buffer");
+            return false;
+        }
+
+        GDALRasterIOExtraArg sArg;
+        INIT_RASTERIO_EXTRA_ARG(sArg);
+        sArg.pfnProgress = GDALScaledProgress;
+        sArg.pProgressData =
+            GDALCreateScaledProgress(0, 0.5, pfnProgress, pProgressData);
+        if (sArg.pProgressData == nullptr)
+            sArg.pfnProgress = nullptr;
+
+        const bool bOK =
+            m_poSrcDS->RasterIO(
+                GF_Read, nXOff, nYOff, nBufXSize, nBufYSize, abyInput.data(),
+                nBufXSize, nBufYSize, eFirstDT, nFirstBandCount, nullptr,
+                static_cast<GSpacing>(nFirstDTSize) * nFirstBandCount,
+                static_cast<GSpacing>(nFirstDTSize) * nFirstBandCount *
+                    nBufXSize,
+                nFirstDTSize, &sArg) == CE_None;
+
+        GDALDestroyScaledProgress(sArg.pProgressData);
+        if (!bOK)
+            return false;
     }
 
     const double dfSrcXOff = nXOff;
@@ -1086,6 +1321,8 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
 
     GDALDataType eLastDT = eFirstDT;
     const auto &oMapFunctions = GetGlobalMapProcessedDatasetFunc();
+
+    int iStep = 0;
     for (const auto &oStep : m_aoSteps)
     {
         const auto oIterFunc = oMapFunctions.find(oStep.osAlgorithm);
@@ -1096,8 +1333,7 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
         {
             try
             {
-                abyOutput.resize(static_cast<size_t>(nBufXSize) * nBufYSize *
-                                 oStep.nInBands *
+                abyOutput.resize(nPixelCount * oStep.nInBands *
                                  GDALGetDataTypeSizeBytes(oStep.eInDT));
             }
             catch (const std::bad_alloc &)
@@ -1110,16 +1346,14 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
             GDALCopyWords64(abyInput.data(), eLastDT,
                             GDALGetDataTypeSizeBytes(eLastDT), abyOutput.data(),
                             oStep.eInDT, GDALGetDataTypeSizeBytes(oStep.eInDT),
-                            static_cast<size_t>(nBufXSize) * nBufYSize *
-                                oStep.nInBands);
+                            nPixelCount * oStep.nInBands);
 
             std::swap(abyInput, abyOutput);
         }
 
         try
         {
-            abyOutput.resize(static_cast<size_t>(nBufXSize) * nBufYSize *
-                             oStep.nOutBands *
+            abyOutput.resize(nPixelCount * oStep.nOutBands *
                              GDALGetDataTypeSizeBytes(oStep.eOutDT));
         }
         catch (const std::bad_alloc &)
@@ -1145,6 +1379,12 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
 
         std::swap(abyInput, abyOutput);
         eLastDT = oStep.eOutDT;
+
+        ++iStep;
+        if (pfnProgress &&
+            !pfnProgress(0.5 + 0.5 * iStep / static_cast<int>(m_aoSteps.size()),
+                         "", pProgressData))
+            return false;
     }
 
     return true;
@@ -1208,7 +1448,8 @@ CPLErr VRTProcessedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
     const int nXPixelOff = nBlockXOff * nBlockXSize;
     const int nYPixelOff = nBlockYOff * nBlockYSize;
-    if (!poVRTDS->ProcessRegion(nXPixelOff, nYPixelOff, nBufXSize, nBufYSize))
+    if (!poVRTDS->ProcessRegion(nXPixelOff, nYPixelOff, nBufXSize, nBufYSize,
+                                nullptr, nullptr))
     {
         return CE_Failure;
     }
@@ -1245,20 +1486,203 @@ CPLErr VRTProcessedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
         for (int iY = 0; iY < nBufYSize; ++iY)
         {
-            GDALCopyWords(poVRTDS->m_abyInput.data() +
-                              (iDstBand + static_cast<size_t>(iY) * nBufXSize *
-                                              nOutBands) *
-                                  nLastDTSize,
-                          eLastDT, nLastDTSize * nOutBands,
-                          pDst +
-                              static_cast<size_t>(iY) * nBlockXSize * nDTSize,
-                          eDataType, nDTSize, nBufXSize);
+            GDALCopyWords64(poVRTDS->m_abyInput.data() +
+                                (iDstBand + static_cast<size_t>(iY) *
+                                                nBufXSize * nOutBands) *
+                                    nLastDTSize,
+                            eLastDT, nLastDTSize * nOutBands,
+                            pDst +
+                                static_cast<size_t>(iY) * nBlockXSize * nDTSize,
+                            eDataType, nDTSize, nBufXSize);
         }
         if (poBlock)
             poBlock->DropLock();
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                VRTProcessedDataset::IRasterIO()                      */
+/************************************************************************/
+
+CPLErr VRTProcessedDataset::IRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    int nBandCount, BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+    GSpacing nLineSpace, GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg)
+{
+    // Try to pass the request to the most appropriate overview dataset.
+    if (nBufXSize < nXSize && nBufYSize < nYSize)
+    {
+        int bTried = FALSE;
+        const CPLErr eErr = TryOverviewRasterIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+            eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace,
+            nBandSpace, psExtraArg, &bTried);
+        if (bTried)
+            return eErr;
+    }
+
+    // Optimize reading of all bands at nominal resolution for BIP-like or
+    // BSQ-like buffer spacing.
+    if (eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
+        nBandCount == nBands)
+    {
+        const auto IsSequentialBandMap = [panBandMap, nBandCount]()
+        {
+            for (int i = 0; i < nBandCount; ++i)
+            {
+                if (panBandMap[i] != i + 1)
+                {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
+        const bool bIsBIPLike =
+            nBandSpace == nBufTypeSize && nPixelSpace == nBandSpace * nBands &&
+            nLineSpace >= nPixelSpace * nBufXSize && IsSequentialBandMap();
+        const bool bIsBSQLike = nPixelSpace == nBufTypeSize &&
+                                nLineSpace >= nPixelSpace * nBufXSize &&
+                                nBandSpace >= nLineSpace * nBufYSize &&
+                                IsSequentialBandMap();
+        if (bIsBIPLike || bIsBSQLike)
+        {
+            GByte *pabyData = static_cast<GByte *>(pData);
+            // If acquiring the region of interest in a single time is going
+            // to consume too much RAM, split in halves.
+            if (m_nAllowedRAMUsage > 0 &&
+                static_cast<GIntBig>(nBufXSize) * nBufYSize >
+                    m_nAllowedRAMUsage / m_nWorkingBytesPerPixel)
+            {
+                if ((nBufXSize == nRasterXSize || nBufYSize >= nBufXSize) &&
+                    nBufYSize >= 2)
+                {
+                    GDALRasterIOExtraArg sArg;
+                    INIT_RASTERIO_EXTRA_ARG(sArg);
+                    const int nHalfHeight = nBufYSize / 2;
+
+                    sArg.pfnProgress = GDALScaledProgress;
+                    sArg.pProgressData = GDALCreateScaledProgress(
+                        0, 0.5, psExtraArg->pfnProgress,
+                        psExtraArg->pProgressData);
+                    if (sArg.pProgressData == nullptr)
+                        sArg.pfnProgress = nullptr;
+                    bool bOK =
+                        IRasterIO(eRWFlag, nXOff, nYOff, nBufXSize, nHalfHeight,
+                                  pabyData, nBufXSize, nHalfHeight, eBufType,
+                                  nBandCount, panBandMap, nPixelSpace,
+                                  nLineSpace, nBandSpace, &sArg) == CE_None;
+                    GDALDestroyScaledProgress(sArg.pProgressData);
+
+                    if (bOK)
+                    {
+                        sArg.pfnProgress = GDALScaledProgress;
+                        sArg.pProgressData = GDALCreateScaledProgress(
+                            0.5, 1, psExtraArg->pfnProgress,
+                            psExtraArg->pProgressData);
+                        if (sArg.pProgressData == nullptr)
+                            sArg.pfnProgress = nullptr;
+                        bOK = IRasterIO(eRWFlag, nXOff, nYOff + nHalfHeight,
+                                        nBufXSize, nBufYSize - nHalfHeight,
+                                        pabyData + nHalfHeight * nLineSpace,
+                                        nBufXSize, nBufYSize - nHalfHeight,
+                                        eBufType, nBandCount, panBandMap,
+                                        nPixelSpace, nLineSpace, nBandSpace,
+                                        &sArg) == CE_None;
+                        GDALDestroyScaledProgress(sArg.pProgressData);
+                    }
+                    return bOK ? CE_None : CE_Failure;
+                }
+                else if (nBufXSize >= 2)
+                {
+                    GDALRasterIOExtraArg sArg;
+                    INIT_RASTERIO_EXTRA_ARG(sArg);
+                    const int nHalfWidth = nBufXSize / 2;
+
+                    sArg.pfnProgress = GDALScaledProgress;
+                    sArg.pProgressData = GDALCreateScaledProgress(
+                        0, 0.5, psExtraArg->pfnProgress,
+                        psExtraArg->pProgressData);
+                    if (sArg.pProgressData == nullptr)
+                        sArg.pfnProgress = nullptr;
+                    bool bOK =
+                        IRasterIO(eRWFlag, nXOff, nYOff, nHalfWidth, nBufYSize,
+                                  pabyData, nHalfWidth, nBufYSize, eBufType,
+                                  nBandCount, panBandMap, nPixelSpace,
+                                  nLineSpace, nBandSpace, &sArg) == CE_None;
+                    GDALDestroyScaledProgress(sArg.pProgressData);
+
+                    if (bOK)
+                    {
+                        sArg.pfnProgress = GDALScaledProgress;
+                        sArg.pProgressData = GDALCreateScaledProgress(
+                            0.5, 1, psExtraArg->pfnProgress,
+                            psExtraArg->pProgressData);
+                        if (sArg.pProgressData == nullptr)
+                            sArg.pfnProgress = nullptr;
+                        bOK = IRasterIO(eRWFlag, nXOff + nHalfWidth, nYOff,
+                                        nBufXSize - nHalfWidth, nBufYSize,
+                                        pabyData + nHalfWidth * nPixelSpace,
+                                        nBufXSize - nHalfWidth, nBufYSize,
+                                        eBufType, nBandCount, panBandMap,
+                                        nPixelSpace, nLineSpace, nBandSpace,
+                                        &sArg) == CE_None;
+                        GDALDestroyScaledProgress(sArg.pProgressData);
+                    }
+                    return bOK ? CE_None : CE_Failure;
+                }
+            }
+
+            if (!ProcessRegion(nXOff, nYOff, nBufXSize, nBufYSize,
+                               psExtraArg->pfnProgress,
+                               psExtraArg->pProgressData))
+            {
+                return CE_Failure;
+            }
+            const auto eLastDT = m_aoSteps.back().eOutDT;
+            const int nLastDTSize = GDALGetDataTypeSizeBytes(eLastDT);
+            if (bIsBIPLike)
+            {
+                for (int iY = 0; iY < nBufYSize; ++iY)
+                {
+                    GDALCopyWords64(
+                        m_abyInput.data() + static_cast<size_t>(iY) * nBands *
+                                                nBufXSize * nLastDTSize,
+                        eLastDT, nLastDTSize, pabyData + iY * nLineSpace,
+                        eBufType, GDALGetDataTypeSizeBytes(eBufType),
+                        static_cast<size_t>(nBufXSize) * nBands);
+                }
+            }
+            else
+            {
+                CPLAssert(bIsBSQLike);
+                for (int iBand = 0; iBand < nBands; ++iBand)
+                {
+                    for (int iY = 0; iY < nBufYSize; ++iY)
+                    {
+                        GDALCopyWords64(
+                            m_abyInput.data() +
+                                (static_cast<size_t>(iY) * nBands * nBufXSize +
+                                 iBand) *
+                                    nLastDTSize,
+                            eLastDT, nLastDTSize * nBands,
+                            pabyData + iBand * nBandSpace + iY * nLineSpace,
+                            eBufType, nBufTypeSize, nBufXSize);
+                    }
+                }
+            }
+            return CE_None;
+        }
+    }
+
+    return VRTDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
+                                 nBufXSize, nBufYSize, eBufType, nBandCount,
+                                 panBandMap, nPixelSpace, nLineSpace,
+                                 nBandSpace, psExtraArg);
 }
 
 /*! @endcond */

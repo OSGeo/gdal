@@ -34,7 +34,7 @@ int HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo)
     if (!poOpenInfo->pabyHeader)
         return FALSE;
 
-    const CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    const CPLString osExt(poOpenInfo->osExtension);
 
     const auto IsRecognizedByNetCDFDriver = [&osExt, poOpenInfo]()
     {
@@ -345,7 +345,7 @@ int BAGDatasetIdentify(GDALOpenInfo *poOpenInfo)
         return FALSE;
 
     // Does it have the extension .bag?
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "bag"))
+    if (!poOpenInfo->IsExtensionEqualToCI("bag"))
     {
         if (poOpenInfo->IsSingleAllowedDriver("BAG"))
         {

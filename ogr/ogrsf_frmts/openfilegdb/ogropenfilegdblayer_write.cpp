@@ -386,6 +386,12 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
     const auto eFlattenType = wkbFlatten(OGR_GT_GetLinear(m_eGeomType));
     if (eFlattenType == wkbNone)
         eTableGeomType = FGTGT_NONE;
+    else if (CPLTestBool(m_aosCreationOptions.FetchNameValueDef(
+                 "CREATE_MULTIPATCH", "FALSE")))
+    {
+        // For compatibility with FileGDB driver
+        eTableGeomType = FGTGT_MULTIPATCH;
+    }
     else if (eFlattenType == wkbPoint)
         eTableGeomType = FGTGT_POINT;
     else if (eFlattenType == wkbMultiPoint)
@@ -395,16 +401,17 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
     {
         eTableGeomType = FGTGT_LINE;
     }
-    else if (OGR_GT_IsSurface(eFlattenType) ||
-             OGR_GT_IsSubClassOf(eFlattenType, wkbMultiSurface))
-    {
-        eTableGeomType = FGTGT_POLYGON;
-    }
-    else if (eFlattenType == wkbTIN || eFlattenType == wkbPolyhedralSurface ||
+    else if (wkbFlatten(m_eGeomType) == wkbTIN ||
+             wkbFlatten(m_eGeomType) == wkbPolyhedralSurface ||
              m_eGeomType == wkbGeometryCollection25D ||
              m_eGeomType == wkbSetZ(wkbUnknown))
     {
         eTableGeomType = FGTGT_MULTIPATCH;
+    }
+    else if (OGR_GT_IsSurface(eFlattenType) ||
+             OGR_GT_IsSubClassOf(eFlattenType, wkbMultiSurface))
+    {
+        eTableGeomType = FGTGT_POLYGON;
     }
     else
     {
@@ -2158,11 +2165,21 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
                     eFlattenType != wkbPolyhedralSurface &&
                     eFlattenType != wkbGeometryCollection)
                 {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "Can only insert a "
-                             "TIN/PolyhedralSurface/GeometryCollection in a "
-                             "esriGeometryMultiPatch layer");
-                    return false;
+                    if (CPLTestBool(m_aosCreationOptions.FetchNameValueDef(
+                            "CREATE_MULTIPATCH", "FALSE")) &&
+                        eFlattenType == wkbMultiPolygon)
+                    {
+                        // ok
+                    }
+                    else
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_NotSupported,
+                            "Can only insert a "
+                            "TIN/PolyhedralSurface/GeometryCollection in a "
+                            "esriGeometryMultiPatch layer");
+                        return false;
+                    }
                 }
                 break;
             }
@@ -2944,19 +2961,20 @@ bool OGROpenFileGDBLayer::BeginEmulatedTransaction()
 
     bool bRet = true;
 
-    const std::string osThisDirname = CPLGetPath(m_osGDBFilename.c_str());
-    const std::string osThisBasename = CPLGetBasename(m_osGDBFilename.c_str());
+    const std::string osThisDirname = CPLGetPathSafe(m_osGDBFilename.c_str());
+    const std::string osThisBasename =
+        CPLGetBasenameSafe(m_osGDBFilename.c_str());
     char **papszFiles = VSIReadDir(osThisDirname.c_str());
     for (char **papszIter = papszFiles;
          papszIter != nullptr && *papszIter != nullptr; ++papszIter)
     {
-        const std::string osBasename = CPLGetBasename(*papszIter);
+        const std::string osBasename = CPLGetBasenameSafe(*papszIter);
         if (osBasename == osThisBasename)
         {
-            std::string osDestFilename = CPLFormFilename(
+            const std::string osDestFilename = CPLFormFilenameSafe(
                 m_poDS->GetBackupDirName().c_str(), *papszIter, nullptr);
-            std::string osSourceFilename =
-                CPLFormFilename(osThisDirname.c_str(), *papszIter, nullptr);
+            const std::string osSourceFilename =
+                CPLFormFilenameSafe(osThisDirname.c_str(), *papszIter, nullptr);
             if (CPLCopyFile(osDestFilename.c_str(), osSourceFilename.c_str()) !=
                 0)
             {
@@ -3019,8 +3037,9 @@ bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
 
     bool bRet = true;
 
-    const std::string osThisDirname = CPLGetPath(m_osGDBFilename.c_str());
-    const std::string osThisBasename = CPLGetBasename(m_osGDBFilename.c_str());
+    const std::string osThisDirname = CPLGetPathSafe(m_osGDBFilename.c_str());
+    const std::string osThisBasename =
+        CPLGetBasenameSafe(m_osGDBFilename.c_str());
 
     // Delete files in working directory that match our basename
     {
@@ -3028,11 +3047,11 @@ bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
         for (char **papszIter = papszFiles;
              papszIter != nullptr && *papszIter != nullptr; ++papszIter)
         {
-            const std::string osBasename = CPLGetBasename(*papszIter);
+            const std::string osBasename = CPLGetBasenameSafe(*papszIter);
             if (osBasename == osThisBasename)
             {
-                std::string osDestFilename =
-                    CPLFormFilename(osThisDirname.c_str(), *papszIter, nullptr);
+                const std::string osDestFilename = CPLFormFilenameSafe(
+                    osThisDirname.c_str(), *papszIter, nullptr);
                 VSIUnlink(osDestFilename.c_str());
             }
         }
@@ -3046,13 +3065,13 @@ bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
         for (char **papszIter = papszFiles;
              papszIter != nullptr && *papszIter != nullptr; ++papszIter)
         {
-            const std::string osBasename = CPLGetBasename(*papszIter);
+            const std::string osBasename = CPLGetBasenameSafe(*papszIter);
             if (osBasename == osThisBasename)
             {
                 bBackupFound = true;
-                std::string osDestFilename =
-                    CPLFormFilename(osThisDirname.c_str(), *papszIter, nullptr);
-                std::string osSourceFilename = CPLFormFilename(
+                const std::string osDestFilename = CPLFormFilenameSafe(
+                    osThisDirname.c_str(), *papszIter, nullptr);
+                const std::string osSourceFilename = CPLFormFilenameSafe(
                     m_poDS->GetBackupDirName().c_str(), *papszIter, nullptr);
                 if (CPLCopyFile(osDestFilename.c_str(),
                                 osSourceFilename.c_str()) != 0)

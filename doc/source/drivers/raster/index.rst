@@ -109,6 +109,7 @@ Raster drivers
    l1b
    lcp
    leveller
+   libertiff
    loslas
    map
    marfa
@@ -130,7 +131,6 @@ Raster drivers
    nwtgrd
    ogcapi
    openfilegdb
-   ozi
    palsar
    paux
    pcidsk

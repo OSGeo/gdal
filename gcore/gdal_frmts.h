@@ -18,6 +18,7 @@
 
 CPL_C_START
 void CPL_DLL GDALRegister_GTiff(void);
+void CPL_DLL GDALRegister_LIBERTIFF(void);
 void CPL_DLL GDALRegister_GXF(void);
 void CPL_DLL GDALRegister_HFA(void);
 void CPL_DLL GDALRegister_AAIGrid(void);
@@ -171,7 +172,6 @@ void CPL_DLL GDALRegister_HF2(void);
 void CPL_DLL GDALRegister_PDF(void);
 void DeclareDeferredPDFPlugin(void);
 void CPL_DLL GDALRegister_MAP(void);
-void CPL_DLL GDALRegister_OZI(void);
 void CPL_DLL GDALRegister_ACE2(void);
 void CPL_DLL GDALRegister_CTG(void);
 void CPL_DLL GDALRegister_SNODAS(void);

@@ -26,7 +26,7 @@ int OGRLIBKMLDriverIdentify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->bIsDirectory)
         return -1;
 
-    const char *pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExt = poOpenInfo->osExtension.c_str();
     if (EQUAL(pszExt, "kml") || EQUAL(pszExt, "kmz"))
     {
         return TRUE;

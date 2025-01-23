@@ -58,7 +58,9 @@ add_library(
   gdalpythondriverloader.cpp
   tilematrixset.cpp
   gdal_thread_pool.cpp
-  nasakeywordhandler.cpp)
+  nasakeywordhandler.cpp
+  tiff_common.cpp
+)
 
 add_library(gcore_gdal_misc OBJECT gdal_misc.cpp)
 gdal_standard_includes(gcore_gdal_misc)
@@ -211,6 +213,7 @@ target_public_header(
   HEADERS
   ${CMAKE_CURRENT_BINARY_DIR}/gdal_version_full/gdal_version.h
   gdal.h
+  gdal_fwd.h
   gdalalgorithm.h
   gdaljp2metadata.h
   gdaljp2abstractdataset.h

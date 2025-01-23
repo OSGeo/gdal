@@ -44,7 +44,7 @@ static bool IsArrowIPCStream(GDALOpenInfo *poOpenInfo)
         memcmp(poOpenInfo->pabyHeader, "\xFF\xFF\xFF\xFF", CONTINUATION_SIZE) ==
             0)
     {
-        const char *pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+        const char *pszExt = poOpenInfo->osExtension.c_str();
         if (EQUAL(pszExt, "arrows") || EQUAL(pszExt, "ipc"))
             return true;
 
@@ -170,7 +170,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
             char *pszCurDir = CPLGetCurrentDir();
             if (pszCurDir == nullptr)
                 return nullptr;
-            osPath = CPLFormFilename(pszCurDir, osPath.c_str(), nullptr);
+            osPath = CPLFormFilenameSafe(pszCurDir, osPath.c_str(), nullptr);
             CPLFree(pszCurDir);
         }
 
@@ -216,7 +216,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
         const bool bSeekable =
             !STARTS_WITH_CI(poOpenInfo->pszFilename, "ARROW_IPC_STREAM:") &&
             strcmp(poOpenInfo->pszFilename, "/vsistdin/") != 0;
-        std::string osLayername = CPLGetBasename(poOpenInfo->pszFilename);
+        std::string osLayername = CPLGetBasenameSafe(poOpenInfo->pszFilename);
         if (osLayername.empty())
             osLayername = "layer";
         auto poLayer = std::make_unique<OGRFeatherLayer>(
@@ -256,7 +256,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
         }
         auto poRecordBatchReader = *result;
         auto poLayer = std::make_unique<OGRFeatherLayer>(
-            poDS.get(), CPLGetBasename(poOpenInfo->pszFilename),
+            poDS.get(), CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str(),
             poRecordBatchReader);
         poDS->SetLayer(std::move(poLayer));
     }

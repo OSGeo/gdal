@@ -198,6 +198,16 @@
                 <xs:element name="VRTDataset" type="VRTDatasetType"/>
             </xs:choice>
         </xs:sequence>
+        <xs:attribute name="unscale" type="xs:string"> <!-- added in GDAL 3.11 -->
+            <xs:annotation>
+                <xs:documentation>
+                    YES, NO, or AUTO.
+                    If not specified, AUTO is the default and will result in
+                    unscaling all input bands to Float64 if any input band has
+                    a defined scale/offset.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="OutputBandsType">
@@ -249,7 +259,7 @@
             <xs:extension base="xs:string">
                 <xs:attribute name="name" type="xs:string" use="required">
                     <xs:annotation>
-                        <xs:documentation>Allowed names are specific of each processing function</xs:documentation>
+                        <xs:documentation>Allowed names are specific to each processing function</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
             </xs:extension>

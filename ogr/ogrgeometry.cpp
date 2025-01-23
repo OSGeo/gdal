@@ -6886,6 +6886,100 @@ OGRGeometryH OGR_G_Polygonize(OGRGeometryH hTarget)
 }
 
 /************************************************************************/
+/*                             BuildArea()                              */
+/************************************************************************/
+
+/**
+ * \brief Polygonize a linework assuming inner polygons are holes.
+ *
+ * This method is the same as the C function OGR_G_BuildArea().
+ *
+ * Polygonization is performed similarly to OGRGeometry::Polygonize().
+ * Additionally, holes are dropped and the result is unified producing
+ * a single Polygon or a MultiPolygon.
+ *
+ * A new geometry object is created and returned: NULL on failure,
+ * empty GeometryCollection if the input geometry cannot be polygonized,
+ * Polygon or MultiPolygon on success.
+ *
+ * This method is built on the GEOSBuildArea_r() function of the GEOS
+ * library, check it for the definition of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @return a newly allocated geometry now owned by the caller,
+ *         or NULL on failure.
+ *
+ * @since OGR 3.11
+ */
+
+OGRGeometry *OGRGeometry::BuildArea() const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
+    return nullptr;
+
+#else
+
+    OGRGeometry *poPolygsOGRGeom = nullptr;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    if (hThisGeosGeom != nullptr)
+    {
+        GEOSGeom hGeosPolygs = GEOSBuildArea_r(hGEOSCtxt, hThisGeosGeom);
+        poPolygsOGRGeom =
+            BuildGeometryFromGEOS(hGEOSCtxt, hGeosPolygs, this, nullptr);
+        GEOSGeom_destroy_r(hGEOSCtxt, hThisGeosGeom);
+    }
+    freeGEOSContext(hGEOSCtxt);
+
+    return poPolygsOGRGeom;
+
+#endif  // HAVE_GEOS
+}
+
+/************************************************************************/
+/*                          OGR_G_BuildArea()                           */
+/************************************************************************/
+
+/**
+ * \brief Polygonize a linework assuming inner polygons are holes.
+ *
+ * This function is the same as the C++ method OGRGeometry::BuildArea().
+ *
+ * Polygonization is performed similarly to OGR_G_Polygonize().
+ * Additionally, holes are dropped and the result is unified producing
+ * a single Polygon or a MultiPolygon.
+ *
+ * A new geometry object is created and returned: NULL on failure,
+ * empty GeometryCollection if the input geometry cannot be polygonized,
+ * Polygon or MultiPolygon on success.
+ *
+ * This function is built on the GEOSBuildArea_r() function of the GEOS
+ * library, check it for the definition of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param hGeom handle on the geometry to polygonize.
+ *
+ * @return a handle on newly allocated geometry now owned by the caller,
+ *         or NULL on failure.
+ *
+ * @since OGR 3.11
+ */
+
+OGRGeometryH OGR_G_BuildArea(OGRGeometryH hGeom)
+
+{
+    VALIDATE_POINTER1(hGeom, "OGR_G_BuildArea", nullptr);
+
+    return OGRGeometry::ToHandle(OGRGeometry::FromHandle(hGeom)->BuildArea());
+}
+
+/************************************************************************/
 /*                               swapXY()                               */
 /************************************************************************/
 

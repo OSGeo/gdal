@@ -49,6 +49,34 @@ Potential steps are:
       --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
       --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
 
+* clip [OPTIONS]
+
+.. code-block::
+
+    Clip a raster dataset.
+
+    Options:
+      --bbox <BBOX>                                        Clipping bounding box as xmin,ymin,xmax,ymax
+                                                           Mutually exclusive with --like
+      --bbox-crs <BBOX-CRS>                                CRS of clipping bounding box
+      --like <DATASET>                                     Raster dataset to use as a template for bounds
+                                                           Mutually exclusive with --bbox
+
+Details for options can be found in :ref:`gdal_raster_clip_subcommand`.
+
+* edit [OPTIONS]
+
+.. code-block::
+
+    Edit a raster dataset.
+
+    Options:
+      --crs <CRS>                                          Override CRS (without reprojection)
+      --bbox <EXTENT>                                      Bounding box as xmin,ymin,xmax,ymax
+      --metadata <KEY>=<VALUE>                             Add/update dataset metadata item [may be repeated]
+      --unset-metadata <KEY>                               Remove dataset metadata item [may be repeated]
+
+Details for options can be found in :ref:`gdal_raster_edit_subcommand`.
 
 * reproject [OPTIONS]
 
@@ -61,9 +89,10 @@ Potential steps are:
       -d, --dst-crs <DST-CRS>                              Destination CRS
       -r, --resampling <RESAMPLING>                        Resampling method. RESAMPLING=near|bilinear|cubic|cubicspline|lanczos|average|rms|mode|min|max|med|q1|q3|sum
       --resolution <xres>,<yres>                           Target resolution (in destination CRS units)
-      --extent <xmin>,<ymin>,<xmax>,<ymax>                 Target extent (in destination CRS units)
+      --bbox <xmin>,<ymin>,<xmax>,<ymax>                   Target bounding box (in destination CRS units)
       --target-aligned-pixels                              Round target extent to target resolution
 
+Details for options can be found in :ref:`gdal_raster_reproject_subcommand`.
 
 * write [OPTIONS] <OUTPUT>
 
@@ -91,8 +120,8 @@ Examples
 --------
 
 .. example::
-   :title: Reproject a GeoTIFF file to CRS EPSG:32632 ("WGS 84 / UTM zone 32N")
+   :title: Reproject a GeoTIFF file to CRS EPSG:32632 ("WGS 84 / UTM zone 32N") and adding a metadata item
 
    .. code-block:: bash
 
-        $ gdal raster pipeline --progress ! read in.tif ! reproject --dst-crs=EPSG:32632 ! write out.tif --overwrite
+        $ gdal raster pipeline --progress ! read in.tif ! reproject --dst-crs=EPSG:32632 ! edit --metadata AUTHOR=EvenR ! write out.tif --overwrite

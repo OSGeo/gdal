@@ -181,7 +181,7 @@ class GNMNetworkShadow : public GDALMajorObjectShadow
         %newobject GetFeatureByGlobalFID;
         OGRFeatureShadow *GetFeatureByGlobalFID (GNMGFID GFID)
         {
-            return GNMGetFeatureByGlobalFID(self, GFID);
+            return (OGRFeatureShadow*)GNMGetFeatureByGlobalFID(self, GFID);
         }
 
         %newobject GetPath;
@@ -192,7 +192,7 @@ class GNMNetworkShadow : public GDALMajorObjectShadow
                                  GNMGraphAlgorithmType eAlgorithm,
                                  char **options = 0)
         {
-            return GNMGetPath(self, nStartFID, nEndFID, eAlgorithm, options);
+            return (OGRLayerShadow*)GNMGetPath(self, nStartFID, nEndFID, eAlgorithm, options);
         }
 
         CPLErr DisconnectAll() {

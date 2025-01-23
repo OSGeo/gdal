@@ -39,7 +39,7 @@ OGRLVBAGLayer::OGRLVBAGLayer(const char *pszFilename, OGRLayerPool *poPoolIn,
       nAttributeElementDepth{0},
       eAddressRefState{AddressRefState::ADDRESS_PRIMARY}, bCollectData{false}
 {
-    SetDescription(CPLGetBasename(pszFilename));
+    SetDescription(CPLGetBasenameSafe(pszFilename).c_str());
 
     poFeatureDefn->Reference();
 }

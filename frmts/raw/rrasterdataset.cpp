@@ -918,7 +918,7 @@ int RRASTERDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
     if (poOpenInfo->nHeaderBytes < 40 || poOpenInfo->fpL == nullptr ||
-        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "grd"))
+        !poOpenInfo->IsExtensionEqualToCI("grd"))
     {
         return FALSE;
     }
@@ -1176,25 +1176,25 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    CPLString osDirname(CPLGetDirname(poOpenInfo->pszFilename));
-    CPLString osBasename(CPLGetBasename(poOpenInfo->pszFilename));
-    CPLString osGRDExtension(CPLGetExtension(poOpenInfo->pszFilename));
+    CPLString osDirname(CPLGetDirnameSafe(poOpenInfo->pszFilename));
+    CPLString osBasename(CPLGetBasenameSafe(poOpenInfo->pszFilename));
+    CPLString osGRDExtension(poOpenInfo->osExtension);
     CPLString osGRIExtension((osGRDExtension[0] == 'g') ? "gri" : "GRI");
     char **papszSiblings = poOpenInfo->GetSiblingFiles();
     if (papszSiblings)
     {
-        int iFile =
-            CSLFindString(papszSiblings,
-                          CPLFormFilename(nullptr, osBasename, osGRIExtension));
+        int iFile = CSLFindString(
+            papszSiblings,
+            CPLFormFilenameSafe(nullptr, osBasename, osGRIExtension).c_str());
         if (iFile < 0)
             return nullptr;
         poDS->m_osGriFilename =
-            CPLFormFilename(osDirname, papszSiblings[iFile], nullptr);
+            CPLFormFilenameSafe(osDirname, papszSiblings[iFile], nullptr);
     }
     else
     {
         poDS->m_osGriFilename =
-            CPLFormFilename(osDirname, osBasename, osGRIExtension);
+            CPLFormFilenameSafe(osDirname, osBasename, osGRIExtension);
     }
 
     VSILFILE *fpImage =
@@ -1420,7 +1420,7 @@ GDALDataset *RRASTERDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    CPLString osGRDExtension(CPLGetExtension(pszFilename));
+    CPLString osGRDExtension(CPLGetExtensionSafe(pszFilename));
     if (!EQUAL(osGRDExtension, "grd"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1442,7 +1442,7 @@ GDALDataset *RRASTERDataset::Create(const char *pszFilename, int nXSize,
     const std::string osGRIExtension((osGRDExtension[0] == 'g') ? "gri"
                                                                 : "GRI");
     const std::string osGriFilename(
-        CPLResetExtension(pszFilename, osGRIExtension.c_str()));
+        CPLResetExtensionSafe(pszFilename, osGRIExtension.c_str()));
 
     // Try to create the file.
     VSILFILE *fpImage = VSIFOpenL(osGriFilename.c_str(), "wb+");

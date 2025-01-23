@@ -32,7 +32,7 @@ int OGRVFKDriverIdentify(GDALOpenInfo *poOpenInfo)
        VFK driver, the real check is done by VFKReaderSQLite */
     if (poOpenInfo->nHeaderBytes >= 100 &&
         STARTS_WITH((const char *)poOpenInfo->pabyHeader, "SQLite format 3") &&
-        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "gpkg"))
+        !poOpenInfo->IsExtensionEqualToCI("gpkg"))
     {
         // The driver is not ready for virtual file systems
         if (STARTS_WITH(poOpenInfo->pszFilename, "/vsi"))

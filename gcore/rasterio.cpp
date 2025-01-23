@@ -51,6 +51,9 @@
 
 #ifdef HAVE_SSSE3_AT_COMPILE_TIME
 #include "rasterio_ssse3.h"
+#ifdef __SSSE3__
+#include <tmmintrin.h>
+#endif
 #endif
 
 static void GDALFastCopyByte(const GByte *CPL_RESTRICT pSrcData,
@@ -161,8 +164,8 @@ static bool DownsamplingIntegerXFactor(
         else
         {
             // Type to type conversion ...
-            GDALCopyWords(pabySrcData, eDataType, nIncSrcOffset, pabyDstData,
-                          eBufType, nPixelSpace, std::max(1, nIters));
+            GDALCopyWords64(pabySrcData, eDataType, nIncSrcOffset, pabyDstData,
+                            eBufType, nPixelSpace, std::max(1, nIters));
             if (nIters > 1)
             {
                 pabySrcData +=
@@ -330,18 +333,18 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 // Type to type conversion.
 
                 if (eRWFlag == GF_Read)
-                    GDALCopyWords(
+                    GDALCopyWords64(
                         pabySrcBlock + nSrcByteOffset, eDataType, nBandDataSize,
                         static_cast<GByte *>(pData) +
                             static_cast<GPtrDiff_t>(iBufYOff) * nLineSpace,
                         eBufType, static_cast<int>(nPixelSpace), nBufXSize);
                 else
-                    GDALCopyWords(static_cast<GByte *>(pData) +
-                                      static_cast<GPtrDiff_t>(iBufYOff) *
-                                          nLineSpace,
-                                  eBufType, static_cast<int>(nPixelSpace),
-                                  pabySrcBlock + nSrcByteOffset, eDataType,
-                                  nBandDataSize, nBufXSize);
+                    GDALCopyWords64(static_cast<GByte *>(pData) +
+                                        static_cast<GPtrDiff_t>(iBufYOff) *
+                                            nLineSpace,
+                                    eBufType, static_cast<int>(nPixelSpace),
+                                    pabySrcBlock + nSrcByteOffset, eDataType,
+                                    nBandDataSize, nBufXSize);
             }
 
             if (psExtraArg->pfnProgress != nullptr &&
@@ -527,7 +530,7 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     {
                         /* type to type conversion */
                         if (eRWFlag == GF_Read)
-                            GDALCopyWords(
+                            GDALCopyWords64(
                                 pabySrcBlock + iSrcOffset, eDataType,
                                 nBandDataSize,
                                 static_cast<GByte *>(pData) + iBufOffset +
@@ -535,7 +538,7 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 eBufType, static_cast<int>(nPixelSpace),
                                 nXSpan);
                         else
-                            GDALCopyWords(
+                            GDALCopyWords64(
                                 static_cast<GByte *>(pData) + iBufOffset +
                                     static_cast<GPtrDiff_t>(k) * nLineSpace,
                                 eBufType, static_cast<int>(nPixelSpace),
@@ -713,9 +716,9 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     /* type to type conversion ... ouch, this is expensive way
                     of handling single words */
 
-                    GDALCopyWords(static_cast<GByte *>(pData) + iBufOffset,
-                                  eBufType, 0, pabyDstBlock + iDstOffset,
-                                  eDataType, 0, 1);
+                    GDALCopyWords64(static_cast<GByte *>(pData) + iBufOffset,
+                                    eBufType, 0, pabyDstBlock + iDstOffset,
+                                    eDataType, 0, 1);
                 }
             }
 
@@ -925,9 +928,10 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                         // Type to type conversion ...
                         GPtrDiff_t iSrcOffset =
                             (nDiffX + iSrcOffsetCst) * nBandDataSize;
-                        GDALCopyWords(pabySrcBlock + iSrcOffset, eDataType, 0,
-                                      static_cast<GByte *>(pData) + iBufOffset,
-                                      eBufType, 0, 1);
+                        GDALCopyWords64(pabySrcBlock + iSrcOffset, eDataType, 0,
+                                        static_cast<GByte *>(pData) +
+                                            iBufOffset,
+                                        eBufType, 0, 1);
                     }
 
                     iBufOffset += static_cast<int>(nPixelSpace);
@@ -1393,12 +1397,13 @@ CPLErr GDALRasterBand::RasterIOResampled(
                         {
                             for (int j = 0; j < nDstYCount; j++)
                             {
-                                GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
-                                              static_cast<GByte *>(pDataMem) +
-                                                  nLSMem * (j + nDstYOff) +
-                                                  nDstXOff * nPSMem,
-                                              eDTMem, static_cast<int>(nPSMem),
-                                              nDstXCount);
+                                GDALCopyWords64(&dfNoDataValue, GDT_Float64, 0,
+                                                static_cast<GByte *>(pDataMem) +
+                                                    nLSMem * (j + nDstYOff) +
+                                                    nDstXOff * nPSMem,
+                                                eDTMem,
+                                                static_cast<int>(nPSMem),
+                                                nDstXCount);
                             }
                             bSkipResample = true;
                         }
@@ -1856,7 +1861,7 @@ CPLErr GDALDataset::RasterIOResampled(
                             {
                                 for (int j = 0; j < nDstYCount; j++)
                                 {
-                                    GDALCopyWords(
+                                    GDALCopyWords64(
                                         abyZero, GDT_Byte, 0,
                                         static_cast<GByte *>(pData) +
                                             iBand * nBandSpace +
@@ -2062,7 +2067,6 @@ void CPL_STDCALL GDALSwapWords(void *pData, int nWordSize, int nWordCount,
 
         case 8:
             CPLAssert(nWordSkip >= 8 || nWordCount == 1);
-#ifdef CPL_HAS_GINT64
             if (CPL_IS_ALIGNED(pabyData, 8) && (nWordSkip % 8) == 0)
             {
                 for (int i = 0; i < nWordCount; i++)
@@ -2073,7 +2077,6 @@ void CPL_STDCALL GDALSwapWords(void *pData, int nWordSize, int nWordCount,
                 }
             }
             else
-#endif
             {
                 for (int i = 0; i < nWordCount; i++)
                 {
@@ -2955,7 +2958,7 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
      */
     // Let the general translation case do the necessary conversions
     // on the first destination element.
-    GDALCopyWords(pSrcData, eSrcType, 0, pDstData, eDstType, 0, 1);
+    GDALCopyWords64(pSrcData, eSrcType, 0, pDstData, eDstType, 0, 1);
 
     // Now copy the first element to the nWordCount - 1 following destination
     // elements.
@@ -4313,15 +4316,15 @@ CPLErr GDALDataset::BlockBasedRasterIO(
                        of handling single words */
 
                     if (eRWFlag == GF_Read)
-                        GDALCopyWords(pabySrcBlock + iSrcOffset, eDataType, 0,
-                                      static_cast<GByte *>(pData) +
-                                          iBandBufOffset,
-                                      eBufType, 0, 1);
+                        GDALCopyWords64(pabySrcBlock + iSrcOffset, eDataType, 0,
+                                        static_cast<GByte *>(pData) +
+                                            iBandBufOffset,
+                                        eBufType, 0, 1);
                     else
-                        GDALCopyWords(static_cast<const GByte *>(pData) +
-                                          iBandBufOffset,
-                                      eBufType, 0, pabySrcBlock + iSrcOffset,
-                                      eDataType, 0, 1);
+                        GDALCopyWords64(static_cast<const GByte *>(pData) +
+                                            iBandBufOffset,
+                                        eBufType, 0, pabySrcBlock + iSrcOffset,
+                                        eDataType, 0, 1);
                 }
             }
 
@@ -5586,7 +5589,7 @@ void GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
 {
     if (eSourceDT == eDestDT)
     {
-        if (eSourceDT == GDT_Byte)
+        if (eSourceDT == GDT_Byte || eSourceDT == GDT_Int8)
         {
             if (nComponents == 3)
             {
@@ -5671,5 +5674,674 @@ void GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
                             iComp * nSourceDTSize,
                         eSourceDT, nComponents * nSourceDTSize,
                         ppDestBuffer[iComp], eDestDT, nDestDTSize, nIters);
+    }
+}
+
+/************************************************************************/
+/*                    GDALTranspose2DSingleToSingle()                   */
+/************************************************************************/
+/**
+ * Transpose a 2D array of non-complex values, in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of height = nSrcHeight and width = nSrcWidth.
+ * @param pDst Destination transposed array of height = nSrcWidth and width = nSrcHeight.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ */
+
+template <class DST, class SRC>
+void GDALTranspose2DSingleToSingle(const SRC *CPL_RESTRICT pSrc,
+                                   DST *CPL_RESTRICT pDst, size_t nSrcWidth,
+                                   size_t nSrcHeight)
+{
+    constexpr size_t blocksize = 32;
+    for (size_t i = 0; i < nSrcHeight; i += blocksize)
+    {
+        const size_t max_k = std::min(i + blocksize, nSrcHeight);
+        for (size_t j = 0; j < nSrcWidth; j += blocksize)
+        {
+            // transpose the block beginning at [i,j]
+            const size_t max_l = std::min(j + blocksize, nSrcWidth);
+            for (size_t k = i; k < max_k; ++k)
+            {
+                for (size_t l = j; l < max_l; ++l)
+                {
+                    GDALCopyWord(pSrc[l + k * nSrcWidth],
+                                 pDst[k + l * nSrcHeight]);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                   GDALTranspose2DComplexToComplex()                  */
+/************************************************************************/
+/**
+ * Transpose a 2D array of complex values into an array of complex values,
+ * in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of height = nSrcHeight and width = nSrcWidth.
+ * @param pDst Destination transposed array of height = nSrcWidth and width = nSrcHeight.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ */
+template <class DST, class SRC>
+void GDALTranspose2DComplexToComplex(const SRC *CPL_RESTRICT pSrc,
+                                     DST *CPL_RESTRICT pDst, size_t nSrcWidth,
+                                     size_t nSrcHeight)
+{
+    constexpr size_t blocksize = 32;
+    for (size_t i = 0; i < nSrcHeight; i += blocksize)
+    {
+        const size_t max_k = std::min(i + blocksize, nSrcHeight);
+        for (size_t j = 0; j < nSrcWidth; j += blocksize)
+        {
+            // transpose the block beginning at [i,j]
+            const size_t max_l = std::min(j + blocksize, nSrcWidth);
+            for (size_t k = i; k < max_k; ++k)
+            {
+                for (size_t l = j; l < max_l; ++l)
+                {
+                    GDALCopyWord(pSrc[2 * (l + k * nSrcWidth) + 0],
+                                 pDst[2 * (k + l * nSrcHeight) + 0]);
+                    GDALCopyWord(pSrc[2 * (l + k * nSrcWidth) + 1],
+                                 pDst[2 * (k + l * nSrcHeight) + 1]);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                   GDALTranspose2DComplexToSingle()                  */
+/************************************************************************/
+/**
+ * Transpose a 2D array of complex values into an array of non-complex values,
+ * in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of height = nSrcHeight and width = nSrcWidth.
+ * @param pDst Destination transposed array of height = nSrcWidth and width = nSrcHeight.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ */
+template <class DST, class SRC>
+void GDALTranspose2DComplexToSingle(const SRC *CPL_RESTRICT pSrc,
+                                    DST *CPL_RESTRICT pDst, size_t nSrcWidth,
+                                    size_t nSrcHeight)
+{
+    constexpr size_t blocksize = 32;
+    for (size_t i = 0; i < nSrcHeight; i += blocksize)
+    {
+        const size_t max_k = std::min(i + blocksize, nSrcHeight);
+        for (size_t j = 0; j < nSrcWidth; j += blocksize)
+        {
+            // transpose the block beginning at [i,j]
+            const size_t max_l = std::min(j + blocksize, nSrcWidth);
+            for (size_t k = i; k < max_k; ++k)
+            {
+                for (size_t l = j; l < max_l; ++l)
+                {
+                    GDALCopyWord(pSrc[2 * (l + k * nSrcWidth) + 0],
+                                 pDst[k + l * nSrcHeight]);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                   GDALTranspose2DSingleToComplex()                  */
+/************************************************************************/
+/**
+ * Transpose a 2D array of non-complex values into an array of complex values,
+ * in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of height = nSrcHeight and width = nSrcWidth.
+ * @param pDst Destination transposed array of height = nSrcWidth and width = nSrcHeight.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ */
+template <class DST, class SRC>
+void GDALTranspose2DSingleToComplex(const SRC *CPL_RESTRICT pSrc,
+                                    DST *CPL_RESTRICT pDst, size_t nSrcWidth,
+                                    size_t nSrcHeight)
+{
+    constexpr size_t blocksize = 32;
+    for (size_t i = 0; i < nSrcHeight; i += blocksize)
+    {
+        const size_t max_k = std::min(i + blocksize, nSrcHeight);
+        for (size_t j = 0; j < nSrcWidth; j += blocksize)
+        {
+            // transpose the block beginning at [i,j]
+            const size_t max_l = std::min(j + blocksize, nSrcWidth);
+            for (size_t k = i; k < max_k; ++k)
+            {
+                for (size_t l = j; l < max_l; ++l)
+                {
+                    GDALCopyWord(pSrc[l + k * nSrcWidth],
+                                 pDst[2 * (k + l * nSrcHeight) + 0]);
+                    pDst[2 * (k + l * nSrcHeight) + 1] = 0;
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                        GDALTranspose2D()                             */
+/************************************************************************/
+
+template <class DST, bool DST_IS_COMPLEX>
+static void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, DST *pDst,
+                            size_t nSrcWidth, size_t nSrcHeight)
+{
+#define CALL_GDALTranspose2D_internal(SRC_TYPE)                                \
+    do                                                                         \
+    {                                                                          \
+        if constexpr (DST_IS_COMPLEX)                                          \
+        {                                                                      \
+            GDALTranspose2DSingleToComplex(                                    \
+                static_cast<const SRC_TYPE *>(pSrc), pDst, nSrcWidth,          \
+                nSrcHeight);                                                   \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            GDALTranspose2DSingleToSingle(static_cast<const SRC_TYPE *>(pSrc), \
+                                          pDst, nSrcWidth, nSrcHeight);        \
+        }                                                                      \
+    } while (0)
+
+#define CALL_GDALTranspose2DComplex_internal(SRC_TYPE)                         \
+    do                                                                         \
+    {                                                                          \
+        if constexpr (DST_IS_COMPLEX)                                          \
+        {                                                                      \
+            GDALTranspose2DComplexToComplex(                                   \
+                static_cast<const SRC_TYPE *>(pSrc), pDst, nSrcWidth,          \
+                nSrcHeight);                                                   \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            GDALTranspose2DComplexToSingle(                                    \
+                static_cast<const SRC_TYPE *>(pSrc), pDst, nSrcWidth,          \
+                nSrcHeight);                                                   \
+        }                                                                      \
+    } while (0)
+
+    // clang-format off
+    switch (eSrcType)
+    {
+        case GDT_Byte:     CALL_GDALTranspose2D_internal(uint8_t); break;
+        case GDT_Int8:     CALL_GDALTranspose2D_internal(int8_t); break;
+        case GDT_UInt16:   CALL_GDALTranspose2D_internal(uint16_t); break;
+        case GDT_Int16:    CALL_GDALTranspose2D_internal(int16_t); break;
+        case GDT_UInt32:   CALL_GDALTranspose2D_internal(uint32_t); break;
+        case GDT_Int32:    CALL_GDALTranspose2D_internal(int32_t); break;
+        case GDT_UInt64:   CALL_GDALTranspose2D_internal(uint64_t); break;
+        case GDT_Int64:    CALL_GDALTranspose2D_internal(int64_t); break;
+        case GDT_Float32:  CALL_GDALTranspose2D_internal(float); break;
+        case GDT_Float64:  CALL_GDALTranspose2D_internal(double); break;
+        case GDT_CInt16:   CALL_GDALTranspose2DComplex_internal(int16_t); break;
+        case GDT_CInt32:   CALL_GDALTranspose2DComplex_internal(int32_t); break;
+        case GDT_CFloat32: CALL_GDALTranspose2DComplex_internal(float); break;
+        case GDT_CFloat64: CALL_GDALTranspose2DComplex_internal(double); break;
+        case GDT_Unknown:
+        case GDT_TypeCount:
+            break;
+    }
+        // clang-format on
+
+#undef CALL_GDALTranspose2D_internal
+#undef CALL_GDALTranspose2DComplex_internal
+}
+
+/************************************************************************/
+/*                      GDALInterleave2Byte()                           */
+/************************************************************************/
+
+#if defined(HAVE_SSE2) &&                                                      \
+    (!defined(__GNUC__) || defined(__INTEL_CLANG_COMPILER))
+
+// ICC autovectorizer doesn't do a good job at generating good SSE code,
+// at least with icx 2024.0.2.20231213, but it nicely unrolls the below loop.
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave2Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+    size_t i = 0;
+    constexpr size_t VALS_PER_ITER = 16;
+    for (i = 0; i + VALS_PER_ITER <= nIters; i += VALS_PER_ITER)
+    {
+        __m128i xmm0 =
+            _mm_loadu_si128(reinterpret_cast<__m128i const *>(pSrc + i));
+        __m128i xmm1 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + nIters));
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(pDst + 2 * i),
+                         _mm_unpacklo_epi8(xmm0, xmm1));
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 2 * i + VALS_PER_ITER),
+            _mm_unpackhi_epi8(xmm0, xmm1));
+    }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
+    for (; i < nIters; ++i)
+    {
+        pDst[2 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[2 * i + 1] = pSrc[i + 1 * nIters];
+    }
+}
+
+#else
+
+#if defined(__GNUC__) && !defined(__clang__)
+__attribute__((optimize("tree-vectorize")))
+#endif
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+// clang++ -O2 -fsanitize=undefined fails to vectorize, ignore that warning
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpass-failed"
+#endif
+static void
+GDALInterleave2Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+#pragma clang loop vectorize(enable)
+#endif
+    for (size_t i = 0; i < nIters; ++i)
+    {
+        pDst[2 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[2 * i + 1] = pSrc[i + 1 * nIters];
+    }
+}
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+#pragma clang diagnostic pop
+#endif
+
+#endif
+
+/************************************************************************/
+/*                      GDALInterleave4Byte()                           */
+/************************************************************************/
+
+#if defined(HAVE_SSE2) &&                                                      \
+    (!defined(__GNUC__) || defined(__INTEL_CLANG_COMPILER))
+
+// ICC autovectorizer doesn't do a good job at generating good SSE code,
+// at least with icx 2024.0.2.20231213, but it nicely unrolls the below loop.
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave4Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+    size_t i = 0;
+    constexpr size_t VALS_PER_ITER = 16;
+    for (i = 0; i + VALS_PER_ITER <= nIters; i += VALS_PER_ITER)
+    {
+        __m128i xmm0 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 0 * nIters));
+        __m128i xmm1 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 1 * nIters));
+        __m128i xmm2 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 2 * nIters));
+        __m128i xmm3 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 3 * nIters));
+        auto tmp0 = _mm_unpacklo_epi8(
+            xmm0,
+            xmm1);  // (xmm0_0, xmm1_0, xmm0_1, xmm1_1, xmm0_2, xmm1_2, ...)
+        auto tmp1 = _mm_unpackhi_epi8(
+            xmm0,
+            xmm1);  // (xmm0_8, xmm1_8, xmm0_9, xmm1_9, xmm0_10, xmm1_10, ...)
+        auto tmp2 = _mm_unpacklo_epi8(
+            xmm2,
+            xmm3);  // (xmm2_0, xmm3_0, xmm2_1, xmm3_1, xmm2_2, xmm3_2, ...)
+        auto tmp3 = _mm_unpackhi_epi8(
+            xmm2,
+            xmm3);  // (xmm2_8, xmm3_8, xmm2_9, xmm3_9, xmm2_10, xmm3_10, ...)
+        auto tmp2_0 = _mm_unpacklo_epi16(
+            tmp0,
+            tmp2);  // (xmm0_0, xmm1_0, xmm2_0, xmm3_0, xmm0_1, xmm1_1, xmm2_1, xmm3_1, ...)
+        auto tmp2_1 = _mm_unpackhi_epi16(tmp0, tmp2);
+        auto tmp2_2 = _mm_unpacklo_epi16(tmp1, tmp3);
+        auto tmp2_3 = _mm_unpackhi_epi16(tmp1, tmp3);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 0 * VALS_PER_ITER),
+            tmp2_0);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 1 * VALS_PER_ITER),
+            tmp2_1);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 2 * VALS_PER_ITER),
+            tmp2_2);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 3 * VALS_PER_ITER),
+            tmp2_3);
+    }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
+    for (; i < nIters; ++i)
+    {
+        pDst[4 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[4 * i + 1] = pSrc[i + 1 * nIters];
+        pDst[4 * i + 2] = pSrc[i + 2 * nIters];
+        pDst[4 * i + 3] = pSrc[i + 3 * nIters];
+    }
+}
+
+#else
+
+#if defined(__GNUC__) && !defined(__clang__)
+__attribute__((optimize("tree-vectorize")))
+#endif
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+// clang++ -O2 -fsanitize=undefined fails to vectorize, ignore that warning
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpass-failed"
+#endif
+static void
+GDALInterleave4Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+#pragma clang loop vectorize(enable)
+#endif
+    for (size_t i = 0; i < nIters; ++i)
+    {
+        pDst[4 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[4 * i + 1] = pSrc[i + 1 * nIters];
+        pDst[4 * i + 2] = pSrc[i + 2 * nIters];
+        pDst[4 * i + 3] = pSrc[i + 3 * nIters];
+    }
+}
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+#pragma clang diagnostic pop
+#endif
+
+#endif
+
+/************************************************************************/
+/*                        GDALTranspose2D()                             */
+/************************************************************************/
+
+/**
+ * Transpose a 2D array in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of width = nSrcWidth and height = nSrcHeight.
+ * @param eSrcType Data type of pSrc.
+ * @param pDst Destination transposed array of width = nSrcHeight and height = nSrcWidth.
+ * @param eDstType Data type of pDst.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ * @since GDAL 3.11
+ */
+
+void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, void *pDst,
+                     GDALDataType eDstType, size_t nSrcWidth, size_t nSrcHeight)
+{
+    if (eSrcType == eDstType && (eSrcType == GDT_Byte || eSrcType == GDT_Int8))
+    {
+        if (nSrcHeight == 2)
+        {
+            GDALInterleave2Byte(static_cast<const uint8_t *>(pSrc),
+                                static_cast<uint8_t *>(pDst), nSrcWidth);
+            return;
+        }
+        if (nSrcHeight == 4)
+        {
+            GDALInterleave4Byte(static_cast<const uint8_t *>(pSrc),
+                                static_cast<uint8_t *>(pDst), nSrcWidth);
+            return;
+        }
+#if (defined(HAVE_SSSE3_AT_COMPILE_TIME) &&                                    \
+     (defined(__x86_64) || defined(_M_X64)))
+        if (CPLHaveRuntimeSSSE3())
+        {
+            GDALTranspose2D_Byte_SSSE3(static_cast<const uint8_t *>(pSrc),
+                                       static_cast<uint8_t *>(pDst), nSrcWidth,
+                                       nSrcHeight);
+            return;
+        }
+#elif defined(USE_NEON_OPTIMIZATIONS)
+        {
+            GDALTranspose2D_Byte_SSSE3(static_cast<const uint8_t *>(pSrc),
+                                       static_cast<uint8_t *>(pDst), nSrcWidth,
+                                       nSrcHeight);
+            return;
+        }
+#endif
+    }
+
+#define CALL_GDALTranspose2D_internal(DST_TYPE, DST_IS_COMPLEX)                \
+    GDALTranspose2D<DST_TYPE, DST_IS_COMPLEX>(                                 \
+        pSrc, eSrcType, static_cast<DST_TYPE *>(pDst), nSrcWidth, nSrcHeight)
+
+    // clang-format off
+    switch (eDstType)
+    {
+        case GDT_Byte:     CALL_GDALTranspose2D_internal(uint8_t, false); break;
+        case GDT_Int8:     CALL_GDALTranspose2D_internal(int8_t, false); break;
+        case GDT_UInt16:   CALL_GDALTranspose2D_internal(uint16_t, false); break;
+        case GDT_Int16:    CALL_GDALTranspose2D_internal(int16_t, false); break;
+        case GDT_UInt32:   CALL_GDALTranspose2D_internal(uint32_t, false); break;
+        case GDT_Int32:    CALL_GDALTranspose2D_internal(int32_t, false); break;
+        case GDT_UInt64:   CALL_GDALTranspose2D_internal(uint64_t, false); break;
+        case GDT_Int64:    CALL_GDALTranspose2D_internal(int64_t, false); break;
+        case GDT_Float32:  CALL_GDALTranspose2D_internal(float, false); break;
+        case GDT_Float64:  CALL_GDALTranspose2D_internal(double, false); break;
+        case GDT_CInt16:   CALL_GDALTranspose2D_internal(int16_t, true); break;
+        case GDT_CInt32:   CALL_GDALTranspose2D_internal(int32_t, true); break;
+        case GDT_CFloat32: CALL_GDALTranspose2D_internal(float, true); break;
+        case GDT_CFloat64: CALL_GDALTranspose2D_internal(double, true); break;
+        case GDT_Unknown:
+        case GDT_TypeCount:
+            break;
+    }
+        // clang-format on
+
+#undef CALL_GDALTranspose2D_internal
+}
+
+/************************************************************************/
+/*                     ExtractBitAndConvertTo255()                      */
+/************************************************************************/
+
+#if defined(__GNUC__) || defined(_MSC_VER)
+// Signedness of char implementation dependent, so be explicit.
+// Assumes 2-complement integer types and sign extension of right shifting
+// GCC guarantees such:
+// https://gcc.gnu.org/onlinedocs/gcc/Integers-implementation.html#Integers-implementation
+static inline GByte ExtractBitAndConvertTo255(GByte byVal, int nBit)
+{
+    return static_cast<GByte>(static_cast<signed char>(byVal << (7 - nBit)) >>
+                              7);
+}
+#else
+// Portable way
+static inline GByte ExtractBitAndConvertTo255(GByte byVal, int nBit)
+{
+    return (byVal & (1 << nBit)) ? 255 : 0;
+}
+#endif
+
+/************************************************************************/
+/*                   ExpandEightPackedBitsToByteAt255()                 */
+/************************************************************************/
+
+static inline void ExpandEightPackedBitsToByteAt255(GByte byVal,
+                                                    GByte abyOutput[8])
+{
+    abyOutput[0] = ExtractBitAndConvertTo255(byVal, 7);
+    abyOutput[1] = ExtractBitAndConvertTo255(byVal, 6);
+    abyOutput[2] = ExtractBitAndConvertTo255(byVal, 5);
+    abyOutput[3] = ExtractBitAndConvertTo255(byVal, 4);
+    abyOutput[4] = ExtractBitAndConvertTo255(byVal, 3);
+    abyOutput[5] = ExtractBitAndConvertTo255(byVal, 2);
+    abyOutput[6] = ExtractBitAndConvertTo255(byVal, 1);
+    abyOutput[7] = ExtractBitAndConvertTo255(byVal, 0);
+}
+
+/************************************************************************/
+/*                GDALExpandPackedBitsToByteAt0Or255()                  */
+/************************************************************************/
+
+/** Expand packed-bits (ordered from most-significant bit to least one)
+  into a byte each, where a bit at 0 is expanded to a byte at 0, and a bit
+  at 1 to a byte at 255.
+
+ The function does (in a possibly more optimized way) the following:
+ \code{.cpp}
+ for (size_t i = 0; i < nInputBits; ++i )
+ {
+     pabyOutput[i] = (pabyInput[i / 8] & (1 << (7 - (i % 8)))) ? 255 : 0;
+ }
+ \endcode
+
+ @param pabyInput Input array of (nInputBits + 7) / 8 bytes.
+ @param pabyOutput Output array of nInputBits bytes.
+ @param nInputBits Number of valid bits in pabyInput.
+
+ @since 3.11
+*/
+
+void GDALExpandPackedBitsToByteAt0Or255(const GByte *CPL_RESTRICT pabyInput,
+                                        GByte *CPL_RESTRICT pabyOutput,
+                                        size_t nInputBits)
+{
+    const size_t nInputWholeBytes = nInputBits / 8;
+    size_t iByte = 0;
+
+#ifdef HAVE_SSE2
+    // Mask to isolate each bit
+    const __m128i bit_mask = _mm_set_epi8(1, 2, 4, 8, 16, 32, 64, -128, 1, 2, 4,
+                                          8, 16, 32, 64, -128);
+    const __m128i zero = _mm_setzero_si128();
+    const __m128i all_ones = _mm_set1_epi8(-1);
+#ifdef __SSSE3__
+    const __m128i dispatch_two_bytes =
+        _mm_set_epi8(1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0);
+#endif
+    constexpr size_t SSE_REG_SIZE = sizeof(bit_mask);
+    for (; iByte + SSE_REG_SIZE <= nInputWholeBytes; iByte += SSE_REG_SIZE)
+    {
+        __m128i reg_ori = _mm_loadu_si128(
+            reinterpret_cast<const __m128i *>(pabyInput + iByte));
+
+        constexpr int NUM_PROCESSED_BYTES_PER_REG = 2;
+        for (size_t k = 0; k < SSE_REG_SIZE / NUM_PROCESSED_BYTES_PER_REG; ++k)
+        {
+            // Given reg_ori = (A, B, ... 14 other bytes ...),
+            // expand to (A, A, A, A, A, A, A, A, B, B, B, B, B, B, B, B)
+#ifdef __SSSE3__
+            __m128i reg = _mm_shuffle_epi8(reg_ori, dispatch_two_bytes);
+#else
+            __m128i reg = _mm_unpacklo_epi8(reg_ori, reg_ori);
+            reg = _mm_unpacklo_epi16(reg, reg);
+            reg = _mm_unpacklo_epi32(reg, reg);
+#endif
+
+            // Test if bits of interest are set
+            reg = _mm_and_si128(reg, bit_mask);
+
+            // Now test if those bits are set, by comparing to zero. So the
+            // result will be that bytes where bits are set will be at 0, and
+            // ones where they are cleared will be at 0xFF. So the inverse of
+            // the end result we want!
+            reg = _mm_cmpeq_epi8(reg, zero);
+
+            // Invert the result
+            reg = _mm_andnot_si128(reg, all_ones);
+
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pabyOutput), reg);
+
+            pabyOutput += SSE_REG_SIZE;
+
+            // Right-shift of 2 bytes
+            reg_ori = _mm_bsrli_si128(reg_ori, NUM_PROCESSED_BYTES_PER_REG);
+        }
+    }
+
+#endif  // HAVE_SSE2
+
+    for (; iByte < nInputWholeBytes; ++iByte)
+    {
+        ExpandEightPackedBitsToByteAt255(pabyInput[iByte], pabyOutput);
+        pabyOutput += 8;
+    }
+    for (int iBit = 0; iBit < static_cast<int>(nInputBits % 8); ++iBit)
+    {
+        *pabyOutput = ExtractBitAndConvertTo255(pabyInput[iByte], 7 - iBit);
+        ++pabyOutput;
+    }
+}
+
+/************************************************************************/
+/*                   ExpandEightPackedBitsToByteAt1()                   */
+/************************************************************************/
+
+static inline void ExpandEightPackedBitsToByteAt1(GByte byVal,
+                                                  GByte abyOutput[8])
+{
+    abyOutput[0] = (byVal >> 7) & 0x1;
+    abyOutput[1] = (byVal >> 6) & 0x1;
+    abyOutput[2] = (byVal >> 5) & 0x1;
+    abyOutput[3] = (byVal >> 4) & 0x1;
+    abyOutput[4] = (byVal >> 3) & 0x1;
+    abyOutput[5] = (byVal >> 2) & 0x1;
+    abyOutput[6] = (byVal >> 1) & 0x1;
+    abyOutput[7] = (byVal >> 0) & 0x1;
+}
+
+/************************************************************************/
+/*                GDALExpandPackedBitsToByteAt0Or1()                    */
+/************************************************************************/
+
+/** Expand packed-bits (ordered from most-significant bit to least one)
+  into a byte each, where a bit at 0 is expanded to a byte at 0, and a bit
+  at 1 to a byte at 1.
+
+ The function does (in a possibly more optimized way) the following:
+ \code{.cpp}
+ for (size_t i = 0; i < nInputBits; ++i )
+ {
+     pabyOutput[i] = (pabyInput[i / 8] & (1 << (7 - (i % 8)))) ? 1 : 0;
+ }
+ \endcode
+
+ @param pabyInput Input array of (nInputBits + 7) / 8 bytes.
+ @param pabyOutput Output array of nInputBits bytes.
+ @param nInputBits Number of valid bits in pabyInput.
+
+ @since 3.11
+*/
+
+void GDALExpandPackedBitsToByteAt0Or1(const GByte *CPL_RESTRICT pabyInput,
+                                      GByte *CPL_RESTRICT pabyOutput,
+                                      size_t nInputBits)
+{
+    const size_t nInputWholeBytes = nInputBits / 8;
+    size_t iByte = 0;
+    for (; iByte < nInputWholeBytes; ++iByte)
+    {
+        ExpandEightPackedBitsToByteAt1(pabyInput[iByte], pabyOutput);
+        pabyOutput += 8;
+    }
+    for (int iBit = 0; iBit < static_cast<int>(nInputBits % 8); ++iBit)
+    {
+        *pabyOutput = (pabyInput[iByte] >> (7 - iBit)) & 0x1;
+        ++pabyOutput;
     }
 }

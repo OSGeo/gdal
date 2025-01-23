@@ -3921,9 +3921,31 @@ bool OGRGeometryFactory::isTransformWithOptionsRegularTransform(
 /************************************************************************/
 
 /** Transform a geometry.
+ *
+ * This is an enhanced version of OGRGeometry::Transform().
+ *
+ * When reprojecting geometries from a Polar Stereographic projection or a
+ * projection naturally crossing the antimeridian (like UTM Zone 60) to a
+ * geographic CRS, it will cut geometries along the antimeridian. So a
+ * LineString might be returned as a MultiLineString.
+ *
+ * The WRAPDATELINE=YES option might be specified for circumstances to correct
+ * geometries that incorrectly go from a longitude on a side of the antimeridian
+ * to the other side, like a LINESTRING(-179 0,179 0) will be transformed to
+ * a MULTILINESTRING ((-179 0,-180 0),(180 0,179 0)). For that use case, hCT
+ * might be NULL.
+ *
+ * Supported options in papszOptions are:
+ * <ul>
+ * <li>WRAPDATELINE=YES</li>
+ * <li>DATELINEOFFSET=longitude_gap_in_degree. Defaults to 10.</li>
+ * </ul>
+ *
+ * This is the same as the C function OGR_GeomTransformer_Transform().
+ *
  * @param poSrcGeom source geometry
  * @param poCT coordinate transformation object, or NULL.
- * @param papszOptions options. Including WRAPDATELINE=YES and DATELINEOFFSET=.
+ * @param papszOptions NULL terminated list of options, or NULL.
  * @param cache Cache. May increase performance if persisted between invocations
  * @return (new) transformed geometry.
  */
@@ -4002,15 +4024,10 @@ OGRGeometry *OGRGeometryFactory::transformWithOptions(
         if (poDstGeom->getSpatialReference() &&
             !poDstGeom->getSpatialReference()->IsGeographic())
         {
-            static bool bHasWarned = false;
-            if (!bHasWarned)
-            {
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
-                    "WRAPDATELINE is without effect when reprojecting to a "
-                    "non-geographic CRS");
-                bHasWarned = true;
-            }
+            CPLErrorOnce(
+                CE_Warning, CPLE_AppDefined,
+                "WRAPDATELINE is without effect when reprojecting to a "
+                "non-geographic CRS");
             return poDstGeom.release();
         }
         // TODO and we should probably also test that the axis order + data axis
@@ -4112,14 +4129,16 @@ struct OGRGeomTransformer
  * a MULTILINESTRING ((-179 0,-180 0),(180 0,179 0)). For that use case, hCT
  * might be NULL.
  *
+ * Supported options in papszOptions are:
+ * <ul>
+ * <li>WRAPDATELINE=YES</li>
+ * <li>DATELINEOFFSET=longitude_gap_in_degree. Defaults to 10.</li>
+ * </ul>
+ *
+ * This is the same as the C++ method OGRGeometryFactory::transformWithOptions().
+
  * @param hCT Coordinate transformation object (will be cloned) or NULL.
  * @param papszOptions NULL terminated list of options, or NULL.
- *                     Supported options are:
- *                     <ul>
- *                         <li>WRAPDATELINE=YES</li>
- *                         <li>DATELINEOFFSET=longitude_gap_in_degree. Defaults
- * to 10.</li>
- *                     </ul>
  * @return transformer object to free with OGR_GeomTransformer_Destroy()
  * @since GDAL 3.1
  */
@@ -4173,13 +4192,37 @@ void OGR_GeomTransformer_Destroy(OGRGeomTransformerH hTransformer)
 }
 
 /************************************************************************/
-/*                       OGRGF_GetDefaultStepSize()                     */
+/*                OGRGeometryFactory::GetDefaultArcStepSize()           */
 /************************************************************************/
 
-static double OGRGF_GetDefaultStepSize()
+/** Return the default value of the angular step used when stroking curves
+ * as lines. Defaults to 4 degrees.
+ * Can be modified by setting the OGR_ARC_STEPSIZE configuration option.
+ * Valid values are in [1e-2, 180] degree range.
+ * @since 3.11
+ */
+
+/* static */
+double OGRGeometryFactory::GetDefaultArcStepSize()
 {
-    // coverity[tainted_data]
-    return CPLAtofM(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4"));
+    const double dfVal = CPLAtofM(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4"));
+    constexpr double MIN_VAL = 1e-2;
+    if (dfVal < MIN_VAL)
+    {
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
+                     "Too small value for OGR_ARC_STEPSIZE. Clamping it to %f",
+                     MIN_VAL);
+        return MIN_VAL;
+    }
+    constexpr double MAX_VAL = 180;
+    if (dfVal > MAX_VAL)
+    {
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
+                     "Too large value for OGR_ARC_STEPSIZE. Clamping it to %f",
+                     MAX_VAL);
+        return MAX_VAL;
+    }
+    return dfVal;
 }
 
 /************************************************************************/
@@ -4242,7 +4285,7 @@ OGRGeometry *OGRGeometryFactory::approximateArcAngles(
     // Support default arc step setting.
     if (dfMaxAngleStepSizeDegrees < 1e-6)
     {
-        dfMaxAngleStepSizeDegrees = OGRGF_GetDefaultStepSize();
+        dfMaxAngleStepSizeDegrees = OGRGeometryFactory::GetDefaultArcStepSize();
     }
 
     // Determine maximum interpolation gap. This is the largest straight-line
@@ -5435,7 +5478,7 @@ OGRLineString *OGRGeometryFactory::curveToLineString(
     // support default arc step setting.
     if (dfMaxAngleStepSizeDegrees < 1e-6)
     {
-        dfMaxAngleStepSizeDegrees = OGRGF_GetDefaultStepSize();
+        dfMaxAngleStepSizeDegrees = OGRGeometryFactory::GetDefaultArcStepSize();
     }
 
     double dfStep = dfMaxAngleStepSizeDegrees / 180 * M_PI;

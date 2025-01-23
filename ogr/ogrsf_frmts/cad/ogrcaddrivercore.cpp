@@ -25,7 +25,7 @@ static int OGRCADDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
 #if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "DWG"))
+    if (!poOpenInfo->IsExtensionEqualToCI("DWG"))
         return FALSE;
 #endif
     return poOpenInfo->nHeaderBytes >= 6 && poOpenInfo->pabyHeader[0] == 'A' &&

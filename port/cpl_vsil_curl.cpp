@@ -352,6 +352,7 @@ static std::string VSICurlGetURLFromFilename(
         }
 
         std::string osURL;
+        std::string osHeaders;
         for (int i = 0; papszTokens[i]; i++)
         {
             char *pszKey = nullptr;
@@ -433,6 +434,13 @@ static std::string VSICurlGetURLFromFilename(
                         *ppszPlanetaryComputerCollection = CPLStrdup(pszValue);
                     }
                 }
+                else if (STARTS_WITH(pszKey, "header."))
+                {
+                    osHeaders += (pszKey + strlen("header."));
+                    osHeaders += ':';
+                    osHeaders += pszValue;
+                    osHeaders += "\r\n";
+                }
                 else
                 {
                     CPLError(CE_Warning, CPLE_NotSupported,
@@ -441,6 +449,9 @@ static std::string VSICurlGetURLFromFilename(
             }
             CPLFree(pszKey);
         }
+
+        if (paosHTTPOptions && !osHeaders.empty())
+            paosHTTPOptions->SetNameValue("HEADERS", osHeaders.c_str());
 
         CSLDestroy(papszTokens);
         if (osURL.empty())
@@ -507,7 +518,7 @@ VSICurlHandle::~VSICurlHandle()
     if (!m_bCached)
     {
         poFS->InvalidateCachedData(m_pszURL);
-        poFS->InvalidateDirContent(CPLGetDirname(m_osFilename.c_str()));
+        poFS->InvalidateDirContent(CPLGetDirnameSafe(m_osFilename.c_str()));
     }
     CPLFree(m_pszURL);
 }
@@ -4274,11 +4285,11 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
                             cachedFileProp) &&
           cachedFileProp.eExists == EXIST_YES) &&
         strchr(CPLGetFilename(osFilename.c_str()), '.') != nullptr &&
-        !STARTS_WITH(CPLGetExtension(osFilename.c_str()), "zip") &&
+        !STARTS_WITH(CPLGetExtensionSafe(osFilename.c_str()).c_str(), "zip") &&
         !bSkipReadDir)
     {
         char **papszFileList = ReadDirInternal(
-            (std::string(CPLGetDirname(osFilename.c_str())) + '/').c_str(), 0,
+            (CPLGetDirnameSafe(osFilename.c_str()) + '/').c_str(), 0,
             &bGotFileList);
         const bool bFound =
             VSICurlIsFileInList(papszFileList,
@@ -5293,13 +5304,14 @@ int VSICurlFilesystemHandlerBase::Stat(const char *pszFilename,
         return -1;
     }
     else if (strchr(CPLGetFilename(osFilename.c_str()), '.') != nullptr &&
-             !STARTS_WITH_CI(CPLGetExtension(osFilename.c_str()), "zip") &&
+             !STARTS_WITH_CI(CPLGetExtensionSafe(osFilename.c_str()).c_str(),
+                             "zip") &&
              strstr(osFilename.c_str(), ".zip.") != nullptr &&
              strstr(osFilename.c_str(), ".ZIP.") != nullptr && !bSkipReadDir)
     {
         bool bGotFileList = false;
         char **papszFileList = ReadDirInternal(
-            CPLGetDirname(osFilename.c_str()), 0, &bGotFileList);
+            CPLGetDirnameSafe(osFilename.c_str()).c_str(), 0, &bGotFileList);
         const bool bFound =
             VSICurlIsFileInList(papszFileList,
                                 CPLGetFilename(osFilename.c_str())) != -1;
@@ -5470,15 +5482,16 @@ char **VSICurlFilesystemHandlerBase::ReadDirInternal(const char *pszDirname,
 /*                        InvalidateDirContent()                        */
 /************************************************************************/
 
-void VSICurlFilesystemHandlerBase::InvalidateDirContent(const char *pszDirname)
+void VSICurlFilesystemHandlerBase::InvalidateDirContent(
+    const std::string &osDirname)
 {
     CPLMutexHolder oHolder(&hMutex);
 
     CachedDirList oCachedDirList;
-    if (oCacheDirList.tryGet(std::string(pszDirname), oCachedDirList))
+    if (oCacheDirList.tryGet(osDirname, oCachedDirList))
     {
         nCachedFilesInDirList -= oCachedDirList.oFileList.size();
-        oCacheDirList.remove(std::string(pszDirname));
+        oCacheDirList.remove(osDirname);
     }
 }
 
@@ -5500,7 +5513,7 @@ char **VSICurlFilesystemHandlerBase::SiblingFiles(const char *pszFilename)
 {
     /* Small optimization to avoid unnecessary stat'ing from PAux or ENVI */
     /* drivers. The MBTiles driver needs no companion file. */
-    if (EQUAL(CPLGetExtension(pszFilename), "mbtiles"))
+    if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "mbtiles"))
     {
         return static_cast<char **>(CPLCalloc(1, sizeof(char *)));
     }
@@ -6196,12 +6209,12 @@ struct curl_slist *VSICurlSetContentTypeFromExt(struct curl_slist *poList,
         {"png", "image/png"},
     };
 
-    const char *pszExt = CPLGetExtension(pszPath);
-    if (pszExt)
+    const std::string osExt = CPLGetExtensionSafe(pszPath);
+    if (!osExt.empty())
     {
         for (const auto &pair : aosExtMimePairs)
         {
-            if (EQUAL(pszExt, pair.ext))
+            if (EQUAL(osExt.c_str(), pair.ext))
             {
 
                 const std::string osContentType(

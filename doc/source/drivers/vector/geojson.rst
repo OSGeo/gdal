@@ -239,6 +239,27 @@ This driver supports the following open options:
       Can also be set with the :config:`OGR_GEOJSON_DATE_AS_STRING`
       configuration option.
 
+-  .. oo:: FOREIGN_MEMBERS
+      :choices: AUTO, ALL, NONE, STAC
+      :default: AUTO
+      :since: 3.11.0
+
+      Whether and how foreign members at the feature level should be processed
+      as OGR fields:
+
+      - ``AUTO`` mode behaves like ``STAC`` mode if a ``stac_version`` member is found at
+        the Feature level, otherwise it behaves as ``NONE`` mode.
+
+      - In ``ALL`` mode, all foreign members at the feature level are added.
+        Whether to recursively explore nested objects and produce flatten OGR attributes
+        or not is decided by the ``FLATTEN_NESTED_ATTRIBUTES`` open option.
+
+      - In ``NONE`` mode, no foreign members at the feature level are added.
+
+      - ``STAC`` mode (Spatio-Temporal Asset Catalog) behaves the same as ``ALL``,
+        except content under the ``assets`` member is by default flattened
+        as ``assets.{asset_name}.{asset_property}`` fields.
+
 -  .. oo:: OGR_SCHEMA
       :choices: <filename>|<json string>
       :since: 3.11.0

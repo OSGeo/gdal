@@ -22,7 +22,7 @@ static int OGRDXFDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
     if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes == 0)
         return FALSE;
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "dxf"))
+    if (poOpenInfo->IsExtensionEqualToCI("dxf"))
         return TRUE;
     const char *pszIter = (const char *)poOpenInfo->pabyHeader;
     bool bFoundZero = false;

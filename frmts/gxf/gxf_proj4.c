@@ -54,7 +54,7 @@
 char *GXFGetMapProjectionAsPROJ4(GXFHandle hGXF)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
     char **papszMethods = NULL;
     char szPROJ4[512] = {0};
 
@@ -563,7 +563,7 @@ CPLErr GXFGetPROJ4Position(GXFHandle hGXF, double *pdfXOrigin,
                            double *pdfYPixelSize, double *pdfRotation)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
     char *pszProj;
 
     /* -------------------------------------------------------------------- */

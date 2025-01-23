@@ -21,7 +21,7 @@
 static int OGRXLSDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    return EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "XLS");
+    return poOpenInfo->IsExtensionEqualToCI("XLS");
 }
 
 /************************************************************************/

@@ -4682,6 +4682,28 @@ def test_tiff_jxl_read_for_files_created_before_6393():
 
 
 ###############################################################################
+# Test reading Compression=50002 deprecated value
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL")
+def test_tiff_read_jxl_deprecated_50002():
+    ds = gdal.Open("data/gtiff/byte_jxl_deprecated_50002.tif")
+    assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "JXL"
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+# Test reading Compression=52546 value used in DNG 1.7
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL")
+def test_tiff_read_jxl_dng_1_7_52546():
+    ds = gdal.Open("data/gtiff/byte_jxl_dng_1_7_52546.tif")
+    assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "JXL"
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
 # Test multi-threaded decoding
 
 
@@ -5135,6 +5157,92 @@ def test_tiff_read_multi_threaded_vsicurl_window_not_aligned_on_blocks():
 
 
 ###############################################################################
+# Test that we honor GDAL_DISABLE_READDIR_ON_OPEN when working on a dataset opened with OVERVIEW_LEVEL open option
+
+
+@pytest.mark.require_curl()
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 0, 11),
+    reason="libtiff >= 4.0.11 required",
+)
+def test_tiff_read_multi_threaded_vsicurl_error_in_IsBlocksAvailable(
+    tmp_path,
+):
+
+    webserver_process = None
+    webserver_port = 0
+
+    (webserver_process, webserver_port) = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    if webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    try:
+        tmp_filename = str(tmp_path / "test.tif")
+        ds = gdal.GetDriverByName("GTiff").Create(
+            tmp_filename, 2001, 10000, 1, options=["SPARSE_OK=YES", "BLOCKYSIZE=1"]
+        )
+        ds.GetRasterBand(1).SetNoDataValue(255)
+        ds.GetRasterBand(1).Fill(255)
+        ds.Close()
+
+        filesize = gdal.VSIStatL(tmp_filename).size
+        handler = webserver.SequentialHandler()
+        handler.add("HEAD", "/test.tif", 200, {"Content-Length": "%d" % filesize})
+
+        def method(request):
+            # sys.stderr.write('%s\n' % str(request.headers))
+
+            if request.headers["Range"].startswith("bytes="):
+                rng = request.headers["Range"][len("bytes=") :]
+                assert len(rng.split("-")) == 2
+                start = int(rng.split("-")[0])
+                end = int(rng.split("-")[1])
+
+                request.protocol_version = "HTTP/1.1"
+                request.send_response(206)
+                request.send_header("Content-type", "application/octet-stream")
+                request.send_header(
+                    "Content-Range", "bytes %d-%d/%d" % (start, end, filesize)
+                )
+                request.send_header("Content-Length", end - start + 1)
+                request.send_header("Connection", "close")
+                request.end_headers()
+                with open(tmp_filename, "rb") as f:
+                    f.seek(start, 0)
+                    request.wfile.write(f.read(end - start + 1))
+
+        for i in range(2):
+            handler.add("GET", "/test.tif", custom_method=method)
+        handler.add("GET", "/test.tif", 404)
+
+        with gdaltest.config_options(
+            {
+                "GDAL_NUM_THREADS": "2",
+                "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif",
+                "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
+            }
+        ):
+            with webserver.install_http_handler(handler):
+                ds = gdal.OpenEx(
+                    "/vsicurl/http://127.0.0.1:%d/test.tif" % webserver_port,
+                )
+                with pytest.raises(
+                    Exception,
+                    match="_TIFFPartialReadStripArray:Cannot read offset/size for strile",
+                ):
+                    ds.GetRasterBand(1).ReadRaster()
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
+
+
+###############################################################################
 # Test that a user receives a warning when it queries
 # GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE")
 
@@ -5467,3 +5575,10 @@ def test_tiff_read_corrupted_vat_dbf(tmp_vsimem):
         band = ds.GetRasterBand(1)
         with pytest.raises(Exception):
             band.GetDefaultRAT()
+
+
+def test_tiff_read_corrupted_lzw():
+
+    ds = gdal.Open("data/gtiff/lzw_corrupted.tif")
+    with pytest.raises(Exception):
+        ds.ReadRaster()

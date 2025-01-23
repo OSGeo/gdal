@@ -1048,6 +1048,21 @@ TEST_F(test_cpl, CPLFormFilename)
     EXPECT_TRUE(
         EQUAL(CPLFormFilename("\\\\$\\c:", "..", nullptr), "\\\\$\\c:/..") ||
         EQUAL(CPLFormFilename("\\\\$\\c:", "..", nullptr), "\\\\$\\c:\\.."));
+    EXPECT_STREQ(CPLFormFilename("/a", "../", nullptr), "/");
+    EXPECT_STREQ(CPLFormFilename("/a/", "../", nullptr), "/");
+    EXPECT_STREQ(CPLFormFilename("/a", "../b", nullptr), "/b");
+    EXPECT_STREQ(CPLFormFilename("/a/", "../b", nullptr), "/b");
+    EXPECT_STREQ(CPLFormFilename("/a", "../b/c", nullptr), "/b/c");
+    EXPECT_STREQ(CPLFormFilename("/a/", "../b/c/d", nullptr), "/b/c/d");
+    EXPECT_STREQ(CPLFormFilename("/a/b", "../../c", nullptr), "/c");
+    EXPECT_STREQ(CPLFormFilename("/a/b/", "../../c/d", nullptr), "/c/d");
+    EXPECT_STREQ(CPLFormFilename("/a/b", "../..", nullptr), "/");
+    EXPECT_STREQ(CPLFormFilename("/a/b", "../../", nullptr), "/");
+    EXPECT_STREQ(CPLFormFilename("/a/b/c", "../../d", nullptr), "/a/d");
+    EXPECT_STREQ(CPLFormFilename("/a/b/c/", "../../d", nullptr), "/a/d");
+    // we could also just error out, but at least this preserves the original
+    // semantics
+    EXPECT_STREQ(CPLFormFilename("/a", "../../b", nullptr), "/a/../../b");
     EXPECT_STREQ(
         CPLFormFilename("/vsicurl/http://example.com?foo", "bar", nullptr),
         "/vsicurl/http://example.com/bar?foo");
@@ -1318,6 +1333,10 @@ TEST_F(test_cpl, CPLDeclareKnownConfigOption)
     }
     {
         CPLDeclareKnownConfigOption("DECLARED_OPTION", nullptr);
+
+        const CPLStringList aosKnownConfigOptions(CPLGetKnownConfigOptions());
+        EXPECT_GE(aosKnownConfigOptions.FindString("CPL_DEBUG"), 0);
+        EXPECT_GE(aosKnownConfigOptions.FindString("DECLARED_OPTION"), 0);
 
         CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         CPLErrorReset();
@@ -1621,36 +1640,36 @@ TEST_F(test_cpl, CPLSM_unsigned)
     {
     }
 
-    ASSERT_EQ((CPLSM(static_cast<GUInt64>(2) * 1000 * 1000 * 1000) +
-               CPLSM(static_cast<GUInt64>(3) * 1000 * 1000 * 1000))
+    ASSERT_EQ((CPLSM(static_cast<uint64_t>(2) * 1000 * 1000 * 1000) +
+               CPLSM(static_cast<uint64_t>(3) * 1000 * 1000 * 1000))
                   .v(),
-              static_cast<GUInt64>(5) * 1000 * 1000 * 1000);
-    ASSERT_EQ((CPLSM(std::numeric_limits<GUInt64>::max() - 1) +
-               CPLSM(static_cast<GUInt64>(1)))
+              static_cast<uint64_t>(5) * 1000 * 1000 * 1000);
+    ASSERT_EQ((CPLSM(std::numeric_limits<uint64_t>::max() - 1) +
+               CPLSM(static_cast<uint64_t>(1)))
                   .v(),
-              std::numeric_limits<GUInt64>::max());
+              std::numeric_limits<uint64_t>::max());
     try
     {
-        (CPLSM(std::numeric_limits<GUInt64>::max()) +
-         CPLSM(static_cast<GUInt64>(1)));
+        (CPLSM(std::numeric_limits<uint64_t>::max()) +
+         CPLSM(static_cast<uint64_t>(1)));
     }
     catch (...)
     {
     }
 
-    ASSERT_EQ((CPLSM(static_cast<GUInt64>(2) * 1000 * 1000 * 1000) *
-               CPLSM(static_cast<GUInt64>(3) * 1000 * 1000 * 1000))
+    ASSERT_EQ((CPLSM(static_cast<uint64_t>(2) * 1000 * 1000 * 1000) *
+               CPLSM(static_cast<uint64_t>(3) * 1000 * 1000 * 1000))
                   .v(),
-              static_cast<GUInt64>(6) * 1000 * 1000 * 1000 * 1000 * 1000 *
+              static_cast<uint64_t>(6) * 1000 * 1000 * 1000 * 1000 * 1000 *
                   1000);
-    ASSERT_EQ((CPLSM(std::numeric_limits<GUInt64>::max()) *
-               CPLSM(static_cast<GUInt64>(1)))
+    ASSERT_EQ((CPLSM(std::numeric_limits<uint64_t>::max()) *
+               CPLSM(static_cast<uint64_t>(1)))
                   .v(),
-              std::numeric_limits<GUInt64>::max());
+              std::numeric_limits<uint64_t>::max());
     try
     {
-        (CPLSM(std::numeric_limits<GUInt64>::max()) *
-         CPLSM(static_cast<GUInt64>(2)));
+        (CPLSM(std::numeric_limits<uint64_t>::max()) *
+         CPLSM(static_cast<uint64_t>(2)));
     }
     catch (...)
     {
@@ -5600,4 +5619,148 @@ TEST_F(test_cpl, VSIMemGenerateHiddenFilename)
         EXPECT_TRUE(ENDS_WITH(pszFilename, "/foo.bar"));
     }
 }
+
+TEST_F(test_cpl, VSIGlob)
+{
+    GByte abyDummyData[1] = {0};
+    const std::string osFilenameRadix = VSIMemGenerateHiddenFilename("");
+    const std::string osFilename = osFilenameRadix + "trick";
+    VSIFCloseL(VSIFileFromMemBuffer(osFilename.c_str(), abyDummyData,
+                                    sizeof(abyDummyData), false));
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(osFilename.c_str(), nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(osFilename.substr(0, osFilename.size() - 1).c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 0);
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("?rick").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("?rack").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 0);
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("*ick").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("*").c_str(), nullptr,
+                    nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("*ack").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 0);
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("*ic*").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("*ac*").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 0);
+    }
+
+    {
+        CPLStringList aosRes(VSIGlob(
+            std::string(osFilenameRadix).append("[st][!s]ic[j-l]").c_str(),
+            nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("[!s]rick").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("[").c_str(), nullptr,
+                    nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 0);
+    }
+
+    const std::string osFilenameWithSpecialChars = osFilenameRadix + "[!-]";
+    VSIFCloseL(VSIFileFromMemBuffer(osFilenameWithSpecialChars.c_str(),
+                                    abyDummyData, sizeof(abyDummyData), false));
+
+    {
+        CPLStringList aosRes(VSIGlob(
+            std::string(osFilenameRadix).append("[[][!]a-][-][]]").c_str(),
+            nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilenameWithSpecialChars.c_str());
+    }
+
+    const std::string osFilename2 = osFilenameRadix + "truck/track";
+    VSIFCloseL(VSIFileFromMemBuffer(osFilename2.c_str(), abyDummyData,
+                                    sizeof(abyDummyData), false));
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("*uc*/track").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename2.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("*uc*/truck").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 0);
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("**/track").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename2.c_str());
+    }
+
+    VSIUnlink(osFilename.c_str());
+    VSIUnlink(osFilenameWithSpecialChars.c_str());
+    VSIUnlink(osFilename2.c_str());
+    VSIUnlink(osFilenameRadix.c_str());
+}
+
 }  // namespace

@@ -202,7 +202,7 @@ def gdal_ls(argv, fout=sys.stdout):
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        return -1
+        return 0
 
     i = 1
     argc = len(argv)

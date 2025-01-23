@@ -5,6 +5,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   SNAP_TIFF -raster- (rov): Sentinel Application Processing GeoTIFF
   GTiff -raster- (rw+vs): GeoTIFF (*.tif, *.tiff)
   COG -raster- (wv): Cloud optimized GeoTIFF generator (*.tif, *.tiff)
+  LIBERTIFF -raster- (rov): GeoTIFF (using LIBERTIFF library) (*.tif, *.tiff)
   NITF -raster- (rw+vs): National Imagery Transmission Format (*.ntf)
   RPFTOC -raster- (rovs): Raster Product Format TOC format (*.toc)
   ECRGTOC -raster- (rovs): ECRG TOC format (*.xml)
@@ -126,7 +127,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   SAGA -raster- (rw+v): SAGA GIS Binary Grid (.sdat, .sg-grd-z) (*.sdat, *.sg-grd-z)
   XYZ -raster- (rwv): ASCII Gridded XYZ (*.xyz)
   HF2 -raster- (rwv): HF2/HFZ heightfield raster (*.hf2)
-  OZI -raster- (rov): OziExplorer Image File
   CTG -raster- (rov): USGS LULC Composite Theme Grid
   ZMap -raster- (rwv): ZMap Plus Grid (*.dat)
   NGSGEOID -raster- (rov): NOAA NGS Geoid Height Grids (*.bin)

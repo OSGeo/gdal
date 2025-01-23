@@ -166,6 +166,24 @@ def test_tiff_ovr_3(mfloat32_tif, both_endian):
 
 
 ###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_invalid_ovr_factor(tmp_path):
+    tif_fname = str(tmp_path / "byte.tif")
+
+    shutil.copyfile("data/byte.tif", tif_fname)
+
+    ds = gdal.Open(tif_fname, gdal.GA_Update)
+    with pytest.raises(
+        Exception,
+        match=r"panOverviewList\[1\] = 0 is invalid\. It must be a positive value",
+    ):
+        ds.BuildOverviews(overviewlist=[2, 0])
+
+
+###############################################################################
 # Test generation
 
 
@@ -1676,6 +1694,33 @@ def test_tiff_ovr_43(tmp_path, both_endian):
 
 
 ###############################################################################
+# Test that we do not propagate PHOTOMETRIC=YCBCR on overviews when
+# COMPRESS_OVERVIEW != JPEG
+
+
+@pytest.mark.require_creation_option("GTiff", "JPEG")
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_do_not_propagate_photometric_ycbcr_if_ovr_if_not_jpeg(tmp_path):
+
+    tif_fname = str(tmp_path / "test.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tif_fname, 8, 8, 3, options=["COMPRESS=JPEG", "PHOTOMETRIC=YCBCR"]
+    )
+    ds.GetRasterBand(1).Fill(255)
+    ds.GetRasterBand(2).Fill(255)
+    ds.GetRasterBand(3).Fill(255)
+    ds = None
+
+    with gdal.Open(tif_fname, gdal.GA_Update) as ds:
+        with gdal.config_option("COMPRESS_OVERVIEW", "DEFLATE"):
+            ds.BuildOverviews("NEAR", [2])
+
+    with gdal.Open(tif_fname) as ds:
+        assert ds.GetRasterBand(1).GetOverview(0).ComputeRasterMinMax() == (255, 255)
+
+
+###############################################################################
 # Test that we can change overview block size through GDAL_TIFF_OVR_BLOCKSIZE configuration
 # option
 
@@ -2950,3 +2995,38 @@ def test_tiff_ovr_JXL_ALPHA_DISTANCE_OVERVIEW(tmp_vsimem):
     assert ds.GetRasterBand(4).Checksum() != cs4
     del ds
     gdal.Unlink(tmpfilename + ".ovr")
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/11555
+
+
+def test_tiff_ovr_internal_mask_issue_11555(tmp_vsimem):
+
+    if "debug build" in gdal.VersionInfo("--version") and "CI" in os.environ:
+        pytest.skip("test skipped on CI for debug builds (to keep things fast)")
+
+    tmpfilename = str(tmp_vsimem / "test.tif")
+    gdal.FileFromMemBuffer(tmpfilename, open("data/test_11555.tif", "rb").read())
+
+    ds = gdal.Open(tmpfilename, gdal.GA_Update)
+    ds.BuildOverviews("bilinear", [2])
+    del ds
+
+    ds = gdal.Open(tmpfilename)
+
+    # Check that we have non-zero data when mask = 255
+    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 5270, 1, 1) == b"\x7F"
+    assert ds.GetRasterBand(2).GetOverview(0).ReadRaster(0, 5270, 1, 1) == b"\x7F"
+    assert (
+        ds.GetRasterBand(1).GetMaskBand().GetOverview(0).ReadRaster(0, 5270, 1, 1)
+        == b"\xFF"
+    )
+
+    # Check that we have zero data when mask = 0
+    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 5271, 1, 1) == b"\x00"
+    assert ds.GetRasterBand(2).GetOverview(0).ReadRaster(0, 5271, 1, 1) == b"\x00"
+    assert (
+        ds.GetRasterBand(1).GetMaskBand().GetOverview(0).ReadRaster(0, 5271, 1, 1)
+        == b"\x00"
+    )

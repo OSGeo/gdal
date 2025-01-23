@@ -25,6 +25,8 @@
 #ifndef TIFF_JXL_H_DEFINED
 #define TIFF_JXL_H_DEFINED
 
+#include "tiffio.h"
+
 #ifndef COMPRESSION_JXL
 #define COMPRESSION_JXL                                                        \
     50002 /* JPEGXL: WARNING not registered in Adobe-maintained registry */

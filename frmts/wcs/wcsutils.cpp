@@ -297,7 +297,7 @@ bool MakeDir(const std::string &dirname)
     VSIStatBufL stat;
     if (VSIStatL(dirname.c_str(), &stat) != 0)
     {
-        std::string parent = CPLGetDirname(dirname.c_str());
+        std::string parent = CPLGetDirnameSafe(dirname.c_str());
         if (!parent.empty() && parent != ".")
         {
             if (!MakeDir(parent))
@@ -390,7 +390,7 @@ bool SetupCache(std::string &cache, bool clear)
 #endif
         if (home)
         {
-            cache = CPLFormFilename(home, ".gdal", nullptr);
+            cache = CPLFormFilenameSafe(home, ".gdal", nullptr);
         }
         else
         {
@@ -406,10 +406,10 @@ bool SetupCache(std::string &cache, bool clear)
             {
                 std::string subdir = ".gdal_";
                 subdir += username;
-                cache = CPLFormFilename(dir, subdir.c_str(), nullptr);
+                cache = CPLFormFilenameSafe(dir, subdir.c_str(), nullptr);
             }
         }
-        cache = CPLFormFilename(cache.c_str(), "wcs_cache", nullptr);
+        cache = CPLFormFilenameSafe(cache.c_str(), "wcs_cache", nullptr);
     }
     if (!MakeDir(cache))
     {
@@ -425,14 +425,14 @@ bool SetupCache(std::string &cache, bool clear)
             {
                 continue;
             }
-            std::string filepath =
-                CPLFormFilename(cache.c_str(), folder[i], nullptr);
-            remove(filepath.c_str());
+            const std::string filepath =
+                CPLFormFilenameSafe(cache.c_str(), folder[i], nullptr);
+            CPL_IGNORE_RET_VAL(VSIUnlink(filepath.c_str()));
         }
         CSLDestroy(folder);
     }
     // make sure the index exists and is writable
-    std::string db = CPLFormFilename(cache.c_str(), "db", nullptr);
+    const std::string db = CPLFormFilenameSafe(cache.c_str(), "db", nullptr);
     VSILFILE *f = VSIFOpenL(db.c_str(), "r");
     if (f)
     {
@@ -465,7 +465,7 @@ static bool CompareStrings(const std::string &a, const std::string &b)
 std::vector<std::string> ReadCache(const std::string &cache)
 {
     std::vector<std::string> contents;
-    std::string db = CPLFormFilename(cache.c_str(), "db", nullptr);
+    const std::string db = CPLFormFilenameSafe(cache.c_str(), "db", nullptr);
     char **data = CSLLoad(db.c_str());
     if (data)
     {
@@ -502,7 +502,7 @@ bool DeleteEntryFromCache(const std::string &cache, const std::string &key,
 {
     // Depending on which one of key and value is not "" delete the relevant
     // entry.
-    std::string db = CPLFormFilename(cache.c_str(), "db", nullptr);
+    const std::string db = CPLFormFilenameSafe(cache.c_str(), "db", nullptr);
     char **data =
         CSLLoad(db.c_str());  // returns NULL in error and for empty files
     char **data2 = CSLAddNameValue(nullptr, "foo", "bar");
@@ -550,8 +550,8 @@ bool DeleteEntryFromCache(const std::string &cache, const std::string &key,
             std::string name = folder[i];
             if (name.find(filename) != std::string::npos)
             {
-                std::string filepath =
-                    CPLFormFilename(cache.c_str(), name.c_str(), nullptr);
+                const std::string filepath =
+                    CPLFormFilenameSafe(cache.c_str(), name.c_str(), nullptr);
                 if (VSIUnlink(filepath.c_str()) == -1)
                 {
                     // error but can't do much, raise a warning?
@@ -575,7 +575,7 @@ CPLErr SearchCache(const std::string &cache, const std::string &url,
                    std::string &filename, const std::string &ext, bool &found)
 {
     found = false;
-    std::string db = CPLFormFilename(cache.c_str(), "db", nullptr);
+    const std::string db = CPLFormFilenameSafe(cache.c_str(), "db", nullptr);
     VSILFILE *f = VSIFOpenL(db.c_str(), "r");
     if (!f)
     {
@@ -601,8 +601,8 @@ CPLErr SearchCache(const std::string &cache, const std::string &url,
     VSIFCloseL(f);
     if (found)
     {
-        filename =
-            CPLFormFilename(cache.c_str(), (filename + ext).c_str(), nullptr);
+        filename = CPLFormFilenameSafe(cache.c_str(), (filename + ext).c_str(),
+                                       nullptr);
         found = FileIsReadable(filename);
         // if not readable, we should delete the entry
     }
@@ -624,7 +624,7 @@ CPLErr AddEntryToCache(const std::string &cache, const std::string &url,
     // todo: lock the cache
     // assuming the url is not in the cache
     const std::string store = filename;
-    const std::string db = CPLFormFilename(cache.c_str(), "db", nullptr);
+    const std::string db = CPLFormFilenameSafe(cache.c_str(), "db", nullptr);
     VSILFILE *f = VSIFOpenL(db.c_str(), "a");
     if (!f)
     {
@@ -650,8 +650,8 @@ CPLErr AddEntryToCache(const std::string &cache, const std::string &url,
             }
         }
         // replace X with random character from a-zA-Z
-        path =
-            CPLFormFilename(cache.c_str(), (filename + ext).c_str(), nullptr);
+        path = CPLFormFilenameSafe(cache.c_str(), (filename + ext).c_str(),
+                                   nullptr);
     } while (VSIStatExL(path.c_str(), &stat, VSI_STAT_EXISTS_FLAG) == 0);
     VSILFILE *f2 = VSIFOpenL(path.c_str(), "w");
     if (f2)

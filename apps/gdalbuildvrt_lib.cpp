@@ -127,6 +127,12 @@ static int GetSrcDstWin(DatasetProperty *psDP, double we_res, double ns_res,
                         double *pdfDstYOff, double *pdfDstXSize,
                         double *pdfDstYSize)
 {
+    if (we_res == 0 || ns_res == 0)
+    {
+        // should not happen. to please Coverity
+        return FALSE;
+    }
+
     /* Check that the destination bounding box intersects the source bounding
      * box */
     if (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] +
@@ -1678,7 +1684,7 @@ static bool add_file_to_list(const char *filename, const char *tile_index,
                              CPLStringList &aosList)
 {
 
-    if (EQUAL(CPLGetExtension(filename), "SHP"))
+    if (EQUAL(CPLGetExtensionSafe(filename).c_str(), "SHP"))
     {
         /* Handle gdaltindex Shapefile as a special case */
         auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(filename));

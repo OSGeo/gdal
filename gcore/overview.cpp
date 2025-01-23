@@ -3706,11 +3706,11 @@ static CPLErr GDALResampleChunk_ConvolutionT(
 
         if (pafWrkScanline)
         {
-            GDALCopyWords(pafWrkScanline, eWrkDataType, nWrkDataTypeSize,
-                          static_cast<GByte *>(pDstBuffer) +
-                              static_cast<size_t>(iDstLine - nDstYOff) *
-                                  nDstXSize * nDstDataTypeSize,
-                          dstDataType, nDstDataTypeSize, nDstXSize);
+            GDALCopyWords64(pafWrkScanline, eWrkDataType, nWrkDataTypeSize,
+                            static_cast<GByte *>(pDstBuffer) +
+                                static_cast<size_t>(iDstLine - nDstYOff) *
+                                    nDstXSize * nDstDataTypeSize,
+                            dstDataType, nDstDataTypeSize, nDstXSize);
         }
     }
 
@@ -4964,7 +4964,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             poJob->nSrcHeight = nHeight;
             poJob->args.nChunkXOff = 0;
             poJob->args.nChunkXSize = nWidth;
-            poJob->args.nChunkYOff = nChunkYOff;
+            poJob->args.nChunkYOff = nChunkYOffQueried;
             poJob->args.nChunkYSize = nChunkYSizeQueried;
             poJob->nDstWidth = nDstWidth;
             poJob->args.nDstXOff = 0;
@@ -5431,7 +5431,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     }
                     if (osTmpFilename.empty())
                     {
-                        osTmpFilename = CPLGenerateTempFilename(nullptr);
+                        osTmpFilename = CPLGenerateTempFilenameSafe(nullptr);
                         osTmpFilename += ".tif";
                     }
                     CPLDebug("GDAL",

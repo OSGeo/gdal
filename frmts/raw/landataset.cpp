@@ -576,10 +576,12 @@ GDALDataset *LANDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for a trailer file with a colormap in it.                 */
     /* -------------------------------------------------------------------- */
-    char *pszPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
-    char *pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
-    const char *pszTRLFilename = CPLFormCIFilename(pszPath, pszBasename, "trl");
-    VSILFILE *fpTRL = VSIFOpenL(pszTRLFilename, "rb");
+    char *pszPath = CPLStrdup(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
+    char *pszBasename =
+        CPLStrdup(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str());
+    const std::string osTRLFilename =
+        CPLFormCIFilenameSafe(pszPath, pszBasename, "trl");
+    VSILFILE *fpTRL = VSIFOpenL(osTRLFilename.c_str(), "rb");
     if (fpTRL != nullptr)
     {
         char szTRLData[896] = {'\0'};
@@ -793,13 +795,13 @@ void LANDataset::CheckForStatistics()
     /* -------------------------------------------------------------------- */
     /*      Do we have a statistics file?                                   */
     /* -------------------------------------------------------------------- */
-    osSTAFilename = CPLResetExtension(GetDescription(), "sta");
+    osSTAFilename = CPLResetExtensionSafe(GetDescription(), "sta");
 
     VSILFILE *fpSTA = VSIFOpenL(osSTAFilename, "r");
 
     if (fpSTA == nullptr && VSIIsCaseSensitiveFS(osSTAFilename))
     {
-        osSTAFilename = CPLResetExtension(GetDescription(), "STA");
+        osSTAFilename = CPLResetExtensionSafe(GetDescription(), "STA");
         fpSTA = VSIFOpenL(osSTAFilename, "r");
     }
 

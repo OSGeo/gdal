@@ -20,7 +20,7 @@
 static GDALDataset *OGRSDTSDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "DDF"))
+    if (!poOpenInfo->IsExtensionEqualToCI("DDF"))
         return nullptr;
     if (poOpenInfo->nHeaderBytes < 10)
         return nullptr;

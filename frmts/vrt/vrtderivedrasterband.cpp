@@ -1364,6 +1364,31 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             papszArgs = CSLSetNameValue(papszArgs, pszKey, pszValue);
         }
 
+        CPLString osSourceNames;
+        for (int iBuffer = 0; iBuffer < nBufferCount; iBuffer++)
+        {
+            int iSource = anMapBufferIdxToSourceIdx[iBuffer];
+            const VRTSource *poSource = papoSources[iSource];
+
+            if (iBuffer > 0)
+            {
+                osSourceNames += "|";
+            }
+
+            const auto &osName = poSource->GetName();
+            if (osName.empty())
+            {
+                osSourceNames += "B" + std::to_string(iBuffer + 1);
+            }
+            else
+            {
+                osSourceNames += osName;
+            }
+        }
+
+        papszArgs =
+            CSLSetNameValue(papszArgs, "SOURCE_NAMES", osSourceNames.c_str());
+
         eErr = (poPixelFunc->first)(
             static_cast<void **>(pBuffers), nBufferCount, pData, nBufXSize,
             nBufYSize, eSrcType, eBufType, static_cast<int>(nPixelSpace),

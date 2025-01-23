@@ -4987,8 +4987,6 @@ CPLErr CPL_STDCALL GDALGetRasterStatistics(GDALRasterBandH hBand, int bApproxOK,
                                  pdfStdDev);
 }
 
-#ifdef CPL_HAS_GINT64
-
 /************************************************************************/
 /*                         GDALUInt128                                  */
 /************************************************************************/
@@ -6021,8 +6019,6 @@ struct ComputeStatisticsInternal<GUInt16, COMPUTE_OTHER_STATS>
 // (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) ||
 // defined(_MSC_VER))
 
-#endif  // CPL_HAS_GINT64
-
 /************************************************************************/
 /*                          GetPixelValue()                             */
 /************************************************************************/
@@ -6431,7 +6427,6 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         if (nSampleRate == 1)
             bApproxOK = false;
 
-#ifdef CPL_HAS_GINT64
         // Particular case for GDT_Byte that only use integral types for all
         // intermediate computations. Only possible if the number of pixels
         // explored is lower than GUINTBIG_MAX / (255*255), so that nSumSquare
@@ -6580,7 +6575,6 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                         "in sampling.");
             return CE_Failure;
         }
-#endif
 
         GByte *pabyMaskData = nullptr;
         if (poMaskBand)
@@ -9301,8 +9295,8 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
             if (bHasNoData)
             {
                 m_pabyNoData.resize(m_dt.GetSize());
-                GDALCopyWords(&nNoData, GDT_Int64, 0, &m_pabyNoData[0],
-                              m_dt.GetNumericDataType(), 0, 1);
+                GDALCopyWords64(&nNoData, GDT_Int64, 0, &m_pabyNoData[0],
+                                m_dt.GetNumericDataType(), 0, 1);
             }
         }
         else if (m_poBand->GetRasterDataType() == GDT_UInt64)
@@ -9311,8 +9305,8 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
             if (bHasNoData)
             {
                 m_pabyNoData.resize(m_dt.GetSize());
-                GDALCopyWords(&nNoData, GDT_UInt64, 0, &m_pabyNoData[0],
-                              m_dt.GetNumericDataType(), 0, 1);
+                GDALCopyWords64(&nNoData, GDT_UInt64, 0, &m_pabyNoData[0],
+                                m_dt.GetNumericDataType(), 0, 1);
             }
         }
         else
@@ -9321,8 +9315,8 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
             if (bHasNoData)
             {
                 m_pabyNoData.resize(m_dt.GetSize());
-                GDALCopyWords(&dfNoData, GDT_Float64, 0, &m_pabyNoData[0],
-                              m_dt.GetNumericDataType(), 0, 1);
+                GDALCopyWords64(&dfNoData, GDT_Float64, 0, &m_pabyNoData[0],
+                                m_dt.GetNumericDataType(), 0, 1);
             }
         }
 
@@ -9668,8 +9662,8 @@ std::shared_ptr<GDALMDArray> GDALRasterBand::AsMDArray() const
 /************************************************************************/
 
 /**
- * \brief Interpolates the value between pixels using
- * a resampling algorithm
+ * \brief Interpolates the value between pixels using a resampling algorithm,
+ * taking pixel/line coordinates as input.
  *
  * @param dfPixel pixel coordinate as a double, where interpolation should be done.
  * @param dfLine line coordinate as a double, where interpolation should be done.
@@ -9731,4 +9725,94 @@ CPLErr GDALRasterInterpolateAtPoint(GDALRasterBandH hBand, double dfPixel,
     GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->InterpolateAtPoint(dfPixel, dfLine, eInterpolation,
                                       pdfRealValue, pdfImagValue);
+}
+
+/************************************************************************/
+/*                    InterpolateAtGeolocation()                        */
+/************************************************************************/
+
+/**
+ * \brief Interpolates the value between pixels using a resampling algorithm,
+ * taking georeferenced coordinates as input.
+ *
+ * When poSRS is null, those georeferenced coordinates (dfGeolocX, dfGeolocY)
+ * must be in the "natural" SRS of the dataset, that is the one returned by
+ * GetSpatialRef() if there is a geotransform, GetGCPSpatialRef() if there are
+ * GCPs, WGS 84 if there are RPC coefficients, or the SRS of the geolocation
+ * array (generally WGS 84) if there is a geolocation array.
+ * If that natural SRS is a geographic one, dfGeolocX must be a longitude, and
+ * dfGeolocY a latitude. If that natural SRS is a projected one, dfGeolocX must
+ * be a easting, and dfGeolocY a northing.
+ *
+ * When poSRS is set to a non-null value, (dfGeolocX, dfGeolocY) must be
+ * expressed in that CRS, and that tuple must be conformant with the
+ * data-axis-to-crs-axis setting of poSRS, that is the one returned by
+ * the OGRSpatialReference::GetDataAxisToSRSAxisMapping(). If you want to be sure
+ * of the axis order, then make sure to call poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER)
+ * before calling this method, and in that case, dfGeolocX must be a longitude
+ * or an easting value, and dfGeolocX a latitude or a northing value.
+ *
+ * The GDALDataset::GeolocationToPixelLine() will be used to transform from
+ * (dfGeolocX,dfGeolocY) georeferenced coordinates to (pixel, line). Refer to
+ * it for details on how that transformation is done.
+ *
+ * @param dfGeolocX X coordinate of the position (longitude or easting if poSRS
+ * is null, otherwise consistent with poSRS data-axis-to-crs-axis mapping),
+ * where interpolation should be done.
+ * @param dfGeolocY Y coordinate of the position (latitude or northing if poSRS
+ * is null, otherwise consistent with poSRS data-axis-to-crs-axis mapping),
+ * where interpolation should be done.
+ * @param poSRS If set, override the natural CRS in which dfGeolocX, dfGeolocY are expressed
+ * @param eInterpolation interpolation type. Only near, bilinear, cubic and cubicspline are allowed.
+ * @param pdfRealValue pointer to real part of interpolated value
+ * @param pdfImagValue pointer to imaginary part of interpolated value (may be null if not needed)
+ * @param papszTransformerOptions Options accepted by GDALDataset::GeolocationToPixelLine() (GDALCreateGenImgProjTransformer2()), or nullptr.
+ *
+ * @return CE_None on success, or an error code on failure.
+ * @since GDAL 3.11
+ */
+
+CPLErr GDALRasterBand::InterpolateAtGeolocation(
+    double dfGeolocX, double dfGeolocY, const OGRSpatialReference *poSRS,
+    GDALRIOResampleAlg eInterpolation, double *pdfRealValue,
+    double *pdfImagValue, CSLConstList papszTransformerOptions) const
+{
+    double dfPixel;
+    double dfLine;
+    if (poDS->GeolocationToPixelLine(dfGeolocX, dfGeolocY, poSRS, &dfPixel,
+                                     &dfLine,
+                                     papszTransformerOptions) != CE_None)
+    {
+        return CE_Failure;
+    }
+    return InterpolateAtPoint(dfPixel, dfLine, eInterpolation, pdfRealValue,
+                              pdfImagValue);
+}
+
+/************************************************************************/
+/*                  GDALRasterInterpolateAtGeolocation()                */
+/************************************************************************/
+
+/**
+ * \brief Interpolates the value between pixels using a resampling algorithm,
+ * taking georeferenced coordinates as input.
+ *
+ * @see GDALRasterBand::InterpolateAtGeolocation()
+ * @since GDAL 3.11
+ */
+
+CPLErr GDALRasterInterpolateAtGeolocation(GDALRasterBandH hBand,
+                                          double dfGeolocX, double dfGeolocY,
+                                          OGRSpatialReferenceH hSRS,
+                                          GDALRIOResampleAlg eInterpolation,
+                                          double *pdfRealValue,
+                                          double *pdfImagValue,
+                                          CSLConstList papszTransformerOptions)
+{
+    VALIDATE_POINTER1(hBand, "GDALRasterInterpolateAtGeolocation", CE_Failure);
+
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return poBand->InterpolateAtGeolocation(
+        dfGeolocX, dfGeolocY, OGRSpatialReference::FromHandle(hSRS),
+        eInterpolation, pdfRealValue, pdfImagValue, papszTransformerOptions);
 }

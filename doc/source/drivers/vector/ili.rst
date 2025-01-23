@@ -9,7 +9,7 @@
 
 .. build_dependencies:: Xerces
 
-| OGR has support for INTERLIS reading and writing.
+| OGR has support for INTERLIS reading.
 | `INTERLIS <http://www.interlis.ch/>`__ is a standard which has been
   especially composed in order to fulfill the requirements of modeling
   and the integration of geodata into contemporary and future geographic
@@ -37,8 +37,6 @@ limitations:
 Driver capabilities
 -------------------
 
-.. supports_create::
-
 .. supports_georeferencing::
 
 .. supports_virtualio::
@@ -46,7 +44,7 @@ Driver capabilities
 Model support
 -------------
 
-Data is read and written into transfer files which have different
+Data is read from transfer files which have different
 formats in INTERLIS 1 (.itf) and INTERLIS 2 (.xtf). Models are passed in
 IlisMeta format by using "a_filename.xtf,models.imd" as a connection
 string.
@@ -83,12 +81,6 @@ Some possible transformations using :ref:`ogr2ogr`.
    ::
 
       ogr2ogr --config OGR_STROKE_CURVE TRUE -SQL 'SELECT Rechtsstatus,publiziertAb,MetadatenGeobasisdaten,Eigentumsbeschraenkung,ZustaendigeStelle,Flaeche FROM "OeREBKRM09trsfr.Transferstruktur.Geometrie"' shpdir ch.bazl.sicherheitszonenplan.oereb_20131118.xtf,OeREBKRM09vs.imd OeREBKRM09trsfr.Transferstruktur.Geometrie
-
--  Shape -> Interlis 2:
-
-   ::
-
-      ogr2ogr -f "Interlis 2" LandCover.xml,RoadsExdm2ien.imd RoadsExdm2ben.Roads.LandCover.shp
 
 -  Importing multiple Interlis 1 files into PostGIS:
 

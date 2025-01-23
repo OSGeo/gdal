@@ -2848,9 +2848,9 @@ def WarpOptions(options=None, format=None,
     transformerOptions:
         list or dict of transformer options
     cutlineDSName:
-        cutline dataset name (mutually exclusive with cutlineDSName)
+        cutline dataset name (mutually exclusive with cutlineWKT)
     cutlineWKT:
-        cutline WKT geometry (POLYGON or MULTIPOLYGON) (mutually exclusive with cutlineWKT)
+        cutline WKT geometry (POLYGON or MULTIPOLYGON) (mutually exclusive with cutlineDSName)
     cutlineSRS:
         set/override cutline SRS
     cutlineLayer:
@@ -5024,6 +5024,75 @@ def InterpolateAtPoint(self, *args, **kwargs):
         return ret[1]
 %}
 
+%feature("shadow") InterpolateAtGeolocation %{
+def InterpolateAtGeolocation(self, *args, **kwargs):
+    """Return the interpolated value at georeferenced coordinates.
+       See :cpp:func:`GDALRasterBand::InterpolateAtGeolocation`.
+
+       When srs is None, those georeferenced coordinates (geolocX, geolocY)
+       must be in the "natural" SRS of the dataset, that is the one returned by
+       GetSpatialRef() if there is a geotransform, GetGCPSpatialRef() if there are
+       GCPs, WGS 84 if there are RPC coefficients, or the SRS of the geolocation
+       array (generally WGS 84) if there is a geolocation array.
+       If that natural SRS is a geographic one, geolocX must be a longitude, and
+       geolocY a latitude. If that natural SRS is a projected one, geolocX must
+       be a easting, and geolocY a northing.
+
+       When srs is set to a non-None value, (geolocX, geolocY) must be
+       expressed in that CRS, and that tuple must be conformant with the
+       data-axis-to-crs-axis setting of srs, that is the one returned by
+       the :py:func:`osgeo.osr.SpatialReference.GetDataAxisToSRSAxisMapping().
+       If you want to be sure of the axis order, then make sure to call
+       ``srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)``
+       before calling this method, and in that case, geolocX must be a longitude
+       or an easting value, and geolocX a latitude or a northing value.
+
+       Parameters
+       ----------
+       geolocX : float
+           X coordinate of the position where interpolation should be done.
+           Longitude or easting in "natural" CRS if `srs` is None,
+           otherwise consistent with first axis of `srs`,
+           taking into account the data-axis-to-crs-axis mapping
+       geolocY : float
+           Y coordinate of the position where interpolation should be done.
+           Latitude or northing in "natural" CRS if `srs` is None,
+           otherwise consistent with second axis of `srs`,
+           taking into account the data-axis-to-crs-axis mapping
+       srs : osgeo.osr.SpatialReference
+           If set, override the natural CRS in which geolocX, geolocY are expressed
+       interpolation : GRIOResampleAlg (nearest, bilinear, cubic, cubicspline)
+
+       Returns
+       -------
+       float:
+           Interpolated value, or ``None`` if it has any error.
+
+       Example
+       -------
+
+       >>> from osgeo import gdal, osr
+       >>> with gdal.Open("my.tif") as ds:
+       ...    wgs84_srs = osr.SpatialReference()
+       ...    wgs84_srs.SetFromUserInput("WGS84")
+       ...    wgs84_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+       ...    val = ds.GetRasterBand(1).InterpolateAtGeolocation(longitude_degree,
+                                                                 latitude_degree,
+                                                                 wgs84_srs,
+                                                                 gdal.GRIORA_Bilinear)
+    """
+
+    ret = $action(self, *args, **kwargs)
+    if ret[0] != CE_None:
+        return None
+
+    from . import gdal
+    if gdal.DataTypeIsComplex(self.DataType):
+        return complex(ret[1], ret[2])
+    else:
+        return ret[1]
+%}
+
 %feature("shadow") ComputeMinMaxLocation %{
 def ComputeMinMaxLocation(self, *args, **kwargs):
     """Compute the min/max values for a band, and their location.
@@ -5206,13 +5275,23 @@ class VSIFile(BytesIO):
         if type == GAAT_REAL:
             return self.SetAsDouble(value)
         if type == GAAT_DATASET:
-            return self.SetAsDatasetValue(value)
+            if isinstance(value, str):
+                return self.GetAsDatasetValue().SetName(value)
+            elif isinstance(value, Dataset):
+                return self.GetAsDatasetValue().SetDataset(value)
+            else:
+                return self.SetAsDatasetValue(value)
         if type == GAAT_STRING_LIST:
             return self.SetAsStringList(value)
         if type == GAAT_INTEGER_LIST:
             return self.SetAsIntegerList(value)
         if type == GAAT_REAL_LIST:
             return self.SetAsDoubleList(value)
+        if type == GAAT_DATASET_LIST:
+            if isinstance(value[0], str):
+                return self.SetDatasetNames(value)
+            elif isinstance(value[0], Dataset):
+                return self.SetDatasets(value)
         raise Exception("Unhandled algorithm argument data type")
 
 %}

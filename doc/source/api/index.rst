@@ -16,6 +16,7 @@ API
        :maxdepth: 1
 
        cpl
+       gdal_fwd
        raster_c_api
        vector_c_api
        gdal_alg

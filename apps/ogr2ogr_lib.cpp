@@ -587,12 +587,14 @@ class LayerTranslator
     std::unique_ptr<OGRGeometry> m_poClipSrcReprojectedToSrcSRS{};
     const OGRSpatialReference *m_poClipSrcReprojectedToSrcSRS_SRS = nullptr;
     OGREnvelope m_oClipSrcEnv{};
+    bool m_bClipSrcIsRectangle = false;
 
     OGRGeometry *m_poClipDstOri = nullptr;
     bool m_bWarnedClipDstSRS = false;
     std::unique_ptr<OGRGeometry> m_poClipDstReprojectedToDstSRS{};
     const OGRSpatialReference *m_poClipDstReprojectedToDstSRS_SRS = nullptr;
     OGREnvelope m_oClipDstEnv{};
+    bool m_bClipDstIsRectangle = false;
 
     bool m_bExplodeCollections = false;
     bool m_bNativeData = false;
@@ -606,10 +608,15 @@ class LayerTranslator
                    const GDALVectorTranslateOptions *psOptions);
 
   private:
-    std::pair<const OGRGeometry *, const OGREnvelope *>
-    GetDstClipGeom(const OGRSpatialReference *poGeomSRS);
-    std::pair<const OGRGeometry *, const OGREnvelope *>
-    GetSrcClipGeom(const OGRSpatialReference *poGeomSRS);
+    struct ClipGeomDesc
+    {
+        const OGRGeometry *poGeom = nullptr;
+        const OGREnvelope *poEnv = nullptr;
+        bool bGeomIsRectangle = false;
+    };
+
+    ClipGeomDesc GetDstClipGeom(const OGRSpatialReference *poGeomSRS);
+    ClipGeomDesc GetSrcClipGeom(const OGRSpatialReference *poGeomSRS);
 };
 
 static OGRLayer *GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
@@ -2212,7 +2219,7 @@ GDALVectorTranslateCreateCopy(GDALDriver *poDriver, const char *pszDest,
             EQUAL(GDALGetDescription(hIdentifyingDriver), "GML"))
         {
             VSIUnlink(pszDest);
-            VSIUnlink(CPLResetExtension(pszDest, "gfs"));
+            VSIUnlink(CPLResetExtensionSafe(pszDest, "gfs").c_str());
         }
     }
 
@@ -2730,7 +2737,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         {
             if (aoDrivers.empty())
             {
-                if (EQUAL(CPLGetExtension(pszDest), ""))
+                if (CPLGetExtensionSafe(pszDest).empty())
                 {
                     psOptions->osFormat = "ESRI Shapefile";
                 }
@@ -2747,7 +2754,8 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Several drivers matching %s extension. Using %s",
-                             CPLGetExtension(pszDest), aoDrivers[0].c_str());
+                             CPLGetExtensionSafe(pszDest).c_str(),
+                             aoDrivers[0].c_str());
                 }
                 psOptions->osFormat = aoDrivers[0];
             }
@@ -2833,7 +2841,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             (psOptions->aosLayers.size() > 1 ||
              (psOptions->aosLayers.empty() && poDS->GetLayerCount() > 1)) &&
             psOptions->osNewLayerName.empty() &&
-            EQUAL(CPLGetExtension(osDestFilename), "SHP") &&
+            EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "SHP") &&
             VSIStatL(osDestFilename, &sStat) != 0)
         {
             if (VSIMkdir(osDestFilename, 0755) != 0)
@@ -3191,11 +3199,11 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                 psOptions->osNewLayerName.empty() &&
                 VSIStatL(osDestFilename, &sStat) == 0 &&
                 VSI_ISREG(sStat.st_mode) &&
-                (EQUAL(CPLGetExtension(osDestFilename), "shp") ||
-                 EQUAL(CPLGetExtension(osDestFilename), "shz") ||
-                 EQUAL(CPLGetExtension(osDestFilename), "dbf")))
+                (EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "shp") ||
+                 EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "shz") ||
+                 EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "dbf")))
             {
-                psOptions->osNewLayerName = CPLGetBasename(osDestFilename);
+                psOptions->osNewLayerName = CPLGetBasenameSafe(osDestFilename);
             }
 
             auto psInfo = oSetup.Setup(poPassedLayer,
@@ -3271,11 +3279,11 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             (psOptions->aosLayers.size() == 1 || nSrcLayerCount == 1) &&
             psOptions->osNewLayerName.empty() &&
             VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode) &&
-            (EQUAL(CPLGetExtension(osDestFilename), "shp") ||
-             EQUAL(CPLGetExtension(osDestFilename), "shz") ||
-             EQUAL(CPLGetExtension(osDestFilename), "dbf")))
+            (EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "shp") ||
+             EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "shz") ||
+             EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "dbf")))
         {
-            psOptions->osNewLayerName = CPLGetBasename(osDestFilename);
+            psOptions->osNewLayerName = CPLGetBasenameSafe(osDestFilename);
         }
 
         GDALProgressFunc pfnProgress = nullptr;
@@ -3550,11 +3558,11 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
             nLayerCount == 1 && psOptions->osNewLayerName.empty() &&
             VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode) &&
-            (EQUAL(CPLGetExtension(osDestFilename), "shp") ||
-             EQUAL(CPLGetExtension(osDestFilename), "shz") ||
-             EQUAL(CPLGetExtension(osDestFilename), "dbf")))
+            (EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "shp") ||
+             EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "shz") ||
+             EQUAL(CPLGetExtensionSafe(osDestFilename).c_str(), "dbf")))
         {
-            psOptions->osNewLayerName = CPLGetBasename(osDestFilename);
+            psOptions->osNewLayerName = CPLGetBasenameSafe(osDestFilename);
         }
 
         std::vector<GIntBig> anLayerCountFeatures;
@@ -4040,6 +4048,12 @@ static void DoFieldTypeConversion(GDALDataset *poDstDS,
                     oFieldDefn.GetNameRef());
             }
             oFieldDefn.SetType(OFTReal);
+        }
+        else if (oFieldDefn.GetType() == OFTDateTime && poDstDriver &&
+                 EQUAL(poDstDriver->GetDescription(), "ESRI Shapefile"))
+        {
+            // Just be silent. The shapefile driver will itself emit a
+            // warning mentionning it converts DateTime to String.
         }
         else if (!bQuiet)
         {
@@ -5987,12 +6001,9 @@ SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer, bool bTransform,
             }
             else
             {
-                static bool bHasWarned = false;
-                if (!bHasWarned)
-                    CPLError(CE_Failure, CPLE_IllegalArg,
+                CPLErrorOnce(CE_Failure, CPLE_IllegalArg,
                              "-wrapdateline option only works when "
                              "reprojecting to a geographic SRS");
-                bHasWarned = true;
             }
 
             psInfo->m_aoReprojectionInfo[iGeom].m_aosTransformOptions.Assign(
@@ -6496,16 +6507,17 @@ bool LayerTranslator::Translate(
                     if (poStolenGeometry->IsEmpty())
                         goto end_loop;
 
-                    const auto [poClipGeom, poClipGeomEnvelope] =
+                    const auto clipGeomDesc =
                         GetSrcClipGeom(poStolenGeometry->getSpatialReference());
 
-                    if (poClipGeom && poClipGeomEnvelope)
+                    if (clipGeomDesc.poGeom && clipGeomDesc.poEnv)
                     {
                         OGREnvelope oEnv;
                         poStolenGeometry->getEnvelope(&oEnv);
-                        if (!poClipGeomEnvelope->Contains(oEnv) &&
-                            !(poClipGeomEnvelope->Intersects(oEnv) &&
-                              poClipGeom->Intersects(poStolenGeometry.get())))
+                        if (!clipGeomDesc.poEnv->Contains(oEnv) &&
+                            !(clipGeomDesc.poEnv->Intersects(oEnv) &&
+                              clipGeomDesc.poGeom->Intersects(
+                                  poStolenGeometry.get())))
                         {
                             goto end_loop;
                         }
@@ -6513,7 +6525,10 @@ bool LayerTranslator::Translate(
                 }
 
                 poDstFeature->Reset();
-                if (poDstFeature->SetFrom(poFeature.get(), panMap, TRUE) !=
+
+                if (poDstFeature->SetFrom(
+                        poFeature.get(), panMap, /* bForgiving = */ TRUE,
+                        /* bUseISO8601ForDateTimeAsString = */ true) !=
                     OGRERR_NONE)
                 {
                     if (psOptions->nGroupTransactions)
@@ -6747,22 +6762,23 @@ bool LayerTranslator::Translate(
                     if (poDstGeometry->IsEmpty())
                         goto end_loop;
 
-                    const auto [poClipGeom, poClipGeomEnvelope] =
+                    const auto clipGeomDesc =
                         GetSrcClipGeom(poDstGeometry->getSpatialReference());
 
-                    if (!(poClipGeom && poClipGeomEnvelope))
+                    if (!(clipGeomDesc.poGeom && clipGeomDesc.poEnv))
                         goto end_loop;
 
                     OGREnvelope oDstEnv;
                     poDstGeometry->getEnvelope(&oDstEnv);
 
-                    if (!poClipGeomEnvelope->Contains(oDstEnv))
+                    if (!(clipGeomDesc.bGeomIsRectangle &&
+                          clipGeomDesc.poEnv->Contains(oDstEnv)))
                     {
                         std::unique_ptr<OGRGeometry> poClipped;
-                        if (poClipGeomEnvelope->Intersects(oDstEnv))
+                        if (clipGeomDesc.poEnv->Intersects(oDstEnv))
                         {
-                            poClipped.reset(
-                                poClipGeom->Intersection(poDstGeometry.get()));
+                            poClipped.reset(clipGeomDesc.poGeom->Intersection(
+                                poDstGeometry.get()));
                         }
                         if (poClipped == nullptr || poClipped->IsEmpty())
                         {
@@ -6929,9 +6945,9 @@ bool LayerTranslator::Translate(
                         if (poDstGeometry->IsEmpty())
                             goto end_loop;
 
-                        auto [poClipGeom, poClipGeomEnvelope] = GetDstClipGeom(
+                        const auto clipGeomDesc = GetDstClipGeom(
                             poDstGeometry->getSpatialReference());
-                        if (!poClipGeom || !poClipGeomEnvelope)
+                        if (!clipGeomDesc.poGeom || !clipGeomDesc.poEnv)
                         {
                             goto end_loop;
                         }
@@ -6939,13 +6955,15 @@ bool LayerTranslator::Translate(
                         OGREnvelope oDstEnv;
                         poDstGeometry->getEnvelope(&oDstEnv);
 
-                        if (!poClipGeomEnvelope->Contains(oDstEnv))
+                        if (!(clipGeomDesc.bGeomIsRectangle &&
+                              clipGeomDesc.poEnv->Contains(oDstEnv)))
                         {
                             std::unique_ptr<OGRGeometry> poClipped;
-                            if (poClipGeomEnvelope->Intersects(oDstEnv))
+                            if (clipGeomDesc.poEnv->Intersects(oDstEnv))
                             {
-                                poClipped.reset(poClipGeom->Intersection(
-                                    poDstGeometry.get()));
+                                poClipped.reset(
+                                    clipGeomDesc.poGeom->Intersection(
+                                        poDstGeometry.get()));
                             }
 
                             if (poClipped == nullptr || poClipped->IsEmpty())
@@ -7154,7 +7172,7 @@ bool LayerTranslator::Translate(
  *                  expressed.
  * @return the destination clip geometry and its envelope, or (nullptr, nullptr)
  */
-std::pair<const OGRGeometry *, const OGREnvelope *>
+LayerTranslator::ClipGeomDesc
 LayerTranslator::GetDstClipGeom(const OGRSpatialReference *poGeomSRS)
 {
     if (m_poClipDstReprojectedToDstSRS_SRS != poGeomSRS)
@@ -7167,7 +7185,7 @@ LayerTranslator::GetDstClipGeom(const OGRSpatialReference *poGeomSRS)
             if (m_poClipDstReprojectedToDstSRS->transformTo(poGeomSRS) !=
                 OGRERR_NONE)
             {
-                return std::make_pair(nullptr, nullptr);
+                return ClipGeomDesc();
             }
             m_poClipDstReprojectedToDstSRS_SRS = poGeomSRS;
         }
@@ -7193,8 +7211,13 @@ LayerTranslator::GetDstClipGeom(const OGRSpatialReference *poGeomSRS)
     if (poGeom && !m_oClipDstEnv.IsInit())
     {
         poGeom->getEnvelope(&m_oClipDstEnv);
+        m_bClipDstIsRectangle = poGeom->IsRectangle();
     }
-    return std::make_pair(poGeom, poGeom ? &m_oClipDstEnv : nullptr);
+    ClipGeomDesc ret;
+    ret.poGeom = poGeom;
+    ret.poEnv = poGeom ? &m_oClipDstEnv : nullptr;
+    ret.bGeomIsRectangle = m_bClipDstIsRectangle;
+    return ret;
 }
 
 /************************************************************************/
@@ -7207,7 +7230,7 @@ LayerTranslator::GetDstClipGeom(const OGRSpatialReference *poGeomSRS)
  *                  expressed.
  * @return the source clip geometry and its envelope, or (nullptr, nullptr)
  */
-std::pair<const OGRGeometry *, const OGREnvelope *>
+LayerTranslator::ClipGeomDesc
 LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
 {
     if (m_poClipSrcReprojectedToSrcSRS_SRS != poGeomSRS)
@@ -7220,7 +7243,7 @@ LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
             if (m_poClipSrcReprojectedToSrcSRS->transformTo(poGeomSRS) !=
                 OGRERR_NONE)
             {
-                return std::make_pair(nullptr, nullptr);
+                return ClipGeomDesc();
             }
             m_poClipSrcReprojectedToSrcSRS_SRS = poGeomSRS;
         }
@@ -7245,8 +7268,13 @@ LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
     if (poGeom && !m_oClipSrcEnv.IsInit())
     {
         poGeom->getEnvelope(&m_oClipSrcEnv);
+        m_bClipSrcIsRectangle = poGeom->IsRectangle();
     }
-    return std::make_pair(poGeom, poGeom ? &m_oClipSrcEnv : nullptr);
+    ClipGeomDesc ret;
+    ret.poGeom = poGeom;
+    ret.poEnv = poGeom ? &m_oClipSrcEnv : nullptr;
+    ret.bGeomIsRectangle = m_bClipDstIsRectangle;
+    return ret;
 }
 
 /************************************************************************/

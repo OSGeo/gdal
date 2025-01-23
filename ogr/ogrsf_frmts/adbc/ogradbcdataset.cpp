@@ -214,17 +214,39 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     }
     const char *pszADBCDriverName =
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "ADBC_DRIVER");
-    m_bIsDuckDB = OGRADBCDriverIsDuckDB(poOpenInfo);
+    m_bIsDuckDBDataset = OGRADBCDriverIsDuckDB(poOpenInfo);
     const bool bIsSQLite3 =
         (pszADBCDriverName && EQUAL(pszADBCDriverName, "adbc_driver_sqlite")) ||
         OGRADBCDriverIsSQLite3(poOpenInfo);
-    const bool bIsParquet = OGRADBCDriverIsParquet(poOpenInfo) ||
-                            EQUAL(CPLGetExtension(pszFilename), "parquet");
+    bool bIsParquet =
+        OGRADBCDriverIsParquet(poOpenInfo) ||
+        EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "parquet");
+    const char *pszSQL = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SQL");
+    if (!bIsParquet && pszSQL)
+    {
+        CPLString osSQL(pszSQL);
+        auto iPos = osSQL.find("FROM '");
+        if (iPos != std::string::npos)
+        {
+            iPos += strlen("FROM '");
+            const auto iPos2 = osSQL.find("'", iPos);
+            if (iPos2 != std::string::npos)
+            {
+                const std::string osFilename = osSQL.substr(iPos, iPos2 - iPos);
+                if (EQUAL(CPLGetExtensionSafe(osFilename.c_str()).c_str(),
+                          "parquet"))
+                {
+                    m_osParquetFilename = osFilename;
+                    bIsParquet = true;
+                }
+            }
+        }
+    }
     const bool bIsPostgreSQL = STARTS_WITH(pszFilename, "postgresql://");
 
     if (!pszADBCDriverName)
     {
-        if (m_bIsDuckDB || bIsParquet)
+        if (m_bIsDuckDBDataset || bIsParquet)
         {
             pszADBCDriverName =
 #ifdef _WIN32
@@ -250,9 +272,12 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
         }
     }
 
+    m_bIsDuckDBDriver =
+        m_bIsDuckDBDataset || bIsParquet ||
+        (pszADBCDriverName && strstr(pszADBCDriverName, "duckdb"));
+
     // Load the driver
-    if (pszADBCDriverName &&
-        (m_bIsDuckDB || bIsParquet || strstr(pszADBCDriverName, "duckdb")))
+    if (m_bIsDuckDBDriver)
     {
         if (OGRADBCLoadDriver(pszADBCDriverName, "duckdb_adbc_init", &m_driver,
                               error) != ADBC_STATUS_OK)
@@ -282,8 +307,7 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     }
 
     // Set options
-    if (pszADBCDriverName &&
-        (m_bIsDuckDB || bIsParquet || strstr(pszADBCDriverName, "duckdb")))
+    if (m_bIsDuckDBDriver)
     {
         if (ADBC_CALL(DatabaseSetOption, &m_database, "path",
                       bIsParquet ? ":memory:" : pszFilename,
@@ -352,9 +376,8 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
         CreateInternalLayer(pszStatement);
     }
     CSLDestroy(papszPreludeStatements);
-    if ((bIsParquet || m_bIsDuckDB) &&
-        CPLTestBool(
-            CPLGetConfigOption("OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", "ON")))
+    if (m_bIsDuckDBDriver && CPLTestBool(CPLGetConfigOption(
+                                 "OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", "ON")))
     {
         auto poTmpLayer =
             CreateInternalLayer("SELECT 1 FROM duckdb_extensions() WHERE "
@@ -376,14 +399,15 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
 
     std::string osLayerName = "RESULTSET";
     std::string osSQL;
-    const char *pszSQL = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SQL");
     bool bIsParquetLayer = false;
     if (bIsParquet)
     {
-        m_osParquetFilename = pszFilename;
-        osLayerName = CPLGetBasename(pszFilename);
+        if (m_osParquetFilename.empty())
+            m_osParquetFilename = pszFilename;
+        osLayerName = CPLGetBasenameSafe(m_osParquetFilename.c_str());
         if (osLayerName == "*")
-            osLayerName = CPLGetBasename(CPLGetDirname(pszFilename));
+            osLayerName = CPLGetBasenameSafe(
+                CPLGetDirnameSafe(m_osParquetFilename.c_str()).c_str());
         if (!pszSQL)
         {
             osSQL =
@@ -399,7 +423,7 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
         if (pszSQL[0])
         {
             std::unique_ptr<OGRADBCLayer> poLayer;
-            if ((bIsParquet || m_bIsDuckDB) && m_bSpatialLoaded)
+            if ((bIsParquet || m_bIsDuckDBDataset) && m_bSpatialLoaded)
             {
                 std::string osErrorMsg;
                 {
@@ -477,7 +501,7 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
             m_apoLayers.emplace_back(std::move(poLayer));
         }
     }
-    else if (m_bIsDuckDB || bIsSQLite3)
+    else if (m_bIsDuckDBDataset || bIsSQLite3)
     {
         auto poLayerList = CreateInternalLayer(
             "SELECT name FROM sqlite_master WHERE type IN ('table', 'view')");

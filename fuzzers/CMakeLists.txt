@@ -125,6 +125,16 @@ build_gdal_specialized_fuzzer(gdal_vrt GDALAllRegister "/vsimem/test.tar" "/vsit
 build_gdal_specialized_fuzzer(ers GDALRegister_ERS "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.ers")
 
 build_fuzzer(
+    NAME
+    libertiff_fuzzer
+    SOURCES
+    gdal_fuzzer.cpp
+    DEFINITIONS
+    -DREGISTER_FUNC=GDALRegister_LIBERTIFF
+    -DDRIVER_NAME="LIBERTIFF"
+)
+
+build_fuzzer(
   NAME
   gdal_filesystem_fuzzer
   SOURCES

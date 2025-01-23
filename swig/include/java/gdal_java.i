@@ -1122,6 +1122,7 @@ import java.awt.Color;
 
 %typemap(javaimports) GDALRasterBandShadow %{
 import org.gdal.gdalconst.gdalconstConstants;
+import org.gdal.osr.SpatialReference;
 %}
 
 

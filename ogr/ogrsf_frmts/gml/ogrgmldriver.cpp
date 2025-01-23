@@ -32,7 +32,7 @@ static int OGRGMLDriverIdentify(GDALOpenInfo *poOpenInfo)
     /* it transparently with /vsigzip/ */
     else if (poOpenInfo->pabyHeader[0] == 0x1f &&
              poOpenInfo->pabyHeader[1] == 0x8b &&
-             EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "gz") &&
+             poOpenInfo->IsExtensionEqualToCI("gz") &&
              !STARTS_WITH(poOpenInfo->pszFilename, "/vsigzip/"))
     {
         return -1; /* must be later checked */

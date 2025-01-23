@@ -134,7 +134,8 @@ int main(int argc, char **argv)
             /* --------------------------------------------------------------------
              */
             CPLString osFilename;
-            osFilename.Printf("%s_%d_%d.tif", CPLGetBasename(pszSrcFilename),
+            osFilename.Printf("%s_%d_%d.tif",
+                              CPLGetBasenameSafe(pszSrcFilename).c_str(),
                               iBand + 1, iOverview);
             if (!DumpBand(hSrcDS, hSrcOver, osFilename))
                 bRet = false;
@@ -142,9 +143,10 @@ int main(int argc, char **argv)
             if (bMasks)
             {
                 CPLString osMaskFilename;
-                osMaskFilename.Printf("%s_%d_%d_mask.tif",
-                                      CPLGetBasename(pszSrcFilename), iBand + 1,
-                                      iOverview);
+                osMaskFilename.Printf(
+                    "%s_%d_%d_mask.tif",
+                    CPLGetBasenameSafe(pszSrcFilename).c_str(), iBand + 1,
+                    iOverview);
                 if (!DumpBand(hSrcDS, GDALGetMaskBand(hSrcOver),
                               osMaskFilename))
                     bRet = false;
@@ -159,7 +161,8 @@ int main(int argc, char **argv)
         if (bMasks)
         {
             CPLString osFilename;
-            osFilename.Printf("%s_%d_mask.tif", CPLGetBasename(pszSrcFilename),
+            osFilename.Printf("%s_%d_mask.tif",
+                              CPLGetBasenameSafe(pszSrcFilename).c_str(),
                               iBand + 1);
             if (!DumpBand(hSrcDS, GDALGetMaskBand(hBaseBand), osFilename))
                 bRet = false;

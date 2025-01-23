@@ -35,7 +35,7 @@ static int OGRDGNDriverIdentify(GDALOpenInfo *poOpenInfo)
         poOpenInfo->fpL != nullptr && poOpenInfo->nHeaderBytes >= 512 &&
         memcmp(poOpenInfo->pabyHeader, "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1", 8) ==
             0 &&
-        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "DGN") &&
+        poOpenInfo->IsExtensionEqualToCI("DGN") &&
         VSIStat(poOpenInfo->pszFilename, &sStat) == 0 &&
         GDALGetDriverByName("DGNV8") == nullptr)
     {

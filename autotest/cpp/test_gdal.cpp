@@ -4951,4 +4951,245 @@ TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_with_mask)
     EXPECT_EQ(nMaxY, 0);
 }
 
+TEST_F(test_gdal, GDALTranspose2D)
+{
+    constexpr int COUNT = 6;
+    const GByte abyData[] = {1, 2, 3, 4, 5, 6};
+    GByte abySrcData[COUNT * 2 * sizeof(double)];
+    GByte abyDstData[COUNT * 2 * sizeof(double)];
+    GByte abyDstAsByteData[COUNT * 2 * sizeof(double)];
+    for (int eSrcDTInt = GDT_Byte; eSrcDTInt < GDT_TypeCount; ++eSrcDTInt)
+    {
+        const auto eSrcDT = static_cast<GDALDataType>(eSrcDTInt);
+        GDALCopyWords(abyData, GDT_Byte, 1, abySrcData, eSrcDT,
+                      GDALGetDataTypeSizeBytes(eSrcDT), COUNT);
+        for (int eDstDTInt = GDT_Byte; eDstDTInt < GDT_TypeCount; ++eDstDTInt)
+        {
+            const auto eDstDT = static_cast<GDALDataType>(eDstDTInt);
+            memset(abyDstData, 0, sizeof(abyDstData));
+            GDALTranspose2D(abySrcData, eSrcDT, abyDstData, eDstDT, 3, 2);
+
+            memset(abyDstAsByteData, 0, sizeof(abyDstAsByteData));
+            GDALCopyWords(abyDstData, eDstDT, GDALGetDataTypeSizeBytes(eDstDT),
+                          abyDstAsByteData, GDT_Byte, 1, COUNT);
+
+            EXPECT_EQ(abyDstAsByteData[0], 1)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[1], 4)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[2], 2)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[3], 5)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[4], 3)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[5], 6)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+        }
+    }
+}
+
+TEST_F(test_gdal, GDALTranspose2D_Byte_optims)
+{
+    std::vector<GByte> in;
+    for (int i = 0; i < 19 * 17; ++i)
+        in.push_back(static_cast<GByte>(i % 256));
+
+    std::vector<GByte> out(in.size());
+
+    // SSSE3 optim (16x16) blocks
+    {
+        constexpr int W = 19;
+        constexpr int H = 17;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // Optim H = 2 with W < 16
+    {
+        constexpr int W = 15;
+        constexpr int H = 2;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // Optim H = 2 with W >= 16
+    {
+        constexpr int W = 19;
+        constexpr int H = 2;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // SSSE3 optim H = 3 with W < 16
+    {
+        constexpr int W = 15;
+        constexpr int H = 3;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // SSSE3 optim H = 3 with W >= 16
+    {
+        constexpr int W = 19;
+        constexpr int H = 3;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // Optim H = 4 with H < 16
+    {
+        constexpr int W = 15;
+        constexpr int H = 4;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // Optim H = 4 with H >= 16
+    {
+        constexpr int W = 19;
+        constexpr int H = 4;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // SSSE3 optim H = 5 with W < 16
+    {
+        constexpr int W = 15;
+        constexpr int H = 5;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // SSSE3 optim H = 5 with W >= 16
+    {
+        constexpr int W = 19;
+        constexpr int H = 5;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+}
+
+TEST_F(test_gdal, GDALExpandPackedBitsToByteAt0Or1)
+{
+    unsigned next = 1;
+    const auto badRand = [&next]()
+    {
+        next = static_cast<unsigned>(static_cast<uint64_t>(next) * 1103515245 +
+                                     12345);
+        return next;
+    };
+
+    constexpr int BITS_PER_BYTE = 8;
+    constexpr int SSE_REGISTER_SIZE_IN_BYTES = 16;
+    constexpr int LESS_THAN_8BITS = 5;
+    std::vector<GByte> expectedOut(SSE_REGISTER_SIZE_IN_BYTES * BITS_PER_BYTE +
+                                   BITS_PER_BYTE + LESS_THAN_8BITS);
+    std::vector<GByte> in((expectedOut.size() + BITS_PER_BYTE - 1) /
+                          BITS_PER_BYTE);
+    for (int i = 0; i < static_cast<int>(expectedOut.size()); ++i)
+    {
+        expectedOut[i] = (badRand() % 2) == 0 ? 0 : 1;
+        if (expectedOut[i])
+        {
+            in[i / BITS_PER_BYTE] = static_cast<GByte>(
+                in[i / BITS_PER_BYTE] |
+                (1 << (BITS_PER_BYTE - 1 - (i % BITS_PER_BYTE))));
+        }
+    }
+
+    std::vector<GByte> out(expectedOut.size());
+    GDALExpandPackedBitsToByteAt0Or1(in.data(), out.data(), out.size());
+
+    EXPECT_EQ(out, expectedOut);
+}
+
+TEST_F(test_gdal, GDALExpandPackedBitsToByteAt0Or255)
+{
+    unsigned next = 1;
+    const auto badRand = [&next]()
+    {
+        next = static_cast<unsigned>(static_cast<uint64_t>(next) * 1103515245 +
+                                     12345);
+        return next;
+    };
+
+    constexpr int BITS_PER_BYTE = 8;
+    constexpr int SSE_REGISTER_SIZE_IN_BYTES = 16;
+    constexpr int LESS_THAN_8BITS = 5;
+    std::vector<GByte> expectedOut(SSE_REGISTER_SIZE_IN_BYTES * BITS_PER_BYTE +
+                                   BITS_PER_BYTE + LESS_THAN_8BITS);
+    std::vector<GByte> in((expectedOut.size() + BITS_PER_BYTE - 1) /
+                          BITS_PER_BYTE);
+    for (int i = 0; i < static_cast<int>(expectedOut.size()); ++i)
+    {
+        expectedOut[i] = (badRand() % 2) == 0 ? 0 : 255;
+        if (expectedOut[i])
+        {
+            in[i / BITS_PER_BYTE] = static_cast<GByte>(
+                in[i / BITS_PER_BYTE] |
+                (1 << (BITS_PER_BYTE - 1 - (i % BITS_PER_BYTE))));
+        }
+    }
+
+    std::vector<GByte> out(expectedOut.size());
+    GDALExpandPackedBitsToByteAt0Or255(in.data(), out.data(), out.size());
+
+    EXPECT_EQ(out, expectedOut);
+}
+
 }  // namespace

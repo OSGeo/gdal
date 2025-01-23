@@ -1115,6 +1115,17 @@ def test_ogr2ogr_lib_clipsrc_datasource(tmp_vsimem):
     f.SetField("filter_field", "exact_overlap_full_result")
     f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0, 0 2, 2 2, 2 0, 0 0))"))
     clip_layer.CreateFeature(f)
+    # Clip geometry envelope contains envelope of input geometry, but does not intersect it
+    f = ogr.Feature(clip_layer.GetLayerDefn())
+    f.SetField(
+        "filter_field", "clip_geometry_envelope_contains_envelope_but_no_intersect"
+    )
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON ((-2 -1,-2 4,4 4,4 -1,3 -1,3 3,-1 3,-1 -1,-2 -1))"
+        )
+    )
+    clip_layer.CreateFeature(f)
     clip_ds = None
 
     # Test clip with 'half_overlap_line_result' using sql statement
@@ -1155,6 +1166,19 @@ def test_ogr2ogr_lib_clipsrc_datasource(tmp_vsimem):
         format="GPKG",
         clipSrc=clip_path,
         clipSrcWhere="filter_field = 'no_overlap_no_result'",
+    )
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 0
+    dst_ds = None
+    gdal.Unlink(dst_filename)
+
+    # Test clip with the "clip_geometry_envelope_contains_envelope_but_no_intersect" using only clipSrcWhere
+    dst_ds = gdal.VectorTranslate(
+        dst_filename,
+        src_filename,
+        format="GPKG",
+        clipSrc=clip_path,
+        clipSrcWhere="filter_field = 'clip_geometry_envelope_contains_envelope_but_no_intersect'",
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 0
@@ -1389,6 +1413,17 @@ def test_ogr2ogr_lib_clipdst_datasource(tmp_vsimem):
     f.SetField("filter_field", "exact_overlap_full_result")
     f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0, 0 2, 2 2, 2 0, 0 0))"))
     clip_layer.CreateFeature(f)
+    # Clip geometry envelope contains envelope of input geometry, but does not intersect it
+    f = ogr.Feature(clip_layer.GetLayerDefn())
+    f.SetField(
+        "filter_field", "clip_geometry_envelope_contains_envelope_but_no_intersect"
+    )
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON ((-2 -1,-2 4,4 4,4 -1,3 -1,3 3,-1 3,-1 -1,-2 -1))"
+        )
+    )
+    clip_layer.CreateFeature(f)
     clip_ds = None
 
     # Test clip with 'half_overlap_line_result' using sql statement
@@ -1429,6 +1464,19 @@ def test_ogr2ogr_lib_clipdst_datasource(tmp_vsimem):
         format="GPKG",
         clipDst=clip_path,
         clipDstWhere="filter_field = 'no_overlap_no_result'",
+    )
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 0
+    dst_ds = None
+    gdal.Unlink(dst_filename)
+
+    # Test clip with the "clip_geometry_envelope_contains_envelope_but_no_intersect" using only clipSrcWhere
+    dst_ds = gdal.VectorTranslate(
+        dst_filename,
+        src_filename,
+        format="GPKG",
+        clipDst=clip_path,
+        clipDstWhere="filter_field = 'clip_geometry_envelope_contains_envelope_but_no_intersect'",
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 0
@@ -3121,3 +3169,46 @@ def test_ogr2ogr_lib_transfer_filegdb_relationships(tmp_vsimem):
         assert relationship.GetLeftTableName() == "table6"
         assert relationship.GetRightTableName() == "table7"
         assert relationship.GetMappingTableName() == "composite_many_to_many"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("GPKG")
+@pytest.mark.parametrize("OGR2OGR_USE_ARROW_API", ["YES", "NO"])
+def test_ogr2ogr_lib_datetime_in_shapefile(tmp_vsimem, OGR2OGR_USE_ARROW_API):
+
+    src_filename = str(tmp_vsimem / "src.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(src_filename) as src_ds:
+        src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+
+        field = ogr.FieldDefn("dt", ogr.OFTDateTime)
+        src_lyr.CreateField(field)
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetField("dt", "2022-05-31T12:34:56.789+05:30")
+        src_lyr.CreateFeature(f)
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        got_msg.append(msg)
+        return
+
+    out_filename = str(tmp_vsimem / "out.dbf")
+    with gdaltest.error_handler(my_handler), gdaltest.config_options(
+        {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": OGR2OGR_USE_ARROW_API}
+    ):
+        gdal.VectorTranslate(out_filename, src_filename)
+
+    if OGR2OGR_USE_ARROW_API == "YES":
+        assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
+    else:
+        assert "OGR2OGR: Using WriteArrowBatch()" not in got_msg
+
+    print(got_msg)
+    assert "Field dt created as String field, though DateTime requested." in got_msg
+
+    with ogr.Open(out_filename) as dst_ds:
+        dst_lyr = dst_ds.GetLayer(0)
+        assert [f.GetField("dt") for f in dst_lyr] == ["2022-05-31T12:34:56.789+05:30"]

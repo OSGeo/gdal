@@ -2410,3 +2410,18 @@ def test_grib_grib2_minx_180():
     ds = gdal.Open("data/grib/minx_180.grib2")
     gt = ds.GetGeoTransform()
     assert gt == pytest.approx((-180.0625, 0.125, 0.0, 90.0625, 0.0, -0.125), rel=1e-6)
+
+
+def test_grib_grib2_MANAL_2023030103_fake_wrong_grid_origin_latitude():
+    with gdal.quiet_errors():
+        ds = gdal.Open(
+            "data/grib/MANAL_2023030103_fake_wrong_grid_origin_latitude.grb2"
+        )
+    assert (
+        gdal.GetLastErrorMsg()
+        == "Likely buggy grid registration for GRIB2 product: heuristics shows that the latitudeOfFirstGridPoint is likely to qualify the latitude of the northern-most grid point instead of the southern-most grid point as expected. Please report to data producer. This heuristics can be disabled by setting the GRIB_LATITUDE_OF_FIRST_GRID_POINT_IS_SOUTHERN_MOST configuration option to YES."
+    )
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx(
+        (-2442500.0217935005, 5000.0, 0.0, 2042500.0318467868, 0.0, -5000.0), rel=1e-6
+    )

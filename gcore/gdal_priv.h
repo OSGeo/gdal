@@ -290,9 +290,9 @@ class CPL_DLL GDALDefaultOverviews
 /** Class for dataset open functions. */
 class CPL_DLL GDALOpenInfo
 {
-    bool bHasGotSiblingFiles;
-    char **papszSiblingFiles;
-    int nHeaderBytesTried;
+    bool bHasGotSiblingFiles = false;
+    char **papszSiblingFiles = nullptr;
+    int nHeaderBytesTried = 0;
 
   public:
     GDALOpenInfo(const char *pszFile, int nOpenFlagsIn,
@@ -300,30 +300,34 @@ class CPL_DLL GDALOpenInfo
     ~GDALOpenInfo(void);
 
     /** Filename */
-    char *pszFilename;
+    char *pszFilename = nullptr;
+
+    /** Result of CPLGetExtension(pszFilename); */
+    std::string osExtension{};
+
     /** Open options */
-    char **papszOpenOptions;
+    char **papszOpenOptions = nullptr;
 
     /** Access flag */
-    GDALAccess eAccess;
+    GDALAccess eAccess = GA_ReadOnly;
     /** Open flags */
-    int nOpenFlags;
+    int nOpenFlags = 0;
 
     /** Whether stat()'ing the file was successful */
-    int bStatOK;
+    bool bStatOK = false;
     /** Whether the file is a directory */
-    int bIsDirectory;
+    bool bIsDirectory = false;
 
     /** Pointer to the file */
-    VSILFILE *fpL;
+    VSILFILE *fpL = nullptr;
 
     /** Number of bytes in pabyHeader */
-    int nHeaderBytes;
+    int nHeaderBytes = 0;
     /** Buffer with first bytes of the file */
-    GByte *pabyHeader;
+    GByte *pabyHeader = nullptr;
 
     /** Allowed drivers (NULL for all) */
-    const char *const *papszAllowedDrivers;
+    const char *const *papszAllowedDrivers = nullptr;
 
     int TryToIngest(int nBytes);
     char **GetSiblingFiles();
@@ -331,6 +335,14 @@ class CPL_DLL GDALOpenInfo
     bool AreSiblingFilesLoaded() const;
 
     bool IsSingleAllowedDriver(const char *pszDriverName) const;
+
+    /** Return whether the extension of the file is equal to pszExt, using
+     * case-insensitive comparison.
+     * @since 3.11 */
+    inline bool IsExtensionEqualToCI(const char *pszExt) const
+    {
+        return EQUAL(osExtension.c_str(), pszExt);
+    }
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALOpenInfo)
@@ -714,6 +726,11 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual CPLErr GetGeoTransform(double *padfTransform);
     virtual CPLErr SetGeoTransform(double *padfTransform);
+
+    CPLErr GeolocationToPixelLine(
+        double dfGeolocX, double dfGeolocY, const OGRSpatialReference *poSRS,
+        double *pdfPixel, double *pdfLine,
+        CSLConstList papszTransformerOptions = nullptr) const;
 
     virtual CPLErr AddBand(GDALDataType eType, char **papszOptions = nullptr);
 
@@ -1574,6 +1591,12 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
             m_poBandRef = bOwned ? nullptr : poBand;
         }
 
+        void reset(std::unique_ptr<GDALRasterBand> poBand)
+        {
+            m_poBandOwned = std::move(poBand);
+            m_poBandRef = nullptr;
+        }
+
         const GDALRasterBand *get() const
         {
             return static_cast<const GDALRasterBand *>(*this);
@@ -1868,6 +1891,12 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     std::shared_ptr<GDALMDArray> AsMDArray() const;
 
+    CPLErr InterpolateAtGeolocation(
+        double dfGeolocX, double dfGeolocY, const OGRSpatialReference *poSRS,
+        GDALRIOResampleAlg eInterpolation, double *pdfRealValue,
+        double *pdfImagValue = nullptr,
+        CSLConstList papszTransfomerOptions = nullptr) const;
+
     virtual CPLErr InterpolateAtPoint(double dfPixel, double dfLine,
                                       GDALRIOResampleAlg eInterpolation,
                                       double *pdfRealValue,
@@ -1967,6 +1996,12 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 {
   protected:
     CPLErr IReadBlock(int, int, void *) override;
+
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, GSpacing nPixelSpace,
+                     GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALAllValidMaskBand)
 
@@ -2156,6 +2191,14 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                 GDALDataset *poSourceDS,
                                 CSLConstList papszVectorTranslateArguments,
                                 char ***ppapszFailureReasons);
+
+    /**
+     * \brief Returns TRUE if the given open option is supported by the driver.
+     * @param pszOpenOptionName name of the open option to be checked
+     * @return TRUE if the driver supports the open option
+     * @since GDAL 3.11
+     */
+    bool HasOpenOption(const char *pszOpenOptionName) const;
 
     GDALDataset *
     VectorTranslateFrom(const char *pszDestName, GDALDataset *poSourceDS,
@@ -4472,6 +4515,14 @@ int CPL_DLL GDALReadTabFile2(const char *pszBaseFilename,
 
 void CPL_DLL GDALCopyRasterIOExtraArg(GDALRasterIOExtraArg *psDestArg,
                                       GDALRasterIOExtraArg *psSrcArg);
+
+void CPL_DLL GDALExpandPackedBitsToByteAt0Or1(
+    const GByte *CPL_RESTRICT pabyInput, GByte *CPL_RESTRICT pabyOutput,
+    size_t nInputBits);
+
+void CPL_DLL GDALExpandPackedBitsToByteAt0Or255(
+    const GByte *CPL_RESTRICT pabyInput, GByte *CPL_RESTRICT pabyOutput,
+    size_t nInputBits);
 
 CPL_C_END
 

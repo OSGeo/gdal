@@ -875,7 +875,7 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                     if ((o->field_bit >= FIELD_CODEC) &&
                         (TIFFFieldSet(tif, o->field_bit)))
                     {
-                        switch (o->set_field_type)
+                        switch (o->set_get_field_type)
                         {
                             case TIFF_SETGET_ASCII:
                             {
@@ -1016,7 +1016,8 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                 case TIFF_RATIONAL:
                 {
                     /*-- Rational2Double: For Rationals evaluate
-                     * "set_field_type" to determine internal storage size. */
+                     * "set_get_field_type" to determine internal storage size.
+                     */
                     int tv_size;
                     tv_size = TIFFFieldSetGetSize(
                         tif->tif_dir.td_customValues[m].info);
@@ -1038,11 +1039,11 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                          * tv_size==4 should be set as default. */
                         if (tv_size != 4)
                         {
-                            TIFFErrorExtR(tif,
-                                          "TIFFLib: _TIFFWriteDirectorySec()",
-                                          "Rational2Double: .set_field_type is "
-                                          "not 4 but %d",
-                                          tv_size);
+                            TIFFErrorExtR(
+                                tif, "TIFFLib: _TIFFWriteDirectorySec()",
+                                "Rational2Double: .set_get_field_type is "
+                                "not 4 but %d",
+                                tv_size);
                         }
                     }
                 }
@@ -1050,7 +1051,8 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                 case TIFF_SRATIONAL:
                 {
                     /*-- Rational2Double: For Rationals evaluate
-                     * "set_field_type" to determine internal storage size. */
+                     * "set_get_field_type" to determine internal storage size.
+                     */
                     int tv_size;
                     tv_size = TIFFFieldSetGetSize(
                         tif->tif_dir.td_customValues[m].info);
@@ -1072,11 +1074,11 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                          * tv_size==4 should be set as default. */
                         if (tv_size != 4)
                         {
-                            TIFFErrorExtR(tif,
-                                          "TIFFLib: _TIFFWriteDirectorySec()",
-                                          "Rational2Double: .set_field_type is "
-                                          "not 4 but %d",
-                                          tv_size);
+                            TIFFErrorExtR(
+                                tif, "TIFFLib: _TIFFWriteDirectorySec()",
+                                "Rational2Double: .set_get_field_type is "
+                                "not 4 but %d",
+                                tv_size);
                         }
                     }
                 }

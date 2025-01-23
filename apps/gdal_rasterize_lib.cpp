@@ -842,12 +842,20 @@ static GDALDatasetH CreateOutputDataset(
         sEnvelop.MaxY = ceil(sEnvelop.MaxY / dfYRes) * dfYRes;
     }
 
+    if (dfXRes == 0 || dfYRes == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not determine bounds");
+        return nullptr;
+    }
+
     double adfProjection[6] = {sEnvelop.MinX, dfXRes, 0.0,
                                sEnvelop.MaxY, 0.0,    -dfYRes};
 
     if (nXSize == 0 && nYSize == 0)
     {
+        // coverity[divide_by_zero]
         const double dfXSize = 0.5 + (sEnvelop.MaxX - sEnvelop.MinX) / dfXRes;
+        // coverity[divide_by_zero]
         const double dfYSize = 0.5 + (sEnvelop.MaxY - sEnvelop.MinY) / dfYRes;
         if (dfXSize > std::numeric_limits<int>::max() ||
             dfXSize < std::numeric_limits<int>::min() ||

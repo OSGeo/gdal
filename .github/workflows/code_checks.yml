@@ -93,7 +93,14 @@ jobs:
           cd build
           cmake ..
 
-      - name: Run cppcheck test
+      - name: Run cppcheck test (on push events)
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          cd build
+          ../scripts/cppcheck.sh
+
+      - name: Run cppcheck test, but ignore failures (on pull request)
+        if: ${{ github.event_name == 'pull_request' }}
         run: |
           cd build
           # Do not fail the job. This is just used as a tool to monitor how we are regarding recent cppcheck
@@ -150,7 +157,7 @@ jobs:
         run: python3 ./scripts/check_binaries.py
 
   linting:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
       - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
@@ -169,16 +176,16 @@ jobs:
             make doxygen_check_warnings
 
   other_checks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
       - name: Install Requirements
         run: |
-            sudo apt install python3-pip wget
-            # ruamel.yaml.clib 0.2.9 throws a 'TypeError: a string or stream input is required' when running cffconvert --validate
-            PYTHON_CMD=python3 && sudo $PYTHON_CMD -m pip install cffconvert "ruamel.yaml.clib<0.2.9"
+            sudo apt-get install -y --no-install-recommends python3-pip
+            sudo apt-get remove -y python3-jsonschema
+            PYTHON_CMD=python3 && sudo $PYTHON_CMD -m pip install --break-system-packages cffconvert
 
       - name: Validate citation file
         run: |

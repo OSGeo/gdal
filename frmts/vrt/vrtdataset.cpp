@@ -160,7 +160,7 @@ CPLErr VRTFlushCacheStruct<T>::FlushCache(T &obj, bool bAtClosing)
     obj.m_bNeedsFlush = false;
 
     // Serialize XML representation to disk
-    const std::string osVRTPath(CPLGetPath(obj.GetDescription()));
+    const std::string osVRTPath(CPLGetPathSafe(obj.GetDescription()));
     CPLXMLNode *psDSTree = obj.T::SerializeToXML(osVRTPath.c_str());
     if (!CPLSerializeXMLTreeToFile(psDSTree, obj.GetDescription()))
         eErr = CE_Failure;
@@ -182,7 +182,7 @@ char **VRTDataset::GetMetadata(const char *pszDomain)
         const char *pszDescription = GetDescription();
         char *l_pszVRTPath = CPLStrdup(
             pszDescription[0] && !STARTS_WITH(pszDescription, "<VRTDataset")
-                ? CPLGetPath(pszDescription)
+                ? CPLGetPathSafe(pszDescription).c_str()
                 : "");
         CPLXMLNode *psDSTree = SerializeToXML(l_pszVRTPath);
         char *pszXML = CPLSerializeXMLTree(psDSTree);
@@ -797,8 +797,8 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
         pszXML = reinterpret_cast<char *>(pabyOut);
 
         char *pszCurDir = CPLGetCurrentDir();
-        const char *currentVrtFilename =
-            CPLProjectRelativeFilename(pszCurDir, poOpenInfo->pszFilename);
+        std::string currentVrtFilename =
+            CPLProjectRelativeFilenameSafe(pszCurDir, poOpenInfo->pszFilename);
         CPLString osInitialCurrentVrtFilename(currentVrtFilename);
         CPLFree(pszCurDir);
 
@@ -808,7 +808,7 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
         while (true)
         {
             VSIStatBuf statBuffer;
-            int lstatCode = lstat(currentVrtFilename, &statBuffer);
+            int lstatCode = lstat(currentVrtFilename.c_str(), &statBuffer);
             if (lstatCode == -1)
             {
                 if (errno == ENOENT)
@@ -821,7 +821,7 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
                     CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
                     CPLFree(pszXML);
                     CPLError(CE_Failure, CPLE_FileIO, "Failed to lstat %s: %s",
-                             currentVrtFilename, VSIStrerror(errno));
+                             currentVrtFilename.c_str(), VSIStrerror(errno));
                     return nullptr;
                 }
             }
@@ -831,8 +831,9 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
                 break;
             }
 
-            const int bufferSize = static_cast<int>(readlink(
-                currentVrtFilename, filenameBuffer, sizeof(filenameBuffer)));
+            const int bufferSize = static_cast<int>(
+                readlink(currentVrtFilename.c_str(), filenameBuffer,
+                         sizeof(filenameBuffer)));
             if (bufferSize != -1)
             {
                 filenameBuffer[std::min(
@@ -840,8 +841,9 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
                     0;
                 // The filename in filenameBuffer might be a relative path
                 // from the linkfile resolve it before looping
-                currentVrtFilename = CPLProjectRelativeFilename(
-                    CPLGetDirname(currentVrtFilename), filenameBuffer);
+                currentVrtFilename = CPLProjectRelativeFilenameSafe(
+                    CPLGetDirnameSafe(currentVrtFilename.c_str()).c_str(),
+                    filenameBuffer);
             }
             else
             {
@@ -849,16 +851,18 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
                 CPLFree(pszXML);
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Failed to read filename from symlink %s: %s",
-                         currentVrtFilename, VSIStrerror(errno));
+                         currentVrtFilename.c_str(), VSIStrerror(errno));
                 return nullptr;
             }
         }
 #endif  // HAVE_READLINK && HAVE_LSTAT
 
         if (osInitialCurrentVrtFilename == currentVrtFilename)
-            pszVRTPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+            pszVRTPath =
+                CPLStrdup(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
         else
-            pszVRTPath = CPLStrdup(CPLGetPath(currentVrtFilename));
+            pszVRTPath =
+                CPLStrdup(CPLGetPathSafe(currentVrtFilename.c_str()).c_str());
 
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     }
@@ -1064,19 +1068,19 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             if (nSubdatasets > 0)
             {
                 bool bFound = false;
-                for (int j = 0; j < nSubdatasets; j += 2)
+                for (int j = 0; j < nSubdatasets && papszSubdatasets[j]; j += 2)
                 {
-                    const std::string osSubdatasetSource(
-                        strstr(papszSubdatasets[j], "=") + 1);
-                    if (osSubdatasetSource.empty())
+                    const char *pszEqual = strchr(papszSubdatasets[j], '=');
+                    if (!pszEqual)
                     {
                         CPLError(CE_Failure, CPLE_IllegalArg,
                                  "'sd_name:' failed to obtain "
                                  "subdataset string ");
                         return nullptr;
                     }
+                    const char *pszSubdatasetSource = pszEqual + 1;
                     GDALSubdatasetInfoH info =
-                        GDALGetSubdatasetInfo(osSubdatasetSource.c_str());
+                        GDALGetSubdatasetInfo(pszSubdatasetSource);
                     char *component =
                         info ? GDALSubdatasetInfoGetSubdatasetComponent(info)
                              : nullptr;
@@ -1088,7 +1092,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                     if (bFound)
                     {
                         poSrcDS.reset(GDALDataset::Open(
-                            osSubdatasetSource.c_str(),
+                            pszSubdatasetSource,
                             GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
                             aosAllowedDrivers.List(), aosOpenOptions.List(),
                             nullptr));
@@ -1675,7 +1679,8 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
         VRTRawRasterBand *poBand =
             new VRTRawRasterBand(this, GetRasterCount() + 1, eType);
 
-        char *l_pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
+        char *l_pszVRTPath =
+            CPLStrdup(CPLGetPathSafe(GetDescription()).c_str());
         if (EQUAL(l_pszVRTPath, ""))
         {
             CPLFree(l_pszVRTPath);
@@ -3020,7 +3025,8 @@ std::string VRTDataset::BuildSourceFilename(const char *pszFilename,
         {
             auto path{oSubDSInfo->GetPathComponent()};
             osSrcDSName = oSubDSInfo->ModifyPathComponent(
-                CPLProjectRelativeFilename(pszVRTPath, path.c_str()));
+                CPLProjectRelativeFilenameSafe(pszVRTPath, path.c_str())
+                    .c_str());
             GDALDestroySubdatasetInfo(oSubDSInfo);
         }
         else
@@ -3047,8 +3053,8 @@ std::string VRTDataset::BuildSourceFilename(const char *pszFilename,
                         CPLString osPrefixFilename = pszFilename;
                         osPrefixFilename.resize(pszLastPart - pszFilename);
                         osSrcDSName =
-                            osPrefixFilename +
-                            CPLProjectRelativeFilename(pszVRTPath, pszLastPart);
+                            osPrefixFilename + CPLProjectRelativeFilenameSafe(
+                                                   pszVRTPath, pszLastPart);
                         bDone = true;
                     }
                     else if (STARTS_WITH_CI(pszSyntax + osPrefix.size(),
@@ -3067,7 +3073,7 @@ std::string VRTDataset::BuildSourceFilename(const char *pszFilename,
                             const CPLString osSuffix = osFilename.substr(nPos);
                             osFilename.resize(nPos);
                             osSrcDSName = osPrefix +
-                                          CPLProjectRelativeFilename(
+                                          CPLProjectRelativeFilenameSafe(
                                               pszVRTPath, osFilename) +
                                           osSuffix;
                             bDone = true;
@@ -3084,13 +3090,13 @@ std::string VRTDataset::BuildSourceFilename(const char *pszFilename,
                     // Simplify path by replacing "foo/a/../b" with "foo/b"
                     while (STARTS_WITH(pszFilename, "../"))
                     {
-                        osVRTPath = CPLGetPath(osVRTPath.c_str());
+                        osVRTPath = CPLGetPathSafe(osVRTPath.c_str());
                         pszFilename += strlen("../");
                     }
                 }
 
-                osSrcDSName =
-                    CPLProjectRelativeFilename(osVRTPath.c_str(), pszFilename);
+                osSrcDSName = CPLProjectRelativeFilenameSafe(osVRTPath.c_str(),
+                                                             pszFilename);
             }
         }
     }

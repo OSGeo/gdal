@@ -162,7 +162,7 @@ public:
     return GDALAlgorithmArgGetAsDouble(self);
   }
 
-%newobject GetAsDataset;
+%newobject GetAsDatasetValue;
   GDALArgDatasetValueHS* GetAsDatasetValue() {
     return GDALAlgorithmArgGetAsDatasetValue(self);
   }
@@ -223,9 +223,22 @@ public:
     return GDALAlgorithmArgSetAsDoubleList(self, nList, pList);
   }
 
-  void SetDataset(GDALDatasetShadow* ds) {
-    GDALAlgorithmArgSetDataset(self, ds);
+  bool SetDataset(GDALDatasetShadow* ds) {
+    return GDALAlgorithmArgSetDataset(self, ds);
   }
+
+#if defined(SWIGPYTHON)
+  bool SetDatasets(int object_list_count, GDALDatasetShadow** poObjects) {
+    return GDALAlgorithmArgSetDatasets(self, object_list_count, poObjects);
+  }
+#endif
+
+%apply (char **options) {char** names};
+  bool SetDatasetNames(char** names) {
+    return GDALAlgorithmArgSetDatasetNames(self, names);
+  }
+%clear char** names;
+
 }
 };
 

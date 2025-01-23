@@ -90,6 +90,7 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON ${GDAL_CMAKE_EXTRA_OPTS} \
         -DOpenDrive_DIR=/usr/lib/ \
         -DOGR_ENABLE_DRIVER_XODR_PLUGIN=TRUE \
+        -DGDAL_USE_EXPRTK:BOOL=ON \
 
     ninja
     DESTDIR="/build" ninja install

@@ -89,11 +89,15 @@ if (ECW_VERSION_STRING VERSION_GREATER_EQUAL 5.5)
             if( "${ECW_LIBRARY}" MATCHES "NCSEcwS" )
                 set(ECW_INTERFACE_COMPILE_DEFINITIONS "${ECW_INTERFACE_COMPILE_DEFINITIONS};NCSECW_STATIC_LIBS")
             endif()
+            if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+                list(APPEND ECW_EXTRA_LINK_LIBRARIES "-framework Foundation")
+            endif()
             set_target_properties(ECW::ECW_ALL PROPERTIES
                                 INTERFACE_INCLUDE_DIRECTORIES "${ECW_INCLUDE_DIRS}"
                                 INTERFACE_COMPILE_DEFINITIONS "${ECW_INTERFACE_COMPILE_DEFINITIONS}"
                                 IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                                IMPORTED_LOCATION "${ECW_LIBRARY}")
+                                IMPORTED_LOCATION "${ECW_LIBRARY}"
+                                INTERFACE_LINK_LIBRARIES "${ECW_EXTRA_LINK_LIBRARIES}")
         endif()
     endif()
 elseif(ECW_VERSION_STRING VERSION_GREATER_EQUAL 4.0)

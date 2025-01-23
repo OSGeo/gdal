@@ -597,7 +597,7 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
 
     CPLString osTarget = poOpenInfo->pszFilename;
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "aux") &&
+    if (poOpenInfo->IsExtensionEqualToCI("aux") &&
         STARTS_WITH_CI(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
                        "AuxilaryTarget: "))
     {
@@ -613,15 +613,15 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         szAuxTarget[sizeof(szAuxTarget) - 1] = '\0';
 
-        const std::string osPath(CPLGetPath(poOpenInfo->pszFilename));
-        osTarget = CPLFormFilename(osPath.c_str(), szAuxTarget, nullptr);
+        const std::string osPath(CPLGetPathSafe(poOpenInfo->pszFilename));
+        osTarget = CPLFormFilenameSafe(osPath.c_str(), szAuxTarget, nullptr);
     }
 
     /* -------------------------------------------------------------------- */
     /*      Now we need to tear apart the filename to form a .aux           */
     /*      filename.                                                       */
     /* -------------------------------------------------------------------- */
-    CPLString osAuxFilename = CPLResetExtension(osTarget, "aux");
+    CPLString osAuxFilename = CPLResetExtensionSafe(osTarget, "aux");
 
     /* -------------------------------------------------------------------- */
     /*      Do we have a .aux file?                                         */
@@ -636,7 +636,7 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
     VSILFILE *fp = VSIFOpenL(osAuxFilename, "r");
     if (fp == nullptr)
     {
-        osAuxFilename = CPLResetExtension(osTarget, "AUX");
+        osAuxFilename = CPLResetExtensionSafe(osTarget, "AUX");
         fp = VSIFOpenL(osAuxFilename, "r");
     }
 
@@ -1010,7 +1010,8 @@ GDALDataset *PAuxDataset::Create(const char *pszFilename, int nXSize,
 static CPLErr PAuxDelete(const char *pszBasename)
 
 {
-    VSILFILE *fp = VSIFOpenL(CPLResetExtension(pszBasename, "aux"), "r");
+    VSILFILE *fp =
+        VSIFOpenL(CPLResetExtensionSafe(pszBasename, "aux").c_str(), "r");
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1039,7 +1040,7 @@ static CPLErr PAuxDelete(const char *pszBasename)
         return CE_Failure;
     }
 
-    VSIUnlink(CPLResetExtension(pszBasename, "aux"));
+    VSIUnlink(CPLResetExtensionSafe(pszBasename, "aux").c_str());
 
     return CE_None;
 }

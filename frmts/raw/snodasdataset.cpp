@@ -431,8 +431,9 @@ GDALDataset *SNODASDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Open target binary file.                                        */
     /* -------------------------------------------------------------------- */
-    const char *pszPath = CPLGetPath(poOpenInfo->pszFilename);
-    osDataFilename = CPLFormFilename(pszPath, osDataFilename, nullptr);
+    const std::string osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
+    osDataFilename =
+        CPLFormFilenameSafe(osPath.c_str(), osDataFilename, nullptr);
 
     VSILFILE *fpRaw = VSIFOpenL(osDataFilename, "rb");
 

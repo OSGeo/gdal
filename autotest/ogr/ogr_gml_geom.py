@@ -2295,6 +2295,36 @@ def test_gml_ArcByCenterPoint():
         geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (1 4,-1 2,1 0)")
     )
 
+    gml = "<gml:ArcByCenterPoint><gml:pos>1 2</gml:pos><gml:radius uom='km'>0.002</gml:radius><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>"
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    ogrtest.check_feature_geometry(
+        geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (1 4,-1 2,1 0)")
+    )
+
+    gml = "<gml:ArcByCenterPoint srsName='http://www.opengis.net/def/crs/EPSG/0/25832'><gml:pos>1 2</gml:pos><gml:radius uom='km'>0.002</gml:radius><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>"
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    ogrtest.check_feature_geometry(
+        geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (1 4,-1 2,1 0)")
+    )
+
+    # EPSG:2222 : unit is ft
+    gml = "<gml:ArcByCenterPoint srsName='http://www.opengis.net/def/crs/EPSG/0/2222'><gml:pos>1 2</gml:pos><gml:radius uom='m'>0.6096</gml:radius><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>"
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    ogrtest.check_feature_geometry(
+        geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (1 4,-1 2,1 0)")
+    )
+
+    # EPSG:2222 : unit is ft
+    gml = "<gml:ArcByCenterPoint srsName='http://www.opengis.net/def/crs/EPSG/0/2222'><gml:pos>1 2</gml:pos><gml:radius uom='ft'>2</gml:radius><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>"
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    ogrtest.check_feature_geometry(
+        geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (1 4,-1 2,1 0)")
+    )
+
 
 ###############################################################################
 # Test compound curve of ArcByCenterPoint whose ends don't exactly match
@@ -2386,6 +2416,29 @@ def test_gml_CircleByCenterPoint_srs_geog_uom_m_km():
     geom2 = ogr.CreateGeometryFromGML(gml)
 
     ogrtest.check_feature_geometry(geom1, geom2)
+
+
+###############################################################################
+# Test GML CircleByCenterPoint with unhandled uom
+
+
+def test_gml_CircleByCenterPoint_srs_geog_unnhandled_uom():
+
+    gml = '<gml:CircleByCenterPoint gml:id="geom_id" srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos><gml:radius uom="unhandled">2000</gml:radius></gml:CircleByCenterPoint>'
+    with gdaltest.disable_exceptions(), gdal.quiet_errors():
+        ogr.CreateGeometryFromGML(gml)
+        assert (
+            gdal.GetLastErrorMsg()
+            == "GML geometry id='geom_id': Unhandled distance unit 'unhandled' in attribute 'radius'"
+        )
+
+    gml = '<gml:CircleByCenterPoint srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>2 49</gml:pos><gml:radius uom="unhandled">2000</gml:radius></gml:CircleByCenterPoint>'
+    with gdaltest.disable_exceptions(), gdal.quiet_errors():
+        ogr.CreateGeometryFromGML(gml)
+        assert (
+            gdal.GetLastErrorMsg()
+            == "Unhandled distance unit 'unhandled' in attribute 'radius'"
+        )
 
 
 ###############################################################################
@@ -3032,3 +3085,22 @@ def test_gml_OrientableCurve():
     )
     assert g is not None
     assert g.ExportToWkt() == "LINESTRING (2 3,0 1)"
+
+
+###############################################################################
+#
+
+
+def test_gml_aixm_ElevatedPoint():
+
+    geom = ogr.CreateGeometryFromGML(
+        """<aixm:ElevatedPoint srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>49 2</gml:pos>
+            <aixm:elevation uom="M">10</aixm:elevation> <!-- ignored -->
+        </aixm:ElevatedPoint>"""
+    )
+
+    ogrtest.check_feature_geometry(
+        geom,
+        "POINT (49 2)",
+    )

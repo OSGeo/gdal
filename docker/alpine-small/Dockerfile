@@ -28,7 +28,8 @@ RUN apk add --no-cache \
     libjpeg-turbo-dev libpng-dev libwebp-dev expat-dev \
     postgresql-dev \
     rsync \
-    openjpeg-dev
+    openjpeg-dev \
+    muparser-dev
 
 # Ninja is not in the default path on Alpine.
 ENV PATH=/usr/lib/ninja-build/bin:$PATH
@@ -172,10 +173,11 @@ RUN date
 
 RUN apk add --no-cache \
         libstdc++ \
+        bash-completion \
         sqlite-libs \
         libcurl tiff \
         zlib zstd-libs lz4-libs libdeflate libarchive \
-        libjpeg-turbo libpng openjpeg libwebp expat libpq \
+        libjpeg-turbo libpng openjpeg libwebp expat libpq muparser \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
     && rm -f /usr/lib/libturbojpeg.so* \
     # Only libwebp.so is used by GDAL
@@ -191,6 +193,9 @@ COPY --from=builder  /build_proj/usr/include/ /usr/include/
 COPY --from=builder  /build_proj/usr/bin/ /usr/bin/
 COPY --from=builder  /build_proj/usr/lib/ /usr/lib/
 
+COPY --from=builder  /build/usr/share/bash-completion/ /usr/share/bash-completion/
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
+
+CMD ["/bin/bash", "-l"]

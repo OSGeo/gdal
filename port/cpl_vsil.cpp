@@ -140,13 +140,278 @@ char **VSISiblingFiles(const char *pszFilename)
 }
 
 /************************************************************************/
+/*                           VSIFnMatch()                               */
+/************************************************************************/
+
+static bool VSIFnMatch(const char *pszPattern, const char *pszStr)
+{
+    for (; *pszPattern && *pszStr; pszPattern++, pszStr++)
+    {
+        if (*pszPattern == '*')
+        {
+            if (pszPattern[1] == 0)
+                return true;
+            for (; *pszStr; ++pszStr)
+            {
+                if (VSIFnMatch(pszPattern + 1, pszStr))
+                    return true;
+            }
+            return false;
+        }
+        else if (*pszPattern == '?')
+        {
+            // match single any char
+        }
+        else if (*pszPattern == '[')
+        {
+            // match character classes and ranges
+            // "[abcd]" will match a character that is a, b, c or d
+            // "[a-z]" will match a character that is a to z
+            // "[!abcd] will match a character that is *not* a, b, c or d
+            // "[]]" will match character ]
+            // "[]-]" will match character ] or -
+            // "[!]a-]" will match a character that is *not* ], a or -
+
+            const char *pszOpenBracket = pszPattern;
+            ++pszPattern;
+            const bool isNot = (*pszPattern == '!');
+            if (isNot)
+            {
+                ++pszOpenBracket;
+                ++pszPattern;
+            }
+            bool res = false;
+            for (; *pszPattern; ++pszPattern)
+            {
+                if ((*pszPattern == ']' || *pszPattern == '-') &&
+                    pszPattern == pszOpenBracket + 1)
+                {
+                    if (*pszStr == *pszPattern)
+                    {
+                        res = true;
+                    }
+                }
+                else if (*pszPattern == ']')
+                {
+                    break;
+                }
+                else if (pszPattern[1] == '-' && pszPattern[2] != 0 &&
+                         pszPattern[2] != ']')
+                {
+                    if (*pszStr >= pszPattern[0] && *pszStr <= pszPattern[2])
+                    {
+                        res = true;
+                    }
+                    pszPattern += 2;
+                }
+                else if (*pszStr == *pszPattern)
+                {
+                    res = true;
+                }
+            }
+            if (*pszPattern == 0)
+                return false;
+            if (!res && !isNot)
+                return false;
+            if (res && isNot)
+                return false;
+        }
+        else if (*pszPattern != *pszStr)
+        {
+            return false;
+        }
+    }
+    return *pszPattern == 0 && *pszStr == 0;
+}
+
+/************************************************************************/
+/*                             VSIGlob()                                */
+/************************************************************************/
+
+/**
+ \brief Return a list of file and directory names matching
+ a pattern that can contain wildcards.
+
+ This function has similar behavior to the POSIX glob() function:
+ https://man7.org/linux/man-pages/man7/glob.7.html
+
+ In particular it supports the following wildcards:
+ <ul>
+ <li>'*': match any string</li>
+ <li>'?': match any single character</li>
+ <li>'[': match character class or range, with '!' immediately after '['
+ to indicate negation.</li>
+ </ul>
+ Refer to to the above man page for more details.
+
+ It also supports the "**" recursive wildcard, behaving similarly to Python
+ glob.glob() with recursive=True. Be careful of the amount of memory and time
+ required when using that recursive wildcard on directories with a large
+ amount of files and subdirectories.
+
+ Examples, given a file hierarchy:
+ - one.tif
+ - my_subdir/two.tif
+ - my_subdir/subsubdir/three.tif
+
+ \code{.cpp}
+ VSIGlob("one.tif",NULL,NULL,NULL) returns ["one.tif", NULL]
+ VSIGlob("*.tif",NULL,NULL,NULL) returns ["one.tif", NULL]
+ VSIGlob("on?.tif",NULL,NULL,NULL) returns ["one.tif", NULL]
+ VSIGlob("on[a-z].tif",NULL,NULL,NULL) returns ["one.tif", NULL]
+ VSIGlob("on[ef].tif",NULL,NULL,NULL) returns ["one.tif", NULL]
+ VSIGlob("on[!e].tif",NULL,NULL,NULL) returns NULL
+ VSIGlob("my_subdir" "/" "*.tif",NULL,NULL,NULL) returns ["my_subdir/two.tif", NULL]
+ VSIGlob("**" "/" "*.tif",NULL,NULL,NULL) returns ["one.tif", "my_subdir/two.tif", "my_subdir/subsubdir/three.tif", NULL]
+ \endcode
+
+ In the current implementation, matching is done based on the assumption that
+ a character fits into a single byte, which will not work properly on
+ non-ASCII UTF-8 filenames.
+
+ VSIGlob() works with any virtual file systems supported by GDAL, including
+ network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc. But note that
+ for those ones, the pattern is not passed to the remote server, and thus large
+ amount of filenames can be transferred from the remote server to the host
+ where the filtering is done.
+
+ @param pszPattern the relative, or absolute path of a directory to read.
+ UTF-8 encoded.
+ @param papszOptions NULL-terminate list of options, or NULL. None supported
+ currently.
+ @param pProgressFunc Progress function, or NULL. This is only used as a way
+ for the user to cancel operation if it takes too much time. The percentage
+ passed to the callback is not significant (always at 0).
+ @param pProgressData User data passed to the progress function, or NULL.
+ @return The list of matched filenames, which must be freed with CSLDestroy().
+ Filenames are returned in UTF-8 encoding.
+
+ @since GDAL 3.11
+*/
+
+char **VSIGlob(const char *pszPattern, const char *const *papszOptions,
+               GDALProgressFunc pProgressFunc, void *pProgressData)
+{
+    CPL_IGNORE_RET_VAL(papszOptions);
+
+    CPLStringList aosRes;
+    std::vector<std::pair<std::string, size_t>> candidates;
+    candidates.emplace_back(pszPattern, 0);
+    while (!candidates.empty())
+    {
+        auto [osPattern, nPosStart] = candidates.back();
+        pszPattern = osPattern.c_str() + nPosStart;
+        candidates.pop_back();
+
+        std::string osPath = osPattern.substr(0, nPosStart);
+        std::string osCurPath;
+        for (;; ++pszPattern)
+        {
+            if (*pszPattern == 0 || *pszPattern == '/' || *pszPattern == '\\')
+            {
+                struct VSIDirCloser
+                {
+                    void operator()(VSIDIR *dir)
+                    {
+                        VSICloseDir(dir);
+                    }
+                };
+
+                if (osCurPath == "**")
+                {
+                    std::unique_ptr<VSIDIR, VSIDirCloser> psDir(
+                        VSIOpenDir(osPath.c_str(), -1, nullptr));
+                    if (!psDir)
+                        return nullptr;
+                    while (const VSIDIREntry *psEntry =
+                               VSIGetNextDirEntry(psDir.get()))
+                    {
+                        if (pProgressFunc &&
+                            !pProgressFunc(0, "", pProgressData))
+                        {
+                            return nullptr;
+                        }
+                        {
+                            std::string osCandidate(osPath);
+                            osCandidate += psEntry->pszName;
+                            nPosStart = osCandidate.size();
+                            if (*pszPattern)
+                            {
+                                osCandidate += pszPattern;
+                            }
+                            candidates.emplace_back(std::move(osCandidate),
+                                                    nPosStart);
+                        }
+                    }
+                    osPath.clear();
+                    break;
+                }
+                else if (osCurPath.find_first_of("*?[") != std::string::npos)
+                {
+                    std::unique_ptr<VSIDIR, VSIDirCloser> psDir(
+                        VSIOpenDir(osPath.c_str(), 0, nullptr));
+                    if (!psDir)
+                        return nullptr;
+                    while (const VSIDIREntry *psEntry =
+                               VSIGetNextDirEntry(psDir.get()))
+                    {
+                        if (pProgressFunc &&
+                            !pProgressFunc(0, "", pProgressData))
+                        {
+                            return nullptr;
+                        }
+                        if (VSIFnMatch(osCurPath.c_str(), psEntry->pszName))
+                        {
+                            std::string osCandidate(osPath);
+                            osCandidate += psEntry->pszName;
+                            nPosStart = osCandidate.size();
+                            if (*pszPattern)
+                            {
+                                osCandidate += pszPattern;
+                            }
+                            candidates.emplace_back(std::move(osCandidate),
+                                                    nPosStart);
+                        }
+                    }
+                    osPath.clear();
+                    break;
+                }
+                else if (*pszPattern == 0)
+                {
+                    osPath += osCurPath;
+                    break;
+                }
+                else
+                {
+                    osPath += osCurPath;
+                    osPath += *pszPattern;
+                    osCurPath.clear();
+                }
+            }
+            else
+            {
+                osCurPath += *pszPattern;
+            }
+        }
+        if (!osPath.empty())
+        {
+            VSIStatBufL sStat;
+            if (VSIStatL(osPath.c_str(), &sStat) == 0)
+                aosRes.AddString(osPath.c_str());
+        }
+    }
+
+    return aosRes.StealList();
+}
+
+/************************************************************************/
 /*                      VSIGetDirectorySeparator()                      */
 /************************************************************************/
 
 /** Return the directory separator for the specified path.
  *
  * Default is forward slash. The only exception currently is the Windows
- * file system which returns anti-slash, unless the specified path is of the
+ * file system which returns backslash, unless the specified path is of the
  * form "{drive_letter}:/{rest_of_the_path}".
  *
  * @since 3.9
@@ -394,7 +659,7 @@ int VSIMkdirRecursive(const char *pszPathname, long mode)
     {
         return VSI_ISDIR(sStat.st_mode) ? 0 : -1;
     }
-    const CPLString osParentPath(CPLGetPath(osPathname));
+    const std::string osParentPath(CPLGetPathSafe(osPathname));
 
     // Prevent crazy paths from recursing forever.
     if (osParentPath == osPathname ||
@@ -403,9 +668,9 @@ int VSIMkdirRecursive(const char *pszPathname, long mode)
         return -1;
     }
 
-    if (VSIStatL(osParentPath, &sStat) != 0)
+    if (VSIStatL(osParentPath.c_str(), &sStat) != 0)
     {
-        if (VSIMkdirRecursive(osParentPath, mode) != 0)
+        if (VSIMkdirRecursive(osParentPath.c_str(), mode) != 0)
             return -1;
     }
 
@@ -1822,18 +2087,18 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
 
     if (VSI_ISDIR(sSource.st_mode))
     {
-        CPLString osTargetDir(pszTarget);
+        std::string osTargetDir(pszTarget);
         if (osSource.back() != '/' && osSource.back() != '\\')
         {
-            osTargetDir = CPLFormFilename(osTargetDir,
-                                          CPLGetFilename(pszSource), nullptr);
+            osTargetDir = CPLFormFilenameSafe(
+                osTargetDir.c_str(), CPLGetFilename(pszSource), nullptr);
         }
 
         VSIStatBufL sTarget;
         bool ret = true;
-        if (VSIStatL(osTargetDir, &sTarget) < 0)
+        if (VSIStatL(osTargetDir.c_str(), &sTarget) < 0)
         {
-            if (VSIMkdirRecursive(osTargetDir, 0755) < 0)
+            if (VSIMkdirRecursive(osTargetDir.c_str(), 0755) < 0)
             {
                 CPLError(CE_Failure, CPLE_FileIO, "Cannot create directory %s",
                          osTargetDir.c_str());
@@ -1866,17 +2131,17 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
                 {
                     continue;
                 }
-                CPLString osSubSource(
-                    CPLFormFilename(osSourceWithoutSlash, *iter, nullptr));
-                CPLString osSubTarget(
-                    CPLFormFilename(osTargetDir, *iter, nullptr));
+                const std::string osSubSource(CPLFormFilenameSafe(
+                    osSourceWithoutSlash.c_str(), *iter, nullptr));
+                const std::string osSubTarget(
+                    CPLFormFilenameSafe(osTargetDir.c_str(), *iter, nullptr));
                 // coverity[divide_by_zero]
                 void *pScaledProgress = GDALCreateScaledProgress(
                     double(iFile) / nFileCount, double(iFile + 1) / nFileCount,
                     pProgressFunc, pProgressData);
-                ret = Sync((osSubSource + SOURCE_SEP).c_str(), osSubTarget,
-                           aosChildOptions.List(), GDALScaledProgress,
-                           pScaledProgress, nullptr);
+                ret = Sync((osSubSource + SOURCE_SEP).c_str(),
+                           osSubTarget.c_str(), aosChildOptions.List(),
+                           GDALScaledProgress, pScaledProgress, nullptr);
                 GDALDestroyScaledProgress(pScaledProgress);
                 if (!ret)
                 {
@@ -1889,15 +2154,15 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
     }
 
     VSIStatBufL sTarget;
-    CPLString osTarget(pszTarget);
-    if (VSIStatL(osTarget, &sTarget) == 0)
+    std::string osTarget(pszTarget);
+    if (VSIStatL(osTarget.c_str(), &sTarget) == 0)
     {
         bool bTargetIsFile = true;
         if (VSI_ISDIR(sTarget.st_mode))
         {
-            osTarget =
-                CPLFormFilename(osTarget, CPLGetFilename(pszSource), nullptr);
-            bTargetIsFile = VSIStatL(osTarget, &sTarget) == 0 &&
+            osTarget = CPLFormFilenameSafe(osTarget.c_str(),
+                                           CPLGetFilename(pszSource), nullptr);
+            bTargetIsFile = VSIStatL(osTarget.c_str(), &sTarget) == 0 &&
                             !CPL_TO_BOOL(VSI_ISDIR(sTarget.st_mode));
         }
         if (bTargetIsFile)

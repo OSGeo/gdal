@@ -4803,7 +4803,7 @@ def test_ogr_gml_force_opening(tmp_vsimem):
             [],
             "Field xxxx not found in layer test_point",
         ),
-        # Test with type wich is not recognized
+        # Test with type which is not recognized
         (
             [
                 r'OGR_SCHEMA={"layers": [{"name": "test_point", "fields": [{ "name": "str", "type": "xxxx" }, {"name": "dbl", "type": "String" }]}]}'

@@ -625,6 +625,35 @@ def test_ogr_vrt_16(tmp_path):
 
 
 ###############################################################################
+# Test SrcRegion.clip
+
+
+@pytest.mark.require_driver("CSV")
+@pytest.mark.require_geos
+def test_ogr_vrt_SrcRegion_clip(tmp_path):
+
+    f = open(tmp_path / "test.csv", "wb")
+    f.write("wkt_geom,val1,val2\n".encode("ascii"))
+    f.write('"LINESTRING (-1 0.5,1.5 0.5)",,\n'.encode("ascii"))
+    f.close()
+
+    vrt_xml = f"""
+<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="0">{tmp_path}/test.csv</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+        <GeometryField encoding="WKT" field="wkt_geom"/>
+        <SrcRegion clip="true">POLYGON((0 0,0 1,1 1,1 0,0 0))</SrcRegion>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+    vrt_ds = ogr.Open(vrt_xml)
+    vrt_lyr = vrt_ds.GetLayerByName("test")
+    feat = vrt_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    assert geom.ExportToWkt() == "LINESTRING (0.0 0.5,1.0 0.5)"
+
+
+###############################################################################
 # Test explicit field definitions.
 
 
@@ -3386,3 +3415,35 @@ def test_ogr_vrt_warped_arrow(tmp_vsimem):
     assert ds.GetLayer(0).GetExtent() == pytest.approx(
         (166021.443080541, 500000, 0.0, 331593.179548329)
     )
+
+
+###############################################################################
+# Test SetSpatialFilter() on a point and SrcRegion not being a polygon
+
+
+@pytest.mark.require_geos
+def test_ogr_vrt_srcregion_and_point_filter():
+
+    src_ds = ogr.Open(
+        """<OGRVRTDataSource>
+            <OGRVRTLayer name="poly">
+                <SrcDataSource>data/poly.shp</SrcDataSource>
+                <SrcRegion>MULTIPOLYGON(((478315 4762880,478315 4765610,481645 4765610,481645 4762880,478315 4762880)))</SrcRegion>
+            </OGRVRTLayer>
+    </OGRVRTDataSource>"""
+    )
+    lyr = src_ds.GetLayer(0)
+
+    lyr.SetSpatialFilter(ogr.CreateGeometryFromWkt("POINT(479751 4764703)"))
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is not None
+    assert lyr.GetNextFeature() is None
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetSpatialFilter(ogr.CreateGeometryFromWkt("POINT(-479751 -4764703)"))
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is None
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetSpatialFilter(None)
+    assert lyr.GetFeatureCount() == 10

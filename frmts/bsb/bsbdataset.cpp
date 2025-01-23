@@ -568,24 +568,24 @@ void BSBDataset::ScanForGCPs(bool isNos, const char *pszFilename)
 
 void BSBDataset::ScanForGCPsNos(const char *pszFilename)
 {
-    const char *extension = CPLGetExtension(pszFilename);
+    const std::string extension = CPLGetExtensionSafe(pszFilename);
 
     // pseudointelligently try and guess whether we want a .geo or a .GEO
-    const char *geofile = nullptr;
-    if (extension[1] == 'O')
+    std::string geofile;
+    if (extension.size() >= 2 && extension[1] == 'O')
     {
-        geofile = CPLResetExtension(pszFilename, "GEO");
+        geofile = CPLResetExtensionSafe(pszFilename, "GEO");
     }
     else
     {
-        geofile = CPLResetExtension(pszFilename, "geo");
+        geofile = CPLResetExtensionSafe(pszFilename, "geo");
     }
 
-    FILE *gfp = VSIFOpen(geofile, "r");  // Text files
+    FILE *gfp = VSIFOpen(geofile.c_str(), "r");  // Text files
     if (gfp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Couldn't find a matching .GEO file: %s", geofile);
+                 "Couldn't find a matching .GEO file: %s", geofile.c_str());
         return;
     }
 

@@ -29,26 +29,7 @@ GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
-    auto &arg =
-        AddArg("bbox", 0, _("Bounding box as xmin,ymin,xmax,ymax"), &m_bbox)
-            .SetRepeatedArgAllowed(false)
-            .SetMinCount(4)
-            .SetMaxCount(4)
-            .SetDisplayHintAboutRepetition(false);
-    arg.AddValidationAction(
-        [&arg]()
-        {
-            const auto &val = arg.Get<std::vector<double>>();
-            CPLAssert(val.size() == 4);
-            if (!(val[0] <= val[2]) || !(val[1] <= val[3]))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Value of 'bbox' should be xmin,ymin,xmax,ymax with "
-                         "xmin <= xmax and ymin <= ymax");
-                return false;
-            }
-            return true;
-        });
+    AddBBOXArg(&m_bbox);
 }
 
 /************************************************************************/

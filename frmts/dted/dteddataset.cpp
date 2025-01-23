@@ -470,9 +470,9 @@ GDALDataset *DTEDDataset::Open(GDALOpenInfo *poOpenInfo)
         int bTryAux = TRUE;
         if (poOpenInfo->GetSiblingFiles() != nullptr &&
             CSLFindString(poOpenInfo->GetSiblingFiles(),
-                          CPLResetExtension(
-                              CPLGetFilename(poOpenInfo->pszFilename), "aux")) <
-                0 &&
+                          CPLResetExtensionSafe(
+                              CPLGetFilename(poOpenInfo->pszFilename), "aux")
+                              .c_str()) < 0 &&
             CSLFindString(
                 poOpenInfo->GetSiblingFiles(),
                 CPLSPrintf("%s.aux", CPLGetFilename(poOpenInfo->pszFilename))) <

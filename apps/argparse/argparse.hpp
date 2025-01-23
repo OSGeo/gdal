@@ -2147,7 +2147,8 @@ public:
           }
         }
         cur_mutex = arg_mutex;
-        if (curline.size() + 1 + arg_inline_usage.size() >
+        if (curline.size() != indent_size &&
+            curline.size() + 1 + arg_inline_usage.size() >
             this->m_usage_max_line_width) {
           stream << curline << std::endl;
           curline = std::string(indent_size, ' ');

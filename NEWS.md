@@ -1,3 +1,215 @@
+# GDAL/OGR 3.10.1 Release Notes
+
+GDAL 3.10.1 is a bugfix release.
+
+### Build
+
+* CMake: FindDotnet.cmake: remove obsolete cmake_minimum_required()
+* CMake: fix swig/csharp/CMakeLists.txt compatibility with CMake 3.31
+* CMake: use add_compile_options() instead of setting CMAKE_CXX_FLAGS for
+  -fno-finite-math-only (#11286)
+* Set GDAL_DEV_SUFFIX to the pre-release suffix if a corresponding Git tag was
+  found.
+* PDF: fix build issue on CondaForge build infrastructure (gcc 13.3)
+* Fix issues in cpl_vsil_win32.cpp with latest mingw64
+
+## GDAL 3.10.1
+
+### Port
+
+* CPLDebug: Accept values of YES,TRUE,1 (#11219)
+* /vsiaz/: ReadDir(): be robust to a response to list blob that returns no blobs
+  but has a non-empty NextMarker
+* /vsis3/ / AWS: implement support for AWS Single-Sign On (AWS IAM Identity
+  Center) (#11203)
+* /vsicurl/: fix to allow to read Parquet partitionned datasets from public
+  Azure container using /vsicurl/ (#11309)
+* CPLGetPath()/CPLGetDirname(): make them work with /vsicurl? and URL encoded
+  (#11467)
+* Fix CPLFormFilename(absolute_path, ../something, NULL) to strip the relative
+  path
+
+### Algorithms
+
+* GDALContourGenerateEx(): return CE_None even if the raster is at constant
+  value (3.10.0 regression, #11340)
+
+### Core
+
+* fix memory leak when calling GDALAllRegister(), several times, on a deferred
+  loaded plugin that is absent from the system (rasterio/rasterio#3250)
+* GDALRasterBlock: make sure mutex is initialize in repeated calls to
+  GDALAllRegister / GDALDestroyDriverManager (#11447)
+* Do not sort items in IMD metadata domain (#11470)
+* GDALDataset::BuildOverviews(): validate values of decimation factors
+
+### Raster utilities
+
+* gdalinfo: bring back stdout streaming mode that went away during argparse
+  refactor
+* gdalinfo: fix bound checking for value of -sds argument
+* gdaldem: fix help message for subcommands
+* gdaltindex: restore -ot option accidentally removed in GDAL 3.10.0 (#11246)
+* gdaladdo: validate values of decimation factors
+
+### Raster drivers
+
+GTI driver:
+ * make it work with STAC GeoParquet files that don't have a assets.image.href
+   field (#11317)
+ * STAC GeoParquet: make it recognize assets.XXX.proj:epsg and
+   assets.XXX.proj:transform
+ * attach the color table of the sample tile to the GTI single band
+ * generalize logic for reading STAC GeoParquet eo:bands field to any asset
+   name, and handle all 'common_names' values
+ * parse central wavelength and full width half max metadata items from STAC
+   GeoParquet eo:bands field
+ * read scale and offset from STAC GeoParquet raster:bands field
+ * STACGeoParquet: add support for proj:code, proj:wkt2, proj:projjson (#11512)
+ * advertise SRS open option
+
+GTiff driver:
+ * detect I/O error when getting tile offset/count in multi-threaded reading
+   (#11552)
+ * CacheMultiRange(): properly react to errors in VSIFReadMultiRangeL() (#11552)
+ * internal overview building: do not set PHOTOMETRIC=YCBCR when
+   COMPRESS_OVERVIEW != JPEG
+ * mask overview: fix vertical shift in internal mask overview computation
+   (#11555)
+ * JXL: add support for Float16 and Compression=52546 which is JPEGXL from DNG
+   1.7 specification
+ * Internal libtiff: fix writing a Predictor=3 file with non-native endianness
+
+HDF4 driver:
+ * fix REMQUOTE implementation that caused valgrind to warn about overlapping
+   source and target buffers
+ * hdf-eos: fix lots of Coverity Scan warnings and disable lots of code unused
+   by GDAL
+
+HTTP driver:
+ * re-emit warnings/errors raised by underlying driver
+
+KEA driver:
+ * use native chunksize for copying RAT (#11446)
+
+netCDF driver:
+ * add a GDAL_NETCDF_REPORT_EXTRA_DIM_VALUES config option (#11207)
+ * multidim: report correct axis order when reading SRS with EPSG geographic
+   CRS + geoid model
+ * fix warning message mentioning Time dimension instead of Vertical
+
+OCI driver:
+ * add a TIMESTAMP_WITH_TIME_ZONE layer creation option, and ogr2ogr tweaks
+
+PNG driver:
+ * fix reading 16-bit interlaced images (on little-endian machines)
+
+TileDB driver:
+ * remove dir only if it exists (#11485)
+
+VRT driver:
+ * fix reading from a CFloat32/CFloat64 ComplexSource in a non-complex-type
+   buffer (3.8.0 regression, refs rasterio/rasterio#3070)
+ * processed dataset: Read scale and offset from src dataset
+ * data/gdalvrt.xsd: fix schema to reflect that <Array> can be a child of
+   <ArraySource>
+
+WMTS driver:
+ * for geographic CRS with official lat,lon order, be robust to bounding box
+   and TopLeftCorner being in the wrong axis order and emits a warning (#11387)
+
+Zarr driver:
+ * fix incorrect DataAxisToSRSAxisMapping for EPSG geographic CRS (#11380)
+
+## OGR 3.10.1
+
+### Core
+
+* OGRWarpedLayer: do not use source layer GetArrowStream() as this would skip
+  reprojection
+
+### OGRSpatialReference
+
+* importFromEPSG(): tries with ESRI when it looks like an ESRI code, but with
+  a warning when that succeeds (#11387)
+
+### Vector utilities
+
+* ogrinfo: command line help text fixes (#11463)
+* ogr2ogr: fix 'ogr2ogr out.parquet in.gpkg/fgb/parquet -t_srs {srs_def}'
+  optimized code path (3.10.0 regression)
+* ogr2ogr: fix crash with -ct and using Arrow code path (e.g source is
+  GeoPackage) (3.10.0 regression) (#11348)
+* GDALVectorTranslate(): fix null-ptr dereference when no source driver
+* ogrlineref: fix double-free on 'ogrlineref --version'
+
+### Vector drivers
+
+DXF driver:
+ * use Z value for SPLINE entities (#11284)
+ * writer: do not set 0 as the value for DXF code 5 (HANDLE) (#11299)
+
+FlatGeobuf driver:
+ * writing: in SPATIAL_INDEX=NO mode, deal with empty geometries as if there
+   were null (#11419)
+ * writing: in SPATIAL_INDEX=NO mode, accept creating a file without features
+
+GeoJSON(-like) drivers:
+ * combine value of GDAL_HTTP_HEADERS with Accept header that the driver set
+   (#11385)
+
+GeoJSON driver:
+ * do not generate an empty layer name when reading from /vsistdin/ (#11484)
+
+GML driver:
+ * add support for AIXM ElevatedCurve (#4600, #11425)
+ * honour SWAP_COORDINATES=YES even when the geometry has no SRS (#11491)
+ * gml:CircleByCenterPoint: correctly take into account radius.uom for projected CRS
+
+GPKG driver:
+ * make CreateCopy() work on vector datasets (#11282)
+ * make sure gpkg_ogr_contents.feature_count = 0 on a newly created empty table
+   (#11274)
+ * fix FID vs field of same name consistency check when field is not set (#11527)
+
+LVBAG driver:
+ * only run IsValid() if bFixInvalidData
+
+MapInfo driver
+ * .tab: support .dbf files with deleted columns (#11173)
+
+MVT driver:
+ * emit warning when the maximum tile size or feature count is reached and the
+   user didn't explicitly set MAX_SIZE or MAX_FEATURES layer creation options
+   (#11408)
+
+OpenFileGDB driver:
+ * be robust to unusual .gdbindexes files with weird/corrupted/not-understood
+   entries (#11295)
+
+Parquet driver:
+ * writer: write page indexes
+
+PG driver:
+ * avoid error when the original search_path contains something like '"",
+   something_else' (#11386)
+
+OGR VRT:
+ * fix SrcRegion.clip at OGRVRTLayer level (#11519)
+ * accept SrcRegion value to be any geometry type as well as SetSpatialFilter()
+   (#11518)
+
+## Python bindings
+
+* add a colorInterpretation argument to gdal.Translate() and fixes a copy&paste
+  issue in the similar argument of gdal.TileIndex()
+* swig/python/setup.py.in: fix exception when building a RC git tag
+
+## Java bindings
+
+* add byte[] org.gdal.gdal.GetMemFileBuffer(String filename) (#11192)
+* avoid double free when calling Dataset.Close() (#11566)
+
 # GDAL/OGR 3.10.0 Release Notes
 
 GDAL/OGR 3.10.0 is a feature release.
@@ -555,6 +767,7 @@ MapInfo driver:
 
 Miramon driver:
  * various memory leak fixes on corrupted datasets
+ * fix a case of mutirecord (lists) in some fields (#11148)
 
 OAPIF driver:
  * combine CURL error message and data payload (when it exists) to form error

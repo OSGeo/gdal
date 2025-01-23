@@ -454,9 +454,9 @@ VSIVirtualHandle *VSISparseFileFilesystemHandler::Open(
         oRegion.osFilename = CPLGetXMLValue(psRegion, "Filename", "");
         if (atoi(CPLGetXMLValue(psRegion, "Filename.relative", "0")) != 0)
         {
-            const CPLString osSFPath = CPLGetPath(osSparseFilePath);
-            oRegion.osFilename =
-                CPLFormFilename(osSFPath, oRegion.osFilename, nullptr);
+            const std::string osSFPath = CPLGetPathSafe(osSparseFilePath);
+            oRegion.osFilename = CPLFormFilenameSafe(
+                osSFPath.c_str(), oRegion.osFilename, nullptr);
         }
 
         // TODO(schwehr): Symbolic constant and an explanation for 32.

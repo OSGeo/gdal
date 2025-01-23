@@ -1645,11 +1645,17 @@ CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
             OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
             if (!poSRS)
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Failed to fetch spatial reference on layer %s "
-                         "to build transformer, assuming matching coordinate "
-                         "systems.",
-                         poLayer->GetLayerDefn()->GetName());
+                if (poDS->GetSpatialRef() != nullptr ||
+                    poDS->GetGCPSpatialRef() != nullptr ||
+                    poDS->GetMetadata("RPC") != nullptr)
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Failed to fetch spatial reference on layer %s "
+                        "to build transformer, assuming matching coordinate "
+                        "systems.",
+                        poLayer->GetLayerDefn()->GetName());
+                }
             }
             else
             {

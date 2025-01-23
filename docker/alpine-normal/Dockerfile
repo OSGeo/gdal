@@ -65,6 +65,7 @@ RUN apk add --no-cache \
     lz4-dev \
     make \
     mariadb-connector-c-dev \
+    muparser-dev \
     netcdf-dev \
     ninja-build \
     odbc-cpp-wrapper-dev \
@@ -230,6 +231,10 @@ RUN --mount=type=cache,id=alpine-normal-spatialite,target=$HOME/.cache \
         mkdir -p /build_spatialite/usr/lib; \
     fi
 
+# Download exprtk
+RUN curl -LO -fsS https://github.com/ArashPartow/exprtk/raw/refs/heads/master/exprtk.hpp \
+    && mv exprtk.hpp /usr/include
+
 # Build GDAL
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
@@ -280,6 +285,7 @@ RUN --mount=type=cache,id=alpine-normal-gdal,target=$HOME/.cache \
         -DBUILD_TESTING=OFF \
         -DOpenDrive_DIR=/usr/lib/ \
         -DOGR_ENABLE_DRIVER_XODR_PLUGIN=TRUE \
+        -DGDAL_USE_EXPRTK:BOOL=ON \
     && ninja \
     && DESTDIR="/build" ninja install \
     && (ninja multireadtest && cp apps/multireadtest /build/usr/bin) \
@@ -323,6 +329,7 @@ RUN date
 
 RUN apk add --no-cache \
         armadillo \
+        bash-completion \
         basisu \
         blosc \
         brotli-libs \
@@ -363,6 +370,7 @@ RUN apk add --no-cache \
         libxml2 \
         lz4-libs \
         mariadb-connector-c \
+        muparser \
         netcdf \
         minizip \
         musl \
@@ -413,7 +421,10 @@ COPY --from=builder  /build_proj/usr/include/ /usr/include/
 COPY --from=builder  /build_proj/usr/bin/ /usr/bin/
 COPY --from=builder  /build_proj/usr/lib/ /usr/lib/
 
+COPY --from=builder  /build/usr/share/bash-completion/ /usr/share/bash-completion/
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build_gdal_python/usr/ /usr/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
+
+CMD ["/bin/bash", "-l"]

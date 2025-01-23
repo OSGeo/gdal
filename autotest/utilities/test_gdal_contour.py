@@ -100,7 +100,8 @@ def test_gdal_contour_1(gdal_contour_path, testdata_tif, tmp_path):
     (_, err) = gdaltest.runexternal_out_and_err(
         gdal_contour_path + f" -a elev -i 10 {testdata_tif} {contour_shp}"
     )
-    assert err is None or err == "", "got error/warning"
+
+    assert err is None or err == "", "got error/warning %s" % err
 
     ds = ogr.Open(contour_shp)
 
@@ -632,3 +633,40 @@ def test_gdal_contour_gt(gdal_contour_path, tmp_path, gt):
         expected_heights = [75, 76, 81, 112, 243, 441]
 
         assert lyr.GetFeatureCount() == len(expected_heights)
+
+
+###############################################################################
+# Test there MIN and MAX values are correctly computed with polygonize fixed
+# levels
+
+
+def test_gdal_contour_fl_and_i__polygonize(gdal_contour_path, testdata_tif, tmp_path):
+
+    contour_shp = str(tmp_path / "contour.shp")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_contour_path
+        + f" -amin elev -amax elev2 -fl MIN 6 16 20 MAX -p {testdata_tif} {contour_shp}"
+    )
+
+    assert err is None or err == "", "got error/warning"
+
+    ds = ogr.Open(contour_shp)
+
+    with ds.ExecuteSQL("select elev, elev2 from contour order by elev asc") as lyr:
+
+        expected_heights = [0, 6, 16, 20]
+
+        assert lyr.GetFeatureCount() == len(expected_heights)
+
+        i = 0
+        feat = lyr.GetNextFeature()
+        while feat is not None:
+            assert feat.GetField("elev") == expected_heights[i]
+            assert (
+                feat.GetField("elev2") == expected_heights[i + 1]
+                if i < len(expected_heights) - 2
+                else expected_heights[i] + 5
+            )
+            i = i + 1
+            feat = lyr.GetNextFeature()

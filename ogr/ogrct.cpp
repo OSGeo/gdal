@@ -1764,15 +1764,10 @@ static PJ *op_to_pj(PJ_CONTEXT *ctx, PJ *op,
     const char *pszUseETMERC = CPLGetConfigOption("OSR_USE_ETMERC", nullptr);
     if (pszUseETMERC && pszUseETMERC[0])
     {
-        static bool bHasWarned = false;
-        if (!bHasWarned)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
                      "OSR_USE_ETMERC is a legacy configuration option, which "
                      "now has only effect when set to NO (YES is the default). "
                      "Use OSR_USE_APPROX_TMERC=YES instead");
-            bHasWarned = true;
-        }
         bForceApproxTMerc = !CPLTestBool(pszUseETMERC);
     }
     else
@@ -2737,18 +2732,14 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
                 x[i] = HUGE_VAL;
                 y[i] = HUGE_VAL;
                 err = PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN;
-                static bool bHasWarned = false;
-                if (!bHasWarned)
-                {
+
 #ifdef DEBUG
-                    CPLError(CE_Warning, CPLE_AppDefined,
+                CPLErrorOnce(CE_Warning, CPLE_AppDefined,
                              "PROJ returned a NaN value. It should be fixed");
 #else
-                    CPLDebug("OGR_CT",
+                CPLDebugOnce("OGR_CT",
                              "PROJ returned a NaN value. It should be fixed");
 #endif
-                    bHasWarned = true;
-                }
             }
             else if (coord.xyzt.x == HUGE_VAL)
             {

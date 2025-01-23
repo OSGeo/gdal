@@ -1307,10 +1307,11 @@ CPLErr MrSIDDataset::OpenZoomLevel(lt_int32 iZoom)
     /*      projection                                                      */
     /* -------------------------------------------------------------------- */
     if (iZoom == 0 && m_oSRS.IsEmpty() &&
-        EQUAL(CPLGetExtension(GetDescription()), "sid"))
+        EQUAL(CPLGetExtensionSafe(GetDescription()).c_str(), "sid"))
     {
-        const char *pszMETFilename = CPLResetExtension(GetDescription(), "met");
-        VSILFILE *fp = VSIFOpenL(pszMETFilename, "rb");
+        const std::string l_osMETFilename =
+            CPLResetExtensionSafe(GetDescription(), "met");
+        VSILFILE *fp = VSIFOpenL(l_osMETFilename.c_str(), "rb");
         if (fp)
         {
             const char *pszLine = nullptr;
@@ -1338,7 +1339,7 @@ CPLErr MrSIDDataset::OpenZoomLevel(lt_int32 iZoom)
             /* UTM SRS for consistency */
             if (nUTMZone >= 1 && nUTMZone <= 60 && bWGS84 && bUnitsMeter)
             {
-                osMETFilename = pszMETFilename;
+                osMETFilename = l_osMETFilename;
 
                 m_oSRS.importFromEPSG(32600 + nUTMZone);
                 m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);

@@ -957,7 +957,8 @@ bool Lerc1Image::readZTile(Byte **ppByte, size_t &nRemainingBytes, int r0,
         return true;
     }
 
-    idataVec.resize((r1 - r0) * (c1 - c0));  // max size, gets adjusted
+    idataVec.resize(static_cast<size_t>(r1 - r0) *
+                    (c1 - c0));  // max size, gets adjusted
     if (!blockread(&ptr, nRemainingBytes, idataVec))
         return false;
 

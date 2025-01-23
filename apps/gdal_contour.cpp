@@ -42,7 +42,7 @@ struct GDALContourOptions
     std::string osElevAttrib;
     std::string osElevAttribMin;
     std::string osElevAttribMax;
-    std::vector<double> adfFixedLevels;
+    std::vector<std::string> aosFixedLevels;
     CPLStringList aosOpenOptions;
     CPLStringList aosCreationOptions;
     bool bQuiet = false;
@@ -140,7 +140,7 @@ GDALContourAppOptionsGetParser(GDALContourOptions *psOptions)
                 "integer."));
 
     // Dealt manually as argparse::nargs_pattern::at_least_one is problematic
-    argParser->add_argument("-fl").scan<'g', double>().metavar("<level>").help(
+    argParser->add_argument("-fl").metavar("<level>").help(
         _("Name one or more \"fixed levels\" to extract."));
 
     argParser->add_argument("-off")
@@ -262,22 +262,49 @@ MAIN_START(argc, argv)
                         CSLTokenizeString(argv[i + 1]));
                     for (const char *pszToken : aosTokens)
                     {
-                        sOptions.adfFixedLevels.push_back(CPLAtof(pszToken));
+                        // Handle min/max special values
+                        if (EQUAL(pszToken, "MIN"))
+                        {
+                            sOptions.aosFixedLevels.push_back("MIN");
+                        }
+                        else if (EQUAL(pszToken, "MAX"))
+                        {
+                            sOptions.aosFixedLevels.push_back("MAX");
+                        }
+                        else
+                        {
+                            sOptions.aosFixedLevels.push_back(
+                                std::to_string(CPLAtof(pszToken)));
+                        }
                     }
                     i += 1;
                 }
                 else
                 {
-                    auto isNumeric = [](const char *pszArg) -> bool
+                    auto isNumericOrMinMax = [](const char *pszArg) -> bool
                     {
+                        if (EQUAL(pszArg, "MIN") || EQUAL(pszArg, "MAX"))
+                            return true;
                         char *pszEnd = nullptr;
                         CPLStrtod(pszArg, &pszEnd);
                         return pszEnd != nullptr && pszEnd[0] == '\0';
                     };
 
-                    while (i < argc - 1 && isNumeric(argv[i + 1]))
+                    while (i < argc - 1 && isNumericOrMinMax(argv[i + 1]))
                     {
-                        sOptions.adfFixedLevels.push_back(CPLAtof(argv[i + 1]));
+                        if (EQUAL(argv[i + 1], "MIN"))
+                        {
+                            sOptions.aosFixedLevels.push_back("MIN");
+                        }
+                        else if (EQUAL(argv[i + 1], "MAX"))
+                        {
+                            sOptions.aosFixedLevels.push_back("MAX");
+                        }
+                        else
+                        {
+                            sOptions.aosFixedLevels.push_back(
+                                std::to_string(CPLAtof(argv[i + 1])));
+                        }
                         i += 1;
                     }
                 }
@@ -291,7 +318,7 @@ MAIN_START(argc, argv)
         auto argParser = GDALContourAppOptionsGetParser(&sOptions);
         argParser->parse_args_without_binary_name(aosArgv.List());
 
-        if (sOptions.dfInterval == 0.0 && sOptions.adfFixedLevels.empty() &&
+        if (sOptions.dfInterval == 0.0 && sOptions.aosFixedLevels.empty() &&
             sOptions.dfExpBase == 0.0)
         {
             fprintf(stderr, "%s\n", argParser->usage().c_str());
@@ -361,7 +388,8 @@ MAIN_START(argc, argv)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Several drivers matching %s extension. Using %s",
-                         CPLGetExtension(sOptions.aosDestFilename.c_str()),
+                         CPLGetExtensionSafe(sOptions.aosDestFilename.c_str())
+                             .c_str(),
                          aoDrivers[0].c_str());
             }
             osFormat = aoDrivers[0];
@@ -465,24 +493,19 @@ MAIN_START(argc, argv)
                                    sOptions.osElevAttribMax.c_str());
 
     char **options = nullptr;
-    if (!sOptions.adfFixedLevels.empty())
+    if (!sOptions.aosFixedLevels.empty())
     {
         std::string values = "FIXED_LEVELS=";
-        for (size_t i = 0; i < sOptions.adfFixedLevels.size(); i++)
+        for (size_t i = 0; i < sOptions.aosFixedLevels.size(); i++)
         {
-            const int sz = 32;
-            char *newValue = new char[sz + 1];
-            if (i == sOptions.adfFixedLevels.size() - 1)
+            if (i == sOptions.aosFixedLevels.size() - 1)
             {
-                CPLsnprintf(newValue, sz + 1, "%f", sOptions.adfFixedLevels[i]);
+                values = values + sOptions.aosFixedLevels[i];
             }
             else
             {
-                CPLsnprintf(newValue, sz + 1, "%f,",
-                            sOptions.adfFixedLevels[i]);
+                values = values + sOptions.aosFixedLevels[i] + ",";
             }
-            values = values + std::string(newValue);
-            delete[] newValue;
         }
         options = CSLAddString(options, values.c_str());
     }

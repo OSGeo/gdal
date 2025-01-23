@@ -80,7 +80,7 @@ class OGCAPIDataset final : public GDALDataset
 
     bool InitFromFile(GDALOpenInfo *poOpenInfo);
     bool InitFromURL(GDALOpenInfo *poOpenInfo);
-    void ProcessScale(const CPLJSONObject &oScaleDenominator,
+    bool ProcessScale(const CPLJSONObject &oScaleDenominator,
                       const double dfXMin, const double dfYMin,
                       const double dfXMax, const double dfYMax);
     bool InitFromCollection(GDALOpenInfo *poOpenInfo, CPLJSONDocument &oDoc);
@@ -648,7 +648,7 @@ int OGCAPIDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:"))
         return TRUE;
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "moaw"))
+    if (poOpenInfo->IsExtensionEqualToCI("moaw"))
         return TRUE;
     if (poOpenInfo->IsSingleAllowedDriver("OGCAPI"))
     {
@@ -753,7 +753,7 @@ bool OGCAPIDataset::InitFromFile(GDALOpenInfo *poOpenInfo)
 /*                        ProcessScale()                          */
 /************************************************************************/
 
-void OGCAPIDataset::ProcessScale(const CPLJSONObject &oScaleDenominator,
+bool OGCAPIDataset::ProcessScale(const CPLJSONObject &oScaleDenominator,
                                  const double dfXMin, const double dfYMin,
                                  const double dfXMax, const double dfYMax)
 
@@ -765,6 +765,8 @@ void OGCAPIDataset::ProcessScale(const CPLJSONObject &oScaleDenominator,
         constexpr double HALF_CIRCUMFERENCE = 6378137 * M_PI;
         dfRes = dfScaleDenominator / ((HALF_CIRCUMFERENCE / 180) / 0.28e-3);
     }
+    if (dfRes == 0.0)
+        return false;
 
     double dfXSize = (dfXMax - dfXMin) / dfRes;
     double dfYSize = (dfYMax - dfYMin) / dfRes;
@@ -780,6 +782,8 @@ void OGCAPIDataset::ProcessScale(const CPLJSONObject &oScaleDenominator,
     m_adfGeoTransform[1] = (dfXMax - dfXMin) / nRasterXSize;
     m_adfGeoTransform[3] = dfYMax;
     m_adfGeoTransform[5] = -(dfYMax - dfYMin) / nRasterYSize;
+
+    return true;
 }
 
 /************************************************************************/
@@ -831,7 +835,8 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo *poOpenInfo,
 
     auto oScaleDenominator = oRoot["scaleDenominator"];
 
-    ProcessScale(oScaleDenominator, dfXMin, dfYMin, dfXMax, dfYMax);
+    if (!ProcessScale(oScaleDenominator, dfXMin, dfYMin, dfXMax, dfYMax))
+        return false;
 
     bool bFoundMap = false;
 

@@ -111,6 +111,10 @@ def test_rasterize_2():
             burn_values=[200, 220, 240],
             options=["ALL_TOUCHED=TRUE"],
         )
+        assert (
+            "Failed to fetch spatial reference on layer cutline to build transformer, assuming matching coordinate systems"
+            in gdal.GetLastErrorMsg()
+        )
 
     assert err == 0, "got non-zero result code from RasterizeLayer"
 
@@ -130,20 +134,15 @@ def test_rasterize_2():
 
 def test_rasterize_3():
 
-    # Setup working spatial reference
-    sr_wkt = 'LOCAL_CS["arbitrary"]'
-    sr = osr.SpatialReference(sr_wkt)
-
     # Create a memory raster to rasterize into.
 
     target_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 3, gdal.GDT_Byte)
     target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
-    target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
 
     rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
-    rast_mem_lyr = rast_ogr_ds.CreateLayer("poly", srs=sr)
+    rast_mem_lyr = rast_ogr_ds.CreateLayer("poly")
 
     # Add polygons and linestrings.
     wkt_geom = [
@@ -160,6 +159,7 @@ def test_rasterize_3():
 
     # Run the algorithm.
 
+    gdal.ErrorReset()
     err = gdal.RasterizeLayer(
         target_ds,
         [3, 2, 1],
@@ -167,6 +167,7 @@ def test_rasterize_3():
         burn_values=[10, 10, 55],
         options=["BURN_VALUE_FROM=Z"],
     )
+    assert gdal.GetLastErrorMsg() == ""
 
     assert err == 0, "got non-zero result code from RasterizeLayer"
 

@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import shutil
+
 import gdaltest
 import pytest
 
@@ -307,6 +309,29 @@ def test_ogr_adbc_duckdb_parquet_with_spatial(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL)
 
 
 @pytest.mark.parametrize("OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", ["ON", "OFF"])
+def test_ogr_adbc_duckdb_parquet_with_spatial_and_SQL_open_optoin(
+    OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL,
+):
+
+    if not _has_libduckdb():
+        pytest.skip("libduckdb.so missing")
+
+    with gdal.config_option(
+        "OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL
+    ):
+        open_options = ["SQL=SELECT * FROM 'data/parquet/poly.parquet' LIMIT 1"]
+        if OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL == "ON":
+            open_options += ["PRELUDE_STATEMENTS=INSTALL spatial"]
+        with gdal.OpenEx("ADBC:", gdal.OF_VECTOR, open_options=open_options) as ds:
+            lyr = ds.GetLayer(0)
+            assert lyr.GetGeomType() == ogr.wkbPolygon
+            assert lyr.GetFeatureCount() == 1
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", ["ON", "OFF"])
 def test_ogr_adbc_duckdb_with_spatial_index(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL):
 
     if not _has_libduckdb():
@@ -322,6 +347,28 @@ def test_ogr_adbc_duckdb_with_spatial_index(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL):
         ) as sql_lyr:
             spatial_loaded = sql_lyr.GetNextFeature() is not None
         assert lyr.TestCapability(ogr.OLCFastSpatialFilter) == spatial_loaded
+
+
+###############################################################################
+
+
+def test_ogr_adbc_duckdb_sql(tmp_path):
+
+    if not _has_libduckdb():
+        pytest.skip("libduckdb.so missing")
+
+    tmp_filename = str(tmp_path / "test.parquet")
+    shutil.copy("data/parquet/poly.parquet", tmp_filename)
+    ds = gdal.OpenEx(
+        "ADBC:",
+        open_options=[
+            "ADBC_DRIVER=libduckdb",
+            f"SQL=SELECT * FROM read_parquet('{tmp_path}/*', hive_partitioning=1)",
+        ],
+    )
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef() is not None
 
 
 ###############################################################################

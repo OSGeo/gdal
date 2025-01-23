@@ -344,8 +344,6 @@ class OGRPGTableLayer final : public OGRPGLayer
 
     CPLString m_osFirstGeometryFieldName{};
 
-    std::vector<bool> m_abGeneratedColumns{};
-
     std::string m_osLCOGeomType{};
 
     virtual CPLString GetFromClauseForGetExtent() override

@@ -760,7 +760,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         CPLFree(pszSRS);
     }
 
-    if (!psOptions->osOutputSRS.empty())
+    if (!psOptions->osOutputSRS.empty() && psOptions->osOutputSRS != "null" &&
+        psOptions->osOutputSRS != "none")
     {
         OGRSpatialReference oOutputSRS;
         if (oOutputSRS.SetFromUserInput(psOptions->osOutputSRS.c_str()) !=
@@ -1276,7 +1277,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     const bool bOutsizeExplicitlySet =
         !(psOptions->nOXSizePixel == 0 && psOptions->dfOXSizePct == 0.0 &&
           psOptions->nOYSizePixel == 0 && psOptions->dfOYSizePct == 0.0);
-    if (psOptions->dfXRes != 0.0)
+    if (psOptions->dfXRes != 0.0 && psOptions->dfYRes != 0.0)
     {
         if (!(bHasSrcGeoTransform && psOptions->nGCPCount == 0 &&
               adfSrcGeoTransform[2] == 0.0 && adfSrcGeoTransform[4] == 0.0))
@@ -1520,23 +1521,31 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
 
     if (psOptions->nGCPCount == 0)
     {
-        OGRSpatialReference oSRS;
-        if (!psOptions->osOutputSRS.empty())
+        if (psOptions->osOutputSRS == "null" ||
+            psOptions->osOutputSRS == "none")
         {
-            oSRS.SetFromUserInput(psOptions->osOutputSRS.c_str());
-            oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            poVDS->SetSpatialRef(nullptr);
         }
         else
         {
-            const OGRSpatialReference *poSrcSRS = poSrcDS->GetSpatialRef();
-            if (poSrcSRS)
-                oSRS = *poSrcSRS;
-        }
-        if (!oSRS.IsEmpty())
-        {
-            if (psOptions->dfOutputCoordinateEpoch > 0)
-                oSRS.SetCoordinateEpoch(psOptions->dfOutputCoordinateEpoch);
-            poVDS->SetSpatialRef(&oSRS);
+            OGRSpatialReference oSRS;
+            if (!psOptions->osOutputSRS.empty())
+            {
+                oSRS.SetFromUserInput(psOptions->osOutputSRS.c_str());
+                oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            }
+            else
+            {
+                const OGRSpatialReference *poSrcSRS = poSrcDS->GetSpatialRef();
+                if (poSrcSRS)
+                    oSRS = *poSrcSRS;
+            }
+            if (!oSRS.IsEmpty())
+            {
+                if (psOptions->dfOutputCoordinateEpoch > 0)
+                    oSRS.SetCoordinateEpoch(psOptions->dfOutputCoordinateEpoch);
+                poVDS->SetSpatialRef(&oSRS);
+            }
         }
     }
 
@@ -1598,7 +1607,12 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     if (psOptions->nGCPCount != 0)
     {
         OGRSpatialReference oSRS;
-        if (!psOptions->osOutputSRS.empty())
+        if (psOptions->osOutputSRS == "null" ||
+            psOptions->osOutputSRS == "none")
+        {
+            // nothing to do
+        }
+        else if (!psOptions->osOutputSRS.empty())
         {
             oSRS.SetFromUserInput(psOptions->osOutputSRS.c_str());
             oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);

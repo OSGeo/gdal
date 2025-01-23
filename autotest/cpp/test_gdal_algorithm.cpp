@@ -455,6 +455,19 @@ TEST_F(test_gdal_algorithm, RunValidationActions)
     EXPECT_FALSE(arg.Set(2));
 }
 
+TEST_F(test_gdal_algorithm, SetIsCRSArg_wrong_type)
+{
+    int val = 0;
+    auto arg = GDALInConstructionAlgorithmArg(
+        nullptr, GDALAlgorithmArgDecl("", 0, "", GAAT_INTEGER), &val);
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        arg.SetIsCRSArg();
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
+}
+
 class MyAlgorithmWithDummyRun : public GDALAlgorithm
 {
   public:
@@ -488,7 +501,7 @@ TEST_F(test_gdal_algorithm, wrong_long_name_dash)
     };
 
     MyAlgorithm alg;
-    alg.Run();
+    CPL_IGNORE_RET_VAL(alg.Run());
 }
 
 TEST_F(test_gdal_algorithm, wrong_long_name_contains_equal)
@@ -584,7 +597,13 @@ TEST_F(test_gdal_algorithm, GDALInConstructionAlgorithmArg_AddAlias)
 
     MyAlgorithm alg;
     alg.GetUsageForCLI(false);
+    EXPECT_NE(alg.GetArg("flag"), nullptr);
+    EXPECT_NE(alg.GetArg("--flag"), nullptr);
+    EXPECT_NE(alg.GetArg("-f"), nullptr);
+    EXPECT_NE(alg.GetArg("f"), nullptr);
     EXPECT_NE(alg.GetArg("alias"), nullptr);
+    EXPECT_EQ(alg.GetArg("invalid"), nullptr);
+    EXPECT_EQ(alg.GetArg("-"), nullptr);
 }
 
 TEST_F(test_gdal_algorithm, GDALInConstructionAlgorithmArg_AddAlias_redundant)
@@ -1111,7 +1130,9 @@ TEST_F(test_gdal_algorithm, string_choices)
 
         MyAlgorithm()
         {
-            AddArg("val", 0, "", &m_val).SetChoices("foo", "bar");
+            AddArg("val", 0, "", &m_val)
+                .SetChoices("foo", "bar")
+                .SetHiddenChoices("baz");
         }
     };
 
@@ -1121,6 +1142,14 @@ TEST_F(test_gdal_algorithm, string_choices)
 
         EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=foo"}));
         EXPECT_STREQ(alg.m_val.c_str(), "foo");
+    }
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=baz"}));
+        EXPECT_STREQ(alg.m_val.c_str(), "baz");
     }
 
     {
@@ -2906,7 +2935,7 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
 
     char **argNames = GDALAlgorithmGetArgNames(hAlg.get());
     ASSERT_NE(argNames, nullptr);
-    EXPECT_EQ(CSLCount(argNames), 12);
+    EXPECT_EQ(CSLCount(argNames), 13);
     CSLDestroy(argNames);
 
     EXPECT_EQ(GDALAlgorithmGetArg(hAlg.get(), "non_existing"), nullptr);
@@ -3068,6 +3097,231 @@ TEST_F(test_gdal_algorithm, DispatcherGetUsageForCLI)
             VSIUnlink(osTmpFilename.c_str());
         }
     }
+}
+
+TEST_F(test_gdal_algorithm, raster_edit_failures_dataset_0_0)
+{
+    auto &singleton = GDALGlobalAlgorithmRegistry::GetSingleton();
+    auto raster = singleton.Instantiate("raster");
+    ASSERT_NE(raster, nullptr);
+    auto edit = raster->InstantiateSubAlgorithm("edit");
+    ASSERT_NE(edit, nullptr);
+
+    class MyDataset : public GDALDataset
+    {
+      public:
+        MyDataset()
+        {
+            nRasterXSize = 0;
+            nRasterYSize = 0;
+            eAccess = GA_Update;
+        }
+    };
+
+    auto datasetArg = edit->GetArg("dataset");
+    ASSERT_NE(datasetArg, nullptr);
+    datasetArg->Get<GDALArgDatasetValue>().Set(std::make_unique<MyDataset>());
+
+    auto extentArg = edit->GetArg("bbox");
+    ASSERT_NE(extentArg, nullptr);
+    extentArg->Set(std::vector<double>{2, 49, 3, 50});
+
+    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+    CPLErrorReset();
+    EXPECT_FALSE(edit->Run());
+    EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    EXPECT_STREQ(CPLGetLastErrorMsg(),
+                 "edit: Cannot set extent because dataset has 0x0 dimension");
+}
+
+TEST_F(test_gdal_algorithm, raster_edit_failures_set_spatial_ref_none)
+{
+    auto &singleton = GDALGlobalAlgorithmRegistry::GetSingleton();
+    auto raster = singleton.Instantiate("raster");
+    ASSERT_NE(raster, nullptr);
+    auto edit = raster->InstantiateSubAlgorithm("edit");
+    ASSERT_NE(edit, nullptr);
+
+    class MyDataset : public GDALDataset
+    {
+      public:
+        MyDataset()
+        {
+            eAccess = GA_Update;
+        }
+
+        CPLErr SetSpatialRef(const OGRSpatialReference *) override
+        {
+            return CE_Failure;
+        }
+    };
+
+    auto datasetArg = edit->GetArg("dataset");
+    ASSERT_NE(datasetArg, nullptr);
+    datasetArg->Get<GDALArgDatasetValue>().Set(std::make_unique<MyDataset>());
+
+    auto crsArg = edit->GetArg("crs");
+    ASSERT_NE(crsArg, nullptr);
+    crsArg->Set("none");
+
+    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+    CPLErrorReset();
+    EXPECT_FALSE(edit->Run());
+    EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    EXPECT_STREQ(CPLGetLastErrorMsg(), "edit: SetSpatialRef(none) failed");
+}
+
+TEST_F(test_gdal_algorithm, raster_edit_failures_set_spatial_ref_regular)
+{
+    auto &singleton = GDALGlobalAlgorithmRegistry::GetSingleton();
+    auto raster = singleton.Instantiate("raster");
+    ASSERT_NE(raster, nullptr);
+    auto edit = raster->InstantiateSubAlgorithm("edit");
+    ASSERT_NE(edit, nullptr);
+
+    class MyDataset : public GDALDataset
+    {
+      public:
+        MyDataset()
+        {
+            eAccess = GA_Update;
+        }
+
+        CPLErr SetSpatialRef(const OGRSpatialReference *) override
+        {
+            return CE_Failure;
+        }
+    };
+
+    auto datasetArg = edit->GetArg("dataset");
+    ASSERT_NE(datasetArg, nullptr);
+    datasetArg->Get<GDALArgDatasetValue>().Set(std::make_unique<MyDataset>());
+
+    auto crsArg = edit->GetArg("crs");
+    ASSERT_NE(crsArg, nullptr);
+    crsArg->Set("EPSG:32632");
+
+    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+    CPLErrorReset();
+    EXPECT_FALSE(edit->Run());
+    EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    EXPECT_STREQ(CPLGetLastErrorMsg(),
+                 "edit: SetSpatialRef(EPSG:32632) failed");
+}
+
+TEST_F(test_gdal_algorithm, raster_edit_failures_set_geo_transform)
+{
+    auto &singleton = GDALGlobalAlgorithmRegistry::GetSingleton();
+    auto raster = singleton.Instantiate("raster");
+    ASSERT_NE(raster, nullptr);
+    auto edit = raster->InstantiateSubAlgorithm("edit");
+    ASSERT_NE(edit, nullptr);
+
+    class MyDataset : public GDALDataset
+    {
+      public:
+        MyDataset()
+        {
+            eAccess = GA_Update;
+        }
+
+        CPLErr SetGeoTransform(double *) override
+        {
+            return CE_Failure;
+        }
+    };
+
+    auto datasetArg = edit->GetArg("dataset");
+    ASSERT_NE(datasetArg, nullptr);
+    datasetArg->Get<GDALArgDatasetValue>().Set(std::make_unique<MyDataset>());
+
+    auto extentArg = edit->GetArg("bbox");
+    ASSERT_NE(extentArg, nullptr);
+    extentArg->Set(std::vector<double>{2, 49, 3, 50});
+
+    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+    CPLErrorReset();
+    EXPECT_FALSE(edit->Run());
+    EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    EXPECT_STREQ(CPLGetLastErrorMsg(), "edit: Setting extent failed");
+}
+
+TEST_F(test_gdal_algorithm, raster_edit_failures_set_metadata)
+{
+    auto &singleton = GDALGlobalAlgorithmRegistry::GetSingleton();
+    auto raster = singleton.Instantiate("raster");
+    ASSERT_NE(raster, nullptr);
+    auto edit = raster->InstantiateSubAlgorithm("edit");
+    ASSERT_NE(edit, nullptr);
+
+    class MyDataset : public GDALDataset
+    {
+      public:
+        MyDataset()
+        {
+            eAccess = GA_Update;
+        }
+
+        CPLErr SetMetadataItem(const char *, const char *,
+                               const char *) override
+        {
+            return CE_Failure;
+        }
+    };
+
+    auto datasetArg = edit->GetArg("dataset");
+    ASSERT_NE(datasetArg, nullptr);
+    datasetArg->Get<GDALArgDatasetValue>().Set(std::make_unique<MyDataset>());
+
+    auto extentArg = edit->GetArg("metadata");
+    ASSERT_NE(extentArg, nullptr);
+    extentArg->Set(std::vector<std::string>{"foo=bar"});
+
+    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+    CPLErrorReset();
+    EXPECT_FALSE(edit->Run());
+    EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    EXPECT_STREQ(CPLGetLastErrorMsg(),
+                 "edit: SetMetadataItem('foo', 'bar') failed");
+}
+
+TEST_F(test_gdal_algorithm, raster_edit_failures_unset_metadata)
+{
+    auto &singleton = GDALGlobalAlgorithmRegistry::GetSingleton();
+    auto raster = singleton.Instantiate("raster");
+    ASSERT_NE(raster, nullptr);
+    auto edit = raster->InstantiateSubAlgorithm("edit");
+    ASSERT_NE(edit, nullptr);
+
+    class MyDataset : public GDALDataset
+    {
+      public:
+        MyDataset()
+        {
+            eAccess = GA_Update;
+        }
+
+        CPLErr SetMetadataItem(const char *, const char *,
+                               const char *) override
+        {
+            return CE_Failure;
+        }
+    };
+
+    auto datasetArg = edit->GetArg("dataset");
+    ASSERT_NE(datasetArg, nullptr);
+    datasetArg->Get<GDALArgDatasetValue>().Set(std::make_unique<MyDataset>());
+
+    auto extentArg = edit->GetArg("unset-metadata");
+    ASSERT_NE(extentArg, nullptr);
+    extentArg->Set(std::vector<std::string>{"foo"});
+
+    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+    CPLErrorReset();
+    EXPECT_FALSE(edit->Run());
+    EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    EXPECT_STREQ(CPLGetLastErrorMsg(),
+                 "edit: SetMetadataItem('foo', NULL) failed");
 }
 
 }  // namespace test_gdal_algorithm

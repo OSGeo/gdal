@@ -28,7 +28,7 @@ class GDALRasterReprojectAlgorithm /* non final */
     static constexpr const char *NAME = "reproject";
     static constexpr const char *DESCRIPTION = "Reproject a raster dataset.";
     static constexpr const char *HELP_URL =
-        "https://gdal.org/en/stable/programs/gdal_raster_reproject.html";
+        "/programs/gdal_raster_reproject.html";
 
     static std::vector<std::string> GetAliases()
     {
@@ -44,7 +44,7 @@ class GDALRasterReprojectAlgorithm /* non final */
     std::string m_dstCrs{};
     std::string m_resampling{};
     std::vector<double> m_resolution{};
-    std::vector<double> m_extent{};
+    std::vector<double> m_bbox{};
     bool m_targetAlignedPixels = false;
 };
 

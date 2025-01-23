@@ -232,18 +232,18 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (pszQube[0] == '"')
     {
-        const CPLString osTPath = CPLGetPath(poOpenInfo->pszFilename);
+        const CPLString osTPath = CPLGetPathSafe(poOpenInfo->pszFilename);
         CPLString osFilename = pszQube;
         poDS->CleanString(osFilename);
-        osTargetFile = CPLFormCIFilename(osTPath, osFilename, nullptr);
+        osTargetFile = CPLFormCIFilenameSafe(osTPath, osFilename, nullptr);
         poDS->osExternalCube = osTargetFile;
     }
     else if (pszQube[0] == '(')
     {
-        const CPLString osTPath = CPLGetPath(poOpenInfo->pszFilename);
+        const CPLString osTPath = CPLGetPathSafe(poOpenInfo->pszFilename);
         CPLString osFilename = poDS->GetKeywordSub("^QUBE", 1, "");
         poDS->CleanString(osFilename);
-        osTargetFile = CPLFormCIFilename(osTPath, osFilename, nullptr);
+        osTargetFile = CPLFormCIFilenameSafe(osTPath, osFilename, nullptr);
         poDS->osExternalCube = osTargetFile;
 
         nQube = atoi(poDS->GetKeywordSub("^QUBE", 2, "1"));
@@ -714,16 +714,16 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for a .prj file. For isis2 I would like to keep this in   */
     /* -------------------------------------------------------------------- */
-    const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
-    const CPLString osName = CPLGetBasename(poOpenInfo->pszFilename);
-    const char *pszPrjFile = CPLFormCIFilename(osPath, osName, "prj");
+    const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
+    const CPLString osName = CPLGetBasenameSafe(poOpenInfo->pszFilename);
+    const std::string osPrjFile = CPLFormCIFilenameSafe(osPath, osName, "prj");
 
-    VSILFILE *fp = VSIFOpenL(pszPrjFile, "r");
+    VSILFILE *fp = VSIFOpenL(osPrjFile.c_str(), "r");
     if (fp != nullptr)
     {
         VSIFCloseL(fp);
 
-        char **papszLines = CSLLoad(pszPrjFile);
+        char **papszLines = CSLLoad(osPrjFile.c_str());
 
         poDS->m_oSRS.importFromESRI(papszLines);
 
@@ -913,7 +913,7 @@ GDALDataset *ISIS2Dataset::Create(const char *pszFilename, int nXSize,
             sExtension = pszExtension;
         }
 
-        if (EQUAL(CPLGetExtension(pszFilename), sExtension))
+        if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), sExtension))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "IMAGE_EXTENSION (%s) cannot match LABEL file extension.",
@@ -922,7 +922,7 @@ GDALDataset *ISIS2Dataset::Create(const char *pszFilename, int nXSize,
         }
 
         osLabelFile = pszFilename;
-        osRasterFile = CPLResetExtension(osLabelFile, sExtension);
+        osRasterFile = CPLResetExtensionSafe(osLabelFile, sExtension);
         osOutFile = osLabelFile;
     }
 

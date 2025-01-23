@@ -5784,3 +5784,39 @@ def test_ogr_geojson_schema_override(
                 assert (
                     gdal.GetLastErrorMsg().find(expected_warning) != -1
                 ), f"Warning {expected_warning} not found, got {gdal.GetLastErrorMsg()} instead"
+
+
+###############################################################################
+# Test FOREIGN_MEMBERS open option
+
+
+@pytest.mark.parametrize(
+    "foreign_members_option", [None, "AUTO", "ALL", "NONE", "STAC"]
+)
+def test_ogr_geojson_foreign_members(foreign_members_option):
+
+    open_options = {}
+    if foreign_members_option:
+        open_options["FOREIGN_MEMBERS"] = foreign_members_option
+    ds = gdal.OpenEx(
+        "data/geojson/stac_item.json", gdal.OF_VECTOR, open_options=open_options
+    )
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if foreign_members_option is None or foreign_members_option in ("AUTO", "STAC"):
+        assert lyr.GetLayerDefn().GetFieldCount() == 39
+        assert f["stac_version"] == "1.0.0"
+        assert f["assets.thumbnail.title"] == "Thumbnail image"
+        assert json.loads(f["assets.thumbnail.alternate"]) == {
+            "s3": {
+                "storage:platform": "AWS",
+                "storage:requester_pays": True,
+                "href": "s3://example/thumb_small.jpeg",
+            }
+        }
+    elif foreign_members_option == "ALL":
+        assert lyr.GetLayerDefn().GetFieldCount() == 35
+        assert f["stac_version"] == "1.0.0"
+        assert f["assets"] != ""
+    else:
+        assert lyr.GetLayerDefn().GetFieldCount() == 29

@@ -332,7 +332,7 @@ static GDALDataset *XPMCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     bool bOK = VSIFPrintfL(fpPBM, "/* XPM */\n") >= 0;
     bOK &= VSIFPrintfL(fpPBM, "static char *%s[] = {\n",
-                       CPLGetBasename(pszFilename)) >= 0;
+                       CPLGetBasenameSafe(pszFilename).c_str()) >= 0;
     bOK &= VSIFPrintfL(fpPBM,
                        "/* width height num_colors chars_per_pixel */\n") >= 0;
 

@@ -102,7 +102,8 @@ OGRErr OGRWAsPDataSource::Load(bool bSilent)
     CPLReadLineL(hFile);
     CPLReadLineL(hFile);
 
-    oLayer.reset(new OGRWAsPLayer(this, CPLGetBasename(sFilename.c_str()),
+    oLayer.reset(new OGRWAsPLayer(this,
+                                  CPLGetBasenameSafe(sFilename.c_str()).c_str(),
                                   hFile, poSpatialRef));
     if (poSpatialRef)
         poSpatialRef->Release();
@@ -299,8 +300,8 @@ OGRWAsPDataSource::ICreateLayer(const char *pszName,
         poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     oLayer.reset(new OGRWAsPLayer(
-        this, CPLGetBasename(pszName), hFile, poSRSClone, sFirstField,
-        sSecondField, sGeomField, bMerge, pdfTolerance.release(),
+        this, CPLGetBasenameSafe(pszName).c_str(), hFile, poSRSClone,
+        sFirstField, sSecondField, sGeomField, bMerge, pdfTolerance.release(),
         pdfAdjacentPointTolerance.release(), pdfPointToCircleRadius.release()));
     if (poSRSClone)
         poSRSClone->Release();

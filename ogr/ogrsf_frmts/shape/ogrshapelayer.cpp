@@ -142,7 +142,7 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
     SetMetadataItem("SOURCE_ENCODING", osEncoding, "SHAPEFILE");
 
     poFeatureDefn = SHPReadOGRFeatureDefn(
-        CPLGetBasename(pszFullName), hSHP, hDBF, osEncoding,
+        CPLGetBasenameSafe(pszFullName).c_str(), hSHP, hDBF, osEncoding,
         CPLFetchBool(poDS->GetOpenOptions(), "ADJUST_TYPE", false));
 
     // To make sure that
@@ -589,9 +589,9 @@ bool OGRShapeLayer::CheckForQIX()
     if (bCheckedForQIX)
         return hQIX != nullptr;
 
-    const char *pszQIXFilename = CPLResetExtension(pszFullName, "qix");
+    const std::string osQIXFilename = CPLResetExtensionSafe(pszFullName, "qix");
 
-    hQIX = SHPOpenDiskTree(pszQIXFilename, nullptr);
+    hQIX = SHPOpenDiskTree(osQIXFilename.c_str(), nullptr);
 
     bCheckedForQIX = true;
 
@@ -608,9 +608,9 @@ bool OGRShapeLayer::CheckForSBN()
     if (bCheckedForSBN)
         return hSBN != nullptr;
 
-    const char *pszSBNFilename = CPLResetExtension(pszFullName, "sbn");
+    const std::string osSBNFilename = CPLResetExtensionSafe(pszFullName, "sbn");
 
-    hSBN = SBNOpenDiskTree(pszSBNFilename, nullptr);
+    hSBN = SBNOpenDiskTree(osSBNFilename.c_str(), nullptr);
 
     bCheckedForSBN = true;
 
@@ -1876,7 +1876,7 @@ OGRErr OGRShapeLayer::CreateField(const OGRFieldDefn *poFieldDefn,
     bool bDBFJustCreated = false;
     if (hDBF == nullptr)
     {
-        const CPLString osFilename = CPLResetExtension(pszFullName, "dbf");
+        const CPLString osFilename = CPLResetExtensionSafe(pszFullName, "dbf");
         hDBF = DBFCreate(osFilename);
 
         if (hDBF == nullptr)
@@ -2086,11 +2086,11 @@ OGRErr OGRShapeLayer::CreateField(const OGRFieldDefn *poFieldDefn,
         case OFTDateTime:
             CPLError(
                 CE_Warning, CPLE_NotSupported,
-                "Field %s create as date field, though DateTime requested.",
+                "Field %s created as String field, though DateTime requested.",
                 szNewFieldName);
-            chType = 'D';
-            nWidth = 8;
-            oModFieldDefn.SetType(OFTDate);
+            chType = 'C';
+            nWidth = static_cast<int>(strlen("YYYY-MM-DDTHH:MM:SS.sss+HH:MM"));
+            oModFieldDefn.SetType(OFTString);
             break;
 
         default:
@@ -2355,7 +2355,8 @@ OGRErr OGRShapeLayer::AlterGeomFieldDefn(
     {
         if (poFieldDefn->GetPrjFilename().empty())
         {
-            poFieldDefn->SetPrjFilename(CPLResetExtension(pszFullName, "prj"));
+            poFieldDefn->SetPrjFilename(
+                CPLResetExtensionSafe(pszFullName, "prj").c_str());
         }
 
         const auto poNewSRSRef = poNewGeomFieldDefn->GetSpatialRef();
@@ -2423,20 +2424,20 @@ const OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
     /* -------------------------------------------------------------------- */
     /*      Is there an associated .prj file we can read?                   */
     /* -------------------------------------------------------------------- */
-    const char *pszPrjFile = CPLResetExtension(pszFullName, "prj");
+    std::string l_osPrjFile = CPLResetExtensionSafe(pszFullName, "prj");
 
     char *apszOptions[] = {
         const_cast<char *>("EMIT_ERROR_IF_CANNOT_OPEN_FILE=FALSE"), nullptr};
-    char **papszLines = CSLLoad2(pszPrjFile, -1, -1, apszOptions);
+    char **papszLines = CSLLoad2(l_osPrjFile.c_str(), -1, -1, apszOptions);
     if (papszLines == nullptr)
     {
-        pszPrjFile = CPLResetExtension(pszFullName, "PRJ");
-        papszLines = CSLLoad2(pszPrjFile, -1, -1, apszOptions);
+        l_osPrjFile = CPLResetExtensionSafe(pszFullName, "PRJ");
+        papszLines = CSLLoad2(l_osPrjFile.c_str(), -1, -1, apszOptions);
     }
 
     if (papszLines != nullptr)
     {
-        osPrjFile = pszPrjFile;
+        osPrjFile = std::move(l_osPrjFile);
 
         auto poSRSNonConst = new OGRSpatialReference();
         poSRSNonConst->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -2639,13 +2640,14 @@ OGRErr OGRShapeLayer::DropSpatialIndex()
 
     if (bHadQIX)
     {
-        const char *pszQIXFilename = CPLResetExtension(pszFullName, "qix");
-        CPLDebug("SHAPE", "Unlinking index file %s", pszQIXFilename);
+        const std::string osQIXFilename =
+            CPLResetExtensionSafe(pszFullName, "qix");
+        CPLDebug("SHAPE", "Unlinking index file %s", osQIXFilename.c_str());
 
-        if (VSIUnlink(pszQIXFilename) != 0)
+        if (VSIUnlink(osQIXFilename.c_str()) != 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to delete file %s.\n%s", pszQIXFilename,
+                     "Failed to delete file %s.\n%s", osQIXFilename.c_str(),
                      VSIStrerror(errno));
             return OGRERR_FAILURE;
         }
@@ -2656,15 +2658,15 @@ OGRErr OGRShapeLayer::DropSpatialIndex()
         const char papszExt[2][4] = {"sbn", "sbx"};
         for (int i = 0; i < 2; i++)
         {
-            const char *pszIndexFilename =
-                CPLResetExtension(pszFullName, papszExt[i]);
+            const std::string osIndexFilename =
+                CPLResetExtensionSafe(pszFullName, papszExt[i]);
             CPLDebug("SHAPE", "Trying to unlink index file %s",
-                     pszIndexFilename);
+                     osIndexFilename.c_str());
 
-            if (VSIUnlink(pszIndexFilename) != 0)
+            if (VSIUnlink(osIndexFilename.c_str()) != 0)
             {
                 CPLDebug("SHAPE", "Failed to delete file %s.\n%s",
-                         pszIndexFilename, VSIStrerror(errno));
+                         osIndexFilename.c_str(), VSIStrerror(errno));
             }
         }
     }
@@ -2716,7 +2718,8 @@ OGRErr OGRShapeLayer::CreateSpatialIndex(int nMaxDepth)
     /* -------------------------------------------------------------------- */
     /*      Dump tree to .qix file.                                         */
     /* -------------------------------------------------------------------- */
-    char *pszQIXFilename = CPLStrdup(CPLResetExtension(pszFullName, "qix"));
+    char *pszQIXFilename =
+        CPLStrdup(CPLResetExtensionSafe(pszFullName, "qix").c_str());
 
     CPLDebug("SHAPE", "Creating index file %s", pszQIXFilename);
 
@@ -2835,8 +2838,8 @@ OGRErr OGRShapeLayer::Repack()
     /* -------------------------------------------------------------------- */
     /*      Find existing filenames with exact case (see #3293).            */
     /* -------------------------------------------------------------------- */
-    const CPLString osDirname(CPLGetPath(pszFullName));
-    const CPLString osBasename(CPLGetBasename(pszFullName));
+    const CPLString osDirname(CPLGetPathSafe(pszFullName));
+    const CPLString osBasename(CPLGetBasenameSafe(pszFullName));
 
     CPLString osDBFName;
     CPLString osSHPName;
@@ -2847,9 +2850,9 @@ OGRErr OGRShapeLayer::Repack()
     while (papszCandidates != nullptr && papszCandidates[i] != nullptr)
     {
         const CPLString osCandidateBasename =
-            CPLGetBasename(papszCandidates[i]);
+            CPLGetBasenameSafe(papszCandidates[i]);
         const CPLString osCandidateExtension =
-            CPLGetExtension(papszCandidates[i]);
+            CPLGetExtensionSafe(papszCandidates[i]);
 #ifdef _WIN32
         // On Windows, as filenames are case insensitive, a shapefile layer can
         // be made of foo.shp and FOO.DBF, so use case insensitive comparison.
@@ -2860,16 +2863,16 @@ OGRErr OGRShapeLayer::Repack()
         {
             if (EQUAL(osCandidateExtension, "dbf"))
                 osDBFName =
-                    CPLFormFilename(osDirname, papszCandidates[i], nullptr);
+                    CPLFormFilenameSafe(osDirname, papszCandidates[i], nullptr);
             else if (EQUAL(osCandidateExtension, "shp"))
                 osSHPName =
-                    CPLFormFilename(osDirname, papszCandidates[i], nullptr);
+                    CPLFormFilenameSafe(osDirname, papszCandidates[i], nullptr);
             else if (EQUAL(osCandidateExtension, "shx"))
                 osSHXName =
-                    CPLFormFilename(osDirname, papszCandidates[i], nullptr);
+                    CPLFormFilenameSafe(osDirname, papszCandidates[i], nullptr);
             else if (EQUAL(osCandidateExtension, "cpg"))
                 osCPGName =
-                    CPLFormFilename(osDirname, papszCandidates[i], nullptr);
+                    CPLFormFilenameSafe(osDirname, papszCandidates[i], nullptr);
         }
 
         i++;
@@ -2924,7 +2927,7 @@ OGRErr OGRShapeLayer::Repack()
         CPLDebug("Shape", "REPACK: repacking .dbf");
         bMustReopenDBF = true;
 
-        oTempFileDBF = CPLFormFilename(osDirname, osBasename, nullptr);
+        oTempFileDBF = CPLFormFilenameSafe(osDirname, osBasename, nullptr);
         oTempFileDBF += "_packed.dbf";
 
         DBFHandle hNewDBF = DBFCloneEmpty(hDBF, oTempFileDBF);
@@ -2939,7 +2942,7 @@ OGRErr OGRShapeLayer::Repack()
         if (!osCPGName.empty())
         {
             CPLString oCPGTempFile =
-                CPLFormFilename(osDirname, osBasename, nullptr);
+                CPLFormFilenameSafe(osDirname, osBasename, nullptr);
             oCPGTempFile += "_packed.cpg";
             ForceDeleteFile(oCPGTempFile);
         }
@@ -3010,9 +3013,9 @@ OGRErr OGRShapeLayer::Repack()
     {
         CPLDebug("Shape", "REPACK: repacking .shp + .shx");
 
-        oTempFileSHP = CPLFormFilename(osDirname, osBasename, nullptr);
+        oTempFileSHP = CPLFormFilenameSafe(osDirname, osBasename, nullptr);
         oTempFileSHP += "_packed.shp";
-        oTempFileSHX = CPLFormFilename(osDirname, osBasename, nullptr);
+        oTempFileSHX = CPLFormFilenameSafe(osDirname, osBasename, nullptr);
         oTempFileSHX += "_packed.shx";
 
         SHPHandle hNewSHP = SHPCreate(oTempFileSHP, hSHP->nShapeType);
@@ -3606,7 +3609,7 @@ bool OGRShapeLayer::ReopenFileDescriptors()
         if (hDBF == nullptr)
         {
             CPLError(CE_Failure, CPLE_OpenFailed, "Cannot reopen %s",
-                     CPLResetExtension(pszFullName, "dbf"));
+                     CPLResetExtensionSafe(pszFullName, "dbf").c_str());
             eFileDescriptorsState = FD_CANNOT_REOPEN;
             return false;
         }
@@ -3661,10 +3664,11 @@ void OGRShapeLayer::AddToFileList(CPLStringList &oFileList)
     {
         const char *pszSHPFilename = VSI_SHP_GetFilename(hSHP->fpSHP);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(pszSHPFilename));
-        const char *pszSHPExt = CPLGetExtension(pszSHPFilename);
-        const char *pszSHXFilename = CPLResetExtension(
-            pszSHPFilename, (pszSHPExt[0] == 's') ? "shx" : "SHX");
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(pszSHXFilename));
+        const std::string osSHPExt = CPLGetExtensionSafe(pszSHPFilename);
+        const std::string osSHXFilename = CPLResetExtensionSafe(
+            pszSHPFilename, (osSHPExt[0] == 's') ? "shx" : "SHX");
+        oFileList.AddStringDirectly(
+            VSIGetCanonicalFilename(osSHXFilename.c_str()));
     }
 
     if (hDBF)
@@ -3673,11 +3677,11 @@ void OGRShapeLayer::AddToFileList(CPLStringList &oFileList)
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(pszDBFFilename));
         if (hDBF->pszCodePage != nullptr && hDBF->iLanguageDriver == 0)
         {
-            const char *pszDBFExt = CPLGetExtension(pszDBFFilename);
-            const char *pszCPGFilename = CPLResetExtension(
-                pszDBFFilename, (pszDBFExt[0] == 'd') ? "cpg" : "CPG");
+            const std::string osDBFExt = CPLGetExtensionSafe(pszDBFFilename);
+            const std::string osCPGFilename = CPLResetExtensionSafe(
+                pszDBFFilename, (osDBFExt[0] == 'd') ? "cpg" : "CPG");
             oFileList.AddStringDirectly(
-                VSIGetCanonicalFilename(pszCPGFilename));
+                VSIGetCanonicalFilename(osCPGFilename.c_str()));
         }
     }
 
@@ -3693,18 +3697,21 @@ void OGRShapeLayer::AddToFileList(CPLStringList &oFileList)
         }
         if (CheckForQIX())
         {
-            const char *pszQIXFilename = CPLResetExtension(pszFullName, "qix");
+            const std::string osQIXFilename =
+                CPLResetExtensionSafe(pszFullName, "qix");
             oFileList.AddStringDirectly(
-                VSIGetCanonicalFilename(pszQIXFilename));
+                VSIGetCanonicalFilename(osQIXFilename.c_str()));
         }
         else if (CheckForSBN())
         {
-            const char *pszSBNFilename = CPLResetExtension(pszFullName, "sbn");
+            const std::string osSBNFilename =
+                CPLResetExtensionSafe(pszFullName, "sbn");
             oFileList.AddStringDirectly(
-                VSIGetCanonicalFilename(pszSBNFilename));
-            const char *pszSBXFilename = CPLResetExtension(pszFullName, "sbx");
+                VSIGetCanonicalFilename(osSBNFilename.c_str()));
+            const std::string osSBXFilename =
+                CPLResetExtensionSafe(pszFullName, "sbx");
             oFileList.AddStringDirectly(
-                VSIGetCanonicalFilename(pszSBXFilename));
+                VSIGetCanonicalFilename(osSBXFilename.c_str()));
         }
     }
 }
@@ -3725,14 +3732,17 @@ void OGRShapeLayer::UpdateFollowingDeOrRecompression()
         OGRShapeGeomFieldDefn *poGeomFieldDefn =
             cpl::down_cast<OGRShapeGeomFieldDefn *>(
                 GetLayerDefn()->GetGeomFieldDefn(0));
-        poGeomFieldDefn->SetPrjFilename(CPLFormFilename(
-            osDSDir.c_str(),
-            CPLGetFilename(poGeomFieldDefn->GetPrjFilename().c_str()),
-            nullptr));
+        poGeomFieldDefn->SetPrjFilename(
+            CPLFormFilenameSafe(
+                osDSDir.c_str(),
+                CPLGetFilename(poGeomFieldDefn->GetPrjFilename().c_str()),
+                nullptr)
+                .c_str());
     }
 
     char *pszNewFullName = CPLStrdup(
-        CPLFormFilename(osDSDir, CPLGetFilename(pszFullName), nullptr));
+        CPLFormFilenameSafe(osDSDir, CPLGetFilename(pszFullName), nullptr)
+            .c_str());
     CPLFree(pszFullName);
     pszFullName = pszNewFullName;
     CloseUnderlyingLayer();
@@ -3760,11 +3770,12 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
     CPLStringList oFileList;
     AddToFileList(oFileList);
 
-    const std::string osDirname = CPLGetPath(pszFullName);
+    const std::string osDirname = CPLGetPathSafe(pszFullName);
     for (int i = 0; i < oFileList.size(); ++i)
     {
-        const std::string osRenamedFile = CPLFormFilename(
-            osDirname.c_str(), pszNewName, CPLGetExtension(oFileList[i]));
+        const std::string osRenamedFile =
+            CPLFormFilenameSafe(osDirname.c_str(), pszNewName,
+                                CPLGetExtensionSafe(oFileList[i]).c_str());
         VSIStatBufL sStat;
         if (VSIStatL(osRenamedFile.c_str(), &sStat) == 0)
         {
@@ -3778,8 +3789,9 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
 
     for (int i = 0; i < oFileList.size(); ++i)
     {
-        const std::string osRenamedFile = CPLFormFilename(
-            osDirname.c_str(), pszNewName, CPLGetExtension(oFileList[i]));
+        const std::string osRenamedFile =
+            CPLFormFilenameSafe(osDirname.c_str(), pszNewName,
+                                CPLGetExtensionSafe(oFileList[i]).c_str());
         if (VSIRename(oFileList[i], osRenamedFile.c_str()) != 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot rename %s to %s",
@@ -3793,13 +3805,18 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
         OGRShapeGeomFieldDefn *poGeomFieldDefn =
             cpl::down_cast<OGRShapeGeomFieldDefn *>(
                 GetLayerDefn()->GetGeomFieldDefn(0));
-        poGeomFieldDefn->SetPrjFilename(CPLFormFilename(
-            osDirname.c_str(), pszNewName,
-            CPLGetExtension(poGeomFieldDefn->GetPrjFilename().c_str())));
+        poGeomFieldDefn->SetPrjFilename(
+            CPLFormFilenameSafe(
+                osDirname.c_str(), pszNewName,
+                CPLGetExtensionSafe(poGeomFieldDefn->GetPrjFilename().c_str())
+                    .c_str())
+                .c_str());
     }
 
-    char *pszNewFullName = CPLStrdup(CPLFormFilename(
-        osDirname.c_str(), pszNewName, CPLGetExtension(pszFullName)));
+    char *pszNewFullName =
+        CPLStrdup(CPLFormFilenameSafe(osDirname.c_str(), pszNewName,
+                                      CPLGetExtensionSafe(pszFullName).c_str())
+                      .c_str());
     CPLFree(pszFullName);
     pszFullName = pszNewFullName;
 

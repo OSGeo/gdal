@@ -16,17 +16,19 @@ Synopsis
 
 .. code-block::
 
-    ogrinfo [--help] [--help-general]
-            [-if <driver_name>] [-json] [-ro] [-q] [-where <restricted_where>|@<filename>]
-            [-spat <xmin> <ymin> <xmax> <ymax>] [-geomfield <field>] [-fid <fid>]
-            [-sql <statement>|@<filename>] [-dialect <sql_dialect>] [-al] [-rl]
-            [-so|-features] [-limit <nb_features>] [-fields={YES|NO}]]
-            [-geom={YES|NO|SUMMARY|WKT|ISO_WKT}] [-oo <NAME>=<VALUE>]...
-            [-nomd] [-listmdd] [-mdd <domain>|all]...
-            [-nocount] [-nogeomtype] [[-noextent] | [-extent3D]]
-            [-wkt_format WKT1|WKT2|<other_values>]
-            [-fielddomain <name>]
-            <datasource_name> [<layer> [<layer> ...]]
+    ogrinfo [--help] [--long-usage] [--help-general]
+            [-json] [-ro] [-update] [--quiet] [-fid <FID>]
+            [-spat <xmin> <ymin> <xmax> <ymax>] [-geomfield <field>]
+            [-where <restricted_where>]
+            [[-sql <statement|@filename>]|[-rl]]
+            [-dialect <dialect>] [-al]
+            [[-summary]|[-features]]
+            [-limit <nb_features>] [-fields YES|NO]
+            [-geom YES|NO|SUMMARY|WKT|ISO_WKT] [-oo <NAME=VALUE>]... [-nomd]
+            [-listmdd] [-mdd <domain>]... [-nocount] [-noextent] [-extent3D]
+            [-nogeomtype] [-wkt_format WKT1|WKT2|WKT2_2015|WKT2_2019]
+            [-fielddomain <name>] [-if <format>]...
+            filename [<layer_name>]...
 
 Description
 -----------
@@ -168,9 +170,7 @@ edit data.
     value is ``YES``. (WKT and ``ISO_WKT`` are available starting with GDAL 2.1,
     which also changes the default to ISO_WKT)
 
-.. option:: -oo <NAME>=<VALUE>
-
-    Dataset open option (format-specific)
+.. include:: options/oo_vector.rst
 
 .. option:: -nomd
 

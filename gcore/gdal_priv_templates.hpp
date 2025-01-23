@@ -6,6 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2009, Phil Vachon, <philippe at cowpig.ca>
+ * Copyright (c) 2025, Even Rouault, <even.rouault at spatialys.com>
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
@@ -15,9 +16,11 @@
 
 #include "cpl_port.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <type_traits>
 
 /************************************************************************/
 /*                        GDALGetDataLimits()                           */
@@ -221,22 +224,6 @@ template <class Tin> struct sGDALCopyWord<Tin, double>
     static inline void f(const Tin tValueIn, double &dfValueOut)
     {
         dfValueOut = static_cast<double>(tValueIn);
-    }
-};
-
-template <> struct sGDALCopyWord<double, double>
-{
-    static inline void f(const double dfValueIn, double &dfValueOut)
-    {
-        dfValueOut = dfValueIn;
-    }
-};
-
-template <> struct sGDALCopyWord<float, float>
-{
-    static inline void f(const float fValueIn, float &fValueOut)
-    {
-        fValueOut = fValueIn;
     }
 };
 
@@ -542,7 +529,10 @@ template <> struct sGDALCopyWord<float, std::uint64_t>
 template <class Tin, class Tout>
 inline void GDALCopyWord(const Tin tValueIn, Tout &tValueOut)
 {
-    sGDALCopyWord<Tin, Tout>::f(tValueIn, tValueOut);
+    if constexpr (std::is_same<Tin, Tout>::value)
+        tValueOut = tValueIn;
+    else
+        sGDALCopyWord<Tin, Tout>::f(tValueIn, tValueOut);
 }
 
 /************************************************************************/

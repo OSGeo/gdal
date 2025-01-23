@@ -220,7 +220,7 @@ CPLErr BIGGIFDataset::ReOpen()
             /* while closing and then destroying this temporary dataset */
             const char *apszOptions[] = {"COMPRESS=LZW", "SPARSE_OK=YES",
                                          nullptr};
-            CPLString osTempFilename = CPLGenerateTempFilename("biggif");
+            CPLString osTempFilename = CPLGenerateTempFilenameSafe("biggif");
 
             osTempFilename += ".tif";
 

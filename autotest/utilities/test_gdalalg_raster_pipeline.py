@@ -372,7 +372,7 @@ def test_gdalalg_raster_pipeline_reproject_invalid_src_crs(tmp_vsimem):
     pipeline = get_pipeline_alg()
     with pytest.raises(
         Exception,
-        match="reproject: Invalid value for '--src-crs'",
+        match="reproject: Invalid value for 'src-crs' argument",
     ):
         pipeline.ParseRunAndFinalize(
             [
@@ -396,7 +396,7 @@ def test_gdalalg_raster_pipeline_reproject_invalid_dst_crs(tmp_vsimem):
     pipeline = get_pipeline_alg()
     with pytest.raises(
         Exception,
-        match="reproject: Invalid value for '--dst-crs'",
+        match="reproject: Invalid value for 'dst-crs' argument",
     ):
         pipeline.ParseRunAndFinalize(
             [
@@ -458,14 +458,14 @@ def test_gdalalg_raster_pipeline_reproject_no_args(tmp_vsimem):
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
-def test_gdalalg_raster_pipeline_reproject_invalid_extent(tmp_vsimem):
+def test_gdalalg_raster_pipeline_reproject_invalid_bbox(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.tif")
 
     pipeline = get_pipeline_alg()
     with pytest.raises(
         Exception,
-        match="Value of 'extent' should be xmin,ymin,xmax,ymax with xmin <= xmax and ymin <= ymax",
+        match="Value of 'bbox' should be xmin,ymin,xmax,ymax with xmin <= xmax and ymin <= ymax",
     ):
         pipeline.ParseRunAndFinalize(
             [
@@ -473,7 +473,7 @@ def test_gdalalg_raster_pipeline_reproject_invalid_extent(tmp_vsimem):
                 "../gcore/data/byte.tif",
                 "!",
                 "reproject",
-                "--extent=3,4,2,1",
+                "--bbox=3,4,2,1",
                 "!",
                 "write",
                 out_filename,
@@ -481,7 +481,7 @@ def test_gdalalg_raster_pipeline_reproject_invalid_extent(tmp_vsimem):
         )
 
 
-def test_gdalalg_raster_pipeline_reproject_extent_arg(tmp_vsimem):
+def test_gdalalg_raster_pipeline_reproject_bbox_arg(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.tif")
 
@@ -494,7 +494,7 @@ def test_gdalalg_raster_pipeline_reproject_extent_arg(tmp_vsimem):
             "reproject",
             "--src-crs=EPSG:32611",
             "--dst-crs=EPSG:4326",
-            "--extent=-117.641,33.89,-117.628,33.9005",
+            "--bbox=-117.641,33.89,-117.628,33.9005",
             "!",
             "write",
             "--overwrite",
@@ -539,3 +539,156 @@ def test_gdalalg_raster_pipeline_reproject_almost_all_args(tmp_vsimem):
             (-117.641, 0.0005, 0.0, 33.9008, 0.0, -0.0004), rel=1e-8
         )
         assert ds.GetRasterBand(1).Checksum() == 8515
+
+
+def test_gdalalg_raster_pipeline_clip_missing_bbox_or_like(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    pipeline = get_pipeline_alg()
+    with pytest.raises(
+        Exception, match="clip: Either --bbox or --like must be specified"
+    ):
+        pipeline.ParseRunAndFinalize(
+            [
+                "read",
+                "../gcore/data/byte.tif",
+                "!",
+                "clip",
+                "!",
+                "write",
+                "--overwrite",
+                out_filename,
+            ]
+        )
+
+
+def test_gdalalg_raster_pipeline_clip(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    pipeline = get_pipeline_alg()
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            "../gcore/data/byte.tif",
+            "!",
+            "clip",
+            "--bbox=440780,3750200,441860,3751260",
+            "!",
+            "write",
+            "--overwrite",
+            out_filename,
+        ]
+    )
+
+    with gdal.Open(out_filename) as ds:
+        assert ds.RasterXSize == 18
+        assert ds.RasterYSize == 18
+        assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"
+        assert ds.GetGeoTransform() == pytest.approx(
+            (440780, 60, 0, 3751260, 0, -60), rel=1e-8
+        )
+        assert ds.GetRasterBand(1).Checksum() == 3695
+
+    out2_filename = str(tmp_vsimem / "out2.tif")
+
+    pipeline = get_pipeline_alg()
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            "../gcore/data/byte.tif",
+            "!",
+            "clip",
+            "--like",
+            out_filename,
+            "!",
+            "write",
+            "--overwrite",
+            out2_filename,
+        ]
+    )
+
+    with gdal.Open(out_filename) as ds:
+        assert ds.RasterXSize == 18
+        assert ds.RasterYSize == 18
+        assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"
+        assert ds.GetGeoTransform() == pytest.approx(
+            (440780, 60, 0, 3751260, 0, -60), rel=1e-8
+        )
+        assert ds.GetRasterBand(1).Checksum() == 3695
+
+
+def test_gdalalg_raster_pipeline_clip_like_error(tmp_vsimem):
+
+    ref_filename = str(tmp_vsimem / "out.tif")
+    gdal.GetDriverByName("GTiff").Create(ref_filename, 1, 1)
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    pipeline = get_pipeline_alg()
+    with pytest.raises(Exception, match="has no geotransform matrix"):
+        pipeline.ParseRunAndFinalize(
+            [
+                "read",
+                "../gcore/data/byte.tif",
+                "!",
+                "clip",
+                "--like",
+                ref_filename,
+                "!",
+                "write",
+                "--overwrite",
+                out_filename,
+            ]
+        )
+
+    with gdal.GetDriverByName("GTiff").Create(ref_filename, 1, 1) as ds:
+        ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+
+    pipeline = get_pipeline_alg()
+    with pytest.raises(Exception, match="has no SRS"):
+        pipeline.ParseRunAndFinalize(
+            [
+                "read",
+                "../gcore/data/byte.tif",
+                "!",
+                "clip",
+                "--like",
+                ref_filename,
+                "!",
+                "write",
+                "--overwrite",
+                out_filename,
+            ]
+        )
+
+
+def test_gdalalg_raster_pipeline_clip_bbox_crs(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    pipeline = get_pipeline_alg()
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            "../gcore/data/byte.tif",
+            "!",
+            "clip",
+            "--bbox=-117.631,33.89,-117.628,33.9005",
+            "--bbox-crs=NAD27",
+            "!",
+            "write",
+            "--overwrite",
+            out_filename,
+        ]
+    )
+
+    with gdal.Open(out_filename) as ds:
+        assert ds.RasterXSize == 5
+        assert ds.RasterYSize == 19
+        assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"
+        print(ds.GetGeoTransform())
+        assert ds.GetGeoTransform() == pytest.approx(
+            (441620.0, 60.0, 0.0, 3751140.0, 0.0, -60.0), rel=1e-8
+        )

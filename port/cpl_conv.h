@@ -48,6 +48,7 @@ void CPL_DLL CPL_STDCALL CPLSetThreadLocalConfigOption(const char *pszKey,
                                                        const char *pszValue);
 void CPL_DLL CPLDeclareKnownConfigOption(const char *pszKey,
                                          const char *pszDefinition);
+char CPL_DLL **CPLGetKnownConfigOptions(void);
 
 /** Callback for CPLSubscribeToSetConfigOption() */
 typedef void (*CPLSetConfigOptionSubscriber)(const char *pszKey,
@@ -150,17 +151,18 @@ int CPL_DLL CPLGetExecPath(char *pszPathBuf, int nMaxLength);
 /* -------------------------------------------------------------------- */
 /*      Filename handling functions.                                    */
 /* -------------------------------------------------------------------- */
+
+#if defined(DOXYGEN_SKIP) || !defined(__cplusplus) ||                          \
+    !defined(GDAL_COMPILATION) ||                                              \
+    (defined(__cplusplus) && defined(ALLOW_DEPRECATED_CPL_PATH_FUNCTIONS))
 const char CPL_DLL *
 CPLGetPath(const char *) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 const char CPL_DLL *
 CPLGetDirname(const char *) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 const char CPL_DLL *
-CPLGetFilename(const char *) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
-const char CPL_DLL *
 CPLGetBasename(const char *) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 const char CPL_DLL *
 CPLGetExtension(const char *) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
-char CPL_DLL *CPLGetCurrentDir(void);
 const char CPL_DLL *CPLFormFilename(
     const char *pszPath, const char *pszBasename,
     const char *pszExtension) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
@@ -172,24 +174,61 @@ const char CPL_DLL *CPLResetExtension(const char *, const char *)
 const char CPL_DLL *CPLProjectRelativeFilename(const char *pszProjectDir,
                                                const char *pszSecondaryFilename)
     CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *
+CPLCleanTrailingSlash(const char *) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *CPLGenerateTempFilename(const char *pszStem)
+    CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *CPLExpandTilde(const char *pszFilename)
+    CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *
+CPLLaunderForFilename(const char *pszName,
+                      const char *pszOutputPath) CPL_WARN_UNUSED_RESULT;
+#endif
+
+char CPL_DLL *CPLGetCurrentDir(void);
+const char CPL_DLL *
+CPLGetFilename(const char *) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 int CPL_DLL CPLIsFilenameRelative(const char *pszFilename);
 const char CPL_DLL *CPLExtractRelativePath(const char *, const char *, int *)
     CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
-const char CPL_DLL *
-CPLCleanTrailingSlash(const char *) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 char CPL_DLL **
 CPLCorrespondingPaths(const char *pszOldFilename, const char *pszNewFilename,
                       char **papszFileList) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CPLCheckForFile(char *pszFilename, char **papszSiblingList);
 
-const char CPL_DLL *CPLGenerateTempFilename(const char *pszStem)
-    CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
-const char CPL_DLL *CPLExpandTilde(const char *pszFilename)
-    CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 const char CPL_DLL *CPLGetHomeDir(void) CPL_WARN_UNUSED_RESULT;
-const char CPL_DLL *
-CPLLaunderForFilename(const char *pszName,
-                      const char *pszOutputPath) CPL_WARN_UNUSED_RESULT;
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+extern "C++"
+{
+    std::string CPL_DLL CPLGetPathSafe(const char *) CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLGetDirnameSafe(const char *) CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLGetBasenameSafe(const char *) CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLGetExtensionSafe(const char *)
+        CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLFormFilenameSafe(
+        const char *pszPath, const char *pszBasename,
+        const char *pszExtension = nullptr) CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLFormCIFilenameSafe(
+        const char *pszPath, const char *pszBasename,
+        const char *pszExtension = nullptr) CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLResetExtensionSafe(const char *, const char *)
+        CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLProjectRelativeFilenameSafe(
+        const char *pszProjectDir,
+        const char *pszSecondaryFilename) CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLCleanTrailingSlashSafe(const char *pszPath)
+        CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLGenerateTempFilenameSafe(const char *pszStem)
+        CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLExpandTildeSafe(const char *pszFilename)
+        CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLLaunderForFilenameSafe(
+        const char *pszName, const char *pszOutputPath) CPL_WARN_UNUSED_RESULT;
+}
+
+#endif  // defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */

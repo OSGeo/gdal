@@ -185,7 +185,7 @@ int OGRODBCDataSource::Open(GDALOpenInfo *poOpenInfo)
     constexpr const char *ODBC_PREFIX = "ODBC:";
     if (!STARTS_WITH_CI(pszNewName, ODBC_PREFIX) &&
         OGRODBCDriverIsSupportedMsAccessFileExtension(
-            CPLGetExtension(pszNewName)))
+            CPLGetExtensionSafe(pszNewName).c_str()))
         return OpenMDB(poOpenInfo);
 
     /* -------------------------------------------------------------------- */

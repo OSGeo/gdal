@@ -455,7 +455,7 @@ MAIN_START(nArgc, papszArgv)
     }
 
     const char *pszZipFilename = osZipFilename.c_str();
-    if (!EQUAL(CPLGetExtension(pszZipFilename), "zip"))
+    if (!EQUAL(CPLGetExtensionSafe(pszZipFilename).c_str(), "zip"))
     {
         std::cerr << _("Extension of zip filename should be .zip") << std::endl
                   << std::endl;

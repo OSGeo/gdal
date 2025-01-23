@@ -228,7 +228,7 @@ class OGRGMLDataSource final : public GDALDataset
         return bIsOutputGML32;
     }
 
-    /** Returns whether a writing error has occured */
+    /** Returns whether a writing error has occurred */
     inline bool HasWriteError() const
     {
         return m_bWriteError;

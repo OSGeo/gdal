@@ -187,7 +187,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         /*      Convert tree to a single block of XML text. */
         /* --------------------------------------------------------------------
          */
-        char *pszVRTPath = CPLStrdup(CPLGetPath(pszFilename));
+        char *pszVRTPath = CPLStrdup(CPLGetPathSafe(pszFilename).c_str());
         poSrcVRTDS->UnsetPreservedRelativeFilenames();
         CPLXMLNode *psDSTree = poSrcVRTDS->SerializeToXML(pszVRTPath);
 
@@ -551,6 +551,17 @@ void GDALRegister_VRT()
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_COORDINATE_EPOCH, "YES");
+
+    const char *pszExpressionDialects = "ExpressionDialects";
+#if defined(GDAL_VRT_ENABLE_MUPARSER) && defined(GDAL_VRT_ENABLE_EXPRTK)
+    poDriver->SetMetadataItem(pszExpressionDialects, "muparser,exprtk");
+#elif defined(GDAL_VRT_ENABLE_MUPARSER)
+    poDriver->SetMetadataItem(pszExpressionDialects, "muparser");
+#elif defined(GDAL_VRT_ENABLE_EXPRTK)
+    poDriver->SetMetadataItem(pszExpressionDialects, "exprtk");
+#else
+    poDriver->SetMetadataItem(pszExpressionDialects, "none");
+#endif
 
     poDriver->AddSourceParser("SimpleSource", VRTParseCoreSources);
     poDriver->AddSourceParser("ComplexSource", VRTParseCoreSources);

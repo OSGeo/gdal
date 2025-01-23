@@ -1,4 +1,5 @@
 /**********************************************************************
+ * $Id$
  *
  * Name:     tif_hash_set.h
  * Project:  TIFF - Common Portability Library

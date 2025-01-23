@@ -1951,10 +1951,47 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 
     const char *pszCO = CSLFetchNameValue(papszOptions, "COORDINATE_OPERATION");
 
+    const auto SetAxisMapping =
+        [papszOptions](OGRSpatialReference &oSRS, const char *pszPrefix)
+    {
+        const char *pszMapping = CSLFetchNameValue(
+            papszOptions, std::string(pszPrefix)
+                              .append("_DATA_AXIS_TO_SRS_AXIS_MAPPING")
+                              .c_str());
+        if (pszMapping)
+        {
+            CPLStringList aosTokens(CSLTokenizeString2(pszMapping, ",", 0));
+            std::vector<int> anMapping;
+            for (int i = 0; i < aosTokens.size(); ++i)
+                anMapping.push_back(atoi(aosTokens[i]));
+            oSRS.SetDataAxisToSRSAxisMapping(anMapping);
+        }
+        else
+        {
+            const char *pszStrategy = CSLFetchNameValueDef(
+                papszOptions,
+                std::string(pszPrefix).append("_AXIS_MAPPING_STRATEGY").c_str(),
+                "TRADITIONAL_GIS_ORDER");
+            if (EQUAL(pszStrategy, "TRADITIONAL_GIS_ORDER"))
+                oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            else if (EQUAL(pszStrategy, "AUTHORITY_COMPLIANT"))
+                oSRS.SetAxisMappingStrategy(OAMS_AUTHORITY_COMPLIANT);
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Unrecognized value '%s' for %s", pszStrategy,
+                         std::string(pszPrefix)
+                             .append("_AXIS_MAPPING_STRATEGY")
+                             .c_str());
+                return false;
+            }
+        }
+        return true;
+    };
+
     OGRSpatialReference oSrcSRS;
     if (pszSrcSRS)
     {
-        oSrcSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (pszSrcSRS[0] != '\0' &&
             oSrcSRS.SetFromUserInput(pszSrcSRS) != OGRERR_NONE)
         {
@@ -1962,12 +1999,13 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                      "Failed to import coordinate system `%s'.", pszSrcSRS);
             return nullptr;
         }
+        if (!SetAxisMapping(oSrcSRS, "SRC_SRS"))
+            return nullptr;
     }
 
     OGRSpatialReference oDstSRS;
     if (pszDstSRS)
     {
-        oDstSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (pszDstSRS[0] != '\0' &&
             oDstSRS.SetFromUserInput(pszDstSRS) != OGRERR_NONE)
         {
@@ -1975,6 +2013,8 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                      "Failed to import coordinate system `%s'.", pszDstSRS);
             return nullptr;
         }
+        if (!SetAxisMapping(oDstSRS, "DST_SRS"))
+            return nullptr;
     }
 
     const char *pszSrcGeolocArray =

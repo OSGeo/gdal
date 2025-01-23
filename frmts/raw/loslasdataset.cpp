@@ -153,7 +153,7 @@ int LOSLASDataset::Identify(GDALOpenInfo *poOpenInfo)
         return FALSE;
 
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    const char *pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExt = poOpenInfo->osExtension.c_str();
     if (!EQUAL(pszExt, "las") && !EQUAL(pszExt, "los") && !EQUAL(pszExt, "geo"))
         return FALSE;
 #endif
@@ -242,17 +242,17 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     poDS->SetBand(1, std::move(poBand));
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "las"))
+    if (poOpenInfo->IsExtensionEqualToCI("las"))
     {
         poDS->GetRasterBand(1)->SetDescription("Latitude Offset (arc seconds)");
     }
-    else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "los"))
+    else if (poOpenInfo->IsExtensionEqualToCI("los"))
     {
         poDS->GetRasterBand(1)->SetDescription(
             "Longitude Offset (arc seconds)");
         poDS->GetRasterBand(1)->SetMetadataItem("positive_value", "west");
     }
-    else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "geo"))
+    else if (poOpenInfo->IsExtensionEqualToCI("geo"))
     {
         poDS->GetRasterBand(1)->SetDescription("Geoid undulation (meters)");
     }

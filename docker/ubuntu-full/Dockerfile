@@ -81,7 +81,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libbrotli-dev${APT_ARCH_SUFFIX} \
        libarchive-dev${APT_ARCH_SUFFIX} \
        libaec-dev${APT_ARCH_SUFFIX} \
-       libavif-dev${APT_ARCH_SUFFIX}
+       libavif-dev${APT_ARCH_SUFFIX} \
+       libmuparser-dev${APT_ARCH_SUFFIX}
 
 ARG RSYNC_REMOTE
 ARG WITH_CCACHE
@@ -493,6 +494,10 @@ RUN --mount=type=cache,id=ubuntu-full-proj,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && /buildscripts/bh-proj.sh
 
+# Download exprtk
+RUN curl -LO -fsS https://github.com/ArashPartow/exprtk/raw/refs/heads/master/exprtk.hpp \
+    && mv exprtk.hpp /usr/include
+
 # Build GDAL
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
@@ -527,7 +532,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         wget curl unzip ca-certificates \
     # GDAL dependencies
     && apt-get install -y \
-        libopenjp2-7 libcairo2 python3-numpy \
+        bash-completion libopenjp2-7 libcairo2 python3-numpy \
         libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos3.12.1 libgeos-c1v5 \
         libxml2 libexpat1 \
         libxerces-c3.2 libnetcdf-c++4-1 netcdf-bin libpoppler134 libspatialite8 librasterlite2-1 gpsbabel \
@@ -543,6 +548,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libaec0 \
         libavif16 \
         libspdlog1.12 libmagic1t64 \
+        libmuparser2v5 \
         python-is-python3 \
         # pil for antialias option of gdal2tiles
         python3-pil \
@@ -606,6 +612,7 @@ COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
 
+COPY --from=builder  /build/usr/share/bash-completion/ /usr/share/bash-completion/
 COPY --from=builder  /build/usr/share/java /usr/share/java
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
@@ -618,3 +625,7 @@ RUN ldconfig
 RUN if test "$(uname -p)" = "x86_64"; then \
     ogrinfo ADBC::memory: -oo ADBC_DRIVER=duckdb -oo PRELUDE_STATEMENTS="INSTALL spatial"; \
     fi
+
+RUN echo "source /usr/share/bash-completion/bash_completion" >> /root/.bashrc
+
+CMD ["/bin/bash", "-l"]

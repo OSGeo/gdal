@@ -14,6 +14,7 @@
 #include <cmath>
 #include "gdal.h"
 #include "vrtdataset.h"
+#include "vrtexpression.h"
 
 #include <limits>
 
@@ -766,6 +767,7 @@ static CPLErr DivPixelFunc(void **papoSources, int nSources, void *pData,
             for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
             {
                 const double dfVal = GetSrcVal(papoSources[1], eSrcType, ii);
+                // coverity[divide_by_zero]
                 double dfPixVal =
                     dfVal == 0
                         ? std::numeric_limits<double>::infinity()
@@ -914,6 +916,7 @@ static CPLErr InvPixelFunc(void **papoSources, int nSources, void *pData,
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 // Not complex.
                 const double dfVal = GetSrcVal(papoSources[0], eSrcType, ii);
+                // coverity[divide_by_zero]
                 const double dfPixVal =
                     dfVal == 0 ? std::numeric_limits<double>::infinity()
                                : dfK / dfVal;
@@ -1482,6 +1485,7 @@ static CPLErr NormDiffPixelFunc(void **papoSources, int nSources, void *pData,
 
             const double dfDenom = (dfLeftVal + dfRightVal);
 
+            // coverity[divide_by_zero]
             const double dfPixVal =
                 dfDenom == 0 ? std::numeric_limits<double>::infinity()
                              : (dfLeftVal - dfRightVal) / dfDenom;
@@ -1614,6 +1618,110 @@ static CPLErr MaxPixelFunc(void **papoSources, int nSources, void *pData,
                                          nPixelSpace, nLineSpace, papszArgs);
 }
 
+static const char pszExprPixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument name='expression' "
+    "             description='Expression to be evaluated' "
+    "             type='string'></Argument>"
+    "   <Argument name='dialect' "
+    "             description='Expression dialect' "
+    "             type='string-select'"
+    "             default='exprtk'>"
+    "       <Value>exprtk</Value>"
+    "       <Value>muparser</Value>"
+    "    </Argument>"
+    "</PixelFunctionArgumentsList>";
+
+static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
+                            int nXSize, int nYSize, GDALDataType eSrcType,
+                            GDALDataType eBufType, int nPixelSpace,
+                            int nLineSpace, CSLConstList papszArgs)
+{
+    /* ---- Init ---- */
+
+    if (GDALDataTypeIsComplex(eSrcType))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "expression cannot by applied to complex data types");
+        return CE_Failure;
+    }
+
+    std::unique_ptr<gdal::MathExpression> poExpression;
+
+    const char *pszExpression = CSLFetchNameValue(papszArgs, "expression");
+
+    const char *pszSourceNames = CSLFetchNameValue(papszArgs, "SOURCE_NAMES");
+    const CPLStringList aosSourceNames(
+        CSLTokenizeString2(pszSourceNames, "|", 0));
+
+    std::vector<double> adfValuesForPixel(nSources);
+
+    const char *pszDialect = CSLFetchNameValue(papszArgs, "dialect");
+    if (!pszDialect)
+    {
+        pszDialect = "muparser";
+    }
+
+    poExpression = gdal::MathExpression::Create(pszExpression, pszDialect);
+
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!poExpression)
+    {
+        return CE_Failure;
+    }
+
+    {
+        int iSource = 0;
+        for (const auto &osName : aosSourceNames)
+        {
+            poExpression->RegisterVariable(osName,
+                                           &adfValuesForPixel[iSource++]);
+        }
+    }
+
+    if (strstr(pszExpression, "BANDS"))
+    {
+        poExpression->RegisterVector("BANDS", &adfValuesForPixel);
+    }
+
+    std::unique_ptr<double, VSIFreeReleaser> padfResults(
+        static_cast<double *>(VSI_MALLOC2_VERBOSE(nXSize, sizeof(double))));
+    if (!padfResults)
+        return CE_Failure;
+
+    /* ---- Set pixels ---- */
+    size_t ii = 0;
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
+        {
+            for (int iSrc = 0; iSrc < nSources; iSrc++)
+            {
+                // cppcheck-suppress unreadVariable
+                adfValuesForPixel[iSrc] =
+                    GetSrcVal(papoSources[iSrc], eSrcType, ii);
+            }
+
+            if (auto eErr = poExpression->Evaluate(); eErr != CE_None)
+            {
+                return CE_Failure;
+            }
+            else
+            {
+                padfResults.get()[iCol] = poExpression->Results()[0];
+            }
+        }
+
+        GDALCopyWords(padfResults.get(), GDT_Float64, sizeof(double),
+                      static_cast<GByte *>(pData) +
+                          static_cast<GSpacing>(nLineSpace) * iLine,
+                      eBufType, nPixelSpace, nXSize);
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+}  // ExprPixelFunc
+
 /************************************************************************/
 /*                     GDALRegisterDefaultPixelFunc()                   */
 /************************************************************************/
@@ -1735,5 +1843,7 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszMinMaxFuncMetadataNodata);
     GDALAddDerivedBandPixelFuncWithArgs("max", MaxPixelFunc,
                                         pszMinMaxFuncMetadataNodata);
+    GDALAddDerivedBandPixelFuncWithArgs("expression", ExprPixelFunc,
+                                        pszExprPixelFuncMetadata);
     return CE_None;
 }

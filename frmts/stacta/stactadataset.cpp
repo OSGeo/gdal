@@ -648,8 +648,7 @@ int STACTADataset::Identify(GDALOpenInfo *poOpenInfo)
 
     if (
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        (!bIsSingleDriver &&
-         !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "json")) ||
+        (!bIsSingleDriver && !poOpenInfo->IsExtensionEqualToCI("json")) ||
 #endif
         poOpenInfo->nHeaderBytes == 0)
     {
@@ -859,8 +858,8 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
     {
         if (STARTS_WITH(osURLTemplate, "./"))
             osURLTemplate = osURLTemplate.substr(2);
-        osURLTemplate = CPLProjectRelativeFilename(CPLGetDirname(osFilename),
-                                                   osURLTemplate);
+        osURLTemplate = CPLProjectRelativeFilenameSafe(
+            CPLGetDirnameSafe(osFilename).c_str(), osURLTemplate);
     }
 
     // Parse optional tile matrix set limits

@@ -2762,7 +2762,7 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
     {
 #if ECWSDK_VERSION < 50
         /* Detect what is apparently the ECW v3 file format signature */
-        if (EQUAL(CPLGetExtension(osFilename), "ECW") &&
+        if (EQUAL(CPLGetExtensionSafe(osFilename).c_str(), "ECW") &&
             poOpenInfo->nHeaderBytes > 0x30 &&
             STARTS_WITH_CI((const char *)(poOpenInfo->pabyHeader + 0x20),
                            "ecw ECW3"))

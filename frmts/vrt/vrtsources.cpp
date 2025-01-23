@@ -439,15 +439,15 @@ void VRTSimpleSource::AddSourceFilenameNode(const char *pszVRTPath,
             !CPLIsFilenameRelative(osVRTFilename.c_str()) &&
             pszCurDir != nullptr)
         {
-            osSourceDataset =
-                CPLFormFilename(pszCurDir, osSourceDataset.c_str(), nullptr);
+            osSourceDataset = CPLFormFilenameSafe(
+                pszCurDir, osSourceDataset.c_str(), nullptr);
         }
         else if (!CPLIsFilenameRelative(osSourceDataset.c_str()) &&
                  CPLIsFilenameRelative(osVRTFilename.c_str()) &&
                  pszCurDir != nullptr)
         {
             osVRTFilename =
-                CPLFormFilename(pszCurDir, osVRTFilename.c_str(), nullptr);
+                CPLFormFilenameSafe(pszCurDir, osVRTFilename.c_str(), nullptr);
         }
         CPLFree(pszCurDir);
         osSourceFilename = CPLExtractRelativePath(
@@ -568,6 +568,7 @@ CPLErr VRTSimpleSource::XMLInit(const CPLXMLNode *psSrc, const char *pszVRTPath,
     m_poMapSharedSources = &oMapSharedSources;
 
     m_osResampling = CPLGetXMLValue(psSrc, "resampling", "");
+    m_osName = CPLGetXMLValue(psSrc, "name", "");
 
     /* -------------------------------------------------------------------- */
     /*      Prepare filename.                                               */
@@ -3535,13 +3536,8 @@ CPLErr VRTComplexSource::RasterIOInternal(
                     }
                     else
                     {
-                        static bool bHasWarned = false;
-                        if (!bHasWarned)
-                        {
-                            bHasWarned = true;
-                            CPLError(CE_Failure, CPLE_AppDefined,
+                        CPLErrorOnce(CE_Failure, CPLE_AppDefined,
                                      "No entry %d.", static_cast<int>(fResult));
-                        }
                         continue;
                     }
                 }

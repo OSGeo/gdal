@@ -579,8 +579,9 @@ bool SRPDataset::GetFromRecord(const char *pszFileName, DDFRecord *record)
     /*      Open the .IMG file.  Try to recover gracefully if the case      */
     /*      of the filename is wrong.                                       */
     /* -------------------------------------------------------------------- */
-    const CPLString osDirname = CPLGetDirname(pszFileName);
-    const CPLString osImgName = CPLFormCIFilename(osDirname, osBAD, nullptr);
+    const CPLString osDirname = CPLGetDirnameSafe(pszFileName);
+    const CPLString osImgName =
+        CPLFormCIFilenameSafe(osDirname, osBAD, nullptr);
 
     fdIMG = VSIFOpenL(osImgName, "rb");
     if (fdIMG == nullptr)
@@ -670,8 +671,8 @@ bool SRPDataset::GetFromRecord(const char *pszFileName, DDFRecord *record)
     /* -------------------------------------------------------------------- */
     /*      Try to collect a color map from the .QAL file.                  */
     /* -------------------------------------------------------------------- */
-    const CPLString osBasename = CPLGetBasename(pszFileName);
-    osQALFileName = CPLFormCIFilename(osDirname, osBasename, "QAL");
+    const CPLString osBasename = CPLGetBasenameSafe(pszFileName);
+    osQALFileName = CPLFormCIFilenameSafe(osDirname, osBasename, "QAL");
 
     DDFModule oQALModule;
 
@@ -1058,7 +1059,7 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
     if (!module.Open(pszFileName, TRUE))
         return papszFileNames;
 
-    CPLString osDirName(CPLGetDirname(pszFileName));
+    CPLString osDirName(CPLGetDirnameSafe(pszFileName));
 
     while (true)
     {
@@ -1119,7 +1120,7 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
                      * characters */
                     CPLString osDirDataset = pszNAM;
                     osDirDataset.resize(6);
-                    CPLString osDatasetDir = CPLFormFilename(
+                    CPLString osDatasetDir = CPLFormFilenameSafe(
                         osDirName.c_str(), osDirDataset.c_str(), nullptr);
 
                     CPLString osGENFileName = "";
@@ -1134,10 +1135,11 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
                         {
                             while (*ptrDir)
                             {
-                                if (EQUAL(CPLGetExtension(*ptrDir), "GEN"))
+                                if (EQUAL(CPLGetExtensionSafe(*ptrDir).c_str(),
+                                          "GEN"))
                                 {
                                     bFound = 1;
-                                    osGENFileName = CPLFormFilename(
+                                    osGENFileName = CPLFormFilenameSafe(
                                         osDatasetDir.c_str(), *ptrDir, nullptr);
                                     CPLDebug("SRP",
                                              "Building GEN full file name : %s",
@@ -1160,11 +1162,13 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
                         {
                             while (*ptrDir)
                             {
-                                if (EQUAL(CPLGetExtension(*ptrDir), "GEN") &&
-                                    EQUALN(CPLGetBasename(*ptrDir), osName, 6))
+                                if (EQUAL(CPLGetExtensionSafe(*ptrDir).c_str(),
+                                          "GEN") &&
+                                    EQUALN(CPLGetBasenameSafe(*ptrDir).c_str(),
+                                           osName, 6))
                                 {
                                     bFound = 1;
-                                    osGENFileName = CPLFormFilename(
+                                    osGENFileName = CPLFormFilenameSafe(
                                         osDirName.c_str(), *ptrDir, nullptr);
                                     CPLDebug("SRP",
                                              "Building GEN full file name : %s",
@@ -1399,10 +1403,10 @@ char **SRPDataset::GetIMGListFromGEN(const char *pszFileName,
             CPLDebug("SRP", "BAD=%s", osBAD.c_str());
 
             /* Build full IMG file name from BAD value */
-            const CPLString osGENDir(CPLGetDirname(pszFileName));
+            const CPLString osGENDir(CPLGetDirnameSafe(pszFileName));
 
             const CPLString osFileName =
-                CPLFormFilename(osGENDir.c_str(), osBAD.c_str(), nullptr);
+                CPLFormFilenameSafe(osGENDir.c_str(), osBAD.c_str(), nullptr);
             VSIStatBufL sStatBuf;
             if (VSIStatL(osFileName, &sStatBuf) == 0)
             {
@@ -1425,8 +1429,8 @@ char **SRPDataset::GetIMGListFromGEN(const char *pszFileName,
                 {
                     if (EQUAL(*ptrDir, osBAD.c_str()))
                     {
-                        osBAD =
-                            CPLFormFilename(osGENDir.c_str(), *ptrDir, nullptr);
+                        osBAD = CPLFormFilenameSafe(osGENDir.c_str(), *ptrDir,
+                                                    nullptr);
                         CPLDebug("SRP", "Building IMG full file name : %s",
                                  osBAD.c_str());
                         break;
@@ -1480,7 +1484,7 @@ GDALDataset *SRPDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         CPLString osFileName(poOpenInfo->pszFilename);
 
-        if (EQUAL(CPLGetExtension(osFileName.c_str()), "THF"))
+        if (EQUAL(CPLGetExtensionSafe(osFileName.c_str()).c_str(), "THF"))
         {
 
             CPLDebug("SRP", "Read THF");
@@ -1521,7 +1525,7 @@ GDALDataset *SRPDataset::Open(GDALOpenInfo *poOpenInfo)
 
         if (bTHFWithSingleGEN
 #ifdef OPEN_GEN
-            || EQUAL(CPLGetExtension(osFileName.c_str()), "GEN")
+            || EQUAL(CPLGetExtensionSafe(osFileName.c_str()).c_str(), "GEN")
 #endif
         )
         {
@@ -1550,7 +1554,7 @@ GDALDataset *SRPDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
-        if (EQUAL(CPLGetExtension(osFileName.c_str()), "IMG"))
+        if (EQUAL(CPLGetExtensionSafe(osFileName.c_str()).c_str(), "IMG"))
         {
 
             osIMGFileName = osFileName;
@@ -1581,7 +1585,7 @@ GDALDataset *SRPDataset::Open(GDALOpenInfo *poOpenInfo)
             // --------------------------------------------------------------------
             VSIStatBufL sStatBuf;
 
-            CPLString basename = CPLGetBasename(osFileName);
+            CPLString basename = CPLGetBasenameSafe(osFileName);
             if (basename.size() != 8)
             {
                 CPLDebug("SRP", "Invalid basename file");
@@ -1590,14 +1594,14 @@ GDALDataset *SRPDataset::Open(GDALOpenInfo *poOpenInfo)
 
             nRecordIndex = static_cast<int>(CPLScanLong(basename + 6, 2));
 
-            CPLString path = CPLGetDirname(osFileName);
+            CPLString path = CPLGetDirnameSafe(osFileName);
             CPLString basename01 = ResetTo01(basename);
-            osFileName = CPLFormFilename(path, basename01, ".IMG");
+            osFileName = CPLFormFilenameSafe(path, basename01, ".IMG");
 
-            osFileName = CPLResetExtension(osFileName, "GEN");
+            osFileName = CPLResetExtensionSafe(osFileName, "GEN");
             if (VSIStatL(osFileName, &sStatBuf) != 0)
             {
-                osFileName = CPLResetExtension(osFileName, "gen");
+                osFileName = CPLResetExtensionSafe(osFileName, "gen");
                 if (VSIStatL(osFileName, &sStatBuf) != 0)
                     return nullptr;
             }

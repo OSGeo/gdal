@@ -13,6 +13,7 @@
 ###############################################################################
 
 import contextlib
+import functools
 import io
 import json
 import math
@@ -217,6 +218,14 @@ class GDALTest:
                         or (
                             drv_name.lower() == "biggif"
                             and self.drivername.lower() == "gif"
+                        )
+                        or (
+                            drv_name.lower() == "gtiff"
+                            and self.drivername.lower() == "libertiff"
+                        )
+                        or (
+                            drv_name.lower() == "libertiff"
+                            and self.drivername.lower() == "gtiff"
                         )
                     ):
                         drivers += [drv_name]
@@ -2123,3 +2132,12 @@ def error_raised(type, match=""):
     assert any(
         [err["level"] == type and match in err["message"] for err in errors]
     ), f'Did not receive an error of type {err_levels[type]} matching "{match}"'
+
+
+###############################################################################
+# Check VRT capabilities
+
+
+@functools.lru_cache()
+def gdal_has_vrt_expression_dialect(dialect):
+    return dialect in gdal.GetDriverByName("VRT").GetMetadataItem("ExpressionDialects")
