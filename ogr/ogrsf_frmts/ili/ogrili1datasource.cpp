@@ -24,8 +24,8 @@
 /************************************************************************/
 
 OGRILI1DataSource::OGRILI1DataSource()
-    : poImdReader(new ImdReader(1)), poReader(nullptr), fpTransfer(nullptr),
-      pszTopic(nullptr), nLayers(0), papoLayers(nullptr)
+    : poImdReader(new ImdReader(1)), poReader(nullptr), nLayers(0),
+      papoLayers(nullptr)
 {
 }
 
@@ -42,17 +42,8 @@ OGRILI1DataSource::~OGRILI1DataSource()
     }
     CPLFree(papoLayers);
 
-    CPLFree(pszTopic);
     DestroyILI1Reader(poReader);
     delete poImdReader;
-    if (fpTransfer)
-    {
-        VSIFPrintfL(fpTransfer, "ETAB\n");
-        VSIFPrintfL(fpTransfer, "ETOP\n");
-        VSIFPrintfL(fpTransfer, "EMOD\n");
-        VSIFPrintfL(fpTransfer, "ENDE\n");
-        VSIFCloseL(fpTransfer);
-    }
 }
 
 /************************************************************************/
@@ -158,141 +149,13 @@ int OGRILI1DataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
 }
 
 /************************************************************************/
-/*                               Create()                               */
-/************************************************************************/
-
-int OGRILI1DataSource::Create(const char *pszFilename,
-                              char ** /* papszOptions */)
-{
-    char **filenames = CSLTokenizeString2(pszFilename, ",", 0);
-
-    std::string osBasename = filenames[0];
-
-    std::string osModelFilename;
-    if (CSLCount(filenames) > 1)
-        osModelFilename = filenames[1];
-
-    CSLDestroy(filenames);
-
-    /* -------------------------------------------------------------------- */
-    /*      Create the empty file.                                          */
-    /* -------------------------------------------------------------------- */
-    fpTransfer = VSIFOpenL(osBasename.c_str(), "w+b");
-
-    if (fpTransfer == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_OpenFailed, "Failed to create %s:\n%s",
-                 osBasename.c_str(), VSIStrerror(errno));
-
-        return FALSE;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Parse model                                                     */
-    /* -------------------------------------------------------------------- */
-    if (osModelFilename.length() == 0)
-    {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "Creating Interlis transfer file without model definition.");
-    }
-    else
-    {
-        poImdReader->ReadModel(osModelFilename.c_str());
-    }
-
-    pszTopic = CPLStrdup(poImdReader->mainTopicName.c_str());
-
-    /* -------------------------------------------------------------------- */
-    /*      Write headers                                                   */
-    /* -------------------------------------------------------------------- */
-    VSIFPrintfL(fpTransfer, "SCNT\n");
-    VSIFPrintfL(fpTransfer, "OGR/GDAL %s, INTERLIS Driver\n",
-                GDALVersionInfo("RELEASE_NAME"));
-    VSIFPrintfL(fpTransfer, "////\n");
-    VSIFPrintfL(fpTransfer, "MTID INTERLIS1\n");
-    const char *modelname = poImdReader->mainModelName.c_str();
-    VSIFPrintfL(fpTransfer, "MODL %s\n", modelname);
-
-    return TRUE;
-}
-
-static char *ExtractTopic(const char *pszLayerName)
-{
-    const char *table = strchr(pszLayerName, '_');
-    while (table && table[1] != '_')
-        table = strchr(table + 1, '_');
-    return (table) ? CPLScanString(pszLayerName,
-                                   static_cast<int>(table - pszLayerName),
-                                   FALSE, FALSE)
-                   : nullptr;
-}
-
-/************************************************************************/
-/*                           ICreateLayer()                             */
-/************************************************************************/
-
-OGRLayer *
-OGRILI1DataSource::ICreateLayer(const char *pszLayerName,
-                                const OGRGeomFieldDefn *poGeomFieldDefn,
-                                CSLConstList /*papszOptions*/)
-{
-    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
-
-    FeatureDefnInfo featureDefnInfo =
-        poImdReader->GetFeatureDefnInfo(pszLayerName);
-    const char *table = pszLayerName;
-    char *topic = ExtractTopic(pszLayerName);
-    if (nLayers)
-        VSIFPrintfL(fpTransfer, "ETAB\n");
-    if (topic)
-    {
-        table = pszLayerName + strlen(topic) + 2;  // after "__"
-        if (pszTopic == nullptr || !EQUAL(topic, pszTopic))
-        {
-            if (pszTopic)
-            {
-                VSIFPrintfL(fpTransfer, "ETOP\n");
-                CPLFree(pszTopic);
-            }
-            pszTopic = topic;
-            VSIFPrintfL(fpTransfer, "TOPI %s\n", pszTopic);
-        }
-        else
-        {
-            CPLFree(topic);
-        }
-    }
-    else
-    {
-        if (pszTopic == nullptr)
-            pszTopic = CPLStrdup("Unknown");
-        VSIFPrintfL(fpTransfer, "TOPI %s\n", pszTopic);
-    }
-    VSIFPrintfL(fpTransfer, "TABL %s\n", table);
-
-    OGRFeatureDefn *poFeatureDefn = new OGRFeatureDefn(table);
-    poFeatureDefn->SetGeomType(eType);
-    OGRILI1Layer *poLayer =
-        new OGRILI1Layer(poFeatureDefn, featureDefnInfo.poGeomFieldInfos, this);
-
-    nLayers++;
-    papoLayers = static_cast<OGRILI1Layer **>(
-        CPLRealloc(papoLayers, sizeof(OGRILI1Layer *) * nLayers));
-    papoLayers[nLayers - 1] = poLayer;
-
-    return poLayer;
-}
-
-/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRILI1DataSource::TestCapability(const char *pszCap)
 
 {
-    if (EQUAL(pszCap, ODsCCreateLayer))
-        return TRUE;
-    else if (EQUAL(pszCap, ODsCCurveGeometries))
+    if (EQUAL(pszCap, ODsCCurveGeometries))
         return TRUE;
     else if (EQUAL(pszCap, ODsCZGeometries))
         return TRUE;
