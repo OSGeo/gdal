@@ -613,30 +613,28 @@ void OGRGeoconceptLayer::SetSpatialRef(OGRSpatialReference *poSpatialRef)
 
 {
     OGRSpatialReference *poSRS = GetSpatialRef();
-    /*-----------------------------------------------------------------
-     * Keep a copy of the OGRSpatialReference...
-     * Note: we have to take the reference count into account...
-     *----------------------------------------------------------------*/
-    if (poSRS && poSRS->Dereference() == 0)
-        delete poSRS;
 
-    if (!poSpatialRef)
+    GCExportFileH *hGXT = GetSubTypeGCHandle_GCIO(_gcFeature);
+    if (hGXT)
+    {
+        GCExportFileMetadata *Meta = GetGCMeta_GCIO(hGXT);
+        if (Meta)
+        {
+            if (poSRS)
+                poSRS->Release();
+            SetMetaSRS_GCIO(Meta, nullptr);
+        }
+        else
+            return;
+    }
+    else
+    {
         return;
+    }
 
     poSRS = poSpatialRef->Clone();
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    GCExportFileH *hGXT = GetSubTypeGCHandle_GCIO(_gcFeature);
-    if (!hGXT)
-    {
-        delete poSRS;
-        return;
-    }
     GCExportFileMetadata *Meta = GetGCMeta_GCIO(hGXT);
-    if (!Meta)
-    {
-        delete poSRS;
-        return;
-    }
     GCSysCoord *os = GetMetaSysCoord_GCIO(Meta);
     GCSysCoord *ns = OGRSpatialReference2SysCoord_GCSRS(
         reinterpret_cast<OGRSpatialReferenceH>(poSRS));
@@ -648,7 +646,7 @@ void OGRGeoconceptLayer::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Can't change SRS on Geoconcept layers.\n");
         DestroySysCoord_GCSRS(&ns);
-        delete poSRS;
+        poSRS->Release();
         return;
     }
 
