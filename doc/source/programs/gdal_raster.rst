@@ -19,13 +19,16 @@ Synopsis
 
     Usage: gdal raster <SUBCOMMAND>
     where <SUBCOMMAND> is one of:
-      - clip: Clip a raster dataset.
-      - convert: Convert a raster dataset.
-      - info:    Return information on a raster dataset.
-      - mosaic:  Build a mosaic, either virtual (VRT) or materialized.
+      - clip:      Clip a raster dataset.
+      - convert:   Convert a raster dataset.
+      - edit:      Edit a raster dataset.
+      - info:      Return information on a raster dataset.
+      - mosaic:    Build a mosaic, either virtual (VRT) or materialized.
       - overview:  Manage overviews of a raster dataset.
       - pipeline:  Process a raster dataset.
       - reproject: Reproject a raster dataset.
+      - stack:     Combine together input bands into a multi-band output, either virtual (VRT) or materialized.
+
 
 Available sub-commands
 ----------------------
@@ -37,6 +40,7 @@ Available sub-commands
 - :ref:`gdal_raster_overview_subcommand`
 - :ref:`gdal_raster_pipeline_subcommand`
 - :ref:`gdal_raster_reproject_subcommand`
+- :ref:`gdal_raster_stack_subcommand`
 
 Examples
 --------

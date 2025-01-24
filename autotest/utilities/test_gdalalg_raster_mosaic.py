@@ -86,32 +86,6 @@ def test_gdalalg_raster_mosaic_overwrite(tmp_vsimem):
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
-def test_gdalalg_raster_mosaic_separate(tmp_vsimem):
-
-    tmp_filename = str(tmp_vsimem / "tmp.tif")
-    gdal.Translate(tmp_filename, "../gcore/data/byte.tif", options="-scale 0 255 255 0")
-
-    alg = get_mosaic_alg()
-    assert alg.ParseCommandLineArguments(
-        [
-            "--separate",
-            "../gcore/data/byte.tif",
-            tmp_filename,
-            "",
-        ]
-    )
-    assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
-    assert ds.RasterCount == 2
-    assert ds.RasterXSize == 20
-    assert ds.RasterYSize == 20
-    assert ds.GetGeoTransform() == pytest.approx(
-        (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
-    )
-    assert ds.GetRasterBand(1).Checksum() == 4672
-    assert ds.GetRasterBand(2).Checksum() == 4563
-
-
 def test_gdalalg_raster_mosaic_bbox():
 
     alg = get_mosaic_alg()

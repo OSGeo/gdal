@@ -1,25 +1,26 @@
-.. _gdal_raster_mosaic_subcommand:
+.. _gdal_raster_stack_subcommand:
 
 ================================================================================
-"gdal raster mosaic" sub-command
+"gdal raster stack" sub-command
 ================================================================================
 
 .. versionadded:: 3.11
 
 .. only:: html
 
-    Build a mosaic, either virtual (VRT) or materialized
+    Combine together input bands into a multi-band output, either virtual (VRT) or materialized.
 
-.. Index:: gdal raster mosaic
+
+.. Index:: gdal raster stack
 
 Synopsis
 --------
 
 .. code-block::
 
-    Usage: gdal raster mosaic [OPTIONS] <INPUTS> <OUTPUT>
+    Usage: gdal raster stack [OPTIONS] <INPUTS> <OUTPUT>
 
-    Build a mosaic, either virtual (VRT) or materialized
+    Combine together input bands into a multi-band output, either virtual (VRT) or materialized.
 
     Positional arguments:
       -i, --input <INPUTS>                                 Input raster datasets (or specify a @<filename> to point to a file containing filenames) [1.. values]
@@ -44,33 +45,23 @@ Synopsis
       --srcnodata <SRCNODATA>                              Set nodata values for input bands. [1.. values]
       --dstnodata <VRTNODATA>                              Set nodata values at the destination band level. [1.. values]
       --hidenodata                                         Makes the destination band not report the NoData.
-      --addalpha                                           Adds an alpha mask band to the destination when the source raster have none.
 
 
 
 Description
 -----------
 
-This program builds a mosaic of a list of input GDAL datasets, that can be
-either a virtual mosaic in the :ref:`VRT (Virtual Dataset) <raster.vrt>` format,
+This program combine together input bands from GDAL datasets into a dataset, that can be
+either a virtual stack in the :ref:`VRT (Virtual Dataset) <raster.vrt>` format,
 or in a more conventional raster format such as GeoTIFF.
+
+All bands of each input file are added as separate
+output bands, unless :option:`-b` is specified to select a subset of them.
 
 The list of input GDAL datasets can be specified at the end
 of the command line or put in a text file (one filename per line) for very long lists.
 Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used, even on files located
 on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
-
-:program:`gdal raster mosaic` does some checks to ensure that all files that will be put
-in the resulting file have similar characteristics: number of bands, projection, color
-interpretation, etc. If not, files that do not match the common characteristics will be skipped.
-
-If the inputs spatially overlap, the order of the input list is used to determine priority.
-Files that are listed at the end are the ones
-from which the content will be fetched. Note that nodata will be taken into account
-to potentially fetch data from lower-priority datasets, but currently, alpha channel
-is not taken into account to do alpha compositing (so a source with alpha=0
-appearing on top of another source will override its content). This might be
-changed in later versions.
 
 The following options are available:
 
@@ -126,17 +117,10 @@ The following options are available:
 
     Set nodata values at the output band level (different values can be supplied for each band).  If more
     than one value is supplied, all values should be quoted to keep them together
-    as a single operating system argument (:example:`dstnodata`). If the option is not specified,
+    as a single operating system argument. If the option is not specified,
     intrinsic nodata settings on the first dataset will be used (if they exist). The value set by this option
     is written in the ``NoDataValue`` element of each ``VRTRasterBand element``. Use a value of
     `None` to ignore intrinsic nodata settings on the source datasets.
-
-.. option:: --addalpha
-
-    Adds an alpha mask band to the output when the source raster have none. Mainly useful for RGB sources (or grey-level sources).
-    The alpha band is filled on-the-fly with the value 0 in areas without any source raster, and with value
-    255 in areas with source raster. The effect is that a RGBA viewer will render
-    the areas without source rasters as transparent and areas with source rasters as opaque.
 
 .. option:: --hidenodata
 
@@ -151,16 +135,9 @@ Examples
 --------
 
 .. example::
-   :title: Make a virtual mosaic with blue background colour (RGB: 0 0 255)
-   :id: dstnodata
+   :title: Make a RGB virtual stack from 3 single-band input files
+   :id: separate
 
    .. code-block:: bash
 
-       gdal raster mosaic --hidenodata --dstnodata=0,0,255 doq/*.tif doq_index.vrt
-
-
-.. below is an allow-list for spelling checker.
-
-.. spelling:word-list::
-    mosaic
-
+       gdal raster stack --separate red.tif green.tif blue.tif rgb.tif
