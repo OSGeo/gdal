@@ -1,69 +1,72 @@
-.. _gdal_raster_buildvrt_subcommand:
+.. _gdal_raster_mosaic_subcommand:
 
 ================================================================================
-"gdal raster buildvrt" sub-command
+"gdal raster mosaic" sub-command
 ================================================================================
 
 .. versionadded:: 3.11
 
 .. only:: html
 
-    Build a virtual dataset (VRT).
+    Build a mosaic, either virtual (VRT) or materialized
 
-.. Index:: gdal raster buildvrt
+.. Index:: gdal raster mosaic
 
 Synopsis
 --------
 
 .. code-block::
 
-    Usage: gdal raster buildvrt [OPTIONS] <INPUTS> <OUTPUT>
+    Usage: gdal raster mosaic [OPTIONS] <INPUTS> <OUTPUT>
 
-    Build a virtual dataset (VRT).
+    Build a mosaic, either virtual (VRT) or materialized
 
     Positional arguments:
-      -i, --input <INPUTS>                                Input raster datasets (or specify a @<filename> to point to a file containing filenames) [1.. values]
-      -o, --output <OUTPUT>                               Output raster dataset (created by algorithm) [required]
+      -i, --input <INPUTS>                                 Input raster datasets (or specify a @<filename> to point to a file containing filenames) [1.. values]
+      -o, --output <OUTPUT>                                Output raster dataset (created by algorithm) [required]
 
     Common Options:
-      -h, --help                                          Display help message and exit
-      --version                                           Display GDAL version and exit
-      --json-usage                                        Display usage as JSON document and exit
-      --drivers                                           Display driver list as JSON document and exit
-      --progress                                          Display progress bar
+      -h, --help                                           Display help message and exit
+      --version                                            Display GDAL version and exit
+      --json-usage                                         Display usage as JSON document and exit
+      --drivers                                            Display driver list as JSON document and exit
+      --config <KEY>=<VALUE>                               Configuration option [may be repeated]
+      --progress                                           Display progress bar
 
     Options:
-      --co, --creation-option <KEY>=<VALUE>               Creation option [may be repeated]
-      -b, --band <BAND>                                   Specify input band(s) number. [may be repeated]
-      --separate                                          Place each input file into a separate band.
-      --overwrite                                         Whether overwriting existing output is allowed
-      --resolution <xres>,<yres>|average|highest|lowest>  Target resolution (in destination CRS units)
-      --bbox <xmin,ymin,xmax,ymax>                        Target bounding box (in destination CRS units)
-      --target-aligned-pixels                             Round target extent to target resolution
-      --srcnodata <SRCNODATA>                             Set nodata values for input bands. [1.. values]
-      --vrtnodata <VRTNODATA>                             Set nodata values at the VRT band level. [1.. values]
-      --hidenodata                                        Makes the VRT band not report the NoData.
-      --addalpha                                          Adds an alpha mask band to the VRT when the source raster have none.
+      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format
+      --co, --creation-option <KEY>=<VALUE>                Creation option [may be repeated]
+      -b, --band <BAND>                                    Specify input band(s) number. [may be repeated]
+      --separate                                           Place each input file into a separate band.
+      --overwrite                                          Whether overwriting existing output is allowed
+      --resolution <xres>,<yres>|average|highest|lowest>   Target resolution (in destination CRS units)
+      --bbox <BBOX>                                        Target bounding box as xmin,ymin,xmax,ymax (in destination CRS units)
+      --target-aligned-pixels                              Round target extent to target resolution
+      --srcnodata <SRCNODATA>                              Set nodata values for input bands. [1.. values]
+      --dstnodata <VRTNODATA>                              Set nodata values at the destination band level. [1.. values]
+      --hidenodata                                         Makes the destination band not report the NoData.
+      --addalpha                                           Adds an alpha mask band to the destination when the source raster have none.
+
 
 
 Description
 -----------
 
-This program builds a :ref:`VRT (Virtual Dataset) <raster.vrt>` that is a mosaic of a list of
-input GDAL datasets. The list of input GDAL datasets can be specified at the end
+This program builds a mosaic of a list of input GDAL datasets, that can be
+either a virtual mosaic in the :ref:`VRT (Virtual Dataset) <raster.vrt>` format,
+or in a more conventional raster format such as GeoTIFF.
+
+The list of input GDAL datasets can be specified at the end
 of the command line or put in a text file (one filename per line) for very long lists.
 Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used, even on files located
 on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
 
-With :option:`--separate`, each input goes into a separate band in the VRT dataset. Otherwise,
-the files are considered as source rasters of a larger mosaic and the VRT file has the same number of
+With :option:`--separate`, each input goes into a separate band in the output dataset. Otherwise,
+the files are considered as source rasters of a larger mosaic and the output file has the same number of
 bands as the input files.
 
-If one GDAL dataset is made of several subdatasets and has 0 raster bands,
-all the subdatasets will be added to the VRT rather than the dataset itself.
-
-:program:`gdal raster buildvrt` does some checks to ensure that all files that will be put
-in the resulting VRT have similar characteristics: number of bands, projection, color
+:program:`gdal raster mosaic` does some checks to ensure that all files that will be put
+in the resulting file have similar characteristics: number of bands, projection, color
 interpretation, etc. If not, files that do not match the common characteristics will be skipped.
 (This is only true in the default mode, and not when using the :option:`--separate` option)
 
@@ -77,10 +80,16 @@ changed in later versions.
 
 The following options are available:
 
+.. include:: gdal_options/of_raster_create_copy.rst
+
+.. include:: gdal_options/co.rst
+
+.. include:: gdal_options/overwrite.rst
+
 .. option:: -b <band>
 
     Select an input <band> to be processed. Bands are numbered from 1.
-    If input bands not set all bands will be added to the VRT.
+    If input bands not set all bands will be added to the output.
     Multiple :option:`-b` switches may be used to select a set of input bands.
 
 .. option:: --separate
@@ -90,7 +99,7 @@ The following options are available:
     required that all bands have the same datatype.
 
     All bands of each input file are added as separate
-    VRT bands, unless :option:`-b` is specified to select a subset of them.
+    output bands, unless :option:`-b` is specified to select a subset of them.
 
 .. option:: --resolution {<xres,yres>|highest|lowest|average}
 
@@ -108,10 +117,10 @@ The following options are available:
 
 .. option:: --bbox <xmin>,<ymin>,<xmax>,<ymax>
 
-    Set georeferenced extents of VRT file. The values must be expressed in georeferenced units.
-    If not specified, the extent of the VRT is the minimum bounding box of the set of source rasters.
-    Pixels within the extent of the VRT but not covered by a source raster will be read as valid
-    pixels with a value of zero unless a NODATA value is specified using :option:`--vrtnodata`
+    Set georeferenced extents of output file. The values must be expressed in georeferenced units.
+    If not specified, the extent of the output is the minimum bounding box of the set of source rasters.
+    Pixels within the extent of the output but not covered by a source raster will be read as valid
+    pixels with a value of zero unless a NODATA value is specified using :option:`--dstnodata`
     or an alpha mask band is added with :option:`--addalpha`.
 
 .. option:: --target-aligned-pixels
@@ -128,18 +137,18 @@ The following options are available:
     will be used (if they exist). The value set by this option is written in the NODATA element
     of each ``ComplexSource`` element.
 
-.. option:: --vrtnodata <value>[,<value>]...
+.. option:: --dstnodata <value>[,<value>]...
 
-    Set nodata values at the VRT band level (different values can be supplied for each band).  If more
+    Set nodata values at the output band level (different values can be supplied for each band).  If more
     than one value is supplied, all values should be quoted to keep them together
-    as a single operating system argument (:example:`vrtnodata`). If the option is not specified,
+    as a single operating system argument (:example:`dstnodata`). If the option is not specified,
     intrinsic nodata settings on the first dataset will be used (if they exist). The value set by this option
     is written in the ``NoDataValue`` element of each ``VRTRasterBand element``. Use a value of
     `None` to ignore intrinsic nodata settings on the source datasets.
 
 .. option:: --addalpha
 
-    Adds an alpha mask band to the VRT when the source raster have none. Mainly useful for RGB sources (or grey-level sources).
+    Adds an alpha mask band to the output when the source raster have none. Mainly useful for RGB sources (or grey-level sources).
     The alpha band is filled on-the-fly with the value 0 in areas without any source raster, and with value
     255 in areas with source raster. The effect is that a RGBA viewer will render
     the areas without source rasters as transparent and areas with source rasters as opaque.
@@ -147,7 +156,7 @@ The following options are available:
 
 .. option:: --hidenodata
 
-    Even if any band contains nodata value, giving this option makes the VRT band
+    Even if any band contains nodata value, giving this option makes the output band
     not report the NoData. Useful when you want to control the background color of
     the dataset. By using along with the -addalpha option, you can prepare a
     dataset which doesn't report nodata value but is transparent in areas with no
@@ -163,19 +172,19 @@ Examples
 
    .. code-block:: bash
 
-       gdal raster biuldvrt --separate red.tif green.tif blue.tif rgb.vrt
+       gdal raster mosaic --separate red.tif green.tif blue.tif rgb.tif
 
 .. example::
    :title: Make a virtual mosaic with blue background colour (RGB: 0 0 255)
-   :id: vrtnodata
+   :id: dstnodata
 
    .. code-block:: bash
 
-       gdal raster buildvrt --hidenodata --vrtnodata=0,0,255 doq/*.tif doq_index.vrt
+       gdal raster mosaic --hidenodata --dstnodata=0,0,255 doq/*.tif doq_index.vrt
 
 
 .. below is an allow-list for spelling checker.
 
 .. spelling:word-list::
-    buildvrt
+    mosaic
 
