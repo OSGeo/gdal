@@ -1561,6 +1561,19 @@ inline void AvoidNoData(const GDALWarpKernel *poWK, int iBand,
                     pDst[iDstOffset], std::numeric_limits<T>::max());
             }
         }
+
+        if (!poWK->bWarnedAboutDstNoDataReplacement)
+        {
+            const_cast<GDALWarpKernel *>(poWK)
+                ->bWarnedAboutDstNoDataReplacement = true;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Value %g in the source dataset has been changed to %g "
+                     "in the destination dataset to avoid being treated as "
+                     "NoData. To avoid this, select a different NoData value "
+                     "for the destination dataset.",
+                     poWK->padfDstNoDataReal[iBand],
+                     static_cast<double>(pDst[iDstOffset]));
+        }
     }
 }
 
