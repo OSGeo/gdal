@@ -584,6 +584,14 @@ typedef enum
 /** Capability set by a driver that can copy over subdatasets. */
 #define GDAL_DCAP_SUBCREATECOPY "DCAP_SUBCREATECOPY"
 
+/** Capability set by a driver that supports the GDAL_OF_UPDATE flag and offers
+ * at least some update capabilities.
+ * Exact update capabilities can be determined by the GDAL_DMD_UPDATE_ITEMS
+ * metadata item
+ * @since GDAL 3.11
+ */
+#define GDAL_DCAP_UPDATE "DCAP_UPDATE"
+
 /** Capability set by a driver that can read/create datasets through the VSI*L
  * API. */
 #define GDAL_DCAP_VIRTUALIO "DCAP_VIRTUALIO"
@@ -898,6 +906,25 @@ typedef enum
 /*! @cond Doxygen_Suppress */
 #define GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE "DMD_PLUGIN_INSTALLATION_MESSAGE"
 /*! @endcond */
+
+/** List of (space separated) items that a dataset opened in update mode supports
+ * updating. Possible values are:
+ * - for raster: "GeoTransform" (through GDALDataset::SetGeoTransform),
+ *   "SRS" (GDALDataset::SetSpatialRef), "GCPs" (GDALDataset::SetGCPs()),
+ *    "NoData" (GDALRasterBand::SetNoDataValue),
+ *   "ColorInterpretation" (GDALRasterBand::SetColorInterpretation()),
+ *   "RasterValues" (GF_Write flag of GDALDataset::RasterIO() and GDALRasterBand::RasterIO()),
+ *   "DatasetMetadata" (GDALDataset::SetMetadata/SetMetadataItem), "BandMetadata"
+ *   (GDALRasterBand::SetMetadata/SetMetadataItem)
+ * - for vector: "Features" (OGRLayer::SetFeature()), "DatasetMetadata",
+ *   "LayerMetadata"
+ *
+ * No distinction is made if the update is done in the native format,
+ * or in a Persistent Auxiliary Metadata .aux.xml side car file.
+ *
+ * @since GDAL 3.11
+ */
+#define GDAL_DMD_UPDATE_ITEMS "DMD_UPDATE_ITEMS"
 
 /** Value for GDALDimension::GetType() specifying the X axis of a horizontal
  * CRS.
