@@ -281,6 +281,9 @@ void OGROpenFileGDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "fields' default='NO'/>"
         "</LayerCreationOptionList>");
 
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "Features");
+
     // Setting to another value than the default one doesn't really work
     // with the SDK
     // Option name='AREA_FIELD_NAME' type='string' description='Name of

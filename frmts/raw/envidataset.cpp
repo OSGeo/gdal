@@ -2941,6 +2941,11 @@ void GDALRegister_ENVI()
         "   </Option>"
         "</CreationOptionList>");
 
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS GCPs NoData "
+                              "RasterValues DatasetMetadata");
+
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->pfnOpen = ENVIDataset::Open;
     poDriver->pfnCreate = ENVIDataset::Create;
