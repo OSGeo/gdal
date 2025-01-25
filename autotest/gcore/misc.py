@@ -19,7 +19,7 @@ import shutil
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 
 ###############################################################################
@@ -118,6 +118,10 @@ def get_filename(drv, dirname):
         filename += ".kmz"
     elif drv.ShortName == "RRASTER":
         filename += ".grd"
+    elif drv.ShortName == "KEA":
+        filename += ".kea"
+    elif drv.ShortName == "GPKG":
+        filename += ".gpkg"
 
     return filename
 
@@ -314,6 +318,66 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                 dst_ds.GetMetadataItem("", None)
             dst_ds = None
 
+            if (
+                has_succeeded
+                and nBands > 0
+                and "DCAP_UPDATE" in md
+                and drv.ShortName
+                not in (
+                    "VRT",
+                    "GPKG",
+                )
+            ):
+                update_ds = gdal.Open(filename, gdal.GA_Update)
+                assert update_ds, (drv.ShortName, filename)
+
+                flags_str = drv.GetMetadataItem(gdal.DMD_UPDATE_ITEMS)
+                if update_ds.RasterCount and "RasterValues" in flags_str:
+                    assert (
+                        update_ds.GetRasterBand(1).WriteRaster(
+                            0, 0, 1, 1, b"\x00", buf_type=gdal.GDT_Byte
+                        )
+                        == gdal.CE_None
+                    ), (drv.ShortName, filename)
+
+                if "GeoTransform" in flags_str and drv.ShortName not in ("netCDF",):
+                    assert (
+                        update_ds.SetGeoTransform([0, 1, 0, 0, 0, -1]) == gdal.CE_None
+                    ), (
+                        drv.ShortName,
+                        filename,
+                    )
+
+                if "SRS" in flags_str and drv.ShortName not in ("netCDF",):
+                    srs = osr.SpatialReference()
+                    srs.SetFromUserInput("WGS84")
+                    assert update_ds.SetSpatialRef(srs) == gdal.CE_None, (
+                        drv.ShortName,
+                        filename,
+                    )
+
+                if update_ds.RasterCount and "NoData" in flags_str:
+                    assert (
+                        update_ds.GetRasterBand(1).SetNoDataValue(0) == gdal.CE_None
+                    ), (
+                        drv.ShortName,
+                        filename,
+                    )
+
+                if "DatasetMetadata" in flags_str:
+                    assert update_ds.SetMetadata({"FOO": "BAR"}) == gdal.CE_None, (
+                        drv.ShortName,
+                        filename,
+                    )
+
+                if update_ds.RasterCount and "BandMetadata" in flags_str:
+                    assert (
+                        update_ds.GetRasterBand(1).SetMetadata({"FOO": "BAR"})
+                        == gdal.CE_None
+                    ), (drv.ShortName, filename)
+
+                update_ds.Close()
+
             size = 0
             stat = gdal.VSIStatL(filename)
             if stat is not None:
@@ -400,6 +464,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                     "USGSDEM",
                     "KMLSUPEROVERLAY",
                     "GMT",
+                    "NULL",
                 ]:
                     dst_ds = drv.CreateCopy(
                         filename, ds, callback=misc_6_interrupt_callback_class().cbk
@@ -440,6 +505,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                             )
                         )
                         pytest.fail(reason)
+
     ds = None
 
 
