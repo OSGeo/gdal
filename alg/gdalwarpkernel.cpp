@@ -190,6 +190,7 @@ static CPLErr GWKBilinearNoMasksOrDstDensityOnlyDouble(GDALWarpKernel *poWK);
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyShort(GDALWarpKernel *poWK);
 static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyShort(GDALWarpKernel *poWK);
 static CPLErr GWKNearestShort(GDALWarpKernel *poWK);
+static CPLErr GWKNearestUnsignedShort(GDALWarpKernel *poWK);
 static CPLErr GWKNearestNoMasksOrDstDensityOnlyFloat(GDALWarpKernel *poWK);
 static CPLErr GWKNearestFloat(GDALWarpKernel *poWK);
 static CPLErr GWKAverageOrMode(GDALWarpKernel *);
@@ -1307,9 +1308,11 @@ CPLErr GDALWarpKernel::PerformWarp()
         bNoMasksOrDstDensityOnly)
         return GWKBilinearNoMasksOrDstDensityOnlyUShort(this);
 
-    if ((eWorkingDataType == GDT_Int16 || eWorkingDataType == GDT_UInt16) &&
-        eResample == GRA_NearestNeighbour)
+    if (eWorkingDataType == GDT_Int16 && eResample == GRA_NearestNeighbour)
         return GWKNearestShort(this);
+
+    if (eWorkingDataType == GDT_Int16 && eResample == GRA_NearestNeighbour)
+        return GWKNearestUnsignedShort(this);
 
     if (eWorkingDataType == GDT_Float32 && eResample == GRA_NearestNeighbour &&
         bNoMasksOrDstDensityOnly)
@@ -1521,6 +1524,60 @@ template <> double GWKClampValueT<double>(double dfValue)
 #endif
 
 /************************************************************************/
+/*                             AvoidNoData()                            */
+/************************************************************************/
+
+template <class T>
+inline void AvoidNoData(const GDALWarpKernel *poWK, int iBand,
+                        GPtrDiff_t iDstOffset)
+{
+    GByte *pabyDst = poWK->papabyDstImage[iBand];
+    T *pDst = reinterpret_cast<T *>(pabyDst);
+
+    if (poWK->padfDstNoDataReal != nullptr &&
+        poWK->padfDstNoDataReal[iBand] == static_cast<double>(pDst[iDstOffset]))
+    {
+        if constexpr (std::numeric_limits<T>::is_integer)
+        {
+            if (pDst[iDstOffset] ==
+                static_cast<T>(std::numeric_limits<T>::lowest()))
+            {
+                pDst[iDstOffset] =
+                    static_cast<T>(std::numeric_limits<T>::lowest() + 1);
+            }
+            else
+                pDst[iDstOffset]--;
+        }
+        else
+        {
+            if (pDst[iDstOffset] == std::numeric_limits<T>::max())
+            {
+                pDst[iDstOffset] =
+                    std::nextafter(pDst[iDstOffset], static_cast<T>(0));
+            }
+            else
+            {
+                pDst[iDstOffset] = std::nextafter(
+                    pDst[iDstOffset], std::numeric_limits<T>::max());
+            }
+        }
+
+        if (!poWK->bWarnedAboutDstNoDataReplacement)
+        {
+            const_cast<GDALWarpKernel *>(poWK)
+                ->bWarnedAboutDstNoDataReplacement = true;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Value %g in the source dataset has been changed to %g "
+                     "in the destination dataset to avoid being treated as "
+                     "NoData. To avoid this, select a different NoData value "
+                     "for the destination dataset.",
+                     poWK->padfDstNoDataReal[iBand],
+                     static_cast<double>(pDst[iDstOffset]));
+        }
+    }
+}
+
+/************************************************************************/
 /*                         GWKSetPixelValueRealT()                      */
 /************************************************************************/
 
@@ -1580,16 +1637,39 @@ static bool GWKSetPixelValueRealT(const GDALWarpKernel *poWK, int iBand,
         pDst[iDstOffset] = value;
     }
 
-    if (poWK->padfDstNoDataReal != nullptr &&
-        poWK->padfDstNoDataReal[iBand] == static_cast<double>(pDst[iDstOffset]))
-    {
-        if (pDst[iDstOffset] == std::numeric_limits<T>::min())
-            pDst[iDstOffset] = std::numeric_limits<T>::min() + 1;
-        else
-            pDst[iDstOffset]--;
-    }
+    AvoidNoData<T>(poWK, iBand, iDstOffset);
 
     return true;
+}
+
+/************************************************************************/
+/*                       ClampRoundAndAvoidNoData()                     */
+/************************************************************************/
+
+template <class T>
+inline void ClampRoundAndAvoidNoData(const GDALWarpKernel *poWK, int iBand,
+                                     GPtrDiff_t iDstOffset, double dfReal)
+{
+    GByte *pabyDst = poWK->papabyDstImage[iBand];
+    T *pDst = reinterpret_cast<T *>(pabyDst);
+
+    if constexpr (std::numeric_limits<T>::is_integer)
+    {
+        if (dfReal < static_cast<double>(std::numeric_limits<T>::lowest()))
+            pDst[iDstOffset] = static_cast<T>(std::numeric_limits<T>::lowest());
+        else if (dfReal > static_cast<double>(std::numeric_limits<T>::max()))
+            pDst[iDstOffset] = static_cast<T>(std::numeric_limits<T>::max());
+        else
+            pDst[iDstOffset] = (std::numeric_limits<T>::is_signed)
+                                   ? static_cast<T>(floor(dfReal + 0.5))
+                                   : static_cast<T>(dfReal + 0.5);
+    }
+    else
+    {
+        pDst[iDstOffset] = static_cast<T>(dfReal);
+    }
+
+    AvoidNoData<T>(poWK, iBand, iDstOffset);
 }
 
 /************************************************************************/
@@ -1724,83 +1804,55 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
                  (dfDensity + dfDstInfluence);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Actually apply the destination value.                           */
-/*                                                                      */
-/*      Avoid using the destination nodata value for integer datatypes  */
-/*      if by chance it is equal to the computed pixel value.           */
-/* -------------------------------------------------------------------- */
-
-// TODO(schwehr): Can we make this a template?
-#define CLAMP(type)                                                            \
-    do                                                                         \
-    {                                                                          \
-        type *_pDst = reinterpret_cast<type *>(pabyDst);                       \
-        if (dfReal < static_cast<double>(std::numeric_limits<type>::min()))    \
-            _pDst[iDstOffset] =                                                \
-                static_cast<type>(std::numeric_limits<type>::min());           \
-        else if (dfReal >                                                      \
-                 static_cast<double>(std::numeric_limits<type>::max()))        \
-            _pDst[iDstOffset] =                                                \
-                static_cast<type>(std::numeric_limits<type>::max());           \
-        else                                                                   \
-            _pDst[iDstOffset] = (std::numeric_limits<type>::is_signed)         \
-                                    ? static_cast<type>(floor(dfReal + 0.5))   \
-                                    : static_cast<type>(dfReal + 0.5);         \
-        if (poWK->padfDstNoDataReal != nullptr &&                              \
-            poWK->padfDstNoDataReal[iBand] ==                                  \
-                static_cast<double>(_pDst[iDstOffset]))                        \
-        {                                                                      \
-            if (_pDst[iDstOffset] ==                                           \
-                static_cast<type>(std::numeric_limits<type>::min()))           \
-                _pDst[iDstOffset] =                                            \
-                    static_cast<type>(std::numeric_limits<type>::min() + 1);   \
-            else                                                               \
-                _pDst[iDstOffset]--;                                           \
-        }                                                                      \
-    } while (false)
+    /* -------------------------------------------------------------------- */
+    /*      Actually apply the destination value.                           */
+    /*                                                                      */
+    /*      Avoid using the destination nodata value for integer datatypes  */
+    /*      if by chance it is equal to the computed pixel value.           */
+    /* -------------------------------------------------------------------- */
 
     switch (poWK->eWorkingDataType)
     {
         case GDT_Byte:
-            CLAMP(GByte);
+            ClampRoundAndAvoidNoData<GByte>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Int8:
-            CLAMP(GInt8);
+            ClampRoundAndAvoidNoData<GInt8>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Int16:
-            CLAMP(GInt16);
+            ClampRoundAndAvoidNoData<GInt16>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_UInt16:
-            CLAMP(GUInt16);
+            ClampRoundAndAvoidNoData<GUInt16>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_UInt32:
-            CLAMP(GUInt32);
+            ClampRoundAndAvoidNoData<GUInt32>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Int32:
-            CLAMP(GInt32);
+            ClampRoundAndAvoidNoData<GInt32>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_UInt64:
-            CLAMP(std::uint64_t);
+            ClampRoundAndAvoidNoData<std::uint64_t>(poWK, iBand, iDstOffset,
+                                                    dfReal);
             break;
 
         case GDT_Int64:
-            CLAMP(std::int64_t);
+            ClampRoundAndAvoidNoData<std::int64_t>(poWK, iBand, iDstOffset,
+                                                   dfReal);
             break;
 
         case GDT_Float32:
-            reinterpret_cast<float *>(pabyDst)[iDstOffset] =
-                static_cast<float>(dfReal);
+            ClampRoundAndAvoidNoData<float>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Float64:
-            reinterpret_cast<double *>(pabyDst)[iDstOffset] = dfReal;
+            ClampRoundAndAvoidNoData<double>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_CInt16:
@@ -1983,44 +2035,45 @@ static bool GWKSetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
     switch (poWK->eWorkingDataType)
     {
         case GDT_Byte:
-            CLAMP(GByte);
+            ClampRoundAndAvoidNoData<GByte>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Int8:
-            CLAMP(GInt8);
+            ClampRoundAndAvoidNoData<GInt8>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Int16:
-            CLAMP(GInt16);
+            ClampRoundAndAvoidNoData<GInt16>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_UInt16:
-            CLAMP(GUInt16);
+            ClampRoundAndAvoidNoData<GUInt16>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_UInt32:
-            CLAMP(GUInt32);
+            ClampRoundAndAvoidNoData<GUInt32>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Int32:
-            CLAMP(GInt32);
+            ClampRoundAndAvoidNoData<GInt32>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_UInt64:
-            CLAMP(std::uint64_t);
+            ClampRoundAndAvoidNoData<std::uint64_t>(poWK, iBand, iDstOffset,
+                                                    dfReal);
             break;
 
         case GDT_Int64:
-            CLAMP(std::int64_t);
+            ClampRoundAndAvoidNoData<std::int64_t>(poWK, iBand, iDstOffset,
+                                                   dfReal);
             break;
 
         case GDT_Float32:
-            reinterpret_cast<float *>(pabyDst)[iDstOffset] =
-                static_cast<float>(dfReal);
+            ClampRoundAndAvoidNoData<float>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Float64:
-            reinterpret_cast<double *>(pabyDst)[iDstOffset] = dfReal;
+            ClampRoundAndAvoidNoData<double>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_CInt16:
@@ -6678,24 +6731,8 @@ template <class T> static void GWKNearestThread(void *pData)
                             padfZ[iDstX] * dfMultFactorVerticalShiftPipeline);
                     }
 
-                    if (dfBandDensity < 1.0)
-                    {
-                        if (dfBandDensity == 0.0)
-                        {
-                            // Do nothing.
-                        }
-                        else
-                        {
-                            // Let the general code take care of mixing.
-                            GWKSetPixelValueRealT(poWK, iBand, iDstOffset,
-                                                  dfBandDensity, value);
-                        }
-                    }
-                    else
-                    {
-                        reinterpret_cast<T *>(
-                            poWK->papabyDstImage[iBand])[iDstOffset] = value;
-                    }
+                    GWKSetPixelValueRealT(poWK, iBand, iDstOffset,
+                                          dfBandDensity, value);
                 }
             }
 
@@ -6808,6 +6845,11 @@ static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyUShort(GDALWarpKernel *poWK)
 static CPLErr GWKNearestShort(GDALWarpKernel *poWK)
 {
     return GWKRun(poWK, "GWKNearestShort", GWKNearestThread<GInt16>);
+}
+
+static CPLErr GWKNearestUnsignedShort(GDALWarpKernel *poWK)
+{
+    return GWKRun(poWK, "GWKNearestUnsignedShort", GWKNearestThread<GUInt16>);
 }
 
 static CPLErr GWKNearestNoMasksOrDstDensityOnlyFloat(GDALWarpKernel *poWK)

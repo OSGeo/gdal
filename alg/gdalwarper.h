@@ -463,6 +463,8 @@ class CPL_DLL GDALWarpKernel
 
     GWKTieStrategy eTieStrategy;
 
+    bool bWarnedAboutDstNoDataReplacement = false;
+
     /*! @endcond */
 
     GDALWarpKernel();
