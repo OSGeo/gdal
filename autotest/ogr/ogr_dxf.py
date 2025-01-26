@@ -1336,7 +1336,6 @@ def test_ogr_dxf_read_wipeout():
     ds = ogr.Open("data/dxf/wipeout.dxf")
     lyr = ds.GetLayer(0)
 
-
     feat = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(
         feat,
