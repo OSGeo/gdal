@@ -160,9 +160,8 @@ The following entity types are supported:
    label. Block content for MULTILEADERS is treated as for INSERT.
    Spline leaders are tessellated into line segments.
 
--  WIPEOUT: starting with GDAL 3.11, a light support of WIPEOUT entities
-   has been added. The outline geometry of WIPEOUT entities are parsed and 
-   translated into a polygon feature. 
+-  WIPEOUT: a light support of WIPEOUT entities can parse the outline 
+   geometry of WIPEOUT entities and translate it into a POLYGON feature. 
 
 -  3DSOLID, REGION, BODY, SURFACE: See below.
 
