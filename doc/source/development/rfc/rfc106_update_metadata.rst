@@ -84,7 +84,7 @@ An additional item is provided to get more details on the exact capabilities:
 Note that the feature list is far from being exhaustive. It is restricted to
 what is thought to be the most useful.
 
-A new ``GDALDataset::ReportUpdateNotSupported(const char* pszDriverName)``
+A new ``GDALDataset::ReportUpdateNotSupportedByDriver(const char* pszDriverName)``
 static method will be added to avoid all drivers to have to compose their own
 error message when they don't support update.
 
@@ -106,7 +106,7 @@ will become:
 
     if (poOpenInfo->eAccess == GA_Update)
     {
-        ReportUpdateNotSupported("GSC");
+        ReportUpdateNotSupportedByDriver("GSC");
         return nullptr;
     }
 
@@ -153,7 +153,19 @@ No impact.
 Testing
 -------
 
-No new tests.
+test_ogrsf is modified to check that if a layer declares the OLCReadWrite
+capabilities it also reports GDAL_DCAP_UPDATE and the "Features" item in
+GDAL_DMD_UPDATE_ITEMS
+
+autotest/gcore/misc.py is modified so that the dataset it creates is opened
+in update mode if GDAL_DCAP_UPDATE is declared and tests that the operations
+specific of "GeoTransform", "SRS", "NoData", "DatasetMetadata", "BandMetadata"
+and "RasterValues" do not fail when those items are declared.
+
+autotest/gcore/test_driver_metadata.py is modified to validate that if GDAL_DCAP_UPDATE
+is declared, GDAL_DMD_UPDATE_ITEMS is also declared, and vice versa. It also
+validates that the items declared in GDAL_DMD_UPDATE_ITEMS are the ones allowed
+(to avoid typos in driver metadata).
 
 Documentation
 -------------
@@ -166,7 +178,7 @@ Related issues and PRs
 
 * Bug that triggered this PR: https://github.com/qgis/QGIS/pull/60208
 
-* Candidate implementation: TODO
+* Candidate implementation: https://github.com/OSGeo/gdal/pull/11718
 
 Funding
 -------
