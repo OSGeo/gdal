@@ -315,6 +315,7 @@ class OGRMVTDataset final : public GDALDataset
     }
 
     static GDALDataset *Open(GDALOpenInfo *);
+    static GDALDataset *Open(GDALOpenInfo *, bool bRecurseAllowed);
 
     OGRSpatialReference *GetSRS()
     {
@@ -1637,7 +1638,8 @@ void OGRMVTDirectoryLayer::OpenTile()
             m_bJsonField ? "" : m_poDS->m_osMetadataMemFilename.c_str());
         oOpenInfo.papszOpenOptions = CSLSetNameValue(
             oOpenInfo.papszOpenOptions, "DO_NOT_ERROR_ON_MISSING_TILE", "YES");
-        m_poCurrentTile = OGRMVTDataset::Open(&oOpenInfo);
+        m_poCurrentTile =
+            OGRMVTDataset::Open(&oOpenInfo, /* bRecurseAllowed = */ false);
         CSLDestroy(oOpenInfo.papszOpenOptions);
 
         int nX = (m_bUseReadDir || !m_aosDirContent.empty())
@@ -1859,7 +1861,8 @@ OGRFeature *OGRMVTDirectoryLayer::GetFeature(GIntBig nFID)
         m_bJsonField ? "" : m_poDS->m_osMetadataMemFilename.c_str());
     oOpenInfo.papszOpenOptions = CSLSetNameValue(
         oOpenInfo.papszOpenOptions, "DO_NOT_ERROR_ON_MISSING_TILE", "YES");
-    GDALDataset *poTile = OGRMVTDataset::Open(&oOpenInfo);
+    GDALDataset *poTile =
+        OGRMVTDataset::Open(&oOpenInfo, /* bRecurseAllowed = */ false);
     CSLDestroy(oOpenInfo.papszOpenOptions);
     OGRFeature *poFeature = nullptr;
     if (poTile)
@@ -2687,7 +2690,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                 oOpenInfo.papszOpenOptions =
                     CSLSetNameValue(oOpenInfo.papszOpenOptions,
                                     "DO_NOT_ERROR_ON_MISSING_TILE", "YES");
-                auto poTileDS = OGRMVTDataset::Open(&oOpenInfo);
+                auto poTileDS = OGRMVTDataset::Open(
+                    &oOpenInfo, /* bRecurseAllowed = */ false);
                 if (poTileDS)
                 {
                     if (poDS == nullptr)
@@ -2880,6 +2884,11 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
+{
+    return Open(poOpenInfo, true);
+}
+
+GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo, bool bRecurseAllowed)
 
 {
     if (!OGRMVTDriverIdentify(poOpenInfo) || poOpenInfo->eAccess == GA_Update)
@@ -2899,7 +2908,7 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
         // If the filename has no extension and is a directory, consider
         // we open a directory
         VSIStatBufL sStat;
-        if (!STARTS_WITH(osFilename, "/vsigzip/") &&
+        if (bRecurseAllowed && !STARTS_WITH(osFilename, "/vsigzip/") &&
             strchr((CPLGetFilename(osFilename)), '.') == nullptr &&
             VSIStatL(osFilename, &sStat) == 0 && VSI_ISDIR(sStat.st_mode))
         {
@@ -2913,7 +2922,8 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
 
         // For a network resource, if the filename is an integer, consider it
         // is a directory and open as such
-        if ((STARTS_WITH(osFilename, "/vsicurl") ||
+        if (bRecurseAllowed &&
+            (STARTS_WITH(osFilename, "/vsicurl") ||
              STARTS_WITH(osFilename, "http://") ||
              STARTS_WITH(osFilename, "https://")) &&
             CPLGetValueType(CPLGetFilename(osFilename)) == CPL_VALUE_INTEGER)
@@ -2947,10 +2957,11 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
     }
-    else if (poOpenInfo->bIsDirectory ||
-             (STARTS_WITH(poOpenInfo->pszFilename, "/vsicurl") &&
-              CPLGetValueType(CPLGetFilename(poOpenInfo->pszFilename)) ==
-                  CPL_VALUE_INTEGER))
+    else if (bRecurseAllowed &&
+             (poOpenInfo->bIsDirectory ||
+              (STARTS_WITH(poOpenInfo->pszFilename, "/vsicurl") &&
+               CPLGetValueType(CPLGetFilename(poOpenInfo->pszFilename)) ==
+                   CPL_VALUE_INTEGER)))
     {
         return OpenDirectory(poOpenInfo);
     }

@@ -877,7 +877,7 @@ GCSysCoord GCSRSAPI_CALL1(*)
     const GCSpheroidInfo *ell = NULL;
     const GCDatumInfo *datum = NULL;
     const GCProjectionInfo *gcproj = NULL;
-    double a, rf, f, p[7];
+    double a, rf, f, p[7] = {0, 0, 0, 0, 0, 0, 0};
     GCSysCoord *syscoord = NULL;
 
     if (!poSR)

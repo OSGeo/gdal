@@ -276,9 +276,7 @@ RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
     ); fi
 
 # Install exprtk
-RUN wget -q https://www.partow.net/downloads/exprtk.zip && \
-    unzip -j -d /usr/local/include exprtk.zip exprtk/exprtk.hpp && \
-    rm exprtk.zip
+RUN wget -q -P /usr/local/include https://raw.githubusercontent.com/ArashPartow/exprtk/refs/heads/master/exprtk.hpp 
 
 RUN ldconfig
 
