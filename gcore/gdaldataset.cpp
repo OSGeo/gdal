@@ -10423,3 +10423,20 @@ CPLErr GDALDatasetGeolocationToPixelLine(GDALDatasetH hDS, double dfGeolocX,
         dfGeolocX, dfGeolocY, OGRSpatialReference::FromHandle(hSRS), pdfPixel,
         pdfLine, papszTransformerOptions);
 }
+
+/************************************************************************/
+/*                  ReportUpdateNotSupportedByDriver()                  */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+
+/* static */
+void GDALDataset::ReportUpdateNotSupportedByDriver(const char *pszDriverName)
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "The %s driver does not support update access to existing "
+             "datasets.",
+             pszDriverName);
+}
+
+//! @endcond

@@ -565,9 +565,7 @@ GDALDataset *HDF5Dataset::Open(GDALOpenInfo *poOpenInfo)
         if (poOpenInfo->eAccess == GA_Update)
         {
             delete poDS;
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "The HDF5 driver does not support update access to "
-                     "existing datasets.");
+            ReportUpdateNotSupportedByDriver("HDF5");
             return nullptr;
         }
     }
