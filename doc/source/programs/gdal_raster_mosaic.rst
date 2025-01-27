@@ -22,30 +22,29 @@ Synopsis
     Build a mosaic, either virtual (VRT) or materialized
 
     Positional arguments:
-      -i, --input <INPUTS>                                 Input raster datasets (or specify a @<filename> to point to a file containing filenames) [1.. values]
-      -o, --output <OUTPUT>                                Output raster dataset (created by algorithm) [required]
+      -i, --input <INPUTS>                                     Input raster datasets (or specify a @<filename> to point to a file containing filenames) [1.. values]
+      -o, --output <OUTPUT>                                    Output raster dataset (created by algorithm) [required]
 
     Common Options:
-      -h, --help                                           Display help message and exit
-      --version                                            Display GDAL version and exit
-      --json-usage                                         Display usage as JSON document and exit
-      --drivers                                            Display driver list as JSON document and exit
-      --config <KEY>=<VALUE>                               Configuration option [may be repeated]
-      --progress                                           Display progress bar
+      -h, --help                                               Display help message and exit
+      --version                                                Display GDAL version and exit
+      --json-usage                                             Display usage as JSON document and exit
+      --drivers                                                Display driver list as JSON document and exit
+      --config <KEY>=<VALUE>                                   Configuration option [may be repeated]
+      --progress                                               Display progress bar
 
     Options:
-      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format
-      --co, --creation-option <KEY>=<VALUE>                Creation option [may be repeated]
-      -b, --band <BAND>                                    Specify input band(s) number. [may be repeated]
-      --overwrite                                          Whether overwriting existing output is allowed
-      --resolution <xres>,<yres>|average|highest|lowest>   Target resolution (in destination CRS units)
-      --bbox <BBOX>                                        Target bounding box as xmin,ymin,xmax,ymax (in destination CRS units)
-      --target-aligned-pixels                              Round target extent to target resolution
-      --srcnodata <SRCNODATA>                              Set nodata values for input bands. [1.. values]
-      --dstnodata <VRTNODATA>                              Set nodata values at the destination band level. [1.. values]
-      --hidenodata                                         Makes the destination band not report the NoData.
-      --addalpha                                           Adds an alpha mask band to the destination when the source raster have none.
-
+      -f, --of, --format, --output-format <OUTPUT-FORMAT>      Output format
+      --co, --creation-option <KEY>=<VALUE>                    Creation option [may be repeated]
+      -b, --band <BAND>                                        Specify input band(s) number. [may be repeated]
+      --overwrite                                              Whether overwriting existing output is allowed
+      --resolution <xres>,<yres>|same|average|highest|lowest>  Target resolution (in destination CRS units) (default: same)
+      --bbox <BBOX>                                            Target bounding box as xmin,ymin,xmax,ymax (in destination CRS units)
+      --target-aligned-pixels                                  Round target extent to target resolution
+      --srcnodata <SRCNODATA>                                  Set nodata values for input bands. [1.. values]
+      --dstnodata <DSTNODATA>                                  Set nodata values at the destination band level. [1.. values]
+      --hidenodata                                             Makes the destination band not report the NoData.
+      --addalpha                                               Adds an alpha mask band to the destination when the source raster have none.
 
 
 Description
@@ -86,16 +85,18 @@ The following options are available:
     If input bands not set all bands will be added to the output.
     Multiple :option:`-b` switches may be used to select a set of input bands.
 
-.. option:: --resolution {<xres,yres>|highest|lowest|average}
+.. option:: --resolution {<xres,yres>|same|highest|lowest|average}
 
     In case the resolution of all input files is not the same, the :option:`--resolution` flag
     enables the user to control the way the output resolution is computed.
+
+    `same`, the default, checks that all source rasters have the same resolution and errors out when this is not the case.
 
     `highest` will pick the smallest values of pixel dimensions within the set of source rasters.
 
     `lowest` will pick the largest values of pixel dimensions within the set of source rasters.
 
-    `average` is the default and will compute an average of pixel dimensions within the set of source rasters.
+    `average` will compute an average of pixel dimensions within the set of source rasters.
 
     <xres>,<yres>. The values must be expressed in georeferenced units.
     Both must be positive values.
