@@ -216,13 +216,6 @@ man_pages = [
         1,
     ),
     (
-        "programs/gdal_raster_buildvrt",
-        "gdal-raster-buildvrt",
-        "Build a virtual dataset (VRT)",
-        [author_evenr],
-        1,
-    ),
-    (
         "programs/gdal_raster_info",
         "gdal-raster-info",
         "Get information on a raster dataset",
@@ -251,6 +244,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_mosaic",
+        "gdal-raster-mosaic",
+        "Build a mosaic",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_overview_add",
         "gdal-raster-overview-add",
         "Add overviews to a raster dataset",
@@ -275,6 +275,13 @@ man_pages = [
         "programs/gdal_raster_reproject",
         "gdal-raster-reproject",
         "Reproject a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_stack",
+        "gdal-raster-stack",
+        "Combine together input bands into a multi-band output, either virtual (VRT) or materialized",
         [author_evenr],
         1,
     ),
