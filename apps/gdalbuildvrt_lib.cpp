@@ -63,6 +63,7 @@ typedef enum
     LOWEST_RESOLUTION,
     HIGHEST_RESOLUTION,
     AVERAGE_RESOLUTION,
+    SAME_RESOLUTION,
     USER_RESOLUTION
 } ResolutionStrategy;
 
@@ -983,6 +984,23 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
         {
             const double dfDelta = padfGeoTransform[GEOTRSFRM_NS_RES] - ns_res;
             ns_res += dfDelta / nCountValid;
+        }
+    }
+    else if (resolutionStrategy == SAME_RESOLUTION)
+    {
+        if (bFirst)
+        {
+            we_res = padfGeoTransform[GEOTRSFRM_WE_RES];
+            ns_res = padfGeoTransform[GEOTRSFRM_NS_RES];
+        }
+        else if (we_res != padfGeoTransform[GEOTRSFRM_WE_RES] ||
+                 ns_res != padfGeoTransform[GEOTRSFRM_NS_RES])
+        {
+            return CPLSPrintf("Dataset %s has resolution %f x %f, whereas "
+                              "previous sources have resolution %f x %f",
+                              dsFileName, padfGeoTransform[GEOTRSFRM_WE_RES],
+                              padfGeoTransform[GEOTRSFRM_NS_RES], we_res,
+                              ns_res);
         }
     }
     else if (resolutionStrategy != USER_RESOLUTION)
@@ -1922,6 +1940,8 @@ GDALDatasetH GDALBuildVRT(const char *pszDest, int nSrcCount,
         eStrategy = HIGHEST_RESOLUTION;
     else if (EQUAL(sOptions.osResolution.c_str(), "lowest"))
         eStrategy = LOWEST_RESOLUTION;
+    else if (EQUAL(sOptions.osResolution.c_str(), "same"))
+        eStrategy = SAME_RESOLUTION;
 
     /* If -srcnodata is specified, use it as the -vrtnodata if the latter is not
      */
@@ -2055,7 +2075,7 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
                 "the default value which is 'location'."));
 
     argParser->add_argument("-resolution")
-        .metavar("user|average|highest|lowest")
+        .metavar("user|average|highest|lowest|same")
         .action(
             [psOptions](const std::string &s)
             {
@@ -2063,7 +2083,8 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
                 if (!EQUAL(psOptions->osResolution.c_str(), "user") &&
                     !EQUAL(psOptions->osResolution.c_str(), "average") &&
                     !EQUAL(psOptions->osResolution.c_str(), "highest") &&
-                    !EQUAL(psOptions->osResolution.c_str(), "lowest"))
+                    !EQUAL(psOptions->osResolution.c_str(), "lowest") &&
+                    !EQUAL(psOptions->osResolution.c_str(), "same"))
                 {
                     throw std::invalid_argument(
                         CPLSPrintf("Illegal resolution value (%s).",

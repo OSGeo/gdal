@@ -19,8 +19,8 @@ Synopsis
                 [--quiet]
                 [[-strict]|[-non_strict]]
                 [-tile_index <field_name>]
-                [-resolution user|average|highest|lowest] [-tr <xres> <yes>]
-                [-input_file_list <filename>] [-separate]
+                [-resolution user|average|highest|lowest|same]
+                [-tr <xres> <yes>] [-input_file_list <filename>] [-separate]
                 [-allow_projection_difference] [-sd <n>] [-tap]
                 [-te <xmin> <ymin> <xmax> <ymax>] [-addalpha] [-b <band>]...
                 [-hidenodata] [-overwrite]
@@ -79,7 +79,7 @@ changed in later versions.
     Use the specified value as the tile index field, instead of the default
     value which is 'location'.
 
-.. option:: -resolution {highest|lowest|average|user}
+.. option:: -resolution {highest|lowest|average|user|same}
 
     In case the resolution of all input files is not the same, the :option:`-resolution` flag
     enables the user to control the way the output resolution is computed.
@@ -91,6 +91,8 @@ changed in later versions.
     `average` is the default and will compute an average of pixel dimensions within the set of source rasters.
 
     `user` must be used in combination with the :option:`-tr` option to specify the target resolution.
+
+    `same` (added in GDAL 3.11) checks that all source rasters have the same resolution and errors out when this is not the case.
 
 .. option:: -tr <xres> <yres>
 
