@@ -181,6 +181,11 @@ bool GDALRasterStackAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     CPLStringList aosOptions;
 
+    aosOptions.push_back("-strict");
+
+    aosOptions.push_back("-program_name");
+    aosOptions.push_back("gdal raster stack");
+
     aosOptions.push_back("-separate");
 
     if (!m_resolution.empty())

@@ -185,6 +185,11 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
               "VRT");
 
     CPLStringList aosOptions;
+    aosOptions.push_back("-strict");
+
+    aosOptions.push_back("-program_name");
+    aosOptions.push_back("gdal raster mosaic");
+
     if (!m_resolution.empty())
     {
         const auto aosTokens =
