@@ -29,7 +29,6 @@ Raster drivers
    avif
    bag
    basisu
-   blx
    bmp
    bsb
    bt

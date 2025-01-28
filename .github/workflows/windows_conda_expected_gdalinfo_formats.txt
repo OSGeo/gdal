@@ -123,7 +123,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   NWT_GRC -raster- (rov): Northwood Classified Grid Format .grc/.tab (*.grc)
   ADRG -raster- (rw+vs): ARC Digitized Raster Graphics (*.gen)
   SRP -raster- (rovs): Standard Raster Product (ASRP/USRP) (*.img)
-  BLX -raster- (rwv): Magellan topo (.blx) (*.blx)
   PostGISRaster -raster- (rws): PostGIS Raster driver
   SAGA -raster- (rw+v): SAGA GIS Binary Grid (.sdat, .sg-grd-z) (*.sdat, *.sg-grd-z)
   XYZ -raster- (rwv): ASCII Gridded XYZ (*.xyz)
