@@ -86,7 +86,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   CPG -raster- (rov): Convair PolGASP
   NDF -raster- (rov): NLAPS Data Format
   EIR -raster- (rov): Erdas Imagine Raw
-  DIPEx -raster- (rov): DIPEx
   LCP -raster- (rwv): FARSITE v.4 Landscape File (.lcp) (*.lcp)
   GTX -raster- (rw+v): NOAA Vertical Datum .GTX (*.gtx)
   LOSLAS -raster- (rov): NADCON .los/.las Datum Grid Shift
