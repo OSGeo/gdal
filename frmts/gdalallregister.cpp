@@ -692,10 +692,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_SRP();
 #endif
 
-#ifdef FRMT_blx
-    GDALRegister_BLX();
-#endif
-
 #ifdef FRMT_georaster
     GDALRegister_GEOR();
 #endif
