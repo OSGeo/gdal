@@ -4,11 +4,6 @@ add_gdal_driver(
           ace2dataset.cpp
           atlsci_spheroid.cpp
           cpgdataset.cpp
-<<<<<<< HEAD
-          dipxdataset.cpp
-=======
-          ctable2dataset.cpp
->>>>>>> 4d841a54a2... Remove DIPex driver
           doq1dataset.cpp
           doq2dataset.cpp
           ehdrdataset.cpp
