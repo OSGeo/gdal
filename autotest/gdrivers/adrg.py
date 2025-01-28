@@ -196,3 +196,23 @@ def test_adrg_zna_18():
 
 
 ###############################################################################
+# Test reading dataset with 2 subdataset image
+
+
+def test_adrg_read_2subdatasets():
+
+    ds = gdal.Open("data/adrg/subdataset/TRANSH01.THF")
+    assert ds.RasterCount == 0, "did not expected non 0 RasterCount"
+    ds = None
+
+    ds = gdal.Open(
+        "ADRG:data/adrg/subdataset/XXXXXX01.GEN,data/adrg/subdataset/XXXXXX02.IMG"
+    )
+    chksum = ds.GetRasterBand(1).Checksum()
+
+    assert chksum == 62833, "Wrong checksum"
+
+    md = ds.GetMetadata("")
+    assert md["ADRG_NAM"] == "XXXXXX02", "metadata wrong."
+
+    ds = None
