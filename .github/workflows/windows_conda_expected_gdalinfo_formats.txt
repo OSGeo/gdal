@@ -79,7 +79,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   PNM -raster- (rw+v): Portable Pixmap Format (netpbm) (*.pgm, *.ppm, *.pnm)
   DOQ1 -raster- (rov): USGS DOQ (Old Style)
   DOQ2 -raster- (rov): USGS DOQ (New Style)
-  PAux -raster- (rw+v): PCI .aux Labelled
+  PAux -raster- (rov): PCI .aux Labelled
   MFF -raster- (rw+v): Vexcel MFF Raster (*.hdr)
   MFF2 -raster- (rw+): Vexcel MFF2 (HKV) Raster
   GSC -raster- (rov): GSC Geogrid
