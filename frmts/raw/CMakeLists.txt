@@ -6,7 +6,6 @@ add_gdal_driver(
           btdataset.cpp
           cpgdataset.cpp
           ctable2dataset.cpp
-          dipxdataset.cpp
           doq1dataset.cpp
           doq2dataset.cpp
           ehdrdataset.cpp
