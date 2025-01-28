@@ -102,7 +102,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   KRO -raster- (rw+v): KOLOR Raw (*.kro)
   ROI_PAC -raster- (rw+v): ROI_PAC raster
   RRASTER -raster- (rw+v): R Raster (*.grd)
-  BYN -raster- (rw+v): Natural Resources Canada's Geoid (*.byn, *.err)
+  BYN -raster- (rov): Natural Resources Canada's Geoid (*.byn, *.err)
   NOAA_B -raster- (rov): NOAA GEOCON/NADCON5 .b format (*.b)
   NSIDCbin -raster- (rov): NSIDC Sea Ice Concentrations binary (.bin) (*.bin)
   RIK -raster- (rov): Swedish Grid RIK (.rik) (*.rik)
