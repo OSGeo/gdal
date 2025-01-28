@@ -31,7 +31,6 @@ Raster drivers
    basisu
    bmp
    bsb
-   bt
    byn
    cad
    cals
