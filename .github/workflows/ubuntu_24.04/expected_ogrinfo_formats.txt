@@ -54,7 +54,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   OAPIF -vector- (ro): OGC API - Features
   SOSI -vector- (ro): Norwegian SOSI Standard
   EDIGEO -vector- (rov): French EDIGEO exchange format (*.thf)
-  SVG -vector- (rov): Scalable Vector Graphics (*.svg)
   Idrisi -vector- (rov): Idrisi Vector (.vct) (*.vct)
   XLS -vector- (ro): MS Excel format (*.xls)
   ODS -vector- (rw+uv): Open Document/ LibreOffice / OpenOffice Spreadsheet (*.ods)
