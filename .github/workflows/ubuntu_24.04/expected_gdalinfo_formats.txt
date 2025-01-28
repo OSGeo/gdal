@@ -98,7 +98,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   NOAA_B -raster- (rov): NOAA GEOCON/NADCON5 .b format (*.b)
   NSIDCbin -raster- (rov): NSIDC Sea Ice Concentrations binary (.bin) (*.bin)
   RIK -raster- (rov): Swedish Grid RIK (.rik) (*.rik)
-  USGSDEM -raster- (rwv): USGS Optional ASCII DEM (and CDED) (*.dem)
+  USGSDEM -raster- (rov): USGS Optional ASCII DEM (and CDED) (*.dem)
   GXF -raster- (rov): GeoSoft Grid Exchange Format (*.gxf)
   BAG -raster,multidimensional raster,vector- (rw+v): Bathymetry Attributed Grid (*.bag)
   S102 -raster,multidimensional raster- (rovs): S-102 Bathymetric Surface Product (*.h5)

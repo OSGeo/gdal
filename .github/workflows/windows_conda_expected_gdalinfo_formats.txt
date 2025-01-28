@@ -99,7 +99,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   BYN -raster- (rov): Natural Resources Canada's Geoid (*.byn, *.err)
   NOAA_B -raster- (rov): NOAA GEOCON/NADCON5 .b format (*.b)
   RIK -raster- (rov): Swedish Grid RIK (.rik) (*.rik)
-  USGSDEM -raster- (rwv): USGS Optional ASCII DEM (and CDED) (*.dem)
+  USGSDEM -raster- (rov): USGS Optional ASCII DEM (and CDED) (*.dem)
   GXF -raster- (rov): GeoSoft Grid Exchange Format (*.gxf)
   KEA -raster- (rw+v): KEA Image Format (.kea) (*.kea)
   BAG -raster,multidimensional raster,vector- (rw+v): Bathymetry Attributed Grid (*.bag)
