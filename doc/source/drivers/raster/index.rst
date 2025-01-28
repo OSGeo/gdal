@@ -143,7 +143,6 @@ Raster drivers
    pnm
    postgisraster
    prf
-   rasterlite
    rasterlite2
    r
    rdb
