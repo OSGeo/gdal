@@ -32,7 +32,6 @@ Raster drivers
    blx
    bmp
    bsb
-   bt
    byn
    cad
    cals
