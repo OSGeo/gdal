@@ -45,7 +45,6 @@ Raster drivers
    dds
    derived
    dimap
-   dipex
    doq1
    doq2
    dted
@@ -54,7 +53,6 @@ Raster drivers
    eedai
    ehdr
    eir
-   elas
    envi
    esat
    esric
