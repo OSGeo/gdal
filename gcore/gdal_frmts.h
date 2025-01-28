@@ -77,7 +77,6 @@ void CPL_DLL GDALRegister_HDF4Image(void);
 void CPL_DLL GDALRegister_L1B(void);
 void CPL_DLL GDALRegister_LDF(void);
 void CPL_DLL GDALRegister_BSB(void);
-void CPL_DLL GDALRegister_XPM(void);
 void CPL_DLL GDALRegister_BMP(void);
 void CPL_DLL GDALRegister_GSC(void);
 void CPL_DLL GDALRegister_NITF(void);
