@@ -64,7 +64,7 @@ int OGRADBCDriverIdentify(GDALOpenInfo *poOpenInfo)
             && GDALGetAdbcLoadDriverOverride() != nullptr
 #endif
             && !STARTS_WITH(poOpenInfo->pszFilename, "/vsi") &&
-            !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "mbtiles"));
+            !poOpenInfo->IsExtensionEqualToCI("mbtiles"));
 }
 
 /************************************************************************/
@@ -89,6 +89,9 @@ void OGRADBCDriverSetCommonMetadata(GDALDriver *poDriver)
         "description='SQL statement from which to build layer'/>"
         "  <Option name='ADBC_OPTION_*' type='string' "
         "description='Option to pass to AdbcDatabaseSetOption()'/>"
+        "  <Option name='PRELUDE_STATEMENTS' type='string' description='SQL "
+        "statement(s) to send on the database connection before any other "
+        "ones'/>"
         "</OpenOptionList>");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS,
                               "NATIVE OGRSQL SQLITE");

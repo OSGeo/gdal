@@ -104,8 +104,8 @@ bool GDALGeoLocDatasetAccessors::AllocateBackMap()
 
     // CPLResetExtension / CPLGenerateTempFilename generate short-lived strings,
     // so store them in a long-lived std::string
-    const std::string osBackmapTmpFilename =
-        CPLResetExtension(CPLGenerateTempFilename(nullptr), "tif");
+    const std::string osBackmapTmpFilename = CPLResetExtensionSafe(
+        CPLGenerateTempFilenameSafe(nullptr).c_str(), "tif");
     m_poBackmapTmpDataset = poDriver->Create(
         osBackmapTmpFilename.c_str(), m_psTransform->nBackMapWidth,
         m_psTransform->nBackMapHeight, 2, GDT_Float32,
@@ -124,8 +124,8 @@ bool GDALGeoLocDatasetAccessors::AllocateBackMap()
 
     // CPLResetExtension / CPLGenerateTempFilename generate short-lived strings,
     // so store them in a long-lived std::string
-    const std::string osBackmapWeightsTmpFilename =
-        CPLResetExtension(CPLGenerateTempFilename(nullptr), "tif");
+    const std::string osBackmapWeightsTmpFilename = CPLResetExtensionSafe(
+        CPLGenerateTempFilenameSafe(nullptr).c_str(), "tif");
     m_poBackmapWeightsTmpDataset = poDriver->Create(
         osBackmapWeightsTmpFilename.c_str(), m_psTransform->nBackMapWidth,
         m_psTransform->nBackMapHeight, 1, GDT_Float32,
@@ -209,8 +209,8 @@ bool GDALGeoLocDatasetAccessors::LoadGeoloc(bool bIsRegularGrid)
 
         // CPLResetExtension / CPLGenerateTempFilename generate short-lived
         // strings, so store them in a long-lived std::string
-        const std::string osGeolocTmpFilename =
-            CPLResetExtension(CPLGenerateTempFilename(nullptr), "tif");
+        const std::string osGeolocTmpFilename = CPLResetExtensionSafe(
+            CPLGenerateTempFilenameSafe(nullptr).c_str(), "tif");
         m_poGeolocTmpDataset =
             poDriver->Create(osGeolocTmpFilename.c_str(), nXSize, nYSize, 2,
                              GDT_Float64, m_aosGTiffCreationOptions.List());

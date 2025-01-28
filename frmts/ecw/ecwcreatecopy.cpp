@@ -827,7 +827,8 @@ CPLErr GDALECWCompressor::Initialize(
             SetParameter(CNCSJP2FileView::JP2_COMPRESS_PROFILE_NITF_BIIF_EPJE);
 
         pszOption = CSLFetchNameValue(papszOptions, "CODESTREAM_ONLY");
-        if (pszOption == nullptr && EQUAL(CPLGetExtension(pszFilename), "j2k"))
+        if (pszOption == nullptr &&
+            EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "j2k"))
             pszOption = "YES";
         if (pszOption != nullptr)
             SetParameter(CNCSJP2FileView::JP2_COMPRESS_CODESTREAM_ONLY,
@@ -1510,7 +1511,7 @@ GDALDataset *ECWCreateCopyECW(const char *pszFilename, GDALDataset *poSrcDS,
         return nullptr;
     }
 
-    if (!EQUAL(CPLGetExtension(pszFilename), "ecw"))
+    if (!EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "ecw"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "ECW driver does not support creating ECW files\n"
@@ -1605,7 +1606,7 @@ GDALDataset *ECWCreateCopyJPEG2000(const char *pszFilename,
         return nullptr;
     }
 
-    if (EQUAL(CPLGetExtension(pszFilename), "ecw"))
+    if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "ecw"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "JP2ECW driver does not support creating JPEG2000 files\n"

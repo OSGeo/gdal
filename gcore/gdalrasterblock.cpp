@@ -184,14 +184,9 @@ int CPL_STDCALL GDALGetCacheMax()
     GIntBig nRes = GDALGetCacheMax64();
     if (nRes > INT_MAX)
     {
-        static bool bHasWarned = false;
-        if (!bHasWarned)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
                      "Cache max value doesn't fit on a 32 bit integer. "
                      "Call GDALGetCacheMax64() instead");
-            bHasWarned = true;
-        }
         nRes = INT_MAX;
     }
     return static_cast<int>(nRes);
@@ -280,14 +275,9 @@ int CPL_STDCALL GDALGetCacheUsed()
 {
     if (nCacheUsed > INT_MAX)
     {
-        static bool bHasWarned = false;
-        if (!bHasWarned)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
                      "Cache used value doesn't fit on a 32 bit integer. "
                      "Call GDALGetCacheUsed64() instead");
-            bHasWarned = true;
-        }
         return INT_MAX;
     }
     return static_cast<int>(nCacheUsed);
@@ -541,6 +531,13 @@ GDALRasterBlock::GDALRasterBlock(GDALRasterBand *poBandIn, int nXOffIn,
       nXOff(nXOffIn), nYOff(nYOffIn), nXSize(0), nYSize(0), pData(nullptr),
       poBand(poBandIn), poNext(nullptr), poPrevious(nullptr), bMustDetach(true)
 {
+    if (!hRBLock)
+    {
+        // Needed for scenarios where GDALAllRegister() is called after
+        // GDALDestroyDriverManager()
+        INITIALIZE_LOCK;
+    }
+
     CPLAssert(poBandIn != nullptr);
     poBand->GetBlockSize(&nXSize, &nYSize);
 }

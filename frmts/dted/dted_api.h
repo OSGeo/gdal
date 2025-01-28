@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  DTED Translator
  * Purpose:  Public (C callable) interface for DTED/CDED reading.

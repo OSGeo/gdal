@@ -11,8 +11,6 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-// $Id$
-
 #include <cstring>
 #include <algorithm>
 #include <cmath>

@@ -405,6 +405,33 @@ The driver supports the following dataset creation options:
       Override the trailer file used - in place
       of trailer.dxf located in the GDAL_DATA directory.
 
+-  .. dsco:: FIRST_ENTITY
+      :choices: <integer>
+
+      Identifier of first entity
+
+-  .. dsco:: INSUNITS
+      :choices: AUTO, HEADER_VALUE, UNITLESS, INCHES, FEET, MILLIMETERS, CENTIMETERS, METERS, US_SURVEY_FEET
+      :default: AUTO
+      :since: 3.11
+
+      Drawing units for the model space
+      (`$INSUNITS <https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2018/ENU/AutoCAD-Core/files/GUID-A58A87BB-482B-4042-A00A-EEF55A2B4FD8-htm.html>`__ system variable).
+      The default ``AUTO`` mode first check if the written layer has a projected
+      CRS, and if so uses is linear units to determine the value of ``$INSUNITS``.
+      Otherwise it fallbacks to the value of the header template (``HEADER_VALUE`` mode),
+      which is ``INCHES``.
+
+-  .. dsco:: MEASUREMENT
+      :choices: HEADER_VALUE, IMPERIAL, METRIC
+      :default: HEADER_VALUE
+      :since: 3.11
+
+      Whether the current drawing uses imperial or metric hatch pattern and linetype
+      (`$MEASUREMENT <https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2018/ENU/AutoCAD-Core/files/GUID-1D074C55-0B63-482E-8A37-A52AC0C7C8FE-htm.html>`__ system variable).
+      Defaults to the value of the header template, which is ``IMPERIAL``.
+
+
 The header and trailer templates can be
 complete DXF files. The driver will scan them and only extract the
 needed portions (portion before or after the ENTITIES section).
@@ -473,16 +500,6 @@ header template, and referenced using the Linetype field if desired.
 It is assumed that patterns are using "g" (georeferenced) units for
 defining the line pattern. If not, the scaling of the DXF patterns is
 likely to be wrong - potentially very wrong.
-
-Units
-~~~~~
-
-GDAL writes DXF files with measurement units set to "Imperial - Inches".
-If you need to change the units, edit the
-`$MEASUREMENT <https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2018/ENU/AutoCAD-Core/files/GUID-1D074C55-0B63-482E-8A37-A52AC0C7C8FE-htm.html>`__
-and
-`$INSUNITS <https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2018/ENU/AutoCAD-Core/files/GUID-A58A87BB-482B-4042-A00A-EEF55A2B4FD8-htm.html>`__
-variables in the header template.
 
 --------------
 

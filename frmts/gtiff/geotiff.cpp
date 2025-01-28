@@ -15,6 +15,8 @@
 
 #include "gtiff.h"
 
+#include "tiff_common.h"
+
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "gdal.h"
@@ -91,16 +93,11 @@ void GTIFFGetOverviewBlockSize(GDALRasterBandH hBand, int *pnBlockXSize,
         if (nOvrBlockSize < 64 || nOvrBlockSize > 4096 ||
             !CPLIsPowerOfTwo(nOvrBlockSize))
         {
-            static bool bHasWarned = false;
-            if (!bHasWarned)
-            {
-                CPLError(CE_Warning, CPLE_NotSupported,
+            CPLErrorOnce(CE_Warning, CPLE_NotSupported,
                          "Wrong value for GDAL_TIFF_OVR_BLOCKSIZE : %s. "
                          "Should be a power of 2 between 64 and 4096. "
                          "Defaulting to 128",
                          pszVal);
-                bHasWarned = true;
-            }
             nOvrBlockSize = 128;
         }
 
@@ -494,68 +491,7 @@ char **GTiffDatasetReadRPCTag(TIFF *hTIFF)
         nCount != 92)
         return nullptr;
 
-    CPLStringList asMD;
-    asMD.SetNameValue(RPC_ERR_BIAS, CPLOPrintf("%.15g", padfRPCTag[0]));
-    asMD.SetNameValue(RPC_ERR_RAND, CPLOPrintf("%.15g", padfRPCTag[1]));
-    asMD.SetNameValue(RPC_LINE_OFF, CPLOPrintf("%.15g", padfRPCTag[2]));
-    asMD.SetNameValue(RPC_SAMP_OFF, CPLOPrintf("%.15g", padfRPCTag[3]));
-    asMD.SetNameValue(RPC_LAT_OFF, CPLOPrintf("%.15g", padfRPCTag[4]));
-    asMD.SetNameValue(RPC_LONG_OFF, CPLOPrintf("%.15g", padfRPCTag[5]));
-    asMD.SetNameValue(RPC_HEIGHT_OFF, CPLOPrintf("%.15g", padfRPCTag[6]));
-    asMD.SetNameValue(RPC_LINE_SCALE, CPLOPrintf("%.15g", padfRPCTag[7]));
-    asMD.SetNameValue(RPC_SAMP_SCALE, CPLOPrintf("%.15g", padfRPCTag[8]));
-    asMD.SetNameValue(RPC_LAT_SCALE, CPLOPrintf("%.15g", padfRPCTag[9]));
-    asMD.SetNameValue(RPC_LONG_SCALE, CPLOPrintf("%.15g", padfRPCTag[10]));
-    asMD.SetNameValue(RPC_HEIGHT_SCALE, CPLOPrintf("%.15g", padfRPCTag[11]));
-
-    CPLString osField;
-    CPLString osMultiField;
-
-    for (int i = 0; i < 20; ++i)
-    {
-        osField.Printf("%.15g", padfRPCTag[12 + i]);
-        if (i > 0)
-            osMultiField += " ";
-        else
-            osMultiField = "";
-        osMultiField += osField;
-    }
-    asMD.SetNameValue(RPC_LINE_NUM_COEFF, osMultiField);
-
-    for (int i = 0; i < 20; ++i)
-    {
-        osField.Printf("%.15g", padfRPCTag[32 + i]);
-        if (i > 0)
-            osMultiField += " ";
-        else
-            osMultiField = "";
-        osMultiField += osField;
-    }
-    asMD.SetNameValue(RPC_LINE_DEN_COEFF, osMultiField);
-
-    for (int i = 0; i < 20; ++i)
-    {
-        osField.Printf("%.15g", padfRPCTag[52 + i]);
-        if (i > 0)
-            osMultiField += " ";
-        else
-            osMultiField = "";
-        osMultiField += osField;
-    }
-    asMD.SetNameValue(RPC_SAMP_NUM_COEFF, osMultiField);
-
-    for (int i = 0; i < 20; ++i)
-    {
-        osField.Printf("%.15g", padfRPCTag[72 + i]);
-        if (i > 0)
-            osMultiField += " ";
-        else
-            osMultiField = "";
-        osMultiField += osField;
-    }
-    asMD.SetNameValue(RPC_SAMP_DEN_COEFF, osMultiField);
-
-    return asMD.StealList();
+    return gdal::tiff_common::TIFFRPCTagToRPCMetadata(padfRPCTag).StealList();
 }
 
 /************************************************************************/
@@ -710,11 +646,13 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
     papszLocalParameters =
         CSLSetNameValue(papszLocalParameters, "WRITE_JPEGTABLE_TAG", "NO");
 
+    bool bTileInterleaving;
     TIFF *hTIFFTmp =
         GTiffDataset::CreateLL(osTmpFilenameIn, nInMemImageWidth,
                                nInMemImageHeight, (nBands <= 4) ? nBands : 1,
                                (l_nBitsPerSample <= 8) ? GDT_Byte : GDT_UInt16,
-                               0.0, 0, papszLocalParameters, &fpTmp, osTmp);
+                               0.0, 0, papszLocalParameters, &fpTmp, osTmp,
+                               /* bCreateCopy=*/false, bTileInterleaving);
     CSLDestroy(papszLocalParameters);
     if (hTIFFTmp)
     {
@@ -761,45 +699,6 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
     VSIUnlink(osTmpFilenameIn);
 }
 
-/************************************************************************/
-/*                       PrepareTIFFErrorFormat()                       */
-/*                                                                      */
-/*      sometimes the "module" has stuff in it that has special         */
-/*      meaning in a printf() style format, so we try to escape it.     */
-/*      For now we hope the only thing we have to escape is %'s.        */
-/************************************************************************/
-
-static char *PrepareTIFFErrorFormat(const char *module, const char *fmt)
-
-{
-    const size_t nModuleSize = strlen(module);
-    const size_t nModFmtSize = nModuleSize * 2 + strlen(fmt) + 2;
-    char *pszModFmt = static_cast<char *>(CPLMalloc(nModFmtSize));
-
-    size_t iOut = 0;  // Used after for.
-
-    for (size_t iIn = 0; iIn < nModuleSize; ++iIn)
-    {
-        if (module[iIn] == '%')
-        {
-            CPLAssert(iOut < nModFmtSize - 2);
-            pszModFmt[iOut++] = '%';
-            pszModFmt[iOut++] = '%';
-        }
-        else
-        {
-            CPLAssert(iOut < nModFmtSize - 1);
-            pszModFmt[iOut++] = module[iIn];
-        }
-    }
-    CPLAssert(iOut < nModFmtSize);
-    pszModFmt[iOut] = '\0';
-    strcat(pszModFmt, ":");
-    strcat(pszModFmt, fmt);
-
-    return pszModFmt;
-}
-
 #if !defined(SUPPORTS_LIBTIFF_OPEN_OPTIONS)
 
 /************************************************************************/
@@ -817,7 +716,7 @@ static void GTiffWarningHandler(const char *module, const char *fmt, va_list ap)
     if (strstr(fmt, "nknown field") != nullptr)
         return;
 
-    char *pszModFmt = PrepareTIFFErrorFormat(module, fmt);
+    char *pszModFmt = gdal::tiff_common::PrepareTIFFErrorFormat(module, fmt);
     if (strstr(fmt, "does not end in null byte") != nullptr)
     {
         CPLString osMsg;
@@ -854,7 +753,7 @@ static void GTiffErrorHandler(const char *module, const char *fmt, va_list ap)
                   "Use BIGTIFF=YES creation option.";
     }
 
-    char *pszModFmt = PrepareTIFFErrorFormat(module, fmt);
+    char *pszModFmt = gdal::tiff_common::PrepareTIFFErrorFormat(module, fmt);
     CPLErrorV(CE_Failure, CPLE_AppDefined, pszModFmt, ap);
     CPLFree(pszModFmt);
     return;
@@ -886,7 +785,7 @@ int GTiffWarningHandlerExt(TIFF *tif, void *user_data, const char *module,
     if (strstr(fmt, "nknown field") != nullptr)
         return 1;
 
-    char *pszModFmt = PrepareTIFFErrorFormat(module, fmt);
+    char *pszModFmt = gdal::tiff_common::PrepareTIFFErrorFormat(module, fmt);
     if (strstr(fmt, "does not end in null byte") != nullptr)
     {
         CPLString osMsg;
@@ -932,7 +831,7 @@ int GTiffErrorHandlerExt(TIFF *tif, void *user_data, const char *module,
                   "Use BIGTIFF=YES creation option.";
     }
 
-    char *pszModFmt = PrepareTIFFErrorFormat(module, fmt);
+    char *pszModFmt = gdal::tiff_common::PrepareTIFFErrorFormat(module, fmt);
     CPLErrorV(CE_Failure, CPLE_AppDefined, pszModFmt, ap);
     CPLFree(pszModFmt);
     return 1;
@@ -1063,8 +962,10 @@ static const struct
     {COMPRESSION_LERC, "LERC_DEFLATE", true},
     {COMPRESSION_LERC, "LERC_ZSTD", true},
     COMPRESSION_ENTRY(WEBP, true),
-    COMPRESSION_ENTRY(JXL, true),
-    COMPRESSION_ENTRY(JXL_DNG_1_7, true),
+    // COMPRESSION_JXL_DNG_1_7 must be *before* COMPRESSION_JXL
+    {COMPRESSION_JXL_DNG_1_7, "JXL", true},
+    {COMPRESSION_JXL, "JXL",
+     true},  // deprecated. No longer used for writing since GDAL 3.11
 
     // Compression methods in read-only
     COMPRESSION_ENTRY(OJPEG, false),
@@ -1350,7 +1251,7 @@ void GDALRegister_GTiff()
         osOptions +=
             ""
             "   <Option name='JPEG_QUALITY' type='int' description='JPEG "
-            "quality 1-100' default='75'/>"
+            "quality 1-100' min='1' max='100' default='75'/>"
             "   <Option name='JPEGTABLESMODE' type='int' description='Content "
             "of JPEGTABLES tag. 0=no JPEGTABLES tag, 1=Quantization tables "
             "only, 2=Huffman tables only, 3=Both' default='1'/>";
@@ -1367,23 +1268,24 @@ void GDALRegister_GTiff()
 #ifdef LIBDEFLATE_SUPPORT
         osOptions += ""
                      "   <Option name='ZLEVEL' type='int' description='DEFLATE "
-                     "compression level 1-12' default='6'/>";
+                     "compression level 1-12' min='1' max='12' default='6'/>";
 #else
         osOptions += ""
                      "   <Option name='ZLEVEL' type='int' description='DEFLATE "
-                     "compression level 1-9' default='6'/>";
+                     "compression level 1-9' min='1' max='9' default='6'/>";
 #endif
     }
     if (bHasLZMA)
         osOptions +=
             ""
             "   <Option name='LZMA_PRESET' type='int' description='LZMA "
-            "compression level 0(fast)-9(slow)' default='6'/>";
+            "compression level 0(fast)-9(slow)' min='0' max='9' default='6'/>";
     if (bHasZSTD)
         osOptions +=
             ""
             "   <Option name='ZSTD_LEVEL' type='int' description='ZSTD "
-            "compression level 1(fast)-22(slow)' default='9'/>";
+            "compression level 1(fast)-22(slow)' min='1' max='22' "
+            "default='9'/>";
     if (bHasLERC)
     {
         osOptions +=
@@ -1416,7 +1318,7 @@ void GDALRegister_GTiff()
         "   <Option name='JXL_LOSSLESS' type='boolean' description='Whether "
         "JPEGXL compression should be lossless' default='YES'/>"
         "   <Option name='JXL_EFFORT' type='int' description='Level of effort "
-        "1(fast)-9(slow)' default='5'/>"
+        "1(fast)-9(slow)' min='1' max='9' default='5'/>"
         "   <Option name='JXL_DISTANCE' type='float' description='Distance "
         "level for lossy compression (0=mathematically lossless, 1.0=visually "
         "lossless, usual range [0.5,3])' default='1.0' min='0.01' max='25.0'/>";

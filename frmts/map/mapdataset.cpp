@@ -150,7 +150,7 @@ int MAPDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
     if (poOpenInfo->nHeaderBytes < 200 ||
-        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MAP"))
+        !poOpenInfo->IsExtensionEqualToCI("MAP"))
         return FALSE;
 
     if (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
@@ -229,11 +229,11 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     poDS->osImgFilename = papszLines[2];
 
-    const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
+    const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
     if (CPLIsFilenameRelative(poDS->osImgFilename))
     {
         poDS->osImgFilename =
-            CPLFormCIFilename(osPath, poDS->osImgFilename, nullptr);
+            CPLFormCIFilenameSafe(osPath, poDS->osImgFilename, nullptr);
     }
     else
     {
@@ -242,7 +242,7 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             poDS->osImgFilename = CPLGetFilename(poDS->osImgFilename);
             poDS->osImgFilename =
-                CPLFormCIFilename(osPath, poDS->osImgFilename, nullptr);
+                CPLFormCIFilenameSafe(osPath, poDS->osImgFilename, nullptr);
         }
     }
 

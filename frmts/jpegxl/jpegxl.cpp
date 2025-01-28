@@ -205,7 +205,7 @@ int JPEGXLDataset::Identify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->fpL == nullptr)
         return false;
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "jxl"))
+    if (poOpenInfo->IsExtensionEqualToCI("jxl"))
         return true;
 
     // See
@@ -474,6 +474,12 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
                     eDT = GDT_Byte;
                 else if (info.bits_per_sample <= 16)
                     eDT = GDT_UInt16;
+            }
+            else if (info.exponent_bits_per_sample == 5)
+            {
+                // Float16
+                CPLDebug("JXL", "16-bit floating point data");
+                eDT = GDT_Float32;
             }
             else if (info.exponent_bits_per_sample == 8)
             {

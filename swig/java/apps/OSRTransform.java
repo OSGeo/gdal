@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     OSRTransform.java
  * Project:  GDAL Java Interface

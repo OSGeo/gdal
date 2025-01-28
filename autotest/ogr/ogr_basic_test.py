@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic OGR functionality against test shapefiles.
@@ -449,8 +448,11 @@ def test_ogr_basic_10():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
+    # --config OPENFILEGDB_REPRODUCIBLE_UUID=YES helps avoiding unsigned-integer-overflow
+    # under UBSAN.
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_test_ogrsf_path() + " -all_drivers"
+        test_cli_utilities.get_test_ogrsf_path()
+        + " -all_drivers --config OPENFILEGDB_REPRODUCIBLE_UUID=YES"
     )
 
     assert "INFO" in ret

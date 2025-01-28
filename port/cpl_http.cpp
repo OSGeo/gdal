@@ -517,7 +517,6 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] = {
     {"GDAL_CURL_CA_BUNDLE", "CAINFO"},
     {"CURL_CA_BUNDLE", "CAINFO"},
     {"SSL_CERT_FILE", "CAINFO"},
-    {"GDAL_HTTP_HEADER_FILE", "HEADER_FILE"},
     {"GDAL_HTTP_CAPATH", "CAPATH"},
     {"GDAL_HTTP_SSL_VERIFYSTATUS", "SSL_VERIFYSTATUS"},
     {"GDAL_HTTP_USE_CAPI_STORE", "USE_CAPI_STORE"},
@@ -2124,7 +2123,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
     {
         unchecked_curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
 
-        if (CPLGetConfigOption("CPL_DEBUG", nullptr) != nullptr)
+        if (CPLIsDebugEnabled())
         {
             unchecked_curl_easy_setopt(http_handle, CURLOPT_DEBUGFUNCTION,
                                        CPLHTTPCurlDebugFunction);

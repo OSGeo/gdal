@@ -16,6 +16,7 @@
 #include "ogrsf_frmts.h"
 #include "../../ogr/ogrsf_frmts/osm/gpb.h"
 #include "ogr_recordbatch.h"
+#include "ogrlayerarrow.h"
 
 #include <string>
 #include <algorithm>
@@ -69,6 +70,7 @@ void testSpatialReferenceLeakOnCopy(OGRSpatialReference *poSRS)
         ASSERT_GT(nCurCount, nLastCount);
         nLastCount = nCurCount;
 
+        // coverity[copy_assignment_call]
         value3 = value;
         ASSERT_EQ(nLastCount, poSRS->GetReferenceCount());
     }
@@ -327,6 +329,7 @@ TEST_F(test_ogr, OGRGeometryCollection_copy_constructor_illegal_use)
     CPLErrorReset();
     {
         CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+        // coverity[copy_assignment_call]
         *mp_as_gc = gc;
     }
     EXPECT_STREQ(CPLGetLastErrorMsg(),
@@ -360,12 +363,67 @@ TEST_F(test_ogr, OGRCurvePolygon_copy_constructor_illegal_use)
     CPLErrorReset();
     {
         CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+        // coverity[copy_assignment_call]
         *poly_as_cp = cp;
     }
     EXPECT_STREQ(CPLGetLastErrorMsg(),
                  "Illegal use of OGRCurvePolygon::operator=(): trying to "
                  "assign an incompatible sub-geometry");
     EXPECT_TRUE(poly.IsEmpty());
+}
+
+template <class T> void testMove()
+{
+    auto poSRS = new OGRSpatialReference();
+    {
+        auto poOrigin = std::unique_ptr<T>(make<T>());
+        ASSERT_TRUE(nullptr != poOrigin);
+        poOrigin->assignSpatialReference(poSRS);
+
+        T valueCopy(*poOrigin);
+        const int refCountBefore = poSRS->GetReferenceCount();
+        T fromMoved(std::move(*poOrigin));
+        EXPECT_EQ(poSRS->GetReferenceCount(), refCountBefore);
+
+        ASSERT_TRUE(CPL_TO_BOOL(fromMoved.Equals(&valueCopy)))
+            << valueCopy.getGeometryName()
+            << ": move constructor changed a value";
+        EXPECT_EQ(fromMoved.getSpatialReference(), poSRS);
+
+        T valueCopy2(valueCopy);
+        EXPECT_EQ(valueCopy.getSpatialReference(), poSRS);
+        T value3;
+        const int refCountBefore2 = poSRS->GetReferenceCount();
+        value3 = std::move(valueCopy);
+        EXPECT_EQ(poSRS->GetReferenceCount(), refCountBefore2);
+
+        ASSERT_TRUE(CPL_TO_BOOL(value3.Equals(&valueCopy2)))
+            << valueCopy2.getGeometryName()
+            << ": move assignment operator changed a value";
+        EXPECT_EQ(value3.getSpatialReference(), poSRS);
+    }
+    EXPECT_EQ(poSRS->GetReferenceCount(), 1);
+    poSRS->Release();
+}
+
+TEST_F(test_ogr, geometry_move)
+{
+    testMove<OGRPoint>();
+    testMove<OGRLineString>();
+    testMove<OGRLinearRing>();
+    testMove<OGRCircularString>();
+    testMove<OGRCompoundCurve>();
+    testMove<OGRCurvePolygon>();
+    testMove<OGRPolygon>();
+    testMove<OGRGeometryCollection>();
+    testMove<OGRMultiSurface>();
+    testMove<OGRMultiPolygon>();
+    testMove<OGRMultiPoint>();
+    testMove<OGRMultiCurve>();
+    testMove<OGRMultiLineString>();
+    testMove<OGRTriangle>();
+    testMove<OGRPolyhedralSurface>();
+    testMove<OGRTriangulatedSurface>();
 }
 
 TEST_F(test_ogr, geometry_get_point)
@@ -2425,6 +2483,36 @@ TEST_F(test_ogr, feature_defn_geomfields_iterator)
     EXPECT_EQ(i, oFDefn.GetGeomFieldCount());
 }
 
+// Test OGRGeomFieldDefn copy constructor
+TEST_F(test_ogr, geom_field_defn_copy_constructor)
+{
+    {
+        OGRGeomFieldDefn oGeomFieldDefn("field1", wkbPoint);
+        oGeomFieldDefn.SetNullable(false);
+        OGRGeomFieldDefn oGeomFieldDefn2("field2", wkbLineString);
+        oGeomFieldDefn2 = oGeomFieldDefn;
+        EXPECT_TRUE(oGeomFieldDefn2.IsSame(&oGeomFieldDefn));
+    }
+
+    {
+        OGRSpatialReference oSRS;
+        oSRS.SetFromUserInput("WGS84");
+        EXPECT_EQ(oSRS.GetReferenceCount(), 1);
+        OGRGeomFieldDefn oGeomFieldDefn("field1", wkbPoint);
+        oGeomFieldDefn.SetSpatialRef(&oSRS);
+        EXPECT_EQ(oSRS.GetReferenceCount(), 2);
+        OGRGeomFieldDefn oGeomFieldDefn2("field2", wkbLineString);
+        oGeomFieldDefn2 = oGeomFieldDefn;
+        EXPECT_EQ(oSRS.GetReferenceCount(), 3);
+        EXPECT_TRUE(oGeomFieldDefn2.IsSame(&oGeomFieldDefn));
+
+        // oGeomFieldDefn2 already points to oSRS
+        oGeomFieldDefn2 = oGeomFieldDefn;
+        EXPECT_EQ(oSRS.GetReferenceCount(), 3);
+        EXPECT_TRUE(oGeomFieldDefn2.IsSame(&oGeomFieldDefn));
+    }
+}
+
 // Test GDALDataset QueryLoggerFunc callback
 TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
 {
@@ -4241,9 +4329,8 @@ TEST_F(test_ogr, OGRCurve_reversePoints)
 TEST_F(test_ogr, transformWithOptions)
 {
     // Projected CRS to national geographic CRS (not including poles or antimeridian)
-    OGRGeometry *poGeom = nullptr;
-    OGRGeometryFactory::createFromWkt(
-        "LINESTRING(700000 6600000, 700001 6600001)", nullptr, &poGeom);
+    auto [poGeom, err] = OGRGeometryFactory::createFromWkt(
+        "LINESTRING(700000 6600000, 700001 6600001)");
     ASSERT_NE(poGeom, nullptr);
 
     OGRSpatialReference oEPSG_2154;
@@ -4254,12 +4341,12 @@ TEST_F(test_ogr, transformWithOptions)
     auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
         OGRCreateCoordinateTransformation(&oEPSG_2154, &oEPSG_4171));
     OGRGeometryFactory::TransformWithOptionsCache oCache;
-    poGeom = OGRGeometryFactory::transformWithOptions(poGeom, poCT.get(),
-                                                      nullptr, oCache);
-    EXPECT_NEAR(poGeom->toLineString()->getX(0), 3, 1e-8);
-    EXPECT_NEAR(poGeom->toLineString()->getY(0), 46.5, 1e-8);
-
-    delete poGeom;
+    auto poNewGeom =
+        std::unique_ptr<OGRGeometry>(OGRGeometryFactory::transformWithOptions(
+            poGeom.get(), poCT.get(), nullptr, oCache));
+    ASSERT_NE(poNewGeom, nullptr);
+    EXPECT_NEAR(poNewGeom->toLineString()->getX(0), 3, 1e-8);
+    EXPECT_NEAR(poNewGeom->toLineString()->getY(0), 46.5, 1e-8);
 }
 
 #ifdef HAVE_GEOS
@@ -4268,10 +4355,8 @@ TEST_F(test_ogr, transformWithOptions)
 TEST_F(test_ogr, transformWithOptions_GEOS)
 {
     // Projected CRS to national geographic CRS including antimeridian
-    OGRGeometry *poGeom = nullptr;
-    OGRGeometryFactory::createFromWkt(
-        "LINESTRING(657630.64 4984896.17,815261.43 4990738.26)", nullptr,
-        &poGeom);
+    auto [poGeom, err] = OGRGeometryFactory::createFromWkt(
+        "LINESTRING(657630.64 4984896.17,815261.43 4990738.26)");
     ASSERT_NE(poGeom, nullptr);
 
     OGRSpatialReference oEPSG_6329;
@@ -4282,12 +4367,14 @@ TEST_F(test_ogr, transformWithOptions_GEOS)
     auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
         OGRCreateCoordinateTransformation(&oEPSG_6329, &oEPSG_6318));
     OGRGeometryFactory::TransformWithOptionsCache oCache;
-    poGeom = OGRGeometryFactory::transformWithOptions(poGeom, poCT.get(),
-                                                      nullptr, oCache);
-    EXPECT_EQ(poGeom->getGeometryType(), wkbMultiLineString);
-    if (poGeom->getGeometryType() == wkbMultiLineString)
+    auto poNewGeom =
+        std::unique_ptr<OGRGeometry>(OGRGeometryFactory::transformWithOptions(
+            poGeom.get(), poCT.get(), nullptr, oCache));
+    ASSERT_NE(poNewGeom, nullptr);
+    EXPECT_EQ(poNewGeom->getGeometryType(), wkbMultiLineString);
+    if (poNewGeom->getGeometryType() == wkbMultiLineString)
     {
-        const auto poMLS = poGeom->toMultiLineString();
+        const auto poMLS = poNewGeom->toMultiLineString();
         EXPECT_EQ(poMLS->getNumGeometries(), 2);
         if (poMLS->getNumGeometries() == 2)
         {
@@ -4302,8 +4389,6 @@ TEST_F(test_ogr, transformWithOptions_GEOS)
             }
         }
     }
-
-    delete poGeom;
 }
 #endif
 
@@ -4400,21 +4485,16 @@ TEST_F(test_ogr, OGRFeature_SetGeometry)
     poFeatureDefn->Reference();
 
     OGRFeature oFeat(poFeatureDefn);
-    std::unique_ptr<OGRGeometry> poGeom;
-    OGRGeometry *poTmpGeom;
-    ASSERT_EQ(
-        OGRGeometryFactory::createFromWkt("POINT (3 7)", nullptr, &poTmpGeom),
-        OGRERR_NONE);
-    poGeom.reset(poTmpGeom);
+    auto [poGeom, err] = OGRGeometryFactory::createFromWkt("POINT (3 7)");
+    ASSERT_EQ(err, OGRERR_NONE);
+
     ASSERT_EQ(oFeat.SetGeometry(std::move(poGeom)), OGRERR_NONE);
     EXPECT_EQ(oFeat.GetGeometryRef()->toPoint()->getX(), 3);
     EXPECT_EQ(oFeat.GetGeometryRef()->toPoint()->getY(), 7);
 
     // set it again to make sure previous feature geometry is freed
-    ASSERT_EQ(
-        OGRGeometryFactory::createFromWkt("POINT (2 8)", nullptr, &poTmpGeom),
-        OGRERR_NONE);
-    poGeom.reset(poTmpGeom);
+    std::tie(poGeom, err) = OGRGeometryFactory::createFromWkt("POINT (2 8)");
+    ASSERT_EQ(err, OGRERR_NONE);
     ASSERT_EQ(oFeat.SetGeometry(std::move(poGeom)), OGRERR_NONE);
     EXPECT_EQ(oFeat.GetGeometryRef()->toPoint()->getX(), 2);
     EXPECT_EQ(oFeat.GetGeometryRef()->toPoint()->getY(), 8);
@@ -4434,27 +4514,127 @@ TEST_F(test_ogr, OGRFeature_SetGeomField)
 
     // failure
     {
-        std::unique_ptr<OGRGeometry> poGeom;
-        OGRGeometry *poTmpGeom;
-        ASSERT_EQ(OGRGeometryFactory::createFromWkt("POINT (3 7)", nullptr,
-                                                    &poTmpGeom),
-                  OGRERR_NONE);
-        poGeom.reset(poTmpGeom);
+        auto [poGeom, err] = OGRGeometryFactory::createFromWkt("POINT (3 7)");
+        ASSERT_EQ(err, OGRERR_NONE);
         EXPECT_EQ(oFeat.SetGeomField(13, std::move(poGeom)), OGRERR_FAILURE);
     }
 
     // success
     {
-        std::unique_ptr<OGRGeometry> poGeom;
-        OGRGeometry *poTmpGeom;
-        ASSERT_EQ(OGRGeometryFactory::createFromWkt("POINT (3 7)", nullptr,
-                                                    &poTmpGeom),
-                  OGRERR_NONE);
-        poGeom.reset(poTmpGeom);
+        auto [poGeom, err] = OGRGeometryFactory::createFromWkt("POINT (3 7)");
+        ASSERT_EQ(err, OGRERR_NONE);
         EXPECT_EQ(oFeat.SetGeomField(1, std::move(poGeom)), OGRERR_NONE);
     }
 
     poFeatureDefn->Release();
+}
+
+TEST_F(test_ogr, GetArrowStream_DateTime_As_String)
+{
+    auto poDS = std::unique_ptr<GDALDataset>(
+        GetGDALDriverManager()->GetDriverByName("Memory")->Create(
+            "", 0, 0, 0, GDT_Unknown, nullptr));
+    auto poLayer = poDS->CreateLayer("test", nullptr, wkbNone);
+    OGRFieldDefn oFieldDefn("dt", OFTDateTime);
+    poLayer->CreateField(&oFieldDefn);
+    struct ArrowArrayStream stream;
+    CPLStringList aosOptions;
+    aosOptions.SetNameValue("INCLUDE_FID", "NO");
+    aosOptions.SetNameValue("DATETIME_AS_STRING", "YES");
+    ASSERT_TRUE(poLayer->GetArrowStream(&stream, aosOptions.List()));
+    struct ArrowSchema schema;
+    memset(&schema, 0, sizeof(schema));
+    EXPECT_EQ(stream.get_schema(&stream, &schema), 0);
+    EXPECT_TRUE(schema.n_children == 1 &&
+                strcmp(schema.children[0]->format, "u") == 0)
+        << schema.n_children;
+    if (schema.n_children == 1 && strcmp(schema.children[0]->format, "u") == 0)
+    {
+        EXPECT_TRUE(schema.children[0]->metadata != nullptr);
+        if (schema.children[0]->metadata)
+        {
+            auto oMapKeyValue =
+                OGRParseArrowMetadata(schema.children[0]->metadata);
+            EXPECT_EQ(oMapKeyValue.size(), 1);
+            if (oMapKeyValue.size() == 1)
+            {
+                EXPECT_STREQ(oMapKeyValue.begin()->first.c_str(),
+                             "GDAL:OGR:type");
+                EXPECT_STREQ(oMapKeyValue.begin()->second.c_str(), "DateTime");
+            }
+        }
+    }
+    schema.release(&schema);
+    stream.release(&stream);
+}
+
+// Test OGRFeatureDefn::GetFieldSubTypeByName()
+TEST_F(test_ogr, OGRFieldDefnGetFieldSubTypeByName)
+{
+    for (int i = 0; i < OFSTMaxSubType; i++)
+    {
+        const char *pszName =
+            OGRFieldDefn::GetFieldSubTypeName(static_cast<OGRFieldSubType>(i));
+        if (pszName != nullptr)
+        {
+            EXPECT_EQ(OGRFieldDefn::GetFieldSubTypeByName(pszName), i);
+        }
+    }
+}
+
+// Test OGRFeatureDefn::GetFieldTypeByName()
+TEST_F(test_ogr, OGRFieldDefnGetFieldTypeByName)
+{
+    for (int i = 0; i < OFTMaxType; i++)
+    {
+        // deprecated types
+        if (i == OFTWideString || i == OFTWideStringList)
+        {
+            continue;
+        }
+        const char *pszName =
+            OGRFieldDefn::GetFieldTypeName(static_cast<OGRFieldType>(i));
+        if (pszName != nullptr)
+        {
+            EXPECT_EQ(OGRFieldDefn::GetFieldTypeByName(pszName), i);
+        }
+    }
+}
+
+// Test OGRGeometryFactory::GetDefaultArcStepSize()
+TEST_F(test_ogr, GetDefaultArcStepSize)
+{
+    if (CPLGetConfigOption("OGR_ARC_STEPSIZE", nullptr) == nullptr)
+    {
+        EXPECT_EQ(OGRGeometryFactory::GetDefaultArcStepSize(), 4.0);
+    }
+    {
+        CPLConfigOptionSetter oSetter("OGR_ARC_STEPSIZE", "0.00001",
+                                      /* bSetOnlyIfUndefined = */ false);
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        EXPECT_EQ(OGRGeometryFactory::GetDefaultArcStepSize(), 1e-2);
+        EXPECT_TRUE(
+            strstr(CPLGetLastErrorMsg(),
+                   "Too small value for OGR_ARC_STEPSIZE. Clamping it to"));
+    }
+    {
+        CPLConfigOptionSetter oSetter("OGR_ARC_STEPSIZE", "190",
+                                      /* bSetOnlyIfUndefined = */ false);
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        EXPECT_EQ(OGRGeometryFactory::GetDefaultArcStepSize(), 180);
+        EXPECT_TRUE(
+            strstr(CPLGetLastErrorMsg(),
+                   "Too large value for OGR_ARC_STEPSIZE. Clamping it to"));
+    }
+}
+
+TEST_F(test_ogr, OGRPolygon_two_vertex_constructor)
+{
+    OGRPolygon p(1, 2, 3, 4);
+    char *outWKT = nullptr;
+    p.exportToWkt(&outWKT, wkbVariantIso);
+    EXPECT_STREQ(outWKT, "POLYGON ((1 2,1 4,3 4,3 2,1 2))");
+    CPLFree(outWKT);
 }
 
 }  // namespace

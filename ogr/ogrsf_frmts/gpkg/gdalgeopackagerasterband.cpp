@@ -1835,6 +1835,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
     const CPLString osMemFileName(
         VSIMemGenerateHiddenFilename("gpkg_write_tile"));
     const char *pszDriverName = "PNG";
+    CPL_IGNORE_RET_VAL(pszDriverName);  // Make CSA happy
     bool bTileDriverSupports1Band = false;
     bool bTileDriverSupports2Bands = false;
     bool bTileDriverSupports4Bands = false;
@@ -2918,7 +2919,7 @@ GDALGPKGMBTilesLikePseudoDataset::DoPartialFlushOfPartialTilesIfNecessary()
     {
         m_nLastSpaceCheckTimestamp = nCurTimeStamp;
         GIntBig nFreeSpace =
-            VSIGetDiskFreeSpace(CPLGetDirname(m_osTempDBFilename));
+            VSIGetDiskFreeSpace(CPLGetDirnameSafe(m_osTempDBFilename).c_str());
         bool bTryFreeing = false;
         if (nFreeSpace >= 0 && nFreeSpace < 1024 * 1024 * 1024)
         {
@@ -2989,7 +2990,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(
         const char *pszBaseFilename =
             m_poParentDS ? m_poParentDS->IGetFilename() : IGetFilename();
         m_osTempDBFilename =
-            CPLResetExtension(pszBaseFilename, "partial_tiles.db");
+            CPLResetExtensionSafe(pszBaseFilename, "partial_tiles.db");
         CPLPushErrorHandler(CPLQuietErrorHandler);
         VSIUnlink(m_osTempDBFilename);
         CPLPopErrorHandler();

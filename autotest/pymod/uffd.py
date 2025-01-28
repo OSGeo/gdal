@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Python Library supporting GDAL/OGR Test Suite

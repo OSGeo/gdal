@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id$
-#
 #  Project:  GDAL samples
 #  Purpose:  Replace container.size() by !container.empty(), and reverse
 #  Author:   Even Rouault <even.rouault at spatialys.com>

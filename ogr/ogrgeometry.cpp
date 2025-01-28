@@ -110,6 +110,22 @@ OGRGeometry::OGRGeometry(const OGRGeometry &other)
 }
 
 /************************************************************************/
+/*                   OGRGeometry( OGRGeometry&& )                       */
+/************************************************************************/
+
+/**
+ * \brief Move constructor.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRGeometry::OGRGeometry(OGRGeometry &&other)
+    : poSRS(other.poSRS), flags(other.flags)
+{
+    other.poSRS = nullptr;
+}
+
+/************************************************************************/
 /*                            ~OGRGeometry()                            */
 /************************************************************************/
 
@@ -139,6 +155,27 @@ OGRGeometry &OGRGeometry::operator=(const OGRGeometry &other)
     {
         empty();
         assignSpatialReference(other.getSpatialReference());
+        flags = other.flags;
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*                    operator=( OGRGeometry&&)                         */
+/************************************************************************/
+
+/**
+ * \brief Move assignment operator.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRGeometry &OGRGeometry::operator=(OGRGeometry &&other)
+{
+    if (this != &other)
+    {
+        poSRS = other.poSRS;
+        other.poSRS = nullptr;
         flags = other.flags;
     }
     return *this;
@@ -6849,6 +6886,100 @@ OGRGeometryH OGR_G_Polygonize(OGRGeometryH hTarget)
 }
 
 /************************************************************************/
+/*                             BuildArea()                              */
+/************************************************************************/
+
+/**
+ * \brief Polygonize a linework assuming inner polygons are holes.
+ *
+ * This method is the same as the C function OGR_G_BuildArea().
+ *
+ * Polygonization is performed similarly to OGRGeometry::Polygonize().
+ * Additionally, holes are dropped and the result is unified producing
+ * a single Polygon or a MultiPolygon.
+ *
+ * A new geometry object is created and returned: NULL on failure,
+ * empty GeometryCollection if the input geometry cannot be polygonized,
+ * Polygon or MultiPolygon on success.
+ *
+ * This method is built on the GEOSBuildArea_r() function of the GEOS
+ * library, check it for the definition of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @return a newly allocated geometry now owned by the caller,
+ *         or NULL on failure.
+ *
+ * @since OGR 3.11
+ */
+
+OGRGeometry *OGRGeometry::BuildArea() const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
+    return nullptr;
+
+#else
+
+    OGRGeometry *poPolygsOGRGeom = nullptr;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    if (hThisGeosGeom != nullptr)
+    {
+        GEOSGeom hGeosPolygs = GEOSBuildArea_r(hGEOSCtxt, hThisGeosGeom);
+        poPolygsOGRGeom =
+            BuildGeometryFromGEOS(hGEOSCtxt, hGeosPolygs, this, nullptr);
+        GEOSGeom_destroy_r(hGEOSCtxt, hThisGeosGeom);
+    }
+    freeGEOSContext(hGEOSCtxt);
+
+    return poPolygsOGRGeom;
+
+#endif  // HAVE_GEOS
+}
+
+/************************************************************************/
+/*                          OGR_G_BuildArea()                           */
+/************************************************************************/
+
+/**
+ * \brief Polygonize a linework assuming inner polygons are holes.
+ *
+ * This function is the same as the C++ method OGRGeometry::BuildArea().
+ *
+ * Polygonization is performed similarly to OGR_G_Polygonize().
+ * Additionally, holes are dropped and the result is unified producing
+ * a single Polygon or a MultiPolygon.
+ *
+ * A new geometry object is created and returned: NULL on failure,
+ * empty GeometryCollection if the input geometry cannot be polygonized,
+ * Polygon or MultiPolygon on success.
+ *
+ * This function is built on the GEOSBuildArea_r() function of the GEOS
+ * library, check it for the definition of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param hGeom handle on the geometry to polygonize.
+ *
+ * @return a handle on newly allocated geometry now owned by the caller,
+ *         or NULL on failure.
+ *
+ * @since OGR 3.11
+ */
+
+OGRGeometryH OGR_G_BuildArea(OGRGeometryH hGeom)
+
+{
+    VALIDATE_POINTER1(hGeom, "OGR_G_BuildArea", nullptr);
+
+    return OGRGeometry::ToHandle(OGRGeometry::FromHandle(hGeom)->BuildArea());
+}
+
+/************************************************************************/
 /*                               swapXY()                               */
 /************************************************************************/
 
@@ -7136,14 +7267,16 @@ char *OGRGeometryToHexEWKB(OGRGeometry *poGeometry, int nSRSId,
     // When converting to hex, each byte takes 2 hex characters.  In addition
     // we add in 8 characters to represent the SRID integer in hex, and
     // one for a null terminator.
-
-    const size_t nTextSize = nWkbSize * 2 + 8 + 1;
-    if (nTextSize > static_cast<size_t>(std::numeric_limits<int>::max()))
+    // The limit of INT_MAX = 2 GB is a bit artificial, but at time of writing
+    // (2024), PostgreSQL by default cannot handle objects larger than 1 GB:
+    // https://github.com/postgres/postgres/blob/5d39becf8ba0080c98fee4b63575552f6800b012/src/include/utils/memutils.h#L40
+    if (nWkbSize >
+        static_cast<size_t>(std::numeric_limits<int>::max() - 8 - 1) / 2)
     {
-        // FIXME: artificial limitation
         CPLFree(pabyWKB);
         return CPLStrdup("");
     }
+    const size_t nTextSize = nWkbSize * 2 + 8 + 1;
     char *pszTextBuf = static_cast<char *>(VSI_MALLOC_VERBOSE(nTextSize));
     if (pszTextBuf == nullptr)
     {
@@ -7193,10 +7326,14 @@ char *OGRGeometryToHexEWKB(OGRGeometry *poGeometry, int nSRSId,
     // Copy the rest of the data over - subtract
     // 5 since we already copied 5 bytes above.
     pszHex = CPLBinaryToHex(static_cast<int>(nWkbSize - 5), pabyWKB + 5);
+    CPLFree(pabyWKB);
+    if (!pszHex || pszHex[0] == 0)
+    {
+        CPLFree(pszTextBuf);
+        return pszHex;
+    }
     strcpy(pszTextBufCurrent, pszHex);
     CPLFree(pszHex);
-
-    CPLFree(pabyWKB);
 
     return pszTextBuf;
 }
@@ -7903,7 +8040,65 @@ sfcgal_geometry_t *
 OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL const OGRGeometry *poGeom)
 {
 #ifdef HAVE_SFCGAL
+
     sfcgal_init();
+#if SFCGAL_VERSION >= SFCGAL_MAKE_VERSION(1, 5, 2)
+
+    const auto exportToSFCGALViaWKB =
+        [](const OGRGeometry *geom) -> sfcgal_geometry_t *
+    {
+        if (!geom)
+            return nullptr;
+
+        // Get WKB size and allocate buffer
+        size_t nSize = geom->WkbSize();
+        unsigned char *pabyWkb = static_cast<unsigned char *>(CPLMalloc(nSize));
+
+        // Set export options with NDR byte order
+        OGRwkbExportOptions oOptions;
+        oOptions.eByteOrder = wkbNDR;
+
+        // Export to WKB
+        sfcgal_geometry_t *sfcgalGeom = nullptr;
+        if (geom->exportToWkb(pabyWkb, &oOptions) == OGRERR_NONE)
+        {
+            sfcgalGeom = sfcgal_io_read_wkb(
+                reinterpret_cast<const char *>(pabyWkb), nSize);
+        }
+
+        CPLFree(pabyWkb);
+        return sfcgalGeom;
+    };
+
+    // Handle special cases
+    if (EQUAL(poGeom->getGeometryName(), "LINEARRING"))
+    {
+        std::unique_ptr<OGRLineString> poLS(
+            OGRCurve::CastToLineString(poGeom->clone()->toCurve()));
+        return exportToSFCGALViaWKB(poLS.get());
+    }
+    else if (EQUAL(poGeom->getGeometryName(), "CIRCULARSTRING") ||
+             EQUAL(poGeom->getGeometryName(), "COMPOUNDCURVE"))
+    {
+        std::unique_ptr<OGRLineString> poLS(
+            OGRGeometryFactory::forceToLineString(poGeom->clone())
+                ->toLineString());
+        return exportToSFCGALViaWKB(poLS.get());
+    }
+    else if (EQUAL(poGeom->getGeometryName(), "CURVEPOLYGON"))
+    {
+        std::unique_ptr<OGRPolygon> poPolygon(
+            OGRGeometryFactory::forceToPolygon(
+                poGeom->clone()->toCurvePolygon())
+                ->toPolygon());
+        return exportToSFCGALViaWKB(poPolygon.get());
+    }
+    else
+    {
+        // Default case - direct export
+        return exportToSFCGALViaWKB(poGeom);
+    }
+#else
     char *buffer = nullptr;
 
     // special cases - LinearRing, Circular String, Compound Curve, Curve
@@ -7979,6 +8174,7 @@ OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL const OGRGeometry *poGeom)
         CPLFree(buffer);
         return nullptr;
     }
+#endif
 #else
     CPLError(CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled.");
     return nullptr;
@@ -8000,13 +8196,36 @@ OGRGeometry *OGRGeometry::SFCGALexportToOGR(
         return nullptr;
 
     sfcgal_init();
-    char *pabySFCGALWKT = nullptr;
+    char *pabySFCGAL = nullptr;
     size_t nLength = 0;
-    sfcgal_geometry_as_text_decim(geometry, 19, &pabySFCGALWKT, &nLength);
+#if SFCGAL_VERSION >= SFCGAL_MAKE_VERSION(1, 5, 2)
+
+    sfcgal_geometry_as_wkb(geometry, &pabySFCGAL, &nLength);
+
+    if (pabySFCGAL == nullptr || nLength == 0)
+        return nullptr;
+
+    OGRGeometry *poGeom = nullptr;
+    OGRErr eErr = OGRGeometryFactory::createFromWkb(
+        reinterpret_cast<unsigned char *>(pabySFCGAL), nullptr, &poGeom,
+        nLength);
+
+    free(pabySFCGAL);
+
+    if (eErr == OGRERR_NONE)
+    {
+        return poGeom;
+    }
+    else
+    {
+        return nullptr;
+    }
+#else
+    sfcgal_geometry_as_text_decim(geometry, 19, &pabySFCGAL, &nLength);
     char *pszWKT = static_cast<char *>(CPLMalloc(nLength + 1));
-    memcpy(pszWKT, pabySFCGALWKT, nLength);
+    memcpy(pszWKT, pabySFCGAL, nLength);
     pszWKT[nLength] = 0;
-    free(pabySFCGALWKT);
+    free(pabySFCGAL);
 
     sfcgal_geometry_type_t geom_type = sfcgal_geometry_type_id(geometry);
 
@@ -8069,7 +8288,7 @@ OGRGeometry *OGRGeometry::SFCGALexportToOGR(
         CPLFree(pszWKT);
         return nullptr;
     }
-
+#endif
 #else
     CPLError(CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled.");
     return nullptr;

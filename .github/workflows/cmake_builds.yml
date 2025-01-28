@@ -97,8 +97,8 @@ jobs:
         # Workaround bug in ogdi packaging
         sudo ln -s /usr/lib/ogdi/libvrf.so /usr/lib
         #
-        python3 -m pip install -U pip wheel setuptools numpy importlib_metadata
-        python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
+        PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U pip wheel setuptools numpy importlib_metadata
+        PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
 
     - name: Build libjxl
       run: |
@@ -245,7 +245,7 @@ jobs:
         python3 -m venv myvenv
         source myvenv/bin/activate
         # Set PATH so that gdal-config is found
-        PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install gdal-python.tar.gz[numpy]
+        PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH $PYTHON_CMD -m pip install gdal-python.tar.gz[numpy]
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib python -c "from osgeo import gdal_array"
         which gdal_edit
         cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
@@ -262,7 +262,7 @@ jobs:
         python3 -m venv myvenv
         source myvenv/bin/activate
         # Set PATH so that gdal-config is found
-        PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install gdal_utils-X.Y.Z.T-py3-none-any.whl
+        PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH $PYTHON_CMD -m pip install gdal_utils-X.Y.Z.T-py3-none-any.whl
         which gdal_edit
         cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit byte.tif -mo FOO=BAR
@@ -319,7 +319,7 @@ jobs:
       - name: Checkout GDAL
         uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
       - name: Install development packages
-        uses: msys2/setup-msys2@ddf331adaebd714795f1042345e6ca57bd66cea8 # v2.24.1
+        uses: msys2/setup-msys2@c52d1fa9c7492275e60fe763540fb601f5f232a1 # v2.25.0
         with:
           msystem: MINGW64
           update: true
@@ -328,7 +328,7 @@ jobs:
             base-devel git mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache
             mingw-w64-x86_64-pcre mingw-w64-x86_64-xerces-c mingw-w64-x86_64-zstd mingw-w64-x86_64-libarchive
             mingw-w64-x86_64-geos mingw-w64-x86_64-libspatialite mingw-w64-x86_64-proj
-            mingw-w64-x86_64-cgal mingw-w64-x86_64-libfreexl mingw-w64-x86_64-hdf5 mingw-w64-x86_64-netcdf mingw-w64-x86_64-poppler  mingw-w64-x86_64-podofo mingw-w64-x86_64-postgresql
+            mingw-w64-x86_64-cgal mingw-w64-x86_64-libfreexl mingw-w64-x86_64-hdf5 mingw-w64-x86_64-muparser mingw-w64-x86_64-netcdf mingw-w64-x86_64-poppler  mingw-w64-x86_64-podofo mingw-w64-x86_64-postgresql
             mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libpng mingw-w64-x86_64-libtiff mingw-w64-x86_64-openjpeg2
             mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools mingw-w64-x86_64-python-lxml mingw-w64-x86_64-swig mingw-w64-x86_64-python-psutil mingw-w64-x86_64-blosc mingw-w64-x86_64-libavif
       - name: Setup cache
@@ -353,8 +353,8 @@ jobs:
       - name: Install python dependencies for autotest
         run: |
           # One of the dependencies of jsonschema 4.18 is rpds_py which requires a Rust compiler
-          python -m pip install "jsonschema<4.18"
-          python -m pip install -r autotest/requirements.txt
+          PYTHON_CMD=python3 && $PYTHON_CMD -m pip install "jsonschema<4.18"
+          PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r autotest/requirements.txt
       # Disable mySQL since C:/mysql/lib/mysqlclient.lib (unrelated to msys) is found, which causes linking issues
       # Set explicitly CMAKE_C|CXX_COMPILER otherwise C:/ProgramData/chocolatey/bin/gcc.exe would be used
       # Disable GDAL_ENABLE_DRIVER_HDF5 because of https://github.com/OSGeo/gdal/issues/11181
@@ -418,7 +418,7 @@ jobs:
       shell: pwsh
       run: |
         echo "JAVA_HOME=$env:JAVA_HOME_11_X64" >> %GITHUB_ENV%
-    - uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
+    - uses: conda-incubator/setup-miniconda@d2e6a045a86077fb6cad6f5adf368e9076ddaa8d # v3.1.0
       with:
         activate-environment: gdalenv
         miniforge-version: latest
@@ -428,14 +428,13 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet curl libiconv icu python=3.10 swig numpy pytest pytest-env pytest-benchmark filelock zlib lxml jsonschema setuptools
-        # FIXME: remove libnetcdf=4.9.2=nompi_h5902ca5_107 pinning as soon as https://github.com/conda-forge/libnetcdf-feedstock/issues/182 is resolved
+        conda install --yes --quiet curl libiconv icu python=3.12 swig numpy pytest pytest-env pytest-benchmark filelock zlib lxml jsonschema setuptools
         conda install --yes --quiet proj geos hdf4 hdf5 kealib \
-            libnetcdf=4.9.2=nompi_h5902ca5_107 openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
+            libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
             cfitsio freexl geotiff libjpeg-turbo libpq libspatialite libwebp-base pcre pcre2 postgresql \
-            sqlite tiledb zstd cryptopp cgal doxygen librttopo libkml openssl xz \
+            sqlite tiledb zstd cryptopp cgal doxygen librttopo openssl liblzma-devel \
             openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc libarchive \
-            arrow-cpp pyarrow libaec libheif libavif cmake fsspec
+            libarrow pyarrow libaec libheif libavif muparser cmake fsspec
     - name: Check CMake version
       shell: bash -l {0}
       run: |
@@ -525,7 +524,7 @@ jobs:
         git config --global core.autocrlf false
     - name: Checkout GDAL
       uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
-    - uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
+    - uses: conda-incubator/setup-miniconda@d2e6a045a86077fb6cad6f5adf368e9076ddaa8d # v3.1.0
       with:
         activate-environment: gdalenv
         miniforge-version: latest
@@ -606,7 +605,7 @@ jobs:
     - name: Setup xcode
       uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
       with:
-        xcode-version: 14.3
+        xcode-version: '15.4.0'
     - name: Checkout GDAL
       uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
     - name: Setup cache
@@ -625,6 +624,9 @@ jobs:
         rm -rf /opt/homebrew/lib/node_modules # conflicts with node@18 from brew
         brew update
         brew outdated
+        mv /opt/homebrew/bin/pkg-config /opt/homebrew/bin/pkg-config.old
+        mv /opt/homebrew/share/aclocal/pkg.m4 /opt/homebrew/share/aclocal/pkg.m4.old
+        mv /opt/homebrew/share/man/man1/pkg-config.1 /opt/homebrew/share/man/man1/pkg-config.1.old
         brew install --overwrite python@3.11 python@3.12
         brew install postgresql || brew link postgresql
         brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo aom jpeg-xl libheif libarchive libkml boost
@@ -634,6 +636,9 @@ jobs:
         brew uninstall --ignore-dependencies gdal
         # Workaround for https://github.com/Homebrew/homebrew-core/pull/170959#issuecomment-2379606442
         sed -i .bak 's/hdf5_hl;hdf5;/hdf5_hl-shared;hdf5-shared;/g' "$(brew --prefix netcdf)/lib/cmake/netCDF/netCDFTargets.cmake"
+        mv /opt/homebrew/bin/pkg-config.old /opt/homebrew/bin/pkg-config
+        mv /opt/homebrew/share/aclocal/pkg.m4.old /opt/homebrew/share/aclocal/pkg.m4
+        mv /opt/homebrew/share/man/man1/pkg-config.1.old /opt/homebrew/share/man/man1/pkg-config.1
     - name: Configure ccache
       run: |
           echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}
@@ -646,8 +651,8 @@ jobs:
         mkdir -p $GITHUB_WORKSPACE/build
         export PKG_CONFIG_PATH=/opt/homebrew/Cellar/libxml2/lib/pkgconfig
         # FIXME: remove -DBUILD_PYTHON_BINDINGS=OFF. Python tests fail with "ModuleNotFoundError: No module named '_gdal'" with macos-12
-        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev" -DBUILD_PYTHON_BINDINGS=OFF
-        #$(cat $GITHUB_WORKSPACE/build/python_executable.txt) -m pip install --user -r $GITHUB_WORKSPACE/autotest/requirements.txt
+        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev" -DBUILD_PYTHON_BINDINGS=OFF  "-DUSE_PRECOMPILED_HEADERS=ON"
+        #PYTHON_CMD=$(cat $GITHUB_WORKSPACE/build/python_executable.txt) && $PYTHON_CMD -m pip install --user -r $GITHUB_WORKSPACE/autotest/requirements.txt
     - name: Build
       run: |
         cmake --build $GITHUB_WORKSPACE/build -j 3
@@ -690,7 +695,7 @@ jobs:
         git config --global core.autocrlf false
     - name: Checkout GDAL
       uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
-    - uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
+    - uses: conda-incubator/setup-miniconda@d2e6a045a86077fb6cad6f5adf368e9076ddaa8d # v3.1.0
       with:
         activate-environment: gdalenv
         python-version: 3.9

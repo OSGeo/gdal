@@ -102,24 +102,26 @@ like creating a PDF file from a XML composition file.
 Examples
 --------
 
-- Initialize a new GeoTIFF file with a uniform value of 10
+.. example::
+   :title: Initialize a new GeoTIFF file with a uniform value of 10
 
-    ::
+   .. code-block:: bash
 
-        gdal_create -outsize 20 20 -a_srs EPSG:4326 -a_ullr 2 50 3 49 -burn 10 out.tif
-
-
-- Create a PDF file from a XML composition file:
-
-    ::
-
-        gdal_create -co COMPOSITION_FILE=composition.xml out.pdf
+      gdal_create -outsize 20 20 -a_srs EPSG:4326 -a_ullr 2 50 3 49 -burn 10 out.tif
 
 
+.. example::
+   :title: Create a PDF file from a XML composition file
 
-- Initialize a blank GeoTIFF file from an input one:
+   .. code-block:: bash
 
-    ::
+      gdal_create -co COMPOSITION_FILE=composition.xml out.pdf
 
-        gdal_create -if prototype.tif output.tif
+
+.. example::
+   :title: Initialize a blank GeoTIFF file from an input one
+
+   .. code-block:: bash
+
+      gdal_create -if prototype.tif output.tif
 

@@ -21,7 +21,7 @@ from osgeo import gdal
 # dummy object to hold options
 
 
-class Options(object):
+class Options:
     def __init__(self):
         self.verbose_flag = 0
         self.append = 0

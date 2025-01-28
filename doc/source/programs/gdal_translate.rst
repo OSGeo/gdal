@@ -15,29 +15,36 @@ Synopsis
 
 .. code-block::
 
+   gdal_translate [--help] [--long-usage] [--help-general]
+                  [-ot Byte|Int8|[U]Int{16|32|64}|CInt{16|32}|[C]Float{32|64}]
+                  [-if <format>]... [-of <output_format>] [--quiet]
+                  [-b <band>]... [-mask <mask>] [-expand gray|rgb|rgba]
+                  [[-strict]|[-not_strict]]
+                  [-outsize <xsize[%]|0> <ysize[%]|0>] [-tr <xres> <yes>]
+                  [-ovr <level>|AUTO|AUTO-<n>|NONE] [-sds]
+                  [-r nearest,bilinear,cubic,cubicspline,lanczos,average,mode]
+                  [[-scale [<src_min> <src_max> [<dst_min> <dst_max>]]]...|
+                  [-scale_X [<src_min> <src_max> [<dst_min> <dst_max>]]]...|
+                  [-unscale]]
+                  [[-exponent <value>]|[-exponent_X <value>]...]
+                  [-srcwin <xoff> <yoff> <xsize> <ysize>]
+                  [-projwin <ulx> <uly> <lrx> <lry>]
+                  [-projwin_srs <srs_def>] [-epo] [-eco] [-a_srs <srs_def>]
+                  [-a_coord_epoch <epoch>] [-a_ullr <ulx> <uly> <lrx> <lry>]
+                  [-a_nodata <value>|none]
+                  [-a_gt <gt(0)> <gt(1)> <gt(2)> <gt(3)> <gt(4)> <gt(5)>]
+                  [-a_scale <value>] [-a_offset <value>] [-nogcp]
+                  [-gcp <pixel> <line> <easting> <northing> [<elevation>]]...
+                  [-colorinterp {red|green|blue|alpha|gray|undefined|pan|
+                                 coastal|rededge|nir|swir|mwir|lwir|...},...]
+                  [-colorinterp_X {red|green|blue|alpha|gray|undefined|pan|
+                                   coastal|rededge|nir|swir|mwir|lwir|...}]...
+                  [[-stats]|[-approx_stats]]
+                  [-norat] [-noxmp] [-co <NAME>=<VALUE>]...
+                  [-mo <NAME>=<VALUE>]... [-dmo <DOMAIN>:<KEY>=<VALUE>]...
+                  [-oo <NAME>=<VALUE>]...
+                  <input_file> <output_file>
 
-    gdal_translate [--help] [--help-general] [--long-usage]
-       [-ot {Byte/Int8/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/
-             CInt16/CInt32/CFloat32/CFloat64}] [-strict]
-       [-if <format>]... [-of <format>]
-       [-b <band>] [-mask <band>] [-expand {gray|rgb|rgba}]
-       [-outsize <xsize>[%]|0 <ysize>[%]|0] [-tr <xres> <yres>]
-       [-ovr <level>|AUTO|AUTO-<n>|NONE]
-       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
-       [-unscale] [-scale[_bn] [<src_min> <src_max> [<dst_min> <dst_max>]]]... [-exponent[_bn] <exp_val>]...
-       [-srcwin <xoff> <yoff> <xsize> <ysize>] [-epo] [-eco]
-       [-projwin <ulx> <uly> <lrx> <lry>] [-projwin_srs <srs_def>]
-       [-a_srs <srs_def>] [-a_coord_epoch <epoch>]
-       [-a_ullr <ulx> <uly> <lrx> <lry>] [-a_nodata <value>]
-       [-a_gt <gt0> <gt1> <gt2> <gt3> <gt4> <gt5>]
-       [-a_scale <value>] [-a_offset <value>]
-       [-nogcp] [-gcp <pixel> <line> <easting> <northing> [<elevation>]]...
-       |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...}]
-       |-colorinterp {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...},...]
-       [-mo <META-TAG>=<VALUE>]... [-dmo "DOMAIN:META-TAG=VALUE"]... [-q] [-sds]
-       [-co <NAME>=<VALUE>]... [-stats] [-norat] [-noxmp]
-       [-oo <NAME>=<VALUE>]...
-       <src_dataset> <dst_dataset>
 
 Description
 -----------
@@ -158,7 +165,7 @@ resampling, and rescaling pixels in the process.
     offset to apply to the input raster values. In particular, ``src_min`` and
     ``src_max`` are not used to clip input values unless :option:`-exponent`
     is also specified.
-    Instead of being clipped, source values that are outside the range of ``src_min`` and ``src_max`` will be scaled to values outside the range of ``dst_min`` and ``dst_max``. 
+    Instead of being clipped, source values that are outside the range of ``src_min`` and ``src_max`` will be scaled to values outside the range of ``dst_min`` and ``dst_max``.
     If clipping without exponential scaling is desired,
     ``-exponent 1`` can be used.
     :option:`-scale` can be repeated several times (if specified only once,
@@ -446,28 +453,34 @@ This utility is also callable from C with :cpp:func:`GDALTranslate`.
 Examples
 --------
 
-::
+.. example::
+   :title: Creating a tiled GeoTIFF
 
-    gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
+   .. code-block:: bash
 
-
-To create a JPEG-compressed TIFF with internal mask from a RGBA dataset
-
-::
-
-    gdal_translate rgba.tif withmask.tif -b 1 -b 2 -b 3 -mask 4 -co COMPRESS=JPEG \
-      -co PHOTOMETRIC=YCBCR --config GDAL_TIFF_INTERNAL_MASK YES
+      gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
 
 
-To create a RGBA dataset from a RGB dataset with a mask
+.. example::
+   :title: Creating a JPEG-compressed TIFF with internal mask from a RGBA dataset
 
-::
+   .. code-block:: bash
 
-    gdal_translate withmask.tif rgba.tif -b 1 -b 2 -b 3 -b mask
+      gdal_translate rgba.tif withmask.tif -b 1 -b 2 -b 3 -mask 4 -co COMPRESS=JPEG \
+        -co PHOTOMETRIC=YCBCR --config GDAL_TIFF_INTERNAL_MASK YES
 
 
-Subsetting using :option:`-projwin` and :option:`-outsize`:
+.. example::
+   :title: Creating a RGBA dataset from a RGB dataset with a mask
 
-.. code-block:: bash
+   .. code-block:: bash
 
-   gdal_translate -projwin -20037500 10037500 0 0 -outsize 100 100 frmt_wms_googlemaps_tms.xml junk.png
+       gdal_translate withmask.tif rgba.tif -b 1 -b 2 -b 3 -b mask
+
+
+.. example::
+   :title: Subsetting using :option:`-projwin` and :option:`-outsize`
+
+   .. code-block:: bash
+
+      gdal_translate -projwin -20037500 10037500 0 0 -outsize 100 100 frmt_wms_googlemaps_tms.xml junk.png

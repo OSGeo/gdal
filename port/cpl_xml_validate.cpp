@@ -80,19 +80,21 @@ static void CPLFixPath(char *pszPath)
             pszPath[i] = '/';
     }
 
+    std::string osRet(pszPath);
     while (true)
     {
-        char *pszSlashDotDot = strstr(pszPath, "/../");
-        if (pszSlashDotDot == nullptr || pszSlashDotDot == pszPath)
-            return;
-        char *pszSlashBefore = pszSlashDotDot - 1;
-        while (pszSlashBefore > pszPath && *pszSlashBefore != '/')
-            pszSlashBefore--;
-        if (pszSlashBefore == pszPath)
-            return;
-        memmove(pszSlashBefore + 1, pszSlashDotDot + 4,
-                strlen(pszSlashDotDot + 4) + 1);
+        size_t nSlashDotDot = osRet.find("/../");
+        if (nSlashDotDot == std::string::npos || nSlashDotDot == 0)
+            break;
+        size_t nPos = nSlashDotDot - 1;
+        while (nPos > 0 && osRet[nPos] != '/')
+            --nPos;
+        if (nPos == 0)
+            break;
+        osRet = osRet.substr(0, nPos + 1) +
+                osRet.substr(nSlashDotDot + strlen("/../"));
     }
+    memcpy(pszPath, osRet.data(), osRet.size() + 1);
 }
 
 #ifdef HAS_VALIDATION_BUG
@@ -423,8 +425,10 @@ static CPLXMLNode *CPLLoadSchemaStrInternal(CPLHashSet *hSetSchemas,
             strcmp(psIter->psChild->pszValue, "schemaLocation") == 0)
         {
             const char *pszIncludeSchema = psIter->psChild->psChild->pszValue;
-            char *pszFullFilename = CPLStrdup(CPLFormFilename(
-                CPLGetPath(pszFile), pszIncludeSchema, nullptr));
+            char *pszFullFilename =
+                CPLStrdup(CPLFormFilenameSafe(CPLGetPathSafe(pszFile).c_str(),
+                                              pszIncludeSchema, nullptr)
+                              .c_str());
 
             CPLFixPath(pszFullFilename);
 
@@ -501,8 +505,9 @@ static CPLXMLNode *CPLLoadSchemaStrInternal(CPLHashSet *hSetSchemas,
                     strstr(pszFile, "/vsimem/CPLValidateXML_") == nullptr)
                 {
                     char *pszFullFilename = CPLStrdup(
-                        CPLFormFilename(CPLGetPath(pszFile),
-                                        psIter2->psChild->pszValue, nullptr));
+                        CPLFormFilenameSafe(CPLGetPathSafe(pszFile).c_str(),
+                                            psIter2->psChild->pszValue, nullptr)
+                            .c_str());
                     CPLFixPath(pszFullFilename);
                     CPLFree(psIter2->psChild->pszValue);
                     psIter2->psChild->pszValue = pszFullFilename;

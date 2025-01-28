@@ -1,4 +1,4 @@
-FROM fedora:rawhide
+FROM fedora:rawhide@sha256:19fcecbd14f2c1e887cbeb974295f5fc0e7b81e2df133e4f1b47a6f65cd11737
 
 # FIXME: Exclude update of dnf&rpm themselves as this results in a no longer working dnf
 # cf https://github.com/OSGeo/gdal/actions/runs/9448190401/job/26021669415?pr=10173
@@ -19,6 +19,7 @@ RUN dnf install -y clang make diffutils ccache cmake \
       mdbtools-devel mdbtools-odbc unixODBC-devel \
       armadillo-devel qhull-devel \
       hdf-devel hdf5-devel netcdf-devel \
+      muParser-devel \
       libpq-devel \
       libavif-devel \
       python3-setuptools python3-pip python3-devel python3-lxml swig \
@@ -26,5 +27,8 @@ RUN dnf install -y clang make diffutils ccache cmake \
 
 COPY requirements.txt /tmp/
 # One of the dependencies of jsonschema 4.18 is rpds_py which requires a Rust compiler
-RUN python3 -m pip install "jsonschema<4.18"
-RUN python3 -m pip install -r /tmp/requirements.txt
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install "jsonschema<4.18"
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r /tmp/requirements.txt
+
+# Workaround https://bugzilla.redhat.com/show_bug.cgi?id=2332307
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --force-reinstall numpy

@@ -25,6 +25,9 @@ file, such as YCbCr color model files, are automatically translated into
 RGBA (red, green, blue, alpha) form, and treated as four eight bit
 bands.
 
+For an alternative which offers thread-safe read-only capabilities, consult
+:ref:`raster.libertiff`.
+
 Driver capabilities
 -------------------
 
@@ -178,7 +181,7 @@ metadata :
 -  TIFFTAG_RESOLUTIONUNIT
 -  TIFFTAG_MINSAMPLEVALUE (read only)
 -  TIFFTAG_MAXSAMPLEVALUE (read only)
--  `GEO_METADATA <https://www.awaresystems.be/imaging/tiff/tifftags/geo_metadata.html>`__:
+-  `GEO_METADATA <https://portal.dgiwg.org/files/70843>`__:
    This tag may be used for embedding XML-encoded instance documents
    prepared using 19139-based schema (GeoTIFF DGIWG) (GDAL >= 2.3)
 -  `TIFF_RSID <https://www.awaresystems.be/imaging/tiff/tifftags/tiff_rsid.html>`__:
@@ -245,6 +248,13 @@ ASCII tag (code 42113) for files created with the default profile
 GDALGeoTIFF. Note that all bands must use the same nodata value. When
 BASELINE or GeoTIFF profile are used, the nodata value is stored into a
 PAM .aux.xml file.
+
+Raster Attribute Table
+----------------------
+
+Starting with GDAL 3.11, Raster attribute tables stored in auxiliary
+.tif.vat.dbf files, as written by ArcGIS, can be read as GDAL Raster Attribute
+Table.
 
 Sparse files
 ------------
@@ -415,15 +425,71 @@ This driver supports the following creation options:
 -  .. co:: INTERLEAVE
       :choices: BAND, PIXEL
 
-      By default TIFF files with pixel
-      interleaving (PLANARCONFIG_CONTIG in TIFF terminology) are created.
-      These are slightly less efficient than BAND interleaving for some
-      purposes, but some applications only support pixel interleaved TIFF
-      files.
+      Set the interleaving to use
+
+      * ``PIXEL``: for each spatial block, one TIFF tile/strip gathering values for
+        all bands is used . This matches the ``contiguous`` planar configuration in
+        TIFF terminology.
+        This is also known as a ``BIP (Band Interleaved Per Pixel)`` organization.
+        Such method is the default, and may be slightly less
+        efficient than BAND interleaving for some purposes, but some applications
+        only support pixel interleaved TIFF files. On the other hand, image-based
+        compression methods may perform better using PIXEL interleaving. For JPEG
+        PHOTOMETRIC=YCbCr, pixel interleaving is required. It is also required for
+        WebP compression.
+
+        Assuming a pixel[band][y][x] indexed array, when using CreateCopy(),
+        the pseudo code for the file disposition is:
+
+        ::
+
+          for y in 0 ... numberOfBlocksInHeight - 1:
+              for x in 0 ... numberOfTilesInWidth - 1:
+                  for j in 0 ... blockHeight - 1:
+                      for i in 0 ... blockWidth -1:
+                          start_new_strip_or_tile()
+                          for band in 0 ... numberBands -1:
+                              write(pixel[band][y*blockHeight+j][x*blockWidth+i])
+                          end_new_strip_or_tile()
+                      end_for
+                  end_for
+              end_for
+          end_for
+
+
+      * ``BAND``: for each spatial block, one TIFF tile/strip is used for each band.
+        This matches the contiguous ``separate`` configuration in TIFF terminology.
+        This is also known as a ``BSQ (Band SeQuential)`` organization.
+
+        In addition to that, when using CreateCopy(), data for the first band is
+        written first, followed by data for the second band, etc.
+        The pseudo code for the file disposition is:
+
+        ::
+
+          for y in 0 ... numberOfBlocksInHeight - 1:
+              for x in 0 ... numberOfTilesInWidth - 1:
+                  start_new_strip_or_tile()
+                  for band in 0 ... numberBands -1:
+                      for j in 0 ... blockHeight - 1:
+                          for i in 0 ... blockWidth -1:
+                              write(pixel[band][y*blockHeight+j][x*blockWidth+i])
+                          end_for
+                      end_for
+                  end_new_strip_or_tile()
+              end_for
+          end_for
+
+
       Starting with GDAL 3.5, when copying from a source dataset with multiple bands
       which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
       is not specified, the source dataset INTERLEAVE will be automatically taken
       into account, unless the COMPRESS creation option is specified.
+
+      .. note::
+
+          Starting with GDAL 3.11, a ``TILE`` interleaving is available,
+          but only when using the :ref:`raster.cog` driver.
 
 -  .. co:: TILED
       :choices: YES, NO
@@ -487,7 +553,7 @@ This driver supports the following creation options:
       * ``JXL`` is for JPEG-XL, and is only available when using internal libtiff and building GDAL against
         https://github.com/libjxl/libjxl . It is recommended to use JXL compression with the ``TILED=YES`` creation
         option and block size of 256x256, 512x512, or 1024x1024 pixels. Supported data types are ``Byte``,
-        ``UInt16`` and ``Float32`` only. For GDAL < 3.6.0, JXL compression may only be used alongside 
+        ``UInt16`` and ``Float32`` only. For GDAL < 3.6.0, JXL compression may only be used alongside
         ``INTERLEAVE=PIXEL`` (the default) on datasets with 4 bands or less.
 
       * ``NONE`` is the default.

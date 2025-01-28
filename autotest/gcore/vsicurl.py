@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test /vsicurl
@@ -1574,3 +1573,63 @@ def test_vsicurl_cache_control_no_cache(server):
         data = gdal.VSIFReadL(1, 6, f).decode("ascii")
         gdal.VSIFCloseL(f)
         assert data == "barbaz"
+
+
+###############################################################################
+# Test VSICURL_QUERY_STRING path specific option.
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "filename,query_string",
+    [
+        ("test_vsicurl_VSICURL_QUERY_STRING.bin", "foo=bar"),
+        ("test_vsicurl_VSICURL_QUERY_STRING.bin?", "foo=bar"),
+        ("test_vsicurl_VSICURL_QUERY_STRING.bin", "?foo=bar"),
+        ("test_vsicurl_VSICURL_QUERY_STRING.bin?", "?foo=bar"),
+    ],
+)
+def test_vsicurl_VSICURL_QUERY_STRING(server, filename, query_string):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "HEAD",
+        "/test_vsicurl_VSICURL_QUERY_STRING.bin?foo=bar",
+        200,
+        {"Content-Length": "3"},
+    )
+
+    with webserver.install_http_handler(handler):
+        full_filename = f"/vsicurl/http://localhost:{server.port}/{filename}"
+        gdal.SetPathSpecificOption(full_filename, "VSICURL_QUERY_STRING", query_string)
+        try:
+            statres = gdal.VSIStatL(full_filename)
+            assert statres.size == 3
+        finally:
+            gdal.SetPathSpecificOption(full_filename, "VSICURL_QUERY_STRING", None)
+
+
+###############################################################################
+# Test /vsicurl?header.foo=bar&
+
+
+@gdaltest.enable_exceptions()
+def test_vsicurl_header_option(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "HEAD",
+        "/test_vsicurl_header_option.bin",
+        200,
+        {"Content-Length": "3"},
+        expected_headers={"foo": "bar", "Accept": "application/json"},
+    )
+
+    with webserver.install_http_handler(handler):
+        full_filename = f"/vsicurl?header.foo=bar&header.Accept=application%2Fjson&url=http%3A%2F%2Flocalhost%3A{server.port}%2Ftest_vsicurl_header_option.bin"
+        statres = gdal.VSIStatL(full_filename)
+        assert statres.size == 3

@@ -549,7 +549,7 @@ bool OGROpenFileGDBDataSource::CreateGDBSystemCatalog()
 {
     // Write GDB_SystemCatalog file
     m_osGDBSystemCatalogFilename =
-        CPLFormFilename(m_osDirName.c_str(), "a00000001.gdbtable", nullptr);
+        CPLFormFilenameSafe(m_osDirName.c_str(), "a00000001.gdbtable", nullptr);
     FileGDBTable oTable;
     if (!oTable.Create(m_osGDBSystemCatalogFilename.c_str(), 4, FGTGT_NONE,
                        false, false) ||
@@ -605,8 +605,8 @@ bool OGROpenFileGDBDataSource::CreateGDBSystemCatalog()
 bool OGROpenFileGDBDataSource::CreateGDBDBTune()
 {
     // Write GDB_DBTune file
-    const std::string osFilename(
-        CPLFormFilename(m_osDirName.c_str(), "a00000002.gdbtable", nullptr));
+    const std::string osFilename(CPLFormFilenameSafe(
+        m_osDirName.c_str(), "a00000002.gdbtable", nullptr));
     FileGDBTable oTable;
     if (!oTable.Create(osFilename.c_str(), 4, FGTGT_NONE, false, false) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
@@ -704,7 +704,7 @@ bool OGROpenFileGDBDataSource::CreateGDBSpatialRefs()
 {
     // Write GDB_SpatialRefs file
     m_osGDBSpatialRefsFilename =
-        CPLFormFilename(m_osDirName.c_str(), "a00000003.gdbtable", nullptr);
+        CPLFormFilenameSafe(m_osDirName.c_str(), "a00000003.gdbtable", nullptr);
     FileGDBTable oTable;
     if (!oTable.Create(m_osGDBSpatialRefsFilename.c_str(), 4, FGTGT_NONE, false,
                        false) ||
@@ -808,7 +808,7 @@ bool OGROpenFileGDBDataSource::CreateGDBItems()
     }
 
     m_osGDBItemsFilename =
-        CPLFormFilename(m_osDirName.c_str(), "a00000004.gdbtable", nullptr);
+        CPLFormFilenameSafe(m_osDirName.c_str(), "a00000004.gdbtable", nullptr);
     FileGDBTable oTable;
     if (!oTable.Create(m_osGDBItemsFilename.c_str(), 4, FGTGT_POLYGON, false,
                        false) ||
@@ -950,8 +950,8 @@ bool OGROpenFileGDBDataSource::CreateGDBItems()
 bool OGROpenFileGDBDataSource::CreateGDBItemTypes()
 {
     // Write GDB_ItemTypes file
-    const std::string osFilename(
-        CPLFormFilename(m_osDirName.c_str(), "a00000005.gdbtable", nullptr));
+    const std::string osFilename(CPLFormFilenameSafe(
+        m_osDirName.c_str(), "a00000005.gdbtable", nullptr));
     FileGDBTable oTable;
     if (!oTable.Create(osFilename.c_str(), 4, FGTGT_NONE, false, false) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
@@ -1073,7 +1073,7 @@ bool OGROpenFileGDBDataSource::CreateGDBItemRelationships()
 {
     // Write GDB_ItemRelationships file
     m_osGDBItemRelationshipsFilename =
-        CPLFormFilename(m_osDirName.c_str(), "a00000006.gdbtable", nullptr);
+        CPLFormFilenameSafe(m_osDirName.c_str(), "a00000006.gdbtable", nullptr);
     FileGDBTable oTable;
     if (!oTable.Create(m_osGDBItemRelationshipsFilename.c_str(), 4, FGTGT_NONE,
                        false, false) ||
@@ -1130,8 +1130,8 @@ bool OGROpenFileGDBDataSource::CreateGDBItemRelationships()
 bool OGROpenFileGDBDataSource::CreateGDBItemRelationshipTypes()
 {
     // Write GDB_ItemRelationshipTypes file
-    const std::string osFilename(
-        CPLFormFilename(m_osDirName.c_str(), "a00000007.gdbtable", nullptr));
+    const std::string osFilename(CPLFormFilenameSafe(
+        m_osDirName.c_str(), "a00000007.gdbtable", nullptr));
     FileGDBTable oTable;
     if (!oTable.Create(osFilename.c_str(), 4, FGTGT_NONE, false, false) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
@@ -1277,7 +1277,7 @@ bool OGROpenFileGDBDataSource::CreateGDBItemRelationshipTypes()
 bool OGROpenFileGDBDataSource::Create(const char *pszName)
 {
 
-    if (!EQUAL(CPLGetExtension(pszName), "gdb"))
+    if (!EQUAL(CPLGetExtensionSafe(pszName).c_str(), "gdb"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Extension of the directory should be gdb");
@@ -1299,12 +1299,15 @@ bool OGROpenFileGDBDataSource::Create(const char *pszName)
         return false;
     }
 
+    CPL_IGNORE_RET_VAL(OFGDBGenerateUUID(/* bInit = */ true));
+
     m_osDirName = pszName;
     eAccess = GA_Update;
 
     {
         // Write "gdb" file
-        const std::string osFilename(CPLFormFilename(pszName, "gdb", nullptr));
+        const std::string osFilename(
+            CPLFormFilenameSafe(pszName, "gdb", nullptr));
         VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "wb");
         if (!fp)
             return false;
@@ -1316,7 +1319,7 @@ bool OGROpenFileGDBDataSource::Create(const char *pszName)
     {
         // Write "timestamps" file
         const std::string osFilename(
-            CPLFormFilename(pszName, "timestamps", nullptr));
+            CPLFormFilenameSafe(pszName, "timestamps", nullptr));
         VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "wb");
         if (!fp)
             return false;
@@ -1362,7 +1365,7 @@ OGROpenFileGDBDataSource::ICreateLayer(const char *pszLayerName,
     const int nTableNum = static_cast<int>(1 + oTable.GetTotalRecordCount());
     oTable.Close();
 
-    const std::string osFilename(CPLFormFilename(
+    const std::string osFilename(CPLFormFilenameSafe(
         m_osDirName.c_str(), CPLSPrintf("a%08x.gdbtable", nTableNum), nullptr));
 
     if (wkbFlatten(eType) == wkbLineString)
@@ -1492,9 +1495,10 @@ OGRErr OGROpenFileGDBDataSource::DeleteLayer(int iLayer)
         }
     }
 
-    const std::string osDirname = CPLGetPath(poLayer->GetFilename().c_str());
+    const std::string osDirname =
+        CPLGetPathSafe(poLayer->GetFilename().c_str());
     const std::string osFilenameBase =
-        CPLGetBasename(poLayer->GetFilename().c_str());
+        CPLGetBasenameSafe(poLayer->GetFilename().c_str());
 
     if (m_bInTransaction)
     {
@@ -1522,7 +1526,9 @@ OGRErr OGROpenFileGDBDataSource::DeleteLayer(int iLayer)
     {
         if (STARTS_WITH(*papszIter, osFilenameBase.c_str()))
         {
-            VSIUnlink(CPLFormFilename(osDirname.c_str(), *papszIter, nullptr));
+            VSIUnlink(
+                CPLFormFilenameSafe(osDirname.c_str(), *papszIter, nullptr)
+                    .c_str());
         }
     }
     CSLDestroy(papszFiles);
@@ -1791,6 +1797,7 @@ bool OGROpenFileGDBDataSource::UpdateFieldDomain(
                 asFields[iDefinition].String = CPLStrdup(osXML.c_str());
 
                 const char *pszNewTypeUUID = "";
+                CPL_IGNORE_RET_VAL(pszNewTypeUUID);  // Make CSA happy
                 switch (domain->GetDomainType())
                 {
                     case OFDT_CODED:
@@ -1878,6 +1885,9 @@ bool OGROpenFileGDBDataSource::AddRelationship(
     std::unique_ptr<GDALRelationship> &&relationship,
     std::string &failureReason)
 {
+    if (FlushCache(false) != CE_None)
+        return false;
+
     const std::string relationshipName(relationship->GetName());
     if (eAccess != GA_Update)
     {
@@ -2351,8 +2361,8 @@ OGRErr OGROpenFileGDBDataSource::StartTransaction(int bForce)
         return OGRERR_FAILURE;
     }
 
-    m_osTransactionBackupDirname =
-        CPLFormFilename(m_osDirName.c_str(), ".ogrtransaction_backup", nullptr);
+    m_osTransactionBackupDirname = CPLFormFilenameSafe(
+        m_osDirName.c_str(), ".ogrtransaction_backup", nullptr);
     VSIStatBufL sStat;
     if (VSIStatL(m_osTransactionBackupDirname.c_str(), &sStat) == 0)
     {
@@ -2389,15 +2399,15 @@ bool OGROpenFileGDBDataSource::BackupSystemTablesForTransaction()
     for (char **papszIter = papszFiles;
          papszIter != nullptr && *papszIter != nullptr; ++papszIter)
     {
-        const std::string osBasename = CPLGetBasename(*papszIter);
+        const std::string osBasename = CPLGetBasenameSafe(*papszIter);
         if (osBasename.size() == strlen("a00000001") &&
             osBasename.compare(0, 8, "a0000000") == 0 && osBasename[8] >= '1' &&
             osBasename[8] <= '8')
         {
-            std::string osDestFilename = CPLFormFilename(
+            const std::string osDestFilename = CPLFormFilenameSafe(
                 m_osTransactionBackupDirname.c_str(), *papszIter, nullptr);
-            std::string osSourceFilename =
-                CPLFormFilename(m_osDirName.c_str(), *papszIter, nullptr);
+            const std::string osSourceFilename =
+                CPLFormFilenameSafe(m_osDirName.c_str(), *papszIter, nullptr);
             if (CPLCopyFile(osDestFilename.c_str(), osSourceFilename.c_str()) !=
                 0)
             {
@@ -2465,14 +2475,14 @@ OGRErr OGROpenFileGDBDataSource::RollbackTransaction()
         for (char **papszIter = papszFiles;
              papszIter != nullptr && *papszIter != nullptr; ++papszIter)
         {
-            const std::string osBasename = CPLGetBasename(*papszIter);
+            const std::string osBasename = CPLGetBasenameSafe(*papszIter);
             if (osBasename.size() == strlen("a00000001") &&
                 osBasename.compare(0, 8, "a0000000") == 0 &&
                 osBasename[8] >= '1' && osBasename[8] <= '8')
             {
-                std::string osDestFilename =
-                    CPLFormFilename(m_osDirName.c_str(), *papszIter, nullptr);
-                std::string osSourceFilename = CPLFormFilename(
+                const std::string osDestFilename = CPLFormFilenameSafe(
+                    m_osDirName.c_str(), *papszIter, nullptr);
+                const std::string osSourceFilename = CPLFormFilenameSafe(
                     m_osTransactionBackupDirname.c_str(), *papszIter, nullptr);
                 if (CPLCopyFile(osDestFilename.c_str(),
                                 osSourceFilename.c_str()) != 0)
@@ -2494,18 +2504,18 @@ OGRErr OGROpenFileGDBDataSource::RollbackTransaction()
     for (auto poLayer : m_oSetLayersCreatedInTransaction)
     {
         const std::string osThisBasename =
-            CPLGetBasename(poLayer->GetFilename().c_str());
+            CPLGetBasenameSafe(poLayer->GetFilename().c_str());
         poLayer->Close();
 
         char **papszFiles = VSIReadDir(m_osDirName.c_str());
         for (char **papszIter = papszFiles;
              papszIter != nullptr && *papszIter != nullptr; ++papszIter)
         {
-            const std::string osBasename = CPLGetBasename(*papszIter);
+            const std::string osBasename = CPLGetBasenameSafe(*papszIter);
             if (osBasename == osThisBasename)
             {
-                std::string osDestFilename =
-                    CPLFormFilename(m_osDirName.c_str(), *papszIter, nullptr);
+                const std::string osDestFilename = CPLFormFilenameSafe(
+                    m_osDirName.c_str(), *papszIter, nullptr);
                 VSIUnlink(osDestFilename.c_str());
             }
         }

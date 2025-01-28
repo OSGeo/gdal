@@ -18,6 +18,7 @@
 #include "parsexsd.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <memory>
 #include <vector>
 #include <set>
@@ -302,7 +303,7 @@ CPLString OGROAPIFDataset::ResolveURL(const CPLString &osURL,
     // Cf https://datatracker.ietf.org/doc/html/rfc3986#section-5.4
     // Partial implementation for usual cases...
     const std::string osRequestURLBase =
-        CPLGetPath(CleanURL(osRequestURL).c_str());
+        CPLGetPathSafe(CleanURL(osRequestURL).c_str());
     if (!osURL.empty() && osURL[0] == '/')
         osRet = m_osServerBaseURL + osURL;
     else if (osURL.size() > 2 && osURL[0] == '.' && osURL[1] == '/')
@@ -314,7 +315,7 @@ CPLString OGROAPIFDataset::ResolveURL(const CPLString &osURL,
         while (osRet.size() > 3 && osRet[0] == '.' && osRet[1] == '.' &&
                osRet[2] == '/')
         {
-            osModifiedRequestURL = CPLGetPath(osModifiedRequestURL.c_str());
+            osModifiedRequestURL = CPLGetPathSafe(osModifiedRequestURL.c_str());
             osRet = osRet.substr(3);
         }
         osRet = osModifiedRequestURL + "/" + osRet;
@@ -2626,7 +2627,7 @@ CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node *poNode)
                 CPLString osRet(osEscapedFieldName);
                 osRet += "=";
                 osRet +=
-                    CPLSPrintf(CPL_FRMT_GIB, poNode->papoSubExpr[1]->int_value);
+                    CPLSPrintf("%" PRId64, poNode->papoSubExpr[1]->int_value);
                 return osRet;
             }
         }
@@ -2806,7 +2807,7 @@ CPLString OGROAPIFLayer::BuildFilterCQLText(const swq_expr_node *poNode)
                 poNode->papoSubExpr[1]->field_type == SWQ_INTEGER64)
             {
                 osRet +=
-                    CPLSPrintf(CPL_FRMT_GIB, poNode->papoSubExpr[1]->int_value);
+                    CPLSPrintf("%" PRId64, poNode->papoSubExpr[1]->int_value);
                 return osRet;
             }
             if (poNode->papoSubExpr[1]->field_type == SWQ_FLOAT)
@@ -2993,7 +2994,7 @@ CPLString OGROAPIFLayer::BuildFilterJSONFilterExpr(const swq_expr_node *poNode)
         if (poNode->field_type == SWQ_INTEGER ||
             poNode->field_type == SWQ_INTEGER64)
         {
-            return CPLSPrintf(CPL_FRMT_GIB, poNode->int_value);
+            return CPLSPrintf("%" PRId64, poNode->int_value);
         }
         if (poNode->field_type == SWQ_FLOAT)
         {

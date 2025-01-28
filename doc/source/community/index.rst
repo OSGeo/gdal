@@ -27,6 +27,7 @@ Code of Conduct
 
    code_of_conduct
 
+.. _mailing_list:
 
 Mailing List
 ------------
@@ -121,6 +122,7 @@ decisions related to the GDAL/OGR project. The current members are (@github user
 - Norman Barker        (@normanb)
 - Sean Gillies         (@sgillies)
 - Javier Jimenez Shaw  (@jjimenezshaw)
+- Dan Baston           (@dbaston)
 
 Past members:
 
@@ -129,6 +131,17 @@ Past members:
 
 Note that discussion of proposals to the PSC take place on gdal-dev, and input
 from all subscribers is welcome. A :ref:`list of past RFC <rfclist>` is available for review.
+
+User survey
++++++++++++
+
+Results of the :ref:`survey_2024` are available for review.
+
+
+.. toctree::
+   :hidden:
+
+   user_survey_2024
 
 
 GDAL Service Providers

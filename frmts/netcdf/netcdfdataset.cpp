@@ -4734,13 +4734,62 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
                                         std::string &osGeolocYNameOut)
 {
     bool bAddGeoloc = false;
-    char *pszTemp = nullptr;
+    char *pszCoordinates = nullptr;
 
-    if (NCDFGetAttr(nGroupId, nVarId, "coordinates", &pszTemp) == CE_None)
+    // If there is no explicit "coordinates" attribute, check if there are
+    // "lon" and "lat" 2D variables whose dimensions are the last
+    // 2 ones of the variable of interest.
+    if (NCDFGetAttr(nGroupId, nVarId, "coordinates", &pszCoordinates) !=
+        CE_None)
+    {
+        CPLFree(pszCoordinates);
+        pszCoordinates = nullptr;
+
+        int nVarDims = 0;
+        NCDF_ERR(nc_inq_varndims(nGroupId, nVarId, &nVarDims));
+        if (nVarDims >= 2)
+        {
+            std::vector<int> anVarDimIds(nVarDims);
+            NCDF_ERR(nc_inq_vardimid(nGroupId, nVarId, anVarDimIds.data()));
+
+            int nLongitudeId = 0;
+            int nLatitudeId = 0;
+            if (nc_inq_varid(nGroupId, "lon", &nLongitudeId) == NC_NOERR &&
+                nc_inq_varid(nGroupId, "lat", &nLatitudeId) == NC_NOERR)
+            {
+                int nDimsLongitude = 0;
+                NCDF_ERR(
+                    nc_inq_varndims(nGroupId, nLongitudeId, &nDimsLongitude));
+                int nDimsLatitude = 0;
+                NCDF_ERR(
+                    nc_inq_varndims(nGroupId, nLatitudeId, &nDimsLatitude));
+                if (nDimsLongitude == 2 && nDimsLatitude == 2)
+                {
+                    std::vector<int> anDimLongitudeIds(2);
+                    NCDF_ERR(nc_inq_vardimid(nGroupId, nLongitudeId,
+                                             anDimLongitudeIds.data()));
+                    std::vector<int> anDimLatitudeIds(2);
+                    NCDF_ERR(nc_inq_vardimid(nGroupId, nLatitudeId,
+                                             anDimLatitudeIds.data()));
+                    if (anDimLongitudeIds == anDimLatitudeIds &&
+                        anVarDimIds[anVarDimIds.size() - 2] ==
+                            anDimLongitudeIds[0] &&
+                        anVarDimIds[anVarDimIds.size() - 1] ==
+                            anDimLongitudeIds[1])
+                    {
+                        pszCoordinates = CPLStrdup("lon lat");
+                    }
+                }
+            }
+        }
+    }
+
+    if (pszCoordinates)
     {
         // Get X and Y geolocation names from coordinates attribute.
-        char **papszTokens = NCDFTokenizeCoordinatesAttribute(pszTemp);
-        if (CSLCount(papszTokens) >= 2)
+        const CPLStringList aosCoordinates(
+            NCDFTokenizeCoordinatesAttribute(pszCoordinates));
+        if (aosCoordinates.size() >= 2)
         {
             char szGeolocXName[NC_MAX_NAME + 1];
             char szGeolocYName[NC_MAX_NAME + 1];
@@ -4748,32 +4797,32 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
             szGeolocYName[0] = '\0';
 
             // Test that each variable is longitude/latitude.
-            for (int i = 0; i < CSLCount(papszTokens); i++)
+            for (int i = 0; i < aosCoordinates.size(); i++)
             {
-                if (NCDFIsVarLongitude(nGroupId, -1, papszTokens[i]))
+                if (NCDFIsVarLongitude(nGroupId, -1, aosCoordinates[i]))
                 {
                     int nOtherGroupId = -1;
                     int nOtherVarId = -1;
                     // Check that the variable actually exists
                     // Needed on Sentinel-3 products
-                    if (NCDFResolveVar(nGroupId, papszTokens[i], &nOtherGroupId,
-                                       &nOtherVarId) == CE_None)
+                    if (NCDFResolveVar(nGroupId, aosCoordinates[i],
+                                       &nOtherGroupId, &nOtherVarId) == CE_None)
                     {
                         snprintf(szGeolocXName, sizeof(szGeolocXName), "%s",
-                                 papszTokens[i]);
+                                 aosCoordinates[i]);
                     }
                 }
-                else if (NCDFIsVarLatitude(nGroupId, -1, papszTokens[i]))
+                else if (NCDFIsVarLatitude(nGroupId, -1, aosCoordinates[i]))
                 {
                     int nOtherGroupId = -1;
                     int nOtherVarId = -1;
                     // Check that the variable actually exists
                     // Needed on Sentinel-3 products
-                    if (NCDFResolveVar(nGroupId, papszTokens[i], &nOtherGroupId,
-                                       &nOtherVarId) == CE_None)
+                    if (NCDFResolveVar(nGroupId, aosCoordinates[i],
+                                       &nOtherGroupId, &nOtherVarId) == CE_None)
                     {
                         snprintf(szGeolocYName, sizeof(szGeolocYName), "%s",
-                                 papszTokens[i]);
+                                 aosCoordinates[i]);
                     }
                 }
             }
@@ -4841,7 +4890,7 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
                              "cannot resolve location of "
                              "lat/lon variables specified by the coordinates "
                              "attribute [%s]",
-                             pszTemp);
+                             pszCoordinates);
                 }
                 CPLFree(pszGeolocXFullName);
                 CPLFree(pszGeolocYFullName);
@@ -4849,7 +4898,8 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
             else
             {
                 CPLDebug("GDAL_netCDF",
-                         "coordinates attribute [%s] is unsupported", pszTemp);
+                         "coordinates attribute [%s] is unsupported",
+                         pszCoordinates);
             }
         }
         else
@@ -4857,10 +4907,8 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
             CPLDebug("GDAL_netCDF",
                      "coordinates attribute [%s] with %d element(s) is "
                      "unsupported",
-                     pszTemp, CSLCount(papszTokens));
+                     pszCoordinates, aosCoordinates.size());
         }
-        if (papszTokens)
-            CSLDestroy(papszTokens);
     }
 
     else
@@ -4871,7 +4919,7 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
             bAddGeoloc = ProcessNASAEMITGeoLocation(nGroupId, nVarId);
     }
 
-    CPLFree(pszTemp);
+    CPLFree(pszCoordinates);
 
     return bAddGeoloc;
 }
@@ -6615,8 +6663,8 @@ OGRLayer *netCDFDataset::ICreateLayer(const char *pszName,
         papszDatasetOptions = CSLSetNameValue(
             papszDatasetOptions, "WRITE_GDAL_TAGS",
             CSLFetchNameValue(papszCreationOptions, "WRITE_GDAL_TAGS"));
-        CPLString osLayerFilename(
-            CPLFormFilename(osFilename, osNetCDFLayerName, "nc"));
+        const CPLString osLayerFilename(
+            CPLFormFilenameSafe(osFilename, osNetCDFLayerName, "nc"));
         CPLAcquireMutex(hNCMutex, 1000.0);
         poLayerDataset =
             CreateLL(osLayerFilename, 0, 0, 0, papszDatasetOptions);
@@ -8011,7 +8059,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         if (poDS->osFilename.empty())
         {
             poDS->bFileToDestroyAtClosing = true;
-            poDS->osFilename = CPLGenerateTempFilename("netcdf_tmp");
+            poDS->osFilename = CPLGenerateTempFilenameSafe("netcdf_tmp");
         }
         if (!netCDFDatasetCreateTempFile(eTmpFormat, poDS->osFilename,
                                          poOpenInfo->fpL))
@@ -8569,7 +8617,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
                 if (NCDFIsVarVerticalCoord(cdfid, -1, szDimName3) == false)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "dimension #%d (%s) is not a Time dimension.",
+                             "dimension #%d (%s) is not a Vertical dimension.",
                              nd - 3, szDimName3);
                 }
                 if (NCDFIsVarTimeCoord(cdfid, -1, szDimName4) == false)
@@ -8769,6 +8817,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
 
         char szDimName[NC_MAX_NAME + 1] = {};
 
+        bool bREPORT_EXTRA_DIM_VALUESWarningEmitted = false;
         for (int j = 0; j < nd; j++)
         {
             if ((poDS->m_anDimIds[j] != poDS->nXDimID) &&
@@ -8813,10 +8862,35 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
                         // dimension in its NETCDF_DIM_xxxx band metadata item
                         // Addresses use case of
                         // https://lists.osgeo.org/pipermail/gdal-dev/2023-May/057209.html
-                        if (VSIIsLocal(osFilenameForNCOpen.c_str()) ||
+                        const bool bIsLocal =
+                            VSIIsLocal(osFilenameForNCOpen.c_str());
+                        bool bListDimValues =
+                            bIsLocal || lev_count == 1 ||
                             !NCDFIsUnlimitedDim(poDS->eFormat ==
                                                     NCDF_FORMAT_NC4,
-                                                cdfid, poDS->m_anDimIds[j]))
+                                                cdfid, poDS->m_anDimIds[j]);
+                        const char *pszGDAL_NETCDF_REPORT_EXTRA_DIM_VALUES =
+                            CPLGetConfigOption(
+                                "GDAL_NETCDF_REPORT_EXTRA_DIM_VALUES", nullptr);
+                        if (pszGDAL_NETCDF_REPORT_EXTRA_DIM_VALUES)
+                        {
+                            bListDimValues = CPLTestBool(
+                                pszGDAL_NETCDF_REPORT_EXTRA_DIM_VALUES);
+                        }
+                        else if (!bListDimValues && !bIsLocal &&
+                                 !bREPORT_EXTRA_DIM_VALUESWarningEmitted)
+                        {
+                            bREPORT_EXTRA_DIM_VALUESWarningEmitted = true;
+                            CPLDebug(
+                                "GDAL_netCDF",
+                                "Listing extra dimension values is skipped "
+                                "because this dataset is hosted on a network "
+                                "file system, and such an operation could be "
+                                "slow. If you still want to proceed, set the "
+                                "GDAL_NETCDF_REPORT_EXTRA_DIM_VALUES "
+                                "configuration option to YES");
+                        }
+                        if (bListDimValues)
                         {
                             char *pszTemp = nullptr;
                             if (NCDFGet1DVar(nIdxGroupID, nIdxVarID,
@@ -9150,8 +9224,9 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
         // Works around bug of msys2 netCDF 4.9.0 package where nc_create()
         // crashes
         VSIStatBuf sStat;
-        const char *pszDir = CPLGetDirname(osFilenameForNCCreate.c_str());
-        if (VSIStat(pszDir, &sStat) != 0)
+        const std::string osDirname =
+            CPLGetDirnameSafe(osFilenameForNCCreate.c_str());
+        if (VSIStat(osDirname.c_str(), &sStat) != 0)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Unable to create netCDF file %s: non existing output "
@@ -11727,7 +11802,8 @@ static CPLErr NCDFOpenSubDataset(int nCdfId, const char *pszSubdatasetName,
     *pnVarId = -1;
 
     // Open group.
-    char *pszGroupFullName = CPLStrdup(CPLGetPath(pszSubdatasetName));
+    char *pszGroupFullName =
+        CPLStrdup(CPLGetPathSafe(pszSubdatasetName).c_str());
     // Add a leading slash if needed.
     if (pszGroupFullName[0] != '/')
     {
@@ -12299,7 +12375,7 @@ CPLErr netCDFDataset::CreateGrpVectorLayers(
     if (pszGroupName == nullptr || pszGroupName[0] == '\0')
     {
         CPLFree(pszGroupName);
-        pszGroupName = CPLStrdup(CPLGetBasename(osFilename));
+        pszGroupName = CPLStrdup(CPLGetBasenameSafe(osFilename).c_str());
     }
     OGRwkbGeometryType eGType = wkbUnknown;
     CPLString osLayerName = CSLFetchNameValueDef(

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  XLSX Translator
  * Purpose:  Definition of classes for OGR OpenOfficeSpreadsheet .xlsx driver.

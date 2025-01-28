@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     cplvirtualmem.i
  * Project:  GDAL Python Interface

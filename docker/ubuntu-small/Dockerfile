@@ -72,6 +72,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libzstd-dev${APT_ARCH_SUFFIX} bash zip curl \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libopenjp2-7-dev${APT_ARCH_SUFFIX} \
        libspatialite-dev${APT_ARCH_SUFFIX} \
+       libmuparser-dev${APT_ARCH_SUFFIX} \
        autoconf automake sqlite3 bash-completion swig
 
 ARG PROJ_INSTALL_PREFIX
@@ -153,6 +154,11 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
     && if test "x${GDAL_BUILD_IS_RELEASE:-}" = "x"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
+    && if test "${GCC_ARCH}" = "x86_64"; then \
+        export GDAL_CMAKE_EXTRA_OPTS="-DENABLE_IPO=ON"; \
+    else \
+        export GDAL_CMAKE_EXTRA_OPTS=""; \
+    fi \
     && mkdir gdal \
     && wget -q https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
@@ -183,7 +189,7 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
         -DPROJ_INCLUDE_DIR="/build${PROJ_INSTALL_PREFIX-/usr/local}/include" \
         -DPROJ_LIBRARY="/build${PROJ_INSTALL_PREFIX-/usr/local}/lib/libinternalproj.so" \
         -DGDAL_USE_TIFF_INTERNAL=ON \
-        -DGDAL_USE_GEOTIFF_INTERNAL=ON \
+        -DGDAL_USE_GEOTIFF_INTERNAL=ON ${GDAL_CMAKE_EXTRA_OPTS} \
         -DBUILD_TESTING=OFF \
     && ninja \
     && DESTDIR="/build" ninja install \
@@ -230,13 +236,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         curl unzip ca-certificates \
     # GDAL dependencies
     && apt-get install -y --no-install-recommends \
-        python3-numpy libpython3.12 \
+        bash-completion python3-numpy libpython3.12 \
         libjpeg-turbo8 libgeos3.12.1 libgeos-c1v5 \
         libexpat1 \
         libxerces-c3.2 \
         libwebp7 libpng16-16 \
         libdeflate0 \
         libzstd1 bash libpq5 libssl3 libopenjp2-7 libspatialite8 \
+        libmuparser2v5 \
         # pil for antialias option of gdal2tiles
         python3-pil \
     && apt-get install -y python-is-python3
@@ -253,9 +260,14 @@ COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
 
+COPY --from=builder  /build/usr/share/bash-completion/ /usr/share/bash-completion/
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build_gdal_python/usr/ /usr/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 
 RUN ldconfig
+
+RUN echo "source /usr/share/bash-completion/bash_completion" >> /root/.bashrc
+
+CMD ["/bin/bash", "-l"]

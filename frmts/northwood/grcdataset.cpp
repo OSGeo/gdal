@@ -241,8 +241,11 @@ NWT_GRCDataset::~NWT_GRCDataset()
     CSLDestroy(papszCategories);
 
     NWT_GRCDataset::FlushCache(true);
-    pGrd->fp = nullptr;  // this prevents nwtCloseGrid from closing the fp
-    nwtCloseGrid(pGrd);
+    if (pGrd)
+    {
+        pGrd->fp = nullptr;  // this prevents nwtCloseGrid from closing the fp
+        nwtCloseGrid(pGrd);
+    }
 
     if (fp != nullptr)
         VSIFCloseL(fp);
@@ -326,6 +329,11 @@ GDALDataset *NWT_GRCDataset::Open(GDALOpenInfo *poOpenInfo)
     VSIFSeekL(poDS->fp, 0, SEEK_SET);
     VSIFReadL(poDS->abyHeader, 1, 1024, poDS->fp);
     poDS->pGrd = static_cast<NWT_GRID *>(malloc(sizeof(NWT_GRID)));
+    if (!poDS->pGrd)
+    {
+        delete poDS;
+        return nullptr;
+    }
 
     poDS->pGrd->fp = poDS->fp;
 

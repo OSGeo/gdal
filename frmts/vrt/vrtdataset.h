@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Virtual GDAL Datasets
  * Purpose:  Declaration of virtual gdal dataset classes.
@@ -191,6 +190,11 @@ class CPL_DLL VRTSource
         return false;
     }
 
+    virtual const CPLString &GetName() const
+    {
+        return m_osName;
+    }
+
     /** Returns a string with the VRTSource class type.
      * This method must be implemented in all subclasses
      */
@@ -200,6 +204,9 @@ class CPL_DLL VRTSource
     {
         return CE_None;
     }
+
+  protected:
+    CPLString m_osName{};
 };
 
 typedef VRTSource *(*VRTSourceParser)(const CPLXMLNode *, const char *,
@@ -666,6 +673,15 @@ class VRTProcessedDataset final : public VRTDataset
 #pragma GCC diagnostic pop
 #endif
 
+  protected:
+    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                             int nXSize, int nYSize, void *pData, int nBufXSize,
+                             int nBufYSize, GDALDataType eBufType,
+                             int nBandCount, BANDMAP_TYPE panBandMap,
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GSpacing nBandSpace,
+                             GDALRasterIOExtraArg *psExtraArg) override;
+
   private:
     friend class VRTProcessedRasterBand;
 
@@ -716,6 +732,9 @@ class VRTProcessedDataset final : public VRTDataset
     //! Directory of the VRT
     std::string m_osVRTPath{};
 
+    //! Source of source dataset generated with GDALTranslate
+    std::unique_ptr<GDALDataset> m_poVRTSrcDS{};
+
     //! Source dataset
     std::unique_ptr<GDALDataset> m_poSrcDS{};
 
@@ -734,6 +753,34 @@ class VRTProcessedDataset final : public VRTDataset
     //! Output buffer of a processing step
     std::vector<NoInitByte> m_abyOutput{};
 
+    //! Provenance of OutputBands.count and OutputBands.dataType
+    enum class ValueProvenance
+    {
+        FROM_VRTRASTERBAND,
+        FROM_SOURCE,
+        FROM_LAST_STEP,
+        USER_PROVIDED,
+    };
+
+    //! Provenance of OutputBands.count attribute
+    ValueProvenance m_outputBandCountProvenance = ValueProvenance::FROM_SOURCE;
+
+    //! Value of OutputBands.count attribute if m_outputBandCountProvenance = USER_PROVIDED
+    int m_outputBandCountValue = 0;
+
+    //! Provenance of OutputBands.dataType attribute
+    ValueProvenance m_outputBandDataTypeProvenance =
+        ValueProvenance::FROM_SOURCE;
+
+    //! Value of OutputBands.dataType attribute if m_outputBandDataTypeProvenance = USER_PROVIDED
+    GDALDataType m_outputBandDataTypeValue = GDT_Unknown;
+
+    //! Number of temporary bytes we need per output pixel.
+    int m_nWorkingBytesPerPixel = 1;
+
+    //! Value of CPLGetUsablePhysicalRAM() / 10 * 4
+    GIntBig m_nAllowedRAMUsage = 0;
+
     CPLErr Init(const CPLXMLNode *, const char *,
                 const VRTProcessedDataset *poParentDS,
                 GDALDataset *poParentSrcDS, int iOvrLevel);
@@ -742,7 +789,8 @@ class VRTProcessedDataset final : public VRTDataset
                    GDALDataType &eCurrentDT, int &nCurrentBandCount,
                    std::vector<double> &adfInNoData,
                    std::vector<double> &adfOutNoData);
-    bool ProcessRegion(int nXOff, int nYOff, int nBufXSize, int nBufYSize);
+    bool ProcessRegion(int nXOff, int nYOff, int nBufXSize, int nBufYSize,
+                       GDALProgressFunc pfnProgress, void *pProgressData);
 };
 
 /************************************************************************/
@@ -1335,7 +1383,11 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     // from which the mask band is taken.
     mutable GDALRasterBand *m_poMaskBandMainBand = nullptr;
 
-    CPLStringList m_aosOpenOptions{};
+    CPLStringList m_aosOpenOptionsOri{};  // as read in the original source XML
+    CPLStringList
+        m_aosOpenOptions{};  // same as above, but potentially augmented with ROOT_PATH
+    bool m_bSrcDSNameFromVRT =
+        false;  // whereas content in m_osSrcDSName is a <VRTDataset> XML node
 
     void OpenSource() const;
 
@@ -1406,6 +1458,8 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
         return m_dfDstXOff != UNINIT_WINDOW || m_dfDstYOff != UNINIT_WINDOW ||
                m_dfDstXSize != UNINIT_WINDOW || m_dfDstYSize != UNINIT_WINDOW;
     }
+
+    void AddSourceFilenameNode(const char *pszVRTPath, CPLXMLNode *psSrc);
 
   public:
     VRTSimpleSource();

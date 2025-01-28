@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "ograrrowarrayhelper.h"
+#include "ogrlayerarrow.h"
 #include "ogr_p.h"
 
 #include <limits>
@@ -32,8 +33,8 @@
         nMemLimit = atoi(pszOGR_ARROW_MEM_LIMIT);
     else
     {
-        const uint64_t nUsableRAM = CPLGetUsablePhysicalRAM();
-        if (nUsableRAM > 0 && nUsableRAM / 4 < nMemLimit)
+        const auto nUsableRAM = CPLGetUsablePhysicalRAM();
+        if (nUsableRAM > 0 && static_cast<uint64_t>(nUsableRAM / 4) < nMemLimit)
             nMemLimit = static_cast<uint32_t>(nUsableRAM / 4);
     }
     return nMemLimit;
@@ -94,6 +95,8 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
             nTZFlagOverride = OGR_TZFLAG_UTC;
         }
     }
+    const bool bDateTimeAsString =
+        aosArrowArrayStreamOptions.FetchBool(GAS_OPT_DATETIME_AS_STRING, false);
 
     if (m_bIncludeFID)
     {
@@ -222,6 +225,20 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
                     }
                     break;
                 }
+
+                case OFTDateTime:
+                {
+                    if (!bDateTimeAsString)
+                    {
+                        nEltSize = sizeof(int64_t);
+                        break;
+                    }
+                    else
+                    {
+                        [[fallthrough]];
+                    }
+                }
+
                 case OFTString:
                 case OFTBinary:
                 {
@@ -253,12 +270,6 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
                 case OFTTime:
                 {
                     nEltSize = sizeof(int32_t);
-                    break;
-                }
-
-                case OFTDateTime:
-                {
-                    nEltSize = sizeof(int64_t);
                     break;
                 }
 

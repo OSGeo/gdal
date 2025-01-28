@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     Driver.i
  * Project:  GDAL Python Interface
@@ -108,6 +107,10 @@ public:
 
   CPLErr CopyFiles( const char *newName, const char *oldName ) {
     return GDALCopyDatasetFiles( self, newName, oldName );
+  }
+
+  bool HasOpenOption( const char *openOptionName ) {
+    return GDALDriverHasOpenOption( self, openOptionName );
   }
 
 #ifdef SWIGPYTHON

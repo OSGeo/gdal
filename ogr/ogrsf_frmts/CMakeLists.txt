@@ -90,6 +90,8 @@ if( NOT WORDS_BIGENDIAN )
     ogr_optional_driver(miramon "MiraMonVector")
 endif()
 
+ogr_optional_driver(aivector AIVector)
+
 # ######################################################################################################################
 #
 if (NOT OGR_ENABLE_DRIVER_GEOJSON_PLUGIN)

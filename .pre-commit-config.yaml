@@ -7,6 +7,7 @@ repos:
               (?x)^(
                 swig/python/osgeo/__init__.py|
                 swig/python/osgeo/gdalnumeric.py|
+                doc/source/_extensions/sphinxcontrib_programoutput_gdal.py|
                 autotest/ogr/data/
               )
     -   repo: https://github.com/timothycrosley/isort
@@ -17,6 +18,7 @@ repos:
               (?x)^(
                 swig/python/osgeo/__init__.py|
                 swig/python/osgeo/gdalnumeric.py|
+                doc/source/_extensions/sphinxcontrib_programoutput_gdal.py|
                 autotest/ogr/data/
               )
     -   repo: https://github.com/pycqa/flake8
@@ -27,6 +29,7 @@ repos:
               (?x)^(
                 swig/python/osgeo/__init__.py|
                 swig/python/osgeo/gdalnumeric.py|
+                doc/source/_extensions/sphinxcontrib_programoutput_gdal.py|
                 examples/|
                 autotest/ogr/data/
               )
@@ -39,7 +42,9 @@ repos:
                 autotest/cpp/data/|
                 autotest/gdrivers/data/|
                 swig/|
+                third_party/exprtk/|
                 third_party/fast_float/|
+                third_party/muparser/|
                 third_party/LercLib/|
                 autotest/ogr/data/|
                 alg/internal_libqhull/|
@@ -56,6 +61,7 @@ repos:
                 frmts/pcidsk/sdk|
                 frmts/grib/degrib/degrib|
                 frmts/grib/degrib/g2clib|
+                gcore/sse2neon.h|
                 port/utf8.h|
                 ogr/ogrsf_frmts/adbc/ogr_adbc_internal.h|
                 ogr/ogrsf_frmts/cad/libopencad/|
@@ -63,6 +69,7 @@ repos:
                 ogr/ogrsf_frmts/flatgeobuf/flatbuffers/|
                 ogr/ogrsf_frmts/pmtiles/pmtiles/|
                 ogr/ogrsf_frmts/ods/ods_formula_parser.cpp|
+                ogr/ogrsf_frmts/ods/ods_formula_parser.hpp|
                 ogr/ogrsf_frmts/sqlite/sqlite_rtree_bulk_load|
                 ogr/swq_parser.cpp|
                 ogr/swq_parser.hpp|

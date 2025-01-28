@@ -1,5 +1,4 @@
 /* ***************************************************************************
-* $Id$
 *
 * Project:  GDAL/OGR Java bindings
 * Purpose:  Documentation for the Java bindings
@@ -238,6 +237,25 @@ public class gdal:public static String EscapeString(byte[] byteArray, int scheme
  * @see #Unlink(String fileName)
  */
 public class gdal:public static void FileFromMemBuffer(String fileName, byte[] byteArray)
+
+
+/**
+ * Fetch buffer underlying memory file.
+ *
+ * This function returns a byte[] array with a copy of the content of the memory
+ * buffer underlying a virtual "in memory" file. The original file is unmodified
+ * by this operation, and must be removed with Unlink(fileName) if necessary.
+ *
+ * @param fileName filename (should begin with "/vsimem/")
+ *
+ * @return file content
+ *
+ * @since 3.10.1
+ *
+ * @see #Unlink(String fileName)
+ */
+public class gdal:public static byte[] GetMemFileBuffer(String fileName)
+
 
 /**
  * Delete a file.

@@ -108,6 +108,12 @@ for the shared lib, *e.g.* ``set (GDAL_LIB_OUTPUT_NAME gdal_x64 CACHE STRING "" 
 
 Refer to :ref:`using_gdal_in_cmake` for how to use GDAL in a CMake project.
 
+To uninstall GDAL, from the build directory (be careful: this does not restore the files that pre-existed to the last installation, but just removes the last installed files!)
+
+.. code-block:: bash
+
+    cmake --build . --target uninstall
+
 Building on Windows
 +++++++++++++++++++
 
@@ -224,6 +230,17 @@ All cached entries can be viewed using ``cmake -LAH`` from a build directory.
     `CMAKE_SKIP_INSTALL_RPATH <https://cmake.org/cmake/help/latest/variable/CMAKE_SKIP_INSTALL_RPATH.html>`__
     variable is not set.
 
+.. option:: USE_CCACHE=ON
+
+    Whether cached build using `ccache <https://ccache.dev/>`__ should be enabled.
+    This defaults to ON when :program:`ccache` is found.
+
+.. option:: USE_PRECOMPILED_HEADER=OFF
+
+    Whether builds with precompiled headers should be enabled. This may speed
+    up the build process. This is still a bit experimental, so it is disabled by
+    default. It also cannot be enabled when using the Visual Studio C++ compiler.
+
 Resource files embedding
 ++++++++++++++++++++++++
 
@@ -260,7 +277,7 @@ CMake package dependent options
 .. Put packages in alphabetic order.
 
 Generally speaking, packages (external dependencies) will be automatically found if
-they are in default locations used by CMake. This can be also tuned for example
+they are in default locations used by CMake. This can also be tuned for example
 with the ``CMAKE_PREFIX_PATH`` variable.
 
 Starting with CMake 3.12, it is also possible to use a
@@ -598,6 +615,22 @@ the XercesC library.
 
     Control whether to use EXPAT. Defaults to ON when EXPAT is found.
 
+
+ExprTk
+******
+
+`ExprTk <https://www.partow.net/programming/exprtk/index.html>`__ is a
+mathematical expression parser and evaluation engine. It can be used by the
+:ref:`raster.vrt` driver. Building with ExprTk may increase the size of the
+GDAL library by several megabytes.
+
+.. option:: GDAL_USE_EXPRTK=ON/OFF
+
+   Control whether to use ExprTk. Defaults to OFF even if ExprTk is found.
+
+.. option:: EXPRTK_INCLUDE_DIR
+
+    Path to the include directory with the :file:`exprtk.hpp` header file.
 
 FileGDB
 *******
@@ -1232,27 +1265,6 @@ capabilities in GMLJP2v2 generation.
     Control whether to use LibXml2. Defaults to ON when LibXml2 is found.
 
 
-LURATECH
-********
-
-The Luratech JPEG2000 SDK (closed source/proprietary) is required for the
-:ref:`raster.jp2lura` driver.
-
-LURATECH_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
-
-.. option:: LURATECH_INCLUDE_DIR
-
-    Path to the include directory with the ``lwf_jp2.h`` header file.
-
-.. option:: LURATECH_LIBRARY
-
-    Path to library file lib_lwf_jp2.a / lwf_jp2.lib
-
-.. option:: GDAL_USE_LURATECH=ON/OFF
-
-    Control whether to use LURATECH. Defaults to ON when LURATECH is found.
-
-
 LZ4
 ***
 
@@ -1381,6 +1393,24 @@ The library is normally found if installed in standard location, and at version 
 
     Control whether to use MSSQL_ODBC. Defaults to ON when MSSQL_ODBC is found.
 
+
+muparser
+********
+
+`muparser <https://beltoforion.de/en/muparser/>`__ is a mathematical expression
+parser and evaluation engine. It can be used by the :ref:`raster.vrt` driver.
+
+.. option:: GDAL_USE_MUPARSER=ON/OFF
+
+   Control whether to use muparser. Defaults to ON when muparser is found.
+
+.. option:: MUPARSER_INCLUDE_DIR
+
+   Path to directory with muparser headers.
+
+.. option:: MUPARSER_LIBRARY
+
+   Path to library to be linked.
 
 MYSQL
 *****

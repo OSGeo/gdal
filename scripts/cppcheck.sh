@@ -146,10 +146,6 @@ ret_code=0
 grep -v "unmatchedSuppression" ${LOG_FILE} | grep -v -e " yacc.c" -e PublicDecompWT -e "kdu_cache_wrapper.h" > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
-# I don't want to care about SDE
-grep -v -e "frmts/sde" -e  "ogr/ogrsf_frmts/sde" ${LOG_FILE} > ${LOG_FILE}.tmp
-mv ${LOG_FILE}.tmp ${LOG_FILE}
-
 # I don't want to care about flatbuffers
 grep -v -e "ogr/ogrsf_frmts/flatgeobuf/flatbuffers" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
@@ -182,6 +178,12 @@ mv ${LOG_FILE}.tmp ${LOG_FILE}
 grep -v -e "The expression '0 <= yystate' is always true" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 grep -v -e "The comparison '0 <= yystate' is always true" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
+# False positives with cppcheck of ubuntu 20.04
+grep -v -e "ogrlinestring.cpp:.*warning,accessMoved"  ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+grep -v -e "ogrgeometrycollection.cpp:.*warning,accessMoved"  ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 if grep "null pointer" ${LOG_FILE} ; then

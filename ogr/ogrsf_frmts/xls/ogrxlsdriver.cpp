@@ -26,7 +26,7 @@ static GDALDataset *OGRXLSDriverOpen(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "XLS"))
+    if (!poOpenInfo->IsExtensionEqualToCI("XLS"))
     {
         return nullptr;
     }

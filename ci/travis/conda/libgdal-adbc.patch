@@ -1,36 +1,36 @@
 diff --git a/recipe/build.sh b/recipe/build.sh
-index b5329fd..8bfa9ef 100644
+index ddc8ae6..0e6c07e 100644
 --- a/recipe/build.sh
 +++ b/recipe/build.sh
-@@ -48,6 +48,7 @@ cmake -G "Unix Makefiles" \
-       -DGDAL_ENABLE_DRIVER_NETCDF=OFF \
-       -DGDAL_ENABLE_DRIVER_HDF4=OFF \
+@@ -52,6 +52,7 @@ cmake -G "Unix Makefiles" \
        -DGDAL_ENABLE_DRIVER_HDF5=OFF \
+       -DGDAL_ENABLE_DRIVER_AVIF=OFF \
+       -DGDAL_ENABLE_DRIVER_HEIF=OFF \
 +      -DOGR_ENABLE_DRIVER_ADBC=OFF \
        -DOGR_REGISTER_DRIVER_ARROW_FOR_LATER_PLUGIN=ON \
        -DOGR_REGISTER_DRIVER_PARQUET_FOR_LATER_PLUGIN=ON \
        -DGDAL_REGISTER_DRIVER_JP2OPENJPEG_FOR_LATER_PLUGIN=ON \
-@@ -62,6 +63,7 @@ cmake -G "Unix Makefiles" \
-       -DGDAL_REGISTER_DRIVER_NETCDF_FOR_LATER_PLUGIN=ON \
-       -DGDAL_REGISTER_DRIVER_HDF4_FOR_LATER_PLUGIN=ON \
+@@ -68,6 +69,7 @@ cmake -G "Unix Makefiles" \
        -DGDAL_REGISTER_DRIVER_HDF5_FOR_LATER_PLUGIN=ON \
+       -DGDAL_REGISTER_DRIVER_AVIF_FOR_LATER_PLUGIN=ON \
+       -DGDAL_REGISTER_DRIVER_HEIF_FOR_LATER_PLUGIN=ON \
 +      -DOGR_REGISTER_DRIVER_ADBC_FOR_LATER_PLUGIN=ON \
        -DOGR_DRIVER_ARROW_PLUGIN_INSTALLATION_MESSAGE="You may install it with 'conda install -c conda-forge libgdal-arrow-parquet'" \
        -DOGR_DRIVER_PARQUET_PLUGIN_INSTALLATION_MESSAGE="You may install it with 'conda install -c conda-forge libgdal-arrow-parquet'" \
        -DGDAL_DRIVER_JP2OPENJPEG_PLUGIN_INSTALLATION_MESSAGE="You may install it with 'conda install -c conda-forge libgdal-jp2openjpeg'" \
-@@ -77,6 +79,7 @@ cmake -G "Unix Makefiles" \
-       -DGDAL_DRIVER_HDF4_PLUGIN_INSTALLATION_MESSAGE="You may install it with 'conda install -c conda-forge libgdal-hdf4'" \
-       -DGDAL_DRIVER_HDF5_PLUGIN_INSTALLATION_MESSAGE="You may install it with 'conda install -c conda-forge libgdal-hdf5'" \
+@@ -85,6 +87,7 @@ cmake -G "Unix Makefiles" \
        -DGDAL_ENABLE_HDF5_GLOBAL_LOCK:BOOL=ON \
+       -DGDAL_DRIVER_AVIF_PLUGIN_INSTALLATION_MESSAGE="You may install it with 'conda install -c conda-forge libgdal-avif'" \
+       -DGDAL_DRIVER_HEIF_PLUGIN_INSTALLATION_MESSAGE="You may install it with 'conda install -c conda-forge libgdal-heif'" \
 +      -DOGR_DRIVER_ADBC_PLUGIN_INSTALLATION_MESSAGE="You may install it with 'conda install -c conda-forge libgdal-adbc'" \
        -DBUILD_PYTHON_BINDINGS:BOOL=OFF \
        -DBUILD_JAVA_BINDINGS:BOOL=OFF \
        -DBUILD_CSHARP_BINDINGS:BOOL=OFF \
 diff --git a/recipe/meta.yaml b/recipe/meta.yaml
-index 067eacd..12aab43 100644
+index f1d0c48..68e2ca4 100644
 --- a/recipe/meta.yaml
 +++ b/recipe/meta.yaml
-@@ -580,6 +580,45 @@ outputs:
+@@ -678,6 +678,53 @@ outputs:
        license: MIT
        license_file: LICENSE.TXT
  
@@ -42,6 +42,9 @@ index 067eacd..12aab43 100644
 +      skip: true  # [win]
 +      ignore_run_exports_from:
 +        - expat
++        - icu
++        - liblzma
++        - lz4-c
 +      script_env:
 +        - GDAL_PLUGIN_NAME=ADBC
 +        - GDAL_PLUGIN_TYPE=ogr
@@ -57,9 +60,14 @@ index 067eacd..12aab43 100644
 +        - ninja  # [win]
 +      host:
 +        - {{ pin_subpackage('libgdal-core', exact=True) }}
++        # GH992 attempt to workaround dep solver picking wrong libxml2
++        - icu  # [not win]
 +        - libkml-devel
++        - liblzma-devel
 +        - expat
 +        - libadbc-driver-manager
++        # dep solver issue
++        - lz4-c
 +      run:
 +        - libgdal-core >={{ ".".join(version.split(".")[:2]) }}
 +    test:

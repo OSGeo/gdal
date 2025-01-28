@@ -24,3 +24,7 @@ endif ()
 if (GDAL_ENABLE_DRIVER_GTI_PLUGIN)
     target_compile_definitions(gdal_GTI PRIVATE -DBUILT_AS_PLUGIN)
 endif()
+
+if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
+  target_compile_definitions(gdal_GTI PRIVATE -DUSE_NEON_OPTIMIZATIONS)
+endif()

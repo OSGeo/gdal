@@ -25,7 +25,11 @@ Consult the `installation instruction <https://arrow.apache.org/adbc/current/dri
 for the various ADBC drivers. At time of writing, there are drivers for
 SQLite3, PostgreSQL, Snowflake, BigQuery, DuckDB, Flight SQL, etc.
 
-The driver is read-only, and there is no support for spatial data currently.
+The driver is read-only.
+
+There is spatial support when the underlying ADBC driver is DuckDB, for
+native spatial DuckDB databases and GeoParquet datasets, and when the spatial
+extension is installed.
 
 Connection string
 -----------------
@@ -74,6 +78,14 @@ The following open options are supported:
       driver specific.
       For example ``ADBC_OPTION_uri=some_value`` to pass the ``uri`` option.
 
+- .. oo:: PRELUDE_STATEMENTS
+      :choices: <string>
+
+      SQL-like statement recognized by the driver that must be executed before
+      discovering layers. Can be repeated multiple times.
+      For example ``PRELUDE_STATEMENTS=INSTALL spatial`` and
+      ``PRELUDE_STATEMENTS=LOAD spatial`` to load DuckDB spatial extension.
+
 "table_list" special layer
 --------------------------
 
@@ -97,6 +109,15 @@ before using the driver. The specified init function will be used by the
 GDAL ADBC driver as a way of locating and loading the ADBC driver if GDAL was
 not built with ADBC Driver Manager support or if an embedding application has
 an updated or augmented collection of drivers available.
+
+Filtering
+---------
+
+Attribute filters are passed to the underlying ADBC engine.
+
+Spatial filters are passed to DuckDB when it is the underlying ADBC engine
+and for DuckDB spatial databases and GeoParquet datasets. GeoParquet bounding
+box column and/or DuckDB native RTree spatial indices are used when available.
 
 Examples
 --------

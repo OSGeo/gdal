@@ -1,5 +1,4 @@
 /*
- * $Id$
  *
  * python specific code for gdal bindings.
  */
@@ -1630,13 +1629,29 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         self._child_references.add(val)
 %}
 
-%feature("pythonprepend") Close %{
-    self._invalidate_children()
-%}
+%feature("shadow") Close %{
+    def Close(self, *args):
+        r"""
+        Close(Dataset self) -> CPLErr
 
-%feature("pythonappend") Close %{
-    self.thisown = 0
-    self.this = None
+        Closes opened dataset and releases allocated resources.
+
+        This method can be used to force the dataset to close
+        when one more references to the dataset are still
+        reachable. If :py:meth:`Close` is never called, the dataset will
+        be closed automatically during garbage collection.
+
+        In most cases, it is preferable to open or create a dataset
+        using a context manager instead of calling :py:meth:`Close`
+        directly.
+        """
+
+        self._invalidate_children()
+        try:
+            return _gdal.Dataset_Close(self, *args)
+        finally:
+            self.thisown = 0
+            self.this = None
 %}
 
 %feature("shadow") ExecuteSQL %{
@@ -2517,6 +2532,7 @@ def TranslateOptions(options=None, format=None,
               noData=None, rgbExpand=None,
               stats = False, rat = True, xmp = True, resampleAlg=None,
               overviewLevel = 'AUTO',
+              colorInterpretation=None,
               callback=None, callback_data=None,
               domainMetadataOptions = None):
     """Create a TranslateOptions() object that can be passed to gdal.Translate()
@@ -2587,6 +2603,8 @@ def TranslateOptions(options=None, format=None,
         resampling mode
     overviewLevel:
         To specify which overview level of source files must be used
+    colorInterpretation:
+        Band color interpretation, as a single value or a list, of the following values ("red", "green", "blue", "alpha", "grey", "undefined", etc.) or their GCI_xxxx symbolic names
     callback:
         callback method
     callback_data:
@@ -2704,6 +2722,13 @@ def TranslateOptions(options=None, format=None,
                 overviewLevel = str(overviewLevel)
         else:
             overviewLevel = None
+        if colorInterpretation is not None:
+            def colorInterpAsString(x):
+                return GetColorInterpretationName(x) if isinstance(x, int) else x
+            if isinstance(colorInterpretation, list):
+                new_options += ['-colorinterp', ','.join([colorInterpAsString(x) for x in colorInterpretation])]
+            else:
+                new_options += ['-colorinterp', colorInterpAsString(colorInterpretation)]
 
         if overviewLevel is not None and overviewLevel != 'AUTO':
             new_options += ['-ovr', overviewLevel]
@@ -2833,9 +2858,9 @@ def WarpOptions(options=None, format=None,
     transformerOptions:
         list or dict of transformer options
     cutlineDSName:
-        cutline dataset name (mutually exclusive with cutlineDSName)
+        cutline dataset name (mutually exclusive with cutlineWKT)
     cutlineWKT:
-        cutline WKT geometry (POLYGON or MULTIPOLYGON) (mutually exclusive with cutlineWKT)
+        cutline WKT geometry (POLYGON or MULTIPOLYGON) (mutually exclusive with cutlineDSName)
     cutlineSRS:
         set/override cutline SRS
     cutlineLayer:
@@ -4551,7 +4576,7 @@ def TileIndexOptions(options=None,
     outputBounds:
         output bounds as [minx, miny, maxx, maxy]
     colorInterpretation:
-        tile color interpretation, as a single value or a list, of the following values: "red", "green", "blue", "alpha", "grey", "undefined"
+        Tile color interpretation, as a single value or a list, of the following values ("red", "green", "blue", "alpha", "grey", "undefined", etc.) or their GCI_xxxx symbolic names
     noData:
         tile nodata value, as a single value or a list
     bandCount:
@@ -4624,10 +4649,12 @@ def TileIndexOptions(options=None,
         if outputBounds is not None:
             new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
         if colorInterpretation is not None:
-            if isinstance(noData, list):
-                new_options += ['-colorinterp', ','.join(colorInterpretation)]
+            def colorInterpAsString(x):
+                return GetColorInterpretationName(x) if isinstance(x, int) else x
+            if isinstance(colorInterpretation, list):
+                new_options += ['-colorinterp', ','.join([colorInterpAsString(x) for x in colorInterpretation])]
             else:
-                new_options += ['-colorinterp', colorInterpretation]
+                new_options += ['-colorinterp', colorInterpAsString(colorInterpretation)]
         if noData is not None:
             if isinstance(noData, list):
                 new_options += ['-nodata', ','.join([_strHighPrec(x) for x in noData])]
@@ -5007,6 +5034,119 @@ def InterpolateAtPoint(self, *args, **kwargs):
         return ret[1]
 %}
 
+%feature("shadow") InterpolateAtGeolocation %{
+def InterpolateAtGeolocation(self, *args, **kwargs):
+    """Return the interpolated value at georeferenced coordinates.
+       See :cpp:func:`GDALRasterBand::InterpolateAtGeolocation`.
+
+       When srs is None, those georeferenced coordinates (geolocX, geolocY)
+       must be in the "natural" SRS of the dataset, that is the one returned by
+       GetSpatialRef() if there is a geotransform, GetGCPSpatialRef() if there are
+       GCPs, WGS 84 if there are RPC coefficients, or the SRS of the geolocation
+       array (generally WGS 84) if there is a geolocation array.
+       If that natural SRS is a geographic one, geolocX must be a longitude, and
+       geolocY a latitude. If that natural SRS is a projected one, geolocX must
+       be a easting, and geolocY a northing.
+
+       When srs is set to a non-None value, (geolocX, geolocY) must be
+       expressed in that CRS, and that tuple must be conformant with the
+       data-axis-to-crs-axis setting of srs, that is the one returned by
+       the :py:func:`osgeo.osr.SpatialReference.GetDataAxisToSRSAxisMapping().
+       If you want to be sure of the axis order, then make sure to call
+       ``srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)``
+       before calling this method, and in that case, geolocX must be a longitude
+       or an easting value, and geolocX a latitude or a northing value.
+
+       Parameters
+       ----------
+       geolocX : float
+           X coordinate of the position where interpolation should be done.
+           Longitude or easting in "natural" CRS if `srs` is None,
+           otherwise consistent with first axis of `srs`,
+           taking into account the data-axis-to-crs-axis mapping
+       geolocY : float
+           Y coordinate of the position where interpolation should be done.
+           Latitude or northing in "natural" CRS if `srs` is None,
+           otherwise consistent with second axis of `srs`,
+           taking into account the data-axis-to-crs-axis mapping
+       srs : osgeo.osr.SpatialReference
+           If set, override the natural CRS in which geolocX, geolocY are expressed
+       interpolation : GRIOResampleAlg (nearest, bilinear, cubic, cubicspline)
+
+       Returns
+       -------
+       float:
+           Interpolated value, or ``None`` if it has any error.
+
+       Example
+       -------
+
+       >>> from osgeo import gdal, osr
+       >>> with gdal.Open("my.tif") as ds:
+       ...    wgs84_srs = osr.SpatialReference()
+       ...    wgs84_srs.SetFromUserInput("WGS84")
+       ...    wgs84_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+       ...    val = ds.GetRasterBand(1).InterpolateAtGeolocation(longitude_degree,
+                                                                 latitude_degree,
+                                                                 wgs84_srs,
+                                                                 gdal.GRIORA_Bilinear)
+    """
+
+    ret = $action(self, *args, **kwargs)
+    if ret[0] != CE_None:
+        return None
+
+    from . import gdal
+    if gdal.DataTypeIsComplex(self.DataType):
+        return complex(ret[1], ret[2])
+    else:
+        return ret[1]
+%}
+
+%feature("shadow") ComputeMinMaxLocation %{
+def ComputeMinMaxLocation(self, *args, **kwargs):
+    """Compute the min/max values for a band, and their location.
+
+       Pixels whose value matches the nodata value or are masked by the mask
+       band are ignored.
+
+       If the minimum or maximum value is hit in several locations, it is not
+       specified which one will be returned.
+
+       This is a mapping of :cpp:func:`GDALRasterBand::ComputeRasterMinMaxLocation`.
+
+       Parameters
+       ----------
+       None
+
+       Returns
+       -------
+       a named tuple (min, max, minX, minY, maxX, maxY) or or ``None``
+       in case of error or no valid pixel.
+    """
+
+    ret = $action(self, *args, **kwargs)
+    if ret[0] != CE_None:
+        return None
+
+    import collections
+    tuple = collections.namedtuple('ComputeMinMaxLocationResult',
+            ['min',
+             'max',
+             'minX',
+             'minY',
+             'maxX',
+             'maxY',
+             ])
+    tuple.min = ret[1]
+    tuple.max = ret[2]
+    tuple.minX = ret[3]
+    tuple.minY = ret[4]
+    tuple.maxX = ret[5]
+    tuple.maxY = ret[6]
+    return tuple
+%}
+
 %pythoncode %{
 
 # VSIFile: Copyright (c) 2024, Dan Baston <dbaston at gmail.com>
@@ -5106,3 +5246,63 @@ class VSIFile(BytesIO):
     def tell(self):
         return VSIFTellL(self._fp)
 %}
+
+/* -------------------------------------------------------------------- */
+/* GDALAlgorithmArgHS                                                   */
+/* -------------------------------------------------------------------- */
+
+%extend GDALAlgorithmArgHS {
+%pythoncode %{
+
+    def Get(self):
+        type = self.GetType()
+        if type == GAAT_BOOLEAN:
+            return self.GetAsBoolean()
+        if type == GAAT_STRING:
+            return self.GetAsString()
+        if type == GAAT_INTEGER:
+            return self.GetAsInteger()
+        if type == GAAT_REAL:
+            return self.GetAsDouble()
+        if type == GAAT_DATASET:
+            return self.GetAsDatasetValue()
+        if type == GAAT_STRING_LIST:
+            return self.GetAsStringList()
+        if type == GAAT_INTEGER_LIST:
+            return self.GetAsIntegerList()
+        if type == GAAT_REAL_LIST:
+            return self.GetAsDoubleList()
+        raise Exception("Unhandled algorithm argument data type")
+
+    def Set(self, value):
+        type = self.GetType()
+        if type == GAAT_BOOLEAN:
+            return self.SetAsBoolean(value)
+        if type == GAAT_STRING:
+            return self.SetAsString(value)
+        if type == GAAT_INTEGER:
+            return self.SetAsInteger(value)
+        if type == GAAT_REAL:
+            return self.SetAsDouble(value)
+        if type == GAAT_DATASET:
+            if isinstance(value, str):
+                return self.GetAsDatasetValue().SetName(value)
+            elif isinstance(value, Dataset):
+                return self.GetAsDatasetValue().SetDataset(value)
+            else:
+                return self.SetAsDatasetValue(value)
+        if type == GAAT_STRING_LIST:
+            return self.SetAsStringList(value)
+        if type == GAAT_INTEGER_LIST:
+            return self.SetAsIntegerList(value)
+        if type == GAAT_REAL_LIST:
+            return self.SetAsDoubleList(value)
+        if type == GAAT_DATASET_LIST:
+            if isinstance(value[0], str):
+                return self.SetDatasetNames(value)
+            elif isinstance(value[0], Dataset):
+                return self.SetDatasets(value)
+        raise Exception("Unhandled algorithm argument data type")
+
+%}
+}

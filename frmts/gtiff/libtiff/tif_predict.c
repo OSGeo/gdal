@@ -208,16 +208,12 @@ static int PredictorSetupDecode(TIFF *tif)
         /*
          * The data should not be swapped outside of the floating
          * point predictor, the accumulation routine should return
-         * byres in the native order.
+         * bytes in the native order.
          */
         if (tif->tif_flags & TIFF_SWAB)
         {
             tif->tif_postdecode = _TIFFNoPostDecode;
         }
-        /*
-         * Allocate buffer to keep the decoded bytes before
-         * rearranging in the right order
-         */
     }
 
     return 1;
@@ -304,6 +300,15 @@ static int PredictorSetupEncode(TIFF *tif)
             tif->tif_encodestrip = PredictorEncodeTile;
             sp->encodetile = tif->tif_encodetile;
             tif->tif_encodetile = PredictorEncodeTile;
+        }
+        /*
+         * The data should not be swapped outside of the floating
+         * point predictor, the differentiation routine should return
+         * bytes in the native order.
+         */
+        if (tif->tif_flags & TIFF_SWAB)
+        {
+            tif->tif_postdecode = _TIFFNoPostDecode;
         }
     }
 
@@ -923,7 +928,7 @@ static int PredictorEncodeTile(TIFF *tif, uint8_t *bp0, tmsize_t cc0,
 
 static const TIFFField predictFields[] = {
     {TIFFTAG_PREDICTOR, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16,
-     TIFF_SETGET_UINT16, FIELD_PREDICTOR, FALSE, FALSE, "Predictor", NULL},
+     FIELD_PREDICTOR, FALSE, FALSE, "Predictor", NULL},
 };
 
 static int PredictorVSetField(TIFF *tif, uint32_t tag, va_list ap)

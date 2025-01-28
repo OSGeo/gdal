@@ -12,6 +12,7 @@
 #
 import datetime
 import os
+import shutil
 import sys
 
 sys.path.insert(0, os.path.abspath("_extensions"))
@@ -68,10 +69,13 @@ extensions = [
     "breathe",
     "configoptions",
     "driverproperties",
+    "cli_example",
     "source_file",
     "sphinx.ext.napoleon",
     "sphinxcontrib.jquery",
+    "sphinxcontrib_programoutput_gdal",
     "sphinxcontrib.spelling",
+    "myst_nb",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -84,6 +88,7 @@ exclude_patterns = [
     "substitutions.rst",
     "programs/options/*.rst",
     "api/python/modules.rst",
+    "gdal_rtd/README.md",
 ]
 
 # Prevents double hyphen (--) to be replaced by Unicode long dash character
@@ -111,6 +116,12 @@ offline_download_text += f"available as a `PDF <{url_root}{pdf_url}>`__ or a `ZI
 rst_prolog += f"""
 .. |offline-download| replace:: {offline_download_text}
 """
+
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".ipynb": "myst-nb",
+    ".myst": "myst-nb",
+}
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -151,10 +162,9 @@ html_theme_options = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-html_extra_path = ["../build/html_extra"]
 
-html_js_files = ["announcement.js"]
-html_css_files = ["announcement.css"]
+# For generated content and robots.txt
+html_extra_path = ["../build/html_extra", "extra_path"]
 
 # If true, links to the reST sources are added to the pages.
 html_show_sourcelink = False
@@ -176,6 +186,141 @@ author_evenr = "Even Rouault <even.rouault@spatialys.com>"
 author_tamass = "Tamas Szekeres <szekerest@gmail.com>"
 
 man_pages = [
+    # New gdal commands and subcommands
+    (
+        "programs/gdal",
+        "gdal",
+        "Main gdal entry point",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_info",
+        "gdal-info",
+        "Get information on a dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_convert",
+        "gdal-convert",
+        "Convert a dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster",
+        "gdal-raster",
+        "Entry point for raster commands",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_info",
+        "gdal-raster-info",
+        "Get information on a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_clip",
+        "gdal-raster-clip",
+        "Clip a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_convert",
+        "gdal-raster-convert",
+        "Convert a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_edit",
+        "gdal-raster-edit",
+        "Edit in place a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_mosaic",
+        "gdal-raster-mosaic",
+        "Build a mosaic",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_overview_add",
+        "gdal-raster-overview-add",
+        "Add overviews to a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_overview_delete",
+        "gdal-raster-overview-delete",
+        "Delete overviews of a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_pipeline",
+        "gdal-raster-pipeline",
+        "Process a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_reproject",
+        "gdal-raster-reproject",
+        "Reproject a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_stack",
+        "gdal-raster-stack",
+        "Combine together input bands into a multi-band output, either virtual (VRT) or materialized",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector",
+        "gdal-vector",
+        "Entry point for vector commands",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_info",
+        "gdal-vector-info",
+        "Get information on a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_clip",
+        "gdal-vector-clip",
+        "Clip a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_convert",
+        "gdal-vector-convert",
+        "Convert a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_pipeline",
+        "gdal-vector-pipeline",
+        "Process a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    # Traditional utilities
     (
         "programs/gdalinfo",
         "gdalinfo",
@@ -577,3 +722,31 @@ options_since_ignore_before = "3.0"
 spelling_ignore_contributor_names = False
 
 spelling_word_list_filename = ["spelling_wordlist.txt"]
+
+# -- myst-nb --------------------------------------------------
+
+# Sets `text/plain` as the highest priority for `spelling` output.
+nb_mime_priority_overrides = [
+    ("spelling", "text/plain", 0),
+]
+
+# -- copy data files -----------------------------------------------------
+
+data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+os.makedirs(data_dir, exist_ok=True)
+data_dir_with_stats = os.path.join(data_dir, "with_stats")
+os.makedirs(data_dir_with_stats, exist_ok=True)
+
+target_filename = os.path.join(data_dir, "utmsmall.tif")
+shutil.copy(
+    os.path.join(os.path.dirname(__file__), "../../autotest/gcore/data/utmsmall.tif"),
+    target_filename,
+)
+if os.path.exists(target_filename + ".aux.xml"):
+    os.unlink(target_filename + ".aux.xml")
+
+target_filename = os.path.join(data_dir_with_stats, "utmsmall.tif")
+shutil.copy(
+    os.path.join(os.path.dirname(__file__), "../../autotest/gcore/data/utmsmall.tif"),
+    target_filename,
+)

@@ -15,6 +15,7 @@
 #define GTIFFRASTERBAND_H_INCLUDED
 
 #include "gdal_pam.h"
+#include "gdal_rat.h"
 
 #include "gtiff.h"
 
@@ -41,6 +42,7 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     GDALColorInterp m_eBandInterp = GCI_Undefined;
     std::set<GTiffRasterBand **> m_aSetPSelf{};
     bool m_bHaveOffsetScale = false;
+    std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
 
     int DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                  int nYSize, void *pData, int nBufXSize, int nBufYSize,
@@ -52,10 +54,6 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
                                              int *pnPixelSpace,
                                              GIntBig *pnLineSpace,
                                              char **papszOptions);
-
-    void *CacheMultiRange(int nXOff, int nYOff, int nXSize, int nYSize,
-                          int nBufXSize, int nBufYSize,
-                          GDALRasterIOExtraArg *psExtraArg);
 
   protected:
     GTiffDataset *m_poGDS = nullptr;

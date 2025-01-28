@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test functioning of the ProxyDB PAM metadata support

@@ -237,7 +237,7 @@ function (gdal_csharp_dll)
     add_custom_command(
       COMMAND ${CMAKE_COMMAND} -E "copy_if_different"
               "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}-$<CONFIG>.csproj" "${_CSHARP_PROJ}"
-      VERBATIM PRE_BUILD
+      VERBATIM
       DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}-$<CONFIG>.csproj"
       OUTPUT ${_CSHARP_PROJ})
     add_dotnet(

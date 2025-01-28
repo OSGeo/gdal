@@ -4,8 +4,8 @@ set -ex
 
 . ../scripts/setdevenv.sh
 
-export LD_LIBRARY_PATH=/usr/lib/llvm-14/lib/clang/14.0.0/lib/linux:${LD_LIBRARY_PATH}
-export PATH=/usr/lib/llvm-14/bin:${PATH}
+export LD_LIBRARY_PATH=/usr/lib/llvm-18/lib/clang/18.0.0/lib/linux:${LD_LIBRARY_PATH}
+export PATH=/usr/lib/llvm-18/bin:${PATH}
 export SKIP_MEM_INTENSIVE_TEST=YES
 export SKIP_VIRTUALMEM=YES
 export LD_PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so)
@@ -15,6 +15,14 @@ export PYTHONMALLOC=malloc
 
 gdalinfo autotest/gcore/data/byte.tif
 python3 -c "from osgeo import gdal; print('yes')"
+
+# Check fix for https://github.com/rasterio/rasterio/issues/3250
+mv ${GDAL_DRIVER_PATH}/gdal_PDF.so ${GDAL_DRIVER_PATH}/gdal_PDF.so.disabled
+echo "from osgeo import gdal" > register_many_times.py
+echo "for i in range(1000):" >> register_many_times.py
+echo "   gdal.AllRegister()" >> register_many_times.py
+python3 register_many_times.py
+mv ${GDAL_DRIVER_PATH}/gdal_PDF.so.disabled ${GDAL_DRIVER_PATH}/gdal_PDF.so
 
 cd autotest
 

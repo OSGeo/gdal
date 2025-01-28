@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Inline C++ templates
@@ -7,6 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2009, Phil Vachon, <philippe at cowpig.ca>
+ * Copyright (c) 2025, Even Rouault, <even.rouault at spatialys.com>
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
@@ -16,9 +16,11 @@
 
 #include "cpl_port.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <type_traits>
 
 #include "cpl_float.h"
 
@@ -819,7 +821,10 @@ template <> struct sGDALCopyWord<GFloat16, std::int64_t>
 template <class Tin, class Tout>
 inline void GDALCopyWord(const Tin tValueIn, Tout &tValueOut)
 {
-    sGDALCopyWord<Tin, Tout>::f(tValueIn, tValueOut);
+    if constexpr (std::is_same<Tin, Tout>::value)
+        tValueOut = tValueIn;
+    else
+        sGDALCopyWord<Tin, Tout>::f(tValueIn, tValueOut);
 }
 
 /************************************************************************/
@@ -861,9 +866,14 @@ inline void GDALCopy8Words(const Tin *pValueIn, Tout *const pValueOut)
 }
 
 // Needs SSE2
-#if defined(__x86_64) || defined(_M_X64) || defined(USE_SSE2)
+#if defined(__x86_64) || defined(_M_X64) || defined(USE_SSE2) ||               \
+    defined(USE_NEON_OPTIMIZATIONS)
 
+#ifdef USE_NEON_OPTIMIZATIONS
+#include "include_sse2neon.h"
+#else
 #include <emmintrin.h>
+#endif
 
 static inline void GDALCopyXMMToInt32(const __m128i xmm, void *pDest)
 {
@@ -880,7 +890,7 @@ static inline void GDALCopyXMMToInt64(const __m128i xmm, void *pDest)
 #include <tmmintrin.h>
 #endif
 
-#if __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__)
 #include <smmintrin.h>
 #endif
 
@@ -898,7 +908,7 @@ inline void GDALCopy4Words(const float *pValueIn, GByte *const pValueOut)
 
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
 
-#if __SSSE3__
+#if defined(__SSSE3__) || defined(USE_NEON_OPTIMIZATIONS)
     xmm_i = _mm_shuffle_epi8(
         xmm_i, _mm_cvtsi32_si128(0 | (4 << 8) | (8 << 16) | (12 << 24)));
 #else
@@ -942,7 +952,7 @@ inline void GDALCopy4Words(const float *pValueIn, GUInt16 *const pValueOut)
 
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
 
-#if __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
     xmm_i = _mm_packus_epi32(xmm_i, xmm_i);  // Pack int32 to uint16
 #else
     // Translate to int16 range because _mm_packus_epi32 is SSE4.1 only
@@ -1013,7 +1023,7 @@ inline void GDALCopy8Words(const float *pValueIn, GUInt16 *const pValueOut)
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
     __m128i xmm1_i = _mm_cvttps_epi32(xmm1);
 
-#if __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
     xmm_i = _mm_packus_epi32(xmm_i, xmm1_i);  // Pack int32 to uint16
 #else
     // Translate to int16 range because _mm_packus_epi32 is SSE4.1 only

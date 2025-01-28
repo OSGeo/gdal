@@ -39,7 +39,7 @@ bool GMLASResourceCache::RecursivelyCreateDirectoryIfNeeded(
         return true;
     }
 
-    std::string osParent = CPLGetDirname(osDirname.c_str());
+    std::string osParent = CPLGetDirnameSafe(osDirname.c_str());
     if (!osParent.empty() && osParent != ".")
     {
         if (!RecursivelyCreateDirectoryIfNeeded(osParent.c_str()))
@@ -115,8 +115,8 @@ std::string GMLASResourceCache::GetCachedFilename(const std::string &osResource)
                  osLaunderedName.c_str());
     }
 
-    return CPLFormFilename(m_osCacheDirectory.c_str(), osLaunderedName.c_str(),
-                           nullptr);
+    return CPLFormFilenameSafe(m_osCacheDirectory.c_str(),
+                               osLaunderedName.c_str(), nullptr);
 }
 
 /************************************************************************/
@@ -176,12 +176,7 @@ bool GMLASXSDCache::CacheAllGML321()
     CPLHTTPDestroyResult(psResult);
     if (!bSuccess)
     {
-        static bool bHasWarned = false;
-        if (!bHasWarned)
-        {
-            bHasWarned = true;
-            CPLDebug("GMLAS", "Cannot get GML schemas from %s", pszHTTPZIP);
-        }
+        CPLDebugOnce("GMLAS", "Cannot get GML schemas from %s", pszHTTPZIP);
     }
     return bSuccess;
 }
@@ -248,12 +243,7 @@ bool GMLASXSDCache::CacheAllISO20070417()
     CPLHTTPDestroyResult(psResult);
     if (!bSuccess)
     {
-        static bool bHasWarned = false;
-        if (!bHasWarned)
-        {
-            bHasWarned = true;
-            CPLDebug("GMLAS", "Cannot get ISO schemas from %s", pszHTTPZIP);
-        }
+        CPLDebugOnce("GMLAS", "Cannot get ISO schemas from %s", pszHTTPZIP);
     }
     return bSuccess;
 }
@@ -278,12 +268,12 @@ VSILFILE *GMLASXSDCache::Open(const std::string &osResource,
                 STARTS_WITH(osResourceModified.c_str(), "..\\")) &&
                !osBasePathModified.empty())
         {
-            osBasePathModified = CPLGetDirname(osBasePathModified.c_str());
+            osBasePathModified = CPLGetDirnameSafe(osBasePathModified.c_str());
             osResourceModified = osResourceModified.substr(3);
         }
 
-        osOutFilename = CPLFormFilename(osBasePathModified.c_str(),
-                                        osResourceModified.c_str(), nullptr);
+        osOutFilename = CPLFormFilenameSafe(
+            osBasePathModified.c_str(), osResourceModified.c_str(), nullptr);
     }
 
     CPLDebug("GMLAS", "Resolving %s (%s) to %s", osResource.c_str(),

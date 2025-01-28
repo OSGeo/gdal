@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  COG driver testing
@@ -13,11 +12,13 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import struct
 import sys
 
 import gdaltest
 import pytest
+import webserver
 from test_py_scripts import samples_path
 
 from osgeo import gdal, osr
@@ -321,16 +322,14 @@ def test_cog_creation_of_overviews_with_compression():
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     assert ds.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION"] == "LZW"
 
-    ds_overview_a = gdal.Open("GTIFF_DIR:2:" + filename)
-    assert ds_overview_a.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION"] == "JPEG"
-    assert ds_overview_a.GetMetadata("IMAGE_STRUCTURE")["JPEG_QUALITY"] == "50"
+    with gdal.Open("GTIFF_DIR:2:" + filename) as ds_overview:
+        assert ds_overview.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION"] == "JPEG"
+        assert ds_overview.GetMetadata("IMAGE_STRUCTURE")["JPEG_QUALITY"] == "50"
 
-    ds_overview_b = gdal.Open("GTIFF_DIR:3:" + filename)
-    assert ds_overview_b.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION"] == "JPEG"
-    assert ds_overview_a.GetMetadata("IMAGE_STRUCTURE")["JPEG_QUALITY"] == "50"
+    with gdal.Open("GTIFF_DIR:3:" + filename) as ds_overview:
+        assert ds_overview.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION"] == "JPEG"
+        assert ds_overview.GetMetadata("IMAGE_STRUCTURE")["JPEG_QUALITY"] == "50"
 
-    ds_overview_a = None
-    ds_overview_b = None
     ds = None
 
     src_ds = None
@@ -558,7 +557,7 @@ def test_cog_byte_to_web_mercator():
     filename2 = directory + "/cog2.tif"
     src_ds = gdal.Open(filename)
 
-    class my_error_handler(object):
+    class my_error_handler:
         def __init__(self):
             self.debug_msg_list = []
             self.other_msg_list = []
@@ -1935,3 +1934,355 @@ def test_cog_mask_band_overviews(tmp_vsimem):
     assert ds.GetRasterBand(1).IsMaskBand()
     assert ds.GetRasterBand(1).GetOverview(0).IsMaskBand()
     assert ds.GetRasterBand(1).GetOverview(1).IsMaskBand()
+
+
+###############################################################################
+# Verify that we can generate an output that is byte-identical to the expected golden file.
+
+
+@pytest.mark.parametrize(
+    "src_filename,creation_options",
+    [
+        ("data/cog/byte_little_endian_golden.tif", []),
+        (
+            "data/cog/byte_little_endian_blocksize_16_predictor_standard_golden.tif",
+            ["BLOCKSIZE=16", "PREDICTOR=STANDARD"],
+        ),
+    ],
+)
+def test_cog_write_check_golden_file(tmp_path, src_filename, creation_options):
+
+    out_filename = str(tmp_path / "test.tif")
+    with gdal.config_option("GDAL_TIFF_ENDIANNESS", "LITTLE"):
+        with gdal.Open(src_filename) as src_ds:
+            gdal.GetDriverByName("COG").CreateCopy(
+                out_filename, src_ds, options=creation_options
+            )
+    assert os.stat(src_filename).st_size == os.stat(out_filename).st_size
+    assert open(src_filename, "rb").read() == open(out_filename, "rb").read()
+
+
+###############################################################################
+
+
+def test_cog_preserve_ALPHA_PREMULTIPLIED_on_copy(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "src.tif")
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        src_filename, 1, 1, 4, options=["ALPHA=PREMULTIPLIED", "PROFILE=BASELINE"]
+    )
+    src_ds.SetGeoTransform([500000, 1, 0, 4500000, 0, -1])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    src_ds.SetProjection(srs.ExportToWkt())
+
+    out_filename = str(tmp_vsimem / "out.tif")
+    gdal.GetDriverByName("COG").CreateCopy(
+        out_filename,
+        src_ds,
+        options=[
+            "TILING_SCHEME=GoogleMapsCompatible",
+        ],
+    )
+    with gdal.Open(out_filename) as ds:
+        assert (
+            ds.GetRasterBand(4).GetMetadataItem("ALPHA", "IMAGE_STRUCTURE")
+            == "PREMULTIPLIED"
+        )
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_cog_write_interleave_tile(tmp_vsimem):
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    with gdal.quiet_errors():
+        gdal.GetDriverByName("COG").CreateCopy(
+            out_filename,
+            gdal.Open("data/rgbsmall.tif"),
+            options=["INTERLEAVE=TILE", "BLOCKSIZE=32"],
+        )
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "TILE"
+    assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
+
+    assert [ds.GetRasterBand(band + 1).Checksum() for band in range(3)] == [
+        21212,
+        21053,
+        21349,
+    ]
+
+    _check_cog(out_filename)
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_cog_write_interleave_band(tmp_vsimem):
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    with gdal.quiet_errors():
+        gdal.GetDriverByName("COG").CreateCopy(
+            out_filename,
+            gdal.Open("data/rgbsmall.tif"),
+            options=["INTERLEAVE=BAND", "BLOCKSIZE=32"],
+        )
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "BAND"
+    assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
+
+    assert [ds.GetRasterBand(band + 1).Checksum() for band in range(3)] == [
+        21212,
+        21053,
+        21349,
+    ]
+
+    _check_cog(out_filename)
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_cog_write_interleave_tile_with_mask(tmp_vsimem):
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    with gdal.quiet_errors():
+        gdal.GetDriverByName("COG").CreateCopy(
+            out_filename,
+            gdal.Translate(
+                "", "data/stefan_full_rgba.tif", options="-f MEM -b 1 -b 2 -b 3 -mask 4"
+            ),
+            options=["INTERLEAVE=TILE", "BLOCKSIZE=32"],
+        )
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "TILE"
+    assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
+
+    assert [ds.GetRasterBand(band + 1).Checksum() for band in range(3)] == [
+        12603,
+        58561,
+        36064,
+    ]
+    assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 22499
+
+    _check_cog(out_filename)
+
+    # Check that the tiles are in the expected order in the file
+    last_offset = 0
+    for y in range(2):
+        for x in range(2):
+            for band in range(3):
+                offset = int(
+                    ds.GetRasterBand(band + 1).GetMetadataItem(
+                        f"BLOCK_OFFSET_{x}_{y}", "TIFF"
+                    )
+                )
+                assert offset > last_offset
+                last_offset = offset
+            offset = int(
+                ds.GetRasterBand(1)
+                .GetMaskBand()
+                .GetMetadataItem(f"BLOCK_OFFSET_{x}_{y}", "TIFF")
+            )
+            assert offset > last_offset
+            last_offset = offset
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_cog_write_interleave_tile_with_mask_and_ovr(tmp_vsimem):
+    out_filename = str(tmp_vsimem / "out.tif")
+    out2_filename = str(tmp_vsimem / "out2.tif")
+
+    ds = gdal.Translate(
+        out_filename,
+        "data/stefan_full_rgba.tif",
+        options="-b 1 -b 2 -b 3 -mask 4 -outsize 1024 0",
+    )
+    ds.BuildOverviews("NEAR", [2])
+    ds.Close()
+
+    ds = gdal.Open(out_filename)
+    expected_md = [ds.GetRasterBand(band + 1).Checksum() for band in range(3)]
+    expected_md += [ds.GetRasterBand(1).GetMaskBand().Checksum()]
+    expected_ovr_md = [
+        ds.GetRasterBand(band + 1).GetOverview(0).Checksum() for band in range(3)
+    ]
+    expected_ovr_md += [ds.GetRasterBand(1).GetMaskBand().GetOverview(0).Checksum()]
+
+    gdal.GetDriverByName("COG").CreateCopy(
+        out2_filename,
+        ds,
+        options=["INTERLEAVE=TILE", "OVERVIEW_RESAMPLING=NEAREST"],
+    )
+
+    ds = gdal.Open(out2_filename)
+    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "TILE"
+    assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
+
+    _check_cog(out2_filename)
+
+    got_md = [ds.GetRasterBand(band + 1).Checksum() for band in range(3)]
+    got_md += [ds.GetRasterBand(1).GetMaskBand().Checksum()]
+    assert got_md == expected_md
+    got_ovr_md = [
+        ds.GetRasterBand(band + 1).GetOverview(0).Checksum() for band in range(3)
+    ]
+    got_ovr_md += [ds.GetRasterBand(1).GetMaskBand().GetOverview(0).Checksum()]
+    assert got_ovr_md == expected_ovr_md
+
+
+###############################################################################
+# Check that our reading of a COG with /vsicurl is efficient
+
+
+@pytest.mark.require_curl()
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 0, 11),
+    reason="libtiff >= 4.0.11 required",
+)
+@pytest.mark.parametrize("INTERLEAVE", ["BAND", "TILE"])
+def test_cog_interleave_tile_or_band_vsicurl(tmp_vsimem, INTERLEAVE):
+
+    gdal.VSICurlClearCache()
+
+    webserver_process = None
+    webserver_port = 0
+
+    (webserver_process, webserver_port) = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    if webserver_port == 0:
+        pytest.skip()
+
+    in_filename = str(tmp_vsimem / "in.tif")
+    cog_filename = str(tmp_vsimem / "cog.tif")
+
+    ds = gdal.Translate(
+        in_filename,
+        "data/stefan_full_rgba.tif",
+        options="-b 1 -b 2 -b 3 -mask 4 -outsize 1024 0",
+    )
+    ds.BuildOverviews("NEAR", [2])
+    ds.Close()
+
+    src_ds = gdal.Open(in_filename)
+    gdal.GetDriverByName("COG").CreateCopy(
+        cog_filename,
+        src_ds,
+        options=["INTERLEAVE=" + INTERLEAVE, "OVERVIEW_RESAMPLING=NEAREST"],
+    )
+
+    def extract(offset, size):
+        f = gdal.VSIFOpenL(cog_filename, "rb")
+        gdal.VSIFSeekL(f, offset, 0)
+        data = gdal.VSIFReadL(size, 1, f)
+        gdal.VSIFCloseL(f)
+        return data
+
+    try:
+        filesize = gdal.VSIStatL(cog_filename).size
+
+        handler = webserver.SequentialHandler()
+        handler.add("HEAD", "/cog.tif", 200, {"Content-Length": "%d" % filesize})
+        handler.add(
+            "GET",
+            "/cog.tif",
+            206,
+            {"Content-Length": "16384"},
+            extract(0, 16384),
+            expected_headers={"Range": "bytes=0-16383"},
+        )
+        with webserver.install_http_handler(handler):
+            ds = gdal.Open("/vsicurl/http://localhost:%d/cog.tif" % webserver_port)
+
+        handler = webserver.SequentialHandler()
+
+        def method(request):
+            # sys.stderr.write('%s\n' % str(request.headers))
+
+            if request.headers["Range"].startswith("bytes="):
+                rng = request.headers["Range"][len("bytes=") :]
+                assert len(rng.split("-")) == 2
+                start = int(rng.split("-")[0])
+                end = int(rng.split("-")[1])
+
+                request.protocol_version = "HTTP/1.1"
+                request.send_response(206)
+                request.send_header("Content-type", "application/octet-stream")
+                request.send_header(
+                    "Content-Range", "bytes %d-%d/%d" % (start, end, filesize)
+                )
+                request.send_header("Content-Length", end - start + 1)
+                request.send_header("Connection", "close")
+                request.end_headers()
+
+                request.wfile.write(extract(start, end - start + 1))
+
+        handler.add("GET", "/cog.tif", custom_method=method)
+        with webserver.install_http_handler(handler):
+            ret = ds.ReadRaster()
+        assert ret == src_ds.ReadRaster()
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
+
+
+###############################################################################
+
+
+@pytest.mark.require_creation_option("COG", "JPEG")
+@gdaltest.enable_exceptions()
+def test_cog_write_interleave_tile_jpeg(tmp_vsimem):
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    gdal.GetDriverByName("GTiff").CreateCopy(
+        out_filename,
+        gdal.Open("data/rgbsmall.tif"),
+        options=["INTERLEAVE=BAND", "COMPRESS=JPEG"],
+    )
+    with gdal.Open(out_filename) as ds:
+        expected_md = [ds.GetRasterBand(band + 1).Checksum() for band in range(3)]
+
+    gdal.GetDriverByName("COG").CreateCopy(
+        out_filename,
+        gdal.Open("data/rgbsmall.tif"),
+        options=["INTERLEAVE=TILE", "COMPRESS=JPEG"],
+    )
+    with gdal.Open(out_filename) as ds:
+        got_md = [ds.GetRasterBand(band + 1).Checksum() for band in range(3)]
+
+    assert got_md == expected_md
+
+
+###############################################################################
+
+
+@pytest.mark.require_creation_option("COG", "WEBP")
+@gdaltest.enable_exceptions()
+def test_cog_write_interleave_tile_webp_error(tmp_vsimem):
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    with pytest.raises(
+        Exception, match="COMPRESS=WEBP only supported for INTERLEAVE=PIXEL"
+    ):
+        gdal.GetDriverByName("COG").CreateCopy(
+            out_filename,
+            gdal.Open("data/rgbsmall.tif"),
+            options=["INTERLEAVE=TILE", "COMPRESS=WEBP"],
+        )

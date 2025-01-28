@@ -1,4 +1,3 @@
-/* $Id$ */
 
 #ifndef INCLUDED_CPL_CONFIG_EXTRAS
 #define INCLUDED_CPL_CONFIG_EXTRAS

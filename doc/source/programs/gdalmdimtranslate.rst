@@ -87,8 +87,10 @@ The following command line parameters can appear in any order.
 
     - [{axis1},{axis2},...] is the argument of  :cpp:func:`GDALMDArray::Transpose`.
        For example, transpose=[1,0] switches the axis order of a 2D array.
+       See :example:`transpose`.
 
-    - {view_expr} is the value of the *viewExpr* argument of :cpp:func:`GDALMDArray::GetView`
+    - {view_expr} is the value of the *viewExpr* argument of :cpp:func:`GDALMDArray::GetView`.
+      See :example:`reorder`.
 
     When specifying a view_expr that performs a slicing or subsetting on a dimension, the
     equivalent operation will be applied to the corresponding indexing variable.
@@ -128,7 +130,9 @@ The following command line parameters can appear in any order.
     to value sliced_val (and this dimension will be removed from the arrays
     that reference to it)
 
-    Using -subset is incompatible of specifying a *view* option in -array.
+    Using -subset is incompatible with specifying a *view* option in -array.
+
+    See :example:`subset-1`.
 
 .. option:: -scaleaxes <scaleaxes_spec>
 
@@ -142,7 +146,9 @@ The following command line parameters can appear in any order.
 
     That is <dim1_name>(<scale_factor>)[,<dim2_name>(<scale_factor>)]...
 
-    Using -scaleaxes is incompatible of specifying a *view* option in -array.
+    Using -scaleaxes is incompatible with specifying a *view* option in -array.
+
+    See :example:`subsample-1`.
 
 .. option:: -strict
 
@@ -172,33 +178,45 @@ This utility is also callable from C with :cpp:func:`GDALMultiDimTranslate`.
 Examples
 --------
 
-- Convert a netCDF file to a multidimensional VRT file
+.. example::
+   :title: Convert a netCDF file to a multidimensional VRT file
 
-.. code-block::
+   .. code-block:: bash
 
-    $ gdalmdimtranslate in.nc out.vrt
+      gdalmdimtranslate in.nc out.vrt
 
-- Extract a 2D slice of a time,Y,X array
+.. example::
+   :title: Extract a 2D slice of a time,Y,X array
+   :id: subset-1
 
-.. code-block::
+   .. code-block:: bash
 
-    $ gdalmdimtranslate in.nc out.tif -subset 'time("2010-01-01")' -array temperature
+       gdalmdimtranslate in.nc out.tif -subset 'time("2010-01-01")' -array temperature
 
-- Subsample along X and Y axis
+.. example::
+   :title: Subsample along X and Y axis
+   :id: subsample-1
 
-.. code-block::
+   .. code-block:: bash
 
-    $ gdalmdimtranslate in.nc out.nc -scaleaxes "X(2),Y(2)"
+       gdalmdimtranslate in.nc out.nc -scaleaxes "X(2),Y(2)"
 
-- Reorder the values of a time,Y,X array along the Y axis from top-to-bottom
-  to bottom-to-top (or the reverse)
+.. example::
+   :title: Reorder the values of an array
+   :id: reorder
 
-.. code-block::
+   Reorder the values of the time,Y,X array along the Y axis from top-to-bottom
+   to bottom-to-top (or the reverse)
 
-    $ gdalmdimtranslate in.nc out.nc -array "name=temperature,view=[:,::-1,:]"
+   .. code-block:: bash
 
-- Transpose an array that has X,Y,time dimension order to time,Y,X
+      gdalmdimtranslate in.nc out.nc -array "name=temperature,view=[:,::-1,:]"
 
-.. code-block::
+.. example::
+   :title: Transpose an array that has X,Y,time dimension order to time,Y,X
+   :id: transpose
 
-    $ gdalmdimtranslate in.nc out.nc -array "name=temperature,transpose=[2,1,0]"
+
+   .. code-block:: bash
+
+       gdalmdimtranslate in.nc out.nc -array "name=temperature,transpose=[2,1,0]"

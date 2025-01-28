@@ -356,17 +356,12 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
             m_eGeomEncoding = OGRArrowGeomEncoding::WKT;
         else if (EQUAL(pszGeomEncoding, "GEOARROW_INTERLEAVED"))
         {
-            static bool bHasWarned = false;
-            if (!bHasWarned)
-            {
-                bHasWarned = true;
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
-                    "Use of GEOMETRY_ENCODING=GEOARROW_INTERLEAVED is not "
-                    "recommended. "
-                    "GeoParquet 1.1 uses GEOMETRY_ENCODING=GEOARROW (struct) "
-                    "instead.");
-            }
+            CPLErrorOnce(
+                CE_Warning, CPLE_AppDefined,
+                "Use of GEOMETRY_ENCODING=GEOARROW_INTERLEAVED is not "
+                "recommended. "
+                "GeoParquet 1.1 uses GEOMETRY_ENCODING=GEOARROW (struct) "
+                "instead.");
             m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_FSL_GENERIC;
         }
         else if (EQUAL(pszGeomEncoding, "GEOARROW") ||
@@ -466,6 +461,12 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
     // Undocumented option. Not clear it is useful besides unit test purposes
     if (!CPLTestBool(CSLFetchNameValueDef(papszOptions, "STATISTICS", "YES")))
         m_oWriterPropertiesBuilder.disable_statistics();
+
+#if PARQUET_VERSION_MAJOR >= 12
+    // Undocumented option. Not clear it is useful to disable it.
+    if (CPLTestBool(CSLFetchNameValueDef(papszOptions, "PAGE_INDEX", "YES")))
+        m_oWriterPropertiesBuilder.enable_write_page_index();
+#endif
 
     if (m_eGeomEncoding == OGRArrowGeomEncoding::WKB && eGType != wkbNone)
     {

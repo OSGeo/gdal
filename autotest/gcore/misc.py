@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Various test of GDAL core.
@@ -13,6 +12,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import datetime
 import os
 import shutil
 
@@ -253,7 +253,7 @@ def test_misc_5():
 
 
 ###############################################################################
-class misc_6_interrupt_callback_class(object):
+class misc_6_interrupt_callback_class:
     def __init__(self):
         pass
 
@@ -722,6 +722,70 @@ def test_misc_13():
 
 
 ###############################################################################
+# Test parsing of CPL_DEBUG and CPL_TIMESTAMP
+
+
+@pytest.fixture
+def debug_output():
+
+    messages = []
+
+    def handle(ecls, ecode, emsg):
+        messages.append(emsg)
+
+    def log_message(category, message):
+        messages.clear()
+        gdal.Debug(category, message)
+        return messages[0] if messages else None
+
+    log_message.handle = handle
+
+    with gdaltest.error_handler(handle):
+        yield log_message
+
+
+@pytest.mark.parametrize(
+    "booleans",
+    [("YES", "NO"), ("TRUE", "FALSE"), ("ON", "OFF"), ("1", "0")],
+    ids="_".join,
+)
+def test_misc_cpl_debug(debug_output, booleans):
+
+    on, off = booleans
+
+    assert debug_output("GDAL", "msg") is None
+
+    with gdal.config_option("CPL_DEBUG", off):
+        assert debug_output("GDAL", "msg") is None
+
+    with gdal.config_option("CPL_DEBUG", on):
+        assert debug_output("GDAL", "message") == "GDAL: message"
+
+        with gdal.config_option("CPL_TIMESTAMP", off):
+            assert debug_output("GDAL", "message") == "GDAL: message"
+
+        with gdal.config_option("CPL_TIMESTAMP", on):
+            output = debug_output("GDAL", "message")
+            assert str(datetime.datetime.now().year) in output
+            assert output.endswith("GDAL: message")
+
+
+def test_misc_cpl_debug_filtering(debug_output):
+
+    with gdal.config_option("CPL_DEBUG", "GDAL"):
+        assert debug_output("GDAL", "msg") == "GDAL: msg"
+        assert debug_output("GDAL_WARP", "msg") is None
+        assert debug_output("", "msg") == ": msg"
+
+    with gdal.config_option("CPL_DEBUG", "GDAL_WARP_TRANSLATE_ETC"):
+        assert debug_output("GDAL", "msg") == "GDAL: msg"
+        assert debug_output("TRANSLATE", "msg") == "TRANSLATE: msg"
+
+    with gdal.config_option("CPL_DEBUG", ""):
+        assert debug_output("GDAL", "msg") == "GDAL: msg"
+
+
+###############################################################################
 # Test ConfigureLogging()
 
 
@@ -964,6 +1028,24 @@ def test_misc_general_cmd_line_processor(tmp_path):
         ["program", 2, tmp_path / "a_path", "a_string"]
     )
     assert processed == ["program", "2", str(tmp_path / "a_path"), "a_string"]
+
+
+###############################################################################
+# Test GDALDriverHasOpenOption()
+
+
+@pytest.mark.require_driver("GTiff")
+@pytest.mark.parametrize(
+    "driver_name,open_option,expected",
+    [
+        ("GTiff", "XXXX", False),
+        ("GTiff", "GEOTIFF_KEYS_FLAVOR", True),
+    ],
+)
+def test_misc_gdal_driver_has_open_option(driver_name, open_option, expected):
+    driver = gdal.GetDriverByName(driver_name)
+    assert driver is not None
+    assert driver.HasOpenOption(open_option) == expected
 
 
 ###############################################################################

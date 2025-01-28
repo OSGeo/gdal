@@ -16,6 +16,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <cmath>
+
 static int nDiscarded = 0;
 static int nHits = 0;
 
@@ -281,6 +283,11 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition(const char *pszTable)
         {
             pszFIDName = CPLStrdup(oField.GetNameRef());
             continue;
+        }
+
+        if (oField.GetTZFlag() >= OGR_TZFLAG_MIXED_TZ)
+        {
+            setFieldIndexWithTimeStampWithTZ.insert(poDefn->GetFieldCount());
         }
 
         poDefn->AddFieldDefn(&oField);
@@ -2096,6 +2103,56 @@ OGRErr OGROCITableLayer::BoundCreateFeature(OGRFeature *poFeature)
                 ((char *)papWriteFields[i]) + iCache * nEachBufSize;
             strncpy(pszTarget, pszStrValue, nLen);
             pszTarget[nLen] = '\0';
+
+            if (poFldDefn->GetType() == OFTDateTime &&
+                cpl::contains(setFieldIndexWithTimeStampWithTZ, i))
+            {
+                const auto *psField = poFeature->GetRawFieldRef(i);
+                int nTZHour = 0;
+                int nTZMin = 0;
+                if (psField->Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
+                {
+                    const int nOffset =
+                        (psField->Date.TZFlag - OGR_TZFLAG_UTC) * 15;
+                    nTZHour =
+                        static_cast<int>(nOffset / 60);  // Round towards zero.
+                    nTZMin = std::abs(nOffset - nTZHour * 60);
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "DateTime %s has no time zone whereas it should "
+                             "have. Assuming +00:00",
+                             pszTarget);
+                }
+                CPLsnprintf(pszTarget, nEachBufSize,
+                            "%04d-%02d-%02d %02d:%02d:%06.3f %s%02d%02d",
+                            psField->Date.Year, psField->Date.Month,
+                            psField->Date.Day, psField->Date.Hour,
+                            psField->Date.Minute, psField->Date.Second,
+                            (psField->Date.TZFlag <= OGR_TZFLAG_MIXED_TZ ||
+                             psField->Date.TZFlag >= OGR_TZFLAG_UTC)
+                                ? "+"
+                                : "-",
+                            std::abs(nTZHour), nTZMin);
+            }
+            else if (poFldDefn->GetType() == OFTDateTime)
+            {
+                const auto *psField = poFeature->GetRawFieldRef(i);
+                if (psField->Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "DateTime %s has a time zone whereas the target "
+                             "field does not support time zone. Time zone will "
+                             "be dropped.",
+                             pszTarget);
+                }
+                CPLsnprintf(pszTarget, nEachBufSize,
+                            "%04d-%02d-%02d %02d:%02d:%06.3f",
+                            psField->Date.Year, psField->Date.Month,
+                            psField->Date.Day, psField->Date.Hour,
+                            psField->Date.Minute, psField->Date.Second);
+            }
         }
     }
 

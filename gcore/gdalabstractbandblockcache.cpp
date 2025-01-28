@@ -204,8 +204,7 @@ void GDALAbstractBandBlockCache::StartDirtyBlockFlushingLog()
     m_nInitialDirtyBlocksInFlushCache = 0;
     if (m_nDirtyBlocks > 0 && CPLIsDefaultErrorHandlerAndCatchDebug())
     {
-        const char *pszDebug = CPLGetConfigOption("CPL_DEBUG", nullptr);
-        if (pszDebug && (EQUAL(pszDebug, "ON") || EQUAL(pszDebug, "GDAL")) &&
+        if (CPLIsDebugEnabled() &&
             CPLGetConfigOption("GDAL_REPORT_DIRTY_BLOCK_FLUSHING", nullptr) ==
                 nullptr)
         {

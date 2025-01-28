@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OSR XML import/export
@@ -181,8 +180,8 @@ def test_osr_xml_2():
     got = srs.ExportToXML()
 
     # Strip the gml:id tags
-    got = re.sub(r' gml:id="[^"]*"', "", got, 0)
-    expected = re.sub(r' gml:id="[^"]*"', "", expected, 0)
+    got = re.sub(r' gml:id="[^"]*"', "", got)
+    expected = re.sub(r' gml:id="[^"]*"', "", expected)
 
     assert got == expected
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  libgeotiff
  * Purpose:  Code to convert a normalized GeoTIFF definition into a PROJ.4
@@ -222,7 +221,7 @@ int GTIFSetFromProj4( GTIF *gtif, const char *proj4 )
         dfSemiMajor = OSR_GDV(papszNV,"a",0.0);
         dfSemiMinor = OSR_GDV(papszNV,"b",0.0);
         dfInvFlattening = OSR_GDV(papszNV,"rf",0.0);
-        if( dfSemiMinor != 0.0 && dfInvFlattening == 0.0 )
+        if( dfSemiMajor != 0.0 && dfSemiMinor != 0.0 && dfInvFlattening == 0.0 )
             dfInvFlattening = -1.0 / (dfSemiMinor/dfSemiMajor - 1.0);
     }
 

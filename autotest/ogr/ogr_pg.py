@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test PostGIS driver functionality.
@@ -1620,6 +1619,47 @@ def test_ogr_pg_31(pg_ds):
         i = i + 1
     ds.ReleaseResultSet(sql_lyr)
     assert i == 501
+
+
+###############################################################################
+# Test the TABLES open option
+
+
+def test_ogr_pg_tables_open_option(pg_ds):
+
+    pg_ds.CreateLayer(
+        "test (with parenthesis and \\)",
+        geom_type=ogr.wkbPoint,
+    )
+    pg_ds.CreateLayer(
+        "test with, comma",
+        geom_type=ogr.wkbPoint,
+    )
+    pg_ds.FlushCache()
+
+    with gdal.OpenEx(
+        pg_ds.GetDescription(),
+        gdal.OF_VECTOR,
+        open_options=["TABLES=test \\(with parenthesis and \\\\)"],
+    ) as ds:
+        assert ds.GetLayerCount() == 1
+        assert ds.GetLayer(0).GetName() == "test (with parenthesis and \\)"
+
+    with gdal.OpenEx(
+        pg_ds.GetDescription(),
+        gdal.OF_VECTOR,
+        open_options=["TABLES=test \\(with parenthesis and \\\\)(geometry)"],
+    ) as ds:
+        assert ds.GetLayerCount() == 1
+        assert ds.GetLayer(0).GetName() == "test (with parenthesis and \\)"
+
+    with gdal.OpenEx(
+        pg_ds.GetDescription(),
+        gdal.OF_VECTOR,
+        open_options=['TABLES="test with, comma"'],
+    ) as ds:
+        assert ds.GetLayerCount() == 1
+        assert ds.GetLayer(0).GetName() == "test with, comma"
 
 
 ###############################################################################
@@ -6204,6 +6244,7 @@ def test_ogr_pg_ogr2ogr_with_multiple_dotted_table_name(pg_ds):
 
 ###############################################################################
 # Test scenario of https://lists.osgeo.org/pipermail/gdal-dev/2024-October/059608.html
+# and bugfix of https://github.com/OSGeo/gdal/issues/11386
 
 
 @only_without_postgis
@@ -6220,6 +6261,7 @@ def test_ogr_pg_empty_search_path(pg_ds):
     with pg_ds.ExecuteSQL("SELECT CURRENT_USER") as lyr:
         f = lyr.GetNextFeature()
         current_user = f.GetField(0)
+
     pg_ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = ''")
     try:
         ds = reconnect(pg_ds, update=1)
@@ -6227,7 +6269,25 @@ def test_ogr_pg_empty_search_path(pg_ds):
         with ds.ExecuteSQL("SHOW search_path") as sql_lyr:
             f = sql_lyr.GetNextFeature()
             new_search_path = f.GetField(0)
-            assert new_search_path == "test_ogr_pg_empty_search_path_no_postgis, public"
+            assert (
+                new_search_path
+                == 'test_ogr_pg_empty_search_path_no_postgis, "", public'
+            )
+
+    finally:
+        ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = {old_search_path}")
+
+    pg_ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = '', '$user'")
+    try:
+        ds = reconnect(pg_ds, update=1)
+
+        with ds.ExecuteSQL("SHOW search_path") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            new_search_path = f.GetField(0)
+            assert (
+                new_search_path
+                == 'test_ogr_pg_empty_search_path_no_postgis, "", "$user", public'
+            )
 
     finally:
         ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = {old_search_path}")

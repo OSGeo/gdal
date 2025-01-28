@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # *****************************************************************************
-# $Id$
 #
 # Project:  OpenGIS Simple Features Reference Implementation
 # Purpose:  Python port of a simple client for viewing OGR driver data.

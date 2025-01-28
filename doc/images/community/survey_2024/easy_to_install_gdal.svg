@@ -1,0 +1,60 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' class='svglite' width='504.00pt' height='360.00pt' viewBox='0 0 504.00 360.00'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: none;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA='>
+    <rect x='0.00' y='0.00' width='504.00' height='360.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+</g>
+<defs>
+  <clipPath id='cpMzguNjB8NDk4LjUyfDUuNDh8MzI3Ljk3'>
+    <rect x='38.60' y='5.48' width='459.92' height='322.49' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMzguNjB8NDk4LjUyfDUuNDh8MzI3Ljk3)'>
+<polyline points='38.60,268.48 498.52,268.48 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='38.60,178.83 498.52,178.83 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='38.60,89.17 498.52,89.17 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='38.60,313.31 498.52,313.31 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='38.60,223.65 498.52,223.65 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='38.60,134.00 498.52,134.00 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='38.60,44.34 498.52,44.34 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='124.84,327.97 124.84,5.48 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='268.56,327.97 268.56,5.48 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='412.29,327.97 412.29,5.48 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<rect x='203.89' y='156.41' width='129.35' height='156.90' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='60.16' y='20.14' width='129.35' height='293.17' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='347.61' y='237.10' width='129.35' height='76.21' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+</g>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+<text x='33.67' y='316.52' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>0</text>
+<text x='33.67' y='226.86' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>100</text>
+<text x='33.67' y='137.21' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>200</text>
+<text x='33.67' y='47.55' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>300</text>
+<polyline points='35.86,313.31 38.60,313.31 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='35.86,223.65 38.60,223.65 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='35.86,134.00 38.60,134.00 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='35.86,44.34 38.60,44.34 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='124.84,330.71 124.84,327.97 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='268.56,330.71 268.56,327.97 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='412.29,330.71 412.29,327.97 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<text x='124.84' y='339.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>Yes</text>
+<text x='268.56' y='339.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>No</text>
+<text x='412.29' y='339.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>Yes, but not with the options I need</text>
+<text x='268.56' y='352.10' text-anchor='middle' style='font-size: 11.00px; font-family: Arial;'>It is easy to install GDAL</text>
+<text transform='translate(13.50,166.72) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: Arial;'>Respondents</text>
+</g>
+</svg>

@@ -120,13 +120,12 @@ int OGRGeoconceptDataSource::LoadFile(const char *pszMode)
 {
     if (_pszExt == nullptr)
     {
-        const char *pszExtension = CPLGetExtension(GetDescription());
-        _pszExt = CPLStrdup(pszExtension);
+        _pszExt = CPLStrdup(CPLGetExtensionSafe(GetDescription()).c_str());
     }
     CPLStrlwr(_pszExt);
 
     if (!_pszDirectory)
-        _pszDirectory = CPLStrdup(CPLGetPath(GetDescription()));
+        _pszDirectory = CPLStrdup(CPLGetPathSafe(GetDescription()).c_str());
 
     if ((_hGXT = Open_GCIO(GetDescription(), _pszExt, pszMode, _pszGCT)) ==
         nullptr)
@@ -212,7 +211,7 @@ int OGRGeoconceptDataSource::Create(const char *pszName, char **papszOptions)
     const char *pszExtension = CSLFetchNameValue(papszOptions, "EXTENSION");
     if (pszExtension == nullptr)
     {
-        _pszExt = CPLStrdup(CPLGetExtension(pszName));
+        _pszExt = CPLStrdup(CPLGetExtensionSafe(pszName).c_str());
     }
     else
     {
@@ -234,21 +233,22 @@ int OGRGeoconceptDataSource::Create(const char *pszName, char **papszOptions)
         _pszDirectory = CPLStrdup(pszName);
         CPLFree(_pszExt);
         _pszExt = CPLStrdup("gxt");
-        char *pszbName = CPLStrdup(CPLGetBasename(pszName));
+        char *pszbName = CPLStrdup(CPLGetBasenameSafe(pszName).c_str());
         if (strlen(pszbName) == 0)
         { /* pszName ends with '/' */
             CPLFree(pszbName);
             char *pszNameDup = CPLStrdup(pszName);
             pszNameDup[strlen(pszName) - 2] = '\0';
-            pszbName = CPLStrdup(CPLGetBasename(pszNameDup));
+            pszbName = CPLStrdup(CPLGetBasenameSafe(pszNameDup).c_str());
             CPLFree(pszNameDup);
         }
-        SetDescription(CPLFormFilename(_pszDirectory, pszbName, nullptr));
+        SetDescription(
+            CPLFormFilenameSafe(_pszDirectory, pszbName, nullptr).c_str());
         CPLFree(pszbName);
     }
     else
     {
-        _pszDirectory = CPLStrdup(CPLGetPath(pszName));
+        _pszDirectory = CPLStrdup(CPLGetPathSafe(pszName).c_str());
         SetDescription(pszName);
     }
 

@@ -169,8 +169,8 @@ OGRErr OGRDXFWriterLayer::WriteCore(OGRFeature *poFeature)
     /*      Also, for reasons I don't understand these ids seem to have     */
     /*      to start somewhere around 0x50 hex (80 decimal).                */
     /* -------------------------------------------------------------------- */
-    long nGotFID = -1;
-    poDS->WriteEntityID(fp, nGotFID, (int)poFeature->GetFID());
+    unsigned int nGotFID = 0;
+    poDS->WriteEntityID(fp, nGotFID, poFeature->GetFID());
     poFeature->SetFID(nGotFID);
 
     WriteValue(100, "AcDbEntity");
@@ -1278,7 +1278,7 @@ OGRErr OGRDXFWriterLayer::ICreateFeature(OGRFeature *poFeature)
     }
 
     // Explode geometry collections into multiple entities.
-    else if (eGType == wkbGeometryCollection)
+    else if (eGType == wkbGeometryCollection || eGType == wkbMultiPoint)
     {
         OGRGeometryCollection *poGC =
             poFeature->StealGeometry()->toGeometryCollection();

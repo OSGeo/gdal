@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<message:AIXMBasicMessage xmlns:message="http://www.aixm.aero/schema/5.1.1/message" xmlns:gts="http://www.isotc211.org/2005/gts" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:aixm="http://www.aixm.aero/schema/5.1.1" xmlns:gsr="http://www.isotc211.org/2005/gsr" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.aixm.aero/schema/5.1.1/message http://www.aixm.aero/schema/5.1.1/message/AIXM_BasicMessage.xsd" gml:id="M0000001">
+    <message:hasMember>
+        <aixm:VerticalStructure gml:id="uuid.foo">
+            <gml:identifier codeSpace="urn:uuid:">foo</gml:identifier>
+            <aixm:timeSlice>
+                <aixm:VerticalStructureTimeSlice gml:id="vsts_1">
+                    <gml:validTime>
+                        <gml:TimePeriod gml:id="vststp_1">
+                            <gml:beginPosition>2018-01-01T00:00:00</gml:beginPosition>
+                            <gml:endPosition indeterminatePosition="unknown"/>
+                        </gml:TimePeriod>
+                    </gml:validTime>
+                    <aixm:interpretation>BASELINE</aixm:interpretation>
+                    <aixm:sequenceNumber>1</aixm:sequenceNumber>
+                    <aixm:featureLifetime>
+                        <gml:TimePeriod gml:id="vsfltp_1">
+                            <gml:beginPosition>2018-01-01T00:00:00</gml:beginPosition>
+                            <gml:endPosition indeterminatePosition="unknown"/>
+                        </gml:TimePeriod>
+                    </aixm:featureLifetime>
+                    <aixm:lighted>NO</aixm:lighted>
+                    <aixm:part>
+                        <aixm:VerticalStructurePart gml:id="uuid.foo.vstp">
+                            <aixm:verticalExtent xsi:nil="true" nilReason="other:unknown"/>
+                            <aixm:horizontalProjection_location>
+                                <aixm:ElevatedPoint srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326" gml:id="opoivsp_1">
+                                    <gml:pos>49 2</gml:pos>
+                                    <aixm:elevation uom="M">10</aixm:elevation>
+                                    <aixm:verticalAccuracy>0.1</aixm:verticalAccuracy>
+                                </aixm:ElevatedPoint>
+                            </aixm:horizontalProjection_location>
+                        </aixm:VerticalStructurePart>
+                    </aixm:part>
+                </aixm:VerticalStructureTimeSlice>
+            </aixm:timeSlice>
+        </aixm:VerticalStructure>
+    </message:hasMember>
+    <message:hasMember>
+        <aixm:VerticalStructure gml:id="uuid.bar">
+            <gml:identifier codeSpace="urn:uuid:">bar</gml:identifier>
+            <aixm:timeSlice>
+                <aixm:VerticalStructureTimeSlice gml:id="vsts_2">
+                    <gml:validTime>
+                        <gml:TimePeriod gml:id="vststp_2">
+                            <gml:beginPosition>2018-01-01T00:00:00</gml:beginPosition>
+                            <gml:endPosition indeterminatePosition="unknown"/>
+                        </gml:TimePeriod>
+                    </gml:validTime>
+                    <aixm:interpretation>BASELINE</aixm:interpretation>
+                    <aixm:sequenceNumber>1</aixm:sequenceNumber>
+                    <aixm:featureLifetime>
+                        <gml:TimePeriod gml:id="vsfltp_2">
+                            <gml:beginPosition>2018-01-01T00:00:00</gml:beginPosition>
+                            <gml:endPosition indeterminatePosition="unknown"/>
+                        </gml:TimePeriod>
+                    </aixm:featureLifetime>
+                    <aixm:lighted>NO</aixm:lighted>
+                    <aixm:part>
+                        <aixm:VerticalStructurePart gml:id="uuid.bar.vstp">
+                            <aixm:verticalExtent xsi:nil="true" nilReason="other:unknown"/>
+                            <aixm:designator>DESIGNATOR</aixm:designator>
+                            <aixm:horizontalProjection_linearExtent>
+                                <aixm:ElevatedCurve srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326" gml:id="olvsp_1">
+                                    <gml:segments>
+                                        <gml:GeodesicString>
+                                            <gml:posList>45 2 46 3</gml:posList>
+                                        </gml:GeodesicString>
+                                    </gml:segments>
+                                    <aixm:elevation>0</aixm:elevation>
+                                </aixm:ElevatedCurve>
+                            </aixm:horizontalProjection_linearExtent>
+                        </aixm:VerticalStructurePart>
+                    </aixm:part>
+                </aixm:VerticalStructureTimeSlice>
+            </aixm:timeSlice>
+        </aixm:VerticalStructure>
+    </message:hasMember>
+</message:AIXMBasicMessage>

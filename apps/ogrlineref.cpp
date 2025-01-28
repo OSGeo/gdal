@@ -66,8 +66,9 @@ static OGRLayer *SetupTargetLayer(OGRLayer *poSrcLayer, GDALDataset *poDstDS,
                                   const char *pszOutputSepFieldName = nullptr)
 {
     const CPLString szLayerName =
-        pszNewLayerName == nullptr ? CPLGetBasename(poDstDS->GetDescription())
-                                   : pszNewLayerName;
+        pszNewLayerName == nullptr
+            ? CPLGetBasenameSafe(poDstDS->GetDescription())
+            : pszNewLayerName;
 
     /* -------------------------------------------------------------------- */
     /*      Get other info.                                                 */
@@ -209,83 +210,6 @@ static OGRLayer *SetupTargetLayer(OGRLayer *poSrcLayer, GDALDataset *poDstDS,
     }
 
     return poDstLayer;
-}
-
-/* -------------------------------------------------------------------- */
-/*                  CheckDestDataSourceNameConsistency()                */
-/* -------------------------------------------------------------------- */
-
-static void CheckDestDataSourceNameConsistency(const char *pszDestFilename,
-                                               const char *pszDriverName)
-{
-    char *pszDestExtension = CPLStrdup(CPLGetExtension(pszDestFilename));
-
-    // TODO: Would be good to have driver metadata like for GDAL drivers.
-    static const char *apszExtensions[][2] = {{"shp", "ESRI Shapefile"},
-                                              {"dbf", "ESRI Shapefile"},
-                                              {"sqlite", "SQLite"},
-                                              {"db", "SQLite"},
-                                              {"mif", "MapInfo File"},
-                                              {"tab", "MapInfo File"},
-                                              {"s57", "S57"},
-                                              {"bna", "BNA"},
-                                              {"csv", "CSV"},
-                                              {"gml", "GML"},
-                                              {"kml", "KML"},
-                                              {"kmz", "LIBKML"},
-                                              {"json", "GeoJSON"},
-                                              {"geojson", "GeoJSON"},
-                                              {"dxf", "DXF"},
-                                              {"gdb", "FileGDB"},
-                                              {"pix", "PCIDSK"},
-                                              {"sql", "PGDump"},
-                                              {"gtm", "GPSTrackMaker"},
-                                              {"gmt", "GMT"},
-                                              {"pdf", "PDF"},
-                                              {nullptr, nullptr}};
-    static const char *apszBeginName[][2] = {{"PG:", "PG"},
-                                             {"MySQL:", "MySQL"},
-                                             {"CouchDB:", "CouchDB"},
-                                             {"GFT:", "GFT"},
-                                             {"MSSQL:", "MSSQLSpatial"},
-                                             {"ODBC:", "ODBC"},
-                                             {"OCI:", "OCI"},
-                                             {"SDE:", "SDE"},
-                                             {"WFS:", "WFS"},
-                                             {nullptr, nullptr}};
-
-    for (int i = 0; apszExtensions[i][0] != nullptr; i++)
-    {
-        if (EQUAL(pszDestExtension, apszExtensions[i][0]) &&
-            !EQUAL(pszDriverName, apszExtensions[i][1]))
-        {
-            fprintf(stderr,
-                    _("Warning: The target file has a '%s' extension, "
-                      "which is normally used by the %s driver,\n"
-                      "but the requested output driver is %s. "
-                      "Is it really what you want ?\n"),
-                    pszDestExtension, apszExtensions[i][1], pszDriverName);
-            break;
-        }
-    }
-
-    for (int i = 0; apszBeginName[i][0] != nullptr; i++)
-    {
-        if (EQUALN(pszDestFilename, apszBeginName[i][0],
-                   strlen(apszBeginName[i][0])) &&
-            !EQUAL(pszDriverName, apszBeginName[i][1]))
-        {
-            fprintf(stderr,
-                    _("Warning: The target file has a name which is normally "
-                      "recognized by the %s driver,\n"
-                      "but the requested output driver is %s. "
-                      "Is it really what you want ?\n"),
-                    apszBeginName[i][1], pszDriverName);
-            break;
-        }
-    }
-
-    CPLFree(pszDestExtension);
 }
 
 //------------------------------------------------------------------------
@@ -1093,7 +1017,13 @@ static OGRErr GetPosition(OGRLayer *const poPkLayer, double dfX, double dfY,
     // Get real distance
     const double dfRealDist = Project(pCloserPart, &pt);
     delete pCloserPart;
+    if (dfScale == 0)
+    {
+        fprintf(stderr, _("dfScale == 0.\n"));
+        return OGRERR_FAILURE;
+    }
     // Compute reference distance
+    // coverity[divide_by_zero]
     const double dfRefDist = dfBeg + dfRealDist / dfScale;
     if (bQuiet)
     {
@@ -1171,7 +1101,7 @@ struct OGRLineRefOptions
 {
     bool bQuiet = false;
     bool bDisplayProgress = false;
-    std::string osFormat = "ESRI Shapefile";
+    std::string osFormat;
 
     std::string osSrcLineDataSourceName;
     std::string osSrcLineLayerName;
@@ -1379,6 +1309,63 @@ OGRLineRefAppOptionsGetParser(OGRLineRefOptions *psOptions)
 }
 
 /************************************************************************/
+/*                              GetOutputDriver()                       */
+/************************************************************************/
+
+static GDALDriver *GetOutputDriver(OGRLineRefOptions &sOptions)
+{
+    if (sOptions.osFormat.empty())
+    {
+        const auto aoDrivers = GetOutputDriversFor(
+            sOptions.osOutputDataSourceName.c_str(), GDAL_OF_VECTOR);
+        if (aoDrivers.empty())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot guess driver for %s",
+                     sOptions.osOutputDataSourceName.c_str());
+            return nullptr;
+        }
+        else
+        {
+            if (aoDrivers.size() > 1)
+            {
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Several drivers matching %s extension. Using %s",
+                    CPLGetExtensionSafe(sOptions.osOutputDataSourceName.c_str())
+                        .c_str(),
+                    aoDrivers[0].c_str());
+            }
+            sOptions.osFormat = aoDrivers[0];
+        }
+    }
+
+    GDALDriver *poDriver =
+        GetGDALDriverManager()->GetDriverByName(sOptions.osFormat.c_str());
+    if (poDriver == nullptr)
+    {
+        fprintf(stderr, _("Unable to find driver `%s'.\n"),
+                sOptions.osFormat.c_str());
+        fprintf(stderr, _("The following drivers are available:\n"));
+
+        GDALDriverManager *poDM = GetGDALDriverManager();
+        for (int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++)
+        {
+            GDALDriver *poIter = poDM->GetDriver(iDriver);
+            char **papszDriverMD = poIter->GetMetadata();
+            if (CPLTestBool(CSLFetchNameValueDef(papszDriverMD,
+                                                 GDAL_DCAP_VECTOR, "FALSE")) &&
+                CPLTestBool(CSLFetchNameValueDef(papszDriverMD,
+                                                 GDAL_DCAP_CREATE, "FALSE")))
+            {
+                fprintf(stderr, "  -> `%s'\n", poIter->GetDescription());
+            }
+        }
+    }
+
+    return poDriver;
+}
+
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -1393,7 +1380,7 @@ MAIN_START(argc, argv)
 
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
 
-    if (argc < 2)
+    if (argc < 1)
     {
         try
         {
@@ -1406,7 +1393,6 @@ MAIN_START(argc, argv)
             CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
                      err.what());
         }
-        CSLDestroy(argv);
         exit(1);
     }
 
@@ -1574,27 +1560,9 @@ MAIN_START(argc, argv)
             /*      Find the output driver.                                      */
             /* ----------------------------------------------------------------- */
 
-            if (!psOptions.bQuiet)
-                CheckDestDataSourceNameConsistency(
-                    psOptions.osOutputDataSourceName.c_str(),
-                    psOptions.osFormat.c_str());
-
-            OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
-
-            GDALDriver *poDriver =
-                poR->GetDriverByName(psOptions.osFormat.c_str());
+            GDALDriver *poDriver = GetOutputDriver(psOptions);
             if (poDriver == nullptr)
             {
-                fprintf(stderr, _("Unable to find driver `%s'.\n"),
-                        psOptions.osFormat.c_str());
-                fprintf(stderr, _("The following drivers are available:\n"));
-
-                for (int iDriver = 0; iDriver < poR->GetDriverCount();
-                     iDriver++)
-                {
-                    fprintf(stderr, "  -> `%s'\n",
-                            poR->GetDriver(iDriver)->GetDescription());
-                }
                 exit(1);
             }
 
@@ -1876,27 +1844,9 @@ MAIN_START(argc, argv)
             }
 
             // Find the output driver.
-            if (!psOptions.bQuiet)
-                CheckDestDataSourceNameConsistency(
-                    psOptions.osOutputDataSourceName.c_str(),
-                    psOptions.osFormat.c_str());
-
-            OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
-
-            GDALDriver *poDriver =
-                poR->GetDriverByName(psOptions.osFormat.c_str());
+            GDALDriver *poDriver = GetOutputDriver(psOptions);
             if (poDriver == nullptr)
             {
-                fprintf(stderr, _("Unable to find driver `%s'.\n"),
-                        psOptions.osFormat.c_str());
-                fprintf(stderr, _("The following drivers are available:\n"));
-
-                for (int iDriver = 0; iDriver < poR->GetDriverCount();
-                     iDriver++)
-                {
-                    fprintf(stderr, "  -> `%s'\n",
-                            poR->GetDriver(iDriver)->GetDescription());
-                }
                 exit(1);
             }
 

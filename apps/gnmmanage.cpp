@@ -507,25 +507,27 @@ MAIN_START(nArgc, papszArgv)
     }
     else if (stOper == op_create)
     {
-        const char *pszPath;
-        const char *pszNetworkName = CSLFetchNameValue(papszDSCO, GNM_MD_NAME);
+        std::string osPath;
+        std::string osNetworkName =
+            CSLFetchNameValueDef(papszDSCO, GNM_MD_NAME, "");
 
         if (pszDataSource == nullptr)
             Usage(true, "No network dataset provided");
 
         // the DSCO have priority on input keys
-        if (nullptr == pszNetworkName)
+        if (osNetworkName.empty())
         {
-            pszPath = CPLGetPath(pszDataSource);
-            pszNetworkName = CPLGetBasename(pszDataSource);
-            papszDSCO = CSLAddNameValue(papszDSCO, GNM_MD_NAME, pszNetworkName);
+            osPath = CPLGetPathSafe(pszDataSource);
+            osNetworkName = CPLGetBasenameSafe(pszDataSource);
+            papszDSCO =
+                CSLAddNameValue(papszDSCO, GNM_MD_NAME, osNetworkName.c_str());
         }
         else
         {
-            pszPath = pszDataSource;
+            osPath = pszDataSource;
         }
 
-        if (pszNetworkName == nullptr)
+        if (osNetworkName.empty())
             Usage(true, "No dataset name provided");
 
         const char *pszFinalSRS = CSLFetchNameValue(papszDSCO, GNM_MD_SRS);
@@ -553,8 +555,8 @@ MAIN_START(nArgc, papszArgv)
             if (!CPLFetchBool(papszMD, GDAL_DCAP_GNM, false))
                 Usage(true, "not a GNM driver");
 
-            poDS = cpl::down_cast<GNMNetwork *>(
-                poDriver->Create(pszPath, 0, 0, 0, GDT_Unknown, papszDSCO));
+            poDS = cpl::down_cast<GNMNetwork *>(poDriver->Create(
+                osPath.c_str(), 0, 0, 0, GDT_Unknown, papszDSCO));
 
             if (nullptr == poDS)
             {
@@ -562,7 +564,9 @@ MAIN_START(nArgc, papszArgv)
                     stderr,
                     "\nFAILURE: Failed to create network in a new dataset at "
                     "%s and with driver %s\n",
-                    CPLFormFilename(pszPath, pszNetworkName, nullptr),
+                    CPLFormFilenameSafe(osPath.c_str(), osNetworkName.c_str(),
+                                        nullptr)
+                        .c_str(),
                     pszFormat);
                 nRet = 1;
             }
@@ -571,7 +575,9 @@ MAIN_START(nArgc, papszArgv)
                 if (bQuiet == FALSE)
                     printf("\nNetwork created successfully in a "
                            "new dataset at %s\n",
-                           CPLFormFilename(pszPath, pszNetworkName, nullptr));
+                           CPLFormFilenameSafe(osPath.c_str(),
+                                               osNetworkName.c_str(), nullptr)
+                               .c_str());
             }
         }
     }

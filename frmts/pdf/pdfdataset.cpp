@@ -2081,7 +2081,7 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
                 osCmd += "\"";
             }
 
-            CPLString osTmpFilenamePrefix = CPLGenerateTempFilename("pdf");
+            CPLString osTmpFilenamePrefix = CPLGenerateTempFilenameSafe("pdf");
             osTmpFilename =
                 CPLSPrintf("%s-%d.ppm", osTmpFilenamePrefix.c_str(), iPage);
             osCmd += CPLSPrintf(" \"%s\"", osTmpFilenamePrefix.c_str());

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements Open FileGDB OGR driver.
@@ -28,7 +27,7 @@
 
 using namespace OpenFileGDB;
 
-std::string OFGDBGenerateUUID();
+std::string OFGDBGenerateUUID(bool bInit = false);
 
 int OGROpenFileGDBIsComparisonOp(int op);
 

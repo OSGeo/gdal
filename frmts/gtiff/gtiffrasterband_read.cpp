@@ -34,8 +34,39 @@
 GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
 
 {
+    if (m_poRAT)
+        return m_poRAT.get();
+
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
-    return GDALPamRasterBand::GetDefaultRAT();
+    auto poRAT = GDALPamRasterBand::GetDefaultRAT();
+    if (poRAT)
+        return poRAT;
+
+    if (!GDALCanFileAcceptSidecarFile(m_poGDS->m_pszFilename))
+        return nullptr;
+    const std::string osVATDBF =
+        std::string(m_poGDS->m_pszFilename) + ".vat.dbf";
+    CSLConstList papszSiblingFiles = m_poGDS->GetSiblingFiles();
+    if (papszSiblingFiles &&
+        // cppcheck-suppress knownConditionTrueFalse
+        GDALCanReliablyUseSiblingFileList(osVATDBF.c_str()))
+    {
+        int iSibling =
+            CSLFindString(papszSiblingFiles, CPLGetFilename(osVATDBF.c_str()));
+        if (iSibling >= 0)
+        {
+            CPLString osFilename = m_poGDS->m_pszFilename;
+            osFilename.resize(strlen(m_poGDS->m_pszFilename) -
+                              strlen(CPLGetFilename(m_poGDS->m_pszFilename)));
+            osFilename += papszSiblingFiles[iSibling];
+            m_poRAT = GDALLoadVATDBF(osFilename.c_str());
+        }
+        return m_poRAT.get();
+    }
+    VSIStatBufL sStatBuf;
+    if (VSIStatL(osVATDBF.c_str(), &sStatBuf) == 0)
+        m_poRAT = GDALLoadVATDBF(osVATDBF.c_str());
+    return m_poRAT.get();
 }
 
 /************************************************************************/
@@ -600,475 +631,6 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
-/*                         CacheMultiRange()                            */
-/************************************************************************/
-
-static bool CheckTrailer(const GByte *strileData, vsi_l_offset nStrileSize)
-{
-    GByte abyTrailer[4];
-    memcpy(abyTrailer, strileData + nStrileSize, 4);
-    GByte abyLastBytes[4] = {};
-    if (nStrileSize >= 4)
-        memcpy(abyLastBytes, strileData + nStrileSize - 4, 4);
-    else
-    {
-        // The last bytes will be zero due to the above {} initialization,
-        // and that's what should be in abyTrailer too when the trailer is
-        // correct.
-        memcpy(abyLastBytes, strileData, static_cast<size_t>(nStrileSize));
-    }
-    return memcmp(abyTrailer, abyLastBytes, 4) == 0;
-}
-
-void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
-                                       int nYSize, int nBufXSize, int nBufYSize,
-                                       GDALRasterIOExtraArg *psExtraArg)
-{
-    void *pBufferedData = nullptr;
-    // Same logic as in GDALRasterBand::IRasterIO()
-    double dfXOff = nXOff;
-    double dfYOff = nYOff;
-    double dfXSize = nXSize;
-    double dfYSize = nYSize;
-    if (psExtraArg->bFloatingPointWindowValidity)
-    {
-        dfXOff = psExtraArg->dfXOff;
-        dfYOff = psExtraArg->dfYOff;
-        dfXSize = psExtraArg->dfXSize;
-        dfYSize = psExtraArg->dfYSize;
-    }
-    const double dfSrcXInc = dfXSize / static_cast<double>(nBufXSize);
-    const double dfSrcYInc = dfYSize / static_cast<double>(nBufYSize);
-    const double EPS = 1e-10;
-    const int nBlockX1 =
-        static_cast<int>(std::max(0.0, (0 + 0.5) * dfSrcXInc + dfXOff + EPS)) /
-        nBlockXSize;
-    const int nBlockY1 =
-        static_cast<int>(std::max(0.0, (0 + 0.5) * dfSrcYInc + dfYOff + EPS)) /
-        nBlockYSize;
-    const int nBlockX2 =
-        static_cast<int>(
-            std::min(static_cast<double>(nRasterXSize - 1),
-                     (nBufXSize - 1 + 0.5) * dfSrcXInc + dfXOff + EPS)) /
-        nBlockXSize;
-    const int nBlockY2 =
-        static_cast<int>(
-            std::min(static_cast<double>(nRasterYSize - 1),
-                     (nBufYSize - 1 + 0.5) * dfSrcYInc + dfYOff + EPS)) /
-        nBlockYSize;
-
-    const int nBlockCount = nBlocksPerRow * nBlocksPerColumn;
-
-    struct StrileData
-    {
-        vsi_l_offset nOffset;
-        vsi_l_offset nByteCount;
-        bool bTryMask;
-    };
-
-    std::map<int, StrileData> oMapStrileToOffsetByteCount;
-
-    // Dedicated method to retrieved the offset and size in an efficient way
-    // when m_bBlockOrderRowMajor and m_bLeaderSizeAsUInt4 conditions are
-    // met.
-    // Except for the last block, we just read the offset from the TIFF offset
-    // array, and retrieve the size in the leader 4 bytes that come before the
-    // payload.
-    auto OptimizedRetrievalOfOffsetSize =
-        [&](int nBlockId, vsi_l_offset &nOffset, vsi_l_offset &nSize,
-            size_t nTotalSize, size_t nMaxRawBlockCacheSize)
-    {
-        bool bTryMask = m_poGDS->m_bMaskInterleavedWithImagery;
-        nOffset = TIFFGetStrileOffset(m_poGDS->m_hTIFF, nBlockId);
-        if (nOffset >= 4)
-        {
-            if (nBlockId == nBlockCount - 1)
-            {
-                // Special case for the last block. As there is no next block
-                // from which to retrieve an offset, use the good old method
-                // that consists in reading the ByteCount array.
-                if (bTryMask && m_poGDS->GetRasterBand(1)->GetMaskBand() &&
-                    m_poGDS->m_poMaskDS)
-                {
-                    auto nMaskOffset = TIFFGetStrileOffset(
-                        m_poGDS->m_poMaskDS->m_hTIFF, nBlockId);
-                    if (nMaskOffset)
-                    {
-                        nSize = nMaskOffset +
-                                TIFFGetStrileByteCount(
-                                    m_poGDS->m_poMaskDS->m_hTIFF, nBlockId) -
-                                nOffset;
-                    }
-                    else
-                    {
-                        bTryMask = false;
-                    }
-                }
-                if (nSize == 0)
-                {
-                    nSize = TIFFGetStrileByteCount(m_poGDS->m_hTIFF, nBlockId);
-                }
-                if (nSize && m_poGDS->m_bTrailerRepeatedLast4BytesRepeated)
-                {
-                    nSize += 4;
-                }
-            }
-            else
-            {
-                auto nOffsetNext =
-                    TIFFGetStrileOffset(m_poGDS->m_hTIFF, nBlockId + 1);
-                if (nOffsetNext > nOffset)
-                {
-                    nSize = nOffsetNext - nOffset;
-                }
-                else
-                {
-                    // Shouldn't happen for a compliant file
-                    if (nOffsetNext != 0)
-                    {
-                        CPLDebug("GTiff", "Tile %d is not located after %d",
-                                 nBlockId + 1, nBlockId);
-                    }
-                    bTryMask = false;
-                    nSize = TIFFGetStrileByteCount(m_poGDS->m_hTIFF, nBlockId);
-                    if (m_poGDS->m_bTrailerRepeatedLast4BytesRepeated)
-                        nSize += 4;
-                }
-            }
-            if (nSize)
-            {
-                nOffset -= 4;
-                nSize += 4;
-                if (nTotalSize + nSize < nMaxRawBlockCacheSize)
-                {
-                    StrileData data;
-                    data.nOffset = nOffset;
-                    data.nByteCount = nSize;
-                    data.bTryMask = bTryMask;
-                    oMapStrileToOffsetByteCount[nBlockId] = data;
-                }
-            }
-        }
-        else
-        {
-            // Sparse tile
-            StrileData data;
-            data.nOffset = 0;
-            data.nByteCount = 0;
-            data.bTryMask = false;
-            oMapStrileToOffsetByteCount[nBlockId] = data;
-        }
-    };
-
-    // This lambda fills m_poDS->m_oCacheStrileToOffsetByteCount (and
-    // m_poDS->m_poMaskDS->m_oCacheStrileToOffsetByteCount, when there is a
-    // mask) from the temporary oMapStrileToOffsetByteCount.
-    auto FillCacheStrileToOffsetByteCount =
-        [&](const std::vector<vsi_l_offset> &anOffsets,
-            const std::vector<size_t> &anSizes,
-            const std::vector<void *> &apData)
-    {
-        CPLAssert(m_poGDS->m_bLeaderSizeAsUInt4);
-        size_t i = 0;
-        vsi_l_offset nLastOffset = 0;
-        for (const auto &entry : oMapStrileToOffsetByteCount)
-        {
-            const auto nBlockId = entry.first;
-            const auto nOffset = entry.second.nOffset;
-            const auto nSize = entry.second.nByteCount;
-            if (nOffset == 0)
-            {
-                // Sparse tile
-                m_poGDS->m_oCacheStrileToOffsetByteCount.insert(
-                    nBlockId, std::pair(0, 0));
-                continue;
-            }
-
-            if (nOffset < nLastOffset)
-            {
-                // shouldn't happen normally if tiles are sorted
-                i = 0;
-            }
-            nLastOffset = nOffset;
-            while (i < anOffsets.size() &&
-                   !(nOffset >= anOffsets[i] &&
-                     nOffset + nSize <= anOffsets[i] + anSizes[i]))
-            {
-                i++;
-            }
-            CPLAssert(i < anOffsets.size());
-            CPLAssert(nOffset >= anOffsets[i]);
-            CPLAssert(nOffset + nSize <= anOffsets[i] + anSizes[i]);
-            GUInt32 nSizeFromLeader;
-            memcpy(&nSizeFromLeader,
-                   // cppcheck-suppress containerOutOfBounds
-                   static_cast<GByte *>(apData[i]) + nOffset - anOffsets[i],
-                   sizeof(nSizeFromLeader));
-            CPL_LSBPTR32(&nSizeFromLeader);
-            bool bOK = true;
-            constexpr int nLeaderSize = 4;
-            const int nTrailerSize =
-                (m_poGDS->m_bTrailerRepeatedLast4BytesRepeated ? 4 : 0);
-            if (nSizeFromLeader > nSize - nLeaderSize - nTrailerSize)
-            {
-                CPLDebug("GTiff",
-                         "Inconsistent block size from in leader of block %d",
-                         nBlockId);
-                bOK = false;
-            }
-            else if (m_poGDS->m_bTrailerRepeatedLast4BytesRepeated)
-            {
-                // Check trailer consistency
-                const GByte *strileData = static_cast<GByte *>(apData[i]) +
-                                          nOffset - anOffsets[i] + nLeaderSize;
-                if (!CheckTrailer(strileData, nSizeFromLeader))
-                {
-                    CPLDebug("GTiff", "Inconsistent trailer of block %d",
-                             nBlockId);
-                    bOK = false;
-                }
-            }
-            if (!bOK)
-            {
-                return false;
-            }
-
-            {
-                const vsi_l_offset nRealOffset = nOffset + nLeaderSize;
-                const vsi_l_offset nRealSize = nSizeFromLeader;
-#ifdef DEBUG_VERBOSE
-                CPLDebug("GTiff",
-                         "Block %d found at offset " CPL_FRMT_GUIB
-                         " with size " CPL_FRMT_GUIB,
-                         nBlockId, nRealOffset, nRealSize);
-#endif
-                m_poGDS->m_oCacheStrileToOffsetByteCount.insert(
-                    nBlockId, std::pair(nRealOffset, nRealSize));
-            }
-
-            // Processing of mask
-            if (!(entry.second.bTryMask &&
-                  m_poGDS->m_bMaskInterleavedWithImagery &&
-                  m_poGDS->GetRasterBand(1)->GetMaskBand() &&
-                  m_poGDS->m_poMaskDS))
-            {
-                continue;
-            }
-
-            bOK = false;
-            const vsi_l_offset nMaskOffsetWithLeader =
-                nOffset + nLeaderSize + nSizeFromLeader + nTrailerSize;
-            if (nMaskOffsetWithLeader + nLeaderSize <=
-                anOffsets[i] + anSizes[i])
-            {
-                GUInt32 nMaskSizeFromLeader;
-                memcpy(&nMaskSizeFromLeader,
-                       static_cast<GByte *>(apData[i]) + nMaskOffsetWithLeader -
-                           anOffsets[i],
-                       sizeof(nMaskSizeFromLeader));
-                CPL_LSBPTR32(&nMaskSizeFromLeader);
-                if (nMaskOffsetWithLeader + nLeaderSize + nMaskSizeFromLeader +
-                        nTrailerSize <=
-                    anOffsets[i] + anSizes[i])
-                {
-                    bOK = true;
-                    if (m_poGDS->m_bTrailerRepeatedLast4BytesRepeated)
-                    {
-                        // Check trailer consistency
-                        const GByte *strileMaskData =
-                            static_cast<GByte *>(apData[i]) + nOffset -
-                            anOffsets[i] + nLeaderSize + nSizeFromLeader +
-                            nTrailerSize + nLeaderSize;
-                        if (!CheckTrailer(strileMaskData, nMaskSizeFromLeader))
-                        {
-                            CPLDebug("GTiff",
-                                     "Inconsistent trailer of mask of block %d",
-                                     nBlockId);
-                            bOK = false;
-                        }
-                    }
-                }
-                if (bOK)
-                {
-                    const vsi_l_offset nRealOffset = nOffset + nLeaderSize +
-                                                     nSizeFromLeader +
-                                                     nTrailerSize + nLeaderSize;
-                    const vsi_l_offset nRealSize = nMaskSizeFromLeader;
-#ifdef DEBUG_VERBOSE
-                    CPLDebug("GTiff",
-                             "Mask of block %d found at offset " CPL_FRMT_GUIB
-                             " with size " CPL_FRMT_GUIB,
-                             nBlockId, nRealOffset, nRealSize);
-#endif
-
-                    m_poGDS->m_poMaskDS->m_oCacheStrileToOffsetByteCount.insert(
-                        nBlockId, std::pair(nRealOffset, nRealSize));
-                }
-            }
-            if (!bOK)
-            {
-                CPLDebug("GTiff",
-                         "Mask for block %d is not properly interleaved with "
-                         "imagery block",
-                         nBlockId);
-            }
-        }
-        return true;
-    };
-
-    thandle_t th = TIFFClientdata(m_poGDS->m_hTIFF);
-    if (!VSI_TIFFHasCachedRanges(th))
-    {
-        std::vector<std::pair<vsi_l_offset, size_t>> aOffsetSize;
-        size_t nTotalSize = 0;
-        const unsigned int nMaxRawBlockCacheSize = atoi(
-            CPLGetConfigOption("GDAL_MAX_RAW_BLOCK_CACHE_SIZE", "10485760"));
-        bool bGoOn = true;
-        for (int iY = nBlockY1; bGoOn && iY <= nBlockY2; iY++)
-        {
-            for (int iX = nBlockX1; bGoOn && iX <= nBlockX2; iX++)
-            {
-                GDALRasterBlock *poBlock = TryGetLockedBlockRef(iX, iY);
-                if (poBlock != nullptr)
-                {
-                    poBlock->DropLock();
-                    continue;
-                }
-                int nBlockId = iX + iY * nBlocksPerRow;
-                if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
-                    nBlockId += (nBand - 1) * m_poGDS->m_nBlocksPerBand;
-                vsi_l_offset nOffset = 0;
-                vsi_l_offset nSize = 0;
-
-                if ((m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ||
-                     m_poGDS->nBands == 1) &&
-                    !m_poGDS->m_bStreamingIn &&
-                    m_poGDS->m_bBlockOrderRowMajor &&
-                    m_poGDS->m_bLeaderSizeAsUInt4)
-                {
-                    OptimizedRetrievalOfOffsetSize(nBlockId, nOffset, nSize,
-                                                   nTotalSize,
-                                                   nMaxRawBlockCacheSize);
-                }
-                else
-                {
-                    CPL_IGNORE_RET_VAL(
-                        m_poGDS->IsBlockAvailable(nBlockId, &nOffset, &nSize));
-                }
-                if (nSize)
-                {
-                    if (nTotalSize + nSize < nMaxRawBlockCacheSize)
-                    {
-#ifdef DEBUG_VERBOSE
-                        CPLDebug("GTiff",
-                                 "Precaching for block (%d, %d), " CPL_FRMT_GUIB
-                                 "-" CPL_FRMT_GUIB,
-                                 iX, iY, nOffset,
-                                 nOffset + static_cast<size_t>(nSize) - 1);
-#endif
-                        aOffsetSize.push_back(
-                            std::pair(nOffset, static_cast<size_t>(nSize)));
-                        nTotalSize += static_cast<size_t>(nSize);
-                    }
-                    else
-                    {
-                        bGoOn = false;
-                    }
-                }
-            }
-        }
-
-        std::sort(aOffsetSize.begin(), aOffsetSize.end());
-
-        if (nTotalSize > 0)
-        {
-            pBufferedData = VSI_MALLOC_VERBOSE(nTotalSize);
-            if (pBufferedData)
-            {
-                std::vector<vsi_l_offset> anOffsets;
-                std::vector<size_t> anSizes;
-                std::vector<void *> apData;
-                anOffsets.push_back(aOffsetSize[0].first);
-                apData.push_back(static_cast<GByte *>(pBufferedData));
-                size_t nChunkSize = aOffsetSize[0].second;
-                size_t nAccOffset = 0;
-                // Try to merge contiguous or slightly overlapping ranges
-                for (size_t i = 0; i < aOffsetSize.size() - 1; i++)
-                {
-                    if (aOffsetSize[i].first < aOffsetSize[i + 1].first &&
-                        aOffsetSize[i].first + aOffsetSize[i].second >=
-                            aOffsetSize[i + 1].first)
-                    {
-                        const auto overlap = aOffsetSize[i].first +
-                                             aOffsetSize[i].second -
-                                             aOffsetSize[i + 1].first;
-                        // That should always be the case for well behaved
-                        // TIFF files.
-                        if (aOffsetSize[i + 1].second > overlap)
-                        {
-                            nChunkSize += static_cast<size_t>(
-                                aOffsetSize[i + 1].second - overlap);
-                        }
-                    }
-                    else
-                    {
-                        // terminate current block
-                        anSizes.push_back(nChunkSize);
-#ifdef DEBUG_VERBOSE
-                        CPLDebug("GTiff",
-                                 "Requesting range [" CPL_FRMT_GUIB
-                                 "-" CPL_FRMT_GUIB "]",
-                                 anOffsets.back(),
-                                 anOffsets.back() + anSizes.back() - 1);
-#endif
-                        nAccOffset += nChunkSize;
-                        // start a new range
-                        anOffsets.push_back(aOffsetSize[i + 1].first);
-                        apData.push_back(static_cast<GByte *>(pBufferedData) +
-                                         nAccOffset);
-                        nChunkSize = aOffsetSize[i + 1].second;
-                    }
-                }
-                // terminate last block
-                anSizes.push_back(nChunkSize);
-#ifdef DEBUG_VERBOSE
-                CPLDebug(
-                    "GTiff",
-                    "Requesting range [" CPL_FRMT_GUIB "-" CPL_FRMT_GUIB "]",
-                    anOffsets.back(), anOffsets.back() + anSizes.back() - 1);
-#endif
-
-                VSILFILE *fp = VSI_TIFFGetVSILFile(th);
-
-                if (VSIFReadMultiRangeL(static_cast<int>(anSizes.size()),
-                                        &apData[0], &anOffsets[0], &anSizes[0],
-                                        fp) == 0)
-                {
-                    if (!oMapStrileToOffsetByteCount.empty() &&
-                        !FillCacheStrileToOffsetByteCount(anOffsets, anSizes,
-                                                          apData))
-                    {
-                        // Retry without optimization
-                        CPLFree(pBufferedData);
-                        m_poGDS->m_bLeaderSizeAsUInt4 = false;
-                        void *pRet =
-                            CacheMultiRange(nXOff, nYOff, nXSize, nYSize,
-                                            nBufXSize, nBufYSize, psExtraArg);
-                        m_poGDS->m_bLeaderSizeAsUInt4 = true;
-                        return pRet;
-                    }
-
-                    VSI_TIFFSetCachedRanges(
-                        th, static_cast<int>(anSizes.size()), &apData[0],
-                        &anOffsets[0], &anSizes[0]);
-                }
-            }
-        }
-    }
-    return pBufferedData;
-}
-
-/************************************************************************/
 /*                       IGetDataCoverageStatus()                       */
 /************************************************************************/
 
@@ -1098,8 +660,12 @@ int GTiffRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
             vsi_l_offset nOffset = 0;
             vsi_l_offset nLength = 0;
             bool bHasData = false;
-            if (!m_poGDS->IsBlockAvailable(nBlockId, &nOffset, &nLength))
+            bool bError = false;
+            if (!m_poGDS->IsBlockAvailable(nBlockId, &nOffset, &nLength,
+                                           &bError))
             {
+                if (bError)
+                    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED;
                 nStatus |= GDAL_DATA_COVERAGE_STATUS_EMPTY;
             }
             else
@@ -1553,7 +1119,8 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
             }
 
             vsi_l_offset nOffset = 0;
-            if (!m_poGDS->IsBlockAvailable(nBlockId, &nOffset))
+            if (!m_poGDS->IsBlockAvailable(nBlockId, &nOffset, nullptr,
+                                           nullptr))
             {
                 return nullptr;
             }
@@ -1574,7 +1141,8 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
             }
 
             vsi_l_offset nByteCount = 0;
-            if (!m_poGDS->IsBlockAvailable(nBlockId, nullptr, &nByteCount))
+            if (!m_poGDS->IsBlockAvailable(nBlockId, nullptr, &nByteCount,
+                                           nullptr))
             {
                 return nullptr;
             }

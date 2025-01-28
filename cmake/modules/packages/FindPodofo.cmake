@@ -46,6 +46,7 @@ find_path(PODOFO_INCLUDE_DIR
 
 find_library(PODOFO_LIBRARY
              NAMES podofo libpodofo
+             NAMES_PER_DIR
              HINTS ${PC_PODOFO_LIBRARY_DIRS})
 
 mark_as_advanced(PODOFO_INCLUDE_DIR PODOFO_LIBRARY)

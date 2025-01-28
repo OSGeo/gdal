@@ -89,12 +89,12 @@ bool OGRIdrisiLayer::Detect_AVL_ADC(const char *pszFilename)
     // --------------------------------------------------------------------
     //      Look for .adc file
     // --------------------------------------------------------------------
-    const char *pszADCFilename = CPLResetExtension(pszFilename, "adc");
-    VSILFILE *fpADC = VSIFOpenL(pszADCFilename, "rb");
+    std::string osADCFilename = CPLResetExtensionSafe(pszFilename, "adc");
+    VSILFILE *fpADC = VSIFOpenL(osADCFilename.c_str(), "rb");
     if (fpADC == nullptr)
     {
-        pszADCFilename = CPLResetExtension(pszFilename, "ADC");
-        fpADC = VSIFOpenL(pszADCFilename, "rb");
+        osADCFilename = CPLResetExtensionSafe(pszFilename, "ADC");
+        fpADC = VSIFOpenL(osADCFilename.c_str(), "rb");
     }
 
     char **papszADC = nullptr;
@@ -104,7 +104,7 @@ bool OGRIdrisiLayer::Detect_AVL_ADC(const char *pszFilename)
         fpADC = nullptr;
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        papszADC = CSLLoad2(pszADCFilename, 1024, 256, nullptr);
+        papszADC = CSLLoad2(osADCFilename.c_str(), 1024, 256, nullptr);
         CPLPopErrorHandler();
         CPLErrorReset();
     }
@@ -150,12 +150,12 @@ bool OGRIdrisiLayer::Detect_AVL_ADC(const char *pszFilename)
     // --------------------------------------------------------------------
     //      Look for .avl file
     // --------------------------------------------------------------------
-    const char *pszAVLFilename = CPLResetExtension(pszFilename, "avl");
-    fpAVL = VSIFOpenL(pszAVLFilename, "rb");
+    std::string osAVLFilename = CPLResetExtensionSafe(pszFilename, "avl");
+    fpAVL = VSIFOpenL(osAVLFilename.c_str(), "rb");
     if (fpAVL == nullptr)
     {
-        pszAVLFilename = CPLResetExtension(pszFilename, "AVL");
-        fpAVL = VSIFOpenL(pszAVLFilename, "rb");
+        osAVLFilename = CPLResetExtensionSafe(pszFilename, "AVL");
+        fpAVL = VSIFOpenL(osAVLFilename.c_str(), "rb");
     }
     if (fpAVL == nullptr)
     {

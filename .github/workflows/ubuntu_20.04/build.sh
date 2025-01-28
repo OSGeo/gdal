@@ -5,12 +5,17 @@ set -eu
 export CXXFLAGS="-march=native -O2 -Wodr -flto-odr-type-merging -Werror"
 export CFLAGS="-O2 -march=native -Werror"
 
+# for precompiled headers
+ccache --set-config sloppiness=pch_defines,time_macros,include_file_mtime,include_file_ctime
+
 cmake "${GDAL_SOURCE_DIR:=..}" \
     -DUSE_CCACHE=ON \
+    "-DUSE_PRECOMPILED_HEADERS=ON" \
     -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
     -DCMAKE_INSTALL_PREFIX=/tmp/install-gdal \
     -DGDAL_USE_TIFF_INTERNAL=OFF \
     -DGDAL_USE_GEOTIFF_INTERNAL=OFF \
+    -DGDAL_USE_EXPRTK=ON \
     -DECW_ROOT=/opt/libecwj2-3.3 \
     -DMRSID_ROOT=/usr/local \
     -DFileGDB_ROOT=/usr/local/FileGDB_API \

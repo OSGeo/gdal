@@ -31,7 +31,7 @@ ZarrSharedResource::ZarrSharedResource(const std::string &osRootDirectoryName,
         m_osRootDirectoryName.pop_back();
     }
     m_poPAM = std::make_shared<GDALPamMultiDim>(
-        CPLFormFilename(m_osRootDirectoryName.c_str(), "pam", nullptr));
+        CPLFormFilenameSafe(m_osRootDirectoryName.c_str(), "pam", nullptr));
 }
 
 /************************************************************************/
@@ -56,8 +56,8 @@ ZarrSharedResource::~ZarrSharedResource()
     {
         CPLJSONDocument oDoc;
         oDoc.SetRoot(m_oObj);
-        oDoc.Save(CPLFormFilename(m_osRootDirectoryName.c_str(), ".zmetadata",
-                                  nullptr));
+        oDoc.Save(CPLFormFilenameSafe(m_osRootDirectoryName.c_str(),
+                                      ".zmetadata", nullptr));
     }
 }
 
@@ -72,8 +72,8 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
         poRG->SetUpdatable(m_bUpdatable);
         poRG->SetDirectoryName(m_osRootDirectoryName);
 
-        const std::string osZarrayFilename(
-            CPLFormFilename(m_osRootDirectoryName.c_str(), ".zarray", nullptr));
+        const std::string osZarrayFilename(CPLFormFilenameSafe(
+            m_osRootDirectoryName.c_str(), ".zarray", nullptr));
         VSIStatBufL sStat;
         if (VSIStatL(osZarrayFilename.c_str(), &sStat) == 0)
         {
@@ -85,9 +85,9 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
             {
                 // If opening a NCZarr array, initialize its group from NCZarr
                 // metadata.
-                const std::string osGroupFilename(CPLFormFilename(
-                    CPLGetDirname(m_osRootDirectoryName.c_str()), ".zgroup",
-                    nullptr));
+                const std::string osGroupFilename(CPLFormFilenameSafe(
+                    CPLGetDirnameSafe(m_osRootDirectoryName.c_str()).c_str(),
+                    ".zgroup", nullptr));
                 if (VSIStatL(osGroupFilename.c_str(), &sStat) == 0)
                 {
                     CPLJSONDocument oDocGroup;
@@ -99,7 +99,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
                 }
             }
             const std::string osArrayName(
-                CPLGetBasename(m_osRootDirectoryName.c_str()));
+                CPLGetBasenameSafe(m_osRootDirectoryName.c_str()));
             if (!poRG->LoadArray(osArrayName, osZarrayFilename, oRoot, false,
                                  CPLJSONObject()))
                 return nullptr;
@@ -107,7 +107,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
             return poRG;
         }
 
-        const std::string osZmetadataFilename(CPLFormFilename(
+        const std::string osZmetadataFilename(CPLFormFilenameSafe(
             m_osRootDirectoryName.c_str(), ".zmetadata", nullptr));
         if (CPLTestBool(CSLFetchNameValueDef(GetOpenOptions(), "USE_ZMETADATA",
                                              "YES")) &&
@@ -127,8 +127,8 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
             return poRG;
         }
 
-        const std::string osGroupFilename(
-            CPLFormFilename(m_osRootDirectoryName.c_str(), ".zgroup", nullptr));
+        const std::string osGroupFilename(CPLFormFilenameSafe(
+            m_osRootDirectoryName.c_str(), ".zgroup", nullptr));
         if (VSIStatL(osGroupFilename.c_str(), &sStat) == 0)
         {
             CPLJSONDocument oDoc;
@@ -146,8 +146,8 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
                                        m_osRootDirectoryName);
     poRG_V3->SetUpdatable(m_bUpdatable);
 
-    const std::string osZarrJsonFilename(
-        CPLFormFilename(m_osRootDirectoryName.c_str(), "zarr.json", nullptr));
+    const std::string osZarrJsonFilename(CPLFormFilenameSafe(
+        m_osRootDirectoryName.c_str(), "zarr.json", nullptr));
     VSIStatBufL sStat;
     if (VSIStatL(osZarrJsonFilename.c_str(), &sStat) == 0)
     {
@@ -165,7 +165,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
         if (osNodeType == "array")
         {
             const std::string osArrayName(
-                CPLGetBasename(m_osRootDirectoryName.c_str()));
+                CPLGetBasenameSafe(m_osRootDirectoryName.c_str()));
             poRG_V3->SetExplored();
             if (!poRG_V3->LoadArray(osArrayName, osZarrJsonFilename, oRoot))
                 return nullptr;

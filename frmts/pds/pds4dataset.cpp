@@ -1398,26 +1398,28 @@ OGRLayer *PDS4Dataset::GetLayer(int nIndex)
 /*                       FixupTableFilename()                           */
 /************************************************************************/
 
-static CPLString FixupTableFilename(const CPLString &osFilename)
+static std::string FixupTableFilename(const std::string &osFilename)
 {
     VSIStatBufL sStat;
-    if (VSIStatL(osFilename, &sStat) == 0)
+    if (VSIStatL(osFilename.c_str(), &sStat) == 0)
     {
         return osFilename;
     }
-    CPLString osExt = CPLGetExtension(osFilename);
+    const std::string osExt = CPLGetExtensionSafe(osFilename.c_str());
     if (!osExt.empty())
     {
-        CPLString osTry(osFilename);
+        std::string osTry(osFilename);
         if (osExt[0] >= 'a' && osExt[0] <= 'z')
         {
-            osTry = CPLResetExtension(osFilename, osExt.toupper());
+            osTry = CPLResetExtensionSafe(osFilename.c_str(),
+                                          CPLString(osExt).toupper());
         }
         else
         {
-            osTry = CPLResetExtension(osFilename, osExt.tolower());
+            osTry = CPLResetExtensionSafe(osFilename.c_str(),
+                                          CPLString(osExt).tolower());
         }
-        if (VSIStatL(osTry, &sStat) == 0)
+        if (VSIStatL(osTry.c_str(), &sStat) == 0)
         {
             return osTry;
         }
@@ -1432,11 +1434,11 @@ static CPLString FixupTableFilename(const CPLString &osFilename)
 bool PDS4Dataset::OpenTableCharacter(const char *pszFilename,
                                      const CPLXMLNode *psTable)
 {
-    CPLString osLayerName(CPLGetBasename(pszFilename));
-    CPLString osFullFilename = FixupTableFilename(CPLFormFilename(
-        CPLGetPath(m_osXMLFilename.c_str()), pszFilename, nullptr));
-    std::unique_ptr<PDS4TableCharacter> poLayer(
-        new PDS4TableCharacter(this, osLayerName, osFullFilename));
+    const std::string osLayerName(CPLGetBasenameSafe(pszFilename));
+    const std::string osFullFilename = FixupTableFilename(CPLFormFilenameSafe(
+        CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(), pszFilename, nullptr));
+    std::unique_ptr<PDS4TableCharacter> poLayer(new PDS4TableCharacter(
+        this, osLayerName.c_str(), osFullFilename.c_str()));
     if (!poLayer->ReadTableDef(psTable))
     {
         return false;
@@ -1454,11 +1456,11 @@ bool PDS4Dataset::OpenTableCharacter(const char *pszFilename,
 bool PDS4Dataset::OpenTableBinary(const char *pszFilename,
                                   const CPLXMLNode *psTable)
 {
-    CPLString osLayerName(CPLGetBasename(pszFilename));
-    CPLString osFullFilename = FixupTableFilename(CPLFormFilename(
-        CPLGetPath(m_osXMLFilename.c_str()), pszFilename, nullptr));
+    const std::string osLayerName(CPLGetBasenameSafe(pszFilename));
+    const std::string osFullFilename = FixupTableFilename(CPLFormFilenameSafe(
+        CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(), pszFilename, nullptr));
     std::unique_ptr<PDS4TableBinary> poLayer(
-        new PDS4TableBinary(this, osLayerName, osFullFilename));
+        new PDS4TableBinary(this, osLayerName.c_str(), osFullFilename.c_str()));
     if (!poLayer->ReadTableDef(psTable))
     {
         return false;
@@ -1476,11 +1478,11 @@ bool PDS4Dataset::OpenTableBinary(const char *pszFilename,
 bool PDS4Dataset::OpenTableDelimited(const char *pszFilename,
                                      const CPLXMLNode *psTable)
 {
-    CPLString osLayerName(CPLGetBasename(pszFilename));
-    CPLString osFullFilename = FixupTableFilename(CPLFormFilename(
-        CPLGetPath(m_osXMLFilename.c_str()), pszFilename, nullptr));
-    std::unique_ptr<PDS4DelimitedTable> poLayer(
-        new PDS4DelimitedTable(this, osLayerName, osFullFilename));
+    const std::string osLayerName(CPLGetBasenameSafe(pszFilename));
+    const std::string osFullFilename = FixupTableFilename(CPLFormFilenameSafe(
+        CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(), pszFilename, nullptr));
+    std::unique_ptr<PDS4DelimitedTable> poLayer(new PDS4DelimitedTable(
+        this, osLayerName.c_str(), osFullFilename.c_str()));
     if (!poLayer->ReadTableDef(psTable))
     {
         return false;
@@ -1951,20 +1953,21 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             if (poDS->nBands != 0)
                 continue;
 
-            const char *pszImageFullFilename = CPLFormFilename(
-                CPLGetPath(osXMLFilename.c_str()), pszFilename, nullptr);
+            const std::string osImageFullFilename = CPLFormFilenameSafe(
+                CPLGetPathSafe(osXMLFilename.c_str()).c_str(), pszFilename,
+                nullptr);
             VSILFILE *fp = VSIFOpenExL(
-                pszImageFullFilename,
+                osImageFullFilename.c_str(),
                 (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb", true);
             if (fp == nullptr)
             {
                 CPLError(CE_Warning, CPLE_FileIO, "Cannt open %s: %s",
-                         pszImageFullFilename, VSIGetLastErrorMsg());
+                         osImageFullFilename.c_str(), VSIGetLastErrorMsg());
                 continue;
             }
             poDS->nRasterXSize = nSamples;
             poDS->nRasterYSize = nLines;
-            poDS->m_osImageFilename = pszImageFullFilename;
+            poDS->m_osImageFilename = osImageFullFilename;
             poDS->m_fpImage = fp;
             poDS->m_bIsLSB = bLSBOrder;
 
@@ -3498,8 +3501,9 @@ void PDS4Dataset::WriteVectorLayers(CPLXMLNode *psProduct)
                      poLayer->GetName());
         }
 
-        const CPLString osRelativePath(CPLExtractRelativePath(
-            CPLGetPath(m_osXMLFilename), poLayer->GetFileName(), nullptr));
+        const std::string osRelativePath(
+            CPLExtractRelativePath(CPLGetPathSafe(m_osXMLFilename).c_str(),
+                                   poLayer->GetFileName(), nullptr));
 
         bool bFound = false;
         for (CPLXMLNode *psIter = psProduct->psChild; psIter != nullptr;
@@ -3512,7 +3516,7 @@ void PDS4Dataset::WriteVectorLayers(CPLXMLNode *psProduct)
                 const char *pszFilename = CPLGetXMLValue(
                     psIter,
                     (osPrefix + "File." + osPrefix + "file_name").c_str(), "");
-                if (strcmp(pszFilename, osRelativePath) == 0)
+                if (strcmp(pszFilename, osRelativePath.c_str()) == 0)
                 {
                     poLayer->RefreshFileAreaObservational(psIter);
                     bFound = true;
@@ -3527,8 +3531,9 @@ void PDS4Dataset::WriteVectorLayers(CPLXMLNode *psProduct)
                 (osPrefix + "File_Area_Observational").c_str());
             CPLXMLNode *psFile = CPLCreateXMLNode(psFAO, CXT_Element,
                                                   (osPrefix + "File").c_str());
-            CPLCreateXMLElementAndValue(
-                psFile, (osPrefix + "file_name").c_str(), osRelativePath);
+            CPLCreateXMLElementAndValue(psFile,
+                                        (osPrefix + "file_name").c_str(),
+                                        osRelativePath.c_str());
             poLayer->RefreshFileAreaObservational(psFAO);
         }
     }
@@ -4168,8 +4173,9 @@ OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
     CPLString osFullFilename;
     if (bSameDirectory)
     {
-        osFullFilename = CPLFormFilename(CPLGetPath(m_osXMLFilename.c_str()),
-                                         osBasename.c_str(), pszExt);
+        osFullFilename =
+            CPLFormFilenameSafe(CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(),
+                                osBasename.c_str(), pszExt);
         VSIStatBufL sStat;
         if (VSIStatL(osFullFilename, &sStat) == 0)
         {
@@ -4182,9 +4188,9 @@ OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
     }
     else
     {
-        CPLString osDirectory =
-            CPLFormFilename(CPLGetPath(m_osXMLFilename),
-                            CPLGetBasename(m_osXMLFilename), nullptr);
+        CPLString osDirectory = CPLFormFilenameSafe(
+            CPLGetPathSafe(m_osXMLFilename).c_str(),
+            CPLGetBasenameSafe(m_osXMLFilename).c_str(), nullptr);
         VSIStatBufL sStat;
         if (VSIStatL(osDirectory, &sStat) != 0 &&
             VSIMkdir(osDirectory, 0755) != 0)
@@ -4194,7 +4200,7 @@ OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
             return nullptr;
         }
         osFullFilename =
-            CPLFormFilename(osDirectory, osBasename.c_str(), pszExt);
+            CPLFormFilenameSafe(osDirectory, osBasename.c_str(), pszExt);
     }
 
     if (EQUAL(pszTableType, "DELIMITED"))
@@ -4370,7 +4376,8 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     const char *pszImageExtension = aosOptions.FetchNameValueDef(
         "IMAGE_EXTENSION", EQUAL(pszImageFormat, "RAW") ? "img" : "tif");
     CPLString osImageFilename(aosOptions.FetchNameValueDef(
-        "IMAGE_FILENAME", CPLResetExtension(pszFilename, pszImageExtension)));
+        "IMAGE_FILENAME",
+        CPLResetExtensionSafe(pszFilename, pszImageExtension).c_str()));
 
     const bool bAppend = aosOptions.FetchBool("APPEND_SUBDATASET", false);
     if (bAppend)
@@ -4667,9 +4674,9 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
         poSrcUnderlyingDS = poSrcDS;
     if (EQUAL(pszImageFormat, "GEOTIFF") &&
         strcmp(poSrcUnderlyingDS->GetDescription(),
-               CSLFetchNameValueDef(papszOptions, "IMAGE_FILENAME",
-                                    CPLResetExtension(pszFilename, "tif"))) ==
-            0)
+               CSLFetchNameValueDef(
+                   papszOptions, "IMAGE_FILENAME",
+                   CPLResetExtensionSafe(pszFilename, "tif").c_str())) == 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Output file has same name as input file");

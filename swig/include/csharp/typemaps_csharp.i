@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     typemaps_csharp.i
  * Project:  GDAL CSharp Interface

@@ -53,6 +53,7 @@ mark_as_advanced(LIBKML_INCLUDE_DIR)
 
 find_library(LIBKML_BASE_LIBRARY
              NAMES kmlbase libkmlbase
+             NAMES_PER_DIR
              HINTS ${PC_LIBKML_LIBRARY_DIRS} )
 mark_as_advanced(LIBKML_BASE_LIBRARY)
 
@@ -62,6 +63,7 @@ foreach(_comp IN LISTS libkml_known_components)
     string(TOLOWER ${_comp} _name)
     find_library(LIBKML_${_comp}_LIBRARY
                  NAMES kml${_name} libkml${_name}
+                 NAMES_PER_DIR
                  HINTS ${PC_LIBKML_LIBRARY_DIRS} )
     mark_as_advanced(LIBKML_${_comp}_LIBRARY)
   endif()
@@ -72,6 +74,7 @@ foreach(_helper IN LISTS libkml_helpers)
   string(TOLOWER ${_helper} _name)
   find_library(LIBKML_${_helper}_LIBRARY
                NAMES ${_name} lib${_name}
+               NAMES_PER_DIR
                HINTS ${PC_LIBKML_LIBRARY_DIRS} )
   mark_as_advanced(LIBKML_${_helper}_LIBRARY)
 endforeach()

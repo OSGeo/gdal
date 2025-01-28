@@ -710,6 +710,12 @@ CPLErr MEMDataset::AddBand(GDALDataType eType, char **papszOptions)
 {
     const int nBandId = GetRasterCount() + 1;
     const GSpacing nPixelSize = GDALGetDataTypeSizeBytes(eType);
+    if (nPixelSize == 0)
+    {
+        ReportError(CE_Failure, CPLE_IllegalArg,
+                    "Illegal GDT_Unknown/GDT_TypeCount argument");
+        return CE_Failure;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Do we need to allocate the memory ourselves?  This is the       */
@@ -1333,7 +1339,7 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
     /*      First allocate band data, verifying that we can get enough      */
     /*      memory.                                                         */
     /* -------------------------------------------------------------------- */
-    const int nWordSize = GDALGetDataTypeSize(eType) / 8;
+    const int nWordSize = GDALGetDataTypeSizeBytes(eType);
     if (nBandsIn > 0 && nWordSize > 0 &&
         (nBandsIn > INT_MAX / nWordSize ||
          (GIntBig)nXSize * nYSize > GINTBIG_MAX / (nWordSize * nBandsIn)))

@@ -175,7 +175,7 @@ int BYNDataset::Identify(GDALOpenInfo *poOpenInfo)
 /*      Check file extension (.byn/.err)                                */
 /* -------------------------------------------------------------------- */
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    const char *pszFileExtension = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszFileExtension = poOpenInfo->osExtension.c_str();
 
     if (!EQUAL(pszFileExtension, "byn") && !EQUAL(pszFileExtension, "err"))
     {
@@ -720,18 +720,15 @@ GDALDataset *BYNDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /*      Check file extension (.byn/.err)                                */
     /* -------------------------------------------------------------------- */
 
-    char *pszFileExtension = CPLStrdup(CPLGetExtension(pszFilename));
+    const std::string osExt = CPLGetExtensionSafe(pszFilename);
 
-    if (!EQUAL(pszFileExtension, "byn") && !EQUAL(pszFileExtension, "err"))
+    if (!EQUAL(osExt.c_str(), "byn") && !EQUAL(osExt.c_str(), "err"))
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
             "Attempt to create byn file with extension other than byn/err.");
-        CPLFree(pszFileExtension);
         return nullptr;
     }
-
-    CPLFree(pszFileExtension);
 
     /* -------------------------------------------------------------------- */
     /*      Try to create the file.                                         */

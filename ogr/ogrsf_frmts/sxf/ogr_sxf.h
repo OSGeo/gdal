@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SXF Translator
  * Purpose:  Include file defining classes for OGR SXF driver, datasource and

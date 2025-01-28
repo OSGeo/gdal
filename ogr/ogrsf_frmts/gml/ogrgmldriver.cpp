@@ -32,7 +32,7 @@ static int OGRGMLDriverIdentify(GDALOpenInfo *poOpenInfo)
     /* it transparently with /vsigzip/ */
     else if (poOpenInfo->pabyHeader[0] == 0x1f &&
              poOpenInfo->pabyHeader[1] == 0x8b &&
-             EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "gz") &&
+             poOpenInfo->IsExtensionEqualToCI("gz") &&
              !STARTS_WITH(poOpenInfo->pszFilename, "/vsigzip/"))
     {
         return -1; /* must be later checked */
@@ -196,6 +196,11 @@ void RegisterOGRGML()
         "    <Value>YES</Value>"
         "    <Value>NO</Value>"
         "  </Option>"
+        "  <Option name='OGR_SCHEMA' type='string' description='"
+        "Partially or totally overrides the auto-detected schema to use for "
+        "creating the layer. "
+        "The overrides are defined as a JSON list of field definitions. "
+        "This can be a filename or a JSON string or a URL.'/>"
         "  <Option name='DOWNLOAD_SCHEMA' type='boolean' description='Whether "
         "to download the remote application schema if needed (only for WFS "
         "currently)' default='YES'/>"

@@ -298,22 +298,25 @@ The following configuration options are available to further customize the JPEG 
 Examples
 --------
 
-Basic example:
+.. example::
+   :title: Basic example
 
-.. code-block::
+   .. code-block:: bash
 
-  gdal2tiles --zoom=2-5 input.tif output_folder
-
-
-MapML generation:
-
-.. code-block::
-
-  gdal2tiles --zoom=16-18 -w mapml -p APSTILE --url "https://example.com" input.tif output_folder
+      gdal2tiles --zoom=2-5 input.tif output_folder
 
 
-MPI example:
+.. example::
+   :title: MapML generation
 
-.. code-block::
+   .. code-block:: bash
 
-  mpiexec -n $NB_PROCESSES gdal2tiles --mpi --config GDAL_CACHEMAX 500 --zoom=2-5 input.tif output_folder
+      gdal2tiles --zoom=16-18 -w mapml -p APSTILE --url "https://example.com" input.tif output_folder
+
+
+.. example::
+   :title: MPI example
+
+    .. code-block:: bash
+
+       mpiexec -n $NB_PROCESSES gdal2tiles --mpi --config GDAL_CACHEMAX 500 --zoom=2-5 input.tif output_folder

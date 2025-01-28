@@ -2086,7 +2086,7 @@ public:
     std::stringstream stream;
 
     std::string curline("Usage: ");
-    curline += this->m_program_name;
+    curline += this->m_parser_path;
     const bool multiline_usage =
         this->m_usage_max_line_width < std::numeric_limits<std::size_t>::max();
     const size_t indent_size = curline.size();
@@ -2147,7 +2147,8 @@ public:
           }
         }
         cur_mutex = arg_mutex;
-        if (curline.size() + 1 + arg_inline_usage.size() >
+        if (curline.size() != indent_size &&
+            curline.size() + 1 + arg_inline_usage.size() >
             this->m_usage_max_line_width) {
           stream << curline << std::endl;
           curline = std::string(indent_size, ' ');

@@ -3,7 +3,6 @@ include(cmake/helpers/GdalCMakeMinimumRequired.cmake)
 cmake_minimum_required(VERSION ${GDAL_CMAKE_VERSION_MIN}...${GDAL_CMAKE_VERSION_MAX})
 
 project(gdal LANGUAGES C CXX)
-include(CTest)
 
 set(GDAL_LIB_TARGET_NAME GDAL)
 
@@ -40,6 +39,12 @@ define_property(
 include(GdalCAndCXXStandards)
 include(CheckCompilerMachineOption)
 include(CheckCompilerSIMDFeature)
+
+option(USE_PRECOMPILED_HEADERS "Use precompiled headers (does not work with MSVC)" OFF)
+if (USE_PRECOMPILED_HEADERS AND MSVC)
+  message(FATAL_ERROR "USE_PRECOMPILED_HEADERS=ON does not currently work with Visual Studio C++ compiler")
+endif()
+
 include(Ccache)
 
 #
@@ -94,6 +99,16 @@ if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(x86|AMD64)")
       set(GDAL_AVX2_FLAG ${flag})
     endif ()
   endif ()
+
+else()
+
+  # Check ability to use Arm Neon optimizations
+  include(CheckCXXSourceCompiles)
+  include(CMakePushCheckState)
+  cmake_push_check_state(RESET)
+  set(CMAKE_REQUIRED_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/gcore")
+  check_cxx_source_compiles("#include \"include_sse2neon.h\"\nint main() { return 0; }" SSE2NEON_COMPILES)
+  cmake_pop_check_state()
 
 endif ()
 #
@@ -219,6 +234,13 @@ if (BUILD_PYTHON_BINDINGS)
     if (NOT SWIG_FOUND)
         message(FATAL_ERROR "SWIG is a requirement to build the Python bindings")
     endif()
+endif()
+
+option(BUILD_TESTING "Build the testing tree." ON)
+# Make sure enable_testing() is defined before including gdal.cmake for
+# Java and CSharp tests
+if (BUILD_TESTING)
+  enable_testing()
 endif()
 
 #

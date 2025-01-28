@@ -96,7 +96,6 @@ Raster drivers
    jdem
    jp2ecw
    jp2kak
-   jp2lura
    jp2mrsid
    jp2openjpeg
    jpeg
@@ -110,6 +109,7 @@ Raster drivers
    l1b
    lcp
    leveller
+   libertiff
    loslas
    map
    marfa
@@ -131,7 +131,6 @@ Raster drivers
    nwtgrd
    ogcapi
    openfilegdb
-   ozi
    palsar
    paux
    pcidsk
@@ -148,6 +147,7 @@ Raster drivers
    rasterlite2
    r
    rdb
+   rcm
    rik
    rmf
    roi_pac

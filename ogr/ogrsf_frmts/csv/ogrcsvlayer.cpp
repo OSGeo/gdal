@@ -327,11 +327,10 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
     if (!bNew)
     {
         // Only try to read .csvt from files that have an extension
-        const char *pszExt = CPLGetExtension(pszFilename);
-        if (pszExt[0])
+        if (!CPLGetExtensionSafe(pszFilename).empty())
         {
             const std::string osCSVTFilename =
-                CPLResetExtension(pszFilename, "csvt");
+                CPLResetExtensionSafe(pszFilename, "csvt");
             VSILFILE *fpCSVT = VSIFOpenL(osCSVTFilename.c_str(), "r");
             if (fpCSVT != nullptr)
             {
@@ -778,7 +777,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
         poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef() == nullptr)
     {
         VSILFILE *fpPRJ =
-            VSIFOpenL(CPLResetExtension(pszFilename, "prj"), "rb");
+            VSIFOpenL(CPLResetExtensionSafe(pszFilename, "prj").c_str(), "rb");
         if (fpPRJ != nullptr)
         {
             GByte *pabyRet = nullptr;
@@ -1359,6 +1358,23 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
 
     for (int iAttr = 0; !bIsEurostatTSV && iAttr < nAttrCount; iAttr++)
     {
+
+        // Skip deleted fields if OGR_SCHEMA with schemaType=Full was specified and fields were removed
+        if (OGRCSVDataSource *poCsvDs = static_cast<OGRCSVDataSource *>(m_poDS))
+        {
+            if (!poCsvDs->DeletedFieldIndexes().empty())
+            {
+                const auto &deletedFieldIndexes =
+                    poCsvDs->DeletedFieldIndexes();
+                if (std::find(deletedFieldIndexes.cbegin(),
+                              deletedFieldIndexes.cend(),
+                              iAttr) != deletedFieldIndexes.cend())
+                {
+                    continue;
+                }
+            }
+        }
+
         if ((iAttr == iLongitudeField || iAttr == iLatitudeField ||
              iAttr == iZField) &&
             !bKeepGeomColumns)
@@ -1455,6 +1471,8 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                 }
                 else if (!bWarningBadTypeOrWidth)
                 {
+                    // Set to TRUE because it's different than 0 but emit a warning
+                    poFeature->SetField(iOGRField, 1);
                     bWarningBadTypeOrWidth = true;
                     CPLError(
                         CE_Warning, CPLE_AppDefined,
@@ -1967,10 +1985,13 @@ OGRErr OGRCSVLayer::WriteHeader()
         VSILFILE *fpCSVT = nullptr;
         if (bCreateCSVT && iFile == 0)
         {
-            char *pszDirName = CPLStrdup(CPLGetDirname(pszFilename));
-            char *pszBaseName = CPLStrdup(CPLGetBasename(pszFilename));
+            char *pszDirName =
+                CPLStrdup(CPLGetDirnameSafe(pszFilename).c_str());
+            char *pszBaseName =
+                CPLStrdup(CPLGetBasenameSafe(pszFilename).c_str());
             fpCSVT = VSIFOpenL(
-                CPLFormFilename(pszDirName, pszBaseName, ".csvt"), "wb");
+                CPLFormFilenameSafe(pszDirName, pszBaseName, ".csvt").c_str(),
+                "wb");
             CPLFree(pszDirName);
             CPLFree(pszBaseName);
         }

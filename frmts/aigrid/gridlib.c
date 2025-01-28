@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Arc/Info Binary Grid Translator
  * Purpose:  Grid file reading code.
@@ -767,21 +766,15 @@ CPLErr AIGReadBlock(VSILFILE *fp, GUInt32 nBlockOffset, int nBlockSize,
 
         if (eErr == CE_Failure)
         {
-            static int bHasWarned = FALSE;
-
             for (i = 0; i < nBlockXSize * nBlockYSize; i++)
                 panData[i] = ESRI_GRID_NO_DATA;
 
-            if (!bHasWarned)
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
+            CPLErrorOnce(CE_Warning, CPLE_AppDefined,
                          "Unsupported Arc/Info Binary Grid tile of type 0x%X"
                          " encountered.\n"
                          "This and subsequent unsupported tile types set to"
                          " no data value.\n",
                          nMagic);
-                bHasWarned = TRUE;
-            }
         }
     }
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-#  $Id$
 #
 # Purpose:  Module for retiling (merging) tiles and building tiled pyramids
 # Author:   Christian Meuller, christian.mueller@nvoe.at
@@ -12,8 +11,6 @@
 #
 # SPDX-License-Identifier: MIT
 ###############################################################################
-from __future__ import print_function
-
 import os
 import sys
 
@@ -23,7 +20,7 @@ from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 progress = gdal.TermProgress_nocb
 
 
-class AffineTransformDecorator(object):
+class AffineTransformDecorator:
     """A class providing some useful methods for affine Transformations"""
 
     def __init__(self, transform):
@@ -54,7 +51,7 @@ class AffineTransformDecorator(object):
         return [xlist, ylist]
 
 
-class DataSetCache(object):
+class DataSetCache:
     """A class for caching source tiles"""
 
     def __init__(self):
@@ -84,7 +81,7 @@ class DataSetCache(object):
         del self.dict
 
 
-class tile_info(object):
+class tile_info:
     """A class holding info how to tile"""
 
     def __init__(self, xsize, ysize, tileWidth, tileHeight, overlap):
@@ -113,7 +110,7 @@ class tile_info(object):
         print("overlap:     %d" % self.overlap)
 
 
-class mosaic_info(object):
+class mosaic_info:
     """A class holding information about a GDAL file or a GDAL fileset"""
 
     def __init__(self, filename, inputDS):

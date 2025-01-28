@@ -33,27 +33,33 @@ def gdalenhance_path():
 # Output a lookup table, then apply it to the image
 
 
-def test_gdalenhance_output_histogram(gdalenhance_path, tmp_path):
-
-    out, err = gdaltest.runexternal_out_and_err(
-        f"{gdalenhance_path} -quiet -equalize ../gcore/data/rgbsmall.tif"
-    )
-
-    assert not err
-
-    lines = out.strip().split("\n")
-    assert len(lines) == 3
-
-    assert lines[0].startswith("1:Band ")
-    assert lines[1].startswith("2:Band ")
-    assert lines[2].startswith("3:Band ")
+@pytest.mark.parametrize("histogram_dest", ("file", "stdout"))
+def test_gdalenhance_output_histogram(gdalenhance_path, histogram_dest, tmp_path):
 
     lut_fname = tmp_path / "lut.txt"
 
-    with open(lut_fname, "w") as outfile:
-        for line in lines:
-            outfile.write(line.strip())
-            outfile.write("\n")
+    cmd = f"{gdalenhance_path} -quiet -equalize ../gcore/data/rgbsmall.tif"
+
+    if histogram_dest == "file":
+        cmd += f" -config {lut_fname}"
+
+    out, err = gdaltest.runexternal_out_and_err(cmd)
+
+    assert not err
+
+    if histogram_dest == "stdout":
+
+        lines = out.strip().split("\n")
+        assert len(lines) == 3
+
+        assert lines[0].startswith("1:Band ")
+        assert lines[1].startswith("2:Band ")
+        assert lines[2].startswith("3:Band ")
+
+        with open(lut_fname, "w") as outfile:
+            for line in lines:
+                outfile.write(line.strip())
+                outfile.write("\n")
 
     enhanced_fname = tmp_path / "out.tif"
 
@@ -105,3 +111,76 @@ def test_gdalenhance_invalid_usage(gdalenhance_path, tmp_path):
 
     assert "ret code = 1" in err
     assert "Usage" in out
+
+
+###############################################################################
+# Malformed LUT
+
+
+def test_gdalenhance_malformed_lut(gdalenhance_path, tmp_path):
+
+    infile = "../gcore/data/rgbsmall.tif"
+    outfile = tmp_path / "out.tif"
+    lut_file = tmp_path / "lut.txt"
+
+    with open(lut_file, "w") as lut:
+        # not enough counts in each line
+        lut.write(
+            "1:Band -0.5:ScaleMin 255.5:ScaleMax "
+            + " ".join(str(x) for x in range(256))
+            + "\n"
+        )
+        lut.write(
+            "2:Band -0.5:ScaleMin 255.5:ScaleMax "
+            + " ".join(str(x) for x in range(255))
+            + "\n"
+        )
+        lut.write(
+            "3:Band -0.5:ScaleMin 255.5:ScaleMax "
+            + " ".join(str(x) for x in range(256))
+            + "\n"
+        )
+
+    out, err = gdaltest.runexternal_out_and_err(
+        f"{gdalenhance_path} {infile} {outfile} -config {lut_file}"
+    )
+
+    assert "Line 2 seems to be corrupt" in err
+    assert "ret code = 1" in err
+
+    with open(lut_file, "w") as lut:
+        # not enough lines
+        lut.write(
+            "1:Band -0.5:ScaleMin 255.5:ScaleMax "
+            + " ".join(str(x) for x in range(256))
+            + "\n"
+        )
+        lut.write(
+            "2:Band -0.5:ScaleMin 255.5:ScaleMax "
+            + " ".join(str(x) for x in range(256))
+            + "\n"
+        )
+
+    out, err = gdaltest.runexternal_out_and_err(
+        f"{gdalenhance_path} {infile} {outfile} -config {lut_file}"
+    )
+
+    assert "Did not get 3 lines" in err
+    assert "ret code = 1" in err
+
+
+###############################################################################
+# Invalid output type
+
+
+def test_gdalenhance_invalid_output_type(gdalenhance_path, tmp_path):
+
+    infile = "../gcore/data/rgbsmall.tif"
+    outfile = tmp_path / "out.tif"
+
+    out, err = gdaltest.runexternal_out_and_err(
+        f"{gdalenhance_path} -equalize -ot Int16 {infile} {outfile}"
+    )
+
+    assert "only supports Byte output" in err
+    assert "ret code = 1" in err

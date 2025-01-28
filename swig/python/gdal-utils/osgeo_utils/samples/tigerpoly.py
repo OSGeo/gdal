@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-# $Id$
 #
 # Project:  OGR Python samples
 # Purpose:  Assemble TIGER Polygons.
@@ -19,7 +18,7 @@ from osgeo import ogr, osr
 
 
 #############################################################################
-class Module(object):
+class Module:
     def __init__(self):
         self.lines = {}
         self.poly_line_links = {}

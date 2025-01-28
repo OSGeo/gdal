@@ -81,7 +81,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libbrotli-dev${APT_ARCH_SUFFIX} \
        libarchive-dev${APT_ARCH_SUFFIX} \
        libaec-dev${APT_ARCH_SUFFIX} \
-       libavif-dev${APT_ARCH_SUFFIX}
+       libavif-dev${APT_ARCH_SUFFIX} \
+       libmuparser-dev${APT_ARCH_SUFFIX}
 
 ARG RSYNC_REMOTE
 ARG WITH_CCACHE
@@ -278,8 +279,7 @@ RUN --mount=type=cache,id=ubuntu-full-libopendrive,target=$HOME/.cache \
     && rm -rf libOpenDRIVE-${OPENDRIVE_VERSION} \
     ); fi
 
-#Build File Geodatabase
-
+#Build File Geodatabase if WITH_FILEGDB=yes is passed
 ARG WITH_FILEGDB=
 RUN . /buildscripts/bh-set-envvars.sh \
   && if echo "$WITH_FILEGDB" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
@@ -292,6 +292,57 @@ RUN . /buildscripts/bh-set-envvars.sh \
   && cp /usr/local/FileGDB_API/include/* /usr/include \
   && rm -rf FileGDB_API-RHEL7-64gcc83.tar.gz \
   ) ; fi
+
+# Download Oracle InstantClient (proprietary) SDK if WITH_ORACLE=yes is passed
+ARG WITH_ORACLE=
+RUN . /buildscripts/bh-set-envvars.sh \
+  && if test "$(uname -p)" = "x86_64"; then \
+  if echo "$WITH_ORACLE" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
+  wget https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-basic-linux.x64-19.23.0.0.0dbru.zip \
+  && wget https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
+  && unzip -o instantclient-basic-linux.x64-19.23.0.0.0dbru.zip \
+  && unzip -o instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
+  && rm -f instantclient-basic-linux.x64-19.23.0.0.0dbru.zip instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
+  && mv instantclient_19_23 /opt \
+  && mkdir -p /build_thirdparty/opt \
+  && cp -r /opt/instantclient_19_23 /build_thirdparty/opt \
+  && (cd /opt/instantclient_19_23; for i in *.so*; do ln -s /opt/instantclient_19_23/$i /usr/lib/x86_64-linux-gnu; ln -s /opt/instantclient_19_23/$i /build_thirdparty/usr/lib/x86_64-linux-gnu; done) \
+  ) ; fi \
+  ; fi
+
+# Download ECW (proprietary) SDK if WITH_ECW=yes is passed
+ARG WITH_ECW=
+RUN . /buildscripts/bh-set-envvars.sh \
+  && if test "$(uname -p)" = "x86_64"; then \
+  if echo "$WITH_ECW" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
+  wget https://github.com/rouault/libecwj2-3.3-builds/releases/download/v1/install-libecwj2-3.3-ubuntu-20.04.tar.gz \
+  && tar xzf install-libecwj2-3.3-ubuntu-20.04.tar.gz \
+  && rm -f install-libecwj2-3.3-ubuntu-20.04.tar.gz \
+  && mkdir -p /build_thirdparty/opt \
+  && cp -r /opt/libecwj2-3.3 /build_thirdparty/opt \
+  && (cd /opt/libecwj2-3.3/lib; for i in *.so*; do ln -s /opt/libecwj2-3.3/lib/$i /usr/lib/x86_64-linux-gnu; ln -s /opt/libecwj2-3.3/lib/$i /build_thirdparty/usr/lib/x86_64-linux-gnu; done) \
+  ) ; fi \
+  ; fi
+
+# Download MrSID (proprietary) SDK if WITH_MRSID=yes is passed
+ARG WITH_MRSID=
+RUN . /buildscripts/bh-set-envvars.sh \
+  && if test "$(uname -p)" = "x86_64"; then \
+  if echo "$WITH_MRSID" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
+    wget https://bin.extensis.com/download/developer/MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
+    && unzip MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
+    && mv MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131 mrsid \
+    && rm -f MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
+    && mkdir -p /opt/Raster_DSDK/include \
+    && mkdir -p /opt/Raster_DSDK/lib \
+    && cp -r mrsid/Raster_DSDK/include/* /opt/Raster_DSDK/include \
+    && cp -r mrsid/Raster_DSDK/lib/* /opt/Raster_DSDK/lib \
+    && rm -rf mrsid \
+    && mkdir -p /build_thirdparty/opt/Raster_DSDK/lib \
+    && cp -r /opt/Raster_DSDK/lib /build_thirdparty/opt/Raster_DSDK \
+    && (cd /opt/Raster_DSDK/lib; for i in *.so*; do ln -s /opt/Raster_DSDK/lib/$i /usr/lib/x86_64-linux-gnu; ln -s /opt/Raster_DSDK/lib/$i /build_thirdparty/usr/lib/x86_64-linux-gnu; done) \
+  ) ; fi \
+  ; fi
 
 # Build libqb3
 RUN --mount=type=cache,id=ubuntu-full-libqb3,target=$HOME/.cache \
@@ -425,17 +476,27 @@ COPY ./bh-proj.sh /buildscripts/bh-proj.sh
 # We want 2 separate steps for incremental builds where grids are refreshed
 # only when the content of cdn.proj.org has changed, independently if PROJ master
 # itself has changed.
+ARG WITH_PROJ_GRIDS=yes
 RUN --mount=type=cache,id=ubuntu-full-proj,target=$HOME/.cache \
-    . /buildscripts/bh-set-envvars.sh \
-    && DESTDIR=/build_tmp_proj /buildscripts/bh-proj.sh \
-     && LD_LIBRARY_PATH=/build_tmp_proj/usr/local/lib /build_tmp_proj/usr/local/bin/projsync --target-dir /tmp/proj_grids --all \
-     && rm -rf /build_tmp_proj
+    mkdir -p /tmp/proj_grids \
+    && touch /tmp/proj_grids/proj_grids_not_included \
+    && if echo "$WITH_PROJ_GRIDS" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
+      . /buildscripts/bh-set-envvars.sh \
+      && rm -f /tmp/proj_grids/proj_grids_not_included \
+      && DESTDIR=/build_tmp_proj /buildscripts/bh-proj.sh \
+      && LD_LIBRARY_PATH=/build_tmp_proj/usr/local/lib /build_tmp_proj/usr/local/bin/projsync --target-dir /tmp/proj_grids --all \
+      && rm -rf /build_tmp_proj \
+    ); fi
 
 # Build PROJ
 ARG PROJ_VERSION=master
 RUN --mount=type=cache,id=ubuntu-full-proj,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && /buildscripts/bh-proj.sh
+
+# Download exprtk
+RUN curl -LO -fsS https://github.com/ArashPartow/exprtk/raw/refs/heads/release/exprtk.hpp \
+    && mv exprtk.hpp /usr/include
 
 # Build GDAL
 ARG GDAL_VERSION=master
@@ -447,6 +508,8 @@ COPY ./bh-gdal.sh /buildscripts/bh-gdal.sh
 RUN --mount=type=cache,id=ubuntu-full-gdal,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && /buildscripts/bh-gdal.sh
+
+RUN mkdir -p /build_thirdparty/opt
 
 # Build final image
 FROM $TARGET_BASE_IMAGE AS runner
@@ -469,7 +532,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         wget curl unzip ca-certificates \
     # GDAL dependencies
     && apt-get install -y \
-        libopenjp2-7 libcairo2 python3-numpy \
+        bash-completion libopenjp2-7 libcairo2 python3-numpy \
         libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos3.12.1 libgeos-c1v5 \
         libxml2 libexpat1 \
         libxerces-c3.2 libnetcdf-c++4-1 netcdf-bin libpoppler134 libspatialite8 librasterlite2-1 gpsbabel \
@@ -485,6 +548,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libaec0 \
         libavif16 \
         libspdlog1.12 libmagic1t64 \
+        libmuparser2v5 \
         python-is-python3 \
         # pil for antialias option of gdal2tiles
         python3-pil \
@@ -520,15 +584,25 @@ RUN if test "$(uname -p)" = "x86_64"; then \
 
 # Install libduckdb
 RUN if test "$(uname -p)" = "x86_64"; then \
-    curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/v1.1.2/libduckdb-linux-amd64.zip \
+    curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/v1.1.3/libduckdb-linux-amd64.zip \
     && unzip libduckdb-linux-amd64.zip libduckdb.so \
     && mv libduckdb.so /usr/lib/x86_64-linux-gnu \
     && rm -f libduckdb-linux-amd64.zip; \
     fi
 
+ARG WITH_ORACLE=
+RUN if test "$(uname -p)" = "x86_64"; then \
+  if echo "$WITH_ORACLE" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
+      apt-get update \
+      && apt-get install -y -V libaio1t64 \
+      && ln -s libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1 \
+  ) ; fi \
+  ; fi
+
 # Attempt to order layers starting with less frequently varying ones
 
 COPY --from=builder  /build_thirdparty/usr/ /usr/
+COPY --from=builder  /build_thirdparty/opt/ /opt/
 
 ARG PROJ_INSTALL_PREFIX=/usr/local
 COPY --from=builder  /tmp/proj_grids/* ${PROJ_INSTALL_PREFIX}/share/proj/
@@ -538,6 +612,7 @@ COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
 
+COPY --from=builder  /build/usr/share/bash-completion/ /usr/share/bash-completion/
 COPY --from=builder  /build/usr/share/java /usr/share/java
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
@@ -545,3 +620,12 @@ COPY --from=builder  /build_gdal_python/usr/ /usr/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 
 RUN ldconfig
+
+# Install duckdb_spatial
+RUN if test "$(uname -p)" = "x86_64"; then \
+    ogrinfo ADBC::memory: -oo ADBC_DRIVER=duckdb -oo PRELUDE_STATEMENTS="INSTALL spatial"; \
+    fi
+
+RUN echo "source /usr/share/bash-completion/bash_completion" >> /root/.bashrc
+
+CMD ["/bin/bash", "-l"]

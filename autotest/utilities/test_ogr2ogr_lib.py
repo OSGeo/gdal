@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  librarified ogr2ogr testing
@@ -1116,6 +1115,17 @@ def test_ogr2ogr_lib_clipsrc_datasource(tmp_vsimem):
     f.SetField("filter_field", "exact_overlap_full_result")
     f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0, 0 2, 2 2, 2 0, 0 0))"))
     clip_layer.CreateFeature(f)
+    # Clip geometry envelope contains envelope of input geometry, but does not intersect it
+    f = ogr.Feature(clip_layer.GetLayerDefn())
+    f.SetField(
+        "filter_field", "clip_geometry_envelope_contains_envelope_but_no_intersect"
+    )
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON ((-2 -1,-2 4,4 4,4 -1,3 -1,3 3,-1 3,-1 -1,-2 -1))"
+        )
+    )
+    clip_layer.CreateFeature(f)
     clip_ds = None
 
     # Test clip with 'half_overlap_line_result' using sql statement
@@ -1156,6 +1166,19 @@ def test_ogr2ogr_lib_clipsrc_datasource(tmp_vsimem):
         format="GPKG",
         clipSrc=clip_path,
         clipSrcWhere="filter_field = 'no_overlap_no_result'",
+    )
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 0
+    dst_ds = None
+    gdal.Unlink(dst_filename)
+
+    # Test clip with the "clip_geometry_envelope_contains_envelope_but_no_intersect" using only clipSrcWhere
+    dst_ds = gdal.VectorTranslate(
+        dst_filename,
+        src_filename,
+        format="GPKG",
+        clipSrc=clip_path,
+        clipSrcWhere="filter_field = 'clip_geometry_envelope_contains_envelope_but_no_intersect'",
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 0
@@ -1390,6 +1413,17 @@ def test_ogr2ogr_lib_clipdst_datasource(tmp_vsimem):
     f.SetField("filter_field", "exact_overlap_full_result")
     f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0, 0 2, 2 2, 2 0, 0 0))"))
     clip_layer.CreateFeature(f)
+    # Clip geometry envelope contains envelope of input geometry, but does not intersect it
+    f = ogr.Feature(clip_layer.GetLayerDefn())
+    f.SetField(
+        "filter_field", "clip_geometry_envelope_contains_envelope_but_no_intersect"
+    )
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON ((-2 -1,-2 4,4 4,4 -1,3 -1,3 3,-1 3,-1 -1,-2 -1))"
+        )
+    )
+    clip_layer.CreateFeature(f)
     clip_ds = None
 
     # Test clip with 'half_overlap_line_result' using sql statement
@@ -1430,6 +1464,19 @@ def test_ogr2ogr_lib_clipdst_datasource(tmp_vsimem):
         format="GPKG",
         clipDst=clip_path,
         clipDstWhere="filter_field = 'no_overlap_no_result'",
+    )
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 0
+    dst_ds = None
+    gdal.Unlink(dst_filename)
+
+    # Test clip with the "clip_geometry_envelope_contains_envelope_but_no_intersect" using only clipSrcWhere
+    dst_ds = gdal.VectorTranslate(
+        dst_filename,
+        src_filename,
+        format="GPKG",
+        clipDst=clip_path,
+        clipDstWhere="filter_field = 'clip_geometry_envelope_contains_envelope_but_no_intersect'",
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 0
@@ -2926,6 +2973,46 @@ def test_ogr2ogr_lib_reproject_arrow_optim_cannot_trigger(tmp_vsimem):
 
 
 ###############################################################################
+# Test -ct in Arrow code path
+# Cf https://github.com/OSGeo/gdal/issues/11438
+
+
+@gdaltest.enable_exceptions()
+def test_ogr2ogr_lib_reproject_arrow_optim_ct(tmp_vsimem):
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32632)
+    srcLayer = srcDS.CreateLayer("test", srs=srs)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    srcLayer.CreateFeature(f)
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        got_msg.append(msg)
+        return
+
+    config_options = {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
+    with gdaltest.error_handler(my_handler), gdaltest.config_options(config_options):
+        ds = gdal.VectorTranslate(
+            "",
+            srcDS,
+            format="Memory",
+            reproject=True,
+            coordinateOperation="+proj=affine +s11=-1",
+        )
+
+    assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32632"
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (-1 2)"
+
+
+###############################################################################
 # Test -explodecollections on empty geometries
 
 
@@ -2958,3 +3045,170 @@ def test_ogr2ogr_lib_explodecollections_empty_geoms(input_wkt, expected_output_w
         out_lyr = out_ds.GetLayer(0)
         f = out_lyr.GetNextFeature()
         assert f.GetGeometryRef().ExportToIsoWkt() == expected_output_wkt
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_arrow_datetime_as_string(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "src.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(src_filename) as src_ds:
+        src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+
+        field = ogr.FieldDefn("dt", ogr.OFTDateTime)
+        src_lyr.CreateField(field)
+
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        src_lyr.CreateFeature(f)
+
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetField("dt", "2022-05-31T12:34:56.789Z")
+        src_lyr.CreateFeature(f)
+
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetField("dt", "2022-05-31T12:34:56")
+        src_lyr.CreateFeature(f)
+
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetField("dt", "2022-05-31T12:34:56+12:30")
+        src_lyr.CreateFeature(f)
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        got_msg.append(msg)
+        return
+
+    with gdaltest.error_handler(my_handler), gdaltest.config_options(
+        {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
+    ):
+        dst_ds = gdal.VectorTranslate("", src_filename, format="Memory")
+
+    assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
+
+    dst_lyr = dst_ds.GetLayer(0)
+    assert [f.GetField("dt") for f in dst_lyr] == [
+        None,
+        "2022/05/31 12:34:56.789+00",
+        "2022/05/31 12:34:56",
+        "2022/05/31 12:34:56+1230",
+    ]
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_transfer_gpkg_relationships(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "relationships.gpkg")
+    gdal.VectorTranslate(out_filename, "../ogr/data/gpkg/relation_mapping_table.gpkg")
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRelationshipNames() == ["a_b_attributes"]
+        relationship = ds.GetRelationship("a_b_attributes")
+        assert relationship.GetLeftTableName() == "a"
+        assert relationship.GetRightTableName() == "b"
+        assert relationship.GetMappingTableName() == "my_mapping_table"
+
+    gdal.VectorTranslate(
+        out_filename,
+        "../ogr/data/gpkg/relation_mapping_table.gpkg",
+        layers=["a", "my_mapping_table"],
+    )
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRelationshipNames() is None
+
+    gdal.VectorTranslate(
+        out_filename,
+        "../ogr/data/gpkg/relation_mapping_table.gpkg",
+        layers=["b", "my_mapping_table"],
+    )
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRelationshipNames() is None
+
+    gdal.VectorTranslate(
+        out_filename, "../ogr/data/gpkg/relation_mapping_table.gpkg", layers=["a", "b"]
+    )
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRelationshipNames() is None
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("OpenFileGDB")
+def test_ogr2ogr_lib_transfer_filegdb_relationships(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "relationships.gdb")
+    gdal.VectorTranslate(
+        out_filename, "../ogr/data/filegdb/relationships.gdb", format="OpenFileGDB"
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert set(ds.GetRelationshipNames()) == set(
+            [
+                "composite_many_to_many",
+                "composite_one_to_one",
+                "points__ATTACHREL",
+                "simple_attributed",
+                "simple_backward_message_direction",
+                "simple_both_message_direction",
+                "simple_forward_message_direction",
+                "simple_many_to_many",
+                "simple_one_to_many",
+                "simple_relationship_one_to_one",
+            ]
+        )
+        relationship = ds.GetRelationship("composite_many_to_many")
+        assert relationship.GetLeftTableName() == "table6"
+        assert relationship.GetRightTableName() == "table7"
+        assert relationship.GetMappingTableName() == "composite_many_to_many"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("GPKG")
+@pytest.mark.parametrize("OGR2OGR_USE_ARROW_API", ["YES", "NO"])
+def test_ogr2ogr_lib_datetime_in_shapefile(tmp_vsimem, OGR2OGR_USE_ARROW_API):
+
+    src_filename = str(tmp_vsimem / "src.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(src_filename) as src_ds:
+        src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+
+        field = ogr.FieldDefn("dt", ogr.OFTDateTime)
+        src_lyr.CreateField(field)
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetField("dt", "2022-05-31T12:34:56.789+05:30")
+        src_lyr.CreateFeature(f)
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        got_msg.append(msg)
+        return
+
+    out_filename = str(tmp_vsimem / "out.dbf")
+    with gdaltest.error_handler(my_handler), gdaltest.config_options(
+        {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": OGR2OGR_USE_ARROW_API}
+    ):
+        gdal.VectorTranslate(out_filename, src_filename)
+
+    if OGR2OGR_USE_ARROW_API == "YES":
+        assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
+    else:
+        assert "OGR2OGR: Using WriteArrowBatch()" not in got_msg
+
+    print(got_msg)
+    assert "Field dt created as String field, though DateTime requested." in got_msg
+
+    with ogr.Open(out_filename) as dst_ds:
+        dst_lyr = dst_ds.GetLayer(0)
+        assert [f.GetField("dt") for f in dst_lyr] == ["2022-05-31T12:34:56.789+05:30"]

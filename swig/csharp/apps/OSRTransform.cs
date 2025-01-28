@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     OSRTransform.cs
  * Project:  GDAL CSharp Interface

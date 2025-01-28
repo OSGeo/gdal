@@ -27,11 +27,6 @@ GDALIdentifyEnum OGROpenFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo,
     if (STARTS_WITH(pszFilename, "OpenFileGDB:"))
         return GDAL_IDENTIFY_TRUE;
 
-        // FUSIL is a fuzzer
-#ifdef FOR_FUSIL
-    CPLString osOrigFilename(pszFilename);
-#endif
-
     // First check if we have to do any work.
     size_t nLen = strlen(pszFilename);
     if (ENDS_WITH(pszFilename, nLen, ".gdb") ||
@@ -49,7 +44,8 @@ GDALIdentifyEnum OGROpenFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo,
             VSIStatBufL stat;
             if (!(STARTS_WITH(pszFilename, "/vsicurl/") &&
                   VSIStatL(
-                      CPLFormFilename(pszFilename, "a00000001", "gdbtable"),
+                      CPLFormFilenameSafe(pszFilename, "a00000001", "gdbtable")
+                          .c_str(),
                       &stat) == 0))
             {
                 return GDAL_IDENTIFY_FALSE;
@@ -104,24 +100,6 @@ GDALIdentifyEnum OGROpenFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo,
     {
         return GDAL_IDENTIFY_TRUE;
     }
-#ifdef FOR_FUSIL
-    /* To be able to test fuzzer on any auxiliary files used (indexes, etc.) */
-    else if (strlen(CPLGetBasename(pszFilename)) == 9 &&
-             CPLGetBasename(pszFilename)[0] == 'a')
-    {
-        pszFilename = CPLFormFilename(CPLGetPath(pszFilename),
-                                      CPLGetBasename(pszFilename), "gdbtable");
-        return GDAL_IDENTIFY_TRUE;
-    }
-    else if (strlen(CPLGetBasename(CPLGetBasename(pszFilename))) == 9 &&
-             CPLGetBasename(CPLGetBasename(pszFilename))[0] == 'a')
-    {
-        pszFilename = CPLFormFilename(
-            CPLGetPath(pszFilename),
-            CPLGetBasename(CPLGetBasename(pszFilename)), "gdbtable");
-        return GDAL_IDENTIFY_TRUE;
-    }
-#endif
 
 #ifdef DEBUG
     /* For AFL, so that .cur_input is detected as the archive filename */
@@ -280,6 +258,9 @@ void OGROpenFileGDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "coordinate precision grid'/>"
         "  <Option name='MSCALE' type='float' description='M scale of the "
         "coordinate precision grid'/>"
+        "  <Option name='CREATE_MULTIPATCH' type='boolean' "
+        "description='Whether to write geometries of layers of type "
+        "MultiPolygon as MultiPatch' default='NO' />"
         "  <Option name='COLUMN_TYPES' type='string' description='A list of "
         "strings of format field_name=fgdb_field_type (separated by comma) to "
         "force the FileGDB column type of fields to be created'/>"

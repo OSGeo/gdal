@@ -76,6 +76,11 @@ MAIN_START(argc, argv)
 
     GDALInfoOptionsForBinary sOptionsForBinary;
 
+    if (CSLFindString(argv, "-stdout") < 0)
+    {
+        argv = CSLAddString(argv, "-stdout");
+    }
+
     std::unique_ptr<GDALInfoOptions, decltype(&GDALInfoOptionsFree)> psOptions{
         GDALInfoOptionsNew(argv + 1, &sOptionsForBinary), GDALInfoOptionsFree};
     CSLDestroy(argv);
@@ -185,7 +190,7 @@ MAIN_START(argc, argv)
         if (sOptionsForBinary.nSubdataset > 0)
         {
             char **papszSubdatasets = GDALGetMetadata(hDataset, "SUBDATASETS");
-            int nSubdatasets = CSLCount(papszSubdatasets);
+            const int nSubdatasets = CSLCount(papszSubdatasets) / 2;
 
             if (nSubdatasets > 0 &&
                 sOptionsForBinary.nSubdataset <= nSubdatasets)

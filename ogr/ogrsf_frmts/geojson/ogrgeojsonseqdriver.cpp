@@ -789,13 +789,13 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
     {
         if (pszUnprefixedFilename != poOpenInfo->pszFilename)
         {
-            osLayerName = CPLGetBasename(pszUnprefixedFilename);
+            osLayerName = CPLGetBasenameSafe(pszUnprefixedFilename);
             m_fp = VSIFOpenL(pszUnprefixedFilename,
                              poOpenInfo->eAccess == GA_Update ? "rb+" : "rb");
         }
         else
         {
-            osLayerName = CPLGetBasename(poOpenInfo->pszFilename);
+            osLayerName = CPLGetBasenameSafe(poOpenInfo->pszFilename);
             std::swap(m_fp, poOpenInfo->fpL);
         }
     }
@@ -837,26 +837,11 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
         }
         else
         {
-            const char *const papsOptions[] = {
-                "HEADERS=Accept: text/plain, application/json", nullptr};
-
             CPLHTTPResult *pResult =
-                CPLHTTPFetch(pszUnprefixedFilename, papsOptions);
-
-            if (nullptr == pResult || 0 == pResult->nDataLen ||
-                0 != CPLGetLastErrorNo())
+                GeoJSONHTTPFetchWithContentTypeHeader(pszUnprefixedFilename);
+            if (!pResult)
             {
-                CPLHTTPDestroyResult(pResult);
-                return false;
-            }
-
-            if (0 != pResult->nStatus)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Curl reports error: %d: %s", pResult->nStatus,
-                         pResult->pszErrBuf);
-                CPLHTTPDestroyResult(pResult);
-                return false;
+                return FALSE;
             }
 
             m_osTmpFile = VSIMemGenerateHiddenFilename("geojsonseq");
@@ -927,7 +912,7 @@ bool OGRGeoJSONSeqDataSource::Create(const char *pszName,
 
     eAccess = GA_Update;
 
-    m_bIsRSSeparated = EQUAL(CPLGetExtension(pszName), "GEOJSONS");
+    m_bIsRSSeparated = EQUAL(CPLGetExtensionSafe(pszName).c_str(), "GEOJSONS");
 
     return true;
 }

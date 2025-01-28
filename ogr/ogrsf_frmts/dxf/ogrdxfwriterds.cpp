@@ -16,6 +16,7 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <limits>
 
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
@@ -269,6 +270,11 @@ int OGRDXFWriterDS::Open(const char *pszFilename, char **papszOptions)
     if (CSLFetchNameValue(papszOptions, "FIRST_ENTITY") != nullptr)
         nNextFID = atoi(CSLFetchNameValue(papszOptions, "FIRST_ENTITY"));
 
+    m_osINSUNITS =
+        CSLFetchNameValueDef(papszOptions, "INSUNITS", m_osINSUNITS.c_str());
+    m_osMEASUREMENT = CSLFetchNameValueDef(papszOptions, "MEASUREMENT",
+                                           m_osMEASUREMENT.c_str());
+
     /* -------------------------------------------------------------------- */
     /*      Prescan the header and trailer for entity codes.                */
     /* -------------------------------------------------------------------- */
@@ -316,12 +322,17 @@ int OGRDXFWriterDS::Open(const char *pszFilename, char **papszOptions)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *
-OGRDXFWriterDS::ICreateLayer(const char *pszName,
-                             const OGRGeomFieldDefn * /*poGeomFieldDefn*/,
-                             CSLConstList /*papszOptions*/)
+OGRLayer *OGRDXFWriterDS::ICreateLayer(const char *pszName,
+                                       const OGRGeomFieldDefn *poGeomFieldDefn,
+                                       CSLConstList /*papszOptions*/)
 
 {
+    if (poGeomFieldDefn)
+    {
+        const auto poSRS = poGeomFieldDefn->GetSpatialRef();
+        if (poSRS)
+            m_oSRS = *poSRS;
+    }
     if (EQUAL(pszName, "blocks") && poBlocksLayer == nullptr)
     {
         poBlocksLayer = new OGRDXFBlocksWriterLayer(this);
@@ -521,6 +532,135 @@ bool OGRDXFWriterDS::TransferUpdateHeader(VSILFILE *fpOut)
                 if (nCode == 20)
                 {
                     if (!WriteValue(fpOut, nCode, oGlobalEnvelope.MaxY))
+                        return false;
+
+                    continue;
+                }
+            }
+        }
+
+        // Patch INSUNITS
+        if (nCode == 9 && EQUAL(szLineBuf, "$INSUNITS") &&
+            m_osINSUNITS != "HEADER_VALUE")
+        {
+            if (!WriteValue(fpOut, nCode, szLineBuf))
+                return false;
+            nCode = oHeaderDS.ReadValue(szLineBuf, sizeof(szLineBuf));
+            if (nCode == 70)
+            {
+                int nVal = -1;
+                if (m_osINSUNITS == "AUTO" && m_oSRS.IsProjected())
+                {
+                    const char *pszUnits = nullptr;
+                    const double dfUnits = m_oSRS.GetLinearUnits(&pszUnits);
+                    const auto IsAlmostEqual = [](double x, double y)
+                    { return std::fabs(x - y) <= 1e-10; };
+                    if (IsAlmostEqual(dfUnits, 1)) /* METERS */
+                    {
+                        nVal = 6;
+                    }
+                    else if (IsAlmostEqual(dfUnits, CPLAtof(SRS_UL_FOOT_CONV)))
+                    {
+                        nVal = 2;
+                    }
+                    else if (IsAlmostEqual(dfUnits,
+                                           CPLAtof(SRS_UL_US_FOOT_CONV)))
+                    {
+                        nVal = 21;
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Could not translate CRS unit %s to "
+                                 "$INSUNIT. Using default value from "
+                                 "template header file",
+                                 pszUnits);
+                    }
+                }
+                else if (m_osINSUNITS != "AUTO")
+                {
+                    static const struct
+                    {
+                        const char *pszValue;
+                        int nValue;
+                    } INSUNITSMap[] = {
+                        {"UNITLESS", 0},
+                        {"INCHES", 1},
+                        {"FEET", 2},
+                        {"MILLIMETERS", 4},
+                        {"CENTIMETERS", 5},
+                        {"METERS", 6},
+                        {"US_SURVEY_FEET", 21},
+                    };
+
+                    for (const auto &sTuple : INSUNITSMap)
+                    {
+                        if (m_osINSUNITS == sTuple.pszValue ||
+                            m_osINSUNITS == CPLSPrintf("%d", sTuple.nValue))
+                        {
+                            nVal = sTuple.nValue;
+                            break;
+                        }
+                    }
+                    if (nVal < 0)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Could not translate $INSUNITS=%s. "
+                                 "Using default value from template header "
+                                 "file",
+                                 m_osINSUNITS.c_str());
+                    }
+                }
+
+                if (nVal >= 0)
+                {
+                    if (!WriteValue(fpOut, nCode, CPLSPrintf("%d", nVal)))
+                        return false;
+
+                    continue;
+                }
+            }
+        }
+
+        // Patch MEASUREMENT
+        if (nCode == 9 && EQUAL(szLineBuf, "$MEASUREMENT") &&
+            m_osMEASUREMENT != "HEADER_VALUE")
+        {
+            if (!WriteValue(fpOut, nCode, szLineBuf))
+                return false;
+            nCode = oHeaderDS.ReadValue(szLineBuf, sizeof(szLineBuf));
+            if (nCode == 70)
+            {
+                int nVal = -1;
+
+                static const struct
+                {
+                    const char *pszValue;
+                    int nValue;
+                } MEASUREMENTMap[] = {
+                    {"IMPERIAL", 0},
+                    {"METRIC", 1},
+                };
+
+                for (const auto &sTuple : MEASUREMENTMap)
+                {
+                    if (m_osMEASUREMENT == sTuple.pszValue ||
+                        m_osMEASUREMENT == CPLSPrintf("%d", sTuple.nValue))
+                    {
+                        nVal = sTuple.nValue;
+                        break;
+                    }
+                }
+                if (nVal < 0)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Could not translate $MEASUREMENT=%s. "
+                             "Using default value from template header file",
+                             m_osMEASUREMENT.c_str());
+                }
+                else
+                {
+                    if (!WriteValue(fpOut, nCode, CPLSPrintf("%d", nVal)))
                         return false;
 
                     continue;
@@ -737,7 +877,7 @@ bool OGRDXFWriterDS::WriteNewLayerDefinitions(VSILFILE *fpOut)
             }
             else if (anDefaultLayerCode[i] == 5)
             {
-                long nIgnored;
+                unsigned int nIgnored;
                 if (!WriteEntityID(fpOut, nIgnored))
                     return false;
             }
@@ -780,7 +920,7 @@ bool OGRDXFWriterDS::WriteNewLineTypeRecords(VSILFILE *fpIn)
     for (const auto &oPair : oNewLineTypes)
     {
         bRet &= WriteValue(fpIn, 0, "LTYPE");
-        long nIgnored;
+        unsigned int nIgnored;
         bRet &= WriteEntityID(fpIn, nIgnored);
         bRet &= WriteValue(fpIn, 100, "AcDbSymbolTableRecord");
         bRet &= WriteValue(fpIn, 100, "AcDbLinetypeTableRecord");
@@ -821,7 +961,7 @@ bool OGRDXFWriterDS::WriteNewTextStyleRecords(VSILFILE *fpIn)
     for (auto &oPair : oNewTextStyles)
     {
         bRet &= WriteValue(fpIn, 0, "STYLE");
-        long nIgnored;
+        unsigned int nIgnored;
         bRet &= WriteEntityID(fpIn, nIgnored);
         bRet &= WriteValue(fpIn, 100, "AcDbSymbolTableRecord");
         bRet &= WriteValue(fpIn, 100, "AcDbTextStyleTableRecord");
@@ -896,7 +1036,7 @@ bool OGRDXFWriterDS::WriteNewBlockRecords(VSILFILE *fpIn)
         /* --------------------------------------------------------------------
          */
         bRet &= WriteValue(fpIn, 0, "BLOCK_RECORD");
-        long nIgnored;
+        unsigned int nIgnored;
         bRet &= WriteEntityID(fpIn, nIgnored);
         bRet &= WriteValue(fpIn, 100, "AcDbSymbolTableRecord");
         bRet &= WriteValue(fpIn, 100, "AcDbBlockTableRecord");
@@ -945,7 +1085,7 @@ bool OGRDXFWriterDS::WriteNewBlockDefinitions(VSILFILE *fpIn)
                  poThisBlockFeat->GetFieldAsString("Block"));
 
         bRet &= WriteValue(fpIn, 0, "BLOCK");
-        long nIgnored;
+        unsigned int nIgnored;
         bRet &= WriteEntityID(fpIn, nIgnored);
         bRet &= WriteValue(fpIn, 100, "AcDbEntity");
         if (strlen(poThisBlockFeat->GetFieldAsString("Layer")) > 0)
@@ -1084,22 +1224,26 @@ bool OGRDXFWriterDS::CheckEntityID(const char *pszEntityID)
 /*                           WriteEntityID()                            */
 /************************************************************************/
 
-bool OGRDXFWriterDS::WriteEntityID(VSILFILE *fpIn, long &nAssignedFID,
-                                   long nPreferredFID)
+bool OGRDXFWriterDS::WriteEntityID(VSILFILE *fpIn, unsigned int &nAssignedFID,
+                                   GIntBig nPreferredFID)
 
 {
     CPLString osEntityID;
 
-    if (nPreferredFID != OGRNullFID)
+    // From https://github.com/OSGeo/gdal/issues/11299 it seems that 0 is an
+    // invalid handle value.
+    if (nPreferredFID > 0 &&
+        nPreferredFID <=
+            static_cast<GIntBig>(std::numeric_limits<unsigned int>::max()))
     {
 
-        osEntityID.Printf("%X", (unsigned int)nPreferredFID);
+        osEntityID.Printf("%X", static_cast<unsigned int>(nPreferredFID));
         if (!CheckEntityID(osEntityID))
         {
             aosUsedEntities.insert(osEntityID);
             if (!WriteValue(fpIn, 5, osEntityID))
                 return false;
-            nAssignedFID = nPreferredFID;
+            nAssignedFID = static_cast<unsigned int>(nPreferredFID);
             return true;
         }
     }

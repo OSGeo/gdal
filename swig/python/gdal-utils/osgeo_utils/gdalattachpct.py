@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # ******************************************************************************
-#  $Id$
 #
 #  Project:  GDAL
 #  Purpose:  Simple command line program for copying the color table of a

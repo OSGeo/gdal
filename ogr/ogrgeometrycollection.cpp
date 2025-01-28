@@ -58,6 +58,27 @@ OGRGeometryCollection::OGRGeometryCollection(const OGRGeometryCollection &other)
 }
 
 /************************************************************************/
+/*            OGRGeometryCollection( OGRGeometryCollection&& )          */
+/************************************************************************/
+
+/**
+ * \brief Move constructor.
+ *
+ * @since GDAL 3.11
+ */
+
+// cppcheck-suppress-begin accessMoved
+OGRGeometryCollection::OGRGeometryCollection(OGRGeometryCollection &&other)
+    : OGRGeometry(std::move(other)), nGeomCount(other.nGeomCount),
+      papoGeoms(other.papoGeoms)
+{
+    other.nGeomCount = 0;
+    other.papoGeoms = nullptr;
+}
+
+// cppcheck-suppress-end accessMoved
+
+/************************************************************************/
 /*                       ~OGRGeometryCollection()                       */
 /************************************************************************/
 
@@ -113,6 +134,30 @@ OGRGeometryCollection::operator=(const OGRGeometryCollection &other)
 }
 
 /************************************************************************/
+/*                  operator=( OGRGeometryCollection&&)                 */
+/************************************************************************/
+
+/**
+ * \brief Move assignment operator.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRGeometryCollection &
+OGRGeometryCollection::operator=(OGRGeometryCollection &&other)
+{
+    if (this != &other)
+    {
+        empty();
+
+        OGRGeometry::operator=(std::move(other));
+        std::swap(nGeomCount, other.nGeomCount);
+        std::swap(papoGeoms, other.papoGeoms);
+    }
+    return *this;
+}
+
+/************************************************************************/
 /*                               empty()                                */
 /************************************************************************/
 
@@ -139,7 +184,16 @@ void OGRGeometryCollection::empty()
 OGRGeometryCollection *OGRGeometryCollection::clone() const
 
 {
-    return new (std::nothrow) OGRGeometryCollection(*this);
+    auto ret = new (std::nothrow) OGRGeometryCollection(*this);
+    if (ret)
+    {
+        if (ret->WkbSize() != WkbSize())
+        {
+            delete ret;
+            ret = nullptr;
+        }
+    }
+    return ret;
 }
 
 /************************************************************************/

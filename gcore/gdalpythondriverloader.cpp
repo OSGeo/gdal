@@ -126,7 +126,7 @@ static bool InitializePythonAndLoadGDALPythonDriverModule()
         "import json\n"
         "import inspect\n"
         "import sys\n"
-        "class BaseLayer(object):\n"
+        "class BaseLayer:\n"
         "   RandomRead='RandomRead'\n"
         "   FastSpatialFilter='FastSpatialFilter'\n"
         "   FastFeatureCount='FastFeatureCount'\n"
@@ -141,11 +141,11 @@ static bool InitializePythonAndLoadGDALPythonDriverModule()
         "BaseLayer'\n"
         "       return _gdal_python_driver.layer_featureCount(self, force)\n"
         "\n"
-        "class BaseDataset(object):\n"
+        "class BaseDataset:\n"
         "   def __init__(self):\n"
         "       pass\n"
         "\n"
-        "class BaseDriver(object):\n"
+        "class BaseDriver:\n"
         "   def __init__(self):\n"
         "       pass\n"
         "\n"
@@ -1617,7 +1617,7 @@ bool PythonPluginDriver::LoadPlugin()
                  GetPyExceptionString().c_str());
         return false;
     }
-    const CPLString osPluginModuleName(CPLGetBasename(m_osFilename));
+    const CPLString osPluginModuleName(CPLGetBasenameSafe(m_osFilename));
     PyObject *poModule =
         PyImport_ExecCodeModule(osPluginModuleName, poCompiledString);
     Py_DecRef(poCompiledString);
@@ -1956,22 +1956,22 @@ void GDALDriverManager::AutoLoadPythonDrivers()
     const int nSearchPaths = CSLCount(papszSearchPaths);
     for (int iDir = 0; iDir < nSearchPaths; ++iDir)
     {
-        CPLString osABISpecificDir =
-            CPLFormFilename(papszSearchPaths[iDir], osABIVersion, nullptr);
+        std::string osABISpecificDir =
+            CPLFormFilenameSafe(papszSearchPaths[iDir], osABIVersion, nullptr);
 
         VSIStatBufL sStatBuf;
-        if (VSIStatL(osABISpecificDir, &sStatBuf) != 0)
+        if (VSIStatL(osABISpecificDir.c_str(), &sStatBuf) != 0)
             osABISpecificDir = papszSearchPaths[iDir];
 
-        char **papszFiles = CPLReadDir(osABISpecificDir);
+        char **papszFiles = CPLReadDir(osABISpecificDir.c_str());
         for (int i = 0; papszFiles && papszFiles[i]; i++)
         {
             if ((STARTS_WITH_CI(papszFiles[i], "gdal_") ||
                  STARTS_WITH_CI(papszFiles[i], "ogr_")) &&
-                EQUAL(CPLGetExtension(papszFiles[i]), "py"))
+                EQUAL(CPLGetExtensionSafe(papszFiles[i]).c_str(), "py"))
             {
-                aosPythonFiles.push_back(
-                    CPLFormFilename(osABISpecificDir, papszFiles[i], nullptr));
+                aosPythonFiles.push_back(CPLFormFilenameSafe(
+                    osABISpecificDir.c_str(), papszFiles[i], nullptr));
             }
         }
         CSLDestroy(papszFiles);

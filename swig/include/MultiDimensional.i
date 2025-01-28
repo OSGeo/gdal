@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     MultiDimensional.i
  * Purpose:  GDAL Core SWIG Interface declarations.
@@ -1031,7 +1030,7 @@ public:
 
   %newobject GetSpatialRef;
   OSRSpatialReferenceShadow *GetSpatialRef() {
-    return GDALMDArrayGetSpatialRef(self);
+    return (OSRSpatialReferenceShadow*) GDALMDArrayGetSpatialRef(self);
   }
 #endif
 

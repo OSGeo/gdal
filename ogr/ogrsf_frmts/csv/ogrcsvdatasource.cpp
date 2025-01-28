@@ -17,6 +17,7 @@
 #include <cerrno>
 #include <cstring>
 #include <string>
+#include <algorithm>
 
 #include "cpl_conv.h"
 #include "cpl_csv.h"
@@ -30,6 +31,7 @@
 #include "ogr_spatialref.h"
 #include "ogreditablelayer.h"
 #include "ogrsf_frmts.h"
+#include "ogr_schema_override.h"
 
 /************************************************************************/
 /*                     OGRCSVEditableLayerSynchronizer                  */
@@ -82,7 +84,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
     const CPLString osLayerName(m_poCSVLayer->GetName());
     const CPLString osFilename(m_poCSVLayer->GetFilename());
     const bool bCreateCSVT = m_poCSVLayer->GetCreateCSVT();
-    const CPLString osCSVTFilename(CPLResetExtension(osFilename, "csvt"));
+    const CPLString osCSVTFilename(CPLResetExtensionSafe(osFilename, "csvt"));
     VSIStatBufL sStatBuf;
     const bool bHasCSVT = VSIStatL(osCSVTFilename, &sStatBuf) == 0;
     CPLString osTmpFilename(osFilename);
@@ -246,7 +248,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
         CPLError(CE_Failure, CPLE_AppDefined, "Error while creating %s",
                  osTmpFilename.c_str());
         VSIUnlink(osTmpFilename);
-        VSIUnlink(CPLResetExtension(osTmpFilename, "csvt"));
+        VSIUnlink(CPLResetExtensionSafe(osTmpFilename, "csvt").c_str());
         return eErr;
     }
 
@@ -474,7 +476,7 @@ OGRLayer *OGRCSVDataSource::GetLayer(int iLayer)
 
 CPLString OGRCSVDataSource::GetRealExtension(CPLString osFilename)
 {
-    const CPLString osExt = CPLGetExtension(osFilename);
+    const CPLString osExt = CPLGetExtensionSafe(osFilename);
     if (STARTS_WITH(osFilename, "/vsigzip/") && EQUAL(osExt, "gz"))
     {
         if (osFilename.size() > 7 &&
@@ -629,12 +631,12 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
     {
         char **papszFiles = VSIReadDir(osFilename);
         if (CSLCount(papszFiles) != 1 ||
-            !EQUAL(CPLGetExtension(papszFiles[0]), "CSV"))
+            !EQUAL(CPLGetExtensionSafe(papszFiles[0]).c_str(), "CSV"))
         {
             CSLDestroy(papszFiles);
             return FALSE;
         }
-        osFilename = CPLFormFilename(osFilename, papszFiles[0], nullptr);
+        osFilename = CPLFormFilenameSafe(osFilename, papszFiles[0], nullptr);
         CSLDestroy(papszFiles);
         return OpenTable(osFilename, papszOpenOptionsIn);
     }
@@ -650,12 +652,12 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
     for (int i = 0; papszNames != nullptr && papszNames[i] != nullptr; i++)
     {
         const CPLString oSubFilename =
-            CPLFormFilename(osFilename, papszNames[i], nullptr);
+            CPLFormFilenameSafe(osFilename, papszNames[i], nullptr);
 
         if (EQUAL(papszNames[i], ".") || EQUAL(papszNames[i], ".."))
             continue;
 
-        if (EQUAL(CPLGetExtension(oSubFilename), "csvt"))
+        if (EQUAL(CPLGetExtensionSafe(oSubFilename).c_str(), "csvt"))
             continue;
 
         if (VSIStatL(oSubFilename, &sStatBuf) != 0 ||
@@ -665,7 +667,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
             continue;
         }
 
-        if (EQUAL(CPLGetExtension(oSubFilename), "csv"))
+        if (EQUAL(CPLGetExtensionSafe(oSubFilename).c_str(), "csv"))
         {
             if (!OpenTable(oSubFilename, papszOpenOptionsIn))
             {
@@ -677,7 +679,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
         // GNIS specific.
         else if (strlen(papszNames[i]) > 2 &&
                  STARTS_WITH_CI(papszNames[i] + 2, "_Features_") &&
-                 EQUAL(CPLGetExtension(papszNames[i]), "txt"))
+                 EQUAL(CPLGetExtensionSafe(papszNames[i]).c_str(), "txt"))
         {
             bool bRet =
                 OpenTable(oSubFilename, papszOpenOptionsIn, nullptr, "PRIM");
@@ -693,7 +695,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
         // GNIS specific.
         else if (strlen(papszNames[i]) > 2 &&
                  STARTS_WITH_CI(papszNames[i] + 2, "_FedCodes_") &&
-                 EQUAL(CPLGetExtension(papszNames[i]), "txt"))
+                 EQUAL(CPLGetExtensionSafe(papszNames[i]).c_str(), "txt"))
         {
             if (!OpenTable(oSubFilename, papszOpenOptionsIn, nullptr,
                            "PRIMARY"))
@@ -715,6 +717,127 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
     // We presume that this is indeed intended to be a CSV
     // datasource if over half the files were .csv files.
     return bForceOpen || nNotCSVCount < GetLayerCount();
+}
+
+const std::vector<int> &OGRCSVDataSource::DeletedFieldIndexes() const
+{
+    return m_oDeletedFieldIndexes;
+}
+
+/************************************************************************/
+/*                      DealWithOgrSchemaOpenOption()                   */
+/************************************************************************/
+bool OGRCSVDataSource::DealWithOgrSchemaOpenOption(
+    CSLConstList papszOpenOptionsIn)
+{
+    std::string osFieldsSchemaOverrideParam =
+        CSLFetchNameValueDef(papszOpenOptionsIn, "OGR_SCHEMA", "");
+
+    if (!osFieldsSchemaOverrideParam.empty())
+    {
+        if (bUpdate)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "OGR_SCHEMA open option is not supported in update mode.");
+            return false;
+        }
+
+        OGRSchemaOverride osSchemaOverride;
+        if (!osSchemaOverride.LoadFromJSON(osFieldsSchemaOverrideParam) ||
+            !osSchemaOverride.IsValid())
+        {
+            return false;
+        }
+
+        const auto &oLayerOverrides = osSchemaOverride.GetLayerOverrides();
+        for (const auto &oLayer : oLayerOverrides)
+        {
+            const auto &oLayerName = oLayer.first;
+            const auto &oLayerFieldOverride = oLayer.second;
+            const bool bIsFullOverride{oLayerFieldOverride.IsFullOverride()};
+            auto oFieldOverrides = oLayerFieldOverride.GetFieldOverrides();
+            std::vector<OGRFieldDefn *> aoFields;
+
+            CPLDebug("CSV", "Applying schema override for layer %s",
+                     oLayerName.c_str());
+
+            // Fail if the layer name does not exist
+            auto poLayer = GetLayerByName(oLayerName.c_str());
+            if (poLayer == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Layer %s not found in CSV file", oLayerName.c_str());
+                return false;
+            }
+
+            // Patch field definitions
+            auto poLayerDefn = poLayer->GetLayerDefn();
+            for (int i = 0; i < poLayerDefn->GetFieldCount(); i++)
+            {
+                auto poFieldDefn = poLayerDefn->GetFieldDefn(i);
+                auto oFieldOverride =
+                    oFieldOverrides.find(poFieldDefn->GetNameRef());
+                if (oFieldOverride != oFieldOverrides.cend())
+                {
+                    if (oFieldOverride->second.GetFieldType().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetType(
+                                oFieldOverride->second.GetFieldType().value());
+                    if (oFieldOverride->second.GetFieldWidth().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetWidth(
+                                oFieldOverride->second.GetFieldWidth().value());
+                    if (oFieldOverride->second.GetFieldPrecision().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetPrecision(
+                                oFieldOverride->second.GetFieldPrecision()
+                                    .value());
+                    if (oFieldOverride->second.GetFieldSubType().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetSubType(
+                                oFieldOverride->second.GetFieldSubType()
+                                    .value());
+                    if (oFieldOverride->second.GetFieldName().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetName(oFieldOverride->second.GetFieldName()
+                                          .value()
+                                          .c_str());
+
+                    if (bIsFullOverride)
+                    {
+                        aoFields.push_back(poFieldDefn);
+                    }
+                    oFieldOverrides.erase(oFieldOverride);
+                }
+            }
+
+            // Error if any field override is not found
+            if (!oFieldOverrides.empty())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s not found in layer %s",
+                         oFieldOverrides.cbegin()->first.c_str(),
+                         oLayerName.c_str());
+                return false;
+            }
+
+            // Remove fields not in the override
+            if (bIsFullOverride)
+            {
+                for (int i = poLayerDefn->GetFieldCount() - 1; i >= 0; i--)
+                {
+                    auto poFieldDefn = poLayerDefn->GetFieldDefn(i);
+                    if (std::find(aoFields.begin(), aoFields.end(),
+                                  poFieldDefn) == aoFields.end())
+                    {
+                        whileUnsealing(poLayerDefn)->DeleteFieldDefn(i);
+                        m_oDeletedFieldIndexes.push_back(i);
+                    }
+                }
+            }
+        }
+    }
+    return true;
 }
 
 /************************************************************************/
@@ -745,8 +868,8 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
         strstr(pszFilename, "/vsizip/") == nullptr)
         fp = VSICreateBufferedReaderHandle(fp);
 
-    CPLString osLayerName = CPLGetBasename(pszFilename);
-    CPLString osExt = CPLGetExtension(pszFilename);
+    CPLString osLayerName = CPLGetBasenameSafe(pszFilename);
+    CPLString osExt = CPLGetExtensionSafe(pszFilename);
     if (STARTS_WITH(pszFilename, "/vsigzip/") && EQUAL(osExt, "gz"))
     {
         if (strlen(pszFilename) > 7 &&
@@ -896,6 +1019,12 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
     else
     {
         m_apoLayers.emplace_back(std::move(poCSVLayer));
+
+        if (!DealWithOgrSchemaOpenOption(papszOpenOptionsIn))
+        {
+            m_apoLayers.pop_back();
+            return false;
+        }
     }
 
     return true;
@@ -961,12 +1090,12 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
     }
     else if (osDefaultCSVName != "")
     {
-        osFilename = CPLFormFilename(pszName, osDefaultCSVName, nullptr);
+        osFilename = CPLFormFilenameSafe(pszName, osDefaultCSVName, nullptr);
         osDefaultCSVName = "";
     }
     else
     {
-        osFilename = CPLFormFilename(pszName, pszLayerName, "csv");
+        osFilename = CPLFormFilenameSafe(pszName, pszLayerName, "csv");
     }
 
     // Does this directory/file already exist?
@@ -1099,8 +1228,8 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
             poSpatialRef->exportToWkt(&pszWKT);
             if (pszWKT)
             {
-                VSILFILE *fpPRJ =
-                    VSIFOpenL(CPLResetExtension(osFilename, "prj"), "wb");
+                VSILFILE *fpPRJ = VSIFOpenL(
+                    CPLResetExtensionSafe(osFilename, "prj").c_str(), "wb");
                 if (fpPRJ)
                 {
                     CPL_IGNORE_RET_VAL(VSIFPrintfL(fpPRJ, "%s\n", pszWKT));

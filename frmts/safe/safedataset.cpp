@@ -777,8 +777,8 @@ int SAFEDataset::Identify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->bIsDirectory)
     {
         VSIStatBufL sStat;
-        CPLString osMDFilename = CPLFormCIFilename(poOpenInfo->pszFilename,
-                                                   "manifest.safe", nullptr);
+        CPLString osMDFilename = CPLFormCIFilenameSafe(
+            poOpenInfo->pszFilename, "manifest.safe", nullptr);
 
         if (VSIStatL(osMDFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode))
         {
@@ -795,11 +795,14 @@ int SAFEDataset::Identify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 100)
         return FALSE;
 
-    if (strstr((const char *)poOpenInfo->pabyHeader, "<xfdu:XFDU") == nullptr)
+    const char *pszHeader =
+        reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+    if (!strstr(pszHeader, "<xfdu:XFDU"))
         return FALSE;
 
-    // This driver doesn't handle Sentinel-2 data
-    if (strstr((const char *)poOpenInfo->pabyHeader, "sentinel-2") != nullptr)
+    // This driver doesn't handle Sentinel-2 or RCM (RADARSAT Constellation Mission) data
+    if (strstr(pszHeader, "sentinel-2") ||
+        strstr(pszHeader, "rcm_prod_manifest.xsd"))
         return FALSE;
 
     return TRUE;
@@ -982,8 +985,8 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->bIsDirectory)
     {
-        osMDFilename =
-            CPLFormCIFilename(osMDFilename.c_str(), "manifest.safe", nullptr);
+        osMDFilename = CPLFormCIFilenameSafe(osMDFilename.c_str(),
+                                             "manifest.safe", nullptr);
     }
 
     /* -------------------------------------------------------------------- */
@@ -994,7 +997,7 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
     if (psManifest == nullptr)
         return nullptr;
 
-    CPLString osPath(CPLGetPath(osMDFilename));
+    CPLString osPath(CPLGetPathSafe(osMDFilename));
 
     /* -------------------------------------------------------------------- */
     /*      Confirm the requested access is supported.                      */
@@ -1143,9 +1146,9 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
 
             // open Annotation XML file
             const CPLString osAnnotationFilePath =
-                CPLFormFilename(osPath, pszAnnotation, nullptr);
+                CPLFormFilenameSafe(osPath, pszAnnotation, nullptr);
             const CPLString osCalibrationFilePath =
-                CPLFormFilename(osPath, pszCalibration, nullptr);
+                CPLFormFilenameSafe(osPath, pszCalibration, nullptr);
 
             CPLXMLTreeCloser psAnnotation(
                 CPLParseXMLFile(osAnnotationFilePath));
@@ -1289,7 +1292,7 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
             /* --------------------------------------------------------------------
              */
             const std::string osFullFilename(
-                CPLFormFilename(osPath, pszMeasurement, nullptr));
+                CPLFormFilenameSafe(osPath, pszMeasurement, nullptr));
 
             /* --------------------------------------------------------------------
              */

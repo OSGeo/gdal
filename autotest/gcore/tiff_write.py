@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for GeoTIFF format.
@@ -949,7 +948,7 @@ def test_tiff_write_20():
 
 
 ###############################################################################
-# Test RGBA images with TIFFTAG_EXTRASAMPLES=EXTRASAMPLE_ASSOCALPHA
+# Test RGBA images with TIFFTAG_EXTRASAMPLES=EXTRASAMPLE_UNASSOCALPHA
 
 
 def test_tiff_write_21():
@@ -11901,3 +11900,137 @@ def test_tiff_write_band_IMAGERY(tmp_vsimem):
         )
     with gdal.Open(filename2) as ds:
         assert ds.GetRasterBand(1).GetMetadata_Dict("IMAGERY") == {"foo": "bar"}
+
+
+###############################################################################
+# Verify that we can generate an output that is byte-identical to the expected golden file.
+
+
+@pytest.mark.parametrize(
+    "src_filename,creation_options",
+    [
+        ("data/gtiff/byte_little_endian_golden.tif", []),
+        ("data/gtiff/uint16_little_endian_golden.tif", []),
+        ("data/gtiff/float32_little_endian_golden.tif", []),
+        (
+            "data/gtiff/byte_little_endian_tiled_lzw_golden.tif",
+            ["TILED=YES", "BLOCKXSIZE=16", "BLOCKYSIZE=16", "COMPRESS=LZW"],
+        ),
+    ],
+)
+def test_tiff_write_check_golden_file(tmp_path, src_filename, creation_options):
+
+    out_filename = str(tmp_path / "test.tif")
+    with gdal.Open(src_filename) as src_ds:
+        gdal.GetDriverByName("GTiff").CreateCopy(
+            out_filename, src_ds, options=["ENDIANNESS=LITTLE"] + creation_options
+        )
+    assert os.stat(src_filename).st_size == os.stat(out_filename).st_size
+    assert open(src_filename, "rb").read() == open(out_filename, "rb").read()
+
+
+###############################################################################
+# Test preserving ALPHA=PREMULTIPLIED on copy
+
+
+def test_tiff_write_preserve_ALPHA_PREMULTIPLIED_on_copy(tmp_path):
+
+    src_filename = str(tmp_path / "src.tif")
+    out_filename = str(tmp_path / "out.tif")
+    gdal.GetDriverByName("GTiff").Create(
+        src_filename, 1, 1, 4, options=["ALPHA=PREMULTIPLIED", "PROFILE=BASELINE"]
+    )
+    assert gdal.VSIStatL(src_filename + ".aux.xml") is None
+    with gdal.Open(src_filename) as src_ds:
+        assert (
+            src_ds.GetRasterBand(4).GetMetadataItem("ALPHA", "IMAGE_STRUCTURE")
+            == "PREMULTIPLIED"
+        )
+        gdal.GetDriverByName("GTiff").CreateCopy(
+            out_filename, src_ds, options=["PROFILE=BASELINE"]
+        )
+        with gdal.Open(out_filename) as out_ds:
+            assert (
+                out_ds.GetRasterBand(4).GetMetadataItem("ALPHA", "IMAGE_STRUCTURE")
+                == "PREMULTIPLIED"
+            )
+
+
+###############################################################################
+#
+
+
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 7, 1),
+    reason="libtiff internal or >= 4.7.1 needed",
+)
+def test_tiff_write_float32_predictor_3_endianness(tmp_path):
+
+    out_filename = str(tmp_path / "out.tif")
+    gdal.GetDriverByName("GTiff").CreateCopy(
+        out_filename,
+        gdal.Open("data/float32.tif"),
+        options=["COMPRESS=LZW", "ENDIANNESS=INVERTED", "PREDICTOR=3"],
+    )
+    with gdal.Open(out_filename) as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+#
+
+
+def test_tiff_write_warn_ignore_predictor_option(tmp_vsimem):
+    out_filename = str(tmp_vsimem / "out.tif")
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        gdal.GetDriverByName("GTiff").Create(
+            out_filename, 1, 1, options=["PREDICTOR=2"]
+        )
+    assert "PREDICTOR option is ignored" in gdal.GetLastErrorMsg()
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("COPY_SRC_OVERVIEWS", ["YES", "NO"])
+def test_tiff_write_interleave_tile(tmp_vsimem, COPY_SRC_OVERVIEWS):
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        out_filename,
+        gdal.Open("data/rgbsmall.tif"),
+        options=[
+            "@TILE_INTERLEAVE=YES",
+            "TILED=YES",
+            "BLOCKXSIZE=32",
+            "BLOCKYSIZE=32",
+            "COPY_SRC_OVERVIEWS=" + COPY_SRC_OVERVIEWS,
+        ],
+    )
+    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "TILE"
+    ds.Close()
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "TILE"
+
+    assert [ds.GetRasterBand(band + 1).Checksum() for band in range(3)] == [
+        21212,
+        21053,
+        21349,
+    ]
+
+    # Check that the tiles are in the expected order in the file
+    last_offset = 0
+    for y in range(2):
+        for x in range(2):
+            for band in range(3):
+                offset = int(
+                    ds.GetRasterBand(band + 1).GetMetadataItem(
+                        f"BLOCK_OFFSET_{x}_{y}", "TIFF"
+                    )
+                )
+                assert offset > last_offset
+                last_offset = offset

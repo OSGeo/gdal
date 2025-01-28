@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGR C API "Spy"
@@ -45,7 +44,7 @@
  * @since GDAL 2.0
  */
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 #define OGRAPISPY_ENABLED
 #endif
 

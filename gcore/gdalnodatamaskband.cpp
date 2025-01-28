@@ -547,7 +547,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     for (int iY = 0; iY < nBufYSize; iY++)
     {
-        GDALCopyWords(
+        GDALCopyWords64(
             static_cast<GByte *>(pTemp) + static_cast<size_t>(iY) * nBufXSize,
             GDT_Byte, 1, static_cast<GByte *>(pData) + iY * nLineSpace,
             eBufType, static_cast<int>(nPixelSpace), nBufXSize);

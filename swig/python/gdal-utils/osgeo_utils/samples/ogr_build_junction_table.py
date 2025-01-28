@@ -2,9 +2,7 @@
 #
 # -*- coding: utf-8 -*-
 # ******************************************************************************
-#  $Id$
 #
-#  Name:     $Id$
 #  Project:
 #  Purpose:  Build a junction table from _href fields
 #  Author:   Even Rouault, <even dot rouault at spatialys.com>

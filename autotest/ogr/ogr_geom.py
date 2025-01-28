@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Misc. OGRGeometry operations.
@@ -931,21 +930,21 @@ def test_ogr_geom_segmentize_issue_1341():
 
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0,10 0)")
     geom.Segmentize(0.399999999999)
-    assert geom.ExportToWkt() == expected_geom
+    ogrtest.check_feature_geometry(geom, expected_geom)
     geom.Segmentize(0.399999999999)
-    assert geom.ExportToWkt() == expected_geom
+    ogrtest.check_feature_geometry(geom, expected_geom)
 
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0,10 0)")
     geom.Segmentize(0.4)
-    assert geom.ExportToWkt() == expected_geom
+    ogrtest.check_feature_geometry(geom, expected_geom)
     geom.Segmentize(0.4)
-    assert geom.ExportToWkt() == expected_geom
+    ogrtest.check_feature_geometry(geom, expected_geom)
 
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0,10 0)")
     geom.Segmentize(0.400000000001)
-    assert geom.ExportToWkt() == expected_geom
+    ogrtest.check_feature_geometry(geom, expected_geom)
     geom.Segmentize(0.400000000001)
-    assert geom.ExportToWkt() == expected_geom
+    ogrtest.check_feature_geometry(geom, expected_geom)
 
 
 ###############################################################################
@@ -1353,7 +1352,7 @@ def test_ogr_geom_getlineargeometry():
 
 
 def test_ogr_geom_getdimension():
-    for (geom, dim) in [
+    for geom, dim in [
         ("POINT EMPTY", 0),
         ("LINESTRING EMPTY", 1),
         ("POLYGON EMPTY", 2),
@@ -2912,7 +2911,7 @@ def test_ogr_geom_getcurvegeometry():
     assert g3.Equals(g1)
 
     # Test various configurations
-    for (wkt, eps) in [
+    for wkt, eps in [
         ("CIRCULARSTRING (0 0,0.5 0.5,0 1,-0.5 0.5,0 0)", 0),
         ("CIRCULARSTRING (0 0,-0.5 0.5,0 1,0.5 0.5,0 0)", 0),
         ("CIRCULARSTRING (0 0,0.5 -0.5,0 -1,-0.5 -0.5,0 0)", 0),
@@ -3074,7 +3073,7 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbCircularStringM, 0),
         (ogr.wkbCircularStringZM, 1),
     ]
-    for (gt, res) in tuples:
+    for gt, res in tuples:
         assert ogr.GT_HasZ(gt) == res
 
     # GT_SetZ
@@ -3088,7 +3087,7 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbCircularStringM, ogr.wkbCircularStringZM),
         (ogr.wkbCircularStringZM, ogr.wkbCircularStringZM),
     ]
-    for (gt, res) in tuples:
+    for gt, res in tuples:
         assert ogr.GT_SetZ(gt) == res
 
     # GT_HasM
@@ -3102,7 +3101,7 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbCircularStringM, 1),
         (ogr.wkbCircularStringZM, 1),
     ]
-    for (gt, res) in tuples:
+    for gt, res in tuples:
         assert ogr.GT_HasM(gt) == res
 
     # GT_SetM
@@ -3116,7 +3115,7 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbCircularStringM, ogr.wkbCircularStringM),
         (ogr.wkbCircularStringZM, ogr.wkbCircularStringZM),
     ]
-    for (gt, res) in tuples:
+    for gt, res in tuples:
         assert ogr.GT_SetM(gt) == res
 
     # OGR_GT_SetModifier
@@ -3140,7 +3139,7 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbCircularString, 0, 0, ogr.wkbCircularString),
         (ogr.wkbCircularStringZ, 0, 0, ogr.wkbCircularString),
     ]
-    for (gt, modZ, modM, res) in tuples:
+    for gt, modZ, modM, res in tuples:
         assert ogr.GT_SetModifier(gt, modZ, modM) == res
 
     # GT_Flatten
@@ -3155,7 +3154,7 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbCircularStringM, ogr.wkbCircularString),
         (ogr.wkbCircularStringZM, ogr.wkbCircularString),
     ]
-    for (gt, res) in tuples:
+    for gt, res in tuples:
         assert ogr.GT_Flatten(gt) == res
 
     # GT_IsSubClassOf
@@ -3175,7 +3174,7 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbTIN, ogr.wkbPolyhedralSurface, 1),
         (ogr.wkbPolyhedralSurface, ogr.wkbTIN, 0),
     ]
-    for (gt, gt2, res) in tuples:
+    for gt, gt2, res in tuples:
         assert ogr.GT_IsSubClassOf(gt, gt2) == res
 
     # GT_IsCurve
@@ -3196,7 +3195,7 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbPolyhedralSurface, 0),
         (ogr.wkbTIN, 0),
     ]
-    for (gt, res) in tuples:
+    for gt, res in tuples:
         assert ogr.GT_IsCurve(gt) == res
 
     # GT_IsSurface
@@ -3215,7 +3214,7 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbPolyhedralSurface, 1),
         (ogr.wkbTIN, 1),
     ]
-    for (gt, res) in tuples:
+    for gt, res in tuples:
         assert ogr.GT_IsSurface(gt) == res
 
     # GT_GetCollection
@@ -3230,7 +3229,7 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbLineString, ogr.wkbMultiLineString),
         (ogr.wkbPolygon, ogr.wkbMultiPolygon),
     ]
-    for (gt, res) in tuples:
+    for gt, res in tuples:
         assert ogr.GT_GetCollection(gt) == res
 
     # GT_IsNonLinear
@@ -3251,7 +3250,7 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbPolygon, 0),
         (ogr.wkbTriangle, 0),
     ]
-    for (gt, res) in tuples:
+    for gt, res in tuples:
         assert ogr.GT_IsNonLinear(gt) == res
 
     # GT_GetCurve
@@ -3273,7 +3272,7 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbMultiCurve, ogr.wkbMultiCurve),
         (ogr.wkbMultiSurface, ogr.wkbMultiSurface),
     ]
-    for (gt, res) in tuples:
+    for gt, res in tuples:
         assert ogr.GT_GetCurve(gt) == res
 
     # GT_GetLinear
@@ -3295,7 +3294,7 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbMultiCurve, ogr.wkbMultiLineString),
         (ogr.wkbMultiSurface, ogr.wkbMultiPolygon),
     ]
-    for (gt, res) in tuples:
+    for gt, res in tuples:
         assert ogr.GT_GetLinear(gt) == res
 
 
@@ -3491,7 +3490,7 @@ def test_ogr_geom_measured_geometries_to_2D_or_3D():
             "TIN Z (((0 0 3,0 1 3,1 1 3,0 0 3)))",
         ],
     ]
-    for (before, after_2D, after_3D) in list_wkt:
+    for before, after_2D, after_3D in list_wkt:
 
         geom = ogr.CreateGeometryFromWkt(before)
         wkb = geom.ExportToIsoWkb()
@@ -3544,7 +3543,7 @@ def test_ogr_geom_postgis_ewkt_xym():
             "GEOMETRYCOLLECTION M (POINT M (1 2 3))",
         ],
     ]
-    for (before, after) in list_wkt:
+    for before, after in list_wkt:
         geom = ogr.CreateGeometryFromWkt(before)
         assert geom.ExportToIsoWkt() == after, before
 
@@ -3566,7 +3565,7 @@ def test_ogr_geom_curve_surface():
         [ogr.wkbSurfaceZM, "3D Measured Surface"],
     ]
 
-    for (wkb_type, name) in tests:
+    for wkb_type, name in tests:
         assert ogr.GeometryTypeToName(wkb_type) == name
 
 
@@ -3902,6 +3901,38 @@ def test_ogr_geom_sfcgal():
 
     g2 = ogr.CreateGeometryFromWkt("CURVEPOLYGON EMPTY")
     g1.Distance(g2)
+
+
+def test_ogr_geom_sfcgal_distance3D():
+
+    if not ogrtest.have_sfcgal():
+        pytest.skip("SFCGAL is not available")
+
+    point1 = ogr.CreateGeometryFromWkt("POINT (1.0 1.0 1.0)")
+    point2 = ogr.CreateGeometryFromWkt("POINT (4.0 1.0 5.0)")
+
+    assert point1.Distance3D(point2) == 5.0
+
+
+def test_ogr_geom_sfcgal_intersection3D():
+
+    if not ogrtest.have_sfcgal():
+        pytest.skip("SFCGAL is not available")
+
+    phsurface = ogr.CreateGeometryFromWkt(
+        "POLYHEDRALSURFACE Z (((0 0 0,0 0 2,0 2 2,0 2 0,0 0 0)),\
+((0 0 0,0 2 0,2 2 0,2 0 0,0 0 0)),\
+((0 0 0,2 0 0,2 0 2,0 0 2,0 0 0)),\
+((2 2 0,2 2 2,2 0 2,2 0 0,2 2 0)),\
+((0 2 0,0 2 2,2 2 2,2 2 0,0 2 0)),\
+((0 0 2,2 0 2,2 2 2,0 2 2,0 0 2)))"
+    )
+
+    line = ogr.CreateGeometryFromWkt("LINESTRING Z (-1 1 1, 3 1 1)")
+
+    result = phsurface.Intersection(line)
+
+    assert result.ExportToWkt() == "MULTIPOINT (0 1 1,2 1 1)"
 
 
 ###############################################################################
@@ -4528,12 +4559,34 @@ def test_ogr_geom_GeodesicArea():
 @gdaltest.enable_exceptions()
 def test_ogr_geom_GeodesicLength():
 
+    # Lat, lon order, not forming a polygon
+    g = ogr.CreateGeometryFromWkt("LINESTRING(49 2,49 3)")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    l1 = g.GeodesicLength()
+    assert l1 == pytest.approx(73171.26435678436)
+
+    g = ogr.CreateGeometryFromWkt("LINESTRING(49 3,48 3)")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    l2 = g.GeodesicLength()
+    assert l2 == pytest.approx(111200.0367623785)
+
+    g = ogr.CreateGeometryFromWkt("LINESTRING(48 3,49 2)")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    l3 = g.GeodesicLength()
+    assert l3 == pytest.approx(133514.4852804854)
+
     # Lat, lon order
     g = ogr.CreateGeometryFromWkt("LINESTRING(49 2,49 3,48 3,49 2)")
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     g.AssignSpatialReference(srs)
-    assert g.GeodesicLength() == pytest.approx(317885.78639964823)
+    assert g.GeodesicLength() == pytest.approx(l1 + l2 + l3)
 
     # Lat, lon order
     g = ogr.CreateGeometryFromWkt("POLYGON((49 2,49 3,48 3,49 2))")

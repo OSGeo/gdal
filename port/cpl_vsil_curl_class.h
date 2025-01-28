@@ -80,6 +80,7 @@ class FileProp
     std::string osRedirectURL{};
     bool bHasComputedFileSize = false;
     bool bIsDirectory = false;
+    bool bIsAzureFolder = false;
     int nMode = 0;  // st_mode member of struct stat
     bool bS3LikeRedirect = false;
     std::string ETag{};
@@ -268,7 +269,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
     char **ReadDirInternal(const char *pszDirname, int nMaxFiles,
                            bool *pbGotFileList);
-    void InvalidateDirContent(const char *pszDirname);
+    void InvalidateDirContent(const std::string &osDirname);
 
     virtual const char *GetDebugKey() const = 0;
 
@@ -404,6 +405,8 @@ class VSICurlHandle : public VSIVirtualHandle
     mutable bool m_bPlanetaryComputerURLSigning = false;
     mutable std::string m_osPlanetaryComputerCollection{};
     void ManagePlanetaryComputerSigning() const;
+
+    void UpdateQueryString() const;
 
     int ReadMultiRangeSingleGet(int nRanges, void **ppData,
                                 const vsi_l_offset *panOffsets,

@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  GMLAS driver testing.
@@ -582,7 +581,7 @@ def test_ogr_gmlas_abstractgeometry():
 # Test validation against schema
 
 
-class MyHandler(object):
+class MyHandler:
     def __init__(self):
         self.error_list = []
 

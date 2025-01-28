@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  BSB Reader
  * Purpose:  Low level BSB Access API Implementation (non-GDAL).
@@ -850,12 +849,7 @@ int BSBReadScanline(BSBInfo *psInfo, int nScanline,
             }
             if (nRunCount > psInfo->nXSize)
             {
-                static int bHasWarned = FALSE;
-                if (!bHasWarned)
-                {
-                    CPLDebug("BSB", "Too big run count : %d", nRunCount);
-                    bHasWarned = TRUE;
-                }
+                CPLDebugOnce("BSB", "Too big run count : %d", nRunCount);
             }
 
             if (iPixel + nRunCount + 1 > psInfo->nXSize)

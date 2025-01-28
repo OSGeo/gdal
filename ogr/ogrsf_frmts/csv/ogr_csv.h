@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CSV Translator
  * Purpose:  Definition of classes for OGR .csv driver.
@@ -275,6 +274,13 @@ class OGRCSVDataSource final : public GDALDataset
 
     bool bEnableGeometryFields = false;
 
+    bool DealWithOgrSchemaOpenOption(CSLConstList papszOpenOptions);
+
+    /* When OGR_SCHEMA and schemaType=Full, this will contain the list
+     * of removed field (if any).
+     */
+    std::vector<int> m_oDeletedFieldIndexes;
+
   public:
     OGRCSVDataSource();
     virtual ~OGRCSVDataSource() override;
@@ -310,6 +316,7 @@ class OGRCSVDataSource final : public GDALDataset
     }
 
     static CPLString GetRealExtension(CPLString osFilename);
+    const std::vector<int> &DeletedFieldIndexes() const;
 };
 
 #endif  // ndef OGR_CSV_H_INCLUDED

@@ -1963,7 +1963,7 @@ CPLString GDALFindAssociatedFile(const char *pszBaseFilename,
                                  CPL_UNUSED int nFlags)
 
 {
-    CPLString osTarget = CPLResetExtension(pszBaseFilename, pszExt);
+    CPLString osTarget = CPLResetExtensionSafe(pszBaseFilename, pszExt);
 
     if (papszSiblingFiles == nullptr ||
         // cppcheck-suppress knownConditionTrueFalse
@@ -1980,7 +1980,7 @@ CPLString GDALFindAssociatedFile(const char *pszBaseFilename,
             else
                 osAltExt = osAltExt.tolower();
 
-            osTarget = CPLResetExtension(pszBaseFilename, osAltExt);
+            osTarget = CPLResetExtensionSafe(pszBaseFilename, osAltExt);
 
             if (VSIStatExL(osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG) != 0)
                 return "";
@@ -2231,14 +2231,14 @@ int CPL_STDCALL GDALReadOziMapFile(const char *pszBaseFilename,
     /* -------------------------------------------------------------------- */
     /*      Try lower case, then upper case.                                */
     /* -------------------------------------------------------------------- */
-    const char *pszOzi = CPLResetExtension(pszBaseFilename, "map");
+    std::string osOzi = CPLResetExtensionSafe(pszBaseFilename, "map");
 
-    VSILFILE *fpOzi = VSIFOpenL(pszOzi, "rt");
+    VSILFILE *fpOzi = VSIFOpenL(osOzi.c_str(), "rt");
 
-    if (fpOzi == nullptr && VSIIsCaseSensitiveFS(pszOzi))
+    if (fpOzi == nullptr && VSIIsCaseSensitiveFS(osOzi.c_str()))
     {
-        pszOzi = CPLResetExtension(pszBaseFilename, "MAP");
-        fpOzi = VSIFOpenL(pszOzi, "rt");
+        osOzi = CPLResetExtensionSafe(pszBaseFilename, "MAP");
+        fpOzi = VSIFOpenL(osOzi.c_str(), "rt");
     }
 
     if (fpOzi == nullptr)
@@ -2249,8 +2249,8 @@ int CPL_STDCALL GDALReadOziMapFile(const char *pszBaseFilename,
     /* -------------------------------------------------------------------- */
     /*      We found the file, now load and parse it.                       */
     /* -------------------------------------------------------------------- */
-    return GDALLoadOziMapFile(pszOzi, padfGeoTransform, ppszWKT, pnGCPCount,
-                              ppasGCPs);
+    return GDALLoadOziMapFile(osOzi.c_str(), padfGeoTransform, ppszWKT,
+                              pnGCPCount, ppasGCPs);
 }
 
 /************************************************************************/
@@ -2437,13 +2437,14 @@ int GDALReadTabFile2(const char *pszBaseFilename, double *padfGeoTransform,
     if (!GDALCanFileAcceptSidecarFile(pszBaseFilename))
         return FALSE;
 
-    const char *pszTAB = CPLResetExtension(pszBaseFilename, "tab");
+    std::string osTAB = CPLResetExtensionSafe(pszBaseFilename, "tab");
 
     if (papszSiblingFiles &&
         // cppcheck-suppress knownConditionTrueFalse
-        GDALCanReliablyUseSiblingFileList(pszTAB))
+        GDALCanReliablyUseSiblingFileList(osTAB.c_str()))
     {
-        int iSibling = CSLFindString(papszSiblingFiles, CPLGetFilename(pszTAB));
+        int iSibling =
+            CSLFindString(papszSiblingFiles, CPLGetFilename(osTAB.c_str()));
         if (iSibling >= 0)
         {
             CPLString osTabFilename = pszBaseFilename;
@@ -2465,12 +2466,12 @@ int GDALReadTabFile2(const char *pszBaseFilename, double *padfGeoTransform,
     /*      Try lower case, then upper case.                                */
     /* -------------------------------------------------------------------- */
 
-    VSILFILE *fpTAB = VSIFOpenL(pszTAB, "rt");
+    VSILFILE *fpTAB = VSIFOpenL(osTAB.c_str(), "rt");
 
-    if (fpTAB == nullptr && VSIIsCaseSensitiveFS(pszTAB))
+    if (fpTAB == nullptr && VSIIsCaseSensitiveFS(osTAB.c_str()))
     {
-        pszTAB = CPLResetExtension(pszBaseFilename, "TAB");
-        fpTAB = VSIFOpenL(pszTAB, "rt");
+        osTAB = CPLResetExtensionSafe(pszBaseFilename, "TAB");
+        fpTAB = VSIFOpenL(osTAB.c_str(), "rt");
     }
 
     if (fpTAB == nullptr)
@@ -2481,11 +2482,11 @@ int GDALReadTabFile2(const char *pszBaseFilename, double *padfGeoTransform,
     /* -------------------------------------------------------------------- */
     /*      We found the file, now load and parse it.                       */
     /* -------------------------------------------------------------------- */
-    if (GDALLoadTabFile(pszTAB, padfGeoTransform, ppszWKT, pnGCPCount,
+    if (GDALLoadTabFile(osTAB.c_str(), padfGeoTransform, ppszWKT, pnGCPCount,
                         ppasGCPs))
     {
         if (ppszTabFileNameOut)
-            *ppszTabFileNameOut = CPLStrdup(pszTAB);
+            *ppszTabFileNameOut = CPLStrdup(osTAB.c_str());
         return TRUE;
     }
     return FALSE;
@@ -2645,7 +2646,7 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
     /* -------------------------------------------------------------------- */
     if (pszExtension == nullptr)
     {
-        const std::string oBaseExt = CPLGetExtension(pszBaseFilename);
+        const std::string oBaseExt = CPLGetExtensionSafe(pszBaseFilename);
 
         if (oBaseExt.length() < 2)
             return FALSE;
@@ -2695,14 +2696,14 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
             CPLTolower(static_cast<unsigned char>(szExtLower[i])));
     }
 
-    const char *pszTFW = CPLResetExtension(pszBaseFilename, szExtLower);
+    std::string osTFW = CPLResetExtensionSafe(pszBaseFilename, szExtLower);
 
     if (papszSiblingFiles &&
         // cppcheck-suppress knownConditionTrueFalse
-        GDALCanReliablyUseSiblingFileList(pszTFW))
+        GDALCanReliablyUseSiblingFileList(osTFW.c_str()))
     {
         const int iSibling =
-            CSLFindString(papszSiblingFiles, CPLGetFilename(pszTFW));
+            CSLFindString(papszSiblingFiles, CPLGetFilename(osTFW.c_str()));
         if (iSibling >= 0)
         {
             CPLString osTFWFilename = pszBaseFilename;
@@ -2724,12 +2725,14 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
     /* -------------------------------------------------------------------- */
 
     VSIStatBufL sStatBuf;
-    bool bGotTFW = VSIStatExL(pszTFW, &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0;
+    bool bGotTFW =
+        VSIStatExL(osTFW.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0;
 
-    if (!bGotTFW && VSIIsCaseSensitiveFS(pszTFW))
+    if (!bGotTFW && VSIIsCaseSensitiveFS(osTFW.c_str()))
     {
-        pszTFW = CPLResetExtension(pszBaseFilename, szExtUpper);
-        bGotTFW = VSIStatExL(pszTFW, &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0;
+        osTFW = CPLResetExtensionSafe(pszBaseFilename, szExtUpper);
+        bGotTFW =
+            VSIStatExL(osTFW.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0;
     }
 
     if (!bGotTFW)
@@ -2738,10 +2741,10 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
     /* -------------------------------------------------------------------- */
     /*      We found the file, now load and parse it.                       */
     /* -------------------------------------------------------------------- */
-    if (GDALLoadWorldFile(pszTFW, padfGeoTransform))
+    if (GDALLoadWorldFile(osTFW.c_str(), padfGeoTransform))
     {
         if (ppszWorldFileNameOut)
-            *ppszWorldFileNameOut = CPLStrdup(pszTFW);
+            *ppszWorldFileNameOut = CPLStrdup(osTFW.c_str());
         return TRUE;
     }
     return FALSE;
@@ -2806,8 +2809,9 @@ int CPL_STDCALL GDALWriteWorldFile(const char *pszBaseFilename,
     /* -------------------------------------------------------------------- */
     /*      Update extension, and write to disk.                            */
     /* -------------------------------------------------------------------- */
-    const char *pszTFW = CPLResetExtension(pszBaseFilename, pszExtension);
-    VSILFILE *const fpTFW = VSIFOpenL(pszTFW, "wt");
+    const std::string osTFW =
+        CPLResetExtensionSafe(pszBaseFilename, pszExtension);
+    VSILFILE *const fpTFW = VSIFOpenL(osTFW.c_str(), "wt");
     if (fpTFW == nullptr)
         return FALSE;
 
@@ -3369,6 +3373,13 @@ int CPL_STDCALL GDALGCPsToGeoTransform(int nGCPCount, const GDAL_GCP *pasGCPs,
     GDALComposeGeoTransforms(pl_normalize, gt_normalized, gt1p2);
     GDALComposeGeoTransforms(gt1p2, inv_geo_normalize, padfGeoTransform);
 
+    // "Hour-glass" like shape of GCPs. Cf https://github.com/OSGeo/gdal/issues/11618
+    if (std::abs(padfGeoTransform[1]) <= 1e-15 ||
+        std::abs(padfGeoTransform[5]) <= 1e-15)
+    {
+        return FALSE;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Now check if any of the input points fit this poorly.           */
     /* -------------------------------------------------------------------- */
@@ -3588,6 +3599,64 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
     /* ==================================================================== */
     /*      Loop over all arguments.                                        */
     /* ==================================================================== */
+
+    // Start with --debug, so that "my_command --config UNKNOWN_CONFIG_OPTION --debug on"
+    // detects and warns about a unknown config option.
+    for (iArg = 1; iArg < nArgc; iArg++)
+    {
+        if (EQUAL(papszArgv[iArg], "--config") && iArg + 2 < nArgc &&
+            EQUAL(papszArgv[iArg + 1], "CPL_DEBUG"))
+        {
+            if (iArg + 1 >= nArgc)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "--config option given without a key=value argument.");
+                return -1;
+            }
+
+            const char *pszArg = papszArgv[iArg + 1];
+            if (strchr(pszArg, '=') != nullptr)
+            {
+                char *pszKey = nullptr;
+                const char *pszValue = CPLParseNameValue(pszArg, &pszKey);
+                if (pszKey && !EQUAL(pszKey, "CPL_DEBUG") && pszValue)
+                {
+                    CPLSetConfigOption(pszKey, pszValue);
+                }
+                CPLFree(pszKey);
+                ++iArg;
+            }
+            else
+            {
+                if (iArg + 2 >= nArgc)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "--config option given without a key and value "
+                             "argument.");
+                    return -1;
+                }
+
+                if (!EQUAL(papszArgv[iArg + 1], "CPL_DEBUG"))
+                    CPLSetConfigOption(papszArgv[iArg + 1],
+                                       papszArgv[iArg + 2]);
+
+                iArg += 2;
+            }
+        }
+        else if (EQUAL(papszArgv[iArg], "--debug"))
+        {
+            if (iArg + 1 >= nArgc)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "--debug option given without debug level.");
+                return -1;
+            }
+
+            CPLSetConfigOption("CPL_DEBUG", papszArgv[iArg + 1]);
+            iArg += 1;
+        }
+    }
+
     for (iArg = 1; iArg < nArgc; iArg++)
     {
         /* --------------------------------------------------------------------
@@ -3642,7 +3711,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             {
                 char *pszKey = nullptr;
                 const char *pszValue = CPLParseNameValue(pszArg, &pszKey);
-                if (pszKey && pszValue)
+                if (pszKey && !EQUAL(pszKey, "CPL_DEBUG") && pszValue)
                 {
                     CPLSetConfigOption(pszKey, pszValue);
                 }
@@ -3659,7 +3728,9 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                     return -1;
                 }
 
-                CPLSetConfigOption(papszArgv[iArg + 1], papszArgv[iArg + 2]);
+                if (!EQUAL(papszArgv[iArg + 1], "CPL_DEBUG"))
+                    CPLSetConfigOption(papszArgv[iArg + 1],
+                                       papszArgv[iArg + 2]);
 
                 iArg += 2;
             }
@@ -3692,13 +3763,14 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 if (EQUAL(papszFiles[i], ".") || EQUAL(papszFiles[i], ".."))
                     continue;
 
-                CPLString osOldPath, osNewPath;
-                osOldPath = CPLFormFilename(papszArgv[iArg + 1], papszFiles[i],
-                                            nullptr);
+                std::string osOldPath;
+                CPLString osNewPath;
+                osOldPath = CPLFormFilenameSafe(papszArgv[iArg + 1],
+                                                papszFiles[i], nullptr);
                 osNewPath.Printf("/vsimem/%s", papszFiles[i]);
 
                 VSIStatBufL sStatBuf;
-                if (VSIStatL(osOldPath, &sStatBuf) != 0 ||
+                if (VSIStatL(osOldPath.c_str(), &sStatBuf) != 0 ||
                     VSI_ISDIR(sStatBuf.st_mode))
                 {
                     CPLDebug("VSI", "Skipping preload of %s.",
@@ -3709,7 +3781,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 CPLDebug("VSI", "Preloading %s to %s.", osOldPath.c_str(),
                          osNewPath.c_str());
 
-                if (CPLCopyFile(osNewPath, osOldPath) != 0)
+                if (CPLCopyFile(osNewPath, osOldPath.c_str()) != 0)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Failed to copy %s to /vsimem", osOldPath.c_str());
@@ -3735,7 +3807,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 return -1;
             }
 
-            CPLSetConfigOption("CPL_DEBUG", papszArgv[iArg + 1]);
             iArg += 1;
         }
 
@@ -3823,15 +3894,17 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
         /*      --formats */
         /* --------------------------------------------------------------------
          */
-        else if (EQUAL(papszArgv[iArg], "--formats"))
+        else if (EQUAL(papszArgv[iArg], "--formats") ||
+                 EQUAL(papszArgv[iArg], "--drivers"))
         {
             if (nOptions == 0)
                 nOptions = GDAL_OF_RASTER;
 
-            bool bJSON = false;
+            bool bJSON = EQUAL(papszArgv[iArg], "--drivers");
             for (int i = 1; i < nArgc; i++)
             {
-                if (strcmp(papszArgv[i], "-json") == 0)
+                if (strcmp(papszArgv[i], "-json") == 0 ||
+                    strcmp(papszArgv[i], "--json") == 0)
                 {
                     bJSON = true;
                     break;
@@ -4392,7 +4465,7 @@ GDALDataset *GDALFindAssociatedAuxFile(const char *pszBasename,
     const char *pszAuxSuffixLC = "aux";
     const char *pszAuxSuffixUC = "AUX";
 
-    if (EQUAL(CPLGetExtension(pszBasename), pszAuxSuffixLC))
+    if (EQUAL(CPLGetExtensionSafe(pszBasename).c_str(), pszAuxSuffixLC))
         return nullptr;
 
     /* -------------------------------------------------------------------- */
@@ -4410,7 +4483,8 @@ GDALDataset *GDALFindAssociatedAuxFile(const char *pszBasename,
     /*      has occurred.                                                   */
     /* -------------------------------------------------------------------- */
     CPLString osJustFile = CPLGetFilename(pszBasename);  // without dir
-    CPLString osAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixLC);
+    CPLString osAuxFilename =
+        CPLResetExtensionSafe(pszBasename, pszAuxSuffixLC);
     GDALDataset *poODS = nullptr;
     GByte abyHeader[32];
 
@@ -4419,7 +4493,7 @@ GDALDataset *GDALFindAssociatedAuxFile(const char *pszBasename,
     if (fp == nullptr && VSIIsCaseSensitiveFS(osAuxFilename))
     {
         // Can't found file with lower case suffix. Try the upper case one.
-        osAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixUC);
+        osAuxFilename = CPLResetExtensionSafe(pszBasename, pszAuxSuffixUC);
         fp = VSIFOpenL(osAuxFilename, "rb");
     }
 

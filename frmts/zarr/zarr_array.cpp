@@ -2633,10 +2633,11 @@ void ZarrArray::ParentRenamed(const std::string &osNewParentFullName)
     // The parent necessarily exist, since it notified us
     CPLAssert(poParent);
 
-    m_osFilename =
-        CPLFormFilename(CPLFormFilename(poParent->GetDirectoryName().c_str(),
-                                        m_osName.c_str(), nullptr),
-                        CPLGetFilename(m_osFilename.c_str()), nullptr);
+    m_osFilename = CPLFormFilenameSafe(
+        CPLFormFilenameSafe(poParent->GetDirectoryName().c_str(),
+                            m_osName.c_str(), nullptr)
+            .c_str(),
+        CPLGetFilename(m_osFilename.c_str()), nullptr);
 }
 
 /************************************************************************/
@@ -2668,10 +2669,10 @@ bool ZarrArray::Rename(const std::string &osNewName)
     }
 
     const std::string osRootDirectoryName(
-        CPLGetDirname(CPLGetDirname(m_osFilename.c_str())));
-    const std::string osOldDirectoryName =
-        CPLFormFilename(osRootDirectoryName.c_str(), m_osName.c_str(), nullptr);
-    const std::string osNewDirectoryName = CPLFormFilename(
+        CPLGetDirnameSafe(CPLGetDirnameSafe(m_osFilename.c_str()).c_str()));
+    const std::string osOldDirectoryName = CPLFormFilenameSafe(
+        osRootDirectoryName.c_str(), m_osName.c_str(), nullptr);
+    const std::string osNewDirectoryName = CPLFormFilenameSafe(
         osRootDirectoryName.c_str(), osNewName.c_str(), nullptr);
 
     if (VSIRename(osOldDirectoryName.c_str(), osNewDirectoryName.c_str()) != 0)
@@ -2685,8 +2686,8 @@ bool ZarrArray::Rename(const std::string &osNewName)
                                                  osNewDirectoryName);
 
     m_osFilename =
-        CPLFormFilename(osNewDirectoryName.c_str(),
-                        CPLGetFilename(m_osFilename.c_str()), nullptr);
+        CPLFormFilenameSafe(osNewDirectoryName.c_str(),
+                            CPLGetFilename(m_osFilename.c_str()), nullptr);
 
     if (poParent)
     {
@@ -2724,6 +2725,7 @@ void ZarrArray::ParseSpecialAttributes(
             if (item.IsValid())
             {
                 poSRS = std::make_shared<OGRSpatialReference>();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 if (poSRS->SetFromUserInput(
                         item.ToString().c_str(),
                         OGRSpatialReference::
@@ -2748,6 +2750,7 @@ void ZarrArray::ParseSpecialAttributes(
             if (gridMappingArray)
             {
                 poSRS = std::make_shared<OGRSpatialReference>();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 CPLStringList aosKeyValues;
                 for (const auto &poAttr : gridMappingArray->GetAttributes())
                 {
@@ -2798,10 +2801,12 @@ void ZarrArray::ParseSpecialAttributes(
         }
         if (iDimX > 0 && iDimY > 0)
         {
-            if (poSRS->GetDataAxisToSRSAxisMapping() == std::vector<int>{2, 1})
+            const auto &oMapping = poSRS->GetDataAxisToSRSAxisMapping();
+            if (oMapping == std::vector<int>{2, 1} ||
+                oMapping == std::vector<int>{2, 1, 3})
                 poSRS->SetDataAxisToSRSAxisMapping({iDimY, iDimX});
-            else if (poSRS->GetDataAxisToSRSAxisMapping() ==
-                     std::vector<int>{1, 2})
+            else if (oMapping == std::vector<int>{1, 2} ||
+                     oMapping == std::vector<int>{1, 2, 3})
                 poSRS->SetDataAxisToSRSAxisMapping({iDimX, iDimY});
         }
 

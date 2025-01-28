@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Arc GIS Server Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS

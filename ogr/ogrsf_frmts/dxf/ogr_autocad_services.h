@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  DXF and DWG Translators
  * Purpose:  Declarations for shared AutoCAD format services.

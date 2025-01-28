@@ -31,12 +31,12 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
                                    char **papszSiblingFiles)
     : GDALMDReaderPleiades(pszPath, papszSiblingFiles)
 {
-    const char *pszDirName = CPLGetDirname(pszPath);
+    const std::string osDirName = CPLGetDirnameSafe(pszPath);
 
     if (m_osIMDSourceFilename.empty())
     {
         std::string osIMDSourceFilename =
-            CPLFormFilename(pszDirName, "METADATA.DIM", nullptr);
+            CPLFormFilenameSafe(osDirName.c_str(), "METADATA.DIM", nullptr);
 
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
@@ -45,7 +45,7 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
         else
         {
             osIMDSourceFilename =
-                CPLFormFilename(pszDirName, "metadata.dim", nullptr);
+                CPLFormFilenameSafe(osDirName.c_str(), "metadata.dim", nullptr);
             if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
             {
                 m_osIMDSourceFilename = std::move(osIMDSourceFilename);
@@ -61,7 +61,7 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
         if (EQUAL(CPLGetFilename(pszPath), "IMAGERY.TIF"))
         {
             std::string osIMDSourceFilename =
-                CPLSPrintf("%s\\METADATA.DIM", CPLGetPath(pszPath));
+                CPLGetPathSafe(pszPath) + "\\METADATA.DIM";
 
             if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
             {
@@ -70,7 +70,7 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
             else
             {
                 osIMDSourceFilename =
-                    CPLSPrintf("%s\\metadata.dim", CPLGetPath(pszPath));
+                    CPLGetPathSafe(pszPath) + "\\metadata.dim";
                 if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
                 {
                     m_osIMDSourceFilename = std::move(osIMDSourceFilename);

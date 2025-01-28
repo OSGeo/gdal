@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CARTO Translator
  * Purpose:  Definition of classes for OGR Carto driver.

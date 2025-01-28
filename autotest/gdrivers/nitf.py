@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for NITF driver.
@@ -5735,7 +5734,8 @@ def test_nitf_invalid_udid():
 def test_nitf_isubcat_populated():
 
     # Check a dataset with IQ complex data.
-    ds = gdal.Open("data/nitf/sar_sicd.ntf")
+    with gdal.config_option("NITF_SAR_AS_COMPLEX_TYPE", "NO"):
+        ds = gdal.Open("data/nitf/sar_sicd.ntf")
     expected = ["I", "Q"]
     for b in range(ds.RasterCount):
         md = ds.GetRasterBand(b + 1).GetMetadata()
@@ -6246,6 +6246,41 @@ def test_nitf_report_ABPP_as_NBITS(tmp_vsimem):
     ds = gdal.Open(out_filename)
     assert ds.GetMetadataItem("NITF_ABPP") == "09"
     assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "9"
+
+
+###############################################################################
+# Test reading SAR products with I,Q bands
+
+
+def test_nitf_readSAR_IQ(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "tmp.ntf")
+    gdal.Translate(
+        out_filename,
+        "data/byte.tif",
+        options="-b 1 -b 1 -outsize 40 20 -co ICAT=SAR -ot Float32 -co ISUBCAT=I,Q -scale_2 0 255 255 0",
+    )
+    gdal.Unlink(out_filename + ".aux.xml")
+
+    ds = gdal.Open(out_filename)
+    assert ds.RasterCount == 1
+    assert ds.RasterXSize == 40
+    assert ds.RasterYSize == 20
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_CFloat32
+    assert ds.GetMetadataItem("NITF_ISUBCAT") is None
+
+    src_ds = gdal.Open("data/byte.tif")
+    ds = gdal.Open("DERIVED_SUBDATASET:REAL:" + out_filename)
+    assert (
+        ds.ReadRaster(0, 0, 40, 20, 20, 20, buf_type=gdal.GDT_Byte)
+        == src_ds.ReadRaster()
+    )
+    ds = gdal.Open("DERIVED_SUBDATASET:IMAG:" + out_filename)
+    mod_src_ds = gdal.Translate("", src_ds, options="-f MEM -scale 0 255 255 0")
+    assert (
+        ds.ReadRaster(0, 0, 40, 20, 20, 20, buf_type=gdal.GDT_Byte)
+        == mod_src_ds.ReadRaster()
+    )
 
 
 ###############################################################################

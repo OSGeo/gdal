@@ -7,7 +7,7 @@
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.20
+ARG ALPINE_VERSION=3.21
 FROM alpine:${ALPINE_VERSION} AS builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -65,6 +65,7 @@ RUN apk add --no-cache \
     lz4-dev \
     make \
     mariadb-connector-c-dev \
+    muparser-dev \
     netcdf-dev \
     ninja-build \
     odbc-cpp-wrapper-dev \
@@ -104,14 +105,14 @@ RUN if test "$(uname -m)" = "x86_64"; then ( \
     ); fi
 
 # Build hdf4
-ARG HDF4_VERSION=4.2.16
+ARG HDF4_VERSION=4.3.0
 RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
-    apk add --no-cache byacc flex portablexdr-dev \
+    apk add --no-cache byacc flex libtirpc-dev \
     && mkdir hdf4 \
-    && curl -L -fsS https://support.hdfgroup.org/ftp/HDF/releases/HDF${HDF4_VERSION}/src/hdf-${HDF4_VERSION}.tar.gz \
-        | tar xz -C hdf4 --strip-components=2 \
+    && curl -L -fsS https://github.com/HDFGroup/hdf4/archive/refs/tags/hdf${HDF4_VERSION}.tar.gz \
+        | tar xz -C hdf4 --strip-components=1 \
     && cd hdf4 \
-    && LDFLAGS=-lportablexdr ./configure --prefix=/usr --enable-shared --disable-static \
+    && LDFLAGS=-ltirpc ./configure --prefix=/usr --enable-shared --disable-static \
         --with-szlib=/usr --disable-fortran --disable-netcdf \
     && make -j$(nproc) \
     && make install \
@@ -120,7 +121,7 @@ RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf hdf4 \
-    && apk del byacc flex portablexdr-dev \
+    && apk del byacc flex libtirpc-dev \
     ); fi
 
 # Build libOpenDRIVE
@@ -230,6 +231,10 @@ RUN --mount=type=cache,id=alpine-normal-spatialite,target=$HOME/.cache \
         mkdir -p /build_spatialite/usr/lib; \
     fi
 
+# Download exprtk
+RUN curl -LO -fsS https://github.com/ArashPartow/exprtk/raw/refs/heads/release/exprtk.hpp \
+    && mv exprtk.hpp /usr/include
+
 # Build GDAL
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
@@ -245,8 +250,8 @@ RUN --mount=type=cache,id=alpine-normal-gdal,target=$HOME/.cache \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
     && if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then \
-        apk add --no-cache portablexdr-dev \
-        && export LDFLAGS="-lportablexdr ${LDFLAGS}"; \
+        apk add --no-cache libtirpc-dev \
+        && export LDFLAGS="-ltirpc ${LDFLAGS}"; \
     fi \
     && mkdir gdal \
     && curl -L -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
@@ -280,6 +285,7 @@ RUN --mount=type=cache,id=alpine-normal-gdal,target=$HOME/.cache \
         -DBUILD_TESTING=OFF \
         -DOpenDrive_DIR=/usr/lib/ \
         -DOGR_ENABLE_DRIVER_XODR_PLUGIN=TRUE \
+        -DGDAL_USE_EXPRTK:BOOL=ON \
     && ninja \
     && DESTDIR="/build" ninja install \
     && (ninja multireadtest && cp apps/multireadtest /build/usr/bin) \
@@ -323,6 +329,7 @@ RUN date
 
 RUN apk add --no-cache \
         armadillo \
+        bash-completion \
         basisu \
         blosc \
         brotli-libs \
@@ -363,6 +370,7 @@ RUN apk add --no-cache \
         libxml2 \
         lz4-libs \
         mariadb-connector-c \
+        muparser \
         netcdf \
         minizip \
         musl \
@@ -372,7 +380,7 @@ RUN apk add --no-cache \
         openjpeg \
         pcre2 \
         poppler \
-        portablexdr \
+        libtirpc \
         proj \
         python3 \
         py3-numpy \
@@ -413,7 +421,10 @@ COPY --from=builder  /build_proj/usr/include/ /usr/include/
 COPY --from=builder  /build_proj/usr/bin/ /usr/bin/
 COPY --from=builder  /build_proj/usr/lib/ /usr/lib/
 
+COPY --from=builder  /build/usr/share/bash-completion/ /usr/share/bash-completion/
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build_gdal_python/usr/ /usr/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
+
+CMD ["/bin/bash", "-l"]

@@ -194,22 +194,24 @@ MAIN_START(argc, argv)
         else
         {
             char **papszSubdatasets = GDALGetMetadata(hDataset, "SUBDATASETS");
+            const int nSubdatasets = CSLCount(papszSubdatasets) / 2;
             char *pszSubDest = static_cast<char *>(
                 CPLMalloc(strlen(sOptionsForBinary.osDest.c_str()) + 32));
 
-            CPLString osPath = CPLGetPath(sOptionsForBinary.osDest.c_str());
-            CPLString osBasename =
-                CPLGetBasename(sOptionsForBinary.osDest.c_str());
-            CPLString osExtension =
-                CPLGetExtension(sOptionsForBinary.osDest.c_str());
+            const CPLString osPath =
+                CPLGetPathSafe(sOptionsForBinary.osDest.c_str());
+            const CPLString osBasename =
+                CPLGetBasenameSafe(sOptionsForBinary.osDest.c_str());
+            const CPLString osExtension =
+                CPLGetExtensionSafe(sOptionsForBinary.osDest.c_str());
             CPLString osTemp;
 
             const char *pszFormat = nullptr;
-            if (CSLCount(papszSubdatasets) / 2 < 10)
+            if (nSubdatasets < 10)
             {
                 pszFormat = "%s_%d";
             }
-            else if (CSLCount(papszSubdatasets) / 2 < 100)
+            else if (nSubdatasets < 100)
             {
                 pszFormat = "%s_%002d";
             }
@@ -225,7 +227,7 @@ MAIN_START(argc, argv)
                 char *pszSource =
                     CPLStrdup(strstr(papszSubdatasets[i], "=") + 1);
                 osTemp = CPLSPrintf(pszFormat, osBasename.c_str(), i / 2 + 1);
-                osTemp = CPLFormFilename(osPath, osTemp, osExtension);
+                osTemp = CPLFormFilenameSafe(osPath, osTemp, osExtension);
                 strcpy(pszSubDest, osTemp.c_str());
                 hDataset = GDALOpenEx(pszSource, GDAL_OF_RASTER, nullptr,
                                       sOptionsForBinary.aosOpenOptions.List(),

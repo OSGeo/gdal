@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MSG Driver
  * Purpose:  GDALDataset driver for MSG translator for read support.

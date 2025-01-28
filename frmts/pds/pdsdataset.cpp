@@ -679,16 +679,17 @@ void PDSDataset::ParseSRS()
     /*      Check for a .prj and world file to override the georeferencing. */
     /* ==================================================================== */
     {
-        const CPLString osPath = CPLGetPath(pszFilename);
-        const CPLString osName = CPLGetBasename(pszFilename);
-        const char *pszPrjFile = CPLFormCIFilename(osPath, osName, "prj");
+        const CPLString osPath = CPLGetPathSafe(pszFilename);
+        const CPLString osName = CPLGetBasenameSafe(pszFilename);
+        const std::string osPrjFile =
+            CPLFormCIFilenameSafe(osPath, osName, "prj");
 
-        VSILFILE *fp = VSIFOpenL(pszPrjFile, "r");
+        VSILFILE *fp = VSIFOpenL(osPrjFile.c_str(), "r");
         if (fp != nullptr)
         {
             VSIFCloseL(fp);
 
-            char **papszLines = CSLLoad(pszPrjFile);
+            char **papszLines = CSLLoad(osPrjFile.c_str());
 
             m_oSRS.importFromESRI(papszLines);
             CSLDestroy(papszLines);
@@ -846,8 +847,9 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
         }
         else
         {
-            CPLString osTPath = CPLGetPath(GetDescription());
-            m_osImageFilename = CPLFormCIFilename(osTPath, osFilename, nullptr);
+            CPLString osTPath = CPLGetPathSafe(GetDescription());
+            m_osImageFilename =
+                CPLFormCIFilenameSafe(osTPath, osFilename, nullptr);
             osExternalCube = m_osImageFilename;
         }
     }
@@ -1201,7 +1203,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
     int nPixelOffset;
     vsi_l_offset nBandOffset;
 
-    const auto CPLSM64 = [](int x) { return CPLSM(static_cast<GInt64>(x)); };
+    const auto CPLSM64 = [](int x) { return CPLSM(static_cast<int64_t>(x)); };
 
     try
     {
@@ -1330,9 +1332,9 @@ int PDSDataset::ParseCompressedImage()
     const CPLString osFileName =
         CleanString(GetKeyword("COMPRESSED_FILE.FILE_NAME", ""));
 
-    const CPLString osPath = CPLGetPath(GetDescription());
+    const CPLString osPath = CPLGetPathSafe(GetDescription());
     const CPLString osFullFileName =
-        CPLFormFilename(osPath, osFileName, nullptr);
+        CPLFormFilenameSafe(osPath, osFileName, nullptr);
 
     poCompressedDS =
         GDALDataset::FromHandle(GDALOpen(osFullFileName, GA_ReadOnly));
@@ -1425,11 +1427,11 @@ GDALDataset *PDSDataset::Open(GDALOpenInfo *poOpenInfo)
     if (EQUAL(osEncodingType, "ZIP") && !osCompressedFilename.empty() &&
         !osUncompressedFilename.empty())
     {
-        const CPLString osPath = CPLGetPath(poDS->GetDescription());
+        const CPLString osPath = CPLGetPathSafe(poDS->GetDescription());
         osCompressedFilename =
-            CPLFormFilename(osPath, osCompressedFilename, nullptr);
+            CPLFormFilenameSafe(osPath, osCompressedFilename, nullptr);
         osUncompressedFilename =
-            CPLFormFilename(osPath, osUncompressedFilename, nullptr);
+            CPLFormFilenameSafe(osPath, osUncompressedFilename, nullptr);
         if (VSIStatExL(osCompressedFilename, &sStat, VSI_STAT_EXISTS_FLAG) ==
                 0 &&
             VSIStatExL(osUncompressedFilename, &sStat, VSI_STAT_EXISTS_FLAG) !=

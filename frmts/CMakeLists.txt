@@ -79,6 +79,7 @@ if (CMAKE_BUILD_TYPE MATCHES "Debug" OR GDAL_ENABLE_DRIVER_NULL)
   gdal_optional_format(null "NULL dummy driver")
 endif ()
 
+gdal_optional_format(libertiff "GeoTIFF support through libertiff library")
 gdal_optional_format(hfa "Erdas Imagine .img")
 gdal_optional_format(sdts "SDTS translator")
 gdal_optional_format(nitf "National Imagery Transmission Format")
@@ -146,7 +147,6 @@ gdal_optional_format(bsb "Maptech/NOAA BSB Nautical Chart Format")
 gdal_dependent_format(aigrid "Arc/Info Binary Grid Format" "OGR_ENABLE_DRIVER_AVC")
 gdal_optional_format(usgsdem "USGS ASCII DEM (and CDED)")
 gdal_optional_format(airsar "AirSAR Polarimetric Format")
-gdal_optional_format(ozi "OZF2/OZFX3 raster")
 gdal_optional_format(pcidsk "PCI Geomatics Database File")
 gdal_optional_format(sigdem "Scaled Integer Gridded DEM .sigdem Driver")
 gdal_dependent_format(msg "Meteosat Second Generation" "GDAL_USE_PUBLICDECOMPWT")
@@ -154,6 +154,7 @@ gdal_optional_format(rik "RIK -- Swedish Grid Maps")
 gdal_optional_format(stacit "STACIT")
 gdal_optional_format(pdf "Geospatial PDF") # write only if none of GDAL_USE_POPPLER, GDAL_USE_PODOFO or GDAL_USE_PDFIUM
                                            # is set
+gdal_optional_format(rcm "Radarsat Constellation Mission")
 
 # formats with external library dependency
 gdal_dependent_format(png "PNG image format" "GDAL_USE_PNG OR GDAL_USE_PNG_INTERNAL")
@@ -191,8 +192,6 @@ gdal_dependent_format(basisu_ktx2 "Basis Universal and KTX2 texture formats" "GD
 # driver with proprietary libraries Kakadu software SDK
 include(jp2kak/driver_declaration.cmake)
 gdal_dependent_format(jpipkak "JPIP Streaming" "GDAL_USE_KDU")
-# Luratech SDK
-gdal_dependent_format(jp2lura "JPEG-2000 (based on Luratech)" "GDAL_USE_LURATECH")
 # LizardTech's decoding software development kit (DSDK)
 include(mrsid/driver_declaration.cmake)
 include(georaster/driver_declaration.cmake)

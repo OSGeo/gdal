@@ -3,7 +3,6 @@ add_gdal_driver(
   SOURCES filegdbindex.cpp
           filegdbindex_write.cpp
           filegdbtable.cpp
-          filegdbtable_write.cpp
           filegdbtable_write_fields.cpp
           filegdbtable_freelist.cpp
           filegdbtable.h
@@ -27,7 +26,15 @@ if(NOT TARGET ogr_OpenFileGDB)
 endif()
 
 # because of use of GDAL_RELEASE_NAME
-set_property(SOURCE filegdbtable_write.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
+add_library(ogr_OpenFileGDB_filegdbtable_write OBJECT filegdbtable_write.cpp)
+add_dependencies(ogr_OpenFileGDB_filegdbtable_write generate_gdal_version_h)
+gdal_standard_includes(ogr_OpenFileGDB_filegdbtable_write)
+set_property(TARGET ogr_OpenFileGDB_filegdbtable_write PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+if(OGR_ENABLE_DRIVER_OPENFILEGDB_PLUGIN)
+  target_sources(ogr_OpenFileGDB PRIVATE $<TARGET_OBJECTS:ogr_OpenFileGDB_filegdbtable_write>)
+else()
+  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogr_OpenFileGDB_filegdbtable_write>)
+endif()
 
 if (CMAKE_CXX_FLAGS MATCHES "-fno-sanitize-recover=unsigned-integer-overflow")
     # Remove '-fno-sanitize-recover=unsigned-integer-overflow' from global flags

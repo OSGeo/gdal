@@ -1390,6 +1390,7 @@ GDALDataset *USGSDEMCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Source dataset dimensions must be at least 2x2.");
+        USGSDEMWriteCleanup(&sWInfo);
         return nullptr;
     }
 

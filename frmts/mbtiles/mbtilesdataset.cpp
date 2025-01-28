@@ -2015,7 +2015,7 @@ int MBTilesDataset::Identify(GDALOpenInfo *poOpenInfo)
     }
 #endif
 
-    if ((EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") ||
+    if ((poOpenInfo->IsExtensionEqualToCI("MBTILES") ||
          // Allow direct Amazon S3 signed URLs that contains .mbtiles in the
          // middle of the URL
          strstr(poOpenInfo->pszFilename, ".mbtiles") != nullptr) &&
@@ -3054,10 +3054,11 @@ bool MBTilesDataset::CreateInternal(const char *pszFilename, int nXSize,
         return false;
     }
 
-    const char *pszName =
-        CSLFetchNameValueDef(papszOptions, "NAME", CPLGetBasename(pszFilename));
+    const std::string osName = CSLFetchNameValueDef(
+        papszOptions, "NAME", CPLGetBasenameSafe(pszFilename).c_str());
     char *pszSQL = sqlite3_mprintf(
-        "INSERT INTO metadata (name, value) VALUES ('name', '%q')", pszName);
+        "INSERT INTO metadata (name, value) VALUES ('name', '%q')",
+        osName.c_str());
     sqlite3_exec(hDB, pszSQL, nullptr, nullptr, nullptr);
     sqlite3_free(pszSQL);
 
@@ -3067,11 +3068,11 @@ bool MBTilesDataset::CreateInternal(const char *pszFilename, int nXSize,
     sqlite3_exec(hDB, pszSQL, nullptr, nullptr, nullptr);
     sqlite3_free(pszSQL);
 
-    const char *pszDescription = CSLFetchNameValueDef(
-        papszOptions, "DESCRIPTION", CPLGetBasename(pszFilename));
+    const std::string osDescription = CSLFetchNameValueDef(
+        papszOptions, "DESCRIPTION", CPLGetBasenameSafe(pszFilename).c_str());
     pszSQL = sqlite3_mprintf(
         "INSERT INTO metadata (name, value) VALUES ('description', '%q')",
-        pszDescription);
+        osDescription.c_str());
     sqlite3_exec(hDB, pszSQL, nullptr, nullptr, nullptr);
     sqlite3_free(pszSQL);
 

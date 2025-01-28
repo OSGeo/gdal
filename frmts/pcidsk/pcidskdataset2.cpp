@@ -853,7 +853,7 @@ char **PCIDSK2Dataset::GetFileList()
 
 {
     char **papszFileList = GDALPamDataset::GetFileList();
-    CPLString osBaseDir = CPLGetPath(GetDescription());
+    CPLString osBaseDir = CPLGetPathSafe(GetDescription());
 
     try
     {
@@ -871,7 +871,8 @@ char **PCIDSK2Dataset::GetFileList()
             {
                 papszFileList = CSLAddString(
                     papszFileList,
-                    CPLProjectRelativeFilename(osBaseDir, osChanFilename));
+                    CPLProjectRelativeFilenameSafe(osBaseDir, osChanFilename)
+                        .c_str());
             }
         }
 

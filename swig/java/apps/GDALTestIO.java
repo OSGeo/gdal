@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     GDALTestIO.java
  * Project:  GDAL Java Interface
@@ -23,6 +22,7 @@ import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
 import org.gdal.gdalconst.gdalconst;
+import org.gdal.gdal.*;
 
 public class GDALTestIO implements Runnable
 {
@@ -148,7 +148,9 @@ public class GDALTestIO implements Runnable
         gdal.AllRegister();
 
         testInt64();
-        
+
+        testGetMemFileBuffer();
+
         int nbIters = 50;
 
         method = METHOD_JAVA_ARRAYS;
@@ -186,12 +188,12 @@ public class GDALTestIO implements Runnable
 
         System.out.println("Success !");
     }
-    
+
     private static void testInt64() {
-        
+
         long[] data1;
         long[] data2;
-        
+
         int xSz = 5;
         int ySz = 2;
         int nBands = 1;
@@ -212,6 +214,22 @@ public class GDALTestIO implements Runnable
         for (int i = 0; i < data1.length; i++) {
             if (data1[i] != data2[i])
                 throw new RuntimeException("int64 write and read values are not the same "+data1[i]+" "+data2[i]);
+        }
+
+        dataset.Close();
+        dataset.Close();
+    }
+
+    private static void testGetMemFileBuffer()
+    {
+        gdal.FileFromMemBuffer("/vsimem/test", new byte[] {1, 2, 3});
+        for(int iter = 0; iter < 2; iter++)
+        {
+            byte[] res = gdal.GetMemFileBuffer("/vsimem/test");
+            if (res.length != 3 )
+                throw new RuntimeException("res.length != 3");
+            if (res[0] != 1 || res[1] != 2 || res[2] != 3)
+                throw new RuntimeException("res != {1, 2, 3}");
         }
     }
 }

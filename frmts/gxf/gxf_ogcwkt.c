@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GXF Reader
  * Purpose:  Handle GXF to OGC WKT projection transformation.
@@ -248,7 +247,7 @@ static void OGCWKTSetProj(char *pszProjection, size_t nProjectionSize,
 char *GXFGetMapProjectionAsOGCWKT(GXFHandle hGXF)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
     char **papszMethods = NULL;
     char szWKT[1024 + 32];
     char szGCS[512];

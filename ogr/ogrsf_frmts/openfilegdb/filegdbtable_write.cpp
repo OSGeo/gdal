@@ -68,7 +68,7 @@ bool FileGDBTable::Create(const char *pszFilename, int nTablxOffsetSize,
     m_bGeomTypeHasM = bGeomTypeHasM;
     m_bHasReadGDBIndexes = TRUE;
 
-    if (!EQUAL(CPLGetExtension(pszFilename), "gdbtable"))
+    if (!EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "gdbtable"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "FileGDB table extension must be gdbtable");
@@ -85,7 +85,8 @@ bool FileGDBTable::Create(const char *pszFilename, int nTablxOffsetSize,
         return false;
     }
 
-    const std::string osTableXName = CPLResetExtension(pszFilename, "gdbtablx");
+    const std::string osTableXName =
+        CPLResetExtensionSafe(pszFilename, "gdbtablx");
     m_fpTableX = VSIFOpenL(osTableXName.c_str(), "wb+");
     if (m_fpTableX == nullptr)
     {
@@ -2127,12 +2128,12 @@ bool FileGDBTable::WholeFileRewriter::Begin()
 #endif
                                        ));
 
-    m_osGdbTablx = CPLFormFilename(
-        CPLGetPath(m_oTable.m_osFilename.c_str()),
-        CPLGetBasename(m_oTable.m_osFilename.c_str()), "gdbtablx");
+    m_osGdbTablx = CPLFormFilenameSafe(
+        CPLGetPathSafe(m_oTable.m_osFilename.c_str()).c_str(),
+        CPLGetBasenameSafe(m_oTable.m_osFilename.c_str()).c_str(), "gdbtablx");
 
-    m_osBackupGdbTable =
-        CPLResetExtension(m_oTable.m_osFilename.c_str(), "_backup.gdbtable");
+    m_osBackupGdbTable = CPLResetExtensionSafe(m_oTable.m_osFilename.c_str(),
+                                               "_backup.gdbtable");
     VSIStatBufL sStat;
     if (VSIStatL(m_osBackupGdbTable.c_str(), &sStat) == 0)
     {
@@ -2143,7 +2144,7 @@ bool FileGDBTable::WholeFileRewriter::Begin()
     }
 
     m_osBackupGdbTablx =
-        CPLResetExtension(m_osGdbTablx.c_str(), "_backup.gdbtablx");
+        CPLResetExtensionSafe(m_osGdbTablx.c_str(), "_backup.gdbtablx");
 
     if (m_bModifyInPlace)
     {
@@ -2188,10 +2189,10 @@ bool FileGDBTable::WholeFileRewriter::Begin()
     }
     else
     {
-        m_osTmpGdbTable = CPLResetExtension(m_oTable.m_osFilename.c_str(),
-                                            "_compress.gdbtable");
+        m_osTmpGdbTable = CPLResetExtensionSafe(m_oTable.m_osFilename.c_str(),
+                                                "_compress.gdbtable");
         m_osTmpGdbTablx =
-            CPLResetExtension(m_osGdbTablx.c_str(), "_compress.gdbtablx");
+            CPLResetExtensionSafe(m_osGdbTablx.c_str(), "_compress.gdbtablx");
 
         m_fpOldGdbtable = m_oTable.m_fpTable;
         m_fpOldGdbtablx = m_oTable.m_fpTableX;

@@ -187,9 +187,6 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_JP2KAK_DRIVER)
     DeclareDeferredJP2KAKPlugin();
 #endif
-#if defined(DEFERRED_JP2LURA_DRIVER)
-    DeclareDeferredJP2LuraPlugin();
-#endif
 #if defined(DEFERRED_JP2OPENJPEG_DRIVER)
     DeclareDeferredOPENJPEGPlugin();
 #endif
@@ -333,6 +330,10 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_gtiff
     GDALRegister_GTiff();
     GDALRegister_COG();
+#endif
+
+#ifdef FRMT_libertiff
+    GDALRegister_LIBERTIFF();
 #endif
 
 #ifdef FRMT_nitf
@@ -514,11 +515,6 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_jpipkak
     // JPEG2000 support using Kakadu toolkit
     GDALRegister_JPIPKAK();
-#endif
-
-#ifdef FRMT_jp2lura
-    // JPEG2000 support using Lurawave library
-    GDALRegister_JP2Lura();
 #endif
 
 #ifdef FRMT_ecw
@@ -720,10 +716,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_HF2();
 #endif
 
-#ifdef FRMT_ozi
-    GDALRegister_OZI();
-#endif
-
 #ifdef FRMT_ctg
     GDALRegister_CTG();
 #endif
@@ -823,6 +815,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_zarr
     GDALRegister_Zarr();
+#endif
+
+#ifdef FRMT_rcm
+    GDALRegister_RCM();
 #endif
 
 /* -------------------------------------------------------------------- */

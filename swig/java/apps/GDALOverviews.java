@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     GDALOverviews.java
  * Project:  GDAL Java Interface

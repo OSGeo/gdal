@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Shapefile driver testing.
@@ -1733,6 +1732,35 @@ def test_ogr_shape_44():
 
     ds = ogr.Open(
         "/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/testshp"
+    )
+    assert ds is not None
+
+    lyr = ds.GetLayer(0)
+
+    srs = lyr.GetSpatialRef()
+    wkt = srs.ExportToWkt()
+    assert wkt.find("OSGB") != -1, "did not get expected SRS"
+
+    f = lyr.GetNextFeature()
+    assert f is not None, "did not get expected feature"
+
+
+###############################################################################
+# Test /vsicurl?url=
+
+
+@pytest.mark.require_curl()
+def test_ogr_shape_vsicurl_url():
+
+    conn = gdaltest.gdalurlopen(
+        "https://raw.githubusercontent.com/OSGeo/gdal/release/3.10/autotest/ogr/data/poly.shp"
+    )
+    if conn is None:
+        pytest.skip("cannot open URL")
+    conn.close()
+
+    ds = ogr.Open(
+        "/vsicurl?url=https%3A%2F%2Fraw.githubusercontent.com%2FOSGeo%2Fgdal%2Frelease%2F3.10%2Fautotest%2Fogr%2Fdata%2Fpoly.shp"
     )
     assert ds is not None
 
@@ -6134,3 +6162,34 @@ def test_ogr_shape_read_date_empty_string():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f["date"] is None
+
+
+###############################################################################
+# Verify that we can generate an output that is byte-identical to the expected golden file.
+
+
+@pytest.mark.parametrize(
+    "src_directory",
+    [
+        # Generated with:
+        # ogr2ogr autotest/ogr/data/shp/poly_golden autotest/ogr/data/poly.shp -lco DBF_DATE_LAST_UPDATE=2000-01-01
+        "data/shp/poly_golden",
+    ],
+)
+def test_ogr_shape_write_check_golden_file(tmp_path, src_directory):
+
+    out_directory = str(tmp_path / "test")
+    gdal.VectorTranslate(
+        out_directory,
+        src_directory,
+        format="ESRI Shapefile",
+        layerCreationOptions=["DBF_DATE_LAST_UPDATE=2000-01-01"],
+    )
+    for filename in os.listdir(src_directory):
+        src_filename = os.path.join(src_directory, filename)
+        out_filename = os.path.join(out_directory, filename)
+
+        assert os.stat(src_filename).st_size == os.stat(out_filename).st_size, filename
+        assert (
+            open(src_filename, "rb").read() == open(out_filename, "rb").read()
+        ), filename

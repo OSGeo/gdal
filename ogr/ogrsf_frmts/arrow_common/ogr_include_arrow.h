@@ -22,6 +22,9 @@
 // warning 4244: 'initializing': conversion from 'int32_t' to 'int16_t',
 // possible loss of data
 #pragma warning(disable : 4244)
+// warning C4324: 'arrow::internal::MemoryPoolStats': structure was padded
+// due to alignment specifier
+#pragma warning(disable : 4324)
 // warning 4458: declaration of 'type_id' hides class member
 #pragma warning(disable : 4458)
 #endif

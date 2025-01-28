@@ -667,7 +667,7 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 17 || poOpenInfo->fpL == nullptr)
         return nullptr;
 
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "hdr"))
+    if (!poOpenInfo->IsExtensionEqualToCI("hdr"))
         return nullptr;
 
     /* -------------------------------------------------------------------- */
@@ -784,10 +784,12 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Read the directory to find matching band files.                 */
     /* -------------------------------------------------------------------- */
-    char *const pszTargetPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+    char *const pszTargetPath =
+        CPLStrdup(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
     char *const pszTargetBase =
-        CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
-    char **papszDirFiles = VSIReadDir(CPLGetPath(poOpenInfo->pszFilename));
+        CPLStrdup(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str());
+    char **papszDirFiles =
+        VSIReadDir(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
     if (papszDirFiles == nullptr)
     {
         CPLFree(pszTargetPath);
@@ -798,21 +800,21 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
     int nSkipped = 0;
     for (int nRawBand = 0; true; nRawBand++)
     {
-        const char *pszExtension = nullptr;
-
         /* Find the next raw band file. */
 
         int i = 0;  // Used after for.
         for (; papszDirFiles[i] != nullptr; i++)
         {
-            if (!EQUAL(CPLGetBasename(papszDirFiles[i]), pszTargetBase))
+            if (!EQUAL(CPLGetBasenameSafe(papszDirFiles[i]).c_str(),
+                       pszTargetBase))
                 continue;
 
-            pszExtension = CPLGetExtension(papszDirFiles[i]);
-            if (strlen(pszExtension) >= 2 &&
-                isdigit(static_cast<unsigned char>(pszExtension[1])) &&
-                atoi(pszExtension + 1) == nRawBand &&
-                strchr("bBcCiIjJrRxXzZ", pszExtension[0]) != nullptr)
+            const std::string osExtension =
+                CPLGetExtensionSafe(papszDirFiles[i]);
+            if (osExtension.size() >= 2 &&
+                isdigit(static_cast<unsigned char>(osExtension[1])) &&
+                atoi(osExtension.c_str() + 1) == nRawBand &&
+                strchr("bBcCiIjJrRxXzZ", osExtension[0]) != nullptr)
                 break;
         }
 
@@ -820,27 +822,27 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
             break;
 
         /* open the file for required level of access */
-        const char *pszRawFilename =
-            CPLFormFilename(pszTargetPath, papszDirFiles[i], nullptr);
+        const std::string osRawFilename =
+            CPLFormFilenameSafe(pszTargetPath, papszDirFiles[i], nullptr);
 
         VSILFILE *fpRaw = nullptr;
         if (poOpenInfo->eAccess == GA_Update)
-            fpRaw = VSIFOpenL(pszRawFilename, "rb+");
+            fpRaw = VSIFOpenL(osRawFilename.c_str(), "rb+");
         else
-            fpRaw = VSIFOpenL(pszRawFilename, "rb");
+            fpRaw = VSIFOpenL(osRawFilename.c_str(), "rb");
 
         if (fpRaw == nullptr)
         {
             CPLError(CE_Warning, CPLE_OpenFailed,
-                     "Unable to open %s ... skipping.", pszRawFilename);
+                     "Unable to open %s ... skipping.", osRawFilename.c_str());
             nSkipped++;
             continue;
         }
         poDS->m_papszFileList =
-            CSLAddString(poDS->m_papszFileList, pszRawFilename);
+            CSLAddString(poDS->m_papszFileList, osRawFilename.c_str());
 
         GDALDataType eDataType = GDT_Unknown;
-        pszExtension = CPLGetExtension(papszDirFiles[i]);
+        const std::string osExt = CPLGetExtensionSafe(papszDirFiles[i]);
         if (pszRefinedType != nullptr)
         {
             if (EQUAL(pszRefinedType, "C*4"))
@@ -888,23 +890,23 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
                 continue;
             }
         }
-        else if (STARTS_WITH_CI(pszExtension, "b"))
+        else if (STARTS_WITH_CI(osExt.c_str(), "b"))
         {
             eDataType = GDT_Byte;
         }
-        else if (STARTS_WITH_CI(pszExtension, "i"))
+        else if (STARTS_WITH_CI(osExt.c_str(), "i"))
         {
             eDataType = GDT_UInt16;
         }
-        else if (STARTS_WITH_CI(pszExtension, "j"))
+        else if (STARTS_WITH_CI(osExt.c_str(), "j"))
         {
             eDataType = GDT_CInt16;
         }
-        else if (STARTS_WITH_CI(pszExtension, "r"))
+        else if (STARTS_WITH_CI(osExt.c_str(), "r"))
         {
             eDataType = GDT_Float32;
         }
-        else if (STARTS_WITH_CI(pszExtension, "x"))
+        else if (STARTS_WITH_CI(osExt.c_str(), "x"))
         {
             eDataType = GDT_CFloat32;
         }
@@ -913,7 +915,7 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLError(CE_Warning, CPLE_OpenFailed,
                      "Unable to open band %d because extension %s is not "
                      "handled.  Skipping.",
-                     nRawBand + 1, pszExtension);
+                     nRawBand + 1, osExt.c_str());
             nSkipped++;
             CPL_IGNORE_RET_VAL(VSIFCloseL(fpRaw));
             continue;
@@ -1098,13 +1100,14 @@ GDALDataset *MFFDataset::Create(const char *pszFilenameIn, int nXSize,
     /* -------------------------------------------------------------------- */
     /*      Create the header file.                                         */
     /* -------------------------------------------------------------------- */
-    const char *pszFilename = CPLFormFilename(nullptr, pszBaseFilename, "hdr");
+    std::string osFilename =
+        CPLFormFilenameSafe(nullptr, pszBaseFilename, "hdr");
 
-    VSILFILE *fp = VSIFOpenL(pszFilename, "wt");
+    VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "wt");
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Couldn't create %s.\n",
-                 pszFilename);
+                 osFilename.c_str());
         CPLFree(pszBaseFilename);
         return nullptr;
     }
@@ -1143,12 +1146,12 @@ GDALDataset *MFFDataset::Create(const char *pszFilenameIn, int nXSize,
         else if (eType == GDT_CFloat32)
             CPLsnprintf(szExtension, sizeof(szExtension), "x%02d", iBand);
 
-        pszFilename = CPLFormFilename(nullptr, pszBaseFilename, szExtension);
-        fp = VSIFOpenL(pszFilename, "wb");
+        osFilename = CPLFormFilenameSafe(nullptr, pszBaseFilename, szExtension);
+        fp = VSIFOpenL(osFilename.c_str(), "wb");
         if (fp == nullptr)
         {
             CPLError(CE_Failure, CPLE_OpenFailed, "Couldn't create %s.\n",
-                     pszFilename);
+                     osFilename.c_str());
             CPLFree(pszBaseFilename);
             return nullptr;
         }
@@ -1169,7 +1172,7 @@ GDALDataset *MFFDataset::Create(const char *pszFilenameIn, int nXSize,
     /* -------------------------------------------------------------------- */
     strcat(pszBaseFilename, ".hdr");
     GDALDataset *poDS =
-        static_cast<GDALDataset *>(GDALOpen(pszBaseFilename, GA_Update));
+        GDALDataset::Open(pszBaseFilename, GDAL_OF_RASTER | GDAL_OF_UPDATE);
     CPLFree(pszBaseFilename);
 
     return poDS;
@@ -1311,14 +1314,14 @@ GDALDataset *MFFDataset::CreateCopy(const char *pszFilename,
             break;
     }
 
-    const char *pszFilenameGEO =
-        CPLFormFilename(nullptr, pszBaseFilename, "hdr");
+    const std::string osFilenameGEO =
+        CPLFormFilenameSafe(nullptr, pszBaseFilename, "hdr");
 
-    VSILFILE *fp = VSIFOpenL(pszFilenameGEO, "at");
+    VSILFILE *fp = VSIFOpenL(osFilenameGEO.c_str(), "at");
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Couldn't open %s for appending.\n", pszFilenameGEO);
+                 "Couldn't open %s for appending.\n", osFilenameGEO.c_str());
         CPLFree(pszBaseFilename);
         return nullptr;
     }

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-# $Id$
 #
 #  Project:  GDAL samples
 #  Purpose:  Copy a virtual file
@@ -33,7 +32,7 @@ def Usage():
     return 2
 
 
-class ScaledProgress(object):
+class ScaledProgress:
     def __init__(self, dfMin, dfMax, UnderlyingProgress):
         self.dfMin = dfMin
         self.dfMax = dfMax
@@ -172,7 +171,7 @@ def gdal_cp(argv, progress=None):
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        return -1
+        return 0
 
     for i in range(1, len(argv)):
         if argv[i] == "-progress":

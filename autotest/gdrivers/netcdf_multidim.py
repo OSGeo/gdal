@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test multidimensional support in netCDF driver
@@ -4157,3 +4156,30 @@ def test_netcdf_multidim_as_classic_dataset_metadata():
 
     assert os.path.exists(pam_filename)
     os.unlink(pam_filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_proj(9)
+def test_netcdf_multidim_WGS84_and_EGM96_height(tmp_path):
+
+    tmp_filename = str(tmp_path / "out.nc")
+    with gdal.GetDriverByName("netCDF").Create(tmp_filename, 3, 3) as ds:
+        srs = osr.SpatialReference()
+        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+        srs.ImportFromEPSG(9707)
+        ds.SetSpatialRef(srs)
+        ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    with gdal.Open(tmp_filename) as ds:
+        srs = ds.GetSpatialRef()
+        assert srs.GetAuthorityCode(None) == "9707"
+        # We currently report a 3rd axis, which is dubious
+        assert srs.GetDataAxisToSRSAxisMapping()[0:2] == [2, 1]
+    with gdal.OpenEx(tmp_filename, gdal.OF_MULTIDIM_RASTER) as ds:
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("Band1")
+        srs = ar.GetSpatialRef()
+        assert srs.GetAuthorityCode(None) == "9707"
+        assert srs.GetDataAxisToSRSAxisMapping() == [1, 2]

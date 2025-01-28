@@ -183,7 +183,7 @@ class CPL_UNSTABLE_API swq_expr_node
 
     /* only for SNT_CONSTANT */
     int is_null = false;
-    GIntBig int_value = 0;
+    int64_t int_value = 0;
     double float_value = 0.0;
     OGRGeometry *geometry_value = nullptr;
 

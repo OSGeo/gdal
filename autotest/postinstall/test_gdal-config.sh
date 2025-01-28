@@ -102,7 +102,12 @@ set -eu
 CXX="${CXX:-c++}"
 echo "Test that we can compile all headers with C++11 using ${CXX}"
 for i in $prefix/include/*.h; do
-  ${CXX} -std=c++11 -c $(${GDAL_CONFIG} --cflags) $i;
+  ${CXX} -Wall -Wpedantic -std=c++11 -c $(${GDAL_CONFIG} --cflags) $i;
+done
+
+echo "Test that we can compile all headers with C++17 using ${CXX}"
+for i in $prefix/include/*.h; do
+  ${CXX} -Wall -Wpedantic -std=c++17 -c $(${GDAL_CONFIG} --cflags) $i;
 done
 
 echo "$ERRORS tests failed out of $NTESTS"

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GXF Reader
  * Purpose:  GXF-3 access function declarations.
@@ -27,9 +26,49 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+/* -------------------------------------------------------------------- */
+/*      This is consider to be a private structure.                     */
+/* -------------------------------------------------------------------- */
+struct GXFInfo_t
+{
+    VSILFILE *fp;
+
+    int nRawXSize;
+    int nRawYSize;
+    int nSense; /* GXFS_ codes */
+    int nGType; /* 0 is uncompressed */
+
+    double dfXPixelSize;
+    double dfYPixelSize;
+    double dfRotation;
+    double dfXOrigin; /* lower left corner */
+    double dfYOrigin; /* lower left corner */
+
+    char szDummy[64];
+    double dfSetDummyTo;
+
+    char *pszTitle;
+
+    double dfTransformScale;
+    double dfTransformOffset;
+    char *pszTransformName;
+
+    char **papszMapProjection;
+    char **papszMapDatumTransform;
+
+    char *pszUnitName;
+    double dfUnitToMeter;
+
+    double dfZMaximum;
+    double dfZMinimum;
+
+    vsi_l_offset *panRawLineOffset;
+};
+typedef struct GXFInfo_t GXFInfo_t;
+
 CPL_C_START
 
-typedef void *GXFHandle;
+typedef struct GXFInfo_t *GXFHandle;
 
 GXFHandle GXFOpen(const char *pszFilename);
 
@@ -65,44 +104,5 @@ void GXFClose(GXFHandle hGXF);
 #define GXFS_LR_UP 4
 
 CPL_C_END
-
-/* -------------------------------------------------------------------- */
-/*      This is consider to be a private structure.                     */
-/* -------------------------------------------------------------------- */
-typedef struct
-{
-    VSILFILE *fp;
-
-    int nRawXSize;
-    int nRawYSize;
-    int nSense; /* GXFS_ codes */
-    int nGType; /* 0 is uncompressed */
-
-    double dfXPixelSize;
-    double dfYPixelSize;
-    double dfRotation;
-    double dfXOrigin; /* lower left corner */
-    double dfYOrigin; /* lower left corner */
-
-    char szDummy[64];
-    double dfSetDummyTo;
-
-    char *pszTitle;
-
-    double dfTransformScale;
-    double dfTransformOffset;
-    char *pszTransformName;
-
-    char **papszMapProjection;
-    char **papszMapDatumTransform;
-
-    char *pszUnitName;
-    double dfUnitToMeter;
-
-    double dfZMaximum;
-    double dfZMinimum;
-
-    vsi_l_offset *panRawLineOffset;
-} GXFInfo_t;
 
 #endif /* ndef GXFOPEN_H_INCLUDED */

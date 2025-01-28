@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Public (C callable) interface for the Erdas Imagine reading
@@ -149,7 +148,6 @@ CPLErr HFARenameReferences(HFAHandle, const char *, const char *);
 HFAHandle CPL_DLL HFACreateLL(const char *pszFilename);
 HFAHandle CPL_DLL HFACreate(const char *pszFilename, int nXSize, int nYSize,
                             int nBands, EPTType eDataType, char **papszOptions);
-const char CPL_DLL *HFAGetIGEFilename(HFAHandle);
 CPLErr CPL_DLL HFAFlush(HFAHandle);
 int CPL_DLL HFACreateOverview(HFAHandle hHFA, int nBand, int nOverviewLevel,
                               const char *pszResampling);
@@ -302,5 +300,13 @@ const char CPL_DLL *HFAReadElevationUnit(HFAHandle psInfo, int iBand);
 #define EPRJ_EXTERNAL_INTEGERIZED_SINUSOIDAL "isin"
 
 CPL_C_END
+
+#ifdef __cplusplus
+extern "C++"
+{
+#include <string>
+    std::string HFAGetIGEFilename(HFAHandle);
+}
+#endif
 
 #endif /* ndef HFAOPEN_H_INCLUDED */

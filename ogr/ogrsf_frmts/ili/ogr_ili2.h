@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Interlis 2 Translator
  * Purpose:   Definition of classes for OGR Interlis 2 driver.
@@ -51,8 +50,6 @@ class OGRILI2Layer final : public OGRLayer
 
     GIntBig GetFeatureCount(int bForce = TRUE) override;
 
-    OGRErr ICreateFeature(OGRFeature *poFeature) override;
-
     OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
@@ -62,9 +59,6 @@ class OGRILI2Layer final : public OGRLayer
     {
         return oGeomFieldInfos[cFieldName].iliGeomType;
     }
-
-    OGRErr CreateField(const OGRFieldDefn *poField,
-                       int bApproxOK = TRUE) override;
 
     int TestCapability(const char *) override;
 
@@ -83,7 +77,6 @@ class OGRILI2DataSource final : public GDALDataset
     char *pszName;
     ImdReader *poImdReader;
     IILI2Reader *poReader;
-    VSILFILE *fpOutput;
 
     int nLayers;
     OGRILI2Layer **papoLayers;
@@ -95,7 +88,6 @@ class OGRILI2DataSource final : public GDALDataset
     virtual ~OGRILI2DataSource();
 
     int Open(const char *, char **papszOpenOptions, int bTestOpen);
-    int Create(const char *pszFile, char **papszOptions);
 
     int GetLayerCount() override
     {
@@ -103,15 +95,6 @@ class OGRILI2DataSource final : public GDALDataset
     }
 
     OGRLayer *GetLayer(int) override;
-
-    OGRLayer *ICreateLayer(const char *pszName,
-                           const OGRGeomFieldDefn *poGeomFieldDefn,
-                           CSLConstList papszOptions) override;
-
-    VSILFILE *GetOutputFP()
-    {
-        return fpOutput;
-    }
 
     int TestCapability(const char *) override;
 };

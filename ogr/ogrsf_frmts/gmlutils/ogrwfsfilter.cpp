@@ -13,6 +13,8 @@
 #include "ogrwfsfilter.h"
 #include "ogr_p.h"
 
+#include <cinttypes>
+
 typedef struct
 {
     int nVersion;
@@ -53,7 +55,7 @@ static bool WFS_ExprDumpGmlObjectIdFilter(CPLString &osFilter,
             poExpr->papoSubExpr[1]->field_type == SWQ_INTEGER64)
         {
             osFilter +=
-                CPLSPrintf(CPL_FRMT_GIB, poExpr->papoSubExpr[1]->int_value);
+                CPLSPrintf("%" PRId64, poExpr->papoSubExpr[1]->int_value);
         }
         else if (poExpr->papoSubExpr[1]->field_type == SWQ_STRING)
         {
@@ -92,7 +94,7 @@ static bool WFS_ExprDumpRawLitteral(CPLString &osFilter,
 {
     if (poExpr->field_type == SWQ_INTEGER ||
         poExpr->field_type == SWQ_INTEGER64)
-        osFilter += CPLSPrintf(CPL_FRMT_GIB, poExpr->int_value);
+        osFilter += CPLSPrintf("%" PRId64, poExpr->int_value);
     else if (poExpr->field_type == SWQ_FLOAT)
         osFilter += CPLSPrintf("%.16g", poExpr->float_value);
     else if (poExpr->field_type == SWQ_STRING)

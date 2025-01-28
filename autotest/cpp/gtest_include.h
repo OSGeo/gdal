@@ -17,4 +17,14 @@
 #pragma GCC system_header
 #endif
 
+#if defined(__GNUC__)
+// Workaround https://github.com/google/googletest/issues/4701
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcpp"
+#endif
+
 #include "gtest/gtest.h"
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

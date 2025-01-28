@@ -39,6 +39,7 @@
 #include "gdal_rat.h"
 #include "gdal_priv_templates.hpp"
 #include "gdal_interpolateatpoint.h"
+#include "gdal_minmax_element.hpp"
 
 /************************************************************************/
 /*                           GDALRasterBand()                           */
@@ -331,7 +332,8 @@ CPLErr GDALRasterBand::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         INIT_RASTERIO_EXTRA_ARG(sExtraArg);
         psExtraArg = &sExtraArg;
     }
-    else if (psExtraArg->nVersion != RASTERIO_EXTRA_ARG_CURRENT_VERSION)
+    else if (CPL_UNLIKELY(psExtraArg->nVersion !=
+                          RASTERIO_EXTRA_ARG_CURRENT_VERSION))
     {
         ReportError(CE_Failure, CPLE_AppDefined,
                     "Unhandled version of GDALRasterIOExtraArg");
@@ -341,7 +343,7 @@ CPLErr GDALRasterBand::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     GDALRasterIOExtraArgSetResampleAlg(psExtraArg, nXSize, nYSize, nBufXSize,
                                        nBufYSize);
 
-    if (nullptr == pData)
+    if (CPL_UNLIKELY(nullptr == pData))
     {
         ReportError(CE_Failure, CPLE_AppDefined,
                     "The buffer into which the data should be read is null");
@@ -352,7 +354,8 @@ CPLErr GDALRasterBand::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     /*      Some size values are "noop".  Lets just return to avoid         */
     /*      stressing lower level functions.                                */
     /* -------------------------------------------------------------------- */
-    if (nXSize < 1 || nYSize < 1 || nBufXSize < 1 || nBufYSize < 1)
+    if (CPL_UNLIKELY(nXSize < 1 || nYSize < 1 || nBufXSize < 1 ||
+                     nBufYSize < 1))
     {
         CPLDebug("GDAL",
                  "RasterIO() skipped for odd window or buffer size.\n"
@@ -365,7 +368,7 @@ CPLErr GDALRasterBand::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     if (eRWFlag == GF_Write)
     {
-        if (eFlushBlockErr != CE_None)
+        if (CPL_UNLIKELY(eFlushBlockErr != CE_None))
         {
             ReportError(eFlushBlockErr, CPLE_AppDefined,
                         "An error occurred while writing a dirty block "
@@ -374,7 +377,7 @@ CPLErr GDALRasterBand::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             eFlushBlockErr = CE_None;
             return eErr;
         }
-        if (eAccess != GA_Update)
+        if (CPL_UNLIKELY(eAccess != GA_Update))
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Write operation not permitted on dataset opened "
@@ -400,9 +403,9 @@ CPLErr GDALRasterBand::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     /* -------------------------------------------------------------------- */
     /*      Do some validation of parameters.                               */
     /* -------------------------------------------------------------------- */
-    if (nXOff < 0 || nXOff > INT_MAX - nXSize ||
-        nXOff + nXSize > nRasterXSize || nYOff < 0 ||
-        nYOff > INT_MAX - nYSize || nYOff + nYSize > nRasterYSize)
+    if (CPL_UNLIKELY(nXOff < 0 || nXOff > INT_MAX - nXSize ||
+                     nXOff + nXSize > nRasterXSize || nYOff < 0 ||
+                     nYOff > INT_MAX - nYSize || nYOff + nYSize > nRasterYSize))
     {
         ReportError(CE_Failure, CPLE_IllegalArg,
                     "Access window out of range in RasterIO().  Requested\n"
@@ -411,12 +414,18 @@ CPLErr GDALRasterBand::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         return CE_Failure;
     }
 
-    if (eRWFlag != GF_Read && eRWFlag != GF_Write)
+    if (CPL_UNLIKELY(eRWFlag != GF_Read && eRWFlag != GF_Write))
     {
         ReportError(
             CE_Failure, CPLE_IllegalArg,
             "eRWFlag = %d, only GF_Read (0) and GF_Write (1) are legal.",
             eRWFlag);
+        return CE_Failure;
+    }
+    if (CPL_UNLIKELY(eBufType == GDT_Unknown || eBufType == GDT_TypeCount))
+    {
+        ReportError(CE_Failure, CPLE_IllegalArg,
+                    "Illegal GDT_Unknown/GDT_TypeCount argument");
         return CE_Failure;
     }
 
@@ -5093,8 +5102,6 @@ CPLErr CPL_STDCALL GDALGetRasterStatistics(GDALRasterBandH hBand, int bApproxOK,
                                  pdfStdDev);
 }
 
-#ifdef CPL_HAS_GINT64
-
 /************************************************************************/
 /*                         GDALUInt128                                  */
 /************************************************************************/
@@ -6127,8 +6134,6 @@ struct ComputeStatisticsInternal<GUInt16, COMPUTE_OTHER_STATS>
 // (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) ||
 // defined(_MSC_VER))
 
-#endif  // CPL_HAS_GINT64
-
 /************************************************************************/
 /*                          GetPixelValue()                             */
 /************************************************************************/
@@ -6551,7 +6556,6 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         if (nSampleRate == 1)
             bApproxOK = false;
 
-#ifdef CPL_HAS_GINT64
         // Particular case for GDT_Byte that only use integral types for all
         // intermediate computations. Only possible if the number of pixels
         // explored is lower than GUINTBIG_MAX / (255*255), so that nSumSquare
@@ -6702,7 +6706,6 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                         "in sampling.");
             return CE_Failure;
         }
-#endif
 
         GByte *pabyMaskData = nullptr;
         if (poMaskBand)
@@ -7545,6 +7548,288 @@ CPLErr CPL_STDCALL GDALComputeRasterMinMax(GDALRasterBandH hBand, int bApproxOK,
 
     GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->ComputeRasterMinMax(bApproxOK, adfMinMax);
+}
+
+/************************************************************************/
+/*                    ComputeRasterMinMaxLocation()                     */
+/************************************************************************/
+
+/**
+ * \brief Compute the min/max values for a band, and their location.
+ *
+ * Pixels whose value matches the nodata value or are masked by the mask
+ * band are ignored.
+ *
+ * If the minimum or maximum value is hit in several locations, it is not
+ * specified which one will be returned.
+ *
+ * @param[out] pdfMin Pointer to the minimum value.
+ * @param[out] pdfMax Pointer to the maximum value.
+ * @param[out] pnMinX Pointer to the column where the minimum value is hit.
+ * @param[out] pnMinY Pointer to the line where the minimum value is hit.
+ * @param[out] pnMaxX Pointer to the column where the maximum value is hit.
+ * @param[out] pnMaxY Pointer to the line where the maximum value is hit.
+ *
+ * @return CE_None in case of success, CE_Warning if there are no valid values,
+ *         CE_Failure in case of error.
+ *
+ * @since GDAL 3.11
+ */
+
+CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
+                                                   double *pdfMax, int *pnMinX,
+                                                   int *pnMinY, int *pnMaxX,
+                                                   int *pnMaxY)
+{
+    int nMinX = -1;
+    int nMinY = -1;
+    int nMaxX = -1;
+    int nMaxY = -1;
+    double dfMin = std::numeric_limits<double>::infinity();
+    double dfMax = -std::numeric_limits<double>::infinity();
+    if (pdfMin)
+        *pdfMin = dfMin;
+    if (pdfMax)
+        *pdfMax = dfMax;
+    if (pnMinX)
+        *pnMinX = nMinX;
+    if (pnMinY)
+        *pnMinY = nMinY;
+    if (pnMaxX)
+        *pnMaxX = nMaxX;
+    if (pnMaxY)
+        *pnMaxY = nMaxY;
+
+    if (GDALDataTypeIsComplex(eDataType))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Complex data type not supported");
+        return CE_Failure;
+    }
+
+    if (!InitBlockInfo())
+        return CE_Failure;
+
+    int bGotNoDataValue = FALSE;
+    const double dfNoDataValue = GetNoDataValue(&bGotNoDataValue);
+    bGotNoDataValue = bGotNoDataValue && !std::isnan(dfNoDataValue);
+    bool bGotFloatNoDataValue = false;
+    float fNoDataValue = 0.0f;
+    ComputeFloatNoDataValue(eDataType, dfNoDataValue, bGotNoDataValue,
+                            fNoDataValue, bGotFloatNoDataValue);
+
+    GDALRasterBand *poMaskBand = nullptr;
+    if (!bGotNoDataValue)
+    {
+        const int l_nMaskFlags = GetMaskFlags();
+        if (l_nMaskFlags != GMF_ALL_VALID && l_nMaskFlags != GMF_NODATA &&
+            GetColorInterpretation() != GCI_AlphaBand)
+        {
+            poMaskBand = GetMaskBand();
+        }
+    }
+
+    bool bSignedByte = false;
+    if (eDataType == GDT_Byte)
+    {
+        EnablePixelTypeSignedByteWarning(false);
+        const char *pszPixelType =
+            GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        EnablePixelTypeSignedByteWarning(true);
+        bSignedByte =
+            pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
+    }
+
+    GByte *pabyMaskData = nullptr;
+    if (poMaskBand)
+    {
+        pabyMaskData =
+            static_cast<GByte *>(VSI_MALLOC2_VERBOSE(nBlockXSize, nBlockYSize));
+        if (!pabyMaskData)
+        {
+            return CE_Failure;
+        }
+    }
+
+    const GIntBig nTotalBlocks =
+        static_cast<GIntBig>(nBlocksPerRow) * nBlocksPerColumn;
+    bool bNeedsMin = pdfMin || pnMinX || pnMinY;
+    bool bNeedsMax = pdfMax || pnMaxX || pnMaxY;
+    for (GIntBig iBlock = 0; iBlock < nTotalBlocks; ++iBlock)
+    {
+        const int iYBlock = static_cast<int>(iBlock / nBlocksPerRow);
+        const int iXBlock = static_cast<int>(iBlock % nBlocksPerRow);
+
+        GDALRasterBlock *poBlock = GetLockedBlockRef(iXBlock, iYBlock);
+        if (poBlock == nullptr)
+        {
+            CPLFree(pabyMaskData);
+            return CE_Failure;
+        }
+
+        void *const pData = poBlock->GetDataRef();
+
+        int nXCheck = 0, nYCheck = 0;
+        GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
+
+        if (poMaskBand &&
+            poMaskBand->RasterIO(GF_Read, iXBlock * nBlockXSize,
+                                 iYBlock * nBlockYSize, nXCheck, nYCheck,
+                                 pabyMaskData, nXCheck, nYCheck, GDT_Byte, 0,
+                                 nBlockXSize, nullptr) != CE_None)
+        {
+            poBlock->DropLock();
+            CPLFree(pabyMaskData);
+            return CE_Failure;
+        }
+
+        if (poMaskBand || nYCheck < nBlockYSize || nXCheck < nBlockXSize)
+        {
+            for (int iY = 0; iY < nYCheck; ++iY)
+            {
+                for (int iX = 0; iX < nXCheck; ++iX)
+                {
+                    const GPtrDiff_t iOffset =
+                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                    if (pabyMaskData && pabyMaskData[iOffset] == 0)
+                        continue;
+                    bool bValid = true;
+                    double dfValue = GetPixelValue(
+                        eDataType, bSignedByte, pData, iOffset, bGotNoDataValue,
+                        dfNoDataValue, bGotFloatNoDataValue, fNoDataValue,
+                        bValid);
+                    if (!bValid)
+                        continue;
+                    if (dfValue < dfMin)
+                    {
+                        dfMin = dfValue;
+                        nMinX = iXBlock * nBlockXSize + iX;
+                        nMinY = iYBlock * nBlockYSize + iY;
+                    }
+                    if (dfValue > dfMax)
+                    {
+                        dfMax = dfValue;
+                        nMaxX = iXBlock * nBlockXSize + iX;
+                        nMaxY = iYBlock * nBlockYSize + iY;
+                    }
+                }
+            }
+        }
+        else
+        {
+            size_t pos_min = 0;
+            size_t pos_max = 0;
+            const auto eEffectiveDT = bSignedByte ? GDT_Int8 : eDataType;
+            if (bNeedsMin && bNeedsMax)
+            {
+                std::tie(pos_min, pos_max) = gdal::minmax_element(
+                    pData, static_cast<size_t>(nBlockXSize) * nBlockYSize,
+                    eEffectiveDT, bGotNoDataValue, dfNoDataValue);
+            }
+            else if (bNeedsMin)
+            {
+                pos_min = gdal::min_element(
+                    pData, static_cast<size_t>(nBlockXSize) * nBlockYSize,
+                    eEffectiveDT, bGotNoDataValue, dfNoDataValue);
+            }
+            else if (bNeedsMax)
+            {
+                pos_max = gdal::max_element(
+                    pData, static_cast<size_t>(nBlockXSize) * nBlockYSize,
+                    eEffectiveDT, bGotNoDataValue, dfNoDataValue);
+            }
+
+            if (bNeedsMin)
+            {
+                const int nMinXBlock = static_cast<int>(pos_min % nBlockXSize);
+                const int nMinYBlock = static_cast<int>(pos_min / nBlockXSize);
+                bool bValid = true;
+                const double dfMinValueBlock = GetPixelValue(
+                    eDataType, bSignedByte, pData, pos_min, bGotNoDataValue,
+                    dfNoDataValue, bGotFloatNoDataValue, fNoDataValue, bValid);
+                if (bValid && dfMinValueBlock < dfMin)
+                {
+                    dfMin = dfMinValueBlock;
+                    nMinX = iXBlock * nBlockXSize + nMinXBlock;
+                    nMinY = iYBlock * nBlockYSize + nMinYBlock;
+                }
+            }
+
+            if (bNeedsMax)
+            {
+                const int nMaxXBlock = static_cast<int>(pos_max % nBlockXSize);
+                const int nMaxYBlock = static_cast<int>(pos_max / nBlockXSize);
+                bool bValid = true;
+                const double dfMaxValueBlock = GetPixelValue(
+                    eDataType, bSignedByte, pData, pos_max, bGotNoDataValue,
+                    dfNoDataValue, bGotFloatNoDataValue, fNoDataValue, bValid);
+                if (bValid && dfMaxValueBlock > dfMax)
+                {
+                    dfMax = dfMaxValueBlock;
+                    nMaxX = iXBlock * nBlockXSize + nMaxXBlock;
+                    nMaxY = iYBlock * nBlockYSize + nMaxYBlock;
+                }
+            }
+        }
+
+        poBlock->DropLock();
+
+        if (eDataType == GDT_Byte)
+        {
+            if (bNeedsMin && dfMin == 0)
+            {
+                bNeedsMin = false;
+            }
+            if (bNeedsMax && dfMax == 255)
+            {
+                bNeedsMax = false;
+            }
+            if (!bNeedsMin && !bNeedsMax)
+            {
+                break;
+            }
+        }
+    }
+
+    CPLFree(pabyMaskData);
+
+    if (pdfMin)
+        *pdfMin = dfMin;
+    if (pdfMax)
+        *pdfMax = dfMax;
+    if (pnMinX)
+        *pnMinX = nMinX;
+    if (pnMinY)
+        *pnMinY = nMinY;
+    if (pnMaxX)
+        *pnMaxX = nMaxX;
+    if (pnMaxY)
+        *pnMaxY = nMaxY;
+    return ((bNeedsMin && nMinX < 0) || (bNeedsMax && nMaxX < 0)) ? CE_Warning
+                                                                  : CE_None;
+}
+
+/************************************************************************/
+/*                    GDALComputeRasterMinMaxLocation()                 */
+/************************************************************************/
+
+/**
+ * \brief Compute the min/max values for a band, and their location.
+ *
+ * @see GDALRasterBand::ComputeRasterMinMax()
+ * @since GDAL 3.11
+ */
+
+CPLErr GDALComputeRasterMinMaxLocation(GDALRasterBandH hBand, double *pdfMin,
+                                       double *pdfMax, int *pnMinX, int *pnMinY,
+                                       int *pnMaxX, int *pnMaxY)
+
+{
+    VALIDATE_POINTER1(hBand, "GDALComputeRasterMinMaxLocation", CE_Failure);
+
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return poBand->ComputeRasterMinMaxLocation(pdfMin, pdfMax, pnMinX, pnMinY,
+                                               pnMaxX, pnMaxY);
 }
 
 /************************************************************************/
@@ -9143,8 +9428,8 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
             if (bHasNoData)
             {
                 m_pabyNoData.resize(m_dt.GetSize());
-                GDALCopyWords(&nNoData, GDT_Int64, 0, &m_pabyNoData[0],
-                              m_dt.GetNumericDataType(), 0, 1);
+                GDALCopyWords64(&nNoData, GDT_Int64, 0, &m_pabyNoData[0],
+                                m_dt.GetNumericDataType(), 0, 1);
             }
         }
         else if (m_poBand->GetRasterDataType() == GDT_UInt64)
@@ -9153,8 +9438,8 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
             if (bHasNoData)
             {
                 m_pabyNoData.resize(m_dt.GetSize());
-                GDALCopyWords(&nNoData, GDT_UInt64, 0, &m_pabyNoData[0],
-                              m_dt.GetNumericDataType(), 0, 1);
+                GDALCopyWords64(&nNoData, GDT_UInt64, 0, &m_pabyNoData[0],
+                                m_dt.GetNumericDataType(), 0, 1);
             }
         }
         else
@@ -9163,8 +9448,8 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
             if (bHasNoData)
             {
                 m_pabyNoData.resize(m_dt.GetSize());
-                GDALCopyWords(&dfNoData, GDT_Float64, 0, &m_pabyNoData[0],
-                              m_dt.GetNumericDataType(), 0, 1);
+                GDALCopyWords64(&dfNoData, GDT_Float64, 0, &m_pabyNoData[0],
+                                m_dt.GetNumericDataType(), 0, 1);
             }
         }
 
@@ -9510,8 +9795,8 @@ std::shared_ptr<GDALMDArray> GDALRasterBand::AsMDArray() const
 /************************************************************************/
 
 /**
- * \brief Interpolates the value between pixels using
- * a resampling algorithm
+ * \brief Interpolates the value between pixels using a resampling algorithm,
+ * taking pixel/line coordinates as input.
  *
  * @param dfPixel pixel coordinate as a double, where interpolation should be done.
  * @param dfLine line coordinate as a double, where interpolation should be done.
@@ -9573,4 +9858,94 @@ CPLErr GDALRasterInterpolateAtPoint(GDALRasterBandH hBand, double dfPixel,
     GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->InterpolateAtPoint(dfPixel, dfLine, eInterpolation,
                                       pdfRealValue, pdfImagValue);
+}
+
+/************************************************************************/
+/*                    InterpolateAtGeolocation()                        */
+/************************************************************************/
+
+/**
+ * \brief Interpolates the value between pixels using a resampling algorithm,
+ * taking georeferenced coordinates as input.
+ *
+ * When poSRS is null, those georeferenced coordinates (dfGeolocX, dfGeolocY)
+ * must be in the "natural" SRS of the dataset, that is the one returned by
+ * GetSpatialRef() if there is a geotransform, GetGCPSpatialRef() if there are
+ * GCPs, WGS 84 if there are RPC coefficients, or the SRS of the geolocation
+ * array (generally WGS 84) if there is a geolocation array.
+ * If that natural SRS is a geographic one, dfGeolocX must be a longitude, and
+ * dfGeolocY a latitude. If that natural SRS is a projected one, dfGeolocX must
+ * be a easting, and dfGeolocY a northing.
+ *
+ * When poSRS is set to a non-null value, (dfGeolocX, dfGeolocY) must be
+ * expressed in that CRS, and that tuple must be conformant with the
+ * data-axis-to-crs-axis setting of poSRS, that is the one returned by
+ * the OGRSpatialReference::GetDataAxisToSRSAxisMapping(). If you want to be sure
+ * of the axis order, then make sure to call poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER)
+ * before calling this method, and in that case, dfGeolocX must be a longitude
+ * or an easting value, and dfGeolocX a latitude or a northing value.
+ *
+ * The GDALDataset::GeolocationToPixelLine() will be used to transform from
+ * (dfGeolocX,dfGeolocY) georeferenced coordinates to (pixel, line). Refer to
+ * it for details on how that transformation is done.
+ *
+ * @param dfGeolocX X coordinate of the position (longitude or easting if poSRS
+ * is null, otherwise consistent with poSRS data-axis-to-crs-axis mapping),
+ * where interpolation should be done.
+ * @param dfGeolocY Y coordinate of the position (latitude or northing if poSRS
+ * is null, otherwise consistent with poSRS data-axis-to-crs-axis mapping),
+ * where interpolation should be done.
+ * @param poSRS If set, override the natural CRS in which dfGeolocX, dfGeolocY are expressed
+ * @param eInterpolation interpolation type. Only near, bilinear, cubic and cubicspline are allowed.
+ * @param pdfRealValue pointer to real part of interpolated value
+ * @param pdfImagValue pointer to imaginary part of interpolated value (may be null if not needed)
+ * @param papszTransformerOptions Options accepted by GDALDataset::GeolocationToPixelLine() (GDALCreateGenImgProjTransformer2()), or nullptr.
+ *
+ * @return CE_None on success, or an error code on failure.
+ * @since GDAL 3.11
+ */
+
+CPLErr GDALRasterBand::InterpolateAtGeolocation(
+    double dfGeolocX, double dfGeolocY, const OGRSpatialReference *poSRS,
+    GDALRIOResampleAlg eInterpolation, double *pdfRealValue,
+    double *pdfImagValue, CSLConstList papszTransformerOptions) const
+{
+    double dfPixel;
+    double dfLine;
+    if (poDS->GeolocationToPixelLine(dfGeolocX, dfGeolocY, poSRS, &dfPixel,
+                                     &dfLine,
+                                     papszTransformerOptions) != CE_None)
+    {
+        return CE_Failure;
+    }
+    return InterpolateAtPoint(dfPixel, dfLine, eInterpolation, pdfRealValue,
+                              pdfImagValue);
+}
+
+/************************************************************************/
+/*                  GDALRasterInterpolateAtGeolocation()                */
+/************************************************************************/
+
+/**
+ * \brief Interpolates the value between pixels using a resampling algorithm,
+ * taking georeferenced coordinates as input.
+ *
+ * @see GDALRasterBand::InterpolateAtGeolocation()
+ * @since GDAL 3.11
+ */
+
+CPLErr GDALRasterInterpolateAtGeolocation(GDALRasterBandH hBand,
+                                          double dfGeolocX, double dfGeolocY,
+                                          OGRSpatialReferenceH hSRS,
+                                          GDALRIOResampleAlg eInterpolation,
+                                          double *pdfRealValue,
+                                          double *pdfImagValue,
+                                          CSLConstList papszTransformerOptions)
+{
+    VALIDATE_POINTER1(hBand, "GDALRasterInterpolateAtGeolocation", CE_Failure);
+
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return poBand->InterpolateAtGeolocation(
+        dfGeolocX, dfGeolocY, OGRSpatialReference::FromHandle(hSRS),
+        eInterpolation, pdfRealValue, pdfImagValue, papszTransformerOptions);
 }

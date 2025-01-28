@@ -359,6 +359,7 @@ int OGR_G_GetPoints(OGRGeometryH hGeom, void *pabyX, int nXStride, void *pabyY,
 {
     VALIDATE_POINTER1(hGeom, "OGR_G_GetPoints", 0);
 
+    int ret = 0;
     switch (wkbFlatten(ToPointer(hGeom)->getGeometryType()))
     {
         case wkbPoint:
@@ -370,25 +371,27 @@ int OGR_G_GetPoints(OGRGeometryH hGeom, void *pabyX, int nXStride, void *pabyY,
                 *(static_cast<double *>(pabyY)) = poPoint->getY();
             if (pabyZ)
                 *(static_cast<double *>(pabyZ)) = poPoint->getZ();
-            return 1;
+            ret = 1;
+            break;
         }
-        break;
 
         case wkbLineString:
         case wkbCircularString:
         {
             OGRSimpleCurve *poSC = ToPointer(hGeom)->toSimpleCurve();
             poSC->getPoints(pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride);
-            return poSC->getNumPoints();
+            ret = poSC->getNumPoints();
+            break;
         }
-        break;
 
         default:
+        {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Incompatible geometry for operation");
-            return 0;
             break;
+        }
     }
+    return ret;
 }
 
 /************************************************************************/
@@ -429,6 +432,7 @@ int OGR_G_GetPointsZM(OGRGeometryH hGeom, void *pabyX, int nXStride,
 {
     VALIDATE_POINTER1(hGeom, "OGR_G_GetPointsZM", 0);
 
+    int ret = 0;
     switch (wkbFlatten(ToPointer(hGeom)->getGeometryType()))
     {
         case wkbPoint:
@@ -442,9 +446,9 @@ int OGR_G_GetPointsZM(OGRGeometryH hGeom, void *pabyX, int nXStride,
                 *static_cast<double *>(pabyZ) = poPoint->getZ();
             if (pabyM)
                 *static_cast<double *>(pabyM) = poPoint->getM();
-            return 1;
+            ret = 1;
+            break;
         }
-        break;
 
         case wkbLineString:
         case wkbCircularString:
@@ -452,16 +456,19 @@ int OGR_G_GetPointsZM(OGRGeometryH hGeom, void *pabyX, int nXStride,
             OGRSimpleCurve *poSC = ToPointer(hGeom)->toSimpleCurve();
             poSC->getPoints(pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride,
                             pabyM, nMStride);
-            return poSC->getNumPoints();
+            ret = poSC->getNumPoints();
+            break;
         }
-        break;
 
         default:
+        {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Incompatible geometry for operation");
-            return 0;
             break;
+        }
     }
+
+    return ret;
 }
 
 /************************************************************************/

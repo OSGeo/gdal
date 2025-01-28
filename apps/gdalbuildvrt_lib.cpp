@@ -127,6 +127,12 @@ static int GetSrcDstWin(DatasetProperty *psDP, double we_res, double ns_res,
                         double *pdfDstYOff, double *pdfDstXSize,
                         double *pdfDstYSize)
 {
+    if (we_res == 0 || ns_res == 0)
+    {
+        // should not happen. to please Coverity
+        return FALSE;
+    }
+
     /* Check that the destination bounding box intersects the source bounding
      * box */
     if (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] +
@@ -435,6 +441,21 @@ static CPLString GetProjectionName(const char *pszProjection)
 /************************************************************************/
 /*                           AnalyseRaster()                            */
 /************************************************************************/
+
+static void checkNoDataValues(const std::vector<BandProperty> &asProperties)
+{
+    for (const auto &oProps : asProperties)
+    {
+        if (oProps.bHasNoData && GDALDataTypeIsInteger(oProps.dataType) &&
+            !GDALIsValueExactAs(oProps.noDataValue, oProps.dataType))
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Band data type of %s cannot represent the specified "
+                     "NoData value of %g",
+                     GDALGetDataTypeName(oProps.dataType), oProps.noDataValue);
+        }
+    }
+}
 
 std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                                       DatasetProperty *psDatasetProperties)
@@ -964,6 +985,8 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
             ns_res = std::min(ns_res, padfGeoTransform[GEOTRSFRM_NS_RES]);
         }
     }
+
+    checkNoDataValues(asBandProperties);
 
     return "";
 }
@@ -1661,7 +1684,7 @@ static bool add_file_to_list(const char *filename, const char *tile_index,
                              CPLStringList &aosList)
 {
 
-    if (EQUAL(CPLGetExtension(filename), "SHP"))
+    if (EQUAL(CPLGetExtensionSafe(filename).c_str(), "SHP"))
     {
         /* Handle gdaltindex Shapefile as a special case */
         auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(filename));

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PDF Translator
  * Purpose:  Definition of classes for OGR .pdf driver.

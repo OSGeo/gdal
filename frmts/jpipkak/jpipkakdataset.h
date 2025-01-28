@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  jpip read driver
  * Purpose:  GDAL bindings for JPIP.

@@ -1,6 +1,4 @@
 /******************************************************************************
- * $Id$
- *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Documentation for ogrsf_frmts.h classes.
  * Author:   Frank Warmerdam, warmerda@home.com
@@ -49,9 +47,9 @@
   otherwise a handle to a GDALDataset.  This GDALDataset should be
   closed by deleting the object when it is no longer needed.
 
-  <b>Example:</b>
+  Example:
 
-  <pre>
+  \code{.cpp}
     OGRDataSourceH	hDS;
     OGRSFDriverH        *pahDriver;
 
@@ -64,7 +62,7 @@
     ... use the data source ...
 
     OGRReleaseDataSource( hDS );
-  </pre>
+  \endcode
 
 */
 
@@ -101,9 +99,9 @@
   otherwise a handle to a GDALDataset.  This GDALDataset should be
   closed by deleting the object when it is no longer needed.
 
-  <b>Example:</b>
+  Example:
 
-  <pre>
+  \code{.cpp}
     OGRDataSourceH  hDS;
     OGRSFDriverH        *pahDriver;
 
@@ -116,7 +114,7 @@
     ... use the data source ...
 
     OGRReleaseDataSource( hDS );
-  </pre>
+  \endcode
 
 */
 
@@ -2516,6 +2514,10 @@ used by a layer directly.
 This method should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 
+If a OGRFieldDefn* object corresponding to the deleted field has been retrieved
+from the layer definition before the call to DeleteField(), it must no longer be
+used after the call to DeleteField(), which will have destroyed it.
+
 Not all drivers support this method. You can query a layer to check if it supports it
 with the OLCDeleteField capability. Some drivers may only support this method while
 there are still no features in the layer. When it is supported, the existing features of the
@@ -2543,6 +2545,10 @@ used by a layer directly.
 
 This function should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
+
+If a OGRFieldDefnH object corresponding to the deleted field has been retrieved
+from the layer definition before the call to DeleteField(), it must no longer be
+used after the call to DeleteField(), which will have destroyed it.
 
 Not all drivers support this function. You can query a layer to check if it supports it
 with the OLCDeleteField capability. Some drivers may only support this method while
@@ -3042,6 +3048,31 @@ form depending on the limitations of the format driver.
  always return OGRERR_NONE.
 
  This function is the same as the C function OGR_L_RollbackTransaction().
+
+
+ OGRFeature* instances acquired or created between the StartTransaction() and RollbackTransaction() should
+ be destroyed before RollbackTransaction() if the field structure has been modified during the transaction.
+
+ In particular, the following is invalid:
+
+ \code
+ lyr->StartTransaction();
+ lyr->DeleteField(...);
+ f = new OGRFeature(lyr->GetLayerDefn());
+ lyr->RollbackTransaction();
+ // f is in a inconsistent state at this point, given its array of fields doesn't match
+ // the updated layer definition, and thus it cannot even be safely deleted !
+ \endcode
+
+ Instead, the feature should be destroyed before the rollback:
+
+ \code
+ lyr->StartTransaction();
+ lyr->DeleteField(...);
+ f = new OGRFeature(lyr->GetLayerDefn());
+ ...
+ delete f;
+ \endcode
 
  @return OGRERR_NONE on success.
 

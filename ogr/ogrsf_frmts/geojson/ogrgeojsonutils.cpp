@@ -1048,3 +1048,77 @@ OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject,
     }
     return OFTString;
 }
+
+/************************************************************************/
+/*                   GeoJSONHTTPFetchWithContentTypeHeader()            */
+/************************************************************************/
+
+CPLHTTPResult *GeoJSONHTTPFetchWithContentTypeHeader(const char *pszURL)
+{
+    std::string osHeaders;
+    const char *pszGDAL_HTTP_HEADERS =
+        CPLGetConfigOption("GDAL_HTTP_HEADERS", nullptr);
+    bool bFoundAcceptHeader = false;
+    if (pszGDAL_HTTP_HEADERS)
+    {
+        bool bHeadersDone = false;
+        // Compatibility hack for "HEADERS=Accept: text/plain, application/json"
+        if (strstr(pszGDAL_HTTP_HEADERS, "\r\n") == nullptr)
+        {
+            const char *pszComma = strchr(pszGDAL_HTTP_HEADERS, ',');
+            if (pszComma != nullptr && strchr(pszComma, ':') == nullptr)
+            {
+                osHeaders = pszGDAL_HTTP_HEADERS;
+                bFoundAcceptHeader =
+                    STARTS_WITH_CI(pszGDAL_HTTP_HEADERS, "Accept:");
+                bHeadersDone = true;
+            }
+        }
+        if (!bHeadersDone)
+        {
+            // We accept both raw headers with \r\n as a separator, or as
+            // a comma separated list of foo: bar values.
+            const CPLStringList aosTokens(
+                strstr(pszGDAL_HTTP_HEADERS, "\r\n")
+                    ? CSLTokenizeString2(pszGDAL_HTTP_HEADERS, "\r\n", 0)
+                    : CSLTokenizeString2(pszGDAL_HTTP_HEADERS, ",",
+                                         CSLT_HONOURSTRINGS));
+            for (int i = 0; i < aosTokens.size(); ++i)
+            {
+                if (!osHeaders.empty())
+                    osHeaders += "\r\n";
+                if (!bFoundAcceptHeader)
+                    bFoundAcceptHeader =
+                        STARTS_WITH_CI(aosTokens[i], "Accept:");
+                osHeaders += aosTokens[i];
+            }
+        }
+    }
+    if (!bFoundAcceptHeader)
+    {
+        if (!osHeaders.empty())
+            osHeaders += "\r\n";
+        osHeaders += "Accept: text/plain, application/json";
+    }
+
+    CPLStringList aosOptions;
+    aosOptions.SetNameValue("HEADERS", osHeaders.c_str());
+    CPLHTTPResult *pResult = CPLHTTPFetch(pszURL, aosOptions.List());
+
+    if (nullptr == pResult || 0 == pResult->nDataLen ||
+        0 != CPLGetLastErrorNo())
+    {
+        CPLHTTPDestroyResult(pResult);
+        return nullptr;
+    }
+
+    if (0 != pResult->nStatus)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Curl reports error: %d: %s",
+                 pResult->nStatus, pResult->pszErrBuf);
+        CPLHTTPDestroyResult(pResult);
+        return nullptr;
+    }
+
+    return pResult;
+}

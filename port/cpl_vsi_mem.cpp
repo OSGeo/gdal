@@ -193,7 +193,7 @@ class VSIMemFilesystemHandler final : public VSIFilesystemHandler
     CPL_DISALLOW_COPY_ASSIGN(VSIMemFilesystemHandler)
 
   public:
-    std::map<CPLString, std::shared_ptr<VSIMemFile>> oFileList{};
+    std::map<std::string, std::shared_ptr<VSIMemFile>> oFileList{};
     CPLMutex *hMutex = nullptr;
 
     explicit VSIMemFilesystemHandler(const char *pszPrefix)
@@ -631,7 +631,7 @@ VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
 
 {
     CPLMutexHolder oHolder(&hMutex);
-    const CPLString osFilename = NormalizePath(pszFilename);
+    const std::string osFilename = NormalizePath(pszFilename);
     if (osFilename.empty())
         return nullptr;
 
@@ -647,9 +647,10 @@ VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
     /*      Get the filename we are opening, create if needed.              */
     /* -------------------------------------------------------------------- */
     std::shared_ptr<VSIMemFile> poFile = nullptr;
-    if (oFileList.find(osFilename) != oFileList.end())
+    const auto oIter = oFileList.find(osFilename);
+    if (oIter != oFileList.end())
     {
-        poFile = oFileList[osFilename];
+        poFile = oIter->second;
     }
 
     // If no file and opening in read, error out.
@@ -667,14 +668,14 @@ VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
     // Create.
     if (poFile == nullptr)
     {
-        const char *pszFileDir = CPLGetPath(osFilename.c_str());
-        if (VSIMkdirRecursive(pszFileDir, 0755) == -1)
+        const std::string osFileDir = CPLGetPathSafe(osFilename.c_str());
+        if (VSIMkdirRecursive(osFileDir.c_str(), 0755) == -1)
         {
             if (bSetError)
             {
                 VSIError(VSIE_FileError,
                          "Could not create directory %s for writing",
-                         pszFileDir);
+                         osFileDir.c_str());
             }
             errno = ENOENT;
             return nullptr;
@@ -742,11 +743,11 @@ int VSIMemFilesystemHandler::Stat(const char *pszFilename,
 {
     CPLMutexHolder oHolder(&hMutex);
 
-    const CPLString osFilename = NormalizePath(pszFilename);
+    const std::string osFilename = NormalizePath(pszFilename);
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
-    if (osFilename + '/' == m_osPrefix || osFilename == m_osPrefix)
+    if (osFilename == m_osPrefix || osFilename + '/' == m_osPrefix)
     {
         pStatBuf->st_size = 0;
         pStatBuf->st_mode = S_IFDIR;
@@ -798,7 +799,7 @@ int VSIMemFilesystemHandler::Unlink(const char *pszFilename)
 int VSIMemFilesystemHandler::Unlink_unlocked(const char *pszFilename)
 
 {
-    const CPLString osFilename = NormalizePath(pszFilename);
+    const std::string osFilename = NormalizePath(pszFilename);
 
     auto oIter = oFileList.find(osFilename);
     if (oIter == oFileList.end())
@@ -826,7 +827,7 @@ int VSIMemFilesystemHandler::Mkdir(const char *pszPathname, long /* nMode */)
 {
     CPLMutexHolder oHolder(&hMutex);
 
-    const CPLString osPathname = NormalizePath(pszPathname);
+    const std::string osPathname = NormalizePath(pszPathname);
     if (STARTS_WITH(osPathname.c_str(), szHIDDEN_DIRNAME))
     {
         if (osPathname.size() == strlen(szHIDDEN_DIRNAME))
@@ -1042,8 +1043,8 @@ int VSIMemFilesystemHandler::Rename(const char *pszOldPath,
 {
     CPLMutexHolder oHolder(&hMutex);
 
-    const CPLString osOldPath = NormalizePath(pszOldPath);
-    const CPLString osNewPath = NormalizePath(pszNewPath);
+    const std::string osOldPath = NormalizePath(pszOldPath);
+    const std::string osNewPath = NormalizePath(pszNewPath);
     if (!STARTS_WITH(pszNewPath, m_osPrefix.c_str()))
         return -1;
 
@@ -1056,15 +1057,15 @@ int VSIMemFilesystemHandler::Rename(const char *pszOldPath,
         return -1;
     }
 
-    std::map<CPLString, std::shared_ptr<VSIMemFile>>::iterator it =
+    std::map<std::string, std::shared_ptr<VSIMemFile>>::iterator it =
         oFileList.find(osOldPath);
-    while (it != oFileList.end() && it->first.ifind(osOldPath) == 0)
+    while (it != oFileList.end() && it->first.find(osOldPath) == 0)
     {
-        const CPLString osRemainder = it->first.substr(osOldPath.size());
+        const std::string osRemainder = it->first.substr(osOldPath.size());
         if (osRemainder.empty() || osRemainder[0] == '/')
         {
-            const CPLString osNewFullPath = osNewPath + osRemainder;
-            Unlink_unlocked(osNewFullPath);
+            const std::string osNewFullPath = osNewPath + osRemainder;
+            Unlink_unlocked(osNewFullPath.c_str());
             oFileList[osNewFullPath] = it->second;
             it->second->osFilename = osNewFullPath;
             oFileList.erase(it++);
@@ -1223,11 +1224,12 @@ VSILFILE *VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
     // ownership of pabyData.
     if (!osFilename.empty())
     {
-        const char *pszFileDir = CPLGetPath(osFilename.c_str());
-        if (VSIMkdirRecursive(pszFileDir, 0755) == -1)
+        const std::string osFileDir = CPLGetPathSafe(osFilename.c_str());
+        if (VSIMkdirRecursive(osFileDir.c_str(), 0755) == -1)
         {
             VSIError(VSIE_FileError,
-                     "Could not create directory %s for writing", pszFileDir);
+                     "Could not create directory %s for writing",
+                     osFileDir.c_str());
             errno = ENOENT;
             return nullptr;
         }
@@ -1293,7 +1295,7 @@ GByte *VSIGetMemFileBuffer(const char *pszFilename, vsi_l_offset *pnDataLength,
     if (pszFilename == nullptr)
         return nullptr;
 
-    const CPLString osFilename =
+    const std::string osFilename =
         VSIMemFilesystemHandler::NormalizePath(pszFilename);
 
     CPLMutexHolder oHolder(&poHandler->hMutex);

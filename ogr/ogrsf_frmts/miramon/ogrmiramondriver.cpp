@@ -32,9 +32,9 @@ static int OGRMiraMonDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
     if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes < 7)
         return FALSE;
-    else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "PNT") ||
-             EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ARC") ||
-             EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "POL"))
+    else if (poOpenInfo->IsExtensionEqualToCI("PNT") ||
+             poOpenInfo->IsExtensionEqualToCI("ARC") ||
+             poOpenInfo->IsExtensionEqualToCI("POL"))
     {
         // Format
         if ((poOpenInfo->pabyHeader[0] == 'P' &&

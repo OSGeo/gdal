@@ -40,6 +40,7 @@
 #include "ogrgeojsonutils.h"
 #include "ogrgeojsonwriter.h"
 #include "ogrsf_frmts.h"
+#include "ogr_schema_override.h"
 
 // #include "symbol_renames.h"
 
@@ -85,6 +86,125 @@ CPLErr OGRGeoJSONDataSource::Close()
             eErr = CE_Failure;
     }
     return eErr;
+}
+
+/************************************************************************/
+/*                 DealWithOgrSchemaOpenOption()                       */
+/************************************************************************/
+
+bool OGRGeoJSONDataSource::DealWithOgrSchemaOpenOption(
+    const GDALOpenInfo *poOpenInfo)
+{
+
+    std::string osFieldsSchemaOverrideParam =
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "OGR_SCHEMA", "");
+
+    if (!osFieldsSchemaOverrideParam.empty())
+    {
+
+        if (poOpenInfo->eAccess == GA_Update)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "OGR_SCHEMA open option is not supported in update mode.");
+            return false;
+        }
+
+        OGRSchemaOverride osSchemaOverride;
+        if (!osSchemaOverride.LoadFromJSON(osFieldsSchemaOverrideParam) ||
+            !osSchemaOverride.IsValid())
+        {
+            return false;
+        }
+
+        const auto &oLayerOverrides = osSchemaOverride.GetLayerOverrides();
+        for (const auto &oLayer : oLayerOverrides)
+        {
+            const auto &oLayerName = oLayer.first;
+            const auto &oLayerFieldOverride = oLayer.second;
+            const bool bIsFullOverride{oLayerFieldOverride.IsFullOverride()};
+            auto oFieldOverrides = oLayerFieldOverride.GetFieldOverrides();
+            std::vector<OGRFieldDefn *> aoFields;
+
+            CPLDebug("GeoJSON", "Applying schema override for layer %s",
+                     oLayerName.c_str());
+
+            // Fail if the layer name does not exist
+            auto poLayer = GetLayerByName(oLayerName.c_str());
+            if (poLayer == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Layer %s not found in GeoJSON file",
+                         oLayerName.c_str());
+                return false;
+            }
+
+            // Patch field definitions
+            auto poLayerDefn = poLayer->GetLayerDefn();
+            for (int i = 0; i < poLayerDefn->GetFieldCount(); i++)
+            {
+                auto poFieldDefn = poLayerDefn->GetFieldDefn(i);
+                auto oFieldOverride =
+                    oFieldOverrides.find(poFieldDefn->GetNameRef());
+                if (oFieldOverride != oFieldOverrides.cend())
+                {
+                    if (oFieldOverride->second.GetFieldType().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetType(
+                                oFieldOverride->second.GetFieldType().value());
+                    if (oFieldOverride->second.GetFieldWidth().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetWidth(
+                                oFieldOverride->second.GetFieldWidth().value());
+                    if (oFieldOverride->second.GetFieldPrecision().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetPrecision(
+                                oFieldOverride->second.GetFieldPrecision()
+                                    .value());
+                    if (oFieldOverride->second.GetFieldSubType().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetSubType(
+                                oFieldOverride->second.GetFieldSubType()
+                                    .value());
+                    if (oFieldOverride->second.GetFieldName().has_value())
+                        whileUnsealing(poFieldDefn)
+                            ->SetName(oFieldOverride->second.GetFieldName()
+                                          .value()
+                                          .c_str());
+
+                    if (bIsFullOverride)
+                    {
+                        aoFields.push_back(poFieldDefn);
+                    }
+                    oFieldOverrides.erase(oFieldOverride);
+                }
+            }
+
+            // Error if any field override is not found
+            if (!oFieldOverrides.empty())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s not found in layer %s",
+                         oFieldOverrides.cbegin()->first.c_str(),
+                         oLayerName.c_str());
+                return false;
+            }
+
+            // Remove fields not in the override
+            if (bIsFullOverride)
+            {
+                for (int i = poLayerDefn->GetFieldCount() - 1; i >= 0; i--)
+                {
+                    auto poFieldDefn = poLayerDefn->GetFieldDefn(i);
+                    if (std::find(aoFields.begin(), aoFields.end(),
+                                  poFieldDefn) == aoFields.end())
+                    {
+                        whileUnsealing(poLayerDefn)->DeleteFieldDefn(i);
+                    }
+                }
+            }
+        }
+    }
+    return true;
 }
 
 /************************************************************************/
@@ -175,6 +295,13 @@ int OGRGeoJSONDataSource::Open(GDALOpenInfo *poOpenInfo,
 
     SetDescription(poOpenInfo->pszFilename);
     LoadLayers(poOpenInfo, nSrcType, pszUnprefixed, pszJSonFlavor);
+
+    if (!DealWithOgrSchemaOpenOption(poOpenInfo))
+    {
+        Clear();
+        return FALSE;
+    }
+
     if (nLayers_ == 0)
     {
         bool bEmitError = true;
@@ -811,27 +938,9 @@ int OGRGeoJSONDataSource::ReadFromService(GDALOpenInfo *poOpenInfo,
     /* -------------------------------------------------------------------- */
     /*      Fetch the GeoJSON result.                                        */
     /* -------------------------------------------------------------------- */
-    char *papsOptions[] = {
-        const_cast<char *>("HEADERS=Accept: text/plain, application/json"),
-        nullptr};
-
-    CPLHTTPResult *pResult = CPLHTTPFetch(pszSource, papsOptions);
-
-    /* -------------------------------------------------------------------- */
-    /*      Try to handle CURL/HTTP errors.                                 */
-    /* -------------------------------------------------------------------- */
-    if (nullptr == pResult || 0 == pResult->nDataLen ||
-        0 != CPLGetLastErrorNo())
+    CPLHTTPResult *pResult = GeoJSONHTTPFetchWithContentTypeHeader(pszSource);
+    if (!pResult)
     {
-        CPLHTTPDestroyResult(pResult);
-        return FALSE;
-    }
-
-    if (0 != pResult->nStatus)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Curl reports error: %d: %s",
-                 pResult->nStatus, pResult->pszErrBuf);
-        CPLHTTPDestroyResult(pResult);
         return FALSE;
     }
 
@@ -1116,6 +1225,29 @@ void OGRGeoJSONDataSource::SetOptionsOnReader(GDALOpenInfo *poOpenInfo,
     poReader->SetDateAsString(CPLTestBool(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "DATE_AS_STRING",
         CPLGetConfigOption("OGR_GEOJSON_DATE_AS_STRING", "NO"))));
+
+    const char *pszForeignMembers = CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "FOREIGN_MEMBERS", "AUTO");
+    if (EQUAL(pszForeignMembers, "AUTO"))
+    {
+        poReader->SetForeignMemberProcessing(
+            OGRGeoJSONBaseReader::ForeignMemberProcessing::AUTO);
+    }
+    else if (EQUAL(pszForeignMembers, "ALL"))
+    {
+        poReader->SetForeignMemberProcessing(
+            OGRGeoJSONBaseReader::ForeignMemberProcessing::ALL);
+    }
+    else if (EQUAL(pszForeignMembers, "NONE"))
+    {
+        poReader->SetForeignMemberProcessing(
+            OGRGeoJSONBaseReader::ForeignMemberProcessing::NONE);
+    }
+    else if (EQUAL(pszForeignMembers, "STAC"))
+    {
+        poReader->SetForeignMemberProcessing(
+            OGRGeoJSONBaseReader::ForeignMemberProcessing::STAC);
+    }
 }
 
 /************************************************************************/

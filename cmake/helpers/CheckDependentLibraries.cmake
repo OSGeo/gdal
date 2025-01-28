@@ -443,6 +443,9 @@ gdal_check_package(IDB "enable ogr_IDB driver" CAN_DISABLE)
 gdal_check_package(rdb "enable RIEGL RDB library" CONFIG CAN_DISABLE)
 include(CheckDependentLibrariesTileDB)
 
+gdal_check_package(ExprTk "Enable C++ Mathematical Expression Tooklit Library (ExprTk) for VRT expressions" DISABLED_BY_DEFAULT)
+gdal_check_package(muparser "Enable muparser library for VRT expressions" RECOMMENDED CAN_DISABLE)
+
 gdal_check_package(OpenEXR "OpenEXR >=2.2" CAN_DISABLE)
 gdal_check_package(MONGOCXX "Enable MongoDBV3 driver" CAN_DISABLE)
 
@@ -489,7 +492,6 @@ option(GDAL_USE_PUBLICDECOMPWT
 
 # proprietary libraries KAKADU
 include(CheckDependentLibrariesKakadu)
-gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
 
 include(CheckDependentLibrariesArrowParquet)
 

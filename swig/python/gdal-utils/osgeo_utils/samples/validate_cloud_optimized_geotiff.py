@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # *****************************************************************************
-#  $Id$
 #
 #  Project:  GDAL
 #  Purpose:  Validate Cloud Optimized GeoTIFF file structure
@@ -39,6 +38,7 @@ class ValidateCloudOptimizedGeoTIFFException(Exception):
 
 def full_check_band(
     f,
+    interleave,
     band_name,
     band,
     errors,
@@ -46,6 +46,7 @@ def full_check_band(
     block_leader_size_as_uint4,
     block_trailer_last_4_bytes_repeated,
     mask_interleaved_with_imagery,
+    last_offset,
 ):
 
     block_size = band.GetBlockSize()
@@ -61,7 +62,6 @@ def full_check_band(
 
     yblocks = (band.YSize + block_size[1] - 1) // block_size[1]
     xblocks = (band.XSize + block_size[0] - 1) // block_size[0]
-    last_offset = 0
     for y in range(yblocks):
         for x in range(xblocks):
 
@@ -99,7 +99,13 @@ def full_check_band(
                                 % (x, y)
                             ]
 
-            if mask_band:
+            if mask_band and (
+                interleave == "PIXEL"
+                or (
+                    interleave == "TILE"
+                    and band.GetBand() == band.GetDataset().RasterCount
+                )
+            ):
                 offset_mask = mask_band.GetMetadataItem(
                     "BLOCK_OFFSET_%d_%d" % (x, y), "TIFF"
                 )
@@ -132,6 +138,33 @@ def full_check_band(
 
             last_offset = offset
 
+    return last_offset
+
+
+def check_tile_interleave(ds, ds_name, block_order_row_major, errors):
+
+    block_size = ds.GetRasterBand(1).GetBlockSize()
+    yblocks = (ds.RasterYSize + block_size[1] - 1) // block_size[1]
+    xblocks = (ds.RasterXSize + block_size[0] - 1) // block_size[0]
+    last_offset = 0
+    for y in range(yblocks):
+        for x in range(xblocks):
+            for band_idx in range(ds.RasterCount):
+                offset = ds.GetRasterBand(band_idx + 1).GetMetadataItem(
+                    "BLOCK_OFFSET_%d_%d" % (x, y), "TIFF"
+                )
+                offset = int(offset) if offset is not None else 0
+
+                if offset > 0:
+                    if block_order_row_major and offset < last_offset:
+                        errors += [
+                            ds_name
+                            + ": offset of block (%d, %d) is smaller than previous block"
+                            % (x, y)
+                        ]
+
+                    last_offset = offset
+
 
 def validate(ds, check_tiled=True, full_check=False):
     """Check if a file is a (Geo)TIFF with cloud optimized compatible structure.
@@ -163,7 +196,7 @@ def validate(ds, check_tiled=True, full_check=False):
             raise ValidateCloudOptimizedGeoTIFFException(
                 "Invalid file : %s" % gdal.GetLastErrorMsg()
             )
-        if ds.GetDriver().ShortName != "GTiff":
+        if ds.GetDriver().ShortName not in ("GTiff", "LIBERTIFF"):
             raise ValidateCloudOptimizedGeoTIFFException("The file is not a GeoTIFF")
 
     details = {}
@@ -332,6 +365,8 @@ def validate(ds, check_tiled=True, full_check=False):
             "should be after the one of the overview of index %d" % (ovr_count - 1)
         ]
 
+    interleave = ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE")
+
     if full_check and (
         block_order_row_major
         or block_leader_size_as_uint4
@@ -342,22 +377,49 @@ def validate(ds, check_tiled=True, full_check=False):
         if not f:
             raise ValidateCloudOptimizedGeoTIFFException("Cannot open file")
 
-        full_check_band(
-            f,
-            "Main resolution image",
-            main_band,
-            errors,
-            block_order_row_major,
-            block_leader_size_as_uint4,
-            block_trailer_last_4_bytes_repeated,
-            mask_interleaved_with_imagery,
-        )
+        if interleave == "PIXEL":
+            full_check_band(
+                f,
+                interleave,
+                "Main resolution image",
+                main_band,
+                errors,
+                block_order_row_major,
+                block_leader_size_as_uint4,
+                block_trailer_last_4_bytes_repeated,
+                mask_interleaved_with_imagery,
+                0,
+            )
+        else:
+            last_offset = 0
+            for band_idx in range(ds.RasterCount):
+                if interleave != "BAND":
+                    last_offset = 0
+                last_offset = full_check_band(
+                    f,
+                    interleave,
+                    "Band %d of main resolution image" % (band_idx + 1),
+                    ds.GetRasterBand(band_idx + 1),
+                    errors,
+                    block_order_row_major,
+                    block_leader_size_as_uint4,
+                    block_trailer_last_4_bytes_repeated,
+                    mask_interleaved_with_imagery,
+                    last_offset,
+                )
+
+        if interleave == "TILE":
+            check_tile_interleave(
+                ds, "Main resolution image", block_order_row_major, errors
+            )
+
         if (
             main_band.GetMaskFlags() == gdal.GMF_PER_DATASET
             and (filename + ".msk") not in ds.GetFileList()
         ):
             full_check_band(
                 f,
+                interleave,
                 "Mask band of main resolution image",
                 main_band.GetMaskBand(),
                 errors,
@@ -365,25 +427,56 @@ def validate(ds, check_tiled=True, full_check=False):
                 block_leader_size_as_uint4,
                 block_trailer_last_4_bytes_repeated,
                 False,
+                0,
             )
         for i in range(ovr_count):
             ovr_band = ds.GetRasterBand(1).GetOverview(i)
-            full_check_band(
-                f,
-                "Overview %d" % i,
-                ovr_band,
-                errors,
-                block_order_row_major,
-                block_leader_size_as_uint4,
-                block_trailer_last_4_bytes_repeated,
-                mask_interleaved_with_imagery,
-            )
+            if interleave == "PIXEL":
+                full_check_band(
+                    f,
+                    interleave,
+                    "Overview %d" % i,
+                    ovr_band,
+                    errors,
+                    block_order_row_major,
+                    block_leader_size_as_uint4,
+                    block_trailer_last_4_bytes_repeated,
+                    mask_interleaved_with_imagery,
+                    0,
+                )
+            else:
+                last_offset = 0
+                for band_idx in range(ds.RasterCount):
+                    if interleave != "BAND":
+                        last_offset = 0
+                    last_offset = full_check_band(
+                        f,
+                        interleave,
+                        "Band %d of overview %d" % (band_idx + 1, i),
+                        ds.GetRasterBand(band_idx + 1).GetOverview(i),
+                        errors,
+                        block_order_row_major,
+                        block_leader_size_as_uint4,
+                        block_trailer_last_4_bytes_repeated,
+                        mask_interleaved_with_imagery,
+                        last_offset,
+                    )
+
+            if interleave == "TILE":
+                check_tile_interleave(
+                    ds.GetRasterBand(1).GetDataset(),
+                    "Overview %d" % i,
+                    block_order_row_major,
+                    errors,
+                )
+
             if (
                 ovr_band.GetMaskFlags() == gdal.GMF_PER_DATASET
                 and (filename + ".msk") not in ds.GetFileList()
             ):
                 full_check_band(
                     f,
+                    interleave,
                     "Mask band of overview %d" % i,
                     ovr_band.GetMaskBand(),
                     errors,
@@ -391,6 +484,7 @@ def validate(ds, check_tiled=True, full_check=False):
                     block_leader_size_as_uint4,
                     block_trailer_last_4_bytes_repeated,
                     False,
+                    0,
                 )
         gdal.VSIFCloseL(f)
 

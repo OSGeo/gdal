@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # ******************************************************************************
-#  $Id$
 #
 #  Project:  GDAL Python Interface
 #  Purpose:  Application for applying sieve filter to raster data.

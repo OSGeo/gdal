@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test RS2 driver
@@ -67,3 +66,15 @@ def test_rs2_3():
         "SAMP_SCALE": "pixelScale",
     }
     assert got_rpc == expected_rpc
+
+
+@pytest.mark.require_curl
+def test_rs2_open_real_dataset():
+    remote_file = "https://donnees-data.asc-csa.gc.ca/users/OpenData_DonneesOuvertes/pub/RADARSAT-2/RS2_OK103540_PK929658_DK864570_SLA12_20190317_110012_HH_SLC/product.xml"
+
+    if gdaltest.gdalurlopen(remote_file) is None:
+        pytest.skip(f"Could not read from {remote_file}")
+
+    ds = gdal.Open("/vsicurl/" + remote_file)
+    assert ds.GetDriver().ShortName == "RS2"
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_CInt16

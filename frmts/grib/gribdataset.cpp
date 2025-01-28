@@ -901,7 +901,7 @@ static bool IsGdalinfoInteractive()
             osPath.resize(1024);
             if (CPLGetExecPath(&osPath[0], static_cast<int>(osPath.size())))
             {
-                osPath = CPLGetBasename(osPath.c_str());
+                osPath = CPLGetBasenameSafe(osPath.c_str());
             }
             return osPath == "gdalinfo";
         }
@@ -2656,7 +2656,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         // case of latlon).
         rMinX = meta->gds.lon1;
         // Latitude in degrees, to be transformed to meters.
-        rMaxY = meta->gds.lat1;
+        double dfGridOriY = meta->gds.lat1;
 
         if (m_poSRS == nullptr || m_poLL == nullptr ||
             !m_poSRS->IsSame(&oSRS) || !m_poLL->IsSame(&oLL))
@@ -2666,13 +2666,78 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         }
 
         // Transform it to meters.
-        if ((m_poCT != nullptr) && m_poCT->Transform(1, &rMinX, &rMaxY))
+        if ((m_poCT != nullptr) && m_poCT->Transform(1, &rMinX, &dfGridOriY))
         {
             if (meta->gds.scan == GRIB2BIT_2)  // Y is minY, GDAL wants maxY.
             {
-                // -1 because we GDAL needs the coordinates of the centre of
-                // the pixel.
-                rMaxY += (meta->gds.Ny - 1) * meta->gds.Dy;
+                const char *pszConfigOpt = CPLGetConfigOption(
+                    "GRIB_LATITUDE_OF_FIRST_GRID_POINT_IS_SOUTHERN_MOST",
+                    nullptr);
+                bool bLatOfFirstPointIsSouthernMost =
+                    !pszConfigOpt || CPLTestBool(pszConfigOpt);
+
+                // Hack for a file called MANAL_2023030103.grb2 that
+                // uses LCC and has Latitude of false origin = 30
+                // Longitude of false origin = 140
+                // Latitude of 1st standard parallel = 60
+                // Latitude of 2nd standard parallel = 30
+                // but whose (meta->gds.lon1, meta->gds.lat1) qualifies the
+                // northern-most point of the grid and not the bottom-most one
+                // as it should given the scan == GRIB2BIT_2
+                if (!pszConfigOpt && meta->gds.projType == GS3_LAMBERT &&
+                    std::fabs(meta->gds.scaleLat1 - 60) <= 1e-8 &&
+                    std::fabs(meta->gds.scaleLat2 - 30) <= 1e-8 &&
+                    std::fabs(meta->gds.meshLat - 30) <= 1e-8 &&
+                    std::fabs(Lon360to180(meta->gds.orientLon) - 140) <= 1e-8)
+                {
+                    double dfXCenterProj = Lon360to180(meta->gds.orientLon);
+                    double dfYCenterProj = meta->gds.meshLat;
+                    if (m_poCT->Transform(1, &dfXCenterProj, &dfYCenterProj))
+                    {
+                        double dfXCenterGridNominal =
+                            rMinX + nRasterXSize * meta->gds.Dx / 2;
+                        double dfYCenterGridNominal =
+                            dfGridOriY + nRasterYSize * meta->gds.Dy / 2;
+                        double dfXCenterGridBuggy = dfXCenterGridNominal;
+                        double dfYCenterGridBuggy =
+                            dfGridOriY - nRasterYSize * meta->gds.Dy / 2;
+                        const auto SQR = [](double x) { return x * x; };
+                        if (SQR(dfXCenterGridBuggy - dfXCenterProj) +
+                                SQR(dfYCenterGridBuggy - dfYCenterProj) <
+                            SQR(10) *
+                                (SQR(dfXCenterGridNominal - dfXCenterProj) +
+                                 SQR(dfYCenterGridNominal - dfYCenterProj)))
+                        {
+                            CPLError(
+                                CE_Warning, CPLE_AppDefined,
+                                "Likely buggy grid registration for GRIB2 "
+                                "product: heuristics shows that the "
+                                "latitudeOfFirstGridPoint is likely to qualify "
+                                "the latitude of the northern-most grid point "
+                                "instead of the southern-most grid point as "
+                                "expected. Please report to data producer. "
+                                "This heuristics can be disabled by setting "
+                                "the "
+                                "GRIB_LATITUDE_OF_FIRST_GRID_POINT_IS_SOUTHERN_"
+                                "MOST configuration option to YES.");
+                            bLatOfFirstPointIsSouthernMost = false;
+                        }
+                    }
+                }
+                if (bLatOfFirstPointIsSouthernMost)
+                {
+                    // -1 because we GDAL needs the coordinates of the centre of
+                    // the pixel.
+                    rMaxY = dfGridOriY + (meta->gds.Ny - 1) * meta->gds.Dy;
+                }
+                else
+                {
+                    rMaxY = dfGridOriY;
+                }
+            }
+            else
+            {
+                rMaxY = dfGridOriY;
             }
             rPixelSizeX = meta->gds.Dx;
             rPixelSizeY = meta->gds.Dy;
@@ -2680,7 +2745,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         else
         {
             rMinX = 0.0;
-            rMaxY = 0.0;
+            // rMaxY = 0.0;
 
             rPixelSizeX = 1.0;
             rPixelSizeY = -1.0;

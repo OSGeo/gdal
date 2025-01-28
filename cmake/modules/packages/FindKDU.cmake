@@ -31,9 +31,9 @@ macro(find_kdu_libs_from_makefiles)
     set(KDU_VERSION_VAR "${KDU_MAJOR_VERSION}.${KDU_MINOR_VERSION}")
 
     find_library(KDU_LIBRARY ${KDU_SHARED_LIB_NAME}
-                 PATH ${KDU_ROOT}/lib/${ARGV0})
+                 PATHS ${KDU_ROOT}/lib/${ARGV0})
     find_library(KDU_AUX_LIBRARY ${KDU_AUX_SHARED_LIB_NAME}
-                 PATH ${KDU_ROOT}/lib/${ARGV0})
+                 PATHS ${KDU_ROOT}/lib/${ARGV0})
 endmacro()
 
 set(KDU_VERSION_VAR "")
@@ -60,15 +60,15 @@ if(KDU_ROOT AND EXISTS "${KDU_ROOT}/coresys")
         string(REGEX REPLACE [[.*<ImportLibrary>([^l]*)(lib_x64\\)([^R]*R)(\.lib).*]] "\\1\\2\\3\\4" KDU_AUX_SHARED_LIB_NAME ${MANAGED_MAKEFILE_CONTENTS})
 
         find_library(KDU_LIBRARY ${KDU_SHARED_LIB_NAME}
-                     PATH ${KDU_ROOT})
+                     PATHS ${KDU_ROOT})
 
         find_library(KDU_AUX_LIBRARY ${KDU_AUX_SHARED_LIB_NAME}
-                     PATH ${KDU_ROOT})
+                     PATHS ${KDU_ROOT})
     endif()
 endif()
 
 find_path(KDU_INCLUDE_DIR coresys/common/kdu_elementary.h
-          PATH ${KDU_ROOT})
+          PATHS ${KDU_ROOT})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(KDU

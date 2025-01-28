@@ -16,6 +16,7 @@ API
        :maxdepth: 1
 
        cpl
+       gdal_fwd
        raster_c_api
        vector_c_api
        gdal_alg
@@ -81,18 +82,9 @@ API
    ----------
 
    .. toctree::
-       :maxdepth: 1
+       :maxdepth: 2
 
-       python_bindings
-       python/osgeo
-       python/raster_api
-       python/vector_api
-       python/spatial_ref_api
-       python/mdim_api
-       python/utilities
-       python/general
-       python_gotchas
-       python_samples
+       python/index
 
 
    `Java API <../java/index.html>`_

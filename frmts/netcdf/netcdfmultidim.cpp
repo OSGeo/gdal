@@ -882,6 +882,7 @@ netCDFGroup::CreateDimension(const std::string &osName,
 static int CreateOrGetComplexDataType(int gid, GDALDataType eDT)
 {
     const char *pszName = "";
+    CPL_IGNORE_RET_VAL(pszName);  // Make CSA happy
     int nSubTypeId = NC_NAT;
     switch (eDT)
     {
@@ -2645,8 +2646,9 @@ std::shared_ptr<OGRSpatialReference> netCDFVariable::GetSpatialRef() const
         m_poSRS.reset(poSRS->Clone());
         if (iDimX > 0 && iDimY > 0)
         {
-            if (m_poSRS->GetDataAxisToSRSAxisMapping() ==
-                std::vector<int>{2, 1})
+            const auto &oMapping = m_poSRS->GetDataAxisToSRSAxisMapping();
+            if (oMapping == std::vector<int>{2, 1} ||
+                oMapping == std::vector<int>{2, 1, 3})
                 m_poSRS->SetDataAxisToSRSAxisMapping({iDimY, iDimX});
             else
                 m_poSRS->SetDataAxisToSRSAxisMapping({iDimX, iDimY});
@@ -4969,7 +4971,7 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
         if (osFilename.empty())
         {
             bFileToDestroyAtClosing = true;
-            osFilename = CPLGenerateTempFilename("netcdf_tmp");
+            osFilename = CPLGenerateTempFilenameSafe("netcdf_tmp");
         }
         if (!netCDFDatasetCreateTempFile(NCDF_FORMAT_NC4, osFilename.c_str(),
                                          poOpenInfo->fpL))

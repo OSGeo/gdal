@@ -31,7 +31,12 @@ bool CPLHaveRuntimeSSE();
 #endif
 #endif
 
-#ifdef HAVE_SSSE3_AT_COMPILE_TIME
+#ifdef USE_NEON_OPTIMIZATIONS
+static bool inline CPLHaveRuntimeSSSE3()
+{
+    return true;
+}
+#elif defined(HAVE_SSSE3_AT_COMPILE_TIME)
 #if __SSSE3__
 #define HAVE_INLINE_SSSE3
 

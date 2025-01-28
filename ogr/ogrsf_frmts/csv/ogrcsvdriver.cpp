@@ -203,13 +203,13 @@ OGRCSVDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     // If the target is not a simple .csv then create it as a directory.
     CPLString osDirName;
 
-    if (EQUAL(CPLGetExtension(pszName), "csv"))
+    if (EQUAL(CPLGetExtensionSafe(pszName).c_str(), "csv"))
     {
-        osDirName = CPLGetPath(pszName);
+        osDirName = CPLGetPathSafe(pszName);
         if (osDirName == "")
             osDirName = ".";
 
-        // HACK: CPLGetPath("/vsimem/foo.csv") = "/vsimem", but this is not
+        // HACK: CPLGetPathSafe("/vsimem/foo.csv") = "/vsimem", but this is not
         // recognized afterwards as a valid directory name.
         if (osDirName == "/vsimem")
             osDirName = "/vsimem/";
@@ -233,7 +233,7 @@ OGRCSVDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     // Force it to open as a datasource.
     auto poDS = std::make_unique<OGRCSVDataSource>();
 
-    if (EQUAL(CPLGetExtension(pszName), "csv"))
+    if (EQUAL(CPLGetExtensionSafe(pszName).c_str(), "csv"))
     {
         poDS->CreateForSingleFile(osDirName, pszName);
     }
@@ -426,6 +426,15 @@ void RegisterOGRCSV()
         "  <Option name='MAX_LINE_SIZE' type='int' description='Maximum number "
         "of bytes for a line (-1=unlimited)' default='" STRINGIFY(
             OGR_CSV_DEFAULT_MAX_LINE_SIZE) "'/>"
+                                           "  <Option name='OGR_SCHEMA' "
+                                           "type='string' description='"
+                                           "Partially or totally overrides the "
+                                           "auto-detected schema to use for "
+                                           "creating the layer. "
+                                           "The overrides are defined as a "
+                                           "JSON list of field definitions. "
+                                           "This can be a filename or a JSON "
+                                           "string or a URL.'/>"
                                            "</OpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");

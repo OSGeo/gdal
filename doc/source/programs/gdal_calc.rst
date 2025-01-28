@@ -25,8 +25,8 @@ Synopsis
 Command line raster calculator with numpy syntax. Use any basic
 arithmetic supported by numpy arrays such as ``+``, ``-``, ``*``, and
 ``/`` along with logical operators such as ``>``.
-Note that all files must have the same dimensions (unless extent option is used),
-but no projection checking is performed (unless projectionCheck option is used).
+Note that all files must have the same dimensions (unless the :option:`--extent` option is used),
+but no projection checking is performed (unless the :option:`--projectionCheck` option is used).
 
 .. note::
 
@@ -37,17 +37,18 @@ but no projection checking is performed (unless projectionCheck option is used).
 .. option:: --calc=<expression>
 
     Calculation in numpy syntax using ``+``, ``-``, ``/``, ``*``, or any numpy array functions (i.e. ``log10()``).
-    Multiple ``--calc`` options can be listed to produce a multiband file (GDAL >= 3.2).
+    Multiple :option:`--calc` options can be listed to produce a multiband file (GDAL >= 3.2).
+    See :example:`gdal-calc-multiple-expr`.
 
 .. option:: -A <filename>
 
-    Input gdal raster file, you can use any letter (a-z, A-Z).  (lower case supported since GDAL 3.3)
+    Input GDAL raster file, you can use any letter (a-z, A-Z).  (lower case supported since GDAL 3.3)
 
     A letter may be repeated, or several values (separated by space) can be provided (GDAL >= 3.3).
+    The effect will be to create a 3D numpy array.
     Since GDAL 3.5, wildcard exceptions (using ?, \*) are supported for all shells/platforms.
-    The effect will be to create a 3-dim numpy array.
-    In such a case, the calculation formula must use this input as a 3-dim array and must return a 2D array (see examples below).
-    In case the calculation does not return a 2D array an error would be generated.
+    In such a case, the calculation formula must use this input as a 3D array and must return a 2D array (see :example:`gdal-calc-3d-sum`).
+    If the calculation does not return a 2D array an error will be generated.
 
 .. option:: --A_band=<n>
 
@@ -143,7 +144,9 @@ but no projection checking is performed (unless projectionCheck option is used).
 
 .. option:: --allBands=[a-z, A-Z]
 
-    Process all bands of given raster (a-z, A-Z). Requires a single calc for all bands.
+    Apply the expression to all bands of a given raster. When
+    :option:`--allBands` is used, :option:`--calc` may be specified only once.
+    See :example:`gdal-calc-allbands-1` and :example:`gdal-calc-allbands-2`.
 
 .. option:: --overwrite
 
@@ -166,7 +169,7 @@ Python options
 
 .. versionadded:: 3.3
 
-The following options are available by using function the python interface of gdal_calc.
+The following options are available by using the Python interface of :program:`gdal_calc`.
 They are not available using the command prompt.
 
 .. option:: user_namespace
@@ -175,7 +178,7 @@ They are not available using the command prompt.
 
 .. option:: return_ds
 
-    If enabled, the output dataset would be returned from the function and not closed.
+    If enabled, the output dataset will be returned from the function and not closed.
 
 .. option:: color_table
 
@@ -184,72 +187,109 @@ They are not available using the command prompt.
 Examples
 --------
 
-Add two files together:
-
-.. code-block:: bash
-
-    gdal_calc -A input1.tif -B input2.tif --outfile=result.tif --calc="A+B"
-
-Average of two layers:
-
-.. code-block:: bash
-
-    gdal_calc -A input1.tif -B input2.tif --outfile=result.tif --calc="(A+B)/2"
-
-.. note::
-
-   In the previous example, beware that if A and B inputs are of the same datatype, for example integers, you
-   may need to force the conversion of one of the operands before the division operation.
+.. example::
+   :title: Average of two files
 
    .. code-block:: bash
 
-      gdal_calc -A input.tif -B input2.tif --outfile=result.tif --calc="(A.astype(numpy.float64) + B) / 2"
+    gdal_calc -A input1.tif -B input2.tif --outfile=result.tif --calc="(A+B)/2"
 
-Add three files together (two options with the same result):
+   .. caution::
 
-.. code-block:: bash
+      If A and B inputs both have integer data types, integer division will be
+      performed.  To avoid this, you can convert of one of the operands to a
+      floating point type before the division operation.
 
-    gdal_calc -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="A+B+C"
+      .. code-block:: bash
 
-.. code-block:: bash
+         gdal_calc -A input.tif -B input2.tif --outfile=result.tif --calc="(A.astype(numpy.float64) + B) / 2"
 
-    gdal_calc -A input1.tif -A input2.tif -A input3.tif --outfile=result.tif --calc="numpy.sum(A,axis=0)".
+.. example::
+   :title: Summing three files
 
-Average of three layers (two options with the same result):
+   .. code-block:: bash
 
-.. code-block:: bash
+       gdal_calc -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="A+B+C"
 
-    gdal_calc -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="(A+B+C)/3"
+.. example::
+   :title: Combining three files into a 3D array and summing
+   :id: gdal-calc-3d-sum
 
-.. code-block:: bash
+   .. code-block:: bash
 
-    gdal_calc -A input1.tif input2.tif input3.tif --outfile=result.tif --calc="numpy.average(a,axis=0)".
+       gdal_calc -A input1.tif -A input2.tif -A input3.tif --outfile=result.tif --calc="numpy.sum(A,axis=0)".
 
-Maximum of three layers  (two options with the same result):
+.. example::
+   :title: Average of three files
 
-.. code-block:: bash
+   .. code-block:: bash
 
-    gdal_calc -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="numpy.max((A,B,C),axis=0)"
+       gdal_calc -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="(A+B+C)/3"
 
-.. code-block:: bash
+.. example::
+   :title: Average of three files, using 3D array
 
-    gdal_calc -A input1.tif input2.tif input3.tif --outfile=result.tif --calc="numpy.max(A,axis=0)"
+   .. code-block:: bash
 
-Set values of zero and below to null:
+       gdal_calc -A input1.tif input2.tif input3.tif --outfile=result.tif --calc="numpy.average(a,axis=0)".
 
-.. code-block:: bash
+.. example::
+   :title: Maximum of three files
 
-    gdal_calc -A input.tif --outfile=result.tif --calc="A*(A>0)" --NoDataValue=0
+   .. code-block:: bash
 
-Using logical operator to keep a range of values from input:
+       gdal_calc -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="numpy.max((A,B,C),axis=0)"
 
-.. code-block:: bash
+.. example::
+   :title: Maximum of three files, using a 3D array
 
-    gdal_calc -A input.tif --outfile=result.tif --calc="A*logical_and(A>100,A<150)"
+   .. code-block:: bash
 
-Work with multiple bands:
+       gdal_calc -A input1.tif input2.tif input3.tif --outfile=result.tif --calc="numpy.max(A,axis=0)"
 
-.. code-block:: bash
+.. example::
+   :title: Setting values of zero and below to NODATA
 
-    gdal_calc -A input.tif --A_band=1 -B input.tif --B_band=2 \
-      --outfile=result.tif --calc="(A+B)/2" --calc="B*logical_and(A>100,A<150)"
+   .. code-block:: bash
+
+       gdal_calc -A input.tif --outfile=result.tif --calc="A*(A>0)" --NoDataValue=0
+
+.. example::
+   :title: Using logical operator to keep a range of values from input
+
+   .. code-block:: bash
+
+       gdal_calc -A input.tif --outfile=result.tif --calc="A*logical_and(A>100,A<150)"
+
+.. example::
+   :title: Performing two calculations and storing results in separate bands
+   :id: gdal-calc-multiple-expr
+
+   .. code-block:: bash
+
+       gdal_calc -A input.tif --A_band=1 -B input.tif --B_band=2 \
+         --outfile=result.tif --calc="(A+B)/2" --calc="B*logical_and(A>100,A<150)"
+
+.. example::
+   :title: Add a raster to each band in a 3-band raster
+   :id: gdal-calc-allbands-1
+
+   .. code-block:: bash
+
+       gdal_calc -A 3band.tif -B 1band.tif --outfile result.tif --calc "A+B" --allBands A
+
+   The result will have three bands, where each band contains the values of ``1band.tif``
+   added to the corresponding band in ``3band.tif``.
+
+.. example::
+   :title: Add two three-band rasters
+   :id: gdal-calc-allbands-2
+
+   .. code-block:: bash
+
+       gdal_calc -A 3band_a.tif -B 3band_b.tif --outfile result.tif --calc "A+B" --allBands A --allBands B
+
+   The result will have three bands, where each band contains the values of the corresponding
+   band of ``3band_a.tif`` added to the corresponding band of ``3band_b.tif``.
+
+

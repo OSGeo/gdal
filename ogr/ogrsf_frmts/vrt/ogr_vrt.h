@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Private definitions for OGR/VRT driver.
@@ -125,6 +124,8 @@ class OGRVRTLayer final : public OGRLayer
     GIntBig nFeatureCount;
 
     bool bError;
+
+    bool m_bEmptyResultSet = false;
 
     bool ParseGeometryField(CPLXMLNode *psNode, CPLXMLNode *psNodeParent,
                             OGRVRTGeomFieldProps *poProps);

@@ -462,7 +462,7 @@ CPLErr CPL_STDCALL GDALFillNodata(GDALRasterBandH hTargetBand,
         aosWorkFileOptions.SetNameValue("BIGTIFF", "IF_SAFER");
     }
 
-    const CPLString osTmpFile = CPLGenerateTempFilename("");
+    const CPLString osTmpFile = CPLGenerateTempFilenameSafe("");
 
     std::unique_ptr<GDALDataset> poTmpMaskDS;
     if (hMaskBand == nullptr)

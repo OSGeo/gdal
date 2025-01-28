@@ -244,9 +244,10 @@ int CPGDataset::AdjustFilename(char **pszFilename, const char *pszPolarization,
     // TODO: Eventually we should handle upper/lower case.
     if (EQUAL(pszPolarization, "stokes"))
     {
-        const char *pszNewName = CPLResetExtension(*pszFilename, pszExtension);
+        const std::string osNewName =
+            CPLResetExtensionSafe(*pszFilename, pszExtension);
         CPLFree(*pszFilename);
-        *pszFilename = CPLStrdup(pszNewName);
+        *pszFilename = CPLStrdup(osNewName.c_str());
     }
     else if (strlen(pszPolarization) == 2)
     {
@@ -261,15 +262,17 @@ int CPGDataset::AdjustFilename(char **pszFilename, const char *pszPolarization,
             return FALSE;
 
         strncpy(subptr, pszPolarization, 2);
-        const char *pszNewName = CPLResetExtension(*pszFilename, pszExtension);
+        const std::string osNewName =
+            CPLResetExtensionSafe(*pszFilename, pszExtension);
         CPLFree(*pszFilename);
-        *pszFilename = CPLStrdup(pszNewName);
+        *pszFilename = CPLStrdup(osNewName.c_str());
     }
     else
     {
-        const char *pszNewName = CPLResetExtension(*pszFilename, pszExtension);
+        const std::string osNewName =
+            CPLResetExtensionSafe(*pszFilename, pszExtension);
         CPLFree(*pszFilename);
-        *pszFilename = CPLStrdup(pszNewName);
+        *pszFilename = CPLStrdup(osNewName.c_str());
     }
     VSIStatBufL sStatBuf;
     return VSIStatL(*pszFilename, &sStatBuf) == 0;

@@ -451,7 +451,7 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
             default:
                 // Other type???  Impossible!
                 CPLError(CE_Failure, CPLE_AssertionFailed,
-                         "Unsupported field type!");
+                         "Unsupported field type for field %d!", iField);
         }
     }
 
@@ -1797,9 +1797,9 @@ const char *TABCustomPoint::GetSymbolStyleString(double dfAngle) const
 
     int nAngle = static_cast<int>(dfAngle);
     const char *pszStyle;
-    const char *pszExt = CPLGetExtension(GetSymbolNameRef());
+    const std::string osExt = CPLGetExtensionSafe(GetSymbolNameRef());
     char szLowerExt[8] = "";
-    const char *pszPtr = pszExt;
+    const char *pszPtr = osExt.c_str();
     int i;
 
     for (i = 0; i < 7 && *pszPtr != '\0' && *pszPtr != ' '; i++, pszPtr++)

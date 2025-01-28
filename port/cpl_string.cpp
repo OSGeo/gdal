@@ -2785,12 +2785,19 @@ char *CPLUnescapeString(const char *pszInput, int *pnLength, int nScheme)
 char *CPLBinaryToHex(int nBytes, const GByte *pabyData)
 
 {
-    char *pszHex = static_cast<char *>(CPLMalloc(nBytes * 2 + 1));
+    CPLAssert(nBytes >= 0);
+    char *pszHex = static_cast<char *>(
+        VSI_MALLOC_VERBOSE(static_cast<size_t>(nBytes) * 2 + 1));
+    if (!pszHex)
+    {
+        pszHex = CPLStrdup("");
+        return pszHex;
+    }
     pszHex[nBytes * 2] = '\0';
 
     constexpr char achHex[] = "0123456789ABCDEF";
 
-    for (int i = 0; i < nBytes; ++i)
+    for (size_t i = 0; i < static_cast<size_t>(nBytes); ++i)
     {
         const int nLow = pabyData[i] & 0x0f;
         const int nHigh = (pabyData[i] & 0xf0) >> 4;
@@ -3160,4 +3167,59 @@ int CPLToupper(int c)
 int CPLTolower(int c)
 {
     return (c >= 'A' && c <= 'Z') ? (c - 'A' + 'a') : c;
+}
+
+/************************************************************************/
+/*                      CPLRemoveSQLComments()                          */
+/************************************************************************/
+
+/** Remove SQL comments from a string
+ *
+ * @param osInput Input string.
+ * @since GDAL 3.11
+ */
+std::string CPLRemoveSQLComments(const std::string &osInput)
+{
+    const CPLStringList aosLines(
+        CSLTokenizeStringComplex(osInput.c_str(), "\r\n", FALSE, FALSE));
+    std::string osSQL;
+    for (const char *pszLine : aosLines)
+    {
+        char chQuote = 0;
+        int i = 0;
+        for (; pszLine[i] != '\0'; ++i)
+        {
+            if (chQuote)
+            {
+                if (pszLine[i] == chQuote)
+                {
+                    // Deal with escaped quote character which is repeated,
+                    // so 'foo''bar' or "foo""bar"
+                    if (pszLine[i + 1] == chQuote)
+                    {
+                        i++;
+                    }
+                    else
+                    {
+                        chQuote = 0;
+                    }
+                }
+            }
+            else if (pszLine[i] == '\'' || pszLine[i] == '"')
+            {
+                chQuote = pszLine[i];
+            }
+            else if (pszLine[i] == '-' && pszLine[i + 1] == '-')
+            {
+                break;
+            }
+        }
+        if (i > 0)
+        {
+            if (!osSQL.empty())
+                osSQL += ' ';
+            osSQL.append(pszLine, i);
+        }
+    }
+    return osSQL;
 }

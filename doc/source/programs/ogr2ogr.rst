@@ -153,7 +153,7 @@ output coordinate system or even reprojecting the features during translation.
     Display progress on terminal. Only works if input layers have the "fast
     feature count" capability.
 
-.. option:: -sql <sql_statement>
+.. option:: -sql <sql_statement>|@<filename>
 
     SQL statement to execute. The resulting table/layer will be saved to the
     output. Starting with GDAL 2.1, the ``@filename`` syntax can be used to
@@ -166,7 +166,7 @@ output coordinate system or even reprojecting the features during translation.
     The :ref:`sql_sqlite_dialect` dialect can be chosen with the ``SQLITE``
     and ``INDIRECT_SQLITE`` dialect values, and this can be used with any datasource.
 
-.. option:: -where <restricted_where>
+.. option:: -where <restricted_where>|@<filename>
 
     Attribute query (like SQL WHERE). Starting with GDAL 2.1, the ``@filename``
     syntax can be used to indicate that the content is in the pointed filename.
@@ -372,9 +372,7 @@ output coordinate system or even reprojecting the features during translation.
 
     Limit the number of features per layer.
 
-.. option:: -oo <NAME>=<VALUE>
-
-    Input dataset open option (format specific).
+.. include:: options/oo_vector.rst
 
 .. option:: -doo <NAME>=<VALUE>
 
@@ -496,7 +494,10 @@ output coordinate system or even reprojecting the features during translation.
     avoid typing a long SQL query. Note that this does not influence the field
     types used by the source driver, and is only an afterwards conversion.
     Also note that this option is without effects on fields whose presence and
-    type is hard-coded in the output driver (e.g KML, GPX)
+    type is hard-coded in the output driver (e.g KML, GPX).
+    For an alternative way to manipulate field types earlier in the process while they
+    are read from the input dataset see :option:`-oo` ``OGR_SCHEMA`` (only available
+    for a limited set of formats).
 
 .. option:: -mapFieldType {<srctype>|All=<dsttype>[,<srctype2>=<dsttype2>]...}
 
@@ -511,7 +512,10 @@ output coordinate system or even reprojecting the features during translation.
     Note that this does not influence the field types used by the source
     driver, and is only an afterwards conversion.
     Also note that this option is without effects on fields whose presence and
-    type is hard-coded in the output driver (e.g KML, GPX)
+    type is hard-coded in the output driver (e.g KML, GPX).
+    For an alternative way to manipulate field types earlier in the process while they
+    are read from the input dataset see :option:`-oo` ``OGR_SCHEMA`` (only available
+    for a limited set of formats).
 
 .. option:: -dateTimeTo {UTC|UTC(+|-)<HH>|UTC(+|-)<HH>:<MM>}
 
@@ -697,31 +701,38 @@ This utility is also callable from C with :cpp:func:`GDALVectorTranslate`.
 Examples
 --------
 
-* Basic conversion from Shapefile to GeoPackage:
+.. example:
+   :title: Basic conversion from Shapefile to GeoPackage
 
     .. code-block:: bash
 
       ogr2ogr output.gpkg input.shp
 
-* Change the coordinate reference system from ``EPSG:4326`` to ``EPSG:3857``:
+.. example:
+   :title: Change the coordinate reference system from ``EPSG:4326`` to ``EPSG:3857``
 
     .. code-block:: bash
 
       ogr2ogr -s_srs EPSG:4326 -t_srs EPSG:3857 output.gpkg input.gpkg
 
-* Example appending to an existing layer:
+.. example::
+   :title: Appending to an existing layer
 
     .. code-block:: bash
 
         ogr2ogr -append -f PostgreSQL PG:dbname=warmerda abc.tab
 
-* Clip input layer with a bounding box (<xmin> <ymin> <xmax> <ymax>):
+.. example::
+   :title: Clip input layer with a bounding box
+
+    The bounding box is specified as ``<xmin> <ymin> <xmax> <ymax>``:
 
     .. code-block:: bash
 
       ogr2ogr -spat -13.931 34.886 46.23 74.12 output.gpkg natural_earth_vector.gpkg
 
-* Filter Features by a ``-where`` clause:
+.. example::
+   :title: Filter Features by a ``-where`` clause
 
     .. code-block:: bash
 
@@ -734,62 +745,68 @@ More examples are given in the individual format pages.
 Advanced examples
 -----------------
 
-* Reprojecting from ETRS_1989_LAEA_52N_10E to EPSG:4326 and clipping to a bounding box:
+.. example::
+   :title: Reprojecting from ETRS_1989_LAEA_52N_10E to EPSG:4326 and clipping to a bounding box
 
     .. code-block:: bash
 
         ogr2ogr -wrapdateline -t_srs EPSG:4326 -clipdst -5 40 15 55 france_4326.shp europe_laea.shp
 
-* Using the ``-fieldmap`` setting. The first field of the source layer is
-  used to fill the third field (index 2 = third field) of the target layer, the
-  second field of the source layer is ignored, the third field of the source
-  layer used to fill the fifth field of the target layer.
+.. example:
+   :title: Using the ``-fieldmap`` setting
+
+   The first field of the source layer is
+   used to fill the third field (index 2 = third field) of the target layer, the
+   second field of the source layer is ignored, the third field of the source
+   layer used to fill the fifth field of the target layer.
 
     .. code-block:: bash
 
         ogr2ogr -append -fieldmap 2,-1,4 dst.shp src.shp
 
-* Outputting geometries with the CSV driver.
+.. example::
+   :title: Outputting geometries with the CSV driver.
 
-  By default, this driver does not preserve geometries on layer creation by
-  default. An explicit layer creation option is needed:
+   By default, this driver does not preserve geometries on layer creation by
+   default. An explicit layer creation option is needed:
 
     .. code-block:: bash
 
         ogr2ogr -lco GEOMETRY=AS_XYZ TrackWaypoint.csv TrackWaypoint.kml
 
-* Extracting only geometries.
+.. example::
+   :title: Extracting only geometries
 
-  There are different situations, depending if the input layer has a named geometry
-  column, or not. First check, with ogrinfo if there is a reported geometry column.
+   There are different situations, depending if the input layer has a named geometry
+   column, or not. First check, with :program:`ogrinfo` if there is a reported geometry column.
 
-    .. code-block:: bash
+    .. code-block:: console
 
-        ogrinfo -so CadNSDI.gdb.zip PLSSPoint | grep 'Geometry Column'
+        $ ogrinfo -so CadNSDI.gdb.zip PLSSPoint | grep 'Geometry Column'
         Geometry Column = SHAPE
 
-  In that situation where the input format is a FileGeodatabase, it is called SHAPE
-  and can thus be referenced directly in a SELECT statement.
+   In that situation where the input format is a FileGeodatabase, it is called SHAPE
+   and can thus be referenced directly in a SELECT statement.
 
     .. code-block:: bash
 
         ogr2ogr -sql "SELECT SHAPE FROM PLSSPoint" \
           -lco GEOMETRY=AS_XY -f CSV /vsistdout/ CadNSDI.gdb.zip
 
-  For a shapefile with a unnamed geometry column, ``_ogr_geometry_`` can be used as
-  a special name to designate the implicit geometry column, when using the default
-  :ref:`OGR SQL <ogr_sql_dialect>` dialect. The name begins with
-  an underscore and SQL syntax requires that it must appear between double quotes.
-  In addition the command line interpreter may require that double quotes are
-  escaped and the final SELECT statement could look like:
+   For a shapefile with a unnamed geometry column, ``_ogr_geometry_`` can be used as
+   a special name to designate the implicit geometry column, when using the default
+   :ref:`OGR SQL <ogr_sql_dialect>` dialect. The name begins with
+   an underscore and SQL syntax requires that it must appear between double quotes.
+   In addition the command line interpreter may require that double quotes are
+   escaped and the final SELECT statement could look like:
 
     .. code-block:: bash
 
         ogr2ogr -sql "SELECT \"_ogr_geometry_\" FROM PLSSPoint" \
           -lco GEOMETRY=AS_XY -f CSV /vsistdout/ CadNSDI.shp
 
-  If using the :ref:`SQL SQLite <sql_sqlite_dialect>` dialect, the special geometry
-  name is ``geometry`` when the source geometry column has no name.
+   If using the :ref:`SQL SQLite <sql_sqlite_dialect>` dialect, the special geometry
+   name is ``geometry`` when the source geometry column has no name.
 
     .. code-block:: bash
 

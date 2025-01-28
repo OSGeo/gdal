@@ -21,7 +21,7 @@
 int OGRXODRDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
     return poOpenInfo->fpL != nullptr &&
-           EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "xodr") &&
+           poOpenInfo->IsExtensionEqualToCI("xodr") &&
            !STARTS_WITH(poOpenInfo->pszFilename, "/vsi");
 }
 

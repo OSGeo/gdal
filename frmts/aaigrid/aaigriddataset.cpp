@@ -1218,11 +1218,12 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
     }
 
     // Try to read projection file.
-    char *const pszDirname = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+    char *const pszDirname =
+        CPLStrdup(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
     char *const pszBasename =
-        CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
+        CPLStrdup(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str());
 
-    poDS->osPrjFilename = CPLFormFilename(pszDirname, pszBasename, "prj");
+    poDS->osPrjFilename = CPLFormFilenameSafe(pszDirname, pszBasename, "prj");
     int nRet = 0;
     {
         VSIStatBufL sStatBuf;
@@ -1230,7 +1231,8 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
     }
     if (nRet != 0 && VSIIsCaseSensitiveFS(poDS->osPrjFilename))
     {
-        poDS->osPrjFilename = CPLFormFilename(pszDirname, pszBasename, "PRJ");
+        poDS->osPrjFilename =
+            CPLFormFilenameSafe(pszDirname, pszBasename, "PRJ");
 
         VSIStatBufL sStatBuf;
         nRet = VSIStatL(poDS->osPrjFilename, &sStatBuf);
@@ -1557,10 +1559,10 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
     const char *pszOriginalProjection = poSrcDS->GetProjectionRef();
     if (!EQUAL(pszOriginalProjection, ""))
     {
-        char *pszDirname = CPLStrdup(CPLGetPath(pszFilename));
-        char *pszBasename = CPLStrdup(CPLGetBasename(pszFilename));
-        char *pszPrjFilename =
-            CPLStrdup(CPLFormFilename(pszDirname, pszBasename, "prj"));
+        char *pszDirname = CPLStrdup(CPLGetPathSafe(pszFilename).c_str());
+        char *pszBasename = CPLStrdup(CPLGetBasenameSafe(pszFilename).c_str());
+        char *pszPrjFilename = CPLStrdup(
+            CPLFormFilenameSafe(pszDirname, pszBasename, "prj").c_str());
         VSILFILE *fp = VSIFOpenL(pszPrjFilename, "wt");
         if (fp != nullptr)
         {

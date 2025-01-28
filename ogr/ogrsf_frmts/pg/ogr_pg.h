@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Private definitions for OGR/PostgreSQL driver.
@@ -344,8 +343,6 @@ class OGRPGTableLayer final : public OGRPGLayer
     int iFIDAsRegularColumnIndex = -1;
 
     CPLString m_osFirstGeometryFieldName{};
-
-    std::vector<bool> m_abGeneratedColumns{};
 
     std::string m_osLCOGeomType{};
 

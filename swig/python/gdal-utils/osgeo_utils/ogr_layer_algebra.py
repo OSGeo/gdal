@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # ******************************************************************************
-#  $Id$
 #
 #  Project:  GDAL Python Interface
 #  Purpose:  Application for executing OGR layer algebra operations

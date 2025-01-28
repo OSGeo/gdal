@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoPackage Translator
  * Purpose:  Definition of classes for OGR GeoPackage driver.
@@ -87,6 +86,7 @@ struct OGRGPKGTableLayerFillArrowArray
     int nCountRows = 0;
     bool bErrorOccurred = false;
     bool bMemoryLimitReached = false;
+    bool bDateTimeAsString = false;
     std::string osErrorMsg{};
     OGRFeatureDefn *poFeatureDefn = nullptr;
     OGRGeoPackageLayer *poLayer = nullptr;
@@ -362,7 +362,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
     inline bool IsInTransaction() const
     {
-        return nSoftTransactionLevel > 0;
+        return m_nSoftTransactionLevel > 0 || m_aosSavepoints.size() > 0;
     }
 
     static std::string LaunderName(const std::string &osStr);
@@ -678,8 +678,6 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     bool m_bFeatureCountTriggersDeletedInTransaction = false;
 #endif
     CPLString m_soColumns{};
-    std::vector<bool> m_abGeneratedColumns{};  // .size() ==
-        // m_poFeatureDefn->GetFieldDefnCount()
     CPLString m_soFilter{};
     CPLString osQuery{};
     CPLString m_osRTreeName{};

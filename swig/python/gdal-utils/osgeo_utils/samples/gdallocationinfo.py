@@ -1,6 +1,5 @@
 # !/usr/bin/env python3
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL utils
 # Purpose:  Query information about a pixel given its location

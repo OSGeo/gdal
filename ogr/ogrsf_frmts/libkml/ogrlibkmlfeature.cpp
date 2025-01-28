@@ -662,7 +662,7 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
         link->set_href(pszURL);
 
         // Collada 3D file?
-        if (EQUAL(CPLGetExtension(pszURL), "dae") &&
+        if (EQUAL(CPLGetExtensionSafe(pszURL).c_str(), "dae") &&
             CPLTestBool(CPLGetConfigOption("LIBKML_ADD_RESOURCE_MAP", "TRUE")))
         {
             VSILFILE *fp = nullptr;
@@ -697,12 +697,12 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
                         {
                             CPLString osImage(pszInitFrom);
                             osImage.resize(pszInitFromEnd - pszInitFrom);
-                            const char *const pszExtension =
-                                CPLGetExtension(osImage);
-                            if (EQUAL(pszExtension, "jpg") ||
-                                EQUAL(pszExtension, "jpeg") ||
-                                EQUAL(pszExtension, "png") ||
-                                EQUAL(pszExtension, "gif"))
+                            const std::string osExtension =
+                                CPLGetExtensionSafe(osImage);
+                            if (EQUAL(osExtension.c_str(), "jpg") ||
+                                EQUAL(osExtension.c_str(), "jpeg") ||
+                                EQUAL(osExtension.c_str(), "png") ||
+                                EQUAL(osExtension.c_str(), "gif"))
                             {
                                 if (!resourceMap)
                                     resourceMap =
@@ -713,12 +713,14 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
                                 {
                                     if (STARTS_WITH(pszURL, "http"))
                                         alias->set_targethref(CPLSPrintf(
-                                            "%s/%s", CPLGetPath(pszURL),
+                                            "%s/%s",
+                                            CPLGetPathSafe(pszURL).c_str(),
                                             osImage.c_str()));
                                     else
                                         alias->set_targethref(
-                                            CPLFormFilename(CPLGetPath(pszURL),
-                                                            osImage, nullptr));
+                                            CPLFormFilenameSafe(
+                                                CPLGetPathSafe(pszURL).c_str(),
+                                                osImage, nullptr));
                                 }
                                 else
                                     alias->set_targethref(osImage);

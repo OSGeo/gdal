@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # ******************************************************************************
-#  $Id$
 #
 #  Project:  GDAL
 #  Purpose:  Densifies linestrings by a tolerance.
@@ -29,7 +28,7 @@ def Usage():
     return 2
 
 
-class Translator(object):
+class Translator:
     def construct_parser(self):
         from optparse import OptionGroup, OptionParser
 

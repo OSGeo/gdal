@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR VFK driver functionality.
@@ -71,6 +70,7 @@ def test_ogr_vfk_1(vfk_ds):
 # Read the first feature from layer 'PAR', check envelope
 
 
+@pytest.mark.require_geos
 def test_ogr_vfk_2(vfk_ds):
 
     vfk_layer_par = vfk_ds.GetLayer(0)

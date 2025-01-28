@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     vrtmultidim.cpp
  * Purpose:  Implementation of VRTDriver
@@ -1938,8 +1937,8 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
 
     const std::string osFilename =
         m_bRelativeToVRT
-            ? std::string(CPLProjectRelativeFilename(
-                  m_poDstArray->GetVRTPath().c_str(), m_osFilename.c_str()))
+            ? CPLProjectRelativeFilenameSafe(m_poDstArray->GetVRTPath().c_str(),
+                                             m_osFilename.c_str())
             : m_osFilename;
     const std::string key(CreateKey(osFilename));
 
@@ -2669,8 +2668,8 @@ ParseSingleSourceArray(const CPLXMLNode *psSingleSourceArray,
     }
     const std::string osSourceFilename(
         bRelativeToVRT
-            ? CPLProjectRelativeFilename(pszVRTPath, pszSourceFilename)
-            : pszSourceFilename);
+            ? CPLProjectRelativeFilenameSafe(pszVRTPath, pszSourceFilename)
+            : std::string(pszSourceFilename));
     auto poDS = std::unique_ptr<GDALDataset>(
         GDALDataset::Open(osSourceFilename.c_str(),
                           GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VERBOSE_ERROR,

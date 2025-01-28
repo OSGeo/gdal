@@ -287,12 +287,12 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
             snprintf(szBandExtension, sizeof(szBandExtension), "I%d",
                      iBand + 1);
             osFilename =
-                CPLResetExtension(poOpenInfo->pszFilename, szBandExtension);
+                CPLResetExtensionSafe(poOpenInfo->pszFilename, szBandExtension);
         }
         else
         {
-            CPLString osBasePath = CPLGetPath(poOpenInfo->pszFilename);
-            osFilename = CPLFormFilename(osBasePath, osFilename, nullptr);
+            CPLString osBasePath = CPLGetPathSafe(poOpenInfo->pszFilename);
+            osFilename = CPLFormFilenameSafe(osBasePath, osFilename, nullptr);
         }
 
         VSILFILE *fpRaw = VSIFOpenL(osFilename, "rb");

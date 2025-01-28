@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     Dataset.i
  * Project:  GDAL Python Interface
@@ -272,6 +271,10 @@ public:
     }
   }
 
+#ifdef SWIGJAVA
+  %rename (CloseInternal) Close;
+  %javamethodmodifiers Close() "private";
+#endif
   CPLErr Close() {
      return GDALClose(self);
   }
@@ -841,15 +844,18 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
                                     GDALProgressFunc callback = NULL,
                                     void* callback_data=NULL )
   {
-    return GDALDatasetGetNextFeature( self, ppoBelongingLayer, pdfProgressPct,
+    OGRLayerH hLayer = NULL;
+    OGRFeatureShadow* feat = (OGRFeatureShadow*)GDALDatasetGetNextFeature( self, &hLayer, pdfProgressPct,
                                       callback, callback_data );
+    *ppoBelongingLayer = (OGRLayerShadow*)hLayer;
+    return feat;
   }
 #else
     // FIXME: return layer
 %newobject GetNextFeature;
   OGRFeatureShadow* GetNextFeature()
   {
-    return GDALDatasetGetNextFeature( self, NULL, NULL, NULL, NULL );
+    return (OGRFeatureShadow*)GDALDatasetGetNextFeature( self, NULL, NULL, NULL, NULL );
   }
 #endif
 
@@ -922,8 +928,11 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
                                     GDALProgressFunc callback = NULL,
                                     void* callback_data=NULL )
   {
-    return GDALDatasetGetNextFeature( self, ppoBelongingLayer, pdfProgressPct,
+    OGRLayerH hLayer = NULL;
+    OGRFeatureShadow* feat = (OGRFeatureShadow*)GDALDatasetGetNextFeature( self, &hLayer, pdfProgressPct,
                                       callback, callback_data );
+    *ppoBelongingLayer = (OGRLayerShadow*)hLayer;
+    return feat;
   }
 
 

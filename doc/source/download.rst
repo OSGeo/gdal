@@ -18,11 +18,11 @@ Source Code
 Current Release
 ...............
 
-* **2024-10-14** `gdal-3.9.3.tar.gz`_ `3.9.3 Release Notes`_ (`3.9.3 md5`_)
+* **2025-01-08** `gdal-3.10.1.tar.gz`_ `3.10.1 Release Notes`_ (`3.10.1 md5`_)
 
-.. _`3.9.3 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.9.3/NEWS.md
-.. _`gdal-3.9.3.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.9.3/gdal-3.9.3.tar.gz
-.. _`3.9.3 md5`: https://github.com/OSGeo/gdal/releases/download/v3.9.3/gdal-3.9.3.tar.gz.md5
+.. _`3.10.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.10.1/NEWS.md
+.. _`gdal-3.10.1.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.10.1/gdal-3.10.1.tar.gz
+.. _`3.10.1 md5`: https://github.com/OSGeo/gdal/releases/download/v3.10.1/gdal-3.10.1.tar.gz.md5
 
 Past Releases
 .............
@@ -88,7 +88,7 @@ by `GISInternals`_ and `OSGeo4W`_ and through the `NuGet`_ and :ref:`vcpkg` pack
 Linux
 ................................................................................
 
-Packages are available for `Debian`_, `Alpine_`, `Fedora_`, and other distributions.
+Packages are available for `Debian`_, `Alpine`_, `Fedora`_, and other distributions.
 
 .. _`Debian`: https://tracker.debian.org/pkg/gdal
 .. _`Alpine`: https://pkgs.alpinelinux.org/package/edge/community/x86/gdal
@@ -150,11 +150,13 @@ GDAL is available as several subpackages:
 - ``gdal``: Python bindings and Python utilities (depends on libgdal-core)
 - ``libgdal``: meta-package gathering all below libgdal-* packages (except libgdal-arrow-parquet)
 - ``libgdal-arrow-parquet``: :ref:`vector.arrow` and :ref:`vector.parquet` drivers as a plugin (depends on libgdal-core)
+- ``libgdal-avif``: :ref:`raster.avif` driver as a plugin (depends on libgdal-core, available since GDAL 3.10.0)
 - ``libgdal-core``: core library and C++ utilities, with a number of builtin drivers (available since GDAL 3.9.1)
 - ``libgdal-fits``: :ref:`raster.fits` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
 - ``libgdal-grib``: :ref:`raster.grib` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
 - ``libgdal-hdf4``: :ref:`raster.hdf4` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
 - ``libgdal-hdf5``: :ref:`raster.hdf5` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-heif``: :ref:`raster.heif` driver as a plugin (depends on libgdal-core, available since GDAL 3.10.0)
 - ``libgdal-jp2openjpeg``: :ref:`raster.jp2openjpeg` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
 - ``libgdal-kea``: :ref:`raster.kea` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
 - ``libgdal-netcdf``: :ref:`raster.netcdf` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
