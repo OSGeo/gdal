@@ -63,8 +63,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   WMS -raster- (rwvs): OGC Web Map Service
   MSGN -raster- (rov): EUMETSAT Archive native (.nat) (*.nat)
   RST -raster- (rw+v): Idrisi Raster A.1 (*.rst)
-  GSAG -raster- (rwv): Golden Software ASCII Grid (.grd) (*.grd)
-  GSBG -raster- (rw+v): Golden Software Binary Grid (.grd) (*.grd)
   GS7BG -raster- (rw+v): Golden Software 7 Binary Grid (.grd) (*.grd)
   COSAR -raster- (rov): COSAR Annotated Binary Matrix (TerraSAR-X)
   TSX -raster- (rov): TerraSAR-X Product
