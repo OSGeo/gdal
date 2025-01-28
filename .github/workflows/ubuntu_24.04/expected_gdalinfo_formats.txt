@@ -85,7 +85,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   DOQ1 -raster- (rov): USGS DOQ (Old Style)
   DOQ2 -raster- (rov): USGS DOQ (New Style)
   PAux -raster- (rov): PCI .aux Labelled
-  MFF -raster- (rw+v): Vexcel MFF Raster (*.hdr)
+  MFF -raster- (rov): Vexcel MFF Raster (*.hdr)
   MFF2 -raster- (rw+): Vexcel MFF2 (HKV) Raster
   GSC -raster- (rov): GSC Geogrid
   FAST -raster- (rov): EOSAT FAST Format
