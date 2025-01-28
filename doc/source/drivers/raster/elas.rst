@@ -15,10 +15,6 @@ research projects within NASA. The ELAS format support can be found in
 Driver capabilities
 -------------------
 
-.. supports_createcopy::
-
-.. supports_create::
-
 .. supports_georeferencing::
 
 .. supports_virtualio::

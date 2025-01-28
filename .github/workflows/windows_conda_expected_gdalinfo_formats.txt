@@ -14,7 +14,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   CEOS -raster- (rov): CEOS Image
   JAXAPALSAR -raster- (rov): JAXA PALSAR Product Reader (Level 1.1/1.5)
   GFF -raster- (rov): Ground-based SAR Applications Testbed File Format (.gff) (*.gff)
-  ELAS -raster- (rw+v): ELAS
+  ELAS -raster- (rov): ELAS
   ESRIC -raster- (rov): Esri Compact Cache (*.json, *.tpkx)
   AIG -raster- (rov): Arc/Info Binary Grid
   AAIGrid -raster- (rwv): Arc/Info ASCII Grid (*.asc)
