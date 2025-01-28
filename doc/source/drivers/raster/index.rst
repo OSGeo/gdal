@@ -71,8 +71,6 @@ Raster drivers
    grassasciigrid
    grib
    gs7bg
-   gsag
-   gsbg
    gsc
    gta
    gti
