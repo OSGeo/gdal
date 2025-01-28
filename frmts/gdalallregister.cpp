@@ -462,10 +462,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_ILWIS();
 #endif
 
-#ifdef FRMT_sgi
-    GDALRegister_SGI();
-#endif
-
 #ifdef FRMT_srtmhgt
     GDALRegister_SRTMHGT();
 #endif

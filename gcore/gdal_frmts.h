@@ -113,7 +113,6 @@ void CPL_DLL GDALRegister_MSG(void);
 void DeclareDeferredMSGPlugin(void);
 void CPL_DLL GDALRegister_RIK(void);
 void CPL_DLL GDALRegister_Leveller(void);
-void CPL_DLL GDALRegister_SGI(void);
 void CPL_DLL GDALRegister_SRTMHGT(void);
 void CPL_DLL GDALRegister_DIPEx(void);
 void CPL_DLL GDALRegister_ISIS3(void);

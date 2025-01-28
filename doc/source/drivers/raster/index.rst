@@ -161,7 +161,6 @@ Raster drivers
    sdat
    sdts
    sentinel2
-   sgi
    sigdem
    snap_tiff
    snodas

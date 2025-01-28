@@ -39,7 +39,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   PCIDSK -raster,vector- (rw+v): PCIDSK Database File (*.pix)
   PCRaster -raster- (rw+): PCRaster Raster File (*.map)
   ILWIS -raster- (rw+v): ILWIS Raster Map (*.mpr, *.mpl)
-  SGI -raster- (rw+v): SGI Image File Format 1.0 (*.rgb)
   SRTMHGT -raster- (rwv): SRTMHGT File Format (*.hgt)
   Leveller -raster- (rw+v): Leveller heightfield (*.ter)
   Terragen -raster- (rw+v): Terragen heightfield (*.ter)
