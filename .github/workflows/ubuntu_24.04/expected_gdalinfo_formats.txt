@@ -45,7 +45,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   HDF4 -raster,multidimensional raster- (ros): Hierarchical Data Format Release 4 (*.hdf)
   HDF4Image -raster- (rw+): HDF4 Dataset
   ISIS3 -raster- (rw+v): USGS Astrogeology ISIS cube (Version 3) (*.lbl, *.cub)
-  ISIS2 -raster- (rw+v): USGS Astrogeology ISIS cube (Version 2)
+  ISIS2 -raster- (rov): USGS Astrogeology ISIS cube (Version 2)
   PDS -raster- (rov): NASA Planetary Data System
   PDS4 -raster,vector- (rw+vs): NASA Planetary Data System 4 (*.xml)
   VICAR -raster,vector- (rw+v): MIPL VICAR file
