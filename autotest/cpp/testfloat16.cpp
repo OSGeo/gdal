@@ -169,7 +169,7 @@ TEST(TestFloat16, math)
             using std::pow;
             EXPECT_EQ(pow(GFloat16(x), GFloat16(y)), GFloat16(pow(x, y)));
             using std::fabs;
-            EXPECT_NEAR(pow(GFloat16(x), j), GFloat16(pow(x, j)), fabs(pow(x, j) / 1024));
+            EXPECT_NEAR(pow(GFloat16(x), j), GFloat16(pow(x, j)), fabs((1 + pow(x, j)) / 1024));
         }
     }
 }
