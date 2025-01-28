@@ -430,10 +430,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_BSB();
 #endif
 
-#ifdef FRMT_xpm
-    GDALRegister_XPM();
-#endif
-
 #ifdef FRMT_bmp
     GDALRegister_BMP();
 #endif
