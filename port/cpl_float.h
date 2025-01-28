@@ -56,6 +56,9 @@
 #include <cstdint>
 #include <cstring>
 #include <limits>
+#if defined(__STDCPP_FLOAT16_T__)
+#include <stdfloat>
+#endif
 #endif
 
 CPL_C_START
@@ -69,6 +72,8 @@ GUInt16 CPL_DLL CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned);
 
 GUInt16 CPL_DLL CPLConvertFloatToHalf(float fFloat32);
 float CPL_DLL CPLConvertHalfToFloat(GUInt16 nHalf);
+
+#if !defined(__STDCPP_FLOAT16_T__)
 
 namespace cpl
 {
@@ -538,7 +543,13 @@ struct CPLFloat16
 //! @endcond
 }  // namespace cpl
 
+#endif  // !defined(__STDCPP_FLOAT16_T__)
+
+#ifdef __STDCPP_FLOAT16_T__
+using GFloat16 = std::float16_t;
+#else
 using GFloat16 = cpl::CPLFloat16;
+#endif
 
 // Define some GDAL wrappers. Their C equivalents are defined in `cpl_port.h`.
 // (These wrappers are not necessary any mroe in C++, one can always
@@ -567,6 +578,7 @@ template <typename T> constexpr int CPLIsFinite(T x)
     return isfinite(x);
 }
 
+#if !defined(__STDCPP_FLOAT16_T__)
 namespace std
 {
 
@@ -627,6 +639,7 @@ template <> struct numeric_limits<cpl::CPLFloat16>
 //! @endcond
 
 }  // namespace std
+#endif  //  !defined(__STDCPP_FLOAT16_T__)
 
 #endif
 
