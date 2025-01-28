@@ -7740,8 +7740,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
                 const int nMinYBlock = static_cast<int>(pos_min / nBlockXSize);
                 bool bValid = true;
                 const double dfMinValueBlock =
-                  GetPixelValue(eDataType, bSignedByte, pData, pos_min,
-                                sNoDataValues, bValid);
+                    GetPixelValue(eDataType, bSignedByte, pData, pos_min,
+                                  sNoDataValues, bValid);
                 if (bValid && dfMinValueBlock < dfMin)
                 {
                     dfMin = dfMinValueBlock;
@@ -7755,8 +7755,9 @@ CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
                 const int nMaxXBlock = static_cast<int>(pos_max % nBlockXSize);
                 const int nMaxYBlock = static_cast<int>(pos_max / nBlockXSize);
                 bool bValid = true;
-                const double dfMaxValueBlock = GetPixelValue(
-                    eDataType, bSignedByte, pData, pos_max, sNoDataValues, bValid);
+                const double dfMaxValueBlock =
+                    GetPixelValue(eDataType, bSignedByte, pData, pos_max,
+                                  sNoDataValues, bValid);
                 if (bValid && dfMaxValueBlock > dfMax)
                 {
                     dfMax = dfMaxValueBlock;
