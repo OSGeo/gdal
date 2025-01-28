@@ -139,7 +139,6 @@ Raster drivers
    postgisraster
    prf
    rasterlite2
-   rdb
    rcm
    rik
    rmf
