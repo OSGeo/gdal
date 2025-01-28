@@ -67,7 +67,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   COSAR -raster- (rov): COSAR Annotated Binary Matrix (TerraSAR-X)
   TSX -raster- (rov): TerraSAR-X Product
   COASP -raster- (ro): DRDC COASP SAR Processor Raster (*.hdr)
-  R -raster- (rwv): R Object Data Store (*.rda)
   MAP -raster- (rov): OziExplorer .MAP
   KMLSUPEROVERLAY -raster- (rwv): Kml Super Overlay (*.kml, *.kmz)
   WEBP -raster- (rwv): WEBP (*.webp)
