@@ -6173,10 +6173,12 @@ void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, void *pDst,
         case GDT_Int32:    CALL_GDALTranspose2D_internal(int32_t, false); break;
         case GDT_UInt64:   CALL_GDALTranspose2D_internal(uint64_t, false); break;
         case GDT_Int64:    CALL_GDALTranspose2D_internal(int64_t, false); break;
+        case GDT_Float16:  CALL_GDALTranspose2D_internal(GFloat16, false); break;
         case GDT_Float32:  CALL_GDALTranspose2D_internal(float, false); break;
         case GDT_Float64:  CALL_GDALTranspose2D_internal(double, false); break;
         case GDT_CInt16:   CALL_GDALTranspose2D_internal(int16_t, true); break;
         case GDT_CInt32:   CALL_GDALTranspose2D_internal(int32_t, true); break;
+        case GDT_CFloat16: CALL_GDALTranspose2D_internal(GFloat16, true); break;
         case GDT_CFloat32: CALL_GDALTranspose2D_internal(float, true); break;
         case GDT_CFloat64: CALL_GDALTranspose2D_internal(double, true); break;
         case GDT_Unknown:
