@@ -142,7 +142,6 @@ Raster drivers
    prf
    rasterlite
    rasterlite2
-   r
    rdb
    rcm
    rik
