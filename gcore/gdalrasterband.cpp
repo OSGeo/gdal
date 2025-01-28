@@ -7687,8 +7687,9 @@ CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
                     if (pabyMaskData && pabyMaskData[iOffset] == 0)
                         continue;
                     bool bValid = true;
-                    double dfValue = GetPixelValue(
-                        eDataType, bSignedByte, pData, iOffset, sNoDataValues, bValid);
+                    double dfValue =
+                        GetPixelValue(eDataType, bSignedByte, pData, iOffset,
+                                      sNoDataValues, bValid);
                     if (!bValid)
                         continue;
                     if (dfValue < dfMin)
@@ -7715,19 +7716,22 @@ CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
             {
                 std::tie(pos_min, pos_max) = gdal::minmax_element(
                     pData, static_cast<size_t>(nBlockXSize) * nBlockYSize,
-                    eEffectiveDT, sNoDataValues.bGotNoDataValue, sNoDataValues.dfNoDataValue);
+                    eEffectiveDT, sNoDataValues.bGotNoDataValue,
+                    sNoDataValues.dfNoDataValue);
             }
             else if (bNeedsMin)
             {
                 pos_min = gdal::min_element(
                     pData, static_cast<size_t>(nBlockXSize) * nBlockYSize,
-                    eEffectiveDT, sNoDataValues.bGotNoDataValue, sNoDataValues.dfNoDataValue);
+                    eEffectiveDT, sNoDataValues.bGotNoDataValue,
+                    sNoDataValues.dfNoDataValue);
             }
             else if (bNeedsMax)
             {
                 pos_max = gdal::max_element(
                     pData, static_cast<size_t>(nBlockXSize) * nBlockYSize,
-                    eEffectiveDT, sNoDataValues.bGotNoDataValue, sNoDataValues.dfNoDataValue);
+                    eEffectiveDT, sNoDataValues.bGotNoDataValue,
+                    sNoDataValues.dfNoDataValue);
             }
 
             if (bNeedsMin)
@@ -7735,8 +7739,9 @@ CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
                 const int nMinXBlock = static_cast<int>(pos_min % nBlockXSize);
                 const int nMinYBlock = static_cast<int>(pos_min / nBlockXSize);
                 bool bValid = true;
-                const double dfMinValueBlock = GetPixelValue(
-                    eDataType, bSignedByte, pData, pos_min, sNoDataValues, bValid);
+                const double dfMinValueBlock =
+                  GetPixelValue(eDataType, bSignedByte, pData, pos_min,
+                                sNoDataValues, bValid);
                 if (bValid && dfMinValueBlock < dfMin)
                 {
                     dfMin = dfMinValueBlock;
