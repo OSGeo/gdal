@@ -8,10 +8,7 @@ ADRG -- ADRG/ARC Digitized Raster Graphics (.gen/.thf)
 
 .. built_in_by_default::
 
-Supported by GDAL for read access. Creation is possible, but it must be
-considered as experimental and a means of testing read access (although
-files created by the driver can be read successfully on another GIS
-software)
+Supported by GDAL for read access.
 
 An ADRG dataset is made of several files. The file recognised by GDAL is
 the General Information File (.GEN). GDAL will also need the image file
@@ -31,10 +28,6 @@ See also : the `ADRG specification
 
 Driver capabilities
 -------------------
-
-.. supports_createcopy::
-
-.. supports_create::
 
 .. supports_georeferencing::
 

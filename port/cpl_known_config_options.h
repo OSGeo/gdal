@@ -4,7 +4,6 @@
 // clang-format off
 constexpr static const char* const apszKnownConfigOptions[] =
 {
-   "ADRG_SIMULATE_MULTI_IMG", // from adrgdataset.cpp
    "ALLOW_GPKG_ZOOM_OTHER_EXTENSION", // from ogrgeopackagedatasource.cpp
    "ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW", // from ogrsqlitedatasource.cpp
    "ALLOW_VIRTUAL_OGR_FROM_TRIGGER_AND_VIEW", // from ogrsqlitevirtualogr.cpp
