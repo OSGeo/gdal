@@ -87,8 +87,7 @@ TEST(TestFloat16, arithmetic)
             EXPECT_EQ(GFloat16(x) + GFloat16(y), x + y);
             EXPECT_EQ(GFloat16(x) - GFloat16(y), x - y);
             using std::fabs;
-            EXPECT_NEAR(GFloat16(x) * GFloat16(y), x * y,
-                        fabs(x * y / 1024));
+            EXPECT_NEAR(GFloat16(x) * GFloat16(y), x * y, fabs(x * y / 1024));
             if (j != 0)
             {
                 EXPECT_NEAR(GFloat16(x) / GFloat16(y), x / y,
@@ -131,8 +130,8 @@ TEST(TestFloat16, math)
         EXPECT_EQ(isnan(GFloat16(x)), isnan(x));
         using std::abs;
         EXPECT_EQ(abs(GFloat16(x)), abs(x));
-        using std::fabs;
         using std::cbrt;
+        using std::fabs;
         EXPECT_NEAR(cbrt(GFloat16(x)), cbrt(x), fabs(cbrt(x) / 1024));
         using std::ceil;
         EXPECT_EQ(ceil(GFloat16(x)), ceil(x));
@@ -169,7 +168,18 @@ TEST(TestFloat16, math)
             using std::pow;
             EXPECT_EQ(pow(GFloat16(x), GFloat16(y)), GFloat16(pow(x, y)));
             using std::fabs;
-            EXPECT_NEAR(pow(GFloat16(x), j), GFloat16(pow(x, j)), fabs((1 + pow(x, j)) / 1024));
+            using std::isfinite;
+            GFloat16 r1 = pow(GFloat16(x), j);
+            GFloat16 r2 = GFloat16(pow(x, j));
+            if (!isfinite(r1))
+            {
+                EXPECT_EQ(r1, r2);
+            }
+            else
+            {
+                GFloat16 tol = (1 + fabs(r2)) / 1024;
+                EXPECT_NEAR(r1, r2, tol);
+            }
         }
     }
 }
