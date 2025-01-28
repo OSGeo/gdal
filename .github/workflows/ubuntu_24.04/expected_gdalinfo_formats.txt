@@ -119,7 +119,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   HDF5Image -raster- (rov): HDF5 Dataset
   NWT_GRD -raster- (rw+v): Northwood Numeric Grid Format .grd/.tab (*.grd)
   NWT_GRC -raster- (rov): Northwood Classified Grid Format .grc/.tab (*.grc)
-  ADRG -raster- (rw+vs): ARC Digitized Raster Graphics (*.gen)
+  ADRG -raster- (rovs): ARC Digitized Raster Graphics (*.gen)
   SRP -raster- (rovs): Standard Raster Product (ASRP/USRP) (*.img)
   BLX -raster- (rwv): Magellan topo (.blx) (*.blx)
   GeoRaster -raster- (rw+s): Oracle Spatial GeoRaster
