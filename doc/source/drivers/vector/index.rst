@@ -92,7 +92,6 @@ Vector drivers
    shapefile
    sosi
    sqlite
-   svg
    sxf
    tiledb
    topojson
