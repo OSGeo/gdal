@@ -54,7 +54,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   ERS -raster- (rw+v): ERMapper .ers Labelled (*.ers)
   JP2OpenJPEG -raster,vector- (rwv): JPEG-2000 driver based on JP2OpenJPEG library (*.jp2, *.j2k)
   L1B -raster- (rovs): NOAA Polar Orbiter Level 1b Data Set
-  FIT -raster- (rwv): FIT Image
   GRIB -raster,multidimensional raster- (rwv): GRIdded Binary (.grb, .grb2) (*.grb, *.grb2, *.grib2)
   RMF -raster- (rw+v): Raster Matrix Format (*.rsw)
   WCS -raster- (rovs): OGC Web Coverage Service

@@ -62,7 +62,6 @@ Raster drivers
    ers
    exr
    fast
-   fit
    fits
    genbin
    georaster
