@@ -69,7 +69,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   KMLSUPEROVERLAY -raster- (rwv): Kml Super Overlay (*.kml, *.kmz)
   WEBP -raster- (rwv): WEBP (*.webp)
   PDF -raster,vector- (rw+vs): Geospatial PDF (*.pdf)
-  Rasterlite -raster- (rwvs): Rasterlite (*.sqlite)
   MBTiles -raster,vector- (rw+v): MBTiles (*.mbtiles)
   PLMOSAIC -raster- (ro): Planet Labs Mosaics API
   CALS -raster- (rwv): CALS (Type 1) (*.cal, *.ct1)
