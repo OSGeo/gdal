@@ -591,10 +591,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_PDF();
 #endif
 
-#ifdef FRMT_rasterlite
-    GDALRegister_Rasterlite();
-#endif
-
 #ifdef FRMT_mbtiles
     GDALRegister_MBTiles();
 #endif
