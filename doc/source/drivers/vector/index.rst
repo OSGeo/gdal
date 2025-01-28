@@ -96,7 +96,6 @@ Vector drivers
    shapefile
    sosi
    sqlite
-   svg
    sxf
    tiger
    tiledb

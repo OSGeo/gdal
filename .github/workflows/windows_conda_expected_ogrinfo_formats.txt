@@ -53,7 +53,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   WFS -vector- (rov): OGC WFS (Web Feature Service)
   OAPIF -vector- (ro): OGC API - Features
   EDIGEO -vector- (rov): French EDIGEO exchange format (*.thf)
-  SVG -vector- (rov): Scalable Vector Graphics (*.svg)
   Idrisi -vector- (rov): Idrisi Vector (.vct) (*.vct)
   XLS -vector- (ro): MS Excel format (*.xls)
   ODS -vector- (rw+v): Open Document/ LibreOffice / OpenOffice Spreadsheet (*.ods)

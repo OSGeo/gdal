@@ -733,7 +733,6 @@ void CPL_DLL RegisterOGROAPIF();
 void CPL_DLL RegisterOGRSOSI();
 void DeclareDeferredOGRSOSIPlugin();
 void CPL_DLL RegisterOGREDIGEO();
-void CPL_DLL RegisterOGRSVG();
 void CPL_DLL RegisterOGRIdrisi();
 void CPL_DLL RegisterOGRXLS();
 void DeclareDeferredOGRXLSPlugin();

@@ -103,7 +103,6 @@ ogr_dependent_driver(sdts SDTS "GDAL_ENABLE_DRIVER_SDTS")
 # XML drivers
 ogr_dependent_driver(gpx "GPX - GPS Exchange Format" "GDAL_USE_EXPAT")
 ogr_dependent_driver(gmlas GMLAS "GDAL_USE_XERCESC;OGR_ENABLE_DRIVER_PGDUMP")
-ogr_dependent_driver(svg "Scalable Vector Graphics" "GDAL_USE_EXPAT")
 ogr_dependent_driver(csw CSW "GDAL_USE_CURL")
 ogr_dependent_driver(dwg DWG "GDAL_USE_TEIGHA")
 ogr_dependent_driver(filegdb FileGDB "GDAL_USE_FILEGDB")
