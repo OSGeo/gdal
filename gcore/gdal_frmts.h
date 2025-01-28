@@ -29,7 +29,6 @@ void CPL_DLL GDALRegister_AIGrid(void);
 void CPL_DLL GDALRegister_CEOS(void);
 void CPL_DLL GDALRegister_SAR_CEOS(void);
 void CPL_DLL GDALRegister_SDTS(void);
-void CPL_DLL GDALRegister_ELAS(void);
 void CPL_DLL GDALRegister_EHdr(void);
 void CPL_DLL GDALRegister_GenBin(void);
 void CPL_DLL GDALRegister_PAux(void);
