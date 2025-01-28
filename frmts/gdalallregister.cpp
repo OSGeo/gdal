@@ -523,10 +523,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_L1B();
 #endif
 
-#ifdef FRMT_fit
-    GDALRegister_FIT();
-#endif
-
 #ifdef FRMT_grib
     GDALRegister_GRIB();
 #endif
