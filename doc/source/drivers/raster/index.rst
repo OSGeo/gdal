@@ -41,7 +41,6 @@ Raster drivers
    cog
    cosar
    cpg
-   ctable2
    ctg
    daas
    dds

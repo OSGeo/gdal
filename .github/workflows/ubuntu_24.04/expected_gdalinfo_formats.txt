@@ -99,7 +99,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   GTX -raster- (rw+v): NOAA Vertical Datum .GTX (*.gtx)
   LOSLAS -raster- (rov): NADCON .los/.las Datum Grid Shift
   NTv2 -raster- (rw+vs): NTv2 Datum Grid Shift (*.gsb, *.gvb)
-  CTable2 -raster- (rw+v): CTable2 Datum Grid Shift
   ACE2 -raster- (rov): ACE2 (*.ACE2)
   SNODAS -raster- (rov): Snow Data Assimilation System (*.hdr)
   KRO -raster- (rw+v): KOLOR Raw (*.kro)
