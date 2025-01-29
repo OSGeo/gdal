@@ -8,7 +8,7 @@ RFC 106: Metadata items to reflect driver update capabilities
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2025-01-22
-Status:        Draft
+Status:        Adopted, implemented
 Target:        GDAL 3.11
 ============== =============================================
 
@@ -188,7 +188,7 @@ Co-funded by GDAL Sponsorship Program (GSP) and QGIS bug-fixing program.
 Voting history
 --------------
 
-TBD
++1 from PSC members JavierJS, JukkaR, SeanG and EvenR
 
 
 .. below is an allow-list for spelling checker.
