@@ -149,7 +149,6 @@ Raster drivers
    safe
    sar_ceos
    sdat
-   sdts
    sentinel2
    sigdem
    snap_tiff

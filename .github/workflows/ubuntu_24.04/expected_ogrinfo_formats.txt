@@ -14,7 +14,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   MapInfo File -vector- (rw+v): MapInfo File (*.tab, *.mif, *.mid)
   UK .NTF -vector- (rov): UK .NTF
   LVBAG -vector- (rov): Kadaster LV BAG Extract 2.0 (*.xml)
-  OGR_SDTS -vector- (rov): SDTS
   S57 -vector- (rw+v): IHO S-57 (ENC) (*.000)
   DGN -vector- (rw+v): Microstation DGN (*.dgn)
   OGR_VRT -vector- (rov): VRT - Virtual Datasource (*.vrt)

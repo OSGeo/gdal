@@ -19,7 +19,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   AAIGrid -raster- (rwv): Arc/Info ASCII Grid (*.asc)
   GRASSASCIIGrid -raster- (rov): GRASS ASCII Grid
   ISG -raster- (rov): International Service for the Geoid (*.isg)
-  SDTS -raster- (rov): SDTS Raster (*.ddf)
   DTED -raster- (rwv): DTED Elevation Raster (*.dt0, *.dt1, *.dt2)
   PNG -raster- (rwv): Portable Network Graphics (*.png)
   JPEG -raster- (rwv): JPEG JFIF (*.jpg, *.jpeg)

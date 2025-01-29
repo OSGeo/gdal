@@ -39,9 +39,6 @@ void OGRRegisterAllInternal()
 #ifdef LVBAG_ENABLED
     RegisterOGRLVBAG();
 #endif
-#ifdef SDTS_ENABLED
-    RegisterOGRSDTS();
-#endif
 #ifdef S57_ENABLED
     RegisterOGRS57();
 #endif

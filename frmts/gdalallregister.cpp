@@ -377,10 +377,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_ISG();
 #endif
 
-#ifdef FRMT_sdts
-    GDALRegister_SDTS();
-#endif
-
 #ifdef FRMT_dted
     GDALRegister_DTED();
 #endif
