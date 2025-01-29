@@ -305,7 +305,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_HTTP_TIMEOUT", // from cpl_http.cpp, gdalwmsdataset.cpp
    "GDAL_HTTP_UNSAFESSL", // from cpl_http.cpp
    "GDAL_HTTP_USE_CAPI_STORE", // from cpl_http.cpp
-   "GDAL_HTTP_USERAGENT", // from cpl_http.cpp, gdalwmsdataset.cpp
+   "GDAL_HTTP_USERAGENT", // from cpl_http.cpp, gdalwmsdataset.cpp, plmosaicdataset.cpp
    "GDAL_HTTP_USERPWD", // from cpl_http.cpp
    "GDAL_HTTP_VERSION", // from cpl_http.cpp
    "GDAL_HTTPS_PROXY", // from cpl_http.cpp
