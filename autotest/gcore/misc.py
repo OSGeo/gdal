@@ -99,6 +99,8 @@ def test_misc_4():
 
 
 ###############################################################################
+
+
 def get_filename(drv, dirname):
 
     filename = "%s/foo" % dirname
@@ -318,66 +320,6 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                 dst_ds.GetMetadataItem("", None)
             dst_ds = None
 
-            if (
-                has_succeeded
-                and nBands > 0
-                and "DCAP_UPDATE" in md
-                and drv.ShortName
-                not in (
-                    "VRT",
-                    "GPKG",
-                )
-            ):
-                update_ds = gdal.Open(filename, gdal.GA_Update)
-                assert update_ds, (drv.ShortName, filename)
-
-                flags_str = drv.GetMetadataItem(gdal.DMD_UPDATE_ITEMS)
-                if update_ds.RasterCount and "RasterValues" in flags_str:
-                    assert (
-                        update_ds.GetRasterBand(1).WriteRaster(
-                            0, 0, 1, 1, b"\x00", buf_type=gdal.GDT_Byte
-                        )
-                        == gdal.CE_None
-                    ), (drv.ShortName, filename)
-
-                if "GeoTransform" in flags_str and drv.ShortName not in ("netCDF",):
-                    assert (
-                        update_ds.SetGeoTransform([0, 1, 0, 0, 0, -1]) == gdal.CE_None
-                    ), (
-                        drv.ShortName,
-                        filename,
-                    )
-
-                if "SRS" in flags_str and drv.ShortName not in ("netCDF",):
-                    srs = osr.SpatialReference()
-                    srs.SetFromUserInput("WGS84")
-                    assert update_ds.SetSpatialRef(srs) == gdal.CE_None, (
-                        drv.ShortName,
-                        filename,
-                    )
-
-                if update_ds.RasterCount and "NoData" in flags_str:
-                    assert (
-                        update_ds.GetRasterBand(1).SetNoDataValue(0) == gdal.CE_None
-                    ), (
-                        drv.ShortName,
-                        filename,
-                    )
-
-                if "DatasetMetadata" in flags_str:
-                    assert update_ds.SetMetadata({"FOO": "BAR"}) == gdal.CE_None, (
-                        drv.ShortName,
-                        filename,
-                    )
-
-                if update_ds.RasterCount and "BandMetadata" in flags_str:
-                    assert (
-                        update_ds.GetRasterBand(1).SetMetadata({"FOO": "BAR"})
-                        == gdal.CE_None
-                    ), (drv.ShortName, filename)
-
-                update_ds.Close()
-
             size = 0
             stat = gdal.VSIStatL(filename)
             if stat is not None:
@@ -551,6 +493,76 @@ def test_misc_6():
                 gdal.GDT_CFloat64,
             ):
                 misc_6_internal(datatype, nBands, setDriversDone)
+
+
+@pytest.mark.parametrize(
+    "driver_name",
+    [
+        gdal.GetDriver(i).GetName()
+        for i in range(gdal.GetDriverCount())
+        if "DCAP_UPDATE" in gdal.GetDriver(i).GetMetadata()
+        and [
+            "DCAP_CREATECOPY" in gdal.GetDriver(i).GetMetadata()
+            or "DCAP_CREATE" in gdal.GetDriver(i).GetMetadata()
+        ]
+        and "DCAP_RASTER" in gdal.GetDriver(i).GetMetadata()
+    ],
+)
+def test_update_metadata(tmp_path, tmp_vsimem, driver_name):
+    if driver_name in ("OpenFileGDB"):
+        pytest.skip("OpenFileGDB does not support creating raster datasets")
+
+    drv = gdal.GetDriverByName(driver_name)
+    if "DCAP_VIRTUALIO" in drv.GetMetadata() and driver_name not in (
+        "KEA",
+        "netCDF",
+        "TileDB",
+    ):
+        # drivers listed above do not allow writing to /vsimem
+        dirname = tmp_vsimem
+    else:
+        dirname = tmp_path
+
+    filename = get_filename(drv, dirname)
+
+    # create a test dataset that can be updated
+    # ECW driver requires at size to be at least 128x128
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "in.tif", 128, 128
+    ) as src_ds:
+        src_ds.GetRasterBand(1).Fill(3)
+        src_ds.SetGeoTransform((20, 0.1, 0, 40, 0, -0.1))
+        dst_ds = gdal.Translate(
+            filename, src_ds, outputSRS="EPSG:4326", format=driver_name
+        )
+        assert dst_ds
+        dst_ds.Close()
+
+    update_ds = gdal.OpenEx(filename, gdal.GA_Update, allowed_drivers=[driver_name])
+    assert update_ds
+
+    flags_str = drv.GetMetadataItem(gdal.DMD_UPDATE_ITEMS)
+    if "RasterValues" in flags_str:
+        assert (
+            update_ds.GetRasterBand(1).WriteRaster(
+                0, 0, 1, 1, b"\x00", buf_type=gdal.GDT_Byte
+            )
+            == gdal.CE_None
+        )
+    if "GeoTransform" in flags_str and drv.ShortName not in ("netCDF",):
+        assert update_ds.SetGeoTransform([0, 1, 0, 0, 0, -1]) == gdal.CE_None
+    if "SRS" in flags_str and drv.ShortName not in ("netCDF",):
+        srs = osr.SpatialReference()
+        srs.SetFromUserInput("WGS84")
+        assert update_ds.SetSpatialRef(srs) == gdal.CE_None
+    if "NoData" in flags_str:
+        assert update_ds.GetRasterBand(1).SetNoDataValue(0) == gdal.CE_None
+    if "DatasetMetadata" in flags_str:
+        assert update_ds.SetMetadata({"FOO": "BAR"}) == gdal.CE_None
+    if "BandMetadata" in flags_str:
+        assert update_ds.GetRasterBand(1).SetMetadata({"FOO": "BAR"}) == gdal.CE_None
+
+    update_ds.Close()
 
 
 ###############################################################################
