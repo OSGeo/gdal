@@ -68,7 +68,7 @@ of these ways:
   for C++ library functions.
 
 - otherwise, ``GFloat16`` will be a new type that emulates float16
-  behaviour (transparently to the user), and operations will be
+  behavior (transparently to the user), and operations will be
   performed as ``float``.
 
 Experimentation has shown that this is the most convenient way to
@@ -83,7 +83,7 @@ The following pixel data types are added:
 Some drivers (at least the HDF5, GTiff, and Zarr) already handle
 float16 by exposing it as float32, using software conversion routines.
 float16 is now supported directly, i.e., without converting to
-float32. In other drivers, the current behaviour is retained, which
+float32. In other drivers, the current behavior is retained, which
 automatically converts float16 to float32.
 
 For simplicity there will be no new functions handling attributes for
@@ -158,3 +158,11 @@ Voting history
 --------------
 
 TBD
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    Schnetter
+    eschnetter
+    perimeterinstitute
