@@ -293,7 +293,7 @@ following option:
 
     Control whether a found dependency can be used for the GDAL build.
 
-    Note that disabling the use of a package does not disable its detection.
+    Note that CMake will still attempt to detect a package even if it has been disabled.
 
 It is also possible to ask GDAL to disable the use of any external dependency
 (besides the required one, PROJ) by default by setting the following option to
