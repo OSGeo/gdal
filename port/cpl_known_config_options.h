@@ -992,8 +992,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "THRESHOLD", // from ogrct.cpp
    "TIFF_READ_STREAMING", // from gtiffdataset_read.cpp
    "TIFF_USE_OVR", // from gtiffdataset_write.cpp
-   "TIGER_LFIELD_AS_STRING", // from tigerfilebase.cpp
-   "TIGER_VERSION", // from ogrtigerdatasource.cpp
    "TILEDB_ATTRIBUTE", // from tiledbdense.cpp
    "TILEDB_BINARY_TYPE", // from tiledbsparse.cpp
    "TILEDB_BUG", // from tiledbsparse.cpp

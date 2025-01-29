@@ -96,7 +96,6 @@ Vector drivers
    sqlite
    svg
    sxf
-   tiger
    tiledb
    topojson
    vdv
