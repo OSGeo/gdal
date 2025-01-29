@@ -78,7 +78,6 @@ Vector drivers
    oci
    odbc
    ods
-   ogdi
    openfilegdb
    osm
    parquet
