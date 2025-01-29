@@ -98,8 +98,6 @@ if (NOT OGR_ENABLE_DRIVER_GEOJSON_PLUGIN)
     ogr_dependent_driver(jsonfg JSONFG "OGR_ENABLE_DRIVER_GEOJSON")
 endif()
 
-ogr_dependent_driver(sdts SDTS "GDAL_ENABLE_DRIVER_SDTS")
-
 # XML drivers
 ogr_dependent_driver(gpx "GPX - GPS Exchange Format" "GDAL_USE_EXPAT")
 ogr_dependent_driver(gmlas GMLAS "GDAL_USE_XERCESC;OGR_ENABLE_DRIVER_PGDUMP")
