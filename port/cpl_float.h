@@ -640,6 +640,6 @@ template <> struct numeric_limits<cpl::CPLFloat16>
 }  // namespace std
 #endif  //  !defined(__STDCPP_FLOAT16_T__)
 
-#endif
+#endif  // #ifdef __cplusplus
 
 #endif  // CPL_FLOAT_H_INCLUDED

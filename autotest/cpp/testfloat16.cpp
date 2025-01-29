@@ -169,8 +169,9 @@ TEST(TestFloat16, math)
             EXPECT_EQ(pow(GFloat16(x), GFloat16(y)), GFloat16(pow(x, y)));
             using std::fabs;
             using std::isfinite;
-            GFloat16 r1 = pow(GFloat16(x), j);
-            GFloat16 r2 = GFloat16(pow(x, j));
+            GFloat16 r1, r2;
+            r1 = pow(GFloat16(x), j);
+            r2 = GFloat16(pow(x, j));
             if (!isfinite(r1))
             {
                 EXPECT_EQ(r1, r2);
