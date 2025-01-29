@@ -91,7 +91,6 @@ Vector drivers
    plscenes
    pmtiles
    s57
-   sdts
    selafin
    shapefile
    sosi

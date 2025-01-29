@@ -46,6 +46,13 @@ class CPL_DLL RawDataset : public GDALPamDataset
     RawDataset();
     virtual ~RawDataset() = 0;
 
+    enum class Interleave
+    {
+        BSQ,
+        BIL,
+        BIP,
+    };
+
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
     void ClearCachedConfigOption(void);
 

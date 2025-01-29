@@ -29,10 +29,8 @@ Raster drivers
    avif
    bag
    basisu
-   blx
    bmp
    bsb
-   bt
    byn
    cad
    cals
@@ -41,13 +39,11 @@ Raster drivers
    cog
    cosar
    cpg
-   ctable2
    ctg
    daas
    dds
    derived
    dimap
-   dipex
    doq1
    doq2
    dted
@@ -56,14 +52,12 @@ Raster drivers
    eedai
    ehdr
    eir
-   elas
    envi
    esat
    esric
    ers
    exr
    fast
-   fit
    fits
    genbin
    georaster
@@ -74,8 +68,6 @@ Raster drivers
    grassasciigrid
    grib
    gs7bg
-   gsag
-   gsbg
    gsc
    gta
    gti
@@ -143,10 +135,7 @@ Raster drivers
    pnm
    postgisraster
    prf
-   rasterlite
    rasterlite2
-   r
-   rdb
    rcm
    rik
    rmf
@@ -160,9 +149,7 @@ Raster drivers
    safe
    sar_ceos
    sdat
-   sdts
    sentinel2
-   sgi
    sigdem
    snap_tiff
    snodas
@@ -182,7 +169,6 @@ Raster drivers
    webp
    wms
    wmts
-   xpm
    xyz
    zarr
    zmap
