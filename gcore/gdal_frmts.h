@@ -66,7 +66,6 @@ void DeclareDeferredECWPlugin(void);
 void CPL_DLL GDALRegister_JP2ECW(void);
 void CPL_DLL GDALRegister_ECW_JP2ECW();
 void CPL_DLL GDALRegister_FujiBAS(void);
-void CPL_DLL GDALRegister_FIT(void);
 void CPL_DLL GDALRegister_VRT(void);
 void CPL_DLL GDALRegister_GTI(void);
 void CPL_DLL GDALRegister_USGSDEM(void);
