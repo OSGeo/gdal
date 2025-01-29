@@ -73,6 +73,8 @@ by the relevant driver, causing a error.
     Set the size of the output file in pixels and lines.
     Note that :option:`-outsize` cannot be used with :option:`-tr`
 
+    If not set then a default size is used.
+
 .. option:: -a_srs <srs_def>
 
     Override the projection for the
@@ -106,6 +108,8 @@ by the relevant driver, causing a error.
     Set the interpolation algorithm or data metric name and (optionally)
     its parameters. See the `Interpolation algorithms`_ and `Data metrics`_
     sections for further discussion of available options.
+
+    If not set then the default algoritm is used.
 
 .. option:: -spat <xmin> <ymin> <xmax> <ymax>
 
