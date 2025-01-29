@@ -500,17 +500,6 @@ Examples
 
       ogr2ogr -f PostgreSQL PG:dbname=warmerda abc.shp
 
--  This second example loads a political boundaries layer from VPF (via
-   the :ref:`OGDI driver <vector.ogdi>`), and renames the layer from the
-   cryptic OGDI layer name to something more sensible. If an existing
-   table of the desired name exists it is overwritten.
-
-   ::
-
-      ogr2ogr -f PostgreSQL PG:dbname=warmerda \
-              gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia \
-              -lco OVERWRITE=yes -nln polbndl_bnd 'polbndl@bnd(*)_line'
-
 - Export a single Postgres table to GeoPackage:
 
    ::

@@ -11,9 +11,6 @@ make quicktest
 PYTEST_SKIP=
 PYTEST_XFAIL="gcore/tiff_ovr.py gdrivers/gribmultidim.py gdrivers/mbtiles.py gdrivers/vrtwarp.py gdrivers/wcs.py utilities/test_gdalwarp.py pyscripts/test_gdal_pansharpen.py"
 
-# Fails with ERROR 1: OGDI DataSource Open Failed: Could not find the dynamic library "vrf"
-PYTEST_SKIP="ogr/ogr_ogdi.py $PYTEST_SKIP"
-
 # Stalls on it. Probably not enough memory
 PYTEST_SKIP="gdrivers/jp2openjpeg.py $PYTEST_SKIP"
 

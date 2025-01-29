@@ -732,7 +732,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR_ODS_FIELD_TYPES", // from ogrodsdatasource.cpp
    "OGR_ODS_HEADERS", // from ogrodsdatasource.cpp
    "OGR_ODS_MAX_FIELD_COUNT", // from ogrodsdatasource.cpp
-   "OGR_OGDI_LAUNDER_LAYER_NAMES", // from ogrogdidatasource.cpp
    "OGR_OPENFILEGDB_ERROR_ON_INCONSISTENT_BUFFER_MAX_SIZE", // from filegdbtable.cpp
    "OGR_OPENFILEGDB_WRITE_EMPTY_GEOMETRY", // from ogropenfilegdblayer_write.cpp
    "OGR_ORGANIZE_POLYGONS", // from filegdbtable.cpp, ogrgeometryfactory.cpp

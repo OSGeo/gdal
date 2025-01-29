@@ -97,9 +97,6 @@ void OGRRegisterAllInternal()
 #ifdef MSSQLSPATIAL_ENABLED
     RegisterOGRMSSQLSpatial();
 #endif
-#ifdef OGDI_ENABLED
-    RegisterOGROGDI();
-#endif
 #ifdef PG_ENABLED
     RegisterOGRPG();
 #endif

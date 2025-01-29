@@ -409,7 +409,6 @@ gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE
   NAMES netCDF
   TARGETS netCDF::netcdf NETCDF::netCDF
   VERSION "4.7")
-gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
 gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" CAN_DISABLE)
 
 set(PostgreSQL_ADDITIONAL_VERSIONS "14" CACHE STRING "Additional PostgreSQL versions to check")

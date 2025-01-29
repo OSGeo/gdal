@@ -49,7 +49,6 @@ find -L \
         ! -name netcdf_cfchecks.py \
         ! -name ogr_fgdb.py `# Don't run these` \
         ! -name ogr_pgeo.py `# Don't run these` \
-        ! -name ogr_ogdi.py `# Error on ogdi_5 test` \
         ! -name ogr_gpsbabel.py `# new-delete-type-mismatch error in gpsbabel binary that we can't suppress` \
         ! -name "__init__.py" \
         ! -path 'ogr/data/*' \
