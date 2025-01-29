@@ -182,7 +182,6 @@ Raster drivers
    webp
    wms
    wmts
-   xpm
    xyz
    zarr
    zmap

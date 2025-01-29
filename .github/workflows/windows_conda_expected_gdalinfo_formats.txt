@@ -31,7 +31,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   ESAT -raster- (rov): Envisat Image Format (*.n1)
   FITS -raster,vector- (rw+): Flexible Image Transport System (*.fits)
   BSB -raster- (rov): Maptech BSB Nautical Charts (*.kap)
-  XPM -raster- (rwv): X11 PixMap Format (*.xpm)
   BMP -raster- (rw+v): MS Windows Device Independent Bitmap (*.bmp)
   DIMAP -raster- (rovs): SPOT DIMAP
   AirSAR -raster- (rov): AirSAR Polarimetric Image
