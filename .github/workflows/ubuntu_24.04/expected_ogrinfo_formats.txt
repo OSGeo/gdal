@@ -12,7 +12,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   OGCAPI -raster,vector- (rov): OGCAPI
   ESRI Shapefile -vector- (rw+v): ESRI Shapefile (*.shp, *.dbf, *.shz, *.shp.zip)
   MapInfo File -vector- (rw+v): MapInfo File (*.tab, *.mif, *.mid)
-  UK .NTF -vector- (rov): UK .NTF
   LVBAG -vector- (rov): Kadaster LV BAG Extract 2.0 (*.xml)
   S57 -vector- (rw+v): IHO S-57 (ENC) (*.000)
   DGN -vector- (rw+v): Microstation DGN (*.dgn)

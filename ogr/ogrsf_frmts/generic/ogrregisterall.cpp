@@ -33,9 +33,6 @@ void OGRRegisterAllInternal()
 #ifdef MITAB_ENABLED
     RegisterOGRTAB();
 #endif
-#ifdef NTF_ENABLED
-    RegisterOGRNTF();
-#endif
 #ifdef LVBAG_ENABLED
     RegisterOGRLVBAG();
 #endif
