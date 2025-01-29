@@ -36,7 +36,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   WAsP -vector- (rw+v): WAsP .map format (*.map)
   PGeo -vector- (ro): ESRI Personal GeoDatabase (*.mdb)
   MSSQLSpatial -vector- (rw+u): Microsoft SQL Server Spatial Database (BCP)
-  OGR_OGDI -vector- (ro): OGDI Vectors (VPF, VMAP, DCW)
   PostgreSQL -vector- (rw+u): PostgreSQL/PostGIS
   MySQL -vector- (rw+u): MySQL
   OCI -vector- (rw+u): Oracle Spatial

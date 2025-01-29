@@ -56,7 +56,7 @@ jobs:
            libfreexl-dev unixodbc-dev libwebp-dev liblcms2-2 libcrypto++-dev libkml-dev \
            libmysqlclient-dev libarmadillo-dev wget libfyba-dev libjsoncpp-dev libexpat1-dev \
            libclc-dev ocl-icd-opencl-dev libsqlite3-dev sqlite3-pcre libpcre3-dev libspatialite-dev libsfcgal-dev fossil libcairo2-dev libjson-c-dev libdeflate-dev liblz4-dev libblosc-dev libarchive-dev \
-           libqhull-dev libcfitsio-dev libogdi-dev libopenjp2-7-dev libheif-dev \
+           libqhull-dev libcfitsio-dev libopenjp2-7-dev libheif-dev \
            python3-dev libpython3-dev libpython3.10-dev python3.10-dev python3-numpy python3-lxml python3-pyflakes python3-setuptools python3-pip python3-venv \
            python3-pytest swig doxygen texlive-latex-base make cppcheck ccache g++ \
            libpq-dev libpqtypes-dev postgresql-14 postgresql-14-postgis-3 postgresql-client-14 postgresql-14-postgis-3-scripts
@@ -94,9 +94,6 @@ jobs:
         sudo apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
         sudo apt-get update
         sudo apt-get install -y -V libarrow-dev libparquet-dev libarrow-dataset-dev
-        #
-        # Workaround bug in ogdi packaging
-        sudo ln -s /usr/lib/ogdi/libvrf.so /usr/lib
         #
         PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
 

@@ -331,17 +331,6 @@ created with the features from abc.shp and attributes from abc.dbf.
 
    % ogr2ogr -f OCI OCI:warmerda/password@gdal800.dreadfest.com abc.shp
 
-This second example loads a political boundaries layer from VPF (via the
-:ref:`OGDI driver <vector.ogdi>`), and renames the layer from the cryptic
-OGDI layer name to something more sensible. If an existing table of the
-desired name exists it is overwritten.
-
-::
-
-   % ogr2ogr  -f OCI OCI:warmerda/password \
-           gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia \
-           -lco OVERWRITE=yes -nln polbndl_bnd 'polbndl@bnd(*)_line'
-
 This example shows using ogrinfo to evaluate an SQL query statement
 within Oracle. More sophisticated Oracle Spatial specific queries may
 also be used via the -sql commandline switch to ogrinfo.

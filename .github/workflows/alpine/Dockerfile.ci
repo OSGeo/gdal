@@ -44,7 +44,6 @@ RUN apk add \
     muparser-dev \
     netcdf-dev \
     odbc-cpp-wrapper-dev \
-    ogdi-dev \
     openexr-dev \
     openjpeg-dev \
     openssl-dev \
