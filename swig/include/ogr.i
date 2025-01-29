@@ -21,9 +21,7 @@ typedef void* VoidPtrAsLong;
 %include "exception.i"
 #endif
 
-#if defined(SWIGCSHARP)
-%module Ogr
-#elif defined(SWIGPYTHON)
+#if defined(SWIGPYTHON)
 %module (package="osgeo") ogr
 #else
 %module ogr
@@ -41,10 +39,6 @@ typedef const char StringAsByteArray;
 %}
 #endif
 
-#ifdef SWIGCSHARP
-%include swig_csharp_extensions.i
-#endif
-
 #ifndef SWIGJAVA
 %feature("compactdefaultargs");
 #endif
@@ -55,7 +49,6 @@ typedef const char StringAsByteArray;
 /*                         Enumerated types                             */
 /************************************************************************/
 
-#ifndef SWIGCSHARP
 typedef int OGRwkbByteOrder;
 typedef int OGRwkbGeometryType;
 typedef int OGRFieldType;
@@ -64,185 +57,6 @@ typedef int OGRJustification;
 typedef int OGRFieldDomainType;
 typedef int OGRFieldDomainSplitPolicy;
 typedef int OGRFieldDomainMergePolicy;
-#else
-%rename (wkbByteOrder) OGRwkbByteOrder;
-typedef enum
-{
-    wkbXDR = 0,         /* MSB/Sun/Motorola: Most Significant Byte First   */
-    wkbNDR = 1          /* LSB/Intel/Vax: Least Significant Byte First      */
-} OGRwkbByteOrder;
-
-%rename (wkbGeometryType) OGRwkbGeometryType;
-typedef enum
-{
-    wkbUnknown = 0,             /* non-standard */
-    wkbPoint = 1,               /* rest are standard WKB type codes */
-    wkbLineString = 2,
-    wkbPolygon = 3,
-    wkbMultiPoint = 4,
-    wkbMultiLineString = 5,
-    wkbMultiPolygon = 6,
-    wkbGeometryCollection = 7,
-
-    wkbCircularString = 8,  /**< one or more circular arc segments connected end to end,
-                             *   ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-    wkbCompoundCurve = 9,   /**< sequence of contiguous curves, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-    wkbCurvePolygon = 10,   /**< planar surface, defined by 1 exterior boundary
-                             *   and zero or more interior boundaries, that are curves.
-                             *    ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-    wkbMultiCurve = 11,     /**< GeometryCollection of Curves, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-    wkbMultiSurface = 12,   /**< GeometryCollection of Surfaces, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-    wkbCurve = 13,          /**< Curve (abstract type). ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbSurface = 14,        /**< Surface (abstract type). ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolyhedralSurface = 15,/**< a contiguous collection of polygons, which share common boundary segments,
-                               *   ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbTIN = 16,              /**< a PolyhedralSurface consisting only of Triangle patches
-                               *    ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbTriangle = 17,       /**< A Triangle is a polygon with 3 distinct, non-collinear vertices and no
-                                 interior boundary. GDAL &gt;= 2.2 */
-
-    wkbNone = 100,          /**< non-standard, for pure attribute records */
-    wkbLinearRing = 101,    /**< non-standard, just for createGeometry() */
-
-    wkbCircularStringZ = 1008,  /**< wkbCircularString with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-    wkbCompoundCurveZ = 1009,   /**< wkbCompoundCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-    wkbCurvePolygonZ = 1010,    /**< wkbCurvePolygon with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-    wkbMultiCurveZ = 1011,      /**< wkbMultiCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-    wkbMultiSurfaceZ = 1012,    /**< wkbMultiSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-    wkbCurveZ = 1013,           /**< wkbCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-    wkbSurfaceZ = 1014,         /**< wkbSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-    wkbPolyhedralSurfaceZ = 1015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbTINZ = 1016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbTriangleZ = 1017,         /**< wkbTriangle with Z component. GDAL &gt;= 2.2 */
-
-    wkbPointM = 2001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbLineStringM = 2002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolygonM = 2003,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiPointM = 2004,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiLineStringM = 2005,    /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiPolygonM = 2006,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbGeometryCollectionM = 2007, /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCircularStringM = 2008,     /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCompoundCurveM = 2009,      /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCurvePolygonM = 2010,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiCurveM = 2011,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiSurfaceM = 2012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCurveM = 2013,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbSurfaceM = 2014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolyhedralSurfaceM = 2015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbTINM = 2016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbTriangleM = 2017,            /**<  GDAL &gt;= 2.2 */
-
-    wkbPointZM = 3001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbLineStringZM = 3002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolygonZM = 3003,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiPointZM = 3004,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiLineStringZM = 3005,    /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiPolygonZM = 3006,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbGeometryCollectionZM = 3007, /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCircularStringZM = 3008,     /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCompoundCurveZM = 3009,      /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCurvePolygonZM = 3010,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiCurveZM = 3011,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbMultiSurfaceZM = 3012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbCurveZM = 3013,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbSurfaceZM = 3014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolyhedralSurfaceZM = 3015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbTriangleZM = 3017,           /**<  GDAL &gt;= 2.2 */
-
-    wkbPoint25D = -2147483647,   /* 2.5D extensions as per 99-402 */
-    wkbLineString25D = -2147483646,
-    wkbPolygon25D = -2147483645,
-    wkbMultiPoint25D = -2147483644,
-    wkbMultiLineString25D = -2147483643,
-    wkbMultiPolygon25D = -2147483642,
-    wkbGeometryCollection25D = -2147483641
-} OGRwkbGeometryType;
-
-%rename (FieldType) OGRFieldType;
-typedef enum
-{
-  /** Simple 32bit integer */                   OFTInteger = 0,
-  /** List of 32bit integers */                 OFTIntegerList = 1,
-  /** Double Precision floating point */        OFTReal = 2,
-  /** List of doubles */                        OFTRealList = 3,
-  /** String of ASCII chars */                  OFTString = 4,
-  /** Array of strings */                       OFTStringList = 5,
-  /** Double byte string (unsupported) */       OFTWideString = 6,
-  /** List of wide strings (unsupported) */     OFTWideStringList = 7,
-  /** Raw Binary data */                        OFTBinary = 8,
-  /** Date */                                   OFTDate = 9,
-  /** Time */                                   OFTTime = 10,
-  /** Date and Time */                          OFTDateTime = 11,
-  /** Single 64bit integer */                   OFTInteger64 = 12,
-  /** List of 64bit integers */                 OFTInteger64List = 13
-} OGRFieldType;
-
-%rename (FieldSubType) OGRFieldSubType;
-typedef enum
-{
-    /** No subtype. This is the default value */        OFSTNone = 0,
-    /** Boolean integer. Only valid for OFTInteger
-        and OFTIntegerList.*/                           OFSTBoolean = 1,
-    /** Signed 16-bit integer. Only valid for OFTInteger and OFTIntegerList. */
-                                                        OFSTInt16 = 2,
-    /** Single precision (32 bit) floating point. Only valid for OFTReal and OFTRealList. */
-                                                        OFSTFloat32 = 3,
-    /** JSON content. Only valid for OFTString.
-     * @since GDAL 2.4
-     */
-                                                        OFSTJSON = 4,
-    /** UUID string representation. Only valid for OFTString.
-     * @since GDAL 3.3
-     */
-                                                        OFSTUUID = 5,
-} OGRFieldSubType;
-
-
-%rename (Justification) OGRJustification;
-typedef enum
-{
-    OJUndefined = 0,
-    OJLeft = 1,
-    OJRight = 2
-} OGRJustification;
-
-%rename (FieldDomainType) OGRFieldDomainType;
-typedef enum
-{
-    /** Coded */
-    OFDT_CODED = 0,
-    /** Range (min/max) */
-    OFDT_RANGE = 1,
-    /** Glob (used by GeoPackage) */
-    OFDT_GLOB = 2
-} OGRFieldDomainType;
-
-%rename (FieldDomainSplitPolicy) OGRFieldDomainSplitPolicy;
-typedef enum
-{
-    /** Default value */
-    OFDSP_DEFAULT_VALUE,
-    /** Duplicate */
-    OFDSP_DUPLICATE,
-    /** New values are computed by the ratio of their area/length compared to the area/length of the original feature */
-    OFDSP_GEOMETRY_RATIO
-} OGRFieldDomainSplitPolicy;
-
-%rename (FieldDomainMergePolicy) OGRFieldDomainMergePolicy;
-typedef enum
-{
-    /** Default value */
-    OFDMP_DEFAULT_VALUE,
-    /** Sum */
-    OFDMP_SUM,
-    /** New values are computed as the weighted average of the source values. */
-    OFDMP_GEOMETRY_WEIGHTED
-} OGRFieldDomainMergePolicy;
-
-
-#endif
 
 
 %{
@@ -600,8 +414,6 @@ typedef int OGRErr;
 
 #if defined(SWIGPYTHON)
 %include ogr_python.i
-#elif defined(SWIGCSHARP)
-%include ogr_csharp.i
 #elif defined(SWIGJAVA)
 %include ogr_java.i
 #else
@@ -4804,10 +4616,6 @@ int GDALTermProgress( double, const char *, void * );
 // Language specific extensions
 //
 //************************************************************************
-
-#ifdef SWIGCSHARP
-%include "ogr_csharp_extend.i"
-#endif
 
 #ifdef SWIGJAVA
 %include "ogr_java_extend.i"

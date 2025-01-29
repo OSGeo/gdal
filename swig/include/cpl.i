@@ -13,17 +13,6 @@
 
 %include constraints.i
 
-#ifdef SWIGCSHARP
-typedef enum
-{
-    CE_None = 0,
-    CE_Log = 1,
-    CE_Warning = 2,
-    CE_Failure = 3,
-    CE_Fatal = 4
-} CPLErr;
-#endif
-
 %inline %{
 typedef char retStringAndCPLFree;
 %}
@@ -239,16 +228,6 @@ retStringAndCPLFree* EscapeString(const char* str, int scheme) {
 }
 %}
 %clear (int len, unsigned char *bin_string);
-#elif defined(SWIGCSHARP)
-%inline %{
-retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme) {
-    return CPLEscapeString((const char*)bin_string, len, scheme);
-}
-%}
-
-retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
-    return CPLEscapeString(bin_string, len, scheme);
-}
 #elif defined(SWIGPYTHON)
 
 %feature( "kwargs" ) wrapper_EscapeString;
@@ -282,7 +261,7 @@ char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
 %clear (int len, char *bin_string);
 #endif
 
-#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
+#if defined(SWIGPYTHON)
 /* We don't want errors to be cleared or thrown by this */
 /* call */
 %exception CPLGetLastErrorNo
@@ -297,7 +276,7 @@ char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
 #endif
 int CPLGetLastErrorNo();
 
-#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
+#if defined(SWIGPYTHON)
 /* We don't want errors to be cleared or thrown by this */
 /* call */
 %exception CPLGetLastErrorType
@@ -314,7 +293,7 @@ int CPLGetLastErrorType();
 CPLErr CPLGetLastErrorType();
 #endif
 
-#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
+#if defined(SWIGPYTHON)
 /* We don't want errors to be cleared or thrown by this */
 /* call */
 %exception CPLGetLastErrorMsg
@@ -330,7 +309,7 @@ CPLErr CPLGetLastErrorType();
 const char *CPLGetLastErrorMsg();
 
 
-#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
+#if defined(SWIGPYTHON)
 /* We don't want errors to be cleared or thrown by this */
 /* call */
 %exception CPLGetErrorCounter
@@ -549,8 +528,6 @@ void wrapper_VSIClearPathSpecificOptions(const char * pszPathPrefix = NULL)
 %apply (int nLen, unsigned char *pBuf ) {( int nBytes, const GByte *pabyData )};
 retStringAndCPLFree* CPLBinaryToHex( int nBytes, const GByte *pabyData );
 %clear ( int nBytes, const GByte *pabyData );
-#elif defined(SWIGCSHARP)
-retStringAndCPLFree* CPLBinaryToHex( int nBytes, const GByte *pabyData );
 #elif defined(SWIGPYTHON)
 %apply (int nLen, char *pBuf) {( int nBytes, const GByte *pabyData )};
 retStringAndCPLFree* CPLBinaryToHex( int nBytes, const GByte *pabyData );
@@ -776,15 +753,12 @@ const char* VSIGetFileSystemOptions(const char * utf8_path);
 */
 
 #if !defined(SWIGJAVA)
-
-#if !defined(SWIGCSHARP)
 class VSILFILE
 {
     private:
         VSILFILE();
         ~VSILFILE();
 };
-#endif
 
 #if defined(SWIGPYTHON)
 

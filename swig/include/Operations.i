@@ -27,7 +27,7 @@ typedef void OGRGeometryShadow;
 /*                            TermProgress()                            */
 /************************************************************************/
 
-#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
+#if !defined(SWIGJAVA)
 %rename (TermProgress_nocb) GDALTermProgress_nocb;
 %feature( "kwargs" ) GDALTermProgress_nocb;
 %inline %{
@@ -374,9 +374,7 @@ int  SieveFilter( GDALRasterBandShadow *srcBand,
 #ifndef SWIGJAVA
 %feature( "kwargs" ) RegenerateOverviews;
 #endif /* SWIGJAVA */
-#ifndef SWIGCSHARP
 %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int overviewBandCount, GDALRasterBandShadow **overviewBands)};
-#endif /* SWIGCSHARP */
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char *resampling};
 #endif /* SWIGJAVA */
@@ -686,9 +684,7 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
 /************************************************************************/
 
 %newobject CreatePansharpenedVRT;
-#ifndef SWIGCSHARP
 %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int nInputSpectralBands, GDALRasterBandShadow **ahInputSpectralBands)};
-#endif /* SWIGCSHARP */
 %apply Pointer NONNULL { GDALRasterBandShadow* panchroBand };
 
 %inline %{
@@ -766,10 +762,6 @@ public:
     return nRet && nSuccess;
   }
 
-#ifdef SWIGCSHARP
-  %apply (double *inout) {(double*)};
-  %apply (double *inout) {(int*)};
-#endif
   int TransformPoints( int bDstToSrc,
                        int nCount, double *x, double *y, double *z,
                        int *panSuccess ) {
@@ -779,10 +771,6 @@ public:
 
     return nRet;
   }
-#ifdef SWIGCSHARP
-  %clear (double*);
-  %clear (int*);
-#endif
 
 /************************************************************************/
 /*                       TransformGeolocations()                        */

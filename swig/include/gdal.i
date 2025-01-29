@@ -21,10 +21,6 @@
 %module gdal
 #endif
 
-#ifdef SWIGCSHARP
-%include swig_csharp_extensions.i
-#endif
-
 #ifndef SWIGJAVA
 %feature ("compactdefaultargs");
 #endif
@@ -267,8 +263,6 @@ typedef enum {
 
 #if defined(SWIGPYTHON)
 %include "gdal_python.i"
-#elif defined(SWIGCSHARP)
-%include "gdal_csharp.i"
 #elif defined(SWIGJAVA)
 %include "gdal_java.i"
 #else
@@ -1013,10 +1007,6 @@ GDALDriverShadow *IdentifyDriverEx( const char* utf8_path,
 // Language specific extensions
 //
 //************************************************************************
-
-#ifdef SWIGCSHARP
-%include "gdal_csharp_extend.i"
-#endif
 
 #ifdef SWIGPYTHON
 /* Add a __version__ attribute to match the convention */

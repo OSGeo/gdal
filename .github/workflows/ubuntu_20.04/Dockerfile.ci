@@ -48,7 +48,6 @@ RUN apt-get update -y \
     liblcms2-dev \
     liblz4-dev \
     liblzma-dev \
-    libmono-system-drawing4.0-cil \
     libmuparser-dev \
     libmysqlclient-dev \
     libnetcdf-dev \
@@ -73,7 +72,6 @@ RUN apt-get update -y \
     llvm-10 \
     lsb-release \
     make \
-    mono-mcs \
     numactl \
     ocl-icd-opencl-dev \
     opencl-c-headers \
@@ -276,7 +274,7 @@ RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
     ); fi
 
 # Install exprtk
-RUN wget -q -P /usr/local/include https://raw.githubusercontent.com/ArashPartow/exprtk/refs/heads/master/exprtk.hpp 
+RUN wget -q -P /usr/local/include https://raw.githubusercontent.com/ArashPartow/exprtk/refs/heads/master/exprtk.hpp
 
 RUN ldconfig
 

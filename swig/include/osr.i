@@ -16,16 +16,10 @@
 
 %include constraints.i
 
-#if defined(SWIGCSHARP)
-%module Osr
-#elif defined(SWIGPYTHON)
+#if defined(SWIGPYTHON)
 %module (package="osgeo") osr
 #else
 %module osr
-#endif
-
-#ifdef SWIGCSHARP
-%include swig_csharp_extensions.i
 #endif
 
 #ifndef SWIGJAVA
@@ -146,8 +140,6 @@ typedef int OGRErr;
 
 #if defined(SWIGPYTHON)
 %include osr_python.i
-#elif defined(SWIGCSHARP)
-%include osr_csharp.i
 #elif defined(SWIGJAVA)
 %include osr_java.i
 #else

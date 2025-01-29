@@ -11,10 +11,6 @@
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
-#ifdef SWIGCSHARP
-%import typemaps_csharp.i
-#endif
-
 #ifdef SWIGPYTHON
 %import typemaps_python.i
 #endif

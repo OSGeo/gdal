@@ -99,7 +99,6 @@ API
    .. toctree::
        :maxdepth: 1
 
-       csharp/index
        java/index
 
    There are also other bindings that are developed outside of the GDAL source tree (**note**: those offer APIs not strictly coupled to the GDAL/OGR C/C++ API). These include bindings for

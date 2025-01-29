@@ -17,16 +17,10 @@
 #endif
 %include constraints.i
 
-#if defined(SWIGCSHARP)
-%module Gnm
-#elif defined(SWIGPYTHON)
+#if defined(SWIGPYTHON)
 %module (package="osgeo") gnm
 #else
 %module gnm
-#endif
-
-#ifdef SWIGCSHARP
-%include swig_csharp_extensions.i
 #endif
 
 #ifndef SWIGJAVA
@@ -79,8 +73,6 @@ typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 
 #if defined(SWIGPYTHON)
 %include gnm_python.i
-#elif defined(SWIGCSHARP)
-//%include gnm_csharp.i
 #elif defined(SWIGJAVA)
 %include gnm_java.i
 #else

@@ -381,14 +381,11 @@ public:
 
   // The (int,int*) arguments are typemapped.  The name of the first argument
   // becomes the kwarg name for it.
-#ifndef SWIGCSHARP
 #ifndef SWIGJAVA
 %feature("kwargs") BuildOverviews;
 #endif
 %apply (int nList, int* pList) { (int overviewlist, int *pOverviews) };
-#else
-%apply (void *buffer_ptr) {int *pOverviews};
-#endif
+
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char* resampling};
   int BuildOverviews( const char *resampling,
@@ -413,11 +410,7 @@ public:
                                 callback_data,
                                 options);
   }
-#ifndef SWIGCSHARP
 %clear (int overviewlist, int *pOverviews);
-#else
-%clear (int *pOverviews);
-#endif
 #ifdef SWIGJAVA
 %clear (const char *resampling);
 #endif
@@ -430,7 +423,6 @@ public:
     return GDALGetGCPProjection( self );
   }
 
-#ifndef SWIGCSHARP
   %newobject GetGCPSpatialRef;
   OSRSpatialReferenceShadow *GetGCPSpatialRef() {
     OGRSpatialReferenceH ref = GDALGetGCPSpatialRef(self);
@@ -438,9 +430,7 @@ public:
        ref = OSRClone( ref );
     return (OSRSpatialReferenceShadow*) ref;
   }
-#endif
 
-#ifndef SWIGCSHARP
   void GetGCPs( int *nGCPs, GDAL_GCP const **pGCPs ) {
     *nGCPs = GDALGetGCPCount( self );
     *pGCPs = GDALGetGCPs( self );
@@ -453,8 +443,6 @@ public:
   CPLErr SetGCPs2( int nGCPs, GDAL_GCP const *pGCPs, OSRSpatialReferenceShadow* hSRS ) {
     return GDALSetGCPs2( self, nGCPs, pGCPs, (OGRSpatialReferenceH)hSRS );
   }
-
-#endif
 
   CPLErr FlushCache() {
     return GDALFlushCache( self );
@@ -919,24 +907,6 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
   int GetLayerCount() {
     return GDALDatasetGetLayerCount(self);
   }
-
-#ifdef SWIGCSHARP
-
-  %newobject GetNextFeature;
-  OGRFeatureShadow *GetNextFeature( OGRLayerShadow** ppoBelongingLayer = NULL,
-                                    double* pdfProgressPct = NULL,
-                                    GDALProgressFunc callback = NULL,
-                                    void* callback_data=NULL )
-  {
-    OGRLayerH hLayer = NULL;
-    OGRFeatureShadow* feat = (OGRFeatureShadow*)GDALDatasetGetNextFeature( self, &hLayer, pdfProgressPct,
-                                      callback, callback_data );
-    *ppoBelongingLayer = (OGRLayerShadow*)hLayer;
-    return feat;
-  }
-
-
-#endif
 
 OGRErr AbortSQL() {
     return GDALDatasetAbortSQL(self);

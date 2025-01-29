@@ -228,15 +228,6 @@ jobs:
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
         # For some reason, during the install phase of above invocation, the Python bindings are rebuilt after the build phase, and without the rpath... Can't reproduce that locally
         # PYTHONPATH=$GITHUB_WORKSPACE/install-gdal-with-rpath/lib/python3.8/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
-    - name: Rerun using Mono
-      run: |
-        export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
-        cd $GITHUB_WORKSPACE/superbuild/build
-        rm -rf swig/csharp
-        cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -UCMAKE_INSTALL_RPATH -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
-        cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
-        # Below fails with errors like 'System.InvalidProgramException: Invalid IL code in CreateData:Main (string[]): IL_00c4: callvirt  0x0a00000c'
-        # ctest -V -R "^csharp.*"
     - name: Standalone Python bindings build from source
       run: |
         (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python && python setup.py sdist)
@@ -284,7 +275,6 @@ jobs:
         cmake  ${CMAKE_OPTIONS} .. \
           -DBUILD_SHARED_LIBS=OFF \
           -DBUILD_TESTING=OFF \
-          -DCSHARP_MONO=OFF \
           -DGDAL_USE_HDF4=OFF \
           -DGDAL_USE_HDF5=OFF \
           -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal-static
@@ -677,45 +667,3 @@ jobs:
         ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal --dynamic --disable-odbc
     - name: ccache statistics
       run: ccache -s
-
-  # Disabled for now since bindings in master use GDALDatasetGetFieldDomainNames
-  # but libgdal from Conda has not it yet.
-  build-windows-conda-csharp-only:
-    if: ${{ false }}  # disable for now
-    runs-on: windows-2022
-    env:
-        architecture: x64
-        generator: Visual Studio 17 2022
-
-    steps:
-    # To avoid git clone to mess with the line endings of GDAL autotest data
-    # files that look like text, but should be handled as binary content
-    - name: Set git core.autocrlf to false
-      run: |
-        git config --global core.autocrlf false
-    - name: Checkout GDAL
-      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
-    - uses: conda-incubator/setup-miniconda@d2e6a045a86077fb6cad6f5adf368e9076ddaa8d # v3.1.0
-      with:
-        activate-environment: gdalenv
-        python-version: 3.9
-        channels: conda-forge
-    - name: Install dependency
-      shell: bash -l {0}
-      run: |
-        conda install --yes --quiet --name gdalenv curl libiconv icu python=3.9 swig numpy pytest pytest-env pytest-benchmark filelock zlib clcache lxml
-        conda install --yes --quiet --name gdalenv -c conda-forge libgdal
-    - name: Configure
-      shell: bash -l {0}
-      run: |
-        mkdir -p $GITHUB_WORKSPACE/build
-        cmake -A ${architecture} -G "${generator}" -DGDAL_CSHARP_ONLY=ON -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build"
-    - name: Build
-      shell: bash -l {0}
-      run: cmake --build $GITHUB_WORKSPACE/build --config Release --target csharp_samples -j 2
-    - name: test (with ctest)
-      shell: bash -l {0}
-      run: |
-        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3 -R "^csharp.*"
-      env:
-        SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES

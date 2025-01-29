@@ -56,23 +56,3 @@ if (BUILD_JAVA_BINDINGS)
     endif()
     add_subdirectory(java)
 endif()
-
-# CSharp bindings
-
-if (SWIG_EXECUTABLE AND CSHARP_FOUND)
-    option(BUILD_CSHARP_BINDINGS "Build CSharp bindings" ON)
-else()
-    option(BUILD_CSHARP_BINDINGS "Build CSharp bindings" OFF)
-endif ()
-
-option(BUILD_CSHARP_BINDINGS "Build CSharp bindings" ON)
-
-if (BUILD_CSHARP_BINDINGS)
-    if (NOT SWIG_FOUND)
-        message(FATAL_ERROR "SWIG is a requirement to build the CSharp bindings")
-    endif()
-    if (NOT CSHARP_FOUND)
-        message(FATAL_ERROR "A CSharp/DotNet compiler is a requirement to build the CSharp bindings")
-    endif()
-    add_subdirectory(csharp)
-endif ()
