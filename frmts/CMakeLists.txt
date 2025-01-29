@@ -81,7 +81,6 @@ endif ()
 
 gdal_optional_format(libertiff "GeoTIFF support through libertiff library")
 gdal_optional_format(hfa "Erdas Imagine .img")
-gdal_optional_format(sdts "SDTS translator")
 gdal_optional_format(nitf "National Imagery Transmission Format")
 gdal_optional_format(gxf "GXF")
 gdal_optional_format(aaigrid "Arc/Info ASCII Grid Format.")
