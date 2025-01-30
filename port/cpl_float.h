@@ -532,12 +532,14 @@ struct CPLFloat16
         float deltaf = nextafter(float(x), float(y)) - float(x);
         CPLFloat16 nextx = x;
         using std::isfinite;
-        while (isfinite(nextx) && nextx == x) {
-          nextx = x + CPLFloat16(deltaf);
-          deltaf *= 2;
+        while (isfinite(nextx) && nextx == x)
+        {
+            nextx = x + CPLFloat16(deltaf);
+            deltaf *= 2;
         }
         return nextx;
     }
+
     friend CPLFloat16 pow(CPLFloat16 x, CPLFloat16 y)
     {
         using std::pow;

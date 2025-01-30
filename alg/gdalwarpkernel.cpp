@@ -1658,14 +1658,15 @@ inline void ClampRoundAndAvoidNoData(const GDALWarpKernel *poWK, int iBand,
 
     if constexpr (std::numeric_limits<T>::is_integer)
     {
+        using std::floor;
         if (dfReal < static_cast<double>(std::numeric_limits<T>::lowest()))
             pDst[iDstOffset] = static_cast<T>(std::numeric_limits<T>::lowest());
         else if (dfReal > static_cast<double>(std::numeric_limits<T>::max()))
             pDst[iDstOffset] = static_cast<T>(std::numeric_limits<T>::max());
+        else if constexpr (std::numeric_limits<T>::is_signed)
+            pDst[iDstOffset] = static_cast<T>(floor(dfReal + 0.5));
         else
-            pDst[iDstOffset] = (std::numeric_limits<T>::is_signed)
-                                   ? static_cast<T>(floor(dfReal + 0.5))
-                                   : static_cast<T>(dfReal + 0.5);
+            pDst[iDstOffset] = static_cast<T>(dfReal + 0.5);
     }
     else
     {
