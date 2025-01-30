@@ -362,10 +362,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_GFF();
 #endif
 
-#ifdef FRMT_elas
-    GDALRegister_ELAS();
-#endif
-
 #ifdef FRMT_esric
     GDALRegister_ESRIC();
 #endif

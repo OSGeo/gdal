@@ -14,12 +14,10 @@ void GDALRegister_raw_no_sidecar()
     GDALRegister_HKV();
     GDALRegister_GSC();
     GDALRegister_FAST();
-    GDALRegister_BT();
     GDALRegister_LAN();
     GDALRegister_CPG();
     GDALRegister_NDF();
     GDALRegister_EIR();
-    GDALRegister_DIPEx();
     GDALRegister_LCP();
     GDALRegister_GTX();
     GDALRegister_LOSLAS();
