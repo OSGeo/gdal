@@ -67,9 +67,7 @@ endif()
 ogr_optional_driver(csv CSV)
 ogr_optional_driver(dgn DGN)
 ogr_optional_driver(gmt GMT)
-ogr_optional_driver(ntf NTF)
 ogr_optional_driver(s57 S57)
-ogr_optional_driver(tiger "U.S. Census TIGER/Line")
 ogr_optional_driver(geoconcept GEOCONCEPT)
 ogr_optional_driver(georss GEORSS)
 ogr_optional_driver(dxf DXF)
@@ -97,8 +95,6 @@ ogr_optional_driver(aivector AIVector)
 if (NOT OGR_ENABLE_DRIVER_GEOJSON_PLUGIN)
     ogr_dependent_driver(jsonfg JSONFG "OGR_ENABLE_DRIVER_GEOJSON")
 endif()
-
-ogr_dependent_driver(sdts SDTS "GDAL_ENABLE_DRIVER_SDTS")
 
 # XML drivers
 ogr_dependent_driver(gpx "GPX - GPS Exchange Format" "GDAL_USE_EXPAT")

@@ -194,11 +194,8 @@ class BYNDataset final : public RawDataset
     mutable OGRSpatialReference m_oSRS{};
     BYNHeader hHeader;
 
-    void UpdateHeader();
-
     CPL_DISALLOW_COPY_ASSIGN(BYNDataset)
 
-    static void header2buffer(const BYNHeader *pohHeader, GByte *pabyBuf);
     static void buffer2header(const GByte *pabyBuf, BYNHeader *pohHeader);
 
     CPLErr Close() override;
@@ -208,16 +205,11 @@ class BYNDataset final : public RawDataset
     ~BYNDataset();
 
     CPLErr GetGeoTransform(double *padfTransform) override;
-    CPLErr SetGeoTransform(double *padfTransform) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
-    static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
-                               int nBands, GDALDataType eType,
-                               char **papszOptions);
 };
 
 /************************************************************************/
@@ -240,7 +232,6 @@ class BYNRasterBand final : public RawRasterBand
 
     double GetNoDataValue(int *pbSuccess = nullptr) override;
     double GetScale(int *pbSuccess = nullptr) override;
-    CPLErr SetScale(double dfNewValue) override;
 };
 
 #endif  // GDAL_FRMTS_RAW_BYNDATASET_H_INCLUDED
