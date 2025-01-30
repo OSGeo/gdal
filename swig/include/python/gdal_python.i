@@ -1851,6 +1851,10 @@ def GetMDArrayNames(self, options = []) -> "list[str]":
         buffer_stride.reverse()
       if not buffer_datatype:
         buffer_datatype = self.GetDataType()
+        if buffer_datatype.GetClass() == GEDTC_NUMERIC and buffer_datatype.GetNumericDataType() == gdalconst.GDT_Float16:
+          buffer_datatype = ExtendedDataType.Create(GDT_Float32)
+        elif buffer_datatype.GetClass() == GEDTC_NUMERIC and buffer_datatype.GetNumericDataType() == gdalconst.GDT_CFloat16:
+          buffer_datatype = ExtendedDataType.Create(GDT_CFloat32)
       return _gdal.MDArray_Read(self, array_start_idx, count, array_step, buffer_stride, buffer_datatype)
 
   def ReadAsArray(self,
