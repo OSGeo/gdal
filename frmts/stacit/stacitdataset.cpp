@@ -123,11 +123,19 @@ int STACITDataset::Identify(GDALOpenInfo *poOpenInfo)
             return pszHeader[0] == '{';
         }
 
-        if (strstr(pszHeader, "\"stac_version\"") != nullptr &&
-            (strstr(pszHeader, "\"proj:transform\"") != nullptr ||
-             strstr(pszHeader, "\"proj:bbox\"") != nullptr))
+        if (strstr(pszHeader, "\"stac_version\"") != nullptr)
         {
-            return true;
+            int nTransformBBOXShapeCount = 0;
+            for (const char *pszItem :
+                 {"\"proj:transform\"", "\"proj:bbox\"", "\"proj:shape\""})
+            {
+                if (strstr(pszHeader, pszItem))
+                    nTransformBBOXShapeCount++;
+            }
+            if (nTransformBBOXShapeCount >= 2)
+            {
+                return true;
+            }
         }
 
         if (i == 0)
