@@ -46,15 +46,18 @@ GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm()
     AddArg("band", 'b', _("Specify input band(s) number."), &m_bands);
     AddOverwriteArg(&m_overwrite);
     {
-        auto &arg = AddArg("resolution", 0,
-                           _("Target resolution (in destination CRS units)"),
-                           &m_resolution)
-                        .SetMetaVar("<xres>,<yres>|average|highest|lowest");
+        auto &arg =
+            AddArg("resolution", 0,
+                   _("Target resolution (in destination CRS units)"),
+                   &m_resolution)
+                .SetDefault("same")
+                .SetMetaVar("<xres>,<yres>|same|average|highest|lowest");
         arg.AddValidationAction(
             [this, &arg]()
             {
                 const std::string val = arg.Get<std::string>();
-                if (val != "average" && val != "highest" && val != "lowest")
+                if (val != "average" && val != "highest" && val != "lowest" &&
+                    val != "same")
                 {
                     const auto aosTokens =
                         CPLStringList(CSLTokenizeString2(val.c_str(), ",", 0));
@@ -66,8 +69,8 @@ GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm()
                     {
                         ReportError(CE_Failure, CPLE_AppDefined,
                                     "resolution: two comma separated positive "
-                                    "values should be provided, or 'average', "
-                                    "'highest' or 'lowest'");
+                                    "values should be provided, or 'same', "
+                                    "'average', 'highest' or 'lowest'");
                         return false;
                     }
                 }
@@ -185,22 +188,25 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
               "VRT");
 
     CPLStringList aosOptions;
-    if (!m_resolution.empty())
+    aosOptions.push_back("-strict");
+
+    aosOptions.push_back("-program_name");
+    aosOptions.push_back("gdal raster mosaic");
+
+    const auto aosTokens =
+        CPLStringList(CSLTokenizeString2(m_resolution.c_str(), ",", 0));
+    if (aosTokens.size() == 2)
     {
-        const auto aosTokens =
-            CPLStringList(CSLTokenizeString2(m_resolution.c_str(), ",", 0));
-        if (aosTokens.size() == 2)
-        {
-            aosOptions.push_back("-tr");
-            aosOptions.push_back(aosTokens[0]);
-            aosOptions.push_back(aosTokens[1]);
-        }
-        else
-        {
-            aosOptions.push_back("-resolution");
-            aosOptions.push_back(m_resolution);
-        }
+        aosOptions.push_back("-tr");
+        aosOptions.push_back(aosTokens[0]);
+        aosOptions.push_back(aosTokens[1]);
     }
+    else
+    {
+        aosOptions.push_back("-resolution");
+        aosOptions.push_back(m_resolution);
+    }
+
     if (!m_bbox.empty())
     {
         aosOptions.push_back("-te");

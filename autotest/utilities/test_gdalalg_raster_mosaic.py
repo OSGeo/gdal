@@ -13,7 +13,7 @@
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 
 def get_mosaic_alg():
@@ -115,6 +115,7 @@ def test_gdalalg_raster_mosaic_resolution_average():
 
     alg = get_mosaic_alg()
     alg.GetArg("input").Set([src1_ds, src2_ds])
+    alg.GetArg("resolution").Set("average")
     alg.GetArg("output").Set("")
     assert alg.Run()
     ds = alg.GetArg("output").Get().GetDataset()
@@ -196,24 +197,41 @@ def test_gdalalg_raster_mosaic_target_aligned_pixels():
     assert ds.GetGeoTransform() == pytest.approx((1.8, 0.3, 0.0, 49.2, 0.0, -0.6))
 
 
+def test_gdalalg_raster_mosaic_resolution_same_default():
+
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src1_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
+    src2_ds.SetGeoTransform([3, 0.5, 0, 49, 0, -0.5])
+
+    alg = get_mosaic_alg()
+    alg.GetArg("input").Set([src1_ds, src2_ds])
+    alg.GetArg("output").Set("")
+    with pytest.raises(
+        Exception,
+        match="whereas previous sources have resolution",
+    ):
+        assert alg.Run()
+
+
 def test_gdalalg_raster_mosaic_resolution_invalid():
 
     alg = get_mosaic_alg()
     with pytest.raises(
         Exception,
-        match="resolution: two comma separated positive values should be provided, or 'average', 'highest' or 'lowest'",
+        match="resolution: two comma separated positive values should be provided, or 'same', 'average', 'highest' or 'lowest'",
     ):
         alg.GetArg("resolution").Set("invalid")
 
     with pytest.raises(
         Exception,
-        match="resolution: two comma separated positive values should be provided, or 'average', 'highest' or 'lowest'",
+        match="resolution: two comma separated positive values should be provided, or 'same', 'average', 'highest' or 'lowest'",
     ):
         alg.GetArg("resolution").Set("0.5")
 
     with pytest.raises(
         Exception,
-        match="resolution: two comma separated positive values should be provided, or 'average', 'highest' or 'lowest'",
+        match="resolution: two comma separated positive values should be provided, or 'same', 'average', 'highest' or 'lowest'",
     ):
         alg.GetArg("resolution").Set("-0.5,-0.5")
 
@@ -373,3 +391,23 @@ def test_gdalalg_raster_mosaic_tif_creation_options(tmp_vsimem):
     with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 50054
         assert ds.GetRasterBand(1).GetBlockSize() == [256, 256]
+
+
+def test_gdalalg_raster_mosaic_inconsistent_characteristics():
+
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src1_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
+    src2_ds.SetGeoTransform([3, 0.5, 0, 49, 0, -0.5])
+    srs = osr.SpatialReference()
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    srs.SetFromUserInput("WGS84")
+    src2_ds.SetSpatialRef(srs)
+
+    alg = get_mosaic_alg()
+    alg.GetArg("input").Set([src1_ds, src2_ds])
+    alg.GetArg("output").Set("")
+    with pytest.raises(
+        Exception, match="gdal raster mosaic does not support heterogeneous projection"
+    ):
+        assert alg.Run()
