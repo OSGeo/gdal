@@ -55,7 +55,7 @@
 #include <cstdint>
 #include <cstring>
 #include <limits>
-#if defined(__STDCPP_FLOAT16_T__)
+#ifdef HAVE_STD_FLOAT16_T
 #include <stdfloat>
 #endif
 #endif
@@ -72,7 +72,7 @@ GUInt16 CPL_DLL CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned);
 GUInt16 CPL_DLL CPLConvertFloatToHalf(float fFloat32);
 float CPL_DLL CPLConvertHalfToFloat(GUInt16 nHalf);
 
-#if !defined(__STDCPP_FLOAT16_T__)
+#ifndef HAVE_STD_FLOAT16_T
 
 namespace cpl
 {
@@ -556,9 +556,9 @@ struct CPLFloat16
 //! @endcond
 }  // namespace cpl
 
-#endif  // !defined(__STDCPP_FLOAT16_T__)
+#endif  // #ifndef HAVE_STD_FLOAT16_T
 
-#ifdef __STDCPP_FLOAT16_T__
+#ifdef HAVE_STD_FLOAT16_T
 using GFloat16 = std::float16_t;
 #else
 using GFloat16 = cpl::CPLFloat16;
@@ -591,7 +591,7 @@ template <typename T> constexpr int CPLIsFinite(T x)
     return isfinite(x);
 }
 
-#if !defined(__STDCPP_FLOAT16_T__)
+#ifndef HAVE_STD_FLOAT16_T
 namespace std
 {
 
@@ -652,7 +652,7 @@ template <> struct numeric_limits<cpl::CPLFloat16>
 //! @endcond
 
 }  // namespace std
-#endif  //  !defined(__STDCPP_FLOAT16_T__)
+#endif  // #ifndef HAVE_STD_FLOAT16_T
 
 #endif  // #ifdef __cplusplus
 
