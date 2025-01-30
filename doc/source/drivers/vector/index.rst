@@ -42,7 +42,6 @@ Vector drivers
    esrijson
    filegdb
    flatgeobuf
-   geoconcept
    geojson
    geojsonseq
    georss
