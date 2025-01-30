@@ -74,7 +74,6 @@ Vector drivers
    nas
    netcdf
    ngw
-   ntf
    oapif
    oci
    odbc
@@ -91,7 +90,6 @@ Vector drivers
    plscenes
    pmtiles
    s57
-   sdts
    selafin
    shapefile
    sosi

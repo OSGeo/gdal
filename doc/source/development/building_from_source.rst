@@ -1849,18 +1849,6 @@ It can be detected with pkg-config.
     Control whether to use RasterLite2. Defaults to ON when RasterLite2 is found.
 
 
-rdb
-***
-
-The `RDB <https://repository.riegl.com/software/libraries/rdblib>`
-(closed source/proprietary) library is required for the :ref:`raster.rdb` driver.
-Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
-
-.. option:: GDAL_USE_RDB=ON/OFF
-
-    Control whether to use rdb. Defaults to ON when rdb is found.
-
-
 SPATIALITE
 **********
 
