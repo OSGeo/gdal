@@ -1274,9 +1274,7 @@ GDALDataset *HDF4Dataset::Open(GDALOpenInfo *poOpenInfo)
             delete poDS;
             CPLAcquireMutex(hHDF4Mutex, 1000.0);
 
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "The HDF4 driver does not support update access to "
-                     "existing datasets.");
+            ReportUpdateNotSupportedByDriver(HDF4_DRIVER_NAME);
             return nullptr;
         }
     }

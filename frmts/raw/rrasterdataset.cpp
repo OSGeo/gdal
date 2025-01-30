@@ -1555,5 +1555,10 @@ void GDALRegister_RRASTER()
     poDriver->pfnCreate = RRASTERDataset::Create;
     poDriver->pfnCreateCopy = RRASTERDataset::CreateCopy;
 
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "GeoTransform SRS NoData "
+                                                     "RasterValues "
+                                                     "DatasetMetadata");
+
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

@@ -239,6 +239,7 @@ set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/tms_MapML_APSTILE.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/tms_MapML_CBMTILE.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/tms_NZTM2000.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/template_tiles.mapml
 )
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}
