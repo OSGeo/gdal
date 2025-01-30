@@ -636,9 +636,7 @@ GDALDataset *AIGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->eAccess == GA_Update)
     {
         AIGClose(psInfo);
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The AIG driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("AIG");
         return nullptr;
     }
     /* -------------------------------------------------------------------- */

@@ -1365,9 +1365,7 @@ GDALDataset *WCSDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         CSLDestroy(papszModifiers);
         CPLDestroyXMLNode(service);
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The WCS driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("WCS");
         return nullptr;
     }
 

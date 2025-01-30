@@ -1706,7 +1706,7 @@ def test_cog_write_jpegxl_alpha():
             "COMPRESS=JXL",
             "JXL_LOSSLESS=NO",
             "TILED=YES",
-            "BLOCKSIZE=512",
+            "BLOCKXSIZE=512",
             "BLOCKYSIZE=512",
         ],
     )

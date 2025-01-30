@@ -164,6 +164,9 @@ void OGRPGDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->pfnIdentify = OGRPGDriverIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "LayerMetadata Features");
 }
 
 /************************************************************************/

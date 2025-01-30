@@ -226,8 +226,10 @@ void OGRIDFDataSource::Parse()
         }
     }
 
+    bool bIsMEMLayer = false;
     if (m_poTmpDS == nullptr)
     {
+        bIsMEMLayer = true;
         m_poTmpDS = poMEMDriver->Create("", 0, 0, 0, GDT_Unknown, nullptr);
     }
 
@@ -582,6 +584,9 @@ void OGRIDFDataSource::Parse()
     }
 
     m_poTmpDS->CommitTransaction();
+
+    if (bIsMEMLayer)
+        m_poTmpDS->ExecuteSQL("PRAGMA read_only=1", nullptr, nullptr);
 
     std::map<GIntBig, OGRLineString *>::iterator oMapLinkCoordinateIter =
         oMapLinkCoordinate.begin();

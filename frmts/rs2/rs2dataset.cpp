@@ -729,9 +729,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->eAccess == GA_Update)
     {
         CPLDestroyXMLNode(psProduct);
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The RS2 driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("RS2");
         return nullptr;
     }
 

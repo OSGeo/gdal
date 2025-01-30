@@ -899,9 +899,7 @@ GDALDataset *EnvisatDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->eAccess == GA_Update)
     {
         EnvisatFile_Close(hEnvisatFile);
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The ENVISAT driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("ENVISAT");
         return nullptr;
     }
     /* -------------------------------------------------------------------- */

@@ -750,6 +750,11 @@ void RegisterOGRGeoPackage()
     poDriver->SetMetadataItem("SQLITE_HAS_COLUMN_METADATA", "YES");
 #endif
 
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "DatasetMetadata BandMetadata RasterValues "
+                              "LayerMetadata Features");
+
     poDriver->pfnOpen = OGRGeoPackageDriverOpen;
     poDriver->pfnIdentify = OGRGeoPackageDriverIdentify;
     poDriver->pfnCreate = OGRGeoPackageDriverCreate;

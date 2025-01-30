@@ -219,3 +219,20 @@ bool OGRMemDataSource::UpdateFieldDomain(
     m_oMapFieldDomains[domainName] = std::move(domain);
     return true;
 }
+
+/************************************************************************/
+/*                              ExecuteSQL()                            */
+/************************************************************************/
+
+OGRLayer *OGRMemDataSource::ExecuteSQL(const char *pszStatement,
+                                       OGRGeometry *poSpatialFilter,
+                                       const char *pszDialect)
+{
+    if (EQUAL(pszStatement, "PRAGMA read_only=1"))  // as used by VDV driver
+    {
+        for (int i = 0; i < nLayers; ++i)
+            papoLayers[i]->SetUpdatable(false);
+        return nullptr;
+    }
+    return GDALDataset::ExecuteSQL(pszStatement, poSpatialFilter, pszDialect);
+}

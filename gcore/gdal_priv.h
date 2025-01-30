@@ -946,6 +946,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     // Only to be used by driver's GetOverviewCount() method.
     bool AreOverviewsEnabled() const;
+
+    static void ReportUpdateNotSupportedByDriver(const char *pszDriverName);
     //! @endcond
 
   private:

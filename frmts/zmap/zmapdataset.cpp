@@ -291,9 +291,7 @@ GDALDataset *ZMapDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The ZMAP driver does not support update access to existing"
-                 " datasets.");
+        ReportUpdateNotSupportedByDriver("ZMAP");
         return nullptr;
     }
 

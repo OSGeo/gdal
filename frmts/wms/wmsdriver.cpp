@@ -902,9 +902,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->eAccess == GA_Update)
     {
         CPLDestroyXMLNode(config);
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The WMS poDriver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("WMS");
         return nullptr;
     }
 

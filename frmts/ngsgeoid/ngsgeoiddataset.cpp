@@ -313,10 +313,7 @@ GDALDataset *NGSGEOIDDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(
-            CE_Failure, CPLE_NotSupported,
-            "The NGSGEOID driver does not support update access to existing"
-            " datasets.\n");
+        ReportUpdateNotSupportedByDriver("NGSGEOID");
         return nullptr;
     }
 

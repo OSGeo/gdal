@@ -1286,8 +1286,7 @@ GDALDataset *RPFTOCDataset::Open(GDALOpenInfo *poOpenInfo)
 
         if (poDS && poOpenInfo->eAccess == GA_Update)
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "RPFTOC driver does not support update mode");
+            ReportUpdateNotSupportedByDriver("RPFTOC");
             delete poDS;
             return nullptr;
         }
@@ -1317,8 +1316,7 @@ GDALDataset *RPFTOCDataset::Open(GDALOpenInfo *poOpenInfo)
 
         if (poDS && poOpenInfo->eAccess == GA_Update)
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "RPFTOC driver does not support update mode");
+            ReportUpdateNotSupportedByDriver("RPFTOC");
             delete poDS;
             return nullptr;
         }

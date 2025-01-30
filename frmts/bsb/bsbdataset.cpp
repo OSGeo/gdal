@@ -818,9 +818,7 @@ GDALDataset *BSBDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The BSB driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("BSB");
         return nullptr;
     }
 

@@ -2621,8 +2621,7 @@ GDALDataset *BAGDataset::Open(GDALOpenInfo *poOpenInfo)
     // Confirm the requested access is supported.
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The BAG driver does not support update access.");
+        ReportUpdateNotSupportedByDriver("BAG");
         return nullptr;
     }
 

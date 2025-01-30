@@ -264,6 +264,9 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
 
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "RasterValues Features");
+
     poDriver->SetMetadataItem(
         "TILEDB_VERSION",
         STRINGIFY(TILEDB_VERSION_MAJOR) "." STRINGIFY(

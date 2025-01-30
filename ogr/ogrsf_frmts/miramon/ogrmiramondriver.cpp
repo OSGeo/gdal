@@ -84,8 +84,7 @@ static GDALDataset *OGRMiraMonDriverOpen(GDALOpenInfo *poOpenInfo)
 
     if (poDS && poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "MiraMonVector driver does not support update.");
+        GDALDataset::ReportUpdateNotSupportedByDriver("MiraMonVector");
         return nullptr;
     }
 

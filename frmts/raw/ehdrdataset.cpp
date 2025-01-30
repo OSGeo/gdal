@@ -2030,6 +2030,10 @@ void GDALRegister_EHdr()
         "signed byte'/>"
         "</CreationOptionList>");
 
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "GeoTransform SRS NoData "
+                                                     "RasterValues");
+
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->pfnOpen = EHdrDataset::Open;
     poDriver->pfnCreate = EHdrDataset::Create;

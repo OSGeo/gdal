@@ -971,9 +971,7 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     // Confirm the requested access is supported.
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The HDF5ImageDataset driver does not support update access "
-                 "to existing datasets.");
+        ReportUpdateNotSupportedByDriver("HDF5");
         return nullptr;
     }
 

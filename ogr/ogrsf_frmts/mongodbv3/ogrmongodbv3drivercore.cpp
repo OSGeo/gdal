@@ -117,6 +117,9 @@ void OGRMongoDBv3DriverSetCommonMetadata(GDALDriver *poDriver)
 
     poDriver->pfnIdentify = OGRMongoDBv3DriverIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "Features");
 }
 
 /************************************************************************/

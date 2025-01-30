@@ -1132,9 +1132,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "ERROR: The RCM driver does not support update "
-                 "access to existing dataset.");
+        ReportUpdateNotSupportedByDriver("RCM");
         return nullptr;
     }
 

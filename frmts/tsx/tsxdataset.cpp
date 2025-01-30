@@ -455,9 +455,7 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The TSX driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("TSX");
         return nullptr;
     }
 

@@ -115,6 +115,11 @@ void ECWDriverSetCommonMetadata(GDALDriver *poDriver)
     // for ECWCreateCopyECW().
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 #endif
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS "
+                              "DatasetMetadata BandMetadata");
 }
 
 /************************************************************************/

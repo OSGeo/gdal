@@ -103,8 +103,7 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
     // Confirm the requested access is supported.
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The S111 driver does not support update access.");
+        ReportUpdateNotSupportedByDriver("S111");
         return nullptr;
     }
 

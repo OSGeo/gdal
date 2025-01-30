@@ -552,6 +552,12 @@ void GDALRegister_VRT()
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_COORDINATE_EPOCH, "YES");
 
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS GCPs NoData "
+                              "ColorInterpretation "
+                              "DatasetMetadata BandMetadata");
+
     const char *pszExpressionDialects = "ExpressionDialects";
 #if defined(GDAL_VRT_ENABLE_MUPARSER) && defined(GDAL_VRT_ENABLE_EXPRTK)
     poDriver->SetMetadataItem(pszExpressionDialects, "muparser,exprtk");

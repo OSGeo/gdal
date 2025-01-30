@@ -4436,6 +4436,25 @@ static int TestOGRLayer(GDALDataset *poDS, OGRLayer *poLayer, int bIsSQLLayer)
     /* -------------------------------------------------------------------- */
     if (LOG_ACTION(poLayer->TestCapability(OLCRandomWrite)))
     {
+        if (!poDS->GetDriver()->GetMetadataItem(GDAL_DCAP_UPDATE))
+        {
+            printf("ERROR: Driver %s does not declare GDAL_DCAP_UPDATE\n",
+                   poDS->GetDriver()->GetDescription());
+            bRet = false;
+        }
+        else
+        {
+            const char *pszItems =
+                poDS->GetDriver()->GetMetadataItem(GDAL_DMD_UPDATE_ITEMS);
+            if (!pszItems || !strstr(pszItems, "Features"))
+            {
+                printf("ERROR: Driver %s does not declare Features in "
+                       "GDAL_DMD_UPDATE_ITEMS\n",
+                       poDS->GetDriver()->GetDescription());
+                bRet = false;
+            }
+        }
+
         bRet &= TestOGRLayerRandomWrite(poLayer);
     }
 

@@ -3330,9 +3330,7 @@ GDALDataset *L1BDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The L1B driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("L1B");
         if (fp != nullptr)
             CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return nullptr;
