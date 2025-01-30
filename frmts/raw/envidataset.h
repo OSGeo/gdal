@@ -65,6 +65,8 @@ class ENVIDataset final : public RawDataset
 
     std::vector<GDAL_GCP> m_asGCPs{};
 
+    Interleave eInterleave = Interleave::BSQ;
+
     bool ReadHeader(VSILFILE *);
     bool ProcessMapinfo(const char *);
     void ProcessRPCinfo(const char *, int, int);
@@ -87,13 +89,6 @@ class ENVIDataset final : public RawDataset
     }
 
     static char **SplitList(const char *);
-
-    enum Interleave
-    {
-        BSQ,
-        BIL,
-        BIP
-    } interleave;
 
     static int GetEnviType(GDALDataType eType);
 

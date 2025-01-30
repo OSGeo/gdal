@@ -39,7 +39,6 @@ RUN apt-get update && \
     liblzma-dev \
     libmysqlclient-dev \
     libnetcdf-dev \
-    libogdi-dev \
     libopenexr-dev \
     libopenjp2-7-dev \
     libpcre3-dev \

@@ -74,12 +74,10 @@ Vector drivers
    nas
    netcdf
    ngw
-   ntf
    oapif
    oci
    odbc
    ods
-   ogdi
    openfilegdb
    osm
    parquet
@@ -91,14 +89,12 @@ Vector drivers
    plscenes
    pmtiles
    s57
-   sdts
    selafin
    shapefile
    sosi
    sqlite
    svg
    sxf
-   tiger
    tiledb
    topojson
    vdv
