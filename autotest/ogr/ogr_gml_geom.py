@@ -2398,7 +2398,7 @@ def test_gml_CircleByCenterPoint():
     geom = ogr.CreateGeometryFromGML(gml)
 
     ogrtest.check_feature_geometry(
-        geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (-1 2,3 2,-1 2)")
+        geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (-1 2,1 4,3 2,1 0,-1 2)")
     )
 
 
