@@ -175,15 +175,28 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
                                         std::string &osAccessKeyId,
                                         std::string &osSessionToken);
 
-    static bool GetConfigurationFromAWSConfigFiles(
-        const std::string &osPathForOption, const char *pszProfile,
-        std::string &osSecretAccessKey, std::string &osAccessKeyId,
-        std::string &osSessionToken, std::string &osRegion,
-        std::string &osCredentials, std::string &osRoleArn,
-        std::string &osSourceProfile, std::string &osExternalId,
-        std::string &osMFASerial, std::string &osRoleSessionName,
-        std::string &osWebIdentityTokenFile, std::string &osSSOStartURL,
-        std::string &osSSOAccountID, std::string &osSSORoleName);
+    struct ConfigFromAWSConfigFiles
+    {
+        std::string osSecretAccessKey{};
+        std::string osAccessKeyId{};
+        std::string osSessionToken{};
+        std::string osRegion{};
+        std::string osCredentialsFilename{};
+        std::string osRoleArn{};
+        std::string osSourceProfile{};
+        std::string osExternalId{};
+        std::string osMFASerial{};
+        std::string osRoleSessionName{};
+        std::string osWebIdentityTokenFile{};
+        std::string osSSOStartURL{};
+        std::string osSSOAccountID{};
+        std::string osSSORoleName{};
+    };
+
+    static bool
+    GetConfigurationFromAWSConfigFiles(const std::string &osPathForOption,
+                                       const char *pszProfile,
+                                       ConfigFromAWSConfigFiles &oConfig);
 
     static bool GetConfiguration(const std::string &osPathForOption,
                                  CSLConstList papszOptions,

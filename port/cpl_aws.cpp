@@ -608,7 +608,10 @@ static EC2InstanceCertainty IsMachinePotentiallyEC2Instance()
         }
     }
 
-    return IsMachinePotentiallyEC2InstanceFromLinuxHost();
+    static const EC2InstanceCertainty
+        eIsMachinePotentiallyEC2InstanceFromLinuxHost =
+            IsMachinePotentiallyEC2InstanceFromLinuxHost();
+    return eIsMachinePotentiallyEC2InstanceFromLinuxHost;
 
 #elif defined(_WIN32)
     if (!CPLTestBool(CPLGetConfigOption("CPL_AWS_AUTODETECT_EC2", "YES")))
@@ -1056,11 +1059,9 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
 /*                      UpdateAndWarnIfInconsistent()                   */
 /************************************************************************/
 
-static void UpdateAndWarnIfInconsistent(const char *pszKeyword,
-                                        std::string &osVal,
-                                        const std::string &osNewVal,
-                                        const std::string &osCredentials,
-                                        const std::string &osConfig)
+static void UpdateAndWarnIfInconsistent(
+    const char *pszKeyword, std::string &osVal, const std::string &osNewVal,
+    const std::string &osCredentialsFilename, const std::string &osConfig)
 {
     // nominally defined in ~/.aws/credentials but can
     // be set here too. If both values exist, credentials
@@ -1074,8 +1075,8 @@ static void UpdateAndWarnIfInconsistent(const char *pszKeyword,
         CPLError(CE_Warning, CPLE_AppDefined,
                  "%s defined in both %s "
                  "and %s. The one of %s will be used",
-                 pszKeyword, osCredentials.c_str(), osConfig.c_str(),
-                 osCredentials.c_str());
+                 pszKeyword, osCredentialsFilename.c_str(), osConfig.c_str(),
+                 osCredentialsFilename.c_str());
     }
 }
 
@@ -1084,7 +1085,7 @@ static void UpdateAndWarnIfInconsistent(const char *pszKeyword,
 /************************************************************************/
 
 static bool ReadAWSCredentials(const std::string &osProfile,
-                               const std::string &osCredentials,
+                               const std::string &osCredentialsFilename,
                                std::string &osSecretAccessKey,
                                std::string &osAccessKeyId,
                                std::string &osSessionToken)
@@ -1093,38 +1094,62 @@ static bool ReadAWSCredentials(const std::string &osProfile,
     osAccessKeyId.clear();
     osSessionToken.clear();
 
-    VSILFILE *fp = VSIFOpenL(osCredentials.c_str(), "rb");
-    if (fp != nullptr)
+    static std::mutex goMutex;
+    std::lock_guard oGuard(goMutex);
+
+    // Cache last request and result to avoid repeated file accesses.
+    static std::string gosLastFilename;
+    static std::string gosLastProfile;
+    static std::string gosLastSecretAccessKey;
+    static std::string gosLastAcessKeyId;
+    static std::string gosLastSessionToken;
+    if (gosLastFilename == osCredentialsFilename && gosLastProfile == osProfile)
     {
-        const char *pszLine;
-        bool bInProfile = false;
-        const std::string osBracketedProfile("[" + osProfile + "]");
-        while ((pszLine = CPLReadLineL(fp)) != nullptr)
+        osSecretAccessKey = gosLastSecretAccessKey;
+        osAccessKeyId = gosLastAcessKeyId;
+        osSessionToken = gosLastSessionToken;
+    }
+    else
+    {
+        VSILFILE *fp = VSIFOpenL(osCredentialsFilename.c_str(), "rb");
+        if (fp != nullptr)
         {
-            if (pszLine[0] == '[')
+            const char *pszLine;
+            bool bInProfile = false;
+            const std::string osBracketedProfile("[" + osProfile + "]");
+            while ((pszLine = CPLReadLineL(fp)) != nullptr)
             {
-                if (bInProfile)
-                    break;
-                if (std::string(pszLine) == osBracketedProfile)
-                    bInProfile = true;
-            }
-            else if (bInProfile)
-            {
-                char *pszKey = nullptr;
-                const char *pszValue = CPLParseNameValue(pszLine, &pszKey);
-                if (pszKey && pszValue)
+                if (pszLine[0] == '[')
                 {
-                    if (EQUAL(pszKey, "aws_access_key_id"))
-                        osAccessKeyId = pszValue;
-                    else if (EQUAL(pszKey, "aws_secret_access_key"))
-                        osSecretAccessKey = pszValue;
-                    else if (EQUAL(pszKey, "aws_session_token"))
-                        osSessionToken = pszValue;
+                    if (bInProfile)
+                        break;
+                    if (std::string(pszLine) == osBracketedProfile)
+                        bInProfile = true;
                 }
-                CPLFree(pszKey);
+                else if (bInProfile)
+                {
+                    char *pszKey = nullptr;
+                    const char *pszValue = CPLParseNameValue(pszLine, &pszKey);
+                    if (pszKey && pszValue)
+                    {
+                        if (EQUAL(pszKey, "aws_access_key_id"))
+                            osAccessKeyId = pszValue;
+                        else if (EQUAL(pszKey, "aws_secret_access_key"))
+                            osSecretAccessKey = pszValue;
+                        else if (EQUAL(pszKey, "aws_session_token"))
+                            osSessionToken = pszValue;
+                    }
+                    CPLFree(pszKey);
+                }
             }
+            VSIFCloseL(fp);
         }
-        VSIFCloseL(fp);
+
+        gosLastFilename = osCredentialsFilename;
+        gosLastProfile = osProfile;
+        gosLastSecretAccessKey = osSecretAccessKey;
+        gosLastAcessKeyId = osAccessKeyId;
+        gosLastSessionToken = osSessionToken;
     }
 
     return !osSecretAccessKey.empty() && !osAccessKeyId.empty();
@@ -1170,13 +1195,7 @@ static std::string GetAWSRootDirectory()
 
 bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     const std::string &osPathForOption, const char *pszProfile,
-    std::string &osSecretAccessKey, std::string &osAccessKeyId,
-    std::string &osSessionToken, std::string &osRegion,
-    std::string &osCredentials, std::string &osRoleArn,
-    std::string &osSourceProfile, std::string &osExternalId,
-    std::string &osMFASerial, std::string &osRoleSessionName,
-    std::string &osWebIdentityTokenFile, std::string &osSSOStartURL,
-    std::string &osSSOAccountID, std::string &osSSORoleName)
+    ConfigFromAWSConfigFiles &oConfig)
 {
     // See http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html
     // If AWS_DEFAULT_PROFILE is set (obsolete, no longer documented), use it in
@@ -1202,185 +1221,211 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
         osPathForOption.c_str(), "CPL_AWS_CREDENTIALS_FILE", nullptr);
     if (pszCredentials)
     {
-        osCredentials = pszCredentials;
+        oConfig.osCredentialsFilename = pszCredentials;
     }
     else
     {
-        osCredentials = osDotAws;
-        osCredentials += GetDirSeparator();
-        osCredentials += "credentials";
+        oConfig.osCredentialsFilename = osDotAws;
+        oConfig.osCredentialsFilename += GetDirSeparator();
+        oConfig.osCredentialsFilename += "credentials";
     }
 
-    ReadAWSCredentials(osProfile, osCredentials, osSecretAccessKey,
-                       osAccessKeyId, osSessionToken);
+    ReadAWSCredentials(osProfile, oConfig.osCredentialsFilename,
+                       oConfig.osSecretAccessKey, oConfig.osAccessKeyId,
+                       oConfig.osSessionToken);
 
     // And then ~/.aws/config file (unless AWS_CONFIG_FILE is defined)
     const char *pszAWSConfigFileEnv = VSIGetPathSpecificOption(
         osPathForOption.c_str(), "AWS_CONFIG_FILE", nullptr);
-    std::string osConfig;
+    std::string osConfigFilename;
     if (pszAWSConfigFileEnv && pszAWSConfigFileEnv[0])
     {
-        osConfig = pszAWSConfigFileEnv;
+        osConfigFilename = pszAWSConfigFileEnv;
     }
     else
     {
-        osConfig = osDotAws;
-        osConfig += GetDirSeparator();
-        osConfig += "config";
+        osConfigFilename = osDotAws;
+        osConfigFilename += GetDirSeparator();
+        osConfigFilename += "config";
     }
 
-    VSILFILE *fp = VSIFOpenL(osConfig.c_str(), "rb");
-    if (fp != nullptr)
+    static std::mutex goMutex;
+    std::lock_guard oGuard(goMutex);
+
+    static std::string gosLastConfigFilename;
+    static std::string gosLastProfile;
+    static ConfigFromAWSConfigFiles goLastConfig;
+
+    if (gosLastConfigFilename == osConfigFilename &&
+        gosLastProfile == osProfile &&
+        goLastConfig.osCredentialsFilename == oConfig.osCredentialsFilename)
     {
-        // Start by reading sso-session's
-        const char *pszLine;
-        std::map<std::string, std::map<std::string, std::string>>
-            oMapSSOSessions;
-        std::string osSSOSession;
-        while ((pszLine = CPLReadLineL(fp)) != nullptr)
-        {
-            if (STARTS_WITH(pszLine, "[sso-session ") &&
-                pszLine[strlen(pszLine) - 1] == ']')
-            {
-                osSSOSession = pszLine + strlen("[sso-session ");
-                osSSOSession.pop_back();
-            }
-            else if (pszLine[0] == '[')
-            {
-                osSSOSession.clear();
-            }
-            else if (!osSSOSession.empty())
-            {
-                char *pszKey = nullptr;
-                const char *pszValue = CPLParseNameValue(pszLine, &pszKey);
-                if (pszKey && pszValue)
-                {
-                    // CPLDebugOnly("S3", "oMapSSOSessions[%s][%s] = %s",
-                    //              osSSOSession.c_str(), pszKey, pszValue);
-                    oMapSSOSessions[osSSOSession][pszKey] = pszValue;
-                }
-                CPLFree(pszKey);
-            }
-        }
-        osSSOSession.clear();
-
-        bool bInProfile = false;
-        const std::string osBracketedProfile("[" + osProfile + "]");
-        const std::string osBracketedProfileProfile("[profile " + osProfile +
-                                                    "]");
-
-        VSIFSeekL(fp, 0, SEEK_SET);
-
-        while ((pszLine = CPLReadLineL(fp)) != nullptr)
-        {
-            if (pszLine[0] == '[')
-            {
-                if (bInProfile)
-                    break;
-                // In config file, the section name is nominally [profile foo]
-                // for the non default profile.
-                if (std::string(pszLine) == osBracketedProfile ||
-                    std::string(pszLine) == osBracketedProfileProfile)
-                {
-                    bInProfile = true;
-                }
-            }
-            else if (bInProfile)
-            {
-                char *pszKey = nullptr;
-                const char *pszValue = CPLParseNameValue(pszLine, &pszKey);
-                if (pszKey && pszValue)
-                {
-                    if (EQUAL(pszKey, "aws_access_key_id"))
-                    {
-                        UpdateAndWarnIfInconsistent(pszKey, osAccessKeyId,
-                                                    pszValue, osCredentials,
-                                                    osConfig);
-                    }
-                    else if (EQUAL(pszKey, "aws_secret_access_key"))
-                    {
-                        UpdateAndWarnIfInconsistent(pszKey, osSecretAccessKey,
-                                                    pszValue, osCredentials,
-                                                    osConfig);
-                    }
-                    else if (EQUAL(pszKey, "aws_session_token"))
-                    {
-                        UpdateAndWarnIfInconsistent(pszKey, osSessionToken,
-                                                    pszValue, osCredentials,
-                                                    osConfig);
-                    }
-                    else if (EQUAL(pszKey, "region"))
-                    {
-                        osRegion = pszValue;
-                    }
-                    else if (strcmp(pszKey, "role_arn") == 0)
-                    {
-                        osRoleArn = pszValue;
-                    }
-                    else if (strcmp(pszKey, "source_profile") == 0)
-                    {
-                        osSourceProfile = pszValue;
-                    }
-                    else if (strcmp(pszKey, "external_id") == 0)
-                    {
-                        osExternalId = pszValue;
-                    }
-                    else if (strcmp(pszKey, "mfa_serial") == 0)
-                    {
-                        osMFASerial = pszValue;
-                    }
-                    else if (strcmp(pszKey, "role_session_name") == 0)
-                    {
-                        osRoleSessionName = pszValue;
-                    }
-                    else if (strcmp(pszKey, "web_identity_token_file") == 0)
-                    {
-                        osWebIdentityTokenFile = pszValue;
-                    }
-                    else if (strcmp(pszKey, "sso_session") == 0)
-                    {
-                        osSSOSession = pszValue;
-                    }
-                    else if (strcmp(pszKey, "sso_start_url") == 0)
-                    {
-                        osSSOStartURL = pszValue;
-                    }
-                    else if (strcmp(pszKey, "sso_account_id") == 0)
-                    {
-                        osSSOAccountID = pszValue;
-                    }
-                    else if (strcmp(pszKey, "sso_role_name") == 0)
-                    {
-                        osSSORoleName = pszValue;
-                    }
-                }
-                CPLFree(pszKey);
-            }
-        }
-        VSIFCloseL(fp);
-
-        if (!osSSOSession.empty())
-        {
-            if (osSSOStartURL.empty())
-                osSSOStartURL = oMapSSOSessions[osSSOSession]["sso_start_url"];
-        }
+        oConfig = goLastConfig;
     }
-    else if (pszAWSConfigFileEnv != nullptr)
+    else
     {
-        if (pszAWSConfigFileEnv[0] != '\0')
+        VSILFILE *fp = VSIFOpenL(osConfigFilename.c_str(), "rb");
+        if (fp != nullptr)
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "%s does not exist or cannot be open",
-                     pszAWSConfigFileEnv);
+            // Start by reading sso-session's
+            const char *pszLine;
+            std::map<std::string, std::map<std::string, std::string>>
+                oMapSSOSessions;
+            std::string osSSOSession;
+            while ((pszLine = CPLReadLineL(fp)) != nullptr)
+            {
+                if (STARTS_WITH(pszLine, "[sso-session ") &&
+                    pszLine[strlen(pszLine) - 1] == ']')
+                {
+                    osSSOSession = pszLine + strlen("[sso-session ");
+                    osSSOSession.pop_back();
+                }
+                else if (pszLine[0] == '[')
+                {
+                    osSSOSession.clear();
+                }
+                else if (!osSSOSession.empty())
+                {
+                    char *pszKey = nullptr;
+                    const char *pszValue = CPLParseNameValue(pszLine, &pszKey);
+                    if (pszKey && pszValue)
+                    {
+                        // CPLDebugOnly("S3", "oMapSSOSessions[%s][%s] = %s",
+                        //              osSSOSession.c_str(), pszKey, pszValue);
+                        oMapSSOSessions[osSSOSession][pszKey] = pszValue;
+                    }
+                    CPLFree(pszKey);
+                }
+            }
+            osSSOSession.clear();
+
+            bool bInProfile = false;
+            const std::string osBracketedProfile("[" + osProfile + "]");
+            const std::string osBracketedProfileProfile("[profile " +
+                                                        osProfile + "]");
+
+            VSIFSeekL(fp, 0, SEEK_SET);
+
+            while ((pszLine = CPLReadLineL(fp)) != nullptr)
+            {
+                if (pszLine[0] == '[')
+                {
+                    if (bInProfile)
+                        break;
+                    // In config file, the section name is nominally [profile foo]
+                    // for the non default profile.
+                    if (std::string(pszLine) == osBracketedProfile ||
+                        std::string(pszLine) == osBracketedProfileProfile)
+                    {
+                        bInProfile = true;
+                    }
+                }
+                else if (bInProfile)
+                {
+                    char *pszKey = nullptr;
+                    const char *pszValue = CPLParseNameValue(pszLine, &pszKey);
+                    if (pszKey && pszValue)
+                    {
+                        if (EQUAL(pszKey, "aws_access_key_id"))
+                        {
+                            UpdateAndWarnIfInconsistent(
+                                pszKey, oConfig.osAccessKeyId, pszValue,
+                                oConfig.osCredentialsFilename,
+                                osConfigFilename);
+                        }
+                        else if (EQUAL(pszKey, "aws_secret_access_key"))
+                        {
+                            UpdateAndWarnIfInconsistent(
+                                pszKey, oConfig.osSecretAccessKey, pszValue,
+                                oConfig.osCredentialsFilename,
+                                osConfigFilename);
+                        }
+                        else if (EQUAL(pszKey, "aws_session_token"))
+                        {
+                            UpdateAndWarnIfInconsistent(
+                                pszKey, oConfig.osSessionToken, pszValue,
+                                oConfig.osCredentialsFilename,
+                                osConfigFilename);
+                        }
+                        else if (EQUAL(pszKey, "region"))
+                        {
+                            oConfig.osRegion = pszValue;
+                        }
+                        else if (strcmp(pszKey, "role_arn") == 0)
+                        {
+                            oConfig.osRoleArn = pszValue;
+                        }
+                        else if (strcmp(pszKey, "source_profile") == 0)
+                        {
+                            oConfig.osSourceProfile = pszValue;
+                        }
+                        else if (strcmp(pszKey, "external_id") == 0)
+                        {
+                            oConfig.osExternalId = pszValue;
+                        }
+                        else if (strcmp(pszKey, "mfa_serial") == 0)
+                        {
+                            oConfig.osMFASerial = pszValue;
+                        }
+                        else if (strcmp(pszKey, "role_session_name") == 0)
+                        {
+                            oConfig.osRoleSessionName = pszValue;
+                        }
+                        else if (strcmp(pszKey, "web_identity_token_file") == 0)
+                        {
+                            oConfig.osWebIdentityTokenFile = pszValue;
+                        }
+                        else if (strcmp(pszKey, "sso_session") == 0)
+                        {
+                            osSSOSession = pszValue;
+                        }
+                        else if (strcmp(pszKey, "sso_start_url") == 0)
+                        {
+                            oConfig.osSSOStartURL = pszValue;
+                        }
+                        else if (strcmp(pszKey, "sso_account_id") == 0)
+                        {
+                            oConfig.osSSOAccountID = pszValue;
+                        }
+                        else if (strcmp(pszKey, "sso_role_name") == 0)
+                        {
+                            oConfig.osSSORoleName = pszValue;
+                        }
+                    }
+                    CPLFree(pszKey);
+                }
+            }
+            VSIFCloseL(fp);
+
+            if (!osSSOSession.empty())
+            {
+                if (oConfig.osSSOStartURL.empty())
+                    oConfig.osSSOStartURL =
+                        oMapSSOSessions[osSSOSession]["sso_start_url"];
+            }
         }
+        else if (pszAWSConfigFileEnv != nullptr)
+        {
+            if (pszAWSConfigFileEnv[0] != '\0')
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "%s does not exist or cannot be open",
+                         pszAWSConfigFileEnv);
+            }
+        }
+
+        gosLastConfigFilename = osConfigFilename;
+        gosLastProfile = osProfile;
+        goLastConfig = oConfig;
     }
 
-    return (!osAccessKeyId.empty() && !osSecretAccessKey.empty()) ||
-           (!osRoleArn.empty() && !osSourceProfile.empty()) ||
-           (pszProfileOri != nullptr && !osRoleArn.empty() &&
-            !osWebIdentityTokenFile.empty()) ||
-           (!osSSOStartURL.empty() && !osSSOAccountID.empty() &&
-            !osSSORoleName.empty());
+    return (!oConfig.osAccessKeyId.empty() &&
+            !oConfig.osSecretAccessKey.empty()) ||
+           (!oConfig.osRoleArn.empty() && !oConfig.osSourceProfile.empty()) ||
+           (pszProfileOri != nullptr && !oConfig.osRoleArn.empty() &&
+            !oConfig.osWebIdentityTokenFile.empty()) ||
+           (!oConfig.osSSOStartURL.empty() && !oConfig.osSSOAccountID.empty() &&
+            !oConfig.osSSORoleName.empty());
 }
 
 /************************************************************************/
@@ -1798,24 +1843,26 @@ bool VSIS3HandleHelper::GetConfiguration(
     }
 
     // Next try reading from ~/.aws/credentials and ~/.aws/config
-    std::string osCredentials;
-    std::string osRoleArn;
-    std::string osSourceProfile;
-    std::string osExternalId;
-    std::string osMFASerial;
-    std::string osRoleSessionName;
-    std::string osWebIdentityTokenFile;
-    std::string osSSOStartURL;
-    std::string osSSOAccountID;
-    std::string osSSORoleName;
+    ConfigFromAWSConfigFiles oConfig;
+    oConfig.osRegion = osRegion;
+    const bool bGotConfFromAWSConfigFiles =
+        GetConfigurationFromAWSConfigFiles(osPathForOption,
+                                           /* pszProfile = */ nullptr, oConfig);
     // coverity[tainted_data]
-    if (GetConfigurationFromAWSConfigFiles(
-            osPathForOption,
-            /* pszProfile = */ nullptr, osSecretAccessKey, osAccessKeyId,
-            osSessionToken, osRegion, osCredentials, osRoleArn, osSourceProfile,
-            osExternalId, osMFASerial, osRoleSessionName,
-            osWebIdentityTokenFile, osSSOStartURL, osSSOAccountID,
-            osSSORoleName))
+    osSecretAccessKey = oConfig.osSecretAccessKey;
+    osAccessKeyId = oConfig.osAccessKeyId;
+    osSessionToken = oConfig.osSessionToken;
+    osRegion = oConfig.osRegion;
+    const std::string osCredentialsFilename = oConfig.osCredentialsFilename;
+    std::string osRoleArn = oConfig.osRoleArn;
+    std::string osSourceProfile = oConfig.osSourceProfile;
+    std::string osExternalId = oConfig.osExternalId;
+    std::string osMFASerial = oConfig.osMFASerial;
+    std::string osRoleSessionName = oConfig.osRoleSessionName;
+    const std::string osSSOStartURL = oConfig.osSSOStartURL;
+    const std::string osSSOAccountID = oConfig.osSSOAccountID;
+    const std::string osSSORoleName = oConfig.osSSORoleName;
+    if (bGotConfFromAWSConfigFiles)
     {
         if (osSecretAccessKey.empty() && !osRoleArn.empty())
         {
@@ -1823,34 +1870,19 @@ bool VSIS3HandleHelper::GetConfiguration(
             // that has a role_arn and web_identity_token_file settings.
             if (!osSourceProfile.empty())
             {
-                std::string osSecretAccessKeySP;
-                std::string osAccessKeyIdSP;
-                std::string osSessionTokenSP;
-                std::string osRegionSP;
-                std::string osCredentialsSP;
-                std::string osRoleArnSP;
-                std::string osSourceProfileSP;
-                std::string osExternalIdSP;
-                std::string osMFASerialSP;
-                std::string osRoleSessionNameSP;
-                std::string osSSOStartURLSP;
-                std::string osSSOAccountIDSP;
-                std::string osSSORoleNameSP;
+                ConfigFromAWSConfigFiles oConfigSP;
                 if (GetConfigurationFromAWSConfigFiles(
-                        osPathForOption, osSourceProfile.c_str(),
-                        osSecretAccessKeySP, osAccessKeyIdSP, osSessionTokenSP,
-                        osRegionSP, osCredentialsSP, osRoleArnSP,
-                        osSourceProfileSP, osExternalIdSP, osMFASerialSP,
-                        osRoleSessionNameSP, osWebIdentityTokenFile,
-                        osSSOStartURLSP, osSSOAccountIDSP, osSSORoleNameSP))
+                        osPathForOption, osSourceProfile.c_str(), oConfigSP))
                 {
+                    std::string osWebIdentityTokenFile =
+                        oConfigSP.osWebIdentityTokenFile;
                     if (GetConfigurationFromAssumeRoleWithWebIdentity(
                             /* bForceRefresh = */ false, osPathForOption,
-                            osRoleArnSP, osWebIdentityTokenFile,
+                            oConfigSP.osRoleArn, osWebIdentityTokenFile,
                             osSecretAccessKey, osAccessKeyId, osSessionToken))
                     {
                         CPLMutexHolder oHolder(&ghMutex);
-                        gosRoleArnWebIdentity = std::move(osRoleArnSP);
+                        gosRoleArnWebIdentity = std::move(oConfigSP.osRoleArn);
                         gosWebIdentityTokenFile =
                             std::move(osWebIdentityTokenFile);
                     }
@@ -1861,7 +1893,7 @@ bool VSIS3HandleHelper::GetConfiguration(
             {
                 // Get the credentials for the source profile, that will be
                 // used to sign the STS AssumedRole request.
-                if (!ReadAWSCredentials(osSourceProfile, osCredentials,
+                if (!ReadAWSCredentials(osSourceProfile, osCredentialsFilename,
                                         osSecretAccessKey, osAccessKeyId,
                                         osSessionToken))
                 {
@@ -1983,7 +2015,7 @@ bool VSIS3HandleHelper::GetConfiguration(
         "virtual_file_systems.html#vsis3-aws-s3-files for more details. "
         "For unauthenticated requests on public resources, set the "
         "AWS_NO_SIGN_REQUEST configuration option to YES.",
-        osCredentials.c_str());
+        osCredentialsFilename.c_str());
     CPLDebug("GS", "%s", osMsg.c_str());
     VSIError(VSIE_AWSInvalidCredentials, "%s", osMsg.c_str());
 
