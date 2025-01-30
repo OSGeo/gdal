@@ -131,9 +131,6 @@ void OGRRegisterAllInternal()
 #ifdef IDB_ENABLED
     RegisterOGRIDB();
 #endif
-#ifdef GEOCONCEPT_ENABLED
-    RegisterOGRGeoconcept();
-#endif
 #ifdef GEORSS_ENABLED
     RegisterOGRGeoRSS();
 #endif
