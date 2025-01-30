@@ -4,7 +4,6 @@
 // clang-format off
 constexpr static const char* const apszKnownConfigOptions[] =
 {
-   "ADRG_SIMULATE_MULTI_IMG", // from adrgdataset.cpp
    "ALLOW_GPKG_ZOOM_OTHER_EXTENSION", // from ogrgeopackagedatasource.cpp
    "ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW", // from ogrsqlitedatasource.cpp
    "ALLOW_VIRTUAL_OGR_FROM_TRIGGER_AND_VIEW", // from ogrsqlitevirtualogr.cpp
@@ -952,7 +951,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "PYTHONSO", // from gdalpython.cpp
    "QGIS_HACK", // from ogrfeaturedefn.cpp
    "QHULL_LOG_TO_TEMP_FILE", // from delaunay.c
-   "RASTERLITE_OVR_OPTIONS", // from rasterliteoverviews.cpp
    "RAW_CHECK_FILE_SIZE", // from rawdataset.cpp
    "RAW_MEM_ALLOC_LIMIT_MB", // from rawdataset.cpp
    "REPORT_COMPD_CS", // from dteddataset.cpp, srtmhgtdataset.cpp
