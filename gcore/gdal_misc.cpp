@@ -5650,19 +5650,18 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
             return 0;
         }
 
-        // TODO(Schnetter): Why should we modify the noDataValue?
-        // if (dfNoDataValue == std::numeric_limits<GFloat16>::max())
-        // {
-        //     dfReplacementVal =
-        //         std::nextafter(static_cast<GFloat16>(dfNoDataValue),
-        //                        std::numeric_limits<GFloat16>::lowest());
-        // }
-        // else
-        // {
-        //     dfReplacementVal =
-        //         std::nextafter(static_cast<GFloat16>(dfNoDataValue),
-        //                        std::numeric_limits<GFloat16>::max());
-        // }
+        if (dfNoDataValue == std::numeric_limits<GFloat16>::max())
+        {
+            using std::nextafter;
+            dfReplacementVal =
+                nextafter(static_cast<GFloat16>(dfNoDataValue), GFloat16(0.0f));
+        }
+        else
+        {
+            using std::nextafter;
+            dfReplacementVal = nextafter(static_cast<GFloat16>(dfNoDataValue),
+                                         std::numeric_limits<GFloat16>::max());
+        }
     }
     else if (dt == GDT_Float32)
     {
@@ -5697,7 +5696,7 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
 
         if (dfNoDataValue == std::numeric_limits<double>::max())
         {
-            dfReplacementVal = std::nextafter(dfNoDataValue, 0.0f);
+            dfReplacementVal = std::nextafter(dfNoDataValue, 0.0);
         }
         else
         {

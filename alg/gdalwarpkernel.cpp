@@ -1553,13 +1553,15 @@ inline void AvoidNoData(const GDALWarpKernel *poWK, int iBand,
         {
             if (pDst[iDstOffset] == std::numeric_limits<T>::max())
             {
+                using std::nextafter;
                 pDst[iDstOffset] =
-                    std::nextafter(pDst[iDstOffset], static_cast<T>(0));
+                    nextafter(pDst[iDstOffset], static_cast<T>(0));
             }
             else
             {
-                pDst[iDstOffset] = std::nextafter(
-                    pDst[iDstOffset], std::numeric_limits<T>::max());
+                using std::nextafter;
+                pDst[iDstOffset] =
+                    nextafter(pDst[iDstOffset], std::numeric_limits<T>::max());
             }
         }
 
@@ -1861,8 +1863,7 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
             break;
 
         case GDT_Float16:
-            reinterpret_cast<GFloat16 *>(pabyDst)[iDstOffset] =
-                static_cast<GFloat16>(dfReal);
+            ClampRoundAndAvoidNoData<GFloat16>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Float32:
@@ -2099,8 +2100,7 @@ static bool GWKSetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
             break;
 
         case GDT_Float16:
-            reinterpret_cast<GFloat16 *>(pabyDst)[iDstOffset] =
-                static_cast<GFloat16>(dfReal);
+            ClampRoundAndAvoidNoData<GFloat16>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Float32:
@@ -4142,9 +4142,9 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
                 else
                     padfWeightsXShifted[i] = padfCst[(i + 3) % 3] / (dfX * dfX);
 #if DEBUG_VERBOSE
-                    // TODO(schwehr): AlmostEqual.
-                    // CPLAssert(fabs(padfWeightsX[i-poWK->nFiltInitX] -
-                    //               GWKLanczosSinc(dfX, 3.0)) < 1e-10);
+                // TODO(schwehr): AlmostEqual.
+                // CPLAssert(fabs(padfWeightsX[i-poWK->nFiltInitX] -
+                //               GWKLanczosSinc(dfX, 3.0)) < 1e-10);
 #endif
             }
 
@@ -4259,9 +4259,9 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
                 else
                     padfWeightsYShifted[j] = padfCst[(j + 3) % 3] / (dfY * dfY);
 #if DEBUG_VERBOSE
-                    // TODO(schwehr): AlmostEqual.
-                    // CPLAssert(fabs(padfWeightsYShifted[j] -
-                    //               GWKLanczosSinc(dfY, 3.0)) < 1e-10);
+                // TODO(schwehr): AlmostEqual.
+                // CPLAssert(fabs(padfWeightsYShifted[j] -
+                //               GWKLanczosSinc(dfY, 3.0)) < 1e-10);
 #endif
             }
 

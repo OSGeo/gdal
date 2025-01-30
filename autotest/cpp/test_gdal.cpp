@@ -3093,12 +3093,13 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
                   static_cast<double>(std::numeric_limits<uint64_t>::lowest())),
               static_cast<double>(std::numeric_limits<uint64_t>::lowest()) + 1);
     // uin64_t max is not representable in double so we expect the next value to be returned
+    using std::nextafter;
     EXPECT_EQ(
         GDALGetNoDataReplacementValue(
             GDT_UInt64,
             static_cast<double>(std::numeric_limits<uint64_t>::max())),
-        std::nextafter(
-            static_cast<double>(std::numeric_limits<uint64_t>::max()), 0) -
+        nextafter(static_cast<double>(std::numeric_limits<uint64_t>::max()),
+                  0) -
             1);
 
     // Test GDT_Int64
@@ -3113,14 +3114,45 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
                   GDT_Int64,
                   static_cast<double>(std::numeric_limits<int64_t>::lowest())),
               static_cast<double>(std::numeric_limits<int64_t>::lowest()) + 1);
-    EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Int64,
-                  static_cast<double>(std::numeric_limits<int64_t>::max())),
-              std::nextafter(
-                  static_cast<double>(std::numeric_limits<int64_t>::max()), 0) -
-                  1);
+    EXPECT_EQ(
+        GDALGetNoDataReplacementValue(
+            GDT_Int64,
+            static_cast<double>(std::numeric_limits<int64_t>::max())),
+        nextafter(static_cast<double>(std::numeric_limits<int64_t>::max()), 0) -
+            1);
 
     // Test floating point types
+
+    // out of range for float16
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Float16, std::numeric_limits<double>::lowest()),
+              0.0);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Float16,
+                                            std::numeric_limits<double>::max()),
+              0.0);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Float16, std::numeric_limits<double>::infinity()),
+              0.0);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Float16, -std::numeric_limits<double>::infinity()),
+              0.0);
+
+    // in range for float 16
+    EXPECT_EQ(
+        static_cast<float>(GDALGetNoDataReplacementValue(GDT_Float16, -1.0)),
+        nextafter(GFloat16(-1.0), GFloat16(0.0f)));
+    EXPECT_EQ(
+        static_cast<float>(GDALGetNoDataReplacementValue(GDT_Float16, 1.1)),
+        nextafter(GFloat16(1.1), GFloat16(2.0f)));
+    EXPECT_EQ(
+        GDALGetNoDataReplacementValue(GDT_Float16,
+                                      std::numeric_limits<GFloat16>::lowest()),
+        nextafter(std::numeric_limits<GFloat16>::lowest(), GFloat16(0.0f)));
+
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Float16, std::numeric_limits<GFloat16>::max()),
+              static_cast<double>(nextafter(
+                  std::numeric_limits<GFloat16>::max(), GFloat16(0.0f))));
 
     // out of range for float32
     EXPECT_EQ(GDALGetNoDataReplacementValue(
@@ -3139,38 +3171,38 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
     // in range for float 32
     EXPECT_EQ(
         static_cast<float>(GDALGetNoDataReplacementValue(GDT_Float32, -1.0)),
-        std::nextafter(float(-1.0), 0.0f));
+        nextafter(float(-1.0), 0.0f));
     EXPECT_EQ(
         static_cast<float>(GDALGetNoDataReplacementValue(GDT_Float32, 1.1)),
-        std::nextafter(float(1.1), 2.0f));
+        nextafter(float(1.1), 2.0f));
     EXPECT_EQ(GDALGetNoDataReplacementValue(
                   GDT_Float32, std::numeric_limits<float>::lowest()),
-              std::nextafter(std::numeric_limits<float>::lowest(), 0.0f));
+              nextafter(std::numeric_limits<float>::lowest(), 0.0f));
 
     EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Float32,
                                             std::numeric_limits<float>::max()),
               static_cast<double>(
-                  std::nextafter(std::numeric_limits<float>::max(), 0.0f)));
+                  nextafter(std::numeric_limits<float>::max(), 0.0f)));
 
     // in range for float64
     EXPECT_EQ(GDALGetNoDataReplacementValue(
                   GDT_Float64, std::numeric_limits<double>::lowest()),
-              std::nextafter(std::numeric_limits<double>::lowest(), 0.0));
+              nextafter(std::numeric_limits<double>::lowest(), 0.0));
     EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Float64,
                                             std::numeric_limits<double>::max()),
-              std::nextafter(std::numeric_limits<double>::max(), 0.0));
+              nextafter(std::numeric_limits<double>::max(), 0.0));
 
     EXPECT_EQ(GDALGetNoDataReplacementValue(
                   GDT_Float64, std::numeric_limits<double>::lowest()),
-              std::nextafter(std::numeric_limits<double>::lowest(), 0.0));
+              nextafter(std::numeric_limits<double>::lowest(), 0.0));
     EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Float64,
                                             std::numeric_limits<double>::max()),
-              std::nextafter(std::numeric_limits<double>::max(), 0.0));
+              nextafter(std::numeric_limits<double>::max(), 0.0));
 
     EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Float64, double(-1.0)),
-              std::nextafter(double(-1.0), 0.0));
+              nextafter(double(-1.0), 0.0));
     EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Float64, double(1.1)),
-              std::nextafter(double(1.1), 2.0));
+              nextafter(double(1.1), 2.0));
 
     // test infinity
     EXPECT_EQ(GDALGetNoDataReplacementValue(
