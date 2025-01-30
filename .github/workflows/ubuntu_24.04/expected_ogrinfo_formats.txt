@@ -44,7 +44,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   DXF -vector- (rw+v): AutoCAD DXF (*.dxf)
   CAD -raster,vector- (rovs): AutoCAD Driver (*.dwg)
   FlatGeobuf -vector- (rw+v): FlatGeobuf (*.fgb)
-  Geoconcept -vector- (rw+v): Geoconcept (*.gxt, *.txt)
   GeoRSS -vector- (rw+v): GeoRSS
   VFK -vector- (ro): Czech Cadastral Exchange Data Format (*.vfk)
   PGDUMP -vector- (w+v): PostgreSQL SQL dump (*.sql)
