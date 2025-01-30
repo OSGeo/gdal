@@ -144,7 +144,8 @@ scanning the features of the tile(s).
 
 As an extension, OGR handles in reading and writing custom tiling
 schemes by using the *crs*, *tile_origin_upper_left_x*,
-*tile_origin_upper_left_y* and *tile_dimension_zoom_0* metadata items.
+*tile_origin_upper_left_y*, *tile_dimension_zoom_0*, *tile_matrix_width_zoom_0*
+and *tile_matrix_height_zoom_0* metadata items.
 For example, for the Finnish ETRS-TM35FIN (EPSG:3067) tiling scheme:
 
 .. code-block:: json
@@ -155,6 +156,21 @@ For example, for the Finnish ETRS-TM35FIN (EPSG:3067) tiling scheme:
      "tile_origin_upper_left_x":-548576.0,
      "tile_origin_upper_left_y":8388608.0,
      "tile_dimension_zoom_0":2097152.0,
+   }
+
+Or for a ``WorldCRS84Quad`` tiling scheme with 2 tiles in the horizontal
+direction at zoom level 0:
+
+.. code-block:: json
+
+   {
+     "...": "...",
+     "crs":"EPSG:4326",
+     "tile_origin_upper_left_x":-180.0,
+     "tile_origin_upper_left_y":90.0,
+     "tile_dimension_zoom_0":180.0,
+     "tile_matrix_width_zoom_0":2,
+     "tile_matrix_height_zoom_0":1
    }
 
 Opening options
@@ -351,7 +367,7 @@ The following dataset creation options are supported:
       metadata item, which is the center of :co:`BOUNDS` at minimum zoom level.
 
 -  .. co:: TILING_SCHEME
-      :choices: <crs\,tile_origin_upper_left_x\,tile_origin_upper_left_y\,tile_dimension_zoom_0>
+      :choices: <crs\,tile_origin_upper_left_x\,tile_origin_upper_left_y\,tile_dimension_zoom_0[\,tile_matrix_width_zoom_0\,tile_matrix_height_zoom_0]>
 
       Define a custom tiling scheme with a CRS
       (typically given as EPSG:XXXX), the coordinates of the upper-left
@@ -365,6 +381,9 @@ The following dataset creation options are supported:
       scheme, the 'crs', 'tile_origin_upper_left_x',
       'tile_origin_upper_left_y' and 'tile_dimension_zoom_0' entries are
       added to the metadata.json, and are honoured by the OGR MVT reader.
+      Starting with GDAL 3.10.2, 'tile_matrix_width_zoom_0' (resp.
+      'tile_matrix_height_zoom_0') can be specified to indicate the number of
+      tiles along the X (resp. Y) axis at zoom level 0.
 
 Layer configuration
 -------------------
