@@ -252,6 +252,9 @@ void RegisterOGRTAB()
     poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES_READ, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES_WRITE, "YES");
 
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "Features");
+
     poDriver->pfnOpen = OGRTABDriverOpen;
     poDriver->pfnIdentify = OGRTABDriverIdentify;
     poDriver->pfnCreate = OGRTABDriverCreate;

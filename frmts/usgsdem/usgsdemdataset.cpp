@@ -920,9 +920,7 @@ GDALDataset *USGSDEMDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->eAccess == GA_Update)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The USGSDEM driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("USGSDEM");
         return nullptr;
     }
 

@@ -1036,8 +1036,7 @@ GDALDataset *ECRGTOCDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poDS && poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "ECRGTOC driver does not support update mode");
+        ReportUpdateNotSupportedByDriver("ECRGTOC");
         delete poDS;
         return nullptr;
     }

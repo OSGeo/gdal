@@ -305,9 +305,7 @@ GDALDataset *MSGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->eAccess == GA_Update)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The MSG driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("MSG");
         return nullptr;
     }
 

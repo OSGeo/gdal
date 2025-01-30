@@ -3851,6 +3851,8 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                         oJCaps.Add("create");
                     if (CPLFetchBool(papszMD, GDAL_DCAP_CREATECOPY, false))
                         oJCaps.Add("create_copy");
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_UPDATE, false))
+                        oJCaps.Add("update");
                     if (CPLFetchBool(papszMD, GDAL_DCAP_VIRTUALIO, false))
                         oJCaps.Add("virtual_io");
                     oJDriver.Add("capabilities", oJCaps);
@@ -3880,7 +3882,8 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             }
 
             printf(/*ok*/
-                   "Supported Formats: (ro:read-only, rw:read-write, +:update, "
+                   "Supported Formats: (ro:read-only, rw:read-write, "
+                   "+:write from scratch, u:update, "
                    "v:virtual-I/O s:subdatasets)\n");
             for (int iDr = 0; iDr < GDALGetDriverCount(); iDr++)
             {
@@ -3912,6 +3915,10 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                     pszWFlag = "w";
                 else
                     pszWFlag = "o";
+
+                const char *pszUpdate = "";
+                if (CPLFetchBool(papszMD, GDAL_DCAP_UPDATE, false))
+                    pszUpdate = "u";
 
                 if (CPLFetchBool(papszMD, GDAL_DCAP_VIRTUALIO, false))
                     pszVirtualIO = "v";
@@ -3966,10 +3973,11 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                         osExtensions += ')';
                 }
 
-                printf("  %s -%s- (%s%s%s%s): %s%s\n", /*ok*/
+                printf("  %s -%s- (%s%s%s%s%s): %s%s\n", /*ok*/
                        GDALGetDriverShortName(hDriver), osKind.c_str(),
-                       pszRFlag, pszWFlag, pszVirtualIO, pszSubdatasets,
-                       GDALGetDriverLongName(hDriver), osExtensions.c_str());
+                       pszRFlag, pszWFlag, pszUpdate, pszVirtualIO,
+                       pszSubdatasets, GDALGetDriverLongName(hDriver),
+                       osExtensions.c_str());
             }
 
             return 0;
@@ -4047,6 +4055,8 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 printf(/*ok*/ "  Supports: CreateCopy() - Create dataset by "
                               "copying "
                               "another.\n");
+            if (CPLFetchBool(papszMD, GDAL_DCAP_UPDATE, false))
+                printf("  Supports: Update\n"); /*ok*/
             if (CPLFetchBool(papszMD, GDAL_DCAP_VIRTUALIO, false))
                 printf("  Supports: Virtual IO - eg. /vsimem/\n"); /*ok*/
             if (CSLFetchNameValue(papszMD, GDAL_DMD_CREATIONDATATYPES))
@@ -4096,6 +4106,9 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 printf("  Supported SQL dialects: %s\n", /*ok*/
                        CSLFetchNameValue(papszMD,
                                          GDAL_DMD_SUPPORTED_SQL_DIALECTS));
+            if (CSLFetchNameValue(papszMD, GDAL_DMD_UPDATE_ITEMS))
+                printf("  Supported items for update: %s\n", /*ok*/
+                       CSLFetchNameValue(papszMD, GDAL_DMD_UPDATE_ITEMS));
 
             for (const char *key :
                  {GDAL_DMD_CREATIONOPTIONLIST,

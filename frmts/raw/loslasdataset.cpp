@@ -180,9 +180,7 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The LOSLAS driver does not support update access to existing"
-                 " datasets.");
+        ReportUpdateNotSupportedByDriver("LOSLAS");
         return nullptr;
     }
 

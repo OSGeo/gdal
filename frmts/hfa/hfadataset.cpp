@@ -5233,6 +5233,12 @@ void GDALRegister_HFA()
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS NoData "
+                              "RasterValues "
+                              "DatasetMetadata BandMetadata");
+
     poDriver->pfnOpen = HFADataset::Open;
     poDriver->pfnCreate = HFADataset::Create;
     poDriver->pfnCreateCopy = HFADataset::CreateCopy;
