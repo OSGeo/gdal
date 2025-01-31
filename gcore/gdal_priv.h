@@ -1181,20 +1181,25 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 };
 
 //! @cond Doxygen_Suppress
-struct CPL_DLL GDALDatasetUniquePtrDeleter{
-    void operator()(GDALDataset *poDataset) const {GDALClose(poDataset);
-}
-}
-;
+struct CPL_DLL GDALDatasetUniquePtrDeleter
+{
+    void operator()(GDALDataset *poDataset) const
+    {
+        GDALClose(poDataset);
+    }
+};
 
 //! @endcond
 
 //! @cond Doxygen_Suppress
-struct CPL_DLL GDALDatasetUniquePtrReleaser{void operator()(
-    GDALDataset *poDataset) const {if (poDataset) poDataset->Release();
-}
-}
-;
+struct CPL_DLL GDALDatasetUniquePtrReleaser
+{
+    void operator()(GDALDataset *poDataset) const
+    {
+        if (poDataset)
+            poDataset->Release();
+    }
+};
 
 //! @endcond
 

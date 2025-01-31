@@ -489,8 +489,8 @@ template <> struct sGDALCopyWord<double, std::uint64_t>
         {
             nValueOut = 0;
         }
-        else if (dfValueIn > static_cast<double>(
-                                 cpl::CPLNumericLimits<uint64_t>::max()))
+        else if (dfValueIn >
+                 static_cast<double>(cpl::CPLNumericLimits<uint64_t>::max()))
         {
             nValueOut = cpl::CPLNumericLimits<uint64_t>::max();
         }
@@ -741,13 +741,13 @@ template <> struct sGDALCopyWord<double, std::int64_t>
         {
             nValueOut = 0;
         }
-        else if (dfValueIn >=
-                 static_cast<double>(cpl::CPLNumericLimits<std::int64_t>::max()))
+        else if (dfValueIn >= static_cast<double>(
+                                  cpl::CPLNumericLimits<std::int64_t>::max()))
         {
             nValueOut = cpl::CPLNumericLimits<std::int64_t>::max();
         }
-        else if (dfValueIn <=
-                 static_cast<double>(cpl::CPLNumericLimits<std::int64_t>::min()))
+        else if (dfValueIn <= static_cast<double>(
+                                  cpl::CPLNumericLimits<std::int64_t>::min()))
         {
             nValueOut = cpl::CPLNumericLimits<std::int64_t>::min();
         }

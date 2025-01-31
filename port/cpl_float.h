@@ -606,6 +606,7 @@ template <> struct CPLNumericLimits<CPLFloat16>
     static constexpr bool has_quiet_NaN = true;
     static constexpr bool has_signaling_NaN = true;
     static constexpr bool has_denorm = true;
+    static constexpr bool is_iec559 = true;
 
     static constexpr int digits = 11;
     static constexpr int digits10 = 3;
@@ -646,6 +647,12 @@ template <> struct CPLNumericLimits<CPLFloat16>
     {
         return CPLFloat16(CPLFloat16::make_from_bits_and_value{}, 0x7e00,
                           std::numeric_limits<float>::quiet_NaN());
+    }
+
+    static constexpr CPLFloat16 signaling_NaN()
+    {
+        return CPLFloat16(CPLFloat16::make_from_bits_and_value{}, 0xfe00,
+                          std::numeric_limits<float>::signaling_NaN());
     }
 };
 
