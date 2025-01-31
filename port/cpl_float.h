@@ -454,6 +454,18 @@ struct CPLFloat16
         return isnan(float(x));
     }
 
+    friend bool isnormal(CPLFloat16 x)
+    {
+        using std::isnormal;
+        return isnormal(float(x));
+    }
+
+    friend bool signbit(CPLFloat16 x)
+    {
+        using std::signbit;
+        return signbit(float(x));
+    }
+
     friend CPLFloat16 abs(CPLFloat16 x)
     {
         using std::abs;
@@ -472,6 +484,12 @@ struct CPLFloat16
         return CPLFloat16(ceil(float(x)));
     }
 
+    friend CPLFloat16 copysign(CPLFloat16 x, CPLFloat16 y)
+    {
+        using std::copysign;
+        return CPLFloat16(copysign(float(x), float(y)));
+    }
+
     friend CPLFloat16 fabs(CPLFloat16 x)
     {
         using std::fabs;
@@ -482,18 +500,6 @@ struct CPLFloat16
     {
         using std::floor;
         return CPLFloat16(floor(float(x)));
-    }
-
-    friend CPLFloat16 round(CPLFloat16 x)
-    {
-        using std::round;
-        return CPLFloat16(round(float(x)));
-    }
-
-    friend CPLFloat16 sqrt(CPLFloat16 x)
-    {
-        using std::sqrt;
-        return CPLFloat16(sqrt(float(x)));
     }
 
     friend CPLFloat16 fmax(CPLFloat16 x, CPLFloat16 y)
@@ -526,18 +532,35 @@ struct CPLFloat16
         return CPLFloat16(min(float(x), float(y)));
     }
 
+    // Adapted from the LLVM Project, under the Apache License v2.0
     friend CPLFloat16 nextafter(CPLFloat16 x, CPLFloat16 y)
     {
-        using std::nextafter;
-        float deltaf = nextafter(float(x), float(y)) - float(x);
-        CPLFloat16 nextx = x;
-        using std::isfinite;
-        while (isfinite(nextx) && nextx == x)
+        using std::isnan;
+        if (isnan(x))
+            return x;
+        if (isnan(y))
+            return y;
+        if (x == y)
+            return y;
+
+        std::uint16_t xbits;
+        std::memcpy(&xbits, &x.rValue, 2);
+        if (x != CPLFloat16(0))
         {
-            nextx = x + CPLFloat16(deltaf);
-            deltaf *= 2;
+            if ((x < y) == (x > 0))
+                ++xbits;
+            else
+                --xbits;
         }
-        return nextx;
+        else
+        {
+            using std::signbit;
+            xbits = (signbit(y) << 15) | 0x0001;
+        }
+
+        std::memcpy(&x.rValue, &xbits, 2);
+
+        return x;
     }
 
     friend CPLFloat16 pow(CPLFloat16 x, CPLFloat16 y)
@@ -550,6 +573,18 @@ struct CPLFloat16
     {
         using std::pow;
         return CPLFloat16(pow(float(x), n));
+    }
+
+    friend CPLFloat16 round(CPLFloat16 x)
+    {
+        using std::round;
+        return CPLFloat16(round(float(x)));
+    }
+
+    friend CPLFloat16 sqrt(CPLFloat16 x)
+    {
+        using std::sqrt;
+        return CPLFloat16(sqrt(float(x)));
     }
 };
 
