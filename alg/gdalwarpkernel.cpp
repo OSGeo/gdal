@@ -4145,9 +4145,9 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
                 else
                     padfWeightsXShifted[i] = padfCst[(i + 3) % 3] / (dfX * dfX);
 #if DEBUG_VERBOSE
-                // TODO(schwehr): AlmostEqual.
-                // CPLAssert(fabs(padfWeightsX[i-poWK->nFiltInitX] -
-                //               GWKLanczosSinc(dfX, 3.0)) < 1e-10);
+                    // TODO(schwehr): AlmostEqual.
+                    // CPLAssert(fabs(padfWeightsX[i-poWK->nFiltInitX] -
+                    //               GWKLanczosSinc(dfX, 3.0)) < 1e-10);
 #endif
             }
 
@@ -4262,9 +4262,9 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
                 else
                     padfWeightsYShifted[j] = padfCst[(j + 3) % 3] / (dfY * dfY);
 #if DEBUG_VERBOSE
-                // TODO(schwehr): AlmostEqual.
-                // CPLAssert(fabs(padfWeightsYShifted[j] -
-                //               GWKLanczosSinc(dfY, 3.0)) < 1e-10);
+                    // TODO(schwehr): AlmostEqual.
+                    // CPLAssert(fabs(padfWeightsYShifted[j] -
+                    //               GWKLanczosSinc(dfY, 3.0)) < 1e-10);
 #endif
             }
 

@@ -135,7 +135,7 @@ struct CPLFloat16
         return static_cast<T>(rValue);
     }
 
-#else  // #ifdef HAVE__FLOAT16
+#else  // #ifndef HAVE__FLOAT16
 
     // How we represent a `CPLFloat16` internally
     using repr = std::uint16_t;
@@ -544,7 +544,6 @@ struct CPLFloat16
     // Adapted from the LLVM Project, under the Apache License v2.0
     friend CPLFloat16 nextafter(CPLFloat16 x, CPLFloat16 y)
     {
-        using std::isnan;
         if (isnan(x))
             return x;
         if (isnan(y))
@@ -552,24 +551,24 @@ struct CPLFloat16
         if (x == y)
             return y;
 
-        std::uint16_t xbits;
-        std::memcpy(&xbits, &x.rValue, 2);
+        std::uint16_t bits;
         if (x != CPLFloat16(0))
         {
-            if ((x < y) == (x > 0))
-                ++xbits;
+            std::memcpy(&bits, &x.rValue, 2);
+            if ((x < y) == (x > CPLFloat16(0)))
+                ++bits;
             else
-                --xbits;
+                --bits;
         }
         else
         {
-            using std::signbit;
-            xbits = (signbit(y) << 15) | 0x0001;
+            bits = (signbit(y) << 15) | 0x0001;
         }
 
-        std::memcpy(&x.rValue, &xbits, 2);
+        CPLFloat16 r;
+        std::memcpy(&r.rValue, &bits, 2);
 
-        return x;
+        return r;
     }
 
     friend CPLFloat16 pow(CPLFloat16 x, CPLFloat16 y)

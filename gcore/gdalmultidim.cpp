@@ -13946,8 +13946,8 @@ GDALMDArrayRegularlySpaced::GDALMDArrayRegularlySpaced(
     double dfIncrement, double dfOffsetInIncrement)
     : GDALAbstractMDArray(osParentName, osName),
       GDALMDArray(osParentName, osName), m_dfStart(dfStart),
-      m_dfIncrement(dfIncrement), m_dfOffsetInIncrement(dfOffsetInIncrement),
-      m_dims{poDim}
+      m_dfIncrement(dfIncrement),
+      m_dfOffsetInIncrement(dfOffsetInIncrement), m_dims{poDim}
 {
 }
 

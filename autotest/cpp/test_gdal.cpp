@@ -284,27 +284,33 @@ TEST_F(test_gdal, GDALDataTypeUnion_special_cases)
               GDT_Float32);
     EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float32, -99999.9876, false),
               GDT_Float64);
-    EXPECT_EQ(GDALDataTypeUnionWithValue(
-                  GDT_Float32, std::numeric_limits<double>::quiet_NaN(), false),
-              GDT_Float32);
-    EXPECT_EQ(GDALDataTypeUnionWithValue(
-                  GDT_Float32, -std::numeric_limits<double>::infinity(), false),
-              GDT_Float32);
-    EXPECT_EQ(GDALDataTypeUnionWithValue(
-                  GDT_Float32, -std::numeric_limits<double>::infinity(), false),
-              GDT_Float32);
+    EXPECT_EQ(
+        GDALDataTypeUnionWithValue(
+            GDT_Float32, cpl::CPLNumericLimits<double>::quiet_NaN(), false),
+        GDT_Float32);
+    EXPECT_EQ(
+        GDALDataTypeUnionWithValue(
+            GDT_Float32, -cpl::CPLNumericLimits<double>::infinity(), false),
+        GDT_Float32);
+    EXPECT_EQ(
+        GDALDataTypeUnionWithValue(
+            GDT_Float32, -cpl::CPLNumericLimits<double>::infinity(), false),
+        GDT_Float32);
 
     EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float64, -99999.9876, false),
               GDT_Float64);
-    EXPECT_EQ(GDALDataTypeUnionWithValue(
-                  GDT_Float64, std::numeric_limits<double>::quiet_NaN(), false),
-              GDT_Float64);
-    EXPECT_EQ(GDALDataTypeUnionWithValue(
-                  GDT_Float64, -std::numeric_limits<double>::infinity(), false),
-              GDT_Float64);
-    EXPECT_EQ(GDALDataTypeUnionWithValue(
-                  GDT_Float64, -std::numeric_limits<double>::infinity(), false),
-              GDT_Float64);
+    EXPECT_EQ(
+        GDALDataTypeUnionWithValue(
+            GDT_Float64, cpl::CPLNumericLimits<double>::quiet_NaN(), false),
+        GDT_Float64);
+    EXPECT_EQ(
+        GDALDataTypeUnionWithValue(
+            GDT_Float64, -cpl::CPLNumericLimits<double>::infinity(), false),
+        GDT_Float64);
+    EXPECT_EQ(
+        GDALDataTypeUnionWithValue(
+            GDT_Float64, -cpl::CPLNumericLimits<double>::infinity(), false),
+        GDT_Float64);
 
     EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Unknown, 0, false), GDT_Byte);
 }
@@ -431,17 +437,17 @@ TEST_F(test_gdal, GDALAdjustValueToDataType)
                                           &bRounded) == 65504 &&
                 bClamped && !bRounded);
     EXPECT_TRUE(GDALAdjustValueToDataType(
-                    GDT_Float16, std::numeric_limits<float>::infinity(),
+                    GDT_Float16, cpl::CPLNumericLimits<float>::infinity(),
                     &bClamped,
-                    &bRounded) == std::numeric_limits<float>::infinity() &&
+                    &bRounded) == cpl::CPLNumericLimits<float>::infinity() &&
                 !bClamped && !bRounded);
     EXPECT_TRUE(GDALAdjustValueToDataType(
-                    GDT_Float16, -std::numeric_limits<float>::infinity(),
+                    GDT_Float16, -cpl::CPLNumericLimits<float>::infinity(),
                     &bClamped,
-                    &bRounded) == -std::numeric_limits<float>::infinity() &&
+                    &bRounded) == -cpl::CPLNumericLimits<float>::infinity() &&
                 !bClamped && !bRounded);
     {
-        double dfNan = std::numeric_limits<double>::quiet_NaN();
+        double dfNan = cpl::CPLNumericLimits<double>::quiet_NaN();
         double dfGot =
             GDALAdjustValueToDataType(GDT_Float16, dfNan, &bClamped, &bRounded);
         EXPECT_TRUE(memcmp(&dfNan, &dfGot, sizeof(double)) == 0 && !bClamped &&
@@ -460,24 +466,24 @@ TEST_F(test_gdal, GDALAdjustValueToDataType)
         !bClamped && !bRounded);
     EXPECT_TRUE(
         GDALAdjustValueToDataType(GDT_Float32, -1e300, &bClamped, &bRounded) ==
-            -std::numeric_limits<float>::max() &&
+            -cpl::CPLNumericLimits<float>::max() &&
         bClamped && !bRounded);
     EXPECT_TRUE(
         GDALAdjustValueToDataType(GDT_Float32, 1e300, &bClamped, &bRounded) ==
-            std::numeric_limits<float>::max() &&
+            cpl::CPLNumericLimits<float>::max() &&
         bClamped && !bRounded);
     EXPECT_TRUE(GDALAdjustValueToDataType(
-                    GDT_Float32, std::numeric_limits<float>::infinity(),
+                    GDT_Float32, cpl::CPLNumericLimits<float>::infinity(),
                     &bClamped,
-                    &bRounded) == std::numeric_limits<float>::infinity() &&
+                    &bRounded) == cpl::CPLNumericLimits<float>::infinity() &&
                 !bClamped && !bRounded);
     EXPECT_TRUE(GDALAdjustValueToDataType(
-                    GDT_Float32, -std::numeric_limits<float>::infinity(),
+                    GDT_Float32, -cpl::CPLNumericLimits<float>::infinity(),
                     &bClamped,
-                    &bRounded) == -std::numeric_limits<float>::infinity() &&
+                    &bRounded) == -cpl::CPLNumericLimits<float>::infinity() &&
                 !bClamped && !bRounded);
     {
-        double dfNan = std::numeric_limits<double>::quiet_NaN();
+        double dfNan = cpl::CPLNumericLimits<double>::quiet_NaN();
         double dfGot =
             GDALAdjustValueToDataType(GDT_Float32, dfNan, &bClamped, &bRounded);
         EXPECT_TRUE(memcmp(&dfNan, &dfGot, sizeof(double)) == 0 && !bClamped &&
@@ -497,17 +503,17 @@ TEST_F(test_gdal, GDALAdjustValueToDataType)
                                           &bRounded) == 1e40 &&
                 !bClamped && !bRounded);
     EXPECT_TRUE(GDALAdjustValueToDataType(
-                    GDT_Float64, std::numeric_limits<float>::infinity(),
+                    GDT_Float64, cpl::CPLNumericLimits<float>::infinity(),
                     &bClamped,
-                    &bRounded) == std::numeric_limits<float>::infinity() &&
+                    &bRounded) == cpl::CPLNumericLimits<float>::infinity() &&
                 !bClamped && !bRounded);
     EXPECT_TRUE(GDALAdjustValueToDataType(
-                    GDT_Float64, -std::numeric_limits<float>::infinity(),
+                    GDT_Float64, -cpl::CPLNumericLimits<float>::infinity(),
                     &bClamped,
-                    &bRounded) == -std::numeric_limits<float>::infinity() &&
+                    &bRounded) == -cpl::CPLNumericLimits<float>::infinity() &&
                 !bClamped && !bRounded);
     {
-        double dfNan = std::numeric_limits<double>::quiet_NaN();
+        double dfNan = cpl::CPLNumericLimits<double>::quiet_NaN();
         double dfGot =
             GDALAdjustValueToDataType(GDT_Float64, dfNan, &bClamped, &bRounded);
         EXPECT_TRUE(memcmp(&dfNan, &dfGot, sizeof(double)) == 0 && !bClamped &&
@@ -745,44 +751,44 @@ TEST_F(test_gdal, ARE_REAL_EQUAL)
     EXPECT_TRUE(!ARE_REAL_EQUAL(0.1, 0.0));
     EXPECT_TRUE(ARE_REAL_EQUAL(1.0, 1.0));
     EXPECT_TRUE(!ARE_REAL_EQUAL(1.0, 0.99));
-    EXPECT_TRUE(ARE_REAL_EQUAL(-std::numeric_limits<double>::min(),
-                               -std::numeric_limits<double>::min()));
-    EXPECT_TRUE(ARE_REAL_EQUAL(std::numeric_limits<double>::min(),
-                               std::numeric_limits<double>::min()));
-    EXPECT_TRUE(!ARE_REAL_EQUAL(std::numeric_limits<double>::min(), 0.0));
-    EXPECT_TRUE(ARE_REAL_EQUAL(-std::numeric_limits<double>::max(),
-                               -std::numeric_limits<double>::max()));
-    EXPECT_TRUE(ARE_REAL_EQUAL(std::numeric_limits<double>::max(),
-                               std::numeric_limits<double>::max()));
-    EXPECT_TRUE(ARE_REAL_EQUAL(-std::numeric_limits<double>::infinity(),
-                               -std::numeric_limits<double>::infinity()));
-    EXPECT_TRUE(ARE_REAL_EQUAL(std::numeric_limits<double>::infinity(),
-                               std::numeric_limits<double>::infinity()));
-    EXPECT_TRUE(!ARE_REAL_EQUAL(std::numeric_limits<double>::infinity(),
-                                std::numeric_limits<double>::max()));
-    EXPECT_TRUE(ARE_REAL_EQUAL(-std::numeric_limits<double>::min(),
-                               -std::numeric_limits<double>::min()));
+    EXPECT_TRUE(ARE_REAL_EQUAL(-cpl::CPLNumericLimits<double>::min(),
+                               -cpl::CPLNumericLimits<double>::min()));
+    EXPECT_TRUE(ARE_REAL_EQUAL(cpl::CPLNumericLimits<double>::min(),
+                               cpl::CPLNumericLimits<double>::min()));
+    EXPECT_TRUE(!ARE_REAL_EQUAL(cpl::CPLNumericLimits<double>::min(), 0.0));
+    EXPECT_TRUE(ARE_REAL_EQUAL(-cpl::CPLNumericLimits<double>::max(),
+                               -cpl::CPLNumericLimits<double>::max()));
+    EXPECT_TRUE(ARE_REAL_EQUAL(cpl::CPLNumericLimits<double>::max(),
+                               cpl::CPLNumericLimits<double>::max()));
+    EXPECT_TRUE(ARE_REAL_EQUAL(-cpl::CPLNumericLimits<double>::infinity(),
+                               -cpl::CPLNumericLimits<double>::infinity()));
+    EXPECT_TRUE(ARE_REAL_EQUAL(cpl::CPLNumericLimits<double>::infinity(),
+                               cpl::CPLNumericLimits<double>::infinity()));
+    EXPECT_TRUE(!ARE_REAL_EQUAL(cpl::CPLNumericLimits<double>::infinity(),
+                                cpl::CPLNumericLimits<double>::max()));
+    EXPECT_TRUE(ARE_REAL_EQUAL(-cpl::CPLNumericLimits<double>::min(),
+                               -cpl::CPLNumericLimits<double>::min()));
 
     EXPECT_TRUE(ARE_REAL_EQUAL(0.0f, 0.0f));
     EXPECT_TRUE(!ARE_REAL_EQUAL(0.0f, 0.1f));
     EXPECT_TRUE(!ARE_REAL_EQUAL(0.1f, 0.0f));
     EXPECT_TRUE(ARE_REAL_EQUAL(1.0f, 1.0f));
     EXPECT_TRUE(!ARE_REAL_EQUAL(1.0f, 0.99f));
-    EXPECT_TRUE(ARE_REAL_EQUAL(-std::numeric_limits<float>::min(),
-                               -std::numeric_limits<float>::min()));
-    EXPECT_TRUE(ARE_REAL_EQUAL(std::numeric_limits<float>::min(),
-                               std::numeric_limits<float>::min()));
-    EXPECT_TRUE(!ARE_REAL_EQUAL(std::numeric_limits<float>::min(), 0.0f));
-    EXPECT_TRUE(ARE_REAL_EQUAL(-std::numeric_limits<float>::max(),
-                               -std::numeric_limits<float>::max()));
-    EXPECT_TRUE(ARE_REAL_EQUAL(std::numeric_limits<float>::max(),
-                               std::numeric_limits<float>::max()));
-    EXPECT_TRUE(ARE_REAL_EQUAL(-std::numeric_limits<float>::infinity(),
-                               -std::numeric_limits<float>::infinity()));
-    EXPECT_TRUE(ARE_REAL_EQUAL(std::numeric_limits<float>::infinity(),
-                               std::numeric_limits<float>::infinity()));
-    EXPECT_TRUE(!ARE_REAL_EQUAL(std::numeric_limits<float>::infinity(),
-                                std::numeric_limits<float>::max()));
+    EXPECT_TRUE(ARE_REAL_EQUAL(-cpl::CPLNumericLimits<float>::min(),
+                               -cpl::CPLNumericLimits<float>::min()));
+    EXPECT_TRUE(ARE_REAL_EQUAL(cpl::CPLNumericLimits<float>::min(),
+                               cpl::CPLNumericLimits<float>::min()));
+    EXPECT_TRUE(!ARE_REAL_EQUAL(cpl::CPLNumericLimits<float>::min(), 0.0f));
+    EXPECT_TRUE(ARE_REAL_EQUAL(-cpl::CPLNumericLimits<float>::max(),
+                               -cpl::CPLNumericLimits<float>::max()));
+    EXPECT_TRUE(ARE_REAL_EQUAL(cpl::CPLNumericLimits<float>::max(),
+                               cpl::CPLNumericLimits<float>::max()));
+    EXPECT_TRUE(ARE_REAL_EQUAL(-cpl::CPLNumericLimits<float>::infinity(),
+                               -cpl::CPLNumericLimits<float>::infinity()));
+    EXPECT_TRUE(ARE_REAL_EQUAL(cpl::CPLNumericLimits<float>::infinity(),
+                               cpl::CPLNumericLimits<float>::infinity()));
+    EXPECT_TRUE(!ARE_REAL_EQUAL(cpl::CPLNumericLimits<float>::infinity(),
+                                cpl::CPLNumericLimits<float>::max()));
 }
 
 // Test GDALIsValueInRange()
@@ -793,7 +799,7 @@ TEST_F(test_gdal, GDALIsValueInRange)
     EXPECT_TRUE(!GDALIsValueInRange<GByte>(-1));
     EXPECT_TRUE(!GDALIsValueInRange<GByte>(256));
     EXPECT_TRUE(
-        !GDALIsValueInRange<GByte>(std::numeric_limits<double>::quiet_NaN()));
+        !GDALIsValueInRange<GByte>(cpl::CPLNumericLimits<double>::quiet_NaN()));
 
     EXPECT_TRUE(GDALIsValueInRange<GInt8>(-128));
     EXPECT_TRUE(GDALIsValueInRange<GInt8>(127));
@@ -816,27 +822,30 @@ TEST_F(test_gdal, GDALIsValueInRange)
     EXPECT_TRUE(!GDALIsValueInRange<uint64_t>(18446744073709551616.0));
     EXPECT_TRUE(!GDALIsValueInRange<uint64_t>(-0.5));
 
-    EXPECT_TRUE(GDALIsValueInRange<float>(-std::numeric_limits<float>::max()));
-    EXPECT_TRUE(GDALIsValueInRange<float>(std::numeric_limits<float>::max()));
     EXPECT_TRUE(
-        GDALIsValueInRange<float>(-std::numeric_limits<float>::infinity()));
+        GDALIsValueInRange<float>(-cpl::CPLNumericLimits<float>::max()));
+    EXPECT_TRUE(GDALIsValueInRange<float>(cpl::CPLNumericLimits<float>::max()));
     EXPECT_TRUE(
-        GDALIsValueInRange<float>(std::numeric_limits<float>::infinity()));
+        GDALIsValueInRange<float>(-cpl::CPLNumericLimits<float>::infinity()));
     EXPECT_TRUE(
-        !GDALIsValueInRange<float>(std::numeric_limits<double>::quiet_NaN()));
+        GDALIsValueInRange<float>(cpl::CPLNumericLimits<float>::infinity()));
     EXPECT_TRUE(
-        !GDALIsValueInRange<float>(-std::numeric_limits<double>::max()));
-    EXPECT_TRUE(!GDALIsValueInRange<float>(std::numeric_limits<double>::max()));
+        !GDALIsValueInRange<float>(cpl::CPLNumericLimits<double>::quiet_NaN()));
+    EXPECT_TRUE(
+        !GDALIsValueInRange<float>(-cpl::CPLNumericLimits<double>::max()));
+    EXPECT_TRUE(
+        !GDALIsValueInRange<float>(cpl::CPLNumericLimits<double>::max()));
 
     EXPECT_TRUE(
-        GDALIsValueInRange<double>(-std::numeric_limits<double>::infinity()));
+        GDALIsValueInRange<double>(-cpl::CPLNumericLimits<double>::infinity()));
     EXPECT_TRUE(
-        GDALIsValueInRange<double>(std::numeric_limits<double>::infinity()));
+        GDALIsValueInRange<double>(cpl::CPLNumericLimits<double>::infinity()));
     EXPECT_TRUE(
-        GDALIsValueInRange<double>(-std::numeric_limits<double>::max()));
-    EXPECT_TRUE(GDALIsValueInRange<double>(std::numeric_limits<double>::max()));
+        GDALIsValueInRange<double>(-cpl::CPLNumericLimits<double>::max()));
     EXPECT_TRUE(
-        !GDALIsValueInRange<double>(std::numeric_limits<double>::quiet_NaN()));
+        GDALIsValueInRange<double>(cpl::CPLNumericLimits<double>::max()));
+    EXPECT_TRUE(!GDALIsValueInRange<double>(
+        cpl::CPLNumericLimits<double>::quiet_NaN()));
 }
 
 #ifdef _MSC_VER
@@ -856,7 +865,7 @@ TEST_F(test_gdal, GDALIsValueExactAs)
     EXPECT_TRUE(!GDALIsValueExactAs<GByte>(255.5));
     EXPECT_TRUE(!GDALIsValueExactAs<GByte>(256));
     EXPECT_TRUE(
-        !GDALIsValueExactAs<GByte>(std::numeric_limits<double>::quiet_NaN()));
+        !GDALIsValueExactAs<GByte>(cpl::CPLNumericLimits<double>::quiet_NaN()));
 
     // -(1 << 63)
     EXPECT_TRUE(GDALIsValueExactAs<int64_t>(-9223372036854775808.0));
@@ -874,27 +883,30 @@ TEST_F(test_gdal, GDALIsValueExactAs)
     EXPECT_TRUE(!GDALIsValueExactAs<uint64_t>(18446744073709551616.0));
     EXPECT_TRUE(!GDALIsValueExactAs<uint64_t>(-0.5));
 
-    EXPECT_TRUE(GDALIsValueExactAs<float>(-std::numeric_limits<float>::max()));
-    EXPECT_TRUE(GDALIsValueExactAs<float>(std::numeric_limits<float>::max()));
     EXPECT_TRUE(
-        GDALIsValueExactAs<float>(-std::numeric_limits<float>::infinity()));
+        GDALIsValueExactAs<float>(-cpl::CPLNumericLimits<float>::max()));
+    EXPECT_TRUE(GDALIsValueExactAs<float>(cpl::CPLNumericLimits<float>::max()));
     EXPECT_TRUE(
-        GDALIsValueExactAs<float>(std::numeric_limits<float>::infinity()));
+        GDALIsValueExactAs<float>(-cpl::CPLNumericLimits<float>::infinity()));
     EXPECT_TRUE(
-        GDALIsValueExactAs<float>(std::numeric_limits<double>::quiet_NaN()));
+        GDALIsValueExactAs<float>(cpl::CPLNumericLimits<float>::infinity()));
     EXPECT_TRUE(
-        !GDALIsValueExactAs<float>(-std::numeric_limits<double>::max()));
-    EXPECT_TRUE(!GDALIsValueExactAs<float>(std::numeric_limits<double>::max()));
+        GDALIsValueExactAs<float>(cpl::CPLNumericLimits<double>::quiet_NaN()));
+    EXPECT_TRUE(
+        !GDALIsValueExactAs<float>(-cpl::CPLNumericLimits<double>::max()));
+    EXPECT_TRUE(
+        !GDALIsValueExactAs<float>(cpl::CPLNumericLimits<double>::max()));
 
     EXPECT_TRUE(
-        GDALIsValueExactAs<double>(-std::numeric_limits<double>::infinity()));
+        GDALIsValueExactAs<double>(-cpl::CPLNumericLimits<double>::infinity()));
     EXPECT_TRUE(
-        GDALIsValueExactAs<double>(std::numeric_limits<double>::infinity()));
+        GDALIsValueExactAs<double>(cpl::CPLNumericLimits<double>::infinity()));
     EXPECT_TRUE(
-        GDALIsValueExactAs<double>(-std::numeric_limits<double>::max()));
-    EXPECT_TRUE(GDALIsValueExactAs<double>(std::numeric_limits<double>::max()));
+        GDALIsValueExactAs<double>(-cpl::CPLNumericLimits<double>::max()));
     EXPECT_TRUE(
-        GDALIsValueExactAs<double>(std::numeric_limits<double>::quiet_NaN()));
+        GDALIsValueExactAs<double>(cpl::CPLNumericLimits<double>::max()));
+    EXPECT_TRUE(
+        GDALIsValueExactAs<double>(cpl::CPLNumericLimits<double>::quiet_NaN()));
 }
 
 // Test GDALIsValueExactAs()
@@ -924,74 +936,74 @@ TEST_F(test_gdal, GDALIsValueExactAs_C_func)
     EXPECT_FALSE(GDALIsValueExactAs(32768, GDT_Int16));
     EXPECT_FALSE(GDALIsValueExactAs(0.5, GDT_Int16));
 
-    EXPECT_TRUE(GDALIsValueExactAs(std::numeric_limits<uint32_t>::lowest(),
+    EXPECT_TRUE(GDALIsValueExactAs(cpl::CPLNumericLimits<uint32_t>::lowest(),
                                    GDT_UInt32));
     EXPECT_TRUE(
-        GDALIsValueExactAs(std::numeric_limits<uint32_t>::max(), GDT_UInt32));
+        GDALIsValueExactAs(cpl::CPLNumericLimits<uint32_t>::max(), GDT_UInt32));
     EXPECT_FALSE(GDALIsValueExactAs(
-        std::numeric_limits<uint32_t>::lowest() - 1.0, GDT_UInt32));
-    EXPECT_FALSE(GDALIsValueExactAs(std::numeric_limits<uint32_t>::max() + 1.0,
-                                    GDT_UInt32));
+        cpl::CPLNumericLimits<uint32_t>::lowest() - 1.0, GDT_UInt32));
+    EXPECT_FALSE(GDALIsValueExactAs(
+        cpl::CPLNumericLimits<uint32_t>::max() + 1.0, GDT_UInt32));
     EXPECT_FALSE(GDALIsValueExactAs(0.5, GDT_UInt32));
 
+    EXPECT_TRUE(GDALIsValueExactAs(cpl::CPLNumericLimits<int32_t>::lowest(),
+                                   GDT_Int32));
     EXPECT_TRUE(
-        GDALIsValueExactAs(std::numeric_limits<int32_t>::lowest(), GDT_Int32));
-    EXPECT_TRUE(
-        GDALIsValueExactAs(std::numeric_limits<int32_t>::max(), GDT_Int32));
+        GDALIsValueExactAs(cpl::CPLNumericLimits<int32_t>::max(), GDT_Int32));
     EXPECT_FALSE(GDALIsValueExactAs(
-        std::numeric_limits<int32_t>::lowest() - 1.0, GDT_Int32));
-    EXPECT_FALSE(GDALIsValueExactAs(std::numeric_limits<int32_t>::max() + 1.0,
+        cpl::CPLNumericLimits<int32_t>::lowest() - 1.0, GDT_Int32));
+    EXPECT_FALSE(GDALIsValueExactAs(cpl::CPLNumericLimits<int32_t>::max() + 1.0,
                                     GDT_Int32));
     EXPECT_FALSE(GDALIsValueExactAs(0.5, GDT_Int32));
 
     EXPECT_TRUE(GDALIsValueExactAs(
-        static_cast<double>(std::numeric_limits<uint64_t>::lowest()),
+        static_cast<double>(cpl::CPLNumericLimits<uint64_t>::lowest()),
         GDT_UInt64));
     // (1 << 64) - 2048
     EXPECT_TRUE(GDALIsValueExactAs(18446744073709549568.0, GDT_UInt64));
     EXPECT_FALSE(GDALIsValueExactAs(
-        static_cast<double>(std::numeric_limits<uint64_t>::lowest()) - 1.0,
+        static_cast<double>(cpl::CPLNumericLimits<uint64_t>::lowest()) - 1.0,
         GDT_UInt64));
     // (1 << 64)
     EXPECT_FALSE(GDALIsValueExactAs(18446744073709551616.0, GDT_UInt64));
     EXPECT_FALSE(GDALIsValueExactAs(0.5, GDT_UInt64));
 
     EXPECT_TRUE(GDALIsValueExactAs(
-        static_cast<double>(std::numeric_limits<int64_t>::lowest()),
+        static_cast<double>(cpl::CPLNumericLimits<int64_t>::lowest()),
         GDT_Int64));
     // (1 << 63) - 1024
     EXPECT_TRUE(GDALIsValueExactAs(9223372036854774784.0, GDT_Int64));
     EXPECT_FALSE(GDALIsValueExactAs(
-        static_cast<double>(std::numeric_limits<int64_t>::lowest()) - 2048.0,
+        static_cast<double>(cpl::CPLNumericLimits<int64_t>::lowest()) - 2048.0,
         GDT_Int64));
     // (1 << 63) - 512
     EXPECT_FALSE(GDALIsValueExactAs(9223372036854775296.0, GDT_Int64));
     EXPECT_FALSE(GDALIsValueExactAs(0.5, GDT_Int64));
 
     EXPECT_TRUE(
-        GDALIsValueExactAs(-std::numeric_limits<float>::max(), GDT_Float32));
+        GDALIsValueExactAs(-cpl::CPLNumericLimits<float>::max(), GDT_Float32));
     EXPECT_TRUE(
-        GDALIsValueExactAs(std::numeric_limits<float>::max(), GDT_Float32));
-    EXPECT_TRUE(GDALIsValueExactAs(-std::numeric_limits<float>::infinity(),
+        GDALIsValueExactAs(cpl::CPLNumericLimits<float>::max(), GDT_Float32));
+    EXPECT_TRUE(GDALIsValueExactAs(-cpl::CPLNumericLimits<float>::infinity(),
                                    GDT_Float32));
-    EXPECT_TRUE(GDALIsValueExactAs(std::numeric_limits<float>::infinity(),
+    EXPECT_TRUE(GDALIsValueExactAs(cpl::CPLNumericLimits<float>::infinity(),
                                    GDT_Float32));
-    EXPECT_TRUE(GDALIsValueExactAs(std::numeric_limits<double>::quiet_NaN(),
+    EXPECT_TRUE(GDALIsValueExactAs(cpl::CPLNumericLimits<double>::quiet_NaN(),
                                    GDT_Float32));
+    EXPECT_TRUE(!GDALIsValueExactAs(-cpl::CPLNumericLimits<double>::max(),
+                                    GDT_Float32));
     EXPECT_TRUE(
-        !GDALIsValueExactAs(-std::numeric_limits<double>::max(), GDT_Float32));
-    EXPECT_TRUE(
-        !GDALIsValueExactAs(std::numeric_limits<double>::max(), GDT_Float32));
+        !GDALIsValueExactAs(cpl::CPLNumericLimits<double>::max(), GDT_Float32));
 
-    EXPECT_TRUE(GDALIsValueExactAs(-std::numeric_limits<double>::infinity(),
+    EXPECT_TRUE(GDALIsValueExactAs(-cpl::CPLNumericLimits<double>::infinity(),
                                    GDT_Float64));
-    EXPECT_TRUE(GDALIsValueExactAs(std::numeric_limits<double>::infinity(),
+    EXPECT_TRUE(GDALIsValueExactAs(cpl::CPLNumericLimits<double>::infinity(),
                                    GDT_Float64));
     EXPECT_TRUE(
-        GDALIsValueExactAs(-std::numeric_limits<double>::max(), GDT_Float64));
+        GDALIsValueExactAs(-cpl::CPLNumericLimits<double>::max(), GDT_Float64));
     EXPECT_TRUE(
-        GDALIsValueExactAs(std::numeric_limits<double>::max(), GDT_Float64));
-    EXPECT_TRUE(GDALIsValueExactAs(std::numeric_limits<double>::quiet_NaN(),
+        GDALIsValueExactAs(cpl::CPLNumericLimits<double>::max(), GDT_Float64));
+    EXPECT_TRUE(GDALIsValueExactAs(cpl::CPLNumericLimits<double>::quiet_NaN(),
                                    GDT_Float64));
 
     EXPECT_TRUE(GDALIsValueExactAs(0, GDT_CInt16));
@@ -1665,8 +1677,8 @@ TEST_F(test_gdal, GDALExtendedDataType)
 
     // Another error case of ProcessPerChunk
     {
-        const auto M64 = std::numeric_limits<GUInt64>::max();
-        const auto Msize_t = std::numeric_limits<size_t>::max();
+        const auto M64 = cpl::CPLNumericLimits<GUInt64>::max();
+        const auto Msize_t = cpl::CPLNumericLimits<size_t>::max();
         myArray ar(GDT_UInt16, {M64, M64, M64}, {32, 256, 128});
 
         // Product of myCustomChunkSize[] > Msize_t
@@ -1757,7 +1769,7 @@ TEST_F(test_gdal, GDALExtendedDataType)
         }
     }
     {
-        const auto M = std::numeric_limits<GUInt64>::max();
+        const auto M = cpl::CPLNumericLimits<GUInt64>::max();
         myArray ar(GDT_UInt16, {M, M, M}, {M, M, M / 2});
         {
             auto cs = ar.GetProcessingChunkSize(0);
@@ -1773,15 +1785,15 @@ TEST_F(test_gdal, GDALExtendedDataType)
     }
 #if SIZEOF_VOIDP == 8
     {
-        const auto M = std::numeric_limits<GUInt64>::max();
+        const auto M = cpl::CPLNumericLimits<GUInt64>::max();
         myArray ar(GDT_UInt16, {M, M, M}, {M, M, M / 4});
         {
             auto cs =
-                ar.GetProcessingChunkSize(std::numeric_limits<size_t>::max());
+                ar.GetProcessingChunkSize(cpl::CPLNumericLimits<size_t>::max());
             EXPECT_EQ(cs.size(), 3U);
             EXPECT_EQ(cs[0], 1U);
             EXPECT_EQ(cs[1], 1U);
-            EXPECT_EQ(cs[2], (std::numeric_limits<size_t>::max() / 4) * 2);
+            EXPECT_EQ(cs[2], (cpl::CPLNumericLimits<size_t>::max() / 4) * 2);
         }
     }
 #endif
@@ -2975,7 +2987,7 @@ TEST_F(test_gdal, GDALBufferHasOnlyNoData)
     EXPECT_TRUE(!GDALBufferHasOnlyNoData(&float32val, 1e50, 1, 1, 1, 1, 32,
                                          GSF_FLOATING_POINT));
 
-    float float32nan = std::numeric_limits<float>::quiet_NaN();
+    float float32nan = cpl::CPLNumericLimits<float>::quiet_NaN();
     EXPECT_TRUE(GDALBufferHasOnlyNoData(&float32nan, float32nan, 1, 1, 1, 1, 32,
                                         GSF_FLOATING_POINT));
     EXPECT_TRUE(!GDALBufferHasOnlyNoData(&float32nan, 0.0, 1, 1, 1, 1, 32,
@@ -2987,7 +2999,7 @@ TEST_F(test_gdal, GDALBufferHasOnlyNoData)
     EXPECT_TRUE(!GDALBufferHasOnlyNoData(&float64val, 0.0, 1, 1, 1, 1, 64,
                                          GSF_FLOATING_POINT));
 
-    double float64nan = std::numeric_limits<double>::quiet_NaN();
+    double float64nan = cpl::CPLNumericLimits<double>::quiet_NaN();
     EXPECT_TRUE(GDALBufferHasOnlyNoData(&float64nan, float64nan, 1, 1, 1, 1, 64,
                                         GSF_FLOATING_POINT));
     EXPECT_TRUE(!GDALBufferHasOnlyNoData(&float64nan, 0.0, 1, 1, 1, 1, 64,
@@ -2999,173 +3011,181 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
 {
     // Test GDT_Byte
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Byte, std::numeric_limits<double>::lowest()),
-              0);
-    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Byte,
-                                            std::numeric_limits<double>::max()),
+                  GDT_Byte, cpl::CPLNumericLimits<double>::lowest()),
               0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Byte, std::numeric_limits<uint8_t>::lowest()),
-              std::numeric_limits<uint8_t>::lowest() + 1);
+                  GDT_Byte, cpl::CPLNumericLimits<double>::max()),
+              0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Byte, std::numeric_limits<uint8_t>::max()),
-              std::numeric_limits<uint8_t>::max() - 1);
+                  GDT_Byte, cpl::CPLNumericLimits<uint8_t>::lowest()),
+              cpl::CPLNumericLimits<uint8_t>::lowest() + 1);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Byte, cpl::CPLNumericLimits<uint8_t>::max()),
+              cpl::CPLNumericLimits<uint8_t>::max() - 1);
 
     // Test GDT_Int8
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Int8, std::numeric_limits<double>::lowest()),
-              0);
-    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Int8,
-                                            std::numeric_limits<double>::max()),
+                  GDT_Int8, cpl::CPLNumericLimits<double>::lowest()),
               0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Int8, std::numeric_limits<int8_t>::lowest()),
-              std::numeric_limits<int8_t>::lowest() + 1);
-    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Int8,
-                                            std::numeric_limits<int8_t>::max()),
-              std::numeric_limits<int8_t>::max() - 1);
+                  GDT_Int8, cpl::CPLNumericLimits<double>::max()),
+              0);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Int8, cpl::CPLNumericLimits<int8_t>::lowest()),
+              cpl::CPLNumericLimits<int8_t>::lowest() + 1);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Int8, cpl::CPLNumericLimits<int8_t>::max()),
+              cpl::CPLNumericLimits<int8_t>::max() - 1);
 
     // Test GDT_UInt16
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_UInt16, std::numeric_limits<double>::lowest()),
-              0);
-    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_UInt16,
-                                            std::numeric_limits<double>::max()),
+                  GDT_UInt16, cpl::CPLNumericLimits<double>::lowest()),
               0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_UInt16, std::numeric_limits<uint16_t>::lowest()),
-              std::numeric_limits<uint16_t>::lowest() + 1);
+                  GDT_UInt16, cpl::CPLNumericLimits<double>::max()),
+              0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_UInt16, std::numeric_limits<uint16_t>::max()),
-              std::numeric_limits<uint16_t>::max() - 1);
+                  GDT_UInt16, cpl::CPLNumericLimits<uint16_t>::lowest()),
+              cpl::CPLNumericLimits<uint16_t>::lowest() + 1);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_UInt16, cpl::CPLNumericLimits<uint16_t>::max()),
+              cpl::CPLNumericLimits<uint16_t>::max() - 1);
 
     // Test GDT_Int16
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Int16, std::numeric_limits<double>::lowest()),
-              0);
-    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Int16,
-                                            std::numeric_limits<double>::max()),
+                  GDT_Int16, cpl::CPLNumericLimits<double>::lowest()),
               0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Int16, std::numeric_limits<int16_t>::lowest()),
-              std::numeric_limits<int16_t>::lowest() + 1);
+                  GDT_Int16, cpl::CPLNumericLimits<double>::max()),
+              0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Int16, std::numeric_limits<int16_t>::max()),
-              std::numeric_limits<int16_t>::max() - 1);
+                  GDT_Int16, cpl::CPLNumericLimits<int16_t>::lowest()),
+              cpl::CPLNumericLimits<int16_t>::lowest() + 1);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Int16, cpl::CPLNumericLimits<int16_t>::max()),
+              cpl::CPLNumericLimits<int16_t>::max() - 1);
 
     // Test GDT_UInt32
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_UInt32, std::numeric_limits<double>::lowest()),
-              0);
-    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_UInt32,
-                                            std::numeric_limits<double>::max()),
+                  GDT_UInt32, cpl::CPLNumericLimits<double>::lowest()),
               0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_UInt32, std::numeric_limits<uint32_t>::lowest()),
-              std::numeric_limits<uint32_t>::lowest() + 1);
+                  GDT_UInt32, cpl::CPLNumericLimits<double>::max()),
+              0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_UInt32, std::numeric_limits<uint32_t>::max()),
-              std::numeric_limits<uint32_t>::max() - 1);
+                  GDT_UInt32, cpl::CPLNumericLimits<uint32_t>::lowest()),
+              cpl::CPLNumericLimits<uint32_t>::lowest() + 1);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_UInt32, cpl::CPLNumericLimits<uint32_t>::max()),
+              cpl::CPLNumericLimits<uint32_t>::max() - 1);
 
     // Test GDT_Int32
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Int32, std::numeric_limits<double>::lowest()),
-              0);
-    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Int32,
-                                            std::numeric_limits<double>::max()),
+                  GDT_Int32, cpl::CPLNumericLimits<double>::lowest()),
               0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Int32, std::numeric_limits<int32_t>::lowest()),
-              std::numeric_limits<int32_t>::lowest() + 1);
+                  GDT_Int32, cpl::CPLNumericLimits<double>::max()),
+              0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Int32, std::numeric_limits<int32_t>::max()),
-              std::numeric_limits<int32_t>::max() - 1);
+                  GDT_Int32, cpl::CPLNumericLimits<int32_t>::lowest()),
+              cpl::CPLNumericLimits<int32_t>::lowest() + 1);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Int32, cpl::CPLNumericLimits<int32_t>::max()),
+              cpl::CPLNumericLimits<int32_t>::max() - 1);
 
     // Test GDT_UInt64
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_UInt64, std::numeric_limits<double>::lowest()),
-              0);
-    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_UInt64,
-                                            std::numeric_limits<double>::max()),
+                  GDT_UInt64, cpl::CPLNumericLimits<double>::lowest()),
               0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_UInt64,
-                  static_cast<double>(std::numeric_limits<uint64_t>::lowest())),
-              static_cast<double>(std::numeric_limits<uint64_t>::lowest()) + 1);
+                  GDT_UInt64, cpl::CPLNumericLimits<double>::max()),
+              0);
+    EXPECT_EQ(
+        GDALGetNoDataReplacementValue(
+            GDT_UInt64,
+            static_cast<double>(cpl::CPLNumericLimits<uint64_t>::lowest())),
+        static_cast<double>(cpl::CPLNumericLimits<uint64_t>::lowest()) + 1);
     // uin64_t max is not representable in double so we expect the next value to be returned
     using std::nextafter;
     EXPECT_EQ(
         GDALGetNoDataReplacementValue(
             GDT_UInt64,
-            static_cast<double>(std::numeric_limits<uint64_t>::max())),
-        nextafter(static_cast<double>(std::numeric_limits<uint64_t>::max()),
+            static_cast<double>(cpl::CPLNumericLimits<uint64_t>::max())),
+        nextafter(static_cast<double>(cpl::CPLNumericLimits<uint64_t>::max()),
                   0) -
             1);
 
     // Test GDT_Int64
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Int64, std::numeric_limits<double>::lowest()),
+                  GDT_Int64, cpl::CPLNumericLimits<double>::lowest()),
               0);
-    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Int64,
-                                            std::numeric_limits<double>::max()),
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Int64, cpl::CPLNumericLimits<double>::max()),
               0);
     // in64_t max is not representable in double so we expect the next value to be returned
-    EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Int64,
-                  static_cast<double>(std::numeric_limits<int64_t>::lowest())),
-              static_cast<double>(std::numeric_limits<int64_t>::lowest()) + 1);
     EXPECT_EQ(
         GDALGetNoDataReplacementValue(
             GDT_Int64,
-            static_cast<double>(std::numeric_limits<int64_t>::max())),
-        nextafter(static_cast<double>(std::numeric_limits<int64_t>::max()), 0) -
+            static_cast<double>(cpl::CPLNumericLimits<int64_t>::lowest())),
+        static_cast<double>(cpl::CPLNumericLimits<int64_t>::lowest()) + 1);
+    EXPECT_EQ(
+        GDALGetNoDataReplacementValue(
+            GDT_Int64,
+            static_cast<double>(cpl::CPLNumericLimits<int64_t>::max())),
+        nextafter(static_cast<double>(cpl::CPLNumericLimits<int64_t>::max()),
+                  0) -
             1);
 
     // Test floating point types
 
+    // NOTE: Google Test's output for GFloat16 values is very wrong.
+    // It seems to round GFloat16 values to integers before outputting
+    // them. Do not trust the screen output when there is an error.
+    // However, the tests themselves are reliable.
+
     // out of range for float16
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Float16, std::numeric_limits<double>::lowest()),
-              0.0);
-    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Float16,
-                                            std::numeric_limits<double>::max()),
+                  GDT_Float16, cpl::CPLNumericLimits<double>::lowest()),
               0.0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Float16, std::numeric_limits<double>::infinity()),
+                  GDT_Float16, cpl::CPLNumericLimits<double>::max()),
               0.0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Float16, -std::numeric_limits<double>::infinity()),
+                  GDT_Float16, cpl::CPLNumericLimits<double>::infinity()),
+              0.0);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Float16, -cpl::CPLNumericLimits<double>::infinity()),
               0.0);
 
     // in range for float 16
     EXPECT_EQ(
-        static_cast<float>(GDALGetNoDataReplacementValue(GDT_Float16, -1.0)),
+        static_cast<GFloat16>(GDALGetNoDataReplacementValue(GDT_Float16, -1.0)),
         nextafter(GFloat16(-1.0), GFloat16(0.0f)));
     EXPECT_EQ(
-        static_cast<float>(GDALGetNoDataReplacementValue(GDT_Float16, 1.1)),
+        static_cast<GFloat16>(GDALGetNoDataReplacementValue(GDT_Float16, 1.1)),
         nextafter(GFloat16(1.1), GFloat16(2.0f)));
     EXPECT_EQ(
-        GDALGetNoDataReplacementValue(GDT_Float16,
-                                      std::numeric_limits<GFloat16>::lowest()),
-        nextafter(std::numeric_limits<GFloat16>::lowest(), GFloat16(0.0f)));
+        GDALGetNoDataReplacementValue(
+            GDT_Float16, cpl::CPLNumericLimits<GFloat16>::lowest()),
+        nextafter(cpl::CPLNumericLimits<GFloat16>::lowest(), GFloat16(0.0f)));
 
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Float16, std::numeric_limits<GFloat16>::max()),
+                  GDT_Float16, cpl::CPLNumericLimits<GFloat16>::max()),
               static_cast<double>(nextafter(
-                  std::numeric_limits<GFloat16>::max(), GFloat16(0.0f))));
+                  cpl::CPLNumericLimits<GFloat16>::max(), GFloat16(0.0f))));
 
     // out of range for float32
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Float32, std::numeric_limits<double>::lowest()),
-              0.0);
-    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Float32,
-                                            std::numeric_limits<double>::max()),
+                  GDT_Float32, cpl::CPLNumericLimits<double>::lowest()),
               0.0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Float32, std::numeric_limits<double>::infinity()),
+                  GDT_Float32, cpl::CPLNumericLimits<double>::max()),
               0.0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Float32, -std::numeric_limits<double>::infinity()),
+                  GDT_Float32, cpl::CPLNumericLimits<double>::infinity()),
+              0.0);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Float32, -cpl::CPLNumericLimits<double>::infinity()),
               0.0);
 
     // in range for float 32
@@ -3176,28 +3196,28 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
         static_cast<float>(GDALGetNoDataReplacementValue(GDT_Float32, 1.1)),
         nextafter(float(1.1), 2.0f));
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Float32, std::numeric_limits<float>::lowest()),
-              nextafter(std::numeric_limits<float>::lowest(), 0.0f));
+                  GDT_Float32, cpl::CPLNumericLimits<float>::lowest()),
+              nextafter(cpl::CPLNumericLimits<float>::lowest(), 0.0f));
 
-    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Float32,
-                                            std::numeric_limits<float>::max()),
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Float32, cpl::CPLNumericLimits<float>::max()),
               static_cast<double>(
-                  nextafter(std::numeric_limits<float>::max(), 0.0f)));
+                  nextafter(cpl::CPLNumericLimits<float>::max(), 0.0f)));
 
     // in range for float64
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Float64, std::numeric_limits<double>::lowest()),
-              nextafter(std::numeric_limits<double>::lowest(), 0.0));
-    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Float64,
-                                            std::numeric_limits<double>::max()),
-              nextafter(std::numeric_limits<double>::max(), 0.0));
+                  GDT_Float64, cpl::CPLNumericLimits<double>::lowest()),
+              nextafter(cpl::CPLNumericLimits<double>::lowest(), 0.0));
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Float64, cpl::CPLNumericLimits<double>::max()),
+              nextafter(cpl::CPLNumericLimits<double>::max(), 0.0));
 
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Float64, std::numeric_limits<double>::lowest()),
-              nextafter(std::numeric_limits<double>::lowest(), 0.0));
-    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Float64,
-                                            std::numeric_limits<double>::max()),
-              nextafter(std::numeric_limits<double>::max(), 0.0));
+                  GDT_Float64, cpl::CPLNumericLimits<double>::lowest()),
+              nextafter(cpl::CPLNumericLimits<double>::lowest(), 0.0));
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Float64, cpl::CPLNumericLimits<double>::max()),
+              nextafter(cpl::CPLNumericLimits<double>::max(), 0.0));
 
     EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Float64, double(-1.0)),
               nextafter(double(-1.0), 0.0));
@@ -3206,10 +3226,10 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
 
     // test infinity
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Float64, std::numeric_limits<double>::infinity()),
+                  GDT_Float64, cpl::CPLNumericLimits<double>::infinity()),
               0.0);
     EXPECT_EQ(GDALGetNoDataReplacementValue(
-                  GDT_Float64, -std::numeric_limits<double>::infinity()),
+                  GDT_Float64, -cpl::CPLNumericLimits<double>::infinity()),
               0.0);
 }
 
@@ -4815,12 +4835,12 @@ TEST_F(test_gdal, ReadRaster)
         std::vector<float> res;
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
         const auto expected_res =
-            std::vector<float>{-std::numeric_limits<float>::infinity(),
+            std::vector<float>{-cpl::CPLNumericLimits<float>::infinity(),
                                -1.0f,
                                1.0f,
                                128.0f,
                                32768.0f,
-                               std::numeric_limits<float>::infinity()};
+                               cpl::CPLNumericLimits<float>::infinity()};
         EXPECT_EQ(res, expected_res);
 
         std::fill(res.begin(), res.end(), 0.0f);
@@ -4833,12 +4853,12 @@ TEST_F(test_gdal, ReadRaster)
         std::vector<std::complex<float>> res;
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
         const auto expected_res = std::vector<std::complex<float>>{
-            -std::numeric_limits<float>::infinity(),
+            -cpl::CPLNumericLimits<float>::infinity(),
             -1.0f,
             1.0f,
             128.0f,
             32768.0f,
-            std::numeric_limits<float>::infinity()};
+            cpl::CPLNumericLimits<float>::infinity()};
         EXPECT_EQ(res, expected_res);
 
         std::fill(res.begin(), res.end(), 0.0f);

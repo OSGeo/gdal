@@ -172,7 +172,8 @@ template <> inline bool GDALIsValueInRange<uint64_t>(double dfValue)
     // get converted to a double that once cast to uint64_t is
     // UINT64_MAX + 1, hence the < strict comparison.
     return dfValue >= 0 &&
-           dfValue < static_cast<double>(cpl::CPLNumericLimits<uint64_t>::max());
+           dfValue <
+               static_cast<double>(cpl::CPLNumericLimits<uint64_t>::max());
 }
 
 /************************************************************************/
@@ -468,8 +469,8 @@ template <> struct sGDALCopyWord<float, std::uint64_t>
         {
             nValueOut = 0;
         }
-        else if (fValueIn >=
-                 static_cast<float>(cpl::CPLNumericLimits<std::uint64_t>::max()))
+        else if (fValueIn >= static_cast<float>(
+                                 cpl::CPLNumericLimits<std::uint64_t>::max()))
         {
             nValueOut = cpl::CPLNumericLimits<std::uint64_t>::max();
         }
@@ -488,8 +489,8 @@ template <> struct sGDALCopyWord<double, std::uint64_t>
         {
             nValueOut = 0;
         }
-        else if (dfValueIn >
-                 static_cast<double>(cpl::CPLNumericLimits<uint64_t>::max()))
+        else if (dfValueIn > static_cast<double>(
+                                 cpl::CPLNumericLimits<uint64_t>::max()))
         {
             nValueOut = cpl::CPLNumericLimits<uint64_t>::max();
         }

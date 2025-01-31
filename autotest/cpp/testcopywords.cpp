@@ -589,35 +589,35 @@ TEST_F(TestCopyWords, GDT_Float16only)
 
     // Float16 to Int64
     {
-        GFloat16 in_value = std::numeric_limits<GFloat16>::quiet_NaN();
+        GFloat16 in_value = cpl::CPLNumericLimits<GFloat16>::quiet_NaN();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        GFloat16 in_value = -std::numeric_limits<GFloat16>::infinity();
+        GFloat16 in_value = -cpl::CPLNumericLimits<GFloat16>::infinity();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MIN);
     }
 
     {
-        GFloat16 in_value = -std::numeric_limits<GFloat16>::max();
+        GFloat16 in_value = -cpl::CPLNumericLimits<GFloat16>::max();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, -65504);
     }
 
     {
-        GFloat16 in_value = std::numeric_limits<GFloat16>::max();
+        GFloat16 in_value = cpl::CPLNumericLimits<GFloat16>::max();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, 65504);
     }
 
     {
-        GFloat16 in_value = std::numeric_limits<GFloat16>::infinity();
+        GFloat16 in_value = cpl::CPLNumericLimits<GFloat16>::infinity();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MAX);
@@ -625,35 +625,35 @@ TEST_F(TestCopyWords, GDT_Float16only)
 
     // Float16 to UInt64
     {
-        GFloat16 in_value = std::numeric_limits<GFloat16>::quiet_NaN();
+        GFloat16 in_value = cpl::CPLNumericLimits<GFloat16>::quiet_NaN();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        GFloat16 in_value = -std::numeric_limits<GFloat16>::infinity();
+        GFloat16 in_value = -cpl::CPLNumericLimits<GFloat16>::infinity();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        GFloat16 in_value = -std::numeric_limits<GFloat16>::max();
+        GFloat16 in_value = -cpl::CPLNumericLimits<GFloat16>::max();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        GFloat16 in_value = std::numeric_limits<GFloat16>::max();
+        GFloat16 in_value = cpl::CPLNumericLimits<GFloat16>::max();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 65504);
     }
 
     {
-        GFloat16 in_value = std::numeric_limits<GFloat16>::infinity();
+        GFloat16 in_value = cpl::CPLNumericLimits<GFloat16>::infinity();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, UINT64_MAX);
@@ -734,35 +734,35 @@ TEST_F(TestCopyWords, GDT_Float32and64)
 
     // Float32 to Int64
     {
-        float in_value = std::numeric_limits<float>::quiet_NaN();
+        float in_value = cpl::CPLNumericLimits<float>::quiet_NaN();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        float in_value = -std::numeric_limits<float>::infinity();
+        float in_value = -cpl::CPLNumericLimits<float>::infinity();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MIN);
     }
 
     {
-        float in_value = -std::numeric_limits<float>::max();
+        float in_value = -cpl::CPLNumericLimits<float>::max();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MIN);
     }
 
     {
-        float in_value = std::numeric_limits<float>::max();
+        float in_value = cpl::CPLNumericLimits<float>::max();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MAX);
     }
 
     {
-        float in_value = std::numeric_limits<float>::infinity();
+        float in_value = cpl::CPLNumericLimits<float>::infinity();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MAX);
@@ -770,35 +770,35 @@ TEST_F(TestCopyWords, GDT_Float32and64)
 
     // Float64 to Int64
     {
-        double in_value = std::numeric_limits<double>::quiet_NaN();
+        double in_value = cpl::CPLNumericLimits<double>::quiet_NaN();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        double in_value = -std::numeric_limits<double>::infinity();
+        double in_value = -cpl::CPLNumericLimits<double>::infinity();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MIN);
     }
 
     {
-        double in_value = -std::numeric_limits<double>::max();
+        double in_value = -cpl::CPLNumericLimits<double>::max();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MIN);
     }
 
     {
-        double in_value = std::numeric_limits<double>::max();
+        double in_value = cpl::CPLNumericLimits<double>::max();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MAX);
     }
 
     {
-        double in_value = std::numeric_limits<double>::infinity();
+        double in_value = cpl::CPLNumericLimits<double>::infinity();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MAX);
@@ -806,35 +806,35 @@ TEST_F(TestCopyWords, GDT_Float32and64)
 
     // Float32 to UInt64
     {
-        float in_value = std::numeric_limits<float>::quiet_NaN();
+        float in_value = cpl::CPLNumericLimits<float>::quiet_NaN();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        float in_value = -std::numeric_limits<float>::infinity();
+        float in_value = -cpl::CPLNumericLimits<float>::infinity();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        float in_value = -std::numeric_limits<float>::max();
+        float in_value = -cpl::CPLNumericLimits<float>::max();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        float in_value = std::numeric_limits<float>::max();
+        float in_value = cpl::CPLNumericLimits<float>::max();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, UINT64_MAX);
     }
 
     {
-        float in_value = std::numeric_limits<float>::infinity();
+        float in_value = cpl::CPLNumericLimits<float>::infinity();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, UINT64_MAX);
@@ -842,35 +842,35 @@ TEST_F(TestCopyWords, GDT_Float32and64)
 
     // Float64 to UInt64
     {
-        double in_value = -std::numeric_limits<double>::quiet_NaN();
+        double in_value = -cpl::CPLNumericLimits<double>::quiet_NaN();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        double in_value = -std::numeric_limits<double>::infinity();
+        double in_value = -cpl::CPLNumericLimits<double>::infinity();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        double in_value = -std::numeric_limits<double>::max();
+        double in_value = -cpl::CPLNumericLimits<double>::max();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        double in_value = std::numeric_limits<double>::max();
+        double in_value = cpl::CPLNumericLimits<double>::max();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, UINT64_MAX);
     }
 
     {
-        double in_value = std::numeric_limits<double>::infinity();
+        double in_value = cpl::CPLNumericLimits<double>::infinity();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, UINT64_MAX);

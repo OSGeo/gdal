@@ -1181,25 +1181,20 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 };
 
 //! @cond Doxygen_Suppress
-struct CPL_DLL GDALDatasetUniquePtrDeleter
-{
-    void operator()(GDALDataset *poDataset) const
-    {
-        GDALClose(poDataset);
-    }
-};
+struct CPL_DLL GDALDatasetUniquePtrDeleter{
+    void operator()(GDALDataset *poDataset) const {GDALClose(poDataset);
+}
+}
+;
 
 //! @endcond
 
 //! @cond Doxygen_Suppress
-struct CPL_DLL GDALDatasetUniquePtrReleaser
-{
-    void operator()(GDALDataset *poDataset) const
-    {
-        if (poDataset)
-            poDataset->Release();
-    }
-};
+struct CPL_DLL GDALDatasetUniquePtrReleaser{void operator()(
+    GDALDataset *poDataset) const {if (poDataset) poDataset->Release();
+}
+}
+;
 
 //! @endcond
 
@@ -3696,10 +3691,10 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     Transpose(const std::vector<int> &anMapNewAxisToOldAxis) const;
 
     std::shared_ptr<GDALMDArray> GetUnscaled(
-        double dfOverriddenScale = std::numeric_limits<double>::quiet_NaN(),
-        double dfOverriddenOffset = std::numeric_limits<double>::quiet_NaN(),
+        double dfOverriddenScale = cpl::CPLNumericLimits<double>::quiet_NaN(),
+        double dfOverriddenOffset = cpl::CPLNumericLimits<double>::quiet_NaN(),
         double dfOverriddenDstNodata =
-            std::numeric_limits<double>::quiet_NaN()) const;
+            cpl::CPLNumericLimits<double>::quiet_NaN()) const;
 
     virtual std::shared_ptr<GDALMDArray>
     GetMask(CSLConstList papszOptions) const;
@@ -4579,7 +4574,7 @@ inline bool ARE_REAL_EQUAL(GFloat16 dfVal1, GFloat16 dfVal2, int ulp = 2)
 {
     using std::abs;
     return dfVal1 == dfVal2 || /* Should cover infinity */
-           abs(dfVal1 - dfVal2) < std::numeric_limits<GFloat16>::epsilon() *
+           abs(dfVal1 - dfVal2) < cpl::CPLNumericLimits<GFloat16>::epsilon() *
                                       abs(dfVal1 + dfVal2) * ulp;
 }
 
@@ -4587,17 +4582,17 @@ inline bool ARE_REAL_EQUAL(float fVal1, float fVal2, int ulp = 2)
 {
     using std::abs;
     return fVal1 == fVal2 || /* Should cover infinity */
-           abs(fVal1 - fVal2) <
-               std::numeric_limits<float>::epsilon() * abs(fVal1 + fVal2) * ulp;
+           abs(fVal1 - fVal2) < cpl::CPLNumericLimits<float>::epsilon() *
+                                    abs(fVal1 + fVal2) * ulp;
 }
 
-// We are using `std::numeric_limits<float>::epsilon()` for backward
+// We are using `cpl::CPLNumericLimits<float>::epsilon()` for backward
 // compatibility
 inline bool ARE_REAL_EQUAL(double dfVal1, double dfVal2, int ulp = 2)
 {
     using std::abs;
     return dfVal1 == dfVal2 || /* Should cover infinity */
-           abs(dfVal1 - dfVal2) < std::numeric_limits<float>::epsilon() *
+           abs(dfVal1 - dfVal2) < cpl::CPLNumericLimits<float>::epsilon() *
                                       abs(dfVal1 + dfVal2) * ulp;
 }
 
