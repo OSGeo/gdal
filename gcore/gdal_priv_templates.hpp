@@ -39,39 +39,39 @@
 template <class Tin, class Tout>
 inline void GDALGetDataLimits(Tin &tMaxValue, Tin &tMinValue)
 {
-    tMaxValue = std::numeric_limits<Tin>::max();
-    tMinValue = std::numeric_limits<Tin>::lowest();
+    tMaxValue = cpl::CPLNumericLimits<Tin>::max();
+    tMinValue = cpl::CPLNumericLimits<Tin>::lowest();
 
     // Compute the actual minimum value of Tout in terms of Tin.
-    if constexpr (std::numeric_limits<Tout>::is_signed &&
-                  std::numeric_limits<Tout>::is_integer)
+    if constexpr (cpl::CPLNumericLimits<Tout>::is_signed &&
+                  cpl::CPLNumericLimits<Tout>::is_integer)
     {
         // the minimum value is less than zero
         // cppcheck-suppress knownConditionTrueFalse
-        if constexpr (std::numeric_limits<Tout>::digits <
-                          std::numeric_limits<Tin>::digits ||
-                      !std::numeric_limits<Tin>::is_integer)
+        if constexpr (cpl::CPLNumericLimits<Tout>::digits <
+                          cpl::CPLNumericLimits<Tin>::digits ||
+                      !cpl::CPLNumericLimits<Tin>::is_integer)
         {
             // Tout is smaller than Tin, so we need to clamp values in input
             // to the range of Tout's min/max values
-            if constexpr (std::numeric_limits<Tin>::is_signed)
+            if constexpr (cpl::CPLNumericLimits<Tin>::is_signed)
             {
                 tMinValue =
-                    static_cast<Tin>(std::numeric_limits<Tout>::lowest());
+                    static_cast<Tin>(cpl::CPLNumericLimits<Tout>::lowest());
             }
-            tMaxValue = static_cast<Tin>(std::numeric_limits<Tout>::max());
+            tMaxValue = static_cast<Tin>(cpl::CPLNumericLimits<Tout>::max());
         }
     }
-    else if constexpr (std::numeric_limits<Tout>::is_integer)
+    else if constexpr (cpl::CPLNumericLimits<Tout>::is_integer)
     {
         // the output is unsigned, so we just need to determine the max
         /* coverity[same_on_both_sides] */
-        if constexpr (std::numeric_limits<Tout>::digits <=
-                      std::numeric_limits<Tin>::digits)
+        if constexpr (cpl::CPLNumericLimits<Tout>::digits <=
+                      cpl::CPLNumericLimits<Tin>::digits)
         {
             // Tout is smaller than Tin, so we need to clamp the input values
             // to the range of Tout's max
-            tMaxValue = static_cast<Tin>(std::numeric_limits<Tout>::max());
+            tMaxValue = static_cast<Tin>(cpl::CPLNumericLimits<Tout>::max());
         }
         tMinValue = 0;
     }
@@ -133,8 +133,8 @@ inline bool GDALClampDoubleValue(double &tValue, const T2 tMin, const T3 tMax)
  */
 template <class T> inline bool GDALIsValueInRange(double dfValue)
 {
-    return dfValue >= static_cast<double>(std::numeric_limits<T>::lowest()) &&
-           dfValue <= static_cast<double>(std::numeric_limits<T>::max());
+    return dfValue >= static_cast<double>(cpl::CPLNumericLimits<T>::lowest()) &&
+           dfValue <= static_cast<double>(cpl::CPLNumericLimits<T>::max());
 }
 
 template <> inline bool GDALIsValueInRange<double>(double dfValue)
@@ -152,8 +152,8 @@ template <> inline bool GDALIsValueInRange<float>(double dfValue)
 template <> inline bool GDALIsValueInRange<GFloat16>(double dfValue)
 {
     return CPLIsInf(dfValue) ||
-           (dfValue >= -std::numeric_limits<GFloat16>::max() &&
-            dfValue <= std::numeric_limits<GFloat16>::max());
+           (dfValue >= -cpl::CPLNumericLimits<GFloat16>::max() &&
+            dfValue <= cpl::CPLNumericLimits<GFloat16>::max());
 }
 
 template <> inline bool GDALIsValueInRange<int64_t>(double dfValue)
@@ -162,8 +162,8 @@ template <> inline bool GDALIsValueInRange<int64_t>(double dfValue)
     // get converted to a double that once cast to int64_t is
     // INT64_MAX + 1, hence the < strict comparison.
     return dfValue >=
-               static_cast<double>(std::numeric_limits<int64_t>::lowest()) &&
-           dfValue < static_cast<double>(std::numeric_limits<int64_t>::max());
+               static_cast<double>(cpl::CPLNumericLimits<int64_t>::lowest()) &&
+           dfValue < static_cast<double>(cpl::CPLNumericLimits<int64_t>::max());
 }
 
 template <> inline bool GDALIsValueInRange<uint64_t>(double dfValue)
@@ -172,7 +172,7 @@ template <> inline bool GDALIsValueInRange<uint64_t>(double dfValue)
     // get converted to a double that once cast to uint64_t is
     // UINT64_MAX + 1, hence the < strict comparison.
     return dfValue >= 0 &&
-           dfValue < static_cast<double>(std::numeric_limits<uint64_t>::max());
+           dfValue < static_cast<double>(cpl::CPLNumericLimits<uint64_t>::max());
 }
 
 /************************************************************************/
@@ -315,14 +315,14 @@ template <> struct sGDALCopyWord<float, GFloat16>
 {
     static inline void f(const float fValueIn, GFloat16 &hfValueOut)
     {
-        if (fValueIn > std::numeric_limits<GFloat16>::max())
+        if (fValueIn > cpl::CPLNumericLimits<GFloat16>::max())
         {
-            hfValueOut = std::numeric_limits<GFloat16>::infinity();
+            hfValueOut = cpl::CPLNumericLimits<GFloat16>::infinity();
             return;
         }
-        if (fValueIn < -std::numeric_limits<GFloat16>::max())
+        if (fValueIn < -cpl::CPLNumericLimits<GFloat16>::max())
         {
-            hfValueOut = -std::numeric_limits<GFloat16>::infinity();
+            hfValueOut = -cpl::CPLNumericLimits<GFloat16>::infinity();
             return;
         }
 
@@ -334,14 +334,14 @@ template <> struct sGDALCopyWord<double, GFloat16>
 {
     static inline void f(const double dfValueIn, GFloat16 &hfValueOut)
     {
-        if (dfValueIn > std::numeric_limits<GFloat16>::max())
+        if (dfValueIn > cpl::CPLNumericLimits<GFloat16>::max())
         {
-            hfValueOut = std::numeric_limits<GFloat16>::infinity();
+            hfValueOut = cpl::CPLNumericLimits<GFloat16>::infinity();
             return;
         }
-        if (dfValueIn < -std::numeric_limits<GFloat16>::max())
+        if (dfValueIn < -cpl::CPLNumericLimits<GFloat16>::max())
         {
-            hfValueOut = -std::numeric_limits<GFloat16>::infinity();
+            hfValueOut = -cpl::CPLNumericLimits<GFloat16>::infinity();
             return;
         }
 
@@ -431,7 +431,7 @@ template <> struct sGDALCopyWord<GFloat16, std::uint64_t>
         }
         else if (CPLIsInf(hfValueIn))
         {
-            nValueOut = std::numeric_limits<std::uint64_t>::max();
+            nValueOut = cpl::CPLNumericLimits<std::uint64_t>::max();
         }
         else
         {
@@ -449,9 +449,9 @@ template <> struct sGDALCopyWord<float, unsigned int>
             nValueOut = 0;
         }
         else if (fValueIn >=
-                 static_cast<float>(std::numeric_limits<unsigned int>::max()))
+                 static_cast<float>(cpl::CPLNumericLimits<unsigned int>::max()))
         {
-            nValueOut = std::numeric_limits<unsigned int>::max();
+            nValueOut = cpl::CPLNumericLimits<unsigned int>::max();
         }
         else
         {
@@ -469,9 +469,9 @@ template <> struct sGDALCopyWord<float, std::uint64_t>
             nValueOut = 0;
         }
         else if (fValueIn >=
-                 static_cast<float>(std::numeric_limits<std::uint64_t>::max()))
+                 static_cast<float>(cpl::CPLNumericLimits<std::uint64_t>::max()))
         {
-            nValueOut = std::numeric_limits<std::uint64_t>::max();
+            nValueOut = cpl::CPLNumericLimits<std::uint64_t>::max();
         }
         else
         {
@@ -489,9 +489,9 @@ template <> struct sGDALCopyWord<double, std::uint64_t>
             nValueOut = 0;
         }
         else if (dfValueIn >
-                 static_cast<double>(std::numeric_limits<uint64_t>::max()))
+                 static_cast<double>(cpl::CPLNumericLimits<uint64_t>::max()))
         {
-            nValueOut = std::numeric_limits<uint64_t>::max();
+            nValueOut = cpl::CPLNumericLimits<uint64_t>::max();
         }
         else
         {
@@ -514,7 +514,7 @@ template <> struct sGDALCopyWord<GFloat16, unsigned short>
         }
         else if (CPLIsInf(hfValueIn))
         {
-            nValueOut = std::numeric_limits<unsigned short>::max();
+            nValueOut = cpl::CPLNumericLimits<unsigned short>::max();
         }
         else
         {
@@ -533,7 +533,7 @@ template <> struct sGDALCopyWord<GFloat16, unsigned int>
         }
         else if (CPLIsInf(hfValueIn))
         {
-            nValueOut = std::numeric_limits<unsigned int>::max();
+            nValueOut = cpl::CPLNumericLimits<unsigned int>::max();
         }
         else
         {
@@ -662,14 +662,14 @@ template <> struct sGDALCopyWord<GFloat16, short>
             nValueOut = 0;
         }
         else if (hfValueIn >=
-                 static_cast<GFloat16>(std::numeric_limits<short>::max()))
+                 static_cast<GFloat16>(cpl::CPLNumericLimits<short>::max()))
         {
-            nValueOut = std::numeric_limits<short>::max();
+            nValueOut = cpl::CPLNumericLimits<short>::max();
         }
         else if (hfValueIn <=
-                 static_cast<GFloat16>(std::numeric_limits<short>::lowest()))
+                 static_cast<GFloat16>(cpl::CPLNumericLimits<short>::lowest()))
         {
-            nValueOut = std::numeric_limits<short>::lowest();
+            nValueOut = cpl::CPLNumericLimits<short>::lowest();
         }
         else
         {
@@ -689,14 +689,14 @@ template <> struct sGDALCopyWord<float, int>
             nValueOut = 0;
         }
         else if (fValueIn >=
-                 static_cast<float>(std::numeric_limits<int>::max()))
+                 static_cast<float>(cpl::CPLNumericLimits<int>::max()))
         {
-            nValueOut = std::numeric_limits<int>::max();
+            nValueOut = cpl::CPLNumericLimits<int>::max();
         }
         else if (fValueIn <=
-                 static_cast<float>(std::numeric_limits<int>::lowest()))
+                 static_cast<float>(cpl::CPLNumericLimits<int>::lowest()))
         {
-            nValueOut = std::numeric_limits<int>::lowest();
+            nValueOut = cpl::CPLNumericLimits<int>::lowest();
         }
         else
         {
@@ -715,14 +715,14 @@ template <> struct sGDALCopyWord<float, std::int64_t>
             nValueOut = 0;
         }
         else if (fValueIn >=
-                 static_cast<float>(std::numeric_limits<std::int64_t>::max()))
+                 static_cast<float>(cpl::CPLNumericLimits<std::int64_t>::max()))
         {
-            nValueOut = std::numeric_limits<std::int64_t>::max();
+            nValueOut = cpl::CPLNumericLimits<std::int64_t>::max();
         }
         else if (fValueIn <= static_cast<float>(
-                                 std::numeric_limits<std::int64_t>::lowest()))
+                                 cpl::CPLNumericLimits<std::int64_t>::lowest()))
         {
-            nValueOut = std::numeric_limits<std::int64_t>::lowest();
+            nValueOut = cpl::CPLNumericLimits<std::int64_t>::lowest();
         }
         else
         {
@@ -741,14 +741,14 @@ template <> struct sGDALCopyWord<double, std::int64_t>
             nValueOut = 0;
         }
         else if (dfValueIn >=
-                 static_cast<double>(std::numeric_limits<std::int64_t>::max()))
+                 static_cast<double>(cpl::CPLNumericLimits<std::int64_t>::max()))
         {
-            nValueOut = std::numeric_limits<std::int64_t>::max();
+            nValueOut = cpl::CPLNumericLimits<std::int64_t>::max();
         }
         else if (dfValueIn <=
-                 static_cast<double>(std::numeric_limits<std::int64_t>::min()))
+                 static_cast<double>(cpl::CPLNumericLimits<std::int64_t>::min()))
         {
-            nValueOut = std::numeric_limits<std::int64_t>::min();
+            nValueOut = cpl::CPLNumericLimits<std::int64_t>::min();
         }
         else
         {
@@ -774,8 +774,8 @@ template <> struct sGDALCopyWord<GFloat16, int>
         else if (CPLIsInf(hfValueIn))
         {
             nValueOut = hfValueIn > GFloat16(0.0f)
-                            ? std::numeric_limits<int>::max()
-                            : std::numeric_limits<int>::lowest();
+                            ? cpl::CPLNumericLimits<int>::max()
+                            : cpl::CPLNumericLimits<int>::lowest();
         }
         else
         {
@@ -797,8 +797,8 @@ template <> struct sGDALCopyWord<GFloat16, std::int64_t>
         else if (CPLIsInf(hfValueIn))
         {
             nValueOut = hfValueIn > GFloat16(0.0f)
-                            ? std::numeric_limits<std::int64_t>::max()
-                            : std::numeric_limits<std::int64_t>::lowest();
+                            ? cpl::CPLNumericLimits<std::int64_t>::max()
+                            : cpl::CPLNumericLimits<std::int64_t>::lowest();
         }
         else
         {

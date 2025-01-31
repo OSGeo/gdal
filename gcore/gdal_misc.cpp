@@ -883,15 +883,15 @@ template <class T>
 static inline void ClampAndRound(double &dfValue, bool &bClamped,
                                  bool &bRounded)
 {
-    if (dfValue < static_cast<double>(std::numeric_limits<T>::lowest()))
+    if (dfValue < static_cast<double>(cpl::CPLNumericLimits<T>::lowest()))
     {
         bClamped = true;
-        dfValue = static_cast<double>(std::numeric_limits<T>::lowest());
+        dfValue = static_cast<double>(cpl::CPLNumericLimits<T>::lowest());
     }
-    else if (dfValue > static_cast<double>(std::numeric_limits<T>::max()))
+    else if (dfValue > static_cast<double>(cpl::CPLNumericLimits<T>::max()))
     {
         bClamped = true;
-        dfValue = static_cast<double>(std::numeric_limits<T>::max());
+        dfValue = static_cast<double>(cpl::CPLNumericLimits<T>::max());
     }
     else if (dfValue != static_cast<double>(static_cast<T>(dfValue)))
     {
@@ -954,17 +954,17 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
                 break;
 
             // TODO: Use ClampAndRound
-            if (dfValue < std::numeric_limits<GFloat16>::lowest())
+            if (dfValue < cpl::CPLNumericLimits<GFloat16>::lowest())
             {
                 bClamped = TRUE;
                 dfValue = static_cast<double>(
-                    std::numeric_limits<GFloat16>::lowest());
+                    cpl::CPLNumericLimits<GFloat16>::lowest());
             }
-            else if (dfValue > std::numeric_limits<GFloat16>::max())
+            else if (dfValue > cpl::CPLNumericLimits<GFloat16>::max())
             {
                 bClamped = TRUE;
                 dfValue =
-                    static_cast<double>(std::numeric_limits<GFloat16>::max());
+                    static_cast<double>(cpl::CPLNumericLimits<GFloat16>::max());
             }
             else
             {
@@ -981,17 +981,17 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
                 break;
 
             // TODO: Use ClampAndRound
-            if (dfValue < std::numeric_limits<float>::lowest())
+            if (dfValue < cpl::CPLNumericLimits<float>::lowest())
             {
                 bClamped = TRUE;
                 dfValue =
-                    static_cast<double>(std::numeric_limits<float>::lowest());
+                    static_cast<double>(cpl::CPLNumericLimits<float>::lowest());
             }
-            else if (dfValue > std::numeric_limits<float>::max())
+            else if (dfValue > cpl::CPLNumericLimits<float>::max())
             {
                 bClamped = TRUE;
                 dfValue =
-                    static_cast<double>(std::numeric_limits<float>::max());
+                    static_cast<double>(cpl::CPLNumericLimits<float>::max());
             }
             else
             {

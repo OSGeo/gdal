@@ -72,10 +72,19 @@ GUInt16 CPL_DLL CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned);
 GUInt16 CPL_DLL CPLConvertFloatToHalf(float fFloat32);
 float CPL_DLL CPLConvertHalfToFloat(GUInt16 nHalf);
 
-#ifndef HAVE_STD_FLOAT16_T
-
 namespace cpl
 {
+
+// We define our own version of `std::numeric_limits` so that we can
+// specialized it for `CPLFloat16` if necessary. Specializing
+// `std::numeric_limits` doesn't always work because some libraries
+// use `std::numeric_limits`, and one cannot specialize a type
+// template after it has been used.
+template <typename T> struct CPLNumericLimits : std::numeric_limits<T>
+{
+};
+
+#ifndef HAVE_STD_FLOAT16_T
 
 // Define a type `CPLFloat16`. If the compiler supports it natively (as
 // `_Float16`), then this class is a simple wrapper. Otherwise we
@@ -126,7 +135,7 @@ struct CPLFloat16
         return static_cast<T>(rValue);
     }
 
-#else
+#else  // #ifdef HAVE__FLOAT16
 
     // How we represent a `CPLFloat16` internally
     using repr = std::uint16_t;
@@ -271,7 +280,7 @@ struct CPLFloat16
         return static_cast<T>(reprToCompute(rValue));
     }
 
-#endif
+#endif  // #ifndef HAVE__FLOAT16
 
   private:
     repr rValue;
@@ -588,10 +597,64 @@ struct CPLFloat16
     }
 };
 
+template <> struct CPLNumericLimits<CPLFloat16>
+{
+    static constexpr bool is_specialized = true;
+    static constexpr bool is_signed = true;
+    static constexpr bool is_integer = false;
+    static constexpr bool is_exact = false;
+    static constexpr bool has_infinity = true;
+    static constexpr bool has_quiet_NaN = true;
+    static constexpr bool has_signaling_NaN = true;
+    static constexpr bool has_denorm = true;
+
+    static constexpr int digits = 11;
+    static constexpr int digits10 = 3;
+    static constexpr int max_digits10 = 5;
+    static constexpr int radix = 2;
+
+    static constexpr CPLFloat16 epsilon()
+    {
+        return CPLFloat16(CPLFloat16::make_from_bits_and_value{}, 0x1400,
+                          0.000977f);
+    }
+
+    static constexpr CPLFloat16 min()
+    {
+        return CPLFloat16(CPLFloat16::make_from_bits_and_value{}, 0x0001,
+                          6.0e-8f);
+    }
+
+    static constexpr CPLFloat16 lowest()
+    {
+        return CPLFloat16(CPLFloat16::make_from_bits_and_value{}, 0xfbff,
+                          -65504.0f);
+    }
+
+    static constexpr CPLFloat16 max()
+    {
+        return CPLFloat16(CPLFloat16::make_from_bits_and_value{}, 0x7bff,
+                          +65504.0f);
+    }
+
+    static constexpr CPLFloat16 infinity()
+    {
+        return CPLFloat16(CPLFloat16::make_from_bits_and_value{}, 0x7c00,
+                          std::numeric_limits<float>::infinity());
+    }
+
+    static constexpr CPLFloat16 quiet_NaN()
+    {
+        return CPLFloat16(CPLFloat16::make_from_bits_and_value{}, 0x7e00,
+                          std::numeric_limits<float>::quiet_NaN());
+    }
+};
+
 //! @endcond
-}  // namespace cpl
 
 #endif  // #ifndef HAVE_STD_FLOAT16_T
+
+}  // namespace cpl
 
 #ifdef HAVE_STD_FLOAT16_T
 using GFloat16 = std::float16_t;
@@ -625,69 +688,6 @@ template <typename T> constexpr int CPLIsFinite(T x)
     using std::isfinite;
     return isfinite(x);
 }
-
-#ifndef HAVE_STD_FLOAT16_T
-namespace std
-{
-
-//! @cond Doxygen_Suppress
-template <> struct numeric_limits<cpl::CPLFloat16>
-{
-    static constexpr bool is_specialized = true;
-    static constexpr bool is_signed = true;
-    static constexpr bool is_integer = false;
-    static constexpr bool is_exact = false;
-    static constexpr bool has_infinity = true;
-    static constexpr bool has_quiet_NaN = true;
-    static constexpr bool has_signaling_NaN = true;
-    static constexpr bool has_denorm = true;
-
-    static constexpr int digits = 11;
-    static constexpr int digits10 = 3;
-    static constexpr int max_digits10 = 5;
-    static constexpr int radix = 2;
-
-    static constexpr cpl::CPLFloat16 epsilon()
-    {
-        return cpl::CPLFloat16(cpl::CPLFloat16::make_from_bits_and_value{},
-                               0x1400, 0.000977f);
-    }
-
-    static constexpr cpl::CPLFloat16 min()
-    {
-        return cpl::CPLFloat16(cpl::CPLFloat16::make_from_bits_and_value{},
-                               0x0001, 6.0e-8f);
-    }
-
-    static constexpr cpl::CPLFloat16 lowest()
-    {
-        return cpl::CPLFloat16(cpl::CPLFloat16::make_from_bits_and_value{},
-                               0xfbff, -65504.0f);
-    }
-
-    static constexpr cpl::CPLFloat16 max()
-    {
-        return cpl::CPLFloat16(cpl::CPLFloat16::make_from_bits_and_value{},
-                               0x7bff, +65504.0f);
-    }
-
-    static constexpr cpl::CPLFloat16 infinity()
-    {
-        return cpl::CPLFloat16(cpl::CPLFloat16::make_from_bits_and_value{},
-                               0x7c00, std::numeric_limits<float>::infinity());
-    }
-
-    static constexpr cpl::CPLFloat16 quiet_NaN()
-    {
-        return cpl::CPLFloat16(cpl::CPLFloat16::make_from_bits_and_value{},
-                               0x7e00, std::numeric_limits<float>::quiet_NaN());
-    }
-};
-
-//! @endcond
-
-}  // namespace std
-#endif  // #ifndef HAVE_STD_FLOAT16_T
 
 #endif  // #ifdef __cplusplus
 

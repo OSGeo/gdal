@@ -3146,8 +3146,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
     constexpr int nWrkDataTypeSize = static_cast<int>(sizeof(Twork));
 
     // TODO: we should have some generic function to do this.
-    Twork fDstMin = -std::numeric_limits<Twork>::max();
-    Twork fDstMax = std::numeric_limits<Twork>::max();
+    Twork fDstMin = cpl::CPLNumericLimits<Twork>::lowest();
+    Twork fDstMax = cpl::CPLNumericLimits<Twork>::max();
     if (dstDataType == GDT_Byte)
     {
         fDstMin = std::numeric_limits<GByte>::min();

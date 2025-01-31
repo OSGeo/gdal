@@ -1006,8 +1006,8 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
 #define setDTMinMax(ctype)                                                     \
     do                                                                         \
     {                                                                          \
-        dfDTMin = static_cast<double>(std::numeric_limits<ctype>::lowest());   \
-        dfDTMax = static_cast<double>(std::numeric_limits<ctype>::max());      \
+        dfDTMin = static_cast<double>(cpl::CPLNumericLimits<ctype>::lowest()); \
+        dfDTMax = static_cast<double>(cpl::CPLNumericLimits<ctype>::max());    \
     } while (0)
 
                 switch (eAutoScaleType)
@@ -7120,9 +7120,9 @@ template <typename Type> static bool IsValidForDT(double dfVal)
 {
     if (std::isnan(dfVal))
         return false;
-    if (dfVal < static_cast<double>(std::numeric_limits<Type>::lowest()))
+    if (dfVal < static_cast<double>(cpl::CPLNumericLimits<Type>::lowest()))
         return false;
-    if (dfVal > static_cast<double>(std::numeric_limits<Type>::max()))
+    if (dfVal > static_cast<double>(cpl::CPLNumericLimits<Type>::max()))
         return false;
     return static_cast<double>(static_cast<Type>(dfVal)) == dfVal;
 }
@@ -9936,8 +9936,8 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
     {
         const GDALMDArray *array = nullptr;
         std::shared_ptr<GDALMDArray> poMask{};
-        double dfMin = std::numeric_limits<double>::max();
-        double dfMax = -std::numeric_limits<double>::max();
+        double dfMin = cpl::CPLNumericLimits<double>::max();
+        double dfMax = -cpl::CPLNumericLimits<double>::max();
         double dfMean = 0.0;
         double dfM2 = 0.0;
         GUInt64 nValidCount = 0;
@@ -13946,8 +13946,8 @@ GDALMDArrayRegularlySpaced::GDALMDArrayRegularlySpaced(
     double dfIncrement, double dfOffsetInIncrement)
     : GDALAbstractMDArray(osParentName, osName),
       GDALMDArray(osParentName, osName), m_dfStart(dfStart),
-      m_dfIncrement(dfIncrement),
-      m_dfOffsetInIncrement(dfOffsetInIncrement), m_dims{poDim}
+      m_dfIncrement(dfIncrement), m_dfOffsetInIncrement(dfOffsetInIncrement),
+      m_dims{poDim}
 {
 }
 

@@ -311,8 +311,8 @@ static CPLErr GDALWarpNoDataMaskerT(const double *padfNoData, size_t nPixels,
                                     int *pbOutAllValid)
 {
     // Nothing to do if value is out of range.
-    if (padfNoData[0] < std::numeric_limits<T>::min() ||
-        padfNoData[0] > std::numeric_limits<T>::max() + 0.000001 ||
+    if (padfNoData[0] < cpl::CPLNumericLimits<T>::min() ||
+        padfNoData[0] > cpl::CPLNumericLimits<T>::max() + 0.000001 ||
         padfNoData[1] != 0.0)
     {
         *pbOutAllValid = TRUE;
@@ -2100,7 +2100,7 @@ GDALWarpOptions *CPL_STDCALL GDALDeserializeWarpOptions(CPLXMLNode *psTree)
                 CPLString().Printf(
                     "%.16g", -std::numeric_limits<float>::max()) == pszValueIn)
             {
-                return -std::numeric_limits<float>::max();
+                return std::numeric_limits<float>::lowest();
             }
             else if (eDataType == GDT_Float32 &&
                      CPLString().Printf("%.16g",
