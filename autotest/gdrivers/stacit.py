@@ -361,3 +361,28 @@ def test_stacit_single_feature(tmp_vsimem):
         assert ds is not None
         assert ds.RasterXSize == 20
         assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+# Test STAC 1.1
+
+
+def test_stacit_stac_1_1(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "feature.json")
+    with gdaltest.tempfile(
+        filename, open("data/stacit/test_stac_1.1.json", "rb").read()
+    ):
+        ds = gdal.Open(filename)
+        assert ds is not None
+        assert ds.RasterXSize == 20
+        assert ds.GetSpatialRef().GetName() == "NAD27 / UTM zone 11N"
+        assert ds.GetGeoTransform() == pytest.approx(
+            [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8
+        )
+        assert ds.GetRasterBand(1).GetMetadata() == {
+            "eo:center_wavelength": "0.4439",
+            "eo:full_width_half_max": "0.027",
+        }
+        assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_CoastalBand
+        assert ds.GetRasterBand(1).Checksum() == 4672

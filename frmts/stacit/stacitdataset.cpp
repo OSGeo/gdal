@@ -44,7 +44,7 @@ struct AssetSetByProjection
 struct Asset
 {
     std::string osName{};
-    CPLJSONArray eoBands{};
+    CPLJSONArray bands{};
     std::map<std::string, AssetSetByProjection> assets{};
 };
 
@@ -123,10 +123,19 @@ int STACITDataset::Identify(GDALOpenInfo *poOpenInfo)
             return pszHeader[0] == '{';
         }
 
-        if (strstr(pszHeader, "\"stac_version\"") != nullptr &&
-            strstr(pszHeader, "\"proj:transform\"") != nullptr)
+        if (strstr(pszHeader, "\"stac_version\"") != nullptr)
         {
-            return true;
+            int nTransformBBOXShapeCount = 0;
+            for (const char *pszItem :
+                 {"\"proj:transform\"", "\"proj:bbox\"", "\"proj:shape\""})
+            {
+                if (strstr(pszHeader, pszItem))
+                    nTransformBBOXShapeCount++;
+            }
+            if (nTransformBBOXShapeCount >= 2)
+            {
+                return true;
+            }
         }
 
         if (i == 0)
@@ -218,34 +227,44 @@ static void ParseAsset(const CPLJSONObject &jAsset,
         return oProperties[pszName];
     };
 
-    auto oProjEPSG = GetAssetOrFeatureProperty("proj:epsg");
     std::string osProjUserString;
-    if (oProjEPSG.IsValid() && oProjEPSG.GetType() != CPLJSONObject::Type::Null)
+    const auto oProjCode = GetAssetOrFeatureProperty("proj:code");
+    if (oProjCode.IsValid() && oProjCode.GetType() != CPLJSONObject::Type::Null)
     {
-        osProjUserString = "EPSG:" + oProjEPSG.ToString();
+        osProjUserString = oProjCode.ToString();
     }
     else
     {
-        auto oProjWKT2 = GetAssetOrFeatureProperty("proj:wkt2");
-        if (oProjWKT2.IsValid() &&
-            oProjWKT2.GetType() == CPLJSONObject::Type::String)
+        const auto oProjEPSG = GetAssetOrFeatureProperty("proj:epsg");
+        if (oProjEPSG.IsValid() &&
+            oProjEPSG.GetType() != CPLJSONObject::Type::Null)
         {
-            osProjUserString = oProjWKT2.ToString();
+            osProjUserString = "EPSG:" + oProjEPSG.ToString();
         }
         else
         {
-            auto oProjPROJJSON = GetAssetOrFeatureProperty("proj:projjson");
-            if (oProjPROJJSON.IsValid() &&
-                oProjPROJJSON.GetType() == CPLJSONObject::Type::Object)
+            const auto oProjWKT2 = GetAssetOrFeatureProperty("proj:wkt2");
+            if (oProjWKT2.IsValid() &&
+                oProjWKT2.GetType() == CPLJSONObject::Type::String)
             {
-                osProjUserString = oProjPROJJSON.ToString();
+                osProjUserString = oProjWKT2.ToString();
             }
             else
             {
-                CPLDebug("STACIT",
-                         "Skipping asset %s that lacks a valid CRS member",
-                         osAssetName.c_str());
-                return;
+                const auto oProjPROJJSON =
+                    GetAssetOrFeatureProperty("proj:projjson");
+                if (oProjPROJJSON.IsValid() &&
+                    oProjPROJJSON.GetType() == CPLJSONObject::Type::Object)
+                {
+                    osProjUserString = oProjPROJJSON.ToString();
+                }
+                else
+                {
+                    CPLDebug("STACIT",
+                             "Skipping asset %s that lacks a valid CRS member",
+                             osAssetName.c_str());
+                    return;
+                }
             }
         }
     }
@@ -380,7 +399,9 @@ static void ParseAsset(const CPLJSONObject &jAsset,
     {
         Asset asset;
         asset.osName = osAssetName;
-        asset.eoBands = jAsset.GetArray("eo:bands");
+        asset.bands = jAsset.GetArray("bands");
+        if (!asset.bands.IsValid())
+            asset.bands = jAsset.GetArray("eo:bands");
 
         collection.assets[osAssetName] = std::move(asset);
     }
@@ -584,15 +605,17 @@ bool STACITDataset::SetupDataset(
             poVRTBand->SetColorInterpretation(eInterp);
 
         // Set band properties
-        if (asset.eoBands.IsValid() &&
-            asset.eoBands.Size() == poItemDS->GetRasterCount())
+        if (asset.bands.IsValid() &&
+            asset.bands.Size() == poItemDS->GetRasterCount())
         {
-            const auto &eoBand = asset.eoBands[i];
-            const auto osBandName = eoBand["name"].ToString();
+            const auto &band = asset.bands[i];
+            const auto osBandName = band["name"].ToString();
             if (!osBandName.empty())
                 poVRTBand->SetDescription(osBandName.c_str());
 
-            const auto osCommonName = eoBand["common_name"].ToString();
+            auto osCommonName = band["eo:common_name"].ToString();
+            if (osCommonName.empty())
+                osCommonName = band["common_name"].ToString();
             if (!osCommonName.empty())
             {
                 const auto eInterpFromCommonName =
@@ -601,13 +624,14 @@ bool STACITDataset::SetupDataset(
                     poVRTBand->SetColorInterpretation(eInterpFromCommonName);
             }
 
-            for (const auto &eoBandChild : eoBand.GetChildren())
+            for (const auto &bandChild : band.GetChildren())
             {
-                const auto osChildName = eoBandChild.GetName();
-                if (osChildName != "name" && osChildName != "common_name")
+                const auto osChildName = bandChild.GetName();
+                if (osChildName != "name" && osChildName != "common_name" &&
+                    osChildName != "eo:common_name")
                 {
                     poVRTBand->SetMetadataItem(osChildName.c_str(),
-                                               eoBandChild.ToString().c_str());
+                                               bandChild.ToString().c_str());
                 }
             }
         }
