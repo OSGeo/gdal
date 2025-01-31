@@ -1,0 +1,184 @@
+.. _migration_guide_to_gdal_cli:
+
+================================================================================
+Migration guide to "gdal" command line interface
+================================================================================
+
+This page documents through examples how to migrate from the traditional GDAL
+command line utilities to the unified "gdal" command line interface added in
+GDAL 3.11.
+
+Raster commands
+---------------
+
+* Getting information on a raster dataset in human-readable format
+
+.. code-block::
+
+    gdalinfo my.tif
+
+    ==>
+
+    gdal raster info --format=text my.tif
+
+
+* Converting a georeferenced netCDF file to cloud-optimized GeoTIFF
+
+.. code-block::
+
+    gdal_translate -of COG in.nc out.tif
+
+    ==>
+
+    gdal raster convert --of=COG in.nc out.tif
+
+
+* Reprojecting a GeoTIFF file to a Deflate compressed tiled GeoTIFF file
+
+.. code-block::
+
+    gdalwarp -t_srs EPSG:4326 -co TILED=YES -co COMPRESS=DEFLATE -overwrite in.tif out.tif
+
+    ==>
+
+    gdal raster reproject --dst-crs=EPSG:4326 --co=TILED=YES,COMPRESS=DEFLATE --overwrite in.tif out.tif
+
+
+* Converting a PNG file to a tiled GeoTIFF file, adding georeferencing for world coverage in WGS 84 and metadata
+
+.. code-block::
+
+    gdal_translate -a_ullr -180 90 180 -90 -a_srs EPSG:4326 -co TILED=YES -mo DESCRIPTION=Mean_day_temperature in.png out.tif
+
+    ==>
+
+    gdal raster pipeline read in.png ! edit --crs=EPSG:4326 --bbox=-180,-90,180,90 --metadata=DESCRIPTION=Mean_day_temperature ! write --co=TILED=YES out.tif
+
+Note that the order of elements differ: "upper-left-x upper-left-y lower-right-x lower-right-y" for gdal_translate,
+compared to "minimum-x,minimum-y,maximum-x,maximum-y" for the ``--bbox`` option of "gdal raster pipeline ... edit".
+
+
+* Clipping a raster with a bounding box
+
+.. code-block::
+
+    gdal_translate -projwin 2 50 3 49 in.tif out.tif
+
+    ==>
+
+    gdal raster clip --bbox=2,49,3,50 in.tif out.tif
+
+
+* Creating a virtual mosaic (.vrt) from all GeoTIFF files in a directory
+
+.. code-block::
+
+    gdalbuildvrt out.vrt src/*.tif
+
+    ==>
+
+    gdal raster mosaic src/*.tif out.vrt
+
+
+* Creating a mosaic in COG format from all GeoTIFF files in a directory
+
+.. code-block::
+
+    gdalbuildvrt tmp.vrt src/*.tif
+    gdal_translate -of COG tmp.vrt out.tif
+
+    ==>
+
+    gdal raster mosaic --of=COG src/*.tif out.tif
+
+
+* Adding internal overviews for reduction factors 2, 4, 8 and 16 to a GeoTIFF file
+
+.. code-block::
+
+    gdaladdo -r average my.tif 2 4 8 16
+
+    ==>
+
+    gdal raster overview add -r average --levels=2,4,8,16 my.tif
+
+
+* Combining single-band rasters into a multi-band raster
+
+.. code-block::
+
+    gdalbuildvrt tmp.vrt red.tif green.tif blue.tif
+    gdal_translate tmp.vrt out.tif
+
+    ==>
+
+    gdal raster stack red.tif green.tif blue.tif out.tif
+
+
+Vector commands
+---------------
+
+* Getting information on a vector dataset in human-readable format
+
+.. code-block::
+
+    ogrinfo -al -so my.gpkg
+
+    ==>
+
+    gdal vector info --format=text my.gpkg
+
+
+* Converting a shapefile to a GeoPackage
+
+.. code-block::
+
+    ogr2ogr out.gpkg in.shp
+
+    ==>
+
+    gdal vector convert in.shp out.gpkg
+
+
+* Reprojecting a shapefile to a GeoPackage
+
+.. code-block::
+
+    ogr2ogr -t_srs EPSG:4326 out.gpkg in.shp
+
+    ==>
+
+    gdal vector reproject --dst-crs=EPSG:4326 in.shp out.gpkg
+
+
+* Clipping a GeoPackage file
+
+.. code-block::
+
+    ogr2ogr -clipsrc 2 49 3 50 out.gpkg in.shp
+
+    ==>
+
+    gdal vector clip --bbox=2,49,3,50 in.gpkg out.gpkg
+
+
+* Selecting features from a GeoPackage file intersecting a bounding box, but not clipping them to it
+
+.. code-block::
+
+    ogr2ogr -spat 2 49 3 50 out.gpkg in.shp
+
+    ==>
+
+    gdal vector filter --bbox=2,49,3,50 in.gpkg out.gpkg
+
+
+*  Selecting features from a GeoPackage file intersecting a bounding box, but not clipping them to it and reprojecting
+
+.. code-block::
+
+    ogr2ogr -t_srs EPSG:32631 -spat 2 49 3 50 out.gpkg in.shp
+
+    ==>
+
+    gdal vector pipeline read in.gpkg ! filter --bbox=2,49,3,50 ! reproject --dst-crs=EPSG:32631 ! write out.gpkg

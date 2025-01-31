@@ -25,6 +25,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    :maxdepth: 1
    :hidden:
 
+   migration_guide_to_gdal_cli
    gdal
    gdal_info
    gdal_convert
@@ -48,6 +49,7 @@ single :program:`gdal` program that accepts commands and subcommands.
 
 .. only:: html
 
+    - :ref:`migration_guide_to_gdal_cli`: Migration guide to "gdal" command line interface
     - :ref:`gdal_program`: Main "gdal" entry point
     - :ref:`gdal_info_command`: Get information on a dataset
     - :ref:`gdal_convert_command`: Convert a dataset
