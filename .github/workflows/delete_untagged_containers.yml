@@ -19,7 +19,7 @@ jobs:
     if: github.repository == 'OSGeo/gdal'
     steps:
     - name: Delete all containers from gdal-deps without tags
-      uses: Chizkiyahu/delete-untagged-ghcr-action@1c77a06b7f80ad4beb82b85919003831d47277d1 # v5.0.0
+      uses: Chizkiyahu/delete-untagged-ghcr-action@4a33ce3cf2456d2aef98a1b6c60a12dad56cffd9 # v6.0.0
       with:
         token: ${{ secrets.PAT_TOKEN_DELETE_UNTAGGED_CONTAINERS }}
         repository_owner: ${{ github.repository_owner }}
