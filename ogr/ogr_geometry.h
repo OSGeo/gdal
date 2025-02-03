@@ -17,6 +17,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_json.h"
+#include "gdal_fwd.h"
 #include "ogr_core.h"
 #include "ogr_geomcoordinateprecision.h"
 #include "ogr_spatialref.h"
@@ -31,17 +32,6 @@
  *
  * Simple feature geometry classes.
  */
-
-/*! @cond Doxygen_Suppress */
-#ifndef DEFINEH_OGRGeometryH
-#define DEFINEH_OGRGeometryH
-#if defined(DEBUG) || defined(GDAL_DEBUG)
-typedef struct OGRGeometryHS *OGRGeometryH;
-#else
-typedef void *OGRGeometryH;
-#endif
-#endif /* DEFINEH_OGRGeometryH */
-/*! @endcond */
 
 /// WKT Output formatting options.
 enum class OGRWktFormat
@@ -599,6 +589,7 @@ class CPL_DLL OGRGeometry
                           int bOnlyEdges) const CPL_WARN_UNUSED_RESULT;
 
     virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *BuildArea() const CPL_WARN_UNUSED_RESULT;
 
     virtual double Distance3D(const OGRGeometry *poOtherGeom) const;
 
@@ -2725,6 +2716,8 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     /** Create an empty polygon. */
     OGRPolygon() = default;
 
+    OGRPolygon(double x1, double y1, double x2, double y2);
+
     OGRPolygon(const OGRPolygon &other);
     /** Move constructor */
     OGRPolygon(OGRPolygon &&other) = default;
@@ -4380,6 +4373,8 @@ class CPL_DLL OGRGeometryFactory
         const OGRGeometry *poSrcGeom, OGRCoordinateTransformation *poCT,
         char **papszOptions,
         const TransformWithOptionsCache &cache = TransformWithOptionsCache());
+
+    static double GetDefaultArcStepSize();
 
     static OGRGeometry *
     approximateArcAngles(double dfX, double dfY, double dfZ,

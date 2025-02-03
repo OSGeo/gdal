@@ -305,6 +305,7 @@ class GTiffDataset final : public GDALPamDataset
     bool m_bWriteKnownIncompatibleEdition : 1;
     bool m_bHasUsedReadEncodedAPI : 1;  // for debugging
     bool m_bWriteCOGLayout : 1;
+    bool m_bTileInterleave : 1;
 
     void ScanDirectories();
     bool ReadStrile(int nBlockId, void *pOutputBuffer,
@@ -439,6 +440,10 @@ class GTiffDataset final : public GDALPamDataset
 
     bool IsWholeBlock(int nXOff, int nYOff, int nXSize, int nYSize) const;
 
+    void *CacheMultiRange(int nXOff, int nYOff, int nXSize, int nYSize,
+                          int nBufXSize, int nBufYSize, const int *panBandMap,
+                          int nBandCount, GDALRasterIOExtraArg *psExtraArg);
+
     static void ThreadDecompressionFunc(void *pData);
 
     static GTIF *GTIFNew(TIFF *hTIFF);
@@ -541,7 +546,8 @@ class GTiffDataset final : public GDALPamDataset
                           int nBands, GDALDataType eType,
                           double dfExtraSpaceForOverviews,
                           int nColorTableMultiplier, char **papszParamList,
-                          VSILFILE **pfpL, CPLString &osTmpFilename);
+                          VSILFILE **pfpL, CPLString &osTmpFilename,
+                          bool bCreateCopy, bool &bTileInterleavingOut);
 
     CPLErr WriteEncodedTileOrStrip(uint32_t tile_or_strip, void *data,
                                    int bPreserveDataBuffer);

@@ -37,6 +37,7 @@ RUN apt-get update && \
     liblcms2-2 \
     liblz4-dev \
     liblzma-dev \
+    libmuparser-dev \
     libmysqlclient-dev \
     libnetcdf-dev \
     libogdi-dev \

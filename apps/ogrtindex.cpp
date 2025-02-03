@@ -264,7 +264,7 @@ MAIN_START(nArgc, papszArgv)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Several drivers matching %s extension. Using %s",
-                             CPLGetExtension(osOutputName.c_str()),
+                             CPLGetExtensionSafe(osOutputName.c_str()).c_str(),
                              aoDrivers[0].c_str());
                 }
                 osFormat = aoDrivers[0];
@@ -281,13 +281,11 @@ MAIN_START(nArgc, papszArgv)
         GDALDriverH hDriver = GDALGetDriverByName(osFormat.c_str());
         if (hDriver == nullptr)
         {
+            fprintf(stderr, "Unable to find driver `%s'.\n", osFormat.c_str());
+            fprintf(stderr, "The following drivers are available:\n");
             GDALDriverManager *poDM = GetGDALDriverManager();
             for (int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++)
             {
-                fprintf(stderr, "Unable to find driver `%s'.\n",
-                        osFormat.c_str());
-                fprintf(stderr, "The following drivers are available:\n");
-
                 GDALDriver *poIter = poDM->GetDriver(iDriver);
                 char **papszDriverMD = poIter->GetMetadata();
                 if (CPLTestBool(CSLFetchNameValueDef(
@@ -493,8 +491,9 @@ MAIN_START(nArgc, papszArgv)
         if (bWriteAbsolutePath && CPLIsFilenameRelative(srcDataSet.c_str()) &&
             VSIStat(srcDataSet.c_str(), &sStatBuf) == 0)
         {
-            fileNameToWrite = CPLStrdup(
-                CPLProjectRelativeFilename(pszCurrentPath, srcDataSet.c_str()));
+            fileNameToWrite = CPLStrdup(CPLProjectRelativeFilenameSafe(
+                                            pszCurrentPath, srcDataSet.c_str())
+                                            .c_str());
         }
         else
         {

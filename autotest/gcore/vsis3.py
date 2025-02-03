@@ -128,9 +128,8 @@ def test_vsis3_init(aws_test_config):
 def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials):
 
     options = {
-        "AWS_S3_ENDPOINT": "s3.amazonaws.com",
+        "AWS_S3_ENDPOINT": "https://s3.amazonaws.com",
         "AWS_NO_SIGN_REQUEST": "YES",
-        "AWS_HTTPS": "YES",
         "AWS_VIRTUAL_HOSTING": "TRUE",
     }
 
@@ -175,7 +174,7 @@ def test_vsis3_sync_multithreaded_download(
 
     tab = [-1]
     options = {
-        "AWS_S3_ENDPOINT": "s3.amazonaws.com",
+        "AWS_S3_ENDPOINT": "http://s3.amazonaws.com",
         "AWS_NO_SIGN_REQUEST": "YES",
         "AWS_VIRTUAL_HOSTING": "FALSE",
     }

@@ -2630,15 +2630,15 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Compute the line offsets.                                        */
     /* -------------------------------------------------------------------- */
 
-    GUInt64 nPixelOffset;
-    GUInt64 nLineOffset;
-    GUInt64 nBandOffset;
-    GUInt64 nImageOffsetWithoutNBB;
-    GUInt64 nNBB;
-    GUInt64 nImageSize;
+    uint64_t nPixelOffset;
+    uint64_t nLineOffset;
+    uint64_t nBandOffset;
+    uint64_t nImageOffsetWithoutNBB;
+    uint64_t nNBB;
+    uint64_t nImageSize;
     if (!GetSpacings(poDS->oKeywords, nPixelOffset, nLineOffset, nBandOffset,
                      nImageOffsetWithoutNBB, nNBB, nImageSize) ||
-        nImageOffsetWithoutNBB > std::numeric_limits<GUInt64>::max() -
+        nImageOffsetWithoutNBB > std::numeric_limits<uint64_t>::max() -
                                      (nNBB + nBandOffset * (nBands - 1)))
     {
         CPLDebug("VICAR", "Invalid spacings found");
@@ -3076,22 +3076,22 @@ GDALDataType VICARDataset::GetDataTypeFromFormat(const char *pszFormat)
 /************************************************************************/
 
 bool VICARDataset::GetSpacings(const VICARKeywordHandler &keywords,
-                               GUInt64 &nPixelOffset, GUInt64 &nLineOffset,
-                               GUInt64 &nBandOffset,
-                               GUInt64 &nImageOffsetWithoutNBB, GUInt64 &nNBB,
-                               GUInt64 &nImageSize)
+                               uint64_t &nPixelOffset, uint64_t &nLineOffset,
+                               uint64_t &nBandOffset,
+                               uint64_t &nImageOffsetWithoutNBB, uint64_t &nNBB,
+                               uint64_t &nImageSize)
 {
     const GDALDataType eDataType =
         GetDataTypeFromFormat(keywords.GetKeyword("FORMAT", ""));
     if (eDataType == GDT_Unknown)
         return false;
-    const GUInt64 nItemSize = GDALGetDataTypeSizeBytes(eDataType);
+    const uint64_t nItemSize = GDALGetDataTypeSizeBytes(eDataType);
     const char *value = keywords.GetKeyword("ORG", "BSQ");
     // number of bytes of binary prefix before each record
     nNBB = atoi(keywords.GetKeyword("NBB", ""));
-    const GUInt64 nCols64 = atoi(keywords.GetKeyword("NS", ""));
-    const GUInt64 nRows64 = atoi(keywords.GetKeyword("NL", ""));
-    const GUInt64 nBands64 = atoi(keywords.GetKeyword("NB", ""));
+    const uint64_t nCols64 = atoi(keywords.GetKeyword("NS", ""));
+    const uint64_t nRows64 = atoi(keywords.GetKeyword("NL", ""));
+    const uint64_t nBands64 = atoi(keywords.GetKeyword("NB", ""));
     try
     {
         if (EQUAL(value, "BIP"))
@@ -3130,9 +3130,9 @@ bool VICARDataset::GetSpacings(const VICARKeywordHandler &keywords,
         return false;
     }
 
-    const GUInt64 nLabelSize = atoi(keywords.GetKeyword("LBLSIZE", ""));
-    const GUInt64 nRecordSize = atoi(keywords.GetKeyword("RECSIZE", ""));
-    const GUInt64 nNLB = atoi(keywords.GetKeyword("NLB", ""));
+    const uint64_t nLabelSize = atoi(keywords.GetKeyword("LBLSIZE", ""));
+    const uint64_t nRecordSize = atoi(keywords.GetKeyword("RECSIZE", ""));
+    const uint64_t nNLB = atoi(keywords.GetKeyword("NLB", ""));
     try
     {
         nImageOffsetWithoutNBB =

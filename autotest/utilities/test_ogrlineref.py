@@ -108,7 +108,7 @@ def test_ogrlineref_4(ogrlineref_path, parts_shp, tmp_path):
 
 
 @pytest.mark.require_driver("KML")
-def test_ogrlineref_5(ogrlineref_path, tmp_path):
+def test_ogrlineref_kml(ogrlineref_path, tmp_path):
 
     parts_kml = str(tmp_path / "parts.kml")
 
@@ -117,3 +117,4 @@ def test_ogrlineref_5(ogrlineref_path, tmp_path):
     )
 
     assert os.path.exists(parts_kml)
+    assert "KML" in ogr.Open(parts_kml).GetDriver().GetDescription()

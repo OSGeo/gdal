@@ -481,6 +481,7 @@ static bool PartialRefreshFromSourceExtent(
         }
         double dfNextCurPixels =
             dfCurPixels + static_cast<double>(region.nXSize) * region.nYSize;
+        // coverity[divide_by_zero]
         void *pScaledProgress = GDALCreateScaledProgress(
             dfCurPixels / dfTotalPixels, dfNextCurPixels / dfTotalPixels,
             pfnProgress, pProgressArg);

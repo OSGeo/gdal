@@ -31,7 +31,7 @@ sys.path.append("../pymod")
 import gdaltest
 import pytest
 
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 geos_flag = None
 sfcgal_flag = None
@@ -405,3 +405,394 @@ def spatial_filter(lyr, *args):
         yield
     finally:
         lyr.SetSpatialFilter(None)
+
+
+###############################################################################
+# Check transactions rollback, to be called with a freshly created datasource
+
+
+def check_transaction_rollback(ds, start_transaction, test_geometry=False):
+
+    gdal.ErrorReset()
+
+    lyr = ds.CreateLayer("test", options=["GEOMETRY_NAME=geom"])
+    lyr.CreateField(ogr.FieldDefn("fld1", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("fld2", ogr.OFTString))
+
+    # Insert a feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("fld1", "value1")
+    f.SetField("fld2", "value2")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+    fld1 = lyr.GetLayerDefn().GetFieldDefn(0)
+    fld2 = lyr.GetLayerDefn().GetFieldDefn(1)
+
+    def verify(lyr, fld1, fld2):
+        assert lyr.GetGeometryColumn() == "geom"
+        assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld1"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "fld2"
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
+        # Test do not crash
+        assert fld1.GetName() == "fld1"
+        assert fld2.GetName() == "fld2"
+
+    # Test deleting a field
+    ds.StartTransaction() if start_transaction else ds.ExecuteSQL("BEGIN")
+    lyr.DeleteField(0)
+    # Test do not crash
+    assert fld1.GetName() == "fld1"
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld2"
+    ds.RollbackTransaction() if start_transaction else ds.ExecuteSQL("ROLLBACK")
+    verify(lyr, fld1, fld2)
+
+    # Test deleting the second field
+    ds.StartTransaction() if start_transaction else ds.ExecuteSQL("BEGIN")
+    lyr.DeleteField(1)
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld1"
+    ds.RollbackTransaction() if start_transaction else ds.ExecuteSQL("ROLLBACK")
+    verify(lyr, fld1, fld2)
+
+    # Test renaming and changing the type of a field
+    fld1 = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fld1.GetName() == "fld1"
+    ds.StartTransaction() if start_transaction else ds.ExecuteSQL("BEGIN")
+    assert (
+        lyr.AlterFieldDefn(
+            0, ogr.FieldDefn("fld1_renamed", ogr.OFTInteger), ogr.ALTER_ALL_FLAG
+        )
+        == ogr.OGRERR_NONE
+    )
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld1_renamed"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
+    assert fld1.GetName() == "fld1_renamed"
+    ds.RollbackTransaction() if start_transaction else ds.ExecuteSQL("ROLLBACK")
+    verify(lyr, fld1, fld2)
+
+    # Test adding a field
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    ds.StartTransaction() if start_transaction else ds.ExecuteSQL("BEGIN")
+    fld = ogr.FieldDefn("fld3", ogr.OFTInteger)
+    assert lyr.CreateField(fld) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldCount() == 3
+    fld3 = lyr.GetLayerDefn().GetFieldDefn(2)
+    assert fld3.GetName() == "fld3"
+    ds.RollbackTransaction() if start_transaction else ds.ExecuteSQL("ROLLBACK")
+    verify(lyr, fld1, fld2)
+    # Test fld3 does not crash
+    assert fld3.GetName() == "fld3"
+
+    # Test multiple operations
+    ds.StartTransaction() if start_transaction else ds.ExecuteSQL("BEGIN")
+    lyr.DeleteField(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld2"
+    # Add a field
+    fld = ogr.FieldDefn("fld3", ogr.OFTInteger)
+    assert lyr.CreateField(fld) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "fld3"
+    # Rename fld2
+    assert (
+        lyr.AlterFieldDefn(
+            0, ogr.FieldDefn("fld2_renamed", ogr.OFTInteger), ogr.ALTER_ALL_FLAG
+        )
+        == ogr.OGRERR_NONE
+    )
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld2_renamed"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "fld3"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTInteger
+    ds.RollbackTransaction() if start_transaction else ds.ExecuteSQL("ROLLBACK")
+    verify(lyr, fld1, fld2)
+
+    if not test_geometry:
+        return
+
+    ###########################################################
+    # Test geometry columns
+
+    # Start a transaction and add a geometry column.
+    ds.StartTransaction() if start_transaction else ds.ExecuteSQL("BEGIN")
+    assert (
+        lyr.CreateGeomField(ogr.GeomFieldDefn("GEOMETRY_2", ogr.wkbPoint))
+        == ogr.OGRERR_NONE
+    )
+    assert lyr.GetGeometryColumn() == "geom"
+    assert lyr.GetLayerDefn().GetGeomFieldCount() == 2
+
+    # Create a feature.
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("fld1", "value1-2")
+    feat.SetField("fld2", "value2-2")
+    feat.SetGeomFieldDirectly("geom", ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    feat.SetGeomFieldDirectly("GEOMETRY_2", ogr.CreateGeometryFromWkt("POINT(3 4)"))
+    lyr.CreateFeature(feat)
+
+    # Verify the feature.
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    assert feat.GetField("fld1") == "value1-2"
+    assert feat.GetField("fld2") == "value2-2"
+    assert feat.GetGeomFieldRef(0).ExportToWkt() == "POINT (1 2)"
+    assert feat.GetGeomFieldRef(1).ExportToWkt() == "POINT (3 4)"
+    ds.RollbackTransaction() if start_transaction else ds.ExecuteSQL("ROLLBACK")
+
+    # Verify that we have not added GEOMETRY_2 field.
+    assert lyr.GetGeometryColumn() == "geom"
+    assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+
+    verify(lyr, fld1, fld2)
+
+
+###############################################################################
+# Check transactions rollback with savepoints, to be called with a freshly created datasource
+
+
+def check_transaction_rollback_with_savepoint(
+    ds, start_transaction, test_geometry=False
+):
+
+    gdal.ErrorReset()
+
+    assert gdal.GetLastErrorMsg() == "", gdal.GetLastErrorMsg()
+    lyr = ds.CreateLayer("test_rollback_with_savepoint", options=["GEOMETRY_NAME=geom"])
+    lyr.CreateField(ogr.FieldDefn("fld1", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("fld2", ogr.OFTString))
+
+    # Insert a feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("fld1", "value1")
+    f.SetField("fld2", "value2")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+    fld1 = lyr.GetLayerDefn().GetFieldDefn(0)
+    fld2 = lyr.GetLayerDefn().GetFieldDefn(1)
+
+    def verify(lyr, fld1, fld2):
+        assert lyr.GetGeometryColumn() == "geom"
+        assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld1"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "fld2"
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
+        # Test do not crash
+        assert fld1.GetName() == "fld1"
+        assert fld2.GetName() == "fld2"
+        assert gdal.GetLastErrorMsg() == "", gdal.GetLastErrorMsg()
+
+    # Test SAVEPOINT
+    ds.ExecuteSQL("SAVEPOINT test_savepoint1")
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld2"
+    ds.ExecuteSQL("ROLLBACK test_savepoint1")
+
+    verify(lyr, fld1, fld2)
+    # Rollback TO leaves the transaction open, close it
+    ds.ExecuteSQL("ROLLBACK")
+
+    # Test nested savepoints
+    ds.ExecuteSQL("SAVEPOINT test_savepoint2")
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld2"
+    ds.ExecuteSQL("SAVEPOINT test_savepoint3")
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldCount() == 0
+    ds.ExecuteSQL("ROLLBACK test_savepoint3")
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld2"
+    ds.ExecuteSQL("ROLLBACK test_savepoint2")
+
+    verify(lyr, fld1, fld2)
+    # Rollback TO leaves the transaction open, close it
+    ds.ExecuteSQL("ROLLBACK")
+
+    # Test rollback to first savepoint
+    ds.ExecuteSQL("SAVEPOINT test_savepoint5")
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld2"
+    ds.ExecuteSQL("SAVEPOINT test_savepoint6")
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldCount() == 0
+    ds.ExecuteSQL("ROLLBACK test_savepoint5")
+
+    verify(lyr, fld1, fld2)
+    # Rollback TO leaves the transaction open, close it
+    ds.ExecuteSQL("ROLLBACK")
+
+    # Test rollback without specifying a savepoint
+    ds.ExecuteSQL("SAVEPOINT test_savepoint7")
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld2"
+    ds.ExecuteSQL("SAVEPOINT test_savepoint8")
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldCount() == 0
+    ds.ExecuteSQL("ROLLBACK")
+
+    verify(lyr, fld1, fld2)
+
+    ###########################################################
+    # Test error conditions
+    assert gdal.GetLastErrorMsg() == ""
+
+    # Test rollback to non-existing savepoint
+    ds.ExecuteSQL("SAVEPOINT test_savepoint9")
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld2"
+
+    ds.ExecuteSQL("ROLLBACK test_savepointXXX")
+    assert gdal.GetLastErrorMsg().startswith("Savepoint test_savepointXXX not found")
+    gdal.ErrorReset()
+    ds.ExecuteSQL("ROLLBACK test_savepoint9")
+
+    verify(lyr, fld1, fld2)
+    # Rollback TO leaves the transaction open, close it
+    ds.ExecuteSQL("ROLLBACK")
+    gdal.ErrorReset()
+
+    # Test savepoint from within a transaction
+    assert gdal.GetLastErrorMsg() == "", gdal.GetLastErrorMsg()
+    ds.StartTransaction() if start_transaction else ds.ExecuteSQL("BEGIN")
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld2"
+    ds.ExecuteSQL("SAVEPOINT test_savepoint10")
+    assert gdal.GetLastErrorMsg() == "", gdal.GetLastErrorMsg()
+    # Rollback TO leaves the transaction open, close it
+    ds.RollbackTransaction() if start_transaction else ds.ExecuteSQL("ROLLBACK")
+    verify(lyr, fld1, fld2)
+
+
+###############################################################################
+# Check transactions rollback with savepoints release
+
+
+def check_transaction_savepoint_release(
+    filename,
+    driver,
+    auto_begin_transaction,
+    start_transaction,
+    release_to,
+    rollback_to,
+    expected,
+    test_geometry=False,
+):
+
+    gdal.ErrorReset()
+
+    def get_field_names(lyr):
+        field_names = []
+        for i in range(lyr.GetLayerDefn().GetFieldCount()):
+            field_names.append(lyr.GetLayerDefn().GetFieldDefn(i).GetName())
+        return field_names
+
+    def verify(lyr):
+
+        field_names = get_field_names(lyr)
+
+        assert lyr.GetGeometryColumn() == "geom"
+        assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+        assert field_names == expected, (field_names, expected)
+
+        assert fld1 is not None
+        assert fld2 is not None
+        assert fld3 is not None
+        assert fld4 is not None
+        assert fld5 is not None
+
+    with ogr.GetDriverByName(driver).CreateDataSource(filename) as ds:
+
+        layer_name = "svp_release_%s" % ("_".join(str(x) for x in release_to))
+        lyr = ds.CreateLayer(layer_name, options=["GEOMETRY_NAME=geom"])
+        for i in range(1, 6):
+            lyr.CreateField(ogr.FieldDefn("fld%d" % i, ogr.OFTString))
+
+        # Insert a feature
+        f = ogr.Feature(lyr.GetLayerDefn())
+        for i in range(1, 6):
+            f.SetField("fld%d" % i, "value%d" % i)
+
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+        fld1 = lyr.GetLayerDefn().GetFieldDefn(0)
+        fld2 = lyr.GetLayerDefn().GetFieldDefn(1)
+        fld3 = lyr.GetLayerDefn().GetFieldDefn(2)
+        fld4 = lyr.GetLayerDefn().GetFieldDefn(3)
+        fld5 = lyr.GetLayerDefn().GetFieldDefn(4)
+
+        assert fld1.GetName() == "fld1"
+        assert fld2.GetName() == "fld2"
+        assert fld3.GetName() == "fld3"
+        assert fld4.GetName() == "fld4"
+        assert fld5.GetName() == "fld5"
+
+        assert lyr.GetLayerDefn().GetFieldCount() == 5
+
+        # fields are now 1,2,3,4,5
+        assert get_field_names(lyr) == ["fld1", "fld2", "fld3", "fld4", "fld5"]
+
+        # Test SAVEPOINT
+        if auto_begin_transaction:
+            ds.StartTransaction() if start_transaction else ds.ExecuteSQL("BEGIN")
+
+        ds.ExecuteSQL("SAVEPOINT test_savepoint1")
+        assert lyr.DeleteField(1) == ogr.OGRERR_NONE
+        assert lyr.GetLayerDefn().GetFieldCount() == 4
+        # fields are now 1,3,4,5
+        assert get_field_names(lyr) == ["fld1", "fld3", "fld4", "fld5"]
+
+        ds.ExecuteSQL("SAVEPOINT test_savepoint2")
+        assert lyr.DeleteField(2) == ogr.OGRERR_NONE
+        assert lyr.GetLayerDefn().GetFieldCount() == 3
+        # fields are now 1,3,5
+        assert get_field_names(lyr) == ["fld1", "fld3", "fld5"]
+
+        ds.ExecuteSQL("SAVEPOINT test_savepoint3")
+        assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+        # fields are now 3,5
+        assert get_field_names(lyr) == ["fld3", "fld5"]
+
+        ds.ExecuteSQL("SAVEPOINT test_savepoint4")
+        assert lyr.DeleteField(1) == ogr.OGRERR_NONE
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
+        # fields are now 3
+        assert get_field_names(lyr) == ["fld3"]
+
+        for i in release_to:
+            ds.ExecuteSQL("RELEASE test_savepoint%d" % i)
+
+        for i in rollback_to:
+            ds.ExecuteSQL("ROLLBACK TO test_savepoint%d" % i)
+
+        # Check that all savepoints have been released
+        for i in release_to:
+            assert ds.ExecuteSQL("ROLLBACK test_savepoint%d" % i) != ogr.OGRERR_NONE
+            assert gdal.GetLastErrorMsg().startswith(
+                "Savepoint test_savepoint%d not found" % i
+            )
+            gdal.ErrorReset()
+
+        # If the release is not to the last savepoint
+        # issue a COMMIT to close the transaction
+        if auto_begin_transaction or 1 not in release_to:
+            ds.CommitTransaction() if start_transaction else ds.ExecuteSQL("COMMIT")
+
+        # Assert no errors
+        assert gdal.GetLastErrorMsg() == "", gdal.GetLastErrorMsg()
+
+    # Reload the datasource and verify the state
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayerByName(layer_name)
+        verify(lyr)

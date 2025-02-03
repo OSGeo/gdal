@@ -172,7 +172,8 @@ int SDTS_CATD::Read(const char *pszFilename)
         /* --------------------------------------------------------------------
          */
         poEntry->pszFullPath = CPLStrdup(
-            CPLFormCIFilename(pszPrefixPath, poEntry->pszFile, nullptr));
+            CPLFormCIFilenameSafe(pszPrefixPath, poEntry->pszFile, nullptr)
+                .c_str());
 
         /* --------------------------------------------------------------------
          */

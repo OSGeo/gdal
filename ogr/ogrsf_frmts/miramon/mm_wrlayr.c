@@ -2643,13 +2643,13 @@ int MMAppendBlockToBuffer(struct MM_FLUSH_INFO *FlushInfo)
 // Copy the contents of a temporary file to a final file.
 // Used everywhere when closing layers.
 int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
-                         MM_FILE_OFFSET *nOffset)
+                         MM_FILE_OFFSET *pnOffset)
 {
     size_t bufferSize = 1024 * 1024;  // 1 MB buffer;
     unsigned char *buffer;
     size_t bytesRead, bytesWritten;
 
-    if (!pSrcFile || !pDestFile || !nOffset)
+    if (!pSrcFile || !pDestFile || !pnOffset)
         return 0;
 
     buffer = (unsigned char *)calloc_function(bufferSize);
@@ -2658,7 +2658,7 @@ int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
         return 1;
 
     fseek_function(pSrcFile, 0, SEEK_SET);
-    fseek_function(pDestFile, *nOffset, SEEK_SET);
+    fseek_function(pDestFile, *pnOffset, SEEK_SET);
     while ((bytesRead = fread_function(buffer, sizeof(unsigned char),
                                        bufferSize, pSrcFile)) > 0)
     {
@@ -2669,8 +2669,7 @@ int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
             free_function(buffer);
             return 1;
         }
-        if (nOffset)
-            (*nOffset) += bytesWritten;
+        (*pnOffset) += bytesWritten;
     }
     free_function(buffer);
     return 0;

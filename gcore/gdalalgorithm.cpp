@@ -889,8 +889,12 @@ bool GDALAlgorithm::ParseArgument(
         case GAAT_STRING:
         {
             const auto &choices = arg->GetChoices();
-            if (!choices.empty() && std::find(choices.begin(), choices.end(),
-                                              value) == choices.end())
+            const auto &hiddenChoices = arg->GetHiddenChoices();
+            if (!choices.empty() &&
+                std::find(choices.begin(), choices.end(), value) ==
+                    choices.end() &&
+                std::find(hiddenChoices.begin(), hiddenChoices.end(), value) ==
+                    hiddenChoices.end())
             {
                 std::string expected;
                 for (const auto &choice : choices)
@@ -966,11 +970,14 @@ bool GDALAlgorithm::ParseArgument(
             auto &valueVector =
                 std::get<std::vector<std::string>>(inConstructionValues[arg]);
             const auto &choices = arg->GetChoices();
+            const auto &hiddenChoices = arg->GetHiddenChoices();
             for (const char *v : aosTokens)
             {
                 if (!choices.empty() &&
                     std::find(choices.begin(), choices.end(), v) ==
-                        choices.end())
+                        choices.end() &&
+                    std::find(hiddenChoices.begin(), hiddenChoices.end(),
+                              value) == hiddenChoices.end())
                 {
                     std::string expected;
                     for (const auto &choice : choices)
@@ -1505,6 +1512,13 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         if ((arg == outputArg || !outputArg) && update)
             flags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
 
+        const auto readOnlyArg = algForOutput->GetArg(GDAL_ARG_NAME_READ_ONLY);
+        const bool readOnly =
+            (readOnlyArg && readOnlyArg->GetType() == GAAT_BOOLEAN &&
+             readOnlyArg->Get<bool>());
+        if (readOnly)
+            flags &= ~GDAL_OF_UPDATE;
+
         CPLStringList aosOpenOptions;
         CPLStringList aosAllowedDrivers;
         if (arg->GetName() == GDAL_ARG_NAME_INPUT)
@@ -1984,7 +1998,7 @@ GDALAlgorithm::AddInputDatasetArg(GDALArgDatasetValue *pValue,
                 }
             }
 
-            std::string osDir = CPLGetDirname(currentValue.c_str());
+            std::string osDir = CPLGetDirnameSafe(currentValue.c_str());
             auto psDir = VSIOpenDir(osDir.c_str(), 0, nullptr);
             const std::string osSep = VSIGetDirectorySeparator(osDir.c_str());
             if (currentValue.empty())
@@ -2004,7 +2018,7 @@ GDALAlgorithm::AddInputDatasetArg(GDALArgDatasetValue *pValue,
                     {
                         if (cpl::contains(
                                 oExtensions,
-                                CPLString(CPLGetExtension(psEntry->pszName))
+                                CPLString(CPLGetExtensionSafe(psEntry->pszName))
                                     .tolower()) ||
                             VSI_ISDIR(psEntry->nMode))
                         {
@@ -2012,7 +2026,7 @@ GDALAlgorithm::AddInputDatasetArg(GDALArgDatasetValue *pValue,
                             if (osDir.empty())
                                 osVal = psEntry->pszName;
                             else
-                                osVal = CPLFormFilename(
+                                osVal = CPLFormFilenameSafe(
                                     osDir.c_str(), psEntry->pszName, nullptr);
                             if (VSI_ISDIR(psEntry->nMode))
                                 osVal += osSep;
@@ -2259,7 +2273,7 @@ GDALAlgorithm::AddOpenOptionsArg(std::vector<std::string> *pValue)
                 auto poDM = GetGDALDriverManager();
                 auto &datasetValue = inputArg->Get<GDALArgDatasetValue>();
                 const auto &osDSName = datasetValue.GetName();
-                const std::string osExt = CPLGetExtension(osDSName.c_str());
+                const std::string osExt = CPLGetExtensionSafe(osDSName.c_str());
                 if (!osExt.empty())
                 {
                     std::set<std::string> oVisitedExtensions;
@@ -2576,7 +2590,7 @@ GDALAlgorithm::AddCreationOptionsArg(std::vector<std::string> *pValue)
                 auto poDM = GetGDALDriverManager();
                 auto &datasetValue = outputArg->Get<GDALArgDatasetValue>();
                 const auto &osDSName = datasetValue.GetName();
-                const std::string osExt = CPLGetExtension(osDSName.c_str());
+                const std::string osExt = CPLGetExtensionSafe(osDSName.c_str());
                 if (!osExt.empty())
                 {
                     std::set<std::string> oVisitedExtensions;
@@ -2666,7 +2680,7 @@ GDALAlgorithm::AddLayerCreationOptionsArg(std::vector<std::string> *pValue)
                 auto poDM = GetGDALDriverManager();
                 auto &datasetValue = outputArg->Get<GDALArgDatasetValue>();
                 const auto &osDSName = datasetValue.GetName();
-                const std::string osExt = CPLGetExtension(osDSName.c_str());
+                const std::string osExt = CPLGetExtensionSafe(osDSName.c_str());
                 if (!osExt.empty())
                 {
                     std::set<std::string> oVisitedExtensions;

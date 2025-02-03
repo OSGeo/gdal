@@ -214,16 +214,17 @@ class VSIIOStream final : public CNCSJPCIOStream
         CPLString osFilenameUsed = pszFilename;
 
 #if ECWSDK_VERSION < 55
-        CPLString osPath = CPLGetPath(pszFilename);
+        CPLString osPath = CPLGetPathSafe(pszFilename);
         struct stat sStatBuf;
         if (!osPath.empty() && stat(osPath, &sStatBuf) != 0)
         {
-            osFilenameUsed = CPLGenerateTempFilename(nullptr);
+            osFilenameUsed = CPLGenerateTempFilenameSafe(nullptr);
             // try to preserve the extension.
-            if (strlen(CPLGetExtension(pszFilename)) > 0)
+            const auto osExt = CPLGetExtensionSafe(pszFilename);
+            if (!osExt.empty())
             {
                 osFilenameUsed += ".";
-                osFilenameUsed += CPLGetExtension(pszFilename);
+                osFilenameUsed += osExt;
             }
             CPLDebug("ECW",
                      "Using filename '%s' for temporary directory "

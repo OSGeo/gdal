@@ -474,6 +474,36 @@ static void SetAlphaMax(GDALWarpOptions *psOptions, GDALRasterBandH hBand,
 }
 
 /************************************************************************/
+/*                            SetTieStrategy()                          */
+/************************************************************************/
+
+static void SetTieStrategy(GDALWarpOptions *psOptions, CPLErr *peErr)
+{
+    if (const char *pszTieStrategy =
+            CSLFetchNameValue(psOptions->papszWarpOptions, "MODE_TIES"))
+    {
+        if (EQUAL(pszTieStrategy, "FIRST"))
+        {
+            psOptions->eTieStrategy = GWKTS_First;
+        }
+        else if (EQUAL(pszTieStrategy, "MIN"))
+        {
+            psOptions->eTieStrategy = GWKTS_Min;
+        }
+        else if (EQUAL(pszTieStrategy, "MAX"))
+        {
+            psOptions->eTieStrategy = GWKTS_Max;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Unknown value of MODE_TIES: %s", pszTieStrategy);
+            *peErr = CE_Failure;
+        }
+    }
+}
+
+/************************************************************************/
 /*                             Initialize()                             */
 /************************************************************************/
 
@@ -483,7 +513,7 @@ static void SetAlphaMax(GDALWarpOptions *psOptions, GDALRasterBandH hBand,
  * This method initializes the GDALWarpOperation's concept of the warp
  * options in effect.  It creates an internal copy of the GDALWarpOptions
  * structure and defaults a variety of additional fields in the internal
- * copy if not set in the provides warp options.
+ * copy if not set in the provided warp options.
  *
  * Defaulting operations include:
  *  - If the nBandCount is 0, it will be set to the number of bands in the
@@ -505,6 +535,8 @@ CPLErr GDALWarpOperation::Initialize(const GDALWarpOptions *psNewOptions)
     if (psOptions != nullptr)
         WipeOptions();
 
+    CPLErr eErr = CE_None;
+
     psOptions = GDALCloneWarpOptions(psNewOptions);
     psOptions->papszWarpOptions =
         CSLSetNameValue(psOptions->papszWarpOptions, "EXTRA_ELTS",
@@ -523,6 +555,7 @@ CPLErr GDALWarpOperation::Initialize(const GDALWarpOptions *psNewOptions)
     }
 
     GDALWarpResolveWorkingDataType(psOptions);
+    SetTieStrategy(psOptions, &eErr);
 
     /* -------------------------------------------------------------------- */
     /*      Default memory available.                                       */
@@ -548,7 +581,6 @@ CPLErr GDALWarpOperation::Initialize(const GDALWarpOptions *psNewOptions)
     const char *pszCutlineWKT =
         CSLFetchNameValue(psOptions->papszWarpOptions, "CUTLINE");
 
-    CPLErr eErr = CE_None;
     if (pszCutlineWKT && psOptions->hCutline == nullptr)
     {
         char *pszWKTTmp = const_cast<char *>(pszCutlineWKT);
@@ -1839,6 +1871,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 
     oWK.eResample = m_bIsTranslationOnPixelBoundaries ? GRA_NearestNeighbour
                                                       : psOptions->eResampleAlg;
+    oWK.eTieStrategy = psOptions->eTieStrategy;
     oWK.nBands = psOptions->nBandCount;
     oWK.eWorkingDataType = psOptions->eWorkingDataType;
 

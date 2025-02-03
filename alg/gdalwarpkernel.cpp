@@ -190,6 +190,7 @@ static CPLErr GWKBilinearNoMasksOrDstDensityOnlyDouble(GDALWarpKernel *poWK);
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyShort(GDALWarpKernel *poWK);
 static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyShort(GDALWarpKernel *poWK);
 static CPLErr GWKNearestShort(GDALWarpKernel *poWK);
+static CPLErr GWKNearestUnsignedShort(GDALWarpKernel *poWK);
 static CPLErr GWKNearestNoMasksOrDstDensityOnlyFloat(GDALWarpKernel *poWK);
 static CPLErr GWKNearestFloat(GDALWarpKernel *poWK);
 static CPLErr GWKAverageOrMode(GDALWarpKernel *);
@@ -989,7 +990,8 @@ GDALWarpKernel::GDALWarpKernel()
       nDstXOff(0), nDstYOff(0), pfnTransformer(nullptr),
       pTransformerArg(nullptr), pfnProgress(GDALDummyProgress),
       pProgress(nullptr), dfProgressBase(0.0), dfProgressScale(1.0),
-      padfDstNoDataReal(nullptr), psThreadData(nullptr)
+      padfDstNoDataReal(nullptr), psThreadData(nullptr),
+      eTieStrategy(GWKTS_First)
 {
 }
 
@@ -1240,13 +1242,8 @@ CPLErr GDALWarpKernel::PerformWarp()
         if (pafUnifiedSrcDensity != nullptr)
         {
             // Typically if there's a cutline or an alpha band
-            static bool bHasWarned = false;
-            if (!bHasWarned)
-            {
-                bHasWarned = true;
-                CPLDebug("WARP", "pafUnifiedSrcDensity is not null, "
+            CPLDebugOnce("WARP", "pafUnifiedSrcDensity is not null, "
                                  "hence OpenCL warper cannot be used");
-            }
         }
         else
         {
@@ -1311,9 +1308,11 @@ CPLErr GDALWarpKernel::PerformWarp()
         bNoMasksOrDstDensityOnly)
         return GWKBilinearNoMasksOrDstDensityOnlyUShort(this);
 
-    if ((eWorkingDataType == GDT_Int16 || eWorkingDataType == GDT_UInt16) &&
-        eResample == GRA_NearestNeighbour)
+    if (eWorkingDataType == GDT_Int16 && eResample == GRA_NearestNeighbour)
         return GWKNearestShort(this);
+
+    if (eWorkingDataType == GDT_Int16 && eResample == GRA_NearestNeighbour)
+        return GWKNearestUnsignedShort(this);
 
     if (eWorkingDataType == GDT_Float32 && eResample == GRA_NearestNeighbour &&
         bNoMasksOrDstDensityOnly)
@@ -1525,6 +1524,60 @@ template <> double GWKClampValueT<double>(double dfValue)
 #endif
 
 /************************************************************************/
+/*                             AvoidNoData()                            */
+/************************************************************************/
+
+template <class T>
+inline void AvoidNoData(const GDALWarpKernel *poWK, int iBand,
+                        GPtrDiff_t iDstOffset)
+{
+    GByte *pabyDst = poWK->papabyDstImage[iBand];
+    T *pDst = reinterpret_cast<T *>(pabyDst);
+
+    if (poWK->padfDstNoDataReal != nullptr &&
+        poWK->padfDstNoDataReal[iBand] == static_cast<double>(pDst[iDstOffset]))
+    {
+        if constexpr (std::numeric_limits<T>::is_integer)
+        {
+            if (pDst[iDstOffset] ==
+                static_cast<T>(std::numeric_limits<T>::lowest()))
+            {
+                pDst[iDstOffset] =
+                    static_cast<T>(std::numeric_limits<T>::lowest() + 1);
+            }
+            else
+                pDst[iDstOffset]--;
+        }
+        else
+        {
+            if (pDst[iDstOffset] == std::numeric_limits<T>::max())
+            {
+                pDst[iDstOffset] =
+                    std::nextafter(pDst[iDstOffset], static_cast<T>(0));
+            }
+            else
+            {
+                pDst[iDstOffset] = std::nextafter(
+                    pDst[iDstOffset], std::numeric_limits<T>::max());
+            }
+        }
+
+        if (!poWK->bWarnedAboutDstNoDataReplacement)
+        {
+            const_cast<GDALWarpKernel *>(poWK)
+                ->bWarnedAboutDstNoDataReplacement = true;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Value %g in the source dataset has been changed to %g "
+                     "in the destination dataset to avoid being treated as "
+                     "NoData. To avoid this, select a different NoData value "
+                     "for the destination dataset.",
+                     poWK->padfDstNoDataReal[iBand],
+                     static_cast<double>(pDst[iDstOffset]));
+        }
+    }
+}
+
+/************************************************************************/
 /*                         GWKSetPixelValueRealT()                      */
 /************************************************************************/
 
@@ -1584,16 +1637,39 @@ static bool GWKSetPixelValueRealT(const GDALWarpKernel *poWK, int iBand,
         pDst[iDstOffset] = value;
     }
 
-    if (poWK->padfDstNoDataReal != nullptr &&
-        poWK->padfDstNoDataReal[iBand] == static_cast<double>(pDst[iDstOffset]))
-    {
-        if (pDst[iDstOffset] == std::numeric_limits<T>::min())
-            pDst[iDstOffset] = std::numeric_limits<T>::min() + 1;
-        else
-            pDst[iDstOffset]--;
-    }
+    AvoidNoData<T>(poWK, iBand, iDstOffset);
 
     return true;
+}
+
+/************************************************************************/
+/*                       ClampRoundAndAvoidNoData()                     */
+/************************************************************************/
+
+template <class T>
+inline void ClampRoundAndAvoidNoData(const GDALWarpKernel *poWK, int iBand,
+                                     GPtrDiff_t iDstOffset, double dfReal)
+{
+    GByte *pabyDst = poWK->papabyDstImage[iBand];
+    T *pDst = reinterpret_cast<T *>(pabyDst);
+
+    if constexpr (std::numeric_limits<T>::is_integer)
+    {
+        if (dfReal < static_cast<double>(std::numeric_limits<T>::lowest()))
+            pDst[iDstOffset] = static_cast<T>(std::numeric_limits<T>::lowest());
+        else if (dfReal > static_cast<double>(std::numeric_limits<T>::max()))
+            pDst[iDstOffset] = static_cast<T>(std::numeric_limits<T>::max());
+        else
+            pDst[iDstOffset] = (std::numeric_limits<T>::is_signed)
+                                   ? static_cast<T>(floor(dfReal + 0.5))
+                                   : static_cast<T>(dfReal + 0.5);
+    }
+    else
+    {
+        pDst[iDstOffset] = static_cast<T>(dfReal);
+    }
+
+    AvoidNoData<T>(poWK, iBand, iDstOffset);
 }
 
 /************************************************************************/
@@ -1728,83 +1804,55 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
                  (dfDensity + dfDstInfluence);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Actually apply the destination value.                           */
-/*                                                                      */
-/*      Avoid using the destination nodata value for integer datatypes  */
-/*      if by chance it is equal to the computed pixel value.           */
-/* -------------------------------------------------------------------- */
-
-// TODO(schwehr): Can we make this a template?
-#define CLAMP(type)                                                            \
-    do                                                                         \
-    {                                                                          \
-        type *_pDst = reinterpret_cast<type *>(pabyDst);                       \
-        if (dfReal < static_cast<double>(std::numeric_limits<type>::min()))    \
-            _pDst[iDstOffset] =                                                \
-                static_cast<type>(std::numeric_limits<type>::min());           \
-        else if (dfReal >                                                      \
-                 static_cast<double>(std::numeric_limits<type>::max()))        \
-            _pDst[iDstOffset] =                                                \
-                static_cast<type>(std::numeric_limits<type>::max());           \
-        else                                                                   \
-            _pDst[iDstOffset] = (std::numeric_limits<type>::is_signed)         \
-                                    ? static_cast<type>(floor(dfReal + 0.5))   \
-                                    : static_cast<type>(dfReal + 0.5);         \
-        if (poWK->padfDstNoDataReal != nullptr &&                              \
-            poWK->padfDstNoDataReal[iBand] ==                                  \
-                static_cast<double>(_pDst[iDstOffset]))                        \
-        {                                                                      \
-            if (_pDst[iDstOffset] ==                                           \
-                static_cast<type>(std::numeric_limits<type>::min()))           \
-                _pDst[iDstOffset] =                                            \
-                    static_cast<type>(std::numeric_limits<type>::min() + 1);   \
-            else                                                               \
-                _pDst[iDstOffset]--;                                           \
-        }                                                                      \
-    } while (false)
+    /* -------------------------------------------------------------------- */
+    /*      Actually apply the destination value.                           */
+    /*                                                                      */
+    /*      Avoid using the destination nodata value for integer datatypes  */
+    /*      if by chance it is equal to the computed pixel value.           */
+    /* -------------------------------------------------------------------- */
 
     switch (poWK->eWorkingDataType)
     {
         case GDT_Byte:
-            CLAMP(GByte);
+            ClampRoundAndAvoidNoData<GByte>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Int8:
-            CLAMP(GInt8);
+            ClampRoundAndAvoidNoData<GInt8>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Int16:
-            CLAMP(GInt16);
+            ClampRoundAndAvoidNoData<GInt16>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_UInt16:
-            CLAMP(GUInt16);
+            ClampRoundAndAvoidNoData<GUInt16>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_UInt32:
-            CLAMP(GUInt32);
+            ClampRoundAndAvoidNoData<GUInt32>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Int32:
-            CLAMP(GInt32);
+            ClampRoundAndAvoidNoData<GInt32>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_UInt64:
-            CLAMP(std::uint64_t);
+            ClampRoundAndAvoidNoData<std::uint64_t>(poWK, iBand, iDstOffset,
+                                                    dfReal);
             break;
 
         case GDT_Int64:
-            CLAMP(std::int64_t);
+            ClampRoundAndAvoidNoData<std::int64_t>(poWK, iBand, iDstOffset,
+                                                   dfReal);
             break;
 
         case GDT_Float32:
-            reinterpret_cast<float *>(pabyDst)[iDstOffset] =
-                static_cast<float>(dfReal);
+            ClampRoundAndAvoidNoData<float>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Float64:
-            reinterpret_cast<double *>(pabyDst)[iDstOffset] = dfReal;
+            ClampRoundAndAvoidNoData<double>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_CInt16:
@@ -1987,44 +2035,45 @@ static bool GWKSetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
     switch (poWK->eWorkingDataType)
     {
         case GDT_Byte:
-            CLAMP(GByte);
+            ClampRoundAndAvoidNoData<GByte>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Int8:
-            CLAMP(GInt8);
+            ClampRoundAndAvoidNoData<GInt8>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Int16:
-            CLAMP(GInt16);
+            ClampRoundAndAvoidNoData<GInt16>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_UInt16:
-            CLAMP(GUInt16);
+            ClampRoundAndAvoidNoData<GUInt16>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_UInt32:
-            CLAMP(GUInt32);
+            ClampRoundAndAvoidNoData<GUInt32>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Int32:
-            CLAMP(GInt32);
+            ClampRoundAndAvoidNoData<GInt32>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_UInt64:
-            CLAMP(std::uint64_t);
+            ClampRoundAndAvoidNoData<std::uint64_t>(poWK, iBand, iDstOffset,
+                                                    dfReal);
             break;
 
         case GDT_Int64:
-            CLAMP(std::int64_t);
+            ClampRoundAndAvoidNoData<std::int64_t>(poWK, iBand, iDstOffset,
+                                                   dfReal);
             break;
 
         case GDT_Float32:
-            reinterpret_cast<float *>(pabyDst)[iDstOffset] =
-                static_cast<float>(dfReal);
+            ClampRoundAndAvoidNoData<float>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_Float64:
-            reinterpret_cast<double *>(pabyDst)[iDstOffset] = dfReal;
+            ClampRoundAndAvoidNoData<double>(poWK, iBand, iDstOffset, dfReal);
             break;
 
         case GDT_CInt16:
@@ -4388,7 +4437,9 @@ static void GWKComputeWeights(GDALResampleAlg eResample, int iMin, int iMax,
 
     int i = iMin;  // Used after for.
     int iC = 0;    // Used after for.
-    double dfAccumulatorWeightHorizontal = 0.0;
+    // Not zero, but as close as possible to it, to avoid potential division by
+    // zero at end of function
+    double dfAccumulatorWeightHorizontal = std::numeric_limits<double>::min();
     for (; i + 2 < iMax; i += 4, iC += 4)
     {
         padfWeightsHorizontal[iC] = (i - dfDeltaX) * dfXScale;
@@ -4409,7 +4460,9 @@ static void GWKComputeWeights(GDALResampleAlg eResample, int iMin, int iMax,
 
     int j = jMin;  // Used after for.
     int jC = 0;    // Used after for.
-    double dfAccumulatorWeightVertical = 0.0;
+    // Not zero, but as close as possible to it, to avoid potential division by
+    // zero at end of function
+    double dfAccumulatorWeightVertical = std::numeric_limits<double>::min();
     for (; j + 2 < jMax; j += 4, jC += 4)
     {
         padfWeightsVertical[jC] = (j - dfDeltaY) * dfYScale;
@@ -6678,24 +6731,8 @@ template <class T> static void GWKNearestThread(void *pData)
                             padfZ[iDstX] * dfMultFactorVerticalShiftPipeline);
                     }
 
-                    if (dfBandDensity < 1.0)
-                    {
-                        if (dfBandDensity == 0.0)
-                        {
-                            // Do nothing.
-                        }
-                        else
-                        {
-                            // Let the general code take care of mixing.
-                            GWKSetPixelValueRealT(poWK, iBand, iDstOffset,
-                                                  dfBandDensity, value);
-                        }
-                    }
-                    else
-                    {
-                        reinterpret_cast<T *>(
-                            poWK->papabyDstImage[iBand])[iDstOffset] = value;
-                    }
+                    GWKSetPixelValueRealT(poWK, iBand, iDstOffset,
+                                          dfBandDensity, value);
                 }
             }
 
@@ -6810,6 +6847,11 @@ static CPLErr GWKNearestShort(GDALWarpKernel *poWK)
     return GWKRun(poWK, "GWKNearestShort", GWKNearestThread<GInt16>);
 }
 
+static CPLErr GWKNearestUnsignedShort(GDALWarpKernel *poWK)
+{
+    return GWKRun(poWK, "GWKNearestUnsignedShort", GWKNearestThread<GUInt16>);
+}
+
 static CPLErr GWKNearestNoMasksOrDstDensityOnlyFloat(GDALWarpKernel *poWK)
 {
     return GWKRun(
@@ -6857,16 +6899,12 @@ static void GWKAverageOrModeThread(void *pData)
     /* -------------------------------------------------------------------- */
     int nAlgo = 0;
 
-    // These vars only used with nAlgo == 3.
-    int *panVals = nullptr;
+    // Only used for GRA_Mode
+    float *pafRealVals = nullptr;
+    float *pafCounts = nullptr;
     int nBins = 0;
     int nBinsOffset = 0;
-
-    // Only used with nAlgo = 2.
-    float *pafRealVals = nullptr;
-    float *pafImagVals = nullptr;
-    int *panRealSums = nullptr;
-    int *panImagSums = nullptr;
+    const GWKTieStrategy eTieStrategy = poWK->eTieStrategy;
 
     // Only used with nAlgo = 6.
     float quant = 0.5;
@@ -6914,9 +6952,9 @@ static void GWKAverageOrModeThread(void *pData)
             {
                 nBins = 65536;
             }
-            panVals =
-                static_cast<int *>(VSI_MALLOC_VERBOSE(nBins * sizeof(int)));
-            if (panVals == nullptr)
+            pafCounts =
+                static_cast<float *>(VSI_MALLOC_VERBOSE(nBins * sizeof(float)));
+            if (pafCounts == nullptr)
                 return;
         }
         else
@@ -6927,12 +6965,12 @@ static void GWKAverageOrModeThread(void *pData)
             {
                 pafRealVals = static_cast<float *>(
                     VSI_MALLOC3_VERBOSE(nSrcXSize, nSrcYSize, sizeof(float)));
-                panRealSums = static_cast<int *>(
-                    VSI_MALLOC3_VERBOSE(nSrcXSize, nSrcYSize, sizeof(int)));
-                if (pafRealVals == nullptr || panRealSums == nullptr)
+                pafCounts = static_cast<float *>(
+                    VSI_MALLOC3_VERBOSE(nSrcXSize, nSrcYSize, sizeof(float)));
+                if (pafRealVals == nullptr || pafCounts == nullptr)
                 {
                     VSIFree(pafRealVals);
-                    VSIFree(panRealSums);
+                    VSIFree(pafCounts);
                     return;
                 }
             }
@@ -7567,12 +7605,12 @@ static void GWKAverageOrModeThread(void *pData)
                         // majority filter on floating point data? But, here it
                         // is for the sake of compatibility. It won't look
                         // right on RGB images by the nature of the filter.
-                        int iMaxInd = 0;
-                        int iMaxVal = -1;
-                        int i = 0;
+                        nBins = 0;
+                        int iModeIndex = -1;
 
                         for (int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++)
                         {
+                            const double dfWeightY = COMPUTE_WEIGHT_Y(iSrcY);
                             iSrcOffset =
                                 iSrcXMin +
                                 static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
@@ -7597,35 +7635,73 @@ static void GWKAverageOrModeThread(void *pData)
                                 {
                                     const float fVal =
                                         static_cast<float>(dfValueRealTmp);
+                                    const double dfWeight =
+                                        COMPUTE_WEIGHT(iSrcX, dfWeightY);
 
                                     // Check array for existing entry.
-                                    for (i = 0; i < iMaxInd; ++i)
-                                        if (pafRealVals[i] == fVal &&
-                                            ++panRealSums[i] >
-                                                panRealSums[iMaxVal])
+                                    int i = 0;
+                                    for (i = 0; i < nBins; ++i)
+                                    {
+                                        if (pafRealVals[i] == fVal)
                                         {
-                                            iMaxVal = i;
+
+                                            pafCounts[i] +=
+                                                static_cast<float>(dfWeight);
+                                            bool bValIsMaxCount =
+                                                (pafCounts[i] >
+                                                 pafCounts[iModeIndex]);
+
+                                            if (!bValIsMaxCount &&
+                                                pafCounts[i] ==
+                                                    pafCounts[iModeIndex])
+                                            {
+                                                switch (eTieStrategy)
+                                                {
+                                                    case GWKTS_First:
+                                                        break;
+                                                    case GWKTS_Min:
+                                                        bValIsMaxCount =
+                                                            fVal <
+                                                            pafRealVals
+                                                                [iModeIndex];
+                                                        break;
+                                                    case GWKTS_Max:
+                                                        bValIsMaxCount =
+                                                            fVal >
+                                                            pafRealVals
+                                                                [iModeIndex];
+                                                        break;
+                                                }
+                                            }
+
+                                            if (bValIsMaxCount)
+                                            {
+                                                iModeIndex = i;
+                                            }
+
                                             break;
                                         }
+                                    }
 
                                     // Add to arr if entry not already there.
-                                    if (i == iMaxInd)
+                                    if (i == nBins)
                                     {
-                                        pafRealVals[iMaxInd] = fVal;
-                                        panRealSums[iMaxInd] = 1;
+                                        pafRealVals[i] = fVal;
+                                        pafCounts[i] =
+                                            static_cast<float>(dfWeight);
 
-                                        if (iMaxVal < 0)
-                                            iMaxVal = iMaxInd;
+                                        if (iModeIndex < 0)
+                                            iModeIndex = i;
 
-                                        ++iMaxInd;
+                                        ++nBins;
                                     }
                                 }
                             }
                         }
 
-                        if (iMaxVal != -1)
+                        if (iModeIndex != -1)
                         {
-                            dfValueReal = pafRealVals[iMaxVal];
+                            dfValueReal = pafRealVals[iModeIndex];
 
                             if (poWK->bApplyVerticalShift)
                             {
@@ -7646,13 +7722,15 @@ static void GWKAverageOrModeThread(void *pData)
                     }
                     else  // byte or int16.
                     {
-                        int nMaxVal = 0;
-                        int iMaxInd = -1;
+                        float fMaxCount = 0.0f;
+                        int nMode = -1;
+                        bool bHasSourceValues = false;
 
-                        memset(panVals, 0, nBins * sizeof(int));
+                        memset(pafCounts, 0, nBins * sizeof(float));
 
                         for (int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++)
                         {
+                            const double dfWeightY = COMPUTE_WEIGHT_Y(iSrcY);
                             iSrcOffset =
                                 iSrcXMin +
                                 static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
@@ -7675,22 +7753,46 @@ static void GWKAverageOrModeThread(void *pData)
                                         &dfValueRealTmp, &dfValueImagTmp) &&
                                     dfBandDensity > BAND_DENSITY_THRESHOLD)
                                 {
+                                    bHasSourceValues = true;
                                     const int nVal =
                                         static_cast<int>(dfValueRealTmp);
-                                    if (++panVals[nVal + nBinsOffset] > nMaxVal)
+                                    const int iBin = nVal + nBinsOffset;
+                                    const double dfWeight =
+                                        COMPUTE_WEIGHT(iSrcX, dfWeightY);
+
+                                    // Sum the density.
+                                    pafCounts[iBin] +=
+                                        static_cast<float>(dfWeight);
+                                    // Is it the most common value so far?
+                                    bool bUpdateMode =
+                                        pafCounts[iBin] > fMaxCount;
+                                    if (!bUpdateMode &&
+                                        pafCounts[iBin] == fMaxCount)
                                     {
-                                        // Sum the density.
-                                        // Is it the most common value so far?
-                                        iMaxInd = nVal;
-                                        nMaxVal = panVals[nVal + nBinsOffset];
+                                        switch (eTieStrategy)
+                                        {
+                                            case GWKTS_First:
+                                                break;
+                                            case GWKTS_Min:
+                                                bUpdateMode = nVal < nMode;
+                                                break;
+                                            case GWKTS_Max:
+                                                bUpdateMode = nVal > nMode;
+                                                break;
+                                        }
+                                    }
+                                    if (bUpdateMode)
+                                    {
+                                        nMode = nVal;
+                                        fMaxCount = pafCounts[iBin];
                                     }
                                 }
                             }
                         }
 
-                        if (iMaxInd != -1)
+                        if (bHasSourceValues)
                         {
-                            dfValueReal = iMaxInd;
+                            dfValueReal = nMode;
 
                             if (poWK->bApplyVerticalShift)
                             {
@@ -7951,14 +8053,8 @@ static void GWKAverageOrModeThread(void *pData)
     CPLFree(padfZ2);
     CPLFree(pabSuccess);
     CPLFree(pabSuccess2);
-    VSIFree(panVals);
+    VSIFree(pafCounts);
     VSIFree(pafRealVals);
-    VSIFree(panRealSums);
-    if (bIsComplex)
-    {
-        VSIFree(pafImagVals);
-        VSIFree(panImagSums);
-    }
 }
 
 /************************************************************************/

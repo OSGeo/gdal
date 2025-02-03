@@ -1418,15 +1418,15 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
     bool bInvalidTileSize;
     try
     {
-        GUInt64 nMaxTileBits =
-            (CPLSM(static_cast<GUInt64>(2)) *
-             CPLSM(static_cast<GUInt64>(poDS->sHeader.nTileWidth)) *
-             CPLSM(static_cast<GUInt64>(poDS->sHeader.nTileHeight)) *
-             CPLSM(static_cast<GUInt64>(poDS->sHeader.nBitDepth)))
+        uint64_t nMaxTileBits =
+            (CPLSM(static_cast<uint64_t>(2)) *
+             CPLSM(static_cast<uint64_t>(poDS->sHeader.nTileWidth)) *
+             CPLSM(static_cast<uint64_t>(poDS->sHeader.nTileHeight)) *
+             CPLSM(static_cast<uint64_t>(poDS->sHeader.nBitDepth)))
                 .v();
         bInvalidTileSize =
             (nMaxTileBits >
-             static_cast<GUInt64>(std::numeric_limits<GUInt32>::max()));
+             static_cast<uint64_t>(std::numeric_limits<GUInt32>::max()));
     }
     catch (...)
     {

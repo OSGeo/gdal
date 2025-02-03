@@ -4024,15 +4024,10 @@ OGRGeometry *OGRGeometryFactory::transformWithOptions(
         if (poDstGeom->getSpatialReference() &&
             !poDstGeom->getSpatialReference()->IsGeographic())
         {
-            static bool bHasWarned = false;
-            if (!bHasWarned)
-            {
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
-                    "WRAPDATELINE is without effect when reprojecting to a "
-                    "non-geographic CRS");
-                bHasWarned = true;
-            }
+            CPLErrorOnce(
+                CE_Warning, CPLE_AppDefined,
+                "WRAPDATELINE is without effect when reprojecting to a "
+                "non-geographic CRS");
             return poDstGeom.release();
         }
         // TODO and we should probably also test that the axis order + data axis
@@ -4197,13 +4192,37 @@ void OGR_GeomTransformer_Destroy(OGRGeomTransformerH hTransformer)
 }
 
 /************************************************************************/
-/*                       OGRGF_GetDefaultStepSize()                     */
+/*                OGRGeometryFactory::GetDefaultArcStepSize()           */
 /************************************************************************/
 
-static double OGRGF_GetDefaultStepSize()
+/** Return the default value of the angular step used when stroking curves
+ * as lines. Defaults to 4 degrees.
+ * Can be modified by setting the OGR_ARC_STEPSIZE configuration option.
+ * Valid values are in [1e-2, 180] degree range.
+ * @since 3.11
+ */
+
+/* static */
+double OGRGeometryFactory::GetDefaultArcStepSize()
 {
-    // coverity[tainted_data]
-    return CPLAtofM(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4"));
+    const double dfVal = CPLAtofM(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4"));
+    constexpr double MIN_VAL = 1e-2;
+    if (dfVal < MIN_VAL)
+    {
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
+                     "Too small value for OGR_ARC_STEPSIZE. Clamping it to %f",
+                     MIN_VAL);
+        return MIN_VAL;
+    }
+    constexpr double MAX_VAL = 180;
+    if (dfVal > MAX_VAL)
+    {
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
+                     "Too large value for OGR_ARC_STEPSIZE. Clamping it to %f",
+                     MAX_VAL);
+        return MAX_VAL;
+    }
+    return dfVal;
 }
 
 /************************************************************************/
@@ -4266,7 +4285,7 @@ OGRGeometry *OGRGeometryFactory::approximateArcAngles(
     // Support default arc step setting.
     if (dfMaxAngleStepSizeDegrees < 1e-6)
     {
-        dfMaxAngleStepSizeDegrees = OGRGF_GetDefaultStepSize();
+        dfMaxAngleStepSizeDegrees = OGRGeometryFactory::GetDefaultArcStepSize();
     }
 
     // Determine maximum interpolation gap. This is the largest straight-line
@@ -5459,7 +5478,7 @@ OGRLineString *OGRGeometryFactory::curveToLineString(
     // support default arc step setting.
     if (dfMaxAngleStepSizeDegrees < 1e-6)
     {
-        dfMaxAngleStepSizeDegrees = OGRGF_GetDefaultStepSize();
+        dfMaxAngleStepSizeDegrees = OGRGeometryFactory::GetDefaultArcStepSize();
     }
 
     double dfStep = dfMaxAngleStepSizeDegrees / 180 * M_PI;

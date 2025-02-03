@@ -110,3 +110,5 @@ RFC list
     rfc102_embedded_resources
     rfc103_schema_open_option
     rfc104_gdal_cli
+    rfc105_safe_path_manipulation_functions
+    rfc106_update_metadata

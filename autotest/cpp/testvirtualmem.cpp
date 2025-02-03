@@ -141,8 +141,8 @@ static void test_raw_auto(const char *pszFormat, int bFileMapping)
     CPLString osTmpFile;
 
     if (bFileMapping)
-        osTmpFile =
-            CPLResetExtension(CPLGenerateTempFilename(pszFormat), "img");
+        osTmpFile = CPLResetExtensionSafe(
+            CPLGenerateTempFilenameSafe(pszFormat).c_str(), "img");
     else
         osTmpFile = "/vsimem/tmp.img";
     GDALDatasetH hDS =

@@ -218,14 +218,14 @@ template <class StepAlgorithm>
 std::string GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetUsageAsJSON() const
 {
     CPLJSONDocument oDoc;
-    oDoc.LoadMemory(GDALAlgorithm::GetUsageAsJSON());
+    CPL_IGNORE_RET_VAL(oDoc.LoadMemory(GDALAlgorithm::GetUsageAsJSON()));
 
     CPLJSONArray jPipelineSteps;
     for (const std::string &name : m_stepRegistry.GetNames())
     {
         auto alg = GetStepAlg(name);
         CPLJSONDocument oStepDoc;
-        oStepDoc.LoadMemory(alg->GetUsageAsJSON());
+        CPL_IGNORE_RET_VAL(oStepDoc.LoadMemory(alg->GetUsageAsJSON()));
         jPipelineSteps.Add(oStepDoc.GetRoot());
     }
     oDoc.GetRoot().Add("pipeline_algorithms", jPipelineSteps);

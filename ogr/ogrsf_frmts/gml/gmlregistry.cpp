@@ -128,41 +128,39 @@ bool GMLRegistryFeatureType::Parse(const char *pszRegistryFilename,
                                    CPLXMLNode *psNode)
 {
     const char *pszElementName = CPLGetXMLValue(psNode, "elementName", nullptr);
-    const char *pszSchemaLocation =
-        CPLGetXMLValue(psNode, "schemaLocation", nullptr);
-    const char *pszGFSSchemaLocation =
-        CPLGetXMLValue(psNode, "gfsSchemaLocation", nullptr);
+    osSchemaLocation = CPLGetXMLValue(psNode, "schemaLocation", "");
+    osGFSSchemaLocation = CPLGetXMLValue(psNode, "gfsSchemaLocation", "");
     if (pszElementName == nullptr ||
-        (pszSchemaLocation == nullptr && pszGFSSchemaLocation == nullptr))
+        (osSchemaLocation.empty() && osGFSSchemaLocation.empty()))
         return false;
 
     const char *pszElementValue =
         CPLGetXMLValue(psNode, "elementValue", nullptr);
     osElementName = pszElementName;
 
-    if (pszSchemaLocation != nullptr)
+    if (!osSchemaLocation.empty())
     {
         if (pszRegistryFilename[0] &&
-            !STARTS_WITH(pszSchemaLocation, "http://") &&
-            !STARTS_WITH(pszSchemaLocation, "https://") &&
-            CPLIsFilenameRelative(pszSchemaLocation))
+            !STARTS_WITH(osSchemaLocation.c_str(), "http://") &&
+            !STARTS_WITH(osSchemaLocation.c_str(), "https://") &&
+            CPLIsFilenameRelative(osSchemaLocation.c_str()))
         {
-            pszSchemaLocation = CPLFormFilename(CPLGetPath(pszRegistryFilename),
-                                                pszSchemaLocation, nullptr);
+            osSchemaLocation =
+                CPLFormFilenameSafe(CPLGetPathSafe(pszRegistryFilename).c_str(),
+                                    osSchemaLocation.c_str(), nullptr);
         }
-        osSchemaLocation = pszSchemaLocation;
     }
-    else if (pszGFSSchemaLocation != nullptr)
+    else if (!osGFSSchemaLocation.empty())
     {
         if (pszRegistryFilename[0] &&
-            !STARTS_WITH(pszGFSSchemaLocation, "http://") &&
-            !STARTS_WITH(pszGFSSchemaLocation, "https://") &&
-            CPLIsFilenameRelative(pszGFSSchemaLocation))
+            !STARTS_WITH(osGFSSchemaLocation.c_str(), "http://") &&
+            !STARTS_WITH(osGFSSchemaLocation.c_str(), "https://") &&
+            CPLIsFilenameRelative(osGFSSchemaLocation.c_str()))
         {
-            pszGFSSchemaLocation = CPLFormFilename(
-                CPLGetPath(pszRegistryFilename), pszGFSSchemaLocation, nullptr);
+            osGFSSchemaLocation =
+                CPLFormFilenameSafe(CPLGetPathSafe(pszRegistryFilename).c_str(),
+                                    osGFSSchemaLocation.c_str(), nullptr);
         }
-        osGFSSchemaLocation = pszGFSSchemaLocation;
     }
 
     if (pszElementValue != nullptr)

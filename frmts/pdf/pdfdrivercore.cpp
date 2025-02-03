@@ -150,8 +150,6 @@ void PDFDriverSetCommonMetadata(GDALDriver *poDriver)
         "description='Format of geo-encoding' default='ISO32000'>\n"
         "     <Value>NONE</Value>\n"
         "     <Value>ISO32000</Value>\n"
-        "     <Value>OGC_BP</Value>\n"
-        "     <Value>BOTH</Value>\n"
         "   </Option>\n"
         "   <Option name='NEATLINE' type='string' description='Neatline'/>\n"
         "   <Option name='DPI' type='float' description='DPI' default='72'/>\n"
@@ -232,6 +230,10 @@ void PDFDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS GCPs DatasetMetadata");
 #endif
 
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");

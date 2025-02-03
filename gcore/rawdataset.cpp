@@ -1760,17 +1760,17 @@ bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands, int nDTSize,
         try
         {
             nExpectedFileSize =
-                (CPLSM(static_cast<GUInt64>(nHeaderSize)) +
-                 CPLSM(static_cast<GUInt64>(nBandOffset)) *
-                     CPLSM(static_cast<GUInt64>(nBands - 1)) +
+                (CPLSM(static_cast<uint64_t>(nHeaderSize)) +
+                 CPLSM(static_cast<uint64_t>(nBandOffset)) *
+                     CPLSM(static_cast<uint64_t>(nBands - 1)) +
                  (nLineOffset >= 0
-                      ? CPLSM(static_cast<GUInt64>(nYSize - 1)) *
-                            CPLSM(static_cast<GUInt64>(nLineOffset))
-                      : CPLSM(static_cast<GUInt64>(0))) +
+                      ? CPLSM(static_cast<uint64_t>(nYSize - 1)) *
+                            CPLSM(static_cast<uint64_t>(nLineOffset))
+                      : CPLSM(static_cast<uint64_t>(0))) +
                  (nPixelOffset >= 0
-                      ? CPLSM(static_cast<GUInt64>(nXSize - 1)) *
-                            CPLSM(static_cast<GUInt64>(nPixelOffset))
-                      : CPLSM(static_cast<GUInt64>(0))))
+                      ? CPLSM(static_cast<uint64_t>(nXSize - 1)) *
+                            CPLSM(static_cast<uint64_t>(nPixelOffset))
+                      : CPLSM(static_cast<uint64_t>(0))))
                     .v();
         }
         catch (...)

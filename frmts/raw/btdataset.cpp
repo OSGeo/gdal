@@ -532,8 +532,9 @@ CPLErr BTDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
     m_oSRS.exportToWkt(&pszProjection, apszOptions);
     if (pszProjection)
     {
-        const char *pszPrjFile = CPLResetExtension(GetDescription(), "prj");
-        VSILFILE *fp = VSIFOpenL(pszPrjFile, "wt");
+        const std::string osPrjFile =
+            CPLResetExtensionSafe(GetDescription(), "prj");
+        VSILFILE *fp = VSIFOpenL(osPrjFile.c_str(), "wt");
         if (fp != nullptr)
         {
             CPL_IGNORE_RET_VAL(VSIFPrintfL(fp, "%s\n", pszProjection));
@@ -639,9 +640,9 @@ GDALDataset *BTDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poDS->nVersionCode >= 12 && poDS->abyHeader[60] != 0)
     {
-        const char *pszPrjFile =
-            CPLResetExtension(poOpenInfo->pszFilename, "prj");
-        VSILFILE *fp = VSIFOpenL(pszPrjFile, "rt");
+        const std::string osPrjFile =
+            CPLResetExtensionSafe(poOpenInfo->pszFilename, "prj");
+        VSILFILE *fp = VSIFOpenL(osPrjFile.c_str(), "rt");
         if (fp != nullptr)
         {
             const int nBufMax = 10000;

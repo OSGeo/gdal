@@ -213,6 +213,7 @@ target_public_header(
   HEADERS
   ${CMAKE_CURRENT_BINARY_DIR}/gdal_version_full/gdal_version.h
   gdal.h
+  gdal_fwd.h
   gdalalgorithm.h
   gdaljp2metadata.h
   gdaljp2abstractdataset.h
@@ -238,6 +239,7 @@ set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/tms_MapML_APSTILE.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/tms_MapML_CBMTILE.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/tms_NZTM2000.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/template_tiles.mapml
 )
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}

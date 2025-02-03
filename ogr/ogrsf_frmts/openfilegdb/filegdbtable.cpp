@@ -870,14 +870,15 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
 
     m_nHeaderBufferMaxSize = GetInt32(abyHeader + 8, 0);
 
-    CPLString osTableXName;
+    std::string osTableXName;
     if (m_bUpdate || (m_nValidRecordCount > 0 &&
                       !CPLTestBool(CPLGetConfigOption(
                           "OPENFILEGDB_IGNORE_GDBTABLX", "false"))))
     {
-        osTableXName = CPLFormFilename(CPLGetPath(pszFilename),
-                                       CPLGetBasename(pszFilename), "gdbtablx");
-        m_fpTableX = VSIFOpenL(osTableXName, m_bUpdate ? "r+b" : "rb");
+        osTableXName = CPLFormFilenameSafe(
+            CPLGetPathSafe(pszFilename).c_str(),
+            CPLGetBasenameSafe(pszFilename).c_str(), "gdbtablx");
+        m_fpTableX = VSIFOpenL(osTableXName.c_str(), m_bUpdate ? "r+b" : "rb");
         if (m_fpTableX == nullptr)
         {
             if (m_bUpdate)
@@ -2478,14 +2479,15 @@ int FileGDBTable::GetIndexCount()
 
     m_bHasReadGDBIndexes = TRUE;
 
-    const char *pszIndexesName =
-        CPLFormFilename(CPLGetPath(m_osFilename.c_str()),
-                        CPLGetBasename(m_osFilename.c_str()), "gdbindexes");
-    VSILFILE *fpIndexes = VSIFOpenL(pszIndexesName, "rb");
+    const std::string osIndexesName = CPLFormFilenameSafe(
+        CPLGetPathSafe(m_osFilename.c_str()).c_str(),
+        CPLGetBasenameSafe(m_osFilename.c_str()).c_str(), "gdbindexes");
+    VSILFILE *fpIndexes = VSIFOpenL(osIndexesName.c_str(), "rb");
     VSIStatBufL sStat;
     if (fpIndexes == nullptr)
     {
-        if (VSIStatExL(pszIndexesName, &sStat, VSI_STAT_EXISTS_FLAG) == 0)
+        if (VSIStatExL(osIndexesName.c_str(), &sStat, VSI_STAT_EXISTS_FLAG) ==
+            0)
             returnError();
         else
             return 0;
@@ -2520,8 +2522,8 @@ int FileGDBTable::GetIndexCount()
         const int iBlockKeyFieldIdx = GetFieldIdx("block_key");
         if (iBlockKeyFieldIdx >= 0)
         {
-            std::string osAtxFilename =
-                CPLResetExtension(m_osFilename.c_str(), "blk_key_index.atx");
+            const std::string osAtxFilename = CPLResetExtensionSafe(
+                m_osFilename.c_str(), "blk_key_index.atx");
             if (VSIStatExL(osAtxFilename.c_str(), &sStat,
                            VSI_STAT_EXISTS_FLAG) == 0)
             {
@@ -2574,7 +2576,7 @@ int FileGDBTable::GetIndexCount()
             // Cf files a00000029.gdbindexes, a000000ea.gdbindexes, a000000ed.gdbindexes,
             // a000000f8.gdbindexes, a000000fb.gdbindexes, a00000103.gdbindexes
             // from https://github.com/OSGeo/gdal/issues/11295#issuecomment-2491158506
-            CPLDebug("OpenFileGDB", "Reading %s", pszIndexesName);
+            CPLDebug("OpenFileGDB", "Reading %s", osIndexesName.c_str());
             CPLDebug(
                 "OpenFileGDB",
                 "Strange (deleted?) index descriptor at index %u of name %s", i,
@@ -2669,12 +2671,12 @@ bool FileGDBTable::HasSpatialIndex()
 {
     if (m_nHasSpatialIndex < 0)
     {
-        const char *pszSpxName =
-            CPLFormFilename(CPLGetPath(m_osFilename.c_str()),
-                            CPLGetBasename(m_osFilename.c_str()), "spx");
+        const std::string osSpxName = CPLFormFilenameSafe(
+            CPLGetPathSafe(m_osFilename.c_str()).c_str(),
+            CPLGetBasenameSafe(m_osFilename.c_str()).c_str(), "spx");
         VSIStatBufL sStat;
         m_nHasSpatialIndex =
-            (VSIStatExL(pszSpxName, &sStat, VSI_STAT_EXISTS_FLAG) == 0);
+            (VSIStatExL(osSpxName.c_str(), &sStat, VSI_STAT_EXISTS_FLAG) == 0);
     }
     return m_nHasSpatialIndex != FALSE;
 }

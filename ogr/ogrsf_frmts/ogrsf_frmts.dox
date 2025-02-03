@@ -3049,6 +3049,31 @@ form depending on the limitations of the format driver.
 
  This function is the same as the C function OGR_L_RollbackTransaction().
 
+
+ OGRFeature* instances acquired or created between the StartTransaction() and RollbackTransaction() should
+ be destroyed before RollbackTransaction() if the field structure has been modified during the transaction.
+
+ In particular, the following is invalid:
+
+ \code
+ lyr->StartTransaction();
+ lyr->DeleteField(...);
+ f = new OGRFeature(lyr->GetLayerDefn());
+ lyr->RollbackTransaction();
+ // f is in a inconsistent state at this point, given its array of fields doesn't match
+ // the updated layer definition, and thus it cannot even be safely deleted !
+ \endcode
+
+ Instead, the feature should be destroyed before the rollback:
+
+ \code
+ lyr->StartTransaction();
+ lyr->DeleteField(...);
+ f = new OGRFeature(lyr->GetLayerDefn());
+ ...
+ delete f;
+ \endcode
+
  @return OGRERR_NONE on success.
 
 */

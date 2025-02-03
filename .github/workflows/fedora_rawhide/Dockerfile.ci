@@ -19,6 +19,7 @@ RUN dnf install -y clang make diffutils ccache cmake \
       mdbtools-devel mdbtools-odbc unixODBC-devel \
       armadillo-devel qhull-devel \
       hdf-devel hdf5-devel netcdf-devel \
+      muParser-devel \
       libpq-devel \
       libavif-devel \
       python3-setuptools python3-pip python3-devel python3-lxml swig \

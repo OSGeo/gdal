@@ -131,7 +131,6 @@ Raster drivers
    nwtgrd
    ogcapi
    openfilegdb
-   ozi
    palsar
    paux
    pcidsk

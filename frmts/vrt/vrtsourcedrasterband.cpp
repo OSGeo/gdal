@@ -124,6 +124,25 @@ bool VRTSourcedRasterBand::CanIRasterIOBeForwardedToEachSource(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     int nBufXSize, int nBufYSize, GDALRasterIOExtraArg *psExtraArg) const
 {
+    const auto IsNonNearestInvolved = [this, psExtraArg]
+    {
+        if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
+        {
+            return true;
+        }
+        for (int i = 0; i < nSources; i++)
+        {
+            if (papoSources[i]->GetType() == VRTComplexSource::GetTypeStatic())
+            {
+                auto *const poSource =
+                    static_cast<VRTComplexSource *>(papoSources[i]);
+                if (!poSource->GetResampling().empty())
+                    return true;
+            }
+        }
+        return false;
+    };
+
     // If resampling with non-nearest neighbour, we need to be careful
     // if the VRT band exposes a nodata value, but the sources do not have it.
     // To also avoid edge effects on sources when downsampling, use the
@@ -131,7 +150,7 @@ bool VRTSourcedRasterBand::CanIRasterIOBeForwardedToEachSource(
     // nominal resolution, and then downsampling), but only if none of the
     // contributing sources have overviews.
     if (eRWFlag == GF_Read && (nXSize != nBufXSize || nYSize != nBufYSize) &&
-        psExtraArg->eResampleAlg != GRIORA_NearestNeighbour && nSources != 0)
+        nSources != 0 && IsNonNearestInvolved())
     {
         bool bSourceHasOverviews = false;
         const bool bIsDownsampling = (nBufXSize < nXSize && nBufYSize < nYSize);
@@ -147,6 +166,27 @@ bool VRTSourcedRasterBand::CanIRasterIOBeForwardedToEachSource(
             {
                 VRTSimpleSource *const poSource =
                     static_cast<VRTSimpleSource *>(papoSources[i]);
+
+                if (poSource->GetType() == VRTComplexSource::GetTypeStatic())
+                {
+                    auto *const poComplexSource =
+                        static_cast<VRTComplexSource *>(poSource);
+                    if (!poComplexSource->GetResampling().empty())
+                    {
+                        const int lMaskFlags =
+                            const_cast<VRTSourcedRasterBand *>(this)
+                                ->GetMaskFlags();
+                        if ((lMaskFlags != GMF_ALL_VALID &&
+                             lMaskFlags != GMF_NODATA) ||
+                            IsMaskBand())
+                        {
+                            // Unfortunately this will prevent using overviews
+                            // of the sources, but it is unpractical to use
+                            // them without serious implementation complications
+                            return false;
+                        }
+                    }
+                }
 
                 double dfXOff = nXOff;
                 double dfYOff = nYOff;
@@ -388,9 +428,41 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
             // recursion
             l_poDS->SetEnableOverviews(false);
         }
+
+        const auto eResampleAlgBackup = psExtraArg->eResampleAlg;
+        if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
+        {
+            std::string osResampling;
+            for (int i = 0; i < nSources; i++)
+            {
+                if (papoSources[i]->GetType() ==
+                    VRTComplexSource::GetTypeStatic())
+                {
+                    auto *const poComplexSource =
+                        static_cast<VRTComplexSource *>(papoSources[i]);
+                    if (!poComplexSource->GetResampling().empty())
+                    {
+                        if (i == 0)
+                            osResampling = poComplexSource->GetResampling();
+                        else if (osResampling !=
+                                 poComplexSource->GetResampling())
+                        {
+                            osResampling.clear();
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!osResampling.empty())
+                psExtraArg->eResampleAlg =
+                    GDALRasterIOGetResampleAlg(osResampling.c_str());
+        }
+
         const auto eErr = GDALRasterBand::IRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
             eBufType, nPixelSpace, nLineSpace, psExtraArg);
+
+        psExtraArg->eResampleAlg = eResampleAlgBackup;
         l_poDS->SetEnableOverviews(bBackupEnabledOverviews);
         return eErr;
     }

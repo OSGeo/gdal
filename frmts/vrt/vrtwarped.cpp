@@ -1417,7 +1417,8 @@ CPLErr VRTWarpedDataset::XMLInit(const CPLXMLNode *psTree,
 
     if (bRelativeToVRT)
         pszAbsolutePath = CPLStrdup(
-            CPLProjectRelativeFilename(pszVRTPathIn, pszRelativePath));
+            CPLProjectRelativeFilenameSafe(pszVRTPathIn, pszRelativePath)
+                .c_str());
     else
         pszAbsolutePath = CPLStrdup(pszRelativePath);
 
@@ -1727,15 +1728,15 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML(const char *pszVRTPathIn)
                 !CPLIsFilenameRelative(osVRTFilename.c_str()) &&
                 pszCurDir != nullptr)
             {
-                osSourceDataset = CPLFormFilename(
+                osSourceDataset = CPLFormFilenameSafe(
                     pszCurDir, osSourceDataset.c_str(), nullptr);
             }
             else if (!CPLIsFilenameRelative(osSourceDataset.c_str()) &&
                      CPLIsFilenameRelative(osVRTFilename.c_str()) &&
                      pszCurDir != nullptr)
             {
-                osVRTFilename =
-                    CPLFormFilename(pszCurDir, osVRTFilename.c_str(), nullptr);
+                osVRTFilename = CPLFormFilenameSafe(
+                    pszCurDir, osVRTFilename.c_str(), nullptr);
             }
             CPLFree(pszCurDir);
             char *pszRelativePath = CPLStrdup(CPLExtractRelativePath(

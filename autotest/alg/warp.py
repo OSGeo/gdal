@@ -694,7 +694,7 @@ def test_warp_24():
 
     ds_ref = gdal.Open("data/test3658.tif")
     cs_ref = ds_ref.GetRasterBand(1).Checksum()
-    ds = gdal.Warp("", ds_ref, options="-of MEM -r bilinear")
+    ds = gdal.Warp("", ds_ref, options="-srcnodata none -of MEM -r bilinear")
     cs = ds.GetRasterBand(1).Checksum()
 
     assert cs == cs_ref, "did not get expected checksum"
@@ -1084,7 +1084,11 @@ def test_warp_38():
     ds.SetGCPs(gcp_list, gdaltest.user_srs_to_wkt("EPSG:32632"))
     ds = None
 
-    gdal.Warp(out_file, "data/test3658.tif", options="-to DST_METHOD=GCP_POLYNOMIAL")
+    gdal.Warp(
+        out_file,
+        "data/test3658.tif",
+        options="-srcnodata none -to DST_METHOD=GCP_POLYNOMIAL",
+    )
 
     ds = gdal.Open(out_file)
     cs = ds.GetRasterBand(1).Checksum()
@@ -1117,7 +1121,9 @@ def test_warp_39():
     ds.SetGCPs(gcp_list, gdaltest.user_srs_to_wkt("EPSG:32632"))
     ds = None
 
-    gdal.Warp(out_file, "data/test3658.tif", options="-to DST_METHOD=GCP_TPS")
+    gdal.Warp(
+        out_file, "data/test3658.tif", options="-srcnodata none -to DST_METHOD=GCP_TPS"
+    )
 
     ds = gdal.Open(out_file)
     cs = ds.GetRasterBand(1).Checksum()
@@ -1158,6 +1164,36 @@ def test_warp_weighted_average():
     ref_ds = None
 
     assert maxdiff <= 1, "Image too different from reference"
+
+
+###############################################################################
+# test weighted mode
+
+
+@pytest.mark.parametrize(
+    "dtype", (gdal.GDT_Int16, gdal.GDT_Int32), ids=gdal.GetDataTypeName
+)
+def test_warp_weighted_mode(dtype):
+
+    np = pytest.importorskip("numpy")
+
+    with gdal.GetDriverByName("MEM").Create("", 3, 3, eType=dtype) as src_ds:
+        src_ds.SetGeoTransform([0, 1, 0, 3, 0, -1])
+        src_ds.WriteArray(np.array([[1, 1, 1], [-1, -1, -1], [3, 3, 3]]))
+
+        dst_ds = gdal.Warp(
+            "",
+            src_ds,
+            format="MEM",
+            resampleAlg="mode",
+            width=1,
+            height=1,
+            outputBounds=(0.5, 0.5, 2.5, 2.5),
+        )
+
+    result = dst_ds.ReadAsArray()[0, 0]
+
+    assert result == -1
 
 
 ###############################################################################
@@ -1439,6 +1475,7 @@ def test_warp_53(typestr, option, alg_name, expected_cs):
     src_ds.GetRasterBand(2).Fill(255)
     zero = struct.pack("B" * 1, 0)
     src_ds.GetRasterBand(2).WriteRaster(10, 10, 1, 1, zero, buf_type=gdal.GDT_Byte)
+
     dst_ds = gdal.Translate(
         "", src_ds, options="-outsize 10 10 -of MEM -a_srs EPSG:32611"
     )
@@ -1620,21 +1657,56 @@ def test_warp_rms_2():
     )
 
 
-def test_warp_mode_ties():
-    # when performing mode resampling the result in case of a tie will be
-    # the first value identified as the mode in scanline processing
+@pytest.mark.parametrize("tie_strategy", ("FIRST", "MIN", "MAX", "HOPE"))
+@pytest.mark.parametrize("dtype", (gdal.GDT_Int16, gdal.GDT_Int32))
+def test_warp_mode_ties(tie_strategy, dtype):
     numpy = pytest.importorskip("numpy")
 
-    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 3, 1, gdal.GDT_Int16)
+    # 1 and 5 are tied for the mode; 1 encountered first
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 3, 1, dtype)
     src_ds.SetGeoTransform([1, 1, 0, 1, 0, 1])
     src_ds.GetRasterBand(1).WriteArray(numpy.array([[1, 1, 1], [2, 3, 4], [5, 5, 5]]))
-    out_ds = gdal.Warp("", src_ds, format="MEM", resampleAlg="mode", xRes=3, yRes=3)
 
-    assert out_ds.GetRasterBand(1).ReadAsArray()[0, 0] == 1
+    with gdaltest.disable_exceptions():
+        out_ds = gdal.Warp(
+            "",
+            src_ds,
+            format="MEM",
+            resampleAlg="mode",
+            xRes=3,
+            yRes=3,
+            warpOptions={"MODE_TIES": tie_strategy},
+        )
 
+    if tie_strategy == "HOPE":
+        assert out_ds is None
+        return
+
+    result = out_ds.GetRasterBand(1).ReadAsArray()[0, 0]
+
+    if tie_strategy in ("FIRST", "MIN"):
+        assert result == 1
+    else:
+        assert result == 5
+
+    # 1 and 5 are tied for the mode; 5 encountered first
     src_ds.GetRasterBand(1).WriteArray(numpy.array([[1, 5, 1], [2, 5, 4], [5, 1, 0]]))
-    out_ds = gdal.Warp("", src_ds, format="MEM", resampleAlg="mode", xRes=3, yRes=3)
-    assert out_ds.GetRasterBand(1).ReadAsArray()[0, 0] == 5
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        format="MEM",
+        resampleAlg="mode",
+        xRes=3,
+        yRes=3,
+        warpOptions={"MODE_TIES": tie_strategy},
+    )
+
+    result = out_ds.GetRasterBand(1).ReadAsArray()[0, 0]
+
+    if tie_strategy in ("FIRST", "MAX"):
+        assert result == 5
+    else:
+        assert result == 1
 
 
 ###############################################################################
@@ -1852,3 +1924,39 @@ def test_warp_average_NODATA_VALUES_PCT_THRESHOLD():
         options="-of MEM -ts 1 1 -r average -wo NODATA_VALUES_PCT_THRESHOLD=25",
     )
     assert struct.unpack("B", out_ds.ReadRaster())[0] == 20
+
+
+###############################################################################
+#
+
+
+@pytest.mark.parametrize(
+    "dt,expected_val",
+    [
+        (gdal.GDT_Byte, 1.0),
+        (gdal.GDT_Int8, -1.0),
+        (gdal.GDT_UInt16, 1.0),
+        (gdal.GDT_Int16, -1.0),
+        (gdal.GDT_UInt32, 1.0),
+        (gdal.GDT_Int32, -1.0),
+        (gdal.GDT_UInt64, 1.0),
+        (gdal.GDT_Int64, -1.0),
+        (gdal.GDT_Float32, 1.401298464324817e-45),
+        (gdal.GDT_Float64, 5e-324),
+    ],
+)
+@pytest.mark.parametrize("resampling", ["nearest", "bilinear"])
+def test_warp_nodata_substitution(dt, expected_val, resampling):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 4, 4, 1, dt)
+    src_ds.SetGeoTransform([1, 1, 0, 1, 0, 1])
+
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options=f"-of MEM -dstnodata 0 -r {resampling}",
+    )
+    assert (
+        struct.unpack("d", out_ds.ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Float64))[0]
+        == expected_val
+    )

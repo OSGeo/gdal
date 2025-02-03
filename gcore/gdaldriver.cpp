@@ -2919,7 +2919,7 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
 {
     CPLStringList aosDriverNames;
 
-    std::string osExt = CPLGetExtension(pszDestDataset);
+    std::string osExt = CPLGetExtensionSafe(pszDestDataset);
     if (EQUAL(osExt.c_str(), "zip"))
     {
         const CPLString osLower(CPLString(pszDestDataset).tolower());

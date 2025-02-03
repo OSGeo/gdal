@@ -50,14 +50,18 @@ bool OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
 
     if (!m_osRootName.empty())
     {
-        const char *pszExtension = CPLGetExtension(m_osRootName.c_str());
-        if (!EQUAL(pszExtension, "pol") && !EQUAL(pszExtension, "arc") &&
-            !EQUAL(pszExtension, "pnt"))
+        const std::string osExtension =
+            CPLGetExtensionSafe(m_osRootName.c_str());
+        if (!EQUAL(osExtension.c_str(), "pol") &&
+            !EQUAL(osExtension.c_str(), "arc") &&
+            !EQUAL(osExtension.c_str(), "pnt"))
         {
             CPLStrlcpy(m_MMMap.pszMapName,
-                       CPLFormFilename(m_osRootName.c_str(),
-                                       CPLGetBasename(m_osRootName.c_str()),
-                                       "mmm"),
+                       CPLFormFilenameSafe(
+                           m_osRootName.c_str(),
+                           CPLGetBasenameSafe(m_osRootName.c_str()).c_str(),
+                           "mmm")
+                           .c_str(),
                        sizeof(m_MMMap.pszMapName));
             if (!m_MMMap.nNumberOfLayers)
             {
@@ -79,7 +83,7 @@ bool OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
                     VSIFPrintfL(m_MMMap.fMMMap, "\n");
                     VSIFPrintfL(m_MMMap.fMMMap, "[DOCUMENT]\n");
                     VSIFPrintfL(m_MMMap.fMMMap, "Titol= %s(map)\n",
-                                CPLGetBasename(poLayer->GetName()));
+                                CPLGetBasenameSafe(poLayer->GetName()).c_str());
                     VSIFPrintfL(m_MMMap.fMMMap, "\n");
                 }
             }
@@ -142,18 +146,18 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     /*       of the file is where to write, and the layer name is the       */
     /*       dataset name (without extension).                              */
     /* -------------------------------------------------------------------- */
-    const char *pszExtension = CPLGetExtension(m_osRootName.c_str());
+    const std::string osExtension = CPLGetExtensionSafe(m_osRootName.c_str());
     std::string osFullMMLayerName;
-    if (EQUAL(pszExtension, "pol") || EQUAL(pszExtension, "arc") ||
-        EQUAL(pszExtension, "pnt"))
+    if (EQUAL(osExtension.c_str(), "pol") ||
+        EQUAL(osExtension.c_str(), "arc") || EQUAL(osExtension.c_str(), "pnt"))
     {
-        osFullMMLayerName = CPLResetExtension(m_osRootName.c_str(), "");
+        osFullMMLayerName = CPLResetExtensionSafe(m_osRootName.c_str(), "");
         if (!osFullMMLayerName.empty())
             osFullMMLayerName.pop_back();
 
         // Checking that the folder where to write exists
         const std::string osDestFolder =
-            CPLGetDirname(osFullMMLayerName.c_str());
+            CPLGetDirnameSafe(osFullMMLayerName.c_str());
         if (!STARTS_WITH(osDestFolder.c_str(), "/vsimem"))
         {
             VSIStatBufL sStat;
@@ -169,7 +173,7 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     else
     {
         osFullMMLayerName =
-            CPLFormFilename(m_osRootName.c_str(), pszLayerName, "");
+            CPLFormFilenameSafe(m_osRootName.c_str(), pszLayerName, "");
 
         /* -------------------------------------------------------------------- */
         /*      Let's create the folder if it's not already created.            */

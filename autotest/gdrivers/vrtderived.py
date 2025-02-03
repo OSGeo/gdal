@@ -1056,6 +1056,225 @@ def identity(in_ar, out_ar, *args, **kwargs):
 
 
 ###############################################################################
+# Test arbitrary expression pixel functions
+
+
+def vrt_expression_xml(tmpdir, expression, dialect, sources):
+
+    drv = gdal.GetDriverByName("GTiff")
+
+    nx = 1
+    ny = 1
+
+    expression = expression.replace("<", "&lt;").replace(">", "&gt;")
+
+    xml = f"""<VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
+              <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+                 <PixelFunctionType>expression</PixelFunctionType>
+                 <PixelFunctionArguments expression="{expression}" dialect="{dialect}" />"""
+
+    for i, source in enumerate(sources):
+        if type(source) is tuple:
+            source_name, source_value = source
+        else:
+            source_name = ""
+            source_value = source
+
+        src_fname = tmpdir / f"source_{i}.tif"
+
+        with drv.Create(src_fname, 1, 1, 1, gdal.GDT_Float64) as ds:
+            ds.GetRasterBand(1).Fill(source_value)
+
+        xml += f"""<SimpleSource name="{source_name}">
+                     <SourceFilename relativeToVRT="0">{src_fname}</SourceFilename>
+                     <SourceBand>1</SourceBand>
+                   </SimpleSource>"""
+
+    xml += "</VRTRasterBand></VRTDataset>"
+
+    return xml
+
+
+@pytest.mark.parametrize(
+    "expression,sources,result,dialects",
+    [
+        pytest.param("A", [("A", 77)], 77, None, id="identity"),
+        pytest.param(
+            "(NIR-R)/(NIR+R)",
+            [("NIR", 77), ("R", 63)],
+            (77 - 63) / (77 + 63),
+            None,
+            id="simple expression",
+        ),
+        pytest.param(
+            "if (A > B) 1.5*C ; else A",
+            [("A", 77), ("B", 63), ("C", 18)],
+            27,
+            ["exprtk"],
+            id="exprtk conditional (explicit)",
+        ),
+        pytest.param(
+            "(A > B) ? 1.5*C : A",
+            [("A", 77), ("B", 63), ("C", 18)],
+            27,
+            ["muparser"],
+            id="muparser conditional (explicit)",
+        ),
+        pytest.param(
+            "(A > B)*(1.5*C) + (A <= B)*(A)",
+            [("A", 77), ("B", 63), ("C", 18)],
+            27,
+            None,
+            id="conditional (implicit)",
+        ),
+        pytest.param(
+            "B2 * PopDensity",
+            [("PopDensity", 3), ("", 7)],
+            21,
+            None,
+            id="implicit source name",
+        ),
+        pytest.param(
+            "B1 / sum(BANDS)",
+            [("", 3), ("", 5), ("", 31)],
+            3 / (3 + 5 + 31),
+            None,
+            id="use of BANDS variable",
+        ),
+        pytest.param(
+            "B1 / sum(B2, B3) ",
+            [("", 3), ("", 5), ("", 31)],
+            3 / (5 + 31),
+            None,
+            id="aggregate specified inputs",
+        ),
+        pytest.param(
+            "var q[2] := {B2, B3}; B1 * q",
+            [("", 3), ("", 5), ("", 31)],
+            15,  # First value in returned vector. This behavior doesn't seem desirable
+            # but I haven't figured out how to detect a vector return.
+            ["exprtk"],
+            id="return vector",
+        ),
+        pytest.param(
+            "B1 + B2 + B3",
+            (5, 9, float("nan")),
+            float("nan"),
+            None,
+            id="nan propagated via arithmetic",
+        ),
+        pytest.param(
+            "if (B3) B1 ; else B2",
+            (5, 9, float("nan")),
+            5,
+            ["exprtk"],
+            id="exprtk nan = truth in conditional?",
+        ),
+        pytest.param(
+            "B3 ? B1 : B2",
+            (5, 9, float("nan")),
+            5,
+            ["muparser"],
+            id="muparser nan = truth in conditional?",
+        ),
+        pytest.param(
+            "if (B3 > 0) B1 ; else B2",
+            (5, 9, float("nan")),
+            9,
+            ["exprtk"],
+            id="exprtk nan comparison is false in conditional",
+        ),
+        pytest.param(
+            "(B3 > 0) ? B1 : B2",
+            (5, 9, float("nan")),
+            9,
+            ["muparser"],
+            id="muparser nan comparison is false in conditional",
+        ),
+        pytest.param(
+            "if (B1 > 5) B1",
+            (1,),
+            float("nan"),
+            ["exprtk"],
+            id="expression returns nodata",
+        ),
+    ],
+)
+@pytest.mark.parametrize("dialect", ("exprtk", "muparser"))
+def test_vrt_pixelfn_expression(
+    tmp_vsimem, expression, sources, result, dialect, dialects
+):
+    pytest.importorskip("numpy")
+
+    if not gdaltest.gdal_has_vrt_expression_dialect(dialect):
+        pytest.skip(f"Expression dialect {dialect} is not available")
+
+    if dialects and dialect not in dialects:
+        pytest.skip(f"Expression not supported for dialect {dialect}")
+
+    xml = vrt_expression_xml(tmp_vsimem, expression, dialect, sources)
+
+    with gdal.Open(xml) as ds:
+        assert pytest.approx(ds.ReadAsArray()[0][0], nan_ok=True) == result
+
+
+@pytest.mark.parametrize(
+    "expression,sources,dialect,exception",
+    [
+        pytest.param(
+            "A*B + C",
+            [("A", 77), ("B", 63)],
+            "exprtk",
+            "Undefined symbol",
+            id="exprtk undefined variable",
+        ),
+        pytest.param(
+            "A*B + C",
+            [("A", 77), ("B", 63)],
+            "muparser",
+            "Unexpected token",
+            id="muparser undefined variable",
+        ),
+        pytest.param(
+            "(".join(["asin", "sin", "acos", "cos"] * 100) + "(X" + 100 * 4 * ")",
+            [("X", 0.5)],
+            "exprtk",
+            "exceeds maximum allowed stack depth",
+            id="expression is too complex",
+        ),
+        pytest.param(
+            " ".join(["sin(x) + cos(x)"] * 10000),
+            [("x", 0.5)],
+            "exprtk",
+            "exceeds maximum of 100000 set by GDAL_EXPRTK_MAX_EXPRESSION_LENGTH",
+            id="expression is too long",
+        ),
+    ],
+)
+def test_vrt_pixelfn_expression_invalid(
+    tmp_vsimem, expression, sources, dialect, exception
+):
+    pytest.importorskip("numpy")
+
+    if not gdaltest.gdal_has_vrt_expression_dialect(dialect):
+        pytest.skip(f"Expression dialect {dialect} is not available")
+
+    messages = []
+
+    def handle(ecls, ecode, emsg):
+        messages.append(emsg)
+
+    xml = vrt_expression_xml(tmp_vsimem, expression, dialect, sources)
+
+    with gdaltest.error_handler(handle):
+        ds = gdal.Open(xml)
+        if ds:
+            assert ds.ReadAsArray() is None
+
+    assert exception in "".join(messages)
+
+
+###############################################################################
 # Cleanup.
 
 

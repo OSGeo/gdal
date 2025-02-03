@@ -517,8 +517,9 @@ CPLErr VRTRasterBand::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
         if (pszVRTPath != nullptr &&
             atoi(CPLGetXMLValue(psFileNameNode, "relativetoVRT", "0")))
         {
-            pszSrcDSName =
-                CPLStrdup(CPLProjectRelativeFilename(pszVRTPath, pszFilename));
+            pszSrcDSName = CPLStrdup(
+                CPLProjectRelativeFilenameSafe(pszVRTPath, pszFilename)
+                    .c_str());
         }
         else
             pszSrcDSName = CPLStrdup(pszFilename);

@@ -17,6 +17,7 @@
 #include "ogr_swq.h"
 
 #include <cctype>
+#include <cinttypes>
 #include <climits>
 #include <cstdlib>
 #include <cstring>
@@ -1788,7 +1789,7 @@ swq_expr_node *SWQCastEvaluator(swq_expr_node *node,
                 case SWQ_INTEGER:
                 case SWQ_BOOLEAN:
                 case SWQ_INTEGER64:
-                    osRet.Printf(CPL_FRMT_GIB, poSrcNode->int_value);
+                    osRet.Printf("%" PRId64, poSrcNode->int_value);
                     break;
 
                 case SWQ_FLOAT:

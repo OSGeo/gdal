@@ -190,7 +190,7 @@ char **ACE2RasterBand::GetCategoryNames()
 int ACE2Dataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (!(EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ACE2") ||
+    if (!(poOpenInfo->IsExtensionEqualToCI("ACE2") ||
           strstr(poOpenInfo->pszFilename, ".ACE2.gz") ||
           strstr(poOpenInfo->pszFilename, ".ace2.gz")))
         return FALSE;
@@ -208,7 +208,8 @@ GDALDataset *ACE2Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (!Identify(poOpenInfo))
         return nullptr;
 
-    const char *pszBasename = CPLGetBasename(poOpenInfo->pszFilename);
+    const std::string osBasename = CPLGetBasenameSafe(poOpenInfo->pszFilename);
+    const char *pszBasename = osBasename.c_str();
 
     if (strlen(pszBasename) < 7)
         return nullptr;

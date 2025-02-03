@@ -58,16 +58,11 @@ struct LIBERTIFFDatasetFileReader final : public LIBERTIFF_NS::FileReader
 
     uint64_t size() const override
     {
-        // coverity[missing_lock,lock_evasion]
+        std::lock_guard oLock(m_oMutex);
         if (m_nFileSize == 0)
         {
-            std::lock_guard oLock(m_oMutex);
-            // cppcheck-suppress identicalInnerCondition
-            if (m_nFileSize == 0)
-            {
-                m_fp->Seek(0, SEEK_END);
-                m_nFileSize = m_fp->Tell();
-            }
+            m_fp->Seek(0, SEEK_END);
+            m_nFileSize = m_fp->Tell();
         }
         return m_nFileSize;
     }
@@ -333,7 +328,7 @@ class LIBERTIFFBand final : public GDALPamRasterBand
 
     // We could do a smarter implementation by manually managing blocks in
     // the TLS structure, but given we should rarely use that method, the
-    // current approach with a mutex should be good enouh
+    // current approach with a mutex should be good enough
     GDALRasterBlock *GetLockedBlockRef(int nXBlockOff, int nYBlockOff,
                                        int bJustInitialize = FALSE) override
     {
@@ -1167,28 +1162,6 @@ FloatingPointHorizPredictorDecode(std::vector<uint8_t> &tmpBuffer,
 }
 
 /************************************************************************/
-/*                     ExtractBitAndConvertTo255()                      */
-/************************************************************************/
-
-#if defined(__GNUC__) || defined(_MSC_VER)
-// Signedness of char implementation dependent, so be explicit.
-// Assumes 2-complement integer types and sign extension of right shifting
-// GCC guarantees such:
-// https://gcc.gnu.org/onlinedocs/gcc/Integers-implementation.html#Integers-implementation
-static inline GByte ExtractBitAndConvertTo255(GByte byVal, int nBit)
-{
-    return static_cast<GByte>(static_cast<signed char>(byVal << (7 - nBit)) >>
-                              7);
-}
-#else
-// Portable way
-static inline GByte ExtractBitAndConvertTo255(GByte byVal, int nBit)
-{
-    return (byVal & (1 << nBit)) ? 255 : 0;
-}
-#endif
-
-/************************************************************************/
 /*                           ReadBlock()                                */
 /************************************************************************/
 
@@ -1582,51 +1555,21 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
         if (m_image->bitsPerSample() == 1)
         {
             const GByte *CPL_RESTRICT pabySrc = abyDecompressedStrile.data();
-            const GByte val = m_bExpand1To255 ? 255 : 1;
             GByte *CPL_RESTRICT pabyDst = bufferForOneBitExpansion.data();
             for (int iY = 0; iY < nBlockActualYSize; ++iY)
             {
-                int iX = 0;
                 if (m_bExpand1To255)
                 {
-                    for (; iX + 7 < nBlockXSize;
-                         iX += 8, ++pabySrc, pabyDst += 8)
-                    {
-                        const GByte srcByte = *pabySrc;
-                        pabyDst[0] = ExtractBitAndConvertTo255(srcByte, 7);
-                        pabyDst[1] = ExtractBitAndConvertTo255(srcByte, 6);
-                        pabyDst[2] = ExtractBitAndConvertTo255(srcByte, 5);
-                        pabyDst[3] = ExtractBitAndConvertTo255(srcByte, 4);
-                        pabyDst[4] = ExtractBitAndConvertTo255(srcByte, 3);
-                        pabyDst[5] = ExtractBitAndConvertTo255(srcByte, 2);
-                        pabyDst[6] = ExtractBitAndConvertTo255(srcByte, 1);
-                        pabyDst[7] = ExtractBitAndConvertTo255(srcByte, 0);
-                    }
+                    GDALExpandPackedBitsToByteAt0Or255(pabySrc, pabyDst,
+                                                       nBlockXSize);
                 }
                 else
                 {
-                    for (; iX + 7 < nBlockXSize;
-                         iX += 8, ++pabySrc, pabyDst += 8)
-                    {
-                        const int srcByte = *pabySrc;
-                        pabyDst[0] = (srcByte >> 7) & 1;
-                        pabyDst[1] = (srcByte >> 6) & 1;
-                        pabyDst[2] = (srcByte >> 5) & 1;
-                        pabyDst[3] = (srcByte >> 4) & 1;
-                        pabyDst[4] = (srcByte >> 3) & 1;
-                        pabyDst[5] = (srcByte >> 2) & 1;
-                        pabyDst[6] = (srcByte >> 1) & 1;
-                        pabyDst[7] = (srcByte >> 0) & 1;
-                    }
+                    GDALExpandPackedBitsToByteAt0Or1(pabySrc, pabyDst,
+                                                     nBlockXSize);
                 }
-                if (iX < nBlockXSize)
-                {
-                    for (; iX < nBlockXSize; ++iX, ++pabyDst)
-                    {
-                        *pabyDst = (*pabySrc & (0x80 >> (iX % 8))) ? val : 0;
-                    }
-                    ++pabySrc;
-                }
+                pabySrc += (nBlockXSize + 7) / 8;
+                pabyDst += nBlockXSize;
             }
 
             std::swap(abyDecompressedStrile, bufferForOneBitExpansion);

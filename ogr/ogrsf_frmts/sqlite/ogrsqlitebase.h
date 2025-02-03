@@ -143,8 +143,11 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
     bool InitSpatialite();
     void FinishSpatialite();
 
-    int bUserTransactionActive = FALSE;
-    int nSoftTransactionLevel = 0;
+    int m_bUserTransactionActive = FALSE;
+    int m_nSoftTransactionLevel = 0;
+    std::vector<std::string> m_aosSavepoints{};
+    // The transaction was implicitly started by SAVEPOINT
+    bool m_bImplicitTransactionOpened = false;
 
     OGRErr DoTransactionCommand(const char *pszCommand);
 
@@ -155,6 +158,18 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
   public:
     OGRSQLiteBaseDataSource();
     virtual ~OGRSQLiteBaseDataSource();
+
+    std::string GetCurrentSavepoint() const
+    {
+        return m_aosSavepoints.empty() ? "" : m_aosSavepoints.back();
+    }
+
+    std::string GetFirstSavepoint() const
+    {
+        return m_aosSavepoints.empty() ? "" : m_aosSavepoints.front();
+    }
+
+    bool IsInTransaction() const;
 
     sqlite3 *GetDB()
     {
@@ -200,6 +215,15 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
     OGRErr SoftStartTransaction();
     OGRErr SoftCommitTransaction();
     OGRErr SoftRollbackTransaction();
+    OGRErr StartSavepoint(const std::string &osName);
+    OGRErr ReleaseSavepoint(const std::string &osName);
+    OGRErr RollbackToSavepoint(const std::string &osName);
+
+    /**
+     *  Execute a SQL transaction command (BEGIN, COMMIT, ROLLBACK, SAVEPOINT)
+     *  @return TRUE if the osSQLCommand was recognized as a transaction command
+     */
+    bool ProcessTransactionSQL(const std::string &osSQLCommand);
 
     OGRErr PragmaCheck(const char *pszPragma, const char *pszExpected,
                        int nRowsExpected);

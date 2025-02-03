@@ -252,15 +252,18 @@ int TSXDataset::Identify(GDALOpenInfo *poOpenInfo)
     {
         if (poOpenInfo->bIsDirectory)
         {
-            const CPLString osFilename = CPLFormCIFilename(
+            const CPLString osFilename = CPLFormCIFilenameSafe(
                 poOpenInfo->pszFilename,
                 CPLGetFilename(poOpenInfo->pszFilename), "xml");
 
             /* Check if the filename contains TSX1_SAR (TerraSAR-X) or TDX1_SAR
              * (TanDEM-X) or PAZ1_SAR (PAZ) */
-            if (!(STARTS_WITH_CI(CPLGetBasename(osFilename), "TSX1_SAR") ||
-                  STARTS_WITH_CI(CPLGetBasename(osFilename), "TDX1_SAR") ||
-                  STARTS_WITH_CI(CPLGetBasename(osFilename), "PAZ1_SAR")))
+            if (!(STARTS_WITH_CI(CPLGetBasenameSafe(osFilename).c_str(),
+                                 "TSX1_SAR") ||
+                  STARTS_WITH_CI(CPLGetBasenameSafe(osFilename).c_str(),
+                                 "TDX1_SAR") ||
+                  STARTS_WITH_CI(CPLGetBasenameSafe(osFilename).c_str(),
+                                 "PAZ1_SAR")))
                 return 0;
 
             VSIStatBufL sStat;
@@ -273,9 +276,12 @@ int TSXDataset::Identify(GDALOpenInfo *poOpenInfo)
 
     /* Check if the filename contains TSX1_SAR (TerraSAR-X) or TDX1_SAR
      * (TanDEM-X) or PAZ1_SAR (PAZ) */
-    if (!(STARTS_WITH_CI(CPLGetBasename(poOpenInfo->pszFilename), "TSX1_SAR") ||
-          STARTS_WITH_CI(CPLGetBasename(poOpenInfo->pszFilename), "TDX1_SAR") ||
-          STARTS_WITH_CI(CPLGetBasename(poOpenInfo->pszFilename), "PAZ1_SAR")))
+    if (!(STARTS_WITH_CI(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str(),
+                         "TSX1_SAR") ||
+          STARTS_WITH_CI(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str(),
+                         "TDX1_SAR") ||
+          STARTS_WITH_CI(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str(),
+                         "PAZ1_SAR")))
         return 0;
 
     /* finally look for the <level1Product tag */
@@ -449,9 +455,7 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The TSX driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("TSX");
         return nullptr;
     }
 
@@ -459,9 +463,9 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->bIsDirectory)
     {
-        osFilename =
-            CPLFormCIFilename(poOpenInfo->pszFilename,
-                              CPLGetFilename(poOpenInfo->pszFilename), "xml");
+        osFilename = CPLFormCIFilenameSafe(
+            poOpenInfo->pszFilename, CPLGetFilename(poOpenInfo->pszFilename),
+            "xml");
     }
     else
         osFilename = poOpenInfo->pszFilename;
@@ -589,9 +593,9 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
          psComponent != nullptr; psComponent = psComponent->psNext)
     {
         const char *pszType = nullptr;
-        const char *pszPath =
-            CPLFormFilename(CPLGetDirname(osFilename),
-                            GetFilePath(psComponent, &pszType).c_str(), "");
+        const std::string osPath =
+            CPLFormFilenameSafe(CPLGetDirnameSafe(osFilename).c_str(),
+                                GetFilePath(psComponent, &pszType).c_str(), "");
         const char *pszPolLayer = CPLGetXMLValue(psComponent, "polLayer", " ");
 
         if (!STARTS_WITH_CI(pszType, " "))
@@ -599,13 +603,13 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
             if (STARTS_WITH_CI(pszType, "MAPPING_GRID"))
             {
                 /* the mapping grid... save as a metadata item this path */
-                poDS->SetMetadataItem("MAPPING_GRID", pszPath);
+                poDS->SetMetadataItem("MAPPING_GRID", osPath.c_str());
             }
             else if (STARTS_WITH_CI(pszType, "GEOREF"))
             {
                 /* save the path to the georef data for later use */
                 CPLFree(pszGeorefFile);
-                pszGeorefFile = CPLStrdup(pszPath);
+                pszGeorefFile = CPLStrdup(osPath.c_str());
             }
         }
         else if (!STARTS_WITH_CI(pszPolLayer, " ") &&
@@ -636,7 +640,7 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
 
             /* try opening the file that represents that band */
             GDALDataset *poBandData =
-                GDALDataset::FromHandle(GDALOpen(pszPath, GA_ReadOnly));
+                GDALDataset::FromHandle(GDALOpen(osPath.c_str(), GA_ReadOnly));
             if (poBandData != nullptr)
             {
                 TSXRasterBand *poBand =

@@ -865,23 +865,19 @@ static GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
 }
 
 /************************************************************************/
-/*                         ExcludeBaseGMLSchemas()                            */
+/*                         ExcludeBaseGMLSchemas()                      */
 /************************************************************************/
 
-static bool ExcludeBaseGMLSchemas(const char *pszFilename)
+static bool ExcludeBaseGMLSchemas(const std::string &osFilename)
 {
     // List of substrings to exclude
     const std::vector<std::string> excludedBaseGMLReferencedSchemasList = {
         "/gml/3.2.1/", "gml/3.1.1/", "/gml/2.1.2/", "/gmlsfProfile/"};
-    if (pszFilename != nullptr)
+    for (const auto &pattern : excludedBaseGMLReferencedSchemasList)
     {
-        const std::string osFilename(pszFilename);
-        for (const auto &pattern : excludedBaseGMLReferencedSchemasList)
+        if (osFilename.find(pattern) != std::string::npos)
         {
-            if (osFilename.find(pattern) != std::string::npos)
-            {
-                return false;  // Found one of the excluded base GML referenced schema
-            }
+            return false;  // Found one of the excluded base GML referenced schema
         }
     }
     return true;  // None of the base GML referenced schemas were found
@@ -964,32 +960,32 @@ static void CPLXMLSchemaResolveInclude(const char *pszMainSchemaLocation,
         CPLXMLNode *psThis = psSchemaNode->psChild;
         for (; psThis != nullptr; psThis = psThis->psNext)
         {
-            const char *pszSchemaLocation =
-                CPLGetXMLValue(psThis, "schemaLocation", nullptr);
+            std::string osSchemaLocation =
+                CPLGetXMLValue(psThis, "schemaLocation", "");
 
             if (psThis->eType == CXT_Element &&
                 (EQUAL(psThis->pszValue, "include") ||
                  (bUseSchemaImports == TRUE &&
                   EQUAL(psThis->pszValue, "import") &&
-                  ExcludeBaseGMLSchemas(pszSchemaLocation))))
+                  ExcludeBaseGMLSchemas(osSchemaLocation))))
             {
 
-                if (pszSchemaLocation != nullptr &&
-                    osAlreadyIncluded.count(pszSchemaLocation) == 0)
+                if (!osSchemaLocation.empty() &&
+                    osAlreadyIncluded.count(osSchemaLocation) == 0)
                 {
-                    osAlreadyIncluded.insert(pszSchemaLocation);
+                    osAlreadyIncluded.insert(osSchemaLocation);
 
-                    if (!STARTS_WITH(pszSchemaLocation, "http://") &&
-                        !STARTS_WITH(pszSchemaLocation, "https://") &&
-                        CPLIsFilenameRelative(pszSchemaLocation))
+                    if (!STARTS_WITH(osSchemaLocation.c_str(), "http://") &&
+                        !STARTS_WITH(osSchemaLocation.c_str(), "https://") &&
+                        CPLIsFilenameRelative(osSchemaLocation.c_str()))
                     {
-                        pszSchemaLocation =
-                            CPLFormFilename(CPLGetPath(pszMainSchemaLocation),
-                                            pszSchemaLocation, nullptr);
+                        osSchemaLocation = CPLFormFilenameSafe(
+                            CPLGetPathSafe(pszMainSchemaLocation).c_str(),
+                            osSchemaLocation.c_str(), nullptr);
                     }
 
                     CPLXMLNode *psIncludedXSDTree =
-                        GMLParseXMLFile(pszSchemaLocation);
+                        GMLParseXMLFile(osSchemaLocation.c_str());
                     if (psIncludedXSDTree != nullptr)
                     {
                         CPLStripXMLNamespace(psIncludedXSDTree, nullptr, TRUE);

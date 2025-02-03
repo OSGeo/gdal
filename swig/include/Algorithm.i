@@ -162,7 +162,7 @@ public:
     return GDALAlgorithmArgGetAsDouble(self);
   }
 
-%newobject GetAsDataset;
+%newobject GetAsDatasetValue;
   GDALArgDatasetValueHS* GetAsDatasetValue() {
     return GDALAlgorithmArgGetAsDatasetValue(self);
   }

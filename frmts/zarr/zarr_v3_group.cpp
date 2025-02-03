@@ -48,9 +48,9 @@ std::shared_ptr<ZarrArray> ZarrV3Group::OpenZarrArray(const std::string &osName,
         return oIter->second;
 
     const std::string osSubDir =
-        CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+        CPLFormFilenameSafe(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
     const std::string osZarrayFilename =
-        CPLFormFilename(osSubDir.c_str(), "zarr.json", nullptr);
+        CPLFormFilenameSafe(osSubDir.c_str(), "zarr.json", nullptr);
 
     VSIStatBufL sStat;
     if (VSIStatL(osZarrayFilename.c_str(), &sStat) == 0)
@@ -76,7 +76,7 @@ void ZarrV3Group::LoadAttributes() const
     m_bAttributesLoaded = true;
 
     const std::string osFilename =
-        CPLFormFilename(m_osDirectoryName.c_str(), "zarr.json", nullptr);
+        CPLFormFilenameSafe(m_osDirectoryName.c_str(), "zarr.json", nullptr);
 
     VSIStatBufL sStat;
     if (VSIStatL(osFilename.c_str(), &sStat) == 0)
@@ -106,11 +106,11 @@ void ZarrV3Group::ExploreDirectory() const
     {
         if (VSI_ISDIR(psEntry->nMode))
         {
-            const std::string osSubDir = CPLFormFilename(
+            const std::string osSubDir = CPLFormFilenameSafe(
                 m_osDirectoryName.c_str(), psEntry->pszName, nullptr);
             VSIStatBufL sStat;
-            std::string osZarrJsonFilename =
-                CPLFormFilename(osSubDir.c_str(), "zarr.json", nullptr);
+            const std::string osZarrJsonFilename =
+                CPLFormFilenameSafe(osSubDir.c_str(), "zarr.json", nullptr);
             if (VSIStatL(osZarrJsonFilename.c_str(), &sStat) == 0)
             {
                 CPLJSONDocument oDoc;
@@ -188,8 +188,8 @@ ZarrV3Group::~ZarrV3Group()
         oRoot.Add("zarr_format", 3);
         oRoot.Add("node_type", "group");
         oRoot.Add("attributes", m_oAttrGroup.Serialize());
-        const std::string osZarrJsonFilename =
-            CPLFormFilename(m_osDirectoryName.c_str(), "zarr.json", nullptr);
+        const std::string osZarrJsonFilename = CPLFormFilenameSafe(
+            m_osDirectoryName.c_str(), "zarr.json", nullptr);
         oDoc.Save(osZarrJsonFilename);
     }
 }
@@ -209,9 +209,9 @@ ZarrV3Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
         return oIter->second;
 
     const std::string osSubDir =
-        CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+        CPLFormFilenameSafe(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
     const std::string osSubDirZarrJsonFilename =
-        CPLFormFilename(osSubDir.c_str(), "zarr.json", nullptr);
+        CPLFormFilenameSafe(osSubDir.c_str(), "zarr.json", nullptr);
 
     VSIStatBufL sStat;
     // Explicit group
@@ -286,7 +286,7 @@ std::shared_ptr<ZarrV3Group> ZarrV3Group::CreateOnDisk(
     }
 
     const std::string osZarrJsonFilename(
-        CPLFormFilename(osDirectoryName.c_str(), "zarr.json", nullptr));
+        CPLFormFilenameSafe(osDirectoryName.c_str(), "zarr.json", nullptr));
     VSILFILE *fp = VSIFOpenL(osZarrJsonFilename.c_str(), "wb");
     if (!fp)
     {
@@ -342,7 +342,7 @@ ZarrV3Group::CreateGroup(const std::string &osName,
     }
 
     const std::string osDirectoryName =
-        CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+        CPLFormFilenameSafe(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
     auto poGroup = CreateOnDisk(m_poSharedResource, GetFullName(), osName,
                                 osDirectoryName);
     if (!poGroup)
@@ -537,7 +537,7 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         CSLFetchNameValueDef(papszOptions, "DIM_SEPARATOR", "/");
 
     const std::string osArrayDirectory =
-        CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+        CPLFormFilenameSafe(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
     if (VSIMkdir(osArrayDirectory.c_str(), 0755) != 0)
     {
         VSIStatBufL sStat;
@@ -672,8 +672,8 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     if (!poArray)
         return nullptr;
     poArray->SetNew(true);
-    std::string osFilename =
-        CPLFormFilename(osArrayDirectory.c_str(), "zarr.json", nullptr);
+    const std::string osFilename =
+        CPLFormFilenameSafe(osArrayDirectory.c_str(), "zarr.json", nullptr);
     poArray->SetFilename(osFilename);
     poArray->SetDimSeparator(pszDimSeparator);
     poArray->SetDtype(dtype);

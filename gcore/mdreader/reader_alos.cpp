@@ -31,18 +31,18 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
                                    char **papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
-    CPLString osDirName = CPLGetDirname(pszPath);
-    CPLString osBaseName = CPLGetBasename(pszPath);
+    const CPLString osDirName = CPLGetDirnameSafe(pszPath);
+    const CPLString osBaseName = CPLGetBasenameSafe(pszPath);
 
     CPLString osIMDSourceFilename =
-        CPLFormFilename(osDirName, "summary", ".txt");
+        CPLFormFilenameSafe(osDirName, "summary", ".txt");
     if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
         m_osIMDSourceFilename = std::move(osIMDSourceFilename);
     }
     else
     {
-        osIMDSourceFilename = CPLFormFilename(osDirName, "SUMMARY", ".TXT");
+        osIMDSourceFilename = CPLFormFilenameSafe(osDirName, "SUMMARY", ".TXT");
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
             m_osIMDSourceFilename = std::move(osIMDSourceFilename);
@@ -53,16 +53,18 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
     {
         // check if this is separate band or whole image
         // test without 6 symbols
-        CPLString osHDRFileName = CPLFormFilename(
-            osDirName, CPLSPrintf("HDR%s", osBaseName + 6), "txt");
+        CPLString osHDRFileName = CPLFormFilenameSafe(
+            osDirName, (std::string("HDR") + (osBaseName.c_str() + 6)).c_str(),
+            "txt");
         if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
         {
             m_osHDRSourceFilename = std::move(osHDRFileName);
         }
         else
         {
-            osHDRFileName = CPLFormFilename(
-                osDirName, CPLSPrintf("HDR%s", osBaseName + 6), "TXT");
+            osHDRFileName = CPLFormFilenameSafe(
+                osDirName,
+                (std::string("HDR") + (osBaseName.c_str() + 6)).c_str(), "TXT");
             if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
             {
                 m_osHDRSourceFilename = std::move(osHDRFileName);
@@ -73,16 +75,18 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
     // test without 3 symbols
     if (osBaseName.size() >= 3 && m_osHDRSourceFilename.empty())
     {
-        CPLString osHDRFileName = CPLFormFilename(
-            osDirName, CPLSPrintf("HDR%s", osBaseName + 3), "txt");
+        CPLString osHDRFileName = CPLFormFilenameSafe(
+            osDirName, (std::string("HDR") + (osBaseName.c_str() + 3)).c_str(),
+            "txt");
         if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
         {
             m_osHDRSourceFilename = std::move(osHDRFileName);
         }
         else
         {
-            osHDRFileName = CPLFormFilename(
-                osDirName, CPLSPrintf("HDR%s", osBaseName + 3), "TXT");
+            osHDRFileName = CPLFormFilenameSafe(
+                osDirName,
+                (std::string("HDR") + (osBaseName.c_str() + 3)).c_str(), "TXT");
             if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
             {
                 m_osHDRSourceFilename = std::move(osHDRFileName);
@@ -93,16 +97,18 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
     // test without 6 symbols
     if (osBaseName.size() >= 6)
     {
-        CPLString osRPCFileName = CPLFormFilename(
-            osDirName, CPLSPrintf("RPC%s", osBaseName + 6), "txt");
+        CPLString osRPCFileName = CPLFormFilenameSafe(
+            osDirName, (std::string("RPC") + (osBaseName.c_str() + 6)).c_str(),
+            "txt");
         if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
             m_osRPBSourceFilename = std::move(osRPCFileName);
         }
         else
         {
-            osRPCFileName = CPLFormFilename(
-                osDirName, CPLSPrintf("RPC%s", osBaseName + 6), "TXT");
+            osRPCFileName = CPLFormFilenameSafe(
+                osDirName,
+                (std::string("RPC") + (osBaseName.c_str() + 6)).c_str(), "TXT");
             if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
             {
                 m_osRPBSourceFilename = std::move(osRPCFileName);
@@ -113,16 +119,18 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
     // test without 3 symbols
     if (osBaseName.size() >= 3 && m_osRPBSourceFilename.empty())
     {
-        CPLString osRPCFileName = CPLFormFilename(
-            osDirName, CPLSPrintf("RPC%s", osBaseName + 3), "txt");
+        CPLString osRPCFileName = CPLFormFilenameSafe(
+            osDirName, (std::string("RPC") + (osBaseName.c_str() + 3)).c_str(),
+            "txt");
         if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
             m_osRPBSourceFilename = std::move(osRPCFileName);
         }
         else
         {
-            osRPCFileName = CPLFormFilename(
-                osDirName, CPLSPrintf("RPC%s", osBaseName + 3), "TXT");
+            osRPCFileName = CPLFormFilenameSafe(
+                osDirName,
+                (std::string("RPC") + (osBaseName.c_str() + 3)).c_str(), "TXT");
             if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
             {
                 m_osRPBSourceFilename = std::move(osRPCFileName);

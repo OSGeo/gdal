@@ -425,8 +425,10 @@ static CPLXMLNode *CPLLoadSchemaStrInternal(CPLHashSet *hSetSchemas,
             strcmp(psIter->psChild->pszValue, "schemaLocation") == 0)
         {
             const char *pszIncludeSchema = psIter->psChild->psChild->pszValue;
-            char *pszFullFilename = CPLStrdup(CPLFormFilename(
-                CPLGetPath(pszFile), pszIncludeSchema, nullptr));
+            char *pszFullFilename =
+                CPLStrdup(CPLFormFilenameSafe(CPLGetPathSafe(pszFile).c_str(),
+                                              pszIncludeSchema, nullptr)
+                              .c_str());
 
             CPLFixPath(pszFullFilename);
 
@@ -503,8 +505,9 @@ static CPLXMLNode *CPLLoadSchemaStrInternal(CPLHashSet *hSetSchemas,
                     strstr(pszFile, "/vsimem/CPLValidateXML_") == nullptr)
                 {
                     char *pszFullFilename = CPLStrdup(
-                        CPLFormFilename(CPLGetPath(pszFile),
-                                        psIter2->psChild->pszValue, nullptr));
+                        CPLFormFilenameSafe(CPLGetPathSafe(pszFile).c_str(),
+                                            psIter2->psChild->pszValue, nullptr)
+                            .c_str());
                     CPLFixPath(pszFullFilename);
                     CPLFree(psIter2->psChild->pszValue);
                     psIter2->psChild->pszValue = pszFullFilename;

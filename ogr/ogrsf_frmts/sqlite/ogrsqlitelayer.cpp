@@ -3535,7 +3535,6 @@ int OGRSQLiteLayer::TestCapability(const char *pszCap)
 /************************************************************************/
 
 OGRErr OGRSQLiteLayer::StartTransaction()
-
 {
     return m_poDS->StartTransaction();
 }
@@ -3545,7 +3544,6 @@ OGRErr OGRSQLiteLayer::StartTransaction()
 /************************************************************************/
 
 OGRErr OGRSQLiteLayer::CommitTransaction()
-
 {
     return m_poDS->CommitTransaction();
 }
@@ -3555,7 +3553,6 @@ OGRErr OGRSQLiteLayer::CommitTransaction()
 /************************************************************************/
 
 OGRErr OGRSQLiteLayer::RollbackTransaction()
-
 {
     return m_poDS->RollbackTransaction();
 }

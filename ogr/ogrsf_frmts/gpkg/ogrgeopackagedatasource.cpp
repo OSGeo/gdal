@@ -5131,8 +5131,8 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
         {
             m_osFinalFilename = pszFilename;
         }
-        m_pszFilename =
-            CPLStrdup(CPLGenerateTempFilename(CPLGetFilename(pszFilename)));
+        m_pszFilename = CPLStrdup(
+            CPLGenerateTempFilenameSafe(CPLGetFilename(pszFilename)).c_str());
         CPLDebug("GPKG", "Creating temporary file %s", m_pszFilename);
     }
     else
@@ -5555,9 +5555,9 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
 
     if (nBandsIn != 0)
     {
-        const char *pszTableName = CPLGetBasename(m_pszFilename);
-        m_osRasterTable =
-            CSLFetchNameValueDef(papszOptions, "RASTER_TABLE", pszTableName);
+        const std::string osTableName = CPLGetBasenameSafe(m_pszFilename);
+        m_osRasterTable = CSLFetchNameValueDef(papszOptions, "RASTER_TABLE",
+                                               osTableName.c_str());
         if (m_osRasterTable.empty())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -6026,9 +6026,9 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
             CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) &&
         CSLFetchNameValue(papszOptions, "RASTER_TABLE") == nullptr)
     {
-        CPLString osBasename(
-            CPLGetBasename(GetUnderlyingDataset(poSrcDS)->GetDescription()));
-        apszUpdatedOptions.SetNameValue("RASTER_TABLE", osBasename);
+        const std::string osBasename(CPLGetBasenameSafe(
+            GetUnderlyingDataset(poSrcDS)->GetDescription()));
+        apszUpdatedOptions.SetNameValue("RASTER_TABLE", osBasename.c_str());
     }
 
     if (nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4)
@@ -7703,27 +7703,15 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
         CSLDestroy(papszTokens);
     }
 
+    if (ProcessTransactionSQL(osSQLCommand))
+    {
+        return nullptr;
+    }
+
     if (EQUAL(osSQLCommand, "VACUUM"))
     {
         ResetReadingAllLayers();
     }
-
-    if (EQUAL(osSQLCommand, "BEGIN"))
-    {
-        SoftStartTransaction();
-        return nullptr;
-    }
-    else if (EQUAL(osSQLCommand, "COMMIT"))
-    {
-        SoftCommitTransaction();
-        return nullptr;
-    }
-    else if (EQUAL(osSQLCommand, "ROLLBACK"))
-    {
-        SoftRollbackTransaction();
-        return nullptr;
-    }
-
     else if (STARTS_WITH_CI(osSQLCommand, "DELETE FROM "))
     {
         // Optimize truncation of a table, especially if it has a spatial
@@ -7742,7 +7730,6 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
             }
         }
     }
-
     else if (pszDialect != nullptr && EQUAL(pszDialect, "INDIRECT_SQLITE"))
         return GDALDataset::ExecuteSQL(osSQLCommand, poSpatialFilter, "SQLITE");
     else if (pszDialect != nullptr && !EQUAL(pszDialect, "") &&
@@ -9678,7 +9665,7 @@ GDALGeoPackageDataset::GetLayerWithGetSpatialWhereByName(const char *pszName)
 OGRErr GDALGeoPackageDataset::CommitTransaction()
 
 {
-    if (nSoftTransactionLevel == 1)
+    if (m_nSoftTransactionLevel == 1)
     {
         FlushMetadata();
         for (int i = 0; i < m_nLayers; i++)
@@ -9701,7 +9688,7 @@ OGRErr GDALGeoPackageDataset::RollbackTransaction()
     std::vector<bool> abAddTriggers;
     std::vector<bool> abTriggersDeletedInTransaction;
 #endif
-    if (nSoftTransactionLevel == 1)
+    if (m_nSoftTransactionLevel == 1)
     {
         FlushMetadata();
         for (int i = 0; i < m_nLayers; i++)
@@ -9721,7 +9708,8 @@ OGRErr GDALGeoPackageDataset::RollbackTransaction()
         }
     }
 
-    OGRErr eErr = OGRSQLiteBaseDataSource::RollbackTransaction();
+    const OGRErr eErr = OGRSQLiteBaseDataSource::RollbackTransaction();
+
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     if (!abAddTriggers.empty())
     {

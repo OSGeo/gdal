@@ -1835,10 +1835,8 @@ static OGRCurve *OGRShapeCreateCompoundCurve(int nPartStartIdx, int nPartPoints,
                 dfStartAngle += 2 * M_PI;
             else if (dfEndAngle + M_PI < dfStartAngle)
                 dfEndAngle += 2 * M_PI;
-            // coverity[tainted_data]
             const double dfStepSizeRad =
-                CPLAtofM(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4")) / 180.0 *
-                M_PI;
+                OGRGeometryFactory::GetDefaultArcStepSize() / 180.0 * M_PI;
             const double dfLengthTangentStart =
                 (dfX1 - dfX0) * (dfX1 - dfX0) + (dfY1 - dfY0) * (dfY1 - dfY0);
             const double dfLengthTangentEnd =

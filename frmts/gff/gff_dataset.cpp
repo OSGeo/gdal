@@ -190,9 +190,7 @@ GDALDataset *GFFDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The GFF driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("GFF");
         return nullptr;
     }
 

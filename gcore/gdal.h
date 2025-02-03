@@ -24,6 +24,7 @@
 #if defined(GDAL_COMPILATION)
 #define DO_NOT_DEFINE_GDAL_DATE_NAME
 #endif
+#include "gdal_fwd.h"
 #include "gdal_version.h"
 #include "cpl_port.h"
 #include "cpl_error.h"
@@ -365,35 +366,8 @@ const char CPL_DLL *GDALGetPaletteInterpretationName(GDALPaletteInterp);
 #endif
 
 /* -------------------------------------------------------------------- */
-/*      Define handle types related to various internal classes.        */
+/*      Types, enumerations.                                            */
 /* -------------------------------------------------------------------- */
-
-/** Opaque type used for the C bindings of the C++ GDALMajorObject class */
-typedef void *GDALMajorObjectH;
-
-/** Opaque type used for the C bindings of the C++ GDALDataset class */
-typedef void *GDALDatasetH;
-
-/** Opaque type used for the C bindings of the C++ GDALRasterBand class */
-typedef void *GDALRasterBandH;
-
-/** Opaque type used for the C bindings of the C++ GDALDriver class */
-typedef void *GDALDriverH;
-
-/** Opaque type used for the C bindings of the C++ GDALColorTable class */
-typedef void *GDALColorTableH;
-
-/** Opaque type used for the C bindings of the C++ GDALRasterAttributeTable
- * class */
-typedef void *GDALRasterAttributeTableH;
-
-/** Opaque type used for the C bindings of the C++ GDALAsyncReader class */
-typedef void *GDALAsyncReaderH;
-
-/** Opaque type used for the C bindings of the C++ GDALRelationship class
- *  @since GDAL 3.6
- */
-typedef void *GDALRelationshipH;
 
 /** Type to express pixel, line or band spacing. Signed 64 bit integer. */
 typedef GIntBig GSpacing;
@@ -421,19 +395,6 @@ typedef enum
     /** JSon. Only applies to GEDTC_STRING */
     GEDTST_JSON
 } GDALExtendedDataTypeSubType;
-
-/** Opaque type for C++ GDALExtendedDataType */
-typedef struct GDALExtendedDataTypeHS *GDALExtendedDataTypeH;
-/** Opaque type for C++ GDALEDTComponent */
-typedef struct GDALEDTComponentHS *GDALEDTComponentH;
-/** Opaque type for C++ GDALGroup */
-typedef struct GDALGroupHS *GDALGroupH;
-/** Opaque type for C++ GDALMDArray */
-typedef struct GDALMDArrayHS *GDALMDArrayH;
-/** Opaque type for C++ GDALAttribute */
-typedef struct GDALAttributeHS *GDALAttributeH;
-/** Opaque type for C++ GDALDimension */
-typedef struct GDALDimensionHS *GDALDimensionH;
 
 /* ==================================================================== */
 /*      Registration/driver related.                                    */
@@ -622,6 +583,14 @@ typedef struct GDALDimensionHS *GDALDimensionH;
 
 /** Capability set by a driver that can copy over subdatasets. */
 #define GDAL_DCAP_SUBCREATECOPY "DCAP_SUBCREATECOPY"
+
+/** Capability set by a driver that supports the GDAL_OF_UPDATE flag and offers
+ * at least some update capabilities.
+ * Exact update capabilities can be determined by the GDAL_DMD_UPDATE_ITEMS
+ * metadata item
+ * @since GDAL 3.11
+ */
+#define GDAL_DCAP_UPDATE "DCAP_UPDATE"
 
 /** Capability set by a driver that can read/create datasets through the VSI*L
  * API. */
@@ -937,6 +906,25 @@ typedef struct GDALDimensionHS *GDALDimensionH;
 /*! @cond Doxygen_Suppress */
 #define GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE "DMD_PLUGIN_INSTALLATION_MESSAGE"
 /*! @endcond */
+
+/** List of (space separated) items that a dataset opened in update mode supports
+ * updating. Possible values are:
+ * - for raster: "GeoTransform" (through GDALDataset::SetGeoTransform),
+ *   "SRS" (GDALDataset::SetSpatialRef), "GCPs" (GDALDataset::SetGCPs()),
+ *    "NoData" (GDALRasterBand::SetNoDataValue),
+ *   "ColorInterpretation" (GDALRasterBand::SetColorInterpretation()),
+ *   "RasterValues" (GF_Write flag of GDALDataset::RasterIO() and GDALRasterBand::RasterIO()),
+ *   "DatasetMetadata" (GDALDataset::SetMetadata/SetMetadataItem), "BandMetadata"
+ *   (GDALRasterBand::SetMetadata/SetMetadataItem)
+ * - for vector: "Features" (OGRLayer::SetFeature()), "DatasetMetadata",
+ *   "LayerMetadata"
+ *
+ * No distinction is made if the update is done in the native format,
+ * or in a Persistent Auxiliary Metadata .aux.xml side car file.
+ *
+ * @since GDAL 3.11
+ */
+#define GDAL_DMD_UPDATE_ITEMS "DMD_UPDATE_ITEMS"
 
 /** Value for GDALDimension::GetType() specifying the X axis of a horizontal
  * CRS.
@@ -1286,6 +1274,10 @@ CPLErr CPL_DLL GDALSetSpatialRef(GDALDatasetH, OGRSpatialReferenceH);
 CPLErr CPL_DLL CPL_STDCALL GDALGetGeoTransform(GDALDatasetH, double *);
 CPLErr CPL_DLL CPL_STDCALL GDALSetGeoTransform(GDALDatasetH, double *);
 
+CPLErr CPL_DLL GDALDatasetGeolocationToPixelLine(
+    GDALDatasetH, double dfGeolocX, double dfGeolocY, OGRSpatialReferenceH hSRS,
+    double *pdfPixel, double *pdfLine, CSLConstList papszTransformerOptions);
+
 int CPL_DLL CPL_STDCALL GDALGetGCPCount(GDALDatasetH);
 const char CPL_DLL *CPL_STDCALL GDALGetGCPProjection(GDALDatasetH);
 OGRSpatialReferenceH CPL_DLL GDALGetGCPSpatialRef(GDALDatasetH);
@@ -1434,12 +1426,6 @@ bool CPL_DLL GDALDatasetSetQueryLoggerFunc(
 /* ==================================================================== */
 /*      Informational utilities about subdatasets in file names         */
 /* ==================================================================== */
-
-/**
- *  Opaque type used for the C bindings of the C++ GDALSubdatasetInfo class
- *  @since GDAL 3.8
-*/
-typedef struct GDALSubdatasetInfo *GDALSubdatasetInfoH;
 
 /**
  * @brief Returns a new GDALSubdatasetInfo object with methods to extract
@@ -1747,6 +1733,12 @@ CPLErr CPL_DLL GDALRasterInterpolateAtPoint(GDALRasterBandH hBand,
                                             GDALRIOResampleAlg eInterpolation,
                                             double *pdfRealValue,
                                             double *pdfImagValue);
+
+CPLErr CPL_DLL GDALRasterInterpolateAtGeolocation(
+    GDALRasterBandH hBand, double dfGeolocX, double dfGeolocY,
+    OGRSpatialReferenceH hSRS, GDALRIOResampleAlg eInterpolation,
+    double *pdfRealValue, double *pdfImagValue,
+    CSLConstList papszTransformerOptions);
 
 /** Generic pointer for the working structure of VRTProcessedDataset
  * function. */

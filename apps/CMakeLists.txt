@@ -11,16 +11,21 @@ add_library(
   gdalalg_main.cpp
   gdalalg_pipeline.cpp
   gdalalg_raster.cpp
-  gdalalg_raster_buildvrt.cpp
   gdalalg_raster_info.cpp
+  gdalalg_raster_clip.cpp
   gdalalg_raster_convert.cpp
   gdalalg_raster_edit.cpp
+  gdalalg_raster_mosaic.cpp
   gdalalg_raster_pipeline.cpp
+  gdalalg_raster_overview_add.cpp
+  gdalalg_raster_overview_delete.cpp
   gdalalg_raster_read.cpp
   gdalalg_raster_reproject.cpp
+  gdalalg_raster_stack.cpp
   gdalalg_raster_write.cpp
   gdalalg_vector.cpp
   gdalalg_vector_info.cpp
+  gdalalg_vector_clip.cpp
   gdalalg_vector_convert.cpp
   gdalalg_vector_pipeline.cpp
   gdalalg_vector_read.cpp
@@ -70,7 +75,12 @@ target_public_header(TARGET ${GDAL_LIB_TARGET_NAME} HEADERS gdal_utils.h)
 
 if (BUILD_APPS)
   # Default Apps
-  add_executable(gdal gdal_utils_priv.h gdal.cpp)
+
+  # MSBuild has case-insensitive target names, so as GDAL is used as the
+  # target name for the library, we cannot reuse it for the "gdal" binary.
+  add_executable(gdal_app gdal_utils_priv.h gdal.cpp)
+  set_target_properties(gdal_app PROPERTIES OUTPUT_NAME gdal)
+
   add_executable(gdalinfo gdal_utils_priv.h gdalinfo_bin.cpp)
   add_executable(gdalbuildvrt gdal_utils_priv.h gdalbuildvrt_bin.cpp)
   add_executable(gdaladdo gdal_utils_priv.h gdaladdo.cpp)
@@ -111,7 +121,7 @@ if (BUILD_APPS)
   add_dependencies(utils_common generate_gdal_version_h)
 
   set(APPS_TARGETS
-      gdal
+      gdal_app
       gdalinfo
       gdalbuildvrt
       gdaladdo
@@ -236,6 +246,7 @@ if (BUILD_APPS)
 endif ()
 
 set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/gdal_algorithm.schema.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalinfo_output.schema.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalmdiminfo_output.schema.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/ogrinfo_output.schema.json

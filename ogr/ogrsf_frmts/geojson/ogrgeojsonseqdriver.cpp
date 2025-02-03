@@ -789,13 +789,13 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
     {
         if (pszUnprefixedFilename != poOpenInfo->pszFilename)
         {
-            osLayerName = CPLGetBasename(pszUnprefixedFilename);
+            osLayerName = CPLGetBasenameSafe(pszUnprefixedFilename);
             m_fp = VSIFOpenL(pszUnprefixedFilename,
                              poOpenInfo->eAccess == GA_Update ? "rb+" : "rb");
         }
         else
         {
-            osLayerName = CPLGetBasename(poOpenInfo->pszFilename);
+            osLayerName = CPLGetBasenameSafe(poOpenInfo->pszFilename);
             std::swap(m_fp, poOpenInfo->fpL);
         }
     }
@@ -912,7 +912,7 @@ bool OGRGeoJSONSeqDataSource::Create(const char *pszName,
 
     eAccess = GA_Update;
 
-    m_bIsRSSeparated = EQUAL(CPLGetExtension(pszName), "GEOJSONS");
+    m_bIsRSSeparated = EQUAL(CPLGetExtensionSafe(pszName).c_str(), "GEOJSONS");
 
     return true;
 }

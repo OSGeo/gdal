@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "raster buildvrt" subcommand
+ * Purpose:  gdal "raster stack" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_raster_buildvrt.h"
+#include "gdalalg_raster_stack.h"
 
 #include "cpl_conv.h"
 #include "cpl_vsi_virtual.h"
@@ -25,13 +25,14 @@
 #endif
 
 /************************************************************************/
-/*        GDALRasterBuildVRTAlgorithm::GDALRasterBuildVRTAlgorithm()    */
+/*        GDALRasterStackAlgorithm::GDALRasterStackAlgorithm()    */
 /************************************************************************/
 
-GDALRasterBuildVRTAlgorithm::GDALRasterBuildVRTAlgorithm()
+GDALRasterStackAlgorithm::GDALRasterStackAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
     AddProgressArg();
+    AddOutputFormatArg(&m_format);
     AddArg(GDAL_ARG_NAME_INPUT, 'i',
            _("Input raster datasets (or specify a @<filename> to point to a "
              "file containing filenames)"),
@@ -43,19 +44,20 @@ GDALRasterBuildVRTAlgorithm::GDALRasterBuildVRTAlgorithm()
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
     AddCreationOptionsArg(&m_creationOptions);
     AddArg("band", 'b', _("Specify input band(s) number."), &m_bands);
-    AddArg("separate", 0, _("Place each input file into a separate band."),
-           &m_separate);
     AddOverwriteArg(&m_overwrite);
     {
-        auto &arg = AddArg("resolution", 0,
-                           _("Target resolution (in destination CRS units)"),
-                           &m_resolution)
-                        .SetMetaVar("<xres>,<yres>|average|highest|lowest");
+        auto &arg =
+            AddArg("resolution", 0,
+                   _("Target resolution (in destination CRS units)"),
+                   &m_resolution)
+                .SetDefault("same")
+                .SetMetaVar("<xres>,<yres>|same|average|highest|lowest");
         arg.AddValidationAction(
             [this, &arg]()
             {
                 const std::string val = arg.Get<std::string>();
-                if (val != "average" && val != "highest" && val != "lowest")
+                if (val != "average" && val != "highest" && val != "lowest" &&
+                    val != "same")
                 {
                     const auto aosTokens =
                         CPLStringList(CSLTokenizeString2(val.c_str(), ",", 0));
@@ -67,8 +69,8 @@ GDALRasterBuildVRTAlgorithm::GDALRasterBuildVRTAlgorithm()
                     {
                         ReportError(CE_Failure, CPLE_AppDefined,
                                     "resolution: two comma separated positive "
-                                    "values should be provided, or 'average', "
-                                    "'highest' or 'lowest'");
+                                    "values should be provided, or 'same', "
+                                    "'average', 'highest' or 'lowest'");
                         return false;
                     }
                 }
@@ -85,29 +87,26 @@ GDALRasterBuildVRTAlgorithm::GDALRasterBuildVRTAlgorithm()
            &m_srcNoData)
         .SetMinCount(1)
         .SetRepeatedArgAllowed(false);
-    AddArg("vrtnodata", 0, _("Set nodata values at the VRT band level."),
-           &m_vrtNoData)
+    AddArg("dstnodata", 0,
+           _("Set nodata values at the destination band level."), &m_dstNoData)
         .SetMinCount(1)
         .SetRepeatedArgAllowed(false);
-    AddArg("hidenodata", 0, _("Makes the VRT band not report the NoData."),
+    AddArg("hidenodata", 0,
+           _("Makes the destination band not report the NoData."),
            &m_hideNoData);
-    AddArg("addalpha", 0,
-           _("Adds an alpha mask band to the VRT when the source raster have "
-             "none."),
-           &m_addAlpha);
 }
 
 /************************************************************************/
-/*                  GDALRasterBuildVRTAlgorithm::RunImpl()              */
+/*                   GDALRasterStackAlgorithm::RunImpl()               */
 /************************************************************************/
 
-bool GDALRasterBuildVRTAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                          void *pProgressData)
+bool GDALRasterStackAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                       void *pProgressData)
 {
     if (m_outputDataset.GetDatasetRef())
     {
         ReportError(CE_Failure, CPLE_NotSupported,
-                    "gdal raster buildvrt does not support outputting to an "
+                    "gdal raster stack does not support outputting to an "
                     "already opened output dataset");
         return false;
     }
@@ -178,23 +177,34 @@ bool GDALRasterBuildVRTAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
+    const bool bVRTOutput =
+        m_outputDataset.GetName().empty() || EQUAL(m_format.c_str(), "VRT") ||
+        EQUAL(CPLGetExtensionSafe(m_outputDataset.GetName().c_str()).c_str(),
+              "VRT");
+
     CPLStringList aosOptions;
-    if (!m_resolution.empty())
+
+    aosOptions.push_back("-strict");
+
+    aosOptions.push_back("-program_name");
+    aosOptions.push_back("gdal raster stack");
+
+    aosOptions.push_back("-separate");
+
+    const auto aosTokens =
+        CPLStringList(CSLTokenizeString2(m_resolution.c_str(), ",", 0));
+    if (aosTokens.size() == 2)
     {
-        const auto aosTokens =
-            CPLStringList(CSLTokenizeString2(m_resolution.c_str(), ",", 0));
-        if (aosTokens.size() == 2)
-        {
-            aosOptions.push_back("-tr");
-            aosOptions.push_back(aosTokens[0]);
-            aosOptions.push_back(aosTokens[1]);
-        }
-        else
-        {
-            aosOptions.push_back("-resolution");
-            aosOptions.push_back(m_resolution);
-        }
+        aosOptions.push_back("-tr");
+        aosOptions.push_back(aosTokens[0]);
+        aosOptions.push_back(aosTokens[1]);
     }
+    else
+    {
+        aosOptions.push_back("-resolution");
+        aosOptions.push_back(m_resolution);
+    }
+
     if (!m_bbox.empty())
     {
         aosOptions.push_back("-te");
@@ -219,11 +229,11 @@ bool GDALRasterBuildVRTAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
         aosOptions.push_back(s);
     }
-    if (!m_vrtNoData.empty())
+    if (!m_dstNoData.empty())
     {
         aosOptions.push_back("-vrtnodata");
         std::string s;
-        for (double v : m_vrtNoData)
+        for (double v : m_dstNoData)
         {
             if (!s.empty())
                 s += " ";
@@ -231,23 +241,18 @@ bool GDALRasterBuildVRTAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
         aosOptions.push_back(s);
     }
-    if (m_separate)
+    if (bVRTOutput)
     {
-        aosOptions.push_back("-separate");
-    }
-    for (const auto &co : m_creationOptions)
-    {
-        aosOptions.push_back("-co");
-        aosOptions.push_back(co);
+        for (const auto &co : m_creationOptions)
+        {
+            aosOptions.push_back("-co");
+            aosOptions.push_back(co);
+        }
     }
     for (const int b : m_bands)
     {
         aosOptions.push_back("-b");
         aosOptions.push_back(CPLSPrintf("%d", b));
-    }
-    if (m_addAlpha)
-    {
-        aosOptions.push_back("-addalpha");
     }
     if (m_hideNoData)
     {
@@ -256,19 +261,57 @@ bool GDALRasterBuildVRTAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     GDALBuildVRTOptions *psOptions =
         GDALBuildVRTOptionsNew(aosOptions.List(), nullptr);
-    GDALBuildVRTOptionsSetProgress(psOptions, pfnProgress, pProgressData);
+    if (bVRTOutput)
+    {
+        GDALBuildVRTOptionsSetProgress(psOptions, pfnProgress, pProgressData);
+    }
 
     auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
-        GDALBuildVRT(m_outputDataset.GetName().c_str(),
+        GDALBuildVRT(bVRTOutput ? m_outputDataset.GetName().c_str() : "",
                      foundByName ? aosInputDatasetNames.size()
                                  : static_cast<int>(m_inputDatasets.size()),
                      ahInputDatasets.empty() ? nullptr : ahInputDatasets.data(),
                      aosInputDatasetNames.List(), psOptions, nullptr)));
     GDALBuildVRTOptionsFree(psOptions);
-    const bool bOK = poOutDS != nullptr;
+    bool bOK = poOutDS != nullptr;
     if (bOK)
     {
-        m_outputDataset.Set(std::move(poOutDS));
+        if (bVRTOutput)
+        {
+            m_outputDataset.Set(std::move(poOutDS));
+        }
+        else
+        {
+            CPLStringList aosTranslateOptions;
+            if (!m_format.empty())
+            {
+                aosTranslateOptions.AddString("-of");
+                aosTranslateOptions.AddString(m_format.c_str());
+            }
+            for (const auto &co : m_creationOptions)
+            {
+                aosTranslateOptions.AddString("-co");
+                aosTranslateOptions.AddString(co.c_str());
+            }
+
+            GDALTranslateOptions *psTranslateOptions =
+                GDALTranslateOptionsNew(aosTranslateOptions.List(), nullptr);
+            GDALTranslateOptionsSetProgress(psTranslateOptions, pfnProgress,
+                                            pProgressData);
+
+            auto poFinalDS =
+                std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
+                    GDALTranslate(m_outputDataset.GetName().c_str(),
+                                  GDALDataset::ToHandle(poOutDS.get()),
+                                  psTranslateOptions, nullptr)));
+            GDALTranslateOptionsFree(psTranslateOptions);
+
+            bOK = poFinalDS != nullptr;
+            if (bOK)
+            {
+                m_outputDataset.Set(std::move(poFinalDS));
+            }
+        }
     }
 
     return bOK;

@@ -30,7 +30,7 @@ static GDALDataset *OGRIdrisiOpen(GDALOpenInfo *poOpenInfo)
     // --------------------------------------------------------------------
     //      Does this appear to be a .vct file?
     // --------------------------------------------------------------------
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "vct"))
+    if (!poOpenInfo->IsExtensionEqualToCI("vct"))
         return nullptr;
 
     auto poDS = std::make_unique<OGRIdrisiDataSource>();

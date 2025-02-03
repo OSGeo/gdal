@@ -12,6 +12,7 @@
 #ifndef MARCHING_SQUARES_SEGMENT_MERGER_H
 #define MARCHING_SQUARES_SEGMENT_MERGER_H
 
+#include "cpl_error.h"
 #include "point.h"
 
 #include <list>
@@ -38,7 +39,7 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
     SegmentMerger(LineWriter &lineWriter, const LevelGenerator &levelGenerator,
                   bool polygonize_)
         : polygonize(polygonize_), lineWriter_(lineWriter), lines_(),
-          levelGenerator_(levelGenerator)
+          levelGenerator_(levelGenerator), m_anSkipLevels()
     {
     }
 
@@ -56,6 +57,13 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
         for (auto it = lines_.begin(); it != lines_.end(); ++it)
         {
             const int levelIdx = it->first;
+
+            // Skip levels that should be skipped
+            if (std::find(m_anSkipLevels.begin(), m_anSkipLevels.end(),
+                          levelIdx) != m_anSkipLevels.end())
+            {
+                continue;
+            }
             while (it->second.begin() != it->second.end())
             {
                 lineWriter_.addLine(levelGenerator_.level(levelIdx),
@@ -125,6 +133,23 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
     SegmentMerger<LineWriter, LevelGenerator> &
     operator=(const SegmentMerger<LineWriter, LevelGenerator> &) = delete;
 
+    /**
+     * @brief setSkipLevels sets the levels that should be skipped
+     *        when polygonize option is set.
+     * @param anSkipLevels integer 0-based levels to skip.
+     */
+    void setSkipLevels(const std::vector<int> &anSkipLevels)
+    {
+        // Warn if polygonize is not set
+        if (!polygonize)
+        {
+            CPLError(
+                CE_Warning, CPLE_NotSupported,
+                "setSkipLevels is ignored when polygonize option is not set");
+        }
+        m_anSkipLevels = anSkipLevels;
+    }
+
     const bool polygonize;
 
   private:
@@ -133,8 +158,12 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
     std::map<int, Lines> lines_;
     const LevelGenerator &levelGenerator_;
 
+    // Store 0-indexed levels to skip when polygonize option is set
+    std::vector<int> m_anSkipLevels;
+
     void addSegment_(int levelIdx, const Point &start, const Point &end)
     {
+
         Lines &lines = lines_[levelIdx];
 
         if (start == end)
@@ -257,11 +286,18 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
     typename Lines::iterator emitLine_(int levelIdx,
                                        typename Lines::iterator it, bool closed)
     {
+
         Lines &lines = lines_[levelIdx];
         if (lines.empty())
             lines_.erase(levelIdx);
 
         // consume "it" and remove it from the list
+        // but clear the line if the level should be skipped
+        if (std::find(m_anSkipLevels.begin(), m_anSkipLevels.end(), levelIdx) !=
+            m_anSkipLevels.end())
+        {
+            it->ls.clear();
+        }
         lineWriter_.addLine(levelGenerator_.level(levelIdx), it->ls, closed);
         return lines.erase(it);
     }

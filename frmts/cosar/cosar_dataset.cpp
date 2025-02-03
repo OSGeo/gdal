@@ -176,9 +176,7 @@ GDALDataset *COSARDataset::Open(GDALOpenInfo *pOpenInfo)
     /* -------------------------------------------------------------------- */
     if (pOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The COSAR driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("COSAR");
         return nullptr;
     }
 

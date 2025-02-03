@@ -25,7 +25,7 @@ GDALArgumentParser::GDALArgumentParser(const std::string &program_name,
                                        bool bForBinary)
     : ArgumentParser(program_name, "", default_arguments::none)
 {
-    set_usage_max_line_width(120);
+    set_usage_max_line_width(80);
     set_usage_break_on_mutex();
     add_usage_newline();
 

@@ -9178,8 +9178,10 @@ def test_ogr_gpkg_read_generated_column(tmp_vsimem):
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 4
     assert lyr.GetLayerDefn().GetFieldDefn(2).GetName() == "strfield_generated"
+    assert lyr.GetLayerDefn().GetFieldDefn(2).IsGenerated()
     assert lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTString
     assert lyr.GetLayerDefn().GetFieldDefn(3).GetName() == "intfield_generated_stored"
+    assert lyr.GetLayerDefn().GetFieldDefn(3).IsGenerated()
     assert lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTInteger64
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -9191,6 +9193,8 @@ def test_ogr_gpkg_read_generated_column(tmp_vsimem):
     assert f["strfield"] == "foo"
     assert f["strfield_generated"] == "foo_generated"
     assert f["intfield_generated_stored"] == 5
+    assert f.GetFieldDefnRef(2).IsGenerated()
+    assert f.GetFieldDefnRef(3).IsGenerated()
 
     assert lyr.SetFeature(f) == ogr.OGRERR_NONE
     lyr.ResetReading()
@@ -10908,3 +10912,62 @@ def test_ogr_gpkg_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
         assert batch["datetime"][1] == b"2022-05-31T12:34:56.789Z"
         assert batch["datetime"][2] == b"2022-05-31T12:34:56.000"
         assert batch["datetime"][3] == b"2022-05-31T12:34:56.000+12:30"
+
+
+###############################################################################
+# Test field operations rolling back changes.
+
+
+@pytest.mark.parametrize("start_transaction", [False, True])
+def test_ogr_gpkg_field_operations_rollback(tmp_vsimem, start_transaction):
+
+    filename = str(tmp_vsimem / "test.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(filename) as ds:
+        ogrtest.check_transaction_rollback(ds, start_transaction, test_geometry=False)
+
+
+@pytest.mark.parametrize("start_transaction", [False, True])
+def test_ogr_gpkg_field_operations_savepoint_rollback(tmp_vsimem, start_transaction):
+
+    filename = str(tmp_vsimem / "test_savepoint.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(filename) as ds:
+        ogrtest.check_transaction_rollback_with_savepoint(
+            ds, start_transaction, test_geometry=False
+        )
+
+
+@pytest.mark.parametrize("auto_begin_transaction", [False, True])
+@pytest.mark.parametrize("start_transaction", [False, True])
+@pytest.mark.parametrize(
+    "release_to,rollback_to,expected",
+    (
+        ([1], [], ["fld3"]),
+        ([2], [], ["fld3"]),
+        ([3], [], ["fld3"]),
+        ([4], [], ["fld3"]),
+        ([], [1], ["fld1", "fld2", "fld3", "fld4", "fld5"]),
+        ([], [2], ["fld1", "fld3", "fld4", "fld5"]),
+        ([], [3], ["fld1", "fld3", "fld5"]),
+        ([], [4], ["fld3", "fld5"]),
+    ),
+)
+def test_ogr_gpkg_field_operations_savepoint_release(
+    tmp_vsimem,
+    auto_begin_transaction,
+    start_transaction,
+    release_to,
+    rollback_to,
+    expected,
+):
+
+    filename = str(tmp_vsimem / "test_savepoint_release.gpkg")
+    ogrtest.check_transaction_savepoint_release(
+        filename,
+        "GPKG",
+        auto_begin_transaction,
+        start_transaction,
+        release_to,
+        rollback_to,
+        expected,
+        test_geometry=False,
+    )

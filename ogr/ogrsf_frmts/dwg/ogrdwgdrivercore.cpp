@@ -21,7 +21,7 @@
 int OGRDWGDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    return EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "dwg");
+    return poOpenInfo->IsExtensionEqualToCI("dwg");
 }
 
 /************************************************************************/

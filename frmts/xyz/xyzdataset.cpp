@@ -707,7 +707,7 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
     nCommentLineCount = 0;
 
     CPLString osFilename(poOpenInfo->pszFilename);
-    if (EQUAL(CPLGetExtension(osFilename), "GRA") &&
+    if (EQUAL(CPLGetExtensionSafe(osFilename).c_str(), "GRA") &&
         !poOpenInfo->IsSingleAllowedDriver("XYZ"))
     {
         // IGNFHeightASCIIGRID .GRA
@@ -1501,9 +1501,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The XYZ driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("XYZ");
         VSIFCloseL(fp);
         return nullptr;
     }

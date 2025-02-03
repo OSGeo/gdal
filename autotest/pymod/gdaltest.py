@@ -13,6 +13,7 @@
 ###############################################################################
 
 import contextlib
+import functools
 import io
 import json
 import math
@@ -2131,3 +2132,12 @@ def error_raised(type, match=""):
     assert any(
         [err["level"] == type and match in err["message"] for err in errors]
     ), f'Did not receive an error of type {err_levels[type]} matching "{match}"'
+
+
+###############################################################################
+# Check VRT capabilities
+
+
+@functools.lru_cache()
+def gdal_has_vrt_expression_dialect(dialect):
+    return dialect in gdal.GetDriverByName("VRT").GetMetadataItem("ExpressionDialects")

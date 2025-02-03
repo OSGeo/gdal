@@ -190,6 +190,11 @@ class CPL_DLL VRTSource
         return false;
     }
 
+    virtual const CPLString &GetName() const
+    {
+        return m_osName;
+    }
+
     /** Returns a string with the VRTSource class type.
      * This method must be implemented in all subclasses
      */
@@ -199,6 +204,9 @@ class CPL_DLL VRTSource
     {
         return CE_None;
     }
+
+  protected:
+    CPLString m_osName{};
 };
 
 typedef VRTSource *(*VRTSourceParser)(const CPLXMLNode *, const char *,
@@ -723,6 +731,9 @@ class VRTProcessedDataset final : public VRTDataset
 
     //! Directory of the VRT
     std::string m_osVRTPath{};
+
+    //! Source of source dataset generated with GDALTranslate
+    std::unique_ptr<GDALDataset> m_poVRTSrcDS{};
 
     //! Source dataset
     std::unique_ptr<GDALDataset> m_poSrcDS{};

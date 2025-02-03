@@ -4536,3 +4536,63 @@ def test_ogr_sqlite_schema_override(
                 assert (
                     gdal.GetLastErrorMsg().find(expected_warning) != -1
                 ), f"Warning {expected_warning} not found, got {gdal.GetLastErrorMsg()} instead"
+
+
+######################################################################
+# Test field operations rolling back changes.
+#
+
+
+@pytest.mark.parametrize("start_transaction", [False, True])
+def test_ogr_sqlite_field_operations_rollback(tmp_vsimem, start_transaction):
+
+    filename = str(tmp_vsimem / "test.db")
+    with ogr.GetDriverByName("SQLite").CreateDataSource(filename) as ds:
+        ogrtest.check_transaction_rollback(ds, start_transaction, test_geometry=False)
+
+
+@pytest.mark.parametrize("start_transaction", [False, True])
+def test_ogr_sqlite_field_operations_savepoint_rollback(tmp_vsimem, start_transaction):
+
+    filename = str(tmp_vsimem / "test_savepoint.db")
+    with ogr.GetDriverByName("SQLite").CreateDataSource(filename) as ds:
+        ogrtest.check_transaction_rollback_with_savepoint(
+            ds, start_transaction, test_geometry=False
+        )
+
+
+@pytest.mark.parametrize("auto_begin_transaction", [False, True])
+@pytest.mark.parametrize("start_transaction", [False, True])
+@pytest.mark.parametrize(
+    "release_to,rollback_to,expected",
+    (
+        ([1], [], ["fld3"]),
+        ([2], [], ["fld3"]),
+        ([3], [], ["fld3"]),
+        ([4], [], ["fld3"]),
+        ([], [1], ["fld1", "fld2", "fld3", "fld4", "fld5"]),
+        ([], [2], ["fld1", "fld3", "fld4", "fld5"]),
+        ([], [3], ["fld1", "fld3", "fld5"]),
+        ([], [4], ["fld3", "fld5"]),
+    ),
+)
+def test_ogr_sqlite_field_operations_savepoint_release(
+    tmp_vsimem,
+    auto_begin_transaction,
+    start_transaction,
+    release_to,
+    rollback_to,
+    expected,
+):
+
+    filename = str(tmp_vsimem / "test_savepoint_release.db")
+    ogrtest.check_transaction_savepoint_release(
+        filename,
+        "SQLite",
+        auto_begin_transaction,
+        start_transaction,
+        release_to,
+        rollback_to,
+        expected,
+        test_geometry=False,
+    )

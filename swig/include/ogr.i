@@ -2977,6 +2977,14 @@ public:
     OGR_Fld_SetUnique( self, bUnique );
   }
 
+  int IsGenerated() {
+    return OGR_Fld_IsGenerated( self );
+  }
+
+  void SetGenerated(int bGenerated ) {
+    OGR_Fld_SetGenerated( self, bGenerated );
+  }
+
   const char* GetDefault() {
     return OGR_Fld_GetDefault( self );
   }
@@ -3758,6 +3766,11 @@ public:
     return (OGRGeometryShadow*) OGR_G_Polygonize(self);
   }
 
+  %newobject BuildArea;
+  OGRGeometryShadow* BuildArea() {
+    return (OGRGeometryShadow*) OGR_G_BuildArea(self);
+  }
+
   %newobject Boundary;
   OGRGeometryShadow* Boundary() {
     return (OGRGeometryShadow*) OGR_G_Boundary(self);
@@ -4047,7 +4060,7 @@ public:
 
   %newobject Value;
   OGRGeometryShadow* Value(double dfDistance) {
-    return OGR_G_Value(self, dfDistance);
+    return (OGRGeometryShadow*)OGR_G_Value(self, dfDistance);
   }
 
   %newobject Transform;

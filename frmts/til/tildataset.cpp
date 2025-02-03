@@ -174,7 +174,7 @@ int TILDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
     if (poOpenInfo->nHeaderBytes < 200 ||
-        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "TIL"))
+        !poOpenInfo->IsExtensionEqualToCI("TIL"))
         return FALSE;
 
     if (strstr((const char *)poOpenInfo->pabyHeader, "numTiles") == nullptr)
@@ -198,13 +198,11 @@ GDALDataset *TILDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The TIL driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("TIL");
         return nullptr;
     }
 
-    CPLString osDirname = CPLGetDirname(poOpenInfo->pszFilename);
+    CPLString osDirname = CPLGetDirnameSafe(poOpenInfo->pszFilename);
 
     // get metadata reader
 
@@ -291,7 +289,7 @@ GDALDataset *TILDataset::Open(GDALOpenInfo *poOpenInfo)
     if (pszFilename[strlen(pszFilename) - 1] == '"')
         const_cast<char *>(pszFilename)[strlen(pszFilename) - 1] = '\0';
 
-    CPLString osFilename = CPLFormFilename(osDirname, pszFilename, nullptr);
+    CPLString osFilename = CPLFormFilenameSafe(osDirname, pszFilename, nullptr);
     GDALDataset *poTemplateDS =
         GDALDataset::FromHandle(GDALOpen(osFilename, GA_ReadOnly));
     if (poTemplateDS == nullptr || poTemplateDS->GetRasterCount() == 0)
@@ -378,7 +376,7 @@ GDALDataset *TILDataset::Open(GDALOpenInfo *poOpenInfo)
             pszFilename++;
         if (pszFilename[strlen(pszFilename) - 1] == '"')
             const_cast<char *>(pszFilename)[strlen(pszFilename) - 1] = '\0';
-        osFilename = CPLFormFilename(osDirname, pszFilename, nullptr);
+        osFilename = CPLFormFilenameSafe(osDirname, pszFilename, nullptr);
         poDS->m_aosFilenames.push_back(osFilename);
 
         osKey.Printf("TILE_%d.ULColOffset", iTile);

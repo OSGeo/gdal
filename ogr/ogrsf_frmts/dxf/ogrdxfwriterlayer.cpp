@@ -1278,7 +1278,7 @@ OGRErr OGRDXFWriterLayer::ICreateFeature(OGRFeature *poFeature)
     }
 
     // Explode geometry collections into multiple entities.
-    else if (eGType == wkbGeometryCollection)
+    else if (eGType == wkbGeometryCollection || eGType == wkbMultiPoint)
     {
         OGRGeometryCollection *poGC =
             poFeature->StealGeometry()->toGeometryCollection();

@@ -968,13 +968,8 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
             {
                 if (!oOptions.bAllowNonFiniteValues)
                 {
-                    static bool bHasWarned = false;
-                    if (!bHasWarned)
-                    {
-                        bHasWarned = true;
-                        CPLError(CE_Warning, CPLE_AppDefined,
+                    CPLErrorOnce(CE_Warning, CPLE_AppDefined,
                                  "NaN of Infinity value found. Skipped");
-                    }
                     continue;
                 }
             }

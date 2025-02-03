@@ -72,6 +72,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libzstd-dev${APT_ARCH_SUFFIX} bash zip curl \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libopenjp2-7-dev${APT_ARCH_SUFFIX} \
        libspatialite-dev${APT_ARCH_SUFFIX} \
+       libmuparser-dev${APT_ARCH_SUFFIX} \
        autoconf automake sqlite3 bash-completion swig
 
 ARG PROJ_INSTALL_PREFIX
@@ -242,6 +243,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libwebp7 libpng16-16 \
         libdeflate0 \
         libzstd1 bash libpq5 libssl3 libopenjp2-7 libspatialite8 \
+        libmuparser2v5 \
         # pil for antialias option of gdal2tiles
         python3-pil \
     && apt-get install -y python-is-python3

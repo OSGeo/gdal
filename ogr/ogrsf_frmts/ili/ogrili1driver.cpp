@@ -50,26 +50,6 @@ static GDALDataset *OGRILI1DriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                               Create()                               */
-/************************************************************************/
-
-static GDALDataset *OGRILI1DriverCreate(const char *pszName, int /* nBands */,
-                                        int /* nXSize */, int /* nYSize */,
-                                        GDALDataType /* eDT */,
-                                        char **papszOptions)
-{
-    OGRILI1DataSource *poDS = new OGRILI1DataSource();
-
-    if (!poDS->Create(pszName, papszOptions))
-    {
-        delete poDS;
-        return nullptr;
-    }
-
-    return poDS;
-}
-
-/************************************************************************/
 /*                           RegisterOGRILI1()                           */
 /************************************************************************/
 
@@ -82,7 +62,6 @@ void RegisterOGRILI1()
 
     poDriver->SetDescription("Interlis 1");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Interlis 1");
@@ -98,7 +77,6 @@ void RegisterOGRILI1()
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = OGRILI1DriverOpen;
-    poDriver->pfnCreate = OGRILI1DriverCreate;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

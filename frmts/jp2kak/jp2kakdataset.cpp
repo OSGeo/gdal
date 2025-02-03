@@ -692,7 +692,7 @@ GDALDataset *JP2KAKDataset::Open(GDALOpenInfo *poOpenInfo)
     KakaduInitialize();
 
     // Handle setting up datasource for JPIP.
-    const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExtension = poOpenInfo->osExtension.c_str();
     std::vector<GByte> abySubfileHeader(16);  // leave in this scope
     if (poOpenInfo->nHeaderBytes < 16)
     {
@@ -2373,22 +2373,24 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
 #ifdef KAKADU_JPX
     jpx_family_tgt jpx_family;
     jpx_target jpx_out;
-    const bool bIsJPX = !EQUAL(CPLGetExtension(pszFilename), "jpf") &&
-                        !EQUAL(CPLGetExtension(pszFilename), "jpc") &&
-                        !EQUAL(CPLGetExtension(pszFilename), "j2k") &&
-                        !(pszCodec != NULL && EQUAL(pszCodec, "J2K"));
+    const bool bIsJPX =
+        !EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "jpf") &&
+        !EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "jpc") &&
+        !EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "j2k") &&
+        !(pszCodec != NULL && EQUAL(pszCodec, "J2K"));
 #endif
 
     kdu_compressed_target *poOutputFile = nullptr;
     jp2_target jp2_out;
     const char *pszCodec = CSLFetchNameValueDef(papszOptions, "CODEC", nullptr);
-    const bool bIsJP2 = (!EQUAL(CPLGetExtension(pszFilename), "jpc") &&
-                         !EQUAL(CPLGetExtension(pszFilename), "j2k") &&
+    const bool bIsJP2 =
+        (!EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "jpc") &&
+         !EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "j2k") &&
 #ifdef KAKADU_JPX
-                         !bIsJPX &&
+         !bIsJPX &&
 #endif
-                         !(pszCodec != nullptr && EQUAL(pszCodec, "J2K"))) ||
-                        (pszCodec != nullptr && EQUAL(pszCodec, "JP2"));
+         !(pszCodec != nullptr && EQUAL(pszCodec, "J2K"))) ||
+        (pszCodec != nullptr && EQUAL(pszCodec, "JP2"));
     kdu_codestream oCodeStream;
 
     vsil_target oVSILTarget;

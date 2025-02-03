@@ -130,6 +130,7 @@ schema_creationoptionslist_xml = etree.XML(
         <xs:extension base="xs:string">
           <xs:attribute type="xs:string" name="alias" use="optional"/>
           <xs:attribute type="xs:string" name="aliasOf" use="optional"/>
+          <xs:attribute type="xs:string" name="remark" use="optional"/>
         </xs:extension>
       </xs:simpleContent>
     </xs:complexType>
@@ -642,3 +643,30 @@ def test_metadata_creation_field_defn_flags(driver_name):
     if flags_str is not None:
         for flag in flags_str.split(" "):
             assert flag in supported_flags
+
+
+@pytest.mark.parametrize("driver_name", ogr_driver_names)
+def test_metadata_update_items(driver_name):
+    """Test if DMD_UPDATE_ITEMS metadataitem returns valid flags"""
+
+    supported_flags = {
+        "GeoTransform",
+        "SRS",
+        "GCPs",
+        "NoData",
+        "ColorInterpretation",
+        "RasterValues",
+        "DatasetMetadata",
+        "BandMetadata",
+        "Features",
+        "LayerMetadata",
+    }
+
+    driver = gdal.GetDriverByName(driver_name)
+    flags_str = driver.GetMetadataItem(gdal.DMD_UPDATE_ITEMS)
+    if flags_str is not None:
+        assert driver.GetMetadataItem(gdal.DCAP_UPDATE)
+        for flag in flags_str.split(" "):
+            assert flag in supported_flags
+    else:
+        assert not driver.GetMetadataItem(gdal.DCAP_UPDATE)

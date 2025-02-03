@@ -85,7 +85,7 @@ OGRGPSBabelDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
              poOpenInfo->pabyHeader[2] <= 'Z' &&
              poOpenInfo->pabyHeader[3] >= 'A' &&
              poOpenInfo->pabyHeader[3] <= 'Z' &&
-             EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "igc"))
+             poOpenInfo->IsExtensionEqualToCI("igc"))
         pszGPSBabelDriverName = "igc";
 
     static int bGPSBabelFound = -1;

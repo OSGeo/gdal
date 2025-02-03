@@ -280,9 +280,9 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLStringList aosHDR;
 
     // default raster file: same name with no extension
-    const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
-    const CPLString osName = CPLGetBasename(poOpenInfo->pszFilename);
-    CPLString osRasterFilename = CPLFormCIFilename(osPath, osName, "");
+    const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
+    const CPLString osName = CPLGetBasenameSafe(poOpenInfo->pszFilename);
+    CPLString osRasterFilename = CPLFormCIFilenameSafe(osPath, osName, "");
 
     // parse the header file
     const char *pszLine = nullptr;
@@ -327,7 +327,7 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else if (EQUAL(aosTokens[0], "PIXEL_FILES"))
         {
-            osRasterFilename = CPLFormCIFilename(osPath, aosTokens[1], "");
+            osRasterFilename = CPLFormCIFilenameSafe(osPath, aosTokens[1], "");
         }
         else if (EQUAL(aosTokens[0], "FORMAT"))
         {
@@ -418,9 +418,7 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The EIR driver does not support update access to existing"
-                 " datasets.");
+        ReportUpdateNotSupportedByDriver("EIR");
         return nullptr;
     }
     /* -------------------------------------------------------------------- */

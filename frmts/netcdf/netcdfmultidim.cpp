@@ -4971,7 +4971,7 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
         if (osFilename.empty())
         {
             bFileToDestroyAtClosing = true;
-            osFilename = CPLGenerateTempFilename("netcdf_tmp");
+            osFilename = CPLGenerateTempFilenameSafe("netcdf_tmp");
         }
         if (!netCDFDatasetCreateTempFile(NCDF_FORMAT_NC4, osFilename.c_str(),
                                          poOpenInfo->fpL))

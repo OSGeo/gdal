@@ -265,7 +265,9 @@ def test_applyverticalshiftgrid_5():
         outputType=gdal.GDT_Float32,
         scaleParams=[[0, 1, 0, 0.5]],
     )
-    out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds, srcUnitToMeter=2)
+    out_ds = gdal.ApplyVerticalShiftGrid(
+        src_ds, grid_ds, srcUnitToMeter=2, options=["ERROR_ON_MISSING_VERT_SHIFT=YES"]
+    )
     cs = out_ds.GetRasterBand(1).Checksum()
     assert cs == 4672
 
@@ -279,7 +281,9 @@ def test_applyverticalshiftgrid_5():
         outputType=gdal.GDT_Float32,
         scaleParams=[[0, 1, 0, 0.5]],
     )
-    out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds, dstUnitToMeter=0.5)
+    out_ds = gdal.ApplyVerticalShiftGrid(
+        src_ds, grid_ds, dstUnitToMeter=0.5, options=["ERROR_ON_MISSING_VERT_SHIFT=YES"]
+    )
     cs = out_ds.GetRasterBand(1).Checksum()
     assert cs == 4672
 

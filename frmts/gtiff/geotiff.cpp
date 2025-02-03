@@ -93,16 +93,11 @@ void GTIFFGetOverviewBlockSize(GDALRasterBandH hBand, int *pnBlockXSize,
         if (nOvrBlockSize < 64 || nOvrBlockSize > 4096 ||
             !CPLIsPowerOfTwo(nOvrBlockSize))
         {
-            static bool bHasWarned = false;
-            if (!bHasWarned)
-            {
-                CPLError(CE_Warning, CPLE_NotSupported,
+            CPLErrorOnce(CE_Warning, CPLE_NotSupported,
                          "Wrong value for GDAL_TIFF_OVR_BLOCKSIZE : %s. "
                          "Should be a power of 2 between 64 and 4096. "
                          "Defaulting to 128",
                          pszVal);
-                bHasWarned = true;
-            }
             nOvrBlockSize = 128;
         }
 
@@ -651,11 +646,13 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
     papszLocalParameters =
         CSLSetNameValue(papszLocalParameters, "WRITE_JPEGTABLE_TAG", "NO");
 
+    bool bTileInterleaving;
     TIFF *hTIFFTmp =
         GTiffDataset::CreateLL(osTmpFilenameIn, nInMemImageWidth,
                                nInMemImageHeight, (nBands <= 4) ? nBands : 1,
                                (l_nBitsPerSample <= 8) ? GDT_Byte : GDT_UInt16,
-                               0.0, 0, papszLocalParameters, &fpTmp, osTmp);
+                               0.0, 0, papszLocalParameters, &fpTmp, osTmp,
+                               /* bCreateCopy=*/false, bTileInterleaving);
     CSLDestroy(papszLocalParameters);
     if (hTIFFTmp)
     {
@@ -1497,6 +1494,12 @@ void GDALRegister_GTiff()
         "</OpenOptionList>");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS GCPs NoData "
+                              "ColorInterpretation RasterValues "
+                              "DatasetMetadata BandMetadata");
 
 #ifdef INTERNAL_LIBTIFF
     poDriver->SetMetadataItem("LIBTIFF", "INTERNAL");

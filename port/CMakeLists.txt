@@ -112,6 +112,8 @@ target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:cpl>)
 target_compile_options(cpl PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
 set_property(TARGET cpl PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 
+set_property(SOURCE cpl_path.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
+
 # include path to generated cpl_config.h
 target_include_directories(cpl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -337,9 +339,7 @@ if (NOT CMAKE_CROSSCOMPILING AND BUILD_VSIPRELOAD AND "${CMAKE_SYSTEM}" MATCHES 
     add_library(vsipreload MODULE vsipreload.cpp)
     set_target_properties(vsipreload PROPERTIES PREFIX "")
     target_link_libraries(vsipreload PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> ${CMAKE_DL_LIBS})
-    if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-      set_property(SOURCE vsipreload.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
-    endif ()
+    set_property(SOURCE vsipreload.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
 
     # For musl / Alpine
     foreach(_header IN ITEMS stdio.h fcntl.h unistd.h dirent.h sys/stat.h)

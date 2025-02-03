@@ -633,8 +633,7 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
             return nullptr;
         }
         auto ds = new ECDataset();
-        ds->dname.Printf("%s/_alllayers",
-                         CPLGetDirname(poOpenInfo->pszFilename));
+        ds->dname = CPLGetDirnameSafe(poOpenInfo->pszFilename) + "/_alllayers";
         CPLErr error = ds->Initialize(CacheInfo);
         CPLDestroyXMLNode(config);
         if (CE_None != error)
@@ -684,7 +683,8 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
             tileBundlesPath.erase(0, 2);
         }
 
-        ds->dname.Printf("%s/%s", CPLGetDirname(poOpenInfo->pszFilename),
+        ds->dname.Printf("%s/%s",
+                         CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str(),
                          tileBundlesPath.c_str());
         CPLErr error = ds->InitializeFromJSON(oRoot);
         if (CE_None != error)

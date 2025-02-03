@@ -72,7 +72,7 @@ static CPLString getRscFilename(GDALOpenInfo *poOpenInfo)
     if (papszSiblingFiles == nullptr)
     {
         const CPLString osRscFilename =
-            CPLFormFilename(nullptr, poOpenInfo->pszFilename, "rsc");
+            CPLFormFilenameSafe(nullptr, poOpenInfo->pszFilename, "rsc");
         VSIStatBufL psRscStatBuf;
         if (VSIStatL(osRscFilename, &psRscStatBuf) != 0)
         {
@@ -85,14 +85,14 @@ static CPLString getRscFilename(GDALOpenInfo *poOpenInfo)
     /*      We need to tear apart the filename to form a .rsc       */
     /*      filename.                                               */
     /* ------------------------------------------------------------ */
-    const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
+    const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
     const CPLString osName = CPLGetFilename(poOpenInfo->pszFilename);
 
-    int iFile = CSLFindString(papszSiblingFiles,
-                              CPLFormFilename(nullptr, osName, "rsc"));
+    int iFile = CSLFindString(
+        papszSiblingFiles, CPLFormFilenameSafe(nullptr, osName, "rsc").c_str());
     if (iFile >= 0)
     {
-        return CPLFormFilename(osPath, papszSiblingFiles[iFile], nullptr);
+        return CPLFormFilenameSafe(osPath, papszSiblingFiles[iFile], nullptr);
     }
 
     return "";
@@ -259,7 +259,7 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
         PIXEL
     } eInterleave = UNKNOWN;
 
-    const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExtension = poOpenInfo->osExtension.c_str();
     if (strcmp(pszExtension, "raw") == 0)
     {
         /* ------------------------------------------------------------ */
@@ -506,7 +506,7 @@ int ROIPACDataset::Identify(GDALOpenInfo *poOpenInfo)
     /*      Check if:                                                       */
     /*      * 1. The data file extension is known                           */
     /* -------------------------------------------------------------------- */
-    const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExtension = poOpenInfo->osExtension.c_str();
     if (strcmp(pszExtension, "raw") == 0)
     {
         /* Since gdal do not read natively CInt8, more work is needed
@@ -548,7 +548,8 @@ GDALDataset *ROIPACDataset::Create(const char *pszFilename, int nXSize,
     /* -------------------------------------------------------------------- */
     /*      Verify input options.                                           */
     /* -------------------------------------------------------------------- */
-    const char *pszExtension = CPLGetExtension(pszFilename);
+    const std::string osExtension = CPLGetExtensionSafe(pszFilename);
+    const char *pszExtension = osExtension.c_str();
     if (strcmp(pszExtension, "int") == 0 || strcmp(pszExtension, "slc") == 0)
     {
         if (nBandsIn != 1 || eType != GDT_CFloat32)
@@ -637,12 +638,13 @@ GDALDataset *ROIPACDataset::Create(const char *pszFilename, int nXSize,
     /* -------------------------------------------------------------------- */
     /*      Open the RSC file.                                              */
     /* -------------------------------------------------------------------- */
-    const char *pszRSCFilename = CPLFormFilename(nullptr, pszFilename, "rsc");
-    fp = VSIFOpenL(pszRSCFilename, "wt");
+    const std::string osRSCFilename =
+        CPLFormFilenameSafe(nullptr, pszFilename, "rsc");
+    fp = VSIFOpenL(osRSCFilename.c_str(), "wt");
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Attempt to create file `%s' failed.", pszRSCFilename);
+                 "Attempt to create file `%s' failed.", osRSCFilename.c_str());
         return nullptr;
     }
 

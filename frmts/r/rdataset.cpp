@@ -313,7 +313,7 @@ int RDataset::Identify(GDALOpenInfo *poOpenInfo)
     // If the extension is .rda and the file type is gzip
     // compressed we assume it is a gzipped R binary file.
     if (memcmp(poOpenInfo->pabyHeader, "\037\213\b", 3) == 0 &&
-        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "rda"))
+        poOpenInfo->IsExtensionEqualToCI("rda"))
         return TRUE;
 
     // Is this an ASCII or XDR binary R file?
@@ -342,9 +342,7 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
     // Confirm the requested access is supported.
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The R driver does not support update access to existing"
-                 " datasets.");
+        ReportUpdateNotSupportedByDriver("R");
         return nullptr;
     }
 

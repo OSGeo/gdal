@@ -49,6 +49,7 @@ RUN apt-get update -y \
     liblz4-dev \
     liblzma-dev \
     libmono-system-drawing4.0-cil \
+    libmuparser-dev \
     libmysqlclient-dev \
     libnetcdf-dev \
     libogdi-dev \
@@ -273,6 +274,9 @@ RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
     && cd .. \
     && rm -rf libOpenDRIVE-${OPENDRIVE_VERSION} \
     ); fi
+
+# Install exprtk
+RUN wget -q -P /usr/local/include https://raw.githubusercontent.com/ArashPartow/exprtk/refs/heads/master/exprtk.hpp 
 
 RUN ldconfig
 

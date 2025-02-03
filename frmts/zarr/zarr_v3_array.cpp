@@ -768,7 +768,7 @@ bool ZarrV3Array::FlushDirtyTile() const
 
     if (m_osDimSeparator == "/")
     {
-        std::string osDir = CPLGetDirname(osFilename.c_str());
+        std::string osDir = CPLGetDirnameSafe(osFilename.c_str());
         VSIStatBufL sStat;
         if (VSIStatL(osDir.c_str(), &sStat) != 0)
         {
@@ -815,12 +815,13 @@ std::string ZarrV3Array::BuildTileFilename(const uint64_t *tileIndices) const
 {
     if (m_aoDims.empty())
     {
-        return CPLFormFilename(CPLGetDirname(m_osFilename.c_str()),
-                               m_bV2ChunkKeyEncoding ? "0" : "c", nullptr);
+        return CPLFormFilenameSafe(
+            CPLGetDirnameSafe(m_osFilename.c_str()).c_str(),
+            m_bV2ChunkKeyEncoding ? "0" : "c", nullptr);
     }
     else
     {
-        std::string osFilename(CPLGetDirname(m_osFilename.c_str()));
+        std::string osFilename(CPLGetDirnameSafe(m_osFilename.c_str()));
         osFilename += '/';
         if (!m_bV2ChunkKeyEncoding)
         {
@@ -842,7 +843,7 @@ std::string ZarrV3Array::BuildTileFilename(const uint64_t *tileIndices) const
 
 std::string ZarrV3Array::GetDataDirectory() const
 {
-    return std::string(CPLGetDirname(m_osFilename.c_str()));
+    return std::string(CPLGetDirnameSafe(m_osFilename.c_str()));
 }
 
 /************************************************************************/
@@ -1239,10 +1240,11 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
             std::string osDirName = m_osDirectoryName;
             while (true)
             {
-                const std::string osArrayFilenameDim =
-                    CPLFormFilename(CPLFormFilename(osDirName.c_str(),
-                                                    osDimName.c_str(), nullptr),
-                                    "zarr.json", nullptr);
+                const std::string osArrayFilenameDim = CPLFormFilenameSafe(
+                    CPLFormFilenameSafe(osDirName.c_str(), osDimName.c_str(),
+                                        nullptr)
+                        .c_str(),
+                    "zarr.json", nullptr);
                 VSIStatBufL sStat;
                 if (VSIStatL(osArrayFilenameDim.c_str(), &sStat) == 0)
                 {
@@ -1258,7 +1260,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
                     // Recurse to upper level for datasets such as
                     // /vsis3/hrrrzarr/sfc/20210809/20210809_00z_anl.zarr/0.1_sigma_level/HAIL_max_fcst/0.1_sigma_level/HAIL_max_fcst
                     const std::string osDirNameNew =
-                        CPLGetPath(osDirName.c_str());
+                        CPLGetPathSafe(osDirName.c_str());
                     if (!osDirNameNew.empty() && osDirNameNew != osDirName)
                     {
                         osDirName = osDirNameNew;

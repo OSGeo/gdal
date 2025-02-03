@@ -68,6 +68,7 @@ OGRFieldDefn::OGRFieldDefn(const OGRFieldDefn *poPrototype)
       bIgnore(FALSE),  // TODO(schwehr): Can we use IsIgnored()?
       eSubType(poPrototype->GetSubType()), bNullable(poPrototype->IsNullable()),
       bUnique(poPrototype->IsUnique()),
+      m_bGenerated(poPrototype->IsGenerated()),
       m_osDomainName(poPrototype->m_osDomainName),
       m_osComment(poPrototype->GetComment()),
       m_nTZFlag(poPrototype->GetTZFlag())
@@ -106,6 +107,66 @@ OGRFieldDefn::~OGRFieldDefn()
     CPLFree(pszName);
     CPLFree(pszAlternativeName);
     CPLFree(pszDefault);
+}
+
+/************************************************************************/
+/*                             OGRFieldDefn::OGRFieldDefn()             */
+/************************************************************************/
+
+/**
+ * @brief OGRFieldDefn::OGRFieldDefn copy constructor.
+ * @param oOther the object to copy.
+ * @since GDAL 3.11
+ */
+OGRFieldDefn::OGRFieldDefn(const OGRFieldDefn &oOther)
+    : pszName(CPLStrdup(oOther.pszName)),
+      pszAlternativeName(CPLStrdup(oOther.pszAlternativeName)),
+      eType(oOther.eType), eJustify(oOther.eJustify), nWidth(oOther.nWidth),
+      nPrecision(oOther.nPrecision),
+      pszDefault(oOther.pszDefault ? CPLStrdup(oOther.pszDefault) : nullptr),
+      bIgnore(oOther.bIgnore), eSubType(oOther.eSubType),
+      bNullable(oOther.bNullable), bUnique(oOther.bUnique),
+      m_bGenerated(oOther.m_bGenerated), m_osDomainName(oOther.m_osDomainName),
+      m_osComment(oOther.m_osComment), m_nTZFlag(oOther.m_nTZFlag),
+      m_bSealed(oOther.m_bSealed)
+{
+}
+
+/************************************************************************/
+/*                           OGRFieldDefn::operator=()                  */
+/************************************************************************/
+
+/**
+ * @brief OGRFieldDefn::operator = assignment operator.
+ * @param oOther the object to copy.
+ * @return the current object.
+ * @since GDAL 3.11
+ */
+OGRFieldDefn &OGRFieldDefn::operator=(const OGRFieldDefn &oOther)
+{
+    if (&oOther != this)
+    {
+        CPLFree(pszName);
+        pszName = CPLStrdup(oOther.pszName);
+        CPLFree(pszAlternativeName);
+        pszAlternativeName = CPLStrdup(oOther.pszAlternativeName);
+        eType = oOther.eType;
+        eJustify = oOther.eJustify;
+        nWidth = oOther.nWidth;
+        nPrecision = oOther.nPrecision;
+        CPLFree(pszDefault);
+        pszDefault = oOther.pszDefault ? CPLStrdup(oOther.pszDefault) : nullptr;
+        bIgnore = oOther.bIgnore;
+        eSubType = oOther.eSubType;
+        bNullable = oOther.bNullable;
+        bUnique = oOther.bUnique;
+        m_bGenerated = oOther.m_bGenerated;
+        m_osDomainName = oOther.m_osDomainName;
+        m_osComment = oOther.m_osComment;
+        m_nTZFlag = oOther.m_nTZFlag;
+        m_bSealed = oOther.m_bSealed;
+    }
+    return *this;
 }
 
 /************************************************************************/
@@ -1715,6 +1776,55 @@ void OGRFieldDefn::SetNullable(int bNullableIn)
 void OGR_Fld_SetNullable(OGRFieldDefnH hDefn, int bNullableIn)
 {
     OGRFieldDefn::FromHandle(hDefn)->SetNullable(bNullableIn);
+}
+
+/************************************************************************/
+/*                        OGR_Fld_SetGenerated()                        */
+/************************************************************************/
+
+/**
+ * \brief Set whether this field is a generated field.
+ *
+ * By default, fields are not generated, so this method is generally called with
+ * TRUE to set a generated field.
+ *
+ * This method is the same as the C++ method OGRFieldDefn::SetGenerated().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
+ *
+ * @param hDefn handle to the field definition
+ * @param bGeneratedIn FALSE if the field is a generated field.
+ * @since GDAL 3.11
+ */
+
+void OGR_Fld_SetGenerated(OGRFieldDefnH hDefn, int bGeneratedIn)
+{
+    OGRFieldDefn::FromHandle(hDefn)->SetGenerated(bGeneratedIn);
+}
+
+/************************************************************************/
+/*                             OGR_Fld_IsGenerated()                    */
+/************************************************************************/
+
+/**
+ * \brief Return whether this field is a generated field.
+ *
+ * By default, fields are not generated.
+ *
+ * This method is the same as the C++ method OGRFieldDefn::IsGenerated().
+ *
+ * @param hDefn handle to the field definition
+ * @return TRUE if the field is a generated field.
+ * @since GDAL 3.11
+ */
+
+int OGR_Fld_IsGenerated(OGRFieldDefnH hDefn)
+{
+    return OGRFieldDefn::FromHandle(hDefn)->IsGenerated();
 }
 
 /************************************************************************/

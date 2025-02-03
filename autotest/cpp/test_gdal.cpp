@@ -5124,4 +5124,72 @@ TEST_F(test_gdal, GDALTranspose2D_Byte_optims)
     }
 }
 
+TEST_F(test_gdal, GDALExpandPackedBitsToByteAt0Or1)
+{
+    unsigned next = 1;
+    const auto badRand = [&next]()
+    {
+        next = static_cast<unsigned>(static_cast<uint64_t>(next) * 1103515245 +
+                                     12345);
+        return next;
+    };
+
+    constexpr int BITS_PER_BYTE = 8;
+    constexpr int SSE_REGISTER_SIZE_IN_BYTES = 16;
+    constexpr int LESS_THAN_8BITS = 5;
+    std::vector<GByte> expectedOut(SSE_REGISTER_SIZE_IN_BYTES * BITS_PER_BYTE +
+                                   BITS_PER_BYTE + LESS_THAN_8BITS);
+    std::vector<GByte> in((expectedOut.size() + BITS_PER_BYTE - 1) /
+                          BITS_PER_BYTE);
+    for (int i = 0; i < static_cast<int>(expectedOut.size()); ++i)
+    {
+        expectedOut[i] = (badRand() % 2) == 0 ? 0 : 1;
+        if (expectedOut[i])
+        {
+            in[i / BITS_PER_BYTE] = static_cast<GByte>(
+                in[i / BITS_PER_BYTE] |
+                (1 << (BITS_PER_BYTE - 1 - (i % BITS_PER_BYTE))));
+        }
+    }
+
+    std::vector<GByte> out(expectedOut.size());
+    GDALExpandPackedBitsToByteAt0Or1(in.data(), out.data(), out.size());
+
+    EXPECT_EQ(out, expectedOut);
+}
+
+TEST_F(test_gdal, GDALExpandPackedBitsToByteAt0Or255)
+{
+    unsigned next = 1;
+    const auto badRand = [&next]()
+    {
+        next = static_cast<unsigned>(static_cast<uint64_t>(next) * 1103515245 +
+                                     12345);
+        return next;
+    };
+
+    constexpr int BITS_PER_BYTE = 8;
+    constexpr int SSE_REGISTER_SIZE_IN_BYTES = 16;
+    constexpr int LESS_THAN_8BITS = 5;
+    std::vector<GByte> expectedOut(SSE_REGISTER_SIZE_IN_BYTES * BITS_PER_BYTE +
+                                   BITS_PER_BYTE + LESS_THAN_8BITS);
+    std::vector<GByte> in((expectedOut.size() + BITS_PER_BYTE - 1) /
+                          BITS_PER_BYTE);
+    for (int i = 0; i < static_cast<int>(expectedOut.size()); ++i)
+    {
+        expectedOut[i] = (badRand() % 2) == 0 ? 0 : 255;
+        if (expectedOut[i])
+        {
+            in[i / BITS_PER_BYTE] = static_cast<GByte>(
+                in[i / BITS_PER_BYTE] |
+                (1 << (BITS_PER_BYTE - 1 - (i % BITS_PER_BYTE))));
+        }
+    }
+
+    std::vector<GByte> out(expectedOut.size());
+    GDALExpandPackedBitsToByteAt0Or255(in.data(), out.data(), out.size());
+
+    EXPECT_EQ(out, expectedOut);
+}
+
 }  // namespace

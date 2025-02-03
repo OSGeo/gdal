@@ -40,7 +40,7 @@ int ECWDatasetIdentifyECW(GDALOpenInfo *poOpenInfo)
     /*      This has to either be a file on disk ending in .ecw or a        */
     /*      ecwp: protocol url.                                             */
     /* -------------------------------------------------------------------- */
-    if ((!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ecw") ||
+    if ((!poOpenInfo->IsExtensionEqualToCI("ecw") ||
          poOpenInfo->nHeaderBytes == 0) &&
         !STARTS_WITH_CI(poOpenInfo->pszFilename, "ecwp:") &&
         !STARTS_WITH_CI(poOpenInfo->pszFilename, "ecwps:"))
@@ -115,6 +115,11 @@ void ECWDriverSetCommonMetadata(GDALDriver *poDriver)
     // for ECWCreateCopyECW().
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 #endif
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS "
+                              "DatasetMetadata BandMetadata");
 }
 
 /************************************************************************/
