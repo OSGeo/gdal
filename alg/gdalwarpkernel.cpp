@@ -1914,8 +1914,7 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
             if (dfImag < static_cast<double>(cpl::NumericLimits<T>::min()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2 + 1] =
                     cpl::NumericLimits<T>::min();
-            else if (dfImag >
-                     static_cast<double>(cpl::NumericLimits<T>::max()))
+            else if (dfImag > static_cast<double>(cpl::NumericLimits<T>::max()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2 + 1] =
                     cpl::NumericLimits<T>::max();
             else
