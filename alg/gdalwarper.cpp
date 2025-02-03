@@ -311,8 +311,8 @@ static CPLErr GDALWarpNoDataMaskerT(const double *padfNoData, size_t nPixels,
                                     int *pbOutAllValid)
 {
     // Nothing to do if value is out of range.
-    if (padfNoData[0] < cpl::CPLNumericLimits<T>::min() ||
-        padfNoData[0] > cpl::CPLNumericLimits<T>::max() + 0.000001 ||
+    if (padfNoData[0] < cpl::NumericLimits<T>::min() ||
+        padfNoData[0] > cpl::NumericLimits<T>::max() + 0.000001 ||
         padfNoData[1] != 0.0)
     {
         *pbOutAllValid = TRUE;

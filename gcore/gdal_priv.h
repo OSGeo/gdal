@@ -3696,10 +3696,10 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     Transpose(const std::vector<int> &anMapNewAxisToOldAxis) const;
 
     std::shared_ptr<GDALMDArray> GetUnscaled(
-        double dfOverriddenScale = cpl::CPLNumericLimits<double>::quiet_NaN(),
-        double dfOverriddenOffset = cpl::CPLNumericLimits<double>::quiet_NaN(),
+        double dfOverriddenScale = cpl::NumericLimits<double>::quiet_NaN(),
+        double dfOverriddenOffset = cpl::NumericLimits<double>::quiet_NaN(),
         double dfOverriddenDstNodata =
-            cpl::CPLNumericLimits<double>::quiet_NaN()) const;
+            cpl::NumericLimits<double>::quiet_NaN()) const;
 
     virtual std::shared_ptr<GDALMDArray>
     GetMask(CSLConstList papszOptions) const;
@@ -4579,7 +4579,7 @@ inline bool ARE_REAL_EQUAL(GFloat16 dfVal1, GFloat16 dfVal2, int ulp = 2)
 {
     using std::abs;
     return dfVal1 == dfVal2 || /* Should cover infinity */
-           abs(dfVal1 - dfVal2) < cpl::CPLNumericLimits<GFloat16>::epsilon() *
+           abs(dfVal1 - dfVal2) < cpl::NumericLimits<GFloat16>::epsilon() *
                                       abs(dfVal1 + dfVal2) * ulp;
 }
 
@@ -4587,17 +4587,17 @@ inline bool ARE_REAL_EQUAL(float fVal1, float fVal2, int ulp = 2)
 {
     using std::abs;
     return fVal1 == fVal2 || /* Should cover infinity */
-           abs(fVal1 - fVal2) < cpl::CPLNumericLimits<float>::epsilon() *
+           abs(fVal1 - fVal2) < cpl::NumericLimits<float>::epsilon() *
                                     abs(fVal1 + fVal2) * ulp;
 }
 
-// We are using `cpl::CPLNumericLimits<float>::epsilon()` for backward
+// We are using `cpl::NumericLimits<float>::epsilon()` for backward
 // compatibility
 inline bool ARE_REAL_EQUAL(double dfVal1, double dfVal2, int ulp = 2)
 {
     using std::abs;
     return dfVal1 == dfVal2 || /* Should cover infinity */
-           abs(dfVal1 - dfVal2) < cpl::CPLNumericLimits<float>::epsilon() *
+           abs(dfVal1 - dfVal2) < cpl::NumericLimits<float>::epsilon() *
                                       abs(dfVal1 + dfVal2) * ulp;
 }
 

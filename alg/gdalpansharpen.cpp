@@ -801,7 +801,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
     }
 
     if (nMaxValue == 0)
-        nMaxValue = cpl::CPLNumericLimits<T>::max();
+        nMaxValue = cpl::NumericLimits<T>::max();
     size_t j;
     if (psOptions->nInputSpectralBands == 3 &&
         psOptions->nOutPansharpenedBands == 3 &&
