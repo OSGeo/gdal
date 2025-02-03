@@ -55,6 +55,7 @@ check_cxx_source_compiles(
         _Float16 h = 1;
         float f = h;
         double d = h;
+        return f != 0 && d != 0 ? 0 : 1;
       }
     "
     HAVE__FLOAT16)
