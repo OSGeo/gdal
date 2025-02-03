@@ -4587,8 +4587,8 @@ inline bool ARE_REAL_EQUAL(float fVal1, float fVal2, int ulp = 2)
 {
     using std::abs;
     return fVal1 == fVal2 || /* Should cover infinity */
-           abs(fVal1 - fVal2) < cpl::NumericLimits<float>::epsilon() *
-                                    abs(fVal1 + fVal2) * ulp;
+           abs(fVal1 - fVal2) <
+               cpl::NumericLimits<float>::epsilon() * abs(fVal1 + fVal2) * ulp;
 }
 
 // We are using `cpl::NumericLimits<float>::epsilon()` for backward

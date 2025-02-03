@@ -172,8 +172,7 @@ template <> inline bool GDALIsValueInRange<uint64_t>(double dfValue)
     // get converted to a double that once cast to uint64_t is
     // UINT64_MAX + 1, hence the < strict comparison.
     return dfValue >= 0 &&
-           dfValue <
-               static_cast<double>(cpl::NumericLimits<uint64_t>::max());
+           dfValue < static_cast<double>(cpl::NumericLimits<uint64_t>::max());
 }
 
 /************************************************************************/
@@ -469,8 +468,8 @@ template <> struct sGDALCopyWord<float, std::uint64_t>
         {
             nValueOut = 0;
         }
-        else if (fValueIn >= static_cast<float>(
-                                 cpl::NumericLimits<std::uint64_t>::max()))
+        else if (fValueIn >=
+                 static_cast<float>(cpl::NumericLimits<std::uint64_t>::max()))
         {
             nValueOut = cpl::NumericLimits<std::uint64_t>::max();
         }
@@ -689,8 +688,7 @@ template <> struct sGDALCopyWord<float, int>
         {
             nValueOut = 0;
         }
-        else if (fValueIn >=
-                 static_cast<float>(cpl::NumericLimits<int>::max()))
+        else if (fValueIn >= static_cast<float>(cpl::NumericLimits<int>::max()))
         {
             nValueOut = cpl::NumericLimits<int>::max();
         }
@@ -720,8 +718,8 @@ template <> struct sGDALCopyWord<float, std::int64_t>
         {
             nValueOut = cpl::NumericLimits<std::int64_t>::max();
         }
-        else if (fValueIn <= static_cast<float>(
-                                 cpl::NumericLimits<std::int64_t>::lowest()))
+        else if (fValueIn <=
+                 static_cast<float>(cpl::NumericLimits<std::int64_t>::lowest()))
         {
             nValueOut = cpl::NumericLimits<std::int64_t>::lowest();
         }
@@ -741,13 +739,13 @@ template <> struct sGDALCopyWord<double, std::int64_t>
         {
             nValueOut = 0;
         }
-        else if (dfValueIn >= static_cast<double>(
-                                  cpl::NumericLimits<std::int64_t>::max()))
+        else if (dfValueIn >=
+                 static_cast<double>(cpl::NumericLimits<std::int64_t>::max()))
         {
             nValueOut = cpl::NumericLimits<std::int64_t>::max();
         }
-        else if (dfValueIn <= static_cast<double>(
-                                  cpl::NumericLimits<std::int64_t>::min()))
+        else if (dfValueIn <=
+                 static_cast<double>(cpl::NumericLimits<std::int64_t>::min()))
         {
             nValueOut = cpl::NumericLimits<std::int64_t>::min();
         }

@@ -285,8 +285,8 @@ static int GetMinBitsForValue(double dValue)
             dValue >= cpl::NumericLimits<GUInt32>::lowest())
             return 32;
 
-        if (dValue <= static_cast<double>(
-                          cpl::NumericLimits<std::uint64_t>::max()) &&
+        if (dValue <=
+                static_cast<double>(cpl::NumericLimits<std::uint64_t>::max()) &&
             dValue >= static_cast<double>(
                           cpl::NumericLimits<std::uint64_t>::lowest()))
             return 64;
@@ -957,8 +957,8 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
             if (dfValue < cpl::NumericLimits<GFloat16>::lowest())
             {
                 bClamped = TRUE;
-                dfValue = static_cast<double>(
-                    cpl::NumericLimits<GFloat16>::lowest());
+                dfValue =
+                    static_cast<double>(cpl::NumericLimits<GFloat16>::lowest());
             }
             else if (dfValue > cpl::NumericLimits<GFloat16>::max())
             {
@@ -4327,8 +4327,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
         {
             std::cout << "Hit <ENTER> to Continue." << std::endl;
             std::cin.clear();
-            std::cin.ignore(cpl::NumericLimits<std::streamsize>::max(),
-                            '\n');
+            std::cin.ignore(cpl::NumericLimits<std::streamsize>::max(), '\n');
         }
 
         /* --------------------------------------------------------------------
@@ -5213,8 +5212,8 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
             }
             else if (eDstDataType == GDT_Int64)
             {
-                if (nNoData < static_cast<uint64_t>(
-                                  cpl::NumericLimits<int64_t>::max()))
+                if (nNoData <
+                    static_cast<uint64_t>(cpl::NumericLimits<int64_t>::max()))
                 {
                     poDstBand->SetNoDataValueAsInt64(
                         static_cast<int64_t>(nNoData));
@@ -5247,9 +5246,8 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
             }
             else if (eDstDataType == GDT_UInt64)
             {
-                if (dfNoData >=
-                        static_cast<double>(
-                            cpl::NumericLimits<uint64_t>::lowest()) &&
+                if (dfNoData >= static_cast<double>(
+                                    cpl::NumericLimits<uint64_t>::lowest()) &&
                     dfNoData <= static_cast<double>(
                                     cpl::NumericLimits<uint64_t>::max()) &&
                     dfNoData ==
@@ -5617,8 +5615,7 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
         // so we take the next lower value representable as a double 18446744073709549567
         static const double dfMaxUInt64Value{
             std::nextafter(
-                static_cast<double>(cpl::NumericLimits<uint64_t>::max()),
-                0) -
+                static_cast<double>(cpl::NumericLimits<uint64_t>::max()), 0) -
             1};
 
         if (GDALClampDoubleValue(dfNoDataValue,
@@ -5675,9 +5672,8 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
         else
         {
             using std::nextafter;
-            dfReplacementVal =
-                nextafter(static_cast<GFloat16>(dfNoDataValue),
-                          cpl::NumericLimits<GFloat16>::max());
+            dfReplacementVal = nextafter(static_cast<GFloat16>(dfNoDataValue),
+                                         cpl::NumericLimits<GFloat16>::max());
         }
     }
     else if (dt == GDT_Float32)
@@ -5697,9 +5693,8 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
         }
         else
         {
-            dfReplacementVal =
-                std::nextafter(static_cast<float>(dfNoDataValue),
-                               cpl::NumericLimits<float>::max());
+            dfReplacementVal = std::nextafter(static_cast<float>(dfNoDataValue),
+                                              cpl::NumericLimits<float>::max());
         }
     }
     else if (dt == GDT_Float64)

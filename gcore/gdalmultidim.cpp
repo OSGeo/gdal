@@ -1006,8 +1006,8 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
 #define setDTMinMax(ctype)                                                     \
     do                                                                         \
     {                                                                          \
-        dfDTMin = static_cast<double>(cpl::NumericLimits<ctype>::lowest()); \
-        dfDTMax = static_cast<double>(cpl::NumericLimits<ctype>::max());    \
+        dfDTMin = static_cast<double>(cpl::NumericLimits<ctype>::lowest());    \
+        dfDTMax = static_cast<double>(cpl::NumericLimits<ctype>::max());       \
     } while (0)
 
                 switch (eAutoScaleType)

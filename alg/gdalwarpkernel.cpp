@@ -1483,8 +1483,7 @@ template <class T> struct sGWKRoundValueT<T, false> /* unsigned */
 
 template <class T> static T GWKRoundValueT(double dfValue)
 {
-    return sGWKRoundValueT<T, cpl::NumericLimits<T>::is_signed>::eval(
-        dfValue);
+    return sGWKRoundValueT<T, cpl::NumericLimits<T>::is_signed>::eval(dfValue);
 }
 
 template <> float GWKRoundValueT<float>(double dfValue)
@@ -1561,8 +1560,8 @@ inline void AvoidNoData(const GDALWarpKernel *poWK, int iBand,
             else
             {
                 using std::nextafter;
-                pDst[iDstOffset] = nextafter(pDst[iDstOffset],
-                                             cpl::NumericLimits<T>::max());
+                pDst[iDstOffset] =
+                    nextafter(pDst[iDstOffset], cpl::NumericLimits<T>::max());
             }
         }
 
@@ -1661,8 +1660,7 @@ inline void ClampRoundAndAvoidNoData(const GDALWarpKernel *poWK, int iBand,
     {
         using std::floor;
         if (dfReal < static_cast<double>(cpl::NumericLimits<T>::lowest()))
-            pDst[iDstOffset] =
-                static_cast<T>(cpl::NumericLimits<T>::lowest());
+            pDst[iDstOffset] = static_cast<T>(cpl::NumericLimits<T>::lowest());
         else if (dfReal > static_cast<double>(cpl::NumericLimits<T>::max()))
             pDst[iDstOffset] = static_cast<T>(cpl::NumericLimits<T>::max());
         else if constexpr (cpl::NumericLimits<T>::is_signed)
@@ -1883,8 +1881,7 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
             if (dfReal < static_cast<double>(cpl::NumericLimits<T>::min()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2] =
                     cpl::NumericLimits<T>::min();
-            else if (dfReal >
-                     static_cast<double>(cpl::NumericLimits<T>::max()))
+            else if (dfReal > static_cast<double>(cpl::NumericLimits<T>::max()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2] =
                     cpl::NumericLimits<T>::max();
             else
@@ -1893,8 +1890,7 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
             if (dfImag < static_cast<double>(cpl::NumericLimits<T>::min()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2 + 1] =
                     cpl::NumericLimits<T>::min();
-            else if (dfImag >
-                     static_cast<double>(cpl::NumericLimits<T>::max()))
+            else if (dfImag > static_cast<double>(cpl::NumericLimits<T>::max()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2 + 1] =
                     cpl::NumericLimits<T>::max();
             else
@@ -1909,8 +1905,7 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
             if (dfReal < static_cast<double>(cpl::NumericLimits<T>::min()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2] =
                     cpl::NumericLimits<T>::min();
-            else if (dfReal >
-                     static_cast<double>(cpl::NumericLimits<T>::max()))
+            else if (dfReal > static_cast<double>(cpl::NumericLimits<T>::max()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2] =
                     cpl::NumericLimits<T>::max();
             else
@@ -7900,8 +7895,7 @@ static void GWKAverageOrModeThread(void *pData)
                 // poWK->eResample == GRA_Max.
                 {
                     bool bFoundValid = false;
-                    double dfTotalReal =
-                        cpl::NumericLimits<double>::lowest();
+                    double dfTotalReal = cpl::NumericLimits<double>::lowest();
                     // This code adapted from nAlgo 1 method, GRA_Average.
                     for (int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++)
                     {
@@ -8350,15 +8344,13 @@ static void getConvexPolyIntersection(const XYPoly &poly1, const XYPoly &poly2,
 
         double tan_p1;
         if (p1x_diff == 0.0)
-            tan_p1 =
-                p1y_diff == 0.0 ? 0.0 : cpl::NumericLimits<double>::max();
+            tan_p1 = p1y_diff == 0.0 ? 0.0 : cpl::NumericLimits<double>::max();
         else
             tan_p1 = p1y_diff / p1x_diff;
 
         double tan_p2;
         if (p2x_diff == 0.0)
-            tan_p2 =
-                p2y_diff == 0.0 ? 0.0 : cpl::NumericLimits<double>::max();
+            tan_p2 = p2y_diff == 0.0 ? 0.0 : cpl::NumericLimits<double>::max();
         else
             tan_p2 = p2y_diff / p2x_diff;
 
