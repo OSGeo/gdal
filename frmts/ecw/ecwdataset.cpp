@@ -2969,10 +2969,10 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
     poDS->GDALDataset::SetMetadataItem(
         "COLORSPACE", ECWGetColorSpaceName(poDS->psFileInfo->eColorSpace));
 #if ECWSDK_VERSION >= 50
-    if (!bIsJPEG2000)
-        poDS->GDALDataset::SetMetadataItem(
-            "VERSION",
-            CPLString().Printf("%d", poDS->psFileInfo->nFormatVersion));
+    // Allow writing VERSION for JP2 also
+    //if (!bIsJPEG2000)
+    poDS->GDALDataset::SetMetadataItem(
+        "VERSION", CPLString().Printf("%d", poDS->psFileInfo->nFormatVersion));
 #if ECWSDK_VERSION >= 51
     // output jp2 header info
     if (bIsJPEG2000 && poDS->poFileView)
