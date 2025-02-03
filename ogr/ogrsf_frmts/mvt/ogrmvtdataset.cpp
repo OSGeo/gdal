@@ -292,9 +292,14 @@ class OGRMVTDataset final : public GDALDataset
     bool m_bClip = true;
     CPLString m_osTileExtension{"pbf"};
     OGRSpatialReference *m_poSRS = nullptr;
-    double m_dfTileDim0 = 0.0;
-    double m_dfTopXOrigin = 0.0;
-    double m_dfTopYOrigin = 0.0;
+    double m_dfTileDim0 =
+        0.0;  // Extent (in CRS units) of a tile at zoom level 0
+    double m_dfTopXOrigin = 0.0;  // top-left X of tile matrix scheme
+    double m_dfTopYOrigin = 0.0;  // top-left Y of tile matrix scheme
+    int m_nTileMatrixWidth0 =
+        1;  // Number of tiles along X axis at zoom level 0
+    int m_nTileMatrixHeight0 =
+        1;  // Number of tiles along Y axis at zoom level 0
 
     static GDALDataset *OpenDirectory(GDALOpenInfo *);
 
@@ -322,19 +327,29 @@ class OGRMVTDataset final : public GDALDataset
         return m_poSRS;
     }
 
-    double GetTileDim0() const
+    inline double GetTileDim0() const
     {
         return m_dfTileDim0;
     }
 
-    double GetTopXOrigin() const
+    inline double GetTopXOrigin() const
     {
         return m_dfTopXOrigin;
     }
 
-    double GetTopYOrigin() const
+    inline double GetTopYOrigin() const
     {
         return m_dfTopYOrigin;
+    }
+
+    inline int GetTileMatrixWidth0() const
+    {
+        return m_nTileMatrixWidth0;
+    }
+
+    inline int GetTileMatrixHeight0() const
+    {
+        return m_nTileMatrixHeight0;
     }
 };
 
@@ -1747,8 +1762,10 @@ void OGRMVTDirectoryLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
 
     if (sEnvelope.IsInit() && sEnvelope.MinX >= -10 * m_poDS->GetTileDim0() &&
         sEnvelope.MinY >= -10 * m_poDS->GetTileDim0() &&
-        sEnvelope.MaxX <= 10 * m_poDS->GetTileDim0() &&
-        sEnvelope.MaxY <= 10 * m_poDS->GetTileDim0())
+        sEnvelope.MaxX <=
+            10 * m_poDS->GetTileDim0() * m_poDS->GetTileMatrixWidth0() &&
+        sEnvelope.MaxY <=
+            10 * m_poDS->GetTileDim0() * m_poDS->GetTileMatrixHeight0())
     {
         const double dfTileDim = m_poDS->GetTileDim0() / (1 << m_nZ);
         m_nFilterMinX = std::max(
@@ -1760,18 +1777,30 @@ void OGRMVTDirectoryLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
         m_nFilterMaxX = std::min(
             static_cast<int>(
                 ceil((sEnvelope.MaxX - m_poDS->GetTopXOrigin()) / dfTileDim)),
-            (1 << m_nZ) - 1);
+            static_cast<int>(std::min<int64_t>(
+                INT_MAX, (static_cast<int64_t>(1) << m_nZ) *
+                                 m_poDS->GetTileMatrixWidth0() -
+                             1)));
         m_nFilterMaxY = std::min(
             static_cast<int>(
                 ceil((m_poDS->GetTopYOrigin() - sEnvelope.MinY) / dfTileDim)),
-            (1 << m_nZ) - 1);
+            static_cast<int>(std::min<int64_t>(
+                INT_MAX, (static_cast<int64_t>(1) << m_nZ) *
+                                 m_poDS->GetTileMatrixHeight0() -
+                             1)));
     }
     else
     {
         m_nFilterMinX = 0;
         m_nFilterMinY = 0;
-        m_nFilterMaxX = (1 << m_nZ) - 1;
-        m_nFilterMaxY = (1 << m_nZ) - 1;
+        m_nFilterMaxX = static_cast<int>(
+            std::min<int64_t>(INT_MAX, (static_cast<int64_t>(1) << m_nZ) *
+                                               m_poDS->GetTileMatrixWidth0() -
+                                           1));
+        m_nFilterMaxY = static_cast<int>(
+            std::min<int64_t>(INT_MAX, (static_cast<int64_t>(1) << m_nZ) *
+                                               m_poDS->GetTileMatrixHeight0() -
+                                           1));
     }
 }
 
@@ -2432,6 +2461,7 @@ static bool LoadMetadata(const CPLString &osMetadataFile,
                          CPLJSONArray &oTileStatLayers, CPLJSONObject &oBounds,
                          OGRSpatialReference *poSRS, double &dfTopX,
                          double &dfTopY, double &dfTileDim0,
+                         int &nTileMatrixWidth0, int &nTileMatrixHeight0,
                          const CPLString &osMetadataMemFilename)
 
 {
@@ -2454,10 +2484,15 @@ static bool LoadMetadata(const CPLString &osMetadataFile,
     if (!bLoadOK)
         return false;
 
-    CPLJSONObject oCrs(oDoc.GetRoot().GetObj("crs"));
-    CPLJSONObject oTopX(oDoc.GetRoot().GetObj("tile_origin_upper_left_x"));
-    CPLJSONObject oTopY(oDoc.GetRoot().GetObj("tile_origin_upper_left_y"));
-    CPLJSONObject oTileDim0(oDoc.GetRoot().GetObj("tile_dimension_zoom_0"));
+    const CPLJSONObject oCrs(oDoc.GetRoot().GetObj("crs"));
+    const CPLJSONObject oTopX(
+        oDoc.GetRoot().GetObj("tile_origin_upper_left_x"));
+    const CPLJSONObject oTopY(
+        oDoc.GetRoot().GetObj("tile_origin_upper_left_y"));
+    const CPLJSONObject oTileDim0(
+        oDoc.GetRoot().GetObj("tile_dimension_zoom_0"));
+    nTileMatrixWidth0 = 1;
+    nTileMatrixHeight0 = 1;
     if (oCrs.IsValid() && oTopX.IsValid() && oTopY.IsValid() &&
         oTileDim0.IsValid())
     {
@@ -2465,6 +2500,20 @@ static bool LoadMetadata(const CPLString &osMetadataFile,
         dfTopX = oTopX.ToDouble();
         dfTopY = oTopY.ToDouble();
         dfTileDim0 = oTileDim0.ToDouble();
+        const CPLJSONObject oTMWidth0(
+            oDoc.GetRoot().GetObj("tile_matrix_width_zoom_0"));
+        if (oTMWidth0.GetType() == CPLJSONObject::Type::Integer)
+            nTileMatrixWidth0 = std::max(1, oTMWidth0.ToInteger());
+
+        const CPLJSONObject oTMHeight0(
+            oDoc.GetRoot().GetObj("tile_matrix_height_zoom_0"));
+        if (oTMHeight0.GetType() == CPLJSONObject::Type::Integer)
+            nTileMatrixHeight0 = std::max(1, oTMHeight0.ToInteger());
+
+        // Assumes WorldCRS84Quad with 2 tiles in width
+        // cf https://github.com/OSGeo/gdal/issues/11749
+        if (!oTMWidth0.IsValid() && dfTopX == -180 && dfTileDim0 == 180)
+            nTileMatrixWidth0 = 2;
     }
 
     oVectorLayers.Deinit();
@@ -2803,7 +2852,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
     if (!LoadMetadata(osMetadataFile, osMetadataContent, oVectorLayers,
                       oTileStatLayers, oBounds, poDS->m_poSRS,
                       poDS->m_dfTopXOrigin, poDS->m_dfTopYOrigin,
-                      poDS->m_dfTileDim0, osMetadataMemFilename))
+                      poDS->m_dfTileDim0, poDS->m_nTileMatrixWidth0,
+                      poDS->m_nTileMatrixHeight0, osMetadataMemFilename))
     {
         delete poDS;
         return nullptr;
@@ -3137,7 +3187,8 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo, bool bRecurseAllowed)
         LoadMetadata(osMetadataFile, CPLString(), oVectorLayers,
                      oTileStatLayers, oBounds, poDS->m_poSRS,
                      poDS->m_dfTopXOrigin, poDS->m_dfTopYOrigin,
-                     poDS->m_dfTileDim0, CPLString());
+                     poDS->m_dfTileDim0, poDS->m_nTileMatrixWidth0,
+                     poDS->m_nTileMatrixHeight0, CPLString());
     }
 
     const char *pszGeorefTopX =
@@ -3166,8 +3217,10 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo, bool bRecurseAllowed)
         int nX = atoi(osX);
         int nY = atoi(osY);
         int nZ = atoi(osZ);
-        if (nZ >= 0 && nZ < 30 && nX >= 0 && nX < (1 << nZ) && nY >= 0 &&
-            nY < (1 << nZ))
+        if (nZ >= 0 && nZ < 30 && nX >= 0 &&
+            nX < (static_cast<int64_t>(1) << nZ) * poDS->m_nTileMatrixWidth0 &&
+            nY >= 0 &&
+            nY < (static_cast<int64_t>(1) << nZ) * poDS->m_nTileMatrixHeight0)
         {
             poDS->m_bGeoreferenced = true;
             poDS->m_dfTileDimX = poDS->m_dfTileDim0 / (1 << nZ);
@@ -3336,6 +3389,10 @@ class OGRMVTWriterDataset final : public GDALDataset
     double m_dfTopX = 0.0;
     double m_dfTopY = 0.0;
     double m_dfTileDim0 = 0.0;
+    int m_nTileMatrixWidth0 =
+        1;  // Number of tiles along X axis at zoom level 0
+    int m_nTileMatrixHeight0 =
+        1;  // Number of tiles along Y axis at zoom level 0
     bool m_bReuseTempFile = false;  // debug only
 
     OGRErr PreGenerateForTile(
@@ -5528,6 +5585,10 @@ bool OGRMVTWriterDataset::GenerateMetadata(
                           oRoot);
         WriteMetadataItem("tile_dimension_zoom_0", m_dfTileDim0, m_hDBMBTILES,
                           oRoot);
+        WriteMetadataItem("tile_matrix_width_zoom_0", m_nTileMatrixWidth0,
+                          m_hDBMBTILES, oRoot);
+        WriteMetadataItem("tile_matrix_height_zoom_0", m_nTileMatrixHeight0,
+                          m_hDBMBTILES, oRoot);
     }
 
     CPLJSONDocument oJsonDoc;
@@ -5830,11 +5891,17 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer *poLayer,
             const int nTileMaxX =
                 std::min(static_cast<int>((sExtent.MaxX - m_dfTopX + dfBuffer) /
                                           dfTileDim),
-                         (1 << nZ) - 1);
+                         static_cast<int>(std::min<int64_t>(
+                             INT_MAX, (static_cast<int64_t>(1) << nZ) *
+                                              m_nTileMatrixWidth0 -
+                                          1)));
             const int nTileMaxY =
                 std::min(static_cast<int>((m_dfTopY - sExtent.MinY + dfBuffer) /
                                           dfTileDim),
-                         (1 << nZ) - 1);
+                         static_cast<int>(std::min<int64_t>(
+                             INT_MAX, (static_cast<int64_t>(1) << nZ) *
+                                              m_nTileMatrixHeight0 -
+                                          1)));
             for (int iX = nTileMinX; iX <= nTileMaxX; iX++)
             {
                 for (int iY = nTileMinY; iY <= nTileMaxY; iY++)
@@ -6181,20 +6248,32 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
             return nullptr;
         }
 
-        CPLStringList aoList(CSLTokenizeString2(pszTilingScheme, ",", 0));
-        if (aoList.Count() == 4)
+        const CPLStringList aoList(CSLTokenizeString2(pszTilingScheme, ",", 0));
+        if (aoList.Count() >= 4)
         {
             poDS->m_poSRS->SetFromUserInput(aoList[0]);
             poDS->m_dfTopX = CPLAtof(aoList[1]);
             poDS->m_dfTopY = CPLAtof(aoList[2]);
             poDS->m_dfTileDim0 = CPLAtof(aoList[3]);
+            if (aoList.Count() == 6)
+            {
+                poDS->m_nTileMatrixWidth0 = std::max(1, atoi(aoList[4]));
+                poDS->m_nTileMatrixHeight0 = std::max(1, atoi(aoList[5]));
+            }
+            else if (poDS->m_dfTopX == -180 && poDS->m_dfTileDim0 == 180)
+            {
+                // Assumes WorldCRS84Quad with 2 tiles in width
+                // cf https://github.com/OSGeo/gdal/issues/11749
+                poDS->m_nTileMatrixWidth0 = 2;
+            }
         }
         else
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Wrong format for TILING_SCHEME. "
                      "Expecting EPSG:XXXX,tile_origin_upper_left_x,"
-                     "tile_origin_upper_left_y,tile_dimension_zoom_0");
+                     "tile_origin_upper_left_y,tile_dimension_zoom_0[,tile_"
+                     "matrix_width_zoom_0,tile_matrix_height_zoom_0]");
             delete poDS;
             return nullptr;
         }
@@ -6347,7 +6426,8 @@ void RegisterOGRMVT()
         "  <Option name='TILING_SCHEME' type='string' "
         "description='Custom tiling scheme with following format "
         "\"EPSG:XXXX,tile_origin_upper_left_x,tile_origin_upper_left_y,"
-        "tile_dimension_zoom_0\"'/>"
+        "tile_dimension_zoom_0[,tile_matrix_width_zoom_0,tile_matrix_height_"
+        "zoom_0]\"'/>"
         "</CreationOptionList>");
 #endif  // HAVE_MVT_WRITE_SUPPORT
 
