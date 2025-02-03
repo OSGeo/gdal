@@ -118,11 +118,11 @@ check_cxx_source_compiles(
   "
     #include <cmath>
     #include <stdfloat>
-    int main(int argc, char** argv) {
+    int main() {
       std::float16_t x = 0;
       using std::nextafter;
       std::float16_t y = nextafter(x, x);
-      return 0;
+      return y == 0 ? 0 : 1;
     }
   "
   HAVE_STD_FLOAT16_T
