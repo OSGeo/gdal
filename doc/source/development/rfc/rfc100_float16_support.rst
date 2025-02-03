@@ -8,7 +8,7 @@ RFC 100: Support float16 type
 Author:        Erik Schnetter
 Contact:       eschnetter @ perimeterinstitute.ca
 Started:       2024-Jun-05
-Status:        Proposed
+Status:        Adopted, implemented
 Target:        GDAL 3.11
 ============== =============================================
 
@@ -157,7 +157,7 @@ No candidate implementation exists yet.
 Voting history
 --------------
 
-TBD
++1 from PSC members KurtS, DanB, JavierJS, JukkaR and EvenR
 
 
 .. below is an allow-list for spelling checker.
