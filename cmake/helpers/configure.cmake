@@ -44,6 +44,22 @@ check_type_size("long int" SIZEOF_LONG_INT)
 check_type_size("void*" SIZEOF_VOIDP)
 check_type_size("size_t" SIZEOF_SIZE_T)
 
+# Check whether the type `_Float16` exists, and whether type
+# conversions work (there might be linker problems)
+check_cxx_source_compiles(
+    "
+      #ifdef GDAL_DISABLE_FLOAT16
+        Explicitly disable _Float16 support
+      #endif
+      int main() {
+        _Float16 h = 1;
+        float f = h;
+        double d = h;
+        return f != 0 && d != 0 ? 0 : 1;
+      }
+    "
+    HAVE__FLOAT16)
+
 check_function_exists(ctime_r HAVE_CTIME_R)
 check_function_exists(gmtime_r HAVE_GMTIME_R)
 check_function_exists(localtime_r HAVE_LOCALTIME_R)

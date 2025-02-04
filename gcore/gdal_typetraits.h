@@ -34,7 +34,7 @@
 #ifdef GDAL_ENABLE_FLOAT16
 #if defined(__GNUC__) || defined(__clang__)
 #define __STDC_WANT_IEC_60559_TYPES_EXT__
-#include <float.h>  // Also brings in _Float16
+#include <float.h>  // Also brings in GFloat16
 #endif
 #endif
 
@@ -165,6 +165,20 @@ template <> struct CXXTypeTraits<uint64_t>
     }
 };
 
+template <> struct CXXTypeTraits<GFloat16>
+{
+    static constexpr GDALDataType gdal_type = GDT_Float16;
+    static constexpr size_t size = sizeof(GFloat16);
+    static constexpr OGRFieldType ogr_type = OFTReal;
+    // We could introduce OFSTFloat16
+    static constexpr OGRFieldSubType ogr_subtype = OFSTNone;
+
+    static inline GDALExtendedDataType GetExtendedDataType()
+    {
+        return GDALExtendedDataType::Create(GDT_Float16);
+    }
+};
+
 template <> struct CXXTypeTraits<float>
 {
     static constexpr GDALDataType gdal_type = GDT_Float32;
@@ -188,6 +202,19 @@ template <> struct CXXTypeTraits<double>
     static inline GDALExtendedDataType GetExtendedDataType()
     {
         return GDALExtendedDataType::Create(GDT_Float64);
+    }
+};
+
+template <> struct CXXTypeTraits<std::complex<GFloat16>>
+{
+    static constexpr GDALDataType gdal_type = GDT_CFloat16;
+    static constexpr size_t size = sizeof(GFloat16) * 2;
+    static constexpr OGRFieldType ogr_type = OFTMaxType;
+    static constexpr OGRFieldSubType ogr_subtype = OFSTNone;
+
+    static inline GDALExtendedDataType GetExtendedDataType()
+    {
+        return GDALExtendedDataType::Create(GDT_CFloat16);
     }
 };
 
@@ -216,21 +243,6 @@ template <> struct CXXTypeTraits<std::complex<double>>
         return GDALExtendedDataType::Create(GDT_CFloat64);
     }
 };
-
-#if defined(GDAL_ENABLE_FLOAT16) && defined(FLT16_MAX) && defined(FLT16_MIN)
-template <> struct CXXTypeTraits<_Float16>
-{
-    static constexpr GDALDataType gdal_type = GDT_Float16;
-    static constexpr size_t size = sizeof(_Float16);
-    static constexpr OGRFieldType ogr_type = OFTReal;
-    static constexpr OGRFieldSubType ogr_subtype = OFSTNone;
-
-    static inline GDALExtendedDataType GetExtendedDataType()
-    {
-        return GDALExtendedDataType::Create(GDT_Float16);
-    }
-};
-#endif
 
 template <> struct CXXTypeTraits<std::string>
 {
@@ -473,11 +485,13 @@ inline OGRFieldType GetOGRFieldType(const GDALDataType gdal_type)
         case GDT_Int64:
             return OFTInteger64;
         case GDT_UInt64:  // Questionable
+        case GDT_Float16:
         case GDT_Float32:
         case GDT_Float64:
             return OFTReal;
         case GDT_CInt16:
         case GDT_CInt32:
+        case GDT_CFloat16:
         case GDT_CFloat32:
         case GDT_CFloat64:
         case GDT_Unknown:

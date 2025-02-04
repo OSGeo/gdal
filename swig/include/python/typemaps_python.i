@@ -2579,6 +2579,11 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
     buf->format = (char*) "I";
     buf->itemsize = 4;
   }
+  else if( *($3) == GDT_Float16 )
+  {
+    buf->format = (char*) "f";
+    buf->itemsize = 2;
+  }
   else if( *($3) == GDT_Float32 )
   {
     buf->format = (char*) "f";
