@@ -9643,6 +9643,14 @@ bool GDALGeoPackageDataset::OpenOrCreateDB(int flags)
         }
     }
 
+    const char *pszPreludeStatements =
+        CSLFetchNameValue(papszOpenOptions, "PRELUDE_STATEMENTS");
+    if (pszPreludeStatements)
+    {
+        if (SQLCommand(hDB, pszPreludeStatements) != OGRERR_NONE)
+            return false;
+    }
+
     return true;
 }
 
