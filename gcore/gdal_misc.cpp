@@ -990,8 +990,7 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
             else if (dfValue > cpl::NumericLimits<float>::max())
             {
                 bClamped = TRUE;
-                dfValue =
-                    static_cast<double>(cpl::NumericLimits<float>::max());
+                dfValue = static_cast<double>(cpl::NumericLimits<float>::max());
             }
             else
             {
