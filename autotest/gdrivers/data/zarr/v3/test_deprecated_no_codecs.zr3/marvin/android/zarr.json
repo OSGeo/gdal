@@ -18,6 +18,5 @@
   "chunk_key_encoding":{
     "name":"v2"
   },
-  "fill_value":255,
-  "codecs": [{"name":"bytes"}]
+  "fill_value":255
 }

@@ -334,6 +334,7 @@ rm -f $OUT/zarr_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
 cd  $(dirname $0)/../autotest/gdrivers/data/zarr
 for dirname in *.zarr v3/*.zr3; do
+    CUR_DIR2=$PWD
     cd $dirname
     {
         filelist=$(find . -type f)
@@ -343,7 +344,7 @@ for dirname in *.zarr v3/*.zr3; do
           cat $f
         done
     } > $CUR_DIR/$(basename $dirname).tar
-    cd ..
+    cd $CUR_DIR2
 done
 cd $CUR_DIR
 zip -r $OUT/zarr_fuzzer_seed_corpus.zip ./*.zarr.tar ./*.zr3.tar >/dev/null
