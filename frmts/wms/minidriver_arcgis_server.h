@@ -38,7 +38,7 @@ class WMSMiniDriver_AGS : public WMSMiniDriver
   protected:
     /*
      * png | png8 | png24 | jpg | pdf | bmp | gif | svg | png32
-     * http://resources.arcgis.com/en/help/rest/apiref/
+     * https://developers.arcgis.com/rest/services-reference/enterprise/export-map/
      * Parameter - format
      */
     CPLString m_image_format;
