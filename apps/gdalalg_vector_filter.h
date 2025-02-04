@@ -41,6 +41,8 @@ class GDALVectorFilterAlgorithm /* non final */
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     std::vector<double> m_bbox{};
+    std::string m_where{};
+    std::vector<std::string> m_selectedFields{};
 };
 
 /************************************************************************/

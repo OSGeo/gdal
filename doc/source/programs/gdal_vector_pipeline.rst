@@ -82,6 +82,12 @@ Details for options can be found in :ref:`gdal_vector_clip_subcommand`.
 
     Options:
       --bbox <BBOX>                                        Bounding box as xmin,ymin,xmax,ymax
+      --where <WHERE>|@<filename>                          Attribute query in a restricted form of the queries used in the SQL WHERE statement
+      --fields <FIELDS>                                    Selected fields [may be repeated]
+
+
+Details for options can be found in :ref:`gdal_vector_filter_subcommand`.
+
 
 * reproject [OPTIONS]
 
