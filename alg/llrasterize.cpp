@@ -59,7 +59,8 @@ void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
                                int nPartCount, const int *panPartSize,
                                const double *padfX, const double *padfY,
                                const double *dfVariant,
-                               llScanlineFunc pfnScanlineFunc, void *pCBData,
+                               llScanlineFunc pfnScanlineFunc,
+                               GDALRasterizeInfo *pCBData,
                                bool bAvoidBurningSamePoints)
 {
     if (!nPartCount)
@@ -232,7 +233,7 @@ void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
 void GDALdllImagePoint(int nRasterXSize, int nRasterYSize, int nPartCount,
                        const int * /*panPartSize*/, const double *padfX,
                        const double *padfY, const double *padfVariant,
-                       llPointFunc pfnPointFunc, void *pCBData)
+                       llPointFunc pfnPointFunc, GDALRasterizeInfo *pCBData)
 {
     for (int i = 0; i < nPartCount; i++)
     {
@@ -254,7 +255,7 @@ void GDALdllImagePoint(int nRasterXSize, int nRasterYSize, int nPartCount,
 void GDALdllImageLine(int nRasterXSize, int nRasterYSize, int nPartCount,
                       const int *panPartSize, const double *padfX,
                       const double *padfY, const double *padfVariant,
-                      llPointFunc pfnPointFunc, void *pCBData)
+                      llPointFunc pfnPointFunc, GDALRasterizeInfo *pCBData)
 {
     if (!nPartCount)
         return;
@@ -272,8 +273,7 @@ void GDALdllImageLine(int nRasterXSize, int nRasterYSize, int nPartCount,
             double dfVariant = 0.0;
             double dfVariant1 = 0.0;
             if (padfVariant != nullptr &&
-                static_cast<GDALRasterizeInfo *>(pCBData)->eBurnValueSource !=
-                    GBV_UserBurnValue)
+                pCBData->eBurnValueSource != GBV_UserBurnValue)
             {
                 dfVariant = padfVariant[n + j - 1];
                 dfVariant1 = padfVariant[n + j];
@@ -380,13 +380,11 @@ void GDALdllImageLine(int nRasterXSize, int nRasterYSize, int nPartCount,
 /*      will be drawn with the burn value.                              */
 /************************************************************************/
 
-void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
-                                int nPartCount, const int *panPartSize,
-                                const double *padfX, const double *padfY,
-                                const double *padfVariant,
-                                llPointFunc pfnPointFunc, void *pCBData,
-                                bool bAvoidBurningSamePoints,
-                                bool bIntersectOnly)
+void GDALdllImageLineAllTouched(
+    int nRasterXSize, int nRasterYSize, int nPartCount, const int *panPartSize,
+    const double *padfX, const double *padfY, const double *padfVariant,
+    llPointFunc pfnPointFunc, GDALRasterizeInfo *pCBData,
+    bool bAvoidBurningSamePoints, bool bIntersectOnly)
 
 {
     // This is an epsilon to detect geometries that are aligned with pixel

@@ -184,12 +184,10 @@ static inline void gvBurnScanlineInt64UserBurnValue(GDALRasterizeInfo *psInfo,
 /************************************************************************/
 /*                           gvBurnScanline()                           */
 /************************************************************************/
-static void gvBurnScanline(void *pCBData, int nY, int nXStart, int nXEnd,
-                           double dfVariant)
+static void gvBurnScanline(GDALRasterizeInfo *psInfo, int nY, int nXStart,
+                           int nXEnd, double dfVariant)
 
 {
-    GDALRasterizeInfo *psInfo = static_cast<GDALRasterizeInfo *>(pCBData);
-
     if (nXStart > nXEnd)
         return;
 
@@ -313,10 +311,10 @@ static inline void gvBurnPointInt64UserBurnValue(GDALRasterizeInfo *psInfo,
 /************************************************************************/
 /*                            gvBurnPoint()                             */
 /************************************************************************/
-static void gvBurnPoint(void *pCBData, int nY, int nX, double dfVariant)
+static void gvBurnPoint(GDALRasterizeInfo *psInfo, int nY, int nX,
+                        double dfVariant)
 
 {
-    GDALRasterizeInfo *psInfo = static_cast<GDALRasterizeInfo *>(pCBData);
 
     CPLAssert(nY >= 0 && nY < psInfo->nYSize);
     CPLAssert(nX >= 0 && nX < psInfo->nXSize);
