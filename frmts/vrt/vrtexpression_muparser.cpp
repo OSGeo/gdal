@@ -25,17 +25,31 @@ class MuParserExpression::Impl
   public:
     explicit Impl(std::string_view osExpression)
         : m_osExpression(std::string(osExpression)), m_oVectors{}, m_oParser{},
-          m_adfResults{1}, m_bIsCompiled{false}
+          m_adfResults{1}, m_bIsCompiled{false}, m_bCompileFailed{false}
     {
     }
 
     void Register(std::string_view osVariable, double *pdfValue)
     {
-        m_oParser.DefineVar(std::string(osVariable), pdfValue);
+        try
+        {
+            m_oParser.DefineVar(std::string(osVariable), pdfValue);
+        }
+        catch (const mu::Parser::exception_type &)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid variable name: %s",
+                     std::string(osVariable).c_str());
+            m_bCompileFailed = true;
+        }
     }
 
     CPLErr Compile()
     {
+        if (m_bCompileFailed)
+        {
+            return CE_Failure;
+        }
+
         try
         {
             CPLString tmpExpression(m_osExpression);
@@ -99,6 +113,7 @@ class MuParserExpression::Impl
     mu::Parser m_oParser;
     std::vector<double> m_adfResults;
     bool m_bIsCompiled;
+    bool m_bCompileFailed;
 };
 
 MuParserExpression::MuParserExpression(std::string_view osExpression)
