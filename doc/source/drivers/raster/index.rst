@@ -14,8 +14,11 @@ Raster drivers
 
 .. note::
 
-    The following drivers have been retired and moved to the
-    https://github.com/OSGeo/gdal-extra-drivers repository: BPG, E00GRID, EPSILON, IGNFHeightASCIIGrid, NTv1
+    The following drivers have been removed in GDAL 3.5: BPG, E00GRID, EPSILON, IGNFHeightASCIIGrid, NTv1
+
+    The following drivers have been removed in GDAL 3.11: BLX, BT, CTable2, FIT, GSAG (Golden Software ASCII grid), GSBG (Golden Software 6.0 binary grid), JP2Lura, OZI, Rasterlite (v1), R object data store (.rda), RDB, SDTS, SGI, XPM
+
+    Write support for the following formats has been removed in GDAL 3.11: ADRG, BYN, ELAS, LAN, MFF, MFF2/HKV, ISIS2, PAux, USGSDEM
 
 .. toctree::
    :maxdepth: 1
@@ -172,3 +175,8 @@ Raster drivers
    xyz
    zarr
    zmap
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    rda
