@@ -88,33 +88,38 @@ def test_gdalalg_vector_filter_where_error(tmp_vsimem):
         )
 
 
-def test_gdalalg_vector_fields(tmp_vsimem):
-
-    out_filename = str(tmp_vsimem / "out.shp")
+def test_gdalalg_vector_fields():
 
     filter_alg = get_filter_alg()
-    assert filter_alg.ParseRunAndFinalize(
-        ["--fields=EAS_ID,_ogr_geometry_", "../ogr/data/poly.shp", out_filename]
+    assert filter_alg.ParseCommandLineArguments(
+        [
+            "--fields=EAS_ID,_ogr_geometry_",
+            "--of=stream",
+            "../ogr/data/poly.shp",
+            "streamed_output",
+        ]
     )
+    assert filter_alg.Run()
 
-    with gdal.OpenEx(out_filename) as ds:
-        lyr = ds.GetLayer(0)
-        assert lyr.GetLayerDefn().GetFieldCount() == 1
-        assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
-        assert lyr.GetFeatureCount() == 10
-        f = lyr.GetNextFeature()
-        assert f["EAS_ID"] == 168
-        assert f.GetGeometryRef() is not None
-        lyr.ResetReading()
-        assert len([f for f in lyr]) == 10
-        f = lyr.GetFeature(0)
-        assert f["EAS_ID"] == 168
-        with pytest.raises(Exception):
-            lyr.GetFeature(10)
-        assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
-        assert lyr.TestCapability(ogr.OLCRandomWrite) == 0
-        assert lyr.GetExtent() == (478315.53125, 481645.3125, 4762880.5, 4765610.5)
-        assert lyr.GetExtent(0) == (478315.53125, 481645.3125, 4762880.5, 4765610.5)
+    ds = filter_alg.GetArg("output").Get().GetDataset()
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+    assert lyr.GetFeatureCount() == 10
+    f = lyr.GetNextFeature()
+    assert f["EAS_ID"] == 168
+    assert f.GetGeometryRef() is not None
+    lyr.ResetReading()
+    assert len([f for f in lyr]) == 10
+    f = lyr.GetFeature(0)
+    assert f["EAS_ID"] == 168
+    with pytest.raises(Exception):
+        lyr.GetFeature(10)
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
+    assert lyr.TestCapability(ogr.OLCRandomWrite) == 0
+    assert lyr.GetExtent() == (478315.53125, 481645.3125, 4762880.5, 4765610.5)
+    assert lyr.GetExtent(0) == (478315.53125, 481645.3125, 4762880.5, 4765610.5)
 
 
 def test_gdalalg_vector_fields_geom_named(tmp_vsimem):
