@@ -42,7 +42,7 @@ string(REPLACE "#define SWIGPYTHON"
        _CONTENTS "${_CONTENTS}")
 
 string(REPLACE "return resultobj;"
-               "if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }\n  return resultobj;"
+               "if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { std::string osMsg = CPLGetLastErrorMsg(); Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, osMsg.c_str() ); return NULL; } }\n  return resultobj;"
        _CONTENTS "${_CONTENTS}")
 
 # Below works around https://github.com/swig/swig/issues/2638 and https://github.com/swig/swig/issues/2037#issuecomment-874372082
