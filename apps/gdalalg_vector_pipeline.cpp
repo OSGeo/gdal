@@ -76,7 +76,7 @@ void GDALVectorPipelineStepAlgorithm::AddInputArgs(bool hiddenForCLI)
 void GDALVectorPipelineStepAlgorithm::AddOutputArgs(
     bool hiddenForCLI, bool shortNameOutputLayerAllowed)
 {
-    AddOutputFormatArg(&m_format)
+    AddOutputFormatArg(&m_format, true)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
                          {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE})
         .SetHiddenForCLI(hiddenForCLI);
@@ -145,12 +145,20 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             m_outputDataset.Set(nullptr);
             if (RunStep(nullptr, nullptr))
             {
-                writeAlg.m_inputDataset.Set(m_outputDataset.GetDatasetRef());
-                if (writeAlg.Run(pfnProgress, pProgressData))
+                if (m_format == "stream")
                 {
-                    m_outputDataset.Set(
-                        writeAlg.m_outputDataset.GetDatasetRef());
                     ret = true;
+                }
+                else
+                {
+                    writeAlg.m_inputDataset.Set(
+                        m_outputDataset.GetDatasetRef());
+                    if (writeAlg.Run(pfnProgress, pProgressData))
+                    {
+                        m_outputDataset.Set(
+                            writeAlg.m_outputDataset.GetDatasetRef());
+                        ret = true;
+                    }
                 }
             }
         }
