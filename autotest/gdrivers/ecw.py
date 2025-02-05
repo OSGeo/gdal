@@ -2367,7 +2367,9 @@ def test_ecw_online_4():
     if gdaltest.jp2ecw_drv is None:
         pytest.skip()
 
-    if (gdaltest.ecw_drv.major_version == 5 and gdaltest.ecw_drv.minor_version == 2) or gdaltest.ecw_drv.major_version >= 6:
+    if (
+        gdaltest.ecw_drv.major_version == 5 and gdaltest.ecw_drv.minor_version == 2
+    ) or gdaltest.ecw_drv.major_version >= 6:
         pytest.skip("This test hangs on Linux in a mutex in the SDK 5.2.1")
 
     gdaltest.download_or_skip(
