@@ -117,7 +117,7 @@ def test_ecw_2():
     if gdaltest.ecw_drv.major_version == 3:
         (exp_mean, exp_stddev) = (141.172, 67.3636)
     else:
-        if gdaltest.ecw_drv.major_version == 5:
+        if gdaltest.ecw_drv.major_version == 5 or gdaltest.ecw_drv.major_version == 6:
             (exp_mean, exp_stddev) = (141.606, 67.2919)
         else:
             (exp_mean, exp_stddev) = (140.332, 67.611)
@@ -165,7 +165,7 @@ def test_ecw_4(tmp_path):
     if gdaltest.ecw_drv.major_version == 3:
         (exp_mean, exp_stddev) = (140.290, 66.6303)
     else:
-        if gdaltest.ecw_drv.major_version == 5:
+        if gdaltest.ecw_drv.major_version == 5 or gdaltest.ecw_drv.major_version == 6:
             (exp_mean, exp_stddev) = (141.517, 67.1285)
         else:
             (exp_mean, exp_stddev) = (138.971, 67.716)
@@ -635,7 +635,7 @@ def test_ecw_20():
     if gdaltest.ecw_drv.major_version == 3:
         (exp_mean, exp_stddev) = (141.644, 67.2186)
     else:
-        if gdaltest.ecw_drv.major_version == 5:
+        if gdaltest.ecw_drv.major_version == 5 or gdaltest.ecw_drv.major_version == 6:
             (exp_mean, exp_stddev) = (142.189, 62.4223)
         else:
             (exp_mean, exp_stddev) = (140.889, 62.742)
@@ -669,7 +669,7 @@ def test_ecw_21():
     if gdaltest.ecw_drv.major_version == 3:
         (exp_mean, exp_stddev) = (141.172, 67.3636)
     else:
-        if gdaltest.ecw_drv.major_version == 5:
+        if gdaltest.ecw_drv.major_version == 5 or gdaltest.ecw_drv.major_version == 6:
             (exp_mean, exp_stddev) = (141.606, 67.2919)
         else:
             (exp_mean, exp_stddev) = (140.332, 67.611)
@@ -1933,6 +1933,14 @@ def test_ecw_44():
         ("USE_SOP", "FALSE"),
     ]
 
+    # Modify expected PRECINCT_SIZE_X and PRECINCT_SIZE_Y for ECW SDK 6.x
+    if gdaltest.ecw_drv.major_version == 6:
+        for i, (key, value) in enumerate(expected_md):
+            if key == "PRECINCT_SIZE_X":
+                expected_md[i] = (key, "64,128,128")
+            elif key == "PRECINCT_SIZE_Y":
+                expected_md[i] = (key, "64,128,128")
+
     got_md = ds.GetMetadata("JPEG2000")
     for (key, value) in expected_md:
         assert key in got_md and got_md[key] == value
@@ -1949,6 +1957,8 @@ def RemoveDriverMetadata(md):
         del md["COLORSPACE"]
     if "VERSION" in md:
         del md["VERSION"]
+    if "ALL_COMMENTS" in md:
+        del md["ALL_COMMENTS"]
     return md
 
 
@@ -1973,65 +1983,67 @@ def test_ecw_45():
         src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
         src_ds.SetMetadataItem("FOO", "BAR")
         out_ds = gdaltest.jp2ecw_drv.CreateCopy(
-            "/vsimem/ecw_45.jp2", src_ds, options=options
+            "/vsimem/ecw_45_1.jp2", src_ds, options=options
         )
         del out_ds
-        assert gdal.VSIStatL("/vsimem/ecw_45.jp2.aux.xml") is None
-        ds = gdal.Open("/vsimem/ecw_45.jp2")
+        assert gdal.VSIStatL("/vsimem/ecw_45_1.jp2.aux.xml") is None
+
+        ds = gdal.Open("/vsimem/ecw_45_1.jp2")
+
         md = RemoveDriverMetadata(ds.GetMetadata())
         assert md == {"FOO": "BAR"}
-        gdal.Unlink("/vsimem/ecw_45.jp2")
+        gdal.Unlink("/vsimem/ecw_45_1.jp2")
 
     # Simple metadata in auxiliary domain
     src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
     src_ds.SetMetadataItem("FOO", "BAR", "SOME_DOMAIN")
     out_ds = gdaltest.jp2ecw_drv.CreateCopy(
-        "/vsimem/ecw_45.jp2", src_ds, options=["WRITE_METADATA=YES"]
+        "/vsimem/ecw_45_2.jp2", src_ds, options=["WRITE_METADATA=YES"]
     )
     del out_ds
-    assert gdal.VSIStatL("/vsimem/ecw_45.jp2.aux.xml") is None
-    ds = gdal.Open("/vsimem/ecw_45.jp2")
+    assert gdal.VSIStatL("/vsimem/ecw_45_2.jp2.aux.xml") is None
+    ds = gdal.Open("/vsimem/ecw_45_2.jp2")
     md = RemoveDriverMetadata(ds.GetMetadata("SOME_DOMAIN"))
     assert md == {"FOO": "BAR"}
-    gdal.Unlink("/vsimem/ecw_45.jp2")
+    gdal.Unlink("/vsimem/ecw_45_2.jp2")
 
     # Simple metadata in auxiliary XML domain
     src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
     src_ds.SetMetadata(["<some_arbitrary_xml_box/>"], "xml:SOME_DOMAIN")
     out_ds = gdaltest.jp2ecw_drv.CreateCopy(
-        "/vsimem/ecw_45.jp2", src_ds, options=["WRITE_METADATA=YES"]
+        "/vsimem/ecw_45_3.jp2", src_ds, options=["WRITE_METADATA=YES"]
     )
     del out_ds
-    assert gdal.VSIStatL("/vsimem/ecw_45.jp2.aux.xml") is None
-    ds = gdal.Open("/vsimem/ecw_45.jp2")
+    assert gdal.VSIStatL("/vsimem/ecw_45_3.jp2.aux.xml") is None
+    ds = gdal.Open("/vsimem/ecw_45_3.jp2")
     assert ds.GetMetadata("xml:SOME_DOMAIN")[0] == "<some_arbitrary_xml_box />\n"
-    gdal.Unlink("/vsimem/ecw_45.jp2")
+    gdal.Unlink("/vsimem/ecw_45_3.jp2")
 
     # Special xml:BOX_ metadata domain
     for options in [["WRITE_METADATA=YES"]]:
         src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
         src_ds.SetMetadata(["<some_arbitrary_xml_box/>"], "xml:BOX_1")
         out_ds = gdaltest.jp2ecw_drv.CreateCopy(
-            "/vsimem/ecw_45.jp2", src_ds, options=options
+            "/vsimem/ecw_45_4.jp2", src_ds, options=options
         )
         del out_ds
-        assert gdal.VSIStatL("/vsimem/ecw_45.jp2.aux.xml") is None
-        ds = gdal.Open("/vsimem/ecw_45.jp2")
+        assert gdal.VSIStatL("/vsimem/ecw_45_4.jp2.aux.xml") is None
+        ds = gdal.Open("/vsimem/ecw_45_4.jp2")
         assert ds.GetMetadata("xml:BOX_0")[0] == "<some_arbitrary_xml_box/>"
-        gdal.Unlink("/vsimem/ecw_45.jp2")
+        gdal.Unlink("/vsimem/ecw_45_4.jp2")
 
     # Special xml:XMP metadata domain
     for options in [["WRITE_METADATA=YES"]]:
         src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
         src_ds.SetMetadata(["<fake_xmp_box/>"], "xml:XMP")
         out_ds = gdaltest.jp2ecw_drv.CreateCopy(
-            "/vsimem/ecw_45.jp2", src_ds, options=options
+            "/vsimem/ecw_45_5.jp2", src_ds, options=options
         )
         del out_ds
-        assert gdal.VSIStatL("/vsimem/ecw_45.jp2.aux.xml") is None
-        ds = gdal.Open("/vsimem/ecw_45.jp2")
+        assert gdal.VSIStatL("/vsimem/ecw_45_5.jp2.aux.xml") is None
+        ds = gdal.Open("/vsimem/ecw_45_5.jp2")
         assert ds.GetMetadata("xml:XMP")[0] == "<fake_xmp_box/>"
-        gdal.Unlink("/vsimem/ecw_45.jp2")
+        gdal.Unlink("/vsimem/ecw_45_5.jp2")
 
 
 ###############################################################################
@@ -2107,7 +2119,7 @@ def test_ecw_47():
 
     mean_tolerance = 0.5
 
-    if gdaltest.ecw_drv.major_version == 5:
+    if gdaltest.ecw_drv.major_version == 5 or gdaltest.ecw_drv.major_version == 6:
         (exp_mean, exp_stddev) = (141.606, 67.2919)
     elif gdaltest.ecw_drv.major_version == 4:
         (exp_mean, exp_stddev) = (140.332, 67.611)
@@ -2355,7 +2367,7 @@ def test_ecw_online_4():
     if gdaltest.jp2ecw_drv is None:
         pytest.skip()
 
-    if gdaltest.ecw_drv.major_version == 5 and gdaltest.ecw_drv.minor_version == 2:
+    if (gdaltest.ecw_drv.major_version == 5 and gdaltest.ecw_drv.minor_version == 2) or gdaltest.ecw_drv.major_version >= 6:
         pytest.skip("This test hangs on Linux in a mutex in the SDK 5.2.1")
 
     gdaltest.download_or_skip(
@@ -2403,7 +2415,7 @@ def test_ecw_online_5():
         mean_tolerance = 1
     else:
         mean_tolerance = 0.5
-        if gdaltest.ecw_drv.major_version == 5:
+        if gdaltest.ecw_drv.major_version == 5 or gdaltest.ecw_drv.major_version == 6:
             (exp_mean, exp_stddev) = (113.345, 52.1259)
         else:
             (exp_mean, exp_stddev) = (114.337, 52.1751)
