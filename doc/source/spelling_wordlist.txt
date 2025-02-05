@@ -2402,6 +2402,7 @@ Pirmin
 pixelfunction
 pixelfunctions
 pixelsize
+pixi
 Pixmap
 pkgconfig
 pkid
