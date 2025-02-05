@@ -1273,6 +1273,13 @@ def test_vrt_pixelfn_expression(
             "exceeds maximum of 100000 set by GDAL_EXPRTK_MAX_EXPRESSION_LENGTH",
             id="expression is too long",
         ),
+        pytest.param(
+            "B[1]",
+            [("B[1]", 3)],
+            "muparser",
+            "Invalid variable name",
+            id="invalid variable name",
+        ),
     ],
 )
 def test_vrt_pixelfn_expression_invalid(
