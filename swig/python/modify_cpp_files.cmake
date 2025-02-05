@@ -41,6 +41,7 @@ string(REPLACE "#define SWIGPYTHON"
                "#define SWIGPYTHON\n\#define SED_HACKS"
        _CONTENTS "${_CONTENTS}")
 
+# patch to avoid memory leaks on exception (see 594fe48)
 string(REPLACE "return resultobj;"
                "if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { std::string osMsg = CPLGetLastErrorMsg(); Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, osMsg.c_str() ); return NULL; } }\n  return resultobj;"
        _CONTENTS "${_CONTENTS}")
