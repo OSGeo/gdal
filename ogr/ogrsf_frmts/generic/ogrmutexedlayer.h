@@ -76,9 +76,8 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
     virtual OGRSpatialReference *GetSpatialRef() override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual int TestCapability(const char *) override;
 

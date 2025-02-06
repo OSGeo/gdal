@@ -489,10 +489,11 @@ int OGRPMTilesVectorLayer::TestCapability(const char *pszCap)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRPMTilesVectorLayer::GetExtent(OGREnvelope *psExtent, int)
+OGRErr OGRPMTilesVectorLayer::IGetExtent(int /* iGeomField */,
+                                         OGREnvelope *psExtent, bool)
 {
     *psExtent = m_sExtent;
     return OGRERR_NONE;

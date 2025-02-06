@@ -1236,15 +1236,15 @@ GIntBig OGRMySQLTableLayer::GetFeatureCount(CPL_UNUSED int bForce)
 }
 
 /************************************************************************/
-/*                          GetExtent()                                 */
+/*                          IGetExtent()                                */
 /*                                                                      */
 /*      Retrieve the MBR of the MySQL table.  This should be made more  */
 /*      in the future when MySQL adds support for a single MBR query    */
 /*      like PostgreSQL.                                                */
 /************************************************************************/
 
-OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent,
-                                     CPL_UNUSED int bForce)
+OGRErr OGRMySQLTableLayer::IGetExtent(int /*iGeomField */,
+                                      OGREnvelope *psExtent, bool /* bForce */)
 {
     if (GetLayerDefn()->GetGeomType() == wkbNone)
     {

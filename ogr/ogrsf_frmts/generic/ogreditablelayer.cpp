@@ -629,20 +629,11 @@ GIntBig OGREditableLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                              IGetExtent()                            */
 /************************************************************************/
 
-OGRErr OGREditableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    return GetExtent(0, psExtent, bForce);
-}
-
-/************************************************************************/
-/*                               GetExtent()                            */
-/************************************************************************/
-
-OGRErr OGREditableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                   int bForce)
+OGRErr OGREditableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                    bool bForce)
 {
     if (!m_poDecoratedLayer)
         return OGRERR_FAILURE;
@@ -662,7 +653,7 @@ OGRErr OGREditableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         }
         return eErr;
     }
-    return GetExtentInternal(iGeomField, psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

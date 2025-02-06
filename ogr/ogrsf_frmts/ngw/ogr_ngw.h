@@ -200,9 +200,8 @@ class OGRNGWLayer final : public OGRLayer
     virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
     virtual OGRFeature *GetFeature(GIntBig nFID) override;
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
     virtual OGRFeatureDefn *GetLayerDefn() override;
     virtual int TestCapability(const char *) override;
 

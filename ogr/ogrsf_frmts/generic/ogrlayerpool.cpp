@@ -482,26 +482,15 @@ GIntBig OGRProxiedLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRProxiedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                  int bForce)
+OGRErr OGRProxiedLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                   bool bForce)
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return OGRERR_FAILURE;
     return poUnderlyingLayer->GetExtent(iGeomField, psExtent, bForce);
-}
-
-/************************************************************************/
-/*                             GetExtent()                              */
-/************************************************************************/
-
-OGRErr OGRProxiedLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
-        return OGRERR_FAILURE;
-    return poUnderlyingLayer->GetExtent(psExtent, bForce);
 }
 
 /************************************************************************/

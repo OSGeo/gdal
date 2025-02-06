@@ -1255,11 +1255,11 @@ int OGRUnionLayer::TestCapability(const char *pszCap)
 }
 
 /************************************************************************/
-/*                              GetExtent()                             */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
-OGRErr OGRUnionLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                int bForce)
+OGRErr OGRUnionLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                 bool bForce)
 {
     if (iGeomField >= 0 && iGeomField < nGeomFields &&
         papoGeomFields[iGeomField]->sStaticEnvelope.IsInit())
@@ -1304,15 +1304,6 @@ OGRErr OGRUnionLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         }
     }
     return (bInit) ? OGRERR_NONE : OGRERR_FAILURE;
-}
-
-/************************************************************************/
-/*                             GetExtent()                              */
-/************************************************************************/
-
-OGRErr OGRUnionLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    return GetExtent(0, psExtent, bForce);
 }
 
 /************************************************************************/

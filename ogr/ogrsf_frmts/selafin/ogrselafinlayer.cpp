@@ -270,9 +270,10 @@ GIntBig OGRSelafinLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
-OGRErr OGRSelafinLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForce)
+OGRErr OGRSelafinLayer::IGetExtent(int /* iGeomField*/, OGREnvelope *psExtent,
+                                   bool /* bForce*/)
 {
     // CPLDebug("Selafin","GetExtent(%i)",bForce);
     if (poHeader->nPoints == 0)

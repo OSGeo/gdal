@@ -2149,19 +2149,12 @@ int OGRVRTLayer::TestCapability(const char *pszCap)
 }
 
 /************************************************************************/
-/*                              GetExtent()                             */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
-OGRErr OGRVRTLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRVRTLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                               bool bForce)
 {
-    return GetExtent(0, psExtent, bForce);
-}
-
-OGRErr OGRVRTLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
-{
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-        return OGRERR_FAILURE;
-
     if (static_cast<size_t>(iGeomField) >= apoGeomFieldProps.size())
         return OGRERR_FAILURE;
 
@@ -2198,7 +2191,7 @@ OGRErr OGRVRTLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
         return eErr;
     }
 
-    return OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

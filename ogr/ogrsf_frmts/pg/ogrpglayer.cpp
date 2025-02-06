@@ -1884,27 +1884,16 @@ const char *OGRPGLayer::GetFIDColumn()
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /*                                                                      */
 /*      For PostGIS use internal Extend(geometry) function              */
 /*      in other cases we use standard OGRLayer::GetExtent()            */
 /************************************************************************/
 
-OGRErr OGRPGLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+OGRErr OGRPGLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce)
 {
     CPLString osCommand;
-
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        CPLAssertNotNull(GetLayerDefn()->GetGeomFieldDefn(iGeomField))
-                ->GetType() == wkbNone)
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return OGRERR_FAILURE;
-    }
 
     OGRPGGeomFieldDefn *poGeomFieldDefn =
         poFeatureDefn->GetGeomFieldDefn(iGeomField);
@@ -1934,14 +1923,12 @@ OGRErr OGRPGLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
             OGRERR_NONE)
             return OGRERR_NONE;
     }
-    if (iGeomField == 0)
-        return OGRLayer::GetExtent(psExtent, bForce);
-    else
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
-OGRErr OGRPGLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
-                               int bForce)
+OGRErr OGRPGLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                                bool bForce)
 {
     auto poLayerDefn = GetLayerDefn();
 
@@ -1957,18 +1944,6 @@ OGRErr OGRPGLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
     }
 
     CPLString osCommand;
-
-    if (iGeomField < 0 || iGeomField >= poLayerDefn->GetGeomFieldCount() ||
-        CPLAssertNotNull(poLayerDefn->GetGeomFieldDefn(iGeomField))
-                ->GetType() == wkbNone)
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return OGRERR_FAILURE;
-    }
 
     OGRPGGeomFieldDefn *poGeomFieldDefn =
         poLayerDefn->GetGeomFieldDefn(iGeomField);
@@ -1998,7 +1973,7 @@ OGRErr OGRPGLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
             return OGRERR_NONE;
     }
 
-    return OGRLayer::GetExtent3D(iGeomField, psExtent3D, bForce);
+    return OGRLayer::IGetExtent3D(iGeomField, psExtent3D, bForce);
 }
 
 /************************************************************************/

@@ -211,12 +211,8 @@ class OGROAPIFLayer final : public OGRLayer
     OGRFeature *GetFeature(GIntBig) override;
     int TestCapability(const char *) override;
     GIntBig GetFeatureCount(int bForce = FALSE) override;
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     void SetSpatialFilter(OGRGeometry *poGeom) override;
 
@@ -2440,10 +2436,11 @@ GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGROAPIFLayer::GetExtent(OGREnvelope *psEnvelope, int bForce)
+OGRErr OGROAPIFLayer::IGetExtent(int iGeomField, OGREnvelope *psEnvelope,
+                                 bool bForce)
 {
     if (m_oOriginalExtent.IsInit())
     {
@@ -2452,7 +2449,7 @@ OGRErr OGROAPIFLayer::GetExtent(OGREnvelope *psEnvelope, int bForce)
         *psEnvelope = m_oExtent;
         return OGRERR_NONE;
     }
-    return OGRLayer::GetExtent(psEnvelope, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psEnvelope, bForce);
 }
 
 /************************************************************************/

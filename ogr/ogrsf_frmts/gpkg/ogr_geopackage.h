@@ -892,16 +892,12 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr CommitTransaction() override;
     OGRErr RollbackTransaction() override;
     GIntBig GetFeatureCount(int) override;
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
 
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    virtual OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
-                               int bForce) override;
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                        bool bForce) override;
     OGRGeometryTypeCounter *GetGeometryTypes(int iGeomField, int nFlagsGGT,
                                              int &nEntryCountOut,
                                              GDALProgressFunc pfnProgress,
@@ -1082,13 +1078,8 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer,
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override
-    {
-        return GetExtent(0, psExtent, bForce);
-    }
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
@@ -1155,15 +1146,10 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer,
         return OGRGeoPackageLayer::TestCapability(pszCap);
     }
 
-    virtual OGRErr BaseGetExtent(OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRGeoPackageLayer::GetExtent(psExtent, bForce);
-    }
-
     virtual OGRErr BaseGetExtent(int iGeomField, OGREnvelope *psExtent,
-                                 int bForce) override
+                                 bool bForce) override
     {
-        return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce);
+        return OGRGeoPackageLayer::IGetExtent(iGeomField, psExtent, bForce);
     }
 
     bool

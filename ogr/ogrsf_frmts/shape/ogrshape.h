@@ -250,15 +250,11 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
     }
 
     GIntBig GetFeatureCount(int) override;
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
-
-    OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
-                       int bForce) override;
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                        bool bForce) override;
 
     OGRErr CreateField(const OGRFieldDefn *poField,
                        int bApproxOK = TRUE) override;

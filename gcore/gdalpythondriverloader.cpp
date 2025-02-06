@@ -338,12 +338,8 @@ class PythonPluginLayer final : public OGRLayer
     void SetSpatialFilter(OGRGeometry *) override;
     void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
 
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     char **GetMetadata(const char *pszDomain = "") override;
 };
@@ -680,10 +676,11 @@ GIntBig PythonPluginLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                           GetExtent()                                */
+/*                          IGetExtent()                                */
 /************************************************************************/
 
-OGRErr PythonPluginLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr PythonPluginLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                     bool bForce)
 {
     GIL_Holder oHolder(false);
     if (PyObject_HasAttrString(m_poLayer, "extent"))
@@ -696,7 +693,7 @@ OGRErr PythonPluginLayer::GetExtent(OGREnvelope *psExtent, int bForce)
             if (ErrOccurredEmitCPLError())
             {
                 Py_DecRef(poRet);
-                return OGRLayer::GetExtent(psExtent, bForce);
+                return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
             }
 
             if (poRet == Py_None)
@@ -736,7 +733,7 @@ OGRErr PythonPluginLayer::GetExtent(OGREnvelope *psExtent, int bForce)
             Py_DecRef(poRet);
         }
     }
-    return OGRLayer::GetExtent(psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

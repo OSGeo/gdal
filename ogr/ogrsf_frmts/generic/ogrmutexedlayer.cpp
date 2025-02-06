@@ -170,17 +170,11 @@ GIntBig OGRMutexedLayer::GetFeatureCount(int bForce)
     return OGRLayerDecorator::GetFeatureCount(bForce);
 }
 
-OGRErr OGRMutexedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                  int bForce)
+OGRErr OGRMutexedLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                   bool bForce)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
-    return OGRLayerDecorator::GetExtent(iGeomField, psExtent, bForce);
-}
-
-OGRErr OGRMutexedLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    CPLMutexHolderOptionalLockD(m_hMutex);
-    return OGRLayerDecorator::GetExtent(psExtent, bForce);
+    return OGRLayerDecorator::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 int OGRMutexedLayer::TestCapability(const char *pszCapability)

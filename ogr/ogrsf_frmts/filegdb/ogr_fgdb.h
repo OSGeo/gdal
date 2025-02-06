@@ -139,13 +139,8 @@ class FGdbLayer final : public FGdbBaseLayer
         return m_wstrType;
     }
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual GIntBig GetFeatureCount(int bForce) override;
     virtual OGRErr SetAttributeFilter(const char *pszQuery) override;

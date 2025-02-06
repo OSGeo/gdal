@@ -357,9 +357,9 @@ class OGRSQLiteTableLayer final : public OGRSQLiteLayer
     virtual const char *GetName() override;
 
     virtual GIntBig GetFeatureCount(int) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override;
+
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
@@ -562,13 +562,8 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override
-    {
-        return GetExtent(0, psExtent, bForce);
-    }
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
@@ -635,15 +630,10 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
         return OGRSQLiteLayer::TestCapability(pszCap);
     }
 
-    virtual OGRErr BaseGetExtent(OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRSQLiteLayer::GetExtent(psExtent, bForce);
-    }
-
     virtual OGRErr BaseGetExtent(int iGeomField, OGREnvelope *psExtent,
-                                 int bForce) override
+                                 bool bForce) override
     {
-        return OGRSQLiteLayer::GetExtent(iGeomField, psExtent, bForce);
+        return OGRSQLiteLayer::IGetExtent(iGeomField, psExtent, bForce);
     }
 
     bool

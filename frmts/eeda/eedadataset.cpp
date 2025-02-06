@@ -150,13 +150,8 @@ class GDALEEDALayer final : public OGRLayer
 
     virtual OGRErr SetAttributeFilter(const char *) CPL_OVERRIDE;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) CPL_OVERRIDE;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) CPL_OVERRIDE
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 };
 
 /************************************************************************/
@@ -971,7 +966,8 @@ void GDALEEDALayer::SetSpatialFilter(OGRGeometry *poGeomIn)
 /*                                GetExtent()                           */
 /************************************************************************/
 
-OGRErr GDALEEDALayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
+OGRErr GDALEEDALayer::IGetExtent(int /* iGeomField*/, OGREnvelope *psExtent,
+                                 bool /* bForce */)
 {
     psExtent->MinX = -180;
     psExtent->MinY = -90;

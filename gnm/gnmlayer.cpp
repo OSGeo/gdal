@@ -279,13 +279,8 @@ GIntBig GNMGenericLayer::GetFeatureCount(int bForce)
     return m_poLayer->GetFeatureCount(bForce);
 }
 
-OGRErr GNMGenericLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    return m_poLayer->GetExtent(psExtent, bForce);
-}
-
-OGRErr GNMGenericLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                  int bForce)
+OGRErr GNMGenericLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                   bool bForce)
 {
     return m_poLayer->GetExtent(iGeomField, psExtent, bForce);
 }

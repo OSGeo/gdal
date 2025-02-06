@@ -162,11 +162,10 @@ class OGRADBCLayer final : public OGRLayer,
     OGRErr SetAttributeFilter(const char *pszFilter) override;
     void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
 
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                     int bForce = TRUE) override;
-    OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
-                       int bForce = TRUE) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                        bool bForce) override;
 };
 
 /************************************************************************/

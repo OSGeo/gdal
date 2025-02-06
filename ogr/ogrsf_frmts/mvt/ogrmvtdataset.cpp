@@ -250,13 +250,8 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
     virtual void ResetReading() override;
 
     virtual GIntBig GetFeatureCount(int bForce) override;
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     virtual void SetSpatialFilter(OGRGeometry *) override;
 
@@ -1818,17 +1813,18 @@ int OGRMVTDirectoryLayer::TestCapability(const char *pszCap)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRMVTDirectoryLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRMVTDirectoryLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                        bool bForce)
 {
     if (m_sExtent.IsInit())
     {
         *psExtent = m_sExtent;
         return OGRERR_NONE;
     }
-    return OGRLayer::GetExtent(psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

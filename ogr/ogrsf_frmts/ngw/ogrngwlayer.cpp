@@ -1063,9 +1063,10 @@ GIntBig OGRNGWLayer::GetFeatureCount(int bForce)
 }
 
 /*
- * GetExtent()
+ * IGetExtent()
  */
-OGRErr OGRNGWLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRNGWLayer::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,
+                               bool bForce)
 {
     if (!stExtent.IsInit() || CPL_TO_BOOL(bForce))
     {
@@ -1079,14 +1080,6 @@ OGRErr OGRNGWLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     }
     *psExtent = stExtent;
     return OGRERR_NONE;
-}
-
-/*
- * GetExtent()
- */
-OGRErr OGRNGWLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
-{
-    return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
 }
 
 /*

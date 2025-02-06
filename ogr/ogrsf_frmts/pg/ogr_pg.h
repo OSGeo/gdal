@@ -236,16 +236,11 @@ class OGRPGLayer CPL_NON_FINAL : public OGRLayer
         return poFeatureDefn;
     }
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override
-    {
-        return GetExtent(0, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override;
-
-    OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
-                       int bForce) override;
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                        bool bForce) override;
 
     virtual OGRErr StartTransaction() override;
     virtual OGRErr CommitTransaction() override;
@@ -406,13 +401,8 @@ class OGRPGTableLayer final : public OGRPGLayer
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override
-    {
-        return GetExtent(0, psExtent, bForce);
-    }
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     const char *GetTableName()
     {

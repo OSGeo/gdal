@@ -1337,15 +1337,16 @@ GIntBig OGRPLScenesDataV1Layer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                                GetExtent()                           */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
-OGRErr OGRPLScenesDataV1Layer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRPLScenesDataV1Layer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                          bool bForce)
 {
     if (m_poFilterGeom != nullptr)
     {
         m_bInFeatureCountOrGetExtent = true;
-        OGRErr eErr = OGRLayer::GetExtentInternal(0, psExtent, bForce);
+        OGRErr eErr = OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
         m_bInFeatureCountOrGetExtent = false;
         return eErr;
     }

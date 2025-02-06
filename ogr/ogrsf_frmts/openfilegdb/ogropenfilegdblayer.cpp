@@ -2038,10 +2038,11 @@ OGRErr OGROpenFileGDBLayer::SetNextByIndex(GIntBig nIndex)
 }
 
 /***********************************************************************/
-/*                           GetExtent()                               */
+/*                          IGetExtent()                               */
 /***********************************************************************/
 
-OGRErr OGROpenFileGDBLayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
+OGRErr OGROpenFileGDBLayer::IGetExtent(int /* iGeomField */,
+                                       OGREnvelope *psExtent, bool /* bForce */)
 {
     if (!BuildLayerDefinition())
         return OGRERR_FAILURE;
@@ -2064,11 +2065,11 @@ OGRErr OGROpenFileGDBLayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
 }
 
 /***********************************************************************/
-/*                           GetExtent3D()                             */
+/*                          IGetExtent3D()                             */
 /***********************************************************************/
 
-OGRErr OGROpenFileGDBLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
-                                        int bForce)
+OGRErr OGROpenFileGDBLayer::IGetExtent3D(int iGeomField,
+                                         OGREnvelope3D *psExtent, bool bForce)
 {
     if (!BuildLayerDefinition())
         return OGRERR_FAILURE;
@@ -2093,7 +2094,7 @@ OGRErr OGROpenFileGDBLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
             {
                 if (OGR_GT_HasZ(m_eGeomType))
                 {
-                    return OGRLayer::GetExtent3D(iGeomField, psExtent, bForce);
+                    return OGRLayer::IGetExtent3D(iGeomField, psExtent, bForce);
                 }
                 psExtent->MinZ = std::numeric_limits<double>::infinity();
                 psExtent->MaxZ = -std::numeric_limits<double>::infinity();
@@ -2102,7 +2103,7 @@ OGRErr OGROpenFileGDBLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
         }
     }
 
-    return OGRLayer::GetExtent3D(iGeomField, psExtent, bForce);
+    return OGRLayer::IGetExtent3D(iGeomField, psExtent, bForce);
 }
 
 /***********************************************************************/

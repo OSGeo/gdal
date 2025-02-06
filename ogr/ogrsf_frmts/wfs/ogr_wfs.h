@@ -158,13 +158,8 @@ class OGRWFSLayer final : public OGRLayer
     void SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
     void SetWGS84Extents(double dfMinX, double dfMinY, double dfMaxX,
                          double dfMaxY);
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;

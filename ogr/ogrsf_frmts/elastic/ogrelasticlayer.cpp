@@ -3887,23 +3887,13 @@ void OGRElasticLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
 }
 
 /************************************************************************/
-/*                            GetExtent()                                */
+/*                           IGetExtent()                                */
 /************************************************************************/
 
-OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                  int bForce)
+OGRErr OGRElasticLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                   bool bForce)
 {
     FinalizeFeatureDefn();
-
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return OGRERR_FAILURE;
-    }
 
     // geo_shape aggregation is only available since ES 7.8, but only with XPack
     // for now
@@ -3912,8 +3902,7 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
           (m_poDS->m_nMajorVersion == 7 && m_poDS->m_nMinorVersion >= 8)))
     {
         m_bUseSingleQueryParams = true;
-        const auto eRet =
-            OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+        const auto eRet = OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
         m_bUseSingleQueryParams = false;
         return eRet;
     }
@@ -3968,8 +3957,7 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         poBottomRightLon == nullptr || poBottomRightLat == nullptr)
     {
         m_bUseSingleQueryParams = true;
-        const auto eRet =
-            OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+        const auto eRet = OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
         m_bUseSingleQueryParams = false;
         return eRet;
     }

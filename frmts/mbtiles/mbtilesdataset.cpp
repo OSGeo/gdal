@@ -271,13 +271,8 @@ class MBTilesVectorLayer final : public OGRLayer
     virtual GIntBig GetFeatureCount(int bForce) override;
     virtual int TestCapability(const char *) override;
 
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual void SetSpatialFilter(OGRGeometry *) override;
 
@@ -1536,10 +1531,11 @@ int MBTilesVectorLayer::TestCapability(const char *pszCap)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr MBTilesVectorLayer::GetExtent(OGREnvelope *psExtent, int)
+OGRErr MBTilesVectorLayer::IGetExtent(int /* iGeomField */,
+                                      OGREnvelope *psExtent, bool /* bForce */)
 {
     *psExtent = m_sExtent;
     return OGRERR_NONE;

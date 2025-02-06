@@ -320,20 +320,11 @@ GIntBig OGRWarpedLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                              GetExtent()                             */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
-OGRErr OGRWarpedLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    return GetExtent(0, psExtent, bForce);
-}
-
-/************************************************************************/
-/*                              GetExtent()                             */
-/************************************************************************/
-
-OGRErr OGRWarpedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                 int bForce)
+OGRErr OGRWarpedLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                  bool bForce)
 {
     if (iGeomField == m_iGeomField)
     {

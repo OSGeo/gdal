@@ -169,13 +169,8 @@ class OGRPLScenesDataV1Layer final : public OGRLayer
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 };
 
 #endif /* ndef OGR_PLSCENES_H_INCLUDED */

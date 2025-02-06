@@ -254,9 +254,8 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
     OGRFeature *GetNextFeature() override;
 
     GIntBig GetFeatureCount(int bForce) override;
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                     int bForce = TRUE) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     void SetSpatialFilter(OGRGeometry *poGeom) override
     {

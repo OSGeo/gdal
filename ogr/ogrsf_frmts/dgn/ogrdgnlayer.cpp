@@ -984,10 +984,11 @@ GIntBig OGRDGNLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRDGNLayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
+OGRErr OGRDGNLayer::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,
+                               bool /* bForce */)
 {
     double adfExtents[6];
 

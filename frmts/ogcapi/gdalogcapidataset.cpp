@@ -297,12 +297,8 @@ class OGCAPITiledLayer final
         return -1;
     }
 
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     void SetSpatialFilter(OGRGeometry *) override;
 
@@ -2771,10 +2767,11 @@ void OGCAPITiledLayer::SetExtent(double dfXMin, double dfYMin, double dfXMax,
 }
 
 /************************************************************************/
-/*                            GetExtent()                               */
+/*                           IGetExtent()                               */
 /************************************************************************/
 
-OGRErr OGCAPITiledLayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
+OGRErr OGCAPITiledLayer::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,
+                                    bool /* bForce */)
 {
     *psExtent = m_sEnvelope;
     return OGRERR_NONE;

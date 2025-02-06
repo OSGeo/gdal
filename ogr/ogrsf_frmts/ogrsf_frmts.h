@@ -100,9 +100,13 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     ValidateGeometryFieldIndexForSetSpatialFilter(int iGeomField,
                                                   const OGRGeometry *poGeomIn,
                                                   bool bIsSelectLayer = false);
-
-    OGRErr GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bForce);
     //! @endcond
+
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) CPL_WARN_UNUSED_RESULT;
+
+    virtual OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                                bool bForce) CPL_WARN_UNUSED_RESULT;
 
     virtual OGRErr ISetFeature(OGRFeature *poFeature) CPL_WARN_UNUSED_RESULT;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) CPL_WARN_UNUSED_RESULT;
@@ -246,13 +250,14 @@ class CPL_DLL OGRLayer : public GDALMajorObject
                                 const OGRSpatialReference *poSRS);
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE);
-    virtual OGRErr GetExtent(OGREnvelope *psExtent,
-                             int bForce = TRUE) CPL_WARN_UNUSED_RESULT;
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) CPL_WARN_UNUSED_RESULT;
 
-    virtual OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
-                               int bForce = TRUE) CPL_WARN_UNUSED_RESULT;
+    OGRErr GetExtent(OGREnvelope *psExtent,
+                     bool bForce = true) CPL_WARN_UNUSED_RESULT;
+    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
+                     bool bForce = true) CPL_WARN_UNUSED_RESULT;
+
+    OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                       bool bForce = true) CPL_WARN_UNUSED_RESULT;
 
     virtual int TestCapability(const char *) = 0;
 

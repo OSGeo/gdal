@@ -198,19 +198,20 @@ GIntBig OGRLayerDecorator::GetFeatureCount(int bForce)
     return m_poDecoratedLayer->GetFeatureCount(bForce);
 }
 
-OGRErr OGRLayerDecorator::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    if (!m_poDecoratedLayer)
-        return OGRERR_FAILURE;
-    return m_poDecoratedLayer->GetExtent(psExtent, bForce);
-}
-
-OGRErr OGRLayerDecorator::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                    int bForce)
+OGRErr OGRLayerDecorator::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                     bool bForce)
 {
     if (!m_poDecoratedLayer)
         return OGRERR_FAILURE;
     return m_poDecoratedLayer->GetExtent(iGeomField, psExtent, bForce);
+}
+
+OGRErr OGRLayerDecorator::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                                       bool bForce)
+{
+    if (!m_poDecoratedLayer)
+        return OGRERR_FAILURE;
+    return m_poDecoratedLayer->GetExtent3D(iGeomField, psExtent, bForce);
 }
 
 int OGRLayerDecorator::TestCapability(const char *pszCapability)

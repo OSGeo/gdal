@@ -257,12 +257,8 @@ class OGRPMTilesVectorLayer final
 
     int TestCapability(const char *) override;
 
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     void SetSpatialFilter(OGRGeometry *) override;
 

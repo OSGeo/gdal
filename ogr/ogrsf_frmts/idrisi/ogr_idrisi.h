@@ -63,13 +63,8 @@ class OGRIdrisiLayer final : public OGRLayer,
     virtual int TestCapability(const char *) override;
 
     void SetExtent(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
 };

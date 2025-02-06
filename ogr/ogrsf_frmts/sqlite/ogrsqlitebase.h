@@ -285,9 +285,8 @@ class IOGRSQLiteSelectLayer
     virtual OGRErr BaseSetAttributeFilter(const char *pszQuery) = 0;
     virtual GIntBig BaseGetFeatureCount(int bForce) = 0;
     virtual int BaseTestCapability(const char *) = 0;
-    virtual OGRErr BaseGetExtent(OGREnvelope *psExtent, int bForce) = 0;
     virtual OGRErr BaseGetExtent(int iGeomField, OGREnvelope *psExtent,
-                                 int bForce) = 0;
+                                 bool bForce) = 0;
     virtual bool ValidateGeometryFieldIndexForSetSpatialFilter(
         int iGeomField, const OGRGeometry *poGeomIn, bool bIsSelectLayer) = 0;
 };
@@ -326,7 +325,7 @@ class OGRSQLiteSelectLayerCommonBehaviour
     void SetSpatialFilter(int iGeomField, OGRGeometry *);
     OGRErr SetAttributeFilter(const char *);
     int TestCapability(const char *);
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce);
+    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, bool bForce);
 };
 
 /************************************************************************/

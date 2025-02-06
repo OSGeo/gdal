@@ -1656,7 +1656,7 @@ GIntBig OGRShapeLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /*                                                                      */
 /*      Fetch extent of the data currently stored in the dataset.       */
 /*      The bForce flag has no effect on SHP files since that value     */
@@ -1665,7 +1665,8 @@ GIntBig OGRShapeLayer::GetFeatureCount(int bForce)
 /*      Returns OGRERR_NONE/OGRRERR_FAILURE.                            */
 /************************************************************************/
 
-OGRErr OGRShapeLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRShapeLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                 bool bForce)
 
 {
     if (!TouchLayer())
@@ -1696,7 +1697,12 @@ OGRErr OGRShapeLayer::GetExtent(OGREnvelope *psExtent, int bForce)
         OGRGeometry *poFilterGeom = m_poFilterGeom;
         m_poFilterGeom = nullptr;
 
-        const OGRErr eErr = OGRLayer::GetExtent(psExtent, bForce);
+        psExtent->MinX = 0;
+        psExtent->MinY = 0;
+        psExtent->MaxX = 0;
+        psExtent->MaxY = 0;
+
+        const OGRErr eErr = OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 
         m_poAttrQuery = poAttrQuery;
         m_poFilterGeom = poFilterGeom;
@@ -1706,10 +1712,11 @@ OGRErr OGRShapeLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     return OGRERR_NONE;
 }
 
-OGRErr OGRShapeLayer::GetExtent3D(int, OGREnvelope3D *psExtent3D, int bForce)
+OGRErr OGRShapeLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                                   bool bForce)
 {
     if (m_poFilterGeom || m_poAttrQuery)
-        return OGRLayer::GetExtent3D(0, psExtent3D, bForce);
+        return OGRLayer::IGetExtent3D(iGeomField, psExtent3D, bForce);
 
     if (!TouchLayer())
         return OGRERR_FAILURE;
@@ -1750,7 +1757,8 @@ OGRErr OGRShapeLayer::GetExtent3D(int, OGREnvelope3D *psExtent3D, int bForce)
         OGRGeometry *poFilterGeom = m_poFilterGeom;
         m_poFilterGeom = nullptr;
 
-        const OGRErr eErr = OGRLayer::GetExtent3D(0, psExtent3D, bForce);
+        const OGRErr eErr =
+            OGRLayer::IGetExtent3D(iGeomField, psExtent3D, bForce);
 
         m_poAttrQuery = poAttrQuery;
         m_poFilterGeom = poFilterGeom;

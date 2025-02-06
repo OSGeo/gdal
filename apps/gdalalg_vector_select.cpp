@@ -246,12 +246,8 @@ class GDALVectorSelectAlgorithmLayer final
         return OGRLayer::GetFeatureCount(bForce);
     }
 
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override
-    {
-        return m_oSrcLayer.GetExtent(psExtent, bForce);
-    }
-
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override
     {
         return m_oSrcLayer.GetExtent(iGeomField, psExtent, bForce);
     }

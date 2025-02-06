@@ -521,9 +521,9 @@ class GNMGenericLayer : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef() override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
+
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce = true) override;
 
     virtual int TestCapability(const char *) override;
 

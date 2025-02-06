@@ -814,7 +814,7 @@ GIntBig OGRLIBKMLLayer::GetFeatureCount(int bForce)
 }
 
 /******************************************************************************
- GetExtent()
+ IGetExtent()
 
  Args:          psExtent    pointer to the Envelope to store the result in
                 bForce      no effect as of now
@@ -823,7 +823,8 @@ GIntBig OGRLIBKMLLayer::GetFeatureCount(int bForce)
 
 ******************************************************************************/
 
-OGRErr OGRLIBKMLLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRLIBKMLLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                  bool bForce)
 {
     Bbox oKmlBbox;
 
@@ -838,7 +839,7 @@ OGRErr OGRLIBKMLLayer::GetExtent(OGREnvelope *psExtent, int bForce)
         return OGRERR_NONE;
     }
 
-    return OGRLayer::GetExtent(psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /******************************************************************************

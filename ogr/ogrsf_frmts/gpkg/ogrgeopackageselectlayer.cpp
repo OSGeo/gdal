@@ -142,11 +142,11 @@ int OGRGeoPackageSelectLayer::TestCapability(const char *pszCap)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
-OGRErr OGRGeoPackageSelectLayer::GetExtent(int iGeomField,
-                                           OGREnvelope *psExtent, int bForce)
+OGRErr OGRGeoPackageSelectLayer::IGetExtent(int iGeomField,
+                                            OGREnvelope *psExtent, bool bForce)
 {
     return poBehavior->GetExtent(iGeomField, psExtent, bForce);
 }

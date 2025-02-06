@@ -872,27 +872,11 @@ void OGRHanaLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                            GetExtent()                               */
+/*                           IGetExtent()                               */
 /************************************************************************/
 
-OGRErr OGRHanaLayer::GetExtent(int iGeomField, OGREnvelope *extent, int force)
+OGRErr OGRHanaLayer::IGetExtent(int iGeomField, OGREnvelope *extent, bool force)
 {
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone)
-    {
-        extent->MinX = 0.0;
-        extent->MaxX = 0.0;
-        extent->MinY = 0.0;
-        extent->MaxY = 0.0;
-
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return OGRERR_FAILURE;
-    }
-
     try
     {
         if (!force)
@@ -913,10 +897,7 @@ OGRErr OGRHanaLayer::GetExtent(int iGeomField, OGREnvelope *extent, int force)
                  clmName.c_str(), ex.what());
     }
 
-    if (iGeomField == 0)
-        return OGRLayer::GetExtent(extent, force);
-    else
-        return OGRLayer::GetExtent(iGeomField, extent, force);
+    return OGRLayer::IGetExtent(iGeomField, extent, force);
 }
 
 /************************************************************************/

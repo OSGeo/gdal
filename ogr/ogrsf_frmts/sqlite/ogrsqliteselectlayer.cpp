@@ -647,15 +647,15 @@ int OGRSQLiteSelectLayerCommonBehaviour::TestCapability(const char *pszCap)
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRSQLiteSelectLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                       int bForce)
+OGRErr OGRSQLiteSelectLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                        bool bForce)
 {
     return m_poBehavior->GetExtent(iGeomField, psExtent, bForce);
 }
 
 OGRErr OGRSQLiteSelectLayerCommonBehaviour::GetExtent(int iGeomField,
                                                       OGREnvelope *psExtent,
-                                                      int bForce)
+                                                      bool bForce)
 {
     if (iGeomField < 0 ||
         iGeomField >= m_poLayer->GetLayerDefn()->GetGeomFieldCount() ||
@@ -712,11 +712,7 @@ OGRErr OGRSQLiteSelectLayerCommonBehaviour::GetExtent(int iGeomField,
         }
     }
 
-    OGRErr eErr;
-    if (iGeomField == 0)
-        eErr = m_poLayer->BaseGetExtent(psExtent, bForce);
-    else
-        eErr = m_poLayer->BaseGetExtent(iGeomField, psExtent, bForce);
+    OGRErr eErr = m_poLayer->BaseGetExtent(iGeomField, psExtent, bForce);
     if (iGeomField == 0 && eErr == OGRERR_NONE && m_poDS->GetUpdate() == false)
         m_poDS->SetEnvelopeForSQL(m_osSQLBase, *psExtent);
     return eErr;

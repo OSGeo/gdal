@@ -5065,15 +5065,6 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                            GetExtent()                               */
-/************************************************************************/
-
-inline OGRErr OGRArrowLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    return GetExtent(0, psExtent, bForce);
-}
-
-/************************************************************************/
 /*                       GetExtentFromMetadata()                        */
 /************************************************************************/
 
@@ -5178,22 +5169,12 @@ inline bool OGRArrowLayer::FastGetExtent(int iGeomField,
 }
 
 /************************************************************************/
-/*                            GetExtent()                               */
+/*                           IGetExtent()                               */
 /************************************************************************/
 
-inline OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                       int bForce)
+inline OGRErr OGRArrowLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                        bool bForce)
 {
-    if (iGeomField < 0 || iGeomField >= m_poFeatureDefn->GetGeomFieldCount())
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return OGRERR_FAILURE;
-    }
-
     if (FastGetExtent(iGeomField, psExtent))
     {
         return OGRERR_NONE;
@@ -5387,7 +5368,7 @@ inline OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         }
     }
 
-    return GetExtentInternal(iGeomField, psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/
@@ -5415,28 +5396,18 @@ inline bool OGRArrowLayer::FastGetExtent3D(int iGeomField,
 }
 
 /************************************************************************/
-/*                           GetExtent3D()                              */
+/*                          IGetExtent3D()                              */
 /************************************************************************/
 
-inline OGRErr OGRArrowLayer::GetExtent3D(int iGeomField,
-                                         OGREnvelope3D *psExtent, int bForce)
+inline OGRErr OGRArrowLayer::IGetExtent3D(int iGeomField,
+                                          OGREnvelope3D *psExtent, bool bForce)
 {
-    if (iGeomField < 0 || iGeomField >= m_poFeatureDefn->GetGeomFieldCount())
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return OGRERR_FAILURE;
-    }
-
     if (FastGetExtent3D(iGeomField, psExtent))
     {
         return OGRERR_NONE;
     }
 
-    return OGRLayer::GetExtent3D(iGeomField, psExtent, bForce);
+    return OGRLayer::IGetExtent3D(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

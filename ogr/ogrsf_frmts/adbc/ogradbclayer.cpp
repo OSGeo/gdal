@@ -595,60 +595,31 @@ void OGRADBCLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                            GetExtent()                               */
+/*                           IGetExtent()                               */
 /************************************************************************/
 
-OGRErr OGRADBCLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRADBCLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                bool bForce)
 {
-    return GetExtent(0, psExtent, bForce);
-}
-
-/************************************************************************/
-/*                            GetExtent()                               */
-/************************************************************************/
-
-OGRErr OGRADBCLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                               int bForce)
-{
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return OGRERR_FAILURE;
-    }
-
     *psExtent = m_extents[iGeomField];
     if (psExtent->IsInit())
         return OGRERR_NONE;
 
-    return GetExtentInternal(iGeomField, psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/
-/*                           GetExtent3D()                              */
+/*                           IGetExtent3D()                             */
 /************************************************************************/
 
-OGRErr OGRADBCLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
-                                 int bForce)
+OGRErr OGRADBCLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                                  bool bForce)
 {
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return OGRERR_FAILURE;
-    }
-
     *psExtent = m_extents[iGeomField];
     if (psExtent->IsInit())
         return OGRERR_NONE;
 
-    return GetExtentInternal(iGeomField, psExtent, bForce);
+    return OGRLayer::IGetExtent3D(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

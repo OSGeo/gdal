@@ -1754,7 +1754,7 @@ GIntBig OGRWFSLayer::GetFeatureCount(int bForce)
     if (CanRunGetFeatureCountAndGetExtentTogether())
     {
         OGREnvelope sDummy;
-        GetExtent(&sDummy);
+        CPL_IGNORE_RET_VAL(GetExtent(&sDummy));
     }
 
     if (nFeatures < 0)
@@ -1790,10 +1790,11 @@ void OGRWFSLayer::SetWGS84Extents(double dfMinXIn, double dfMinYIn,
 }
 
 /************************************************************************/
-/*                              GetExtent()                             */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
-OGRErr OGRWFSLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRWFSLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                               bool bForce)
 {
     if (m_oExtents.IsInit())
     {
@@ -1814,7 +1815,7 @@ OGRErr OGRWFSLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     }
 
     if (TestCapability(OLCFastGetExtent))
-        return poBaseLayer->GetExtent(psExtent, bForce);
+        return poBaseLayer->GetExtent(iGeomField, psExtent, bForce);
 
     /* In some cases, we can evaluate the result of GetFeatureCount() */
     /* and GetExtent() with the same data */
@@ -1824,7 +1825,7 @@ OGRErr OGRWFSLayer::GetExtent(OGREnvelope *psExtent, int bForce)
         nFeatures = 0;
     }
 
-    OGRErr eErr = OGRLayer::GetExtent(psExtent, bForce);
+    OGRErr eErr = OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 
     if (bCountFeaturesInGetNextFeature)
     {

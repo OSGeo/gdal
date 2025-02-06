@@ -189,13 +189,8 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
     virtual OGRErr SetAttributeFilter(const char *) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override
-    {
-        return GetExtent(0, psExtent, bForce);
-    }
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     void SetDeferredCreation(OGRwkbGeometryType eGType,
                              OGRSpatialReference *poSRS, int bGeomNullable);

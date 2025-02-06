@@ -1009,7 +1009,7 @@ int TABView::GetBounds(double &dXMin, double &dYMin, double &dXMax,
 }
 
 /**********************************************************************
- *                   TABView::GetExtent()
+ *                   TABView::IGetExtent()
  *
  * Fetch extent of the data currently stored in the dataset.
  *
@@ -1018,7 +1018,7 @@ int TABView::GetBounds(double &dXMin, double &dYMin, double &dXMax,
  *
  * Returns OGRERR_NONE/OGRRERR_FAILURE.
  **********************************************************************/
-OGRErr TABView::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr TABView::IGetExtent(int iGeomField, OGREnvelope *psExtent, bool bForce)
 {
     if (m_nMainTableIndex == -1)
     {
@@ -1028,7 +1028,8 @@ OGRErr TABView::GetExtent(OGREnvelope *psExtent, int bForce)
         return OGRERR_FAILURE;
     }
 
-    return m_papoTABFiles[m_nMainTableIndex]->GetExtent(psExtent, bForce);
+    return m_papoTABFiles[m_nMainTableIndex]->GetExtent(iGeomField, psExtent,
+                                                        bForce);
 }
 
 /**********************************************************************
