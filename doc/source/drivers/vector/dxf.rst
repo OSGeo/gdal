@@ -162,6 +162,7 @@ The following entity types are supported:
 
 -  WIPEOUT: a light support of WIPEOUT entities can parse the outline 
    geometry of WIPEOUT entities and translate it into a POLYGON feature. 
+   The feature is 2D support only - Z coordinates are ignored.
 
 -  3DSOLID, REGION, BODY, SURFACE: See below.
 

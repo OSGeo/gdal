@@ -2776,6 +2776,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateWIPEOUT()
 
     int nNumVertices = 1;  // use 1 based index
     int nBoundaryVertexCount = 1;
+    int nFormat = 0;
 
     DXFSmoothPolyline smoothPolyline;
 
@@ -2793,26 +2794,15 @@ OGRDXFFeature *OGRDXFLayer::TranslateWIPEOUT()
 
         switch (nCode)
         {
-                /* Group codes 10, 20 and 30 control the insertion point of the lower    */
+                /* Group codes 10, 20 control the insertion point of the lower    */
                 /* left corner of your image.                                            */
             case 10:
-                if (bHaveX && bHaveY)
-                {
-                    smoothPolyline.AddPoint(dfXOffset, dfYOffset, 0.0, 0.0);
-                    bHaveY = FALSE;
-                }
                 dfXOffset = CPLAtof(szLineBuf);
-                bHaveX = TRUE;
                 break;
 
             case 20:
-                if (bHaveX && bHaveY)
-                {
-                    smoothPolyline.AddPoint(dfXOffset, dfYOffset, 0.0, 0.0);
-                    bHaveX = FALSE;
-                }
                 dfYOffset = CPLAtof(szLineBuf);
-                bHaveY = TRUE;
+                smoothPolyline.AddPoint(dfXOffset, dfYOffset, 0.0, 0.0);
                 break;
 
                 /* --------------------------------------------------------------------- */
@@ -2844,6 +2834,15 @@ OGRDXFFeature *OGRDXFLayer::TranslateWIPEOUT()
                 break;
 
             case 71:
+                nFormat = atoi(szLineBuf);
+                if (nFormat == 1)
+                {
+                    // Here ignore feature because point format set to 1 is not supported
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Format of points in WIPEOUT entity not supported.");
+                    return nullptr;
+                }
                 break;
 
             case 91:
@@ -2870,6 +2869,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateWIPEOUT()
                 break;
 
             case 24:
+                //Last point is skipped as the polyline is closed just after
                 if (bHaveX && bHaveY)
                 {
                     smoothPolyline.AddPoint(dfXOffset + (0.5 + dfX) * dfXscale,
