@@ -16,6 +16,8 @@
 #include "gdalalgorithm.h"
 #include "gdalalg_abstract_pipeline.h"
 
+#include "ogrsf_frmts.h"
+
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
@@ -103,6 +105,43 @@ class GDALVectorPipelineAlgorithm final
     GDALArgDatasetValue &GetOutputDataset() override
     {
         return m_outputDataset;
+    }
+};
+
+/************************************************************************/
+/*                 GDALVectorPipelineOutputDataset                      */
+/************************************************************************/
+
+/** Class used by vector pipeline steps to create an output on-the-fly
+ * dataset where they can store on-the-fly layers.
+ */
+class GDALVectorPipelineOutputDataset final : public GDALDataset
+{
+    std::vector<std::unique_ptr<OGRLayer>> m_layersToDestroy{};
+    std::vector<OGRLayer *> m_layers{};
+
+  public:
+    GDALVectorPipelineOutputDataset() = default;
+
+    void AddLayer(std::unique_ptr<OGRLayer> poLayer)
+    {
+        m_layersToDestroy.push_back(std::move(poLayer));
+        m_layers.push_back(m_layersToDestroy.back().get());
+    }
+
+    void AddLayer(OGRLayer *poLayer)
+    {
+        m_layers.push_back(poLayer);
+    }
+
+    int GetLayerCount() override
+    {
+        return static_cast<int>(m_layers.size());
+    }
+
+    OGRLayer *GetLayer(int idx) override
+    {
+        return idx >= 0 && idx < GetLayerCount() ? m_layers[idx] : nullptr;
     }
 };
 

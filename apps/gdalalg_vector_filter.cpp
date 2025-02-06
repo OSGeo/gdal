@@ -47,34 +47,6 @@ namespace
 {
 
 /************************************************************************/
-/*                 GDALVectorFilterAlgorithmDataset                     */
-/************************************************************************/
-
-class GDALVectorFilterAlgorithmDataset final : public GDALDataset
-{
-    std::vector<std::unique_ptr<OGRLayer>> m_layers{};
-
-  public:
-    GDALVectorFilterAlgorithmDataset() = default;
-
-    void AddLayer(std::unique_ptr<OGRLayer> poLayer)
-    {
-        m_layers.push_back(std::move(poLayer));
-    }
-
-    int GetLayerCount() override
-    {
-        return static_cast<int>(m_layers.size());
-    }
-
-    OGRLayer *GetLayer(int idx) override
-    {
-        return idx >= 0 && idx < GetLayerCount() ? m_layers[idx].get()
-                                                 : nullptr;
-    }
-};
-
-/************************************************************************/
 /*                   GDALVectorFilterAlgorithmLayer                     */
 /************************************************************************/
 
@@ -314,7 +286,7 @@ bool GDALVectorFilterAlgorithm::RunStep(GDALProgressFunc, void *)
 
     if (ret && !m_selectedFields.empty())
     {
-        auto outDS = std::make_unique<GDALVectorFilterAlgorithmDataset>();
+        auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>();
         outDS->SetDescription(poSrcDS->GetDescription());
 
         for (int i = 0; i < nLayerCount; ++i)

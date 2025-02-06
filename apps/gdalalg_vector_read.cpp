@@ -33,36 +33,6 @@ GDALVectorReadAlgorithm::GDALVectorReadAlgorithm()
 }
 
 /************************************************************************/
-/*                 GDALVectorReadAlgorithmDataset                       */
-/************************************************************************/
-
-namespace
-{
-class GDALVectorReadAlgorithmDataset final : public GDALDataset
-{
-    std::vector<OGRLayer *> m_srcLayers{};
-
-  public:
-    GDALVectorReadAlgorithmDataset() = default;
-
-    void AddLayer(OGRLayer *poSrcLayer)
-    {
-        m_srcLayers.push_back(poSrcLayer);
-    }
-
-    int GetLayerCount() override
-    {
-        return static_cast<int>(m_srcLayers.size());
-    }
-
-    OGRLayer *GetLayer(int idx) override
-    {
-        return idx >= 0 && idx < GetLayerCount() ? m_srcLayers[idx] : nullptr;
-    }
-};
-}  // namespace
-
-/************************************************************************/
 /*                  GDALVectorReadAlgorithm::RunStep()                  */
 /************************************************************************/
 
@@ -79,7 +49,7 @@ bool GDALVectorReadAlgorithm::RunStep(GDALProgressFunc, void *)
     else
     {
         auto poSrcDS = m_inputDataset.GetDatasetRef();
-        auto poOutDS = std::make_unique<GDALVectorReadAlgorithmDataset>();
+        auto poOutDS = std::make_unique<GDALVectorPipelineOutputDataset>();
         poOutDS->SetDescription(poSrcDS->GetDescription());
         for (const auto &srcLayerName : m_inputLayerNames)
         {
