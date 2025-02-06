@@ -89,8 +89,13 @@ class GDALVectorClipAlgorithmDataset final : public GDALDataset
     }
 };
 
-class GDALVectorClipAlgorithmLayer final : public OGRLayer
+class GDALVectorClipAlgorithmLayer final
+    : public OGRLayer,
+      public OGRGetNextFeatureThroughRaw<GDALVectorClipAlgorithmLayer>
 {
+
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(GDALVectorClipAlgorithmLayer)
+
   public:
     GDALVectorClipAlgorithmLayer(OGRLayer *poSrcLayer,
                                  std::unique_ptr<OGRGeometry> poClipGeom)
@@ -117,7 +122,7 @@ class GDALVectorClipAlgorithmLayer final : public OGRLayer
         m_idxInCurGeomColl = 0;
     }
 
-    OGRFeature *GetNextFeature() override
+    OGRFeature *GetNextRawFeature()
     {
         if (m_poSrcFeature && m_poCurGeomColl)
         {
