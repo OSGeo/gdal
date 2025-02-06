@@ -267,12 +267,9 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
                               int nFlagsIn) override;
 
     int TestCapability(const char *) override;
-    void SetSpatialFilter(OGRGeometry *) override;
 
-    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     OGRErr SetAttributeFilter(const char *) override;
 

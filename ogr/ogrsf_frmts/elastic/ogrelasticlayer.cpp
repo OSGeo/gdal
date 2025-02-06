@@ -3772,24 +3772,15 @@ void OGRElasticLayer::ClampEnvelope(OGREnvelope &sEnvelope)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGRElasticLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
+OGRErr OGRElasticLayer::ISetSpatialFilter(int iGeomField,
+                                          const OGRGeometry *poGeomIn)
 
 {
     FinalizeFeatureDefn();
 
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone)
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return;
-    }
     m_iGeomFieldFilter = iGeomField;
 
     InstallFilter(poGeomIn);
@@ -3798,14 +3789,14 @@ void OGRElasticLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
     m_poSpatialFilter = nullptr;
 
     if (poGeomIn == nullptr)
-        return;
+        return OGRERR_NONE;
 
     if (!m_osESSearch.empty())
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
             "Setting a spatial filter on a resulting layer is not supported");
-        return;
+        return OGRERR_FAILURE;
     }
 
     OGREnvelope sEnvelope;
@@ -3815,7 +3806,7 @@ void OGRElasticLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
     if (sEnvelope.MinX == -180 && sEnvelope.MinY == -90 &&
         sEnvelope.MaxX == 180 && sEnvelope.MaxY == 90)
     {
-        return;
+        return OGRERR_NONE;
     }
 
     m_poSpatialFilter = json_object_new_object();
@@ -3884,6 +3875,8 @@ void OGRElasticLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
             json_object_new_double_with_precision(sEnvelope.MinY, 6));
         json_object_array_add(coordinates, bottom_right);
     }
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

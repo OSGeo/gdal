@@ -995,40 +995,21 @@ OGRErr OGRSQLiteTableLayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRSQLiteTableLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
-{
-    SetSpatialFilter(0, poGeomIn);
-}
-
-void OGRSQLiteTableLayer::SetSpatialFilter(int iGeomField,
-                                           OGRGeometry *poGeomIn)
+OGRErr OGRSQLiteTableLayer::ISetSpatialFilter(int iGeomField,
+                                              const OGRGeometry *poGeomIn)
 
 {
-    if (iGeomField == 0)
-    {
-        m_iGeomFieldFilter = 0;
-    }
-    else
-    {
-        if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-            return;
-        }
-
-        m_iGeomFieldFilter = iGeomField;
-    }
-
+    m_iGeomFieldFilter = iGeomField;
     if (InstallFilter(poGeomIn))
     {
         BuildWhere();
 
         ResetReading();
     }
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

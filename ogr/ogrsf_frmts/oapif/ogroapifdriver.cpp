@@ -214,12 +214,8 @@ class OGROAPIFLayer final : public OGRLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    void SetSpatialFilter(OGRGeometry *poGeom) override;
-
-    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     OGRErr SetAttributeFilter(const char *pszQuery) override;
 
@@ -2453,14 +2449,15 @@ OGRErr OGROAPIFLayer::IGetExtent(int iGeomField, OGREnvelope *psEnvelope,
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGROAPIFLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGROAPIFLayer::ISetSpatialFilter(int, const OGRGeometry *poGeomIn)
 {
     InstallFilter(poGeomIn);
 
     ResetReading();
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

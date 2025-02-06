@@ -551,60 +551,25 @@ bool OGREditableLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
 }
 
 /************************************************************************/
-/*                           SetSpatialFilter()                         */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGREditableLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGREditableLayer::ISetSpatialFilter(int iGeomField,
+                                           const OGRGeometry *poGeom)
 {
-    SetSpatialFilter(0, poGeom);
-}
-
-/************************************************************************/
-/*                           SetSpatialFilter()                         */
-/************************************************************************/
-
-void OGREditableLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    if (iGeomField < 0 ||
-        (iGeomField != 0 && iGeomField >= GetLayerDefn()->GetGeomFieldCount()))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid geometry field index : %d", iGeomField);
-        return;
-    }
-
     m_iGeomFieldFilter = iGeomField;
     if (InstallFilter(poGeom))
         ResetReading();
 
-    int iSrcGeomFieldIdx = GetSrcGeomFieldIndex(iGeomField);
+    OGRErr eErr = OGRERR_NONE;
+    const int iSrcGeomFieldIdx = GetSrcGeomFieldIndex(iGeomField);
     if (iSrcGeomFieldIdx >= 0)
     {
-        m_poDecoratedLayer->SetSpatialFilter(iSrcGeomFieldIdx, poGeom);
+        eErr = m_poDecoratedLayer->SetSpatialFilter(iSrcGeomFieldIdx, poGeom);
     }
-    m_poMemLayer->SetSpatialFilter(iGeomField, poGeom);
-}
-
-/************************************************************************/
-/*                         SetSpatialFilterRect()                       */
-/************************************************************************/
-
-void OGREditableLayer::SetSpatialFilterRect(double dfMinX, double dfMinY,
-                                            double dfMaxX, double dfMaxY)
-{
-    return OGRLayer::SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
-}
-
-/************************************************************************/
-/*                         SetSpatialFilterRect()                       */
-/************************************************************************/
-
-void OGREditableLayer::SetSpatialFilterRect(int iGeomField, double dfMinX,
-                                            double dfMinY, double dfMaxX,
-                                            double dfMaxY)
-{
-    return OGRLayer::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX,
-                                          dfMaxY);
+    if (eErr == OGRERR_NONE)
+        eErr = m_poMemLayer->SetSpatialFilter(iGeomField, poGeom);
+    return eErr;
 }
 
 /************************************************************************/

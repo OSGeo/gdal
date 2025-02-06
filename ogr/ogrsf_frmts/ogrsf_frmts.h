@@ -95,7 +95,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     int FilterGeometry(const OGRGeometry *);
     // int          FilterGeometry( OGRGeometry *, OGREnvelope*
     // psGeometryEnvelope);
-    int InstallFilter(OGRGeometry *);
+    int InstallFilter(const OGRGeometry *);
     bool
     ValidateGeometryFieldIndexForSetSpatialFilter(int iGeomField,
                                                   const OGRGeometry *poGeomIn,
@@ -107,6 +107,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     virtual OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
                                 bool bForce) CPL_WARN_UNUSED_RESULT;
+
+    virtual OGRErr ISetSpatialFilter(int iGeomField, const OGRGeometry *);
 
     virtual OGRErr ISetFeature(OGRFeature *poFeature) CPL_WARN_UNUSED_RESULT;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) CPL_WARN_UNUSED_RESULT;
@@ -193,14 +195,14 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     FeatureIterator end();
 
     virtual OGRGeometry *GetSpatialFilter();
-    virtual void SetSpatialFilter(OGRGeometry *);
-    virtual void SetSpatialFilterRect(double dfMinX, double dfMinY,
-                                      double dfMaxX, double dfMaxY);
 
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *);
-    virtual void SetSpatialFilterRect(int iGeomField, double dfMinX,
-                                      double dfMinY, double dfMaxX,
-                                      double dfMaxY);
+    OGRErr SetSpatialFilter(const OGRGeometry *);
+    OGRErr SetSpatialFilterRect(double dfMinX, double dfMinY, double dfMaxX,
+                                double dfMaxY);
+
+    OGRErr SetSpatialFilter(int iGeomField, const OGRGeometry *);
+    OGRErr SetSpatialFilterRect(int iGeomField, double dfMinX, double dfMinY,
+                                double dfMaxX, double dfMaxY);
 
     virtual OGRErr SetAttributeFilter(const char *);
 

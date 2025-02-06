@@ -36,36 +36,12 @@ OGRGeometry *OGRLayerDecorator::GetSpatialFilter()
     return m_poDecoratedLayer->GetSpatialFilter();
 }
 
-void OGRLayerDecorator::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGRLayerDecorator::ISetSpatialFilter(int iGeomField,
+                                            const OGRGeometry *poGeom)
 {
     if (!m_poDecoratedLayer)
-        return;
-    m_poDecoratedLayer->SetSpatialFilter(poGeom);
-}
-
-void OGRLayerDecorator::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    if (!m_poDecoratedLayer)
-        return;
-    m_poDecoratedLayer->SetSpatialFilter(iGeomField, poGeom);
-}
-
-void OGRLayerDecorator::SetSpatialFilterRect(double dfMinX, double dfMinY,
-                                             double dfMaxX, double dfMaxY)
-{
-    if (!m_poDecoratedLayer)
-        return;
-    m_poDecoratedLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
-}
-
-void OGRLayerDecorator::SetSpatialFilterRect(int iGeomField, double dfMinX,
-                                             double dfMinY, double dfMaxX,
-                                             double dfMaxY)
-{
-    if (!m_poDecoratedLayer)
-        return;
-    m_poDecoratedLayer->SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX,
-                                             dfMaxY);
+        return OGRERR_FAILURE;
+    return m_poDecoratedLayer->SetSpatialFilter(iGeomField, poGeom);
 }
 
 OGRErr OGRLayerDecorator::SetAttributeFilter(const char *poAttrFilter)

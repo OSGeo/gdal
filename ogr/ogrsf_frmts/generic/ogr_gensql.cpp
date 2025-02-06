@@ -2754,17 +2754,14 @@ OGRErr OGRGenSQLResultsLayer::SetAttributeFilter(const char *pszAttributeFilter)
 }
 
 /************************************************************************/
-/*                       SetSpatialFilter()                             */
+/*                       ISetSpatialFilter()                            */
 /************************************************************************/
 
-void OGRGenSQLResultsLayer::SetSpatialFilter(int iGeomField,
-                                             OGRGeometry *poGeom)
+OGRErr OGRGenSQLResultsLayer::ISetSpatialFilter(int iGeomField,
+                                                const OGRGeometry *poGeom)
 {
     InvalidateOrderByIndex();
-    if (iGeomField == 0)
-        OGRLayer::SetSpatialFilter(poGeom);
-    else
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
+    return OGRLayer::ISetSpatialFilter(iGeomField, poGeom);
 }
 
 /************************************************************************/

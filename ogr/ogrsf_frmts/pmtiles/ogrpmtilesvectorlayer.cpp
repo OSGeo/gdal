@@ -524,12 +524,13 @@ void OGRPMTilesVectorLayer::ExtentToTileExtent(const OGREnvelope &sEnvelope,
 }
 
 /************************************************************************/
-/*                         SetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                           */
 /************************************************************************/
 
-void OGRPMTilesVectorLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGRPMTilesVectorLayer::ISetSpatialFilter(int iGeomField,
+                                                const OGRGeometry *poGeomIn)
 {
-    OGRLayer::SetSpatialFilter(poGeomIn);
+    OGRLayer::ISetSpatialFilter(iGeomField, poGeomIn);
 
     if (m_poFilterGeom != nullptr && m_sFilterEnvelope.MinX <= -MAX_GM &&
         m_sFilterEnvelope.MinY <= -MAX_GM && m_sFilterEnvelope.MaxX >= MAX_GM &&
@@ -576,4 +577,5 @@ void OGRPMTilesVectorLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
         m_nFilterMaxX = (1 << m_nZoomLevel) - 1;
         m_nFilterMaxY = (1 << m_nZoomLevel) - 1;
     }
+    return OGRERR_NONE;
 }

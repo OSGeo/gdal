@@ -412,18 +412,18 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition(const char *pszTable)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGRMySQLTableLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGRMySQLTableLayer::ISetSpatialFilter(int, const OGRGeometry *poGeomIn)
 
 {
-    if (!InstallFilter(poGeomIn))
-        return;
-
-    BuildWhere();
-
-    ResetReading();
+    if (InstallFilter(poGeomIn))
+    {
+        BuildWhere();
+        ResetReading();
+    }
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

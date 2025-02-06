@@ -1699,44 +1699,171 @@ bool OGRLayer::ValidateGeometryFieldIndexForSetSpatialFilter(
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+/**
+ \brief Set a new spatial filter.
+
+ This method set the geometry to be used as a spatial filter when
+ fetching features via the GetNextFeature() method.  Only features that
+ geometrically intersect the filter geometry will be returned.
+
+ Currently this test is may be inaccurately implemented, but it is
+ guaranteed that all features whose envelope (as returned by
+ OGRGeometry::getEnvelope()) overlaps the envelope of the spatial filter
+ will be returned.  This can result in more shapes being returned that
+ should strictly be the case.
+
+ Starting with GDAL 2.3, features with null or empty geometries will never
+ be considered as matching a spatial filter.
+
+ This method makes an internal copy of the passed geometry.  The
+ passed geometry remains the responsibility of the caller, and may
+ be safely destroyed.
+
+ For the time being the passed filter geometry should be in the same
+ SRS as the layer (as returned by OGRLayer::GetSpatialRef()).  In the
+ future this may be generalized.
+
+ This method is the same as the C function OGR_L_SetSpatialFilter().
+
+ @param poFilter the geometry to use as a filtering region.  NULL may
+ be passed indicating that the current spatial filter should be cleared,
+ but no new one instituted.
+ */
+
+OGRErr OGRLayer::SetSpatialFilter(const OGRGeometry *poFilter)
 
 {
-    if (poGeomIn && !ValidateGeometryFieldIndexForSetSpatialFilter(0, poGeomIn))
-        return;
-
-    m_iGeomFieldFilter = 0;
-    if (InstallFilter(poGeomIn))
-        ResetReading();
+    return SetSpatialFilter(0, poFilter);
 }
 
-void OGRLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
+/**
+ \brief Set a new spatial filter.
+
+ This method set the geometry to be used as a spatial filter when
+ fetching features via the GetNextFeature() method.  Only features that
+ geometrically intersect the filter geometry will be returned.
+
+ Currently this test is may be inaccurately implemented, but it is
+ guaranteed that all features who's envelope (as returned by
+ OGRGeometry::getEnvelope()) overlaps the envelope of the spatial filter
+ will be returned.  This can result in more shapes being returned that
+ should strictly be the case.
+
+ This method makes an internal copy of the passed geometry.  The
+ passed geometry remains the responsibility of the caller, and may
+ be safely destroyed.
+
+ For the time being the passed filter geometry should be in the same
+ SRS as the geometry field definition it corresponds to (as returned by
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(iGeomField)->GetSpatialRef()).  In the
+ future this may be generalized.
+
+ Note that only the last spatial filter set is applied, even if several
+ successive calls are done with different iGeomField values.
+
+ This method is the same as the C function OGR_L_SetSpatialFilterEx().
+
+ @param iGeomField index of the geometry field on which the spatial filter
+ operates.
+ @param poFilter the geometry to use as a filtering region.  NULL may
+ be passed indicating that the current spatial filter should be cleared,
+ but no new one instituted.
+
+ @since GDAL 1.11
+ */
+
+OGRErr OGRLayer::SetSpatialFilter(int iGeomField, const OGRGeometry *poFilter)
 
 {
     if (iGeomField == 0)
     {
-        if (poGeomIn &&
-            !ValidateGeometryFieldIndexForSetSpatialFilter(0, poGeomIn))
-            return;
-
-        m_iGeomFieldFilter = iGeomField;
-        SetSpatialFilter(poGeomIn);
+        if (poFilter &&
+            !ValidateGeometryFieldIndexForSetSpatialFilter(0, poFilter))
+        {
+            return OGRERR_FAILURE;
+        }
     }
     else
     {
         if (!ValidateGeometryFieldIndexForSetSpatialFilter(iGeomField,
-                                                           poGeomIn))
-            return;
-
-        m_iGeomFieldFilter = iGeomField;
-        if (InstallFilter(poGeomIn))
-            ResetReading();
+                                                           poFilter))
+        {
+            return OGRERR_FAILURE;
+        }
     }
+
+    return ISetSpatialFilter(iGeomField, poFilter);
+}
+
+/************************************************************************/
+/*                         ISetSpatialFilter()                          */
+/************************************************************************/
+
+/**
+ \brief Set a new spatial filter.
+
+ Virtual method implemented by drivers since 3.11. In previous versions,
+ SetSpatialFilter() / SetSpatialFilterRect() itself was the virtual method.
+
+ Driver implementations, when wanting to call the base method, must take
+ care of calling OGRLayer::ISetSpatialFilter() (and note the public method without
+ the leading I).
+
+ @param iGeomField index of the geometry field on which the spatial filter
+ operates.
+ @param poFilter the geometry to use as a filtering region.  NULL may
+ be passed indicating that the current spatial filter should be cleared,
+ but no new one instituted.
+
+ @since GDAL 3.11
+ */
+
+OGRErr OGRLayer::ISetSpatialFilter(int iGeomField, const OGRGeometry *poFilter)
+
+{
+    m_iGeomFieldFilter = iGeomField;
+    if (InstallFilter(poFilter))
+        ResetReading();
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
 /*                       OGR_L_SetSpatialFilter()                       */
 /************************************************************************/
+
+/**
+ \brief Set a new spatial filter.
+
+ This function set the geometry to be used as a spatial filter when
+ fetching features via the OGR_L_GetNextFeature() function.  Only
+ features that geometrically intersect the filter geometry will be
+ returned.
+
+ Currently this test is may be inaccurately implemented, but it is
+ guaranteed that all features whose envelope (as returned by
+ OGR_G_GetEnvelope()) overlaps the envelope of the spatial filter
+ will be returned.  This can result in more shapes being returned that
+ should strictly be the case.
+
+ Starting with GDAL 2.3, features with null or empty geometries will never
+ be considered as matching a spatial filter.
+
+ This function makes an internal copy of the passed geometry.  The
+ passed geometry remains the responsibility of the caller, and may
+ be safely destroyed.
+
+ For the time being the passed filter geometry should be in the same
+ SRS as the layer (as returned by OGR_L_GetSpatialRef()).  In the
+ future this may be generalized.
+
+ This function is the same as the C++ method OGRLayer::SetSpatialFilter.
+
+ @param hLayer handle to the layer on which to set the spatial filter.
+ @param hGeom handle to the geometry to use as a filtering region.  NULL may
+ be passed indicating that the current spatial filter should be cleared,
+ but no new one instituted.
+
+ */
 
 void OGR_L_SetSpatialFilter(OGRLayerH hLayer, OGRGeometryH hGeom)
 
@@ -1755,6 +1882,45 @@ void OGR_L_SetSpatialFilter(OGRLayerH hLayer, OGRGeometryH hGeom)
 /************************************************************************/
 /*                      OGR_L_SetSpatialFilterEx()                      */
 /************************************************************************/
+
+/**
+ \brief Set a new spatial filter.
+
+ This function set the geometry to be used as a spatial filter when
+ fetching features via the OGR_L_GetNextFeature() function.  Only
+ features that geometrically intersect the filter geometry will be
+ returned.
+
+ Currently this test is may be inaccurately implemented, but it is
+ guaranteed that all features who's envelope (as returned by
+ OGR_G_GetEnvelope()) overlaps the envelope of the spatial filter
+ will be returned.  This can result in more shapes being returned that
+ should strictly be the case.
+
+ This function makes an internal copy of the passed geometry.  The
+ passed geometry remains the responsibility of the caller, and may
+ be safely destroyed.
+
+ For the time being the passed filter geometry should be in the same
+ SRS as the geometry field definition it corresponds to (as returned by
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(iGeomField)->GetSpatialRef()).  In the
+ future this may be generalized.
+
+ Note that only the last spatial filter set is applied, even if several
+ successive calls are done with different iGeomField values.
+
+ This function is the same as the C++ method OGRLayer::SetSpatialFilter.
+
+ @param hLayer handle to the layer on which to set the spatial filter.
+ @param iGeomField index of the geometry field on which the spatial filter
+ operates.
+ @param hGeom handle to the geometry to use as a filtering region.  NULL may
+ be passed indicating that the current spatial filter should be cleared,
+ but no new one instituted.
+
+ @since GDAL 1.11
+
+ */
 
 void OGR_L_SetSpatialFilterEx(OGRLayerH hLayer, int iGeomField,
                               OGRGeometryH hGeom)
@@ -1775,38 +1941,115 @@ void OGR_L_SetSpatialFilterEx(OGRLayerH hLayer, int iGeomField,
 /*                        SetSpatialFilterRect()                        */
 /************************************************************************/
 
-void OGRLayer::SetSpatialFilterRect(double dfMinX, double dfMinY, double dfMaxX,
-                                    double dfMaxY)
+/**
+ \brief Set a new rectangular spatial filter.
+
+ This method set rectangle to be used as a spatial filter when
+ fetching features via the GetNextFeature() method.  Only features that
+ geometrically intersect the given rectangle will be returned.
+
+ The x/y values should be in the same coordinate system as the layer as
+ a whole (as returned by OGRLayer::GetSpatialRef()).   Internally this
+ method is normally implemented as creating a 5 vertex closed rectangular
+ polygon and passing it to OGRLayer::SetSpatialFilter().  It exists as
+ a convenience.
+
+ The only way to clear a spatial filter set with this method is to
+ call OGRLayer::SetSpatialFilter(NULL).
+
+ This method is the same as the C function OGR_L_SetSpatialFilterRect().
+
+ @param dfMinX the minimum X coordinate for the rectangular region.
+ @param dfMinY the minimum Y coordinate for the rectangular region.
+ @param dfMaxX the maximum X coordinate for the rectangular region.
+ @param dfMaxY the maximum Y coordinate for the rectangular region.
+
+ */
+
+OGRErr OGRLayer::SetSpatialFilterRect(double dfMinX, double dfMinY,
+                                      double dfMaxX, double dfMaxY)
 
 {
-    SetSpatialFilterRect(0, dfMinX, dfMinY, dfMaxX, dfMaxY);
+    return SetSpatialFilterRect(0, dfMinX, dfMinY, dfMaxX, dfMaxY);
 }
 
-void OGRLayer::SetSpatialFilterRect(int iGeomField, double dfMinX,
-                                    double dfMinY, double dfMaxX, double dfMaxY)
+/**
+ \brief Set a new rectangular spatial filter.
+
+ This method set rectangle to be used as a spatial filter when
+ fetching features via the GetNextFeature() method.  Only features that
+ geometrically intersect the given rectangle will be returned.
+
+ The x/y values should be in the same coordinate system as as the geometry
+ field definition it corresponds to (as returned by
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(iGeomField)->GetSpatialRef()). Internally this
+ method is normally implemented as creating a 5 vertex closed rectangular
+ polygon and passing it to OGRLayer::SetSpatialFilter().  It exists as
+ a convenience.
+
+ The only way to clear a spatial filter set with this method is to
+ call OGRLayer::SetSpatialFilter(NULL).
+
+ This method is the same as the C function OGR_L_SetSpatialFilterRectEx().
+
+ @param iGeomField index of the geometry field on which the spatial filter
+ operates.
+ @param dfMinX the minimum X coordinate for the rectangular region.
+ @param dfMinY the minimum Y coordinate for the rectangular region.
+ @param dfMaxX the maximum X coordinate for the rectangular region.
+ @param dfMaxY the maximum Y coordinate for the rectangular region.
+
+ @since GDAL 1.11
+ */
+
+OGRErr OGRLayer::SetSpatialFilterRect(int iGeomField, double dfMinX,
+                                      double dfMinY, double dfMaxX,
+                                      double dfMaxY)
 
 {
-    OGRLinearRing oRing;
+    auto poRing = std::make_unique<OGRLinearRing>();
     OGRPolygon oPoly;
 
-    oRing.addPoint(dfMinX, dfMinY);
-    oRing.addPoint(dfMinX, dfMaxY);
-    oRing.addPoint(dfMaxX, dfMaxY);
-    oRing.addPoint(dfMaxX, dfMinY);
-    oRing.addPoint(dfMinX, dfMinY);
+    poRing->addPoint(dfMinX, dfMinY);
+    poRing->addPoint(dfMinX, dfMaxY);
+    poRing->addPoint(dfMaxX, dfMaxY);
+    poRing->addPoint(dfMaxX, dfMinY);
+    poRing->addPoint(dfMinX, dfMinY);
 
-    oPoly.addRing(&oRing);
+    oPoly.addRing(std::move(poRing));
 
-    if (iGeomField == 0)
-        /* for drivers that only overload SetSpatialFilter(OGRGeometry*) */
-        SetSpatialFilter(&oPoly);
-    else
-        SetSpatialFilter(iGeomField, &oPoly);
+    return SetSpatialFilter(iGeomField, &oPoly);
 }
 
 /************************************************************************/
 /*                     OGR_L_SetSpatialFilterRect()                     */
 /************************************************************************/
+
+/**
+ \brief Set a new rectangular spatial filter.
+
+ This method set rectangle to be used as a spatial filter when
+ fetching features via the OGR_L_GetNextFeature() method.  Only features that
+ geometrically intersect the given rectangle will be returned.
+
+ The x/y values should be in the same coordinate system as the layer as
+ a whole (as returned by OGRLayer::GetSpatialRef()).   Internally this
+ method is normally implemented as creating a 5 vertex closed rectangular
+ polygon and passing it to OGRLayer::SetSpatialFilter().  It exists as
+ a convenience.
+
+ The only way to clear a spatial filter set with this method is to
+ call OGRLayer::SetSpatialFilter(NULL).
+
+ This method is the same as the C++ method OGRLayer::SetSpatialFilterRect().
+
+ @param hLayer handle to the layer on which to set the spatial filter.
+ @param dfMinX the minimum X coordinate for the rectangular region.
+ @param dfMinY the minimum Y coordinate for the rectangular region.
+ @param dfMaxX the maximum X coordinate for the rectangular region.
+ @param dfMaxY the maximum Y coordinate for the rectangular region.
+
+ */
 
 void OGR_L_SetSpatialFilterRect(OGRLayerH hLayer, double dfMinX, double dfMinY,
                                 double dfMaxX, double dfMaxY)
@@ -1827,6 +2070,36 @@ void OGR_L_SetSpatialFilterRect(OGRLayerH hLayer, double dfMinX, double dfMinY,
 /************************************************************************/
 /*                    OGR_L_SetSpatialFilterRectEx()                    */
 /************************************************************************/
+
+/**
+ \brief Set a new rectangular spatial filter.
+
+ This method set rectangle to be used as a spatial filter when
+ fetching features via the OGR_L_GetNextFeature() method.  Only features that
+ geometrically intersect the given rectangle will be returned.
+
+ The x/y values should be in the same coordinate system as as the geometry
+ field definition it corresponds to (as returned by
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(iGeomField)->GetSpatialRef()). Internally this
+ method is normally implemented as creating a 5 vertex closed rectangular
+ polygon and passing it to OGRLayer::SetSpatialFilter().  It exists as
+ a convenience.
+
+ The only way to clear a spatial filter set with this method is to
+ call OGRLayer::SetSpatialFilter(NULL).
+
+ This method is the same as the C++ method OGRLayer::SetSpatialFilterRect().
+
+ @param hLayer handle to the layer on which to set the spatial filter.
+ @param iGeomField index of the geometry field on which the spatial filter
+ operates.
+ @param dfMinX the minimum X coordinate for the rectangular region.
+ @param dfMinY the minimum Y coordinate for the rectangular region.
+ @param dfMaxX the maximum X coordinate for the rectangular region.
+ @param dfMaxY the maximum Y coordinate for the rectangular region.
+
+ @since GDAL 1.11
+ */
 
 void OGR_L_SetSpatialFilterRectEx(OGRLayerH hLayer, int iGeomField,
                                   double dfMinX, double dfMinY, double dfMaxX,
@@ -1860,7 +2133,7 @@ void OGR_L_SetSpatialFilterRectEx(OGRLayerH hLayer, int iGeomField,
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-int OGRLayer::InstallFilter(OGRGeometry *poFilter)
+int OGRLayer::InstallFilter(const OGRGeometry *poFilter)
 
 {
     if (m_poFilterGeom == poFilter)

@@ -140,13 +140,8 @@ class GDALEEDALayer final : public OGRLayer
         return -1;
     }
 
-    virtual void SetSpatialFilter(OGRGeometry *poGeom) CPL_OVERRIDE;
-
-    virtual void SetSpatialFilter(int iGeomField,
-                                  OGRGeometry *poGeom) CPL_OVERRIDE
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *poGeom) override;
 
     virtual OGRErr SetAttributeFilter(const char *) CPL_OVERRIDE;
 
@@ -938,10 +933,11 @@ OGRErr GDALEEDALayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void GDALEEDALayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr GDALEEDALayer::ISetSpatialFilter(int /* iGeomField */,
+                                        const OGRGeometry *poGeomIn)
 {
     if (poGeomIn)
     {
@@ -960,6 +956,7 @@ void GDALEEDALayer::SetSpatialFilter(OGRGeometry *poGeomIn)
         InstallFilter(poGeomIn);
 
     ResetReading();
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

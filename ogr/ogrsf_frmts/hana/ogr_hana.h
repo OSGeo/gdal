@@ -238,12 +238,8 @@ class OGRHanaLayer : public OGRLayer
 
     OGRErr SetAttributeFilter(const char *pszQuery) override;
 
-    void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
-
-    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 };
 
 /************************************************************************/

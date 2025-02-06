@@ -1383,10 +1383,10 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                         SetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRWFSLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGRWFSLayer::ISetSpatialFilter(int iGeomField, const OGRGeometry *poGeom)
 {
     if (bStreamingDS)
     {
@@ -1415,8 +1415,9 @@ void OGRWFSLayer::SetSpatialFilter(OGRGeometry *poGeom)
         bReloadNeeded = true;
     }
     nFeatures = -1;
-    OGRLayer::SetSpatialFilter(poGeom);
+    const OGRErr eErr = OGRLayer::ISetSpatialFilter(iGeomField, poGeom);
     ResetReading();
+    return eErr;
 }
 
 /************************************************************************/

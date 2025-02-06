@@ -779,15 +779,19 @@ int OGRWFSJoinLayer::TestCapability(const char *)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGRWFSJoinLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGRWFSJoinLayer::ISetSpatialFilter(int, const OGRGeometry *poGeom)
 {
     if (poGeom != nullptr)
+    {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Setting a spatial filter on a layer resulting from a WFS "
                  "join is unsupported");
+        return OGRERR_FAILURE;
+    }
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

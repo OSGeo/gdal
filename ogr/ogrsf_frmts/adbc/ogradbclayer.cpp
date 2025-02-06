@@ -735,15 +735,13 @@ OGRErr OGRADBCLayer::SetAttributeFilter(const char *pszFilter)
 }
 
 /************************************************************************/
-/*                        SetSpatialFilter()                            */
+/*                        ISetSpatialFilter()                           */
 /************************************************************************/
 
-void OGRADBCLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
+OGRErr OGRADBCLayer::ISetSpatialFilter(int iGeomField,
+                                       const OGRGeometry *poGeomIn)
 
 {
-    if (!ValidateGeometryFieldIndexForSetSpatialFilter(iGeomField, poGeomIn))
-        return;
-
     if (iGeomField < GetLayerDefn()->GetGeomFieldCount())
     {
         m_iGeomFieldFilter = iGeomField;
@@ -751,6 +749,7 @@ void OGRADBCLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
             ResetReading();
         UpdateStatement();
     }
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

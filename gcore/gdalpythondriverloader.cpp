@@ -335,8 +335,7 @@ class PythonPluginLayer final : public OGRLayer
     const char *GetFIDColumn() override;
     OGRErr SetAttributeFilter(const char *) override;
 
-    void SetSpatialFilter(OGRGeometry *) override;
-    void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
+    OGRErr ISetSpatialFilter(int iGeomField, const OGRGeometry *) override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -507,19 +506,16 @@ void PythonPluginLayer::StoreSpatialFilter()
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void PythonPluginLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr PythonPluginLayer::ISetSpatialFilter(int iGeomField,
+                                            const OGRGeometry *poGeom)
 {
-    OGRLayer::SetSpatialFilter(poGeom);
-    StoreSpatialFilter();
-}
-
-void PythonPluginLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    StoreSpatialFilter();
+    const OGRErr eErr = OGRLayer::ISetSpatialFilter(iGeomField, poGeom);
+    if (eErr == OGRERR_NONE)
+        StoreSpatialFilter();
+    return eErr;
 }
 
 /************************************************************************/

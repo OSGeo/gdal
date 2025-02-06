@@ -758,7 +758,8 @@ OGRSpatialReference *TABSeamless::GetSpatialRef()
  * Standard OGR SetSpatialFiltere implementation.  This method is used
  * to set a SpatialFilter for this OGRLayer.
  **********************************************************************/
-void TABSeamless::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr TABSeamless::ISetSpatialFilter(int /*iGeomField*/,
+                                      const OGRGeometry *poGeomIn)
 
 {
     IMapInfoFile::SetSpatialFilter(poGeomIn);
@@ -768,6 +769,8 @@ void TABSeamless::SetSpatialFilter(OGRGeometry *poGeomIn)
 
     if (m_poCurBaseTable)
         m_poCurBaseTable->SetSpatialFilter(poGeomIn);
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

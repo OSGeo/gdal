@@ -122,12 +122,8 @@ class OGRGenSQLResultsLayer final : public OGRLayer
 
     virtual int TestCapability(const char *) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *) override;
     virtual OGRErr SetAttributeFilter(const char *) override;
 
     bool GetArrowStream(struct ArrowArrayStream *out_stream,

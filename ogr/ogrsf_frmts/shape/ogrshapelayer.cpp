@@ -810,10 +810,11 @@ void OGRShapeLayer::ClearSpatialFIDs()
 }
 
 /************************************************************************/
-/*                         SetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRShapeLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGRShapeLayer::ISetSpatialFilter(int iGeomField,
+                                        const OGRGeometry *poGeomIn)
 {
     ClearMatchingFIDs();
 
@@ -837,7 +838,7 @@ void OGRShapeLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
         ClearSpatialFIDs();
     }
 
-    return OGRLayer::SetSpatialFilter(poGeomIn);
+    return OGRLayer::ISetSpatialFilter(iGeomField, poGeomIn);
 }
 
 /************************************************************************/

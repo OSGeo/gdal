@@ -14,6 +14,12 @@ MIGRATION GUIDE FROM GDAL 3.10 to GDAL 3.11
   bool bForce) protected virtual method. The public method checks that the
   iGeomField value is in range.
 
+- The OGRLayer::SetSpatialFilter() and SetSpatialFilterRect() methods are
+  no longer virtual methods that are implemented by drivers. They now return
+  OGRErr instead of void, `and accept a ``const OGRGeometry*``). Drivers may implement
+  the new ISetSpatialFilter(int iGeomField, const OGRGeometry*) protected virtual method.
+  The public methods check that the iGeomField value is in range.
+
 - GDAL drivers may now return raster bands with the new data types
   GDT_Float16 or GDT_CFloat16. Code that use the GDAL API must be
   ready to react to the new data type, possibly by doing RasterIO()

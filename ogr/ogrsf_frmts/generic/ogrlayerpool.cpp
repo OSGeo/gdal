@@ -242,25 +242,15 @@ OGRGeometry *OGRProxiedLayer::GetSpatialFilter()
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRProxiedLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGRProxiedLayer::ISetSpatialFilter(int iGeomField,
+                                          const OGRGeometry *poGeom)
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
-        return;
-    poUnderlyingLayer->SetSpatialFilter(poGeom);
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRProxiedLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
-        return;
-    poUnderlyingLayer->SetSpatialFilter(iGeomField, poGeom);
+        return OGRERR_FAILURE;
+    return poUnderlyingLayer->SetSpatialFilter(iGeomField, poGeom);
 }
 
 /************************************************************************/

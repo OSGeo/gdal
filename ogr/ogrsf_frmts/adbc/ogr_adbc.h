@@ -154,13 +154,9 @@ class OGRADBCLayer final : public OGRLayer,
                         CSLConstList papszOptions = nullptr) override;
     GIntBig GetFeatureCount(int bForce) override;
 
-    void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
-
     OGRErr SetAttributeFilter(const char *pszFilter) override;
-    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;

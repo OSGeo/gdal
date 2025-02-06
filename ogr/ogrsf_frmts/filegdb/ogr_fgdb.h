@@ -145,12 +145,8 @@ class FGdbLayer final : public FGdbBaseLayer
     virtual GIntBig GetFeatureCount(int bForce) override;
     virtual OGRErr SetAttributeFilter(const char *pszQuery) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {

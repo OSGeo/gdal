@@ -225,8 +225,8 @@ class OGRNGWLayer final : public OGRLayer
 
     virtual OGRErr SetIgnoredFields(CSLConstList papszFields) override;
     virtual OGRErr SetAttributeFilter(const char *pszQuery) override;
-    virtual void SetSpatialFilter(OGRGeometry *poGeom) override;
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *poGeom) override;
 
     OGRErr SetSelectedFields(const std::set<std::string> &aosFields);
     OGRNGWLayer *Clone() const;

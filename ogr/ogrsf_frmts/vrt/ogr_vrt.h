@@ -167,9 +167,8 @@ class OGRVRTLayer final : public OGRLayer
     virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                               bool bForce = TRUE) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *poGeomIn) override;
-    virtual void SetSpatialFilter(int iGeomField,
-                                  OGRGeometry *poGeomIn) override;
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *poGeomIn) override;
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 

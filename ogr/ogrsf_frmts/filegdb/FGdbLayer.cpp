@@ -1027,13 +1027,13 @@ void FGdbLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                         SetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void FGdbLayer::SetSpatialFilter(OGRGeometry *pOGRGeom)
+OGRErr FGdbLayer::ISetSpatialFilter(int iGeomField, const OGRGeometry *pOGRGeom)
 {
     m_bFilterDirty = true;
-    OGRLayer::SetSpatialFilter(pOGRGeom);
+    return OGRLayer::ISetSpatialFilter(iGeomField, pOGRGeom);
 }
 
 /************************************************************************/

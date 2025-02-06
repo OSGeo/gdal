@@ -32,32 +32,11 @@ OGRGeometry *OGRMutexedLayer::GetSpatialFilter()
     return OGRLayerDecorator::GetSpatialFilter();
 }
 
-void OGRMutexedLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGRMutexedLayer::ISetSpatialFilter(int iGeomField,
+                                          const OGRGeometry *poGeom)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
-    OGRLayerDecorator::SetSpatialFilter(poGeom);
-}
-
-void OGRMutexedLayer::SetSpatialFilterRect(double dfMinX, double dfMinY,
-                                           double dfMaxX, double dfMaxY)
-{
-    CPLMutexHolderOptionalLockD(m_hMutex);
-    OGRLayerDecorator::SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
-}
-
-void OGRMutexedLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    CPLMutexHolderOptionalLockD(m_hMutex);
-    OGRLayerDecorator::SetSpatialFilter(iGeomField, poGeom);
-}
-
-void OGRMutexedLayer::SetSpatialFilterRect(int iGeomField, double dfMinX,
-                                           double dfMinY, double dfMaxX,
-                                           double dfMaxY)
-{
-    CPLMutexHolderOptionalLockD(m_hMutex);
-    OGRLayerDecorator::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX,
-                                            dfMaxY);
+    return OGRLayerDecorator::ISetSpatialFilter(iGeomField, poGeom);
 }
 
 OGRErr OGRMutexedLayer::SetAttributeFilter(const char *poAttrFilter)

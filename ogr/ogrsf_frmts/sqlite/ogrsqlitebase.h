@@ -278,7 +278,7 @@ class IOGRSQLiteSelectLayer
     virtual int &GetIGeomFieldFilter() = 0;
     virtual OGRSpatialReference *GetSpatialRef() = 0;
     virtual OGRFeatureDefn *GetLayerDefn() = 0;
-    virtual int InstallFilter(OGRGeometry *) = 0;
+    virtual int InstallFilter(const OGRGeometry *) = 0;
     virtual int HasReadFeature() = 0;
     virtual void BaseResetReading() = 0;
     virtual OGRFeature *BaseGetNextFeature() = 0;
@@ -322,7 +322,7 @@ class OGRSQLiteSelectLayerCommonBehaviour
     void ResetReading();
     OGRFeature *GetNextFeature();
     GIntBig GetFeatureCount(int);
-    void SetSpatialFilter(int iGeomField, OGRGeometry *);
+    OGRErr SetSpatialFilter(int iGeomField, const OGRGeometry *);
     OGRErr SetAttributeFilter(const char *);
     int TestCapability(const char *);
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, bool bForce);

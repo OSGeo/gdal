@@ -53,12 +53,8 @@ class OGRDGNLayer final : public OGRLayer
                 int bUpdate);
     virtual ~OGRDGNLayer();
 
-    void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;

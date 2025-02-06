@@ -113,8 +113,8 @@ class CPL_DLL OGRProxiedLayer : public OGRAbstractProxiedLayer
     OGRLayer *GetUnderlyingLayer();
 
     virtual OGRGeometry *GetSpatialFilter() override;
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 

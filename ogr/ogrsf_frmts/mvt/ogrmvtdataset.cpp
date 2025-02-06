@@ -253,12 +253,8 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     virtual OGRFeature *GetFeature(GIntBig nFID) override;
 
@@ -1737,12 +1733,13 @@ GIntBig OGRMVTDirectoryLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                         SetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRMVTDirectoryLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGRMVTDirectoryLayer::ISetSpatialFilter(int iGeomField,
+                                               const OGRGeometry *poGeomIn)
 {
-    OGRLayer::SetSpatialFilter(poGeomIn);
+    OGRLayer::ISetSpatialFilter(iGeomField, poGeomIn);
 
     OGREnvelope sEnvelope;
     if (m_poFilterGeom != nullptr)
@@ -1797,6 +1794,8 @@ void OGRMVTDirectoryLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
                                                m_poDS->GetTileMatrixHeight0() -
                                            1));
     }
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

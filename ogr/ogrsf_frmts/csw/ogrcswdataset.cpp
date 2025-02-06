@@ -65,12 +65,8 @@ class OGRCSWLayer final : public OGRLayer
         return FALSE;
     }
 
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 };
@@ -692,14 +688,18 @@ GDALDataset *OGRCSWLayer::FetchGetRecords()
 }
 
 /************************************************************************/
-/*                         SetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRCSWLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGRCSWLayer::ISetSpatialFilter(int iGeomField, const OGRGeometry *poGeom)
 {
-    OGRLayer::SetSpatialFilter(poGeom);
-    ResetReading();
-    BuildQuery();
+    const OGRErr eErr = OGRLayer::ISetSpatialFilter(iGeomField, poGeom);
+    if (eErr == OGRERR_NONE)
+    {
+        ResetReading();
+        BuildQuery();
+    }
+    return eErr;
 }
 
 /************************************************************************/

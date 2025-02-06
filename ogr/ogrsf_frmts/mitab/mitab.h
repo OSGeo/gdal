@@ -592,12 +592,8 @@ class TABSeamless final : public IMapInfoFile
         return m_poFeatureDefnRef ? m_poFeatureDefnRef->GetName() : "";
     }
 
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *poGeom) override;
 
     virtual void ResetReading() override;
     virtual int TestCapability(const char *pszCap) override;

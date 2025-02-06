@@ -5487,10 +5487,11 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char *pszDstTableName)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRGeoPackageTableLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGRGeoPackageTableLayer::ISetSpatialFilter(int /*iGeomField*/,
+                                                  const OGRGeometry *poGeomIn)
 
 {
     if (!m_bFeatureDefnCompleted)
@@ -5501,6 +5502,7 @@ void OGRGeoPackageTableLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
 
         ResetReading();
     }
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

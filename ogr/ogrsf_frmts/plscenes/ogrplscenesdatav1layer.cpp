@@ -488,10 +488,11 @@ void OGRPLScenesDataV1Layer::ResetReading()
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGRPLScenesDataV1Layer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGRPLScenesDataV1Layer::ISetSpatialFilter(int /*iGeomField*/,
+                                                 const OGRGeometry *poGeomIn)
 {
     m_poFeatures = nullptr;
 
@@ -512,6 +513,8 @@ void OGRPLScenesDataV1Layer::SetSpatialFilter(OGRGeometry *poGeomIn)
         InstallFilter(poGeomIn);
 
     ResetReading();
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

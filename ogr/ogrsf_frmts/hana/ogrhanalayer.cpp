@@ -993,27 +993,21 @@ OGRErr OGRHanaLayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGRHanaLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
+OGRErr OGRHanaLayer::ISetSpatialFilter(int iGeomField,
+                                       const OGRGeometry *poGeom)
 {
-    m_iGeomFieldFilter = 0;
-
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid geometry field index : %d", iGeomField);
-        return;
-    }
     m_iGeomFieldFilter = iGeomField;
 
     if (!InstallFilter(poGeom))
-        return;
+        return OGRERR_NONE;
 
     ClearQueryStatement();
     BuildWhereClause();
     ResetReading();
+    return OGRERR_NONE;
 }
 
 }  // namespace OGRHANA

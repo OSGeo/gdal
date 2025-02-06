@@ -508,18 +508,19 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition(const char *pszTable)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGROCITableLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGROCITableLayer::ISetSpatialFilter(int, const OGRGeometry *poGeomIn)
 
 {
     if (!InstallFilter(poGeomIn))
-        return;
+        return OGRERR_NONE;
 
     BuildWhere();
 
     ResetReading();
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

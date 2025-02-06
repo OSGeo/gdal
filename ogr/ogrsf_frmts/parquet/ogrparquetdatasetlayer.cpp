@@ -1146,18 +1146,20 @@ OGRErr OGRParquetDatasetLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                        SetSpatialFilter()                            */
+/*                        ISetSpatialFilter()                           */
 /************************************************************************/
 
-void OGRParquetDatasetLayer::SetSpatialFilter(int iGeomField,
-                                              OGRGeometry *poGeomIn)
+OGRErr OGRParquetDatasetLayer::ISetSpatialFilter(int iGeomField,
+                                                 const OGRGeometry *poGeomIn)
 
 {
-    OGRParquetLayerBase::SetSpatialFilter(iGeomField, poGeomIn);
+    const OGRErr eErr =
+        OGRParquetLayerBase::ISetSpatialFilter(iGeomField, poGeomIn);
     m_bRebuildScanner = true;
 
     // Full invalidation
     InvalidateCachedBatches();
+    return eErr;
 }
 
 /************************************************************************/

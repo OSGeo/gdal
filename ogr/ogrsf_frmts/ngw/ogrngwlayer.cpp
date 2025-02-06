@@ -1781,11 +1781,11 @@ OGRErr OGRNGWLayer::SetIgnoredFields(CSLConstList papszFields)
 }
 
 /*
- * SetSpatialFilter()
+ * ISetSpatialFilter()
  */
-void OGRNGWLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGRNGWLayer::ISetSpatialFilter(int iGeomField, const OGRGeometry *poGeom)
 {
-    OGRLayer::SetSpatialFilter(poGeom);
+    OGRLayer::ISetSpatialFilter(iGeomField, poGeom);
 
     if (nullptr == m_poFilterGeom)
     {
@@ -1830,14 +1830,8 @@ void OGRNGWLayer::SetSpatialFilter(OGRGeometry *poGeom)
     }
 
     ResetReading();
-}
 
-/*
- * SetSpatialFilter()
- */
-void OGRNGWLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    OGRLayer::SetSpatialFilter(iGeomField, poGeom);
+    return OGRERR_NONE;
 }
 
 /*

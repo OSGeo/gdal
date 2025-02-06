@@ -5099,16 +5099,13 @@ OGRArrowLayer::GetExtentFromMetadata(const CPLJSONObject &oJSONDef,
 }
 
 /************************************************************************/
-/*                        SetSpatialFilter()                            */
+/*                        ISetSpatialFilter()                           */
 /************************************************************************/
 
-inline void OGRArrowLayer::SetSpatialFilter(int iGeomField,
-                                            OGRGeometry *poGeomIn)
+inline OGRErr OGRArrowLayer::ISetSpatialFilter(int iGeomField,
+                                               const OGRGeometry *poGeomIn)
 
 {
-    if (!ValidateGeometryFieldIndexForSetSpatialFilter(iGeomField, poGeomIn))
-        return;
-
     // When changing filters, we need to invalidate cached batches, as
     // PostFilterArrowArray() has potentially modified array contents
     if (m_poFilterGeom)
@@ -5132,6 +5129,7 @@ inline void OGRArrowLayer::SetSpatialFilter(int iGeomField,
     }
 
     SetBatch(m_poBatch);
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

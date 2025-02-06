@@ -357,37 +357,33 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGRSQLiteSelectLayer::SetSpatialFilter(int iGeomField,
-                                            OGRGeometry *poGeomIn)
+OGRErr OGRSQLiteSelectLayer::ISetSpatialFilter(int iGeomField,
+                                               const OGRGeometry *poGeomIn)
 
 {
     if (!m_bCanReopenBaseDS && iGeomField == 0)
     {
         if (!ValidateGeometryFieldIndexForSetSpatialFilter(iGeomField, poGeomIn,
                                                            true))
-            return;
+            return OGRERR_FAILURE;
         // For a Memory datasource, short-circuit
         // OGRSQLiteExecuteSQL::SetSpatialFilter()
         // that would try to re-open the Memory datasource, which would fail.
-        OGRLayer::SetSpatialFilter(poGeomIn);
+        return OGRLayer::ISetSpatialFilter(iGeomField, poGeomIn);
     }
     else
     {
-        m_poBehavior->SetSpatialFilter(iGeomField, poGeomIn);
+        return m_poBehavior->SetSpatialFilter(iGeomField, poGeomIn);
     }
 }
 
-void OGRSQLiteSelectLayerCommonBehaviour::SetSpatialFilter(
-    int iGeomField, OGRGeometry *poGeomIn)
+OGRErr OGRSQLiteSelectLayerCommonBehaviour::SetSpatialFilter(
+    int iGeomField, const OGRGeometry *poGeomIn)
 
 {
-    if (!m_poLayer->ValidateGeometryFieldIndexForSetSpatialFilter(
-            iGeomField, poGeomIn, true))
-        return;
-
     m_bAllowResetReadingEvenIfIndexAtZero = true;
 
     int &iGeomFieldFilter = m_poLayer->GetIGeomFieldFilter();
@@ -398,6 +394,8 @@ void OGRSQLiteSelectLayerCommonBehaviour::SetSpatialFilter(
 
         ResetReading();
     }
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

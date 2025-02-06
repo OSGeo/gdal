@@ -911,15 +911,16 @@ void OGROpenFileGDBLayer::ResetReading()
 }
 
 /***********************************************************************/
-/*                         SetSpatialFilter()                          */
+/*                        ISetSpatialFilter()                          */
 /***********************************************************************/
 
-void OGROpenFileGDBLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGROpenFileGDBLayer::ISetSpatialFilter(int iGeomField,
+                                              const OGRGeometry *poGeom)
 {
     if (!BuildLayerDefinition())
-        return;
+        return OGRERR_FAILURE;
 
-    OGRLayer::SetSpatialFilter(poGeom);
+    OGRLayer::ISetSpatialFilter(iGeomField, poGeom);
 
     if (m_bFilterIsEnvelope)
     {
@@ -936,7 +937,7 @@ void OGROpenFileGDBLayer::SetSpatialFilter(OGRGeometry *poGeom)
                                         "contains the layer spatial extent");
 #endif
                 poGeom = nullptr;
-                OGRLayer::SetSpatialFilter(poGeom);
+                OGRLayer::ISetSpatialFilter(iGeomField, poGeom);
             }
         }
     }
@@ -991,6 +992,8 @@ void OGROpenFileGDBLayer::SetSpatialFilter(OGRGeometry *poGeom)
     }
 
     BuildCombinedIterator();
+
+    return OGRERR_NONE;
 }
 
 /***********************************************************************/

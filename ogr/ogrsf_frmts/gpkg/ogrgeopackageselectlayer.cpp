@@ -122,14 +122,14 @@ OGRErr OGRGeoPackageSelectLayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRGeoPackageSelectLayer::SetSpatialFilter(int iGeomField,
-                                                OGRGeometry *poGeomIn)
+OGRErr OGRGeoPackageSelectLayer::ISetSpatialFilter(int iGeomField,
+                                                   const OGRGeometry *poGeomIn)
 
 {
-    poBehavior->SetSpatialFilter(iGeomField, poGeomIn);
+    return poBehavior->SetSpatialFilter(iGeomField, poGeomIn);
 }
 
 /************************************************************************/
