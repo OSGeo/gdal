@@ -121,6 +121,24 @@ def test_gdalalg_vector_fields():
     assert lyr.GetExtent() == (478315.53125, 481645.3125, 4762880.5, 4765610.5)
     assert lyr.GetExtent(0) == (478315.53125, 481645.3125, 4762880.5, 4765610.5)
 
+    # Test attribute filter on result layer
+    lyr.SetAttributeFilter("EAS_ID = 170")
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f["EAS_ID"] == 170
+    assert lyr.GetNextFeature() is None
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 0
+    assert lyr.GetFeatureCount() == 1
+    lyr.SetAttributeFilter(None)
+
+    # Test spatial filter on reslt layer
+    lyr.SetSpatialFilterRect(-1, -1, -1, -1)
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is None
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 0
+    assert lyr.GetFeatureCount() == 0
+    lyr.SetSpatialFilter(None)
+
 
 def test_gdalalg_vector_fields_geom_named(tmp_vsimem):
 

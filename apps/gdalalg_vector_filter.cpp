@@ -78,7 +78,9 @@ class GDALVectorFilterAlgorithmDataset final : public GDALDataset
 /*                   GDALVectorFilterAlgorithmLayer                     */
 /************************************************************************/
 
-class GDALVectorFilterAlgorithmLayer final : public OGRLayer
+class GDALVectorFilterAlgorithmLayer final
+    : public OGRLayer,
+      public OGRGetNextFeatureThroughRaw<GDALVectorFilterAlgorithmLayer>
 {
   private:
     bool m_bIsOK = true;
@@ -107,6 +109,8 @@ class GDALVectorFilterAlgorithmLayer final : public OGRLayer
         }
         return poFeature;
     }
+
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(GDALVectorFilterAlgorithmLayer)
 
   public:
     GDALVectorFilterAlgorithmLayer(
@@ -212,7 +216,9 @@ class GDALVectorFilterAlgorithmLayer final : public OGRLayer
 
     GIntBig GetFeatureCount(int bForce) override
     {
-        return m_poSrcLayer->GetFeatureCount(bForce);
+        if (!m_poAttrQuery && !m_poFilterGeom)
+            return m_poSrcLayer->GetFeatureCount(bForce);
+        return OGRLayer::GetFeatureCount(bForce);
     }
 
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override
@@ -230,7 +236,7 @@ class GDALVectorFilterAlgorithmLayer final : public OGRLayer
         m_poSrcLayer->ResetReading();
     }
 
-    OGRFeature *GetNextFeature() override
+    OGRFeature *GetNextRawFeature()
     {
         auto poSrcFeature =
             std::unique_ptr<OGRFeature>(m_poSrcLayer->GetNextFeature());
@@ -253,7 +259,8 @@ class GDALVectorFilterAlgorithmLayer final : public OGRLayer
         if (EQUAL(pszCap, OLCRandomRead) || EQUAL(pszCap, OLCCurveGeometries) ||
             EQUAL(pszCap, OLCMeasuredGeometries) ||
             EQUAL(pszCap, OLCZGeometries) ||
-            EQUAL(pszCap, OLCFastFeatureCount) ||
+            (EQUAL(pszCap, OLCFastFeatureCount) && !m_poAttrQuery &&
+             !m_poFilterGeom) ||
             EQUAL(pszCap, OLCFastGetExtent) || EQUAL(pszCap, OLCStringsAsUTF8))
         {
             return m_poSrcLayer->TestCapability(pszCap);
