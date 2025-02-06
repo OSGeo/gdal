@@ -302,6 +302,9 @@ void OGRLIBKMLDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->pfnIdentify = OGRLIBKMLDriverIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "Features");
 }
 
 /************************************************************************/

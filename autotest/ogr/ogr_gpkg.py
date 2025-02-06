@@ -5870,6 +5870,27 @@ def test_ogr_gpkg_prelude_statements(tmp_vsimem):
 
 
 ###############################################################################
+# Test PRELUDE_STATEMENTS open option
+
+
+def test_ogr_gpkg_prelude_statements_after_spatialite_loading(tmp_vsimem):
+
+    gdal.VectorTranslate(tmp_vsimem / "test.gpkg", "data/poly.shp", format="GPKG")
+
+    with ogr.Open(tmp_vsimem / "test.gpkg") as ds:
+        if not _has_spatialite_4_3_or_later(ds):
+            pytest.skip("spatialite missing")
+
+    with gdal.OpenEx(
+        tmp_vsimem / "test.gpkg",
+        open_options=["PRELUDE_STATEMENTS=SELECT setdecimalprecision(1)"],
+    ) as ds:
+        with ds.ExecuteSQL("SELECT ST_AsText(geom) FROM poly LIMIT 1") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0].startswith("POLYGON((479819.8 4765180.5,")
+
+
+###############################################################################
 # Test DATETIME_FORMAT
 
 

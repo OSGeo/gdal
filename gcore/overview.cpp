@@ -30,6 +30,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_progress.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
@@ -173,6 +174,7 @@ static CPLErr GDALResampleChunk_Near(const GDALOverviewResampleArgs &args,
 
         case GDT_Int16:
         case GDT_UInt16:
+        case GDT_Float16:
         {
             CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 2);
             return GDALResampleChunk_NearT(
@@ -181,6 +183,7 @@ static CPLErr GDALResampleChunk_Near(const GDALOverviewResampleArgs &args,
         }
 
         case GDT_CInt16:
+        case GDT_CFloat16:
         case GDT_Int32:
         case GDT_UInt32:
         case GDT_Float32:
@@ -2422,6 +2425,7 @@ static CPLErr GDALResampleChunk_Mode(const GDALOverviewResampleArgs &args,
 
         case GDT_Int16:
         case GDT_UInt16:
+        case GDT_Float16:
         {
             CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 2);
             return GDALResampleChunk_ModeT(
@@ -2430,6 +2434,7 @@ static CPLErr GDALResampleChunk_Mode(const GDALOverviewResampleArgs &args,
         }
 
         case GDT_CInt16:
+        case GDT_CFloat16:
         case GDT_Int32:
         case GDT_UInt32:
         {
@@ -3141,8 +3146,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
     constexpr int nWrkDataTypeSize = static_cast<int>(sizeof(Twork));
 
     // TODO: we should have some generic function to do this.
-    Twork fDstMin = -std::numeric_limits<Twork>::max();
-    Twork fDstMax = std::numeric_limits<Twork>::max();
+    Twork fDstMin = cpl::NumericLimits<Twork>::lowest();
+    Twork fDstMax = cpl::NumericLimits<Twork>::max();
     if (dstDataType == GDT_Byte)
     {
         fDstMin = std::numeric_limits<GByte>::min();

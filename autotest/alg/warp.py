@@ -694,7 +694,7 @@ def test_warp_24():
 
     ds_ref = gdal.Open("data/test3658.tif")
     cs_ref = ds_ref.GetRasterBand(1).Checksum()
-    ds = gdal.Warp("", ds_ref, options="-of MEM -r bilinear")
+    ds = gdal.Warp("", ds_ref, options="-srcnodata none -of MEM -r bilinear")
     cs = ds.GetRasterBand(1).Checksum()
 
     assert cs == cs_ref, "did not get expected checksum"
@@ -1084,7 +1084,11 @@ def test_warp_38():
     ds.SetGCPs(gcp_list, gdaltest.user_srs_to_wkt("EPSG:32632"))
     ds = None
 
-    gdal.Warp(out_file, "data/test3658.tif", options="-to DST_METHOD=GCP_POLYNOMIAL")
+    gdal.Warp(
+        out_file,
+        "data/test3658.tif",
+        options="-srcnodata none -to DST_METHOD=GCP_POLYNOMIAL",
+    )
 
     ds = gdal.Open(out_file)
     cs = ds.GetRasterBand(1).Checksum()
@@ -1117,7 +1121,9 @@ def test_warp_39():
     ds.SetGCPs(gcp_list, gdaltest.user_srs_to_wkt("EPSG:32632"))
     ds = None
 
-    gdal.Warp(out_file, "data/test3658.tif", options="-to DST_METHOD=GCP_TPS")
+    gdal.Warp(
+        out_file, "data/test3658.tif", options="-srcnodata none -to DST_METHOD=GCP_TPS"
+    )
 
     ds = gdal.Open(out_file)
     cs = ds.GetRasterBand(1).Checksum()
@@ -1469,6 +1475,7 @@ def test_warp_53(typestr, option, alg_name, expected_cs):
     src_ds.GetRasterBand(2).Fill(255)
     zero = struct.pack("B" * 1, 0)
     src_ds.GetRasterBand(2).WriteRaster(10, 10, 1, 1, zero, buf_type=gdal.GDT_Byte)
+
     dst_ds = gdal.Translate(
         "", src_ds, options="-outsize 10 10 -of MEM -a_srs EPSG:32611"
     )
@@ -1917,3 +1924,39 @@ def test_warp_average_NODATA_VALUES_PCT_THRESHOLD():
         options="-of MEM -ts 1 1 -r average -wo NODATA_VALUES_PCT_THRESHOLD=25",
     )
     assert struct.unpack("B", out_ds.ReadRaster())[0] == 20
+
+
+###############################################################################
+#
+
+
+@pytest.mark.parametrize(
+    "dt,expected_val",
+    [
+        (gdal.GDT_Byte, 1.0),
+        (gdal.GDT_Int8, -1.0),
+        (gdal.GDT_UInt16, 1.0),
+        (gdal.GDT_Int16, -1.0),
+        (gdal.GDT_UInt32, 1.0),
+        (gdal.GDT_Int32, -1.0),
+        (gdal.GDT_UInt64, 1.0),
+        (gdal.GDT_Int64, -1.0),
+        (gdal.GDT_Float32, 1.401298464324817e-45),
+        (gdal.GDT_Float64, 5e-324),
+    ],
+)
+@pytest.mark.parametrize("resampling", ["nearest", "bilinear"])
+def test_warp_nodata_substitution(dt, expected_val, resampling):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 4, 4, 1, dt)
+    src_ds.SetGeoTransform([1, 1, 0, 1, 0, 1])
+
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options=f"-of MEM -dstnodata 0 -r {resampling}",
+    )
+    assert (
+        struct.unpack("d", out_ds.ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Float64))[0]
+        == expected_val
+    )

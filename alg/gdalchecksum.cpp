@@ -58,7 +58,8 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
     const GDALDataType eDataType = GDALGetRasterDataType(hBand);
     const bool bComplex = CPL_TO_BOOL(GDALDataTypeIsComplex(eDataType));
     const bool bIsFloatingPoint =
-        (eDataType == GDT_Float32 || eDataType == GDT_Float64 ||
+        (eDataType == GDT_Float16 || eDataType == GDT_Float32 ||
+         eDataType == GDT_Float64 || eDataType == GDT_CFloat16 ||
          eDataType == GDT_CFloat32 || eDataType == GDT_CFloat64);
 
     const auto IntFromDouble = [](double dfVal)

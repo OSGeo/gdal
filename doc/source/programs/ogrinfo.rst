@@ -116,6 +116,7 @@ edit data.
 
         -where "\"Corner Point Identifier\" LIKE '%__00_00'"
 
+    Note: -dialect is ignored with -where. Use -sql instead of -where if you want to use -dialect.
 
 .. option:: -sql <statement>|@<filename>
 

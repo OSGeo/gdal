@@ -658,7 +658,7 @@ def test_numpy_rw_16():
     assert ds is None
 
     # Unsupported data type
-    array = numpy.empty([1, 1], numpy.float16)
+    array = numpy.empty([1, 1], numpy.bool_)
     with gdal.quiet_errors():
         ds = gdal_array.OpenArray(array)
     assert ds is None

@@ -1616,9 +1616,7 @@ GDALDataset *ADRGDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         if (poOpenInfo->eAccess == GA_Update)
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "The ADRG driver does not support update access to "
-                     "existing datasets.");
+            ReportUpdateNotSupportedByDriver("ADRG");
             return nullptr;
         }
 

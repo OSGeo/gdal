@@ -409,6 +409,16 @@ char **PLMosaicDataset::GetBaseHTTPOptions()
 
     char **papszOptions =
         CSLAddString(nullptr, CPLSPrintf("PERSISTENT=PLMOSAIC:%p", this));
+
+    /* Ensure the PLMosaic driver uses a unique default user agent to help
+     * identify usage. */
+    CPLString osUserAgent = CPLGetConfigOption("GDAL_HTTP_USERAGENT", "");
+    if (osUserAgent.empty())
+        papszOptions = CSLAddString(
+            papszOptions, CPLSPrintf("USERAGENT=PLMosaic Driver GDAL/%d.%d.%d",
+                                     GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR,
+                                     GDAL_VERSION_REV));
+
     /* Use basic auth, rather than Authorization headers since curl would
      * forward it to S3 */
     papszOptions =

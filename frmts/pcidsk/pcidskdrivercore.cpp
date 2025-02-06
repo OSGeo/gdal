@@ -73,6 +73,12 @@ void PCIDSKDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->pfnIdentify = PCIDSKDriverIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS "
+                              "DatasetMetadata BandMetadata "
+                              "RasterValues Features");
 }
 
 /************************************************************************/

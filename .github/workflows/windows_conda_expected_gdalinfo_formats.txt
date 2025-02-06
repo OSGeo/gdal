@@ -1,15 +1,15 @@
-Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subdatasets)
-  VRT -raster,multidimensional raster- (rw+v): Virtual Raster (*.vrt)
+Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update, v:virtual-I/O s:subdatasets)
+  VRT -raster,multidimensional raster- (rw+uv): Virtual Raster (*.vrt)
   DERIVED -raster- (ro): Derived datasets using VRT pixel functions
   GTI -raster- (rov): GDAL Raster Tile Index (*.gti.gpkg, *.gti.fgb, *.gti)
   SNAP_TIFF -raster- (rov): Sentinel Application Processing GeoTIFF
-  GTiff -raster- (rw+vs): GeoTIFF (*.tif, *.tiff)
+  GTiff -raster- (rw+uvs): GeoTIFF (*.tif, *.tiff)
   COG -raster- (wv): Cloud optimized GeoTIFF generator (*.tif, *.tiff)
   LIBERTIFF -raster- (rov): GeoTIFF (using LIBERTIFF library) (*.tif, *.tiff)
-  NITF -raster- (rw+vs): National Imagery Transmission Format (*.ntf)
+  NITF -raster- (rw+uvs): National Imagery Transmission Format (*.ntf)
   RPFTOC -raster- (rovs): Raster Product Format TOC format (*.toc)
   ECRGTOC -raster- (rovs): ECRG TOC format (*.xml)
-  HFA -raster- (rw+v): Erdas Imagine Images (.img) (*.img)
+  HFA -raster- (rw+uv): Erdas Imagine Images (.img) (*.img)
   SAR_CEOS -raster- (rov): CEOS SAR Image
   CEOS -raster- (rov): CEOS Image
   JAXAPALSAR -raster- (rov): JAXA PALSAR Product Reader (Level 1.1/1.5)
@@ -37,20 +37,20 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   AirSAR -raster- (rov): AirSAR Polarimetric Image
   RS2 -raster- (rovs): RadarSat 2 XML Product
   SAFE -raster- (rov): Sentinel-1 SAR SAFE Product
-  PCIDSK -raster,vector- (rw+v): PCIDSK Database File (*.pix)
+  PCIDSK -raster,vector- (rw+uv): PCIDSK Database File (*.pix)
   PCRaster -raster- (rw+): PCRaster Raster File (*.map)
   ILWIS -raster- (rw+v): ILWIS Raster Map (*.mpr, *.mpl)
   SGI -raster- (rw+v): SGI Image File Format 1.0 (*.rgb)
   SRTMHGT -raster- (rwv): SRTMHGT File Format (*.hgt)
   Leveller -raster- (rw+v): Leveller heightfield (*.ter)
   Terragen -raster- (rw+v): Terragen heightfield (*.ter)
-  netCDF -raster,multidimensional raster,vector- (rw+s): Network Common Data Format (*.nc)
+  netCDF -raster,multidimensional raster,vector- (rw+us): Network Common Data Format (*.nc)
   HDF4 -raster,multidimensional raster- (ros): Hierarchical Data Format Release 4 (*.hdf)
   HDF4Image -raster- (rw+): HDF4 Dataset
   ISIS3 -raster- (rw+v): USGS Astrogeology ISIS cube (Version 3) (*.lbl, *.cub)
   ISIS2 -raster- (rw+v): USGS Astrogeology ISIS cube (Version 2)
   PDS -raster- (rov): NASA Planetary Data System
-  PDS4 -raster,vector- (rw+vs): NASA Planetary Data System 4 (*.xml)
+  PDS4 -raster,vector- (rw+uvs): NASA Planetary Data System 4 (*.xml)
   VICAR -raster,vector- (rw+v): MIPL VICAR file
   TIL -raster- (rov): EarthWatch .TIL
   ERS -raster- (rw+v): ERMapper .ers Labelled (*.ers)
@@ -74,7 +74,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   MAP -raster- (rov): OziExplorer .MAP
   KMLSUPEROVERLAY -raster- (rwv): Kml Super Overlay (*.kml, *.kmz)
   WEBP -raster- (rwv): WEBP (*.webp)
-  PDF -raster,vector- (rw+vs): Geospatial PDF (*.pdf)
+  PDF -raster,vector- (rw+uvs): Geospatial PDF (*.pdf)
   Rasterlite -raster- (rwvs): Rasterlite (*.sqlite)
   MBTiles -raster,vector- (rw+v): MBTiles (*.mbtiles)
   PLMOSAIC -raster- (ro): Planet Labs Mosaics API
@@ -82,7 +82,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   WMTS -raster- (rwv): OGC Web Map Tile Service
   SENTINEL2 -raster- (rovs): Sentinel 2
   MRF -raster- (rw+v): Meta Raster Format (*.mrf)
-  TileDB -raster,multidimensional raster,vector- (rw+vs): TileDB
+  TileDB -raster,multidimensional raster,vector- (rw+uvs): TileDB
   PNM -raster- (rw+v): Portable Pixmap Format (netpbm) (*.pgm, *.ppm, *.pnm)
   DOQ1 -raster- (rov): USGS DOQ (Old Style)
   DOQ2 -raster- (rov): USGS DOQ (New Style)
@@ -106,13 +106,13 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   SNODAS -raster- (rov): Snow Data Assimilation System (*.hdr)
   KRO -raster- (rw+v): KOLOR Raw (*.kro)
   ROI_PAC -raster- (rw+v): ROI_PAC raster
-  RRASTER -raster- (rw+v): R Raster (*.grd)
+  RRASTER -raster- (rw+uv): R Raster (*.grd)
   BYN -raster- (rw+v): Natural Resources Canada's Geoid (*.byn, *.err)
   NOAA_B -raster- (rov): NOAA GEOCON/NADCON5 .b format (*.b)
   RIK -raster- (rov): Swedish Grid RIK (.rik) (*.rik)
   USGSDEM -raster- (rwv): USGS Optional ASCII DEM (and CDED) (*.dem)
   GXF -raster- (rov): GeoSoft Grid Exchange Format (*.gxf)
-  KEA -raster- (rw+v): KEA Image Format (.kea) (*.kea)
+  KEA -raster- (rw+uv): KEA Image Format (.kea) (*.kea)
   BAG -raster,multidimensional raster,vector- (rw+v): Bathymetry Attributed Grid (*.bag)
   S102 -raster,multidimensional raster- (rovs): S-102 Bathymetric Surface Product (*.h5)
   S104 -raster,multidimensional raster- (rov): S-104 Water Level Information for Surface Navigation Product (*.h5)
@@ -143,15 +143,15 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   STACTA -raster- (rovs): Spatio-Temporal Asset Catalog Tiled Assets (*.json)
   STACIT -raster- (rovs): Spatio-Temporal Asset Catalog Items
   NSIDCbin -raster- (rov): NSIDC Sea Ice Concentrations binary (.bin) (*.bin)
-  GPKG -raster,vector- (rw+vs): GeoPackage (*.gpkg, *.gpkg.zip)
-  OpenFileGDB -raster,vector- (rw+v): ESRI FileGeodatabase (using OpenFileGDB) (*.gdb)
+  GPKG -raster,vector- (rw+uvs): GeoPackage (*.gpkg, *.gpkg.zip)
+  OpenFileGDB -raster,vector- (rw+uv): ESRI FileGeodatabase (using OpenFileGDB) (*.gdb)
   CAD -raster,vector- (rovs): AutoCAD Driver (*.dwg)
   PLSCENES -raster,vector- (ro): Planet Labs Scenes API
   NGW -raster,vector- (rw+s): NextGIS Web
   GenBin -raster- (rov): Generic Binary (.hdr Labelled)
-  ENVI -raster- (rw+v): ENVI .hdr Labelled
-  EHdr -raster- (rw+v): ESRI .hdr Labelled (*.bil)
+  ENVI -raster- (rw+uv): ENVI .hdr Labelled
+  EHdr -raster- (rw+uv): ESRI .hdr Labelled (*.bil)
   ISCE -raster- (rw+v): ISCE raster
-  Zarr -raster,multidimensional raster- (rw+vs): Zarr
+  Zarr -raster,multidimensional raster- (rw+uvs): Zarr
   RCM -raster- (rovs): Radarsat Constellation Mission XML Product
   HTTP -raster,vector- (ro): HTTP Fetching Wrapper

@@ -512,8 +512,8 @@ void GDALRegister_VRT()
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONDATATYPES,
         "Byte Int8 Int16 UInt16 Int32 UInt32 Int64 UInt64 "
-        "Float32 Float64 "
-        "CInt16 CInt32 CFloat32 CFloat64");
+        "Float16 Float32 Float64 "
+        "CInt16 CInt32 CFloat16 CFloat32 CFloat64");
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,
         "<CreationOptionList>\n"
@@ -551,6 +551,12 @@ void GDALRegister_VRT()
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_COORDINATE_EPOCH, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS GCPs NoData "
+                              "ColorInterpretation "
+                              "DatasetMetadata BandMetadata");
 
     const char *pszExpressionDialects = "ExpressionDialects";
 #if defined(GDAL_VRT_ENABLE_MUPARSER) && defined(GDAL_VRT_ENABLE_EXPRTK)

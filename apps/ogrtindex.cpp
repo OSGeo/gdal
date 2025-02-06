@@ -281,13 +281,11 @@ MAIN_START(nArgc, papszArgv)
         GDALDriverH hDriver = GDALGetDriverByName(osFormat.c_str());
         if (hDriver == nullptr)
         {
+            fprintf(stderr, "Unable to find driver `%s'.\n", osFormat.c_str());
+            fprintf(stderr, "The following drivers are available:\n");
             GDALDriverManager *poDM = GetGDALDriverManager();
             for (int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++)
             {
-                fprintf(stderr, "Unable to find driver `%s'.\n",
-                        osFormat.c_str());
-                fprintf(stderr, "The following drivers are available:\n");
-
                 GDALDriver *poIter = poDM->GetDriver(iDriver);
                 char **papszDriverMD = poIter->GetMetadata();
                 if (CPLTestBool(CSLFetchNameValueDef(

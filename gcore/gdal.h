@@ -55,14 +55,16 @@ typedef enum
     /*! Thirty two bit signed integer */ GDT_Int32 = 5,
     /*! 64 bit unsigned integer (GDAL >= 3.5)*/ GDT_UInt64 = 12,
     /*! 64 bit signed integer  (GDAL >= 3.5)*/ GDT_Int64 = 13,
+    /*! Sixteen bit floating point */ GDT_Float16 = 15,
     /*! Thirty two bit floating point */ GDT_Float32 = 6,
     /*! Sixty four bit floating point */ GDT_Float64 = 7,
     /*! Complex Int16 */ GDT_CInt16 = 8,
     /*! Complex Int32 */ GDT_CInt32 = 9,
     /* TODO?(#6879): GDT_CInt64 */
+    /*! Complex Float16 */ GDT_CFloat16 = 16,
     /*! Complex Float32 */ GDT_CFloat32 = 10,
     /*! Complex Float64 */ GDT_CFloat64 = 11,
-    GDT_TypeCount = 15 /* maximum type # + 1 */
+    GDT_TypeCount = 17 /* maximum type # + 1 */
 } GDALDataType;
 
 int CPL_DLL CPL_STDCALL GDALGetDataTypeSize(GDALDataType);  // Deprecated.
@@ -584,6 +586,14 @@ typedef enum
 /** Capability set by a driver that can copy over subdatasets. */
 #define GDAL_DCAP_SUBCREATECOPY "DCAP_SUBCREATECOPY"
 
+/** Capability set by a driver that supports the GDAL_OF_UPDATE flag and offers
+ * at least some update capabilities.
+ * Exact update capabilities can be determined by the GDAL_DMD_UPDATE_ITEMS
+ * metadata item
+ * @since GDAL 3.11
+ */
+#define GDAL_DCAP_UPDATE "DCAP_UPDATE"
+
 /** Capability set by a driver that can read/create datasets through the VSI*L
  * API. */
 #define GDAL_DCAP_VIRTUALIO "DCAP_VIRTUALIO"
@@ -898,6 +908,25 @@ typedef enum
 /*! @cond Doxygen_Suppress */
 #define GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE "DMD_PLUGIN_INSTALLATION_MESSAGE"
 /*! @endcond */
+
+/** List of (space separated) items that a dataset opened in update mode supports
+ * updating. Possible values are:
+ * - for raster: "GeoTransform" (through GDALDataset::SetGeoTransform),
+ *   "SRS" (GDALDataset::SetSpatialRef), "GCPs" (GDALDataset::SetGCPs()),
+ *    "NoData" (GDALRasterBand::SetNoDataValue),
+ *   "ColorInterpretation" (GDALRasterBand::SetColorInterpretation()),
+ *   "RasterValues" (GF_Write flag of GDALDataset::RasterIO() and GDALRasterBand::RasterIO()),
+ *   "DatasetMetadata" (GDALDataset::SetMetadata/SetMetadataItem), "BandMetadata"
+ *   (GDALRasterBand::SetMetadata/SetMetadataItem)
+ * - for vector: "Features" (OGRLayer::SetFeature()), "DatasetMetadata",
+ *   "LayerMetadata"
+ *
+ * No distinction is made if the update is done in the native format,
+ * or in a Persistent Auxiliary Metadata .aux.xml side car file.
+ *
+ * @since GDAL 3.11
+ */
+#define GDAL_DMD_UPDATE_ITEMS "DMD_UPDATE_ITEMS"
 
 /** Value for GDALDimension::GetType() specifying the X axis of a horizontal
  * CRS.

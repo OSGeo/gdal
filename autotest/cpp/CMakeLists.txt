@@ -299,6 +299,7 @@ set(QUICKTEST_LIST
     test-block-cache-4
     test-block-cache-5
     test-block-cache-6
+    test-float16
     test-copy-words
     test-closed-on-destroy-DM
     test-threaded-condition
@@ -312,6 +313,7 @@ set(QUICKTEST_LIST
     test-deferred-plugin
 )
 
+gdal_gtest_target(testfloat16 test-float16 testfloat16.cpp)
 gdal_gtest_target(testcopywords test-copy-words testcopywords.cpp)
 gdal_gtest_target(testclosedondestroydm test-closed-on-destroy-DM testclosedondestroydm.cpp)
 gdal_gtest_target(testthreadcond test-threaded-condition testthreadcond.cpp)

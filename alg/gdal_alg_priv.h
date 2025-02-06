@@ -76,32 +76,31 @@ typedef enum
 /*      Low level rasterizer API.                                       */
 /************************************************************************/
 
-typedef void (*llScanlineFunc)(void *, int, int, int, double);
-typedef void (*llPointFunc)(void *, int, int, double);
+typedef void (*llScanlineFunc)(GDALRasterizeInfo *, int, int, int, double);
+typedef void (*llPointFunc)(GDALRasterizeInfo *, int, int, double);
 
 void GDALdllImagePoint(int nRasterXSize, int nRasterYSize, int nPartCount,
                        const int *panPartSize, const double *padfX,
                        const double *padfY, const double *padfVariant,
-                       llPointFunc pfnPointFunc, void *pCBData);
+                       llPointFunc pfnPointFunc, GDALRasterizeInfo *pCBData);
 
 void GDALdllImageLine(int nRasterXSize, int nRasterYSize, int nPartCount,
                       const int *panPartSize, const double *padfX,
                       const double *padfY, const double *padfVariant,
-                      llPointFunc pfnPointFunc, void *pCBData);
+                      llPointFunc pfnPointFunc, GDALRasterizeInfo *pCBData);
 
-void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
-                                int nPartCount, const int *panPartSize,
-                                const double *padfX, const double *padfY,
-                                const double *padfVariant,
-                                llPointFunc pfnPointFunc, void *pCBData,
-                                bool bAvoidBurningSamePoints,
-                                bool bIntersectOnly);
+void GDALdllImageLineAllTouched(
+    int nRasterXSize, int nRasterYSize, int nPartCount, const int *panPartSize,
+    const double *padfX, const double *padfY, const double *padfVariant,
+    llPointFunc pfnPointFunc, GDALRasterizeInfo *pCBData,
+    bool bAvoidBurningSamePoints, bool bIntersectOnly);
 
 void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
                                int nPartCount, const int *panPartSize,
                                const double *padfX, const double *padfY,
                                const double *padfVariant,
-                               llScanlineFunc pfnScanlineFunc, void *pCBData,
+                               llScanlineFunc pfnScanlineFunc,
+                               GDALRasterizeInfo *pCBData,
                                bool bAvoidBurningSamePoints);
 
 CPL_C_END

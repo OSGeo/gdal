@@ -12,6 +12,7 @@
 
 #include "tiledbheaders.h"
 
+#include "cpl_float.h"
 #include "cpl_json.h"
 #include "cpl_time.h"
 #include "ogr_p.h"

@@ -44,6 +44,8 @@ inline double GetSrcVal(const void *pSource, GDALDataType eSrcType, T ii)
         case GDT_Int64:
             return static_cast<double>(
                 static_cast<const int64_t *>(pSource)[ii]);
+        case GDT_Float16:
+            return static_cast<const GFloat16 *>(pSource)[ii];
         case GDT_Float32:
             return static_cast<const float *>(pSource)[ii];
         case GDT_Float64:
@@ -52,6 +54,8 @@ inline double GetSrcVal(const void *pSource, GDALDataType eSrcType, T ii)
             return static_cast<const GInt16 *>(pSource)[2 * ii];
         case GDT_CInt32:
             return static_cast<const GInt32 *>(pSource)[2 * ii];
+        case GDT_CFloat16:
+            return static_cast<const GFloat16 *>(pSource)[2 * ii];
         case GDT_CFloat32:
             return static_cast<const float *>(pSource)[2 * ii];
         case GDT_CFloat64:

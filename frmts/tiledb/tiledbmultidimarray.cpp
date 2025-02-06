@@ -1281,6 +1281,11 @@ FillBlockSize(const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
         case GDT_Int64:
             tiledb_dt = TILEDB_INT64;
             break;
+        case GDT_CFloat16:
+        case GDT_Float16:
+            // tileDB does not support float16
+            tiledb_dt = TILEDB_FLOAT32;
+            break;
         case GDT_CFloat32:
         case GDT_Float32:
             tiledb_dt = TILEDB_FLOAT32;
