@@ -15,6 +15,7 @@
 #include "gdal_alg_priv.h"
 #include "ogrsqlitevfs.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 
 #include <algorithm>
 #include <cmath>

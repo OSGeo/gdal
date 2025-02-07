@@ -74,7 +74,10 @@ def gdal2xyz(
 
     result = None
 
-    progress_callback = get_progress_callback(progress_callback)
+    if dstfile == "/vsistdout/":
+        progress_callback = None
+    else:
+        progress_callback = get_progress_callback(progress_callback)
 
     # Open source file.
     ds = open_ds(srcfile)
@@ -94,11 +97,11 @@ def gdal2xyz(
 
     # Open the output file.
     if dstfile is not None:
-        dst_fh = open(dstfile, "wt")
+        dst_fh = gdal.VSIFOpenL(dstfile, "wb")
     elif return_np_arrays:
         dst_fh = None
     else:
-        dst_fh = sys.stdout
+        dst_fh = gdal.VSIFOpenL("/vsistdout/", "wb")
 
     if dst_fh:
         if dt == gdal.GDT_Int32 or dt == gdal.GDT_UInt32:
@@ -195,8 +198,10 @@ def gdal2xyz(
 
             if dst_fh:
                 band_str = band_format % tuple(x_i_data)
-                line = frmt % (float(geo_x), float(geo_y), band_str)
-                dst_fh.write(line)
+                line = (frmt % (float(geo_x), float(geo_y), band_str)).encode("UTF-8")
+                if gdal.VSIFWriteL(line, len(line), 1, dst_fh) != 1:
+                    gdal.VSIFCloseL(dst_fh)
+                    raise IOError("Cannot write into destination file")
             if return_np_arrays:
                 if pre_allocate_np_arrays:
                     all_geo_x[idx] = geo_x
@@ -215,6 +220,9 @@ def gdal2xyz(
             all_geo_y = all_geo_y[:idx]
             all_data = all_data[:idx, :]
         result = all_geo_x, all_geo_y, all_data.transpose(), nodata
+
+    if dst_fh:
+        gdal.VSIFCloseL(dst_fh)
 
     return result
 

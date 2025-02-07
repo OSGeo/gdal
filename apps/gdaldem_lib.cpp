@@ -99,6 +99,7 @@
 #include <limits>
 
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_progress.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
@@ -329,7 +330,7 @@ static CPLErr GDALGeneric3x3Processing(
 
     int bIsSrcNoDataNan = FALSE;
     T fSrcNoDataValue = 0;
-    if (std::numeric_limits<T>::is_integer)
+    if (cpl::NumericLimits<T>::is_integer)
     {
         eReadDT = GDT_Int32;
         if (bSrcHasNoData)
@@ -398,7 +399,7 @@ static CPLErr GDALGeneric3x3Processing(
 
                 return CE_Failure;
             }
-            if (std::numeric_limits<T>::is_integer && bSrcHasNoData)
+            if (cpl::NumericLimits<T>::is_integer && bSrcHasNoData)
             {
                 abLineHasNoDataValue[i] = false;
                 for (int iX = 0; iX < nXSize; iX++)
@@ -484,7 +485,7 @@ static CPLErr GDALGeneric3x3Processing(
         // In case none of the 3 lines have nodata values, then no need to
         // check it in ComputeVal()
         bool bOneOfThreeLinesHasNoData = CPL_TO_BOOL(bSrcHasNoData);
-        if (std::numeric_limits<T>::is_integer && bSrcHasNoData)
+        if (cpl::NumericLimits<T>::is_integer && bSrcHasNoData)
         {
             bool bLastLineHasNoDataValue = false;
             int iX = 0;
@@ -2654,7 +2655,7 @@ GDALGeneric3x3RasterBand<T>::GDALGeneric3x3RasterBand(
 
     const double dfNoDataValue =
         GDALGetRasterNoDataValue(poDSIn->hSrcBand, &bSrcHasNoData);
-    if (std::numeric_limits<T>::is_integer)
+    if (cpl::NumericLimits<T>::is_integer)
     {
         eReadDT = GDT_Int32;
         if (bSrcHasNoData)

@@ -89,7 +89,7 @@ if test "${CIFUZZ:-}" = "True"; then
             -L$SRC_DIR/build -lgdal \
             -lproj \
             -Wl,-Bstatic -lzstd -lwebp -llzma -lexpat -lsqlite3 -lgif -ljpeg -lz \
-            -Wl,-Bdynamic -ldl -lpthread
+            -Wl,-Bdynamic -ldl -lpthread -lclang_rt.builtins
 
   echo "Building ogr_fuzzer"
   $CXX $CXXFLAGS \
@@ -103,7 +103,7 @@ if test "${CIFUZZ:-}" = "True"; then
             -L$SRC_DIR/build -lgdal \
             -L$SRC/install/lib -lproj \
             -Wl,-Bstatic -lzstd -lwebp -llzma -lexpat -lsqlite3 -lgif -ljpeg -lz \
-            -Wl,-Bdynamic -ldl -lpthread
+            -Wl,-Bdynamic -ldl -lpthread -lclang_rt.builtins
 
   echo "Building gdal_fuzzer_seed_corpus.zip"
   cd $(dirname $0)/../autotest/gcore/data

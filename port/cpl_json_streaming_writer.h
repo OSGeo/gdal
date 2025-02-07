@@ -20,6 +20,8 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+
+#include "cpl_float.h"
 #include "cpl_port.h"
 
 class CPL_DLL CPLJSonStreamingWriter
@@ -93,8 +95,9 @@ class CPL_DLL CPLJSonStreamingWriter
 
     void Add(std::int64_t nVal);
     void Add(std::uint64_t nVal);
+    void Add(GFloat16 hfVal, int nPrecision = 5);
     void Add(float fVal, int nPrecision = 9);
-    void Add(double dfVal, int nPrecision = 18);
+    void Add(double dfVal, int nPrecision = 17);
     void AddNull();
 
     void StartObj();

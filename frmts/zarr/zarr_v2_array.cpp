@@ -1140,9 +1140,11 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject &obj,
             }
             else if (chType == 'f' && nBytes == 2)
             {
+                // elt.nativeType = DtypeElt::NativeType::IEEEFP;
+                // elt.gdalTypeIsApproxOfNative = true;
+                // eDT = GDT_Float32;
                 elt.nativeType = DtypeElt::NativeType::IEEEFP;
-                elt.gdalTypeIsApproxOfNative = true;
-                eDT = GDT_Float32;
+                eDT = GDT_Float16;
             }
             else if (chType == 'f' && nBytes == 4)
             {
@@ -1697,6 +1699,13 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
                 return nullptr;
+            }
+            if (oType.GetNumericDataType() == GDT_Float16)
+            {
+                const GFloat16 hfNoDataValue =
+                    static_cast<GFloat16>(dfNoDataValue);
+                abyNoData.resize(sizeof(hfNoDataValue));
+                memcpy(&abyNoData[0], &hfNoDataValue, sizeof(hfNoDataValue));
             }
             if (oType.GetNumericDataType() == GDT_Float32)
             {

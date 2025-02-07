@@ -111,6 +111,23 @@ else()
   cmake_pop_check_state()
 
 endif ()
+
+# Check whether std::float16_t is available and is working
+include(CheckCXXSourceCompiles)
+check_cxx_source_compiles(
+  "
+    #include <cmath>
+    #include <stdfloat>
+    int main() {
+      std::float16_t x = 0;
+      using std::nextafter;
+      std::float16_t y = nextafter(x, x);
+      return y == 0 ? 0 : 1;
+    }
+  "
+  HAVE_STD_FLOAT16_T
+)
+
 #
 option(CLANG_TIDY_ENABLED "Run clang-tidy with the compiler." OFF)
 set(CLANG_TIDY_CHECKS

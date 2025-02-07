@@ -30,6 +30,7 @@
 
 #include "cpl_error.h"
 #include "cpl_error_internal.h"  // CPLErrorHandlerAccumulatorStruct
+#include "cpl_float.h"
 #include "cpl_md5.h"
 #include "cpl_vsi.h"
 #include "cpl_vsi_virtual.h"
