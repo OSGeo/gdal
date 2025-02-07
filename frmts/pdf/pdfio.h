@@ -47,8 +47,20 @@ class VSIPDFFileStream final : public BaseStream
     virtual int getUnfilteredChar() override;
     virtual int lookChar() override;
 
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+    virtual bool reset() override;
+#else
     virtual void reset() override;
+#endif
+
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION > 2)
+    virtual bool unfilteredReset() override;
+#else
     virtual void unfilteredReset() override;
+#endif
+
     virtual void close() override;
 
     bool FoundLinearizedHint() const
