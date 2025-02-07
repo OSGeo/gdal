@@ -2244,6 +2244,7 @@ OverviewCount
 ovf
 ovr
 ozi
+pabSuccess
 pabyData
 pabyDstData
 pabyHeader
@@ -2280,6 +2281,7 @@ panBandList
 panBandMap
 pand
 panDstBands
+panErrorCodes
 panHistogram
 panMap
 panOffsets

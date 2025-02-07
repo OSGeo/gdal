@@ -76,6 +76,22 @@ CPLErr CPL_DLL CPL_STDCALL GDALSieveFilter(
  * Warp Related.
  */
 
+/**
+ * Callback to transforms points.
+ *
+ * @param pTransformerArg return value from a GDALCreateXXXXTransformer() function
+ * @param bDstToSrc TRUE if transformation is from the destination
+ * (georeferenced) coordinates to pixel/line or FALSE when transforming
+ * from pixel/line to georeferenced coordinates.
+ * @param nPointCount the number of values in the x, y and z arrays.
+ * @param[in,out] x array containing the X values to be transformed. Must not be NULL.
+ * @param[in,out] y array containing the Y values to be transformed. Must not be NULL.
+ * @param[in,out] z array containing the Z values to be transformed. Must not be NULL.
+ * @param[out] panSuccess array in which a flag indicating success (TRUE) or
+ * failure (FALSE) of the transformation are placed. Must not be NULL.
+ *
+ * @return TRUE if all points have been successfully transformed.
+ */
 typedef int (*GDALTransformerFunc)(void *pTransformerArg, int bDstToSrc,
                                    int nPointCount, double *x, double *y,
                                    double *z, int *panSuccess);
