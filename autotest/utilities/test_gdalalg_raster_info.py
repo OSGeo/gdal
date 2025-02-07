@@ -19,9 +19,7 @@ from osgeo import gdal
 
 
 def get_info_alg():
-    reg = gdal.GetGlobalAlgorithmRegistry()
-    raster = reg.InstantiateAlg("raster")
-    return raster.InstantiateSubAlgorithm("info")
+    return gdal.GetGlobalAlgorithmRegistry()["raster"]["info"]
 
 
 def test_gdalalg_raster_info_stdout():
@@ -41,7 +39,7 @@ def test_gdalalg_raster_info_stdout():
 def test_gdalalg_raster_info():
     info = get_info_alg()
     assert info.ParseRunAndFinalize(["--format=text", "data/utmsmall.tif"])
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     assert output_string.startswith("Driver: GTiff/GeoTIFF")
 
 
@@ -50,7 +48,7 @@ def test_gdalalg_raster_info_mm_checksum():
     assert info.ParseRunAndFinalize(
         ["--format=text", "--mm", "--checksum", "data/utmsmall.tif"]
     )
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     assert "   Computed Min/Max=0.000,255.000" in output_string
     assert "Checksum=" in output_string
 
@@ -58,9 +56,9 @@ def test_gdalalg_raster_info_mm_checksum():
 def test_gdalalg_raster_info_stats():
     info = get_info_alg()
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
-    info.GetArg("input").SetDataset(ds)
+    info["input"] = ds
     assert info.ParseRunAndFinalize(["--stats"])
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     j = json.loads(output_string)
     assert "stdDev" in j["bands"][0]
 
@@ -68,9 +66,9 @@ def test_gdalalg_raster_info_stats():
 def test_gdalalg_raster_info_approx_stats():
     info = get_info_alg()
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
-    info.GetArg("input").SetDataset(ds)
+    info["input"] = ds
     assert info.ParseRunAndFinalize(["--approx-stats"])
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     j = json.loads(output_string)
     assert "stdDev" in j["bands"][0]
 
@@ -78,9 +76,9 @@ def test_gdalalg_raster_info_approx_stats():
 def test_gdalalg_raster_info_hist():
     info = get_info_alg()
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
-    info.GetArg("input").SetDataset(ds)
+    info["input"] = ds
     assert info.ParseRunAndFinalize(["--hist"])
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     j = json.loads(output_string)
     assert "histogram" in j["bands"][0]
 
@@ -88,7 +86,7 @@ def test_gdalalg_raster_info_hist():
 def test_gdalalg_raster_info_no_options():
     info = get_info_alg()
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
-    info.GetArg("input").SetDataset(ds)
+    info["input"] = ds
     assert info.ParseRunAndFinalize(
         ["--no-gcp", "--no-md", "--no-ct", "--no-fl", "--no-nodata", "--no-mask"]
     )
@@ -98,9 +96,9 @@ def test_gdalalg_raster_info_list_mdd():
     info = get_info_alg()
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
     ds.SetMetadataItem("foo", "bar", "MY_DOMAIN")
-    info.GetArg("input").SetDataset(ds)
+    info["input"] = ds
     assert info.ParseRunAndFinalize(["--list-mdd"])
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     j = json.loads(output_string)
     assert "MY_DOMAIN" in j["metadata"]["metadataDomains"]
 
@@ -109,9 +107,9 @@ def test_gdalalg_raster_info_mdd_all():
     info = get_info_alg()
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
     ds.SetMetadataItem("foo", "bar", "MY_DOMAIN")
-    info.GetArg("input").SetDataset(ds)
+    info["input"] = ds
     assert info.ParseRunAndFinalize(["--mdd=all"])
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     j = json.loads(output_string)
     assert j["metadata"] == {
         "": {"AREA_OR_POINT": "Area"},
@@ -128,7 +126,7 @@ def test_gdalalg_raster_info_list_subdataset():
     assert info.ParseRunAndFinalize(
         ["--input=../gcore/data/tiff_with_subifds.tif", "--subdataset=2"]
     )
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     j = json.loads(output_string)
     assert j["description"] == "GTIFF_DIR:2:../gcore/data/tiff_with_subifds.tif"
 
@@ -149,7 +147,7 @@ def test_gdalalg_raster_info_list_subdataset_error_cannot_open_subdataset():
     ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     ds.SetMetadataItem("SUBDATASET_1_DESC", "desc", "SUBDATASETS")
     ds.SetMetadataItem("SUBDATASET_1_NAME", "i_do_not_exist", "SUBDATASETS")
-    info.GetArg("input").SetDataset(ds)
+    info["input"] = ds
     with pytest.raises(
         Exception,
         match="i_do_not_exist",

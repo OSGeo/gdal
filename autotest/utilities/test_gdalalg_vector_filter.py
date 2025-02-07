@@ -15,9 +15,7 @@ from osgeo import gdal
 
 
 def get_filter_alg():
-    reg = gdal.GetGlobalAlgorithmRegistry()
-    vector = reg.InstantiateAlg("vector")
-    return vector.InstantiateSubAlgorithm("filter")
+    return gdal.GetGlobalAlgorithmRegistry()["vector"]["filter"]
 
 
 def test_gdalalg_vector_filter_no_filter(tmp_vsimem):
@@ -27,7 +25,7 @@ def test_gdalalg_vector_filter_no_filter(tmp_vsimem):
     filter_alg = get_filter_alg()
     assert filter_alg.ParseCommandLineArguments(["../ogr/data/poly.shp", out_filename])
     assert filter_alg.Run()
-    ds = filter_alg.GetArg("output").Get().GetDataset()
+    ds = filter_alg["output"].GetDataset()
     assert ds.GetLayer(0).GetFeatureCount() == 10
     assert filter_alg.Finalize()
     ds = None
