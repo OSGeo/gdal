@@ -88,6 +88,8 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
                            CSLConstList papszOptionsIn)
 
 {
+    SetDescription(pszFilename);
+
     osEncoding = CPL_ENC_ISO8859_1;
 
     bInlineBlocks = CPLTestBool(
