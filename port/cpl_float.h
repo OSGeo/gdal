@@ -665,7 +665,7 @@ using GFloat16 = cpl::Float16;
 #endif
 
 // Define some GDAL wrappers. Their C equivalents are defined in `cpl_port.h`.
-// (These wrappers are not necessary any mroe in C++, one can always
+// (These wrappers are not necessary any more in C++, one can always
 // call `isnan` etc directly.)
 
 template <typename T> constexpr int CPLIsNan(T x)

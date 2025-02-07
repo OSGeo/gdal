@@ -4053,7 +4053,7 @@ static void DoFieldTypeConversion(GDALDataset *poDstDS,
                  EQUAL(poDstDriver->GetDescription(), "ESRI Shapefile"))
         {
             // Just be silent. The shapefile driver will itself emit a
-            // warning mentionning it converts DateTime to String.
+            // warning mentioning it converts DateTime to String.
         }
         else if (!bQuiet)
         {
