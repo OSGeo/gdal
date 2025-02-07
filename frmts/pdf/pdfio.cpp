@@ -237,23 +237,40 @@ int VSIPDFFileStream::lookChar()
 /*                                reset()                               */
 /************************************************************************/
 
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+bool VSIPDFFileStream::reset()
+#else
 void VSIPDFFileStream::reset()
+#endif
 {
     nSavedPos = VSIFTellL(f);
     bHasSavedPos = TRUE;
     VSIFSeekL(f, nCurrentPos = nStart, SEEK_SET);
     nPosInBuffer = -1;
     nBufferLength = -1;
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+    return true;
+#endif
 }
 
 /************************************************************************/
 /*                         unfilteredReset()                            */
 /************************************************************************/
 
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION > 2)
+bool VSIPDFFileStream::unfilteredReset()
+{
+    return reset();
+}
+#else
 void VSIPDFFileStream::unfilteredReset()
 {
     reset();
 }
+#endif
 
 /************************************************************************/
 /*                                close()                               */
