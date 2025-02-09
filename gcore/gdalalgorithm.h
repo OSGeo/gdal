@@ -1447,6 +1447,8 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
         return RunAllActions();
     }
 
+    bool ProcessString(std::string &value) const;
+
     bool RunAllActions();
     void RunActions();
     bool RunValidationActions();

@@ -46,6 +46,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vector_clip
    gdal_vector_convert
    gdal_vector_pipeline
+   gdal_vector_sql
 
 .. only:: html
 
@@ -70,6 +71,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vector_clip_subcommand`: Clip a vector dataset
     - :ref:`gdal_vector_convert_subcommand`: Convert a vector dataset
     - :ref:`gdal_vector_pipeline_subcommand`: Process a vector dataset
+    - :ref:`gdal_vector_sql_subcommand`: Apply SQL statement(s) to a dataset
 
 
 "Traditional" applications

@@ -18,6 +18,7 @@
 #include "ogrsf_frmts.h"
 
 typedef OGRLayer *(*OpenLayerFunc)(void *user_data);
+typedef void (*ReleaseLayerFunc)(OGRLayer *, void *user_data);
 typedef void (*FreeUserDataFunc)(void *user_data);
 
 class OGRLayerPool;
@@ -89,6 +90,7 @@ class CPL_DLL OGRProxiedLayer : public OGRAbstractProxiedLayer
     CPL_DISALLOW_COPY_ASSIGN(OGRProxiedLayer)
 
     OpenLayerFunc pfnOpenLayer;
+    ReleaseLayerFunc pfnReleaseLayer;
     FreeUserDataFunc pfnFreeUserData;
     void *pUserData;
     OGRLayer *poUnderlyingLayer;
@@ -102,6 +104,9 @@ class CPL_DLL OGRProxiedLayer : public OGRAbstractProxiedLayer
 
   public:
     OGRProxiedLayer(OGRLayerPool *poPool, OpenLayerFunc pfnOpenLayer,
+                    FreeUserDataFunc pfnFreeUserData, void *pUserData);
+    OGRProxiedLayer(OGRLayerPool *poPool, OpenLayerFunc pfnOpenLayer,
+                    ReleaseLayerFunc pfnReleaseLayer,
                     FreeUserDataFunc pfnFreeUserData, void *pUserData);
     virtual ~OGRProxiedLayer();
 

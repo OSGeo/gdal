@@ -320,6 +320,13 @@ man_pages = [
         [author_evenr],
         1,
     ),
+    (
+        "programs/gdal_vector_sql",
+        "gdal-vector-sql",
+        "Apply SQL statement(s) to a dataset",
+        [author_evenr],
+        1,
+    ),
     # Traditional utilities
     (
         "programs/gdalinfo",

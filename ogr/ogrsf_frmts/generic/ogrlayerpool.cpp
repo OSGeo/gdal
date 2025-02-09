@@ -131,13 +131,36 @@ void OGRLayerPool::UnchainLayer(OGRAbstractProxiedLayer *poLayer)
 /*                          OGRProxiedLayer()                           */
 /************************************************************************/
 
+static void ReleaseDelete(OGRLayer *poLayer, void *)
+{
+    delete poLayer;
+}
+
 OGRProxiedLayer::OGRProxiedLayer(OGRLayerPool *poPoolIn,
                                  OpenLayerFunc pfnOpenLayerIn,
                                  FreeUserDataFunc pfnFreeUserDataIn,
                                  void *pUserDataIn)
     : OGRAbstractProxiedLayer(poPoolIn), pfnOpenLayer(pfnOpenLayerIn),
-      pfnFreeUserData(pfnFreeUserDataIn), pUserData(pUserDataIn),
-      poUnderlyingLayer(nullptr), poFeatureDefn(nullptr), poSRS(nullptr)
+      pfnReleaseLayer(ReleaseDelete), pfnFreeUserData(pfnFreeUserDataIn),
+      pUserData(pUserDataIn), poUnderlyingLayer(nullptr),
+      poFeatureDefn(nullptr), poSRS(nullptr)
+{
+    CPLAssert(pfnOpenLayerIn != nullptr);
+}
+
+/************************************************************************/
+/*                          OGRProxiedLayer()                           */
+/************************************************************************/
+
+OGRProxiedLayer::OGRProxiedLayer(OGRLayerPool *poPoolIn,
+                                 OpenLayerFunc pfnOpenLayerIn,
+                                 ReleaseLayerFunc pfnReleaseLayerIn,
+                                 FreeUserDataFunc pfnFreeUserDataIn,
+                                 void *pUserDataIn)
+    : OGRAbstractProxiedLayer(poPoolIn), pfnOpenLayer(pfnOpenLayerIn),
+      pfnReleaseLayer(pfnReleaseLayerIn), pfnFreeUserData(pfnFreeUserDataIn),
+      pUserData(pUserDataIn), poUnderlyingLayer(nullptr),
+      poFeatureDefn(nullptr), poSRS(nullptr)
 {
     CPLAssert(pfnOpenLayerIn != nullptr);
 }
@@ -148,7 +171,7 @@ OGRProxiedLayer::OGRProxiedLayer(OGRLayerPool *poPoolIn,
 
 OGRProxiedLayer::~OGRProxiedLayer()
 {
-    delete poUnderlyingLayer;
+    OGRProxiedLayer::CloseUnderlyingLayer();
 
     if (poSRS)
         poSRS->Release();
@@ -184,7 +207,10 @@ int OGRProxiedLayer::OpenUnderlyingLayer()
 void OGRProxiedLayer::CloseUnderlyingLayer()
 {
     CPLDebug("OGR", "CloseUnderlyingLayer(%p)", this);
-    delete poUnderlyingLayer;
+    if (poUnderlyingLayer)
+    {
+        pfnReleaseLayer(poUnderlyingLayer, pUserData);
+    }
     poUnderlyingLayer = nullptr;
 }
 
