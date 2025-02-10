@@ -1436,7 +1436,7 @@ GDALRasterizeOptionsNew(char **papszArgv,
             {
                 CPLError(
                     CE_Warning, CPLE_AppDefined,
-                    "Conversion to int looses precision for -ts parameter.");
+                    "-ts values parsed as %d %d.", nXSize, nYSize);
             }
 
             psOptions->nXSize = nXSize;

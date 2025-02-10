@@ -446,4 +446,4 @@ def test_gdal_rasterize_ts_1(tmp_path, gdal_rasterize_path):
     (_, err) = gdaltest.runexternal_out_and_err(
         f"{gdal_rasterize_path} -at -burn 200 -ts 100.4 200.6 ../alg/data/cutline.csv {output_tif}"
     )
-    assert "Conversion to int looses precision for -ts parameter" in err
+    assert "-ts values parsed as 100 200" in err
