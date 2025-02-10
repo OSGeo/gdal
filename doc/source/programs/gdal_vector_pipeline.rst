@@ -93,6 +93,23 @@ Details for options can be found in :ref:`gdal_vector_clip_subcommand`.
       -s, --src-crs <SRC-CRS>                              Source CRS
       -d, --dst-crs <DST-CRS>                              Destination CRS [required]
 
+* sql [OPTIONS] <STATEMENT>
+
+.. code-block::
+
+    Apply SQL statement(s) to a dataset.
+
+    Positional arguments:
+      --sql <statement>|@<filename>                        SQL statement(s) [may be repeated] [required]
+
+    Options:
+      -l, --output-layer <OUTPUT-LAYER>                    Output layer name(s) [may be repeated]
+      --dialect <DIALECT>                                  SQL dialect (e.g. OGRSQL, SQLITE)
+
+
+Details for options can be found in :ref:`gdal_vector_sql_subcommand`.
+
+
 * write [OPTIONS] <OUTPUT>
 
 .. code-block::

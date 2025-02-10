@@ -25,6 +25,7 @@ Synopsis
       - info:      Return information on a vector dataset.
       - pipeline:  Process a vector dataset.
       - reproject: Reproject a vector dataset.
+      - sql:       Apply SQL statement(s) to a dataset.
 
 Available sub-commands
 ----------------------
@@ -33,6 +34,7 @@ Available sub-commands
 - :ref:`gdal_vector_convert_subcommand`
 - :ref:`gdal_vector_info_subcommand`
 - :ref:`gdal_vector_pipeline_subcommand`
+- :ref:`gdal_vector_sql_subcommand`
 
 Examples
 --------
