@@ -589,6 +589,7 @@ int GDALGeoLoc<Accessors>::Transform(void *pTransformArg, int bDstToSrc,
                                      double *padfY, double * /* padfZ */,
                                      int *panSuccess)
 {
+    int bSuccess = TRUE;
     GDALGeoLocTransformInfo *psTransform =
         static_cast<GDALGeoLocTransformInfo *>(pTransformArg);
 
@@ -607,6 +608,7 @@ int GDALGeoLoc<Accessors>::Transform(void *pTransformArg, int bDstToSrc,
         {
             if (padfX[i] == HUGE_VAL || padfY[i] == HUGE_VAL)
             {
+                bSuccess = FALSE;
                 panSuccess[i] = FALSE;
                 continue;
             }
@@ -623,6 +625,7 @@ int GDALGeoLoc<Accessors>::Transform(void *pTransformArg, int bDstToSrc,
             if (!PixelLineToXY(psTransform, dfGeoLocPixel, dfGeoLocLine,
                                padfX[i], padfY[i]))
             {
+                bSuccess = FALSE;
                 panSuccess[i] = FALSE;
                 padfX[i] = HUGE_VAL;
                 padfY[i] = HUGE_VAL;
@@ -665,6 +668,7 @@ int GDALGeoLoc<Accessors>::Transform(void *pTransformArg, int bDstToSrc,
         {
             if (padfX[i] == HUGE_VAL || padfY[i] == HUGE_VAL)
             {
+                bSuccess = FALSE;
                 panSuccess[i] = FALSE;
                 continue;
             }
@@ -688,6 +692,7 @@ int GDALGeoLoc<Accessors>::Transform(void *pTransformArg, int bDstToSrc,
                   dfBMX + 1 < psTransform->nBackMapWidth &&
                   dfBMY + 1 < psTransform->nBackMapHeight))
             {
+                bSuccess = FALSE;
                 panSuccess[i] = FALSE;
                 padfX[i] = HUGE_VAL;
                 padfY[i] = HUGE_VAL;
@@ -701,6 +706,7 @@ int GDALGeoLoc<Accessors>::Transform(void *pTransformArg, int bDstToSrc,
             const auto fBMY_0_0 = pAccessors->backMapYAccessor.Get(iBMX, iBMY);
             if (fBMX_0_0 == INVALID_BMXY)
             {
+                bSuccess = FALSE;
                 panSuccess[i] = FALSE;
                 padfX[i] = HUGE_VAL;
                 padfY[i] = HUGE_VAL;
@@ -914,6 +920,7 @@ int GDALGeoLoc<Accessors>::Transform(void *pTransformArg, int bDstToSrc,
             }
             if (!bDone)
             {
+                bSuccess = FALSE;
                 panSuccess[i] = FALSE;
                 padfX[i] = HUGE_VAL;
                 padfY[i] = HUGE_VAL;
@@ -924,7 +931,7 @@ int GDALGeoLoc<Accessors>::Transform(void *pTransformArg, int bDstToSrc,
         }
     }
 
-    return TRUE;
+    return bSuccess;
 }
 
 /*! @endcond */
