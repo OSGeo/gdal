@@ -1434,9 +1434,8 @@ GDALRasterizeOptionsNew(char **papszArgv,
             // Warn the user if the conversion to int looses precision
             if (nXSize != oTs.value()[0] || nYSize != oTs.value()[1])
             {
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
-                    "-ts values parsed as %d %d.", nXSize, nYSize);
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "-ts values parsed as %d %d.", nXSize, nYSize);
             }
 
             psOptions->nXSize = nXSize;
