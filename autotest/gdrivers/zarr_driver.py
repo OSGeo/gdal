@@ -982,11 +982,13 @@ def test_zarr_read_ARRAY_DIMENSIONS(use_zmetadata, filename):
     assert len(rg.GetDimensions()) == 2
 
 
+@pytest.mark.parametrize(
+    "ds_name", ["data/zarr/v3/test_deprecated_no_codecs.zr3", "data/zarr/v3/test.zr3"]
+)
 @pytest.mark.parametrize("use_get_names", [True, False])
-def test_zarr_read_v3(use_get_names):
+def test_zarr_read_v3(ds_name, use_get_names):
 
-    filename = "data/zarr/v3/test.zr3"
-    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.OpenEx(ds_name, gdal.OF_MULTIDIM_RASTER)
     assert ds is not None
     rg = ds.GetRootGroup()
     assert rg.GetName() == "/"
@@ -1930,21 +1932,28 @@ def test_zarr_create_array_compressor(compressor, options, expected_json):
 @pytest.mark.parametrize(
     "compressor,options,expected_json",
     [
-        ["NONE", [], None],
+        ["NONE", [], [{"name": "bytes", "configuration": {"endian": "little"}}]],
         [
             "gzip",
             [],
-            [{"name": "gzip", "configuration": {"level": 6}}],
+            [
+                {"name": "bytes", "configuration": {"endian": "little"}},
+                {"name": "gzip", "configuration": {"level": 6}},
+            ],
         ],
         [
             "gzip",
             ["GZIP_LEVEL=1"],
-            [{"name": "gzip", "configuration": {"level": 1}}],
+            [
+                {"name": "bytes", "configuration": {"endian": "little"}},
+                {"name": "gzip", "configuration": {"level": 1}},
+            ],
         ],
         [
             "blosc",
             [],
             [
+                {"name": "bytes", "configuration": {"endian": "little"}},
                 {
                     "name": "blosc",
                     "configuration": {
@@ -1954,7 +1963,7 @@ def test_zarr_create_array_compressor(compressor, options, expected_json):
                         "typesize": 1,
                         "blocksize": 0,
                     },
-                }
+                },
             ],
         ],
         [
@@ -1966,6 +1975,7 @@ def test_zarr_create_array_compressor(compressor, options, expected_json):
                 "BLOSC_BLOCKSIZE=2",
             ],
             [
+                {"name": "bytes", "configuration": {"endian": "little"}},
                 {
                     "name": "blosc",
                     "configuration": {
@@ -1974,7 +1984,23 @@ def test_zarr_create_array_compressor(compressor, options, expected_json):
                         "shuffle": "noshuffle",
                         "blocksize": 2,
                     },
-                }
+                },
+            ],
+        ],
+        [
+            "zstd",
+            ["ZSTD_LEVEL=20"],
+            [
+                {"name": "bytes", "configuration": {"endian": "little"}},
+                {"name": "zstd", "configuration": {"level": 20, "checksum": False}},
+            ],
+        ],
+        [
+            "zstd",
+            ["ZSTD_CHECKSUM=YES"],
+            [
+                {"name": "bytes", "configuration": {"endian": "little"}},
+                {"name": "zstd", "configuration": {"level": 13, "checksum": True}},
             ],
         ],
     ],
@@ -2032,28 +2058,28 @@ def test_zarr_create_array_compressor_v3(compressor, options, expected_json):
     [
         [
             ["@ENDIAN=little"],
-            [{"configuration": {"endian": "little"}, "name": "endian"}],
+            [{"configuration": {"endian": "little"}, "name": "bytes"}],
         ],
-        [["@ENDIAN=big"], [{"configuration": {"endian": "big"}, "name": "endian"}]],
+        [["@ENDIAN=big"], [{"configuration": {"endian": "big"}, "name": "bytes"}]],
         [
             ["@ENDIAN=little", "CHUNK_MEMORY_LAYOUT=F"],
             [
                 {"name": "transpose", "configuration": {"order": "F"}},
-                {"configuration": {"endian": "little"}, "name": "endian"},
+                {"configuration": {"endian": "little"}, "name": "bytes"},
             ],
         ],
         [
             ["@ENDIAN=big", "CHUNK_MEMORY_LAYOUT=F"],
             [
                 {"name": "transpose", "configuration": {"order": "F"}},
-                {"configuration": {"endian": "big"}, "name": "endian"},
+                {"configuration": {"endian": "big"}, "name": "bytes"},
             ],
         ],
         [
             ["@ENDIAN=big", "CHUNK_MEMORY_LAYOUT=F", "COMPRESS=GZIP"],
             [
                 {"name": "transpose", "configuration": {"order": "F"}},
-                {"name": "endian", "configuration": {"endian": "big"}},
+                {"name": "bytes", "configuration": {"endian": "big"}},
                 {"name": "gzip", "configuration": {"level": 6}},
             ],
         ],
@@ -3180,6 +3206,7 @@ def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator(
             assert "codecs" in j
             assert j["codecs"] == [
                 {"name": "transpose", "configuration": {"order": "F"}},
+                {"name": "bytes", "configuration": {"endian": "little"}},
                 {"name": "gzip", "configuration": {"level": 6}},
             ]
 
@@ -5512,7 +5539,7 @@ def test_zarr_driver_copy_files(format):
         assert gdal.Open(filename)
 
         assert gdal.VSIStatL(newfilename)
-        print(gdal.ReadDirRecursive(newfilename))
+        # print(gdal.ReadDirRecursive(newfilename))
         assert gdal.Open(newfilename)
 
     finally:
