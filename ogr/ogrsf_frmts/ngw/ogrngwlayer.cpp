@@ -1232,20 +1232,19 @@ OGRErr OGRNGWLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
     OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
     // Check new field name is not equal for another fields.
     if (!CheckFieldNameUnique(poFeatureDefn, iField,
-                                poNewFieldDefn->GetNameRef()))
+                              poNewFieldDefn->GetNameRef()))
     {
         return OGRERR_FAILURE;
     }
 
     if (osResourceId == "-1")  // Can full alter field only on new layers
-                                // (not synced with server).
+                               // (not synced with server).
     {
         // Field name 'id' forbidden.
         OGRFieldDefn oModFieldDefn(poNewFieldDefn);
 
         poFieldDefn->SetName(oModFieldDefn.GetNameRef());
-        poFieldDefn->SetAlternativeName(
-            oModFieldDefn.GetAlternativeNameRef());
+        poFieldDefn->SetAlternativeName(oModFieldDefn.GetAlternativeNameRef());
         poFieldDefn->SetComment(oModFieldDefn.GetComment());
         poFieldDefn->SetType(oModFieldDefn.GetType());
         poFieldDefn->SetSubType(oModFieldDefn.GetSubType());
@@ -1369,7 +1368,7 @@ std::string OGRNGWLayer::CreateNGWResourceJson()
             osFieldAliasName = poFieldDefn->GetNameRef();
         }
         oField.Add("display_name", osFieldAliasName);
-        
+
         if (poFieldDefn->GetDomainName().empty())
         {
             oField.AddNull("lookup_table");

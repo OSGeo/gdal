@@ -27,9 +27,9 @@ import time
 import gdaltest
 import pytest
 
-NET_TIMEOUT = 30
+NET_TIMEOUT = 130
 NET_MAX_RETRY = 5
-NET_RETRY_DELAY = 1
+NET_RETRY_DELAY = 2
 
 pytestmark = [
     pytest.mark.require_driver("NGW"),
@@ -75,7 +75,7 @@ def check_availability(url):
 
     version_url = url + "/api/component/pyramid/pkg_version"
 
-    if gdaltest.gdalurlopen(version_url, timeout = NET_TIMEOUT) is None:
+    if gdaltest.gdalurlopen(version_url, timeout=NET_TIMEOUT) is None:
         return False
 
     return True
@@ -83,6 +83,7 @@ def check_availability(url):
 
 def get_new_name():
     return "gdaltest_group_" + str(int(time.time())) + "_" + str(random.randint(10, 99))
+
 
 def check_tms(sub):
     ds = gdal.OpenEx(
@@ -118,9 +119,7 @@ def check_tms(sub):
     ), f"Wrong geotransform. {gt}"
 
     assert ds.GetRasterBand(1).GetOverviewCount() > 0, "No overviews!"
-    assert (
-        ds.GetRasterBand(1).DataType == gdal.GDT_Byte
-    ), "Wrong band data type."
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte, "Wrong band data type."
 
 
 ###############################################################################
@@ -184,36 +183,39 @@ def test_ngw_4():
     src_ds = gdal.Open("data/rgbsmall.tif")
     resource_id = gdaltest.ngw_ds.GetMetadataItem("id", "")
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + resource_id + "/rgbsmall"
-    ds = gdal.GetDriverByName("NGW").CreateCopy(
-        url, src_ds, options=["DESCRIPTION=Test raster create"]
-    )
-    src_ds = None
+    with gdal.quiet_errors():
+        ds = gdal.GetDriverByName("NGW").CreateCopy(
+            url, src_ds, options=["DESCRIPTION=Test raster create"]
+        )
+        src_ds = None
 
-    assert ds is not None, "Raster create failed"
+        assert ds is not None, "Raster create failed"
 
-    ds_resource_id = ds.GetMetadataItem("id", "")
-    gdaltest.raster1_id = ds_resource_id
-    ds = None
+        ds_resource_id = ds.GetMetadataItem("id", "")
+        gdaltest.raster1_id = ds_resource_id
+        ds = None
 
     # Upload 16bit raster
     src_ds = gdal.Open("data/int16.tif")
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + resource_id + "/int16"
-    ds = gdal.GetDriverByName("NGW").CreateCopy(
-        url,
-        src_ds,
-        options=[
-            "DESCRIPTION=Test 16bit raster create",
-            "RASTER_QML_PATH=data/ngw/96.qml",
-        ],
-    )
-    src_ds = None
+    with gdal.quiet_errors():
+        ds = gdal.GetDriverByName("NGW").CreateCopy(
+            url,
+            src_ds,
+            options=[
+                "DESCRIPTION=Test 16bit raster create",
+                "RASTER_QML_PATH=data/ngw/96.qml",
+            ],
+        )
+        src_ds = None
 
-    assert ds is not None, "Raster create failed"
-    ds_resource_id = ds.GetMetadataItem("id", "")
-    gdaltest.raster2_id = ds_resource_id
-    ds = None
+        assert ds is not None, "Raster create failed"
+        ds_resource_id = ds.GetMetadataItem("id", "")
+        gdaltest.raster2_id = ds_resource_id
+        ds = None
 
     gdaltest.group_id = resource_id
+
 
 ###############################################################################
 # Open the NGW dataset - rgbsmall
@@ -239,13 +241,12 @@ def test_ngw_5():
     assert ds is not None, f"Open {url} failed."
 
     assert (
-        ds.RasterXSize == 48
-        and ds.RasterYSize == 52
-        and ds.RasterCount == 4
+        ds.RasterXSize == 48 and ds.RasterYSize == 52 and ds.RasterCount == 4
     ), "Wrong size or band count."
 
     # Get subdatasets count
     assert len(ds.GetSubDatasets()) > 0
+
 
 ###############################################################################
 # Open the NGW dataset - int16
@@ -271,9 +272,7 @@ def test_ngw_6():
     assert ds is not None, f"Open {url} failed."
 
     assert (
-        ds.RasterXSize == 20
-        and ds.RasterYSize == 20
-        and ds.RasterCount == 2
+        ds.RasterXSize == 20 and ds.RasterYSize == 20 and ds.RasterCount == 2
     ), "Wrong size or band count."
 
     # Get subdatasets count
@@ -286,7 +285,7 @@ def test_ngw_6():
 
 def test_ngw_7():
 
-   # FIXME: depends on previous test
+    # FIXME: depends on previous test
     if gdaltest.raster1_id is None:
         pytest.skip()
 
@@ -333,9 +332,11 @@ def test_ngw_8():
     assert ds is not None, f"Open {url} failed."
 
     band = ds.GetRasterBand(1)
-    assert band is not None, f"GetRasterBand 1 failed."
+    assert band is not None, "GetRasterBand 1 failed."
 
-    assert band.GetOverviewCount() > 0, f'Expected overviews > 0, got {band.GetOverviewCount()}'
+    assert (
+        band.GetOverviewCount() > 0
+    ), f"Expected overviews > 0, got {band.GetOverviewCount()}"
     for band_idx in range(band.GetOverviewCount()):
         ovr_band = band.GetOverview(band_idx)
         assert ovr_band is not None
@@ -345,10 +346,11 @@ def test_ngw_8():
 ###############################################################################
 # Check webmap as raster and basemap
 
-def test_ngw_9():
-    url = gdaltest.ngw_test_server + '/api/resource/search/?cls=webmap'
 
-    result = gdaltest.gdalurlopen(url, timeout = NET_TIMEOUT)
+def test_ngw_9():
+    url = gdaltest.ngw_test_server + "/api/resource/search/?cls=webmap"
+
+    result = gdaltest.gdalurlopen(url, timeout=NET_TIMEOUT)
 
     if result is not None:
         data = json.loads(result.read())
@@ -359,12 +361,11 @@ def test_ngw_9():
             check_tms([url, "webmap"])
             break
 
+    url = gdaltest.ngw_test_server + "/api/resource/search/?cls=basemap_layer"
 
-    url = gdaltest.ngw_test_server + '/api/resource/search/?cls=basemap_layer'
+    result = gdaltest.gdalurlopen(url, timeout=NET_TIMEOUT)
 
-    result = gdaltest.gdalurlopen(url, timeout = NET_TIMEOUT)
-
-    if result is not None:        
+    if result is not None:
         data = json.loads(result.read())
 
         for item in data:
@@ -372,4 +373,3 @@ def test_ngw_9():
             url = f"NGW:{gdaltest.ngw_test_server}/resource/{item['resource']['id']}"
             check_tms([url, "basemap"])
             break
-    

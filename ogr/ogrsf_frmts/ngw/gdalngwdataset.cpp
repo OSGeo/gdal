@@ -1740,6 +1740,7 @@ bool OGRNGWDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
     auto osPalyload = CreateNGWLookupTableJson(
         dynamic_cast<OGRCodedFieldDomain *>(domain.get()),
         static_cast<GIntBig>(std::stol(osResourceId)));
+
     std::string osResourceIdInt =
         NGWAPI::CreateResource(osUrl, osPalyload, GetHeaders());
     if (osResourceIdInt == "-1")

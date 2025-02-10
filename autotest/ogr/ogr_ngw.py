@@ -35,9 +35,9 @@ pytestmark = [
     ),
 ]
 
-NET_TIMEOUT = 30
+NET_TIMEOUT = 130
 NET_MAX_RETRY = 5
-NET_RETRY_DELAY = 1
+NET_RETRY_DELAY = 2
 
 
 def check_availability(url):
@@ -252,14 +252,11 @@ def test_ogr_ngw_5():
 
     # Test duplicated names.
     gdal.ErrorReset()
-    with gdal.quiet_errors():
-        fld_defn = ogr.FieldDefn("STRFIELD", ogr.OFTString)
-        try:
-            assert (
-                lyr.CreateField(fld_defn) != 0
-            ), "Expected not to create duplicated field"
-        except:
-            pass
+    fld_defn = ogr.FieldDefn("STRFIELD", ogr.OFTString)
+    try:
+        assert lyr.CreateField(fld_defn) != 0, "Expected not to create duplicated field"
+    except Exception:
+        pass
 
     add_metadata(lyr)
 
@@ -321,28 +318,27 @@ def test_ogr_ngw_5():
 
     # Test without overwrite
     gdal.ErrorReset()
-    with gdal.quiet_errors():
-        try:
-            lyr = gdaltest.ngw_ds.CreateLayer(
-                "test_pl_layer",
-                srs=sr,
-                geom_type=ogr.wkbMultiPolygon,
-                options=["OVERWRITE=NO", "DESCRIPTION=Test polygon layer 1"],
-            )
-            assert lyr is None, "Create layer without overwrite should fail."
-        except:
-            pass
+    try:
+        lyr = gdaltest.ngw_ds.CreateLayer(
+            "test_pl_layer",
+            srs=sr,
+            geom_type=ogr.wkbMultiPolygon,
+            options=["OVERWRITE=NO", "DESCRIPTION=Test polygon layer 1"],
+        )
+        assert lyr is None, "Create layer without overwrite should fail."
+    except Exception:
+        pass
 
-        try:
-            lyr = gdaltest.ngw_ds.CreateLayer(
-                "test_pl_layer",
-                srs=sr,
-                geom_type=ogr.wkbMultiPolygon,
-                options=["DESCRIPTION=Test point layer 1"],
-            )
-            assert lyr is None, "Create layer without overwrite should fail."
-        except:
-            pass
+    try:
+        lyr = gdaltest.ngw_ds.CreateLayer(
+            "test_pl_layer",
+            srs=sr,
+            geom_type=ogr.wkbMultiPolygon,
+            options=["DESCRIPTION=Test point layer 1"],
+        )
+        assert lyr is None, "Create layer without overwrite should fail."
+    except Exception:
+        pass
 
     # Test geometry with Z
     lyr = gdaltest.ngw_ds.CreateLayer(
@@ -477,12 +473,11 @@ def test_ogr_ngw_7():
 
     # Expected fail to get feature
     gdal.ErrorReset()
-    with gdal.quiet_errors():
-        try:
-            f = lyr.GetFeature(f.GetFID())
-            assert f is None, f"Failed. Got deleted feature #{f.GetFID()}."
-        except:
-            pass
+    try:
+        f = lyr.GetFeature(f.GetFID())
+        assert f is None, f"Failed. Got deleted feature #{f.GetFID()}."
+    except Exception:
+        pass
 
 
 ###############################################################################
@@ -843,7 +838,6 @@ def test_ogr_ngw_15():
 
 @pytest.mark.slow()
 def test_ogr_ngw_16():
-    # TODO: support domains
     if gdaltest.ngw_ds is None:
         pytest.skip()
 
@@ -851,16 +845,22 @@ def test_ogr_ngw_16():
 
     assert gdaltest.ngw_ds.GetFieldDomain("does_not_exist") is None
 
-    assert gdaltest.ngw_ds.AddFieldDomain(
-        ogr.CreateCodedFieldDomain(
-            "enum_domain", "", ogr.OFTInteger64, ogr.OFSTNone, {1: "one", "2": None}
-        )
-    )
-    assert gdaltest.ngw_ds.GetFieldDomain("enum_domain") is not None
+    base_name = f"enum_domain_{str(int(time.time()))}_{str(random.randint(10, 99))}"
 
     assert gdaltest.ngw_ds.AddFieldDomain(
         ogr.CreateCodedFieldDomain(
-            "enum_domain_guess_int_single",
+            base_name,
+            "test domain",
+            ogr.OFTInteger64,
+            ogr.OFSTNone,
+            {1: "one", "2": None},
+        )
+    )
+    assert gdaltest.ngw_ds.GetFieldDomain(base_name) is not None
+
+    assert gdaltest.ngw_ds.AddFieldDomain(
+        ogr.CreateCodedFieldDomain(
+            f"{base_name}_guess_int_single",
             "my desc",
             ogr.OFTInteger,
             ogr.OFSTNone,
@@ -869,7 +869,7 @@ def test_ogr_ngw_16():
     )
     assert gdaltest.ngw_ds.AddFieldDomain(
         ogr.CreateCodedFieldDomain(
-            "enum_domain_guess_int",
+            f"{base_name}_guess_int",
             "",
             ogr.OFTInteger,
             ogr.OFSTNone,
@@ -878,7 +878,7 @@ def test_ogr_ngw_16():
     )
     assert gdaltest.ngw_ds.AddFieldDomain(
         ogr.CreateCodedFieldDomain(
-            "enum_domain_guess_int64_single_1",
+            f"{base_name}_guess_int64_single_1",
             "",
             ogr.OFTInteger64,
             ogr.OFSTNone,
@@ -887,7 +887,7 @@ def test_ogr_ngw_16():
     )
     assert gdaltest.ngw_ds.AddFieldDomain(
         ogr.CreateCodedFieldDomain(
-            "enum_domain_guess_int64_single_2",
+            f"{base_name}_guess_int64_single_2",
             "",
             ogr.OFTInteger64,
             ogr.OFSTNone,
@@ -896,7 +896,7 @@ def test_ogr_ngw_16():
     )
     assert gdaltest.ngw_ds.AddFieldDomain(
         ogr.CreateCodedFieldDomain(
-            "enum_domain_guess_int64",
+            f"{base_name}_guess_int64",
             "",
             ogr.OFTInteger64,
             ogr.OFSTNone,
@@ -905,7 +905,7 @@ def test_ogr_ngw_16():
     )
     assert gdaltest.ngw_ds.AddFieldDomain(
         ogr.CreateCodedFieldDomain(
-            "enum_domain_guess_string_single",
+            f"{base_name}_guess_string_single",
             "",
             ogr.OFTString,
             ogr.OFSTNone,
@@ -914,7 +914,7 @@ def test_ogr_ngw_16():
     )
     assert gdaltest.ngw_ds.AddFieldDomain(
         ogr.CreateCodedFieldDomain(
-            "enum_domain_guess_string",
+            f"{base_name}_guess_string",
             "",
             ogr.OFTString,
             ogr.OFSTNone,
@@ -923,14 +923,14 @@ def test_ogr_ngw_16():
     )
 
     assert {
-        "enum_domain",
-        "enum_domain_guess_int",
-        "enum_domain_guess_int64",
-        "enum_domain_guess_int64_single_1",
-        "enum_domain_guess_int64_single_2",
-        "enum_domain_guess_int_single",
-        "enum_domain_guess_string",
-        "enum_domain_guess_string_single",
+        base_name,
+        f"{base_name}_guess_int",
+        f"{base_name}_guess_int64",
+        f"{base_name}_guess_int64_single_1",
+        f"{base_name}_guess_int64_single_2",
+        f"{base_name}_guess_int_single",
+        f"{base_name}_guess_string",
+        f"{base_name}_guess_string_single",
     }.issubset(set(gdaltest.ngw_ds.GetFieldDomainNames()))
 
     sr = osr.SpatialReference()
@@ -947,7 +947,7 @@ def test_ogr_ngw_16():
     assert lyr is not None, "Create layer failed."
 
     fld_defn = ogr.FieldDefn("with_enum_domain", ogr.OFTInteger64)
-    fld_defn.SetDomainName("enum_domain (bigint)")
+    fld_defn.SetDomainName(f"{base_name} (bigint)")
     lyr.CreateField(fld_defn)
 
     fld_defn = ogr.FieldDefn("without_domain_initially", ogr.OFTInteger)
@@ -955,10 +955,10 @@ def test_ogr_ngw_16():
 
     # If all keys can be transform to numbers 3 domains created for string, int
     # and int64 types
-    domain1 = gdaltest.ngw_ds.GetFieldDomain("enum_domain")
+    domain1 = gdaltest.ngw_ds.GetFieldDomain(base_name)
     assert domain1 is not None
-    assert domain1.GetName() == "enum_domain"
-    assert domain1.GetDescription() == ""
+    assert domain1.GetName() == base_name
+    assert domain1.GetDescription() == "test domain"
     assert domain1.GetDomainType() == ogr.OFDT_CODED
     assert domain1.GetFieldType() == ogr.OFTString
     assert domain1.GetEnumeration() == {
@@ -966,10 +966,10 @@ def test_ogr_ngw_16():
         "2": "",
     }, f'Expected \'{{"1": "one", "2": ""}}\', got {domain1.GetEnumeration()}'
 
-    domain2 = gdaltest.ngw_ds.GetFieldDomain("enum_domain (number)")
+    domain2 = gdaltest.ngw_ds.GetFieldDomain(f"{base_name} (number)")
     assert domain2 is not None
-    assert domain2.GetName() == "enum_domain (number)"
-    assert domain2.GetDescription() == ""
+    assert domain2.GetName() == f"{base_name} (number)"
+    assert domain2.GetDescription() == "test domain"
     assert domain2.GetDomainType() == ogr.OFDT_CODED
     assert domain2.GetFieldType() == ogr.OFTInteger
     assert domain2.GetEnumeration() == {
@@ -977,10 +977,10 @@ def test_ogr_ngw_16():
         "2": "",
     }, f'Expected \'{{"1": "one", "2": ""}}\', got {domain1.GetEnumeration()}'
 
-    domain3 = gdaltest.ngw_ds.GetFieldDomain("enum_domain (bigint)")
+    domain3 = gdaltest.ngw_ds.GetFieldDomain(f"{base_name} (bigint)")
     assert domain3 is not None
-    assert domain3.GetName() == "enum_domain (bigint)"
-    assert domain3.GetDescription() == ""
+    assert domain3.GetName() == f"{base_name} (bigint)"
+    assert domain3.GetDescription() == "test domain"
     assert domain3.GetDomainType() == ogr.OFDT_CODED
     assert domain3.GetFieldType() == ogr.OFTInteger64
     assert domain3.GetEnumeration() == {
@@ -988,26 +988,30 @@ def test_ogr_ngw_16():
         "2": "",
     }, f'Expected \'{{"1": "one", "2": ""}}\', got {domain1.GetEnumeration()}'
 
-    domain = gdaltest.ngw_ds.GetFieldDomain("enum_domain_guess_int_single (number)")
+    domain = gdaltest.ngw_ds.GetFieldDomain(f"{base_name}_guess_int_single (number)")
     assert domain.GetDescription() == "my desc"
     assert domain.GetFieldType() == ogr.OFTInteger
 
-    domain = gdaltest.ngw_ds.GetFieldDomain("enum_domain_guess_int (number)")
+    domain = gdaltest.ngw_ds.GetFieldDomain(f"{base_name}_guess_int (number)")
     assert domain.GetFieldType() == ogr.OFTInteger
 
-    domain = gdaltest.ngw_ds.GetFieldDomain("enum_domain_guess_int64_single_1 (bigint)")
+    domain = gdaltest.ngw_ds.GetFieldDomain(
+        f"{base_name}_guess_int64_single_1 (bigint)"
+    )
     assert domain.GetFieldType() == ogr.OFTInteger64
 
-    domain = gdaltest.ngw_ds.GetFieldDomain("enum_domain_guess_int64_single_2 (bigint)")
+    domain = gdaltest.ngw_ds.GetFieldDomain(
+        f"{base_name}_guess_int64_single_2 (bigint)"
+    )
     assert domain.GetFieldType() == ogr.OFTInteger64
 
-    domain = gdaltest.ngw_ds.GetFieldDomain("enum_domain_guess_int64 (bigint)")
+    domain = gdaltest.ngw_ds.GetFieldDomain(f"{base_name}_guess_int64 (bigint)")
     assert domain.GetFieldType() == ogr.OFTInteger64
 
-    domain = gdaltest.ngw_ds.GetFieldDomain("enum_domain_guess_string_single")
+    domain = gdaltest.ngw_ds.GetFieldDomain(f"{base_name}_guess_string_single")
     assert domain.GetFieldType() == ogr.OFTString
 
-    domain = gdaltest.ngw_ds.GetFieldDomain("enum_domain_guess_string")
+    domain = gdaltest.ngw_ds.GetFieldDomain(f"{base_name}_guess_string")
     assert domain.GetFieldType() == ogr.OFTString
 
     lyr_defn = lyr.GetLayerDefn()
@@ -1020,7 +1024,7 @@ def test_ogr_ngw_16():
     # Change domain name
     idx = lyr_defn.GetFieldIndex("with_enum_domain")
     fld_defn = lyr_defn.GetFieldDefn(idx)
-    fld_defn.SetDomainName("enum_domain_guess_int64 (bigint)")
+    fld_defn.SetDomainName(f"{base_name}_guess_int64 (bigint)")
     assert lyr.AlterFieldDefn(idx, fld_defn, ogr.ALTER_ALL_FLAG) == 0
 
     # Don't change anything
@@ -1031,13 +1035,13 @@ def test_ogr_ngw_16():
     # Set domain name
     idx = lyr_defn.GetFieldIndex("without_domain_initially")
     fld_defn = lyr_defn.GetFieldDefn(idx)
-    fld_defn.SetDomainName("enum_domain_guess_int (number)")
+    fld_defn.SetDomainName(f"{base_name}_guess_int (number)")
     assert lyr.AlterFieldDefn(idx, fld_defn, ogr.ALTER_ALL_FLAG) == 0
 
     fld_defn = lyr_defn.GetFieldDefn(idx)
     assert (
-        fld_defn.GetDomainName() == "enum_domain_guess_int (number)"
-    ), f"Got {fld_defn.GetDomainName()} but expected 'enum_domain_guess_int (number)'"
+        fld_defn.GetDomainName() == f"{base_name}_guess_int (number)"
+    ), f"Got {fld_defn.GetDomainName()} but expected '{base_name}_guess_int (number)'"
 
 
 ###############################################################################
