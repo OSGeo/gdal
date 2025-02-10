@@ -1635,7 +1635,7 @@ static bool ReadPixels(const GUInt64 *arrayStartIdx, const size_t *count,
     /*      to look in to find the external files.  Normally this is the    */
     /*      directory holding the hdf file.                                 */
     /* -------------------------------------------------------------------- */
-    HXsetdir(CPLGetPath(poShared->GetFilename().c_str()));
+    HXsetdir(CPLGetPathSafe(poShared->GetFilename().c_str()).c_str());
 
     const size_t nDims(dims.size());
     std::vector<int32> sw_start(nDims);
@@ -3042,7 +3042,7 @@ bool HDF4GRArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
     /*      to look in to find the external files.  Normally this is the    */
     /*      directory holding the hdf file.                                 */
     /* -------------------------------------------------------------------- */
-    HXsetdir(CPLGetPath(m_poShared->GetFilename().c_str()));
+    HXsetdir(CPLGetPathSafe(m_poShared->GetFilename().c_str()).c_str());
 
     const size_t nDims(m_dims.size());
     std::vector<int32> sw_start(nDims);

@@ -311,7 +311,7 @@ void GDALDefaultOverviews::OverviewScan()
         bool bTryFindAssociatedAuxFile = true;
         if (papszInitSiblingFiles)
         {
-            CPLString osAuxFilename = CPLResetExtension(pszInitName, "aux");
+            CPLString osAuxFilename = CPLResetExtensionSafe(pszInitName, "aux");
             int iSibling = CSLFindString(papszInitSiblingFiles,
                                          CPLGetFilename(osAuxFilename));
             if (iSibling < 0)
@@ -364,10 +364,10 @@ void GDALDefaultOverviews::OverviewScan()
         {
             if (STARTS_WITH_CI(pszProxyOvrFilename, ":::BASE:::"))
             {
-                const CPLString osPath = CPLGetPath(poDS->GetDescription());
+                const CPLString osPath = CPLGetPathSafe(poDS->GetDescription());
 
-                osOvrFilename =
-                    CPLFormFilename(osPath, pszProxyOvrFilename + 10, nullptr);
+                osOvrFilename = CPLFormFilenameSafe(
+                    osPath, pszProxyOvrFilename + 10, nullptr);
             }
             else
             {
@@ -546,9 +546,10 @@ CPLErr GDALDefaultOverviews::CleanOverviews()
         const bool bUseRRD = CPLTestBool(CPLGetConfigOption("USE_RRD", "NO"));
 
         if (bUseRRD)
-            osOvrFilename = CPLResetExtension(poDS->GetDescription(), "aux");
+            osOvrFilename =
+                CPLResetExtensionSafe(poDS->GetDescription(), "aux");
         else
-            osOvrFilename.Printf("%s.ovr", poDS->GetDescription());
+            osOvrFilename = std::string(poDS->GetDescription()).append(".ovr");
     }
     else
     {
@@ -666,7 +667,8 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
         bOvrIsAux = pszUseRRD && CPLTestBool(pszUseRRD);
         if (bOvrIsAux)
         {
-            osOvrFilename = CPLResetExtension(poDS->GetDescription(), "aux");
+            osOvrFilename =
+                CPLResetExtensionSafe(poDS->GetDescription(), "aux");
 
             VSIStatBufL sStatBuf;
             if (VSIStatExL(osOvrFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0)
@@ -1312,7 +1314,7 @@ int GDALDefaultOverviews::HaveMaskFile(char **papszSiblingFiles,
         pszBasename = poDS->GetDescription();
 
     // Don't bother checking for masks of masks.
-    if (EQUAL(CPLGetExtension(pszBasename), "msk"))
+    if (EQUAL(CPLGetExtensionSafe(pszBasename).c_str(), "msk"))
         return FALSE;
 
     if (!GDALCanFileAcceptSidecarFile(pszBasename))

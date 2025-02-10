@@ -962,20 +962,20 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
         /* If nfw found, try looking for a header with projection info */
         /* in space imaging style format                               */
-        const char *pszHDR = CPLResetExtension(pszFilename, "hdr");
+        std::string osHDR = CPLResetExtensionSafe(pszFilename, "hdr");
 
-        VSILFILE *fpHDR = VSIFOpenL(pszHDR, "rt");
+        VSILFILE *fpHDR = VSIFOpenL(osHDR.c_str(), "rt");
 
-        if (fpHDR == nullptr && VSIIsCaseSensitiveFS(pszHDR))
+        if (fpHDR == nullptr && VSIIsCaseSensitiveFS(osHDR.c_str()))
         {
-            pszHDR = CPLResetExtension(pszFilename, "HDR");
-            fpHDR = VSIFOpenL(pszHDR, "rt");
+            osHDR = CPLResetExtensionSafe(pszFilename, "HDR");
+            fpHDR = VSIFOpenL(osHDR.c_str(), "rt");
         }
 
         if (fpHDR != nullptr)
         {
             CPL_IGNORE_RET_VAL(VSIFCloseL(fpHDR));
-            char **papszLines = CSLLoad2(pszHDR, 16, 200, nullptr);
+            char **papszLines = CSLLoad2(osHDR.c_str(), 16, 200, nullptr);
             if (CSLCount(papszLines) == 16)
             {
 
@@ -1422,23 +1422,24 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     /* -------------------------------------------------------------------- */
 
     // get _rpc.txt file
-    const char *pszDirName = CPLGetDirname(pszFilename);
-    const char *pszBaseName = CPLGetBasename(pszFilename);
-    const char *pszRPCTXTFilename =
-        CPLFormFilename(pszDirName, CPLSPrintf("%s_rpc", pszBaseName), "txt");
-    if (CPLCheckForFile((char *)pszRPCTXTFilename,
-                        poOpenInfo->GetSiblingFiles()))
+    const std::string osDirName = CPLGetDirnameSafe(pszFilename);
+    const std::string osBaseName = CPLGetBasenameSafe(pszFilename);
+    std::string osRPCTXTFilename = CPLFormFilenameSafe(
+        osDirName.c_str(), std::string(osBaseName).append("_rpc").c_str(),
+        "txt");
+    if (CPLCheckForFile(osRPCTXTFilename.data(), poOpenInfo->GetSiblingFiles()))
     {
-        poDS->m_osRPCTXTFilename = pszRPCTXTFilename;
+        poDS->m_osRPCTXTFilename = osRPCTXTFilename;
     }
     else
     {
-        pszRPCTXTFilename = CPLFormFilename(
-            pszDirName, CPLSPrintf("%s_RPC", pszBaseName), "TXT");
-        if (CPLCheckForFile((char *)pszRPCTXTFilename,
+        osRPCTXTFilename = CPLFormFilenameSafe(
+            osDirName.c_str(), std::string(osBaseName).append("_RPC").c_str(),
+            "TXT");
+        if (CPLCheckForFile(osRPCTXTFilename.data(),
                             poOpenInfo->GetSiblingFiles()))
         {
-            poDS->m_osRPCTXTFilename = pszRPCTXTFilename;
+            poDS->m_osRPCTXTFilename = osRPCTXTFilename;
         }
     }
     bool bHasLoadedRPCTXT = false;
@@ -3502,7 +3503,7 @@ int NITFDataset::CheckForRSets(const char *pszNITFFilename,
                                char **papszSiblingFiles)
 
 {
-    bool isR0File = EQUAL(CPLGetExtension(pszNITFFilename), "r0");
+    bool isR0File = EQUAL(CPLGetExtensionSafe(pszNITFFilename).c_str(), "r0");
 
     /* -------------------------------------------------------------------- */
     /*      Check to see if we have RSets.                                  */
@@ -4040,7 +4041,7 @@ char **NITFDataset::AddFile(char **papszFileList, const char *EXTENSION,
                             const char *extension)
 {
     VSIStatBufL sStatBuf;
-    CPLString osTarget = CPLResetExtension(osNITFFilename, EXTENSION);
+    CPLString osTarget = CPLResetExtensionSafe(osNITFFilename, EXTENSION);
     if (oOvManager.GetSiblingFiles() != nullptr)
     {
         if (CSLFindStringCaseSensitive(oOvManager.GetSiblingFiles(),
@@ -4048,7 +4049,7 @@ char **NITFDataset::AddFile(char **papszFileList, const char *EXTENSION,
             papszFileList = CSLAddString(papszFileList, osTarget);
         else
         {
-            osTarget = CPLResetExtension(osNITFFilename, extension);
+            osTarget = CPLResetExtensionSafe(osNITFFilename, extension);
             if (CSLFindStringCaseSensitive(oOvManager.GetSiblingFiles(),
                                            CPLGetFilename(osTarget)) >= 0)
                 papszFileList = CSLAddString(papszFileList, osTarget);
@@ -4060,7 +4061,7 @@ char **NITFDataset::AddFile(char **papszFileList, const char *EXTENSION,
             papszFileList = CSLAddString(papszFileList, osTarget);
         else
         {
-            osTarget = CPLResetExtension(osNITFFilename, extension);
+            osTarget = CPLResetExtensionSafe(osNITFFilename, extension);
             if (VSIStatL(osTarget, &sStatBuf) == 0)
                 papszFileList = CSLAddString(papszFileList, osTarget);
         }

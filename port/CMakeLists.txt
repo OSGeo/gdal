@@ -14,6 +14,7 @@ target_public_header(
   cpl_conv.h
   cpl_csv.h
   cpl_error.h
+  cpl_float.h
   cpl_hash_set.h
   cpl_http.h
   cpl_json.h
@@ -111,6 +112,8 @@ add_library(cpl OBJECT ${CPL_SOURCES})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:cpl>)
 target_compile_options(cpl PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
 set_property(TARGET cpl PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+
+set_property(SOURCE cpl_path.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
 
 # include path to generated cpl_config.h
 target_include_directories(cpl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})

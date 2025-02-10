@@ -28,7 +28,7 @@ More generally, consult [development practices](https://gdal.org/development/dev
 
 ## Tasklist
 
- - [ ] ADD YOUR TASKS HERE
+ - [ ] AI (Copilot or something similar) supported my development of this PR
  - [ ] Make sure code is correctly formatted (cf [pre-commit configuration](https://gdal.org/development/dev_practices.html#commit-hooks))
  - [ ] Add test case(s)
  - [ ] Add documentation
@@ -36,6 +36,7 @@ More generally, consult [development practices](https://gdal.org/development/dev
  - [ ] Review
  - [ ] Adjust for comments
  - [ ] All CI builds and checks have passed
+ - [ ] ADD YOUR TASKS HERE
 
 ## Environment
 

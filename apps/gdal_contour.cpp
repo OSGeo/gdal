@@ -388,7 +388,8 @@ MAIN_START(argc, argv)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Several drivers matching %s extension. Using %s",
-                         CPLGetExtension(sOptions.aosDestFilename.c_str()),
+                         CPLGetExtensionSafe(sOptions.aosDestFilename.c_str())
+                             .c_str(),
                          aoDrivers[0].c_str());
             }
             osFormat = aoDrivers[0];

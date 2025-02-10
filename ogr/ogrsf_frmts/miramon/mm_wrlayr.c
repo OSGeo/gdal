@@ -2643,13 +2643,13 @@ int MMAppendBlockToBuffer(struct MM_FLUSH_INFO *FlushInfo)
 // Copy the contents of a temporary file to a final file.
 // Used everywhere when closing layers.
 int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
-                         MM_FILE_OFFSET *nOffset)
+                         MM_FILE_OFFSET *pnOffset)
 {
     size_t bufferSize = 1024 * 1024;  // 1 MB buffer;
     unsigned char *buffer;
     size_t bytesRead, bytesWritten;
 
-    if (!pSrcFile || !pDestFile || !nOffset)
+    if (!pSrcFile || !pDestFile || !pnOffset)
         return 0;
 
     buffer = (unsigned char *)calloc_function(bufferSize);
@@ -2658,7 +2658,7 @@ int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
         return 1;
 
     fseek_function(pSrcFile, 0, SEEK_SET);
-    fseek_function(pDestFile, *nOffset, SEEK_SET);
+    fseek_function(pDestFile, *pnOffset, SEEK_SET);
     while ((bytesRead = fread_function(buffer, sizeof(unsigned char),
                                        bufferSize, pSrcFile)) > 0)
     {
@@ -2669,8 +2669,7 @@ int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
             free_function(buffer);
             return 1;
         }
-        if (nOffset)
-            (*nOffset) += bytesWritten;
+        (*pnOffset) += bytesWritten;
     }
     free_function(buffer);
     return 0;
@@ -3730,6 +3729,7 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
     MM_N_VERTICES_TYPE nPolVertices = 0;
     MM_BOOLEAN bReverseArc;
     int prevCoord = -1;
+    MM_BOOLEAN bPolZeroJustCreated = FALSE;
 
     if (!hMiraMonLayer)
         return MM_FATAL_ERROR_WRITING_FEATURES;
@@ -3825,7 +3825,16 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
             // Universal polygon have a record with ID_GRAFIC=0 and blancs
             if (MMAddPolygonRecordToMMDB(hMiraMonLayer, nullptr, 0, 0, nullptr))
+            {
+                // Rare case where polygon zero creates the database
+                // but some error occurs in the creation of the polygon zero.
+                // The database must be destroyed and created again
+                // next time the polygon zero is created.
+                MMCloseMMBD_XP(hMiraMonLayer);
+                MMDestroyMMDB(hMiraMonLayer);
                 return MM_FATAL_ERROR_WRITING_FEATURES;
+            }
+            bPolZeroJustCreated = TRUE;
         }
     }
 
@@ -3968,7 +3977,18 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
     pCoord = hMMFeature->pCoord;
 
     if (!pCoord)
+    {
+        if (bPolZeroJustCreated)
+        {
+            // Rare case where polygon zero creates the database
+            // but some error occurs in the creation of the polygon zero.
+            // The database must be destroyed and created again
+            // next time the polygon zero is created.
+            MMCloseMMBD_XP(hMiraMonLayer);
+            MMDestroyMMDB(hMiraMonLayer);
+        }
         return MM_FATAL_ERROR_WRITING_FEATURES;
+    }
 
     // Doing real job
     for (nIPart = 0; nIPart < hMMFeature->nNRings; nIPart++,

@@ -52,6 +52,28 @@ Potential steps are:
       --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
       --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
 
+* clip [OPTIONS]
+
+.. code-block::
+
+    Clip a vector dataset.
+
+    Options:
+      --bbox <BBOX>                                        Clipping bounding box as xmin,ymin,xmax,ymax
+                                                           Mutually exclusive with --geometry, --like
+      --bbox-crs <BBOX-CRS>                                CRS of clipping bounding box
+      --geometry <GEOMETRY>                                Clipping geometry (WKT or GeoJSON)
+                                                           Mutually exclusive with --bbox, --like
+      --geometry-crs <GEOMETRY-CRS>                        CRS of clipping geometry
+      --like <DATASET>                                     Dataset to use as a template for bounds
+                                                           Mutually exclusive with --bbox, --geometry
+      --like-sql <SELECT-STATEMENT>                        SELECT statement to run on the 'like' dataset
+      --like-layer <LAYER-NAME>                            Name of the layer of the 'like' dataset
+      --like-where <WHERE-EXPRESSION>                      Expression for a WHERE SQL clause to run on the 'like' dataset
+
+
+Details for options can be found in :ref:`gdal_vector_clip_subcommand`.
+
 * filter [OPTIONS]
 
 .. code-block::

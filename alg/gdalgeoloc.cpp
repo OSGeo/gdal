@@ -1817,9 +1817,11 @@ void *GDALCreateGeoLocTransformerEx(GDALDatasetH hBaseDS,
                 papszGeolocationInfo, "X_DATASET_RELATIVE_TO_SOURCE", "NO")) &&
             (hBaseDS != nullptr || pszSourceDataset))
         {
-            CPLString osFilename = CPLProjectRelativeFilename(
-                CPLGetDirname(pszSourceDataset ? pszSourceDataset
-                                               : GDALGetDescription(hBaseDS)),
+            const CPLString osFilename = CPLProjectRelativeFilenameSafe(
+                CPLGetDirnameSafe(pszSourceDataset
+                                      ? pszSourceDataset
+                                      : GDALGetDescription(hBaseDS))
+                    .c_str(),
                 pszDSName);
             psTransform->hDS_X =
                 GDALOpenShared(osFilename.c_str(), GA_ReadOnly);
@@ -1849,9 +1851,11 @@ void *GDALCreateGeoLocTransformerEx(GDALDatasetH hBaseDS,
                 papszGeolocationInfo, "Y_DATASET_RELATIVE_TO_SOURCE", "NO")) &&
             (hBaseDS != nullptr || pszSourceDataset))
         {
-            CPLString osFilename = CPLProjectRelativeFilename(
-                CPLGetDirname(pszSourceDataset ? pszSourceDataset
-                                               : GDALGetDescription(hBaseDS)),
+            const CPLString osFilename = CPLProjectRelativeFilenameSafe(
+                CPLGetDirnameSafe(pszSourceDataset
+                                      ? pszSourceDataset
+                                      : GDALGetDescription(hBaseDS))
+                    .c_str(),
                 pszDSName);
             psTransform->hDS_Y =
                 GDALOpenShared(osFilename.c_str(), GA_ReadOnly);

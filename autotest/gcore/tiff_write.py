@@ -11988,3 +11988,49 @@ def test_tiff_write_warn_ignore_predictor_option(tmp_vsimem):
             out_filename, 1, 1, options=["PREDICTOR=2"]
         )
     assert "PREDICTOR option is ignored" in gdal.GetLastErrorMsg()
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("COPY_SRC_OVERVIEWS", ["YES", "NO"])
+def test_tiff_write_interleave_tile(tmp_vsimem, COPY_SRC_OVERVIEWS):
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        out_filename,
+        gdal.Open("data/rgbsmall.tif"),
+        options=[
+            "@TILE_INTERLEAVE=YES",
+            "TILED=YES",
+            "BLOCKXSIZE=32",
+            "BLOCKYSIZE=32",
+            "COPY_SRC_OVERVIEWS=" + COPY_SRC_OVERVIEWS,
+        ],
+    )
+    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "TILE"
+    ds.Close()
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "TILE"
+
+    assert [ds.GetRasterBand(band + 1).Checksum() for band in range(3)] == [
+        21212,
+        21053,
+        21349,
+    ]
+
+    # Check that the tiles are in the expected order in the file
+    last_offset = 0
+    for y in range(2):
+        for x in range(2):
+            for band in range(3):
+                offset = int(
+                    ds.GetRasterBand(band + 1).GetMetadataItem(
+                        f"BLOCK_OFFSET_{x}_{y}", "TIFF"
+                    )
+                )
+                assert offset > last_offset
+                last_offset = offset

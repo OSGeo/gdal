@@ -581,7 +581,7 @@ bool OGRVRTLayer::FullInitialize()
                     nLastPart -= 2;
                 CPLString osPrefix(osSrcDSName);
                 osPrefix.resize(nLastPart);
-                osSrcDSName = osPrefix + CPLProjectRelativeFilename(
+                osSrcDSName = osPrefix + CPLProjectRelativeFilenameSafe(
                                              osVRTDirectory,
                                              osSrcDSName.c_str() + nLastPart);
                 bDone = true;
@@ -590,8 +590,8 @@ bool OGRVRTLayer::FullInitialize()
         }
         if (!bDone)
         {
-            osSrcDSName =
-                CPLProjectRelativeFilename(osVRTDirectory, osSrcDSName.c_str());
+            osSrcDSName = CPLProjectRelativeFilenameSafe(osVRTDirectory,
+                                                         osSrcDSName.c_str());
         }
     }
 

@@ -20,3 +20,4 @@ gdal.h: Raster C API
      nSrcWidth
      pSrc
      pDst
+     SetMetadataItem

@@ -303,7 +303,7 @@ CPLString OGROAPIFDataset::ResolveURL(const CPLString &osURL,
     // Cf https://datatracker.ietf.org/doc/html/rfc3986#section-5.4
     // Partial implementation for usual cases...
     const std::string osRequestURLBase =
-        CPLGetPath(CleanURL(osRequestURL).c_str());
+        CPLGetPathSafe(CleanURL(osRequestURL).c_str());
     if (!osURL.empty() && osURL[0] == '/')
         osRet = m_osServerBaseURL + osURL;
     else if (osURL.size() > 2 && osURL[0] == '.' && osURL[1] == '/')
@@ -315,7 +315,7 @@ CPLString OGROAPIFDataset::ResolveURL(const CPLString &osURL,
         while (osRet.size() > 3 && osRet[0] == '.' && osRet[1] == '.' &&
                osRet[2] == '/')
         {
-            osModifiedRequestURL = CPLGetPath(osModifiedRequestURL.c_str());
+            osModifiedRequestURL = CPLGetPathSafe(osModifiedRequestURL.c_str());
             osRet = osRet.substr(3);
         }
         osRet = osModifiedRequestURL + "/" + osRet;

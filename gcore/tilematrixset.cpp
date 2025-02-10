@@ -34,7 +34,8 @@ std::set<std::string> TileMatrixSet::listPredefinedTileMatrixSets()
     const char *pszSomeFile = CPLFindFile("gdal", "tms_NZTM2000.json");
     if (pszSomeFile)
     {
-        CPLStringList aosList(VSIReadDir(CPLGetDirname(pszSomeFile)));
+        CPLStringList aosList(
+            VSIReadDir(CPLGetDirnameSafe(pszSomeFile).c_str()));
         for (int i = 0; i < aosList.size(); i++)
         {
             const size_t nLen = strlen(aosList[i]);

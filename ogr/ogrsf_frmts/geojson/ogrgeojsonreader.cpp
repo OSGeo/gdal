@@ -415,14 +415,15 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
     VSIFSeekL(fp, 0, SEEK_SET);
     bFirstSeg_ = true;
 
-    const char *pszName = poDS->GetDescription();
-    if (STARTS_WITH_CI(pszName, "GeoJSON:"))
-        pszName += strlen("GeoJSON:");
-    pszName = CPLGetBasename(pszName);
-    pszName = OGRGeoJSONLayer::GetValidLayerName(pszName);
+    std::string osName = poDS->GetDescription();
+    if (STARTS_WITH_CI(osName.c_str(), "GeoJSON:"))
+        osName = osName.substr(strlen("GeoJSON:"));
+    osName = CPLGetBasenameSafe(osName.c_str());
+    osName = OGRGeoJSONLayer::GetValidLayerName(osName.c_str());
 
-    OGRGeoJSONLayer *poLayer = new OGRGeoJSONLayer(
-        pszName, nullptr, OGRGeoJSONLayer::DefaultGeometryType, poDS, this);
+    OGRGeoJSONLayer *poLayer =
+        new OGRGeoJSONLayer(osName.c_str(), nullptr,
+                            OGRGeoJSONLayer::DefaultGeometryType, poDS, this);
     OGRGeoJSONReaderStreamingParser oParser(*this, poLayer, true,
                                             bStoreNativeData_);
 
@@ -911,7 +912,12 @@ void OGRGeoJSONReader::ReadLayer(OGRGeoJSONDataSource *poDS,
     CPLErrorReset();
 
     // Figure out layer name
-    if (pszName == nullptr)
+    std::string osName;
+    if (pszName)
+    {
+        osName = pszName;
+    }
+    else
     {
         if (GeoJSONObject::eFeatureCollection == objType)
         {
@@ -922,20 +928,25 @@ void OGRGeoJSONReader::ReadLayer(OGRGeoJSONDataSource *poDS,
                 pszName = json_object_get_string(poName);
             }
         }
-        if (pszName == nullptr)
+        if (pszName)
+        {
+            osName = pszName;
+        }
+        else
         {
             const char *pszDesc = poDS->GetDescription();
             if (strchr(pszDesc, '?') == nullptr &&
                 strchr(pszDesc, '{') == nullptr)
             {
-                pszName = CPLGetBasename(pszDesc);
+                osName = CPLGetBasenameSafe(pszDesc);
             }
         }
     }
-    pszName = OGRGeoJSONLayer::GetValidLayerName(pszName);
+    osName = OGRGeoJSONLayer::GetValidLayerName(osName.c_str());
 
     OGRGeoJSONLayer *poLayer = new OGRGeoJSONLayer(
-        pszName, nullptr, OGRGeoJSONLayer::DefaultGeometryType, poDS, nullptr);
+        osName.c_str(), nullptr, OGRGeoJSONLayer::DefaultGeometryType, poDS,
+        nullptr);
 
     OGRSpatialReference *poSRS = OGRGeoJSONReadSpatialReference(poObj);
     bool bDefaultSRS = false;

@@ -955,7 +955,7 @@ CPLErr GDALPamDataset::TryLoadXML(CSLConstList papszSiblingFiles)
     /*      Initialize ourselves from this XML tree.                        */
     /* -------------------------------------------------------------------- */
 
-    CPLString osVRTPath(CPLGetPath(psPam->pszPamFilename));
+    CPLString osVRTPath(CPLGetPathSafe(psPam->pszPamFilename));
     const CPLErr eErr = XMLInit(psTree, osVRTPath);
 
     CPLDestroyXMLNode(psTree);
@@ -1576,21 +1576,26 @@ const char *GDALPamDataset::GetMetadataItem(const char *pszName,
     else if (pszDomain != nullptr && EQUAL(pszDomain, "OVERVIEWS") &&
              EQUAL(pszName, "OVERVIEW_FILE"))
     {
-        const char *pszOverviewFile =
-            GDALDataset::GetMetadataItem(pszName, pszDomain);
+        if (m_osOverviewFile.empty())
+        {
+            const char *pszOverviewFile =
+                GDALDataset::GetMetadataItem(pszName, pszDomain);
 
-        if (pszOverviewFile == nullptr ||
-            !STARTS_WITH_CI(pszOverviewFile, ":::BASE:::"))
-            return pszOverviewFile;
+            if (pszOverviewFile == nullptr ||
+                !STARTS_WITH_CI(pszOverviewFile, ":::BASE:::"))
+                return pszOverviewFile;
 
-        CPLString osPath;
+            std::string osPath;
 
-        if (strlen(GetPhysicalFilename()) > 0)
-            osPath = CPLGetPath(GetPhysicalFilename());
-        else
-            osPath = CPLGetPath(GetDescription());
+            if (strlen(GetPhysicalFilename()) > 0)
+                osPath = CPLGetPathSafe(GetPhysicalFilename());
+            else
+                osPath = CPLGetPathSafe(GetDescription());
 
-        return CPLFormFilename(osPath, pszOverviewFile + 10, nullptr);
+            m_osOverviewFile = CPLFormFilenameSafe(
+                osPath.c_str(), pszOverviewFile + 10, nullptr);
+        }
+        return m_osOverviewFile.c_str();
     }
 
     /* -------------------------------------------------------------------- */
@@ -1641,7 +1646,7 @@ CPLErr GDALPamDataset::TryLoadAux(CSLConstList papszSiblingFiles)
 
     if (papszSiblingFiles && GDALCanReliablyUseSiblingFileList(pszPhysicalFile))
     {
-        CPLString osAuxFilename = CPLResetExtension(pszPhysicalFile, "aux");
+        CPLString osAuxFilename = CPLResetExtensionSafe(pszPhysicalFile, "aux");
         int iSibling =
             CSLFindString(papszSiblingFiles, CPLGetFilename(osAuxFilename));
         if (iSibling < 0)

@@ -901,7 +901,7 @@ static bool IsGdalinfoInteractive()
             osPath.resize(1024);
             if (CPLGetExecPath(&osPath[0], static_cast<int>(osPath.size())))
             {
-                osPath = CPLGetBasename(osPath.c_str());
+                osPath = CPLGetBasenameSafe(osPath.c_str());
             }
             return osPath == "gdalinfo";
         }
@@ -1485,9 +1485,7 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
     // Confirm the requested access is supported.
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The GRIB driver does not support update access to existing "
-                 "datasets.");
+        ReportUpdateNotSupportedByDriver("GRIB");
         return nullptr;
     }
 

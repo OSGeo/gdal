@@ -169,11 +169,11 @@ int PhPrfDataset::Identify(GDALOpenInfo *poOpenInfo)
         return FALSE;
     }
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), PH_PRF_EXT))
+    if (poOpenInfo->IsExtensionEqualToCI(PH_PRF_EXT))
     {
         return TRUE;
     }
-    else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), PH_DEM_EXT))
+    else if (poOpenInfo->IsExtensionEqualToCI(PH_DEM_EXT))
     {
         return TRUE;
     }
@@ -355,11 +355,11 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
 {
     ph_format eFormat;
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), PH_PRF_EXT))
+    if (poOpenInfo->IsExtensionEqualToCI(PH_PRF_EXT))
     {
         eFormat = ph_megatiff;
     }
-    else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), PH_DEM_EXT))
+    else if (poOpenInfo->IsExtensionEqualToCI(PH_DEM_EXT))
     {
         eFormat = ph_xdem;
     }
@@ -385,9 +385,9 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
     int nSizeY = 0;
     int nBandCount = 0;
     GDALDataType eResultDatatype = GDT_Unknown;
-    CPLString osPartsBasePath(CPLGetPath(poOpenInfo->pszFilename));
+    CPLString osPartsBasePath(CPLGetPathSafe(poOpenInfo->pszFilename));
     CPLString osPartsPath(osPartsBasePath + "/" +
-                          CPLGetBasename(poOpenInfo->pszFilename));
+                          CPLGetBasenameSafe(poOpenInfo->pszFilename));
     CPLString osPartsExt;
     double adfGeoTrans[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     bool bGeoTransOk = false;
@@ -608,8 +608,9 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    const char *pszPrj = CPLResetExtension(poOpenInfo->pszFilename, "prj");
-    VSILFILE *const fp = VSIFOpenL(pszPrj, "rt");
+    const std::string osPrj =
+        CPLResetExtensionSafe(poOpenInfo->pszFilename, "prj");
+    VSILFILE *const fp = VSIFOpenL(osPrj.c_str(), "rt");
     if (fp != nullptr)
     {
         const size_t nBufMax = 100000;

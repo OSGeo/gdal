@@ -218,8 +218,9 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     const bool bIsSQLite3 =
         (pszADBCDriverName && EQUAL(pszADBCDriverName, "adbc_driver_sqlite")) ||
         OGRADBCDriverIsSQLite3(poOpenInfo);
-    bool bIsParquet = OGRADBCDriverIsParquet(poOpenInfo) ||
-                      EQUAL(CPLGetExtension(pszFilename), "parquet");
+    bool bIsParquet =
+        OGRADBCDriverIsParquet(poOpenInfo) ||
+        EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "parquet");
     const char *pszSQL = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SQL");
     if (!bIsParquet && pszSQL)
     {
@@ -232,7 +233,8 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
             if (iPos2 != std::string::npos)
             {
                 const std::string osFilename = osSQL.substr(iPos, iPos2 - iPos);
-                if (EQUAL(CPLGetExtension(osFilename.c_str()), "parquet"))
+                if (EQUAL(CPLGetExtensionSafe(osFilename.c_str()).c_str(),
+                          "parquet"))
                 {
                     m_osParquetFilename = osFilename;
                     bIsParquet = true;
@@ -402,10 +404,10 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     {
         if (m_osParquetFilename.empty())
             m_osParquetFilename = pszFilename;
-        osLayerName = CPLGetBasename(m_osParquetFilename.c_str());
+        osLayerName = CPLGetBasenameSafe(m_osParquetFilename.c_str());
         if (osLayerName == "*")
-            osLayerName =
-                CPLGetBasename(CPLGetDirname(m_osParquetFilename.c_str()));
+            osLayerName = CPLGetBasenameSafe(
+                CPLGetDirnameSafe(m_osParquetFilename.c_str()).c_str());
         if (!pszSQL)
         {
             osSQL =

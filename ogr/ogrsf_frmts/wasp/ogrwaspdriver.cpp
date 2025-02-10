@@ -26,7 +26,7 @@ static GDALDataset *OGRWAsPDriverOpen(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "map"))
+    if (!poOpenInfo->IsExtensionEqualToCI("map"))
     {
         return nullptr;
     }

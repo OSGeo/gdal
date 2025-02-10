@@ -1753,4 +1753,46 @@ def test_ogr_mvt_write_reuse_temp_db():
 
 
 ###############################################################################
-#
+
+
+@pytest.mark.require_driver("SQLite")
+@pytest.mark.require_geos
+@pytest.mark.parametrize(
+    "TILING_SCHEME",
+    ["EPSG:4326,-180,90,180", "EPSG:4326,-180,90,180,2,1", "EPSG:4326,-180,90,180,1,1"],
+)
+def test_ogr_mvt_write_custom_tiling_scheme_WorldCRS84Quad(tmp_vsimem, TILING_SCHEME):
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+    lyr = src_ds.CreateLayer("mylayer", srs=srs)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(120 40)"))
+    lyr.CreateFeature(f)
+
+    filename = str(tmp_vsimem / "out")
+    out_ds = gdal.VectorTranslate(
+        filename,
+        src_ds,
+        format="MVT",
+        datasetCreationOptions=["TILING_SCHEME=" + TILING_SCHEME],
+    )
+    assert out_ds is not None
+    out_ds = None
+
+    if TILING_SCHEME == "EPSG:4326,-180,90,180,1,1":
+        # If explicitly setting tile_matrix_width_zoom_0 == 1,
+        # we have no tiles beyond longitude 0 degree
+        with pytest.raises(Exception):
+            ogr.Open(filename + "/0")
+    else:
+        out_ds = ogr.Open(filename + "/0")
+        assert out_ds is not None
+        out_lyr = out_ds.GetLayerByName("mylayer")
+        assert out_lyr.GetSpatialRef().ExportToWkt().find("4326") >= 0
+        out_f = out_lyr.GetNextFeature()
+        ogrtest.check_feature_geometry(
+            out_f, "MULTIPOINT ((120.0146484375 39.990234375))"
+        )

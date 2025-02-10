@@ -40,7 +40,7 @@ int OGRODBCDriverIdentify(GDALOpenInfo *poOpenInfo)
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "ODBC:"))
         return TRUE;
 
-    const char *psExtension(CPLGetExtension(poOpenInfo->pszFilename));
+    const char *psExtension = poOpenInfo->osExtension.c_str();
     if (EQUAL(psExtension, "mdb"))
         return -1;  // Could potentially be a PGeo MDB database
 

@@ -26,6 +26,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_multiproc.h"
 #include "cpl_vsi.h"
 #include "../frmts/mem/memdataset.h"
@@ -800,7 +801,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
     }
 
     if (nMaxValue == 0)
-        nMaxValue = std::numeric_limits<T>::max();
+        nMaxValue = cpl::NumericLimits<T>::max();
     size_t j;
     if (psOptions->nInputSpectralBands == 3 &&
         psOptions->nOutPansharpenedBands == 3 &&
@@ -1009,6 +1010,12 @@ CPLErr GDALPansharpenOperation::WeightedBrovey(
                            nBandValues, nMaxValue);
             break;
 
+        case GDT_Float16:
+            WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
+                           static_cast<GFloat16 *>(pDataBuf), nValues,
+                           nBandValues, nMaxValue);
+            break;
+
         case GDT_Float32:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
                            static_cast<float *>(pDataBuf), nValues, nBandValues,
@@ -1088,6 +1095,12 @@ CPLErr GDALPansharpenOperation::WeightedBrovey(
             WeightedBrovey3<WorkDataType, std::int64_t, FALSE>(
                 pPanBuffer, pUpsampledSpectralBuffer,
                 static_cast<std::int64_t *>(pDataBuf), nValues, nBandValues, 0);
+            break;
+
+        case GDT_Float16:
+            WeightedBrovey3<WorkDataType, GFloat16, FALSE>(
+                pPanBuffer, pUpsampledSpectralBuffer,
+                static_cast<GFloat16 *>(pDataBuf), nValues, nBandValues, 0);
             break;
 
         case GDT_Float32:
@@ -1766,6 +1779,13 @@ CPLErr GDALPansharpenOperation::PansharpenChunk(
             eErr = WeightedBrovey(
                 static_cast<const std::int64_t *>(pPanBuffer),
                 static_cast<const std::int64_t *>(pUpsampledSpectralBuffer),
+                pDataBuf, eBufDataType, nValues, nBandValues);
+            break;
+
+        case GDT_Float16:
+            eErr = WeightedBrovey(
+                static_cast<const GFloat16 *>(pPanBuffer),
+                static_cast<const GFloat16 *>(pUpsampledSpectralBuffer),
                 pDataBuf, eBufDataType, nValues, nBandValues);
             break;
 

@@ -313,10 +313,7 @@ GDALDataset *NGSGEOIDDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(
-            CE_Failure, CPLE_NotSupported,
-            "The NGSGEOID driver does not support update access to existing"
-            " datasets.\n");
+        ReportUpdateNotSupportedByDriver("NGSGEOID");
         return nullptr;
     }
 
@@ -376,7 +373,7 @@ const OGRSpatialReference *NGSGEOIDDataset::GetSpatialRef() const
     }
 
     const CPLString osFilename =
-        CPLString(CPLGetBasename(GetDescription())).tolower();
+        CPLString(CPLGetBasenameSafe(GetDescription())).tolower();
 
     // See https://www.ngs.noaa.gov/GEOID/GEOID12B/faq_2012B.shtml
 

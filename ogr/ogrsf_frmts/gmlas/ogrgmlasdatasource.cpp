@@ -468,7 +468,8 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
                 {
                     oFeature.SetField(
                         szVALUE,
-                        CPLFormFilename(pszCurDir, osConfigFile, nullptr));
+                        CPLFormFilenameSafe(pszCurDir, osConfigFile, nullptr)
+                            .c_str());
                 }
                 else
                 {
@@ -520,7 +521,7 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
             CPLIsFilenameRelative(m_osGMLFilename) && pszCurDir != nullptr)
         {
             osAbsoluteGMLFilename =
-                CPLFormFilename(pszCurDir, m_osGMLFilename, nullptr);
+                CPLFormFilenameSafe(pszCurDir, m_osGMLFilename, nullptr);
         }
         else
             osAbsoluteGMLFilename = m_osGMLFilename;
@@ -534,7 +535,7 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
     for (int i = 0; i < static_cast<int>(aoXSDs.size()); i++)
     {
         const CPLString osURI(aoXSDs[i].first);
-        const CPLString osXSDFilename(aoXSDs[i].second);
+        const std::string osXSDFilename(aoXSDs[i].second);
 
         oSetVisitedURI.insert(osURI);
 
@@ -557,10 +558,10 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
             const CPLString osAbsoluteXSDFilename(
                 (osXSDFilename.find("http://") != 0 &&
                  osXSDFilename.find("https://") != 0 &&
-                 CPLIsFilenameRelative(osXSDFilename))
-                    ? CPLString(
-                          CPLFormFilename(CPLGetDirname(osAbsoluteGMLFilename),
-                                          osXSDFilename, nullptr))
+                 CPLIsFilenameRelative(osXSDFilename.c_str()))
+                    ? CPLFormFilenameSafe(
+                          CPLGetDirnameSafe(osAbsoluteGMLFilename).c_str(),
+                          osXSDFilename.c_str(), nullptr)
                     : osXSDFilename);
             oFeature.SetField(szVALUE, osAbsoluteXSDFilename.c_str());
             CPL_IGNORE_RET_VAL(
@@ -652,7 +653,8 @@ OGRGMLASDataSource::BuildXSDVector(const CPLString &osXSDFilenames)
             CPLIsFilenameRelative(papszTokens[i]) && pszCurDir != nullptr)
         {
             aoXSDs.push_back(PairURIFilename(
-                "", CPLFormFilename(pszCurDir, papszTokens[i], nullptr)));
+                "", CPLFormFilenameSafe(pszCurDir, papszTokens[i], nullptr)
+                        .c_str()));
         }
         else
         {
@@ -734,10 +736,10 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
         m_oConf.m_nMaximumFieldsForFlattening);
     oAnalyzer.SetAlwaysGenerateOGRId(m_oConf.m_bAlwaysGenerateOGRId);
 
-    m_osGMLFilename =
-        STARTS_WITH_CI(poOpenInfo->pszFilename, szGMLAS_PREFIX)
-            ? CPLExpandTilde(poOpenInfo->pszFilename + strlen(szGMLAS_PREFIX))
-            : poOpenInfo->pszFilename;
+    m_osGMLFilename = STARTS_WITH_CI(poOpenInfo->pszFilename, szGMLAS_PREFIX)
+                          ? CPLExpandTildeSafe(poOpenInfo->pszFilename +
+                                               strlen(szGMLAS_PREFIX))
+                          : poOpenInfo->pszFilename;
 
     CPLString osXSDFilenames =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, szXSD_OPTION, "");
@@ -859,9 +861,9 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
                                             szHANDLE_MULTIPLE_IMPORTS_OPTION,
                                             m_oConf.m_bHandleMultipleImports);
 
-    bool bRet =
-        oAnalyzer.Analyze(m_oCache, CPLGetDirname(m_osGMLFilename), aoXSDs,
-                          m_bSchemaFullChecking, m_bHandleMultipleImports);
+    bool bRet = oAnalyzer.Analyze(
+        m_oCache, CPLGetDirnameSafe(m_osGMLFilename).c_str(), aoXSDs,
+        m_bSchemaFullChecking, m_bHandleMultipleImports);
     if (!bRet)
     {
         return false;

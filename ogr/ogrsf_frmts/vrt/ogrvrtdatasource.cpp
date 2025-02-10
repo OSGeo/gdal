@@ -738,7 +738,7 @@ bool OGRVRTDataSource::Initialize(CPLXMLNode *psTreeIn, const char *pszNewName,
 
     // Set name, and capture the directory path so we can use it
     // for relative datasources.
-    CPLString osVRTDirectory = CPLGetPath(pszNewName);
+    CPLString osVRTDirectory = CPLGetPathSafe(pszNewName);
 
     // Look for the OGRVRTDataSource node, it might be after an <xml> node.
     CPLXMLNode *psVRTDSXML = CPLGetXMLNode(psTree, "=OGRVRTDataSource");

@@ -64,7 +64,7 @@ int OGRADBCDriverIdentify(GDALOpenInfo *poOpenInfo)
             && GDALGetAdbcLoadDriverOverride() != nullptr
 #endif
             && !STARTS_WITH(poOpenInfo->pszFilename, "/vsi") &&
-            !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "mbtiles"));
+            !poOpenInfo->IsExtensionEqualToCI("mbtiles"));
 }
 
 /************************************************************************/

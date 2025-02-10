@@ -32,9 +32,9 @@ static int OGRMiraMonDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
     if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes < 7)
         return FALSE;
-    else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "PNT") ||
-             EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ARC") ||
-             EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "POL"))
+    else if (poOpenInfo->IsExtensionEqualToCI("PNT") ||
+             poOpenInfo->IsExtensionEqualToCI("ARC") ||
+             poOpenInfo->IsExtensionEqualToCI("POL"))
     {
         // Format
         if ((poOpenInfo->pabyHeader[0] == 'P' &&
@@ -84,8 +84,7 @@ static GDALDataset *OGRMiraMonDriverOpen(GDALOpenInfo *poOpenInfo)
 
     if (poDS && poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "MiraMonVector driver does not support update.");
+        GDALDataset::ReportUpdateNotSupportedByDriver("MiraMonVector");
         return nullptr;
     }
 

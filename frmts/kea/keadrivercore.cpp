@@ -28,7 +28,7 @@ int KEADriverIdentify(GDALOpenInfo *poOpenInfo)
         return 0;
     }
 
-    return EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "KEA");
+    return poOpenInfo->IsExtensionEqualToCI("KEA");
 }
 
 /************************************************************************/
@@ -84,6 +84,12 @@ void KEADriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS GCPs NoData "
+                              "ColorInterpretation RasterValues "
+                              "DatasetMetadata BandMetadata");
 }
 
 /************************************************************************/

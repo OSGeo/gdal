@@ -263,7 +263,7 @@ CPLErr CPL_STDCALL GDALComputeProximity(GDALRasterBandH hSrcBand,
             eErr = CE_Failure;
             goto end;
         }
-        CPLString osTmpFile = CPLGenerateTempFilename("proximity");
+        CPLString osTmpFile = CPLGenerateTempFilenameSafe("proximity");
         hWorkProximityDS = GDALCreate(hDriver, osTmpFile, nXSize, nYSize, 1,
                                       GDT_Float32, nullptr);
         if (hWorkProximityDS == nullptr)

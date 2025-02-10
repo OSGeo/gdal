@@ -56,7 +56,6 @@ class OGRILI1Layer final : public OGRLayer
 
     GIntBig GetFeatureCount(int bForce = TRUE) override;
 
-    OGRErr ICreateFeature(OGRFeature *poFeature) override;
     int GeometryAppend(OGRGeometry *poGeometry);
 
     OGRFeatureDefn *GetLayerDefn() override
@@ -68,9 +67,6 @@ class OGRILI1Layer final : public OGRLayer
     {
         return oGeomFieldInfos;
     }
-
-    OGRErr CreateField(const OGRFieldDefn *poField,
-                       int bApproxOK = TRUE) override;
 
     int TestCapability(const char *) override;
 
@@ -95,8 +91,6 @@ class OGRILI1DataSource final : public GDALDataset
   private:
     ImdReader *poImdReader;
     IILI1Reader *poReader;
-    VSILFILE *fpTransfer;
-    char *pszTopic;
     int nLayers;
     OGRILI1Layer **papoLayers;
 
@@ -107,7 +101,6 @@ class OGRILI1DataSource final : public GDALDataset
     virtual ~OGRILI1DataSource();
 
     int Open(const char *, char **papszOpenOptions, int bTestOpen);
-    int Create(const char *pszFile, char **papszOptions);
 
     int GetLayerCount() override
     {
@@ -116,15 +109,6 @@ class OGRILI1DataSource final : public GDALDataset
 
     OGRLayer *GetLayer(int) override;
     OGRILI1Layer *GetLayerByName(const char *) override;
-
-    VSILFILE *GetTransferFile()
-    {
-        return fpTransfer;
-    }
-
-    OGRLayer *ICreateLayer(const char *pszName,
-                           const OGRGeomFieldDefn *poGeomFieldDefn,
-                           CSLConstList papszOptions) override;
 
     int TestCapability(const char *) override;
 };

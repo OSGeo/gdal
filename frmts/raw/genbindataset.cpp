@@ -266,14 +266,14 @@ CPLErr GenBinDataset::GetGeoTransform(double *padfTransform)
 char **GenBinDataset::GetFileList()
 
 {
-    const CPLString osPath = CPLGetPath(GetDescription());
-    const CPLString osName = CPLGetBasename(GetDescription());
+    const CPLString osPath = CPLGetPathSafe(GetDescription());
+    const CPLString osName = CPLGetBasenameSafe(GetDescription());
 
     // Main data file, etc.
     char **papszFileList = GDALPamDataset::GetFileList();
 
     // Header file.
-    const CPLString osFilename = CPLFormCIFilename(osPath, osName, "hdr");
+    const CPLString osFilename = CPLFormCIFilenameSafe(osPath, osName, "hdr");
     papszFileList = CSLAddString(papszFileList, osFilename);
 
     return papszFileList;
@@ -401,24 +401,25 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Now we need to tear apart the filename to form a .HDR           */
     /*      filename.                                                       */
     /* -------------------------------------------------------------------- */
-    const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
-    const CPLString osName = CPLGetBasename(poOpenInfo->pszFilename);
+    const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
+    const CPLString osName = CPLGetBasenameSafe(poOpenInfo->pszFilename);
     CPLString osHDRFilename;
 
     char **papszSiblingFiles = poOpenInfo->GetSiblingFiles();
     if (papszSiblingFiles)
     {
-        const int iFile = CSLFindString(
-            papszSiblingFiles, CPLFormFilename(nullptr, osName, "hdr"));
+        const int iFile =
+            CSLFindString(papszSiblingFiles,
+                          CPLFormFilenameSafe(nullptr, osName, "hdr").c_str());
         if (iFile < 0)  // return if there is no corresponding .hdr file
             return nullptr;
 
         osHDRFilename =
-            CPLFormFilename(osPath, papszSiblingFiles[iFile], nullptr);
+            CPLFormFilenameSafe(osPath, papszSiblingFiles[iFile], nullptr);
     }
     else
     {
-        osHDRFilename = CPLFormCIFilename(osPath, osName, "hdr");
+        osHDRFilename = CPLFormCIFilenameSafe(osPath, osName, "hdr");
     }
 
     const bool bSelectedHDR = EQUAL(osHDRFilename, poOpenInfo->pszFilename);

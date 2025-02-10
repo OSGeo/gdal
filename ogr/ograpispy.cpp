@@ -476,7 +476,7 @@ int OGRAPISpyOpenTakeSnapshot(const char *pszName, int bUpdate)
             CPLString osWorkingDir;
             while (true)
             {
-                osBaseDir = CPLFormFilename(
+                osBaseDir = CPLFormFilenameSafe(
                     osSnapshotPath, CPLSPrintf("snapshot_%d", i), nullptr);
                 if (VSIStatL(osBaseDir, &sStat) != 0)
                     break;
@@ -484,9 +484,9 @@ int OGRAPISpyOpenTakeSnapshot(const char *pszName, int bUpdate)
             }
             VSIMkdir(osSnapshotPath, 0777);
             VSIMkdir(osBaseDir, 0777);
-            osSrcDir = CPLFormFilename(osBaseDir, "source", nullptr);
+            osSrcDir = CPLFormFilenameSafe(osBaseDir, "source", nullptr);
             VSIMkdir(osSrcDir, 0777);
-            osWorkingDir = CPLFormFilename(osBaseDir, "working", nullptr);
+            osWorkingDir = CPLFormFilenameSafe(osBaseDir, "working", nullptr);
             VSIMkdir(osWorkingDir, 0777);
 
             OGRAPISpyFileReopen();
@@ -499,9 +499,9 @@ int OGRAPISpyOpenTakeSnapshot(const char *pszName, int bUpdate)
             fprintf(fpSpyFile, "os.mkdir('%s')\n", osWorkingDir.c_str());
             for (char **papszIter = papszFileList; *papszIter; papszIter++)
             {
-                CPLString osSnapshotSrcFile = CPLFormFilename(
+                CPLString osSnapshotSrcFile = CPLFormFilenameSafe(
                     osSrcDir, CPLGetFilename(*papszIter), nullptr);
-                CPLString osSnapshotWorkingFile = CPLFormFilename(
+                CPLString osSnapshotWorkingFile = CPLFormFilenameSafe(
                     osWorkingDir, CPLGetFilename(*papszIter), nullptr);
                 CPL_IGNORE_RET_VAL(CPLCopyFile(osSnapshotSrcFile, *papszIter));
                 CPL_IGNORE_RET_VAL(
@@ -528,11 +528,12 @@ void OGRAPISpyOpen(const char *pszName, int bUpdate, int iSnapshot,
     CPLString osName;
     if (iSnapshot > 0)
     {
-        CPLString osBaseDir = CPLFormFilename(
+        CPLString osBaseDir = CPLFormFilenameSafe(
             osSnapshotPath, CPLSPrintf("snapshot_%d", iSnapshot), nullptr);
-        CPLString osWorkingDir = CPLFormFilename(osBaseDir, "working", nullptr);
+        CPLString osWorkingDir =
+            CPLFormFilenameSafe(osBaseDir, "working", nullptr);
         osName =
-            CPLFormFilename(osWorkingDir, CPLGetFilename(pszName), nullptr);
+            CPLFormFilenameSafe(osWorkingDir, CPLGetFilename(pszName), nullptr);
         pszName = osName.c_str();
 
         if (*phDS != nullptr)

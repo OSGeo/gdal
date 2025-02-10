@@ -127,8 +127,9 @@ void ZarrV2Array::Flush()
 
         CPLJSONDocument oDoc;
         oDoc.SetRoot(oAttrs);
-        const std::string osAttrFilename = CPLFormFilename(
-            CPLGetDirname(m_osFilename.c_str()), ".zattrs", nullptr);
+        const std::string osAttrFilename =
+            CPLFormFilenameSafe(CPLGetDirnameSafe(m_osFilename.c_str()).c_str(),
+                                ".zattrs", nullptr);
         oDoc.Save(osAttrFilename);
         m_poSharedResource->SetZMetadataItem(osAttrFilename, oAttrs);
     }
@@ -872,7 +873,7 @@ bool ZarrV2Array::FlushDirtyTile() const
 
     if (m_osDimSeparator == "/")
     {
-        std::string osDir = CPLGetDirname(osFilename.c_str());
+        std::string osDir = CPLGetDirnameSafe(osFilename.c_str());
         VSIStatBufL sStat;
         if (VSIStatL(osDir.c_str(), &sStat) != 0)
         {
@@ -987,8 +988,8 @@ std::string ZarrV2Array::BuildTileFilename(const uint64_t *tileIndices) const
         }
     }
 
-    return CPLFormFilename(CPLGetDirname(m_osFilename.c_str()),
-                           osFilename.c_str(), nullptr);
+    return CPLFormFilenameSafe(CPLGetDirnameSafe(m_osFilename.c_str()).c_str(),
+                               osFilename.c_str(), nullptr);
 }
 
 /************************************************************************/
@@ -997,7 +998,7 @@ std::string ZarrV2Array::BuildTileFilename(const uint64_t *tileIndices) const
 
 std::string ZarrV2Array::GetDataDirectory() const
 {
-    return std::string(CPLGetDirname(m_osFilename.c_str()));
+    return CPLGetDirnameSafe(m_osFilename.c_str());
 }
 
 /************************************************************************/
@@ -1139,9 +1140,11 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject &obj,
             }
             else if (chType == 'f' && nBytes == 2)
             {
+                // elt.nativeType = DtypeElt::NativeType::IEEEFP;
+                // elt.gdalTypeIsApproxOfNative = true;
+                // eDT = GDT_Float32;
                 elt.nativeType = DtypeElt::NativeType::IEEEFP;
-                elt.gdalTypeIsApproxOfNative = true;
-                eDT = GDT_Float32;
+                eDT = GDT_Float16;
             }
             else if (chType == 'f' && nBytes == 4)
             {
@@ -1328,8 +1331,9 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
     if (!bLoadedFromZMetadata)
     {
         CPLJSONDocument oDoc;
-        const std::string osZattrsFilename(CPLFormFilename(
-            CPLGetDirname(osZarrayFilename.c_str()), ".zattrs", nullptr));
+        const std::string osZattrsFilename(CPLFormFilenameSafe(
+            CPLGetDirnameSafe(osZarrayFilename.c_str()).c_str(), ".zattrs",
+            nullptr));
         CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         if (oDoc.Load(osZattrsFilename))
         {
@@ -1418,10 +1422,11 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
             std::string osDirName = m_osDirectoryName;
             while (true)
             {
-                const std::string osArrayFilenameDim =
-                    CPLFormFilename(CPLFormFilename(osDirName.c_str(),
-                                                    osDimName.c_str(), nullptr),
-                                    ".zarray", nullptr);
+                const std::string osArrayFilenameDim = CPLFormFilenameSafe(
+                    CPLFormFilenameSafe(osDirName.c_str(), osDimName.c_str(),
+                                        nullptr)
+                        .c_str(),
+                    ".zarray", nullptr);
                 VSIStatBufL sStat;
                 if (VSIStatL(osArrayFilenameDim.c_str(), &sStat) == 0)
                 {
@@ -1437,7 +1442,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                     // Recurse to upper level for datasets such as
                     // /vsis3/hrrrzarr/sfc/20210809/20210809_00z_anl.zarr/0.1_sigma_level/HAIL_max_fcst/0.1_sigma_level/HAIL_max_fcst
                     const std::string osDirNameNew =
-                        CPLGetPath(osDirName.c_str());
+                        CPLGetPathSafe(osDirName.c_str());
                     if (!osDirNameNew.empty() && osDirNameNew != osDirName)
                     {
                         osDirName = osDirNameNew;
@@ -1695,6 +1700,13 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
                 return nullptr;
             }
+            if (oType.GetNumericDataType() == GDT_Float16)
+            {
+                const GFloat16 hfNoDataValue =
+                    static_cast<GFloat16>(dfNoDataValue);
+                abyNoData.resize(sizeof(hfNoDataValue));
+                memcpy(&abyNoData[0], &hfNoDataValue, sizeof(hfNoDataValue));
+            }
             if (oType.GetNumericDataType() == GDT_Float32)
             {
                 const float fNoDataValue = static_cast<float>(dfNoDataValue);
@@ -1895,9 +1907,10 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
         const std::string gridMappingName = gridMapping.ToString();
         if (m_oMapMDArrays.find(gridMappingName) == m_oMapMDArrays.end())
         {
-            const std::string osArrayFilenameDim = CPLFormFilename(
-                CPLFormFilename(m_osDirectoryName.c_str(),
-                                gridMappingName.c_str(), nullptr),
+            const std::string osArrayFilenameDim = CPLFormFilenameSafe(
+                CPLFormFilenameSafe(m_osDirectoryName.c_str(),
+                                    gridMappingName.c_str(), nullptr)
+                    .c_str(),
                 ".zarray", nullptr);
             VSIStatBufL sStat;
             if (VSIStatL(osArrayFilenameDim.c_str(), &sStat) == 0)

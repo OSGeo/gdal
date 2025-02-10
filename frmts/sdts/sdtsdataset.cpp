@@ -134,9 +134,7 @@ GDALDataset *SDTSDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->eAccess == GA_Update)
     {
         delete poTransfer;
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The SDTS driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("SDTS");
         return nullptr;
     }
 

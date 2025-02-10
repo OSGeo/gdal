@@ -66,8 +66,8 @@ static void ProcessIdentifyTarget(const char *pszTarget,
         if (EQUAL(papszSiblingList[i], "..") || EQUAL(papszSiblingList[i], "."))
             continue;
 
-        CPLString osSubTarget =
-            CPLFormFilename(pszTarget, papszSiblingList[i], nullptr);
+        const CPLString osSubTarget =
+            CPLFormFilenameSafe(pszTarget, papszSiblingList[i], nullptr);
 
         ProcessIdentifyTarget(osSubTarget, papszSiblingList, bRecursive,
                               bReportFailures, bForceRecurse);

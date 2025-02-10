@@ -397,7 +397,7 @@ int SENTINEL2Dataset::Identify(GDALOpenInfo *poOpenInfo)
          STARTS_WITH_CI(pszJustFilename, "S2B_OPER_PRD_MSI") ||
          STARTS_WITH_CI(pszJustFilename, "S2A_USER_PRD_MSI") ||
          STARTS_WITH_CI(pszJustFilename, "S2B_USER_PRD_MSI")) &&
-        EQUAL(CPLGetExtension(pszJustFilename), "zip"))
+        EQUAL(CPLGetExtensionSafe(pszJustFilename).c_str(), "zip"))
     {
         return TRUE;
     }
@@ -501,13 +501,13 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
          STARTS_WITH_CI(pszJustFilename, "S2B_OPER_PRD_MSI") ||
          STARTS_WITH_CI(pszJustFilename, "S2A_USER_PRD_MSI") ||
          STARTS_WITH_CI(pszJustFilename, "S2B_USER_PRD_MSI")) &&
-        EQUAL(CPLGetExtension(pszJustFilename), "zip"))
+        EQUAL(CPLGetExtensionSafe(pszJustFilename).c_str(), "zip"))
     {
-        const CPLString osBasename(CPLGetBasename(pszJustFilename));
+        const CPLString osBasename(CPLGetBasenameSafe(pszJustFilename));
         CPLString osFilename(poOpenInfo->pszFilename);
         CPLString osMTD(osBasename);
         // Normally given above constraints, osMTD.size() should be >= 16
-        // but if pszJustFilename is too long, CPLGetBasename() will return
+        // but if pszJustFilename is too long, CPLGetBasenameSafe().c_str() will return
         // an empty string.
         if (osMTD.size() < 16)
             return nullptr;
@@ -527,15 +527,15 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else if ((STARTS_WITH_CI(pszJustFilename, "S2A_MSIL1C_") ||
               STARTS_WITH_CI(pszJustFilename, "S2B_MSIL1C_")) &&
-             EQUAL(CPLGetExtension(pszJustFilename), "zip"))
+             EQUAL(CPLGetExtensionSafe(pszJustFilename).c_str(), "zip"))
     {
-        const CPLString osBasename(CPLGetBasename(pszJustFilename));
+        const CPLString osBasename(CPLGetBasenameSafe(pszJustFilename));
         CPLString osFilename(poOpenInfo->pszFilename);
         CPLString osSAFE(osBasename);
         // S2B_MSIL1C_20171004T233419_N0206_R001_T54DWM_20171005T001811.SAFE.zip
         // has .SAFE.zip extension, but other products have just a .zip
         // extension. So for the subdir in the zip only add .SAFE when needed
-        if (!EQUAL(CPLGetExtension(osSAFE), "SAFE"))
+        if (!EQUAL(CPLGetExtensionSafe(osSAFE).c_str(), "SAFE"))
             osSAFE += ".SAFE";
         osFilename = osFilename + "/" + osSAFE + "/MTD_MSIL1C.xml";
         if (strncmp(osFilename, "/vsizip/", strlen("/vsizip/")) != 0)
@@ -546,15 +546,15 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else if ((STARTS_WITH_CI(pszJustFilename, "S2A_MSIL2A_") ||
               STARTS_WITH_CI(pszJustFilename, "S2B_MSIL2A_")) &&
-             EQUAL(CPLGetExtension(pszJustFilename), "zip"))
+             EQUAL(CPLGetExtensionSafe(pszJustFilename).c_str(), "zip"))
     {
-        const CPLString osBasename(CPLGetBasename(pszJustFilename));
+        const CPLString osBasename(CPLGetBasenameSafe(pszJustFilename));
         CPLString osFilename(poOpenInfo->pszFilename);
         CPLString osSAFE(osBasename);
         // S2B_MSIL1C_20171004T233419_N0206_R001_T54DWM_20171005T001811.SAFE.zip
         // has .SAFE.zip extension, but other products have just a .zip
         // extension. So for the subdir in the zip only add .SAFE when needed
-        if (!EQUAL(CPLGetExtension(osSAFE), "SAFE"))
+        if (!EQUAL(CPLGetExtensionSafe(osSAFE).c_str(), "SAFE"))
             osSAFE += ".SAFE";
         osFilename = osFilename + "/" + osSAFE + "/MTD_MSIL2A.xml";
         if (strncmp(osFilename, "/vsizip/", strlen("/vsizip/")) != 0)
@@ -878,7 +878,7 @@ static bool SENTINEL2GetGranuleInfo(
 /************************************************************************/
 
 // For the sake of simplifying our unit tests, we limit the use of \\ to when
-// it is strictly necessary. Otherwise we could use CPLFormFilename()...
+// it is strictly necessary. Otherwise we could use CPLFormFilenameSafe()...
 static char SENTINEL2GetPathSeparator(const char *pszBasename)
 {
     if (STARTS_WITH_CI(pszBasename, "\\\\?\\"))
@@ -935,7 +935,7 @@ static bool SENTINEL2GetGranuleList(
         return false;
     }
 
-    CPLString osDirname(CPLGetDirname(pszFilename));
+    CPLString osDirname(CPLGetDirnameSafe(pszFilename));
 #ifdef HAVE_READLINK
     char szPointerFilename[2048];
     int nBytes = static_cast<int>(
@@ -945,7 +945,7 @@ static bool SENTINEL2GetGranuleList(
         const int nOffset =
             std::min(nBytes, static_cast<int>(sizeof(szPointerFilename) - 1));
         szPointerFilename[nOffset] = '\0';
-        osDirname = CPLGetDirname(szPointerFilename);
+        osDirname = CPLGetDirnameSafe(szPointerFilename);
     }
 #endif
 
@@ -1726,18 +1726,21 @@ static CPLString
 SENTINEL2GetMainMTDFilenameFromGranuleMTD(const char *pszFilename)
 {
     // Look for product MTD file
-    CPLString osTopDir(CPLFormFilename(
-        CPLFormFilename(CPLGetDirname(pszFilename), "..", nullptr), "..",
-        nullptr));
+    CPLString osTopDir(CPLFormFilenameSafe(
+        CPLFormFilenameSafe(CPLGetDirnameSafe(pszFilename).c_str(), "..",
+                            nullptr)
+            .c_str(),
+        "..", nullptr));
 
     // Workaround to avoid long filenames on Windows
     if (CPLIsFilenameRelative(pszFilename))
     {
         // GRANULE/bla/bla.xml
-        const char *pszPath = CPLGetPath(pszFilename);
-        if (strchr(pszPath, '/') || strchr(pszPath, '\\'))
+        const std::string osPath = CPLGetPathSafe(pszFilename);
+        if (osPath.find('/') != std::string::npos ||
+            osPath.find('\\') != std::string::npos)
         {
-            osTopDir = CPLGetPath(CPLGetPath(pszPath));
+            osTopDir = CPLGetPathSafe(CPLGetPathSafe(osPath.c_str()).c_str());
             if (osTopDir == "")
                 osTopDir = ".";
         }
@@ -1752,7 +1755,7 @@ SENTINEL2GetMainMTDFilenameFromGranuleMTD(const char *pszFilename)
              STARTS_WITH_CI(*papszIter, "S2B_")) &&
             EQUALN(*papszIter + strlen("S2A_XXXX"), "_MTD", 4))
         {
-            osMainMTD = CPLFormFilename(osTopDir, *papszIter, nullptr);
+            osMainMTD = CPLFormFilenameSafe(osTopDir, *papszIter, nullptr);
             break;
         }
     }
@@ -1816,9 +1819,9 @@ static void SENTINEL2GetResolutionSetAndMainMDFromGranule(
             if (atoi(osBandName) < 10)
                 osBandName = "0" + osBandName;
 
-            CPLString osTile(SENTINEL2GetTilename(CPLGetPath(pszFilename),
-                                                  CPLGetBasename(pszFilename),
-                                                  osBandName));
+            CPLString osTile(SENTINEL2GetTilename(
+                CPLGetPathSafe(pszFilename).c_str(),
+                CPLGetBasenameSafe(pszFilename).c_str(), osBandName));
             VSIStatBufL sStat;
             if (VSIStatExL(osTile, &sStat, VSI_STAT_EXISTS_FLAG) == 0)
             {
@@ -2050,9 +2053,9 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset(GDALOpenInfo *poOpenInfo)
     {
         for (size_t i = 0; i < aosBands.size(); i++)
         {
-            CPLString osTile(SENTINEL2GetTilename(CPLGetPath(osFilename),
-                                                  CPLGetBasename(osFilename),
-                                                  aosBands[i]));
+            CPLString osTile(SENTINEL2GetTilename(
+                CPLGetPathSafe(osFilename).c_str(),
+                CPLGetBasenameSafe(osFilename).c_str(), aosBands[i]));
             if (SENTINEL2GetTileInfo(osTile, &nCols, &nRows, &nBits))
             {
                 if (nBits <= 16)
@@ -2161,7 +2164,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset(GDALOpenInfo *poOpenInfo)
             osBandName = aosBands[0];
 
         CPLString osTile(SENTINEL2GetTilename(
-            CPLGetPath(osFilename), CPLGetBasename(osFilename), osBandName));
+            CPLGetPathSafe(osFilename).c_str(),
+            CPLGetBasenameSafe(osFilename).c_str(), osBandName));
 
         bool bTileFound = false;
         if (nValMax == 0)
@@ -2326,7 +2330,7 @@ static bool SENTINEL2GetGranuleList_L1CSafeCompact(
         return false;
     }
 
-    CPLString osDirname(CPLGetDirname(pszFilename));
+    CPLString osDirname(CPLGetDirnameSafe(pszFilename));
 #ifdef HAVE_READLINK
     char szPointerFilename[2048];
     int nBytes = static_cast<int>(
@@ -2336,7 +2340,7 @@ static bool SENTINEL2GetGranuleList_L1CSafeCompact(
         const int nOffset =
             std::min(nBytes, static_cast<int>(sizeof(szPointerFilename) - 1));
         szPointerFilename[nOffset] = '\0';
-        osDirname = CPLGetDirname(szPointerFilename);
+        osDirname = CPLGetDirnameSafe(szPointerFilename);
     }
 #endif
 
@@ -2371,9 +2375,10 @@ static bool SENTINEL2GetGranuleList_L1CSafeCompact(
                                           3);  // strip B12
             // GRANULE/L1C_T30TXT_A007999_20170102T111441/IMG_DATA/T30TXT_20170102T111442_B12
             // --> GRANULE/L1C_T30TXT_A007999_20170102T111441/MTD_TL.xml
-            oDesc.osMTDTLPath = osDirname + chSeparator +
-                                CPLGetDirname(CPLGetDirname(pszImageFile)) +
-                                chSeparator + "MTD_TL.xml";
+            oDesc.osMTDTLPath =
+                osDirname + chSeparator +
+                CPLGetDirnameSafe(CPLGetDirnameSafe(pszImageFile).c_str()) +
+                chSeparator + "MTD_TL.xml";
             osList.push_back(oDesc);
         }
     }
@@ -2417,7 +2422,7 @@ static bool SENTINEL2GetGranuleList_L2ASafeCompact(
         }
     }
 
-    CPLString osDirname(CPLGetDirname(pszFilename));
+    CPLString osDirname(CPLGetDirnameSafe(pszFilename));
 #ifdef HAVE_READLINK
     char szPointerFilename[2048];
     int nBytes = static_cast<int>(
@@ -2427,7 +2432,7 @@ static bool SENTINEL2GetGranuleList_L2ASafeCompact(
         const int nOffset =
             std::min(nBytes, static_cast<int>(sizeof(szPointerFilename) - 1));
         szPointerFilename[nOffset] = '\0';
-        osDirname = CPLGetDirname(szPointerFilename);
+        osDirname = CPLGetDirnameSafe(szPointerFilename);
     }
 #endif
 
@@ -2471,8 +2476,9 @@ static bool SENTINEL2GetGranuleList_L2ASafeCompact(
             oDesc.osBandPrefixPath.resize(oDesc.osBandPrefixPath.size() - 36);
             // GRANULE/L1C_T30TXT_A007999_20170102T111441/IMG_DATA/T30TXT_20170102T111442_B12_60m
             // --> GRANULE/L1C_T30TXT_A007999_20170102T111441/MTD_TL.xml
-            oDesc.osMTDTLPath = osDirname + chSeparator +
-                                CPLGetDirname(CPLGetDirname(pszImageFile));
+            oDesc.osMTDTLPath =
+                osDirname + chSeparator +
+                CPLGetDirnameSafe(CPLGetDirnameSafe(pszImageFile).c_str());
             if (oDesc.osMTDTLPath.size() < 9)
             {
                 CPLDebug("SENTINEL2", "MTDTL path too short");
@@ -3579,7 +3585,7 @@ SENTINEL2Dataset *SENTINEL2Dataset::CreateL1CL2ADataset(
                 dfMinY = dfLRY;
 
             SENTINEL2GranuleInfo oGranuleInfo;
-            oGranuleInfo.osPath = CPLGetPath(aosGranuleList[i]);
+            oGranuleInfo.osPath = CPLGetPathSafe(aosGranuleList[i]);
             if (bIsSafeCompact)
             {
                 oGranuleInfo.osBandPrefixPath =

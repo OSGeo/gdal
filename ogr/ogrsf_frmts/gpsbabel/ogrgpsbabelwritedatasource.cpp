@@ -173,7 +173,7 @@ int OGRGPSBabelWriteDataSource::Create(const char *pszNameIn,
     if (pszOptionUseTempFile == nullptr)
         pszOptionUseTempFile = CPLGetConfigOption("USE_TEMPFILE", nullptr);
     if (pszOptionUseTempFile && CPLTestBool(pszOptionUseTempFile))
-        osTmpFileName = CPLGenerateTempFilename(nullptr);
+        osTmpFileName = CPLGenerateTempFilenameSafe(nullptr);
     else
         osTmpFileName = VSIMemGenerateHiddenFilename("gpsbabel");
 

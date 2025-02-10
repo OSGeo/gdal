@@ -292,9 +292,14 @@ class OGRMVTDataset final : public GDALDataset
     bool m_bClip = true;
     CPLString m_osTileExtension{"pbf"};
     OGRSpatialReference *m_poSRS = nullptr;
-    double m_dfTileDim0 = 0.0;
-    double m_dfTopXOrigin = 0.0;
-    double m_dfTopYOrigin = 0.0;
+    double m_dfTileDim0 =
+        0.0;  // Extent (in CRS units) of a tile at zoom level 0
+    double m_dfTopXOrigin = 0.0;  // top-left X of tile matrix scheme
+    double m_dfTopYOrigin = 0.0;  // top-left Y of tile matrix scheme
+    int m_nTileMatrixWidth0 =
+        1;  // Number of tiles along X axis at zoom level 0
+    int m_nTileMatrixHeight0 =
+        1;  // Number of tiles along Y axis at zoom level 0
 
     static GDALDataset *OpenDirectory(GDALOpenInfo *);
 
@@ -315,25 +320,36 @@ class OGRMVTDataset final : public GDALDataset
     }
 
     static GDALDataset *Open(GDALOpenInfo *);
+    static GDALDataset *Open(GDALOpenInfo *, bool bRecurseAllowed);
 
     OGRSpatialReference *GetSRS()
     {
         return m_poSRS;
     }
 
-    double GetTileDim0() const
+    inline double GetTileDim0() const
     {
         return m_dfTileDim0;
     }
 
-    double GetTopXOrigin() const
+    inline double GetTopXOrigin() const
     {
         return m_dfTopXOrigin;
     }
 
-    double GetTopYOrigin() const
+    inline double GetTopYOrigin() const
     {
         return m_dfTopYOrigin;
+    }
+
+    inline int GetTileMatrixWidth0() const
+    {
+        return m_nTileMatrixWidth0;
+    }
+
+    inline int GetTileMatrixHeight0() const
+    {
+        return m_nTileMatrixHeight0;
     }
 };
 
@@ -1589,11 +1605,11 @@ void OGRMVTDirectoryLayer::ReadNewSubDir()
                          : (1 << m_nZ)))
     {
         m_aosSubDirName =
-            CPLFormFilename(m_osDirName,
-                            (m_bUseReadDir || !m_aosDirContent.empty())
-                                ? m_aosDirContent[m_nXIndex]
-                                : CPLSPrintf("%d", m_nXIndex),
-                            nullptr);
+            CPLFormFilenameSafe(m_osDirName,
+                                (m_bUseReadDir || !m_aosDirContent.empty())
+                                    ? m_aosDirContent[m_nXIndex]
+                                    : CPLSPrintf("%d", m_nXIndex),
+                                nullptr);
         if (m_bUseReadDir)
         {
             m_aosSubDirContent =
@@ -1625,7 +1641,7 @@ void OGRMVTDirectoryLayer::OpenTile()
     m_poCurrentTile = nullptr;
     if (m_nYIndex < (m_bUseReadDir ? m_aosSubDirContent.Count() : (1 << m_nZ)))
     {
-        CPLString osFilename = CPLFormFilename(
+        CPLString osFilename = CPLFormFilenameSafe(
             m_aosSubDirName,
             m_bUseReadDir ? m_aosSubDirContent[m_nYIndex]
                           : CPLSPrintf("%d.%s", m_nYIndex,
@@ -1637,7 +1653,8 @@ void OGRMVTDirectoryLayer::OpenTile()
             m_bJsonField ? "" : m_poDS->m_osMetadataMemFilename.c_str());
         oOpenInfo.papszOpenOptions = CSLSetNameValue(
             oOpenInfo.papszOpenOptions, "DO_NOT_ERROR_ON_MISSING_TILE", "YES");
-        m_poCurrentTile = OGRMVTDataset::Open(&oOpenInfo);
+        m_poCurrentTile =
+            OGRMVTDataset::Open(&oOpenInfo, /* bRecurseAllowed = */ false);
         CSLDestroy(oOpenInfo.papszOpenOptions);
 
         int nX = (m_bUseReadDir || !m_aosDirContent.empty())
@@ -1668,8 +1685,9 @@ void OGRMVTDirectoryLayer::OpenTileIfNeeded()
         if (m_bUseReadDir)
         {
             while (m_nYIndex < m_aosSubDirContent.Count() &&
-                   (CPLGetValueType(CPLGetBasename(
-                        m_aosSubDirContent[m_nYIndex])) != CPL_VALUE_INTEGER ||
+                   (CPLGetValueType(
+                        CPLGetBasenameSafe(m_aosSubDirContent[m_nYIndex])
+                            .c_str()) != CPL_VALUE_INTEGER ||
                     !IsBetween(atoi(m_aosSubDirContent[m_nYIndex]),
                                m_nFilterMinY, m_nFilterMaxY)))
             {
@@ -1744,8 +1762,10 @@ void OGRMVTDirectoryLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
 
     if (sEnvelope.IsInit() && sEnvelope.MinX >= -10 * m_poDS->GetTileDim0() &&
         sEnvelope.MinY >= -10 * m_poDS->GetTileDim0() &&
-        sEnvelope.MaxX <= 10 * m_poDS->GetTileDim0() &&
-        sEnvelope.MaxY <= 10 * m_poDS->GetTileDim0())
+        sEnvelope.MaxX <=
+            10 * m_poDS->GetTileDim0() * m_poDS->GetTileMatrixWidth0() &&
+        sEnvelope.MaxY <=
+            10 * m_poDS->GetTileDim0() * m_poDS->GetTileMatrixHeight0())
     {
         const double dfTileDim = m_poDS->GetTileDim0() / (1 << m_nZ);
         m_nFilterMinX = std::max(
@@ -1757,18 +1777,30 @@ void OGRMVTDirectoryLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
         m_nFilterMaxX = std::min(
             static_cast<int>(
                 ceil((sEnvelope.MaxX - m_poDS->GetTopXOrigin()) / dfTileDim)),
-            (1 << m_nZ) - 1);
+            static_cast<int>(std::min<int64_t>(
+                INT_MAX, (static_cast<int64_t>(1) << m_nZ) *
+                                 m_poDS->GetTileMatrixWidth0() -
+                             1)));
         m_nFilterMaxY = std::min(
             static_cast<int>(
                 ceil((m_poDS->GetTopYOrigin() - sEnvelope.MinY) / dfTileDim)),
-            (1 << m_nZ) - 1);
+            static_cast<int>(std::min<int64_t>(
+                INT_MAX, (static_cast<int64_t>(1) << m_nZ) *
+                                 m_poDS->GetTileMatrixHeight0() -
+                             1)));
     }
     else
     {
         m_nFilterMinX = 0;
         m_nFilterMinY = 0;
-        m_nFilterMaxX = (1 << m_nZ) - 1;
-        m_nFilterMaxY = (1 << m_nZ) - 1;
+        m_nFilterMaxX = static_cast<int>(
+            std::min<int64_t>(INT_MAX, (static_cast<int64_t>(1) << m_nZ) *
+                                               m_poDS->GetTileMatrixWidth0() -
+                                           1));
+        m_nFilterMaxY = static_cast<int>(
+            std::min<int64_t>(INT_MAX, (static_cast<int64_t>(1) << m_nZ) *
+                                               m_poDS->GetTileMatrixHeight0() -
+                                           1));
     }
 }
 
@@ -1849,8 +1881,8 @@ OGRFeature *OGRMVTDirectoryLayer::GetFeature(GIntBig nFID)
     const int nX = static_cast<int>(nFID & ((1 << m_nZ) - 1));
     const int nY = static_cast<int>((nFID >> m_nZ) & ((1 << m_nZ) - 1));
     const GIntBig nTileFID = nFID >> (2 * m_nZ);
-    const CPLString osFilename = CPLFormFilename(
-        CPLFormFilename(m_osDirName, CPLSPrintf("%d", nX), nullptr),
+    const CPLString osFilename = CPLFormFilenameSafe(
+        CPLFormFilenameSafe(m_osDirName, CPLSPrintf("%d", nX), nullptr).c_str(),
         CPLSPrintf("%d.%s", nY, m_poDS->m_osTileExtension.c_str()), nullptr);
     GDALOpenInfo oOpenInfo(("MVT:" + osFilename).c_str(), GA_ReadOnly);
     oOpenInfo.papszOpenOptions = CSLSetNameValue(
@@ -1858,7 +1890,8 @@ OGRFeature *OGRMVTDirectoryLayer::GetFeature(GIntBig nFID)
         m_bJsonField ? "" : m_poDS->m_osMetadataMemFilename.c_str());
     oOpenInfo.papszOpenOptions = CSLSetNameValue(
         oOpenInfo.papszOpenOptions, "DO_NOT_ERROR_ON_MISSING_TILE", "YES");
-    GDALDataset *poTile = OGRMVTDataset::Open(&oOpenInfo);
+    GDALDataset *poTile =
+        OGRMVTDataset::Open(&oOpenInfo, /* bRecurseAllowed = */ false);
     CSLDestroy(oOpenInfo.papszOpenOptions);
     OGRFeature *poFeature = nullptr;
     if (poTile)
@@ -1954,8 +1987,9 @@ static int OGRMVTDriverIdentify(GDALOpenInfo *poOpenInfo)
             CPL_VALUE_INTEGER)
         {
             VSIStatBufL sStat;
-            CPLString osMetadataFile(CPLFormFilename(
-                CPLGetPath(poOpenInfo->pszFilename), "metadata.json", nullptr));
+            CPLString osMetadataFile(CPLFormFilenameSafe(
+                CPLGetPathSafe(poOpenInfo->pszFilename).c_str(),
+                "metadata.json", nullptr));
             const char *pszMetadataFile = CSLFetchNameValue(
                 poOpenInfo->papszOpenOptions, "METADATA_FILE");
             if (pszMetadataFile)
@@ -1973,10 +2007,10 @@ static int OGRMVTDriverIdentify(GDALOpenInfo *poOpenInfo)
             {
                 // tileserver-gl metadata file:
                 // If opening /path/to/foo/0, try looking for /path/to/foo.json
-                CPLString osParentDir(CPLGetPath(poOpenInfo->pszFilename));
+                CPLString osParentDir(CPLGetPathSafe(poOpenInfo->pszFilename));
                 osMetadataFile =
-                    CPLFormFilename(CPLGetPath(osParentDir),
-                                    CPLGetFilename(osParentDir), "json");
+                    CPLFormFilenameSafe(CPLGetPathSafe(osParentDir).c_str(),
+                                        CPLGetFilename(osParentDir), "json");
                 if (VSIStatL(osMetadataFile, &sStat) == 0)
                 {
                     return TRUE;
@@ -1984,28 +2018,29 @@ static int OGRMVTDriverIdentify(GDALOpenInfo *poOpenInfo)
             }
 
             // At least 3 files, to include the dummy . and ..
-            CPLStringList aosDirContent(
-                VSIReadDirEx(poOpenInfo->pszFilename, 3));
-            aosDirContent = StripDummyEntries(aosDirContent);
+            const CPLStringList aosDirContent = StripDummyEntries(
+                CPLStringList(VSIReadDirEx(poOpenInfo->pszFilename, 3)));
             if (!aosDirContent.empty() &&
                 CPLGetValueType(aosDirContent[0]) == CPL_VALUE_INTEGER)
             {
-                CPLString osSubDir = CPLFormFilename(poOpenInfo->pszFilename,
-                                                     aosDirContent[0], nullptr);
+                const std::string osSubDir = CPLFormFilenameSafe(
+                    poOpenInfo->pszFilename, aosDirContent[0], nullptr);
                 // At least 3 files, to include the dummy . and ..
-                CPLStringList aosSubDirContent(VSIReadDirEx(osSubDir, 10));
-                aosSubDirContent = StripDummyEntries(aosSubDirContent);
-                CPLString osTileExtension(CSLFetchNameValueDef(
+                const CPLStringList aosSubDirContent = StripDummyEntries(
+                    CPLStringList(VSIReadDirEx(osSubDir.c_str(), 10)));
+                const std::string osTileExtension(CSLFetchNameValueDef(
                     poOpenInfo->papszOpenOptions, "TILE_EXTENSION", "pbf"));
                 for (int i = 0; i < aosSubDirContent.Count(); i++)
                 {
-                    if (CPLGetValueType(CPLGetBasename(aosSubDirContent[i])) ==
+                    if (CPLGetValueType(
+                            CPLGetBasenameSafe(aosSubDirContent[i]).c_str()) ==
                         CPL_VALUE_INTEGER)
                     {
-                        CPLString osExtension(
-                            CPLGetExtension(aosSubDirContent[i]));
-                        if (EQUAL(osExtension, osTileExtension) ||
-                            EQUAL(osExtension, "mvt"))
+                        const std::string osExtension(
+                            CPLGetExtensionSafe(aosSubDirContent[i]));
+                        if (EQUAL(osExtension.c_str(),
+                                  osTileExtension.c_str()) ||
+                            EQUAL(osExtension.c_str(), "mvt"))
                         {
                             return TRUE;
                         }
@@ -2426,6 +2461,7 @@ static bool LoadMetadata(const CPLString &osMetadataFile,
                          CPLJSONArray &oTileStatLayers, CPLJSONObject &oBounds,
                          OGRSpatialReference *poSRS, double &dfTopX,
                          double &dfTopY, double &dfTileDim0,
+                         int &nTileMatrixWidth0, int &nTileMatrixHeight0,
                          const CPLString &osMetadataMemFilename)
 
 {
@@ -2448,10 +2484,15 @@ static bool LoadMetadata(const CPLString &osMetadataFile,
     if (!bLoadOK)
         return false;
 
-    CPLJSONObject oCrs(oDoc.GetRoot().GetObj("crs"));
-    CPLJSONObject oTopX(oDoc.GetRoot().GetObj("tile_origin_upper_left_x"));
-    CPLJSONObject oTopY(oDoc.GetRoot().GetObj("tile_origin_upper_left_y"));
-    CPLJSONObject oTileDim0(oDoc.GetRoot().GetObj("tile_dimension_zoom_0"));
+    const CPLJSONObject oCrs(oDoc.GetRoot().GetObj("crs"));
+    const CPLJSONObject oTopX(
+        oDoc.GetRoot().GetObj("tile_origin_upper_left_x"));
+    const CPLJSONObject oTopY(
+        oDoc.GetRoot().GetObj("tile_origin_upper_left_y"));
+    const CPLJSONObject oTileDim0(
+        oDoc.GetRoot().GetObj("tile_dimension_zoom_0"));
+    nTileMatrixWidth0 = 1;
+    nTileMatrixHeight0 = 1;
     if (oCrs.IsValid() && oTopX.IsValid() && oTopY.IsValid() &&
         oTileDim0.IsValid())
     {
@@ -2459,6 +2500,20 @@ static bool LoadMetadata(const CPLString &osMetadataFile,
         dfTopX = oTopX.ToDouble();
         dfTopY = oTopY.ToDouble();
         dfTileDim0 = oTileDim0.ToDouble();
+        const CPLJSONObject oTMWidth0(
+            oDoc.GetRoot().GetObj("tile_matrix_width_zoom_0"));
+        if (oTMWidth0.GetType() == CPLJSONObject::Type::Integer)
+            nTileMatrixWidth0 = std::max(1, oTMWidth0.ToInteger());
+
+        const CPLJSONObject oTMHeight0(
+            oDoc.GetRoot().GetObj("tile_matrix_height_zoom_0"));
+        if (oTMHeight0.GetType() == CPLJSONObject::Type::Integer)
+            nTileMatrixHeight0 = std::max(1, oTMHeight0.ToInteger());
+
+        // Assumes WorldCRS84Quad with 2 tiles in width
+        // cf https://github.com/OSGeo/gdal/issues/11749
+        if (!oTMWidth0.IsValid() && dfTopX == -180 && dfTileDim0 == 180)
+            nTileMatrixWidth0 = 2;
     }
 
     oVectorLayers.Deinit();
@@ -2540,8 +2595,9 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
     if (nZ < 0 || nZ > 30)
         return nullptr;
 
-    CPLString osMetadataFile(CPLFormFilename(
-        CPLGetPath(poOpenInfo->pszFilename), "metadata.json", nullptr));
+    CPLString osMetadataFile(
+        CPLFormFilenameSafe(CPLGetPathSafe(poOpenInfo->pszFilename).c_str(),
+                            "metadata.json", nullptr));
     const char *pszMetadataFile =
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "METADATA_FILE");
     if (pszMetadataFile)
@@ -2582,10 +2638,11 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                     // tileserver-gl metadata file:
                     // If opening /path/to/foo/0, try looking for
                     // /path/to/foo.json
-                    CPLString osParentDir(CPLGetPath(poOpenInfo->pszFilename));
-                    osMetadataFile =
-                        CPLFormFilename(CPLGetPath(osParentDir),
-                                        CPLGetFilename(osParentDir), "json");
+                    CPLString osParentDir(
+                        CPLGetPathSafe(poOpenInfo->pszFilename));
+                    osMetadataFile = CPLFormFilenameSafe(
+                        CPLGetPathSafe(osParentDir).c_str(),
+                        CPLGetFilename(osParentDir), "json");
                     continue;
                 }
             }
@@ -2606,9 +2663,10 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
         {
             // tileserver-gl metadata file:
             // If opening /path/to/foo/0, try looking for /path/to/foo.json
-            CPLString osParentDir(CPLGetPath(poOpenInfo->pszFilename));
-            osMetadataFile = CPLFormFilename(
-                CPLGetPath(osParentDir), CPLGetFilename(osParentDir), "json");
+            CPLString osParentDir(CPLGetPathSafe(poOpenInfo->pszFilename));
+            osMetadataFile =
+                CPLFormFilenameSafe(CPLGetPathSafe(osParentDir).c_str(),
+                                    CPLGetFilename(osParentDir), "json");
             bMetadataFileExists = (VSIStatL(osMetadataFile, &sStat) == 0);
         }
     }
@@ -2645,7 +2703,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                     continue;
                 }
             }
-            CPLString osSubDir = CPLFormFilename(
+            CPLString osSubDir = CPLFormFilenameSafe(
                 poOpenInfo->pszFilename,
                 bTryToListDir ? aosDirContent[i] : CPLSPrintf("%d", i),
                 nullptr);
@@ -2661,13 +2719,14 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
             {
                 if (bTryToListDir)
                 {
-                    if (CPLGetValueType(CPLGetBasename(aosSubDirContent[j])) !=
+                    if (CPLGetValueType(
+                            CPLGetBasenameSafe(aosSubDirContent[j]).c_str()) !=
                         CPL_VALUE_INTEGER)
                     {
                         continue;
                     }
                 }
-                CPLString osFilename(CPLFormFilename(
+                const std::string osFilename(CPLFormFilenameSafe(
                     osSubDir,
                     bTryToListDir
                         ? aosSubDirContent[j]
@@ -2680,7 +2739,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                 oOpenInfo.papszOpenOptions =
                     CSLSetNameValue(oOpenInfo.papszOpenOptions,
                                     "DO_NOT_ERROR_ON_MISSING_TILE", "YES");
-                auto poTileDS = OGRMVTDataset::Open(&oOpenInfo);
+                auto poTileDS = OGRMVTDataset::Open(
+                    &oOpenInfo, /* bRecurseAllowed = */ false);
                 if (poTileDS)
                 {
                     if (poDS == nullptr)
@@ -2792,7 +2852,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
     if (!LoadMetadata(osMetadataFile, osMetadataContent, oVectorLayers,
                       oTileStatLayers, oBounds, poDS->m_poSRS,
                       poDS->m_dfTopXOrigin, poDS->m_dfTopYOrigin,
-                      poDS->m_dfTileDim0, osMetadataMemFilename))
+                      poDS->m_dfTileDim0, poDS->m_nTileMatrixWidth0,
+                      poDS->m_nTileMatrixHeight0, osMetadataMemFilename))
     {
         delete poDS;
         return nullptr;
@@ -2873,6 +2934,11 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
+{
+    return Open(poOpenInfo, true);
+}
+
+GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo, bool bRecurseAllowed)
 
 {
     if (!OGRMVTDriverIdentify(poOpenInfo) || poOpenInfo->eAccess == GA_Update)
@@ -2892,7 +2958,7 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
         // If the filename has no extension and is a directory, consider
         // we open a directory
         VSIStatBufL sStat;
-        if (!STARTS_WITH(osFilename, "/vsigzip/") &&
+        if (bRecurseAllowed && !STARTS_WITH(osFilename, "/vsigzip/") &&
             strchr((CPLGetFilename(osFilename)), '.') == nullptr &&
             VSIStatL(osFilename, &sStat) == 0 && VSI_ISDIR(sStat.st_mode))
         {
@@ -2906,7 +2972,8 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
 
         // For a network resource, if the filename is an integer, consider it
         // is a directory and open as such
-        if ((STARTS_WITH(osFilename, "/vsicurl") ||
+        if (bRecurseAllowed &&
+            (STARTS_WITH(osFilename, "/vsicurl") ||
              STARTS_WITH(osFilename, "http://") ||
              STARTS_WITH(osFilename, "https://")) &&
             CPLGetValueType(CPLGetFilename(osFilename)) == CPL_VALUE_INTEGER)
@@ -2940,10 +3007,11 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
     }
-    else if (poOpenInfo->bIsDirectory ||
-             (STARTS_WITH(poOpenInfo->pszFilename, "/vsicurl") &&
-              CPLGetValueType(CPLGetFilename(poOpenInfo->pszFilename)) ==
-                  CPL_VALUE_INTEGER))
+    else if (bRecurseAllowed &&
+             (poOpenInfo->bIsDirectory ||
+              (STARTS_WITH(poOpenInfo->pszFilename, "/vsicurl") &&
+               CPLGetValueType(CPLGetFilename(poOpenInfo->pszFilename)) ==
+                   CPL_VALUE_INTEGER)))
     {
         return OpenDirectory(poOpenInfo);
     }
@@ -2966,9 +3034,10 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    CPLString osY = CPLGetBasename(osFilename);
-    CPLString osX = CPLGetBasename(CPLGetPath(osFilename));
-    CPLString osZ = CPLGetBasename(CPLGetPath(CPLGetPath(osFilename)));
+    CPLString osY = CPLGetBasenameSafe(osFilename);
+    CPLString osX = CPLGetBasenameSafe(CPLGetPathSafe(osFilename).c_str());
+    CPLString osZ = CPLGetBasenameSafe(
+        CPLGetPathSafe(CPLGetPathSafe(osFilename).c_str()).c_str());
     size_t nPos = osY.find('.');
     if (nPos != std::string::npos)
         osY.resize(nPos);
@@ -2983,9 +3052,11 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
              CPLGetValueType(osY) == CPL_VALUE_INTEGER &&
              CPLGetValueType(osZ) == CPL_VALUE_INTEGER)
     {
-        osMetadataFile =
-            CPLFormFilename(CPLGetPath(CPLGetPath(CPLGetPath(osFilename))),
-                            "metadata.json", nullptr);
+        osMetadataFile = CPLFormFilenameSafe(
+            CPLGetPathSafe(
+                CPLGetPathSafe(CPLGetPathSafe(osFilename).c_str()).c_str())
+                .c_str(),
+            "metadata.json", nullptr);
         if (osMetadataFile.find("/vsigzip/") == 0)
         {
             osMetadataFile = osMetadataFile.substr(strlen("/vsigzip/"));
@@ -3093,7 +3164,8 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
         int nX = 0;
         int nY = 0;
         int nZ = 0;
-        CPLString osBasename(CPLGetBasename(CPLGetBasename(osFilename)));
+        CPLString osBasename(
+            CPLGetBasenameSafe(CPLGetBasenameSafe(osFilename).c_str()));
         if (sscanf(osBasename, "%d-%d-%d", &nZ, &nX, &nY) == 3 ||
             sscanf(osBasename, "%d_%d_%d", &nZ, &nX, &nY) == 3)
         {
@@ -3115,7 +3187,8 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
         LoadMetadata(osMetadataFile, CPLString(), oVectorLayers,
                      oTileStatLayers, oBounds, poDS->m_poSRS,
                      poDS->m_dfTopXOrigin, poDS->m_dfTopYOrigin,
-                     poDS->m_dfTileDim0, CPLString());
+                     poDS->m_dfTileDim0, poDS->m_nTileMatrixWidth0,
+                     poDS->m_nTileMatrixHeight0, CPLString());
     }
 
     const char *pszGeorefTopX =
@@ -3144,8 +3217,10 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
         int nX = atoi(osX);
         int nY = atoi(osY);
         int nZ = atoi(osZ);
-        if (nZ >= 0 && nZ < 30 && nX >= 0 && nX < (1 << nZ) && nY >= 0 &&
-            nY < (1 << nZ))
+        if (nZ >= 0 && nZ < 30 && nX >= 0 &&
+            nX < (static_cast<int64_t>(1) << nZ) * poDS->m_nTileMatrixWidth0 &&
+            nY >= 0 &&
+            nY < (static_cast<int64_t>(1) << nZ) * poDS->m_nTileMatrixHeight0)
         {
             poDS->m_bGeoreferenced = true;
             poDS->m_dfTileDimX = poDS->m_dfTileDim0 / (1 << nZ);
@@ -3314,6 +3389,10 @@ class OGRMVTWriterDataset final : public GDALDataset
     double m_dfTopX = 0.0;
     double m_dfTopY = 0.0;
     double m_dfTileDim0 = 0.0;
+    int m_nTileMatrixWidth0 =
+        1;  // Number of tiles along X axis at zoom level 0
+    int m_nTileMatrixHeight0 =
+        1;  // Number of tiles along Y axis at zoom level 0
     bool m_bReuseTempFile = false;  // debug only
 
     OGRErr PreGenerateForTile(
@@ -5279,24 +5358,25 @@ bool OGRMVTWriterDataset::CreateOutput()
         }
         else
         {
-            CPLString osZDirname(CPLFormFilename(
+            const std::string osZDirname(CPLFormFilenameSafe(
                 GetDescription(), CPLSPrintf("%d", nZ), nullptr));
-            CPLString osXDirname(
-                CPLFormFilename(osZDirname, CPLSPrintf("%d", nX), nullptr));
+            const std::string osXDirname(CPLFormFilenameSafe(
+                osZDirname.c_str(), CPLSPrintf("%d", nX), nullptr));
             if (nZ != nLastZ)
             {
-                VSIMkdir(osZDirname, 0755);
+                VSIMkdir(osZDirname.c_str(), 0755);
                 nLastZ = nZ;
                 nLastX = -1;
             }
             if (nX != nLastX)
             {
-                VSIMkdir(osXDirname, 0755);
+                VSIMkdir(osXDirname.c_str(), 0755);
                 nLastX = nX;
             }
-            CPLString osTileFilename(CPLFormFilename(
-                osXDirname, CPLSPrintf("%d", nY), m_osExtension.c_str()));
-            VSILFILE *fpOut = VSIFOpenL(osTileFilename, "wb");
+            const std::string osTileFilename(
+                CPLFormFilenameSafe(osXDirname.c_str(), CPLSPrintf("%d", nY),
+                                    m_osExtension.c_str()));
+            VSILFILE *fpOut = VSIFOpenL(osTileFilename.c_str(), "wb");
             if (fpOut)
             {
                 const size_t nRet = VSIFWriteL(oTileBuffer.data(), 1,
@@ -5505,6 +5585,10 @@ bool OGRMVTWriterDataset::GenerateMetadata(
                           oRoot);
         WriteMetadataItem("tile_dimension_zoom_0", m_dfTileDim0, m_hDBMBTILES,
                           oRoot);
+        WriteMetadataItem("tile_matrix_width_zoom_0", m_nTileMatrixWidth0,
+                          m_hDBMBTILES, oRoot);
+        WriteMetadataItem("tile_matrix_height_zoom_0", m_nTileMatrixHeight0,
+                          m_hDBMBTILES, oRoot);
     }
 
     CPLJSONDocument oJsonDoc;
@@ -5688,7 +5772,7 @@ bool OGRMVTWriterDataset::GenerateMetadata(
     }
 
     return oDoc.Save(
-        CPLFormFilename(GetDescription(), "metadata.json", nullptr));
+        CPLFormFilenameSafe(GetDescription(), "metadata.json", nullptr));
 }
 
 /************************************************************************/
@@ -5807,11 +5891,17 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer *poLayer,
             const int nTileMaxX =
                 std::min(static_cast<int>((sExtent.MaxX - m_dfTopX + dfBuffer) /
                                           dfTileDim),
-                         (1 << nZ) - 1);
+                         static_cast<int>(std::min<int64_t>(
+                             INT_MAX, (static_cast<int64_t>(1) << nZ) *
+                                              m_nTileMatrixWidth0 -
+                                          1)));
             const int nTileMaxY =
                 std::min(static_cast<int>((m_dfTopY - sExtent.MinY + dfBuffer) /
                                           dfTileDim),
-                         (1 << nZ) - 1);
+                         static_cast<int>(std::min<int64_t>(
+                             INT_MAX, (static_cast<int64_t>(1) << nZ) *
+                                              m_nTileMatrixHeight0 -
+                                          1)));
             for (int iX = nTileMinX; iX <= nTileMaxX; iX++)
             {
                 for (int iY = nTileMinY; iY <= nTileMaxY; iY++)
@@ -5956,7 +6046,8 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
     }
 
     const char *pszFormat = CSLFetchNameValue(papszOptions, "FORMAT");
-    const bool bMBTILESExt = EQUAL(CPLGetExtension(pszFilename), "mbtiles");
+    const bool bMBTILESExt =
+        EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "mbtiles");
     if (pszFormat == nullptr && bMBTILESExt)
     {
         pszFormat = "MBTILES";
@@ -6133,8 +6224,8 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
         }
     }
 
-    poDS->m_osName =
-        CSLFetchNameValueDef(papszOptions, "NAME", CPLGetBasename(pszFilename));
+    poDS->m_osName = CSLFetchNameValueDef(
+        papszOptions, "NAME", CPLGetBasenameSafe(pszFilename).c_str());
     poDS->m_osDescription = CSLFetchNameValueDef(papszOptions, "DESCRIPTION",
                                                  poDS->m_osDescription.c_str());
     poDS->m_osType =
@@ -6157,20 +6248,32 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
             return nullptr;
         }
 
-        CPLStringList aoList(CSLTokenizeString2(pszTilingScheme, ",", 0));
-        if (aoList.Count() == 4)
+        const CPLStringList aoList(CSLTokenizeString2(pszTilingScheme, ",", 0));
+        if (aoList.Count() >= 4)
         {
             poDS->m_poSRS->SetFromUserInput(aoList[0]);
             poDS->m_dfTopX = CPLAtof(aoList[1]);
             poDS->m_dfTopY = CPLAtof(aoList[2]);
             poDS->m_dfTileDim0 = CPLAtof(aoList[3]);
+            if (aoList.Count() == 6)
+            {
+                poDS->m_nTileMatrixWidth0 = std::max(1, atoi(aoList[4]));
+                poDS->m_nTileMatrixHeight0 = std::max(1, atoi(aoList[5]));
+            }
+            else if (poDS->m_dfTopX == -180 && poDS->m_dfTileDim0 == 180)
+            {
+                // Assumes WorldCRS84Quad with 2 tiles in width
+                // cf https://github.com/OSGeo/gdal/issues/11749
+                poDS->m_nTileMatrixWidth0 = 2;
+            }
         }
         else
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Wrong format for TILING_SCHEME. "
                      "Expecting EPSG:XXXX,tile_origin_upper_left_x,"
-                     "tile_origin_upper_left_y,tile_dimension_zoom_0");
+                     "tile_origin_upper_left_y,tile_dimension_zoom_0[,tile_"
+                     "matrix_width_zoom_0,tile_matrix_height_zoom_0]");
             delete poDS;
             return nullptr;
         }
@@ -6323,7 +6426,8 @@ void RegisterOGRMVT()
         "  <Option name='TILING_SCHEME' type='string' "
         "description='Custom tiling scheme with following format "
         "\"EPSG:XXXX,tile_origin_upper_left_x,tile_origin_upper_left_y,"
-        "tile_dimension_zoom_0\"'/>"
+        "tile_dimension_zoom_0[,tile_matrix_width_zoom_0,tile_matrix_height_"
+        "zoom_0]\"'/>"
         "</CreationOptionList>");
 #endif  // HAVE_MVT_WRITE_SUPPORT
 

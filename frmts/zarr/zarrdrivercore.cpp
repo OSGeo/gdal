@@ -19,18 +19,19 @@
 static bool CheckExistenceOfOneZarrFile(const char *pszFilename)
 {
 
-    CPLString osMDFilename = CPLFormFilename(pszFilename, ".zarray", nullptr);
+    CPLString osMDFilename =
+        CPLFormFilenameSafe(pszFilename, ".zarray", nullptr);
 
     VSIStatBufL sStat;
     if (VSIStatL(osMDFilename, &sStat) == 0)
         return true;
 
-    osMDFilename = CPLFormFilename(pszFilename, ".zgroup", nullptr);
+    osMDFilename = CPLFormFilenameSafe(pszFilename, ".zgroup", nullptr);
     if (VSIStatL(osMDFilename, &sStat) == 0)
         return true;
 
     // Zarr V3
-    osMDFilename = CPLFormFilename(pszFilename, "zarr.json", nullptr);
+    osMDFilename = CPLFormFilenameSafe(pszFilename, "zarr.json", nullptr);
     if (VSIStatL(osMDFilename, &sStat) == 0)
         return true;
 
@@ -67,9 +68,10 @@ void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Zarr");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte Int16 UInt16 Int32 UInt32 Int64 UInt64 "
-                              "Float32 Float64 CFloat32 CFloat64");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONDATATYPES,
+        "Int8 Byte Int16 UInt16 Int32 UInt32 Int64 UInt64 "
+        "Float16 Float32 Float64 CFLoat16 CFloat32 CFloat64");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
 
@@ -111,6 +113,12 @@ void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_MULTIDIMENSIONAL, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS NoData "
+                              "RasterValues "
+                              "DatasetMetadata BandMetadata");
 }
 
 /************************************************************************/

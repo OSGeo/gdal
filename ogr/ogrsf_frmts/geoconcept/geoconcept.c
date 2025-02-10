@@ -991,9 +991,11 @@ static void GCIOAPI_CALL _Destroy_GCIO(GCExportFileH **hGXT, int delFile)
     {
         VSIFCloseL(GetGCHandle_GCIO(*hGXT));
         SetGCHandle_GCIO(*hGXT, NULL);
-        VSIUnlink(CPLFormFilename(GetGCPath_GCIO(*hGXT),
-                                  GetGCBasename_GCIO(*hGXT),
-                                  GetGCExtension_GCIO(*hGXT)));
+        char *pszTmp = CPLStrdup(CPLFormFilename(GetGCPath_GCIO(*hGXT),
+                                                 GetGCBasename_GCIO(*hGXT),
+                                                 GetGCExtension_GCIO(*hGXT)));
+        VSIUnlink(pszTmp);
+        VSIFree(pszTmp);
     }
     _ReInit_GCIO(*hGXT);
     CPLFree(*hGXT);
@@ -2762,21 +2764,24 @@ GCExportFileH GCIOAPI_CALL1(*)
         VSILFILE *h;
 
         /* file must exists ... */
-        if (!(h = VSIFOpenL(CPLFormFilename(GetGCPath_GCIO(hGXT),
-                                            GetGCBasename_GCIO(hGXT),
-                                            GetGCExtension_GCIO(hGXT)),
-                            "rt")))
+        char *pszTmp = CPLStrdup(CPLFormFilename(GetGCPath_GCIO(hGXT),
+                                                 GetGCBasename_GCIO(hGXT),
+                                                 GetGCExtension_GCIO(hGXT)));
+        if (!(h = VSIFOpenL(pszTmp, "rt")))
         {
             _Destroy_GCIO(&hGXT, FALSE);
+            CPLFree(pszTmp);
             return NULL;
         }
+        CPLFree(pszTmp);
         VSIFCloseL(h);
     }
 
-    SetGCHandle_GCIO(hGXT, VSIFOpenL(CPLFormFilename(GetGCPath_GCIO(hGXT),
-                                                     GetGCBasename_GCIO(hGXT),
-                                                     GetGCExtension_GCIO(hGXT)),
-                                     mode));
+    char *pszTmp = CPLStrdup(CPLFormFilename(GetGCPath_GCIO(hGXT),
+                                             GetGCBasename_GCIO(hGXT),
+                                             GetGCExtension_GCIO(hGXT)));
+    SetGCHandle_GCIO(hGXT, VSIFOpenL(pszTmp, mode));
+    CPLFree(pszTmp);
     if (!GetGCHandle_GCIO(hGXT))
     {
         _Destroy_GCIO(&hGXT, FALSE);
@@ -2791,11 +2796,11 @@ GCExportFileH GCIOAPI_CALL1(*)
             GCExportFileH *hGCT;
 
             hGCT = _Create_GCIO(gctPath, "gct", "-");
-            SetGCHandle_GCIO(
-                hGCT, VSIFOpenL(CPLFormFilename(GetGCPath_GCIO(hGCT),
-                                                GetGCBasename_GCIO(hGCT),
-                                                GetGCExtension_GCIO(hGCT)),
-                                "r"));
+            pszTmp = CPLStrdup(CPLFormFilename(GetGCPath_GCIO(hGCT),
+                                               GetGCBasename_GCIO(hGCT),
+                                               GetGCExtension_GCIO(hGCT)));
+            SetGCHandle_GCIO(hGCT, VSIFOpenL(pszTmp, "r"));
+            CPLFree(pszTmp);
             if (!GetGCHandle_GCIO(hGCT))
             {
                 CPLError(CE_Failure, CPLE_NotSupported,

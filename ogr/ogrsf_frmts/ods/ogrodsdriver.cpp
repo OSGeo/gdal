@@ -39,7 +39,7 @@ static int OGRODSDriverIdentify(GDALOpenInfo *poOpenInfo)
                       "<office:document-content") != nullptr;
     }
 
-    const char *pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExt = poOpenInfo->osExtension.c_str();
     if (!EQUAL(pszExt, "ODS") && !EQUAL(pszExt, "ODS}"))
         return FALSE;
 
@@ -170,7 +170,7 @@ static GDALDataset *OGRODSDriverCreate(const char *pszName, int /* nXSize */,
                                        char **papszOptions)
 
 {
-    if (!EQUAL(CPLGetExtension(pszName), "ODS"))
+    if (!EQUAL(CPLGetExtensionSafe(pszName).c_str(), "ODS"))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "File extension should be ODS");
         return nullptr;
@@ -239,6 +239,9 @@ void RegisterOGRODS()
     poDriver->SetMetadataItem(GDAL_DCAP_REORDER_FIELDS, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "Features");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,

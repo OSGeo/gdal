@@ -373,7 +373,7 @@ int OGRSelafinDataSource::Open(const char *pszFilename, int bUpdateIn,
             CSLDestroy(papszFiles);
             return FALSE;
         }
-        osFilename = CPLFormFilename(osFilename, papszFiles[0], nullptr);
+        osFilename = CPLFormFilenameSafe(osFilename, papszFiles[0], nullptr);
         CSLDestroy(papszFiles);
         return OpenTable(osFilename);
     }
@@ -388,8 +388,8 @@ int OGRSelafinDataSource::Open(const char *pszFilename, int bUpdateIn,
     char **papszNames = VSIReadDir(osFilename);
     for (i = 0; papszNames != NULL && papszNames[i] != NULL; i++)
     {
-        CPLString oSubFilename =
-            CPLFormFilename(osFilename, papszNames[i], NULL);
+        const CPLString oSubFilename =
+            CPLFormFilenameSafe(osFilename, papszNames[i], NULL);
         if (EQUAL(papszNames[i], ".") || EQUAL(papszNames[i], ".."))
             continue;
         if (VSIStatL(oSubFilename, &sStatBuf) != 0 ||
@@ -469,7 +469,7 @@ int OGRSelafinDataSource::OpenTable(const char *pszFilename)
     } */
 
     // Get layer base name
-    CPLString osBaseLayerName = CPLGetBasename(pszFilename);
+    CPLString osBaseLayerName = CPLGetBasenameSafe(pszFilename);
 
     // Read header of file to get common information for all layers
     // poHeader now owns fp

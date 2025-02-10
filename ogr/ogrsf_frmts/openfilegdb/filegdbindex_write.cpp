@@ -54,13 +54,15 @@ void FileGDBTable::RemoveIndices()
         osUCIndexFieldName.toupper();
         if (osUCIndexFieldName == osUCGeomFieldName)
         {
-            VSIUnlink(CPLResetExtension(m_osFilename.c_str(), "spx"));
+            VSIUnlink(
+                CPLResetExtensionSafe(m_osFilename.c_str(), "spx").c_str());
         }
         else
         {
-            VSIUnlink(
-                CPLResetExtension(m_osFilename.c_str(),
-                                  (poIndex->GetIndexName() + ".atx").c_str()));
+            VSIUnlink(CPLResetExtensionSafe(
+                          m_osFilename.c_str(),
+                          (poIndex->GetIndexName() + ".atx").c_str())
+                          .c_str());
         }
     }
 
@@ -264,8 +266,9 @@ void FileGDBTable::CreateGdbIndexesFile()
         WriteUInt16(abyBuffer, 0);  // unknown semantics
     }
 
-    VSILFILE *fp =
-        VSIFOpenL(CPLResetExtension(m_osFilename.c_str(), "gdbindexes"), "wb");
+    VSILFILE *fp = VSIFOpenL(
+        CPLResetExtensionSafe(m_osFilename.c_str(), "gdbindexes").c_str(),
+        "wb");
     if (fp == nullptr)
         return;
     CPL_IGNORE_RET_VAL(VSIFWriteL(abyBuffer.data(), abyBuffer.size(), 1, fp));
@@ -1271,7 +1274,7 @@ bool FileGDBTable::CreateSpatialIndex()
     }
 
     const std::string osSPXFilename(
-        CPLResetExtension(m_osFilename.c_str(), "spx"));
+        CPLResetExtensionSafe(m_osFilename.c_str(), "spx"));
     VSILFILE *fp = VSIFOpenL(osSPXFilename.c_str(), "wb");
     if (fp == nullptr)
         return false;
@@ -1314,7 +1317,7 @@ bool FileGDBTable::CreateAttributeIndex(const FileGDBIndex *poIndex)
         return false;
     }
 
-    const std::string osIdxFilename(CPLResetExtension(
+    const std::string osIdxFilename(CPLResetExtensionSafe(
         m_osFilename.c_str(), (poIndex->GetIndexName() + ".atx").c_str()));
     VSILFILE *fp = VSIFOpenL(osIdxFilename.c_str(), "wb");
     if (fp == nullptr)

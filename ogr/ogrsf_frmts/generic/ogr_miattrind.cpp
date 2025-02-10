@@ -164,9 +164,11 @@ OGRErr OGRMILayerAttrIndex::Initialize(const char *pszIndexPathIn,
     if (STARTS_WITH_CI(pszIndexPathIn, "<OGRMILayerAttrIndex>"))
         return LoadConfigFromXML(pszIndexPathIn);
 
-    pszMetadataFilename = CPLStrdup(CPLResetExtension(pszIndexPathIn, "idm"));
+    pszMetadataFilename =
+        CPLStrdup(CPLResetExtensionSafe(pszIndexPathIn, "idm").c_str());
 
-    pszMIINDFilename = CPLStrdup(CPLResetExtension(pszIndexPathIn, "ind"));
+    pszMIINDFilename =
+        CPLStrdup(CPLResetExtensionSafe(pszIndexPathIn, "ind").c_str());
 
     /* -------------------------------------------------------------------- */
     /*      If a metadata file already exists, load it.                     */

@@ -568,7 +568,8 @@ The following configuration options are specific to the /vsis3/ handler:
       :default: s3.amazonaws.com
 
       Allows the use of /vsis3/ with non-AWS remote object stores that use the
-      AWS S3 protocol.
+      AWS S3 protocol. Starting with GDAL 3.11, this can be a URL starting
+      with ``http://`` or ``https://``.
 
 -  .. config:: AWS_HTTPS
       :choices: YES, NO
@@ -576,6 +577,8 @@ The following configuration options are specific to the /vsis3/ handler:
 
       If ``YES``, AWS resources will be accessed using HTTPS. If ``NO``, HTTP
       will be used.
+      No longer needed starting with GDAL 3.11, because :config:`AWS_S3_ENDPOINT`
+      can include the protocol, and when doing so, this option is ignored.
 
 -  .. config:: AWS_VIRTUAL_HOSTING
       :choices: TRUE, FALSE

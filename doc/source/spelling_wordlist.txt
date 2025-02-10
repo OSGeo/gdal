@@ -521,6 +521,7 @@ cvs
 Cxx
 Cygwin
 dall
+DanB
 DanielM
 danlittle
 dat
@@ -2412,6 +2413,8 @@ Pirmin
 pixelfunction
 pixelfunctions
 pixelsize
+pixi
+Pixi
 Pixmap
 pkgconfig
 pkid

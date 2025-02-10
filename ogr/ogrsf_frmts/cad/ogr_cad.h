@@ -97,7 +97,7 @@ class GDALCADDataset final : public GDALDataset
     virtual int CloseDependentDatasets() override;
 
   protected:
-    const char *GetPrjFilePath() const;
+    const std::string GetPrjFilePath() const;
     void FillTransform(CADImage *pImage, double dfUnits);
     int GetCadEncoding() const;
 

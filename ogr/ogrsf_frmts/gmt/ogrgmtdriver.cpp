@@ -26,7 +26,7 @@ static int OGRGMTDriverIdentify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes && strstr(pszHeader, "@VGMT") != nullptr)
         return true;
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GMT"))
+    if (poOpenInfo->IsExtensionEqualToCI("GMT"))
         return true;
 
     return false;

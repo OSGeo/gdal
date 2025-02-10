@@ -45,7 +45,7 @@ jobs:
       if: matrix.platform == 'windows-latest'
 
     - name: Cache Conda Environment
-      uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+      uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
       with:
         path: ~/conda_pkgs_dir
         key: ${{ runner.os }}-${{ steps.get-date.outputs.today }}-conda-${{ env.CACHE_NUMBER }}
@@ -74,16 +74,16 @@ jobs:
           source ../ci/travis/conda/compile.sh
       working-directory: ./gdal-feedstock
 
-    - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+    - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
       with:
         name: ${{ matrix.platform }}-conda-package
         path: ./gdal-feedstock/packages/
 
     - name: Deploy to gdal-master Conda channel
-      if: github.ref == 'refs/heads/master'
+      if: github.repository == 'OSGeo/GDAL' && github.ref == 'refs/heads/master'
       shell: bash -l {0}
       env:
         ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
       run: |
-          source ../ci/travis/conda/upload.sh || true
+          source ../ci/travis/conda/upload.sh
       working-directory: ./gdal-feedstock

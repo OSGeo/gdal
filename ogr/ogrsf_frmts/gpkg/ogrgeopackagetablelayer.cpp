@@ -284,8 +284,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
         const int iField =
             nUpdatedFieldsCount < 0 ? idx : panUpdatedFieldsIdx[idx];
         assert(iField >= 0);
-        if (iField == m_iFIDAsRegularColumnIndex ||
-            m_abGeneratedColumns[iField])
+        const auto &oFieldDefn = poFeatureDefn->GetFieldDefn(iField);
+        if (iField == m_iFIDAsRegularColumnIndex || oFieldDefn->IsGenerated())
             continue;
         if (!poFeature->IsFieldSetUnsafe(iField))
         {
@@ -647,7 +647,8 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL(
     /* Add attribute column names (except FID) to the SQL */
     for (int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
     {
-        if (i == m_iFIDAsRegularColumnIndex || m_abGeneratedColumns[i])
+        const auto &oFieldDefn = poFeatureDefn->GetFieldDefn(i);
+        if (i == m_iFIDAsRegularColumnIndex || oFieldDefn->IsGenerated())
             continue;
         if (!bBindUnsetFields && !poFeature->IsFieldSet(i))
             continue;
@@ -764,7 +765,8 @@ std::string OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL(
     const int nFieldCount = poFeatureDefn->GetFieldCount();
     for (int i = 0; i < nFieldCount; i++)
     {
-        if (i == m_iFIDAsRegularColumnIndex || m_abGeneratedColumns[i])
+        const auto &oFieldDefn = poFeatureDefn->GetFieldDefn(i);
+        if (i == m_iFIDAsRegularColumnIndex || oFieldDefn->IsGenerated())
             continue;
         if (!poFeature->IsFieldSet(i))
             continue;
@@ -1109,7 +1111,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                  m_pszTableName);
     }
 
-    m_abGeneratedColumns.resize(oResultTable->RowCount());
     for (int iRecord = 0; iRecord < oResultTable->RowCount(); iRecord++)
     {
         const char *pszName = oResultTable->GetValue(1, iRecord);
@@ -1317,14 +1318,11 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                         oField.SetDefault(pszDefault);
                     }
                 }
-                m_abGeneratedColumns[m_poFeatureDefn->GetFieldCount()] =
-                    bIsGenerated;
+                oField.SetGenerated(bIsGenerated);
                 m_poFeatureDefn->AddFieldDefn(&oField);
             }
         }
     }
-
-    m_abGeneratedColumns.resize(m_poFeatureDefn->GetFieldCount());
 
     /* Wait, we didn't find a FID? Some operations will not be possible */
     if (m_bIsTable && m_pszFidColumn == nullptr)
@@ -1849,10 +1847,9 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
     {
         m_apoFieldDefnChanges.emplace_back(
             std::make_unique<OGRFieldDefn>(oFieldDefn),
-            m_poFeatureDefn->GetFieldCount() - 1, FieldChangeType::ADD_FIELD);
+            m_poFeatureDefn->GetFieldCount() - 1, FieldChangeType::ADD_FIELD,
+            m_poDS->GetCurrentSavepoint());
     }
-
-    m_abGeneratedColumns.resize(m_poFeatureDefn->GetFieldCount());
 
     if (m_pszFidColumn != nullptr &&
         EQUAL(oFieldDefn.GetNameRef(), m_pszFidColumn))
@@ -3258,7 +3255,7 @@ std::string OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL(
     {
         const int iField = panUpdatedFieldsIdx[i];
         if (iField == m_iFIDAsRegularColumnIndex ||
-            m_abGeneratedColumns[iField])
+            poFeatureDefn->GetFieldDefn(iField)->IsGenerated())
             continue;
         if (!poFeature->IsFieldSet(iField))
             continue;
@@ -3811,6 +3808,7 @@ bool OGRGeoPackageTableLayer::DoJobAtTransactionRollback()
         SyncToDisk();
         m_bDeferredSpatialIndexCreation = bDeferredSpatialIndexCreationBackup;
     }
+
     ResetReading();
     return true;
 }
@@ -6456,7 +6454,8 @@ OGRErr OGRGeoPackageTableLayer::DeleteField(int iFieldToDelete)
     const GPKGTemporaryForeignKeyCheckDisabler
         oGPKGTemporaryForeignKeyCheckDisabler(m_poDS);
 
-    if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
+    if (m_poDS->GetCurrentSavepoint().empty() &&
+        m_poDS->SoftStartTransaction() != OGRERR_NONE)
     {
         return OGRERR_FAILURE;
     }
@@ -6578,7 +6577,10 @@ OGRErr OGRGeoPackageTableLayer::DeleteField(int iFieldToDelete)
     /* -------------------------------------------------------------------- */
     if (eErr == OGRERR_NONE)
     {
-        eErr = m_poDS->SoftCommitTransaction();
+
+        if (m_poDS->GetCurrentSavepoint().empty())
+            eErr = m_poDS->SoftCommitTransaction();
+
         if (eErr == OGRERR_NONE)
         {
 
@@ -6590,7 +6592,8 @@ OGRErr OGRGeoPackageTableLayer::DeleteField(int iFieldToDelete)
                 {
                     m_apoFieldDefnChanges.emplace_back(
                         std::move(poFieldDefn), iFieldToDelete,
-                        FieldChangeType::DELETE_FIELD);
+                        FieldChangeType::DELETE_FIELD,
+                        m_poDS->GetCurrentSavepoint());
                 }
                 else
                 {
@@ -6602,24 +6605,10 @@ OGRErr OGRGeoPackageTableLayer::DeleteField(int iFieldToDelete)
                 eErr = whileUnsealing(m_poFeatureDefn)
                            ->DeleteFieldDefn(iFieldToDelete);
             }
-
-            if (eErr == OGRERR_NONE)
-            {
-#if SQLITE_VERSION_NUMBER >= 3035005L
-                m_abGeneratedColumns.erase(m_abGeneratedColumns.begin() +
-                                           iFieldToDelete);
-#else
-                // We have recreated the table from scratch, and lost the
-                // generated column property
-                std::fill(m_abGeneratedColumns.begin(),
-                          m_abGeneratedColumns.end(), false);
-#endif
-            }
-
             ResetReading();
         }
     }
-    else
+    else if (m_poDS->GetCurrentSavepoint().empty())
     {
         m_poDS->SoftRollbackTransaction();
     }
@@ -6746,7 +6735,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
     /*      Build the modified field definition from the flags.             */
     /* -------------------------------------------------------------------- */
     OGRFieldDefn oTmpFieldDefn(poFieldDefnToAlter);
-    bool bUseRewriteSchemaMethod = (m_poDS->nSoftTransactionLevel == 0);
+    bool bUseRewriteSchemaMethod = (m_poDS->m_nSoftTransactionLevel == 0);
     int nActualFlags = 0;
     if (bRenameCol)
     {
@@ -7098,7 +7087,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
             {
                 m_apoFieldDefnChanges.emplace_back(
                     std::make_unique<OGRFieldDefn>(poFieldDefnToAlter),
-                    iFieldToAlter, FieldChangeType::ALTER_FIELD);
+                    iFieldToAlter, FieldChangeType::ALTER_FIELD,
+                    m_poDS->GetCurrentSavepoint());
             }
 
             auto oTemporaryUnsealer(poFieldDefnToAlter->GetTemporaryUnsealer());
@@ -7566,14 +7556,6 @@ OGRErr OGRGeoPackageTableLayer::ReorderFields(int *panMap)
         if (eErr == OGRERR_NONE)
         {
             eErr = whileUnsealing(m_poFeatureDefn)->ReorderFieldDefns(panMap);
-        }
-
-        if (eErr == OGRERR_NONE)
-        {
-            // We have recreated the table from scratch, and lost the
-            // generated column property
-            std::fill(m_abGeneratedColumns.begin(), m_abGeneratedColumns.end(),
-                      false);
         }
 
         ResetReading();

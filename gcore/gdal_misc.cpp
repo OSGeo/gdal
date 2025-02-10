@@ -30,6 +30,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_json.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
@@ -87,7 +88,9 @@ static int GetDataTypeElementSizeBits(GDALDataType eDataType)
 
         case GDT_UInt16:
         case GDT_Int16:
+        case GDT_Float16:
         case GDT_CInt16:
+        case GDT_CFloat16:
             return 16;
 
         case GDT_UInt32:
@@ -224,10 +227,12 @@ GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(GDALDataType eDT,
                     return eDT;
                 break;
             }
+            // Do not return `GDT_Float16` because that type is not supported everywhere
+            case GDT_Float16:
             case GDT_Float32:
             {
                 if (GDALIsValueExactAs<float>(dfValue))
-                    return eDT;
+                    return GDT_Float32;
                 break;
             }
             case GDT_Float64:
@@ -237,6 +242,7 @@ GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(GDALDataType eDT,
             case GDT_Unknown:
             case GDT_CInt16:
             case GDT_CInt32:
+            case GDT_CFloat16:
             case GDT_CFloat32:
             case GDT_CFloat64:
             case GDT_TypeCount:
@@ -255,34 +261,34 @@ static int GetMinBitsForValue(double dValue)
 {
     if (round(dValue) == dValue)
     {
-        if (dValue <= std::numeric_limits<GByte>::max() &&
-            dValue >= std::numeric_limits<GByte>::min())
+        if (dValue <= cpl::NumericLimits<GByte>::max() &&
+            dValue >= cpl::NumericLimits<GByte>::lowest())
             return 8;
 
-        if (dValue <= std::numeric_limits<GInt8>::max() &&
-            dValue >= std::numeric_limits<GInt8>::min())
+        if (dValue <= cpl::NumericLimits<GInt8>::max() &&
+            dValue >= cpl::NumericLimits<GInt8>::lowest())
             return 8;
 
-        if (dValue <= std::numeric_limits<GInt16>::max() &&
-            dValue >= std::numeric_limits<GInt16>::min())
+        if (dValue <= cpl::NumericLimits<GInt16>::max() &&
+            dValue >= cpl::NumericLimits<GInt16>::lowest())
             return 16;
 
-        if (dValue <= std::numeric_limits<GUInt16>::max() &&
-            dValue >= std::numeric_limits<GUInt16>::min())
+        if (dValue <= cpl::NumericLimits<GUInt16>::max() &&
+            dValue >= cpl::NumericLimits<GUInt16>::lowest())
             return 16;
 
-        if (dValue <= std::numeric_limits<GInt32>::max() &&
-            dValue >= std::numeric_limits<GInt32>::min())
+        if (dValue <= cpl::NumericLimits<GInt32>::max() &&
+            dValue >= cpl::NumericLimits<GInt32>::lowest())
             return 32;
 
-        if (dValue <= std::numeric_limits<GUInt32>::max() &&
-            dValue >= std::numeric_limits<GUInt32>::min())
+        if (dValue <= cpl::NumericLimits<GUInt32>::max() &&
+            dValue >= cpl::NumericLimits<GUInt32>::lowest())
             return 32;
 
-        if (dValue <= static_cast<double>(
-                          std::numeric_limits<std::uint64_t>::max()) &&
-            dValue >=
-                static_cast<double>(std::numeric_limits<std::uint64_t>::min()))
+        if (dValue <=
+                static_cast<double>(cpl::NumericLimits<std::uint64_t>::max()) &&
+            dValue >= static_cast<double>(
+                          cpl::NumericLimits<std::uint64_t>::lowest()))
             return 64;
     }
     else if (static_cast<float>(dValue) == dValue)
@@ -312,53 +318,80 @@ static int GetMinBitsForValue(double dValue)
 GDALDataType CPL_STDCALL GDALFindDataType(int nBits, int bSigned, int bFloating,
                                           int bComplex)
 {
-    if (bComplex)
+    if (!bFloating)
     {
-        nBits = std::max(nBits, !bSigned ? 32 : 16);
-    }  // we don't have complex unsigned data types, so for a complex uint16,
-       // promote to complex int32
-    if (bFloating)
-    {
-        nBits = std::max(nBits, 32);
-    }
-
-    if (nBits <= 8)
-    {
-        return bSigned ? GDT_Int8 : GDT_Byte;
-    }
-
-    if (nBits <= 16)
-    {
-        if (bComplex)
-            return GDT_CInt16;
-        if (bSigned)
-            return GDT_Int16;
-        return GDT_UInt16;
-    }
-
-    if (nBits <= 32)
-    {
-        if (bFloating)
+        if (!bComplex)
         {
-            if (bComplex)
-                return GDT_CFloat32;
-            return GDT_Float32;
+            if (!bSigned)
+            {
+                if (nBits <= 8)
+                    return GDT_Byte;
+                if (nBits <= 16)
+                    return GDT_UInt16;
+                if (nBits <= 32)
+                    return GDT_UInt32;
+                if (nBits <= 64)
+                    return GDT_UInt64;
+                return GDT_Float64;
+            }
+            else  // bSigned
+            {
+                if (nBits <= 8)
+                    return GDT_Int8;
+                if (nBits <= 16)
+                    return GDT_Int16;
+                if (nBits <= 32)
+                    return GDT_Int32;
+                if (nBits <= 64)
+                    return GDT_Int64;
+                return GDT_Float64;
+            }
         }
+        else  // bComplex
+        {
+            if (!bSigned)
+            {
+                // We don't have complex unsigned data types, so
+                // return a large-enough complex signed type
 
-        if (bComplex)
-            return GDT_CInt32;
-        if (bSigned)
-            return GDT_Int32;
-        return GDT_UInt32;
+                // Do not choose CInt16 for backward compatibility
+                // if (nBits <= 15)
+                //     return GDT_CInt16;
+                if (nBits <= 31)
+                    return GDT_CInt32;
+                return GDT_CFloat64;
+            }
+            else  // bSigned
+            {
+                if (nBits <= 16)
+                    return GDT_CInt16;
+                if (nBits <= 32)
+                    return GDT_CInt32;
+                return GDT_CFloat64;
+            }
+        }
     }
-
-    if (nBits == 64 && !bFloating && !bComplex)
-        return bSigned ? GDT_Int64 : GDT_UInt64;
-
-    if (bComplex)
-        return GDT_CFloat64;
-
-    return GDT_Float64;
+    else  // bFloating
+    {
+        if (!bComplex)
+        {
+            // Do not choose Float16 since is not supported everywhere
+            // if (nBits <= 16)
+            //     return GDT_Float16;
+            if (nBits <= 32)
+                return GDT_Float32;
+            return GDT_Float64;
+        }
+        else  // bComplex
+        {
+            // Do not choose Float16 since is not supported everywhere
+            // if (nBits <= 16)
+            //     return GDT_CFloat16;
+            if (nBits <= 32)
+                return GDT_CFloat32;
+            return GDT_CFloat64;
+        }
+    }
 }
 
 /************************************************************************/
@@ -379,9 +412,9 @@ GDALDataType CPL_STDCALL GDALFindDataTypeForValue(double dValue, int bComplex)
     const bool bFloating =
         round(dValue) != dValue ||
         dValue >
-            static_cast<double>(std::numeric_limits<std::uint64_t>::max()) ||
+            static_cast<double>(cpl::NumericLimits<std::uint64_t>::max()) ||
         dValue <
-            static_cast<double>(std::numeric_limits<std::int64_t>::lowest());
+            static_cast<double>(cpl::NumericLimits<std::int64_t>::lowest());
     const bool bSigned = bFloating || dValue < 0;
     const int nBits = GetMinBitsForValue(dValue);
 
@@ -413,12 +446,14 @@ int CPL_STDCALL GDALGetDataTypeSizeBytes(GDALDataType eDataType)
 
         case GDT_UInt16:
         case GDT_Int16:
+        case GDT_Float16:
             return 2;
 
         case GDT_UInt32:
         case GDT_Int32:
         case GDT_Float32:
         case GDT_CInt16:
+        case GDT_CFloat16:
             return 4;
 
         case GDT_Float64:
@@ -499,6 +534,7 @@ int CPL_STDCALL GDALDataTypeIsComplex(GDALDataType eDataType)
     {
         case GDT_CInt16:
         case GDT_CInt32:
+        case GDT_CFloat16:
         case GDT_CFloat32:
         case GDT_CFloat64:
             return TRUE;
@@ -511,6 +547,7 @@ int CPL_STDCALL GDALDataTypeIsComplex(GDALDataType eDataType)
         case GDT_UInt32:
         case GDT_Int64:
         case GDT_UInt64:
+        case GDT_Float16:
         case GDT_Float32:
         case GDT_Float64:
             return FALSE;
@@ -529,8 +566,8 @@ int CPL_STDCALL GDALDataTypeIsComplex(GDALDataType eDataType)
 /**
  * \brief Is data type floating? (might be complex)
  *
- * @return TRUE if the passed type is floating (one of GDT_Float32, GDT_Float64,
- * GDT_CFloat32, GDT_CFloat64)
+ * @return TRUE if the passed type is floating (one of GDT_Float32, GDT_Float16,
+ * GDT_Float64, GDT_CFloat16, GDT_CFloat32, GDT_CFloat64)
  * @since GDAL 2.3
  */
 
@@ -538,8 +575,10 @@ int CPL_STDCALL GDALDataTypeIsFloating(GDALDataType eDataType)
 {
     switch (eDataType)
     {
+        case GDT_Float16:
         case GDT_Float32:
         case GDT_Float64:
+        case GDT_CFloat16:
         case GDT_CFloat32:
         case GDT_CFloat64:
             return TRUE;
@@ -592,8 +631,10 @@ int CPL_STDCALL GDALDataTypeIsInteger(GDALDataType eDataType)
         case GDT_Int64:
             return TRUE;
 
+        case GDT_Float16:
         case GDT_Float32:
         case GDT_Float64:
+        case GDT_CFloat16:
         case GDT_CFloat32:
         case GDT_CFloat64:
             return FALSE;
@@ -630,10 +671,12 @@ int CPL_STDCALL GDALDataTypeIsSigned(GDALDataType eDataType)
         case GDT_Int16:
         case GDT_Int32:
         case GDT_Int64:
+        case GDT_Float16:
         case GDT_Float32:
         case GDT_Float64:
         case GDT_CInt16:
         case GDT_CInt32:
+        case GDT_CFloat16:
         case GDT_CFloat32:
         case GDT_CFloat64:
             return TRUE;
@@ -691,6 +734,15 @@ int CPL_STDCALL GDALDataTypeIsConversionLossy(GDALDataType eTypeFrom,
             return TRUE;
 
         return FALSE;
+    }
+
+    if (eTypeTo == GDT_Float16 &&
+        (eTypeFrom == GDT_Int16 || eTypeFrom == GDT_UInt16 ||
+         eTypeFrom == GDT_Int32 || eTypeFrom == GDT_UInt32 ||
+         eTypeFrom == GDT_Int64 || eTypeFrom == GDT_UInt64 ||
+         eTypeFrom == GDT_Float32 || eTypeFrom == GDT_Float64))
+    {
+        return TRUE;
     }
 
     if (eTypeTo == GDT_Float32 &&
@@ -760,6 +812,9 @@ const char *CPL_STDCALL GDALGetDataTypeName(GDALDataType eDataType)
         case GDT_Int64:
             return "Int64";
 
+        case GDT_Float16:
+            return "Float16";
+
         case GDT_Float32:
             return "Float32";
 
@@ -771,6 +826,9 @@ const char *CPL_STDCALL GDALGetDataTypeName(GDALDataType eDataType)
 
         case GDT_CInt32:
             return "CInt32";
+
+        case GDT_CFloat16:
+            return "CFloat16";
 
         case GDT_CFloat32:
             return "CFloat32";
@@ -825,17 +883,15 @@ template <class T>
 static inline void ClampAndRound(double &dfValue, bool &bClamped,
                                  bool &bRounded)
 {
-    // TODO(schwehr): Rework this template.  ::min() versus ::lowest.
-
-    if (dfValue < static_cast<double>(std::numeric_limits<T>::min()))
+    if (dfValue < static_cast<double>(cpl::NumericLimits<T>::lowest()))
     {
         bClamped = true;
-        dfValue = static_cast<double>(std::numeric_limits<T>::min());
+        dfValue = static_cast<double>(cpl::NumericLimits<T>::lowest());
     }
-    else if (dfValue > static_cast<double>(std::numeric_limits<T>::max()))
+    else if (dfValue > static_cast<double>(cpl::NumericLimits<T>::max()))
     {
         bClamped = true;
-        dfValue = static_cast<double>(std::numeric_limits<T>::max());
+        dfValue = static_cast<double>(cpl::NumericLimits<T>::max());
     }
     else if (dfValue != static_cast<double>(static_cast<T>(dfValue)))
     {
@@ -892,28 +948,53 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
         case GDT_UInt64:
             ClampAndRound<std::uint64_t>(dfValue, bClamped, bRounded);
             break;
+        case GDT_Float16:
+        {
+            if (!std::isfinite(dfValue))
+                break;
+
+            // TODO: Use ClampAndRound
+            if (dfValue < cpl::NumericLimits<GFloat16>::lowest())
+            {
+                bClamped = TRUE;
+                dfValue =
+                    static_cast<double>(cpl::NumericLimits<GFloat16>::lowest());
+            }
+            else if (dfValue > cpl::NumericLimits<GFloat16>::max())
+            {
+                bClamped = TRUE;
+                dfValue =
+                    static_cast<double>(cpl::NumericLimits<GFloat16>::max());
+            }
+            else
+            {
+                // Intentionally lose precision.
+                // TODO(schwehr): Is the double cast really necessary?
+                // If so, why?  What will fail?
+                dfValue = static_cast<double>(static_cast<GFloat16>(dfValue));
+            }
+            break;
+        }
         case GDT_Float32:
         {
             if (!std::isfinite(dfValue))
                 break;
 
-            // TODO(schwehr): ::min() versus ::lowest.
-            // Use ClampAndRound after it has been fixed.
-            if (dfValue < -std::numeric_limits<float>::max())
+            // TODO: Use ClampAndRound
+            if (dfValue < cpl::NumericLimits<float>::lowest())
             {
                 bClamped = TRUE;
                 dfValue =
-                    static_cast<double>(-std::numeric_limits<float>::max());
+                    static_cast<double>(cpl::NumericLimits<float>::lowest());
             }
-            else if (dfValue > std::numeric_limits<float>::max())
+            else if (dfValue > cpl::NumericLimits<float>::max())
             {
                 bClamped = TRUE;
-                dfValue =
-                    static_cast<double>(std::numeric_limits<float>::max());
+                dfValue = static_cast<double>(cpl::NumericLimits<float>::max());
             }
             else
             {
-                // Intentionally loose precision.
+                // Intentionally lose precision.
                 // TODO(schwehr): Is the double cast really necessary?
                 // If so, why?  What will fail?
                 dfValue = static_cast<double>(static_cast<float>(dfValue));
@@ -923,6 +1004,7 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
         case GDT_Float64:
         case GDT_CInt16:
         case GDT_CInt32:
+        case GDT_CFloat16:
         case GDT_CFloat32:
         case GDT_CFloat64:
         case GDT_Unknown:
@@ -973,6 +1055,8 @@ bool GDALIsValueExactAs(double dfValue, GDALDataType eDT)
             return GDALIsValueExactAs<uint64_t>(dfValue);
         case GDT_Int64:
             return GDALIsValueExactAs<int64_t>(dfValue);
+        case GDT_Float16:
+            return GDALIsValueExactAs<GFloat16>(dfValue);
         case GDT_Float32:
             return GDALIsValueExactAs<float>(dfValue);
         case GDT_Float64:
@@ -980,6 +1064,7 @@ bool GDALIsValueExactAs(double dfValue, GDALDataType eDT)
         case GDT_Unknown:
         case GDT_CInt16:
         case GDT_CInt32:
+        case GDT_CFloat16:
         case GDT_CFloat32:
         case GDT_CFloat64:
         case GDT_TypeCount:
@@ -1011,6 +1096,8 @@ GDALDataType CPL_STDCALL GDALGetNonComplexDataType(GDALDataType eDataType)
             return GDT_Int16;
         case GDT_CInt32:
             return GDT_Int32;
+        case GDT_CFloat16:
+            return GDT_Float16;
         case GDT_CFloat32:
             return GDT_Float32;
         case GDT_CFloat64:
@@ -1024,6 +1111,7 @@ GDALDataType CPL_STDCALL GDALGetNonComplexDataType(GDALDataType eDataType)
         case GDT_Int16:
         case GDT_Int32:
         case GDT_Int64:
+        case GDT_Float16:
         case GDT_Float32:
         case GDT_Float64:
             break;
@@ -1549,6 +1637,10 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                             reinterpret_cast<const std::int64_t *>(
                                 pDataRef)[iOffset]);
                         break;
+                    case GDT_Float16:
+                        dfValue = reinterpret_cast<const GFloat16 *>(
+                            pDataRef)[iOffset];
+                        break;
                     case GDT_Float32:
                         dfValue =
                             reinterpret_cast<const float *>(pDataRef)[iOffset];
@@ -1573,6 +1665,17 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                             pDataRef)[iOffset * 2];
                         const double dfImag = reinterpret_cast<const GInt32 *>(
                             pDataRef)[iOffset * 2 + 1];
+                        dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
+                        break;
+                    }
+                    case GDT_CFloat16:
+                    {
+                        const double dfReal =
+                            reinterpret_cast<const GFloat16 *>(
+                                pDataRef)[iOffset * 2];
+                        const double dfImag =
+                            reinterpret_cast<const GFloat16 *>(
+                                pDataRef)[iOffset * 2 + 1];
                         dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
                         break;
                     }
@@ -1859,7 +1962,7 @@ CPLString GDALFindAssociatedFile(const char *pszBaseFilename,
                                  CPL_UNUSED int nFlags)
 
 {
-    CPLString osTarget = CPLResetExtension(pszBaseFilename, pszExt);
+    CPLString osTarget = CPLResetExtensionSafe(pszBaseFilename, pszExt);
 
     if (papszSiblingFiles == nullptr ||
         // cppcheck-suppress knownConditionTrueFalse
@@ -1876,7 +1979,7 @@ CPLString GDALFindAssociatedFile(const char *pszBaseFilename,
             else
                 osAltExt = osAltExt.tolower();
 
-            osTarget = CPLResetExtension(pszBaseFilename, osAltExt);
+            osTarget = CPLResetExtensionSafe(pszBaseFilename, osAltExt);
 
             if (VSIStatExL(osTarget, &sStatBuf, VSI_STAT_EXISTS_FLAG) != 0)
                 return "";
@@ -2127,14 +2230,14 @@ int CPL_STDCALL GDALReadOziMapFile(const char *pszBaseFilename,
     /* -------------------------------------------------------------------- */
     /*      Try lower case, then upper case.                                */
     /* -------------------------------------------------------------------- */
-    const char *pszOzi = CPLResetExtension(pszBaseFilename, "map");
+    std::string osOzi = CPLResetExtensionSafe(pszBaseFilename, "map");
 
-    VSILFILE *fpOzi = VSIFOpenL(pszOzi, "rt");
+    VSILFILE *fpOzi = VSIFOpenL(osOzi.c_str(), "rt");
 
-    if (fpOzi == nullptr && VSIIsCaseSensitiveFS(pszOzi))
+    if (fpOzi == nullptr && VSIIsCaseSensitiveFS(osOzi.c_str()))
     {
-        pszOzi = CPLResetExtension(pszBaseFilename, "MAP");
-        fpOzi = VSIFOpenL(pszOzi, "rt");
+        osOzi = CPLResetExtensionSafe(pszBaseFilename, "MAP");
+        fpOzi = VSIFOpenL(osOzi.c_str(), "rt");
     }
 
     if (fpOzi == nullptr)
@@ -2145,8 +2248,8 @@ int CPL_STDCALL GDALReadOziMapFile(const char *pszBaseFilename,
     /* -------------------------------------------------------------------- */
     /*      We found the file, now load and parse it.                       */
     /* -------------------------------------------------------------------- */
-    return GDALLoadOziMapFile(pszOzi, padfGeoTransform, ppszWKT, pnGCPCount,
-                              ppasGCPs);
+    return GDALLoadOziMapFile(osOzi.c_str(), padfGeoTransform, ppszWKT,
+                              pnGCPCount, ppasGCPs);
 }
 
 /************************************************************************/
@@ -2333,13 +2436,14 @@ int GDALReadTabFile2(const char *pszBaseFilename, double *padfGeoTransform,
     if (!GDALCanFileAcceptSidecarFile(pszBaseFilename))
         return FALSE;
 
-    const char *pszTAB = CPLResetExtension(pszBaseFilename, "tab");
+    std::string osTAB = CPLResetExtensionSafe(pszBaseFilename, "tab");
 
     if (papszSiblingFiles &&
         // cppcheck-suppress knownConditionTrueFalse
-        GDALCanReliablyUseSiblingFileList(pszTAB))
+        GDALCanReliablyUseSiblingFileList(osTAB.c_str()))
     {
-        int iSibling = CSLFindString(papszSiblingFiles, CPLGetFilename(pszTAB));
+        int iSibling =
+            CSLFindString(papszSiblingFiles, CPLGetFilename(osTAB.c_str()));
         if (iSibling >= 0)
         {
             CPLString osTabFilename = pszBaseFilename;
@@ -2361,12 +2465,12 @@ int GDALReadTabFile2(const char *pszBaseFilename, double *padfGeoTransform,
     /*      Try lower case, then upper case.                                */
     /* -------------------------------------------------------------------- */
 
-    VSILFILE *fpTAB = VSIFOpenL(pszTAB, "rt");
+    VSILFILE *fpTAB = VSIFOpenL(osTAB.c_str(), "rt");
 
-    if (fpTAB == nullptr && VSIIsCaseSensitiveFS(pszTAB))
+    if (fpTAB == nullptr && VSIIsCaseSensitiveFS(osTAB.c_str()))
     {
-        pszTAB = CPLResetExtension(pszBaseFilename, "TAB");
-        fpTAB = VSIFOpenL(pszTAB, "rt");
+        osTAB = CPLResetExtensionSafe(pszBaseFilename, "TAB");
+        fpTAB = VSIFOpenL(osTAB.c_str(), "rt");
     }
 
     if (fpTAB == nullptr)
@@ -2377,11 +2481,11 @@ int GDALReadTabFile2(const char *pszBaseFilename, double *padfGeoTransform,
     /* -------------------------------------------------------------------- */
     /*      We found the file, now load and parse it.                       */
     /* -------------------------------------------------------------------- */
-    if (GDALLoadTabFile(pszTAB, padfGeoTransform, ppszWKT, pnGCPCount,
+    if (GDALLoadTabFile(osTAB.c_str(), padfGeoTransform, ppszWKT, pnGCPCount,
                         ppasGCPs))
     {
         if (ppszTabFileNameOut)
-            *ppszTabFileNameOut = CPLStrdup(pszTAB);
+            *ppszTabFileNameOut = CPLStrdup(osTAB.c_str());
         return TRUE;
     }
     return FALSE;
@@ -2541,7 +2645,7 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
     /* -------------------------------------------------------------------- */
     if (pszExtension == nullptr)
     {
-        const std::string oBaseExt = CPLGetExtension(pszBaseFilename);
+        const std::string oBaseExt = CPLGetExtensionSafe(pszBaseFilename);
 
         if (oBaseExt.length() < 2)
             return FALSE;
@@ -2591,14 +2695,14 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
             CPLTolower(static_cast<unsigned char>(szExtLower[i])));
     }
 
-    const char *pszTFW = CPLResetExtension(pszBaseFilename, szExtLower);
+    std::string osTFW = CPLResetExtensionSafe(pszBaseFilename, szExtLower);
 
     if (papszSiblingFiles &&
         // cppcheck-suppress knownConditionTrueFalse
-        GDALCanReliablyUseSiblingFileList(pszTFW))
+        GDALCanReliablyUseSiblingFileList(osTFW.c_str()))
     {
         const int iSibling =
-            CSLFindString(papszSiblingFiles, CPLGetFilename(pszTFW));
+            CSLFindString(papszSiblingFiles, CPLGetFilename(osTFW.c_str()));
         if (iSibling >= 0)
         {
             CPLString osTFWFilename = pszBaseFilename;
@@ -2620,12 +2724,14 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
     /* -------------------------------------------------------------------- */
 
     VSIStatBufL sStatBuf;
-    bool bGotTFW = VSIStatExL(pszTFW, &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0;
+    bool bGotTFW =
+        VSIStatExL(osTFW.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0;
 
-    if (!bGotTFW && VSIIsCaseSensitiveFS(pszTFW))
+    if (!bGotTFW && VSIIsCaseSensitiveFS(osTFW.c_str()))
     {
-        pszTFW = CPLResetExtension(pszBaseFilename, szExtUpper);
-        bGotTFW = VSIStatExL(pszTFW, &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0;
+        osTFW = CPLResetExtensionSafe(pszBaseFilename, szExtUpper);
+        bGotTFW =
+            VSIStatExL(osTFW.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0;
     }
 
     if (!bGotTFW)
@@ -2634,10 +2740,10 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
     /* -------------------------------------------------------------------- */
     /*      We found the file, now load and parse it.                       */
     /* -------------------------------------------------------------------- */
-    if (GDALLoadWorldFile(pszTFW, padfGeoTransform))
+    if (GDALLoadWorldFile(osTFW.c_str(), padfGeoTransform))
     {
         if (ppszWorldFileNameOut)
-            *ppszWorldFileNameOut = CPLStrdup(pszTFW);
+            *ppszWorldFileNameOut = CPLStrdup(osTFW.c_str());
         return TRUE;
     }
     return FALSE;
@@ -2702,8 +2808,9 @@ int CPL_STDCALL GDALWriteWorldFile(const char *pszBaseFilename,
     /* -------------------------------------------------------------------- */
     /*      Update extension, and write to disk.                            */
     /* -------------------------------------------------------------------- */
-    const char *pszTFW = CPLResetExtension(pszBaseFilename, pszExtension);
-    VSILFILE *const fpTFW = VSIFOpenL(pszTFW, "wt");
+    const std::string osTFW =
+        CPLResetExtensionSafe(pszBaseFilename, pszExtension);
+    VSILFILE *const fpTFW = VSIFOpenL(osTFW.c_str(), "wt");
     if (fpTFW == nullptr)
         return FALSE;
 
@@ -3655,13 +3762,14 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 if (EQUAL(papszFiles[i], ".") || EQUAL(papszFiles[i], ".."))
                     continue;
 
-                CPLString osOldPath, osNewPath;
-                osOldPath = CPLFormFilename(papszArgv[iArg + 1], papszFiles[i],
-                                            nullptr);
+                std::string osOldPath;
+                CPLString osNewPath;
+                osOldPath = CPLFormFilenameSafe(papszArgv[iArg + 1],
+                                                papszFiles[i], nullptr);
                 osNewPath.Printf("/vsimem/%s", papszFiles[i]);
 
                 VSIStatBufL sStatBuf;
-                if (VSIStatL(osOldPath, &sStatBuf) != 0 ||
+                if (VSIStatL(osOldPath.c_str(), &sStatBuf) != 0 ||
                     VSI_ISDIR(sStatBuf.st_mode))
                 {
                     CPLDebug("VSI", "Skipping preload of %s.",
@@ -3672,7 +3780,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 CPLDebug("VSI", "Preloading %s to %s.", osOldPath.c_str(),
                          osNewPath.c_str());
 
-                if (CPLCopyFile(osNewPath, osOldPath) != 0)
+                if (CPLCopyFile(osNewPath, osOldPath.c_str()) != 0)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Failed to copy %s to /vsimem", osOldPath.c_str());
@@ -3846,6 +3954,8 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                         oJCaps.Add("create");
                     if (CPLFetchBool(papszMD, GDAL_DCAP_CREATECOPY, false))
                         oJCaps.Add("create_copy");
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_UPDATE, false))
+                        oJCaps.Add("update");
                     if (CPLFetchBool(papszMD, GDAL_DCAP_VIRTUALIO, false))
                         oJCaps.Add("virtual_io");
                     oJDriver.Add("capabilities", oJCaps);
@@ -3875,7 +3985,8 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             }
 
             printf(/*ok*/
-                   "Supported Formats: (ro:read-only, rw:read-write, +:update, "
+                   "Supported Formats: (ro:read-only, rw:read-write, "
+                   "+:write from scratch, u:update, "
                    "v:virtual-I/O s:subdatasets)\n");
             for (int iDr = 0; iDr < GDALGetDriverCount(); iDr++)
             {
@@ -3907,6 +4018,10 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                     pszWFlag = "w";
                 else
                     pszWFlag = "o";
+
+                const char *pszUpdate = "";
+                if (CPLFetchBool(papszMD, GDAL_DCAP_UPDATE, false))
+                    pszUpdate = "u";
 
                 if (CPLFetchBool(papszMD, GDAL_DCAP_VIRTUALIO, false))
                     pszVirtualIO = "v";
@@ -3961,10 +4076,11 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                         osExtensions += ')';
                 }
 
-                printf("  %s -%s- (%s%s%s%s): %s%s\n", /*ok*/
+                printf("  %s -%s- (%s%s%s%s%s): %s%s\n", /*ok*/
                        GDALGetDriverShortName(hDriver), osKind.c_str(),
-                       pszRFlag, pszWFlag, pszVirtualIO, pszSubdatasets,
-                       GDALGetDriverLongName(hDriver), osExtensions.c_str());
+                       pszRFlag, pszWFlag, pszUpdate, pszVirtualIO,
+                       pszSubdatasets, GDALGetDriverLongName(hDriver),
+                       osExtensions.c_str());
             }
 
             return 0;
@@ -4042,6 +4158,8 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 printf(/*ok*/ "  Supports: CreateCopy() - Create dataset by "
                               "copying "
                               "another.\n");
+            if (CPLFetchBool(papszMD, GDAL_DCAP_UPDATE, false))
+                printf("  Supports: Update\n"); /*ok*/
             if (CPLFetchBool(papszMD, GDAL_DCAP_VIRTUALIO, false))
                 printf("  Supports: Virtual IO - eg. /vsimem/\n"); /*ok*/
             if (CSLFetchNameValue(papszMD, GDAL_DMD_CREATIONDATATYPES))
@@ -4091,6 +4209,9 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 printf("  Supported SQL dialects: %s\n", /*ok*/
                        CSLFetchNameValue(papszMD,
                                          GDAL_DMD_SUPPORTED_SQL_DIALECTS));
+            if (CSLFetchNameValue(papszMD, GDAL_DMD_UPDATE_ITEMS))
+                printf("  Supported items for update: %s\n", /*ok*/
+                       CSLFetchNameValue(papszMD, GDAL_DMD_UPDATE_ITEMS));
 
             for (const char *key :
                  {GDAL_DMD_CREATIONOPTIONLIST,
@@ -4205,7 +4326,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
         {
             std::cout << "Hit <ENTER> to Continue." << std::endl;
             std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cin.ignore(cpl::NumericLimits<std::streamsize>::max(), '\n');
         }
 
         /* --------------------------------------------------------------------
@@ -4356,7 +4477,7 @@ GDALDataset *GDALFindAssociatedAuxFile(const char *pszBasename,
     const char *pszAuxSuffixLC = "aux";
     const char *pszAuxSuffixUC = "AUX";
 
-    if (EQUAL(CPLGetExtension(pszBasename), pszAuxSuffixLC))
+    if (EQUAL(CPLGetExtensionSafe(pszBasename).c_str(), pszAuxSuffixLC))
         return nullptr;
 
     /* -------------------------------------------------------------------- */
@@ -4374,7 +4495,8 @@ GDALDataset *GDALFindAssociatedAuxFile(const char *pszBasename,
     /*      has occurred.                                                   */
     /* -------------------------------------------------------------------- */
     CPLString osJustFile = CPLGetFilename(pszBasename);  // without dir
-    CPLString osAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixLC);
+    CPLString osAuxFilename =
+        CPLResetExtensionSafe(pszBasename, pszAuxSuffixLC);
     GDALDataset *poODS = nullptr;
     GByte abyHeader[32];
 
@@ -4383,7 +4505,7 @@ GDALDataset *GDALFindAssociatedAuxFile(const char *pszBasename,
     if (fp == nullptr && VSIIsCaseSensitiveFS(osAuxFilename))
     {
         // Can't found file with lower case suffix. Try the upper case one.
-        osAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixUC);
+        osAuxFilename = CPLResetExtensionSafe(pszBasename, pszAuxSuffixUC);
         fp = VSIFOpenL(osAuxFilename, "rb");
     }
 
@@ -5038,7 +5160,7 @@ bool GDALCanReliablyUseSiblingFileList(const char *pszFilename)
 
 double GDALAdjustNoDataCloseToFloatMax(double dfVal)
 {
-    const auto kMaxFloat = std::numeric_limits<float>::max();
+    const auto kMaxFloat = cpl::NumericLimits<float>::max();
     if (std::fabs(dfVal - -kMaxFloat) < 1e-10 * kMaxFloat)
         return -kMaxFloat;
     if (std::fabs(dfVal - kMaxFloat) < 1e-10 * kMaxFloat)
@@ -5090,7 +5212,7 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
             else if (eDstDataType == GDT_Int64)
             {
                 if (nNoData <
-                    static_cast<uint64_t>(std::numeric_limits<int64_t>::max()))
+                    static_cast<uint64_t>(cpl::NumericLimits<int64_t>::max()))
                 {
                     poDstBand->SetNoDataValueAsInt64(
                         static_cast<int64_t>(nNoData));
@@ -5111,9 +5233,9 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
             if (eDstDataType == GDT_Int64)
             {
                 if (dfNoData >= static_cast<double>(
-                                    std::numeric_limits<int64_t>::min()) &&
+                                    cpl::NumericLimits<int64_t>::lowest()) &&
                     dfNoData <= static_cast<double>(
-                                    std::numeric_limits<int64_t>::max()) &&
+                                    cpl::NumericLimits<int64_t>::max()) &&
                     dfNoData ==
                         static_cast<double>(static_cast<int64_t>(dfNoData)))
                 {
@@ -5124,9 +5246,9 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
             else if (eDstDataType == GDT_UInt64)
             {
                 if (dfNoData >= static_cast<double>(
-                                    std::numeric_limits<uint64_t>::min()) &&
+                                    cpl::NumericLimits<uint64_t>::lowest()) &&
                     dfNoData <= static_cast<double>(
-                                    std::numeric_limits<uint64_t>::max()) &&
+                                    cpl::NumericLimits<uint64_t>::max()) &&
                     dfNoData ==
                         static_cast<double>(static_cast<uint64_t>(dfNoData)))
                 {
@@ -5411,78 +5533,78 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
     if (dt == GDT_Byte)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<uint8_t>::lowest(),
-                                 std::numeric_limits<uint8_t>::max()))
+                                 cpl::NumericLimits<uint8_t>::lowest(),
+                                 cpl::NumericLimits<uint8_t>::max()))
         {
             return 0;
         }
-        if (dfNoDataValue == std::numeric_limits<unsigned char>::max())
-            dfReplacementVal = std::numeric_limits<unsigned char>::max() - 1;
+        if (dfNoDataValue == cpl::NumericLimits<unsigned char>::max())
+            dfReplacementVal = cpl::NumericLimits<unsigned char>::max() - 1;
         else
             dfReplacementVal = dfNoDataValue + 1;
     }
     else if (dt == GDT_Int8)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<int8_t>::lowest(),
-                                 std::numeric_limits<int8_t>::max()))
+                                 cpl::NumericLimits<int8_t>::lowest(),
+                                 cpl::NumericLimits<int8_t>::max()))
         {
             return 0;
         }
-        if (dfNoDataValue == std::numeric_limits<GInt8>::max())
-            dfReplacementVal = std::numeric_limits<GInt8>::max() - 1;
+        if (dfNoDataValue == cpl::NumericLimits<GInt8>::max())
+            dfReplacementVal = cpl::NumericLimits<GInt8>::max() - 1;
         else
             dfReplacementVal = dfNoDataValue + 1;
     }
     else if (dt == GDT_UInt16)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<uint16_t>::lowest(),
-                                 std::numeric_limits<uint16_t>::max()))
+                                 cpl::NumericLimits<uint16_t>::lowest(),
+                                 cpl::NumericLimits<uint16_t>::max()))
         {
             return 0;
         }
-        if (dfNoDataValue == std::numeric_limits<GUInt16>::max())
-            dfReplacementVal = std::numeric_limits<GUInt16>::max() - 1;
+        if (dfNoDataValue == cpl::NumericLimits<GUInt16>::max())
+            dfReplacementVal = cpl::NumericLimits<GUInt16>::max() - 1;
         else
             dfReplacementVal = dfNoDataValue + 1;
     }
     else if (dt == GDT_Int16)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<int16_t>::lowest(),
-                                 std::numeric_limits<int16_t>::max()))
+                                 cpl::NumericLimits<int16_t>::lowest(),
+                                 cpl::NumericLimits<int16_t>::max()))
         {
             return 0;
         }
-        if (dfNoDataValue == std::numeric_limits<GInt16>::max())
-            dfReplacementVal = std::numeric_limits<GInt16>::max() - 1;
+        if (dfNoDataValue == cpl::NumericLimits<GInt16>::max())
+            dfReplacementVal = cpl::NumericLimits<GInt16>::max() - 1;
         else
             dfReplacementVal = dfNoDataValue + 1;
     }
     else if (dt == GDT_UInt32)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<uint32_t>::lowest(),
-                                 std::numeric_limits<uint32_t>::max()))
+                                 cpl::NumericLimits<uint32_t>::lowest(),
+                                 cpl::NumericLimits<uint32_t>::max()))
         {
             return 0;
         }
-        if (dfNoDataValue == std::numeric_limits<GUInt32>::max())
-            dfReplacementVal = std::numeric_limits<GUInt32>::max() - 1;
+        if (dfNoDataValue == cpl::NumericLimits<GUInt32>::max())
+            dfReplacementVal = cpl::NumericLimits<GUInt32>::max() - 1;
         else
             dfReplacementVal = dfNoDataValue + 1;
     }
     else if (dt == GDT_Int32)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<int32_t>::lowest(),
-                                 std::numeric_limits<int32_t>::max()))
+                                 cpl::NumericLimits<int32_t>::lowest(),
+                                 cpl::NumericLimits<int32_t>::max()))
         {
             return 0;
         }
-        if (dfNoDataValue == std::numeric_limits<int32_t>::max())
-            dfReplacementVal = std::numeric_limits<int32_t>::max() - 1;
+        if (dfNoDataValue == cpl::NumericLimits<int32_t>::max())
+            dfReplacementVal = cpl::NumericLimits<int32_t>::max() - 1;
         else
             dfReplacementVal = dfNoDataValue + 1;
     }
@@ -5492,18 +5614,18 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
         // so we take the next lower value representable as a double 18446744073709549567
         static const double dfMaxUInt64Value{
             std::nextafter(
-                static_cast<double>(std::numeric_limits<uint64_t>::max()), 0) -
+                static_cast<double>(cpl::NumericLimits<uint64_t>::max()), 0) -
             1};
 
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<uint64_t>::lowest(),
-                                 std::numeric_limits<uint64_t>::max()))
+                                 cpl::NumericLimits<uint64_t>::lowest(),
+                                 cpl::NumericLimits<uint64_t>::max()))
         {
             return 0;
         }
 
         if (dfNoDataValue >=
-            static_cast<double>(std::numeric_limits<uint64_t>::max()))
+            static_cast<double>(cpl::NumericLimits<uint64_t>::max()))
             dfReplacementVal = dfMaxUInt64Value;
         else
             dfReplacementVal = dfNoDataValue + 1;
@@ -5514,61 +5636,83 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
         // so we take the next lower value representable as a double 9223372036854774784
         static const double dfMaxInt64Value{
             std::nextafter(
-                static_cast<double>(std::numeric_limits<int64_t>::max()), 0) -
+                static_cast<double>(cpl::NumericLimits<int64_t>::max()), 0) -
             1};
 
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<int64_t>::lowest(),
-                                 std::numeric_limits<int64_t>::max()))
+                                 cpl::NumericLimits<int64_t>::lowest(),
+                                 cpl::NumericLimits<int64_t>::max()))
         {
             return 0;
         }
 
         if (dfNoDataValue >=
-            static_cast<double>(std::numeric_limits<int64_t>::max()))
+            static_cast<double>(cpl::NumericLimits<int64_t>::max()))
             dfReplacementVal = dfMaxInt64Value;
         else
             dfReplacementVal = dfNoDataValue + 1;
+    }
+    else if (dt == GDT_Float16)
+    {
+
+        if (GDALClampDoubleValue(dfNoDataValue,
+                                 cpl::NumericLimits<GFloat16>::lowest(),
+                                 cpl::NumericLimits<GFloat16>::max()))
+        {
+            return 0;
+        }
+
+        if (dfNoDataValue == cpl::NumericLimits<GFloat16>::max())
+        {
+            using std::nextafter;
+            dfReplacementVal =
+                nextafter(static_cast<GFloat16>(dfNoDataValue), GFloat16(0.0f));
+        }
+        else
+        {
+            using std::nextafter;
+            dfReplacementVal = nextafter(static_cast<GFloat16>(dfNoDataValue),
+                                         cpl::NumericLimits<GFloat16>::max());
+        }
     }
     else if (dt == GDT_Float32)
     {
 
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<float>::lowest(),
-                                 std::numeric_limits<float>::max()))
+                                 cpl::NumericLimits<float>::lowest(),
+                                 cpl::NumericLimits<float>::max()))
         {
             return 0;
         }
 
-        if (dfNoDataValue == std::numeric_limits<float>::max())
+        if (dfNoDataValue == cpl::NumericLimits<float>::max())
         {
             dfReplacementVal =
                 std::nextafter(static_cast<float>(dfNoDataValue), 0.0f);
         }
         else
         {
-            dfReplacementVal =
-                std::nextafter(static_cast<float>(dfNoDataValue),
-                               std::numeric_limits<float>::max());
+            dfReplacementVal = std::nextafter(static_cast<float>(dfNoDataValue),
+                                              cpl::NumericLimits<float>::max());
         }
     }
     else if (dt == GDT_Float64)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<double>::lowest(),
-                                 std::numeric_limits<double>::max()))
+                                 cpl::NumericLimits<double>::lowest(),
+                                 cpl::NumericLimits<double>::max()))
         {
             return 0;
         }
 
-        if (dfNoDataValue == std::numeric_limits<double>::max())
+        if (dfNoDataValue == cpl::NumericLimits<double>::max())
         {
-            dfReplacementVal = std::nextafter(dfNoDataValue, 0.0f);
+            dfReplacementVal = std::nextafter(dfNoDataValue, 0.0);
         }
         else
         {
             dfReplacementVal = std::nextafter(
-                dfNoDataValue, std::numeric_limits<double>::max());
+                dfNoDataValue, cpl::NumericLimits<double>::max());
         }
     }
 

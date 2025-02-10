@@ -328,7 +328,7 @@ PLMosaicDataset::PLMosaicDataset()
     adfGeoTransform[5] = 1;
 
     SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
-    osCachePathRoot = CPLGetPath(CPLGenerateTempFilename(""));
+    osCachePathRoot = CPLGetPathSafe(CPLGenerateTempFilenameSafe("").c_str());
 }
 
 /************************************************************************/
@@ -409,6 +409,16 @@ char **PLMosaicDataset::GetBaseHTTPOptions()
 
     char **papszOptions =
         CSLAddString(nullptr, CPLSPrintf("PERSISTENT=PLMOSAIC:%p", this));
+
+    /* Ensure the PLMosaic driver uses a unique default user agent to help
+     * identify usage. */
+    CPLString osUserAgent = CPLGetConfigOption("GDAL_HTTP_USERAGENT", "");
+    if (osUserAgent.empty())
+        papszOptions = CSLAddString(
+            papszOptions, CPLSPrintf("USERAGENT=PLMosaic Driver GDAL/%d.%d.%d",
+                                     GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR,
+                                     GDAL_VERSION_REV));
+
     /* Use basic auth, rather than Authorization headers since curl would
      * forward it to S3 */
     papszOptions =
@@ -678,9 +688,9 @@ CPLString PLMosaicDataset::GetMosaicCachePath()
     if (!osCachePathRoot.empty())
     {
         const CPLString osCachePath(
-            CPLFormFilename(osCachePathRoot, "plmosaic_cache", nullptr));
+            CPLFormFilenameSafe(osCachePathRoot, "plmosaic_cache", nullptr));
         const CPLString osMosaicPath(
-            CPLFormFilename(osCachePath, osMosaic, nullptr));
+            CPLFormFilenameSafe(osCachePath, osMosaic, nullptr));
 
         return osMosaicPath;
     }
@@ -696,9 +706,9 @@ void PLMosaicDataset::CreateMosaicCachePathIfNecessary()
     if (!osCachePathRoot.empty())
     {
         const CPLString osCachePath(
-            CPLFormFilename(osCachePathRoot, "plmosaic_cache", nullptr));
+            CPLFormFilenameSafe(osCachePathRoot, "plmosaic_cache", nullptr));
         const CPLString osMosaicPath(
-            CPLFormFilename(osCachePath, osMosaic, nullptr));
+            CPLFormFilenameSafe(osCachePath, osMosaic, nullptr));
 
         VSIStatBufL sStatBuf;
         if (VSIStatL(osMosaicPath, &sStatBuf) != 0)
@@ -1256,10 +1266,10 @@ GDALDataset *PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
 
         const CPLString osMosaicPath(GetMosaicCachePath());
         osTmpFilename =
-            CPLFormFilename(osMosaicPath,
-                            CPLSPrintf("%s_%s.tif", osMosaic.c_str(),
-                                       CPLGetFilename(osTilename)),
-                            nullptr);
+            CPLFormFilenameSafe(osMosaicPath,
+                                CPLSPrintf("%s_%s.tif", osMosaic.c_str(),
+                                           CPLGetFilename(osTilename)),
+                                nullptr);
         VSIStatBufL sStatBuf;
 
         CPLString osURL = osQuadsURL;

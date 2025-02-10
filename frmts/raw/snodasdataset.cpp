@@ -250,9 +250,7 @@ GDALDataset *SNODASDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The SNODAS driver does not support update access to existing"
-                 " datasets.");
+        ReportUpdateNotSupportedByDriver("SNODAS");
         return nullptr;
     }
 
@@ -431,8 +429,9 @@ GDALDataset *SNODASDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Open target binary file.                                        */
     /* -------------------------------------------------------------------- */
-    const char *pszPath = CPLGetPath(poOpenInfo->pszFilename);
-    osDataFilename = CPLFormFilename(pszPath, osDataFilename, nullptr);
+    const std::string osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
+    osDataFilename =
+        CPLFormFilenameSafe(osPath.c_str(), osDataFilename, nullptr);
 
     VSILFILE *fpRaw = VSIFOpenL(osDataFilename, "rb");
 

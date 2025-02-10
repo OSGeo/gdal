@@ -216,15 +216,8 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "ES_OVERWRITE", // from ogrelasticdatasource.cpp
    "ES_WRITEMAP", // from ogrelasticdatasource.cpp
    "ESRI_XML_PAM", // from gtiffdataset.cpp, gtiffdataset_write.cpp
-   "FGDB_BULK_LOAD", // from FGdbLayer.cpp
-   "FGDB_PER_LAYER_COPYING_TRANSACTION", // from FGdbDatasource.cpp
-   "FGDB_RESYNC_THRESHOLD", // from FGdbLayer.cpp
-   "FGDB_SIMUL_FAIL", // from FGdbDriver.cpp
-   "FGDB_SIMUL_FAIL_REOPEN", // from FGdbDatasource.cpp
    "FGDB_STRING_WIDTH", // from FGdbUtils.cpp
-   "FILEGDB_DISABLE_SPARSE_PAGES", // from FGdbLayer.cpp
    "FORCE_BLOCKSIZE", // from hfaopen.cpp
-   "FUSIL_SRC_DIR", // from ogropenfilegdbdriver.cpp
    "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", // from JPEG_band.cpp, jpgdataset.cpp
    "GDAL_BAG_BLOCK_SIZE", // from bagdataset.cpp
    "GDAL_BAG_MAX_SIZE_VARRES_MAP", // from bagdataset.cpp
@@ -312,7 +305,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_HTTP_TIMEOUT", // from cpl_http.cpp, gdalwmsdataset.cpp
    "GDAL_HTTP_UNSAFESSL", // from cpl_http.cpp
    "GDAL_HTTP_USE_CAPI_STORE", // from cpl_http.cpp
-   "GDAL_HTTP_USERAGENT", // from cpl_http.cpp, gdalwmsdataset.cpp
+   "GDAL_HTTP_USERAGENT", // from cpl_http.cpp, gdalwmsdataset.cpp, plmosaicdataset.cpp
    "GDAL_HTTP_USERPWD", // from cpl_http.cpp
    "GDAL_HTTP_VERSION", // from cpl_http.cpp
    "GDAL_HTTPS_PROXY", // from cpl_http.cpp
@@ -328,7 +321,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_MAX_CONNECTIONS", // from gdalogcapidataset.cpp, gdalwmsdataset.cpp
    "GDAL_MAX_DATASET_POOL_RAM_USAGE", // from gdalproxypool.cpp
    "GDAL_MAX_DATASET_POOL_SIZE", // from gdal_translate_bin.cpp, gdalproxypool.cpp, gdalwarp_bin.cpp
-   "GDAL_MAX_RAW_BLOCK_CACHE_SIZE", // from gtiffrasterband_read.cpp
+   "GDAL_MAX_RAW_BLOCK_CACHE_SIZE", // from gtiffdataset_read.cpp
    "GDAL_MEM_ENABLE_OPEN", // from memdataset.cpp
    "GDAL_NETCDF_ASSUME_LONGLAT", // from netcdfdataset.cpp
    "GDAL_NETCDF_BOTTOMUP", // from netcdfdataset.cpp

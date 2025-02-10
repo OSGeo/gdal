@@ -438,7 +438,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
             if (psFC != nullptr)
             {
                 osGMLTmpFile =
-                    CPLFormFilename(osTmpDir.c_str(), "my.gml", nullptr);
+                    CPLFormFilenameSafe(osTmpDir.c_str(), "my.gml", nullptr);
                 // Create temporary .gml file.
                 CPLSerializeXMLTreeToFile(psFC, osGMLTmpFile);
             }
@@ -473,7 +473,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
                                     CPLSPrintf("xml:%s", pszBoxName));
                                 if (papszBoxData != nullptr)
                                 {
-                                    osXSDTmpFile = CPLFormFilename(
+                                    osXSDTmpFile = CPLFormFilenameSafe(
                                         osTmpDir.c_str(), "my.xsd", nullptr);
                                     CPL_IGNORE_RET_VAL(
                                         VSIFCloseL(VSIFileFromMemBuffer(

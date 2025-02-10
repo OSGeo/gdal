@@ -27,8 +27,8 @@ int RasterliteDriverIdentify(GDALOpenInfo *poOpenInfo)
     }
 #endif
 
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") &&
-        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GPKG") &&
+    if (!poOpenInfo->IsExtensionEqualToCI("MBTILES") &&
+        !poOpenInfo->IsExtensionEqualToCI("GPKG") &&
         poOpenInfo->nHeaderBytes >= 1024 && poOpenInfo->pabyHeader &&
         STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader,
                        "SQLite Format 3") &&

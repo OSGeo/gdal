@@ -125,14 +125,14 @@ static CPLErr OGRLIBKMLDriverDelete(const char *pszName)
     }
 
     /***** kml *****/
-    else if (EQUAL(CPLGetExtension(pszName), "kml"))
+    else if (EQUAL(CPLGetExtensionSafe(pszName).c_str(), "kml"))
     {
         if (VSIUnlink(pszName) < 0)
             return CE_Failure;
     }
 
     /***** kmz *****/
-    else if (EQUAL(CPLGetExtension(pszName), "kmz"))
+    else if (EQUAL(CPLGetExtensionSafe(pszName).c_str(), "kmz"))
     {
         if (VSIUnlink(pszName) < 0)
             return CE_Failure;

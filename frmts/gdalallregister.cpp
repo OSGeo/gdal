@@ -716,10 +716,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_HF2();
 #endif
 
-#ifdef FRMT_ozi
-    GDALRegister_OZI();
-#endif
-
 #ifdef FRMT_ctg
     GDALRegister_CTG();
 #endif

@@ -393,5 +393,5 @@ OGRFeature *netCDFLayer::buildSGeometryFeature(size_t featureInd)
 
 std::string netCDFDataset::generateLogName()
 {
-    return std::string(CPLGenerateTempFilename(nullptr));
+    return std::string(CPLGenerateTempFilenameSafe(nullptr));
 }

@@ -185,6 +185,9 @@ class OGRMemDataSource CPL_NON_FINAL : public GDALDataset
 
     int TestCapability(const char *) override;
 
+    OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
+
     bool AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
                         std::string &failureReason) override;
 

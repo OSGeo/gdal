@@ -180,9 +180,7 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The NDF driver does not support update access to existing"
-                 " datasets.");
+        ReportUpdateNotSupportedByDriver("NDF");
         return nullptr;
     }
     /* -------------------------------------------------------------------- */
@@ -241,9 +239,7 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->eAccess == GA_Update)
     {
         CSLDestroy(papszHeader);
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The NDF driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("NDF");
         return nullptr;
     }
 
@@ -287,12 +283,12 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
             snprintf(szBandExtension, sizeof(szBandExtension), "I%d",
                      iBand + 1);
             osFilename =
-                CPLResetExtension(poOpenInfo->pszFilename, szBandExtension);
+                CPLResetExtensionSafe(poOpenInfo->pszFilename, szBandExtension);
         }
         else
         {
-            CPLString osBasePath = CPLGetPath(poOpenInfo->pszFilename);
-            osFilename = CPLFormFilename(osBasePath, osFilename, nullptr);
+            CPLString osBasePath = CPLGetPathSafe(poOpenInfo->pszFilename);
+            osFilename = CPLFormFilenameSafe(osBasePath, osFilename, nullptr);
         }
 
         VSILFILE *fpRaw = VSIFOpenL(osFilename, "rb");

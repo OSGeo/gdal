@@ -39,7 +39,7 @@ static int OGRXLSXDriverIdentify(GDALOpenInfo *poOpenInfo)
     if (STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") ||
         STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/"))
     {
-        const char *pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+        const char *pszExt = poOpenInfo->osExtension.c_str();
         return EQUAL(pszExt, "XLSX") || EQUAL(pszExt, "XLSM") ||
                EQUAL(pszExt, "XLSX}") || EQUAL(pszExt, "XLSM}");
     }
@@ -62,7 +62,7 @@ static int OGRXLSXDriverIdentify(GDALOpenInfo *poOpenInfo)
         {
             return TRUE;
         }
-        const char *pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+        const char *pszExt = poOpenInfo->osExtension.c_str();
         if (EQUAL(pszExt, "XLSX") || EQUAL(pszExt, "XLSM"))
         {
             CPLDebug(
@@ -176,7 +176,7 @@ static GDALDataset *OGRXLSXDriverCreate(const char *pszName, int /* nXSize */,
                                         char **papszOptions)
 
 {
-    if (!EQUAL(CPLGetExtension(pszName), "XLSX"))
+    if (!EQUAL(CPLGetExtensionSafe(pszName).c_str(), "XLSX"))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "File extension should be XLSX");
         return nullptr;
@@ -246,6 +246,9 @@ void RegisterOGRXLSX()
     poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "Features");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,

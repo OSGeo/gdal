@@ -16,7 +16,8 @@ Synopsis
 .. code-block::
 
     gdaladdo [--help] [--help-general]
-             [-r {nearest|average|rms|gauss|bilinear|cubic|cubicspline|lanczos|average_mp|average_magphase|mode}]
+             [-r {nearest|average|rms|gauss|bilinear|cubic|cubicspline|
+                  lanczos|average_mp|average_magphase|mode}]
              [-ro] [-clean] [-q] [-oo <NAME>=<VALUE>]... [-minsize <val>]
              [--partial-refresh-from-source-timestamp]
              [--partial-refresh-from-projwin <ulx> <uly> <lrx> <lry>]

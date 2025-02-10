@@ -2543,7 +2543,7 @@ GDALDataset *FITSDataset::Open(GDALOpenInfo *poOpenInfo)
             osPath.resize(1024);
             if (CPLGetExecPath(&osPath[0], static_cast<int>(osPath.size())))
             {
-                osPath = CPLGetBasename(osPath.c_str());
+                osPath = CPLGetBasenameSafe(osPath.c_str());
             }
             if (osPath == "gdalinfo")
             {
@@ -2578,7 +2578,7 @@ GDALDataset *FITSDataset::Open(GDALOpenInfo *poOpenInfo)
             osPath.resize(1024);
             if (CPLGetExecPath(&osPath[0], static_cast<int>(osPath.size())))
             {
-                osPath = CPLGetBasename(osPath.c_str());
+                osPath = CPLGetBasenameSafe(osPath.c_str());
             }
             if (osPath == "ogrinfo")
             {

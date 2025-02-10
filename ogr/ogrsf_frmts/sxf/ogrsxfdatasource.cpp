@@ -203,30 +203,30 @@ int OGRSXFDataSource::Open(const char *pszFilename, bool bUpdateIn,
     /*---------------- TRY READ THE RSC FILE HEADER  -----------------------*/
 
     CPLString soRSCRileName;
-    const char *pszRSCRileName =
+    std::string osRSCRileNameCandidate =
         CSLFetchNameValueDef(papszOpenOpts, "SXF_RSC_FILENAME",
                              CPLGetConfigOption("SXF_RSC_FILENAME", ""));
-    if (pszRSCRileName != nullptr &&
-        CPLCheckForFile((char *)pszRSCRileName, nullptr) == TRUE)
+    if (!osRSCRileNameCandidate.empty() &&
+        CPLCheckForFile(osRSCRileNameCandidate.data(), nullptr) == TRUE)
     {
-        soRSCRileName = pszRSCRileName;
+        soRSCRileName = osRSCRileNameCandidate;
     }
 
     if (soRSCRileName.empty())
     {
-        pszRSCRileName = CPLResetExtension(pszFilename, "rsc");
-        if (CPLCheckForFile((char *)pszRSCRileName, nullptr) == TRUE)
+        osRSCRileNameCandidate = CPLResetExtensionSafe(pszFilename, "rsc");
+        if (CPLCheckForFile(osRSCRileNameCandidate.data(), nullptr) == TRUE)
         {
-            soRSCRileName = pszRSCRileName;
+            soRSCRileName = osRSCRileNameCandidate;
         }
     }
 
     if (soRSCRileName.empty())
     {
-        pszRSCRileName = CPLResetExtension(pszFilename, "RSC");
-        if (CPLCheckForFile((char *)pszRSCRileName, nullptr) == TRUE)
+        osRSCRileNameCandidate = CPLResetExtensionSafe(pszFilename, "RSC");
+        if (CPLCheckForFile(osRSCRileNameCandidate.data(), nullptr) == TRUE)
         {
-            soRSCRileName = pszRSCRileName;
+            soRSCRileName = osRSCRileNameCandidate;
         }
     }
 
@@ -237,9 +237,9 @@ int OGRSXFDataSource::Open(const char *pszFilename, bool bUpdateIn,
     if (soRSCRileName.empty())
     {
 #if defined(USE_ONLY_EMBEDDED_RESOURCE_FILES)
-        pszRSCRileName = nullptr;
+        const char *pszRSCRileName = nullptr;
 #else
-        pszRSCRileName = CPLFindFile("gdal", "default.rsc");
+        const char *pszRSCRileName = CPLFindFile("gdal", "default.rsc");
 #endif
 #ifdef EMBED_RESOURCE_FILES
         if (!pszRSCRileName || EQUAL(pszRSCRileName, "default.rsc"))

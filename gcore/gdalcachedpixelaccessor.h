@@ -351,6 +351,11 @@ template <> struct GDALCachedPixelAccessorGetDataType<GInt64>
     static constexpr GDALDataType DataType = GDT_Int64;
 };
 
+template <> struct GDALCachedPixelAccessorGetDataType<GFloat16>
+{
+    static constexpr GDALDataType DataType = GDT_Float16;
+};
+
 template <> struct GDALCachedPixelAccessorGetDataType<float>
 {
     static constexpr GDALDataType DataType = GDT_Float32;

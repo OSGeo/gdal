@@ -26,9 +26,9 @@ int RCMDatasetIdentify(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->bIsDirectory)
     {
-        const auto IsRCM = [](const CPLString &osMDFilename)
+        const auto IsRCM = [](const std::string &osMDFilename)
         {
-            CPLXMLNode *psProduct = CPLParseXMLFile(osMDFilename);
+            CPLXMLNode *psProduct = CPLParseXMLFile(osMDFilename.c_str());
             if (psProduct == nullptr)
                 return FALSE;
 
@@ -57,11 +57,11 @@ int RCMDatasetIdentify(GDALOpenInfo *poOpenInfo)
 
         /* Check for directory access when there is a product.xml file in the
         directory. */
-        CPLString osMDFilename =
-            CPLFormCIFilename(poOpenInfo->pszFilename, "product.xml", nullptr);
+        const std::string osMDFilename = CPLFormCIFilenameSafe(
+            poOpenInfo->pszFilename, "product.xml", nullptr);
 
         VSIStatBufL sStat;
-        if (VSIStatL(osMDFilename, &sStat) == 0)
+        if (VSIStatL(osMDFilename.c_str(), &sStat) == 0)
         {
             return IsRCM(osMDFilename);
         }
@@ -69,11 +69,11 @@ int RCMDatasetIdentify(GDALOpenInfo *poOpenInfo)
         /* If not, check for directory extra 'metadata' access when there is a
         product.xml file in the directory. */
 
-        CPLString osMDFilenameMetadata = CPLFormCIFilename(
+        const std::string osMDFilenameMetadata = CPLFormCIFilenameSafe(
             poOpenInfo->pszFilename, GetMetadataProduct(), nullptr);
 
         VSIStatBufL sStatMetadata;
-        if (VSIStatL(osMDFilenameMetadata, &sStatMetadata) == 0)
+        if (VSIStatL(osMDFilenameMetadata.c_str(), &sStatMetadata) == 0)
         {
             return IsRCM(osMDFilenameMetadata);
         }

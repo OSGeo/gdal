@@ -2004,8 +2004,8 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
         }
     }
 
-    CPLString osCoverageName(CSLFetchNameValueDef(papszOptions, "COVERAGE",
-                                                  CPLGetBasename(pszName)));
+    const std::string osCoverageName(CSLFetchNameValueDef(
+        papszOptions, "COVERAGE", CPLGetBasenameSafe(pszName).c_str()));
     // Check if the coverage already exists
     rl2CoveragePtr cvg = nullptr;
     char *pszSQL = sqlite3_mprintf(
@@ -2019,7 +2019,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     if (nRowCount == 1)
     {
         cvg = rl2_create_coverage_from_dbms(poDS->GetDB(), nullptr,
-                                            osCoverageName);
+                                            osCoverageName.c_str());
         if (cvg == nullptr)
         {
             delete poDS;
@@ -2071,7 +2071,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
         }
 
         if (rl2_create_dbms_coverage(
-                poDS->GetDB(), osCoverageName, nSampleType, nPixelType,
+                poDS->GetDB(), osCoverageName.c_str(), nSampleType, nPixelType,
                 nBandCount, nCompression, nQuality, nTileWidth, nTileHeight,
                 nSRSId, dfXRes, dfYRes, pNoData, pPalette, bStrictResolution,
                 bMixedResolutions, bSectionPaths, bSectionMD5, bSectionSummary,
@@ -2092,7 +2092,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     if (cvg == nullptr)
     {
         cvg = rl2_create_coverage_from_dbms(poDS->GetDB(), nullptr,
-                                            osCoverageName);
+                                            osCoverageName.c_str());
         if (cvg == nullptr)
         {
             if (pPalette)
@@ -2109,8 +2109,8 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     double dfYMax = adfGeoTransform[3];
     double dfYMin = dfYMax + adfGeoTransform[5] * poSrcDS->GetRasterYSize();
 
-    CPLString osSectionName(
-        CSLFetchNameValueDef(papszOptions, "SECTION", CPLGetBasename(pszName)));
+    CPLString osSectionName(CSLFetchNameValueDef(
+        papszOptions, "SECTION", CPLGetBasenameSafe(pszName).c_str()));
     const bool bPyramidize = CPLFetchBool(papszOptions, "PYRAMIDIZE", false);
     RasterLite2CallbackData cbk_data;
     cbk_data.poSrcDS = poSrcDS;
@@ -2148,7 +2148,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     GDALOpenInfo oOpenInfo(
         CPLSPrintf("RASTERLITE2:%s:%s",
                    EscapeNameAndQuoteIfNeeded(pszName).c_str(),
-                   EscapeNameAndQuoteIfNeeded(osCoverageName).c_str()),
+                   EscapeNameAndQuoteIfNeeded(osCoverageName.c_str()).c_str()),
         GDAL_OF_RASTER | GDAL_OF_UPDATE);
     poDS->Open(&oOpenInfo);
     return poDS;

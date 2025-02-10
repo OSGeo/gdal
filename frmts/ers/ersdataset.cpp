@@ -988,7 +988,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Figure out the name of the target file.                         */
     /* -------------------------------------------------------------------- */
-    CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
+    CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
     CPLString osDataFile = poHeader->Find("DataFile", "");
 
     if (osDataFile.length() == 0)  // just strip off extension.
@@ -997,7 +997,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
         osDataFile = osDataFile.substr(0, osDataFile.find_last_of('.'));
     }
 
-    CPLString osDataFilePath = CPLFormFilename(osPath, osDataFile, nullptr);
+    CPLString osDataFilePath = CPLFormFilenameSafe(osPath, osDataFile, nullptr);
 
     /* -------------------------------------------------------------------- */
     /*      DataSetType = Translated files are links to things like ecw     */
@@ -1350,7 +1350,7 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     CPLString osBinFile, osErsFile;
 
-    if (EQUAL(CPLGetExtension(pszFilename), "ers"))
+    if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "ers"))
     {
         osErsFile = pszFilename;
         osBinFile = osErsFile.substr(0, osErsFile.length() - 4);

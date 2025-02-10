@@ -56,6 +56,7 @@ used in GDAL/OGR.
 -  *i*: integer number used as a zero based array or loop index.
 -  *f*: floating point value (single precision)
 -  *h*: an opaque handle (such as GDALDatasetH).
+-  *hf*: floating point value (half precision)
 -  *n*: integer number (size unspecified)
 -  *o*: C++ object
 -  *os*: CPLString or std::string
