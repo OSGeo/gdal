@@ -19,9 +19,7 @@ from osgeo import gdal
 
 
 def get_pipeline_alg():
-    reg = gdal.GetGlobalAlgorithmRegistry()
-    vector = reg.InstantiateAlg("vector")
-    return vector.InstantiateSubAlgorithm("pipeline")
+    return gdal.GetGlobalAlgorithmRegistry()["vector"]["pipeline"]
 
 
 def test_gdalalg_vector_pipeline_read_and_write(tmp_vsimem):
@@ -68,9 +66,9 @@ def test_gdalalg_vector_pipeline_as_api(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out.shp")
 
     pipeline = get_pipeline_alg()
-    pipeline.GetArg("pipeline").Set(f"read ../ogr/data/poly.shp ! write {out_filename}")
+    pipeline["pipeline"] = f"read ../ogr/data/poly.shp ! write {out_filename}"
     assert pipeline.Run()
-    ds = pipeline.GetArg("output").Get().GetDataset()
+    ds = pipeline["output"].GetDataset()
     assert ds.GetLayer(0).GetFeatureCount() == 10
     assert pipeline.Finalize()
     ds = None
@@ -84,8 +82,8 @@ def test_gdalalg_vector_pipeline_input_through_api(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out.shp")
 
     pipeline = get_pipeline_alg()
-    pipeline.GetArg("input").Get().SetDataset(gdal.OpenEx("../ogr/data/poly.shp"))
-    pipeline.GetArg("pipeline").Set(f"read ! write {out_filename}")
+    pipeline["input"] = gdal.OpenEx("../ogr/data/poly.shp")
+    pipeline["pipeline"] = f"read ! write {out_filename}"
     assert pipeline.Run()
     assert pipeline.Finalize()
 
@@ -98,8 +96,8 @@ def test_gdalalg_vector_pipeline_input_through_api_run_twice(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out.shp")
 
     pipeline = get_pipeline_alg()
-    pipeline.GetArg("input").Get().SetDataset(gdal.OpenEx("../ogr/data/poly.shp"))
-    pipeline.GetArg("pipeline").Set(f"read ! write {out_filename}")
+    pipeline["input"] = gdal.OpenEx("../ogr/data/poly.shp")
+    pipeline["pipeline"] = f"read ! write {out_filename}"
     assert pipeline.Run()
     with pytest.raises(
         Exception, match=r"pipeline: Step nr 0 \(read\) has already an output dataset"
@@ -112,8 +110,8 @@ def test_gdalalg_vector_pipeline_output_through_api(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out.shp")
 
     pipeline = get_pipeline_alg()
-    pipeline.GetArg("output").Get().SetName(out_filename)
-    pipeline.GetArg("pipeline").Set("read ../ogr/data/poly.shp ! write")
+    pipeline["output"] = out_filename
+    pipeline["pipeline"] = "read ../ogr/data/poly.shp ! write"
     assert pipeline.Run()
     assert pipeline.Finalize()
 
@@ -124,7 +122,7 @@ def test_gdalalg_vector_pipeline_output_through_api(tmp_vsimem):
 def test_gdalalg_vector_pipeline_as_api_error():
 
     pipeline = get_pipeline_alg()
-    pipeline.GetArg("pipeline").Set("read")
+    pipeline["pipeline"] = "read"
     with pytest.raises(Exception, match="pipeline: At least 2 steps must be provided"):
         pipeline.Run()
 
@@ -624,10 +622,10 @@ def test_gdalalg_vector_pipeline_reproject_missing_layer_crs(tmp_vsimem):
     pipeline = get_pipeline_alg()
     mem_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     mem_ds.CreateLayer("layer")
-    pipeline.GetArg("input").Get().SetDataset(mem_ds)
-    pipeline.GetArg("pipeline").Set(
-        f"read ! reproject --dst-crs=EPSG:4326 ! write {out_filename}"
-    )
+    pipeline["input"] = mem_ds
+    pipeline[
+        "pipeline"
+    ] = f"read ! reproject --dst-crs=EPSG:4326 ! write {out_filename}"
     with pytest.raises(
         Exception, match="reproject: Layer 'layer' has no spatial reference system"
     ):

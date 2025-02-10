@@ -26,6 +26,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    :hidden:
 
    migration_guide_to_gdal_cli
+   gdal_cli_from_python
    gdal
    gdal_info
    gdal_convert
@@ -51,6 +52,7 @@ single :program:`gdal` program that accepts commands and subcommands.
 .. only:: html
 
     - :ref:`migration_guide_to_gdal_cli`: Migration guide to "gdal" command line interface
+    - :ref:`gdal_cli_from_python`: How to use "gdal" CLI algorithms from Python
     - :ref:`gdal_program`: Main "gdal" entry point
     - :ref:`gdal_info_command`: Get information on a dataset
     - :ref:`gdal_convert_command`: Convert a dataset

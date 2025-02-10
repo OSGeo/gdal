@@ -19,9 +19,7 @@ from osgeo import gdal
 
 
 def get_info_alg():
-    reg = gdal.GetGlobalAlgorithmRegistry()
-    vector = reg.InstantiateAlg("vector")
-    return vector.InstantiateSubAlgorithm("info")
+    return gdal.GetGlobalAlgorithmRegistry()["vector"]["info"]
 
 
 def test_gdalalg_vector_info_stdout():
@@ -42,14 +40,14 @@ def test_gdalalg_vector_info_stdout():
 def test_gdalalg_vector_info_text():
     info = get_info_alg()
     assert info.ParseRunAndFinalize(["--format=text", "data/path.shp"])
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     assert output_string.startswith("INFO: Open of")
 
 
 def test_gdalalg_vector_info_json():
     info = get_info_alg()
     assert info.ParseRunAndFinalize(["data/path.shp"])
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     j = json.loads(output_string)
     assert j["layers"][0]["name"] == "path"
     assert "features" not in j["layers"][0]
@@ -58,7 +56,7 @@ def test_gdalalg_vector_info_json():
 def test_gdalalg_vector_info_features():
     info = get_info_alg()
     assert info.ParseRunAndFinalize(["--features", "data/path.shp"])
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     j = json.loads(output_string)
     assert "features" in j["layers"][0]
 
@@ -68,7 +66,7 @@ def test_gdalalg_vector_info_sql():
     assert info.ParseRunAndFinalize(
         ["--sql", "SELECT 1 AS foo FROM path", "data/path.shp"]
     )
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     j = json.loads(output_string)
     assert len(j["layers"][0]["fields"]) == 1
     assert j["layers"][0]["fields"][0]["name"] == "foo"
@@ -77,7 +75,7 @@ def test_gdalalg_vector_info_sql():
 def test_gdalalg_vector_info_layer():
     info = get_info_alg()
     assert info.ParseRunAndFinalize(["-l", "path", "data/path.shp"])
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     j = json.loads(output_string)
     assert j["layers"][0]["name"] == "path"
 
@@ -92,7 +90,7 @@ def test_gdalalg_vector_info_wrong_layer():
 def test_gdalalg_vector_info_where(cond, featureCount):
     info = get_info_alg()
     assert info.ParseRunAndFinalize(["--where", cond, "data/path.shp"])
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     j = json.loads(output_string)
     assert j["layers"][0]["featureCount"] == featureCount
 
@@ -110,6 +108,6 @@ def test_gdalalg_vector_info_dialect():
             "data/path.shp",
         ]
     )
-    output_string = info.GetArg("output-string").Get()
+    output_string = info["output-string"]
     j = json.loads(output_string)
     assert j["layers"][0]["features"][0]["properties"]["version"].startswith("3.")

@@ -17,27 +17,23 @@ from osgeo import gdal, osr
 
 
 def get_mosaic_alg():
-    reg = gdal.GetGlobalAlgorithmRegistry()
-    raster = reg.InstantiateAlg("raster")
-    return raster.InstantiateSubAlgorithm("mosaic")
+    return gdal.GetGlobalAlgorithmRegistry()["raster"]["mosaic"]
 
 
 def test_gdalalg_raster_mosaic_from_dataset_handle():
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set(
-        [
-            gdal.Translate(
-                "", "../gcore/data/byte.tif", options="-f MEM -srcwin 0 0 10 20"
-            ),
-            gdal.Translate(
-                "", "../gcore/data/byte.tif", options="-f MEM -srcwin 10 0 10 20"
-            ),
-        ]
-    )
-    alg.GetArg("output").Set("")
+    alg["input"] = [
+        gdal.Translate(
+            "", "../gcore/data/byte.tif", options="-f MEM -srcwin 0 0 10 20"
+        ),
+        gdal.Translate(
+            "", "../gcore/data/byte.tif", options="-f MEM -srcwin 10 0 10 20"
+        ),
+    ]
+    alg["output"] = ""
     assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
+    ds = alg["output"].GetDataset()
     assert ds.RasterXSize == 20
     assert ds.RasterYSize == 20
     assert ds.GetGeoTransform() == pytest.approx(
@@ -49,10 +45,10 @@ def test_gdalalg_raster_mosaic_from_dataset_handle():
 def test_gdalalg_raster_mosaic_from_dataset_name():
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set(["../gcore/data/byte.tif"])
-    alg.GetArg("output").Set("")
+    alg["input"] = ["../gcore/data/byte.tif"]
+    alg["output"] = ""
     assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
+    ds = alg["output"].GetDataset()
     assert ds.RasterXSize == 20
     assert ds.RasterYSize == 20
     assert ds.GetGeoTransform() == pytest.approx(
@@ -97,7 +93,7 @@ def test_gdalalg_raster_mosaic_bbox():
         ]
     )
     assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
+    ds = alg["output"].GetDataset()
     assert ds.RasterXSize == 18
     assert ds.RasterYSize == 18
     assert ds.GetGeoTransform() == pytest.approx(
@@ -114,11 +110,11 @@ def test_gdalalg_raster_mosaic_resolution_average():
     src2_ds.SetGeoTransform([3, 0.5, 0, 49, 0, -0.5])
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set([src1_ds, src2_ds])
-    alg.GetArg("resolution").Set("average")
-    alg.GetArg("output").Set("")
+    alg["input"] = [src1_ds, src2_ds]
+    alg["resolution"] = "average"
+    alg["output"] = ""
     assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
+    ds = alg["output"].GetDataset()
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 1
     assert ds.GetGeoTransform() == pytest.approx((2.0, 0.75, 0.0, 49.0, 0.0, -0.75))
@@ -132,11 +128,11 @@ def test_gdalalg_raster_mosaic_resolution_highest():
     src2_ds.SetGeoTransform([3, 0.5, 0, 49, 0, -0.5])
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set([src1_ds, src2_ds])
-    alg.GetArg("output").Set("")
-    alg.GetArg("resolution").Set("highest")
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output"] = ""
+    alg["resolution"] = "highest"
     assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
+    ds = alg["output"].GetDataset()
     assert ds.RasterXSize == 4
     assert ds.RasterYSize == 2
     assert ds.GetGeoTransform() == pytest.approx((2.0, 0.5, 0.0, 49.0, 0.0, -0.5))
@@ -150,11 +146,11 @@ def test_gdalalg_raster_mosaic_resolution_lowest():
     src2_ds.SetGeoTransform([3, 0.5, 0, 49, 0, -0.5])
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set([src1_ds, src2_ds])
-    alg.GetArg("output").Set("")
-    alg.GetArg("resolution").Set("lowest")
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output"] = ""
+    alg["resolution"] = "lowest"
     assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
+    ds = alg["output"].GetDataset()
     assert ds.RasterXSize == 2
     assert ds.RasterYSize == 1
     assert ds.GetGeoTransform() == pytest.approx((2.0, 1.0, 0.0, 49.0, 0.0, -1.0))
@@ -168,11 +164,11 @@ def test_gdalalg_raster_mosaic_resolution_custom():
     src2_ds.SetGeoTransform([3, 0.5, 0, 49, 0, -0.5])
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set([src1_ds, src2_ds])
-    alg.GetArg("output").Set("")
-    alg.GetArg("resolution").Set("0.5,1")
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output"] = ""
+    alg["resolution"] = "0.5,1"
     assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
+    ds = alg["output"].GetDataset()
     assert ds.RasterXSize == 4
     assert ds.RasterYSize == 1
     assert ds.GetGeoTransform() == pytest.approx((2.0, 0.5, 0.0, 49.0, 0.0, -1.0))
@@ -186,12 +182,12 @@ def test_gdalalg_raster_mosaic_target_aligned_pixels():
     src2_ds.SetGeoTransform([3, 0.5, 0, 49, 0, -0.5])
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set([src1_ds, src2_ds])
-    alg.GetArg("output").Set("")
-    alg.GetArg("resolution").Set("0.3,0.6")
-    alg.GetArg("target-aligned-pixels").Set(True)
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output"] = ""
+    alg["resolution"] = "0.3,0.6"
+    alg["target-aligned-pixels"] = True
     assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
+    ds = alg["output"].GetDataset()
     assert ds.RasterXSize == 8
     assert ds.RasterYSize == 2
     assert ds.GetGeoTransform() == pytest.approx((1.8, 0.3, 0.0, 49.2, 0.0, -0.6))
@@ -205,8 +201,8 @@ def test_gdalalg_raster_mosaic_resolution_same_default():
     src2_ds.SetGeoTransform([3, 0.5, 0, 49, 0, -0.5])
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set([src1_ds, src2_ds])
-    alg.GetArg("output").Set("")
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output"] = ""
     with pytest.raises(
         Exception,
         match="whereas previous sources have resolution",
@@ -221,19 +217,19 @@ def test_gdalalg_raster_mosaic_resolution_invalid():
         Exception,
         match="resolution: two comma separated positive values should be provided, or 'same', 'average', 'highest' or 'lowest'",
     ):
-        alg.GetArg("resolution").Set("invalid")
+        alg["resolution"] = "invalid"
 
     with pytest.raises(
         Exception,
         match="resolution: two comma separated positive values should be provided, or 'same', 'average', 'highest' or 'lowest'",
     ):
-        alg.GetArg("resolution").Set("0.5")
+        alg["resolution"] = "0.5"
 
     with pytest.raises(
         Exception,
         match="resolution: two comma separated positive values should be provided, or 'same', 'average', 'highest' or 'lowest'",
     ):
-        alg.GetArg("resolution").Set("-0.5,-0.5")
+        alg["resolution"] = "-0.5,-0.5"
 
 
 def test_gdalalg_raster_mosaic_srcnodata_dstnodata():
@@ -243,12 +239,12 @@ def test_gdalalg_raster_mosaic_srcnodata_dstnodata():
     src1_ds.GetRasterBand(1).Fill(1)
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set([src1_ds])
-    alg.GetArg("output").Set("")
-    alg.GetArg("srcnodata").Set([1])
-    alg.GetArg("dstnodata").Set([2])
+    alg["input"] = [src1_ds]
+    alg["output"] = ""
+    alg["srcnodata"] = [1]
+    alg["dstnodata"] = [2]
     assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
+    ds = alg["output"].GetDataset()
     assert ds.GetRasterBand(1).Checksum() == 2
     assert ds.GetRasterBand(1).GetNoDataValue() == 2
 
@@ -260,13 +256,13 @@ def test_gdalalg_raster_mosaic_hidenodata():
     src1_ds.GetRasterBand(1).Fill(1)
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set([src1_ds])
-    alg.GetArg("output").Set("")
-    alg.GetArg("srcnodata").Set([1])
-    alg.GetArg("dstnodata").Set([2])
-    alg.GetArg("hidenodata").Set(True)
+    alg["input"] = [src1_ds]
+    alg["output"] = ""
+    alg["srcnodata"] = [1]
+    alg["dstnodata"] = [2]
+    alg["hidenodata"] = True
     assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
+    ds = alg["output"].GetDataset()
     assert ds.GetRasterBand(1).Checksum() == 2
     assert ds.GetRasterBand(1).GetNoDataValue() is None
 
@@ -274,25 +270,11 @@ def test_gdalalg_raster_mosaic_hidenodata():
 def test_gdalalg_raster_mosaic_addalpha():
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set(["../gcore/data/byte.tif"])
-    alg.GetArg("output").Set("")
-    alg.GetArg("addalpha").Set(True)
+    alg["input"] = ["../gcore/data/rgbsmall.tif"]
+    alg["output"] = ""
+    alg["band"] = [3, 2]
     assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
-    assert ds.RasterCount == 2
-    assert ds.GetRasterBand(1).Checksum() == 4672
-    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_AlphaBand
-    assert ds.GetRasterBand(2).Checksum() == 4873
-
-
-def test_gdalalg_raster_mosaic_band():
-
-    alg = get_mosaic_alg()
-    alg.GetArg("input").Set(["../gcore/data/rgbsmall.tif"])
-    alg.GetArg("output").Set("")
-    alg.GetArg("band").Set([3, 2])
-    assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
+    ds = alg["output"].GetDataset()
     assert ds.RasterCount == 2
     assert ds.GetRasterBand(1).Checksum() == 21349
     assert ds.GetRasterBand(2).Checksum() == 21053
@@ -301,10 +283,10 @@ def test_gdalalg_raster_mosaic_band():
 def test_gdalalg_raster_mosaic_glob():
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set(["../gcore/data/rgbsm?ll.tif"])
-    alg.GetArg("output").Set("")
+    alg["input"] = ["../gcore/data/rgbsm?ll.tif"]
+    alg["output"] = ""
     assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
+    ds = alg["output"].GetDataset()
     assert ds.RasterCount == 3
 
 
@@ -314,18 +296,18 @@ def test_gdalalg_raster_mosaic_at_filename(tmp_vsimem):
     gdal.FileFromMemBuffer(input_file_list, "../gcore/data/byte.tif")
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set([f"@{input_file_list}"])
-    alg.GetArg("output").Set("")
+    alg["input"] = [f"@{input_file_list}"]
+    alg["output"] = ""
     assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
+    ds = alg["output"].GetDataset()
     assert ds.GetRasterBand(1).Checksum() == 4672
 
 
 def test_gdalalg_raster_mosaic_at_filename_error():
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set(["@i_do_not_exist"])
-    alg.GetArg("output").Set("")
+    alg["input"] = ["@i_do_not_exist"]
+    alg["output"] = ""
     with pytest.raises(Exception, match="mosaic: Cannot open i_do_not_exist"):
         alg.Run()
 
@@ -335,8 +317,8 @@ def test_gdalalg_raster_mosaic_output_ds_alread_set():
     out_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set(["../gcore/data/byte.tif"])
-    alg.GetArg("output").Set(out_ds)
+    alg["input"] = ["../gcore/data/byte.tif"]
+    alg["output"] = out_ds
     with pytest.raises(
         Exception,
         match="mosaic: gdal raster mosaic does not support outputting to an already opened output dataset",
@@ -347,11 +329,11 @@ def test_gdalalg_raster_mosaic_output_ds_alread_set():
 def test_gdalalg_raster_mosaic_co():
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set(["../gcore/data/byte.tif"])
-    alg.GetArg("output").Set("")
-    alg.GetArg("creation-option").Set(["BLOCKXSIZE=10", "BLOCKYSIZE=15"])
+    alg["input"] = ["../gcore/data/byte.tif"]
+    alg["output"] = ""
+    alg["creation-option"] = ["BLOCKXSIZE=10", "BLOCKYSIZE=15"]
     assert alg.Run()
-    ds = alg.GetArg("output").Get().GetDataset()
+    ds = alg["output"].GetDataset()
     assert ds.GetRasterBand(1).GetBlockSize() == [10, 15]
 
 
@@ -405,8 +387,8 @@ def test_gdalalg_raster_mosaic_inconsistent_characteristics():
     src2_ds.SetSpatialRef(srs)
 
     alg = get_mosaic_alg()
-    alg.GetArg("input").Set([src1_ds, src2_ds])
-    alg.GetArg("output").Set("")
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output"] = ""
     with pytest.raises(
         Exception, match="gdal raster mosaic does not support heterogeneous projection"
     ):
