@@ -105,8 +105,8 @@ OGRLIBKMLLayer::OGRLIBKMLLayer(
     const char *pszLayerName, OGRwkbGeometryType eGType,
     const OGRSpatialReference *poSRSIn, OGRLIBKMLDataSource *poOgrDS,
     ElementPtr poKmlRoot, ContainerPtr poKmlContainer, UpdatePtr poKmlUpdate,
-    const char *pszFileName, int bNew, int bUpdateIn)
-    : bUpdate(CPL_TO_BOOL(bUpdateIn)), m_pszName(CPLStrdup(pszLayerName)),
+    const char *pszFileName, bool bNew, bool bUpdateIn)
+    : m_bNew(bNew), bUpdate(bUpdateIn), m_pszName(CPLStrdup(pszLayerName)),
       m_pszFileName(CPLStrdup(pszFileName)),
       m_poKmlLayer(std::move(poKmlContainer)),  // Store the layers container.
       m_poKmlLayerRoot(
@@ -536,19 +536,22 @@ OGRErr OGRLIBKMLLayer::ICreateFeature(OGRFeature *poOgrFeat)
     if (!bUpdate)
         return OGRERR_UNSUPPORTED_OPERATION;
 
-    const int idxIdField =
-        m_poOgrFeatureDefn->GetFieldIndex(m_oFieldConfig.idfield);
-    if (idxIdField >= 0 && poOgrFeat->IsFieldSet(idxIdField))
+    if (!m_bNew)
     {
-        ScanAllFeatures();
-
-        if (cpl::contains(m_oMapKmlIdToOGRId,
-                          poOgrFeat->GetFieldAsString(idxIdField)))
+        const int idxIdField =
+            m_poOgrFeatureDefn->GetFieldIndex(m_oFieldConfig.idfield);
+        if (idxIdField >= 0 && poOgrFeat->IsFieldSet(idxIdField))
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "A feature with id %s already exists",
-                     poOgrFeat->GetFieldAsString(idxIdField));
-            return OGRERR_FAILURE;
+            ScanAllFeatures();
+
+            if (cpl::contains(m_oMapKmlIdToOGRId,
+                              poOgrFeat->GetFieldAsString(idxIdField)))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "A feature with id %s already exists",
+                         poOgrFeat->GetFieldAsString(idxIdField));
+                return OGRERR_FAILURE;
+            }
         }
     }
 

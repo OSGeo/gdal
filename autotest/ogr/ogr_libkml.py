@@ -2341,3 +2341,25 @@ def ogr_libkml_non_editable():
         lyr = ds.GetLayer(0)
         assert lyr.TestCapability(ogr.OLCRandomWrite) == 0
         assert lyr.TestCapability(ogr.OLCDeleteFeature) == 0
+
+
+###############################################################################
+#
+
+
+def test_ogr_libkml_create_field_id_integer(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.kml")
+    with ogr.GetDriverByName("LIBKML").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test")
+        lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+        lyr.CreateField(ogr.FieldDefn("name"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["id"] = 1
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr.CreateFeature(f)
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["id"] == "1"
