@@ -102,6 +102,18 @@ OGRErr OGRWarpedLayer::ISetSpatialFilter(int iGeomField,
 }
 
 /************************************************************************/
+/*                         TranslateFeature()                           */
+/************************************************************************/
+
+void OGRWarpedLayer::TranslateFeature(
+    std::unique_ptr<OGRFeature> poSrcFeature,
+    std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures)
+{
+    apoOutFeatures.push_back(
+        SrcFeatureToWarpedFeature(std::move(poSrcFeature)));
+}
+
+/************************************************************************/
 /*                     SrcFeatureToWarpedFeature()                      */
 /************************************************************************/
 

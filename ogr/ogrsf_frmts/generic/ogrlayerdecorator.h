@@ -17,7 +17,7 @@
 
 #include "ogrsf_frmts.h"
 
-class CPL_DLL OGRLayerDecorator : public OGRLayer
+class CPL_DLL OGRLayerDecorator : virtual public OGRLayer
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRLayerDecorator)
 
