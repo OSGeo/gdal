@@ -65,8 +65,7 @@ bool GDALVectorReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
     auto poSrcDS = m_inputDataset.GetDatasetRef();
 
     auto reprojectedDataset =
-        std::make_unique<GDALVectorPipelineOutputDataset>();
-    reprojectedDataset->SetDescription(poSrcDS->GetDescription());
+        std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
 
     const int nLayerCount = poSrcDS->GetLayerCount();
     bool ret = true;
@@ -95,10 +94,11 @@ bool GDALVectorReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
             ret = (poCT != nullptr) && (poReversedCT != nullptr);
             if (ret)
             {
-                reprojectedDataset->AddLayer(std::make_unique<OGRWarpedLayer>(
-                    poSrcLayer, /* iGeomField = */ 0,
-                    /*bTakeOwnership = */ false, poCT.release(),
-                    poReversedCT.release()));
+                reprojectedDataset->AddLayer(
+                    *poSrcLayer, std::make_unique<OGRWarpedLayer>(
+                                     poSrcLayer, /* iGeomField = */ 0,
+                                     /*bTakeOwnership = */ false,
+                                     poCT.release(), poReversedCT.release()));
             }
         }
     }

@@ -16,13 +16,22 @@
 #ifndef DOXYGEN_SKIP
 
 #include "ogrlayerdecorator.h"
+#include "ogrlayerwithtranslatefeature.h"
+
 #include <memory>
+
+#if defined(_MSC_VER)
+#pragma warning(push)
+// Silence warnings of the type warning C4250: 'OGRWarpedLayer': inherits 'OGRLayerDecorator::OGRLayerDecorator::GetMetadata' via dominance
+#pragma warning(disable : 4250)
+#endif
 
 /************************************************************************/
 /*                           OGRWarpedLayer                             */
 /************************************************************************/
 
-class CPL_DLL OGRWarpedLayer : public OGRLayerDecorator
+class CPL_DLL OGRWarpedLayer : public OGRLayerDecorator,
+                               public OGRLayerWithTranslateFeature
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRWarpedLayer)
 
@@ -53,6 +62,10 @@ class CPL_DLL OGRWarpedLayer : public OGRLayerDecorator
             poReversedCT /* may be NULL, ownership acquired by OGRWarpedLayer */);
     virtual ~OGRWarpedLayer();
 
+    void TranslateFeature(
+        std::unique_ptr<OGRFeature> poSrcFeature,
+        std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override;
+
     void SetExtent(double dfXMin, double dfYMin, double dfXMax, double dfYMax);
 
     virtual OGRErr ISetSpatialFilter(int iGeomField,
@@ -82,6 +95,10 @@ class CPL_DLL OGRWarpedLayer : public OGRLayerDecorator
     virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
                                 CSLConstList papszOptions = nullptr) override;
 };
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
