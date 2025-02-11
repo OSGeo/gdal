@@ -123,7 +123,6 @@ def test_gdal_rasterize_2(gdal_rasterize_path, tmp_path):
     output_tif = str(tmp_path / "rast2.tif")
 
     # Create a raster to rasterize into.
-
     target_ds = gdal.GetDriverByName("GTiff").Create(
         output_tif, 12, 12, 3, gdal.GDT_Byte
     )
@@ -418,3 +417,33 @@ def test_gdal_rasterize_8(gdal_rasterize_path, tmp_path):
     assert cs == 21, "Did not rasterize line data properly"
 
     ds = None
+
+
+###############################################################################
+# Test that -ts also accepts double and warns if not integer
+
+
+@pytest.mark.require_driver("CSV")
+def test_gdal_rasterize_ts_1(tmp_path, gdal_rasterize_path):
+
+    output_tif = str(tmp_path / "rast2.tif")
+
+    # Create a raster to rasterize into.
+    target_ds = gdal.GetDriverByName("GTiff").Create(
+        output_tif, 12, 12, 3, gdal.GDT_Byte
+    )
+    target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
+
+    # Close TIF file
+    target_ds = None
+
+    # Run the algorithm.
+    (_, err) = gdaltest.runexternal_out_and_err(
+        f"{gdal_rasterize_path} -at -burn 200 -ts 100.0 200.0 ../alg/data/cutline.csv {output_tif}"
+    )
+    assert err is None or err == "", f"got error/warning {err}"
+
+    (_, err) = gdaltest.runexternal_out_and_err(
+        f"{gdal_rasterize_path} -at -burn 200 -ts 100.4 200.6 ../alg/data/cutline.csv {output_tif}"
+    )
+    assert "-ts values parsed as 100 200" in err
