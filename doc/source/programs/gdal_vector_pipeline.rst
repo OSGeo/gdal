@@ -107,11 +107,13 @@ Details for options can be found in :ref:`gdal_vector_filter_subcommand`.
     Select a subset of fields from a vector dataset.
 
     Positional arguments:
-      --fields <FIELDS>                                    Selected fields [may be repeated] [required]
+      --fields <FIELDS>                                    Fields to select (or exclude if --exclude) [may be repeated] [required]
 
     Options:
+      --exclude                                            Exclude specified fields
+                                                           Mutually exclusive with --ignore-missing-fields
       --ignore-missing-fields                              Ignore missing fields
-
+                                                           Mutually exclusive with --exclude
 
 
 Details for options can be found in :ref:`gdal_vector_select_subcommand`.

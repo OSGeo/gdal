@@ -22,7 +22,7 @@ Synopsis
     Positional arguments:
       -i, --input <INPUT>                                  Input vector dataset [required]
       -o, --output <OUTPUT>                                Output vector dataset [required]
-      --fields <FIELDS>                                    Selected fields [may be repeated] [required]
+      --fields <FIELDS>                                    Fields to select (or exclude if --exclude) [may be repeated] [required]
 
     Common Options:
       -h, --help                                           Display help message and exit
@@ -42,8 +42,10 @@ Synopsis
       --overwrite-layer                                    Whether overwriting existing layer is allowed
       --append                                             Whether appending to existing layer is allowed
       --output-layer <OUTPUT-LAYER>                        Output layer name
-      --fields <FIELDS>                                    Selected fields [may be repeated]
+      --exclude                                            Exclude specified fields
+                                                           Mutually exclusive with --ignore-missing-fields
       --ignore-missing-fields                              Ignore missing fields
+                                                           Mutually exclusive with --exclude
 
     Advanced Options:
       --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
@@ -68,7 +70,8 @@ Standard options
 
 .. option:: --fields <FIELDS>
 
-    Comma-separated list of fields from input layer to copy to the new layer.
+    Comma-separated list of fields from input layer to copy to the new layer
+    (or to exclude if :option:`--exclude` is specified)
 
     Field names with spaces, commas or double-quote
     should be surrounded with a starting and ending double-quote character, and
@@ -97,6 +100,11 @@ Standard options
     When specifying :option:`--ignore-missing-fields`, only a warning is
     emitted and the non existing fields are just ignored.
 
+.. option:: --exclude
+
+    Modifies the behavior of the algorithm such that all fields are selected,
+    except the ones mentioned by :option:`--fields`.
+
 
 Advanced options
 ++++++++++++++++
@@ -114,3 +122,11 @@ Examples
    .. code-block:: bash
 
         $ gdal vector select in.shp out.gpkg "EAS_ID,_ogr_geometry_" --overwrite
+
+
+.. example::
+   :title: Remove sensitive fields from a layer
+
+   .. code-block:: bash
+
+        $ gdal vector select in.shp out.gpkg --exclude "name,surname,address" --overwrite

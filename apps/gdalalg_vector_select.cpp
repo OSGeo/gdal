@@ -32,11 +32,15 @@ GDALVectorSelectAlgorithm::GDALVectorSelectAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
-    AddArg("fields", 0, _("Selected fields"), &m_selectedFields)
+    AddArg("fields", 0, _("Fields to select (or exclude if --exclude)"),
+           &m_fields)
         .SetPositional()
         .SetRequired();
+    AddArg("exclude", 0, _("Exclude specified fields"), &m_exclude)
+        .SetMutualExclusionGroup("exclude-ignore");
     AddArg("ignore-missing-fields", 0, _("Ignore missing fields"),
-           &m_ignoreMissingFields);
+           &m_ignoreMissingFields)
+        .SetMutualExclusionGroup("exclude-ignore");
 }
 
 namespace
@@ -51,7 +55,6 @@ class GDALVectorSelectAlgorithmLayer final
       public OGRGetNextFeatureThroughRaw<GDALVectorSelectAlgorithmLayer>
 {
   private:
-    bool m_bIsOK = true;
     OGRLayer &m_oSrcLayer;
     OGRFeatureDefn *const m_poFeatureDefn = nullptr;
     std::vector<int> m_anMapSrcFieldsToDstFields{};
@@ -81,16 +84,24 @@ class GDALVectorSelectAlgorithmLayer final
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(GDALVectorSelectAlgorithmLayer)
 
   public:
-    GDALVectorSelectAlgorithmLayer(
-        OGRLayer &oSrcLayer, const std::vector<std::string> &selectedFields,
-        bool bStrict)
+    explicit GDALVectorSelectAlgorithmLayer(OGRLayer &oSrcLayer)
         : m_oSrcLayer(oSrcLayer),
           m_poFeatureDefn(new OGRFeatureDefn(oSrcLayer.GetName()))
     {
         SetDescription(oSrcLayer.GetDescription());
         m_poFeatureDefn->SetGeomType(wkbNone);
         m_poFeatureDefn->Reference();
+    }
 
+    ~GDALVectorSelectAlgorithmLayer() override
+    {
+        if (m_poFeatureDefn)
+            m_poFeatureDefn->Dereference();
+    }
+
+    bool IncludeFields(const std::vector<std::string> &selectedFields,
+                       bool bStrict)
+    {
         std::set<std::string> oSetSelFields;
         std::set<std::string> oSetSelFieldsUC;
         for (const std::string &osFieldName : selectedFields)
@@ -101,7 +112,7 @@ class GDALVectorSelectAlgorithmLayer final
 
         std::set<std::string> oSetUsedSetFieldsUC;
 
-        const auto poSrcLayerDefn = oSrcLayer.GetLayerDefn();
+        const auto poSrcLayerDefn = m_oSrcLayer.GetLayerDefn();
         for (int i = 0; i < poSrcLayerDefn->GetFieldCount(); ++i)
         {
             const auto poSrcFieldDefn = poSrcLayerDefn->GetFieldDefn(i);
@@ -157,26 +168,70 @@ class GDALVectorSelectAlgorithmLayer final
                 {
                     CPLError(bStrict ? CE_Failure : CE_Warning, CPLE_AppDefined,
                              "Field '%s' does not exist in layer '%s'.%s",
-                             osName.c_str(), oSrcLayer.GetDescription(),
+                             osName.c_str(), m_oSrcLayer.GetDescription(),
                              bStrict ? " You may specify "
                                        "--ignore-missing-fields to skip it"
                                      : " It will be ignored");
                     if (bStrict)
-                        m_bIsOK = false;
+                        return false;
                 }
             }
         }
+
+        return true;
     }
 
-    ~GDALVectorSelectAlgorithmLayer() override
+    void ExcludeFields(const std::vector<std::string> &fields)
     {
-        if (m_poFeatureDefn)
-            m_poFeatureDefn->Dereference();
-    }
+        std::set<std::string> oSetSelFields;
+        std::set<std::string> oSetSelFieldsUC;
+        for (const std::string &osFieldName : fields)
+        {
+            oSetSelFields.insert(osFieldName);
+            oSetSelFieldsUC.insert(CPLString(osFieldName).toupper());
+        }
 
-    bool IsOK() const
-    {
-        return m_bIsOK;
+        const auto poSrcLayerDefn = m_oSrcLayer.GetLayerDefn();
+        for (int i = 0; i < poSrcLayerDefn->GetFieldCount(); ++i)
+        {
+            const auto poSrcFieldDefn = poSrcLayerDefn->GetFieldDefn(i);
+            auto oIter = oSetSelFieldsUC.find(
+                CPLString(poSrcFieldDefn->GetNameRef()).toupper());
+            if (oIter != oSetSelFieldsUC.end())
+            {
+                m_anMapSrcFieldsToDstFields.push_back(-1);
+            }
+            else
+            {
+                m_anMapSrcFieldsToDstFields.push_back(
+                    m_poFeatureDefn->GetFieldCount());
+                OGRFieldDefn oDstFieldDefn(*poSrcFieldDefn);
+                m_poFeatureDefn->AddFieldDefn(&oDstFieldDefn);
+            }
+        }
+
+        if (oSetSelFieldsUC.find(
+                CPLString(OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME).toupper()) !=
+                oSetSelFieldsUC.end() &&
+            poSrcLayerDefn->GetGeomFieldCount() == 1)
+        {
+            // exclude default geometry field
+        }
+        else
+        {
+            for (int i = 0; i < poSrcLayerDefn->GetGeomFieldCount(); ++i)
+            {
+                const auto poSrcFieldDefn = poSrcLayerDefn->GetGeomFieldDefn(i);
+                auto oIter = oSetSelFieldsUC.find(
+                    CPLString(poSrcFieldDefn->GetNameRef()).toupper());
+                if (oIter == oSetSelFieldsUC.end())
+                {
+                    m_anMapDstGeomFieldsToSrcGeomFields.push_back(i);
+                    OGRGeomFieldDefn oDstFieldDefn(*poSrcFieldDefn);
+                    m_poFeatureDefn->AddGeomFieldDefn(&oDstFieldDefn);
+                }
+            }
+        }
     }
 
     OGRFeatureDefn *GetLayerDefn() override
@@ -258,11 +313,17 @@ bool GDALVectorSelectAlgorithm::RunStep(GDALProgressFunc, void *)
 
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
     {
-        auto poLayer = std::make_unique<GDALVectorSelectAlgorithmLayer>(
-            *poSrcLayer, m_selectedFields,
-            /* bStrict = */ !m_ignoreMissingFields);
-        if (!poLayer->IsOK())
-            return false;
+        auto poLayer =
+            std::make_unique<GDALVectorSelectAlgorithmLayer>(*poSrcLayer);
+        if (m_exclude)
+        {
+            poLayer->ExcludeFields(m_fields);
+        }
+        else
+        {
+            if (!poLayer->IncludeFields(m_fields, !m_ignoreMissingFields))
+                return false;
+        }
         outDS->AddLayer(std::move(poLayer));
     }
 

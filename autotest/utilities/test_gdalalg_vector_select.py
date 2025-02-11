@@ -127,3 +127,88 @@ def test_gdalalg_vector_select_fields_non_existing_ignore_missing_fields(tmp_vsi
         lyr = ds.GetLayer(0)
         assert lyr.GetLayerDefn().GetFieldCount() == 1
         assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+
+
+def test_gdalalg_vector_select_fields_exclude(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.shp")
+
+    select_alg = get_select_alg()
+    assert select_alg.ParseRunAndFinalize(
+        [
+            "--exclude",
+            "--fields=EAS_ID,i_do_not_exist",
+            "../ogr/data/poly.shp",
+            out_filename,
+        ]
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        lyr = ds.GetLayer(0)
+        lyr_defn = lyr.GetLayerDefn()
+        assert [
+            lyr_defn.GetFieldDefn(i).GetName() for i in range(lyr_defn.GetFieldCount())
+        ] == ["AREA", "PRFEDEA"]
+        assert lyr_defn.GetGeomFieldCount() == 1
+
+
+def test_gdalalg_vector_select_fields_exclude_ogr_geometry(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.dbf")
+
+    select_alg = get_select_alg()
+    assert select_alg.ParseRunAndFinalize(
+        ["--exclude", "--fields=_ogr_geometry_", "../ogr/data/poly.shp", out_filename]
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        lyr = ds.GetLayer(0)
+        lyr_defn = lyr.GetLayerDefn()
+        assert [
+            lyr_defn.GetFieldDefn(i).GetName() for i in range(lyr_defn.GetFieldCount())
+        ] == ["AREA", "EAS_ID", "PRFEDEA"]
+        assert lyr_defn.GetGeomFieldCount() == 0
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_select_fields_exclude_name_geom_fields(tmp_vsimem):
+
+    tmp_filename = str(tmp_vsimem / "tmp.gpkg")
+    out_filename = str(tmp_vsimem / "out.dbf")
+
+    gdal.VectorTranslate(tmp_filename, "../ogr/data/poly.shp")
+
+    select_alg = get_select_alg()
+    assert select_alg.ParseRunAndFinalize(
+        ["--exclude", "--fields=geom", tmp_filename, out_filename]
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        lyr = ds.GetLayer(0)
+        lyr_defn = lyr.GetLayerDefn()
+        assert [
+            lyr_defn.GetFieldDefn(i).GetName() for i in range(lyr_defn.GetFieldCount())
+        ] == ["AREA", "EAS_ID", "PRFEDEA"]
+        assert lyr_defn.GetGeomFieldCount() == 0
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_select_fields_exclude_name_geom_fields_not_excluded(tmp_vsimem):
+
+    tmp_filename = str(tmp_vsimem / "tmp.gpkg")
+    out_filename = str(tmp_vsimem / "out.dbf")
+
+    gdal.VectorTranslate(tmp_filename, "../ogr/data/poly.shp")
+
+    select_alg = get_select_alg()
+    assert select_alg.ParseRunAndFinalize(
+        ["--exclude", "--fields=i_do_not_exist", tmp_filename, out_filename]
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        lyr = ds.GetLayer(0)
+        lyr_defn = lyr.GetLayerDefn()
+        assert [
+            lyr_defn.GetFieldDefn(i).GetName() for i in range(lyr_defn.GetFieldCount())
+        ] == ["AREA", "EAS_ID", "PRFEDEA"]
+        assert lyr_defn.GetGeomFieldCount() == 1
