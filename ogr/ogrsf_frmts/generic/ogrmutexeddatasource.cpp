@@ -160,7 +160,7 @@ void OGRMutexedDataSource::ReleaseResultSet(OGRLayer *poResultsSet)
     {
         std::map<OGRMutexedLayer *, OGRLayer *>::iterator oIter =
             m_oReverseMapLayers.find(
-                cpl::down_cast<OGRMutexedLayer *>(poResultsSet));
+                dynamic_cast<OGRMutexedLayer *>(poResultsSet));
         CPLAssert(oIter != m_oReverseMapLayers.end());
         delete poResultsSet;
         poResultsSet = oIter->second;
