@@ -65,32 +65,13 @@ GDALVectorClipAlgorithm::GDALVectorClipAlgorithm(bool standaloneStep)
 
 namespace
 {
-class GDALVectorClipAlgorithmDataset final : public GDALDataset
+class GDALVectorClipAlgorithmLayer final
+    : public OGRLayer,
+      public OGRGetNextFeatureThroughRaw<GDALVectorClipAlgorithmLayer>
 {
-    std::vector<std::unique_ptr<OGRLayer>> m_layers{};
 
-  public:
-    GDALVectorClipAlgorithmDataset() = default;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(GDALVectorClipAlgorithmLayer)
 
-    void AddLayer(std::unique_ptr<OGRLayer> poLayer)
-    {
-        m_layers.push_back(std::move(poLayer));
-    }
-
-    int GetLayerCount() override
-    {
-        return static_cast<int>(m_layers.size());
-    }
-
-    OGRLayer *GetLayer(int idx) override
-    {
-        return idx >= 0 && idx < GetLayerCount() ? m_layers[idx].get()
-                                                 : nullptr;
-    }
-};
-
-class GDALVectorClipAlgorithmLayer final : public OGRLayer
-{
   public:
     GDALVectorClipAlgorithmLayer(OGRLayer *poSrcLayer,
                                  std::unique_ptr<OGRGeometry> poClipGeom)
@@ -117,7 +98,7 @@ class GDALVectorClipAlgorithmLayer final : public OGRLayer
         m_idxInCurGeomColl = 0;
     }
 
-    OGRFeature *GetNextFeature() override
+    OGRFeature *GetNextRawFeature()
     {
         if (m_poSrcFeature && m_poCurGeomColl)
         {
@@ -447,7 +428,7 @@ bool GDALVectorClipAlgorithm::RunStep(GDALProgressFunc, void *)
         return false;
     }
 
-    auto outDS = std::make_unique<GDALVectorClipAlgorithmDataset>();
+    auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>();
     outDS->SetDescription(poSrcDS->GetDescription());
 
     bool ret = true;

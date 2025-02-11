@@ -2348,12 +2348,17 @@ GDALAlgorithm::AddOpenOptionsArg(std::vector<std::string> *pValue)
 /*                            ValidateFormat()                          */
 /************************************************************************/
 
-bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg) const
+bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
+                                   bool bStreamAllowed) const
 {
     if (arg.GetChoices().empty())
     {
-        const auto Validate = [this, &arg](const std::string &val)
+        const auto Validate =
+            [this, &arg, bStreamAllowed](const std::string &val)
         {
+            if (bStreamAllowed && val == "stream")
+                return true;
+
             auto hDriver = GDALGetDriverByName(val.c_str());
             if (!hDriver)
             {
@@ -2471,7 +2476,8 @@ GDALAlgorithm::AddInputFormatsArg(std::vector<std::string> *pValue)
         AddArg(GDAL_ARG_NAME_INPUT_FORMAT, 0, _("Input formats"), pValue)
             .AddAlias("if")
             .SetCategory(GAAC_ADVANCED);
-    arg.AddValidationAction([this, &arg]() { return ValidateFormat(arg); });
+    arg.AddValidationAction([this, &arg]()
+                            { return ValidateFormat(arg, false); });
     arg.SetAutoCompleteFunction([&arg](const std::string &)
                                 { return FormatAutoCompleteFunction(arg); });
     return arg;
@@ -2482,13 +2488,16 @@ GDALAlgorithm::AddInputFormatsArg(std::vector<std::string> *pValue)
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
-GDALAlgorithm::AddOutputFormatArg(std::string *pValue)
+GDALAlgorithm::AddOutputFormatArg(std::string *pValue, bool bStreamAllowed)
 {
-    auto &arg =
-        AddArg(GDAL_ARG_NAME_OUTPUT_FORMAT, 'f', _("Output format"), pValue)
-            .AddAlias("of")
-            .AddAlias("format");
-    arg.AddValidationAction([this, &arg]() { return ValidateFormat(arg); });
+    auto &arg = AddArg(GDAL_ARG_NAME_OUTPUT_FORMAT, 'f',
+                       bStreamAllowed ? _("Output format (\"stream\" allowed)")
+                                      : _("Output format"),
+                       pValue)
+                    .AddAlias("of")
+                    .AddAlias("format");
+    arg.AddValidationAction([this, &arg, bStreamAllowed]()
+                            { return ValidateFormat(arg, bStreamAllowed); });
     arg.SetAutoCompleteFunction([&arg](const std::string &)
                                 { return FormatAutoCompleteFunction(arg); });
     return arg;

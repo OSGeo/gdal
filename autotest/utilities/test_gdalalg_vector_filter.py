@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import pytest
+
 from osgeo import gdal
 
 
@@ -34,7 +36,7 @@ def test_gdalalg_vector_filter_no_filter(tmp_vsimem):
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
-def test_gdalalg_vector_filter_base(tmp_vsimem):
+def test_gdalalg_vector_filter_bbox(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.shp")
 
@@ -45,3 +47,42 @@ def test_gdalalg_vector_filter_base(tmp_vsimem):
 
     with gdal.OpenEx(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 1
+
+
+def test_gdalalg_vector_filter_where_discard_all(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.shp")
+
+    filter_alg = get_filter_alg()
+    assert filter_alg.ParseRunAndFinalize(
+        ["--where=0=1", "../ogr/data/poly.shp", out_filename]
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 0
+
+
+def test_gdalalg_vector_filter_where_accept_all(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.shp")
+
+    filter_alg = get_filter_alg()
+    assert filter_alg.ParseRunAndFinalize(
+        ["--where=1=1", "../ogr/data/poly.shp", out_filename]
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 10
+
+
+def test_gdalalg_vector_filter_where_error(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.shp")
+
+    filter_alg = get_filter_alg()
+    with pytest.raises(
+        Exception, match='"invalid" not recognised as an available field.'
+    ):
+        filter_alg.ParseRunAndFinalize(
+            ["--where=invalid", "../ogr/data/poly.shp", out_filename]
+        )

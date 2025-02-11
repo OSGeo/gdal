@@ -18,6 +18,7 @@
 #include "gdalalg_vector_pipeline.h"
 #include "gdalalg_vector_filter.h"
 #include "gdalalg_vector_reproject.h"
+#include "gdalalg_vector_select.h"
 #include "gdalalg_vector_sql.h"
 
 /************************************************************************/
@@ -44,6 +45,7 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALVectorPipelineAlgorithm>();
         RegisterSubAlgorithm<GDALVectorFilterAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorReprojectAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorSelectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSQLAlgorithmStandalone>();
     }
 

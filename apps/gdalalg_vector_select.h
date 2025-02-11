@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "filter" step of "vector pipeline"
+ * Purpose:  "select" step of "vector pipeline"
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,53 +10,55 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_VECTOR_FILTER_INCLUDED
-#define GDALALG_VECTOR_FILTER_INCLUDED
+#ifndef GDALALG_VECTOR_SELECT_INCLUDED
+#define GDALALG_VECTOR_SELECT_INCLUDED
 
 #include "gdalalg_vector_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALVectorFilterAlgorithm                         */
+/*                    GDALVectorSelectAlgorithm                         */
 /************************************************************************/
 
-class GDALVectorFilterAlgorithm /* non final */
+class GDALVectorSelectAlgorithm /* non final */
     : public GDALVectorPipelineStepAlgorithm
 {
   public:
-    static constexpr const char *NAME = "filter";
-    static constexpr const char *DESCRIPTION = "Filter a vector dataset.";
-    static constexpr const char *HELP_URL = "/programs/gdal_vector_filter.html";
+    static constexpr const char *NAME = "select";
+    static constexpr const char *DESCRIPTION =
+        "Select a subset of fields from a vector dataset.";
+    static constexpr const char *HELP_URL = "/programs/gdal_vector_select.html";
 
     static std::vector<std::string> GetAliases()
     {
         return {};
     }
 
-    explicit GDALVectorFilterAlgorithm(bool standaloneStep = false);
+    explicit GDALVectorSelectAlgorithm(bool standaloneStep = false);
 
   private:
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
-    std::vector<double> m_bbox{};
-    std::string m_where{};
+    std::vector<std::string> m_fields{};
+    bool m_ignoreMissingFields = false;
+    bool m_exclude = false;
 };
 
 /************************************************************************/
-/*                 GDALVectorFilterAlgorithmStandalone                  */
+/*                 GDALVectorSelectAlgorithmStandalone                  */
 /************************************************************************/
 
-class GDALVectorFilterAlgorithmStandalone final
-    : public GDALVectorFilterAlgorithm
+class GDALVectorSelectAlgorithmStandalone final
+    : public GDALVectorSelectAlgorithm
 {
   public:
-    GDALVectorFilterAlgorithmStandalone()
-        : GDALVectorFilterAlgorithm(/* standaloneStep = */ true)
+    GDALVectorSelectAlgorithmStandalone()
+        : GDALVectorSelectAlgorithm(/* standaloneStep = */ true)
     {
     }
 };
 
 //! @endcond
 
-#endif /* GDALALG_VECTOR_FILTER_INCLUDED */
+#endif /* GDALALG_VECTOR_SELECT_INCLUDED */
