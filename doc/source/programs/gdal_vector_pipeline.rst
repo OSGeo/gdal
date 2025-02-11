@@ -99,6 +99,24 @@ Details for options can be found in :ref:`gdal_vector_filter_subcommand`.
       -s, --src-crs <SRC-CRS>                              Source CRS
       -d, --dst-crs <DST-CRS>                              Destination CRS [required]
 
+
+* select [OPTIONS]
+
+.. code-block::
+
+    Select a subset of fields from a vector dataset.
+
+    Positional arguments:
+      --fields <FIELDS>                                    Selected fields [may be repeated] [required]
+
+    Options:
+      --ignore-missing-fields                              Ignore missing fields
+
+
+
+Details for options can be found in :ref:`gdal_vector_select_subcommand`.
+
+
 * sql [OPTIONS] <STATEMENT>
 
 .. code-block::

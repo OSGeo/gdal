@@ -192,4 +192,4 @@ Vector commands
 
     ==>
 
-    gdal vector filter --where "country='Greenland'" --fields population,_ogr_geometry_ in.shp out.gpkg
+    gdal vector pipeline ! read in.shp ! filter --where "country='Greenland'" ! select --fields population,_ogr_geometry_ ! write out.gpkg

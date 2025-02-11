@@ -15,6 +15,7 @@
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_filter.h"
 #include "gdalalg_vector_reproject.h"
+#include "gdalalg_vector_select.h"
 #include "gdalalg_vector_sql.h"
 #include "gdalalg_vector_write.h"
 
@@ -193,6 +194,7 @@ GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()
     m_stepRegistry.Register<GDALVectorClipAlgorithm>();
     m_stepRegistry.Register<GDALVectorReprojectAlgorithm>();
     m_stepRegistry.Register<GDALVectorFilterAlgorithm>();
+    m_stepRegistry.Register<GDALVectorSelectAlgorithm>();
     m_stepRegistry.Register<GDALVectorSQLAlgorithm>();
 }
 

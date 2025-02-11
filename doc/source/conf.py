@@ -328,6 +328,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_select",
+        "gdal-vector-select",
+        "Select a subset of fields from a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector_sql",
         "gdal-vector-sql",
         "Apply SQL statement(s) to a dataset",
