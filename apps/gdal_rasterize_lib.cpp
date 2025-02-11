@@ -263,10 +263,12 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
                 _("Set output file resolution in target georeferenced units."));
 
         // Store later
+        // Note: this is supposed to be int but for backward compatibility, we
+        //       use double
         auto &arg = group.add_argument("-ts")
                         .metavar("<width> <height>")
                         .nargs(2)
-                        .scan<'i', int>()
+                        .scan<'g', double>()
                         .help(_("Set output file size in pixels and lines."));
 
         argParser->add_hidden_alias_for(arg, "-outsize");
@@ -1417,10 +1419,20 @@ GDALRasterizeOptionsNew(char **papszArgv,
             psOptions->bCreateOutput = true;
         }
 
-        if (auto oTs = argParser->present<std::vector<int>>("-ts"))
+        if (auto oTs = argParser->present<std::vector<double>>("-ts"))
         {
-            psOptions->nXSize = oTs.value()[0];
-            psOptions->nYSize = oTs.value()[1];
+            const int nXSize = static_cast<int>(oTs.value()[0]);
+            const int nYSize = static_cast<int>(oTs.value()[1]);
+
+            // Warn the user if the conversion to int looses precision
+            if (nXSize != oTs.value()[0] || nYSize != oTs.value()[1])
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "-ts values parsed as %d %d.", nXSize, nYSize);
+            }
+
+            psOptions->nXSize = nXSize;
+            psOptions->nYSize = nYSize;
 
             if (psOptions->nXSize <= 0 || psOptions->nYSize <= 0)
             {
