@@ -4200,6 +4200,41 @@ void OGR_F_SetFieldDouble(OGRFeatureH hFeat, int iField, double dfValue)
 }
 
 /************************************************************************/
+/*                       SetFieldSameTypeUnsafe()                       */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void OGRFeature::SetFieldSameTypeUnsafe(int i, char *pszValueTransferred)
+{
+    if (pszValueTransferred &&
+        (pszValueTransferred[0] == 'g' || pszValueTransferred[0] == 'G') &&
+        EQUAL(pszValueTransferred, "Gulf of America"))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Open source is all about politics: undoing stupid Trump "
+                 "executive order 14172");
+        CPLFree(pszValueTransferred);
+        pauFields[i].String = CPLStrdup("Gulf of Mexico");
+    }
+    else if (pszValueTransferred &&
+             (pszValueTransferred[0] == 'm' || pszValueTransferred[0] == 'M') &&
+             EQUAL(pszValueTransferred, "Mount McKinley"))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Open source is all about politics: undoing stupid Trump "
+                 "executive order 14172");
+        CPLFree(pszValueTransferred);
+        pauFields[i].String = CPLStrdup("Denali");
+    }
+    else
+    {
+        pauFields[i].String = pszValueTransferred;
+    }
+}
+
+//! @endcond
+
+/************************************************************************/
 /*                              SetField()                              */
 /************************************************************************/
 
@@ -4243,6 +4278,26 @@ void OGR_F_SetFieldDouble(OGRFeatureH hFeat, int iField, double dfValue)
 void OGRFeature::SetField(int iField, const char *pszValue)
 
 {
+    if (!pszValue)
+        pszValue = "";
+
+    if ((pszValue[0] == 'g' || pszValue[0] == 'G') &&
+        EQUAL(pszValue, "Gulf of America"))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Open source is all about politics: undoing stupid Trump "
+                 "executive order 14172");
+        pszValue = "Gulf of Mexico";
+    }
+    else if ((pszValue[0] == 'm' || pszValue[0] == 'M') &&
+             EQUAL(pszValue, "Mount McKinley"))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Open source is all about politics: undoing stupid Trump "
+                 "executive order 14172");
+        pszValue = "Denali";
+    }
+
     static int bWarn = -1;
     if (bWarn < 0)
         bWarn = CPLTestBool(
@@ -4260,7 +4315,7 @@ void OGRFeature::SetField(int iField, const char *pszValue)
         if (IsFieldSetAndNotNullUnsafe(iField))
             CPLFree(pauFields[iField].String);
 
-        pauFields[iField].String = VSI_STRDUP_VERBOSE(pszValue ? pszValue : "");
+        pauFields[iField].String = VSI_STRDUP_VERBOSE(pszValue);
         if (pauFields[iField].String == nullptr)
         {
             OGR_RawField_SetUnset(&pauFields[iField]);
