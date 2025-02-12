@@ -8,7 +8,7 @@ RFC 107: Add OGRLayer::IGetExtent() and OGRLayer::ISetSpatialFilter()
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2025-02-06
-Status:        Drat
+Status:        Adopted, implemented
 Target:        GDAL 3.11
 ============== =============================================
 
@@ -102,4 +102,4 @@ Funded by GDAL Sponsorship Program (GSP)
 Voting history
 --------------
 
-TBD
++1 from PSC members HowardB, JavierJS, DanB and EvenR
