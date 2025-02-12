@@ -52,7 +52,6 @@ RUN apt-get update -y \
     libmuparser-dev \
     libmysqlclient-dev \
     libnetcdf-dev \
-    libogdi-dev \
     libopenexr-dev \
     libopenjp2-7-dev \
     libpcre2-dev \
@@ -123,9 +122,6 @@ RUN mkdir tiledb \
     && make install-tiledb \
     && cd ../.. \
     && rm -rf tiledeb
-
-# Workaround bug in ogdi packaging
-RUN ln -s /usr/lib/ogdi/libvrf.so /usr/lib
 
 # Build libjxl
 # libjxl being still unstable, if the main branch fails to compile/test
@@ -276,7 +272,7 @@ RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
     ); fi
 
 # Install exprtk
-RUN wget -q -P /usr/local/include https://raw.githubusercontent.com/ArashPartow/exprtk/refs/heads/master/exprtk.hpp 
+RUN wget -q -P /usr/local/include https://raw.githubusercontent.com/ArashPartow/exprtk/refs/heads/master/exprtk.hpp
 
 RUN ldconfig
 

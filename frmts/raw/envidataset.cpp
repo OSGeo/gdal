@@ -85,8 +85,7 @@ static int ITTVISToUSGSZone(int nITTVISZone)
 
 ENVIDataset::ENVIDataset()
     : fpImage(nullptr), fp(nullptr), pszHDRFilename(nullptr),
-      bFoundMapinfo(false), bHeaderDirty(false), bFillFile(false),
-      interleave(BSQ)
+      bFoundMapinfo(false), bHeaderDirty(false), bFillFile(false)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -217,15 +216,15 @@ CPLErr ENVIDataset::FlushCache(bool bAtClosing)
     const int iENVIType = GetEnviType(band->GetRasterDataType());
     bOK &= VSIFPrintfL(fp, "data type = %d\n", iENVIType) >= 0;
     const char *pszInterleaving = nullptr;
-    switch (interleave)
+    switch (eInterleave)
     {
-        case BIP:
+        case Interleave::BIP:
             pszInterleaving = "bip";  // Interleaved by pixel.
             break;
-        case BIL:
+        case Interleave::BIL:
             pszInterleaving = "bil";  // Interleaved by line.
             break;
-        case BSQ:
+        case Interleave::BSQ:
             pszInterleaving = "bsq";  // Band sequential by default.
             break;
         default:
@@ -2294,7 +2293,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
     if (STARTS_WITH_CI(osInterleave, "bil"))
     {
-        poDS->interleave = BIL;
+        poDS->eInterleave = Interleave::BIL;
         poDS->SetMetadataItem("INTERLEAVE", "LINE", "IMAGE_STRUCTURE");
         if (nSamples > std::numeric_limits<int>::max() / (nDataSize * nBands))
         {
@@ -2307,7 +2306,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     }
     else if (STARTS_WITH_CI(osInterleave, "bip"))
     {
-        poDS->interleave = BIP;
+        poDS->eInterleave = Interleave::BIP;
         poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
         if (nSamples > std::numeric_limits<int>::max() / (nDataSize * nBands))
         {
@@ -2320,7 +2319,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     }
     else
     {
-        poDS->interleave = BSQ;
+        poDS->eInterleave = Interleave::BSQ;
         poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
         if (nSamples > std::numeric_limits<int>::max() / nDataSize)
         {

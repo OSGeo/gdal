@@ -4,7 +4,6 @@
 // clang-format off
 constexpr static const char* const apszKnownConfigOptions[] =
 {
-   "ADRG_SIMULATE_MULTI_IMG", // from adrgdataset.cpp
    "ALLOW_GPKG_ZOOM_OTHER_EXTENSION", // from ogrgeopackagedatasource.cpp
    "ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW", // from ogrsqlitedatasource.cpp
    "ALLOW_VIRTUAL_OGR_FROM_TRIGGER_AND_VIEW", // from ogrsqlitevirtualogr.cpp
@@ -737,7 +736,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR_ODS_FIELD_TYPES", // from ogrodsdatasource.cpp
    "OGR_ODS_HEADERS", // from ogrodsdatasource.cpp
    "OGR_ODS_MAX_FIELD_COUNT", // from ogrodsdatasource.cpp
-   "OGR_OGDI_LAUNDER_LAYER_NAMES", // from ogrogdidatasource.cpp
    "OGR_OPENFILEGDB_ERROR_ON_INCONSISTENT_BUFFER_MAX_SIZE", // from filegdbtable.cpp
    "OGR_OPENFILEGDB_WRITE_EMPTY_GEOMETRY", // from ogropenfilegdblayer_write.cpp
    "OGR_ORGANIZE_POLYGONS", // from filegdbtable.cpp, ogrgeometryfactory.cpp
@@ -956,7 +954,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "PYTHONSO", // from gdalpython.cpp
    "QGIS_HACK", // from ogrfeaturedefn.cpp
    "QHULL_LOG_TO_TEMP_FILE", // from delaunay.c
-   "RASTERLITE_OVR_OPTIONS", // from rasterliteoverviews.cpp
    "RAW_CHECK_FILE_SIZE", // from rawdataset.cpp
    "RAW_MEM_ALLOC_LIMIT_MB", // from rawdataset.cpp
    "REPORT_COMPD_CS", // from dteddataset.cpp, srtmhgtdataset.cpp
@@ -998,8 +995,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "THRESHOLD", // from ogrct.cpp
    "TIFF_READ_STREAMING", // from gtiffdataset_read.cpp
    "TIFF_USE_OVR", // from gtiffdataset_write.cpp
-   "TIGER_LFIELD_AS_STRING", // from tigerfilebase.cpp
-   "TIGER_VERSION", // from ogrtigerdatasource.cpp
    "TILEDB_ATTRIBUTE", // from tiledbdense.cpp
    "TILEDB_BINARY_TYPE", // from tiledbsparse.cpp
    "TILEDB_BUG", // from tiledbsparse.cpp

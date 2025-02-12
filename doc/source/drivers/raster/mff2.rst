@@ -8,8 +8,8 @@ MFF2 -- Vexcel MFF2 Image
 
 .. built_in_by_default::
 
-GDAL supports MFF2 Image raster file format for read, update, and
-creation. The MFF2 (Multi-File Format 2) format was designed to fit into
+GDAL supports MFF2 Image raster file format for read.
+The MFF2 (Multi-File Format 2) format was designed to fit into
 Vexcel Hierarchical Key-Value (HKV) databases, which can store binary
 data as well as ASCII parameters. This format is primarily used
 internally to the Vexcel InSAR processing system.
@@ -23,24 +23,13 @@ affine transform computed from the lat/long control points. In any
 event, if GCPs are available in a georef file, they are returned with
 the dataset.
 
-Newly created files (with a type of ``MFF2``) are always just raw
-rasters with no georeferencing information. For read, and creation all
-data types (real, integer and complex in bit depths of 8, 16, 32) should
+For read, all data types (real, integer and complex in bit depths of 8, 16, 32) should
 be supported.
-
-IMPORTANT: When creating a new MFF2, be sure to set the projection
-before setting the geotransform (this is necessary because the
-geotransform is stored internally as 5 latitude-longitude ground control
-points, and the projection is needed to do the conversion).
 
 NOTE: Implemented as :source_file:`frmts/raw/hkvdataset.cpp`.
 
 Driver capabilities
 -------------------
-
-.. supports_createcopy::
-
-.. supports_create::
 
 .. supports_georeferencing::
 
