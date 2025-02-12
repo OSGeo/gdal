@@ -47,7 +47,7 @@ NextGIS Web supports several raster types:
 -  WMS layer
 -  WMS Service
 -  Web map as combination of raster and vector styles
--  Basemap resource
+-  Base map resource
 -  QML Raster style
 -  QML Vector style
 -  Raster layer
@@ -61,7 +61,7 @@ WMS layers from external WMS service have no styles.
 WMS Service is usual WMS protocol implementation.
 
 NGW driver supports raster, vector, QML raster, QML vector styles, web map, 
-basemap layer, WMS layers and raster layer as COG.
+base map layer, WMS layers and raster layer as COG.
 You can get raster data as tiles or image or COG (only tiles and COG are 
 supported now).
 

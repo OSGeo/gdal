@@ -108,16 +108,15 @@ def check_tms(sub):
     assert 'PROJCS["WGS 84 / Pseudo-Mercator"' in wkt, "Got wrong SRS: " + wkt
 
     gt = ds.GetGeoTransform()
-    # -20037508.34, 0.037322767712175846, 0.0, 20037508.34, 0.0, -0.037322767712175846
-    assert (
-        gt[0] == pytest.approx(-20037508.34, abs=0.00001)
-        or gt[3] == pytest.approx(20037508.34, abs=0.00001)
-        or gt[1] == pytest.approx(0.037322767712175846, abs=0.00001)
-        or gt[2] == pytest.approx(0.0, abs=0.00001)
-        or gt[5] == pytest.approx(-0.037322767712175846, abs=0.00001)
-        or gt[4] == pytest.approx(0.0, abs=0.00001)
-    ), f"Wrong geotransform. {gt}"
-
+    expected_gt = [
+        -20037508.34,
+        0.037322767712175846,
+        0.0,
+        20037508.34,
+        0.0,
+        -0.037322767712175846,
+    ]
+    assert gt == pytest.approx(expected_gt, abs=0.00001), f"Wrong geotransform. {gt}"
     assert ds.GetRasterBand(1).GetOverviewCount() > 0, "No overviews!"
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte, "Wrong band data type."
 

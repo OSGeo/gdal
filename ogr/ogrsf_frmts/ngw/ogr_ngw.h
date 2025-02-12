@@ -17,6 +17,7 @@
 #include "ogrsf_frmts.h"
 #include "ogr_swq.h"
 
+#include <array>
 #include <map>
 #include <set>
 

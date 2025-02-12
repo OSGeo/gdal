@@ -789,12 +789,12 @@ def test_ogr_ngw_15():
 
     assert (
         lyr.GetFeatureCount() == 3
-    ), f"Expected feature count is 3, got { lyr.GetFeatureCount()}."
+    ), f"Expected feature count is 3, got {lyr.GetFeatureCount()}."
 
     gdaltest.ngw_ds.ExecuteSQL("DELETE FROM test_pl_layer WHERE \"STRFIELD\" = 'fo_o'")
     assert (
         lyr.GetFeatureCount() == 1
-    ), f"Expected feature count is 1, got { lyr.GetFeatureCount()}."
+    ), f"Expected feature count is 1, got {lyr.GetFeatureCount()}."
 
     gdaltest.ngw_ds.ExecuteSQL("DELETE FROM test_pl_layer")
     assert (

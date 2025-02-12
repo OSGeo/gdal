@@ -303,37 +303,6 @@ static bool CheckFieldNameUnique(OGRFeatureDefn *poFeatureDefn, int iField,
     return true;
 }
 
-static std::string GetUniqueFieldName(OGRFeatureDefn *poFeatureDefn, int iField,
-                                      const char *pszBaseName, int nAdd = 0,
-                                      int nMax = 255)
-{
-    const char *pszNewName = CPLSPrintf("%s%d", pszBaseName, nAdd);
-    for (int i = 0; i < poFeatureDefn->GetFieldCount(); ++i)
-    {
-        if (i == iField)
-        {
-            continue;
-        }
-
-        OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(i);
-        if (poFieldDefn && EQUAL(poFieldDefn->GetNameRef(), pszNewName))
-        {
-            if (nAdd + 1 == nMax)
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "Too many field names like '%s' + number.",
-                         pszBaseName);
-
-                return pszBaseName;  // Let's solve this on server side.
-            }
-            return GetUniqueFieldName(poFeatureDefn, iField, pszBaseName,
-                                      nAdd + 1);
-        }
-    }
-
-    return pszNewName;
-}
-
 /*
  * TranslateSQLToFilter()
  */
@@ -1027,7 +996,6 @@ void OGRNGWLayer::FillFields(const CPLJSONArray &oFields,
             NGWAPI::NGWFieldTypeToOGRFieldType(oField.GetString("datatype"));
 
         OGRFieldDefn oFieldDefn(osFieldName.c_str(), eFieldtype);
-        std::string osFieldId = oField.GetString("id");
         std::string osFieldAlias = oField.GetString("display_name");
         oFieldDefn.SetAlternativeName(osFieldAlias.c_str());
 
@@ -1586,7 +1554,6 @@ OGRErr OGRNGWLayer::DeleteFeatures(const std::vector<GIntBig> &vFeaturesID)
     FetchPermissions();
     if (stPermissions.bDataCanWrite && poDS->IsUpdateMode())
     {
-        std::string osFeaturesJson;
         bool bResult = NGWAPI::DeleteFeatures(
             poDS->GetUrl(), osResourceId,
             FeaturesIDToJsonString(vFeaturesIDInt), poDS->GetHeaders(false));

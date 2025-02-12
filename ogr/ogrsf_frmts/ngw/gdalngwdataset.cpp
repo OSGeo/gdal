@@ -528,7 +528,7 @@ bool OGRNGWDataset::Init(int nOpenFlagsIn)
             }
             else if (osResourceType == "basemap_layer")
             {
-                auto osURL = oRoot.GetString("basemap_layer/url");
+                auto osTMSURL = oRoot.GetString("basemap_layer/url");
                 int nEPSG = 3857;
                 auto osQMS = oRoot.GetString("basemap_layer/qms");
                 if (!osQMS.empty())
@@ -556,7 +556,7 @@ bool OGRNGWDataset::Init(int nOpenFlagsIn)
                     stExtent.MaxY = 20037508.34;
 
                     const char *pszConnStr = FormGDALTMSConnectionString(
-                        osUrl, osResourceId, nEPSG, nCacheExpires,
+                        osTMSURL, osResourceId, nEPSG, nCacheExpires,
                         nCacheMaxSize);
                     poRasterDS = GDALDataset::FromHandle(GDALOpenEx(
                         pszConnStr,

@@ -96,24 +96,13 @@ The following configuration options are available:
       Comma separated extensions list. Available values are
       `description` and `attachment`. This needed to fill native data.
       
--  .. config:: NGW_CONNECTTIMEOUT
+-  :copy-config:`NGW_CONNECTTIMEOUT`
 
-      Maximum delay for the connection to be established before being aborted in 
-      seconds.
+-  :copy-config:`NGW_TIMEOUT`
 
--  .. config:: NGW_TIMEOUT
+-  :copy-config:`NGW_MAX_RETRY`
 
-      Maximum delay for the whole request to complete before being aborted in 
-      seconds.
-
--  .. config:: NGW_MAX_RETRY
-
-      Maximum number of retry attempts if a 429, 502, 503 or 504 HTTP error 
-      occurs.
-
--  .. config:: NGW_RETRY_DELAY
-
-      Number of seconds between retry attempts.
+-  :copy-config:`NGW_RETRY_DELAY`
 
 Authentication
 --------------
@@ -367,7 +356,7 @@ read-only metadata items *creation_date*, *resource_type* and
 *parent_id* in default domain.
 
 Vector layer field properties (identifier, label field, grid
-visibility, text search) saved as json string in field commnet.
+visibility, text search) saved as json string in field comment.
 
 Starting from GDAL 3.3 field alias can be set/get via `SetAlternativeName`
 and `GetAlternativeNameRef`.
@@ -437,7 +426,7 @@ supported:
 -  DELLAYER: layer_name; - delete layer with layer_name.
 -  DELETE FROM layer_name; - delete any features from layer with
    layer_name.
--  DELETE FROM layer_name WHERE feild = value; - delete features from layer with
+-  DELETE FROM layer_name WHERE field = value; - delete features from layer with
    layer_name and where clause.
 -  DROP TABLE layer_name; - delete layer with layer_name.
 -  ALTER TABLE src_layer RENAME TO dst_layer; - rename layer.
