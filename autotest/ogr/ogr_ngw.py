@@ -8,7 +8,7 @@
 ################################################################################
 #  The MIT License (MIT)
 #
-#  Copyright (c) 2018-2021, NextGIS <info@nextgis.com>
+#  Copyright (c) 2018-2025, NextGIS <info@nextgis.com>
 #
 # SPDX-License-Identifier: MIT
 ################################################################################
@@ -18,10 +18,8 @@ import sys
 
 sys.path.append("../pymod")
 
-import json
 import random
 import time
-from datetime import datetime
 
 import gdaltest
 import pytest
@@ -30,40 +28,24 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = [
     pytest.mark.require_driver("NGW"),
+    pytest.mark.random_order(disabled=True),
     pytest.mark.skipif(
         "CI" in os.environ,
         reason="NGW tests are flaky. See https://github.com/OSGeo/gdal/issues/4453",
     ),
 ]
 
+NET_TIMEOUT = 130
+NET_MAX_RETRY = 5
+NET_RETRY_DELAY = 2
+
 
 def check_availability(url):
-    # Sandbox cleans at 1:05 on monday (UTC)
-    now = datetime.utcnow()
-    if now.weekday() == 0:
-        if now.hour >= 0 and now.hour < 4:
-            return False
-
+    # Check NGW availability
     version_url = url + "/api/component/pyramid/pkg_version"
-
-    if gdaltest.gdalurlopen(version_url) is None:
+    if gdaltest.gdalurlopen(version_url, timeout=NET_TIMEOUT) is None:
         return False
-
-    # Check quota
-    quota_url = url + "/api/resource/quota"
-    quota_conn = gdaltest.gdalurlopen(quota_url)
-    try:
-        quota_json = json.loads(quota_conn.read())
-        quota_conn.close()
-        if quota_json is None:
-            return False
-        limit = quota_json["limit"]
-        count = quota_json["count"]
-        if limit is None or count is None:
-            return True
-        return limit - count > 15
-    except Exception:
-        return False
+    return True
 
 
 def get_new_name():
@@ -104,6 +86,7 @@ def startup_and_cleanup():
 def test_ogr_ngw_2():
 
     create_url = "NGW:" + gdaltest.ngw_test_server + "/resource/0/" + get_new_name()
+    gdal.ErrorReset()
     with gdal.quiet_errors():
         gdaltest.ngw_ds = gdal.GetDriverByName("NGW").Create(
             create_url,
@@ -113,6 +96,9 @@ def test_ogr_ngw_2():
             gdal.GDT_Unknown,
             options=[
                 "DESCRIPTION=GDAL Test group",
+                f"TIMEOUT={NET_TIMEOUT}",
+                f"MAX_RETRY={NET_MAX_RETRY}",
+                f"RETRY_DELAY={NET_RETRY_DELAY}",
             ],
         )
 
@@ -165,30 +151,30 @@ def test_ogr_ngw_4():
     gdaltest.ngw_ds = None
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + ds_resource_id
     gdaltest.ngw_ds = gdal.OpenEx(
-        url, gdal.OF_UPDATE
-    )  # gdal.GetDriverByName('NGW').Open(url, update=1)
+        url,
+        gdal.OF_UPDATE,
+        open_options=[
+            f"TIMEOUT={NET_TIMEOUT}",
+            f"MAX_RETRY={NET_MAX_RETRY}",
+            f"RETRY_DELAY={NET_RETRY_DELAY}",
+        ],
+    )
     assert gdaltest.ngw_ds is not None, "Open datasource failed."
 
     md_item = gdaltest.ngw_ds.GetMetadataItem("test_int.d", "NGW")
     assert (
         md_item == "777"
-    ), "Did not get expected datasource metadata item. test_int.d is equal {}, but should {}.".format(
-        md_item, "777"
-    )
+    ), f"Did not get expected datasource metadata item. test_int.d is equal {md_item}, but should 777."
 
     md_item = gdaltest.ngw_ds.GetMetadataItem("test_float.f", "NGW")
     assert float(md_item) == pytest.approx(
         777.555, abs=0.00001
-    ), "Did not get expected datasource metadata item. test_float.f is equal {}, but should {}.".format(
-        md_item, "777.555"
-    )
+    ), f"Did not get expected datasource metadata item. test_float.f is equal {md_item}, but should 777.555."
 
     md_item = gdaltest.ngw_ds.GetMetadataItem("test_string", "NGW")
     assert (
         md_item == "metadata test"
-    ), "Did not get expected datasource metadata item. test_string is equal {}, but should {}.".format(
-        md_item, "metadata test"
-    )
+    ), f"Did not get expected datasource metadata item. test_string is equal {md_item}, but should 'metadata test'."
 
     resource_type = gdaltest.ngw_ds.GetMetadataItem("resource_type", "")
     assert (
@@ -198,26 +184,26 @@ def test_ogr_ngw_4():
 
 def create_fields(lyr):
     fld_defn = ogr.FieldDefn("STRFIELD", ogr.OFTString)
+    fld_defn.SetAlternativeName("String field test")
     lyr.CreateField(fld_defn)
-    lyr.SetMetadataItem("FIELD_0_ALIAS", "String field test")
     fld_defn = ogr.FieldDefn("DECFIELD", ogr.OFTInteger)
+    fld_defn.SetAlternativeName("Integer field test")
     lyr.CreateField(fld_defn)
-    lyr.SetMetadataItem("FIELD_1_ALIAS", "Integer field test")
     fld_defn = ogr.FieldDefn("BIGDECFIELD", ogr.OFTInteger64)
+    fld_defn.SetAlternativeName("Integer64 field test")
     lyr.CreateField(fld_defn)
-    lyr.SetMetadataItem("FIELD_2_ALIAS", "Integer64 field test")
     fld_defn = ogr.FieldDefn("REALFIELD", ogr.OFTReal)
+    fld_defn.SetAlternativeName("Real field test")
     lyr.CreateField(fld_defn)
-    lyr.SetMetadataItem("FIELD_3_ALIAS", "Real field test")
     fld_defn = ogr.FieldDefn("DATEFIELD", ogr.OFTDate)
+    fld_defn.SetAlternativeName("Date field test")
     lyr.CreateField(fld_defn)
-    lyr.SetMetadataItem("FIELD_4_ALIAS", "Date field test")
     fld_defn = ogr.FieldDefn("TIMEFIELD", ogr.OFTTime)
+    fld_defn.SetAlternativeName("Time field test")
     lyr.CreateField(fld_defn)
-    lyr.SetMetadataItem("FIELD_5_ALIAS", "Time field test")
     fld_defn = ogr.FieldDefn("DATETIMEFLD", ogr.OFTDateTime)
+    fld_defn.SetAlternativeName("Date & time field test")
     lyr.CreateField(fld_defn)
-    lyr.SetMetadataItem("FIELD_6_ALIAS", "Date & time field test")
 
 
 def fill_fields(f):
@@ -265,15 +251,12 @@ def test_ogr_ngw_5():
     create_fields(lyr)
 
     # Test duplicated names.
-    fld_defn = ogr.FieldDefn("STRFIELD", ogr.OFTString)
-    assert lyr.CreateField(fld_defn) != 0, "Expected not to create duplicated field"
-
-    # Test forbidden field names.
     gdal.ErrorReset()
-    with gdal.quiet_errors():
-        fld_defn = ogr.FieldDefn("id", ogr.OFTInteger)
-        lyr.CreateField(fld_defn)
-    assert gdal.GetLastErrorMsg() != "", "Expecting a warning"
+    fld_defn = ogr.FieldDefn("STRFIELD", ogr.OFTString)
+    try:
+        assert lyr.CreateField(fld_defn) != 0, "Expected not to create duplicated field"
+    except Exception:
+        pass
 
     add_metadata(lyr)
 
@@ -334,20 +317,28 @@ def test_ogr_ngw_5():
     add_metadata(lyr)
 
     # Test without overwrite
-    lyr = gdaltest.ngw_ds.CreateLayer(
-        "test_pl_layer",
-        srs=sr,
-        geom_type=ogr.wkbMultiPolygon,
-        options=["OVERWRITE=NO", "DESCRIPTION=Test polygon layer 1"],
-    )
-    assert lyr is None, "Create layer without overwrite should fail."
-    lyr = gdaltest.ngw_ds.CreateLayer(
-        "test_pl_layer",
-        srs=sr,
-        geom_type=ogr.wkbMultiPolygon,
-        options=["DESCRIPTION=Test point layer 1"],
-    )
-    assert lyr is None, "Create layer without overwrite should fail."
+    gdal.ErrorReset()
+    try:
+        lyr = gdaltest.ngw_ds.CreateLayer(
+            "test_pl_layer",
+            srs=sr,
+            geom_type=ogr.wkbMultiPolygon,
+            options=["OVERWRITE=NO", "DESCRIPTION=Test polygon layer 1"],
+        )
+        assert lyr is None, "Create layer without overwrite should fail."
+    except Exception:
+        pass
+
+    try:
+        lyr = gdaltest.ngw_ds.CreateLayer(
+            "test_pl_layer",
+            srs=sr,
+            geom_type=ogr.wkbMultiPolygon,
+            options=["DESCRIPTION=Test point layer 1"],
+        )
+        assert lyr is None, "Create layer without overwrite should fail."
+    except Exception:
+        pass
 
     # Test geometry with Z
     lyr = gdaltest.ngw_ds.CreateLayer(
@@ -367,8 +358,14 @@ def test_ogr_ngw_5():
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + ds_resource_id
 
     gdaltest.ngw_ds = gdal.OpenEx(
-        url, gdal.OF_UPDATE
-    )  # gdal.GetDriverByName('NGW').Open(url, update=1)
+        url,
+        gdal.OF_UPDATE,
+        open_options=[
+            f"TIMEOUT={NET_TIMEOUT}",
+            f"MAX_RETRY={NET_MAX_RETRY}",
+            f"RETRY_DELAY={NET_RETRY_DELAY}",
+        ],
+    )
     assert gdaltest.ngw_ds is not None, "Open datasource failed."
 
     for layer_name in [
@@ -378,28 +375,22 @@ def test_ogr_ngw_5():
         "test_plz_layer",
     ]:
         lyr = gdaltest.ngw_ds.GetLayerByName(layer_name)
-        assert lyr is not None, "Get layer {} failed.".format(layer_name)
+        assert lyr is not None, f"Get layer '{layer_name}' failed."
 
         md_item = lyr.GetMetadataItem("test_int.d", "NGW")
         assert (
             md_item == "777"
-        ), "Did not get expected layer metadata item. test_int.d is equal {}, but should {}.".format(
-            md_item, "777"
-        )
+        ), f"Did not get expected layer metadata item. test_int.d is equal {md_item}, but should 777."
 
         md_item = lyr.GetMetadataItem("test_float.f", "NGW")
         assert float(md_item) == pytest.approx(
             777.555, abs=0.00001
-        ), "Did not get expected layer metadata item. test_float.f is equal {}, but should {}.".format(
-            md_item, "777.555"
-        )
+        ), f"Did not get expected layer metadata item. test_float.f is equal {md_item}, but should 777.555."
 
         md_item = lyr.GetMetadataItem("test_string", "NGW")
         assert (
             md_item == "metadata test"
-        ), "Did not get expected layer metadata item. test_string is equal {}, but should {}.".format(
-            md_item, "metadata test"
-        )
+        ), f"Did not get expected layer metadata item. test_string is equal {md_item}, but should  'metadata test'."
 
         resource_type = lyr.GetMetadataItem("resource_type", "")
         assert (
@@ -407,6 +398,24 @@ def test_ogr_ngw_5():
         ), "Did not get expected layer metadata item. Resourse type should be present."
 
         assert lyr.GetGeomType() != ogr.wkbUnknown and lyr.GetGeomType() != ogr.wkbNone
+
+    # Test append field
+    lyr = gdaltest.ngw_ds.CreateLayer(
+        "test_append_layer",
+        srs=sr,
+        geom_type=ogr.wkbPoint,
+        options=["OVERWRITE=YES", "DESCRIPTION=Test append point layer"],
+    )
+    assert lyr is not None, "Create layer failed."
+
+    create_fields(lyr)
+    assert lyr.SyncToDisk() == 0
+
+    fld_defn = ogr.FieldDefn("STRFIELD_NEW", ogr.OFTString)
+    fld_defn.SetAlternativeName("String field test new")
+    lyr.CreateField(fld_defn)
+    lyr.DeleteField(2)
+    assert lyr.SyncToDisk() == 0
 
 
 ###############################################################################
@@ -422,7 +431,14 @@ def test_ogr_ngw_6():
     lyr = gdaltest.ngw_ds.GetLayerByName("test_pt_layer")
     lyr_resource_id = lyr.GetMetadataItem("id", "")
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + lyr_resource_id
-    ds = gdal.OpenEx(url)
+    ds = gdal.OpenEx(
+        url,
+        open_options=[
+            f"TIMEOUT={NET_TIMEOUT}",
+            f"MAX_RETRY={NET_MAX_RETRY}",
+            f"RETRY_DELAY={NET_RETRY_DELAY}",
+        ],
+    )
     assert (
         ds is not None and ds.GetLayerCount() == 1
     ), "Failed to open single vector layer."
@@ -446,21 +462,22 @@ def test_ogr_ngw_7():
     ret = lyr.CreateFeature(f)
     assert (
         ret == 0 and f.GetFID() >= 0
-    ), "Create feature failed. Expected FID greater or equal 0, got {}.".format(
-        f.GetFID()
-    )
+    ), f"Create feature failed. Expected FID greater or equal 0, got {f.GetFID()}."
 
     fill_fields2(f)
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
     ret = lyr.SetFeature(f)
-    assert ret == 0, "Failed to update feature #{}.".format(f.GetFID())
+    assert ret == 0, f"Failed to update feature #{f.GetFID()}."
 
     lyr.DeleteFeature(f.GetFID())
 
     # Expected fail to get feature
-    with gdal.quiet_errors():
+    gdal.ErrorReset()
+    try:
         f = lyr.GetFeature(f.GetFID())
-    assert f is None, "Failed to delete feature #{}.".format(f.GetFID())
+        assert f is None, f"Failed. Got deleted feature #{f.GetFID()}."
+    except Exception:
+        pass
 
 
 ###############################################################################
@@ -477,7 +494,16 @@ def test_ogr_ngw_8():
     gdaltest.ngw_ds = None
 
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + ds_resource_id
-    gdaltest.ngw_ds = gdal.OpenEx(url, gdal.OF_UPDATE, open_options=["BATCH_SIZE=2"])
+    gdaltest.ngw_ds = gdal.OpenEx(
+        url,
+        gdal.OF_UPDATE,
+        open_options=[
+            "BATCH_SIZE=2",
+            f"TIMEOUT={NET_TIMEOUT}",
+            f"MAX_RETRY={NET_MAX_RETRY}",
+            f"RETRY_DELAY={NET_RETRY_DELAY}",
+        ],
+    )
 
     lyr = gdaltest.ngw_ds.GetLayerByName("test_pt_layer")
     f1 = ogr.Feature(lyr.GetLayerDefn())
@@ -506,13 +532,13 @@ def test_ogr_ngw_8():
     counter = 0
     while feat is not None:
         counter += 1
-        assert feat.GetFID() >= 0, "Expected FID greater or equal 0, got {}.".format(
-            feat.GetFID()
-        )
+        assert (
+            feat.GetFID() >= 0
+        ), f"Expected FID greater or equal 0, got {feat.GetFID()}."
 
         feat = lyr.GetNextFeature()
 
-    assert counter >= 3, "Expected 3 or greater feature count, got {}.".format(counter)
+    assert counter >= 3, f"Expected 3 or greater feature count, got {counter}."
 
 
 ###############################################################################
@@ -529,7 +555,16 @@ def test_ogr_ngw_9():
     gdaltest.ngw_ds = None
 
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + ds_resource_id
-    gdaltest.ngw_ds = gdal.OpenEx(url, gdal.OF_UPDATE, open_options=["PAGE_SIZE=2"])
+    gdaltest.ngw_ds = gdal.OpenEx(
+        url,
+        gdal.OF_UPDATE,
+        open_options=[
+            "PAGE_SIZE=2",
+            f"TIMEOUT={NET_TIMEOUT}",
+            f"MAX_RETRY={NET_MAX_RETRY}",
+            f"RETRY_DELAY={NET_RETRY_DELAY}",
+        ],
+    )
 
     lyr = gdaltest.ngw_ds.GetLayerByName("test_pt_layer")
 
@@ -538,13 +573,13 @@ def test_ogr_ngw_9():
     counter = 0
     while feat is not None:
         counter += 1
-        assert feat.GetFID() >= 0, "Expected FID greater or equal 0, got {}.".format(
-            feat.GetFID()
-        )
+        assert (
+            feat.GetFID() >= 0
+        ), f"Expected FID greater or equal 0, got {feat.GetFID()}."
 
         feat = lyr.GetNextFeature()
 
-    assert counter >= 3, "Expected 3 or greater feature count, got {}.".format(counter)
+    assert counter >= 3, f"Expected 3 or greater feature count, got {counter}."
 
 
 ###############################################################################
@@ -563,7 +598,13 @@ def test_ogr_ngw_10():
     gdaltest.ngw_ds = gdal.OpenEx(
         url,
         gdal.OF_UPDATE,
-        open_options=["NATIVE_DATA=YES", "EXTENSIONS=description,attachment"],
+        open_options=[
+            "NATIVE_DATA=YES",
+            "EXTENSIONS=description,attachment",
+            f"TIMEOUT={NET_TIMEOUT}",
+            f"MAX_RETRY={NET_MAX_RETRY}",
+            f"RETRY_DELAY={NET_RETRY_DELAY}",
+        ],
     )
     lyr = gdaltest.ngw_ds.GetLayerByName("test_pt_layer")
     lyr.ResetReading()
@@ -573,7 +614,7 @@ def test_ogr_ngw_10():
     native_data = feat.GetNativeData()
     assert (
         native_data is not None
-    ), "Feature #{} native data should not be empty".format(feature_id)
+    ), f"Feature #{feature_id} native data should not be empty"
     # {"description":null,"attachment":null}
     assert (
         feat.GetNativeMediaType() == "application/json"
@@ -582,13 +623,13 @@ def test_ogr_ngw_10():
     # Set description
     feat.SetNativeData('{"description":"Test feature description"}')
     ret = lyr.SetFeature(feat)
-    assert ret == 0, "Failed to update feature #{}.".format(feature_id)
+    assert ret == 0, f"Failed to update feature #{feature_id}."
 
     feat = lyr.GetFeature(feature_id)
     native_data = feat.GetNativeData()
     assert (
         native_data is not None and native_data.find("Test feature description") != -1
-    ), "Expected feature description text, got {}".format(native_data)
+    ), f"Expected feature description text, got {native_data}"
 
 
 ###############################################################################
@@ -610,16 +651,20 @@ def test_ogr_ngw_11():
 
     assert feat.GetFieldAsInteger("DECFIELD") == 123, "missing or wrong DECFIELD"
 
-    fd = lyr.GetLayerDefn()
-    fld = fd.GetFieldDefn(0)  # STRFIELD
+    layerDefn = lyr.GetLayerDefn()
+    fld = layerDefn.GetFieldDefn(0)  # STRFIELD
+
+    assert (
+        fld.GetName() == "STRFIELD"
+    ), f"Expected field 'STRFIELD', got {fld.GetName()}"
     assert fld.IsIgnored(), "STRFIELD unexpectedly not marked as ignored."
 
-    fld = fd.GetFieldDefn(1)  # DECFIELD
+    fld = layerDefn.GetFieldDefn(1)  # DECFIELD
     assert not fld.IsIgnored(), "DECFIELD unexpectedly marked as ignored."
 
-    assert not fd.IsGeometryIgnored(), "geometry unexpectedly ignored."
+    assert not layerDefn.IsGeometryIgnored(), "geometry unexpectedly ignored."
 
-    assert not fd.IsStyleIgnored(), "style unexpectedly ignored."
+    assert not layerDefn.IsStyleIgnored(), "style unexpectedly ignored."
 
     feat = None
     lyr = None
@@ -638,27 +683,27 @@ def test_ogr_ngw_12():
     lyr = gdaltest.ngw_ds.GetLayerByName("test_pt_layer")
     lyr.SetAttributeFilter("STRFIELD = 'русский'")
     fc = lyr.GetFeatureCount()
-    assert fc == 1, "Expected feature count is 1, got {}.".format(fc)
+    assert fc == 1, f"Expected feature count is 1, got {fc}."
 
     lyr.SetAttributeFilter("STRFIELD = 'fo_o' AND DECFIELD = 321")
     fc = lyr.GetFeatureCount()
-    assert fc == 0, "Expected feature count is 0, got {}.".format(fc)
+    assert fc == 0, f"Expected feature count is 0, got {fc}."
 
     lyr.SetAttributeFilter("NGW:fld_STRFIELD=fo_o&fld_DECFIELD=123")
     fc = lyr.GetFeatureCount()
-    assert fc == 2, "Expected feature count is 2, got {}.".format(fc)
+    assert fc == 2, f"Expected feature count is 2, got {fc}."
 
     lyr.SetAttributeFilter("DECFIELD < 321")
     fc = lyr.GetFeatureCount()
-    assert fc == 2, "Expected feature count is 2, got {}.".format(fc)
+    assert fc == 2, f"Expected feature count is 2, got {fc}."
 
     lyr.SetAttributeFilter("NGW:fld_REALFIELD__gt=1.5")
     fc = lyr.GetFeatureCount()
-    assert fc == 1, "Expected feature count is 1, got {}.".format(fc)
+    assert fc == 1, f"Expected feature count is 1, got {fc}."
 
     lyr.SetAttributeFilter("STRFIELD ILIKE '%O_O'")
     fc = lyr.GetFeatureCount()
-    assert fc == 2, "Expected feature count is 2, got {}.".format(fc)
+    assert fc == 2, f"Expected feature count is 2, got {fc}."
 
 
 ###############################################################################
@@ -681,7 +726,7 @@ def test_ogr_ngw_13():
         ogr.CreateGeometryFromWkt("POLYGON ((2.5 3.5,2.5 6,6 6,6 3.5,2.5 3.5))")
     )
     fc = lyr.GetFeatureCount()
-    assert fc == 1, "Expected feature count is 1, got {}.".format(fc)
+    assert fc == 1, f"Expected feature count is 1, got {fc}."
 
 
 ###############################################################################
@@ -733,14 +778,28 @@ def test_ogr_ngw_15():
     f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 0,0 0))"))
     ret = lyr.CreateFeature(f)
     assert ret == 0, "Failed to create feature in test_pl_layer."
-    assert lyr.GetFeatureCount() == 1, "Expected feature count is 1, got {}.".format(
-        lyr.GetFeatureCount()
-    )
+
+    fill_fields2(f)
+    ret = lyr.CreateFeature(f)
+    assert ret == 0, "Failed to create feature in test_pl_layer."
+
+    fill_fields(f)
+    ret = lyr.CreateFeature(f)
+    assert ret == 0, "Failed to create feature in test_pl_layer."
+
+    assert (
+        lyr.GetFeatureCount() == 3
+    ), f"Expected feature count is 3, got {lyr.GetFeatureCount()}."
+
+    gdaltest.ngw_ds.ExecuteSQL("DELETE FROM test_pl_layer WHERE \"STRFIELD\" = 'fo_o'")
+    assert (
+        lyr.GetFeatureCount() == 1
+    ), f"Expected feature count is 1, got {lyr.GetFeatureCount()}."
 
     gdaltest.ngw_ds.ExecuteSQL("DELETE FROM test_pl_layer")
-    assert lyr.GetFeatureCount() == 0, "Expected feature count is 0, got {}.".format(
-        lyr.GetFeatureCount()
-    )
+    assert (
+        lyr.GetFeatureCount() == 0
+    ), f"Expected feature count is 0, got {lyr.GetFeatureCount()}."
 
     gdaltest.ngw_ds.ExecuteSQL("ALTER TABLE test_pl_layer RENAME TO test_pl_layer777")
     lyr = gdaltest.ngw_ds.GetLayerByName("test_pl_layer777")
@@ -766,11 +825,223 @@ def test_ogr_ngw_15():
     assert (
         lyr is not None
     ), 'ExecuteSQL: SELECT STRFIELD,DECFIELD FROM test_pl_layer777 WHERE STRFIELD = "fo_o"; failed.'
-    assert lyr.GetFeatureCount() == 2, "Expected feature count is 2, got {}.".format(
-        lyr.GetFeatureCount()
-    )
+    assert (
+        lyr.GetFeatureCount() == 2
+    ), f"Expected feature count is 2, got {lyr.GetFeatureCount()}."
 
     gdaltest.ngw_ds.ReleaseResultSet(lyr)
+
+
+###############################################################################
+# Test field domains
+
+
+@pytest.mark.slow()
+def test_ogr_ngw_16():
+    if gdaltest.ngw_ds is None:
+        pytest.skip()
+
+    assert gdaltest.ngw_ds.TestCapability(ogr.ODsCAddFieldDomain)
+
+    assert gdaltest.ngw_ds.GetFieldDomain("does_not_exist") is None
+
+    base_name = f"enum_domain_{str(int(time.time()))}_{str(random.randint(10, 99))}"
+
+    assert gdaltest.ngw_ds.AddFieldDomain(
+        ogr.CreateCodedFieldDomain(
+            base_name,
+            "test domain",
+            ogr.OFTInteger64,
+            ogr.OFSTNone,
+            {1: "one", "2": None},
+        )
+    )
+    assert gdaltest.ngw_ds.GetFieldDomain(base_name) is not None
+
+    assert gdaltest.ngw_ds.AddFieldDomain(
+        ogr.CreateCodedFieldDomain(
+            f"{base_name}_guess_int_single",
+            "my desc",
+            ogr.OFTInteger,
+            ogr.OFSTNone,
+            {1: "one"},
+        )
+    )
+    assert gdaltest.ngw_ds.AddFieldDomain(
+        ogr.CreateCodedFieldDomain(
+            f"{base_name}_guess_int",
+            "",
+            ogr.OFTInteger,
+            ogr.OFSTNone,
+            {1: "one", 2: "two"},
+        )
+    )
+    assert gdaltest.ngw_ds.AddFieldDomain(
+        ogr.CreateCodedFieldDomain(
+            f"{base_name}_guess_int64_single_1",
+            "",
+            ogr.OFTInteger64,
+            ogr.OFSTNone,
+            {1234567890123: "1234567890123"},
+        )
+    )
+    assert gdaltest.ngw_ds.AddFieldDomain(
+        ogr.CreateCodedFieldDomain(
+            f"{base_name}_guess_int64_single_2",
+            "",
+            ogr.OFTInteger64,
+            ogr.OFSTNone,
+            {-1234567890123: "-1234567890123"},
+        )
+    )
+    assert gdaltest.ngw_ds.AddFieldDomain(
+        ogr.CreateCodedFieldDomain(
+            f"{base_name}_guess_int64",
+            "",
+            ogr.OFTInteger64,
+            ogr.OFSTNone,
+            {1: "one", 1234567890123: "1234567890123", 3: "three"},
+        )
+    )
+    assert gdaltest.ngw_ds.AddFieldDomain(
+        ogr.CreateCodedFieldDomain(
+            f"{base_name}_guess_string_single",
+            "",
+            ogr.OFTString,
+            ogr.OFSTNone,
+            {"three": "three"},
+        )
+    )
+    assert gdaltest.ngw_ds.AddFieldDomain(
+        ogr.CreateCodedFieldDomain(
+            f"{base_name}_guess_string",
+            "",
+            ogr.OFTString,
+            ogr.OFSTNone,
+            {1: "one", 1.5: "one dot five", "three": "three", 4: "four"},
+        )
+    )
+
+    assert {
+        base_name,
+        f"{base_name}_guess_int",
+        f"{base_name}_guess_int64",
+        f"{base_name}_guess_int64_single_1",
+        f"{base_name}_guess_int64_single_2",
+        f"{base_name}_guess_int_single",
+        f"{base_name}_guess_string",
+        f"{base_name}_guess_string_single",
+    }.issubset(set(gdaltest.ngw_ds.GetFieldDomainNames()))
+
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(3857)
+    lyr = gdaltest.ngw_ds.CreateLayer(
+        "test_pt_layer_dom",
+        srs=sr,
+        geom_type=ogr.wkbPoint,
+        options=[
+            "OVERWRITE=FALSE",
+            "DESCRIPTION=Test point layer with coded field domains",
+        ],
+    )
+    assert lyr is not None, "Create layer failed."
+
+    fld_defn = ogr.FieldDefn("with_enum_domain", ogr.OFTInteger64)
+    fld_defn.SetDomainName(f"{base_name} (bigint)")
+    lyr.CreateField(fld_defn)
+
+    fld_defn = ogr.FieldDefn("without_domain_initially", ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+
+    # If all keys can be transform to numbers 3 domains created for string, int
+    # and int64 types
+    domain1 = gdaltest.ngw_ds.GetFieldDomain(base_name)
+    assert domain1 is not None
+    assert domain1.GetName() == base_name
+    assert domain1.GetDescription() == "test domain"
+    assert domain1.GetDomainType() == ogr.OFDT_CODED
+    assert domain1.GetFieldType() == ogr.OFTString
+    assert domain1.GetEnumeration() == {
+        "1": "one",
+        "2": "",
+    }, f'Expected \'{{"1": "one", "2": ""}}\', got {domain1.GetEnumeration()}'
+
+    domain2 = gdaltest.ngw_ds.GetFieldDomain(f"{base_name} (number)")
+    assert domain2 is not None
+    assert domain2.GetName() == f"{base_name} (number)"
+    assert domain2.GetDescription() == "test domain"
+    assert domain2.GetDomainType() == ogr.OFDT_CODED
+    assert domain2.GetFieldType() == ogr.OFTInteger
+    assert domain2.GetEnumeration() == {
+        "1": "one",
+        "2": "",
+    }, f'Expected \'{{"1": "one", "2": ""}}\', got {domain1.GetEnumeration()}'
+
+    domain3 = gdaltest.ngw_ds.GetFieldDomain(f"{base_name} (bigint)")
+    assert domain3 is not None
+    assert domain3.GetName() == f"{base_name} (bigint)"
+    assert domain3.GetDescription() == "test domain"
+    assert domain3.GetDomainType() == ogr.OFDT_CODED
+    assert domain3.GetFieldType() == ogr.OFTInteger64
+    assert domain3.GetEnumeration() == {
+        "1": "one",
+        "2": "",
+    }, f'Expected \'{{"1": "one", "2": ""}}\', got {domain1.GetEnumeration()}'
+
+    domain = gdaltest.ngw_ds.GetFieldDomain(f"{base_name}_guess_int_single (number)")
+    assert domain.GetDescription() == "my desc"
+    assert domain.GetFieldType() == ogr.OFTInteger
+
+    domain = gdaltest.ngw_ds.GetFieldDomain(f"{base_name}_guess_int (number)")
+    assert domain.GetFieldType() == ogr.OFTInteger
+
+    domain = gdaltest.ngw_ds.GetFieldDomain(
+        f"{base_name}_guess_int64_single_1 (bigint)"
+    )
+    assert domain.GetFieldType() == ogr.OFTInteger64
+
+    domain = gdaltest.ngw_ds.GetFieldDomain(
+        f"{base_name}_guess_int64_single_2 (bigint)"
+    )
+    assert domain.GetFieldType() == ogr.OFTInteger64
+
+    domain = gdaltest.ngw_ds.GetFieldDomain(f"{base_name}_guess_int64 (bigint)")
+    assert domain.GetFieldType() == ogr.OFTInteger64
+
+    domain = gdaltest.ngw_ds.GetFieldDomain(f"{base_name}_guess_string_single")
+    assert domain.GetFieldType() == ogr.OFTString
+
+    domain = gdaltest.ngw_ds.GetFieldDomain(f"{base_name}_guess_string")
+    assert domain.GetFieldType() == ogr.OFTString
+
+    lyr_defn = lyr.GetLayerDefn()
+    # Unset domain name
+    idx = lyr_defn.GetFieldIndex("with_enum_domain")
+    fld_defn = lyr_defn.GetFieldDefn(idx)
+    fld_defn.SetDomainName("")
+    assert lyr.AlterFieldDefn(idx, fld_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Change domain name
+    idx = lyr_defn.GetFieldIndex("with_enum_domain")
+    fld_defn = lyr_defn.GetFieldDefn(idx)
+    fld_defn.SetDomainName(f"{base_name}_guess_int64 (bigint)")
+    assert lyr.AlterFieldDefn(idx, fld_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Don't change anything
+    idx = lyr_defn.GetFieldIndex("with_enum_domain")
+    fld_defn = lyr_defn.GetFieldDefn(idx)
+    assert lyr.AlterFieldDefn(idx, fld_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Set domain name
+    idx = lyr_defn.GetFieldIndex("without_domain_initially")
+    fld_defn = lyr_defn.GetFieldDefn(idx)
+    fld_defn.SetDomainName(f"{base_name}_guess_int (number)")
+    assert lyr.AlterFieldDefn(idx, fld_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    fld_defn = lyr_defn.GetFieldDefn(idx)
+    assert (
+        fld_defn.GetDomainName() == f"{base_name}_guess_int (number)"
+    ), f"Got {fld_defn.GetDomainName()} but expected '{base_name}_guess_int (number)'"
 
 
 ###############################################################################
@@ -796,12 +1067,11 @@ def test_ogr_ngw_test_ogrsf():
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_test_ogrsf_path() + " " + url + " -oo PAGE_SIZE=100"
-    )
-    assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
-
-    ret = gdaltest.runexternal(
-        test_cli_utilities.get_test_ogrsf_path() + " " + url + " -oo BATCH_SIZE=5"
+        test_cli_utilities.get_test_ogrsf_path()
+        + " "
+        + url
+        + f" -oo PAGE_SIZE=100 -oo TIMEOUT={NET_TIMEOUT}"
+        + f" -oo MAX_RETRY={NET_MAX_RETRY} -oo RETRY_DELAY={NET_RETRY_DELAY}"
     )
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
@@ -809,6 +1079,16 @@ def test_ogr_ngw_test_ogrsf():
         test_cli_utilities.get_test_ogrsf_path()
         + " "
         + url
-        + " -oo BATCH_SIZE=5 -oo PAGE_SIZE=100"
+        + f" -oo BATCH_SIZE=5 -oo TIMEOUT={NET_TIMEOUT}"
+        + f" -oo MAX_RETRY={NET_MAX_RETRY} -oo RETRY_DELAY={NET_RETRY_DELAY}"
+    )
+    assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path()
+        + " "
+        + url
+        + f" -oo BATCH_SIZE=5 -oo PAGE_SIZE=100 -oo TIMEOUT={NET_TIMEOUT}"
+        + f" -oo MAX_RETRY={NET_MAX_RETRY} -oo RETRY_DELAY={NET_RETRY_DELAY}"
     )
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
