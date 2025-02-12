@@ -15,7 +15,7 @@ import json
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 
 def get_pipeline_alg():
@@ -45,6 +45,85 @@ def test_gdalalg_vector_pipeline_read_and_write(tmp_vsimem):
         pipeline.ParseRunAndFinalize(
             ["read", "../ogr/data/poly.shp", "!", "write", out_filename], my_progress
         )
+
+
+@pytest.mark.require_driver("OSM")
+def test_gdalalg_vector_pipeline_read_osm():
+
+    pipeline = get_pipeline_alg()
+    assert pipeline.ParseCommandLineArguments(
+        [
+            "read",
+            "../ogr/data/osm/test.pbf",
+            "!",
+            "write",
+            "--of=stream",
+            "streamed_file",
+        ]
+    )
+    assert pipeline.Run()
+
+    out_ds = pipeline["output"].GetDataset()
+    assert out_ds.TestCapability(ogr.ODsCRandomLayerRead)
+
+    expected = []
+    src_ds = gdal.OpenEx("../ogr/data/osm/test.pbf")
+    while True:
+        f, _ = src_ds.GetNextFeature()
+        if not f:
+            break
+        expected.append(str(f))
+
+    got = []
+    out_ds.ResetReading()
+    while True:
+        f, _ = out_ds.GetNextFeature()
+        if not f:
+            break
+        got.append(str(f))
+
+    assert expected == got
+
+
+@pytest.mark.require_driver("OSM")
+def test_gdalalg_vector_pipeline_read_osm_subset_of_layers():
+
+    pipeline = get_pipeline_alg()
+    assert pipeline.ParseCommandLineArguments(
+        [
+            "read",
+            "../ogr/data/osm/test.pbf",
+            "--layer=points,multipolygons",
+            "!",
+            "write",
+            "--of=stream",
+            "streamed_file",
+        ]
+    )
+    assert pipeline.Run()
+
+    out_ds = pipeline["output"].GetDataset()
+    assert out_ds.TestCapability(ogr.ODsCRandomLayerRead)
+
+    expected = []
+    src_ds = gdal.OpenEx("../ogr/data/osm/test.pbf")
+    while True:
+        f, lyr = src_ds.GetNextFeature()
+        if not f:
+            break
+        if lyr.GetName() in ["points", "multipolygons"]:
+            expected.append(str(f))
+
+    got = []
+    out_ds.ResetReading()
+    while True:
+        f, _ = out_ds.GetNextFeature()
+        if not f:
+            break
+        got.append(str(f))
+
+    assert len(expected) == len(got)
+    assert expected == got
 
 
 def test_gdalalg_vector_pipeline_pipeline_arg(tmp_vsimem):

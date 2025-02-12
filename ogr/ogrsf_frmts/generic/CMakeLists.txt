@@ -37,6 +37,7 @@ add_library(
   ogrunionlayer.cpp
   ogrlayerpool.cpp
   ogrlayerdecorator.cpp
+  ogrlayerwithtranslatefeature.cpp
   ogreditablelayer.cpp
   ogrmutexeddatasource.cpp
   ogrmutexedlayer.cpp

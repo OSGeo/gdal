@@ -920,3 +920,37 @@ def test_gdalalg_vector_clip_like_neither_raster_no_vector():
         match="clip: Cannot get extent from clip dataset",
     ):
         clip.Run()
+
+
+@pytest.mark.require_driver("OSM")
+def test_gdalalg_vector_clip_dataset_getnextfeature():
+
+    clip = get_clip_alg()
+    src_ds = gdal.OpenEx("../ogr/data/osm/test.pbf")
+    clip["input"] = src_ds
+    clip["bbox"] = [-180, -90, 180, 90]
+
+    assert clip.ParseCommandLineArguments(
+        ["--of", "stream", "--output", "streamed_output"]
+    )
+    assert clip.Run()
+
+    out_ds = clip["output"].GetDataset()
+    assert out_ds.TestCapability(ogr.ODsCRandomLayerRead)
+
+    expected = []
+    while True:
+        f, lyr = src_ds.GetNextFeature()
+        if not f:
+            break
+        expected.append((f, lyr))
+
+    got = []
+    out_ds.ResetReading()
+    while True:
+        f, lyr = out_ds.GetNextFeature()
+        if not f:
+            break
+        got.append((f, lyr))
+
+    assert len(expected) == len(got)

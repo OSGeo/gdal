@@ -43,6 +43,12 @@ bool GDALVectorWriteAlgorithm::RunStep(GDALProgressFunc pfnProgress,
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
 
+    if (m_format == "stream")
+    {
+        m_outputDataset.Set(m_inputDataset.GetDatasetRef());
+        return true;
+    }
+
     CPLStringList aosOptions;
     aosOptions.AddString("--invoked-from-gdal-vector-convert");
     if (!m_overwrite)
