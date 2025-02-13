@@ -51,14 +51,8 @@ class OGROGDILayer final : public OGRLayer
   public:
     OGROGDILayer(OGROGDIDataSource *, const char *, ecs_Family);
     virtual ~OGROGDILayer();
-
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
-
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
     virtual OGRErr SetAttributeFilter(const char *pszQuery) override;
 
     void ResetReading() override;

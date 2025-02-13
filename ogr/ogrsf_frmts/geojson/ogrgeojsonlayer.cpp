@@ -454,13 +454,8 @@ OGRErr OGRGeoJSONLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
     return OGRMemLayer::CreateGeomField(poGeomField, bApproxOK);
 }
 
-OGRErr OGRGeoJSONLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    return GetExtent(0, psExtent, bForce);
-}
-
-OGRErr OGRGeoJSONLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                  int bForce)
+OGRErr OGRGeoJSONLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                   bool bForce)
 {
     if (iGeomField != 0)
     {
@@ -475,12 +470,12 @@ OGRErr OGRGeoJSONLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
     }
     else
     {
-        return OGRMemLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+        return OGRMemLayer::IGetExtent(iGeomField, psExtent, bForce);
     }
 }
 
-OGRErr OGRGeoJSONLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
-                                    int bForce)
+OGRErr OGRGeoJSONLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                                     bool bForce)
 {
 
     if (iGeomField != 0)
@@ -496,7 +491,7 @@ OGRErr OGRGeoJSONLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
     }
     else
     {
-        return OGRMemLayer::GetExtent3D(iGeomField, psExtent3D, bForce);
+        return OGRMemLayer::IGetExtent3D(iGeomField, psExtent3D, bForce);
     }
 }
 

@@ -476,10 +476,11 @@ GIntBig OGRPCIDSKLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRPCIDSKLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRPCIDSKLayer::IGetExtent(int /*iGeomField*/, OGREnvelope *psExtent,
+                                  bool bForce)
 
 {
     if (!bForce)

@@ -372,15 +372,15 @@ bool OGROSMLayer::AddFeature(std::unique_ptr<OGRFeature> poFeature,
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGROSMLayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
+OGRErr OGROSMLayer::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,
+                               bool /* bForce */)
 {
     if (m_poDS->GetExtent(psExtent) == OGRERR_NONE)
         return OGRERR_NONE;
 
-    /* return OGRLayer::GetExtent(psExtent, bForce);*/
     return OGRERR_FAILURE;
 }
 

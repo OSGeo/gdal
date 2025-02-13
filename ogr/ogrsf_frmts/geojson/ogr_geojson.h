@@ -92,11 +92,11 @@ class OGRGeoJSONLayer final : public OGRMemLayer
                                   int nFlags) override;
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
-    virtual OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
-                               int bForce = TRUE) override;
+
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce = true) override;
+    virtual OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                                bool bForce = true) override;
 
     GDALDataset *GetDataset() override;
 
@@ -184,14 +184,9 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
     int TestCapability(const char *pszCap) override;
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
 
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-    {
-        return iGeomField == 0
-                   ? OGRGeoJSONWriteLayer::GetExtent(psExtent, bForce)
-                   : OGRERR_FAILURE;
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     OGRErr SyncToDisk() override;
 

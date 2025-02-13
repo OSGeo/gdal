@@ -1,6 +1,25 @@
 MIGRATION GUIDE FROM GDAL 3.10 to GDAL 3.11
 -------------------------------------------
 
+- The OGRLayer::GetExtent(OGREnvelope*, int bForce) and
+  OGRLayer::GetExtent(int iGeomField, OGREnvelope*, int bForce) methods are
+  no longer virtual methods that are implemented by drivers, and the ``int bForce``
+  parameter is now a ``bool bForce``.
+  Drivers may implement the new IGetExtent(int iGeomField, OGREnvelope*,
+  bool bForce) protected virtual method. The public method checks that the
+  iGeomField value is in range.
+  Similarly for OGRLayer::GetExtent3D(int iGeomField, OGREnvelope3D*, int bForce)
+  which is now a user facing method (with the change that the ``int bForce`` is now a
+  ``bool bForce``). Drivers may implement the new IGetExtent3D(int iGeomField, OGREnvelope3D*,
+  bool bForce) protected virtual method. The public method checks that the
+  iGeomField value is in range.
+
+- The OGRLayer::SetSpatialFilter() and SetSpatialFilterRect() methods are
+  no longer virtual methods that are implemented by drivers. They now return
+  OGRErr instead of void, `and accept a ``const OGRGeometry*``). Drivers may implement
+  the new ISetSpatialFilter(int iGeomField, const OGRGeometry*) protected virtual method.
+  The public methods check that the iGeomField value is in range.
+
 - GDAL drivers may now return raster bands with the new data types
   GDT_Float16 or GDT_CFloat16. Code that use the GDAL API must be
   ready to react to the new data type, possibly by doing RasterIO()

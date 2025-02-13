@@ -229,12 +229,7 @@ class OGRHanaLayer : public OGRLayer
 
     void ResetReading() override;
 
-    OGRErr GetExtent(OGREnvelope *extent, int force = TRUE) override
-    {
-        return GetExtent(0, extent, force);
-    }
-
-    OGRErr GetExtent(int geomField, OGREnvelope *extent, int force) override;
+    OGRErr IGetExtent(int geomField, OGREnvelope *extent, bool force) override;
     GIntBig GetFeatureCount(int force) override;
     OGRFeature *GetNextFeature() override;
     const char *GetFIDColumn() override;
@@ -243,12 +238,8 @@ class OGRHanaLayer : public OGRLayer
 
     OGRErr SetAttributeFilter(const char *pszQuery) override;
 
-    void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
-
-    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 };
 
 /************************************************************************/
@@ -309,12 +300,8 @@ class OGRHanaTableLayer final : public OGRHanaLayer
 
     void ResetReading() override;
 
-    OGRErr GetExtent(OGREnvelope *extent, int force = TRUE) override
-    {
-        return GetExtent(0, extent, force);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *extent, bool force) override;
 
-    OGRErr GetExtent(int geomField, OGREnvelope *extent, int force) override;
     GIntBig GetFeatureCount(int force) override;
 
     const char *GetName() override

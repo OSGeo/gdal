@@ -2149,19 +2149,12 @@ int OGRVRTLayer::TestCapability(const char *pszCap)
 }
 
 /************************************************************************/
-/*                              GetExtent()                             */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
-OGRErr OGRVRTLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRVRTLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                               bool bForce)
 {
-    return GetExtent(0, psExtent, bForce);
-}
-
-OGRErr OGRVRTLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
-{
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-        return OGRERR_FAILURE;
-
     if (static_cast<size_t>(iGeomField) >= apoGeomFieldProps.size())
         return OGRERR_FAILURE;
 
@@ -2198,7 +2191,7 @@ OGRErr OGRVRTLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
         return eErr;
     }
 
-    return OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/
@@ -2233,37 +2226,25 @@ GIntBig OGRVRTLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGRVRTLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGRVRTLayer::ISetSpatialFilter(int iGeomField,
+                                      const OGRGeometry *poGeomIn)
 {
-    SetSpatialFilter(0, poGeomIn);
-}
-
-void OGRVRTLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
-{
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-    {
-        if (poGeomIn != nullptr)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return;
-    }
-
     if (!bHasFullInitialized)
         FullInitialize();
     if (!poSrcLayer || poDS->GetRecursionDetected())
-        return;
+        return OGRERR_FAILURE;
 
-    if (apoGeomFieldProps[iGeomField]->eGeometryStyle == VGS_Direct)
+    if (iGeomField >= 0 && iGeomField < GetLayerDefn()->GetGeomFieldCount() &&
+        apoGeomFieldProps[iGeomField]->eGeometryStyle == VGS_Direct)
         bNeedReset = true;
 
     m_iGeomFieldFilter = iGeomField;
     if (InstallFilter(poGeomIn))
         ResetReading();
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

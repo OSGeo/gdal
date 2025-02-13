@@ -480,12 +480,8 @@ class OGRTileDBLayer final : public OGRLayer,
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
     int TestCapability(const char *) override;
     GIntBig GetFeatureCount(int bForce) override;
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     const char *GetFIDColumn() override
     {

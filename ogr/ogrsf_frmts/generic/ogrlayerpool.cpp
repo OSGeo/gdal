@@ -242,25 +242,15 @@ OGRGeometry *OGRProxiedLayer::GetSpatialFilter()
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRProxiedLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGRProxiedLayer::ISetSpatialFilter(int iGeomField,
+                                          const OGRGeometry *poGeom)
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
-        return;
-    poUnderlyingLayer->SetSpatialFilter(poGeom);
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRProxiedLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
-        return;
-    poUnderlyingLayer->SetSpatialFilter(iGeomField, poGeom);
+        return OGRERR_FAILURE;
+    return poUnderlyingLayer->SetSpatialFilter(iGeomField, poGeom);
 }
 
 /************************************************************************/
@@ -482,26 +472,15 @@ GIntBig OGRProxiedLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRProxiedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                  int bForce)
+OGRErr OGRProxiedLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                   bool bForce)
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return OGRERR_FAILURE;
     return poUnderlyingLayer->GetExtent(iGeomField, psExtent, bForce);
-}
-
-/************************************************************************/
-/*                             GetExtent()                              */
-/************************************************************************/
-
-OGRErr OGRProxiedLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
-        return OGRERR_FAILURE;
-    return poUnderlyingLayer->GetExtent(psExtent, bForce);
 }
 
 /************************************************************************/

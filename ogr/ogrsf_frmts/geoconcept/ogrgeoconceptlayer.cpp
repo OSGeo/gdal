@@ -416,11 +416,11 @@ GIntBig OGRGeoconceptLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRGeoconceptLayer::GetExtent(OGREnvelope *psExtent,
-                                     CPL_UNUSED int bForce)
+OGRErr OGRGeoconceptLayer::IGetExtent(int /* iGeomField*/,
+                                      OGREnvelope *psExtent, bool)
 {
     GCExtent *theExtent = GetSubTypeExtent_GCIO(_gcFeature);
     if (!theExtent)

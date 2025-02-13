@@ -548,7 +548,7 @@ def NO_LONGER_USED_test_ogr_oapif_fc_links_next_headers():
 ###############################################################################
 
 
-def test_ogr_oapif_spatial_filter():
+def test_ogr_oapif_spatial_filter_deprecated_api():
 
     # Deprecated API
     handler = webserver.SequentialHandler()
@@ -568,7 +568,31 @@ def test_ogr_oapif_spatial_filter():
         ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
     lyr = ds.GetLayer(0)
     assert lyr.TestCapability(ogr.OLCFastGetExtent)
-    assert lyr.GetExtent() == (-10.0, 15.0, 40.0, 50.0)
+
+    handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=20",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        }
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        assert lyr.GetExtent() == (-10.0, 15.0, 40.0, 50.0)
+
+
+###############################################################################
+
+
+def test_ogr_oapif_spatial_filter():
 
     # Nominal API
     handler = webserver.SequentialHandler()
@@ -591,7 +615,6 @@ def test_ogr_oapif_spatial_filter():
     with webserver.install_http_handler(handler):
         ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
     lyr = ds.GetLayer(0)
-    assert lyr.GetExtent() == (-10.0, 15.0, 40.0, 50.0)
 
     handler = webserver.SequentialHandler()
     _add_dummy_root_and_api_pages(handler)
@@ -610,6 +633,7 @@ def test_ogr_oapif_spatial_filter():
                 ] }""",
     )
     with webserver.install_http_handler(handler):
+        assert lyr.GetExtent() == (-10.0, 15.0, 40.0, 50.0)
         assert lyr.GetLayerDefn().GetFieldCount() == 1
 
     lyr.SetSpatialFilterRect(2, 49, 3, 50)
@@ -1365,11 +1389,6 @@ def test_ogr_oapif_storage_crs_easting_northing():
     with webserver.install_http_handler(handler):
         ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
     lyr = ds.GetLayer(0)
-    minx, maxx, miny, maxy = lyr.GetExtent()
-    assert (minx, miny, maxx, maxy) == pytest.approx(
-        (-611288.854779237, 4427761.561734099, 1525592.2813932528, 5620112.89047953),
-        abs=1e-3,
-    )
 
     handler = webserver.SequentialHandler()
     _add_dummy_root_and_api_pages(handler)
@@ -1389,10 +1408,16 @@ def test_ogr_oapif_storage_crs_easting_northing():
                 ] }""",
     )
     with webserver.install_http_handler(handler):
-        srs = lyr.GetSpatialRef()
-        assert srs
-        assert srs.GetAuthorityCode(None) == "32631"
-        assert lyr.GetLayerDefn().GetFieldCount() == 1
+        minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx(
+        (-611288.854779237, 4427761.561734099, 1525592.2813932528, 5620112.89047953),
+        abs=1e-3,
+    )
+
+    srs = lyr.GetSpatialRef()
+    assert srs
+    assert srs.GetAuthorityCode(None) == "32631"
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1467,8 +1492,6 @@ def test_ogr_oapif_storage_crs_latitude_longitude():
     with webserver.install_http_handler(handler):
         ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
     lyr = ds.GetLayer(0)
-    minx, maxx, miny, maxy = lyr.GetExtent()
-    assert (minx, miny, maxx, maxy) == pytest.approx((-10, 40, 15, 50), abs=1e-3)
 
     handler = webserver.SequentialHandler()
     _add_dummy_root_and_api_pages(handler)
@@ -1488,12 +1511,15 @@ def test_ogr_oapif_storage_crs_latitude_longitude():
                 ] }""",
     )
     with webserver.install_http_handler(handler):
-        srs = lyr.GetSpatialRef()
-        assert srs
-        assert srs.GetAuthorityCode(None) == "4326"
-        assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
-        assert srs.GetCoordinateEpoch() == 2022.5
-        assert lyr.GetLayerDefn().GetFieldCount() == 1
+        minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx((-10, 40, 15, 50), abs=1e-3)
+
+    srs = lyr.GetSpatialRef()
+    assert srs
+    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+    assert srs.GetCoordinateEpoch() == 2022.5
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
 
     handler = webserver.SequentialHandler()
     # Coordinates must be in lat, lon order in the GeoJSON answer
@@ -1573,11 +1599,6 @@ def test_ogr_oapif_storage_crs_latitude_longitude_non_compliant_server():
             open_options=["SERVER_FEATURE_AXIS_ORDER=GIS_FRIENDLY"],
         )
     lyr = ds.GetLayer(0)
-    minx, maxx, miny, maxy = lyr.GetExtent()
-    assert (minx, miny, maxx, maxy) == pytest.approx((-10, 40, 15, 50), abs=1e-3)
-
-    supported_srs_list = lyr.GetSupportedSRSList()
-    assert supported_srs_list is None
 
     handler = webserver.SequentialHandler()
     _add_dummy_root_and_api_pages(handler)
@@ -1597,12 +1618,18 @@ def test_ogr_oapif_storage_crs_latitude_longitude_non_compliant_server():
                 ] }""",
     )
     with webserver.install_http_handler(handler):
-        srs = lyr.GetSpatialRef()
-        assert srs
-        assert srs.GetAuthorityCode(None) == "4326"
-        assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
-        assert srs.GetCoordinateEpoch() == 2022.5
-        assert lyr.GetLayerDefn().GetFieldCount() == 1
+        minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx((-10, 40, 15, 50), abs=1e-3)
+
+    supported_srs_list = lyr.GetSupportedSRSList()
+    assert supported_srs_list is None
+
+    srs = lyr.GetSpatialRef()
+    assert srs
+    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+    assert srs.GetCoordinateEpoch() == 2022.5
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
 
     handler = webserver.SequentialHandler()
     # Coordinates must be in lat, lon order in the GeoJSON answer
@@ -1665,19 +1692,6 @@ def test_ogr_oapif_crs_and_preferred_crs_open_options():
         assert ds
         lyr = ds.GetLayer(0)
 
-    minx, maxx, miny, maxy = lyr.GetExtent()
-    assert (minx, miny, maxx, maxy) == pytest.approx(
-        (-611288.854779237, 4427761.561734099, 1525592.2813932528, 5620112.89047953),
-        abs=1e-3,
-    )
-
-    supported_srs_list = lyr.GetSupportedSRSList()
-    assert supported_srs_list
-    assert len(supported_srs_list) == 2
-    assert supported_srs_list[0].GetAuthorityCode(None) == "32631"
-    # Below doesn't work with early PROJ 6 versions
-    # assert supported_srs_list[1].GetAuthorityCode(None) == "CRS84"
-
     def get_items_handler():
         handler = webserver.SequentialHandler()
         _add_dummy_root_and_api_pages(handler)
@@ -1699,9 +1713,22 @@ def test_ogr_oapif_crs_and_preferred_crs_open_options():
         return handler
 
     with webserver.install_http_handler(get_items_handler()):
-        srs = lyr.GetSpatialRef()
-        assert srs
-        assert srs.GetAuthorityCode(None) == "32631"
+        minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx(
+        (-611288.854779237, 4427761.561734099, 1525592.2813932528, 5620112.89047953),
+        abs=1e-3,
+    )
+
+    supported_srs_list = lyr.GetSupportedSRSList()
+    assert supported_srs_list
+    assert len(supported_srs_list) == 2
+    assert supported_srs_list[0].GetAuthorityCode(None) == "32631"
+    # Below doesn't work with early PROJ 6 versions
+    # assert supported_srs_list[1].GetAuthorityCode(None) == "CRS84"
+
+    srs = lyr.GetSpatialRef()
+    assert srs
+    assert srs.GetAuthorityCode(None) == "32631"
 
     json_info = gdal.VectorInfo(ds, format="json", featureCount=False)
     assert "supportedSRSList" in json_info["layers"][0]["geometryFields"][0]
