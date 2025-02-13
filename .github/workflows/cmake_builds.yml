@@ -215,8 +215,8 @@ jobs:
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
         test -f $GITHUB_WORKSPACE/install-gdal/share/man/man1/gdalinfo.1
         test -f $GITHUB_WORKSPACE/install-gdal/share/man/man1/gdaladdo.1
-        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
-        $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
+        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/local/lib
+        $GITHUB_WORKSPACE/install-gdal/local/bin/gdalinfo --version
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.10/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
         # Test fix for https://github.com/conda-forge/gdal-feedstock/issues/995
         PYTHONWARNINGS="error" PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.10/dist-packages python3 -c "from osgeo import gdal"
@@ -245,12 +245,12 @@ jobs:
         python3 -m venv myvenv
         source myvenv/bin/activate
         # Set PATH so that gdal-config is found
-        PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH $PYTHON_CMD -m pip install gdal-python.tar.gz[numpy]
-        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib python -c "from osgeo import gdal_array"
+        PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/local/bin:$PATH $PYTHON_CMD -m pip install gdal-python.tar.gz[numpy]
+        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/local/lib python -c "from osgeo import gdal_array"
         which gdal_edit
         cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
-        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib ldd myvenv/lib/python3.10/site-packages/osgeo/_gdal.cpython-310-x86_64-linux-gnu.so
-        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit byte.tif -mo FOO=BAR
+        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/local/lib ldd myvenv/lib/python3.10/site-packages/osgeo/_gdal.cpython-310-x86_64-linux-gnu.so
+        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/local/lib gdal_edit byte.tif -mo FOO=BAR
         rm -f myvenv/bin/gdal_edit
         rm -f myvenv/bin/gdal_edit.py
     - name: Standalone gdal-utils package from wheel
@@ -262,10 +262,10 @@ jobs:
         python3 -m venv myvenv
         source myvenv/bin/activate
         # Set PATH so that gdal-config is found
-        PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH $PYTHON_CMD -m pip install gdal_utils-X.Y.Z.T-py3-none-any.whl
+        PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/local/bin:$PATH $PYTHON_CMD -m pip install gdal_utils-X.Y.Z.T-py3-none-any.whl
         which gdal_edit
         cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
-        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit byte.tif -mo FOO=BAR
+        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/local/lib gdal_edit byte.tif -mo FOO=BAR
         pip uninstall -y gdal-utils
     - name: Test post-install usage (with pkg-config)
       run: |
@@ -484,16 +484,16 @@ jobs:
       shell: bash -l {0}
       run: |
         cmake --build $GITHUB_WORKSPACE/build --config Release --target install
-        export PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH
+        export PATH=$GITHUB_WORKSPACE/install-gdal/local/bin:$PATH
         gdalinfo --version
         python -VV
-        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
         export PATH=$GITHUB_WORKSPACE/install-gdal/Scripts:$PATH
-        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages gdal_edit --version
+        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/site-packages gdal_edit --version
     - name: Check the build includes the expected drivers
       shell: bash -l {0}
       run: |
-        export PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH
+        export PATH=$GITHUB_WORKSPACE/install-gdal/local/bin:$PATH
         gdalinfo --formats > found_formats.txt
         ogrinfo --formats >> found_formats.txt
         cat found_formats.txt
