@@ -219,7 +219,7 @@ jobs:
         $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.10/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
         # Test fix for https://github.com/conda-forge/gdal-feedstock/issues/995
-        PYTHONWARNINGS="error" PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3.10/dist-packages python3 -c "from osgeo import gdal"
+        PYTHONWARNINGS="error" PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.10/dist-packages python3 -c "from osgeo import gdal"
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.10/dist-packages python3 $GITHUB_WORKSPACE/scripts/check_doc.py
     - name: CMake with rpath
       run: |
