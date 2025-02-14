@@ -21,15 +21,16 @@ permissions:
 jobs:
 
   cppcheck_2004:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
+    container: ubuntu:20.04
     steps:
       - name: Checkout
         uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
       - name: Install Requirements
         run: |
-          sudo apt update
-          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3 libproj-dev cmake
+          apt update
+          apt install -y cppcheck libsqlite3-dev ccache sqlite3 libproj-dev cmake g++ make
 
       - name: Run cmake
         run: |
