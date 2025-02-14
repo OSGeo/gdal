@@ -42,9 +42,9 @@ def test_gdalalg_raster_calc_basic_1(calc, tmp_vsimem, output_format):
     infile = "../gcore/data/rgbsmall.tif"
     outfile = tmp_vsimem / "out.tif"
 
-    calc.GetArg("input").Set([infile])
-    calc.GetArg("output").Set(outfile)
-    calc.GetArg("calc").Set(["2 + X / (1 + sum(X[1], X[2], X[3]))"])
+    calc["input"] = [infile]
+    calc["output"] = outfile
+    calc["calc"] = ["2 + X / (1 + sum(X[1], X[2], X[3]))"]
 
     assert calc.Run()
 
@@ -65,9 +65,9 @@ def test_gdalalg_raster_calc_basic_2(calc, tmp_vsimem, output_format):
     infile = "../gcore/data/byte.tif"
     outfile = tmp_vsimem / "out.tif"
 
-    calc.GetArg("input").Set([infile])
-    calc.GetArg("output").Set(outfile)
-    calc.GetArg("calc").Set(["X > 128 ? X + 3 : nan"])
+    calc["input"] = [infile]
+    calc["output"] = outfile
+    calc["calc"] = ["X > 128 ? X + 3 : nan"]
 
     assert calc.Run()
 
@@ -85,10 +85,10 @@ def test_gdalalg_raster_calc_creation_options(calc, tmp_vsimem):
     infile = "../gcore/data/byte.tif"
     outfile = tmp_vsimem / "out.tif"
 
-    calc.GetArg("input").Set([infile])
-    calc.GetArg("output").Set(outfile)
-    calc.GetArg("creation-option").Set(["COMPRESS=LZW"])
-    calc.GetArg("calc").Set(["X[1] + 3"])
+    calc["input"] = [infile]
+    calc["output"] = outfile
+    calc["creation-option"] = ["COMPRESS=LZW"]
+    calc["calc"] = ["X[1] + 3"]
 
     assert calc.Run()
 
@@ -101,10 +101,10 @@ def test_gdalalg_raster_calc_output_format(calc, tmp_vsimem):
     infile = "../gcore/data/byte.tif"
     outfile = tmp_vsimem / "out.unknown"
 
-    calc.GetArg("input").Set([infile])
-    calc.GetArg("output").Set(outfile)
-    calc.GetArg("output-format").Set("GTiff")
-    calc.GetArg("calc").Set(["X + 3"])
+    calc["input"] = [infile]
+    calc["output"] = outfile
+    calc["output-format"] = "GTiff"
+    calc["calc"] = ["X + 3"]
 
     assert calc.Run()
 
@@ -119,14 +119,14 @@ def test_gdalalg_raster_calc_overwrite(calc, tmp_vsimem):
 
     gdal.CopyFile(infile, outfile)
 
-    calc.GetArg("input").Set([infile])
-    calc.GetArg("output").Set(outfile)
-    calc.GetArg("calc").Set(["X + 3"])
+    calc["input"] = [infile]
+    calc["output"] = outfile
+    calc["calc"] = ["X + 3"]
 
     with pytest.raises(Exception, match="already exists"):
         assert not calc.Run()
 
-    calc.GetArg("overwrite").Set(True)
+    calc["overwrite"] = True
 
     assert calc.Run()
 
@@ -139,9 +139,9 @@ def test_gdalalg_raster_calc_basic_named_source(calc, tmp_vsimem, expr):
     infile = "../gcore/data/byte.tif"
     outfile = tmp_vsimem / "out.tif"
 
-    calc.GetArg("input").Set([f"X={infile}"])
-    calc.GetArg("output").Set(outfile)
-    calc.GetArg("calc").Set([expr])
+    calc["input"] = [f"X={infile}"]
+    calc["output"] = outfile
+    calc["calc"] = [expr]
 
     assert calc.Run()
 
@@ -156,9 +156,9 @@ def test_gdalalg_raster_calc_multiple_calcs(calc, tmp_vsimem):
     infile = "../gcore/data/byte.tif"
     outfile = tmp_vsimem / "out.tif"
 
-    calc.GetArg("input").Set([infile])
-    calc.GetArg("output").Set(outfile)
-    calc.GetArg("calc").Set(["X + 3", "sqrt(X)"])
+    calc["input"] = [infile]
+    calc["output"] = outfile
+    calc["calc"] = ["X + 3", "sqrt(X)"]
 
     assert calc.Run()
 
@@ -208,9 +208,9 @@ def test_gdalalg_raster_calc_multiple_inputs(calc, tmp_vsimem, expr):
     ) as ds:
         ds.WriteArray(B)
 
-    calc.GetArg("input").Set([f"A={input_1}", f"B={input_2}"])
-    calc.GetArg("output").Set(outfile)
-    calc.GetArg("calc").Set([expr])
+    calc["input"] = [f"A={input_1}", f"B={input_2}"]
+    calc["output"] = outfile
+    calc["calc"] = [expr]
 
     assert calc.Run()
 
@@ -238,9 +238,9 @@ def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path):
         txtfile.write(f"A={input_1}\n")
         txtfile.write(f"B={input_2}\n")
 
-    calc.GetArg("input").Set([f"@{input_txt}"])
-    calc.GetArg("output").Set(outfile)
-    calc.GetArg("calc").Set(["A + B"])
+    calc["input"] = [f"@{input_txt}"]
+    calc["output"] = outfile
+    calc["calc"] = ["A + B"]
 
     assert calc.Run()
 
@@ -265,9 +265,9 @@ def test_gdalalg_raster_calc_different_band_counts(calc, tmp_vsimem):
         ds.GetRasterBand(2).Fill(4)
         ds.GetRasterBand(3).Fill(5)
 
-    calc.GetArg("input").Set([f"A={input_1}", f"B={input_2}"])
-    calc.GetArg("output").Set(outfile)
-    calc.GetArg("calc").Set(["A[1] + A[2] + B[1] + B[2] + B[3]"])
+    calc["input"] = [f"A={input_1}", f"B={input_2}"]
+    calc["output"] = outfile
+    calc["calc"] = ["A[1] + A[2] + B[1] + B[2] + B[3]"]
 
     assert calc.Run()
 
@@ -293,14 +293,14 @@ def test_gdalalg_calc_different_resolutions(calc, tmp_vsimem):
             ds.GetRasterBand(1).Fill(res)
             ds.SetGeoTransform((0, res, 0, ymax, 0, -res))
 
-    calc.GetArg("input").Set([f"A={inputs[0]}", f"B={inputs[1]}", f"C={inputs[2]}"])
-    calc.GetArg("calc").Set(["A + B + C"])
-    calc.GetArg("output").Set(outfile)
+    calc["input"] = [f"A={inputs[0]}", f"B={inputs[1]}", f"C={inputs[2]}"]
+    calc["calc"] = ["A + B + C"]
+    calc["output"] = outfile
 
-    calc.GetArg("no-check-extent").Set(True)
+    calc["no-check-extent"] = True
     with pytest.raises(Exception, match="Inputs do not have the same dimensions"):
         calc.Run()
-    calc.GetArg("no-check-extent").Set(False)
+    calc["no-check-extent"] = False
 
     assert calc.Run()
 
@@ -322,14 +322,14 @@ def test_gdalalg_raster_calc_error_extent_mismatch(calc, tmp_vsimem):
     with gdal.GetDriverByName("GTIff").Create(input_2, 2, 2) as ds:
         ds.SetGeoTransform((0, 2, 0, 4, 0, -2))
 
-    calc.GetArg("input").Set([f"A={input_1}", f"B={input_2}"])
-    calc.GetArg("output").Set(outfile)
-    calc.GetArg("calc").Set(["A+B"])
+    calc["input"] = [f"A={input_1}", f"B={input_2}"]
+    calc["output"] = outfile
+    calc["calc"] = ["A+B"]
 
     with pytest.raises(Exception, match="extents are inconsistent"):
         calc.Run()
 
-    calc.GetArg("no-check-extent").Set(True)
+    calc["no-check-extent"] = True
     assert calc.Run()
 
     with gdal.Open(input_1) as src, gdal.Open(outfile) as dst:
@@ -347,14 +347,14 @@ def test_gdalalg_raster_calc_error_crs_mismatch(calc, tmp_vsimem):
     with gdal.GetDriverByName("GTIff").Create(input_2, 2, 2) as ds:
         ds.SetProjection("EPSG:4269")
 
-    calc.GetArg("input").Set([f"B={input_1}", f"A={input_2}"])
-    calc.GetArg("output").Set(outfile)
-    calc.GetArg("calc").Set(["A+B"])
+    calc["input"] = [f"B={input_1}", f"A={input_2}"]
+    calc["output"] = outfile
+    calc["calc"] = ["A+B"]
 
     with pytest.raises(Exception, match="spatial reference systems are inconsistent"):
         calc.Run()
 
-    calc.GetArg("no-check-srs").Set(True)
+    calc["no-check-srs"] = True
     assert calc.Run()
 
     with gdal.Open(input_1) as src, gdal.Open(outfile) as dst:
@@ -371,14 +371,14 @@ def test_gdalalg_raster_calc_error_band_count_mismatch(calc, tmp_vsimem, bands):
     gdal.GetDriverByName("GTiff").Create(input_1, 2, 2, bands[0])
     gdal.GetDriverByName("GTIff").Create(input_2, 2, 2, bands[1])
 
-    calc.GetArg("input").Set([f"A={input_1}", f"B={input_2}"])
-    calc.GetArg("output").Set(outfile)
-    calc.GetArg("calc").Set(["A+B"])
+    calc["input"] = [f"A={input_1}", f"B={input_2}"]
+    calc["output"] = outfile
+    calc["calc"] = ["A+B"]
 
     with pytest.raises(Exception, match="incompatible numbers of bands"):
         calc.Run()
 
-    calc.GetArg("calc").Set(["A+B[1]"])
+    calc["calc"] = ["A+B[1]"]
     assert calc.Run()
 
 
@@ -434,9 +434,9 @@ def test_gdalalg_raster_calc_expression_rewriting(
         expr = expr.replace(f"SOURCE{i + 1}", source)
         expected = [expr.replace(f"SOURCE{i + 1}", source) for expr in expected]
 
-    calc.GetArg("input").Set(inputs)
-    calc.GetArg("output").Set(outfile)
-    calc.GetArg("calc").Set([expr])
+    calc["input"] = inputs
+    calc["output"] = outfile
+    calc["calc"] = [expr]
 
     assert calc.Run()
 
