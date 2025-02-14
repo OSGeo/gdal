@@ -34,10 +34,15 @@ struct GDALCalcOptions
     bool checkExtent{true};
 };
 
-static bool ShouldReplace(const std::string &str, size_t from, size_t to)
+static bool MatchIsCompleteVariableNameWithNoIndex(const std::string &str,
+                                                   size_t from, size_t to)
 {
     if (to < str.size())
     {
+        // If the character after the end of the match is:
+        // * alphanumeric or _ : we've matched only part of a variable name
+        // * [ : we've matched a variable that already has an index
+        // * ( : we've matched a function name
         if (std::isalnum(str[to]) || str[to] == '_' || str[to] == '[' ||
             str[to] == '(')
         {
@@ -46,6 +51,8 @@ static bool ShouldReplace(const std::string &str, size_t from, size_t to)
     }
     if (from > 0)
     {
+        // If the character before the start of the match is alphanumeric or _,
+        // we've matched only part of a variable name.
         if (std::isalnum(str[from - 1]) || str[from - 1] == '_')
         {
             return false;
@@ -73,7 +80,7 @@ static std::string SetBandIndices(const std::string &origExpression,
     {
         auto end = pos + variable.size();
 
-        if (ShouldReplace(expression, pos, end))
+        if (MatchIsCompleteVariableNameWithNoIndex(expression, pos, end))
         {
             // No index specified for variable
             expression = expression.substr(0, pos + variable.size()) + '[' +

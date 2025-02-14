@@ -383,58 +383,40 @@ def test_gdalalg_raster_calc_error_band_count_mismatch(calc, tmp_vsimem, bands):
 
 
 @pytest.mark.parametrize(
-    "sources",
+    "expr,source,bands,expected",
     [
-        ("AX", "A"),
-        ("A", "AX"),
-        ("XA", "A"),
-        ("X", "AX"),
-        ("A_X", "A"),
-        ("A", "A_X"),
-        ("SIN", "S"),
-    ],
-)
-@pytest.mark.parametrize(
-    "expr,expected",
-    [
-        ("SOURCE1 + SOURCE2", ["SOURCE1[1] + SOURCE2[1]", "SOURCE1[1] + SOURCE2[2]"]),
-        (
-            "SOURCE1* 2 + SOURCE2",
-            ["SOURCE1[1]* 2 + SOURCE2[1]", "SOURCE1[1]* 2 + SOURCE2[2]"],
-        ),
-        ("SOURCE1 + SOURCE2[2]", ["SOURCE1[1] + SOURCE2[2]"]),
-        ("SOURCE2 + SOURCE1", ["SOURCE2[1] + SOURCE1[1]", "SOURCE2[2] + SOURCE1[1]"]),
-        ("SOURCE2[2] + SOURCE1", ["SOURCE2[2] + SOURCE1[1]"]),
-        (
-            "SIN(SOURCE1) + SOURCE2",
-            ["SIN(SOURCE1[1]) + SOURCE2[1]", "SIN(SOURCE1[1]) + SOURCE2[2]"],
-        ),
-        (
-            "SUM(SOURCE1,SOURCE2)",
-            ["SUM(SOURCE1[1],SOURCE2[1])", "SUM(SOURCE1[1],SOURCE2[2])"],
-        ),
+        ("aX + 2", "aX", 1, ["aX[1] + 2"]),
+        ("aX + 2", "aX", 2, ["aX[1] + 2", "aX[2] + 2"]),
+        ("aX + 2", "X", 1, ["aX + 2"]),
+        ("aX + 2", "a", 1, ["aX + 2"]),
+        ("2 + aX", "X", 1, ["2 + aX"]),
+        ("2 + aX", "aX", 1, ["2 + aX[1]"]),
+        ("B1 + B10", "B1", 1, ["B1[1] + B10"]),
+        ("B1[1] + B10", "B1", 2, ["B1[1] + B10"]),
+        ("B1[1] + B1", "B1", 2, ["B1[1] + B1[1]", "B1[1] + B1[2]"]),
+        ("SIN(N) + N", "N", 1, ["SIN(N[1]) + N[1]"]),
+        ("SUM(N,N2) + N", "N", 1, ["SUM(N[1],N2) + N[1]"]),
+        ("SUM(N,N2) + N", "N2", 1, ["SUM(N,N2[1]) + N"]),
+        ("A_X + X", "X", 1, ["A_X + X[1]"]),
     ],
 )
 def test_gdalalg_raster_calc_expression_rewriting(
-    calc, tmp_vsimem, sources, expr, expected
+    calc, tmp_vsimem, expr, source, bands, expected
 ):
+    # The expression rewriting isn't exposed to Python, so we
+    # create an VRT with an expression and a single source, and
+    # inspect the transformed expression in the VRT XML.
+    # The transformed expression need not be valid, because we
+    # don't actually read the VRT in GDAL.
+
     import xml.etree.ElementTree as ET
 
     outfile = tmp_vsimem / "out.vrt"
+    infile = tmp_vsimem / "input.tif"
 
-    inputs = []
-    for i, source in enumerate(sources):
-        fname = tmp_vsimem / f"{i}.tif"
-        with gdal.GetDriverByName("GTiff").Create(
-            tmp_vsimem / f"{i}.tif", 2, 2, i + 1
-        ) as ds:
-            ds.GetRasterBand(1).Fill(i)
-        inputs.append(f"{source}={fname}")
+    gdal.GetDriverByName("GTiff").Create(infile, 2, 2, bands)
 
-        expr = expr.replace(f"SOURCE{i + 1}", source)
-        expected = [expr.replace(f"SOURCE{i + 1}", source) for expr in expected]
-
-    calc["input"] = inputs
+    calc["input"] = [f"{source}={infile}"]
     calc["output"] = outfile
     calc["calc"] = [expr]
 
