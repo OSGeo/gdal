@@ -493,7 +493,7 @@ jobs:
     - name: Check the build includes the expected drivers
       shell: bash -l {0}
       run: |
-        export PATH=$GITHUB_WORKSPACE/install-gdal/local/bin:$PATH
+        export PATH=$GITHUB_WORKSPACE/install-gdal/local/bin:$GITHUB_WORKSPACE/install-gdal/bin:$PATH
         gdalinfo --formats > found_formats.txt
         ogrinfo --formats >> found_formats.txt
         cat found_formats.txt
