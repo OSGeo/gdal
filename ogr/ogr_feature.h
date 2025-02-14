@@ -1431,7 +1431,10 @@ class CPL_DLL OGRFeature
         pauFields[i].Real = dfValue;
     }
 
-    void SetFieldSameTypeUnsafe(int i, char *pszValueTransferred);
+    void SetFieldSameTypeUnsafe(int i, char *pszValueTransferred)
+    {
+        pauFields[i].String = pszValueTransferred;
+    }
 
     //! @endcond
 

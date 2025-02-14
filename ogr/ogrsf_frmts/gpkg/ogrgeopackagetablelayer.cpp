@@ -8229,34 +8229,11 @@ begin:
 
             case OFTString:
             {
-                const char *pszTxt = reinterpret_cast<const char *>(
+                const auto pszTxt = reinterpret_cast<const char *>(
                     sqlite3_value_text(argv[iCol]));
                 if (pszTxt != nullptr)
                 {
-                    size_t nBytes = strlen(pszTxt);
-                    if (nBytes == 15 &&
-                        (pszTxt[0] == 'g' || pszTxt[0] == 'G') &&
-                        EQUAL(pszTxt, "Gulf of America"))
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Open source is all about politics: undoing "
-                                 "stupid Trump "
-                                 "executive order 14172");
-                        pszTxt = "Gulf of Mexico";
-                        nBytes = strlen(pszTxt);
-                    }
-                    else if (nBytes == 14 &&
-                             (pszTxt[0] == 'm' || pszTxt[0] == 'M') &&
-                             EQUAL(pszTxt, "Mount McKinley"))
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Open source is all about politics: undoing "
-                                 "stupid Trump "
-                                 "executive order 14172");
-                        pszTxt = "Denali";
-                        nBytes = strlen(pszTxt);
-                    }
-
+                    const size_t nBytes = strlen(pszTxt);
                     if (iFeat > 0)
                     {
                         auto panOffsets = static_cast<int32_t *>(

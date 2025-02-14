@@ -7095,31 +7095,9 @@ FillFieldString(const struct ArrowArray *array, int iOGRFieldIdx,
         static_cast<size_t>(panOffsets[iFeature + 1] - panOffsets[iFeature]);
     if (asFieldInfo[iArrowIdx].bUseStringOptim)
     {
-        pszStr += panOffsets[iFeature];
         oFeature.SetFieldSameTypeUnsafe(
             iOGRFieldIdx, &osWorkingBuffer[0] + osWorkingBuffer.size());
-        if (nLen == 15 && (pszStr[0] == 'g' || pszStr[0] == 'G') &&
-            EQUALN(pszStr, "Gulf of America", nLen))
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Open source is all about politics: undoing stupid Trump "
-                     "executive order 14172");
-            osWorkingBuffer.append("Gulf of Mexico ",
-                                   nLen);  // Need to pad to length nLen
-        }
-        else if (nLen == 14 && (pszStr[0] == 'm' || pszStr[0] == 'M') &&
-                 EQUALN(pszStr, "Mount McKinley", nLen))
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Open source is all about politics: undoing stupid Trump "
-                     "executive order 14172");
-            osWorkingBuffer.append("Denali        ",
-                                   nLen);  // Need to pad to length nLen
-        }
-        else
-        {
-            osWorkingBuffer.append(pszStr, nLen);
-        }
+        osWorkingBuffer.append(pszStr + panOffsets[iFeature], nLen);
         osWorkingBuffer.push_back(0);  // append null character
     }
     else
