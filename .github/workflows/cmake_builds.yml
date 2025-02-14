@@ -240,12 +240,14 @@ jobs:
     - name: Standalone Python bindings build from source
       run: |
         (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python && python setup.py sdist)
-        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/dist/gdal-*.tar.gz gdal-python.tar.gz
+        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/dist/GDAL-*.tar.gz gdal-python.tar.gz
         mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python gdal-swig-python
         python3 -m venv myvenv
         source myvenv/bin/activate
         # Set PATH so that gdal-config is found
-        PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/local/bin:$PATH $PYTHON_CMD -m pip install gdal-python.tar.gz[numpy]
+        PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH $PYTHON_CMD -m pip uninstall numpy
+        PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH $PYTHON_CMD -m pip install numpy==1.26.4
+        PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH $PYTHON_CMD -m pip install gdal-python.tar.gz[numpy]
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib python -c "from osgeo import gdal_array"
         which gdal_edit
         cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
@@ -256,7 +258,7 @@ jobs:
     - name: Standalone gdal-utils package from wheel
       run: |
         mv gdal-swig-python $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
-        (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils && python setup.py bdist_wheel)
+        (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils && python3 setup.py bdist_wheel)
         mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils/dist/*.whl gdal_utils-X.Y.Z.T-py3-none-any.whl
         rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
         python3 -m venv myvenv
