@@ -94,41 +94,49 @@ struct SourceProperties
     int nX{0};
     int nY{0};
     std::array<double, 6> gt{};
-    OGRSpatialReferenceH srs{nullptr};
+    OGRSpatialReference *srs{nullptr};
 };
 
 static std::optional<SourceProperties>
 UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
                        const GDALCalcOptions &options)
 {
-    GDALDatasetH ds = GDALOpen(dsn.c_str(), GA_ReadOnly);
-    if (!ds)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open %s", dsn.c_str());
-        GDALClose(ds);
-        return std::nullopt;
-    }
-
     SourceProperties source;
-    source.nBands = GDALGetRasterCount(ds);
-    source.nX = GDALGetRasterXSize(ds);
-    source.nY = GDALGetRasterYSize(ds);
-
-    if (options.checkExtent)
-    {
-        GDALGetGeoTransform(ds, source.gt.data());
-    }
     bool srsMismatch = false;
+    bool extentMismatch = false;
+    bool dimensionMismatch = false;
 
-    if (options.checkSRS && out.srs)
     {
-        OGRSpatialReferenceH srs = GDALGetSpatialRef(ds);
-        srsMismatch = srs && !OSRIsSame(srs, out.srs);
+        std::unique_ptr<GDALDataset> ds(
+            GDALDataset::Open(dsn.c_str(), GDAL_OF_RASTER));
+
+        if (!ds)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to open %s",
+                     dsn.c_str());
+            return std::nullopt;
+        }
+
+        source.nBands = ds->GetRasterCount();
+        source.nX = ds->GetRasterXSize();
+        source.nY = ds->GetRasterYSize();
+
+        if (options.checkExtent)
+        {
+            ds->GetGeoTransform(source.gt.data());
+        }
+
+        if (options.checkSRS && out.srs)
+        {
+            const OGRSpatialReference *srs = ds->GetSpatialRef();
+            srsMismatch = srs && !srs->IsSame(out.srs);
+        }
     }
 
-    GDALClose(ds);
-
-    bool extentMismatch = false;
+    if (source.nX != out.nX || source.nY != out.nY)
+    {
+        dimensionMismatch = true;
+    }
 
     if (source.gt[0] != out.gt[0] || source.gt[2] != out.gt[2] ||
         source.gt[3] != out.gt[3] || source.gt[4] != out.gt[4])
@@ -138,7 +146,6 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
     if (source.gt[1] != out.gt[1] || source.gt[5] != out.gt[5])
     {
         // Resolutions are different. Are the extents the same?
-
         double xmaxOut = out.gt[0] + out.nX * out.gt[1] + out.nY * out.gt[2];
         double yminOut = out.gt[3] + out.nX * out.gt[4] + out.nY * out.gt[5];
 
@@ -154,16 +161,14 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
         }
     }
 
-    if (options.checkExtent)
+    if (options.checkExtent && extentMismatch)
     {
-        if (extentMismatch)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Input extents are inconsistent.");
-            return std::nullopt;
-        }
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Input extents are inconsistent.");
+        return std::nullopt;
     }
-    else if (source.nX != out.nX || source.nY != out.nY)
+
+    if (!options.checkExtent && dimensionMismatch)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Inputs do not have the same dimensions.");
@@ -432,25 +437,26 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
 
     // Use the first source provided to determine properties of the output
     const char *firstDSN = sources[firstSource].c_str();
-    auto hDS = GDALOpen(firstDSN, GA_ReadOnly);
-    if (!hDS)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open %s", firstDSN);
-        return nullptr;
-    }
 
     // Read properties from the first source
     SourceProperties out;
-    out.nX = GDALGetRasterXSize(hDS);
-    out.nY = GDALGetRasterYSize(hDS);
-    out.nBands = 1;
-    out.srs = GDALGetSpatialRef(hDS);
-    if (out.srs)
     {
-        out.srs = OSRClone(out.srs);
+        std::unique_ptr<GDALDataset> ds(
+            GDALDataset::Open(firstDSN, GDAL_OF_RASTER));
+
+        if (!ds)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to open %s",
+                     firstDSN);
+            return nullptr;
+        }
+
+        out.nX = ds->GetRasterXSize();
+        out.nY = ds->GetRasterYSize();
+        out.nBands = 1;
+        out.srs = ds->GetSpatialRef() ? ds->GetSpatialRef()->Clone() : nullptr;
+        ds->GetGeoTransform(out.gt.data());
     }
-    GDALGetGeoTransform(hDS, out.gt.data());
-    GDALClose(hDS);
 
     CPLXMLNode *root = CPLCreateXMLNode(nullptr, CXT_Element, "VRTDataset");
 
