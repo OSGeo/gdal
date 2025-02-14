@@ -216,7 +216,7 @@ jobs:
         test -f $GITHUB_WORKSPACE/install-gdal/share/man/man1/gdalinfo.1
         test -f $GITHUB_WORKSPACE/install-gdal/share/man/man1/gdaladdo.1
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/local/lib
-        $GITHUB_WORKSPACE/install-gdal/local/bin/gdalinfo --version
+        $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.10/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
         # Test fix for https://github.com/conda-forge/gdal-feedstock/issues/995
         PYTHONWARNINGS="error" PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.10/dist-packages python3 -c "from osgeo import gdal"
@@ -484,7 +484,7 @@ jobs:
       shell: bash -l {0}
       run: |
         cmake --build $GITHUB_WORKSPACE/build --config Release --target install
-        export PATH=$GITHUB_WORKSPACE/install-gdal/local/bin:$PATH
+        export PATH=$GITHUB_WORKSPACE/install-gdal/bin:$GITHUB_WORKSPACE/install-gdal/local/bin:$PATH
         gdalinfo --version
         python -VV
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
