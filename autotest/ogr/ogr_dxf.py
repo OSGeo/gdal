@@ -3881,7 +3881,7 @@ def test_ogr_dxf_53():
 # Test frozen and off layers
 
 
-def test_ogr_dxf_54():
+def test_ogr_dxf_54(tmp_vsimem):
 
     with gdal.config_option("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE"):
         ds = ogr.Open("data/dxf/frozen-off.dxf")
@@ -3897,7 +3897,36 @@ def test_ogr_dxf_54():
         )
         if isFeatureVisible == (h == "h"):
             f.DumpReadable()
-            pytest.fail("Wrong visibility on feature %d" % number)
+            pytest.fail(
+                "Wrong visibility on feature %d (testing with layer 0 thawed)" % number
+            )
+
+    # Rewrite the test file, this time with layer 0 set as frozen
+    with open("data/dxf/frozen-off.dxf", "r") as file:
+        gdal.FileFromMemBuffer(
+            tmp_vsimem / "frozen-off-with-layer0-frozen.dxf",
+            file.read().replace(
+                "0\nLAYER\n  2\n0\n 70\n     0", "0\nLAYER\n  2\n0\n 70\n     1"
+            ),
+        )
+
+    with gdal.config_option("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE"):
+        ds = ogr.Open(
+            tmp_vsimem / "frozen-off-with-layer0-frozen.dxf",
+        )
+    lyr = ds.GetLayer(0)
+
+    # Repeat test - outcome should be the same
+    for number, h in enumerate(featureVisibility):
+        f = lyr.GetNextFeature()
+        isFeatureVisible = (
+            "#000000)" in f.GetStyleString() or "#ff0000)" in f.GetStyleString()
+        )
+        if isFeatureVisible == (h == "h"):
+            f.DumpReadable()
+            pytest.fail(
+                "Wrong visibility on feature %d (testing with layer 0 frozen)" % number
+            )
 
 
 ###############################################################################
