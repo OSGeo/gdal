@@ -360,6 +360,98 @@ XODR driver:
 * Fix typo in handling of Translate widthPct, heightPct
 * add relatedFieldNameMatch parameter to gdal.VectorTranslate()
 
+# GDAL/OGR 3.10.2 Release Notes
+
+GDAL 3.10.2 is a bugfix release.
+
+## Build
+
+* Fix build against Poppler 25.02.00 (#11804)
+* explicitly set CMAKE_CXX_SCAN_FOR_MODULES=0
+* Fix build in infback9 on MacOS and unity builds
+* Move swig/python/data/template_tiles.mapml to gcore/data to avoid issues
+  with Conda Forge builds (#11745)
+
+## GDAL 3.10.2
+
+### Port
+
+* Fix read heap-buffer-overflow on nested /vsitar/ calls (ossfuzz #388868487)
+* fix cppcheck nullPointerOutOfMemory
+
+### Core
+
+* GDALGCPsToGeoTransform(): return FALSE when invalid geotransform is generated
+  (#11618)
+
+### Utilities
+
+* gdal_rasterize: Also accept doubles for -ts (#11829)
+
+### Raster drivers
+
+PLMOSAIC driver:
+ * Use a unique user-agent string to isolate usage of driver
+
+SNAP_TIFF driver:
+ * third_party/libertiff: avoid issue with invalid offline tags with value
+   offset at zero (ossfuzz #388571282)
+
+STACIT driver:
+ * add STAC 1.1 support (#11753)
+ * Identify(): accept if at least 2 of 'proj:transform', 'proj:bbox' or
+   'proj:shape' are present
+
+WMS driver:
+ * Update ESRI WMS links in documentation
+
+## OGR 3.10.2
+
+### Core
+
+* Fix GeodesicLength() that was quite severely broken as working only on closed
+  linestrings (3.10.0 regression)
+
+### Vector utilities
+
+* ogr2ogr: fix -clipsrc/-clipdst when a input geometry is within the envelope of
+  a non-rectangle clip geometry, but doesn't intersect it (3.10.0 regression)
+  (#11652, #10341)
+* ogrtindex: fix error message when specifying incorrect output driver
+* ogrlineref: make -f LIBKML to work without warning (#11719)
+
+### Vector drivers
+
+CSV driver:
+ * fix parsing files with double-quote inside a field value (#11660)
+
+DXF driver:
+ * interpret INSERT blocks with row count or column count equal to 0 as 1
+   (#11591)
+
+Geoconcept driver:
+ * fix potential double-free on creation error code
+
+GML driver:
+ * gml:CircleByCenterPoint(): return a 5-point CIRCULARSTRING for compliance
+   with ISO/IEC 13249-3:2011 (#11750)
+
+MiraMonVector driver:
+ * Fix memory leak with oss-fuzz #393742177 scenario
+
+MVT driver:
+ * allow generating tilesets with more than 1 tile at zoom level 0 (#11749)
+ * avoid infinite recursion on opening on hostile file (ossfuzz #391974926)
+
+Parquet driver:
+ * fix compiler deprecation warning with libarrow 19.0
+
+## Python bindings
+
+* fix wrong comment in documentation (#11631)
+* on Debian, fix install target with non-Debian provided python version (#11636)
+* Avoid losing error message (#11795)
+
 # GDAL/OGR 3.10.1 Release Notes
 
 GDAL 3.10.1 is a bugfix release.
