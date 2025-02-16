@@ -122,6 +122,28 @@ Verify that the necessary dependencies have been installed and then run the foll
     pip install --no-cache --force-reinstall gdal[numpy]=="$(gdal-config --version).*"
 
 
+uv
+~~~
+
+Uv build local wheel for GDAL < 3.9 specific configuration must be added to the `pyproject.toml` to add Numpy to the build environnment prior to build gdal wheel.
+
+::
+    [tool.uv]
+    no-build-isolation-package = ["gdal"]
+
+    [[tool.uv.dependency-metadata]]
+    name = "gdal"
+    requires-dist = ["numpy>=1.19.5,<1.27.0"]
+
+Numpy version can be changed according to target platform.
+
+Don't forget de clean uv cache
+
+::
+    uv cache clean
+    uv add gdal=="$(gdal-config --version).*"
+
+
 Potential issues with GDAL >= 3.9, Python >= 3.9 and NumPy 2.0 (pip)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
