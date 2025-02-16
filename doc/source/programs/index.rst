@@ -32,6 +32,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_convert
    gdal_raster
    gdal_raster_info
+   gdal_raster_calc
    gdal_raster_clip
    gdal_raster_convert
    gdal_raster_edit
@@ -60,6 +61,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_convert_command`: Convert a dataset
     - :ref:`gdal_raster_command`: Entry point for raster commands
     - :ref:`gdal_raster_info_subcommand`: Get information on a raster dataset
+    - :ref:`gdal_raster_calc_subcommand`: Perform raster algebra
     - :ref:`gdal_raster_clip_subcommand`: Clip a raster dataset
     - :ref:`gdal_raster_convert_subcommand`: Convert a raster dataset
     - :ref:`gdal_raster_edit_subcommand`: Edit in place a raster dataset

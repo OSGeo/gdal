@@ -1274,8 +1274,8 @@ def test_vrt_pixelfn_expression(
             id="expression is too long",
         ),
         pytest.param(
-            "B[1]",
-            [("B[1]", 3)],
+            "B@1",
+            [("B@1", 3)],
             "muparser",
             "Invalid variable name",
             id="invalid variable name",

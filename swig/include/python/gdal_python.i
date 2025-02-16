@@ -5365,6 +5365,10 @@ class VSIFile(BytesIO):
         raise Exception("Unhandled algorithm argument data type")
 
     def Set(self, value):
+        import os
+        if isinstance(value, os.PathLike):
+            value = str(value)
+
         type = self.GetType()
         if type == GAAT_BOOLEAN:
             return self.SetAsBoolean(value)
