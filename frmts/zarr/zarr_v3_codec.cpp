@@ -1006,7 +1006,7 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
             poEndianCodec->InitFromConfiguration(
                 ZarrV3CodecBytes::GetConfiguration(true), oInputArrayMetadata,
                 oOutputArrayMetadata);
-            oInputArrayMetadata = oOutputArrayMetadata;
+            oInputArrayMetadata = std::move(oOutputArrayMetadata);
             eLastType = poEndianCodec->GetOutputType();
             osLastCodec = poEndianCodec->GetName();
 #if !CPL_IS_LSB
