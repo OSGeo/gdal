@@ -5,7 +5,6 @@ add_gdal_driver(
           atlsci_spheroid.cpp
           btdataset.cpp
           cpgdataset.cpp
-          ctable2dataset.cpp
           dipxdataset.cpp
           doq1dataset.cpp
           doq2dataset.cpp

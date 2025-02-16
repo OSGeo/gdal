@@ -24,7 +24,6 @@ void GDALRegister_raw_no_sidecar()
     GDALRegister_GTX();
     GDALRegister_LOSLAS();
     GDALRegister_NTv2();
-    GDALRegister_CTable2();
     GDALRegister_ACE2();
     GDALRegister_SNODAS();
     GDALRegister_KRO();
