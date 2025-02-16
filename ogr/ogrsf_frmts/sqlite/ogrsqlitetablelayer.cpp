@@ -995,40 +995,21 @@ OGRErr OGRSQLiteTableLayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRSQLiteTableLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
-{
-    SetSpatialFilter(0, poGeomIn);
-}
-
-void OGRSQLiteTableLayer::SetSpatialFilter(int iGeomField,
-                                           OGRGeometry *poGeomIn)
+OGRErr OGRSQLiteTableLayer::ISetSpatialFilter(int iGeomField,
+                                              const OGRGeometry *poGeomIn)
 
 {
-    if (iGeomField == 0)
-    {
-        m_iGeomFieldFilter = 0;
-    }
-    else
-    {
-        if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-            return;
-        }
-
-        m_iGeomFieldFilter = iGeomField;
-    }
-
+    m_iGeomFieldFilter = iGeomField;
     if (InstallFilter(poGeomIn))
     {
         BuildWhere();
 
         ResetReading();
     }
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -1287,34 +1268,14 @@ GIntBig OGRSQLiteTableLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRSQLiteTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    return GetExtent(0, psExtent, bForce);
-}
-
-OGRErr OGRSQLiteTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                      int bForce)
+OGRErr OGRSQLiteTableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                       bool bForce)
 {
     if (HasLayerDefnError())
         return OGRERR_FAILURE;
-
-    /* -------------------------------------------------------------------- */
-    /*      If this layer has a none geometry type, then we can             */
-    /*      reasonably assume there are not extents available.              */
-    /* -------------------------------------------------------------------- */
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone)
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return OGRERR_FAILURE;
-    }
 
     OGRSQLiteGeomFieldDefn *poGeomFieldDefn =
         m_poFeatureDefn->myGetGeomFieldDefn(iGeomField);
@@ -1347,7 +1308,7 @@ OGRErr OGRSQLiteTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
 
         if (sqlite3_get_table(m_poDS->GetDB(), pszSQL, &papszResult, &nRowCount,
                               &nColCount, &pszErrMsg) != SQLITE_OK)
-            return OGRSQLiteLayer::GetExtent(psExtent, bForce);
+            return OGRSQLiteLayer::IGetExtent(iGeomField, psExtent, bForce);
 
         OGRErr eErr = OGRERR_FAILURE;
 
@@ -1376,11 +1337,7 @@ OGRErr OGRSQLiteTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
             return eErr;
     }
 
-    OGRErr eErr;
-    if (iGeomField == 0)
-        eErr = OGRSQLiteLayer::GetExtent(psExtent, bForce);
-    else
-        eErr = OGRSQLiteLayer::GetExtent(iGeomField, psExtent, bForce);
+    OGRErr eErr = OGRSQLiteLayer::IGetExtent(iGeomField, psExtent, bForce);
     if (eErr == OGRERR_NONE && m_poFilterGeom == nullptr && m_osQuery.empty())
     {
         poGeomFieldDefn->m_bCachedExtentIsValid = true;

@@ -348,6 +348,9 @@ with ``ARRAY:`` using :program:`gdalmdimtranslate`):
 
       Compression method.
 
+      For FORMAT=ZARR_V3, only ``NONE``, ``BLOSC``, ``GZIP`` and ``ZSTD`` are
+      supported.
+
 -  .. co:: FILTER
       :choices: NONE, DELTA
       :default: NONE

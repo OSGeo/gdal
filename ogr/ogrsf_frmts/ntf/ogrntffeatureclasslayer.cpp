@@ -57,23 +57,6 @@ OGRNTFFeatureClassLayer::~OGRNTFFeatureClassLayer()
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRNTFFeatureClassLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
-
-{
-    if (poFilterGeom != nullptr)
-    {
-        delete poFilterGeom;
-        poFilterGeom = nullptr;
-    }
-
-    if (poGeomIn != nullptr)
-        poFilterGeom = poGeomIn->clone();
-}
-
-/************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
 

@@ -58,14 +58,6 @@ class OGREDIGEOLayer final : public OGRLayer,
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
-
     void AddFeature(OGRFeature *poFeature);
 
     int GetAttributeIndex(const CPLString &osRID);

@@ -7,11 +7,12 @@
 # Author:   Dmitry Baryshnikov <polimax@mail.ru>
 #
 ###############################################################################
-# Copyright (c) 2018-2021, NextGIS <info@nextgis.com>
+# Copyright (c) 2018-2025, NextGIS <info@nextgis.com>
 #
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
 import os
 import shutil
 import sys
@@ -20,13 +21,15 @@ from osgeo import gdal
 
 sys.path.append("../pymod")
 
-import json
 import random
 import time
-from datetime import datetime
 
 import gdaltest
 import pytest
+
+NET_TIMEOUT = 130
+NET_MAX_RETRY = 5
+NET_RETRY_DELAY = 2
 
 pytestmark = [
     pytest.mark.require_driver("NGW"),
@@ -69,36 +72,53 @@ def startup_and_cleanup():
 
 
 def check_availability(url):
-    # Sandbox cleans at 1:05 on monday (UTC)
-    now = datetime.utcnow()
-    if now.weekday() == 0:
-        if now.hour >= 0 and now.hour < 4:
-            return False
 
     version_url = url + "/api/component/pyramid/pkg_version"
 
-    if gdaltest.gdalurlopen(version_url) is None:
+    if gdaltest.gdalurlopen(version_url, timeout=NET_TIMEOUT) is None:
         return False
 
-    # Check quota
-    quota_url = url + "/api/resource/quota"
-    quota_conn = gdaltest.gdalurlopen(quota_url)
-    try:
-        quota_json = json.loads(quota_conn.read())
-        quota_conn.close()
-        if quota_json is None:
-            return False
-        limit = quota_json["limit"]
-        count = quota_json["count"]
-        if limit is None or count is None:
-            return True
-        return limit - count > 15
-    except Exception:
-        return False
+    return True
 
 
 def get_new_name():
     return "gdaltest_group_" + str(int(time.time())) + "_" + str(random.randint(10, 99))
+
+
+def check_tms(sub):
+    ds = gdal.OpenEx(
+        sub[0],
+        gdal.OF_RASTER,
+        open_options=[
+            f"TIMEOUT={NET_TIMEOUT}",
+            f"MAX_RETRY={NET_MAX_RETRY}",
+            f"RETRY_DELAY={NET_RETRY_DELAY}",
+        ],
+    )
+
+    assert ds is not None, f"Open {sub[0]} failed."
+
+    assert (
+        ds.RasterXSize == 1073741824
+        and ds.RasterYSize == 1073741824
+        and ds.RasterCount == 4
+    ), f"Wrong size or band count for raster {sub[0]} [{sub[1]}]."
+
+    wkt = ds.GetProjectionRef()
+    assert 'PROJCS["WGS 84 / Pseudo-Mercator"' in wkt, "Got wrong SRS: " + wkt
+
+    gt = ds.GetGeoTransform()
+    expected_gt = [
+        -20037508.34,
+        0.037322767712175846,
+        0.0,
+        20037508.34,
+        0.0,
+        -0.037322767712175846,
+    ]
+    assert gt == pytest.approx(expected_gt, abs=0.00001), f"Wrong geotransform. {gt}"
+    assert ds.GetRasterBand(1).GetOverviewCount() > 0, "No overviews!"
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte, "Wrong band data type."
 
 
 ###############################################################################
@@ -118,6 +138,9 @@ def test_ngw_2():
             gdal.GDT_Unknown,
             options=[
                 "DESCRIPTION=" + description,
+                f"TIMEOUT={NET_TIMEOUT}",
+                f"MAX_RETRY={NET_MAX_RETRY}",
+                f"RETRY_DELAY={NET_RETRY_DELAY}",
             ],
         )
 
@@ -159,137 +182,193 @@ def test_ngw_4():
     src_ds = gdal.Open("data/rgbsmall.tif")
     resource_id = gdaltest.ngw_ds.GetMetadataItem("id", "")
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + resource_id + "/rgbsmall"
-    ds = gdal.GetDriverByName("NGW").CreateCopy(
-        url, src_ds, options=["DESCRIPTION=Test raster create"]
-    )
-    src_ds = None
+    with gdal.quiet_errors():
+        ds = gdal.GetDriverByName("NGW").CreateCopy(
+            url, src_ds, options=["DESCRIPTION=Test raster create"]
+        )
+        src_ds = None
 
-    assert ds is not None, "Raster create failed"
+        assert ds is not None, "Raster create failed"
 
-    ds_resource_id = ds.GetMetadataItem("id", "")
-    gdaltest.raster_id = ds_resource_id
-    gdaltest.group_id = resource_id
-
-    ds = None
+        ds_resource_id = ds.GetMetadataItem("id", "")
+        gdaltest.raster1_id = ds_resource_id
+        ds = None
 
     # Upload 16bit raster
     src_ds = gdal.Open("data/int16.tif")
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + resource_id + "/int16"
-    ds = gdal.GetDriverByName("NGW").CreateCopy(
-        url,
-        src_ds,
-        options=[
-            "DESCRIPTION=Test 16bit raster create",
-            "RASTER_QML_PATH=data/ngw/96.qml",
-        ],
-    )
-    src_ds = None
+    with gdal.quiet_errors():
+        ds = gdal.GetDriverByName("NGW").CreateCopy(
+            url,
+            src_ds,
+            options=[
+                "DESCRIPTION=Test 16bit raster create",
+                "RASTER_QML_PATH=data/ngw/96.qml",
+            ],
+        )
+        src_ds = None
 
-    assert ds is not None, "Raster create failed"
-    ds = None
+        assert ds is not None, "Raster create failed"
+        ds_resource_id = ds.GetMetadataItem("id", "")
+        gdaltest.raster2_id = ds_resource_id
+        ds = None
+
+    gdaltest.group_id = resource_id
 
 
 ###############################################################################
-# Open the NGW dataset
+# Open the NGW dataset - rgbsmall
 
 
 def test_ngw_5():
 
     # FIXME: depends on previous test
-    if gdaltest.ngw_ds is None:
+    if gdaltest.raster1_id is None:
         pytest.skip()
 
-    if gdaltest.raster_id is None:
-        pytest.skip()
+    url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + gdaltest.raster1_id
+    ds = gdal.OpenEx(
+        url,
+        gdal.OF_RASTER,
+        open_options=[
+            f"TIMEOUT={NET_TIMEOUT}",
+            f"MAX_RETRY={NET_MAX_RETRY}",
+            f"RETRY_DELAY={NET_RETRY_DELAY}",
+        ],
+    )
 
-    url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + gdaltest.raster_id
-    gdaltest.ngw_ds = gdal.OpenEx(url, gdal.OF_RASTER)
+    assert ds is not None, f"Open {url} failed."
 
-    assert gdaltest.ngw_ds is not None, "Open {} failed.".format(url)
+    assert (
+        ds.RasterXSize == 48 and ds.RasterYSize == 52 and ds.RasterCount == 4
+    ), "Wrong size or band count."
+
+    # Get subdatasets count
+    assert len(ds.GetSubDatasets()) > 0
 
 
 ###############################################################################
-# Check various things about the configuration.
+# Open the NGW dataset - int16
 
 
 def test_ngw_6():
 
     # FIXME: depends on previous test
-    if gdaltest.ngw_ds is None:
+    if gdaltest.raster2_id is None:
         pytest.skip()
 
+    url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + gdaltest.raster2_id
+    ds = gdal.OpenEx(
+        url,
+        gdal.OF_RASTER,
+        open_options=[
+            f"TIMEOUT={NET_TIMEOUT}",
+            f"MAX_RETRY={NET_MAX_RETRY}",
+            f"RETRY_DELAY={NET_RETRY_DELAY}",
+        ],
+    )
+
+    assert ds is not None, f"Open {url} failed."
+
     assert (
-        gdaltest.ngw_ds.RasterXSize == 1073741824
-        and gdaltest.ngw_ds.RasterYSize == 1073741824
-        and gdaltest.ngw_ds.RasterCount == 4
+        ds.RasterXSize == 20 and ds.RasterYSize == 20 and ds.RasterCount == 2
     ), "Wrong size or band count."
 
-    wkt = gdaltest.ngw_ds.GetProjectionRef()
-    assert wkt[:33] == 'PROJCS["WGS 84 / Pseudo-Mercator"', "Got wrong SRS: " + wkt
+    # Get subdatasets count
+    assert len(ds.GetSubDatasets()) > 0
 
-    gt = gdaltest.ngw_ds.GetGeoTransform()
-    # -20037508.34, 0.037322767712175846, 0.0, 20037508.34, 0.0, -0.037322767712175846
-    assert (
-        gt[0] == pytest.approx(-20037508.34, abs=0.00001)
-        or gt[3] == pytest.approx(20037508.34, abs=0.00001)
-        or gt[1] == pytest.approx(0.037322767712175846, abs=0.00001)
-        or gt[2] == pytest.approx(0.0, abs=0.00001)
-        or gt[5] == pytest.approx(-0.037322767712175846, abs=0.00001)
-        or gt[4] == pytest.approx(0.0, abs=0.00001)
-    ), "Wrong geotransform. {}".format(gt)
 
-    assert gdaltest.ngw_ds.GetRasterBand(1).GetOverviewCount() > 0, "No overviews!"
-    assert (
-        gdaltest.ngw_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
-    ), "Wrong band data type."
+###############################################################################
+# Test getting subdatasets
+
+
+def test_ngw_7():
+
+    # FIXME: depends on previous test
+    if gdaltest.raster1_id is None:
+        pytest.skip()
+
+    url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + gdaltest.raster1_id
+    ds = gdal.OpenEx(
+        url,
+        gdal.OF_RASTER,
+        open_options=[
+            f"TIMEOUT={NET_TIMEOUT}",
+            f"MAX_RETRY={NET_MAX_RETRY}",
+            f"RETRY_DELAY={NET_RETRY_DELAY}",
+        ],
+    )
+
+    # Get first style
+    assert ds is not None, f"Open {url} failed."
+
+    sub = ds.GetSubDatasets()[0]
+
+    check_tms(sub)
 
 
 ###############################################################################
 # Check checksum execute success for a small region.
 
 
-def test_ngw_7():
-
-    # FIXME: depends on previous test
-    if gdaltest.ngw_ds is None:
-        pytest.skip()
-
-    gdal.ErrorReset()
-    with gdal.config_option("CPL_ACCUM_ERROR_MSG", "ON"), gdaltest.error_handler():
-
-        ovr_band = gdaltest.ngw_ds.GetRasterBand(1).GetOverview(21)
-        assert ovr_band is not None
-        ovr_band.Checksum()
-
-    msg = gdal.GetLastErrorMsg()
-
-    assert gdal.GetLastErrorType() != gdal.CE_Failure, msg
-    gdal.ErrorReset()
-
-
-###############################################################################
-# Test getting subdatasets from GetCapabilities
-
-
 def test_ngw_8():
 
     # FIXME: depends on previous test
-    if gdaltest.ngw_ds is None:
+    if gdaltest.raster1_id is None:
         pytest.skip()
 
-    url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + gdaltest.group_id
-    ds = gdal.OpenEx(url, gdal.OF_VECTOR | gdal.OF_RASTER)
-    assert ds is not None, "Open of {} failed.".format(url)
-
-    subdatasets = ds.GetMetadata("SUBDATASETS")
-    assert (
-        subdatasets
-    ), "Did not get expected subdataset count. Get {} subdatasets. Url: {}".format(
-        len(subdatasets), url
+    url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + gdaltest.raster1_id
+    ds = gdal.OpenEx(
+        url,
+        gdal.OF_RASTER,
+        open_options=[
+            f"TIMEOUT={NET_TIMEOUT}",
+            f"MAX_RETRY={NET_MAX_RETRY}",
+            f"RETRY_DELAY={NET_RETRY_DELAY}",
+        ],
     )
 
-    name = subdatasets["SUBDATASET_0_NAME"]
-    ds = gdal.OpenEx(name, gdal.OF_RASTER)
-    assert ds is not None, "Open of {} failed.".format(name)
+    assert ds is not None, f"Open {url} failed."
 
-    ds = None
+    band = ds.GetRasterBand(1)
+    assert band is not None, "GetRasterBand 1 failed."
+
+    assert (
+        band.GetOverviewCount() > 0
+    ), f"Expected overviews > 0, got {band.GetOverviewCount()}"
+    for band_idx in range(band.GetOverviewCount()):
+        ovr_band = band.GetOverview(band_idx)
+        assert ovr_band is not None
+        ovr_band.Checksum()
+
+
+###############################################################################
+# Check webmap as raster and basemap
+
+
+def test_ngw_9():
+    url = gdaltest.ngw_test_server + "/api/resource/search/?cls=webmap"
+
+    result = gdaltest.gdalurlopen(url, timeout=NET_TIMEOUT)
+
+    if result is not None:
+        data = json.loads(result.read())
+
+        for item in data:
+            # Test first webmap
+            url = f"NGW:{gdaltest.ngw_test_server}/resource/{item['resource']['id']}"
+            check_tms([url, "webmap"])
+            break
+
+    url = gdaltest.ngw_test_server + "/api/resource/search/?cls=basemap_layer"
+
+    result = gdaltest.gdalurlopen(url, timeout=NET_TIMEOUT)
+
+    if result is not None:
+        data = json.loads(result.read())
+
+        for item in data:
+            # Test first basemap_layer
+            url = f"NGW:{gdaltest.ngw_test_server}/resource/{item['resource']['id']}"
+            check_tms([url, "basemap"])
+            break

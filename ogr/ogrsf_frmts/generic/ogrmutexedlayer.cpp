@@ -32,32 +32,11 @@ OGRGeometry *OGRMutexedLayer::GetSpatialFilter()
     return OGRLayerDecorator::GetSpatialFilter();
 }
 
-void OGRMutexedLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGRMutexedLayer::ISetSpatialFilter(int iGeomField,
+                                          const OGRGeometry *poGeom)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
-    OGRLayerDecorator::SetSpatialFilter(poGeom);
-}
-
-void OGRMutexedLayer::SetSpatialFilterRect(double dfMinX, double dfMinY,
-                                           double dfMaxX, double dfMaxY)
-{
-    CPLMutexHolderOptionalLockD(m_hMutex);
-    OGRLayerDecorator::SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
-}
-
-void OGRMutexedLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    CPLMutexHolderOptionalLockD(m_hMutex);
-    OGRLayerDecorator::SetSpatialFilter(iGeomField, poGeom);
-}
-
-void OGRMutexedLayer::SetSpatialFilterRect(int iGeomField, double dfMinX,
-                                           double dfMinY, double dfMaxX,
-                                           double dfMaxY)
-{
-    CPLMutexHolderOptionalLockD(m_hMutex);
-    OGRLayerDecorator::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX,
-                                            dfMaxY);
+    return OGRLayerDecorator::ISetSpatialFilter(iGeomField, poGeom);
 }
 
 OGRErr OGRMutexedLayer::SetAttributeFilter(const char *poAttrFilter)
@@ -170,17 +149,11 @@ GIntBig OGRMutexedLayer::GetFeatureCount(int bForce)
     return OGRLayerDecorator::GetFeatureCount(bForce);
 }
 
-OGRErr OGRMutexedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                  int bForce)
+OGRErr OGRMutexedLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                   bool bForce)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
-    return OGRLayerDecorator::GetExtent(iGeomField, psExtent, bForce);
-}
-
-OGRErr OGRMutexedLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    CPLMutexHolderOptionalLockD(m_hMutex);
-    return OGRLayerDecorator::GetExtent(psExtent, bForce);
+    return OGRLayerDecorator::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 int OGRMutexedLayer::TestCapability(const char *pszCapability)

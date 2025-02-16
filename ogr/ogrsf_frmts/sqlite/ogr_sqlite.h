@@ -357,9 +357,9 @@ class OGRSQLiteTableLayer final : public OGRSQLiteLayer
     virtual const char *GetName() override;
 
     virtual GIntBig GetFeatureCount(int) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override;
+
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
@@ -369,8 +369,8 @@ class OGRSQLiteTableLayer final : public OGRSQLiteLayer
         return m_bLayerDefnError;
     }
 
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *) override;
     virtual OGRErr SetAttributeFilter(const char *) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
@@ -504,12 +504,8 @@ class OGRSQLiteViewLayer final : public OGRSQLiteLayer
     virtual OGRFeature *GetNextFeature() override;
     virtual GIntBig GetFeatureCount(int) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRSQLiteLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *poGeom) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 
@@ -552,23 +548,14 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
     virtual OGRFeature *GetNextFeature() override;
     virtual GIntBig GetFeatureCount(int) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *) override;
     virtual OGRErr SetAttributeFilter(const char *) override;
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override
-    {
-        return GetExtent(0, psExtent, bForce);
-    }
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
@@ -600,7 +587,7 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
         return OGRSQLiteLayer::GetSpatialRef();
     }
 
-    virtual int InstallFilter(OGRGeometry *poGeomIn) override
+    virtual int InstallFilter(const OGRGeometry *poGeomIn) override
     {
         return OGRSQLiteLayer::InstallFilter(poGeomIn);
     }
@@ -635,15 +622,10 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
         return OGRSQLiteLayer::TestCapability(pszCap);
     }
 
-    virtual OGRErr BaseGetExtent(OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRSQLiteLayer::GetExtent(psExtent, bForce);
-    }
-
     virtual OGRErr BaseGetExtent(int iGeomField, OGREnvelope *psExtent,
-                                 int bForce) override
+                                 bool bForce) override
     {
-        return OGRSQLiteLayer::GetExtent(iGeomField, psExtent, bForce);
+        return OGRSQLiteLayer::IGetExtent(iGeomField, psExtent, bForce);
     }
 
     bool

@@ -1073,18 +1073,18 @@ OGRErr OGRHanaTableLayer::GetGeometryWkb(OGRFeature *feature, int fieldIndex,
 }
 
 /************************************************************************/
-/*                                 GetExtent()                          */
+/*                                IGetExtent()                          */
 /************************************************************************/
 
-OGRErr OGRHanaTableLayer::GetExtent(int geomField, OGREnvelope *extent,
-                                    int force)
+OGRErr OGRHanaTableLayer::IGetExtent(int geomField, OGREnvelope *extent,
+                                     bool force)
 {
     if (geomField >= 0 && geomField < GetLayerDefn()->GetGeomFieldCount())
     {
         FlushPendingBatches(false);
     }
 
-    return OGRHanaLayer::GetExtent(geomField, extent, force);
+    return OGRHanaLayer::IGetExtent(geomField, extent, force);
 }
 
 /************************************************************************/

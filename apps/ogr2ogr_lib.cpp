@@ -795,26 +795,10 @@ class OGRSplitListFieldLayer : public OGRLayer
         return poSrcLayer->GetStyleTable();
     }
 
-    virtual void SetSpatialFilter(OGRGeometry *poGeom) override
+    virtual OGRErr ISetSpatialFilter(int iGeom,
+                                     const OGRGeometry *poGeom) override
     {
-        poSrcLayer->SetSpatialFilter(poGeom);
-    }
-
-    virtual void SetSpatialFilter(int iGeom, OGRGeometry *poGeom) override
-    {
-        poSrcLayer->SetSpatialFilter(iGeom, poGeom);
-    }
-
-    virtual void SetSpatialFilterRect(double dfMinX, double dfMinY,
-                                      double dfMaxX, double dfMaxY) override
-    {
-        poSrcLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
-    }
-
-    virtual void SetSpatialFilterRect(int iGeom, double dfMinX, double dfMinY,
-                                      double dfMaxX, double dfMaxY) override
-    {
-        poSrcLayer->SetSpatialFilterRect(iGeom, dfMinX, dfMinY, dfMaxX, dfMaxY);
+        return poSrcLayer->SetSpatialFilter(iGeom, poGeom);
     }
 
     virtual OGRErr SetAttributeFilter(const char *pszFilter) override
@@ -4053,7 +4037,7 @@ static void DoFieldTypeConversion(GDALDataset *poDstDS,
                  EQUAL(poDstDriver->GetDescription(), "ESRI Shapefile"))
         {
             // Just be silent. The shapefile driver will itself emit a
-            // warning mentionning it converts DateTime to String.
+            // warning mentioning it converts DateTime to String.
         }
         else if (!bQuiet)
         {

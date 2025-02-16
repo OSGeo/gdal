@@ -640,10 +640,14 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "NGW_BATCH_SIZE", // from gdalngwdataset.cpp
    "NGW_CACHE_EXPIRES", // from gdalngwdataset.cpp
    "NGW_CACHE_MAX_SIZE", // from gdalngwdataset.cpp
+   "NGW_CONNECTTIMEOUT", // from gdalngwdataset.cpp, ogrngwdriver.cpp
    "NGW_EXTENSIONS", // from gdalngwdataset.cpp
    "NGW_JSON_DEPTH", // from gdalngwdataset.cpp
+   "NGW_MAX_RETRY", // from gdalngwdataset.cpp, ogrngwdriver.cpp
    "NGW_NATIVE_DATA", // from gdalngwdataset.cpp
    "NGW_PAGE_SIZE", // from gdalngwdataset.cpp
+   "NGW_RETRY_DELAY", // from gdalngwdataset.cpp, ogrngwdriver.cpp
+   "NGW_TIMEOUT", // from gdalngwdataset.cpp, ogrngwdriver.cpp
    "NGW_USERPWD", // from gdalngwdataset.cpp, ogrngwdriver.cpp
    "NITF_DISABLE_RPF_LOCATION_TABLE_SANITY_TESTS", // from nitfimage.c
    "NITF_OPEN_UNDERLYING_DS", // from nitfdataset.cpp, nitfrasterband.cpp

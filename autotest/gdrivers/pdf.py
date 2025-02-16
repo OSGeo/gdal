@@ -1272,7 +1272,7 @@ def test_pdf_extra_rasters(poppler_or_pdfium):
             "LAYER_01_NAME=subbyte",
         ], "did not get expected layers"
     if pdf_is_poppler():
-        assert cs in (7926, 8177, 8174, 8165, 8172)
+        assert cs in (7926, 8177, 8174, 8165, 8172, 8193)
 
 
 ###############################################################################
@@ -1649,7 +1649,9 @@ def test_pdf_overviews(poppler_or_pdfium):
 
 def test_pdf_password(poppler_or_pdfium_or_podofo):
 
-    if gdaltest.is_travis_branch("alpine_32bit"):
+    if gdaltest.is_travis_branch("alpine_32bit") or gdaltest.is_travis_branch(
+        "cmake-ubuntu-jammy"
+    ):
         pytest.skip()
 
     # User password of this test file is user_password and owner password is

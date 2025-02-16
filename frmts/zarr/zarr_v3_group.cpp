@@ -248,6 +248,11 @@ ZarrV3Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
     // Implicit group
     if (VSIStatL(osSubDir.c_str(), &sStat) == 0 && VSI_ISDIR(sStat.st_mode))
     {
+        // Note: Python zarr v3.0.2 still generates implicit groups
+        // See https://github.com/zarr-developers/zarr-python/issues/2794
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Support for Zarr V3 implicit group is now deprecated, and "
+                 "may be removed in a future version");
         auto poSubGroup = ZarrV3Group::Create(m_poSharedResource, GetFullName(),
                                               osName, osSubDir);
         poSubGroup->m_poParent =
@@ -580,13 +585,13 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         oCodecs.Add(oCodec);
     }
 
-    // Not documented
-    const char *pszEndian = CSLFetchNameValue(papszOptions, "@ENDIAN");
-    if (pszEndian)
+    // Not documented option, but 'bytes' codec is required
+    const char *pszEndian =
+        CSLFetchNameValueDef(papszOptions, "@ENDIAN", "little");
     {
         CPLJSONObject oCodec;
-        oCodec.Add("name", "endian");
-        oCodec.Add("configuration", ZarrV3CodecEndian::GetConfiguration(
+        oCodec.Add("name", "bytes");
+        oCodec.Add("configuration", ZarrV3CodecBytes::GetConfiguration(
                                         EQUAL(pszEndian, "little")));
         oCodecs.Add(oCodec);
     }
@@ -653,6 +658,18 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         oCodec.Add("configuration",
                    ZarrV3CodecBlosc::GetConfiguration(cname, clevel, shuffle,
                                                       typesize, blocksize));
+        oCodecs.Add(oCodec);
+    }
+    else if (EQUAL(pszCompressor, "ZSTD"))
+    {
+        CPLJSONObject oCodec;
+        oCodec.Add("name", "zstd");
+        const char *pszLevel =
+            CSLFetchNameValueDef(papszOptions, "ZSTD_LEVEL", "13");
+        const bool bChecksum = CPLTestBool(
+            CSLFetchNameValueDef(papszOptions, "ZSTD_CHECKSUM", "FALSE"));
+        oCodec.Add("configuration", ZarrV3CodecZstd::GetConfiguration(
+                                        atoi(pszLevel), bChecksum));
         oCodecs.Add(oCodec);
     }
     else if (!EQUAL(pszCompressor, "NONE"))

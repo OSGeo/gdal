@@ -226,15 +226,20 @@ void OGRElasticAggregationLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGRElasticAggregationLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGRElasticAggregationLayer::ISetSpatialFilter(int iGeomField,
+                                                     const OGRGeometry *poGeom)
 
 {
-    OGRLayer::SetSpatialFilter(poGeom);
-    m_bFeaturesRequested = false;
-    m_apoCachedFeatures.clear();
+    const OGRErr eErr = OGRLayer::ISetSpatialFilter(iGeomField, poGeom);
+    if (eErr == OGRERR_NONE)
+    {
+        m_bFeaturesRequested = false;
+        m_apoCachedFeatures.clear();
+    }
+    return eErr;
 }
 
 /************************************************************************/

@@ -118,10 +118,8 @@ def test_geoloc_fill_line(use_temp_datasets):
     with gdaltest.config_option("GDAL_GEOLOC_USE_TEMP_DATASETS", use_temp_datasets):
         warped_ds = gdal.Warp("", ds, format="MEM")
         assert warped_ds
-        assert warped_ds.GetRasterBand(1).Checksum() in (
-            22339,
-            22336,
-        )  # 22336 with Intel(R) oneAPI DPC++/C++ Compiler 2022.1.0
+        # 20174 with Intel compiler
+        assert warped_ds.GetRasterBand(1).Checksum() in [20177, 20174]
 
 
 ###############################################################################

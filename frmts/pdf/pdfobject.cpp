@@ -979,13 +979,13 @@ class GDALPDFDictionaryPoppler : public GDALPDFDictionary
 class GDALPDFArrayPoppler : public GDALPDFArray
 {
   private:
-    Array *m_poArray;
+    const Array *m_poArray;
     std::vector<std::unique_ptr<GDALPDFObject>> m_v{};
 
     CPL_DISALLOW_COPY_ASSIGN(GDALPDFArrayPoppler)
 
   public:
-    GDALPDFArrayPoppler(Array *poArray) : m_poArray(poArray)
+    GDALPDFArrayPoppler(const Array *poArray) : m_poArray(poArray)
     {
     }
 
@@ -1334,7 +1334,7 @@ std::map<CPLString, GDALPDFObject *> &GDALPDFDictionaryPoppler::GetValues()
 /*                           GDALPDFCreateArray()                       */
 /************************************************************************/
 
-GDALPDFArray *GDALPDFCreateArray(Array *array)
+GDALPDFArray *GDALPDFCreateArray(const Array *array)
 {
     return new GDALPDFArrayPoppler(array);
 }

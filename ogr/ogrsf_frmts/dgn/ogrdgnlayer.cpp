@@ -187,14 +187,14 @@ OGRDGNLayer::~OGRDGNLayer()
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRDGNLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGRDGNLayer::ISetSpatialFilter(int, const OGRGeometry *poGeomIn)
 
 {
     if (!InstallFilter(poGeomIn))
-        return;
+        return OGRERR_NONE;
 
     if (m_poFilterGeom != nullptr)
     {
@@ -208,6 +208,7 @@ void OGRDGNLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
     }
 
     ResetReading();
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -984,10 +985,11 @@ GIntBig OGRDGNLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRDGNLayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
+OGRErr OGRDGNLayer::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,
+                               bool /* bForce */)
 {
     double adfExtents[6];
 

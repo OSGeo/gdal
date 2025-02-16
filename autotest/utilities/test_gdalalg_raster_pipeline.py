@@ -19,9 +19,7 @@ from osgeo import gdal
 
 
 def get_pipeline_alg():
-    reg = gdal.GetGlobalAlgorithmRegistry()
-    raster = reg.InstantiateAlg("raster")
-    return raster.InstantiateSubAlgorithm("pipeline")
+    return gdal.GetGlobalAlgorithmRegistry()["raster"]["pipeline"]
 
 
 def test_gdalalg_raster_pipeline_read_and_write(tmp_vsimem):
@@ -68,11 +66,9 @@ def test_gdalalg_raster_pipeline_as_api(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out.tif")
 
     pipeline = get_pipeline_alg()
-    pipeline.GetArg("pipeline").Set(
-        f"read ../gcore/data/byte.tif ! write {out_filename}"
-    )
+    pipeline["pipeline"] = f"read ../gcore/data/byte.tif ! write {out_filename}"
     assert pipeline.Run()
-    ds = pipeline.GetArg("output").Get().GetDataset()
+    ds = pipeline["output"].GetDataset()
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert pipeline.Finalize()
     ds = None
@@ -86,8 +82,8 @@ def test_gdalalg_raster_pipeline_input_through_api(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out.tif")
 
     pipeline = get_pipeline_alg()
-    pipeline.GetArg("input").Get().SetDataset(gdal.OpenEx("../gcore/data/byte.tif"))
-    pipeline.GetArg("pipeline").Set(f"read ! write {out_filename}")
+    pipeline["input"] = "../gcore/data/byte.tif"
+    pipeline["pipeline"] = f"read ! write {out_filename}"
     assert pipeline.Run()
     assert pipeline.Finalize()
 
@@ -100,8 +96,8 @@ def test_gdalalg_raster_pipeline_input_through_api_run_twice(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out.tif")
 
     pipeline = get_pipeline_alg()
-    pipeline.GetArg("input").Get().SetDataset(gdal.OpenEx("../gcore/data/byte.tif"))
-    pipeline.GetArg("pipeline").Set(f"read ! write {out_filename}")
+    pipeline["input"] = "../gcore/data/byte.tif"
+    pipeline["pipeline"] = f"read ! write {out_filename}"
     assert pipeline.Run()
     with pytest.raises(
         Exception, match=r"pipeline: Step nr 0 \(read\) has already an output dataset"
@@ -114,8 +110,8 @@ def test_gdalalg_raster_pipeline_output_through_api(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out.tif")
 
     pipeline = get_pipeline_alg()
-    pipeline.GetArg("output").Get().SetName(out_filename)
-    pipeline.GetArg("pipeline").Set("read ../gcore/data/byte.tif ! write")
+    pipeline["output"] = out_filename
+    pipeline["pipeline"] = "read ../gcore/data/byte.tif ! write"
     assert pipeline.Run()
     assert pipeline.Finalize()
 
@@ -126,7 +122,7 @@ def test_gdalalg_raster_pipeline_output_through_api(tmp_vsimem):
 def test_gdalalg_raster_pipeline_as_api_error():
 
     pipeline = get_pipeline_alg()
-    pipeline.GetArg("pipeline").Set("read")
+    pipeline["pipeline"] = "read"
     with pytest.raises(Exception, match="pipeline: At least 2 steps must be provided"):
         pipeline.Run()
 

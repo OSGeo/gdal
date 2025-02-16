@@ -877,12 +877,9 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
                           const int *panUpdatedGeomFieldsIdx,
                           bool bUpdateStyleString) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
-    virtual void SetSpatialFilter(OGRGeometry *) override;
 
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRGeoPackageLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     OGRErr SetAttributeFilter(const char *pszQuery) override;
     OGRErr SyncToDisk() override;
@@ -892,16 +889,12 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr CommitTransaction() override;
     OGRErr RollbackTransaction() override;
     GIntBig GetFeatureCount(int) override;
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
 
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    virtual OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
-                               int bForce) override;
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                        bool bForce) override;
     OGRGeometryTypeCounter *GetGeometryTypes(int iGeomField, int nFlagsGGT,
                                              int &nEntryCountOut,
                                              GDALProgressFunc pfnProgress,
@@ -1072,23 +1065,13 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer,
     virtual OGRFeature *GetNextFeature() override;
     virtual GIntBig GetFeatureCount(int) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
+    OGRErr ISetSpatialFilter(int iGeomField, const OGRGeometry *) override;
     virtual OGRErr SetAttributeFilter(const char *) override;
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override
-    {
-        return GetExtent(0, psExtent, bForce);
-    }
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
@@ -1120,7 +1103,7 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer,
         return OGRGeoPackageLayer::GetSpatialRef();
     }
 
-    virtual int InstallFilter(OGRGeometry *poGeomIn) override
+    virtual int InstallFilter(const OGRGeometry *poGeomIn) override
     {
         return OGRGeoPackageLayer::InstallFilter(poGeomIn);
     }
@@ -1155,15 +1138,10 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer,
         return OGRGeoPackageLayer::TestCapability(pszCap);
     }
 
-    virtual OGRErr BaseGetExtent(OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRGeoPackageLayer::GetExtent(psExtent, bForce);
-    }
-
     virtual OGRErr BaseGetExtent(int iGeomField, OGREnvelope *psExtent,
-                                 int bForce) override
+                                 bool bForce) override
     {
-        return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce);
+        return OGRGeoPackageLayer::IGetExtent(iGeomField, psExtent, bForce);
     }
 
     bool

@@ -257,7 +257,7 @@ template <class Tin> struct sGDALCopyWord<Tin, double>
     }
 };
 
-// Floating point input and output, converting between indentical types: simply copy
+// Floating point input and output, converting between identical types: simply copy
 
 template <> struct sGDALCopyWord<GFloat16, GFloat16>
 {

@@ -508,18 +508,19 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition(const char *pszTable)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGROCITableLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGROCITableLayer::ISetSpatialFilter(int, const OGRGeometry *poGeomIn)
 
 {
     if (!InstallFilter(poGeomIn))
-        return;
+        return OGRERR_NONE;
 
     BuildWhere();
 
     ResetReading();
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -1362,10 +1363,11 @@ OGRErr OGROCITableLayer::UnboundCreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           GetExtent()                                */
+/*                           IGetExtent()                               */
 /************************************************************************/
 
-OGRErr OGROCITableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGROCITableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                    bool bForce)
 
 {
     CPLAssert(nullptr != psExtent);
@@ -1443,7 +1445,7 @@ OGRErr OGROCITableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     /* -------------------------------------------------------------------- */
     if (err != OGRERR_NONE)
     {
-        err = OGRLayer::GetExtent(psExtent, bForce);
+        err = OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
         CPLDebug("OCI", "Failing to query extent of %s using default GetExtent",
                  osTableName.c_str());
     }

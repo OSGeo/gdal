@@ -271,20 +271,11 @@ class MBTilesVectorLayer final : public OGRLayer
     virtual GIntBig GetFeatureCount(int bForce) override;
     virtual int TestCapability(const char *) override;
 
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
-
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *poGeom) override;
 
     virtual OGRFeature *GetFeature(GIntBig nFID) override;
 };
@@ -1536,10 +1527,11 @@ int MBTilesVectorLayer::TestCapability(const char *pszCap)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr MBTilesVectorLayer::GetExtent(OGREnvelope *psExtent, int)
+OGRErr MBTilesVectorLayer::IGetExtent(int /* iGeomField */,
+                                      OGREnvelope *psExtent, bool /* bForce */)
 {
     *psExtent = m_sExtent;
     return OGRERR_NONE;
@@ -1569,71 +1561,76 @@ void MBTilesVectorLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                         SetSpatialFilter()                           */
+/*                        ISetSpatialFilter()                           */
 /************************************************************************/
 
-void MBTilesVectorLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr MBTilesVectorLayer::ISetSpatialFilter(int iGeomField,
+                                             const OGRGeometry *poGeomIn)
 {
-    OGRLayer::SetSpatialFilter(poGeomIn);
-
-    if (m_poFilterGeom != nullptr && m_sFilterEnvelope.MinX <= -MAX_GM &&
-        m_sFilterEnvelope.MinY <= -MAX_GM && m_sFilterEnvelope.MaxX >= MAX_GM &&
-        m_sFilterEnvelope.MaxY >= MAX_GM)
+    OGRErr eErr = OGRLayer::ISetSpatialFilter(iGeomField, poGeomIn);
+    if (eErr == OGRERR_NONE)
     {
-        if (m_bZoomLevelAuto)
+        if (m_poFilterGeom != nullptr && m_sFilterEnvelope.MinX <= -MAX_GM &&
+            m_sFilterEnvelope.MinY <= -MAX_GM &&
+            m_sFilterEnvelope.MaxX >= MAX_GM &&
+            m_sFilterEnvelope.MaxY >= MAX_GM)
         {
-            m_nZoomLevel = m_poDS->m_nMinZoomLevel;
+            if (m_bZoomLevelAuto)
+            {
+                m_nZoomLevel = m_poDS->m_nMinZoomLevel;
+            }
+            m_nFilterMinX = 0;
+            m_nFilterMinY = 0;
+            m_nFilterMaxX = (1 << m_nZoomLevel) - 1;
+            m_nFilterMaxY = (1 << m_nZoomLevel) - 1;
         }
-        m_nFilterMinX = 0;
-        m_nFilterMinY = 0;
-        m_nFilterMaxX = (1 << m_nZoomLevel) - 1;
-        m_nFilterMaxY = (1 << m_nZoomLevel) - 1;
-    }
-    else if (m_poFilterGeom != nullptr &&
-             m_sFilterEnvelope.MinX >= -10 * MAX_GM &&
-             m_sFilterEnvelope.MinY >= -10 * MAX_GM &&
-             m_sFilterEnvelope.MaxX <= 10 * MAX_GM &&
-             m_sFilterEnvelope.MaxY <= 10 * MAX_GM)
-    {
-        if (m_bZoomLevelAuto)
+        else if (m_poFilterGeom != nullptr &&
+                 m_sFilterEnvelope.MinX >= -10 * MAX_GM &&
+                 m_sFilterEnvelope.MinY >= -10 * MAX_GM &&
+                 m_sFilterEnvelope.MaxX <= 10 * MAX_GM &&
+                 m_sFilterEnvelope.MaxY <= 10 * MAX_GM)
         {
-            double dfExtent =
-                std::min(m_sFilterEnvelope.MaxX - m_sFilterEnvelope.MinX,
-                         m_sFilterEnvelope.MaxY - m_sFilterEnvelope.MinY);
-            m_nZoomLevel = std::max(
-                m_poDS->m_nMinZoomLevel,
-                std::min(static_cast<int>(0.5 + log(2 * MAX_GM / dfExtent) /
-                                                    log(2.0)),
-                         m_poDS->m_nZoomLevel));
-            CPLDebug("MBTILES", "Zoom level = %d", m_nZoomLevel);
+            if (m_bZoomLevelAuto)
+            {
+                double dfExtent =
+                    std::min(m_sFilterEnvelope.MaxX - m_sFilterEnvelope.MinX,
+                             m_sFilterEnvelope.MaxY - m_sFilterEnvelope.MinY);
+                m_nZoomLevel = std::max(
+                    m_poDS->m_nMinZoomLevel,
+                    std::min(static_cast<int>(0.5 + log(2 * MAX_GM / dfExtent) /
+                                                        log(2.0)),
+                             m_poDS->m_nZoomLevel));
+                CPLDebug("MBTILES", "Zoom level = %d", m_nZoomLevel);
+            }
+            const double dfTileDim = 2 * MAX_GM / (1 << m_nZoomLevel);
+            m_nFilterMinX = std::max(
+                0, static_cast<int>(
+                       floor((m_sFilterEnvelope.MinX + MAX_GM) / dfTileDim)));
+            m_nFilterMinY = std::max(
+                0, static_cast<int>(
+                       floor((m_sFilterEnvelope.MinY + MAX_GM) / dfTileDim)));
+            m_nFilterMaxX =
+                std::min(static_cast<int>(ceil(
+                             (m_sFilterEnvelope.MaxX + MAX_GM) / dfTileDim)),
+                         (1 << m_nZoomLevel) - 1);
+            m_nFilterMaxY =
+                std::min(static_cast<int>(ceil(
+                             (m_sFilterEnvelope.MaxY + MAX_GM) / dfTileDim)),
+                         (1 << m_nZoomLevel) - 1);
         }
-        const double dfTileDim = 2 * MAX_GM / (1 << m_nZoomLevel);
-        m_nFilterMinX =
-            std::max(0, static_cast<int>(floor(
-                            (m_sFilterEnvelope.MinX + MAX_GM) / dfTileDim)));
-        m_nFilterMinY =
-            std::max(0, static_cast<int>(floor(
-                            (m_sFilterEnvelope.MinY + MAX_GM) / dfTileDim)));
-        m_nFilterMaxX =
-            std::min(static_cast<int>(
-                         ceil((m_sFilterEnvelope.MaxX + MAX_GM) / dfTileDim)),
-                     (1 << m_nZoomLevel) - 1);
-        m_nFilterMaxY =
-            std::min(static_cast<int>(
-                         ceil((m_sFilterEnvelope.MaxY + MAX_GM) / dfTileDim)),
-                     (1 << m_nZoomLevel) - 1);
-    }
-    else
-    {
-        if (m_bZoomLevelAuto)
+        else
         {
-            m_nZoomLevel = m_poDS->m_nZoomLevel;
+            if (m_bZoomLevelAuto)
+            {
+                m_nZoomLevel = m_poDS->m_nZoomLevel;
+            }
+            m_nFilterMinX = 0;
+            m_nFilterMinY = 0;
+            m_nFilterMaxX = (1 << m_nZoomLevel) - 1;
+            m_nFilterMaxY = (1 << m_nZoomLevel) - 1;
         }
-        m_nFilterMinX = 0;
-        m_nFilterMinY = 0;
-        m_nFilterMaxX = (1 << m_nZoomLevel) - 1;
-        m_nFilterMaxY = (1 << m_nZoomLevel) - 1;
     }
+    return eErr;
 }
 
 /************************************************************************/

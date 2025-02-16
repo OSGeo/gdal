@@ -60,18 +60,18 @@ OGROGDILayer::~OGROGDILayer()
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGROGDILayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGROGDILayer::ISetSpatialFilter(int, const OGRGeometry *poGeomIn)
 
 {
-    if (!InstallFilter(poGeomIn))
-        return;
-
-    ResetReading();
-
-    m_nTotalShapeCount = -1;
+    if (InstallFilter(poGeomIn))
+    {
+        ResetReading();
+        m_nTotalShapeCount = -1;
+    }
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

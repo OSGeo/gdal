@@ -297,19 +297,11 @@ class OGCAPITiledLayer final
         return -1;
     }
 
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
-
-    void SetSpatialFilter(OGRGeometry *) override;
-
-    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     OGRFeature *GetFeature(GIntBig nFID) override;
     int TestCapability(const char *) override;
@@ -2771,61 +2763,66 @@ void OGCAPITiledLayer::SetExtent(double dfXMin, double dfYMin, double dfXMax,
 }
 
 /************************************************************************/
-/*                            GetExtent()                               */
+/*                           IGetExtent()                               */
 /************************************************************************/
 
-OGRErr OGCAPITiledLayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
+OGRErr OGCAPITiledLayer::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,
+                                    bool /* bForce */)
 {
     *psExtent = m_sEnvelope;
     return OGRERR_NONE;
 }
 
 /************************************************************************/
-/*                         SetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGCAPITiledLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGCAPITiledLayer::ISetSpatialFilter(int iGeomField,
+                                           const OGRGeometry *poGeomIn)
 {
-    OGRLayer::SetSpatialFilter(poGeomIn);
-
-    OGREnvelope sEnvelope;
-    if (m_poFilterGeom != nullptr)
-        sEnvelope = m_sFilterEnvelope;
-    else
-        sEnvelope = m_sEnvelope;
-
-    const double dfTileDim = m_oTileMatrix.mResX * m_oTileMatrix.mTileWidth;
-    const double dfOriX =
-        m_bInvertAxis ? m_oTileMatrix.mTopLeftY : m_oTileMatrix.mTopLeftX;
-    const double dfOriY =
-        m_bInvertAxis ? m_oTileMatrix.mTopLeftX : m_oTileMatrix.mTopLeftY;
-    if (sEnvelope.MinX - dfOriX >= -10 * dfTileDim &&
-        dfOriY - sEnvelope.MinY >= -10 * dfTileDim &&
-        sEnvelope.MaxX - dfOriX <= 10 * dfTileDim &&
-        dfOriY - sEnvelope.MaxY <= 10 * dfTileDim)
+    const OGRErr eErr = OGRLayer::ISetSpatialFilter(iGeomField, poGeomIn);
+    if (eErr == OGRERR_NONE)
     {
-        m_nCurMinX = std::max(
-            m_nMinX,
-            static_cast<int>(floor((sEnvelope.MinX - dfOriX) / dfTileDim)));
-        m_nCurMinY = std::max(
-            m_nMinY,
-            static_cast<int>(floor((dfOriY - sEnvelope.MaxY) / dfTileDim)));
-        m_nCurMaxX = std::min(
-            m_nMaxX,
-            static_cast<int>(floor((sEnvelope.MaxX - dfOriX) / dfTileDim)));
-        m_nCurMaxY = std::min(
-            m_nMaxY,
-            static_cast<int>(floor((dfOriY - sEnvelope.MinY) / dfTileDim)));
-    }
-    else
-    {
-        m_nCurMinX = m_nMinX;
-        m_nCurMinY = m_nMinY;
-        m_nCurMaxX = m_nMaxX;
-        m_nCurMaxY = m_nMaxY;
-    }
+        OGREnvelope sEnvelope;
+        if (m_poFilterGeom != nullptr)
+            sEnvelope = m_sFilterEnvelope;
+        else
+            sEnvelope = m_sEnvelope;
 
-    ResetReading();
+        const double dfTileDim = m_oTileMatrix.mResX * m_oTileMatrix.mTileWidth;
+        const double dfOriX =
+            m_bInvertAxis ? m_oTileMatrix.mTopLeftY : m_oTileMatrix.mTopLeftX;
+        const double dfOriY =
+            m_bInvertAxis ? m_oTileMatrix.mTopLeftX : m_oTileMatrix.mTopLeftY;
+        if (sEnvelope.MinX - dfOriX >= -10 * dfTileDim &&
+            dfOriY - sEnvelope.MinY >= -10 * dfTileDim &&
+            sEnvelope.MaxX - dfOriX <= 10 * dfTileDim &&
+            dfOriY - sEnvelope.MaxY <= 10 * dfTileDim)
+        {
+            m_nCurMinX = std::max(
+                m_nMinX,
+                static_cast<int>(floor((sEnvelope.MinX - dfOriX) / dfTileDim)));
+            m_nCurMinY = std::max(
+                m_nMinY,
+                static_cast<int>(floor((dfOriY - sEnvelope.MaxY) / dfTileDim)));
+            m_nCurMaxX = std::min(
+                m_nMaxX,
+                static_cast<int>(floor((sEnvelope.MaxX - dfOriX) / dfTileDim)));
+            m_nCurMaxY = std::min(
+                m_nMaxY,
+                static_cast<int>(floor((dfOriY - sEnvelope.MinY) / dfTileDim)));
+        }
+        else
+        {
+            m_nCurMinX = m_nMinX;
+            m_nCurMinY = m_nMinY;
+            m_nCurMaxX = m_nMaxX;
+            m_nCurMaxY = m_nMaxY;
+        }
+
+        ResetReading();
+    }
+    return eErr;
 }
 
 /************************************************************************/

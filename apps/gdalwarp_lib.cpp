@@ -2762,36 +2762,35 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                     }
                 }
                 std::vector<int> abSuccess(nPoints);
-                if (pfnTransformer(hTransformArg, TRUE, nPoints, &adfX[0],
-                                   &adfY[0], &adfZ[0], &abSuccess[0]))
+                pfnTransformer(hTransformArg, TRUE, nPoints, &adfX[0], &adfY[0],
+                               &adfZ[0], &abSuccess[0]);
+
+                double dfMinSrcX = std::numeric_limits<double>::infinity();
+                double dfMaxSrcX = -std::numeric_limits<double>::infinity();
+                double dfMinSrcY = std::numeric_limits<double>::infinity();
+                double dfMaxSrcY = -std::numeric_limits<double>::infinity();
+                for (int i = 0; i < nPoints; i++)
                 {
-                    double dfMinSrcX = std::numeric_limits<double>::infinity();
-                    double dfMaxSrcX = -std::numeric_limits<double>::infinity();
-                    double dfMinSrcY = std::numeric_limits<double>::infinity();
-                    double dfMaxSrcY = -std::numeric_limits<double>::infinity();
-                    for (int i = 0; i < nPoints; i++)
+                    if (abSuccess[i])
                     {
-                        if (abSuccess[i])
-                        {
-                            dfMinSrcX = std::min(dfMinSrcX, adfX[i]);
-                            dfMaxSrcX = std::max(dfMaxSrcX, adfX[i]);
-                            dfMinSrcY = std::min(dfMinSrcY, adfY[i]);
-                            dfMaxSrcY = std::max(dfMaxSrcY, adfY[i]);
-                        }
+                        dfMinSrcX = std::min(dfMinSrcX, adfX[i]);
+                        dfMaxSrcX = std::max(dfMaxSrcX, adfX[i]);
+                        dfMinSrcY = std::min(dfMinSrcY, adfY[i]);
+                        dfMaxSrcY = std::max(dfMaxSrcY, adfY[i]);
                     }
-                    if (dfMaxSrcX > dfMinSrcX)
-                    {
-                        dfTargetRatioX = (dfMaxSrcX - dfMinSrcX) /
-                                         GDALGetRasterXSize(hDstDS);
-                    }
-                    if (dfMaxSrcY > dfMinSrcY)
-                    {
-                        dfTargetRatioY = (dfMaxSrcY - dfMinSrcY) /
-                                         GDALGetRasterYSize(hDstDS);
-                    }
-                    // take the minimum of these ratios #7019
-                    dfTargetRatio = std::min(dfTargetRatioX, dfTargetRatioY);
                 }
+                if (dfMaxSrcX > dfMinSrcX)
+                {
+                    dfTargetRatioX =
+                        (dfMaxSrcX - dfMinSrcX) / GDALGetRasterXSize(hDstDS);
+                }
+                if (dfMaxSrcY > dfMinSrcY)
+                {
+                    dfTargetRatioY =
+                        (dfMaxSrcY - dfMinSrcY) / GDALGetRasterYSize(hDstDS);
+                }
+                // take the minimum of these ratios #7019
+                dfTargetRatio = std::min(dfTargetRatioX, dfTargetRatioY);
             }
             else
             {
