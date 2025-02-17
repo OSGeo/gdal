@@ -1261,9 +1261,9 @@ OGRProjCT::OGRProjCT(const OGRProjCT &other)
       m_osTargetSRS(other.m_osTargetSRS),
       bWebMercatorToWGS84LongLat(other.bWebMercatorToWGS84LongLat),
       nErrorCount(other.nErrorCount), dfThreshold(other.dfThreshold),
-      m_pj(other.m_pj),
-      m_bReversePj(other.m_bReversePj), m_bEmitErrors(other.m_bEmitErrors),
-      bNoTransform(other.bNoTransform), m_eStrategy(other.m_eStrategy),
+      m_pj(other.m_pj), m_bReversePj(other.m_bReversePj),
+      m_bEmitErrors(other.m_bEmitErrors), bNoTransform(other.bNoTransform),
+      m_eStrategy(other.m_eStrategy),
       m_oTransformations(other.m_oTransformations),
       m_iCurTransformation(other.m_iCurTransformation),
       m_options(other.m_options)
