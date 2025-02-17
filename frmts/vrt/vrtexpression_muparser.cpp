@@ -43,6 +43,28 @@ static std::optional<std::string> Sanitize(const std::string &osVariable)
     return std::nullopt;
 }
 
+static void ReplaceVariable(std::string &expression,
+                            const std::string &variable,
+                            const std::string &sanitized)
+{
+    std::string::size_type seekPos = 0;
+    auto pos = expression.find(variable, seekPos);
+    while (pos != std::string::npos)
+    {
+        auto end = pos + variable.size();
+
+        if (pos == 0 ||
+            (!std::isalnum(expression[pos - 1]) && expression[pos - 1] != '_'))
+        {
+            expression =
+                expression.substr(0, pos) + sanitized + expression.substr(end);
+        }
+
+        seekPos = end;
+        pos = expression.find(variable, seekPos);
+    }
+}
+
 class MuParserExpression::Impl
 {
   public:
@@ -89,11 +111,11 @@ class MuParserExpression::Impl
 
         try
         {
-            CPLString tmpExpression(m_osExpression);
+            std::string tmpExpression(m_osExpression);
 
             for (const auto &[osFrom, osTo] : m_oSubstitutions)
             {
-                tmpExpression.replaceAll(osFrom, osTo);
+                ReplaceVariable(tmpExpression, osFrom, osTo);
             }
 
             m_oParser.SetExpr(tmpExpression);
