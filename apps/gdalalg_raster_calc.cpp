@@ -101,7 +101,8 @@ struct SourceProperties
     int nX{0};
     int nY{0};
     std::array<double, 6> gt{};
-    OGRSpatialReference *srs{nullptr};
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> srs{
+        nullptr};
 };
 
 static std::optional<SourceProperties>
@@ -136,7 +137,7 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
         if (options.checkSRS && out.srs)
         {
             const OGRSpatialReference *srs = ds->GetSpatialRef();
-            srsMismatch = srs && !srs->IsSame(out.srs);
+            srsMismatch = srs && !srs->IsSame(out.srs.get());
         }
     }
 
@@ -461,7 +462,8 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
         out.nX = ds->GetRasterXSize();
         out.nY = ds->GetRasterYSize();
         out.nBands = 1;
-        out.srs = ds->GetSpatialRef() ? ds->GetSpatialRef()->Clone() : nullptr;
+        out.srs.reset(ds->GetSpatialRef() ? ds->GetSpatialRef()->Clone()
+                                          : nullptr);
         ds->GetGeoTransform(out.gt.data());
     }
 
@@ -476,7 +478,7 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
         auto props = UpdateSourceProperties(out, dsn, options);
         if (props.has_value())
         {
-            sourceProps[source_name] = props.value();
+            sourceProps[source_name] = std::move(props.value());
         }
         else
         {
@@ -503,7 +505,7 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
     ds->SetGeoTransform(out.gt.data());
     if (out.srs)
     {
-        ds->SetSpatialRef(OGRSpatialReference::FromHandle(out.srs));
+        ds->SetSpatialRef(OGRSpatialReference::FromHandle(out.srs.get()));
     }
 
     return ds;
