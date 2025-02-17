@@ -1996,18 +1996,19 @@ def test_cog_preserve_ALPHA_PREMULTIPLIED_on_copy(tmp_vsimem):
 
 
 @gdaltest.enable_exceptions()
-def test_cog_write_interleave_tile(tmp_vsimem):
+@pytest.mark.parametrize("INTERLEAVE", ["TILE", "BAND"])
+def test_cog_write_interleave_tile_or_band(tmp_vsimem, INTERLEAVE):
     out_filename = str(tmp_vsimem / "out.tif")
 
     with gdal.quiet_errors():
         gdal.GetDriverByName("COG").CreateCopy(
             out_filename,
             gdal.Open("data/rgbsmall.tif"),
-            options=["INTERLEAVE=TILE", "BLOCKSIZE=32"],
+            options=["INTERLEAVE=" + INTERLEAVE, "BLOCKSIZE=32"],
         )
 
     ds = gdal.Open(out_filename)
-    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "TILE"
+    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == INTERLEAVE
     assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
 
     assert [ds.GetRasterBand(band + 1).Checksum() for band in range(3)] == [
@@ -2024,35 +2025,8 @@ def test_cog_write_interleave_tile(tmp_vsimem):
 
 
 @gdaltest.enable_exceptions()
-def test_cog_write_interleave_band(tmp_vsimem):
-    out_filename = str(tmp_vsimem / "out.tif")
-
-    with gdal.quiet_errors():
-        gdal.GetDriverByName("COG").CreateCopy(
-            out_filename,
-            gdal.Open("data/rgbsmall.tif"),
-            options=["INTERLEAVE=BAND", "BLOCKSIZE=32"],
-        )
-
-    ds = gdal.Open(out_filename)
-    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "BAND"
-    assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
-
-    assert [ds.GetRasterBand(band + 1).Checksum() for band in range(3)] == [
-        21212,
-        21053,
-        21349,
-    ]
-
-    _check_cog(out_filename)
-
-
-###############################################################################
-#
-
-
-@gdaltest.enable_exceptions()
-def test_cog_write_interleave_tile_with_mask(tmp_vsimem):
+@pytest.mark.parametrize("INTERLEAVE", ["TILE", "BAND"])
+def test_cog_write_interleave_with_mask(tmp_vsimem, INTERLEAVE):
     out_filename = str(tmp_vsimem / "out.tif")
 
     with gdal.quiet_errors():
@@ -2061,11 +2035,11 @@ def test_cog_write_interleave_tile_with_mask(tmp_vsimem):
             gdal.Translate(
                 "", "data/stefan_full_rgba.tif", options="-f MEM -b 1 -b 2 -b 3 -mask 4"
             ),
-            options=["INTERLEAVE=TILE", "BLOCKSIZE=32"],
+            options=["INTERLEAVE=" + INTERLEAVE, "BLOCKSIZE=32"],
         )
 
     ds = gdal.Open(out_filename)
-    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "TILE"
+    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == INTERLEAVE
     assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
 
     assert [ds.GetRasterBand(band + 1).Checksum() for band in range(3)] == [
@@ -2078,24 +2052,25 @@ def test_cog_write_interleave_tile_with_mask(tmp_vsimem):
     _check_cog(out_filename)
 
     # Check that the tiles are in the expected order in the file
-    last_offset = 0
-    for y in range(2):
-        for x in range(2):
-            for band in range(3):
-                offset = int(
-                    ds.GetRasterBand(band + 1).GetMetadataItem(
-                        f"BLOCK_OFFSET_{x}_{y}", "TIFF"
+    if INTERLEAVE == "TILE":
+        last_offset = 0
+        for y in range(2):
+            for x in range(2):
+                for band in range(3):
+                    offset = int(
+                        ds.GetRasterBand(band + 1).GetMetadataItem(
+                            f"BLOCK_OFFSET_{x}_{y}", "TIFF"
+                        )
                     )
+                    assert offset > last_offset
+                    last_offset = offset
+                offset = int(
+                    ds.GetRasterBand(1)
+                    .GetMaskBand()
+                    .GetMetadataItem(f"BLOCK_OFFSET_{x}_{y}", "TIFF")
                 )
                 assert offset > last_offset
                 last_offset = offset
-            offset = int(
-                ds.GetRasterBand(1)
-                .GetMaskBand()
-                .GetMetadataItem(f"BLOCK_OFFSET_{x}_{y}", "TIFF")
-            )
-            assert offset > last_offset
-            last_offset = offset
 
 
 ###############################################################################
