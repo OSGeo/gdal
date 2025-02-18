@@ -377,6 +377,23 @@ extern "C++"
          */
         ~CPLErrorStateBackuper();
     };
+
+    /** Class that turns errors into warning on construction, and
+     *  restores the previous state on destruction.
+     */
+    class CPL_DLL CPLTurnFailureIntoWarningBackuper
+    {
+      public:
+        CPLTurnFailureIntoWarningBackuper()
+        {
+            CPLTurnFailureIntoWarning(true);
+        }
+
+        ~CPLTurnFailureIntoWarningBackuper()
+        {
+            CPLTurnFailureIntoWarning(false);
+        }
+    };
 }
 
 #ifdef GDAL_COMPILATION
