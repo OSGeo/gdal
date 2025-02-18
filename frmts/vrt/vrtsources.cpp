@@ -489,6 +489,11 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML(const char *pszVRTPath)
                          CXT_Text, m_osResampling.c_str());
     }
 
+    if (!m_osName.empty())
+    {
+        CPLAddXMLAttributeAndValue(psSrc, "name", m_osName);
+    }
+
     if (m_bSrcDSNameFromVRT)
     {
         CPLAddXMLChild(psSrc, CPLParseXMLString(m_osSrcDSName.c_str()));

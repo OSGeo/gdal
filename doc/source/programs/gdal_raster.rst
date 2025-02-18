@@ -19,6 +19,7 @@ Synopsis
 
     Usage: gdal raster <SUBCOMMAND>
     where <SUBCOMMAND> is one of:
+      - calc:      Perform raster algebra.
       - clip:      Clip a raster dataset.
       - convert:   Convert a raster dataset.
       - edit:      Edit a raster dataset.
@@ -34,6 +35,7 @@ Available sub-commands
 ----------------------
 
 - :ref:`gdal_raster_info_subcommand`
+- :ref:`gdal_raster_calc_subcommand`
 - :ref:`gdal_raster_clip_subcommand`
 - :ref:`gdal_raster_convert_subcommand`
 - :ref:`gdal_raster_mosaic_subcommand`
