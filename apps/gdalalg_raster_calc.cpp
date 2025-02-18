@@ -368,8 +368,8 @@ static bool ParseSourceDescriptors(const std::vector<std::string> &inputs,
             name = input.substr(0, pos);
         }
 
-        std::string dsn = input.substr(pos + 1, input.size());
-        datasets[name] = dsn;
+        std::string dsn = (pos == std::string::npos) ? input : input.substr(pos + 1);
+        datasets[name] = std::move(dsn);
 
         if (isFirst)
         {
