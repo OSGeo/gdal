@@ -19,7 +19,7 @@ Synopsis
                 [--quiet]
                 [[-strict]|[-non_strict]]
                 [-tile_index <field_name>]
-                [-resolution user|average|highest|lowest|same]
+                [-resolution user|common|average|highest|lowest|same]
                 [-tr <xres> <yes>] [-input_file_list <filename>] [-separate]
                 [-allow_projection_difference] [-sd <n>] [-tap]
                 [-te <xmin> <ymin> <xmax> <ymax>] [-addalpha] [-b <band>]...
@@ -93,6 +93,8 @@ changed in later versions.
     `user` must be used in combination with the :option:`-tr` option to specify the target resolution.
 
     `same` (added in GDAL 3.11) checks that all source rasters have the same resolution and errors out when this is not the case.
+
+    `common` (added in GDAL 3.11) determines the greatest common divisor of the source pixel dimensions, e.g. 0.2 for source pixel dimensions of 0.4 and 0.6.
 
 .. option:: -tr <xres> <yres>
 

@@ -183,17 +183,32 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
         return std::nullopt;
     }
 
-    // Choose the finest resolution
-    // TODO modify to use common resolution (https://github.com/OSGeo/gdal/issues/11497)
+    // Find a common resolution
     if (source.nX > out.nX)
     {
-        out.nX = source.nX;
-        out.gt[1] = source.gt[1];
+        auto dx = CPLGreatestCommonDivisor(out.gt[1], source.gt[1]);
+        if (dx == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to find common resolution for inputs.");
+            return std::nullopt;
+        }
+        out.nX = static_cast<int>(
+            std::round(static_cast<double>(out.nX) * out.gt[1] / dx));
+        out.gt[1] = dx;
     }
     if (source.nY > out.nY)
     {
-        out.nY = source.nY;
-        out.gt[5] = source.gt[5];
+        auto dy = CPLGreatestCommonDivisor(out.gt[5], source.gt[5]);
+        if (dy == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to find common resolution for inputs.");
+            return std::nullopt;
+        }
+        out.nY = static_cast<int>(
+            std::round(static_cast<double>(out.nY) * out.gt[5] / dy));
+        out.gt[5] = dy;
     }
 
     if (srsMismatch)
