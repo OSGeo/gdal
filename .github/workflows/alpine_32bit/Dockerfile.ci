@@ -58,6 +58,7 @@ RUN apk add \
     py3-pyarrow-pyc \
     py3-numpy \
     py3-numpy-dev \
+    py3-numpy-tests \
     py3-pip \
     py3-setuptools \
     python3-dev \
