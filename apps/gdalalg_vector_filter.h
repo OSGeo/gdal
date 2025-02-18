@@ -27,8 +27,7 @@ class GDALVectorFilterAlgorithm /* non final */
   public:
     static constexpr const char *NAME = "filter";
     static constexpr const char *DESCRIPTION = "Filter a vector dataset.";
-    static constexpr const char *HELP_URL =
-        "/programs/gdal_vector_pipeline.html";
+    static constexpr const char *HELP_URL = "/programs/gdal_vector_filter.html";
 
     static std::vector<std::string> GetAliases()
     {
@@ -41,6 +40,7 @@ class GDALVectorFilterAlgorithm /* non final */
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     std::vector<double> m_bbox{};
+    std::string m_where{};
 };
 
 /************************************************************************/

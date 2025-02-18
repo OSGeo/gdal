@@ -5251,6 +5251,92 @@ class VSIFile(BytesIO):
         return VSIFTellL(self._fp)
 %}
 
+
+/* -------------------------------------------------------------------- */
+/* GDALAlgorithmRegistryHS                                              */
+/* -------------------------------------------------------------------- */
+
+%extend GDALAlgorithmRegistryHS {
+%pythoncode %{
+
+    def __getitem__(self, key):
+        """Instantiate an algorithm
+
+           Shortcut for self.InstantiateAlg(key)
+
+           Example
+           -------
+           >>> gdal.GetGlobalAlgorithmRegistry()["raster"]
+        """
+
+        return self.InstantiateAlg(key)
+%}
+}
+
+/* -------------------------------------------------------------------- */
+/* GDALAlgorithmHS                                                      */
+/* -------------------------------------------------------------------- */
+
+%extend GDALAlgorithmHS {
+%pythoncode %{
+
+    def __getitem__(self, key):
+        """Get the value of an argument.
+
+           Shortcut for self.GetActualAlgorithm().GetArg(key).Get()
+           or self.InstantiateSubAlgorithm(key) for a non-leaf algorithm
+
+           Parameters
+           -----------
+           key: str
+               Name of a known argument of the algorithm
+           value:
+               Value of the argument
+
+           Example
+           -------
+           >>> alg["output-string"]
+           >>> alg["output"].GetName()
+           >>> alg["output"].GetDataset()
+           >>> gdal.GetGlobalAlgorithmRegistry()["raster"]["info"]
+        """
+
+        if self.HasSubAlgorithms():
+            return self.InstantiateSubAlgorithm(key)
+        else:
+            return self.GetActualAlgorithm().GetArg(key).Get()
+
+    def __setitem__(self, key, value):
+        """Set the value of an argment.
+
+           Shortcut for self.GetArg(key).Set(value)
+
+           Parameters
+           -----------
+           key: str
+               Name of a known argument of the algorithm
+           value:
+               Value of the argument
+
+           Examples
+           --------
+           >>> alg["bbox"] = [2, 49, 3, 50]
+           >>> alg["where"] = "country = 'France'"
+           >>> alg["input"] = "byte.tif"
+           >>> alg["input"] = gdal.Open("byte.tif")
+           >>> alg["target-aligned-pixels"] = True
+
+           >>> # Multiple input datasets
+           >>> alg["input"] = ["one.tif", "two.tif"]
+           >>> alg["input"] = [one_ds, two_ds]
+        """
+
+        if not self.GetArg(key).Set(value):
+            raise Exception(f"Cannot set argument {key} to {value}")
+%}
+}
+
+
 /* -------------------------------------------------------------------- */
 /* GDALAlgorithmArgHS                                                   */
 /* -------------------------------------------------------------------- */
@@ -5290,9 +5376,11 @@ class VSIFile(BytesIO):
             return self.SetAsDouble(value)
         if type == GAAT_DATASET:
             if isinstance(value, str):
-                return self.GetAsDatasetValue().SetName(value)
+                self.GetAsDatasetValue().SetName(value)
+                return True
             elif isinstance(value, Dataset):
-                return self.GetAsDatasetValue().SetDataset(value)
+                self.GetAsDatasetValue().SetDataset(value)
+                return True
             else:
                 return self.SetAsDatasetValue(value)
         if type == GAAT_STRING_LIST:

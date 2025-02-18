@@ -324,7 +324,7 @@ void GDALDestroyTPSTransformer(void *pTransformArg)
  * @param panSuccess array in which a flag indicating success (TRUE) or
  * failure (FALSE) of the transformation are placed.
  *
- * @return TRUE.
+ * @return TRUE if all points have been successfully transformed.
  */
 
 int GDALTPSTransform(void *pTransformArg, int bDstToSrc, int nPointCount,

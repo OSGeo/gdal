@@ -29,18 +29,76 @@ ZarrV3Codec::ZarrV3Codec(const std::string &osName) : m_osName(osName)
 ZarrV3Codec::~ZarrV3Codec() = default;
 
 /************************************************************************/
-/*                        ZarrV3CodecGZip()                             */
+/*                      ZarrV3CodecAbstractCompressor()                 */
 /************************************************************************/
 
-ZarrV3CodecGZip::ZarrV3CodecGZip() : ZarrV3Codec(NAME)
+ZarrV3CodecAbstractCompressor::ZarrV3CodecAbstractCompressor(
+    const std::string &osName)
+    : ZarrV3Codec(osName)
 {
 }
 
 /************************************************************************/
-/*                       ~ZarrV3CodecGZip()                             */
+/*                 ZarrV3CodecAbstractCompressor::Encode()              */
 /************************************************************************/
 
-ZarrV3CodecGZip::~ZarrV3CodecGZip() = default;
+bool ZarrV3CodecAbstractCompressor::Encode(
+    const ZarrByteVectorQuickResize &abySrc,
+    ZarrByteVectorQuickResize &abyDst) const
+{
+    abyDst.resize(abyDst.capacity());
+    void *pOutputData = abyDst.data();
+    size_t nOutputSize = abyDst.size();
+    bool bRet = m_pCompressor->pfnFunc(
+        abySrc.data(), abySrc.size(), &pOutputData, &nOutputSize,
+        m_aosCompressorOptions.List(), m_pCompressor->user_data);
+    if (bRet)
+    {
+        abyDst.resize(nOutputSize);
+    }
+    else if (nOutputSize > abyDst.size())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s codec:Encode(): output buffer too small",
+                 m_osName.c_str());
+    }
+    return bRet;
+}
+
+/************************************************************************/
+/*                 ZarrV3CodecAbstractCompressor::Decode()              */
+/************************************************************************/
+
+bool ZarrV3CodecAbstractCompressor::Decode(
+    const ZarrByteVectorQuickResize &abySrc,
+    ZarrByteVectorQuickResize &abyDst) const
+{
+    abyDst.resize(abyDst.capacity());
+    void *pOutputData = abyDst.data();
+    size_t nOutputSize = abyDst.size();
+    bool bRet = m_pDecompressor->pfnFunc(abySrc.data(), abySrc.size(),
+                                         &pOutputData, &nOutputSize, nullptr,
+                                         m_pDecompressor->user_data);
+    if (bRet)
+    {
+        abyDst.resize(nOutputSize);
+    }
+    else if (nOutputSize > abyDst.size())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s codec:Decode(): output buffer too small",
+                 m_osName.c_str());
+    }
+    return bRet;
+}
+
+/************************************************************************/
+/*                        ZarrV3CodecGZip()                             */
+/************************************************************************/
+
+ZarrV3CodecGZip::ZarrV3CodecGZip() : ZarrV3CodecAbstractCompressor(NAME)
+{
+}
 
 /************************************************************************/
 /*                           GetConfiguration()                         */
@@ -136,68 +194,130 @@ std::unique_ptr<ZarrV3Codec> ZarrV3CodecGZip::Clone() const
 }
 
 /************************************************************************/
-/*                      ZarrV3CodecGZip::Encode()                       */
+/*                        ZarrV3CodecZstd()                             */
 /************************************************************************/
 
-bool ZarrV3CodecGZip::Encode(const ZarrByteVectorQuickResize &abySrc,
-                             ZarrByteVectorQuickResize &abyDst) const
+ZarrV3CodecZstd::ZarrV3CodecZstd() : ZarrV3CodecAbstractCompressor(NAME)
 {
-    abyDst.resize(abyDst.capacity());
-    void *pOutputData = abyDst.data();
-    size_t nOutputSize = abyDst.size();
-    bool bRet = m_pCompressor->pfnFunc(
-        abySrc.data(), abySrc.size(), &pOutputData, &nOutputSize,
-        m_aosCompressorOptions.List(), m_pCompressor->user_data);
-    if (bRet)
-    {
-        abyDst.resize(nOutputSize);
-    }
-    else if (nOutputSize > abyDst.size())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "ZarrV3CodecGZip::Encode(): output buffer too small");
-    }
-    return bRet;
 }
 
 /************************************************************************/
-/*                      ZarrV3CodecGZip::Decode()                       */
+/*                           GetConfiguration()                         */
 /************************************************************************/
 
-bool ZarrV3CodecGZip::Decode(const ZarrByteVectorQuickResize &abySrc,
-                             ZarrByteVectorQuickResize &abyDst) const
+/* static */ CPLJSONObject ZarrV3CodecZstd::GetConfiguration(int nLevel,
+                                                             bool checksum)
 {
-    abyDst.resize(abyDst.capacity());
-    void *pOutputData = abyDst.data();
-    size_t nOutputSize = abyDst.size();
-    bool bRet = m_pDecompressor->pfnFunc(abySrc.data(), abySrc.size(),
-                                         &pOutputData, &nOutputSize, nullptr,
-                                         m_pDecompressor->user_data);
-    if (bRet)
+    CPLJSONObject oConfig;
+    oConfig.Add("level", nLevel);
+    oConfig.Add("checksum", checksum);
+    return oConfig;
+}
+
+/************************************************************************/
+/*                   ZarrV3CodecZstd::InitFromConfiguration()           */
+/************************************************************************/
+
+bool ZarrV3CodecZstd::InitFromConfiguration(
+    const CPLJSONObject &configuration,
+    const ZarrArrayMetadata &oInputArrayMetadata,
+    ZarrArrayMetadata &oOutputArrayMetadata)
+{
+    m_pCompressor = CPLGetCompressor("zstd");
+    m_pDecompressor = CPLGetDecompressor("zstd");
+    if (!m_pCompressor || !m_pDecompressor)
     {
-        abyDst.resize(nOutputSize);
+        CPLError(CE_Failure, CPLE_AppDefined, "zstd compressor not available");
+        return false;
     }
-    else if (nOutputSize > abyDst.size())
+
+    m_oConfiguration = configuration.Clone();
+    m_oInputArrayMetadata = oInputArrayMetadata;
+    // byte->byte codec
+    oOutputArrayMetadata = oInputArrayMetadata;
+
+    int nLevel = 13;
+    bool bChecksum = false;
+
+    if (configuration.IsValid())
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "ZarrV3CodecGZip::Decode(): output buffer too small");
+        if (configuration.GetType() != CPLJSONObject::Type::Object)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Codec zstd: configuration is not an object");
+            return false;
+        }
+
+        for (const auto &oChild : configuration.GetChildren())
+        {
+            if (oChild.GetName() != "level" && oChild.GetName() != "checksum")
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Codec zstd: configuration contains a unhandled member: %s",
+                    oChild.GetName().c_str());
+                return false;
+            }
+        }
+
+        const auto oLevel = configuration.GetObj("level");
+        if (oLevel.IsValid())
+        {
+            if (oLevel.GetType() != CPLJSONObject::Type::Integer)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Codec zstd: level is not an integer");
+                return false;
+            }
+            nLevel = oLevel.ToInteger();
+            if (nLevel < 0 || nLevel > 22)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Codec zstd: invalid value for level: %d", nLevel);
+                return false;
+            }
+        }
+
+        const auto oChecksum = configuration.GetObj("checksum");
+        if (oChecksum.IsValid())
+        {
+            if (oChecksum.GetType() != CPLJSONObject::Type::Boolean)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Codec zstd: checksum is not a boolean");
+                return false;
+            }
+            bChecksum = oChecksum.ToBool();
+        }
     }
-    return bRet;
+
+    m_aosCompressorOptions.SetNameValue("LEVEL", CPLSPrintf("%d", nLevel));
+    if (bChecksum)
+        m_aosCompressorOptions.SetNameValue("CKECKSUM", "YES");
+
+    return true;
+}
+
+/************************************************************************/
+/*                      ZarrV3CodecZstd::Clone()                        */
+/************************************************************************/
+
+std::unique_ptr<ZarrV3Codec> ZarrV3CodecZstd::Clone() const
+{
+    auto psClone = std::make_unique<ZarrV3CodecZstd>();
+    ZarrArrayMetadata oOutputArrayMetadata;
+    psClone->InitFromConfiguration(m_oConfiguration, m_oInputArrayMetadata,
+                                   oOutputArrayMetadata);
+    return psClone;
 }
 
 /************************************************************************/
 /*                       ZarrV3CodecBlosc()                             */
 /************************************************************************/
 
-ZarrV3CodecBlosc::ZarrV3CodecBlosc() : ZarrV3Codec(NAME)
+ZarrV3CodecBlosc::ZarrV3CodecBlosc() : ZarrV3CodecAbstractCompressor(NAME)
 {
 }
-
-/************************************************************************/
-/*                      ~ZarrV3CodecBlosc()                             */
-/************************************************************************/
-
-ZarrV3CodecBlosc::~ZarrV3CodecBlosc() = default;
 
 /************************************************************************/
 /*                           GetConfiguration()                         */
@@ -355,74 +475,18 @@ std::unique_ptr<ZarrV3Codec> ZarrV3CodecBlosc::Clone() const
 }
 
 /************************************************************************/
-/*                      ZarrV3CodecBlosc::Encode()                       */
+/*                       ZarrV3CodecBytes()                            */
 /************************************************************************/
 
-bool ZarrV3CodecBlosc::Encode(const ZarrByteVectorQuickResize &abySrc,
-                              ZarrByteVectorQuickResize &abyDst) const
-{
-    abyDst.resize(abyDst.capacity());
-    void *pOutputData = abyDst.data();
-    size_t nOutputSize = abyDst.size();
-    bool bRet = m_pCompressor->pfnFunc(
-        abySrc.data(), abySrc.size(), &pOutputData, &nOutputSize,
-        m_aosCompressorOptions.List(), m_pCompressor->user_data);
-    if (bRet)
-    {
-        abyDst.resize(nOutputSize);
-    }
-    else if (nOutputSize > abyDst.size())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "ZarrV3CodecBlosc::Encode(): output buffer too small");
-    }
-    return bRet;
-}
-
-/************************************************************************/
-/*                      ZarrV3CodecBlosc::Decode()                       */
-/************************************************************************/
-
-bool ZarrV3CodecBlosc::Decode(const ZarrByteVectorQuickResize &abySrc,
-                              ZarrByteVectorQuickResize &abyDst) const
-{
-    abyDst.resize(abyDst.capacity());
-    void *pOutputData = abyDst.data();
-    size_t nOutputSize = abyDst.size();
-    bool bRet = m_pDecompressor->pfnFunc(abySrc.data(), abySrc.size(),
-                                         &pOutputData, &nOutputSize, nullptr,
-                                         m_pDecompressor->user_data);
-    if (bRet)
-    {
-        abyDst.resize(nOutputSize);
-    }
-    else if (nOutputSize > abyDst.size())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "ZarrV3CodecBlosc::Decode(): output buffer too small");
-    }
-    return bRet;
-}
-
-/************************************************************************/
-/*                       ZarrV3CodecEndian()                            */
-/************************************************************************/
-
-ZarrV3CodecEndian::ZarrV3CodecEndian() : ZarrV3Codec(NAME)
+ZarrV3CodecBytes::ZarrV3CodecBytes() : ZarrV3Codec(NAME)
 {
 }
-
-/************************************************************************/
-/*                       ~ZarrV3CodecEndian()                           */
-/************************************************************************/
-
-ZarrV3CodecEndian::~ZarrV3CodecEndian() = default;
 
 /************************************************************************/
 /*                           GetConfiguration()                         */
 /************************************************************************/
 
-/* static */ CPLJSONObject ZarrV3CodecEndian::GetConfiguration(bool bLittle)
+/* static */ CPLJSONObject ZarrV3CodecBytes::GetConfiguration(bool bLittle)
 {
     CPLJSONObject oConfig;
     oConfig.Add("endian", bLittle ? "little" : "big");
@@ -430,10 +494,10 @@ ZarrV3CodecEndian::~ZarrV3CodecEndian() = default;
 }
 
 /************************************************************************/
-/*                 ZarrV3CodecEndian::InitFromConfiguration()           */
+/*                 ZarrV3CodecBytes::InitFromConfiguration()            */
 /************************************************************************/
 
-bool ZarrV3CodecEndian::InitFromConfiguration(
+bool ZarrV3CodecBytes::InitFromConfiguration(
     const CPLJSONObject &configuration,
     const ZarrArrayMetadata &oInputArrayMetadata,
     ZarrArrayMetadata &oOutputArrayMetadata)
@@ -490,12 +554,12 @@ bool ZarrV3CodecEndian::InitFromConfiguration(
 }
 
 /************************************************************************/
-/*                     ZarrV3CodecEndian::Clone()                       */
+/*                     ZarrV3CodecBytes::Clone()                        */
 /************************************************************************/
 
-std::unique_ptr<ZarrV3Codec> ZarrV3CodecEndian::Clone() const
+std::unique_ptr<ZarrV3Codec> ZarrV3CodecBytes::Clone() const
 {
-    auto psClone = std::make_unique<ZarrV3CodecEndian>();
+    auto psClone = std::make_unique<ZarrV3CodecBytes>();
     ZarrArrayMetadata oOutputArrayMetadata;
     psClone->InitFromConfiguration(m_oConfiguration, m_oInputArrayMetadata,
                                    oOutputArrayMetadata);
@@ -503,11 +567,11 @@ std::unique_ptr<ZarrV3Codec> ZarrV3CodecEndian::Clone() const
 }
 
 /************************************************************************/
-/*                      ZarrV3CodecEndian::Encode()                     */
+/*                      ZarrV3CodecBytes::Encode()                      */
 /************************************************************************/
 
-bool ZarrV3CodecEndian::Encode(const ZarrByteVectorQuickResize &abySrc,
-                               ZarrByteVectorQuickResize &abyDst) const
+bool ZarrV3CodecBytes::Encode(const ZarrByteVectorQuickResize &abySrc,
+                              ZarrByteVectorQuickResize &abyDst) const
 {
     CPLAssert(!IsNoOp());
 
@@ -566,11 +630,11 @@ bool ZarrV3CodecEndian::Encode(const ZarrByteVectorQuickResize &abySrc,
 }
 
 /************************************************************************/
-/*                      ZarrV3CodecEndian::Decode()                     */
+/*                      ZarrV3CodecBytes::Decode()                      */
 /************************************************************************/
 
-bool ZarrV3CodecEndian::Decode(const ZarrByteVectorQuickResize &abySrc,
-                               ZarrByteVectorQuickResize &abyDst) const
+bool ZarrV3CodecBytes::Decode(const ZarrByteVectorQuickResize &abySrc,
+                              ZarrByteVectorQuickResize &abyDst) const
 {
     return Encode(abySrc, abyDst);
 }
@@ -582,12 +646,6 @@ bool ZarrV3CodecEndian::Decode(const ZarrByteVectorQuickResize &abySrc,
 ZarrV3CodecTranspose::ZarrV3CodecTranspose() : ZarrV3Codec(NAME)
 {
 }
-
-/************************************************************************/
-/*                       ~ZarrV3CodecTranspose()                        */
-/************************************************************************/
-
-ZarrV3CodecTranspose::~ZarrV3CodecTranspose() = default;
 
 /************************************************************************/
 /*                             IsNoOp()                                 */
@@ -930,26 +988,33 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
     ZarrV3Codec::IOType eLastType = ZarrV3Codec::IOType::ARRAY;
     std::string osLastCodec;
 
-#if !CPL_IS_LSB
     const auto InsertImplicitEndianCodecIfNeeded =
-        [this, &oInputArrayMetadata, &eLastType, &osLastCodec]()
+        [
+#if !CPL_IS_LSB
+            this,
+#endif
+            &oInputArrayMetadata, &eLastType, &osLastCodec]()
     {
-        // Insert a little endian codec if we are on a big endian target
         if (eLastType == ZarrV3Codec::IOType::ARRAY &&
             oInputArrayMetadata.oElt.nativeSize > 1)
         {
-            auto poEndianCodec = std::make_unique<ZarrV3CodecEndian>();
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "'bytes' codec missing. Assuming little-endian storage, "
+                     "but such tolerance may be removed in future versions");
+            auto poEndianCodec = std::make_unique<ZarrV3CodecBytes>();
             ZarrArrayMetadata oOutputArrayMetadata;
             poEndianCodec->InitFromConfiguration(
-                ZarrV3CodecEndian::GetConfiguration(true), oInputArrayMetadata,
+                ZarrV3CodecBytes::GetConfiguration(true), oInputArrayMetadata,
                 oOutputArrayMetadata);
-            oInputArrayMetadata = oOutputArrayMetadata;
+            oInputArrayMetadata = std::move(oOutputArrayMetadata);
             eLastType = poEndianCodec->GetOutputType();
             osLastCodec = poEndianCodec->GetName();
+#if !CPL_IS_LSB
+            // Insert a little endian codec if we are on a big endian target
             m_apoCodecs.emplace_back(std::move(poEndianCodec));
+#endif
         }
     };
-#endif
 
     for (const auto &oCodec : oCodecsArray)
     {
@@ -964,8 +1029,11 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
             poCodec = std::make_unique<ZarrV3CodecGZip>();
         else if (osName == "blosc")
             poCodec = std::make_unique<ZarrV3CodecBlosc>();
-        else if (osName == "endian")
-            poCodec = std::make_unique<ZarrV3CodecEndian>();
+        else if (osName == "zstd")
+            poCodec = std::make_unique<ZarrV3CodecZstd>();
+        else if (osName == "bytes" ||
+                 osName == "endian" /* endian is the old name */)
+            poCodec = std::make_unique<ZarrV3CodecBytes>();
         else if (osName == "transpose")
             poCodec = std::make_unique<ZarrV3CodecTranspose>();
         else
@@ -985,12 +1053,10 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
                 return false;
             }
         }
-#if !CPL_IS_LSB
         else
         {
             InsertImplicitEndianCodecIfNeeded();
         }
-#endif
 
         ZarrArrayMetadata oOutputArrayMetadata;
         if (!poCodec->InitFromConfiguration(oCodec["configuration"],
@@ -1007,16 +1073,14 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
             m_apoCodecs.emplace_back(std::move(poCodec));
     }
 
-#if !CPL_IS_LSB
     InsertImplicitEndianCodecIfNeeded();
-#endif
 
     m_oCodecArray = oCodecs.Clone();
     return true;
 }
 
 /************************************************************************/
-/*                  ZarrV3CodecEndian::AllocateBuffer()                 */
+/*                  ZarrV3CodecBytes::AllocateBuffer()                 */
 /************************************************************************/
 
 bool ZarrV3CodecSequence::AllocateBuffer(ZarrByteVectorQuickResize &abyBuffer)

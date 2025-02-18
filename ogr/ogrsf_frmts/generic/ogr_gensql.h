@@ -117,22 +117,13 @@ class OGRGenSQLResultsLayer final : public OGRLayer
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override
-    {
-        return GetExtent(0, psExtent, bForce);
-    }
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual int TestCapability(const char *) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *) override;
     virtual OGRErr SetAttributeFilter(const char *) override;
 
     bool GetArrowStream(struct ArrowArrayStream *out_stream,

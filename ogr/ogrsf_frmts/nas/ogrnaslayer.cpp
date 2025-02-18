@@ -299,10 +299,11 @@ GIntBig OGRNASLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRNASLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRNASLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                               bool bForce)
 
 {
     double dfXMin = 0.0;
@@ -321,7 +322,7 @@ OGRErr OGRNASLayer::GetExtent(OGREnvelope *psExtent, int bForce)
         return OGRERR_NONE;
     }
 
-    return OGRLayer::GetExtent(psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

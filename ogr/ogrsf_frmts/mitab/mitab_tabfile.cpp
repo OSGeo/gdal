@@ -2531,7 +2531,7 @@ int TABFile::GetBounds(double &dXMin, double &dYMin, double &dXMax,
 }
 
 /**********************************************************************
- *                   TABFile::GetExtent()
+ *                   TABFile::IGetExtent()
  *
  * Fetch extent of the data currently stored in the dataset.
  *
@@ -2540,7 +2540,8 @@ int TABFile::GetBounds(double &dXMin, double &dYMin, double &dXMax,
  *
  * Returns OGRERR_NONE/OGRRERR_FAILURE.
  **********************************************************************/
-OGRErr TABFile::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForce)
+OGRErr TABFile::IGetExtent(int /*iGeomField*/, OGREnvelope *psExtent,
+                           bool /* bForce */)
 {
     TABMAPHeaderBlock *poHeader = nullptr;
 

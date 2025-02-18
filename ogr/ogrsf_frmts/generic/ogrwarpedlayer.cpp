@@ -53,36 +53,12 @@ OGRWarpedLayer::~OGRWarpedLayer()
 }
 
 /************************************************************************/
-/*                         SetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRWarpedLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGRWarpedLayer::ISetSpatialFilter(int iGeomField,
+                                         const OGRGeometry *poGeom)
 {
-    SetSpatialFilter(0, poGeom);
-}
-
-/************************************************************************/
-/*                          SetSpatialFilterRect()                      */
-/************************************************************************/
-
-void OGRWarpedLayer::SetSpatialFilterRect(double dfMinX, double dfMinY,
-                                          double dfMaxX, double dfMaxY)
-{
-    OGRLayer::SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
-}
-
-/************************************************************************/
-/*                         SetSpatialFilter()                           */
-/************************************************************************/
-
-void OGRWarpedLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid geometry field index : %d", iGeomField);
-        return;
-    }
 
     m_iGeomFieldFilter = iGeomField;
     if (InstallFilter(poGeom))
@@ -92,7 +68,8 @@ void OGRWarpedLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
     {
         if (poGeom == nullptr || m_poReversedCT == nullptr)
         {
-            m_poDecoratedLayer->SetSpatialFilter(m_iGeomFieldFilter, nullptr);
+            return m_poDecoratedLayer->SetSpatialFilter(m_iGeomFieldFilter,
+                                                        nullptr);
         }
         else
         {
@@ -101,38 +78,27 @@ void OGRWarpedLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
             if (std::isinf(sEnvelope.MinX) && std::isinf(sEnvelope.MinY) &&
                 std::isinf(sEnvelope.MaxX) && std::isinf(sEnvelope.MaxY))
             {
-                m_poDecoratedLayer->SetSpatialFilterRect(
+                return m_poDecoratedLayer->SetSpatialFilterRect(
                     m_iGeomFieldFilter, sEnvelope.MinX, sEnvelope.MinY,
                     sEnvelope.MaxX, sEnvelope.MaxY);
             }
             else if (ReprojectEnvelope(&sEnvelope, m_poReversedCT))
             {
-                m_poDecoratedLayer->SetSpatialFilterRect(
+                return m_poDecoratedLayer->SetSpatialFilterRect(
                     m_iGeomFieldFilter, sEnvelope.MinX, sEnvelope.MinY,
                     sEnvelope.MaxX, sEnvelope.MaxY);
             }
             else
             {
-                m_poDecoratedLayer->SetSpatialFilter(m_iGeomFieldFilter,
-                                                     nullptr);
+                return m_poDecoratedLayer->SetSpatialFilter(m_iGeomFieldFilter,
+                                                            nullptr);
             }
         }
     }
     else
     {
-        m_poDecoratedLayer->SetSpatialFilter(m_iGeomFieldFilter, poGeom);
+        return m_poDecoratedLayer->SetSpatialFilter(m_iGeomFieldFilter, poGeom);
     }
-}
-
-/************************************************************************/
-/*                        SetSpatialFilterRect()                        */
-/************************************************************************/
-
-void OGRWarpedLayer::SetSpatialFilterRect(int iGeomField, double dfMinX,
-                                          double dfMinY, double dfMaxX,
-                                          double dfMaxY)
-{
-    OGRLayer::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX, dfMaxY);
 }
 
 /************************************************************************/
@@ -320,20 +286,11 @@ GIntBig OGRWarpedLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                              GetExtent()                             */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
-OGRErr OGRWarpedLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    return GetExtent(0, psExtent, bForce);
-}
-
-/************************************************************************/
-/*                              GetExtent()                             */
-/************************************************************************/
-
-OGRErr OGRWarpedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                 int bForce)
+OGRErr OGRWarpedLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                  bool bForce)
 {
     if (iGeomField == m_iGeomField)
     {

@@ -504,13 +504,6 @@ class OGRNTFFeatureClassLayer final : public OGRLayer
         return poFilterGeom;
     }
 
-    void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
-
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
@@ -552,13 +545,6 @@ class OGRNTFRasterLayer final : public OGRLayer
     OGRGeometry *GetSpatialFilter() override
     {
         return poFilterGeom;
-    }
-
-    void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
     }
 
     void ResetReading() override;

@@ -110,24 +110,6 @@ int OGREDIGEOLayer::TestCapability(const char *pszCap)
 }
 
 /************************************************************************/
-/*                              GetExtent()                             */
-/************************************************************************/
-
-OGRErr OGREDIGEOLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    /*if (poDS->bExtentValid)
-    {
-        psExtent->MinX = poDS->dfMinX;
-        psExtent->MinY = poDS->dfMinY;
-        psExtent->MaxX = poDS->dfMaxX;
-        psExtent->MaxY = poDS->dfMaxY;
-        return OGRERR_NONE;
-    }*/
-
-    return OGRLayer::GetExtent(psExtent, bForce);
-}
-
-/************************************************************************/
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 

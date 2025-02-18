@@ -41,37 +41,6 @@ GDALVectorReprojectAlgorithm::GDALVectorReprojectAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*               GDALVectorReprojectAlgorithmDataset                    */
-/************************************************************************/
-
-namespace
-{
-class GDALVectorReprojectAlgorithmDataset final : public GDALDataset
-{
-    std::vector<std::unique_ptr<OGRLayer>> m_layers{};
-
-  public:
-    GDALVectorReprojectAlgorithmDataset() = default;
-
-    void AddLayer(std::unique_ptr<OGRLayer> poLayer)
-    {
-        m_layers.push_back(std::move(poLayer));
-    }
-
-    int GetLayerCount() override
-    {
-        return static_cast<int>(m_layers.size());
-    }
-
-    OGRLayer *GetLayer(int idx) override
-    {
-        return idx >= 0 && idx < GetLayerCount() ? m_layers[idx].get()
-                                                 : nullptr;
-    }
-};
-}  // namespace
-
-/************************************************************************/
 /*            GDALVectorReprojectAlgorithm::RunStep()                   */
 /************************************************************************/
 
@@ -96,7 +65,7 @@ bool GDALVectorReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
     auto poSrcDS = m_inputDataset.GetDatasetRef();
 
     auto reprojectedDataset =
-        std::make_unique<GDALVectorReprojectAlgorithmDataset>();
+        std::make_unique<GDALVectorPipelineOutputDataset>();
     reprojectedDataset->SetDescription(poSrcDS->GetDescription());
 
     const int nLayerCount = poSrcDS->GetLayerCount();

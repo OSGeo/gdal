@@ -122,14 +122,14 @@ OGRErr OGRGeoPackageSelectLayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRGeoPackageSelectLayer::SetSpatialFilter(int iGeomField,
-                                                OGRGeometry *poGeomIn)
+OGRErr OGRGeoPackageSelectLayer::ISetSpatialFilter(int iGeomField,
+                                                   const OGRGeometry *poGeomIn)
 
 {
-    poBehavior->SetSpatialFilter(iGeomField, poGeomIn);
+    return poBehavior->SetSpatialFilter(iGeomField, poGeomIn);
 }
 
 /************************************************************************/
@@ -142,11 +142,11 @@ int OGRGeoPackageSelectLayer::TestCapability(const char *pszCap)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
-OGRErr OGRGeoPackageSelectLayer::GetExtent(int iGeomField,
-                                           OGREnvelope *psExtent, int bForce)
+OGRErr OGRGeoPackageSelectLayer::IGetExtent(int iGeomField,
+                                            OGREnvelope *psExtent, bool bForce)
 {
     return poBehavior->GetExtent(iGeomField, psExtent, bForce);
 }

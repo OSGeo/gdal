@@ -144,12 +144,8 @@ class OGRWFSLayer final : public OGRLayer
 
     virtual int TestCapability(const char *) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 
@@ -158,13 +154,8 @@ class OGRWFSLayer final : public OGRLayer
     void SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
     void SetWGS84Extents(double dfMinX, double dfMinY, double dfMaxX,
                          double dfMaxY);
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
@@ -294,12 +285,8 @@ class OGRWFSJoinLayer final : public OGRLayer
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 };

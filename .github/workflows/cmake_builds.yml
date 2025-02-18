@@ -28,11 +28,12 @@ permissions:
 
 jobs:
 
-  build-linux-ubuntu-focal:
-    runs-on: ubuntu-20.04
+  build-linux-ubuntu-jammy:
+    runs-on: ubuntu-22.04
     env:
-      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.8 -DUSE_CCACHE=ON -DSWIG_REGENERATE_PYTHON=ON
-      cache-name: cmake-ubuntu-focal
+      BUILD_NAME: cmake-ubuntu-jammy
+      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.10 -DUSE_CCACHE=ON -DSWIG_REGENERATE_PYTHON=ON
+      cache-name: cmake-ubuntu-jammy
     steps:
     - name: Checkout GDAL
       uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
@@ -52,16 +53,16 @@ jobs:
         sudo apt-get install -y -q bison libaec-dev libjpeg-dev libgif-dev liblzma-dev libzstd-dev libgeos-dev git \
            libcurl4-gnutls-dev libproj-dev libxml2-dev  libxerces-c-dev libnetcdf-dev netcdf-bin \
            libpoppler-dev libpoppler-private-dev gpsbabel libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils \
-           libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libcrypto++-dev libkml-dev \
+           libfreexl-dev unixodbc-dev libwebp-dev liblcms2-2 libcrypto++-dev libkml-dev \
            libmysqlclient-dev libarmadillo-dev wget libfyba-dev libjsoncpp-dev libexpat1-dev \
            libclc-dev ocl-icd-opencl-dev libsqlite3-dev sqlite3-pcre libpcre3-dev libspatialite-dev libsfcgal-dev fossil libcairo2-dev libjson-c-dev libdeflate-dev liblz4-dev libblosc-dev libarchive-dev \
            libqhull-dev libcfitsio-dev libogdi-dev libopenjp2-7-dev libheif-dev \
-           python3-dev libpython3-dev libpython3.8-dev python3.8-dev python3-numpy python3-lxml pyflakes python3-setuptools python3-pip python3-venv \
+           python3-dev libpython3-dev libpython3.10-dev python3.10-dev python3-numpy python3-lxml python3-pyflakes python3-setuptools python3-pip python3-venv \
            python3-pytest swig doxygen texlive-latex-base make cppcheck ccache g++ \
-           libpq-dev libpqtypes-dev postgresql-12 postgresql-12-postgis-3 postgresql-client-12 postgresql-12-postgis-3-scripts
+           libpq-dev libpqtypes-dev postgresql-14 postgresql-14-postgis-3 postgresql-client-14 postgresql-14-postgis-3-scripts
         # MSSQL: client side
         curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-        curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+        curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
         sudo apt-get update
         sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
         # HANA: client side
@@ -97,7 +98,6 @@ jobs:
         # Workaround bug in ogdi packaging
         sudo ln -s /usr/lib/ogdi/libvrf.so /usr/lib
         #
-        PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U pip wheel setuptools numpy importlib_metadata
         PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
 
     - name: Build libjxl
@@ -217,17 +217,17 @@ jobs:
         test -f $GITHUB_WORKSPACE/install-gdal/share/man/man1/gdaladdo.1
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
         $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
-        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3.8/site-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.10/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
         # Test fix for https://github.com/conda-forge/gdal-feedstock/issues/995
-        PYTHONWARNINGS="error" PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3.8/site-packages python3 -c "from osgeo import gdal"
-        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3.8/site-packages python3 $GITHUB_WORKSPACE/scripts/check_doc.py
+        PYTHONWARNINGS="error" PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.10/dist-packages python3 -c "from osgeo import gdal"
+        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.10/dist-packages python3 $GITHUB_WORKSPACE/scripts/check_doc.py
     - name: CMake with rpath
       run: |
         export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         (cd $GITHUB_WORKSPACE/superbuild/build; cmake .. "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal-with-rpath" "-DCMAKE_INSTALL_RPATH=$GITHUB_WORKSPACE/install-gdal-with-rpath/lib")
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
         # For some reason, during the install phase of above invocation, the Python bindings are rebuilt after the build phase, and without the rpath... Can't reproduce that locally
-        # PYTHONPATH=$GITHUB_WORKSPACE/install-gdal-with-rpath/lib/python3.8/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+        # PYTHONPATH=$GITHUB_WORKSPACE/install-gdal-with-rpath/lib/python3.10/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
     - name: Rerun using Mono
       run: |
         export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
@@ -240,29 +240,31 @@ jobs:
     - name: Standalone Python bindings build from source
       run: |
         (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python && python setup.py sdist)
-        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/dist/gdal-*.tar.gz gdal-python.tar.gz
+        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/dist/GDAL-*.tar.gz gdal-python.tar.gz
         mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python gdal-swig-python
         python3 -m venv myvenv
         source myvenv/bin/activate
         # Set PATH so that gdal-config is found
+        PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH $PYTHON_CMD -m pip uninstall numpy
+        PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH $PYTHON_CMD -m pip install numpy==1.26.4
         PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH $PYTHON_CMD -m pip install gdal-python.tar.gz[numpy]
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib python -c "from osgeo import gdal_array"
         which gdal_edit
         cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
-        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib ldd myvenv/lib/python3.8/site-packages/osgeo/_gdal.cpython-38-x86_64-linux-gnu.so
+        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib ldd myvenv/lib/python3.10/site-packages/osgeo/_gdal.cpython-310-x86_64-linux-gnu.so
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit byte.tif -mo FOO=BAR
         rm -f myvenv/bin/gdal_edit
         rm -f myvenv/bin/gdal_edit.py
     - name: Standalone gdal-utils package from wheel
       run: |
         mv gdal-swig-python $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
-        (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils && python setup.py bdist_wheel)
+        (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils && python3 setup.py bdist_wheel)
         mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils/dist/*.whl gdal_utils-X.Y.Z.T-py3-none-any.whl
         rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
         python3 -m venv myvenv
         source myvenv/bin/activate
         # Set PATH so that gdal-config is found
-        PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH $PYTHON_CMD -m pip install gdal_utils-X.Y.Z.T-py3-none-any.whl
+        PYTHON_CMD=python3 && PATH=$GITHUB_WORKSPACE/install-gdal/local/bin:$PATH $PYTHON_CMD -m pip install gdal_utils-X.Y.Z.T-py3-none-any.whl
         which gdal_edit
         cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit byte.tif -mo FOO=BAR
@@ -484,7 +486,7 @@ jobs:
       shell: bash -l {0}
       run: |
         cmake --build $GITHUB_WORKSPACE/build --config Release --target install
-        export PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH
+        export PATH=$GITHUB_WORKSPACE/install-gdal/bin:$GITHUB_WORKSPACE/install-gdal/local/bin:$PATH
         gdalinfo --version
         python -VV
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
@@ -493,7 +495,7 @@ jobs:
     - name: Check the build includes the expected drivers
       shell: bash -l {0}
       run: |
-        export PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH
+        export PATH=$GITHUB_WORKSPACE/install-gdal/local/bin:$GITHUB_WORKSPACE/install-gdal/bin:$PATH
         gdalinfo --formats > found_formats.txt
         ogrinfo --formats >> found_formats.txt
         cat found_formats.txt

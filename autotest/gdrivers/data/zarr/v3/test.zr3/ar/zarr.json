@@ -19,5 +19,6 @@
       "separator":"\/"
     }
   },
-  "fill_value": 255
+  "fill_value": 255,
+  "codecs": [{"name":"bytes"}]
 }

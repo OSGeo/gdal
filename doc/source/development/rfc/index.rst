@@ -113,3 +113,4 @@ RFC list
     rfc104_gdal_cli
     rfc105_safe_path_manipulation_functions
     rfc106_update_metadata
+    rfc107_igetextent_isetspatialfilter

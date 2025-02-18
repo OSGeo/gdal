@@ -257,19 +257,11 @@ class OGRPMTilesVectorLayer final
 
     int TestCapability(const char *) override;
 
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
-
-    void SetSpatialFilter(OGRGeometry *) override;
-
-    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     GIntBig GetFeatureCount(int bForce) override;
 

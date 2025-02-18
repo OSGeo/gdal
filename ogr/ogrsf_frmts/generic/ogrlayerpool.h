@@ -18,6 +18,7 @@
 #include "ogrsf_frmts.h"
 
 typedef OGRLayer *(*OpenLayerFunc)(void *user_data);
+typedef void (*ReleaseLayerFunc)(OGRLayer *, void *user_data);
 typedef void (*FreeUserDataFunc)(void *user_data);
 
 class OGRLayerPool;
@@ -89,6 +90,7 @@ class CPL_DLL OGRProxiedLayer : public OGRAbstractProxiedLayer
     CPL_DISALLOW_COPY_ASSIGN(OGRProxiedLayer)
 
     OpenLayerFunc pfnOpenLayer;
+    ReleaseLayerFunc pfnReleaseLayer;
     FreeUserDataFunc pfnFreeUserData;
     void *pUserData;
     OGRLayer *poUnderlyingLayer;
@@ -103,13 +105,16 @@ class CPL_DLL OGRProxiedLayer : public OGRAbstractProxiedLayer
   public:
     OGRProxiedLayer(OGRLayerPool *poPool, OpenLayerFunc pfnOpenLayer,
                     FreeUserDataFunc pfnFreeUserData, void *pUserData);
+    OGRProxiedLayer(OGRLayerPool *poPool, OpenLayerFunc pfnOpenLayer,
+                    ReleaseLayerFunc pfnReleaseLayer,
+                    FreeUserDataFunc pfnFreeUserData, void *pUserData);
     virtual ~OGRProxiedLayer();
 
     OGRLayer *GetUnderlyingLayer();
 
     virtual OGRGeometry *GetSpatialFilter() override;
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 
@@ -138,9 +143,8 @@ class CPL_DLL OGRProxiedLayer : public OGRAbstractProxiedLayer
     virtual OGRSpatialReference *GetSpatialRef() override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual int TestCapability(const char *) override;
 

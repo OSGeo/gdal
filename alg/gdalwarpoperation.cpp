@@ -2579,14 +2579,10 @@ void GDALWarpOperation::ComputeSourceWindowStartingFromSource(
         /*      Transform them to the output pixel coordinate space */
         /* --------------------------------------------------------------------
          */
-        if (!psOptions->pfnTransformer(
-                psOptions->pTransformerArg, FALSE, nSampleMax,
-                privateData->adfDstX.data(), privateData->adfDstY.data(),
-                adfDstZ.data(), privateData->abSuccess.data()))
-        {
-            return;
-        }
-
+        psOptions->pfnTransformer(psOptions->pTransformerArg, FALSE, nSampleMax,
+                                  privateData->adfDstX.data(),
+                                  privateData->adfDstY.data(), adfDstZ.data(),
+                                  privateData->abSuccess.data());
         privateData->nStepCount = nStepCount;
     }
 
@@ -2834,24 +2830,12 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
         CPLSetThreadLocalConfigOption("CHECK_WITH_INVERT_PROJ", "YES");
         RefreshTransformer();
     }
-    int ret = psOptions->pfnTransformer(psOptions->pTransformerArg, TRUE,
-                                        nSamplePoints, padfX, padfY, padfZ,
-                                        pabSuccess);
+    psOptions->pfnTransformer(psOptions->pTransformerArg, TRUE, nSamplePoints,
+                              padfX, padfY, padfZ, pabSuccess);
     if (bTryWithCheckWithInvertProj)
     {
         CPLSetThreadLocalConfigOption("CHECK_WITH_INVERT_PROJ", nullptr);
         RefreshTransformer();
-    }
-
-    if (!ret)
-    {
-        CPLFree(padfX);
-        CPLFree(pabSuccess);
-
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "GDALWarperOperation::ComputeSourceWindow() failed because "
-                 "the pfnTransformer failed.");
-        return false;
     }
 
     /* -------------------------------------------------------------------- */

@@ -2381,9 +2381,9 @@ def test_ogr_vrt_33b(ogr_vrt_33, tmp_path):
         ret = gdaltest.runexternal(
             test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_path}/ogr_vrt_33.vrt"
         )
-        os.unlink(tmp_path / "ogr_vrt_33.vrt")
 
-        assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
+        assert "INFO" in ret
+        assert "ERROR" not in ret
 
 
 @pytest.mark.require_driver("CSV")

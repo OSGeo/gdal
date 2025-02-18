@@ -231,18 +231,8 @@ bool GDALAlgorithmArg::Set(bool value)
     return SetInternal(value);
 }
 
-bool GDALAlgorithmArg::Set(const std::string &value)
+bool GDALAlgorithmArg::ProcessString(std::string &value) const
 {
-    if (m_decl.GetType() != GAAT_STRING)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Calling Set(std::string) on argument '%s' of type %s is not "
-                 "supported",
-                 GetName().c_str(), GDALAlgorithmArgTypeName(m_decl.GetType()));
-        return false;
-    }
-
-    std::string newValue(value);
     if (m_decl.IsReadFromFileAtSyntaxAllowed() && !value.empty() &&
         value.front() == '@')
     {
@@ -257,7 +247,7 @@ bool GDALAlgorithmArg::Set(const std::string &value)
             {
                 offset = 3;
             }
-            newValue = reinterpret_cast<const char *>(pabyData + offset);
+            value = reinterpret_cast<const char *>(pabyData + offset);
             VSIFree(pabyData);
         }
         else
@@ -267,9 +257,24 @@ bool GDALAlgorithmArg::Set(const std::string &value)
     }
 
     if (m_decl.IsRemoveSQLCommentsEnabled())
-        newValue = CPLRemoveSQLComments(newValue);
+        value = CPLRemoveSQLComments(value);
 
-    return SetInternal(newValue);
+    return true;
+}
+
+bool GDALAlgorithmArg::Set(const std::string &value)
+{
+    if (m_decl.GetType() != GAAT_STRING)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Calling Set(std::string) on argument '%s' of type %s is not "
+                 "supported",
+                 GetName().c_str(), GDALAlgorithmArgTypeName(m_decl.GetType()));
+        return false;
+    }
+
+    std::string newValue(value);
+    return ProcessString(newValue) && SetInternal(newValue);
 }
 
 bool GDALAlgorithmArg::Set(int value)
@@ -392,7 +397,22 @@ bool GDALAlgorithmArg::Set(const std::vector<std::string> &value)
                  GetName().c_str(), GDALAlgorithmArgTypeName(m_decl.GetType()));
         return false;
     }
-    return SetInternal(value);
+
+    if (m_decl.IsReadFromFileAtSyntaxAllowed() ||
+        m_decl.IsRemoveSQLCommentsEnabled())
+    {
+        std::vector<std::string> newValue(value);
+        for (auto &s : newValue)
+        {
+            if (!ProcessString(s))
+                return false;
+        }
+        return SetInternal(newValue);
+    }
+    else
+    {
+        return SetInternal(value);
+    }
 }
 
 bool GDALAlgorithmArg::Set(const std::vector<int> &value)
@@ -2328,12 +2348,17 @@ GDALAlgorithm::AddOpenOptionsArg(std::vector<std::string> *pValue)
 /*                            ValidateFormat()                          */
 /************************************************************************/
 
-bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg) const
+bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
+                                   bool bStreamAllowed) const
 {
     if (arg.GetChoices().empty())
     {
-        const auto Validate = [this, &arg](const std::string &val)
+        const auto Validate =
+            [this, &arg, bStreamAllowed](const std::string &val)
         {
+            if (bStreamAllowed && val == "stream")
+                return true;
+
             auto hDriver = GDALGetDriverByName(val.c_str());
             if (!hDriver)
             {
@@ -2451,7 +2476,8 @@ GDALAlgorithm::AddInputFormatsArg(std::vector<std::string> *pValue)
         AddArg(GDAL_ARG_NAME_INPUT_FORMAT, 0, _("Input formats"), pValue)
             .AddAlias("if")
             .SetCategory(GAAC_ADVANCED);
-    arg.AddValidationAction([this, &arg]() { return ValidateFormat(arg); });
+    arg.AddValidationAction([this, &arg]()
+                            { return ValidateFormat(arg, false); });
     arg.SetAutoCompleteFunction([&arg](const std::string &)
                                 { return FormatAutoCompleteFunction(arg); });
     return arg;
@@ -2462,13 +2488,16 @@ GDALAlgorithm::AddInputFormatsArg(std::vector<std::string> *pValue)
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
-GDALAlgorithm::AddOutputFormatArg(std::string *pValue)
+GDALAlgorithm::AddOutputFormatArg(std::string *pValue, bool bStreamAllowed)
 {
-    auto &arg =
-        AddArg(GDAL_ARG_NAME_OUTPUT_FORMAT, 'f', _("Output format"), pValue)
-            .AddAlias("of")
-            .AddAlias("format");
-    arg.AddValidationAction([this, &arg]() { return ValidateFormat(arg); });
+    auto &arg = AddArg(GDAL_ARG_NAME_OUTPUT_FORMAT, 'f',
+                       bStreamAllowed ? _("Output format (\"stream\" allowed)")
+                                      : _("Output format"),
+                       pValue)
+                    .AddAlias("of")
+                    .AddAlias("format");
+    arg.AddValidationAction([this, &arg, bStreamAllowed]()
+                            { return ValidateFormat(arg, bStreamAllowed); });
     arg.SetAutoCompleteFunction([&arg](const std::string &)
                                 { return FormatAutoCompleteFunction(arg); });
     return arg;
@@ -2972,9 +3001,17 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                 osRet += " [OPTIONS]";
             for (const auto *arg : m_positionalArgs)
             {
-                osRet += " <";
-                osRet += arg->GetMetaVar();
-                osRet += '>';
+                const std::string &metavar = arg->GetMetaVar();
+                if (!metavar.empty() && metavar[0] == '<')
+                {
+                    osRet += metavar;
+                }
+                else
+                {
+                    osRet += " <";
+                    osRet += metavar;
+                    osRet += '>';
+                }
             }
         }
 

@@ -181,19 +181,6 @@ int OGRMSSQLSpatialSelectLayer::TestCapability(const char *pszCap)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
-/*                                                                      */
-/*      Since SELECT layers currently cannot ever have geometry, we     */
-/*      can optimize the GetExtent() method!                            */
-/************************************************************************/
-
-OGRErr OGRMSSQLSpatialSelectLayer::GetExtent(OGREnvelope *, int)
-
-{
-    return OGRERR_FAILURE;
-}
-
-/************************************************************************/
 /*                          GetFeatureCount()                           */
 /*                                                                      */
 /*      If a spatial filter is in effect, we turn control over to       */

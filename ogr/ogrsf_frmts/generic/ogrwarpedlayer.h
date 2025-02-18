@@ -55,13 +55,8 @@ class CPL_DLL OGRWarpedLayer : public OGRLayerDecorator
 
     void SetExtent(double dfXMin, double dfYMin, double dfXMax, double dfYMax);
 
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-    virtual void SetSpatialFilterRect(double dfMinX, double dfMinY,
-                                      double dfMaxX, double dfMaxY) override;
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
-    virtual void SetSpatialFilterRect(int iGeomField, double dfMinX,
-                                      double dfMinY, double dfMaxX,
-                                      double dfMaxY) override;
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *) override;
 
     virtual OGRFeature *GetNextFeature() override;
     virtual OGRFeature *GetFeature(GIntBig nFID) override;
@@ -79,9 +74,8 @@ class CPL_DLL OGRWarpedLayer : public OGRLayerDecorator
     virtual OGRSpatialReference *GetSpatialRef() override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce = true) override;
 
     virtual int TestCapability(const char *) override;
 

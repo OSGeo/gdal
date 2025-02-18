@@ -407,11 +407,11 @@ GIntBig OGRPGeoTableLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRPGeoTableLayer::GetExtent(OGREnvelope *psExtent,
-                                    CPL_UNUSED int bForce)
+OGRErr OGRPGeoTableLayer::IGetExtent(int /* iGeomField */,
+                                     OGREnvelope *psExtent, bool /* bForce */)
 {
     if (pszGeomColumn == nullptr)
     {
