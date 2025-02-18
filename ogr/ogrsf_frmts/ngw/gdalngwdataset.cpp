@@ -93,7 +93,7 @@ static std::string GetStylesIdentifiers(const CPLJSONArray &aoStyles, int nDeep)
             {
                 if (sOut.empty())
                 {
-                    sOut = sId;
+                    sOut = std::move(sId);
                 }
                 else
                 {
@@ -109,7 +109,7 @@ static std::string GetStylesIdentifiers(const CPLJSONArray &aoStyles, int nDeep)
             {
                 if (sOut.empty())
                 {
-                    sOut = sId;
+                    sOut = std::move(sId);
                 }
                 else
                 {
@@ -1682,7 +1682,7 @@ bool OGRNGWDataset::DeleteFieldDomain(const std::string &name,
 /*
  * CreateNGWLookupTableJson()
  */
-static std::string CreateNGWLookupTableJson(OGRCodedFieldDomain *pDomain,
+static std::string CreateNGWLookupTableJson(const OGRCodedFieldDomain *pDomain,
                                             GIntBig nResourceId)
 {
     CPLJSONObject oResourceJson;
@@ -1801,7 +1801,7 @@ bool OGRNGWDataset::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
     }
 
     auto osPayload = CreateNGWLookupTableJson(
-        dynamic_cast<OGRCodedFieldDomain *>(domain.get()),
+        dynamic_cast<const OGRCodedFieldDomain *>(domain.get()),
         static_cast<GIntBig>(std::stol(osResourceId)));
 
     if (!NGWAPI::UpdateResource(osUrl, osResourceId, osPayload, GetHeaders()))
@@ -1851,7 +1851,7 @@ OGRNGWCodedFieldDomain OGRNGWDataset::GetDomainByID(GIntBig id) const
  */
 GIntBig OGRNGWDataset::GetDomainIdByName(const std::string &osDomainName) const
 {
-    for (auto oDom : moDomains)
+    for (auto const &oDom : moDomains)
     {
         if (oDom.second.HasDomainName(osDomainName))
         {
