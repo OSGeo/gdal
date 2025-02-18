@@ -360,7 +360,7 @@ XODR driver:
 * Fix typo in handling of Translate widthPct, heightPct
 * add relatedFieldNameMatch parameter to gdal.VectorTranslate()
 
-# GDAL/OGR 3.10.2 Release Notes
+# GDAL/OGR 3.10.2 "Gulf of Mexico" Release Notes
 
 GDAL 3.10.2 is a bugfix release.
 
