@@ -624,7 +624,7 @@ def test_ogr_gpkg_6(gpkg_ds, tmp_path):
 def test_ogr_gpkg_7(gpkg_ds):
     def get_feature_count_from_gpkg_contents():
         with gpkg_ds.ExecuteSQL(
-            'SELECT feature_count FROM gpkg_ogr_contents WHERE table_name = "field_test_layer"',
+            "SELECT feature_count FROM gpkg_ogr_contents WHERE table_name = 'field_test_layer'",
             dialect="DEBUG",
         ) as sql_lyr:
             f = sql_lyr.GetNextFeature()
