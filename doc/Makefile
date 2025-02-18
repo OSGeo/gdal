@@ -29,7 +29,7 @@ doxygen:
 doxygen_check_warnings:
 	@echo "Checking that Doxygen runs without warnings..."
 	@$(MAKE) -B $(BUILDDIR)/.doxygen_up_to_date > /tmp/doxygen_gdal_log.txt 2>&1
-	@if grep -i warning /tmp/doxygen_gdal_log.txt; then \
+	@if grep "warning:" /tmp/doxygen_gdal_log.txt; then \
 		echo "Doxygen warnings found!"; \
 		echo "---------"; \
 		echo "Full log:"; \
@@ -39,7 +39,7 @@ doxygen_check_warnings:
 		echo "--------------------"; \
 		echo "Extract of warnings:"; \
 		echo "--------------------"; \
-		grep -i warning /tmp/doxygen_gdal_log.txt; \
+		grep "warning:" /tmp/doxygen_gdal_log.txt; \
 		echo "-----------------------"; \
 		echo "Doxygen warnings found!"; \
 		/bin/false; \

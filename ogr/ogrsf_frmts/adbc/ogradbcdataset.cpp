@@ -518,10 +518,9 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
             const std::string osStatement =
                 CPLSPrintf("SELECT * FROM \"%s\"",
                            OGRDuplicateCharacter(pszLayerName, '"').c_str());
-            CPLTurnFailureIntoWarning(true);
+            CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
             auto poLayer =
                 CreateLayer(osStatement.c_str(), pszLayerName, false);
-            CPLTurnFailureIntoWarning(false);
             if (poLayer)
             {
                 m_apoLayers.emplace_back(std::move(poLayer));
@@ -550,11 +549,10 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
                            OGRDuplicateCharacter(pszNamespace, '"').c_str(),
                            OGRDuplicateCharacter(pszTableName, '"').c_str());
 
-            CPLTurnFailureIntoWarning(true);
+            CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
             auto poLayer = CreateLayer(
                 osStatement.c_str(),
                 CPLSPrintf("%s.%s", pszNamespace, pszTableName), false);
-            CPLTurnFailureIntoWarning(false);
             if (poLayer)
             {
                 m_apoLayers.emplace_back(std::move(poLayer));
