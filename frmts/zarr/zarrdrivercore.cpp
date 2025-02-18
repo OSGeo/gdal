@@ -68,6 +68,7 @@ void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Zarr");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "zarr");
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONDATATYPES,
         "Int8 Byte Int16 UInt16 Int32 UInt32 Int64 UInt64 "
