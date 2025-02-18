@@ -524,11 +524,11 @@ retry:
     /* -------------------------------------------------------------------- */
     /*      Transform them to the output coordinate system.                 */
     /* -------------------------------------------------------------------- */
-    CPLTurnFailureIntoWarning(true);
-    pfnTransformer(pTransformArg, FALSE, nSamplePoints, padfX, padfY, padfZ,
-                   pabSuccess);
-    CPLTurnFailureIntoWarning(false);
-
+    {
+        CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
+        pfnTransformer(pTransformArg, FALSE, nSamplePoints, padfX, padfY, padfZ,
+                       pabSuccess);
+    }
     constexpr int SIGN_FINAL_UNINIT = -2;
     constexpr int SIGN_FINAL_INVALID = 0;
     int iSignDiscontinuity = SIGN_FINAL_UNINIT;
@@ -588,7 +588,7 @@ retry:
                     double ayTemp[2] = {padfY[i], padfY[i]};
                     double azTemp[2] = {padfZ[i], padfZ[i]};
                     int abSuccess[2] = {FALSE, FALSE};
-                    CPLTurnFailureIntoWarning(true);
+                    CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
                     if (pfnTransformer(pTransformArg, TRUE, 2, axTemp, ayTemp,
                                        azTemp, abSuccess) &&
                         fabs(axTemp[0] - axTemp[1]) < 1e-8 &&
@@ -596,7 +596,6 @@ retry:
                     {
                         padfX[i] = iSignDiscontinuity * 180.0;
                     }
-                    CPLTurnFailureIntoWarning(false);
                 }
             }
         }
@@ -615,10 +614,11 @@ retry:
         memcpy(padfXRevert, padfX, nSamplePoints * sizeof(double));
         memcpy(padfYRevert, padfY, nSamplePoints * sizeof(double));
         memcpy(padfZRevert, padfZ, nSamplePoints * sizeof(double));
-        CPLTurnFailureIntoWarning(true);
-        pfnTransformer(pTransformArg, TRUE, nSamplePoints, padfXRevert,
-                       padfYRevert, padfZRevert, pabSuccess);
-        CPLTurnFailureIntoWarning(false);
+        {
+            CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
+            pfnTransformer(pTransformArg, TRUE, nSamplePoints, padfXRevert,
+                           padfYRevert, padfZRevert, pabSuccess);
+        }
 
         for (int i = 0; nFailedCount == 0 && i < nSamplePoints; i++)
         {
@@ -693,10 +693,11 @@ retry:
 
         CPLAssert(nSamplePoints == nSampleMax);
 
-        CPLTurnFailureIntoWarning(true);
-        pfnTransformer(pTransformArg, FALSE, nSamplePoints, padfX, padfY, padfZ,
-                       pabSuccess);
-        CPLTurnFailureIntoWarning(false);
+        {
+            CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
+            pfnTransformer(pTransformArg, FALSE, nSamplePoints, padfX, padfY,
+                           padfZ, pabSuccess);
+        }
     }
 
     /* -------------------------------------------------------------------- */
