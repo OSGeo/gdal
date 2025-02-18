@@ -146,9 +146,9 @@ OGRDXFFeature::GetColor(OGRDXFDataSource *const poDS,
         (poBlockFeature &&
          poBlockFeature->oStyleProperties.count("Hidden") > 0))
     {
-        // Hidden objects should never be shown no matter what happens,
-        // so they can be treated as if they are on a frozen layer
-        iHidden = 2;
+        // Hidden objects should never be shown no matter what happens
+        iHidden = 1;
+        oStyleProperties["Hidden"] = "1";
     }
     else
     {
@@ -166,13 +166,13 @@ OGRDXFFeature::GetColor(OGRDXFDataSource *const poDS,
             if (pszBlockHidden && atoi(pszBlockHidden) == 2)
                 iHidden = 2;
         }
-    }
 
-    // If this feature is on a frozen layer, make the object totally
-    // hidden so it won't reappear if we regenerate the style string again
-    // during block insertion
-    if (iHidden == 2)
-        oStyleProperties["Hidden"] = "1";
+        // If this feature is on a frozen layer (other than layer 0), make the
+        // object totally hidden so it won't reappear if we regenerate the style
+        // string again during block insertion
+        if (iHidden == 2 && !EQUAL(GetFieldAsString("Layer"), "0"))
+            oStyleProperties["Hidden"] = "1";
+    }
 
     // Helpful constants
     const int C_BYLAYER = 256;
