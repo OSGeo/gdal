@@ -1,4 +1,4 @@
-# GDAL/OGR 3.10.2 "Gulf of Mexico" Release Notes
+# GDAL/OGR 3.10.2 Release Notes
 
 GDAL 3.10.2 is a bugfix release.
 
