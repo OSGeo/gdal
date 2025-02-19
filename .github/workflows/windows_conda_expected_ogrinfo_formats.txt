@@ -13,9 +13,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   OGCAPI -raster,vector- (rov): OGCAPI
   ESRI Shapefile -vector- (rw+uv): ESRI Shapefile (*.shp, *.dbf, *.shz, *.shp.zip)
   MapInfo File -vector- (rw+uv): MapInfo File (*.tab, *.mif, *.mid)
-  UK .NTF -vector- (rov): UK .NTF
   LVBAG -vector- (rov): Kadaster LV BAG Extract 2.0 (*.xml)
-  OGR_SDTS -vector- (rov): SDTS
   S57 -vector- (rw+v): IHO S-57 (ENC) (*.000)
   DGN -vector- (rw+v): Microstation DGN (*.dgn)
   OGR_VRT -vector- (rov): VRT - Virtual Datasource (*.vrt)
@@ -43,7 +41,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   DXF -vector- (rw+v): AutoCAD DXF (*.dxf)
   CAD -raster,vector- (rovs): AutoCAD Driver (*.dwg)
   FlatGeobuf -vector- (rw+v): FlatGeobuf (*.fgb)
-  Geoconcept -vector- (rw+v): Geoconcept (*.gxt, *.txt)
   GeoRSS -vector- (rw+v): GeoRSS
   VFK -vector- (ro): Czech Cadastral Exchange Data Format (*.vfk)
   PGDUMP -vector- (w+v): PostgreSQL SQL dump (*.sql)
@@ -53,7 +50,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   WFS -vector- (rov): OGC WFS (Web Feature Service)
   OAPIF -vector- (ro): OGC API - Features
   EDIGEO -vector- (rov): French EDIGEO exchange format (*.thf)
-  SVG -vector- (rov): Scalable Vector Graphics (*.svg)
   Idrisi -vector- (rov): Idrisi Vector (.vct) (*.vct)
   XLS -vector- (ro): MS Excel format (*.xls)
   ODS -vector- (rw+uv): Open Document/ LibreOffice / OpenOffice Spreadsheet (*.ods)
@@ -78,7 +74,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   JSONFG -vector- (rw+v): OGC Features and Geometries JSON (*.json)
   MiraMonVector -vector- (rw+v): MiraMon Vectors (.pol, .arc, .pnt) (*.pol, *.arc, *.pnt)
   ADBC -vector- (ro): Arrow Database Connectivity
-  TIGER -vector- (rov): U.S. Census TIGER/Line
   AVCBin -vector- (rov): Arc/Info Binary Coverage
   AVCE00 -vector- (rov): Arc/Info E00 (ASCII) Coverage (*.e00)
   AIVector -vector- (ro): Artificial Intelligence powered vector driver

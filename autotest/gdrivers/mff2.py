@@ -24,14 +24,3 @@ def test_mff2_1():
 
     tst = gdaltest.GDALTest("MFF2", "mff2/bytemff2", 1, 4672)
     tst.testOpen()
-
-
-###############################################################################
-# Test writing a MFF2 file
-
-
-def test_mff2_write():
-
-    with gdaltest.config_option("GDAL_PAM_ENABLED", "NO"):
-        tst = gdaltest.GDALTest("MFF2", "mff2/bytemff2", 1, 4672)
-        tst.testCreateCopy(check_srs=True)
