@@ -88,7 +88,7 @@ Write-support removal:
   * PAux: not sure what it is about and that this is actively used
   * MFF: not sure what it is about and that this is actively used
   * MFF2/HKV: not sure what it is about and that this is actively used
-  * LAN: not sure what it is about and that this is actively used
+  * LAN: old ERDAS format before HFA (.img). "raw format", does not support compression. Write support doesn't seem useful.
   * BYN: Canadian grid-related format. Write support doesn't seem useful
   * NTv2: read-support definitely useful. Write support obsolete since PROJ 7
     and use of Geodetic TIFF Grid format.
