@@ -2836,6 +2836,8 @@ int CPL_STDCALL GDALWriteWorldFile(const char *pszBaseFilename,
  * <li> "RELEASE_DATE": Returns GDAL_RELEASE_DATE formatted as a
  * string. i.e. "20230312".</li>
  * <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME. ie. "3.6.3"</li>
+ * <li> "RELEASE_NICKNAME": (>= 3.11) Returns the GDAL_RELEASE_NICKNAME.
+ * i.e. "Trans rights are human rights"</li>
  * <li> "--version": Returns one line version message suitable for
  * use in response to --version requests.  i.e. "GDAL 3.6.3, released
  * 2023/03/12"</li>
@@ -2999,12 +3001,14 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
         osVersionInfo.Printf("%d", GDAL_RELEASE_DATE);
     else if (EQUAL(pszRequest, "RELEASE_NAME"))
         osVersionInfo.Printf(GDAL_RELEASE_NAME);
+    else if (EQUAL(pszRequest, "RELEASE_NICKNAME"))
+        osVersionInfo.Printf(GDAL_RELEASE_NICKNAME);
     else  // --version
     {
-        osVersionInfo.Printf("GDAL %s, released %d/%02d/%02d",
-                             GDAL_RELEASE_NAME, GDAL_RELEASE_DATE / 10000,
-                             (GDAL_RELEASE_DATE % 10000) / 100,
-                             GDAL_RELEASE_DATE % 100);
+        osVersionInfo.Printf(
+            "GDAL %s \"%s\", released %d/%02d/%02d", GDAL_RELEASE_NAME,
+            GDAL_RELEASE_NICKNAME, GDAL_RELEASE_DATE / 10000,
+            (GDAL_RELEASE_DATE % 10000) / 100, GDAL_RELEASE_DATE % 100);
 #if defined(__GNUC__) && !defined(__OPTIMIZE__)
         // Cf https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
         // also true for CLang
