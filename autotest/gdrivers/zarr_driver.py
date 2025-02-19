@@ -16,6 +16,7 @@ import base64
 import json
 import math
 import os
+import shutil
 import struct
 import sys
 
@@ -533,6 +534,36 @@ def test_zarr_read_compression_methods(datasetname, compressor):
         ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
         assert ar
         assert ar.Read() == array.array("b", [1, 2])
+
+
+def test_zarr_read_shuffle_filter():
+
+    filename = "data/zarr/shuffle.zarr"
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+    assert ar.Read() == array.array("h", [1, 2])
+
+
+def test_zarr_read_shuffle_filter_update(tmp_path):
+
+    out_filename = tmp_path / "filter_update.zarr"
+    shutil.copytree("data/zarr/shuffle.zarr", out_filename)
+
+    def write():
+        ds = gdal.OpenEx(out_filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        ar.Write([3, 4])
+
+    write()
+
+    ds = gdal.OpenEx(out_filename, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar.Read() == array.array("h", [3, 4])
 
 
 @pytest.mark.parametrize("name", ["u1", "u2", "u4", "u8"])
