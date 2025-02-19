@@ -119,7 +119,7 @@ will be from the source coordinate system to the destination coordinate system.
 
 @param[in,out] z input Z coordinates.  Results returned in same array.
 
-@param[out] panSuccess panSuccess array of ints in which success (TRUE) or failure (FALSE)
+@param[out] panSuccess array of ints in which success (TRUE) or failure (FALSE)
 flags are returned for the translation of each point. Must not be NULL.
 
 @return TRUE if all points have been successfully transformed (changed in 3.11,
