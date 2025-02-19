@@ -706,6 +706,14 @@ CSVReadParseLineGeneric(void *fp, const char *(*pfnReadLine)(void *, size_t),
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
     }
+
+    if (bInString)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CSV file has unbalanced number of double-quotes. Corrupted "
+                 "data will likely be returned");
+    }
+
     return nullptr;
 }
 
