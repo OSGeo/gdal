@@ -62,6 +62,22 @@ def test_gdalmdimtranslate_multidim_to_mem():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
+def test_gdalmdimtranslate_multidim_to_unknown_format():
+
+    with pytest.raises(
+        Exception,
+        match="Cannot determine output driver for dataset name 'unknown.unknown'",
+    ):
+        gdal.MultiDimTranslate("unknown.unknown", "data/mdim.vrt")
+
+
+###############################################################################
+
+
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_multidim_to_classic(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.tif"
