@@ -22,73 +22,73 @@ sphinx.locale.admonitionlabels[
 def setup(app):
     app.add_node(
         shortname,
-        html=(visit_shortname_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_shortname_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("shortname", ShortName)
 
     app.add_node(
         built_in_by_default,
-        html=(visit_built_in_by_default_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_built_in_by_default_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("built_in_by_default", BuiltInByDefault)
 
     app.add_node(
         build_dependencies,
-        html=(visit_build_dependencies_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_build_dependencies_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("build_dependencies", BuildDependencies)
 
     app.add_node(
         supports_create,
-        html=(visit_supports_create_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_supports_create_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("supports_create", CreateDirective)
 
     app.add_node(
         supports_createcopy,
-        html=(visit_supports_createcopy_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_supports_createcopy_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("supports_createcopy", CreateCopyDirective)
 
     app.add_node(
         supports_georeferencing,
-        html=(visit_supports_georeferencing_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_supports_georeferencing_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("supports_georeferencing", GeoreferencingDirective)
 
     app.add_node(
         supports_virtualio,
-        html=(visit_supports_virtualio_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_supports_virtualio_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("supports_virtualio", VirtualIODirective)
 
     app.add_node(
         supports_multidimensional,
-        html=(visit_supports_multidimensional_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_supports_multidimensional_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("supports_multidimensional", MultiDimensionalDirective)
 
     app.add_node(
         deprecated_driver,
-        html=(visit_deprecated_driver_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_deprecated_driver_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("deprecated_driver", DeprecatedDriverDirective)
 
@@ -100,19 +100,27 @@ def setup(app):
 from docutils import nodes
 
 
-def visit_admonition(self, node):
+def visit_admonition_generic(self, node):
     self.visit_admonition(node)
 
 
-def depart_node(self, node):
+def depart_node_generic(self, node):
     self.depart_admonition(node)
+
+
+def visit_admonition_html(self, node, name: str = ""):
+    self.body.append(self.starttag(node, "div", CLASS=("admonition " + name)))
+
+
+def depart_node_html(self, node):
+    self.body.append("</div>\n")
 
 
 class shortname(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_shortname_node(self, node):
+def visit_shortname_node_html(self, node):
     self.body.append(self.starttag(node, "div", CLASS=("admonition shortname")))
 
 
@@ -120,7 +128,7 @@ class built_in_by_default(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_built_in_by_default_node(self, node):
+def visit_built_in_by_default_node_html(self, node):
     self.body.append(
         self.starttag(node, "div", CLASS=("admonition built_in_by_default"))
     )
@@ -130,7 +138,7 @@ class build_dependencies(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_build_dependencies_node(self, node):
+def visit_build_dependencies_node_html(self, node):
     self.body.append(
         self.starttag(node, "div", CLASS=("admonition build_dependencies"))
     )
@@ -140,7 +148,7 @@ class supports_create(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_supports_create_node(self, node):
+def visit_supports_create_node_html(self, node):
     self.body.append(self.starttag(node, "div", CLASS=("admonition supports_create")))
 
 
@@ -148,7 +156,7 @@ class supports_createcopy(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_supports_createcopy_node(self, node):
+def visit_supports_createcopy_node_html(self, node):
     self.body.append(
         self.starttag(node, "div", CLASS=("admonition supports_createcopy"))
     )
@@ -158,7 +166,7 @@ class supports_georeferencing(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_supports_georeferencing_node(self, node):
+def visit_supports_georeferencing_node_html(self, node):
     self.body.append(
         self.starttag(node, "div", CLASS=("admonition supports_georeferencing"))
     )
@@ -168,7 +176,7 @@ class supports_virtualio(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_supports_virtualio_node(self, node):
+def visit_supports_virtualio_node_html(self, node):
     self.body.append(
         self.starttag(node, "div", CLASS=("admonition supports_virtualio"))
     )
@@ -178,7 +186,7 @@ class supports_multidimensional(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_supports_multidimensional_node(self, node):
+def visit_supports_multidimensional_node_html(self, node):
     self.body.append(
         self.starttag(node, "div", CLASS=("admonition supports_multidimensional"))
     )
@@ -188,7 +196,7 @@ class deprecated_driver(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_deprecated_driver_node(self, node):
+def visit_deprecated_driver_node_html(self, node):
     self.body.append(self.starttag(node, "div", CLASS=("danger deprecated_driver")))
 
 
