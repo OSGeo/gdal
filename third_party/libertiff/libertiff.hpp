@@ -1084,18 +1084,26 @@ class Image
     {
         if (m_isTiled && m_tileWidth > 0 && m_tileHeight > 0)
         {
-            const auto lTilesPerRow = tilesPerRow();
-            const auto lTilesPerCol = tilesPerCol();
+            const uint32_t lTilesPerRow = tilesPerRow();
+            const uint32_t lTilesPerCol = tilesPerCol();
             if (xtile >= lTilesPerRow || ytile >= lTilesPerCol)
             {
                 ok = false;
                 return 0;
             }
-            auto idx = uint64_t(ytile) * lTilesPerRow + xtile;
+            uint64_t idx = uint64_t(ytile) * lTilesPerRow + xtile;
             if (bandIdx &&
                 m_planarConfiguration == PlanarConfiguration::Separate)
             {
-                idx += uint64_t(bandIdx) * lTilesPerCol * lTilesPerRow;
+                const uint64_t lTotalTiles =
+                    uint64_t(lTilesPerCol) * lTilesPerRow;
+                if (lTotalTiles >
+                    std::numeric_limits<uint64_t>::max() / bandIdx)
+                {
+                    ok = false;
+                    return 0;
+                }
+                idx += bandIdx * lTotalTiles;
             }
             return idx;
         }
