@@ -1222,6 +1222,13 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources):
             ["exprtk"],
             id="expression returns nodata",
         ),
+        pytest.param(
+            "ZB[1] + B[1]",
+            [("ZB[1]", 7), ("B[1]", 3)],
+            10,
+            ["muparser"],
+            id="index substitution works correctly",
+        ),
     ],
 )
 @pytest.mark.parametrize("dialect", ("exprtk", "muparser"))
@@ -1274,8 +1281,8 @@ def test_vrt_pixelfn_expression(
             id="expression is too long",
         ),
         pytest.param(
-            "B[1]",
-            [("B[1]", 3)],
+            "B@1",
+            [("B@1", 3)],
             "muparser",
             "Invalid variable name",
             id="invalid variable name",

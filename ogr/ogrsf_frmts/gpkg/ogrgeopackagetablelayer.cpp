@@ -7293,12 +7293,13 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
         eErr = SQLCommand(
             m_poDS->GetDB(),
             CPLString()
-                .Printf("UPDATE gpkg_geometry_columns SET column_name = \"%s\" "
-                        "WHERE lower(table_name) = lower(\"%s\") "
-                        "AND lower(column_name) = lower(\"%s\")",
-                        SQLEscapeName(poNewGeomFieldDefn->GetNameRef()).c_str(),
-                        SQLEscapeName(m_pszTableName).c_str(),
-                        SQLEscapeName(poGeomFieldDefn->GetNameRef()).c_str())
+                .Printf(
+                    "UPDATE gpkg_geometry_columns SET column_name = '%s' "
+                    "WHERE lower(table_name) = lower('%s') "
+                    "AND lower(column_name) = lower('%s')",
+                    SQLEscapeLiteral(poNewGeomFieldDefn->GetNameRef()).c_str(),
+                    SQLEscapeLiteral(m_pszTableName).c_str(),
+                    SQLEscapeLiteral(poGeomFieldDefn->GetNameRef()).c_str())
                 .c_str());
         if (eErr != OGRERR_NONE)
         {

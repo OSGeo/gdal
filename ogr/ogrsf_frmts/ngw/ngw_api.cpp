@@ -20,13 +20,19 @@
 namespace NGWAPI
 {
 
-static bool ReportErrorToCPL(const std::string &osErrorMessage)
+static std::string GetErrorMessage(const CPLJSONObject &oRoot,
+                                   const std::string &osErrorMessage)
 {
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "NGW driver failed to fetch data with error: %s",
-             osErrorMessage.c_str());
-
-    return false;
+    if (oRoot.IsValid())
+    {
+        std::string osErrorMessageInt =
+            oRoot.GetString("message", osErrorMessage);
+        if (!osErrorMessageInt.empty())
+        {
+            return osErrorMessageInt;
+        }
+    }
+    return osErrorMessage;
 }
 
 bool CheckRequestResult(bool bResult, const CPLJSONObject &oRoot,
@@ -34,24 +40,31 @@ bool CheckRequestResult(bool bResult, const CPLJSONObject &oRoot,
 {
     if (!bResult)
     {
-        if (oRoot.IsValid())
-        {
-            std::string osErrorMessageInt =
-                oRoot.GetString("message", osErrorMessage);
-            if (!osErrorMessageInt.empty())
-            {
-                return ReportErrorToCPL(osErrorMessageInt);
-            }
-        }
-        return ReportErrorToCPL(osErrorMessage);
-    }
+        auto osMsg = GetErrorMessage(oRoot, osErrorMessage);
 
-    if (!oRoot.IsValid())
-    {
-        return ReportErrorToCPL(osErrorMessage);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "NGW driver failed to fetch data with error: %s",
+                 osMsg.c_str());
+        return false;
     }
 
     return true;
+}
+
+static void ReportError(const GByte *pabyData, int nDataLen,
+                        const std::string &osErrorMessage)
+{
+    CPLJSONDocument oResult;
+    if (oResult.LoadMemory(pabyData, nDataLen))
+    {
+        CPLJSONObject oRoot = oResult.GetRoot();
+        auto osMsg = GetErrorMessage(oRoot, osErrorMessage);
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", osMsg.c_str());
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMessage.c_str());
+    }
 }
 
 bool CheckSupportedType(bool bIsRaster, const std::string &osType)
@@ -169,16 +182,6 @@ GetFeaturePageURL(const std::string &osUrl, const std::string &osResourceId,
         }
     }
 
-    if (bParamAdd)
-    {
-        osFeatureUrl += "&extensions=" + osExtensions;
-    }
-    else
-    {
-        osFeatureUrl += "?extensions=" + osExtensions;
-        bParamAdd = true;
-    }
-
     if (IsGeometryIgnored)
     {
         if (bParamAdd)
@@ -188,7 +191,17 @@ GetFeaturePageURL(const std::string &osUrl, const std::string &osResourceId,
         else
         {
             osFeatureUrl += "?geom=no";
+            bParamAdd = true;
         }
+    }
+
+    if (bParamAdd)
+    {
+        osFeatureUrl += "&extensions=" + osExtensions;
+    }
+    else
+    {
+        osFeatureUrl += "?extensions=" + osExtensions;
     }
 
     return osFeatureUrl;
@@ -279,21 +292,6 @@ Uri ParseUri(const std::string &osUrl)
     }
 
     return stOut;
-}
-
-static void ReportError(const GByte *pabyData, int nDataLen,
-                        const std::string &osErrorMessage)
-{
-    CPLJSONDocument oResult;
-    if (oResult.LoadMemory(pabyData, nDataLen))
-    {
-        CPLJSONObject oRoot = oResult.GetRoot();
-        CheckRequestResult(false, oRoot, osErrorMessage);
-    }
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMessage.c_str());
-    }
 }
 
 std::string CreateResource(const std::string &osUrl,

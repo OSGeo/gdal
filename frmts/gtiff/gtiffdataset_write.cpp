@@ -6700,18 +6700,21 @@ CPLErr GTiffDataset::CopyImageryAndMask(GTiffDataset *poDstDS,
                     {
                         memset(pBlockBuffer, 0,
                                static_cast<size_t>(poDstDS->m_nBlockXSize) *
-                                   poDstDS->m_nBlockYSize * nDataTypeSize);
+                                   poDstDS->m_nBlockYSize);
                     }
                     eErr = poSrcMaskBand->RasterIO(
                         GF_Read, iX, iY, nReqXSize, nReqYSize, pBlockBuffer,
-                        nReqXSize, nReqYSize, eType, nDataTypeSize,
-                        static_cast<GSpacing>(nDataTypeSize) *
-                            poDstDS->m_nBlockXSize,
-                        nullptr);
+                        nReqXSize, nReqYSize, GDT_Byte, 1,
+                        poDstDS->m_nBlockXSize, nullptr);
                     if (eErr == CE_None)
                     {
-                        eErr = poDstDS->m_poMaskDS->WriteEncodedTileOrStrip(
-                            iBlockMask, pBlockBuffer, false);
+                        // Avoid any attempt to load from disk
+                        poDstDS->m_poMaskDS->m_nLoadedBlock = iBlockMask;
+                        eErr =
+                            poDstDS->m_poMaskDS->GetRasterBand(1)->WriteBlock(
+                                nXBlock, nYBlock, pBlockBuffer);
+                        if (eErr == CE_None)
+                            eErr = poDstDS->m_poMaskDS->FlushBlockBuf();
                     }
 
                     iBlockMask++;

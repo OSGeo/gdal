@@ -1310,7 +1310,7 @@ std::string OGRNGWLayer::CreateNGWResourceJson()
     {
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
         CPLJSONObject oField;
-        auto sComment = poFieldDefn->GetComment();
+        auto const &sComment = poFieldDefn->GetComment();
         if (!sComment.empty())
         {
             CPLJSONDocument oComment;

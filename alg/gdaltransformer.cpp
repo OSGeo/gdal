@@ -113,17 +113,17 @@ will be from the source coordinate system to the destination coordinate system.
 
 @param nPointCount number of points in the x, y and z arrays.
 
-@param x input X coordinates.  Results returned in same array.
+@param[in,out] x input X coordinates.  Results returned in same array.
 
-@param y input Y coordinates.  Results returned in same array.
+@param[in,out] y input Y coordinates.  Results returned in same array.
 
-@param z input Z coordinates.  Results returned in same array.
+@param[in,out] z input Z coordinates.  Results returned in same array.
 
-@param panSuccess array of ints in which success (TRUE) or failure (FALSE)
-flags are returned for the translation of each point.
+@param[out] panSuccess panSuccess array of ints in which success (TRUE) or failure (FALSE)
+flags are returned for the translation of each point. Must not be NULL.
 
-@return TRUE if the overall transformation succeeds (though some individual
-points may have failed) or FALSE if the overall transformation fails.
+@return TRUE if all points have been successfully transformed (changed in 3.11,
+previously was TRUE if some points have been successfully transformed)
 
 */
 
@@ -524,11 +524,11 @@ retry:
     /* -------------------------------------------------------------------- */
     /*      Transform them to the output coordinate system.                 */
     /* -------------------------------------------------------------------- */
-    CPLTurnFailureIntoWarning(true);
-    pfnTransformer(pTransformArg, FALSE, nSamplePoints, padfX, padfY, padfZ,
-                   pabSuccess);
-    CPLTurnFailureIntoWarning(false);
-
+    {
+        CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
+        pfnTransformer(pTransformArg, FALSE, nSamplePoints, padfX, padfY, padfZ,
+                       pabSuccess);
+    }
     constexpr int SIGN_FINAL_UNINIT = -2;
     constexpr int SIGN_FINAL_INVALID = 0;
     int iSignDiscontinuity = SIGN_FINAL_UNINIT;
@@ -588,7 +588,7 @@ retry:
                     double ayTemp[2] = {padfY[i], padfY[i]};
                     double azTemp[2] = {padfZ[i], padfZ[i]};
                     int abSuccess[2] = {FALSE, FALSE};
-                    CPLTurnFailureIntoWarning(true);
+                    CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
                     if (pfnTransformer(pTransformArg, TRUE, 2, axTemp, ayTemp,
                                        azTemp, abSuccess) &&
                         fabs(axTemp[0] - axTemp[1]) < 1e-8 &&
@@ -596,7 +596,6 @@ retry:
                     {
                         padfX[i] = iSignDiscontinuity * 180.0;
                     }
-                    CPLTurnFailureIntoWarning(false);
                 }
             }
         }
@@ -615,10 +614,11 @@ retry:
         memcpy(padfXRevert, padfX, nSamplePoints * sizeof(double));
         memcpy(padfYRevert, padfY, nSamplePoints * sizeof(double));
         memcpy(padfZRevert, padfZ, nSamplePoints * sizeof(double));
-        CPLTurnFailureIntoWarning(true);
-        pfnTransformer(pTransformArg, TRUE, nSamplePoints, padfXRevert,
-                       padfYRevert, padfZRevert, pabSuccess);
-        CPLTurnFailureIntoWarning(false);
+        {
+            CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
+            pfnTransformer(pTransformArg, TRUE, nSamplePoints, padfXRevert,
+                           padfYRevert, padfZRevert, pabSuccess);
+        }
 
         for (int i = 0; nFailedCount == 0 && i < nSamplePoints; i++)
         {
@@ -693,10 +693,11 @@ retry:
 
         CPLAssert(nSamplePoints == nSampleMax);
 
-        CPLTurnFailureIntoWarning(true);
-        pfnTransformer(pTransformArg, FALSE, nSamplePoints, padfX, padfY, padfZ,
-                       pabSuccess);
-        CPLTurnFailureIntoWarning(false);
+        {
+            CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
+            pfnTransformer(pTransformArg, FALSE, nSamplePoints, padfX, padfY,
+                           padfZ, pabSuccess);
+        }
     }
 
     /* -------------------------------------------------------------------- */

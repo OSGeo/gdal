@@ -51,7 +51,7 @@ namespace
 /************************************************************************/
 
 class GDALVectorSelectAlgorithmLayer final
-    : public OGRLayer,
+    : public OGRLayerWithTranslateFeature,
       public OGRGetNextFeatureThroughRaw<GDALVectorSelectAlgorithmLayer>
 {
   private:
@@ -257,6 +257,13 @@ class GDALVectorSelectAlgorithmLayer final
         m_oSrcLayer.ResetReading();
     }
 
+    void TranslateFeature(
+        std::unique_ptr<OGRFeature> poSrcFeature,
+        std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
+    {
+        apoOutFeatures.push_back(TranslateFeature(poSrcFeature.release()));
+    }
+
     OGRFeature *GetNextRawFeature()
     {
         auto poSrcFeature =
@@ -304,8 +311,7 @@ bool GDALVectorSelectAlgorithm::RunStep(GDALProgressFunc, void *)
 
     auto poSrcDS = m_inputDataset.GetDatasetRef();
 
-    auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>();
-    outDS->SetDescription(poSrcDS->GetDescription());
+    auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
 
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
     {
@@ -320,7 +326,7 @@ bool GDALVectorSelectAlgorithm::RunStep(GDALProgressFunc, void *)
             if (!poLayer->IncludeFields(m_fields, !m_ignoreMissingFields))
                 return false;
         }
-        outDS->AddLayer(std::move(poLayer));
+        outDS->AddLayer(*poSrcLayer, std::move(poLayer));
     }
 
     m_outputDataset.Set(std::move(outDS));
