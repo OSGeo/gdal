@@ -113,17 +113,17 @@ will be from the source coordinate system to the destination coordinate system.
 
 @param nPointCount number of points in the x, y and z arrays.
 
-@param x input X coordinates.  Results returned in same array.
+@param[in,out] x input X coordinates.  Results returned in same array.
 
-@param y input Y coordinates.  Results returned in same array.
+@param[in,out] y input Y coordinates.  Results returned in same array.
 
-@param z input Z coordinates.  Results returned in same array.
+@param[in,out] z input Z coordinates.  Results returned in same array.
 
-@param panSuccess array of ints in which success (TRUE) or failure (FALSE)
-flags are returned for the translation of each point.
+@param[out] panSuccess panSuccess array of ints in which success (TRUE) or failure (FALSE)
+flags are returned for the translation of each point. Must not be NULL.
 
-@return TRUE if the overall transformation succeeds (though some individual
-points may have failed) or FALSE if the overall transformation fails.
+@return TRUE if all points have been successfully transformed (changed in 3.11,
+previously was TRUE if some points have been successfully transformed)
 
 */
 
