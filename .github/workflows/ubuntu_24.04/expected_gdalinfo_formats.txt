@@ -153,6 +153,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   ENVI -raster- (rw+uv): ENVI .hdr Labelled
   EHdr -raster- (rw+uv): ESRI .hdr Labelled (*.bil)
   ISCE -raster- (rw+v): ISCE raster
-  Zarr -raster,multidimensional raster- (rw+uvs): Zarr
+  Zarr -raster,multidimensional raster- (rw+uvs): Zarr (*.zarr)
   RCM -raster- (rovs): Radarsat Constellation Mission XML Product
   HTTP -raster,vector- (ro): HTTP Fetching Wrapper
