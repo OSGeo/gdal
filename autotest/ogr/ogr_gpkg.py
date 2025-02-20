@@ -10833,7 +10833,7 @@ def test_gpkg_secure_delete(tmp_vsimem):
 )
 def test_ogr_gpkg_write_check_golden_file(tmp_path, src_filename):
 
-    out_filename = str(tmp_path / "test.gpkg")
+    out_filename = str(tmp_path / os.path.basename(src_filename))
     with gdal.config_option("OGR_CURRENT_DATE", "2000-01-01T:00:00:00.000Z"):
         gdal.VectorTranslate(out_filename, src_filename)
 
