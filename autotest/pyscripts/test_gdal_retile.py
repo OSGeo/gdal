@@ -351,6 +351,7 @@ def test_gdal_retile_4(script_path, tmp_path):
 
 def test_gdal_retile_5(script_path, tmp_path):
 
+    pytest.importorskip("osgeo.gdal_array")
     np = pytest.importorskip("numpy")
 
     nodata_value = -3.4028234663852886e38

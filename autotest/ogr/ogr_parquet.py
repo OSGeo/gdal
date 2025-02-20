@@ -1195,6 +1195,10 @@ def test_ogr_parquet_polygon_orientation(option_value, written_wkt, expected_wkt
     try:
         import numpy
 
+        from osgeo import gdal_array
+
+        str(gdal_array)
+
         numpy.zeros
 
         has_numpy = True

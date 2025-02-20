@@ -25,7 +25,7 @@ pytestmark = pytest.mark.skipif(
 
 # All tests will be skipped if numpy is unavailable.
 numpy = pytest.importorskip("numpy")
-
+pytest.importorskip("osgeo.gdal_array")
 
 ###############################################################################
 # Verify real part extraction from a complex dataset.

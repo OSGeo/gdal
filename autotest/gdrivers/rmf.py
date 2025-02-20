@@ -702,6 +702,8 @@ def rmf_31e_data_gen(min_val, max_val, stripeSize, sx):
 
 
 def test_rmf_31e():
+
+    pytest.importorskip("osgeo.gdal_array")
     numpy = pytest.importorskip("numpy")
 
     drv = gdal.GetDriverByName("Gtiff")
@@ -846,6 +848,8 @@ def test_rmf_33c():
 
 
 def test_rmf_34():
+
+    pytest.importorskip("osgeo.gdal_array")
     numpy = pytest.importorskip("numpy")
 
     drv = gdal.GetDriverByName("RMF")
