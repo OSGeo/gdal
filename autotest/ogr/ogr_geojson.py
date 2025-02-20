@@ -2111,6 +2111,19 @@ def test_ogr_geojson_54():
 
 
 ###############################################################################
+
+
+def strip_gdal_release_nickname(content):
+
+    start = content.find('"_gdal_release_nickname_":')
+    if start < 0:
+        return content
+    end = content.find('",\n', start)
+    ret = content[0:start] + content[end + 3 :]
+    return ret
+
+
+###############################################################################
 # Test RFC 7946
 
 
@@ -2120,7 +2133,7 @@ def read_file(filename):
         return None
     content = gdal.VSIFReadL(1, 10000, f).decode("UTF-8")
     gdal.VSIFCloseL(f)
-    return content
+    return strip_gdal_release_nickname(content)
 
 
 def test_ogr_geojson_55(tmp_vsimem):
@@ -4921,9 +4934,7 @@ def test_ogr_geojson_foreign_members_collection(tmp_vsimem):
     )
     ds.Close()
 
-    fp = gdal.VSIFOpenL(filename, "rb")
-    data = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
-    gdal.VSIFCloseL(fp)
+    data = read_file(filename)
 
     assert """{\n"type": "FeatureCollection",\n"foo":"bar",\n"name": "test",""" in data
 
@@ -4970,9 +4981,7 @@ def test_ogr_geojson_foreign_members_feature(tmp_vsimem):
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     ds.Close()
 
-    fp = gdal.VSIFOpenL(filename, "rb")
-    data = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
-    gdal.VSIFCloseL(fp)
+    data = read_file(filename)
 
     assert (
         """{\n"type": "FeatureCollection",\n"name": "test",\n"features": [\n{ "type": "Feature", "properties": { }, "geometry": null, "foo":"bar"}\n]\n}"""
