@@ -252,7 +252,7 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
                         geometryTypes.push_back( type );
                     }
 
-                    if( find( geometryTypes.begin(), geometryTypes.end(), type ) ==
+                    if( std::find( geometryTypes.begin(), geometryTypes.end(), type ) ==
                         geometryTypes.end() )
                     {
                         geometryTypes.push_back( type );
@@ -268,7 +268,7 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
                     geometryTypes.push_back( type );
                 }
 
-                if( find( geometryTypes.begin(), geometryTypes.end(), type ) ==
+                if( std::find( geometryTypes.begin(), geometryTypes.end(), type ) ==
                     geometryTypes.end() )
                 {
                     geometryTypes.push_back( type );
