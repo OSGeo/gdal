@@ -533,6 +533,7 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] = {
     {"GDAL_HTTP_TCP_KEEPALIVE", "TCP_KEEPALIVE"},
     {"GDAL_HTTP_TCP_KEEPIDLE", "TCP_KEEPIDLE"},
     {"GDAL_HTTP_TCP_KEEPINTVL", "TCP_KEEPINTVL"},
+    {"GDAL_HTTP_MAXCONNECTS", "MAXCONNECTS"},
 };
 
 char **CPLHTTPGetOptionsFromEnv(const char *pszFilename)
@@ -1153,6 +1154,10 @@ int CPLHTTPPopFetchCallback(void)
  * </li>
  * <li>MAX_FILE_SIZE=val, where val is a number of bytes (GDAL >= 2.2)
  * No corresponding configuration option.
+ * </li>
+ * <li>MAXCONNECTS=val, where val is the maximum number of connections in the
+ * connection pool. (GDAL >= 3.11)
+ * Corresponding configuration option: GDAL_HTTP_MAXCONNECTS.
  * </li>
  * <li>CAINFO=/path/to/bundle.crt. This is path to Certificate Authority (CA)
  *     bundle file. By default, it will be looked for in a system location. If
@@ -2614,6 +2619,16 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
                                    nKeepAliveInterval);
         unchecked_curl_easy_setopt(http_handle, CURLOPT_TCP_KEEPIDLE,
                                    nKeepAliveIdle);
+    }
+    
+    // Set connection pool size.
+    const char *pszMaxConnects = CSLFetchNameValue(papszOptions, "MAXCONNECTS");
+    if (pszMaxConnects == nullptr)
+        pszMaxConnects = CPLGetConfigOption("GDAL_HTTP_MAXCONNECTS", nullptr);
+    if (pszMaxConnects != nullptr)
+    {
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_MAXCONNECTS, 
+                                  atoi(pszMaxConnects));
     }
 
     struct curl_slist *headers = nullptr;

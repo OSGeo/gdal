@@ -826,6 +826,12 @@ Networking options
       Interval time between keep-alive probes. Only taken into account if
       :config:`GDAL_HTTP_TCP_KEEPALIVE=YES`.
 
+-  .. config:: GDAL_HTTP_MAXCONNECTS
+      :choices: <number of cached connections>
+      :since: 3.11
+
+      Number of connections that will be cached in the connection pool. See https://curl.se/libcurl/c/CURLOPT_MAXCONNECTS.html
+
 -  .. config:: GDAL_HTTP_SSLCERT
       :choices: <filename>
       :since: 3.7

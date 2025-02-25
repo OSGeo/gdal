@@ -217,6 +217,15 @@ def test_http_keep_alive():
 
 
 ###############################################################################
+
+def test_http_max_cached_connections():
+
+    # Test which just triggers code path
+
+    with gdaltest.config_option("GDAL_HTTP_MAXCONNECTS", "10"):
+        gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
+
+###############################################################################
 #
 
 
