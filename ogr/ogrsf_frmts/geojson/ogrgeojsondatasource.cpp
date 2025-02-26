@@ -440,6 +440,9 @@ OGRGeoJSONDataSource::ICreateLayer(const char *pszNameIn,
 
     VSIFPrintfL(fpOut_, "{\n\"type\": \"FeatureCollection\",\n");
 
+    VSIFPrintfL(fpOut_, "\"_gdal_release_nickname_\": \"%s\",\n",
+                GDALVersionInfo("RELEASE_NICKNAME"));
+
     if (pszForeignMembersCollection)
     {
         VSIFWriteL(pszForeignMembersCollection + 1, 1,
