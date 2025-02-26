@@ -5357,6 +5357,13 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
                      "table_name TEXT NOT NULL PRIMARY KEY,"
                      "feature_count INTEGER DEFAULT NULL"
                      ")";
+            if (strstr(pszFilename, "_golden") == nullptr)
+            {
+                osSQL += ";CREATE TABLE gpkg_gdal_release_nickname(value TEXT)";
+                osSQL += ";INSERT INTO gpkg_gdal_release_nickname VALUES('";
+                osSQL += GDALVersionInfo("RELEASE_NICKNAME");
+                osSQL += "')";
+            }
         }
 #endif
 
