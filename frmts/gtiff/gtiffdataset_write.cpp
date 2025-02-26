@@ -3790,16 +3790,21 @@ static void AppendMetadataItem(CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
     /*      Create root, if missing.                                        */
     /* -------------------------------------------------------------------- */
     if (*ppsRoot == nullptr)
+    {
         *ppsRoot = CPLCreateXMLNode(nullptr, CXT_Element, "GDALMetadata");
+
+        *ppsTail =
+            CPLCreateXMLNode(*ppsRoot, CXT_Comment,
+                             std::string("GDAL release nickname: ")
+                                 .append(GDALVersionInfo("RELEASE_NICKNAME"))
+                                 .c_str());
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Append item to tail.  We keep track of the tail to avoid        */
     /*      O(nsquared) time as the list gets longer.                       */
     /* -------------------------------------------------------------------- */
-    if (*ppsTail == nullptr)
-        CPLAddXMLChild(*ppsRoot, psItem);
-    else
-        CPLAddXMLSibling(*ppsTail, psItem);
+    CPLAddXMLSibling(*ppsTail, psItem);
 
     *ppsTail = psItem;
 }
