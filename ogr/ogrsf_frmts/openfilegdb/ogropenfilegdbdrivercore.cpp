@@ -111,6 +111,17 @@ GDALIdentifyEnum OGROpenFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo,
     }
 #endif
 
+    else if (STARTS_WITH(pszFilename, "/vsizip/") && poOpenInfo->bIsDirectory)
+    {
+        VSIStatBufL stat;
+        return VSIStatL(
+                   CPLFormFilenameSafe(pszFilename, "a00000001", "gdbtable")
+                       .c_str(),
+                   &stat) == 0
+                   ? GDAL_IDENTIFY_TRUE
+                   : GDAL_IDENTIFY_FALSE;
+    }
+
     else if (EQUAL(pszFilename, "."))
     {
         GDALIdentifyEnum eRet = GDAL_IDENTIFY_FALSE;
