@@ -5318,7 +5318,16 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
         }
         else
         {
-            value = section_header;  // Freed out
+            if (section_header)
+            {
+                if (!strcmp(section_header, section))
+                    value = section_header;  // Freed out
+                else
+                    value = nullptr;
+            }
+            else
+                value = nullptr;
+
             fclose_function(file);
             free_function(pszString);
             return value;
@@ -6107,6 +6116,7 @@ int MMCheck_REL_FILE(const char *szREL_file)
         MMCPLError(CE_Failure, CPLE_OpenFailed,
                    "The file \"%s\" must be REL4. "
                    "You can use ConvREL.exe from MiraMon software "
+                   " or GeM+ "
                    "to convert this file to REL4.",
                    szREL_file);
         return 1;
