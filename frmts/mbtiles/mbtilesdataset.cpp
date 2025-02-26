@@ -2870,6 +2870,10 @@ GDALDataset *MBTilesDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 poDS->m_eTF = GPKG_TF_JPEG;
             }
+            else if (pszFormat != nullptr && (EQUAL(pszFormat, "webp")))
+            {
+                poDS->m_eTF = GPKG_TF_WEBP;
+            }
 
             const char *pszTF =
                 CSLFetchNameValue(poOpenInfo->papszOpenOptions, "TILE_FORMAT");
@@ -2879,6 +2883,8 @@ GDALDataset *MBTilesDataset::Open(GDALOpenInfo *poOpenInfo)
                 if ((pszFormat != nullptr &&
                      (EQUAL(pszFormat, "jpg") || EQUAL(pszFormat, "jpeg")) &&
                      poDS->m_eTF != GPKG_TF_JPEG) ||
+                    (pszFormat != nullptr && EQUAL(pszFormat, "webp") &&
+                     poDS->m_eTF != GPKG_TF_WEBP) ||
                     (pszFormat != nullptr && EQUAL(pszFormat, "png") &&
                      poDS->m_eTF == GPKG_TF_JPEG))
                 {
