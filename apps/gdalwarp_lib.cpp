@@ -54,6 +54,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 #include "ogr_proj_p.h"
+#include "ogrct_priv.h"
 #include "ogrsf_frmts.h"
 #include "vrtdataset.h"
 #include "../frmts/gtiff/cogdriver.h"
@@ -4796,8 +4797,117 @@ static GDALDatasetH GDALWarpCreateOutput(
     }
 
     if (phTransformArg && *phTransformArg != nullptr)
+    {
         GDALSetGenImgProjTransformerDstGeoTransform(*phTransformArg,
                                                     adfDstGeoTransform);
+
+        void *pTransformerArg = *phTransformArg;
+        if (GDALIsTransformer(pTransformerArg,
+                              GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
+        {
+            // Detect if there is a change of coordinate operation in the area of
+            // interest. The underlying proj_trans_get_last_used_operation() is
+            // quite costly due to using proj_clone() internally, so only do that
+            // on a restricted set of points.
+            GDALGenImgProjTransformInfo *psTransformInfo{
+                static_cast<GDALGenImgProjTransformInfo *>(pTransformerArg)};
+            GDALTransformerInfo *psInfo = &psTransformInfo->sTI;
+
+            void *pReprojectArg = psTransformInfo->pReprojectArg;
+            if (GDALIsTransformer(pReprojectArg,
+                                  GDAL_APPROX_TRANSFORMER_CLASS_NAME))
+            {
+                const auto *pApproxInfo =
+                    static_cast<const GDALApproxTransformInfo *>(pReprojectArg);
+                pReprojectArg = pApproxInfo->pBaseCBData;
+            }
+
+            if (GDALIsTransformer(pReprojectArg,
+                                  GDAL_REPROJECTION_TRANSFORMER_CLASS_NAME))
+            {
+                const GDALReprojectionTransformInfo *psRTI =
+                    static_cast<const GDALReprojectionTransformInfo *>(
+                        pReprojectArg);
+                if (psRTI->poReverseTransform)
+                {
+                    std::vector<double> adfX, adfY, adfZ;
+                    std::vector<int> abSuccess;
+
+                    GDALDatasetH hSrcDS = pahSrcDS[0];
+
+                    // Sample points on a N x N grid in the source raster
+                    constexpr int N = 10;
+                    const int nSrcXSize = GDALGetRasterXSize(hSrcDS);
+                    const int nSrcYSize = GDALGetRasterYSize(hSrcDS);
+                    for (int j = 0; j <= N; ++j)
+                    {
+                        for (int i = 0; i <= N; ++i)
+                        {
+                            adfX.push_back(static_cast<double>(i) / N *
+                                           nSrcXSize);
+                            adfY.push_back(static_cast<double>(j) / N *
+                                           nSrcYSize);
+                            adfZ.push_back(0);
+                            abSuccess.push_back(0);
+                        }
+                    }
+
+                    {
+                        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+
+                        // Transform from source raster coordinates to target raster
+                        // coordinates
+                        psInfo->pfnTransform(*phTransformArg, FALSE,
+                                             static_cast<int>(adfX.size()),
+                                             &adfX[0], &adfY[0], &adfZ[0],
+                                             &abSuccess[0]);
+
+                        const int nDstXSize = nPixels;
+                        const int nDstYSize = nLines;
+
+                        // Clamp target raster coordinates
+                        for (size_t i = 0; i < adfX.size(); ++i)
+                        {
+                            if (adfX[i] < 0)
+                                adfX[i] = 0;
+                            if (adfX[i] > nDstXSize)
+                                adfX[i] = nDstXSize;
+                            if (adfY[i] < 0)
+                                adfY[i] = 0;
+                            if (adfY[i] > nDstYSize)
+                                adfY[i] = nDstYSize;
+                        }
+
+                        // Start recording if different coordinate operations are
+                        // going to be used
+                        OGRProjCTDifferentOperationsStart(
+                            psRTI->poReverseTransform);
+
+                        // Transform back to source raster coordinates.
+                        psInfo->pfnTransform(*phTransformArg, TRUE,
+                                             static_cast<int>(adfX.size()),
+                                             &adfX[0], &adfY[0], &adfZ[0],
+                                             &abSuccess[0]);
+                    }
+
+                    if (OGRProjCTDifferentOperationsUsed(
+                            psRTI->poReverseTransform))
+                    {
+                        CPLError(
+                            CE_Warning, CPLE_AppDefined,
+                            "Several coordinate operations are going to be "
+                            "used. Artifacts may appear. You may consider "
+                            "using the -wo ALLOW_BALLPARK=NO and/or "
+                            "-wo ONLY_BEST=YES warping options, or specify "
+                            "a particular coordinate operation with -ct");
+                    }
+
+                    // Stop recording
+                    OGRProjCTDifferentOperationsStop(psRTI->poReverseTransform);
+                }
+            }
+        }
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Try to set color interpretation of source bands to target       */
