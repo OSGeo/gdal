@@ -16,7 +16,7 @@ import os
 
 import numpy as np
 import zarr
-from numcodecs import LZ4, LZMA, Blosc, GZip, Zlib, Zstd
+from numcodecs import LZ4, LZMA, Blosc, GZip, Shuffle, Zlib, Zstd
 
 os.chdir(os.path.dirname(__file__))
 
@@ -66,6 +66,17 @@ z[:] = [1, 2]
 
 z = zarr.open(
     "zstd.zarr", mode="w", dtype="u1", shape=(2,), chunks=(2,), compressor=Zstd()
+)
+z[:] = [1, 2]
+
+z = zarr.open(
+    "shuffle.zarr",
+    mode="w",
+    dtype="u2",
+    shape=(2,),
+    chunks=(2,),
+    compressor=None,
+    filters=[Shuffle(elementsize=2)],
 )
 z[:] = [1, 2]
 
