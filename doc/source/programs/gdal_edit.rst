@@ -118,7 +118,7 @@ It works only with raster formats that support update access to existing dataset
 
     Store user-defined values for band statistics (minimum, maximum,
     mean and standard deviation). If any of the values is set to None,
-    the real statistics are calclulated from the file and the ones set
+    the real statistics are calculated from the file and the ones set
     to None are used from the real statistics.
 
     .. versionadded:: 2.4

@@ -262,8 +262,8 @@ Relationships
 
 Relationship retrieval, creation, deletion and updating is supported.
 
-Hiearchical organization
-------------------------
+Hierarchical organization
+-------------------------
 
 .. versionadded:: 3.4
 

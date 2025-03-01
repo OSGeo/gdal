@@ -277,7 +277,7 @@ mentioned in the previous section.
 .. code-block:: xml
 
     <GDALTileIndexDataset>
-        <IndexDataset>PG:dbname=my_db</IndexDataset>   <!-- required for stanalone XML GTI files. Ignored if embedded in the xml:GTI metadata domain of the layer  -->
+        <IndexDataset>PG:dbname=my_db</IndexDataset>   <!-- required for standalone XML GTI files. Ignored if embedded in the xml:GTI metadata domain of the layer  -->
         <IndexLayer>my_layer</IndexLayer>              <!-- optional, but required if there are multiple layers in IndexDataset -->
         <Filter>pub_date >= '2023/12/01'</Filter>      <!-- optional -->
         <SortField>pub_date</SortField>                <!-- optional -->

@@ -7,7 +7,7 @@ subdirectory of the current directory), unless the :config:`GDAL_DEFAULT_WMS_CAC
 configuration option is specified.
 
 Starting with GDAL 3.9, the directory of the cache is set according to the
-following logic (first listed criterion is prioritary over following ones):
+following logic (first listed criterion has priority over following ones):
 
 - Value of the <Path> sub-element of <Cache>, if specified.
 
