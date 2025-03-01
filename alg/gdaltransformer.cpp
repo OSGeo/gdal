@@ -1720,6 +1720,29 @@ const char *GDALGetGenImgProjTranformerOptionList(void)
            "<Option name='ALLOW_BALLPARK' type='boolean' description='"
            "Whether ballpark coordinate operations are allowed.' "
            "default='YES'/>"
+           "<Option name='ONLY_BEST' type='string-select' "
+           "description='"
+           "By default (at least in the PROJ 9.x series), PROJ may use "
+           "coordinate operations that are not the \"best\" if resources "
+           "(typically grids) needed to use them are missing. It will then "
+           "fallback to other coordinate operations that have a lesser "
+           "accuracy, for example using Helmert transformations, or in the "
+           "absence of such operations, to ones with potential very rough "
+           " accuracy, using \"ballpark\" transformations (see "
+           "https://proj.org/glossary.html). "
+           "When calling this method with YES, PROJ will only consider the "
+           "\"best\" operation, and error out (at Transform() time) if they "
+           "cannot be used. This method may be used together with "
+           "ALLOW_BALLPARK=NO to only allow best operations that have a known "
+           "accuracy. Note that this method has no effect on PROJ versions "
+           "before 9.2. The default value for this option can be also set with "
+           "the PROJ_ONLY_BEST_DEFAULT environment variable, or with the "
+           "\"only_best_default\" setting of proj.ini. Setting "
+           "ONLY_BEST=YES/NO overrides such default value' default='AUTO'>"
+           "  <Value>AUTO</Value>"
+           "  <Value>YES</Value>"
+           "  <Value>NO</Value>"
+           "</Option>"
            "<Option name='COORDINATE_EPOCH' type='float' description='"
            "Coordinate epoch, expressed as a decimal year. Useful for "
            "time-dependent coordinate operations.'/>"
@@ -1983,6 +2006,23 @@ const char *GDALGetGenImgProjTranformerOptionList(void)
  * </li>
  * <li> ALLOW_BALLPARK=YES/NO: (GDAL &gt;= 3.11) Whether ballpark coordinate
  * operations are allowed. Defaults to YES.</li>
+ * <li> ONLY_BEST=YES/NO/AUTO: (GDAL &gt;= 3.11) By default (at least in the
+ * PROJ 9.x series), PROJ may use coordinate
+ * operations that are not the "best" if resources (typically grids) needed
+ * to use them are missing. It will then fallback to other coordinate operations
+ * that have a lesser accuracy, for example using Helmert transformations,
+ * or in the absence of such operations, to ones with potential very rought
+ * accuracy, using "ballpark" transformations
+ * (see https://proj.org/glossary.html).
+ * When calling this method with YES, PROJ will only consider the
+ * "best" operation, and error out (at Transform() time) if they cannot be
+ * used.
+ * This method may be used together with ALLOW_BALLPARK=NO to
+ * only allow best operations that have a known accuracy.
+ * Note that this method has no effect on PROJ versions before 9.2.
+ * The default value for this option can be also set with the
+ * PROJ_ONLY_BEST_DEFAULT environment variable, or with the "only_best_default"
+ * setting of proj.ini. Calling SetOnlyBest() overrides such default value.</li>
  * <li> COORDINATE_EPOCH: (GDAL &gt;= 3.0) Coordinate epoch,
  * expressed as a decimal year. Useful for time-dependent coordinate operations.
  * </li>
@@ -2646,6 +2686,12 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                 CSLFetchNameValue(papszOptions, "ALLOW_BALLPARK"))
         {
             aosOptions.SetNameValue("ALLOW_BALLPARK", pszAllowBallpark);
+        }
+
+        if (const char *pszOnlyBest =
+                CSLFetchNameValue(papszOptions, "ONLY_BEST"))
+        {
+            aosOptions.SetNameValue("ONLY_BEST", pszOnlyBest);
         }
 
         psInfo->pReprojectArg = GDALCreateReprojectionTransformerEx(
@@ -3434,6 +3480,23 @@ void *GDALCreateReprojectionTransformer(const char *pszSrcWKT,
  *coordinate operations.</li>
  * <li> ALLOW_BALLPARK=YES/NO: (GDAL &gt;= 3.11) Whether ballpark coordinate
  * operations are allowed. Defaults to YES.</li>
+ * <li> ONLY_BEST=YES/NO/AUTO: (GDAL &gt;= 3.11) By default (at least in the
+ * PROJ 9.x series), PROJ may use coordinate
+ * operations that are not the "best" if resources (typically grids) needed
+ * to use them are missing. It will then fallback to other coordinate operations
+ * that have a lesser accuracy, for example using Helmert transformations,
+ * or in the absence of such operations, to ones with potential very rought
+ * accuracy, using "ballpark" transformations
+ * (see https://proj.org/glossary.html).
+ * When calling this method with YES, PROJ will only consider the
+ * "best" operation, and error out (at Transform() time) if they cannot be
+ * used.
+ * This method may be used together with ALLOW_BALLPARK=NO to
+ * only allow best operations that have a known accuracy.
+ * Note that this method has no effect on PROJ versions before 9.2.
+ * The default value for this option can be also set with the
+ * PROJ_ONLY_BEST_DEFAULT environment variable, or with the "only_best_default"
+ * setting of proj.ini. Calling SetOnlyBest() overrides such default value.</li>
  * </ul>
  *
  * @return Handle for use with GDALReprojectionTransform(), or NULL if the
@@ -3488,8 +3551,16 @@ void *GDALCreateReprojectionTransformerEx(OGRSpatialReferenceH hSrcSRS,
     {
         optionsFwd.SetSourceCenterLong(CPLAtof(pszCENTER_LONG));
     }
+
     optionsFwd.SetBallparkAllowed(CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "ALLOW_BALLPARK", "YES")));
+
+    const char *pszOnlyBest =
+        CSLFetchNameValueDef(papszOptions, "ONLY_BEST", "AUTO");
+    if (!EQUAL(pszOnlyBest, "AUTO"))
+    {
+        optionsFwd.SetOnlyBest(CPLTestBool(pszOnlyBest));
+    }
 
     OGRCoordinateTransformation *poForwardTransform =
         OGRCreateCoordinateTransformation(poSrcSRS, poDstSRS, optionsFwd);

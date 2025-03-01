@@ -602,7 +602,7 @@ int OCTCoordinateTransformationOptionsSetBallparkAllowed(
  * operations that are not the "best" if resources (typically grids) needed
  * to use them are missing. It will then fallback to other coordinate operations
  * that have a lesser accuracy, for example using Helmert transformations,
- * or in the absence of such operations, to ones with potential very rought
+ * or in the absence of such operations, to ones with potential very rough
  * accuracy, using "ballpark" transformations
  * (see https://proj.org/glossary.html).
  *

@@ -4435,3 +4435,29 @@ def test_gdalwarp_lib_allow_ballpark_no():
             dstSRS="EPSG:4258",  # ETRS89
             transformerOptions={"ALLOW_BALLPARK": "NO"},
         )
+
+
+###############################################################################
+# Test ONLY_BEST=YES transformer option
+
+
+def test_gdalwarp_lib_only_best_yes():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4746)  # PD/83
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([15, 1, 0, 47, 0, -1])
+
+    with pytest.raises(
+        Exception,
+        match="Cannot find coordinate operations from `EPSG:4746' to `EPSG:4326'",
+    ):
+        gdal.Warp(
+            "",
+            src_ds,
+            format="MEM",
+            dstSRS="EPSG:4326",  # WGS 84
+            transformerOptions={"ALLOW_BALLPARK": "NO", "ONLY_BEST": "YES"},
+        )
