@@ -3592,7 +3592,7 @@ void *GDALCreateReprojectionTransformerEx(OGRSpatialReferenceH hSrcSRS,
 
     memcpy(psInfo->sTI.abySignature, GDAL_GTI2_SIGNATURE,
            strlen(GDAL_GTI2_SIGNATURE));
-    psInfo->sTI.pszClassName = "GDALReprojectionTransformer";
+    psInfo->sTI.pszClassName = GDAL_REPROJECTION_TRANSFORMER_CLASS_NAME;
     psInfo->sTI.pfnTransform = GDALReprojectionTransform;
     psInfo->sTI.pfnCleanup = GDALDestroyReprojectionTransformer;
     psInfo->sTI.pfnSerialize = GDALSerializeReprojectionTransformer;
@@ -3837,18 +3837,6 @@ static void *GDALDeserializeReprojectionTransformer(CPLXMLNode *psTree)
 /* ==================================================================== */
 /************************************************************************/
 
-typedef struct
-{
-    GDALTransformerInfo sTI;
-
-    GDALTransformerFunc pfnBaseTransformer;
-    void *pBaseCBData;
-    double dfMaxErrorForward;
-    double dfMaxErrorReverse;
-
-    int bOwnSubtransformer;
-} ApproxTransformInfo;
-
 /************************************************************************/
 /*                  GDALCreateSimilarApproxTransformer()                */
 /************************************************************************/
@@ -3860,23 +3848,20 @@ static void *GDALCreateSimilarApproxTransformer(void *hTransformArg,
     VALIDATE_POINTER1(hTransformArg, "GDALCreateSimilarApproxTransformer",
                       nullptr);
 
-    ApproxTransformInfo *psInfo =
-        static_cast<ApproxTransformInfo *>(hTransformArg);
+    GDALApproxTransformInfo *psInfo =
+        static_cast<GDALApproxTransformInfo *>(hTransformArg);
 
-    ApproxTransformInfo *psClonedInfo = static_cast<ApproxTransformInfo *>(
-        CPLMalloc(sizeof(ApproxTransformInfo)));
-
-    memcpy(psClonedInfo, psInfo, sizeof(ApproxTransformInfo));
-    if (psClonedInfo->pBaseCBData)
+    void *pBaseCBData = GDALCreateSimilarTransformer(psInfo->pBaseCBData,
+                                                     dfSrcRatioX, dfSrcRatioY);
+    if (pBaseCBData == nullptr)
     {
-        psClonedInfo->pBaseCBData = GDALCreateSimilarTransformer(
-            psInfo->pBaseCBData, dfSrcRatioX, dfSrcRatioY);
-        if (psClonedInfo->pBaseCBData == nullptr)
-        {
-            CPLFree(psClonedInfo);
-            return nullptr;
-        }
+        return nullptr;
     }
+
+    GDALApproxTransformInfo *psClonedInfo =
+        static_cast<GDALApproxTransformInfo *>(GDALCreateApproxTransformer2(
+            psInfo->pfnBaseTransformer, pBaseCBData, psInfo->dfMaxErrorForward,
+            psInfo->dfMaxErrorReverse));
     psClonedInfo->bOwnSubtransformer = TRUE;
 
     return psClonedInfo;
@@ -3890,8 +3875,8 @@ static CPLXMLNode *GDALSerializeApproxTransformer(void *pTransformArg)
 
 {
     CPLXMLNode *psTree;
-    ApproxTransformInfo *psInfo =
-        static_cast<ApproxTransformInfo *>(pTransformArg);
+    GDALApproxTransformInfo *psInfo =
+        static_cast<GDALApproxTransformInfo *>(pTransformArg);
 
     psTree = CPLCreateXMLNode(nullptr, CXT_Element, "ApproxTransformer");
 
@@ -3984,8 +3969,7 @@ GDALCreateApproxTransformer2(GDALTransformerFunc pfnBaseTransformer,
                              double dfMaxErrorReverse)
 
 {
-    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(
-        CPLMalloc(sizeof(ApproxTransformInfo)));
+    GDALApproxTransformInfo *psATInfo = new GDALApproxTransformInfo;
     psATInfo->pfnBaseTransformer = pfnBaseTransformer;
     psATInfo->pBaseCBData = pBaseTransformArg;
     psATInfo->dfMaxErrorForward = dfMaxErrorForward;
@@ -4011,7 +3995,8 @@ GDALCreateApproxTransformer2(GDALTransformerFunc pfnBaseTransformer,
 void GDALApproxTransformerOwnsSubtransformer(void *pCBData, int bOwnFlag)
 
 {
-    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
+    GDALApproxTransformInfo *psATInfo =
+        static_cast<GDALApproxTransformInfo *>(pCBData);
 
     psATInfo->bOwnSubtransformer = bOwnFlag;
 }
@@ -4035,12 +4020,13 @@ void GDALDestroyApproxTransformer(void *pCBData)
     if (pCBData == nullptr)
         return;
 
-    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
+    GDALApproxTransformInfo *psATInfo =
+        static_cast<GDALApproxTransformInfo *>(pCBData);
 
     if (psATInfo->bOwnSubtransformer)
         GDALDestroyTransformer(psATInfo->pBaseCBData);
 
-    CPLFree(pCBData);
+    delete psATInfo;
 }
 
 /************************************************************************/
@@ -4049,8 +4035,8 @@ void GDALDestroyApproxTransformer(void *pCBData)
 
 void GDALRefreshApproxTransformer(void *hTransformArg)
 {
-    ApproxTransformInfo *psInfo =
-        static_cast<ApproxTransformInfo *>(hTransformArg);
+    GDALApproxTransformInfo *psInfo =
+        static_cast<GDALApproxTransformInfo *>(hTransformArg);
 
     if (GDALIsTransformer(psInfo->pBaseCBData,
                           GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
@@ -4071,7 +4057,8 @@ static int GDALApproxTransformInternal(void *pCBData, int bDstToSrc,
                                        const double ySMETransformed[3],
                                        const double zSMETransformed[3])
 {
-    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
+    GDALApproxTransformInfo *psATInfo =
+        static_cast<GDALApproxTransformInfo *>(pCBData);
     const int nMiddle = (nPoints - 1) / 2;
 
 #ifdef notdef_sanify_check
@@ -4327,7 +4314,8 @@ int GDALApproxTransform(void *pCBData, int bDstToSrc, int nPoints, double *x,
                         double *y, double *z, int *panSuccess)
 
 {
-    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
+    GDALApproxTransformInfo *psATInfo =
+        static_cast<GDALApproxTransformInfo *>(pCBData);
     double x2[3] = {};
     double y2[3] = {};
     double z2[3] = {};
@@ -4447,8 +4435,8 @@ static void *GDALDeserializeApproxTransformer(CPLXMLNode *psTree)
 int GDALTransformLonLatToDestApproxTransformer(void *hTransformArg,
                                                double *pdfX, double *pdfY)
 {
-    ApproxTransformInfo *psInfo =
-        static_cast<ApproxTransformInfo *>(hTransformArg);
+    GDALApproxTransformInfo *psInfo =
+        static_cast<GDALApproxTransformInfo *>(hTransformArg);
 
     if (GDALIsTransformer(psInfo->pBaseCBData,
                           GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
@@ -4896,8 +4884,8 @@ static GDALTransformerInfo *GetGenImgProjTransformInfo(const char *pszFunc,
 
     if (EQUAL(psInfo->pszClassName, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
-        ApproxTransformInfo *psATInfo =
-            static_cast<ApproxTransformInfo *>(pTransformArg);
+        GDALApproxTransformInfo *psATInfo =
+            static_cast<GDALApproxTransformInfo *>(pTransformArg);
         psInfo = static_cast<GDALTransformerInfo *>(psATInfo->pBaseCBData);
 
         if (psInfo == nullptr ||
@@ -4995,7 +4983,7 @@ bool GDALTransformIsTranslationOnPixelBoundaries(GDALTransformerFunc,
     if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
         const auto *pApproxInfo =
-            static_cast<const ApproxTransformInfo *>(pTransformerArg);
+            static_cast<const GDALApproxTransformInfo *>(pTransformerArg);
         pTransformerArg = pApproxInfo->pBaseCBData;
     }
     if (GDALIsTransformer(pTransformerArg, GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
@@ -5043,7 +5031,7 @@ bool GDALTransformIsAffineNoRotation(GDALTransformerFunc, void *pTransformerArg)
     if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
         const auto *pApproxInfo =
-            static_cast<const ApproxTransformInfo *>(pTransformerArg);
+            static_cast<const GDALApproxTransformInfo *>(pTransformerArg);
         pTransformerArg = pApproxInfo->pBaseCBData;
     }
     if (GDALIsTransformer(pTransformerArg, GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
@@ -5074,7 +5062,7 @@ bool GDALTransformHasFastClone(void *pTransformerArg)
     if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
         const auto *pApproxInfo =
-            static_cast<const ApproxTransformInfo *>(pTransformerArg);
+            static_cast<const GDALApproxTransformInfo *>(pTransformerArg);
         pTransformerArg = pApproxInfo->pBaseCBData;
         // Fallback to next lines
     }
