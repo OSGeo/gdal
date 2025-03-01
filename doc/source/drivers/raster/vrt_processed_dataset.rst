@@ -268,7 +268,7 @@ The following required arguments must be specified:
 
 - ``tone_ceil``: Maximum threshold beyond which we give up saturation.
 
-- ``top_margin``: Margin to allow for dynamics in brighest areas (between 0 and 1, should be close to 0)
+- ``top_margin``: Margin to allow for dynamics in brightest areas (between 0 and 1, should be close to 0)
 
 
 The following optional arguments may be specified:
@@ -353,5 +353,3 @@ When using ExprTk, the following configuration options are available:
 
      Indicates the maximum per-pixel runtime of an ExprTk expression. ExprTk performs runtime
      checks only when loops are used.
-
-
