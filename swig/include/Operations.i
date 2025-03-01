@@ -709,6 +709,9 @@ GDALDatasetShadow*  CreatePansharpenedVRT( const char* pszXML,
 /*                             Transformer                              */
 /************************************************************************/
 
+%rename (GetTranformerOptionList) GDALGetGenImgProjTranformerOptionList;
+const char* GDALGetGenImgProjTranformerOptionList();
+
 #ifndef SWIGPYTHON
 %rename (Transformer) GDALTransformerInfoShadow;
 #endif
