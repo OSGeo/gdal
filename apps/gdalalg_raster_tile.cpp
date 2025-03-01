@@ -53,6 +53,8 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
     AddArg("progress-forked", 0, _("Report progress as a forked child"),
            &m_progressForked)
         .SetHidden();  // Used in spawn mode
+    AddArg("config-options-in-stdin", 0, _(""), &m_dummy)
+        .SetHidden();  // Used in spawn mode
     AddArg("ovr-zoom-level", 0, _("Overview zoom level to compute"),
            &m_ovrZoomLevel)
         .SetMinValueIncluded(0)
@@ -2351,8 +2353,8 @@ static void GetProgressForChildProcesses(
             }
             else
             {
-                CPLDebugOnce(
-                    "gdal_raster_tile",
+                CPLErrorOnce(
+                    CE_Warning, CPLE_AppDefined,
                     "Spurious character detected on stdout of child process");
                 anProgressState[iProcess] = 0;
                 if (ch == PROGRESS_MARKER[anProgressState[iProcess]])
@@ -2443,7 +2445,7 @@ int GDALRasterTileAlgorithm::GetMaxChildCount() const
     const int remainingFileDescriptorCount =
         CPLGetRemainingFileDescriptorCount();
     constexpr int SOME_MARGIN = 3;
-    constexpr int FD_PER_CHILD = 2; /* stdout and stderr */
+    constexpr int FD_PER_CHILD = 3; /* stdin, stdout and stderr */
     if (FD_PER_CHILD * nMaxJobCount + SOME_MARGIN >
         remainingFileDescriptorCount)
     {
@@ -2457,6 +2459,41 @@ int GDALRasterTileAlgorithm::GetMaxChildCount() const
     }
 #endif
     return nMaxJobCount;
+}
+
+/************************************************************************/
+/*                           SendConfigOptions()                        */
+/************************************************************************/
+
+static void SendConfigOptions(CPLSpawnedProcess *hSpawnedProcess, bool &bRet)
+{
+    // Send most config options through pipe, to avoid leaking
+    // secrets when listing processes
+    auto handle = CPLSpawnAsyncGetOutputFileHandle(hSpawnedProcess);
+    for (auto pfnFunc : {&CPLGetConfigOptions, &CPLGetThreadLocalConfigOptions})
+    {
+        CPLStringList aosConfigOptions((*pfnFunc)());
+        for (const char *pszNameValue : aosConfigOptions)
+        {
+            if (!STARTS_WITH(pszNameValue, "GDAL_CACHEMAX") &&
+                !STARTS_WITH(pszNameValue, "GDAL_NUM_THREADS"))
+            {
+                constexpr const char *CONFIG_MARKER = "--config\n";
+                bRet &= CPL_TO_BOOL(
+                    CPLPipeWrite(handle, CONFIG_MARKER,
+                                 static_cast<int>(strlen(CONFIG_MARKER))));
+                char *pszEscaped = CPLEscapeString(pszNameValue, -1, CPLES_URL);
+                bRet &= CPL_TO_BOOL(CPLPipeWrite(
+                    handle, pszEscaped, static_cast<int>(strlen(pszEscaped))));
+                CPLFree(pszEscaped);
+                bRet &= CPL_TO_BOOL(CPLPipeWrite(handle, "\n", 1));
+            }
+        }
+    }
+    constexpr const char *END_MARKER = "END\n";
+    bRet &= CPL_TO_BOOL(
+        CPLPipeWrite(handle, END_MARKER, static_cast<int>(strlen(END_MARKER))));
+    CPLSpawnAsyncCloseOutputFileHandle(hSpawnedProcess);
 }
 
 /************************************************************************/
@@ -2534,25 +2571,12 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
             aosArgv.push_back(m_osGDALPath.c_str());
             aosArgv.push_back("raster");
             aosArgv.push_back("tile");
+            aosArgv.push_back("--config-options-in-stdin");
             aosArgv.push_back("--config");
             aosArgv.push_back("GDAL_NUM_THREADS=1");
             aosArgv.push_back("--config");
             aosArgv.push_back(
                 CPLSPrintf("GDAL_CACHEMAX=%" PRIu64, nCacheMaxPerProcess));
-            for (auto pfnFunc :
-                 {&CPLGetConfigOptions, &CPLGetThreadLocalConfigOptions})
-            {
-                CPLStringList aosConfigOptions((*pfnFunc)());
-                for (const char *pszNameValue : aosConfigOptions)
-                {
-                    if (!STARTS_WITH(pszNameValue, "GDAL_CACHEMAX") &&
-                        !STARTS_WITH(pszNameValue, "GDAL_NUM_THREADS"))
-                    {
-                        aosArgv.push_back("--config");
-                        aosArgv.push_back(pszNameValue);
-                    }
-                }
-            }
             aosArgv.push_back("--num-threads");
             aosArgv.push_back("1");
             aosArgv.push_back("--min-x");
@@ -2597,7 +2621,7 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
 
             CPLSpawnedProcess *hSpawnedProcess =
                 CPLSpawnAsync(nullptr, aosArgv.List(),
-                              /* bCreateInputPipe = */ false,
+                              /* bCreateInputPipe = */ true,
                               /* bCreateOutputPipe = */ true,
                               /* bCreateErrorPipe = */ true, nullptr);
             if (!hSpawnedProcess)
@@ -2617,6 +2641,16 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
                              CPLSpawnAsyncGetChildProcessId(hSpawnedProcess)));
 
             ahSpawnedProcesses.push_back(hSpawnedProcess);
+
+            SendConfigOptions(hSpawnedProcess, bRet);
+            if (!bRet)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Could not transmit config options to child gdal "
+                            "process '%s'",
+                            asCommandLines.back().c_str());
+                break;
+            }
         }
     }
 
@@ -2718,25 +2752,12 @@ bool GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod(
             aosArgv.push_back(m_osGDALPath.c_str());
             aosArgv.push_back("raster");
             aosArgv.push_back("tile");
+            aosArgv.push_back("--config-options-in-stdin");
             aosArgv.push_back("--config");
             aosArgv.push_back("GDAL_NUM_THREADS=1");
             aosArgv.push_back("--config");
             aosArgv.push_back(
                 CPLSPrintf("GDAL_CACHEMAX=%" PRIu64, nCacheMaxPerProcess));
-            for (auto pfnFunc :
-                 {&CPLGetConfigOptions, &CPLGetThreadLocalConfigOptions})
-            {
-                CPLStringList aosConfigOptions((*pfnFunc)());
-                for (const char *pszNameValue : aosConfigOptions)
-                {
-                    if (!STARTS_WITH(pszNameValue, "GDAL_CACHEMAX") &&
-                        !STARTS_WITH(pszNameValue, "GDAL_NUM_THREADS"))
-                    {
-                        aosArgv.push_back("--config");
-                        aosArgv.push_back(pszNameValue);
-                    }
-                }
-            }
             aosArgv.push_back("--num-threads");
             aosArgv.push_back("1");
             aosArgv.push_back("--ovr-zoom-level");
@@ -2780,7 +2801,7 @@ bool GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod(
 
             CPLSpawnedProcess *hSpawnedProcess =
                 CPLSpawnAsync(nullptr, aosArgv.List(),
-                              /* bCreateInputPipe = */ false,
+                              /* bCreateInputPipe = */ true,
                               /* bCreateOutputPipe = */ true,
                               /* bCreateErrorPipe = */ true, nullptr);
             if (!hSpawnedProcess)
@@ -2800,6 +2821,16 @@ bool GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod(
                              CPLSpawnAsyncGetChildProcessId(hSpawnedProcess)));
 
             ahSpawnedProcesses.push_back(hSpawnedProcess);
+
+            SendConfigOptions(hSpawnedProcess, bRet);
+            if (!bRet)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Could not transmit config options to child gdal "
+                            "process '%s'",
+                            asCommandLines.back().c_str());
+                break;
+            }
         }
     }
 

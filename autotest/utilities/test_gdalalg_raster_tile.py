@@ -739,7 +739,9 @@ def test_gdalalg_raster_tile_multithread_spawn_error_in_child(tmp_path):
 
 
 @pytest.mark.skipif(gdal.GetNumCPUs() <= 2, reason="needs more than 2 CPUs")
-@pytest.mark.skipif(sys.platform != "linux", reason="not linux")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Windows not supported for this test"
+)
 def test_gdalalg_raster_tile_multithread_spawn_limit(tmp_path):
 
     import resource
@@ -784,10 +786,11 @@ def test_gdalalg_raster_tile_multithread_spawn(tmp_path):
         last_pct[0] = pct
         return True
 
-    got_msg = []
+    got_spurious = [False]
 
     def my_handler(errorClass, errno, msg):
-        got_msg.append(msg)
+        if "Spurious" in msg:
+            got_spurious[0] = True
         return
 
     alg = get_alg()
@@ -811,6 +814,7 @@ def test_gdalalg_raster_tile_multithread_spawn(tmp_path):
 
     assert len(gdal.ReadDirRecursive(tmp_path / "subdir")) == 107
     assert gdal.VSIStatL(tmp_path / "log.txt") is not None
+    assert got_spurious[0]
 
 
 def test_gdalalg_raster_tile_multithread_progress(tmp_vsimem):

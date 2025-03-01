@@ -75,6 +75,7 @@ class GDALRasterTileAlgorithm final : public GDALAlgorithm
     bool m_resume = false;
     bool m_kml = false;
     bool m_progressForked = false;
+    bool m_dummy = false;
     int m_numThreads = 0;
     std::string m_parallelMethod{};
 
