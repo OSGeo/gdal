@@ -828,6 +828,8 @@ public:
 %}
 #endif
 
+%rename (WarpGetOptionList) GDALWarpGetOptionList;
+const char* GDALWarpGetOptionList();
 
 /************************************************************************/
 /*                        SuggestedWarpOutput()                         */
