@@ -3206,7 +3206,6 @@ def test_ogr2ogr_lib_datetime_in_shapefile(tmp_vsimem, OGR2OGR_USE_ARROW_API):
     else:
         assert "OGR2OGR: Using WriteArrowBatch()" not in got_msg
 
-    print(got_msg)
     assert "Field dt created as String field, though DateTime requested." in got_msg
 
     with ogr.Open(out_filename) as dst_ds:
