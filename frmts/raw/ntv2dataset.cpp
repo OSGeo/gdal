@@ -102,7 +102,6 @@ class NTv2Dataset final : public RawDataset
     NTv2Dataset();
     ~NTv2Dataset() override;
 
-    CPLErr SetGeoTransform(double *padfTransform) override;
     CPLErr GetGeoTransform(double *padfTransform) override;
 
     const OGRSpatialReference *GetSpatialRef() const override
@@ -110,13 +109,8 @@ class NTv2Dataset final : public RawDataset
         return &m_oSRS;
     }
 
-    CPLErr FlushCache(bool bAtClosing) override;
-
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
-    static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
-                               int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
 };
 
 /************************************************************************/
@@ -161,9 +155,6 @@ CPLErr NTv2Dataset::Close()
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        if (NTv2Dataset::FlushCache(true) != CE_None)
-            eErr = CE_Failure;
-
         if (fpImage)
         {
             if (VSIFCloseL(fpImage) != 0)
@@ -204,156 +195,6 @@ static void SwapPtr64IfNecessary(bool bMustSwap, void *ptr)
 }
 
 /************************************************************************/
-/*                             FlushCache()                             */
-/************************************************************************/
-
-CPLErr NTv2Dataset::FlushCache(bool bAtClosing)
-
-{
-    /* -------------------------------------------------------------------- */
-    /*      Nothing to do in readonly mode, or if nothing seems to have     */
-    /*      changed metadata wise.                                          */
-    /* -------------------------------------------------------------------- */
-    if (eAccess != GA_Update || !(GetPamFlags() & GPF_DIRTY))
-    {
-        return RawDataset::FlushCache(bAtClosing);
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Load grid and file headers.                                     */
-    /* -------------------------------------------------------------------- */
-    const int nRecords = 11;
-    char achFileHeader[nRecords * knMAX_RECORD_SIZE] = {'\0'};
-    char achGridHeader[nRecords * knMAX_RECORD_SIZE] = {'\0'};
-
-    bool bOK = VSIFSeekL(fpImage, 0, SEEK_SET) == 0;
-    bOK &=
-        VSIFReadL(achFileHeader, nRecords, nRecordSize, fpImage) == nRecordSize;
-
-    bOK &= VSIFSeekL(fpImage, nGridOffset, SEEK_SET) == 0;
-    bOK &=
-        VSIFReadL(achGridHeader, nRecords, nRecordSize, fpImage) == nRecordSize;
-
-    /* -------------------------------------------------------------------- */
-    /*      Update the grid, and file headers with any available            */
-    /*      metadata.  If all available metadata is recognised then mark    */
-    /*      things "clean" from a PAM point of view.                        */
-    /* -------------------------------------------------------------------- */
-    char **papszMD = GetMetadata();
-    bool bSomeLeftOver = false;
-
-    for (int i = 0; papszMD != nullptr && papszMD[i] != nullptr; i++)
-    {
-        const size_t nMinLen = 8;
-        char *pszKey = nullptr;
-        const char *pszValue = CPLParseNameValue(papszMD[i], &pszKey);
-        if (pszKey == nullptr)
-            continue;
-
-        if (EQUAL(pszKey, "GS_TYPE"))
-        {
-            memcpy(achFileHeader + 3 * nRecordSize + 8, "        ", 8);
-            memcpy(achFileHeader + 3 * nRecordSize + 8, pszValue,
-                   std::min(nMinLen, strlen(pszValue)));
-        }
-        else if (EQUAL(pszKey, "VERSION"))
-        {
-            memcpy(achFileHeader + 4 * nRecordSize + 8, "        ", 8);
-            memcpy(achFileHeader + 4 * nRecordSize + 8, pszValue,
-                   std::min(nMinLen, strlen(pszValue)));
-        }
-        else if (EQUAL(pszKey, "SYSTEM_F"))
-        {
-            memcpy(achFileHeader + 5 * nRecordSize + 8, "        ", 8);
-            memcpy(achFileHeader + 5 * nRecordSize + 8, pszValue,
-                   std::min(nMinLen, strlen(pszValue)));
-        }
-        else if (EQUAL(pszKey, "SYSTEM_T"))
-        {
-            memcpy(achFileHeader + 6 * nRecordSize + 8, "        ", 8);
-            memcpy(achFileHeader + 6 * nRecordSize + 8, pszValue,
-                   std::min(nMinLen, strlen(pszValue)));
-        }
-        else if (EQUAL(pszKey, "MAJOR_F"))
-        {
-            double dfValue = CPLAtof(pszValue);
-            SwapPtr64IfNecessary(m_bMustSwap, &dfValue);
-            memcpy(achFileHeader + 7 * nRecordSize + 8, &dfValue, 8);
-        }
-        else if (EQUAL(pszKey, "MINOR_F"))
-        {
-            double dfValue = CPLAtof(pszValue);
-            SwapPtr64IfNecessary(m_bMustSwap, &dfValue);
-            memcpy(achFileHeader + 8 * nRecordSize + 8, &dfValue, 8);
-        }
-        else if (EQUAL(pszKey, "MAJOR_T"))
-        {
-            double dfValue = CPLAtof(pszValue);
-            SwapPtr64IfNecessary(m_bMustSwap, &dfValue);
-            memcpy(achFileHeader + 9 * nRecordSize + 8, &dfValue, 8);
-        }
-        else if (EQUAL(pszKey, "MINOR_T"))
-        {
-            double dfValue = CPLAtof(pszValue);
-            SwapPtr64IfNecessary(m_bMustSwap, &dfValue);
-            memcpy(achFileHeader + 10 * nRecordSize + 8, &dfValue, 8);
-        }
-        else if (EQUAL(pszKey, "SUB_NAME"))
-        {
-            memcpy(achGridHeader + /*0*nRecordSize+*/ 8, "        ", 8);
-            memcpy(achGridHeader + /*0*nRecordSize+*/ 8, pszValue,
-                   std::min(nMinLen, strlen(pszValue)));
-        }
-        else if (EQUAL(pszKey, "PARENT"))
-        {
-            memcpy(achGridHeader + 1 * nRecordSize + 8, "        ", 8);
-            memcpy(achGridHeader + 1 * nRecordSize + 8, pszValue,
-                   std::min(nMinLen, strlen(pszValue)));
-        }
-        else if (EQUAL(pszKey, "CREATED"))
-        {
-            memcpy(achGridHeader + 2 * nRecordSize + 8, "        ", 8);
-            memcpy(achGridHeader + 2 * nRecordSize + 8, pszValue,
-                   std::min(nMinLen, strlen(pszValue)));
-        }
-        else if (EQUAL(pszKey, "UPDATED"))
-        {
-            memcpy(achGridHeader + 3 * nRecordSize + 8, "        ", 8);
-            memcpy(achGridHeader + 3 * nRecordSize + 8, pszValue,
-                   std::min(nMinLen, strlen(pszValue)));
-        }
-        else
-        {
-            bSomeLeftOver = true;
-        }
-
-        CPLFree(pszKey);
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Load grid and file headers.                                     */
-    /* -------------------------------------------------------------------- */
-    bOK &= VSIFSeekL(fpImage, 0, SEEK_SET) == 0;
-    bOK &= VSIFWriteL(achFileHeader, nRecords, nRecordSize, fpImage) ==
-           nRecordSize;
-
-    bOK &= VSIFSeekL(fpImage, nGridOffset, SEEK_SET) == 0;
-    bOK &= VSIFWriteL(achGridHeader, nRecords, nRecordSize, fpImage) ==
-           nRecordSize;
-
-    /* -------------------------------------------------------------------- */
-    /*      Clear flags if we got everything, then let pam and below do     */
-    /*      their flushing.                                                 */
-    /* -------------------------------------------------------------------- */
-    if (!bSomeLeftOver)
-        SetPamFlags(GetPamFlags() & (~GPF_DIRTY));
-
-    if (RawDataset::FlushCache(bAtClosing) != CE_None)
-        bOK = false;
-    return bOK ? CE_None : CE_Failure;
-}
-
-/************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
 
@@ -385,7 +226,7 @@ int NTv2Dataset::Identify(GDALOpenInfo *poOpenInfo)
 GDALDataset *NTv2Dataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
-    if (!Identify(poOpenInfo))
+    if (!Identify(poOpenInfo) || poOpenInfo->eAccess == GA_Update)
         return nullptr;
 
     /* -------------------------------------------------------------------- */
@@ -711,321 +552,6 @@ CPLErr NTv2Dataset::GetGeoTransform(double *padfTransform)
 }
 
 /************************************************************************/
-/*                          SetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr NTv2Dataset::SetGeoTransform(double *padfTransform)
-
-{
-    if (eAccess == GA_ReadOnly)
-    {
-        CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "Unable to update geotransform on readonly file.");
-        return CE_Failure;
-    }
-
-    if (padfTransform[2] != 0.0 || padfTransform[4] != 0.0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Rotated and sheared geotransforms not supported for NTv2.");
-        return CE_Failure;
-    }
-
-    memcpy(adfGeoTransform, padfTransform, sizeof(double) * 6);
-
-    /* -------------------------------------------------------------------- */
-    /*      Update grid header.                                             */
-    /* -------------------------------------------------------------------- */
-    char achHeader[11 * knMAX_RECORD_SIZE] = {'\0'};
-
-    // read grid header
-    CPL_IGNORE_RET_VAL(VSIFSeekL(fpImage, nGridOffset, SEEK_SET));
-    CPL_IGNORE_RET_VAL(VSIFReadL(achHeader, 11, nRecordSize, fpImage));
-
-    // S_LAT
-    double dfValue =
-        3600 * (adfGeoTransform[3] + (nRasterYSize - 0.5) * adfGeoTransform[5]);
-    SwapPtr64IfNecessary(m_bMustSwap, &dfValue);
-    memcpy(achHeader + 4 * nRecordSize + 8, &dfValue, 8);
-
-    // N_LAT
-    dfValue = 3600 * (adfGeoTransform[3] + 0.5 * adfGeoTransform[5]);
-    SwapPtr64IfNecessary(m_bMustSwap, &dfValue);
-    memcpy(achHeader + 5 * nRecordSize + 8, &dfValue, 8);
-
-    // E_LONG
-    dfValue = -3600 *
-              (adfGeoTransform[0] + (nRasterXSize - 0.5) * adfGeoTransform[1]);
-    SwapPtr64IfNecessary(m_bMustSwap, &dfValue);
-    memcpy(achHeader + 6 * nRecordSize + 8, &dfValue, 8);
-
-    // W_LONG
-    dfValue = -3600 * (adfGeoTransform[0] + 0.5 * adfGeoTransform[1]);
-    SwapPtr64IfNecessary(m_bMustSwap, &dfValue);
-    memcpy(achHeader + 7 * nRecordSize + 8, &dfValue, 8);
-
-    // LAT_INC
-    dfValue = -3600 * adfGeoTransform[5];
-    SwapPtr64IfNecessary(m_bMustSwap, &dfValue);
-    memcpy(achHeader + 8 * nRecordSize + 8, &dfValue, 8);
-
-    // LONG_INC
-    dfValue = 3600 * adfGeoTransform[1];
-    SwapPtr64IfNecessary(m_bMustSwap, &dfValue);
-    memcpy(achHeader + 9 * nRecordSize + 8, &dfValue, 8);
-
-    // write grid header.
-    CPL_IGNORE_RET_VAL(VSIFSeekL(fpImage, nGridOffset, SEEK_SET));
-    CPL_IGNORE_RET_VAL(VSIFWriteL(achHeader, 11, nRecordSize, fpImage));
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                               Create()                               */
-/************************************************************************/
-
-GDALDataset *NTv2Dataset::Create(const char *pszFilename, int nXSize,
-                                 int nYSize, int nBandsIn, GDALDataType eType,
-                                 char **papszOptions)
-{
-    if (eType != GDT_Float32)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Attempt to create NTv2 file with unsupported data type '%s'.",
-                 GDALGetDataTypeName(eType));
-        return nullptr;
-    }
-    if (nBandsIn != 4)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Attempt to create NTv2 file with unsupported "
-                 "band number '%d'.",
-                 nBandsIn);
-        return nullptr;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Are we extending an existing file?                              */
-    /* -------------------------------------------------------------------- */
-    const bool bAppend = CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false);
-
-    /* -------------------------------------------------------------------- */
-    /*      Try to open or create file.                                     */
-    /* -------------------------------------------------------------------- */
-    VSILFILE *fp = nullptr;
-    if (bAppend)
-        fp = VSIFOpenL(pszFilename, "rb+");
-    else
-        fp = VSIFOpenL(pszFilename, "wb");
-
-    if (fp == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Attempt to open/create file `%s' failed.\n", pszFilename);
-        return nullptr;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Create a file level header if we are creating new.              */
-    /* -------------------------------------------------------------------- */
-    char achHeader[11 * 16] = {'\0'};
-    const char *pszValue = nullptr;
-    GUInt32 nNumFile = 1;
-    bool bMustSwap = false;
-    bool bIsLE = false;
-
-    if (!bAppend)
-    {
-        memset(achHeader, 0, sizeof(achHeader));
-
-        bIsLE =
-            EQUAL(CSLFetchNameValueDef(papszOptions, "ENDIANNESS", "LE"), "LE");
-#ifdef CPL_LSB
-        bMustSwap = !bIsLE;
-#else
-        bMustSwap = bIsLE;
-#endif
-
-        memcpy(achHeader + 0 * 16, "NUM_OREC", 8);
-        int nNumOrec = 11;
-        SwapPtr32IfNecessary(bMustSwap, &nNumOrec);
-        memcpy(achHeader + 0 * 16 + 8, &nNumOrec, 4);
-
-        memcpy(achHeader + 1 * 16, "NUM_SREC", 8);
-        int nNumSrec = 11;
-        SwapPtr32IfNecessary(bMustSwap, &nNumSrec);
-        memcpy(achHeader + 1 * 16 + 8, &nNumSrec, 4);
-
-        memcpy(achHeader + 2 * 16, "NUM_FILE", 8);
-        SwapPtr32IfNecessary(bMustSwap, &nNumFile);
-        memcpy(achHeader + 2 * 16 + 8, &nNumFile, 4);
-        SwapPtr32IfNecessary(bMustSwap, &nNumFile);
-
-        const size_t nMinLen = 16;
-        memcpy(achHeader + 3 * 16, "GS_TYPE         ", 16);
-        pszValue = CSLFetchNameValueDef(papszOptions, "GS_TYPE", "SECONDS");
-        memcpy(achHeader + 3 * 16 + 8, pszValue,
-               std::min(nMinLen, strlen(pszValue)));
-
-        memcpy(achHeader + 4 * 16, "VERSION         ", 16);
-        pszValue = CSLFetchNameValueDef(papszOptions, "VERSION", "");
-        memcpy(achHeader + 4 * 16 + 8, pszValue,
-               std::min(nMinLen, strlen(pszValue)));
-
-        memcpy(achHeader + 5 * 16, "SYSTEM_F        ", 16);
-        pszValue = CSLFetchNameValueDef(papszOptions, "SYSTEM_F", "");
-        memcpy(achHeader + 5 * 16 + 8, pszValue,
-               std::min(nMinLen, strlen(pszValue)));
-
-        memcpy(achHeader + 6 * 16, "SYSTEM_T        ", 16);
-        pszValue = CSLFetchNameValueDef(papszOptions, "SYSTEM_T", "");
-        memcpy(achHeader + 6 * 16 + 8, pszValue,
-               std::min(nMinLen, strlen(pszValue)));
-
-        memcpy(achHeader + 7 * 16, "MAJOR_F ", 8);
-        memcpy(achHeader + 8 * 16, "MINOR_F ", 8);
-        memcpy(achHeader + 9 * 16, "MAJOR_T ", 8);
-        memcpy(achHeader + 10 * 16, "MINOR_T ", 8);
-
-        CPL_IGNORE_RET_VAL(VSIFWriteL(achHeader, 1, sizeof(achHeader), fp));
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Otherwise update the header with an increased subfile count,    */
-    /*      and advanced to the last record of the file.                    */
-    /* -------------------------------------------------------------------- */
-    else
-    {
-        CPL_IGNORE_RET_VAL(VSIFSeekL(fp, 0, SEEK_SET));
-        CPL_IGNORE_RET_VAL(VSIFReadL(achHeader, 1, 16, fp));
-
-        bIsLE = achHeader[8] == 11 && achHeader[9] == 0 && achHeader[10] == 0 &&
-                achHeader[11] == 0;
-        const bool bIsBE = achHeader[8] == 0 && achHeader[9] == 0 &&
-                           achHeader[10] == 0 && achHeader[11] == 11;
-        if (!bIsLE && !bIsBE)
-        {
-            VSIFCloseL(fp);
-            return nullptr;
-        }
-#ifdef CPL_LSB
-        bMustSwap = bIsBE;
-#else
-        bMustSwap = bIsLE;
-#endif
-
-        CPL_IGNORE_RET_VAL(VSIFSeekL(fp, 2 * 16 + 8, SEEK_SET));
-        CPL_IGNORE_RET_VAL(VSIFReadL(&nNumFile, 1, 4, fp));
-        SwapPtr32IfNecessary(bMustSwap, &nNumFile);
-
-        nNumFile++;
-
-        SwapPtr32IfNecessary(bMustSwap, &nNumFile);
-        CPL_IGNORE_RET_VAL(VSIFSeekL(fp, 2 * 16 + 8, SEEK_SET));
-        CPL_IGNORE_RET_VAL(VSIFWriteL(&nNumFile, 1, 4, fp));
-        SwapPtr32IfNecessary(bMustSwap, &nNumFile);
-
-        CPL_IGNORE_RET_VAL(VSIFSeekL(fp, 0, SEEK_END));
-        const vsi_l_offset nEnd = VSIFTellL(fp);
-        CPL_IGNORE_RET_VAL(VSIFSeekL(fp, nEnd - 16, SEEK_SET));
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Write the grid header.                                          */
-    /* -------------------------------------------------------------------- */
-    memset(achHeader, 0, sizeof(achHeader));
-
-    const size_t nMinLen = 16;
-
-    memcpy(achHeader + 0 * 16, "SUB_NAME        ", 16);
-    pszValue = CSLFetchNameValueDef(papszOptions, "SUB_NAME", "");
-    memcpy(achHeader + 0 * 16 + 8, pszValue,
-           std::min(nMinLen, strlen(pszValue)));
-
-    memcpy(achHeader + 1 * 16, "PARENT          ", 16);
-    pszValue = CSLFetchNameValueDef(papszOptions, "PARENT", "NONE");
-    memcpy(achHeader + 1 * 16 + 8, pszValue,
-           std::min(nMinLen, strlen(pszValue)));
-
-    memcpy(achHeader + 2 * 16, "CREATED         ", 16);
-    pszValue = CSLFetchNameValueDef(papszOptions, "CREATED", "");
-    memcpy(achHeader + 2 * 16 + 8, pszValue,
-           std::min(nMinLen, strlen(pszValue)));
-
-    memcpy(achHeader + 3 * 16, "UPDATED         ", 16);
-    pszValue = CSLFetchNameValueDef(papszOptions, "UPDATED", "");
-    memcpy(achHeader + 3 * 16 + 8, pszValue,
-           std::min(nMinLen, strlen(pszValue)));
-
-    double dfValue;
-
-    memcpy(achHeader + 4 * 16, "S_LAT   ", 8);
-    dfValue = 0;
-    SwapPtr64IfNecessary(bMustSwap, &dfValue);
-    memcpy(achHeader + 4 * 16 + 8, &dfValue, 8);
-
-    memcpy(achHeader + 5 * 16, "N_LAT   ", 8);
-    dfValue = nYSize - 1;
-    SwapPtr64IfNecessary(bMustSwap, &dfValue);
-    memcpy(achHeader + 5 * 16 + 8, &dfValue, 8);
-
-    memcpy(achHeader + 6 * 16, "E_LONG  ", 8);
-    dfValue = -1 * (nXSize - 1);
-    SwapPtr64IfNecessary(bMustSwap, &dfValue);
-    memcpy(achHeader + 6 * 16 + 8, &dfValue, 8);
-
-    memcpy(achHeader + 7 * 16, "W_LONG  ", 8);
-    dfValue = 0;
-    SwapPtr64IfNecessary(bMustSwap, &dfValue);
-    memcpy(achHeader + 7 * 16 + 8, &dfValue, 8);
-
-    memcpy(achHeader + 8 * 16, "LAT_INC ", 8);
-    dfValue = 1;
-    SwapPtr64IfNecessary(bMustSwap, &dfValue);
-    memcpy(achHeader + 8 * 16 + 8, &dfValue, 8);
-
-    memcpy(achHeader + 9 * 16, "LONG_INC", 8);
-    memcpy(achHeader + 9 * 16 + 8, &dfValue, 8);
-
-    memcpy(achHeader + 10 * 16, "GS_COUNT", 8);
-    GUInt32 nGSCount = nXSize * nYSize;
-    SwapPtr32IfNecessary(bMustSwap, &nGSCount);
-    memcpy(achHeader + 10 * 16 + 8, &nGSCount, 4);
-
-    CPL_IGNORE_RET_VAL(VSIFWriteL(achHeader, 1, sizeof(achHeader), fp));
-
-    /* -------------------------------------------------------------------- */
-    /*      Write zeroed grid data.                                         */
-    /* -------------------------------------------------------------------- */
-    memset(achHeader, 0, 16);
-
-    // Use -1 (0x000080bf) as the default error value.
-    memset(achHeader + ((bIsLE) ? 10 : 9), 0x80, 1);
-    memset(achHeader + ((bIsLE) ? 11 : 8), 0xbf, 1);
-    memset(achHeader + ((bIsLE) ? 14 : 13), 0x80, 1);
-    memset(achHeader + ((bIsLE) ? 15 : 12), 0xbf, 1);
-
-    for (int i = 0; i < nXSize * nYSize; i++)
-        CPL_IGNORE_RET_VAL(VSIFWriteL(achHeader, 1, 16, fp));
-
-    /* -------------------------------------------------------------------- */
-    /*      Write the end record.                                           */
-    /* -------------------------------------------------------------------- */
-    memcpy(achHeader, "END     ", 8);
-    memset(achHeader + 8, 0, 8);
-    CPL_IGNORE_RET_VAL(VSIFWriteL(achHeader, 1, 16, fp));
-    CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-
-    if (nNumFile == 1)
-        return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_Update));
-
-    CPLString osSubDSName;
-    osSubDSName.Printf("NTv2:%d:%s", nNumFile - 1, pszFilename);
-    return GDALDataset::FromHandle(GDALOpen(osSubDSName, GA_Update));
-}
-
-/************************************************************************/
 /*                         GDALRegister_NTv2()                          */
 /************************************************************************/
 
@@ -1043,11 +569,9 @@ void GDALRegister_NTv2()
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "gsb gvb");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Float32");
 
     poDriver->pfnOpen = NTv2Dataset::Open;
     poDriver->pfnIdentify = NTv2Dataset::Identify;
-    poDriver->pfnCreate = NTv2Dataset::Create;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

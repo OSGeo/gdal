@@ -13,10 +13,6 @@ NOTE: Implemented as :source_file:`frmts/raw/ntv2dataset.cpp`.
 Driver capabilities
 -------------------
 
-.. supports_createcopy::
-
-.. supports_create::
-
 .. supports_georeferencing::
 
 .. supports_virtualio::

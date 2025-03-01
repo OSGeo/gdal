@@ -92,17 +92,6 @@ double BYNRasterBand::GetScale(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                              SetScale()                              */
-/************************************************************************/
-
-CPLErr BYNRasterBand::SetScale(double dfNewValue)
-{
-    BYNDataset *poIDS = reinterpret_cast<BYNDataset *>(poDS);
-    poIDS->hHeader.dfFactor = 1.0 / dfNewValue;
-    return CE_None;
-}
-
-/************************************************************************/
 /* ==================================================================== */
 /*                              BYNDataset                              */
 /* ==================================================================== */
@@ -142,9 +131,6 @@ CPLErr BYNDataset::Close()
     {
         if (BYNDataset::FlushCache(true) != CE_None)
             eErr = CE_Failure;
-
-        if (GetAccess() == GA_Update)
-            UpdateHeader();
 
         if (fpImage != nullptr)
         {
@@ -253,7 +239,8 @@ int BYNDataset::Identify(GDALOpenInfo *poOpenInfo)
 GDALDataset *BYNDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
-    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
+    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr ||
+        poOpenInfo->eAccess == GA_Update)
         return nullptr;
 
     /* -------------------------------------------------------------------- */
@@ -389,23 +376,6 @@ CPLErr BYNDataset::GetGeoTransform(double *padfTransform)
 }
 
 /************************************************************************/
-/*                          SetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr BYNDataset::SetGeoTransform(double *padfTransform)
-
-{
-    if (padfTransform[2] != 0.0 || padfTransform[4] != 0.0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Attempt to write skewed or rotated geotransform to byn.");
-        return CE_Failure;
-    }
-    memcpy(adfGeoTransform, padfTransform, sizeof(double) * 6);
-    return CE_None;
-}
-
-/************************************************************************/
 /*                          GetSpatialRef()                             */
 /************************************************************************/
 
@@ -486,76 +456,6 @@ const OGRSpatialReference *BYNDataset::GetSpatialRef() const
     }
 
     return nullptr;
-}
-
-/************************************************************************/
-/*                          SetSpatialRef()                             */
-/************************************************************************/
-
-CPLErr BYNDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
-
-{
-    if (poSRS == nullptr)
-        return CE_Failure;
-
-    m_oSRS = *poSRS;
-
-    /* Try to recognize prefefined EPSG compound CS */
-
-    if (poSRS->IsCompound())
-    {
-        const char *pszAuthName = poSRS->GetAuthorityName("COMPD_CS");
-        const char *pszAuthCode = poSRS->GetAuthorityCode("COMPD_CS");
-
-        if (pszAuthName != nullptr && pszAuthCode != nullptr &&
-            EQUAL(pszAuthName, "EPSG") &&
-            atoi(pszAuthCode) == BYN_DATUM_1_VDATUM_2)
-        {
-            hHeader.nVDatum = 2;
-            hHeader.nDatum = 1;
-            return CE_None;
-        }
-    }
-
-    OGRSpatialReference oSRSTemp;
-
-    /* Try to match GEOGCS */
-
-    if (poSRS->IsGeographic())
-    {
-        oSRSTemp.importFromEPSG(BYN_DATUM_0);
-        if (poSRS->IsSameGeogCS(&oSRSTemp))
-            hHeader.nDatum = 0;
-        else
-        {
-            oSRSTemp.importFromEPSG(BYN_DATUM_1);
-            if (poSRS->IsSameGeogCS(&oSRSTemp))
-                hHeader.nDatum = 1;
-        }
-    }
-
-    /* Try to match VERT_CS */
-
-    if (poSRS->IsVertical())
-    {
-        oSRSTemp.importFromEPSG(BYN_VDATUM_1);
-        if (poSRS->IsSameVertCS(&oSRSTemp))
-            hHeader.nVDatum = 1;
-        else
-        {
-            oSRSTemp.importFromEPSG(BYN_VDATUM_2);
-            if (poSRS->IsSameVertCS(&oSRSTemp))
-                hHeader.nVDatum = 2;
-            else
-            {
-                oSRSTemp.importFromEPSG(BYN_VDATUM_3);
-                if (poSRS->IsSameVertCS(&oSRSTemp))
-                    hHeader.nVDatum = 3;
-            }
-        }
-    }
-
-    return CE_None;
 }
 
 /*----------------------------------------------------------------------*/
@@ -642,230 +542,6 @@ void BYNDataset::buffer2header(const GByte *pabyBuf, BYNHeader *pohHeader)
 #endif
 }
 
-/*----------------------------------------------------------------------*/
-/*                           header2buffer()                            */
-/*----------------------------------------------------------------------*/
-
-void BYNDataset::header2buffer(const BYNHeader *pohHeader, GByte *pabyBuf)
-
-{
-    memcpy(pabyBuf, &pohHeader->nSouth, 4);
-    memcpy(pabyBuf + 4, &pohHeader->nNorth, 4);
-    memcpy(pabyBuf + 8, &pohHeader->nWest, 4);
-    memcpy(pabyBuf + 12, &pohHeader->nEast, 4);
-    memcpy(pabyBuf + 16, &pohHeader->nDLat, 2);
-    memcpy(pabyBuf + 18, &pohHeader->nDLon, 2);
-    memcpy(pabyBuf + 20, &pohHeader->nGlobal, 2);
-    memcpy(pabyBuf + 22, &pohHeader->nType, 2);
-    memcpy(pabyBuf + 24, &pohHeader->dfFactor, 8);
-    memcpy(pabyBuf + 32, &pohHeader->nSizeOf, 2);
-    memcpy(pabyBuf + 34, &pohHeader->nVDatum, 2);
-    memcpy(pabyBuf + 40, &pohHeader->nDescrip, 2);
-    memcpy(pabyBuf + 42, &pohHeader->nSubType, 2);
-    memcpy(pabyBuf + 44, &pohHeader->nDatum, 2);
-    memcpy(pabyBuf + 46, &pohHeader->nEllipsoid, 2);
-    memcpy(pabyBuf + 48, &pohHeader->nByteOrder, 2);
-    memcpy(pabyBuf + 50, &pohHeader->nScale, 2);
-    memcpy(pabyBuf + 52, &pohHeader->dfWo, 8);
-    memcpy(pabyBuf + 60, &pohHeader->dfGM, 8);
-    memcpy(pabyBuf + 68, &pohHeader->nTideSys, 2);
-    memcpy(pabyBuf + 70, &pohHeader->nRealiz, 2);
-    memcpy(pabyBuf + 72, &pohHeader->dEpoch, 4);
-    memcpy(pabyBuf + 76, &pohHeader->nPtType, 2);
-
-#if defined(CPL_MSB)
-    CPL_LSBPTR32(pabyBuf);
-    CPL_LSBPTR32(pabyBuf + 4);
-    CPL_LSBPTR32(pabyBuf + 8);
-    CPL_LSBPTR32(pabyBuf + 12);
-    CPL_LSBPTR16(pabyBuf + 16);
-    CPL_LSBPTR16(pabyBuf + 18);
-    CPL_LSBPTR16(pabyBuf + 20);
-    CPL_LSBPTR16(pabyBuf + 22);
-    CPL_LSBPTR64(pabyBuf + 24);
-    CPL_LSBPTR16(pabyBuf + 32);
-    CPL_LSBPTR16(pabyBuf + 34);
-    CPL_LSBPTR16(pabyBuf + 40);
-    CPL_LSBPTR16(pabyBuf + 42);
-    CPL_LSBPTR16(pabyBuf + 44);
-    CPL_LSBPTR16(pabyBuf + 46);
-    CPL_LSBPTR16(pabyBuf + 48);
-    CPL_LSBPTR16(pabyBuf + 50);
-    CPL_LSBPTR64(pabyBuf + 52);
-    CPL_LSBPTR64(pabyBuf + 60);
-    CPL_LSBPTR16(pabyBuf + 68);
-    CPL_LSBPTR16(pabyBuf + 70);
-    CPL_LSBPTR32(pabyBuf + 72);
-    CPL_LSBPTR16(pabyBuf + 76);
-#endif
-}
-
-/************************************************************************/
-/*                               Create()                               */
-/************************************************************************/
-
-GDALDataset *BYNDataset::Create(const char *pszFilename, int nXSize, int nYSize,
-                                int /* nBands */, GDALDataType eType,
-                                char ** /* papszOptions */)
-{
-    if (eType != GDT_Int16 && eType != GDT_Int32)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Attempt to create byn file with unsupported data type '%s'.",
-                 GDALGetDataTypeName(eType));
-        return nullptr;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Check file extension (.byn/.err)                                */
-    /* -------------------------------------------------------------------- */
-
-    const std::string osExt = CPLGetExtensionSafe(pszFilename);
-
-    if (!EQUAL(osExt.c_str(), "byn") && !EQUAL(osExt.c_str(), "err"))
-    {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Attempt to create byn file with extension other than byn/err.");
-        return nullptr;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Try to create the file.                                         */
-    /* -------------------------------------------------------------------- */
-
-    VSILFILE *fp = VSIFOpenL(pszFilename, "wb+");
-    if (fp == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Attempt to create file `%s' failed.\n", pszFilename);
-        return nullptr;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Write an empty header.                                          */
-    /* -------------------------------------------------------------------- */
-
-    GByte abyBuf[BYN_HDR_SZ] = {'\0'};
-
-    /* Load header with some commum values */
-
-    BYNHeader hHeader = {0, 0, 0, 0, 0, 0,   0,   0, 0.0, 0,   0, 0,
-                         0, 0, 0, 0, 0, 0.0, 0.0, 0, 0,   0.0, 0};
-
-    /* Set temporary values on header */
-
-    hHeader.nSouth = 0;
-    hHeader.nNorth = nYSize - 2;
-    hHeader.nWest = 0;
-    hHeader.nEast = nXSize - 2;
-    hHeader.nDLat = 1;
-    hHeader.nDLon = 1;
-    hHeader.nSizeOf = static_cast<GInt16>(GDALGetDataTypeSizeBytes(eType));
-
-    /* Prepare buffer for writing */
-
-    header2buffer(&hHeader, abyBuf);
-
-    /* Write initial header */
-
-    VSIFWriteL(abyBuf, BYN_HDR_SZ, 1, fp);
-    VSIFCloseL(fp);
-
-    return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_Update));
-}
-
-/************************************************************************/
-/*                          UpdateHeader()                              */
-/************************************************************************/
-
-void BYNDataset::UpdateHeader()
-{
-    double dfDLon = (adfGeoTransform[1] * 3600.0);
-    double dfDLat = (adfGeoTransform[5] * 3600.0 * -1);
-    double dfWest = (adfGeoTransform[0] * 3600.0) + (dfDLon / 2);
-    double dfNorth = (adfGeoTransform[3] * 3600.0) - (dfDLat / 2);
-    double dfSouth = dfNorth - ((nRasterYSize - 1) * dfDLat);
-    double dfEast = dfWest + ((nRasterXSize - 1) * dfDLon);
-
-    if (hHeader.nScale == 1)
-    {
-        dfSouth /= BYN_SCALE;
-        dfNorth /= BYN_SCALE;
-        dfWest /= BYN_SCALE;
-        dfEast /= BYN_SCALE;
-        dfDLat /= BYN_SCALE;
-        dfDLon /= BYN_SCALE;
-    }
-
-    hHeader.nSouth = static_cast<GInt32>(dfSouth);
-    hHeader.nNorth = static_cast<GInt32>(dfNorth);
-    hHeader.nWest = static_cast<GInt32>(dfWest);
-    hHeader.nEast = static_cast<GInt32>(dfEast);
-    hHeader.nDLat = static_cast<GInt16>(dfDLat);
-    hHeader.nDLon = static_cast<GInt16>(dfDLon);
-
-    GByte abyBuf[BYN_HDR_SZ];
-
-    header2buffer(&hHeader, abyBuf);
-
-    const char *pszValue = GetMetadataItem("GLOBAL");
-    if (pszValue != nullptr)
-        hHeader.nGlobal = static_cast<GInt16>(atoi(pszValue));
-
-    pszValue = GetMetadataItem("TYPE");
-    if (pszValue != nullptr)
-        hHeader.nType = static_cast<GInt16>(atoi(pszValue));
-
-    pszValue = GetMetadataItem("DESCRIPTION");
-    if (pszValue != nullptr)
-        hHeader.nDescrip = static_cast<GInt16>(atoi(pszValue));
-
-    pszValue = GetMetadataItem("SUBTYPE");
-    if (pszValue != nullptr)
-        hHeader.nSubType = static_cast<GInt16>(atoi(pszValue));
-
-    pszValue = GetMetadataItem("WO");
-    if (pszValue != nullptr)
-        hHeader.dfWo = CPLAtof(pszValue);
-
-    pszValue = GetMetadataItem("GM");
-    if (pszValue != nullptr)
-        hHeader.dfGM = CPLAtof(pszValue);
-
-    pszValue = GetMetadataItem("TIDESYSTEM");
-    if (pszValue != nullptr)
-        hHeader.nTideSys = static_cast<GInt16>(atoi(pszValue));
-
-    pszValue = GetMetadataItem("REALIZATION");
-    if (pszValue != nullptr)
-        hHeader.nRealiz = static_cast<GInt16>(atoi(pszValue));
-
-    pszValue = GetMetadataItem("EPOCH");
-    if (pszValue != nullptr)
-        hHeader.dEpoch = static_cast<float>(CPLAtof(pszValue));
-
-    pszValue = GetMetadataItem("PTTYPE");
-    if (pszValue != nullptr)
-        hHeader.nPtType = static_cast<GInt16>(atoi(pszValue));
-
-    CPL_IGNORE_RET_VAL(VSIFSeekL(fpImage, 0, SEEK_SET));
-    CPL_IGNORE_RET_VAL(VSIFWriteL(abyBuf, BYN_HDR_SZ, 1, fpImage));
-
-    /* GDALPam metadata update */
-
-    SetMetadataItem("GLOBAL", CPLSPrintf("%d", hHeader.nGlobal), "BYN");
-    SetMetadataItem("TYPE", CPLSPrintf("%d", hHeader.nType), "BYN");
-    SetMetadataItem("DESCRIPTION", CPLSPrintf("%d", hHeader.nDescrip), "BYN");
-    SetMetadataItem("SUBTYPE", CPLSPrintf("%d", hHeader.nSubType), "BYN");
-    SetMetadataItem("WO", CPLSPrintf("%g", hHeader.dfWo), "BYN");
-    SetMetadataItem("GM", CPLSPrintf("%g", hHeader.dfGM), "BYN");
-    SetMetadataItem("TIDESYSTEM", CPLSPrintf("%d", hHeader.nTideSys), "BYN");
-    SetMetadataItem("REALIZATION", CPLSPrintf("%d", hHeader.nRealiz), "BYN");
-    SetMetadataItem("EPOCH", CPLSPrintf("%g", hHeader.dEpoch), "BYN");
-    SetMetadataItem("PTTYPE", CPLSPrintf("%d", hHeader.nPtType), "BYN");
-}
-
 /************************************************************************/
 /*                          GDALRegister_BYN()                          */
 /************************************************************************/
@@ -885,11 +561,9 @@ void GDALRegister_BYN()
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "byn err");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/byn.html");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Int16 Int32");
 
     poDriver->pfnOpen = BYNDataset::Open;
     poDriver->pfnIdentify = BYNDataset::Identify;
-    poDriver->pfnCreate = BYNDataset::Create;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

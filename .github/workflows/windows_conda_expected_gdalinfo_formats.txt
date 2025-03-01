@@ -14,13 +14,11 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   CEOS -raster- (rov): CEOS Image
   JAXAPALSAR -raster- (rov): JAXA PALSAR Product Reader (Level 1.1/1.5)
   GFF -raster- (rov): Ground-based SAR Applications Testbed File Format (.gff) (*.gff)
-  ELAS -raster- (rw+v): ELAS
   ESRIC -raster- (rov): Esri Compact Cache (*.json, *.tpkx)
   AIG -raster- (rov): Arc/Info Binary Grid
   AAIGrid -raster- (rwv): Arc/Info ASCII Grid (*.asc)
   GRASSASCIIGrid -raster- (rov): GRASS ASCII Grid
   ISG -raster- (rov): International Service for the Geoid (*.isg)
-  SDTS -raster- (rov): SDTS Raster (*.ddf)
   DTED -raster- (rwv): DTED Elevation Raster (*.dt0, *.dt1, *.dt2)
   PNG -raster- (rwv): Portable Network Graphics (*.png)
   JPEG -raster- (rwv): JPEG JFIF (*.jpg, *.jpeg)
@@ -31,7 +29,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   ESAT -raster- (rov): Envisat Image Format (*.n1)
   FITS -raster,vector- (rw+): Flexible Image Transport System (*.fits)
   BSB -raster- (rov): Maptech BSB Nautical Charts (*.kap)
-  XPM -raster- (rwv): X11 PixMap Format (*.xpm)
   BMP -raster- (rw+v): MS Windows Device Independent Bitmap (*.bmp)
   DIMAP -raster- (rovs): SPOT DIMAP
   AirSAR -raster- (rov): AirSAR Polarimetric Image
@@ -40,7 +37,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   PCIDSK -raster,vector- (rw+uv): PCIDSK Database File (*.pix)
   PCRaster -raster- (rw+): PCRaster Raster File (*.map)
   ILWIS -raster- (rw+v): ILWIS Raster Map (*.mpr, *.mpl)
-  SGI -raster- (rw+v): SGI Image File Format 1.0 (*.rgb)
   SRTMHGT -raster- (rwv): SRTMHGT File Format (*.hgt)
   Leveller -raster- (rw+v): Leveller heightfield (*.ter)
   Terragen -raster- (rw+v): Terragen heightfield (*.ter)
@@ -48,7 +44,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   HDF4 -raster,multidimensional raster- (ros): Hierarchical Data Format Release 4 (*.hdf)
   HDF4Image -raster- (rw+): HDF4 Dataset
   ISIS3 -raster- (rw+v): USGS Astrogeology ISIS cube (Version 3) (*.lbl, *.cub)
-  ISIS2 -raster- (rw+v): USGS Astrogeology ISIS cube (Version 2)
+  ISIS2 -raster- (rov): USGS Astrogeology ISIS cube (Version 2)
   PDS -raster- (rov): NASA Planetary Data System
   PDS4 -raster,vector- (rw+uvs): NASA Planetary Data System 4 (*.xml)
   VICAR -raster,vector- (rw+v): MIPL VICAR file
@@ -56,7 +52,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   ERS -raster- (rw+v): ERMapper .ers Labelled (*.ers)
   JP2OpenJPEG -raster,vector- (rwv): JPEG-2000 driver based on JP2OpenJPEG library (*.jp2, *.j2k)
   L1B -raster- (rovs): NOAA Polar Orbiter Level 1b Data Set
-  FIT -raster- (rwv): FIT Image
   GRIB -raster,multidimensional raster- (rwv): GRIdded Binary (.grb, .grb2) (*.grb, *.grb2, *.grib2)
   RMF -raster- (rw+v): Raster Matrix Format (*.rsw)
   WCS -raster- (rovs): OGC Web Coverage Service
@@ -64,18 +59,14 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   MSGN -raster- (rov): EUMETSAT Archive native (.nat) (*.nat)
   MSG -raster- (ro): MSG HRIT Data
   RST -raster- (rw+v): Idrisi Raster A.1 (*.rst)
-  GSAG -raster- (rwv): Golden Software ASCII Grid (.grd) (*.grd)
-  GSBG -raster- (rw+v): Golden Software Binary Grid (.grd) (*.grd)
   GS7BG -raster- (rw+v): Golden Software 7 Binary Grid (.grd) (*.grd)
   COSAR -raster- (rov): COSAR Annotated Binary Matrix (TerraSAR-X)
   TSX -raster- (rov): TerraSAR-X Product
   COASP -raster- (ro): DRDC COASP SAR Processor Raster (*.hdr)
-  R -raster- (rwv): R Object Data Store (*.rda)
   MAP -raster- (rov): OziExplorer .MAP
   KMLSUPEROVERLAY -raster- (rwv): Kml Super Overlay (*.kml, *.kmz)
   WEBP -raster- (rwv): WEBP (*.webp)
   PDF -raster,vector- (rw+uvs): Geospatial PDF (*.pdf)
-  Rasterlite -raster- (rwvs): Rasterlite (*.sqlite)
   MBTiles -raster,vector- (rw+v): MBTiles (*.mbtiles)
   PLMOSAIC -raster- (ro): Planet Labs Mosaics API
   CALS -raster- (rwv): CALS (Type 1) (*.cal, *.ct1)
@@ -86,31 +77,28 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   PNM -raster- (rw+v): Portable Pixmap Format (netpbm) (*.pgm, *.ppm, *.pnm)
   DOQ1 -raster- (rov): USGS DOQ (Old Style)
   DOQ2 -raster- (rov): USGS DOQ (New Style)
-  PAux -raster- (rw+v): PCI .aux Labelled
-  MFF -raster- (rw+v): Vexcel MFF Raster (*.hdr)
-  MFF2 -raster- (rw+): Vexcel MFF2 (HKV) Raster
+  PAux -raster- (rov): PCI .aux Labelled
+  MFF -raster- (rov): Vexcel MFF Raster (*.hdr)
+  MFF2 -raster- (ro): Vexcel MFF2 (HKV) Raster
   GSC -raster- (rov): GSC Geogrid
   FAST -raster- (rov): EOSAT FAST Format
-  BT -raster- (rw+v): VTP .bt (Binary Terrain) 1.3 Format (*.bt)
-  LAN -raster- (rw+v): Erdas .LAN/.GIS
+  LAN -raster- (rov): Erdas .LAN/.GIS
   CPG -raster- (rov): Convair PolGASP
   NDF -raster- (rov): NLAPS Data Format
   EIR -raster- (rov): Erdas Imagine Raw
-  DIPEx -raster- (rov): DIPEx
   LCP -raster- (rwv): FARSITE v.4 Landscape File (.lcp) (*.lcp)
   GTX -raster- (rw+v): NOAA Vertical Datum .GTX (*.gtx)
   LOSLAS -raster- (rov): NADCON .los/.las Datum Grid Shift
-  NTv2 -raster- (rw+vs): NTv2 Datum Grid Shift (*.gsb, *.gvb)
-  CTable2 -raster- (rw+v): CTable2 Datum Grid Shift
+  NTv2 -raster- (rovs): NTv2 Datum Grid Shift (*.gsb, *.gvb)
   ACE2 -raster- (rov): ACE2 (*.ACE2)
   SNODAS -raster- (rov): Snow Data Assimilation System (*.hdr)
   KRO -raster- (rw+v): KOLOR Raw (*.kro)
   ROI_PAC -raster- (rw+v): ROI_PAC raster
   RRASTER -raster- (rw+uv): R Raster (*.grd)
-  BYN -raster- (rw+v): Natural Resources Canada's Geoid (*.byn, *.err)
+  BYN -raster- (rov): Natural Resources Canada's Geoid (*.byn, *.err)
   NOAA_B -raster- (rov): NOAA GEOCON/NADCON5 .b format (*.b)
   RIK -raster- (rov): Swedish Grid RIK (.rik) (*.rik)
-  USGSDEM -raster- (rwv): USGS Optional ASCII DEM (and CDED) (*.dem)
+  USGSDEM -raster- (rov): USGS Optional ASCII DEM (and CDED) (*.dem)
   GXF -raster- (rov): GeoSoft Grid Exchange Format (*.gxf)
   KEA -raster- (rw+uv): KEA Image Format (.kea) (*.kea)
   BAG -raster,multidimensional raster,vector- (rw+v): Bathymetry Attributed Grid (*.bag)
@@ -121,9 +109,8 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   HDF5Image -raster- (rov): HDF5 Dataset
   NWT_GRD -raster- (rw+v): Northwood Numeric Grid Format .grd/.tab (*.grd)
   NWT_GRC -raster- (rov): Northwood Classified Grid Format .grc/.tab (*.grc)
-  ADRG -raster- (rw+vs): ARC Digitized Raster Graphics (*.gen)
+  ADRG -raster- (rovs): ARC Digitized Raster Graphics (*.gen)
   SRP -raster- (rovs): Standard Raster Product (ASRP/USRP) (*.img)
-  BLX -raster- (rwv): Magellan topo (.blx) (*.blx)
   PostGISRaster -raster- (rws): PostGIS Raster driver
   SAGA -raster- (rw+v): SAGA GIS Binary Grid (.sdat, .sg-grd-z) (*.sdat, *.sg-grd-z)
   XYZ -raster- (rwv): ASCII Gridded XYZ (*.xyz)

@@ -9,7 +9,7 @@ ISIS2 -- USGS Astrogeology ISIS Cube (Version 2)
 .. built_in_by_default::
 
 ISIS2 is a format used by the USGS Planetary Cartography group to store
-and distribute planetary imagery data. GDAL provides read and write
+and distribute planetary imagery data. GDAL provides read
 access to ISIS2 formatted imagery data.
 
 ISIS2 files often have the extension .cub, sometimes with an associated
@@ -28,40 +28,9 @@ ISIS2 is part of a family of related formats including PDS and ISIS3.
 Driver capabilities
 -------------------
 
-.. supports_createcopy::
-
-.. supports_create::
-
 .. supports_georeferencing::
 
 .. supports_virtualio::
-
-Creation Issues
----------------
-
-Currently the ISIS2 writer writes a very minimal header with only the
-image structure information. No coordinate system, georeferencing or
-other metadata is captured.
-
-Creation Options
-~~~~~~~~~~~~~~~~
-
-|about-creation-options|
-The following creation options are supported:
-
--  .. co:: LABELING_METHOD
-      :choices: ATTACHED, DETACHED
-      :default: ATTACHED
-
-      Determines whether the header
-      labeling should be in the same file as the imagery (ATTACHED)
-      or in a separate file (DETACHED).
-
--  .. co:: IMAGE_EXTENSION
-      :default: cub
-
-      Set the extension used for detached image files. Only used if
-      :co:`LABELING_METHOD=DETACHED`.
 
 See Also
 --------

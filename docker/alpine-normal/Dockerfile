@@ -69,7 +69,6 @@ RUN apk add --no-cache \
     netcdf-dev \
     ninja-build \
     odbc-cpp-wrapper-dev \
-    ogdi-dev \
     openexr-dev \
     openjpeg-dev \
     openssl-dev \
@@ -375,7 +374,6 @@ RUN apk add --no-cache \
         minizip \
         musl \
         odbc-cpp-wrapper \
-        ogdi \
         openexr-libopenexr \
         openjpeg \
         pcre2 \
