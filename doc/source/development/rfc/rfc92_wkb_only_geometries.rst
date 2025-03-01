@@ -194,7 +194,7 @@ runs in 15.8 second in WKBOnlyGeometry mode vs 19.1 second without it (master),
 hence a 17% speed-up.
 
 With spatial index creation enabled (multi-threaded), the wall clock time
-difference is within measurement noise. And for singe threaded creation, the
+difference is within measurement noise. And for single threaded creation, the
 WKBOnlyGeometry mode is 5% faster.
 
 Discussion

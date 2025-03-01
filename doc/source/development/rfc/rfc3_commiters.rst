@@ -201,8 +201,8 @@ repository:
    contribute to the code base, please seek more information from the
    project steering committee, or the foundation legal counsel.
 
-Bootstraping
-------------
+Bootstrapping
+-------------
 
 The following existing committers will be considered authorized GDAL/OGR
 committers as long as they each review the committer guidelines, and

@@ -409,7 +409,7 @@ Security implications
 
 Similar to the existing native code plugin mechanism of GDAL. If the user
 defines the GDAL_PYTHON_DRIVER_PATH environment variable or GDAL_DRIVER_PATH,
-annd put .py scripts in them (or in {prefix}/lib/gdalplugins/python as a fallback),
+and puts .py scripts in them (or in {prefix}/lib/gdalplugins/python as a fallback),
 they will be executed.
 
 However, opening a .py file with GDALOpen() or similar mechanisms will not
