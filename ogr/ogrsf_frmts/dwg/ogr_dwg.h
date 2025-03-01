@@ -84,6 +84,9 @@ class OGRDWGBlocksLayer final : public OGRLayer
 /************************************************************************/
 class OGRDWGLayer final : public OGRLayer
 {
+
+    void AddSRSIfPresent();
+
     OGRDWGDataSource *poDS;
 
     OGRFeatureDefn *poFeatureDefn;
