@@ -67,12 +67,12 @@ Relationships
 
 Relationship retrieval is supported.
 
-Hiearchical organization
-------------------------
+Hierarchical organization
+-------------------------
 
 .. versionadded:: 3.4
 
-The hiearchical organization of tables and feature classes as top-level
+The hierarchical organization of tables and feature classes as top-level
 element or within a feature dataset can be explored using the methods
 :cpp:func:`GDALDataset::GetRootGroup`,
 :cpp:func:`GDALGroup::GetGroupNames`, :cpp:func:`GDALGroup::OpenGroup`,
