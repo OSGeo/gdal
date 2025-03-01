@@ -252,7 +252,7 @@ Drivers and driver registration
                    "group of the S-57 file" default="YES" />
      <Option name="RETURN_LINKAGES" type="boolean"
        description="Should additional attributes relating features to their underlying "
-                   "geometric primtives be attached" default="NO" />
+                   "geometric primitives be attached" default="NO" />
      <Option name="RECODE_BY_DSSI" type="boolean"
        description="Should attribute values be recoded to UTF-8 from the character "
                    "encoding specified in the S57 DSSI record." default="NO" />

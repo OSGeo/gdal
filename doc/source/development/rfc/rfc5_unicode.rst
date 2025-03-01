@@ -69,7 +69,7 @@ the file encoding to UTF-8. So we need a way to get file encoding in
 some way on per datasource basis. The natural solution of the problem is
 to introduce optional open parameter "ENCODING" to GDALOpen/OGROpen
 functions. Unfortunately, those functions do not accept options. That
-should be introduced in another RFC. Fortunately, tehre is no need to
+should be introduced in another RFC. Fortunately, there is no need to
 add encoding parameter immediately, because it is independent from the
 general i18n process. We can add UTF-8 support as it is defined in this
 RFC and add support for forcing per-datasource encoding later, when the
