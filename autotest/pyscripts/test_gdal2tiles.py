@@ -722,6 +722,8 @@ def test_gdal2tiles_py_jpeg_3band_input(
     script_path, tmp_path, resampling, expected_stats_z0, expected_stats_z1
 ):
 
+    pytest.importorskip("osgeo.gdal_array")
+
     if resampling == "antialias" and not pil_available():
         pytest.skip("'antialias' resampling is not available")
 
@@ -785,6 +787,8 @@ def test_gdal2tiles_py_jpeg_3band_input(
 def test_gdal2tiles_py_jpeg_1band_input(
     script_path, tmp_path, resampling, expected_stats_z14, expected_stats_z13
 ):
+
+    pytest.importorskip("osgeo.gdal_array")
 
     if resampling == "antialias" and not pil_available():
         pytest.skip("'antialias' resampling is not available")

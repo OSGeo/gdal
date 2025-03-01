@@ -709,6 +709,7 @@ def test_rasterio_9():
 
 def test_rasterio_overview_subpixel_resampling():
 
+    pytest.importorskip("osgeo.gdal_array")
     numpy = pytest.importorskip("numpy")
 
     temp_path = "/vsimem/rasterio_ovr.tif"
@@ -774,6 +775,8 @@ def test_rasterio_10():
 
 
 def test_rasterio_11():
+
+    pytest.importorskip("osgeo.gdal_array")
     numpy = pytest.importorskip("numpy")
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 4, 3)
@@ -810,6 +813,8 @@ def rasterio_12_progress_callback(pct, message, user_data):
 
 
 def test_rasterio_12():
+
+    pytest.importorskip("osgeo.gdal_array")
     numpy = pytest.importorskip("numpy")
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 4, 3, 4)
@@ -878,6 +883,8 @@ def test_rasterio_12():
     ],
 )
 def test_rasterio_13(dt):
+
+    pytest.importorskip("osgeo.gdal_array")
     numpy = pytest.importorskip("numpy")
 
     dt = gdal.GetDataTypeByName(dt)
@@ -1206,6 +1213,8 @@ cellsize     0
 
 
 def test_rasterio_nodata():
+
+    pytest.importorskip("osgeo.gdal_array")
     pytest.importorskip("numpy")
 
     ndv = 123
@@ -1413,6 +1422,8 @@ nodata_value 0
 
 
 def test_rasterio_dataset_readarray_cint16():
+
+    pytest.importorskip("osgeo.gdal_array")
     numpy = pytest.importorskip("numpy")
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2, gdal.GDT_CInt16)
@@ -1488,6 +1499,8 @@ def test_rasterio_floating_point_window_no_resampling():
 
 def test_rasterio_floating_point_window_no_resampling_numpy():
     # Same as above but using ReadAsArray() instead of ReadRaster()
+
+    pytest.importorskip("osgeo.gdal_array")
     numpy = pytest.importorskip("numpy")
 
     ds = gdal.Translate(
@@ -3158,6 +3171,8 @@ def test_rasterio_gdal_rasterio_resampling():
 
 
 def test_rasterio_numpy_datatypes_for_xoff():
+
+    pytest.importorskip("osgeo.gdal_array")
     np = pytest.importorskip("numpy")
 
     ds = gdal.Open("data/byte.tif")

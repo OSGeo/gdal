@@ -149,6 +149,7 @@ def test_tiff_write_3():
 
 def test_tiff_write_4():
 
+    pytest.importorskip("osgeo.gdal_array")
     np = pytest.importorskip("numpy")
 
     options = ["TILED=YES", "BLOCKXSIZE=32", "BLOCKYSIZE=32"]

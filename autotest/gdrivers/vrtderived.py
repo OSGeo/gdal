@@ -228,12 +228,7 @@ def test_vrtderived_5():
 
 def test_vrtderived_6():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
         ds = gdal.Open("data/vrt/python_ones.vrt")
@@ -319,12 +314,7 @@ def test_vrtderived_7():
 
 def test_vrtderived_8():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "NO"):
         ds = gdal.Open("data/vrt/n43_hillshade.vrt")
@@ -344,12 +334,7 @@ def test_vrtderived_8():
 
 def test_vrtderived_9():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     # Missing PixelFunctionType
     with gdal.quiet_errors():
@@ -637,12 +622,7 @@ def one_pix_func(
 
 def test_vrtderived_10():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     content = """<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
@@ -706,12 +686,7 @@ def test_vrtderived_10():
 
 def test_vrtderived_11():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     gdal.FileFromMemBuffer(
         "/vsimem/n43_hillshade.vrt",
@@ -742,12 +717,7 @@ def test_vrtderived_11():
 
 def test_vrtderived_12():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     for dt in [
         "Byte",
@@ -834,12 +804,7 @@ def test_vrtderived_12():
 
 def test_vrtderived_13():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
         # Will test the VRTDerivedRasterBand::IGetDataCoverageStatus() interface
@@ -859,12 +824,7 @@ def test_vrtderived_13():
 
 def test_vrtderived_14():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
         ds = gdal.GetDriverByName("VRT").CreateCopy(
@@ -914,12 +874,7 @@ def vrtderived_15_worker(args_dict):
 
 def test_vrtderived_15():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     gdal.SetConfigOption("GDAL_VRT_ENABLE_PYTHON", "YES")
 
@@ -951,12 +906,7 @@ def test_vrtderived_15():
 
 def test_vrtderived_skip_non_contributing_sources():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     def create_vrt(SkipNonContributingSources):
         Trace = ""
@@ -1032,6 +982,8 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
 
 @pytest.mark.parametrize("dtype", range(1, gdal.GDT_TypeCount))
 def test_vrt_derived_dtype(tmp_vsimem, dtype):
+
+    pytest.importorskip("osgeo.gdal_array")
     pytest.importorskip("numpy")
 
     input_fname = tmp_vsimem / "input.tif"

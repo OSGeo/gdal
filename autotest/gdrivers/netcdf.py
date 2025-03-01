@@ -2920,10 +2920,8 @@ def test_netcdf_66(tmp_path):
 
 def test_netcdf_67():
 
-    try:
-        import numpy
-    except ImportError:
-        pytest.skip()
+    pytest.importorskip("osgeo.gdal_array")
+    numpy = pytest.importorskip("numpy")
 
     # disable bottom-up mode to use the real file's blocks size
     with gdal.config_option("GDAL_NETCDF_BOTTOMUP", "NO"):
