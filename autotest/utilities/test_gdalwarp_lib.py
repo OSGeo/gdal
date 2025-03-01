@@ -4414,3 +4414,24 @@ def test_gdalwarp_lib_init_dest_no_source_window_mem():
     assert ds.GetRasterBand(1).GetNoDataValue() == 255
     ds.GetRasterBand(1).SetNoDataValue(0)
     assert ds.GetRasterBand(1).ComputeRasterMinMax() == (255, 255)
+
+
+###############################################################################
+# Test ALLOW_BALLPARK=NO transformer option
+
+
+def test_gdalwarp_lib_allow_ballpark_no():
+
+    src_ds = gdal.Open("../gcore/data/byte.tif")
+
+    with pytest.raises(
+        Exception,
+        match="Cannot find coordinate operations from `EPSG:26711' to `EPSG:4258'",
+    ):
+        gdal.Warp(
+            "",
+            src_ds,
+            format="MEM",
+            dstSRS="EPSG:4258",  # ETRS89
+            transformerOptions={"ALLOW_BALLPARK": "NO"},
+        )

@@ -1737,7 +1737,11 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
  * <li> COORDINATE_OPERATION: (GDAL &gt;= 3.0) Coordinate operation, as
  * a PROJ or WKT string, used as an override over the normally computed
  * pipeline. The pipeline must take into account the axis order of the source
- * and target SRS. <li> COORDINATE_EPOCH: (GDAL &gt;= 3.0) Coordinate epoch,
+ * and target SRS.
+ * </li>
+ * <li> ALLOW_BALLPARK=YES/NO: (GDAL &gt;= 3.11) Whether ballpark coordinate
+ * operations are allowed. Defaults to YES.</li>
+ * <li> COORDINATE_EPOCH: (GDAL &gt;= 3.0) Coordinate epoch,
  * expressed as a decimal year. Useful for time-dependent coordinate operations.
  * </li>
  * <li> SRC_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch of source CRS,
@@ -2388,6 +2392,12 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         {
             aosOptions.SetNameValue("DST_COORDINATE_EPOCH", pszDstCoordEpoch);
             oDstSRS.SetCoordinateEpoch(CPLAtof(pszDstCoordEpoch));
+        }
+
+        if (const char *pszAllowBallpark =
+                CSLFetchNameValue(papszOptions, "ALLOW_BALLPARK"))
+        {
+            aosOptions.SetNameValue("ALLOW_BALLPARK", pszAllowBallpark);
         }
 
         psInfo->pReprojectArg = GDALCreateReprojectionTransformerEx(
@@ -3170,9 +3180,12 @@ void *GDALCreateReprojectionTransformer(const char *pszSrcWKT,
  * decimal year. Useful for time-dependent coordinate operations.</li>
  * <li> SRC_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch of source CRS,
  * expressed as a decimal year. Useful for time-dependent coordinate
- *operations.</li> <li> DST_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch
+ *operations.</li>
+ * <li> DST_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch
  *of target CRS, expressed as a decimal year. Useful for time-dependent
  *coordinate operations.</li>
+ * <li> ALLOW_BALLPARK=YES/NO: (GDAL &gt;= 3.11) Whether ballpark coordinate
+ * operations are allowed. Defaults to YES.</li>
  * </ul>
  *
  * @return Handle for use with GDALReprojectionTransform(), or NULL if the
@@ -3227,6 +3240,8 @@ void *GDALCreateReprojectionTransformerEx(OGRSpatialReferenceH hSrcSRS,
     {
         optionsFwd.SetSourceCenterLong(CPLAtof(pszCENTER_LONG));
     }
+    optionsFwd.SetBallparkAllowed(CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "ALLOW_BALLPARK", "YES")));
 
     OGRCoordinateTransformation *poForwardTransform =
         OGRCreateCoordinateTransformation(poSrcSRS, poDstSRS, optionsFwd);
