@@ -2958,3 +2958,12 @@ def test_ogr_openfilegdb_weird_gdbindexes():
         lyr.SetAttributeFilter("id = '1'")
         f = lyr.GetNextFeature()
         assert f
+
+
+###############################################################################
+
+
+def test_ogr_openfilegdb_vsizip_random_zip_name_and_no_gdb_subdir():
+
+    with ogr.Open("/vsizip/data/filegdb/testopenfilegdb.zip") as ds:
+        assert ds.GetLayerCount() == 37
