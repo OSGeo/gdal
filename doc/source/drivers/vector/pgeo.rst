@@ -115,7 +115,7 @@ Prerequisites
 #. Install MDB Tools. The official upstream of MDB Tools is maintained
    at `https://github.com/mdbtools/mdbtools <https://github.com/mdbtools/mdbtools>`__
    Version 0.9.4 or later is recommended for best compatibility with the PGeo driver.
-   With the latest version no additional configuration (the followings) is required on Debian Linux and
+   With the latest version no additional configuration (the following) is required on Debian Linux and
    :bash:`ogrinfo sample.mdb` works fine.
 
 

@@ -86,7 +86,7 @@ Proprietary license / Other
 - `FalconView  <http://www.falconview.org>`_  Windows-based GIS platform with roots in military mission planning, now available as a free GIS visualization and analysis package.
 - `flighttrack  <http://flighttrack.sourceforge.net>`_  GPS track viewing and downloading software for Mac.
 - `FME  <http://www.safe.com>`_  A GIS translator package includes a GDAL plugin.
-- `GenGIS  <hhttps://beikolab.cs.dal.ca/gengis/Main_Page>`_  Software for geospatial analysis of genetic data.
+- `GenGIS  <https://beikolab.cs.dal.ca/gengis/Main_Page>`_  Software for geospatial analysis of genetic data.
 - `Geographic Imager  <https://www.avenza.com/geographic-imager>`_  DEM / aerial / satellite image processing GIS plug-in for Adobe Photoshop, by Avenza Systems.
 - `GeoDMS  <https://geodms.nl/>`_  A framework for building spatial calculation models.
 - `GeoFusion  <http://www.geofusion.com>`_  3D visualization.
