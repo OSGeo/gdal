@@ -186,20 +186,32 @@ if sys.platform == 'win32':
 
 numpy_include_dir = '.'
 numpy_error_msg = ""
-try:
-    numpy_include_dir = get_numpy_include()
-    HAVE_NUMPY = numpy_include_dir != '.'
-    if not HAVE_NUMPY:
-        numpy_error_msg = "numpy found, but numpy headers were not found!"
-except ImportError:
-    HAVE_NUMPY = False
-    numpy_error_msg = "numpy not available!"
 
-if not HAVE_NUMPY:
-   if "GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY" in os.environ:
-      print("WARNING: " + numpy_error_msg + " Array support will not be enabled.")
-   else:
-      raise Exception(numpy_error_msg + " This error may happen if you build/install using setup.py directly, but should normally not happen if you install using pip install. If you still want to build the bindings without numpy support, define the GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY environment variable")
+do_numpy_detection = True
+if "GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY" in os.environ:
+    v = os.environ["GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY"].upper()
+    if v in ('YES', '1', 'ON', 'TRUE'):
+        do_numpy_detection = False
+    elif v not in ('NO', '0', 'OFF', 'FALSE'):
+        raise Exception("Unrecognized value for GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY")
+
+if do_numpy_detection:
+    try:
+        numpy_include_dir = get_numpy_include()
+        HAVE_NUMPY = numpy_include_dir != '.'
+        if not HAVE_NUMPY:
+            numpy_error_msg = "numpy found, but numpy headers were not found!"
+    except ImportError:
+        HAVE_NUMPY = False
+        numpy_error_msg = "numpy not available!"
+
+    if not HAVE_NUMPY:
+        if "GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY" in os.environ:
+            print("WARNING: " + numpy_error_msg + " Array support will not be enabled.")
+        else:
+            raise Exception(numpy_error_msg + " This error may happen if you build/install using setup.py directly, but should normally not happen if you install using pip install. If you still want to build the bindings without numpy support, define the GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY environment variable")
+else:
+    HAVE_NUMPY = False
 
 class gdal_ext(build_ext):
 

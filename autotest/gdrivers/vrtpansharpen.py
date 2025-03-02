@@ -1315,10 +1315,8 @@ def test_vrtpansharpen_5():
 
 def test_vrtpansharpen_6():
 
-    try:
-        import numpy
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("osgeo.gdal_array")
+    numpy = pytest.importorskip("numpy")
 
     # i = 0: VRT has <BitDepth>7</BitDepth>
     # i = 1: bands have NBITS=7 and VRT <BitDepth>7</BitDepth>
