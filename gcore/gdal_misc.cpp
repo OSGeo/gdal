@@ -2837,7 +2837,7 @@ int CPL_STDCALL GDALWriteWorldFile(const char *pszBaseFilename,
  * string. i.e. "20230312".</li>
  * <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME. ie. "3.6.3"</li>
  * <li> "RELEASE_NICKNAME": (>= 3.11) Returns the GDAL_RELEASE_NICKNAME.
- * i.e. "Trans rights are human rights"</li>
+ * (may be empty)</li>
  * <li> "--version": Returns one line version message suitable for
  * use in response to --version requests.  i.e. "GDAL 3.6.3, released
  * 2023/03/12"</li>
@@ -3002,7 +3002,7 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
     else if (EQUAL(pszRequest, "RELEASE_NAME"))
         osVersionInfo.Printf(GDAL_RELEASE_NAME);
     else if (EQUAL(pszRequest, "RELEASE_NICKNAME"))
-        osVersionInfo.Printf(GDAL_RELEASE_NICKNAME);
+        osVersionInfo.Printf("%s", GDAL_RELEASE_NICKNAME);
     else  // --version
     {
         osVersionInfo.Printf(
