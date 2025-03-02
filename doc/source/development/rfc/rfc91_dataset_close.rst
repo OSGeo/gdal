@@ -62,7 +62,7 @@ A new virtual method GDALDataset::Close() is added.
      * destroying a dataset. It should not be called on a shared dataset whose
      * reference count is greater than one.
      *
-     * It gives a last chance to the closing processus to return an error code if
+     * It gives a last chance to the closing process to return an error code if
      * something goes wrong, in particular in creation / update scenarios where
      * file write or network communication might occur when finalizing the dataset.
      *
