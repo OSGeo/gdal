@@ -8,7 +8,7 @@ RFC 108: Driver removals for GDAL 3.11
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2025-02-18
-Status:        Draft
+Status:        Adopted, implemented
 Target:        GDAL 3.11
 ============== =============================================
 
@@ -148,7 +148,7 @@ Funded by GDAL Sponsorship Program (GSP) (this RFC text)
 Voting history
 --------------
 
-TBD
++1 from PSC members JukkaR, JavierJS, KurtS, HowardB, DanielM, and -0 from DanB.
 
 
 .. below is an allow-list for spelling checker.
