@@ -1492,25 +1492,6 @@ the :ref:`vector.hana` driver.
     Control whether to use ODBC-CPP. Defaults to ON when ODBC-CPP is found.
 
 
-OGDI
-****
-
-The `OGDI <https://github.com/libogdi/ogdi/>`_ library is required for the :ref:`vector.ogdi`
-driver. It can be detected with pkg-config.
-
-.. option:: OGDI_INCLUDE_DIR
-
-    Path to an include directory with the ``ecs.h`` header file.
-
-.. option:: OGDI_LIBRARY
-
-    Path to a shared or static library file.
-
-.. option:: GDAL_USE_OGDI=ON/OFF
-
-    Control whether to use OGDI. Defaults to ON when OGDI is found.
-
-
 OpenCAD
 *******
 
@@ -1849,18 +1830,6 @@ It can be detected with pkg-config.
 .. option:: GDAL_USE_RASTERLITE2=ON/OFF
 
     Control whether to use RasterLite2. Defaults to ON when RasterLite2 is found.
-
-
-rdb
-***
-
-The `RDB <https://repository.riegl.com/software/libraries/rdblib>`
-(closed source/proprietary) library is required for the :ref:`raster.rdb` driver.
-Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
-
-.. option:: GDAL_USE_RDB=ON/OFF
-
-    Control whether to use rdb. Defaults to ON when rdb is found.
 
 
 SPATIALITE

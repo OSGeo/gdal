@@ -33,14 +33,8 @@ void OGRRegisterAllInternal()
 #ifdef MITAB_ENABLED
     RegisterOGRTAB();
 #endif
-#ifdef NTF_ENABLED
-    RegisterOGRNTF();
-#endif
 #ifdef LVBAG_ENABLED
     RegisterOGRLVBAG();
-#endif
-#ifdef SDTS_ENABLED
-    RegisterOGRSDTS();
 #endif
 #ifdef S57_ENABLED
     RegisterOGRS57();
@@ -103,9 +97,6 @@ void OGRRegisterAllInternal()
 #ifdef MSSQLSPATIAL_ENABLED
     RegisterOGRMSSQLSpatial();
 #endif
-#ifdef OGDI_ENABLED
-    RegisterOGROGDI();
-#endif
 #ifdef PG_ENABLED
     RegisterOGRPG();
 #endif
@@ -140,9 +131,6 @@ void OGRRegisterAllInternal()
 #ifdef IDB_ENABLED
     RegisterOGRIDB();
 #endif
-#ifdef GEOCONCEPT_ENABLED
-    RegisterOGRGeoconcept();
-#endif
 #ifdef GEORSS_ENABLED
     RegisterOGRGeoRSS();
 #endif
@@ -173,9 +161,6 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef EDIGEO_ENABLED
     RegisterOGREDIGEO();
-#endif
-#ifdef SVG_ENABLED
-    RegisterOGRSVG();
 #endif
 #ifdef IDRISI_ENABLED
     RegisterOGRIdrisi();
@@ -264,10 +249,7 @@ void OGRRegisterAllInternal()
     // NOTE: frmts/drivers.ini in the same directory should be kept in same
     // order as this file
 
-/* Put TIGER and AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */
-#ifdef TIGER_ENABLED
-    RegisterOGRTiger();
-#endif
+/* Put AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */
 #ifdef AVC_ENABLED
     RegisterOGRAVCBin();
     RegisterOGRAVCE00();

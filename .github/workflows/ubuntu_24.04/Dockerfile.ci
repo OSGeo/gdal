@@ -40,7 +40,6 @@ RUN apt-get update && \
     libmuparser-dev \
     libmysqlclient-dev \
     libnetcdf-dev \
-    libogdi-dev \
     libopenexr-dev \
     libopenjp2-7-dev \
     libpcre3-dev \
@@ -157,10 +156,6 @@ RUN curl -L -O https://download.oracle.com/otn_software/linux/instantclient/1990
     && unzip instantclient-sdk-linux.x64-19.9.0.0.0dbru.zip -d opt \
     && apt-get install -y libaio1t64 \
     && ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1
-
-# Workaround libogdi packaging issue
-# Cf https://lists.debian.org/debian-gis/2024/04/msg00006.html
-RUN ln -s /usr/lib/x86_64-linux-gnu/ogdi/4.1/libvrf.so /usr/lib/x86_64-linux-gnu
 
 COPY requirements.txt /tmp/
 RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U --break-system-packages -r /tmp/requirements.txt

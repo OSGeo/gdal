@@ -43,10 +43,6 @@ will have variable Data equal to 1 or 3.
 Driver capabilities
 -------------------
 
-.. supports_createcopy::
-
-.. supports_create::
-
 .. supports_georeferencing::
 
 .. supports_virtualio::
@@ -54,7 +50,7 @@ Driver capabilities
 Factor
 ------
 
-When translating from or into BYN file to or from another formats the
+When translating from BYN file to or from another formats the
 scale will affect the result profoundly.
 
 Translating to a format that supports Scale (GTIFF for example) will
