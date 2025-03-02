@@ -29,6 +29,8 @@
 #  define GDAL_RELEASE_NAME     "3.11.0dev"
 #endif
 
-#define GDAL_RELEASE_NICKNAME   "Trans rights are human rights"
+#ifndef GDAL_RELEASE_NICKNAME
+#define GDAL_RELEASE_NICKNAME   ""
+#endif
 
 #endif
