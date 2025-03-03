@@ -563,10 +563,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_COASP();
 #endif
 
-#ifdef FRMT_r
-    GDALRegister_R();
-#endif
-
 #ifdef FRMT_map
     GDALRegister_MAP();
 #endif
