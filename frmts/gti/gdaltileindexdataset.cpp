@@ -374,11 +374,11 @@ class GDALTileIndexDataset final : public GDALPamDataset
     {
         std::atomic<int> *pnCompletedJobs = nullptr;
         std::atomic<bool> *pbSuccess = nullptr;
+        CPLErrorAccumulator *poErrorAccumulator = nullptr;
         GDALTileIndexDataset *poDS = nullptr;
         GDALTileIndexDataset::QueueWorkingStates *poQueueWorkingStates =
             nullptr;
         int nBandNrMax = 0;
-        std::string *posErrorMsg = nullptr;
 
         int nXOff = 0;
         int nYOff = 0;
@@ -4624,6 +4624,7 @@ CPLErr GDALTileIndexDataset::IRasterIO(
 
         if (m_bLastMustUseMultiThreading)
         {
+            CPLErrorAccumulator oErrorAccumulator;
             std::atomic<bool> bSuccess = true;
             const int nContributingSources =
                 static_cast<int>(m_aoSourceDesc.size());
@@ -4654,16 +4655,15 @@ CPLErr GDALTileIndexDataset::IRasterIO(
 
             auto oQueue = psThreadPool->CreateJobQueue();
             std::atomic<int> nCompletedJobs = 0;
-            std::string osErrorMsg;
             for (auto &oSourceDesc : m_aoSourceDesc)
             {
                 auto psJob = new RasterIOJob();
                 psJob->poDS = this;
                 psJob->pbSuccess = &bSuccess;
+                psJob->poErrorAccumulator = &oErrorAccumulator;
                 psJob->pnCompletedJobs = &nCompletedJobs;
                 psJob->poQueueWorkingStates = &m_oQueueWorkingStates;
                 psJob->nBandNrMax = nBandNrMax;
-                psJob->posErrorMsg = &osErrorMsg;
                 psJob->nXOff = nXOff;
                 psJob->nYOff = nYOff;
                 psJob->nXSize = nXSize;
@@ -4702,10 +4702,7 @@ CPLErr GDALTileIndexDataset::IRasterIO(
                 }
             }
 
-            if (!osErrorMsg.empty())
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMsg.c_str());
-            }
+            oErrorAccumulator.ReplayErrors();
 
             if (bSuccess && psExtraArg->pfnProgress)
             {
@@ -4754,22 +4751,16 @@ void GDALTileIndexDataset::RasterIOJob::Func(void *pData)
 
         SourceDesc oSourceDesc;
 
-        std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
-        CPLInstallErrorHandlerAccumulator(aoErrors);
+        auto oAccumulator = psJob->poErrorAccumulator->InstallForCurrentScope();
+        CPL_IGNORE_RET_VAL(oAccumulator);
+
         const bool bCanOpenSource =
             psJob->poDS->GetSourceDesc(osTileName, oSourceDesc,
                                        &psJob->poQueueWorkingStates->oMutex) &&
             oSourceDesc.poDS;
-        CPLUninstallErrorHandlerAccumulator();
 
         if (!bCanOpenSource)
         {
-            if (!aoErrors.empty())
-            {
-                std::lock_guard oLock(psJob->poQueueWorkingStates->oMutex);
-                if (psJob->posErrorMsg->empty())
-                    *(psJob->posErrorMsg) = aoErrors.back().msg;
-            }
             *psJob->pbSuccess = false;
         }
         else
@@ -4799,8 +4790,6 @@ void GDALTileIndexDataset::RasterIOJob::Func(void *pData)
                 dfYSize = psJob->psExtraArg->dfYSize;
             }
 
-            aoErrors.clear();
-            CPLInstallErrorHandlerAccumulator(aoErrors);
             const bool bRenderOK =
                 psJob->poDS->RenderSource(
                     oSourceDesc, /*bNeedInitBuffer = */ true, psJob->nBandNrMax,
@@ -4810,16 +4799,9 @@ void GDALTileIndexDataset::RasterIOJob::Func(void *pData)
                     psJob->nBandCount, psJob->panBandMap, psJob->nPixelSpace,
                     psJob->nLineSpace, psJob->nBandSpace, &sArg,
                     *(poWorkingState.get())) == CE_None;
-            CPLUninstallErrorHandlerAccumulator();
 
             if (!bRenderOK)
             {
-                if (!aoErrors.empty())
-                {
-                    std::lock_guard oLock(psJob->poQueueWorkingStates->oMutex);
-                    if (psJob->posErrorMsg->empty())
-                        *(psJob->posErrorMsg) = aoErrors.back().msg;
-                }
                 *psJob->pbSuccess = false;
             }
 
