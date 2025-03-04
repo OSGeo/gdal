@@ -3005,9 +3005,13 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
         osVersionInfo.Printf("%s", GDAL_RELEASE_NICKNAME);
     else  // --version
     {
-        osVersionInfo.Printf(
-            "GDAL %s \"%s\", released %d/%02d/%02d", GDAL_RELEASE_NAME,
-            GDAL_RELEASE_NICKNAME, GDAL_RELEASE_DATE / 10000,
+        osVersionInfo = "GDAL " GDAL_RELEASE_NAME;
+        if (GDAL_RELEASE_NICKNAME[0])
+        {
+            osVersionInfo += " \"" GDAL_RELEASE_NICKNAME "\"";
+        }
+        osVersionInfo += CPLString().Printf(
+            ", released %d/%02d/%02d", GDAL_RELEASE_DATE / 10000,
             (GDAL_RELEASE_DATE % 10000) / 100, GDAL_RELEASE_DATE % 100);
 #if defined(__GNUC__) && !defined(__OPTIMIZE__)
         // Cf https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
