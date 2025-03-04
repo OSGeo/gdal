@@ -299,7 +299,7 @@ GDALAVIFIO::GDALAVIFIO(VSIVirtualHandleUniquePtr fpIn) : fp(std::move(fpIn))
     nFileSize = fp->Tell();
     fp->Seek(0, SEEK_SET);
 
-    io.sizeHint = std::min<uint64_t>(10 * 1024 * 1024, nFileSize);
+    io.sizeHint = nFileSize;
 }
 
 /************************************************************************/
