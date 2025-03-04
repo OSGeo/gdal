@@ -245,6 +245,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     friend struct VRTFlushCacheStruct<VRTProcessedDataset>;
     friend class VRTSourcedRasterBand;
     friend class VRTSimpleSource;
+    friend struct VRTSourcedRasterBandRasterIOJob;
     friend VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize);
 
     std::vector<gdal::GCP> m_asGCPs{};
@@ -302,34 +303,6 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     bool GetShiftedDataset(int nXOff, int nYOff, int nXSize, int nYSize,
                            GDALDataset *&poSrcDataset, int &nSrcXOff,
                            int &nSrcYOff);
-
-    /** Structure used to declare a threaded job to satisfy IRasterIO()
-     * on a given source.
-     */
-    struct RasterIOJob
-    {
-        std::atomic<int> *pnCompletedJobs = nullptr;
-        std::atomic<bool> *pbSuccess = nullptr;
-
-        GDALDataType eVRTBandDataType = GDT_Unknown;
-        int nXOff = 0;
-        int nYOff = 0;
-        int nXSize = 0;
-        int nYSize = 0;
-        void *pData = nullptr;
-        int nBufXSize = 0;
-        int nBufYSize = 0;
-        int nBandCount = 0;
-        BANDMAP_TYPE panBandMap = nullptr;
-        GDALDataType eBufType = GDT_Unknown;
-        GSpacing nPixelSpace = 0;
-        GSpacing nLineSpace = 0;
-        GSpacing nBandSpace = 0;
-        GDALRasterIOExtraArg *psExtraArg = nullptr;
-        VRTSimpleSource *poSource = nullptr;
-
-        static void Func(void *pData);
-    };
 
     CPL_DISALLOW_COPY_ASSIGN(VRTDataset)
 
@@ -957,32 +930,6 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
 
     bool IsMosaicOfNonOverlappingSimpleSourcesOfFullRasterNoResAndTypeChange(
         bool bAllowMaxValAdjustment) const;
-
-    /** Structure used to declare a threaded job to satisfy IRasterIO()
-     * on a given source.
-     */
-    struct RasterIOJob
-    {
-        std::atomic<int> *pnCompletedJobs = nullptr;
-        std::atomic<bool> *pbSuccess = nullptr;
-        VRTDataset::QueueWorkingStates *poQueueWorkingStates = nullptr;
-
-        GDALDataType eVRTBandDataType = GDT_Unknown;
-        int nXOff = 0;
-        int nYOff = 0;
-        int nXSize = 0;
-        int nYSize = 0;
-        void *pData = nullptr;
-        int nBufXSize = 0;
-        int nBufYSize = 0;
-        GDALDataType eBufType = GDT_Unknown;
-        GSpacing nPixelSpace = 0;
-        GSpacing nLineSpace = 0;
-        GDALRasterIOExtraArg *psExtraArg = nullptr;
-        VRTSimpleSource *poSource = nullptr;
-
-        static void Func(void *pData);
-    };
 
     CPL_DISALLOW_COPY_ASSIGN(VRTSourcedRasterBand)
 

@@ -69,7 +69,7 @@ class CPL_DLL CPLErrorAccumulator
     /** Constructor */
     CPLErrorAccumulator() = default;
 
-    struct Context
+    struct CPL_DLL Context
     {
         ~Context();
     };

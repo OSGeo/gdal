@@ -13,6 +13,7 @@
 
 #include "vrtdataset.h"
 
+#include "cpl_error_internal.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 #include "gdal_frmts.h"
@@ -2237,6 +2238,70 @@ CPLErr VRTDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
 }
 
 /************************************************************************/
+/*                       VRTDatasetRasterIOJob                          */
+/************************************************************************/
+
+/** Structure used to declare a threaded job to satisfy IRasterIO()
+ * on a given source.
+ */
+struct VRTDatasetRasterIOJob
+{
+    std::atomic<int> *pnCompletedJobs = nullptr;
+    std::atomic<bool> *pbSuccess = nullptr;
+    CPLErrorAccumulator *poErrorAccumulator = nullptr;
+
+    GDALDataType eVRTBandDataType = GDT_Unknown;
+    int nXOff = 0;
+    int nYOff = 0;
+    int nXSize = 0;
+    int nYSize = 0;
+    void *pData = nullptr;
+    int nBufXSize = 0;
+    int nBufYSize = 0;
+    int nBandCount = 0;
+    BANDMAP_TYPE panBandMap = nullptr;
+    GDALDataType eBufType = GDT_Unknown;
+    GSpacing nPixelSpace = 0;
+    GSpacing nLineSpace = 0;
+    GSpacing nBandSpace = 0;
+    GDALRasterIOExtraArg *psExtraArg = nullptr;
+    VRTSimpleSource *poSource = nullptr;
+
+    static void Func(void *pData);
+};
+
+/************************************************************************/
+/*                     VRTDatasetRasterIOJob::Func()                    */
+/************************************************************************/
+
+void VRTDatasetRasterIOJob::Func(void *pData)
+{
+    auto psJob = std::unique_ptr<VRTDatasetRasterIOJob>(
+        static_cast<VRTDatasetRasterIOJob *>(pData));
+    if (*psJob->pbSuccess)
+    {
+        GDALRasterIOExtraArg sArg = *(psJob->psExtraArg);
+        sArg.pfnProgress = nullptr;
+        sArg.pProgressData = nullptr;
+
+        auto oAccumulator = psJob->poErrorAccumulator->InstallForCurrentScope();
+        CPL_IGNORE_RET_VAL(oAccumulator);
+
+        if (psJob->poSource->DatasetRasterIO(
+                psJob->eVRTBandDataType, psJob->nXOff, psJob->nYOff,
+                psJob->nXSize, psJob->nYSize, psJob->pData, psJob->nBufXSize,
+                psJob->nBufYSize, psJob->eBufType, psJob->nBandCount,
+                psJob->panBandMap, psJob->nPixelSpace, psJob->nLineSpace,
+                psJob->nBandSpace, &sArg) != CE_None)
+        {
+            *psJob->pbSuccess = false;
+        }
+    }
+
+    ++(*psJob->pnCompletedJobs);
+}
+
+/************************************************************************/
 /*                              IRasterIO()                             */
 /************************************************************************/
 
@@ -2378,6 +2443,7 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             m_bMultiThreadedRasterIOLastUsed = true;
             m_oMapSharedSources.InitMutex();
 
+            CPLErrorAccumulator errorAccumulator;
             std::atomic<bool> bSuccess = true;
             CPLWorkerThreadPool *psThreadPool = GDALGetGlobalThreadPool(
                 std::min(nContributingSources, nMaxThreads));
@@ -2401,8 +2467,9 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 if (poSimpleSource->DstWindowIntersects(dfXOff, dfYOff, dfXSize,
                                                         dfYSize))
                 {
-                    auto psJob = new RasterIOJob();
+                    auto psJob = new VRTDatasetRasterIOJob();
                     psJob->pbSuccess = &bSuccess;
+                    psJob->poErrorAccumulator = &errorAccumulator;
                     psJob->pnCompletedJobs = &nCompletedJobs;
                     psJob->eVRTBandDataType = poBand->GetRasterDataType();
                     psJob->nXOff = nXOff;
@@ -2421,7 +2488,7 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     psJob->psExtraArg = psExtraArg;
                     psJob->poSource = poSimpleSource;
 
-                    if (!oQueue->SubmitJob(RasterIOJob::Func, psJob))
+                    if (!oQueue->SubmitJob(VRTDatasetRasterIOJob::Func, psJob))
                     {
                         delete psJob;
                         bSuccess = false;
@@ -2442,6 +2509,7 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 }
             }
 
+            errorAccumulator.ReplayErrors();
             eErr = bSuccess ? CE_None : CE_Failure;
         }
         else
@@ -2503,34 +2571,6 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                       nLineSpace, nBandSpace, psExtraArg);
     }
     return eErr;
-}
-
-/************************************************************************/
-/*                    VRTDataset::RasterIOJob::Func()                   */
-/************************************************************************/
-
-void VRTDataset::RasterIOJob::Func(void *pData)
-{
-    auto psJob =
-        std::unique_ptr<RasterIOJob>(static_cast<RasterIOJob *>(pData));
-    if (*psJob->pbSuccess)
-    {
-        GDALRasterIOExtraArg sArg = *(psJob->psExtraArg);
-        sArg.pfnProgress = nullptr;
-        sArg.pProgressData = nullptr;
-
-        if (psJob->poSource->DatasetRasterIO(
-                psJob->eVRTBandDataType, psJob->nXOff, psJob->nYOff,
-                psJob->nXSize, psJob->nYSize, psJob->pData, psJob->nBufXSize,
-                psJob->nBufYSize, psJob->eBufType, psJob->nBandCount,
-                psJob->panBandMap, psJob->nPixelSpace, psJob->nLineSpace,
-                psJob->nBandSpace, &sArg) != CE_None)
-        {
-            *psJob->pbSuccess = false;
-        }
-    }
-
-    ++(*psJob->pnCompletedJobs);
 }
 
 /************************************************************************/
