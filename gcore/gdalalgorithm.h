@@ -1058,7 +1058,21 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
                       !std::is_same_v<T, std::vector<GDALArgDatasetValue>>)
         {
             if (decl.HasDefaultValue())
-                *std::get<T *>(m_value) = decl.GetDefault<T>();
+            {
+                try
+                {
+                    *std::get<T *>(m_value) = decl.GetDefault<T>();
+                }
+                catch (const std::bad_variant_access &e)
+                {
+                    // I don't think that can happen, but Coverity Scan thinks
+                    // so
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "*std::get<T *>(m_value) = decl.GetDefault<T>() "
+                             "failed: %s",
+                             e.what());
+                }
+            }
         }
     }
 
