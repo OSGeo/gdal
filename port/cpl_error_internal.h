@@ -45,10 +45,6 @@ class CPL_DLL CPLErrorHandlerAccumulatorStruct
     }
 };
 
-void CPL_DLL CPLInstallErrorHandlerAccumulator(
-    std::vector<CPLErrorHandlerAccumulatorStruct> &aoErrors);
-void CPL_DLL CPLUninstallErrorHandlerAccumulator();
-
 /************************************************************************/
 /*                       CPLErrorAccumulator                            */
 /************************************************************************/
