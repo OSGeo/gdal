@@ -1820,6 +1820,8 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
     {
         if( pszCallbackName == NULL || EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
             $1 = CPLQuietErrorHandler;
+        else if( EQUAL(pszCallbackName,"CPLQuietWarningsErrorHandler") )
+            $1 = CPLQuietWarningsErrorHandler;
         else if( EQUAL(pszCallbackName,"CPLDefaultErrorHandler") )
             $1 = CPLDefaultErrorHandler;
         else if( EQUAL(pszCallbackName,"CPLLoggingErrorHandler") )
