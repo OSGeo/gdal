@@ -42,16 +42,20 @@ XRITHeaderParser::XRITHeaderParser(std::ifstream &ifile)
         {
             unsigned char *buf =
                 (unsigned char *)std::malloc(totalHeaderLength);
-            std::memcpy(
-                buf, probeBuf,
-                probeSize);  // save what we have already read when probing
-            ifile.read((char *)buf + probeSize,
-                       totalHeaderLength -
-                           probeSize);  // read the rest of the header section
-            parseHeader(buf, totalHeaderLength);
-            std::free(buf);
+            if (buf)
+            {
+                std::memcpy(
+                    buf, probeBuf,
+                    probeSize);  // save what we have already read when probing
+                ifile.read(
+                    (char *)buf + probeSize,
+                    totalHeaderLength -
+                        probeSize);  // read the rest of the header section
+                parseHeader(buf, totalHeaderLength);
+                std::free(buf);
 
-            m_isValid = true;
+                m_isValid = true;
+            }
         }
     }
 

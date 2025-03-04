@@ -111,6 +111,7 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DPCIDSK_FRMT_UINT64="\"%llu\"" \
         -DGNMGFIDFormat="\"%lld\"" \
         -DGDAL_RELEASE_NAME="\"dummy\"" \
+        -DGDAL_RELEASE_NICKNAME="\"dummy\"" \
         "-DBANDMAP_TYPE=int*" \
         -DSQLITE_UTF8=1 \
         -DSQLITE_DETERMINISTIC=0x000000800 \
