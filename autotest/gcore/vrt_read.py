@@ -2806,6 +2806,33 @@ def test_vrt_read_multi_threaded_disabled_since_overlapping_sources():
 
 
 ###############################################################################
+# Test propagation of errors from threads to main thread in multi-threaded reading
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_read_multi_threaded_errors(tmp_vsimem):
+
+    filename1 = str(tmp_vsimem / "tmp1.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(filename1, 1, 1)
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    ds.Close()
+
+    filename2 = str(tmp_vsimem / "tmp2.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(filename2, 1, 1)
+    ds.SetGeoTransform([3, 1, 0, 49, 0, -1])
+    ds.Close()
+
+    vrt_filename = str(tmp_vsimem / "tmp.vrt")
+    gdal.BuildVRT(vrt_filename, [filename1, filename2])
+
+    gdal.Unlink(filename2)
+
+    with gdal.Open(vrt_filename) as ds:
+        with pytest.raises(Exception):
+            ds.GetRasterBand(1).ReadRaster()
+
+
+###############################################################################
 # Test reading a VRT with a <VRTDataset> inside a <SimpleSource>
 
 
