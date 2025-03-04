@@ -84,21 +84,22 @@ CPLErr GTiffSplitBitmapBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
     {
         ++m_poGDS->m_nLoadedBlock;
 
-        std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
-        CPLInstallErrorHandlerAccumulator(aoErrors);
-        int nRet = TIFFReadScanline(m_poGDS->m_hTIFF, m_poGDS->m_pabyBlockBuf,
-                                    m_poGDS->m_nLoadedBlock, 0);
-        CPLUninstallErrorHandlerAccumulator();
-
-        for (size_t iError = 0; iError < aoErrors.size(); ++iError)
+        CPLErrorAccumulator oErrorAccumulator;
+        int nRet;
         {
-            ReportError(aoErrors[iError].type, aoErrors[iError].no, "%s",
-                        aoErrors[iError].msg.c_str());
+            auto oAccumulator = oErrorAccumulator.InstallForCurrentScope();
+            nRet = TIFFReadScanline(m_poGDS->m_hTIFF, m_poGDS->m_pabyBlockBuf,
+                                    m_poGDS->m_nLoadedBlock, 0);
+        }
+
+        for (const auto &oError : oErrorAccumulator.GetErrors())
+        {
+            ReportError(oError.type, oError.no, "%s", oError.msg.c_str());
             // FAX decoding only handles EOF condition as a warning, so
             // catch it so as to turn on error when attempting to read
             // following lines, to avoid performance issues.
             if (!m_poGDS->m_bIgnoreReadErrors &&
-                aoErrors[iError].msg.find("Premature EOF") != std::string::npos)
+                oError.msg.find("Premature EOF") != std::string::npos)
             {
                 m_nLastLineValid = nBlockYOff;
                 nRet = -1;

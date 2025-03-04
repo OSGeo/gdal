@@ -343,8 +343,7 @@ struct GTiffDecompressContext
     // already acquired.
     std::recursive_mutex oMutex{};
     bool bSuccess = true;
-
-    std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors{};
+    CPLErrorAccumulator oErrorAccumulator{};
 
     VSIVirtualHandle *poHandle = nullptr;
     GTiffDataset *poDS = nullptr;
@@ -400,19 +399,6 @@ struct GTiffDecompressJob
 };
 
 /************************************************************************/
-/*                  ThreadDecompressionFuncErrorHandler()               */
-/************************************************************************/
-
-static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
-    CPLErr eErr, CPLErrorNum eErrorNum, const char *pszMsg)
-{
-    GTiffDecompressContext *psContext =
-        static_cast<GTiffDecompressContext *>(CPLGetErrorHandlerUserData());
-    std::lock_guard<std::recursive_mutex> oLock(psContext->oMutex);
-    psContext->aoErrors.emplace_back(eErr, eErrorNum, pszMsg);
-}
-
-/************************************************************************/
 /*                     ThreadDecompressionFunc()                        */
 /************************************************************************/
 
@@ -422,8 +408,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
     auto psContext = psJob->psContext;
     auto poDS = psContext->poDS;
 
-    CPLErrorHandlerPusher oErrorHandler(ThreadDecompressionFuncErrorHandler,
-                                        psContext);
+    auto oAccumulator = psContext->oErrorAccumulator.InstallForCurrentScope();
 
     const int nBandsPerStrile =
         poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ? poDS->nBands : 1;
@@ -1482,11 +1467,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
         // Undo effect of above TemporarilyDropReadWriteLock()
         ReacquireReadWriteLock();
 
-        // Re-emit errors caught in threads
-        for (const auto &oError : sContext.aoErrors)
-        {
-            CPLError(oError.type, oError.no, "%s", oError.msg.c_str());
-        }
+        sContext.oErrorAccumulator.ReplayErrors();
     }
 
     return sContext.bSuccess ? CE_None : CE_Failure;
@@ -3830,31 +3811,33 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Store errors/warnings and emit them later.
-    std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
-    CPLInstallErrorHandlerAccumulator(aoErrors);
-    CPLSetCurrentErrorHandlerCatchDebug(FALSE);
-    const bool bDeferStrileLoading = CPLTestBool(
-        CPLGetConfigOption("GTIFF_USE_DEFER_STRILE_LOADING", "YES"));
-    TIFF *l_hTIFF = VSI_TIFFOpen(
-        pszFilename,
-        poOpenInfo->eAccess == GA_ReadOnly
-            ? ((bStreaming || !bDeferStrileLoading) ? "rC" : "rDOC")
-            : (!bDeferStrileLoading ? "r+C" : "r+DC"),
-        poOpenInfo->fpL);
-    CPLUninstallErrorHandlerAccumulator();
+    TIFF *l_hTIFF;
+    CPLErrorAccumulator oErrorAccumulator;
+    {
+        auto oAccumulator = oErrorAccumulator.InstallForCurrentScope();
+        CPL_IGNORE_RET_VAL(oAccumulator);
+        CPLSetCurrentErrorHandlerCatchDebug(FALSE);
+        const bool bDeferStrileLoading = CPLTestBool(
+            CPLGetConfigOption("GTIFF_USE_DEFER_STRILE_LOADING", "YES"));
+        l_hTIFF = VSI_TIFFOpen(
+            pszFilename,
+            poOpenInfo->eAccess == GA_ReadOnly
+                ? ((bStreaming || !bDeferStrileLoading) ? "rC" : "rDOC")
+                : (!bDeferStrileLoading ? "r+C" : "r+DC"),
+            poOpenInfo->fpL);
+    };
 
     // Now emit errors and change their criticality if needed
     // We only emit failures if we didn't manage to open the file.
     // Otherwise it makes Python bindings unhappy (#5616).
-    for (size_t iError = 0; iError < aoErrors.size(); ++iError)
+    for (const auto &oError : oErrorAccumulator.GetErrors())
     {
         ReportError(pszFilename,
-                    (l_hTIFF == nullptr && aoErrors[iError].type == CE_Failure)
+                    (l_hTIFF == nullptr && oError.type == CE_Failure)
                         ? CE_Failure
                         : CE_Warning,
-                    aoErrors[iError].no, "%s", aoErrors[iError].msg.c_str());
+                    oError.no, "%s", oError.msg.c_str());
     }
-    aoErrors.resize(0);
 
     if (l_hTIFF == nullptr)
         return nullptr;
@@ -4136,16 +4119,18 @@ void GTiffDataset::LookForProjectionFromGeoTIFF()
 
         bool bHasErrorBefore = CPLGetLastErrorType() != 0;
         // Collect (PROJ) error messages and remit them later as warnings
-        std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
-        CPLInstallErrorHandlerAccumulator(aoErrors);
-        const int ret = GTIFGetDefn(hGTIF, psGTIFDefn);
-        CPLUninstallErrorHandlerAccumulator();
+        int ret;
+        CPLErrorAccumulator oErrorAccumulator;
+        {
+            auto oAccumulator = oErrorAccumulator.InstallForCurrentScope();
+            ret = GTIFGetDefn(hGTIF, psGTIFDefn);
+        }
 
         bool bWarnAboutEllipsoid = true;
 
         if (ret)
         {
-            CPLInstallErrorHandlerAccumulator(aoErrors);
+            auto oAccumulator = oErrorAccumulator.InstallForCurrentScope();
 
             if (psGTIFDefn->Ellipsoid == 4326 &&
                 psGTIFDefn->SemiMajor == 6378137 &&
@@ -4158,7 +4143,6 @@ void GTiffDataset::LookForProjectionFromGeoTIFF()
             }
 
             OGRSpatialReferenceH hSRS = GTIFGetOGISDefnAsOSR(hGTIF, psGTIFDefn);
-            CPLUninstallErrorHandlerAccumulator();
 
             if (hSRS)
             {
@@ -4171,7 +4155,7 @@ void GTiffDataset::LookForProjectionFromGeoTIFF()
         }
 
         std::set<std::string> oSetErrorMsg;
-        for (const auto &oError : aoErrors)
+        for (const auto &oError : oErrorAccumulator.GetErrors())
         {
             if (!bWarnAboutEllipsoid &&
                 oError.msg.find("ellipsoid not found") != std::string::npos)
