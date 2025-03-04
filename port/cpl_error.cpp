@@ -1550,30 +1550,6 @@ bool CPLIsDefaultErrorHandlerAndCatchDebug()
 }
 
 /************************************************************************/
-/*                    CPLErrorAccumulatorFunc()                         */
-/************************************************************************/
-
-static void CPL_STDCALL CPLErrorAccumulatorFunc(CPLErr eErr, CPLErrorNum no,
-                                                const char *msg)
-{
-    std::vector<CPLErrorHandlerAccumulatorStruct> *paoErrors =
-        static_cast<std::vector<CPLErrorHandlerAccumulatorStruct> *>(
-            CPLGetErrorHandlerUserData());
-    paoErrors->push_back(CPLErrorHandlerAccumulatorStruct(eErr, no, msg));
-}
-
-void CPLInstallErrorHandlerAccumulator(
-    std::vector<CPLErrorHandlerAccumulatorStruct> &aoErrors)
-{
-    CPLPushErrorHandlerEx(CPLErrorAccumulatorFunc, &aoErrors);
-}
-
-void CPLUninstallErrorHandlerAccumulator()
-{
-    CPLPopErrorHandler();
-}
-
-/************************************************************************/
 /*               CPLErrorStateBackuper::CPLErrorStateBackuper()         */
 /************************************************************************/
 
