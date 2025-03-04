@@ -136,24 +136,21 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
     /* suppress errors as not all drivers support /vsimem */
 
     GDALDataset *poDS;
-    std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
+    CPLErrorAccumulator oErrorAccumulator;
     {
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-        CPLInstallErrorHandlerAccumulator(aoErrors);
+        auto oAccumulator = oErrorAccumulator.InstallForCurrentScope();
+        CPL_IGNORE_RET_VAL(oAccumulator);
         poDS = GDALDataset::Open(osResultFilename,
                                  poOpenInfo->nOpenFlags & ~GDAL_OF_SHARED,
                                  poOpenInfo->papszAllowedDrivers,
                                  poOpenInfo->papszOpenOptions, nullptr);
-        CPLUninstallErrorHandlerAccumulator();
     }
 
     // Re-emit silenced errors if open was successful
     if (poDS)
     {
-        for (const auto &oError : aoErrors)
-        {
-            CPLError(oError.type, oError.no, "%s", oError.msg.c_str());
-        }
+        oErrorAccumulator.ReplayErrors();
     }
 
     // The JP2OpenJPEG driver may need to reopen the file, hence this special
