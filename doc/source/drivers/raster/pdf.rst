@@ -727,8 +727,14 @@ Only GDAL builds against static builds of PDFium have been tested.
 Building PDFium can be challenging, and particular builds must be used to
 work properly with GDAL.
 
-With GDAL >= 3.10
+With GDAL >= 3.11
 +++++++++++++++++
+
+The scripts in the `<https://github.com/rouault/pdfium_build_gdal_3_11>`__
+repository must be used to build a patched version of PDFium.
+
+With GDAL = 3.10
+++++++++++++++++
 
 The scripts in the `<https://github.com/rouault/pdfium_build_gdal_3_10>`__
 repository must be used to build a patched version of PDFium.
