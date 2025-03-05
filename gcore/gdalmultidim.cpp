@@ -14278,11 +14278,14 @@ void GDALPamMultiDim::Save()
         }
     }
 
-    std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
-    CPLInstallErrorHandlerAccumulator(aoErrors);
-    const int bSaved =
-        CPLSerializeXMLTreeToFile(oTree.get(), d->m_osPamFilename.c_str());
-    CPLUninstallErrorHandlerAccumulator();
+    int bSaved;
+    CPLErrorAccumulator oErrorAccumulator;
+    {
+        auto oAccumulator = oErrorAccumulator.InstallForCurrentScope();
+        CPL_IGNORE_RET_VAL(oAccumulator);
+        bSaved =
+            CPLSerializeXMLTreeToFile(oTree.get(), d->m_osPamFilename.c_str());
+    }
 
     const char *pszNewPam = nullptr;
     if (!bSaved && PamGetProxy(d->m_osFilename.c_str()) == nullptr &&
@@ -14293,10 +14296,7 @@ void GDALPamMultiDim::Save()
     }
     else
     {
-        for (const auto &oError : aoErrors)
-        {
-            CPLError(oError.type, oError.no, "%s", oError.msg.c_str());
-        }
+        oErrorAccumulator.ReplayErrors();
     }
 }
 

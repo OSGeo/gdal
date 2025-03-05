@@ -29,6 +29,7 @@
 #include "cpl_config.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_error_internal.h"
 #include "cpl_mask.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
@@ -1044,20 +1045,22 @@ CPLErr GDALChunkAndWarpImage(GDALWarpOperationH hOperation, int nDstXOff,
 /*                          ChunkThreadMain()                           */
 /************************************************************************/
 
-typedef struct
+struct ChunkThreadData
 {
-    GDALWarpOperation *poOperation;
-    GDALWarpChunk *pasChunkInfo;
-    CPLJoinableThread *hThreadHandle;
-    CPLErr eErr;
-    double dfProgressBase;
-    double dfProgressScale;
-    CPLMutex *hIOMutex;
+    GDALWarpOperation *poOperation = nullptr;
+    GDALWarpChunk *pasChunkInfo = nullptr;
+    CPLJoinableThread *hThreadHandle = nullptr;
+    CPLErr eErr = CE_None;
+    double dfProgressBase = 0;
+    double dfProgressScale = 0;
+    CPLMutex *hIOMutex = nullptr;
 
-    CPLMutex *hCondMutex;
-    volatile int bIOMutexTaken;
-    CPLCond *hCond;
-} ChunkThreadData;
+    CPLMutex *hCondMutex = nullptr;
+    volatile int bIOMutexTaken = 0;
+    CPLCond *hCond = nullptr;
+
+    CPLErrorAccumulator *poErrorAccumulator = nullptr;
+};
 
 static void ChunkThreadMain(void *pThreadData)
 
@@ -1085,6 +1088,10 @@ static void ChunkThreadMain(void *pThreadData)
             CPLCondSignal(psData->hCond);
             CPLReleaseMutex(psData->hCondMutex);
         }
+
+        auto oAccumulator =
+            psData->poErrorAccumulator->InstallForCurrentScope();
+        CPL_IGNORE_RET_VAL(oAccumulator);
 
         psData->eErr = psData->poOperation->WarpRegion(
             pasChunkInfo->dx, pasChunkInfo->dy, pasChunkInfo->dsx,
@@ -1150,13 +1157,13 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(int nDstXOff, int nDstYOff,
     /*      information for each region.                                    */
     /* -------------------------------------------------------------------- */
     ChunkThreadData volatile asThreadData[2] = {};
-    memset(reinterpret_cast<void *>(
-               const_cast<ChunkThreadData(*)[2]>(&asThreadData)),
-           0, sizeof(asThreadData));
-    asThreadData[0].poOperation = this;
-    asThreadData[0].hIOMutex = hIOMutex;
-    asThreadData[1].poOperation = this;
-    asThreadData[1].hIOMutex = hIOMutex;
+    CPLErrorAccumulator oErrorAccumulator;
+    for (int i = 0; i < 2; ++i)
+    {
+        asThreadData[i].poOperation = this;
+        asThreadData[i].hIOMutex = hIOMutex;
+        asThreadData[i].poErrorAccumulator = &oErrorAccumulator;
+    }
 
     double dfPixelsProcessed = 0.0;
     double dfTotalPixels = static_cast<double>(nDstXSize) * nDstYSize;
@@ -1259,6 +1266,8 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(int nDstXOff, int nDstYOff,
     CPLDestroyMutex(hCondMutex);
 
     WipeChunkList();
+
+    oErrorAccumulator.ReplayErrors();
 
     psOptions->pfnProgress(1.0, "", psOptions->pProgressArg);
 

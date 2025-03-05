@@ -29,6 +29,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_error_internal.h"
 #include "cpl_hash_set.h"
 #include "cpl_minixml.h"
 #include "cpl_progress.h"
@@ -364,6 +365,82 @@ bool VRTSourcedRasterBand::CanMultiThreadRasterIO(
 }
 
 /************************************************************************/
+/*                 VRTSourcedRasterBandRasterIOJob                      */
+/************************************************************************/
+
+/** Structure used to declare a threaded job to satisfy IRasterIO()
+ * on a given source.
+ */
+struct VRTSourcedRasterBandRasterIOJob
+{
+    std::atomic<int> *pnCompletedJobs = nullptr;
+    std::atomic<bool> *pbSuccess = nullptr;
+    VRTDataset::QueueWorkingStates *poQueueWorkingStates = nullptr;
+    CPLErrorAccumulator *poErrorAccumulator = nullptr;
+
+    GDALDataType eVRTBandDataType = GDT_Unknown;
+    int nXOff = 0;
+    int nYOff = 0;
+    int nXSize = 0;
+    int nYSize = 0;
+    void *pData = nullptr;
+    int nBufXSize = 0;
+    int nBufYSize = 0;
+    GDALDataType eBufType = GDT_Unknown;
+    GSpacing nPixelSpace = 0;
+    GSpacing nLineSpace = 0;
+    GDALRasterIOExtraArg *psExtraArg = nullptr;
+    VRTSimpleSource *poSource = nullptr;
+
+    static void Func(void *pData);
+};
+
+/************************************************************************/
+/*                 VRTSourcedRasterBandRasterIOJob::Func()              */
+/************************************************************************/
+
+void VRTSourcedRasterBandRasterIOJob::Func(void *pData)
+{
+    auto psJob = std::unique_ptr<VRTSourcedRasterBandRasterIOJob>(
+        static_cast<VRTSourcedRasterBandRasterIOJob *>(pData));
+    if (*psJob->pbSuccess)
+    {
+        GDALRasterIOExtraArg sArg = *(psJob->psExtraArg);
+        sArg.pfnProgress = nullptr;
+        sArg.pProgressData = nullptr;
+
+        std::unique_ptr<VRTSource::WorkingState> poWorkingState;
+        {
+            std::lock_guard oLock(psJob->poQueueWorkingStates->oMutex);
+            poWorkingState =
+                std::move(psJob->poQueueWorkingStates->oStates.back());
+            psJob->poQueueWorkingStates->oStates.pop_back();
+            CPLAssert(poWorkingState.get());
+        }
+
+        auto oAccumulator = psJob->poErrorAccumulator->InstallForCurrentScope();
+        CPL_IGNORE_RET_VAL(oAccumulator);
+
+        if (psJob->poSource->RasterIO(
+                psJob->eVRTBandDataType, psJob->nXOff, psJob->nYOff,
+                psJob->nXSize, psJob->nYSize, psJob->pData, psJob->nBufXSize,
+                psJob->nBufYSize, psJob->eBufType, psJob->nPixelSpace,
+                psJob->nLineSpace, &sArg, *(poWorkingState.get())) != CE_None)
+        {
+            *psJob->pbSuccess = false;
+        }
+
+        {
+            std::lock_guard oLock(psJob->poQueueWorkingStates->oMutex);
+            psJob->poQueueWorkingStates->oStates.push_back(
+                std::move(poWorkingState));
+        }
+    }
+
+    ++(*psJob->pnCompletedJobs);
+}
+
+/************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
@@ -565,6 +642,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
         l_poDS->m_bMultiThreadedRasterIOLastUsed = true;
         l_poDS->m_oMapSharedSources.InitMutex();
 
+        CPLErrorAccumulator errorAccumulator;
         std::atomic<bool> bSuccess = true;
         CPLWorkerThreadPool *psThreadPool = GDALGetGlobalThreadPool(
             std::min(nContributingSources, nMaxThreads));
@@ -602,10 +680,11 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
             if (poSimpleSource->DstWindowIntersects(dfXOff, dfYOff, dfXSize,
                                                     dfYSize))
             {
-                auto psJob = new RasterIOJob();
+                auto psJob = new VRTSourcedRasterBandRasterIOJob();
                 psJob->pbSuccess = &bSuccess;
                 psJob->pnCompletedJobs = &nCompletedJobs;
                 psJob->poQueueWorkingStates = &(l_poDS->m_oQueueWorkingStates);
+                psJob->poErrorAccumulator = &errorAccumulator;
                 psJob->eVRTBandDataType = eDataType;
                 psJob->nXOff = nXOff;
                 psJob->nYOff = nYOff;
@@ -620,7 +699,8 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
                 psJob->psExtraArg = psExtraArg;
                 psJob->poSource = poSimpleSource;
 
-                if (!oQueue->SubmitJob(RasterIOJob::Func, psJob))
+                if (!oQueue->SubmitJob(VRTSourcedRasterBandRasterIOJob::Func,
+                                       psJob))
                 {
                     delete psJob;
                     bSuccess = false;
@@ -641,6 +721,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
             }
         }
 
+        errorAccumulator.ReplayErrors();
         eErr = bSuccess ? CE_None : CE_Failure;
     }
     else
@@ -676,48 +757,6 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
     }
 
     return eErr;
-}
-
-/************************************************************************/
-/*                 VRTSourcedRasterBand::RasterIOJob::Func()            */
-/************************************************************************/
-
-void VRTSourcedRasterBand::RasterIOJob::Func(void *pData)
-{
-    auto psJob =
-        std::unique_ptr<RasterIOJob>(static_cast<RasterIOJob *>(pData));
-    if (*psJob->pbSuccess)
-    {
-        GDALRasterIOExtraArg sArg = *(psJob->psExtraArg);
-        sArg.pfnProgress = nullptr;
-        sArg.pProgressData = nullptr;
-
-        std::unique_ptr<VRTSource::WorkingState> poWorkingState;
-        {
-            std::lock_guard oLock(psJob->poQueueWorkingStates->oMutex);
-            poWorkingState =
-                std::move(psJob->poQueueWorkingStates->oStates.back());
-            psJob->poQueueWorkingStates->oStates.pop_back();
-            CPLAssert(poWorkingState.get());
-        }
-
-        if (psJob->poSource->RasterIO(
-                psJob->eVRTBandDataType, psJob->nXOff, psJob->nYOff,
-                psJob->nXSize, psJob->nYSize, psJob->pData, psJob->nBufXSize,
-                psJob->nBufYSize, psJob->eBufType, psJob->nPixelSpace,
-                psJob->nLineSpace, &sArg, *(poWorkingState.get())) != CE_None)
-        {
-            *psJob->pbSuccess = false;
-        }
-
-        {
-            std::lock_guard oLock(psJob->poQueueWorkingStates->oMutex);
-            psJob->poQueueWorkingStates->oStates.push_back(
-                std::move(poWorkingState));
-        }
-    }
-
-    ++(*psJob->pnCompletedJobs);
 }
 
 /************************************************************************/

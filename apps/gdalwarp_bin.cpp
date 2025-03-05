@@ -204,20 +204,17 @@ MAIN_START(argc, argv)
     }
     else
     {
-        std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
-        CPLInstallErrorHandlerAccumulator(aoErrors);
-        hDstDS = GDALOpenEx(
-            sOptionsForBinary.osDstFilename.c_str(),
-            GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE, nullptr,
-            sOptionsForBinary.aosDestOpenOptions.List(), nullptr);
-        CPLUninstallErrorHandlerAccumulator();
+        CPLErrorAccumulator oErrorAccumulator;
+        {
+            auto oAccumulator = oErrorAccumulator.InstallForCurrentScope();
+            hDstDS = GDALOpenEx(
+                sOptionsForBinary.osDstFilename.c_str(),
+                GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
+                nullptr, sOptionsForBinary.aosDestOpenOptions.List(), nullptr);
+        }
         if (hDstDS != nullptr)
         {
-            for (size_t i = 0; i < aoErrors.size(); i++)
-            {
-                CPLError(aoErrors[i].type, aoErrors[i].no, "%s",
-                         aoErrors[i].msg.c_str());
-            }
+            oErrorAccumulator.ReplayErrors();
         }
     }
 
