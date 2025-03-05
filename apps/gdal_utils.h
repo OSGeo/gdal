@@ -173,6 +173,33 @@ GDALDatasetH CPL_DLL GDALGrid(const char *pszDest, GDALDatasetH hSrcDS,
                               const GDALGridOptions *psOptions,
                               int *pbUsageError);
 
+/*! Options for GDALContour(). Opaque type */
+typedef struct GDALContourOptions GDALContourOptions;
+
+/** Opaque type */
+typedef struct GDALContourOptionsForBinary GDALContourOptionsForBinary;
+
+GDALContourOptions CPL_DLL *
+GDALContourOptionsNew(char **papszArgv,
+                      GDALContourOptionsForBinary *psOptionsForBinary);
+
+void CPL_DLL GDALContourOptionsFree(GDALContourOptions *psOptions);
+
+void CPL_DLL GDALContourOptionsSetProgress(GDALContourOptions *psOptions,
+                                           GDALProgressFunc pfnProgress,
+                                           void *pProgressData);
+
+void CPL_DLL GDALContourOptionsSetDestDataSource(GDALContourOptions *psOptions,
+                                                 const char *pszDestDatasource);
+
+// Finally promoted: https://wiki.c2.com/?ThreeStarProgrammer
+CPLErr CPL_DLL GDALContourProcessOptions(GDALContourOptions *psOptions,
+                                         char ***ppapszStringOptions,
+                                         GDALDatasetH *hSrcDS,
+                                         GDALRasterBandH *hBand,
+                                         GDALDatasetH *hDstDS,
+                                         OGRLayerH *hLayer);
+
 /*! Options for GDALRasterize(). Opaque type */
 typedef struct GDALRasterizeOptions GDALRasterizeOptions;
 
