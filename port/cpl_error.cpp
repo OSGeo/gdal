@@ -1112,6 +1112,20 @@ void CPL_STDCALL CPLQuietErrorHandler(CPLErr eErrClass, CPLErrorNum nError,
 }
 
 /************************************************************************/
+/*                    CPLQuietWarningsErrorHandler()                    */
+/************************************************************************/
+
+/** Error handler that ignores CE_Warning messages. */
+void CPL_STDCALL CPLQuietWarningsErrorHandler(CPLErr eErrClass,
+                                              CPLErrorNum nError,
+                                              const char *pszErrorMsg)
+
+{
+    if (eErrClass != CE_Warning)
+        CPLDefaultErrorHandler(eErrClass, nError, pszErrorMsg);
+}
+
+/************************************************************************/
 /*                       CPLLoggingErrorHandler()                       */
 /************************************************************************/
 
