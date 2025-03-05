@@ -5545,7 +5545,7 @@ def test_zarr_driver_rename(format):
     try:
         drv.Create(filename, 1, 1, options=["FORMAT=" + format])
 
-        with gdal.quiet_errors():
+        with gdal.quiet_warnings():
             # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
             assert gdal.Open(filename)
 
@@ -5556,7 +5556,7 @@ def test_zarr_driver_rename(format):
             gdal.Open(filename)
 
         assert gdal.VSIStatL(newfilename)
-        with gdal.quiet_errors():
+        with gdal.quiet_warnings():
             # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
             assert gdal.Open(newfilename)
 
@@ -5586,7 +5586,7 @@ def test_zarr_driver_copy_files(format):
 
         assert drv.CopyFiles(newfilename, filename) == gdal.CE_None
 
-        with gdal.quiet_errors():
+        with gdal.quiet_warnings():
             # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
             assert gdal.VSIStatL(filename)
             assert gdal.Open(filename)
