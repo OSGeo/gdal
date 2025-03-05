@@ -1822,6 +1822,7 @@ mscale
 msg
 msi
 msk
+msmitherdc
 mssql
 mssqlspatial
 MSVC

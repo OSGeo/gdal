@@ -121,6 +121,8 @@ decisions related to the GDAL/OGR project. The current members are (@github user
 - Norman Barker        (@normanb)
 - Sean Gillies         (@sgillies)
 - Javier Jimenez Shaw  (@jjimenezshaw)
+- Dan Baston           (@dbaston)
+- Michael Smith        (@msmitherdc)
 
 Past members:
 
