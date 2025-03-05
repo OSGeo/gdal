@@ -15,7 +15,7 @@ build:
       - (git --no-pager log --pretty="tformat:%s -- %b" -1 | paste -s -d " " | grep -viqP "skip ci|ci skip") || exit 183
     pre_build:
       - ./doc/rtd/pre_build.sh
-      - cd doc && make doxygen generated_rst_files
+      - cd doc && make doxygen
 
   apt_packages:
     - ant

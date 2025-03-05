@@ -81,11 +81,6 @@ jobs:
       run: |
         mkdir -p doc/build
         doxygen Doxyfile
-    - name: Generated RST files
-      shell: bash -l {0}
-      run: |
-        make generated_rst_files
-      working-directory: ./doc
     - name: Spelling
       shell: bash -l {0}
       run: |
