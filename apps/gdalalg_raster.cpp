@@ -17,6 +17,7 @@
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_convert.h"
 #include "gdalalg_raster_edit.h"
+#include "gdalalg_raster_contour.h"
 #include "gdalalg_raster_mosaic.h"
 #include "gdalalg_raster_overview.h"
 #include "gdalalg_raster_pipeline.h"
@@ -50,6 +51,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterPipelineAlgorithm>();
         RegisterSubAlgorithm<GDALRasterReprojectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterMosaicAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterContourAlgorithm>();
         RegisterSubAlgorithm<GDALRasterStackAlgorithm>();
     }
 
