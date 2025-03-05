@@ -14,7 +14,7 @@ BUILDDIR      = build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile clean generated_rst_files doxygen
+.PHONY: help Makefile clean doxygen
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
@@ -67,22 +67,19 @@ $(BUILDDIR)/.doxygen_up_to_date:
 	for i in $(BUILDDIR)/xml/*.xml; do sed "s/<ndash\/>/--/g" < $$i > $$i.tmp; mv $$i.tmp $$i; done; \
 	touch $(BUILDDIR)/.doxygen_up_to_date
 
-generated_rst_files: $(BUILDDIR)/.doxygen_up_to_date
-	$(PYTHON) "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/raster" raster_driver_summary "$(SOURCEDIR)/drivers/raster/driver_summary.rst"
-	$(PYTHON) "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/vector" vector_driver_summary "$(SOURCEDIR)/drivers/vector/driver_summary.rst"
 
 .PHONY: html latexpdf
-html: generated_rst_files
+html: $(BUILDDIR)/.doxygen_up_to_date
 	BUILDDIR="${BUILDDIR}" $(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	ln -sf ../latex/gdal.pdf $(BUILDDIR)/html
 
-man: generated_rst_files
+man:
 	BUILDDIR="${BUILDDIR}" $(SPHINXBUILD) -M man "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-latexpdf: generated_rst_files
+latexpdf:
 	BUILDDIR="${BUILDDIR}" $(SPHINXBUILD) -M latexpdf "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-spelling: generated_rst_files
+spelling: $(BUILDDIR)/.doxygen_up_to_date
 	BUILDDIR="${BUILDDIR}" $(SPHINXBUILD) -b spelling "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 clean:
