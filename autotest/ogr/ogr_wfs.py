@@ -5204,3 +5204,84 @@ def test_ogr_wfs_vsimem_wfs200_supported_crs():
             f = lyr.GetNextFeature()
             assert f is not None
             assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
+
+
+###############################################################################
+# Test GetFeatureCount() with client-side only filter
+
+
+def test_ogr_wfs_get_feature_count_issue_11920():
+
+    getfeatures_response = """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:foo="http://foo"
+    xmlns:wfs="http://www.opengis.net/wfs/2.0"
+    xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    numberMatched="unknown" numberReturned="1" timeStamp="2015-01-01T00:00:00.000Z"
+    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd
+                        http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd
+                        http://foo /vsimem/test_ogr_wfs_get_feature_count_issue_11920?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=foo:lyr">
+      <wfs:member>
+        <foo:lyr gml:id="lyr-101">
+          <foo:str>foo</foo:str>
+          <foo:shape><gml:Point srsName="urn:ogc:def:crs:EPSG::4326" gml:id="bla"><gml:pos>49 2</gml:pos></gml:Point></foo:shape>
+        </foo:lyr>
+      </wfs:member>
+</wfs:FeatureCollection>"""
+
+    with gdaltest.tempfile(
+        "/vsimem/test_ogr_wfs_get_feature_count_issue_11920?SERVICE=WFS&REQUEST=GetCapabilities",
+        """<WFS_Capabilities version="2.0.0">
+    <OperationsMetadata>
+        <ows:Operation name="GetFeature">
+            <ows:Parameter name="resultType">
+                <ows:Value>results</ows:Value>
+                <ows:Value>hits</ows:Value>
+            </ows:Parameter>
+        </ows:Operation>
+    </OperationsMetadata>
+    <FeatureTypeList>
+        <FeatureType>
+            <Name>foo:lyr</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-10 40</ows:LowerCorner>
+                <ows:UpperCorner>15 50</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+    </FeatureTypeList>
+</WFS_Capabilities>
+""",
+    ), gdaltest.tempfile(
+        "/vsimem/test_ogr_wfs_get_feature_count_issue_11920?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=foo:lyr",
+        """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+  <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
+  <xsd:complexType name="lyrType">
+    <xsd:complexContent>
+      <xsd:extension base="gml:AbstractFeatureType">
+        <xsd:sequence>
+          <xsd:element maxOccurs="1" minOccurs="0" name="str" nillable="true" type="xsd:string"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="shape" nillable="true" type="gml:PointPropertyType"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element name="lyr" substitutionGroup="gml:_Feature" type="foo:lyr1Type"/>
+</xsd:schema>
+""",
+    ), gdaltest.tempfile(
+        "/vsimem/test_ogr_wfs_get_feature_count_issue_11920?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=foo:lyr&COUNT=1",
+        getfeatures_response,
+    ), gdaltest.tempfile(
+        "/vsimem/test_ogr_wfs_get_feature_count_issue_11920?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=foo:lyr",
+        getfeatures_response,
+    ):
+        ds = ogr.Open("WFS:/vsimem/test_ogr_wfs_get_feature_count_issue_11920")
+        lyr = ds.GetLayer(0)
+
+        # Use client-side filters
+        lyr.SetAttributeFilter("FID >= 0")
+        assert lyr.GetFeatureCount() == 1
+
+        lyr.SetAttributeFilter("FID < 0")
+        assert lyr.GetFeatureCount() == 0
