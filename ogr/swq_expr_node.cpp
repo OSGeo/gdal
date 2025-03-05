@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <queue>
 #include <vector>
 
 #include "cpl_conv.h"
@@ -942,6 +943,99 @@ void swq_expr_node::ReplaceBetweenByGEAndLERecurse()
     papoSubExpr[1] = new swq_expr_node(SWQ_LE);
     papoSubExpr[1]->PushSubExpression(poExpr0->Clone());
     papoSubExpr[1]->PushSubExpression(poExpr2);
+}
+
+/************************************************************************/
+/*                      ReplaceInByOrRecurse()                          */
+/************************************************************************/
+
+void swq_expr_node::ReplaceInByOrRecurse()
+{
+    if (eNodeType != SNT_OPERATION)
+        return;
+
+    if (nOperation != SWQ_IN)
+    {
+        for (int i = 0; i < nSubExprCount; i++)
+            papoSubExpr[i]->ReplaceInByOrRecurse();
+        return;
+    }
+
+    nOperation = SWQ_OR;
+    swq_expr_node *poExprLeft = papoSubExpr[0]->Clone();
+    for (int i = 1; i < nSubExprCount; ++i)
+    {
+        papoSubExpr[i - 1] = new swq_expr_node(SWQ_EQ);
+        papoSubExpr[i - 1]->PushSubExpression(poExprLeft->Clone());
+        papoSubExpr[i - 1]->PushSubExpression(papoSubExpr[i]);
+    }
+    delete poExprLeft;
+    --nSubExprCount;
+
+    RebalanceAndOr();
+}
+
+/************************************************************************/
+/*                         RebalanceAndOr()                             */
+/************************************************************************/
+
+void swq_expr_node::RebalanceAndOr()
+{
+    std::queue<swq_expr_node *> nodes;
+    nodes.push(this);
+    while (!nodes.empty())
+    {
+        swq_expr_node *node = nodes.front();
+        nodes.pop();
+        if (node->eNodeType == SNT_OPERATION)
+        {
+            const swq_op eOp = node->nOperation;
+            if ((eOp == SWQ_OR || eOp == SWQ_AND) && node->nSubExprCount > 2)
+            {
+                std::vector<swq_expr_node *> exprs;
+                for (int i = 0; i < node->nSubExprCount; i++)
+                {
+                    node->papoSubExpr[i]->RebalanceAndOr();
+                    exprs.push_back(node->papoSubExpr[i]);
+                }
+                node->nSubExprCount = 0;
+                CPLFree(node->papoSubExpr);
+                node->papoSubExpr = nullptr;
+
+                while (exprs.size() > 2)
+                {
+                    std::vector<swq_expr_node *> new_exprs;
+                    for (size_t i = 0; i < exprs.size(); i++)
+                    {
+                        if (i + 1 < exprs.size())
+                        {
+                            auto cur_expr = new swq_expr_node(eOp);
+                            cur_expr->field_type = SWQ_BOOLEAN;
+                            cur_expr->PushSubExpression(exprs[i]);
+                            cur_expr->PushSubExpression(exprs[i + 1]);
+                            i++;
+                            new_exprs.push_back(cur_expr);
+                        }
+                        else
+                        {
+                            new_exprs.push_back(exprs[i]);
+                        }
+                    }
+                    exprs = std::move(new_exprs);
+                }
+                CPLAssert(exprs.size() == 2);
+                node->PushSubExpression(exprs[0]);
+                node->PushSubExpression(exprs[1]);
+            }
+            else
+            {
+                for (int i = 0; i < node->nSubExprCount; i++)
+                {
+                    nodes.push(node->papoSubExpr[i]);
+                }
+            }
+        }
+    }
 }
 
 /************************************************************************/
