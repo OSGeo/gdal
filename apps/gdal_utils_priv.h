@@ -74,6 +74,41 @@ struct GDALVectorTranslateOptionsForBinary
     CPLStringList aosAllowInputDrivers{};
 };
 
+struct GDALContourOptionsForBinary
+{
+    int nBand = 1;
+    double dfInterval = 0.0;
+    double dfNoData = 0.0;
+    double dfOffset = 0.0;
+    double dfExpBase = 0.0;
+    bool b3D = false;
+    bool bPolygonize = false;
+    bool bNoDataSet = false;
+    bool bIgnoreNoData = false;
+    std::string osNewLayerName = "contour";
+    std::string osFormat;
+    std::string osElevAttrib;
+    std::string osElevAttribMin;
+    std::string osElevAttribMax;
+    std::vector<std::string> aosFixedLevels;
+    CPLStringList aosOpenOptions;
+    CPLStringList aosCreationOptions;
+    bool bQuiet = false;
+    std::string osDestDataSource;
+    std::string osSrcDataSource;
+    GIntBig nGroupTransactions = 100 * 1000;
+};
+
+struct GDALContourProcessContext
+{
+    GDALDatasetH hSrcDS{nullptr};
+    GDALDatasetH hDstDS{nullptr};
+    GDALRasterBandH hBand{nullptr};
+    OGRLayerH hLayer{nullptr};
+    CPLStringList options{};
+    int errorCode = 0;
+};
+
 struct GDALMultiDimInfoOptionsForBinary
 {
     /* Filename to open. */
@@ -228,6 +263,8 @@ std::string CPL_DLL GDALInfoAppGetParserUsage();
 std::string CPL_DLL GDALMultiDimInfoAppGetParserUsage();
 
 std::string CPL_DLL GDALGridGetParserUsage();
+
+std::string CPL_DLL GDALContourGetParserUsage();
 
 std::string CPL_DLL GDALBuildVRTGetParserUsage();
 

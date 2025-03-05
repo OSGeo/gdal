@@ -16,6 +16,7 @@ add_library(
   gdalalg_raster_clip.cpp
   gdalalg_raster_convert.cpp
   gdalalg_raster_edit.cpp
+  gdalalg_raster_contour.cpp
   gdalalg_raster_mosaic.cpp
   gdalalg_raster_pipeline.cpp
   gdalalg_raster_overview_add.cpp
@@ -41,6 +42,7 @@ add_library(
   gdal_grid_lib.cpp
   gdal_translate_lib.cpp
   gdal_rasterize_lib.cpp
+  gdal_contour_lib.cpp
   gdalwarp_lib.cpp
   commonutils.cpp
   ogrinfo_lib.cpp

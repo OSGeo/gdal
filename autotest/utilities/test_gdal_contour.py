@@ -12,6 +12,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import struct
 
 import gdaltest
@@ -643,6 +644,11 @@ def test_gdal_contour_gt(gdal_contour_path, tmp_path, gt):
 def test_gdal_contour_fl_and_i__polygonize(gdal_contour_path, testdata_tif, tmp_path):
 
     contour_shp = str(tmp_path / "contour.shp")
+
+    try:
+        os.remove(contour_shp)
+    except OSError:
+        pass
 
     _, err = gdaltest.runexternal_out_and_err(
         gdal_contour_path

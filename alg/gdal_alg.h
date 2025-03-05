@@ -25,6 +25,7 @@
 #include "gdal.h"
 #include "cpl_minixml.h"
 #include "ogr_api.h"
+#include "cpl_string.h"
 #include <stdint.h>
 #endif
 
@@ -300,6 +301,7 @@ typedef struct
 } OGRContourWriterInfo;
 
 CPLErr CPL_DLL OGRContourWriter(double, int, double *, double *, void *pInfo);
+
 /*! @endcond */
 
 CPLErr CPL_DLL GDALContourGenerate(
