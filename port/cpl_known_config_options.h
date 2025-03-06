@@ -56,7 +56,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "BAG_GEOREF_MD_BLOCKYSIZE", // from bagdataset.cpp
    "BASISU_MAX_FILE_SIZE", // from basisudataset.cpp
    "BIGTIFF_OVERVIEW", // from gt_overview.cpp
-   "BLACKLISTED_OPENCL_VENDOR", // from gdalwarpkernel_opencl.cpp
    "BLOCKXSIZE", // from netcdfdataset.cpp
    "BLOCKYSIZE", // from netcdfdataset.cpp
    "BSB_DISABLE_INDEX", // from bsb_read.c
@@ -390,7 +389,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_USE_AVX", // from gdalgrid.cpp
    "GDAL_USE_GEOJP2", // from gdaljp2metadata.cpp
    "GDAL_USE_GMLJP2", // from gdaljp2metadata.cpp
-   "GDAL_USE_OPENCL", // from gdalwarpkernel.cpp
    "GDAL_USE_SSE", // from gdalgrid.cpp
    "GDAL_USE_SSSE3", // from cpl_cpu_features.cpp
    "GDAL_VALIDATE_CREATION_OPTIONS", // from gdaldataset.cpp, gdaldriver.cpp
@@ -831,7 +829,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR_XLS_HEADERS", // from ogrxlslayer.cpp
    "OGR_XLSX_FIELD_TYPES", // from ogrxlsxdatasource.cpp
    "OGR_XLSX_HEADERS", // from ogrxlsxdatasource.cpp
-   "OPENCL_USE_CPU", // from gdalwarpkernel_opencl.cpp
    "OPENFILEGDB_CREATE_FIELD_BEFORE_GEOMETRY", // from ogropenfilegdblayer_write.cpp
    "OPENFILEGDB_CREATOR", // from filegdbtable_write.cpp
    "OPENFILEGDB_DEFAULT_STRING_WIDTH", // from ogropenfilegdblayer_write.cpp
@@ -946,7 +943,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "PR_RESOLUTION_STRATEGY", // from postgisrasterdataset.cpp
    "PR_WE_RES", // from postgisrasterdataset.cpp
    "PREDICTOR_OVERVIEW", // from gt_overview.cpp
-   "PREFERRED_OPENCL_VENDOR", // from gdalwarpkernel_opencl.cpp
    "PROJ_DATA", // from ogr_proj_p.cpp
    "PROJ_LIB", // from ogr_proj_p.cpp
    "PST_INSTANCE", // from jpipkakdataset.cpp

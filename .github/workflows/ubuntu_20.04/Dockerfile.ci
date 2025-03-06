@@ -74,8 +74,6 @@ RUN apt-get update -y \
     make \
     mono-mcs \
     numactl \
-    ocl-icd-opencl-dev \
-    opencl-c-headers \
     openjdk-8-jdk-headless \
     pkg-config \
     python3-dev \

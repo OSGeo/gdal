@@ -1516,32 +1516,6 @@ driver. If not found, an internal copy can be used.
     to ON, has precedence over GDAL_USE_OPENCAD=ON
 
 
-
-OpenCL
-******
-
-The OpenCL library may be used to accelerate warping computations, typically
-with a GPU.
-
-.. note:: (GDAL 3.5 and 3.6) It is disabled by default even when detected, since the current OpenCL
-          warping implementation lags behind the generic implementation.
-          Starting with GDAL 3.7, build support is enabled by default when OpenCL is detected,
-          but it is disabled by default at runtime. The warping option USE_OPENCL
-          or the configuration option GDAL_USE_OPENCL must be set to YES to enable it.
-
-.. option:: OpenCL_INCLUDE_DIR
-
-    Path to an include directory with the ``CL/cl.h`` header file.
-
-.. option:: OpenCL_LIBRARY
-
-    Path to a shared or static library file.
-
-.. option:: GDAL_USE_OPENCL=ON/OFF
-
-    Control whether to use OPENCL. Defaults to *OFF* when OPENCL is found.
-
-
 OpenEXR
 *******
 
