@@ -16,7 +16,7 @@ import os
 
 import numpy as np
 import zarr
-from numcodecs import LZ4, LZMA, Blosc, GZip, Shuffle, Zlib, Zstd
+from numcodecs import LZ4, LZMA, Blosc, GZip, Quantize, Shuffle, Zlib, Zstd
 
 os.chdir(os.path.dirname(__file__))
 
@@ -192,3 +192,17 @@ z = zarr.open(
     compressor=None,
 )
 z[0] = (1, (2, 3, 1000, 4), "AAA", -1)
+
+
+data = np.arange(100, dtype="f8").reshape(10, 10) / 10
+quantize = Quantize(digits=1, dtype="f8", astype="f4")
+z = zarr.open(
+    "quantize.zarr",
+    mode="w",
+    dtype="f8",
+    shape=(10, 10),
+    chunks=(10, 10),
+    compressor=None,
+    filters=[quantize],
+)
+z[:] = data
