@@ -534,6 +534,33 @@ def test_zarr_read_compression_methods(datasetname, compressor):
         ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
         assert ar
         assert ar.Read() == array.array("b", [1, 2])
+        assert json.loads(ar.GetStructuralInfo()["COMPRESSOR"])["id"] == compressor
+
+
+# Check reading different compression methods
+@pytest.mark.parametrize(
+    "datasetname,compressor",
+    [
+        ("gzip.zarr", "gzip"),
+    ],
+)
+def test_zarr_v3_read_compression_methods(datasetname, compressor):
+
+    compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
+    filename = "data/zarr/v3/" + datasetname
+
+    if compressor not in compressors:
+        with gdal.quiet_errors():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        assert ds is None
+    else:
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar
+        assert ar.Read() == array.array("b", [1, 2])
+        assert json.loads(ar.GetStructuralInfo()["COMPRESSOR"])["name"] == compressor
 
 
 def test_zarr_read_shuffle_filter():
@@ -545,6 +572,9 @@ def test_zarr_read_shuffle_filter():
     ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
     assert ar
     assert ar.Read() == array.array("h", [1, 2])
+    assert json.loads(ar.GetStructuralInfo()["FILTERS"]) == [
+        {"elementsize": 2, "id": "shuffle"}
+    ]
 
 
 def test_zarr_read_shuffle_filter_update(tmp_path):
