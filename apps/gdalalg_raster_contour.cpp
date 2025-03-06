@@ -61,7 +61,6 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
            &m_interval)
         .SetMutualExclusionGroup("levels");
     AddArg("levels", 0, _("List of contour levels to generate."), &m_levels)
-        .SetDefault(std::vector<double>{})
         .SetMutualExclusionGroup("levels");
     AddArg("exp-base", 'e', _("Base for exponential contour level generation."),
            &m_expBase)
