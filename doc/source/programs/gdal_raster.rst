@@ -28,6 +28,7 @@ Synopsis
       - overview:  Manage overviews of a raster dataset.
       - pipeline:  Process a raster dataset.
       - reproject: Reproject a raster dataset.
+      - resize:    Resize a raster dataset.
       - stack:     Combine together input bands into a multi-band output, either virtual (VRT) or materialized.
 
 
@@ -42,6 +43,7 @@ Available sub-commands
 - :ref:`gdal_raster_overview_subcommand`
 - :ref:`gdal_raster_pipeline_subcommand`
 - :ref:`gdal_raster_reproject_subcommand`
+- :ref:`gdal_raster_resize_subcommand`
 - :ref:`gdal_raster_stack_subcommand`
 
 Examples
