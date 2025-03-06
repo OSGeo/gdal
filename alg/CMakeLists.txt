@@ -82,12 +82,6 @@ if (GDAL_USE_ARMADILLO)
   gdal_target_link_libraries(alg PRIVATE ${ARMADILLO_LIBRARIES})
 endif ()
 
-if (GDAL_USE_OPENCL)
-  gdal_target_link_libraries(alg PRIVATE OpenCL::OpenCL)
-  target_compile_definitions(alg PRIVATE -DHAVE_OPENCL)
-  target_sources(alg PRIVATE gdalwarpkernel_opencl.h gdalwarpkernel_opencl.cpp)
-endif ()
-
 gdal_target_link_libraries(alg PRIVATE PROJ::proj)
 
 if (GDAL_USE_QHULL_INTERNAL)
