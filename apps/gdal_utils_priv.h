@@ -75,11 +75,11 @@ struct GDALVectorTranslateOptionsForBinary
 
 struct GDALContourOptionsForBinary
 {
-    CPLStringList aosOpenOptions;
-    CPLStringList aosCreationOptions;
+    CPLStringList aosOpenOptions{};
+    CPLStringList aosCreationOptions{};
     bool bQuiet = false;
-    std::string osDestDataSource;
-    std::string osSrcDataSource;
+    std::string osDestDataSource{};
+    std::string osSrcDataSource{};
 };
 
 struct GDALMultiDimInfoOptionsForBinary
