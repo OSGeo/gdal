@@ -189,16 +189,23 @@ void CPL_DLL GDALContourOptionsSetProgress(GDALContourOptions *psOptions,
                                            GDALProgressFunc pfnProgress,
                                            void *pProgressData);
 
+///@cond Doxygen_Suppress
+// Cannot be in gdal_utils_priv.h because it's used in the bindings (that
+// define CPL_SUPRESS_CPLUSPLUS making it impossible to import this header
+// because it uses CPLStringList which is a C++ class and it's not included
+// if CPL_SUPRESS_CPLUSPLUS is on).
 void CPL_DLL GDALContourOptionsSetDestDataSource(GDALContourOptions *psOptions,
                                                  const char *pszDestDatasource);
 
-// Finally promoted: https://wiki.c2.com/?ThreeStarProgrammer
+// Finally got the third star! https://wiki.c2.com/?ThreeStarProgrammer
 CPLErr CPL_DLL GDALContourProcessOptions(GDALContourOptions *psOptions,
                                          char ***ppapszStringOptions,
                                          GDALDatasetH *hSrcDS,
                                          GDALRasterBandH *hBand,
                                          GDALDatasetH *hDstDS,
                                          OGRLayerH *hLayer);
+
+///@endcond
 
 /*! Options for GDALRasterize(). Opaque type */
 typedef struct GDALRasterizeOptions GDALRasterizeOptions;

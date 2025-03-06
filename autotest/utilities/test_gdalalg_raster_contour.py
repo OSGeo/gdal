@@ -44,9 +44,9 @@ cellsize     1
             tmp_out_filename,
             "--interval",
             "10",
-            "--amin",
+            "--min-name",
             "ELEV_MIN",
-            "--amax",
+            "--max-name",
             "ELEV_MAX",
             "-p",
         ]

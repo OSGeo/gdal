@@ -51,6 +51,7 @@ using namespace std;
 
 #include "gdal.h"
 #include "gdal_alg.h"
+
 #include "gdalwarper.h"
 #include "ogr_srs_api.h"
 
@@ -236,10 +237,10 @@ typedef enum {
 
 %rename (AsyncStatusType) GDALAsyncStatusType;
 typedef enum {
-	GARIO_PENDING = 0,
-	GARIO_UPDATE = 1,
-	GARIO_ERROR = 2,
-	GARIO_COMPLETE = 3
+    GARIO_PENDING = 0,
+    GARIO_UPDATE = 1,
+    GARIO_ERROR = 2,
+    GARIO_COMPLETE = 3
 } GDALAsyncStatusType;
 
 /** Cardinality of relationship.
@@ -548,7 +549,7 @@ void GDAL_GCP_set_Id( GDAL_GCP *gcp, const char * pszId ) {
 %inline
 {
 int wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
-    	                             double argout[6], int bApproxOK = 1 )
+                                     double argout[6], int bApproxOK = 1 )
 {
     return GDALGCPsToGeoTransform(nGCPs, pGCPs, argout, bApproxOK);
 }
@@ -556,7 +557,7 @@ int wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 #else
 %apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
 RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
-    	                             double argout[6], int bApproxOK = 1 );
+                                     double argout[6], int bApproxOK = 1 );
 %clear (RETURN_NONE);
 #endif
 
@@ -896,7 +897,7 @@ GDALDatasetShadow* OpenShared( char const* utf8_path, GDALAccess eAccess = GA_Re
 GDALDriverShadow *IdentifyDriver( const char *utf8_path,
                                   char **papszSiblings = NULL ) {
     return (GDALDriverShadow *) GDALIdentifyDriver( utf8_path,
-	                                            papszSiblings );
+                                                papszSiblings );
 }
 %}
 %clear char **papszSiblings;
@@ -1772,7 +1773,7 @@ int wrapper_GDALContourDestDS(  GDALDatasetShadow* dstDS,
 %}
 
 #ifdef SWIGJAVA
-%rename (Rasterize) wrapper_GDALContourDestName;
+%rename (Contour) wrapper_GDALContourDestName;
 #endif
 %newobject wrapper_GDALContourDestName;
 
