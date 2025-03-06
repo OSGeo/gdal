@@ -70,6 +70,8 @@ if (GDAL_ENABLE_DRIVER_GTIFF)
   target_compile_definitions(appslib PRIVATE -DHAVE_TIFF)
 endif()
 
+target_compile_definitions(appslib PUBLIC $<$<CONFIG:DEBUG>:GDAL_DEBUG>)
+
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(appslib libjson)
 else ()
