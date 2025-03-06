@@ -10,6 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include <cmath>
+
 #include "gdalalg_raster_contour.h"
 
 #include "cpl_conv.h"
