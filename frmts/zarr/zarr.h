@@ -29,6 +29,10 @@
 
 #define CRS_ATTRIBUTE_NAME "_CRS"
 
+const CPLCompressor *ZarrGetShuffleCompressor();
+const CPLCompressor *ZarrGetShuffleDecompressor();
+const CPLCompressor *ZarrGetQuantizeDecompressor();
+
 /************************************************************************/
 /*                            ZarrDataset                               */
 /************************************************************************/
