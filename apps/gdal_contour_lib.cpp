@@ -47,8 +47,8 @@ struct GDALContourOptions
     std::string osElevAttribMin{};
     std::string osElevAttribMax{};
     std::vector<std::string> aosFixedLevels{};
-    CPLStringList aosOpenOptions;
-    CPLStringList aosCreationOptions;
+    CPLStringList aosOpenOptions{};
+    CPLStringList aosCreationOptions{};
     bool bQuiet = false;
     std::string osDestDataSource{};
     std::string osSrcDataSource{};
@@ -228,12 +228,12 @@ CPLErr GDALContourProcessOptions(GDALContourOptions *psOptions,
         auto hDriver = GDALGetDatasetDriver(*hDstDS);
         // Try to load the layer if it already exists
         if (GDALGetMetadataItem(hDriver, GDAL_DCAP_MULTIPLE_VECTOR_LAYERS,
-                                NULL))
+                                nullptr))
         {
             *hLayer = GDALDatasetGetLayerByName(
                 *hDstDS, psOptions->osNewLayerName.c_str());
             if (!*hLayer &&
-                GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE_LAYER, NULL) &&
+                GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE_LAYER, nullptr) &&
                 !GDALDatasetTestCapability(*hDstDS, ODsCCreateLayer))
             {
                 *hLayer = CreateLayer();
