@@ -277,6 +277,14 @@ Open options
 |about-open-options|
 The following open options are available:
 
+-  .. oo:: LIST_ALL_ARRAYS
+      :choices: YES, NO
+      :default: NO
+      :since: 3.11
+
+      In classic 2D mode, whereas the subdataset list should include all arrays,
+      including those with 1 dimension.
+
 -  .. oo:: HONOUR_VALID_RANGE
       :choices: YES, NO
       :since: 2.2
