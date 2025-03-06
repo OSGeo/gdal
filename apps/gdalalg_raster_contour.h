@@ -13,6 +13,8 @@
 #ifndef GDALALG_RASTER_CONTOUR_INCLUDED
 #define GDALALG_RASTER_CONTOUR_INCLUDED
 
+#include <limits>
+
 #include "gdalalgorithm.h"
 
 //! @cond Doxygen_Suppress
