@@ -1964,3 +1964,27 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
 
     return poArray;
 }
+
+/************************************************************************/
+/*                    ZarrV2Group::SetCompressorJson()                  */
+/************************************************************************/
+
+void ZarrV2Array::SetCompressorJson(const CPLJSONObject &oCompressor)
+{
+    m_oCompressorJSon = oCompressor;
+    if (oCompressor.GetType() != CPLJSONObject::Type::Null)
+        m_aosStructuralInfo.SetNameValue("COMPRESSOR",
+                                         oCompressor.ToString().c_str());
+}
+
+/************************************************************************/
+/*                     ZarrV2Group::SetFilters()                        */
+/************************************************************************/
+
+void ZarrV2Array::SetFilters(const CPLJSONArray &oFiltersArray)
+{
+    m_oFiltersArray = oFiltersArray;
+    if (oFiltersArray.Size() > 0)
+        m_aosStructuralInfo.SetNameValue("FILTERS",
+                                         oFiltersArray.ToString().c_str());
+}

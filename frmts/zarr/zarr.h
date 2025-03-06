@@ -752,6 +752,7 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     const GDALExtendedDataType m_oType;
     const std::vector<DtypeElt> m_aoDtypeElts;
     const std::vector<GUInt64> m_anBlockSize;
+    CPLStringList m_aosStructuralInfo{};
     CPLJSONObject m_dtype{};
     GByte *m_pabyNoData = nullptr;
     std::string m_osDimSeparator{"."};
@@ -903,6 +904,11 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
         return m_anBlockSize;
     }
 
+    CSLConstList GetStructuralInfo() const override
+    {
+        return m_aosStructuralInfo.List();
+    }
+
     const void *GetRawNoDataValue() const override
     {
         return m_pabyNoData;
@@ -1038,6 +1044,11 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 
     bool CacheTilePresence();
 
+    void SetStructuralInfo(const char *pszKey, const char *pszValue)
+    {
+        m_aosStructuralInfo.SetNameValue(pszKey, pszValue);
+    }
+
     static void DecodeSourceElt(const std::vector<DtypeElt> &elts,
                                 const GByte *pSrc, GByte *pDst);
 
@@ -1099,10 +1110,7 @@ class ZarrV2Array final : public ZarrArray
            const std::vector<DtypeElt> &aoDtypeElts,
            const std::vector<GUInt64> &anBlockSize, bool bFortranOrder);
 
-    void SetCompressorJson(const CPLJSONObject &oCompressor)
-    {
-        m_oCompressorJSon = oCompressor;
-    }
+    void SetCompressorJson(const CPLJSONObject &oCompressor);
 
     void SetCompressorDecompressor(const std::string &osDecompressorId,
                                    const CPLCompressor *psComp,
@@ -1113,10 +1121,7 @@ class ZarrV2Array final : public ZarrArray
         m_psDecompressor = psDecomp;
     }
 
-    void SetFilters(const CPLJSONArray &oFiltersArray)
-    {
-        m_oFiltersArray = oFiltersArray;
-    }
+    void SetFilters(const CPLJSONArray &oFiltersArray);
 
     void Flush() override;
 
