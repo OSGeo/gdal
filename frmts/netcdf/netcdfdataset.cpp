@@ -6466,13 +6466,16 @@ void netCDFDataset::CreateSubDatasetList(int nGroupId)
     int nVarCount;
     nc_inq_nvars(nGroupId, &nVarCount);
 
+    const bool bListAllArrays = CPLTestBool(
+        CSLFetchNameValueDef(papszOpenOptions, "LIST_ALL_ARRAYS", "NO"));
+
     for (int nVar = 0; nVar < nVarCount; nVar++)
     {
 
         int nDims;
         nc_inq_varndims(nGroupId, nVar, &nDims);
 
-        if (nDims >= 2)
+        if ((bListAllArrays && nDims > 0) || nDims >= 2)
         {
             ponDimIds = static_cast<int *>(CPLCalloc(nDims, sizeof(int)));
             nc_inq_vardimid(nGroupId, nVar, ponDimIds);
@@ -6483,14 +6486,14 @@ void netCDFDataset::CreateSubDatasetList(int nGroupId)
             {
                 size_t nDimLen;
                 nc_inq_dimlen(nGroupId, ponDimIds[i], &nDimLen);
-                osDim += CPLSPrintf("%dx", (int)nDimLen);
+                if (!osDim.empty())
+                    osDim += 'x';
+                osDim += CPLSPrintf("%d", (int)nDimLen);
             }
             CPLFree(ponDimIds);
 
             nc_type nVarType;
             nc_inq_vartype(nGroupId, nVar, &nVarType);
-            // Get rid of the last "x" character.
-            osDim.pop_back();
             const char *pszType = "";
             switch (nVarType)
             {
@@ -8487,7 +8490,9 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     // We have more than one variable with 2 dimensions in the
     // file, then treat this as a subdataset container dataset.
     bool bSeveralVariablesAsBands = false;
-    if ((nRasterVars > 1) && !bTreatAsSubdataset)
+    const bool bListAllArrays = CPLTestBool(
+        CSLFetchNameValueDef(poDS->papszOpenOptions, "LIST_ALL_ARRAYS", "NO"));
+    if (bListAllArrays || ((nRasterVars > 1) && !bTreatAsSubdataset))
     {
         if (CPLFetchBool(poOpenInfo->papszOpenOptions, "VARIABLES_AS_BANDS",
                          false) &&
