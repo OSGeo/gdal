@@ -28,8 +28,7 @@
 /*          GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()    */
 /************************************************************************/
 
-GDALRasterContourAlgorithm::GDALRasterContourAlgorithm(
-    bool openForMixedRasterVector)
+GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL), m_outputLayerName("contour"),
       m_elevAttributeName(""), m_amin(""), m_amax(""), m_levels{}
 {
@@ -37,33 +36,29 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm(
     AddProgressArg();
     AddOutputFormatArg(&m_outputFormat)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_RASTER, GDAL_DCAP_CREATECOPY});
+                         {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATECOPY});
     AddOpenOptionsArg(&m_openOptions);
     AddInputFormatsArg(&m_inputFormats)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-    AddInputDatasetArg(&m_inputDataset, openForMixedRasterVector
-                                            ? GDAL_OF_RASTER | GDAL_OF_VECTOR |
-                                                  GDAL_OF_MULTIDIM_RASTER
-                                            : GDAL_OF_RASTER);
+    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
     AddCreationOptionsArg(&m_creationOptions);
 
     // gdal_contour specific options
     AddArg("band", 'b', _("Specify input band number."), &m_band).SetDefault(1);
     AddLayerNameArg(&m_outputLayerName).AddAlias("nln");
-    AddArg("aelev", 'a', _("Name of the elevation field."),
+    AddArg("elevation-name", 0, _("Name of the elevation field."),
            &m_elevAttributeName);
-    AddArg("amin", 0, _("Name of the minimum elevation field."), &m_amin);
-    AddArg("amax", 0, _("Name of the maximum elevation field."), &m_amax);
+    AddArg("min-name", 0, _("Name of the minimum elevation field."), &m_amin);
+    AddArg("max-name", 0, _("Name of the maximum elevation field."), &m_amax);
     AddArg("3d", 0, _("Force production of 3D vectors instead of 2D."), &m_3d);
-    AddArg("inodata", 0, _("Ignore nodata values in the input raster."),
-           &m_iNodata);
-    AddArg("snodata", 0, _("Set the nodata value for the output vector."),
+
+    AddArg("srcnodata", 0, _("Input pixel value to treat as 'nodata'."),
            &m_sNodata);
     AddArg("interval", 0, _("Elevation interval between contours."),
            &m_interval)
         .SetMutualExclusionGroup("levels");
-    AddArg("fl", 0, _("List of contour levels to generate."), &m_levels)
+    AddArg("levels", 0, _("List of contour levels to generate."), &m_levels)
         .SetDefault(std::vector<double>{})
         .SetMutualExclusionGroup("levels");
     AddArg("exp-base", 'e', _("Base for exponential contour level generation."),
@@ -129,10 +124,6 @@ bool GDALRasterContourAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     if (m_3d)
     {
         aosOptions.AddString("-3d");
-    }
-    if (m_iNodata)
-    {
-        aosOptions.AddString("-inodata");
     }
     if (!std::isnan(m_sNodata))
     {

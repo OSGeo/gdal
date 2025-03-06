@@ -35,7 +35,7 @@ class GDALRasterContourAlgorithm final : public GDALAlgorithm
         return {};
     }
 
-    explicit GDALRasterContourAlgorithm(bool openForMixedRasterVector = false);
+    explicit GDALRasterContourAlgorithm();
 
     GDALDataset *GetDatasetRef()
     {
@@ -66,7 +66,7 @@ class GDALRasterContourAlgorithm final : public GDALAlgorithm
     std::string m_amin;               // -amin <value>
     std::string m_amax;               // -amax <value>
     bool m_3d = false;                // -3d
-    bool m_iNodata = false;           // -inodata
+                                      // -inodata (skipped)
     double m_sNodata =
         std::numeric_limits<double>::quiet_NaN();  // -snodata <value>
     double m_interval =

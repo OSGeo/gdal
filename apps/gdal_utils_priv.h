@@ -19,8 +19,7 @@
 #include "cpl_string.h"
 #include "gdal_utils.h"
 
-/* This file is only meant at being used by the XXXX_bin.cpp and XXXX_lib.cpp
- * files */
+/* This file is only meant at being used by the XXXX_bin.cpp and XXXX_lib.cpp */
 
 CPL_C_START
 
@@ -76,37 +75,11 @@ struct GDALVectorTranslateOptionsForBinary
 
 struct GDALContourOptionsForBinary
 {
-    int nBand = 1;
-    double dfInterval = 0.0;
-    double dfNoData = 0.0;
-    double dfOffset = 0.0;
-    double dfExpBase = 0.0;
-    bool b3D = false;
-    bool bPolygonize = false;
-    bool bNoDataSet = false;
-    bool bIgnoreNoData = false;
-    std::string osNewLayerName = "contour";
-    std::string osFormat;
-    std::string osElevAttrib;
-    std::string osElevAttribMin;
-    std::string osElevAttribMax;
-    std::vector<std::string> aosFixedLevels;
     CPLStringList aosOpenOptions;
     CPLStringList aosCreationOptions;
     bool bQuiet = false;
     std::string osDestDataSource;
     std::string osSrcDataSource;
-    GIntBig nGroupTransactions = 100 * 1000;
-};
-
-struct GDALContourProcessContext
-{
-    GDALDatasetH hSrcDS{nullptr};
-    GDALDatasetH hDstDS{nullptr};
-    GDALRasterBandH hBand{nullptr};
-    OGRLayerH hLayer{nullptr};
-    CPLStringList options{};
-    int errorCode = 0;
 };
 
 struct GDALMultiDimInfoOptionsForBinary

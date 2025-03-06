@@ -154,7 +154,7 @@ CPLErr GDALContourProcessOptions(GDALContourOptions *psOptions,
     // Dedup lambda to create the layer
     auto CreateLayer = [&]() -> OGRLayerH
     {
-        return OGR_DS_CreateLayer(
+        return GDALDatasetCreateLayer(
             *hDstDS, psOptions->osNewLayerName.c_str(), hSRS,
             psOptions->bPolygonize
                 ? (psOptions->b3D ? wkbMultiPolygon25D : wkbMultiPolygon)
@@ -225,13 +225,13 @@ CPLErr GDALContourProcessOptions(GDALContourOptions *psOptions,
 
     if (!*hLayer)
     {
-        OGRSFDriverH hDriver = GDALGetDatasetDriver(*hDstDS);
+        auto hDriver = GDALGetDatasetDriver(*hDstDS);
         // Try to load the layer if it already exists
         if (GDALGetMetadataItem(hDriver, GDAL_DCAP_MULTIPLE_VECTOR_LAYERS,
                                 NULL))
         {
-            *hLayer = OGR_DS_GetLayerByName(*hDstDS,
-                                            psOptions->osNewLayerName.c_str());
+            *hLayer = GDALDatasetGetLayerByName(
+                *hDstDS, psOptions->osNewLayerName.c_str());
             if (!*hLayer &&
                 GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE_LAYER, NULL) &&
                 !GDALDatasetTestCapability(*hDstDS, ODsCCreateLayer))
@@ -241,7 +241,7 @@ CPLErr GDALContourProcessOptions(GDALContourOptions *psOptions,
         }
         else
         {
-            *hLayer = OGR_DS_GetLayer(*hDstDS, 0);
+            *hLayer = GDALDatasetGetLayer(*hDstDS, 0);
         }
     }
 
