@@ -845,7 +845,23 @@ def test_zarr_read_crs(crs_member):
                 },
                 "id": {"authority": "EPSG", "code": 4326},
             },
-            "wkt": 'GEOGCRS["WGS 84",ENSEMBLE["World Geodetic System 1984 ensemble",MEMBER["World Geodetic System 1984 (Transit)"],MEMBER["World Geodetic System 1984 (G730)"],MEMBER["World Geodetic System 1984 (G873)"],MEMBER["World Geodetic System 1984 (G1150)"],MEMBER["World Geodetic System 1984 (G1674)"],MEMBER["World Geodetic System 1984 (G1762)"],ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ENSEMBLEACCURACY[2.0]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],CS[ellipsoidal,2],AXIS["geodetic latitude (Lat)",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433]],AXIS["geodetic longitude (Lon)",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433]],USAGE[SCOPE["Horizontal component of 3D system."],AREA["World."],BBOX[-90,-180,90,180]],ID["EPSG",4326]]',
+            "wkt": (
+                'GEOGCRS["WGS 84",ENSEMBLE["World Geodetic System 1984 ensemble",'
+                'MEMBER["World Geodetic System 1984 (Transit)"],'
+                'MEMBER["World Geodetic System 1984 (G730)"],'
+                'MEMBER["World Geodetic System 1984 (G873)"],'
+                'MEMBER["World Geodetic System 1984 (G1150)"],'
+                'MEMBER["World Geodetic System 1984 (G1674)"],'
+                'MEMBER["World Geodetic System 1984 (G1762)"],'
+                'ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],'
+                "ENSEMBLEACCURACY[2.0]],"
+                'PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],'
+                "CS[ellipsoidal,2],"
+                'AXIS["geodetic latitude (Lat)",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433]],'
+                'AXIS["geodetic longitude (Lon)",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433]],'
+                'USAGE[SCOPE["Horizontal component of 3D system."],AREA["World."],BBOX[-90,-180,90,180]],'
+                'ID["EPSG",4326]]'
+            ),
             "url": "http://www.opengis.net/def/crs/EPSG/0/4326",
         }
     }
@@ -5529,7 +5545,9 @@ def test_zarr_driver_rename(format):
     try:
         drv.Create(filename, 1, 1, options=["FORMAT=" + format])
 
-        assert gdal.Open(filename)
+        with gdal.quiet_warnings():
+            # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
+            assert gdal.Open(filename)
 
         assert drv.Rename(newfilename, filename) == gdal.CE_None
 
@@ -5538,7 +5556,9 @@ def test_zarr_driver_rename(format):
             gdal.Open(filename)
 
         assert gdal.VSIStatL(newfilename)
-        assert gdal.Open(newfilename)
+        with gdal.quiet_warnings():
+            # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
+            assert gdal.Open(newfilename)
 
     finally:
         if gdal.VSIStatL(filename):
@@ -5566,12 +5586,13 @@ def test_zarr_driver_copy_files(format):
 
         assert drv.CopyFiles(newfilename, filename) == gdal.CE_None
 
-        assert gdal.VSIStatL(filename)
-        assert gdal.Open(filename)
+        with gdal.quiet_warnings():
+            # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
+            assert gdal.VSIStatL(filename)
+            assert gdal.Open(filename)
 
-        assert gdal.VSIStatL(newfilename)
-        # print(gdal.ReadDirRecursive(newfilename))
-        assert gdal.Open(newfilename)
+            assert gdal.VSIStatL(newfilename)
+            assert gdal.Open(newfilename)
 
     finally:
         if gdal.VSIStatL(filename):
