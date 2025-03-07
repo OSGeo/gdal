@@ -396,7 +396,7 @@ CPLErr GDALContourGenerate(GDALRasterBandH hBand, double dfContourInterval,
  * vector layer. Also, a NODATA value may be specified to identify pixels
  * that should not be considered in contour line generation.
  *
- * The gdal/apps/gdal_contour.cpp mainline can be used as an example of
+ * The gdal/apps/gdal_contour_bin.cpp mainline can be used as an example of
  * how to use this function.
  *
  * [1] see https://en.wikipedia.org/wiki/Marching_squares
