@@ -47,30 +47,29 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
     AddCreationOptionsArg(&m_creationOptions);
 
     // gdal_contour specific options
-    AddArg("band", 'b', _("Specify input band number."), &m_band).SetDefault(1);
+    AddArg("band", 'b', _("Specify input band number"), &m_band).SetDefault(1);
     AddLayerNameArg(&m_outputLayerName).AddAlias("nln");
-    AddArg("elevation-name", 0, _("Name of the elevation field."),
+    AddArg("elevation-name", 0, _("Name of the elevation field"),
            &m_elevAttributeName);
-    AddArg("min-name", 0, _("Name of the minimum elevation field."), &m_amin);
-    AddArg("max-name", 0, _("Name of the maximum elevation field."), &m_amax);
-    AddArg("3d", 0, _("Force production of 3D vectors instead of 2D."), &m_3d);
+    AddArg("min-name", 0, _("Name of the minimum elevation field"), &m_amin);
+    AddArg("max-name", 0, _("Name of the maximum elevation field"), &m_amax);
+    AddArg("3d", 0, _("Force production of 3D vectors instead of 2D"), &m_3d);
 
-    AddArg("srcnodata", 0, _("Input pixel value to treat as 'nodata'."),
+    AddArg("srcnodata", 0, _("Input pixel value to treat as 'nodata'"),
            &m_sNodata);
-    AddArg("interval", 0, _("Elevation interval between contours."),
-           &m_interval)
+    AddArg("interval", 0, _("Elevation interval between contours"), &m_interval)
         .SetMutualExclusionGroup("levels");
-    AddArg("levels", 0, _("List of contour levels to generate."), &m_levels)
+    AddArg("levels", 0, _("List of contour levels"), &m_levels)
         .SetMutualExclusionGroup("levels");
-    AddArg("exp-base", 'e', _("Base for exponential contour level generation."),
+    AddArg("exp-base", 'e', _("Base for exponential contour level generation"),
            &m_expBase)
         .SetMutualExclusionGroup("levels");
-    AddArg("offset", 0, _("Offset to apply to contour levels."), &m_offset)
+    AddArg("offset", 0, _("Offset to apply to contour levels"), &m_offset)
         .AddAlias("off");
-    AddArg("polygonize", 'p', _("Create polygons instead of lines."),
+    AddArg("polygonize", 'p', _("Create polygons instead of lines"),
            &m_polygonize);
     AddArg("group-transactions", 0,
-           _("Group n features per transaction (default 100 000)."),
+           _("Group n features per transaction (default 100 000)"),
            &m_groupTransactions);
 }
 
@@ -193,13 +192,6 @@ bool GDALRasterContourAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     {
         eErr = GDALContourGenerateEx(hBand, hLayer, papszStringOptions,
                                      pfnProgress, pProgressData);
-    }
-
-    // Print debug papszStringOptions
-    for (int i = 0; papszStringOptions[i] != nullptr; i++)
-    {
-        CPLDebug("GDAL", "papszStringOptions[%d] = %s", i,
-                 papszStringOptions[i]);
     }
 
     CSLDestroy(papszStringOptions);

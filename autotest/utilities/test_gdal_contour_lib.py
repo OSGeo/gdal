@@ -24,11 +24,7 @@ from osgeo import gdal, ogr
     "options, polygonize, expected_elev_values",
     [
         (["-i", "10"], True, [(4, 10), (10, 20), (20, 30), (30, 36)]),
-        (
-            ["-fl", "15", "-i", "10"],
-            True,
-            [(4, 10), (10, 15), (15, 20), (20, 30), (30, 36)],
-        ),
+        (["-i", "10"], False, [10.0, 20.0, 30.0]),
     ],
 )
 @pytest.mark.require_driver("AAIGRID")
@@ -69,19 +65,18 @@ cellsize     1
         src_ds = gdal.Open(srcfilename)
         assert src_ds is not None
 
-        options_new.extend(
-            [
-                "-amin",
-                "ELEV_MIN",
-                "-amax",
-                "ELEV_MAX",
-            ]
-        )
-
         if polygonize:
-            options_new.append("-p")
+            options_new.extend(
+                [
+                    "-amin",
+                    "ELEV_MIN",
+                    "-amax",
+                    "ELEV_MAX",
+                    "-p",
+                ]
+            )
         else:
-            options_new.extend(["-a", "ID"])
+            options_new.extend(["-a", "ELEV"])
 
         if create_output:
             assert gdal.Contour(ogr_ds, src_ds, options=options_new)
@@ -93,8 +88,10 @@ cellsize     1
 
         # Get all elev values
         elev_values = []
-        assert lyr.GetFeatureCount() == len(expected_elev_values)
         for f in lyr:
-            elev_values.append((f["ELEV_MIN"], f["ELEV_MAX"]))
+            if polygonize:
+                elev_values.append((f["ELEV_MIN"], f["ELEV_MAX"]))
+            else:
+                elev_values.append(f["ELEV"])
 
         assert elev_values == expected_elev_values, (elev_values, expected_elev_values)
