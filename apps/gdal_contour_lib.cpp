@@ -700,6 +700,7 @@ GDALContourOptionsNew(char **papszArgv,
 
     try
     {
+
         auto argParser =
             GDALContourAppOptionsGetParser(psOptions.get(), psOptionsForBinary);
         argParser->parse_args_without_binary_name(aosArgv.List());

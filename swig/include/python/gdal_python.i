@@ -3913,19 +3913,18 @@ def ContourOptions(
     options=None,
     format=None,
     band=1,
-    attributeName=None,
-    elevationMinAttributeName=None,
-    elevationMaxAttributeName=None,
+    elevationName=None,
+    minName=None,
+    maxName=None,
     with3d=False,
-    ignoreNodata=False,
-    nodataValue=None,
+    srcNodata=None,
     offset=None,
     datasetCreationOptions=None,
     layerCreationOptions=None,
     interval=None,
     fixedLevels=None,
     exponentialBase=None,
-    outputLayerName="contour",
+    layerName="contour",
     polygonize=False,
     groupTransactions=100000,
     callback=None,
@@ -3940,23 +3939,21 @@ def ContourOptions(
         output format ("ESRI Shapefile", etc...)
     band:
         band number to use (default = 1)
-    attributeName:
+    elevationName:
         name of the attribute in which to put the elevation.
         If not provided no elevation attribute is attached.
         Ignored in polygonal contouring (polygonize) mode.
-    elevationMinAttributeName:
+    minName:
         name for the attribute in which to put the minimum elevation of contour polygon.
         If not provided no minimum elevation attribute is attached.
         Ignored in default line contouring mode.
-    elevationMaxAttributeName:
+    maxName:
         name for the attribute in which to put the maximum elevation of contour polygon.
         If not provided no maximum elevation attribute is attached.
         Ignored in default line contouring mode.
     with3d:
         Force production of 3D vectors instead of 2D. Includes elevation at every vertex.
-    ignoreNodata:
-        Ignore nodata values on input raster.
-    nodataValue:
+    srcNodata:
         Input pixel value to treat as "nodata".
     offset:
         Offset to apply to the elevation values.
@@ -3970,7 +3967,7 @@ def ContourOptions(
         Name one or more "fixed levels" to extract. Must specify either "interval" or "fixedLevels" or "exponentialBase".
     exponentialBase:
         Generate levels on an exponential scale: base ^ k, for k an integer. Must specify either. Must specify either "interval" or "fixedLevels" or "exponentialBase".
-    outputLayerName:
+    layerName:
         Name for the output vector layer, defaults to "contour".
     polygonize:
         Produce polygons instead of lines (default = False).
@@ -4000,18 +3997,16 @@ def ContourOptions(
 
         if format is not None:
             new_options += ['-of', format]
-        if attributeName is not None:
-            new_options += ['-a', attributeName]
-        if elevationMinAttributeName is not None:
-            new_options += ['-amin', elevationMinAttributeName]
-        if elevationMaxAttributeName is not None:
-            new_options += ['-amax', elevationMaxAttributeName]
+        if elevationName is not None:
+            new_options += ['-a', elevationName]
+        if minName is not None:
+            new_options += ['-amin', minName]
+        if maxName is not None:
+            new_options += ['-amax', maxName]
         if with3d:
             new_options += ['-3d']
-        if ignoreNodata:
-            new_options += ['-inodata']
-        if nodataValue is not None:
-            new_options += ['-snodata', str(nodataValue)]
+        if srcNodata is not None:
+            new_options += ['-snodata', str(srcNodata)]
         if offset is not None:
             new_options += ['-off', str(offset)]
         if datasetCreationOptions is not None:
@@ -4035,8 +4030,8 @@ def ContourOptions(
                 new_options += ['-fl', str(level)]
         if exponentialBase is not None:
             new_options += ['-e', str(exponentialBase)]
-        if outputLayerName is not None:
-            new_options += ['-nln', outputLayerName]
+        if layerName is not None:
+            new_options += ['-nln', layerName]
         if polygonize:
             new_options += ['-p']
         if groupTransactions is not None:
