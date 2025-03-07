@@ -78,7 +78,7 @@ class GDALRasterContourAlgorithm final : public GDALAlgorithm
     std::vector<double> m_levels;                  // -fl <level>[,<level>...]
     int m_expBase = 0;                             // -e <base>
     bool m_polygonize = false;                     // -p
-    int m_groupTransactions = 0;                   // -gt <n>
+    int m_groupTransactions = 0;                   // gt <n>
 };
 
 //! @endcond
