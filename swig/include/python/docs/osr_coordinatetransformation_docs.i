@@ -32,8 +32,15 @@ tuple
 
 Examples
 --------
->>> ct.TransformBounds(-72.5, 44.2, -72.4, 44.3, 21)
-(7415356.140468472, -51238192.683464445, 7454323.154814391, -51210287.42581475)
+>>> wgs84 = osr.SpatialReference()
+>>> wgs84.ImportFromEPSG(4326)
+0
+>>> vt_sp = osr.SpatialReference()
+>>> vt_sp.ImportFromEPSG(5646)
+0
+>>> ct = osr.CoordinateTransformation(wgs84, vt_sp)
+>>> ct.TransformBounds(44.2,-72.5, 44.3, -72.4, 21)
+(1640416.6667, 619626.4287465283, 1666641.4901271078, 656096.7597360199)
 
 ";
 
@@ -77,13 +84,20 @@ list
 
 Examples
 --------
->>> ct.TransformPoints([(-72.58, 44.26), (-72.59, 44.26)])
-[(7390620.052019633, -51202148.77747277, 0.0), (7387261.070131293, -51200373.68798984, 0.0)]
+>>> wgs84 = osr.SpatialReference()
+>>> wgs84.ImportFromEPSG(4326)
+0
+>>> vt_sp = osr.SpatialReference()
+>>> vt_sp.ImportFromEPSG(5646)
+0
+>>> ct = osr.CoordinateTransformation(wgs84, vt_sp)
+>>> # Transform two points from WGS84 lat/long to Vermont State Plane easting/northing
+>>> ct.TransformPoints([(44.26, -72.58), (44.26, -72.59)])
+[(1619458.1108559777, 641509.1883246159, 0.0), (1616838.2913193079, 641511.9008312856, 0.0)]
 
 >>> import numpy as np
->>> ct.TransformPoints(np.array([[-72.58, 44.26], [-72.59, 44.26]]))
-[(7390620.052019633, -51202148.77747277, 0.0), (7387261.070131293, -51200373.68798984, 0.0)]
-
+>>> ct.TransformPoints(np.array([[44.26, -72.58], [44.26, -72.59]]))
+[(1619458.1108559777, 641509.1883246159, 0.0), (1616838.2913193079, 641511.9008312856, 0.0)]
 
 ";
 
