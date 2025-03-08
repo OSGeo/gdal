@@ -136,11 +136,12 @@ def TransformPoint(self, *args):
     >>> vt_sp = osr.SpatialReference()
     >>> vt_sp.ImportFromEPSG(5646)
     0
-    >>> ct = osr.CoordinateTransformation(wgs84, ps)
-    >>> ct.TransformPoint(-72.58, 44.26)
-    (7390620.052019633, -51202148.77747277, 0.0)
-    >>> ct.TransformPoint(-72.58, 44.26, 103)
-    (7390620.052019633, -51202148.77747277, 103.0)
+    >>> ct = osr.CoordinateTransformation(wgs84, vt_sp)
+    >>> # Transform a point from WGS84 lat/long to Vermont State Plane easting/northing
+    >>> ct.TransformPoint(44.26, -72.58)
+    (1619458.1108559777, 641509.1883246159, 0.0)
+    >>> ct.TransformPoint(44.26, -72.58, 103)
+    (1619458.1108559777, 641509.1883246159, 103.0)
     """
 
     import collections.abc
