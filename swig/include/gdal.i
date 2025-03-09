@@ -51,6 +51,7 @@ using namespace std;
 
 #include "gdal.h"
 #include "gdal_alg.h"
+
 #include "gdalwarper.h"
 #include "ogr_srs_api.h"
 
@@ -236,10 +237,10 @@ typedef enum {
 
 %rename (AsyncStatusType) GDALAsyncStatusType;
 typedef enum {
-	GARIO_PENDING = 0,
-	GARIO_UPDATE = 1,
-	GARIO_ERROR = 2,
-	GARIO_COMPLETE = 3
+    GARIO_PENDING = 0,
+    GARIO_UPDATE = 1,
+    GARIO_ERROR = 2,
+    GARIO_COMPLETE = 3
 } GDALAsyncStatusType;
 
 /** Cardinality of relationship.
@@ -548,7 +549,7 @@ void GDAL_GCP_set_Id( GDAL_GCP *gcp, const char * pszId ) {
 %inline
 {
 int wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
-    	                             double argout[6], int bApproxOK = 1 )
+                                     double argout[6], int bApproxOK = 1 )
 {
     return GDALGCPsToGeoTransform(nGCPs, pGCPs, argout, bApproxOK);
 }
@@ -556,7 +557,7 @@ int wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 #else
 %apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
 RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
-    	                             double argout[6], int bApproxOK = 1 );
+                                     double argout[6], int bApproxOK = 1 );
 %clear (RETURN_NONE);
 #endif
 
@@ -896,7 +897,7 @@ GDALDatasetShadow* OpenShared( char const* utf8_path, GDALAccess eAccess = GA_Re
 GDALDriverShadow *IdentifyDriver( const char *utf8_path,
                                   char **papszSiblings = NULL ) {
     return (GDALDriverShadow *) GDALIdentifyDriver( utf8_path,
-	                                            papszSiblings );
+                                                papszSiblings );
 }
 %}
 %clear char **papszSiblings;
@@ -1698,6 +1699,136 @@ GDALDatasetShadow* wrapper_GDALGrid( const char* dest,
     return hDSRet;
 }
 %}
+
+
+//************************************************************************
+// gdal.Contour()
+//************************************************************************
+#ifdef SWIGJAVA
+%rename (ContourOptions) GDALContourOptions;
+#endif
+
+struct GDALContourOptions {
+    %extend {
+        GDALContourOptions(char** options) {
+            return GDALContourOptionsNew(options, NULL);
+        }
+
+        ~GDALContourOptions() {
+            GDALContourOptionsFree( self );
+        }
+    }
+};
+
+/* Note: we must use 2 distinct names due to different ownership of the result */
+
+#ifdef SWIGJAVA
+%rename (Countour) wrapper_GDALContourDestDS;
+#endif
+%inline %{
+
+int wrapper_GDALContourDestDS(  GDALDatasetShadow* dstDS,
+                                GDALDatasetShadow* srcDS,
+                                GDALContourOptions* options,
+                                GDALProgressFunc callback=NULL,
+                                void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALContourOptionsNew(NULL, NULL);
+        }
+        GDALContourOptionsSetProgress(options, callback, callback_data);
+    }
+
+#ifdef SWIGPYTHON
+    std::vector<ErrorStruct> aoErrors;
+    if( GetUseExceptions() )
+    {
+        PushStackingErrorHandler(&aoErrors);
+    }
+#endif
+
+    char** papszStringOptions = NULL;
+    GDALRasterBandH hBand = NULL;
+    OGRLayerH hLayer = NULL;
+    const CPLErr err = GDALContourProcessOptions(options, &papszStringOptions, &srcDS, &hBand, &dstDS, &hLayer);
+    bool bRet = (err == CE_None && GDALContourGenerateEx(hBand, hLayer, papszStringOptions, callback, callback_data) == CE_None);
+    if( bFreeOptions )
+        GDALContourOptionsFree(options);
+#ifdef SWIGPYTHON
+    if( GetUseExceptions() )
+    {
+        PopStackingErrorHandler(&aoErrors, bRet);
+    }
+#endif
+    CSLDestroy(papszStringOptions);
+    return bRet;
+}
+%}
+
+#ifdef SWIGJAVA
+%rename (Contour) wrapper_GDALContourDestName;
+#endif
+%newobject wrapper_GDALContourDestName;
+
+%inline %{
+GDALDatasetShadow* wrapper_GDALContourDestName( const char* dest,
+                                                  GDALDatasetShadow* srcDS,
+                                                  GDALContourOptions* options,
+                                                  GDALProgressFunc callback=NULL,
+                                                  void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALContourOptionsNew(NULL, NULL);
+        }
+        GDALContourOptionsSetProgress(options, callback, callback_data);
+    }
+
+#ifdef SWIGPYTHON
+    std::vector<ErrorStruct> aoErrors;
+    if( GetUseExceptions() )
+    {
+        PushStackingErrorHandler(&aoErrors);
+    }
+#endif
+
+    GDALContourOptionsSetDestDataSource(options, dest);
+    char** papszStringOptions = NULL;
+    GDALRasterBandH hBand = NULL;
+    OGRLayerH hLayer = NULL;
+    GDALDatasetH dstDS = NULL;
+    CPLErr err = GDALContourProcessOptions(options, &papszStringOptions, &srcDS, &hBand, &dstDS, &hLayer);
+    if (err == CE_None )
+    {
+        err = GDALContourGenerateEx(hBand, hLayer, papszStringOptions, callback, callback_data);
+    }
+
+    if( bFreeOptions )
+        GDALContourOptionsFree(options);
+#ifdef SWIGPYTHON
+    if( GetUseExceptions() )
+    {
+        PopStackingErrorHandler(&aoErrors, dstDS != NULL);
+    }
+#endif
+    CSLDestroy(papszStringOptions);
+    return dstDS;
+}
+%}
+
+
 
 //************************************************************************
 // gdal.Rasterize()

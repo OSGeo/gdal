@@ -487,6 +487,7 @@ extern "C++"
         }
 
         CPLStringList &AddString(const char *pszNewString);
+        CPLStringList &AddString(const std::string &newString);
         CPLStringList &AddStringDirectly(char *pszNewString);
 
         /** Add a string to the list */

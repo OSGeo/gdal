@@ -506,7 +506,7 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
     ds->SetGeoTransform(out.gt.data());
     if (out.srs)
     {
-        ds->SetSpatialRef(OGRSpatialReference::FromHandle(out.srs.get()));
+        ds->SetSpatialRef(out.srs.get());
     }
 
     return ds;

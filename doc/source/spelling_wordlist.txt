@@ -451,6 +451,7 @@ connectedness
 const
 constexpr
 contensts
+ContourOptions
 Contrarty
 conv
 Convair
@@ -829,6 +830,7 @@ executables
 Exif
 explodeCollections
 eXploration
+exponentialBase
 exportToESRI
 ExportToIsoWkb
 ExportToIsoWkt
@@ -898,6 +900,7 @@ FindFile
 finition
 fiona
 fipszone
+fixedLevels
 fixup
 flatbuffers
 flatgeobuf
