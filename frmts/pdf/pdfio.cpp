@@ -260,7 +260,7 @@ void VSIPDFFileStream::reset()
 /************************************************************************/
 
 #if POPPLER_MAJOR_VERSION > 25 ||                                              \
-    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION > 2)
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 3)
 bool VSIPDFFileStream::unfilteredReset()
 {
     return reset();
