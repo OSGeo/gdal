@@ -54,8 +54,18 @@ class VSIPDFFileStream final : public BaseStream
     virtual void reset() override;
 #endif
 
+    static void resetNoCheckReturnValue(Stream *str)
+    {
 #if POPPLER_MAJOR_VERSION > 25 ||                                              \
-    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION > 2)
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+        CPL_IGNORE_RET_VAL(str->reset());
+#else
+        str->reset();
+#endif
+    }
+
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 3)
     virtual bool unfilteredReset() override;
 #else
     virtual void unfilteredReset() override;

@@ -1409,7 +1409,13 @@ int64_t GDALPDFStreamPoppler::GetLength(int64_t nMaxSize)
     if (m_nLength >= 0)
         return m_nLength;
 
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+    if (!m_poStream->reset())
+        return 0;
+#else
     m_poStream->reset();
+#endif
     m_nLength = 0;
     unsigned char readBuf[4096];
     int readChars;
@@ -1477,7 +1483,13 @@ int64_t GDALPDFStreamPoppler::GetRawLength()
         return m_nRawLength;
 
     auto undecodeStream = m_poStream->getUndecodedStream();
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+    if (!undecodeStream->reset())
+        return 0;
+#else
     undecodeStream->reset();
+#endif
     m_nRawLength = 0;
     while (undecodeStream->getChar() != EOF)
         m_nRawLength++;
