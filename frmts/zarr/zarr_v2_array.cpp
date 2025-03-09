@@ -397,181 +397,6 @@ bool ZarrV2Array::AllocateWorkingBuffers(
 }
 
 /************************************************************************/
-/*                       ZarrShuffleCompressor()                        */
-/************************************************************************/
-
-static bool ZarrShuffleCompressor(const void *input_data, size_t input_size,
-                                  void **output_data, size_t *output_size,
-                                  CSLConstList options,
-                                  void * /* compressor_user_data */)
-{
-    // 4 is the default of the shuffle numcodecs:
-    // https://numcodecs.readthedocs.io/en/v0.10.0/shuffle.html
-    const int eltSize = atoi(CSLFetchNameValueDef(options, "ELEMENTSIZE", "4"));
-    if (eltSize != 2 && eltSize != 4 && eltSize != 8)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Only ELEMENTSIZE=2,4,8 is supported");
-        if (output_size)
-            *output_size = 0;
-        return false;
-    }
-    if ((input_size % eltSize) != 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "input_size should be a multiple of ELEMENTSIZE");
-        if (output_size)
-            *output_size = 0;
-        return false;
-    }
-    if (output_data != nullptr && *output_data != nullptr &&
-        output_size != nullptr && *output_size != 0)
-    {
-        if (*output_size < input_size)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Too small output size");
-            *output_size = input_size;
-            return false;
-        }
-
-        const size_t nElts = input_size / eltSize;
-        // Put at the front of the output buffer all the least significant
-        // bytes of each word, then then 2nd least significant byte, etc.
-        for (size_t i = 0; i < nElts; ++i)
-        {
-            for (int j = 0; j < eltSize; j++)
-            {
-                (static_cast<uint8_t *>(*output_data))[j * nElts + i] =
-                    (static_cast<const uint8_t *>(input_data))[i * eltSize + j];
-            }
-        }
-
-        *output_size = input_size;
-        return true;
-    }
-
-    if (output_data == nullptr && output_size != nullptr)
-    {
-        *output_size = input_size;
-        return true;
-    }
-
-    if (output_data != nullptr && *output_data == nullptr &&
-        output_size != nullptr)
-    {
-        *output_data = VSI_MALLOC_VERBOSE(input_size);
-        *output_size = input_size;
-        if (*output_data == nullptr)
-            return false;
-        bool ret = ZarrShuffleCompressor(input_data, input_size, output_data,
-                                         output_size, options, nullptr);
-        if (!ret)
-        {
-            VSIFree(*output_data);
-            *output_data = nullptr;
-        }
-        return ret;
-    }
-
-    CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
-    return false;
-}
-
-/************************************************************************/
-/*                       ZarrShuffleDecompressor()                        */
-/************************************************************************/
-
-static bool ZarrShuffleDecompressor(const void *input_data, size_t input_size,
-                                    void **output_data, size_t *output_size,
-                                    CSLConstList options,
-                                    void * /* compressor_user_data */)
-{
-    // 4 is the default of the shuffle numcodecs:
-    // https://numcodecs.readthedocs.io/en/v0.10.0/shuffle.html
-    const int eltSize = atoi(CSLFetchNameValueDef(options, "ELEMENTSIZE", "4"));
-    if (eltSize != 2 && eltSize != 4 && eltSize != 8)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Only ELEMENTSIZE=2,4,8 is supported");
-        if (output_size)
-            *output_size = 0;
-        return false;
-    }
-    if ((input_size % eltSize) != 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "input_size should be a multiple of ELEMENTSIZE");
-        if (output_size)
-            *output_size = 0;
-        return false;
-    }
-    if (output_data != nullptr && *output_data != nullptr &&
-        output_size != nullptr && *output_size != 0)
-    {
-        if (*output_size < input_size)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Too small output size");
-            *output_size = input_size;
-            return false;
-        }
-
-        // Reverse of what is done in the compressor function.
-        const size_t nElts = input_size / eltSize;
-        for (size_t i = 0; i < nElts; ++i)
-        {
-            for (int j = 0; j < eltSize; j++)
-            {
-                (static_cast<uint8_t *>(*output_data))[i * eltSize + j] =
-                    (static_cast<const uint8_t *>(input_data))[j * nElts + i];
-            }
-        }
-
-        *output_size = input_size;
-        return true;
-    }
-
-    if (output_data == nullptr && output_size != nullptr)
-    {
-        *output_size = input_size;
-        return true;
-    }
-
-    if (output_data != nullptr && *output_data == nullptr &&
-        output_size != nullptr)
-    {
-        *output_data = VSI_MALLOC_VERBOSE(input_size);
-        *output_size = input_size;
-        if (*output_data == nullptr)
-            return false;
-        bool ret = ZarrShuffleDecompressor(input_data, input_size, output_data,
-                                           output_size, options, nullptr);
-        if (!ret)
-        {
-            VSIFree(*output_data);
-            *output_data = nullptr;
-        }
-        return ret;
-    }
-
-    CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
-    return false;
-}
-
-static const CPLCompressor gShuffleCompressor = {
-    /* nStructVersion = */ 1,
-    /* pszId = */ "shuffle",       CCT_FILTER,
-    /* papszMetadata = */ nullptr, ZarrShuffleCompressor,
-    /* user_data = */ nullptr};
-
-static const CPLCompressor gShuffleDecompressor = {
-    /* nStructVersion = */ 1,
-    /* pszId = */ "shuffle",
-    CCT_FILTER,
-    /* papszMetadata = */ nullptr,
-    ZarrShuffleDecompressor,
-    /* user_data = */ nullptr};
-
-/************************************************************************/
 /*                      ZarrV2Array::LoadTileData()                     */
 /************************************************************************/
 
@@ -738,8 +563,9 @@ bool ZarrV2Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
         const auto &oFilter = m_oFiltersArray[i];
         const auto osFilterId = oFilter["id"].ToString();
         const auto psFilterDecompressor =
-            EQUAL(osFilterId.c_str(), "shuffle")
-                ? &gShuffleDecompressor
+            EQUAL(osFilterId.c_str(), "shuffle") ? ZarrGetShuffleDecompressor()
+            : EQUAL(osFilterId.c_str(), "quantize")
+                ? ZarrGetQuantizeDecompressor()
                 : CPLGetDecompressor(osFilterId.c_str());
         CPLAssert(psFilterDecompressor);
 
@@ -1023,9 +849,15 @@ bool ZarrV2Array::FlushDirtyTile() const
     for (const auto &oFilter : m_oFiltersArray)
     {
         const auto osFilterId = oFilter["id"].ToString();
+        if (osFilterId == "quantize")
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "quantize filter not supported for writing");
+            return false;
+        }
         const auto psFilterCompressor =
             EQUAL(osFilterId.c_str(), "shuffle")
-                ? &gShuffleCompressor
+                ? ZarrGetShuffleCompressor()
                 : CPLGetCompressor(osFilterId.c_str());
         CPLAssert(psFilterCompressor);
 
@@ -2045,7 +1877,8 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                 CPLError(CE_Failure, CPLE_AppDefined, "Missing filter id");
                 return nullptr;
             }
-            if (!EQUAL(osFilterId.c_str(), "shuffle"))
+            if (!EQUAL(osFilterId.c_str(), "shuffle") &&
+                !EQUAL(osFilterId.c_str(), "quantize"))
             {
                 const auto psFilterCompressor =
                     CPLGetCompressor(osFilterId.c_str());
@@ -2130,4 +1963,28 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
     }
 
     return poArray;
+}
+
+/************************************************************************/
+/*                    ZarrV2Group::SetCompressorJson()                  */
+/************************************************************************/
+
+void ZarrV2Array::SetCompressorJson(const CPLJSONObject &oCompressor)
+{
+    m_oCompressorJSon = oCompressor;
+    if (oCompressor.GetType() != CPLJSONObject::Type::Null)
+        m_aosStructuralInfo.SetNameValue("COMPRESSOR",
+                                         oCompressor.ToString().c_str());
+}
+
+/************************************************************************/
+/*                     ZarrV2Group::SetFilters()                        */
+/************************************************************************/
+
+void ZarrV2Array::SetFilters(const CPLJSONArray &oFiltersArray)
+{
+    m_oFiltersArray = oFiltersArray;
+    if (oFiltersArray.Size() > 0)
+        m_aosStructuralInfo.SetNameValue("FILTERS",
+                                         oFiltersArray.ToString().c_str());
 }

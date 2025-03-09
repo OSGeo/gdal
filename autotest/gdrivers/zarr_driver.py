@@ -534,6 +534,33 @@ def test_zarr_read_compression_methods(datasetname, compressor):
         ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
         assert ar
         assert ar.Read() == array.array("b", [1, 2])
+        assert json.loads(ar.GetStructuralInfo()["COMPRESSOR"])["id"] == compressor
+
+
+# Check reading different compression methods
+@pytest.mark.parametrize(
+    "datasetname,compressor",
+    [
+        ("gzip.zarr", "gzip"),
+    ],
+)
+def test_zarr_v3_read_compression_methods(datasetname, compressor):
+
+    compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
+    filename = "data/zarr/v3/" + datasetname
+
+    if compressor not in compressors:
+        with gdal.quiet_errors():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        assert ds is None
+    else:
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar
+        assert ar.Read() == array.array("b", [1, 2])
+        assert json.loads(ar.GetStructuralInfo()["COMPRESSOR"])["name"] == compressor
 
 
 def test_zarr_read_shuffle_filter():
@@ -545,6 +572,9 @@ def test_zarr_read_shuffle_filter():
     ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
     assert ar
     assert ar.Read() == array.array("h", [1, 2])
+    assert json.loads(ar.GetStructuralInfo()["FILTERS"]) == [
+        {"elementsize": 2, "id": "shuffle"}
+    ]
 
 
 def test_zarr_read_shuffle_filter_update(tmp_path):
@@ -564,6 +594,137 @@ def test_zarr_read_shuffle_filter_update(tmp_path):
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
     assert ar.Read() == array.array("h", [3, 4])
+
+
+def test_zarr_read_shuffle_quantize():
+
+    filename = "data/zarr/quantize.zarr"
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+    assert ar.Read() == array.array(
+        "d",
+        [
+            0,
+            0.125,
+            0.1875,
+            0.3125,
+            0.375,
+            0.5,
+            0.625,
+            0.6875,
+            0.8125,
+            0.875,
+            1,
+            1.125,
+            1.1875,
+            1.3125,
+            1.375,
+            1.5,
+            1.625,
+            1.6875,
+            1.8125,
+            1.875,
+            2,
+            2.125,
+            2.1875,
+            2.3125,
+            2.375,
+            2.5,
+            2.625,
+            2.6875,
+            2.8125,
+            2.875,
+            3,
+            3.125,
+            3.1875,
+            3.3125,
+            3.375,
+            3.5,
+            3.625,
+            3.6875,
+            3.8125,
+            3.875,
+            4,
+            4.125,
+            4.1875,
+            4.3125,
+            4.375,
+            4.5,
+            4.625,
+            4.6875,
+            4.8125,
+            4.875,
+            5,
+            5.125,
+            5.1875,
+            5.3125,
+            5.375,
+            5.5,
+            5.625,
+            5.6875,
+            5.8125,
+            5.875,
+            6,
+            6.125,
+            6.1875,
+            6.3125,
+            6.375,
+            6.5,
+            6.625,
+            6.6875,
+            6.8125,
+            6.875,
+            7,
+            7.125,
+            7.1875,
+            7.3125,
+            7.375,
+            7.5,
+            7.625,
+            7.6875,
+            7.8125,
+            7.875,
+            8,
+            8.125,
+            8.1875,
+            8.3125,
+            8.375,
+            8.5,
+            8.625,
+            8.6875,
+            8.8125,
+            8.875,
+            9.0,
+            9.125,
+            9.1875,
+            9.3125,
+            9.375,
+            9.5,
+            9.625,
+            9.6875,
+            9.8125,
+            9.875,
+        ],
+    )
+
+
+def test_zarr_read_shuffle_quantize_update_not_supported():
+
+    filename = "data/zarr/quantize.zarr"
+
+    def write():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        ar.Write(ar.Read())
+
+    with gdal.quiet_errors():
+        write()
+        assert gdal.GetLastErrorMsg() == "quantize filter not supported for writing"
 
 
 @pytest.mark.parametrize("name", ["u1", "u2", "u4", "u8"])

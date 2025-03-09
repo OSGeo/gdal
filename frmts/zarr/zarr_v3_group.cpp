@@ -706,6 +706,12 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     poArray->SetFilename(osFilename);
     poArray->SetDimSeparator(pszDimSeparator);
     poArray->SetDtype(dtype);
+    if (oCodecs.Size() > 0 &&
+        oCodecs[oCodecs.Size() - 1].GetString("name") != "bytes")
+    {
+        poArray->SetStructuralInfo(
+            "COMPRESSOR", oCodecs[oCodecs.Size() - 1].ToString().c_str());
+    }
     if (poCodecs)
         poArray->SetCodecs(std::move(poCodecs));
     poArray->SetUpdatable(true);
