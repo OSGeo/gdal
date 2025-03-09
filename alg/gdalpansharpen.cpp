@@ -1225,13 +1225,17 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
     sExtraArg.dfXSize = nXSize * m_adfPanToMSGT[1];
     sExtraArg.dfYSize = nYSize * m_adfPanToMSGT[5];
     if (sExtraArg.dfXOff + sExtraArg.dfXSize > aMSBands[0]->GetXSize())
-        sExtraArg.dfXOff = aMSBands[0]->GetXSize() - sExtraArg.dfXSize;
+        sExtraArg.dfXSize = aMSBands[0]->GetXSize() - sExtraArg.dfXOff;
     if (sExtraArg.dfYOff + sExtraArg.dfYSize > aMSBands[0]->GetYSize())
-        sExtraArg.dfYOff = aMSBands[0]->GetYSize() - sExtraArg.dfYSize;
+        sExtraArg.dfYSize = aMSBands[0]->GetYSize() - sExtraArg.dfYOff;
     int nSpectralXOff = static_cast<int>(sExtraArg.dfXOff);
     int nSpectralYOff = static_cast<int>(sExtraArg.dfYOff);
     int nSpectralXSize = static_cast<int>(0.49999 + sExtraArg.dfXSize);
     int nSpectralYSize = static_cast<int>(0.49999 + sExtraArg.dfYSize);
+    if (nSpectralXOff + nSpectralXSize > aMSBands[0]->GetXSize())
+        nSpectralXSize = aMSBands[0]->GetXSize() - nSpectralXOff;
+    if (nSpectralYOff + nSpectralYSize > aMSBands[0]->GetYSize())
+        nSpectralYSize = aMSBands[0]->GetYSize() - nSpectralYOff;
     if (nSpectralXSize == 0)
         nSpectralXSize = 1;
     if (nSpectralYSize == 0)
@@ -1378,17 +1382,15 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                     pasJobs[i].dfXSize = sExtraArg.dfXSize;
                     pasJobs[i].dfYSize =
                         (iNextStartLine - iStartLine) * m_adfPanToMSGT[5];
-                    if (pasJobs[i].dfXOff + pasJobs[i].dfXSize >
-                        aMSBands[0]->GetXSize())
+                    if (pasJobs[i].dfXOff + pasJobs[i].dfXSize > nXSizeExtract)
                     {
-                        pasJobs[i].dfXOff =
-                            aMSBands[0]->GetXSize() - pasJobs[i].dfXSize;
+                        pasJobs[i].dfXSize = nYSizeExtract - pasJobs[i].dfXOff;
                     }
                     if (pasJobs[i].dfYOff + pasJobs[i].dfYSize >
                         aMSBands[0]->GetYSize())
                     {
-                        pasJobs[i].dfYOff =
-                            aMSBands[0]->GetYSize() - pasJobs[i].dfYSize;
+                        pasJobs[i].dfYSize =
+                            aMSBands[0]->GetYSize() - pasJobs[i].dfYOff;
                     }
                     pasJobs[i].nXOff = static_cast<int>(pasJobs[i].dfXOff);
                     pasJobs[i].nYOff = static_cast<int>(pasJobs[i].dfYOff);
@@ -1396,6 +1398,14 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                         static_cast<int>(0.4999 + pasJobs[i].dfXSize);
                     pasJobs[i].nYSize =
                         static_cast<int>(0.4999 + pasJobs[i].dfYSize);
+                    if (pasJobs[i].nXOff + pasJobs[i].nXSize > nXSizeExtract)
+                    {
+                        pasJobs[i].nXSize = nXSizeExtract - pasJobs[i].nXOff;
+                    }
+                    if (pasJobs[i].nYOff + pasJobs[i].nYSize > nYSizeExtract)
+                    {
+                        pasJobs[i].nYSize = nYSizeExtract - pasJobs[i].nYOff;
+                    }
                     if (pasJobs[i].nXSize == 0)
                         pasJobs[i].nXSize = 1;
                     if (pasJobs[i].nYSize == 0)
@@ -1413,6 +1423,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
 #ifdef DEBUG_TIMING
                     pasJobs[i].ptv = &tv;
 #endif
+                    pasJobs[i].eErr = CE_Failure;
+
                     ahJobData[i] = &(pasJobs[i]);
                 }
 #ifdef DEBUG_TIMING
@@ -1421,6 +1433,21 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                 poThreadPool->SubmitJobs(PansharpenResampleJobThreadFunc,
                                          ahJobData);
                 poThreadPool->WaitCompletion();
+
+                for (int i = 0; i < nTasks; i++)
+                {
+                    if (pasJobs[i].eErr == CE_Failure)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                                 pasJobs[i].osLastErrorMsg.c_str());
+                        GDALClose(poMEMDS);
+                        VSIFree(pSpectralBuffer);
+                        VSIFree(pUpsampledSpectralBuffer);
+                        VSIFree(pPanBuffer);
+
+                        return CE_Failure;
+                    }
+                }
             }
         }
 
@@ -1613,8 +1640,6 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
 /*                   PansharpenResampleJobThreadFunc()                  */
 /************************************************************************/
 
-// static int acc=0;
-
 void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void *pUserData)
 {
     GDALPansharpenResampleJob *psJob =
@@ -1630,10 +1655,6 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void *pUserData)
                               static_cast<GIntBig>(tv.tv_usec);
 #endif
 
-#if 0
-    for(int i=0;i<1000000;i++)
-        acc += i * i;
-#else
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     // cppcheck-suppress redundantAssignment
@@ -1650,12 +1671,12 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void *pUserData)
     // This call to RasterIO() in a thread to poMEMDS shared between several
     // threads is really risky, but works given the implementation details...
     // Do not do this at home!
-    CPL_IGNORE_RET_VAL(psJob->poMEMDS->RasterIO(
+    psJob->eErr = psJob->poMEMDS->RasterIO(
         GF_Read, psJob->nXOff, psJob->nYOff, psJob->nXSize, psJob->nYSize,
         psJob->pBuffer, psJob->nBufXSize, psJob->nBufYSize, psJob->eDT,
-        psJob->nBandCount, anBands.data(), 0, 0, psJob->nBandSpace,
-        &sExtraArg));
-#endif
+        psJob->nBandCount, anBands.data(), 0, 0, psJob->nBandSpace, &sExtraArg);
+    if (CPLGetLastErrorType() == CE_Failure)
+        psJob->osLastErrorMsg = CPLGetLastErrorMsg();
 
 #ifdef DEBUG_TIMING
     struct timeval tv_end;
