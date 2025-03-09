@@ -164,7 +164,10 @@ class CPL_UNSTABLE_API swq_expr_node
     swq_expr_node *Clone();
 
     void ReplaceBetweenByGEAndLERecurse();
+    void ReplaceInByOrRecurse();
     void PushNotOperationDownToStack();
+
+    void RebalanceAndOr();
 
     swq_node_type eNodeType = SNT_CONSTANT;
     swq_field_type field_type = SWQ_INTEGER;
