@@ -557,6 +557,7 @@ Datums
 dawson
 Daylon
 dBASE
+dbaston
 dbf
 dbfopen
 DBit
