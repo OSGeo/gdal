@@ -42,6 +42,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_overview_delete
    gdal_raster_pipeline
    gdal_raster_reproject
+   gdal_raster_resize
    gdal_raster_stack
    gdal_vector
    gdal_vector_info
@@ -71,6 +72,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_overview_delete_subcommand`: Remove overviews of a raster dataset
     - :ref:`gdal_raster_pipeline_subcommand`: Process a raster dataset
     - :ref:`gdal_raster_reproject_subcommand`: Reproject a raster dataset
+    - :ref:`gdal_raster_resize_subcommand`: Resize a raster dataset without changing the georeferenced extents
     - :ref:`gdal_raster_stack_subcommand`: Combine together input bands into a multi-band output, either virtual (VRT) or materialized.
     - :ref:`gdal_vector_command`: Entry point for vector commands
     - :ref:`gdal_vector_info_subcommand`: Get information on a vector dataset
@@ -78,7 +80,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vector_filter_subcommand`: Filter a vector dataset
     - :ref:`gdal_vector_convert_subcommand`: Convert a vector dataset
     - :ref:`gdal_vector_pipeline_subcommand`: Process a vector dataset
-    - :ref:`gdal_vector_select_subcommand`:
+    - :ref:`gdal_vector_select_subcommand`: Select a subset of fields from a vector dataset.
     - :ref:`gdal_vector_sql_subcommand`: Apply SQL statement(s) to a dataset
 
 

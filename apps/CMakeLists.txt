@@ -22,6 +22,7 @@ add_library(
   gdalalg_raster_overview_delete.cpp
   gdalalg_raster_read.cpp
   gdalalg_raster_reproject.cpp
+  gdalalg_raster_resize.cpp
   gdalalg_raster_stack.cpp
   gdalalg_raster_write.cpp
   gdalalg_vector.cpp

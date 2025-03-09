@@ -15,6 +15,7 @@
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_edit.h"
 #include "gdalalg_raster_reproject.h"
+#include "gdalalg_raster_resize.h"
 #include "gdalalg_raster_write.h"
 
 #include "cpl_conv.h"
@@ -165,6 +166,7 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     m_stepRegistry.Register<GDALRasterClipAlgorithm>();
     m_stepRegistry.Register<GDALRasterEditAlgorithm>();
     m_stepRegistry.Register<GDALRasterReprojectAlgorithm>();
+    m_stepRegistry.Register<GDALRasterResizeAlgorithm>();
 }
 
 /************************************************************************/
