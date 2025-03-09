@@ -62,3 +62,40 @@ def test_gdalalg_raster_reproject_failure(tmp_vsimem):
                 out_filename,
             ],
         )
+
+
+def test_gdalalg_raster_reproject_size(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    pipeline = get_reproject_alg()
+    pipeline.ParseRunAndFinalize(
+        [
+            "--size=10,0",
+            "../gcore/data/byte.tif",
+            out_filename,
+        ],
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.RasterXSize == 10
+        assert ds.RasterYSize == 10
+
+
+def test_gdalalg_raster_reproject_bbox_crs(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    pipeline = get_reproject_alg()
+    pipeline.ParseRunAndFinalize(
+        [
+            "--bbox=-117.638051657173,33.8904636339659,-117.627303823822,33.8995379597727",
+            "--bbox-crs=EPSG:4267",
+            "../gcore/data/byte.tif",
+            out_filename,
+        ],
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.RasterXSize == 17
+        assert ds.RasterYSize == 17
