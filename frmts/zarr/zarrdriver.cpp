@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cinttypes>
 #include <limits>
 
 #ifdef HAVE_BLOSC
@@ -373,36 +374,42 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
         if (aosArrays.empty())
             return nullptr;
 
-        if (aosArrays.size() == 1)
+        const bool bListAllArrays = CPLTestBool(CSLFetchNameValueDef(
+            poOpenInfo->papszOpenOptions, "LIST_ALL_ARRAYS", "NO"));
+
+        if (!bListAllArrays)
         {
-            poMainArray = poRG->OpenMDArrayFromFullname(aosArrays[0]);
-            if (poMainArray)
-                osMainArray = poMainArray->GetFullName();
-        }
-        else  // at least 2 arrays
-        {
-            for (const auto &osArrayName : aosArrays)
+            if (aosArrays.size() == 1)
             {
-                auto poArray = poRG->OpenMDArrayFromFullname(osArrayName);
-                if (poArray && poArray->GetDimensionCount() >= 2)
+                poMainArray = poRG->OpenMDArrayFromFullname(aosArrays[0]);
+                if (poMainArray)
+                    osMainArray = poMainArray->GetFullName();
+            }
+            else  // at least 2 arrays
+            {
+                for (const auto &osArrayName : aosArrays)
                 {
-                    if (osMainArray.empty())
+                    auto poArray = poRG->OpenMDArrayFromFullname(osArrayName);
+                    if (poArray && poArray->GetDimensionCount() >= 2)
                     {
-                        poMainArray = std::move(poArray);
-                        osMainArray = osArrayName;
-                    }
-                    else
-                    {
-                        poMainArray.reset();
-                        osMainArray.clear();
-                        break;
+                        if (osMainArray.empty())
+                        {
+                            poMainArray = std::move(poArray);
+                            osMainArray = osArrayName;
+                        }
+                        else
+                        {
+                            poMainArray.reset();
+                            osMainArray.clear();
+                            break;
+                        }
                     }
                 }
             }
-        }
 
-        if (poMainArray)
-            GetXYDimensionIndices(poMainArray, poOpenInfo, iXDim, iYDim);
+            if (poMainArray)
+                GetXYDimensionIndices(poMainArray, poOpenInfo, iXDim, iYDim);
+        }
 
         int iCountSubDS = 1;
 
@@ -477,17 +484,61 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
-        if (aosArrays.size() >= 2)
+        if (bListAllArrays || aosArrays.size() >= 2)
         {
             for (size_t i = 0; i < aosArrays.size(); ++i)
             {
-                poDS->m_aosSubdatasets.AddString(
-                    CPLSPrintf("SUBDATASET_%d_NAME=ZARR:\"%s\":%s", iCountSubDS,
-                               osFilename.c_str(), aosArrays[i].c_str()));
-                poDS->m_aosSubdatasets.AddString(
-                    CPLSPrintf("SUBDATASET_%d_DESC=Array %s", iCountSubDS,
-                               aosArrays[i].c_str()));
-                ++iCountSubDS;
+                auto poArray = poRG->OpenMDArrayFromFullname(aosArrays[i]);
+                if (poArray)
+                {
+                    bool bAddSubDS = false;
+                    if (bListAllArrays)
+                    {
+                        bAddSubDS = true;
+                    }
+                    else if (poArray->GetDimensionCount() >= 2)
+                    {
+                        bAddSubDS = true;
+                    }
+                    if (bAddSubDS)
+                    {
+                        std::string osDim;
+                        const auto &apoDims = poArray->GetDimensions();
+                        for (const auto &poDim : apoDims)
+                        {
+                            if (!osDim.empty())
+                                osDim += "x";
+                            osDim += CPLSPrintf(
+                                "%" PRIu64,
+                                static_cast<uint64_t>(poDim->GetSize()));
+                        }
+
+                        std::string osDataType;
+                        if (poArray->GetDataType().GetClass() == GEDTC_STRING)
+                        {
+                            osDataType = "string type";
+                        }
+                        else if (poArray->GetDataType().GetClass() ==
+                                 GEDTC_NUMERIC)
+                        {
+                            osDataType = GDALGetDataTypeName(
+                                poArray->GetDataType().GetNumericDataType());
+                        }
+                        else
+                        {
+                            osDataType = "compound type";
+                        }
+
+                        poDS->m_aosSubdatasets.AddString(CPLSPrintf(
+                            "SUBDATASET_%d_NAME=ZARR:\"%s\":%s", iCountSubDS,
+                            osFilename.c_str(), aosArrays[i].c_str()));
+                        poDS->m_aosSubdatasets.AddString(CPLSPrintf(
+                            "SUBDATASET_%d_DESC=[%s] %s (%s)", iCountSubDS,
+                            osDim.c_str(), aosArrays[i].c_str(),
+                            osDataType.c_str()));
+                        ++iCountSubDS;
+                    }
+                }
             }
         }
     }

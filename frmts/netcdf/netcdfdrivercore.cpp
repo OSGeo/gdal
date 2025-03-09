@@ -329,6 +329,9 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
         "<OpenOptionList>"
+        "   <Option name='LIST_ALL_ARRAYS' type='boolean' "
+        "description='Whether to list all arrays, and not only those whose "
+        "dimension count is 2 or more' default='NO'/>"
         "   <Option name='HONOUR_VALID_RANGE' type='boolean' scope='raster' "
         "description='Whether to set to nodata pixel values outside of the "
         "validity range' default='YES'/>"
