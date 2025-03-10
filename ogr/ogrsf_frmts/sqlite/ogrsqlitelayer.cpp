@@ -565,9 +565,10 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
                 {
                     OGRSQLiteGeomFormat eGeomFormat = OSGF_None;
                     CPLPushErrorHandler(CPLQuietErrorHandler);
-                    OGRGeometry *poGeometry = nullptr;
-                    if (OGRGeometryFactory::createFromWkt(
-                            pszText, nullptr, &poGeometry) == OGRERR_NONE)
+
+                    auto [poGeometry, eErr] =
+                        OGRGeometryFactory::createFromWkt(pszText);
+                    if (eErr == OGRERR_NONE)
                     {
                         eGeomFormat = OSGF_WKT;
                         auto poGeomFieldDefn =
@@ -579,7 +580,6 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
                     }
                     CPLPopErrorHandler();
                     CPLErrorReset();
-                    delete poGeometry;
                     if (eGeomFormat != OSGF_None)
                         continue;
                 }

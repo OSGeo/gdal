@@ -1342,10 +1342,9 @@ GDALGridOptionsNew(char **papszArgv,
                       STARTS_WITH_CI(osVal.c_str(), "MULTIPOLYGON")) &&
                      VSIStatL(osVal.c_str(), &sStat) != 0)
             {
-                OGRGeometry *poGeom = nullptr;
-                OGRGeometryFactory::createFromWkt(osVal.c_str(), nullptr,
-                                                  &poGeom);
-                psOptions->poClipSrc.reset(poGeom);
+                psOptions->poClipSrc =
+                    OGRGeometryFactory::createFromWkt(osVal.c_str(), nullptr)
+                        .first;
                 if (psOptions->poClipSrc == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,

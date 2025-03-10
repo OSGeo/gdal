@@ -46,7 +46,7 @@ class OGRVRTGeomFieldProps
     const OGRSpatialReference *poSRS;
 
     bool bSrcClip;
-    OGRGeometry *poSrcRegion;
+    std::unique_ptr<OGRGeometry> poSrcRegion;
 
     // Geometry interpretation related.
     OGRVRTGeometryStyle eGeometryStyle;

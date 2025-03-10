@@ -822,9 +822,8 @@ static int TestCreateLayer(GDALDriver *poDriver, OGRwkbGeometryType eGeomType)
         const char *pszWKT = GetWKT(eGeomType);
         if (pszWKT != nullptr)
         {
-            OGRGeometry *poGeom = nullptr;
-            OGRGeometryFactory::createFromWkt(pszWKT, nullptr, &poGeom);
-            poFeature->SetGeometryDirectly(poGeom);
+            auto [poGeom, _] = OGRGeometryFactory::createFromWkt(pszWKT);
+            poFeature->SetGeometry(std::move(poGeom));
         }
 
         CPLErrorReset();
@@ -864,9 +863,8 @@ static int TestCreateLayer(GDALDriver *poDriver, OGRwkbGeometryType eGeomType)
         pszWKT = GetWKT(eOtherGeomType);
         if (pszWKT != nullptr)
         {
-            OGRGeometry *poGeom = nullptr;
-            OGRGeometryFactory::createFromWkt(pszWKT, nullptr, &poGeom);
-            poFeature->SetGeometryDirectly(poGeom);
+            auto [poGeom, _] = OGRGeometryFactory::createFromWkt(pszWKT);
+            poFeature->SetGeometry(std::move(poGeom));
         }
 
         CPLErrorReset();
@@ -915,9 +913,8 @@ static int TestCreateLayer(GDALDriver *poDriver, OGRwkbGeometryType eGeomType)
             pszWKT = GetWKT(eGeomType);
             if (pszWKT != nullptr)
             {
-                OGRGeometry *poGeom = nullptr;
-                OGRGeometryFactory::createFromWkt(pszWKT, nullptr, &poGeom);
-                poFeature->SetGeometryDirectly(poGeom);
+                auto [poGeom, _] = OGRGeometryFactory::createFromWkt(pszWKT);
+                poFeature->SetGeometry(std::move(poGeom));
             }
             CPLErrorReset();
             CPLPushErrorHandler(CPLQuietErrorHandler);

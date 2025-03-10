@@ -1401,40 +1401,37 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                 const char *pszStr = papszTokens[iAttr];
                 while (*pszStr == ' ')
                     pszStr++;
-                OGRGeometry *poGeom = nullptr;
+                std::unique_ptr<OGRGeometry> poGeom = nullptr;
+                OGRErr eErr;
 
                 if (EQUAL(poGeomFieldDefn->GetNameRef(), ""))
                 {
-                    if (OGRGeometryFactory::createFromWkt(
-                            pszStr, nullptr, &poGeom) != OGRERR_NONE)
+                    std::tie(poGeom, eErr) =
+                        OGRGeometryFactory::createFromWkt(pszStr);
+                    if (eErr != OGRERR_NONE)
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Ignoring invalid WKT: %s", pszStr);
-                        delete poGeom;
-                        poGeom = nullptr;
                     }
                 }
                 else
                 {
                     CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
 
-                    if (OGRGeometryFactory::createFromWkt(
-                            pszStr, nullptr, &poGeom) != OGRERR_NONE)
-                    {
-                        delete poGeom;
-                        poGeom = nullptr;
-                    }
+                    std::tie(poGeom, eErr) =
+                        OGRGeometryFactory::createFromWkt(pszStr);
 
                     if (!poGeom && *pszStr == '{')
                     {
-                        poGeom = OGRGeometry::FromHandle(
-                            OGR_G_CreateGeometryFromJson(pszStr));
+                        poGeom.reset(OGRGeometry::FromHandle(
+                            OGR_G_CreateGeometryFromJson(pszStr)));
                     }
                     else if (!poGeom && ((*pszStr >= '0' && *pszStr <= '9') ||
                                          (*pszStr >= 'a' && *pszStr <= 'z') ||
                                          (*pszStr >= 'A' && *pszStr <= 'Z')))
                     {
-                        poGeom = OGRGeometryFromHexEWKB(pszStr, nullptr, FALSE);
+                        poGeom.reset(
+                            OGRGeometryFromHexEWKB(pszStr, nullptr, FALSE));
                     }
                 }
 
@@ -1442,7 +1439,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                 {
                     poGeom->assignSpatialReference(
                         poGeomFieldDefn->GetSpatialRef());
-                    poFeature->SetGeomFieldDirectly(iGeom, poGeom);
+                    poFeature->SetGeomField(iGeom, std::move(poGeom));
                 }
             }
 
