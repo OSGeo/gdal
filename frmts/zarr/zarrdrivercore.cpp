@@ -79,6 +79,9 @@ void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
         "<OpenOptionList>"
+        "   <Option name='LIST_ALL_ARRAYS' type='boolean' "
+        "description='Whether to list all arrays, and not only those whose "
+        "dimension count is 2 or more' default='NO'/>"
         "   <Option name='USE_ZMETADATA' type='boolean' description='Whether "
         "to use consolidated metadata from .zmetadata' default='YES'/>"
         "   <Option name='CACHE_TILE_PRESENCE' type='boolean' "

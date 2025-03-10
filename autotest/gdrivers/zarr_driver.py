@@ -1334,18 +1334,33 @@ def test_zarr_read_classic():
         assert gdal.Open("ZARR:data/zarr/order_f_u1_3d.zarr:/order_f_u1_3d:2") is None
         assert gdal.Open(subds[0][0] + ":0") is None
 
-    ds = gdal.Open("data/zarr/v3/test.zr3")
+    ds = gdal.OpenEx("data/zarr/v3/test.zr3", open_options=["LIST_ALL_ARRAYS=YES"])
     assert ds
     subds = ds.GetSubDatasets()
     assert set(subds) == set(
         [
-            ('ZARR:"data/zarr/v3/test.zr3":/ar', "Array /ar"),
-            ('ZARR:"data/zarr/v3/test.zr3":/marvin/android', "Array /marvin/android"),
+            ('ZARR:"data/zarr/v3/test.zr3":/ar', "[2] /ar (Byte)"),
+            (
+                'ZARR:"data/zarr/v3/test.zr3":/marvin/android',
+                "[5x4] /marvin/android (Byte)",
+            ),
         ]
     )
     ds = gdal.Open('ZARR:"data/zarr/v3/test.zr3":/ar')
     assert ds
     assert ds.ReadRaster() == array.array("b", [1, 2])
+
+    ds = gdal.OpenEx("data/zarr/v3/test.zr3")
+    assert ds
+    subds = ds.GetSubDatasets()
+    assert set(subds) == set(
+        [
+            (
+                'ZARR:"data/zarr/v3/test.zr3":/marvin/android',
+                "[5x4] /marvin/android (Byte)",
+            ),
+        ]
+    )
 
 
 def test_zarr_read_classic_2d():
@@ -1387,18 +1402,26 @@ def test_zarr_read_classic_2d_with_unrelated_auxiliary_1D_arrays():
             rg.CreateMDArray("y", [dim1], dt)
 
         create()
+
         ds = gdal.Open("/vsimem/test.zarr")
         assert ds is not None
         assert ds.RasterYSize == 2
         assert ds.RasterXSize == 3
         assert set(ds.GetSubDatasets()) == set(
+            [('ZARR:"/vsimem/test.zarr":/main_array', "[2x3] /main_array (Float64)")]
+        )
+        ds = None
+
+        ds = gdal.OpenEx("/vsimem/test.zarr", open_options=["LIST_ALL_ARRAYS=YES"])
+        assert set(ds.GetSubDatasets()) == set(
             [
-                ('ZARR:"/vsimem/test.zarr":/main_array', "Array /main_array"),
-                ('ZARR:"/vsimem/test.zarr":/x', "Array /x"),
-                ('ZARR:"/vsimem/test.zarr":/y', "Array /y"),
+                ('ZARR:"/vsimem/test.zarr":/main_array', "[2x3] /main_array (Float64)"),
+                ('ZARR:"/vsimem/test.zarr":/x', "[2] /x (Float64)"),
+                ('ZARR:"/vsimem/test.zarr":/y', "[3] /y (Float64)"),
             ]
         )
         ds = None
+
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
 
