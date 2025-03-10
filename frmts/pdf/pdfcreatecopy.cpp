@@ -690,8 +690,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteSRS_ISO32000(GDALDataset *poSrcDS,
         pszNEATLINE = poSrcDS->GetMetadataItem("NEATLINE");
     if (bHasGT && pszNEATLINE != nullptr && pszNEATLINE[0] != '\0')
     {
-        OGRGeometry *poGeom = nullptr;
-        OGRGeometryFactory::createFromWkt(pszNEATLINE, nullptr, &poGeom);
+        auto [poGeom, _] = OGRGeometryFactory::createFromWkt(pszNEATLINE);
         if (poGeom != nullptr &&
             wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
         {
@@ -748,7 +747,6 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteSRS_ISO32000(GDALDataset *poSrcDS,
                 }
             }
         }
-        delete poGeom;
     }
 
     if (pasGCPList)

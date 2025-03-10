@@ -683,8 +683,8 @@ bool GDALPDFComposerWriter::GenerateGeoreferencing(
     std::vector<xyPair> aBoundingPolygon;
     if (pszBoundingPolygon)
     {
-        OGRGeometry *poGeom = nullptr;
-        OGRGeometryFactory::createFromWkt(pszBoundingPolygon, nullptr, &poGeom);
+        auto [poGeom, _] =
+            OGRGeometryFactory::createFromWkt(pszBoundingPolygon);
         if (poGeom && poGeom->getGeometryType() == wkbPolygon)
         {
             auto poPoly = poGeom->toPolygon();
@@ -707,7 +707,6 @@ bool GDALPDFComposerWriter::GenerateGeoreferencing(
                 }
             }
         }
-        delete poGeom;
     }
 
     const auto pszSRS = CPLGetXMLValue(psGeoreferencing, "SRS", nullptr);
