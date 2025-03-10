@@ -15,6 +15,10 @@ import os
 import shutil
 import sys
 
+build_dir = os.environ.get("BUILDDIR", "../build")
+if build_dir == "build":
+    build_dir = "../build"
+
 sys.path.insert(0, os.path.abspath("_extensions"))
 
 
@@ -167,7 +171,7 @@ html_theme_options = {
 html_static_path = ["_static"]
 
 # For generated content and robots.txt
-html_extra_path = ["../build/html_extra", "extra_path"]
+html_extra_path = [os.path.join(build_dir, "html_extra"), "extra_path"]
 
 # If true, links to the reST sources are added to the pages.
 html_show_sourcelink = False
@@ -734,9 +738,6 @@ latex_logo = "../images/gdalicon_big.png"
 
 # Setup the breathe extension
 
-build_dir = os.environ.get("BUILDDIR", "../build")
-if build_dir == "build":
-    build_dir = "../build"
 breathe_projects = {"api": os.path.join(build_dir, "xml")}
 breathe_default_project = "api"
 

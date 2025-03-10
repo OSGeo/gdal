@@ -9,6 +9,7 @@ sphinx-markdown-tables
 sphinx_rtd_theme
 sphinxcontrib-bibtex
 sphinxcontrib-jquery
+sphinx-rtd-theme >= 3.0.0
 # We use a slightly forked version
 # sphinxcontrib-programoutput
 sphinxcontrib-spelling
