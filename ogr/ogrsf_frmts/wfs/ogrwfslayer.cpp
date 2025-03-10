@@ -1456,6 +1456,7 @@ OGRErr OGRWFSLayer::SetAttributeFilter(const char *pszFilter)
     {
         swq_expr_node *poNode = (swq_expr_node *)m_poAttrQuery->GetSWQExpr();
         poNode->ReplaceBetweenByGEAndLERecurse();
+        poNode->ReplaceInByOrRecurse();
 
         int bNeedsNullCheck = FALSE;
         int nVersion = (strcmp(poDS->GetVersion(), "1.0.0") == 0) ? 100
