@@ -39,6 +39,7 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
         .SetChoices("nearest", "bilinear", "cubic", "cubicspline", "lanczos",
                     "average", "rms", "mode", "min", "max", "med", "q1", "q3",
                     "sum")
+        .SetDefault("nearest")
         .SetHiddenChoices("near");
 
     auto &resArg =

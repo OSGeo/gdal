@@ -87,12 +87,24 @@ Details for options can be found in :ref:`gdal_raster_edit_subcommand`.
     Options:
       -s, --src-crs <SRC-CRS>                              Source CRS
       -d, --dst-crs <DST-CRS>                              Destination CRS
-      -r, --resampling <RESAMPLING>                        Resampling method. RESAMPLING=near|bilinear|cubic|cubicspline|lanczos|average|rms|mode|min|max|med|q1|q3|sum
+      -r, --resampling <RESAMPLING>                        Resampling method. RESAMPLING=near|bilinear|cubic|cubicspline|lanczos|average|rms|mode|min|max|med|q1|q3|sum (default: nearest)
       --resolution <xres>,<yres>                           Target resolution (in destination CRS units)
       --bbox <xmin>,<ymin>,<xmax>,<ymax>                   Target bounding box (in destination CRS units)
       --target-aligned-pixels                              Round target extent to target resolution
 
 Details for options can be found in :ref:`gdal_raster_reproject_subcommand`.
+
+* resize [OPTIONS]
+
+.. code-block::
+
+    Resize a raster dataset without changing the georeferenced extents.
+
+    Options:
+      --size <width>,<height>                              Target size in pixels [required]
+      -r, --resampling <RESAMPLING>                        Resampling method. RESAMPLING=nearest|bilinear|cubic|cubicspline|lanczos|average|mode (default: nearest)
+
+Details for options can be found in :ref:`gdal_raster_resize_subcommand`.
 
 * write [OPTIONS] <OUTPUT>
 
