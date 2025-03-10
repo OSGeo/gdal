@@ -1338,6 +1338,7 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
         if (bGotApproximateLayerDefn)
         {
             poNewFeature->SetFrom(poSrcFeature);
+            poNewFeature->SetFID(poSrcFeature->GetFID());
 
             /* Client-side attribute filtering. */
             if (m_poAttrQuery != nullptr && osWFSWhere.empty() &&
@@ -1350,6 +1351,7 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
         }
         else
         {
+            poNewFeature->SetFID(poSrcFeature->GetFID());
             for (int iField = 0; iField < poFeatureDefn->GetFieldCount();
                  iField++)
             {
@@ -1359,7 +1361,6 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
             poNewFeature->SetStyleString(poSrcFeature->GetStyleString());
             poNewFeature->SetGeometryDirectly(poSrcFeature->StealGeometry());
         }
-        poNewFeature->SetFID(poSrcFeature->GetFID());
         poGeom = poNewFeature->GetGeometryRef();
 
         /* FIXME? I don't really know what we should do with WFS 1.1.0 */
@@ -1722,7 +1723,7 @@ GIntBig OGRWFSLayer::GetFeatureCount(int bForce)
     if (nFeatures >= 0)
         return nFeatures;
 
-    if (TestCapability(OLCFastFeatureCount))
+    if (poBaseLayer && TestCapability(OLCFastFeatureCount))
         return poBaseLayer->GetFeatureCount(bForce);
 
     if ((m_poAttrQuery == nullptr || !osWFSWhere.empty()) &&
@@ -1737,14 +1738,18 @@ GIntBig OGRWFSLayer::GetFeatureCount(int bForce)
     /* feature, and then query again OLCFastFeatureCount on the */
     /* base layer. In case the WFS response would contain the */
     /* number of features */
-    if (poBaseLayer == nullptr)
+    if (poBaseLayer == nullptr &&
+        (m_poAttrQuery == nullptr || !osWFSWhere.empty()))
     {
         ResetReading();
         OGRFeature *poFeature = GetNextFeature();
         delete poFeature;
         ResetReading();
 
-        if (TestCapability(OLCFastFeatureCount))
+        if (nFeatures >= 0)
+            return nFeatures;
+
+        if (poBaseLayer && TestCapability(OLCFastFeatureCount))
             return poBaseLayer->GetFeatureCount(bForce);
     }
 
