@@ -10,7 +10,7 @@
     The creation options available vary by format driver, and some
     simple formats have no creation options at all. A list of options
     supported for a format can be listed with the
-    :ref:`--formats <raster_common_options_formats>`
+    :ref:`--format <raster_common_options_format>`
     command line option but the documentation for the format is the
     definitive source of information on driver creation options.
     See :ref:`raster_drivers` format
