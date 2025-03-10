@@ -140,29 +140,32 @@ typedef struct
     CPLErr eErr;
 } GDALPansharpenJob;
 
-typedef struct
+struct GDALPansharpenResampleJob
 {
-    GDALDataset *poMEMDS;
-    int nXOff;
-    int nYOff;
-    int nXSize;
-    int nYSize;
-    double dfXOff;
-    double dfYOff;
-    double dfXSize;
-    double dfYSize;
-    void *pBuffer;
-    GDALDataType eDT;
-    int nBufXSize;
-    int nBufYSize;
-    int nBandCount;
-    GDALRIOResampleAlg eResampleAlg;
-    GSpacing nBandSpace;
+    GDALDataset *poMEMDS = nullptr;
+    int nXOff = 0;
+    int nYOff = 0;
+    int nXSize = 0;
+    int nYSize = 0;
+    double dfXOff = 0;
+    double dfYOff = 0;
+    double dfXSize = 0;
+    double dfYSize = 0;
+    void *pBuffer = nullptr;
+    GDALDataType eDT = GDT_Unknown;
+    int nBufXSize = 0;
+    int nBufYSize = 0;
+    int nBandCount = 0;
+    GDALRIOResampleAlg eResampleAlg = GRIORA_NearestNeighbour;
+    GSpacing nBandSpace = 0;
 
 #ifdef DEBUG_TIMING
-    struct timeval *ptv;
+    struct timeval *ptv = nullptr;
 #endif
-} GDALPansharpenResampleJob;
+
+    CPLErr eErr = CE_Failure;
+    std::string osLastErrorMsg{};
+};
 
 class CPLWorkerThreadPool;
 
