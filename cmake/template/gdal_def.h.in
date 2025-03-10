@@ -21,9 +21,6 @@
 /* Define if gdal use geos*/
 #cmakedefine GDAL_USE_GEOS
 
-/* Define if gdal use opencl*/
-#cmakedefine GDAL_USE_OPENCL
-
 /* Define if gdal use armadillo*/
 #cmakedefine GDAL_USE_ARMADILLO
 
