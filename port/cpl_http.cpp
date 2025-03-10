@@ -618,7 +618,8 @@ static double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay,
               (strstr(pszCurlError, "Connection timed out") ||
                strstr(pszCurlError, "Operation timed out") ||
                strstr(pszCurlError, "Connection reset by peer") ||
-               strstr(pszCurlError, "Connection was reset"))))
+               strstr(pszCurlError, "Connection was reset") ||
+               strstr(pszCurlError, "SSL connection timeout"))))
     {
         bRetry = true;
     }
