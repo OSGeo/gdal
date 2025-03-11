@@ -30,8 +30,8 @@ struct HomographyTransformInfo
 {
     GDALTransformerInfo sTI{};
 
-    double poForward[9]{};
-    double poReverse[9]{};
+    double padfForward[9]{};
+    double padfReverse[9]{};
 
     volatile int nRefCount{};
 };
@@ -62,9 +62,9 @@ static void *GDALCreateSimilarHomographyTransformer(void *hTransformArg,
         for (int i = 0; i < 3; i++)
         {
             homography[3 * i] =
-                psInfo->poForward[3 * i] / dfRatioX;  //TODO check order
-            homography[3 * i + 1] = psInfo->poForward[3 * i + 1] / dfRatioY;
-            homography[3 * i + 2] = psInfo->poForward[3 * i + 2];
+                psInfo->padfForward[3 * i] / dfRatioX;  //TODO check order
+            homography[3 * i + 1] = psInfo->padfForward[3 * i + 1] / dfRatioY;
+            homography[3 * i + 2] = psInfo->padfForward[3 * i + 2];
         }
         psInfo = static_cast<HomographyTransformInfo *>(
             GDALCreateHomographyTransformer(homography));
@@ -104,8 +104,8 @@ void *GDALCreateHomographyTransformer(double adfHomography[9])
 
     psInfo->nRefCount = 1;
 
-    memcpy(psInfo->poForward, adfHomography, 9 * sizeof(double));
-    if (GDALInvHomography(psInfo->poForward, psInfo->poReverse))
+    memcpy(psInfo->padfForward, adfHomography, 9 * sizeof(double));
+    if (GDALInvHomography(psInfo->padfForward, psInfo->padfReverse))
     {
         return psInfo;
     }
@@ -501,7 +501,7 @@ int GDALHomographyTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
     HomographyTransformInfo *psInfo =
         static_cast<HomographyTransformInfo *>(pTransformArg);
 
-    double *homography = bDstToSrc ? psInfo->poReverse : psInfo->poForward;
+    double *homography = bDstToSrc ? psInfo->padfReverse : psInfo->padfForward;
     for (int i = 0; i < nPointCount; i++)
     {
         double wx = homography[0] + x[i] * homography[1] + y[i] * homography[2];
@@ -539,9 +539,9 @@ CPLXMLNode *GDALSerializeHomographyTransformer(void *pTransformArg)
     CPLsnprintf(
         szWork, sizeof(szWork),
         "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
-        psInfo->poForward[0], psInfo->poForward[1], psInfo->poForward[2],
-        psInfo->poForward[3], psInfo->poForward[4], psInfo->poForward[5],
-        psInfo->poForward[6], psInfo->poForward[7], psInfo->poForward[8]);
+        psInfo->padfForward[0], psInfo->padfForward[1], psInfo->padfForward[2],
+        psInfo->padfForward[3], psInfo->padfForward[4], psInfo->padfForward[5],
+        psInfo->padfForward[6], psInfo->padfForward[7], psInfo->padfForward[8]);
     CPLCreateXMLElementAndValue(psTree, "Homography", szWork);
 
     return psTree;
@@ -569,16 +569,16 @@ void *GDALDeserializeHomographyTransformer(CPLXMLNode *psTree)
     /* -------------------------------------------------------------------- */
     /*      Homography                                                */
     /* -------------------------------------------------------------------- */
-    double poForward[9];
+    double padfForward[9];
     if (CPLGetXMLNode(psTree, "Homography") != nullptr)
     {
         GDALDeserializeHomography(CPLGetXMLValue(psTree, "Homography", ""),
-                                  poForward);
+                                  padfForward);
 
         /* -------------------------------------------------------------------- */
         /*      Generate transformation.                                        */
         /* -------------------------------------------------------------------- */
-        void *pResult = GDALCreateHomographyTransformer(poForward);
+        void *pResult = GDALCreateHomographyTransformer(padfForward);
 
         return pResult;
     }
