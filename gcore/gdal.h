@@ -1194,6 +1194,17 @@ void CPL_DLL CPL_STDCALL GDALApplyGeoTransform(const double *, double, double,
 void CPL_DLL GDALComposeGeoTransforms(const double *padfGeoTransform1,
                                       const double *padfGeoTransform2,
                                       double *padfGeoTransformOut);
+int CPL_DLL CPL_STDCALL
+GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPs,
+                     double *padfHomography) CPL_WARN_UNUSED_RESULT;
+int CPL_DLL CPL_STDCALL GDALInvHomography(const double *padfHomographyIn,
+                                          double *padfInvHomographyOut)
+    CPL_WARN_UNUSED_RESULT;
+void CPL_DLL CPL_STDCALL GDALApplyHomography(const double *, double, double,
+                                             double *, double *);
+void CPL_DLL GDALComposeHomographies(const double *padfHomography1,
+                                     const double *padfHomography2,
+                                     double *padfHomographyOut);
 
 /* ==================================================================== */
 /*      major objects (dataset, and, driver, drivermanager).            */
