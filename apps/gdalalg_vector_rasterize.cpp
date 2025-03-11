@@ -49,7 +49,7 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
     AddArg("burn-value", 0, _("Burn value"), &m_burnValues);
     AddArg("attribute-name", 'a', _("Attribute name"), &m_attributeName);
     AddArg("3d", 0,
-           _("Indicates that a burn value should be extracted from the " Z
+           _("Indicates that a burn value should be extracted from the Z"
              " values of the feature."),
            &m_3d);
     AddArg("add", 0, _("Add to existing raster"), &m_add).SetDefault(false);
@@ -63,12 +63,39 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
     AddArg("nodata", 0, _("Assign a specified nodata value to output bands"),
            &m_nodata);
     AddArg("init", 0, _("Pre-initialize output bands with specified value"),
-           &m_init);
+           &m_initValues);
     AddArg("srs", 0, _("Override the projection for the output file"), &m_srs);
     AddArg("transformer-option", 0,
            _("Set a transformer option suitable to pass to "
              "GDALCreateGenImgProjTransformer2"),
-           &m_transformerOption);
+           &m_transformerOption)
+        .SetMetaVar("<NAME>=<VALUE>");
+    AddArg("target-extent", 0, _("Set the target georeferenced extent"),
+           &m_targetExtent)
+        .SetMinCount(4)
+        .SetMaxCount(4)
+        .SetMetaVar("<xmin> <ymin> <xmax> <ymax>");
+    AddArg("target-resolution", 0, _("Set the target resolution"),
+           &m_targetResolution)
+        .SetMinCount(2)
+        .SetMaxCount(2)
+        .SetMetaVar("<xres> <yres>")
+        .SetMutualExclusionGroup("target-size-or-resoulution");
+    AddArg("tap", 0,
+           _("(target aligned pixels) Align the coordinates of the extent of "
+             "the output file to the values of the target-resolution"),
+           &m_tap);
+    AddArg("target-size", 0, _("Set the target size in pixels and lines"),
+           &m_targetSize)
+        .SetMinCount(2)
+        .SetMaxCount(2)
+        .SetMetaVar("<xsize> <ysize>")
+        .SetMutualExclusionGroup("target-size-or-resoulution");
+    AddArg("optimization", 0,
+           _("Force the algorithm used (results are identical)."),
+           &m_optimization)
+        .SetChoices("AUTO", "RASTER", "VECTOR")
+        .SetDefault("AUTO");
 }
 
 /************************************************************************/
@@ -81,25 +108,13 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     CPLAssert(m_inputDataset.GetDatasetRef());
 
     CPLStringList aosOptions;
-    aosOptions.AddString("--invoked-from-gdal-vector-rasterize");
-    if (!m_overwrite)
-    {
-        aosOptions.AddString("--no-overwrite");
-    }
-    if (m_overwriteLayer)
-    {
-        aosOptions.AddString("-overwrite");
-    }
-    if (m_appendLayer)
-    {
-        aosOptions.AddString("-append");
-    }
+
     if (!m_outputFormat.empty())
     {
         aosOptions.AddString("-of");
         aosOptions.AddString(m_outputFormat.c_str());
     }
-    for (const auto &co : m_creationOptions)
+    for (const auto &co : m_datasetCreationOptions)
     {
         aosOptions.AddString("-dsco");
         aosOptions.AddString(co.c_str());
@@ -109,35 +124,121 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         aosOptions.AddString("-lco");
         aosOptions.AddString(co.c_str());
     }
-    if (!m_outputLayerName.empty())
-    {
-        aosOptions.AddString("-nln");
-        aosOptions.AddString(m_outputLayerName.c_str());
-    }
+
     if (pfnProgress && pfnProgress != GDALDummyProgress)
     {
         aosOptions.AddString("-progress");
     }
 
-    // Must be last, as positional
-    for (const auto &name : m_inputLayerNames)
+    if (m_bands.size())
     {
-        aosOptions.AddString(name.c_str());
+        for (int band : m_bands)
+        {
+            aosOptions.AddString("-b");
+            aosOptions.AddString(CPLSPrintf("%d", band));
+        }
     }
 
-    GDALVectorTranslateOptions *psOptions =
-        GDALVectorTranslateOptionsNew(aosOptions.List(), nullptr);
+    if (m_invert)
+    {
+        aosOptions.AddString("-i");
+    }
 
-    GDALVectorTranslateOptionsSetProgress(psOptions, pfnProgress,
-                                          pProgressData);
+    if (m_allTouched)
+    {
+        aosOptions.AddString("-at");
+    }
+
+    if (m_burnValues.size())
+    {
+        for (double burnValue : m_burnValues)
+        {
+            aosOptions.AddString("-burn");
+            aosOptions.AddString(CPLSPrintf("%.15g", burnValue));
+        }
+    }
+
+    if (!m_attributeName.empty())
+    {
+        aosOptions.AddString("-a");
+        aosOptions.AddString(m_attributeName.c_str());
+    }
+
+    if (m_3d)
+    {
+        aosOptions.AddString("-3d");
+    }
+
+    if (m_add)
+    {
+        aosOptions.AddString("-add");
+    }
+
+    if (!m_layerName.empty())
+    {
+        aosOptions.AddString("-l");
+        aosOptions.AddString(m_layerName.c_str());
+    }
+
+    if (!m_where.empty())
+    {
+        aosOptions.AddString("-where");
+        aosOptions.AddString(m_where.c_str());
+    }
+
+    if (!m_sql.empty())
+    {
+        aosOptions.AddString("-sql");
+        aosOptions.AddString(m_sql.c_str());
+    }
+
+    if (!m_dialect.empty())
+    {
+        aosOptions.AddString("-dialect");
+        aosOptions.AddString(m_dialect.c_str());
+    }
+
+    if (!std::isnan(m_nodata))
+    {
+        aosOptions.AddString("-a_nodata");
+        aosOptions.AddString(CPLSPrintf("%.15g", m_nodata));
+    }
+
+    if (m_initValues.size())
+    {
+        for (double initValue : m_initValues)
+        {
+            aosOptions.AddString("-init");
+            aosOptions.AddString(CPLSPrintf("%.15g", initValue));
+        }
+    }
+
+    if (!m_srs.empty())
+    {
+        aosOptions.AddString("-a_srs");
+        aosOptions.AddString(m_srs.c_str());
+    }
+
+    if (m_transformerOption.size())
+    {
+        for (const auto &to : m_transformerOption)
+        {
+            aosOptions.AddString("-to");
+            aosOptions.AddString(to.c_str());
+        }
+    }
+
+    GDALRasterizeOptions *psOptions =
+        GDALRasterizeOptionsNew(aosOptions.List(), nullptr);
+
+    GDALRasterizeOptionsSetProgress(psOptions, pfnProgress, pProgressData);
 
     GDALDatasetH hOutDS =
         GDALDataset::ToHandle(m_outputDataset.GetDatasetRef());
     GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
-    auto poRetDS = GDALDataset::FromHandle(
-        GDALVectorTranslate(m_outputDataset.GetName().c_str(), hOutDS, 1,
-                            &hSrcDS, psOptions, nullptr));
-    GDALVectorTranslateOptionsFree(psOptions);
+    auto poRetDS = GDALDataset::FromHandle(GDALRasterize(
+        m_outputDataset.GetName().c_str(), hOutDS, hSrcDS, psOptions, nullptr));
+    GDALRasterizeOptionsFree(psOptions);
     if (!poRetDS)
         return false;
 
