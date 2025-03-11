@@ -933,6 +933,11 @@ JPEG_Band::JPEG_Band(MRFDataset *pDS, const ILImage &image, int b, int level)
     {
         codec.optimize = true;  // Required for 12bit
     }
+    // For high Q, no downsampling and multispectral, output can be larger than the input
+    // This is just a guess, 20% larger plus some space for the headers and mask
+    // If too small, the empty_output_buffer() above will be called and an
+    // error will be generated
+    poMRFDS->SetPBufferSize(int(1.2 * image.pageSizeBytes + 4000));
 }
 #endif
 

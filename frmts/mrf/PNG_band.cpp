@@ -55,6 +55,7 @@
 
 #include "marfa.h"
 #include <cassert>
+#include <algorithm>
 
 CPL_C_START
 #include <png.h>
@@ -300,18 +301,10 @@ CPLErr PNG_Codec::CompressPNG(buf_mgr &dst, const buf_mgr &src)
     flags = png_get_asm_flags(pngp);
     mask = png_get_asm_flagmask(PNG_SELECT_READ | PNG_SELECT_WRITE);
     png_set_asm_flags(pngp, flags | mask);  // use flags &~mask to disable all
-
-    // Test that the MMX is compiled into PNG
-    // fprintf(stderr,"MMX support is %d\n", png_mmx_support());
-
 #endif
 
     // Let the quality control the compression level
-    // Start at level 1, level 0 means uncompressed
-    int zlvl = img.quality / 10;
-    if (0 == zlvl)
-        zlvl = 1;
-    png_set_compression_level(pngp, zlvl);
+    png_set_compression_level(pngp, std::clamp(img.quality / 10, 1, 9));
 
     // Custom strategy for zlib, set using the band option Z_STRATEGY
     if (deflate_flags & ZFLAG_SMASK)
