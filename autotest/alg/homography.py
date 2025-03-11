@@ -96,3 +96,7 @@ def test_homography_2():
     h = (10.0, 0.1, 0.0, 20.0, 0.0, -1.0, 1.0, 0.0, 0.0)
     res = gdal.ApplyHomography(h, 10, 1)
     assert res == [11.0, 19.0]
+
+    h = (10.0, 0.1, 3.0, 20.0, 7.0, -1.0, 2.0, 5.0, 4.0)
+    res = gdal.ApplyHomography(h, 10, 1)
+    assert res == [0.25, 1.5892857142857142]
