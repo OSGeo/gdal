@@ -1631,7 +1631,7 @@ static inline bool is_absolute(const CPLString &name)
 // returns true if name was modified
 static inline bool make_absolute(CPLString &name, const CPLString &path)
 {
-    if (!is_absolute(path) && (path.find_first_of("/\\") != string::npos))
+    if (!is_absolute(name) && (path.find_first_of("/\\") != string::npos))
     {
         name = path.substr(0, path.find_last_of("/\\") + 1) + name;
         return true;
@@ -1649,9 +1649,12 @@ GDALDataset *MRFDataset::GetSrcDS()
     if (source.empty())
         return nullptr;
 
+    // Stub out the error handler
+    CPLPushErrorHandler(CPLQuietErrorHandler);
     // Try open the source dataset as is
     poSrcDS =
         GDALDataset::FromHandle(GDALOpenShared(source.c_str(), GA_ReadOnly));
+    CPLPopErrorHandler();
 
     // It the open fails, try again with the current dataset path prepended
     if (!poSrcDS && make_absolute(source, fname))
