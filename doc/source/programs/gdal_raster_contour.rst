@@ -144,9 +144,9 @@ Examples
     This will create a shapefile named ``contour.shp`` with contour lines at 100 meter intervals.
 
 .. example::
-    :title: Create contour polygons from a raster elevation model with custom attributes and fixed leves
+    :title: Create contour polygons from a raster elevation model with custom attributes and fixed levels
 
-     The following example creates contour polygons from a raster elevation model with custom attributes and fixed leves:
+     The following example creates contour polygons from a raster elevation model with custom attributes and fixed levels:
 
      .. code-block:: bash
 
