@@ -222,6 +222,7 @@ swq_expr_node &swq_expr_node::operator=(const swq_expr_node &other)
         if (other.string_value)
             string_value = CPLStrdup(other.string_value);
         bHidden = other.bHidden;
+        nDepth = other.nDepth;
     }
     return *this;
 }
@@ -258,6 +259,7 @@ swq_expr_node &swq_expr_node::operator=(swq_expr_node &&other)
         std::swap(geometry_value, other.geometry_value);
         std::swap(string_value, other.string_value);
         bHidden = other.bHidden;
+        nDepth = other.nDepth;
     }
     return *this;
 }
@@ -286,6 +288,8 @@ void swq_expr_node::PushSubExpression(swq_expr_node *child)
         CPLRealloc(papoSubExpr, sizeof(void *) * nSubExprCount));
 
     papoSubExpr[nSubExprCount - 1] = child;
+
+    nDepth = std::max(nDepth, 1 + child->nDepth);
 }
 
 /************************************************************************/
@@ -307,19 +311,13 @@ void swq_expr_node::ReverseSubExpressions()
 /*      Check argument types, etc.                                      */
 /************************************************************************/
 
-swq_field_type swq_expr_node::Check(
-    swq_field_list *poFieldList, int bAllowFieldsInSecondaryTables,
-    int bAllowMismatchTypeOnFieldComparison,
-    swq_custom_func_registrar *poCustomFuncRegistrar, int nDepth)
+swq_field_type
+swq_expr_node::Check(swq_field_list *poFieldList,
+                     int bAllowFieldsInSecondaryTables,
+                     int bAllowMismatchTypeOnFieldComparison,
+                     swq_custom_func_registrar *poCustomFuncRegistrar)
 
 {
-    if (nDepth == 32)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too many recursion levels in expression");
-        return SWQ_ERROR;
-    }
-
     /* -------------------------------------------------------------------- */
     /*      Otherwise we take constants literally.                          */
     /* -------------------------------------------------------------------- */
@@ -390,8 +388,7 @@ swq_field_type swq_expr_node::Check(
     {
         if (papoSubExpr[i]->Check(poFieldList, bAllowFieldsInSecondaryTables,
                                   bAllowMismatchTypeOnFieldComparison,
-                                  poCustomFuncRegistrar,
-                                  nDepth + 1) == SWQ_ERROR)
+                                  poCustomFuncRegistrar) == SWQ_ERROR)
             return SWQ_ERROR;
     }
 
@@ -1161,6 +1158,15 @@ void swq_expr_node::PushNotOperationDownToStack()
 
     for (int i = 0; i < nSubExprCount; i++)
         papoSubExpr[i]->PushNotOperationDownToStack();
+}
+
+/************************************************************************/
+/*                        HasReachedMaxDepth()                          */
+/************************************************************************/
+
+bool swq_expr_node::HasReachedMaxDepth() const
+{
+    return nDepth == 128;
 }
 
 #endif  // #ifndef DOXYGEN_SKIP

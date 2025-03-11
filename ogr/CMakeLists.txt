@@ -202,7 +202,7 @@ add_custom_target(check_swq_parser_md5 ALL
                   COMMAND ${CMAKE_COMMAND}
                       "-DIN_FILE=swq_parser.y"
                       "-DTARGET=generate_swq_parser"
-                      "-DEXPECTED_MD5SUM=47b674ecca1fc71a50bc81d7d0bfa29d   "
+                      "-DEXPECTED_MD5SUM=c3eaca734f3005e73586cc697e481f94"
                       "-DFILENAME_CMAKE=${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
                       -P "${PROJECT_SOURCE_DIR}/cmake/helpers/check_md5sum.cmake"
                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
