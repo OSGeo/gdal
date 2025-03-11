@@ -16,6 +16,7 @@ add_library(
   gdalalg_raster_clip.cpp
   gdalalg_raster_convert.cpp
   gdalalg_raster_edit.cpp
+  gdalalg_raster_contour.cpp
   gdalalg_raster_mosaic.cpp
   gdalalg_raster_pipeline.cpp
   gdalalg_raster_overview_add.cpp
@@ -41,6 +42,7 @@ add_library(
   gdal_grid_lib.cpp
   gdal_translate_lib.cpp
   gdal_rasterize_lib.cpp
+  gdal_contour_lib.cpp
   gdalwarp_lib.cpp
   commonutils.cpp
   ogrinfo_lib.cpp
@@ -68,6 +70,8 @@ if (GDAL_ENABLE_DRIVER_GTIFF)
   target_compile_definitions(appslib PRIVATE -DHAVE_TIFF)
 endif()
 
+target_compile_definitions(appslib PUBLIC $<$<CONFIG:DEBUG>:GDAL_DEBUG>)
+
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(appslib libjson)
 else ()
@@ -91,7 +95,7 @@ if (BUILD_APPS)
   add_executable(gdal_grid gdal_utils_priv.h commonutils.h gdal_grid_bin.cpp)
   add_executable(gdal_translate gdal_utils_priv.h commonutils.h gdal_translate_bin.cpp)
   add_executable(gdalwarp commonutils.h gdalwarp_bin.cpp)
-  add_executable(gdal_contour commonutils.h gdal_contour.cpp)
+  add_executable(gdal_contour gdal_utils_priv.h commonutils.h gdal_contour_bin.cpp)
   add_executable(gdalenhance gdalenhance.cpp)
   add_executable(gdallocationinfo gdallocationinfo.cpp)
   add_executable(gdalmanage gdalmanage.cpp)

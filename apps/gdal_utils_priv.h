@@ -19,8 +19,7 @@
 #include "cpl_string.h"
 #include "gdal_utils.h"
 
-/* This file is only meant at being used by the XXXX_bin.cpp and XXXX_lib.cpp
- * files */
+/* This file is only meant at being used by the XXXX_bin.cpp and XXXX_lib.cpp */
 
 CPL_C_START
 
@@ -72,6 +71,15 @@ struct GDALVectorTranslateOptionsForBinary
 
     /* Allowed input drivers. */
     CPLStringList aosAllowInputDrivers{};
+};
+
+struct GDALContourOptionsForBinary
+{
+    CPLStringList aosOpenOptions{};
+    CPLStringList aosCreationOptions{};
+    bool bQuiet = false;
+    std::string osDestDataSource{};
+    std::string osSrcDataSource{};
 };
 
 struct GDALMultiDimInfoOptionsForBinary
@@ -228,6 +236,8 @@ std::string CPL_DLL GDALInfoAppGetParserUsage();
 std::string CPL_DLL GDALMultiDimInfoAppGetParserUsage();
 
 std::string CPL_DLL GDALGridGetParserUsage();
+
+std::string CPL_DLL GDALContourGetParserUsage();
 
 std::string CPL_DLL GDALBuildVRTGetParserUsage();
 
