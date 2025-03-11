@@ -452,6 +452,23 @@ CPLStringList &CPLStringList::AddString(const char *pszNewString)
 }
 
 /************************************************************************/
+/*                             AddString()                              */
+/************************************************************************/
+/**
+ * Add a string to the list.
+ *
+ * A copy of the passed in string is made and inserted in the list.
+ *
+ * @param newString the string to add to the list.
+ * @return a reference to the CPLStringList on which it was invoked.
+ */
+
+CPLStringList &CPLStringList::AddString(const std::string &newString)
+{
+    return AddString(newString.c_str());
+}
+
+/************************************************************************/
 /*                            AddNameValue()                            */
 /************************************************************************/
 

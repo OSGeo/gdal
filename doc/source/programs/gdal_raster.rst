@@ -21,6 +21,7 @@ Synopsis
     where <SUBCOMMAND> is one of:
       - calc:      Perform raster algebra.
       - clip:      Clip a raster dataset.
+      - contour:   Creates a vector contour from a raster elevation model (DEM).
       - convert:   Convert a raster dataset.
       - edit:      Edit a raster dataset.
       - info:      Return information on a raster dataset.

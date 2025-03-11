@@ -183,6 +183,7 @@ author_silker = "Silke Reimer <silke@intevation.de>"
 author_mikhailg = "Mikhail Gusev <gusevmihs@gmail.com>"
 author_dmitryb = "Dmitry Baryshnikov <polimax@mail.ru>"
 author_evenr = "Even Rouault <even.rouault@spatialys.com>"
+author_elpaso = "Alessandro Pasotti <elpaso@itopen.it>"
 author_tamass = "Tamas Szekeres <szekerest@gmail.com>"
 
 man_pages = [
@@ -227,6 +228,13 @@ man_pages = [
         "gdal-raster-clip",
         "Clip a raster dataset",
         [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_contour",
+        "gdal-raster-contour",
+        "Creates a vector contour from a raster elevation model (DEM)",
+        [author_elpaso],
         1,
     ),
     (

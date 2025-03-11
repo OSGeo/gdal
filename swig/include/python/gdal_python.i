@@ -3909,6 +3909,178 @@ def Grid(destName, srcDS, **kwargs):
 
     return GridInternal(destName, srcDS, opts, callback, callback_data)
 
+def ContourOptions(
+    options=None,
+    format=None,
+    band=1,
+    elevationName=None,
+    minName=None,
+    maxName=None,
+    with3d=False,
+    srcNodata=None,
+    offset=None,
+    datasetCreationOptions=None,
+    layerCreationOptions=None,
+    interval=None,
+    fixedLevels=None,
+    exponentialBase=None,
+    layerName="contour",
+    polygonize=False,
+    groupTransactions=100000,
+    callback=None,
+    callback_data=None):
+    """Create a ContourOptions() object that can be passed to gdal.Contour()
+
+    Parameters
+    ----------
+    options:
+        can be be an array of strings, a string or let empty and filled from other keywords.
+    format:
+        output format ("ESRI Shapefile", etc...)
+    band:
+        band number to use (default = 1)
+    elevationName:
+        name of the attribute in which to put the elevation.
+        If not provided no elevation attribute is attached.
+        Ignored in polygonal contouring (polygonize) mode.
+    minName:
+        name for the attribute in which to put the minimum elevation of contour polygon.
+        If not provided no minimum elevation attribute is attached.
+        Ignored in default line contouring mode.
+    maxName:
+        name for the attribute in which to put the maximum elevation of contour polygon.
+        If not provided no maximum elevation attribute is attached.
+        Ignored in default line contouring mode.
+    with3d:
+        Force production of 3D vectors instead of 2D. Includes elevation at every vertex.
+    srcNodata:
+        Input pixel value to treat as "nodata".
+    offset:
+        Offset to apply to the elevation values.
+    datasetCreationOptions:
+        List or dict of dataset creation options.
+    layerCreationOptions:
+        List or dict of layer creation options.
+    interval:
+        Elevation interval between contours. Must specify either "interval" or "fixedLevels" or "exponentialBase".
+    fixedLevels:
+        Name one or more "fixed levels" to extract. Must specify either "interval" or "fixedLevels" or "exponentialBase".
+    exponentialBase:
+        Generate levels on an exponential scale: base ^ k, for k an integer. Must specify either. Must specify either "interval" or "fixedLevels" or "exponentialBase".
+    layerName:
+        Name for the output vector layer, defaults to "contour".
+    polygonize:
+        Produce polygons instead of lines (default = False).
+    groupTransactions:
+        Group n features per transaction (default 100 000). Increase the value for better performance when writing into
+        DBMS drivers that have transaction support. n can be set to unlimited to load the data into a single transaction.
+        If set to 0, no explicit transaction is done.
+    callback:
+        Callback method.
+    callback_data:
+        User data for callback.
+    """
+
+    # Only used for tests
+    return_option_list = options == '__RETURN_OPTION_LIST__'
+
+    if return_option_list:
+        options = []
+    else:
+        options = [] if options is None else options
+
+    if isinstance(options, str):
+        new_options = ParseCommandLine(options)
+    else:
+        import copy
+        new_options = copy.copy(options)
+
+        if format is not None:
+            new_options += ['-of', format]
+        if elevationName is not None:
+            new_options += ['-a', elevationName]
+        if minName is not None:
+            new_options += ['-amin', minName]
+        if maxName is not None:
+            new_options += ['-amax', maxName]
+        if with3d:
+            new_options += ['-3d']
+        if srcNodata is not None:
+            new_options += ['-snodata', str(srcNodata)]
+        if offset is not None:
+            new_options += ['-off', str(offset)]
+        if datasetCreationOptions is not None:
+            if isinstance(datasetCreationOptions, dict):
+                for k, v in datasetCreationOptions.items():
+                    new_options += ['-dsco', f'{k}={v}']
+            else:
+                for opt in datasetCreationOptions:
+                    new_options += ['-dsco', opt]
+        if layerCreationOptions is not None:
+            if isinstance(layerCreationOptions, dict):
+                for k, v in layerCreationOptions.items():
+                    new_options += ['-lco', f'{k}={v}']
+            else:
+                for opt in layerCreationOptions:
+                    new_options += ['-lco', opt]
+        if interval is not None:
+            new_options += ['-i', str(interval)]
+        if fixedLevels is not None:
+            for level in fixedLevels:
+                new_options += ['-fl', str(level)]
+        if exponentialBase is not None:
+            new_options += ['-e', str(exponentialBase)]
+        if layerName is not None:
+            new_options += ['-nln', layerName]
+        if polygonize:
+            new_options += ['-p']
+        if groupTransactions is not None:
+            new_options += ['-gt', str(groupTransactions)]
+
+    if return_option_list:
+        return new_options
+
+    return (GDALContourOptions(new_options), callback, callback_data)
+
+
+def Contour(destNameOrDestDS, srcDS, **kwargs):
+    """Create contour lines or polygons from raster data.
+
+    Parameters
+    ----------
+    destNameOrDestDS:
+        Output dataset name or object
+
+        If passed as a dataset name, a potentially existing output dataset of
+        the same name will be overwritten. To update an existing output dataset,
+        it must be passed as a dataset object.
+
+    srcDS:
+        a Dataset object or a filename
+    kwargs:
+        options: return of gdal.ContourOptions(), string or array of strings,
+        other keywords arguments of gdal.ContourOptions().
+        If options is provided as a gdal.ContourOptions() object, other keywords are ignored.
+    """
+
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
+    if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
+        (opts, callback, callback_data) = ContourOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+
+    import os
+
+    if isinstance(srcDS, (str, os.PathLike)):
+        srcDS = OpenEx(srcDS)
+
+    if isinstance(destNameOrDestDS, (str, os.PathLike)):
+        return wrapper_GDALContourDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
+    else:
+        return wrapper_GDALContourDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
+
+
 def RasterizeOptions(options=None, format=None,
          outputType=gdalconst.GDT_Unknown,
          creationOptions=None, noData=None, initValues=None,
