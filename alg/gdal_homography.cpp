@@ -233,7 +233,20 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
     }
 
     // "Hour-glass" like shape of GCPs. Cf https://github.com/OSGeo/gdal/issues/11618
-    if (false)  //TODO
+    double x[4] = {0, 1, 1, 0};
+    double y[4] = {0, 0, 1, 1};
+    for (int i = 0; i < 4; i++)
+    {
+        GDALApplyHomography(h_normalized.data(), x[i], y[i], &x[i], &y[i]);
+    }
+    for (int i = 3; i >= 0; i--)
+    {
+        x[i] -= x[0];
+        y[i] -= y[0];
+    }
+    double cross12 = x[1] * y[2] - x[2] * y[1];
+    double cross23 = x[2] * y[3] - x[3] * y[2];
+    if (cross12 * cross23 <= 0.0)
     {
         return FALSE;
     }

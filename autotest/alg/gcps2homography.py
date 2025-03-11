@@ -236,16 +236,15 @@ def test_gcps2h_broken_hour_glass():
             ]
         )
     )
-    print(h)
     assert h is None
 
     h = gdal.GCPsToHomography(
         _list2gcps(
             [
                 (0, 0, 0, 0),
-                (0, 10, 10, 0),
-                (10, 0, 0, 10),
-                (10, 10, 10, 10),
+                (0, 10, 10, 10),
+                (10, 0, 10, 0),
+                (10, 10, 0, 10),
             ]
         )
     )
