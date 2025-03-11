@@ -46,6 +46,7 @@ void *GDALDeserializeGCPTransformer(CPLXMLNode *psTree);
 void *GDALDeserializeTPSTransformer(CPLXMLNode *psTree);
 void *GDALDeserializeGeoLocTransformer(CPLXMLNode *psTree);
 void *GDALDeserializeRPCTransformer(CPLXMLNode *psTree);
+void *GDALDeserializeHomographyTransformer(CPLXMLNode *psTree);
 CPL_C_END
 
 static CPLXMLNode *GDALSerializeReprojectionTransformer(void *pTransformArg);
@@ -4649,6 +4650,11 @@ CPLErr GDALDeserializeTransformer(CPLXMLNode *psTree,
     {
         *ppfnFunc = GDALApproxTransform;
         *ppTransformArg = GDALDeserializeApproxTransformer(psTree);
+    }
+    else if (EQUAL(psTree->pszValue, "HomographyTransformer"))
+    {
+        *ppfnFunc = GDALHomographyTransform;
+        *ppTransformArg = GDALDeserializeHomographyTransformer(psTree);
     }
     else
     {
