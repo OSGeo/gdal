@@ -2054,7 +2054,7 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     else if (bGCPUseOK &&
              ((pszMethod == nullptr && GDALGetGCPCount(hSrcDS) >= 4 &&
                GDALGetGCPCount(hSrcDS) < 6) ||
-              EQUAL(pszMethod, "GCP_HOMOGRAPHY")) &&
+              (pszMethod != nullptr && EQUAL(pszMethod, "GCP_HOMOGRAPHY"))) &&
              GDALGetGCPCount(hSrcDS) > 0)
     {
         if (pszSrcSRS == nullptr)
@@ -2305,7 +2305,7 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     else if (bGCPUseOK &&
              ((pszDstMethod == nullptr && GDALGetGCPCount(hDstDS) >= 4 &&
                GDALGetGCPCount(hDstDS) < 6) ||
-              EQUAL(pszMethod, "GCP_HOMOGRAPHY")) &&
+              (pszMethod != nullptr && EQUAL(pszMethod, "GCP_HOMOGRAPHY"))) &&
              GDALGetGCPCount(hDstDS) > 0)
     {
         if (pszDstSRS == nullptr)
