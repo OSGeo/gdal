@@ -64,6 +64,18 @@ def get_contour_alg():
         ),
         (
             [
+                "--levels",
+                "MIN,15,MAX",
+                "--min-name",
+                "ELEV_MIN",
+                "--max-name",
+                "ELEV_MAX",
+            ],
+            True,
+            [(4, 15), (15, 36)],
+        ),
+        (
+            [
                 "--exp-base",
                 "10",
                 "--levels",

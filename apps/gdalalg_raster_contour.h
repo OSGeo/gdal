@@ -75,10 +75,11 @@ class GDALRasterContourAlgorithm final : public GDALAlgorithm
         std::numeric_limits<double>::quiet_NaN();  // -i <interval>
     double m_offset =
         std::numeric_limits<double>::quiet_NaN();  // -off <offset>
-    std::vector<double> m_levels;                  // -fl <level>[,<level>...]
-    int m_expBase = 0;                             // -e <base>
-    bool m_polygonize = false;                     // -p
-    int m_groupTransactions = 0;                   // gt <n>
+    std::vector<std::string>
+        m_levels;       // -fl <level>[,<level>...] MIN/MAX are also supported
+    int m_expBase = 0;  // -e <base>
+    bool m_polygonize = false;    // -p
+    int m_groupTransactions = 0;  // gt <n>
 };
 
 //! @endcond

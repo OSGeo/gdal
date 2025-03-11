@@ -80,6 +80,9 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
 bool GDALRasterContourAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                          void *pProgressData)
 {
+
+    CPLErrorReset();
+
     CPLAssert(m_inputDataset.GetDatasetRef());
     if (m_outputDataset.GetDatasetRef())
     {
@@ -135,7 +138,7 @@ bool GDALRasterContourAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         for (const auto &level : m_levels)
         {
             aosOptions.AddString("-fl");
-            aosOptions.AddString(CPLSPrintf("%.16g", level));
+            aosOptions.AddString(level);
         }
     }
     if (!std::isnan(m_interval))
@@ -174,7 +177,7 @@ bool GDALRasterContourAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     if (!psOptions)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Failed to create contour options");
+                 "Failed to create contour options: %s", CPLGetLastErrorMsg());
         return false;
     }
 
