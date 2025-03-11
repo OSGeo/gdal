@@ -33,6 +33,8 @@ constexpr const char *GDAL_ARG_NAME_INPUT_FORMAT = "input-format";
 
 constexpr const char *GDAL_ARG_NAME_OUTPUT_FORMAT = "output-format";
 
+constexpr const char *GDAL_ARG_NAME_OUTPUT_DATA_TYPE = "output-data-type";
+
 constexpr const char *GDAL_ARG_NAME_OPEN_OPTION = "open-option";
 
 //! @cond Doxygen_Suppress
@@ -2500,6 +2502,22 @@ GDALAlgorithm::AddOutputFormatArg(std::string *pValue, bool bStreamAllowed)
                             { return ValidateFormat(arg, bStreamAllowed); });
     arg.SetAutoCompleteFunction([&arg](const std::string &)
                                 { return FormatAutoCompleteFunction(arg); });
+    return arg;
+}
+
+/************************************************************************/
+/*                 GDALAlgorithm::AddOutputDataTypeArg()                */
+/************************************************************************/
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddOutputDataTypeArg(std::string *pValue)
+{
+    auto &arg =
+        AddArg(GDAL_ARG_NAME_OUTPUT_DATA_TYPE, 0, _("Output data type"), pValue)
+            .AddAlias("ot")
+            .AddAlias("datatype")
+            .SetChoices("Byte", "Int8", "UInt16", "Int16", "UInt32", "Int32",
+                        "UInt64", "Int64", "CInt16", "CInt32", "Float32",
+                        "Float64", "CFloat32", "CFloat64");
     return arg;
 }
 

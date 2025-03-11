@@ -68,14 +68,13 @@ class GDALVectorRasterizeAlgorithm final : public GDALAlgorithm
     std::string m_srs{};
     std::vector<std::string> m_transformerOption{};
     std::vector<std::string> m_datasetCreationOptions{};
-    std::vector<std::string> m_layerCreationOptions{};
     std::vector<double> m_targetExtent{};
     std::vector<double>
         m_targetResolution{};  // Mutually exclusive with targetSize
     bool m_tap = false;
     std::vector<int>
         m_targetSize{};  // Mutually exclusive with targetResolution
-    GDALDataType m_outputType = GDT_Float64;
+    std::string m_outputType{};
     std::string m_optimization{};  // {AUTO|VECTOR|RASTER}
     std::vector<std::string> m_openOptions{};
     GDALArgDatasetValue m_inputDataset{};

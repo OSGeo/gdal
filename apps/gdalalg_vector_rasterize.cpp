@@ -40,24 +40,23 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR);
     m_outputDataset.SetInputFlags(GADV_NAME | GADV_OBJECT);
     AddCreationOptionsArg(&m_datasetCreationOptions);
-    AddLayerCreationOptionsArg(&m_layerCreationOptions);
-    AddArg("band", 'b', _("The band(s) to burn values into."), &m_bands);
+    AddArg("band", 'b', _("The band(s) to burn values into"), &m_bands);
     AddArg("invert", 0, _("Invert the rasterization"), &m_invert)
         .SetDefault(false);
     AddArg("all-touched", 0, _("Enables the ALL_TOUCHED rasterization option"),
            &m_allTouched);
-    AddArg("burn-value", 0, _("Burn value"), &m_burnValues);
+    AddArg("burn", 0, _("Burn value"), &m_burnValues);
     AddArg("attribute-name", 'a', _("Attribute name"), &m_attributeName);
     AddArg("3d", 0,
            _("Indicates that a burn value should be extracted from the Z"
-             " values of the feature."),
+             " values of the feature"),
            &m_3d);
     AddArg("add", 0, _("Add to existing raster"), &m_add).SetDefault(false);
     AddArg("layer-name", 'l', _("Layer name"), &m_layerName)
         .AddAlias("layer")
         .SetMutualExclusionGroup("layer-name-or-sql");
     AddArg("where", 0, _("SQL where clause"), &m_where);
-    AddArg("sql", 0, _("SQL where clause"), &m_sql)
+    AddArg("sql", 0, _("SQL select statement"), &m_sql)
         .SetMutualExclusionGroup("layer-name-or-sql");
     AddArg("dialect", 0, _("SQL dialect"), &m_dialect);
     AddArg("nodata", 0, _("Assign a specified nodata value to output bands"),
@@ -91,8 +90,9 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
         .SetMaxCount(2)
         .SetMetaVar("<xsize> <ysize>")
         .SetMutualExclusionGroup("target-size-or-resoulution");
+    AddOutputDataTypeArg(&m_outputType);
     AddArg("optimization", 0,
-           _("Force the algorithm used (results are identical)."),
+           _("Force the algorithm used (results are identical)"),
            &m_optimization)
         .SetChoices("AUTO", "RASTER", "VECTOR")
         .SetDefault("AUTO");
@@ -108,22 +108,6 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     CPLAssert(m_inputDataset.GetDatasetRef());
 
     CPLStringList aosOptions;
-
-    if (!m_outputFormat.empty())
-    {
-        aosOptions.AddString("-of");
-        aosOptions.AddString(m_outputFormat.c_str());
-    }
-    for (const auto &co : m_datasetCreationOptions)
-    {
-        aosOptions.AddString("-dsco");
-        aosOptions.AddString(co.c_str());
-    }
-    for (const auto &co : m_layerCreationOptions)
-    {
-        aosOptions.AddString("-lco");
-        aosOptions.AddString(co.c_str());
-    }
 
     if (pfnProgress && pfnProgress != GDALDummyProgress)
     {
@@ -198,6 +182,12 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         aosOptions.AddString(m_dialect.c_str());
     }
 
+    if (!m_outputFormat.empty())
+    {
+        aosOptions.AddString("-of");
+        aosOptions.AddString(m_outputFormat.c_str());
+    }
+
     if (!std::isnan(m_nodata))
     {
         aosOptions.AddString("-a_nodata");
@@ -228,23 +218,105 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
     }
 
+    for (const auto &co : m_datasetCreationOptions)
+    {
+        aosOptions.AddString("-dsco");
+        aosOptions.AddString(co.c_str());
+    }
+
+    if (m_targetExtent.size())
+    {
+        for (double targetExtent : m_targetExtent)
+        {
+            aosOptions.AddString("-te");
+            aosOptions.AddString(CPLSPrintf("%.15g", targetExtent));
+        }
+    }
+
+    if (m_targetResolution.size())
+    {
+        for (double targetResolution : m_targetResolution)
+        {
+            aosOptions.AddString("-tr");
+            aosOptions.AddString(CPLSPrintf("%.15g", targetResolution));
+        }
+    }
+
+    if (m_tap)
+    {
+        aosOptions.AddString("-tap");
+    }
+
+    if (m_targetSize.size())
+    {
+        for (int targetSize : m_targetSize)
+        {
+            aosOptions.AddString("-ts");
+            aosOptions.AddString(CPLSPrintf("%d", targetSize));
+        }
+    }
+
+    if (!m_outputType.empty())
+    {
+        aosOptions.AddString("-ot");
+        aosOptions.AddString(m_outputType.c_str());
+    }
+
+    if (!m_optimization.empty())
+    {
+        aosOptions.AddString("-optim");
+        aosOptions.AddString(m_optimization.c_str());
+    }
+
+    if (m_openOptions.size())
+    {
+        for (const auto &oo : m_openOptions)
+        {
+            aosOptions.AddString("-oo");
+            aosOptions.AddString(oo.c_str());
+        }
+    }
+
     GDALRasterizeOptions *psOptions =
         GDALRasterizeOptionsNew(aosOptions.List(), nullptr);
 
     GDALRasterizeOptionsSetProgress(psOptions, pfnProgress, pProgressData);
 
-    GDALDatasetH hOutDS =
+    GDALDatasetH hDstDS =
         GDALDataset::ToHandle(m_outputDataset.GetDatasetRef());
+
+    const bool dstDSWasNull{!hDstDS};
+
+    // Try to open the output file if it exists.
+    if (!hDstDS && !m_outputDataset.GetName().empty())
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        hDstDS =
+            GDALOpenEx(m_outputDataset.GetName().c_str(),
+                       GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
+                       nullptr, nullptr, nullptr);
+        CPLPopErrorHandler();
+    }
+
     GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
     auto poRetDS = GDALDataset::FromHandle(GDALRasterize(
-        m_outputDataset.GetName().c_str(), hOutDS, hSrcDS, psOptions, nullptr));
+        m_outputDataset.GetName().c_str(), hDstDS, hSrcDS, psOptions, nullptr));
     GDALRasterizeOptionsFree(psOptions);
     if (!poRetDS)
         return false;
 
-    if (!hOutDS)
+    if (!hDstDS)
     {
         m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
+    }
+    else if (dstDSWasNull)
+    {
+        if (GDALClose(hDstDS) != CE_None)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to close output dataset");
+            return false;
+        }
     }
 
     return true;
