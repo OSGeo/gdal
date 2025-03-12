@@ -114,6 +114,27 @@ void *GDALCreateHomographyTransformer(double adfHomography[9])
     return nullptr;
 }
 
+/************************************************************************/
+/*                       GDALGCPsToHomography()                       */
+/************************************************************************/
+
+/**
+ * \brief Generate Homography from GCPs.
+ *
+ * Given a set of GCPs perform least squares fit as a homography.
+ *
+ * A minimum of four GCPs are required to uniquely define a homography.
+ * If there are less than four GCPs, GDALGCPsToGeoTransform() is used to
+ * compute the transform.
+ *
+ * @param nGCPCount the number of GCPs being passed in.
+ * @param pasGCPs the list of GCP structures.
+ * @param padfHomography the nine double array in which the homography
+ * will be returned.
+ *
+ * @return TRUE on success or FALSE if there aren't enough points to prepare a
+ * homography, or pathological geometry is detected
+ */
 int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
                          double *padfHomography)
 {
