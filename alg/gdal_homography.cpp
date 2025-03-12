@@ -219,10 +219,13 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
     {
         double pixel, line, geox, geoy;
 
-        GDALApplyHomography(pl_normalize, pasGCPList[i].dfGCPPixel,
-                            pasGCPList[i].dfGCPLine, &pixel, &line);
-        GDALApplyHomography(geo_normalize, pasGCPList[i].dfGCPX,
-                            pasGCPList[i].dfGCPY, &geox, &geoy);
+        if (!GDALApplyHomography(pl_normalize, pasGCPList[i].dfGCPPixel,
+                                 pasGCPList[i].dfGCPLine, &pixel, &line) ||
+            !GDALApplyHomography(geo_normalize, pasGCPList[i].dfGCPX,
+                                 pasGCPList[i].dfGCPY, &geox, &geoy))
+        {
+            return FALSE;
+        }
 
         double Lx[] = {1, pixel, line,          0,           0,
                        0, -geox, -geox * pixel, -geox * line};
@@ -252,6 +255,10 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
     {
         return FALSE;
     }
+    if (abs(h_normalized(6, 0)) < 1.0e-15)
+    {
+        return FALSE;
+    }
 
     /* -------------------------------------------------------------------- */
     /* Check that the homography maps the unit square to a convex           */
@@ -263,7 +270,10 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
     double y[4] = {0, 0, 1, 1};
     for (int i = 0; i < 4; i++)
     {
-        GDALApplyHomography(h_normalized.data(), x[i], y[i], &x[i], &y[i]);
+        if (!GDALApplyHomography(h_normalized.data(), x[i], y[i], &x[i], &y[i]))
+        {
+            return FALSE;
+        }
     }
     // Next, compute the vector from the top-left corner to each corner
     for (int i = 3; i >= 0; i--)
@@ -365,19 +375,26 @@ void GDALComposeHomographies(const double *padfH1, const double *padfH2,
  * location is placed.
  * @param pdfGeoY output location where geo_y (northing/latitude)
  * location is placed.
+*
+* @return TRUE on success or FALSE if failure.
  */
 
-void GDALApplyHomography(const double *padfHomography, double dfPixel,
-                         double dfLine, double *pdfGeoX, double *pdfGeoY)
+int GDALApplyHomography(const double *padfHomography, double dfPixel,
+                        double dfLine, double *pdfGeoX, double *pdfGeoY)
 {
+    double w = padfHomography[6] + dfPixel * padfHomography[7] +
+               dfLine * padfHomography[8];
+    if (abs(w) < 1.0e-15)
+    {
+        return FALSE;
+    }
     double wx = padfHomography[0] + dfPixel * padfHomography[1] +
                 dfLine * padfHomography[2];
     double wy = padfHomography[3] + dfPixel * padfHomography[4] +
                 dfLine * padfHomography[5];
-    double w = padfHomography[6] + dfPixel * padfHomography[7] +
-               dfLine * padfHomography[8];
     *pdfGeoX = wx / w;
     *pdfGeoY = wy / w;
+    return TRUE;
 }
 
 /************************************************************************/
@@ -542,17 +559,28 @@ int GDALHomographyTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
         static_cast<HomographyTransformInfo *>(pTransformArg);
 
     double *homography = bDstToSrc ? psInfo->padfReverse : psInfo->padfForward;
+    int ret = TRUE;
     for (int i = 0; i < nPointCount; i++)
     {
-        double wx = homography[0] + x[i] * homography[1] + y[i] * homography[2];
-        double wy = homography[3] + x[i] * homography[4] + y[i] * homography[5];
         double w = homography[6] + x[i] * homography[7] + y[i] * homography[8];
-        x[i] = wx / w;
-        y[i] = wy / w;
-        panSuccess[i] = TRUE;
+        if (abs(w) < 1.0e-15)
+        {
+            panSuccess[i] = FALSE;
+            ret = FALSE;
+        }
+        else
+        {
+            double wx =
+                homography[0] + x[i] * homography[1] + y[i] * homography[2];
+            double wy =
+                homography[3] + x[i] * homography[4] + y[i] * homography[5];
+            x[i] = wx / w;
+            y[i] = wy / w;
+            panSuccess[i] = TRUE;
+        }
     }
 
-    return TRUE;
+    return ret;
 }
 
 /************************************************************************/
