@@ -87,8 +87,7 @@ bool GDALRasterResizeAlgorithm::RunStep(GDALProgressFunc, void *)
         GDALTranslateOptionsNew(aosOptions.List(), nullptr);
 
     auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
-        GDALTranslate(m_outputDataset.GetName().c_str(),
-                      GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()),
+        GDALTranslate("", GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()),
                       psOptions, nullptr)));
     GDALTranslateOptionsFree(psOptions);
     const bool bRet = poOutDS != nullptr;
