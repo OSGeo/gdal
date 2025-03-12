@@ -2023,7 +2023,9 @@ def test_osr_basic_is_dynamic():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4258)  # ETRS89 (generic), using datum ensemble
-    assert not srs.IsDynamic()
+    # Just run it. Prior to PROJ 9.6, this was not a dynamic CRS
+    # Since PROJ 9.6, it is a dynamic CRS.
+    srs.IsDynamic()
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput(
