@@ -13,6 +13,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <algorithm>
 
 #include "cpl_atomic_ops.h"
 #include "cpl_error.h"
@@ -81,7 +82,7 @@ static void *GDALCreateSimilarHomographyTransformer(void *hTransformArg,
  *
  * Homography Transformers are serializable.
  *
- * @param homography the forward homography.
+ * @param adfHomography the forward homography.
  *
  * @return the transform argument or NULL if creation fails.
  */
@@ -127,7 +128,7 @@ void *GDALCreateHomographyTransformer(double adfHomography[9])
  * compute the transform.
  *
  * @param nGCPCount the number of GCPs being passed in.
- * @param pasGCPs the list of GCP structures.
+ * @param pasGCPList the list of GCP structures.
  * @param padfHomography the nine double array in which the homography
  * will be returned.
  *
@@ -348,7 +349,7 @@ void GDALComposeHomographies(const double *padfH1, const double *padfH2,
  *                                + dfLine  * padfHomography[8]);
  * \endcode
  *
- * @param padfGeoTransform Nine coefficient Homography to apply.
+ * @param padfHomography Nine coefficient Homography to apply.
  * @param dfPixel Input pixel position.
  * @param dfLine Input line position.
  * @param pdfGeoX output location where geo_x (easting/longitude)
