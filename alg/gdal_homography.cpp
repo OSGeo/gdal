@@ -417,8 +417,6 @@ int GDALInvHomography(const double *padfHIn, double *padfHOut)
         return 1;
     }
 
-    // Assume a 3rd row that is [1 0 0].
-
     // Compute determinate.
 
     const double det = padfHIn[1] * padfHIn[5] * padfHIn[6] -
