@@ -1733,8 +1733,6 @@ int wrapper_GDALContourDestDS(  GDALDatasetShadow* dstDS,
                                 GDALProgressFunc callback=NULL,
                                 void* callback_data=NULL)
 {
-    int usageError; /* ignored */
-
     bool bFreeOptions = false;
     if( callback )
     {
@@ -1784,7 +1782,6 @@ GDALDatasetShadow* wrapper_GDALContourDestName( const char* dest,
                                                   GDALProgressFunc callback=NULL,
                                                   void* callback_data=NULL)
 {
-    int usageError; /* ignored */
     bool bFreeOptions = false;
     if( callback )
     {
