@@ -358,7 +358,7 @@ void GDALComposeHomographies(const double *padfH1, const double *padfH2,
  * location is placed.
  */
 
-void CPL_STDCALL GDALApplyHomography(const double *padfHomography,
+void GDALApplyHomography(const double *padfHomography,
                                      double dfPixel, double dfLine,
                                      double *pdfGeoX, double *pdfGeoY)
 {
