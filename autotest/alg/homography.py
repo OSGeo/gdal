@@ -34,8 +34,7 @@ def test_homography_1():
     h = (10, 0.1, 0, 20, 0, -1.0, 1.0, 0.0, 0.0)
     res = gdal.InvHomography(h)
     expected_inv_h = (-100.0, 10.0, 0.0, 20.0, 0.0, -1.0, 1.0, 0.0, 0.0)
-    for i in range(9):
-        assert res[i] == pytest.approx(expected_inv_h[i], abs=1e-6), res
+    assert res == pytest.approx(expected_inv_h, abs=1e-6), res
 
     h = (3, 1, 2, 6, 4, 5, 11, 7, 8)
     res = gdal.InvHomography(h)
@@ -51,8 +50,7 @@ def test_homography_1():
         -1,
     )
     print(res)
-    for i in range(9):
-        assert res[i] == pytest.approx(expected_inv_h[i], abs=1e-6), res
+    assert res == pytest.approx(expected_inv_h, abs=1e-6), res
 
     h = (10, 1, 1, 20, 2, 2, 1, 0, 0)
     res = gdal.InvHomography(h)
@@ -80,11 +78,9 @@ def test_homography_1():
         0.0,
         0.0,
     )
-    for i in range(9):
-        assert res[i] == pytest.approx(expected_inv_h[i], abs=1e-6), res
+    assert res == pytest.approx(expected_inv_h, abs=1e-6), res
     res2 = gdal.InvHomography(res)
-    for i in range(9):
-        assert res2[i] == pytest.approx(h[i], abs=1e-6), res2
+    assert res2 == pytest.approx(h, abs=1e-6), res2
 
 
 ###############################################################################
