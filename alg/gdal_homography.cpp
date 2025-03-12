@@ -388,7 +388,7 @@ void CPL_STDCALL GDALApplyHomography(const double *padfHomography,
 * @return TRUE on success or FALSE if the equation is uninvertable.
 */
 
-int CPL_STDCALL GDALInvHomography(const double *padfHIn, double *padfHOut)
+int GDALInvHomography(const double *padfHIn, double *padfHOut)
 
 {
     // Special case - no rotation - to avoid computing determinate
