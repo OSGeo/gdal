@@ -49,7 +49,6 @@ def test_homography_1():
         0.5,
         -1,
     )
-    print(res)
     assert res == pytest.approx(expected_inv_h, abs=1e-6), res
 
     h = (10, 1, 1, 20, 2, 2, 1, 0, 0)
