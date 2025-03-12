@@ -662,7 +662,7 @@ RETURN_NONE GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
 %apply (double argin[ANY]) {(double padfHomography[9])};
 %apply (double *OUTPUT) {(double *pdfGeoX)};
 %apply (double *OUTPUT) {(double *pdfGeoY)};
-void GDALApplyHomography( double padfHomography[9],
+int GDALApplyHomography( double padfHomography[9],
                             double dfPixel, double dfLine,
                             double *pdfGeoX, double *pdfGeoY );
 %clear (double *padfHomography);
