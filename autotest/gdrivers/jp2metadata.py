@@ -40,7 +40,7 @@ def test_jp2metadata_1():
     ds = gdal.Open("data/jpeg2000/erdas_foo.jp2")
     wkt = ds.GetProjectionRef()
     gt = ds.GetGeoTransform()
-    assert wkt.startswith('PROJCS["ETRS89')
+    assert wkt.startswith('PROJCS["ETRS89') or wkt.startswith('PROJCS["EUREF-FIN')
     expected_gt = (356000.0, 0.5, 0.0, 7596000.0, 0.0, -0.5)
     for i in range(6):
         assert gt[i] == pytest.approx(expected_gt[i], abs=1e-5)
