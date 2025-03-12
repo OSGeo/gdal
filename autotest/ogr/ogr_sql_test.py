@@ -2154,3 +2154,73 @@ def test_ogr_sql_kahan_babuska_eumaier_summation(input, expected_output):
             assert math.isnan(f["SUM_v"])
         else:
             assert f["SUM_v"] == expected_output
+
+
+@pytest.mark.parametrize(
+    "operator", ["+", "-", "*", "/", "%", "<", "<=", "=<", "=", "<>", ">", ">=", "=>"]
+)
+def test_ogr_sql_max_expr_depth(operator):
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds.CreateLayer("test")
+    with ds.ExecuteSQL("SELECT " + operator.join(["1"] * 127) + " FROM test") as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL("SELECT " + operator.join(["1"] * 128) + " FROM test")
+
+
+def test_ogr_sql_max_expr_depth_other():
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds.CreateLayer("test")
+
+    with ds.ExecuteSQL(
+        "SELECT CAST(" + "+".join(["1"] * 126) + " AS CHARACTER) FROM test"
+    ) as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL(
+            "SELECT CAST(" + "+".join(["1"] * 127) + " AS CHARACTER) FROM test"
+        )
+
+    with ds.ExecuteSQL(
+        "SELECT 'a' IN (CAST(" + "+".join(["1"] * 125) + " AS CHARACTER)) FROM test"
+    ) as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL(
+            "SELECT 'a' IN (CAST(" + "+".join(["1"] * 126) + " AS CHARACTER)) FROM test"
+        )
+
+    with ds.ExecuteSQL("SELECT NOT " + "+".join(["1"] * 126) + " FROM test") as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL("SELECT NOT " + "+".join(["1"] * 127) + " FROM test")
+
+    with ds.ExecuteSQL("SELECT 1 AND " + "+".join(["1"] * 126) + " FROM test") as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL("SELECT 1 AND " + "+".join(["1"] * 127) + " FROM test")
+
+    with ds.ExecuteSQL("SELECT 1 OR " + "+".join(["1"] * 126) + " FROM test") as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL("SELECT 1 OR " + "+".join(["1"] * 127) + " FROM test")
+
+    with ds.ExecuteSQL("SELECT " + "+".join(["1"] * 126) + " IS NULL FROM test") as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL("SELECT " + "+".join(["1"] * 127) + " IS NULL FROM test")
+
+    with ds.ExecuteSQL(
+        "SELECT " + "+".join(["1"] * 125) + " IS NOT NULL FROM test"
+    ) as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL("SELECT " + "+".join(["1"] * 126) + " IS NOT NULL FROM test")
+
+    with ds.ExecuteSQL(
+        "SELECT SUBSTR('a', " + "+".join(["1"] * 126) + ") FROM test"
+    ) as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL("SELECT SUBSTR('a', " + "+".join(["1"] * 127) + ") FROM test")
