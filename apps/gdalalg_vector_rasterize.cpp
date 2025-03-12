@@ -63,7 +63,9 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
            &m_nodata);
     AddArg("init", 0, _("Pre-initialize output bands with specified value"),
            &m_initValues);
-    AddArg("crs", 0, _("Override the projection for the output file"), &m_srs).AddHiddenAlias("srs").SetIsCRSArg(/*noneAllowed=*/false);
+    AddArg("crs", 0, _("Override the projection for the output file"), &m_srs)
+        .AddHiddenAlias("srs")
+        .SetIsCRSArg(/*noneAllowed=*/false);
     AddArg("transformer-option", 0,
            _("Set a transformer option suitable to pass to "
              "GDALCreateGenImgProjTransformer2"),
@@ -75,16 +77,15 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
         .SetMaxCount(4)
         .SetRepeatedArgAllowed(false)
         .SetMetaVar("<xmin>,<ymin>,<xmax>,<ymax>");
-    AddArg("resolution", 0, _("Set the target resolution"),
-           &m_targetResolution)
+    AddArg("resolution", 0, _("Set the target resolution"), &m_targetResolution)
         .SetMinCount(2)
         .SetMaxCount(2)
         .SetRepeatedArgAllowed(false)
         .SetMetaVar("<xres>,<yres>")
-        .SetMutualExclusionGroup("target-size-or-resoulution");
+        .SetMutualExclusionGroup("size-or-resolution");
     AddArg("target-aligned-pixels", 0,
            _("(target aligned pixels) Align the coordinates of the extent of "
-             "the output file to the values of the target-resolution"),
+             "the output file to the values of the resolution"),
            &m_tap);
     AddArg("size", 0, _("Set the target size in pixels and lines"),
            &m_targetSize)
@@ -92,7 +93,7 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
         .SetMaxCount(2)
         .SetRepeatedArgAllowed(false)
         .SetMetaVar("<xsize>,<ysize>")
-        .SetMutualExclusionGroup("target-size-or-resoulution");
+        .SetMutualExclusionGroup("size-or-resolution");
     AddOutputDataTypeArg(&m_outputType);
     AddArg("optimization", 0,
            _("Force the algorithm used (results are identical)"),

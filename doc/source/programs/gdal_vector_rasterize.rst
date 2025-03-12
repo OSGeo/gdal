@@ -23,7 +23,7 @@ Synopsis
 
     Positional arguments:
     -i, --input <INPUT>                                      Input vector dataset [required]
-    -o, --output <OUTPUT>                                    Output vector dataset [required]
+    -o, --output <OUTPUT>                                    Output raster dataset [required]
 
     Common Options:
     -h, --help                                               Display help message and exit
@@ -36,12 +36,12 @@ Synopsis
     Options:
     -f, --of, --format, --output-format <OUTPUT-FORMAT>      Output format
     --co, --creation-option <KEY>=<VALUE>                    Creation option [may be repeated]
-    -b, --band <BAND>                                        The band(s) to burn values into. [may be repeated]
+    -b, --band <BAND>                                        The band(s) to burn values into [may be repeated]
     --invert                                                 Invert the rasterization
     --all-touched                                            Enables the ALL_TOUCHED rasterization option
     --burn <BURN>                                            Burn value [may be repeated]
     -a, --attribute-name <ATTRIBUTE-NAME>                    Attribute name
-    --3d                                                     Indicates that a burn value should be extracted from the Z values of the feature.
+    --3d                                                     Indicates that a burn value should be extracted from the Z values of the feature
     --add                                                    Add to existing raster
     -l, --layer, --layer-name <LAYER-NAME>                   Layer name
                                                             Mutually exclusive with --sql
@@ -51,22 +51,23 @@ Synopsis
     --dialect <DIALECT>                                      SQL dialect
     --nodata <NODATA>                                        Assign a specified nodata value to output bands
     --init <INIT>                                            Pre-initialize output bands with specified value [may be repeated]
-    --srs <SRS>                                              Override the projection for the output file
+    --crs <CRS>                                              Override the projection for the output file
     --transformer-option <NAME>=<VALUE>                      Set a transformer option suitable to pass to GDALCreateGenImgProjTransformer2 [may be repeated]
-    --target-extent <xmin> <ymin> <xmax> <ymax>              Set the target georeferenced extent [4 values]
-    --target-resolution <xres> <yres>                        Set the target resolution [2 values]
-                                                            Mutually exclusive with --target-size
-    --tap                                                    (target aligned pixels) Align the coordinates of the extent of the output file to the values of the target-resolution
-    --target-size <xsize> <ysize>                            Set the target size in pixels and lines [2 values]
-                                                            Mutually exclusive with --target-resolution
+    --extent <xmin>,<ymin>,<xmax>,<ymax>                     Set the target georeferenced extent [4 values]
+    --resolution <xres>,<yres>                               Set the target resolution [2 values]
+                                                            Mutually exclusive with --size
+    --target-aligned-pixels                                  (target aligned pixels) Align the coordinates of the extent of the output file to the values of the resolution
+    --size <xsize>,<ysize>                                   Set the target size in pixels and lines [2 values]
+                                                            Mutually exclusive with --resolution
     --ot, --datatype, --output-data-type <OUTPUT-DATA-TYPE>  Output data type. OUTPUT-DATA-TYPE=Byte|Int8|UInt16|Int16|UInt32|Int32|UInt64|Int64|CInt16|CInt32|Float32|Float64|CFloat32|CFloat64
-    --optimization <OPTIMIZATION>                            Force the algorithm used (results are identical).. OPTIMIZATION=AUTO|RASTER|VECTOR (default: AUTO)
+    --optimization <OPTIMIZATION>                            Force the algorithm used (results are identical). OPTIMIZATION=AUTO|RASTER|VECTOR (default: AUTO)
 
     Advanced Options:
     --oo, --open-option <KEY=VALUE>                          Open options [may be repeated]
     --if, --input-format <INPUT-FORMAT>                      Input formats [may be repeated]
 
     For more details, consult https://gdal.org/programs/gdal_vector_rasterize.html
+
 
 
 Description
@@ -113,7 +114,7 @@ Standard options
 
 .. option:: --3d
 
-    Indicates that a burn value should be extracted from the "Z" values of the feature. Works with points and lines (linear interpolation along each segment). For polygons, works properly only if the are flat (same Z value for all vertices).
+    Indicates that a burn value should be extracted from the "Z" values of the feature. Works with points and lines (linear interpolation along each segment). For polygons, works properly only if they are flat (same Z value for all vertices).
 
 .. option:: --add
 
@@ -132,9 +133,7 @@ Standard options
     An SQL statement to be evaluated against the datasource to produce a virtual layer of features to be burned in.
     Starting with GDAL 3.7, the @filename syntax can be used to indicate that the content is in the pointed filename.
 
-.. option:: --dialect <DIALECT>
-
-    SQL dialect. In some cases can be used to use (unoptimized) OGR SQL instead of the native SQL of an RDBMS by passing OGRSQL. The "SQLITE" dialect can also be used with any datasource.
+.. include:: gdal_options/sql_dialect.rst
 
 .. option:: --nodata <NODATA>
 
@@ -144,9 +143,9 @@ Standard options
 
     Pre-initialize output bands with specified value. May be repeated.
 
-.. option:: --crs <SRS>
+.. option:: --crs <CRS>
 
-    Override the projection for the output file. If not specified, the projection of the input vector file will be used if available. When using this option, no reprojection of features from the SRS of the input vector to the specified SRS of the output raster, so use only this option to correct an invalid source SRS. The <srs_def> may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing the WKT.
+    Override the projection for the output file. If not specified, the projection of the input vector file will be used if available. When using this option, no reprojection of features from the CRS of the input vector to the specified CRS of the output raster, so use only this option to correct an invalid source CRS. The ``<CRS>`` may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing the WKT.
 
 .. option:: --transformer-option <NAME>=<VALUE>
 
@@ -158,7 +157,7 @@ Standard options
 
 .. option:: --resolution <xres>,<yres>
 
-    Set target resolution. The values must be expressed in georeferenced units. Both must be positive values. Note that `--target-resolution` cannot be used with `--target-size`.
+    Set target resolution. The values must be expressed in georeferenced units. Both must be positive values. Note that `--resolution` cannot be used with `--size`.
 
 .. option:: --target-aligned-pixels
 
@@ -166,11 +165,11 @@ Standard options
 
 .. option:: --size <xsize>,<ysize>
 
-    Set output file size in pixels and lines. Note that `--target-size` cannot be used with `--target-resolution`.
+    Set output file size in pixels and lines. Note that `--size` cannot be used with `--resolution`.
 
 .. option:: --ot, --datatype, --output-data-type <OUTPUT-DATA-TYPE>
 
-    Force the output bands to be of the indicated data type. Defaults to `Float64`, unless the attribute field to burn is of type `Int6`4, in which case `Int64`` is used for the output raster data type if the output driver supports it.
+    Force the output bands to be of the indicated data type. Defaults to ``Float64``, unless the attribute field to burn is of type ``Int64``, in which case ``Int64`` is used for the output raster data type if the output driver supports it.
 
 .. option:: --optimization <OPTIMIZATION>
 
