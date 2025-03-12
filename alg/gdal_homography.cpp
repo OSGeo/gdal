@@ -253,18 +253,27 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
         return FALSE;
     }
 
-    // "Hour-glass" like shape of GCPs. Cf https://github.com/OSGeo/gdal/issues/11618
+    /* -------------------------------------------------------------------- */
+    /* Check that the homography maps the unit square to a convex           */
+    /* quadrilateral.                                                       */
+    /* -------------------------------------------------------------------- */
+    // First, use the normalized homography to make the corners of the unit
+    // square to normalized geo coordinates
     double x[4] = {0, 1, 1, 0};
     double y[4] = {0, 0, 1, 1};
     for (int i = 0; i < 4; i++)
     {
         GDALApplyHomography(h_normalized.data(), x[i], y[i], &x[i], &y[i]);
     }
+    // Next, compute the vector from the top-left corner to each corner
     for (int i = 3; i >= 0; i--)
     {
         x[i] -= x[0];
         y[i] -= y[0];
     }
+    // Finally, check that "v2" (<x[2], y[2]>, the vector from top-left to
+    // bottom-right corner) is between v1 and v3, by checking that the
+    // vector cross product (v1 x v2) has the same sign as (v2 x v3)
     double cross12 = x[1] * y[2] - x[2] * y[1];
     double cross23 = x[2] * y[3] - x[3] * y[2];
     if (cross12 * cross23 <= 0.0)
@@ -358,9 +367,8 @@ void GDALComposeHomographies(const double *padfH1, const double *padfH2,
  * location is placed.
  */
 
-void GDALApplyHomography(const double *padfHomography,
-                                     double dfPixel, double dfLine,
-                                     double *pdfGeoX, double *pdfGeoY)
+void GDALApplyHomography(const double *padfHomography, double dfPixel,
+                         double dfLine, double *pdfGeoX, double *pdfGeoY)
 {
     double wx = padfHomography[0] + dfPixel * padfHomography[1] +
                 dfLine * padfHomography[2];
