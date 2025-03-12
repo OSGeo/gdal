@@ -895,7 +895,7 @@ OGRErr CPL_DLL OSRSetTPED(OGRSpatialReferenceH hSRS, double dfLat1,
 OGRErr CPL_DLL OSRSetVDG(OGRSpatialReferenceH hSRS, double dfCenterLong,
                          double dfFalseEasting, double dfFalseNorthing);
 
-/** Wagner I -- VII */
+/** Wagner I \-- VII */
 OGRErr CPL_DLL OSRSetWagner(OGRSpatialReferenceH hSRS, int nVariation,
                             double dfCenterLat, double dfFalseEasting,
                             double dfFalseNorthing);
