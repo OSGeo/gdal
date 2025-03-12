@@ -42,9 +42,10 @@ def check_homography(h1, h2, h_epsilon):
 ###############################################################################
 # Test if homography satisfies the GCP with an epsilon tolerance
 def check_gcp(h, gcp, h_epsilon):
-    out = gdal.ApplyHomography(h, gcp.GCPPixel, gcp.GCPLine)
-    assert out[0] == pytest.approx(gcp.GCPX, h_epsilon)
-    assert out[1] == pytest.approx(gcp.GCPY, h_epsilon)
+    success, x, y = gdal.ApplyHomography(h, gcp.GCPPixel, gcp.GCPLine)
+    assert success
+    assert x == pytest.approx(gcp.GCPX, h_epsilon)
+    assert y == pytest.approx(gcp.GCPY, h_epsilon)
 
 
 ###############################################################################
