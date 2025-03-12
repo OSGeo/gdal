@@ -144,7 +144,7 @@ Standard options
 
     Pre-initialize output bands with specified value. May be repeated.
 
-.. option:: --srs <SRS>
+.. option:: --crs <SRS>
 
     Override the projection for the output file. If not specified, the projection of the input vector file will be used if available. When using this option, no reprojection of features from the SRS of the input vector to the specified SRS of the output raster, so use only this option to correct an invalid source SRS. The <srs_def> may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing the WKT.
 
@@ -152,19 +152,19 @@ Standard options
 
     set a transformer option suitable to pass to GDALCreateGenImgProjTransformer2(). This is used when converting geometries coordinates to target raster pixel space. For example this can be used to specify RPC related transformer options.
 
-.. option:: --target-extent <xmin> <ymin> <xmax> <ymax>
+.. option:: --extent <xmin>,<ymin>,<xmax>,<ymax>
 
     Set georeferenced extents. The values must be expressed in georeferenced units. If not specified, the extent of the output file will be the extent of the vector layers.
 
-.. option:: --target-resolution <xres> <yres>
+.. option:: --resolution <xres>,<yres>
 
     Set target resolution. The values must be expressed in georeferenced units. Both must be positive values. Note that `--target-resolution` cannot be used with `--target-size`.
 
-.. option:: --tap
+.. option:: --target-aligned-pixels
 
     (target aligned pixels) Align the coordinates of the extent of the output file to the values of the -tr, such that the aligned extent includes the minimum extent. Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
 
-.. option:: --target-size <xsize> <ysize>
+.. option:: --size <xsize>,<ysize>
 
     Set output file size in pixels and lines. Note that `--target-size` cannot be used with `--target-resolution`.
 
@@ -211,4 +211,4 @@ Examples
 
     .. code-block:: bash
 
-        gdal vector rasterize --burn 255,0,0 --ot Byte --ts 1000,1000 -l footprints footprints.shp mask.tif
+        gdal vector rasterize --burn 255,0,0 --ot Byte --size 1000,1000 -l footprints footprints.shp mask.tif

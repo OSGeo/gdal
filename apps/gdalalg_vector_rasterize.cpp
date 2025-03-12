@@ -37,7 +37,7 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
     AddInputFormatsArg(&m_inputFormats)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR});
     AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR);
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR);
+    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
     m_outputDataset.SetInputFlags(GADV_NAME | GADV_OBJECT);
     AddCreationOptionsArg(&m_datasetCreationOptions);
     AddArg("band", 'b', _("The band(s) to burn values into"), &m_bands);
@@ -63,32 +63,35 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
            &m_nodata);
     AddArg("init", 0, _("Pre-initialize output bands with specified value"),
            &m_initValues);
-    AddArg("srs", 0, _("Override the projection for the output file"), &m_srs);
+    AddArg("crs", 0, _("Override the projection for the output file"), &m_srs).AddHiddenAlias("srs").SetIsCRSArg(/*noneAllowed=*/false);
     AddArg("transformer-option", 0,
            _("Set a transformer option suitable to pass to "
              "GDALCreateGenImgProjTransformer2"),
            &m_transformerOption)
         .SetMetaVar("<NAME>=<VALUE>");
-    AddArg("target-extent", 0, _("Set the target georeferenced extent"),
+    AddArg("extent", 0, _("Set the target georeferenced extent"),
            &m_targetExtent)
         .SetMinCount(4)
         .SetMaxCount(4)
-        .SetMetaVar("<xmin> <ymin> <xmax> <ymax>");
-    AddArg("target-resolution", 0, _("Set the target resolution"),
+        .SetRepeatedArgAllowed(false)
+        .SetMetaVar("<xmin>,<ymin>,<xmax>,<ymax>");
+    AddArg("resolution", 0, _("Set the target resolution"),
            &m_targetResolution)
         .SetMinCount(2)
         .SetMaxCount(2)
-        .SetMetaVar("<xres> <yres>")
+        .SetRepeatedArgAllowed(false)
+        .SetMetaVar("<xres>,<yres>")
         .SetMutualExclusionGroup("target-size-or-resoulution");
-    AddArg("tap", 0,
+    AddArg("target-aligned-pixels", 0,
            _("(target aligned pixels) Align the coordinates of the extent of "
              "the output file to the values of the target-resolution"),
            &m_tap);
-    AddArg("target-size", 0, _("Set the target size in pixels and lines"),
+    AddArg("size", 0, _("Set the target size in pixels and lines"),
            &m_targetSize)
         .SetMinCount(2)
         .SetMaxCount(2)
-        .SetMetaVar("<xsize> <ysize>")
+        .SetRepeatedArgAllowed(false)
+        .SetMetaVar("<xsize>,<ysize>")
         .SetMutualExclusionGroup("target-size-or-resoulution");
     AddOutputDataTypeArg(&m_outputType);
     AddArg("optimization", 0,
@@ -138,7 +141,7 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         for (double burnValue : m_burnValues)
         {
             aosOptions.AddString("-burn");
-            aosOptions.AddString(CPLSPrintf("%.15g", burnValue));
+            aosOptions.AddString(CPLSPrintf("%.17g", burnValue));
         }
     }
 
@@ -191,7 +194,7 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     if (!std::isnan(m_nodata))
     {
         aosOptions.AddString("-a_nodata");
-        aosOptions.AddString(CPLSPrintf("%.15g", m_nodata));
+        aosOptions.AddString(CPLSPrintf("%.17g", m_nodata));
     }
 
     if (m_initValues.size())
@@ -199,7 +202,7 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         for (double initValue : m_initValues)
         {
             aosOptions.AddString("-init");
-            aosOptions.AddString(CPLSPrintf("%.15g", initValue));
+            aosOptions.AddString(CPLSPrintf("%.17g", initValue));
         }
     }
 
@@ -229,7 +232,7 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         for (double targetExtent : m_targetExtent)
         {
             aosOptions.AddString("-te");
-            aosOptions.AddString(CPLSPrintf("%.15g", targetExtent));
+            aosOptions.AddString(CPLSPrintf("%.17g", targetExtent));
         }
     }
 
@@ -238,7 +241,7 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         for (double targetResolution : m_targetResolution)
         {
             aosOptions.AddString("-tr");
-            aosOptions.AddString(CPLSPrintf("%.15g", targetResolution));
+            aosOptions.AddString(CPLSPrintf("%.17g", targetResolution));
         }
     }
 
