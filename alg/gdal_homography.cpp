@@ -38,7 +38,7 @@ struct HomographyTransformInfo
 };
 
 /************************************************************************/
-/*                   GDALCreateSimilarHomographyTransformer()                  */
+/*               GDALCreateSimilarHomographyTransformer()               */
 /************************************************************************/
 
 static void *GDALCreateSimilarHomographyTransformer(void *hTransformArg,
@@ -74,7 +74,7 @@ static void *GDALCreateSimilarHomographyTransformer(void *hTransformArg,
 }
 
 /************************************************************************/
-/*                      GDALCreateHomographyTransformer()                      */
+/*                   GDALCreateHomographyTransformer()                  */
 /************************************************************************/
 
 /**
@@ -115,7 +115,7 @@ void *GDALCreateHomographyTransformer(double adfHomography[9])
 }
 
 /************************************************************************/
-/*                       GDALGCPsToHomography()                       */
+/*                        GDALGCPsToHomography()                        */
 /************************************************************************/
 
 /**
@@ -274,7 +274,7 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
 
     /* -------------------------------------------------------------------- */
     /*      Compose the resulting transformation with the normalization     */
-    /*      homographies.                                             */
+    /*      homographies.                                                   */
     /* -------------------------------------------------------------------- */
     double h1p2[9] = {0.0};
 
@@ -285,7 +285,7 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
 }
 
 /************************************************************************/
-/*                      GDALComposeHomographies()                      */
+/*                      GDALComposeHomographies()                       */
 /************************************************************************/
 
 /**
@@ -330,7 +330,7 @@ void GDALComposeHomographies(const double *padfH1, const double *padfH2,
 }
 
 /************************************************************************/
-/*                       GDALApplyHomography()                        */
+/*                        GDALApplyHomography()                         */
 /************************************************************************/
 
 /**
@@ -373,7 +373,7 @@ void CPL_STDCALL GDALApplyHomography(const double *padfHomography,
 }
 
 /************************************************************************/
-/*                        GDALInvHomography()                         */
+/*                         GDALInvHomography()                          */
 /************************************************************************/
 
 /**
@@ -446,7 +446,7 @@ int CPL_STDCALL GDALInvHomography(const double *padfHIn, double *padfHOut)
 }
 
 /************************************************************************/
-/*                      GDALCreateHomographyTransformerFromGCPs()                      */
+/*               GDALCreateHomographyTransformerFromGCPs()              */
 /************************************************************************/
 
 /**
@@ -473,7 +473,7 @@ void *GDALCreateHomographyTransformerFromGCPs(int nGCPCount,
 }
 
 /************************************************************************/
-/*                     GDALDestroyHomographyTransformer()                      */
+/*                  GDALDestroyHomographyTransformer()                  */
 /************************************************************************/
 
 /**
@@ -502,7 +502,7 @@ void GDALDestroyHomographyTransformer(void *pTransformArg)
 }
 
 /************************************************************************/
-/*                          GDALHomographyTransform()                          */
+/*                       GDALHomographyTransform()                      */
 /************************************************************************/
 
 /**
@@ -550,7 +550,7 @@ int GDALHomographyTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
 }
 
 /************************************************************************/
-/*                    GDALSerializeHomographyTransformer()                     */
+/*                 GDALSerializeHomographyTransformer()                 */
 /************************************************************************/
 
 CPLXMLNode *GDALSerializeHomographyTransformer(void *pTransformArg)
@@ -566,7 +566,7 @@ CPLXMLNode *GDALSerializeHomographyTransformer(void *pTransformArg)
         CPLCreateXMLNode(nullptr, CXT_Element, "HomographyTransformer");
 
     /* -------------------------------------------------------------------- */
-    /*      Attach Homography.                                                */
+    /*      Attach Homography.                                              */
     /* -------------------------------------------------------------------- */
     char szWork[300] = {};
 
@@ -582,7 +582,7 @@ CPLXMLNode *GDALSerializeHomographyTransformer(void *pTransformArg)
 }
 
 /************************************************************************/
-/*                   GDALDeserializeHomography()                    */
+/*                     GDALDeserializeHomography()                      */
 /************************************************************************/
 
 static void GDALDeserializeHomography(const char *pszH, double adfHomography[9])
@@ -594,14 +594,14 @@ static void GDALDeserializeHomography(const char *pszH, double adfHomography[9])
 }
 
 /************************************************************************/
-/*                   GDALDeserializeHomographyTransformer()                    */
+/*                GDALDeserializeHomographyTransformer()                */
 /************************************************************************/
 
 void *GDALDeserializeHomographyTransformer(CPLXMLNode *psTree)
 
 {
     /* -------------------------------------------------------------------- */
-    /*      Homography                                                */
+    /*        Homography                                                    */
     /* -------------------------------------------------------------------- */
     double padfForward[9];
     if (CPLGetXMLNode(psTree, "Homography") != nullptr)
