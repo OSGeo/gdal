@@ -13,6 +13,7 @@
 ###############################################################################
 
 import gdaltest
+import pytest
 
 from osgeo import gdal
 
@@ -42,16 +43,15 @@ def check_homography(h1, h2, h_epsilon):
 # Test if homography satisfies the GCP with an epsilon tolerance
 def check_gcp(h, gcp, h_epsilon):
     out = gdal.ApplyHomography(h, gcp.GCPPixel, gcp.GCPLine)
-    return (gcp.GCPX - out[0]) < h_epsilon and (gcp.GCPY - out[1]) < h_epsilon
+    assert out[0] == pytest.approx(gcp.GCPX, h_epsilon)
+    assert out[1] == pytest.approx(gcp.GCPY, h_epsilon)
 
 
 ###############################################################################
 # Test if homography satisfies all GCPs in list with an epsilon tolerance
 def check_gcps(h, gcps, h_epsilon):
-    ret = True
     for gcp in gcps:
-        ret = ret and check_gcp(h, gcp, h_epsilon)
-    return ret
+        check_gcp(h, gcp, h_epsilon)
 
 
 ###############################################################################
