@@ -210,10 +210,17 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
         return FALSE;
     }
 
-    GDALMatrix LtL(9, 9);
+    /* -------------------------------------------------------------------- */
+    /* Calculate the best fit homography following                          */
+    /* https://www.cs.unc.edu/~ronisen/teaching/fall_2023/pdf_slides/       */
+    /* lecture9_transformation.pdf                                          */
+    /* Since rank(AtA) = rank(8) = 8, append an additional equation         */
+    /* h_normalized[6] = 1 to fully define the solution.                    */
+    /* -------------------------------------------------------------------- */
+    GDALMatrix AtA(9, 9);
     GDALMatrix rhs(9, 1);
     rhs(6, 0) = 1;
-    LtL(6, 6) = 1;
+    AtA(6, 6) = 1;
 
     for (int i = 0; i < nGCPCount; ++i)
     {
@@ -227,31 +234,31 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
             return FALSE;
         }
 
-        double Lx[] = {1, pixel, line,          0,           0,
+        double Ax[] = {1, pixel, line,          0,           0,
                        0, -geox, -geox * pixel, -geox * line};
-        double Ly[] = {0,           0, 0, 1, pixel, line, -geoy, -geoy * pixel,
+        double Ay[] = {0,           0, 0, 1, pixel, line, -geoy, -geoy * pixel,
                        -geoy * line};
         int j, k;
-        // Populate the lower triangle of symmetric LtL matrix
+        // Populate the lower triangle of symmetric AtA matrix
         for (j = 0; j < 9; j++)
         {
             for (k = j; k < 9; k++)
             {
-                LtL(j, k) += Lx[j] * Lx[k] + Ly[j] * Ly[k];
+                AtA(j, k) += Ax[j] * Ax[k] + Ay[j] * Ay[k];
             }
         }
     }
-    // Populate the upper triangle of symmetric LtL matrix
+    // Populate the upper triangle of symmetric AtA matrix
     for (int j = 0; j < 9; j++)
     {
         for (int k = 0; k < j; k++)
         {
-            LtL(j, k) = LtL(k, j);
+            AtA(j, k) = AtA(k, j);
         }
     }
 
     GDALMatrix h_normalized(9, 1);
-    if (!GDALLinearSystemSolve(LtL, rhs, h_normalized))
+    if (!GDALLinearSystemSolve(AtA, rhs, h_normalized))
     {
         return FALSE;
     }
