@@ -165,6 +165,16 @@ int CPL_DLL GDALGCPTransform(void *pTransformArg, int bDstToSrc,
                              int nPointCount, double *x, double *y, double *z,
                              int *panSuccess);
 
+/* Homography transformer ... forward is to georef coordinates */
+void CPL_DLL *GDALCreateHomographyTransformer(double adfHomography[9]);
+void CPL_DLL *
+GDALCreateHomographyTransformerFromGCPs(int nGCPCount,
+                                        const GDAL_GCP *pasGCPList);
+void CPL_DLL GDALDestroyHomographyTransformer(void *pTransformArg);
+int CPL_DLL GDALHomographyTransform(void *pTransformArg, int bDstToSrc,
+                                    int nPointCount, double *x, double *y,
+                                    double *z, int *panSuccess);
+
 /* Thin Plate Spine transformer ... forward is to georef coordinates */
 
 void CPL_DLL *GDALCreateTPSTransformer(int nGCPCount,

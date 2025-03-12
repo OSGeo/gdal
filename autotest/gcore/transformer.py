@@ -114,6 +114,38 @@ def test_transformer_3():
 
 
 ###############################################################################
+# Test GCP based transformer with homography.
+
+
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
+def test_transformer_homography():
+
+    ds = gdal.Open("data/gcps.vrt")
+    tr = gdal.Transformer(ds, None, ["METHOD=GCP_HOMOGRAPHY"])
+
+    (success, pnt) = tr.TransformPoint(0, 20, 10)
+
+    assert (
+        success
+        and pnt[0] == pytest.approx(441920, abs=0.001)
+        and pnt[1] == pytest.approx(3750720, abs=0.001)
+        and pnt[2] == 0
+    ), "got wrong forward transform result."
+
+    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+
+    assert (
+        success
+        and pnt[0] == pytest.approx(20, abs=0.001)
+        and pnt[1] == pytest.approx(10, abs=0.001)
+        and pnt[2] == 0
+    ), "got wrong reverse transform result."
+
+
+###############################################################################
 # Test geolocation based transformer.
 
 

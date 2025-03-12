@@ -1137,6 +1137,43 @@ def test_warp_39():
 
 
 ###############################################################################
+# Test a warp with GCPs for homography on the *destination* image.
+
+
+def test_warp_homography():
+
+    # Create an output file with GCPs.
+    out_file = "tmp/warp_homography.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(out_file, 50, 50, 3)
+
+    gcp_list = [
+        gdal.GCP(397000, 5642000, 0, 0, 0),
+        gdal.GCP(397000, 5641990, 0, 0, 50),
+        gdal.GCP(397010, 5642000, 0, 50, 0),
+        gdal.GCP(397010, 5641990, 0, 50, 50),
+        gdal.GCP(397005, 5641995, 0, 25, 25),
+    ]
+    ds.SetGCPs(gcp_list, gdaltest.user_srs_to_wkt("EPSG:32632"))
+    ds = None
+
+    gdal.Warp(
+        out_file,
+        "data/test3658.tif",
+        options="-srcnodata none -to DST_METHOD=GCP_HOMOGRAPHY",
+    )
+
+    ds = gdal.Open(out_file)
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    # Should exactly match the source file.
+    exp_cs = 30546
+    assert cs == exp_cs
+
+    os.unlink(out_file)
+
+
+###############################################################################
 # test average (#5311)
 
 

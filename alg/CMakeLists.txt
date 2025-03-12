@@ -5,6 +5,7 @@ add_library(
   contour.cpp
   delaunay.c
   gdal_crs.cpp
+  gdal_homography.cpp
   gdal_octave.cpp
   gdal_rpc.cpp
   gdal_tps.cpp
