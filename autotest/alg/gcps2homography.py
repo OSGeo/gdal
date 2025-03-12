@@ -216,7 +216,6 @@ def test_gcps2h_8():
         9.207539714141043e-06,
         -1.9069099634950863e-05,
     )
-    print(h)
     check_homography(h, h_expected, 0.00001)
 
 
