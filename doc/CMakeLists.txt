@@ -34,7 +34,7 @@ if (BUILD_DOCS)
     gdal_set_runtime_env(PYTHON_RUN_ENV)
 
     set(SPHINX_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/build)
-    set(SPHINX_BUILD_OPTS "--jobs=auto" "--fail-on-warning" "--show-traceback")
+    set(SPHINX_BUILD_OPTS "--jobs=auto" "--show-traceback")
     file(MAKE_DIRECTORY ${SPHINX_BUILD_DIR})
     file(MAKE_DIRECTORY ${SPHINX_BUILD_DIR}/html_extra)
 
@@ -115,8 +115,9 @@ if (BUILD_DOCS)
                     COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} BUILDDIR=${SPHINX_BUILD_DIR}
                     ${SPHINX_BUILD} -M html
                                     ${CMAKE_CURRENT_SOURCE_DIR}/source
-                                    ${CMAKE_CURRENT_BINARY_DIR}/build
+                                    ${SPHINX_BUILD_DIR}
                                     ${SPHINX_BUILD_OPTS}
+                                    "--fail-on-warning"
             COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/html.stamp"
     )
 
@@ -125,17 +126,17 @@ if (BUILD_DOCS)
     )
 
     # Sphinx PDF documentation
+    set(GDAL_DOC_PDF ${CMAKE_CURRENT_BINARY_DIR}/build/latex/gdal.pdf)
     add_custom_command(
-            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/build/gdal.pdf
+            OUTPUT ${GDAL_DOC_PDF}
             DEPENDS ${SPHINX_SOURCE_FILES}
             COMMAND ${CMAKE_COMMAND} -E env BUILDDIR=${SPHINX_BUILD_DIR}
                     ${SPHINX_BUILD} -M latexpdf
                                     ${CMAKE_CURRENT_SOURCE_DIR}/source
                                     ${CMAKE_CURRENT_BINARY_DIR}/build
-                                    ${SPHINX_BUILD_OPTS}
     )
 
-    add_custom_target(latexpdf DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/build/gdal.pdf)
+    add_custom_target(latexpdf DEPENDS ${GDAL_DOC_PDF})
 
     # Sphinx manpage documentation
     add_custom_command(
@@ -150,6 +151,31 @@ if (BUILD_DOCS)
     )
 
     add_custom_target(man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/man.stamp)
+
+    ####################################################################################################
+    # Packaged documentation (e.g. "gdal3100doc.zip")
+    ####################################################################################################
+
+    string(REPLACE "." "" _GDAL_VERSION_NO_DOTS ${GDAL_VERSION_NO_DEV_SUFFIX})
+    set(DOC_ZIP "gdal${_GDAL_VERSION_NO_DOTS}doc.zip")
+
+    # The Javadoc path is copied from swig/java/CMakeLists.txt, which hasn't been read
+    # at the time this is executed.
+    set(JAVADOC_ZIP ${CMAKE_CURRENT_BINARY_DIR}/../swig/java/javadoc.zip)
+
+    add_custom_command(
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${DOC_ZIP}
+            DEPENDS ${GDAL_DOC_PDF}
+                    ${CMAKE_CURRENT_BINARY_DIR}/html.stamp
+                    java_binding ${JAVADOC_ZIP}
+            COMMAND ${CMAKE_COMMAND} -E make_directory gdaldoc
+            COMMAND ${CMAKE_COMMAND} -E make_directory gdaldoc/java
+            COMMAND ${CMAKE_COMMAND} -E chdir gdaldoc/java ${CMAKE_COMMAND} -E tar x ${JAVADOC_ZIP} --format=zip
+            COMMAND ${CMAKE_COMMAND} -E copy ${GDAL_DOC_PDF} gdaldoc/gdal.pdf
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${SPHINX_BUILD_DIR}/html gdaldoc
+            COMMAND ${CMAKE_COMMAND} -E tar c ${DOC_ZIP} --format=zip gdaldoc)
+
+    add_custom_target(doczip DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${DOC_ZIP})
 
     ####################################################################################################
     # Documentation tests
