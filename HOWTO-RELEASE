@@ -90,7 +90,11 @@ Process :
 
    If make is not GNU make, e.g., export MAKE=gmake
 
+   ant used for building Javadocs
+
    doxygen
+
+   jdk used for building Javadocs
 
    python available as "python", or e.g. export PYTHON=python3.9
 
@@ -128,13 +132,9 @@ Process :
 
 12.2) Create a snapshot of the documentation (only for feature releases)
 
-    1. Refresh
-       https://download.osgeo.org/gdal/for_doc/javadoc.zip
-       by building the Java bindings, with -DGDAL_JAVA_GENERATE_JAVADOC=ON.
-       javadoc.zip is in the swig/java subdirectory of the build directory.
-    2. cd doc
-    3. ./build_doc_snapshot 310
-       This generates gdal310doc.zip
+    1. From the build directory, run
+       cmake --build . --target doczip
+       This generates doc/gdal3110doc.zip
 
 12.3) Publish the resulting files on download.osgeo.org,
     in /osgeo/download/gdal/X.Y.Z (where X.Y.Z is the version number)
