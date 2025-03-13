@@ -306,6 +306,7 @@ function(add_gdal_driver)
         add_library(${_DRIVER_TARGET} OBJECT ${_DRIVER_SOURCES} ${_DRIVER_CORE_SOURCES})
         set_property(TARGET ${_DRIVER_TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
         target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:${_DRIVER_TARGET}>)
+
         if (_DRIVER_DEF)
             if (IS_OGR EQUAL -1) # raster
                 target_compile_definitions(gdal_frmts PRIVATE -D${_DRIVER_DEF})
@@ -315,10 +316,13 @@ function(add_gdal_driver)
         else ()
             if (IS_OGR EQUAL -1) # raster
                 string(TOLOWER ${_DRIVER_TARGET} _FORMAT)
-                string(REPLACE "gdal" "FRMT" _DEF ${_FORMAT})
+                string(FIND "${_FORMAT}" "gdal_" PREFIX_POS)
+                if (PREFIX_POS EQUAL -1)
+                    message(FATAL_ERROR "Cannot find gdal_ prefix in ${_FORMAT}")
+                endif()
+                string(REPLACE "gdal_" "FRMT_" _DEF ${_FORMAT})
                 target_compile_definitions(gdal_frmts PRIVATE -D${_DEF})
             else () # vector
-                string(REPLACE "ogr_" "" _FORMAT ${_DRIVER_TARGET})
                 target_compile_definitions(ogrsf_frmts PRIVATE -D${_KEY}_ENABLED)
             endif ()
         endif ()

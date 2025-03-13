@@ -39,6 +39,7 @@ Vector drivers
    esrijson
    filegdb
    flatgeobuf
+   gdalg
    geojson
    geojsonseq
    georss

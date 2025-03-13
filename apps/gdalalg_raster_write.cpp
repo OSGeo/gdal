@@ -39,6 +39,12 @@ bool GDALRasterWriteAlgorithm::RunStep(GDALProgressFunc pfnProgress,
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
+    if (m_format == "stream")
+    {
+        m_outputDataset.Set(m_inputDataset.GetDatasetRef());
+        return true;
+    }
+
     CPLStringList aosOptions;
     if (!m_overwrite)
     {

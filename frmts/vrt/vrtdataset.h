@@ -290,11 +290,6 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     bool m_bMultiThreadedRasterIOLastUsed = false;
 
-    static constexpr const char *const apszSpecialSyntax[] = {
-        "NITF_IM:{ANY}:{FILENAME}", "PDF:{ANY}:{FILENAME}",
-        "RASTERLITE:{FILENAME},{ANY}", "TILEDB:\"{FILENAME}\":{ANY}",
-        "TILEDB:{FILENAME}:{ANY}"};
-
     VRTRasterBand *InitBand(const char *pszSubclass, int nBand,
                             bool bAllowPansharpenedOrProcessed);
     static GDALDataset *OpenVRTProtocol(const char *pszSpec);
@@ -446,10 +441,6 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
                            CSLConstList papszRootGroupOptions,
                            CSLConstList papszOptions);
     static CPLErr Delete(const char *pszFilename);
-
-    static std::string BuildSourceFilename(const char *pszFilename,
-                                           const char *pszVRTPath,
-                                           bool bRelativeToVRT);
 
     static int GetNumThreads(GDALDataset *poDS);
 };
