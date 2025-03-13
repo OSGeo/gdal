@@ -40,14 +40,50 @@ def temp_cutline(input_csv):
 
 @pytest.mark.require_driver("CSV")
 @pytest.mark.parametrize(
-    "options,expected",
+    "create_empty_dataset,options,expected",
     [
         (
+            True,
             ["--all-touched", "-b", "3,2,1", "--burn", "200,220,240", "-l", "cutline"],
+            "Specify the --overwrite option to overwrite it or the --update option to update",
+        ),
+        (
+            True,
+            [
+                "--update",
+                "--all-touched",
+                "-b",
+                "3,2,1",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
             121,
         ),
         (
+            False,
+            ["--all-touched", "-b", "3,2,1", "--burn", "200,220,240", "-l", "cutline"],
+            "Size and resolution are missing",
+        ),
+        (
+            True,
             [
+                "--update",
+                "--all-touched",
+                "-b",
+                "3,2,1",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            121,
+        ),
+        (
+            True,
+            [
+                "--update",
                 "--all-touched",
                 "--where",
                 "Counter='2'",
@@ -61,7 +97,9 @@ def temp_cutline(input_csv):
             46,
         ),
         (
+            True,
             [
+                "--update",
                 "--all-touched",
                 "--sql",
                 "SELECT * FROM cutline WHERE Counter='2'",
@@ -73,7 +111,9 @@ def temp_cutline(input_csv):
             46,
         ),
         (
+            True,
             [
+                "--update",
                 "--all-touched",
                 "--sql",
                 "SELECT * FROM cutline WHERE Counter='2'",
@@ -87,7 +127,9 @@ def temp_cutline(input_csv):
             "Argument 'sql' is mutually exclusive with 'layer-name'.",
         ),
         (
+            True,
             [
+                "--update",
                 "--all-touched",
                 "-b",
                 "3,2,1",
@@ -100,11 +142,14 @@ def temp_cutline(input_csv):
             "Argument '-3d' not allowed with '-burn <value>'",
         ),
         (
-            ["--all-touched", "-b", "3,2,1", "-l", "cutline", "--3d"],
+            True,
+            ["--update", "--all-touched", "-b", "3,2,1", "-l", "cutline", "--3d"],
             101,
         ),
         (
+            True,
             [
+                "--update",
                 "--invert",
                 "--all-touched",
                 "-b",
@@ -117,7 +162,9 @@ def temp_cutline(input_csv):
             1690,
         ),
         (
+            True,
             [
+                "--update",
                 "--attribute-name",
                 "HEIGHT",
                 "--all-touched",
@@ -131,7 +178,9 @@ def temp_cutline(input_csv):
             "Argument '-a <attribute_name>' not allowed with '-burn <value>'",
         ),
         (
+            True,
             [
+                "--update",
                 "--attribute-name",
                 "__HEIGHT",
                 "--all-touched",
@@ -143,7 +192,9 @@ def temp_cutline(input_csv):
             "Failed to find field __HEIGHT on layer cutline",
         ),
         (
+            True,
             [
+                "--update",
                 "--attribute-name",
                 "HEIGHT",
                 "--all-touched",
@@ -155,7 +206,9 @@ def temp_cutline(input_csv):
             168,
         ),
         (
+            True,
             [
+                "--update",
                 "--all-touched",
                 "--dialect",
                 "SQLITE",
@@ -169,7 +222,9 @@ def temp_cutline(input_csv):
             46,
         ),
         (
+            True,
             [
+                "--update",
                 "--all-touched",
                 "--dialect",
                 "XXXXXX",  # No errors: just a warning
@@ -183,6 +238,7 @@ def temp_cutline(input_csv):
             46,
         ),
         (
+            False,
             [
                 "--all-touched",
                 "--init",
@@ -197,6 +253,7 @@ def temp_cutline(input_csv):
             "'-tr xres yres' or '-ts xsize ysize' is required.",
         ),
         (
+            False,
             [
                 "--all-touched",
                 "--size",
@@ -213,6 +270,7 @@ def temp_cutline(input_csv):
             "-b option cannot be used when creating a GDAL dataset.",
         ),
         (
+            False,
             [
                 "--all-touched",
                 "--size",
@@ -227,6 +285,7 @@ def temp_cutline(input_csv):
             1418,
         ),
         (
+            False,
             [
                 "--all-touched",
                 "--resolution",
@@ -243,6 +302,7 @@ def temp_cutline(input_csv):
             "Argument 'size' is mutually exclusive with 'resolution'.",
         ),
         (
+            False,
             [
                 "--all-touched",
                 "--resolution",
@@ -255,6 +315,7 @@ def temp_cutline(input_csv):
             500,
         ),
         (
+            False,
             [
                 "--all-touched",
                 "--resolution",
@@ -269,6 +330,7 @@ def temp_cutline(input_csv):
             524,
         ),
         (
+            False,
             [
                 "--tap",
                 "--all-touched",
@@ -282,6 +344,7 @@ def temp_cutline(input_csv):
             497,
         ),
         (
+            False,
             [
                 "--optimization",
                 "XXXXX",
@@ -296,6 +359,7 @@ def temp_cutline(input_csv):
             "Invalid value 'XXXXX' for string argument '--optimization'. Should be one among 'AUTO', 'RASTER', 'VECTOR'.",
         ),
         (
+            False,
             [
                 "--optimization",
                 "AUTO",
@@ -310,6 +374,7 @@ def temp_cutline(input_csv):
             500,
         ),
         (
+            False,
             [
                 "--crs",
                 "EPSG:XXXXX",
@@ -324,6 +389,7 @@ def temp_cutline(input_csv):
             "Invalid value for 'crs' argument",
         ),
         (
+            False,
             [
                 "--crs",
                 "EPSG:4326",
@@ -338,6 +404,7 @@ def temp_cutline(input_csv):
             500,
         ),
         (
+            False,
             [
                 "--nodata",
                 "-1",
@@ -353,9 +420,11 @@ def temp_cutline(input_csv):
         ),
     ],
 )
-def test_gdalalg_vector_rasterize(tmp_vsimem, options, expected):
+def test_gdalalg_vector_rasterize(tmp_vsimem, create_empty_dataset, options, expected):
 
     input_csv = str(tmp_vsimem / "cutline.csv")
+
+    options = options.copy()
 
     with temp_cutline(input_csv):
 
@@ -366,26 +435,9 @@ def test_gdalalg_vector_rasterize(tmp_vsimem, options, expected):
             gdal.ErrorReset()
             pass
 
-        # These options (GDALRasterize format) imply creating a new dataset
-        # -of, -a_nodata, -init, -a_srs, -co, -te, -tr, -tap, -ts, or -ot
-        create_dataset = True
-        for opt in options:
-            if opt in [
-                "--of",
-                "--nodata",
-                "--init",
-                "--crs",
-                "--co",
-                "--extent",
-                "--resolution",
-                "--tap",
-                "--size",
-                "--ot",
-            ]:
-                create_dataset = False
-                break
+        assert gdal.VSIStatL(output_tif) != 0
 
-        if create_dataset:
+        if create_empty_dataset:
             # Create a raster to rasterize into.
             target_ds = gdal.GetDriverByName("GTiff").Create(
                 output_tif, 12, 12, 3, gdal.GDT_Byte
@@ -459,7 +511,9 @@ def test_gdalalg_vector_rasterize_add_option(tmp_vsimem):
     with temp_cutline(input_csv):
 
         rasterize = get_rasterize_alg()
-        assert rasterize.ParseRunAndFinalize(options + [input_csv, output_tif])
+        assert rasterize.ParseRunAndFinalize(
+            options + ["--update", input_csv, output_tif]
+        )
 
         target_ds = gdal.Open(output_tif)
         checksum = target_ds.GetRasterBand(2).Checksum()
@@ -492,6 +546,7 @@ def test_gdalalg_vector_rasterize_dialect_warning(tmp_vsimem):
             "3,2,1",
             "--burn",
             "200,220,240",
+            "--update",
         ]
 
         output_tif = str(tmp_vsimem / "rasterize_alg_1.tif")
@@ -509,4 +564,4 @@ def test_gdalalg_vector_rasterize_dialect_warning(tmp_vsimem):
         assert rasterize.ParseRunAndFinalize(options + [input_csv, output_tif])
 
         # Check the warning
-        assert expected_warning in gdal.GetLastErrorMsg()
+        assert expected_warning in gdal.GetLastErrorMsg(), gdal.GetLastErrorMsg()

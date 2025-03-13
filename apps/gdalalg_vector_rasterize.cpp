@@ -103,6 +103,8 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
            &m_optimization)
         .SetChoices("AUTO", "RASTER", "VECTOR")
         .SetDefault("AUTO");
+    AddUpdateArg(&m_update);
+    AddOverwriteArg(&m_overwrite);
 }
 
 /************************************************************************/
@@ -163,6 +165,8 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     if (m_add)
     {
         aosOptions.AddString("-add");
+        // Implies update
+        m_update = true;
     }
 
     if (!m_layerName.empty())
@@ -299,15 +303,48 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     const bool dstDSWasNull{!hDstDS};
 
-    // Try to open the output file if it exists.
     if (!hDstDS && !m_outputDataset.GetName().empty())
     {
-        CPLErrorStateBackuper oCPLErrorHandlerPusher(CPLQuietErrorHandler);
-        hDstDS =
-            GDALOpenEx(m_outputDataset.GetName().c_str(),
-                       GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
-                       nullptr, nullptr, nullptr);
-        CPLErrorReset();
+        VSIStatBufL sStat;
+        bool fileExists{VSIStatL(m_outputDataset.GetName().c_str(), &sStat) ==
+                        0};
+
+        {
+            CPLErrorStateBackuper oCPLErrorHandlerPusher(CPLQuietErrorHandler);
+            hDstDS = GDALOpenEx(m_outputDataset.GetName().c_str(),
+                                GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR |
+                                    GDAL_OF_UPDATE,
+                                nullptr, nullptr, nullptr);
+            CPLErrorReset();
+        }
+
+        if (hDstDS)
+        {
+            if (!m_overwrite && !m_update)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Dataset '%s' already exists. Specify the --overwrite "
+                         "option to overwrite it or the --update option to "
+                         "update it.",
+                         m_outputDataset.GetName().c_str());
+                GDALClose(hDstDS);
+                return false;
+            }
+            else if (fileExists && m_overwrite)
+            {
+                // Delete the existing file
+                CPLErrorStateBackuper oCPLErrorHandlerPusher(
+                    CPLQuietErrorHandler);
+                if (VSIUnlink(m_outputDataset.GetName().c_str()) != 0)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Failed to delete existing dataset '%s'.",
+                             m_outputDataset.GetName().c_str());
+                    GDALClose(hDstDS);
+                    return false;
+                }
+            }
+        }
     }
 
     GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());

@@ -17,6 +17,8 @@ Synopsis
 
 .. code-block::
 
+    Usage: gdal vector rasterize [OPTIONS] <INPUT> <OUTPUT>
+
     Burns vector geometries into a raster.
 
     Positional arguments:
@@ -59,13 +61,12 @@ Synopsis
                                                             Mutually exclusive with --resolution
     --ot, --datatype, --output-data-type <OUTPUT-DATA-TYPE>  Output data type. OUTPUT-DATA-TYPE=Byte|Int8|UInt16|Int16|UInt32|Int32|UInt64|Int64|CInt16|CInt32|Float32|Float64|CFloat32|CFloat64
     --optimization <OPTIMIZATION>                            Force the algorithm used (results are identical). OPTIMIZATION=AUTO|RASTER|VECTOR (default: AUTO)
+    --update                                                 Whether to open existing dataset in update mode
+    --overwrite                                              Whether overwriting existing output is allowed
 
     Advanced Options:
     --oo, --open-option <KEY=VALUE>                          Open options [may be repeated]
     --if, --input-format <INPUT-FORMAT>                      Input formats [may be repeated]
-
-    For more details, consult https://gdal.org/programs/gdal_vector_rasterize.html
-
 
 Description
 -----------
@@ -115,7 +116,7 @@ Standard options
 
 .. option:: --add
 
-   Instead of burning a new value, this adds the new value to the existing raster. Suitable for heatmaps for instance.
+   Instead of burning a new value, this adds the new value to the existing raster, implies ``--update``. Suitable for heatmaps for instance.
 
 .. option:: -l, --layer, --layer-name <LAYER-NAME>
 
@@ -171,6 +172,14 @@ Standard options
 .. option:: --optimization <OPTIMIZATION>
 
     Force the algorithm used (results are identical). The raster mode is used in most cases and optimise read/write operations. The vector mode is useful with a decent amount of input features and optimise the CPU use. That mode have to be used with tiled images to be efficient. The auto mode (the default) will chose the algorithm based on input and output properties.
+
+.. option:: --update
+
+        Whether to open existing dataset in update mode.
+
+.. option:: --overwrite
+
+        Whether overwriting existing output is allowed.
 
 Advanced options
 ++++++++++++++++

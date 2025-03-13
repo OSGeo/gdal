@@ -82,6 +82,8 @@ class GDALVectorRasterizeAlgorithm final : public GDALAlgorithm
     std::vector<std::string> m_openOptions{};
     GDALArgDatasetValue m_inputDataset{};
     GDALArgDatasetValue m_outputDataset{};
+    bool m_update{false};
+    bool m_overwrite{false};
 };
 
 //! @endcond
