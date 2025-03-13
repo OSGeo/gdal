@@ -267,6 +267,7 @@ bPixelIsPoint
 bpw
 branche
 Brashear
+bRelativeToReferencePath
 Bresenham
 bReversed
 Brezenham
@@ -1002,6 +1003,7 @@ gdaldem
 gdaldriver
 gdalenhance
 gdalframework
+gdalg
 gdalgmlcoverage
 GDALGridDataMetricsOptions
 GDALGridInverseDistanceToAPowerNearestNeighborOptions
@@ -2662,6 +2664,7 @@ pszPath
 pszPreferredAuthority
 pszPrefix
 pszProj
+pszReferencePath
 pszRequest
 pszSource
 pszSrc

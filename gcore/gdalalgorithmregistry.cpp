@@ -122,7 +122,13 @@ GDALGlobalAlgorithmRegistry::Instantiate(const std::string &name) const
 {
     if (name == GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME)
         return std::make_unique<GDALMainAlgorithm>();
-    return GDALAlgorithmRegistry::Instantiate(name);
+    auto alg = GDALAlgorithmRegistry::Instantiate(name);
+    if (alg)
+    {
+        alg->SetCallPath(
+            {std::string(GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME), name});
+    }
+    return alg;
 }
 
 /************************************************************************/

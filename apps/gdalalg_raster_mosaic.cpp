@@ -31,8 +31,11 @@
 GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
+    m_supportsStreamedOutput = true;
+
     AddProgressArg();
-    AddOutputFormatArg(&m_format);
+    AddOutputFormatArg(&m_format, /* bStreamAllowed = */ true,
+                       /* bGDALGAllowed = */ true);
     AddArg(GDAL_ARG_NAME_INPUT, 'i',
            _("Input raster datasets (or specify a @<filename> to point to a "
              "file containing filenames)"),
@@ -157,7 +160,14 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
             else
             {
-                aosInputDatasetNames.push_back(ds.GetName().c_str());
+                std::string osDatasetName = ds.GetName();
+                if (!GetReferencePathForRelativePaths().empty())
+                {
+                    osDatasetName = GDALDataset::BuildFilename(
+                        osDatasetName.c_str(),
+                        GetReferencePathForRelativePaths().c_str(), true);
+                }
+                aosInputDatasetNames.push_back(osDatasetName.c_str());
             }
         }
     }
@@ -184,6 +194,7 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     const bool bVRTOutput =
         m_outputDataset.GetName().empty() || EQUAL(m_format.c_str(), "VRT") ||
+        EQUAL(m_format.c_str(), "stream") ||
         EQUAL(CPLGetExtensionSafe(m_outputDataset.GetName().c_str()).c_str(),
               "VRT");
 
@@ -273,7 +284,9 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
 
     auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
-        GDALBuildVRT(bVRTOutput ? m_outputDataset.GetName().c_str() : "",
+        GDALBuildVRT(EQUAL(m_format.c_str(), "stream") ? ""
+                     : bVRTOutput ? m_outputDataset.GetName().c_str()
+                                  : "",
                      foundByName ? aosInputDatasetNames.size()
                                  : static_cast<int>(m_inputDatasets.size()),
                      ahInputDatasets.empty() ? nullptr : ahInputDatasets.data(),

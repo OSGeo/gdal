@@ -1,0 +1,4 @@
+{
+    "type": "gdal_streamed_alg",
+    "command_line": "gdal raster pipeline ! read ../byte.tif",
+}
