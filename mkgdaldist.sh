@@ -141,11 +141,17 @@ CWD=${PWD}
 #
 echo "* Generating man pages..."
 
-(cd doc; SPHINXOPTS='--keep-going -j auto' make man)
+mkdir cmake-build-man
+cmake -DCMAKE_BUILD_TYPE=Debug \
+      -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF \
+      -DOGR_BUILD_OPTIONAL_DRIVERS=OFF \
+      -DBUILD_APPS=ON \
+      -DBUILD_TESTING=OFF \
+      -B cmake-build-man -S . 
+cmake --build cmake-build-man --target man
 mkdir -p man/man1
-cp doc/build/man/*.1 man/man1
-rm -rf doc/build
-rm -f doc/.doxygen_up_to_date
+cp cmake-build-man/doc/build/man/*.1 man/man1
+rm -rf cmake-build-man
 
 if test ! -f "man/man1/gdalinfo.1"; then
     echo " make man failed"
