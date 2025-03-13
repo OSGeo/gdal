@@ -14,6 +14,7 @@
 #define GDALALG_VECTOR_RASTERIZE_INCLUDED
 
 #include <algorithm>
+#include <limits>
 
 #include "gdalalgorithm.h"
 

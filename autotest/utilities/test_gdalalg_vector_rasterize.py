@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import contextlib
+
 import pytest
 
 from osgeo import gdal
@@ -18,6 +20,22 @@ from osgeo import gdal
 
 def get_rasterize_alg():
     return gdal.GetGlobalAlgorithmRegistry()["vector"]["rasterize"]
+
+
+# Context manager that creates a temporary file and writes content to it
+@contextlib.contextmanager
+def temp_cutline(input_csv):
+
+    content = """Counter,HEIGHT,WKT
+1,100,"POLYGON((6.25 1.25 100,7.25 1.25 200,7.25 2.25 250,6.25 2.25 254,6.25 1.25 100))"
+2,200,"POLYGON((4.25 4.25 220,6.25 4.25 200,6.25 6.25 202,4.25 6.25 200,4.25 4.25 220))"
+3,300,"POLYGON((1.001 1.001 200,3.999 3.999 220,3.2 1.6 210,1.001 1.001 200))"
+"""
+    gdal.FileFromMemBuffer(input_csv, content)
+    try:
+        yield
+    finally:
+        gdal.Unlink(input_csv)
 
 
 @pytest.mark.require_driver("CSV")
@@ -42,10 +60,391 @@ def get_rasterize_alg():
             ],
             46,
         ),
+        (
+            [
+                "--all-touched",
+                "--sql",
+                "SELECT * FROM cutline WHERE Counter='2'",
+                "-b",
+                "3,2,1",
+                "--burn",
+                "200,220,240",
+            ],
+            46,
+        ),
+        (
+            [
+                "--all-touched",
+                "--sql",
+                "SELECT * FROM cutline WHERE Counter='2'",
+                "-b",
+                "3,2,1",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            "Argument 'sql' is mutually exclusive with 'layer-name'.",
+        ),
+        (
+            [
+                "--all-touched",
+                "-b",
+                "3,2,1",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+                "--3d",
+            ],
+            "Argument '-3d' not allowed with '-burn <value>'",
+        ),
+        (
+            ["--all-touched", "-b", "3,2,1", "-l", "cutline", "--3d"],
+            101,
+        ),
+        (
+            [
+                "--invert",
+                "--all-touched",
+                "-b",
+                "3,2,1",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            1690,
+        ),
+        (
+            [
+                "--attribute-name",
+                "HEIGHT",
+                "--all-touched",
+                "-b",
+                "3,2,1",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            "Argument '-a <attribute_name>' not allowed with '-burn <value>'",
+        ),
+        (
+            [
+                "--attribute-name",
+                "__HEIGHT",
+                "--all-touched",
+                "-b",
+                "3,2,1",
+                "-l",
+                "cutline",
+            ],
+            "Failed to find field __HEIGHT on layer cutline",
+        ),
+        (
+            [
+                "--attribute-name",
+                "HEIGHT",
+                "--all-touched",
+                "-b",
+                "3,2,1",
+                "-l",
+                "cutline",
+            ],
+            168,
+        ),
+        (
+            [
+                "--all-touched",
+                "--dialect",
+                "SQLITE",
+                "--sql",
+                "SELECT * FROM cutline WHERE Counter='2'",
+                "-b",
+                "3,2,1",
+                "--burn",
+                "200,220,240",
+            ],
+            46,
+        ),
+        (
+            [
+                "--all-touched",
+                "--dialect",
+                "XXXXXX",  # No errors: just a warning
+                "--sql",
+                "SELECT * FROM cutline WHERE Counter='2'",
+                "-b",
+                "3,2,1",
+                "--burn",
+                "200,220,240",
+            ],
+            46,
+        ),
+        (
+            [
+                "--all-touched",
+                "--init",
+                "100,200,300",
+                "-b",
+                "3,2,1",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            "'-tr xres yres' or '-ts xsize ysize' is required.",
+        ),
+        (
+            [
+                "--all-touched",
+                "--size",
+                "10,10",
+                "--init",
+                "100,200,300",
+                "-b",
+                "3,2,1",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            "-b option cannot be used when creating a GDAL dataset.",
+        ),
+        (
+            [
+                "--all-touched",
+                "--size",
+                "10,10",
+                "--init",
+                "100,200,300",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            1418,
+        ),
+        (
+            [
+                "--all-touched",
+                "--resolution",
+                "0.6249,0.5249",
+                "--size",
+                "10,10",
+                "--init",
+                "100,200,300",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            "Argument 'size' is mutually exclusive with 'resolution'.",
+        ),
+        (
+            [
+                "--all-touched",
+                "--resolution",
+                "0.7,0.5",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            500,
+        ),
+        (
+            [
+                "--all-touched",
+                "--resolution",
+                "0.7,0.5",
+                "--extent",
+                "0.64,1.0,7.64,6.50",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            524,
+        ),
+        (
+            [
+                "--tap",
+                "--all-touched",
+                "--resolution",
+                "0.7,0.5",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            497,
+        ),
+        (
+            [
+                "--optimization",
+                "XXXXX",
+                "--all-touched",
+                "--resolution",
+                "0.7,0.5",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            "Invalid value 'XXXXX' for string argument '--optimization'. Should be one among 'AUTO', 'RASTER', 'VECTOR'.",
+        ),
+        (
+            [
+                "--optimization",
+                "AUTO",
+                "--all-touched",
+                "--resolution",
+                "0.7,0.5",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            500,
+        ),
+        (
+            [
+                "--crs",
+                "EPSG:XXXXX",
+                "--all-touched",
+                "--resolution",
+                "0.7,0.5",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            "Invalid value for 'crs' argument",
+        ),
+        (
+            [
+                "--crs",
+                "EPSG:4326",
+                "--all-touched",
+                "--resolution",
+                "0.7,0.5",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            500,
+        ),
+        (
+            [
+                "--nodata",
+                "-1",
+                "--all-touched",
+                "--resolution",
+                "0.7,0.5",
+                "--burn",
+                "200,220,240",
+                "-l",
+                "cutline",
+            ],
+            431,
+        ),
     ],
 )
 def test_gdalalg_vector_rasterize(tmp_vsimem, options, expected):
 
+    input_csv = str(tmp_vsimem / "cutline.csv")
+
+    with temp_cutline(input_csv):
+
+        output_tif = str(tmp_vsimem / "rasterize_alg_1.tif")
+        try:
+            gdal.Unlink(output_tif)
+        except RuntimeError:
+            gdal.ErrorReset()
+            pass
+
+        # These options (GDALRasterize format) imply creating a new dataset
+        # -of, -a_nodata, -init, -a_srs, -co, -te, -tr, -tap, -ts, or -ot
+        create_dataset = True
+        for opt in options:
+            if opt in [
+                "--of",
+                "--nodata",
+                "--init",
+                "--crs",
+                "--co",
+                "--extent",
+                "--resolution",
+                "--tap",
+                "--size",
+                "--ot",
+            ]:
+                create_dataset = False
+                break
+
+        if create_dataset:
+            # Create a raster to rasterize into.
+            target_ds = gdal.GetDriverByName("GTiff").Create(
+                output_tif, 12, 12, 3, gdal.GDT_Byte
+            )
+            target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
+
+            # Close TIF file
+            target_ds = None
+
+        # Rasterize
+        if isinstance(expected, str):
+            with pytest.raises(RuntimeError) as error:
+                rasterize = get_rasterize_alg()
+                rasterize.ParseRunAndFinalize(options + [input_csv, output_tif])
+            assert expected in str(error.value)
+
+        else:
+            rasterize = get_rasterize_alg()
+            assert rasterize.ParseRunAndFinalize(options + [input_csv, output_tif])
+
+        # Check the error
+        if isinstance(expected, str):
+            assert expected in gdal.GetLastErrorMsg()
+            return
+
+        # Check the result
+        target_ds = gdal.Open(output_tif)
+        checksum = target_ds.GetRasterBand(2).Checksum()
+        assert (
+            checksum == expected
+        ), "Did not get expected image checksum (got %d, expected %s)" % (
+            checksum,
+            expected,
+        )
+
+        if "--crs" in options:
+            assert target_ds.GetProjection().startswith('GEOGCS["WGS 84"')
+        else:
+            assert target_ds.GetProjection() == ""
+
+        if "--nodata" in options:
+            assert target_ds.GetRasterBand(2).GetNoDataValue() == -1
+        else:
+            assert target_ds.GetRasterBand(2).GetNoDataValue() in [None, 0]
+
+        target_ds = None
+
+
+def test_gdalalg_vector_rasterize_add_option(tmp_vsimem):
+
+    options = [
+        "--all-touched",
+        "-b",
+        "3,2,1",
+        "--burn",
+        "200,220,240",
+    ]
+
+    input_csv = str(tmp_vsimem / "cutline.csv")
     output_tif = str(tmp_vsimem / "rasterize_alg_1.tif")
 
     # Create a raster to rasterize into.
@@ -57,21 +456,57 @@ def test_gdalalg_vector_rasterize(tmp_vsimem, options, expected):
     # Close TIF file
     target_ds = None
 
-    # Rasterize
-    rasterize = get_rasterize_alg()
-    assert rasterize.ParseRunAndFinalize(
-        options + ["../alg/data/cutline.csv", output_tif]
-    )
+    with temp_cutline(input_csv):
 
-    # Check the result
+        rasterize = get_rasterize_alg()
+        assert rasterize.ParseRunAndFinalize(options + [input_csv, output_tif])
 
-    target_ds = gdal.Open(output_tif)
-    checksum = target_ds.GetRasterBand(2).Checksum()
-    assert (
-        checksum == expected
-    ), "Did not get expected image checksum (got %d, expected %d)" % (
-        checksum,
-        expected,
-    )
+        target_ds = gdal.Open(output_tif)
+        checksum = target_ds.GetRasterBand(2).Checksum()
 
-    target_ds = None
+        assert checksum == 121
+
+        rasterize = get_rasterize_alg()
+        assert rasterize.ParseRunAndFinalize(options + ["--add", input_csv, output_tif])
+
+        target_ds = gdal.Open(output_tif)
+        checksum = target_ds.GetRasterBand(2).Checksum()
+
+        assert checksum == 166
+
+
+def test_gdalalg_vector_rasterize_dialect_warning(tmp_vsimem):
+
+    expected_warning = "Dialect 'XXXXXX' is unsupported. Only supported dialects are 'OGRSQL', 'SQLITE'. Defaulting to OGRSQL"
+    input_csv = str(tmp_vsimem / "cutline.csv")
+
+    with temp_cutline(input_csv):
+
+        options = [
+            "--all-touched",
+            "--dialect",
+            "XXXXXX",  # No error: just a warning
+            "--sql",
+            "SELECT * FROM cutline WHERE Counter='2'",
+            "-b",
+            "3,2,1",
+            "--burn",
+            "200,220,240",
+        ]
+
+        output_tif = str(tmp_vsimem / "rasterize_alg_1.tif")
+
+        # Create a raster to rasterize into.
+        target_ds = gdal.GetDriverByName("GTiff").Create(
+            output_tif, 12, 12, 3, gdal.GDT_Byte
+        )
+        target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
+
+        # Close TIF file
+        target_ds = None
+
+        rasterize = get_rasterize_alg()
+        assert rasterize.ParseRunAndFinalize(options + [input_csv, output_tif])
+
+        # Check the warning
+        assert expected_warning in gdal.GetLastErrorMsg()

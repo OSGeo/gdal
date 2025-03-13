@@ -88,7 +88,8 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
     AddArg("target-aligned-pixels", 0,
            _("(target aligned pixels) Align the coordinates of the extent of "
              "the output file to the values of the resolution"),
-           &m_tap);
+           &m_tap)
+        .AddAlias("tap");
     AddArg("size", 0, _("Set the target size in pixels and lines"),
            &m_targetSize)
         .SetMinCount(2)
@@ -232,18 +233,18 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     if (m_targetExtent.size())
     {
+        aosOptions.AddString("-te");
         for (double targetExtent : m_targetExtent)
         {
-            aosOptions.AddString("-te");
             aosOptions.AddString(CPLSPrintf("%.17g", targetExtent));
         }
     }
 
     if (m_targetResolution.size())
     {
+        aosOptions.AddString("-tr");
         for (double targetResolution : m_targetResolution)
         {
-            aosOptions.AddString("-tr");
             aosOptions.AddString(CPLSPrintf("%.17g", targetResolution));
         }
     }
@@ -255,9 +256,9 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     if (m_targetSize.size())
     {
+        aosOptions.AddString("-ts");
         for (int targetSize : m_targetSize)
         {
-            aosOptions.AddString("-ts");
             aosOptions.AddString(CPLSPrintf("%d", targetSize));
         }
     }
@@ -286,6 +287,11 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     GDALRasterizeOptions *psOptions =
         GDALRasterizeOptionsNew(aosOptions.List(), nullptr);
 
+    if (!psOptions)
+    {
+        return false;
+    }
+
     GDALRasterizeOptionsSetProgress(psOptions, pfnProgress, pProgressData);
 
     GDALDatasetH hDstDS =
@@ -296,12 +302,12 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     // Try to open the output file if it exists.
     if (!hDstDS && !m_outputDataset.GetName().empty())
     {
-        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oCPLErrorHandlerPusher(CPLQuietErrorHandler);
         hDstDS =
             GDALOpenEx(m_outputDataset.GetName().c_str(),
                        GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
                        nullptr, nullptr, nullptr);
-        CPLPopErrorHandler();
+        CPLErrorReset();
     }
 
     GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
