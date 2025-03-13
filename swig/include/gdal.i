@@ -344,6 +344,9 @@ $1;
 %rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
 %rename (ApplyGeoTransform) GDALApplyGeoTransform;
 %rename (InvGeoTransform) GDALInvGeoTransform;
+%rename (GCPsToHomography) GDALGCPsToHomography;
+%rename (ApplyHomography) GDALApplyHomography;
+%rename (InvHomography) GDALInvHomography;
 %rename (VersionInfo) GDALVersionInfo;
 %rename (AllRegister) GDALAllRegister;
 %rename (GetCacheMax) wrapper_GDALGetCacheMax;
@@ -561,6 +564,23 @@ RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 %clear (RETURN_NONE);
 #endif
 
+#ifdef SWIGJAVA
+%rename (GCPsToHomography) wrapper_GDALGCPsToHomography;
+%inline
+{
+int wrapper_GDALGCPsToHomography( int nGCPs, GDAL_GCP const * pGCPs,
+    	                             double argout[9] )
+{
+    return GDALGCPsToHomography(nGCPs, pGCPs, argout);
+}
+}
+#else
+%apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
+RETURN_NONE GDALGCPsToHomography( int nGCPs, GDAL_GCP const * pGCPs,
+    	                             double argout[9]);
+%clear (RETURN_NONE);
+#endif
+
 %include "cplvirtualmem.i"
 
 //************************************************************************
@@ -638,6 +658,29 @@ RETURN_NONE GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
 #endif
 %clear (double *gt_in);
 %clear (double *gt_out);
+
+%apply (double argin[ANY]) {(double padfHomography[9])};
+%apply (double *OUTPUT) {(double *pdfGeoX)};
+%apply (double *OUTPUT) {(double *pdfGeoY)};
+int GDALApplyHomography( double padfHomography[9],
+                            double dfPixel, double dfLine,
+                            double *pdfGeoX, double *pdfGeoY );
+%clear (double *padfHomography);
+%clear (double *pdfGeoX);
+%clear (double *pdfGeoY);
+
+%apply (double argin[ANY]) {double h_in[9]};
+%apply (double argout[ANY]) {double h_out[9]};
+#ifdef SWIGJAVA
+// FIXME: we should implement correctly the IF_FALSE_RETURN_NONE typemap
+int GDALInvHomography( double h_in[9], double h_out[9] );
+#else
+%apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
+RETURN_NONE GDALInvHomography( double h_in[9], double h_out[9] );
+%clear (RETURN_NONE);
+#endif
+%clear (double *h_in);
+%clear (double *h_out);
 
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char *request};

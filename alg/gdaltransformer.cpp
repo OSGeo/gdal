@@ -46,6 +46,7 @@ void *GDALDeserializeGCPTransformer(CPLXMLNode *psTree);
 void *GDALDeserializeTPSTransformer(CPLXMLNode *psTree);
 void *GDALDeserializeGeoLocTransformer(CPLXMLNode *psTree);
 void *GDALDeserializeRPCTransformer(CPLXMLNode *psTree);
+void *GDALDeserializeHomographyTransformer(CPLXMLNode *psTree);
 CPL_C_END
 
 static CPLXMLNode *GDALSerializeReprojectionTransformer(void *pTransformArg);
@@ -1762,14 +1763,15 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
  * a continuous set. This option can be set to YES to force that behavior
  * (useful if no SRS information is available), or to NO to disable it.
  * </li>
- * <li> SRC_METHOD: may have a value which is one of GEOTRANSFORM,
+ * <li> SRC_METHOD: may have a value which is one of GEOTRANSFORM, GCP_HOMOGRAPHY,
  * GCP_POLYNOMIAL, GCP_TPS, GEOLOC_ARRAY, RPC to force only one geolocation
  * method to be considered on the source dataset. Will be used for pixel/line
  * to georef transformation on the source dataset. NO_GEOTRANSFORM can be
  * used to specify the identity geotransform (ungeoreference image)
  * </li>
  * <li> DST_METHOD: may have a value which is one of GEOTRANSFORM,
- * GCP_POLYNOMIAL, GCP_TPS, GEOLOC_ARRAY (added in 3.5), RPC to force only one
+ * GCP_POLYNOMIAL, GCP_HOMOGRAPHY, GCP_TPS, GEOLOC_ARRAY (added in 3.5), RPC to
+ * force only one
  * geolocation method to be considered on the target dataset.  Will be used for
  * pixel/line to georef transformation on the destination dataset.
  * NO_GEOTRANSFORM can be used to specify the identity geotransform
@@ -2051,6 +2053,36 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         bCanUseSrcGeoTransform = true;
     }
     else if (bGCPUseOK &&
+             ((pszMethod == nullptr && GDALGetGCPCount(hSrcDS) >= 4 &&
+               GDALGetGCPCount(hSrcDS) < 6) ||
+              (pszMethod != nullptr && EQUAL(pszMethod, "GCP_HOMOGRAPHY"))) &&
+             GDALGetGCPCount(hSrcDS) > 0)
+    {
+        if (pszSrcSRS == nullptr)
+        {
+            auto hSRS = GDALGetGCPSpatialRef(hSrcDS);
+            if (hSRS)
+                oSrcSRS = *(OGRSpatialReference::FromHandle(hSRS));
+        }
+
+        const auto nGCPCount = GDALGetGCPCount(hSrcDS);
+        auto pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALGetGCPs(hSrcDS));
+        GDALGCPAntimeridianUnwrap(nGCPCount, pasGCPList, oSrcSRS, papszOptions);
+
+        psInfo->pSrcTransformArg =
+            GDALCreateHomographyTransformerFromGCPs(nGCPCount, pasGCPList);
+
+        GDALDeinitGCPs(nGCPCount, pasGCPList);
+        CPLFree(pasGCPList);
+
+        if (psInfo->pSrcTransformArg == nullptr)
+        {
+            GDALDestroyGenImgProjTransformer(psInfo);
+            return nullptr;
+        }
+        psInfo->pSrcTransformer = GDALHomographyTransform;
+    }
+    else if (bGCPUseOK &&
              (pszMethod == nullptr || EQUAL(pszMethod, "GCP_POLYNOMIAL")) &&
              GDALGetGCPCount(hSrcDS) > 0 && nOrder >= 0)
     {
@@ -2270,6 +2302,36 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             GDALDestroyGenImgProjTransformer(psInfo);
             return nullptr;
         }
+    }
+    else if (bGCPUseOK &&
+             ((pszDstMethod == nullptr && GDALGetGCPCount(hDstDS) >= 4 &&
+               GDALGetGCPCount(hDstDS) < 6) ||
+              (pszMethod != nullptr && EQUAL(pszMethod, "GCP_HOMOGRAPHY"))) &&
+             GDALGetGCPCount(hDstDS) > 0)
+    {
+        if (pszDstSRS == nullptr)
+        {
+            auto hSRS = GDALGetGCPSpatialRef(hDstDS);
+            if (hSRS)
+                oDstSRS = *(OGRSpatialReference::FromHandle(hSRS));
+        }
+
+        const auto nGCPCount = GDALGetGCPCount(hDstDS);
+        auto pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALGetGCPs(hDstDS));
+        GDALGCPAntimeridianUnwrap(nGCPCount, pasGCPList, oDstSRS, papszOptions);
+
+        psInfo->pDstTransformArg =
+            GDALCreateHomographyTransformerFromGCPs(nGCPCount, pasGCPList);
+
+        GDALDeinitGCPs(nGCPCount, pasGCPList);
+        CPLFree(pasGCPList);
+
+        if (psInfo->pDstTransformArg == nullptr)
+        {
+            GDALDestroyGenImgProjTransformer(psInfo);
+            return nullptr;
+        }
+        psInfo->pDstTransformer = GDALHomographyTransform;
     }
     else if (bGCPUseOK &&
              (pszDstMethod == nullptr ||
@@ -4588,6 +4650,11 @@ CPLErr GDALDeserializeTransformer(CPLXMLNode *psTree,
     {
         *ppfnFunc = GDALApproxTransform;
         *ppTransformArg = GDALDeserializeApproxTransformer(psTree);
+    }
+    else if (EQUAL(psTree->pszValue, "HomographyTransformer"))
+    {
+        *ppfnFunc = GDALHomographyTransform;
+        *ppTransformArg = GDALDeserializeHomographyTransformer(psTree);
     }
     else
     {
