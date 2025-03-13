@@ -3358,10 +3358,10 @@ static CPLErr LoadCutline(const std::string &osCutlineDSNameOrWKT,
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             poSRS->SetFromUserInput(osSRS.c_str());
         }
-        OGRGeometry *poGeom = nullptr;
-        OGRGeometryFactory::createFromWkt(osCutlineDSNameOrWKT.c_str(),
-                                          poSRS.get(), &poGeom);
-        *phCutlineRet = OGRGeometry::ToHandle(poGeom);
+
+        auto [poGeom, _] = OGRGeometryFactory::createFromWkt(
+            osCutlineDSNameOrWKT.c_str(), poSRS.get());
+        *phCutlineRet = OGRGeometry::ToHandle(poGeom.release());
         return *phCutlineRet ? CE_None : CE_Failure;
     }
 

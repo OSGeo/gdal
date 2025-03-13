@@ -1311,13 +1311,11 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
         }
         if (pszWKT != nullptr)
         {
-            OGRGeometry *poGeom = nullptr;
-            CPL_IGNORE_RET_VAL(
-                OGRGeometryFactory::createFromWkt(pszWKT, nullptr, &poGeom));
+            auto [poGeom, _] = OGRGeometryFactory::createFromWkt(pszWKT);
             if (poGeom != nullptr)
             {
                 poGeom->assignSpatialReference(GetSpatialRef());
-                poFeature->SetGeometryDirectly(poGeom);
+                poFeature->SetGeometry(std::move(poGeom));
             }
             CPLFree(pszWKT);
         }
