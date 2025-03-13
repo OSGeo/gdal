@@ -30,6 +30,8 @@ GDALMainAlgorithm::GDALMainAlgorithm()
             RegisterSubAlgorithm(*pInfo);
     }
 
+    SetCallPath({NAME});
+
     m_longDescription = "'gdal <FILENAME>' can also be used as a shortcut for "
                         "'gdal info <FILENAME>'.\n"
                         "And 'gdal read <FILENAME> ! ...' as a shortcut for "
