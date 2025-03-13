@@ -17,8 +17,6 @@ Synopsis
 
 .. code-block::
 
-    Usage: gdal vector rasterize [OPTIONS] <INPUT> <OUTPUT>
-
     Burns vector geometries into a raster.
 
     Positional arguments:
@@ -56,7 +54,7 @@ Synopsis
     --extent <xmin>,<ymin>,<xmax>,<ymax>                     Set the target georeferenced extent [4 values]
     --resolution <xres>,<yres>                               Set the target resolution [2 values]
                                                             Mutually exclusive with --size
-    --target-aligned-pixels                                  (target aligned pixels) Align the coordinates of the extent of the output file to the values of the resolution
+    --tap, --target-aligned-pixels                           (target aligned pixels) Align the coordinates of the extent of the output file to the values of the resolution
     --size <xsize>,<ysize>                                   Set the target size in pixels and lines [2 values]
                                                             Mutually exclusive with --resolution
     --ot, --datatype, --output-data-type <OUTPUT-DATA-TYPE>  Output data type. OUTPUT-DATA-TYPE=Byte|Int8|UInt16|Int16|UInt32|Int32|UInt64|Int64|CInt16|CInt32|Float32|Float64|CFloat32|CFloat64
@@ -67,7 +65,6 @@ Synopsis
     --if, --input-format <INPUT-FORMAT>                      Input formats [may be repeated]
 
     For more details, consult https://gdal.org/programs/gdal_vector_rasterize.html
-
 
 
 Description
@@ -159,7 +156,7 @@ Standard options
 
     Set target resolution. The values must be expressed in georeferenced units. Both must be positive values. Note that `--resolution` cannot be used with `--size`.
 
-.. option:: --target-aligned-pixels
+.. option:: --tap, --target-aligned-pixels
 
     (target aligned pixels) Align the coordinates of the extent of the output file to the values of the -tr, such that the aligned extent includes the minimum extent. Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
 
