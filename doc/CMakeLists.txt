@@ -31,7 +31,7 @@ if (BUILD_DOCS)
 
     # Determine environment variables so that Sphinx can load the gdal Python module without installing it.
     include(GdalSetRuntimeEnv)
-    gdal_set_runtime_env(PYTHON_RUN_ENV)
+    gdal_set_runtime_env(BUILD_RUN_ENV)
 
     set(SPHINX_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/build)
     set(SPHINX_BUILD_OPTS "--jobs=auto" "--show-traceback")
@@ -110,9 +110,9 @@ if (BUILD_DOCS)
     # Sphinx HTML documentation
     add_custom_command(
             OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/html.stamp"
-            DEPENDS doxygen_xml python_binding
+            DEPENDS gdalapps doxygen_xml python_binding
                     ${SPHINX_SOURCE_FILES}
-                    COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} BUILDDIR=${SPHINX_BUILD_DIR}
+                    COMMAND ${CMAKE_COMMAND} -E env ${BUILD_RUN_ENV} BUILDDIR=${SPHINX_BUILD_DIR}
                     ${SPHINX_BUILD} -M html
                                     ${CMAKE_CURRENT_SOURCE_DIR}/source
                                     ${SPHINX_BUILD_DIR}
@@ -129,8 +129,8 @@ if (BUILD_DOCS)
     set(GDAL_DOC_PDF ${CMAKE_CURRENT_BINARY_DIR}/build/latex/gdal.pdf)
     add_custom_command(
             OUTPUT ${GDAL_DOC_PDF}
-            DEPENDS ${SPHINX_SOURCE_FILES}
-            COMMAND ${CMAKE_COMMAND} -E env BUILDDIR=${SPHINX_BUILD_DIR}
+            DEPENDS gdalapps doxygen_xml ${SPHINX_SOURCE_FILES}
+            COMMAND ${CMAKE_COMMAND} -E env ${BUILD_RUN_ENV} BUILDDIR=${SPHINX_BUILD_DIR}
                     ${SPHINX_BUILD} -M latexpdf
                                     ${CMAKE_CURRENT_SOURCE_DIR}/source
                                     ${CMAKE_CURRENT_BINARY_DIR}/build
@@ -141,8 +141,8 @@ if (BUILD_DOCS)
     # Sphinx manpage documentation
     add_custom_command(
             OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/man.stamp"
-            DEPENDS ${SPHINX_SOURCE_FILES}
-            COMMAND ${CMAKE_COMMAND} -E env BUILDDIR=${SPHINX_BUILD_DIR}
+            DEPENDS gdalapps doxygen_xml ${SPHINX_SOURCE_FILES}
+            COMMAND ${CMAKE_COMMAND} -E env ${BUILD_RUN_ENV} BUILDDIR=${SPHINX_BUILD_DIR}
                     ${SPHINX_BUILD} -M man
                                     ${CMAKE_CURRENT_SOURCE_DIR}/source
                                     ${CMAKE_CURRENT_BINARY_DIR}/build
@@ -183,7 +183,7 @@ if (BUILD_DOCS)
 
     # Spell check
     add_test(NAME doc-spelling
-             COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} BUILDDIR=${SPHINX_BUILD_DIR}
+             COMMAND ${CMAKE_COMMAND} -E env ${BUILD_RUN_ENV} BUILDDIR=${SPHINX_BUILD_DIR}
                      ${SPHINX_BUILD} -b spelling
                                      ${CMAKE_CURRENT_SOURCE_DIR}/source
                                      ${CMAKE_CURRENT_BINARY_DIR}/build
