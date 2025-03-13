@@ -10,6 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include <cmath>
+
 #include "gdalalg_vector_rasterize.h"
 
 #include "cpl_conv.h"

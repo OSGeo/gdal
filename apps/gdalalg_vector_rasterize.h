@@ -13,6 +13,8 @@
 #ifndef GDALALG_VECTOR_RASTERIZE_INCLUDED
 #define GDALALG_VECTOR_RASTERIZE_INCLUDED
 
+#include <algorithm>
+
 #include "gdalalgorithm.h"
 
 //! @cond Doxygen_Suppress

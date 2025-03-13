@@ -51,6 +51,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vector_convert
    gdal_vector_filter
    gdal_vector_pipeline
+   gdal_vector_rasterize
    gdal_vector_select
    gdal_vector_sql
 
