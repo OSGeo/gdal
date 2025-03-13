@@ -1310,6 +1310,10 @@ hobu
 hoc
 holded
 Homebrew
+homographies
+Homographies
+homography
+Homography
 Homolosine
 honour
 honoured
@@ -2263,6 +2267,7 @@ padfDstNoDataImag
 padfDstNoDataReal
 padfGeoTransformOut
 padfGT
+padfH
 padfLayerBurnValues
 padfM
 padfPrjParams
