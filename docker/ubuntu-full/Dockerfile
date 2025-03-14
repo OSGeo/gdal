@@ -552,6 +552,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         python-is-python3 \
         # pil for antialias option of gdal2tiles
         python3-pil \
+        # for validate_geoparquet.py (cf https://github.com/OSGeo/gdal/issues/11953)
+        python3-jsonschema \
     # Install JRE with --no-install-recommends, otherwise it draws default-jre, which draws systemd, which fails to install when running the arm64v8/ubuntu:24.04 image on a 64bit host
     && apt-get install -y --no-install-recommends openjdk-"$JAVA_VERSION"-jre \
     # Install Arrow C++
