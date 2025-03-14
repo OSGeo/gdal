@@ -5582,3 +5582,40 @@ def test_tiff_read_corrupted_lzw():
     ds = gdal.Open("data/gtiff/lzw_corrupted.tif")
     with pytest.raises(Exception):
         ds.ReadRaster()
+
+
+###############################################################################
+# Test bugfix for https://lists.osgeo.org/pipermail/gdal-dev/2025-March/060378.html
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_read_multithreaded_read_fresh_file(tmp_vsimem):
+
+    drv = gdal.GetDriverByName("GTiff")
+    ds_out = drv.Create(
+        tmp_vsimem / "temp.tif",
+        xsize=100,
+        ysize=100,
+        bands=1,
+        eType=gdal.GDT_Byte,
+        options=["COMPRESS=DEFLATE", "NUM_THREADS=2"],
+    )
+    assert ds_out.ReadRaster(0, 0, 100, 100) == b"\x00" * (100 * 100)
+
+
+###############################################################################
+# Test bugfix for https://lists.osgeo.org/pipermail/gdal-dev/2025-March/060378.html
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_read_multithreaded_read_missing_tilebytecounts_and_offsets():
+
+    ds = gdal.OpenEx(
+        "data/gtiff/missing_tilebytecounts_and_offsets.tif",
+        open_options=["NUM_THREADS=2"],
+    )
+    with pytest.raises(
+        Exception,
+        match="missing_tilebytecounts_and_offsets.tif: Error while getting location of block 0",
+    ):
+        ds.ReadRaster()
