@@ -36,6 +36,7 @@ Available sub-commands
 - :ref:`gdal_vector_filter_subcommand`
 - :ref:`gdal_vector_info_subcommand`
 - :ref:`gdal_vector_pipeline_subcommand`
+- :ref:`gdal_vector_reproject_subcommand`
 - :ref:`gdal_vector_select_subcommand`
 - :ref:`gdal_vector_sql_subcommand`
 
