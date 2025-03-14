@@ -343,6 +343,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_rasterize",
+        "gdal-vector-rasterize",
+        "Burn vector geometries into a raster",
+        [author_elpaso],
+        1,
+    ),
+    (
         "programs/gdal_vector_select",
         "gdal-vector-select",
         "Select a subset of fields from a vector dataset",
