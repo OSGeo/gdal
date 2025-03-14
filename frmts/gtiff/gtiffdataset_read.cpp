@@ -1317,6 +1317,9 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                 }
                 if (bErrorInIsBlockAvailable)
                 {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Error while getting location of block %d",
+                                nBlockId);
                     std::lock_guard<std::recursive_mutex> oLock(
                         sContext.oMutex);
                     sContext.bSuccess = false;

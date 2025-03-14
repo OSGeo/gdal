@@ -777,6 +777,18 @@ bool GTiffDataset::IsBlockAvailable(int nBlockId, vsi_l_offset *pnOffset,
         return bytecount != 0;
     }
 
+    if (!m_bCrystalized)
+    {
+        // If this is a fresh new file not yet crystalized, do not try to
+        // read the [Strip|Tile][ByteCounts|Offsets] tags as they do not yet
+        // exist. Trying would set *pbErrOccurred=true, which is not desirable.
+        if (pnOffset)
+            *pnOffset = 0;
+        if (pnSize)
+            *pnSize = 0;
+        return false;
+    }
+
     toff_t *panByteCounts = nullptr;
     toff_t *panOffsets = nullptr;
     const bool bIsTiled = CPL_TO_BOOL(TIFFIsTiled(m_hTIFF));
