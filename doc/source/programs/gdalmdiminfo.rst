@@ -27,7 +27,7 @@ Description
 
 :program:`gdalmdiminfo` program lists various information about a GDAL supported
 multidimensional raster dataset as JSON output. It follows the
-following `JSON schema <https://github.com/OSGeo/gdal/blob/master/data/gdalmdiminfo_output.schema.json>`_
+following `JSON schema <https://github.com/OSGeo/gdal/blob/master/apps/data/gdalmdiminfo_output.schema.json>`_
 
 The following command line parameters can appear in any order
 
