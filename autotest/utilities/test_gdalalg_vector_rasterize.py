@@ -486,6 +486,7 @@ def test_gdalalg_vector_rasterize(tmp_vsimem, create_empty_dataset, options, exp
         target_ds = None
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalalg_vector_rasterize_add_option(tmp_vsimem):
 
     options = [
@@ -529,6 +530,7 @@ def test_gdalalg_vector_rasterize_add_option(tmp_vsimem):
         assert checksum == 166
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalalg_vector_rasterize_dialect_warning(tmp_vsimem):
 
     expected_warning = "Dialect 'XXXXXX' is unsupported. Only supported dialects are 'OGRSQL', 'SQLITE'. Defaulting to OGRSQL"
