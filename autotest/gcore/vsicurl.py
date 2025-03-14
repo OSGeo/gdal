@@ -426,7 +426,7 @@ def test_vsicurl_test_redirect_with_expires(server):
     current_time = 1500
 
     def method(request):
-        response = "HTTP/1.1 302\r\n"
+        response = "HTTP/1.1 302 Found\r\n"
         response += "Server: foo\r\n"
         response += (
             "Date: "
@@ -473,7 +473,7 @@ def test_vsicurl_test_redirect_with_expires(server):
                 request.end_headers()
         else:
             # After a failed attempt on a HEAD, the client should go there
-            response = "HTTP/1.1 200\r\n"
+            response = "HTTP/1.1 200 OK\r\n"
             response += "Server: foo\r\n"
             response += (
                 "Date: "
@@ -590,7 +590,7 @@ def test_vsicurl_test_redirect_x_amz(server):
     current_time = 1500
 
     def method(request):
-        response = "HTTP/1.1 302\r\n"
+        response = "HTTP/1.1 302 Found\r\n"
         response += "Server: foo\r\n"
         response += (
             "Date: "
@@ -640,7 +640,7 @@ def test_vsicurl_test_redirect_x_amz(server):
                 request.end_headers()
         else:
             # After a failed attempt on a HEAD, the client should go there
-            response = "HTTP/1.1 200\r\n"
+            response = "HTTP/1.1 200 OK\r\n"
             response += "Server: foo\r\n"
             response += (
                 "Date: "
@@ -1369,7 +1369,7 @@ def test_vsicurl_test_CPL_VSIL_CURL_USE_HEAD_NO(server):
     handler.add("GET", "/test_CPL_VSIL_CURL_USE_HEAD_NO/", 404)
 
     def method(request):
-        response = "HTTP/1.1 200\r\n"
+        response = "HTTP/1.1 200 OK\r\n"
         response += "Server: foo\r\n"
         response += "Content-type: text/plain\r\n"
         response += "Content-Length: 1000000\r\n"
