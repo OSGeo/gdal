@@ -71,6 +71,10 @@
             "$ref": "#/definitions/algorithm"
           },
           "$comment": "For pipeline algorithm, description of the accepted step algorithms. Only present for such pipeline algorithms"
+        },
+        "supports_streamed_output": {
+          "type": "boolean",
+          "$comment": "Whether the algorithm supports a streamed output dataset"
         }
       },
       "required": [

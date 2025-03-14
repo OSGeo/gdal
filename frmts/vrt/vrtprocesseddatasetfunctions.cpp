@@ -833,7 +833,7 @@ LocalScaleOffsetInit(const char * /*pszFuncName*/, void * /*pUserData*/,
         for (const auto &kv : oMapNames)
         {
             const int nInBandIdx = kv.first;
-            const auto osFilename = VRTDataset::BuildSourceFilename(
+            const auto osFilename = GDALDataset::BuildFilename(
                 kv.second.c_str(), pszVRTPath, bRelativeToVRT);
             auto oIter = data->m_oDatasetMap.find(osFilename);
             if (oIter == data->m_oDatasetMap.end())
@@ -1257,7 +1257,7 @@ static CPLErr TrimmingInit(const char * /*pszFuncName*/, void * /*pUserData*/,
         return CE_Failure;
     }
 
-    const auto osFilename = VRTDataset::BuildSourceFilename(
+    const auto osFilename = GDALDataset::BuildFilename(
         osTrimmingFilename.c_str(), pszVRTPath, bRelativeToVRT);
     data->m_poTrimmingDS.reset(GDALDataset::Open(
         osFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, nullptr,

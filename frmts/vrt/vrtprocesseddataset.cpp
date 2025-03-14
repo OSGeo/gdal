@@ -255,7 +255,7 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
     {
         const bool bRelativeToVRT = CPL_TO_BOOL(
             atoi(CPLGetXMLValue(psSourceFileNameNode, "relativetoVRT", "0")));
-        const std::string osFilename = VRTDataset::BuildSourceFilename(
+        const std::string osFilename = GDALDataset::BuildFilename(
             CPLGetXMLValue(psInput, "SourceFilename", ""), pszVRTPathIn,
             bRelativeToVRT);
         m_poSrcDS.reset(GDALDataset::Open(

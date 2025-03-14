@@ -27,6 +27,7 @@ single :program:`gdal` program that accepts commands and subcommands.
 
    migration_guide_to_gdal_cli
    gdal_cli_from_python
+   gdal_cli_gdalg
    gdal
    gdal_info
    gdal_convert
@@ -51,6 +52,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vector_convert
    gdal_vector_filter
    gdal_vector_pipeline
+   gdal_vector_reproject
    gdal_vector_select
    gdal_vector_sql
 
@@ -58,6 +60,7 @@ single :program:`gdal` program that accepts commands and subcommands.
 
     - :ref:`migration_guide_to_gdal_cli`: Migration guide to "gdal" command line interface
     - :ref:`gdal_cli_from_python`: How to use "gdal" CLI algorithms from Python
+    - :ref:`gdal_cli_gdalg`: .gdalg files to replay serialized "gdal" commands
     - :ref:`gdal_program`: Main "gdal" entry point
     - :ref:`gdal_info_command`: Get information on a dataset
     - :ref:`gdal_convert_command`: Convert a dataset
@@ -82,6 +85,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vector_filter_subcommand`: Filter a vector dataset
     - :ref:`gdal_vector_convert_subcommand`: Convert a vector dataset
     - :ref:`gdal_vector_pipeline_subcommand`: Process a vector dataset
+    - :ref:`gdal_vector_reproject_subcommand`: Reproject a vector dataset
     - :ref:`gdal_vector_select_subcommand`: Select a subset of fields from a vector dataset.
     - :ref:`gdal_vector_sql_subcommand`: Apply SQL statement(s) to a dataset
 

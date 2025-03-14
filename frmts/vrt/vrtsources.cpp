@@ -379,7 +379,8 @@ void VRTSimpleSource::AddSourceFilenameNode(const char *pszVRTPath,
         }
         else
         {
-            for (const char *pszSyntax : VRTDataset::apszSpecialSyntax)
+            for (const char *pszSyntax :
+                 GDALDataset::apszSpecialSubDatasetSyntax)
             {
                 CPLString osPrefix(pszSyntax);
                 osPrefix.resize(strchr(pszSyntax, ':') - pszSyntax + 1);
@@ -611,7 +612,7 @@ CPLErr VRTSimpleSource::XMLInit(const CPLXMLNode *psSrc, const char *pszVRTPath,
             m_nExplicitSharedStatus = CPLTestBool(pszShared);
         }
 
-        m_osSrcDSName = VRTDataset::BuildSourceFilename(
+        m_osSrcDSName = GDALDataset::BuildFilename(
             pszFilename, pszVRTPath, CPL_TO_BOOL(m_bRelativeToVRTOri));
     }
     else if (psSourceVRTDataset)
