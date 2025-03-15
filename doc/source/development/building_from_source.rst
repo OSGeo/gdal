@@ -54,6 +54,8 @@ From the build directory you can now configure CMake, build and install the bina
     cmake --build .
     cmake --build . --target install
 
+.. _minimal_build:
+
 .. note::
 
     For a minimal build, add these options to the initial ``cmake`` command: ``-DGDAL_BUILD_OPTIONAL_DRIVERS=OFF -DOGR_BUILD_OPTIONAL_DRIVERS=OFF``.

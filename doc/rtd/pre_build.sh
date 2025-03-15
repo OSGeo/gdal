@@ -22,6 +22,7 @@ cmake \
     ..
 
 cmake --build . -j$(nproc)
+cmake --build . --target doxygen_xml doxygen_html
 cmake --install .
 
 # set rpath for python libraries
@@ -33,6 +34,10 @@ python3 -c "from osgeo import gdal; print(gdal.__version__)"
 # unpack javadoc created during cmake --build into correct location
 mkdir -p ../doc/build/html_extra
 unzip -d ../doc/build/html_extra swig/java/javadoc.zip
+
+# copy doxygen outputs into source tree
+cp -r doc/build/xml ../doc/build
+cp -r doc/build/html_extra/doxygen ../doc/build/html_extra
 
 # copy gdalicon.png into html_extra (used by test suite)
 cp ../data/gdalicon.png ../doc/build/html_extra/

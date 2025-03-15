@@ -73,7 +73,7 @@ class GDALArgumentParser : public ArgumentParser
     //! Format an exception as an error message and display the program usage
     void display_error_and_usage(const std::exception &err);
 
-    //! Add -q/--quiet argument, and store its value in *pVar (if pVar not null)
+    //! Add -q/\--quiet argument, and store its value in *pVar (if pVar not null)
     Argument &add_quiet_argument(bool *pVar);
 
     //! Add "-if format_name" argument for input format, and store its value into *pvar.

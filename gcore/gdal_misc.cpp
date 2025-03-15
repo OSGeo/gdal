@@ -2838,8 +2838,8 @@ int CPL_STDCALL GDALWriteWorldFile(const char *pszBaseFilename,
  * <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME. ie. "3.6.3"</li>
  * <li> "RELEASE_NICKNAME": (>= 3.11) Returns the GDAL_RELEASE_NICKNAME.
  * (may be empty)</li>
- * <li> "--version": Returns one line version message suitable for
- * use in response to --version requests.  i.e. "GDAL 3.6.3, released
+ * <li> "\--version": Returns one line version message suitable for
+ * use in response to \--version requests.  i.e. "GDAL 3.6.3, released
  * 2023/03/12"</li>
  * <li> "LICENSE": Returns the content of the LICENSE.TXT file from
  * the GDAL_DATA directory.
@@ -3552,24 +3552,24 @@ static void StripIrrelevantOptions(CPLXMLNode *psCOL, int nOptions)
  * options for all GDAL commandline utilities.  It takes care of the following
  * commandline options:
  *
- *  --version: report version of GDAL in use.
- *  --build: report build info about GDAL in use.
- *  --license: report GDAL license info.
- *  --formats: report all format drivers configured. Can be used with -json since 3.10
- *  --format [format]: report details of one format driver.
- *  --optfile filename: expand an option file into the argument list.
- *  --config key value: set system configuration option.
- *  --config key=value: set system configuration option (since GDAL 3.9)
- *  --debug [on/off/value]: set debug level.
- *  --mempreload dir: preload directory contents into /vsimem
- *  --pause: Pause for user input (allows time to attach debugger)
- *  --locale [locale]: Install a locale using setlocale() (debugging)
- *  --help-general: report detailed help on general options.
+ *  \--version: report version of GDAL in use.
+ *  \--build: report build info about GDAL in use.
+ *  \--license: report GDAL license info.
+ *  \--formats: report all format drivers configured. Can be used with -json since 3.10
+ *  \--format [format]: report details of one format driver.
+ *  \--optfile filename: expand an option file into the argument list.
+ *  \--config key value: set system configuration option.
+ *  \--config key=value: set system configuration option (since GDAL 3.9)
+ *  \--debug [on/off/value]: set debug level.
+ *  \--mempreload dir: preload directory contents into /vsimem
+ *  \--pause: Pause for user input (allows time to attach debugger)
+ *  \--locale [locale]: Install a locale using setlocale() (debugging)
+ *  \--help-general: report detailed help on general options.
  *
  * The argument array is replaced "in place" and should be freed with
  * CSLDestroy() when no longer needed.  The typical usage looks something
  * like the following.  Note that the formats should be registered so that
- * the --formats and --format options will work properly.
+ * the \--formats and \--format options will work properly.
  *
  *  int main( int argc, char ** argv )
  *  {
@@ -3583,7 +3583,7 @@ static void StripIrrelevantOptions(CPLXMLNode *psCOL, int nOptions)
  * @param ppapszArgv pointer to the argument list array (will be updated in
  * place).
  * @param nOptions a or-able combination of GDAL_OF_RASTER and GDAL_OF_VECTOR
- *                 to determine which drivers should be displayed by --formats.
+ *                 to determine which drivers should be displayed by \--formats.
  *                 If set to 0, GDAL_OF_RASTER is assumed.
  *
  * @return updated nArgc argument count.  Return of 0 requests terminate

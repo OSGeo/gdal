@@ -673,7 +673,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr SetUTM(int nZone, int bNorth = TRUE);
     int GetUTMZone(int *pbNorth = nullptr) const;
 
-    /** Wagner I -- VII */
+    /** Wagner I \-- VII */
     OGRErr SetWagner(int nVariation, double dfCenterLat, double dfFalseEasting,
                      double dfFalseNorthing);
 

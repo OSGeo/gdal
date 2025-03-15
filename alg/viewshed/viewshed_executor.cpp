@@ -93,7 +93,7 @@ double doMax(int nXOffset, int nYOffset, double dfThisPrev, double dfLast,
 
 }  // unnamed namespace
 
-/// Constructor -- the viewshed algorithm executor
+/// Constructor - the viewshed algorithm executor
 /// @param srcBand  Source raster band
 /// @param dstBand  Destination raster band
 /// @param nX  X position of observer

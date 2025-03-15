@@ -903,21 +903,21 @@ void OGRFree(void *pMemory)
  * options for all OGR commandline utilities.  It takes care of the following
  * commandline options:
  *
- *  --version: report version of GDAL in use.
- *  --license: report GDAL license info.
- *  --format [format]: report details of one format driver.
- *  --formats: report all format drivers configured.
- *  --optfile filename: expand an option file into the argument list.
- *  --config key value: set system configuration option.
- *  --debug [on/off/value]: set debug level.
- *  --pause: Pause for user input (allows time to attach debugger)
- *  --locale [locale]: Install a locale using setlocale() (debugging)
- *  --help-general: report detailed help on general options.
+ *  \--version: report version of GDAL in use.
+ *  \--license: report GDAL license info.
+ *  \--format [format]: report details of one format driver.
+ *  \--formats: report all format drivers configured.
+ *  \--optfile filename: expand an option file into the argument list.
+ *  \--config key value: set system configuration option.
+ *  \--debug [on/off/value]: set debug level.
+ *  \--pause: Pause for user input (allows time to attach debugger)
+ *  \--locale [locale]: Install a locale using setlocale() (debugging)
+ *  \--help-general: report detailed help on general options.
  *
  * The argument array is replaced "in place" and should be freed with
  * CSLDestroy() when no longer needed.  The typical usage looks something
  * like the following.  Note that the formats should be registered so that
- * the --formats option will work properly.
+ * the \--formats option will work properly.
  *
  *  int main( int argc, char ** argv )
  *  {

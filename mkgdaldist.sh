@@ -137,18 +137,28 @@ rm -rf ci
 CWD=${PWD}
 
 #
-# Generate man pages
+# Generate man pages and doc snapshot
 #
-echo "* Generating man pages..."
+echo "* Generating man pages and doc snapshot..."
 
-(cd doc; SPHINXOPTS='--keep-going -j auto' make man)
+mkdir cmake-build-doc
+cmake -DCMAKE_BUILD_TYPE=Debug \
+      -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF \
+      -DOGR_BUILD_OPTIONAL_DRIVERS=OFF \
+      -DBUILD_APPS=ON \
+      -DBUILD_TESTING=OFF \
+      -DBUILD_PYTHON_BINDINGS=ON \
+      -DBUILD_JAVA_BINDINGS=ON \
+      -DGDAL_JAVA_GENERATE_JAVADOC=ON \
+      -B cmake-build-doc -S . 
+cmake --build cmake-build-doc --target man doczip
 mkdir -p man/man1
-cp doc/build/man/*.1 man/man1
-rm -rf doc/build
-rm -f doc/.doxygen_up_to_date
+cp cmake-build-doc/doc/build/man/*.1 man/man1
+cp cmake-build-doc/doc/gdal${COMPRESSED_VERSION}doc.zip .
+rm -rf cmake-build-doc
 
 if test ! -f "man/man1/gdalinfo.1"; then
-    echo " make man failed"
+    echo " man build failed"
 fi
 
 cd "$CWD"
