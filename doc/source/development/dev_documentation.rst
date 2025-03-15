@@ -19,8 +19,22 @@ the ``doc`` subdirectory.
 Building documentation
 ######################
 
-Documentation can be generated with Makefile targets, from the ``doc`` subdirectory
-of the GDAL source repository (only on Unix systems).
+Documentation can be generated with the CMake targets listed below. These
+targets are only available if the CMake ``BUILD_DOCS=ON`` variable is set,
+which is the default if Doxygen and Sphinx are detected.
+
+.. note::
+
+   CMake will attempt to detect Sphinx at configuration time (i.e, when ``cmake``
+   is first run). If Sphinx is provided via a Conda or a Python virtual environment,
+   that environment should be activated during CMake configuration.
+
+.. note::
+
+   Because some documentation pages execute GDAL command-line utilities or Python
+   code when generating, these GDAL components must also be available to build the
+   documentation without warnings. See :ref:`build instructions <minimal_build>` for hints on reducing
+   this build time.
 
 The following targets are available:
 
@@ -29,35 +43,22 @@ The following targets are available:
 
 * ``man``: build MAN pages into the ``doc/build/man`` directory.
 
-* ``latexpdf``: build PDF documentation into the ``doc/build/pdf`` directory
+* ``latexpdf``: build PDF documentation into the ``doc/build/latex`` directory
 
-* ``doxygen``: regenerate API Doxygen XML and HTML output, that is used by the
-  ``html`` target. Doxygen content is not automatically rebuilt when source files
-  are modified, hence this target must be explicitly run to refresh it.
+* ``doxygen_xml`` : regenerate API Doxygen XML outputs, used by the above targets.
 
-* ``doxygen_check_warnings``: same as ``doxygen``, but errors out when Doxygen
-  emits a warning (the ``doxygen`` target is tolerant to Doxygen warnings).
-  This can be useful to reproduce one of the continuous integration checks that
-  verifies that there are no Doxygen warnings.
-  Requires Doxygen >= 1.9.3 to be warning free.
+* ``doxygen_html``: generate Doxygen HTML documentation (this is distinct from the
+  API documentation included in the ``html`` target above).
 
-* ``spelling``: runs spell checking on the documentation, covering as well as
-  documentation generated from C/C++ API (Doxygen) and Python API. Words unknown
-  to the spell checker but still considered valid should be added to the allow
-  list in :file:`doc/source/spelling_wordlist.txt`
+If ``BUILD_TESTING`` is enabled, the documentation can be spell-checked using
+the ``doc-spelling`` test (invoked using ``ctest -V -R doc-spelling --output-on-failure``.)
+Documentation generated from C/C++ API (Doxygen) and Python API is included in
+the check. Words unknown to the spell checker but still considered valid should
+be added to the list in :file:`doc/source/spelling_wordlist.txt`
 
-* ``clean``: clean the ``doc/build`` directory.
-
-It is also possible to run those targets as CMake targets. In that case, the
-output directory will be the ``doc/build`` subdirectory of the CMake
-build directory. To only clean the documentation, the ``clean_doc`` target can
-be invoked.
-Note: those CMake targets are only available if the CMake BUILD_DOCS=ON variable
-is set (it is set by default if build preconditions are met, that is if Doxygen,
-Sphinx and make are available)
-
-To visualize documentation changes while editing, it may be useful to install the |sphinx-autobuild| python package.
-Once installed, running ``sphinx-autobuild -b html source build`` from the ``doc`` subdirectory will build documentation
+To visualize documentation changes while editing, it may be useful to install the |sphinx-autobuild| Python package.
+Once installed, running ``sphinx-autobuild -b html source_dir build_dir`` with appropriate values of ``source_dir`` and
+``build_dir`` will build documentation
 and serve it on a local web server at ``http://127.0.0.1:8000``. The pages served will be automatically refreshed as changes
 are made to underlying ``rst`` documentation files.
 
@@ -72,13 +73,17 @@ Docstrings may be found in two locations. If the function was defined in Python
 placed within the function definition. If the function is defined in C++ only,
 then the docstring should be placed in a separate file
 containing only docstrings (located in :source_file:`swig/include/python/docs`).
-Sphinx loads the Python bindings when generating documentation, so for it to see any changes
-the following steps must be completed:
 
-- rebuild the Python bindings from the build directory (``cmake --build . --target python_binding``)
-- make the updated Python bindings visible to Python, either by installing them, or by running ``scripts/setdevenv.sh``
-  from the build directory
-- update the timestamp of the ``rst`` files associated with the page where the documentation appears (e.g., ``touch doc/source/api/python/osgeo.ogr.rst``)
+Sphinx loads the Python bindings when generating documentation, so for it to see any changes
+the updated Python module must be loadable by the Python interpreter Sphinx is using. When building
+documentation using CMake (e..g, ``cmake --build . --target html``) this will be done automatically.
+If using ``sphinx-build`` or ``sphinx-autobuild`` manually, the updated Python bindings must be
+rebuilt (``cmake --build . --target python_binding``) and made visible to Python, either by installing
+them or by sourcing  ``scripts/setdevenv.sh`` from the build directory. 
+
+Sphinx cannot detect changes to the Python module, so when iteratively rebuilding Python API documentation it is
+necessary to manually update the timestamp of the ``rst`` files associated with the page where the modified 
+documentation appears (e.g., ``touch doc/source/api/python/osgeo.ogr.rst``)
 
 
 .. _rst_style:
