@@ -113,6 +113,7 @@ def test_gdalalg_raster_info_mdd_all():
     j = json.loads(output_string)
     assert j["metadata"] == {
         "": {"AREA_OR_POINT": "Area"},
+        "IMAGE_STRUCTURE": {"INTERLEAVE": "BAND"},
         "MY_DOMAIN": {"foo": "bar"},
         "DERIVED_SUBDATASETS": {
             "DERIVED_SUBDATASET_1_NAME": "DERIVED_SUBDATASET:LOGAMPLITUDE:",
