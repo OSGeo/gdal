@@ -276,7 +276,7 @@ static bool ZarrQuantizeDecompressor(const void *input_data, size_t input_size,
         static_cast<uint64_t>(nElts) * outputEltSize;
     if constexpr (SIZEOF_VOIDP < 8)
     {
-        if (required_output_size64 > std::numeric_limits<size_t>::max())
+        if (required_output_size64 >= std::numeric_limits<size_t>::max())
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Too large input");
             if (output_size)
