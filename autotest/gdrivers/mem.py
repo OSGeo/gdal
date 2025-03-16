@@ -250,6 +250,10 @@ def test_mem_4():
             cs == expected_cs[i]
         ), "did not get expected checksum for band %d after fill" % (i + 1)
 
+    assert (
+        ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "BAND"
+    ), "did not get expected INTERLEAVE value"
+
     ds = None
 
 

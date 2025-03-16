@@ -90,7 +90,14 @@ or
 Creation Options
 ----------------
 
-There are no supported creation options.
+|about-creation-options|
+This driver supports the following creation option:
+
+-  .. co:: INTERLEAVE
+      :choices: BAND, PIXEL
+      :default: BAND
+
+      Set the interleaving to use
 
 The MEM format is one of the few that supports the AddBand() method. The
 AddBand() method supports DATAPOINTER, PIXELOFFSET and LINEOFFSET
