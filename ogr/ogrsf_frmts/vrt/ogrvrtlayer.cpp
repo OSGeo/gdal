@@ -1226,6 +1226,7 @@ bool OGRVRTLayer::ResetSourceReading()
                 }
                 else
                 {
+                    CPLAssert(m_poFilterGeom);
                     m_poFilterGeom->getEnvelope(&sEnvelope);
                 }
 
