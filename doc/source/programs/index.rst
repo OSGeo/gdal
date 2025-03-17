@@ -51,6 +51,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vector_convert
    gdal_vector_filter
    gdal_vector_pipeline
+   gdal_vector_rasterize
    gdal_vector_select
    gdal_vector_sql
 
@@ -83,6 +84,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vector_convert_subcommand`: Convert a vector dataset
     - :ref:`gdal_vector_pipeline_subcommand`: Process a vector dataset
     - :ref:`gdal_vector_select_subcommand`: Select a subset of fields from a vector dataset.
+    - :ref:`gdal_vector_rasterize_subcommand`: Burns vector geometries into a raster
     - :ref:`gdal_vector_sql_subcommand`: Apply SQL statement(s) to a dataset
 
 
