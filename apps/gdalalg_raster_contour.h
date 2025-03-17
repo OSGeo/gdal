@@ -80,6 +80,7 @@ class GDALRasterContourAlgorithm final : public GDALAlgorithm
     int m_expBase = 0;  // -e <base>
     bool m_polygonize = false;    // -p
     int m_groupTransactions = 0;  // gt <n>
+    bool m_overwrite = false;     // -overwrite
 };
 
 //! @endcond

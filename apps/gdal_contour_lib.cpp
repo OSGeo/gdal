@@ -441,7 +441,7 @@ GDALContourAppOptionsGetParser(GDALContourOptions *psOptions,
 {
 
     auto argParser = std::make_unique<GDALArgumentParser>(
-        "gdal_contour", /* bForBinary */ true);
+        "gdal_contour", /* bForBinary=*/psOptionsForBinary != nullptr);
 
     argParser->add_description(_("Creates contour lines from a raster file."));
     argParser->add_epilog(_(
