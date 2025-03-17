@@ -39,16 +39,24 @@ if (BUILD_DOCS)
     file(MAKE_DIRECTORY ${SPHINX_BUILD_DIR}/html_extra)
 
     file(GLOB_RECURSE SPHINX_SOURCE_FILES CONFIGURE_DEPENDS 
-            ${CMAKE_CURRENT_SOURCE_DIR}/source/**/*.rst
-            ${CMAKE_CURRENT_SOURCE_DIR}/source/**/*.py)
+            ${CMAKE_CURRENT_SOURCE_DIR}/source/*.rst
+            ${CMAKE_CURRENT_SOURCE_DIR}/source/*.py)
 
     ####################################################################################################
     # Doxygen XML and HTML outputs
     ####################################################################################################
 
     # Create a dependency between source files and Doxygen
-    # This is more aggressive than needed, because we only build Doxygen for a subset of the source tree
-    file(GLOB_RECURSE DOXYGEN_SOURCE_FILES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/**/*.cpp)
+    file(GLOB_RECURSE DOXYGEN_SOURCE_FILES CONFIGURE_DEPENDS 
+            ${CMAKE_SOURCE_DIR}/alg/*.cpp
+            ${CMAKE_SOURCE_DIR}/app/*.cpp
+            ${CMAKE_SOURCE_DIR}/frmts/gdalallregister.cpp
+            ${CMAKE_SOURCE_DIR}/frmts/vrt/*.cpp
+            ${CMAKE_SOURCE_DIR}/gcore/*.cpp
+            ${CMAKE_SOURCE_DIR}/ogr/*.cpp
+            ${CMAKE_SOURCE_DIR}/port/*.cpp
+            ${CMAKE_SOURCE_DIR}/gnm/*.cpp
+    )
 
     # Use configure_file to copy the Doxygen file into our build directory.
     # This causes CMake to re-run if the contents of the Doxyfile change.
