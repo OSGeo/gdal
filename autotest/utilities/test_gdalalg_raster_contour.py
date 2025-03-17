@@ -164,6 +164,7 @@ cellsize     1
             lyr = None
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_gdalalg_raster_contour_overwrite(tmp_vsimem):
 
     tmp_out_filename = str(tmp_vsimem / "out.shp")
