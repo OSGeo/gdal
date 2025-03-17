@@ -288,15 +288,17 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
     }
 
-    GDALRasterizeOptions *psOptions =
-        GDALRasterizeOptionsNew(aosOptions.List(), nullptr);
+    std::unique_ptr<GDALRasterizeOptions, decltype(&GDALRasterizeOptionsFree)>
+        psOptions{GDALRasterizeOptionsNew(aosOptions.List(), nullptr),
+                  GDALRasterizeOptionsFree};
 
     if (!psOptions)
     {
         return false;
     }
 
-    GDALRasterizeOptionsSetProgress(psOptions, pfnProgress, pProgressData);
+    GDALRasterizeOptionsSetProgress(psOptions.get(), pfnProgress,
+                                    pProgressData);
 
     GDALDatasetH hDstDS =
         GDALDataset::ToHandle(m_outputDataset.GetDatasetRef());
@@ -348,9 +350,10 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
 
     GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
-    auto poRetDS = GDALDataset::FromHandle(GDALRasterize(
-        m_outputDataset.GetName().c_str(), hDstDS, hSrcDS, psOptions, nullptr));
-    GDALRasterizeOptionsFree(psOptions);
+    auto poRetDS = GDALDataset::FromHandle(
+        GDALRasterize(m_outputDataset.GetName().c_str(), hDstDS, hSrcDS,
+                      psOptions.get(), nullptr));
+
     if (!poRetDS)
         return false;
 
