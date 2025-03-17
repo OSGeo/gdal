@@ -29,7 +29,7 @@ static const char *const szOpenOptionList =
     "  </Option>"
 #endif
     "  <Option name='DPI' type='float' description='Resolution in Dot Per "
-    "Inch' default='72' alt_config_option='GDAL_PDF_DPI'/>"
+    "Inch' default='150' alt_config_option='GDAL_PDF_DPI'/>"
     "  <Option name='USER_PWD' type='string' description='Password' "
     "alt_config_option='PDF_USER_PWD'/>"
 #ifdef HAVE_MULTIPLE_PDF_BACKENDS
