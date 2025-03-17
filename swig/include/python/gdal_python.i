@@ -2836,7 +2836,7 @@ def WarpOptions(options=None, format=None,
     workingType:
         working type (gdalconst.GDT_Byte, etc...)
     warpOptions:
-        list or dict of warping options
+        list or dict of warping options. For a list of available options, see :cpp:member:`GDALWarpOptions::papszWarpOptions`.
     errorThreshold:
         error threshold for approximation transformer (in pixels)
     warpMemoryLimit:
