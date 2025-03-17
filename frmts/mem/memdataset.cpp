@@ -1404,6 +1404,8 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
 
     if (bPixelInterleaved)
         poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    else
+        poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
 
     /* -------------------------------------------------------------------- */
     /*      Create band information objects.                                */
