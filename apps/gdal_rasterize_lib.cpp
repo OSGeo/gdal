@@ -830,7 +830,7 @@ static GDALDatasetH CreateOutputDataset(
         if (nXSize == 0 || nYSize == 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Size and resolutions are missing");
+                     "Size and resolution are missing");
             return nullptr;
         }
         dfXRes = (sEnvelop.MaxX - sEnvelop.MinX) / nXSize;

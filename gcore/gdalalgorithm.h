@@ -2169,6 +2169,9 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddOutputFormatArg(std::string *pValue, bool bStreamAllowed = false);
 
+    /** Add output data type argument. */
+    GDALInConstructionAlgorithmArg &AddOutputDataTypeArg(std::string *pValue);
+
     /** Add creation option(s) argument. */
     GDALInConstructionAlgorithmArg &
     AddCreationOptionsArg(std::vector<std::string> *pValue);

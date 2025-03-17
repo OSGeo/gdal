@@ -90,7 +90,7 @@ raster data is only supported since GDAL 2.1.0.
 
     Indicates that a burn value should be extracted from the "Z" values of the
     feature. Works with points and lines (linear interpolation along each segment).
-    For polygons, works properly only if the are flat (same Z value for all
+    For polygons, works properly only if they are flat (same Z value for all
     vertices).
 
 .. option:: -add
