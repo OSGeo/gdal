@@ -106,6 +106,16 @@ def get_contour_alg():
             True,
             "contour: Argument 'levels' is mutually exclusive with 'interval'.",
         ),
+        (
+            [],
+            True,
+            "contour: One of 'interval', 'levels', 'exp-base' must be specified.",
+        ),
+        (
+            ["--interval", "-10"],
+            True,
+            "contour: Interval must be a positive number.",
+        ),
     ],
 )
 def test_gdalalg_raster_contour(tmp_vsimem, options, polygonize, expected_elev_values):
@@ -152,3 +162,43 @@ cellsize     1
                     assert geom.GetGeometryType() == ogr.wkbLineString
                     assert feat.GetField("ELEV") == expected_elev_values[i]
             lyr = None
+
+
+@pytest.mark.require_driver("AAIGRID")
+def test_gdalalg_raster_contour_overwrite(tmp_vsimem):
+
+    tmp_out_filename = str(tmp_vsimem / "out.shp")
+    tmp_filename = str(tmp_vsimem / "tmp.asc")
+    dem = """ncols        2
+nrows        2
+xllcorner    0
+yllcorner    0
+cellsize     1
+4 15
+25 36"""
+
+    gdal.FileFromMemBuffer(tmp_filename, dem.encode("ascii"))
+
+    pipeline = get_contour_alg()
+    alg_options = [
+        tmp_filename,
+        tmp_out_filename,
+        "--interval",
+        "10",
+        "--min-name",
+        "ELEV_MIN",
+        "--max-name",
+        "ELEV_MAX",
+    ]
+
+    assert pipeline.ParseRunAndFinalize(alg_options)
+
+    # Run it again without --overwrite
+    pipeline = get_contour_alg()
+    with pytest.raises(RuntimeError, match="already exists"):
+        pipeline.ParseRunAndFinalize(alg_options)
+
+    # Run it again with --overwrite
+    pipeline = get_contour_alg()
+    alg_options.append("--overwrite")
+    assert pipeline.ParseRunAndFinalize(alg_options)

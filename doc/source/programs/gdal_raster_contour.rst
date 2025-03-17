@@ -52,6 +52,7 @@ Synopsis
     --off, --offset <OFFSET>                             Offset to apply to contour levels
     -p, --polygonize                                     Create polygons instead of lines
     --group-transactions <GROUP-TRANSACTIONS>            Group n features per transaction (default 100 000)
+    --overwrite                                          Whether overwriting existing output is allowed
 
     Advanced Options:
     --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
@@ -66,6 +67,13 @@ The following options are available:
 
 Standard options
 ++++++++++++++++
+
+
+.. include:: gdal_options/of_vector.rst
+
+.. include:: gdal_options/co.rst
+
+.. include:: gdal_options/overwrite.rst
 
 .. option:: -b, --band <BAND>
 
@@ -127,6 +135,7 @@ Advanced options
 .. include:: gdal_options/oo.rst
 
 .. include:: gdal_options/if.rst
+
 
 
 Examples

@@ -71,6 +71,7 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
     AddArg("group-transactions", 0,
            _("Group n features per transaction (default 100 000)"),
            &m_groupTransactions);
+    AddOverwriteArg(&m_overwrite);
 }
 
 /************************************************************************/
@@ -166,18 +167,46 @@ bool GDALRasterContourAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         aosOptions.AddString(m_outputLayerName);
     }
 
+    VSIStatBufL sStat;
+    if (!m_overwrite && !m_outputDataset.GetName().empty() &&
+        (VSIStatL(m_outputDataset.GetName().c_str(), &sStat) == 0 ||
+         std::unique_ptr<GDALDataset>(
+             GDALDataset::Open(m_outputDataset.GetName().c_str()))))
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "File '%s' already exists. Specify the --overwrite "
+                    "option to overwrite it.",
+                    m_outputDataset.GetName().c_str());
+        return false;
+    }
+
+    // Check that one of --interval, --levels, --exp-base is specified
+    if (m_levels.size() == 0 && std::isnan(m_interval) && m_expBase == 0)
+    {
+        ReportError(
+            CE_Failure, CPLE_AppDefined,
+            "One of 'interval', 'levels', 'exp-base' must be specified.");
+        return false;
+    }
+
+    // Check that interval is not negative
+    if (!std::isnan(m_interval) && m_interval < 0)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Interval must be a positive number.");
+        return false;
+    }
+
     aosOptions.AddString(m_inputDataset.GetName());
     aosOptions.AddString(m_outputDataset.GetName());
 
-    GDALContourOptionsForBinary sOptionsForBinary;
+    GDALContourOptionsForBinary optionsForBinary;
     std::unique_ptr<GDALContourOptions, decltype(&GDALContourOptionsFree)>
-        psOptions{GDALContourOptionsNew(aosOptions.List(), &sOptionsForBinary),
+        psOptions{GDALContourOptionsNew(aosOptions.List(), &optionsForBinary),
                   GDALContourOptionsFree};
 
     if (!psOptions)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Failed to create contour options: %s", CPLGetLastErrorMsg());
         return false;
     }
 
