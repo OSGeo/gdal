@@ -31,7 +31,7 @@ Synopsis
     <PIPELINE> is of the form: read [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]
 
 
-A pipeline chains several steps, separated with the `!` (quotation mark) character.
+A pipeline chains several steps, separated with the ``!`` (exclamation mark) character.
 The first step must be ``read``, and the last one ``write``.
 
 Potential steps are:
@@ -83,7 +83,6 @@ Details for options can be found in :ref:`gdal_vector_clip_subcommand`.
     Options:
       --bbox <BBOX>                                        Bounding box as xmin,ymin,xmax,ymax
       --where <WHERE>|@<filename>                          Attribute query in a restricted form of the queries used in the SQL WHERE statement
-      --fields <FIELDS>                                    Selected fields [may be repeated]
 
 
 Details for options can be found in :ref:`gdal_vector_filter_subcommand`.
