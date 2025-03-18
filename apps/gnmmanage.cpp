@@ -41,9 +41,10 @@ enum operation
 /************************************************************************/
 
 static void Usage(bool bIsError, const char *pszAdditionalMsg = nullptr,
-                  bool bShort = true) CPL_NO_RETURN;
+                  bool bShort = true, bool bHelpDoc = false) CPL_NO_RETURN;
 
-static void Usage(bool bIsError, const char *pszAdditionalMsg, bool bShort)
+static void Usage(bool bIsError, const char *pszAdditionalMsg, bool bShort,
+                  bool bHelpDoc)
 {
     fprintf(
         bIsError ? stderr : stdout,
@@ -62,6 +63,11 @@ static void Usage(bool bIsError, const char *pszAdditionalMsg, bool bShort)
         "                 [delete]\n"
         "                 [change [-bl <gfid>][-unbl <gfid>][-unblall]]\n"
         "                 <gnm_name> [<layer> [<layer>]...]\n");
+
+    if (bHelpDoc)
+    {
+        exit(0);
+    }
 
     if (bShort)
     {
@@ -227,6 +233,11 @@ MAIN_START(nArgc, papszArgv)
         else if (EQUAL(papszArgv[iArg], "--help"))
         {
             Usage(false);
+        }
+
+        else if (EQUAL(papszArgv[iArg], "--help-doc"))
+        {
+            Usage(false, nullptr, true, true);
         }
 
         else if (EQUAL(papszArgv[iArg], "--long-usage"))

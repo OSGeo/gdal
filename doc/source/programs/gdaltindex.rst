@@ -13,22 +13,7 @@ gdaltindex
 Synopsis
 --------
 
-.. code-block::
-
-    gdaltindex [--help] [--help-general]
-            [-overwrite] [-recursive] [-filename_filter <val>]...
-            [-min_pixel_size <val>] [-max_pixel_size <val>]
-            [-f <format>] [-tileindex <field_name>] [-write_absolute_path]
-            [-skip_different_projection] [-t_srs <target_srs>]
-            [-src_srs_name <field_name>] [-src_srs_format {AUTO|WKT|EPSG|PROJ}]
-            [-lyr_name <name>] [-lco <NAME>=<VALUE>]...
-            [-gti_filename <name>]
-            [-tr <xres> <yres>] [-te <xmin> <ymin> <xmax> <ymax>]
-            [-ot <datatype>] [-bandcount <val>] [-nodata <val>[,<val>...]]
-            [-colorinterp <val>[,<val>...]] [-mask]
-            [-mo <KEY>=<VALUE>]...
-            [-fetch_md <gdal_md_name> <fld_name> <fld_type>]...
-            <index_file> <file_or_dir> [<file_or_dir>]...
+.. program-output:: gdaltindex --help-doc
 
 Description
 -----------

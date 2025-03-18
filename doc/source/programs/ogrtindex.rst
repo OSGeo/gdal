@@ -13,16 +13,7 @@ ogrtindex
 Synopsis
 --------
 
-.. code-block::
-
-    ogrtindex [--help] [--help-general]
-              [-lnum <n>]... [-lname <name>]... [-f <output_format>]
-              [-write_absolute_path] [-skip_different_projection]
-              [-t_srs <target_srs>]
-              [-src_srs_name <field_name>] [-src_srs_format {AUTO|WKT|EPSG|PROJ}]
-              [-accept_different_schemas]
-              <output_dataset> <src_dataset> <src_dataset>...
-
+.. program-output:: ogrtindex --help-doc
 
 Description
 -----------

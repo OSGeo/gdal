@@ -13,15 +13,7 @@ gdalinfo
 Synopsis
 --------
 
-.. code-block::
-
-    gdalinfo [--help] [--help-general]
-             [-json] [-mm] [-stats | -approx_stats] [-hist]
-             [-nogcp] [-nomd] [-norat] [-noct] [-nofl] [-nonodata] [-nomask]
-             [-checksum] [-listmdd] [-mdd <domain>|all]
-             [-proj4] [-wkt_format {WKT1|WKT2|<other_format>}]...
-             [-sd <subdataset>] [-oo <NAME>=<VALUE>]... [-if <format>]...
-             <datasetname>
+.. program-output:: gdalinfo --help-doc
 
 Description
 -----------
