@@ -83,6 +83,20 @@ CPLErr GDALAllValidMaskBand::IRasterIO(GDALRWFlag eRWFlag, int, int, int, int,
 }
 
 /************************************************************************/
+/*                   EmitErrorMessageIfWriteNotSupported()              */
+/************************************************************************/
+
+bool GDALAllValidMaskBand::EmitErrorMessageIfWriteNotSupported(
+    const char *pszCaller) const
+{
+    ReportError(CE_Failure, CPLE_NoWriteAccess,
+                "%s: attempt to write to an all-valid implicit mask band.",
+                pszCaller);
+
+    return true;
+}
+
+/************************************************************************/
 /*                            GetMaskBand()                             */
 /************************************************************************/
 

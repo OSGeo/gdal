@@ -556,4 +556,18 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     return CE_None;
 }
 
+/************************************************************************/
+/*                   EmitErrorMessageIfWriteNotSupported()              */
+/************************************************************************/
+
+bool GDALNoDataMaskBand::EmitErrorMessageIfWriteNotSupported(
+    const char *pszCaller) const
+{
+    ReportError(CE_Failure, CPLE_NoWriteAccess,
+                "%s: attempt to write to a nodata implicit mask band.",
+                pszCaller);
+
+    return true;
+}
+
 //! @endcond

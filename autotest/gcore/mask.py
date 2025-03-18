@@ -1010,3 +1010,62 @@ def test_mask_setting_nodata(dt, GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND):
             test()
     else:
         test()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_mask_write_to_all_valid_mask_band():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterBand::Fill\(\): attempt to write to an all-valid implicit mask band.",
+    ):
+        ds.GetRasterBand(1).GetMaskBand().Fill(0)
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterBand::RasterIO\(\): attempt to write to an all-valid implicit mask band.",
+    ):
+        ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, b"\0")
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_mask_write_to_nodata_mask_band():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterBand::Fill\(\): attempt to write to a nodata implicit mask band.",
+    ):
+        ds.GetRasterBand(1).GetMaskBand().Fill(0)
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterBand::RasterIO\(\): attempt to write to a nodata implicit mask band.",
+    ):
+        ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, b"\0")
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_mask_write_to_nodata_values_mask_band():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
+    ds.SetMetadataItem("NODATA_VALUES", "0 0")
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterBand::Fill\(\): attempt to write to a nodata implicit mask band.",
+    ):
+        ds.GetRasterBand(1).GetMaskBand().Fill(0)
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterBand::RasterIO\(\): attempt to write to a nodata implicit mask band.",
+    ):
+        ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, b"\0")

@@ -1090,6 +1090,9 @@ class CPL_DLL VRTWarpedRasterBand final : public VRTRasterBand
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview(int) override;
 
+    bool
+    EmitErrorMessageIfWriteNotSupported(const char *pszCaller) const override;
+
   private:
     int m_nIRasterIOCounter =
         0;  //! Protects against infinite recursion inside IRasterIO()
