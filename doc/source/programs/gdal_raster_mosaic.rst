@@ -15,37 +15,7 @@
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal raster mosaic [OPTIONS] <INPUTS> <OUTPUT>
-
-    Build a mosaic, either virtual (VRT) or materialized
-
-    Positional arguments:
-      -i, --input <INPUTS>                                     Input raster datasets (or specify a @<filename> to point to a file containing filenames) [1.. values]
-      -o, --output <OUTPUT>                                    Output raster dataset (created by algorithm) [required]
-
-    Common Options:
-      -h, --help                                               Display help message and exit
-      --version                                                Display GDAL version and exit
-      --json-usage                                             Display usage as JSON document and exit
-      --drivers                                                Display driver list as JSON document and exit
-      --config <KEY>=<VALUE>                                   Configuration option [may be repeated]
-      --progress                                               Display progress bar
-
-    Options:
-      -f, --of, --format, --output-format <OUTPUT-FORMAT>      Output format
-      --co, --creation-option <KEY>=<VALUE>                    Creation option [may be repeated]
-      -b, --band <BAND>                                        Specify input band(s) number. [may be repeated]
-      --overwrite                                              Whether overwriting existing output is allowed
-      --resolution <xres>,<yres>|same|average|highest|lowest>  Target resolution (in destination CRS units) (default: same)
-      --bbox <BBOX>                                            Target bounding box as xmin,ymin,xmax,ymax (in destination CRS units)
-      --target-aligned-pixels                                  Round target extent to target resolution
-      --srcnodata <SRCNODATA>                                  Set nodata values for input bands. [1.. values]
-      --dstnodata <DSTNODATA>                                  Set nodata values at the destination band level. [1.. values]
-      --hidenodata                                             Makes the destination band not report the NoData.
-      --addalpha                                               Adds an alpha mask band to the destination when the source raster have none.
-
+.. program-output:: gdal raster mosaic --help-doc
 
 Description
 -----------

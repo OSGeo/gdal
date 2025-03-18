@@ -15,12 +15,7 @@
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal raster <SUBCOMMAND>
-    where <SUBCOMMAND> is one of:
-      - add:    Adding overviews.
-      - delete: Deleting overviews.
+.. program-output:: gdal raster overview --help-doc
 
 Available sub-commands
 ----------------------

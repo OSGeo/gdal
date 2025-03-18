@@ -15,33 +15,7 @@
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal vector info [OPTIONS] <INPUT>
-
-    Return information on a vector dataset.
-
-    Positional arguments:
-      -i, --input <INPUT>                                  Input vector dataset [required]
-
-    Common Options:
-      -h, --help                                           Display help message and exit
-      --json-usage                                         Display usage as JSON document and exit
-
-    Options:
-      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format. OUTPUT-FORMAT=json|text (default: json)
-      -l, --layer <LAYER>                                  Layer name [may be repeated]
-                                                           Mutually exclusive with --sql
-      --features                                           List all features (beware of RAM consumption on large layers)
-      --sql <statement|@filename>                          Execute the indicated SQL statement and return the result
-                                                           Mutually exclusive with --layer
-      --where <WHERE>|<@filename>                          Attribute query in a restricted form of the queries used in the SQL WHERE statement
-      --dialect <DIALECT>                                  SQL dialect
-      --update                                             Open the dataset in update mode
-
-    Advanced Options:
-      --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
-      --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
+.. program-output:: gdal vector info --help-doc
 
 Description
 -----------

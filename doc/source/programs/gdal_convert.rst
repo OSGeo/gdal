@@ -18,25 +18,7 @@ Acts as a shortcut for :ref:`gdal_raster_convert_subcommand` or
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal convert [OPTIONS] <INPUT> <OUTPUT>
-
-    Convert a dataset (shortcut for 'gdal raster convert' or 'gdal vector convert').
-
-    Positional arguments:
-      -i, --input <INPUT>                                  Input raster, vector or multidimensional raster dataset [required]
-      -o, --output <OUTPUT>                                Output raster, vector or multidimensional raster dataset (created by algorithm) [required]
-
-    Common Options:
-      -h, --help                                           Display help message and exit
-      --json-usage                                         Display usage as JSON document and exit
-      --progress                                           Display progress bar
-
-    Options:
-      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format
-
-    For all options, run 'gdal raster convert --help' or 'gdal vector convert --help'
+.. program-output:: gdal convert --help-doc
 
 Examples
 --------

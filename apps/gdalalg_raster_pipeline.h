@@ -107,6 +107,9 @@ class GDALRasterPipelineAlgorithm final
     {
         return m_outputDataset;
     }
+
+  private:
+    std::string m_helpDocCategory{};
 };
 
 //! @endcond
