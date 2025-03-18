@@ -531,7 +531,9 @@ def test_mask_14():
 # Test creation of internal TIFF overview, mask band and mask band of overview
 
 
-def mask_and_ovr(order, method):
+@pytest.mark.parametrize("order", [1, 2, 3, 4])
+@pytest.mark.parametrize("method", ["NEAR", "AVERAGE"])
+def test_mask_and_ovr(order, method):
 
     src_ds = gdal.Open("data/byte.tif")
 
@@ -544,8 +546,15 @@ def mask_and_ovr(order, method):
     if order == 1:
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.BuildOverviews(method, overviewlist=[2, 4])
-        ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
-        ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
+        with gdal.quiet_errors():
+            assert (
+                ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
+                == gdal.CE_Failure
+            )
+            assert (
+                ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
+                == gdal.CE_Failure
+            )
     elif order == 2:
         ds.BuildOverviews(method, overviewlist=[2, 4])
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
@@ -592,38 +601,6 @@ def mask_and_ovr(order, method):
     ds = None
 
     drv.Delete("tmp/byte_with_ovr_and_mask.tif")
-
-
-def test_mask_15():
-    return mask_and_ovr(1, "NEAREST")
-
-
-def test_mask_16():
-    return mask_and_ovr(2, "NEAREST")
-
-
-def test_mask_17():
-    return mask_and_ovr(3, "NEAREST")
-
-
-def test_mask_18():
-    return mask_and_ovr(4, "NEAREST")
-
-
-def test_mask_15_avg():
-    return mask_and_ovr(1, "AVERAGE")
-
-
-def test_mask_16_avg():
-    return mask_and_ovr(2, "AVERAGE")
-
-
-def test_mask_17_avg():
-    return mask_and_ovr(3, "AVERAGE")
-
-
-def test_mask_18_avg():
-    return mask_and_ovr(4, "AVERAGE")
 
 
 ###############################################################################
