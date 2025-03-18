@@ -555,9 +555,9 @@ class CPL_DLL GDALWarpOperation
     CPLErr Initialize(const GDALWarpOptions *psNewOptions);
     void *CreateDestinationBuffer(int nDstXSize, int nDstYSize,
                                   int *pbWasInitialized = nullptr);
-    void InitializeDestinationBuffer(void *pDstBuffer, int nDstXSize,
-                                     int nDstYSize,
-                                     int *pbWasInitialized = nullptr);
+    CPLErr InitializeDestinationBuffer(void *pDstBuffer, int nDstXSize,
+                                       int nDstYSize,
+                                       int *pbWasInitialized = nullptr) const;
     static void DestroyDestinationBuffer(void *pDstBuffer);
 
     const GDALWarpOptions *GetOptions();

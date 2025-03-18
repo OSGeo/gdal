@@ -2363,7 +2363,7 @@ def test_gdalwarp_lib_auto_skip_nosource(tmp_vsimem):
         "-wo SKIP_NOSOURCE=NO",
         "",
         "-wo INIT_DEST=0",
-        "-wo INIT_DEST=NO_DATA",
+        "-wo INIT_DEST=NO_DATA -dstnodata 0",
         "-dstnodata 0",
     ]:
         if gdal.VSIStatL(tmpfilename) is not None:
@@ -4419,3 +4419,28 @@ def test_gdalwarp_lib_cubic_multiband_uint16_4sample_optim():
         4689,
         5007,
     ]
+
+
+###############################################################################
+# Test invalid values of INIT_DEST
+
+
+def test_gdalwarp_lib_init_dest_invalid(tmp_vsimem):
+
+    src_ds = gdal.Open("../gcore/data/byte.tif")
+
+    with pytest.raises(Exception, match="Unexpected value of BAND_INIT"):
+        gdal.Warp(
+            tmp_vsimem / "out.tif",
+            src_ds,
+            outputBounds=(440000, 3750120, 441920, 3751320),
+            warpOptions={"INIT_DEST": "NODATA"},
+        )
+
+    with pytest.raises(Exception, match="NoData value was not defined"):
+        gdal.Warp(
+            tmp_vsimem / "out.tif",
+            src_ds,
+            outputBounds=(440000, 3750120, 441920, 3751320),
+            warpOptions={"INIT_DEST": "NO_DATA"},
+        )

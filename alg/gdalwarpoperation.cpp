@@ -14,6 +14,7 @@
 #include "cpl_port.h"
 #include "gdalwarper.h"
 
+#include <cctype>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -713,8 +714,13 @@ void *GDALWarpOperation::CreateDestinationBuffer(int nDstXSize, int nDstYSize,
         nDstYSize);
     if (pDstBuffer)
     {
-        InitializeDestinationBuffer(pDstBuffer, nDstXSize, nDstYSize,
-                                    pbInitialized);
+        auto eErr = InitializeDestinationBuffer(pDstBuffer, nDstXSize,
+                                                nDstYSize, pbInitialized);
+        if (eErr != CE_None)
+        {
+            CPLFree(pDstBuffer);
+            return nullptr;
+        }
     }
     return pDstBuffer;
 }
@@ -738,10 +744,10 @@ void *GDALWarpOperation::CreateDestinationBuffer(int nDstXSize, int nDstYSize,
  *                      initialized.
  * @since 3.10
  */
-void GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
-                                                    int nDstXSize,
-                                                    int nDstYSize,
-                                                    int *pbInitialized)
+CPLErr GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
+                                                      int nDstXSize,
+                                                      int nDstYSize,
+                                                      int *pbInitialized) const
 {
     const int nWordSize = GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType);
 
@@ -760,7 +766,7 @@ void GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
         {
             *pbInitialized = FALSE;
         }
-        return;
+        return CE_None;
     }
 
     if (pbInitialized != nullptr)
@@ -768,19 +774,26 @@ void GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
         *pbInitialized = TRUE;
     }
 
-    char **papszInitValues =
-        CSLTokenizeStringComplex(pszInitDest, ",", FALSE, FALSE);
-    const int nInitCount = CSLCount(papszInitValues);
+    CPLStringList aosInitValues(
+        CSLTokenizeStringComplex(pszInitDest, ",", FALSE, FALSE));
+    const int nInitCount = aosInitValues.Count();
 
     for (int iBand = 0; iBand < psOptions->nBandCount; iBand++)
     {
         double adfInitRealImag[2] = {0.0, 0.0};
         const char *pszBandInit =
-            papszInitValues[std::min(iBand, nInitCount - 1)];
+            aosInitValues[std::min(iBand, nInitCount - 1)];
 
-        if (EQUAL(pszBandInit, "NO_DATA") &&
-            psOptions->padfDstNoDataReal != nullptr)
+        if (EQUAL(pszBandInit, "NO_DATA"))
         {
+            if (psOptions->padfDstNoDataReal == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "BAND_INIT was set to NO_DATA, but a NoData value was "
+                         "not defined.");
+                return CE_Failure;
+            }
+
             adfInitRealImag[0] = psOptions->padfDstNoDataReal[iBand];
             if (psOptions->padfDstNoDataImag != nullptr)
             {
@@ -789,6 +802,16 @@ void GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
         }
         else
         {
+            for (const char *c = pszBandInit; *c != '\0'; c++)
+            {
+                if (std::isalpha(*c) && *c != 'i')
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unexpected value of BAND_INIT: %s", pszBandInit);
+                    return CE_Failure;
+                }
+            }
+
             CPLStringToComplex(pszBandInit, adfInitRealImag + 0,
                                adfInitRealImag + 1);
         }
@@ -821,7 +844,7 @@ void GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
         }
     }
 
-    CSLDestroy(papszInitValues);
+    return CE_None;
 }
 
 /**
