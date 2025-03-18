@@ -126,4 +126,17 @@ CPLErr GDALRescaledAlphaBand::IRasterIO(
                                      nPixelSpace, nLineSpace, psExtraArg);
 }
 
+/************************************************************************/
+/*                   EmitErrorMessageIfWriteNotSupported()              */
+/************************************************************************/
+
+bool GDALRescaledAlphaBand::EmitErrorMessageIfWriteNotSupported(
+    const char *pszCaller) const
+{
+    ReportError(CE_Failure, CPLE_NoWriteAccess,
+                "%s: attempt to write to a GDALRescaledAlphaBand.", pszCaller);
+
+    return true;
+}
+
 //! @endcond

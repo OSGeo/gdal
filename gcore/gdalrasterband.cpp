@@ -377,11 +377,8 @@ CPLErr GDALRasterBand::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             eFlushBlockErr = CE_None;
             return eErr;
         }
-        if (CPL_UNLIKELY(eAccess != GA_Update))
+        if (EmitErrorMessageIfWriteNotSupported("GDALRasterBand::RasterIO()"))
         {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Write operation not permitted on dataset opened "
-                        "in read-only mode");
             return CE_Failure;
         }
     }
@@ -1248,13 +1245,9 @@ CPLErr GDALRasterBand::WriteBlock(int nXBlockOff, int nYBlockOff, void *pImage)
         return (CE_Failure);
     }
 
-    if (eAccess == GA_ReadOnly)
+    if (EmitErrorMessageIfWriteNotSupported("GDALRasterBand::WriteBlock()"))
     {
-        ReportError(CE_Failure, CPLE_NoWriteAccess,
-                    "Attempt to write to read only dataset in"
-                    "GDALRasterBand::WriteBlock().\n");
-
-        return (CE_Failure);
+        return CE_Failure;
     }
 
     if (eFlushBlockErr != CE_None)
@@ -1297,6 +1290,33 @@ CPLErr CPL_STDCALL GDALWriteBlock(GDALRasterBandH hBand, int nXOff, int nYOff,
 
     GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return (poBand->WriteBlock(nXOff, nYOff, pData));
+}
+
+/************************************************************************/
+/*                   EmitErrorMessageIfWriteNotSupported()              */
+/************************************************************************/
+
+/**
+ * Emit an error message if a write operation to this band is not supported.
+ *
+ * The base implementation will emit an error message if the access mode is
+ * read-only. Derived classes may implement it to provide a custom message.
+ *
+ * @param pszCaller Calling function.
+ * @return true if an error message has been emitted.
+ */
+bool GDALRasterBand::EmitErrorMessageIfWriteNotSupported(
+    const char *pszCaller) const
+{
+    if (eAccess == GA_ReadOnly)
+    {
+        ReportError(CE_Failure, CPLE_NoWriteAccess,
+                    "%s: attempt to write to dataset opened in read-only mode.",
+                    pszCaller);
+
+        return true;
+    }
+    return false;
 }
 
 /************************************************************************/
@@ -2079,11 +2099,8 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue)
     // file.)
 
     // Check we can write to the file.
-    if (eAccess == GA_ReadOnly)
+    if (EmitErrorMessageIfWriteNotSupported("GDALRasterBand::Fill()"))
     {
-        ReportError(CE_Failure, CPLE_NoWriteAccess,
-                    "Attempt to write to read only dataset in "
-                    "GDALRasterBand::Fill().");
         return CE_Failure;
     }
 
