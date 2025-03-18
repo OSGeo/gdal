@@ -43,6 +43,18 @@ GDALArgumentParser::GDALArgumentParser(const std::string &program_name,
                 })
             .help(_("Shows short help message and exits."));
 
+        // Used by program-output directives in .rst files
+        add_argument("--help-doc")
+            .flag()
+            .hidden()
+            .action(
+                [this](const auto &)
+                {
+                    std::cout << usage() << std::endl;
+                    std::exit(0);
+                })
+            .help(_("Display help message for use by documentation."));
+
         add_argument("--long-usage")
             .flag()
             .action(
