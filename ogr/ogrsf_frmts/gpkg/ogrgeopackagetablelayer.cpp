@@ -123,6 +123,12 @@ OGRErr OGRGeoPackageTableLayer::UpdateExtent(const OGREnvelope *poExtent)
 //
 OGRErr OGRGeoPackageTableLayer::BuildColumns()
 {
+    if (m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE)
+        return OGRERR_FAILURE;
+
+    if (!m_bFeatureDefnCompleted)
+        GetLayerDefn();
+
     m_anFieldOrdinals.resize(m_poFeatureDefn->GetFieldCount());
     int iCurCol = 0;
 
