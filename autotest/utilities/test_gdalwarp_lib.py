@@ -2347,7 +2347,22 @@ def test_gdalwarp_lib_override_default_output_nodata(frmt, tmp_path):
 # Test automatting setting (or not) of SKIP_NOSOURCE=YES
 
 
-def test_gdalwarp_lib_auto_skip_nosource(tmp_vsimem):
+@pytest.mark.parametrize(
+    "options,checksum",
+    [
+        ("-wo SKIP_NOSOURCE=NO", 41500),
+        ("", 41500),
+        ("-wo INIT_DEST=0", 41500),
+        ("-wo INIT_DEST=NO_DATA -dstnodata 0", 41500),
+        ("-dstnodata 0", 41500),
+        ("-dstnodata 1", 51132),
+        ("-dstnodata 1 -wo INIT_DEST=NO_DATA", 51132),
+        ("-dstnodata 1 -wo INIT_DEST=1", 51132),
+        ("-dstnodata 127 -wo INIT_DEST=0", 41500),
+    ],
+)
+@pytest.mark.parametrize("output_format", ("GTiff", "MEM"))
+def test_gdalwarp_lib_auto_skip_nosource(tmp_vsimem, options, checksum, output_format):
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
@@ -2359,80 +2374,20 @@ def test_gdalwarp_lib_auto_skip_nosource(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "test_gdalwarp_lib_auto_skip_nosource.tif"
 
-    for options in [
-        "-wo SKIP_NOSOURCE=NO",
-        "",
-        "-wo INIT_DEST=0",
-        "-wo INIT_DEST=NO_DATA",
-        "-dstnodata 0",
-    ]:
-        if gdal.VSIStatL(tmpfilename) is not None:
-            gdal.Unlink(tmpfilename)
-        out_ds = gdal.Warp(
-            tmpfilename,
-            src_ds,
-            options="-te 1.5 48 3.5 49.5 -wm 100000 " + "-of GTiff " + options,
-        )
-        cs = out_ds.GetRasterBand(1).Checksum()
-        assert cs == 41500, (options, cs)
+    out_ds = gdal.Warp(
+        tmpfilename,
+        src_ds,
+        options=f"-te 1.5 48 3.5 49.5 -wm 100000 -of {output_format} {options}",
+    )
+    cs = out_ds.GetRasterBand(1).Checksum()
 
-    # Same with MEM
-    for options in ["", "-wo INIT_DEST=0", "-dstnodata 0"]:
-        if gdal.VSIStatL(tmpfilename) is not None:
-            gdal.Unlink(tmpfilename)
-        out_ds = gdal.Warp(
-            tmpfilename,
-            src_ds,
-            options="-te 1.5 48 3.5 49.5 -wm 100000 " + "-of MEM " + options,
-        )
-        cs = out_ds.GetRasterBand(1).Checksum()
-        assert cs == 41500, (options, cs)
+    assert cs == checksum, options
 
-    # Use fill/nodata at 1
-    for options in [  # '-wo SKIP_NOSOURCE=NO -dstnodata 1',
-        "-dstnodata 1",
-        "-dstnodata 1 -wo INIT_DEST=NO_DATA",
-        "-dstnodata 1 -wo INIT_DEST=1",
-    ]:
-        if gdal.VSIStatL(tmpfilename) is not None:
-            gdal.Unlink(tmpfilename)
-        out_ds = gdal.Warp(
-            tmpfilename,
-            src_ds,
-            options="-te 1.5 48 3.5 49.5 -wm 100000 " + "-of GTiff " + options,
-        )
-        cs = out_ds.GetRasterBand(1).Checksum()
-        assert cs == 51132, (options, cs)
 
-    # Same with MEM
-    for options in [  # '-wo SKIP_NOSOURCE=NO -dstnodata 1',
-        "-dstnodata 1",
-        "-dstnodata 1 -wo INIT_DEST=NO_DATA",
-        "-dstnodata 1 -wo INIT_DEST=1",
-    ]:
-        if gdal.VSIStatL(tmpfilename) is not None:
-            gdal.Unlink(tmpfilename)
-        out_ds = gdal.Warp(
-            tmpfilename,
-            src_ds,
-            options="-te 1.5 48 3.5 49.5 -wm 100000 " + "-of MEM " + options,
-        )
-        cs = out_ds.GetRasterBand(1).Checksum()
-        assert cs == 51132, (options, cs)
+def test_gdalwarp_lib_auto_skip_nosource_2(tmp_vsimem):
 
-    # Rather dummy: use a INIT_DEST different of the target dstnodata
-    for options in [  # '-wo SKIP_NOSOURCE=NO -dstnodata 1 -wo INIT_DEST=0',
-        "-dstnodata 127 -wo INIT_DEST=0"
-    ]:
-        if gdal.VSIStatL(tmpfilename) is not None:
-            gdal.Unlink(tmpfilename)
-        out_ds = gdal.Warp(
-            tmpfilename,
-            src_ds,
-            options="-te 1.5 48 3.5 49.5 -wm 100000 " + "-of GTiff " + options,
-        )
-        cs = out_ds.GetRasterBand(1).Checksum()
-        assert cs == 41500, (options, cs)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
 
     # Test with 2 input datasets
     src_ds1 = gdal.GetDriverByName("MEM").Create("", 500, 500)
@@ -2445,16 +2400,13 @@ def test_gdalwarp_lib_auto_skip_nosource(tmp_vsimem):
     src_ds2.SetGeoTransform([2.5, 0.001, 0, 49, 0, -0.001])
     src_ds2.SetProjection(sr.ExportToWkt())
 
-    for options in [""]:
-        if gdal.VSIStatL(tmpfilename) is not None:
-            gdal.Unlink(tmpfilename)
-        out_ds = gdal.Warp(
-            tmpfilename,
-            [src_ds1, src_ds2],
-            options="-te 1.5 48 3.5 49.5 -wm 100000 " + "-of GTiff " + options,
-        )
-        cs = out_ds.GetRasterBand(1).Checksum()
-        assert cs == 41500, (options, cs)
+    out_ds = gdal.Warp(
+        tmp_vsimem / "out.tif",
+        [src_ds1, src_ds2],
+        options="-te 1.5 48 3.5 49.5 -wm 100000 -of GTiff ",
+    )
+    cs = out_ds.GetRasterBand(1).Checksum()
+    assert cs == 41500
 
 
 ###############################################################################
@@ -4419,3 +4371,28 @@ def test_gdalwarp_lib_cubic_multiband_uint16_4sample_optim():
         4689,
         5007,
     ]
+
+
+###############################################################################
+# Test invalid values of INIT_DEST
+
+
+def test_gdalwarp_lib_init_dest_invalid(tmp_vsimem):
+
+    src_ds = gdal.Open("../gcore/data/byte.tif")
+
+    with pytest.raises(Exception, match="Unexpected value of BAND_INIT"):
+        gdal.Warp(
+            tmp_vsimem / "out.tif",
+            src_ds,
+            outputBounds=(440000, 3750120, 441920, 3751320),
+            warpOptions={"INIT_DEST": "NODATA"},
+        )
+
+    with pytest.raises(Exception, match="NoData value was not defined"):
+        gdal.Warp(
+            tmp_vsimem / "out.tif",
+            src_ds,
+            outputBounds=(440000, 3750120, 441920, 3751320),
+            warpOptions={"INIT_DEST": "NO_DATA"},
+        )
