@@ -37,6 +37,9 @@ Process :
    (*NOT* gdal_version.h which is a generated file)
    Note: the format of GDAL_RELEASE_DATE should be YYYYMMDD.
 
+   Update the release nickname of GDAL_RELEASE_NICKNAME to whatever makes sense
+   to the release manager.
+
 3) Update two instances of year in CITATION file to the current year.
 
 4) Update "version" and "date-released" in CITATION.cff (Note: the DOI does
