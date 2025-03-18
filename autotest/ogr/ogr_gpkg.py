@@ -10606,3 +10606,24 @@ def test_gpkg_secure_delete(tmp_vsimem):
             with ds.ExecuteSQL("PRAGMA secure_delete") as sql_lyr:
                 f = sql_lyr.GetNextFeature()
                 assert f.GetField(0) == 0
+
+
+###############################################################################
+
+
+def test_ogr_gpkg_set_next_by_index(tmp_vsimem):
+
+    filename = tmp_vsimem / "test_ogr_gpkg_set_next_by_index.gpkg"
+    with ogr.GetDriverByName("GPKG").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test")
+        lyr.CreateField(ogr.FieldDefn("foo"))
+        lyr.SetNextByIndex(0)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["foo"] = "bar"
+        lyr.CreateFeature(f)
+
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        lyr.SetNextByIndex(0)
+        f = lyr.GetNextFeature()
+        assert f["foo"] == "bar"
