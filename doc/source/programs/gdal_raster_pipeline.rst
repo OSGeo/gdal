@@ -31,7 +31,7 @@ Synopsis
     <PIPELINE> is of the form: read [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]
 
 
-A pipeline chains several steps, separated with the `!` (quotation mark) character.
+A pipeline chains several steps, separated with the ``!`` (exclamation mark) character.
 The first step must be ``read``, and the last one ``write``.
 
 Potential steps are:
