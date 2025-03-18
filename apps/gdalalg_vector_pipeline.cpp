@@ -207,7 +207,14 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
 {
     if (args.size() == 1 && (args[0] == "-h" || args[0] == "--help" ||
                              args[0] == "help" || args[0] == "--json-usage"))
+    {
         return GDALAlgorithm::ParseCommandLineArguments(args);
+    }
+    else if (args.size() == 1 && STARTS_WITH(args[0].c_str(), "--help-doc="))
+    {
+        m_helpDocCategory = args[0].substr(strlen("--help-doc="));
+        return GDALAlgorithm::ParseCommandLineArguments({"--help-doc"});
+    }
 
     for (const auto &arg : args)
     {
@@ -459,21 +466,46 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
 std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
     bool shortUsage, const UsageOptions &usageOptions) const
 {
+    UsageOptions stepUsageOptions;
+    stepUsageOptions.isPipelineStep = true;
+
+    if (!m_helpDocCategory.empty() && m_helpDocCategory != "main")
+    {
+        auto alg = GetStepAlg(m_helpDocCategory);
+        std::string ret;
+        if (alg)
+        {
+            alg->SetCallPath({m_helpDocCategory});
+            alg->GetArg("help-doc")->Set(true);
+            return alg->GetUsageForCLI(shortUsage, stepUsageOptions);
+        }
+        else
+        {
+            fprintf(stderr, "ERROR: unknown pipeline step '%s'\n",
+                    m_helpDocCategory.c_str());
+            return CPLSPrintf("ERROR: unknown pipeline step '%s'\n",
+                              m_helpDocCategory.c_str());
+        }
+    }
+
     std::string ret = GDALAlgorithm::GetUsageForCLI(shortUsage, usageOptions);
     if (shortUsage)
         return ret;
 
     ret += "\n<PIPELINE> is of the form: read [READ-OPTIONS] "
            "( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]\n";
+
+    if (m_helpDocCategory == "main")
+    {
+        return ret;
+    }
+
     ret += '\n';
     ret += "Example: 'gdal vector pipeline --progress ! read in.gpkg ! \\\n";
     ret += "               reproject --dst-crs=EPSG:32632 ! ";
     ret += "write out.gpkg --overwrite'\n";
     ret += '\n';
     ret += "Potential steps are:\n";
-
-    UsageOptions stepUsageOptions;
-    stepUsageOptions.isPipelineStep = true;
 
     for (const std::string &name : m_stepRegistry.GetNames())
     {

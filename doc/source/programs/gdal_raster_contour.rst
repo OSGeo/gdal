@@ -15,48 +15,7 @@
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal raster contour [OPTIONS] <INPUT> <OUTPUT>
-
-    Creates a vector contour from a raster elevation model (DEM).
-
-    Positional arguments:
-    -i, --input <INPUT>                                  Input raster dataset [required]
-    -o, --output <OUTPUT>                                Output raster dataset (created by algorithm) [required]
-
-    Common Options:
-    -h, --help                                           Display help message and exit
-    --version                                            Display GDAL version and exit
-    --json-usage                                         Display usage as JSON document and exit
-    --drivers                                            Display driver list as JSON document and exit
-    --config <KEY>=<VALUE>                               Configuration option [may be repeated]
-    --progress                                           Display progress bar
-
-    Options:
-    -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format
-    --co, --creation-option <KEY>=<VALUE>                Creation option [may be repeated]
-    -b, --band <BAND>                                    Specify input band number (default: 1)
-    -l, --nln, --layer <LAYER>                           Layer name
-    --elevation-name <ELEVATION-NAME>                    Name of the elevation field
-    --min-name <MIN-NAME>                                Name of the minimum elevation field
-    --max-name <MAX-NAME>                                Name of the maximum elevation field
-    --3d                                                 Force production of 3D vectors instead of 2D
-    --srcnodata <SRCNODATA>                              Input pixel value to treat as 'nodata'
-    --interval <INTERVAL>                                Elevation interval between contours
-                                                        Mutually exclusive with --levels, --exp-base
-    --levels <LEVELS>                                    List of contour levels [may be repeated]
-                                                        Mutually exclusive with --interval, --exp-base
-    -e, --exp-base <EXP-BASE>                            Base for exponential contour level generation
-                                                        Mutually exclusive with --interval, --levels
-    --off, --offset <OFFSET>                             Offset to apply to contour levels
-    -p, --polygonize                                     Create polygons instead of lines
-    --group-transactions <GROUP-TRANSACTIONS>            Group n features per transaction (default 100 000)
-    --overwrite                                          Whether overwriting existing output is allowed
-
-    Advanced Options:
-    --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
-    --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
+.. program-output:: gdal raster contour --help-doc
 
 Description
 -----------

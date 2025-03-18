@@ -15,52 +15,7 @@
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal vector clip [OPTIONS] <INPUT> <OUTPUT>
-
-    Clip a vector dataset.
-
-    Positional arguments:
-      -i, --input <INPUT>                                  Input vector dataset [required]
-      -o, --output <OUTPUT>                                Output vector dataset [required]
-
-    Common Options:
-      -h, --help                                           Display help message and exit
-      --version                                            Display GDAL version and exit
-      --json-usage                                         Display usage as JSON document and exit
-      --drivers                                            Display driver list as JSON document and exit
-      --config <KEY>=<VALUE>                               Configuration option [may be repeated]
-      --progress                                           Display progress bar
-
-    Options:
-      -l, --layer, --input-layer <INPUT-LAYER>             Input layer name(s) [may be repeated]
-      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format
-      --co, --creation-option <KEY>=<VALUE>                Creation option [may be repeated]
-      --lco, --layer-creation-option <KEY>=<VALUE>         Layer creation option [may be repeated]
-      --overwrite                                          Whether overwriting existing output is allowed
-      --update                                             Whether to open existing dataset in update mode
-      --overwrite-layer                                    Whether overwriting existing layer is allowed
-      --append                                             Whether appending to existing layer is allowed
-      --output-layer <OUTPUT-LAYER>                        Output layer name
-      --bbox <BBOX>                                        Clipping bounding box as xmin,ymin,xmax,ymax
-                                                           Mutually exclusive with --geometry, --like
-      --bbox-crs <BBOX-CRS>                                CRS of clipping bounding box
-      --geometry <GEOMETRY>                                Clipping geometry (WKT or GeoJSON)
-                                                           Mutually exclusive with --bbox, --like
-      --geometry-crs <GEOMETRY-CRS>                        CRS of clipping geometry
-      --like <DATASET>                                     Dataset to use as a template for bounds
-                                                           Mutually exclusive with --bbox, --geometry
-      --like-sql <SELECT-STATEMENT>                        SELECT statement to run on the 'like' dataset
-      --like-layer <LAYER-NAME>                            Name of the layer of the 'like' dataset
-      --like-where <WHERE-EXPRESSION>                      Expression for a WHERE SQL clause to run on the 'like' dataset
-
-
-    Advanced Options:
-      --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
-      --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
-
-
+.. program-output:: gdal vector clip --help-doc
 
 Description
 -----------
