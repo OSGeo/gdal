@@ -3939,7 +3939,7 @@ static GDALDatasetH GDALWarpCreateOutput(
             // target extent instead of the real source image extent, but also
             // check for target extent compatibility with source CRS extent
             if (psTransformInfo && psTransformInfo->pReprojectArg &&
-                psTransformInfo->pSrcTransformer == nullptr)
+                psTransformInfo->sSrcParams.pTransformer == nullptr)
             {
                 const GDALReprojectionTransformInfo *psRTI =
                     static_cast<const GDALReprojectionTransformInfo *>(
