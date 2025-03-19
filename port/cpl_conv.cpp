@@ -1890,9 +1890,16 @@ static void NotifyOtherComponentsConfigOptionChanged(const char *pszKey,
                                                      const char *pszValue,
                                                      bool bThreadLocal)
 {
-    // Hack
-    if (STARTS_WITH_CI(pszKey, "AWS_"))
+    // When changing authentication parameters of virtual file systems,
+    // partially invalidate cached state about file availability.
+    if (STARTS_WITH_CI(pszKey, "AWS_") || STARTS_WITH_CI(pszKey, "GS_") ||
+        STARTS_WITH_CI(pszKey, "GOOGLE_") ||
+        STARTS_WITH_CI(pszKey, "GDAL_HTTP_HEADER_FILE") ||
+        STARTS_WITH_CI(pszKey, "AZURE_") ||
+        (STARTS_WITH_CI(pszKey, "SWIFT_") && !EQUAL(pszKey, "SWIFT_MAX_KEYS")))
+    {
         VSICurlAuthParametersChanged();
+    }
 
     if (!gSetConfigOptionSubscribers.empty())
     {
