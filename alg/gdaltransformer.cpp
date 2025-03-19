@@ -1897,45 +1897,24 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                        CSLConstList papszOptions)
 
 {
-    CSLConstList papszMD = nullptr;
-    GDALRPCInfoV2 sRPCInfo;
-    const char *pszMethod = CSLFetchNameValue(papszOptions, "SRC_METHOD");
-    if (pszMethod == nullptr)
-        pszMethod = CSLFetchNameValue(papszOptions, "METHOD");
-    const char *pszSrcSRS = CSLFetchNameValue(papszOptions, "SRC_SRS");
-    const char *pszDstSRS = CSLFetchNameValue(papszOptions, "DST_SRS");
-
-    const char *pszValue = CSLFetchNameValue(papszOptions, "MAX_GCP_ORDER");
-    const int nOrder = pszValue ? atoi(pszValue) : 0;
-
-    pszValue = CSLFetchNameValue(papszOptions, "GCPS_OK");
-    const bool bGCPUseOK = pszValue ? CPLTestBool(pszValue) : true;
-
-    pszValue = CSLFetchNameValue(papszOptions, "REFINE_MINIMUM_GCPS");
-    const int nMinimumGcps = pszValue ? atoi(pszValue) : -1;
-
-    pszValue = CSLFetchNameValue(papszOptions, "REFINE_TOLERANCE");
-    const bool bRefine = pszValue != nullptr;
-    const double dfTolerance = pszValue ? CPLAtof(pszValue) : 0.0;
-
     double dfWestLongitudeDeg = 0.0;
     double dfSouthLatitudeDeg = 0.0;
     double dfEastLongitudeDeg = 0.0;
     double dfNorthLatitudeDeg = 0.0;
     bool bHasAreaOfInterest = false;
-    pszValue = CSLFetchNameValue(papszOptions, "AREA_OF_INTEREST");
-    if (pszValue)
+    if (const char *pszAreaOfInterest =
+            CSLFetchNameValue(papszOptions, "AREA_OF_INTEREST"))
     {
-        char **papszTokens = CSLTokenizeString2(pszValue, ", ", 0);
-        if (CSLCount(papszTokens) == 4)
+        const CPLStringList aosTokens(
+            CSLTokenizeString2(pszAreaOfInterest, ", ", 0));
+        if (aosTokens.size() == 4)
         {
-            dfWestLongitudeDeg = CPLAtof(papszTokens[0]);
-            dfSouthLatitudeDeg = CPLAtof(papszTokens[1]);
-            dfEastLongitudeDeg = CPLAtof(papszTokens[2]);
-            dfNorthLatitudeDeg = CPLAtof(papszTokens[3]);
+            dfWestLongitudeDeg = CPLAtof(aosTokens[0]);
+            dfSouthLatitudeDeg = CPLAtof(aosTokens[1]);
+            dfEastLongitudeDeg = CPLAtof(aosTokens[2]);
+            dfNorthLatitudeDeg = CPLAtof(aosTokens[3]);
             bHasAreaOfInterest = true;
         }
-        CSLDestroy(papszTokens);
     }
 
     const char *pszCO = CSLFetchNameValue(papszOptions, "COORDINATE_OPERATION");
@@ -1978,565 +1957,363 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         return true;
     };
 
-    OGRSpatialReference oSrcSRS;
-    if (pszSrcSRS)
-    {
-        if (pszSrcSRS[0] != '\0' &&
-            oSrcSRS.SetFromUserInput(pszSrcSRS) != OGRERR_NONE)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to import coordinate system `%s'.", pszSrcSRS);
-            return nullptr;
-        }
-        if (!SetAxisMapping(oSrcSRS, "SRC_SRS"))
-            return nullptr;
-    }
-
-    OGRSpatialReference oDstSRS;
-    if (pszDstSRS)
-    {
-        if (pszDstSRS[0] != '\0' &&
-            oDstSRS.SetFromUserInput(pszDstSRS) != OGRERR_NONE)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to import coordinate system `%s'.", pszDstSRS);
-            return nullptr;
-        }
-        if (!SetAxisMapping(oDstSRS, "DST_SRS"))
-            return nullptr;
-    }
-
-    const char *pszSrcGeolocArray =
-        CSLFetchNameValueDef(papszOptions, "SRC_GEOLOC_ARRAY",
-                             CSLFetchNameValue(papszOptions, "GEOLOC_ARRAY"));
-    if (pszMethod == nullptr && pszSrcGeolocArray != nullptr)
-        pszMethod = "GEOLOC_ARRAY";
-
     /* -------------------------------------------------------------------- */
     /*      Initialize the transform info.                                  */
     /* -------------------------------------------------------------------- */
     GDALGenImgProjTransformInfo *psInfo =
         GDALCreateGenImgProjTransformerInternal();
 
-    bool bCanUseSrcGeoTransform = false;
+    const auto DealWithForwardOrInverse =
+        [bHasAreaOfInterest, &dfWestLongitudeDeg, &dfSouthLatitudeDeg,
+         &dfEastLongitudeDeg, &dfNorthLatitudeDeg, pszCO, papszOptions,
+         &SetAxisMapping](GDALGenImgProjTransformPart &part, GDALDatasetH hDS,
+                          const char *pszPrefix, OGRSpatialReference &oSRS,
+                          bool &bCanUseGeoTransform)
+    {
+        const int nOrder =
+            atoi(CSLFetchNameValueDef(papszOptions, "MAX_GCP_ORDER", "0"));
+
+        const bool bGCPUseOK =
+            CPLTestBool(CSLFetchNameValueDef(papszOptions, "GCPS_OK", "YES"));
+        const int nMinimumGcps = atoi(
+            CSLFetchNameValueDef(papszOptions, "REFINE_MINIMUM_GCPS", "-1"));
+
+        const char *pszRefineTolerance =
+            CSLFetchNameValue(papszOptions, "REFINE_TOLERANCE");
+        const bool bRefine = pszRefineTolerance != nullptr;
+        const double dfTolerance =
+            pszRefineTolerance ? CPLAtof(pszRefineTolerance) : 0.0;
+
+        const std::string osSRSOptionName =
+            std::string(pszPrefix).append("_SRS");
+        const char *pszSRS =
+            CSLFetchNameValue(papszOptions, osSRSOptionName.c_str());
+        if (pszSRS)
+        {
+            if (pszSRS[0] != '\0' &&
+                oSRS.SetFromUserInput(pszSRS) != OGRERR_NONE)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed to import coordinate system `%s'.", pszSRS);
+                return false;
+            }
+            if (!SetAxisMapping(oSRS, osSRSOptionName.c_str()))
+                return false;
+        }
+
+        CSLConstList papszMD = nullptr;
+        GDALRPCInfoV2 sRPCInfo;
+
+        bCanUseGeoTransform = false;
+
+        const char *pszMethod = CSLFetchNameValue(
+            papszOptions, std::string(pszPrefix).append("_METHOD").c_str());
+        if (!pszMethod && EQUAL(pszPrefix, "SRC"))
+            pszMethod = CSLFetchNameValue(papszOptions, "METHOD");
+
+        const char *pszGeolocArray = CSLFetchNameValue(
+            papszOptions,
+            std::string(pszPrefix).append("_GEOLOC_ARRAY").c_str());
+        if (!pszGeolocArray && EQUAL(pszPrefix, "SRC"))
+            pszGeolocArray = CSLFetchNameValue(papszOptions, "GEOLOC_ARRAY");
+        if (!pszMethod && pszGeolocArray != nullptr)
+            pszMethod = "GEOLOC_ARRAY";
+
+        /* -------------------------------------------------------------------- */
+        /*      Get forward and inverse geotransform for the source image.      */
+        /* -------------------------------------------------------------------- */
+        if (hDS == nullptr ||
+            (pszMethod != nullptr && EQUAL(pszMethod, "NO_GEOTRANSFORM")))
+        {
+            part.adfGeoTransform[0] = 0.0;
+            part.adfGeoTransform[1] = 1.0;
+            part.adfGeoTransform[2] = 0.0;
+            part.adfGeoTransform[3] = 0.0;
+            part.adfGeoTransform[4] = 0.0;
+            part.adfGeoTransform[5] = 1.0;
+            memcpy(part.adfInvGeoTransform, part.adfGeoTransform,
+                   sizeof(double) * 6);
+        }
+        else if ((pszMethod == nullptr || EQUAL(pszMethod, "GEOTRANSFORM")) &&
+                 GDALGetGeoTransform(hDS, part.adfGeoTransform) == CE_None)
+        {
+            if (!GDALInvGeoTransform(part.adfGeoTransform,
+                                     part.adfInvGeoTransform))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot invert geotransform");
+                return false;
+            }
+            if (pszSRS == nullptr)
+            {
+                auto hSRS = GDALGetSpatialRef(hDS);
+                if (hSRS)
+                    oSRS = *(OGRSpatialReference::FromHandle(hSRS));
+            }
+            if (EQUAL(pszPrefix, "SRC"))
+            {
+                if (!bHasAreaOfInterest && pszCO == nullptr && !oSRS.IsEmpty())
+                {
+                    GDALComputeAreaOfInterest(
+                        &oSRS, part.adfGeoTransform, GDALGetRasterXSize(hDS),
+                        GDALGetRasterYSize(hDS), dfWestLongitudeDeg,
+                        dfSouthLatitudeDeg, dfEastLongitudeDeg,
+                        dfNorthLatitudeDeg);
+                }
+                bCanUseGeoTransform = true;
+            }
+        }
+        else if (bGCPUseOK &&
+                 ((pszMethod == nullptr && GDALGetGCPCount(hDS) >= 4 &&
+                   GDALGetGCPCount(hDS) < 6) ||
+                  (pszMethod != nullptr &&
+                   EQUAL(pszMethod, "GCP_HOMOGRAPHY"))) &&
+                 GDALGetGCPCount(hDS) > 0)
+        {
+            if (pszSRS == nullptr)
+            {
+                auto hSRS = GDALGetGCPSpatialRef(hDS);
+                if (hSRS)
+                    oSRS = *(OGRSpatialReference::FromHandle(hSRS));
+            }
+
+            const auto nGCPCount = GDALGetGCPCount(hDS);
+            auto pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALGetGCPs(hDS));
+            GDALGCPAntimeridianUnwrap(nGCPCount, pasGCPList, oSRS,
+                                      papszOptions);
+
+            part.pTransformArg =
+                GDALCreateHomographyTransformerFromGCPs(nGCPCount, pasGCPList);
+
+            GDALDeinitGCPs(nGCPCount, pasGCPList);
+            CPLFree(pasGCPList);
+
+            if (part.pTransformArg == nullptr)
+            {
+                return false;
+            }
+            part.pTransformer = GDALHomographyTransform;
+        }
+        else if (bGCPUseOK &&
+                 (pszMethod == nullptr || EQUAL(pszMethod, "GCP_POLYNOMIAL")) &&
+                 GDALGetGCPCount(hDS) > 0 && nOrder >= 0)
+        {
+            if (pszSRS == nullptr)
+            {
+                auto hSRS = GDALGetGCPSpatialRef(hDS);
+                if (hSRS)
+                    oSRS = *(OGRSpatialReference::FromHandle(hSRS));
+            }
+
+            const auto nGCPCount = GDALGetGCPCount(hDS);
+            auto pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALGetGCPs(hDS));
+            GDALGCPAntimeridianUnwrap(nGCPCount, pasGCPList, oSRS,
+                                      papszOptions);
+
+            if (bRefine)
+            {
+                part.pTransformArg = GDALCreateGCPRefineTransformer(
+                    nGCPCount, pasGCPList, nOrder, FALSE, dfTolerance,
+                    nMinimumGcps);
+            }
+            else
+            {
+                part.pTransformArg = GDALCreateGCPTransformer(
+                    nGCPCount, pasGCPList, nOrder, FALSE);
+            }
+
+            GDALDeinitGCPs(nGCPCount, pasGCPList);
+            CPLFree(pasGCPList);
+
+            if (part.pTransformArg == nullptr)
+            {
+                return false;
+            }
+            part.pTransformer = GDALGCPTransform;
+        }
+
+        else if (bGCPUseOK && GDALGetGCPCount(hDS) > 0 && nOrder <= 0 &&
+                 (pszMethod == nullptr || EQUAL(pszMethod, "GCP_TPS")))
+        {
+            if (pszSRS == nullptr)
+            {
+                auto hSRS = GDALGetGCPSpatialRef(hDS);
+                if (hSRS)
+                    oSRS = *(OGRSpatialReference::FromHandle(hSRS));
+            }
+
+            const auto nGCPCount = GDALGetGCPCount(hDS);
+            auto pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALGetGCPs(hDS));
+            GDALGCPAntimeridianUnwrap(nGCPCount, pasGCPList, oSRS,
+                                      papszOptions);
+
+            part.pTransformArg = GDALCreateTPSTransformerInt(
+                nGCPCount, pasGCPList, FALSE, papszOptions);
+
+            GDALDeinitGCPs(nGCPCount, pasGCPList);
+            CPLFree(pasGCPList);
+
+            if (part.pTransformArg == nullptr)
+            {
+                return false;
+            }
+            part.pTransformer = GDALTPSTransform;
+        }
+
+        else if ((pszMethod == nullptr || EQUAL(pszMethod, "RPC")) &&
+                 (papszMD = GDALGetMetadata(hDS, "RPC")) != nullptr &&
+                 GDALExtractRPCInfoV2(papszMD, &sRPCInfo))
+        {
+            CPLStringList aosOptions(papszOptions);
+            if (!CSLFetchNameValue(papszOptions, "RPC_HEIGHT") &&
+                !CSLFetchNameValue(papszOptions, "RPC_DEM"))
+            {
+                if (const char *pszHEIGHT_DEFAULT =
+                        CSLFetchNameValue(papszMD, "HEIGHT_DEFAULT"))
+                {
+                    CPLDebug("GDAL",
+                             "For %s, using RPC_HEIGHT = HEIGHT_DEFAULT = %s",
+                             pszPrefix, pszHEIGHT_DEFAULT);
+                    aosOptions.SetNameValue("RPC_HEIGHT", pszHEIGHT_DEFAULT);
+                }
+            }
+            part.pTransformArg = GDALCreateRPCTransformerV2(&sRPCInfo, FALSE, 0,
+                                                            aosOptions.List());
+            if (part.pTransformArg == nullptr)
+            {
+                return false;
+            }
+            part.pTransformer = GDALRPCTransform;
+            if (pszSRS == nullptr)
+            {
+                oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+                oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            }
+        }
+
+        else if ((pszMethod == nullptr || EQUAL(pszMethod, "GEOLOC_ARRAY")) &&
+                 ((papszMD = GDALGetMetadata(hDS, "GEOLOCATION")) != nullptr ||
+                  pszGeolocArray != nullptr))
+        {
+            CPLStringList aosGeolocMD;  // keep in this scope
+            if (pszGeolocArray != nullptr)
+            {
+                if (papszMD != nullptr)
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Both GEOLOCATION metadata domain on the source "
+                        "dataset "
+                        "and [%s_]GEOLOC_ARRAY transformer option are set. "
+                        "Only using the later.",
+                        pszPrefix);
+                }
+                aosGeolocMD = GDALCreateGeolocationMetadata(
+                    hDS, pszGeolocArray,
+                    /* bIsSource= */ EQUAL(pszPrefix, "SRC"));
+                if (aosGeolocMD.empty())
+                {
+                    return false;
+                }
+                papszMD = aosGeolocMD.List();
+            }
+
+            part.pTransformArg = GDALCreateGeoLocTransformerEx(
+                hDS, papszMD, FALSE, nullptr, papszOptions);
+            if (part.pTransformArg == nullptr)
+            {
+                return false;
+            }
+            part.pTransformer = GDALGeoLocTransform;
+            if (pszSRS == nullptr)
+            {
+                pszSRS = CSLFetchNameValue(papszMD, "SRS");
+                if (pszSRS)
+                {
+                    oSRS.SetFromUserInput(pszSRS);
+                    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                }
+            }
+        }
+
+        else if (pszMethod != nullptr && EQUAL(pszPrefix, "SRC"))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to compute a %s based transformation between "
+                     "pixel/line and georeferenced coordinates for %s.",
+                     pszMethod, GDALGetDescription(hDS));
+
+            return false;
+        }
+
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to compute a transformation between pixel/line "
+                     "and georeferenced coordinates for %s. "
+                     "There is no affine transformation and no GCPs. "
+                     "Specify transformation option %s_METHOD=NO_GEOTRANSFORM "
+                     "to bypass this check.",
+                     GDALGetDescription(hDS), pszPrefix);
+
+            return false;
+        }
+
+        /* ---------------------------------------------------------------- */
+        /*      Handle optional source approximation transformer.           */
+        /* ---------------------------------------------------------------- */
+        if (part.pTransformer)
+        {
+            const char *pszApproxErrorFwd = CSLFetchNameValue(
+                papszOptions, std::string(pszPrefix)
+                                  .append("_APPROX_ERROR_IN_SRS_UNIT")
+                                  .c_str());
+            const char *pszApproxErrorReverse = CSLFetchNameValue(
+                papszOptions, std::string(pszPrefix)
+                                  .append("_APPROX_ERROR_IN_PIXEL")
+                                  .c_str());
+            if (pszApproxErrorFwd && pszApproxErrorReverse)
+            {
+                void *pArg = GDALCreateApproxTransformer2(
+                    part.pTransformer, part.pTransformArg,
+                    CPLAtof(pszApproxErrorFwd), CPLAtof(pszApproxErrorReverse));
+                if (pArg == nullptr)
+                {
+                    return false;
+                }
+                part.pTransformArg = pArg;
+                part.pTransformer = GDALApproxTransform;
+                GDALApproxTransformerOwnsSubtransformer(part.pTransformArg,
+                                                        TRUE);
+            }
+        }
+
+        return true;
+    };
 
     /* -------------------------------------------------------------------- */
     /*      Get forward and inverse geotransform for the source image.      */
     /* -------------------------------------------------------------------- */
-    if (hSrcDS == nullptr ||
-        (pszMethod != nullptr && EQUAL(pszMethod, "NO_GEOTRANSFORM")))
+    bool bCanUseSrcGeoTransform = false;
+    OGRSpatialReference oSrcSRS;
+    if (!DealWithForwardOrInverse(psInfo->sSrcParams, hSrcDS, "SRC", oSrcSRS,
+                                  bCanUseSrcGeoTransform))
     {
-        psInfo->sSrcParams.adfGeoTransform[0] = 0.0;
-        psInfo->sSrcParams.adfGeoTransform[1] = 1.0;
-        psInfo->sSrcParams.adfGeoTransform[2] = 0.0;
-        psInfo->sSrcParams.adfGeoTransform[3] = 0.0;
-        psInfo->sSrcParams.adfGeoTransform[4] = 0.0;
-        psInfo->sSrcParams.adfGeoTransform[5] = 1.0;
-        memcpy(psInfo->sSrcParams.adfInvGeoTransform,
-               psInfo->sSrcParams.adfGeoTransform, sizeof(double) * 6);
-    }
-    else if ((pszMethod == nullptr || EQUAL(pszMethod, "GEOTRANSFORM")) &&
-             GDALGetGeoTransform(hSrcDS, psInfo->sSrcParams.adfGeoTransform) ==
-                 CE_None)
-    {
-        if (!GDALInvGeoTransform(psInfo->sSrcParams.adfGeoTransform,
-                                 psInfo->sSrcParams.adfInvGeoTransform))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
-            GDALDestroyGenImgProjTransformer(psInfo);
-            return nullptr;
-        }
-        if (pszSrcSRS == nullptr)
-        {
-            auto hSRS = GDALGetSpatialRef(hSrcDS);
-            if (hSRS)
-                oSrcSRS = *(OGRSpatialReference::FromHandle(hSRS));
-        }
-        if (!bHasAreaOfInterest && pszCO == nullptr && !oSrcSRS.IsEmpty())
-        {
-            GDALComputeAreaOfInterest(
-                &oSrcSRS, psInfo->sSrcParams.adfGeoTransform,
-                GDALGetRasterXSize(hSrcDS), GDALGetRasterYSize(hSrcDS),
-                dfWestLongitudeDeg, dfSouthLatitudeDeg, dfEastLongitudeDeg,
-                dfNorthLatitudeDeg);
-        }
-        bCanUseSrcGeoTransform = true;
-    }
-    else if (bGCPUseOK &&
-             ((pszMethod == nullptr && GDALGetGCPCount(hSrcDS) >= 4 &&
-               GDALGetGCPCount(hSrcDS) < 6) ||
-              (pszMethod != nullptr && EQUAL(pszMethod, "GCP_HOMOGRAPHY"))) &&
-             GDALGetGCPCount(hSrcDS) > 0)
-    {
-        if (pszSrcSRS == nullptr)
-        {
-            auto hSRS = GDALGetGCPSpatialRef(hSrcDS);
-            if (hSRS)
-                oSrcSRS = *(OGRSpatialReference::FromHandle(hSRS));
-        }
-
-        const auto nGCPCount = GDALGetGCPCount(hSrcDS);
-        auto pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALGetGCPs(hSrcDS));
-        GDALGCPAntimeridianUnwrap(nGCPCount, pasGCPList, oSrcSRS, papszOptions);
-
-        psInfo->sSrcParams.pTransformArg =
-            GDALCreateHomographyTransformerFromGCPs(nGCPCount, pasGCPList);
-
-        GDALDeinitGCPs(nGCPCount, pasGCPList);
-        CPLFree(pasGCPList);
-
-        if (psInfo->sSrcParams.pTransformArg == nullptr)
-        {
-            GDALDestroyGenImgProjTransformer(psInfo);
-            return nullptr;
-        }
-        psInfo->sSrcParams.pTransformer = GDALHomographyTransform;
-    }
-    else if (bGCPUseOK &&
-             (pszMethod == nullptr || EQUAL(pszMethod, "GCP_POLYNOMIAL")) &&
-             GDALGetGCPCount(hSrcDS) > 0 && nOrder >= 0)
-    {
-        if (pszSrcSRS == nullptr)
-        {
-            auto hSRS = GDALGetGCPSpatialRef(hSrcDS);
-            if (hSRS)
-                oSrcSRS = *(OGRSpatialReference::FromHandle(hSRS));
-        }
-
-        const auto nGCPCount = GDALGetGCPCount(hSrcDS);
-        auto pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALGetGCPs(hSrcDS));
-        GDALGCPAntimeridianUnwrap(nGCPCount, pasGCPList, oSrcSRS, papszOptions);
-
-        if (bRefine)
-        {
-            psInfo->sSrcParams.pTransformArg = GDALCreateGCPRefineTransformer(
-                nGCPCount, pasGCPList, nOrder, FALSE, dfTolerance,
-                nMinimumGcps);
-        }
-        else
-        {
-            psInfo->sSrcParams.pTransformArg =
-                GDALCreateGCPTransformer(nGCPCount, pasGCPList, nOrder, FALSE);
-        }
-
-        GDALDeinitGCPs(nGCPCount, pasGCPList);
-        CPLFree(pasGCPList);
-
-        if (psInfo->sSrcParams.pTransformArg == nullptr)
-        {
-            GDALDestroyGenImgProjTransformer(psInfo);
-            return nullptr;
-        }
-        psInfo->sSrcParams.pTransformer = GDALGCPTransform;
-    }
-
-    else if (bGCPUseOK && GDALGetGCPCount(hSrcDS) > 0 && nOrder <= 0 &&
-             (pszMethod == nullptr || EQUAL(pszMethod, "GCP_TPS")))
-    {
-        if (pszSrcSRS == nullptr)
-        {
-            auto hSRS = GDALGetGCPSpatialRef(hSrcDS);
-            if (hSRS)
-                oSrcSRS = *(OGRSpatialReference::FromHandle(hSRS));
-        }
-
-        const auto nGCPCount = GDALGetGCPCount(hSrcDS);
-        auto pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALGetGCPs(hSrcDS));
-        GDALGCPAntimeridianUnwrap(nGCPCount, pasGCPList, oSrcSRS, papszOptions);
-
-        psInfo->sSrcParams.pTransformArg = GDALCreateTPSTransformerInt(
-            nGCPCount, pasGCPList, FALSE, papszOptions);
-
-        GDALDeinitGCPs(nGCPCount, pasGCPList);
-        CPLFree(pasGCPList);
-
-        if (psInfo->sSrcParams.pTransformArg == nullptr)
-        {
-            GDALDestroyGenImgProjTransformer(psInfo);
-            return nullptr;
-        }
-        psInfo->sSrcParams.pTransformer = GDALTPSTransform;
-    }
-
-    else if ((pszMethod == nullptr || EQUAL(pszMethod, "RPC")) &&
-             (papszMD = GDALGetMetadata(hSrcDS, "RPC")) != nullptr &&
-             GDALExtractRPCInfoV2(papszMD, &sRPCInfo))
-    {
-        CPLStringList aosOptions(papszOptions);
-        if (!CSLFetchNameValue(papszOptions, "RPC_HEIGHT") &&
-            !CSLFetchNameValue(papszOptions, "RPC_DEM"))
-        {
-            if (const char *pszHEIGHT_DEFAULT =
-                    CSLFetchNameValue(papszMD, "HEIGHT_DEFAULT"))
-            {
-                CPLDebug("GDAL",
-                         "For source, using RPC_HEIGHT = HEIGHT_DEFAULT = %s",
-                         pszHEIGHT_DEFAULT);
-                aosOptions.SetNameValue("RPC_HEIGHT", pszHEIGHT_DEFAULT);
-            }
-        }
-        psInfo->sSrcParams.pTransformArg =
-            GDALCreateRPCTransformerV2(&sRPCInfo, FALSE, 0, aosOptions.List());
-        if (psInfo->sSrcParams.pTransformArg == nullptr)
-        {
-            GDALDestroyGenImgProjTransformer(psInfo);
-            return nullptr;
-        }
-        psInfo->sSrcParams.pTransformer = GDALRPCTransform;
-        if (pszSrcSRS == nullptr)
-        {
-            oSrcSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
-            oSrcSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        }
-    }
-
-    else if ((pszMethod == nullptr || EQUAL(pszMethod, "GEOLOC_ARRAY")) &&
-             ((papszMD = GDALGetMetadata(hSrcDS, "GEOLOCATION")) != nullptr ||
-              pszSrcGeolocArray != nullptr))
-    {
-        CPLStringList aosGeolocMD;  // keep in this scope
-        if (pszSrcGeolocArray != nullptr)
-        {
-            if (papszMD != nullptr)
-            {
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
-                    "Both GEOLOCATION metadata domain on the source dataset "
-                    "and [SRC_]GEOLOC_ARRAY transformer option are set. "
-                    "Only using the later.");
-            }
-            aosGeolocMD =
-                GDALCreateGeolocationMetadata(hSrcDS, pszSrcGeolocArray,
-                                              /* bIsSource= */ true);
-            if (aosGeolocMD.empty())
-            {
-                GDALDestroyGenImgProjTransformer(psInfo);
-                return nullptr;
-            }
-            papszMD = aosGeolocMD.List();
-        }
-
-        psInfo->sSrcParams.pTransformArg = GDALCreateGeoLocTransformerEx(
-            hSrcDS, papszMD, FALSE, nullptr, papszOptions);
-        if (psInfo->sSrcParams.pTransformArg == nullptr)
-        {
-            GDALDestroyGenImgProjTransformer(psInfo);
-            return nullptr;
-        }
-        psInfo->sSrcParams.pTransformer = GDALGeoLocTransform;
-        if (pszSrcSRS == nullptr)
-        {
-            pszSrcSRS = CSLFetchNameValue(papszMD, "SRS");
-            if (pszSrcSRS)
-            {
-                oSrcSRS.SetFromUserInput(pszSrcSRS);
-                oSrcSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            }
-        }
-    }
-
-    else if (pszMethod != nullptr)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to compute a %s based transformation between "
-                 "pixel/line and georeferenced coordinates for %s.",
-                 pszMethod, GDALGetDescription(hSrcDS));
-
         GDALDestroyGenImgProjTransformer(psInfo);
         return nullptr;
-    }
-
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to compute a transformation between pixel/line "
-                 "and georeferenced coordinates for %s. "
-                 "There is no affine transformation and no GCPs. "
-                 "Specify transformation option SRC_METHOD=NO_GEOTRANSFORM "
-                 "to bypass this check.",
-                 GDALGetDescription(hSrcDS));
-
-        GDALDestroyGenImgProjTransformer(psInfo);
-        return nullptr;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Handle optional source approximation transformer.               */
-    /* -------------------------------------------------------------------- */
-    if (psInfo->sSrcParams.pTransformer)
-    {
-        const char *pszSrcApproxErrorFwd =
-            CSLFetchNameValue(papszOptions, "SRC_APPROX_ERROR_IN_SRS_UNIT");
-        const char *pszSrcApproxErrorReverse =
-            CSLFetchNameValue(papszOptions, "SRC_APPROX_ERROR_IN_PIXEL");
-        if (pszSrcApproxErrorFwd && pszSrcApproxErrorReverse)
-        {
-            void *pArg = GDALCreateApproxTransformer2(
-                psInfo->sSrcParams.pTransformer,
-                psInfo->sSrcParams.pTransformArg, CPLAtof(pszSrcApproxErrorFwd),
-                CPLAtof(pszSrcApproxErrorReverse));
-            if (pArg == nullptr)
-            {
-                GDALDestroyGenImgProjTransformer(psInfo);
-                return nullptr;
-            }
-            psInfo->sSrcParams.pTransformArg = pArg;
-            psInfo->sSrcParams.pTransformer = GDALApproxTransform;
-            GDALApproxTransformerOwnsSubtransformer(
-                psInfo->sSrcParams.pTransformArg, TRUE);
-        }
     }
 
     /* -------------------------------------------------------------------- */
     /*      Get forward and inverse geotransform for destination image.     */
     /*      If we have no destination use a unit transform.                 */
     /* -------------------------------------------------------------------- */
-    const char *pszDstMethod = CSLFetchNameValue(papszOptions, "DST_METHOD");
-    const char *pszDstGeolocArray =
-        CSLFetchNameValue(papszOptions, "DST_GEOLOC_ARRAY");
-    if (pszDstMethod == nullptr && pszDstGeolocArray != nullptr)
-        pszDstMethod = "GEOLOC_ARRAY";
-
-    if (!hDstDS ||
-        (pszDstMethod != nullptr && EQUAL(pszDstMethod, "NO_GEOTRANSFORM")))
+    bool bIgnored = false;
+    OGRSpatialReference oDstSRS;
+    if (!DealWithForwardOrInverse(psInfo->sDstParams, hDstDS, "DST", oDstSRS,
+                                  bIgnored))
     {
-        psInfo->sDstParams.adfGeoTransform[0] = 0.0;
-        psInfo->sDstParams.adfGeoTransform[1] = 1.0;
-        psInfo->sDstParams.adfGeoTransform[2] = 0.0;
-        psInfo->sDstParams.adfGeoTransform[3] = 0.0;
-        psInfo->sDstParams.adfGeoTransform[4] = 0.0;
-        psInfo->sDstParams.adfGeoTransform[5] = 1.0;
-        memcpy(psInfo->sDstParams.adfInvGeoTransform,
-               psInfo->sDstParams.adfGeoTransform, sizeof(double) * 6);
-    }
-    else if ((pszDstMethod == nullptr || EQUAL(pszDstMethod, "GEOTRANSFORM")) &&
-             GDALGetGeoTransform(hDstDS, psInfo->sDstParams.adfGeoTransform) ==
-                 CE_None)
-    {
-        if (pszDstSRS == nullptr)
-        {
-            auto hSRS = GDALGetSpatialRef(hDstDS);
-            if (hSRS)
-                oDstSRS = *(OGRSpatialReference::FromHandle(hSRS));
-        }
-        if (!GDALInvGeoTransform(psInfo->sDstParams.adfGeoTransform,
-                                 psInfo->sDstParams.adfInvGeoTransform))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
-            GDALDestroyGenImgProjTransformer(psInfo);
-            return nullptr;
-        }
-    }
-    else if (bGCPUseOK &&
-             ((pszDstMethod == nullptr && GDALGetGCPCount(hDstDS) >= 4 &&
-               GDALGetGCPCount(hDstDS) < 6) ||
-              (pszMethod != nullptr && EQUAL(pszMethod, "GCP_HOMOGRAPHY"))) &&
-             GDALGetGCPCount(hDstDS) > 0)
-    {
-        if (pszDstSRS == nullptr)
-        {
-            auto hSRS = GDALGetGCPSpatialRef(hDstDS);
-            if (hSRS)
-                oDstSRS = *(OGRSpatialReference::FromHandle(hSRS));
-        }
-
-        const auto nGCPCount = GDALGetGCPCount(hDstDS);
-        auto pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALGetGCPs(hDstDS));
-        GDALGCPAntimeridianUnwrap(nGCPCount, pasGCPList, oDstSRS, papszOptions);
-
-        psInfo->sDstParams.pTransformArg =
-            GDALCreateHomographyTransformerFromGCPs(nGCPCount, pasGCPList);
-
-        GDALDeinitGCPs(nGCPCount, pasGCPList);
-        CPLFree(pasGCPList);
-
-        if (psInfo->sDstParams.pTransformArg == nullptr)
-        {
-            GDALDestroyGenImgProjTransformer(psInfo);
-            return nullptr;
-        }
-        psInfo->sDstParams.pTransformer = GDALHomographyTransform;
-    }
-    else if (bGCPUseOK &&
-             (pszDstMethod == nullptr ||
-              EQUAL(pszDstMethod, "GCP_POLYNOMIAL")) &&
-             GDALGetGCPCount(hDstDS) > 0 && nOrder >= 0)
-    {
-        if (pszDstSRS == nullptr)
-        {
-            auto hSRS = GDALGetGCPSpatialRef(hDstDS);
-            if (hSRS)
-                oDstSRS = *(OGRSpatialReference::FromHandle(hSRS));
-        }
-
-        const auto nGCPCount = GDALGetGCPCount(hDstDS);
-        auto pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALGetGCPs(hDstDS));
-        GDALGCPAntimeridianUnwrap(nGCPCount, pasGCPList, oDstSRS, papszOptions);
-
-        if (bRefine)
-        {
-            psInfo->sDstParams.pTransformArg = GDALCreateGCPRefineTransformer(
-                nGCPCount, pasGCPList, nOrder, FALSE, dfTolerance,
-                nMinimumGcps);
-        }
-        else
-        {
-            psInfo->sDstParams.pTransformArg =
-                GDALCreateGCPTransformer(nGCPCount, pasGCPList, nOrder, FALSE);
-        }
-
-        GDALDeinitGCPs(nGCPCount, pasGCPList);
-        CPLFree(pasGCPList);
-
-        if (psInfo->sDstParams.pTransformArg == nullptr)
-        {
-            GDALDestroyGenImgProjTransformer(psInfo);
-            return nullptr;
-        }
-        psInfo->sDstParams.pTransformer = GDALGCPTransform;
-    }
-    else if (bGCPUseOK && GDALGetGCPCount(hDstDS) > 0 && nOrder <= 0 &&
-             (pszDstMethod == nullptr || EQUAL(pszDstMethod, "GCP_TPS")))
-    {
-        if (pszDstSRS == nullptr)
-        {
-            auto hSRS = GDALGetGCPSpatialRef(hDstDS);
-            if (hSRS)
-                oDstSRS = *(OGRSpatialReference::FromHandle(hSRS));
-        }
-
-        const auto nGCPCount = GDALGetGCPCount(hDstDS);
-        auto pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALGetGCPs(hDstDS));
-        GDALGCPAntimeridianUnwrap(nGCPCount, pasGCPList, oDstSRS, papszOptions);
-
-        psInfo->sDstParams.pTransformArg = GDALCreateTPSTransformerInt(
-            nGCPCount, pasGCPList, FALSE, papszOptions);
-
-        GDALDeinitGCPs(nGCPCount, pasGCPList);
-        CPLFree(pasGCPList);
-
-        if (psInfo->sDstParams.pTransformArg == nullptr)
-        {
-            GDALDestroyGenImgProjTransformer(psInfo);
-            return nullptr;
-        }
-        psInfo->sDstParams.pTransformer = GDALTPSTransform;
-    }
-    else if ((pszDstMethod == nullptr || EQUAL(pszDstMethod, "RPC")) &&
-             (papszMD = GDALGetMetadata(hDstDS, "RPC")) != nullptr &&
-             GDALExtractRPCInfoV2(papszMD, &sRPCInfo))
-    {
-        CPLStringList aosOptions(papszOptions);
-        if (!CSLFetchNameValue(papszOptions, "RPC_HEIGHT") &&
-            !CSLFetchNameValue(papszOptions, "RPC_DEM"))
-        {
-            if (const char *pszHEIGHT_DEFAULT =
-                    CSLFetchNameValue(papszMD, "HEIGHT_DEFAULT"))
-            {
-                CPLDebug(
-                    "GDAL",
-                    "For destination, using RPC_HEIGHT = HEIGHT_DEFAULT = %s",
-                    pszHEIGHT_DEFAULT);
-                aosOptions.SetNameValue("RPC_HEIGHT", pszHEIGHT_DEFAULT);
-            }
-        }
-        psInfo->sDstParams.pTransformArg =
-            GDALCreateRPCTransformerV2(&sRPCInfo, FALSE, 0, aosOptions.List());
-        if (psInfo->sDstParams.pTransformArg == nullptr)
-        {
-            GDALDestroyGenImgProjTransformer(psInfo);
-            return nullptr;
-        }
-        psInfo->sDstParams.pTransformer = GDALRPCTransform;
-        if (pszDstSRS == nullptr)
-        {
-            oDstSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
-            oDstSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        }
-    }
-    else if ((pszDstMethod == nullptr || EQUAL(pszDstMethod, "GEOLOC_ARRAY")) &&
-             ((papszMD = GDALGetMetadata(hDstDS, "GEOLOCATION")) != nullptr ||
-              pszDstGeolocArray != nullptr))
-    {
-        CPLStringList aosGeolocMD;  // keep in this scope
-        if (pszDstGeolocArray != nullptr)
-        {
-            if (papszMD != nullptr)
-            {
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
-                    "Both GEOLOCATION metadata domain on the target dataset "
-                    "and DST_GEOLOC_ARRAY transformer option are set. "
-                    "Only using the later.");
-            }
-            aosGeolocMD =
-                GDALCreateGeolocationMetadata(hDstDS, pszDstGeolocArray,
-                                              /* bIsSource= */ false);
-            if (aosGeolocMD.empty())
-            {
-                GDALDestroyGenImgProjTransformer(psInfo);
-                return nullptr;
-            }
-            papszMD = aosGeolocMD.List();
-        }
-
-        psInfo->sDstParams.pTransformArg = GDALCreateGeoLocTransformerEx(
-            hDstDS, papszMD, FALSE, nullptr, papszOptions);
-        if (psInfo->sDstParams.pTransformArg == nullptr)
-        {
-            GDALDestroyGenImgProjTransformer(psInfo);
-            return nullptr;
-        }
-        psInfo->sDstParams.pTransformer = GDALGeoLocTransform;
-        if (pszDstSRS == nullptr)
-        {
-            pszDstSRS = CSLFetchNameValue(papszMD, "SRS");
-            if (pszDstSRS)
-            {
-                oDstSRS.SetFromUserInput(pszDstSRS);
-                oDstSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            }
-        }
-    }
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to compute a transformation between pixel/line "
-                 "and georeferenced coordinates for %s. "
-                 "There is no affine transformation and no GCPs. "
-                 "Specify transformation option DST_METHOD=NO_GEOTRANSFORM "
-                 "to bypass this check.",
-                 GDALGetDescription(hDstDS));
-
         GDALDestroyGenImgProjTransformer(psInfo);
         return nullptr;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Handle optional destination approximation transformer.          */
-    /* -------------------------------------------------------------------- */
-    if (psInfo->sDstParams.pTransformer)
-    {
-        const char *pszDstApproxErrorFwd =
-            CSLFetchNameValue(papszOptions, "DST_APPROX_ERROR_IN_PIXEL");
-        const char *pszDstApproxErrorReverse =
-            CSLFetchNameValue(papszOptions, "DST_APPROX_ERROR_IN_SRS_UNIT");
-        if (pszDstApproxErrorFwd && pszDstApproxErrorReverse)
-        {
-            void *pArg = GDALCreateApproxTransformer2(
-                psInfo->sDstParams.pTransformer,
-                psInfo->sDstParams.pTransformArg, CPLAtof(pszDstApproxErrorFwd),
-                CPLAtof(pszDstApproxErrorReverse));
-            if (pArg == nullptr)
-            {
-                GDALDestroyGenImgProjTransformer(psInfo);
-                return nullptr;
-            }
-            psInfo->sDstParams.pTransformArg = pArg;
-            psInfo->sDstParams.pTransformer = GDALApproxTransform;
-            GDALApproxTransformerOwnsSubtransformer(
-                psInfo->sDstParams.pTransformArg, TRUE);
-        }
     }
 
     /* -------------------------------------------------------------------- */
@@ -2789,28 +2566,39 @@ void *GDALCreateGenImgProjTransformer4(OGRSpatialReferenceH hSrcSRS,
     /* -------------------------------------------------------------------- */
     /*      Get forward and inverse geotransform for the source image.      */
     /* -------------------------------------------------------------------- */
-    if (padfSrcGeoTransform)
+
+    const auto SetParams =
+        [](GDALGenImgProjTransformPart &part, const double *padfGT)
     {
-        memcpy(psInfo->sSrcParams.adfGeoTransform, padfSrcGeoTransform,
-               sizeof(psInfo->sSrcParams.adfGeoTransform));
-        if (!GDALInvGeoTransform(psInfo->sSrcParams.adfGeoTransform,
-                                 psInfo->sSrcParams.adfInvGeoTransform))
+        if (padfGT)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
-            GDALDestroyGenImgProjTransformer(psInfo);
-            return nullptr;
+            memcpy(part.adfGeoTransform, padfGT, sizeof(part.adfGeoTransform));
+            if (!GDALInvGeoTransform(part.adfGeoTransform,
+                                     part.adfInvGeoTransform))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot invert geotransform");
+                return false;
+            }
         }
-    }
-    else
+        else
+        {
+            part.adfGeoTransform[0] = 0.0;
+            part.adfGeoTransform[1] = 1.0;
+            part.adfGeoTransform[2] = 0.0;
+            part.adfGeoTransform[3] = 0.0;
+            part.adfGeoTransform[4] = 0.0;
+            part.adfGeoTransform[5] = 1.0;
+            memcpy(part.adfInvGeoTransform, part.adfGeoTransform,
+                   sizeof(double) * 6);
+        }
+        return true;
+    };
+
+    if (!SetParams(psInfo->sSrcParams, padfSrcGeoTransform))
     {
-        psInfo->sSrcParams.adfGeoTransform[0] = 0.0;
-        psInfo->sSrcParams.adfGeoTransform[1] = 1.0;
-        psInfo->sSrcParams.adfGeoTransform[2] = 0.0;
-        psInfo->sSrcParams.adfGeoTransform[3] = 0.0;
-        psInfo->sSrcParams.adfGeoTransform[4] = 0.0;
-        psInfo->sSrcParams.adfGeoTransform[5] = 1.0;
-        memcpy(psInfo->sSrcParams.adfInvGeoTransform,
-               psInfo->sSrcParams.adfGeoTransform, sizeof(double) * 6);
+        GDALDestroyGenImgProjTransformer(psInfo);
+        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -2835,28 +2623,10 @@ void *GDALCreateGenImgProjTransformer4(OGRSpatialReferenceH hSrcSRS,
     /*      Get forward and inverse geotransform for destination image.     */
     /*      If we have no destination matrix use a unit transform.          */
     /* -------------------------------------------------------------------- */
-    if (padfDstGeoTransform)
+    if (!SetParams(psInfo->sDstParams, padfDstGeoTransform))
     {
-        memcpy(psInfo->sDstParams.adfGeoTransform, padfDstGeoTransform,
-               sizeof(psInfo->sDstParams.adfGeoTransform));
-        if (!GDALInvGeoTransform(psInfo->sDstParams.adfGeoTransform,
-                                 psInfo->sDstParams.adfInvGeoTransform))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
-            GDALDestroyGenImgProjTransformer(psInfo);
-            return nullptr;
-        }
-    }
-    else
-    {
-        psInfo->sDstParams.adfGeoTransform[0] = 0.0;
-        psInfo->sDstParams.adfGeoTransform[1] = 1.0;
-        psInfo->sDstParams.adfGeoTransform[2] = 0.0;
-        psInfo->sDstParams.adfGeoTransform[3] = 0.0;
-        psInfo->sDstParams.adfGeoTransform[4] = 0.0;
-        psInfo->sDstParams.adfGeoTransform[5] = 1.0;
-        memcpy(psInfo->sDstParams.adfInvGeoTransform,
-               psInfo->sDstParams.adfGeoTransform, sizeof(double) * 6);
+        GDALDestroyGenImgProjTransformer(psInfo);
+        return nullptr;
     }
 
     return psInfo;
@@ -2969,49 +2739,41 @@ int GDALGenImgProjTransform(void *pTransformArgIn, int bDstToSrc,
         panSuccess[i] = (padfX[i] != HUGE_VAL && padfY[i] != HUGE_VAL);
     }
 
+    int ret = TRUE;
+
     /* -------------------------------------------------------------------- */
     /*      Convert from src (dst) pixel/line to src (dst)                  */
     /*      georeferenced coordinates.                                      */
     /* -------------------------------------------------------------------- */
-    double *padfGeoTransform = nullptr;
-    void *pTransformArg = nullptr;
-    GDALTransformerFunc pTransformer = nullptr;
-    if (bDstToSrc)
     {
-        padfGeoTransform = psInfo->sDstParams.adfGeoTransform;
-        pTransformArg = psInfo->sDstParams.pTransformArg;
-        pTransformer = psInfo->sDstParams.pTransformer;
-    }
-    else
-    {
-        padfGeoTransform = psInfo->sSrcParams.adfGeoTransform;
-        pTransformArg = psInfo->sSrcParams.pTransformArg;
-        pTransformer = psInfo->sSrcParams.pTransformer;
-    }
+        const auto params = bDstToSrc ? psInfo->sDstParams : psInfo->sSrcParams;
+        const double *padfGeoTransform = params.adfGeoTransform;
+        void *pTransformArg = params.pTransformArg;
+        GDALTransformerFunc pTransformer = params.pTransformer;
 
-    int ret = TRUE;
-    if (pTransformArg != nullptr)
-    {
-        if (!pTransformer(pTransformArg, FALSE, nPointCount, padfX, padfY,
-                          padfZ, panSuccess))
-            ret = FALSE;
-    }
-    else
-    {
-        for (int i = 0; i < nPointCount; i++)
+        if (pTransformArg != nullptr)
         {
-            if (!panSuccess[i])
-                continue;
+            if (!pTransformer(pTransformArg, FALSE, nPointCount, padfX, padfY,
+                              padfZ, panSuccess))
+                ret = FALSE;
+        }
+        else
+        {
+            for (int i = 0; i < nPointCount; i++)
+            {
+                if (!panSuccess[i])
+                    continue;
 
-            const double dfNewX = padfGeoTransform[0] +
-                                  padfX[i] * padfGeoTransform[1] +
-                                  padfY[i] * padfGeoTransform[2];
-            const double dfNewY = padfGeoTransform[3] +
-                                  padfX[i] * padfGeoTransform[4] +
-                                  padfY[i] * padfGeoTransform[5];
+                const double dfNewX = padfGeoTransform[0] +
+                                      padfX[i] * padfGeoTransform[1] +
+                                      padfY[i] * padfGeoTransform[2];
+                const double dfNewY = padfGeoTransform[3] +
+                                      padfX[i] * padfGeoTransform[4] +
+                                      padfY[i] * padfGeoTransform[5];
 
-            padfX[i] = dfNewX;
-            padfY[i] = dfNewY;
+                padfX[i] = dfNewX;
+                padfY[i] = dfNewY;
+            }
         }
     }
 
@@ -3028,41 +2790,35 @@ int GDALGenImgProjTransform(void *pTransformArgIn, int bDstToSrc,
     /* -------------------------------------------------------------------- */
     /*      Convert dst (src) georef coordinates back to pixel/line.        */
     /* -------------------------------------------------------------------- */
-    if (bDstToSrc)
     {
-        padfGeoTransform = psInfo->sSrcParams.adfInvGeoTransform;
-        pTransformArg = psInfo->sSrcParams.pTransformArg;
-        pTransformer = psInfo->sSrcParams.pTransformer;
-    }
-    else
-    {
-        padfGeoTransform = psInfo->sDstParams.adfInvGeoTransform;
-        pTransformArg = psInfo->sDstParams.pTransformArg;
-        pTransformer = psInfo->sDstParams.pTransformer;
-    }
+        const auto params = bDstToSrc ? psInfo->sSrcParams : psInfo->sDstParams;
+        const double *padfInvGeoTransform = params.adfInvGeoTransform;
+        void *pTransformArg = params.pTransformArg;
+        GDALTransformerFunc pTransformer = params.pTransformer;
 
-    if (pTransformArg != nullptr)
-    {
-        if (!pTransformer(pTransformArg, TRUE, nPointCount, padfX, padfY, padfZ,
-                          panSuccess))
-            ret = FALSE;
-    }
-    else
-    {
-        for (int i = 0; i < nPointCount; i++)
+        if (pTransformArg != nullptr)
         {
-            if (!panSuccess[i])
-                continue;
+            if (!pTransformer(pTransformArg, TRUE, nPointCount, padfX, padfY,
+                              padfZ, panSuccess))
+                ret = FALSE;
+        }
+        else
+        {
+            for (int i = 0; i < nPointCount; i++)
+            {
+                if (!panSuccess[i])
+                    continue;
 
-            const double dfNewX = padfGeoTransform[0] +
-                                  padfX[i] * padfGeoTransform[1] +
-                                  padfY[i] * padfGeoTransform[2];
-            const double dfNewY = padfGeoTransform[3] +
-                                  padfX[i] * padfGeoTransform[4] +
-                                  padfY[i] * padfGeoTransform[5];
+                const double dfNewX = padfInvGeoTransform[0] +
+                                      padfX[i] * padfInvGeoTransform[1] +
+                                      padfY[i] * padfInvGeoTransform[2];
+                const double dfNewY = padfInvGeoTransform[3] +
+                                      padfX[i] * padfInvGeoTransform[4] +
+                                      padfY[i] * padfInvGeoTransform[5];
 
-            padfX[i] = dfNewX;
-            padfY[i] = dfNewY;
+                padfX[i] = dfNewX;
+                padfY[i] = dfNewY;
+            }
         }
     }
 
@@ -3177,93 +2933,53 @@ static CPLXMLNode *GDALSerializeGenImgProjTransformer(void *pTransformArg)
     CPLXMLNode *psTree =
         CPLCreateXMLNode(nullptr, CXT_Element, "GenImgProjTransformer");
 
-    char szWork[200] = {};
-
-    /* -------------------------------------------------------------------- */
-    /*      Handle source transformation.                                   */
-    /* -------------------------------------------------------------------- */
-    if (psInfo->sSrcParams.pTransformArg != nullptr)
+    const auto SerializePart =
+        [psTree](const char *pszPrefix, const GDALGenImgProjTransformPart &part)
     {
-        CPLXMLNode *psTransformer = GDALSerializeTransformer(
-            psInfo->sSrcParams.pTransformer, psInfo->sSrcParams.pTransformArg);
-        if (psTransformer != nullptr)
+        char szWork[200] = {};
+
+        /* ------------------------------------------------------------- */
+        /*      Handle transformation.                                   */
+        /* ------------------------------------------------------------- */
+        if (part.pTransformArg != nullptr)
         {
-            CPLXMLNode *psTransformerContainer =
-                CPLCreateXMLNode(psTree, CXT_Element,
-                                 CPLSPrintf("Src%s", psTransformer->pszValue));
+            CPLXMLNode *psTransformer =
+                GDALSerializeTransformer(part.pTransformer, part.pTransformArg);
+            if (psTransformer != nullptr)
+            {
+                CPLXMLNode *psTransformerContainer = CPLCreateXMLNode(
+                    psTree, CXT_Element,
+                    CPLSPrintf("%s%s", pszPrefix, psTransformer->pszValue));
 
-            CPLAddXMLChild(psTransformerContainer, psTransformer);
+                CPLAddXMLChild(psTransformerContainer, psTransformer);
+            }
         }
-    }
 
-    /* -------------------------------------------------------------------- */
-    /*      Handle source geotransforms.                                    */
-    /* -------------------------------------------------------------------- */
-    else
-    {
-        CPLsnprintf(szWork, sizeof(szWork),
-                    "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
-                    psInfo->sSrcParams.adfGeoTransform[0],
-                    psInfo->sSrcParams.adfGeoTransform[1],
-                    psInfo->sSrcParams.adfGeoTransform[2],
-                    psInfo->sSrcParams.adfGeoTransform[3],
-                    psInfo->sSrcParams.adfGeoTransform[4],
-                    psInfo->sSrcParams.adfGeoTransform[5]);
-        CPLCreateXMLElementAndValue(psTree, "SrcGeoTransform", szWork);
-
-        CPLsnprintf(szWork, sizeof(szWork),
-                    "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
-                    psInfo->sSrcParams.adfInvGeoTransform[0],
-                    psInfo->sSrcParams.adfInvGeoTransform[1],
-                    psInfo->sSrcParams.adfInvGeoTransform[2],
-                    psInfo->sSrcParams.adfInvGeoTransform[3],
-                    psInfo->sSrcParams.adfInvGeoTransform[4],
-                    psInfo->sSrcParams.adfInvGeoTransform[5]);
-        CPLCreateXMLElementAndValue(psTree, "SrcInvGeoTransform", szWork);
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Handle dest transformation.                                     */
-    /* -------------------------------------------------------------------- */
-    if (psInfo->sDstParams.pTransformArg != nullptr)
-    {
-        CPLXMLNode *psTransformer = GDALSerializeTransformer(
-            psInfo->sDstParams.pTransformer, psInfo->sDstParams.pTransformArg);
-        if (psTransformer != nullptr)
+        /* ------------------------------------------------------------- */
+        /*      Handle geotransforms.                                    */
+        /* ------------------------------------------------------------- */
+        else
         {
-            CPLXMLNode *psTransformerContainer =
-                CPLCreateXMLNode(psTree, CXT_Element,
-                                 CPLSPrintf("Dst%s", psTransformer->pszValue));
+            CPLsnprintf(szWork, sizeof(szWork),
+                        "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
+                        part.adfGeoTransform[0], part.adfGeoTransform[1],
+                        part.adfGeoTransform[2], part.adfGeoTransform[3],
+                        part.adfGeoTransform[4], part.adfGeoTransform[5]);
+            CPLCreateXMLElementAndValue(
+                psTree, CPLSPrintf("%sGeoTransform", pszPrefix), szWork);
 
-            CPLAddXMLChild(psTransformerContainer, psTransformer);
+            CPLsnprintf(szWork, sizeof(szWork),
+                        "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
+                        part.adfInvGeoTransform[0], part.adfInvGeoTransform[1],
+                        part.adfInvGeoTransform[2], part.adfInvGeoTransform[3],
+                        part.adfInvGeoTransform[4], part.adfInvGeoTransform[5]);
+            CPLCreateXMLElementAndValue(
+                psTree, CPLSPrintf("%sInvGeoTransform", pszPrefix), szWork);
         }
-    }
+    };
 
-    /* -------------------------------------------------------------------- */
-    /*      Handle destination geotransforms.                               */
-    /* -------------------------------------------------------------------- */
-    else
-    {
-        CPLsnprintf(szWork, sizeof(szWork),
-                    "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
-                    psInfo->sDstParams.adfGeoTransform[0],
-                    psInfo->sDstParams.adfGeoTransform[1],
-                    psInfo->sDstParams.adfGeoTransform[2],
-                    psInfo->sDstParams.adfGeoTransform[3],
-                    psInfo->sDstParams.adfGeoTransform[4],
-                    psInfo->sDstParams.adfGeoTransform[5]);
-        CPLCreateXMLElementAndValue(psTree, "DstGeoTransform", szWork);
-
-        CPLsnprintf(szWork, sizeof(szWork),
-                    "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
-                    psInfo->sDstParams.adfInvGeoTransform[0],
-                    psInfo->sDstParams.adfInvGeoTransform[1],
-                    psInfo->sDstParams.adfInvGeoTransform[2],
-                    psInfo->sDstParams.adfInvGeoTransform[3],
-                    psInfo->sDstParams.adfInvGeoTransform[4],
-                    psInfo->sDstParams.adfInvGeoTransform[5]);
-        CPLCreateXMLElementAndValue(psTree, "DstInvGeoTransform", szWork);
-    }
+    SerializePart("Src", psInfo->sSrcParams);
+    SerializePart("Dst", psInfo->sDstParams);
 
     /* -------------------------------------------------------------------- */
     /*      Do we have a reprojection transformer?                          */
@@ -3308,95 +3024,57 @@ void *GDALDeserializeGenImgProjTransformer(CPLXMLNode *psTree)
     GDALGenImgProjTransformInfo *psInfo =
         GDALCreateGenImgProjTransformerInternal();
 
-    /* -------------------------------------------------------------------- */
-    /*      SrcGeotransform                                                 */
-    /* -------------------------------------------------------------------- */
-    if (CPLGetXMLNode(psTree, "SrcGeoTransform") != nullptr)
+    const auto DeserializePart =
+        [psTree](const char *pszPrefix, GDALGenImgProjTransformPart &part)
     {
-        GDALDeserializeGeoTransform(
-            CPLGetXMLValue(psTree, "SrcGeoTransform", ""),
-            psInfo->sSrcParams.adfGeoTransform);
-
-        if (CPLGetXMLNode(psTree, "SrcInvGeoTransform") != nullptr)
+        /* ----------------------------------------------------------------- */
+        /*      Geotransform                                                 */
+        /* ----------------------------------------------------------------- */
+        if (const auto psGTNode =
+                CPLGetXMLNode(psTree, CPLSPrintf("%sGeoTransform", pszPrefix)))
         {
-            GDALDeserializeGeoTransform(
-                CPLGetXMLValue(psTree, "SrcInvGeoTransform", ""),
-                psInfo->sSrcParams.adfInvGeoTransform);
+            GDALDeserializeGeoTransform(CPLGetXMLValue(psGTNode, "", ""),
+                                        part.adfGeoTransform);
+
+            if (const auto psInvGTNode = CPLGetXMLNode(
+                    psTree, CPLSPrintf("%sInvGeoTransform", pszPrefix)))
+            {
+                GDALDeserializeGeoTransform(CPLGetXMLValue(psInvGTNode, "", ""),
+                                            part.adfInvGeoTransform);
+            }
+            else
+            {
+                if (!GDALInvGeoTransform(part.adfGeoTransform,
+                                         part.adfInvGeoTransform))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot invert geotransform");
+                }
+            }
         }
+
+        /* ---------------------------------------------------------------- */
+        /*      Transform                                                   */
+        /* ---------------------------------------------------------------- */
         else
         {
-            if (!GDALInvGeoTransform(psInfo->sSrcParams.adfGeoTransform,
-                                     psInfo->sSrcParams.adfInvGeoTransform))
+            for (CPLXMLNode *psIter = psTree->psChild; psIter != nullptr;
+                 psIter = psIter->psNext)
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot invert geotransform");
+                if (psIter->eType == CXT_Element &&
+                    STARTS_WITH_CI(psIter->pszValue, pszPrefix))
+                {
+                    GDALDeserializeTransformer(psIter->psChild,
+                                               &part.pTransformer,
+                                               &part.pTransformArg);
+                    break;
+                }
             }
         }
-    }
+    };
 
-    /* -------------------------------------------------------------------- */
-    /*      Src Transform                                                   */
-    /* -------------------------------------------------------------------- */
-    else
-    {
-        for (CPLXMLNode *psIter = psTree->psChild; psIter != nullptr;
-             psIter = psIter->psNext)
-        {
-            if (psIter->eType == CXT_Element &&
-                STARTS_WITH_CI(psIter->pszValue, "Src"))
-            {
-                GDALDeserializeTransformer(psIter->psChild,
-                                           &psInfo->sSrcParams.pTransformer,
-                                           &psInfo->sSrcParams.pTransformArg);
-                break;
-            }
-        }
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      DstGeotransform                                                 */
-    /* -------------------------------------------------------------------- */
-    if (CPLGetXMLNode(psTree, "DstGeoTransform") != nullptr)
-    {
-        GDALDeserializeGeoTransform(
-            CPLGetXMLValue(psTree, "DstGeoTransform", ""),
-            psInfo->sDstParams.adfGeoTransform);
-
-        if (CPLGetXMLNode(psTree, "DstInvGeoTransform") != nullptr)
-        {
-            GDALDeserializeGeoTransform(
-                CPLGetXMLValue(psTree, "DstInvGeoTransform", ""),
-                psInfo->sDstParams.adfInvGeoTransform);
-        }
-        else
-        {
-            if (!GDALInvGeoTransform(psInfo->sDstParams.adfGeoTransform,
-                                     psInfo->sDstParams.adfInvGeoTransform))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot invert geotransform");
-            }
-        }
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Dst Transform                                                   */
-    /* -------------------------------------------------------------------- */
-    else
-    {
-        for (CPLXMLNode *psIter = psTree->psChild; psIter != nullptr;
-             psIter = psIter->psNext)
-        {
-            if (psIter->eType == CXT_Element &&
-                STARTS_WITH_CI(psIter->pszValue, "Dst"))
-            {
-                GDALDeserializeTransformer(psIter->psChild,
-                                           &psInfo->sDstParams.pTransformer,
-                                           &psInfo->sDstParams.pTransformArg);
-                break;
-            }
-        }
-    }
+    DeserializePart("Src", psInfo->sSrcParams);
+    DeserializePart("Dst", psInfo->sDstParams);
 
     /* -------------------------------------------------------------------- */
     /*      Reproject transformer                                           */
