@@ -620,7 +620,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
      */
     GDALAlgorithmArgDecl &SetMaxCount(int count);
 
-    /** Declare whether in --help message one should display hints about the
+    /** Declare whether in \--help message one should display hints about the
      * minimum/maximum number of values. Defaults to true.
      */
     GDALAlgorithmArgDecl &SetDisplayHintAboutRepetition(bool displayHint)
@@ -870,7 +870,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return m_maxCount;
     }
 
-    /** Returns whether in --help message one should display hints about the
+    /** Returns whether in \--help message one should display hints about the
      * minimum/maximum number of values. Defaults to true.
      */
     inline bool GetDisplayHintAboutRepetition() const
@@ -1978,7 +1978,7 @@ class CPL_DLL GDALAlgorithmRegistry
     };
 
     /** Return the usage as a string appropriate for command-line interface
-     * --help output.
+     * \--help output.
      */
     virtual std::string
     GetUsageForCLI(bool shortUsage,
@@ -2002,19 +2002,19 @@ class CPL_DLL GDALAlgorithmRegistry
         return *this;
     }
 
-    /** Whether the --help flag has been specified. */
+    /** Whether the \--help flag has been specified. */
     bool IsHelpRequested() const
     {
         return m_helpRequested;
     }
 
-    /** Whether the --json-usage flag has been specified. */
+    /** Whether the \--json-usage flag has been specified. */
     bool IsJSONUsageRequested() const
     {
         return m_JSONUsageRequested;
     }
 
-    /** Whether the --progress flag has been specified. */
+    /** Whether the \--progress flag has been specified. */
     bool IsProgressBarRequested() const
     {
         if (m_selectedSubAlg)
@@ -2030,7 +2030,7 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Used by the "gdal info" special algorithm when it first tries to
      * run "gdal raster info", to inherit from the potential special flags,
-     * such as --help or --json-usage, that this later algorithm has received.
+     * such as \--help or \--json-usage, that this later algorithm has received.
      */
     bool PropagateSpecialActionTo(GDALAlgorithm *target)
     {
@@ -2065,7 +2065,7 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Long description of the algorithm */
     std::string m_longDescription{};
 
-    /** Whether a progress bar is requested (value of --progress argument) */
+    /** Whether a progress bar is requested (value of \--progress argument) */
     bool m_progressBarRequested = false;
 
     friend class GDALVectorPipelineAlgorithm;
@@ -2186,10 +2186,10 @@ class CPL_DLL GDALAlgorithmRegistry
                                                        GDAL_OF_MULTIDIM_RASTER,
                         bool positionalAndRequired = true);
 
-    /** Add --overwrite argument. */
+    /** Add \--overwrite argument. */
     GDALInConstructionAlgorithmArg &AddOverwriteArg(bool *pValue);
 
-    /** Add --update argument. */
+    /** Add \--update argument. */
     GDALInConstructionAlgorithmArg &AddUpdateArg(bool *pValue);
 
     /** Add (non-CLI) output-string argument. */
@@ -2221,7 +2221,7 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddBBOXArg(std::vector<double> *pValue, const char *helpMessage = nullptr);
 
-    /** Add --progress argument. */
+    /** Add \--progress argument. */
     GDALInConstructionAlgorithmArg &AddProgressArg();
 
     /** Validation function to use for key=value type of arguments. */
