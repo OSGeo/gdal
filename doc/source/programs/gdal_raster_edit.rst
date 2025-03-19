@@ -15,27 +15,7 @@
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal raster edit [OPTIONS] <DATASET>
-
-    Edit a raster dataset.
-
-    Positional arguments:
-      --dataset <DATASET>       Dataset (in-place updated) [required]
-
-    Common Options:
-      -h, --help                Display help message and exit
-      --version                 Display GDAL version and exit
-      --json-usage              Display usage as JSON document and exit
-      --drivers                 Display driver list as JSON document and exit
-
-    Options:
-      --crs <CRS>               Override CRS (without reprojection)
-      --bbox <EXTENT>           Bounding box as xmin,ymin,xmax,ymax
-      --metadata <KEY>=<VALUE>  Add/update dataset metadata item [may be repeated]
-      --unset-metadata <KEY>    Remove dataset metadata item [may be repeated]
-
+.. program-output:: gdal raster edit --help-doc
 
 Description
 -----------

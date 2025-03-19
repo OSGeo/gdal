@@ -829,6 +829,10 @@ GDALAlgorithm::GDALAlgorithm(const std::string &name,
         .SetOnlyForCLI()
         .SetCategory(GAAC_COMMON)
         .AddAction([this]() { m_specialActionRequested = true; });
+    AddArg("help-doc", 0, _("Display help message for use by documentation"),
+           &m_helpDocRequested)
+        .SetHidden()
+        .AddAction([this]() { m_specialActionRequested = true; });
     AddArg("version", 0, _("Display GDAL version and exit"), &m_dummyBoolean)
         .SetOnlyForCLI()
         .SetCategory(GAAC_COMMON);
@@ -2826,7 +2830,7 @@ bool GDALAlgorithm::Run(GDALProgressFunc pfnProgress, void *pProgressData)
     if (m_selectedSubAlg)
         return m_selectedSubAlg->Run(pfnProgress, pProgressData);
 
-    if (m_helpRequested)
+    if (m_helpRequested || m_helpDocRequested)
     {
         printf("%s", GetUsageForCLI(false).c_str()); /*ok*/
         return true;
@@ -2880,7 +2884,7 @@ GDALAlgorithm::GetArgNamesForCLI() const
     size_t maxOptLen = 0;
     for (const auto &arg : m_args)
     {
-        if (arg->IsHiddenForCLI())
+        if (arg->IsHidden() || arg->IsHiddenForCLI())
             continue;
         std::string opt;
         bool addComma = false;
@@ -2947,7 +2951,7 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
     bool hasNonPositionals = false;
     for (const auto &arg : m_args)
     {
-        if (!arg->IsHiddenForCLI() && !arg->IsPositional())
+        if (!arg->IsHidden() && !arg->IsHiddenForCLI() && !arg->IsPositional())
             hasNonPositionals = true;
     }
 
@@ -3158,7 +3162,8 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                 std::string otherArgs;
                 for (const auto &otherArg : m_args)
                 {
-                    if (otherArg->IsHiddenForCLI() || otherArg.get() == arg)
+                    if (otherArg->IsHidden() || otherArg->IsHiddenForCLI() ||
+                        otherArg.get() == arg)
                         continue;
                     if (otherArg->GetMutualExclusionGroup() ==
                         mutualExclusionGroup)
@@ -3261,21 +3266,25 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
         osRet += '\n';
     }
 
-    if (!m_helpURL.empty())
+    if (!m_helpDocRequested)
     {
-        osRet += "\nFor more details, consult ";
-        osRet += GetHelpFullURL();
-        osRet += '\n';
-    }
+        if (!m_helpURL.empty())
+        {
+            osRet += "\nFor more details, consult ";
+            osRet += GetHelpFullURL();
+            osRet += '\n';
+        }
 
-    if (!m_callPath.empty() && m_callPath[0] == "gdal")
-    {
-        osRet += "\nWARNING: the gdal command is provisionally provided as an "
-                 "alternative interface to GDAL and OGR command line "
-                 "utilities.\nThe project reserves the right to modify, "
-                 "rename, reorganize, and change the behavior of the utility\n"
-                 "until it is officially frozen in a future feature release of "
-                 "GDAL.\n";
+        if (!m_callPath.empty() && m_callPath[0] == "gdal")
+        {
+            osRet +=
+                "\nWARNING: the gdal command is provisionally provided as an "
+                "alternative interface to GDAL and OGR command line "
+                "utilities.\nThe project reserves the right to modify, "
+                "rename, reorganize, and change the behavior of the utility\n"
+                "until it is officially frozen in a future feature release of "
+                "GDAL.\n";
+        }
     }
 
     return osRet;
@@ -3434,7 +3443,8 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
         CPLJSONArray jArgs;
         for (const auto &arg : m_args)
         {
-            if (!arg->IsOnlyForCLI() && arg->IsInput() && !arg->IsOutput())
+            if (!arg->IsHidden() && !arg->IsOnlyForCLI() && arg->IsInput() &&
+                !arg->IsOutput())
                 jArgs.Add(ProcessArg(arg.get()));
         }
         oRoot.Add("input_arguments", jArgs);
@@ -3444,7 +3454,8 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
         CPLJSONArray jArgs;
         for (const auto &arg : m_args)
         {
-            if (!arg->IsOnlyForCLI() && !arg->IsInput() && arg->IsOutput())
+            if (!arg->IsHidden() && !arg->IsOnlyForCLI() && !arg->IsInput() &&
+                arg->IsOutput())
                 jArgs.Add(ProcessArg(arg.get()));
         }
         oRoot.Add("output_arguments", jArgs);
@@ -3454,7 +3465,8 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
         CPLJSONArray jArgs;
         for (const auto &arg : m_args)
         {
-            if (!arg->IsOnlyForCLI() && arg->IsInput() && arg->IsOutput())
+            if (!arg->IsHidden() && !arg->IsOnlyForCLI() && arg->IsInput() &&
+                arg->IsOutput())
                 jArgs.Add(ProcessArg(arg.get()));
         }
         oRoot.Add("input_output_arguments", jArgs);

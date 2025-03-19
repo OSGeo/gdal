@@ -29,7 +29,7 @@ enum operation
 /*                               Usage()                                */
 /************************************************************************/
 static void Usage(bool bIsError, const char *pszAdditionalMsg = nullptr,
-                  bool bShort = true)
+                  bool bShort = true, bool bHelpDoc = false)
 {
     fprintf(
         bIsError ? stderr : stdout,
@@ -42,6 +42,11 @@ static void Usage(bool bIsError, const char *pszAdditionalMsg = nullptr,
         "                  [-ds <ds_name>][-f <ds_format>][-l <layer_name>]\n"
         "                  [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...\n"
         "                  <gnm_name>\n");
+
+    if (bHelpDoc)
+    {
+        exit(0);
+    }
 
     if (bShort)
     {
@@ -409,6 +414,11 @@ MAIN_START(nArgc, papszArgv)
         else if (EQUAL(papszArgv[iArg], "--help"))
         {
             Usage(false);
+        }
+
+        else if (EQUAL(papszArgv[iArg], "--help-doc"))
+        {
+            Usage(false, nullptr, true, true);
         }
 
         else if (EQUAL(papszArgv[iArg], "--long-usage"))

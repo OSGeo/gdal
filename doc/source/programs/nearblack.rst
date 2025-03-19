@@ -13,13 +13,7 @@ nearblack
 Synopsis
 --------
 
-.. code-block::
-
-    nearblack [--help] [--help-general]
-              [-of <format>] [-white | [-color <c1>,<c2>,<c3>...<cn>]...]
-              [-near <dist>] [-nb <non_black_pixels>]
-              [-setalpha] [-setmask] [-alg twopasses|floodfill]
-              [-o <outfile>] [-q] [-co <NAME>=<VALUE>]... <infile>
+.. program-output:: nearblack --help-doc
 
 Description
 -----------

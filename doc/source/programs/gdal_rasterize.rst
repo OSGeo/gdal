@@ -13,19 +13,7 @@ gdal_rasterize
 Synopsis
 --------
 
-.. code-block::
-
-    gdal_rasterize [--help] [--help-general]
-        [-b <band>]... [-i] [-at]
-        [-oo <NAME>=<VALUE>]...
-        {[-burn <value>]... | [-a <attribute_name>] | [-3d]} [-add]
-        [-l <layername>]... [-where <expression>] [-sql <select_statement>|@<filename>]
-        [-dialect <dialect>] [-of <format>] [-a_srs <srs_def>] [-to <NAME>=<VALUE>]...
-        [-co <NAME>=<VALUE>]... [-a_nodata <value>] [-init <value>]...
-        [-te <xmin> <ymin> <xmax> <ymax>] [-tr <xres> <yres>] [-tap] [-ts <width> <height>]
-        [-ot {Byte/Int8/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/
-             CInt16/CInt32/CFloat32/CFloat64}] [-optim {AUTO|VECTOR|RASTER}] [-q]
-        <src_datasource> <dst_filename>
+.. program-output:: gdal_rasterize --help-doc
 
 Description
 -----------

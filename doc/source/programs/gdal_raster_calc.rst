@@ -15,9 +15,7 @@
 Synopsis
 --------
 
-.. program-output:: gdal raster calc --help
-    :ellipsis: -5
-
+.. program-output:: gdal raster calc --help-doc
 
 Description
 -----------

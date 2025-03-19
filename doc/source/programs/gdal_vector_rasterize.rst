@@ -15,58 +15,7 @@
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal vector rasterize [OPTIONS] <INPUT> <OUTPUT>
-
-    Burns vector geometries into a raster.
-
-    Positional arguments:
-    -i, --input <INPUT>                                      Input vector dataset [required]
-    -o, --output <OUTPUT>                                    Output raster dataset [required]
-
-    Common Options:
-    -h, --help                                               Display help message and exit
-    --version                                                Display GDAL version and exit
-    --json-usage                                             Display usage as JSON document and exit
-    --drivers                                                Display driver list as JSON document and exit
-    --config <KEY>=<VALUE>                                   Configuration option [may be repeated]
-    --progress                                               Display progress bar
-
-    Options:
-    -f, --of, --format, --output-format <OUTPUT-FORMAT>      Output format
-    --co, --creation-option <KEY>=<VALUE>                    Creation option [may be repeated]
-    -b, --band <BAND>                                        The band(s) to burn values into [may be repeated]
-    --invert                                                 Invert the rasterization
-    --all-touched                                            Enables the ALL_TOUCHED rasterization option
-    --burn <BURN>                                            Burn value [may be repeated]
-    -a, --attribute-name <ATTRIBUTE-NAME>                    Attribute name
-    --3d                                                     Indicates that a burn value should be extracted from the Z values of the feature
-    --add                                                    Add to existing raster
-    -l, --layer, --layer-name <LAYER-NAME>                   Layer name
-                                                            Mutually exclusive with --sql
-    --where <WHERE>                                          SQL where clause
-    --sql <SQL>                                              SQL select statement
-                                                            Mutually exclusive with --layer-name
-    --dialect <DIALECT>                                      SQL dialect
-    --nodata <NODATA>                                        Assign a specified nodata value to output bands
-    --init <INIT>                                            Pre-initialize output bands with specified value [may be repeated]
-    --crs <CRS>                                              Override the projection for the output file
-    --transformer-option <NAME>=<VALUE>                      Set a transformer option suitable to pass to GDALCreateGenImgProjTransformer2 [may be repeated]
-    --extent <xmin>,<ymin>,<xmax>,<ymax>                     Set the target georeferenced extent [4 values]
-    --resolution <xres>,<yres>                               Set the target resolution [2 values]
-                                                            Mutually exclusive with --size
-    --tap, --target-aligned-pixels                           (target aligned pixels) Align the coordinates of the extent of the output file to the values of the resolution
-    --size <xsize>,<ysize>                                   Set the target size in pixels and lines [2 values]
-                                                            Mutually exclusive with --resolution
-    --ot, --datatype, --output-data-type <OUTPUT-DATA-TYPE>  Output data type. OUTPUT-DATA-TYPE=Byte|Int8|UInt16|Int16|UInt32|Int32|UInt64|Int64|CInt16|CInt32|Float32|Float64|CFloat32|CFloat64
-    --optimization <OPTIMIZATION>                            Force the algorithm used (results are identical). OPTIMIZATION=AUTO|RASTER|VECTOR (default: AUTO)
-    --update                                                 Whether to open existing dataset in update mode
-    --overwrite                                              Whether overwriting existing output is allowed
-
-    Advanced Options:
-    --oo, --open-option <KEY=VALUE>                          Open options [may be repeated]
-    --if, --input-format <INPUT-FORMAT>                      Input formats [may be repeated]
+.. program-output:: gdal vector rasterize --help-doc
 
 Description
 -----------

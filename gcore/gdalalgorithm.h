@@ -705,6 +705,14 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return *this;
     }
 
+    /** Declare that the argument is hidden. Default is no
+     */
+    GDALAlgorithmArgDecl &SetHidden()
+    {
+        m_hidden = true;
+        return *this;
+    }
+
     /** Indicate whether the value of the argument is read-only during the
      * execution of the algorithm. Default is true.
      */
@@ -900,6 +908,13 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return m_hasDefaultValue;
     }
 
+    /** Return whether the argument is hidden.
+     */
+    inline bool IsHidden() const
+    {
+        return m_hidden;
+    }
+
     /** Return whether the argument must not be mentioned in CLI usage.
      * For example, "output-value" for "gdal raster info", which is only
      * meant when the algorithm is used from a non-CLI context.
@@ -1018,6 +1033,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     bool m_required = false;
     bool m_positional = false;
     bool m_hasDefaultValue = false;
+    bool m_hidden = false;
     bool m_hiddenForCLI = false;
     bool m_onlyForCLI = false;
     bool m_isInput = true;
@@ -1199,6 +1215,12 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     inline bool HasDefaultValue() const
     {
         return m_decl.HasDefaultValue();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::IsHidden() */
+    inline bool IsHidden() const
+    {
+        return m_decl.IsHidden();
     }
 
     /** Alias for GDALAlgorithmArgDecl::IsHiddenForCLI() */
@@ -1596,6 +1618,13 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     {
         m_decl.SetHiddenChoices(std::forward<T>(first),
                                 std::forward<U>(rest)...);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetHidden() */
+    GDALInConstructionAlgorithmArg &SetHidden()
+    {
+        m_decl.SetHidden();
         return *this;
     }
 
@@ -2010,6 +2039,7 @@ class CPL_DLL GDALAlgorithmRegistry
         {
             target->m_specialActionRequested = m_specialActionRequested;
             target->m_helpRequested = m_helpRequested;
+            target->m_helpDocRequested = m_helpDocRequested;
             target->m_JSONUsageRequested = m_JSONUsageRequested;
             return true;
         }
@@ -2228,6 +2258,10 @@ class CPL_DLL GDALAlgorithmRegistry
     bool m_displayInJSONUsage = true;
     bool m_specialActionRequested = false;
     bool m_helpRequested = false;
+
+    // Used by program-output directives in .rst files
+    bool m_helpDocRequested = false;
+
     bool m_JSONUsageRequested = false;
     bool m_dummyBoolean = false;  // Used for --version
     bool m_parseForAutoCompletion = false;

@@ -13,57 +13,7 @@ ogr2ogr
 Synopsis
 --------
 
-.. code-block::
-
-    ogr2ogr [--help] [--long-usage] [--help-general]
-            [-of <output_format>]
-            [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...
-            [[-append]|[-upsert]|[-overwrite]]
-            [-update] [-sql <statement>|@<filename>] [-dialect <dialect>]
-            [-spat <xmin> <ymin> <xmax> <ymax>]
-            [-where <restricted_where>|@<filename>] [-select <field_list>]
-            [-nln <name>] [-nlt <type>]...
-            [-s_srs <srs_def>]
-            [[-a_srs <srs_def>]|[-t_srs <srs_def>]]
-            <dst_dataset_name> <src_dataset_name> [<layer_name>]...
-
-    Field related options:
-           [-addfields] [-relaxedFieldNameMatch]
-           [-fieldTypeToString All|<type1>[,<type2>]...]
-           [-mapFieldType <srctype>|All=<dsttype>[,<srctype2>=<dsttype2>]...]
-           [-fieldmap <field_1>[,<field_2>]...]
-           [-splitlistfields] [-maxsubfields <n>] [-emptyStrAsNull]
-           [-forceNullable] [-unsetFieldWidth]
-           [-unsetDefault] [-resolveDomains]
-           [-dateTimeTo UTC|UTC(+|-)<HH>|UTC(+|-)<HH>:<MM>] [-noNativeData]
-
-    Advanced geometry and SRS related options:
-           [-dim layer_dim|2|XY|3|XYZ|XYM|XYZM]
-           [-s_coord_epoch <epoch>] [-a_coord_epoch <epoch>]
-           [-t_coord_epoch <epoch>] [-ct <pipeline_def>]
-           [-spat_srs <srs_def>] [-geomfield <name>]
-           [-segmentize <max_dist>] [-simplify <tolerance>]
-           [-makevalid] [-skipinvalid]
-           [-wrapdateline] [-datelineoffset <val_in_degree>]
-           [-clipsrc [<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>|spat_extent]
-           [-clipsrcsql <sql_statement>] [-clipsrclayer <layername>]
-           [-clipsrcwhere <expression>]
-           [-clipdst [<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>]
-           [-clipdstsql <sql_statement>] [-clipdstlayer <layername>]
-           [-clipdstwhere <expression>]
-           [-explodecollections] [-zfield <name>]
-           [-gcp <ungeoref_x> <ungeoref_y> <georef_x> <georef_y> [<elevation>]]...
-           [-tps] [-order 1|2|3]
-           [-xyRes <val>[ m|mm|deg]] [-zRes <val>[ m|mm]] [-mRes <val>]
-           [-unsetCoordPrecision]
-
-    Other options:
-           [--quiet] [-progress] [-if <format>]...
-           [-oo <NAME>=<VALUE>]... [-doo <NAME>=<VALUE>]...
-           [-fid <FID>] [-preserve_fid] [-unsetFid]
-           [[-skipfailures]|[-gt <n>|unlimited]]
-           [-limit <nb_features>] [-ds_transaction]
-           [-mo <NAME>=<VALUE>]... [-nomd]
+.. program-output:: ogr2ogr --help-doc
 
 Description
 -----------

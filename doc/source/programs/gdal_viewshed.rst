@@ -15,18 +15,7 @@ gdal_viewshed
 Synopsis
 --------
 
-.. code-block::
-
-   gdal_viewshed [--help] [--help-general] [-b <band>]
-                 [-a_nodata <value>] [-f <formatname>]
-                 [-oz <observer_height>] [-tz <target_height>] [-md <max_distance>]
-                 -ox <observer_x> -oy <observer_y>
-                 [-vv <visibility>] [-iv <invisibility>]
-                 [-ov <out_of_range>] [-cc <curvature_coef>]
-                 [-os <observer_spacing>] [-j <relative job count>]
-                 [-co <NAME>=<VALUE>]...
-                 [-q] [-om <output mode>]
-                 <src_filename> <dst_filename>
+.. program-output:: gdal_viewshed --help-doc
 
 Description
 -----------

@@ -13,19 +13,7 @@ gnmmanage
 Synopsis
 --------
 
-.. code-block::
-
-    gnmmanage [--help] [--help-general] [-q] [-quiet] [--long-usage]
-              [info]
-              [create [-f <format_name>] [-t_srs <srs_name>] [-dsco <NAME>=<VALUE>]... ]
-              [import <src_dataset_name>] [-l <layer_name>]
-              [connect <gfid_src> <gfid_tgt> <gfid_con> [-c <cost>] [-ic <inv_cost>] [-dir <dir>]]
-              [disconnect <gfid_src> <gfid_tgt> <gfid_con>]
-              [rule <rule_str>]
-              [autoconnect <tolerance>]
-              [delete]
-              [change [-bl <gfid>][-unbl <gfid>][-unblall]]
-              <gnm_name> [<layer> [<layer>]...]
+.. program-output:: gnmmanage --help-doc
 
 Description
 -----------

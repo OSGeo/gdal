@@ -15,18 +15,7 @@ gdal
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal <COMMAND>
-    where <COMMAND> is one of:
-      - convert:  Convert a dataset (shortcut for 'gdal raster convert' or 'gdal vector convert').
-      - info:     Return information on a dataset (shortcut for 'gdal raster info' or 'gdal vector info').
-      - pipeline: Execute a pipeline (shortcut for 'gdal vector pipeline').
-      - raster:   Raster commands.
-      - vector:   Vector commands.
-
-    'gdal <FILENAME>' can also be used as a shortcut for 'gdal info <FILENAME>'.
-    And 'gdal read <FILENAME> ! ...' as a shortcut for 'gdal pipeline <FILENAME> ! ...'.
+.. program-output:: gdal --help-doc
 
 Examples
 --------
