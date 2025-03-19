@@ -45,6 +45,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define KEY_CreationDate "CreationDate"
 #define SECTION_SPATIAL_REFERENCE_SYSTEM "SPATIAL_REFERENCE_SYSTEM"
 #define SECTION_HORIZONTAL "HORIZONTAL"
+#define SECTION_VERTICAL "VERTICAL"
 #define KEY_HorizontalSystemIdentifier "HorizontalSystemIdentifier"
 #define SECTION_TAULA_PRINCIPAL "TAULA_PRINCIPAL"
 #define KEY_IdGrafic "IdGrafic"
@@ -291,6 +292,7 @@ struct MiraMonVectorMetaData
     char *pXUnit;    // X units if pszSRS is empty.
     char *pYUnit;    // Y units if pszSRS is empty. If Y units is empty,
                      // X unit will be assigned as Y unit by default.
+    char *pZUnit;    // In 3D cases, Z unit can be assigned.
 
     struct MMBoundingBox hBB;  // Bounding box of the entire layer
 
@@ -739,6 +741,7 @@ struct MiraMonVectLayerInfo
     // EPSG code of the spatial reference system.
     char *pSRS;
     int nSRS_EPSG;  // Ref. system if has EPSG code.
+    char *pZUnit;   // In case of 3D data, Z unit can be assigned.
 
 // Used to write the precision of the reserved fields in the DBF
 #define MM_SRS_LAYER_IS_UNKNOWN_TYPE 0

@@ -2437,6 +2437,12 @@ int MMDestroyLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         hMiraMonLayer->pSRS = nullptr;
     }
 
+    if (hMiraMonLayer->pZUnit)
+    {
+        free_function(hMiraMonLayer->pZUnit);
+        hMiraMonLayer->pZUnit = nullptr;
+    }
+
     if (hMiraMonLayer->pMultRecordIndex)
     {
         free_function(hMiraMonLayer->pMultRecordIndex);
@@ -4260,6 +4266,11 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 if (pZDesc[pArcTopHeader->nElemCount].dfBBmaxz < *pZ)
                     pZDesc[pArcTopHeader->nElemCount].dfBBmaxz = *pZ;
 
+                if (pMMArc->pZSection.ZHeader.dfBBminz > *pZ)
+                    pMMArc->pZSection.ZHeader.dfBBminz = *pZ;
+                if (pMMArc->pZSection.ZHeader.dfBBmaxz < *pZ)
+                    pMMArc->pZSection.ZHeader.dfBBmaxz = *pZ;
+
                 // Only one altitude (the same for all vertices) is written
                 if (hMMFeature->bAllZHaveSameValue)
                     break;
@@ -4521,6 +4532,11 @@ static int MMCreateFeaturePoint(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
             pZDescription[nElemCount].dfBBminz = *pZ;
             pZDescription[nElemCount].dfBBmaxz = *pZ;
+
+            if (hMiraMonLayer->MMPoint.pZSection.ZHeader.dfBBminz > *pZ)
+                hMiraMonLayer->MMPoint.pZSection.ZHeader.dfBBminz = *pZ;
+            if (hMiraMonLayer->MMPoint.pZSection.ZHeader.dfBBmaxz < *pZ)
+                hMiraMonLayer->MMPoint.pZSection.ZHeader.dfBBmaxz = *pZ;
 
             // Specification ask for a negative number.
             pZDescription[nElemCount].nZCount = -1;
@@ -5686,6 +5702,7 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
     if (hMMMD->ePlainLT != MM_LayerType_Node &&
         hMMMD->ePlainLT != MM_LayerType_Pol)
     {
+        // SPATIAL_REFERENCE_SYSTEM:HORIZONTAL
         fprintf_function(pF, LineReturn "[%s:%s]" LineReturn,
                          SECTION_SPATIAL_REFERENCE_SYSTEM, SECTION_HORIZONTAL);
         if (!ReturnMMIDSRSFromEPSGCodeSRS(hMMMD->pSRS, aMMIDSRS) &&
@@ -5710,6 +5727,17 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                     fprintf_function(pF, "%s=%s" LineReturn, KEY_unitatsY,
                                      hMMMD->pYUnit);
             }
+        }
+
+        // SPATIAL_REFERENCE_SYSTEM:VERTICAL
+        // Llegim les unitats del Sist. ref. vertical
+        if (hMMMD->pZUnit)
+        {
+            fprintf_function(pF, LineReturn "[%s:%s]" LineReturn,
+                             SECTION_SPATIAL_REFERENCE_SYSTEM,
+                             SECTION_VERTICAL);
+            fprintf_function(pF, "%s=%s" LineReturn, KEY_unitats,
+                             hMMMD->pZUnit);
         }
     }
 
@@ -5969,6 +5997,7 @@ static int MMWriteVectorMetadataFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
     memset(&hMMMD, 0, sizeof(hMMMD));
     hMMMD.ePlainLT = layerPlainType;
     hMMMD.pSRS = hMiraMonLayer->pSRS;
+    hMMMD.pZUnit = hMiraMonLayer->pZUnit;
     hMMMD.nMMLanguage = hMiraMonLayer->nMMLanguage;
 
     hMMMD.szLayerTitle = hMiraMonLayer->szLayerTitle;
