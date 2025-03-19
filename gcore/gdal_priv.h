@@ -1670,6 +1670,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual int IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
                                        int nYSize, int nMaskFlagStop,
                                        double *pdfDataPct);
+
+    virtual bool
+    EmitErrorMessageIfWriteNotSupported(const char *pszCaller) const;
+
     //! @cond Doxygen_Suppress
     CPLErr
     OverviewRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
@@ -2006,6 +2010,9 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
                      GSpacing nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
+    bool
+    EmitErrorMessageIfWriteNotSupported(const char *pszCaller) const override;
+
     CPL_DISALLOW_COPY_ASSIGN(GDALAllValidMaskBand)
 
   public:
@@ -2050,6 +2057,9 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
                      GDALDataType, GSpacing, GSpacing,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
+    bool
+    EmitErrorMessageIfWriteNotSupported(const char *pszCaller) const override;
+
   public:
     explicit GDALNoDataMaskBand(GDALRasterBand *);
     explicit GDALNoDataMaskBand(GDALRasterBand *, double dfNoDataValue);
@@ -2080,6 +2090,9 @@ class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
 
   protected:
     CPLErr IReadBlock(int, int, void *) override;
+
+    bool
+    EmitErrorMessageIfWriteNotSupported(const char *pszCaller) const override;
 
   public:
     explicit GDALNoDataValuesMaskBand(GDALDataset *);
@@ -2112,6 +2125,9 @@ class GDALRescaledAlphaBand : public GDALRasterBand
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                      GDALDataType, GSpacing, GSpacing,
                      GDALRasterIOExtraArg *psExtraArg) override;
+
+    bool
+    EmitErrorMessageIfWriteNotSupported(const char *pszCaller) const override;
 
   public:
     explicit GDALRescaledAlphaBand(GDALRasterBand *);
