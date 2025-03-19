@@ -2749,14 +2749,11 @@ bool GDALAlgorithm::ValidateKeyValue(const GDALAlgorithmArg &arg) const
 }
 
 /************************************************************************/
-/*                          ProcessGDALGOutput()                        */
+/*                             IsGDALGOutput()                          */
 /************************************************************************/
 
-GDALAlgorithm::ProcessGDALGOutputRet GDALAlgorithm::ProcessGDALGOutput()
+bool GDALAlgorithm::IsGDALGOutput() const
 {
-    if (!SupportsStreamedOutput())
-        return ProcessGDALGOutputRet::NOT_GDALG;
-
     bool isGDALGOutput = false;
     const auto outputFormatArg = GetArg(GDAL_ARG_NAME_OUTPUT_FORMAT);
     const auto outputArg = GetArg(GDAL_ARG_NAME_OUTPUT);
@@ -2775,12 +2772,27 @@ GDALAlgorithm::ProcessGDALGOutputRet GDALAlgorithm::ProcessGDALGOutput()
             const auto &filename =
                 outputArg->GDALAlgorithmArg::Get<GDALArgDatasetValue>();
             isGDALGOutput =
-                EQUAL(CPLGetExtensionSafe(filename.GetName().c_str()).c_str(),
-                      "GDALG");
+                filename.GetName().size() > strlen(".gdalg.json") &&
+                EQUAL(filename.GetName().c_str() + filename.GetName().size() -
+                          strlen(".gdalg.json"),
+                      ".gdalg.json");
         }
     }
-    if (isGDALGOutput)
+    return isGDALGOutput;
+}
+
+/************************************************************************/
+/*                          ProcessGDALGOutput()                        */
+/************************************************************************/
+
+GDALAlgorithm::ProcessGDALGOutputRet GDALAlgorithm::ProcessGDALGOutput()
+{
+    if (!SupportsStreamedOutput())
+        return ProcessGDALGOutputRet::NOT_GDALG;
+
+    if (IsGDALGOutput())
     {
+        const auto outputArg = GetArg(GDAL_ARG_NAME_OUTPUT);
         const auto &filename =
             outputArg->GDALAlgorithmArg::Get<GDALArgDatasetValue>().GetName();
         VSIStatBufL sStat;
@@ -3128,7 +3140,7 @@ bool GDALAlgorithm::CheckSafeForStreamOutput()
         const auto &val = outputFormatArg->GDALAlgorithmArg::Get<std::string>();
         if (!EQUAL(val.c_str(), "stream"))
         {
-            // For security reasons, to avoid that reading a .gdalg file
+            // For security reasons, to avoid that reading a .gdalg.json file
             // writes a file on the file system.
             ReportError(
                 CE_Failure, CPLE_NotSupported,

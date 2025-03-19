@@ -22,14 +22,14 @@ pytestmark = pytest.mark.require_driver("GDALG")
 
 
 def test_gdalg_raster_from_file():
-    ds = gdal.Open("data/gdalg/read_byte.gdalg")
+    ds = gdal.Open("data/gdalg/read_byte.gdalg.json")
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetDriver().GetDescription() == "GDALG"
 
 
 def test_gdalg_raster_opened_as_vector():
     with pytest.raises(Exception):
-        gdal.OpenEx("data/gdalg/read_byte.gdalg", gdal.OF_VECTOR)
+        gdal.OpenEx("data/gdalg/read_byte.gdalg.json", gdal.OF_VECTOR)
 
 
 def test_gdalg_raster_pipeline_standard():
@@ -168,7 +168,7 @@ def test_gdalg_raster_reproject_write_to_file_not_allowed():
 
 
 def test_gdalg_vector():
-    ds = gdal.OpenEx("data/gdalg/read_poly.gdalg", gdal.OF_VECTOR)
+    ds = gdal.OpenEx("data/gdalg/read_poly.gdalg.json", gdal.OF_VECTOR)
     assert ds.GetLayerCount() == 1
     assert ds.GetLayer(0).GetName() == "poly"
     assert ds.GetLayerByName("poly").GetName() == "poly"
@@ -187,7 +187,7 @@ def test_gdalg_vector():
 
 def test_gdalg_vector_opened_as_raster():
     with pytest.raises(Exception):
-        gdal.OpenEx("data/gdalg/read_poly.gdalg", gdal.OF_RASTER)
+        gdal.OpenEx("data/gdalg/read_poly.gdalg.json", gdal.OF_RASTER)
 
 
 def test_gdalg_vector_pipeline_write_to_file_not_allowed():
@@ -207,7 +207,7 @@ def test_gdalg_vector_pipeline_write_to_file_not_allowed():
 
 def test_gdalg_generate_from_raster_pipeline(tmp_vsimem):
     pipeline = gdal.GetGlobalAlgorithmRegistry()["raster"]["pipeline"]
-    out_filename = str(tmp_vsimem / "test.gdalg")
+    out_filename = str(tmp_vsimem / "test.gdalg.json")
     assert pipeline.ParseRunAndFinalize(
         [
             "read",
@@ -230,7 +230,7 @@ def test_gdalg_generate_from_raster_pipeline(tmp_vsimem):
 
 def test_gdalg_generate_from_raster_mosaic(tmp_vsimem):
     mosaic = gdal.GetGlobalAlgorithmRegistry()["raster"]["mosaic"]
-    out_filename = str(tmp_vsimem / "test.gdalg")
+    out_filename = str(tmp_vsimem / "test.gdalg.json")
     assert mosaic.ParseRunAndFinalize(["data/byte.tif", out_filename])
     assert json.loads(gdal.VSIFile(out_filename, "rb").read()) == {
         "command_line": "gdal raster mosaic --input data/byte.tif --output-format stream --output streamed_dataset",
@@ -240,7 +240,7 @@ def test_gdalg_generate_from_raster_mosaic(tmp_vsimem):
 
 def test_gdalg_generate_from_raster_reproject(tmp_vsimem):
     reproject = gdal.GetGlobalAlgorithmRegistry()["raster"]["reproject"]
-    out_filename = str(tmp_vsimem / "test.gdalg")
+    out_filename = str(tmp_vsimem / "test.gdalg.json")
     assert reproject.ParseRunAndFinalize(
         ["data/byte.tif", out_filename, "--dst-crs=EPSG:4326", "--overwrite"]
     )
@@ -252,7 +252,7 @@ def test_gdalg_generate_from_raster_reproject(tmp_vsimem):
 
 def test_gdalg_generate_from_vector_pipeline(tmp_vsimem):
     pipeline = gdal.GetGlobalAlgorithmRegistry()["vector"]["pipeline"]
-    out_filename = str(tmp_vsimem / "test.gdalg")
+    out_filename = str(tmp_vsimem / "test.gdalg.json")
     assert pipeline.ParseRunAndFinalize(
         [
             "read",

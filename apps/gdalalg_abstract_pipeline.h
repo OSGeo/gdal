@@ -163,33 +163,9 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
     // Handle output to GDALG file
     if (!m_steps.empty() && m_steps.back()->GetName() == "write")
     {
-        bool isGDALGOutput = false;
-        const auto outputFormatArg =
-            m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_FORMAT);
-        const auto outputArg = m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT);
-        if (outputArg && outputArg->GetType() == GAAT_DATASET &&
-            outputArg->IsExplicitlySet())
+        if (m_steps.back()->IsGDALGOutput())
         {
-            if (outputFormatArg && outputFormatArg->GetType() == GAAT_STRING &&
-                outputFormatArg->IsExplicitlySet())
-            {
-                const auto &val =
-                    outputFormatArg
-                        ->GDALAlgorithmArg::template Get<std::string>();
-                isGDALGOutput = EQUAL(val.c_str(), "GDALG");
-            }
-            else
-            {
-                const auto &filename =
-                    outputArg
-                        ->GDALAlgorithmArg::template Get<GDALArgDatasetValue>();
-                isGDALGOutput = EQUAL(
-                    CPLGetExtensionSafe(filename.GetName().c_str()).c_str(),
-                    "GDALG");
-            }
-        }
-        if (isGDALGOutput)
-        {
+            const auto outputArg = m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT);
             const auto &filename =
                 outputArg->GDALAlgorithmArg::template Get<GDALArgDatasetValue>()
                     .GetName();
@@ -257,7 +233,7 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
 
     if (GDALAlgorithm::m_executionForStreamOutput)
     {
-        // For security reasons, to avoid that reading a .gdalg file writes
+        // For security reasons, to avoid that reading a .gdalg.json file writes
         // a file on the file system.
         for (const auto &step : m_steps)
         {

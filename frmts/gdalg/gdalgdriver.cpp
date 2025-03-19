@@ -282,7 +282,7 @@ void GDALRegister_GDALG()
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "GDAL Streamed Algorithm driver");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "gdalg");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "gdalg.json");
 
     poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");

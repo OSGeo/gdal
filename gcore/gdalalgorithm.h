@@ -2279,6 +2279,9 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Validation function to use for key=value type of arguments. */
     bool ValidateKeyValue(const GDALAlgorithmArg &arg) const;
 
+    /** Return whether output-format or output arguments express GDALG output */
+    bool IsGDALGOutput() const;
+
     /** Return value for ProcessGDALGOutput */
     enum class ProcessGDALGOutputRet
     {

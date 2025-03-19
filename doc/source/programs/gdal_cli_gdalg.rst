@@ -7,7 +7,7 @@
 A subset of subcommands of :program:`gdal` support generating
 on-the-fly / streamed raster of vector datasets. They are typically saved to
 a "real" output dataset, but it is also possible to save them in a JSON file
-of extension ``.gdalg``, that can be read by the :ref:`raster.gdalg` driver or
+of extension ``.gdalg.json``, that can be read by the :ref:`raster.gdalg` driver or
 :ref:`vector.gdalg` driver to apply the saved processing on-the-fly and use
 the resulting dataset as a regular input dataset for :cpp:func:`GDALOpenEx`,
 or anywhere in GDAL API or command line utilities where a raster input dataset
@@ -22,10 +22,10 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal vector pipeline --progress ! read in.gpkg ! reproject --dst-crs=EPSG:32632 ! write in_epsg_32632.gdalg --overwrite
-        $ gdal vector info in_epsg_32632.gdalg
+        $ gdal vector pipeline --progress ! read in.gpkg ! reproject --dst-crs=EPSG:32632 ! write in_epsg_32632.gdalg.json --overwrite
+        $ gdal vector info in_epsg_32632.gdalg.json
 
-    The content of :file:`in_epsg_32632.gdalg` is:
+    The content of :file:`in_epsg_32632.gdalg.json` is:
 
     .. code-block:: json
 
