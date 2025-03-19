@@ -1542,7 +1542,7 @@ int DIMAPDataset::ReadImageInformation2()
     {
         GDALMDReaderPleiades *poReader =
             GDALMDReaderPleiades::CreateReaderForRPC(osRPCFilename);
-        char **papszRPC = poReader->LoadRPCXmlFile();
+        char **papszRPC = poReader->LoadRPCXmlFile(psDoc);
         delete poReader;
         if (papszRPC)
             SetMetadata(papszRPC, "RPC");
