@@ -2932,6 +2932,12 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
             osExt = "gpkg.zip";
         }
     }
+    else if (EQUAL(osExt.c_str(), "json"))
+    {
+        const CPLString osLower(CPLString(pszDestDataset).tolower());
+        if (osLower.endsWith(".gdalg.json"))
+            return nullptr;
+    }
 
     const int nDriverCount = GDALGetDriverCount();
     for (int i = 0; i < nDriverCount; i++)

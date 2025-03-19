@@ -23,7 +23,7 @@ indicate support for writing ``GDALG`` in the ``--help`` description for
 ``--output-format``. This includes :ref:`gdal_raster_pipeline_subcommand`,
 :ref:`gdal_raster_mosaic_subcommand` or :ref:`gdal_raster_stack_subcommand`.
 
-It is recommended that GDALG files use the ``.gdalg`` extension.
+It is recommended that GDALG files use the ``.gdalg.json`` extension.
 
 The JSON document must include a ``type`` member with the value ``gdal_streamed_alg``,
 and a ``command_line`` member, which is very close to the one that would be used
@@ -36,8 +36,8 @@ to generate a materialized dataset, but using the ``stream`` output format.
         "command_line": "gdal raster mosaic in1.tif in2.tif --output-format stream streamed_dataset"
     }
 
-If such file is saved as ``mosaic.gdalg``, it can be for example read with
-``gdal raster info mosaic.gdalg``.
+If such file is saved as ``mosaic.gdalg.json``, it can be for example read with
+``gdal raster info mosaic.gdalg.json``.
 
 In the case of a :ref:`gdal_raster_pipeline_subcommand`, the final ``write`` step can be
 omitted.
@@ -51,10 +51,10 @@ omitted.
 
 An optional ``relative_paths_relative_to_this_file`` boolean member defaults to ``true``,
 to indicate that relative input filenames in the command line should be interpreted
-as relative to the location of the .gdalg file. If setting this member to ``false``,
+as relative to the location of the ``.gdalg.json`` file. If setting this member to ``false``,
 they will be interpreted as being relative to the current working directory.
 
-.gdalg files can be validated against the following
+``.gdalg.json`` files can be validated against the following
 `JSON schema <https://github.com/OSGeo/gdal/blob/master/frmts/gdalg/data/gdalg.schema.json>`_
 
 This driver has also vector capabilities as detailed in :ref:`vector.gdalg`.
