@@ -1778,7 +1778,11 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
  * (ungeoreference image)
  * </li>
  * <li> RPC_HEIGHT: A fixed height to be used with RPC
- * calculations.
+ * calculations. If RPC_HEIGHT and RPC_DEM are not specified but that the RPC
+ * metadata domain contains a HEIGHT_DEFAULT item (for example, the DIMAP driver
+ * may fill it), this value will be used as the RPC_HEIGHT. Otherwise, if none
+ * of RPC_HEIGHT and RPC_DEM are specified as transformer
+ * options and if HEIGHT_DEFAULT is no available, a height of 0 will be used.
  * </li>
  * <li> RPC_DEM: The name of a DEM file to be used with RPC
  * calculations. See GDALCreateRPCTransformerV2() for more details.
@@ -1885,7 +1889,7 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
 /* clang-format on */
 
 void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
-                                       char **papszOptions)
+                                       CSLConstList papszOptions)
 
 {
     CSLConstList papszMD = nullptr;
@@ -2152,8 +2156,21 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
              (papszMD = GDALGetMetadata(hSrcDS, "RPC")) != nullptr &&
              GDALExtractRPCInfoV2(papszMD, &sRPCInfo))
     {
+        CPLStringList aosOptions(papszOptions);
+        if (!CSLFetchNameValue(papszOptions, "RPC_HEIGHT") &&
+            !CSLFetchNameValue(papszOptions, "RPC_DEM"))
+        {
+            if (const char *pszHEIGHT_DEFAULT =
+                    CSLFetchNameValue(papszMD, "HEIGHT_DEFAULT"))
+            {
+                CPLDebug("GDAL",
+                         "For source, using RPC_HEIGHT = HEIGHT_DEFAULT = %s",
+                         pszHEIGHT_DEFAULT);
+                aosOptions.SetNameValue("RPC_HEIGHT", pszHEIGHT_DEFAULT);
+            }
+        }
         psInfo->pSrcTransformArg =
-            GDALCreateRPCTransformerV2(&sRPCInfo, FALSE, 0, papszOptions);
+            GDALCreateRPCTransformerV2(&sRPCInfo, FALSE, 0, aosOptions.List());
         if (psInfo->pSrcTransformArg == nullptr)
         {
             GDALDestroyGenImgProjTransformer(psInfo);
@@ -2402,8 +2419,22 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
              (papszMD = GDALGetMetadata(hDstDS, "RPC")) != nullptr &&
              GDALExtractRPCInfoV2(papszMD, &sRPCInfo))
     {
+        CPLStringList aosOptions(papszOptions);
+        if (!CSLFetchNameValue(papszOptions, "RPC_HEIGHT") &&
+            !CSLFetchNameValue(papszOptions, "RPC_DEM"))
+        {
+            if (const char *pszHEIGHT_DEFAULT =
+                    CSLFetchNameValue(papszMD, "HEIGHT_DEFAULT"))
+            {
+                CPLDebug(
+                    "GDAL",
+                    "For destination, using RPC_HEIGHT = HEIGHT_DEFAULT = %s",
+                    pszHEIGHT_DEFAULT);
+                aosOptions.SetNameValue("RPC_HEIGHT", pszHEIGHT_DEFAULT);
+            }
+        }
         psInfo->pDstTransformArg =
-            GDALCreateRPCTransformerV2(&sRPCInfo, FALSE, 0, papszOptions);
+            GDALCreateRPCTransformerV2(&sRPCInfo, FALSE, 0, aosOptions.List());
         if (psInfo->pDstTransformArg == nullptr)
         {
             GDALDestroyGenImgProjTransformer(psInfo);

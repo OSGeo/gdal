@@ -172,7 +172,7 @@ void GDALCleanupTransformDeserializerMutex();
 /* Transformer cloning */
 
 void *GDALCreateTPSTransformerInt(int nGCPCount, const GDAL_GCP *pasGCPList,
-                                  int bReversed, char **papszOptions);
+                                  int bReversed, CSLConstList papszOptions);
 
 void CPL_DLL *GDALCloneTransformer(void *pTransformerArg);
 
