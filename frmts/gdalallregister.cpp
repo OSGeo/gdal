@@ -756,6 +756,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_KTX2();
 #endif
 
+#ifdef FRMT_gdalg
+    GDALRegister_GDALG();
+#endif
+
     // NOTE: you need to generally insert your own driver before that line.
 
     // NOTE: frmts/drivers.ini in the same directory should be kept in same

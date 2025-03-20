@@ -297,8 +297,14 @@ constexpr const char *GDAL_ARG_NAME_INPUT = "input";
 /** Name of the argument for an output dataset. */
 constexpr const char *GDAL_ARG_NAME_OUTPUT = "output";
 
+/** Name of the argument for an output format. */
+constexpr const char *GDAL_ARG_NAME_OUTPUT_FORMAT = "output-format";
+
 /** Name of the argument for update. */
 constexpr const char *GDAL_ARG_NAME_UPDATE = "update";
+
+/** Name of the argument for overwrite. */
+constexpr const char *GDAL_ARG_NAME_OVERWRITE = "overwrite";
 
 /** Name of the argument for read-only. */
 constexpr const char *GDAL_ARG_NAME_READ_ONLY = "read-only";
@@ -1447,6 +1453,12 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
         return m_skipIfAlreadySet;
     }
 
+    /** Serialize this argument and its value.
+     * May return false if the argument is not explicitly set or if a dataset
+     * is passed by value.
+     */
+    bool Serialize(std::string &serializedArg) const;
+
     //! @cond Doxygen_Suppress
     void NotifyValueSet()
     {
@@ -1941,6 +1953,39 @@ class CPL_DLL GDALAlgorithmRegistry
         m_parseForAutoCompletion = true;
     }
 
+    /** Set the reference file paths used to interpret relative paths.
+     *
+     * This has only effect if called before calling ParseCommandLineArguments().
+     */
+    void SetReferencePathForRelativePaths(const std::string &referencePath)
+    {
+        m_referencePath = referencePath;
+    }
+
+    /** Return the reference file paths used to interpret relative paths. */
+    const std::string &GetReferencePathForRelativePaths() const
+    {
+        return m_referencePath;
+    }
+
+    /** Returns whether this algorithm supports a streamed output dataset. */
+    bool SupportsStreamedOutput() const
+    {
+        return m_supportsStreamedOutput;
+    }
+
+    /** Indicates that the algorithm must be run to generate a streamed output
+     * dataset. In particular, this must be used as a hint by algorithms to
+     * avoid writing files on the filesystem. This is used by the GDALG driver
+     * when executing a serialized algorithm command line.
+     *
+     * This has only effect if called before calling Run().
+     */
+    void SetExecutionForStreamedOutput()
+    {
+        m_executionForStreamOutput = true;
+    }
+
     /** Parse a command line argument, which does not include the algorithm
      * name, to set the value of corresponding arguments.
      */
@@ -2076,12 +2121,18 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Algorithm alias names */
     std::vector<std::string> m_aliases{};
 
-    /** Special processing for an argument of type GAAT_DATASET */
-    bool ProcessDatasetArg(GDALAlgorithmArg *arg, GDALAlgorithm *algForOutput);
+    /** Whether this algorithm supports a streamed output dataset. */
+    bool m_supportsStreamedOutput = false;
+
+    /** Whether this algorithm is run to generated a streamed output dataset. */
+    bool m_executionForStreamOutput = false;
 
     /** Constructor */
     GDALAlgorithm(const std::string &name, const std::string &description,
                   const std::string &helpURL);
+
+    /** Special processing for an argument of type GAAT_DATASET */
+    bool ProcessDatasetArg(GDALAlgorithmArg *arg, GDALAlgorithm *algForOutput);
 
     /** Register the sub-algorithm of type MyAlgorithm.
      */
@@ -2197,7 +2248,8 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Add output format argument. */
     GDALInConstructionAlgorithmArg &
-    AddOutputFormatArg(std::string *pValue, bool bStreamAllowed = false);
+    AddOutputFormatArg(std::string *pValue, bool bStreamAllowed = false,
+                       bool bGDALGAllowed = false);
 
     /** Add output data type argument. */
     GDALInConstructionAlgorithmArg &AddOutputDataTypeArg(std::string *pValue);
@@ -2226,6 +2278,28 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Validation function to use for key=value type of arguments. */
     bool ValidateKeyValue(const GDALAlgorithmArg &arg) const;
+
+    /** Return whether output-format or output arguments express GDALG output */
+    bool IsGDALGOutput() const;
+
+    /** Return value for ProcessGDALGOutput */
+    enum class ProcessGDALGOutputRet
+    {
+        /** GDALG output requested and successful. */
+        GDALG_OK,
+        /** GDALG output requested but an error has occurred. */
+        GDALG_ERROR,
+        /** GDALG output not requeste. RunImpl() must be run. */
+        NOT_GDALG,
+    };
+
+    /** Process output to a .gdalg file */
+    virtual ProcessGDALGOutputRet ProcessGDALGOutput();
+
+    /** Method executed by Run() when m_executionForStreamOutput is set to
+     * ensure the command is safe to execute in a streamed dataset context.
+     */
+    virtual bool CheckSafeForStreamOutput();
 
     //! @cond Doxygen_Suppress
     void AddAliasFor(GDALInConstructionAlgorithmArg *arg,
@@ -2265,13 +2339,14 @@ class CPL_DLL GDALAlgorithmRegistry
     bool m_JSONUsageRequested = false;
     bool m_dummyBoolean = false;  // Used for --version
     bool m_parseForAutoCompletion = false;
+    std::string m_referencePath{};
     std::vector<std::string> m_dummyConfigOptions{};
     std::vector<std::unique_ptr<GDALAlgorithmArg>> m_args{};
     std::map<std::string, GDALAlgorithmArg *> m_mapLongNameToArg{};
     std::map<std::string, GDALAlgorithmArg *> m_mapShortNameToArg{};
     std::vector<GDALAlgorithmArg *> m_positionalArgs{};
     GDALAlgorithmRegistry m_subAlgRegistry{};
-    std::unique_ptr<GDALAlgorithm> m_shortCutAlg{};
+    std::unique_ptr<GDALAlgorithm> m_selectedSubAlgHolder{};
     std::function<std::vector<std::string>(const std::vector<std::string> &)>
         m_autoCompleteFunction{};
 
@@ -2286,7 +2361,8 @@ class CPL_DLL GDALAlgorithmRegistry
                          std::vector<double>, std::vector<GDALArgDatasetValue>>>
             &inConstructionValues);
 
-    bool ValidateFormat(const GDALAlgorithmArg &arg, bool bStreamAllowed) const;
+    bool ValidateFormat(const GDALAlgorithmArg &arg, bool bStreamAllowed,
+                        bool bGDALGAllowed) const;
 
     virtual bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
 

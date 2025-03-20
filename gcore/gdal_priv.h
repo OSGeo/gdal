@@ -1144,6 +1144,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual std::shared_ptr<GDALGroup> GetRootGroup() const;
 
+    static std::string BuildFilename(const char *pszFilename,
+                                     const char *pszReferencePath,
+                                     bool bRelativeToReferencePath);
+
     //! @cond Doxygen_Suppress
     static int IsGenericSQLDialect(const char *pszDialect);
 
@@ -1155,6 +1159,12 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
                          const char *pszDialect,
                          swq_select_parse_options *poSelectParseOptions);
+
+    static constexpr const char *const apszSpecialSubDatasetSyntax[] = {
+        "NITF_IM:{ANY}:{FILENAME}", "PDF:{ANY}:{FILENAME}",
+        "RASTERLITE:{FILENAME},{ANY}", "TILEDB:\"{FILENAME}\":{ANY}",
+        "TILEDB:{FILENAME}:{ANY}"};
+
     //! @endcond
 
   protected:

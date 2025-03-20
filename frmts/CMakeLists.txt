@@ -135,7 +135,6 @@ gdal_optional_format(tga "TGA")
 gdal_optional_format(stacta "STACTA")
 gdal_optional_format(snap_tiff "SNAP TIFF")
 
-# optional Formats
 gdal_optional_format(bsb "Maptech/NOAA BSB Nautical Chart Format")
 gdal_dependent_format(aigrid "Arc/Info Binary Grid Format" "OGR_ENABLE_DRIVER_AVC")
 gdal_optional_format(usgsdem "USGS ASCII DEM (and CDED)")
@@ -148,6 +147,7 @@ gdal_optional_format(stacit "STACIT")
 gdal_optional_format(pdf "Geospatial PDF") # write only if none of GDAL_USE_POPPLER, GDAL_USE_PODOFO or GDAL_USE_PDFIUM
                                            # is set
 gdal_optional_format(rcm "Radarsat Constellation Mission")
+gdal_optional_format(gdalg "GDAL Streamed Algorithm Format")
 
 # formats with external library dependency
 gdal_dependent_format(png "PNG image format" "GDAL_USE_PNG OR GDAL_USE_PNG_INTERNAL")

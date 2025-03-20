@@ -31,8 +31,6 @@
 
 constexpr const char *GDAL_ARG_NAME_INPUT_FORMAT = "input-format";
 
-constexpr const char *GDAL_ARG_NAME_OUTPUT_FORMAT = "output-format";
-
 constexpr const char *GDAL_ARG_NAME_OUTPUT_DATA_TYPE = "output-data-type";
 
 constexpr const char *GDAL_ARG_NAME_OPEN_OPTION = "open-option";
@@ -550,6 +548,133 @@ bool GDALAlgorithmArg::RunValidationActions()
         if (!f())
             return false;
     }
+    return true;
+}
+
+/************************************************************************/
+/*                    GDALAlgorithmArg::Serialize()                     */
+/************************************************************************/
+
+bool GDALAlgorithmArg::Serialize(std::string &serializedArg) const
+{
+    serializedArg.clear();
+
+    if (!IsExplicitlySet())
+    {
+        return false;
+    }
+
+    std::string ret = "--";
+    ret += GetName();
+    if (GetType() == GAAT_BOOLEAN)
+    {
+        serializedArg = std::move(ret);
+        return true;
+    }
+
+    const auto AppendString = [&ret](const std::string &str)
+    {
+        if (str.find('"') != std::string::npos ||
+            str.find(' ') != std::string::npos ||
+            str.find('\\') != std::string::npos ||
+            str.find(',') != std::string::npos)
+        {
+            ret += '"';
+            ret +=
+                CPLString(str).replaceAll('\\', "\\\\").replaceAll('"', "\\\"");
+            ret += '"';
+        }
+        else
+        {
+            ret += str;
+        }
+    };
+
+    ret += ' ';
+    switch (GetType())
+    {
+        case GAAT_BOOLEAN:
+            break;
+        case GAAT_STRING:
+        {
+            const auto &val = Get<std::string>();
+            AppendString(val);
+            break;
+        }
+        case GAAT_INTEGER:
+        {
+            ret += CPLSPrintf("%d", Get<int>());
+            break;
+        }
+        case GAAT_REAL:
+        {
+            ret += CPLSPrintf("%.17g", Get<double>());
+            break;
+        }
+        case GAAT_DATASET:
+        {
+            const auto &val = Get<GDALArgDatasetValue>();
+            const auto &str = val.GetName();
+            if (str.empty())
+            {
+                return false;
+            }
+            AppendString(str);
+            break;
+        }
+        case GAAT_STRING_LIST:
+        {
+            const auto &vals = Get<std::vector<std::string>>();
+            for (size_t i = 0; i < vals.size(); ++i)
+            {
+                if (i > 0)
+                    ret += ',';
+                AppendString(vals[i]);
+            }
+            break;
+        }
+        case GAAT_INTEGER_LIST:
+        {
+            const auto &vals = Get<std::vector<int>>();
+            for (size_t i = 0; i < vals.size(); ++i)
+            {
+                if (i > 0)
+                    ret += ',';
+                ret += CPLSPrintf("%d", vals[i]);
+            }
+            break;
+        }
+        case GAAT_REAL_LIST:
+        {
+            const auto &vals = Get<std::vector<double>>();
+            for (size_t i = 0; i < vals.size(); ++i)
+            {
+                if (i > 0)
+                    ret += ',';
+                ret += CPLSPrintf("%.17g", vals[i]);
+            }
+            break;
+        }
+        case GAAT_DATASET_LIST:
+        {
+            const auto &vals = Get<std::vector<GDALArgDatasetValue>>();
+            for (size_t i = 0; i < vals.size(); ++i)
+            {
+                if (i > 0)
+                    ret += ',';
+                const auto &val = vals[i];
+                const auto &str = val.GetName();
+                if (str.empty())
+                {
+                    return false;
+                }
+                AppendString(str);
+            }
+            break;
+        }
+    }
+
+    serializedArg = std::move(ret);
     return true;
 }
 
@@ -1153,10 +1278,14 @@ bool GDALAlgorithm::ParseCommandLineArguments(
         }
         else
         {
-            m_shortCutAlg = InstantiateSubAlgorithm(args[0]);
-            if (m_shortCutAlg)
+            m_selectedSubAlgHolder = InstantiateSubAlgorithm(args[0]);
+            if (m_selectedSubAlgHolder)
             {
-                m_selectedSubAlg = m_shortCutAlg.get();
+                m_selectedSubAlg = m_selectedSubAlgHolder.get();
+                m_selectedSubAlg->SetReferencePathForRelativePaths(
+                    m_referencePath);
+                m_selectedSubAlg->m_executionForStreamOutput =
+                    m_executionForStreamOutput;
                 bool bRet = m_selectedSubAlg->ParseCommandLineArguments(
                     std::vector<std::string>(args.begin() + 1, args.end()));
                 m_selectedSubAlg->PropagateSpecialActionTo(this);
@@ -1312,6 +1441,8 @@ bool GDALAlgorithm::ParseCommandLineArguments(
         return true;
     };
 
+    // Process positional arguments that have not been set through their
+    // option name.
     size_t i = 0;
     size_t iCurPosArg = 0;
     while (i < lArgs.size() && iCurPosArg < m_positionalArgs.size())
@@ -1439,32 +1570,34 @@ bool GDALAlgorithm::ParseCommandLineArguments(
         ReportError(CE_Failure, CPLE_AppDefined,
                     "Positional values starting at '%s' are not expected.",
                     lArgs[i].c_str());
-        ProcessInConstructionValues();
         return false;
     }
+
+    if (!ProcessInConstructionValues())
+    {
+        return false;
+    }
+
+    // Skip to first unset positional argument.
+    while (iCurPosArg < m_positionalArgs.size() &&
+           m_positionalArgs[iCurPosArg]->IsExplicitlySet())
+    {
+        ++iCurPosArg;
+    }
+    // Check if this positional argument is required.
     if (iCurPosArg < m_positionalArgs.size() &&
         (GDALAlgorithmArgTypeIsList(m_positionalArgs[iCurPosArg]->GetType())
              ? m_positionalArgs[iCurPosArg]->GetMinCount() > 0
              : m_positionalArgs[iCurPosArg]->IsRequired()))
     {
-        while (iCurPosArg < m_positionalArgs.size() &&
-               m_positionalArgs[iCurPosArg]->IsExplicitlySet())
-        {
-            ++iCurPosArg;
-        }
-        if (iCurPosArg < m_positionalArgs.size())
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Positional arguments starting at '%s' have not been "
-                        "specified.",
-                        m_positionalArgs[iCurPosArg]->GetMetaVar().c_str());
-            ProcessInConstructionValues();
-            return false;
-        }
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Positional arguments starting at '%s' have not been "
+                    "specified.",
+                    m_positionalArgs[iCurPosArg]->GetMetaVar().c_str());
+        return false;
     }
 
-    return ProcessInConstructionValues() &&
-           (m_skipValidationInParseCommandLine || ValidateArguments());
+    return m_skipValidationInParseCommandLine || ValidateArguments();
 }
 
 /************************************************************************/
@@ -1499,7 +1632,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
     const auto updateArg = algForOutput->GetArg(GDAL_ARG_NAME_UPDATE);
     const bool update = (updateArg && updateArg->GetType() == GAAT_BOOLEAN &&
                          updateArg->Get<bool>());
-    const auto overwriteArg = algForOutput->GetArg("overwrite");
+    const auto overwriteArg = algForOutput->GetArg(GDAL_ARG_NAME_OVERWRITE);
     const bool overwrite =
         (arg->IsOutput() && overwriteArg &&
          overwriteArg->GetType() == GAAT_BOOLEAN && overwriteArg->Get<bool>());
@@ -1560,8 +1693,15 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                     CPLStringList(ifArg->Get<std::vector<std::string>>());
         }
 
+        std::string osDatasetName = val.GetName();
+        if (!m_referencePath.empty())
+        {
+            osDatasetName = GDALDataset::BuildFilename(
+                osDatasetName.c_str(), m_referencePath.c_str(), true);
+        }
+
         auto poDS =
-            GDALDataset::Open(val.GetName().c_str(), flags,
+            GDALDataset::Open(osDatasetName.c_str(), flags,
                               aosAllowedDrivers.List(), aosOpenOptions.List());
         if (poDS)
         {
@@ -2114,7 +2254,7 @@ GDALAlgorithm::AddOutputDatasetArg(GDALArgDatasetValue *pValue,
 
 GDALInConstructionAlgorithmArg &GDALAlgorithm::AddOverwriteArg(bool *pValue)
 {
-    return AddArg("overwrite", 0,
+    return AddArg(GDAL_ARG_NAME_OVERWRITE, 0,
                   _("Whether overwriting existing output is allowed"), pValue)
         .SetDefault(false);
 }
@@ -2355,14 +2495,18 @@ GDALAlgorithm::AddOpenOptionsArg(std::vector<std::string> *pValue)
 /************************************************************************/
 
 bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
-                                   bool bStreamAllowed) const
+                                   bool bStreamAllowed,
+                                   bool bGDALGAllowed) const
 {
     if (arg.GetChoices().empty())
     {
         const auto Validate =
-            [this, &arg, bStreamAllowed](const std::string &val)
+            [this, &arg, bStreamAllowed, bGDALGAllowed](const std::string &val)
         {
-            if (bStreamAllowed && val == "stream")
+            if (bStreamAllowed && EQUAL(val.c_str(), "stream"))
+                return true;
+
+            if (bGDALGAllowed && EQUAL(val.c_str(), "GDALG"))
                 return true;
 
             auto hDriver = GDALGetDriverByName(val.c_str());
@@ -2431,7 +2575,8 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
 /************************************************************************/
 
 static std::vector<std::string>
-FormatAutoCompleteFunction(const GDALAlgorithmArg &arg)
+FormatAutoCompleteFunction(const GDALAlgorithmArg &arg,
+                           bool /* bStreamAllowed */, bool bGDALGAllowed)
 {
     std::vector<std::string> res;
     auto poDM = GetGDALDriverManager();
@@ -2468,6 +2613,8 @@ FormatAutoCompleteFunction(const GDALAlgorithmArg &arg)
             }
         }
     }
+    if (bGDALGAllowed)
+        res.push_back("GDALG");
     return res;
 }
 
@@ -2483,9 +2630,10 @@ GDALAlgorithm::AddInputFormatsArg(std::vector<std::string> *pValue)
             .AddAlias("if")
             .SetCategory(GAAC_ADVANCED);
     arg.AddValidationAction([this, &arg]()
-                            { return ValidateFormat(arg, false); });
-    arg.SetAutoCompleteFunction([&arg](const std::string &)
-                                { return FormatAutoCompleteFunction(arg); });
+                            { return ValidateFormat(arg, false, false); });
+    arg.SetAutoCompleteFunction(
+        [&arg](const std::string &)
+        { return FormatAutoCompleteFunction(arg, false, false); });
     return arg;
 }
 
@@ -2494,18 +2642,23 @@ GDALAlgorithm::AddInputFormatsArg(std::vector<std::string> *pValue)
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
-GDALAlgorithm::AddOutputFormatArg(std::string *pValue, bool bStreamAllowed)
+GDALAlgorithm::AddOutputFormatArg(std::string *pValue, bool bStreamAllowed,
+                                  bool bGDALGAllowed)
 {
     auto &arg = AddArg(GDAL_ARG_NAME_OUTPUT_FORMAT, 'f',
-                       bStreamAllowed ? _("Output format (\"stream\" allowed)")
-                                      : _("Output format"),
+                       bGDALGAllowed ? _("Output format (\"GDALG\" allowed)")
+                                     : _("Output format"),
                        pValue)
                     .AddAlias("of")
                     .AddAlias("format");
-    arg.AddValidationAction([this, &arg, bStreamAllowed]()
-                            { return ValidateFormat(arg, bStreamAllowed); });
-    arg.SetAutoCompleteFunction([&arg](const std::string &)
-                                { return FormatAutoCompleteFunction(arg); });
+    arg.AddValidationAction(
+        [this, &arg, bStreamAllowed, bGDALGAllowed]()
+        { return ValidateFormat(arg, bStreamAllowed, bGDALGAllowed); });
+    arg.SetAutoCompleteFunction(
+        [&arg, bStreamAllowed, bGDALGAllowed](const std::string &) {
+            return FormatAutoCompleteFunction(arg, bStreamAllowed,
+                                              bGDALGAllowed);
+        });
     return arg;
 }
 
@@ -2593,6 +2746,113 @@ bool GDALAlgorithm::ValidateKeyValue(const GDALAlgorithmArg &arg) const
     }
 
     return true;
+}
+
+/************************************************************************/
+/*                             IsGDALGOutput()                          */
+/************************************************************************/
+
+bool GDALAlgorithm::IsGDALGOutput() const
+{
+    bool isGDALGOutput = false;
+    const auto outputFormatArg = GetArg(GDAL_ARG_NAME_OUTPUT_FORMAT);
+    const auto outputArg = GetArg(GDAL_ARG_NAME_OUTPUT);
+    if (outputArg && outputArg->GetType() == GAAT_DATASET &&
+        outputArg->IsExplicitlySet())
+    {
+        if (outputFormatArg && outputFormatArg->GetType() == GAAT_STRING &&
+            outputFormatArg->IsExplicitlySet())
+        {
+            const auto &val =
+                outputFormatArg->GDALAlgorithmArg::Get<std::string>();
+            isGDALGOutput = EQUAL(val.c_str(), "GDALG");
+        }
+        else
+        {
+            const auto &filename =
+                outputArg->GDALAlgorithmArg::Get<GDALArgDatasetValue>();
+            isGDALGOutput =
+                filename.GetName().size() > strlen(".gdalg.json") &&
+                EQUAL(filename.GetName().c_str() + filename.GetName().size() -
+                          strlen(".gdalg.json"),
+                      ".gdalg.json");
+        }
+    }
+    return isGDALGOutput;
+}
+
+/************************************************************************/
+/*                          ProcessGDALGOutput()                        */
+/************************************************************************/
+
+GDALAlgorithm::ProcessGDALGOutputRet GDALAlgorithm::ProcessGDALGOutput()
+{
+    if (!SupportsStreamedOutput())
+        return ProcessGDALGOutputRet::NOT_GDALG;
+
+    if (IsGDALGOutput())
+    {
+        const auto outputArg = GetArg(GDAL_ARG_NAME_OUTPUT);
+        const auto &filename =
+            outputArg->GDALAlgorithmArg::Get<GDALArgDatasetValue>().GetName();
+        VSIStatBufL sStat;
+        if (VSIStatL(filename.c_str(), &sStat) == 0)
+        {
+            const auto overwriteArg = GetArg(GDAL_ARG_NAME_OVERWRITE);
+            if (overwriteArg && overwriteArg->GetType() == GAAT_BOOLEAN)
+            {
+                if (!overwriteArg->GDALAlgorithmArg::Get<bool>())
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "File '%s' already exists. Specify the "
+                             "--overwrite option to overwrite it.",
+                             filename.c_str());
+                    return ProcessGDALGOutputRet::GDALG_ERROR;
+                }
+            }
+        }
+
+        std::string osCommandLine;
+
+        for (const auto &path : GDALAlgorithm::m_callPath)
+        {
+            if (!osCommandLine.empty())
+                osCommandLine += ' ';
+            osCommandLine += path;
+        }
+
+        for (const auto &arg : GetArgs())
+        {
+            if (arg->IsExplicitlySet() &&
+                arg->GetName() != GDAL_ARG_NAME_OUTPUT &&
+                arg->GetName() != GDAL_ARG_NAME_OUTPUT_FORMAT &&
+                arg->GetName() != GDAL_ARG_NAME_UPDATE &&
+                arg->GetName() != GDAL_ARG_NAME_OVERWRITE)
+            {
+                osCommandLine += ' ';
+                std::string strArg;
+                if (!arg->Serialize(strArg))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot serialize argument %s",
+                             arg->GetName().c_str());
+                    return ProcessGDALGOutputRet::GDALG_ERROR;
+                }
+                osCommandLine += strArg;
+            }
+        }
+
+        osCommandLine += " --output-format stream --output streamed_dataset";
+
+        CPLJSONDocument oDoc;
+        oDoc.GetRoot().Add("type", "gdal_streamed_alg");
+        oDoc.GetRoot().Add("command_line", osCommandLine);
+
+        return oDoc.Save(filename) ? ProcessGDALGOutputRet::GDALG_OK
+                                   : ProcessGDALGOutputRet::GDALG_ERROR;
+    }
+
+    return ProcessGDALGOutputRet::NOT_GDALG;
 }
 
 /************************************************************************/
@@ -2842,7 +3102,53 @@ bool GDALAlgorithm::Run(GDALProgressFunc pfnProgress, void *pProgressData)
         return true;
     }
 
-    return ValidateArguments() && RunImpl(pfnProgress, pProgressData);
+    if (!ValidateArguments())
+        return false;
+
+    switch (ProcessGDALGOutput())
+    {
+        case ProcessGDALGOutputRet::GDALG_ERROR:
+            return false;
+
+        case ProcessGDALGOutputRet::GDALG_OK:
+            return true;
+
+        case ProcessGDALGOutputRet::NOT_GDALG:
+            break;
+    }
+
+    if (m_executionForStreamOutput)
+    {
+        if (!CheckSafeForStreamOutput())
+        {
+            return false;
+        }
+    }
+
+    return RunImpl(pfnProgress, pProgressData);
+}
+
+/************************************************************************/
+/*              GDALAlgorithm::CheckSafeForStreamOutput()               */
+/************************************************************************/
+
+bool GDALAlgorithm::CheckSafeForStreamOutput()
+{
+    const auto outputFormatArg = GetArg(GDAL_ARG_NAME_OUTPUT_FORMAT);
+    if (outputFormatArg && outputFormatArg->GetType() == GAAT_STRING)
+    {
+        const auto &val = outputFormatArg->GDALAlgorithmArg::Get<std::string>();
+        if (!EQUAL(val.c_str(), "stream"))
+        {
+            // For security reasons, to avoid that reading a .gdalg.json file
+            // writes a file on the file system.
+            ReportError(
+                CE_Failure, CPLE_NotSupported,
+                "in streamed execution, --format stream should be used");
+            return false;
+        }
+    }
+    return true;
 }
 
 /************************************************************************/
@@ -3470,6 +3776,11 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
                 jArgs.Add(ProcessArg(arg.get()));
         }
         oRoot.Add("input_output_arguments", jArgs);
+    }
+
+    if (m_supportsStreamedOutput)
+    {
+        oRoot.Add("supports_streamed_output", true);
     }
 
     return oDoc.SaveAsString();

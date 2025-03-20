@@ -43,6 +43,8 @@ GDALVectorPipelineStepAlgorithm::GDALVectorPipelineStepAlgorithm(
 {
     if (m_standaloneStep)
     {
+        m_supportsStreamedOutput = true;
+
         AddInputArgs(false);
         AddProgressArg();
         AddOutputArgs(false, false);
@@ -77,7 +79,8 @@ void GDALVectorPipelineStepAlgorithm::AddInputArgs(bool hiddenForCLI)
 void GDALVectorPipelineStepAlgorithm::AddOutputArgs(
     bool hiddenForCLI, bool shortNameOutputLayerAllowed)
 {
-    AddOutputFormatArg(&m_format, true)
+    AddOutputFormatArg(&m_format, /* bStreamAllowed = */ true,
+                       /* bGDALGAllowed = */ true)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
                          {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE})
         .SetHiddenForCLI(hiddenForCLI);
@@ -139,6 +142,16 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
         }
 
+        if (m_executionForStreamOutput && !EQUAL(m_format.c_str(), "stream"))
+        {
+            // For security reasons, to avoid that reading a .gdalg.json file
+            // writes a file on the file system.
+            ReportError(CE_Failure, CPLE_NotSupported,
+                        "gdal vector pipeline in streamed execution should use "
+                        "--format stream");
+            return false;
+        }
+
         bool ret = false;
         if (readAlg.Run())
         {
@@ -173,6 +186,44 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
+/*                          ProcessGDALGOutput()                        */
+/************************************************************************/
+
+GDALAlgorithm::ProcessGDALGOutputRet
+GDALVectorPipelineStepAlgorithm::ProcessGDALGOutput()
+{
+    if (m_standaloneStep)
+    {
+        return GDALAlgorithm::ProcessGDALGOutput();
+    }
+    else
+    {
+        // GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep() might
+        // actually detect a GDALG output request and process it.
+        return GDALAlgorithm::ProcessGDALGOutputRet::NOT_GDALG;
+    }
+}
+
+/************************************************************************/
+/*      GDALVectorPipelineStepAlgorithm::CheckSafeForStreamOutput()     */
+/************************************************************************/
+
+bool GDALVectorPipelineStepAlgorithm::CheckSafeForStreamOutput()
+{
+    if (m_standaloneStep)
+    {
+        return GDALAlgorithm::CheckSafeForStreamOutput();
+    }
+    else
+    {
+        // The check is actually done in
+        // GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep()
+        // so return true for now.
+        return true;
+    }
+}
+
+/************************************************************************/
 /*        GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()    */
 /************************************************************************/
 
@@ -181,6 +232,8 @@ GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()
           NAME, DESCRIPTION, HELP_URL,
           /*standaloneStep=*/false)
 {
+    m_supportsStreamedOutput = true;
+
     AddInputArgs(/* hiddenForCLI = */ true);
     AddProgressArg();
     AddArg("pipeline", 0, _("Pipeline string"), &m_pipeline)
@@ -325,16 +378,18 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
             {
                 curStep.args.push_back("--dst-crs");
             }
-            else if (value == "to" && curStep.alg->GetName() == "write")
+            else if (value == "to" &&
+                     curStep.alg->GetName() == GDALVectorWriteAlgorithm::NAME)
             {
                 // do nothing
             }
-            else if (value == "with" && curStep.alg->GetName() == "write")
+            else if (value == "with" &&
+                     curStep.alg->GetName() == GDALVectorWriteAlgorithm::NAME)
             {
                 // do nothing
             }
             else if (value == "overwriting" &&
-                     curStep.alg->GetName() == "write")
+                     curStep.alg->GetName() == GDALVectorWriteAlgorithm::NAME)
             {
                 curStep.args.push_back("--overwrite");
             }
@@ -357,6 +412,18 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
     // the pipeline with a '!' separator.
     if (!steps.back().alg)
         steps.pop_back();
+
+    // Automatically add a final write step if none in m_executionForStreamOutput
+    // mode
+    if (m_executionForStreamOutput && !steps.empty() &&
+        steps.back().alg->GetName() != GDALVectorWriteAlgorithm::NAME)
+    {
+        steps.resize(steps.size() + 1);
+        steps.back().alg = GetStepAlg(GDALVectorWriteAlgorithm::NAME);
+        steps.back().args.push_back("--output-format");
+        steps.back().args.push_back("stream");
+        steps.back().args.push_back("streamed_dataset");
+    }
 
     if (steps.size() < 2)
     {
@@ -396,6 +463,12 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
                         GDALVectorWriteAlgorithm::NAME);
             return false;
         }
+    }
+
+    for (auto &step : steps)
+    {
+        step.alg->SetReferencePathForRelativePaths(
+            GetReferencePathForRelativePaths());
     }
 
     if (!m_pipeline.empty())
@@ -656,7 +729,9 @@ OGRLayer *GDALVectorPipelineOutputDataset::GetLayer(int idx)
 
 int GDALVectorPipelineOutputDataset::TestCapability(const char *pszCap)
 {
-    if (EQUAL(pszCap, ODsCRandomLayerRead))
+    if (EQUAL(pszCap, ODsCRandomLayerRead) ||
+        EQUAL(pszCap, OLCMeasuredGeometries) ||
+        EQUAL(pszCap, OLCCurveGeometries) || EQUAL(pszCap, OLCZGeometries))
     {
         return m_srcDS.TestCapability(pszCap);
     }

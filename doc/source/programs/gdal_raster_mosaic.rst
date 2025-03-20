@@ -117,6 +117,13 @@ The following options are available:
     dataset which doesn't report nodata value but is transparent in areas with no
     data.
 
+GDALG output (on-the-fly / streamed dataset)
+--------------------------------------------
+
+This program supports serializing the command line as a JSON file using the ``GDALG`` output format.
+The resulting file can then be opened as a raster dataset using the
+:ref:`raster.gdalg` driver, and apply the specified pipeline in a on-the-fly /
+streamed way.
 
 Examples
 --------

@@ -11,6 +11,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   BAG -raster,multidimensional raster,vector- (rw+v): Bathymetry Attributed Grid (*.bag)
   EEDA -vector- (ro): Earth Engine Data API
   OGCAPI -raster,vector- (rov): OGCAPI
+  GDALG -raster,vector- (rov): GDAL Streamed Algorithm driver (*.gdalg.json)
   ESRI Shapefile -vector- (rw+uv): ESRI Shapefile (*.shp, *.dbf, *.shz, *.shp.zip)
   MapInfo File -vector- (rw+uv): MapInfo File (*.tab, *.mif, *.mid)
   LVBAG -vector- (rov): Kadaster LV BAG Extract 2.0 (*.xml)

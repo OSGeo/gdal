@@ -160,6 +160,94 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
             return false;
     }
 
+    // Handle output to GDALG file
+    if (!m_steps.empty() && m_steps.back()->GetName() == "write")
+    {
+        if (m_steps.back()->IsGDALGOutput())
+        {
+            const auto outputArg = m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT);
+            const auto &filename =
+                outputArg->GDALAlgorithmArg::template Get<GDALArgDatasetValue>()
+                    .GetName();
+            VSIStatBufL sStat;
+            if (VSIStatL(filename.c_str(), &sStat) == 0)
+            {
+                const auto overwriteArg =
+                    m_steps.back()->GetArg(GDAL_ARG_NAME_OVERWRITE);
+                if (overwriteArg && overwriteArg->GetType() == GAAT_BOOLEAN)
+                {
+                    if (!overwriteArg->GDALAlgorithmArg::template Get<bool>())
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "File '%s' already exists. Specify the "
+                                 "--overwrite option to overwrite it.",
+                                 filename.c_str());
+                        return false;
+                    }
+                }
+            }
+
+            std::string osCommandLine;
+
+            for (const auto &path : GDALAlgorithm::m_callPath)
+            {
+                if (!osCommandLine.empty())
+                    osCommandLine += ' ';
+                osCommandLine += path;
+            }
+
+            // Do not include the last step
+            for (size_t i = 0; i + 1 < m_steps.size(); ++i)
+            {
+                const auto &step = m_steps[i];
+                if (i > 0)
+                    osCommandLine += " !";
+                osCommandLine += ' ';
+                osCommandLine += step->GetName();
+
+                for (const auto &arg : step->GetArgs())
+                {
+                    if (arg->IsExplicitlySet())
+                    {
+                        osCommandLine += ' ';
+                        std::string strArg;
+                        if (!arg->Serialize(strArg))
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Cannot serialize argument %s",
+                                     arg->GetName().c_str());
+                            return false;
+                        }
+                        osCommandLine += strArg;
+                    }
+                }
+            }
+
+            CPLJSONDocument oDoc;
+            oDoc.GetRoot().Add("type", "gdal_streamed_alg");
+            oDoc.GetRoot().Add("command_line", osCommandLine);
+
+            return oDoc.Save(filename);
+        }
+    }
+
+    if (GDALAlgorithm::m_executionForStreamOutput)
+    {
+        // For security reasons, to avoid that reading a .gdalg.json file writes
+        // a file on the file system.
+        for (const auto &step : m_steps)
+        {
+            if (step->GetName() == "write" &&
+                !EQUAL(step->m_format.c_str(), "stream"))
+            {
+                StepAlgorithm::ReportError(CE_Failure, CPLE_AppDefined,
+                                           "in streamed execution, --format "
+                                           "stream should be used");
+                return false;
+            }
+        }
+    }
+
     GDALDataset *poCurDS = nullptr;
     for (size_t i = 0; i < m_steps.size(); ++i)
     {
