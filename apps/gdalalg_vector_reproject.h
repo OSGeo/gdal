@@ -40,6 +40,7 @@ class GDALVectorReprojectAlgorithm /* non final */
   private:
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
+    std::string m_activeLayer{};
     std::string m_srsCrs{};
     std::string m_dstCrs{};
 };

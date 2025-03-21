@@ -19,39 +19,40 @@ Synopsis
 
 A pipeline chains several steps, separated with the `!` (quotation mark) character.
 The first step must be ``read``, and the last one ``write``. Each step has its
-own positional or non-positional arguments.
+own positional or non-positional arguments. Apart from ``read`` and ``write``,
+all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:
 
-* read [OPTIONS] <INPUT>
+* read
 
 .. program-output:: gdal raster pipeline --help-doc=read
 
-* clip [OPTIONS]
+* clip
 
 .. program-output:: gdal raster pipeline --help-doc=clip
 
 Details for options can be found in :ref:`gdal_raster_clip_subcommand`.
 
-* edit [OPTIONS]
+* edit
 
 .. program-output:: gdal raster pipeline --help-doc=edit
 
 Details for options can be found in :ref:`gdal_raster_edit_subcommand`.
 
-* reproject [OPTIONS]
+* reproject
 
 .. program-output:: gdal raster pipeline --help-doc=reproject
 
 Details for options can be found in :ref:`gdal_raster_reproject_subcommand`.
 
-* resize [OPTIONS]
+* resize
 
 .. program-output:: gdal raster pipeline --help-doc=resize
 
 Details for options can be found in :ref:`gdal_raster_resize_subcommand`.
 
-* write [OPTIONS] <OUTPUT>
+* write
 
 .. program-output:: gdal raster pipeline --help-doc=write
 

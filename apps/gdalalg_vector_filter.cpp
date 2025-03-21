@@ -32,6 +32,7 @@ GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
+    AddActiveLayerArg(&m_activeLayer);
     AddBBOXArg(&m_bbox);
     AddArg("where", 0,
            _("Attribute query in a restricted form of the queries used in the "
@@ -66,7 +67,8 @@ bool GDALVectorFilterAlgorithm::RunStep(GDALProgressFunc, void *)
         {
             auto poSrcLayer = poSrcDS->GetLayer(i);
             ret = ret && (poSrcLayer != nullptr);
-            if (poSrcLayer)
+            if (poSrcLayer && (m_activeLayer.empty() ||
+                               m_activeLayer == poSrcLayer->GetDescription()))
                 poSrcLayer->SetSpatialFilterRect(xmin, ymin, xmax, ymax);
         }
     }
@@ -77,9 +79,12 @@ bool GDALVectorFilterAlgorithm::RunStep(GDALProgressFunc, void *)
         {
             auto poSrcLayer = poSrcDS->GetLayer(i);
             ret = ret && (poSrcLayer != nullptr);
-            if (ret)
+            if (ret && (m_activeLayer.empty() ||
+                        m_activeLayer == poSrcLayer->GetDescription()))
+            {
                 ret = poSrcLayer->SetAttributeFilter(m_where.c_str()) ==
                       OGRERR_NONE;
+            }
         }
     }
 

@@ -212,3 +212,32 @@ def test_gdalalg_vector_select_fields_exclude_name_geom_fields_not_excluded(tmp_
             lyr_defn.GetFieldDefn(i).GetName() for i in range(lyr_defn.GetFieldCount())
         ] == ["AREA", "EAS_ID", "PRFEDEA"]
         assert lyr_defn.GetGeomFieldCount() == 1
+
+
+def test_gdalalg_vector_select_active_layer():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("the_layer")
+    src_lyr.CreateField(ogr.FieldDefn("a"))
+    src_lyr.CreateField(ogr.FieldDefn("b"))
+    src_lyr.CreateField(ogr.FieldDefn("c"))
+
+    src_lyr = src_ds.CreateLayer("other_layer")
+    src_lyr.CreateField(ogr.FieldDefn("b"))
+    src_lyr.CreateField(ogr.FieldDefn("c"))
+
+    select_alg = get_select_alg()
+    select_alg["input"] = src_ds
+    select_alg["active-layer"] = "the_layer"
+
+    assert select_alg.ParseCommandLineArguments(
+        ["--fields=b", "--of", "Memory", "--output", "memory_ds"]
+    )
+    assert select_alg.Run()
+
+    out_ds = select_alg["output"].GetDataset()
+    out_lyr = out_ds.GetLayer(0)
+    assert out_lyr.GetLayerDefn().GetFieldCount() == 1
+
+    out_lyr = out_ds.GetLayer(1)
+    assert out_lyr.GetLayerDefn().GetFieldCount() == 2
