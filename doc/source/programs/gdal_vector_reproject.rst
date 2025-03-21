@@ -32,6 +32,8 @@ Standard options
 
 .. include:: gdal_options/overwrite.rst
 
+.. include:: gdal_options/active_layer.rst
+
 .. option:: --update
 
     Whether the output dataset must be opened in update mode. Implies that

@@ -32,6 +32,7 @@ GDALVectorClipAlgorithm::GDALVectorClipAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
+    AddActiveLayerArg(&m_activeLayer);
     AddBBOXArg(&m_bbox, _("Clipping bounding box as xmin,ymin,xmax,ymax"))
         .SetMutualExclusionGroup("bbox-geometry-like");
     AddArg("bbox-crs", 0, _("CRS of clipping bounding box"), &m_bboxCrs)
@@ -60,7 +61,7 @@ GDALVectorClipAlgorithm::GDALVectorClipAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                   GDALVectorClipAlgorithmDataset                     */
+/*                   GDALVectorClipAlgorithmLayer                       */
 /************************************************************************/
 
 namespace
@@ -78,6 +79,7 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
               m_eFlattenSrcLayerGeomType, wkbGeometryCollection))
     {
         SetDescription(oSrcLayer.GetDescription());
+        SetMetadata(oSrcLayer.GetMetadata());
         oSrcLayer.SetSpatialFilter(m_poClipGeom.get());
     }
 
@@ -256,7 +258,10 @@ bool GDALVectorClipAlgorithm::RunStep(GDALProgressFunc, void *)
     for (int i = 0; i < nLayerCount; ++i)
     {
         auto poSrcLayer = poSrcDS->GetLayer(i);
-        if (poSrcLayer && poSrcLayer->GetSpatialRef())
+        if (poSrcLayer &&
+            (m_activeLayer.empty() ||
+             m_activeLayer == poSrcLayer->GetDescription()) &&
+            poSrcLayer->GetSpatialRef())
         {
             bSrcLayerHasSRS = true;
             break;
@@ -407,20 +412,31 @@ bool GDALVectorClipAlgorithm::RunStep(GDALProgressFunc, void *)
         ret = (poSrcLayer != nullptr);
         if (ret)
         {
-            auto poClipGeomForLayer =
-                std::unique_ptr<OGRGeometry>(poClipGeom->clone());
-            if (poClipGeomForLayer->getSpatialReference() &&
-                poSrcLayer->GetSpatialRef())
+            if (m_activeLayer.empty() ||
+                m_activeLayer == poSrcLayer->GetDescription())
             {
-                ret = poClipGeomForLayer->transformTo(
-                          poSrcLayer->GetSpatialRef()) == OGRERR_NONE;
+                auto poClipGeomForLayer =
+                    std::unique_ptr<OGRGeometry>(poClipGeom->clone());
+                if (poClipGeomForLayer->getSpatialReference() &&
+                    poSrcLayer->GetSpatialRef())
+                {
+                    ret = poClipGeomForLayer->transformTo(
+                              poSrcLayer->GetSpatialRef()) == OGRERR_NONE;
+                }
+                if (ret)
+                {
+                    outDS->AddLayer(
+                        *poSrcLayer,
+                        std::make_unique<GDALVectorClipAlgorithmLayer>(
+                            *poSrcLayer, std::move(poClipGeomForLayer)));
+                }
             }
-            if (ret)
+            else
             {
                 outDS->AddLayer(
                     *poSrcLayer,
-                    std::make_unique<GDALVectorClipAlgorithmLayer>(
-                        *poSrcLayer, std::move(poClipGeomForLayer)));
+                    std::make_unique<GDALVectorPipelinePassthroughLayer>(
+                        *poSrcLayer));
             }
         }
     }

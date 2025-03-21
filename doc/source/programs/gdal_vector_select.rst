@@ -33,6 +33,8 @@ Standard options
 
 .. include:: gdal_options/overwrite.rst
 
+.. include:: gdal_options/active_layer.rst
+
 .. option:: --fields <FIELDS>
 
     Comma-separated list of fields from input layer to copy to the new layer
