@@ -2427,6 +2427,9 @@ const char CPL_DLL *GDALGroupGetFullName(GDALGroupH hGroup);
 char CPL_DLL **
 GDALGroupGetMDArrayNames(GDALGroupH hGroup,
                          CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+char CPL_DLL **GDALGroupGetMDArrayFullNamesRecursive(
+    GDALGroupH hGroup, CSLConstList papszGroupOptions,
+    CSLConstList papszArrayOptions) CPL_WARN_UNUSED_RESULT;
 GDALMDArrayH CPL_DLL
 GDALGroupOpenMDArray(GDALGroupH hGroup, const char *pszMDArrayName,
                      CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;

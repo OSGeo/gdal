@@ -3092,6 +3092,10 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     OpenMDArray(const std::string &osName,
                 CSLConstList papszOptions = nullptr) const;
 
+    std::vector<std::string> GetMDArrayFullNamesRecursive(
+        CSLConstList papszGroupOptions = nullptr,
+        CSLConstList papszArrayOptions = nullptr) const;
+
     virtual std::vector<std::string>
     GetGroupNames(CSLConstList papszOptions = nullptr) const;
     virtual std::shared_ptr<GDALGroup>
