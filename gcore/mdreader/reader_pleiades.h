@@ -40,7 +40,7 @@ class CPL_DLL GDALMDReaderPleiades : public GDALMDReaderBase
     static GDALMDReaderPleiades *
     CreateReaderForRPC(const char *pszRPCSourceFilename);
 
-    char **LoadRPCXmlFile();
+    char **LoadRPCXmlFile(const CPLXMLNode *psDIMRootNode = nullptr);
 
   protected:
     virtual void LoadMetadata() override;
