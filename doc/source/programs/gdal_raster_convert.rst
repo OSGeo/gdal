@@ -15,32 +15,7 @@
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal raster convert [OPTIONS] <INPUT> <OUTPUT>
-
-    Convert a raster dataset.
-
-    Positional arguments:
-      -i, --input <INPUT>                                  Input raster dataset [required]
-      -o, --output <OUTPUT>                                Output raster dataset (created by algorithm) [required]
-
-    Common Options:
-      -h, --help                                           Display help message and exit
-      --json-usage                                         Display usage as JSON document and exit
-      --progress                                           Display progress bar
-
-    Options:
-      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format
-      --co, --creation-option <KEY>=<VALUE>                Creation option [may be repeated]
-      --overwrite                                          Whether overwriting existing output is allowed
-                                                           Mutually exclusive with --append
-      --append                                             Append as a subdataset to existing output
-                                                           Mutually exclusive with --overwrite
-
-    Advanced Options:
-      --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
-      --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
+.. program-output:: gdal raster convert --help-doc
 
 Description
 -----------
