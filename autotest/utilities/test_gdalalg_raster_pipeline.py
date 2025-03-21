@@ -537,6 +537,33 @@ def test_gdalalg_raster_pipeline_reproject_almost_all_args(tmp_vsimem):
         assert ds.GetRasterBand(1).Checksum() == 8515
 
 
+def test_gdalalg_raster_pipeline_reproject_proj_string(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    pipeline = get_pipeline_alg()
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            "../gcore/data/byte.tif",
+            "!",
+            "reproject",
+            "--src-crs=EPSG:32611",
+            "--dst-crs",
+            "+proj=laea +lon_0=147 +lat_0=-40 +datum=WGS84",
+            "!",
+            "write",
+            "--overwrite",
+            out_filename,
+        ]
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert "Lambert Azimuthal Equal Area" in ds.GetSpatialRef().ExportToWkt(
+            ["FORMAT=WKT2"]
+        ), ds.GetSpatialRef().ExportToWkt(["FORMAT=WKT2"])
+
+
 def test_gdalalg_raster_pipeline_clip_missing_bbox_or_like(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.tif")

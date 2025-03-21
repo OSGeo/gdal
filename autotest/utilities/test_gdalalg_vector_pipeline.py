@@ -762,3 +762,31 @@ def test_gdalalg_vector_pipeline_reproject_with_src_crs(tmp_vsimem):
         assert f.GetGeometryRef().GetEnvelope() == pytest.approx(
             (2.750130423614134, 2.759262932833617, 43.0361359661472, 43.0429263707128)
         )
+
+
+def test_gdalalg_vector_pipeline_reproject_proj_string(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.shp")
+
+    pipeline = get_pipeline_alg()
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            "../ogr/data/poly.shp",
+            "!",
+            "reproject",
+            "--src-crs=EPSG:32631",
+            "--dst-crs",
+            "+proj=laea +lon_0=147 +lat_0=-40 +datum=WGS84",
+            "!",
+            "write",
+            "--overwrite",
+            out_filename,
+        ]
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        lyr = ds.GetLayer(0)
+        assert "Lambert Azimuthal Equal Area" in lyr.GetSpatialRef().ExportToWkt(
+            ["FORMAT=WKT2"]
+        ), lyr.GetSpatialRef().ExportToWkt(["FORMAT=WKT2"])

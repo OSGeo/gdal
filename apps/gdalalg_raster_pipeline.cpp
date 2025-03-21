@@ -330,7 +330,8 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
         else
         {
 #ifdef GDAL_PIPELINE_PROJ_NOSTALGIA
-            if (!arg.empty() && arg[0] == '+')
+            if (!arg.empty() && arg[0] == '+' &&
+                arg.find(' ') == std::string::npos)
             {
                 curStep.args.push_back("--" + arg.substr(1));
                 continue;
