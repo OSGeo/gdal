@@ -3698,7 +3698,7 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
                 if (val.GetType() & GDAL_OF_VECTOR)
                     jAr.Add("vector");
                 if (val.GetType() & GDAL_OF_MULTIDIM_RASTER)
-                    jAr.Add("muldim_raster");
+                    jAr.Add("multidim_raster");
                 jArg.Add("dataset_type", jAr);
             }
 
