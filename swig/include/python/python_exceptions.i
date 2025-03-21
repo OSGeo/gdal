@@ -358,6 +358,11 @@ static void popErrorHandler()
 
 %pythoncode %{
 
+import importlib.util
+
+def _has_gdal_array():
+    return importlib.util.find_spec("osgeo.gdal_array") and importlib.util.find_spec("numpy")
+
 def UseExceptions():
     """ Enable exceptions in all GDAL related modules (osgeo.gdal, osgeo.ogr, osgeo.osr, osgeo.gnm).
         Note: prior to GDAL 3.7, this only affected the calling module"""
@@ -367,21 +372,25 @@ def UseExceptions():
         gdal._UseExceptions()
     except ImportError:
         pass
-    try:
-        from . import gdal_array
-        gdal_array._UseExceptions()
-    except ImportError:
-        pass
+
+    if _has_gdal_array():
+        try:
+            from . import gdal_array
+            gdal_array._UseExceptions()
+        except ImportError:
+            pass
     try:
         from . import ogr
         ogr._UseExceptions()
     except ImportError:
         pass
+
     try:
         from . import osr
         osr._UseExceptions()
     except ImportError:
         pass
+
     try:
         from . import gnm
         gnm._UseExceptions()
@@ -397,21 +406,26 @@ def DontUseExceptions():
         gdal._DontUseExceptions()
     except ImportError:
         pass
-    try:
-        from . import gdal_array
-        gdal_array._DontUseExceptions()
-    except ImportError:
-        pass
+
+    if _has_gdal_array():
+        try:
+            from . import gdal_array
+            gdal_array._DontUseExceptions()
+        except ImportError:
+            pass
+
     try:
         from . import ogr
         ogr._DontUseExceptions()
     except ImportError:
         pass
+
     try:
         from . import osr
         osr._DontUseExceptions()
     except ImportError:
         pass
+
     try:
         from . import gnm
         gnm._DontUseExceptions()
