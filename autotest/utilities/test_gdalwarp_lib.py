@@ -4330,3 +4330,21 @@ def test_gdalwarp_lib_src_is_geog_arc_second():
     assert out_ds.RasterXSize == 5464
     assert out_ds.RasterYSize == 5464
     assert out_ds.GetRasterBand(1).Checksum() == 31856
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/11992
+
+
+def test_gdalwarp_lib_init_dest_no_source_window_mem():
+
+    # Extract a target area that is in space.
+    with gdal.quiet_errors():
+        ds = gdal.Warp(
+            "",
+            "../gdrivers/data/small_world.tif",
+            options="-t_srs +proj=ortho -overwrite -te -6378137 6356000 -6378000 6356752 -ts 100 100 -of MEM -dstnodata 255",
+        )
+    assert ds.GetRasterBand(1).GetNoDataValue() == 255
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (255, 255)
