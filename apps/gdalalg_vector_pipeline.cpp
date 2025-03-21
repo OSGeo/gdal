@@ -13,6 +13,7 @@
 #include "gdalalg_vector_pipeline.h"
 #include "gdalalg_vector_read.h"
 #include "gdalalg_vector_clip.h"
+#include "gdalalg_vector_edit.h"
 #include "gdalalg_vector_filter.h"
 #include "gdalalg_vector_reproject.h"
 #include "gdalalg_vector_select.h"
@@ -245,6 +246,7 @@ GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()
     m_stepRegistry.Register<GDALVectorReadAlgorithm>();
     m_stepRegistry.Register<GDALVectorWriteAlgorithm>();
     m_stepRegistry.Register<GDALVectorClipAlgorithm>();
+    m_stepRegistry.Register<GDALVectorEditAlgorithm>();
     m_stepRegistry.Register<GDALVectorReprojectAlgorithm>();
     m_stepRegistry.Register<GDALVectorFilterAlgorithm>();
     m_stepRegistry.Register<GDALVectorSelectAlgorithm>();
@@ -689,6 +691,7 @@ GDALVectorPipelineOutputDataset::GDALVectorPipelineOutputDataset(
     : m_srcDS(srcDS)
 {
     SetDescription(m_srcDS.GetDescription());
+    SetMetadata(m_srcDS.GetMetadata());
 }
 
 /************************************************************************/

@@ -31,6 +31,7 @@ GDALVectorReprojectAlgorithm::GDALVectorReprojectAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
+    AddActiveLayerArg(&m_activeLayer);
     AddArg("src-crs", 's', _("Source CRS"), &m_srsCrs)
         .SetIsCRSArg()
         .AddHiddenAlias("s_srs");
@@ -75,30 +76,44 @@ bool GDALVectorReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
         ret = (poSrcLayer != nullptr);
         if (ret)
         {
-            OGRSpatialReference *poSrcLayerCRS;
-            if (poSrcCRS)
-                poSrcLayerCRS = poSrcCRS.get();
-            else
-                poSrcLayerCRS = poSrcLayer->GetSpatialRef();
-            if (!poSrcLayerCRS)
+            if (m_activeLayer.empty() ||
+                m_activeLayer == poSrcLayer->GetDescription())
             {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Layer '%s' has no spatial reference system",
-                            poSrcLayer->GetName());
-                return false;
+                OGRSpatialReference *poSrcLayerCRS;
+                if (poSrcCRS)
+                    poSrcLayerCRS = poSrcCRS.get();
+                else
+                    poSrcLayerCRS = poSrcLayer->GetSpatialRef();
+                if (!poSrcLayerCRS)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Layer '%s' has no spatial reference system",
+                                poSrcLayer->GetName());
+                    return false;
+                }
+                auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+                    OGRCreateCoordinateTransformation(poSrcLayerCRS, &oDstCRS));
+                auto poReversedCT =
+                    std::unique_ptr<OGRCoordinateTransformation>(
+                        OGRCreateCoordinateTransformation(&oDstCRS,
+                                                          poSrcLayerCRS));
+                ret = (poCT != nullptr) && (poReversedCT != nullptr);
+                if (ret)
+                {
+                    reprojectedDataset->AddLayer(
+                        *poSrcLayer,
+                        std::make_unique<OGRWarpedLayer>(
+                            poSrcLayer, /* iGeomField = */ 0,
+                            /*bTakeOwnership = */ false, poCT.release(),
+                            poReversedCT.release()));
+                }
             }
-            auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
-                OGRCreateCoordinateTransformation(poSrcLayerCRS, &oDstCRS));
-            auto poReversedCT = std::unique_ptr<OGRCoordinateTransformation>(
-                OGRCreateCoordinateTransformation(&oDstCRS, poSrcLayerCRS));
-            ret = (poCT != nullptr) && (poReversedCT != nullptr);
-            if (ret)
+            else
             {
                 reprojectedDataset->AddLayer(
-                    *poSrcLayer, std::make_unique<OGRWarpedLayer>(
-                                     poSrcLayer, /* iGeomField = */ 0,
-                                     /*bTakeOwnership = */ false,
-                                     poCT.release(), poReversedCT.release()));
+                    *poSrcLayer,
+                    std::make_unique<GDALVectorPipelinePassthroughLayer>(
+                        *poSrcLayer));
             }
         }
     }

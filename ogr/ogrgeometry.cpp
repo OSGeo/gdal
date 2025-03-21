@@ -2540,7 +2540,7 @@ int OGR_G_IsRing(OGRGeometryH hGeom)
 /*                     OGRFromOGCGeomType()                             */
 /************************************************************************/
 
-/** Map OGCgeometry format type to corresponding OGR constants.
+/** Map OGC geometry format type to corresponding OGR constants.
  * @param pszGeomType POINT[ ][Z][M], LINESTRING[ ][Z][M], etc...
  * @return OGR constant.
  */

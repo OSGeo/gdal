@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "clip" step of "vector pipeline", or "gdal vector clip" standalone
+ * Purpose:  "edit" step of "vector pipeline"
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,59 +10,58 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_VECTOR_CLIP_INCLUDED
-#define GDALALG_VECTOR_CLIP_INCLUDED
+#ifndef GDALALG_RASTER_EDIT_INCLUDED
+#define GDALALG_RASTER_EDIT_INCLUDED
 
 #include "gdalalg_vector_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                       GDALVectorClipAlgorithm                        */
+/*                       GDALVectorEditAlgorithm                        */
 /************************************************************************/
 
-class GDALVectorClipAlgorithm /* non final */
+class GDALVectorEditAlgorithm /* non final */
     : public GDALVectorPipelineStepAlgorithm
 {
   public:
-    static constexpr const char *NAME = "clip";
-    static constexpr const char *DESCRIPTION = "Clip a vector dataset.";
-    static constexpr const char *HELP_URL = "/programs/gdal_vector_clip.html";
+    static constexpr const char *NAME = "edit";
+    static constexpr const char *DESCRIPTION =
+        "Edit metadata of a vector dataset.";
+    static constexpr const char *HELP_URL = "/programs/gdal_vector_edit.html";
 
     static std::vector<std::string> GetAliases()
     {
         return {};
     }
 
-    explicit GDALVectorClipAlgorithm(bool standaloneStep = false);
+    explicit GDALVectorEditAlgorithm(bool standaloneStep = false);
 
   private:
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     std::string m_activeLayer{};
-    std::vector<double> m_bbox{};
-    std::string m_bboxCrs{};
-    std::string m_geometry{};
-    std::string m_geometryCrs{};
-    GDALArgDatasetValue m_likeDataset{};
-    std::string m_likeLayer{};
-    std::string m_likeSQL{};
-    std::string m_likeWhere{};
+    std::string m_overrideCrs{};
+    std::string m_geometryType{};
+    std::vector<std::string> m_metadata{};
+    std::vector<std::string> m_unsetMetadata{};
+    std::vector<std::string> m_layerMetadata{};
+    std::vector<std::string> m_unsetLayerMetadata{};
 };
 
 /************************************************************************/
-/*                   GDALVectorClipAlgorithmStandalone                  */
+/*                   GDALVectorEditAlgorithmStandalone                  */
 /************************************************************************/
 
-class GDALVectorClipAlgorithmStandalone final : public GDALVectorClipAlgorithm
+class GDALVectorEditAlgorithmStandalone final : public GDALVectorEditAlgorithm
 {
   public:
-    GDALVectorClipAlgorithmStandalone()
-        : GDALVectorClipAlgorithm(/* standaloneStep = */ true)
+    GDALVectorEditAlgorithmStandalone()
+        : GDALVectorEditAlgorithm(/* standaloneStep = */ true)
     {
     }
 };
 
 //! @endcond
 
-#endif /* GDALALG_VECTOR_CLIP_INCLUDED */
+#endif /* GDALALG_RASTER_EDIT_INCLUDED */

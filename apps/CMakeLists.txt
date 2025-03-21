@@ -34,6 +34,7 @@ add_library(
   gdalalg_vector_info.cpp
   gdalalg_vector_clip.cpp
   gdalalg_vector_convert.cpp
+  gdalalg_vector_edit.cpp
   gdalalg_vector_pipeline.cpp
   gdalalg_vector_rasterize.cpp
   gdalalg_vector_read.cpp

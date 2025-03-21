@@ -364,6 +364,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_edit",
+        "gdal-vector-edit",
+        "Edit metadata of a vetor dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector_filter",
         "gdal-vector-filter",
         "Filter a vector dataset",

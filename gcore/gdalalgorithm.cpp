@@ -3101,6 +3101,17 @@ GDALAlgorithm::AddBBOXArg(std::vector<double> *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
+/*                  GDALAlgorithm::AddActiveLayerArg()                  */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddActiveLayerArg(std::string *pValue)
+{
+    return AddArg("active-layer", 0,
+                  _("Set active layer (if not specified, all)"), pValue);
+}
+
+/************************************************************************/
 /*                  GDALAlgorithm::AddProgressArg()                     */
 /************************************************************************/
 
@@ -3837,7 +3848,7 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
         // List available options
         for (const auto &arg : GetArgs())
         {
-            if (arg->IsHiddenForCLI() ||
+            if (arg->IsHidden() || arg->IsHiddenForCLI() ||
                 (!showAllOptions &&
                  (arg->GetName() == "help" || arg->GetName() == "drivers" ||
                   arg->GetName() == "config" || arg->GetName() == "version" ||
