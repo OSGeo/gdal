@@ -54,13 +54,13 @@ GDALRasterStackAlgorithm::GDALRasterStackAlgorithm()
                    _("Target resolution (in destination CRS units)"),
                    &m_resolution)
                 .SetDefault("same")
-                .SetMetaVar("<xres>,<yres>|same|average|highest|lowest");
+                .SetMetaVar("<xres>,<yres>|same|average|common|highest|lowest");
         arg.AddValidationAction(
             [this, &arg]()
             {
                 const std::string val = arg.Get<std::string>();
                 if (val != "average" && val != "highest" && val != "lowest" &&
-                    val != "same")
+                    val != "same" && val != "common")
                 {
                     const auto aosTokens =
                         CPLStringList(CSLTokenizeString2(val.c_str(), ",", 0));
@@ -70,10 +70,11 @@ GDALRasterStackAlgorithm::GDALRasterStackAlgorithm()
                         CPLAtof(aosTokens[0]) <= 0 ||
                         CPLAtof(aosTokens[1]) <= 0)
                     {
-                        ReportError(CE_Failure, CPLE_AppDefined,
-                                    "resolution: two comma separated positive "
-                                    "values should be provided, or 'same', "
-                                    "'average', 'highest' or 'lowest'");
+                        ReportError(
+                            CE_Failure, CPLE_AppDefined,
+                            "resolution: two comma-separated positive "
+                            "values should be provided, or 'same', "
+                            "'average', 'common', 'highest' or 'lowest'");
                         return false;
                     }
                 }

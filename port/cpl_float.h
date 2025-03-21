@@ -76,7 +76,7 @@ namespace cpl
 {
 
 // We define our own version of `std::numeric_limits` so that we can
-// specialized it for `cpl::Float16` if necessary. Specializing
+// specialize it for `cpl::Float16` if necessary. Specializing
 // `std::numeric_limits` doesn't always work because some libraries
 // use `std::numeric_limits`, and one cannot specialize a type
 // template after it has been used.
@@ -692,5 +692,7 @@ template <typename T> constexpr int CPLIsFinite(T x)
 }
 
 #endif  // #ifdef __cplusplus
+
+double CPL_DLL CPLGreatestCommonDivisor(double x, double y);
 
 #endif  // CPL_FLOAT_H_INCLUDED

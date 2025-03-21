@@ -21,6 +21,7 @@
 
 #include "cpl_compressor.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_hash_set.h"
 #include "cpl_list.h"
 #include "cpl_mask.h"
@@ -5761,6 +5762,38 @@ TEST_F(test_cpl, VSIGlob)
     VSIUnlink(osFilenameWithSpecialChars.c_str());
     VSIUnlink(osFilename2.c_str());
     VSIUnlink(osFilenameRadix.c_str());
+}
+
+TEST_F(test_cpl, CPLGreatestCommonDivisor)
+{
+    CPLErrorStateBackuper state(CPLQuietErrorHandler);
+
+    // These tests serve to document the current behavior.
+    // In some cases the results are dependent on various
+    // hardcoded epsilons and it may be appropriate to change
+    // the expected results.
+
+    EXPECT_EQ(CPLGreatestCommonDivisor(3.0, 5.0), 1.0);
+    EXPECT_EQ(CPLGreatestCommonDivisor(3.0 / 3600, 5.0 / 3600), 1.0 / 3600);
+    EXPECT_EQ(CPLGreatestCommonDivisor(5.0 / 3600, 2.5 / 3600), 2.5 / 3600);
+    EXPECT_EQ(CPLGreatestCommonDivisor(1.0 / 10, 1.0), 1.0 / 10);
+    EXPECT_EQ(CPLGreatestCommonDivisor(1.0 / 17, 1.0 / 13), 1.0 / 221);
+    EXPECT_EQ(CPLGreatestCommonDivisor(1.0 / 17, 1.0 / 3600), 1.0 / 61200);
+
+    // GLO-90 resolutoins
+    EXPECT_EQ(CPLGreatestCommonDivisor(3.0 / 3600, 4.5 / 3600), 1.5 / 3600);
+
+    // WorldDEM resolutions
+    EXPECT_EQ(CPLGreatestCommonDivisor(0.4 / 3600, 0.6 / 3600), 0.2 / 3600);
+    EXPECT_EQ(CPLGreatestCommonDivisor(0.6 / 3600, 0.8 / 3600), 0.2 / 3600);
+
+    EXPECT_EQ(CPLGreatestCommonDivisor(M_PI, M_PI / 6), M_PI / 6);
+    EXPECT_EQ(CPLGreatestCommonDivisor(M_PI / 5, M_PI / 6),
+              0);  // Ideally we would get M_PI / 30
+
+    EXPECT_EQ(CPLGreatestCommonDivisor(2.999999, 3.0), 0);
+    EXPECT_EQ(CPLGreatestCommonDivisor(2.9999999, 3.0), 0);
+    EXPECT_EQ(CPLGreatestCommonDivisor(2.99999999, 3.0), 2.99999999);
 }
 
 }  // namespace
