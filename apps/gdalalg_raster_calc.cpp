@@ -162,8 +162,11 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
         double ymin =
             source.gt[3] + source.nX * source.gt[4] + source.nY * source.gt[5];
 
-        // TODO use a tolerance here
-        if (xmax != xmaxOut || ymin != yminOut)
+        // Max allowable extent misalignment, expressed as fraction of a pixel
+        constexpr double EXTENT_RTOL = 1e-3;
+
+        if (std::abs(xmax - xmaxOut) > EXTENT_RTOL * std::abs(source.gt[1]) ||
+            std::abs(ymin - yminOut) > EXTENT_RTOL * std::abs(source.gt[5]))
         {
             extentMismatch = true;
         }

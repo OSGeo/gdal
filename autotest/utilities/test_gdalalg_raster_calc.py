@@ -338,6 +338,46 @@ def test_gdalalg_raster_calc_error_extent_mismatch(calc, tmp_vsimem):
         assert src.GetGeoTransform() == dst.GetGeoTransform()
 
 
+def test_gdalalg_raster_calc_error_extent_within_tolerance(calc, tmp_vsimem):
+
+    input_1 = tmp_vsimem / "in1.tif"
+    input_2 = tmp_vsimem / "in2.tif"
+    outfile = tmp_vsimem / "out.tif"
+
+    with gdal.GetDriverByName("GTIff").Create(input_2, 3600, 3600) as ds:
+        ds.SetGeoTransform(
+            (
+                2.4999861111111112e01,
+                2.7777777777777778e-04,
+                0.0000000000000000e00,
+                8.0000138888888884e01,
+                0.0000000000000000e00,
+                -2.7777777777777778e-04,
+            )
+        )
+    with gdal.GetDriverByName("GTiff").Create(input_1, 3600, 3600) as ds:
+        # this geotransform represents error introduced by writing a dataset with the above
+        # geotransform to netCDF
+        ds.SetGeoTransform(
+            (
+                2.4999861111111112e01,
+                2.7777777777777778e-04,
+                0.0000000000000000e00,
+                8.0000138888888884e01,
+                0.0000000000000000e00,
+                -2.7777777777778173e-04,
+            )
+        )
+
+    calc["input"] = [f"A={input_1}", f"B={input_2}"]
+    calc["output"] = outfile
+    calc["calc"] = ["A+B"]
+    assert calc.Run()
+
+    with gdal.Open(input_1) as src, gdal.Open(outfile) as dst:
+        assert src.GetGeoTransform() == dst.GetGeoTransform()
+
+
 def test_gdalalg_raster_calc_error_crs_mismatch(calc, tmp_vsimem):
 
     input_1 = tmp_vsimem / "in1.tif"
