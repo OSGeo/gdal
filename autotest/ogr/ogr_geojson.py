@@ -648,7 +648,7 @@ def test_ogr_geojson_23(tmp_vsimem):
     lyr.CreateFeature(feat)
     assert lyr.GetExtent() == (1.0, 2.0, 10.0, 20.0)
     assert lyr.GetExtent(geom_field=0) == (1.0, 2.0, 10.0, 20.0)
-    with gdaltest.disable_exceptions():
+    with gdaltest.disable_exceptions(), gdal.quiet_errors():
         assert lyr.GetExtent(geom_field=1, can_return_null=True) is None
     lyr = None
     ds = None
@@ -1064,7 +1064,7 @@ def test_ogr_geojson_38(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.json"
     gdal.VectorTranslate(
-        tmpfilename, ds, options="-lco NATIVE_DATA=dummy"
+        tmpfilename, ds, options="-lco NATIVE_DATA=dummy -of GeoJSON"
     )  # dummy NATIVE_DATA so that input values are not copied directly
 
     fp = gdal.VSIFOpenL(tmpfilename, "rb")
@@ -1481,7 +1481,8 @@ def test_ogr_geojson_45(tmp_vsimem):
         % json_geom
     )
     f.SetNativeMediaType("application/vnd.geo+json")
-    f.SetGeometry(ogr.CreateGeometryFromJson(json_geom))
+    with gdal.quiet_errors():  # will warn about "coordinates": [0,1,2, 3]
+        f.SetGeometry(ogr.CreateGeometryFromJson(json_geom))
     lyr.CreateFeature(f)
     ds = None
 
@@ -3487,7 +3488,8 @@ def test_ogr_geojson_geom_export_failure():
     assert geojson is None
 
     g = ogr.CreateGeometryFromWkt("GEOMETRYCOLLECTION(TIN EMPTY)")
-    geojson = json.loads(g.ExportToJson())
+    with gdal.quiet_errors():
+        geojson = json.loads(g.ExportToJson())
     assert geojson == {"type": "GeometryCollection", "geometries": None}
 
     g = ogr.Geometry(ogr.wkbLineString)
@@ -4464,7 +4466,7 @@ def test_ogr_geojson_test_ogrsf():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(
+    ret, _ = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_test_ogrsf_path()
         + " -ro data/geojson/ids_0_1_null_1_null.json"
     )
@@ -5821,3 +5823,56 @@ def test_ogr_geojson_foreign_members(foreign_members_option):
         assert f["assets"] != ""
     else:
         assert lyr.GetLayerDefn().GetFieldCount() == 29
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "geojson",
+    [
+        {"type": "Point"},
+        {"type": "Point", "coordinates": None},
+        {"type": "Point", "coordinates": "invalid"},
+        {"type": "Point", "coordinates": []},
+        {"type": "Point", "coordinates": [1]},
+        {"type": "Point", "coordinates": [None, 2]},
+        {"type": "Point", "coordinates": ["invalid", 2]},
+        {"type": "MultiPoint"},
+        {"type": "MultiPoint", "coordinates": None},
+        {"type": "MultiPoint", "coordinates": "invalid"},
+        {"type": "MultiPoint", "coordinates": ["invalid"]},
+        {"type": "MultiPoint", "coordinates": [["invalid", 2]]},
+        {"type": "LineString"},
+        {"type": "LineString", "coordinates": None},
+        {"type": "LineString", "coordinates": "invalid"},
+        {"type": "LineString", "coordinates": ["invalid"]},
+        {"type": "LineString", "coordinates": [["invalid", 2]]},
+        {"type": "MultiLineString"},
+        {"type": "MultiLineString", "coordinates": None},
+        {"type": "MultiLineString", "coordinates": "invalid"},
+        {"type": "MultiLineString", "coordinates": ["invalid"]},
+        {"type": "MultiLineString", "coordinates": [["invalid"]]},
+        {"type": "MultiLineString", "coordinates": [[["invalid", 2]]]},
+        {"type": "Polygon"},
+        {"type": "Polygon", "coordinates": None},
+        {"type": "Polygon", "coordinates": "invalid"},
+        {"type": "Polygon", "coordinates": ["invalid"]},
+        {"type": "Polygon", "coordinates": [["invalid"]]},
+        {"type": "Polygon", "coordinates": [[["invalid", 2]]]},
+        {"type": "MultiPolygon"},
+        {"type": "MultiPolygon", "coordinates": None},
+        {"type": "MultiPolygon", "coordinates": "invalid"},
+        {"type": "MultiPolygon", "coordinates": ["invalid"]},
+        {"type": "MultiPolygon", "coordinates": [["invalid"]]},
+        {"type": "MultiPolygon", "coordinates": [[["invalid"]]]},
+        {"type": "MultiPolygon", "coordinates": [[[["invalid", 2]]]]},
+    ],
+)
+@gdaltest.disable_exceptions()
+def test_ogr_geojson_invalid_geoms(geojson):
+
+    with gdal.quiet_errors():
+        gdal.ErrorReset()
+        ogr.Open(json.dumps(geojson))
+        assert gdal.GetLastErrorMsg() != "", json.dumps(geojson)

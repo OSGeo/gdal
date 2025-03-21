@@ -1020,10 +1020,10 @@ void OGRGeoJSONReader::ReadLayer(OGRGeoJSONDataSource *poDS,
     else if (GeoJSONObject::eFeatureCollection == objType)
     {
         ReadFeatureCollection(poLayer, poObj);
-    }
 
-    if (CPLGetLastErrorType() != CE_Warning)
-        CPLErrorReset();
+        if (CPLGetLastErrorType() != CE_Warning)
+            CPLErrorReset();
+    }
 
     poLayer->DetectGeometryType();
 

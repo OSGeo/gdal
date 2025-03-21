@@ -182,8 +182,9 @@ OGRGeometry *OGRGeoJSONReadGeometry(json_object *poObj,
         poGeometry = OGRGeoJSONReadGeometryCollection(poObj, poSRSToAssign);
     else
     {
-        CPLDebug("GeoJSON", "Unsupported geometry type detected. "
-                            "Feature gets NULL geometry assigned.");
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Unsupported geometry type detected. "
+                 "Feature gets NULL geometry assigned.");
     }
 
     if (poGeometry && GeoJSONObject::eGeometryCollection != objType)
@@ -193,6 +194,32 @@ OGRGeometry *OGRGeoJSONReadGeometry(json_object *poObj,
         poSRS->Release();
 
     return poGeometry;
+}
+
+/************************************************************************/
+/*                       GetJSONConstructName()                         */
+/************************************************************************/
+
+static const char *GetJSONConstructName(json_type eType)
+{
+    switch (eType)
+    {
+        case json_type_null:
+            break;
+        case json_type_boolean:
+            return "boolean";
+        case json_type_double:
+            return "double";
+        case json_type_int:
+            return "int";
+        case json_type_object:
+            return "object";
+        case json_type_array:
+            return "array";
+        case json_type_string:
+            return "string";
+    }
+    return "null";
 }
 
 /************************************************************************/
@@ -211,13 +238,14 @@ static double OGRGeoJSONGetCoordinate(json_object *poObj,
         return 0.0;
     }
 
-    const int iType = json_object_get_type(poObjCoord);
-    if (json_type_double != iType && json_type_int != iType)
+    const json_type eType = json_object_get_type(poObjCoord);
+    if (json_type_double != eType && json_type_int != eType)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid '%s' coordinate. "
-                 "Type is not double or integer for \'%s\'.",
-                 pszCoordName, json_object_to_json_string(poObjCoord));
+                 "OGRGeoJSONGetCoordinate(): invalid '%s' coordinate. "
+                 "Unexpected type %s for '%s'. Expected double or integer.",
+                 pszCoordName, GetJSONConstructName(eType),
+                 json_object_to_json_string(poObjCoord));
         bValid = false;
         return 0.0;
     }
@@ -231,16 +259,17 @@ static double OGRGeoJSONGetCoordinate(json_object *poObj,
 
 static bool OGRGeoJSONReadRawPoint(json_object *poObj, OGRPoint &point)
 {
-    CPLAssert(nullptr != poObj);
-
     if (json_type_array == json_object_get_type(poObj))
     {
-        const auto nSize = json_object_array_length(poObj);
+        const int nSize = static_cast<int>(json_object_array_length(poObj));
 
         if (nSize < GeoJSONObject::eMinCoordinateDimension)
         {
-            CPLDebug("GeoJSON", "Invalid coord dimension. "
-                                "At least 2 dimensions must be present.");
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "OGRGeoJSONReadRawPoint(): "
+                     "Invalid coord dimension for '%s'. "
+                     "At least 2 dimensions must be present.",
+                     json_object_to_json_string(poObj));
             return false;
         }
 
@@ -253,6 +282,15 @@ static bool OGRGeoJSONReadRawPoint(json_object *poObj, OGRPoint &point)
         // Read Z coordinate.
         if (nSize >= GeoJSONObject::eMaxCoordinateDimension)
         {
+            if (nSize > GeoJSONObject::eMaxCoordinateDimension)
+            {
+                CPLErrorOnce(CE_Warning, CPLE_AppDefined,
+                             "OGRGeoJSONReadRawPoint(): too many members in "
+                             "array '%s': %d. At most %d are handled. Ignoring "
+                             "extra members.",
+                             json_object_to_json_string(poObj), nSize,
+                             GeoJSONObject::eMaxCoordinateDimension);
+            }
             // Don't *expect* mixed-dimension geometries, although the
             // spec doesn't explicitly forbid this.
             const double dfZ = OGRGeoJSONGetCoordinate(poObj, "z", 2, bValid);
@@ -264,6 +302,14 @@ static bool OGRGeoJSONReadRawPoint(json_object *poObj, OGRPoint &point)
         }
         return bValid;
     }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRGeoJSONReadRawPoint(): invalid Point. "
+                 "Unexpected type %s for '%s'. Expected array.",
+                 GetJSONConstructName(json_object_get_type(poObj)),
+                 json_object_to_json_string(poObj));
+    }
 
     return false;
 }
@@ -274,25 +320,28 @@ static bool OGRGeoJSONReadRawPoint(json_object *poObj, OGRPoint &point)
 
 OGRPoint *OGRGeoJSONReadPoint(json_object *poObj)
 {
-    CPLAssert(nullptr != poObj);
-
+    if (!poObj)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRGeoJSONReadPoint(): invalid Point object. Got null.");
+        return nullptr;
+    }
     json_object *poObjCoords = OGRGeoJSONFindMemberByName(poObj, "coordinates");
     if (nullptr == poObjCoords)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid Point object. Missing \'coordinates\' member.");
+                 "OGRGeoJSONReadPoint(): invalid Point object. "
+                 "Missing \'coordinates\' member.");
         return nullptr;
     }
 
-    OGRPoint *poPoint = new OGRPoint();
+    auto poPoint = std::make_unique<OGRPoint>();
     if (!OGRGeoJSONReadRawPoint(poObjCoords, *poPoint))
     {
-        CPLDebug("GeoJSON", "Point: raw point parsing failure.");
-        delete poPoint;
         return nullptr;
     }
 
-    return poPoint;
+    return poPoint.release();
 }
 
 /************************************************************************/
@@ -301,8 +350,13 @@ OGRPoint *OGRGeoJSONReadPoint(json_object *poObj)
 
 OGRMultiPoint *OGRGeoJSONReadMultiPoint(json_object *poObj)
 {
-    CPLAssert(nullptr != poObj);
-
+    if (!poObj)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "OGRGeoJSONReadMultiPoint(): invalid MultiPoint object. Got null.");
+        return nullptr;
+    }
     json_object *poObjPoints = OGRGeoJSONFindMemberByName(poObj, "coordinates");
     if (nullptr == poObjPoints)
     {
@@ -312,12 +366,12 @@ OGRMultiPoint *OGRGeoJSONReadMultiPoint(json_object *poObj)
         return nullptr;
     }
 
-    OGRMultiPoint *poMultiPoint = nullptr;
+    std::unique_ptr<OGRMultiPoint> poMultiPoint;
     if (json_type_array == json_object_get_type(poObjPoints))
     {
         const auto nPoints = json_object_array_length(poObjPoints);
 
-        poMultiPoint = new OGRMultiPoint();
+        poMultiPoint = std::make_unique<OGRMultiPoint>();
 
         for (auto i = decltype(nPoints){0}; i < nPoints; ++i)
         {
@@ -325,18 +379,23 @@ OGRMultiPoint *OGRGeoJSONReadMultiPoint(json_object *poObj)
                 json_object_array_get_idx(poObjPoints, i);
 
             OGRPoint pt;
-            if (poObjCoords != nullptr &&
-                !OGRGeoJSONReadRawPoint(poObjCoords, pt))
+            if (!OGRGeoJSONReadRawPoint(poObjCoords, pt))
             {
-                delete poMultiPoint;
-                CPLDebug("GeoJSON", "LineString: raw point parsing failure.");
                 return nullptr;
             }
             poMultiPoint->addGeometry(&pt);
         }
     }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRGeoJSONReadMultiPoint(): invalid MultiPoint. "
+                 "Unexpected type %s for '%s'. Expected array.",
+                 GetJSONConstructName(json_object_get_type(poObjPoints)),
+                 json_object_to_json_string(poObjPoints));
+    }
 
-    return poMultiPoint;
+    return poMultiPoint.release();
 }
 
 /************************************************************************/
@@ -345,8 +404,13 @@ OGRMultiPoint *OGRGeoJSONReadMultiPoint(json_object *poObj)
 
 OGRLineString *OGRGeoJSONReadLineString(json_object *poObj, bool bRaw)
 {
-    CPLAssert(nullptr != poObj);
-
+    if (!poObj)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "OGRGeoJSONReadLineString(): invalid LineString object. Got null.");
+        return nullptr;
+    }
     json_object *poObjPoints = nullptr;
 
     if (!bRaw)
@@ -365,31 +429,23 @@ OGRLineString *OGRGeoJSONReadLineString(json_object *poObj, bool bRaw)
         poObjPoints = poObj;
     }
 
-    OGRLineString *poLine = nullptr;
+    std::unique_ptr<OGRLineString> poLine;
 
     if (json_type_array == json_object_get_type(poObjPoints))
     {
         const auto nPoints = json_object_array_length(poObjPoints);
 
-        poLine = new OGRLineString();
+        poLine = std::make_unique<OGRLineString>();
         poLine->setNumPoints(static_cast<int>(nPoints));
 
         for (auto i = decltype(nPoints){0}; i < nPoints; ++i)
         {
             json_object *poObjCoords =
                 json_object_array_get_idx(poObjPoints, i);
-            if (poObjCoords == nullptr)
-            {
-                delete poLine;
-                CPLDebug("GeoJSON", "LineString: got null object.");
-                return nullptr;
-            }
 
             OGRPoint pt;
             if (!OGRGeoJSONReadRawPoint(poObjCoords, pt))
             {
-                delete poLine;
-                CPLDebug("GeoJSON", "LineString: raw point parsing failure.");
                 return nullptr;
             }
             if (pt.getCoordinateDimension() == 2)
@@ -403,8 +459,16 @@ OGRLineString *OGRGeoJSONReadLineString(json_object *poObj, bool bRaw)
             }
         }
     }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRGeoJSONReadLineString(): invalid MultiLineString. "
+                 "Unexpected type %s for '%s'. Expected array.",
+                 GetJSONConstructName(json_object_get_type(poObjPoints)),
+                 json_object_to_json_string(poObjPoints));
+    }
 
-    return poLine;
+    return poLine.release();
 }
 
 /************************************************************************/
@@ -424,32 +488,35 @@ OGRMultiLineString *OGRGeoJSONReadMultiLineString(json_object *poObj)
         return nullptr;
     }
 
-    OGRMultiLineString *poMultiLine = nullptr;
+    std::unique_ptr<OGRMultiLineString> poMultiLine;
 
     if (json_type_array == json_object_get_type(poObjLines))
     {
         const auto nLines = json_object_array_length(poObjLines);
 
-        poMultiLine = new OGRMultiLineString();
+        poMultiLine = std::make_unique<OGRMultiLineString>();
 
         for (auto i = decltype(nLines){0}; i < nLines; ++i)
         {
             json_object *poObjLine = json_object_array_get_idx(poObjLines, i);
 
-            OGRLineString *poLine;
-            if (poObjLine != nullptr)
-                poLine = OGRGeoJSONReadLineString(poObjLine, true);
-            else
-                poLine = new OGRLineString();
-
-            if (nullptr != poLine)
+            OGRLineString *poLine = OGRGeoJSONReadLineString(poObjLine, true);
+            if (poLine)
             {
                 poMultiLine->addGeometryDirectly(poLine);
             }
         }
     }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRGeoJSONReadLineString(): invalid LineString. "
+                 "Unexpected type %s for '%s'. Expected array.",
+                 GetJSONConstructName(json_object_get_type(poObjLines)),
+                 json_object_to_json_string(poObjLines));
+    }
 
-    return poMultiLine;
+    return poMultiLine.release();
 }
 
 /************************************************************************/
@@ -460,30 +527,22 @@ OGRLinearRing *OGRGeoJSONReadLinearRing(json_object *poObj)
 {
     CPLAssert(nullptr != poObj);
 
-    OGRLinearRing *poRing = nullptr;
+    std::unique_ptr<OGRLinearRing> poRing;
 
     if (json_type_array == json_object_get_type(poObj))
     {
         const auto nPoints = json_object_array_length(poObj);
 
-        poRing = new OGRLinearRing();
+        poRing = std::make_unique<OGRLinearRing>();
         poRing->setNumPoints(static_cast<int>(nPoints));
 
         for (auto i = decltype(nPoints){0}; i < nPoints; ++i)
         {
             json_object *poObjCoords = json_object_array_get_idx(poObj, i);
-            if (poObjCoords == nullptr)
-            {
-                delete poRing;
-                CPLDebug("GeoJSON", "LinearRing: got null object.");
-                return nullptr;
-            }
 
             OGRPoint pt;
             if (!OGRGeoJSONReadRawPoint(poObjCoords, pt))
             {
-                delete poRing;
-                CPLDebug("GeoJSON", "LinearRing: raw point parsing failure.");
                 return nullptr;
             }
 
@@ -494,8 +553,16 @@ OGRLinearRing *OGRGeoJSONReadLinearRing(json_object *poObj)
                                  pt.getZ());
         }
     }
+    else
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "OGRGeoJSONReadLinearRing(): unexpected type of JSON "
+                 "construct %s for '%s'. Expected array.",
+                 GetJSONConstructName(json_object_get_type(poObj)),
+                 json_object_to_json_string(poObj));
+    }
 
-    return poRing;
+    return poRing.release();
 }
 
 /************************************************************************/
@@ -504,8 +571,12 @@ OGRLinearRing *OGRGeoJSONReadLinearRing(json_object *poObj)
 
 OGRPolygon *OGRGeoJSONReadPolygon(json_object *poObj, bool bRaw)
 {
-    CPLAssert(nullptr != poObj);
-
+    if (!poObj)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRGeoJSONReadPolygon(): invalid Polygon object. Got null.");
+        return nullptr;
+    }
     json_object *poObjRings = nullptr;
 
     if (!bRaw)
@@ -524,7 +595,7 @@ OGRPolygon *OGRGeoJSONReadPolygon(json_object *poObj, bool bRaw)
         poObjRings = poObj;
     }
 
-    OGRPolygon *poPolygon = nullptr;
+    std::unique_ptr<OGRPolygon> poPolygon;
 
     if (json_type_array == json_object_get_type(poObjRings))
     {
@@ -532,16 +603,16 @@ OGRPolygon *OGRGeoJSONReadPolygon(json_object *poObj, bool bRaw)
         if (nRings > 0)
         {
             json_object *poObjPoints = json_object_array_get_idx(poObjRings, 0);
-            if (poObjPoints == nullptr)
+            if (!poObjPoints)
             {
-                poPolygon = new OGRPolygon();
+                poPolygon = std::make_unique<OGRPolygon>();
             }
             else
             {
                 OGRLinearRing *poRing = OGRGeoJSONReadLinearRing(poObjPoints);
-                if (nullptr != poRing)
+                if (poRing)
                 {
-                    poPolygon = new OGRPolygon();
+                    poPolygon = std::make_unique<OGRPolygon>();
                     poPolygon->addRingDirectly(poRing);
                 }
             }
@@ -550,11 +621,11 @@ OGRPolygon *OGRGeoJSONReadPolygon(json_object *poObj, bool bRaw)
                  i < nRings && nullptr != poPolygon; ++i)
             {
                 poObjPoints = json_object_array_get_idx(poObjRings, i);
-                if (poObjPoints != nullptr)
+                if (poObjPoints)
                 {
                     OGRLinearRing *poRing =
                         OGRGeoJSONReadLinearRing(poObjPoints);
-                    if (nullptr != poRing)
+                    if (poRing)
                     {
                         poPolygon->addRingDirectly(poRing);
                     }
@@ -563,11 +634,19 @@ OGRPolygon *OGRGeoJSONReadPolygon(json_object *poObj, bool bRaw)
         }
         else
         {
-            poPolygon = new OGRPolygon();
+            poPolygon = std::make_unique<OGRPolygon>();
         }
     }
+    else
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "OGRGeoJSONReadPolygon(): unexpected type of JSON construct "
+                 "%s for '%s'. Expected array.",
+                 GetJSONConstructName(json_object_get_type(poObjRings)),
+                 json_object_to_json_string(poObjRings));
+    }
 
-    return poPolygon;
+    return poPolygon.release();
 }
 
 /************************************************************************/
@@ -587,37 +666,46 @@ OGRMultiPolygon *OGRGeoJSONReadMultiPolygon(json_object *poObj)
         return nullptr;
     }
 
-    OGRMultiPolygon *poMultiPoly = nullptr;
+    std::unique_ptr<OGRMultiPolygon> poMultiPoly;
 
     if (json_type_array == json_object_get_type(poObjPolys))
     {
         const auto nPolys = json_object_array_length(poObjPolys);
 
-        poMultiPoly = new OGRMultiPolygon();
+        poMultiPoly = std::make_unique<OGRMultiPolygon>();
 
         for (auto i = decltype(nPolys){0}; i < nPolys; ++i)
         {
             json_object *poObjPoly = json_object_array_get_idx(poObjPolys, i);
-            if (poObjPoly == nullptr)
+            if (!poObjPoly)
             {
-                poMultiPoly->addGeometryDirectly(new OGRPolygon());
+                poMultiPoly->addGeometryDirectly(
+                    std::make_unique<OGRPolygon>().release());
             }
             else
             {
                 OGRPolygon *poPoly = OGRGeoJSONReadPolygon(poObjPoly, true);
-                if (nullptr != poPoly)
+                if (poPoly)
                 {
                     poMultiPoly->addGeometryDirectly(poPoly);
                 }
             }
         }
     }
+    else
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "OGRGeoJSONReadMultiPolygon(): unexpected type of JSON "
+                 "construct %s for '%s'. Expected array.",
+                 GetJSONConstructName(json_object_get_type(poObjPolys)),
+                 json_object_to_json_string(poObjPolys));
+    }
 
-    return poMultiPoly;
+    return poMultiPoly.release();
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONReadGeometryCollection           */
+/*                    OGRGeoJSONReadGeometryCollection                  */
 /************************************************************************/
 
 OGRGeometryCollection *
@@ -634,32 +722,42 @@ OGRGeoJSONReadGeometryCollection(json_object *poObj, OGRSpatialReference *poSRS)
         return nullptr;
     }
 
-    OGRGeometryCollection *poCollection = nullptr;
+    std::unique_ptr<OGRGeometryCollection> poCollection;
 
     if (json_type_array == json_object_get_type(poObjGeoms))
     {
-        poCollection = new OGRGeometryCollection();
+        poCollection = std::make_unique<OGRGeometryCollection>();
         poCollection->assignSpatialReference(poSRS);
 
         const auto nGeoms = json_object_array_length(poObjGeoms);
         for (auto i = decltype(nGeoms){0}; i < nGeoms; ++i)
         {
             json_object *poObjGeom = json_object_array_get_idx(poObjGeoms, i);
-            if (poObjGeom == nullptr)
+            if (!poObjGeom)
             {
-                CPLDebug("GeoJSON", "Skipping null sub-geometry");
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "OGRGeoJSONReadGeometryCollection(): skipping null "
+                         "sub-geometry");
                 continue;
             }
 
             OGRGeometry *poGeometry = OGRGeoJSONReadGeometry(poObjGeom, poSRS);
-            if (nullptr != poGeometry)
+            if (poGeometry)
             {
                 poCollection->addGeometryDirectly(poGeometry);
             }
         }
     }
+    else
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "OGRGeoJSONReadGeometryCollection(): unexpected type of JSON "
+                 "construct %s for '%s'. Expected array.",
+                 GetJSONConstructName(json_object_get_type(poObjGeoms)),
+                 json_object_to_json_string(poObjGeoms));
+    }
 
-    return poCollection;
+    return poCollection.release();
 }
 
 /************************************************************************/
