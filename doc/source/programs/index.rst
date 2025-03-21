@@ -31,6 +31,9 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal
    gdal_info
    gdal_convert
+   gdal_mdim
+   gdal_mdim_info
+   gdal_mdim_convert
    gdal_raster
    gdal_raster_info
    gdal_raster_astype
@@ -69,6 +72,9 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_program`: Main "gdal" entry point
     - :ref:`gdal_info_command`: Get information on a dataset
     - :ref:`gdal_convert_command`: Convert a dataset
+    - :ref:`gdal_mdim_command`: Entry point for multidimensional commands
+    - :ref:`gdal_mdim_info_subcommand`: Get information on a multidimensional dataset
+    - :ref:`gdal_mdim_convert_subcommand`: Convert a multidimensional dataset
     - :ref:`gdal_raster_command`: Entry point for raster commands
     - :ref:`gdal_raster_info_subcommand`: Get information on a raster dataset
     - :ref:`gdal_raster_astype_subcommand`: Modify the data type of bands of a raster dataset

@@ -217,6 +217,27 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_mdim",
+        "gdal-mdim",
+        "Entry point for multidimensional commands",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_mdim_info",
+        "gdal-mdim-info",
+        "Get information on a multidimensional dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_mdim_convert",
+        "gdal-mdim-convert",
+        "Convert a multidimensional dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster",
         "gdal-raster",
         "Entry point for raster commands",
