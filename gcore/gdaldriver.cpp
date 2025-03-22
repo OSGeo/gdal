@@ -2892,6 +2892,23 @@ static bool DoesDriverHandleExtension(GDALDriverH hDriver, const char *pszExt)
 }
 
 /************************************************************************/
+/*                     IsOnlyExpectedGDBDrivers()                       */
+/************************************************************************/
+
+static bool IsOnlyExpectedGDBDrivers(const CPLStringList &aosDriverNames)
+{
+    for (const char *pszDrvName : aosDriverNames)
+    {
+        if (!EQUAL(pszDrvName, "OpenFileGDB") &&
+            !EQUAL(pszDrvName, "FileGDB") && !EQUAL(pszDrvName, "GPSBabel"))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                  GDALGetOutputDriversForDatasetName()                */
 /************************************************************************/
 
@@ -3016,6 +3033,15 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
                 aosDriverNames.Clear();
                 aosDriverNames.AddString(osDrvName.c_str());
             }
+        }
+        else if (EQUAL(osExt.c_str(), "gdb") &&
+                 IsOnlyExpectedGDBDrivers(aosDriverNames))
+        {
+            // Do not warn about that case given that FileGDB write support
+            // forwards to OpenFileGDB one. And also consider GPSBabel as too
+            // marginal to deserve the warning.
+            aosDriverNames.Clear();
+            aosDriverNames.AddString("OpenFileGDB");
         }
         else if (aosDriverNames.size() >= 2)
         {
