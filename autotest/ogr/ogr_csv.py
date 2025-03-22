@@ -3501,6 +3501,61 @@ def test_ogr_csv_unbalanced_double_quotes():
 ###############################################################################
 
 
+@gdaltest.enable_exceptions()
+def test_ogr_csv_64_bit_integer(tmp_vsimem):
+
+    filename = tmp_vsimem / "test.csv"
+    gdal.FileFromMemBuffer(filename, "field\n9223372036854775807\n")
+    gdal.FileFromMemBuffer(str(filename) + "t", "Integer64\n")
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["field"] == 9223372036854775807
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_csv_64_bit_integer_invalid_value(tmp_vsimem):
+
+    filename = tmp_vsimem / "test.csv"
+    gdal.FileFromMemBuffer(filename, "field\n9223372036854775807.5\n")
+    gdal.FileFromMemBuffer(str(filename) + "t", "Integer64\n")
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        with gdal.quiet_errors():
+            f = lyr.GetNextFeature()
+            assert (
+                gdal.GetLastErrorMsg()
+                == "Invalid value type found in record 1 for field field. This warning will no longer be emitted"
+            )
+        assert f["field"] is None
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_csv_32_bit_integer_invalid_value(tmp_vsimem):
+
+    filename = tmp_vsimem / "test.csv"
+    gdal.FileFromMemBuffer(filename, "field\n9223372036854775807\n")
+    gdal.FileFromMemBuffer(str(filename) + "t", "Integer\n")
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        with gdal.quiet_errors():
+            f = lyr.GetNextFeature()
+            assert (
+                gdal.GetLastErrorMsg()
+                == "Field test.field: integer overflow occurred when trying to set 9223372036854775807 as 32 bit integer."
+            )
+        assert f["field"] == 2147483647
+
+
+###############################################################################
+
+
 if __name__ == "__main__":
     gdal.UseExceptions()
     if len(sys.argv) != 2:
