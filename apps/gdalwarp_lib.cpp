@@ -5771,6 +5771,11 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
         .action(
             [psOptions](const std::string &)
             {
+                if (psOptions->dfErrorThreshold < 0)
+                {
+                    throw std::invalid_argument(
+                        "Invalid value for error threshold");
+                }
                 psOptions->aosWarpOptions.AddString(CPLSPrintf(
                     "ERROR_THRESHOLD=%.16g", psOptions->dfErrorThreshold));
             })
