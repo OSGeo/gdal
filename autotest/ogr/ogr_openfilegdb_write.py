@@ -4254,13 +4254,14 @@ def test_ogr_openfilegdb_write_new_datetime_types(tmp_vsimem):
 
     filename = str(tmp_vsimem / "out.gdb")
     with gdal.quiet_errors():
+        gdal.ErrorReset()
         ds = gdal.VectorTranslate(
             filename,
             "data/filegdb/arcgis_pro_32_types.gdb",
-            format="OpenFileGDB",
             layers=["date_types", "date_types_high_precision"],
             layerCreationOptions=["TARGET_ARCGIS_VERSION=ARCGIS_PRO_3_2_OR_LATER"],
         )
+        assert gdal.GetLastErrorMsg() == ""
 
     lyr = ds.GetLayerByName("date_types")
     lyr_defn = lyr.GetLayerDefn()
