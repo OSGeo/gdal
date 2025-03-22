@@ -15,6 +15,8 @@
 #include "gdal_priv.h"
 #include "gdal_utils.h"
 
+#include <cmath>
+
 //! @cond Doxygen_Suppress
 
 #ifndef _
@@ -94,7 +96,36 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
     AddArg("target-aligned-pixels", 0,
            _("Round target extent to target resolution"),
            &m_targetAlignedPixels)
-        .AddHiddenAlias("tap");
+        .AddHiddenAlias("tap")
+        .SetCategory(GAAC_ADVANCED);
+    AddArg("srcnodata", 0,
+           _("Set nodata values for input bands ('None' to unset)."),
+           &m_srcNoData)
+        .SetMinCount(1)
+        .SetRepeatedArgAllowed(false)
+        .SetCategory(GAAC_ADVANCED);
+    AddArg("dstnodata", 0,
+           _("Set nodata values for output bands ('None' to unset)."),
+           &m_dstNoData)
+        .SetMinCount(1)
+        .SetRepeatedArgAllowed(false)
+        .SetCategory(GAAC_ADVANCED);
+    AddArg("addalpha", 0,
+           _("Adds an alpha mask band to the destination when the source "
+             "raster have none."),
+           &m_addAlpha)
+        .SetCategory(GAAC_ADVANCED);
+    AddArg("warp-option", 0, _("Warping option(s)"), &m_warpOptions)
+        .AddAlias("wo")
+        .SetMetaVar("<NAME>=<VALUE>")
+        .SetCategory(GAAC_ADVANCED);
+    AddArg("transform-option", 0, _("Transform option(s)"), &m_transformOptions)
+        .AddAlias("to")
+        .SetMetaVar("<NAME>=<VALUE>")
+        .SetCategory(GAAC_ADVANCED);
+    AddArg("error-threshold", 0, _("Error threshold"), &m_errorThreshold)
+        .AddAlias("et")
+        .SetCategory(GAAC_ADVANCED);
 }
 
 /************************************************************************/
@@ -154,6 +185,50 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
     {
         aosOptions.AddString("-tap");
     }
+    if (!m_srcNoData.empty())
+    {
+        aosOptions.push_back("-srcnodata");
+        std::string s;
+        for (const std::string &v : m_srcNoData)
+        {
+            if (!s.empty())
+                s += " ";
+            s += v;
+        }
+        aosOptions.push_back(s);
+    }
+    if (!m_dstNoData.empty())
+    {
+        aosOptions.push_back("-dstnodata");
+        std::string s;
+        for (const std::string &v : m_dstNoData)
+        {
+            if (!s.empty())
+                s += " ";
+            s += v;
+        }
+        aosOptions.push_back(s);
+    }
+    if (m_addAlpha)
+    {
+        aosOptions.AddString("-dstalpha");
+    }
+    for (const std::string &opt : m_warpOptions)
+    {
+        aosOptions.AddString("-wo");
+        aosOptions.AddString(opt.c_str());
+    }
+    for (const std::string &opt : m_transformOptions)
+    {
+        aosOptions.AddString("-to");
+        aosOptions.AddString(opt.c_str());
+    }
+    if (std::isfinite(m_errorThreshold))
+    {
+        aosOptions.AddString("-et");
+        aosOptions.AddString(CPLSPrintf("%.17g", m_errorThreshold));
+    }
+
     GDALWarpAppOptions *psOptions =
         GDALWarpAppOptionsNew(aosOptions.List(), nullptr);
 
