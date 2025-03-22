@@ -1449,9 +1449,36 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                 continue;
         }
 
-        OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iOGRField);
+        const OGRFieldDefn *poFieldDefn =
+            poFeatureDefn->GetFieldDefn(iOGRField);
         const OGRFieldType eFieldType = poFieldDefn->GetType();
         const OGRFieldSubType eFieldSubType = poFieldDefn->GetSubType();
+
+        const auto WarnOnceBadValue = [this, poFieldDefn]()
+        {
+            if (!bWarningBadTypeOrWidth)
+            {
+                bWarningBadTypeOrWidth = true;
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Invalid value type found in record %d for field %s. "
+                         "This warning will no longer be emitted",
+                         nNextFID, poFieldDefn->GetNameRef());
+            };
+        };
+
+        const auto WarnTooLargeWidth = [this, poFieldDefn]()
+        {
+            if (!bWarningBadTypeOrWidth)
+            {
+                bWarningBadTypeOrWidth = true;
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Value with a width greater than field width "
+                         "found in record %d for field %s. "
+                         "This warning will no longer be emitted",
+                         nNextFID, poFieldDefn->GetNameRef());
+            };
+        };
+
         if (eFieldType == OFTInteger && eFieldSubType == OFSTBoolean)
         {
             if (papszTokens[iAttr][0] != '\0' && !poFieldDefn->IsIgnored())
@@ -1466,30 +1493,45 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                 {
                     poFeature->SetField(iOGRField, 0);
                 }
-                else if (!bWarningBadTypeOrWidth)
+                else
                 {
                     // Set to TRUE because it's different than 0 but emit a warning
                     poFeature->SetField(iOGRField, 1);
-                    bWarningBadTypeOrWidth = true;
-                    CPLError(
-                        CE_Warning, CPLE_AppDefined,
-                        "Invalid value type found in record %d for field %s. "
-                        "This warning will no longer be emitted",
-                        nNextFID, poFieldDefn->GetNameRef());
+                    WarnOnceBadValue();
                 }
             }
         }
-        else if (eFieldType == OFTReal || eFieldType == OFTInteger ||
-                 eFieldType == OFTInteger64)
+        else if (eFieldType == OFTInteger || eFieldType == OFTInteger64)
         {
             if (papszTokens[iAttr][0] != '\0' && !poFieldDefn->IsIgnored())
             {
-                if (eFieldType == OFTReal)
+                char *endptr = nullptr;
+                const GIntBig nVal = static_cast<GIntBig>(
+                    std::strtoll(papszTokens[iAttr], &endptr, 10));
+                if (endptr == papszTokens[iAttr] + strlen(papszTokens[iAttr]))
                 {
-                    char *chComma = strchr(papszTokens[iAttr], ',');
-                    if (chComma)
-                        *chComma = '.';
+                    poFeature->SetField(iOGRField, nVal);
+                    if (!bWarningBadTypeOrWidth &&
+                        poFieldDefn->GetWidth() > 0 &&
+                        static_cast<int>(strlen(papszTokens[iAttr])) >
+                            poFieldDefn->GetWidth())
+                    {
+                        WarnTooLargeWidth();
+                    }
                 }
+                else
+                {
+                    WarnOnceBadValue();
+                }
+            }
+        }
+        else if (eFieldType == OFTReal)
+        {
+            if (papszTokens[iAttr][0] != '\0' && !poFieldDefn->IsIgnored())
+            {
+                char *chComma = strchr(papszTokens[iAttr], ',');
+                if (chComma)
+                    *chComma = '.';
                 char *endptr = nullptr;
                 const double dfVal =
                     CPLStrtodDelim(papszTokens[iAttr], &endptr, '.');
@@ -1497,33 +1539,14 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                 {
                     poFeature->SetField(iOGRField, dfVal);
                     if (!bWarningBadTypeOrWidth &&
-                        (eFieldType == OFTInteger ||
-                         eFieldType == OFTInteger64) &&
-                        CPLGetValueType(papszTokens[iAttr]) == CPL_VALUE_REAL)
+                        poFieldDefn->GetWidth() > 0 &&
+                        static_cast<int>(strlen(papszTokens[iAttr])) >
+                            poFieldDefn->GetWidth())
                     {
-                        bWarningBadTypeOrWidth = true;
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Invalid value type found in record %d for "
-                                 "field %s. "
-                                 "This warning will no longer be emitted",
-                                 nNextFID, poFieldDefn->GetNameRef());
+                        WarnTooLargeWidth();
                     }
                     else if (!bWarningBadTypeOrWidth &&
-                             poFieldDefn->GetWidth() > 0 &&
-                             static_cast<int>(strlen(papszTokens[iAttr])) >
-                                 poFieldDefn->GetWidth())
-                    {
-                        bWarningBadTypeOrWidth = true;
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Value with a width greater than field width "
-                                 "found in record %d for field %s. "
-                                 "This warning will no longer be emitted",
-                                 nNextFID, poFieldDefn->GetNameRef());
-                    }
-                    else if (!bWarningBadTypeOrWidth &&
-                             poFieldDefn->GetWidth() > 0 &&
-                             CPLGetValueType(papszTokens[iAttr]) ==
-                                 CPL_VALUE_REAL)
+                             poFieldDefn->GetWidth() > 0)
                     {
                         const char *pszDot = strchr(papszTokens[iAttr], '.');
                         const int nPrecision =
@@ -1544,15 +1567,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                 }
                 else
                 {
-                    if (!bWarningBadTypeOrWidth)
-                    {
-                        bWarningBadTypeOrWidth = true;
-                        CPLError(
-                            CE_Warning, CPLE_AppDefined,
-                            "Invalid value type found in record %d for field "
-                            "%s. This warning will no longer be emitted.",
-                            nNextFID, poFieldDefn->GetNameRef());
-                    }
+                    WarnOnceBadValue();
                 }
             }
         }
@@ -1564,12 +1579,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                 if (!bWarningBadTypeOrWidth &&
                     !poFeature->IsFieldSetAndNotNull(iOGRField))
                 {
-                    bWarningBadTypeOrWidth = true;
-                    CPLError(
-                        CE_Warning, CPLE_AppDefined,
-                        "Invalid value type found in record %d for field %s. "
-                        "This warning will no longer be emitted",
-                        nNextFID, poFieldDefn->GetNameRef());
+                    WarnOnceBadValue();
                 }
             }
         }
@@ -1586,12 +1596,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                     static_cast<int>(strlen(papszTokens[iAttr])) >
                         poFieldDefn->GetWidth())
                 {
-                    bWarningBadTypeOrWidth = true;
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Value with a width greater than field width "
-                             "found in record %d for field %s. "
-                             "This warning will no longer be emitted",
-                             nNextFID, poFieldDefn->GetNameRef());
+                    WarnTooLargeWidth();
                 }
             }
         }

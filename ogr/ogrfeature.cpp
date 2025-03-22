@@ -3883,7 +3883,7 @@ void OGRFeature::SetField(int iField, GIntBig nValue)
             CPLError(
                 CE_Warning, CPLE_AppDefined,
                 "Field %s.%s: integer overflow occurred when trying to set "
-                "%" PRId64 "as 32 bit integer.",
+                "%" PRId64 " as 32 bit integer.",
                 poDefn->GetName(), poFDefn->GetNameRef(),
                 static_cast<int64_t>(nValue));
         }
