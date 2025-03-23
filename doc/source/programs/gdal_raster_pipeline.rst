@@ -51,6 +51,12 @@ Details for options can be found in :ref:`gdal_raster_reproject_subcommand`.
 
 Details for options can be found in :ref:`gdal_raster_resize_subcommand`.
 
+* select [OPTIONS]
+
+.. program-output:: gdal raster pipeline --help-doc=select
+
+Details for options can be found in :ref:`gdal_raster_select_subcommand`.
+
 * write [OPTIONS] <OUTPUT>
 
 .. program-output:: gdal raster pipeline --help-doc=write

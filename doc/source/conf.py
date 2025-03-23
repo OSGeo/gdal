@@ -301,6 +301,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_select",
+        "gdal-raster-select",
+        "Select a subset of bands from a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_stack",
         "gdal-raster-stack",
         "Combine together input bands into a multi-band output, either virtual (VRT) or materialized",
