@@ -2771,11 +2771,9 @@ OGRDXFFeature *OGRDXFLayer::TranslateWIPEOUT()
     auto poFeature = std::make_unique<OGRDXFFeature>(poFeatureDefn);
     double dfX = 0.0, dfY = 0.0, dfXOffset = 0.0, dfYOffset = 0.0;
     double dfXscale = 1.0, dfYscale = 1.0;
-    int bHaveX = FALSE;
-    int bHaveY = FALSE;
 
-    int nNumVertices = 1;  // use 1 based index
-    int nBoundaryVertexCount = 1;
+    int nNumVertices = 0;
+    int nBoundaryVertexCount = 0;
     int nFormat = 0;
 
     DXFSmoothPolyline smoothPolyline;
@@ -2847,39 +2845,22 @@ OGRDXFFeature *OGRDXFLayer::TranslateWIPEOUT()
 
             case 91:
                 nNumVertices = atoi(szLineBuf);
-                bHaveX = false;
-                bHaveY = false;
                 break;
 
             /* -------------------------------------------------------------------- */
             /*      Read clipping boudary properties and set them feature geometry  */
             /*      Collect VERTEXes as a smooth polyline.                          */
             /* -------------------------------------------------------------------- */
-            case 14:
-                if (bHaveX && bHaveY)
-                {
-                    smoothPolyline.AddPoint(dfXOffset + (0.5 + dfX) * dfXscale,
-                                            dfYOffset + (0.5 - dfY) * dfYscale,
-                                            0.0, 0.0);
-                    nBoundaryVertexCount++;
-                    bHaveY = FALSE;
-                }
+            case 14:                
                 dfX = CPLAtof(szLineBuf);
-                bHaveX = TRUE;
                 break;
 
             case 24:
-                //Last point is skipped as the polyline is closed just after
-                if (bHaveX && bHaveY)
-                {
-                    smoothPolyline.AddPoint(dfXOffset + (0.5 + dfX) * dfXscale,
-                                            dfYOffset + (0.5 - dfY) * dfYscale,
-                                            0.0, 0.0);
-                    nBoundaryVertexCount++;
-                    bHaveX = FALSE;
-                }
-                dfY = CPLAtof(szLineBuf);
-                bHaveY = TRUE;
+                dfY = CPLAtof(szLineBuf);                
+                smoothPolyline.AddPoint(dfXOffset + (0.5 + dfX) * dfXscale,
+                                        dfYOffset + (0.5 - dfY) * dfYscale,
+                                        0.0, 0.0);
+                nBoundaryVertexCount++;
                 break;
 
             default:
