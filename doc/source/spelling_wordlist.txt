@@ -106,6 +106,7 @@ Astrogeology
 Astun
 AStyle
 astylename
+astype
 async
 atable
 athematic

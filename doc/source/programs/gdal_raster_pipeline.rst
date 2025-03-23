@@ -27,6 +27,12 @@ Potential steps are:
 
 .. program-output:: gdal raster pipeline --help-doc=read
 
+* astype [OPTIONS]
+
+.. program-output:: gdal raster pipeline --help-doc=astype
+
+Details for options can be found in :ref:`gdal_raster_astype_subcommand`.
+
 * clip [OPTIONS]
 
 .. program-output:: gdal raster pipeline --help-doc=clip
