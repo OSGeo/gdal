@@ -46,6 +46,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_pipeline
    gdal_raster_reproject
    gdal_raster_resize
+   gdal_raster_scale
    gdal_raster_select
    gdal_raster_stack
    gdal_vector
@@ -82,6 +83,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_pipeline_subcommand`: Process a raster dataset
     - :ref:`gdal_raster_reproject_subcommand`: Reproject a raster dataset
     - :ref:`gdal_raster_resize_subcommand`: Resize a raster dataset without changing the georeferenced extents
+    - :ref:`gdal_raster_scale_subcommand`: Scale the values of the bands of a raster dataset.
     - :ref:`gdal_raster_select_subcommand`: Select a subset of bands from a raster dataset.
     - :ref:`gdal_raster_stack_subcommand`: Combine together input bands into a multi-band output, either virtual (VRT) or materialized.
     - :ref:`gdal_vector_command`: Entry point for vector commands

@@ -308,6 +308,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_scale",
+        "gdal-raster-scale",
+        "Scale the values of the bands of a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_select",
         "gdal-raster-select",
         "Select a subset of bands from a raster dataset",
