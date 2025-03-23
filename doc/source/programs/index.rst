@@ -49,6 +49,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_scale
    gdal_raster_select
    gdal_raster_stack
+   gdal_raster_unscale
    gdal_vector
    gdal_vector_info
    gdal_vector_clip
@@ -86,6 +87,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_scale_subcommand`: Scale the values of the bands of a raster dataset.
     - :ref:`gdal_raster_select_subcommand`: Select a subset of bands from a raster dataset.
     - :ref:`gdal_raster_stack_subcommand`: Combine together input bands into a multi-band output, either virtual (VRT) or materialized.
+    - :ref:`gdal_raster_unscale_subcommand`: Convert scaled values of a raster dataset into unscaled values.
     - :ref:`gdal_vector_command`: Entry point for vector commands
     - :ref:`gdal_vector_info_subcommand`: Get information on a vector dataset
     - :ref:`gdal_vector_clip_subcommand`: Clip a vector dataset

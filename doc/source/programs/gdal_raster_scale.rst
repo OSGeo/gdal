@@ -42,6 +42,8 @@ If clipping without exponential scaling is desired,
 By default, the scaling is applied to all bands. It is possible to restrict
 it to a single band with :option:`--band` and leave values of other bands unmodified.
 
+This command is the reverse operation of :ref:`gdal_raster_unscale_subcommand`.
+
 Standard options
 ++++++++++++++++
 

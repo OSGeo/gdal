@@ -329,6 +329,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_unscale",
+        "gdal-raster-unscale",
+        "Convert scaled values of a raster dataset into unscaled values",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector",
         "gdal-vector",
         "Entry point for vector commands",

@@ -27,6 +27,7 @@
 #include "gdalalg_raster_scale.h"
 #include "gdalalg_raster_select.h"
 #include "gdalalg_raster_stack.h"
+#include "gdalalg_raster_unscale.h"
 
 /************************************************************************/
 /*                         GDALRasterAlgorithm                          */
@@ -61,6 +62,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterScaleAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterSelectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterStackAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterUnscaleAlgorithmStandalone>();
     }
 
   private:
