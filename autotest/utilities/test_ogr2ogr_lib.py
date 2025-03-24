@@ -941,26 +941,26 @@ def test_ogr2ogr_upsert(tmp_vsimem):
 
     create_gpkg_file()
 
-    def create_mem_file():
-        srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
-        mem_lyr = srcDS.CreateLayer("foo")
-        assert (
-            mem_lyr.CreateField(ogr.FieldDefn("other", ogr.OFTString))
-            == ogr.OGRERR_NONE
+    def create_src_file():
+        src_filename = tmp_vsimem / "test_ogr_gpkg_upsert_src.gpkg"
+        srcDS = gdal.GetDriverByName("GPKG").Create(
+            src_filename, 0, 0, 0, gdal.GDT_Unknown
         )
+        lyr = srcDS.CreateLayer("foo")
+        assert lyr.CreateField(ogr.FieldDefn("other", ogr.OFTString)) == ogr.OGRERR_NONE
         unique_field = ogr.FieldDefn("unique_field", ogr.OFTString)
         unique_field.SetUnique(True)
-        assert mem_lyr.CreateField(unique_field) == ogr.OGRERR_NONE
+        assert lyr.CreateField(unique_field) == ogr.OGRERR_NONE
 
-        f = ogr.Feature(mem_lyr.GetLayerDefn())
+        f = ogr.Feature(lyr.GetLayerDefn())
         f.SetField("unique_field", "2")
         f.SetField("other", "foo")
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (10 10)"))
-        mem_lyr.CreateFeature(f)
+        lyr.CreateFeature(f)
         return srcDS
 
     assert (
-        gdal.VectorTranslate(filename, create_mem_file(), accessMode="upsert")
+        gdal.VectorTranslate(filename, create_src_file(), accessMode="upsert")
         is not None
     )
 
