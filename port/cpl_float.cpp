@@ -46,7 +46,10 @@
 #include "cpl_float.h"
 #include "cpl_error.h"
 
+#include <algorithm>
 #include <cstring>
+#include <numeric>
+#include <optional>
 
 /************************************************************************/
 /*                           HalfToFloat()                              */
@@ -305,4 +308,142 @@ float CPLConvertHalfToFloat(GUInt16 nHalf)
     float fFloat32;
     std::memcpy(&fFloat32, &nFloat32, sizeof fFloat32);
     return fFloat32;
+}
+
+namespace
+{
+
+template <typename T> struct Fraction
+{
+    using value_type = T;
+
+    T num;
+    T denom;
+};
+
+/** Approximate a floating point number as a fraction, using the method describe
+ * in Richards, Ian (1981). Continued Fractions Without Tears. Mathematics
+ * Magazine, Vol. 54, No. 4. https://doi.org/10.2307/2689627
+ *
+ * If the fraction cannot be approximated within the specified error tolerance
+ * in a certain amount of iterations, a warning will be raised and  std::nullopt
+ * will be returned.
+ *
+ * @param x the number to approximate as a fraction
+ * @param err the maximum allowable absolute error in the approximation
+ *
+ * @return the approximated value, or std::nullopt
+ *
+*/
+std::optional<Fraction<std::uint64_t>> FloatToFraction(double x, double err)
+{
+    using inttype = std::uint64_t;
+    int nMaxIter = 1000;
+
+    double sign = std::signbit(x) ? -1 : 1;
+
+    double g(std::abs(x));
+    inttype a(0);
+    inttype b(1);
+    inttype c(1);
+    inttype d(0);
+
+    Fraction<std::uint64_t> ret;
+
+    for (int i = 0; i < nMaxIter; i++)
+    {
+        inttype s = static_cast<inttype>(std::floor(g));
+        ret.num = a + s * c;
+        ret.denom = b + s * d;
+
+        a = c;
+        b = d;
+        c = ret.num;
+        d = ret.denom;
+        g = 1.0 / (g - static_cast<double>(s));
+
+        double approx = sign * static_cast<double>(ret.num) /
+                        static_cast<double>(ret.denom);
+
+        if (std::abs(approx - x) < err)
+        {
+            return ret;
+        }
+    }
+
+    CPLError(CE_Warning, CPLE_AppDefined,
+             "Failed to approximate %g as a fraction with error < %g in %d "
+             "iterations",
+             x, err, nMaxIter);
+    return std::nullopt;
+}
+}  // namespace
+
+/** Return the largest value by which two input values can be
+ *  divided, with the result being an integer. If no suitable
+ *  value can be found, zero will be returned.
+ */
+double CPLGreatestCommonDivisor(double a, double b)
+{
+    if (a == b)
+    {
+        return a;
+    }
+
+    // Check if one resolution is an integer factor of the other.
+    // This is fast and succeeds in some cases where the method below fails.
+    if (a > b && std::abs(std::round(a / b) - a / b) < 1e-8)
+    {
+        return b;
+    }
+    if (b > a && std::abs(std::round(b / a) - b / a) < 1e-8)
+    {
+        return a;
+    }
+
+    auto approx_a = FloatToFraction(a, 1e-10);
+    if (!approx_a.has_value())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Could not approximate resolution %.18g as a fraction", a);
+        return 0;
+    }
+
+    auto approx_b = FloatToFraction(b, 1e-10);
+    if (!approx_b.has_value())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Could not approximate resolution %.18g as a fraction", b);
+        return 0;
+    }
+
+    double sign = std::signbit(a) ? -1 : 1;
+
+    auto &frac_a = approx_a.value();
+    auto &frac_b = approx_b.value();
+
+    auto common_denom = std::lcm(frac_a.denom, frac_b.denom);
+
+    auto num_a = static_cast<std::uint64_t>(
+        frac_a.num * std::round(common_denom / frac_a.denom));
+    auto num_b = static_cast<std::uint64_t>(
+        frac_b.num * std::round(common_denom / frac_b.denom));
+
+    auto common_num = std::gcd(num_a, num_b);
+
+    auto common = sign * static_cast<double>(common_num) /
+                  static_cast<double>(common_denom);
+
+    auto disaggregation_factor = std::max(a / common, b / common);
+    if (disaggregation_factor > 10000)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Common resolution between %.18g and %.18g calculated at "
+                 "%.18g which "
+                 "would cause excessive disaggregation",
+                 a, b, common);
+        return 0;
+    }
+
+    return common;
 }

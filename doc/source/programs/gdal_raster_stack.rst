@@ -60,8 +60,11 @@ The following options are available:
 
     `average` will compute an average of pixel dimensions within the set of source rasters.
 
+    `common` determines the greatest common divisor of the source pixel dimensions, e.g. 0.2 for source pixel dimensions of 0.4 and 0.6.
+
     <xres>,<yres>. The values must be expressed in georeferenced units.
     Both must be positive values.
+
 
 .. option:: --bbox <xmin>,<ymin>,<xmax>,<ymax>
 

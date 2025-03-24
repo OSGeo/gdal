@@ -2662,9 +2662,7 @@ def test_vsis3_rmdir_recursive_no_batch_deletion(aws_test_config, webserver_port
 # Test multipart upload with a fake AWS server
 
 
-@pytest.mark.skipif(
-    gdaltest.is_travis_branch("macos_build"), reason="randomly fails on macos"
-)
+@pytest.mark.skipif(gdaltest.is_ci(), reason="randomly fails on CI")
 def test_vsis3_6(aws_test_config, webserver_port):
     with gdaltest.config_option("VSIS3_CHUNK_SIZE", "1", thread_local=False):  # 1 MB
         with webserver.install_http_handler(webserver.SequentialHandler()):
@@ -2967,9 +2965,7 @@ def test_vsis3_6(aws_test_config, webserver_port):
 # Test multipart upload with retry logic
 
 
-@pytest.mark.skipif(
-    gdaltest.is_travis_branch("macos_build"), reason="randomly fails on macos"
-)
+@pytest.mark.skipif(gdaltest.is_ci(), reason="randomly fails on CI")
 def test_vsis3_write_multipart_retry(aws_test_config, webserver_port):
 
     with gdaltest.config_options(
