@@ -2851,15 +2851,15 @@ OGRDXFFeature *OGRDXFLayer::TranslateWIPEOUT()
             /*      Read clipping boudary properties and set them feature geometry  */
             /*      Collect VERTEXes as a smooth polyline.                          */
             /* -------------------------------------------------------------------- */
-            case 14:                
+            case 14:
                 dfX = CPLAtof(szLineBuf);
                 break;
 
             case 24:
-                dfY = CPLAtof(szLineBuf);                
+                dfY = CPLAtof(szLineBuf);
                 smoothPolyline.AddPoint(dfXOffset + (0.5 + dfX) * dfXscale,
-                                        dfYOffset + (0.5 - dfY) * dfYscale,
-                                        0.0, 0.0);
+                                        dfYOffset + (0.5 - dfY) * dfYscale, 0.0,
+                                        0.0);
                 nBoundaryVertexCount++;
                 break;
 
