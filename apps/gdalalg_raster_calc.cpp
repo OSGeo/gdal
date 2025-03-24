@@ -162,7 +162,6 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
         double ymin =
             source.gt[3] + source.nX * source.gt[4] + source.nY * source.gt[5];
 
-
         // Max allowable extent misalignment, expressed as fraction of a pixel
         constexpr double EXTENT_RTOL = 1e-3;
 
