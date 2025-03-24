@@ -24,7 +24,9 @@ Description
 from the range :option:`--srcmin` to :option:`--srcmax` to the range
 :option:`--dstmin` to :option:`--dstmax`.
 It is also often necessary to reset the output datatype with the :option:`--ot` switch.
-If omitted the output range is 0 to 255.
+If omitted the output range is from the minimum value to the maximum value allowed
+for integer data types (for example from 0 to 255 for Byte output) or from 0 to 1
+for floating-point data types.
 If omitted the input range is automatically computed from the source dataset.
 This may be a slow operation on a large source dataset, and if using it multiple times
 for several gdal_translate invocation, it might be beneficial to call
@@ -75,11 +77,11 @@ Standard options
 
 .. option:: --dstmin <DSTMIN>
 
-    Minimum value of the output range. This option must be used together with :option:`--srcmin`, :option:`--srcmax` and :option:`--dstmax`.
+    Minimum value of the output range. This option must be used together with :option:`--dstmax`.
 
 .. option:: --dstmax <DSTMAX>
 
-    Maximum value of the output range. This option must be used together with :option:`--srcmin`, :option:`--srcmax` and :option:`--dstmin`.
+    Maximum value of the output range. This option must be used together with :option:`--dstmin`.
 
 .. option:: --exponent <EXPONENT>
 
@@ -107,4 +109,4 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal raster scale --datatype Byte --srcmin 0 --srcmax 4095 --dstmin 0 --dstmax 255 uint16.tif byte.tif --overwrite
+        $ gdal raster scale --datatype Byte --srcmin 0 --srcmax 4095 uint16.tif byte.tif --overwrite

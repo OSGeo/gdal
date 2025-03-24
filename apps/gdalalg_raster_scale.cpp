@@ -72,31 +72,37 @@ bool GDALRasterScaleAlgorithm::RunStep(GDALProgressFunc, void *)
         }
         aosOptions.AddString(CPLSPrintf("%.17g", m_srcMin));
         aosOptions.AddString(CPLSPrintf("%.17g", m_srcMax));
-        if (!std::isnan(m_dstMin))
-        {
-            if (std::isnan(m_dstMax))
-            {
-                ReportError(
-                    CE_Failure, CPLE_AppDefined,
-                    "dstmax must be specified when dstmin is specified");
-                return false;
-            }
-            aosOptions.AddString(CPLSPrintf("%.17g", m_dstMin));
-            aosOptions.AddString(CPLSPrintf("%.17g", m_dstMax));
-        }
-        else if (!std::isnan(m_dstMax))
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "dstmin must be specified");
-            return false;
-        }
     }
-    else if (!std::isnan(m_srcMax) || !std::isnan(m_dstMin) ||
-             !std::isnan(m_dstMax))
+    else if (!std::isnan(m_srcMax))
     {
-        ReportError(CE_Failure, CPLE_AppDefined, "srcmin must be specified");
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "srcmin must be specified when srcmax is specified");
         return false;
     }
+
+    if (!std::isnan(m_dstMin))
+    {
+        if (std::isnan(m_dstMax))
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "dstmax must be specified when dstmin is specified");
+            return false;
+        }
+        if (std::isnan(m_srcMin))
+        {
+            aosOptions.AddString("NaN");
+            aosOptions.AddString("NaN");
+        }
+        aosOptions.AddString(CPLSPrintf("%.17g", m_dstMin));
+        aosOptions.AddString(CPLSPrintf("%.17g", m_dstMax));
+    }
+    else if (!std::isnan(m_dstMax))
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "dstmin must be specified when dstmax is specified");
+        return false;
+    }
+
     if (!std::isnan(m_exponent))
     {
         aosOptions.AddString(m_band > 0 ? CPLSPrintf("-exponent_%d", m_band)

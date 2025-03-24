@@ -22,10 +22,23 @@ def get_scale_alg():
     return raster.InstantiateSubAlgorithm("scale")
 
 
-def test_gdalalg_raster_scale_no_option():
+@pytest.mark.parametrize(
+    "dt,min,max",
+    [
+        (gdal.GDT_Byte, 0, 255),
+        (gdal.GDT_Int8, -128, 127),
+        (gdal.GDT_UInt16, 0, 65535),
+        (gdal.GDT_Int16, -32768, 32767),
+        (gdal.GDT_UInt32, 0, (1 << 32) - 1),
+        (gdal.GDT_Int32, -(1 << 31), (1 << 31) - 1),
+        (gdal.GDT_UInt64, 0, 1.844674407370955e19),
+        (gdal.GDT_Int64, -9.223372036854776e18, 9.223372036854772e18),
+    ],
+)
+def test_gdalalg_raster_scale_no_option(dt, min, max):
 
-    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
-    src_ds.GetRasterBand(1).Fill(15)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 2, 1, dt)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 2, b"\x01\x02", buf_type=gdal.GDT_Byte)
 
     alg = get_scale_alg()
     alg["input"] = src_ds
@@ -33,7 +46,39 @@ def test_gdalalg_raster_scale_no_option():
     alg["output-format"] = "MEM"
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
-    assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (0, 0)
+    assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (min, max)
+
+
+def test_gdalalg_raster_scale_srcmin_srcmax_only():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 2)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 2, b"\x01\x02")
+
+    alg = get_scale_alg()
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "MEM"
+    alg["srcmin"] = 0
+    alg["srcmax"] = 3
+    assert alg.Run()
+    out_ds = alg["output"].GetDataset()
+    assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (85, 170)
+
+
+def test_gdalalg_raster_scale_dstcmin_dstmax_only():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 2)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 2, b"\x01\x02")
+
+    alg = get_scale_alg()
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "MEM"
+    alg["dstmin"] = 0
+    alg["dstmax"] = 3
+    assert alg.Run()
+    out_ds = alg["output"].GetDataset()
+    assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (0, 3)
 
 
 def test_gdalalg_raster_scale_missing_srcmin():
@@ -73,8 +118,6 @@ def test_gdalalg_raster_scale_missing_dstmin():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["srcmin"] = 0
-    alg["srcmax"] = 0
     alg["dstmax"] = 0
     with pytest.raises(Exception, match="scale: dstmin must be specified"):
         alg.Run()
@@ -89,14 +132,12 @@ def test_gdalalg_raster_scale_missing_dstmax():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["srcmin"] = 0
-    alg["srcmax"] = 0
     alg["dstmin"] = 0
     with pytest.raises(Exception, match="scale: dstmax must be specified"):
         alg.Run()
 
 
-def test_gdalalg_raster_scale():
+def test_gdalalg_raster_scale_srcmin_srcmax_destmin_dstmax():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
     src_ds.GetRasterBand(1).Fill(15)
