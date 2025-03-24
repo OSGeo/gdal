@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import struct
+
 import pytest
 
 from osgeo import gdal
@@ -32,7 +34,7 @@ def get_scale_alg():
         (gdal.GDT_UInt32, 0, (1 << 32) - 1),
         (gdal.GDT_Int32, -(1 << 31), (1 << 31) - 1),
         (gdal.GDT_UInt64, 0, 1.844674407370955e19),
-        (gdal.GDT_Int64, -9.223372036854776e18, 9.223372036854772e18),
+        (gdal.GDT_Int64, -9.223372036854775e18, 9.223372036854773e18),
     ],
 )
 def test_gdalalg_raster_scale_no_option(dt, min, max):
@@ -221,3 +223,78 @@ def test_gdalalg_raster_band_exponent_datatype():
     assert out_ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
     assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (15, 15)
     assert out_ds.GetRasterBand(2).ComputeRasterMinMax() == (125, 125)
+
+
+def test_gdalalg_raster_scale_clip():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 5)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 5, b"\x00\x01\x02\x03\x04")
+
+    alg = get_scale_alg()
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "MEM"
+    alg["srcmin"] = 1
+    alg["srcmax"] = 3
+    alg["dstmin"] = 100
+    alg["dstmax"] = 200
+    assert alg.Run()
+    out_ds = alg["output"].GetDataset()
+    assert struct.unpack("B" * 5, out_ds.GetRasterBand(1).ReadRaster()) == (
+        100,
+        100,
+        150,
+        200,
+        200,
+    )
+
+
+def test_gdalalg_raster_scale_no_clip():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 5)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 5, b"\x00\x01\x02\x03\x04")
+
+    alg = get_scale_alg()
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "MEM"
+    alg["srcmin"] = 1
+    alg["srcmax"] = 3
+    alg["dstmin"] = 100
+    alg["dstmax"] = 200
+    alg["no-clip"] = True
+    assert alg.Run()
+    out_ds = alg["output"].GetDataset()
+    assert struct.unpack("B" * 5, out_ds.GetRasterBand(1).ReadRaster()) == (
+        50,
+        100,
+        150,
+        200,
+        250,
+    )
+
+
+def test_gdalalg_raster_scale_no_clip_exponent():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 5)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 5, b"\x00\x01\x02\x03\x04")
+
+    alg = get_scale_alg()
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "MEM"
+    alg["srcmin"] = 1
+    alg["srcmax"] = 3
+    alg["dstmin"] = 100
+    alg["dstmax"] = 200
+    alg["exponent"] = 1.1
+    alg["no-clip"] = True
+    assert alg.Run()
+    out_ds = alg["output"].GetDataset()
+    assert struct.unpack("B" * 5, out_ds.GetRasterBand(1).ReadRaster()) == (
+        0,
+        100,
+        147,
+        200,
+        255,
+    )

@@ -164,6 +164,8 @@ struct GDALTranslateOptions
     /*! It is set to TRUE, when scale parameters are specific to each band */
     bool bHasUsedExplicitScaleBand = false;
 
+    bool bNoClip = false;
+
     /*! to apply non-linear scaling with a power function. It is the list of
        exponents of the power function (must be positive). This option must be
        used with GDALTranslateOptions::asScaleParams. If
@@ -2374,7 +2376,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             {
                 poSource->SetPowerScaling(dfExponent, dfScaleSrcMin,
                                           dfScaleSrcMax, dfScaleDstMin,
-                                          dfScaleDstMax);
+                                          dfScaleDstMax, !psOptions->bNoClip);
             }
 
             poSource->SetColorTableComponent(nComponent);
@@ -3217,6 +3219,11 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
     // Undocumented option used by gdal raster convert
     argParser->add_argument("--no-overwrite")
         .store_into(psOptions->bNoOverwrite)
+        .hidden();
+
+    // Undocumented option used by gdal raster scale
+    argParser->add_argument("--no-clip")
+        .store_into(psOptions->bNoClip)
         .hidden();
 
     if (psOptionsForBinary)

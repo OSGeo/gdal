@@ -49,6 +49,7 @@ class GDALRasterScaleAlgorithm /* non final */
     double m_dstMin = std::numeric_limits<double>::quiet_NaN();
     double m_dstMax = std::numeric_limits<double>::quiet_NaN();
     double m_exponent = std::numeric_limits<double>::quiet_NaN();
+    bool m_noClip = false;
 };
 
 /************************************************************************/

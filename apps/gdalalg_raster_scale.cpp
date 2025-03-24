@@ -40,6 +40,8 @@ GDALRasterScaleAlgorithm::GDALRasterScaleAlgorithm(bool standaloneStep)
     AddArg("exponent", 0,
            _("Exponent to apply non-linear scaling with a power function"),
            &m_exponent);
+    AddArg("no-clip", 0, _("Do not clip input values to [srcmin, srcmax]"),
+           &m_noClip);
 }
 
 /************************************************************************/
@@ -108,6 +110,17 @@ bool GDALRasterScaleAlgorithm::RunStep(GDALProgressFunc, void *)
         aosOptions.AddString(m_band > 0 ? CPLSPrintf("-exponent_%d", m_band)
                                         : "-exponent");
         aosOptions.AddString(CPLSPrintf("%.17g", m_exponent));
+    }
+    else if (!m_noClip)
+    {
+        aosOptions.AddString(m_band > 0 ? CPLSPrintf("-exponent_%d", m_band)
+                                        : "-exponent");
+        aosOptions.AddString("1");
+    }
+
+    if (m_noClip)
+    {
+        aosOptions.AddString("--no-clip");
     }
 
     GDALTranslateOptions *psOptions =

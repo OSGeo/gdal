@@ -32,14 +32,8 @@ This may be a slow operation on a large source dataset, and if using it multiple
 for several gdal_translate invocation, it might be beneficial to call
 ``gdal raster info --stats {source_dataset}`` priorly to precompute statistics, for
 formats that support serializing statistics computations (GeoTIFF, VRT...)
-Note that the values specified for the ranges are only used to compute a scale and
-offset to apply to the input raster values. In particular, ``srcmin`` and
-``srcmax`` are not used to clip input values unless :option:`--exponent`
-is also specified.
-Instead of being clipped, source values that are outside the range of ``srcmin``
-and ``srcmax`` will be scaled to values outside the range of ``dstmin`` and ``dstmax``.
-If clipping without exponential scaling is desired,
-``--exponent 1`` can be used.
+Source values are clipped to the range defined by ``srcmin`` and ``srcmax``,
+unless :option:`--no-clip` is set.
 
 By default, the scaling is applied to all bands. It is possible to restrict
 it to a single band with :option:`--band` and leave values of other bands unmodified.
@@ -99,6 +93,12 @@ Standard options
 
         :ref:`gdal_raster_unscale_subcommand` assumes linear scaling, and
         this cannot unscale values back to the original ones.
+
+.. option:: --no-clip
+
+    Disable clipping input values to the source range. Note that using this option
+    with non-linear scaling with a non-integer exponent will cause input values lower
+    than the minimum value of the source range to be mapped to not-a-number.
 
 
 Examples
