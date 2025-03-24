@@ -26,7 +26,13 @@ This subcommand is also available as a potential step of :ref:`gdal_raster_pipel
 
 .. option:: --dataset <DATASET>
 
-    Dataset name, to be in-place updated. Required.
+    Dataset name, to be updated in-place, unless :option:`--auxiliary` is set. Required.
+
+.. option:: --auxiliary
+
+    Force opening the dataset in read-only mode. For drivers that implement the
+    Persistent Auxiliary Metadata (PAM) mechanism, changes will be
+    saved in an auxiliary side car file of extension ``.aux.xml``.
 
 .. option:: --crs <CRS>
 
@@ -54,6 +60,20 @@ This subcommand is also available as a potential step of :ref:`gdal_raster_pipel
 .. option:: --unset-metadata <KEY>
 
     Remove dataset metadata item, at the dataset level.
+
+.. option:: --stats
+
+    Compute raster band statistics for all bands.
+
+.. option:: --approx-stats
+
+    Compute raster band statistics for all bands. They may be computed
+    based on overviews or a subset of all tiles. Useful if you are in a
+    hurry and don't need precise stats.
+
+.. option:: --hist
+
+    Compute histogram information for all bands.
 
 
 Examples

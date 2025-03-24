@@ -50,7 +50,7 @@ The following command line parameters can appear in any order
     Read and display image statistics. Force computation if no
     statistics are stored in an image. However, they may be computed
     based on overviews or a subset of all tiles. Useful if you are in a
-    hurry and don't want precise stats.
+    hurry and don't need precise stats.
 
 .. option:: -hist
 

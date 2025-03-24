@@ -30,7 +30,7 @@ for floating-point data types.
 If omitted the input range is automatically computed from the source dataset.
 This may be a slow operation on a large source dataset, and if using it multiple times
 for several gdal_translate invocation, it might be beneficial to call
-``gdal raster info --stats {source_dataset}`` priorly to precompute statistics, for
+``gdal raster edit --stats {source_dataset}`` priorly to precompute statistics, for
 formats that support serializing statistics computations (GeoTIFF, VRT...)
 Source values are clipped to the range defined by ``srcmin`` and ``srcmax``,
 unless :option:`--no-clip` is set.

@@ -32,7 +32,7 @@ of a dataset.
 
 .. option:: --dataset <DATASET>
 
-    Dataset name, to be in-place updated by default (unless :option:`--external` is specified). Required.
+    Dataset name, to be updated in-place by default (unless :option:`--external` is specified). Required.
 
 .. option:: --external
 
