@@ -373,7 +373,6 @@ static bool CPLZSTDCompressor(const void *input_data, size_t input_size,
     if (output_data != nullptr && *output_data != nullptr &&
         output_size != nullptr && *output_size != 0)
     {
-        const int level = atoi(CSLFetchNameValueDef(options, "LEVEL", "13"));
         ZSTD_CCtx *ctx = ZSTD_createCCtx();
         if (ctx == nullptr)
         {
@@ -381,8 +380,24 @@ static bool CPLZSTDCompressor(const void *input_data, size_t input_size,
             return false;
         }
 
-        size_t ret = ZSTD_compressCCtx(ctx, *output_data, *output_size,
-                                       input_data, input_size, level);
+        const int level = atoi(CSLFetchNameValueDef(options, "LEVEL", "13"));
+        if (ZSTD_isError(
+                ZSTD_CCtx_setParameter(ctx, ZSTD_c_compressionLevel, level)))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid compression level");
+            ZSTD_freeCCtx(ctx);
+            *output_size = 0;
+            return false;
+        }
+
+        if (CPLTestBool(CSLFetchNameValueDef(options, "CHECKSUM", "NO")))
+        {
+            CPL_IGNORE_RET_VAL(
+                ZSTD_CCtx_setParameter(ctx, ZSTD_c_checksumFlag, 1));
+        }
+
+        size_t ret = ZSTD_compress2(ctx, *output_data, *output_size, input_data,
+                                    input_size);
         ZSTD_freeCCtx(ctx);
         if (ZSTD_isError(ret))
         {
@@ -1370,6 +1385,9 @@ static void CPLAddBuiltinCompressors()
             "OPTIONS=<Options>"
             "  <Option name='LEVEL' type='int' description='Compression level' "
             "min='1' max='22' default='13' />"
+            "  <Option name='CHECKSUM' type='boolean' description='Whether "
+            "to store a checksum when writing that will be verified' "
+            "default='NO' />"
             "</Options>";
         const char *const apszMetadata[] = {pszOptions, nullptr};
         sComp.papszMetadata = apszMetadata;

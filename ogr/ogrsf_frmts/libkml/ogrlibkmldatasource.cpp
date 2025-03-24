@@ -846,7 +846,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
     const char *pszLayerName, OGRwkbGeometryType eGType,
     const OGRSpatialReference *poSRS, OGRLIBKMLDataSource *poOgrDS,
     ElementPtr poKmlRoot, ContainerPtr poKmlContainer, const char *pszFileName,
-    int bNew, int bUpdateIn, int nGuess)
+    bool bNew, bool bUpdateIn, int nGuess)
 {
     // Build unique layer name
     CPLString osUniqueLayername(pszLayerName);
@@ -947,7 +947,7 @@ int OGRLIBKMLDataSource::ParseLayers(ContainerPtr poKmlContainer, bool bRecurse)
                 /***** create the layer *****/
 
                 AddLayer(oKmlFeatName.c_str(), wkbUnknown, nullptr, this,
-                         nullptr, AsContainer(poKmlFeat), "", FALSE, bUpdate,
+                         nullptr, AsContainer(poKmlFeat), "", false, bUpdate,
                          static_cast<int>(nKmlFeatures));
 
                 /***** check if any features are another layer *****/
@@ -1293,7 +1293,7 @@ int OGRLIBKMLDataSource::OpenKmz(const char *pszFilename, int bUpdateIn)
 
                 AddLayer(osLayerName.c_str(), wkbUnknown, nullptr, this,
                          std::move(poKmlLyrRoot), poKmlLyrContainer,
-                         oKmlHref.get_path().c_str(), FALSE, bUpdateIn,
+                         oKmlHref.get_path().c_str(), false, bUpdateIn,
                          static_cast<int>(nKmlFeatures));
 
                 /***** check if any features are another layer *****/
@@ -1335,7 +1335,7 @@ int OGRLIBKMLDataSource::OpenKmz(const char *pszFilename, int bUpdateIn)
 
             AddLayer(layername_default.c_str(), wkbUnknown, nullptr, this,
                      std::move(poKmlDocKmlRoot), poKmlContainer, pszFilename,
-                     FALSE, bUpdateIn, 1);
+                     false, bUpdateIn, 1);
         }
 
         ParseLayers(std::move(poKmlContainer), true);
@@ -1458,7 +1458,7 @@ int OGRLIBKMLDataSource::OpenDir(const char *pszFilename, int bUpdateIn)
         /***** create the layer *****/
         AddLayer(osLayerName.c_str(), wkbUnknown, nullptr, this,
                  std::move(poKmlRoot), poKmlContainer, osFilePath.c_str(),
-                 FALSE, bUpdateIn, nFiles);
+                 false, bUpdateIn, nFiles);
 
         /***** check if any features are another layer *****/
         ParseLayers(std::move(poKmlContainer), true);
@@ -1514,7 +1514,7 @@ static bool CheckIsKMZ(const char *pszFilename)
     return bFoundKML;
 }
 
-int OGRLIBKMLDataSource::Open(const char *pszFilename, int bUpdateIn)
+int OGRLIBKMLDataSource::Open(const char *pszFilename, bool bUpdateIn)
 {
     bUpdate = CPL_TO_BOOL(bUpdateIn);
 
@@ -2171,7 +2171,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(
     /***** create the layer *****/
     OGRLIBKMLLayer *poOgrLayer =
         AddLayer(pszLayerName, eGType, poSRS, this, nullptr,
-                 poKmlLayerContainer, "", TRUE, bUpdate, 1);
+                 poKmlLayerContainer, "", true, bUpdate, 1);
 
     /***** add the layer name as a <Name> *****/
     if (poKmlLayerContainer)
@@ -2239,7 +2239,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz(
     OGRLIBKMLLayer *poOgrLayer =
         AddLayer(pszLayerName, eGType, poSRS, this, nullptr, poKmlDocument,
                  CPLFormFilenameSafe(nullptr, pszLayerName, ".kml").c_str(),
-                 TRUE, bUpdate, 1);
+                 true, bUpdate, 1);
 
     /***** add the layer name as a <Name> *****/
     if (!m_poKmlUpdate)

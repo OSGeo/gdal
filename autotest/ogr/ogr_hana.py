@@ -11,6 +11,7 @@
 #
 # SPDX-License-Identifier: MIT
 ###############################################################################
+from datetime import datetime, timedelta
 from os import environ
 
 import gdaltest
@@ -48,8 +49,11 @@ def setup_driver():
         conn,
         "SELECT REPLACE(CURRENT_UTCDATE, '-', '') || '_' || BINTOHEX(SYSUUID) FROM DUMMY;",
     )
-    gdaltest.hana_schema_name = "{}_{}".format("gdal_test", uid)
+    schema_prefix = "gdal_test"
 
+    drop_old_test_schemas(conn, schema_prefix)
+
+    gdaltest.hana_schema_name = f"{schema_prefix}_{uid}"
     execute_sql(conn, f'CREATE SCHEMA "{gdaltest.hana_schema_name}"')
 
     ds = open_datasource(1)
@@ -1373,6 +1377,24 @@ def execute_sql_scalar(conn, sql):
     cursor.close()
     conn.commit()
     return res
+
+
+def drop_old_test_schemas(conn, schema_prefix):
+    try:
+        assert conn
+        cursor = conn.cursor()
+        assert cursor
+        sql = f"""SELECT SCHEMA_NAME FROM SYS.SCHEMAS WHERE SCHEMA_NAME
+                  LIKE '{schema_prefix.replace('_', '__')}__%' ESCAPE '_' AND
+                  LOCALTOUTC(CREATE_TIME) < ?"""
+        cursor.execute(sql, datetime.now() - timedelta(days=1))
+        rows = cursor.fetchall()
+        cursor.close()
+        for row in rows:
+            execute_sql(conn, f'DROP SCHEMA "{row["SCHEMA_NAME"]}" CASCADE')
+    except Exception as ex:
+        print(f"Unable to drop old test schemas. Error: {ex}")
+        pass
 
 
 def open_datasource(update=0, open_opts=None):

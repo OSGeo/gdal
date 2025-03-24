@@ -1059,15 +1059,6 @@ GIntBig OGRParquetDatasetLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                            GetExtent()                               */
-/************************************************************************/
-
-OGRErr OGRParquetDatasetLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    return GetExtent(0, psExtent, bForce);
-}
-
-/************************************************************************/
 /*                         FastGetExtent()                              */
 /************************************************************************/
 
@@ -1085,22 +1076,12 @@ bool OGRParquetDatasetLayer::FastGetExtent(int iGeomField,
 }
 
 /************************************************************************/
-/*                            GetExtent()                               */
+/*                           IGetExtent()                               */
 /************************************************************************/
 
-OGRErr OGRParquetDatasetLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                         int bForce)
+OGRErr OGRParquetDatasetLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                          bool bForce)
 {
-    if (iGeomField < 0 || iGeomField >= m_poFeatureDefn->GetGeomFieldCount())
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return OGRERR_FAILURE;
-    }
-
     if (FastGetExtent(iGeomField, psExtent))
     {
         return OGRERR_NONE;
@@ -1161,22 +1142,24 @@ OGRErr OGRParquetDatasetLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         }
     }
 
-    return OGRParquetLayerBase::GetExtent(iGeomField, psExtent, bForce);
+    return OGRParquetLayerBase::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/
-/*                        SetSpatialFilter()                            */
+/*                        ISetSpatialFilter()                           */
 /************************************************************************/
 
-void OGRParquetDatasetLayer::SetSpatialFilter(int iGeomField,
-                                              OGRGeometry *poGeomIn)
+OGRErr OGRParquetDatasetLayer::ISetSpatialFilter(int iGeomField,
+                                                 const OGRGeometry *poGeomIn)
 
 {
-    OGRParquetLayerBase::SetSpatialFilter(iGeomField, poGeomIn);
+    const OGRErr eErr =
+        OGRParquetLayerBase::ISetSpatialFilter(iGeomField, poGeomIn);
     m_bRebuildScanner = true;
 
     // Full invalidation
     InvalidateCachedBatches();
+    return eErr;
 }
 
 /************************************************************************/

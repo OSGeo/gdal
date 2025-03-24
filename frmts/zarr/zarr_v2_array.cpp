@@ -563,7 +563,10 @@ bool ZarrV2Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
         const auto &oFilter = m_oFiltersArray[i];
         const auto osFilterId = oFilter["id"].ToString();
         const auto psFilterDecompressor =
-            CPLGetDecompressor(osFilterId.c_str());
+            EQUAL(osFilterId.c_str(), "shuffle") ? ZarrGetShuffleDecompressor()
+            : EQUAL(osFilterId.c_str(), "quantize")
+                ? ZarrGetQuantizeDecompressor()
+                : CPLGetDecompressor(osFilterId.c_str());
         CPLAssert(psFilterDecompressor);
 
         CPLStringList aosOptions;
@@ -846,7 +849,16 @@ bool ZarrV2Array::FlushDirtyTile() const
     for (const auto &oFilter : m_oFiltersArray)
     {
         const auto osFilterId = oFilter["id"].ToString();
-        const auto psFilterCompressor = CPLGetCompressor(osFilterId.c_str());
+        if (osFilterId == "quantize")
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "quantize filter not supported for writing");
+            return false;
+        }
+        const auto psFilterCompressor =
+            EQUAL(osFilterId.c_str(), "shuffle")
+                ? ZarrGetShuffleCompressor()
+                : CPLGetCompressor(osFilterId.c_str());
         CPLAssert(psFilterCompressor);
 
         CPLStringList aosOptions;
@@ -1865,16 +1877,20 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                 CPLError(CE_Failure, CPLE_AppDefined, "Missing filter id");
                 return nullptr;
             }
-            const auto psFilterCompressor =
-                CPLGetCompressor(osFilterId.c_str());
-            const auto psFilterDecompressor =
-                CPLGetDecompressor(osFilterId.c_str());
-            if (psFilterCompressor == nullptr ||
-                psFilterDecompressor == nullptr)
+            if (!EQUAL(osFilterId.c_str(), "shuffle") &&
+                !EQUAL(osFilterId.c_str(), "quantize"))
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Filter %s not handled",
-                         osFilterId.c_str());
-                return nullptr;
+                const auto psFilterCompressor =
+                    CPLGetCompressor(osFilterId.c_str());
+                const auto psFilterDecompressor =
+                    CPLGetDecompressor(osFilterId.c_str());
+                if (psFilterCompressor == nullptr ||
+                    psFilterDecompressor == nullptr)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Filter %s not handled", osFilterId.c_str());
+                    return nullptr;
+                }
             }
         }
     }
@@ -1947,4 +1963,28 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
     }
 
     return poArray;
+}
+
+/************************************************************************/
+/*                    ZarrV2Group::SetCompressorJson()                  */
+/************************************************************************/
+
+void ZarrV2Array::SetCompressorJson(const CPLJSONObject &oCompressor)
+{
+    m_oCompressorJSon = oCompressor;
+    if (oCompressor.GetType() != CPLJSONObject::Type::Null)
+        m_aosStructuralInfo.SetNameValue("COMPRESSOR",
+                                         oCompressor.ToString().c_str());
+}
+
+/************************************************************************/
+/*                     ZarrV2Group::SetFilters()                        */
+/************************************************************************/
+
+void ZarrV2Array::SetFilters(const CPLJSONArray &oFiltersArray)
+{
+    m_oFiltersArray = oFiltersArray;
+    if (oFiltersArray.Size() > 0)
+        m_aosStructuralInfo.SetNameValue("FILTERS",
+                                         oFiltersArray.ToString().c_str());
 }

@@ -37,7 +37,7 @@ software developers and data producers. This was based on the authors
 interpretation of something said once by the GeoTIFF author. However, a
 recent review of section [`section
 2.5.2.2 <http://www.remotesensing.org/geotiff/spec/geotiff2.5.html#2.5.2.2>`__]
-of the GeoTIFF specificaiton has made it clear that GDAL behavior is
+of the GeoTIFF specification has made it clear that GDAL behavior is
 incorrect and that PixelIsPoint georeferencing needs to be offset by a
 half a pixel when transformed to the GDAL georeferencing model. This
 issue is documented in the following tickets including #3837, #3838,

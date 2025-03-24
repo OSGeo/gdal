@@ -1449,10 +1449,15 @@ GDALRPCTransformWholeLineWithDEM(const GDALRPCTransformInfo *psTransform,
     const int nY = static_cast<int>(dfY);
     const double dfDeltaY = dfY - nY;
 
+    int bRet = TRUE;
     for (int i = 0; i < nPointCount; i++)
     {
         if (padfX[i] == HUGE_VAL)
+        {
+            bRet = FALSE;
+            panSuccess[i] = FALSE;
             continue;
+        }
 
         double dfDEMH = 0.0;
         const double dfZ_i = padfZ ? padfZ[i] : 0.0;
@@ -1502,6 +1507,7 @@ GDALRPCTransformWholeLineWithDEM(const GDALRPCTransformInfo *psTransform,
                     dfDEMH = psTransform->dfDEMMissingValue;
                 else
                 {
+                    bRet = FALSE;
                     panSuccess[i] = FALSE;
                     continue;
                 }
@@ -1546,6 +1552,7 @@ GDALRPCTransformWholeLineWithDEM(const GDALRPCTransformInfo *psTransform,
                     {
                         if (!RPCIsValidLongLat(psTransform, padfX[i], padfY[i]))
                         {
+                            bRet = FALSE;
                             panSuccess[i] = FALSE;
                             padfX[i] = HUGE_VAL;
                             padfY[i] = HUGE_VAL;
@@ -1565,6 +1572,7 @@ GDALRPCTransformWholeLineWithDEM(const GDALRPCTransformInfo *psTransform,
                     {
                         if (!RPCIsValidLongLat(psTransform, padfX[i], padfY[i]))
                         {
+                            bRet = FALSE;
                             panSuccess[i] = FALSE;
                             padfX[i] = HUGE_VAL;
                             padfY[i] = HUGE_VAL;
@@ -1582,6 +1590,7 @@ GDALRPCTransformWholeLineWithDEM(const GDALRPCTransformInfo *psTransform,
                     }
                     else
                     {
+                        bRet = FALSE;
                         panSuccess[i] = FALSE;
                         padfX[i] = HUGE_VAL;
                         padfY[i] = HUGE_VAL;
@@ -1613,6 +1622,7 @@ GDALRPCTransformWholeLineWithDEM(const GDALRPCTransformInfo *psTransform,
                     dfDEMH = psTransform->dfDEMMissingValue;
                 else
                 {
+                    bRet = FALSE;
                     panSuccess[i] = FALSE;
                     padfX[i] = HUGE_VAL;
                     padfY[i] = HUGE_VAL;
@@ -1623,6 +1633,7 @@ GDALRPCTransformWholeLineWithDEM(const GDALRPCTransformInfo *psTransform,
 
         if (!RPCIsValidLongLat(psTransform, padfX[i], padfY[i]))
         {
+            bRet = FALSE;
             panSuccess[i] = FALSE;
             padfX[i] = HUGE_VAL;
             padfY[i] = HUGE_VAL;
@@ -1638,7 +1649,7 @@ GDALRPCTransformWholeLineWithDEM(const GDALRPCTransformInfo *psTransform,
 
     VSIFree(padfDEMBuffer);
 
-    return TRUE;
+    return bRet;
 }
 
 /************************************************************************/
@@ -1900,10 +1911,12 @@ int GDALRPCTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
             }
         }
 
+        int bRet = TRUE;
         for (int i = 0; i < nPointCount; i++)
         {
             if (!RPCIsValidLongLat(psTransform, padfX[i], padfY[i]))
             {
+                bRet = FALSE;
                 panSuccess[i] = FALSE;
                 padfX[i] = HUGE_VAL;
                 padfY[i] = HUGE_VAL;
@@ -1913,6 +1926,7 @@ int GDALRPCTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
             if (!GDALRPCGetHeightAtLongLat(psTransform, padfX[i], padfY[i],
                                            &dfHeight))
             {
+                bRet = FALSE;
                 panSuccess[i] = FALSE;
                 padfX[i] = HUGE_VAL;
                 padfY[i] = HUGE_VAL;
@@ -1925,13 +1939,15 @@ int GDALRPCTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
             panSuccess[i] = TRUE;
         }
 
-        return TRUE;
+        return bRet;
     }
 
     if (padfZ == nullptr)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Z array should be provided for reverse RPC computation");
+        for (int i = 0; i < nPointCount; i++)
+            panSuccess[i] = FALSE;
         return FALSE;
     }
 
@@ -1940,6 +1956,7 @@ int GDALRPCTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
     /*      function uses an iterative method from an initial linear        */
     /*      approximation.                                                  */
     /* -------------------------------------------------------------------- */
+    int bRet = TRUE;
     for (int i = 0; i < nPointCount; i++)
     {
         double dfResultX = 0.0;
@@ -1948,6 +1965,7 @@ int GDALRPCTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
         if (!RPCInverseTransformPoint(psTransform, padfX[i], padfY[i], padfZ[i],
                                       &dfResultX, &dfResultY))
         {
+            bRet = FALSE;
             panSuccess[i] = FALSE;
             padfX[i] = HUGE_VAL;
             padfY[i] = HUGE_VAL;
@@ -1955,6 +1973,7 @@ int GDALRPCTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
         }
         if (!RPCIsValidLongLat(psTransform, padfX[i], padfY[i]))
         {
+            bRet = FALSE;
             panSuccess[i] = FALSE;
             padfX[i] = HUGE_VAL;
             padfY[i] = HUGE_VAL;
@@ -1967,7 +1986,7 @@ int GDALRPCTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
         panSuccess[i] = TRUE;
     }
 
-    return TRUE;
+    return bRet;
 }
 
 /************************************************************************/

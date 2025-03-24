@@ -277,6 +277,14 @@ Open options
 |about-open-options|
 The following open options are available:
 
+-  .. oo:: LIST_ALL_ARRAYS
+      :choices: YES, NO
+      :default: NO
+      :since: 3.11
+
+      In classic 2D mode, whereas the subdataset list should include all arrays,
+      including those with 1 dimension.
+
 -  .. oo:: HONOUR_VALID_RANGE
       :choices: YES, NO
       :since: 2.2
@@ -693,9 +701,9 @@ The :cpp:func:`GDALGroup::GetMDArrayNames` method supports the following options
 - SHOW_ALL=YES/NO. Defaults to NO. If set to YES, all variables will be listed.
 - SHOW_ZERO_DIM=YES/NO. Defaults to NO. If set to NO, variables with 0-dimension
   will not be listed.
-- SHOW_COORDINATES=YES/NO. Defaults to YES. If set to NO, variables refererenced
+- SHOW_COORDINATES=YES/NO. Defaults to YES. If set to NO, variables referenced
   in the ``coordinates`` attribute of another variable will not be listed.
-- SHOW_BOUNDS=YES/NO. Defaults to YES. If set to NO, variables refererenced
+- SHOW_BOUNDS=YES/NO. Defaults to YES. If set to NO, variables referenced
   in the ``bounds`` attribute of another variable will not be listed.
 - SHOW_INDEXING=YES/NO. Defaults to YES. If set to NO,
   single-dimensional variables whose name is equal to the name of their indexing

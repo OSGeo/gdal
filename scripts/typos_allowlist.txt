@@ -266,7 +266,7 @@ int CPL_DLL creat(const char *path, mode_t mode)
     msg = msg.replace("overfow", "overflow")
     msg = msg.replace("divison", "division")
     msg = msg.replace("behaviour", "behavior")
-scan-build -o $GDAL_TOPDIR/scanbuildoutput -sarif -v -enable-checker alpha.unix.cstring.OutOfBounds,alpha.unix.cstring.BufferOverlap,optin.cplusplus.VirtualCall,optin.cplusplus.UninitializedObject make -j4
+scan-build -o $GDAL_TOPDIR/scanbuildoutput -sarif -v -enable-checker alpha.unix.cstring.OutOfBounds,alpha.unix.cstring.BufferOverlap,optin.cplusplus.VirtualCall,optin.cplusplus.UninitializedObject make -j$(nproc)
         "JPNG",
         "       <Value>JPNG</Value>"
              || poDS->current.comp == IL_JPNG

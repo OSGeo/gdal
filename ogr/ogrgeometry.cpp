@@ -4618,7 +4618,7 @@ OGRGeometryH OGR_G_Buffer(OGRGeometryH hTarget, double dfDist, int nQuadSegs)
  * <li>ENDCAP_STYLE=ROUND/FLAT/SQUARE</li>
  * <li>JOIN_STYLE=ROUND/MITRE/BEVEL</li>
  * <li>MITRE_LIMIT=double</li>
- * <li>QUADRANT_SEGMENTS=double</li>
+ * <li>QUADRANT_SEGMENTS=int</li>
  * <li>SINGLE_SIDED=YES/NO</li>
  * </ul>
  *
@@ -4833,7 +4833,7 @@ OGRGeometry::BufferEx(UNUSED_IF_NO_GEOS double dfDist,
  * <li>ENDCAP_STYLE=ROUND/FLAT/SQUARE</li>
  * <li>JOIN_STYLE=ROUND/MITRE/BEVEL</li>
  * <li>MITRE_LIMIT=double</li>
- * <li>QUADRANT_SEGMENTS=double</li>
+ * <li>QUADRANT_SEGMENTS=int</li>
  * <li>SINGLE_SIDED=YES/NO</li>
  * </ul>
  *

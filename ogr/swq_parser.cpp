@@ -606,17 +606,17 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   109,   109,   110,   116,   123,   128,   133,   138,   145,
-     153,   161,   169,   177,   185,   193,   201,   209,   217,   225,
-     237,   246,   259,   267,   279,   288,   301,   310,   323,   332,
-     345,   352,   364,   370,   377,   379,   382,   390,   403,   408,
-     413,   417,   422,   427,   432,   467,   474,   481,   488,   495,
-     502,   538,   546,   552,   559,   568,   586,   606,   607,   610,
-     615,   621,   622,   624,   632,   633,   636,   646,   647,   650,
-     651,   654,   663,   674,   689,   704,   725,   756,   791,   816,
-     845,   851,   854,   856,   865,   866,   871,   872,   878,   885,
-     886,   889,   890,   893,   899,   905,   912,   913,   920,   921,
-     929,   939,   950,   961,   974,   985
+       0,   109,   109,   110,   116,   123,   128,   139,   150,   163,
+     177,   191,   205,   219,   233,   247,   261,   275,   289,   303,
+     321,   336,   355,   369,   387,   402,   421,   436,   455,   470,
+     489,   502,   520,   532,   545,   547,   550,   558,   571,   576,
+     581,   585,   590,   595,   600,   641,   654,   667,   680,   693,
+     706,   742,   756,   768,   775,   784,   802,   822,   823,   826,
+     831,   837,   838,   840,   848,   849,   852,   862,   863,   866,
+     867,   870,   879,   890,   905,   920,   941,   972,  1007,  1032,
+    1061,  1067,  1070,  1072,  1081,  1082,  1087,  1088,  1094,  1101,
+    1102,  1105,  1106,  1109,  1115,  1121,  1128,  1129,  1136,  1137,
+    1145,  1155,  1166,  1177,  1190,  1201
 };
 #endif
 
@@ -1729,12 +1729,24 @@ yyreduce:
   case 6: /* value_expr: value_expr "AND" value_expr  */
         {
             yyval = swq_create_and_or_or( SWQ_AND, yyvsp[-2], yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
   case 7: /* value_expr: value_expr "OR" value_expr  */
         {
             yyval = swq_create_and_or_or( SWQ_OR, yyvsp[-2], yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1743,6 +1755,12 @@ yyreduce:
             yyval = new swq_expr_node( SWQ_NOT );
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1752,6 +1770,12 @@ yyreduce:
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( yyvsp[-2] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1761,6 +1785,12 @@ yyreduce:
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( yyvsp[-3] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1770,6 +1800,12 @@ yyreduce:
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( yyvsp[-3] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1779,6 +1815,12 @@ yyreduce:
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( yyvsp[-2] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1788,6 +1830,12 @@ yyreduce:
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( yyvsp[-2] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1797,6 +1845,12 @@ yyreduce:
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( yyvsp[-3] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1806,6 +1860,12 @@ yyreduce:
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( yyvsp[-3] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1815,6 +1875,12 @@ yyreduce:
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( yyvsp[-3] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1824,6 +1890,12 @@ yyreduce:
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( yyvsp[-3] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1833,6 +1905,12 @@ yyreduce:
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( yyvsp[-2] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1846,6 +1924,12 @@ yyreduce:
             yyval = new swq_expr_node( SWQ_NOT );
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( like );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1856,6 +1940,12 @@ yyreduce:
             yyval->PushSubExpression( yyvsp[-4] );
             yyval->PushSubExpression( yyvsp[-2] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1870,6 +1960,12 @@ yyreduce:
             yyval = new swq_expr_node( SWQ_NOT );
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( like );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1879,6 +1975,12 @@ yyreduce:
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( yyvsp[-2] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1892,6 +1994,12 @@ yyreduce:
             yyval = new swq_expr_node( SWQ_NOT );
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( like );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1902,6 +2010,12 @@ yyreduce:
             yyval->PushSubExpression( yyvsp[-4] );
             yyval->PushSubExpression( yyvsp[-2] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1916,6 +2030,12 @@ yyreduce:
             yyval = new swq_expr_node( SWQ_NOT );
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( like );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1926,6 +2046,12 @@ yyreduce:
             yyval->nOperation = SWQ_IN;
             yyval->PushSubExpression( yyvsp[-4] );
             yyval->ReverseSubExpressions();
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1940,6 +2066,12 @@ yyreduce:
             yyval = new swq_expr_node( SWQ_NOT );
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( in );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1950,6 +2082,12 @@ yyreduce:
             yyval->PushSubExpression( yyvsp[-4] );
             yyval->PushSubExpression( yyvsp[-2] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1964,6 +2102,12 @@ yyreduce:
             yyval = new swq_expr_node( SWQ_NOT );
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( between );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1972,6 +2116,12 @@ yyreduce:
             yyval = new swq_expr_node( SWQ_ISNULL );
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( yyvsp[-2] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1984,13 +2134,25 @@ yyreduce:
             yyval = new swq_expr_node( SWQ_NOT );
             yyval->field_type = SWQ_BOOLEAN;
             yyval->PushSubExpression( isnull );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
   case 32: /* value_expr_list: value_expr ',' value_expr_list  */
         {
             yyval = yyvsp[0];
-            yyvsp[0]->PushSubExpression( yyvsp[-2] );
+            yyval->PushSubExpression( yyvsp[-2] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -1998,6 +2160,12 @@ yyreduce:
             {
             yyval = new swq_expr_node( SWQ_ARGUMENT_LIST ); /* temporary value */
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -2091,6 +2259,12 @@ yyreduce:
                 yyval = new swq_expr_node( SWQ_MULTIPLY );
                 yyval->PushSubExpression( new swq_expr_node(-1) );
                 yyval->PushSubExpression( yyvsp[0] );
+                if( yyval->HasReachedMaxDepth() )
+                {
+                    yyerror (context, "Maximum expression depth reached");
+                    delete yyval;
+                    YYERROR;
+                }
             }
         }
     break;
@@ -2100,6 +2274,12 @@ yyreduce:
             yyval = new swq_expr_node( SWQ_ADD );
             yyval->PushSubExpression( yyvsp[-2] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -2108,6 +2288,12 @@ yyreduce:
             yyval = new swq_expr_node( SWQ_SUBTRACT );
             yyval->PushSubExpression( yyvsp[-2] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -2116,6 +2302,12 @@ yyreduce:
             yyval = new swq_expr_node( SWQ_MULTIPLY );
             yyval->PushSubExpression( yyvsp[-2] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -2124,6 +2316,12 @@ yyreduce:
             yyval = new swq_expr_node( SWQ_DIVIDE );
             yyval->PushSubExpression( yyvsp[-2] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -2132,6 +2330,12 @@ yyreduce:
             yyval = new swq_expr_node( SWQ_MODULUS );
             yyval->PushSubExpression( yyvsp[-2] );
             yyval->PushSubExpression( yyvsp[0] );
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -2177,6 +2381,12 @@ yyreduce:
             yyval = yyvsp[-1];
             yyval->PushSubExpression( yyvsp[-3] );
             yyval->ReverseSubExpressions();
+            if( yyval->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete yyval;
+                YYERROR;
+            }
         }
     break;
 
@@ -2184,6 +2394,12 @@ yyreduce:
     {
         yyval = new swq_expr_node( SWQ_CAST );
         yyval->PushSubExpression( yyvsp[0] );
+        if( yyval->HasReachedMaxDepth() )
+        {
+            yyerror (context, "Maximum expression depth reached");
+            delete yyval;
+            YYERROR;
+        }
     }
     break;
 

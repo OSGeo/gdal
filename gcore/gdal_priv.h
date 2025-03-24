@@ -1898,7 +1898,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
         double dfGeolocX, double dfGeolocY, const OGRSpatialReference *poSRS,
         GDALRIOResampleAlg eInterpolation, double *pdfRealValue,
         double *pdfImagValue = nullptr,
-        CSLConstList papszTransfomerOptions = nullptr) const;
+        CSLConstList papszTransformerOptions = nullptr) const;
 
     virtual CPLErr InterpolateAtPoint(double dfPixel, double dfLine,
                                       GDALRIOResampleAlg eInterpolation,

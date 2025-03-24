@@ -345,7 +345,7 @@ The other following creation options are available:
 
       Path to a XML file that can serve as a template.
       This will typically be a customized version of the base
-      bag_template.xml file. The file can contain other substituable
+      bag_template.xml file. The file can contain other substitutable
       variables than the ones mentioned above by using a similar syntax.
 
 -  .. co:: VAR_xxxx
@@ -448,7 +448,7 @@ Usage examples
       $ gdal_translate data/test_vr.bag -oo MODE=RESAMPLED_GRID -oo RES_FILTER_MIN=4 -oo RES_FILTER_MAX=8 out.tif
 
 -  Converting a GeoTIFF file to a BAG dataset, and provide a custom
-   value for the ABSTRACT substituable variable.
+   value for the ABSTRACT substitutable variable.
 
    ::
 

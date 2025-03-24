@@ -13,19 +13,65 @@
 #include "vrtexpression.h"
 #include "cpl_string.h"
 
+#include <limits>
 #include <map>
+#include <optional>
 #include <muParser.h>
 
 namespace gdal
 {
 
 /*! @cond Doxygen_Suppress */
+
+static std::optional<std::string> Sanitize(const std::string &osVariable)
+{
+    // muparser does not allow characters '[' or ']' which we use to emulate
+    // vectors. Replace these with a combination of underscores
+    auto from = osVariable.find('[');
+    if (from != std::string::npos)
+    {
+        auto to = osVariable.find(']');
+        if (to != std::string::npos)
+        {
+            auto sanitized = std::string("__") + osVariable.substr(0, from) +
+                             +"__" +
+                             osVariable.substr(from + 1, to - from - 1) + "__";
+            return sanitized;
+        }
+    }
+
+    return std::nullopt;
+}
+
+static void ReplaceVariable(std::string &expression,
+                            const std::string &variable,
+                            const std::string &sanitized)
+{
+    std::string::size_type seekPos = 0;
+    auto pos = expression.find(variable, seekPos);
+    while (pos != std::string::npos)
+    {
+        auto end = pos + variable.size();
+
+        if (pos == 0 ||
+            (!std::isalnum(expression[pos - 1]) && expression[pos - 1] != '_'))
+        {
+            expression =
+                expression.substr(0, pos) + sanitized + expression.substr(end);
+        }
+
+        seekPos = end;
+        pos = expression.find(variable, seekPos);
+    }
+}
+
 class MuParserExpression::Impl
 {
   public:
     explicit Impl(std::string_view osExpression)
-        : m_osExpression(std::string(osExpression)), m_oVectors{}, m_oParser{},
-          m_adfResults{1}, m_bIsCompiled{false}, m_bCompileFailed{false}
+        : m_osExpression(std::string(osExpression)), m_oSubstitutions{},
+          m_oParser{}, m_adfResults{1}, m_bIsCompiled{false}, m_bCompileFailed{
+                                                                  false}
     {
     }
 
@@ -50,13 +96,26 @@ class MuParserExpression::Impl
             return CE_Failure;
         }
 
+        // On some platforms muparser does not seem to parse "nan" as a floating
+        // point literal.
         try
         {
-            CPLString tmpExpression(m_osExpression);
+            m_oParser.DefineConst("nan",
+                                  std::numeric_limits<double>::quiet_NaN());
+            m_oParser.DefineConst("NaN",
+                                  std::numeric_limits<double>::quiet_NaN());
+        }
+        catch (const mu::Parser::exception_type &)
+        {
+        }
 
-            for (const auto &[osVec, osElems] : m_oVectors)
+        try
+        {
+            std::string tmpExpression(m_osExpression);
+
+            for (const auto &[osFrom, osTo] : m_oSubstitutions)
             {
-                tmpExpression.replaceAll(osVec, osElems);
+                ReplaceVariable(tmpExpression, osFrom, osTo);
             }
 
             m_oParser.SetExpr(tmpExpression);
@@ -108,8 +167,8 @@ class MuParserExpression::Impl
         return CE_None;
     }
 
-    CPLString m_osExpression;
-    std::map<CPLString, CPLString> m_oVectors;
+    const CPLString m_osExpression;
+    std::map<CPLString, CPLString> m_oSubstitutions;
     mu::Parser m_oParser;
     std::vector<double> m_adfResults;
     bool m_bIsCompiled;
@@ -134,7 +193,12 @@ CPLErr MuParserExpression::Compile()
 void MuParserExpression::RegisterVariable(std::string_view osVariable,
                                           double *pdfValue)
 {
-    m_pImpl->Register(osVariable, pdfValue);
+    auto sanitized = Sanitize(std::string(osVariable));
+    if (sanitized.has_value())
+    {
+        m_pImpl->m_oSubstitutions[std::string(osVariable)] = sanitized.value();
+    }
+    m_pImpl->Register(sanitized.value_or(std::string(osVariable)), pdfValue);
 }
 
 void MuParserExpression::RegisterVector(std::string_view osVariable,
@@ -155,8 +219,9 @@ void MuParserExpression::RegisterVector(std::string_view osVariable,
 
     for (std::size_t i = 0; i < padfValues->size(); i++)
     {
-        osElementVarName.Printf("__%s_%d", osVectorVarName.c_str(),
+        osElementVarName.Printf("%s[%d]", osVectorVarName.c_str(),
                                 static_cast<int>(i));
+        osElementVarName = Sanitize(osElementVarName).value();
         RegisterVariable(osElementVarName, padfValues->data() + i);
 
         if (i > 0)
@@ -166,7 +231,7 @@ void MuParserExpression::RegisterVector(std::string_view osVariable,
         osElementsList += osElementVarName;
     }
 
-    m_pImpl->m_oVectors[std::string(osVariable)] = osElementsList;
+    m_pImpl->m_oSubstitutions[std::string(osVariable)] = osElementsList;
 }
 
 CPLErr MuParserExpression::Evaluate()

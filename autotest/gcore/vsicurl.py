@@ -25,9 +25,12 @@ def curl_version():
     actual_version = [0, 0, 0]
     for build_info_item in gdal.VersionInfo("BUILD_INFO").strip().split("\n"):
         if build_info_item.startswith("CURL_VERSION="):
-            actual_version = [
-                int(x) for x in build_info_item[len("CURL_VERSION=") :].split(".")
-            ]
+            curl_version = build_info_item[len("CURL_VERSION=") :]
+            # Remove potential -rcX postfix.
+            dashrc_pos = curl_version.find("-rc")
+            if dashrc_pos > 0:
+                curl_version = curl_version[0:dashrc_pos]
+            actual_version = [int(x) for x in curl_version.split(".")]
     return actual_version
 
 
@@ -423,7 +426,7 @@ def test_vsicurl_test_redirect_with_expires(server):
     current_time = 1500
 
     def method(request):
-        response = "HTTP/1.1 302\r\n"
+        response = "HTTP/1.1 302 Found\r\n"
         response += "Server: foo\r\n"
         response += (
             "Date: "
@@ -470,7 +473,7 @@ def test_vsicurl_test_redirect_with_expires(server):
                 request.end_headers()
         else:
             # After a failed attempt on a HEAD, the client should go there
-            response = "HTTP/1.1 200\r\n"
+            response = "HTTP/1.1 200 OK\r\n"
             response += "Server: foo\r\n"
             response += (
                 "Date: "
@@ -587,7 +590,7 @@ def test_vsicurl_test_redirect_x_amz(server):
     current_time = 1500
 
     def method(request):
-        response = "HTTP/1.1 302\r\n"
+        response = "HTTP/1.1 302 Found\r\n"
         response += "Server: foo\r\n"
         response += (
             "Date: "
@@ -637,7 +640,7 @@ def test_vsicurl_test_redirect_x_amz(server):
                 request.end_headers()
         else:
             # After a failed attempt on a HEAD, the client should go there
-            response = "HTTP/1.1 200\r\n"
+            response = "HTTP/1.1 200 OK\r\n"
             response += "Server: foo\r\n"
             response += (
                 "Date: "
@@ -1366,7 +1369,7 @@ def test_vsicurl_test_CPL_VSIL_CURL_USE_HEAD_NO(server):
     handler.add("GET", "/test_CPL_VSIL_CURL_USE_HEAD_NO/", 404)
 
     def method(request):
-        response = "HTTP/1.1 200\r\n"
+        response = "HTTP/1.1 200 OK\r\n"
         response += "Server: foo\r\n"
         response += "Content-type: text/plain\r\n"
         response += "Content-Length: 1000000\r\n"

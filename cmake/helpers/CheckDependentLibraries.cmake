@@ -409,8 +409,6 @@ gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE
   NAMES netCDF
   TARGETS netCDF::netcdf NETCDF::netCDF
   VERSION "4.7")
-gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
-gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" CAN_DISABLE)
 
 set(PostgreSQL_ADDITIONAL_VERSIONS "14" CACHE STRING "Additional PostgreSQL versions to check")
 gdal_check_package(PostgreSQL "" CAN_DISABLE)
@@ -440,7 +438,6 @@ gdal_check_package(JXL_THREADS "JPEG-XL threading" CAN_DISABLE)
 gdal_check_package(Crnlib "enable gdal_DDS driver" CAN_DISABLE)
 gdal_check_package(basisu "Enable BASISU driver" CONFIG CAN_DISABLE)
 gdal_check_package(IDB "enable ogr_IDB driver" CAN_DISABLE)
-gdal_check_package(rdb "enable RIEGL RDB library" CONFIG CAN_DISABLE)
 include(CheckDependentLibrariesTileDB)
 
 gdal_check_package(ExprTk "Enable C++ Mathematical Expression Tooklit Library (ExprTk) for VRT expressions" DISABLED_BY_DEFAULT)

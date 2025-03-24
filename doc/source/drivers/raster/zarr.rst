@@ -257,6 +257,14 @@ Open options
 
 The following dataset open options are available:
 
+-  .. oo:: LIST_ALL_ARRAYS
+      :choices: YES, NO
+      :default: NO
+      :since: 3.11
+
+      In classic 2D mode, whereas the subdataset list should include all arrays,
+      including those with 0 or 1 dimension.
+
 -  .. oo:: USE_ZMETADATA
       :choices: YES, NO
       :default: YES
@@ -347,6 +355,9 @@ with ``ARRAY:`` using :program:`gdalmdimtranslate`):
       :default: NONE
 
       Compression method.
+
+      For FORMAT=ZARR_V3, only ``NONE``, ``BLOSC``, ``GZIP`` and ``ZSTD`` are
+      supported.
 
 -  .. co:: FILTER
       :choices: NONE, DELTA

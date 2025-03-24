@@ -16,6 +16,7 @@ import base64
 import json
 import math
 import os
+import shutil
 import struct
 import sys
 
@@ -533,6 +534,197 @@ def test_zarr_read_compression_methods(datasetname, compressor):
         ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
         assert ar
         assert ar.Read() == array.array("b", [1, 2])
+        assert json.loads(ar.GetStructuralInfo()["COMPRESSOR"])["id"] == compressor
+
+
+# Check reading different compression methods
+@pytest.mark.parametrize(
+    "datasetname,compressor",
+    [
+        ("gzip.zarr", "gzip"),
+    ],
+)
+def test_zarr_v3_read_compression_methods(datasetname, compressor):
+
+    compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
+    filename = "data/zarr/v3/" + datasetname
+
+    if compressor not in compressors:
+        with gdal.quiet_errors():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        assert ds is None
+    else:
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar
+        assert ar.Read() == array.array("b", [1, 2])
+        assert json.loads(ar.GetStructuralInfo()["COMPRESSOR"])["name"] == compressor
+
+
+def test_zarr_read_shuffle_filter():
+
+    filename = "data/zarr/shuffle.zarr"
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+    assert ar.Read() == array.array("h", [1, 2])
+    assert json.loads(ar.GetStructuralInfo()["FILTERS"]) == [
+        {"elementsize": 2, "id": "shuffle"}
+    ]
+
+
+def test_zarr_read_shuffle_filter_update(tmp_path):
+
+    out_filename = tmp_path / "filter_update.zarr"
+    shutil.copytree("data/zarr/shuffle.zarr", out_filename)
+
+    def write():
+        ds = gdal.OpenEx(out_filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        ar.Write([3, 4])
+
+    write()
+
+    ds = gdal.OpenEx(out_filename, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar.Read() == array.array("h", [3, 4])
+
+
+def test_zarr_read_shuffle_quantize():
+
+    filename = "data/zarr/quantize.zarr"
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+    assert ar.Read() == array.array(
+        "d",
+        [
+            0,
+            0.125,
+            0.1875,
+            0.3125,
+            0.375,
+            0.5,
+            0.625,
+            0.6875,
+            0.8125,
+            0.875,
+            1,
+            1.125,
+            1.1875,
+            1.3125,
+            1.375,
+            1.5,
+            1.625,
+            1.6875,
+            1.8125,
+            1.875,
+            2,
+            2.125,
+            2.1875,
+            2.3125,
+            2.375,
+            2.5,
+            2.625,
+            2.6875,
+            2.8125,
+            2.875,
+            3,
+            3.125,
+            3.1875,
+            3.3125,
+            3.375,
+            3.5,
+            3.625,
+            3.6875,
+            3.8125,
+            3.875,
+            4,
+            4.125,
+            4.1875,
+            4.3125,
+            4.375,
+            4.5,
+            4.625,
+            4.6875,
+            4.8125,
+            4.875,
+            5,
+            5.125,
+            5.1875,
+            5.3125,
+            5.375,
+            5.5,
+            5.625,
+            5.6875,
+            5.8125,
+            5.875,
+            6,
+            6.125,
+            6.1875,
+            6.3125,
+            6.375,
+            6.5,
+            6.625,
+            6.6875,
+            6.8125,
+            6.875,
+            7,
+            7.125,
+            7.1875,
+            7.3125,
+            7.375,
+            7.5,
+            7.625,
+            7.6875,
+            7.8125,
+            7.875,
+            8,
+            8.125,
+            8.1875,
+            8.3125,
+            8.375,
+            8.5,
+            8.625,
+            8.6875,
+            8.8125,
+            8.875,
+            9.0,
+            9.125,
+            9.1875,
+            9.3125,
+            9.375,
+            9.5,
+            9.625,
+            9.6875,
+            9.8125,
+            9.875,
+        ],
+    )
+
+
+def test_zarr_read_shuffle_quantize_update_not_supported():
+
+    filename = "data/zarr/quantize.zarr"
+
+    def write():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        ar.Write(ar.Read())
+
+    with gdal.quiet_errors():
+        write()
+        assert gdal.GetLastErrorMsg() == "quantize filter not supported for writing"
 
 
 @pytest.mark.parametrize("name", ["u1", "u2", "u4", "u8"])
@@ -814,7 +1006,23 @@ def test_zarr_read_crs(crs_member):
                 },
                 "id": {"authority": "EPSG", "code": 4326},
             },
-            "wkt": 'GEOGCRS["WGS 84",ENSEMBLE["World Geodetic System 1984 ensemble",MEMBER["World Geodetic System 1984 (Transit)"],MEMBER["World Geodetic System 1984 (G730)"],MEMBER["World Geodetic System 1984 (G873)"],MEMBER["World Geodetic System 1984 (G1150)"],MEMBER["World Geodetic System 1984 (G1674)"],MEMBER["World Geodetic System 1984 (G1762)"],ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ENSEMBLEACCURACY[2.0]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],CS[ellipsoidal,2],AXIS["geodetic latitude (Lat)",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433]],AXIS["geodetic longitude (Lon)",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433]],USAGE[SCOPE["Horizontal component of 3D system."],AREA["World."],BBOX[-90,-180,90,180]],ID["EPSG",4326]]',
+            "wkt": (
+                'GEOGCRS["WGS 84",ENSEMBLE["World Geodetic System 1984 ensemble",'
+                'MEMBER["World Geodetic System 1984 (Transit)"],'
+                'MEMBER["World Geodetic System 1984 (G730)"],'
+                'MEMBER["World Geodetic System 1984 (G873)"],'
+                'MEMBER["World Geodetic System 1984 (G1150)"],'
+                'MEMBER["World Geodetic System 1984 (G1674)"],'
+                'MEMBER["World Geodetic System 1984 (G1762)"],'
+                'ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],'
+                "ENSEMBLEACCURACY[2.0]],"
+                'PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],'
+                "CS[ellipsoidal,2],"
+                'AXIS["geodetic latitude (Lat)",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433]],'
+                'AXIS["geodetic longitude (Lon)",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433]],'
+                'USAGE[SCOPE["Horizontal component of 3D system."],AREA["World."],BBOX[-90,-180,90,180]],'
+                'ID["EPSG",4326]]'
+            ),
             "url": "http://www.opengis.net/def/crs/EPSG/0/4326",
         }
     }
@@ -982,11 +1190,13 @@ def test_zarr_read_ARRAY_DIMENSIONS(use_zmetadata, filename):
     assert len(rg.GetDimensions()) == 2
 
 
+@pytest.mark.parametrize(
+    "ds_name", ["data/zarr/v3/test_deprecated_no_codecs.zr3", "data/zarr/v3/test.zr3"]
+)
 @pytest.mark.parametrize("use_get_names", [True, False])
-def test_zarr_read_v3(use_get_names):
+def test_zarr_read_v3(ds_name, use_get_names):
 
-    filename = "data/zarr/v3/test.zr3"
-    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.OpenEx(ds_name, gdal.OF_MULTIDIM_RASTER)
     assert ds is not None
     rg = ds.GetRootGroup()
     assert rg.GetName() == "/"
@@ -1124,18 +1334,33 @@ def test_zarr_read_classic():
         assert gdal.Open("ZARR:data/zarr/order_f_u1_3d.zarr:/order_f_u1_3d:2") is None
         assert gdal.Open(subds[0][0] + ":0") is None
 
-    ds = gdal.Open("data/zarr/v3/test.zr3")
+    ds = gdal.OpenEx("data/zarr/v3/test.zr3", open_options=["LIST_ALL_ARRAYS=YES"])
     assert ds
     subds = ds.GetSubDatasets()
     assert set(subds) == set(
         [
-            ('ZARR:"data/zarr/v3/test.zr3":/ar', "Array /ar"),
-            ('ZARR:"data/zarr/v3/test.zr3":/marvin/android', "Array /marvin/android"),
+            ('ZARR:"data/zarr/v3/test.zr3":/ar', "[2] /ar (Byte)"),
+            (
+                'ZARR:"data/zarr/v3/test.zr3":/marvin/android',
+                "[5x4] /marvin/android (Byte)",
+            ),
         ]
     )
     ds = gdal.Open('ZARR:"data/zarr/v3/test.zr3":/ar')
     assert ds
     assert ds.ReadRaster() == array.array("b", [1, 2])
+
+    ds = gdal.OpenEx("data/zarr/v3/test.zr3")
+    assert ds
+    subds = ds.GetSubDatasets()
+    assert set(subds) == set(
+        [
+            (
+                'ZARR:"data/zarr/v3/test.zr3":/marvin/android',
+                "[5x4] /marvin/android (Byte)",
+            ),
+        ]
+    )
 
 
 def test_zarr_read_classic_2d():
@@ -1177,18 +1402,26 @@ def test_zarr_read_classic_2d_with_unrelated_auxiliary_1D_arrays():
             rg.CreateMDArray("y", [dim1], dt)
 
         create()
+
         ds = gdal.Open("/vsimem/test.zarr")
         assert ds is not None
         assert ds.RasterYSize == 2
         assert ds.RasterXSize == 3
         assert set(ds.GetSubDatasets()) == set(
+            [('ZARR:"/vsimem/test.zarr":/main_array', "[2x3] /main_array (Float64)")]
+        )
+        ds = None
+
+        ds = gdal.OpenEx("/vsimem/test.zarr", open_options=["LIST_ALL_ARRAYS=YES"])
+        assert set(ds.GetSubDatasets()) == set(
             [
-                ('ZARR:"/vsimem/test.zarr":/main_array', "Array /main_array"),
-                ('ZARR:"/vsimem/test.zarr":/x', "Array /x"),
-                ('ZARR:"/vsimem/test.zarr":/y', "Array /y"),
+                ('ZARR:"/vsimem/test.zarr":/main_array', "[2x3] /main_array (Float64)"),
+                ('ZARR:"/vsimem/test.zarr":/x', "[2] /x (Float64)"),
+                ('ZARR:"/vsimem/test.zarr":/y', "[3] /y (Float64)"),
             ]
         )
         ds = None
+
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
 
@@ -1930,21 +2163,28 @@ def test_zarr_create_array_compressor(compressor, options, expected_json):
 @pytest.mark.parametrize(
     "compressor,options,expected_json",
     [
-        ["NONE", [], None],
+        ["NONE", [], [{"name": "bytes", "configuration": {"endian": "little"}}]],
         [
             "gzip",
             [],
-            [{"name": "gzip", "configuration": {"level": 6}}],
+            [
+                {"name": "bytes", "configuration": {"endian": "little"}},
+                {"name": "gzip", "configuration": {"level": 6}},
+            ],
         ],
         [
             "gzip",
             ["GZIP_LEVEL=1"],
-            [{"name": "gzip", "configuration": {"level": 1}}],
+            [
+                {"name": "bytes", "configuration": {"endian": "little"}},
+                {"name": "gzip", "configuration": {"level": 1}},
+            ],
         ],
         [
             "blosc",
             [],
             [
+                {"name": "bytes", "configuration": {"endian": "little"}},
                 {
                     "name": "blosc",
                     "configuration": {
@@ -1954,7 +2194,7 @@ def test_zarr_create_array_compressor(compressor, options, expected_json):
                         "typesize": 1,
                         "blocksize": 0,
                     },
-                }
+                },
             ],
         ],
         [
@@ -1966,6 +2206,7 @@ def test_zarr_create_array_compressor(compressor, options, expected_json):
                 "BLOSC_BLOCKSIZE=2",
             ],
             [
+                {"name": "bytes", "configuration": {"endian": "little"}},
                 {
                     "name": "blosc",
                     "configuration": {
@@ -1974,7 +2215,23 @@ def test_zarr_create_array_compressor(compressor, options, expected_json):
                         "shuffle": "noshuffle",
                         "blocksize": 2,
                     },
-                }
+                },
+            ],
+        ],
+        [
+            "zstd",
+            ["ZSTD_LEVEL=20"],
+            [
+                {"name": "bytes", "configuration": {"endian": "little"}},
+                {"name": "zstd", "configuration": {"level": 20, "checksum": False}},
+            ],
+        ],
+        [
+            "zstd",
+            ["ZSTD_CHECKSUM=YES"],
+            [
+                {"name": "bytes", "configuration": {"endian": "little"}},
+                {"name": "zstd", "configuration": {"level": 13, "checksum": True}},
             ],
         ],
     ],
@@ -2032,28 +2289,28 @@ def test_zarr_create_array_compressor_v3(compressor, options, expected_json):
     [
         [
             ["@ENDIAN=little"],
-            [{"configuration": {"endian": "little"}, "name": "endian"}],
+            [{"configuration": {"endian": "little"}, "name": "bytes"}],
         ],
-        [["@ENDIAN=big"], [{"configuration": {"endian": "big"}, "name": "endian"}]],
+        [["@ENDIAN=big"], [{"configuration": {"endian": "big"}, "name": "bytes"}]],
         [
             ["@ENDIAN=little", "CHUNK_MEMORY_LAYOUT=F"],
             [
                 {"name": "transpose", "configuration": {"order": "F"}},
-                {"configuration": {"endian": "little"}, "name": "endian"},
+                {"configuration": {"endian": "little"}, "name": "bytes"},
             ],
         ],
         [
             ["@ENDIAN=big", "CHUNK_MEMORY_LAYOUT=F"],
             [
                 {"name": "transpose", "configuration": {"order": "F"}},
-                {"configuration": {"endian": "big"}, "name": "endian"},
+                {"configuration": {"endian": "big"}, "name": "bytes"},
             ],
         ],
         [
             ["@ENDIAN=big", "CHUNK_MEMORY_LAYOUT=F", "COMPRESS=GZIP"],
             [
                 {"name": "transpose", "configuration": {"order": "F"}},
-                {"name": "endian", "configuration": {"endian": "big"}},
+                {"name": "bytes", "configuration": {"endian": "big"}},
                 {"name": "gzip", "configuration": {"level": 6}},
             ],
         ],
@@ -3180,6 +3437,7 @@ def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator(
             assert "codecs" in j
             assert j["codecs"] == [
                 {"name": "transpose", "configuration": {"order": "F"}},
+                {"name": "bytes", "configuration": {"endian": "little"}},
                 {"name": "gzip", "configuration": {"level": 6}},
             ]
 
@@ -5471,7 +5729,9 @@ def test_zarr_driver_rename(format):
     try:
         drv.Create(filename, 1, 1, options=["FORMAT=" + format])
 
-        assert gdal.Open(filename)
+        with gdal.quiet_warnings():
+            # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
+            assert gdal.Open(filename)
 
         assert drv.Rename(newfilename, filename) == gdal.CE_None
 
@@ -5480,7 +5740,9 @@ def test_zarr_driver_rename(format):
             gdal.Open(filename)
 
         assert gdal.VSIStatL(newfilename)
-        assert gdal.Open(newfilename)
+        with gdal.quiet_warnings():
+            # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
+            assert gdal.Open(newfilename)
 
     finally:
         if gdal.VSIStatL(filename):
@@ -5508,12 +5770,13 @@ def test_zarr_driver_copy_files(format):
 
         assert drv.CopyFiles(newfilename, filename) == gdal.CE_None
 
-        assert gdal.VSIStatL(filename)
-        assert gdal.Open(filename)
+        with gdal.quiet_warnings():
+            # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
+            assert gdal.VSIStatL(filename)
+            assert gdal.Open(filename)
 
-        assert gdal.VSIStatL(newfilename)
-        print(gdal.ReadDirRecursive(newfilename))
-        assert gdal.Open(newfilename)
+            assert gdal.VSIStatL(newfilename)
+            assert gdal.Open(newfilename)
 
     finally:
         if gdal.VSIStatL(filename):

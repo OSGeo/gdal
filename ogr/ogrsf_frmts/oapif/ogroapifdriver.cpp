@@ -211,19 +211,11 @@ class OGROAPIFLayer final : public OGRLayer
     OGRFeature *GetFeature(GIntBig) override;
     int TestCapability(const char *) override;
     GIntBig GetFeatureCount(int bForce = FALSE) override;
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
-
-    void SetSpatialFilter(OGRGeometry *poGeom) override;
-
-    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     OGRErr SetAttributeFilter(const char *pszQuery) override;
 
@@ -2440,10 +2432,11 @@ GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGROAPIFLayer::GetExtent(OGREnvelope *psEnvelope, int bForce)
+OGRErr OGROAPIFLayer::IGetExtent(int iGeomField, OGREnvelope *psEnvelope,
+                                 bool bForce)
 {
     if (m_oOriginalExtent.IsInit())
     {
@@ -2452,18 +2445,19 @@ OGRErr OGROAPIFLayer::GetExtent(OGREnvelope *psEnvelope, int bForce)
         *psEnvelope = m_oExtent;
         return OGRERR_NONE;
     }
-    return OGRLayer::GetExtent(psEnvelope, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psEnvelope, bForce);
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGROAPIFLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGROAPIFLayer::ISetSpatialFilter(int, const OGRGeometry *poGeomIn)
 {
     InstallFilter(poGeomIn);
 
     ResetReading();
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

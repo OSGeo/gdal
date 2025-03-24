@@ -1,0 +1,22 @@
+{
+  "zarr_format":3,
+  "node_type":"array",
+  "shape":[
+    5,
+    4
+  ],
+  "data_type":"uint8",
+  "chunk_grid":{
+    "name":"regular",
+    "configuration":{
+      "chunk_shape":[
+        5,
+        4
+      ]
+    }
+  },
+  "chunk_key_encoding":{
+    "name":"v2"
+  },
+  "fill_value":255
+}

@@ -669,7 +669,7 @@ int TABSeamless::GetBounds(double &dXMin, double &dYMin, double &dXMax,
 }
 
 /**********************************************************************
- *                   TABSeamless::GetExtent()
+ *                   TABSeamless::IGetExtent()
  *
  * Fetch extent of the data currently stored in the dataset.
  *
@@ -678,7 +678,8 @@ int TABSeamless::GetBounds(double &dXMin, double &dYMin, double &dXMax,
  *
  * Returns OGRERR_NONE/OGRRERR_FAILURE.
  **********************************************************************/
-OGRErr TABSeamless::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr TABSeamless::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                               bool bForce)
 {
     if (m_poIndexTable == nullptr)
     {
@@ -688,7 +689,7 @@ OGRErr TABSeamless::GetExtent(OGREnvelope *psExtent, int bForce)
         return OGRERR_FAILURE;
     }
 
-    return m_poIndexTable->GetExtent(psExtent, bForce);
+    return m_poIndexTable->GetExtent(iGeomField, psExtent, bForce);
 }
 
 /**********************************************************************
@@ -757,7 +758,8 @@ OGRSpatialReference *TABSeamless::GetSpatialRef()
  * Standard OGR SetSpatialFiltere implementation.  This method is used
  * to set a SpatialFilter for this OGRLayer.
  **********************************************************************/
-void TABSeamless::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr TABSeamless::ISetSpatialFilter(int /*iGeomField*/,
+                                      const OGRGeometry *poGeomIn)
 
 {
     IMapInfoFile::SetSpatialFilter(poGeomIn);
@@ -767,6 +769,8 @@ void TABSeamless::SetSpatialFilter(OGRGeometry *poGeomIn)
 
     if (m_poCurBaseTable)
         m_poCurBaseTable->SetSpatialFilter(poGeomIn);
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

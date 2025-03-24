@@ -17,9 +17,7 @@ from osgeo import gdal
 
 
 def get_convert_alg():
-    reg = gdal.GetGlobalAlgorithmRegistry()
-    vector = reg.InstantiateAlg("vector")
-    return vector.InstantiateSubAlgorithm("convert")
+    return gdal.GetGlobalAlgorithmRegistry()["vector"]["convert"]
 
 
 @pytest.mark.require_driver("GPKG")
@@ -156,8 +154,11 @@ def test_gdalalg_vector_wrong_layer_name(tmp_vsimem):
 
 def test_gdalalg_vector_convert_error_output_not_set():
     convert = get_convert_alg()
-    convert.GetArg("input").Get().SetName("../ogr/data/poly.shp")
-    convert.GetArg("output").Set(convert.GetArg("output").Get())
+    convert["input"] = "../ogr/data/poly.shp"
+
+    # Make it such that the "output" argment is set, but to a unset GDALArgDatasetValue
+    convert["output"] = convert["output"]
+
     with pytest.raises(
         Exception,
         match="convert: Argument 'output' has no dataset object or dataset name",

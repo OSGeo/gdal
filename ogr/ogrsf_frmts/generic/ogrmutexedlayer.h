@@ -41,13 +41,8 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
     virtual ~OGRMutexedLayer();
 
     virtual OGRGeometry *GetSpatialFilter() override;
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-    virtual void SetSpatialFilterRect(double dfMinX, double dfMinY,
-                                      double dfMaxX, double dfMaxY) override;
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
-    virtual void SetSpatialFilterRect(int iGeomField, double dfMinX,
-                                      double dfMinY, double dfMaxX,
-                                      double dfMaxY) override;
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 
@@ -76,9 +71,8 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
     virtual OGRSpatialReference *GetSpatialRef() override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual int TestCapability(const char *) override;
 

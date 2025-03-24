@@ -17,7 +17,7 @@
 
 #include "ogrsf_frmts.h"
 
-class CPL_DLL OGRLayerDecorator : public OGRLayer
+class CPL_DLL OGRLayerDecorator : virtual public OGRLayer
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRLayerDecorator)
 
@@ -30,13 +30,8 @@ class CPL_DLL OGRLayerDecorator : public OGRLayer
     virtual ~OGRLayerDecorator();
 
     virtual OGRGeometry *GetSpatialFilter() override;
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-    virtual void SetSpatialFilterRect(double dfMinX, double dfMinY,
-                                      double dfMaxX, double dfMaxY) override;
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
-    virtual void SetSpatialFilterRect(int iGeomField, double dfMinX,
-                                      double dfMinY, double dfMaxX,
-                                      double dfMaxY) override;
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 
@@ -65,9 +60,10 @@ class CPL_DLL OGRLayerDecorator : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef() override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce = true) override;
+    virtual OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                                bool bForce = true) override;
 
     virtual int TestCapability(const char *) override;
 

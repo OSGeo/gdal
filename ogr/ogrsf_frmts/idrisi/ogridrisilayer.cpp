@@ -564,13 +564,14 @@ void OGRIdrisiLayer::SetExtent(double dfMinXIn, double dfMinYIn,
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRIdrisiLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRIdrisiLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                  bool bForce)
 {
     if (!bExtentValid)
-        return OGRLayer::GetExtent(psExtent, bForce);
+        return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 
     psExtent->MinX = dfMinX;
     psExtent->MinY = dfMinY;

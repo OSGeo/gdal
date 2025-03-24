@@ -15,6 +15,8 @@
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_filter.h"
 #include "gdalalg_vector_reproject.h"
+#include "gdalalg_vector_select.h"
+#include "gdalalg_vector_sql.h"
 #include "gdalalg_vector_write.h"
 
 #include "cpl_conv.h"
@@ -60,9 +62,12 @@ void GDALVectorPipelineStepAlgorithm::AddInputArgs(bool hiddenForCLI)
     AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR,
                        /* positionalAndRequired = */ !hiddenForCLI)
         .SetHiddenForCLI(hiddenForCLI);
-    AddArg("input-layer", 'l', _("Input layer name(s)"), &m_inputLayerNames)
-        .AddAlias("layer")
-        .SetHiddenForCLI(hiddenForCLI);
+    if (GetName() != "sql")
+    {
+        AddArg("input-layer", 'l', _("Input layer name(s)"), &m_inputLayerNames)
+            .AddAlias("layer")
+            .SetHiddenForCLI(hiddenForCLI);
+    }
 }
 
 /************************************************************************/
@@ -72,7 +77,7 @@ void GDALVectorPipelineStepAlgorithm::AddInputArgs(bool hiddenForCLI)
 void GDALVectorPipelineStepAlgorithm::AddOutputArgs(
     bool hiddenForCLI, bool shortNameOutputLayerAllowed)
 {
-    AddOutputFormatArg(&m_format)
+    AddOutputFormatArg(&m_format, true)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
                          {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE})
         .SetHiddenForCLI(hiddenForCLI);
@@ -94,10 +99,13 @@ void GDALVectorPipelineStepAlgorithm::AddOutputArgs(
            &m_appendLayer)
         .SetDefault(false)
         .SetHiddenForCLI(hiddenForCLI);
-    AddArg("output-layer", shortNameOutputLayerAllowed ? 'l' : 0,
-           _("Output layer name"), &m_outputLayerName)
-        .AddHiddenAlias("nln")  // For ogr2ogr nostalgic people
-        .SetHiddenForCLI(hiddenForCLI);
+    if (GetName() != "sql")
+    {
+        AddArg("output-layer", shortNameOutputLayerAllowed ? 'l' : 0,
+               _("Output layer name"), &m_outputLayerName)
+            .AddHiddenAlias("nln")  // For ogr2ogr nostalgic people
+            .SetHiddenForCLI(hiddenForCLI);
+    }
 }
 
 /************************************************************************/
@@ -138,12 +146,20 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             m_outputDataset.Set(nullptr);
             if (RunStep(nullptr, nullptr))
             {
-                writeAlg.m_inputDataset.Set(m_outputDataset.GetDatasetRef());
-                if (writeAlg.Run(pfnProgress, pProgressData))
+                if (m_format == "stream")
                 {
-                    m_outputDataset.Set(
-                        writeAlg.m_outputDataset.GetDatasetRef());
                     ret = true;
+                }
+                else
+                {
+                    writeAlg.m_inputDataset.Set(
+                        m_outputDataset.GetDatasetRef());
+                    if (writeAlg.Run(pfnProgress, pProgressData))
+                    {
+                        m_outputDataset.Set(
+                            writeAlg.m_outputDataset.GetDatasetRef());
+                        ret = true;
+                    }
                 }
             }
         }
@@ -178,6 +194,8 @@ GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()
     m_stepRegistry.Register<GDALVectorClipAlgorithm>();
     m_stepRegistry.Register<GDALVectorReprojectAlgorithm>();
     m_stepRegistry.Register<GDALVectorFilterAlgorithm>();
+    m_stepRegistry.Register<GDALVectorSelectAlgorithm>();
+    m_stepRegistry.Register<GDALVectorSQLAlgorithm>();
 }
 
 /************************************************************************/
@@ -496,6 +514,177 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
     }
 
     return ret;
+}
+
+/************************************************************************/
+/*                  GDALVectorPipelineOutputLayer                       */
+/************************************************************************/
+
+/************************************************************************/
+/*                  GDALVectorPipelineOutputLayer()                     */
+/************************************************************************/
+
+GDALVectorPipelineOutputLayer::GDALVectorPipelineOutputLayer(OGRLayer &srcLayer)
+    : m_srcLayer(srcLayer)
+{
+}
+
+/************************************************************************/
+/*             GDALVectorPipelineOutputLayer::ResetReading()            */
+/************************************************************************/
+
+void GDALVectorPipelineOutputLayer::ResetReading()
+{
+    m_srcLayer.ResetReading();
+    m_pendingFeatures.clear();
+    m_idxInPendingFeatures = 0;
+}
+
+/************************************************************************/
+/*           GDALVectorPipelineOutputLayer::GetNextRawFeature()         */
+/************************************************************************/
+
+OGRFeature *GDALVectorPipelineOutputLayer::GetNextRawFeature()
+{
+    if (m_idxInPendingFeatures < m_pendingFeatures.size())
+    {
+        OGRFeature *poFeature =
+            m_pendingFeatures[m_idxInPendingFeatures].release();
+        ++m_idxInPendingFeatures;
+        return poFeature;
+    }
+    m_pendingFeatures.clear();
+    m_idxInPendingFeatures = 0;
+    while (true)
+    {
+        auto poSrcFeature =
+            std::unique_ptr<OGRFeature>(m_srcLayer.GetNextFeature());
+        if (!poSrcFeature)
+            return nullptr;
+        TranslateFeature(std::move(poSrcFeature), m_pendingFeatures);
+        if (!m_pendingFeatures.empty())
+            break;
+    }
+    OGRFeature *poFeature = m_pendingFeatures[0].release();
+    m_idxInPendingFeatures = 1;
+    return poFeature;
+}
+
+/************************************************************************/
+/*                 GDALVectorPipelineOutputDataset                      */
+/************************************************************************/
+
+/************************************************************************/
+/*                 GDALVectorPipelineOutputDataset()                    */
+/************************************************************************/
+
+GDALVectorPipelineOutputDataset::GDALVectorPipelineOutputDataset(
+    GDALDataset &srcDS)
+    : m_srcDS(srcDS)
+{
+    SetDescription(m_srcDS.GetDescription());
+}
+
+/************************************************************************/
+/*            GDALVectorPipelineOutputDataset::AddLayer()               */
+/************************************************************************/
+
+void GDALVectorPipelineOutputDataset::AddLayer(
+    OGRLayer &oSrcLayer,
+    std::unique_ptr<OGRLayerWithTranslateFeature> poNewLayer)
+{
+    m_layersToDestroy.push_back(std::move(poNewLayer));
+    OGRLayerWithTranslateFeature *poNewLayerRaw =
+        m_layersToDestroy.back().get();
+    m_layers.push_back(poNewLayerRaw);
+    m_mapSrcLayerToNewLayer[&oSrcLayer] = poNewLayerRaw;
+}
+
+/************************************************************************/
+/*          GDALVectorPipelineOutputDataset::GetLayerCount()            */
+/************************************************************************/
+
+int GDALVectorPipelineOutputDataset::GetLayerCount()
+{
+    return static_cast<int>(m_layers.size());
+}
+
+/************************************************************************/
+/*             GDALVectorPipelineOutputDataset::GetLayer()              */
+/************************************************************************/
+
+OGRLayer *GDALVectorPipelineOutputDataset::GetLayer(int idx)
+{
+    return idx >= 0 && idx < GetLayerCount() ? m_layers[idx] : nullptr;
+}
+
+/************************************************************************/
+/*           GDALVectorPipelineOutputDataset::TestCapability()          */
+/************************************************************************/
+
+int GDALVectorPipelineOutputDataset::TestCapability(const char *pszCap)
+{
+    if (EQUAL(pszCap, ODsCRandomLayerRead))
+    {
+        return m_srcDS.TestCapability(pszCap);
+    }
+    return false;
+}
+
+/************************************************************************/
+/*             GDALVectorPipelineOutputDataset::ResetReading()          */
+/************************************************************************/
+
+void GDALVectorPipelineOutputDataset::ResetReading()
+{
+    m_srcDS.ResetReading();
+    m_pendingFeatures.clear();
+    m_idxInPendingFeatures = 0;
+}
+
+/************************************************************************/
+/*            GDALVectorPipelineOutputDataset::GetNextFeature()         */
+/************************************************************************/
+
+OGRFeature *GDALVectorPipelineOutputDataset::GetNextFeature(
+    OGRLayer **ppoBelongingLayer, double *pdfProgressPct,
+    GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    if (m_idxInPendingFeatures < m_pendingFeatures.size())
+    {
+        OGRFeature *poFeature =
+            m_pendingFeatures[m_idxInPendingFeatures].release();
+        if (ppoBelongingLayer)
+            *ppoBelongingLayer = m_belongingLayer;
+        ++m_idxInPendingFeatures;
+        return poFeature;
+    }
+
+    m_pendingFeatures.clear();
+    m_idxInPendingFeatures = 0;
+
+    while (true)
+    {
+        OGRLayer *poSrcBelongingLayer = nullptr;
+        auto poSrcFeature = std::unique_ptr<OGRFeature>(m_srcDS.GetNextFeature(
+            &poSrcBelongingLayer, pdfProgressPct, pfnProgress, pProgressData));
+        if (!poSrcFeature)
+            return nullptr;
+        auto iterToDstLayer = m_mapSrcLayerToNewLayer.find(poSrcBelongingLayer);
+        if (iterToDstLayer != m_mapSrcLayerToNewLayer.end())
+        {
+            m_belongingLayer = iterToDstLayer->second;
+            m_belongingLayer->TranslateFeature(std::move(poSrcFeature),
+                                               m_pendingFeatures);
+            if (!m_pendingFeatures.empty())
+                break;
+        }
+    }
+    OGRFeature *poFeature = m_pendingFeatures[0].release();
+    if (ppoBelongingLayer)
+        *ppoBelongingLayer = m_belongingLayer;
+    m_idxInPendingFeatures = 1;
+    return poFeature;
 }
 
 //! @endcond

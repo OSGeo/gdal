@@ -1492,25 +1492,6 @@ the :ref:`vector.hana` driver.
     Control whether to use ODBC-CPP. Defaults to ON when ODBC-CPP is found.
 
 
-OGDI
-****
-
-The `OGDI <https://github.com/libogdi/ogdi/>`_ library is required for the :ref:`vector.ogdi`
-driver. It can be detected with pkg-config.
-
-.. option:: OGDI_INCLUDE_DIR
-
-    Path to an include directory with the ``ecs.h`` header file.
-
-.. option:: OGDI_LIBRARY
-
-    Path to a shared or static library file.
-
-.. option:: GDAL_USE_OGDI=ON/OFF
-
-    Control whether to use OGDI. Defaults to ON when OGDI is found.
-
-
 OpenCAD
 *******
 
@@ -1533,32 +1514,6 @@ driver. If not found, an internal copy can be used.
 
     Control whether to use internal libopencad copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
     to ON, has precedence over GDAL_USE_OPENCAD=ON
-
-
-
-OpenCL
-******
-
-The OpenCL library may be used to accelerate warping computations, typically
-with a GPU.
-
-.. note:: (GDAL 3.5 and 3.6) It is disabled by default even when detected, since the current OpenCL
-          warping implementation lags behind the generic implementation.
-          Starting with GDAL 3.7, build support is enabled by default when OpenCL is detected,
-          but it is disabled by default at runtime. The warping option USE_OPENCL
-          or the configuration option GDAL_USE_OPENCL must be set to YES to enable it.
-
-.. option:: OpenCL_INCLUDE_DIR
-
-    Path to an include directory with the ``CL/cl.h`` header file.
-
-.. option:: OpenCL_LIBRARY
-
-    Path to a shared or static library file.
-
-.. option:: GDAL_USE_OPENCL=ON/OFF
-
-    Control whether to use OPENCL. Defaults to *OFF* when OPENCL is found.
 
 
 OpenEXR
@@ -1849,18 +1804,6 @@ It can be detected with pkg-config.
 .. option:: GDAL_USE_RASTERLITE2=ON/OFF
 
     Control whether to use RasterLite2. Defaults to ON when RasterLite2 is found.
-
-
-rdb
-***
-
-The `RDB <https://repository.riegl.com/software/libraries/rdblib>`
-(closed source/proprietary) library is required for the :ref:`raster.rdb` driver.
-Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
-
-.. option:: GDAL_USE_RDB=ON/OFF
-
-    Control whether to use rdb. Defaults to ON when rdb is found.
 
 
 SPATIALITE

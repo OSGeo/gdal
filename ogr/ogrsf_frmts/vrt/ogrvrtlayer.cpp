@@ -75,8 +75,6 @@ OGRVRTGeomFieldProps::~OGRVRTGeomFieldProps()
 {
     if (poSRS != nullptr)
         const_cast<OGRSpatialReference *>(poSRS)->Release();
-    if (poSrcRegion != nullptr)
-        delete poSrcRegion;
 }
 
 /************************************************************************/
@@ -467,8 +465,9 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
     const char *pszSrcRegion = CPLGetXMLValue(psSrcRegionNode, "", nullptr);
     if (pszSrcRegion != nullptr)
     {
-        OGRGeometryFactory::createFromWkt(pszSrcRegion, nullptr,
-                                          &poProps->poSrcRegion);
+        poProps->poSrcRegion =
+            OGRGeometryFactory::createFromWkt(pszSrcRegion).first;
+
         if (poProps->poSrcRegion == nullptr)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -1227,6 +1226,7 @@ bool OGRVRTLayer::ResetSourceReading()
                 }
                 else
                 {
+                    CPLAssert(m_poFilterGeom);
                     m_poFilterGeom->getEnvelope(&sEnvelope);
                 }
 
@@ -1325,7 +1325,7 @@ bool OGRVRTLayer::ResetSourceReading()
     {
         OGRGeometry *poNewSpatialGeom = nullptr;
         OGRGeometry *poSrcRegion =
-            apoGeomFieldProps[m_iGeomFieldFilter]->poSrcRegion;
+            apoGeomFieldProps[m_iGeomFieldFilter]->poSrcRegion.get();
         std::unique_ptr<OGRGeometry> poIntersection;
 
         if (poSrcRegion == nullptr)
@@ -1442,7 +1442,8 @@ void OGRVRTLayer::ClipAndAssignSRS(OGRFeature *poFeature)
         if (apoGeomFieldProps[i]->poSrcRegion != nullptr &&
             apoGeomFieldProps[i]->bSrcClip && poGeom != nullptr)
         {
-            poGeom = poGeom->Intersection(apoGeomFieldProps[i]->poSrcRegion);
+            poGeom =
+                poGeom->Intersection(apoGeomFieldProps[i]->poSrcRegion.get());
             if (poGeom != nullptr)
                 poGeom->assignSpatialReference(
                     GetLayerDefn()->GetGeomFieldDefn(i)->GetSpatialRef());
@@ -1507,13 +1508,11 @@ retry:
 
             if (pszWKT != nullptr)
             {
-                OGRGeometry *poGeom = nullptr;
-
-                OGRGeometryFactory::createFromWkt(pszWKT, nullptr, &poGeom);
+                auto [poGeom, _] = OGRGeometryFactory::createFromWkt(pszWKT);
                 if (poGeom == nullptr)
                     CPLDebug("OGR_VRT", "Did not get geometry from %s", pszWKT);
 
-                poDstFeat->SetGeomFieldDirectly(i, poGeom);
+                poDstFeat->SetGeomField(i, std::move(poGeom));
             }
         }
         else if (eGeometryStyle == VGS_WKB && iGeomField != -1)
@@ -1619,7 +1618,7 @@ retry:
         {
             OGRGeometry *poGeom = poDstFeat->GetGeomFieldRef(i);
             if (poGeom != nullptr &&
-                !poGeom->Intersects(apoGeomFieldProps[i]->poSrcRegion))
+                !poGeom->Intersects(apoGeomFieldProps[i]->poSrcRegion.get()))
             {
                 delete poSrcFeat;
                 delete poDstFeat;
@@ -2149,19 +2148,12 @@ int OGRVRTLayer::TestCapability(const char *pszCap)
 }
 
 /************************************************************************/
-/*                              GetExtent()                             */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
-OGRErr OGRVRTLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRVRTLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                               bool bForce)
 {
-    return GetExtent(0, psExtent, bForce);
-}
-
-OGRErr OGRVRTLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
-{
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-        return OGRERR_FAILURE;
-
     if (static_cast<size_t>(iGeomField) >= apoGeomFieldProps.size())
         return OGRERR_FAILURE;
 
@@ -2198,7 +2190,7 @@ OGRErr OGRVRTLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
         return eErr;
     }
 
-    return OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/
@@ -2233,37 +2225,25 @@ GIntBig OGRVRTLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGRVRTLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGRVRTLayer::ISetSpatialFilter(int iGeomField,
+                                      const OGRGeometry *poGeomIn)
 {
-    SetSpatialFilter(0, poGeomIn);
-}
-
-void OGRVRTLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
-{
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-    {
-        if (poGeomIn != nullptr)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return;
-    }
-
     if (!bHasFullInitialized)
         FullInitialize();
     if (!poSrcLayer || poDS->GetRecursionDetected())
-        return;
+        return OGRERR_FAILURE;
 
-    if (apoGeomFieldProps[iGeomField]->eGeometryStyle == VGS_Direct)
+    if (iGeomField >= 0 && iGeomField < GetLayerDefn()->GetGeomFieldCount() &&
+        apoGeomFieldProps[iGeomField]->eGeometryStyle == VGS_Direct)
         bNeedReset = true;
 
     m_iGeomFieldFilter = iGeomField;
     if (InstallFilter(poGeomIn))
         ResetReading();
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

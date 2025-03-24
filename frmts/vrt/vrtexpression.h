@@ -72,8 +72,7 @@ class MathExpression
      * the expression is evaluated.
      *
      * @return CE_None if the expression can be successfully parsed and all
-     *                 symbols have been registe          vrtexpression_exprtk.cpp
-          vrtexpression_muparser.cppred, CE_Failure otherwise.
+     *                 symbols have been registered, CE_Failure otherwise.
      *
      * @since 3.11
      */

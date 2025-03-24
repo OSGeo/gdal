@@ -68,10 +68,13 @@ def test_interpolateatpoint_throw():
 
 def test_interpolateatpoint_2_bands():
 
+    pytest.importorskip("osgeo.gdal_array")
+    np = pytest.importorskip("numpy")
+
     mem_ds = gdal.GetDriverByName("MEM").Create(
         "", xsize=2, ysize=2, bands=2, eType=gdal.GDT_Float32
     )
-    np = pytest.importorskip("numpy")
+
     # First band with values values
     raster_array_1 = np.array(([10.5, 1.3], [2.4, 3.8]))
     mem_ds.GetRasterBand(1).WriteArray(raster_array_1)
@@ -94,10 +97,12 @@ def test_interpolateatpoint_2_bands():
 
 def test_interpolateatpoint_bilinear_several_points():
 
+    pytest.importorskip("osgeo.gdal_array")
+    np = pytest.importorskip("numpy")
+
     mem_ds = gdal.GetDriverByName("MEM").Create(
         "", xsize=3, ysize=2, bands=1, eType=gdal.GDT_Float32
     )
-    np = pytest.importorskip("numpy")
     raster_array_1 = np.array(([10.5, 1.3, 0.5], [2.4, 3.8, -1.0]))
     mem_ds.GetRasterBand(1).WriteArray(raster_array_1)
 
@@ -131,10 +136,12 @@ def test_interpolateatpoint_bilinear_several_points():
 
 def test_interpolateatpoint_cubicspline_several_points():
 
+    pytest.importorskip("osgeo.gdal_array")
+    np = pytest.importorskip("numpy")
+
     mem_ds = gdal.GetDriverByName("MEM").Create(
         "", xsize=4, ysize=4, bands=1, eType=gdal.GDT_Float32
     )
-    np = pytest.importorskip("numpy")
     raster_array_1 = np.array(
         (
             [1.0, 2.0, 1.5, -0.3],
@@ -160,10 +167,12 @@ def test_interpolateatpoint_cubicspline_several_points():
 
 def test_interpolateatpoint_cubic_several_points():
 
+    pytest.importorskip("osgeo.gdal_array")
+    np = pytest.importorskip("numpy")
+
     mem_ds = gdal.GetDriverByName("MEM").Create(
         "", xsize=4, ysize=4, bands=1, eType=gdal.GDT_Float32
     )
-    np = pytest.importorskip("numpy")
     raster_array_1 = np.array(
         (
             [1.0, 2.0, 1.5, -0.3],
@@ -196,10 +205,12 @@ def test_interpolateatpoint_cubic_several_points():
 
 def test_interpolateatpoint_at_borders():
 
+    pytest.importorskip("osgeo.gdal_array")
+    np = pytest.importorskip("numpy")
+
     mem_ds = gdal.GetDriverByName("MEM").Create(
         "", xsize=6, ysize=5, bands=1, eType=gdal.GDT_Float32
     )
-    np = pytest.importorskip("numpy")
     raster_array_1 = np.array(
         (
             [1, 2, 4, 4, 5, 6],

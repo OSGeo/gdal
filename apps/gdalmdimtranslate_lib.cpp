@@ -1800,6 +1800,9 @@ GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 osFormat = GetOutputDriverForRaster(pszDest);
             if (osFormat.empty())
             {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot determine output driver for dataset name '%s'",
+                         pszDest);
                 return nullptr;
             }
         }

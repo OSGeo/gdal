@@ -32,7 +32,8 @@ CPLString OGRLIBKMLGetSanitizedNCName(const char *pszName);
 class OGRLIBKMLLayer final : public OGRLayer,
                              public OGRGetNextFeatureThroughRaw<OGRLIBKMLLayer>
 {
-    int bUpdate = false;
+    bool m_bNew = false;
+    bool bUpdate = false;
 
     int nFeatures = 0;
     int iFeature = 0;
@@ -84,7 +85,7 @@ class OGRLIBKMLLayer final : public OGRLayer,
                    OGRLIBKMLDataSource *poOgrDS, kmldom::ElementPtr poKmlRoot,
                    kmldom::ContainerPtr poKmlContainer,
                    kmldom::UpdatePtr poKmlUpdate, const char *pszFileName,
-                   int bNew, int bUpdate);
+                   bool bNew, bool bUpdate);
     virtual ~OGRLIBKMLLayer();
 
     void ResetReading() override
@@ -105,13 +106,8 @@ class OGRLIBKMLLayer final : public OGRLayer,
     OGRErr DeleteFeature(GIntBig nFID) override;
 
     GIntBig GetFeatureCount(int bForce = TRUE) override;
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     // const char               *GetInfo( const char * );
 
@@ -265,7 +261,7 @@ class OGRLIBKMLDataSource final : public GDALDataset
     void SetStyleTableDirectly(OGRStyleTable *poStyleTable) override;
     void SetStyleTable(OGRStyleTable *poStyleTable) override;
 
-    int Open(const char *pszFilename, int bUpdate);
+    int Open(const char *pszFilename, bool bUpdate);
     int Create(const char *pszFilename, char **papszOptions);
 
     CPLErr FlushCache(bool bAtClosing) override;
@@ -357,7 +353,7 @@ class OGRLIBKMLDataSource final : public GDALDataset
     AddLayer(const char *pszLayerName, OGRwkbGeometryType eGType,
              const OGRSpatialReference *poSRS, OGRLIBKMLDataSource *poOgrDS,
              kmldom::ElementPtr poKmlRoot, kmldom::ContainerPtr poKmlContainer,
-             const char *pszFileName, int bNew, int bUpdate, int nGuess);
+             const char *pszFileName, bool bNew, bool bUpdate, int nGuess);
 };
 
 #endif

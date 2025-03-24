@@ -46,7 +46,7 @@ class OGRVRTGeomFieldProps
     const OGRSpatialReference *poSRS;
 
     bool bSrcClip;
-    OGRGeometry *poSrcRegion;
+    std::unique_ptr<OGRGeometry> poSrcRegion;
 
     // Geometry interpretation related.
     OGRVRTGeometryStyle eGeometryStyle;
@@ -164,13 +164,11 @@ class OGRVRTLayer final : public OGRLayer
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce = TRUE) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *poGeomIn) override;
-    virtual void SetSpatialFilter(int iGeomField,
-                                  OGRGeometry *poGeomIn) override;
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *poGeomIn) override;
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 

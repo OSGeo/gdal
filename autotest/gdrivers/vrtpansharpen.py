@@ -1315,10 +1315,8 @@ def test_vrtpansharpen_5():
 
 def test_vrtpansharpen_6():
 
-    try:
-        import numpy
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("osgeo.gdal_array")
+    numpy = pytest.importorskip("numpy")
 
     # i = 0: VRT has <BitDepth>7</BitDepth>
     # i = 1: bands have NBITS=7 and VRT <BitDepth>7</BitDepth>
@@ -2387,3 +2385,51 @@ def test_vrtpansharpen_open_options_input_bands():
         )
         # Not the prettiest way to check that open options are used, but that does the job...
         assert "small_world.tif: Invalid value for NUM_THREADS: foo" in msgs
+
+
+###############################################################################
+# Test fix for #11889
+
+
+def test_vrtpansharpen_slightly_different_extent(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("GTiff").Create(
+        "/vsimem/pan.tif", 1000, 1000, 1, gdal.GDT_Byte
+    )
+    ds.SetGeoTransform([0, 1.0 / 1000, 0, 0, 0, -1.0 / 1000])
+    ds.GetRasterBand(1).Fill(30)
+    ds = None
+    ds = gdal.GetDriverByName("GTiff").Create(
+        "/vsimem/ms.tif", 500, 500, 2, gdal.GDT_Byte
+    )
+    ds.SetGeoTransform(
+        [0, 1.0 / 500 - 1.0 / 300000, 0, 0, 0, -(1.0 / 500 - 1.0 / 300000)]
+    )
+    ds.GetRasterBand(1).Fill(10)
+    ds.GetRasterBand(2).Fill(20)
+    ds = None
+
+    vrt_ds = gdal.Open(
+        """<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">/vsimem/pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+    )
+    mm = [
+        vrt_ds.GetRasterBand(i + 1).ComputeRasterMinMax()
+        for i in range(vrt_ds.RasterCount)
+    ]
+    assert mm == [(20.0, 20.0), (40.0, 40.0)]

@@ -7,7 +7,7 @@ RFC 40: Improving performance of Raster Attribute Table implementation for large
 Summary:
 --------
 
-Raster Attrbute Tables from some applications (notably segmentation) can
+Raster Attribute Tables from some applications (notably segmentation) can
 be very large and are slow to access with the current API due to the way
 only one element can get read or written at a time. Also, when an
 attribute table is requested by the application the whole table must be

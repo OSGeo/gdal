@@ -2397,14 +2397,15 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     }
 }
 
-OGRErr OGRFlatGeobufLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRFlatGeobufLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                      bool bForce)
 {
     if (m_sExtent.IsInit())
     {
         *psExtent = m_sExtent;
         return OGRERR_NONE;
     }
-    return OGRLayer::GetExtent(psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 int OGRFlatGeobufLayer::TestCapability(const char *pszCap)

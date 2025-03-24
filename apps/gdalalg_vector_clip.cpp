@@ -65,148 +65,99 @@ GDALVectorClipAlgorithm::GDALVectorClipAlgorithm(bool standaloneStep)
 
 namespace
 {
-class GDALVectorClipAlgorithmDataset final : public GDALDataset
-{
-    std::vector<std::unique_ptr<OGRLayer>> m_layers{};
-
-  public:
-    GDALVectorClipAlgorithmDataset() = default;
-
-    void AddLayer(std::unique_ptr<OGRLayer> poLayer)
-    {
-        m_layers.push_back(std::move(poLayer));
-    }
-
-    int GetLayerCount() override
-    {
-        return static_cast<int>(m_layers.size());
-    }
-
-    OGRLayer *GetLayer(int idx) override
-    {
-        return idx >= 0 && idx < GetLayerCount() ? m_layers[idx].get()
-                                                 : nullptr;
-    }
-};
-
-class GDALVectorClipAlgorithmLayer final : public OGRLayer
+class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 {
   public:
-    GDALVectorClipAlgorithmLayer(OGRLayer *poSrcLayer,
+    GDALVectorClipAlgorithmLayer(OGRLayer &oSrcLayer,
                                  std::unique_ptr<OGRGeometry> poClipGeom)
-        : m_poSrcLayer(poSrcLayer), m_poClipGeom(std::move(poClipGeom)),
-          m_eSrcLayerGeomType(m_poSrcLayer->GetGeomType()),
+        : GDALVectorPipelineOutputLayer(oSrcLayer),
+          m_poClipGeom(std::move(poClipGeom)),
+          m_eSrcLayerGeomType(oSrcLayer.GetGeomType()),
           m_eFlattenSrcLayerGeomType(wkbFlatten(m_eSrcLayerGeomType)),
           m_bSrcLayerGeomTypeIsCollection(OGR_GT_IsSubClassOf(
               m_eFlattenSrcLayerGeomType, wkbGeometryCollection))
     {
-        SetDescription(poSrcLayer->GetDescription());
-        poSrcLayer->SetSpatialFilter(m_poClipGeom.get());
+        SetDescription(oSrcLayer.GetDescription());
+        oSrcLayer.SetSpatialFilter(m_poClipGeom.get());
     }
 
     OGRFeatureDefn *GetLayerDefn() override
     {
-        return m_poSrcLayer->GetLayerDefn();
+        return m_srcLayer.GetLayerDefn();
     }
 
-    void ResetReading() override
+    void TranslateFeature(
+        std::unique_ptr<OGRFeature> poSrcFeature,
+        std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
-        m_poSrcLayer->ResetReading();
-        m_poSrcFeature.reset();
-        m_poCurGeomColl.reset();
-        m_idxInCurGeomColl = 0;
-    }
+        auto poGeom = poSrcFeature->GetGeometryRef();
+        if (!poGeom)
+            return;
 
-    OGRFeature *GetNextFeature() override
-    {
-        if (m_poSrcFeature && m_poCurGeomColl)
+        auto poIntersection = std::unique_ptr<OGRGeometry>(
+            poGeom->Intersection(m_poClipGeom.get()));
+        if (!poIntersection)
+            return;
+
+        const auto eFeatGeomType =
+            wkbFlatten(poIntersection->getGeometryType());
+        if (m_eFlattenSrcLayerGeomType != wkbUnknown &&
+            m_eFlattenSrcLayerGeomType != eFeatGeomType)
         {
-            while (m_idxInCurGeomColl < m_poCurGeomColl->getNumGeometries())
+            // If the intersection is a collection of geometry and the
+            // layer geometry type is of non-collection type, create
+            // one feature per element of the collection.
+            if (!m_bSrcLayerGeomTypeIsCollection &&
+                OGR_GT_IsSubClassOf(eFeatGeomType, wkbGeometryCollection))
             {
-                const auto poGeom =
-                    m_poCurGeomColl->getGeometryRef(m_idxInCurGeomColl);
-                ++m_idxInCurGeomColl;
-                if (m_eFlattenSrcLayerGeomType == wkbUnknown ||
-                    m_eFlattenSrcLayerGeomType ==
-                        wkbFlatten(poGeom->getGeometryType()))
+                auto poGeomColl = std::unique_ptr<OGRGeometryCollection>(
+                    poIntersection.release()->toGeometryCollection());
+                for (const auto *poSubGeom : poGeomColl.get())
                 {
                     auto poDstFeature =
-                        std::unique_ptr<OGRFeature>(m_poSrcFeature->Clone());
-                    poDstFeature->SetGeometry(poGeom);
-                    return poDstFeature.release();
+                        std::unique_ptr<OGRFeature>(poSrcFeature->Clone());
+                    poDstFeature->SetGeometry(poSubGeom);
+                    apoOutFeatures.push_back(std::move(poDstFeature));
                 }
             }
-            m_poSrcFeature.reset();
-            m_poCurGeomColl.reset();
-            m_idxInCurGeomColl = 0;
+            else if (OGR_GT_GetCollection(eFeatGeomType) ==
+                     m_eFlattenSrcLayerGeomType)
+            {
+                poIntersection.reset(OGRGeometryFactory::forceTo(
+                    poIntersection.release(), m_eSrcLayerGeomType));
+                poSrcFeature->SetGeometryDirectly(poIntersection.release());
+                apoOutFeatures.push_back(std::move(poSrcFeature));
+            }
+            else if (m_eFlattenSrcLayerGeomType == wkbGeometryCollection)
+            {
+                auto poGeomColl = std::make_unique<OGRGeometryCollection>();
+                poGeomColl->addGeometry(std::move(poIntersection));
+                poSrcFeature->SetGeometryDirectly(poGeomColl.release());
+                apoOutFeatures.push_back(std::move(poSrcFeature));
+            }
+            // else discard geometries of incompatible type with the
+            // layer geometry type
         }
-
-        while (auto poFeature =
-                   std::unique_ptr<OGRFeature>(m_poSrcLayer->GetNextFeature()))
+        else
         {
-            auto poGeom = poFeature->GetGeometryRef();
-            if (!poGeom)
-                continue;
-
-            auto poIntersection = std::unique_ptr<OGRGeometry>(
-                poGeom->Intersection(m_poClipGeom.get()));
-            if (!poIntersection)
-                continue;
-
-            const auto eFeatGeomType =
-                wkbFlatten(poIntersection->getGeometryType());
-            if (m_eFlattenSrcLayerGeomType != wkbUnknown &&
-                m_eFlattenSrcLayerGeomType != eFeatGeomType)
-            {
-                // If the intersection is a collection of geometry and the
-                // layer geometry type is of non-collection type, create
-                // one feature per element of the collection.
-                if (!m_bSrcLayerGeomTypeIsCollection &&
-                    OGR_GT_IsSubClassOf(eFeatGeomType, wkbGeometryCollection))
-                {
-                    m_poSrcFeature = std::move(poFeature);
-                    m_poCurGeomColl.reset(
-                        poIntersection.release()->toGeometryCollection());
-                    m_idxInCurGeomColl = 0;
-                    return GetNextFeature();
-                }
-                else if (OGR_GT_GetCollection(eFeatGeomType) ==
-                         m_eFlattenSrcLayerGeomType)
-                {
-                    poIntersection.reset(OGRGeometryFactory::forceTo(
-                        poIntersection.release(), m_eSrcLayerGeomType));
-                    poFeature->SetGeometryDirectly(poIntersection.release());
-                    return poFeature.release();
-                }
-                // else discard geometries of incompatible type with the
-                // layer geometry type
-            }
-            else
-            {
-                poFeature->SetGeometryDirectly(poIntersection.release());
-                return poFeature.release();
-            }
+            poSrcFeature->SetGeometryDirectly(poIntersection.release());
+            apoOutFeatures.push_back(std::move(poSrcFeature));
         }
-        return nullptr;
     }
 
     int TestCapability(const char *pszCap) override
     {
         if (EQUAL(pszCap, OLCStringsAsUTF8) ||
             EQUAL(pszCap, OLCCurveGeometries) || EQUAL(pszCap, OLCZGeometries))
-            return m_poSrcLayer->TestCapability(pszCap);
+            return m_srcLayer.TestCapability(pszCap);
         return false;
     }
 
   private:
-    OGRLayer *m_poSrcLayer = nullptr;
     std::unique_ptr<OGRGeometry> m_poClipGeom{};
     const OGRwkbGeometryType m_eSrcLayerGeomType;
     const OGRwkbGeometryType m_eFlattenSrcLayerGeomType;
     const bool m_bSrcLayerGeomTypeIsCollection;
-    std::unique_ptr<OGRFeature> m_poSrcFeature{};
-    std::unique_ptr<OGRGeometryCollection> m_poCurGeomColl{};
-    int m_idxInCurGeomColl = 0;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorClipAlgorithmLayer)
 };
@@ -447,8 +398,7 @@ bool GDALVectorClipAlgorithm::RunStep(GDALProgressFunc, void *)
         return false;
     }
 
-    auto outDS = std::make_unique<GDALVectorClipAlgorithmDataset>();
-    outDS->SetDescription(poSrcDS->GetDescription());
+    auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
 
     bool ret = true;
     for (int i = 0; ret && i < nLayerCount; ++i)
@@ -467,8 +417,10 @@ bool GDALVectorClipAlgorithm::RunStep(GDALProgressFunc, void *)
             }
             if (ret)
             {
-                outDS->AddLayer(std::make_unique<GDALVectorClipAlgorithmLayer>(
-                    poSrcLayer, std::move(poClipGeomForLayer)));
+                outDS->AddLayer(
+                    *poSrcLayer,
+                    std::make_unique<GDALVectorClipAlgorithmLayer>(
+                        *poSrcLayer, std::move(poClipGeomForLayer)));
             }
         }
     }

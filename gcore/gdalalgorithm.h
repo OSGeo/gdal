@@ -423,7 +423,7 @@ class CPL_DLL GDALArgDatasetValue final
     /** Set dataset name */
     void Set(const std::string &name);
 
-    /** Transfer dataset to this instance (does not affect is reference
+    /** Transfer dataset to this instance (does not affect its reference
      * counter). */
     void Set(std::unique_ptr<GDALDataset> poDS);
 
@@ -1058,7 +1058,21 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
                       !std::is_same_v<T, std::vector<GDALArgDatasetValue>>)
         {
             if (decl.HasDefaultValue())
-                *std::get<T *>(m_value) = decl.GetDefault<T>();
+            {
+                try
+                {
+                    *std::get<T *>(m_value) = decl.GetDefault<T>();
+                }
+                catch (const std::bad_variant_access &e)
+                {
+                    // I don't think that can happen, but Coverity Scan thinks
+                    // so
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "*std::get<T *>(m_value) = decl.GetDefault<T>() "
+                             "failed: %s",
+                             e.what());
+                }
+            }
         }
     }
 
@@ -1446,6 +1460,8 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
         *std::get<T *>(m_value) = value;
         return RunAllActions();
     }
+
+    bool ProcessString(std::string &value) const;
 
     bool RunAllActions();
     void RunActions();
@@ -2150,7 +2166,11 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &AddOutputStringArg(std::string *pValue);
 
     /** Add output format argument. */
-    GDALInConstructionAlgorithmArg &AddOutputFormatArg(std::string *pValue);
+    GDALInConstructionAlgorithmArg &
+    AddOutputFormatArg(std::string *pValue, bool bStreamAllowed = false);
+
+    /** Add output data type argument. */
+    GDALInConstructionAlgorithmArg &AddOutputDataTypeArg(std::string *pValue);
 
     /** Add creation option(s) argument. */
     GDALInConstructionAlgorithmArg &
@@ -2232,7 +2252,7 @@ class CPL_DLL GDALAlgorithmRegistry
                          std::vector<double>, std::vector<GDALArgDatasetValue>>>
             &inConstructionValues);
 
-    bool ValidateFormat(const GDALAlgorithmArg &arg) const;
+    bool ValidateFormat(const GDALAlgorithmArg &arg, bool bStreamAllowed) const;
 
     virtual bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
 

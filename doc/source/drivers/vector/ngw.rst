@@ -41,8 +41,8 @@ Driver
 ------
 
 The driver can connect to the services implementing the NextGIS Web REST API.
-NGW driver requires cURL support in GDAL. The driver supports read and write
-operations.
+NGW driver requires cURL support in GDAL and WMS driver. The driver supports 
+read and write operations.
 
 Dataset name syntax
 -------------------
@@ -95,6 +95,14 @@ The following configuration options are available:
 
       Comma separated extensions list. Available values are
       `description` and `attachment`. This needed to fill native data.
+      
+-  :copy-config:`NGW_CONNECTTIMEOUT`
+
+-  :copy-config:`NGW_TIMEOUT`
+
+-  :copy-config:`NGW_MAX_RETRY`
+
+-  :copy-config:`NGW_RETRY_DELAY`
 
 Authentication
 --------------
@@ -136,7 +144,7 @@ Geometry with Z value also supported.
 Field data types
 ----------------
 
-NextWeb supports only following field types:
+NextGIS Web supports only following field types:
 
 -  OFTInteger
 -  OFTInteger64
@@ -145,6 +153,20 @@ NextWeb supports only following field types:
 -  OFTDate
 -  OFTTime
 -  OFTDateTime
+
+Driver stores additional field data in comment as JSON string:
+
+-  field identifier in NGW
+-  check if this is label field
+-  check to show field in grid view
+-  check to use field in text search
+
+Driver supports alter field:
+
+-  name
+-  alternative name
+-  field domain
+-  comment
 
 Paging
 ------
@@ -203,6 +225,25 @@ The following open options are available:
       Comma separated extensions list. Available values are
       `description` and `attachment`. This needed to fill native data.
 
+-  .. oo:: CONNECTTIMEOUT
+
+      Maximum delay for the connection to be established before being aborted in 
+      seconds.
+
+-  .. oo:: TIMEOUT
+
+      Maximum delay for the whole request to complete before being aborted in 
+      seconds.
+
+-  .. oo:: MAX_RETRY
+
+      Maximum number of retry attempts if a 429, 502, 503 or 504 HTTP error 
+      occurs.
+
+-  .. oo:: RETRY_DELAY
+
+      Number of seconds between retry attempts.
+
 Dataset creation options
 ------------------------
 
@@ -252,6 +293,25 @@ The following dataset creation options are available:
       Comma separated extensions list. Available values are
       `description` and `attachment`. This needed to fill native data.
 
+-  .. dsco:: CONNECTTIMEOUT
+
+      Maximum delay for the connection to be established before being aborted in 
+      seconds.
+
+-  .. dsco:: TIMEOUT
+
+      Maximum delay for the whole request to complete before being aborted in 
+      seconds.
+
+-  .. dsco:: MAX_RETRY
+
+      Maximum number of retry attempts if a 429, 502, 503 or 504 HTTP error 
+      occurs.
+
+-  .. dsco:: RETRY_DELAY
+
+      Number of seconds between retry attempts.      
+
 Layer creation options
 ----------------------
 
@@ -295,18 +355,29 @@ Resource creation date, type and parent identifier map to appropriate
 read-only metadata items *creation_date*, *resource_type* and
 *parent_id* in default domain.
 
-Vector layer field properties (alias, identifier, label field, grid
-visibility) map to layer metadata the following way:
-
--  field alias -> FIELD_{field number}_ALIAS (for example FIELD_0_ALIAS)
--  identifier -> FIELD_{field number}_ID (for example FIELD_0_ID)
--  label field -> FIELD_{field number}_LABEL_FIELD (for example
-   FIELD_0_LABEL_FIELD)
--  grid visibility -> FIELD_{field number}_GRID_VISIBILITY (for example
-   FIELD_0_GRID_VISIBILITY)
+Vector layer field properties (identifier, label field, grid
+visibility, text search) saved as json string in field comment.
 
 Starting from GDAL 3.3 field alias can be set/get via `SetAlternativeName`
 and `GetAlternativeNameRef`.
+
+
+Domains
+-------
+
+Driver supports only coded field domain. Since NGW does not support field types 
+in domains, three domains are created for each domain where keys can be 
+represented as numbers:
+
+-  domain_name with field type OFTString
+-  domain_name + " (number)" with field type OFTInteger
+-  domain_name + " (bigint)" with field type OFTString64
+
+Deleting any of the three domains will delete the others.
+
+Also NGW does not support null as coded values. So the null will represent as 
+empty string.
+
 
 Filters
 -------
@@ -318,14 +389,14 @@ Vector and PostGIS layers support SetAttributeFilter and
 SetSpatialFilter methods. The attribute filter will evaluate at server side
 if condition is one of following comparison operators:
 
- - greater (>)
- - lower (<)
- - greater or equal (>=)
- - lower or equal (<=)
- - equal (=)
- - not equal (!=)
- - LIKE SQL statement (for strings compare)
- - ILIKE SQL statement (for strings compare)
+- greater (>)
+- lower (<)
+- greater or equal (>=)
+- lower or equal (<=)
+- equal (=)
+- not equal (!=)
+- LIKE SQL statement (for strings compare)
+- ILIKE SQL statement (for strings compare)
 
 Also only AND operator without brackets supported between comparison. For example,
 
@@ -355,6 +426,8 @@ supported:
 -  DELLAYER: layer_name; - delete layer with layer_name.
 -  DELETE FROM layer_name; - delete any features from layer with
    layer_name.
+-  DELETE FROM layer_name WHERE field = value; - delete features from layer with
+   layer_name and where clause.
 -  DROP TABLE layer_name; - delete layer with layer_name.
 -  ALTER TABLE src_layer RENAME TO dst_layer; - rename layer.
 -  SELECT field_1,field_2 FROM src_layer WHERE field_1 = 'Value 1' AND

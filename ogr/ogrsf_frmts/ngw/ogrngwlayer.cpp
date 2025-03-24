@@ -6,44 +6,12 @@
  *******************************************************************************
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2018-2020, NextGIS <info@nextgis.com>
+ *  Copyright (c) 2018-2025, NextGIS <info@nextgis.com>
  *
  * SPDX-License-Identifier: MIT
  *******************************************************************************/
 
 #include "ogr_ngw.h"
-
-/*
- * CheckRequestResult()
- */
-static bool CheckRequestResult(bool bResult, const CPLJSONObject &oRoot,
-                               const std::string &osErrorMessage)
-{
-    if (!bResult)
-    {
-        if (oRoot.IsValid())
-        {
-            std::string osErrorMessageInt = oRoot.GetString("message");
-            if (!osErrorMessageInt.empty())
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                         osErrorMessageInt.c_str());
-                return false;
-            }
-        }
-        CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMessage.c_str());
-
-        return false;
-    }
-
-    if (!oRoot.IsValid())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMessage.c_str());
-        return false;
-    }
-
-    return true;
-}
 
 /*
  * OGRGeometryToWKT()
@@ -281,6 +249,25 @@ static std::string FeatureToJsonString(OGRFeature *poFeature)
 }
 
 /*
+ * FeaturesIDToJsonString()
+ */
+static std::string
+FeaturesIDToJsonString(const std::vector<GIntBig> &vFeaturesID)
+{
+    CPLJSONArray oFeaturesIDJsonArray;
+
+    for (GIntBig nFeatureID : vFeaturesID)
+    {
+        CPLJSONObject oFeatureIDJson;
+        oFeatureIDJson.Add("id", nFeatureID);
+
+        oFeaturesIDJsonArray.Add(oFeatureIDJson);
+    }
+
+    return oFeaturesIDJsonArray.Format(CPLJSONObject::PrettyFormat::Plain);
+}
+
+/*
  * FreeMap()
  */
 static void FreeMap(std::map<GIntBig, OGRFeature *> &moFeatures)
@@ -314,53 +301,6 @@ static bool CheckFieldNameUnique(OGRFeatureDefn *poFeatureDefn, int iField,
         }
     }
     return true;
-}
-
-static std::string GetUniqueFieldName(OGRFeatureDefn *poFeatureDefn, int iField,
-                                      const char *pszBaseName, int nAdd = 0,
-                                      int nMax = 100)
-{
-    const char *pszNewName = CPLSPrintf("%s%d", pszBaseName, nAdd);
-    for (int i = 0; i < poFeatureDefn->GetFieldCount(); ++i)
-    {
-        if (i == iField)
-        {
-            continue;
-        }
-
-        OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(i);
-        if (poFieldDefn && EQUAL(poFieldDefn->GetNameRef(), pszNewName))
-        {
-            if (nAdd + 1 == nMax)
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "Too many field names like '%s' + number.",
-                         pszBaseName);
-
-                return pszBaseName;  // Let's solve this on server side.
-            }
-            return GetUniqueFieldName(poFeatureDefn, iField, pszBaseName,
-                                      nAdd + 1);
-        }
-    }
-
-    return pszNewName;
-}
-
-static void NormalizeFieldName(OGRFeatureDefn *poFeatureDefn, int iField,
-                               OGRFieldDefn *poFieldDefn)
-{
-    if (EQUAL(poFieldDefn->GetNameRef(), "id"))
-    {
-        std::string osNewFieldName = GetUniqueFieldName(
-            poFeatureDefn, iField, poFieldDefn->GetNameRef(), 0);
-        CPLError(CE_Warning, CPLE_NotSupported,
-                 "Normalized/laundered field name: '%s' to '%s'",
-                 poFieldDefn->GetNameRef(), osNewFieldName.c_str());
-
-        // Set field name with normalized value.
-        poFieldDefn->SetName(osNewFieldName.c_str());
-    }
 }
 
 /*
@@ -498,36 +438,12 @@ std::string OGRNGWLayer::TranslateSQLToFilter(swq_expr_node *poNode)
 OGRNGWLayer::OGRNGWLayer(OGRNGWDataset *poDSIn,
                          const CPLJSONObject &oResourceJsonObject)
     : osResourceId(oResourceJsonObject.GetString("resource/id", "-1")),
-      poDS(poDSIn), bFetchedPermissions(false), nFeatureCount(-1),
-      oNextPos(moFeatures.begin()), nPageStart(0), bNeedSyncData(false),
-      bNeedSyncStructure(false), bClientSideAttributeFilter(false)
+      poDS(poDSIn), bFetchedPermissions(false), poFeatureDefn(nullptr),
+      nFeatureCount(-1), oNextPos(moFeatures.begin()), nPageStart(0),
+      bNeedSyncData(false), bNeedSyncStructure(false),
+      bClientSideAttributeFilter(false)
 {
-    std::string osName = oResourceJsonObject.GetString("resource/display_name");
-    poFeatureDefn = new OGRFeatureDefn(osName.c_str());
-    poFeatureDefn->Reference();
-
-    poFeatureDefn->SetGeomType(NGWAPI::NGWGeomTypeToOGRGeomType(
-        oResourceJsonObject.GetString("vector_layer/geometry_type")));
-
-    OGRSpatialReference *poSRS = new OGRSpatialReference;
-    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    int nEPSG = oResourceJsonObject.GetInteger(
-        "vector_layer/srs/id",
-        3857);  // Default NGW SRS is Web mercator EPSG:3857.
-    if (poSRS->importFromEPSG(nEPSG) == OGRERR_NONE)
-    {
-        if (poFeatureDefn->GetGeomFieldCount() != 0)
-        {
-            poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-        }
-    }
-    poSRS->Release();
-
-    CPLJSONArray oFields = oResourceJsonObject.GetArray("feature_layer/fields");
-    FillFields(oFields);
-    FillMetadata(oResourceJsonObject);
-
-    SetDescription(poFeatureDefn->GetName());
+    Fill(oResourceJsonObject);
 }
 
 /*
@@ -584,6 +500,13 @@ OGRNGWLayer::OGRNGWLayer(OGRNGWDataset *poDSIn, const std::string &osNameIn,
     }
 
     SetDescription(poFeatureDefn->GetName());
+
+    stPermissions.bDatastructCanRead = true;
+    stPermissions.bDatastructCanWrite = true;
+    stPermissions.bDataCanRead = true;
+    stPermissions.bDataCanWrite = true;
+    stPermissions.bMetadataCanRead = true;
+    stPermissions.bMetadataCanWrite = true;
 }
 
 /*
@@ -636,7 +559,7 @@ bool OGRNGWLayer::Delete()
 
     // Headers free in DeleteResource method.
     return NGWAPI::DeleteResource(poDS->GetUrl(), osResourceId,
-                                  poDS->GetHeaders());
+                                  poDS->GetHeaders(false));
 }
 
 /*
@@ -648,7 +571,7 @@ OGRErr OGRNGWLayer::Rename(const char *pszNewName)
     if (osResourceId != "-1")
     {
         bResult = NGWAPI::RenameResource(poDS->GetUrl(), osResourceId,
-                                         pszNewName, poDS->GetHeaders());
+                                         pszNewName, poDS->GetHeaders(false));
     }
     if (bResult)
     {
@@ -669,12 +592,30 @@ OGRErr OGRNGWLayer::Rename(const char *pszNewName)
 void OGRNGWLayer::ResetReading()
 {
     SyncToDisk();
+    FreeFeaturesCache();
     if (poDS->GetPageSize() > 0)
     {
-        FreeFeaturesCache();
         nPageStart = 0;
     }
     oNextPos = moFeatures.begin();
+}
+
+CPLJSONObject OGRNGWLayer::LoadUrl(const std::string &osUrl) const
+{
+    CPLErrorReset();
+    auto aosHTTPOptions = poDS->GetHeaders(false);
+    CPLJSONDocument oFeatureReq;
+
+    bool bResult = oFeatureReq.LoadUrl(osUrl, aosHTTPOptions);
+    CPLJSONObject oRoot = oFeatureReq.GetRoot();
+    if (NGWAPI::CheckRequestResult(bResult, oRoot,
+                                   "GetFeatures request failed"))
+    {
+        CPLErrorReset();  // If we are here no error occurred
+        return oRoot;
+    }
+
+    return CPLJSONObject();
 }
 
 /*
@@ -684,14 +625,8 @@ bool OGRNGWLayer::FillFeatures(const std::string &osUrl)
 {
     CPLDebug("NGW", "GetNextFeature: Url: %s", osUrl.c_str());
 
-    CPLErrorReset();
-    CPLJSONDocument oFeatureReq;
-    char **papszHTTPOptions = poDS->GetHeaders();
-    bool bResult = oFeatureReq.LoadUrl(osUrl, papszHTTPOptions);
-    CSLDestroy(papszHTTPOptions);
-
-    CPLJSONObject oRoot = oFeatureReq.GetRoot();
-    if (!CheckRequestResult(bResult, oRoot, "GetFeatures request failed"))
+    CPLJSONObject oRoot = LoadUrl(osUrl);
+    if (!oRoot.IsValid())
     {
         return false;
     }
@@ -749,17 +684,20 @@ OGRErr OGRNGWLayer::SetNextByIndex(GIntBig nIndex)
             std::string osUrl;
             if (poDS->HasFeaturePaging())
             {
-                osUrl = NGWAPI::GetFeaturePage(
+                osUrl = NGWAPI::GetFeaturePageURL(
                     poDS->GetUrl(), osResourceId, 0, 0, osFields, osWhere,
                     osSpatialFilter, poDS->Extensions(),
                     poFeatureDefn->IsGeometryIgnored() == TRUE);
             }
             else
             {
-                osUrl = NGWAPI::GetFeature(poDS->GetUrl(), osResourceId);
+                osUrl = NGWAPI::GetFeatureURL(poDS->GetUrl(), osResourceId);
             }
 
-            FillFeatures(osUrl);
+            if (!FillFeatures(osUrl))
+            {
+                return OGRERR_FAILURE;
+            }
         }
 
         if (moFeatures.empty() ||
@@ -790,7 +728,7 @@ OGRFeature *OGRNGWLayer::GetNextFeature()
         {
             FreeFeaturesCache();
 
-            osUrl = NGWAPI::GetFeaturePage(
+            osUrl = NGWAPI::GetFeaturePageURL(
                 poDS->GetUrl(), osResourceId, nPageStart, poDS->GetPageSize(),
                 osFields, osWhere, osSpatialFilter, poDS->Extensions(),
                 poFeatureDefn->IsGeometryIgnored() == TRUE);
@@ -801,14 +739,14 @@ OGRFeature *OGRNGWLayer::GetNextFeature()
     {
         if (poDS->HasFeaturePaging())
         {
-            osUrl = NGWAPI::GetFeaturePage(
+            osUrl = NGWAPI::GetFeaturePageURL(
                 poDS->GetUrl(), osResourceId, 0, 0, osFields, osWhere,
                 osSpatialFilter, poDS->Extensions(),
                 poFeatureDefn->IsGeometryIgnored() == TRUE);
         }
         else
         {
-            osUrl = NGWAPI::GetFeature(poDS->GetUrl(), osResourceId);
+            osUrl = NGWAPI::GetFeatureURL(poDS->GetUrl(), osResourceId);
         }
     }
 
@@ -887,18 +825,10 @@ OGRFeature *OGRNGWLayer::GetFeature(GIntBig nFID)
     {
         return moFeatures[nFID]->Clone();
     }
-    std::string osUrl =
-        NGWAPI::GetFeature(poDS->GetUrl(), osResourceId) + std::to_string(nFID);
-    CPLErrorReset();
-    CPLJSONDocument oFeatureReq;
-    char **papszHTTPOptions = poDS->GetHeaders();
-    bool bResult = oFeatureReq.LoadUrl(osUrl, papszHTTPOptions);
-    CSLDestroy(papszHTTPOptions);
-
-    CPLJSONObject oRoot = oFeatureReq.GetRoot();
-    if (!CheckRequestResult(bResult, oRoot,
-                            "GetFeature " + std::to_string(nFID) +
-                                " response is invalid"))
+    auto osUrl = NGWAPI::GetFeatureURL(poDS->GetUrl(), osResourceId) +
+                 std::to_string(nFID);
+    CPLJSONObject oRoot = LoadUrl(osUrl);
+    if (!oRoot.IsValid())
     {
         return nullptr;
     }
@@ -931,8 +861,7 @@ int OGRNGWLayer::TestCapability(const char *pszCap)
         return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
     else if (EQUAL(pszCap, OLCFastGetExtent))
         return TRUE;
-    else if (EQUAL(pszCap, OLCAlterFieldDefn))  // Only field name and alias can
-                                                // be altered.
+    else if (EQUAL(pszCap, OLCAlterFieldDefn))
         return stPermissions.bDatastructCanWrite && poDS->IsUpdateMode();
     else if (EQUAL(pszCap, OLCDeleteFeature))
         return stPermissions.bDataCanWrite && poDS->IsUpdateMode();
@@ -941,9 +870,7 @@ int OGRNGWLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCFastSetNextByIndex))
         return TRUE;
     else if (EQUAL(pszCap, OLCCreateField))
-        return osResourceId == "-1" &&
-               poDS->IsUpdateMode();  // Can create fields only in new layer not
-                                      // synced with server.
+        return stPermissions.bDatastructCanWrite && poDS->IsUpdateMode();
     else if (EQUAL(pszCap, OLCIgnoreFields))
         return poDS->HasFeaturePaging();  // Ignore fields, paging support and
                                           // attribute/spatial filters were
@@ -955,6 +882,61 @@ int OGRNGWLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCZGeometries))
         return TRUE;
     return FALSE;
+}
+
+/*
+ * Fill()
+ */
+void OGRNGWLayer::Fill(const CPLJSONObject &oRootObject)
+{
+    auto osName = oRootObject.GetString("resource/display_name");
+    CPLStringList soIgnoredFieldsNames;
+    if (nullptr != poFeatureDefn)
+    {
+        while (poFeatureDefn->GetFieldCount() > 0)
+        {
+            OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(0);
+            if (poFieldDefn->IsIgnored())
+            {
+                soIgnoredFieldsNames.AddString(poFieldDefn->GetNameRef());
+            }
+            poFeatureDefn->DeleteFieldDefn(0);
+        }
+        poFeatureDefn->SetName(osName.c_str());
+
+        poFeatureDefn->SetGeomType(NGWAPI::NGWGeomTypeToOGRGeomType(
+            oRootObject.GetString("vector_layer/geometry_type")));
+    }
+    else
+    {
+        poFeatureDefn = new OGRFeatureDefn(osName.c_str());
+        poFeatureDefn->Reference();
+
+        poFeatureDefn->SetGeomType(NGWAPI::NGWGeomTypeToOGRGeomType(
+            oRootObject.GetString("vector_layer/geometry_type")));
+
+        OGRSpatialReference *poSRS = new OGRSpatialReference;
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        int nEPSG = oRootObject.GetInteger(
+            "vector_layer/srs/id",
+            3857);  // Default NGW SRS is Web mercator EPSG:3857.
+        if (poSRS->importFromEPSG(nEPSG) == OGRERR_NONE)
+        {
+            if (poFeatureDefn->GetGeomFieldCount() != 0)
+            {
+                poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+            }
+        }
+        poSRS->Release();
+    }
+
+    CPLJSONArray oFields = oRootObject.GetArray("feature_layer/fields");
+    FillFields(oFields, soIgnoredFieldsNames);
+    FillMetadata(oRootObject);
+
+    auto osDescription = oRootObject.GetString("resource/desciption");
+    SetDescription(osDescription.c_str());
+    // SetDescription(poFeatureDefn->GetName());
 }
 
 /*
@@ -1004,37 +986,45 @@ void OGRNGWLayer::FillMetadata(const CPLJSONObject &oRootObject)
 /*
  * FillFields()
  */
-void OGRNGWLayer::FillFields(const CPLJSONArray &oFields)
+void OGRNGWLayer::FillFields(const CPLJSONArray &oFields,
+                             const CPLStringList &soIgnoredFieldsNames)
 {
-    for (int i = 0; i < oFields.Size(); ++i)
+    for (const auto &oField : oFields)
     {
-        CPLJSONObject oField = oFields[i];
         std::string osFieldName = oField.GetString("keyname");
         OGRFieldType eFieldtype =
             NGWAPI::NGWFieldTypeToOGRFieldType(oField.GetString("datatype"));
+
         OGRFieldDefn oFieldDefn(osFieldName.c_str(), eFieldtype);
-        std::string osFieldId = oField.GetString("id");
         std::string osFieldAlias = oField.GetString("display_name");
         oFieldDefn.SetAlternativeName(osFieldAlias.c_str());
+
+        // Add additional parameters to comment as JSON string
+        CPLJSONObject oFieldCommnent;
+        oFieldCommnent.Add("id", oField.GetLong("id"));
+        oFieldCommnent.Add("label_field", oField.GetBool("label_field"));
+        oFieldCommnent.Add("grid_visibility",
+                           oField.GetBool("grid_visibility"));
+        oFieldCommnent.Add("text_search", oField.GetBool("text_search"));
+        oFieldDefn.SetComment(
+            oFieldCommnent.Format(CPLJSONObject::PrettyFormat::Plain));
+
+        // Domain
+        auto nDomainID = oField.GetInteger("lookup_table/id", -1);
+        if (nDomainID != -1)
+        {
+            auto oDom = poDS->GetDomainByID(nDomainID);
+            auto pOgrDom = oDom.ToFieldDomain(eFieldtype);
+            if (pOgrDom != nullptr)
+            {
+                oFieldDefn.SetDomainName(pOgrDom->GetName());
+            }
+        }
+
         poFeatureDefn->AddFieldDefn(&oFieldDefn);
-        std::string osFieldIsLabel = oField.GetString("label_field");
-        std::string osFieldGridVisible = oField.GetString("grid_visibility");
-
-        std::string osFieldAliasName = "FIELD_" + std::to_string(i) + "_ALIAS";
-        std::string osFieldIdName = "FIELD_" + std::to_string(i) + "_ID";
-        std::string osFieldIsLabelName =
-            "FIELD_" + std::to_string(i) + "_LABEL_FIELD";
-        std::string osFieldGridVisibleName =
-            "FIELD_" + std::to_string(i) + "_GRID_VISIBILITY";
-
-        OGRLayer::SetMetadataItem(osFieldAliasName.c_str(),
-                                  osFieldAlias.c_str(), "");
-        OGRLayer::SetMetadataItem(osFieldIdName.c_str(), osFieldId.c_str(), "");
-        OGRLayer::SetMetadataItem(osFieldIsLabelName.c_str(),
-                                  osFieldIsLabel.c_str(), "");
-        OGRLayer::SetMetadataItem(osFieldGridVisibleName.c_str(),
-                                  osFieldGridVisible.c_str(), "");
     }
+
+    OGRLayer::SetIgnoredFields(soIgnoredFieldsNames);
 }
 
 /*
@@ -1044,22 +1034,15 @@ GIntBig OGRNGWLayer::GetMaxFeatureCount(bool bForce)
 {
     if (nFeatureCount < 0 || bForce)
     {
-        CPLErrorReset();
-        CPLJSONDocument oCountReq;
-        char **papszHTTPOptions = poDS->GetHeaders();
-        bool bResult = oCountReq.LoadUrl(
-            NGWAPI::GetFeatureCount(poDS->GetUrl(), osResourceId),
-            papszHTTPOptions);
-        CSLDestroy(papszHTTPOptions);
-        if (bResult)
+        CPLJSONObject oRoot =
+            LoadUrl(NGWAPI::GetFeatureCount(poDS->GetUrl(), osResourceId));
+        if (!oRoot.IsValid())
         {
-            CPLJSONObject oRoot = oCountReq.GetRoot();
-            if (oRoot.IsValid())
-            {
-                nFeatureCount = oRoot.GetLong("total_count");
-                nFeatureCount += GetNewFeaturesCount();
-            }
+            return nFeatureCount;
         }
+
+        nFeatureCount = oRoot.GetLong("total_count");
+        nFeatureCount += GetNewFeaturesCount();
     }
     return nFeatureCount;
 }
@@ -1080,16 +1063,16 @@ GIntBig OGRNGWLayer::GetFeatureCount(int bForce)
 }
 
 /*
- * GetExtent()
+ * IGetExtent()
  */
-OGRErr OGRNGWLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRNGWLayer::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,
+                               bool bForce)
 {
     if (!stExtent.IsInit() || CPL_TO_BOOL(bForce))
     {
-        char **papszHTTPOptions = poDS->GetHeaders();
+        auto aosHTTPOptions = poDS->GetHeaders(false);
         bool bResult = NGWAPI::GetExtent(poDS->GetUrl(), osResourceId,
-                                         papszHTTPOptions, 3857, stExtent);
-        CSLDestroy(papszHTTPOptions);
+                                         aosHTTPOptions, 3857, stExtent);
         if (!bResult)
         {
             return OGRERR_FAILURE;
@@ -1097,14 +1080,6 @@ OGRErr OGRNGWLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     }
     *psExtent = stExtent;
     return OGRERR_NONE;
-}
-
-/*
- * GetExtent()
- */
-OGRErr OGRNGWLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
-{
-    return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
 }
 
 /*
@@ -1119,11 +1094,9 @@ void OGRNGWLayer::FetchPermissions()
 
     if (poDS->IsUpdateMode())
     {
-        char **papszHTTPOptions = poDS->GetHeaders();
-        stPermissions =
-            NGWAPI::CheckPermissions(poDS->GetUrl(), osResourceId,
-                                     papszHTTPOptions, poDS->IsUpdateMode());
-        CSLDestroy(papszHTTPOptions);
+        auto aosHTTPOptions = poDS->GetHeaders(false);
+        stPermissions = NGWAPI::CheckPermissions(
+            poDS->GetUrl(), osResourceId, aosHTTPOptions, poDS->IsUpdateMode());
     }
     else
     {
@@ -1143,20 +1116,15 @@ OGRErr OGRNGWLayer::CreateField(const OGRFieldDefn *poField,
 {
     CPLAssert(nullptr != poField);
 
-    if (osResourceId ==
-        "-1")  // Can create field only on new layers (not synced with server).
+    if (!CheckFieldNameUnique(poFeatureDefn, -1, poField->GetNameRef()))
     {
-        if (!CheckFieldNameUnique(poFeatureDefn, -1, poField->GetNameRef()))
-        {
-            return OGRERR_FAILURE;
-        }
-        // Field name 'id' is forbidden.
-        OGRFieldDefn oModFieldDefn(poField);
-        NormalizeFieldName(poFeatureDefn, -1, &oModFieldDefn);
-        poFeatureDefn->AddFieldDefn(&oModFieldDefn);
-        return OGRERR_NONE;
+        return OGRERR_FAILURE;
     }
-    return OGRLayer::CreateField(poField, bApproxOK);
+
+    OGRFieldDefn oModFieldDefn(poField);
+    poFeatureDefn->AddFieldDefn(&oModFieldDefn);
+    bNeedSyncStructure = true;
+    return OGRERR_NONE;
 }
 
 /*
@@ -1164,12 +1132,26 @@ OGRErr OGRNGWLayer::CreateField(const OGRFieldDefn *poField,
  */
 OGRErr OGRNGWLayer::DeleteField(int iField)
 {
-    if (osResourceId ==
-        "-1")  // Can delete field only on new layers (not synced with server).
+    if (osResourceId != "-1")
     {
-        return poFeatureDefn->DeleteFieldDefn(iField);
+        auto poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
+        if (poFieldDefn == nullptr)
+        {
+            return OGRERR_FAILURE;
+        }
+        // Get field NGW ID
+        CPLJSONDocument oComment;
+        if (oComment.LoadMemory(poFieldDefn->GetComment()))
+        {
+            auto oRoot = oComment.GetRoot();
+            auto nNGWID = oRoot.GetLong("id", -1);
+            if (nNGWID != -1)
+            {
+                soDeletedFieldsIds.insert(nNGWID);
+            }
+        }
     }
-    return OGRLayer::DeleteField(iField);
+    return poFeatureDefn->DeleteFieldDefn(iField);
 }
 
 /*
@@ -1177,12 +1159,7 @@ OGRErr OGRNGWLayer::DeleteField(int iField)
  */
 OGRErr OGRNGWLayer::ReorderFields(int *panMap)
 {
-    if (osResourceId == "-1")  // Can reorder fields only on new layers (not
-                               // synced with server).
-    {
-        return poFeatureDefn->ReorderFieldDefns(panMap);
-    }
-    return OGRLayer::ReorderFields(panMap);
+    return poFeatureDefn->ReorderFieldDefns(panMap);
 }
 
 /*
@@ -1191,42 +1168,76 @@ OGRErr OGRNGWLayer::ReorderFields(int *panMap)
 OGRErr OGRNGWLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
                                    int nFlagsIn)
 {
+    CPLDebug("NGW", "AlterFieldDefn fld #%d", iField);
     CPLAssert(nullptr != poNewFieldDefn);
 
-    OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
-    if (poFieldDefn)
+    if (iField < 0 || iField >= poFeatureDefn->GetFieldCount())
     {
-        // Check new field name is not equal for another fields.
-        if (!CheckFieldNameUnique(poFeatureDefn, iField,
-                                  poNewFieldDefn->GetNameRef()))
-        {
-            return OGRERR_FAILURE;
-        }
-        if (osResourceId == "-1")  // Can alter field only on new layers (not
-                                   // synced with server).
-        {
-            // Field name 'id' forbidden.
-            OGRFieldDefn oModFieldDefn(poNewFieldDefn);
-            NormalizeFieldName(poFeatureDefn, iField, &oModFieldDefn);
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid field index");
+        return OGRERR_FAILURE;
+    }
 
-            poFieldDefn->SetName(oModFieldDefn.GetNameRef());
-            poFieldDefn->SetType(oModFieldDefn.GetType());
-            poFieldDefn->SetSubType(oModFieldDefn.GetSubType());
-            poFieldDefn->SetWidth(oModFieldDefn.GetWidth());
-            poFieldDefn->SetPrecision(oModFieldDefn.GetPrecision());
-        }
-        else if (nFlagsIn &
-                 ALTER_NAME_FLAG)  // Can only rename field, not change it type.
-        {
-            // Field name 'id' forbidden.
-            OGRFieldDefn oModFieldDefn(poNewFieldDefn);
-            NormalizeFieldName(poFeatureDefn, iField, &oModFieldDefn);
+    FetchPermissions();
+    if (!stPermissions.bDatastructCanWrite)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Insufficient permissions");
+        return OGRERR_FAILURE;
+    }
 
+    if (!poDS->IsUpdateMode())
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Layer is read only");
+        return OGRERR_FAILURE;
+    }
+
+    OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
+    // Check new field name is not equal for another fields.
+    if (!CheckFieldNameUnique(poFeatureDefn, iField,
+                              poNewFieldDefn->GetNameRef()))
+    {
+        return OGRERR_FAILURE;
+    }
+
+    if (osResourceId == "-1")  // Can full alter field only on new layers
+                               // (not synced with server).
+    {
+        // Field name 'id' forbidden.
+        OGRFieldDefn oModFieldDefn(poNewFieldDefn);
+
+        poFieldDefn->SetName(oModFieldDefn.GetNameRef());
+        poFieldDefn->SetAlternativeName(oModFieldDefn.GetAlternativeNameRef());
+        poFieldDefn->SetComment(oModFieldDefn.GetComment());
+        poFieldDefn->SetType(oModFieldDefn.GetType());
+        poFieldDefn->SetSubType(oModFieldDefn.GetSubType());
+        poFieldDefn->SetWidth(oModFieldDefn.GetWidth());
+        poFieldDefn->SetPrecision(oModFieldDefn.GetPrecision());
+    }
+    else
+    {
+        if (nFlagsIn & ALTER_NAME_FLAG)
+        {
             bNeedSyncStructure = true;
-            poFieldDefn->SetName(oModFieldDefn.GetNameRef());
+            poFieldDefn->SetName(poNewFieldDefn->GetNameRef());
+        }
+        if (nFlagsIn & ALTER_DOMAIN_FLAG)
+        {
+            bNeedSyncStructure = true;
+            poFieldDefn->SetDomainName(poNewFieldDefn->GetDomainName());
+        }
+        if (nFlagsIn & ALTER_ALTERNATIVE_NAME_FLAG)
+        {
+            bNeedSyncStructure = true;
+            poFieldDefn->SetAlternativeName(
+                poNewFieldDefn->GetAlternativeNameRef());
+        }
+        if (nFlagsIn & ALTER_COMMENT_FLAG)
+        {
+            bNeedSyncStructure = true;
+            poFieldDefn->SetComment(poNewFieldDefn->GetComment());
         }
     }
-    return OGRLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
+    ResetReading();
+    return OGRERR_NONE;
 }
 
 /*
@@ -1292,12 +1303,22 @@ std::string OGRNGWLayer::CreateNGWResourceJson()
     // In OGRNGWDataset::ICreateLayer we limit supported geometry types.
     oVectorLayer.Add("geometry_type",
                      NGWAPI::OGRGeomTypeToNGWGeomType(GetGeomType()));
+
+    // Fill fields
     CPLJSONArray oVectorLayerFields;
     for (int iField = 0; iField < poFeatureDefn->GetFieldCount(); ++iField)
     {
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
-
         CPLJSONObject oField;
+        auto const &sComment = poFieldDefn->GetComment();
+        if (!sComment.empty())
+        {
+            CPLJSONDocument oComment;
+            if (oComment.LoadMemory(sComment))
+            {
+                oField = oComment.GetRoot();
+            }
+        }
         oField.Add("keyname", poFieldDefn->GetNameRef());
         oField.Add("datatype",
                    NGWAPI::OGRFieldTypeToNGWFieldType(poFieldDefn->GetType()));
@@ -1305,21 +1326,33 @@ std::string OGRNGWLayer::CreateNGWResourceJson()
         // Get alias from metadata.
         if (osFieldAliasName.empty())
         {
-            osFieldAliasName = "FIELD_" + std::to_string(iField) + "_ALIAS";
-            const char *pszFieldAlias =
-                GetMetadataItem(osFieldAliasName.c_str());
-            if (pszFieldAlias)
-            {
-                oField.Add("display_name", pszFieldAlias);
-            }
+            osFieldAliasName = poFieldDefn->GetNameRef();
+        }
+        oField.Add("display_name", osFieldAliasName);
+
+        if (poFieldDefn->GetDomainName().empty())
+        {
+            oField.AddNull("lookup_table");
         }
         else
         {
-            oField.Add("display_name", osFieldAliasName);
+            CPLJSONObject oFieldDom("lookup_table", oField);
+            auto nDomId = poDS->GetDomainIdByName(poFieldDefn->GetDomainName());
+            oFieldDom.Add("id", nDomId);
         }
+
         oVectorLayerFields.Add(oField);
     }
-    oVectorLayer.Add("fields", oVectorLayerFields);
+    for (auto nFieldID : soDeletedFieldsIds)
+    {
+        CPLJSONObject oField;
+        oField.Add("id", nFieldID);
+        oField.Add("delete", true);
+        oVectorLayerFields.Add(oField);
+    }
+
+    CPLJSONObject oFeatureLayer("feature_layer", oResourceJson);
+    oFeatureLayer.Add("fields", oVectorLayerFields);
 
     // Add resmeta json item.
     NGWAPI::FillResmeta(oResourceJson, GetMetadata("NGW"));
@@ -1362,7 +1395,7 @@ OGRErr OGRNGWLayer::SyncFeatures()
             if (osIDs.size() !=
                 aoPatchedFIDs.size())  // Expected equal identifier count.
             {
-                CPLDebug("ngw", "Patched feature count is not equal. Reload "
+                CPLDebug("NGW", "Patched feature count is not equal. Reload "
                                 "features from server.");
                 FreeMap(moFeatures);
             }
@@ -1421,7 +1454,18 @@ OGRErr OGRNGWLayer::SyncToDisk()
             return OGRERR_FAILURE;
         }
         bNeedSyncStructure = false;
+        soDeletedFieldsIds.clear();
     }
+
+    auto oRoot = LoadUrl(NGWAPI::GetResourceURL(poDS->GetUrl(), osResourceId));
+    if (!oRoot.IsValid())
+    {
+        return OGRERR_FAILURE;
+    }
+    Fill(oRoot);
+
+    // Update NGW layer state
+    FetchPermissions();
 
     // Sync features.
     return SyncFeatures();
@@ -1452,9 +1496,9 @@ OGRErr OGRNGWLayer::DeleteFeature(GIntBig nFID)
         FetchPermissions();
         if (stPermissions.bDataCanWrite && poDS->IsUpdateMode())
         {
-            bool bResult =
-                NGWAPI::DeleteFeature(poDS->GetUrl(), osResourceId,
-                                      std::to_string(nFID), poDS->GetHeaders());
+            bool bResult = NGWAPI::DeleteFeature(poDS->GetUrl(), osResourceId,
+                                                 std::to_string(nFID),
+                                                 poDS->GetHeaders(false));
             if (bResult)
             {
                 if (moFeatures[nFID] != nullptr)
@@ -1476,6 +1520,58 @@ OGRErr OGRNGWLayer::DeleteFeature(GIntBig nFID)
 }
 
 /*
+ * DeleteFeatures()
+ */
+OGRErr OGRNGWLayer::DeleteFeatures(const std::vector<GIntBig> &vFeaturesID)
+{
+    CPLErrorReset();
+
+    // Try to delete local features (not synchronized with NGW)
+    std::vector<GIntBig> vFeaturesIDInt(vFeaturesID);
+    for (size_t i = 0; i < vFeaturesIDInt.size(); i++)
+    {
+        auto nFID = vFeaturesIDInt[i];
+        if (nFID < 0)
+        {
+            if (moFeatures[nFID] != nullptr)
+            {
+                OGRFeature::DestroyFeature(moFeatures[nFID]);
+                moFeatures[nFID] = nullptr;
+                nFeatureCount--;
+                soChangedIds.erase(nFID);
+                vFeaturesIDInt.erase(vFeaturesIDInt.begin() + i);
+            }
+        }
+    }
+
+    FetchPermissions();
+    if (stPermissions.bDataCanWrite && poDS->IsUpdateMode())
+    {
+        bool bResult = NGWAPI::DeleteFeatures(
+            poDS->GetUrl(), osResourceId,
+            FeaturesIDToJsonString(vFeaturesIDInt), poDS->GetHeaders(false));
+        if (bResult)
+        {
+            for (GIntBig nFID : vFeaturesIDInt)
+            {
+                if (moFeatures[nFID] != nullptr)
+                {
+                    OGRFeature::DestroyFeature(moFeatures[nFID]);
+                    moFeatures[nFID] = nullptr;
+                    nFeatureCount--;
+                    soChangedIds.erase(nFID);
+                }
+                nFeatureCount--;
+                soChangedIds.erase(nFID);
+            }
+            return OGRERR_NONE;
+        }
+    }
+    CPLError(CE_Failure, CPLE_AppDefined, "Delete features failed");
+    return OGRERR_FAILURE;
+}
+
+/*
  * DeleteAllFeatures()
  */
 bool OGRNGWLayer::DeleteAllFeatures()
@@ -1494,7 +1590,7 @@ bool OGRNGWLayer::DeleteAllFeatures()
         if (stPermissions.bDataCanWrite && poDS->IsUpdateMode())
         {
             bool bResult = NGWAPI::DeleteFeature(poDS->GetUrl(), osResourceId,
-                                                 "", poDS->GetHeaders());
+                                                 "", poDS->GetHeaders(false));
             if (bResult)
             {
                 soChangedIds.clear();
@@ -1646,53 +1742,50 @@ OGRErr OGRNGWLayer::SetIgnoredFields(CSLConstList papszFields)
         return eResult;
     }
 
-    if (nullptr == papszFields)
-    {
-        osFields.clear();
-    }
-    else
-    {
-        for (int iField = 0; iField < poFeatureDefn->GetFieldCount(); ++iField)
-        {
-            OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
-            if (poFieldDefn->IsIgnored())
-            {
-                continue;
-            }
+    osFields.clear();
 
-            if (osFields.empty())
-            {
-                osFields = poFieldDefn->GetNameRef();
-            }
-            else
-            {
-                osFields += "," + std::string(poFieldDefn->GetNameRef());
-            }
+    for (int iField = 0; iField < poFeatureDefn->GetFieldCount(); ++iField)
+    {
+        OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
+        if (poFieldDefn->IsIgnored())
+        {
+            CPLDebug("NGW", "SetIgnoredFields: Field '%s' set to ignored",
+                     poFieldDefn->GetNameRef());
+            continue;
         }
 
-        if (!osFields.empty())
+        if (osFields.empty())
         {
-            char *pszValuesEncoded = CPLEscapeString(
-                osFields.c_str(), static_cast<int>(osFields.size()), CPLES_URL);
-            osFields = pszValuesEncoded;
-            CPLFree(pszValuesEncoded);
+            osFields = poFieldDefn->GetNameRef();
+        }
+        else
+        {
+            osFields += "," + std::string(poFieldDefn->GetNameRef());
         }
     }
 
-    if (poDS->GetPageSize() < 1)
+    // Encode osFields string for URL
+    if (!osFields.empty())
     {
-        FreeFeaturesCache();
+        char *pszValuesEncoded = CPLEscapeString(
+            osFields.c_str(), static_cast<int>(osFields.size()), CPLES_URL);
+        osFields = pszValuesEncoded;
+        CPLFree(pszValuesEncoded);
     }
+
+    CPLDebug("NGW", "SetIgnoredFields: NGW fields filter set to '%s'",
+             osFields.c_str());
+
     ResetReading();
     return OGRERR_NONE;
 }
 
 /*
- * SetSpatialFilter()
+ * ISetSpatialFilter()
  */
-void OGRNGWLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGRNGWLayer::ISetSpatialFilter(int iGeomField, const OGRGeometry *poGeom)
 {
-    OGRLayer::SetSpatialFilter(poGeom);
+    OGRLayer::ISetSpatialFilter(iGeomField, poGeom);
 
     if (nullptr == m_poFilterGeom)
     {
@@ -1736,19 +1829,9 @@ void OGRNGWLayer::SetSpatialFilter(OGRGeometry *poGeom)
         }
     }
 
-    if (poDS->GetPageSize() < 1)
-    {
-        FreeFeaturesCache();
-    }
     ResetReading();
-}
 
-/*
- * SetSpatialFilter()
- */
-void OGRNGWLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    OGRLayer::SetSpatialFilter(iGeomField, poGeom);
+    return OGRERR_NONE;
 }
 
 /*
@@ -1776,9 +1859,10 @@ OGRErr OGRNGWLayer::SetAttributeFilter(const char *pszQuery)
         {
             swq_expr_node *poNode =
                 reinterpret_cast<swq_expr_node *>(m_poAttrQuery->GetSWQExpr());
-            osWhere = TranslateSQLToFilter(poNode);
-            if (osWhere.empty())
+            std::string osWhereIn = TranslateSQLToFilter(poNode);
+            if (osWhereIn.empty())
             {
+                osWhere.clear();
                 bClientSideAttributeFilter = true;
                 CPLDebug(
                     "NGW",
@@ -1788,15 +1872,12 @@ OGRErr OGRNGWLayer::SetAttributeFilter(const char *pszQuery)
             else
             {
                 bClientSideAttributeFilter = false;
-                CPLDebug("NGW", "Attribute filter: %s", osWhere.c_str());
+                CPLDebug("NGW", "Attribute filter: %s", osWhereIn.c_str());
+                osWhere = osWhereIn;
             }
         }
     }
 
-    if (poDS->GetPageSize() < 1)
-    {
-        FreeFeaturesCache();
-    }
     ResetReading();
     return eResult;
 }

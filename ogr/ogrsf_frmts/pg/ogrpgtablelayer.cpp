@@ -1008,22 +1008,13 @@ void OGRPGTableLayer::SetTableDefinition(const char *pszFIDColumnName,
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRPGTableLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
+OGRErr OGRPGTableLayer::ISetSpatialFilter(int iGeomField,
+                                          const OGRGeometry *poGeomIn)
 
 {
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone)
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return;
-    }
     m_iGeomFieldFilter = iGeomField;
 
     if (InstallFilter(poGeomIn))
@@ -1032,6 +1023,8 @@ void OGRPGTableLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
 
         ResetReading();
     }
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -3681,27 +3674,16 @@ void OGRPGTableLayer::SetOverrideColumnTypes(const char *pszOverrideColumnTypes)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /*                                                                      */
 /*      For PostGIS use internal ST_EstimatedExtent(geometry) function  */
 /*      if bForce == 0                                                  */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                  int bForce)
+OGRErr OGRPGTableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                   bool bForce)
 {
     CPLString osCommand;
-
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone)
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return OGRERR_FAILURE;
-    }
 
     if (bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE)
         return OGRERR_FAILURE;
@@ -3743,7 +3725,7 @@ OGRErr OGRPGTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
             "Unable to get estimated extent by PostGIS. Trying real extent.");
     }
 
-    return OGRPGLayer::GetExtent(iGeomField, psExtent, bForce);
+    return OGRPGLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

@@ -17,8 +17,7 @@ from osgeo import gdal
 
 
 def get_pipeline_alg():
-    reg = gdal.GetGlobalAlgorithmRegistry()
-    return reg.InstantiateAlg("pipeline")
+    return gdal.GetGlobalAlgorithmRegistry()["pipeline"]
 
 
 def test_gdalalg_pipeline_read_and_write(tmp_vsimem):
@@ -44,6 +43,6 @@ def test_gdalalg_pipeline_read_and_write(tmp_vsimem):
 def test_gdalalg_pipeline_mixed_run_without_arg(tmp_vsimem):
 
     pipeline = get_pipeline_alg()
-    pipeline.GetArg("input").Get().SetDataset(gdal.OpenEx("../ogr/data/poly.shp"))
+    pipeline["input"] = gdal.OpenEx("../ogr/data/poly.shp")
     with pytest.raises(Exception, match="should not be called directly"):
         assert pipeline.Run()

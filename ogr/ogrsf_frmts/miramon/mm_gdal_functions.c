@@ -97,6 +97,7 @@ void MM_FillFieldDescriptorByLanguage(void)
                MM_MAX_IDENTIFIER_SIZE);
     CPLStrlcpy(szNumberOfVerticesSpa, "Numero de vertices",
                MM_MAX_IDENTIFIER_SIZE);
+    *(unsigned char *)&szNumberOfVerticesCat[11] = MM_e_WITH_GRAVE;
     *(unsigned char *)&szNumberOfVerticesSpa[1] = MM_u_WITH_ACUTE;
     *(unsigned char *)&szNumberOfVerticesSpa[11] = MM_e_WITH_ACUTE;
 

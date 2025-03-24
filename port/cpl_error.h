@@ -183,6 +183,8 @@ void CPL_DLL CPL_STDCALL CPLDefaultErrorHandler(CPLErr, CPLErrorNum,
                                                 const char *);
 void CPL_DLL CPL_STDCALL CPLQuietErrorHandler(CPLErr, CPLErrorNum,
                                               const char *);
+void CPL_DLL CPL_STDCALL CPLQuietWarningsErrorHandler(CPLErr, CPLErrorNum,
+                                                      const char *);
 void CPL_DLL CPLTurnFailureIntoWarning(int bOn);
 
 CPLErrorHandler CPL_DLL CPLGetErrorHandler(void **ppUserData);
@@ -376,6 +378,23 @@ extern "C++"
          * before construction.
          */
         ~CPLErrorStateBackuper();
+    };
+
+    /** Class that turns errors into warning on construction, and
+     *  restores the previous state on destruction.
+     */
+    class CPL_DLL CPLTurnFailureIntoWarningBackuper
+    {
+      public:
+        CPLTurnFailureIntoWarningBackuper()
+        {
+            CPLTurnFailureIntoWarning(true);
+        }
+
+        ~CPLTurnFailureIntoWarningBackuper()
+        {
+            CPLTurnFailureIntoWarning(false);
+        }
     };
 }
 

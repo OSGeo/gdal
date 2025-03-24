@@ -31,7 +31,7 @@ Synopsis
     <PIPELINE> is of the form: read [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]
 
 
-A pipeline chains several steps, separated with the `!` (quotation mark) character.
+A pipeline chains several steps, separated with the ``!`` (exclamation mark) character.
 The first step must be ``read``, and the last one ``write``.
 
 Potential steps are:
@@ -82,6 +82,11 @@ Details for options can be found in :ref:`gdal_vector_clip_subcommand`.
 
     Options:
       --bbox <BBOX>                                        Bounding box as xmin,ymin,xmax,ymax
+      --where <WHERE>|@<filename>                          Attribute query in a restricted form of the queries used in the SQL WHERE statement
+
+
+Details for options can be found in :ref:`gdal_vector_filter_subcommand`.
+
 
 * reproject [OPTIONS]
 
@@ -92,6 +97,43 @@ Details for options can be found in :ref:`gdal_vector_clip_subcommand`.
     Options:
       -s, --src-crs <SRC-CRS>                              Source CRS
       -d, --dst-crs <DST-CRS>                              Destination CRS [required]
+
+
+* select [OPTIONS]
+
+.. code-block::
+
+    Select a subset of fields from a vector dataset.
+
+    Positional arguments:
+      --fields <FIELDS>                                    Fields to select (or exclude if --exclude) [may be repeated] [required]
+
+    Options:
+      --exclude                                            Exclude specified fields
+                                                           Mutually exclusive with --ignore-missing-fields
+      --ignore-missing-fields                              Ignore missing fields
+                                                           Mutually exclusive with --exclude
+
+
+Details for options can be found in :ref:`gdal_vector_select_subcommand`.
+
+
+* sql [OPTIONS] <STATEMENT>
+
+.. code-block::
+
+    Apply SQL statement(s) to a dataset.
+
+    Positional arguments:
+      --sql <statement>|@<filename>                        SQL statement(s) [may be repeated] [required]
+
+    Options:
+      -l, --output-layer <OUTPUT-LAYER>                    Output layer name(s) [may be repeated]
+      --dialect <DIALECT>                                  SQL dialect (e.g. OGRSQL, SQLITE)
+
+
+Details for options can be found in :ref:`gdal_vector_sql_subcommand`.
+
 
 * write [OPTIONS] <OUTPUT>
 

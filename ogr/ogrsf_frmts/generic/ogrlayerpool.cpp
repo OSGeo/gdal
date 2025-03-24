@@ -131,13 +131,36 @@ void OGRLayerPool::UnchainLayer(OGRAbstractProxiedLayer *poLayer)
 /*                          OGRProxiedLayer()                           */
 /************************************************************************/
 
+static void ReleaseDelete(OGRLayer *poLayer, void *)
+{
+    delete poLayer;
+}
+
 OGRProxiedLayer::OGRProxiedLayer(OGRLayerPool *poPoolIn,
                                  OpenLayerFunc pfnOpenLayerIn,
                                  FreeUserDataFunc pfnFreeUserDataIn,
                                  void *pUserDataIn)
     : OGRAbstractProxiedLayer(poPoolIn), pfnOpenLayer(pfnOpenLayerIn),
-      pfnFreeUserData(pfnFreeUserDataIn), pUserData(pUserDataIn),
-      poUnderlyingLayer(nullptr), poFeatureDefn(nullptr), poSRS(nullptr)
+      pfnReleaseLayer(ReleaseDelete), pfnFreeUserData(pfnFreeUserDataIn),
+      pUserData(pUserDataIn), poUnderlyingLayer(nullptr),
+      poFeatureDefn(nullptr), poSRS(nullptr)
+{
+    CPLAssert(pfnOpenLayerIn != nullptr);
+}
+
+/************************************************************************/
+/*                          OGRProxiedLayer()                           */
+/************************************************************************/
+
+OGRProxiedLayer::OGRProxiedLayer(OGRLayerPool *poPoolIn,
+                                 OpenLayerFunc pfnOpenLayerIn,
+                                 ReleaseLayerFunc pfnReleaseLayerIn,
+                                 FreeUserDataFunc pfnFreeUserDataIn,
+                                 void *pUserDataIn)
+    : OGRAbstractProxiedLayer(poPoolIn), pfnOpenLayer(pfnOpenLayerIn),
+      pfnReleaseLayer(pfnReleaseLayerIn), pfnFreeUserData(pfnFreeUserDataIn),
+      pUserData(pUserDataIn), poUnderlyingLayer(nullptr),
+      poFeatureDefn(nullptr), poSRS(nullptr)
 {
     CPLAssert(pfnOpenLayerIn != nullptr);
 }
@@ -148,7 +171,7 @@ OGRProxiedLayer::OGRProxiedLayer(OGRLayerPool *poPoolIn,
 
 OGRProxiedLayer::~OGRProxiedLayer()
 {
-    delete poUnderlyingLayer;
+    OGRProxiedLayer::CloseUnderlyingLayer();
 
     if (poSRS)
         poSRS->Release();
@@ -184,7 +207,10 @@ int OGRProxiedLayer::OpenUnderlyingLayer()
 void OGRProxiedLayer::CloseUnderlyingLayer()
 {
     CPLDebug("OGR", "CloseUnderlyingLayer(%p)", this);
-    delete poUnderlyingLayer;
+    if (poUnderlyingLayer)
+    {
+        pfnReleaseLayer(poUnderlyingLayer, pUserData);
+    }
     poUnderlyingLayer = nullptr;
 }
 
@@ -216,25 +242,15 @@ OGRGeometry *OGRProxiedLayer::GetSpatialFilter()
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRProxiedLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGRProxiedLayer::ISetSpatialFilter(int iGeomField,
+                                          const OGRGeometry *poGeom)
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
-        return;
-    poUnderlyingLayer->SetSpatialFilter(poGeom);
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRProxiedLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
-        return;
-    poUnderlyingLayer->SetSpatialFilter(iGeomField, poGeom);
+        return OGRERR_FAILURE;
+    return poUnderlyingLayer->SetSpatialFilter(iGeomField, poGeom);
 }
 
 /************************************************************************/
@@ -456,26 +472,15 @@ GIntBig OGRProxiedLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRProxiedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                  int bForce)
+OGRErr OGRProxiedLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                   bool bForce)
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return OGRERR_FAILURE;
     return poUnderlyingLayer->GetExtent(iGeomField, psExtent, bForce);
-}
-
-/************************************************************************/
-/*                             GetExtent()                              */
-/************************************************************************/
-
-OGRErr OGRProxiedLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
-        return OGRERR_FAILURE;
-    return poUnderlyingLayer->GetExtent(psExtent, bForce);
 }
 
 /************************************************************************/

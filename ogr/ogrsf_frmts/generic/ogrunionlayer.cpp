@@ -1255,11 +1255,11 @@ int OGRUnionLayer::TestCapability(const char *pszCap)
 }
 
 /************************************************************************/
-/*                              GetExtent()                             */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
-OGRErr OGRUnionLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                int bForce)
+OGRErr OGRUnionLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                 bool bForce)
 {
     if (iGeomField >= 0 && iGeomField < nGeomFields &&
         papoGeomFields[iGeomField]->sStaticEnvelope.IsInit())
@@ -1307,39 +1307,12 @@ OGRErr OGRUnionLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                        ISetSpatialFilter()                           */
 /************************************************************************/
 
-OGRErr OGRUnionLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRUnionLayer::ISetSpatialFilter(int iGeomField,
+                                        const OGRGeometry *poGeom)
 {
-    return GetExtent(0, psExtent, bForce);
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRUnionLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
-{
-    SetSpatialFilter(0, poGeomIn);
-}
-
-/************************************************************************/
-/*                         SetSpatialFilter()                           */
-/************************************************************************/
-
-void OGRUnionLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-    {
-        if (poGeom != nullptr)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-            return;
-        }
-    }
-
     m_iGeomFieldFilter = iGeomField;
     if (InstallFilter(poGeom))
         ResetReading();
@@ -1348,6 +1321,8 @@ void OGRUnionLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
     {
         SetSpatialFilterToSourceLayer(papoSrcLayers[iCurLayer]);
     }
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

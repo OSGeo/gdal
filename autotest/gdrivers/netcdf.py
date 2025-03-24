@@ -2920,10 +2920,8 @@ def test_netcdf_66(tmp_path):
 
 def test_netcdf_67():
 
-    try:
-        import numpy
-    except ImportError:
-        pytest.skip()
+    pytest.importorskip("osgeo.gdal_array")
+    numpy = pytest.importorskip("numpy")
 
     # disable bottom-up mode to use the real file's blocks size
     with gdal.config_option("GDAL_NETCDF_BOTTOMUP", "NO"):
@@ -6724,3 +6722,25 @@ def test_netcdf_var_extra_dim_unlimited_network():
         webserver.server_stop(webserver_process, webserver_port)
 
         gdal.VSICurlClearCache()
+
+
+###############################################################################
+# Test LIST_ALL_ARRAYS open option
+
+
+def test_netcdf_LIST_ALL_ARRAYS():
+
+    ds = gdal.OpenEx("data/netcdf/byte.nc", open_options=["LIST_ALL_ARRAYS=YES"])
+    assert set(ds.GetSubDatasets()) == set(
+        [
+            (
+                'NETCDF:"data/netcdf/byte.nc":x',
+                "[20] projection_x_coordinate (64-bit floating-point)",
+            ),
+            (
+                'NETCDF:"data/netcdf/byte.nc":y',
+                "[20] projection_y_coordinate (64-bit floating-point)",
+            ),
+            ('NETCDF:"data/netcdf/byte.nc":Band1', "[20x20] Band1 (8-bit integer)"),
+        ]
+    )

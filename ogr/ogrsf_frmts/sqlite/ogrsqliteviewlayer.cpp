@@ -360,10 +360,10 @@ OGRErr OGRSQLiteViewLayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRSQLiteViewLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGRSQLiteViewLayer::ISetSpatialFilter(int, const OGRGeometry *poGeomIn)
 
 {
     if (InstallFilter(poGeomIn))
@@ -372,6 +372,7 @@ void OGRSQLiteViewLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
 
         ResetReading();
     }
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

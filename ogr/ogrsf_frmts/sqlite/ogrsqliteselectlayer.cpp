@@ -357,37 +357,33 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGRSQLiteSelectLayer::SetSpatialFilter(int iGeomField,
-                                            OGRGeometry *poGeomIn)
+OGRErr OGRSQLiteSelectLayer::ISetSpatialFilter(int iGeomField,
+                                               const OGRGeometry *poGeomIn)
 
 {
     if (!m_bCanReopenBaseDS && iGeomField == 0)
     {
         if (!ValidateGeometryFieldIndexForSetSpatialFilter(iGeomField, poGeomIn,
                                                            true))
-            return;
+            return OGRERR_FAILURE;
         // For a Memory datasource, short-circuit
         // OGRSQLiteExecuteSQL::SetSpatialFilter()
         // that would try to re-open the Memory datasource, which would fail.
-        OGRLayer::SetSpatialFilter(poGeomIn);
+        return OGRLayer::ISetSpatialFilter(iGeomField, poGeomIn);
     }
     else
     {
-        m_poBehavior->SetSpatialFilter(iGeomField, poGeomIn);
+        return m_poBehavior->SetSpatialFilter(iGeomField, poGeomIn);
     }
 }
 
-void OGRSQLiteSelectLayerCommonBehaviour::SetSpatialFilter(
-    int iGeomField, OGRGeometry *poGeomIn)
+OGRErr OGRSQLiteSelectLayerCommonBehaviour::SetSpatialFilter(
+    int iGeomField, const OGRGeometry *poGeomIn)
 
 {
-    if (!m_poLayer->ValidateGeometryFieldIndexForSetSpatialFilter(
-            iGeomField, poGeomIn, true))
-        return;
-
     m_bAllowResetReadingEvenIfIndexAtZero = true;
 
     int &iGeomFieldFilter = m_poLayer->GetIGeomFieldFilter();
@@ -398,6 +394,8 @@ void OGRSQLiteSelectLayerCommonBehaviour::SetSpatialFilter(
 
         ResetReading();
     }
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -647,15 +645,15 @@ int OGRSQLiteSelectLayerCommonBehaviour::TestCapability(const char *pszCap)
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRSQLiteSelectLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                       int bForce)
+OGRErr OGRSQLiteSelectLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                        bool bForce)
 {
     return m_poBehavior->GetExtent(iGeomField, psExtent, bForce);
 }
 
 OGRErr OGRSQLiteSelectLayerCommonBehaviour::GetExtent(int iGeomField,
                                                       OGREnvelope *psExtent,
-                                                      int bForce)
+                                                      bool bForce)
 {
     if (iGeomField < 0 ||
         iGeomField >= m_poLayer->GetLayerDefn()->GetGeomFieldCount() ||
@@ -712,11 +710,7 @@ OGRErr OGRSQLiteSelectLayerCommonBehaviour::GetExtent(int iGeomField,
         }
     }
 
-    OGRErr eErr;
-    if (iGeomField == 0)
-        eErr = m_poLayer->BaseGetExtent(psExtent, bForce);
-    else
-        eErr = m_poLayer->BaseGetExtent(iGeomField, psExtent, bForce);
+    OGRErr eErr = m_poLayer->BaseGetExtent(iGeomField, psExtent, bForce);
     if (iGeomField == 0 && eErr == OGRERR_NONE && m_poDS->GetUpdate() == false)
         m_poDS->SetEnvelopeForSQL(m_osSQLBase, *psExtent);
     return eErr;

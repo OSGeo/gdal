@@ -289,7 +289,7 @@ The allowed subelements for VRTRasterBand are :
 
 .. code-block:: xml
 
-  <Scale>0.0</Scale>
+  <Scale>1.0</Scale>
 
 - **Overview**: This optional element describes one overview level for the band.  It should have a child SourceFilename and SourceBand element.  The SourceFilename may have a relativeToVRT boolean attribute.  Multiple elements may be used to describe multiple overviews.
 

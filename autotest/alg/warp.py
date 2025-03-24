@@ -1137,6 +1137,43 @@ def test_warp_39():
 
 
 ###############################################################################
+# Test a warp with GCPs for homography on the *destination* image.
+
+
+def test_warp_homography():
+
+    # Create an output file with GCPs.
+    out_file = "tmp/warp_homography.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(out_file, 50, 50, 3)
+
+    gcp_list = [
+        gdal.GCP(397000, 5642000, 0, 0, 0),
+        gdal.GCP(397000, 5641990, 0, 0, 50),
+        gdal.GCP(397010, 5642000, 0, 50, 0),
+        gdal.GCP(397010, 5641990, 0, 50, 50),
+        gdal.GCP(397005, 5641995, 0, 25, 25),
+    ]
+    ds.SetGCPs(gcp_list, gdaltest.user_srs_to_wkt("EPSG:32632"))
+    ds = None
+
+    gdal.Warp(
+        out_file,
+        "data/test3658.tif",
+        options="-srcnodata none -to DST_METHOD=GCP_HOMOGRAPHY",
+    )
+
+    ds = gdal.Open(out_file)
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    # Should exactly match the source file.
+    exp_cs = 30546
+    assert cs == exp_cs
+
+    os.unlink(out_file)
+
+
+###############################################################################
 # test average (#5311)
 
 
@@ -1175,6 +1212,7 @@ def test_warp_weighted_average():
 )
 def test_warp_weighted_mode(dtype):
 
+    pytest.importorskip("osgeo.gdal_array")
     np = pytest.importorskip("numpy")
 
     with gdal.GetDriverByName("MEM").Create("", 3, 3, eType=dtype) as src_ds:
@@ -1563,6 +1601,7 @@ def test_warp_55():
 @pytest.mark.parametrize("use_optim", ["YES", "NO"])
 def test_warp_56(use_optim):
 
+    pytest.importorskip("osgeo.gdal_array")
     numpy = pytest.importorskip("numpy")
 
     pix_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
@@ -1660,6 +1699,8 @@ def test_warp_rms_2():
 @pytest.mark.parametrize("tie_strategy", ("FIRST", "MIN", "MAX", "HOPE"))
 @pytest.mark.parametrize("dtype", (gdal.GDT_Int16, gdal.GDT_Int32))
 def test_warp_mode_ties(tie_strategy, dtype):
+
+    pytest.importorskip("osgeo.gdal_array")
     numpy = pytest.importorskip("numpy")
 
     # 1 and 5 are tied for the mode; 1 encountered first
@@ -1960,3 +2001,30 @@ def test_warp_nodata_substitution(dt, expected_val, resampling):
         struct.unpack("d", out_ds.ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_Float64))[0]
         == expected_val
     )
+
+
+###############################################################################
+# Test propagation of errors from I/O threads to main thread in multi-threaded reading
+
+
+@gdaltest.enable_exceptions()
+def test_warp_multi_threaded_errors(tmp_vsimem):
+
+    filename1 = str(tmp_vsimem / "tmp1.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(filename1, 1, 1)
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    ds.Close()
+
+    filename2 = str(tmp_vsimem / "tmp2.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(filename2, 1, 1)
+    ds.SetGeoTransform([3, 1, 0, 49, 0, -1])
+    ds.Close()
+
+    vrt_filename = str(tmp_vsimem / "tmp.vrt")
+    gdal.BuildVRT(vrt_filename, [filename1, filename2])
+
+    gdal.Unlink(filename2)
+
+    with gdal.Open(vrt_filename) as ds:
+        with pytest.raises(Exception):
+            gdal.Warp("", ds, format="MEM", multithread=True)

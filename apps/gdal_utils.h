@@ -173,6 +173,40 @@ GDALDatasetH CPL_DLL GDALGrid(const char *pszDest, GDALDatasetH hSrcDS,
                               const GDALGridOptions *psOptions,
                               int *pbUsageError);
 
+/*! Options for GDALContour(). Opaque type */
+typedef struct GDALContourOptions GDALContourOptions;
+
+/** Opaque type */
+typedef struct GDALContourOptionsForBinary GDALContourOptionsForBinary;
+
+GDALContourOptions CPL_DLL *
+GDALContourOptionsNew(char **papszArgv,
+                      GDALContourOptionsForBinary *psOptionsForBinary);
+
+void CPL_DLL GDALContourOptionsFree(GDALContourOptions *psOptions);
+
+void CPL_DLL GDALContourOptionsSetProgress(GDALContourOptions *psOptions,
+                                           GDALProgressFunc pfnProgress,
+                                           void *pProgressData);
+
+///@cond Doxygen_Suppress
+// Cannot be in gdal_utils_priv.h because it's used in the bindings (that
+// define CPL_SUPRESS_CPLUSPLUS making it impossible to import this header
+// because it uses CPLStringList which is a C++ class and it's not included
+// if CPL_SUPRESS_CPLUSPLUS is on).
+void CPL_DLL GDALContourOptionsSetDestDataSource(GDALContourOptions *psOptions,
+                                                 const char *pszDestDatasource);
+
+// Finally got the third star! https://wiki.c2.com/?ThreeStarProgrammer
+CPLErr CPL_DLL GDALContourProcessOptions(GDALContourOptions *psOptions,
+                                         char ***ppapszStringOptions,
+                                         GDALDatasetH *hSrcDS,
+                                         GDALRasterBandH *hBand,
+                                         GDALDatasetH *hDstDS,
+                                         OGRLayerH *hLayer);
+
+///@endcond
+
 /*! Options for GDALRasterize(). Opaque type */
 typedef struct GDALRasterizeOptions GDALRasterizeOptions;
 

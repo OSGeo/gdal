@@ -17,28 +17,26 @@ from osgeo import gdal
 
 
 def get_overview_alg():
-    reg = gdal.GetGlobalAlgorithmRegistry()
-    raster = reg.InstantiateAlg("raster")
-    return raster.InstantiateSubAlgorithm("overview")
+    return gdal.GetGlobalAlgorithmRegistry()["raster"]["overview"]
 
 
 def get_overview_add_alg():
-    return get_overview_alg().InstantiateSubAlgorithm("add")
+    return get_overview_alg()["add"]
 
 
 def get_overview_delete_alg():
-    return get_overview_alg().InstantiateSubAlgorithm("delete")
+    return get_overview_alg()["delete"]
 
 
 def test_gdalalg_overview_invalid_arguments():
 
     add = get_overview_add_alg()
     with pytest.raises(Exception):
-        add.GetArg("levels").Set([1])
+        add["levels"] = [1]
 
     add = get_overview_add_alg()
     with pytest.raises(Exception):
-        add.GetArg("min-size").Set(0)
+        add["min-size"] = 0
 
 
 def test_gdalalg_overview_explicit_level():
@@ -46,8 +44,8 @@ def test_gdalalg_overview_explicit_level():
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
 
     add = get_overview_add_alg()
-    add.GetArg("dataset").Get().SetDataset(ds)
-    add.GetArg("levels").Set([2])
+    add["dataset"] = ds
+    add["levels"] = [2]
     assert add.Run()
 
     assert ds.GetRasterBand(1).Checksum() == 4672
@@ -60,9 +58,9 @@ def test_gdalalg_overview_minsize_and_resampling():
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
 
     add = get_overview_add_alg()
-    add.GetArg("dataset").Get().SetDataset(ds)
-    add.GetArg("resampling").Set("average")
-    add.GetArg("min-size").Set(10)
+    add["dataset"] = ds
+    add["resampling"] = "average"
+    add["min-size"] = 10
     assert add.Run()
 
     assert ds.GetRasterBand(1).Checksum() == 4672
@@ -76,9 +74,9 @@ def test_gdalalg_overview_reuse_resampling_and_levels(tmp_vsimem):
     ds = gdal.Translate(tmp_filename, "../gcore/data/byte.tif")
 
     add = get_overview_add_alg()
-    add.GetArg("dataset").Get().SetDataset(ds)
-    add.GetArg("resampling").Set("average")
-    add.GetArg("min-size").Set(10)
+    add["dataset"] = ds
+    add["resampling"] = "average"
+    add["min-size"] = 10
     assert add.Run()
 
     assert ds.GetRasterBand(1).Checksum() == 4672
@@ -89,7 +87,7 @@ def test_gdalalg_overview_reuse_resampling_and_levels(tmp_vsimem):
     ds.GetRasterBand(1).GetOverview(0).Fill(0)
 
     add = get_overview_add_alg()
-    add.GetArg("dataset").Get().SetDataset(ds)
+    add["dataset"] = ds
     assert add.Run()
 
     assert ds.GetRasterBand(1).Checksum() == 4672
@@ -136,15 +134,15 @@ def test_gdalalg_overview_delete():
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
 
     add = get_overview_add_alg()
-    add.GetArg("dataset").Get().SetDataset(ds)
-    add.GetArg("resampling").Set("average")
-    add.GetArg("min-size").Set(10)
+    add["dataset"] = ds
+    add["resampling"] = "average"
+    add["min-size"] = 10
     assert add.Run()
 
     assert ds.GetRasterBand(1).GetOverviewCount() == 1
 
     delete = get_overview_delete_alg()
-    delete.GetArg("dataset").Get().SetDataset(ds)
+    delete["dataset"] = ds
     assert delete.Run()
 
     assert ds.GetRasterBand(1).GetOverviewCount() == 0

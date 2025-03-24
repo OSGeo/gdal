@@ -362,10 +362,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_GFF();
 #endif
 
-#ifdef FRMT_elas
-    GDALRegister_ELAS();
-#endif
-
 #ifdef FRMT_esric
     GDALRegister_ESRIC();
 #endif
@@ -379,10 +375,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_AAIGrid();
     GDALRegister_GRASSASCIIGrid();
     GDALRegister_ISG();
-#endif
-
-#ifdef FRMT_sdts
-    GDALRegister_SDTS();
 #endif
 
 #ifdef FRMT_dted
@@ -430,10 +422,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_BSB();
 #endif
 
-#ifdef FRMT_xpm
-    GDALRegister_XPM();
-#endif
-
 #ifdef FRMT_bmp
     GDALRegister_BMP();
 #endif
@@ -464,10 +452,6 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_ilwis
     GDALRegister_ILWIS();
-#endif
-
-#ifdef FRMT_sgi
-    GDALRegister_SGI();
 #endif
 
 #ifdef FRMT_srtmhgt
@@ -531,10 +515,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_L1B();
 #endif
 
-#ifdef FRMT_fit
-    GDALRegister_FIT();
-#endif
-
 #ifdef FRMT_grib
     GDALRegister_GRIB();
 #endif
@@ -568,8 +548,6 @@ void CPL_STDCALL GDALAllRegister()
 #endif
 
 #ifdef FRMT_gsg
-    GDALRegister_GSAG();
-    GDALRegister_GSBG();
     GDALRegister_GS7BG();
 #endif
 
@@ -583,10 +561,6 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_coasp
     GDALRegister_COASP();
-#endif
-
-#ifdef FRMT_r
-    GDALRegister_R();
 #endif
 
 #ifdef FRMT_map
@@ -603,10 +577,6 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_pdf
     GDALRegister_PDF();
-#endif
-
-#ifdef FRMT_rasterlite
-    GDALRegister_Rasterlite();
 #endif
 
 #ifdef FRMT_mbtiles
@@ -690,10 +660,6 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_adrg
     GDALRegister_ADRG();
     GDALRegister_SRP();
-#endif
-
-#ifdef FRMT_blx
-    GDALRegister_BLX();
 #endif
 
 #ifdef FRMT_georaster

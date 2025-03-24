@@ -13,13 +13,16 @@
 #include "gdalalgorithm.h"
 
 #include "gdalalg_raster_info.h"
+#include "gdalalg_raster_calc.h"
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_convert.h"
 #include "gdalalg_raster_edit.h"
+#include "gdalalg_raster_contour.h"
 #include "gdalalg_raster_mosaic.h"
 #include "gdalalg_raster_overview.h"
 #include "gdalalg_raster_pipeline.h"
 #include "gdalalg_raster_reproject.h"
+#include "gdalalg_raster_resize.h"
 #include "gdalalg_raster_stack.h"
 
 /************************************************************************/
@@ -41,6 +44,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
     GDALRasterAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
         RegisterSubAlgorithm<GDALRasterInfoAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterCalcAlgorithm>();
         RegisterSubAlgorithm<GDALRasterConvertAlgorithm>();
         RegisterSubAlgorithm<GDALRasterClipAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterEditAlgorithmStandalone>();
@@ -48,6 +52,8 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterPipelineAlgorithm>();
         RegisterSubAlgorithm<GDALRasterReprojectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterMosaicAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterResizeAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALRasterContourAlgorithm>();
         RegisterSubAlgorithm<GDALRasterStackAlgorithm>();
     }
 

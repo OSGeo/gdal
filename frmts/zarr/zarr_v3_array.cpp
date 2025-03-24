@@ -1585,6 +1585,12 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     poArray->ParseSpecialAttributes(m_pSelf.lock(), oAttributes);
     poArray->SetAttributes(oAttributes);
     poArray->SetDtype(oDtype);
+    if (oCodecs.Size() > 0 &&
+        oCodecs[oCodecs.Size() - 1].GetString("name") != "bytes")
+    {
+        poArray->SetStructuralInfo(
+            "COMPRESSOR", oCodecs[oCodecs.Size() - 1].ToString().c_str());
+    }
     if (poCodecs)
         poArray->SetCodecs(std::move(poCodecs));
     RegisterArray(poArray);

@@ -180,12 +180,8 @@ class OGRMongoDBv3Layer final : public OGRLayer
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr SetAttributeFilter(const char *pszFilter) override;
 
-    void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
-
-    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
     int TestCapability(const char *pszCap) override;
     OGRFeatureDefn *GetLayerDefn() override;
     OGRErr CreateField(const OGRFieldDefn *poFieldIn, int) override;
@@ -2164,22 +2160,13 @@ OGRErr OGRMongoDBv3Layer::SetAttributeFilter(const char *pszFilter)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGRMongoDBv3Layer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
+OGRErr OGRMongoDBv3Layer::ISetSpatialFilter(int iGeomField,
+                                            const OGRGeometry *poGeomIn)
 
 {
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone)
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return;
-    }
     m_iGeomFieldFilter = iGeomField;
 
     m_oQuerySpat = bsoncxx::builder::basic::make_document();
@@ -2203,7 +2190,7 @@ void OGRMongoDBv3Layer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
         if (sEnvelope.MinX == -180 && sEnvelope.MinY == -90 &&
             sEnvelope.MaxX == 180 && sEnvelope.MaxY == 90)
         {
-            return;
+            return OGRERR_NONE;
         }
 
         try
@@ -2237,8 +2224,10 @@ void OGRMongoDBv3Layer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s: %s",
                      "SetSpatialFilter()", ex.what());
+            return OGRERR_FAILURE;
         }
     }
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

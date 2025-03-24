@@ -20,9 +20,7 @@ pytestmark = pytest.mark.require_geos
 
 
 def get_clip_alg():
-    reg = gdal.GetGlobalAlgorithmRegistry()
-    vector = reg.InstantiateAlg("vector")
-    return vector.InstantiateSubAlgorithm("clip")
+    return gdal.GetGlobalAlgorithmRegistry()["vector"]["clip"]
 
 
 @pytest.mark.require_driver("GPKG")
@@ -136,14 +134,14 @@ def test_gdalalg_vector_clip_bbox():
     src_lyr.CreateFeature(f)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
+    clip["input"] = src_ds
 
     assert clip.ParseCommandLineArguments(
         ["--bbox", "0.2,0.3,0.7,0.8", "--of", "Memory", "--output", "memory_ds"]
     )
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
@@ -169,7 +167,7 @@ def test_gdalalg_vector_clip_bbox_srs():
     src_lyr.CreateFeature(f)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
+    clip["input"] = src_ds
 
     assert clip.ParseCommandLineArguments(
         [
@@ -185,7 +183,7 @@ def test_gdalalg_vector_clip_bbox_srs():
     )
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
     assert out_lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
     out_f = out_lyr.GetNextFeature()
@@ -220,14 +218,14 @@ def test_gdalalg_vector_clip_split_multipart():
     src_lyr.CreateFeature(f)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
+    clip["input"] = src_ds
 
     assert clip.ParseCommandLineArguments(
         ["--bbox", "-0.1,0.3,1.1,0.7", "--of", "Memory", "--output", "memory_ds"]
     )
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
 
     ref1_geom = ogr.CreateGeometryFromWkt(
@@ -284,14 +282,14 @@ def test_gdalalg_vector_clip_geom(clip_geom):
     src_lyr.CreateFeature(f)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
+    clip["input"] = src_ds
 
     assert clip.ParseCommandLineArguments(
         ["--geometry", clip_geom, "--of", "Memory", "--output", "memory_ds"]
     )
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
@@ -324,7 +322,7 @@ def test_gdalalg_vector_clip_geom_srs(clip_geom):
     src_lyr.CreateFeature(f)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
+    clip["input"] = src_ds
     clip_geom = clip_geom.replace("0.2", "22263.8981586547")
     clip_geom = clip_geom.replace("0.3", "33395.9998333802")
     clip_geom = clip_geom.replace("0.7", "77923.6435552915")
@@ -343,7 +341,7 @@ def test_gdalalg_vector_clip_geom_srs(clip_geom):
     )
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
@@ -376,7 +374,7 @@ def test_gdalalg_vector_clip_geom_not_rectangle():
     src_lyr.CreateFeature(f)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
+    clip["input"] = src_ds
 
     assert clip.ParseCommandLineArguments(
         [
@@ -390,7 +388,7 @@ def test_gdalalg_vector_clip_geom_not_rectangle():
     )
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
@@ -411,7 +409,7 @@ def test_gdalalg_vector_clip_intersection_incompatible_geometry_type():
     src_lyr.CreateFeature(f)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
+    clip["input"] = src_ds
 
     assert clip.ParseCommandLineArguments(
         [
@@ -425,7 +423,7 @@ def test_gdalalg_vector_clip_intersection_incompatible_geometry_type():
     )
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
     assert out_lyr.GetNextFeature() is None
 
@@ -444,7 +442,7 @@ def test_gdalalg_vector_clip_intersection_promote_simple_type_to_multi():
     src_lyr.CreateFeature(f)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
+    clip["input"] = src_ds
 
     assert clip.ParseCommandLineArguments(
         [
@@ -458,7 +456,7 @@ def test_gdalalg_vector_clip_intersection_promote_simple_type_to_multi():
     )
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     ogrtest.check_feature_geometry(
@@ -487,13 +485,13 @@ def test_gdalalg_vector_clip_like_vector():
     like_lyr.CreateFeature(f)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
-    clip.GetArg("like").Get().SetDataset(like_ds)
+    clip["input"] = src_ds
+    clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
@@ -525,8 +523,8 @@ def test_gdalalg_vector_clip_like_vector_invalid_geom():
     like_lyr.CreateFeature(f)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
-    clip.GetArg("like").Get().SetDataset(like_ds)
+    clip["input"] = src_ds
+    clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
     with gdal.quiet_errors(), pytest.raises(
@@ -556,15 +554,15 @@ def test_gdalalg_vector_clip_like_vector_like_layer():
     like_lyr.CreateFeature(f)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
-    clip.GetArg("like").Get().SetDataset(like_ds)
+    clip["input"] = src_ds
+    clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(
         ["--like-layer", "my_layer", "--of", "Memory", "--output", "memory_ds"]
     )
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
@@ -585,8 +583,8 @@ def test_gdalalg_vector_clip_like_vector_like_layer_invalid():
     like_ds.CreateLayer("test")
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
-    clip.GetArg("like").Get().SetDataset(like_ds)
+    clip["input"] = src_ds
+    clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(
         ["--like-layer", "invalid", "--of", "Memory", "--output", "memory_ds"]
@@ -618,8 +616,8 @@ def test_gdalalg_vector_clip_like_vector_like_sql():
     like_lyr.CreateFeature(f)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
-    clip.GetArg("like").Get().SetDataset(like_ds)
+    clip["input"] = src_ds
+    clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(
         [
@@ -633,7 +631,7 @@ def test_gdalalg_vector_clip_like_vector_like_sql():
     )
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
@@ -672,15 +670,15 @@ def test_gdalalg_vector_clip_like_vector_like_where():
     like_lyr.CreateFeature(f)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
-    clip.GetArg("like").Get().SetDataset(like_ds)
+    clip["input"] = src_ds
+    clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(
         ["--like-where", "id=1", "--of", "Memory", "--output", "memory_ds"]
     )
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
@@ -708,8 +706,8 @@ def test_gdalalg_vector_clip_like_vector_like_where_empty():
     like_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
-    clip.GetArg("like").Get().SetDataset(like_ds)
+    clip["input"] = src_ds
+    clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(
         ["--like-where", "id=1", "--of", "Memory", "--output", "memory_ds"]
@@ -745,13 +743,13 @@ def test_gdalalg_vector_clip_like_vector_srs():
     like_lyr.CreateFeature(f)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
-    clip.GetArg("like").Get().SetDataset(like_ds)
+    clip["input"] = src_ds
+    clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     ogrtest.check_feature_geometry(
@@ -777,13 +775,13 @@ def test_gdalalg_vector_clip_like_raster():
     like_ds.SetGeoTransform([0.2, 0.5, 0, 0.3, 0, 0.5])
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
-    clip.GetArg("like").Get().SetDataset(like_ds)
+    clip["input"] = src_ds
+    clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
@@ -818,13 +816,13 @@ def test_gdalalg_vector_clip_like_raster_srs():
     like_ds.SetSpatialRef(srs_3857)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
-    clip.GetArg("like").Get().SetDataset(like_ds)
+    clip["input"] = src_ds
+    clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
     assert clip.Run()
 
-    out_ds = clip.GetArg("output").Get().GetDataset()
+    out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
@@ -852,7 +850,7 @@ def test_gdalalg_vector_clip_geometry_invalid():
     src_ds.CreateLayer("test")
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
+    clip["input"] = src_ds
 
     assert clip.ParseCommandLineArguments(
         ["--geometry", "invalid", "--of", "Memory", "--output", "memory_ds"]
@@ -873,8 +871,8 @@ def test_gdalalg_vector_clip_like_vector_too_many_layers():
     like_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
-    clip.GetArg("like").Get().SetDataset(like_ds)
+    clip["input"] = src_ds
+    clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
     with pytest.raises(
@@ -895,8 +893,8 @@ def test_gdalalg_vector_clip_like_raster_no_geotransform():
     like_ds.CreateLayer("test2")
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
-    clip.GetArg("like").Get().SetDataset(like_ds)
+    clip["input"] = src_ds
+    clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
     with pytest.raises(
@@ -913,8 +911,8 @@ def test_gdalalg_vector_clip_like_neither_raster_no_vector():
     like_ds = gdal.GetDriverByName("Memory").Create("clip", 0, 0, 0, gdal.GDT_Unknown)
 
     clip = get_clip_alg()
-    clip.GetArg("input").Get().SetDataset(src_ds)
-    clip.GetArg("like").Get().SetDataset(like_ds)
+    clip["input"] = src_ds
+    clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
     with pytest.raises(
@@ -922,3 +920,37 @@ def test_gdalalg_vector_clip_like_neither_raster_no_vector():
         match="clip: Cannot get extent from clip dataset",
     ):
         clip.Run()
+
+
+@pytest.mark.require_driver("OSM")
+def test_gdalalg_vector_clip_dataset_getnextfeature():
+
+    clip = get_clip_alg()
+    src_ds = gdal.OpenEx("../ogr/data/osm/test.pbf")
+    clip["input"] = src_ds
+    clip["bbox"] = [-180, -90, 180, 90]
+
+    assert clip.ParseCommandLineArguments(
+        ["--of", "stream", "--output", "streamed_output"]
+    )
+    assert clip.Run()
+
+    out_ds = clip["output"].GetDataset()
+    assert out_ds.TestCapability(ogr.ODsCRandomLayerRead)
+
+    expected = []
+    while True:
+        f, lyr = src_ds.GetNextFeature()
+        if not f:
+            break
+        expected.append((f, lyr))
+
+    got = []
+    out_ds.ResetReading()
+    while True:
+        f, lyr = out_ds.GetNextFeature()
+        if not f:
+            break
+        got.append((f, lyr))
+
+    assert len(expected) == len(got)

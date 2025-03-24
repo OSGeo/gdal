@@ -183,6 +183,7 @@ author_silker = "Silke Reimer <silke@intevation.de>"
 author_mikhailg = "Mikhail Gusev <gusevmihs@gmail.com>"
 author_dmitryb = "Dmitry Baryshnikov <polimax@mail.ru>"
 author_evenr = "Even Rouault <even.rouault@spatialys.com>"
+author_elpaso = "Alessandro Pasotti <elpaso@itopen.it>"
 author_tamass = "Tamas Szekeres <szekerest@gmail.com>"
 
 man_pages = [
@@ -227,6 +228,13 @@ man_pages = [
         "gdal-raster-clip",
         "Clip a raster dataset",
         [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_contour",
+        "gdal-raster-contour",
+        "Creates a vector contour from a raster elevation model (DEM)",
+        [author_elpaso],
         1,
     ),
     (
@@ -279,6 +287,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_resize",
+        "gdal-raster-resize",
+        "Resize a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_stack",
         "gdal-raster-stack",
         "Combine together input bands into a multi-band output, either virtual (VRT) or materialized",
@@ -314,9 +329,37 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_filter",
+        "gdal-vector-filter",
+        "Filter a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector_pipeline",
         "gdal-vector-pipeline",
         "Process a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_rasterize",
+        "gdal-vector-rasterize",
+        "Burn vector geometries into a raster",
+        [author_elpaso],
+        1,
+    ),
+    (
+        "programs/gdal_vector_select",
+        "gdal-vector-select",
+        "Select a subset of fields from a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_sql",
+        "gdal-vector-sql",
+        "Apply SQL statement(s) to a dataset",
         [author_evenr],
         1,
     ),

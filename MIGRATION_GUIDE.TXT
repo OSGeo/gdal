@@ -1,6 +1,25 @@
 MIGRATION GUIDE FROM GDAL 3.10 to GDAL 3.11
 -------------------------------------------
 
+- The OGRLayer::GetExtent(OGREnvelope*, int bForce) and
+  OGRLayer::GetExtent(int iGeomField, OGREnvelope*, int bForce) methods are
+  no longer virtual methods that are implemented by drivers, and the ``int bForce``
+  parameter is now a ``bool bForce``.
+  Drivers may implement the new IGetExtent(int iGeomField, OGREnvelope*,
+  bool bForce) protected virtual method. The public method checks that the
+  iGeomField value is in range.
+  Similarly for OGRLayer::GetExtent3D(int iGeomField, OGREnvelope3D*, int bForce)
+  which is now a user facing method (with the change that the ``int bForce`` is now a
+  ``bool bForce``). Drivers may implement the new IGetExtent3D(int iGeomField, OGREnvelope3D*,
+  bool bForce) protected virtual method. The public method checks that the
+  iGeomField value is in range.
+
+- The OGRLayer::SetSpatialFilter() and SetSpatialFilterRect() methods are
+  no longer virtual methods that are implemented by drivers. They now return
+  OGRErr instead of void, `and accept a ``const OGRGeometry*``). Drivers may implement
+  the new ISetSpatialFilter(int iGeomField, const OGRGeometry*) protected virtual method.
+  The public methods check that the iGeomField value is in range.
+
 - GDAL drivers may now return raster bands with the new data types
   GDT_Float16 or GDT_CFloat16. Code that use the GDAL API must be
   ready to react to the new data type, possibly by doing RasterIO()
@@ -9,6 +28,21 @@ MIGRATION GUIDE FROM GDAL 3.10 to GDAL 3.11
 
 - If only a specific GDAL Minor version is to be supported, this must now be
   specified in the find_package call in CMake via a version range specification.
+
+- The following methods
+  OGRCoordinateTransformation::Transform(size_t nCount, double *x, double *y,
+  double *z, double *t, int *pabSuccess) and
+  OGRCoordinateTransformation::TransformWithErrorCodes(size_t nCount, double *x,
+  double *y, double *z, double *t, int *panErrorCodes) are modified to return
+  FALSE as soon as at least one point fails to transform (to be consistent with
+  the other form of Transform() that doesn't take a "t" argument), whereas
+  previously they would return FALSE only if no transformation was found. When
+  FALSE is returned the pabSuccess[] or panErrorCodes[] arrays indicate which
+  point succeeded or failed to transform.
+
+  The GDALTransformerFunc callback and its implementations (GenImgProjTransformer,
+  RPCTransformer, etc.) are also modified to return FALSE as soon as at least
+  one point fails to transform.
 
 MIGRATION GUIDE FROM GDAL 3.9 to GDAL 3.10
 ------------------------------------------

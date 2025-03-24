@@ -3142,7 +3142,10 @@ static CPLErr GDALResampleChunk_ConvolutionT(
                    : dfNoDataValue;
     // cppcheck-suppress unreadVariable
     const int isIntegerDT = GDALDataTypeIsInteger(dstDataType);
-    const auto nNodataValueInt64 = static_cast<GInt64>(dfNoDataValue);
+    const bool bNoDataValueInt64Valid =
+        isIntegerDT && GDALIsValueExactAs<GInt64>(dfNoDataValue);
+    const auto nNodataValueInt64 =
+        bNoDataValueInt64Valid ? static_cast<GInt64>(dfNoDataValue) : 0;
     constexpr int nWrkDataTypeSize = static_cast<int>(sizeof(Twork));
 
     // TODO: we should have some generic function to do this.
@@ -3196,8 +3199,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
     }
 
     auto replaceValIfNodata = [bHasNoData, isIntegerDT, fDstMin, fDstMax,
-                               nNodataValueInt64, dfNoDataValue,
-                               dfReplacementVal](Twork fVal)
+                               bNoDataValueInt64Valid, nNodataValueInt64,
+                               dfNoDataValue, dfReplacementVal](Twork fVal)
     {
         if (!bHasNoData)
             return fVal;
@@ -3211,7 +3214,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             fClamped = fDstMax;
         if (isIntegerDT)
         {
-            if (nNodataValueInt64 == static_cast<GInt64>(std::round(fClamped)))
+            if (bNoDataValueInt64Valid &&
+                nNodataValueInt64 == static_cast<GInt64>(std::round(fClamped)))
             {
                 // Do not use the nodata value
                 return static_cast<Twork>(dfReplacementVal);

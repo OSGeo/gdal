@@ -115,13 +115,8 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual int TestCapability(const char *pszCap) override = 0;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override = 0;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override = 0;
 
     GDALDataset *GetDataset() override
     {
@@ -289,13 +284,8 @@ class TABFile final : public IMapInfoFile
     virtual void ResetReading() override;
     virtual int TestCapability(const char *pszCap) override;
     virtual GIntBig GetFeatureCount(int bForce) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     /* Implement OGRLayer's SetFeature() for random write, only with TABFile */
     virtual OGRErr ISetFeature(OGRFeature *) override;
@@ -467,13 +457,8 @@ class TABView final : public IMapInfoFile
     virtual void ResetReading() override;
     virtual int TestCapability(const char *pszCap) override;
     virtual GIntBig GetFeatureCount(int bForce) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     ///////////////
     // Read access specific stuff
@@ -607,23 +592,14 @@ class TABSeamless final : public IMapInfoFile
         return m_poFeatureDefnRef ? m_poFeatureDefnRef->GetName() : "";
     }
 
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *poGeom) override;
 
     virtual void ResetReading() override;
     virtual int TestCapability(const char *pszCap) override;
     virtual GIntBig GetFeatureCount(int bForce) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     ///////////////
     // Read access specific stuff
@@ -816,13 +792,8 @@ class MIFFile final : public IMapInfoFile
     virtual int TestCapability(const char *pszCap) override;
     virtual GIntBig GetFeatureCount(int bForce) override;
     virtual void ResetReading() override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     ///////////////
     // Read access specific stuff

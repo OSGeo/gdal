@@ -184,9 +184,9 @@ static void OGR2SQLITEAddLayer(const char *&pszStart, int &nNum,
         {
             oLayerDesc.osSubstitutedName =
                 CPLString().Printf("_OGR_%d", nNum++);
-            osModifiedSQL += "\"";
+            osModifiedSQL += "'";
             osModifiedSQL += oLayerDesc.osSubstitutedName;
-            osModifiedSQL += "\"";
+            osModifiedSQL += "'";
         }
         else
         {

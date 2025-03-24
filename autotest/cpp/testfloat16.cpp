@@ -144,6 +144,7 @@ TEST(TestFloat16, math)
         if (x >= 0)
         {
             using std::sqrt;
+            // coverity[negative_returns]
             EXPECT_NEAR(sqrt(GFloat16(x)), sqrt(x), fabs(sqrt(x) / 1024));
         }
     }

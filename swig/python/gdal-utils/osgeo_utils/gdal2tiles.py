@@ -2373,15 +2373,19 @@ class GDAL2Tiles:
                 self.warped_input_dataset = reproject_dataset(
                     input_dataset, self.in_srs, self.out_srs
                 )
-
-                if in_nodata:
-                    self.warped_input_dataset = update_no_data_values(
-                        self.warped_input_dataset, in_nodata, options=self.options
-                    )
-                else:
+                if not in_nodata:
                     self.warped_input_dataset = update_alpha_value_for_non_alpha_inputs(
                         self.warped_input_dataset, options=self.options
                     )
+            else:
+                self.warped_input_dataset = gdal.GetDriverByName("VRT").CreateCopy(
+                    "", input_dataset
+                )
+
+            if in_nodata:
+                self.warped_input_dataset = update_no_data_values(
+                    self.warped_input_dataset, in_nodata, options=self.options
+                )
 
             if self.warped_input_dataset and self.options.verbose:
                 logger.debug(

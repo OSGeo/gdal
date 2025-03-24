@@ -638,10 +638,11 @@ def test_gdal2tiles_nodata_values_pct_threshold(script_path, tmp_path):
     output_folder = str(tmp_path / "test_gdal2tiles_nodata_values_pct_threshold")
 
     src_ds = gdal.GetDriverByName("GTiff").Create(input_tif, 256, 256, 3, gdal.GDT_Byte)
-    src_ds.GetRasterBand(1).SetNoDataValue(20)
-    src_ds.GetRasterBand(1).WriteRaster(
-        0, 0, 2, 2, struct.pack("B" * 4, 10, 20, 30, 40)
-    )
+    for i in range(3):
+        src_ds.GetRasterBand(i + 1).SetNoDataValue(20)
+        src_ds.GetRasterBand(i + 1).WriteRaster(
+            0, 0, 2, 2, struct.pack("B" * 4, 10, 20, 30, 40)
+        )
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(3857)
     src_ds.SetSpatialRef(srs)
@@ -722,6 +723,8 @@ def test_gdal2tiles_py_jpeg_3band_input(
     script_path, tmp_path, resampling, expected_stats_z0, expected_stats_z1
 ):
 
+    pytest.importorskip("osgeo.gdal_array")
+
     if resampling == "antialias" and not pil_available():
         pytest.skip("'antialias' resampling is not available")
 
@@ -785,6 +788,8 @@ def test_gdal2tiles_py_jpeg_3band_input(
 def test_gdal2tiles_py_jpeg_1band_input(
     script_path, tmp_path, resampling, expected_stats_z14, expected_stats_z13
 ):
+
+    pytest.importorskip("osgeo.gdal_array")
 
     if resampling == "antialias" and not pil_available():
         pytest.skip("'antialias' resampling is not available")

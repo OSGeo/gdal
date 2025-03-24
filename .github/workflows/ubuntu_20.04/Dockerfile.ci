@@ -52,7 +52,6 @@ RUN apt-get update -y \
     libmuparser-dev \
     libmysqlclient-dev \
     libnetcdf-dev \
-    libogdi-dev \
     libopenexr-dev \
     libopenjp2-7-dev \
     libpcre2-dev \
@@ -75,8 +74,6 @@ RUN apt-get update -y \
     make \
     mono-mcs \
     numactl \
-    ocl-icd-opencl-dev \
-    opencl-c-headers \
     openjdk-8-jdk-headless \
     pkg-config \
     python3-dev \
@@ -123,9 +120,6 @@ RUN mkdir tiledb \
     && make install-tiledb \
     && cd ../.. \
     && rm -rf tiledeb
-
-# Workaround bug in ogdi packaging
-RUN ln -s /usr/lib/ogdi/libvrf.so /usr/lib
 
 # Build libjxl
 # libjxl being still unstable, if the main branch fails to compile/test
@@ -184,12 +178,12 @@ RUN mkdir geos \
     && rm -rf geos
 
 # Install pdfium
-RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_10/releases/download/pdfium_6677_v1/install-ubuntu2004-rev6677.tar.gz \
-  && tar -xzf install-ubuntu2004-rev6677.tar.gz \
+RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_11/releases/download/pdfium_7047_v1/install-ubuntu2004-rev7047.tar.gz \
+  && tar -xzf install-ubuntu2004-rev7047.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev6677.tar.gz install
+  && rm -rf install-ubuntu2004-rev7047.tar.gz install
 
 # HANA: client side
 # Install hdbsql tool
@@ -276,7 +270,7 @@ RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
     ); fi
 
 # Install exprtk
-RUN wget -q -P /usr/local/include https://raw.githubusercontent.com/ArashPartow/exprtk/refs/heads/master/exprtk.hpp 
+RUN wget -q -P /usr/local/include https://raw.githubusercontent.com/ArashPartow/exprtk/refs/heads/master/exprtk.hpp
 
 RUN ldconfig
 

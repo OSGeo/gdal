@@ -2094,9 +2094,10 @@ int MIFFile::GetBounds(double &dXMin, double &dYMin, double &dXMax,
  *
  * Returns OGRERR_NONE/OGRRERR_FAILURE.
  **********************************************************************/
-OGRErr MIFFile::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr MIFFile::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,
+                           bool bForce)
 {
-    if (bForce == TRUE)
+    if (bForce)
         PreParseFile();
 
     if (m_bPreParsed && m_bExtentsSet)

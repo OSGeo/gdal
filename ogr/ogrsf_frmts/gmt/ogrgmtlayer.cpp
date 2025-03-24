@@ -958,7 +958,7 @@ OGRErr OGRGmtLayer::WriteGeometry(OGRGeometryH hGeom, bool bHaveAngle)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /*                                                                      */
 /*      Fetch extent of the data currently stored in the dataset.       */
 /*      The bForce flag has no effect on SHO files since that value     */
@@ -967,7 +967,8 @@ OGRErr OGRGmtLayer::WriteGeometry(OGRGeometryH hGeom, bool bHaveAngle)
 /*      Returns OGRERR_NONE/OGRRERR_FAILURE.                            */
 /************************************************************************/
 
-OGRErr OGRGmtLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRGmtLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                               bool bForce)
 
 {
     if (bRegionComplete && sRegion.IsInit())
@@ -976,7 +977,7 @@ OGRErr OGRGmtLayer::GetExtent(OGREnvelope *psExtent, int bForce)
         return OGRERR_NONE;
     }
 
-    return OGRLayer::GetExtent(psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

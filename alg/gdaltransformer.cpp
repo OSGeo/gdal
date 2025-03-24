@@ -46,6 +46,7 @@ void *GDALDeserializeGCPTransformer(CPLXMLNode *psTree);
 void *GDALDeserializeTPSTransformer(CPLXMLNode *psTree);
 void *GDALDeserializeGeoLocTransformer(CPLXMLNode *psTree);
 void *GDALDeserializeRPCTransformer(CPLXMLNode *psTree);
+void *GDALDeserializeHomographyTransformer(CPLXMLNode *psTree);
 CPL_C_END
 
 static CPLXMLNode *GDALSerializeReprojectionTransformer(void *pTransformArg);
@@ -113,17 +114,17 @@ will be from the source coordinate system to the destination coordinate system.
 
 @param nPointCount number of points in the x, y and z arrays.
 
-@param x input X coordinates.  Results returned in same array.
+@param[in,out] x input X coordinates.  Results returned in same array.
 
-@param y input Y coordinates.  Results returned in same array.
+@param[in,out] y input Y coordinates.  Results returned in same array.
 
-@param z input Z coordinates.  Results returned in same array.
+@param[in,out] z input Z coordinates.  Results returned in same array.
 
-@param panSuccess array of ints in which success (TRUE) or failure (FALSE)
-flags are returned for the translation of each point.
+@param[out] panSuccess array of ints in which success (TRUE) or failure (FALSE)
+flags are returned for the translation of each point. Must not be NULL.
 
-@return TRUE if the overall transformation succeeds (though some individual
-points may have failed) or FALSE if the overall transformation fails.
+@return TRUE if all points have been successfully transformed (changed in 3.11,
+previously was TRUE if some points have been successfully transformed)
 
 */
 
@@ -185,10 +186,9 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput(GDALDatasetH hSrcDS,
                                     adfExtent, 0);
 }
 
-static int GDALSuggestedWarpOutput2_MustAdjustForRightBorder(
+static bool GDALSuggestedWarpOutput2_MustAdjustForRightBorder(
     GDALTransformerFunc pfnTransformer, void *pTransformArg, double *padfExtent,
-    CPL_UNUSED int nPixels, int nLines, double dfPixelSizeX,
-    double dfPixelSizeY)
+    int /* nPixels*/, int nLines, double dfPixelSizeX, double dfPixelSizeY)
 {
     double adfX[21] = {};
     double adfY[21] = {};
@@ -213,38 +213,35 @@ static int GDALSuggestedWarpOutput2_MustAdjustForRightBorder(
 
     int abSuccess[21] = {};
 
-    bool bErr = false;
-    if (!pfnTransformer(pTransformArg, TRUE, nSamplePoints, adfX, adfY, adfZ,
-                        abSuccess))
-    {
-        bErr = true;
-    }
+    pfnTransformer(pTransformArg, TRUE, nSamplePoints, adfX, adfY, adfZ,
+                   abSuccess);
 
-    if (!bErr && !pfnTransformer(pTransformArg, FALSE, nSamplePoints, adfX,
-                                 adfY, adfZ, abSuccess))
-    {
-        bErr = true;
-    }
+    int abSuccess2[21] = {};
+
+    pfnTransformer(pTransformArg, FALSE, nSamplePoints, adfX, adfY, adfZ,
+                   abSuccess2);
 
     nSamplePoints = 0;
     int nBadCount = 0;
-    for (double dfRatio = 0.0; !bErr && dfRatio <= 1.01; dfRatio += 0.05)
+    for (double dfRatio = 0.0; dfRatio <= 1.01; dfRatio += 0.05)
     {
         const double expected_x = dfMaxXOut;
         const double expected_y = dfMaxYOut - dfPixelSizeY * dfRatio * nLines;
-        if (fabs(adfX[nSamplePoints] - expected_x) > dfPixelSizeX ||
+        if (!abSuccess[nSamplePoints] || !abSuccess2[nSamplePoints] ||
+            fabs(adfX[nSamplePoints] - expected_x) > dfPixelSizeX ||
             fabs(adfY[nSamplePoints] - expected_y) > dfPixelSizeY)
+        {
             nBadCount++;
+        }
         nSamplePoints++;
     }
 
     return nBadCount == nSamplePoints;
 }
 
-static int GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
+static bool GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
     GDALTransformerFunc pfnTransformer, void *pTransformArg, double *padfExtent,
-    int nPixels, CPL_UNUSED int nLines, double dfPixelSizeX,
-    double dfPixelSizeY)
+    int nPixels, int /* nLines */, double dfPixelSizeX, double dfPixelSizeY)
 {
     double adfX[21] = {};
     double adfY[21] = {};
@@ -269,28 +266,26 @@ static int GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
 
     int abSuccess[21] = {};
 
-    bool bErr = false;
-    if (!pfnTransformer(pTransformArg, TRUE, nSamplePoints, adfX, adfY, adfZ,
-                        abSuccess))
-    {
-        bErr = true;
-    }
+    pfnTransformer(pTransformArg, TRUE, nSamplePoints, adfX, adfY, adfZ,
+                   abSuccess);
 
-    if (!bErr && !pfnTransformer(pTransformArg, FALSE, nSamplePoints, adfX,
-                                 adfY, adfZ, abSuccess))
-    {
-        bErr = true;
-    }
+    int abSuccess2[21] = {};
+
+    pfnTransformer(pTransformArg, FALSE, nSamplePoints, adfX, adfY, adfZ,
+                   abSuccess2);
 
     nSamplePoints = 0;
     int nBadCount = 0;
-    for (double dfRatio = 0.0; !bErr && dfRatio <= 1.01; dfRatio += 0.05)
+    for (double dfRatio = 0.0; dfRatio <= 1.01; dfRatio += 0.05)
     {
         const double expected_x = dfMinXOut + dfPixelSizeX * dfRatio * nPixels;
         const double expected_y = dfMinYOut;
-        if (fabs(adfX[nSamplePoints] - expected_x) > dfPixelSizeX ||
+        if (!abSuccess[nSamplePoints] || !abSuccess2[nSamplePoints] ||
+            fabs(adfX[nSamplePoints] - expected_x) > dfPixelSizeX ||
             fabs(adfY[nSamplePoints] - expected_y) > dfPixelSizeY)
+        {
             nBadCount++;
+        }
         nSamplePoints++;
     }
 
@@ -530,18 +525,11 @@ retry:
     /* -------------------------------------------------------------------- */
     /*      Transform them to the output coordinate system.                 */
     /* -------------------------------------------------------------------- */
-    if (!pfnTransformer(pTransformArg, FALSE, nSamplePoints, padfX, padfY,
-                        padfZ, pabSuccess))
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "GDALSuggestedWarpOutput() failed because the passed "
-                 "transformer failed.");
-        CPLFree(padfX);
-        CPLFree(padfXRevert);
-        CPLFree(pabSuccess);
-        return CE_Failure;
+        CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
+        pfnTransformer(pTransformArg, FALSE, nSamplePoints, padfX, padfY, padfZ,
+                       pabSuccess);
     }
-
     constexpr int SIGN_FINAL_UNINIT = -2;
     constexpr int SIGN_FINAL_INVALID = 0;
     int iSignDiscontinuity = SIGN_FINAL_UNINIT;
@@ -601,6 +589,7 @@ retry:
                     double ayTemp[2] = {padfY[i], padfY[i]};
                     double azTemp[2] = {padfZ[i], padfZ[i]};
                     int abSuccess[2] = {FALSE, FALSE};
+                    CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
                     if (pfnTransformer(pTransformArg, TRUE, 2, axTemp, ayTemp,
                                        azTemp, abSuccess) &&
                         fabs(axTemp[0] - axTemp[1]) < 1e-8 &&
@@ -626,56 +615,54 @@ retry:
         memcpy(padfXRevert, padfX, nSamplePoints * sizeof(double));
         memcpy(padfYRevert, padfY, nSamplePoints * sizeof(double));
         memcpy(padfZRevert, padfZ, nSamplePoints * sizeof(double));
-        if (pfnTransformer(pTransformArg, TRUE, nSamplePoints, padfXRevert,
-                           padfYRevert, padfZRevert, pabSuccess))
         {
-            for (int i = 0; nFailedCount == 0 && i < nSamplePoints; i++)
+            CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
+            pfnTransformer(pTransformArg, TRUE, nSamplePoints, padfXRevert,
+                           padfYRevert, padfZRevert, pabSuccess);
+        }
+
+        for (int i = 0; nFailedCount == 0 && i < nSamplePoints; i++)
+        {
+            if (!pabSuccess[i])
             {
-                if (!pabSuccess[i])
-                {
-                    nFailedCount++;
-                    break;
-                }
-
-                double dfRatio = (i % nStepsPlusOne) * dfStep;
-                if (dfRatio > 0.99)
-                    dfRatio = 1.0;
-
-                double dfExpectedX = 0.0;
-                double dfExpectedY = 0.0;
-                if (i < nStepsPlusOne)
-                {
-                    dfExpectedX = dfRatio * nInXSize;
-                }
-                else if (i < 2 * nStepsPlusOne)
-                {
-                    dfExpectedX = dfRatio * nInXSize;
-                    dfExpectedY = nInYSize;
-                }
-                else if (i < 3 * nStepsPlusOne)
-                {
-                    dfExpectedY = dfRatio * nInYSize;
-                }
-                else
-                {
-                    dfExpectedX = nInXSize;
-                    dfExpectedY = dfRatio * nInYSize;
-                }
-
-                if (fabs(padfXRevert[i] - dfExpectedX) >
-                        nInXSize / static_cast<double>(nSteps) ||
-                    fabs(padfYRevert[i] - dfExpectedY) >
-                        nInYSize / static_cast<double>(nSteps))
-                    nFailedCount++;
+                nFailedCount++;
+                break;
             }
-            if (nFailedCount != 0)
-                CPLDebug("WARP",
-                         "At least one point failed after revert transform");
+
+            double dfRatio = (i % nStepsPlusOne) * dfStep;
+            if (dfRatio > 0.99)
+                dfRatio = 1.0;
+
+            double dfExpectedX = 0.0;
+            double dfExpectedY = 0.0;
+            if (i < nStepsPlusOne)
+            {
+                dfExpectedX = dfRatio * nInXSize;
+            }
+            else if (i < 2 * nStepsPlusOne)
+            {
+                dfExpectedX = dfRatio * nInXSize;
+                dfExpectedY = nInYSize;
+            }
+            else if (i < 3 * nStepsPlusOne)
+            {
+                dfExpectedY = dfRatio * nInYSize;
+            }
+            else
+            {
+                dfExpectedX = nInXSize;
+                dfExpectedY = dfRatio * nInYSize;
+            }
+
+            if (fabs(padfXRevert[i] - dfExpectedX) >
+                    nInXSize / static_cast<double>(nSteps) ||
+                fabs(padfYRevert[i] - dfExpectedY) >
+                    nInYSize / static_cast<double>(nSteps))
+                nFailedCount++;
         }
-        else
-        {
-            nFailedCount = 1;
-        }
+        if (nFailedCount != 0)
+            CPLDebug("WARP",
+                     "At least one point failed after revert transform");
     }
 
     /* -------------------------------------------------------------------- */
@@ -707,18 +694,10 @@ retry:
 
         CPLAssert(nSamplePoints == nSampleMax);
 
-        if (!pfnTransformer(pTransformArg, FALSE, nSamplePoints, padfX, padfY,
-                            padfZ, pabSuccess))
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "GDALSuggestedWarpOutput() failed because the passed"
-                     "transformer failed.");
-
-            CPLFree(padfX);
-            CPLFree(padfXRevert);
-            CPLFree(pabSuccess);
-
-            return CE_Failure;
+            CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
+            pfnTransformer(pTransformArg, FALSE, nSamplePoints, padfX, padfY,
+                           padfZ, pabSuccess);
         }
     }
 
@@ -1784,14 +1763,15 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
  * a continuous set. This option can be set to YES to force that behavior
  * (useful if no SRS information is available), or to NO to disable it.
  * </li>
- * <li> SRC_METHOD: may have a value which is one of GEOTRANSFORM,
+ * <li> SRC_METHOD: may have a value which is one of GEOTRANSFORM, GCP_HOMOGRAPHY,
  * GCP_POLYNOMIAL, GCP_TPS, GEOLOC_ARRAY, RPC to force only one geolocation
  * method to be considered on the source dataset. Will be used for pixel/line
  * to georef transformation on the source dataset. NO_GEOTRANSFORM can be
  * used to specify the identity geotransform (ungeoreference image)
  * </li>
  * <li> DST_METHOD: may have a value which is one of GEOTRANSFORM,
- * GCP_POLYNOMIAL, GCP_TPS, GEOLOC_ARRAY (added in 3.5), RPC to force only one
+ * GCP_POLYNOMIAL, GCP_HOMOGRAPHY, GCP_TPS, GEOLOC_ARRAY (added in 3.5), RPC to
+ * force only one
  * geolocation method to be considered on the target dataset.  Will be used for
  * pixel/line to georef transformation on the destination dataset.
  * NO_GEOTRANSFORM can be used to specify the identity geotransform
@@ -2073,6 +2053,36 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         bCanUseSrcGeoTransform = true;
     }
     else if (bGCPUseOK &&
+             ((pszMethod == nullptr && GDALGetGCPCount(hSrcDS) >= 4 &&
+               GDALGetGCPCount(hSrcDS) < 6) ||
+              (pszMethod != nullptr && EQUAL(pszMethod, "GCP_HOMOGRAPHY"))) &&
+             GDALGetGCPCount(hSrcDS) > 0)
+    {
+        if (pszSrcSRS == nullptr)
+        {
+            auto hSRS = GDALGetGCPSpatialRef(hSrcDS);
+            if (hSRS)
+                oSrcSRS = *(OGRSpatialReference::FromHandle(hSRS));
+        }
+
+        const auto nGCPCount = GDALGetGCPCount(hSrcDS);
+        auto pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALGetGCPs(hSrcDS));
+        GDALGCPAntimeridianUnwrap(nGCPCount, pasGCPList, oSrcSRS, papszOptions);
+
+        psInfo->pSrcTransformArg =
+            GDALCreateHomographyTransformerFromGCPs(nGCPCount, pasGCPList);
+
+        GDALDeinitGCPs(nGCPCount, pasGCPList);
+        CPLFree(pasGCPList);
+
+        if (psInfo->pSrcTransformArg == nullptr)
+        {
+            GDALDestroyGenImgProjTransformer(psInfo);
+            return nullptr;
+        }
+        psInfo->pSrcTransformer = GDALHomographyTransform;
+    }
+    else if (bGCPUseOK &&
              (pszMethod == nullptr || EQUAL(pszMethod, "GCP_POLYNOMIAL")) &&
              GDALGetGCPCount(hSrcDS) > 0 && nOrder >= 0)
     {
@@ -2292,6 +2302,36 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             GDALDestroyGenImgProjTransformer(psInfo);
             return nullptr;
         }
+    }
+    else if (bGCPUseOK &&
+             ((pszDstMethod == nullptr && GDALGetGCPCount(hDstDS) >= 4 &&
+               GDALGetGCPCount(hDstDS) < 6) ||
+              (pszMethod != nullptr && EQUAL(pszMethod, "GCP_HOMOGRAPHY"))) &&
+             GDALGetGCPCount(hDstDS) > 0)
+    {
+        if (pszDstSRS == nullptr)
+        {
+            auto hSRS = GDALGetGCPSpatialRef(hDstDS);
+            if (hSRS)
+                oDstSRS = *(OGRSpatialReference::FromHandle(hSRS));
+        }
+
+        const auto nGCPCount = GDALGetGCPCount(hDstDS);
+        auto pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALGetGCPs(hDstDS));
+        GDALGCPAntimeridianUnwrap(nGCPCount, pasGCPList, oDstSRS, papszOptions);
+
+        psInfo->pDstTransformArg =
+            GDALCreateHomographyTransformerFromGCPs(nGCPCount, pasGCPList);
+
+        GDALDeinitGCPs(nGCPCount, pasGCPList);
+        CPLFree(pasGCPList);
+
+        if (psInfo->pDstTransformArg == nullptr)
+        {
+            GDALDestroyGenImgProjTransformer(psInfo);
+            return nullptr;
+        }
+        psInfo->pDstTransformer = GDALHomographyTransform;
     }
     else if (bGCPUseOK &&
              (pszDstMethod == nullptr ||
@@ -2910,11 +2950,12 @@ int GDALGenImgProjTransform(void *pTransformArgIn, int bDstToSrc,
         pTransformer = psInfo->pSrcTransformer;
     }
 
+    int ret = TRUE;
     if (pTransformArg != nullptr)
     {
         if (!pTransformer(pTransformArg, FALSE, nPointCount, padfX, padfY,
                           padfZ, panSuccess))
-            return FALSE;
+            ret = FALSE;
     }
     else
     {
@@ -2942,7 +2983,7 @@ int GDALGenImgProjTransform(void *pTransformArgIn, int bDstToSrc,
     {
         if (!psInfo->pReproject(psInfo->pReprojectArg, bDstToSrc, nPointCount,
                                 padfX, padfY, padfZ, panSuccess))
-            return FALSE;
+            ret = FALSE;
     }
 
     /* -------------------------------------------------------------------- */
@@ -2965,7 +3006,7 @@ int GDALGenImgProjTransform(void *pTransformArgIn, int bDstToSrc,
     {
         if (!pTransformer(pTransformArg, TRUE, nPointCount, padfX, padfY, padfZ,
                           panSuccess))
-            return FALSE;
+            ret = FALSE;
     }
     else
     {
@@ -2986,7 +3027,7 @@ int GDALGenImgProjTransform(void *pTransformArgIn, int bDstToSrc,
         }
     }
 
-    return TRUE;
+    return ret;
 }
 
 /************************************************************************/
@@ -4609,6 +4650,11 @@ CPLErr GDALDeserializeTransformer(CPLXMLNode *psTree,
     {
         *ppfnFunc = GDALApproxTransform;
         *ppTransformArg = GDALDeserializeApproxTransformer(psTree);
+    }
+    else if (EQUAL(psTree->pszValue, "HomographyTransformer"))
+    {
+        *ppfnFunc = GDALHomographyTransform;
+        *ppTransformArg = GDALDeserializeHomographyTransformer(psTree);
     }
     else
     {

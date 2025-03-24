@@ -682,28 +682,16 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature(GIntBig nFeatureId)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /*                                                                      */
 /*      For Geometry or Geography types we can use an optimized         */
-/*      statement in other cases we use standard OGRLayer::GetExtent()  */
+/*      statement in other cases we use standard OGRLayer::IGetExtent() */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField,
-                                            OGREnvelope *psExtent, int bForce)
+OGRErr OGRMSSQLSpatialTableLayer::IGetExtent(int iGeomField,
+                                             OGREnvelope *psExtent, bool bForce)
 {
     GetLayerDefn();
-
-    // Make sure we have a geometry field:
-    if (iGeomField < 0 || iGeomField >= poFeatureDefn->GetGeomFieldCount() ||
-        poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone)
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return OGRERR_FAILURE;
-    }
 
     // If we have a geometry or geography type:
     if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY ||
@@ -798,10 +786,7 @@ OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField,
     }
 
     // Fall back to generic implementation (loading all features)
-    if (iGeomField == 0)
-        return OGRLayer::GetExtent(psExtent, bForce);
-    else
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

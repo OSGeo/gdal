@@ -219,7 +219,7 @@ class ProgramOutputCache(defaultdict):
     """
     Execute command and cache their output.
 
-    This class is a mapping.  Its keys are :class:`Command` objects represeting
+    This class is a mapping.  Its keys are :class:`Command` objects representing
     command invocations.  Its values are tuples of the form ``(returncode,
     output)``, where ``returncode`` is the integral return code of the command,
     and ``output`` is the output as unicode string.

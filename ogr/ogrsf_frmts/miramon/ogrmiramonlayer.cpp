@@ -2722,14 +2722,15 @@ OGRFeatureDefn *OGRMiraMonLayer::GetLayerDefn()
 }
 
 /****************************************************************************/
-/*                             GetExtent()                                  */
+/*                            IGetExtent()                                  */
 /*                                                                          */
 /*      Fetch extent of the data currently stored in the dataset.           */
 /*      The bForce flag has no effect on SHO files since that value         */
 /*      is always in the header.                                            */
 /****************************************************************************/
 
-OGRErr OGRMiraMonLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRMiraMonLayer::IGetExtent(int /* iGeomField*/, OGREnvelope *psExtent,
+                                   bool bForce)
 
 {
     if (phMiraMonLayer)

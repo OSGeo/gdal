@@ -157,14 +157,18 @@ class CPL_UNSTABLE_API swq_expr_node
     void Dump(FILE *fp, int depth);
     swq_field_type Check(swq_field_list *, int bAllowFieldsInSecondaryTables,
                          int bAllowMismatchTypeOnFieldComparison,
-                         swq_custom_func_registrar *poCustomFuncRegistrar,
-                         int depth = 0);
+                         swq_custom_func_registrar *poCustomFuncRegistrar);
     swq_expr_node *Evaluate(swq_field_fetcher pfnFetcher, void *record,
                             const swq_evaluation_context &sContext);
     swq_expr_node *Clone();
 
     void ReplaceBetweenByGEAndLERecurse();
+    void ReplaceInByOrRecurse();
     void PushNotOperationDownToStack();
+
+    void RebalanceAndOr();
+
+    bool HasReachedMaxDepth() const;
 
     swq_node_type eNodeType = SNT_CONSTANT;
     swq_field_type field_type = SWQ_INTEGER;
@@ -195,6 +199,9 @@ class CPL_UNSTABLE_API swq_expr_node
     // May be transiently used by swq_parser.h, but should not be relied upon
     // after parsing. swq_col_def.bHidden captures it afterwards.
     bool bHidden = false;
+
+    // Recursive depth of this expression, taking into account papoSubExpr.
+    int nDepth = 1;
 
     static CPLString QuoteIfNecessary(const CPLString &, char chQuote = '\'');
     static CPLString Quote(const CPLString &, char chQuote = '\'');

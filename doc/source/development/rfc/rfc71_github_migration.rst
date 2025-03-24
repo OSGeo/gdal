@@ -92,7 +92,7 @@ from other GDAL developers/contributors would be welcome:
 Exit strategy
 -------------
 
-GitHub is a closed platform. In case it would close or would start askin
+GitHub is a closed platform. In case it would close or would start asking
 to pay unreasonable fees, some backup strategy of the tickets would be
 needed. The solutions might be:
 

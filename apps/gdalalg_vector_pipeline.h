@@ -16,6 +16,12 @@
 #include "gdalalgorithm.h"
 #include "gdalalg_abstract_pipeline.h"
 
+#include "ogrsf_frmts.h"
+#include "ogrlayerwithtranslatefeature.h"
+
+#include <map>
+#include <vector>
+
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
@@ -104,6 +110,76 @@ class GDALVectorPipelineAlgorithm final
     {
         return m_outputDataset;
     }
+};
+
+/************************************************************************/
+/*                  GDALVectorPipelineOutputLayer                       */
+/************************************************************************/
+
+/** Class that implements GetNextFeature() by forwarding to
+ * OGRLayerWithTranslateFeature::TranslateFeature() implementation, which
+ * might return several features.
+ */
+class GDALVectorPipelineOutputLayer /* non final */
+    : public OGRLayerWithTranslateFeature,
+      public OGRGetNextFeatureThroughRaw<GDALVectorPipelineOutputLayer>
+{
+  protected:
+    explicit GDALVectorPipelineOutputLayer(OGRLayer &oSrcLayer);
+
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(GDALVectorPipelineOutputLayer)
+
+    OGRLayer &m_srcLayer;
+
+  public:
+    void ResetReading() override;
+    OGRFeature *GetNextRawFeature();
+
+  private:
+    std::vector<std::unique_ptr<OGRFeature>> m_pendingFeatures{};
+    size_t m_idxInPendingFeatures = 0;
+};
+
+/************************************************************************/
+/*                 GDALVectorPipelineOutputDataset                      */
+/************************************************************************/
+
+/** Class used by vector pipeline steps to create an output on-the-fly
+ * dataset where they can store on-the-fly layers.
+ */
+class GDALVectorPipelineOutputDataset final : public GDALDataset
+{
+    GDALDataset &m_srcDS;
+    std::map<OGRLayer *, OGRLayerWithTranslateFeature *>
+        m_mapSrcLayerToNewLayer{};
+    std::vector<std::unique_ptr<OGRLayerWithTranslateFeature>>
+        m_layersToDestroy{};
+    std::vector<OGRLayerWithTranslateFeature *> m_layers{};
+
+    OGRLayerWithTranslateFeature *m_belongingLayer = nullptr;
+    std::vector<std::unique_ptr<OGRFeature>> m_pendingFeatures{};
+    size_t m_idxInPendingFeatures = 0;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorPipelineOutputDataset)
+
+  public:
+    explicit GDALVectorPipelineOutputDataset(GDALDataset &oSrcDS);
+
+    void AddLayer(OGRLayer &oSrcLayer,
+                  std::unique_ptr<OGRLayerWithTranslateFeature> poNewLayer);
+
+    int GetLayerCount() override;
+
+    OGRLayer *GetLayer(int idx) override;
+
+    int TestCapability(const char *pszCap) override;
+
+    void ResetReading() override;
+
+    OGRFeature *GetNextFeature(OGRLayer **ppoBelongingLayer,
+                               double *pdfProgressPct,
+                               GDALProgressFunc pfnProgress,
+                               void *pProgressData) override;
 };
 
 //! @endcond

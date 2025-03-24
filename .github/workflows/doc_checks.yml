@@ -24,7 +24,7 @@ jobs:
     container: ghcr.io/osgeo/proj-docs
 
     steps:
-    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
     - name: Setup environment
       shell: bash -l {0}
       run: |
@@ -81,11 +81,6 @@ jobs:
       run: |
         mkdir -p doc/build
         doxygen Doxyfile
-    - name: Generated RST files
-      shell: bash -l {0}
-      run: |
-        make generated_rst_files
-      working-directory: ./doc
     - name: Spelling
       shell: bash -l {0}
       run: |

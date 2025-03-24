@@ -149,7 +149,7 @@ List style
 
 The following dataset creation options can be used to control how the
 main folder (folder of layers) appear in the Places panel of the Earth
-browser, trough a
+browser, through a
 `<ListStyle> <https://developers.google.com/kml/documentation/kmlreference#liststyle>`__
 element:
 
@@ -447,7 +447,7 @@ Do not confuse them with the same named dataset creation options.
 
 The following layer creation options can be used to control how the
 folder of a layer appear in the Places panel of the Earth browser,
-trough a
+through a
 `<ListStyle> <https://developers.google.com/kml/documentation/kmlreference#liststyle>`__
 element:
 

@@ -1783,7 +1783,7 @@ def test_ogr_mvt_write_custom_tiling_scheme_WorldCRS84Quad(tmp_vsimem, TILING_SC
     out_ds = None
 
     if TILING_SCHEME == "EPSG:4326,-180,90,180,1,1":
-        # If explictly setting tile_matrix_width_zoom_0 == 1,
+        # If explicitly setting tile_matrix_width_zoom_0 == 1,
         # we have no tiles beyond longitude 0 degree
         with pytest.raises(Exception):
             ogr.Open(filename + "/0")

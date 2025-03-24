@@ -1754,12 +1754,15 @@ OGRErr OGRSpatialReference::exportToWkt(char **ppszResult,
             d->getPROJContext(), d->m_pj_crs, true, true);
     }
 
-    std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
-    CPLInstallErrorHandlerAccumulator(aoErrors);
-    const char *pszWKT = proj_as_wkt(ctxt, boundCRS ? boundCRS : d->m_pj_crs,
-                                     wktFormat, aosOptions.List());
-    CPLUninstallErrorHandlerAccumulator();
-    for (const auto &oError : aoErrors)
+    CPLErrorAccumulator oErrorAccumulator;
+    const char *pszWKT;
+    {
+        auto oAccumulator = oErrorAccumulator.InstallForCurrentScope();
+        CPL_IGNORE_RET_VAL(oAccumulator);
+        pszWKT = proj_as_wkt(ctxt, boundCRS ? boundCRS : d->m_pj_crs, wktFormat,
+                             aosOptions.List());
+    }
+    for (const auto &oError : oErrorAccumulator.GetErrors())
     {
         if (pszFormat[0] == '\0' &&
             (oError.msg.find("Unsupported conversion method") !=

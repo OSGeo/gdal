@@ -75,7 +75,7 @@ two main callbacks to get:
   a set of values for a specific column/field in a subset of features.
   This is the equivalent of a
   `Series <https://arrow.apache.org/docs/python/pandas.html#series>`_ in a Pandas DataFrame.
-  This is a potentially hiearchical structure that can aggregate
+  This is a potentially hierarchical structure that can aggregate
   sub arrays, and in OGR usage, the main array will be a StructArray which is
   the collection of OGR attribute and geometry fields.
   The layout of buffers and children arrays per data type is detailed in the

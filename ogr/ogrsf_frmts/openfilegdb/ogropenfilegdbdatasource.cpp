@@ -1369,15 +1369,16 @@ class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
         return poBaseLayer->GetFIDColumn();
     }
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override
     {
-        return poBaseLayer->GetExtent(psExtent, bForce);
+        return poBaseLayer->GetExtent(iGeomField, psExtent, bForce);
     }
 
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
+    virtual OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                                bool bForce) override
     {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+        return poBaseLayer->GetExtent3D(iGeomField, psExtent, bForce);
     }
 
     virtual GIntBig GetFeatureCount(int bForce) override;

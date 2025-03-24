@@ -18,13 +18,6 @@
 
 #include <vector>
 
-enum Interleave
-{
-    BSQ,
-    BIL,
-    BIP
-};
-
 /************************************************************************/
 /* ==================================================================== */
 /*                              CPGDataset                              */
@@ -53,7 +46,7 @@ class CPGDataset final : public RawDataset
     int nLoadedStokesLine;
     float *padfStokesMatrix;
 
-    int nInterleave;
+    Interleave eInterleave = Interleave::BSQ;
     static int AdjustFilename(char **, const char *, const char *);
     static int FindType1(const char *pszWorkname);
     static int FindType2(const char *pszWorkname);
@@ -101,7 +94,7 @@ class CPGDataset final : public RawDataset
 
 CPGDataset::CPGDataset()
     : nGCPCount(0), pasGCPList(nullptr), nLoadedStokesLine(-1),
-      padfStokesMatrix(nullptr), nInterleave(0)
+      padfStokesMatrix(nullptr)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -377,7 +370,7 @@ CPLErr CPGDataset::LoadStokesLine(int iLine, int bNativeOrder)
     /*      Load all the pixel data associated with this scanline.          */
     /*      Retains same interleaving as original dataset.                  */
     /* -------------------------------------------------------------------- */
-    if (nInterleave == BIP)
+    if (eInterleave == Interleave::BIP)
     {
         const int offset = nRasterXSize * iLine * nDataSize * 16;
         const int nBytesToRead = nDataSize * nRasterXSize * 16;
@@ -396,7 +389,7 @@ CPLErr CPGDataset::LoadStokesLine(int iLine, int bNativeOrder)
             return CE_Failure;
         }
     }
-    else if (nInterleave == BIL)
+    else if (eInterleave == Interleave::BIL)
     {
         for (int band_index = 0; band_index < 16; band_index++)
         {
@@ -810,7 +803,8 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
 GDALDataset *CPGDataset::InitializeType3Dataset(const char *pszFilename)
 {
     int iBytesPerPixel = 0;
-    int iInterleave = -1;
+    Interleave::eInterleave = Interleave::BSQ;
+    bool bInterleaveSpecified = false;
     int nLines = 0;
     int nSamples = 0;
     int nBands = 0;
@@ -845,11 +839,20 @@ GDALDataset *CPGDataset::InitializeType3Dataset(const char *pszFilename)
         {
 
             if (STARTS_WITH_CI(papszTokens[2], "BSQ"))
-                iInterleave = BSQ;
+            {
+                bInterleaveSpecified = true;
+                eInterleave = Interleave::BSQ;
+            }
             else if (STARTS_WITH_CI(papszTokens[2], "BIL"))
-                iInterleave = BIL;
+            {
+                bInterleaveSpecified = true;
+                eInterleave = Interleave::BIL;
+            }
             else if (STARTS_WITH_CI(papszTokens[2], "BIP"))
-                iInterleave = BIP;
+            {
+                bInterleaveSpecified = true;
+                eInterleave = Interleave::BIP;
+            }
             else
             {
                 CPLError(
@@ -979,7 +982,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset(const char *pszFilename)
     }
 
     if (!GDALCheckDatasetDimensions(nSamples, nLines) ||
-        !GDALCheckBandCount(nBands, FALSE) || iInterleave == -1 ||
+        !GDALCheckBandCount(nBands, FALSE) || !bInterleaveSpecified ||
         iBytesPerPixel == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -998,13 +1001,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset(const char *pszFilename)
 
     poDS->nRasterXSize = nSamples;
     poDS->nRasterYSize = nLines;
-
-    if (iInterleave == BSQ)
-        poDS->nInterleave = BSQ;
-    else if (iInterleave == BIL)
-        poDS->nInterleave = BIL;
-    else
-        poDS->nInterleave = BIP;
+    poDS->eInterleave = eInterleave;
 
     /* -------------------------------------------------------------------- */
     /*      Open the 16 bands.                                              */
@@ -1393,7 +1390,7 @@ CPLErr CPG_STOKESRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     float *M = poGDS->padfStokesMatrix;
     float *pafLine = reinterpret_cast<float *>(pImage);
 
-    if (poGDS->nInterleave == BIP)
+    if (poGDS->eInterleave == RawDataset::Interleave::BIP)
     {
         step = 16;
         m11 = M11;

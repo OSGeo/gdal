@@ -4255,7 +4255,7 @@ OGRErr OGRSQLiteBaseDataSource::SoftRollbackTransaction()
 OGRErr OGRSQLiteBaseDataSource::StartSavepoint(const std::string &osName)
 {
 
-    // A SAVEPOINT implicity starts a transaction, let's fake one
+    // A SAVEPOINT implicitly starts a transaction, let's fake one
     if (!IsInTransaction())
     {
         m_bImplicitTransactionOpened = true;

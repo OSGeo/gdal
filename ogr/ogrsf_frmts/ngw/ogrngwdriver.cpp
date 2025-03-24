@@ -6,38 +6,53 @@
  *******************************************************************************
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2018-2020, NextGIS <info@nextgis.com>
+ *  Copyright (c) 2018-2025, NextGIS <info@nextgis.com>
  *
  * SPDX-License-Identifier: MIT
  *******************************************************************************/
 
 #include "ogr_ngw.h"
 
+// #include <gdalsubdatasetinfo.h>
+
 /*
  * GetHeaders()
  */
-static char **GetHeaders(const std::string &osUserPwdIn = "")
+static CPLStringList GetHeaders(const std::string &osUserPwdIn = "",
+                                const std::string &osConnectTimeout = "",
+                                const std::string &osTimeout = "",
+                                const std::string &osRetryCount = "",
+                                const std::string &osRetryDelay = "")
 {
-    char **papszOptions = nullptr;
-    papszOptions = CSLAddString(papszOptions, "HEADERS=Accept: */*");
-    std::string osUserPwd;
-    if (osUserPwdIn.empty())
+    CPLStringList aosHTTPOptions;
+    aosHTTPOptions.AddString("HEADERS=Accept: */*");
+    if (!osUserPwdIn.empty())
     {
-        osUserPwd = CPLGetConfigOption("NGW_USERPWD", "");
-    }
-    else
-    {
-        osUserPwd = osUserPwdIn;
+        aosHTTPOptions.AddString("HTTPAUTH=BASIC");
+        std::string osUserPwdOption("USERPWD=");
+        osUserPwdOption += osUserPwdIn;
+        aosHTTPOptions.AddString(osUserPwdOption.c_str());
     }
 
-    if (!osUserPwd.empty())
+    if (!osConnectTimeout.empty())
     {
-        papszOptions = CSLAddString(papszOptions, "HTTPAUTH=BASIC");
-        std::string osUserPwdOption("USERPWD=");
-        osUserPwdOption += osUserPwd;
-        papszOptions = CSLAddString(papszOptions, osUserPwdOption.c_str());
+        aosHTTPOptions.AddNameValue("CONNECTTIMEOUT", osConnectTimeout.c_str());
     }
-    return papszOptions;
+
+    if (!osTimeout.empty())
+    {
+        aosHTTPOptions.AddNameValue("TIMEOUT", osTimeout.c_str());
+    }
+
+    if (!osRetryCount.empty())
+    {
+        aosHTTPOptions.AddNameValue("MAX_RETRY", osRetryCount.c_str());
+    }
+    if (!osRetryDelay.empty())
+    {
+        aosHTTPOptions.AddNameValue("RETRY_DELAY", osRetryDelay.c_str());
+    }
+    return aosHTTPOptions;
 }
 
 /*
@@ -119,9 +134,15 @@ OGRNGWDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     CPLJSONObject oParent("parent", oResource);
     oParent.Add("id", atoi(stUri.osResourceId.c_str()));
 
+    std::string osConnectTimeout =
+        CSLFetchNameValueDef(papszOptions, "CONNECTTIMEOUT",
+                             CPLGetConfigOption("NGW_CONNECTTIMEOUT", ""));
+    std::string osTimeout = CSLFetchNameValueDef(
+        papszOptions, "TIMEOUT", CPLGetConfigOption("NGW_TIMEOUT", ""));
+
     std::string osNewResourceId = NGWAPI::CreateResource(
         stUri.osAddress, oPayload.Format(CPLJSONObject::PrettyFormat::Plain),
-        GetHeaders(osUserPwd));
+        GetHeaders(osUserPwd, osConnectTimeout, osTimeout));
     if (osNewResourceId == "-1")
     {
         return nullptr;
@@ -146,16 +167,17 @@ static CPLErr OGRNGWDriverDelete(const char *pszName)
 {
     NGWAPI::Uri stUri = NGWAPI::ParseUri(pszName);
     CPLErrorReset();
-    if (!stUri.osNewResourceName.empty())
-    {
-        CPLError(CE_Warning, CPLE_NotSupported,
-                 "Cannot delete new resource with name %s", pszName);
-        return CE_Failure;
-    }
 
     if (stUri.osPrefix != "NGW")
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported name %s", pszName);
+        return CE_Failure;
+    }
+
+    if (!stUri.osNewResourceName.empty())
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Cannot delete new resource with name %s", pszName);
         return CE_Failure;
     }
 
@@ -165,19 +187,19 @@ static CPLErr OGRNGWDriverDelete(const char *pszName)
         return CE_Failure;
     }
 
-    char **papszOptions = GetHeaders();
-    // NGWAPI::Permissions stPermissions =
-    // NGWAPI::CheckPermissions(stUri.osAddress,
-    //     stUri.osResourceId, papszOptions, true);
-    // if( stPermissions.bResourceCanDelete )
-    // {
+    std::string osUserPwd = CPLGetConfigOption("NGW_USERPWD", "");
+    std::string osConnectTimeout = CPLGetConfigOption("NGW_CONNECTTIMEOUT", "");
+    std::string osTimeout = CPLGetConfigOption("NGW_TIMEOUT", "");
+    std::string osRetryCount = CPLGetConfigOption("NGW_MAX_RETRY", "");
+    std::string osRetryDelay = CPLGetConfigOption("NGW_RETRY_DELAY", "");
+
+    auto aosHTTPOptions = GetHeaders(osUserPwd, osConnectTimeout, osTimeout,
+                                     osRetryCount, osRetryDelay);
+
     return NGWAPI::DeleteResource(stUri.osAddress, stUri.osResourceId,
-                                  papszOptions)
+                                  aosHTTPOptions)
                ? CE_None
                : CE_Failure;
-    // }
-    // CPLError(CE_Failure, CPLE_AppDefined, "Operation not permitted.");
-    // return CE_Failure;
 }
 
 /*
@@ -195,19 +217,20 @@ static CPLErr OGRNGWDriverRename(const char *pszNewName, const char *pszOldName)
     }
     CPLDebug("NGW", "Parse uri result. URL: %s, ID: %s, New name: %s",
              stUri.osAddress.c_str(), stUri.osResourceId.c_str(), pszNewName);
-    char **papszOptions = GetHeaders();
-    // NGWAPI::Permissions stPermissions =
-    // NGWAPI::CheckPermissions(stUri.osAddress,
-    //     stUri.osResourceId, papszOptions, true);
-    // if( stPermissions.bResourceCanUpdate )
-    // {
+
+    std::string osUserPwd = CPLGetConfigOption("NGW_USERPWD", "");
+    std::string osConnectTimeout = CPLGetConfigOption("NGW_CONNECTTIMEOUT", "");
+    std::string osTimeout = CPLGetConfigOption("NGW_TIMEOUT", "");
+    std::string osRetryCount = CPLGetConfigOption("NGW_MAX_RETRY", "");
+    std::string osRetryDelay = CPLGetConfigOption("NGW_RETRY_DELAY", "");
+
+    auto aosHTTPOptions = GetHeaders(osUserPwd, osConnectTimeout, osTimeout,
+                                     osRetryCount, osRetryDelay);
+
     return NGWAPI::RenameResource(stUri.osAddress, stUri.osResourceId,
-                                  pszNewName, papszOptions)
+                                  pszNewName, aosHTTPOptions)
                ? CE_None
                : CE_Failure;
-    // }
-    // CPLError(CE_Failure, CPLE_AppDefined, "Operation not permitted.");
-    // return CE_Failure;
 }
 
 /*
@@ -227,44 +250,6 @@ static GDALDataset *OGRNGWDriverCreateCopy(const char *pszFilename,
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported name %s",
                  pszFilename);
         return nullptr;
-    }
-
-    // NGW v3.1 supported different raster types: 1 band and 16/32 bit, RGB/RGBA
-    // rasters and etc.
-    // For RGB/RGBA rasters we can create default raster_style.
-    // For other types - qml style file path is mandatory.
-    std::string osQMLPath =
-        CSLFetchNameValueDef(papszOptions, "RASTER_QML_PATH", "");
-
-    // Check bands count.
-    const int nBands = poSrcDS->GetRasterCount();
-    if (nBands < 3 || nBands > 4)
-    {
-        if (osQMLPath.empty())
-        {
-            CPLError(
-                CE_Failure, CPLE_NotSupported,
-                "Default NGW raster style supports only 3 (RGB) or 4 (RGBA). "
-                "Raster has %d bands. You must provide QML file with raster "
-                "style.",
-                nBands);
-            return nullptr;
-        }
-    }
-
-    // Check band data type.
-    if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
-    {
-        if (osQMLPath.empty())
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Default NGW raster style supports only 8 bit byte bands. "
-                     "Raster has data type %s. You must provide QML file with "
-                     "raster style.",
-                     GDALGetDataTypeName(
-                         poSrcDS->GetRasterBand(1)->GetRasterDataType()));
-            return nullptr;
-        }
     }
 
     bool bCloseDS = false;
@@ -314,6 +299,10 @@ static GDALDataset *OGRNGWDriverCreateCopy(const char *pszFilename,
         }
     }
 
+    // Check bands count.
+    auto nBands = poSrcDS->GetRasterCount();
+    auto nDataType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+
     if (bCloseDS)
     {
         GDALClose((GDALDatasetH)poSrcDS);
@@ -326,10 +315,21 @@ static GDALDataset *OGRNGWDriverCreateCopy(const char *pszFilename,
     std::string osStyleName =
         CSLFetchNameValueDef(papszOptions, "RASTER_STYLE_NAME", "");
 
+    std::string osConnectTimeout =
+        CSLFetchNameValueDef(papszOptions, "CONNECTTIMEOUT",
+                             CPLGetConfigOption("NGW_CONNECTTIMEOUT", ""));
+    std::string osTimeout = CSLFetchNameValueDef(
+        papszOptions, "TIMEOUT", CPLGetConfigOption("NGW_TIMEOUT", ""));
+    std::string osRetryCount = CSLFetchNameValueDef(
+        papszOptions, "MAX_RETRY", CPLGetConfigOption("NGW_MAX_RETRY", ""));
+    std::string osRetryDelay = CSLFetchNameValueDef(
+        papszOptions, "RETRY_DELAY", CPLGetConfigOption("NGW_RETRY_DELAY", ""));
+
     // Send file
-    char **papszHTTPOptions = GetHeaders(osUserPwd);
+    auto aosHTTPOptions = GetHeaders(osUserPwd, osConnectTimeout, osTimeout,
+                                     osRetryCount, osRetryDelay);
     CPLJSONObject oFileJson =
-        NGWAPI::UploadFile(stUri.osAddress, osFilename, papszHTTPOptions,
+        NGWAPI::UploadFile(stUri.osAddress, osFilename, aosHTTPOptions,
                            pfnProgress, pProgressData);
 
     if (bCloseDS)  // Delete temp tiff file.
@@ -375,12 +375,11 @@ static GDALDataset *OGRNGWDriverCreateCopy(const char *pszFilename,
     CPLJSONObject oSrs("srs", oRasterLayer);
     oSrs.Add("id", 3857);  // Now only Web Mercator supported.
 
-    papszHTTPOptions = GetHeaders(osUserPwd);
-    std::string osNewResourceId = NGWAPI::CreateResource(
+    auto osRasterResourceId = NGWAPI::CreateResource(
         stUri.osAddress,
         oPayloadRaster.Format(CPLJSONObject::PrettyFormat::Plain),
-        papszHTTPOptions);
-    if (osNewResourceId == "-1")
+        aosHTTPOptions);
+    if (osRasterResourceId == "-1")
     {
         return nullptr;
     }
@@ -388,18 +387,38 @@ static GDALDataset *OGRNGWDriverCreateCopy(const char *pszFilename,
     // Create raster style
     CPLJSONObject oPayloadRasterStyle;
     CPLJSONObject oResourceStyle("resource", oPayloadRasterStyle);
+
+    // NGW v3.1 supported different raster types: 1 band and 16/32 bit, RGB/RGBA
+    // rasters and etc.
+    // For RGB/RGBA rasters we can create default raster_style.
+    // For other types - qml style file path is mandatory.
+    std::string osQMLPath =
+        CSLFetchNameValueDef(papszOptions, "RASTER_QML_PATH", "");
+
+    bool bCreateStyle = true;
     if (osQMLPath.empty())
     {
-        oResourceStyle.Add("cls", "raster_style");
+        if ((nBands == 3 || nBands == 4) && nDataType == GDT_Byte)
+        {
+            oResourceStyle.Add("cls", "raster_style");
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Default NGW raster style supports only 3 (RGB) or 4 "
+                     "(RGBA) and 8 "
+                     "bit byte bands. Raster has %d bands and data type %s",
+                     nBands, GDALGetDataTypeName(nDataType));
+            bCreateStyle = false;
+        }
     }
     else
     {
         oResourceStyle.Add("cls", "qgis_raster_style");
 
         // Upload QML file
-        papszHTTPOptions = GetHeaders(osUserPwd);
         oFileJson =
-            NGWAPI::UploadFile(stUri.osAddress, osQMLPath, papszHTTPOptions,
+            NGWAPI::UploadFile(stUri.osAddress, osQMLPath, aosHTTPOptions,
                                pfnProgress, pProgressData);
         oUploadMeta = oFileJson.GetArray("upload_meta");
         if (!oUploadMeta.IsValid() || oUploadMeta.Size() == 0)
@@ -414,27 +433,29 @@ static GDALDataset *OGRNGWDriverCreateCopy(const char *pszFilename,
         oQGISRasterStyle.Add("file_upload", oUploadMeta[0]);
     }
 
-    if (osStyleName.empty())
+    if (bCreateStyle)
     {
-        osStyleName = stUri.osNewResourceName;
-    }
-    oResourceStyle.Add("display_name", osStyleName);
-    CPLJSONObject oParentRaster("parent", oResourceStyle);
-    oParentRaster.Add("id", atoi(osNewResourceId.c_str()));
+        if (osStyleName.empty())
+        {
+            osStyleName = stUri.osNewResourceName;
+        }
+        oResourceStyle.Add("display_name", osStyleName);
+        CPLJSONObject oParentRaster("parent", oResourceStyle);
+        oParentRaster.Add("id", atoi(osRasterResourceId.c_str()));
 
-    papszHTTPOptions = GetHeaders(osUserPwd);
-    osNewResourceId = NGWAPI::CreateResource(
-        stUri.osAddress,
-        oPayloadRasterStyle.Format(CPLJSONObject::PrettyFormat::Plain),
-        papszHTTPOptions);
-    if (osNewResourceId == "-1")
-    {
-        return nullptr;
+        auto osStyleResourceId = NGWAPI::CreateResource(
+            stUri.osAddress,
+            oPayloadRasterStyle.Format(CPLJSONObject::PrettyFormat::Plain),
+            aosHTTPOptions);
+        if (osStyleResourceId == "-1")
+        {
+            return nullptr;
+        }
     }
 
     OGRNGWDataset *poDS = new OGRNGWDataset();
 
-    if (!poDS->Open(stUri.osAddress, osNewResourceId, papszOptions, true,
+    if (!poDS->Open(stUri.osAddress, osRasterResourceId, papszOptions, true,
                     GDAL_OF_RASTER))
     {
         delete poDS;
@@ -464,6 +485,7 @@ void RegisterOGRNGW()
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_DELETE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_DELETE_FIELD, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/ngw.html");
     poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, "NGW:");
@@ -472,8 +494,12 @@ void RegisterOGRNGW()
                               "NATIVE OGRSQL SQLITE");
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte");
-    poDriver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name");
+    poDriver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,
+                              "Name AlternativeName Domain");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
+                              "AlternativeName Domain");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_FIELD_DOMAINS, "YES");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
@@ -506,6 +532,19 @@ void RegisterOGRNGW()
         "   <Option name='EXTENSIONS' scope='vector' type='string' "
         "description='Comma separated extensions list. Available are "
         "description and attachment' default=''/>"
+        "   <Option name='CONNECTTIMEOUT' scope='raster,vector' type='integer' "
+        "description='Maximum delay for the connection to be established "
+        "before "
+        "being aborted in seconds'/>"
+        "   <Option name='TIMEOUT' scope='raster,vector' type='integer' "
+        "description='Maximum delay for the whole request to complete before "
+        "being aborted in seconds'/>"
+        "   <Option name='MAX_RETRY' scope='raster,vector' type='integer' "
+        "description='Maximum number of retry attempts if a 429, 502, 503 or "
+        "504 "
+        "HTTP error occurs'/>"
+        "   <Option name='RETRY_DELAY' scope='raster,vector' type='integer' "
+        "description='Number of seconds between retry attempts'/>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(
@@ -548,6 +587,19 @@ void RegisterOGRNGW()
         "   <Option name='EXTENSIONS' scope='vector' type='string' "
         "description='Comma separated extensions list. Available are "
         "description and attachment' default=''/>"
+        "   <Option name='CONNECTTIMEOUT' scope='raster,vector' type='integer' "
+        "description='Maximum delay for the connection to be established "
+        "before "
+        "being aborted in seconds'/>"
+        "   <Option name='TIMEOUT' scope='raster,vector' type='integer' "
+        "description='Maximum delay for the whole request to complete before "
+        "being aborted in seconds'/>"
+        "   <Option name='MAX_RETRY' scope='raster,vector' type='integer' "
+        "description='Maximum number of retry attempts if a 429, 502, 503 or "
+        "504 "
+        "HTTP error occurs'/>"
+        "   <Option name='RETRY_DELAY' scope='raster,vector' type='integer' "
+        "description='Number of seconds between retry attempts'/>"
         "</CreationOptionList>");
 
     poDriver->SetMetadataItem(
@@ -570,6 +622,7 @@ void RegisterOGRNGW()
     poDriver->SetMetadataItem(GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_RENAME_LAYERS, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES, "Coded");
 
     poDriver->pfnOpen = OGRNGWDriverOpen;
     poDriver->pfnIdentify = OGRNGWDriverIdentify;

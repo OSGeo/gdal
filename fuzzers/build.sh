@@ -346,7 +346,7 @@ if [ "$ARCHITECTURE" = "x86_64" ]; then
 fi
 # poppler related
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lpoppler -ljpeg -lfreetype -lfontconfig -lpng"
-export EXTRA_LIBS="$EXTRA_LIBS -Wl,-Bdynamic -ldl -lpthread"
+export EXTRA_LIBS="$EXTRA_LIBS -Wl,-Bdynamic -ldl -lpthread -lclang_rt.builtins"
 
 # to find sqlite3.h
 export CXXFLAGS="$CXXFLAGS -I$SRC/install/include"

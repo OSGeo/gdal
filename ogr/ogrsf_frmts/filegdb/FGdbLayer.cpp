@@ -1027,13 +1027,13 @@ void FGdbLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                         SetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void FGdbLayer::SetSpatialFilter(OGRGeometry *pOGRGeom)
+OGRErr FGdbLayer::ISetSpatialFilter(int iGeomField, const OGRGeometry *pOGRGeom)
 {
     m_bFilterDirty = true;
-    OGRLayer::SetSpatialFilter(pOGRGeom);
+    return OGRLayer::ISetSpatialFilter(iGeomField, pOGRGeom);
 }
 
 /************************************************************************/
@@ -1508,10 +1508,10 @@ const char *FGdbLayer::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr FGdbLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr FGdbLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent, bool bForce)
 {
     if (m_pTable == nullptr)
         return OGRERR_FAILURE;
@@ -1528,7 +1528,7 @@ OGRErr FGdbLayer::GetExtent(OGREnvelope *psExtent, int bForce)
                 m_pFeatureDefn->GetFieldDefn(i)->IsIgnored();
             m_pFeatureDefn->GetFieldDefn(i)->SetIgnored(TRUE);
         }
-        OGRErr eErr = OGRLayer::GetExtent(psExtent, bForce);
+        OGRErr eErr = OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
         for (int i = 0; i < nFieldCount; i++)
         {
             m_pFeatureDefn->GetFieldDefn(i)->SetIgnored(pabSaveFieldIgnored[i]);

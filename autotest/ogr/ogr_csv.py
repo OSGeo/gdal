@@ -3483,6 +3483,22 @@ def test_ogr_schema_override_wkt(tmp_vsimem):
 
 
 ###############################################################################
+# Test reading CSV with unbalanced double-quotes
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_csv_unbalanced_double_quotes():
+
+    with ogr.Open("data/csv/unbalanced_double_quotes.csv") as ds:
+        lyr = ds.GetLayer(0)
+        with pytest.raises(
+            Exception,
+            match="CSV file has unbalanced number of double-quotes. Corrupted data will likely be returned",
+        ):
+            lyr.GetNextFeature()
+
+
+###############################################################################
 
 
 if __name__ == "__main__":

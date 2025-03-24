@@ -279,23 +279,13 @@ OGRErr OGRAmigoCloudTableLayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRAmigoCloudTableLayer::SetSpatialFilter(int iGeomField,
-                                               OGRGeometry *poGeomIn)
+OGRErr OGRAmigoCloudTableLayer::ISetSpatialFilter(int iGeomField,
+                                                  const OGRGeometry *poGeomIn)
 
 {
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone)
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return;
-    }
     m_iGeomFieldFilter = iGeomField;
 
     if (InstallFilter(poGeomIn))
@@ -304,6 +294,7 @@ void OGRAmigoCloudTableLayer::SetSpatialFilter(int iGeomField,
 
         ResetReading();
     }
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -885,31 +876,20 @@ GIntBig OGRAmigoCloudTableLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /*                                                                      */
 /*      For PostGIS use internal Extend(geometry) function              */
 /*      in other cases we use standard OGRLayer::GetExtent()            */
 /************************************************************************/
 
-OGRErr OGRAmigoCloudTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                          int bForce)
+OGRErr OGRAmigoCloudTableLayer::IGetExtent(int iGeomField,
+                                           OGREnvelope *psExtent, bool bForce)
 {
     CPLString osSQL;
 
     if (bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE)
         return OGRERR_FAILURE;
     FlushDeferredInsert();
-
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone)
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return OGRERR_FAILURE;
-    }
 
     OGRGeomFieldDefn *poGeomFieldDefn =
         poFeatureDefn->GetGeomFieldDefn(iGeomField);
@@ -986,10 +966,7 @@ OGRErr OGRAmigoCloudTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
     if (poObj != nullptr)
         json_object_put(poObj);
 
-    if (iGeomField == 0)
-        return OGRLayer::GetExtent(psExtent, bForce);
-    else
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

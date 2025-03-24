@@ -22,9 +22,6 @@ with big images (which are limited to 16383x16383 pixels).
 
 The WEBP driver supports 3 bands (RGB) images. It also supports 4 bands (RGBA)
 
-The WEBP driver can be used as the internal format used by the
-:ref:`raster.rasterlite` driver.
-
 XMP metadata can be extracted from the file,
 and will be stored as XML raw content in the xml:XMP metadata domain.
 

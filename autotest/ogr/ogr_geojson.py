@@ -648,7 +648,8 @@ def test_ogr_geojson_23(tmp_vsimem):
     lyr.CreateFeature(feat)
     assert lyr.GetExtent() == (1.0, 2.0, 10.0, 20.0)
     assert lyr.GetExtent(geom_field=0) == (1.0, 2.0, 10.0, 20.0)
-    assert lyr.GetExtent(geom_field=1, can_return_null=True) is None
+    with gdaltest.disable_exceptions():
+        assert lyr.GetExtent(geom_field=1, can_return_null=True) is None
     lyr = None
     ds = None
 

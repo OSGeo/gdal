@@ -370,6 +370,69 @@ def test_vsigs_GDAL_HTTP_HEADERS(gs_test_config, webserver_port):
 
 
 ###############################################################################
+# Test re-opening after changing configuration option (#11964)
+
+
+def test_vsigs_open_after_config_option_change(gs_test_config, webserver_port):
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options(
+        {
+            "GS_SECRET_ACCESS_KEY": "GS_SECRET_ACCESS_KEY",
+            "GS_ACCESS_KEY_ID": "GS_ACCESS_KEY_ID",
+        },
+        thread_local=False,
+    ):
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET", "/test_vsigs_open_after_config_option_change/?delimiter=%2F", 403
+        )
+        handler.add("GET", "/test_vsigs_open_after_config_option_change/test.bin", 403)
+        with webserver.install_http_handler(handler):
+            with gdal.quiet_errors():
+                f = open_for_read(
+                    "/vsigs/test_vsigs_open_after_config_option_change/test.bin"
+                )
+            assert f is None
+
+    # Does not attempt any network access since we didn't change significant
+    # parameters
+    f = open_for_read("/vsigs/test_vsigs_open_after_config_option_change/test.bin")
+    assert f is None
+
+    with gdaltest.config_options(
+        {
+            "GS_SECRET_ACCESS_KEY": "GS_SECRET_ACCESS_KEY",
+            "GS_ACCESS_KEY_ID": "another_key_id",
+        },
+        thread_local=False,
+    ):
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/test_vsigs_open_after_config_option_change/?delimiter=%2F",
+            200,
+            {"Content-type": "application/xml"},
+            """<?xml version="1.0" encoding="UTF-8"?>
+                        <ListBucketResult>
+                            <Prefix></Prefix>
+                            <Contents>
+                                <Key>test.bin</Key>
+                                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                                <Size>123456</Size>
+                            </Contents>
+                        </ListBucketResult>
+                    """,
+        )
+        with webserver.install_http_handler(handler):
+            f = open_for_read(
+                "/vsigs/test_vsigs_open_after_config_option_change/test.bin"
+            )
+            assert f is not None
+            gdal.VSIFCloseL(f)
+
+
+###############################################################################
 # Test ReadDir() with a fake Google Cloud Storage server
 
 

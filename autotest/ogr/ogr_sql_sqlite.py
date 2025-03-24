@@ -2473,7 +2473,7 @@ def test_ogr_sql_sqlite_execute_sql_error_on_spatial_filter_mem_layer():
     ds.CreateLayer("test")
     geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))")
     with pytest.raises(
-        Exception, match="Cannot set spatial filter: no geometry field selected"
+        Exception, match="Cannot set spatial filter: no geometry field present in layer"
     ):
         ds.ExecuteSQL("SELECT 1 FROM test", spatialFilter=geom, dialect="SQLITE")
 
@@ -2490,6 +2490,6 @@ def test_ogr_sql_sqlite_execute_sql_error_on_spatial_filter_shp_layer(tmp_vsimem
     ds.CreateLayer("test")
     geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))")
     with pytest.raises(
-        Exception, match="Cannot set spatial filter: no geometry field selected"
+        Exception, match="Cannot set spatial filter: no geometry field present in layer"
     ):
         ds.ExecuteSQL("SELECT 1 FROM test", spatialFilter=geom, dialect="SQLITE")

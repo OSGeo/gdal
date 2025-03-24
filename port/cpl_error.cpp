@@ -1112,6 +1112,20 @@ void CPL_STDCALL CPLQuietErrorHandler(CPLErr eErrClass, CPLErrorNum nError,
 }
 
 /************************************************************************/
+/*                    CPLQuietWarningsErrorHandler()                    */
+/************************************************************************/
+
+/** Error handler that ignores CE_Warning messages. */
+void CPL_STDCALL CPLQuietWarningsErrorHandler(CPLErr eErrClass,
+                                              CPLErrorNum nError,
+                                              const char *pszErrorMsg)
+
+{
+    if (eErrClass != CE_Warning)
+        CPLDefaultErrorHandler(eErrClass, nError, pszErrorMsg);
+}
+
+/************************************************************************/
 /*                       CPLLoggingErrorHandler()                       */
 /************************************************************************/
 
@@ -1536,30 +1550,6 @@ bool CPLIsDefaultErrorHandlerAndCatchDebug()
 }
 
 /************************************************************************/
-/*                       CPLErrorHandlerAccumulator()                   */
-/************************************************************************/
-
-static void CPL_STDCALL CPLErrorHandlerAccumulator(CPLErr eErr, CPLErrorNum no,
-                                                   const char *msg)
-{
-    std::vector<CPLErrorHandlerAccumulatorStruct> *paoErrors =
-        static_cast<std::vector<CPLErrorHandlerAccumulatorStruct> *>(
-            CPLGetErrorHandlerUserData());
-    paoErrors->push_back(CPLErrorHandlerAccumulatorStruct(eErr, no, msg));
-}
-
-void CPLInstallErrorHandlerAccumulator(
-    std::vector<CPLErrorHandlerAccumulatorStruct> &aoErrors)
-{
-    CPLPushErrorHandlerEx(CPLErrorHandlerAccumulator, &aoErrors);
-}
-
-void CPLUninstallErrorHandlerAccumulator()
-{
-    CPLPopErrorHandler();
-}
-
-/************************************************************************/
 /*               CPLErrorStateBackuper::CPLErrorStateBackuper()         */
 /************************************************************************/
 
@@ -1583,3 +1573,57 @@ CPLErrorStateBackuper::~CPLErrorStateBackuper()
     CPLErrorSetState(m_nLastErrorType, m_nLastErrorNum,
                      m_osLastErrorMsg.c_str(), &m_nLastErrorCounter);
 }
+
+/*! @cond Doxygen_Suppress */
+
+/************************************************************************/
+/*                CPLErrorAccumulator::Context::~Context()              */
+/************************************************************************/
+
+CPLErrorAccumulator::Context::~Context()
+{
+    CPLPopErrorHandler();
+}
+
+/************************************************************************/
+/*             CPLErrorAccumulator::InstallForCurrentScope()            */
+/************************************************************************/
+
+CPLErrorAccumulator::Context CPLErrorAccumulator::InstallForCurrentScope()
+{
+    CPLPushErrorHandlerEx(CPLErrorAccumulator::Accumulator, this);
+    return CPLErrorAccumulator::Context();
+}
+
+/************************************************************************/
+/*                    CPLErrorAccumulator::ReplayErrors()               */
+/************************************************************************/
+
+void CPLErrorAccumulator::ReplayErrors()
+{
+    std::lock_guard oLock(mutex);
+    for (const auto &err : errors)
+    {
+        CPLError(err.type, err.no, "%s", err.msg.c_str());
+    }
+}
+
+/************************************************************************/
+/*                 CPLErrorAccumulator::Accumulator()                   */
+/************************************************************************/
+
+/* static */ void CPL_STDCALL CPLErrorAccumulator::Accumulator(CPLErr eErr,
+                                                               CPLErrorNum no,
+                                                               const char *msg)
+{
+    if (eErr != CE_Debug)
+    {
+        CPLErrorAccumulator *pThis =
+            static_cast<CPLErrorAccumulator *>(CPLGetErrorHandlerUserData());
+        std::lock_guard oLock(pThis->mutex);
+        pThis->errors.push_back(
+            CPLErrorHandlerAccumulatorStruct(eErr, no, msg));
+    }
+}
+
+/*! @endcond */

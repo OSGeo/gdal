@@ -173,7 +173,7 @@ Vector commands
     gdal vector filter --bbox=2,49,3,50 in.gpkg out.gpkg
 
 
-*  Selecting features from a GeoPackage file intersecting a bounding box, but not clipping them to it and reprojecting
+*  Selecting features from a shapefile intersecting a bounding box, but not clipping them to it and reprojecting
 
 .. code-block::
 
@@ -182,3 +182,14 @@ Vector commands
     ==>
 
     gdal vector pipeline read in.gpkg ! filter --bbox=2,49,3,50 ! reproject --dst-crs=EPSG:32631 ! write out.gpkg
+
+
+* Selecting features from a shapefile based on an attribute query, and restricting to a few fields
+
+.. code-block::
+
+    ogr2ogr -where "country='Greenland'" -select population,_ogr_geometry_ out.gpkg in.shp
+
+    ==>
+
+    gdal vector pipeline ! read in.shp ! filter --where "country='Greenland'" ! select --fields population,_ogr_geometry_ ! write out.gpkg

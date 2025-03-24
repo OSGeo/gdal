@@ -127,6 +127,8 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, CPLErrorNum err_no, const c
     CPLErrorHandler pfnHandler = NULL;
     if( pszCallbackName == NULL || EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
       pfnHandler = CPLQuietErrorHandler;
+    else if( EQUAL(pszCallbackName,"CPLQuietWarningsErrorHandler") )
+      pfnHandler = CPLQuietWarningsErrorHandler;
     else if( EQUAL(pszCallbackName,"CPLDefaultErrorHandler") )
       pfnHandler = CPLDefaultErrorHandler;
     else if( EQUAL(pszCallbackName,"CPLLoggingErrorHandler") )

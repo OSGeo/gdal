@@ -51,8 +51,8 @@ Scope
   identifying issues reported by Continuous Integration, asking for new tests
   to be developed whenever possible, etc. When the contributor is not in capacity
   to polish his/her contribution, the co-maintainer may do it themself.
-- Ensuring that fixes that are appropriate for backporting in stable branche(s)
-  are backported.
+- Ensuring that fixes that are appropriate for backporting in stable branch /
+  branches are backported.
 - Monitoring of project communication channels (mailing list, IRC, Slack
   channels, etc.). The co-maintainer will in particular identify issues that are
   reported through those means and ensures that they are captured by a

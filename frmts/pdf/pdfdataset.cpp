@@ -171,7 +171,7 @@ class GDALPDFOutputDev : public SplashOutputDev
                                            invert, interpolate, inlineImg);
         else
         {
-            str->reset();
+            VSIPDFFileStream::resetNoCheckReturnValue(str);
             if (inlineImg)
             {
                 skipBytes(str, width, height, 1, 1);
@@ -209,7 +209,7 @@ class GDALPDFOutputDev : public SplashOutputDev
                                        interpolate, maskColors, inlineImg);
         else
         {
-            str->reset();
+            VSIPDFFileStream::resetNoCheckReturnValue(str);
             if (inlineImg)
             {
                 skipBytes(str, width, height, colorMap->getNumPixelComps(),
@@ -1527,30 +1527,26 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
                           const CFX_Matrix *pObject2Device,
                           const CFX_GraphStateData *pGraphState,
                           uint32_t fill_color, uint32_t stroke_color,
-                          const CFX_FillRenderOptions &fill_options,
-                          BlendMode blend_type) override
+                          const CFX_FillRenderOptions &fill_options) override
     {
         if (!bEnableVector && !bTemporaryEnableVectorForTextStroking)
             return true;
         return m_poParent->DrawPath(path, pObject2Device, pGraphState,
-                                    fill_color, stroke_color, fill_options,
-                                    blend_type);
+                                    fill_color, stroke_color, fill_options);
     }
 
-    virtual bool FillRectWithBlend(const FX_RECT &rect, uint32_t fill_color,
-                                   BlendMode blend_type) override
+    virtual bool FillRect(const FX_RECT &rect, uint32_t fill_color) override
     {
-        return m_poParent->FillRectWithBlend(rect, fill_color, blend_type);
+        return m_poParent->FillRect(rect, fill_color);
     }
 
     virtual bool DrawCosmeticLine(const CFX_PointF &ptMoveTo,
-                                  const CFX_PointF &ptLineTo, uint32_t color,
-                                  BlendMode blend_typeL) override
+                                  const CFX_PointF &ptLineTo,
+                                  uint32_t color) override
     {
         if (!bEnableVector && !bTemporaryEnableVectorForTextStroking)
             return TRUE;
-        return m_poParent->DrawCosmeticLine(ptMoveTo, ptLineTo, color,
-                                            blend_typeL);
+        return m_poParent->DrawCosmeticLine(ptMoveTo, ptLineTo, color);
     }
 
     virtual FX_RECT GetClipBox() const override
@@ -1964,6 +1960,14 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
         PDFDoc *poDoc = m_poDocPoppler;
         poSplashOut->startDoc(poDoc);
 
+        // Note: Poppler 25.2 is certainly not the lowest version where we can
+        // avoid the hack.
+#if !(POPPLER_MAJOR_VERSION > 25 ||                                            \
+      (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2))
+#define USE_OPTCONTENT_HACK
+#endif
+
+#ifdef USE_OPTCONTENT_HACK
         /* EVIL: we modify a private member... */
         /* poppler (at least 0.12 and 0.14 versions) don't render correctly */
         /* some PDFs and display an error message 'Could not find a OCG with
@@ -1978,6 +1982,7 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
         OCGs *poOldOCGs = poCatalog->optContent;
         if (!m_bUseOCG)
             poCatalog->optContent = nullptr;
+#endif
         try
         {
             poDoc->displayPageSlice(poSplashOut, m_iPage, m_dfDPI, m_dfDPI, 0,
@@ -1988,14 +1993,19 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "PDFDoc::displayPageSlice() failed with %s", e.what());
+
+#ifdef USE_OPTCONTENT_HACK
             /* Restore back */
             poCatalog->optContent = poOldOCGs;
+#endif
             delete poSplashOut;
             return CE_Failure;
         }
 
+#ifdef USE_OPTCONTENT_HACK
         /* Restore back */
         poCatalog->optContent = poOldOCGs;
+#endif
 
         SplashBitmap *poBitmap = poSplashOut->getBitmap();
         if (poBitmap->getWidth() != nReqXSize ||
@@ -3734,9 +3744,14 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
                 }
                 else
                     osCurLayer = std::move(osName);
-                // CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
+                    // CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
 
-                OCGs *optContentConfig = m_poDocPoppler->getOptContentConfig();
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+                const
+#endif
+                    OCGs *optContentConfig =
+                        m_poDocPoppler->getOptContentConfig();
                 struct Ref r;
                 r.num = poObj->GetRefNum().toInt();
                 r.gen = poObj->GetRefGen();
@@ -3772,11 +3787,19 @@ void PDFDataset::FindLayersPoppler(int iPageOfInterest)
     if (poPages)
         nPageCount = poPages->GetLength();
 
-    OCGs *optContentConfig = m_poDocPoppler->getOptContentConfig();
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+    const
+#endif
+        OCGs *optContentConfig = m_poDocPoppler->getOptContentConfig();
     if (optContentConfig == nullptr || !optContentConfig->isOk())
         return;
 
-    Array *array = optContentConfig->getOrderArray();
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+    const
+#endif
+        Array *array = optContentConfig->getOrderArray();
     if (array)
     {
         GDALPDFArray *poArray = GDALPDFCreateArray(array);
@@ -3812,7 +3835,11 @@ void PDFDataset::FindLayersPoppler(int iPageOfInterest)
 
 void PDFDataset::TurnLayersOnOffPoppler()
 {
-    OCGs *optContentConfig = m_poDocPoppler->getOptContentConfig();
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+    const
+#endif
+        OCGs *optContentConfig = m_poDocPoppler->getOptContentConfig();
     if (optContentConfig == nullptr || !optContentConfig->isOk())
         return;
 

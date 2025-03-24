@@ -18,6 +18,7 @@ import shutil
 
 import gdaltest
 import pytest
+from test_py_scripts import run_py_script_as_external_script
 
 from osgeo import gdal, osr
 
@@ -1124,6 +1125,39 @@ def test_misc_gdal_driver_has_open_option(driver_name, open_option, expected):
     driver = gdal.GetDriverByName(driver_name)
     assert driver is not None
     assert driver.HasOpenOption(open_option) == expected
+
+
+###############################################################################
+# Test gdal.quiet_errors() and gdal.quiet_warnings()
+
+
+@pytest.mark.parametrize("context", ("quiet_errors", "quiet_warnings"))
+def test_misc_quiet_errors(tmp_path, context):
+
+    script = f"""
+from osgeo import gdal
+
+with gdal.{context}():
+    gdal.Error(gdal.CE_Debug, gdal.CPLE_AppDefined, "Debug")
+    gdal.Error(gdal.CE_Warning, gdal.CPLE_AppDefined, "Warning")
+    gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "Failure") 
+"""
+
+    with open(tmp_path / "script.py", "w") as f:
+        f.write(script)
+
+    out, err = run_py_script_as_external_script(
+        tmp_path, "script", "", return_stderr=True
+    )
+    if context == "quiet_errors":
+        assert "Debug" in err
+        assert "Warning" not in err
+        assert "Failure" not in err
+
+    if context == "quiet_warnings":
+        assert "Debug" in err
+        assert "Warning" not in err
+        assert "Failure" in err
 
 
 ###############################################################################

@@ -51,10 +51,15 @@
 
 #include <Dict.h>
 
-#define private                                                                \
-    public /* Ugly! Catalog::optContent is private but we need it... */
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
+#include <Catalog.h>
+#else
+/* Ugly! Catalog::optContent is private but we need it for ancient Poppler versions. */
+#define private public
 #include <Catalog.h>
 #undef private
+#endif
 
 #define private public /* Ugly! PDFDoc::str is private but we need it... */
 #include <PDFDoc.h>

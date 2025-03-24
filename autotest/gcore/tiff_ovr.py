@@ -2472,6 +2472,7 @@ def test_tiff_ovr_color_table_bug_3336_bis():
 
 def test_tiff_ovr_nodata_multiband():
 
+    pytest.importorskip("osgeo.gdal_array")
     numpy = pytest.importorskip("numpy")
 
     temp_path = "/vsimem/test.tif"

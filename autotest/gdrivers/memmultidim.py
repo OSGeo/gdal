@@ -2038,6 +2038,10 @@ def test_mem_md_array_get_mask():
     try:
         import numpy
 
+        from osgeo import gdal_array
+
+        str(gdal_array)
+
         has_numpy = True
     except ImportError:
         has_numpy = False

@@ -404,7 +404,7 @@ class GDALPDFObjectPoppler : public GDALPDFObject
     virtual int GetRefGen() override;
 };
 
-GDALPDFArray *GDALPDFCreateArray(Array *array);
+GDALPDFArray *GDALPDFCreateArray(const Array *array);
 
 #endif  // HAVE_POPPLER
 

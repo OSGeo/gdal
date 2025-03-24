@@ -17,9 +17,7 @@ from osgeo import gdal
 
 
 def get_edit_alg():
-    reg = gdal.GetGlobalAlgorithmRegistry()
-    raster = reg.InstantiateAlg("raster")
-    return raster.InstantiateSubAlgorithm("edit")
+    return gdal.GetGlobalAlgorithmRegistry()["raster"]["edit"]
 
 
 def test_gdalalg_raster_edit_read_only(tmp_vsimem):
@@ -28,7 +26,7 @@ def test_gdalalg_raster_edit_read_only(tmp_vsimem):
     gdal.FileFromMemBuffer(tmp_filename, open("../gcore/data/byte.tif", "rb").read())
 
     pipeline = get_edit_alg()
-    pipeline.GetArg("dataset").Set(gdal.OpenEx(tmp_filename))
+    pipeline["dataset"] = gdal.OpenEx(tmp_filename)
     with pytest.raises(
         Exception, match="edit: Dataset should be opened in update mode"
     ):

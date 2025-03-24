@@ -58,13 +58,8 @@ class OGRESRIFeatureServiceLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     GIntBig GetFeatureCount(int bForce = TRUE) override;
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce = true) override;
 
     int TestCapability(const char *pszCap) override;
 
@@ -290,10 +285,12 @@ GIntBig OGRESRIFeatureServiceLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                               GetExtent()                            */
+/*                              IGetExtent()                            */
 /************************************************************************/
 
-OGRErr OGRESRIFeatureServiceLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRESRIFeatureServiceLayer::IGetExtent(int iGeomField,
+                                              OGREnvelope *psExtent,
+                                              bool bForce)
 {
     OGRErr eErr = OGRERR_FAILURE;
     CPLString osNewURL =
@@ -328,7 +325,7 @@ OGRErr OGRESRIFeatureServiceLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     }
     CPLHTTPDestroyResult(pResult);
     if (eErr == OGRERR_FAILURE)
-        eErr = OGRLayer::GetExtent(psExtent, bForce);
+        eErr = OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
     return eErr;
 }
 

@@ -39,6 +39,7 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
         .SetChoices("nearest", "bilinear", "cubic", "cubicspline", "lanczos",
                     "average", "rms", "mode", "min", "max", "med", "q1", "q3",
                     "sum")
+        .SetDefault("nearest")
         .SetHiddenChoices("near");
 
     auto &resArg =
@@ -48,13 +49,14 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
             .SetMaxCount(2)
             .SetRepeatedArgAllowed(false)
             .SetDisplayHintAboutRepetition(false)
-            .SetMetaVar("<xres>,<yres>");
+            .SetMetaVar("<xres>,<yres>")
+            .SetMutualExclusionGroup("resolution-size");
     resArg.AddValidationAction(
         [&resArg]()
         {
             const auto &val = resArg.Get<std::vector<double>>();
             CPLAssert(val.size() == 2);
-            if (!(val[0] >= 0 && val[1] >= 0))
+            if (!(val[0] > 0 && val[1] > 0))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Target resolution should be strictly positive.");
@@ -63,7 +65,31 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
             return true;
         });
 
+    auto &sizeArg = AddArg("size", 0, _("Target size in pixels"), &m_size)
+                        .SetMinCount(2)
+                        .SetMaxCount(2)
+                        .SetRepeatedArgAllowed(false)
+                        .SetDisplayHintAboutRepetition(false)
+                        .SetMetaVar("<width>,<height>")
+                        .SetMutualExclusionGroup("resolution-size");
+    sizeArg.AddValidationAction(
+        [&sizeArg]()
+        {
+            const auto &val = sizeArg.Get<std::vector<int>>();
+            CPLAssert(val.size() == 2);
+            if (!(val[0] >= 0 && val[1] >= 0))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Target size should be positive or 0.");
+                return false;
+            }
+            return true;
+        });
+
     AddBBOXArg(&m_bbox, _("Target bounding box (in destination CRS units)"));
+    AddArg("bbox-crs", 0, _("CRS of target bounding box"), &m_bboxCrs)
+        .SetIsCRSArg()
+        .AddHiddenAlias("bbox_srs");
 
     AddArg("target-aligned-pixels", 0,
            _("Round target extent to target resolution"),
@@ -105,6 +131,12 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
         aosOptions.AddString(CPLSPrintf("%.17g", m_resolution[0]));
         aosOptions.AddString(CPLSPrintf("%.17g", m_resolution[1]));
     }
+    if (!m_size.empty())
+    {
+        aosOptions.AddString("-ts");
+        aosOptions.AddString(CPLSPrintf("%d", m_size[0]));
+        aosOptions.AddString(CPLSPrintf("%d", m_size[1]));
+    }
     if (!m_bbox.empty())
     {
         aosOptions.AddString("-te");
@@ -112,6 +144,11 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
         aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[1]));
         aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[2]));
         aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[3]));
+    }
+    if (!m_bboxCrs.empty())
+    {
+        aosOptions.AddString("-te_srs");
+        aosOptions.AddString(m_bboxCrs.c_str());
     }
     if (m_targetAlignedPixels)
     {

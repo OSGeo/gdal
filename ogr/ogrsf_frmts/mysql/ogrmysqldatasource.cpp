@@ -217,6 +217,7 @@ int OGRMySQLDataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
         CSLDestroy(papszTableNames);
         return FALSE;
     }
+#if defined(LIBMYSQL_VERSION_ID) && (LIBMYSQL_VERSION_ID < 80034)
     else
     {
         // Enable automatic reconnection
@@ -229,6 +230,7 @@ int OGRMySQLDataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
         // and at any point on more recent versions.
         mysql_options(hConn, MYSQL_OPT_RECONNECT, &reconnect);
     }
+#endif
 
     bDSUpdate = bUpdate;
 

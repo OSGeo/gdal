@@ -4,7 +4,6 @@
 // clang-format off
 constexpr static const char* const apszKnownConfigOptions[] =
 {
-   "ADRG_SIMULATE_MULTI_IMG", // from adrgdataset.cpp
    "ALLOW_GPKG_ZOOM_OTHER_EXTENSION", // from ogrgeopackagedatasource.cpp
    "ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW", // from ogrsqlitedatasource.cpp
    "ALLOW_VIRTUAL_OGR_FROM_TRIGGER_AND_VIEW", // from ogrsqlitevirtualogr.cpp
@@ -57,7 +56,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "BAG_GEOREF_MD_BLOCKYSIZE", // from bagdataset.cpp
    "BASISU_MAX_FILE_SIZE", // from basisudataset.cpp
    "BIGTIFF_OVERVIEW", // from gt_overview.cpp
-   "BLACKLISTED_OPENCL_VENDOR", // from gdalwarpkernel_opencl.cpp
    "BLOCKXSIZE", // from netcdfdataset.cpp
    "BLOCKYSIZE", // from netcdfdataset.cpp
    "BSB_DISABLE_INDEX", // from bsb_read.c
@@ -391,7 +389,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_USE_AVX", // from gdalgrid.cpp
    "GDAL_USE_GEOJP2", // from gdaljp2metadata.cpp
    "GDAL_USE_GMLJP2", // from gdaljp2metadata.cpp
-   "GDAL_USE_OPENCL", // from gdalwarpkernel.cpp
    "GDAL_USE_SSE", // from gdalgrid.cpp
    "GDAL_USE_SSSE3", // from cpl_cpu_features.cpp
    "GDAL_VALIDATE_CREATION_OPTIONS", // from gdaldataset.cpp, gdaldriver.cpp
@@ -640,10 +637,14 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "NGW_BATCH_SIZE", // from gdalngwdataset.cpp
    "NGW_CACHE_EXPIRES", // from gdalngwdataset.cpp
    "NGW_CACHE_MAX_SIZE", // from gdalngwdataset.cpp
+   "NGW_CONNECTTIMEOUT", // from gdalngwdataset.cpp, ogrngwdriver.cpp
    "NGW_EXTENSIONS", // from gdalngwdataset.cpp
    "NGW_JSON_DEPTH", // from gdalngwdataset.cpp
+   "NGW_MAX_RETRY", // from gdalngwdataset.cpp, ogrngwdriver.cpp
    "NGW_NATIVE_DATA", // from gdalngwdataset.cpp
    "NGW_PAGE_SIZE", // from gdalngwdataset.cpp
+   "NGW_RETRY_DELAY", // from gdalngwdataset.cpp, ogrngwdriver.cpp
+   "NGW_TIMEOUT", // from gdalngwdataset.cpp, ogrngwdriver.cpp
    "NGW_USERPWD", // from gdalngwdataset.cpp, ogrngwdriver.cpp
    "NITF_DISABLE_RPF_LOCATION_TABLE_SANITY_TESTS", // from nitfimage.c
    "NITF_OPEN_UNDERLYING_DS", // from nitfdataset.cpp, nitfrasterband.cpp
@@ -733,7 +734,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR_ODS_FIELD_TYPES", // from ogrodsdatasource.cpp
    "OGR_ODS_HEADERS", // from ogrodsdatasource.cpp
    "OGR_ODS_MAX_FIELD_COUNT", // from ogrodsdatasource.cpp
-   "OGR_OGDI_LAUNDER_LAYER_NAMES", // from ogrogdidatasource.cpp
    "OGR_OPENFILEGDB_ERROR_ON_INCONSISTENT_BUFFER_MAX_SIZE", // from filegdbtable.cpp
    "OGR_OPENFILEGDB_WRITE_EMPTY_GEOMETRY", // from ogropenfilegdblayer_write.cpp
    "OGR_ORGANIZE_POLYGONS", // from filegdbtable.cpp, ogrgeometryfactory.cpp
@@ -829,7 +829,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR_XLS_HEADERS", // from ogrxlslayer.cpp
    "OGR_XLSX_FIELD_TYPES", // from ogrxlsxdatasource.cpp
    "OGR_XLSX_HEADERS", // from ogrxlsxdatasource.cpp
-   "OPENCL_USE_CPU", // from gdalwarpkernel_opencl.cpp
    "OPENFILEGDB_CREATE_FIELD_BEFORE_GEOMETRY", // from ogropenfilegdblayer_write.cpp
    "OPENFILEGDB_CREATOR", // from filegdbtable_write.cpp
    "OPENFILEGDB_DEFAULT_STRING_WIDTH", // from ogropenfilegdblayer_write.cpp
@@ -944,7 +943,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "PR_RESOLUTION_STRATEGY", // from postgisrasterdataset.cpp
    "PR_WE_RES", // from postgisrasterdataset.cpp
    "PREDICTOR_OVERVIEW", // from gt_overview.cpp
-   "PREFERRED_OPENCL_VENDOR", // from gdalwarpkernel_opencl.cpp
    "PROJ_DATA", // from ogr_proj_p.cpp
    "PROJ_LIB", // from ogr_proj_p.cpp
    "PST_INSTANCE", // from jpipkakdataset.cpp
@@ -952,7 +950,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "PYTHONSO", // from gdalpython.cpp
    "QGIS_HACK", // from ogrfeaturedefn.cpp
    "QHULL_LOG_TO_TEMP_FILE", // from delaunay.c
-   "RASTERLITE_OVR_OPTIONS", // from rasterliteoverviews.cpp
    "RAW_CHECK_FILE_SIZE", // from rawdataset.cpp
    "RAW_MEM_ALLOC_LIMIT_MB", // from rawdataset.cpp
    "REPORT_COMPD_CS", // from dteddataset.cpp, srtmhgtdataset.cpp
@@ -994,8 +991,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "THRESHOLD", // from ogrct.cpp
    "TIFF_READ_STREAMING", // from gtiffdataset_read.cpp
    "TIFF_USE_OVR", // from gtiffdataset_write.cpp
-   "TIGER_LFIELD_AS_STRING", // from tigerfilebase.cpp
-   "TIGER_VERSION", // from ogrtigerdatasource.cpp
    "TILEDB_ATTRIBUTE", // from tiledbdense.cpp
    "TILEDB_BINARY_TYPE", // from tiledbsparse.cpp
    "TILEDB_BUG", // from tiledbsparse.cpp

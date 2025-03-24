@@ -3406,17 +3406,18 @@ GIntBig OGRTileDBLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                          GetExtent()                                 */
+/*                         IGetExtent()                                 */
 /************************************************************************/
 
-OGRErr OGRTileDBLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRTileDBLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                  bool bForce)
 {
     if (m_oLayerExtent.IsInit())
     {
         *psExtent = m_oLayerExtent;
         return OGRERR_NONE;
     }
-    return OGRLayer::GetExtent(psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

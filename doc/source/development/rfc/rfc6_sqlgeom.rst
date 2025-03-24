@@ -69,7 +69,7 @@ for the field names and types in ogrfeaturequery.cpp as
    swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT]
        = {SWQ_INTEGER, SWQ_STRING, SWQ_STRING, SWQ_STRING};
 
-So as to make this array accessible to the other files the followings
+So as to make this array accessible to the other files the following
 will be added to ogr_p.h
 
 ::

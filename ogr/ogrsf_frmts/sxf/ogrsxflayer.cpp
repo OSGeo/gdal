@@ -303,14 +303,15 @@ OGRSpatialReference *OGRSXFLayer::GetSpatialRef()
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRSXFLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRSXFLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                               bool bForce)
 {
     if (bForce)
     {
-        return OGRLayer::GetExtent(psExtent, bForce);
+        return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
     }
     else
     {

@@ -20,6 +20,7 @@ import test_py_scripts
 
 # test that osgeo_utils is available, if not skip all tests
 pytest.importorskip("osgeo_utils")
+pytest.importorskip("osgeo.gdal_array")
 pytest.importorskip("numpy")
 
 from itertools import product

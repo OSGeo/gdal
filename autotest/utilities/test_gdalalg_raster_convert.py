@@ -53,7 +53,7 @@ def test_gdalalg_raster_convert_to_mem():
     convert = get_convert_alg()
     assert convert.ParseCommandLineArguments(["--of=MEM", "data/utmsmall.tif", ""])
     assert convert.Run()
-    out_ds = convert.GetArg("output").Get().GetDataset()
+    out_ds = convert["output"].GetDataset()
     assert out_ds.GetRasterBand(1).Checksum() == 50054
 
 
@@ -82,8 +82,7 @@ def test_gdalalg_raster_convert_append(tmp_vsimem):
 
 def test_gdalalg_raster_convert_error_output_already_set():
     convert = get_convert_alg()
-    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
-    convert.GetArg("output").Get().SetDataset(ds)
+    convert["output"] = gdal.GetDriverByName("MEM").Create("", 1, 1)
     assert convert.ParseCommandLineArguments(["data/utmsmall.tif"])
     with pytest.raises(
         Exception,

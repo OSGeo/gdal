@@ -5,6 +5,7 @@ add_library(
   contour.cpp
   delaunay.c
   gdal_crs.cpp
+  gdal_homography.cpp
   gdal_octave.cpp
   gdal_rpc.cpp
   gdal_tps.cpp
@@ -80,12 +81,6 @@ if (GDAL_USE_ARMADILLO)
   target_include_directories(alg PRIVATE ${ARMADILLO_INCLUDE_DIRS})
   target_compile_definitions(alg PRIVATE -DHAVE_ARMADILLO)
   gdal_target_link_libraries(alg PRIVATE ${ARMADILLO_LIBRARIES})
-endif ()
-
-if (GDAL_USE_OPENCL)
-  gdal_target_link_libraries(alg PRIVATE OpenCL::OpenCL)
-  target_compile_definitions(alg PRIVATE -DHAVE_OPENCL)
-  target_sources(alg PRIVATE gdalwarpkernel_opencl.h gdalwarpkernel_opencl.cpp)
 endif ()
 
 gdal_target_link_libraries(alg PRIVATE PROJ::proj)

@@ -36,6 +36,22 @@
 #pragma warning(push)
 // include/pdfium\core/fxcrt/fx_memcpy_wrappers.h(48,30): warning C4244: 'argument': conversion from 'int' to 'wchar_t', possible loss of data
 #pragma warning(disable : 4244)
+
+// Nasty hack to avoid build issues with asm volatile in include/pdfium\core/fxcrt/immediate_crash.h(138,3)
+#define CORE_FXCRT_IMMEDIATE_CRASH_H_
+#include "cpl_error.h"
+
+namespace pdfium
+{
+
+[[noreturn]] inline void ImmediateCrash()
+{
+    // Private joke: GDAL crashing !!!! Are you satisfied Martin ;-)
+    CPLError(CE_Fatal, CPLE_AppDefined, "ImmediateCrash()");
+}
+
+}  // namespace pdfium
+
 #endif
 
 #include <cstring>
