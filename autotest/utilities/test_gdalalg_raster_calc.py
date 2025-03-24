@@ -11,7 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-mport functools
+import functools
 import math
 import re
 
