@@ -5501,7 +5501,7 @@ class VSIFile(BytesIO):
             return self.GetActualAlgorithm().GetArg(key).Get()
 
     def __setitem__(self, key, value):
-        """Set the value of an argment.
+        """Set the value of an argument.
 
            Shortcut for self.GetArg(key).Set(value)
 

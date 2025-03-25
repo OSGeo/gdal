@@ -201,7 +201,7 @@ Advanced options
     the NBITS band metadata item. If it is present, the maximum value is 2^NBITS-1.
     Otherwise, if NBITS is not set and the alpha band is of type UInt16
     (resp. Int16), 65535 (resp. 32767) is used. Otherwise, 255 is used. The
-    maximum value can also be overriden with ``--wo DST_ALPHA_MAX=<value>``.
+    maximum value can also be overridden with ``--wo DST_ALPHA_MAX=<value>``.
 
 .. option:: --wo, --warp-option <NAME>=<VALUE>
 

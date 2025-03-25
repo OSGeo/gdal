@@ -7113,7 +7113,7 @@ void *GTiffDataset::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                 bool ok;
                 {
                     CPLTurnFailureIntoWarningBackuper
-                        oFailureToWarninBackuper{};
+                        oFailureToWarningBackuper{};
                     ok = VSIFReadMultiRangeL(static_cast<int>(anSizes.size()),
                                              &apData[0], &anOffsets[0],
                                              &anSizes[0], fp) == 0;

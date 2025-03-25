@@ -2848,8 +2848,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateWIPEOUT()
                 break;
 
             /* -------------------------------------------------------------------- */
-            /*      Read clipping boudary properties and set them feature geometry  */
-            /*      Collect VERTEXes as a smooth polyline.                          */
+            /*      Read clipping boundary properties and set them feature geometry */
+            /*      Collect vertices as a smooth polyline.                          */
             /* -------------------------------------------------------------------- */
             case 14:
                 dfX = CPLAtof(szLineBuf);
