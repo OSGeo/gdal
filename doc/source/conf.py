@@ -378,6 +378,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_geom_op",
+        "gdal-vector-geom-op",
+        "Geometry operations on a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector_pipeline",
         "gdal-vector-pipeline",
         "Process a vector dataset",

@@ -56,6 +56,8 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vector_convert
    gdal_vector_edit
    gdal_vector_filter
+   gdal_vector_geom_op
+   gdal_vector_geom_op_set_type
    gdal_vector_pipeline
    gdal_vector_rasterize
    gdal_vector_reproject
@@ -94,6 +96,8 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vector_clip_subcommand`: Clip a vector dataset
     - :ref:`gdal_vector_edit_subcommand`: Edit metadata of a vector dataset
     - :ref:`gdal_vector_filter_subcommand`: Filter a vector dataset
+    - :ref:`gdal_vector_geom_op_subcommand`: Geometry operations on a vector dataset
+    - :ref:`gdal_vector_geom_op_set_type_subsubcommand`: Modify the geometry type of a vector dataset
     - :ref:`gdal_vector_convert_subcommand`: Convert a vector dataset
     - :ref:`gdal_vector_pipeline_subcommand`: Process a vector dataset
     - :ref:`gdal_vector_reproject_subcommand`: Reproject a vector dataset

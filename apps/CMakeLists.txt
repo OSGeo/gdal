@@ -39,6 +39,8 @@ add_library(
   gdalalg_vector_rasterize.cpp
   gdalalg_vector_read.cpp
   gdalalg_vector_filter.cpp
+  gdalalg_vector_geom_op.cpp
+  gdalalg_vector_geom_op_set_type.cpp
   gdalalg_vector_reproject.cpp
   gdalalg_vector_select.cpp
   gdalalg_vector_sql.cpp
