@@ -270,3 +270,25 @@ def test_gdalg_generate_from_vector_pipeline(tmp_vsimem):
         "command_line": "gdal vector pipeline read --input ../ogr/data/poly.shp ! reproject --dst-crs EPSG:4326",
         "type": "gdal_streamed_alg",
     }
+
+
+def test_gdalg_generate_from_vector_pipeline_geom_op(tmp_vsimem):
+    pipeline = gdal.GetGlobalAlgorithmRegistry()["vector"]["pipeline"]
+    out_filename = str(tmp_vsimem / "test.gdalg.json")
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            "../ogr/data/poly.shp",
+            "!",
+            "geom-op",
+            "set-type",
+            "--geometry-type=MULTIPOLYGON",
+            "!",
+            "write",
+            out_filename,
+        ]
+    )
+    assert json.loads(gdal.VSIFile(out_filename, "rb").read()) == {
+        "command_line": "gdal vector pipeline read --input ../ogr/data/poly.shp ! geom-op set-type --geometry-type MULTIPOLYGON",
+        "type": "gdal_streamed_alg",
+    }
