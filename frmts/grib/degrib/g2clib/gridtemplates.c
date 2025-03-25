@@ -18,7 +18,7 @@ static const struct gridtemplate templatesgrid[MAXGRIDTEMP] = {
              // 3.5: Variable resolution rotate Latitude/Longitude
          { 5, 16, 1, {1,1,4,1,4,1,4,4,4,4,4,1,1,-4,4,4} },
              // 3.12: Transverse Mercator
-         {12, 22, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,-4,4,4,1,4,4,-4,-4,-4,-4} },
+         {12, 22, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,-4,-4,-4,1,4,4,-4,-4,-4,-4} },
              // 3.101: General unstructured grid
          {101, 4, 0, {1,4,1,-4} },
              // 3.140: Lambert Azimuthal Equal Area Projection

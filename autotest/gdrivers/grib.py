@@ -2425,3 +2425,22 @@ def test_grib_grib2_MANAL_2023030103_fake_wrong_grid_origin_latitude():
     assert gt == pytest.approx(
         (-2442500.0217935005, 5000.0, 0.0, 2042500.0318467868, 0.0, -5000.0), rel=1e-6
     )
+
+
+# Test reading a Transverse Mercator projection with negative false easting/northing (#12015)
+
+
+def test_grib_grib2_tmerc_negative_false_easting_false_northing(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
+    src_ds.SetProjection(
+        "+proj=tmerc +lat_0=-1 +lon_0=-2 +k=1 +x_0=-300000 +y_0=-400000"
+    )
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    out_filename = tmp_vsimem / "tmp.grb2"
+    gdal.GetDriverByName("GRIB").CreateCopy(out_filename, src_ds)
+    with gdal.Open(out_filename) as ds:
+        assert (
+            "+proj=tmerc +lat_0=-1 +lon_0=-2 +k=1 +x_0=-300000 +y_0=-400000"
+            in ds.GetSpatialRef().ExportToProj4()
+        )

@@ -2495,7 +2495,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         case GS3_TRANSVERSE_MERCATOR:
             oSRS.SetTM(meta->gds.latitude_of_origin,
                        Lon360to180(meta->gds.central_meridian),
-                       std::abs(meta->gds.scaleLat1 - 0.9996) < 1e8
+                       std::abs(meta->gds.scaleLat1 - 0.9996) < 1e-8
                            ? 0.9996
                            : meta->gds.scaleLat1,
                        meta->gds.x0, meta->gds.y0);
