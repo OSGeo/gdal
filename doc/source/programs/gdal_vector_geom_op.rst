@@ -21,3 +21,4 @@ Available sub-commands
 ----------------------
 
 - :ref:`gdal_vector_geom_op_set_type_subsubcommand`
+- :ref:`gdal_vector_geom_op_explode_collections_subsubcommand`

@@ -12,6 +12,7 @@
 
 #include "gdalalg_vector_geom_op.h"
 #include "gdalalg_vector_geom_op_set_type.h"
+#include "gdalalg_vector_geom_op_explode_collections.h"
 
 //! @cond Doxygen_Suppress
 
@@ -26,10 +27,13 @@ GDALVectorGeomOpAlgorithm::GDALVectorGeomOpAlgorithm(bool standaloneStep)
     if (standaloneStep)
     {
         RegisterSubAlgorithm<GDALVectorGeomOpSetTypeAlgorithmStandalone>();
+        RegisterSubAlgorithm<
+            GDALVectorGeomOpExplodeCollectionsAlgorithmStandalone>();
     }
     else
     {
         RegisterSubAlgorithm<GDALVectorGeomOpSetTypeAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorGeomOpExplodeCollectionsAlgorithm>();
     }
 }
 
