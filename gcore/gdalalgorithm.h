@@ -297,8 +297,14 @@ constexpr const char *GDAL_ARG_NAME_INPUT = "input";
 /** Name of the argument for an output dataset. */
 constexpr const char *GDAL_ARG_NAME_OUTPUT = "output";
 
+/** Name of the argument for an output format. */
+constexpr const char *GDAL_ARG_NAME_OUTPUT_FORMAT = "output-format";
+
 /** Name of the argument for update. */
 constexpr const char *GDAL_ARG_NAME_UPDATE = "update";
+
+/** Name of the argument for overwrite. */
+constexpr const char *GDAL_ARG_NAME_OVERWRITE = "overwrite";
 
 /** Name of the argument for read-only. */
 constexpr const char *GDAL_ARG_NAME_READ_ONLY = "read-only";
@@ -620,7 +626,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
      */
     GDALAlgorithmArgDecl &SetMaxCount(int count);
 
-    /** Declare whether in --help message one should display hints about the
+    /** Declare whether in \--help message one should display hints about the
      * minimum/maximum number of values. Defaults to true.
      */
     GDALAlgorithmArgDecl &SetDisplayHintAboutRepetition(bool displayHint)
@@ -702,6 +708,14 @@ class CPL_DLL GDALAlgorithmArgDecl final
     GDALAlgorithmArgDecl &SetOnlyForCLI(bool onlyForCLI = true)
     {
         m_onlyForCLI = onlyForCLI;
+        return *this;
+    }
+
+    /** Declare that the argument is hidden. Default is no
+     */
+    GDALAlgorithmArgDecl &SetHidden()
+    {
+        m_hidden = true;
         return *this;
     }
 
@@ -862,7 +876,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return m_maxCount;
     }
 
-    /** Returns whether in --help message one should display hints about the
+    /** Returns whether in \--help message one should display hints about the
      * minimum/maximum number of values. Defaults to true.
      */
     inline bool GetDisplayHintAboutRepetition() const
@@ -898,6 +912,13 @@ class CPL_DLL GDALAlgorithmArgDecl final
     inline bool HasDefaultValue() const
     {
         return m_hasDefaultValue;
+    }
+
+    /** Return whether the argument is hidden.
+     */
+    inline bool IsHidden() const
+    {
+        return m_hidden;
     }
 
     /** Return whether the argument must not be mentioned in CLI usage.
@@ -1018,6 +1039,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     bool m_required = false;
     bool m_positional = false;
     bool m_hasDefaultValue = false;
+    bool m_hidden = false;
     bool m_hiddenForCLI = false;
     bool m_onlyForCLI = false;
     bool m_isInput = true;
@@ -1199,6 +1221,12 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     inline bool HasDefaultValue() const
     {
         return m_decl.HasDefaultValue();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::IsHidden() */
+    inline bool IsHidden() const
+    {
+        return m_decl.IsHidden();
     }
 
     /** Alias for GDALAlgorithmArgDecl::IsHiddenForCLI() */
@@ -1425,6 +1453,12 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
         return m_skipIfAlreadySet;
     }
 
+    /** Serialize this argument and its value.
+     * May return false if the argument is not explicitly set or if a dataset
+     * is passed by value.
+     */
+    bool Serialize(std::string &serializedArg) const;
+
     //! @cond Doxygen_Suppress
     void NotifyValueSet()
     {
@@ -1596,6 +1630,13 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     {
         m_decl.SetHiddenChoices(std::forward<T>(first),
                                 std::forward<U>(rest)...);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetHidden() */
+    GDALInConstructionAlgorithmArg &SetHidden()
+    {
+        m_decl.SetHidden();
         return *this;
     }
 
@@ -1912,6 +1953,39 @@ class CPL_DLL GDALAlgorithmRegistry
         m_parseForAutoCompletion = true;
     }
 
+    /** Set the reference file paths used to interpret relative paths.
+     *
+     * This has only effect if called before calling ParseCommandLineArguments().
+     */
+    void SetReferencePathForRelativePaths(const std::string &referencePath)
+    {
+        m_referencePath = referencePath;
+    }
+
+    /** Return the reference file paths used to interpret relative paths. */
+    const std::string &GetReferencePathForRelativePaths() const
+    {
+        return m_referencePath;
+    }
+
+    /** Returns whether this algorithm supports a streamed output dataset. */
+    bool SupportsStreamedOutput() const
+    {
+        return m_supportsStreamedOutput;
+    }
+
+    /** Indicates that the algorithm must be run to generate a streamed output
+     * dataset. In particular, this must be used as a hint by algorithms to
+     * avoid writing files on the filesystem. This is used by the GDALG driver
+     * when executing a serialized algorithm command line.
+     *
+     * This has only effect if called before calling Run().
+     */
+    void SetExecutionForStreamedOutput()
+    {
+        m_executionForStreamOutput = true;
+    }
+
     /** Parse a command line argument, which does not include the algorithm
      * name, to set the value of corresponding arguments.
      */
@@ -1949,7 +2023,7 @@ class CPL_DLL GDALAlgorithmRegistry
     };
 
     /** Return the usage as a string appropriate for command-line interface
-     * --help output.
+     * \--help output.
      */
     virtual std::string
     GetUsageForCLI(bool shortUsage,
@@ -1973,19 +2047,19 @@ class CPL_DLL GDALAlgorithmRegistry
         return *this;
     }
 
-    /** Whether the --help flag has been specified. */
+    /** Whether the \--help flag has been specified. */
     bool IsHelpRequested() const
     {
         return m_helpRequested;
     }
 
-    /** Whether the --json-usage flag has been specified. */
+    /** Whether the \--json-usage flag has been specified. */
     bool IsJSONUsageRequested() const
     {
         return m_JSONUsageRequested;
     }
 
-    /** Whether the --progress flag has been specified. */
+    /** Whether the \--progress flag has been specified. */
     bool IsProgressBarRequested() const
     {
         if (m_selectedSubAlg)
@@ -2001,7 +2075,7 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Used by the "gdal info" special algorithm when it first tries to
      * run "gdal raster info", to inherit from the potential special flags,
-     * such as --help or --json-usage, that this later algorithm has received.
+     * such as \--help or \--json-usage, that this later algorithm has received.
      */
     bool PropagateSpecialActionTo(GDALAlgorithm *target)
     {
@@ -2010,6 +2084,7 @@ class CPL_DLL GDALAlgorithmRegistry
         {
             target->m_specialActionRequested = m_specialActionRequested;
             target->m_helpRequested = m_helpRequested;
+            target->m_helpDocRequested = m_helpDocRequested;
             target->m_JSONUsageRequested = m_JSONUsageRequested;
             return true;
         }
@@ -2035,7 +2110,7 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Long description of the algorithm */
     std::string m_longDescription{};
 
-    /** Whether a progress bar is requested (value of --progress argument) */
+    /** Whether a progress bar is requested (value of \--progress argument) */
     bool m_progressBarRequested = false;
 
     friend class GDALVectorPipelineAlgorithm;
@@ -2046,12 +2121,18 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Algorithm alias names */
     std::vector<std::string> m_aliases{};
 
-    /** Special processing for an argument of type GAAT_DATASET */
-    bool ProcessDatasetArg(GDALAlgorithmArg *arg, GDALAlgorithm *algForOutput);
+    /** Whether this algorithm supports a streamed output dataset. */
+    bool m_supportsStreamedOutput = false;
+
+    /** Whether this algorithm is run to generated a streamed output dataset. */
+    bool m_executionForStreamOutput = false;
 
     /** Constructor */
     GDALAlgorithm(const std::string &name, const std::string &description,
                   const std::string &helpURL);
+
+    /** Special processing for an argument of type GAAT_DATASET */
+    bool ProcessDatasetArg(GDALAlgorithmArg *arg, GDALAlgorithm *algForOutput);
 
     /** Register the sub-algorithm of type MyAlgorithm.
      */
@@ -2156,10 +2237,10 @@ class CPL_DLL GDALAlgorithmRegistry
                                                        GDAL_OF_MULTIDIM_RASTER,
                         bool positionalAndRequired = true);
 
-    /** Add --overwrite argument. */
+    /** Add \--overwrite argument. */
     GDALInConstructionAlgorithmArg &AddOverwriteArg(bool *pValue);
 
-    /** Add --update argument. */
+    /** Add \--update argument. */
     GDALInConstructionAlgorithmArg &AddUpdateArg(bool *pValue);
 
     /** Add (non-CLI) output-string argument. */
@@ -2167,7 +2248,8 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Add output format argument. */
     GDALInConstructionAlgorithmArg &
-    AddOutputFormatArg(std::string *pValue, bool bStreamAllowed = false);
+    AddOutputFormatArg(std::string *pValue, bool bStreamAllowed = false,
+                       bool bGDALGAllowed = false);
 
     /** Add output data type argument. */
     GDALInConstructionAlgorithmArg &AddOutputDataTypeArg(std::string *pValue);
@@ -2191,11 +2273,33 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddBBOXArg(std::vector<double> *pValue, const char *helpMessage = nullptr);
 
-    /** Add --progress argument. */
+    /** Add \--progress argument. */
     GDALInConstructionAlgorithmArg &AddProgressArg();
 
     /** Validation function to use for key=value type of arguments. */
     bool ValidateKeyValue(const GDALAlgorithmArg &arg) const;
+
+    /** Return whether output-format or output arguments express GDALG output */
+    bool IsGDALGOutput() const;
+
+    /** Return value for ProcessGDALGOutput */
+    enum class ProcessGDALGOutputRet
+    {
+        /** GDALG output requested and successful. */
+        GDALG_OK,
+        /** GDALG output requested but an error has occurred. */
+        GDALG_ERROR,
+        /** GDALG output not requeste. RunImpl() must be run. */
+        NOT_GDALG,
+    };
+
+    /** Process output to a .gdalg file */
+    virtual ProcessGDALGOutputRet ProcessGDALGOutput();
+
+    /** Method executed by Run() when m_executionForStreamOutput is set to
+     * ensure the command is safe to execute in a streamed dataset context.
+     */
+    virtual bool CheckSafeForStreamOutput();
 
     //! @cond Doxygen_Suppress
     void AddAliasFor(GDALInConstructionAlgorithmArg *arg,
@@ -2228,16 +2332,21 @@ class CPL_DLL GDALAlgorithmRegistry
     bool m_displayInJSONUsage = true;
     bool m_specialActionRequested = false;
     bool m_helpRequested = false;
+
+    // Used by program-output directives in .rst files
+    bool m_helpDocRequested = false;
+
     bool m_JSONUsageRequested = false;
     bool m_dummyBoolean = false;  // Used for --version
     bool m_parseForAutoCompletion = false;
+    std::string m_referencePath{};
     std::vector<std::string> m_dummyConfigOptions{};
     std::vector<std::unique_ptr<GDALAlgorithmArg>> m_args{};
     std::map<std::string, GDALAlgorithmArg *> m_mapLongNameToArg{};
     std::map<std::string, GDALAlgorithmArg *> m_mapShortNameToArg{};
     std::vector<GDALAlgorithmArg *> m_positionalArgs{};
     GDALAlgorithmRegistry m_subAlgRegistry{};
-    std::unique_ptr<GDALAlgorithm> m_shortCutAlg{};
+    std::unique_ptr<GDALAlgorithm> m_selectedSubAlgHolder{};
     std::function<std::vector<std::string>(const std::vector<std::string> &)>
         m_autoCompleteFunction{};
 
@@ -2252,7 +2361,8 @@ class CPL_DLL GDALAlgorithmRegistry
                          std::vector<double>, std::vector<GDALArgDatasetValue>>>
             &inConstructionValues);
 
-    bool ValidateFormat(const GDALAlgorithmArg &arg, bool bStreamAllowed) const;
+    bool ValidateFormat(const GDALAlgorithmArg &arg, bool bStreamAllowed,
+                        bool bGDALGAllowed) const;
 
     virtual bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
 

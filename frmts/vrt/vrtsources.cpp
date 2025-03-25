@@ -379,7 +379,8 @@ void VRTSimpleSource::AddSourceFilenameNode(const char *pszVRTPath,
         }
         else
         {
-            for (const char *pszSyntax : VRTDataset::apszSpecialSyntax)
+            for (const char *pszSyntax :
+                 GDALDataset::apszSpecialSubDatasetSyntax)
             {
                 CPLString osPrefix(pszSyntax);
                 osPrefix.resize(strchr(pszSyntax, ':') - pszSyntax + 1);
@@ -611,7 +612,7 @@ CPLErr VRTSimpleSource::XMLInit(const CPLXMLNode *psSrc, const char *pszVRTPath,
             m_nExplicitSharedStatus = CPLTestBool(pszShared);
         }
 
-        m_osSrcDSName = VRTDataset::BuildSourceFilename(
+        m_osSrcDSName = GDALDataset::BuildFilename(
             pszFilename, pszVRTPath, CPL_TO_BOOL(m_bRelativeToVRTOri));
     }
     else if (psSourceVRTDataset)
@@ -2550,7 +2551,7 @@ VRTComplexSource::VRTComplexSource(const VRTComplexSource *poSrcSource,
       m_bSrcMinMaxDefined(poSrcSource->m_bSrcMinMaxDefined),
       m_dfSrcMin(poSrcSource->m_dfSrcMin), m_dfSrcMax(poSrcSource->m_dfSrcMax),
       m_dfDstMin(poSrcSource->m_dfDstMin), m_dfDstMax(poSrcSource->m_dfDstMax),
-      m_dfExponent(poSrcSource->m_dfExponent),
+      m_dfExponent(poSrcSource->m_dfExponent), m_bClip(poSrcSource->m_bClip),
       m_nColorTableComponent(poSrcSource->m_nColorTableComponent),
       m_adfLUTInputs(poSrcSource->m_adfLUTInputs),
       m_adfLUTOutputs(poSrcSource->m_adfLUTOutputs)
@@ -2673,6 +2674,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML(const char *pszVRTPath)
         }
         CPLSetXMLValue(psSrc, "DstMin", CPLSPrintf("%g", m_dfDstMin));
         CPLSetXMLValue(psSrc, "DstMax", CPLSPrintf("%g", m_dfDstMax));
+        CPLSetXMLValue(psSrc, "Clip", m_bClip ? "true" : "false");
     }
 
     if (!m_adfLUTInputs.empty())
@@ -2774,6 +2776,7 @@ CPLErr VRTComplexSource::XMLInit(const CPLXMLNode *psSrc,
 
         m_dfDstMin = CPLAtof(CPLGetXMLValue(psSrc, "DstMin", "0.0"));
         m_dfDstMax = CPLAtof(CPLGetXMLValue(psSrc, "DstMax", "0.0"));
+        m_bClip = CPLTestBool(CPLGetXMLValue(psSrc, "Clip", "true"));
     }
 
     if (const char *pszNODATA = CPLGetXMLValue(psSrc, "NODATA", nullptr))
@@ -2910,7 +2913,7 @@ void VRTComplexSource::SetLinearScaling(double dfOffset, double dfScale)
 
 void VRTComplexSource::SetPowerScaling(double dfExponentIn, double dfSrcMinIn,
                                        double dfSrcMaxIn, double dfDstMinIn,
-                                       double dfDstMaxIn)
+                                       double dfDstMaxIn, bool bClip)
 {
     m_nProcessingFlags &= ~PROCESSING_FLAG_SCALING_LINEAR;
     m_nProcessingFlags |= PROCESSING_FLAG_SCALING_EXPONENTIAL;
@@ -2920,6 +2923,7 @@ void VRTComplexSource::SetPowerScaling(double dfExponentIn, double dfSrcMinIn,
     m_dfDstMin = dfDstMinIn;
     m_dfDstMax = dfDstMaxIn;
     m_bSrcMinMaxDefined = true;
+    m_bClip = bClip;
 }
 
 /************************************************************************/
@@ -3578,12 +3582,17 @@ CPLErr VRTComplexSource::RasterIOInternal(
                         }
                     }
 
-                    double dfPowVal =
-                        (fResult - m_dfSrcMin) / (m_dfSrcMax - m_dfSrcMin);
-                    if (dfPowVal < 0.0)
-                        dfPowVal = 0.0;
-                    else if (dfPowVal > 1.0)
-                        dfPowVal = 1.0;
+                    double dfPowVal = (m_dfSrcMin == m_dfSrcMax)
+                                          ? 0
+                                          : (fResult - m_dfSrcMin) /
+                                                (m_dfSrcMax - m_dfSrcMin);
+                    if (m_bClip)
+                    {
+                        if (dfPowVal < 0.0)
+                            dfPowVal = 0.0;
+                        else if (dfPowVal > 1.0)
+                            dfPowVal = 1.0;
+                    }
                     fResult =
                         static_cast<WorkingDT>((m_dfDstMax - m_dfDstMin) *
                                                    pow(dfPowVal, m_dfExponent) +

@@ -3939,7 +3939,7 @@ static GDALDatasetH GDALWarpCreateOutput(
             // target extent instead of the real source image extent, but also
             // check for target extent compatibility with source CRS extent
             if (psTransformInfo && psTransformInfo->pReprojectArg &&
-                psTransformInfo->pSrcTransformer == nullptr)
+                psTransformInfo->sSrcParams.pTransformer == nullptr)
             {
                 const GDALReprojectionTransformInfo *psRTI =
                     static_cast<const GDALReprojectionTransformInfo *>(
@@ -5771,6 +5771,11 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
         .action(
             [psOptions](const std::string &)
             {
+                if (psOptions->dfErrorThreshold < 0)
+                {
+                    throw std::invalid_argument(
+                        "Invalid value for error threshold");
+                }
                 psOptions->aosWarpOptions.AddString(CPLSPrintf(
                     "ERROR_THRESHOLD=%.16g", psOptions->dfErrorThreshold));
             })

@@ -290,11 +290,6 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     bool m_bMultiThreadedRasterIOLastUsed = false;
 
-    static constexpr const char *const apszSpecialSyntax[] = {
-        "NITF_IM:{ANY}:{FILENAME}", "PDF:{ANY}:{FILENAME}",
-        "RASTERLITE:{FILENAME},{ANY}", "TILEDB:\"{FILENAME}\":{ANY}",
-        "TILEDB:{FILENAME}:{ANY}"};
-
     VRTRasterBand *InitBand(const char *pszSubclass, int nBand,
                             bool bAllowPansharpenedOrProcessed);
     static GDALDataset *OpenVRTProtocol(const char *pszSpec);
@@ -446,10 +441,6 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
                            CSLConstList papszRootGroupOptions,
                            CSLConstList papszOptions);
     static CPLErr Delete(const char *pszFilename);
-
-    static std::string BuildSourceFilename(const char *pszFilename,
-                                           const char *pszVRTPath,
-                                           bool bRelativeToVRT);
 
     static int GetNumThreads(GDALDataset *poDS);
 };
@@ -1090,6 +1081,9 @@ class CPL_DLL VRTWarpedRasterBand final : public VRTRasterBand
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview(int) override;
 
+    bool
+    EmitErrorMessageIfWriteNotSupported(const char *pszCaller) const override;
+
   private:
     int m_nIRasterIOCounter =
         0;  //! Protects against infinite recursion inside IRasterIO()
@@ -1622,6 +1616,7 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
     double m_dfDstMin = 0;
     double m_dfDstMax = 0;
     double m_dfExponent = 1;
+    bool m_bClip = true;  // Only taken into account for non-linear scaling
 
     int m_nColorTableComponent = 0;
 
@@ -1696,7 +1691,7 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
 
     void SetLinearScaling(double dfOffset, double dfScale);
     void SetPowerScaling(double dfExponent, double dfSrcMin, double dfSrcMax,
-                         double dfDstMin, double dfDstMax);
+                         double dfDstMin, double dfDstMax, bool bClip = true);
     void SetColorTableComponent(int nComponent);
 };
 

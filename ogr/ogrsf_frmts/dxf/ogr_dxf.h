@@ -507,6 +507,7 @@ class OGRDXFLayer final : public OGRLayer
     OGRDXFFeature *TranslateSOLID();
     OGRDXFFeature *TranslateLEADER();
     OGRDXFFeature *TranslateMLEADER();
+    OGRDXFFeature *TranslateWIPEOUT();
     OGRDXFFeature *TranslateASMEntity();
 
     static constexpr int FORTRAN_INDEXING = 1;

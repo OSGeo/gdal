@@ -34,6 +34,7 @@
 #include "commonutils.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_progress.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
@@ -64,7 +65,8 @@ typedef enum
     HIGHEST_RESOLUTION,
     AVERAGE_RESOLUTION,
     SAME_RESOLUTION,
-    USER_RESOLUTION
+    USER_RESOLUTION,
+    COMMON_RESOLUTION,
 } ResolutionStrategy;
 
 struct DatasetProperty
@@ -1016,6 +1018,21 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
             // ns_res is negative, the highest resolution is the max value.
             ns_res = std::max(ns_res, padfGeoTransform[GEOTRSFRM_NS_RES]);
         }
+        else if (resolutionStrategy == COMMON_RESOLUTION)
+        {
+            we_res = CPLGreatestCommonDivisor(
+                we_res, padfGeoTransform[GEOTRSFRM_WE_RES]);
+            if (we_res == 0)
+            {
+                return "Failed to get common resolution";
+            }
+            ns_res = CPLGreatestCommonDivisor(
+                ns_res, padfGeoTransform[GEOTRSFRM_NS_RES]);
+            if (ns_res == 0)
+            {
+                return "Failed to get common resolution";
+            }
+        }
         else
         {
             we_res = std::max(we_res, padfGeoTransform[GEOTRSFRM_WE_RES]);
@@ -1942,6 +1959,8 @@ GDALDatasetH GDALBuildVRT(const char *pszDest, int nSrcCount,
         eStrategy = LOWEST_RESOLUTION;
     else if (EQUAL(sOptions.osResolution.c_str(), "same"))
         eStrategy = SAME_RESOLUTION;
+    else if (EQUAL(sOptions.osResolution.c_str(), "common"))
+        eStrategy = COMMON_RESOLUTION;
 
     /* If -srcnodata is specified, use it as the -vrtnodata if the latter is not
      */
@@ -2075,7 +2094,7 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
                 "the default value which is 'location'."));
 
     argParser->add_argument("-resolution")
-        .metavar("user|average|highest|lowest|same")
+        .metavar("user|average|common|highest|lowest|same")
         .action(
             [psOptions](const std::string &s)
             {
@@ -2084,7 +2103,8 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
                     !EQUAL(psOptions->osResolution.c_str(), "average") &&
                     !EQUAL(psOptions->osResolution.c_str(), "highest") &&
                     !EQUAL(psOptions->osResolution.c_str(), "lowest") &&
-                    !EQUAL(psOptions->osResolution.c_str(), "same"))
+                    !EQUAL(psOptions->osResolution.c_str(), "same") &&
+                    !EQUAL(psOptions->osResolution.c_str(), "common"))
                 {
                     throw std::invalid_argument(
                         CPLSPrintf("Illegal resolution value (%s).",

@@ -15,36 +15,7 @@
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal raster resize [OPTIONS] <INPUT> <OUTPUT>
-
-    Resize a raster dataset.
-
-    Positional arguments:
-      -i, --input <INPUT>                                  Input raster dataset [required]
-      -o, --output <OUTPUT>                                Output raster dataset [required]
-
-    Common Options:
-      -h, --help                                           Display help message and exit
-      --version                                            Display GDAL version and exit
-      --json-usage                                         Display usage as JSON document and exit
-      --drivers                                            Display driver list as JSON document and exit
-      --config <KEY>=<VALUE>                               Configuration option [may be repeated]
-      --progress                                           Display progress bar
-
-    Options:
-      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format
-      --co, --creation-option <KEY>=<VALUE>                Creation option [may be repeated]
-      --overwrite                                          Whether overwriting existing output is allowed
-      --size <width>,<height>                              Target size in pixels [required]
-      -r, --resampling <RESAMPLING>                        Resampling method. RESAMPLING=nearest|bilinear|cubic|cubicspline|lanczos|average|mode (default: nearest)
-
-
-    Advanced Options:
-      --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
-      --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
-
+.. program-output:: gdal raster resize --help-doc
 
 Description
 -----------

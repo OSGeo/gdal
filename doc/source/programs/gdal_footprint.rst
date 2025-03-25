@@ -15,22 +15,7 @@ gdal_footprint
 Synopsis
 --------
 
-.. code-block::
-
-
-    gdal_footprint [--help] [--help-general]
-       [-b <band>]... [-combine_bands union|intersection]
-       [-oo <NAME>=<VALUE>]... [-ovr <index>]
-       [-srcnodata "<value>[ <value>]..."]
-       [-t_cs pixel|georef] [-t_srs <srs_def>] [-split_polys]
-       [-convex_hull] [-densify <value>] [-simplify <value>]
-       [-min_ring_area <value>] [-max_points <value>|unlimited]
-       [-of <ogr_format>] [-lyr_name <dst_layername>]
-       [-location_field_name <field_name>] [-no_location]
-       [-write_absolute_path]
-       [-dsco <name>=<value>]... [-lco <name>=<value>]... [-overwrite] [-q]
-       <src_filename> <dst_filename>
-
+.. program-output:: gdal_footprint --help-doc
 
 Description
 -----------

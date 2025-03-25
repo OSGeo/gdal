@@ -15,29 +15,7 @@
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal raster overview delete [OPTIONS] <DATASET>
-
-    Deleting overviews.
-
-    Positional arguments:
-      --dataset <DATASET>              Dataset (in-place updated, unless --external) [required]
-
-    Common Options:
-      -h, --help                       Display help message and exit
-      --version                        Display GDAL version and exit
-      --json-usage                     Display usage as JSON document and exit
-      --drivers                        Display driver list as JSON document and exit
-      --config <KEY>=<VALUE>           Configuration option [may be repeated]
-      --progress                       Display progress bar
-
-    Options:
-      --external                       Remove external overviews
-
-    Advanced Options:
-      --oo, --open-option <KEY=VALUE>  Open options [may be repeated]
-
+.. program-output:: gdal raster overview delete --help-doc
 
 Description
 -----------
@@ -54,7 +32,7 @@ of a dataset.
 
 .. option:: --dataset <DATASET>
 
-    Dataset name, to be in-place updated by default (unless :option:`--external` is specified). Required.
+    Dataset name, to be updated in-place by default (unless :option:`--external` is specified). Required.
 
 .. option:: --external
 

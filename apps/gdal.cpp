@@ -121,7 +121,6 @@ MAIN_START(argc, argv)
     if (argc < 1)
         return (-argc);
 
-    alg->SetCallPath(std::vector<std::string>{argv[0]});
     std::vector<std::string> args;
     for (int i = 1; i < argc; ++i)
         args.push_back(argv[i]);

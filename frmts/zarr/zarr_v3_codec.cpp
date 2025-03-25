@@ -293,7 +293,7 @@ bool ZarrV3CodecZstd::InitFromConfiguration(
 
     m_aosCompressorOptions.SetNameValue("LEVEL", CPLSPrintf("%d", nLevel));
     if (bChecksum)
-        m_aosCompressorOptions.SetNameValue("CKECKSUM", "YES");
+        m_aosCompressorOptions.SetNameValue("CHECKSUM", "YES");
 
     return true;
 }

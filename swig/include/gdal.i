@@ -1766,7 +1766,7 @@ struct GDALContourOptions {
 /* Note: we must use 2 distinct names due to different ownership of the result */
 
 #ifdef SWIGJAVA
-%rename (Countour) wrapper_GDALContourDestDS;
+%rename (Contour) wrapper_GDALContourDestDS;
 #endif
 %inline %{
 

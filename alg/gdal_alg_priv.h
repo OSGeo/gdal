@@ -172,7 +172,7 @@ void GDALCleanupTransformDeserializerMutex();
 /* Transformer cloning */
 
 void *GDALCreateTPSTransformerInt(int nGCPCount, const GDAL_GCP *pasGCPList,
-                                  int bReversed, char **papszOptions);
+                                  int bReversed, CSLConstList papszOptions);
 
 void CPL_DLL *GDALCloneTransformer(void *pTransformerArg);
 
@@ -278,25 +278,26 @@ struct GDALReprojectionTransformInfo
 /* ==================================================================== */
 /************************************************************************/
 
+struct GDALGenImgProjTransformPart
+{
+    double adfGeoTransform[6];
+    double adfInvGeoTransform[6];
+
+    void *pTransformArg;
+    GDALTransformerFunc pTransformer;
+};
+
 typedef struct
 {
 
     GDALTransformerInfo sTI;
 
-    double adfSrcGeoTransform[6];
-    double adfSrcInvGeoTransform[6];
-
-    void *pSrcTransformArg;
-    GDALTransformerFunc pSrcTransformer;
+    GDALGenImgProjTransformPart sSrcParams;
 
     void *pReprojectArg;
     GDALTransformerFunc pReproject;
 
-    double adfDstGeoTransform[6];
-    double adfDstInvGeoTransform[6];
-
-    void *pDstTransformArg;
-    GDALTransformerFunc pDstTransformer;
+    GDALGenImgProjTransformPart sDstParams;
 
     // Memorize the value of the CHECK_WITH_INVERT_PROJ at the time we
     // instantiated the object, to be able to decide if

@@ -55,6 +55,8 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    GDALAlgorithm::ProcessGDALGOutputRet ProcessGDALGOutput() override;
+    bool CheckSafeForStreamOutput() override;
 };
 
 /************************************************************************/
@@ -107,6 +109,9 @@ class GDALRasterPipelineAlgorithm final
     {
         return m_outputDataset;
     }
+
+  private:
+    std::string m_helpDocCategory{};
 };
 
 //! @endcond

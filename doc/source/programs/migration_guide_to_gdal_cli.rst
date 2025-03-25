@@ -115,6 +115,17 @@ compared to "minimum-x,minimum-y,maximum-x,maximum-y" for the ``--bbox`` option 
     gdal raster stack red.tif green.tif blue.tif out.tif
 
 
+* Reorder a 3-band dataset with bands ordered Blue, Green, Red to Red, Green, Blue
+
+.. code-block::
+
+    gdal_translate -b 3 -b 2 -b 1 bgr.tif rgb.tif
+
+    ==>
+
+    gdal raster select --band 3,2,1 bgr.tif rgb.tif --overwrite
+
+
 Vector commands
 ---------------
 

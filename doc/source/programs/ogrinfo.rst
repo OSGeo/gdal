@@ -14,21 +14,7 @@ ogrinfo
 Synopsis
 --------
 
-.. code-block::
-
-    ogrinfo [--help] [--long-usage] [--help-general]
-            [-json] [-ro] [-update] [--quiet] [-fid <FID>]
-            [-spat <xmin> <ymin> <xmax> <ymax>] [-geomfield <field>]
-            [-where <restricted_where>]
-            [[-sql <statement|@filename>]|[-rl]]
-            [-dialect <dialect>] [-al]
-            [[-summary]|[-features]]
-            [-limit <nb_features>] [-fields YES|NO]
-            [-geom YES|NO|SUMMARY|WKT|ISO_WKT] [-oo <NAME=VALUE>]... [-nomd]
-            [-listmdd] [-mdd <domain>]... [-nocount] [-noextent] [-extent3D]
-            [-nogeomtype] [-wkt_format WKT1|WKT2|WKT2_2015|WKT2_2019]
-            [-fielddomain <name>] [-if <format>]...
-            filename [<layer_name>]...
+.. program-output:: ogrinfo --help-doc
 
 Description
 -----------

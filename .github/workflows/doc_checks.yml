@@ -21,52 +21,44 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
-    container: ghcr.io/osgeo/proj-docs
+    container: ubuntu:24.04
 
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
     - name: Setup environment
       shell: bash -l {0}
+      env:
+        DEBIAN_FRONTEND: noninteractive
       run: |
           apt update
-          apt install -y libproj-dev swig
-          PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r doc/requirements.txt
-          PYTHON_CMD=python3 && $PYTHON_CMD -m pip install numpy setuptools
-          pushd .
+          apt install -y g++ cmake doxygen enchant-2 python3 python3-dev python3-pip python3-venv libproj-dev swig
+          python3 -m venv create doc_env
+          . doc_env/bin/activate
+          python3 -m pip install -r doc/requirements.txt
+          echo PATH=$PATH >> $GITHUB_ENV
+
+    - name: Build GDAL
+      shell: bash -l {0}
+      run: |
           mkdir build
           cd build
-          export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
           cmake .. \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DCMAKE_BUILD_TYPE=Debug \
             -DBUILD_APPS=ON \
-            -DBUILD_TESTING=OFF \
+            -DBUILD_DOCS=ON \
+            -DBUILD_TESTING=ON \
             -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF \
             -DOGR_BUILD_OPTIONAL_DRIVERS=OFF
           cmake --build . -j$(nproc)
-          cmake --install .
-          # With the new ghcr.io/osgeo/proj-docs image based on Ubuntu 24.04
-          # a venv is activated. The above does not install the
-          # Python bindings into it (and the ones in the system are not found
-          # without overriding PYTHONPATH), so do it through pip install
-          cd swig/python
-          python3 setup.py sdist
-          cp dist/* /tmp/gdal.tar.gz
-          PYTHON_CMD=python3 && $PYTHON_CMD -m pip install /tmp/gdal.tar.gz
-          ldconfig
-          popd
-
-    - name: Update components
-      shell: bash -l {0}
-      run: |
-          PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U "sphinx-rtd-theme>=3.0.0" "sphinxcontrib-spelling>=8.0.0"
 
     - name: Print versions
       shell: bash -l {0}
       run: |
+          which python3
           python3 --version
           sphinx-build --version
-          PYTHON_CMD=python3 && $PYTHON_CMD -m pip list --not-required --format=columns
+          python3 -m pip list --not-required --format=columns
+
     - name: Lint .rst files
       shell: bash -l {0}
       run: |
@@ -79,11 +71,11 @@ jobs:
     - name: Doxygen
       shell: bash -l {0}
       run: |
-        mkdir -p doc/build
-        doxygen Doxyfile
+        cmake --build . --target doxygen_xml
+      working-directory: build
     - name: Spelling
       shell: bash -l {0}
       run: |
-        sed -i '/html_extra_path/d' source/conf.py # avoid WARNING: html_extra_path entry '../build/html_extra' is placed inside outdir
-        make spelling
-      working-directory: ./doc
+        python3 -c 'from osgeo import gdal'
+        ctest -V -R spelling --output-on-failure
+      working-directory: build

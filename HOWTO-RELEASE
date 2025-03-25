@@ -90,7 +90,11 @@ Process :
 
    If make is not GNU make, e.g., export MAKE=gmake
 
+   ant used for building Javadocs
+
    doxygen
+
+   jdk used for building Javadocs
 
    python available as "python", or e.g. export PYTHON=python3.9
 
@@ -105,7 +109,7 @@ Process :
 
    md5sum (GNU version) in path (not a POSIX requirement)
 
-12.1) Create the source distributions using the mkgdaldist.sh script.
+12.1) Create the source distributions and documentation snapshot using the mkgdaldist.sh script.
    The argument should be the version number (i.e. 1.4.2). As our process involves
    doing betas or RCs, use the -rc option so that the filenames include this
    information (after promotion to official release, filename renaming will have
@@ -126,17 +130,7 @@ Process :
    a previous release (diff -Nur gdal-3.0.1 gdal-3.0.2).
    This is more easily doable for a bugfix release.
 
-12.2) Create a snapshot of the documentation (only for feature releases)
-
-    1. Refresh
-       https://download.osgeo.org/gdal/for_doc/javadoc.zip
-       by building the Java bindings, with -DGDAL_JAVA_GENERATE_JAVADOC=ON.
-       javadoc.zip is in the swig/java subdirectory of the build directory.
-    2. cd doc
-    3. ./build_doc_snapshot 310
-       This generates gdal310doc.zip
-
-12.3) Publish the resulting files on download.osgeo.org,
+12.2) Publish the resulting files on download.osgeo.org,
     in /osgeo/download/gdal/X.Y.Z (where X.Y.Z is the version number)
 
     with ~/.ssh/config containing:

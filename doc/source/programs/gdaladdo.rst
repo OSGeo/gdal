@@ -13,16 +13,7 @@ gdaladdo
 Synopsis
 --------
 
-.. code-block::
-
-    gdaladdo [--help] [--help-general]
-             [-r {nearest|average|rms|gauss|bilinear|cubic|cubicspline|
-                  lanczos|average_mp|average_magphase|mode}]
-             [-ro] [-clean] [-q] [-oo <NAME>=<VALUE>]... [-minsize <val>]
-             [--partial-refresh-from-source-timestamp]
-             [--partial-refresh-from-projwin <ulx> <uly> <lrx> <lry>]
-             [--partial-refresh-from-source-extent <filename1>[,<filenameN>]...]
-             <filename> [<levels>]...
+.. program-output:: gdaladdo --help-doc
 
 Description
 -----------

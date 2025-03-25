@@ -72,6 +72,7 @@ Raster drivers
    grib
    gs7bg
    gsc
+   gdalg
    gta
    gti
    gtiff

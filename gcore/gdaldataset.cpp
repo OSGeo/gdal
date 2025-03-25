@@ -10440,3 +10440,133 @@ void GDALDataset::ReportUpdateNotSupportedByDriver(const char *pszDriverName)
 }
 
 //! @endcond
+
+/************************************************************************/
+/*                         BuildFilename()                              */
+/************************************************************************/
+
+/** Generates a filename, potentially relative to another one.
+ *
+ * Given the path to a reference directory, and a path to a file
+ * referenced from it, build a path to the file that the current application
+ * can use. If the file path is already absolute, rather than relative, or if
+ * bRelativeToReferencePath is false, then the filename of interest will be
+ * returned unaltered.
+ *
+ * This is enhanced version of CPLProjectRelativeFilenameSafe() that takes
+ * into account the subdataset syntax.
+ *
+ * Examples:
+ * \code{.cpp}
+ * BuildFilename("tmp/abc.gif", "abc/def", true) == "abc/def/tmp/abc.gif"
+ * BuildFilename("../abc.gif", "/abc/def") == "/abc/abc.gif"
+ * BuildFilename("abc.gif", "C:\WIN", true) == "C:\WIN\abc.gif"
+ * BuildFilename("abc.gif", "C:\WIN", false) == "abc.gif"
+ * BuildFilename("/home/even/foo.tif", "/home/even/workdir", true) == "/home/even/foo.tif"
+ * \endcode
+ *
+ * @param pszFilename Filename of interest.
+ * @param pszReferencePath Path to a reference directory.
+ * @param bRelativeToReferencePath Whether pszFilename, if a relative path, is
+ *                                 relative to pszReferencePath
+ * @since 3.11
+ */
+
+/* static */
+std::string GDALDataset::BuildFilename(const char *pszFilename,
+                                       const char *pszReferencePath,
+                                       bool bRelativeToReferencePath)
+{
+    std::string osSrcDSName;
+    if (pszReferencePath != nullptr && bRelativeToReferencePath)
+    {
+        // Try subdatasetinfo API first
+        // Note: this will become the only branch when subdatasetinfo will become
+        //       available for NITF_IM, RASTERLITE and TILEDB
+        const auto oSubDSInfo{GDALGetSubdatasetInfo(pszFilename)};
+        if (oSubDSInfo && !oSubDSInfo->GetPathComponent().empty())
+        {
+            auto path{oSubDSInfo->GetPathComponent()};
+            osSrcDSName = oSubDSInfo->ModifyPathComponent(
+                CPLProjectRelativeFilenameSafe(pszReferencePath, path.c_str())
+                    .c_str());
+            GDALDestroySubdatasetInfo(oSubDSInfo);
+        }
+        else
+        {
+            bool bDone = false;
+            for (const char *pszSyntax : apszSpecialSubDatasetSyntax)
+            {
+                CPLString osPrefix(pszSyntax);
+                osPrefix.resize(strchr(pszSyntax, ':') - pszSyntax + 1);
+                if (pszSyntax[osPrefix.size()] == '"')
+                    osPrefix += '"';
+                if (EQUALN(pszFilename, osPrefix, osPrefix.size()))
+                {
+                    if (STARTS_WITH_CI(pszSyntax + osPrefix.size(), "{ANY}"))
+                    {
+                        const char *pszLastPart = strrchr(pszFilename, ':') + 1;
+                        // CSV:z:/foo.xyz
+                        if ((pszLastPart[0] == '/' || pszLastPart[0] == '\\') &&
+                            pszLastPart - pszFilename >= 3 &&
+                            pszLastPart[-3] == ':')
+                        {
+                            pszLastPart -= 2;
+                        }
+                        CPLString osPrefixFilename = pszFilename;
+                        osPrefixFilename.resize(pszLastPart - pszFilename);
+                        osSrcDSName = osPrefixFilename +
+                                      CPLProjectRelativeFilenameSafe(
+                                          pszReferencePath, pszLastPart);
+                        bDone = true;
+                    }
+                    else if (STARTS_WITH_CI(pszSyntax + osPrefix.size(),
+                                            "{FILENAME}"))
+                    {
+                        CPLString osFilename(pszFilename + osPrefix.size());
+                        size_t nPos = 0;
+                        if (osFilename.size() >= 3 && osFilename[1] == ':' &&
+                            (osFilename[2] == '\\' || osFilename[2] == '/'))
+                            nPos = 2;
+                        nPos = osFilename.find(
+                            pszSyntax[osPrefix.size() + strlen("{FILENAME}")],
+                            nPos);
+                        if (nPos != std::string::npos)
+                        {
+                            const CPLString osSuffix = osFilename.substr(nPos);
+                            osFilename.resize(nPos);
+                            osSrcDSName = osPrefix +
+                                          CPLProjectRelativeFilenameSafe(
+                                              pszReferencePath, osFilename) +
+                                          osSuffix;
+                            bDone = true;
+                        }
+                    }
+                    break;
+                }
+            }
+            if (!bDone)
+            {
+                std::string osReferencePath = pszReferencePath;
+                if (!CPLIsFilenameRelative(pszReferencePath))
+                {
+                    // Simplify path by replacing "foo/a/../b" with "foo/b"
+                    while (STARTS_WITH(pszFilename, "../"))
+                    {
+                        osReferencePath =
+                            CPLGetPathSafe(osReferencePath.c_str());
+                        pszFilename += strlen("../");
+                    }
+                }
+
+                osSrcDSName = CPLProjectRelativeFilenameSafe(
+                    osReferencePath.c_str(), pszFilename);
+            }
+        }
+    }
+    else
+    {
+        osSrcDSName = pszFilename;
+    }
+    return osSrcDSName;
+}

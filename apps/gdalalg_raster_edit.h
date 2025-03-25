@@ -41,10 +41,14 @@ class GDALRasterEditAlgorithm /* non final */
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     GDALArgDatasetValue m_dataset{};  // standalone mode only
+    bool m_readOnly = false;          // standalone mode only
     std::string m_overrideCrs{};
     std::vector<double> m_bbox{};
     std::vector<std::string> m_metadata{};
     std::vector<std::string> m_unsetMetadata{};
+    bool m_stats = false;        // standalone mode only
+    bool m_approxStats = false;  // standalone mode only
+    bool m_hist = false;         // standalone mode only
 };
 
 /************************************************************************/

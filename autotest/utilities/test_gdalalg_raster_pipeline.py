@@ -537,6 +537,33 @@ def test_gdalalg_raster_pipeline_reproject_almost_all_args(tmp_vsimem):
         assert ds.GetRasterBand(1).Checksum() == 8515
 
 
+def test_gdalalg_raster_pipeline_reproject_proj_string(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    pipeline = get_pipeline_alg()
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            "../gcore/data/byte.tif",
+            "!",
+            "reproject",
+            "--src-crs=EPSG:32611",
+            "--dst-crs",
+            "+proj=laea +lon_0=147 +lat_0=-40 +datum=WGS84",
+            "!",
+            "write",
+            "--overwrite",
+            out_filename,
+        ]
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert "Lambert Azimuthal Equal Area" in ds.GetSpatialRef().ExportToWkt(
+            ["FORMAT=WKT2"]
+        ), ds.GetSpatialRef().ExportToWkt(["FORMAT=WKT2"])
+
+
 def test_gdalalg_raster_pipeline_clip_missing_bbox_or_like(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.tif")
@@ -687,4 +714,29 @@ def test_gdalalg_raster_pipeline_clip_bbox_crs(tmp_vsimem):
         print(ds.GetGeoTransform())
         assert ds.GetGeoTransform() == pytest.approx(
             (441620.0, 60.0, 0.0, 3751140.0, 0.0, -60.0), rel=1e-8
+        )
+
+
+def test_gdalalg_raster_pipeline_too_many_steps_for_vrt_output(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.vrt")
+
+    pipeline = get_pipeline_alg()
+    with pytest.raises(
+        Exception,
+        match="pipeline: VRT output is not supported when there are more than 3 steps",
+    ):
+        pipeline.ParseRunAndFinalize(
+            [
+                "read",
+                "../gcore/data/byte.tif",
+                "!",
+                "reproject",
+                "!",
+                "reproject",
+                "!",
+                "write",
+                "--overwrite",
+                out_filename,
+            ]
         )

@@ -15,43 +15,7 @@
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal raster info [OPTIONS] <INPUT>
-
-    Return information on a raster dataset.
-
-    Positional arguments:
-      -i, --input <INPUT>                                  Input raster dataset [required]
-
-    Common Options:
-      -h, --help                                           Display help message and exit
-      --json-usage                                         Display usage as JSON document and exit
-
-    Options:
-      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format. OUTPUT-FORMAT=json|text (default: json)
-      --mm, --min-max                                      Compute minimum and maximum value
-      --stats                                              Retrieve or compute statistics, using all pixels
-                                                           Mutually exclusive with --approx-stats
-      --approx-stats                                       Retrieve or compute statistics, using a subset of pixels
-                                                           Mutually exclusive with --stats
-      --hist                                               Retrieve or compute histogram
-
-    Advanced Options:
-      --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
-      --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
-      --no-gcp                                             Suppress ground control points list printing
-      --no-md                                              Suppress metadata printing
-      --no-ct                                              Suppress color table printing
-      --no-fl                                              Suppress file list printing
-      --checksum                                           Compute pixel checksum
-      --list-mdd                                           List all metadata domains available for the dataset
-      --mdd <MDD>                                          Report metadata for the specified domain. 'all' can be used to report metadata in all domains
-
-    Esoteric Options:
-      --no-nodata                                          Suppress retrieving nodata value
-      --no-mask                                            Suppress mask band information
-      --subdataset <SUBDATASET>                            Use subdataset of specified index (starting at 1), instead of the source dataset itself
+.. program-output:: gdal raster info --help-doc
 
 Description
 -----------
@@ -105,7 +69,7 @@ Standard options
     Read and display image statistics. Force computation if no
     statistics are stored in an image. However, they may be computed
     based on overviews or a subset of all tiles. Useful if you are in a
-    hurry and don't want precise stats.
+    hurry and don't need precise stats.
 
 .. option:: --hist
 

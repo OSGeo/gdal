@@ -13,16 +13,7 @@ gdallocationinfo
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdallocationinfo [--help] [--help-general]
-                            [-xml] [-lifonly] [-valonly]
-                            [-E] [-field_sep <sep>] [-ignore_extra_input]
-                            [-b <band>]... [-overview <overview_level>]
-                            [-r {nearest|bilinear|cubic|cubicspline}]
-                            [[-l_srs <srs_def>] | [-geoloc] | [-wgs84]]
-                            [-oo <NAME>=<VALUE>]... <srcfile> [<x> <y>]
-
+.. program-output:: gdallocationinfo --help-doc
 
 Description
 -----------

@@ -156,7 +156,7 @@ def test_gdalalg_vector_convert_error_output_not_set():
     convert = get_convert_alg()
     convert["input"] = "../ogr/data/poly.shp"
 
-    # Make it such that the "output" argment is set, but to a unset GDALArgDatasetValue
+    # Make it such that the "output" argument is set, but to a unset GDALArgDatasetValue
     convert["output"] = convert["output"]
 
     with pytest.raises(

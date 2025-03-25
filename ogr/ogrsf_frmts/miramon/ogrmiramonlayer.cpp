@@ -159,6 +159,30 @@ OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
             const char *pszAuthorityName = poSRS->GetAuthorityName(nullptr);
             const char *pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
 
+            // Reading Z units (in case of 3D vector file)
+            if (poSRS->GetAuthorityCode("VERT_CS") != nullptr)
+            {
+                const char *pszUnits = nullptr;
+                const double dfUnits = poSRS->GetLinearUnits(&pszUnits);
+                const auto IsAlmostEqual = [](double x, double y)
+                { return std::fabs(x - y) <= 1e-10; };
+                if (pszUnits)
+                {
+                    if (!strcmp(pszUnits, "metre") && IsAlmostEqual(dfUnits, 1))
+                    {
+                        hMiraMonLayerPNT.pZUnit = strdup("m");
+                        hMiraMonLayerARC.pZUnit = strdup("m");
+                        hMiraMonLayerPOL.pZUnit = strdup("m");
+                    }
+                    else
+                    {
+                        hMiraMonLayerPNT.pZUnit = strdup(pszUnits);
+                        hMiraMonLayerARC.pZUnit = strdup(pszUnits);
+                        hMiraMonLayerPOL.pZUnit = strdup(pszUnits);
+                    }
+                }
+            }
+
             if (pszAuthorityName && pszAuthorityCode &&
                 EQUAL(pszAuthorityName, "EPSG"))
             {

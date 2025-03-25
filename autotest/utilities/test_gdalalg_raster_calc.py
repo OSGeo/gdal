@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import functools
+import math
 import re
 
 import gdaltest
@@ -281,7 +283,7 @@ def test_gdalalg_calc_different_resolutions(calc, tmp_vsimem):
 
     xmax = 60
     ymax = 60
-    resolutions = [10, 20, 60]
+    resolutions = [30, 20, 60]
 
     inputs = [tmp_vsimem / f"in_{i}.tif" for i in range(len(resolutions))]
     outfile = tmp_vsimem / "out.tif"
@@ -305,8 +307,8 @@ def test_gdalalg_calc_different_resolutions(calc, tmp_vsimem):
     assert calc.Run()
 
     with gdal.Open(outfile) as ds:
-        assert ds.RasterXSize == xmax / min(resolutions)
-        assert ds.RasterYSize == ymax / min(resolutions)
+        assert ds.RasterXSize == xmax / functools.reduce(math.gcd, resolutions)
+        assert ds.RasterYSize == ymax / functools.reduce(math.gcd, resolutions)
 
         assert np.all(ds.ReadAsArray() == sum(resolutions))
 
@@ -330,6 +332,46 @@ def test_gdalalg_raster_calc_error_extent_mismatch(calc, tmp_vsimem):
         calc.Run()
 
     calc["no-check-extent"] = True
+    assert calc.Run()
+
+    with gdal.Open(input_1) as src, gdal.Open(outfile) as dst:
+        assert src.GetGeoTransform() == dst.GetGeoTransform()
+
+
+def test_gdalalg_raster_calc_error_extent_within_tolerance(calc, tmp_vsimem):
+
+    input_1 = tmp_vsimem / "in1.tif"
+    input_2 = tmp_vsimem / "in2.tif"
+    outfile = tmp_vsimem / "out.tif"
+
+    with gdal.GetDriverByName("GTIff").Create(input_2, 3600, 3600) as ds:
+        ds.SetGeoTransform(
+            (
+                2.4999861111111112e01,
+                2.7777777777777778e-04,
+                0.0000000000000000e00,
+                8.0000138888888884e01,
+                0.0000000000000000e00,
+                -2.7777777777777778e-04,
+            )
+        )
+    with gdal.GetDriverByName("GTiff").Create(input_1, 3600, 3600) as ds:
+        # this geotransform represents error introduced by writing a dataset with the above
+        # geotransform to netCDF
+        ds.SetGeoTransform(
+            (
+                2.4999861111111112e01,
+                2.7777777777777778e-04,
+                0.0000000000000000e00,
+                8.0000138888888884e01,
+                0.0000000000000000e00,
+                -2.7777777777778173e-04,
+            )
+        )
+
+    calc["input"] = [f"A={input_1}", f"B={input_2}"]
+    calc["output"] = outfile
+    calc["calc"] = ["A+B"]
     assert calc.Run()
 
     with gdal.Open(input_1) as src, gdal.Open(outfile) as dst:

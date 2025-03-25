@@ -1,0 +1,100 @@
+<?xml version= "1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Ultra stripped document derived from MARSEILLE_PRY_NoHD15_NoDHZ_JP2/000251471_1_1_STD_A from
+ https://geodelivery.intelligence-airbusds.com/main.html?download&weblink=7f828450ac65e2d61bfd5ea4ac8b3feb&realfilename=MARSEILLE_ORT_NoHD15_NoDHZ_JP2.7z
+ Just to test that we capture Dataset_Content.Dataset_Extent.Center.H
+ -->
+<Dimap_Document version="1.2">
+	<Metadata_Identification>
+		<METADATA_FORMAT version="2.0">DIMAP</METADATA_FORMAT>
+		<METADATA_PROFILE>PNEO_SENSOR</METADATA_PROFILE>
+		<METADATA_SUBPROFILE>PRODUCT</METADATA_SUBPROFILE>
+		<METADATA_LANGUAGE>en</METADATA_LANGUAGE>
+	</Metadata_Identification>
+	<Dataset_Content>
+		<Dataset_Extent>
+			<EXTENT_TYPE>Bounding_Box</EXTENT_TYPE>
+			<Center>
+				<LON>2</LON>
+				<LAT>49</LAT>
+				<H>123.45</H>
+				<COL>7026</COL>
+				<ROW>10908</ROW>
+			</Center>
+		</Dataset_Extent>
+	</Dataset_Content>
+	<Coordinate_Reference_System>
+		<Geodetic_CRS>
+			<CRS_TABLES version="0.0">EPSG</CRS_TABLES>
+			<GEODETIC_CRS_TYPE>GEOGRAPHIC2D</GEODETIC_CRS_TYPE>
+			<GEODETIC_CRS_NAME>WGS 84</GEODETIC_CRS_NAME>
+			<GEODETIC_CRS_CODE>urn:ogc:def:crs:EPSG::4326</GEODETIC_CRS_CODE>
+		</Geodetic_CRS>
+		<Temporal_CRS>
+			<CRS_TABLES version="0.0">ITU</CRS_TABLES>
+			<TEMPORAL_CRS_NAME>UTC</TEMPORAL_CRS_NAME>
+		</Temporal_CRS>
+	</Coordinate_Reference_System>
+	<Geoposition>
+		<Raster_CRS>
+			<RASTER_GEOMETRY>SENSOR</RASTER_GEOMETRY>
+			<PIXEL_CRS_TYPE>POINT</PIXEL_CRS_TYPE>
+			<PIXEL_ORIENTATION>CENTER</PIXEL_ORIENTATION>
+			<PIXEL_ORIGIN>1</PIXEL_ORIGIN>
+		</Raster_CRS>
+		<Geoposition_Models>
+			<Rational_Function_Model>
+				<Component>
+					<COMPONENT_TITLE>RPC Model</COMPONENT_TITLE>
+					<COMPONENT_CONTENT>Geoposition Model</COMPONENT_CONTENT>
+					<COMPONENT_TYPE>DIMAP</COMPONENT_TYPE>
+					<COMPONENT_PATH href="RPC_PNEO3_STD_x_1_1_F_1.XML"></COMPONENT_PATH>
+				</Component>
+			</Rational_Function_Model>
+		</Geoposition_Models>
+	</Geoposition>
+	<Raster_Data>
+		<Raster_Dimensions>
+			<NROWS>21813</NROWS>
+			<NCOLS>14049</NCOLS>
+			<NBANDS>1</NBANDS>
+		</Raster_Dimensions>
+		<Raster_Encoding>
+			<DATA_TYPE>INTEGER</DATA_TYPE>
+			<NBITS>16</NBITS>
+			<SIGN>UNSIGNED</SIGN>
+			<COMPRESSION_TYPE>LOSSLESS</COMPRESSION_TYPE>
+		</Raster_Encoding>
+		<Data_Access>
+			<DATA_FILE_ORGANISATION>BAND_COMPOSITE</DATA_FILE_ORGANISATION>
+			<DATA_FILE_FORMAT>image/jp2</DATA_FILE_FORMAT>
+			<DATA_FILE_TILES>false</DATA_FILE_TILES>
+			<Data_Files>
+				<Data_File tile_R="1" tile_C="1">
+					<DATA_FILE_PATH href="IMG_PNEO3_STD_x_1_1_F_1_P_R1C1.JP2"></DATA_FILE_PATH>
+				</Data_File>
+				<Raster_Display>
+					<Raster_Index_List>
+						<Raster_Index>
+							<BAND_ID>PAN</BAND_ID>
+							<BAND_NAME>PANCHROMATIC</BAND_NAME>
+							<BAND_INDEX>1</BAND_INDEX>
+						</Raster_Index>
+					</Raster_Index_List>
+					<Band_Display_Order>
+						<RED_CHANNEL>PAN</RED_CHANNEL>
+						<GREEN_CHANNEL>PAN</GREEN_CHANNEL>
+						<BLUE_CHANNEL>PAN</BLUE_CHANNEL>
+					</Band_Display_Order>
+					<Special_Value>
+						<SPECIAL_VALUE_TEXT>NODATA</SPECIAL_VALUE_TEXT>
+						<SPECIAL_VALUE_COUNT>0</SPECIAL_VALUE_COUNT>
+					</Special_Value>
+					<Special_Value>
+						<SPECIAL_VALUE_TEXT>SATURATED</SPECIAL_VALUE_TEXT>
+						<SPECIAL_VALUE_COUNT>32767</SPECIAL_VALUE_COUNT>
+					</Special_Value>
+				</Raster_Display>
+			</Data_Files>
+		</Data_Access>
+	</Raster_Data>
+</Dimap_Document>

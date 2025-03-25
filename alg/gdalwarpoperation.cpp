@@ -1410,18 +1410,34 @@ CPLErr GDALWarpOperation::CollectChunkListInternal(int nDstXOff, int nDstYOff,
     double dfSrcXExtraSize = 0.0;
     double dfSrcYExtraSize = 0.0;
     double dfSrcFillRatio = 0.0;
-    CPLErr eErr =
-        ComputeSourceWindow(nDstXOff, nDstYOff, nDstXSize, nDstYSize, &nSrcXOff,
-                            &nSrcYOff, &nSrcXSize, &nSrcYSize, &dfSrcXExtraSize,
-                            &dfSrcYExtraSize, &dfSrcFillRatio);
+    CPLErr eErr;
+    {
+        CPLTurnFailureIntoWarningBackuper oBackuper;
+        eErr = ComputeSourceWindow(nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                                   &nSrcXOff, &nSrcYOff, &nSrcXSize, &nSrcYSize,
+                                   &dfSrcXExtraSize, &dfSrcYExtraSize,
+                                   &dfSrcFillRatio);
+    }
 
     if (eErr != CE_None)
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "Unable to compute source region for "
-                 "output window %d,%d,%d,%d, skipping.",
-                 nDstXOff, nDstYOff, nDstXSize, nDstYSize);
-        return eErr;
+        const bool bErrorOutIfEmptySourceWindow =
+            CPLFetchBool(psOptions->papszWarpOptions,
+                         "ERROR_OUT_IF_EMPTY_SOURCE_WINDOW", true);
+        if (bErrorOutIfEmptySourceWindow)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Unable to compute source region for "
+                     "output window %d,%d,%d,%d, skipping.",
+                     nDstXOff, nDstYOff, nDstXSize, nDstYSize);
+        }
+        else
+        {
+            CPLDebug("WARP",
+                     "Unable to compute source region for "
+                     "output window %d,%d,%d,%d, skipping.",
+                     nDstXOff, nDstYOff, nDstXSize, nDstYSize);
+        }
     }
 
     /* -------------------------------------------------------------------- */
@@ -1483,7 +1499,7 @@ CPLErr GDALWarpOperation::CollectChunkListInternal(int nDstXOff, int nDstYOff,
              // 2x2 blocks large and the shapes of the source and target regions
              // are not excessively different. All those thresholds are a bit
              // arbitrary
-             (bOptimizeSizeAuto &&
+             (bOptimizeSizeAuto && nSrcXSize > 0 && nDstYSize > 0 &&
               (nDstXSize > nDstYSize ? fabs(double(nDstXSize) / nDstYSize -
                                             double(nSrcXSize) / nSrcYSize) <
                                            5 * double(nDstXSize) / nDstYSize
@@ -1709,10 +1725,13 @@ CPLErr GDALWarpOperation::WarpRegion(
     /* -------------------------------------------------------------------- */
     /*      Perform the warp.                                               */
     /* -------------------------------------------------------------------- */
-    CPLErr eErr = WarpRegionToBuffer(
-        nDstXOff, nDstYOff, nDstXSize, nDstYSize, pDstBuffer,
-        psOptions->eWorkingDataType, nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
-        dfSrcXExtraSize, dfSrcYExtraSize, dfProgressBase, dfProgressScale);
+    CPLErr eErr = nSrcXSize == 0
+                      ? CE_None
+                      : WarpRegionToBuffer(
+                            nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                            pDstBuffer, psOptions->eWorkingDataType, nSrcXOff,
+                            nSrcYOff, nSrcXSize, nSrcYSize, dfSrcXExtraSize,
+                            dfSrcYExtraSize, dfProgressBase, dfProgressScale);
 
     /* -------------------------------------------------------------------- */
     /*      Write the output data back to disk if all went well.            */

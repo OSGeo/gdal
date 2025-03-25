@@ -31,8 +31,11 @@
 GDALRasterStackAlgorithm::GDALRasterStackAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
+    m_supportsStreamedOutput = true;
+
     AddProgressArg();
-    AddOutputFormatArg(&m_format);
+    AddOutputFormatArg(&m_format, /* bStreamAllowed = */ true,
+                       /* bGDALGAllowed = */ true);
     AddArg(GDAL_ARG_NAME_INPUT, 'i',
            _("Input raster datasets (or specify a @<filename> to point to a "
              "file containing filenames)"),
@@ -51,13 +54,13 @@ GDALRasterStackAlgorithm::GDALRasterStackAlgorithm()
                    _("Target resolution (in destination CRS units)"),
                    &m_resolution)
                 .SetDefault("same")
-                .SetMetaVar("<xres>,<yres>|same|average|highest|lowest");
+                .SetMetaVar("<xres>,<yres>|same|average|common|highest|lowest");
         arg.AddValidationAction(
             [this, &arg]()
             {
                 const std::string val = arg.Get<std::string>();
                 if (val != "average" && val != "highest" && val != "lowest" &&
-                    val != "same")
+                    val != "same" && val != "common")
                 {
                     const auto aosTokens =
                         CPLStringList(CSLTokenizeString2(val.c_str(), ",", 0));
@@ -67,10 +70,11 @@ GDALRasterStackAlgorithm::GDALRasterStackAlgorithm()
                         CPLAtof(aosTokens[0]) <= 0 ||
                         CPLAtof(aosTokens[1]) <= 0)
                     {
-                        ReportError(CE_Failure, CPLE_AppDefined,
-                                    "resolution: two comma separated positive "
-                                    "values should be provided, or 'same', "
-                                    "'average', 'highest' or 'lowest'");
+                        ReportError(
+                            CE_Failure, CPLE_AppDefined,
+                            "resolution: two comma-separated positive "
+                            "values should be provided, or 'same', "
+                            "'average', 'common', 'highest' or 'lowest'");
                         return false;
                     }
                 }
@@ -152,7 +156,14 @@ bool GDALRasterStackAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
             else
             {
-                aosInputDatasetNames.push_back(ds.GetName().c_str());
+                std::string osDatasetName = ds.GetName();
+                if (!GetReferencePathForRelativePaths().empty())
+                {
+                    osDatasetName = GDALDataset::BuildFilename(
+                        osDatasetName.c_str(),
+                        GetReferencePathForRelativePaths().c_str(), true);
+                }
+                aosInputDatasetNames.push_back(osDatasetName.c_str());
             }
         }
     }
@@ -179,6 +190,7 @@ bool GDALRasterStackAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     const bool bVRTOutput =
         m_outputDataset.GetName().empty() || EQUAL(m_format.c_str(), "VRT") ||
+        EQUAL(m_format.c_str(), "stream") ||
         EQUAL(CPLGetExtensionSafe(m_outputDataset.GetName().c_str()).c_str(),
               "VRT");
 
@@ -267,7 +279,9 @@ bool GDALRasterStackAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
 
     auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
-        GDALBuildVRT(bVRTOutput ? m_outputDataset.GetName().c_str() : "",
+        GDALBuildVRT(EQUAL(m_format.c_str(), "stream") ? ""
+                     : bVRTOutput ? m_outputDataset.GetName().c_str()
+                                  : "",
                      foundByName ? aosInputDatasetNames.size()
                                  : static_cast<int>(m_inputDatasets.size()),
                      ahInputDatasets.empty() ? nullptr : ahInputDatasets.data(),

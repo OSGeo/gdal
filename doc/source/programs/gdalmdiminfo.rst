@@ -15,12 +15,7 @@ gdalmdiminfo
 Synopsis
 --------
 
-.. code-block::
-
-    gdalmdiminfo [--help] [--help-general]
-                 [-oo <NAME>=<VALUE>]... [-arrayoption <NAME>=<VALUE>]...
-                 [-detailed] [-nopretty] [-array <array_name>] [-limit <number>]
-                 [-stats] [-if <format>]... <datasetname>
+.. program-output:: gdalmdiminfo --help-doc
 
 Description
 -----------

@@ -15,20 +15,7 @@ gdalmdimtranslate
 Synopsis
 --------
 
-.. code-block::
-
-    gdalmdimtranslate [--help] [--help-general]
-                      [-if <format>]... [-of <format>]
-                      [-co <NAME>=<VALUE>]...
-                      [-array <array_spec>]...
-                      [-arrayoption <NAME>=<VALUE>]...
-                      [-group <group_spec>]...
-                      [-subset <subset_spec>]...
-                      [-scaleaxes <scaleaxes_spec>]
-                      [-oo <NAME>=<VALUE>]...
-                      [-strict]
-                       <src_filename> <dst_filename>
-
+.. program-output:: gdalmdimtranslate --help-doc
 
 Description
 -----------

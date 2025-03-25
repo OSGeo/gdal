@@ -708,6 +708,12 @@ void *GDALCreateRPCTransformerV1(GDALRPCInfoV1 *psRPCInfo, int bReversed,
  * separated)
  * </ul>
  *
+ * Some drivers (such as DIMAP) may also fill a HEIGHT_DEFAULT item that can be
+ * used by GDALCreateGenImgProjTransformer2() to initialize the below RPC_HEIGHT
+ * transformer option if none of RPC_HEIGHT and RPC_DEM are specified.
+ * Otherwise, if none of RPC_HEIGHT and RPC_DEM are specified as transformer
+ * options and if HEIGHT_DEFAULT is no available, a height of 0 will be used.
+ *
  * The transformer normally maps from pixel/line/height to long/lat/height space
  * as a forward transformation though in RPC terms that would be considered
  * an inverse transformation (and is solved by iterative approximation using
@@ -806,7 +812,8 @@ void *GDALCreateRPCTransformerV1(GDALRPCInfoV1 *psRPCInfo, int bReversed,
  */
 
 void *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo, int bReversed,
-                                 double dfPixErrThreshold, char **papszOptions)
+                                 double dfPixErrThreshold,
+                                 CSLConstList papszOptions)
 
 {
     /* -------------------------------------------------------------------- */

@@ -15,31 +15,7 @@
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal raster overview add [OPTIONS] <DATASET>
-
-    Adding overviews.
-
-    Positional arguments:
-      --dataset <DATASET>              Dataset (in-place updated, unless --external) [required]
-
-    Common Options:
-      -h, --help                       Display help message and exit
-      --version                        Display GDAL version and exit
-      --json-usage                     Display usage as JSON document and exit
-      --drivers                        Display driver list as JSON document and exit
-      --config <KEY>=<VALUE>           Configuration option [may be repeated]
-      --progress                       Display progress bar
-
-    Options:
-      --external                       Add external overviews
-      -r, --resampling <RESAMPLING>    Resampling method. RESAMPLING=nearest|average|cubic|cubicspline|lanczos|bilinear|gauss|average_magphase|rms|mode
-      --levels <LEVELS>                Levels / decimation factors [may be repeated]
-      --min-size <MIN-SIZE>            Maximum width or height of the smallest overview level.
-
-    Advanced Options:
-      --oo, --open-option <KEY=VALUE>  Open options [may be repeated]
+.. program-output:: gdal raster overview add --help-doc
 
 Description
 -----------
@@ -49,7 +25,7 @@ most supported file formats with one of several downsampling algorithms.
 
 .. option:: --dataset <DATASET>
 
-    Dataset name, to be in-place updated by default (unless :option:`--external` is specified). Required.
+    Dataset name, to be updated in-place by default (unless :option:`--external` is specified). Required.
 
 .. option:: --external
 

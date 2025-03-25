@@ -15,40 +15,7 @@
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal vector sql [OPTIONS] <INPUT> <OUTPUT> <statement>|@<filename>
-
-    Apply SQL statement(s) to a dataset.
-
-    Positional arguments:
-      -i, --input <INPUT>                                  Input vector dataset [required]
-      -o, --output <OUTPUT>                                Output vector dataset [required]
-      --sql <statement>|@<filename>                        SQL statement(s) [may be repeated] [required]
-
-    Common Options:
-      -h, --help                                           Display help message and exit
-      --version                                            Display GDAL version and exit
-      --json-usage                                         Display usage as JSON document and exit
-      --drivers                                            Display driver list as JSON document and exit
-      --config <KEY>=<VALUE>                               Configuration option [may be repeated]
-      --progress                                           Display progress bar
-
-    Options:
-      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format
-      --co, --creation-option <KEY>=<VALUE>                Creation option [may be repeated]
-      --lco, --layer-creation-option <KEY>=<VALUE>         Layer creation option [may be repeated]
-      --overwrite                                          Whether overwriting existing output is allowed
-      --update                                             Whether to open existing dataset in update mode
-      --overwrite-layer                                    Whether overwriting existing layer is allowed
-      --append                                             Whether appending to existing layer is allowed
-      --output-layer <OUTPUT-LAYER>                        Output layer name(s) [may be repeated]
-      --dialect <DIALECT>                                  SQL dialect (e.g. OGRSQL, SQLITE)
-
-    Advanced Options:
-      --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
-      --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
-
+.. program-output:: gdal vector sql --help-doc
 
 Description
 -----------

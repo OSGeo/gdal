@@ -782,3 +782,25 @@ def test_vrtwarp_add_band_gdt_unknown():
     vrt_ds = gdal.AutoCreateWarpedVRT(ds)
     with pytest.raises(Exception, match="Illegal GDT_Unknown/GDT_TypeCount argument"):
         vrt_ds.AddBand(gdal.GDT_Unknown)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_vrtwarp_write_to_band():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Byte)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds.GetRasterBand(1).SetNoDataValue(-9999)
+    vrt_ds = gdal.AutoCreateWarpedVRT(ds)
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterBand::Fill\(\): attempt to write to a VRTWarpedRasterBand.",
+    ):
+        vrt_ds.GetRasterBand(1).Fill(0)
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterBand::RasterIO\(\): attempt to write to a VRTWarpedRasterBand.",
+    ):
+        vrt_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\0")

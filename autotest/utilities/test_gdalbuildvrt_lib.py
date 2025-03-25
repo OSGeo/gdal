@@ -923,3 +923,49 @@ def test_gdalbuildvrt_lib_nodata_invalid(tmp_vsimem, dtype, nodata):
         gdal.CE_Warning, "cannot represent the specified NoData value"
     ):
         gdal.BuildVRT("", [tmp_vsimem / "in.tif"], VRTNodata=nodata)
+
+
+###############################################################################
+
+
+# Test --resolution=common
+# Also tested by C++ test_cpl.CPLGreatestCommonDivisor
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "resolutions,expected",
+    [
+        ([5 / 3600, 3 / 3600], 1 / 3600),
+        ([5, 3], 1),
+        ([5 / 3600, 2.5 / 3600], 2.5 / 3600),
+        ([1 / 10, 1], 1 / 10),
+        ([1 / 10, 1 / 3], 1 / 30),
+        ([1 / 17, 1 / 13], 1 / 221),
+        ([1 / 17, 1 / 3600], 1 / 61200),
+        ([2.9999999, 3], "common resolution"),
+    ],
+)
+def test_gdalbuildvrt_resolution_common(tmp_vsimem, resolutions, expected):
+
+    inputs = []
+
+    width = 5
+    height = 5
+
+    for i, res in enumerate(resolutions):
+        fname = tmp_vsimem / f"in_{i}.tif"
+        inputs.append(fname)
+
+        nx = round(width / res)
+        ny = round(height / res)
+
+        with gdal.GetDriverByName("GTiff").Create(fname, nx, ny) as ds:
+            ds.SetGeoTransform((0, res, 0, height, 0, -res))
+
+    if type(expected) is str:
+        with pytest.raises(Exception, match=expected):
+            gdal.BuildVRT("", inputs, resolution="common", strict=True)
+    else:
+        with gdal.BuildVRT("", inputs, resolution="common", strict=True) as ds:
+            gt = ds.GetGeoTransform()
+            assert gt[1] == expected
+            assert -gt[5] == expected

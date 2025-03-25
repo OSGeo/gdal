@@ -278,6 +278,19 @@ def test_transformer_5():
 
     tr = None
 
+    # Test HEIGHT_DEFAULT in RPC metadata domain
+    tmp_ds = gdal.GetDriverByName("VRT").CreateCopy("", ds)
+    tmp_ds.SetMetadataItem("HEIGHT_DEFAULT", "30", "RPC")
+    tr = gdal.Transformer(tmp_ds, None, ["METHOD=RPC"])
+
+    (success, pnt) = tr.TransformPoint(0, 20.5, 10.5)
+
+    assert (
+        success
+        and pnt[0] == pytest.approx(125.64828521533849, abs=0.000001)
+        and pnt[1] == pytest.approx(39.869345204440144, abs=0.000001)
+    ), "got wrong forward transform result.(3)"
+
     # Test RPC_DEMINTERPOLATION=cubic
 
     tr = gdal.Transformer(

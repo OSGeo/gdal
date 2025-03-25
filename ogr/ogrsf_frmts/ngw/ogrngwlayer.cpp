@@ -934,7 +934,7 @@ void OGRNGWLayer::Fill(const CPLJSONObject &oRootObject)
     FillFields(oFields, soIgnoredFieldsNames);
     FillMetadata(oRootObject);
 
-    auto osDescription = oRootObject.GetString("resource/desciption");
+    auto osDescription = oRootObject.GetString("resource/description");
     SetDescription(osDescription.c_str());
     // SetDescription(poFeatureDefn->GetName());
 }
@@ -1000,14 +1000,13 @@ void OGRNGWLayer::FillFields(const CPLJSONArray &oFields,
         oFieldDefn.SetAlternativeName(osFieldAlias.c_str());
 
         // Add additional parameters to comment as JSON string
-        CPLJSONObject oFieldCommnent;
-        oFieldCommnent.Add("id", oField.GetLong("id"));
-        oFieldCommnent.Add("label_field", oField.GetBool("label_field"));
-        oFieldCommnent.Add("grid_visibility",
-                           oField.GetBool("grid_visibility"));
-        oFieldCommnent.Add("text_search", oField.GetBool("text_search"));
+        CPLJSONObject oFieldComment;
+        oFieldComment.Add("id", oField.GetLong("id"));
+        oFieldComment.Add("label_field", oField.GetBool("label_field"));
+        oFieldComment.Add("grid_visibility", oField.GetBool("grid_visibility"));
+        oFieldComment.Add("text_search", oField.GetBool("text_search"));
         oFieldDefn.SetComment(
-            oFieldCommnent.Format(CPLJSONObject::PrettyFormat::Plain));
+            oFieldComment.Format(CPLJSONObject::PrettyFormat::Plain));
 
         // Domain
         auto nDomainID = oField.GetInteger("lookup_table/id", -1);

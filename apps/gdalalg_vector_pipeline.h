@@ -65,6 +65,8 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    GDALAlgorithm::ProcessGDALGOutputRet ProcessGDALGOutput() override;
+    bool CheckSafeForStreamOutput() override;
 };
 
 /************************************************************************/
@@ -110,6 +112,9 @@ class GDALVectorPipelineAlgorithm final
     {
         return m_outputDataset;
     }
+
+  private:
+    std::string m_helpDocCategory{};
 };
 
 /************************************************************************/

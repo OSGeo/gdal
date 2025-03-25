@@ -2287,6 +2287,26 @@ CPLErr VRTWarpedRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
+/*                   EmitErrorMessageIfWriteNotSupported()              */
+/************************************************************************/
+
+bool VRTWarpedRasterBand::EmitErrorMessageIfWriteNotSupported(
+    const char *pszCaller) const
+{
+    VRTWarpedDataset *poWDS = static_cast<VRTWarpedDataset *>(poDS);
+    // Cf comment in IWriteBlock()
+    if (poWDS->m_poWarper->GetOptions()->nDstAlphaBand != nBand)
+    {
+        ReportError(CE_Failure, CPLE_NoWriteAccess,
+                    "%s: attempt to write to a VRTWarpedRasterBand.",
+                    pszCaller);
+
+        return true;
+    }
+    return false;
+}
+
+/************************************************************************/
 /*                       GetBestOverviewLevel()                         */
 /************************************************************************/
 

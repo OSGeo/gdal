@@ -1360,9 +1360,7 @@ OGRErr OGRMSSQLSpatialDataSource::InitializeMetadataTables()
         CPLODBCStatement oStmt(&oSession);
 
         oStmt.Append(
-            "IF NOT EXISTS (SELECT * FROM sys.objects WHERE "
-            "object_id = OBJECT_ID(N'[dbo].[geometry_columns]') AND type in "
-            "(N'U')) "
+            "IF OBJECT_ID(N'[geometry_columns]', N'U') IS NULL "
             "CREATE TABLE geometry_columns (f_table_catalog varchar(128) not "
             "null, "
             "f_table_schema varchar(128) not null, f_table_name varchar(256) "
@@ -1373,9 +1371,7 @@ OGRErr OGRMSSQLSpatialDataSource::InitializeMetadataTables()
             "CONSTRAINT geometry_columns_pk PRIMARY KEY (f_table_catalog, "
             "f_table_schema, f_table_name, f_geometry_column));\n");
 
-        oStmt.Append("IF NOT EXISTS (SELECT * FROM sys.objects "
-                     "WHERE object_id = OBJECT_ID(N'[dbo].[spatial_ref_sys]') "
-                     "AND type in (N'U')) "
+        oStmt.Append("IF OBJECT_ID(N'[spatial_ref_sys]', N'U') IS NULL "
                      "CREATE TABLE spatial_ref_sys (srid integer not null "
                      "PRIMARY KEY, auth_name varchar(256), auth_srid integer, "
                      "srtext varchar(2048), proj4text varchar(2048))");
