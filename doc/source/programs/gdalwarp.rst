@@ -548,7 +548,8 @@ The details of how it is taken into account depends on the resampling kernel:
 - for bilinear, cubic, cubicspline and lanczos, for each target pixel, the
   coordinate of its center is projected back to source coordinates and a
   corresponding source pixel is identified. If this source pixel is invalid, the
-  target pixel is considered as nodata.
+  target pixel is considered as nodata (in this case, valid pixels within the
+  kernel radius would not be considered).
   Given that those resampling kernels have a non-null kernel radius, this source
   pixel is just one among other several source pixels, and it might be possible
   that there are invalid values in those other contributing source pixels.

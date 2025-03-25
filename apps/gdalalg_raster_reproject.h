@@ -15,6 +15,8 @@
 
 #include "gdalalg_raster_pipeline.h"
 
+#include <limits>
+
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
@@ -48,6 +50,12 @@ class GDALRasterReprojectAlgorithm /* non final */
     std::string m_bboxCrs{};
     std::vector<int> m_size{};
     bool m_targetAlignedPixels = false;
+    std::vector<std::string> m_srcNoData{};
+    std::vector<std::string> m_dstNoData{};
+    bool m_addAlpha = false;
+    std::vector<std::string> m_warpOptions{};
+    std::vector<std::string> m_transformOptions{};
+    double m_errorThreshold = std::numeric_limits<double>::quiet_NaN();
 };
 
 /************************************************************************/

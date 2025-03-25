@@ -5582,7 +5582,10 @@ class VSIFile(BytesIO):
             else:
                 return self.SetAsDatasetValue(value)
         if type == GAAT_STRING_LIST:
-            return self.SetAsStringList(value)
+            if isinstance(value, list):
+                return self.SetAsStringList([str(v) for v in value])
+            else:
+                return self.SetAsStringList([str(v)])
         if type == GAAT_INTEGER_LIST:
             return self.SetAsIntegerList(value)
         if type == GAAT_REAL_LIST:
