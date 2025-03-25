@@ -2468,6 +2468,41 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
     VSIFree(*$3);
 }
 
+%typemap(in) (GDALDataType eType)
+{
+    if (PyInt_Check($input))
+    {
+        $1 = static_cast<GDALDataType>(PyInt_AsLong($input));
+    }
+    else
+    {
+        PyObject* gdal_array = PyImport_ImportModule("osgeo.gdal_array");
+        if (gdal_array) 
+        {
+            PyObject* dict = PyModule_GetDict(gdal_array);
+            PyObject* fn = PyDict_GetItemString(dict, "NumericTypeCodeToGDALTypeCode");
+            PyObject* type_code = PyObject_CallFunctionObjArgs(fn, $input, NULL);
+
+            Py_DECREF(gdal_array);
+            if (type_code && PyInt_Check(type_code))
+            {
+                $1 = static_cast<GDALDataType>(PyInt_AsLong(type_code));
+                Py_DECREF(type_code);
+            }
+            else
+            {
+                Py_XDECREF(type_code);
+                PyErr_SetString(PyExc_RuntimeError, "type must be a GDAL data type code or NumPy type");
+                SWIG_fail;
+            }
+        }
+        else
+        {
+            PyErr_SetString(PyExc_RuntimeError, "gdal_array module is not available; type must be a specified as a GDAL data type code");
+            SWIG_fail;
+        }
+    }
+}
 
 %typemap(in) (const char *utf8_path) (int bToFree = 0)
 {
