@@ -599,7 +599,7 @@ RUN if test "$(uname -p)" = "x86_64"; then \
       && apt-get install -y -V libaio1t64 \
       && ln -s libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1 \
       && apt-get clean \   
-      && rm -rf /var/lib/apt/lists
+      && rm -rf /var/lib/apt/lists \
   ) ; fi \
   ; fi
 
