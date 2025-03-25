@@ -38,7 +38,7 @@ if (BUILD_DOCS)
     file(MAKE_DIRECTORY ${SPHINX_BUILD_DIR})
     file(MAKE_DIRECTORY ${SPHINX_BUILD_DIR}/html_extra)
 
-    file(GLOB_RECURSE SPHINX_SOURCE_FILES CONFIGURE_DEPENDS 
+    file(GLOB_RECURSE SPHINX_SOURCE_FILES CONFIGURE_DEPENDS
             ${CMAKE_CURRENT_SOURCE_DIR}/source/*.rst
             ${CMAKE_CURRENT_SOURCE_DIR}/source/*.py)
 
@@ -47,7 +47,7 @@ if (BUILD_DOCS)
     ####################################################################################################
 
     # Create a dependency between source files and Doxygen
-    file(GLOB_RECURSE DOXYGEN_SOURCE_FILES CONFIGURE_DEPENDS 
+    file(GLOB_RECURSE DOXYGEN_SOURCE_FILES CONFIGURE_DEPENDS
             ${CMAKE_SOURCE_DIR}/alg/*.cpp
             ${CMAKE_SOURCE_DIR}/app/*.cpp
             ${CMAKE_SOURCE_DIR}/frmts/gdalallregister.cpp
@@ -154,7 +154,7 @@ if (BUILD_DOCS)
                     ${SPHINX_BUILD} -M man
                                     ${CMAKE_CURRENT_SOURCE_DIR}/source
                                     ${CMAKE_CURRENT_BINARY_DIR}/build
-                                    ${SPHINX_BUILD_OPTS} 
+                                    ${SPHINX_BUILD_OPTS}
             COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/man.stamp"
     )
 
@@ -196,6 +196,7 @@ if (BUILD_DOCS)
                                      ${CMAKE_CURRENT_SOURCE_DIR}/source
                                      ${CMAKE_CURRENT_BINARY_DIR}/build
                                      ${SPHINX_BUILD_OPTS}
+                                     "--fail-on-warning"
                                      -D html_extra_path=extra_path
     )
 

@@ -54,6 +54,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vector_info
    gdal_vector_clip
    gdal_vector_convert
+   gdal_vector_edit
    gdal_vector_filter
    gdal_vector_pipeline
    gdal_vector_rasterize
@@ -91,6 +92,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vector_command`: Entry point for vector commands
     - :ref:`gdal_vector_info_subcommand`: Get information on a vector dataset
     - :ref:`gdal_vector_clip_subcommand`: Clip a vector dataset
+    - :ref:`gdal_vector_edit_subcommand`: Edit metadata of a vector dataset
     - :ref:`gdal_vector_filter_subcommand`: Filter a vector dataset
     - :ref:`gdal_vector_convert_subcommand`: Convert a vector dataset
     - :ref:`gdal_vector_pipeline_subcommand`: Process a vector dataset

@@ -32,6 +32,7 @@ GDALVectorSelectAlgorithm::GDALVectorSelectAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
+    AddActiveLayerArg(&m_activeLayer);
     AddArg("fields", 0, _("Fields to select (or exclude if --exclude)"),
            &m_fields)
         .SetPositional()
@@ -89,6 +90,7 @@ class GDALVectorSelectAlgorithmLayer final
           m_poFeatureDefn(new OGRFeatureDefn(oSrcLayer.GetName()))
     {
         SetDescription(oSrcLayer.GetDescription());
+        SetMetadata(oSrcLayer.GetMetadata());
         m_poFeatureDefn->SetGeomType(wkbNone);
         m_poFeatureDefn->Reference();
     }
@@ -315,18 +317,29 @@ bool GDALVectorSelectAlgorithm::RunStep(GDALProgressFunc, void *)
 
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
     {
-        auto poLayer =
-            std::make_unique<GDALVectorSelectAlgorithmLayer>(*poSrcLayer);
-        if (m_exclude)
+        if (m_activeLayer.empty() ||
+            m_activeLayer == poSrcLayer->GetDescription())
         {
-            poLayer->ExcludeFields(m_fields);
+            auto poLayer =
+                std::make_unique<GDALVectorSelectAlgorithmLayer>(*poSrcLayer);
+            if (m_exclude)
+            {
+                poLayer->ExcludeFields(m_fields);
+            }
+            else
+            {
+                if (!poLayer->IncludeFields(m_fields, !m_ignoreMissingFields))
+                    return false;
+            }
+            outDS->AddLayer(*poSrcLayer, std::move(poLayer));
         }
         else
         {
-            if (!poLayer->IncludeFields(m_fields, !m_ignoreMissingFields))
-                return false;
+            outDS->AddLayer(
+                *poSrcLayer,
+                std::make_unique<GDALVectorPipelinePassthroughLayer>(
+                    *poSrcLayer));
         }
-        outDS->AddLayer(*poSrcLayer, std::move(poLayer));
     }
 
     m_outputDataset.Set(std::move(outDS));

@@ -2273,6 +2273,9 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddBBOXArg(std::vector<double> *pValue, const char *helpMessage = nullptr);
 
+    /** Add active layer argument. */
+    GDALInConstructionAlgorithmArg &AddActiveLayerArg(std::string *pValue);
+
     /** Add \--progress argument. */
     GDALInConstructionAlgorithmArg &AddProgressArg();
 
