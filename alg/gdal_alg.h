@@ -116,7 +116,7 @@ GDALCreateGenImgProjTransformer(GDALDatasetH hSrcDS, const char *pszSrcWKT,
                                 int nOrder);
 void CPL_DLL *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS,
                                                GDALDatasetH hDstDS,
-                                               char **papszOptions);
+                                               CSLConstList papszOptions);
 void CPL_DLL *GDALCreateGenImgProjTransformer3(
     const char *pszSrcWKT, const double *padfSrcGeoTransform,
     const char *pszDstWKT, const double *padfDstGeoTransform);
@@ -212,7 +212,7 @@ void CPL_DLL *GDALCreateRPCTransformerV1(GDALRPCInfoV1 *psRPC, int bReversed,
 void CPL_DLL *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPC,
                                          int bReversed,
                                          double dfPixErrThreshold,
-                                         char **papszOptions);
+                                         CSLConstList papszOptions);
 
 void CPL_DLL GDALDestroyRPCTransformer(void *pTransformArg);
 int CPL_DLL GDALRPCTransform(void *pTransformArg, int bDstToSrc,
