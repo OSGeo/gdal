@@ -564,7 +564,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get install -y -V libarrow${ARROW_SOVERSION} \
     && apt-get install -y -V libparquet${ARROW_SOVERSION} \
     && apt-get install -y -V libarrow-dataset${ARROW_SOVERSION} \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists
 
 # Manually install ADBC packages from Ubuntu 22.04 as there are no 24.04 packages at time of writing.
 RUN if test "$(uname -p)" = "x86_64"; then \
@@ -597,7 +598,8 @@ RUN if test "$(uname -p)" = "x86_64"; then \
       apt-get update \
       && apt-get install -y -V libaio1t64 \
       && ln -s libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1 \
-      && apt-get clean
+      && apt-get clean \   
+      && rm -rf /var/lib/apt/lists
   ) ; fi \
   ; fi
 
