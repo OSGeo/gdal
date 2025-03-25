@@ -2756,6 +2756,146 @@ OGRDXFLayer::SimplifyBlockGeometry(OGRGeometryCollection *poCollection)
 }
 
 /************************************************************************/
+/*                        TranslateWIPEOUT()                            */
+/*                                                                      */
+/*     Translate Autodesk Wipeout entities                              */
+/*     This function reads only the geometry of the image outline and   */
+/*     doesn't output the embedded image                                */
+/************************************************************************/
+
+OGRDXFFeature *OGRDXFLayer::TranslateWIPEOUT()
+
+{
+    char szLineBuf[257];
+    int nCode;
+    auto poFeature = std::make_unique<OGRDXFFeature>(poFeatureDefn);
+    double dfX = 0.0, dfY = 0.0, dfXOffset = 0.0, dfYOffset = 0.0;
+    double dfXscale = 1.0, dfYscale = 1.0;
+
+    int nNumVertices = 0;
+    int nBoundaryVertexCount = 0;
+    int nFormat = 0;
+
+    DXFSmoothPolyline smoothPolyline;
+
+    smoothPolyline.setCoordinateDimension(2);
+
+    /* Read main feature properties as class, insertion point (in WCS) */
+    while ((nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) > 0)
+    {
+        if (nBoundaryVertexCount > nNumVertices)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too many vertices found in WIPEOUT.");
+            return nullptr;
+        }
+
+        switch (nCode)
+        {
+                /* Group codes 10, 20 control the insertion point of the lower    */
+                /* left corner of your image.                                            */
+            case 10:
+                dfXOffset = CPLAtof(szLineBuf);
+                break;
+
+            case 20:
+                dfYOffset = CPLAtof(szLineBuf);
+                smoothPolyline.AddPoint(dfXOffset, dfYOffset, 0.0, 0.0);
+                break;
+
+                /* --------------------------------------------------------------------- */
+                /* The group codes 11, 21 and 31 are used to define a vector in 3D space */
+                /* that is the endpoint of a line whose start point is assumed to be     */
+                /* 0,0,0, regardless of the origin point of the image.                   */
+                /* These group codes describe a relative vector.                         */
+                /* --------------------------------------------------------------------- */
+
+            case 11:
+                dfXscale = CPLAtof(szLineBuf);
+                break;
+
+            case 22:
+                dfYscale = CPLAtof(szLineBuf);
+                break;
+
+            case 31:
+                break;
+
+            /* Read image properties and set them in feature style (contrast...) */
+            case 281:
+                break;
+
+            case 282:
+                break;
+
+            case 293:
+                break;
+
+            case 71:
+                nFormat = atoi(szLineBuf);
+                if (nFormat == 1)
+                {
+                    // Here ignore feature because point format set to 1 is not supported
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Format of points in WIPEOUT entity not supported.");
+                    return nullptr;
+                }
+                break;
+
+            case 91:
+                nNumVertices = atoi(szLineBuf);
+                break;
+
+            /* -------------------------------------------------------------------- */
+            /*      Read clipping boudary properties and set them feature geometry  */
+            /*      Collect VERTEXes as a smooth polyline.                          */
+            /* -------------------------------------------------------------------- */
+            case 14:
+                dfX = CPLAtof(szLineBuf);
+                break;
+
+            case 24:
+                dfY = CPLAtof(szLineBuf);
+                smoothPolyline.AddPoint(dfXOffset + (0.5 + dfX) * dfXscale,
+                                        dfYOffset + (0.5 - dfY) * dfYscale, 0.0,
+                                        0.0);
+                nBoundaryVertexCount++;
+                break;
+
+            default:
+                TranslateGenericProperty(poFeature.get(), nCode, szLineBuf);
+                break;
+        }
+    }
+    if (nCode < 0)
+    {
+        DXF_LAYER_READER_ERROR();
+        return nullptr;
+    }
+
+    if (nCode == 0)
+        poDS->UnreadValue();
+
+    /* -------------------------------------------------------------------- */
+    /*      Close polyline to output polygon geometry.                      */
+    /* -------------------------------------------------------------------- */
+    smoothPolyline.Close();
+
+    OGRGeometry *poGeom = smoothPolyline.Tessellate(TRUE);
+
+    poFeature->SetGeometryDirectly(poGeom);
+
+    // Set style pen color
+    PrepareLineStyle(poFeature.get());
+    //CPLDebug("Wipeout translated", "%s", poFeature->GetFieldAsString("EntityHandle"));
+
+    return poFeature.release();
+}
+
+/************************************************************************/
+
+/************************************************************************/
 /*                       InsertBlockReference()                         */
 /*                                                                      */
 /*     Returns a point geometry located at the block's insertion        */
@@ -3521,6 +3661,10 @@ OGRDXFFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         else if (EQUAL(szLineBuf, "MLEADER") || EQUAL(szLineBuf, "MULTILEADER"))
         {
             poFeature = TranslateMLEADER();
+        }
+        else if (EQUAL(szLineBuf, "WIPEOUT"))
+        {
+            poFeature = TranslateWIPEOUT();
         }
         else if (EQUAL(szLineBuf, "3DSOLID") || EQUAL(szLineBuf, "BODY") ||
                  EQUAL(szLineBuf, "REGION") || EQUAL(szLineBuf, "SURFACE"))

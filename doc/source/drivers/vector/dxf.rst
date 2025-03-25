@@ -160,6 +160,10 @@ The following entity types are supported:
    label. Block content for MULTILEADERS is treated as for INSERT.
    Spline leaders are tessellated into line segments.
 
+-  WIPEOUT: a light support of WIPEOUT entities can parse the outline 
+   geometry of WIPEOUT entities and translate it into a POLYGON feature. 
+   The feature is 2D support only - Z coordinates are ignored.
+
 -  3DSOLID, REGION, BODY, SURFACE: See below.
 
 A reasonable attempt is made to preserve color, line width (lineweight),
