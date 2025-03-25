@@ -493,34 +493,31 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
             GetReferencePathForRelativePaths());
     }
 
-    if (!m_pipeline.empty())
+    // Propagate input parameters set at the pipeline level to the
+    // "read" step
     {
-        // Propagate input parameters set at the pipeline level to the
-        // "read" step
+        auto &step = steps.front();
+        for (auto &arg : step.alg->GetArgs())
         {
-            auto &step = steps.front();
-            for (auto &arg : step.alg->GetArgs())
+            auto pipelineArg = GetArg(arg->GetName());
+            if (pipelineArg && pipelineArg->IsExplicitlySet())
             {
-                auto pipelineArg = GetArg(arg->GetName());
-                if (pipelineArg && pipelineArg->IsExplicitlySet())
-                {
-                    arg->SetSkipIfAlreadySet(true);
-                    arg->SetFrom(*pipelineArg);
-                }
+                arg->SetSkipIfAlreadySet(true);
+                arg->SetFrom(*pipelineArg);
             }
         }
+    }
 
-        // Same with "write" step
+    // Same with "write" step
+    {
+        auto &step = steps.back();
+        for (auto &arg : step.alg->GetArgs())
         {
-            auto &step = steps.back();
-            for (auto &arg : step.alg->GetArgs())
+            auto pipelineArg = GetArg(arg->GetName());
+            if (pipelineArg && pipelineArg->IsExplicitlySet())
             {
-                auto pipelineArg = GetArg(arg->GetName());
-                if (pipelineArg && pipelineArg->IsExplicitlySet())
-                {
-                    arg->SetSkipIfAlreadySet(true);
-                    arg->SetFrom(*pipelineArg);
-                }
+                arg->SetSkipIfAlreadySet(true);
+                arg->SetFrom(*pipelineArg);
             }
         }
     }

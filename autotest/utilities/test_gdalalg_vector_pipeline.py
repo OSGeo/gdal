@@ -13,6 +13,7 @@
 
 import json
 
+import ogrtest
 import pytest
 
 from osgeo import gdal, ogr
@@ -790,3 +791,50 @@ def test_gdalalg_vector_pipeline_reproject_proj_string(tmp_vsimem):
         assert "Lambert Azimuthal Equal Area" in lyr.GetSpatialRef().ExportToWkt(
             ["FORMAT=WKT2"]
         ), lyr.GetSpatialRef().ExportToWkt(["FORMAT=WKT2"])
+
+
+def test_gdalalg_vector_pipeline_geom_op_unknown_subalgorithm():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+
+    alg = get_pipeline_alg()
+
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    with pytest.raises(
+        Exception,
+        match="pipeline: 'unknown-subalgorithm' is a unknown sub-algorithm of 'geom-op'",
+    ):
+        alg.ParseCommandLineArguments(
+            ["read", "!", "geom-op", "unknown-subalgorithm", "!", "write"]
+        )
+
+
+def test_gdalalg_vector_pipeline_geom_op_set_type():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("the_layer")
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 0)"))
+    src_lyr.CreateFeature(f)
+
+    alg = get_pipeline_alg()
+
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.ParseCommandLineArguments(
+        ["read", "!", "geom-op", "set-type", "--geometry-type=POINTZ", "!", "write"]
+    )
+
+    assert alg.Run()
+
+    out_ds = alg["output"].GetDataset()
+    out_lyr = out_ds.GetLayer(0)
+    assert out_lyr.GetGeomType() == ogr.wkbPoint25D
+    out_f = out_lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(out_f, "POINT Z (3 0 0)")
