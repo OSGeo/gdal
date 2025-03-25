@@ -738,6 +738,7 @@ dstSRS
 dstType
 dt
 dT
+dtype
 DUnits
 dValue
 dve
@@ -2133,6 +2134,7 @@ Nummeraanduiding
 numnorth
 numpy
 Numpy
+NumPy
 numslope
 numwoodies
 nUpdatedFieldsCount
