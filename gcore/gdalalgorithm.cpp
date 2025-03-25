@@ -1040,12 +1040,21 @@ bool GDALAlgorithm::ParseArgument(
         case GAAT_STRING:
         {
             const auto &choices = arg->GetChoices();
-            const auto &hiddenChoices = arg->GetHiddenChoices();
-            if (!choices.empty() &&
-                std::find(choices.begin(), choices.end(), value) ==
-                    choices.end() &&
-                std::find(hiddenChoices.begin(), hiddenChoices.end(), value) ==
-                    hiddenChoices.end())
+            for (const std::string &choice : choices)
+            {
+                if (EQUAL(value.c_str(), choice.c_str()))
+                {
+                    return arg->Set(choice.c_str());
+                }
+            }
+            for (const std::string &choice : arg->GetHiddenChoices())
+            {
+                if (EQUAL(value.c_str(), choice.c_str()))
+                {
+                    return arg->Set(choice.c_str());
+                }
+            }
+            if (!choices.empty())
             {
                 std::string expected;
                 for (const auto &choice : choices)
@@ -1124,30 +1133,52 @@ bool GDALAlgorithm::ParseArgument(
             const auto &hiddenChoices = arg->GetHiddenChoices();
             for (const char *v : aosTokens)
             {
-                if (!choices.empty() &&
-                    std::find(choices.begin(), choices.end(), v) ==
-                        choices.end() &&
-                    std::find(hiddenChoices.begin(), hiddenChoices.end(),
-                              value) == hiddenChoices.end())
+                bool found = false;
+                for (const std::string &choice : choices)
                 {
-                    std::string expected;
-                    for (const auto &choice : choices)
+                    if (EQUAL(choice.c_str(), v))
                     {
-                        if (!expected.empty())
-                            expected += ", ";
-                        expected += '\'';
-                        expected += choice;
-                        expected += '\'';
+                        found = true;
+                        valueVector.push_back(choice);
+                        break;
                     }
-                    ReportError(CE_Failure, CPLE_IllegalArg,
-                                "Invalid value '%s' for string argument '%s'. "
-                                "Should be "
-                                "one among %s.",
-                                v, name.c_str(), expected.c_str());
-                    return false;
                 }
+                if (!found)
+                {
+                    for (const std::string &choice : hiddenChoices)
+                    {
+                        if (EQUAL(choice.c_str(), v))
+                        {
+                            found = true;
+                            valueVector.push_back(choice);
+                            break;
+                        }
+                    }
+                }
+                if (!found)
+                {
+                    if (!choices.empty())
+                    {
+                        std::string expected;
+                        for (const auto &choice : choices)
+                        {
+                            if (!expected.empty())
+                                expected += ", ";
+                            expected += '\'';
+                            expected += choice;
+                            expected += '\'';
+                        }
+                        ReportError(
+                            CE_Failure, CPLE_IllegalArg,
+                            "Invalid value '%s' for string argument '%s'. "
+                            "Should be "
+                            "one among %s.",
+                            v, name.c_str(), expected.c_str());
+                        return false;
+                    }
 
-                valueVector.push_back(v);
+                    valueVector.push_back(v);
+                }
             }
             break;
         }

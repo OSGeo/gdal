@@ -12,11 +12,15 @@
 
 #include "gdalalg_raster_pipeline.h"
 #include "gdalalg_raster_read.h"
+#include "gdalalg_raster_astype.h"
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_edit.h"
 #include "gdalalg_raster_reproject.h"
 #include "gdalalg_raster_resize.h"
+#include "gdalalg_raster_scale.h"
+#include "gdalalg_raster_select.h"
 #include "gdalalg_raster_write.h"
+#include "gdalalg_raster_unscale.h"
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -224,10 +228,14 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
 
     m_stepRegistry.Register<GDALRasterReadAlgorithm>();
     m_stepRegistry.Register<GDALRasterWriteAlgorithm>();
+    m_stepRegistry.Register<GDALRasterAsTypeAlgorithm>();
     m_stepRegistry.Register<GDALRasterClipAlgorithm>();
     m_stepRegistry.Register<GDALRasterEditAlgorithm>();
     m_stepRegistry.Register<GDALRasterReprojectAlgorithm>();
     m_stepRegistry.Register<GDALRasterResizeAlgorithm>();
+    m_stepRegistry.Register<GDALRasterScaleAlgorithm>();
+    m_stepRegistry.Register<GDALRasterSelectAlgorithm>();
+    m_stepRegistry.Register<GDALRasterUnscaleAlgorithm>();
 }
 
 /************************************************************************/

@@ -229,6 +229,42 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
 
             return oDoc.Save(filename);
         }
+
+        const auto outputFormatArg =
+            m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_FORMAT);
+        const auto outputArg = m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT);
+        if (outputArg && outputArg->GetType() == GAAT_DATASET &&
+            outputArg->IsExplicitlySet())
+        {
+            const auto &outputFile =
+                outputArg
+                    ->GDALAlgorithmArg::template Get<GDALArgDatasetValue>();
+            bool isVRTOutput;
+            if (outputFormatArg && outputFormatArg->GetType() == GAAT_STRING &&
+                outputFormatArg->IsExplicitlySet())
+            {
+                const auto &val =
+                    outputFormatArg
+                        ->GDALAlgorithmArg::template Get<std::string>();
+                isVRTOutput = EQUAL(val.c_str(), "vrt");
+            }
+            else
+            {
+                isVRTOutput = EQUAL(
+                    CPLGetExtensionSafe(outputFile.GetName().c_str()).c_str(),
+                    "vrt");
+            }
+            if (isVRTOutput && !outputFile.GetName().empty() &&
+                m_steps.size() > 3)
+            {
+                StepAlgorithm::ReportError(
+                    CE_Failure, CPLE_NotSupported,
+                    "VRT output is not supported when there are more than 3 "
+                    "steps. Consider using the GDALG driver (files with "
+                    ".gdalg.json extension)");
+                return false;
+            }
+        }
     }
 
     if (GDALAlgorithm::m_executionForStreamOutput)

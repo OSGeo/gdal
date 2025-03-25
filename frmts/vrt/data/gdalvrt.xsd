@@ -529,6 +529,7 @@
                 <xs:element name="SrcMax" type="xs:double"/>
                 <xs:element name="DstMin" type="xs:double"/>
                 <xs:element name="DstMax" type="xs:double"/>
+                <xs:element name="Clip" type="xs:boolean"/> <!-- added in 3.11 -->
                 <xs:element name="NODATA" type="DoubleOrNanType"/> <!-- NODATA and UseMaskBand are mutually exclusive -->
                 <xs:element name="UseMaskBand" type="xs:boolean"/> <!-- NODATA and UseMaskBand are mutually exclusive -->
                 <xs:element name="LUT" type="xs:string"/>

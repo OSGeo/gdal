@@ -33,10 +33,19 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
 {
     if (standaloneStep)
     {
-        AddArg("dataset", 0, _("Dataset (in-place updated)"), &m_dataset,
-               GDAL_OF_RASTER | GDAL_OF_UPDATE)
+        AddProgressArg();
+
+        AddArg("dataset", 0,
+               _("Dataset (to be updated in-place, unless --auxiliary)"),
+               &m_dataset, GDAL_OF_RASTER | GDAL_OF_UPDATE)
             .SetPositional()
             .SetRequired();
+        AddArg("auxiliary", 0,
+               _("Ask for an auxiliary .aux.xml file to be edited"),
+               &m_readOnly)
+            .AddHiddenAlias("ro")
+            .AddHiddenAlias(GDAL_ARG_NAME_READ_ONLY);
+
         m_standaloneStep = true;
     }
 
@@ -58,6 +67,17 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
     AddArg("unset-metadata", 0, _("Remove dataset metadata item"),
            &m_unsetMetadata)
         .SetMetaVar("<KEY>");
+
+    if (standaloneStep)
+    {
+        AddArg("stats", 0, _("Compute statistics, using all pixels"), &m_stats)
+            .SetMutualExclusionGroup("stats");
+        AddArg("approx-stats", 0,
+               _("Compute statistics, using a subset of pixels"),
+               &m_approxStats)
+            .SetMutualExclusionGroup("stats");
+        AddArg("hist", 0, _("Compute histogram"), &m_hist);
+    }
 }
 
 /************************************************************************/
@@ -71,10 +91,11 @@ bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     {
         auto poDS = m_dataset.GetDatasetRef();
         CPLAssert(poDS);
-        if (poDS->GetAccess() != GA_Update)
+        if (poDS->GetAccess() != GA_Update && !m_readOnly)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
-                        "Dataset should be opened in update mode");
+                        "Dataset should be opened in update mode unless "
+                        "--auxiliary is set");
             return false;
         }
 
@@ -145,7 +166,58 @@ bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
         }
 
-        return true;
+        const int nBands = poDS->GetRasterCount();
+        int nCurProgress = 0;
+        const double dfTotalProgress =
+            ((m_stats || m_approxStats) ? nBands : 0) + (m_hist ? nBands : 0);
+        bool ret = true;
+        if (m_stats || m_approxStats)
+        {
+            for (int i = 0; (i < nBands) && ret; ++i)
+            {
+                void *pScaledProgress = GDALCreateScaledProgress(
+                    nCurProgress / dfTotalProgress,
+                    (nCurProgress + 1) / dfTotalProgress, pfnProgress,
+                    pProgressData);
+                ++nCurProgress;
+                double dfMin = 0.0;
+                double dfMax = 0.0;
+                double dfMean = 0.0;
+                double dfStdDev = 0.0;
+                ret = poDS->GetRasterBand(i + 1)->ComputeStatistics(
+                          m_approxStats, &dfMin, &dfMax, &dfMean, &dfStdDev,
+                          GDALScaledProgress, pScaledProgress) == CE_None;
+                GDALDestroyScaledProgress(pScaledProgress);
+            }
+        }
+        if (m_hist)
+        {
+            for (int i = 0; (i < nBands) && ret; ++i)
+            {
+                void *pScaledProgress = GDALCreateScaledProgress(
+                    nCurProgress / dfTotalProgress,
+                    (nCurProgress + 1) / dfTotalProgress, pfnProgress,
+                    pProgressData);
+                ++nCurProgress;
+                double dfMin = 0.0;
+                double dfMax = 0.0;
+                int nBucketCount = 0;
+                GUIntBig *panHistogram = nullptr;
+                ret = poDS->GetRasterBand(i + 1)->GetDefaultHistogram(
+                          &dfMin, &dfMax, &nBucketCount, &panHistogram, TRUE,
+                          GDALScaledProgress, pScaledProgress) == CE_None;
+                if (ret)
+                {
+                    ret = poDS->GetRasterBand(i + 1)->SetDefaultHistogram(
+                              dfMin, dfMax, nBucketCount, panHistogram) ==
+                          CE_None;
+                }
+                CPLFree(panHistogram);
+                GDALDestroyScaledProgress(pScaledProgress);
+            }
+        }
+
+        return ret;
     }
     else
     {

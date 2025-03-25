@@ -29,7 +29,8 @@ GDALRasterOverviewAlgorithmDelete::GDALRasterOverviewAlgorithmDelete()
 {
     AddProgressArg();
     AddOpenOptionsArg(&m_openOptions);
-    AddArg("dataset", 0, _("Dataset (in-place updated, unless --read-only)"),
+    AddArg("dataset", 0,
+           _("Dataset (to be updated in-place, unless --read-only)"),
            &m_dataset, GDAL_OF_RASTER | GDAL_OF_UPDATE)
         .SetPositional()
         .SetRequired();

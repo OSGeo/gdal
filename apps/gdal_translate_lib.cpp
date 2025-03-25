@@ -69,20 +69,14 @@ struct GDALTranslateScaleParams
        a need to scale only certain bands. */
     bool bScale = false;
 
-    /*! set it to TRUE if dfScaleSrcMin and dfScaleSrcMax is set. When it is
-       FALSE, the input range is automatically computed from the source data. */
-    bool bHaveScaleSrc = false;
+    /*! the range of input pixel values which need to be scaled.
+        If not set, the input range is automatically computed from the source data. */
+    double dfScaleSrcMin = std::numeric_limits<double>::quiet_NaN();
+    double dfScaleSrcMax = std::numeric_limits<double>::quiet_NaN();
 
-    /*! the range of input pixel values which need to be scaled */
-    double dfScaleSrcMin = 0;
-    double dfScaleSrcMax = 0;
-
-    /*! the range of output pixel values. If
-       GDALTranslateScaleParams::dfScaleDstMin and
-       GDALTranslateScaleParams::dfScaleDstMax are not set, then the output
-        range is 0 to 255. */
-    double dfScaleDstMin = 0;
-    double dfScaleDstMax = 0;
+    /*! the range of output pixel values. */
+    double dfScaleDstMin = std::numeric_limits<double>::quiet_NaN();
+    double dfScaleDstMax = std::numeric_limits<double>::quiet_NaN();
 };
 
 /************************************************************************/
@@ -169,6 +163,8 @@ struct GDALTranslateOptions
 
     /*! It is set to TRUE, when scale parameters are specific to each band */
     bool bHasUsedExplicitScaleBand = false;
+
+    bool bNoClip = false;
 
     /*! to apply non-linear scaling with a power function. It is the list of
        exponents of the power function (must be positive). This option must be
@@ -2205,11 +2201,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         double dfScale = 1.0;
         double dfOffset = 0.0;
         bool bScale = false;
-        bool bHaveScaleSrc = false;
-        double dfScaleSrcMin = 0.0;
-        double dfScaleSrcMax = 0.0;
-        double dfScaleDstMin = 0.0;
-        double dfScaleDstMax = 0.0;
+        double dfScaleSrcMin = std::numeric_limits<double>::quiet_NaN();
+        double dfScaleSrcMax = std::numeric_limits<double>::quiet_NaN();
+        double dfScaleDstMin = std::numeric_limits<double>::quiet_NaN();
+        double dfScaleDstMax = std::numeric_limits<double>::quiet_NaN();
         bool bExponentScaling = false;
         double dfExponent = 0.0;
 
@@ -2217,7 +2212,6 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             psOptions->asScaleParams[i].bScale)
         {
             bScale = psOptions->asScaleParams[i].bScale;
-            bHaveScaleSrc = psOptions->asScaleParams[i].bHaveScaleSrc;
             dfScaleSrcMin = psOptions->asScaleParams[i].dfScaleSrcMin;
             dfScaleSrcMax = psOptions->asScaleParams[i].dfScaleSrcMax;
             dfScaleDstMin = psOptions->asScaleParams[i].dfScaleDstMin;
@@ -2227,7 +2221,6 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                  !psOptions->bHasUsedExplicitScaleBand)
         {
             bScale = psOptions->asScaleParams[0].bScale;
-            bHaveScaleSrc = psOptions->asScaleParams[0].bHaveScaleSrc;
             dfScaleSrcMin = psOptions->asScaleParams[0].dfScaleSrcMin;
             dfScaleSrcMax = psOptions->asScaleParams[0].dfScaleSrcMax;
             dfScaleDstMin = psOptions->asScaleParams[0].dfScaleDstMin;
@@ -2261,7 +2254,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             return nullptr;
         }
 
-        if (bScale && !bHaveScaleSrc)
+        if (bScale && std::isnan(dfScaleSrcMin))
         {
             double adfCMinMax[2] = {};
             GDALComputeRasterMinMax(poSrcBand, TRUE, adfCMinMax);
@@ -2285,6 +2278,62 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 delete poVDS;
                 poSrcDS->Release();
                 return nullptr;
+            }
+
+            if (std::isnan(dfScaleDstMin))
+            {
+                switch (poVRTBand->GetRasterDataType())
+                {
+                    case GDT_Byte:
+                        dfScaleDstMin = std::numeric_limits<uint8_t>::lowest();
+                        dfScaleDstMax = std::numeric_limits<uint8_t>::max();
+                        break;
+                    case GDT_Int8:
+                        dfScaleDstMin = std::numeric_limits<int8_t>::lowest();
+                        dfScaleDstMax = std::numeric_limits<int8_t>::max();
+                        break;
+                    case GDT_UInt16:
+                        dfScaleDstMin = std::numeric_limits<uint16_t>::lowest();
+                        dfScaleDstMax = std::numeric_limits<uint16_t>::max();
+                        break;
+                    case GDT_Int16:
+                    case GDT_CInt16:
+                        dfScaleDstMin = std::numeric_limits<int16_t>::lowest();
+                        dfScaleDstMax = std::numeric_limits<int16_t>::max();
+                        break;
+                    case GDT_UInt32:
+                        dfScaleDstMin = std::numeric_limits<uint32_t>::lowest();
+                        dfScaleDstMax = std::numeric_limits<uint32_t>::max();
+                        break;
+                    case GDT_Int32:
+                    case GDT_CInt32:
+                        dfScaleDstMin = std::numeric_limits<int32_t>::lowest();
+                        dfScaleDstMax = std::numeric_limits<int32_t>::max();
+                        break;
+                    case GDT_UInt64:
+                        dfScaleDstMin = static_cast<double>(
+                            std::numeric_limits<uint64_t>::lowest());
+                        dfScaleDstMax = static_cast<double>(
+                            std::numeric_limits<uint64_t>::max() - 2048);
+                        break;
+                    case GDT_Int64:
+                        dfScaleDstMin = static_cast<double>(
+                            std::numeric_limits<int64_t>::lowest() + 1024);
+                        dfScaleDstMax = static_cast<double>(
+                            std::numeric_limits<int64_t>::max() - 2048);
+                        break;
+                    case GDT_Float16:
+                    case GDT_Float32:
+                    case GDT_Float64:
+                    case GDT_CFloat16:
+                    case GDT_CFloat32:
+                    case GDT_CFloat64:
+                    case GDT_Unknown:
+                    case GDT_TypeCount:
+                        dfScaleDstMin = 0;
+                        dfScaleDstMax = 1;
+                        break;
+                }
             }
 
             if (!bExponentScaling)
@@ -2327,7 +2376,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             {
                 poSource->SetPowerScaling(dfExponent, dfScaleSrcMin,
                                           dfScaleSrcMax, dfScaleDstMin,
-                                          dfScaleDstMax);
+                                          dfScaleDstMax, !psOptions->bNoClip);
             }
 
             poSource->SetColorTableComponent(nComponent);
@@ -3172,6 +3221,11 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
         .store_into(psOptions->bNoOverwrite)
         .hidden();
 
+    // Undocumented option used by gdal raster scale
+    argParser->add_argument("--no-clip")
+        .store_into(psOptions->bNoClip)
+        .hidden();
+
     if (psOptionsForBinary)
     {
         argParser->add_argument("input_file")
@@ -3316,8 +3370,14 @@ GDALTranslateOptionsNew(char **papszArgv,
                 psOptions->asScaleParams.resize(nIndex + 1);
             }
             psOptions->asScaleParams[nIndex].bScale = true;
-            psOptions->asScaleParams[nIndex].bHaveScaleSrc = false;
-            if (i < argc - 2 && ArgIsNumeric(papszArgv[i + 1]))
+            bool bScanForDst = false;
+            if (i < argc - 2 && EQUAL(papszArgv[i + 1], "NaN") &&
+                EQUAL(papszArgv[i + 2], "NaN"))
+            {
+                bScanForDst = true;
+                i += 2;
+            }
+            else if (i < argc - 2 && ArgIsNumeric(papszArgv[i + 1]))
             {
                 if (!ArgIsNumeric(papszArgv[i + 2]))
                 {
@@ -3325,16 +3385,14 @@ GDALTranslateOptionsNew(char **papszArgv,
                              "Value of -scale must be numeric");
                     return nullptr;
                 }
-                psOptions->asScaleParams[nIndex].bHaveScaleSrc = true;
                 psOptions->asScaleParams[nIndex].dfScaleSrcMin =
                     CPLAtofM(papszArgv[i + 1]);
                 psOptions->asScaleParams[nIndex].dfScaleSrcMax =
                     CPLAtofM(papszArgv[i + 2]);
+                bScanForDst = true;
                 i += 2;
             }
-            if (i < argc - 2 &&
-                psOptions->asScaleParams[nIndex].bHaveScaleSrc &&
-                ArgIsNumeric(papszArgv[i + 1]))
+            if (i < argc - 2 && bScanForDst && ArgIsNumeric(papszArgv[i + 1]))
             {
                 if (!ArgIsNumeric(papszArgv[i + 2]))
                 {
@@ -3347,11 +3405,6 @@ GDALTranslateOptionsNew(char **papszArgv,
                 psOptions->asScaleParams[nIndex].dfScaleDstMax =
                     CPLAtofM(papszArgv[i + 2]);
                 i += 2;
-            }
-            else
-            {
-                psOptions->asScaleParams[nIndex].dfScaleDstMin = 0.0;
-                psOptions->asScaleParams[nIndex].dfScaleDstMax = 255.0;
             }
         }
 

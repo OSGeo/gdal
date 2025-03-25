@@ -1587,13 +1587,13 @@ def test_vrt_protocol():
     assert ds.GetRasterBand(2).Checksum() == 5047
 
     ds = gdal.Open("vrt://data/float32.tif?scale_1=0,10")
-    assert ds.GetRasterBand(1).Checksum() == 4155
+    assert ds.GetRasterBand(1).Checksum() == 4151
 
     with pytest.raises(Exception):
         gdal.Open("vrt://data/float32.tif?exponent=2.2")
 
     ds = gdal.Open("vrt://data/float32.tif?exponent=2.2&scale=0,100")
-    assert ds.GetRasterBand(1).Checksum() == 4901
+    assert ds.GetRasterBand(1).Checksum() == 400
 
     ds = gdal.Open("vrt://data/uint16_3band.vrt?exponent_2=2.2&scale_2=0,10,0,100")
     assert ds.GetRasterBand(2).Checksum() == 4455
@@ -1696,12 +1696,12 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/minfloat.tif?scale=true")
     assert struct.unpack("f", ds.GetRasterBand(1).ReadRaster(2, 0, 1, 1))[
         0
-    ] == pytest.approx(255)
+    ] == pytest.approx(1.0)
 
     ds = gdal.Open("vrt://data/minfloat.tif?scale_2=true&bands=1,1")
     assert struct.unpack("f", ds.GetRasterBand(2).ReadRaster(2, 0, 1, 1))[
         0
-    ] == pytest.approx(255)
+    ] == pytest.approx(1.0)
     assert struct.unpack("f", ds.GetRasterBand(1).ReadRaster(2, 0, 1, 1))[
         0
     ] == pytest.approx(5.0)

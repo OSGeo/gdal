@@ -1616,6 +1616,7 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
     double m_dfDstMin = 0;
     double m_dfDstMax = 0;
     double m_dfExponent = 1;
+    bool m_bClip = true;  // Only taken into account for non-linear scaling
 
     int m_nColorTableComponent = 0;
 
@@ -1690,7 +1691,7 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
 
     void SetLinearScaling(double dfOffset, double dfScale);
     void SetPowerScaling(double dfExponent, double dfSrcMin, double dfSrcMax,
-                         double dfDstMin, double dfDstMax);
+                         double dfDstMin, double dfDstMax, bool bClip = true);
     void SetColorTableComponent(int nComponent);
 };
 

@@ -30,8 +30,9 @@ GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd()
 {
     AddProgressArg();
     AddOpenOptionsArg(&m_openOptions);
-    AddArg("dataset", 0, _("Dataset (in-place updated, unless --read-only)"),
-           &m_dataset, GDAL_OF_RASTER | GDAL_OF_UPDATE)
+    AddArg("dataset", 0,
+           _("Dataset (to be updated in-place, unless --external)"), &m_dataset,
+           GDAL_OF_RASTER | GDAL_OF_UPDATE)
         .SetPositional()
         .SetRequired();
     AddArg("external", 0, _("Add external overviews"), &m_readOnly)

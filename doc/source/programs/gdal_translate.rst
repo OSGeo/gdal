@@ -122,7 +122,9 @@ resampling, and rescaling pixels in the process.
 
     Rescale the input pixels values from the range **src_min** to **src_max**
     to the range **dst_min** to **dst_max**.
-    If omitted the output range is 0 to 255.
+    If omitted the output range is from the minimum value to the maximum value allowed
+    for integer data types (for example from 0 to 255 for Byte output) or from 0 to 1
+    for floating-point data types.
     If omitted the input range is automatically computed from the
     source dataset, in its whole (not just the window of interest potentially
     specified with :option:`-srcwin` or :option:`-projwin`). This may be a

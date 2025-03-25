@@ -27,6 +27,12 @@ Potential steps are:
 
 .. program-output:: gdal raster pipeline --help-doc=read
 
+* astype [OPTIONS]
+
+.. program-output:: gdal raster pipeline --help-doc=astype
+
+Details for options can be found in :ref:`gdal_raster_astype_subcommand`.
+
 * clip [OPTIONS]
 
 .. program-output:: gdal raster pipeline --help-doc=clip
@@ -50,6 +56,24 @@ Details for options can be found in :ref:`gdal_raster_reproject_subcommand`.
 .. program-output:: gdal raster pipeline --help-doc=resize
 
 Details for options can be found in :ref:`gdal_raster_resize_subcommand`.
+
+* scale [OPTIONS]
+
+.. program-output:: gdal raster pipeline --help-doc=scale
+
+Details for options can be found in :ref:`gdal_raster_scale_subcommand`.
+
+* select [OPTIONS]
+
+.. program-output:: gdal raster pipeline --help-doc=select
+
+Details for options can be found in :ref:`gdal_raster_select_subcommand`.
+
+* unscale [OPTIONS]
+
+.. program-output:: gdal raster pipeline --help-doc=unscale
+
+Details for options can be found in :ref:`gdal_raster_unscale_subcommand`.
 
 * write [OPTIONS] <OUTPUT>
 

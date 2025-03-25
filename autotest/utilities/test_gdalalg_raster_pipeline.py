@@ -715,3 +715,28 @@ def test_gdalalg_raster_pipeline_clip_bbox_crs(tmp_vsimem):
         assert ds.GetGeoTransform() == pytest.approx(
             (441620.0, 60.0, 0.0, 3751140.0, 0.0, -60.0), rel=1e-8
         )
+
+
+def test_gdalalg_raster_pipeline_too_many_steps_for_vrt_output(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.vrt")
+
+    pipeline = get_pipeline_alg()
+    with pytest.raises(
+        Exception,
+        match="pipeline: VRT output is not supported when there are more than 3 steps",
+    ):
+        pipeline.ParseRunAndFinalize(
+            [
+                "read",
+                "../gcore/data/byte.tif",
+                "!",
+                "reproject",
+                "!",
+                "reproject",
+                "!",
+                "write",
+                "--overwrite",
+                out_filename,
+            ]
+        )
