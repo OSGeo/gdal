@@ -101,7 +101,8 @@ GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetAutoComplete(
         if (args.empty() || args.front() != "read")
             ret.push_back("read");
     }
-    else if (args.back() == "!" || args[args.size() - 2] == "!")
+    else if (args.back() == "!" ||
+             (args[args.size() - 2] == "!" && !GetStepAlg(args.back())))
     {
         for (const std::string &name : m_stepRegistry.GetNames())
         {
@@ -202,8 +203,12 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
                 const auto &step = m_steps[i];
                 if (i > 0)
                     osCommandLine += " !";
-                osCommandLine += ' ';
-                osCommandLine += step->GetName();
+                for (const auto &path : step->GDALAlgorithm::m_callPath)
+                {
+                    if (!osCommandLine.empty())
+                        osCommandLine += ' ';
+                    osCommandLine += path;
+                }
 
                 for (const auto &arg : step->GetArgs())
                 {

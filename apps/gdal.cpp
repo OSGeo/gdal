@@ -61,20 +61,8 @@ static void EmitCompletion(std::unique_ptr<GDALAlgorithm> rootAlg,
         return;
     }
 
-    // Get inner-most algorithm
-    bool showAllOptions = true;
-    auto curAlg = std::move(rootAlg);
-    while (!args.empty() && !args.front().empty() && args.front()[0] != '-')
-    {
-        auto subAlg = curAlg->InstantiateSubAlgorithm(args.front());
-        if (!subAlg)
-            break;
-        showAllOptions = false;
-        args.erase(args.begin());
-        curAlg = std::move(subAlg);
-    }
-
-    for (const auto &choice : curAlg->GetAutoComplete(args, showAllOptions))
+    for (const auto &choice :
+         rootAlg->GetAutoComplete(args, /*showAllOptions = */ true))
     {
         addSpace();
         ret += CPLString(choice).replaceAll(" ", "\\ ");

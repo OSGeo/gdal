@@ -3836,6 +3836,24 @@ std::vector<std::string>
 GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
                                bool showAllOptions)
 {
+    // Get inner-most algorithm
+    std::unique_ptr<GDALAlgorithm> curAlgHolder;
+    GDALAlgorithm *curAlg = this;
+    while (!args.empty() && !args.front().empty() && args.front()[0] != '-')
+    {
+        auto subAlg = curAlg->InstantiateSubAlgorithm(args.front());
+        if (!subAlg)
+            break;
+        showAllOptions = false;
+        args.erase(args.begin());
+        curAlgHolder = std::move(subAlg);
+        curAlg = curAlgHolder.get();
+    }
+    if (curAlg != this)
+    {
+        return curAlg->GetAutoComplete(args, /* showAllOptions = */ false);
+    }
+
     std::vector<std::string> ret;
 
     std::string option;

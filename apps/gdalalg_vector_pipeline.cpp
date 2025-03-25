@@ -349,9 +349,26 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
                             "unknown step name: %s", algName.c_str());
                 return false;
             }
+            curStep.alg->SetCallPath({algName});
         }
         else
         {
+            if (curStep.alg->HasSubAlgorithms())
+            {
+                auto subAlg = std::unique_ptr<GDALVectorPipelineStepAlgorithm>(
+                    cpl::down_cast<GDALVectorPipelineStepAlgorithm *>(
+                        curStep.alg->InstantiateSubAlgorithm(arg).release()));
+                if (!subAlg)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "'%s' is a unknown sub-algorithm of '%s'",
+                                arg.c_str(), curStep.alg->GetName().c_str());
+                    return false;
+                }
+                curStep.alg = std::move(subAlg);
+                continue;
+            }
+
 #ifdef GDAL_PIPELINE_PROJ_NOSTALGIA
             if (!arg.empty() && arg[0] == '+' &&
                 arg.find(' ') == std::string::npos)
