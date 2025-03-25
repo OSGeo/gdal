@@ -3271,6 +3271,7 @@ def test_ogr_geom_GT_IsSurface(gt, res):
 @pytest.mark.parametrize(
     "gt,res",
     [
+        (ogr.wkbNone, ogr.wkbNone),
         (ogr.wkbPoint, ogr.wkbMultiPoint),
         (ogr.wkbPoint25D, ogr.wkbMultiPoint25D),
         (ogr.wkbPointM, ogr.wkbMultiPointM),
@@ -3284,6 +3285,30 @@ def test_ogr_geom_GT_IsSurface(gt, res):
 )
 def test_ogr_geom_GT_GetCollection(gt, res):
     assert ogr.GT_GetCollection(gt) == res
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "gt,res",
+    [
+        (ogr.wkbNone, ogr.wkbNone),
+        (ogr.wkbMultiPoint, ogr.wkbPoint),
+        (ogr.wkbMultiPoint25D, ogr.wkbPoint25D),
+        (ogr.wkbMultiPointM, ogr.wkbPointM),
+        (ogr.wkbMultiPointZM, ogr.wkbPointZM),
+        (ogr.wkbMultiLineString, ogr.wkbLineString),
+        (ogr.wkbMultiPolygon, ogr.wkbPolygon),
+        (ogr.wkbMultiCurve, ogr.wkbCompoundCurve),
+        (ogr.wkbMultiSurface, ogr.wkbCurvePolygon),
+        (ogr.wkbPoint, ogr.wkbPoint),
+        (ogr.wkbGeometryCollection, ogr.wkbUnknown),
+        (ogr.wkbUnknown, ogr.wkbUnknown),
+    ],
+)
+def test_ogr_geom_GT_GetSingle(gt, res):
+    assert ogr.GT_GetSingle(gt) == res
 
 
 ###############################################################################
