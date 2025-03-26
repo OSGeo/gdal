@@ -205,6 +205,21 @@ def test_gdalg_vector_pipeline_write_to_file_not_allowed():
         )
 
 
+def test_gdalg_vector_filter_standalone_write_to_file_not_allowed():
+    with pytest.raises(
+        Exception,
+        match="filter: in streamed execution, --format stream should be used",
+    ):
+        gdal.Open(
+            json.dumps(
+                {
+                    "type": "gdal_streamed_alg",
+                    "command_line": "gdal vector filter ../ogr/data/poly.shp --output-format=Memory foo",
+                }
+            )
+        )
+
+
 def test_gdalg_generate_from_raster_pipeline(tmp_vsimem):
     pipeline = gdal.GetGlobalAlgorithmRegistry()["raster"]["pipeline"]
     out_filename = str(tmp_vsimem / "test.gdalg.json")

@@ -144,15 +144,9 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
         }
 
-        if (m_executionForStreamOutput && !EQUAL(m_format.c_str(), "stream"))
-        {
-            // For security reasons, to avoid that reading a .gdalg.json file
-            // writes a file on the file system.
-            ReportError(CE_Failure, CPLE_NotSupported,
-                        "gdal vector pipeline in streamed execution should use "
-                        "--format stream");
-            return false;
-        }
+        // Already checked by GDALAlgorithm::Run()
+        CPLAssert(!m_executionForStreamOutput ||
+                  EQUAL(m_format.c_str(), "stream"));
 
         bool ret = false;
         if (readAlg.Run())
