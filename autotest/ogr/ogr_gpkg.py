@@ -309,14 +309,14 @@ def test_ogr_gpkg_1(gpkg_ds, tmp_path):
 
 def test_ogr_gpkg_2(gpkg_ds):
 
-    # Should default to GPKG 1.2
+    # Should default to GPKG 1.4
     with gpkg_ds.ExecuteSQL("PRAGMA application_id") as sql_lyr:
         f = sql_lyr.GetNextFeature()
         assert f["application_id"] == 1196444487
 
     with gpkg_ds.ExecuteSQL("PRAGMA user_version") as sql_lyr:
         f = sql_lyr.GetNextFeature()
-        assert f["user_version"] == 10200
+        assert f["user_version"] == 10400
 
 
 ###############################################################################
@@ -4758,6 +4758,30 @@ def test_ogr_gpkg_47c(tmp_vsimem):
     assert gdal.GetLastErrorMsg() == ""
 
 
+def test_ogr_gpkg_47c2(tmp_vsimem):
+
+    dbname = tmp_vsimem / "ogr_gpkg_47.gpkg"
+
+    # Set GPKG 1.4.0
+    gdaltest.gpkg_dr.CreateDataSource(dbname, options={"VERSION": "1.4"})
+    # Check user_version
+    fp = gdal.VSIFOpenL(dbname, "rb")
+    gdal.VSIFSeekL(fp, 60, 0)
+    assert struct.unpack(">I", gdal.VSIFReadL(4, 1, fp))[0] == 10400
+    gdal.VSIFCloseL(fp)
+
+    gdal.ErrorReset()
+    ds = ogr.Open(dbname, update=1)
+    assert ds is not None
+    assert gdal.GetLastErrorMsg() == ""
+    ds = None
+
+    gdal.ErrorReset()
+    with gdal.config_option("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "NO"):
+        ogr.Open(dbname)
+    assert gdal.GetLastErrorMsg() == ""
+
+
 def test_ogr_gpkg_47d(tmp_vsimem):
 
     dbname = tmp_vsimem / "ogr_gpkg_47.gpkg"
@@ -5897,7 +5921,9 @@ def test_ogr_gpkg_prelude_statements_after_spatialite_loading(tmp_vsimem):
 def test_ogr_gpkg_datetime_timezones(tmp_vsimem):
 
     filename = tmp_vsimem / "test_ogr_gpkg_datetime_timezones.gpkg"
-    ds = gdaltest.gpkg_dr.CreateDataSource(filename, options=["DATETIME_FORMAT=UTC"])
+    ds = gdaltest.gpkg_dr.CreateDataSource(
+        filename, options=["DATETIME_FORMAT=UTC", "VERSION=1.2"]
+    )
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("dt", ogr.OFTDateTime))
     for val in [
@@ -5923,6 +5949,44 @@ def test_ogr_gpkg_datetime_timezones(tmp_vsimem):
         f = sql_lyr.GetNextFeature()
         # check that milliseconds are written to be strictly compliant with the GPKG spec
         assert f.GetField(0) == "2020-01-01T01:34:56.000Z"
+    ds = None
+
+
+###############################################################################
+# Test DATETIME_FORMAT
+
+
+def test_ogr_gpkg_datetime_timezones_gpkg_1_4(tmp_vsimem):
+
+    filename = tmp_vsimem / "test_ogr_gpkg_datetime_timezones.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(
+        filename, options=["DATETIME_FORMAT=UTC", "VERSION=1.4"]
+    )
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("dt", ogr.OFTDateTime))
+    for val in [
+        "2020/01/01 01:34:56",
+        "2020/01/01 01:34:56+00",
+        "2020/01/01 01:34:56.789+02",
+    ]:
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("dt", val)
+        lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetField("dt") == "2020/01/01 01:34:56+00"
+    f = lyr.GetNextFeature()
+    assert f.GetField("dt") == "2020/01/01 01:34:56+00"
+    f = lyr.GetNextFeature()
+    assert f.GetField("dt") == "2019/12/31 23:34:56.789+00"
+
+    with ds.ExecuteSQL("SELECT dt || '' FROM test") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        # check that milliseconds are not written, since it is not required since GPKG 1.4
+        assert f.GetField(0) == "2020-01-01T01:34:56Z"
     ds = None
 
 
@@ -10825,17 +10889,19 @@ def test_gpkg_secure_delete(tmp_vsimem):
 
 
 @pytest.mark.parametrize(
-    "src_filename",
+    "src_filename,options",
     [
-        # Generated with: ogr2ogr autotest/ogr/data/gpkg/poly_golden.gpkg autotest/ogr/data/poly.shp --config OGR_CURRENT_DATE="2000-01-01T:00:00:00.000Z" -nomd
-        "data/gpkg/poly_golden.gpkg",
+        # Generated with: ogr2ogr autotest/ogr/data/gpkg/poly_golden.gpkg autotest/ogr/data/poly.shp --config OGR_CURRENT_DATE="2000-01-01T:00:00:00.000Z" -nomd -dsco VERSION=1.2
+        ("data/gpkg/poly_golden.gpkg", ["VERSION=1.2"]),
+        # Generated with: ogr2ogr autotest/ogr/data/gpkg/poly_golden_gpkg_1_4.gpkg autotest/ogr/data/poly.shp --config OGR_CURRENT_DATE="2000-01-01T:00:00:00.000Z" -nomd -dsco VERSION=1.4
+        ("data/gpkg/poly_golden_gpkg_1_4.gpkg", ["VERSION=1.4"]),
     ],
 )
-def test_ogr_gpkg_write_check_golden_file(tmp_path, src_filename):
+def test_ogr_gpkg_write_check_golden_file(tmp_path, src_filename, options):
 
     out_filename = str(tmp_path / "test.gpkg")
     with gdal.config_option("OGR_CURRENT_DATE", "2000-01-01T:00:00:00.000Z"):
-        gdal.VectorTranslate(out_filename, src_filename)
+        gdal.VectorTranslate(out_filename, src_filename, datasetCreationOptions=options)
 
     # Compare first sqlite3 dump if sqlite3 binary available
     import subprocess
@@ -10902,8 +10968,8 @@ def test_ogr_gpkg_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
     assert len(batch["datetime"]) == 4
     assert batch["datetime"][0] == b""
     assert batch["datetime"][1] == b"2022-05-31T12:34:56.789Z"
-    assert batch["datetime"][2] == b"2022-05-31T12:34:56.000"
-    assert batch["datetime"][3] == b"2022-05-31T12:34:56.000+12:30"
+    assert batch["datetime"][2] == b"2022-05-31T12:34:56"
+    assert batch["datetime"][3] == b"2022-05-31T12:34:56+12:30"
 
     # Setting a filer tests the use of the less optimized
     # OGRGeoPackageTableLayer::GetNextArray() implementation
@@ -10918,8 +10984,8 @@ def test_ogr_gpkg_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
     assert len(batch["datetime"]) == 4
     assert batch["datetime"][0] == b""
     assert batch["datetime"][1] == b"2022-05-31T12:34:56.789Z"
-    assert batch["datetime"][2] == b"2022-05-31T12:34:56.000"
-    assert batch["datetime"][3] == b"2022-05-31T12:34:56.000+12:30"
+    assert batch["datetime"][2] == b"2022-05-31T12:34:56"
+    assert batch["datetime"][3] == b"2022-05-31T12:34:56+12:30"
 
     with ds.ExecuteSQL("SELECT * FROM test") as sql_lyr:
         stream = sql_lyr.GetArrowStreamAsNumPy(
@@ -10931,8 +10997,8 @@ def test_ogr_gpkg_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
         assert len(batch["datetime"]) == 4
         assert batch["datetime"][0] == b""
         assert batch["datetime"][1] == b"2022-05-31T12:34:56.789Z"
-        assert batch["datetime"][2] == b"2022-05-31T12:34:56.000"
-        assert batch["datetime"][3] == b"2022-05-31T12:34:56.000+12:30"
+        assert batch["datetime"][2] == b"2022-05-31T12:34:56"
+        assert batch["datetime"][3] == b"2022-05-31T12:34:56+12:30"
 
 
 ###############################################################################

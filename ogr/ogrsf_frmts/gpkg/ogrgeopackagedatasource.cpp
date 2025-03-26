@@ -981,7 +981,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference *poSRSIn)
 /************************************************************************/
 
 GDALGeoPackageDataset::GDALGeoPackageDataset()
-    : m_nApplicationId(GPKG_APPLICATION_ID), m_nUserVersion(GPKG_1_2_VERSION),
+    : m_nApplicationId(GPKG_APPLICATION_ID), m_nUserVersion(GPKG_1_4_VERSION),
       m_papoLayers(nullptr), m_nLayers(0),
 #ifdef ENABLE_GPKG_OGR_CONTENTS
       m_bHasGPKGOGRContents(false),
