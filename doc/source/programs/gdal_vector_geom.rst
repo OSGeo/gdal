@@ -1,7 +1,7 @@
-.. _gdal_vector_geom_op_subcommand:
+.. _gdal_vector_geom_subcommand:
 
 ================================================================================
-"gdal vector geom-op" sub-command
+"gdal vector geom" sub-command
 ================================================================================
 
 .. versionadded:: 3.11
@@ -10,15 +10,15 @@
 
     Geometry operations on a vector dataset
 
-.. Index:: gdal vector geom-op
+.. Index:: gdal vector geom
 
 Synopsis
 --------
 
-.. program-output:: gdal vector geom-op --help-doc
+.. program-output:: gdal vector geom --help-doc
 
 Available sub-commands
 ----------------------
 
-- :ref:`gdal_vector_geom_op_set_type_subsubcommand`
-- :ref:`gdal_vector_geom_op_explode_collections_subsubcommand`
+- :ref:`gdal_vector_geom_set_type_subsubcommand`
+- :ref:`gdal_vector_geom_explode_collections_subsubcommand`

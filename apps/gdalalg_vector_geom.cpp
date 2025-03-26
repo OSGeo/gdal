@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "geom-op" step of "vector pipeline", or "gdal vector geom-op" standalone
+ * Purpose:  "geom" step of "vector pipeline", or "gdal vector geom" standalone
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,42 +10,42 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_geom_op.h"
-#include "gdalalg_vector_geom_op_set_type.h"
-#include "gdalalg_vector_geom_op_explode_collections.h"
+#include "gdalalg_vector_geom.h"
+#include "gdalalg_vector_geom_set_type.h"
+#include "gdalalg_vector_geom_explode_collections.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*         GDALVectorGeomOpAlgorithm::GDALVectorGeomOpAlgorithm()       */
+/*           GDALVectorGeomAlgorithm::GDALVectorGeomAlgorithm()         */
 /************************************************************************/
 
-GDALVectorGeomOpAlgorithm::GDALVectorGeomOpAlgorithm(bool standaloneStep)
+GDALVectorGeomAlgorithm::GDALVectorGeomAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       /* standaloneStep = */ false)
 {
     if (standaloneStep)
     {
-        RegisterSubAlgorithm<GDALVectorGeomOpSetTypeAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorGeomSetTypeAlgorithmStandalone>();
         RegisterSubAlgorithm<
-            GDALVectorGeomOpExplodeCollectionsAlgorithmStandalone>();
+            GDALVectorGeomExplodeCollectionsAlgorithmStandalone>();
     }
     else
     {
-        RegisterSubAlgorithm<GDALVectorGeomOpSetTypeAlgorithm>();
-        RegisterSubAlgorithm<GDALVectorGeomOpExplodeCollectionsAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorGeomSetTypeAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorGeomExplodeCollectionsAlgorithm>();
     }
 }
 
 /************************************************************************/
-/*               GDALVectorGeomOpAlgorithm::RunStep()                   */
+/*                GDALVectorGeomAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALVectorGeomOpAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorGeomAlgorithm::RunStep(GDALProgressFunc, void *)
 {
     CPLError(CE_Failure, CPLE_AppDefined,
              "The Run() method should not be called directly on the \"gdal "
-             "vector geom-op\" program.");
+             "vector geom\" program.");
     return false;
 }
 

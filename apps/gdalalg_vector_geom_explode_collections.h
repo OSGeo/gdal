@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "gdal vector geom-op set-type"
+ * Purpose:  "gdal vector geom explode-collections"
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,53 +10,44 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_VECTOR_GEOM_OP_SET_TYPE_INCLUDED
-#define GDALALG_VECTOR_GEOM_OP_SET_TYPE_INCLUDED
+#ifndef GDALALG_VECTOR_GEOM_EXPLODE_COLLECTIONS_INCLUDED
+#define GDALALG_VECTOR_GEOM_EXPLODE_COLLECTIONS_INCLUDED
 
 #include "gdalalg_vector_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   GDALVectorGeomOpSetTypeAlgorithm                   */
+/*              GDALVectorGeomExplodeCollectionsAlgorithm               */
 /************************************************************************/
 
-class GDALVectorGeomOpSetTypeAlgorithm /* non final */
+class GDALVectorGeomExplodeCollectionsAlgorithm /* non final */
     : public GDALVectorPipelineStepAlgorithm
 {
   public:
-    static constexpr const char *NAME = "set-type";
+    static constexpr const char *NAME = "explode-collections";
     static constexpr const char *DESCRIPTION =
-        "Modify the geometry type of a vector dataset.";
+        "Explode geometries of type collection of a vector dataset.";
     static constexpr const char *HELP_URL =
-        "/programs/gdal_vector_geom_op_set_type.html";
+        "/programs/gdal_vector_geom_explode_collections.html";
 
     static std::vector<std::string> GetAliases()
     {
         return {};
     }
 
-    explicit GDALVectorGeomOpSetTypeAlgorithm(bool standaloneStep = false);
-
     struct Options
     {
         std::string m_geomField{};
-        bool m_layerOnly = false;
-        bool m_featureGeomOnly = false;
         std::string m_type{};
-        bool m_multi = false;
-        bool m_single = false;
-        bool m_linear = false;
-        bool m_curve = false;
-        bool m_xy = false;
-        bool m_xyz = false;
-        bool m_xym = false;
-        bool m_xyzm = false;
         bool m_skip = false;
 
         // Computed value from m_type
         OGRwkbGeometryType m_eType = wkbUnknown;
     };
+
+    explicit GDALVectorGeomExplodeCollectionsAlgorithm(
+        bool standaloneStep = false);
 
   private:
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
@@ -66,19 +57,20 @@ class GDALVectorGeomOpSetTypeAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*               GDALVectorGeomOpSetTypeAlgorithmStandalone             */
+/*            GDALVectorGeomExplodeCollectionsAlgorithmStandalone       */
 /************************************************************************/
 
-class GDALVectorGeomOpSetTypeAlgorithmStandalone final
-    : public GDALVectorGeomOpSetTypeAlgorithm
+class GDALVectorGeomExplodeCollectionsAlgorithmStandalone final
+    : public GDALVectorGeomExplodeCollectionsAlgorithm
 {
   public:
-    GDALVectorGeomOpSetTypeAlgorithmStandalone()
-        : GDALVectorGeomOpSetTypeAlgorithm(/* standaloneStep = */ true)
+    GDALVectorGeomExplodeCollectionsAlgorithmStandalone()
+        : GDALVectorGeomExplodeCollectionsAlgorithm(
+              /* standaloneStep = */ true)
     {
     }
 };
 
 //! @endcond
 
-#endif /* GDALALG_VECTOR_GEOM_OP_SET_TYPE_INCLUDED */
+#endif /* GDALALG_VECTOR_GEOM_EXPLODE_COLLECTIONS_INCLUDED */

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal vector geom-op explode-collections' testing
+# Purpose:  'gdal vector geom explode-collections' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -20,7 +20,7 @@ from osgeo import gdal, ogr
 
 
 def get_alg():
-    return gdal.GetGlobalAlgorithmRegistry()["vector"]["geom-op"]["explode-collections"]
+    return gdal.GetGlobalAlgorithmRegistry()["vector"]["geom"]["explode-collections"]
 
 
 def _src_ds_two_fields():
@@ -41,7 +41,7 @@ def _src_ds_two_fields():
     return src_ds
 
 
-def test_gdalalg_vector_geom_op_explode_collections():
+def test_gdalalg_vector_geom_explode_collections():
 
     alg = get_alg()
     alg["input"] = _src_ds_two_fields()
@@ -91,7 +91,7 @@ def test_gdalalg_vector_geom_op_explode_collections():
     assert len(got) == 4
 
 
-def test_gdalalg_vector_geom_op_explode_collections_active_geometry_a():
+def test_gdalalg_vector_geom_explode_collections_active_geometry_a():
 
     alg = get_alg()
     alg["input"] = _src_ds_two_fields()
@@ -125,7 +125,7 @@ def test_gdalalg_vector_geom_op_explode_collections_active_geometry_a():
     assert out_lyr.GetFeatureCount() == 2
 
 
-def test_gdalalg_vector_geom_op_explode_collections_active_geometry_b():
+def test_gdalalg_vector_geom_explode_collections_active_geometry_b():
 
     alg = get_alg()
     alg["input"] = _src_ds_two_fields()
@@ -153,7 +153,7 @@ def test_gdalalg_vector_geom_op_explode_collections_active_geometry_b():
     assert out_lyr.GetFeatureCount() == 2
 
 
-def test_gdalalg_vector_geom_op_explode_collections_active_layer():
+def test_gdalalg_vector_geom_explode_collections_active_layer():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
@@ -196,7 +196,7 @@ def test_gdalalg_vector_geom_op_explode_collections_active_layer():
     assert out_f.GetFID() == 0
 
 
-def test_gdalalg_vector_geom_op_explode_collections_geometry_type():
+def test_gdalalg_vector_geom_explode_collections_geometry_type():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
@@ -223,7 +223,7 @@ def test_gdalalg_vector_geom_op_explode_collections_geometry_type():
     ogrtest.check_feature_geometry(out_f, "POINT Z (3 4 0)")
 
 
-def test_gdalalg_vector_geom_op_explode_collections_geometry_type_skip():
+def test_gdalalg_vector_geom_explode_collections_geometry_type_skip():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
@@ -265,7 +265,7 @@ def test_gdalalg_vector_geom_op_explode_collections_geometry_type_skip():
     ogrtest.check_feature_geometry(out_f, "POINT (9 10)")
 
 
-def test_gdalalg_vector_geom_op_explode_collections_type_invalid():
+def test_gdalalg_vector_geom_explode_collections_type_invalid():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
@@ -281,14 +281,14 @@ def test_gdalalg_vector_geom_op_explode_collections_type_invalid():
         alg.Run()
 
 
-def test_gdalalg_vector_geom_op_explode_collections_type_autocomplete():
+def test_gdalalg_vector_geom_explode_collections_type_autocomplete():
 
     gdal_path = test_cli_utilities.get_gdal_path()
     if gdal_path is None:
         pytest.skip("gdal binary not available")
 
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal vector geom-op explode-collections --geometry-type"
+        f"{gdal_path} completion gdal vector geom explode-collections --geometry-type"
     ).split(" ")
     assert out == [
         "GEOMETRY",
@@ -330,6 +330,6 @@ def test_gdalalg_vector_geom_op_explode_collections_type_autocomplete():
     ]
 
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal vector geom-op explode-collections --geometry-type COMPOUNDCURVE"
+        f"{gdal_path} completion gdal vector geom explode-collections --geometry-type COMPOUNDCURVE"
     ).split(" ")
     assert len(out) == 4

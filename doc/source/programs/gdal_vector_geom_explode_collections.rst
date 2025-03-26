@@ -1,7 +1,7 @@
-.. _gdal_vector_geom_op_explode_collections_subsubcommand:
+.. _gdal_vector_geom_explode_collections_subsubcommand:
 
 ================================================================================
-"gdal vector geom-op explode-collections" sub-sub-command
+"gdal vector geom explode-collections" sub-sub-command
 ================================================================================
 
 .. versionadded:: 3.11
@@ -10,17 +10,17 @@
 
     Explode geometries of type collection of a vector dataset.
 
-.. Index:: gdal vector geom-op explode-collections
+.. Index:: gdal vector geom explode-collections
 
 Synopsis
 --------
 
-.. program-output:: gdal vector geom-op explode-collections --help-doc
+.. program-output:: gdal vector geom explode-collections --help-doc
 
 Description
 -----------
 
-:program:`gdal vector geom-op explode-collections` produces one feature for
+:program:`gdal vector geom explode-collections` produces one feature for
 each geometry in any kind of geometry collection.
 
 For example if a feature contains a geometry ``MULTIPOINT(1 2,3 4)``, two
@@ -81,4 +81,4 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal vector geom-op explode-collections --geometry-type=POINT --skip-on-type-mismatch in.gpkg points.shp --overwrite
+        $ gdal vector geom explode-collections --geometry-type=POINT --skip-on-type-mismatch in.gpkg points.shp --overwrite

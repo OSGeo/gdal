@@ -287,7 +287,7 @@ def test_gdalg_generate_from_vector_pipeline(tmp_vsimem):
     }
 
 
-def test_gdalg_generate_from_vector_pipeline_geom_op(tmp_vsimem):
+def test_gdalg_generate_from_vector_pipeline_geom(tmp_vsimem):
     pipeline = gdal.GetGlobalAlgorithmRegistry()["vector"]["pipeline"]
     out_filename = str(tmp_vsimem / "test.gdalg.json")
     assert pipeline.ParseRunAndFinalize(
@@ -295,7 +295,7 @@ def test_gdalg_generate_from_vector_pipeline_geom_op(tmp_vsimem):
             "read",
             "../ogr/data/poly.shp",
             "!",
-            "geom-op",
+            "geom",
             "set-type",
             "--geometry-type=MULTIPOLYGON",
             "!",
@@ -304,6 +304,6 @@ def test_gdalg_generate_from_vector_pipeline_geom_op(tmp_vsimem):
         ]
     )
     assert json.loads(gdal.VSIFile(out_filename, "rb").read()) == {
-        "command_line": "gdal vector pipeline read --input ../ogr/data/poly.shp ! geom-op set-type --geometry-type MULTIPOLYGON",
+        "command_line": "gdal vector pipeline read --input ../ogr/data/poly.shp ! geom set-type --geometry-type MULTIPOLYGON",
         "type": "gdal_streamed_alg",
     }

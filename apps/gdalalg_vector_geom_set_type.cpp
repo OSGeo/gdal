@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "gdal vector geom-op set-type"
+ * Purpose:  "gdal vector geom set-type"
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_geom_op_set_type.h"
+#include "gdalalg_vector_geom_set_type.h"
 
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
@@ -22,10 +22,10 @@
 #endif
 
 /************************************************************************/
-/* GDALVectorGeomOpSetTypeAlgorithm::GDALVectorGeomOpSetTypeAlgorithm() */
+/*   GDALVectorGeomSetTypeAlgorithm::GDALVectorGeomSetTypeAlgorithm()   */
 /************************************************************************/
 
-GDALVectorGeomOpSetTypeAlgorithm::GDALVectorGeomOpSetTypeAlgorithm(
+GDALVectorGeomSetTypeAlgorithm::GDALVectorGeomSetTypeAlgorithm(
     bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
@@ -99,17 +99,17 @@ namespace
 {
 
 /************************************************************************/
-/*               GDALVectorGeomOpSetTypeAlgorithmLayer                  */
+/*                GDALVectorGeomSetTypeAlgorithmLayer                   */
 /************************************************************************/
 
-class GDALVectorGeomOpSetTypeAlgorithmLayer final
+class GDALVectorGeomSetTypeAlgorithmLayer final
     : public GDALVectorPipelineOutputLayer
 {
   private:
-    const GDALVectorGeomOpSetTypeAlgorithm::Options m_opts;
+    const GDALVectorGeomSetTypeAlgorithm::Options m_opts;
     OGRFeatureDefn *m_poFeatureDefn = nullptr;
 
-    CPL_DISALLOW_COPY_ASSIGN(GDALVectorGeomOpSetTypeAlgorithmLayer)
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorGeomSetTypeAlgorithmLayer)
 
     std::unique_ptr<OGRFeature>
     TranslateFeature(std::unique_ptr<OGRFeature> poSrcFeature) const;
@@ -126,11 +126,11 @@ class GDALVectorGeomOpSetTypeAlgorithmLayer final
     OGRwkbGeometryType ConvertType(OGRwkbGeometryType eType) const;
 
   public:
-    GDALVectorGeomOpSetTypeAlgorithmLayer(
+    GDALVectorGeomSetTypeAlgorithmLayer(
         OGRLayer &oSrcLayer,
-        const GDALVectorGeomOpSetTypeAlgorithm::Options &opts);
+        const GDALVectorGeomSetTypeAlgorithm::Options &opts);
 
-    ~GDALVectorGeomOpSetTypeAlgorithmLayer() override
+    ~GDALVectorGeomSetTypeAlgorithmLayer() override
     {
         m_poFeatureDefn->Dereference();
     }
@@ -178,11 +178,11 @@ class GDALVectorGeomOpSetTypeAlgorithmLayer final
 };
 
 /************************************************************************/
-/*                 GDALVectorGeomOpSetTypeAlgorithmLayer()              */
+/*                  GDALVectorGeomSetTypeAlgorithmLayer()               */
 /************************************************************************/
 
-GDALVectorGeomOpSetTypeAlgorithmLayer::GDALVectorGeomOpSetTypeAlgorithmLayer(
-    OGRLayer &oSrcLayer, const GDALVectorGeomOpSetTypeAlgorithm::Options &opts)
+GDALVectorGeomSetTypeAlgorithmLayer::GDALVectorGeomSetTypeAlgorithmLayer(
+    OGRLayer &oSrcLayer, const GDALVectorGeomSetTypeAlgorithm::Options &opts)
     : GDALVectorPipelineOutputLayer(oSrcLayer), m_opts(opts),
       m_poFeatureDefn(oSrcLayer.GetLayerDefn()->Clone())
 {
@@ -206,11 +206,11 @@ GDALVectorGeomOpSetTypeAlgorithmLayer::GDALVectorGeomOpSetTypeAlgorithmLayer(
 }
 
 /************************************************************************/
-/*                           ConvertType()                             */
+/*                           ConvertType()                              */
 /************************************************************************/
 
-OGRwkbGeometryType GDALVectorGeomOpSetTypeAlgorithmLayer::ConvertType(
-    OGRwkbGeometryType eType) const
+OGRwkbGeometryType
+GDALVectorGeomSetTypeAlgorithmLayer::ConvertType(OGRwkbGeometryType eType) const
 {
     if (!m_opts.m_type.empty())
         return m_opts.m_eType;
@@ -268,7 +268,7 @@ OGRwkbGeometryType GDALVectorGeomOpSetTypeAlgorithmLayer::ConvertType(
 /************************************************************************/
 
 std::unique_ptr<OGRFeature>
-GDALVectorGeomOpSetTypeAlgorithmLayer::TranslateFeature(
+GDALVectorGeomSetTypeAlgorithmLayer::TranslateFeature(
     std::unique_ptr<OGRFeature> poSrcFeature) const
 {
     poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn);
@@ -310,10 +310,10 @@ GDALVectorGeomOpSetTypeAlgorithmLayer::TranslateFeature(
 }  // namespace
 
 /************************************************************************/
-/*           GDALVectorGeomOpSetTypeAlgorithm::RunStep()                */
+/*            GDALVectorGeomSetTypeAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALVectorGeomOpSetTypeAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorGeomSetTypeAlgorithm::RunStep(GDALProgressFunc, void *)
 {
     auto poSrcDS = m_inputDataset.GetDatasetRef();
     CPLAssert(poSrcDS);
@@ -350,7 +350,7 @@ bool GDALVectorGeomOpSetTypeAlgorithm::RunStep(GDALProgressFunc, void *)
             m_activeLayer == poSrcLayer->GetDescription())
         {
             auto poLayer =
-                std::make_unique<GDALVectorGeomOpSetTypeAlgorithmLayer>(
+                std::make_unique<GDALVectorGeomSetTypeAlgorithmLayer>(
                     *poSrcLayer, m_opts);
             outDS->AddLayer(*poSrcLayer, std::move(poLayer));
         }

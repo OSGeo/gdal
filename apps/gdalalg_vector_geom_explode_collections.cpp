@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "gdal vector geom-op explode-collections"
+ * Purpose:  "gdal vector geom explode-collections"
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_geom_op_explode_collections.h"
+#include "gdalalg_vector_geom_explode_collections.h"
 
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
@@ -25,11 +25,11 @@
 #endif
 
 /************************************************************************/
-/*              GDALVectorGeomOpExplodeCollectionsAlgorithm()           */
+/*               GDALVectorGeomExplodeCollectionsAlgorithm()            */
 /************************************************************************/
 
-GDALVectorGeomOpExplodeCollectionsAlgorithm::
-    GDALVectorGeomOpExplodeCollectionsAlgorithm(bool standaloneStep)
+GDALVectorGeomExplodeCollectionsAlgorithm::
+    GDALVectorGeomExplodeCollectionsAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
@@ -70,29 +70,29 @@ namespace
 {
 
 /************************************************************************/
-/*            GDALVectorGeomOpExplodeCollectionsAlgorithmLayer          */
+/*             GDALVectorGeomExplodeCollectionsAlgorithmLayer           */
 /************************************************************************/
 
-class GDALVectorGeomOpExplodeCollectionsAlgorithmLayer final
+class GDALVectorGeomExplodeCollectionsAlgorithmLayer final
     : public GDALVectorPipelineOutputLayer
 {
   private:
-    const GDALVectorGeomOpExplodeCollectionsAlgorithm::Options m_opts;
+    const GDALVectorGeomExplodeCollectionsAlgorithm::Options m_opts;
     OGRFeatureDefn *const m_poFeatureDefn = nullptr;
     GIntBig m_nextFID = 1;
 
-    CPL_DISALLOW_COPY_ASSIGN(GDALVectorGeomOpExplodeCollectionsAlgorithmLayer)
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorGeomExplodeCollectionsAlgorithmLayer)
 
     void TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override;
 
   public:
-    GDALVectorGeomOpExplodeCollectionsAlgorithmLayer(
+    GDALVectorGeomExplodeCollectionsAlgorithmLayer(
         OGRLayer &oSrcLayer,
-        const GDALVectorGeomOpExplodeCollectionsAlgorithm::Options &opts);
+        const GDALVectorGeomExplodeCollectionsAlgorithm::Options &opts);
 
-    ~GDALVectorGeomOpExplodeCollectionsAlgorithmLayer() override
+    ~GDALVectorGeomExplodeCollectionsAlgorithmLayer() override
     {
         m_poFeatureDefn->Dereference();
     }
@@ -128,13 +128,13 @@ class GDALVectorGeomOpExplodeCollectionsAlgorithmLayer final
 };
 
 /************************************************************************/
-/*            GDALVectorGeomOpExplodeCollectionsAlgorithmLayer()        */
+/*             GDALVectorGeomExplodeCollectionsAlgorithmLayer()         */
 /************************************************************************/
 
-GDALVectorGeomOpExplodeCollectionsAlgorithmLayer::
-    GDALVectorGeomOpExplodeCollectionsAlgorithmLayer(
+GDALVectorGeomExplodeCollectionsAlgorithmLayer::
+    GDALVectorGeomExplodeCollectionsAlgorithmLayer(
         OGRLayer &oSrcLayer,
-        const GDALVectorGeomOpExplodeCollectionsAlgorithm::Options &opts)
+        const GDALVectorGeomExplodeCollectionsAlgorithm::Options &opts)
     : GDALVectorPipelineOutputLayer(oSrcLayer), m_opts(opts),
       m_poFeatureDefn(oSrcLayer.GetLayerDefn()->Clone())
 {
@@ -160,7 +160,7 @@ GDALVectorGeomOpExplodeCollectionsAlgorithmLayer::
 /*                          TranslateFeature()                          */
 /************************************************************************/
 
-void GDALVectorGeomOpExplodeCollectionsAlgorithmLayer::TranslateFeature(
+void GDALVectorGeomExplodeCollectionsAlgorithmLayer::TranslateFeature(
     std::unique_ptr<OGRFeature> poSrcFeature,
     std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures)
 {
@@ -255,11 +255,11 @@ void GDALVectorGeomOpExplodeCollectionsAlgorithmLayer::TranslateFeature(
 }  // namespace
 
 /************************************************************************/
-/*         GDALVectorGeomOpExplodeCollectionsAlgorithm::RunStep()       */
+/*          GDALVectorGeomExplodeCollectionsAlgorithm::RunStep()        */
 /************************************************************************/
 
-bool GDALVectorGeomOpExplodeCollectionsAlgorithm::RunStep(GDALProgressFunc,
-                                                          void *)
+bool GDALVectorGeomExplodeCollectionsAlgorithm::RunStep(GDALProgressFunc,
+                                                        void *)
 {
     auto poSrcDS = m_inputDataset.GetDatasetRef();
     CPLAssert(poSrcDS);
@@ -286,8 +286,8 @@ bool GDALVectorGeomOpExplodeCollectionsAlgorithm::RunStep(GDALProgressFunc,
             m_activeLayer == poSrcLayer->GetDescription())
         {
             auto poLayer = std::make_unique<
-                GDALVectorGeomOpExplodeCollectionsAlgorithmLayer>(*poSrcLayer,
-                                                                  m_opts);
+                GDALVectorGeomExplodeCollectionsAlgorithmLayer>(*poSrcLayer,
+                                                                m_opts);
             outDS->AddLayer(*poSrcLayer, std::move(poLayer));
         }
         else

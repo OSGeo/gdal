@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal vector geom-op set-type' testing
+# Purpose:  'gdal vector geom set-type' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -20,10 +20,10 @@ from osgeo import gdal, ogr
 
 
 def get_alg():
-    return gdal.GetGlobalAlgorithmRegistry()["vector"]["geom-op"]["set-type"]
+    return gdal.GetGlobalAlgorithmRegistry()["vector"]["geom"]["set-type"]
 
 
-def test_gdalalg_vector_geom_op_set_type_geometry_type():
+def test_gdalalg_vector_geom_set_type_geometry_type():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
@@ -53,7 +53,7 @@ def test_gdalalg_vector_geom_op_set_type_geometry_type():
     assert out_lyr.GetFeature(-1) is None
 
 
-def test_gdalalg_vector_geom_op_set_type_geometry_type_invalid():
+def test_gdalalg_vector_geom_set_type_geometry_type_invalid():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
@@ -70,7 +70,7 @@ def test_gdalalg_vector_geom_op_set_type_geometry_type_invalid():
 @pytest.mark.parametrize(
     "other_option", ["multi", "single", "linear", "curve", "xy", "xyz", "xym", "xyzm"]
 )
-def test_gdalalg_vector_geom_op_set_type_geometry_type_exclusive_with_other_option(
+def test_gdalalg_vector_geom_set_type_geometry_type_exclusive_with_other_option(
     other_option,
 ):
 
@@ -87,7 +87,7 @@ def test_gdalalg_vector_geom_op_set_type_geometry_type_exclusive_with_other_opti
         alg.Run()
 
 
-def test_gdalalg_vector_geom_op_set_type_geometry_type_failed_no_skip():
+def test_gdalalg_vector_geom_set_type_geometry_type_failed_no_skip():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
@@ -113,7 +113,7 @@ def test_gdalalg_vector_geom_op_set_type_geometry_type_failed_no_skip():
     assert out_lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
 
 
-def test_gdalalg_vector_geom_op_set_type_geometry_type_failed_skip():
+def test_gdalalg_vector_geom_set_type_geometry_type_failed_skip():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
@@ -146,7 +146,7 @@ def test_gdalalg_vector_geom_op_set_type_geometry_type_failed_skip():
     assert out_lyr.TestCapability(ogr.OLCFastFeatureCount) == 0
 
 
-def test_gdalalg_vector_geom_op_set_type_geometry_type_layer_only():
+def test_gdalalg_vector_geom_set_type_geometry_type_layer_only():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
@@ -173,7 +173,7 @@ def test_gdalalg_vector_geom_op_set_type_geometry_type_layer_only():
     assert out_lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
 
 
-def test_gdalalg_vector_geom_op_set_type_geometry_type_feature_only():
+def test_gdalalg_vector_geom_set_type_geometry_type_feature_only():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
@@ -226,7 +226,7 @@ def test_gdalalg_vector_geom_op_set_type_geometry_type_feature_only():
         ("curve", "LINESTRING (0 0,1 1)", "COMPOUNDCURVE((0 0,1 1))"),
     ],
 )
-def test_gdalalg_vector_geom_op_set_type_other_modifiers(modifier, in_wkt, out_wkt):
+def test_gdalalg_vector_geom_set_type_other_modifiers(modifier, in_wkt, out_wkt):
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
@@ -251,7 +251,7 @@ def test_gdalalg_vector_geom_op_set_type_other_modifiers(modifier, in_wkt, out_w
     assert out_lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
 
 
-def test_gdalalg_vector_geom_op_active_layer_active_geometry():
+def test_gdalalg_vector_geom_active_layer_active_geometry():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
@@ -300,14 +300,14 @@ def test_gdalalg_vector_geom_op_active_layer_active_geometry():
     ogrtest.check_feature_geometry(out_f.GetGeomFieldRef(1), "POINT (7 8)")
 
 
-def test_gdalalg_vector_geom_op_set_type_type_autocomplete():
+def test_gdalalg_vector_geom_set_type_type_autocomplete():
 
     gdal_path = test_cli_utilities.get_gdal_path()
     if gdal_path is None:
         pytest.skip("gdal binary not available")
 
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal vector geom-op set-type --geometry-type"
+        f"{gdal_path} completion gdal vector geom set-type --geometry-type"
     ).split(" ")
     assert "GEOMETRY" in out
     assert "GEOMETRYZ" in out
@@ -317,6 +317,6 @@ def test_gdalalg_vector_geom_op_set_type_type_autocomplete():
     assert "MULTIPOINT" in out
 
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal vector geom-op set-type --geometry-type GEOMETRYC"
+        f"{gdal_path} completion gdal vector geom set-type --geometry-type GEOMETRYC"
     ).split(" ")
     assert len(out) == 4

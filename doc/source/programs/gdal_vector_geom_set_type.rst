@@ -1,7 +1,7 @@
-.. _gdal_vector_geom_op_set_type_subsubcommand:
+.. _gdal_vector_geom_set_type_subsubcommand:
 
 ================================================================================
-"gdal vector geom-op set-type" sub-sub-command
+"gdal vector geom set-type" sub-sub-command
 ================================================================================
 
 .. versionadded:: 3.11
@@ -10,17 +10,17 @@
 
     Modify the geometry type of a vector dataset.
 
-.. Index:: gdal vector geom-op set-type
+.. Index:: gdal vector geom set-type
 
 Synopsis
 --------
 
-.. program-output:: gdal vector geom-op set-type --help-doc
+.. program-output:: gdal vector geom set-type --help-doc
 
 Description
 -----------
 
-:program:`gdal vector geom-op set-type` can be used to modify the geometry type
+:program:`gdal vector geom set-type` can be used to modify the geometry type
 of geometry fields at the layer and/or feature level.
 
 It can also be used as a step of :ref:`gdal_vector_pipeline_subcommand`.
@@ -151,11 +151,11 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal vector geom-op set-type --geometry-type=MULTIPOLYGON in.shp out.gpkg --overwrite
+        $ gdal vector geom set-type --geometry-type=MULTIPOLYGON in.shp out.gpkg --overwrite
 
 .. example::
    :title: Convert a GeoPackage with curve geometries to a Shapefile (that does not support them).
 
    .. code-block:: bash
 
-        $ gdal vector geom-op set-type --linear in.gpkg out.shp --overwrite
+        $ gdal vector geom set-type --linear in.gpkg out.shp --overwrite

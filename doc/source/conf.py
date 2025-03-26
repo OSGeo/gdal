@@ -378,8 +378,8 @@ man_pages = [
         1,
     ),
     (
-        "programs/gdal_vector_geom_op",
-        "gdal-vector-geom-op",
+        "programs/gdal_vector_geom",
+        "gdal-vector-geom",
         "Geometry operations on a vector dataset",
         [author_evenr],
         1,

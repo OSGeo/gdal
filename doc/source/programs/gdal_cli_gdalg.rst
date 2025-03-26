@@ -21,7 +21,7 @@ For algorithms that support GDALG output, it is also possible to use the
 ``stream`` output format to indicate that a raster or vector streamed dataset
 must be returned.
 
-For example the following snippet, runs that "gdal vector geom-op set-type"
+For example the following snippet, runs that "gdal vector geom set-type"
 algorithm on a source dataset and iterates over features from the returned
 streamed dataset.
 
@@ -30,7 +30,7 @@ streamed dataset.
     from osgeo import gdal
     gdal.UseExceptions()
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["vector"]["geom-op"]["set-type"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vector"]["geom"]["set-type"]
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "stream"
