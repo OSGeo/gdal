@@ -593,8 +593,7 @@ RUN if test "$(uname -p)" = "x86_64"; then \
 ARG WITH_ORACLE=
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    . /buildscripts/bh-set-envvars.sh \
-    && if test "$(uname -p)" = "x86_64"; then \
+  if test "$(uname -p)" = "x86_64"; then \
   if echo "$WITH_ORACLE" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
       apt-get update \
       && apt-get install -y -V libaio1t64 \
