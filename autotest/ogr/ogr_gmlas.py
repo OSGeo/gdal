@@ -3484,3 +3484,24 @@ def test_ogr_gmlas_billion_laugh():
             for lyr in ds:
                 for f in lyr:
                     pass
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/12027
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "filename, attrname, value",
+    [
+        ("data/gmlas/choice_str_inlined.xml", "a_b_str_attr", ["val1", "val2"]),
+        ("data/gmlas/choice_int_inlined.xml", "a_b_int_attr", [1, 2]),
+        ("data/gmlas/choice_int64_inlined.xml", "a_b_int64_attr", [123456789123, 2]),
+        ("data/gmlas/choice_double_inlined.xml", "a_b_double_attr", [1.5, 2.5]),
+    ],
+)
+def test_ogr_gmlas_choice_inlined(filename, attrname, value):
+    with gdal.OpenEx(f"GMLAS:{filename}") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f[attrname] == value

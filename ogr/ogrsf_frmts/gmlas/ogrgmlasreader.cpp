@@ -797,9 +797,80 @@ void GMLASReader::SetField(OGRFeature *poFeature, OGRGMLASLayer *poLayer,
             poFeature->SetField(nAttrIdx, papszTokens);
             CSLDestroy(papszTokens);
         }
+        else if (eType == OFTStringList)
+        {
+            OGRField *psRawField = poFeature->GetRawFieldRef(nAttrIdx);
+            if (OGR_RawField_IsUnset(psRawField))
+            {
+                poFeature->SetField(nAttrIdx, osAttrValue.c_str());
+            }
+            else
+            {
+                ++psRawField->StringList.nCount;
+                psRawField->StringList.paList = CSLAddString(
+                    psRawField->StringList.paList, osAttrValue.c_str());
+            }
+        }
+        else if (eType == OFTIntegerList)
+        {
+            OGRField *psRawField = poFeature->GetRawFieldRef(nAttrIdx);
+            if (OGR_RawField_IsUnset(psRawField))
+            {
+                psRawField->IntegerList.nCount = 1;
+                psRawField->IntegerList.paList = static_cast<int *>(
+                    CPLMalloc(psRawField->IntegerList.nCount * sizeof(int)));
+            }
+            else
+            {
+                ++psRawField->IntegerList.nCount;
+                psRawField->IntegerList.paList = static_cast<int *>(
+                    CPLRealloc(psRawField->IntegerList.paList,
+                               psRawField->IntegerList.nCount * sizeof(int)));
+            }
+            psRawField->IntegerList.paList[psRawField->IntegerList.nCount - 1] =
+                atoi(osAttrValue.c_str());
+        }
+        else if (eType == OFTInteger64List)
+        {
+            OGRField *psRawField = poFeature->GetRawFieldRef(nAttrIdx);
+            if (OGR_RawField_IsUnset(psRawField))
+            {
+                psRawField->Integer64List.nCount = 1;
+                psRawField->Integer64List.paList =
+                    static_cast<GIntBig *>(CPLMalloc(
+                        psRawField->Integer64List.nCount * sizeof(GIntBig)));
+            }
+            else
+            {
+                ++psRawField->Integer64List.nCount;
+                psRawField->Integer64List.paList =
+                    static_cast<GIntBig *>(CPLRealloc(
+                        psRawField->Integer64List.paList,
+                        psRawField->Integer64List.nCount * sizeof(GIntBig)));
+            }
+            psRawField->Integer64List
+                .paList[psRawField->Integer64List.nCount - 1] =
+                CPLAtoGIntBig(osAttrValue.c_str());
+        }
         else
         {
-            poFeature->SetField(nAttrIdx, osAttrValue.c_str());
+            CPLAssert(eType == OFTRealList);
+            OGRField *psRawField = poFeature->GetRawFieldRef(nAttrIdx);
+            if (OGR_RawField_IsUnset(psRawField))
+            {
+                psRawField->RealList.nCount = 1;
+                psRawField->RealList.paList = static_cast<double *>(
+                    CPLMalloc(psRawField->RealList.nCount * sizeof(double)));
+            }
+            else
+            {
+                ++psRawField->RealList.nCount;
+                psRawField->RealList.paList = static_cast<double *>(
+                    CPLRealloc(psRawField->RealList.paList,
+                               psRawField->RealList.nCount * sizeof(double)));
+            }
+            psRawField->RealList.paList[psRawField->RealList.nCount - 1] =
+                CPLAtof(osAttrValue.c_str());
         }
     }
     else
