@@ -19,7 +19,7 @@ from osgeo import gdal
 
 # All tests will be skipped if numpy or gdal_array are unavailable.
 numpy = pytest.importorskip("numpy")
-gdal_array = pytest.importorskip("osgeo.gdal_array")
+gdal_array = gdaltest.importorskip_gdal_array()
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")

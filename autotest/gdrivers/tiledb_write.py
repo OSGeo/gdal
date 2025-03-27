@@ -74,7 +74,7 @@ def test_tiledb_write_custom_blocksize(tmp_path, mode):
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
 def test_tiledb_write_update(tmp_path, mode):
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
@@ -243,7 +243,7 @@ def test_tiledb_write_band_meta(tmp_path, mode):
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
 def test_tiledb_write_history(tmp_path, mode):
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     options = ["INTERLEAVE=%s" % (mode), "TILEDB_TIMESTAMP=1"]

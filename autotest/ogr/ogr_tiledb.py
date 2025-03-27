@@ -1202,7 +1202,7 @@ def test_ogr_tiledb_arrow_stream_pyarrow(nullable, batch_size):
 
 @pytest.mark.parametrize("nullable,batch_size", [(True, None), (False, 2)])
 def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
     import datetime
 
@@ -1432,7 +1432,7 @@ def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
 
 
 def test_ogr_tiledb_arrow_stream_numpy_point_no_wkb_geometry_col():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     if os.path.exists("tmp/test.tiledb"):
@@ -1476,7 +1476,7 @@ def test_ogr_tiledb_arrow_stream_numpy_point_no_wkb_geometry_col():
 
 
 def test_ogr_tiledb_arrow_stream_numpy_pointz_no_fid_and_wkb_geometry_col():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     if os.path.exists("tmp/test.tiledb"):
@@ -1518,7 +1518,7 @@ def test_ogr_tiledb_arrow_stream_numpy_pointz_no_fid_and_wkb_geometry_col():
 
 
 def test_ogr_tiledb_arrow_stream_numpy_detailed_spatial_filter():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     if os.path.exists("tmp/test.tiledb"):

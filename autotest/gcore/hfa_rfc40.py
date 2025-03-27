@@ -13,6 +13,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -24,7 +25,7 @@ pytestmark = [
 
 # All tests will be skipped if numpy is unavailable.
 np = pytest.importorskip("numpy")
-pytest.importorskip("osgeo.gdal_array")
+gdaltest.importorskip_gdal_array()
 
 INT_DATA = np.array([197, 83, 46, 29, 1, 78, 23, 90, 12, 45])
 DOUBLE_DATA = np.array([0.1, 43.2, 78.1, 9.9, 23.0, 0.92, 82.5, 0.0, 1.0, 99.0])

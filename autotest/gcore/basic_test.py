@@ -1009,7 +1009,7 @@ def test_ComputeMinMaxLocation():
 
 def test_create_numpy_types():
     np = pytest.importorskip("numpy")
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
 
     drv = gdal.GetDriverByName("MEM")
 

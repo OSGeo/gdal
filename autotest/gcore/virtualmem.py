@@ -14,12 +14,13 @@
 
 import sys
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
 
 # All tests will be skipped if numpy unavailable or SKIP_VIRTUALMEM is set.
-pytest.importorskip("osgeo.gdal_array")
+gdaltest.importorskip_gdal_array()
 numpy = pytest.importorskip("numpy")
 
 pytestmark = pytest.mark.skipif(

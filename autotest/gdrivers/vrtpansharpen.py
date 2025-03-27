@@ -1315,7 +1315,7 @@ def test_vrtpansharpen_5():
 
 def test_vrtpansharpen_6():
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     # i = 0: VRT has <BitDepth>7</BitDepth>

@@ -968,7 +968,7 @@ def test_ogr_flatgeobuf_invalid_output_filename():
     ids=["regular", "no_spatial_index"],
 )
 def test_ogr_flatgeobuf_arrow_stream_numpy(layer_creation_options):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     ds = ogr.GetDriverByName("FlatGeoBuf").CreateDataSource("/vsimem/test.fgb")
@@ -1570,7 +1570,7 @@ def test_ogr_flatgeobuf_sql_arrow(tmp_vsimem):
 
 
 def test_ogr_flatgeobuf_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     filename = str(tmp_vsimem / "datetime_as_string.fgb")
