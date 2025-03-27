@@ -126,15 +126,9 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
         }
 
-        if (m_executionForStreamOutput && !EQUAL(m_format.c_str(), "stream"))
-        {
-            // For security reasons, to avoid that reading a .gdalg.json file
-            // writes a file on the file system.
-            ReportError(CE_Failure, CPLE_NotSupported,
-                        "gdal raster pipeline in streamed execution should use "
-                        "--format stream");
-            return false;
-        }
+        // Already checked by GDALAlgorithm::Run()
+        CPLAssert(!m_executionForStreamOutput ||
+                  EQUAL(m_format.c_str(), "stream"));
 
         bool ret = false;
         if (readAlg.Run())
@@ -334,9 +328,26 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
                             "unknown step name: %s", algName.c_str());
                 return false;
             }
+            curStep.alg->SetCallPath({algName});
         }
         else
         {
+            if (curStep.alg->HasSubAlgorithms())
+            {
+                auto subAlg = std::unique_ptr<GDALRasterPipelineStepAlgorithm>(
+                    cpl::down_cast<GDALRasterPipelineStepAlgorithm *>(
+                        curStep.alg->InstantiateSubAlgorithm(arg).release()));
+                if (!subAlg)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "'%s' is a unknown sub-algorithm of '%s'",
+                                arg.c_str(), curStep.alg->GetName().c_str());
+                    return false;
+                }
+                curStep.alg = std::move(subAlg);
+                continue;
+            }
+
 #ifdef GDAL_PIPELINE_PROJ_NOSTALGIA
             if (!arg.empty() && arg[0] == '+' &&
                 arg.find(' ') == std::string::npos)
@@ -413,34 +424,31 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
             GetReferencePathForRelativePaths());
     }
 
-    if (!m_pipeline.empty())
+    // Propagate input parameters set at the pipeline level to the
+    // "read" step
     {
-        // Propagate input parameters set at the pipeline level to the
-        // "read" step
+        auto &step = steps.front();
+        for (auto &arg : step.alg->GetArgs())
         {
-            auto &step = steps.front();
-            for (auto &arg : step.alg->GetArgs())
+            auto pipelineArg = GetArg(arg->GetName());
+            if (pipelineArg && pipelineArg->IsExplicitlySet())
             {
-                auto pipelineArg = GetArg(arg->GetName());
-                if (pipelineArg && pipelineArg->IsExplicitlySet())
-                {
-                    arg->SetSkipIfAlreadySet(true);
-                    arg->SetFrom(*pipelineArg);
-                }
+                arg->SetSkipIfAlreadySet(true);
+                arg->SetFrom(*pipelineArg);
             }
         }
+    }
 
-        // Same with "write" step
+    // Same with "write" step
+    {
+        auto &step = steps.back();
+        for (auto &arg : step.alg->GetArgs())
         {
-            auto &step = steps.back();
-            for (auto &arg : step.alg->GetArgs())
+            auto pipelineArg = GetArg(arg->GetName());
+            if (pipelineArg && pipelineArg->IsExplicitlySet())
             {
-                auto pipelineArg = GetArg(arg->GetName());
-                if (pipelineArg && pipelineArg->IsExplicitlySet())
-                {
-                    arg->SetSkipIfAlreadySet(true);
-                    arg->SetFrom(*pipelineArg);
-                }
+                arg->SetSkipIfAlreadySet(true);
+                arg->SetFrom(*pipelineArg);
             }
         }
     }

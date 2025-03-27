@@ -13,6 +13,7 @@
 
 import json
 
+import ogrtest
 import pytest
 
 from osgeo import gdal, ogr
@@ -65,6 +66,7 @@ def test_gdalalg_vector_pipeline_read_osm():
 
     out_ds = pipeline["output"].GetDataset()
     assert out_ds.TestCapability(ogr.ODsCRandomLayerRead)
+    assert out_ds.TestCapability("unknown") == 0
 
     expected = []
     src_ds = gdal.OpenEx("../ogr/data/osm/test.pbf")
@@ -213,6 +215,34 @@ def test_gdalalg_vector_pipeline_usage_as_json():
     assert "pipeline_algorithms" in j
 
 
+def test_gdalalg_vector_pipeline_help_doc():
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(f"{gdal_path} vector pipeline --help-doc=main")
+
+    assert "Usage: gdal vector pipeline [OPTIONS] <PIPELINE>" in out
+    assert (
+        "<PIPELINE> is of the form: read [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]"
+        in out
+    )
+
+    out = gdaltest.runexternal(f"{gdal_path} vector pipeline --help-doc=edit")
+
+    assert "* edit [OPTIONS]" in out
+
+    out, _ = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} vector pipeline --help-doc=unknown"
+    )
+
+    assert "ERROR: unknown pipeline step 'unknown'" in out
+
+
 def test_gdalalg_vector_pipeline_quoted(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.shp")
@@ -261,6 +291,21 @@ def test_gdalalg_vector_easter_egg(tmp_path):
 
     with gdal.OpenEx(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
+
+
+def test_gdalalg_vector_easter_egg_failed():
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} vector +gdal=pipeline +step +gdal=read +input=../ogr/data/poly.shp +step +gdal=unknown +step +write +output=/vsimem/out.shp"
+    )
+
+    assert "pipeline: unknown step name: unknown" in err
 
 
 def test_gdalalg_vector_pipeline_usage_as_json_bis():
@@ -790,3 +835,50 @@ def test_gdalalg_vector_pipeline_reproject_proj_string(tmp_vsimem):
         assert "Lambert Azimuthal Equal Area" in lyr.GetSpatialRef().ExportToWkt(
             ["FORMAT=WKT2"]
         ), lyr.GetSpatialRef().ExportToWkt(["FORMAT=WKT2"])
+
+
+def test_gdalalg_vector_pipeline_geom_unknown_subalgorithm():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+
+    alg = get_pipeline_alg()
+
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    with pytest.raises(
+        Exception,
+        match="pipeline: 'unknown-subalgorithm' is a unknown sub-algorithm of 'geom'",
+    ):
+        alg.ParseCommandLineArguments(
+            ["read", "!", "geom", "unknown-subalgorithm", "!", "write"]
+        )
+
+
+def test_gdalalg_vector_pipeline_geom_set_type():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("the_layer")
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 0)"))
+    src_lyr.CreateFeature(f)
+
+    alg = get_pipeline_alg()
+
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.ParseCommandLineArguments(
+        ["read", "!", "geom", "set-type", "--geometry-type=POINTZ", "!", "write"]
+    )
+
+    assert alg.Run()
+
+    out_ds = alg["output"].GetDataset()
+    out_lyr = out_ds.GetLayer(0)
+    assert out_lyr.GetGeomType() == ogr.wkbPoint25D
+    out_f = out_lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(out_f, "POINT Z (3 0 0)")

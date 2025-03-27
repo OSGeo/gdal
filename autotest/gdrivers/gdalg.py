@@ -205,6 +205,21 @@ def test_gdalg_vector_pipeline_write_to_file_not_allowed():
         )
 
 
+def test_gdalg_vector_filter_standalone_write_to_file_not_allowed():
+    with pytest.raises(
+        Exception,
+        match="filter: in streamed execution, --format stream should be used",
+    ):
+        gdal.Open(
+            json.dumps(
+                {
+                    "type": "gdal_streamed_alg",
+                    "command_line": "gdal vector filter ../ogr/data/poly.shp --output-format=Memory foo",
+                }
+            )
+        )
+
+
 def test_gdalg_generate_from_raster_pipeline(tmp_vsimem):
     pipeline = gdal.GetGlobalAlgorithmRegistry()["raster"]["pipeline"]
     out_filename = str(tmp_vsimem / "test.gdalg.json")
@@ -268,5 +283,27 @@ def test_gdalg_generate_from_vector_pipeline(tmp_vsimem):
     )
     assert json.loads(gdal.VSIFile(out_filename, "rb").read()) == {
         "command_line": "gdal vector pipeline read --input ../ogr/data/poly.shp ! reproject --dst-crs EPSG:4326",
+        "type": "gdal_streamed_alg",
+    }
+
+
+def test_gdalg_generate_from_vector_pipeline_geom(tmp_vsimem):
+    pipeline = gdal.GetGlobalAlgorithmRegistry()["vector"]["pipeline"]
+    out_filename = str(tmp_vsimem / "test.gdalg.json")
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            "../ogr/data/poly.shp",
+            "!",
+            "geom",
+            "set-type",
+            "--geometry-type=MULTIPOLYGON",
+            "!",
+            "write",
+            out_filename,
+        ]
+    )
+    assert json.loads(gdal.VSIFile(out_filename, "rb").read()) == {
+        "command_line": "gdal vector pipeline read --input ../ogr/data/poly.shp ! geom set-type --geometry-type MULTIPOLYGON",
         "type": "gdal_streamed_alg",
     }
