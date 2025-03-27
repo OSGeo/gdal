@@ -115,7 +115,7 @@ A reStructuredText document is written in plain text.  Without the need for comp
      - `` ``monospace`` `` (double back quote)
      - ``monospace``
 
-.. warning:: Use of HTML markup is **not recommend**! Where possible use sphinx inline directives (described below) to logically mark commands, parameters, options, input, and files. By using directives consistently these items can be styled appropriately.
+.. warning:: Use of the basic markup above is **not recommended**! Where possible use sphinx inline directives (described below) to logically mark commands, parameters, options, input, and files. By using directives consistently these items can be styled appropriately.
 
 Lists
 -----
