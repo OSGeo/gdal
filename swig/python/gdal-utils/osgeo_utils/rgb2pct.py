@@ -183,7 +183,7 @@ class RGB2PCT(GDALScript):
         )
 
         parser.add_argument(
-            "--creation_option",
+            "--creation-option",
             "--co",
             dest="creation_options",
             default=[],
