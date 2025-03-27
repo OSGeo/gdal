@@ -89,7 +89,11 @@ def rgb2pct(
         creation_options = []
 
     tif_ds = gtiff_driver.Create(
-        tif_filename, src_ds.RasterXSize, src_ds.RasterYSize, 1, options=creation_options,
+        tif_filename,
+        src_ds.RasterXSize,
+        src_ds.RasterYSize,
+        1,
+        options=creation_options,
     )
 
     tif_ds.GetRasterBand(1).SetRasterColorTable(ct)
