@@ -30,15 +30,9 @@
 
 GDALVectorGeomExplodeCollectionsAlgorithm::
     GDALVectorGeomExplodeCollectionsAlgorithm(bool standaloneStep)
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      standaloneStep)
+    : GDALVectorGeomAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      standaloneStep, m_opts)
 {
-    AddActiveLayerArg(&m_activeLayer);
-    AddArg("active-geometry", 0,
-           _("Geometry field name to which to restrict the processing (if not "
-             "specified, all)"),
-           &m_opts.m_geomField);
-
     AddArg("geometry-type", 0, _("Geometry type"), &m_opts.m_type)
         .SetAutoCompleteFunction(
             [](const std::string &currentValue)
@@ -78,6 +72,7 @@ class GDALVectorGeomExplodeCollectionsAlgorithmLayer final
 {
   private:
     const GDALVectorGeomExplodeCollectionsAlgorithm::Options m_opts;
+    int m_iGeomIdx = -1;
     OGRFeatureDefn *const m_poFeatureDefn = nullptr;
     GIntBig m_nextFID = 1;
 
@@ -86,6 +81,11 @@ class GDALVectorGeomExplodeCollectionsAlgorithmLayer final
     void TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override;
+
+    bool IsSelectedGeomField(int idx) const
+    {
+        return m_iGeomIdx < 0 || idx == m_iGeomIdx;
+    }
 
   public:
     GDALVectorGeomExplodeCollectionsAlgorithmLayer(
@@ -142,12 +142,21 @@ GDALVectorGeomExplodeCollectionsAlgorithmLayer::
     SetMetadata(oSrcLayer.GetMetadata());
     m_poFeatureDefn->Reference();
 
+    if (!m_opts.m_geomField.empty())
+    {
+        const int nIdx = oSrcLayer.GetLayerDefn()->GetGeomFieldIndex(
+            m_opts.m_geomField.c_str());
+        if (nIdx >= 0)
+            m_iGeomIdx = nIdx;
+        else
+            m_iGeomIdx = INT_MAX;
+    }
+
     for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
     {
-        auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
-        if (m_opts.m_geomField.empty() ||
-            m_opts.m_geomField == poGeomFieldDefn->GetNameRef())
+        if (IsSelectedGeomField(i))
         {
+            const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
             poGeomFieldDefn->SetType(
                 !m_opts.m_type.empty()
                     ? m_opts.m_eType
@@ -175,13 +184,13 @@ void GDALVectorGeomExplodeCollectionsAlgorithmLayer::TranslateFeature(
         for (int i = nextGeomIndex; i < nGeomFieldCount; ++i)
         {
             auto poGeom = poCurFeature->GetGeomFieldRef(i);
-            const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
             if (poGeom && !poGeom->IsEmpty() &&
                 OGR_GT_IsSubClassOf(poGeom->getGeometryType(),
                                     wkbGeometryCollection) &&
-                (m_opts.m_geomField.empty() ||
-                 m_opts.m_geomField == poGeomFieldDefn->GetNameRef()))
+                IsSelectedGeomField(i))
             {
+                const auto poGeomFieldDefn =
+                    m_poFeatureDefn->GetGeomFieldDefn(i);
                 bInsertionDone = true;
                 const auto eTargetType =
                     !m_opts.m_type.empty()
@@ -238,6 +247,8 @@ void GDALVectorGeomExplodeCollectionsAlgorithmLayer::TranslateFeature(
             }
             else if (poGeom)
             {
+                const auto poGeomFieldDefn =
+                    m_poFeatureDefn->GetGeomFieldDefn(i);
                 poGeom->assignSpatialReference(
                     poGeomFieldDefn->GetSpatialRef());
             }
@@ -255,19 +266,23 @@ void GDALVectorGeomExplodeCollectionsAlgorithmLayer::TranslateFeature(
 }  // namespace
 
 /************************************************************************/
+/*     GDALVectorGeomExplodeCollectionsAlgorithm::CreateAlgLayer()      */
+/************************************************************************/
+
+std::unique_ptr<OGRLayerWithTranslateFeature>
+GDALVectorGeomExplodeCollectionsAlgorithm::CreateAlgLayer(OGRLayer &srcLayer)
+{
+    return std::make_unique<GDALVectorGeomExplodeCollectionsAlgorithmLayer>(
+        srcLayer, m_opts);
+}
+
+/************************************************************************/
 /*          GDALVectorGeomExplodeCollectionsAlgorithm::RunStep()        */
 /************************************************************************/
 
 bool GDALVectorGeomExplodeCollectionsAlgorithm::RunStep(GDALProgressFunc,
                                                         void *)
 {
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
-    CPLAssert(poSrcDS);
-    CPLAssert(m_outputDataset.GetName().empty());
-    CPLAssert(!m_outputDataset.GetDatasetRef());
-
-    auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
-
     if (!m_opts.m_type.empty())
     {
         m_opts.m_eType = OGRFromOGCGeomType(m_opts.m_type.c_str());
@@ -280,28 +295,7 @@ bool GDALVectorGeomExplodeCollectionsAlgorithm::RunStep(GDALProgressFunc,
         }
     }
 
-    for (auto &&poSrcLayer : poSrcDS->GetLayers())
-    {
-        if (m_activeLayer.empty() ||
-            m_activeLayer == poSrcLayer->GetDescription())
-        {
-            auto poLayer = std::make_unique<
-                GDALVectorGeomExplodeCollectionsAlgorithmLayer>(*poSrcLayer,
-                                                                m_opts);
-            outDS->AddLayer(*poSrcLayer, std::move(poLayer));
-        }
-        else
-        {
-            outDS->AddLayer(
-                *poSrcLayer,
-                std::make_unique<GDALVectorPipelinePassthroughLayer>(
-                    *poSrcLayer));
-        }
-    }
-
-    m_outputDataset.Set(std::move(outDS));
-
-    return true;
+    return GDALVectorGeomAbstractAlgorithm::RunStep(nullptr, nullptr);
 }
 
 //! @endcond

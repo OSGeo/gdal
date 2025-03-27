@@ -16,6 +16,10 @@
 
 //! @cond Doxygen_Suppress
 
+#ifndef _
+#define _(x) (x)
+#endif
+
 /************************************************************************/
 /*           GDALVectorGeomAlgorithm::GDALVectorGeomAlgorithm()         */
 /************************************************************************/
@@ -24,17 +28,9 @@ GDALVectorGeomAlgorithm::GDALVectorGeomAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       /* standaloneStep = */ false)
 {
-    if (standaloneStep)
-    {
-        RegisterSubAlgorithm<GDALVectorGeomSetTypeAlgorithmStandalone>();
-        RegisterSubAlgorithm<
-            GDALVectorGeomExplodeCollectionsAlgorithmStandalone>();
-    }
-    else
-    {
-        RegisterSubAlgorithm<GDALVectorGeomSetTypeAlgorithm>();
-        RegisterSubAlgorithm<GDALVectorGeomExplodeCollectionsAlgorithm>();
-    }
+    RegisterSubAlgorithm<GDALVectorGeomSetTypeAlgorithm>(standaloneStep);
+    RegisterSubAlgorithm<GDALVectorGeomExplodeCollectionsAlgorithm>(
+        standaloneStep);
 }
 
 /************************************************************************/
@@ -47,6 +43,58 @@ bool GDALVectorGeomAlgorithm::RunStep(GDALProgressFunc, void *)
              "The Run() method should not be called directly on the \"gdal "
              "vector geom\" program.");
     return false;
+}
+
+/************************************************************************/
+/*                 GDALVectorGeomAbstractAlgorithm()                    */
+/************************************************************************/
+
+GDALVectorGeomAbstractAlgorithm::GDALVectorGeomAbstractAlgorithm(
+    const std::string &name, const std::string &description,
+    const std::string &helpURL, bool standaloneStep, OptionsBase &opts)
+    : GDALVectorPipelineStepAlgorithm(name, description, helpURL,
+                                      standaloneStep),
+      m_activeLayer(opts.m_activeLayer)
+{
+    AddActiveLayerArg(&opts.m_activeLayer);
+    AddArg("active-geometry", 0,
+           _("Geometry field name to which to restrict the processing (if not "
+             "specified, all)"),
+           &opts.m_geomField);
+}
+
+/************************************************************************/
+/*               GDALVectorGeomAbstractAlgorithm::RunStep()             */
+/************************************************************************/
+
+bool GDALVectorGeomAbstractAlgorithm::RunStep(GDALProgressFunc, void *)
+{
+    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    CPLAssert(poSrcDS);
+    CPLAssert(m_outputDataset.GetName().empty());
+    CPLAssert(!m_outputDataset.GetDatasetRef());
+
+    auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
+
+    for (auto &&poSrcLayer : poSrcDS->GetLayers())
+    {
+        if (m_activeLayer.empty() ||
+            m_activeLayer == poSrcLayer->GetDescription())
+        {
+            outDS->AddLayer(*poSrcLayer, CreateAlgLayer(*poSrcLayer));
+        }
+        else
+        {
+            outDS->AddLayer(
+                *poSrcLayer,
+                std::make_unique<GDALVectorPipelinePassthroughLayer>(
+                    *poSrcLayer));
+        }
+    }
+
+    m_outputDataset.Set(std::move(outDS));
+
+    return true;
 }
 
 //! @endcond

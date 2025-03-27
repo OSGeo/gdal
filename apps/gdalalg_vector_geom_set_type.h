@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_GEOM_SET_TYPE_INCLUDED
 #define GDALALG_VECTOR_GEOM_SET_TYPE_INCLUDED
 
-#include "gdalalg_vector_pipeline.h"
+#include "gdalalg_vector_geom.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,8 +21,8 @@
 /*                    GDALVectorGeomSetTypeAlgorithm                    */
 /************************************************************************/
 
-class GDALVectorGeomSetTypeAlgorithm /* non final */
-    : public GDALVectorPipelineStepAlgorithm
+class GDALVectorGeomSetTypeAlgorithm final
+    : public GDALVectorGeomAbstractAlgorithm
 {
   public:
     static constexpr const char *NAME = "set-type";
@@ -36,11 +36,10 @@ class GDALVectorGeomSetTypeAlgorithm /* non final */
         return {};
     }
 
-    explicit GDALVectorGeomSetTypeAlgorithm(bool standaloneStep = false);
+    explicit GDALVectorGeomSetTypeAlgorithm(bool standaloneStep);
 
-    struct Options
+    struct Options : public GDALVectorGeomAbstractAlgorithm::OptionsBase
     {
-        std::string m_geomField{};
         bool m_layerOnly = false;
         bool m_featureGeomOnly = false;
         std::string m_type{};
@@ -58,25 +57,13 @@ class GDALVectorGeomSetTypeAlgorithm /* non final */
         OGRwkbGeometryType m_eType = wkbUnknown;
     };
 
+    std::unique_ptr<OGRLayerWithTranslateFeature>
+    CreateAlgLayer(OGRLayer &srcLayer) override;
+
   private:
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
-    std::string m_activeLayer{};
     Options m_opts{};
-};
-
-/************************************************************************/
-/*                GDALVectorGeomSetTypeAlgorithmStandalone              */
-/************************************************************************/
-
-class GDALVectorGeomSetTypeAlgorithmStandalone final
-    : public GDALVectorGeomSetTypeAlgorithm
-{
-  public:
-    GDALVectorGeomSetTypeAlgorithmStandalone()
-        : GDALVectorGeomSetTypeAlgorithm(/* standaloneStep = */ true)
-    {
-    }
 };
 
 //! @endcond
