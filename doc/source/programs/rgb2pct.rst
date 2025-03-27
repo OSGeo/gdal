@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    rgb2pct [--help] [--help-general] [--options OPTION]
+    rgb2pct [--help] [--help-general] [--creation-option OPTION]
                [-n colors | -pct palette_file] [-of format] <source_file> <dest_file>
 
 Description
