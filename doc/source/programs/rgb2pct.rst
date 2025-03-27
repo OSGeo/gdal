@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    rgb2pct [--help] [--help-general]
+    rgb2pct [--help] [--help-general] [--options OPTION]
                [-n colors | -pct palette_file] [-of format] <source_file> <dest_file>
 
 Description
@@ -39,6 +39,11 @@ maximize output image visual quality.
 
     Select the number of colors in the generated
     color table.  Defaults to 256.  Must be between 2 and 256.
+
+.. option:: --options OPTION
+
+    Optional creation parameters for the GeoTIFF driver,
+    for example COMPRESS=LZW. Multiple options are space separated.
 
 .. option:: -pct <palette_file>
 
