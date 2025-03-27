@@ -89,6 +89,20 @@ def rgb2pct2_tif(script_path, tmp_path_factory):
     yield tif_fname
 
 
+@pytest.fixture(scope="module")
+def rgb2pct2c_tif(script_path, tmp_path_factory):
+
+    tif_fname = str(tmp_path_factory.mktemp("tmp") / "test_rgb2pct_2c.tif")
+
+    test_py_scripts.run_py_script(
+        script_path,
+        "rgb2pct",
+        "-n 16 --compress-option COMPRESS=LZW " + test_py_scripts.get_data_path("gcore") + f"rgbsmall.tif {tif_fname}",
+    )
+
+    yield tif_fname
+
+
 ###############################################################################
 # Test rgb2pct
 
@@ -190,6 +204,21 @@ def test_pct2rgb_no_color_table(script_path, tmp_path, rgb2pct1_tif):
 def test_rgb2pct_2(script_path, rgb2pct2_tif):
 
     ds = gdal.Open(rgb2pct2_tif)
+    assert ds.GetRasterBand(1).Checksum() == 16596
+
+    ct = ds.GetRasterBand(1).GetRasterColorTable()
+    for i in range(16, 255):
+        entry = ct.GetColorEntry(i)
+        assert (
+            entry[0] == 0 and entry[1] == 0 and entry[2] == 0
+        ), "Color table has more than 16 entries"
+
+    ds = None
+
+
+def test_rgb2pct_2c(script_path, rgb2pct2c_tif):
+
+    ds = gdal.Open(rgb2pct2c_tif)
     assert ds.GetRasterBand(1).Checksum() == 16596
 
     ct = ds.GetRasterBand(1).GetRasterColorTable()
