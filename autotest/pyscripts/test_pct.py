@@ -203,6 +203,26 @@ def test_rgb2pct_2(script_path, rgb2pct2_tif):
 
 
 ###############################################################################
+# Test rgb2pct --creation-option option
+
+
+def test_rgb2pct_creation_option(script_path, tmp_path):
+
+    tif_fname = str(tmp_path / "test_rgb2pct_creation_option.tif")
+
+    test_py_scripts.run_py_script(
+        script_path,
+        "rgb2pct",
+        "--creation-option COMPRESS=LZW "
+        + test_py_scripts.get_data_path("gcore")
+        + f"rgbsmall.tif {tif_fname}",
+    )
+
+    ds = gdal.Open(tif_fname)
+    assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
+
+
+###############################################################################
 # Test rgb2pct -pct option
 
 
