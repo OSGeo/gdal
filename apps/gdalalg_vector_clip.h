@@ -39,6 +39,7 @@ class GDALVectorClipAlgorithm /* non final */
   private:
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
+    std::string m_activeLayer{};
     std::vector<double> m_bbox{};
     std::string m_bboxCrs{};
     std::string m_geometry{};

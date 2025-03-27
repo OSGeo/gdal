@@ -13,7 +13,7 @@
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 
 def get_filter_alg():
@@ -86,3 +86,44 @@ def test_gdalalg_vector_filter_where_error(tmp_vsimem):
         filter_alg.ParseRunAndFinalize(
             ["--where=invalid", "../ogr/data/poly.shp", out_filename]
         )
+
+
+def test_gdalalg_vector_filter_bbox_active_layer():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("the_layer")
+    src_lyr.CreateField(ogr.FieldDefn("foo"))
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["foo"] = "bar"
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["foo"] = "baz"
+    src_lyr.CreateFeature(f)
+
+    src_lyr = src_ds.CreateLayer("other_layer")
+    src_lyr.CreateField(ogr.FieldDefn("foo"))
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["foo"] = "baz"
+    src_lyr.CreateFeature(f)
+
+    filter_alg = get_filter_alg()
+    filter_alg["input"] = src_ds
+    filter_alg["active-layer"] = "the_layer"
+
+    assert filter_alg.ParseCommandLineArguments(
+        ["--where", "foo='bar'", "--of", "Memory", "--output", "memory_ds"]
+    )
+    assert filter_alg.Run()
+
+    out_ds = filter_alg["output"].GetDataset()
+    out_lyr = out_ds.GetLayer(0)
+    out_f = out_lyr.GetNextFeature()
+    assert out_f["foo"] == "bar"
+    assert out_lyr.GetNextFeature() is None
+
+    out_lyr = out_ds.GetLayer(1)
+    out_f = out_lyr.GetNextFeature()
+    assert out_f["foo"] == "baz"

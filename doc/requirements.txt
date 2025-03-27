@@ -6,7 +6,6 @@ numpy
 sphinx
 sphinx_bootstrap_theme
 sphinx-markdown-tables
-sphinx_rtd_theme
 sphinxcontrib-bibtex
 sphinxcontrib-jquery
 sphinx-rtd-theme >= 3.0.0

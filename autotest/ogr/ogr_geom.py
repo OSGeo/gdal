@@ -3057,13 +3057,11 @@ def test_ogr_geom_getcurvegeometry_issue9382():
 
 
 ###############################################################################
-# Test OGR_GT_ functions
 
 
-def test_ogr_geom_gt_functions():
-
-    # GT_HasZ
-    tuples = [
+@pytest.mark.parametrize(
+    "gt,res",
+    [
         (ogr.wkbPoint, 0),
         (ogr.wkbPoint25D, 1),
         (ogr.wkbPointM, 0),
@@ -3072,12 +3070,18 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbCircularStringZ, 1),
         (ogr.wkbCircularStringM, 0),
         (ogr.wkbCircularStringZM, 1),
-    ]
-    for gt, res in tuples:
-        assert ogr.GT_HasZ(gt) == res
+    ],
+)
+def test_ogr_geom_GT_HasZ(gt, res):
+    assert ogr.GT_HasZ(gt) == res
 
-    # GT_SetZ
-    tuples = [
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "gt,res",
+    [
         (ogr.wkbPoint, ogr.wkbPoint25D),
         (ogr.wkbPoint25D, ogr.wkbPoint25D),
         (ogr.wkbPointM, ogr.wkbPointZM),
@@ -3086,12 +3090,18 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbCircularStringZ, ogr.wkbCircularStringZ),
         (ogr.wkbCircularStringM, ogr.wkbCircularStringZM),
         (ogr.wkbCircularStringZM, ogr.wkbCircularStringZM),
-    ]
-    for gt, res in tuples:
-        assert ogr.GT_SetZ(gt) == res
+    ],
+)
+def test_ogr_geom_GT_SetZ(gt, res):
+    assert ogr.GT_SetZ(gt) == res
 
-    # GT_HasM
-    tuples = [
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "gt,res",
+    [
         (ogr.wkbPoint, 0),
         (ogr.wkbPoint25D, 0),
         (ogr.wkbPointM, 1),
@@ -3100,12 +3110,18 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbCircularStringZ, 0),
         (ogr.wkbCircularStringM, 1),
         (ogr.wkbCircularStringZM, 1),
-    ]
-    for gt, res in tuples:
-        assert ogr.GT_HasM(gt) == res
+    ],
+)
+def test_ogr_geom_GT_HasM(gt, res):
+    assert ogr.GT_HasM(gt) == res
 
-    # GT_SetM
-    tuples = [
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "gt,res",
+    [
         (ogr.wkbPoint, ogr.wkbPointM),
         (ogr.wkbPoint25D, ogr.wkbPointZM),
         (ogr.wkbPointM, ogr.wkbPointM),
@@ -3114,12 +3130,18 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbCircularStringZ, ogr.wkbCircularStringZM),
         (ogr.wkbCircularStringM, ogr.wkbCircularStringM),
         (ogr.wkbCircularStringZM, ogr.wkbCircularStringZM),
-    ]
-    for gt, res in tuples:
-        assert ogr.GT_SetM(gt) == res
+    ],
+)
+def test_ogr_geom_GT_SetM(gt, res):
+    assert ogr.GT_SetM(gt) == res
 
-    # OGR_GT_SetModifier
-    tuples = [
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "gt,modZ,modM,res",
+    [
         (ogr.wkbPoint, 0, 0, ogr.wkbPoint),
         (ogr.wkbPoint, 1, 0, ogr.wkbPoint25D),
         (ogr.wkbPoint, 0, 1, ogr.wkbPointM),
@@ -3138,12 +3160,18 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbPoint25D, 0, 0, ogr.wkbPoint),
         (ogr.wkbCircularString, 0, 0, ogr.wkbCircularString),
         (ogr.wkbCircularStringZ, 0, 0, ogr.wkbCircularString),
-    ]
-    for gt, modZ, modM, res in tuples:
-        assert ogr.GT_SetModifier(gt, modZ, modM) == res
+    ],
+)
+def test_ogr_geom_GT_SetModifier(gt, modZ, modM, res):
+    assert ogr.GT_SetModifier(gt, modZ, modM) == res
 
-    # GT_Flatten
-    tuples = [
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "gt,res",
+    [
         (ogr.wkbPoint, ogr.wkbPoint),
         (ogr.wkbPoint25D, ogr.wkbPoint),
         (ogr.wkbPointM, ogr.wkbPoint),
@@ -3153,12 +3181,18 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbCircularStringZ, ogr.wkbCircularString),
         (ogr.wkbCircularStringM, ogr.wkbCircularString),
         (ogr.wkbCircularStringZM, ogr.wkbCircularString),
-    ]
-    for gt, res in tuples:
-        assert ogr.GT_Flatten(gt) == res
+    ],
+)
+def test_ogr_geom_GT_Flatten(gt, res):
+    assert ogr.GT_Flatten(gt) == res
 
-    # GT_IsSubClassOf
-    tuples = [
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "gt,gt2,res",
+    [
         (ogr.wkbPoint, ogr.wkbPoint, 1),
         (ogr.wkbPoint25D, ogr.wkbPoint, 1),
         (ogr.wkbPoint, ogr.wkbUnknown, 1),
@@ -3173,12 +3207,18 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbUnknown, ogr.wkbPoint, 0),
         (ogr.wkbTIN, ogr.wkbPolyhedralSurface, 1),
         (ogr.wkbPolyhedralSurface, ogr.wkbTIN, 0),
-    ]
-    for gt, gt2, res in tuples:
-        assert ogr.GT_IsSubClassOf(gt, gt2) == res
+    ],
+)
+def test_ogr_geom_GT_IsSubClassOf(gt, gt2, res):
+    assert ogr.GT_IsSubClassOf(gt, gt2) == res
 
-    # GT_IsCurve
-    tuples = [
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "gt,res",
+    [
         (ogr.wkbPoint, 0),
         (ogr.wkbPoint25D, 0),
         (ogr.wkbPointM, 0),
@@ -3194,12 +3234,18 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbTriangle, 0),
         (ogr.wkbPolyhedralSurface, 0),
         (ogr.wkbTIN, 0),
-    ]
-    for gt, res in tuples:
-        assert ogr.GT_IsCurve(gt) == res
+    ],
+)
+def test_ogr_geom_GT_IsCurve(gt, res):
+    assert ogr.GT_IsCurve(gt) == res
 
-    # GT_IsSurface
-    tuples = [
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "gt,res",
+    [
         (ogr.wkbPoint, 0),
         (ogr.wkbPoint25D, 0),
         (ogr.wkbPointM, 0),
@@ -3213,12 +3259,19 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbTriangle, 1),
         (ogr.wkbPolyhedralSurface, 1),
         (ogr.wkbTIN, 1),
-    ]
-    for gt, res in tuples:
-        assert ogr.GT_IsSurface(gt) == res
+    ],
+)
+def test_ogr_geom_GT_IsSurface(gt, res):
+    assert ogr.GT_IsSurface(gt) == res
 
-    # GT_GetCollection
-    tuples = [
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "gt,res",
+    [
+        (ogr.wkbNone, ogr.wkbNone),
         (ogr.wkbPoint, ogr.wkbMultiPoint),
         (ogr.wkbPoint25D, ogr.wkbMultiPoint25D),
         (ogr.wkbPointM, ogr.wkbMultiPointM),
@@ -3228,12 +3281,42 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbCurvePolygon, ogr.wkbMultiSurface),
         (ogr.wkbLineString, ogr.wkbMultiLineString),
         (ogr.wkbPolygon, ogr.wkbMultiPolygon),
-    ]
-    for gt, res in tuples:
-        assert ogr.GT_GetCollection(gt) == res
+    ],
+)
+def test_ogr_geom_GT_GetCollection(gt, res):
+    assert ogr.GT_GetCollection(gt) == res
 
-    # GT_IsNonLinear
-    tuples = [
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "gt,res",
+    [
+        (ogr.wkbNone, ogr.wkbNone),
+        (ogr.wkbMultiPoint, ogr.wkbPoint),
+        (ogr.wkbMultiPoint25D, ogr.wkbPoint25D),
+        (ogr.wkbMultiPointM, ogr.wkbPointM),
+        (ogr.wkbMultiPointZM, ogr.wkbPointZM),
+        (ogr.wkbMultiLineString, ogr.wkbLineString),
+        (ogr.wkbMultiPolygon, ogr.wkbPolygon),
+        (ogr.wkbMultiCurve, ogr.wkbCompoundCurve),
+        (ogr.wkbMultiSurface, ogr.wkbCurvePolygon),
+        (ogr.wkbPoint, ogr.wkbPoint),
+        (ogr.wkbGeometryCollection, ogr.wkbUnknown),
+        (ogr.wkbUnknown, ogr.wkbUnknown),
+    ],
+)
+def test_ogr_geom_GT_GetSingle(gt, res):
+    assert ogr.GT_GetSingle(gt) == res
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "gt,res",
+    [
         (ogr.wkbPoint, 0),
         (ogr.wkbPoint25D, 0),
         (ogr.wkbPointM, 0),
@@ -3249,12 +3332,18 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbLineString, 0),
         (ogr.wkbPolygon, 0),
         (ogr.wkbTriangle, 0),
-    ]
-    for gt, res in tuples:
-        assert ogr.GT_IsNonLinear(gt) == res
+    ],
+)
+def test_ogr_geom_GT_IsNonLinear(gt, res):
+    assert ogr.GT_IsNonLinear(gt) == res
 
-    # GT_GetCurve
-    tuples = [
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "gt,res",
+    [
         (ogr.wkbPoint, ogr.wkbPoint),
         (ogr.wkbPoint25D, ogr.wkbPoint25D),
         (ogr.wkbPointM, ogr.wkbPointM),
@@ -3271,12 +3360,18 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbMultiPolygon, ogr.wkbMultiSurface),
         (ogr.wkbMultiCurve, ogr.wkbMultiCurve),
         (ogr.wkbMultiSurface, ogr.wkbMultiSurface),
-    ]
-    for gt, res in tuples:
-        assert ogr.GT_GetCurve(gt) == res
+    ],
+)
+def test_ogr_geom_GT_GetCurve(gt, res):
+    assert ogr.GT_GetCurve(gt) == res
 
-    # GT_GetLinear
-    tuples = [
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "gt,res",
+    [
         (ogr.wkbPoint, ogr.wkbPoint),
         (ogr.wkbPoint25D, ogr.wkbPoint25D),
         (ogr.wkbPointM, ogr.wkbPointM),
@@ -3293,9 +3388,10 @@ def test_ogr_geom_gt_functions():
         (ogr.wkbMultiPolygon, ogr.wkbMultiPolygon),
         (ogr.wkbMultiCurve, ogr.wkbMultiLineString),
         (ogr.wkbMultiSurface, ogr.wkbMultiPolygon),
-    ]
-    for gt, res in tuples:
-        assert ogr.GT_GetLinear(gt) == res
+    ],
+)
+def test_ogr_geom_GT_GetLinear(gt, res):
+    assert ogr.GT_GetLinear(gt) == res
 
 
 ###############################################################################

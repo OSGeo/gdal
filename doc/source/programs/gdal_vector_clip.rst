@@ -44,6 +44,8 @@ Standard options
 
 .. include:: gdal_options/overwrite.rst
 
+.. include:: gdal_options/active_layer.rst
+
 .. option:: --bbox <xmin>,<ymin>,<xmax>,<ymax>
 
     Bounds to which to clip the dataset. They are assumed to be in the CRS of

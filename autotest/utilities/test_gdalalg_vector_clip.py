@@ -954,3 +954,48 @@ def test_gdalalg_vector_clip_dataset_getnextfeature():
         got.append((f, lyr))
 
     assert len(expected) == len(got)
+
+
+def test_gdalalg_vector_clip_bbox_active_layer():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("the_layer")
+    src_lyr.CreateField(ogr.FieldDefn("foo"))
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["foo"] = "bar"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 -1,-1 -1,-1 0,0 0))"))
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["foo"] = "bar"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 1,1 1,1 0,0 0))"))
+    src_lyr.CreateFeature(f)
+
+    src_lyr = src_ds.CreateLayer("other_layer")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((10 10,10 11,11 11,10 10))"))
+    src_lyr.CreateFeature(f)
+
+    clip = get_clip_alg()
+    clip["input"] = src_ds
+    clip["active-layer"] = "the_layer"
+
+    assert clip.ParseCommandLineArguments(
+        ["--bbox", "0.2,0.3,0.7,0.8", "--of", "Memory", "--output", "memory_ds"]
+    )
+    assert clip.Run()
+
+    out_ds = clip["output"].GetDataset()
+    out_lyr = out_ds.GetLayer(0)
+    out_f = out_lyr.GetNextFeature()
+    assert out_f["foo"] == "bar"
+    ogrtest.check_feature_geometry(
+        out_f, "POLYGON ((0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3,0.2 0.8))"
+    )
+
+    assert out_lyr.GetNextFeature() is None
+
+    out_lyr = out_ds.GetLayer(1)
+    out_f = out_lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(out_f, "POLYGON ((10 10,10 11,11 11,10 10))")

@@ -40,6 +40,7 @@ class GDALVectorSelectAlgorithm /* non final */
   private:
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
+    std::string m_activeLayer{};
     std::vector<std::string> m_fields{};
     bool m_ignoreMissingFields = false;
     bool m_exclude = false;

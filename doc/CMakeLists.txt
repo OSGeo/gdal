@@ -14,6 +14,8 @@ endif()
 
 option(BUILD_DOCS "Set to ON to define documentation targets: 'html', 'latexpdf', 'man', 'doxygen_xml', 'doxygen_html' " ${BUILD_DOCS_DEFAULT})
 
+option(DOXYGEN_FAIL_ON_WARNINGS "Set to ON to fail the build if Doxygen produces warnings" OFF)
+
 if (BUILD_DOCS)
     if ("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
         message(FATAL_ERROR "BUILD_DOCS=ON not compatible of in-source builds (CMAKE_SOURCE_DIR=CMAKE_BINARY_DIR)")
@@ -38,7 +40,7 @@ if (BUILD_DOCS)
     file(MAKE_DIRECTORY ${SPHINX_BUILD_DIR})
     file(MAKE_DIRECTORY ${SPHINX_BUILD_DIR}/html_extra)
 
-    file(GLOB_RECURSE SPHINX_SOURCE_FILES CONFIGURE_DEPENDS 
+    file(GLOB_RECURSE SPHINX_SOURCE_FILES CONFIGURE_DEPENDS
             ${CMAKE_CURRENT_SOURCE_DIR}/source/*.rst
             ${CMAKE_CURRENT_SOURCE_DIR}/source/*.py)
 
@@ -47,7 +49,7 @@ if (BUILD_DOCS)
     ####################################################################################################
 
     # Create a dependency between source files and Doxygen
-    file(GLOB_RECURSE DOXYGEN_SOURCE_FILES CONFIGURE_DEPENDS 
+    file(GLOB_RECURSE DOXYGEN_SOURCE_FILES CONFIGURE_DEPENDS
             ${CMAKE_SOURCE_DIR}/alg/*.cpp
             ${CMAKE_SOURCE_DIR}/app/*.cpp
             ${CMAKE_SOURCE_DIR}/frmts/gdalallregister.cpp
@@ -66,12 +68,17 @@ if (BUILD_DOCS)
     # for XML and HTML outputs
     file(READ ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile_base DOXYFILE_CONTENTS)
 
+    if (DOXYGEN_FAIL_ON_WARNINGS) 
+            string(JOIN "\n" DOXYFILE_CONTENTS
+                   ${DOXYFILE_CONTENTS}
+                   "FAIL_ON_WARNINGS=YES"
+                   "WARN_AS_ERROR=FAIL_ON_WARNINGS_PRINT")
+    endif()
+
     # Doxygen XML outputs
     # TODO <ndash> replacement?
     string(JOIN "\n" DOXYFILE_XML_CONTENTS
             ${DOXYFILE_CONTENTS}
-            "FAIL_ON_WARNINGS=YES"
-            "WARN_AS_ERROR=FAIL_ON_WARNINGS_PRINT"
             "GENERATE_HTML=NO"
             "GENERATE_XML=YES"
             "XML_OUTPUT=${SPHINX_BUILD_DIR}/xml"
@@ -94,8 +101,6 @@ if (BUILD_DOCS)
     # Doxygen HTML outputs
     string(JOIN "\n" DOXYFILE_HTML_CONTENTS
             "${DOXYFILE_CONTENTS}"
-            "FAIL_ON_WARNINGS=YES"
-            "WARN_AS_ERROR=FAIL_ON_WARNINGS_PRINT"
             "HTML_OUTPUT=${SPHINX_BUILD_DIR}/html_extra/doxygen"
             "INLINE_INHERITED_MEMB=YES"
     )
@@ -154,7 +159,7 @@ if (BUILD_DOCS)
                     ${SPHINX_BUILD} -M man
                                     ${CMAKE_CURRENT_SOURCE_DIR}/source
                                     ${CMAKE_CURRENT_BINARY_DIR}/build
-                                    ${SPHINX_BUILD_OPTS} 
+                                    ${SPHINX_BUILD_OPTS}
             COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/man.stamp"
     )
 
@@ -196,6 +201,7 @@ if (BUILD_DOCS)
                                      ${CMAKE_CURRENT_SOURCE_DIR}/source
                                      ${CMAKE_CURRENT_BINARY_DIR}/build
                                      ${SPHINX_BUILD_OPTS}
+                                     "--fail-on-warning"
                                      -D html_extra_path=extra_path
     )
 

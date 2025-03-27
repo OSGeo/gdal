@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <algorithm>
 #include <limits>
+#include <list>
 #include <queue>
 #include <set>
 #include <utility>
@@ -371,6 +372,58 @@ std::vector<std::string>
 GDALGroup::GetMDArrayNames(CPL_UNUSED CSLConstList papszOptions) const
 {
     return {};
+}
+
+/************************************************************************/
+/*                     GetMDArrayFullNamesRecursive()                   */
+/************************************************************************/
+
+/** Return the list of multidimensional array full names contained in this
+ * group and its subgroups.
+ *
+ * This is the same as the C function GDALGroupGetMDArrayFullNamesRecursive().
+ *
+ * @param papszGroupOptions Driver specific options determining how groups
+ * should be retrieved. Pass nullptr for default behavior.
+ * @param papszArrayOptions Driver specific options determining how arrays
+ * should be retrieved. Pass nullptr for default behavior.
+ *
+ * @return the array full names.
+ *
+ * @since 3.11
+ */
+std::vector<std::string>
+GDALGroup::GetMDArrayFullNamesRecursive(CSLConstList papszGroupOptions,
+                                        CSLConstList papszArrayOptions) const
+{
+    std::vector<std::string> ret;
+    std::list<std::shared_ptr<GDALGroup>> stackGroups;
+    stackGroups.push_back(nullptr);  // nullptr means this
+    while (!stackGroups.empty())
+    {
+        std::shared_ptr<GDALGroup> groupPtr = std::move(stackGroups.front());
+        stackGroups.erase(stackGroups.begin());
+        const GDALGroup *poCurGroup = groupPtr ? groupPtr.get() : this;
+        for (const std::string &arrayName :
+             poCurGroup->GetMDArrayNames(papszArrayOptions))
+        {
+            std::string osFullName = poCurGroup->GetFullName();
+            if (!osFullName.empty() && osFullName.back() != '/')
+                osFullName += '/';
+            osFullName += arrayName;
+            ret.push_back(std::move(osFullName));
+        }
+        auto insertionPoint = stackGroups.begin();
+        for (const auto &osSubGroup :
+             poCurGroup->GetGroupNames(papszGroupOptions))
+        {
+            auto poSubGroup = poCurGroup->OpenGroup(osSubGroup);
+            if (poSubGroup)
+                stackGroups.insert(insertionPoint, std::move(poSubGroup));
+        }
+    }
+
+    return ret;
 }
 
 /************************************************************************/
@@ -11117,6 +11170,34 @@ char **GDALGroupGetMDArrayNames(GDALGroupH hGroup, CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hGroup, __func__, nullptr);
     auto names = hGroup->m_poImpl->GetMDArrayNames(papszOptions);
+    CPLStringList res;
+    for (const auto &name : names)
+    {
+        res.AddString(name.c_str());
+    }
+    return res.StealList();
+}
+
+/************************************************************************/
+/*                  GDALGroupGetMDArrayFullNamesRecursive()             */
+/************************************************************************/
+
+/** Return the list of multidimensional array full names contained in this
+ * group and its subgroups.
+ *
+ * This is the same as the C++ method GDALGroup::GetMDArrayFullNamesRecursive().
+ *
+ * @return the array names, to be freed with CSLDestroy()
+ *
+ * @since 3.11
+ */
+char **GDALGroupGetMDArrayFullNamesRecursive(GDALGroupH hGroup,
+                                             CSLConstList papszGroupOptions,
+                                             CSLConstList papszArrayOptions)
+{
+    VALIDATE_POINTER1(hGroup, __func__, nullptr);
+    auto names = hGroup->m_poImpl->GetMDArrayFullNamesRecursive(
+        papszGroupOptions, papszArrayOptions);
     CPLStringList res;
     for (const auto &name : names)
     {

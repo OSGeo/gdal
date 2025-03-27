@@ -134,6 +134,34 @@ def test_gdalalg_raster_pipeline_usage_as_json():
     assert "pipeline_algorithms" in j
 
 
+def test_gdalalg_raster_pipeline_help_doc():
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(f"{gdal_path} raster pipeline --help-doc=main")
+
+    assert "Usage: gdal raster pipeline [OPTIONS] <PIPELINE>" in out
+    assert (
+        "<PIPELINE> is of the form: read [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]"
+        in out
+    )
+
+    out = gdaltest.runexternal(f"{gdal_path} raster pipeline --help-doc=edit")
+
+    assert "* edit [OPTIONS]" in out
+
+    out, _ = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} raster pipeline --help-doc=unknown"
+    )
+
+    assert "ERROR: unknown pipeline step 'unknown'" in out
+
+
 def test_gdalalg_raster_pipeline_quoted(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.tif")
@@ -182,6 +210,21 @@ def test_gdalalg_raster_easter_egg(tmp_path):
 
     with gdal.OpenEx(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+def test_gdalalg_raster_easter_egg_failed():
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} raster +gdal=pipeline +step +gdal=read +input=../gcore/data/byte.tif +step +gdal=unknown +step +write +output=/vsimem/out.tif"
+    )
+
+    assert "pipeline: unknown step name: unknown" in err
 
 
 def test_gdalalg_raster_pipeline_usage_as_json_bis():

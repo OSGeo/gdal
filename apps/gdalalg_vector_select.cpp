@@ -32,6 +32,7 @@ GDALVectorSelectAlgorithm::GDALVectorSelectAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
+    AddActiveLayerArg(&m_activeLayer);
     AddArg("fields", 0, _("Fields to select (or exclude if --exclude)"),
            &m_fields)
         .SetPositional()
@@ -51,11 +52,9 @@ namespace
 /************************************************************************/
 
 class GDALVectorSelectAlgorithmLayer final
-    : public OGRLayerWithTranslateFeature,
-      public OGRGetNextFeatureThroughRaw<GDALVectorSelectAlgorithmLayer>
+    : public GDALVectorPipelineOutputLayer
 {
   private:
-    OGRLayer &m_oSrcLayer;
     OGRFeatureDefn *const m_poFeatureDefn = nullptr;
     std::vector<int> m_anMapSrcFieldsToDstFields{};
     std::vector<int> m_anMapDstGeomFieldsToSrcGeomFields{};
@@ -81,14 +80,20 @@ class GDALVectorSelectAlgorithmLayer final
         return poFeature;
     }
 
-    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(GDALVectorSelectAlgorithmLayer)
+    void TranslateFeature(
+        std::unique_ptr<OGRFeature> poSrcFeature,
+        std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
+    {
+        apoOutFeatures.push_back(TranslateFeature(poSrcFeature.release()));
+    }
 
   public:
     explicit GDALVectorSelectAlgorithmLayer(OGRLayer &oSrcLayer)
-        : m_oSrcLayer(oSrcLayer),
+        : GDALVectorPipelineOutputLayer(oSrcLayer),
           m_poFeatureDefn(new OGRFeatureDefn(oSrcLayer.GetName()))
     {
         SetDescription(oSrcLayer.GetDescription());
+        SetMetadata(oSrcLayer.GetMetadata());
         m_poFeatureDefn->SetGeomType(wkbNone);
         m_poFeatureDefn->Reference();
     }
@@ -112,7 +117,7 @@ class GDALVectorSelectAlgorithmLayer final
 
         std::set<std::string> oSetUsedSetFieldsUC;
 
-        const auto poSrcLayerDefn = m_oSrcLayer.GetLayerDefn();
+        const auto poSrcLayerDefn = m_srcLayer.GetLayerDefn();
         for (int i = 0; i < poSrcLayerDefn->GetFieldCount(); ++i)
         {
             const auto poSrcFieldDefn = poSrcLayerDefn->GetFieldDefn(i);
@@ -168,7 +173,7 @@ class GDALVectorSelectAlgorithmLayer final
                 {
                     CPLError(bStrict ? CE_Failure : CE_Warning, CPLE_AppDefined,
                              "Field '%s' does not exist in layer '%s'.%s",
-                             osName.c_str(), m_oSrcLayer.GetDescription(),
+                             osName.c_str(), m_srcLayer.GetDescription(),
                              bStrict ? " You may specify "
                                        "--ignore-missing-fields to skip it"
                                      : " It will be ignored");
@@ -191,7 +196,7 @@ class GDALVectorSelectAlgorithmLayer final
             oSetSelFieldsUC.insert(CPLString(osFieldName).toupper());
         }
 
-        const auto poSrcLayerDefn = m_oSrcLayer.GetLayerDefn();
+        const auto poSrcLayerDefn = m_srcLayer.GetLayerDefn();
         for (int i = 0; i < poSrcLayerDefn->GetFieldCount(); ++i)
         {
             const auto poSrcFieldDefn = poSrcLayerDefn->GetFieldDefn(i);
@@ -242,41 +247,20 @@ class GDALVectorSelectAlgorithmLayer final
     GIntBig GetFeatureCount(int bForce) override
     {
         if (!m_poAttrQuery && !m_poFilterGeom)
-            return m_oSrcLayer.GetFeatureCount(bForce);
+            return m_srcLayer.GetFeatureCount(bForce);
         return OGRLayer::GetFeatureCount(bForce);
     }
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override
     {
-        return m_oSrcLayer.GetExtent(iGeomField, psExtent, bForce);
-    }
-
-    void ResetReading() override
-    {
-        m_oSrcLayer.ResetReading();
-    }
-
-    void TranslateFeature(
-        std::unique_ptr<OGRFeature> poSrcFeature,
-        std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
-    {
-        apoOutFeatures.push_back(TranslateFeature(poSrcFeature.release()));
-    }
-
-    OGRFeature *GetNextRawFeature()
-    {
-        auto poSrcFeature =
-            std::unique_ptr<OGRFeature>(m_oSrcLayer.GetNextFeature());
-        if (!poSrcFeature)
-            return nullptr;
-        return TranslateFeature(poSrcFeature.get()).release();
+        return m_srcLayer.GetExtent(iGeomField, psExtent, bForce);
     }
 
     OGRFeature *GetFeature(GIntBig nFID) override
     {
         auto poSrcFeature =
-            std::unique_ptr<OGRFeature>(m_oSrcLayer.GetFeature(nFID));
+            std::unique_ptr<OGRFeature>(m_srcLayer.GetFeature(nFID));
         if (!poSrcFeature)
             return nullptr;
         return TranslateFeature(poSrcFeature.get()).release();
@@ -291,7 +275,7 @@ class GDALVectorSelectAlgorithmLayer final
              !m_poFilterGeom) ||
             EQUAL(pszCap, OLCFastGetExtent) || EQUAL(pszCap, OLCStringsAsUTF8))
         {
-            return m_oSrcLayer.TestCapability(pszCap);
+            return m_srcLayer.TestCapability(pszCap);
         }
         return false;
     }
@@ -315,18 +299,29 @@ bool GDALVectorSelectAlgorithm::RunStep(GDALProgressFunc, void *)
 
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
     {
-        auto poLayer =
-            std::make_unique<GDALVectorSelectAlgorithmLayer>(*poSrcLayer);
-        if (m_exclude)
+        if (m_activeLayer.empty() ||
+            m_activeLayer == poSrcLayer->GetDescription())
         {
-            poLayer->ExcludeFields(m_fields);
+            auto poLayer =
+                std::make_unique<GDALVectorSelectAlgorithmLayer>(*poSrcLayer);
+            if (m_exclude)
+            {
+                poLayer->ExcludeFields(m_fields);
+            }
+            else
+            {
+                if (!poLayer->IncludeFields(m_fields, !m_ignoreMissingFields))
+                    return false;
+            }
+            outDS->AddLayer(*poSrcLayer, std::move(poLayer));
         }
         else
         {
-            if (!poLayer->IncludeFields(m_fields, !m_ignoreMissingFields))
-                return false;
+            outDS->AddLayer(
+                *poSrcLayer,
+                std::make_unique<GDALVectorPipelinePassthroughLayer>(
+                    *poSrcLayer));
         }
-        outDS->AddLayer(*poSrcLayer, std::move(poLayer));
     }
 
     m_outputDataset.Set(std::move(outDS));

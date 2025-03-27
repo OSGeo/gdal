@@ -34,6 +34,7 @@ advertizing
 AdviseRead
 advized
 AES
+affine
 Affine
 ahArrays
 airphotos
@@ -737,6 +738,7 @@ dstSRS
 dstType
 dt
 dT
+dtype
 DUnits
 dValue
 dve
@@ -1002,6 +1004,7 @@ gdaldata
 GDALDataset
 gdaldem
 gdaldriver
+GDALEDTComponent
 gdalenhance
 gdalframework
 gdalg
@@ -1408,6 +1411,7 @@ importFromEPSGA
 importFromURN
 importFromWkb
 ImportFromWKB
+importFromWkt
 ImportFromWKT
 Impots
 imtem
@@ -1461,6 +1465,7 @@ iSubGeom
 ISurface
 itemtypes
 iterable
+iteratively
 itf
 itopen
 iTXt
@@ -1506,8 +1511,8 @@ julian
 Julien
 Jupyter
 Jürgen
-Kadaster
 Ka
+Kadaster
 kak
 kakadu
 Kakadu
@@ -1766,6 +1771,7 @@ md
 mdb
 mdbtools
 mdd
+mdim
 megt
 Melero
 mem
@@ -1921,6 +1927,7 @@ Namespaces
 namespacing
 nan
 NaN
+nanometer
 nArgc
 nArray
 nArrays
@@ -2128,6 +2135,7 @@ Nummeraanduiding
 numnorth
 numpy
 Numpy
+NumPy
 numslope
 numwoodies
 nUpdatedFieldsCount
@@ -3268,8 +3276,8 @@ TileY
 tim
 timePosition
 timesheet
-TinZ
 timezones
+TinZ
 tippecanoe
 tm
 tmerc

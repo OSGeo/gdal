@@ -453,15 +453,11 @@ def test_gdalalg_vector_rasterize(tmp_vsimem, create_empty_dataset, options, exp
                 rasterize = get_rasterize_alg()
                 rasterize.ParseRunAndFinalize(options + [input_csv, output_tif])
             assert expected in str(error.value)
+            return
 
         else:
             rasterize = get_rasterize_alg()
             assert rasterize.ParseRunAndFinalize(options + [input_csv, output_tif])
-
-        # Check the error
-        if isinstance(expected, str):
-            assert expected in gdal.GetLastErrorMsg()
-            return
 
         # Check the result
         target_ds = gdal.Open(output_tif)

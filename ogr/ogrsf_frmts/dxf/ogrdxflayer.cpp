@@ -2792,8 +2792,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateWIPEOUT()
 
         switch (nCode)
         {
-                /* Group codes 10, 20 control the insertion point of the lower    */
-                /* left corner of your image.                                            */
+                /* Group codes 10, 20 control the insertion point of the lower
+                   left corner of your image. */
             case 10:
                 dfXOffset = CPLAtof(szLineBuf);
                 break;
@@ -2877,6 +2877,11 @@ OGRDXFFeature *OGRDXFLayer::TranslateWIPEOUT()
     if (nCode == 0)
         poDS->UnreadValue();
 
+    if (smoothPolyline.IsEmpty())
+    {
+        return nullptr;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Close polyline to output polygon geometry.                      */
     /* -------------------------------------------------------------------- */
@@ -2888,7 +2893,6 @@ OGRDXFFeature *OGRDXFLayer::TranslateWIPEOUT()
 
     // Set style pen color
     PrepareLineStyle(poFeature.get());
-    //CPLDebug("Wipeout translated", "%s", poFeature->GetFieldAsString("EntityHandle"));
 
     return poFeature.release();
 }

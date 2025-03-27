@@ -19,43 +19,50 @@ Synopsis
 
 A pipeline chains several steps, separated with the `!` (quotation mark) character.
 The first step must be ``read``, and the last one ``write``. Each step has its
-own positional or non-positional arguments.
+own positional or non-positional arguments. Apart from ``read`` and ``write``,
+all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:
 
-* read [OPTIONS] <INPUT>
+* read
 
 .. program-output:: gdal vector pipeline --help-doc=read
 
-* clip [OPTIONS]
+* clip
 
 .. program-output:: gdal vector pipeline --help-doc=clip
 
 Details for options can be found in :ref:`gdal_vector_clip_subcommand`.
 
-* filter [OPTIONS]
+* edit
+
+.. program-output:: gdal vector pipeline --help-doc=edit
+
+Details for options can be found in :ref:`gdal_vector_edit_subcommand`.
+
+* filter
 
 .. program-output:: gdal vector pipeline --help-doc=filter
 
 Details for options can be found in :ref:`gdal_vector_filter_subcommand`.
 
-* reproject [OPTIONS]
+* reproject
 
 .. program-output:: gdal vector pipeline --help-doc=reproject
 
-* select [OPTIONS]
+* select
 
 .. program-output:: gdal vector pipeline --help-doc=select
 
 Details for options can be found in :ref:`gdal_vector_select_subcommand`.
 
-* sql [OPTIONS] <STATEMENT>
+* sql
 
 .. program-output:: gdal vector pipeline --help-doc=sql
 
 Details for options can be found in :ref:`gdal_vector_sql_subcommand`.
 
-* write [OPTIONS] <OUTPUT>
+* write
 
 .. program-output:: gdal vector pipeline --help-doc=write
 
