@@ -2302,28 +2302,20 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddUpdateArg(bool *pValue)
 }
 
 /************************************************************************/
-/*                          AddOptionsSuggestions()                     */
+/*                 GDALAlgorithm::AddOptionsSuggestions()               */
 /************************************************************************/
 
-static bool AddOptionsSuggestions(const char *pszXML, int datasetType,
-                                  const std::string &currentValue,
-                                  std::vector<std::string> &oRet)
+/* static */
+bool GDALAlgorithm::AddOptionsSuggestions(const char *pszXML, int datasetType,
+                                          const std::string &currentValue,
+                                          std::vector<std::string> &oRet)
 {
     if (!pszXML)
         return false;
     CPLXMLTreeCloser poTree(CPLParseXMLString(pszXML));
     if (!poTree)
         return false;
-    const CPLXMLNode *psRoot =
-        CPLGetXMLNode(poTree.get(), "=CreationOptionList");
-    if (!psRoot)
-        psRoot = CPLGetXMLNode(poTree.get(), "=LayerCreationOptionList");
-    if (!psRoot)
-        psRoot = CPLGetXMLNode(poTree.get(), "=OpenOptionList");
-    if (!psRoot)
-        return false;
-
-    for (const CPLXMLNode *psChild = psRoot->psChild; psChild;
+    for (const CPLXMLNode *psChild = poTree.get()->psChild; psChild;
          psChild = psChild->psNext)
     {
         const char *pszName = CPLGetXMLValue(psChild, "name", nullptr);
@@ -2398,7 +2390,7 @@ static bool AddOptionsSuggestions(const char *pszXML, int datasetType,
         }
     }
 
-    for (const CPLXMLNode *psChild = psRoot->psChild; psChild;
+    for (const CPLXMLNode *psChild = poTree.get()->psChild; psChild;
          psChild = psChild->psNext)
     {
         const char *pszName = CPLGetXMLValue(psChild, "name", nullptr);
@@ -2621,13 +2613,22 @@ FormatAutoCompleteFunction(const GDALAlgorithmArg &arg,
             bool ok = true;
             for (const std::string &cap : *caps)
             {
-                if (poDriver->GetMetadataItem(cap.c_str()))
+                if (cap == GDAL_ALG_DCAP_RASTER_OR_MULTIDIM_RASTER)
+                {
+                    if (!poDriver->GetMetadataItem(GDAL_DCAP_RASTER) &&
+                        !poDriver->GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER))
+                    {
+                        ok = false;
+                        break;
+                    }
+                }
+                else if (poDriver->GetMetadataItem(cap.c_str()))
                 {
                 }
                 else if (cap == GDAL_DCAP_CREATECOPY &&
-                         std::find(caps->begin(), caps->end(),
-                                   GDAL_DCAP_RASTER) != caps->end() &&
-                         poDriver->GetMetadataItem(GDAL_DCAP_RASTER) &&
+                         (std::find(caps->begin(), caps->end(),
+                                    GDAL_DCAP_RASTER) != caps->end() &&
+                          poDriver->GetMetadataItem(GDAL_DCAP_RASTER)) &&
                          poDriver->GetMetadataItem(GDAL_DCAP_CREATE))
                 {
                     // if it supports Create, it supports CreateCopy
@@ -3740,7 +3741,7 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
                 if (val.GetType() & GDAL_OF_VECTOR)
                     jAr.Add("vector");
                 if (val.GetType() & GDAL_OF_MULTIDIM_RASTER)
-                    jAr.Add("muldim_raster");
+                    jAr.Add("multidim_raster");
                 jArg.Add("dataset_type", jAr);
             }
 
@@ -3836,6 +3837,24 @@ std::vector<std::string>
 GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
                                bool showAllOptions)
 {
+    // Get inner-most algorithm
+    std::unique_ptr<GDALAlgorithm> curAlgHolder;
+    GDALAlgorithm *curAlg = this;
+    while (!args.empty() && !args.front().empty() && args.front()[0] != '-')
+    {
+        auto subAlg = curAlg->InstantiateSubAlgorithm(args.front());
+        if (!subAlg)
+            break;
+        showAllOptions = false;
+        args.erase(args.begin());
+        curAlgHolder = std::move(subAlg);
+        curAlg = curAlgHolder.get();
+    }
+    if (curAlg != this)
+    {
+        return curAlg->GetAutoComplete(args, /* showAllOptions = */ false);
+    }
+
     std::vector<std::string> ret;
 
     std::string option;

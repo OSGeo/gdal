@@ -7852,6 +7852,63 @@ OGRwkbGeometryType OGR_GT_GetCollection(OGRwkbGeometryType eType)
 }
 
 /************************************************************************/
+/*                         OGR_GT_GetSingle()                           */
+/************************************************************************/
+/**
+ * \brief Returns the non-collection type that be contained in the passed
+ * geometry type.
+ *
+ * Handled conversions are : wkbNone->wkbNone, wkbMultiPoint -> wkbPoint,
+ * wkbMultiLineString -> wkbLineString, wkbMultiPolygon -> wkbPolygon,
+ * wkbMultiCurve -> wkbCompoundCurve, wkbMultiSurface -> wkbCurvePolygon,
+ * wkbGeometryCollection -> wkbUnknown
+ * In other cases, the original geometry is returned.
+ *
+ * Passed Z, M, ZM flag is preserved.
+ *
+ *
+ * @param eType Input geometry type
+ *
+ * @return the the non-collection type that be contained in the passed geometry
+ * type or wkbUnknown
+ *
+ * @since GDAL 3.11
+ */
+
+OGRwkbGeometryType OGR_GT_GetSingle(OGRwkbGeometryType eType)
+{
+    const bool bHasZ = wkbHasZ(eType);
+    const bool bHasM = wkbHasM(eType);
+    if (eType == wkbNone)
+        return wkbNone;
+    const OGRwkbGeometryType eFGType = wkbFlatten(eType);
+    if (eFGType == wkbMultiPoint)
+        eType = wkbPoint;
+
+    else if (eFGType == wkbMultiLineString)
+        eType = wkbLineString;
+
+    else if (eFGType == wkbMultiPolygon)
+        eType = wkbPolygon;
+
+    else if (eFGType == wkbMultiCurve)
+        eType = wkbCompoundCurve;
+
+    else if (eFGType == wkbMultiSurface)
+        eType = wkbCurvePolygon;
+
+    else if (eFGType == wkbGeometryCollection)
+        return wkbUnknown;
+
+    if (bHasZ)
+        eType = wkbSetZ(eType);
+    if (bHasM)
+        eType = wkbSetM(eType);
+
+    return eType;
+}
+
+/************************************************************************/
 /*                        OGR_GT_GetCurve()                             */
 /************************************************************************/
 /**

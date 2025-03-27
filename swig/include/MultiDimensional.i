@@ -52,6 +52,12 @@ public:
   }
 %clear char **;
 
+%apply (char **CSL) {char **};
+  char **GetMDArrayFullNamesRecursive(char** groupOptions = 0, char** arrayOptions = 0) {
+    return GDALGroupGetMDArrayFullNamesRecursive( self, groupOptions, arrayOptions );
+  }
+%clear char **;
+
 %newobject OpenMDArray;
   GDALMDArrayHS* OpenMDArray( const char* name, char** options = 0) {
 #if defined(SWIGPYTHON)

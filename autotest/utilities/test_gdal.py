@@ -394,3 +394,8 @@ def test_gdal_completion_pipeline(gdal_path, subcommand):
             f"{gdal_path} completion gdal {subcommand} pipeline read foo ! reproject --resampling"
         ).split(" ")
         assert "nearest" in out
+    else:
+        out = gdaltest.runexternal(
+            f"{gdal_path} completion gdal {subcommand} pipeline read foo ! geom"
+        ).split(" ")
+        assert "set-type" in out

@@ -38,6 +38,8 @@ struct GDALMultiDimTranslateOptions
     bool bStrict = false;
     void *pProgressData = nullptr;
     bool bUpdate = false;
+    bool bOverwrite = false;
+    bool bNoOverwrite = false;
 };
 
 /*************************************************************************/
@@ -84,7 +86,7 @@ GDALMultiDimTranslateAppOptionsGetParser(
         .action([psOptions](const std::string &s)
                 { psOptions->aosArrayOptions.AddString(s.c_str()); })
         .help(_("Option passed to GDALGroup::GetMDArrayNames() to filter "
-                "reported arrays."));
+                "arrays."));
 
     group.add_argument("-group")
         .metavar("<group_spec>")
@@ -120,6 +122,16 @@ GDALMultiDimTranslateAppOptionsGetParser(
         .flag()
         .store_into(psOptions->bStrict)
         .help(_("Turn warnings into failures."));
+
+    // Undocumented option used by gdal mdim convert
+    argParser->add_argument("--overwrite")
+        .store_into(psOptions->bOverwrite)
+        .hidden();
+
+    // Undocumented option used by gdal mdim convert
+    argParser->add_argument("--no-overwrite")
+        .store_into(psOptions->bNoOverwrite)
+        .hidden();
 
     if (psOptionsForBinary)
     {
@@ -1787,6 +1799,31 @@ GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     if (pszDest == nullptr)
         pszDest = GDALGetDescription(hDstDS);
 #endif
+
+    if (psOptions && psOptions->bOverwrite && !EQUAL(pszDest, ""))
+    {
+        VSIRmdirRecursive(pszDest);
+    }
+    else if (psOptions && psOptions->bNoOverwrite && !EQUAL(pszDest, ""))
+    {
+        VSIStatBufL sStat;
+        if (VSIStatL(pszDest, &sStat) == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "File '%s' already exists. Specify the --overwrite "
+                     "option to overwrite it.",
+                     pszDest);
+            return nullptr;
+        }
+        else if (std::unique_ptr<GDALDataset>(GDALDataset::Open(pszDest)))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Dataset '%s' already exists. Specify the --overwrite "
+                     "option to overwrite it.",
+                     pszDest);
+            return nullptr;
+        }
+    }
 
 #ifdef this_is_dead_code_for_now
     if (hDstDS == nullptr)

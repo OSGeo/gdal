@@ -15,6 +15,7 @@
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_edit.h"
 #include "gdalalg_vector_filter.h"
+#include "gdalalg_vector_geom.h"
 #include "gdalalg_vector_reproject.h"
 #include "gdalalg_vector_select.h"
 #include "gdalalg_vector_sql.h"
@@ -143,15 +144,9 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
         }
 
-        if (m_executionForStreamOutput && !EQUAL(m_format.c_str(), "stream"))
-        {
-            // For security reasons, to avoid that reading a .gdalg.json file
-            // writes a file on the file system.
-            ReportError(CE_Failure, CPLE_NotSupported,
-                        "gdal vector pipeline in streamed execution should use "
-                        "--format stream");
-            return false;
-        }
+        // Already checked by GDALAlgorithm::Run()
+        CPLAssert(!m_executionForStreamOutput ||
+                  EQUAL(m_format.c_str(), "stream"));
 
         bool ret = false;
         if (readAlg.Run())
@@ -249,6 +244,7 @@ GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()
     m_stepRegistry.Register<GDALVectorEditAlgorithm>();
     m_stepRegistry.Register<GDALVectorReprojectAlgorithm>();
     m_stepRegistry.Register<GDALVectorFilterAlgorithm>();
+    m_stepRegistry.Register<GDALVectorGeomAlgorithm>();
     m_stepRegistry.Register<GDALVectorSelectAlgorithm>();
     m_stepRegistry.Register<GDALVectorSQLAlgorithm>();
 }
@@ -349,9 +345,26 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
                             "unknown step name: %s", algName.c_str());
                 return false;
             }
+            curStep.alg->SetCallPath({algName});
         }
         else
         {
+            if (curStep.alg->HasSubAlgorithms())
+            {
+                auto subAlg = std::unique_ptr<GDALVectorPipelineStepAlgorithm>(
+                    cpl::down_cast<GDALVectorPipelineStepAlgorithm *>(
+                        curStep.alg->InstantiateSubAlgorithm(arg).release()));
+                if (!subAlg)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "'%s' is a unknown sub-algorithm of '%s'",
+                                arg.c_str(), curStep.alg->GetName().c_str());
+                    return false;
+                }
+                curStep.alg = std::move(subAlg);
+                continue;
+            }
+
 #ifdef GDAL_PIPELINE_PROJ_NOSTALGIA
             if (!arg.empty() && arg[0] == '+' &&
                 arg.find(' ') == std::string::npos)
@@ -474,34 +487,31 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
             GetReferencePathForRelativePaths());
     }
 
-    if (!m_pipeline.empty())
+    // Propagate input parameters set at the pipeline level to the
+    // "read" step
     {
-        // Propagate input parameters set at the pipeline level to the
-        // "read" step
+        auto &step = steps.front();
+        for (auto &arg : step.alg->GetArgs())
         {
-            auto &step = steps.front();
-            for (auto &arg : step.alg->GetArgs())
+            auto pipelineArg = GetArg(arg->GetName());
+            if (pipelineArg && pipelineArg->IsExplicitlySet())
             {
-                auto pipelineArg = GetArg(arg->GetName());
-                if (pipelineArg && pipelineArg->IsExplicitlySet())
-                {
-                    arg->SetSkipIfAlreadySet(true);
-                    arg->SetFrom(*pipelineArg);
-                }
+                arg->SetSkipIfAlreadySet(true);
+                arg->SetFrom(*pipelineArg);
             }
         }
+    }
 
-        // Same with "write" step
+    // Same with "write" step
+    {
+        auto &step = steps.back();
+        for (auto &arg : step.alg->GetArgs())
         {
-            auto &step = steps.back();
-            for (auto &arg : step.alg->GetArgs())
+            auto pipelineArg = GetArg(arg->GetName());
+            if (pipelineArg && pipelineArg->IsExplicitlySet())
             {
-                auto pipelineArg = GetArg(arg->GetName());
-                if (pipelineArg && pipelineArg->IsExplicitlySet())
-                {
-                    arg->SetSkipIfAlreadySet(true);
-                    arg->SetFrom(*pipelineArg);
-                }
+                arg->SetSkipIfAlreadySet(true);
+                arg->SetFrom(*pipelineArg);
             }
         }
     }
@@ -733,9 +743,7 @@ OGRLayer *GDALVectorPipelineOutputDataset::GetLayer(int idx)
 
 int GDALVectorPipelineOutputDataset::TestCapability(const char *pszCap)
 {
-    if (EQUAL(pszCap, ODsCRandomLayerRead) ||
-        EQUAL(pszCap, OLCMeasuredGeometries) ||
-        EQUAL(pszCap, OLCCurveGeometries) || EQUAL(pszCap, OLCZGeometries))
+    if (EQUAL(pszCap, ODsCRandomLayerRead))
     {
         return m_srcDS.TestCapability(pszCap);
     }

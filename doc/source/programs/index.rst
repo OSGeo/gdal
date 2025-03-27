@@ -31,6 +31,9 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal
    gdal_info
    gdal_convert
+   gdal_mdim
+   gdal_mdim_info
+   gdal_mdim_convert
    gdal_raster
    gdal_raster_info
    gdal_raster_astype
@@ -56,6 +59,9 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vector_convert
    gdal_vector_edit
    gdal_vector_filter
+   gdal_vector_geom
+   gdal_vector_geom_set_type
+   gdal_vector_geom_explode_collections
    gdal_vector_pipeline
    gdal_vector_rasterize
    gdal_vector_reproject
@@ -70,6 +76,9 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_program`: Main "gdal" entry point
     - :ref:`gdal_info_command`: Get information on a dataset
     - :ref:`gdal_convert_command`: Convert a dataset
+    - :ref:`gdal_mdim_command`: Entry point for multidimensional commands
+    - :ref:`gdal_mdim_info_subcommand`: Get information on a multidimensional dataset
+    - :ref:`gdal_mdim_convert_subcommand`: Convert a multidimensional dataset
     - :ref:`gdal_raster_command`: Entry point for raster commands
     - :ref:`gdal_raster_info_subcommand`: Get information on a raster dataset
     - :ref:`gdal_raster_astype_subcommand`: Modify the data type of bands of a raster dataset
@@ -94,6 +103,9 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vector_clip_subcommand`: Clip a vector dataset
     - :ref:`gdal_vector_edit_subcommand`: Edit metadata of a vector dataset
     - :ref:`gdal_vector_filter_subcommand`: Filter a vector dataset
+    - :ref:`gdal_vector_geom_subcommand`: Geometry operations on a vector dataset
+    - :ref:`gdal_vector_geom_set_type_subsubcommand`: Modify the geometry type of a vector dataset
+    - :ref:`gdal_vector_geom_explode_collections_subsubcommand`: Explode geometries of type collection of a vector dataset
     - :ref:`gdal_vector_convert_subcommand`: Convert a vector dataset
     - :ref:`gdal_vector_pipeline_subcommand`: Process a vector dataset
     - :ref:`gdal_vector_reproject_subcommand`: Reproject a vector dataset

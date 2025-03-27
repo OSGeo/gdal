@@ -14,6 +14,36 @@ or anywhere in GDAL API or command line utilities where a raster input dataset
 is expected. GDALG files are conceptually close to :ref:`VRT (Virtual) files <raster.vrt>`,
 although the implementation is substantially different.
 
+In-process stream execution
+---------------------------
+
+For algorithms that support GDALG output, it is also possible to use the
+``stream`` output format to indicate that a raster or vector streamed dataset
+must be returned.
+
+For example the following snippet, runs that "gdal vector geom set-type"
+algorithm on a source dataset and iterates over features from the returned
+streamed dataset.
+
+.. code-block:: python
+
+    from osgeo import gdal
+    gdal.UseExceptions()
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["vector"]["geom"]["set-type"]
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+    alg["geometry-type"] = "LINESTRING Z"
+
+    alg.Run()
+
+    out_ds = alg["output"].GetDataset()
+    out_lyr = out_ds.GetLayer(0)
+    for f in our_lyr:
+        f.DumpReadable()
+
+
 Examples
 --------
 

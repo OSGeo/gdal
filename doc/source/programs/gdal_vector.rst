@@ -24,6 +24,7 @@ Available sub-commands
 - :ref:`gdal_vector_convert_subcommand`
 - :ref:`gdal_vector_edit_subcommand`
 - :ref:`gdal_vector_filter_subcommand`
+- :ref:`gdal_vector_geom_subcommand`
 - :ref:`gdal_vector_info_subcommand`
 - :ref:`gdal_vector_pipeline_subcommand`
 - :ref:`gdal_vector_rasterize_subcommand`

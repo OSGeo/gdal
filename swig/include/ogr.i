@@ -4579,6 +4579,9 @@ int                OGR_GT_IsNonLinear( OGRwkbGeometryType );
 %rename (GT_GetCollection) OGR_GT_GetCollection;
 OGRwkbGeometryType OGR_GT_GetCollection( OGRwkbGeometryType eType );
 
+%rename (GT_GetSingle) OGR_GT_GetSingle;
+OGRwkbGeometryType OGR_GT_GetSingle( OGRwkbGeometryType eType );
+
 %rename (GT_GetCurve) OGR_GT_GetCurve;
 OGRwkbGeometryType OGR_GT_GetCurve( OGRwkbGeometryType eType );
 
