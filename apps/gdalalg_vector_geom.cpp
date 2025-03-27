@@ -14,6 +14,7 @@
 #include "gdalalg_vector_geom_set_type.h"
 #include "gdalalg_vector_geom_explode_collections.h"
 #include "gdalalg_vector_geom_make_valid.h"
+#include "gdalalg_vector_geom_segmentize.h"
 
 //! @cond Doxygen_Suppress
 
@@ -33,6 +34,7 @@ GDALVectorGeomAlgorithm::GDALVectorGeomAlgorithm(bool standaloneStep)
     RegisterSubAlgorithm<GDALVectorGeomExplodeCollectionsAlgorithm>(
         standaloneStep);
     RegisterSubAlgorithm<GDALVectorGeomMakeValidAlgorithm>(standaloneStep);
+    RegisterSubAlgorithm<GDALVectorGeomSegmentizeAlgorithm>(standaloneStep);
 }
 
 /************************************************************************/
