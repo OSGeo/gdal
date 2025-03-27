@@ -89,20 +89,6 @@ def rgb2pct2_tif(script_path, tmp_path_factory):
     yield tif_fname
 
 
-@pytest.fixture(scope="module")
-def rgb2pct2c_tif(script_path, tmp_path_factory):
-
-    tif_fname = str(tmp_path_factory.mktemp("tmp") / "test_rgb2pct_2c.tif")
-
-    test_py_scripts.run_py_script(
-        script_path,
-        "rgb2pct",
-        "-n 16 --compress-option COMPRESS=LZW " + test_py_scripts.get_data_path("gcore") + f"rgbsmall.tif {tif_fname}",
-    )
-
-    yield tif_fname
-
-
 ###############################################################################
 # Test rgb2pct
 
@@ -216,19 +202,24 @@ def test_rgb2pct_2(script_path, rgb2pct2_tif):
     ds = None
 
 
-def test_rgb2pct_2c(script_path, rgb2pct2c_tif):
+###############################################################################
+# Test rgb2pct --creation-option option
 
-    ds = gdal.Open(rgb2pct2c_tif)
-    assert ds.GetRasterBand(1).Checksum() == 16596
 
-    ct = ds.GetRasterBand(1).GetRasterColorTable()
-    for i in range(16, 255):
-        entry = ct.GetColorEntry(i)
-        assert (
-            entry[0] == 0 and entry[1] == 0 and entry[2] == 0
-        ), "Color table has more than 16 entries"
+def test_rgb2pct_creation_option(script_path, tmp_path):
 
-    ds = None
+    tif_fname = str(tmp_path / "test_rgb2pct_creation_option.tif")
+
+    test_py_scripts.run_py_script(
+        script_path,
+        "rgb2pct",
+        "--creation-option COMPRESS=LZW "
+        + test_py_scripts.get_data_path("gcore")
+        + f"rgbsmall.tif {tif_fname}",
+    )
+
+    ds = gdal.Open(tif_fname)
+    assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
 
 
 ###############################################################################
