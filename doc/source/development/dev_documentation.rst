@@ -368,7 +368,7 @@ a cross-reference from the same document.
 
     The ``ls`` command is demonstrated in :example:`basic-ls`.
 
-If the output of the command is to be included in the listing, the code language
+If the output of a command is to be included in the listing, the code language
 should be set to ``console``:
 
 .. code-block:: rst
