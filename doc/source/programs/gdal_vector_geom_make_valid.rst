@@ -1,0 +1,69 @@
+.. _gdal_vector_geom_make_valid_subsubcommand:
+
+================================================================================
+"gdal vector geom make-valid" sub-sub-command
+================================================================================
+
+.. versionadded:: 3.11
+
+.. only:: html
+
+    Fix validity of geometries of a vector dataset
+
+.. Index:: gdal vector geom make-valid
+
+Synopsis
+--------
+
+.. program-output:: gdal vector geom make-valid --help-doc
+
+Description
+-----------
+
+:program:`gdal vector geom make-valid` ensures that geometries are
+valid regarding the rules of the Simple Features specification.
+
+It runs the :cpp:func:`OGRGeometry::MakeValid` operation,
+followed by :cpp:func:`OGRGeometryFactory::removeLowerDimensionSubGeoms`
+(unless :option:`--keep-lower-dim` is set)
+
+It can also be used as a step of :ref:`gdal_vector_pipeline_subcommand`.
+
+.. note:: This command requires a GDAL build against the GEOS library.
+
+Standard options
+++++++++++++++++
+
+.. include:: gdal_options/of_vector.rst
+
+.. include:: gdal_options/co_vector.rst
+
+.. include:: gdal_options/overwrite.rst
+
+.. include:: gdal_options/active_layer.rst
+
+.. include:: gdal_options/active_geometry.rst
+
+.. option:: --keep-lower-dim
+
+   Keep components of lower dimension after MakeValid(). For example, MakeValid() may
+   return a GeometryCollection of a Polygon and a LineString from a Polygon input.
+   By default only the Polygon would be returned. Setting this option will return
+   the GeometryCollection.
+
+Advanced options
+++++++++++++++++
+
+.. include:: gdal_options/oo.rst
+
+.. include:: gdal_options/if.rst
+
+Examples
+--------
+
+.. example::
+   :title: Basic use of make-valid
+
+   .. code-block:: bash
+
+        $ gdal vector geom make-valid in.gpkg out.gpkg --overwrite

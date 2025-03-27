@@ -45,6 +45,7 @@ add_library(
   gdalalg_vector_geom.cpp
   gdalalg_vector_geom_set_type.cpp
   gdalalg_vector_geom_explode_collections.cpp
+  gdalalg_vector_geom_make_valid.cpp
   gdalalg_vector_reproject.cpp
   gdalalg_vector_select.cpp
   gdalalg_vector_sql.cpp
@@ -77,6 +78,10 @@ target_include_directories(
 gdal_target_link_libraries(appslib PRIVATE PROJ::proj)
 
 set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+
+if (GDAL_USE_GEOS)
+  target_compile_definitions(appslib PRIVATE -DHAVE_GEOS=1)
+endif ()
 
 if (GDAL_ENABLE_DRIVER_GTIFF)
   target_compile_definitions(appslib PRIVATE -DHAVE_TIFF)
