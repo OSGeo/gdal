@@ -3147,6 +3147,13 @@ bool GDALAlgorithm::Run(GDALProgressFunc pfnProgress, void *pProgressData)
     if (!ValidateArguments())
         return false;
 
+    if (!m_dummyConfigOptions.empty())
+    {
+        ReportError(CE_Warning, CPLE_AppDefined,
+                    "Configuration options passed with the 'config' argument "
+                    "are ignored");
+    }
+
     switch (ProcessGDALGOutput())
     {
         case ProcessGDALGOutputRet::GDALG_ERROR:

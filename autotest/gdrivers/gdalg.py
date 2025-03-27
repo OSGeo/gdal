@@ -59,6 +59,23 @@ def test_gdalg_raster_pipeline_explicit_write_step():
     assert ds.GetRasterBand(1).Checksum() == 4672
 
 
+def test_gdalg_raster_pipeline_warn_about_config():
+    with gdal.quiet_errors():
+        ds = gdal.Open(
+            json.dumps(
+                {
+                    "type": "gdal_streamed_alg",
+                    "command_line": "gdal raster pipeline ! read --config FOO=BAR data/byte.tif",
+                }
+            )
+        )
+        assert (
+            gdal.GetLastErrorMsg()
+            == "read: Configuration options passed with the 'config' argument are ignored"
+        )
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
 def test_gdalg_raster_pipeline_error():
     with pytest.raises(Exception):
         gdal.Open(
