@@ -27,7 +27,7 @@ from osgeo import gdal
 
 # test that numpy is available, if not skip all tests
 np = pytest.importorskip("numpy")
-gdal_calc = pytest.importorskip("osgeo_utils.gdal_calc")
+gdal_calc = pytest.importorskip("osgeo_utils.gdal_calc", exc_type=ImportError)
 gdal_array = gdaltest.importorskip_gdal_array()
 try:
     GDALTypeCodeToNumericTypeCode = gdal_array.GDALTypeCodeToNumericTypeCode
