@@ -40,10 +40,10 @@ maximize output image visual quality.
     Select the number of colors in the generated
     color table.  Defaults to 256.  Must be between 2 and 256.
 
-.. option:: --options OPTION
+.. option:: --creation-option OPTION
 
     Optional creation parameters for the GeoTIFF driver,
-    for example COMPRESS=LZW. Multiple options are space separated.
+    for example "COMPRESS=LZW". Can be specified multiple times.
 
 .. option:: -pct <palette_file>
 

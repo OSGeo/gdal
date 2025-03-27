@@ -36,7 +36,7 @@ def rgb2pct(
     dst_filename: Optional[PathLikeOrStr] = None,
     color_count: int = 256,
     driver_name: Optional[str] = None,
-    options: Optional[list] = None,
+    creation_options: Optional[list] = None,
 ):
     # Open source file
     src_ds = open_ds(src_filename)
@@ -83,13 +83,13 @@ def rgb2pct(
     gtiff_driver = gdal.GetDriverByName("GTiff")
 
     # Convert options to list
-    if isinstance(options, str):
-        options = options.split()
-    if not options:
-        options = []
+    if isinstance(creation_options, str):
+        creation_options = creation_options.split()
+    if not creation_options:
+        creation_options = []
 
     tif_ds = gtiff_driver.Create(
-        tif_filename, src_ds.RasterXSize, src_ds.RasterYSize, 1, options=options
+        tif_filename, src_ds.RasterXSize, src_ds.RasterYSize, 1, options=creation_options,
     )
 
     tif_ds.GetRasterBand(1).SetRasterColorTable(ct)
@@ -183,9 +183,11 @@ class RGB2PCT(GDALScript):
         )
 
         parser.add_argument(
-            "--options",
-            dest="options",
-            type=str,
+            "--creation_option",
+            "--co",
+            dest="creation_options",
+            default=[],
+            action="append",
             help="GeoTIFF creation options, e.g. COMPRESS=LZW",
         )
 
