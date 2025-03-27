@@ -591,7 +591,9 @@ RUN if test "$(uname -p)" = "x86_64"; then \
     fi
 
 ARG WITH_ORACLE=
-RUN if test "$(uname -p)" = "x86_64"; then \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  if test "$(uname -p)" = "x86_64"; then \
   if echo "$WITH_ORACLE" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
       apt-get update \
       && apt-get install -y -V libaio1t64 \
