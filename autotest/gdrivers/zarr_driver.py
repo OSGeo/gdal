@@ -1905,7 +1905,6 @@ def test_zarr_create_group_errors(group_name, format):
                 "/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
             )
             rg = ds.GetRootGroup()
-            gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
             with gdal.quiet_errors():
                 assert rg.CreateGroup(group_name) is None
 
