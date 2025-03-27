@@ -9,6 +9,9 @@ add_library(
   gdalalg_convert.cpp
   gdalalg_info.cpp
   gdalalg_main.cpp
+  gdalalg_mdim.cpp
+  gdalalg_mdim_info.cpp
+  gdalalg_mdim_convert.cpp
   gdalalg_pipeline.cpp
   gdalalg_raster.cpp
   gdalalg_raster_info.cpp

@@ -179,6 +179,7 @@ static void readraster_releasebuffer(CPLErr eErr,
   from osgeo.gdalconst import *
   from osgeo import gdalconst
 
+  import os
   import sys
   byteorders = {"little": "<",
                 "big": ">"}
@@ -2148,7 +2149,6 @@ def _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions():
 %}
 
 %pythonprepend GeneralCmdLineProcessor %{
-    import os
     for i in range(len(args[0])):
         if isinstance(args[0][i], (os.PathLike, int)):
             args[0][i] = str(args[0][i])
@@ -2312,8 +2312,6 @@ def Info(ds, **kwargs):
     else:
         (opts, format, deserialize) = kwargs['options']
 
-    import os
-
     if isinstance(ds, (str, os.PathLike)):
         ds = Open(ds)
     ret = InfoInternal(ds, opts)
@@ -2433,8 +2431,6 @@ def VectorInfo(ds, **kwargs):
     else:
         (opts, format, deserialize) = kwargs['options']
 
-    import os
-
     if isinstance(ds, (str, os.PathLike)):
         ds = OpenEx(ds, OF_VERBOSE_ERROR | OF_VECTOR)
     ret = VectorInfoInternal(ds, opts)
@@ -2487,8 +2483,6 @@ def MultiDimInfo(ds, **kwargs):
     else:
         opts = kwargs['options']
         as_text = True
-
-    import os
 
     if isinstance(ds, (str, os.PathLike)):
         ds = OpenEx(ds, OF_VERBOSE_ERROR | OF_MULTIDIM_RASTER)
@@ -2763,8 +2757,6 @@ def Translate(destName, srcDS, **kwargs):
         (opts, callback, callback_data) = TranslateOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-
-    import os
 
     if isinstance(srcDS, (str, os.PathLike)):
         srcDS = Open(srcDS)
@@ -3063,8 +3055,6 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
         (opts, callback, callback_data) = WarpOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-
-    import os
 
     if isinstance(srcDSOrSrcDSTab, (str, os.PathLike)):
         srcDSTab = [Open(srcDSOrSrcDSTab)]
@@ -3492,8 +3482,6 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
     else:
         (opts, callback, callback_data) = kwargs['options']
 
-    import os
-
     if isinstance(srcDS, (str, os.PathLike)):
         srcDS = OpenEx(srcDS, gdalconst.OF_VECTOR)
 
@@ -3639,8 +3627,6 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
     else:
         (opts, colorFilename, callback, callback_data) = kwargs['options']
 
-    import os
-
     if isinstance(srcDS, (str, os.PathLike)):
         srcDS = Open(srcDS)
 
@@ -3752,8 +3738,6 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
         (opts, callback, callback_data) = NearblackOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-
-    import os
 
     if isinstance(srcDS, (str, os.PathLike)):
         srcDS = OpenEx(srcDS)
@@ -3901,8 +3885,6 @@ def Grid(destName, srcDS, **kwargs):
         (opts, callback, callback_data) = GridOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-
-    import os
 
     if isinstance(srcDS, (str, os.PathLike)):
         srcDS = OpenEx(srcDS, gdalconst.OF_VECTOR)
@@ -4069,8 +4051,6 @@ def Contour(destNameOrDestDS, srcDS, **kwargs):
         (opts, callback, callback_data) = ContourOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-
-    import os
 
     if isinstance(srcDS, (str, os.PathLike)):
         srcDS = OpenEx(srcDS)
@@ -4270,8 +4250,6 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
     """
 
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
-
-    import os
 
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = RasterizeOptions(**kwargs)
@@ -4479,8 +4457,6 @@ def Footprint(destNameOrDestDS, srcDS, **kwargs):
     else:
         (opts, callback, callback_data) = kwargs['options']
 
-    import os
-
     if isinstance(srcDS, (str, os.PathLike)):
         srcDS = OpenEx(srcDS, gdalconst.OF_RASTER)
 
@@ -4514,8 +4490,6 @@ def Footprint(destNameOrDestDS, srcDS, **kwargs):
         finally:
             if VSIStatL(temp_filename):
                 Unlink(temp_filename)
-
-    import os
 
     if isinstance(destNameOrDestDS, (str, os.PathLike)):
         return wrapper_GDALFootprintDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
@@ -4668,8 +4642,6 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
 
     srcDSTab = []
     srcDSNamesTab = []
-
-    import os
 
     if isinstance(srcDSOrSrcDSTab, (str, os.PathLike)):
         srcDSNamesTab = [str(srcDSOrSrcDSTab)]
@@ -4887,8 +4859,6 @@ def TileIndex(destName, srcFilenames, **kwargs):
         (opts, callback, callback_data) = kwargs['options']
 
     srcDSNamesTab = []
-
-    import os
 
     if isinstance(srcFilenames, (str, os.PathLike)):
         srcDSNamesTab = [str(srcFilenames)]
@@ -5559,7 +5529,7 @@ class VSIFile(BytesIO):
         raise Exception("Unhandled algorithm argument data type")
 
     def Set(self, value):
-        import os
+
         if isinstance(value, os.PathLike):
             value = str(value)
 
@@ -5573,8 +5543,8 @@ class VSIFile(BytesIO):
         if type == GAAT_REAL:
             return self.SetAsDouble(value)
         if type == GAAT_DATASET:
-            if isinstance(value, str):
-                self.GetAsDatasetValue().SetName(value)
+            if isinstance(value, str) or isinstance(value, os.PathLike):
+                self.GetAsDatasetValue().SetName(str(value))
                 return True
             elif isinstance(value, Dataset):
                 self.GetAsDatasetValue().SetDataset(value)
@@ -5591,11 +5561,31 @@ class VSIFile(BytesIO):
         if type == GAAT_REAL_LIST:
             return self.SetAsDoubleList(value)
         if type == GAAT_DATASET_LIST:
-            if isinstance(value[0], str):
-                return self.SetDatasetNames(value)
+            if isinstance(value[0], str) or isinstance(value[0], os.PathLike):
+                return self.SetDatasetNames([str(v) for v in value])
             elif isinstance(value[0], Dataset):
                 return self.SetDatasets(value)
         raise Exception("Unhandled algorithm argument data type")
 
 %}
 }
+
+%pythonprepend GDALAlgorithmHS::ParseCommandLineArguments %{
+    # Convert PathLike to str
+    import copy
+    args = copy.deepcopy(args)
+    if isinstance(args[0], list):
+        for i in range(len(args[0])):
+            args[0][i] = str(args[0][i])
+
+%}
+
+%pythonprepend GDALAlgorithmHS::ParseRunAndFinalize %{
+    # Convert PathLike to str
+    import copy
+    args = copy.deepcopy(args)
+    if isinstance(args[0], list):
+        for i in range(len(args[0])):
+            args[0][i] = str(args[0][i])
+
+%}

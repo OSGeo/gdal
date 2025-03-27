@@ -309,6 +309,10 @@ constexpr const char *GDAL_ARG_NAME_OVERWRITE = "overwrite";
 /** Name of the argument for read-only. */
 constexpr const char *GDAL_ARG_NAME_READ_ONLY = "read-only";
 
+/** Driver rmust expose GDAL_DCAP_RASTER or GDAL_DCAP_MULTIDIM_RASTER */
+constexpr const char *GDAL_ALG_DCAP_RASTER_OR_MULTIDIM_RASTER =
+    "raster-or-multidim-raster";
+
 /************************************************************************/
 /*                           GDALArgDatasetValue                        */
 /************************************************************************/
@@ -2278,6 +2282,11 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Add \--progress argument. */
     GDALInConstructionAlgorithmArg &AddProgressArg();
+
+    /** Add KEY=VALUE suggestion from open, creation options */
+    static bool AddOptionsSuggestions(const char *pszXML, int datasetType,
+                                      const std::string &currentValue,
+                                      std::vector<std::string> &oRet);
 
     /** Validation function to use for key=value type of arguments. */
     bool ValidateKeyValue(const GDALAlgorithmArg &arg) const;
