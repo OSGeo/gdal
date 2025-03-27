@@ -47,6 +47,7 @@ jobs:
             -DBUILD_APPS=ON \
             -DBUILD_DOCS=ON \
             -DBUILD_TESTING=ON \
+            -DDOXYGEN_FAIL_ON_WARNINGS=ON \
             -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF \
             -DOGR_BUILD_OPTIONAL_DRIVERS=OFF
           cmake --build . -j$(nproc)
