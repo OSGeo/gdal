@@ -2464,9 +2464,9 @@ void CPLLoadConfigOptionsFromFile(const char *pszFilename, int bOverrideEnvVars)
  * to ${prefix}/etc, unless the \--sysconfdir switch of configure has been
  * invoked.
  *
- * Then CPLLoadConfigOptionsFromFile() will be called with $(HOME)/.gdal/gdalrc
+ * Then CPLLoadConfigOptionsFromFile() will be called with ${HOME}/.gdal/gdalrc
  * on Unix builds (potentially overriding what was loaded with the sysconfdir)
- * or $(USERPROFILE)/.gdal/gdalrc on Windows builds.
+ * or ${USERPROFILE}/.gdal/gdalrc on Windows builds.
  *
  * CPLLoadConfigOptionsFromFile() will be called with bOverrideEnvVars = false,
  * that is the value of environment variables previously set will be used
