@@ -192,6 +192,44 @@ def test_gdalalg_vector_geom_make_valid_keep_lower_dim():
     assert out_f.GetGeometryRef().GetGeometryType() == ogr.wkbGeometryCollection
 
 
+@pytest.mark.require_geos(3, 10, 0)
+@pytest.mark.parametrize(
+    "input_wkt,options,output_wkt",
+    [
+        ("LINESTRING (0 0,0 0)", {}, "POINT (0 0)"),
+        ("LINESTRING (0 0,0 0)", {"method": "structure"}, "LINESTRING EMPTY"),
+        (
+            "LINESTRING (0 0,0 0)",
+            {"method": "structure", "keep-lower-dim": True},
+            "POINT (0 0)",
+        ),
+    ],
+)
+def test_gdalalg_vector_geom_make_valid_options(input_wkt, options, output_wkt):
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("the_layer")
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt(input_wkt))
+    src_lyr.CreateFeature(f)
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+    for k in options:
+        alg[k] = options[k]
+
+    assert alg.Run()
+
+    out_ds = alg["output"].GetDataset()
+    out_lyr = out_ds.GetLayer(0)
+    out_f = out_lyr.GetNextFeature()
+    # print(out_f.GetGeometryRef().ExportToIsoWkt())
+    ogrtest.check_feature_geometry(out_f, output_wkt)
+
+
 @pytest.mark.require_driver("GDALG")
 def test_gdalalg_vector_geom_make_valid_test_ogrsf(tmp_path):
 

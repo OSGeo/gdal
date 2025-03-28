@@ -44,6 +44,18 @@ Standard options
 
 .. include:: gdal_options/active_geometry.rst
 
+.. option:: --method=linework|structure
+
+   Algorithm to use when repairing invalid geometries.
+
+   The default ``linework`` method combines all rings into a set of noded lines and
+   then extracts valid polygons from that linework. This method keeps all input
+   vertices.
+
+   The ``structure`` method (only available with GEOS >= 3.10) first makes all
+   rings valid then merges shells and subtracts holes from shells to generate
+   valid result. It assumes that holes and shells are correctly categorized.
+
 .. option:: --keep-lower-dim
 
    Keep components of lower dimension after MakeValid(). For example, MakeValid() may

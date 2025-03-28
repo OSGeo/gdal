@@ -84,6 +84,7 @@ set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIB
 
 if (GDAL_USE_GEOS)
   target_compile_definitions(appslib PRIVATE -DHAVE_GEOS=1)
+  target_include_directories(appslib PRIVATE $<TARGET_PROPERTY:${GEOS_TARGET},INTERFACE_INCLUDE_DIRECTORIES>)
 endif ()
 
 if (GDAL_ENABLE_DRIVER_GTIFF)

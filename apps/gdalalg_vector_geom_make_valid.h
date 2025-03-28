@@ -38,6 +38,7 @@ class GDALVectorGeomMakeValidAlgorithm final
 
     struct Options : public GDALVectorGeomAbstractAlgorithm::OptionsBase
     {
+        std::string m_method = "linework";
         bool m_keepLowerDim = false;
     };
 
