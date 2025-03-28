@@ -961,12 +961,12 @@ CPLErr GDALDriverManager::LoadPlugin(const char *name)
  * search separated by colons on UNIX, or semi-colons on Windows.  Otherwise
  * the /usr/local/lib/gdalplugins directory, and (if known) the
  * lib/gdalplugins subdirectory of the gdal home directory are searched on
- * UNIX and $(BINDIR)\\gdalplugins on Windows.
+ * UNIX and \$(BINDIR)\\gdalplugins on Windows.
  *
  * Auto loading can be completely disabled by setting the GDAL_DRIVER_PATH
  * config option to "disable".
  *
- * Starting with gdal 3.5, the default search path $(prefix)/lib/gdalplugins
+ * Starting with gdal 3.5, the default search path \$(prefix)/lib/gdalplugins
  * can be overridden at compile time by passing
  * -DINSTALL_PLUGIN_DIR=/another/path to cmake.
  */
