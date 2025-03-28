@@ -100,8 +100,7 @@ class GDALVectorSelectAlgorithmLayer final
 
     ~GDALVectorSelectAlgorithmLayer() override
     {
-        if (m_poFeatureDefn)
-            m_poFeatureDefn->Dereference();
+        m_poFeatureDefn->Release();
     }
 
     bool IncludeFields(const std::vector<std::string> &selectedFields,

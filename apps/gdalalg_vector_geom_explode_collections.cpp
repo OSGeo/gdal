@@ -94,7 +94,7 @@ class GDALVectorGeomExplodeCollectionsAlgorithmLayer final
 
     ~GDALVectorGeomExplodeCollectionsAlgorithmLayer() override
     {
-        m_poFeatureDefn->Dereference();
+        m_poFeatureDefn->Release();
     }
 
     OGRFeatureDefn *GetLayerDefn() override

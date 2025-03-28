@@ -158,9 +158,9 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 
     ~GDALVectorEditAlgorithmLayer()
     {
-        m_poFeatureDefn->Dereference();
+        m_poFeatureDefn->Release();
         if (m_poSRS)
-            m_poSRS->Dereference();
+            m_poSRS->Release();
     }
 
     OGRFeatureDefn *GetLayerDefn() override

@@ -486,7 +486,7 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
         ds->GetGeoTransform(out.gt.data());
     }
 
-    CPLXMLNode *root = CPLCreateXMLNode(nullptr, CXT_Element, "VRTDataset");
+    CPLXMLTreeCloser root(CPLCreateXMLNode(nullptr, CXT_Element, "VRTDataset"));
 
     // Collect properties of the different sources, and verity them for
     // consistency.
@@ -507,17 +507,17 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
 
     for (const auto &origExpression : expressions)
     {
-        if (!CreateDerivedBandXML(root, out.nX, out.nY, origExpression, sources,
-                                  sourceProps))
+        if (!CreateDerivedBandXML(root.get(), out.nX, out.nY, origExpression,
+                                  sources, sourceProps))
         {
             return nullptr;
         }
     }
 
-    //CPLDebug("VRT", "%s", CPLSerializeXMLTree(root));
+    //CPLDebug("VRT", "%s", CPLSerializeXMLTree(root.get()));
 
     auto ds = std::make_unique<VRTDataset>(out.nX, out.nY);
-    if (ds->XMLInit(root, "") != CE_None)
+    if (ds->XMLInit(root.get(), "") != CE_None)
     {
         return nullptr;
     };
