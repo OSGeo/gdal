@@ -538,11 +538,64 @@ void GDALAlgorithmArg::RunActions()
 }
 
 /************************************************************************/
+/*                    GDALAlgorithmArg::ValidateChoice()                */
+/************************************************************************/
+
+bool GDALAlgorithmArg::ValidateChoice(const std::string &value) const
+{
+    for (const std::string &choice : GetChoices())
+    {
+        if (EQUAL(value.c_str(), choice.c_str()))
+        {
+            return true;
+        }
+    }
+
+    for (const std::string &choice : GetHiddenChoices())
+    {
+        if (EQUAL(value.c_str(), choice.c_str()))
+        {
+            return true;
+        }
+    }
+
+    std::string expected;
+    for (const auto &choice : GetChoices())
+    {
+        if (!expected.empty())
+            expected += ", ";
+        expected += '\'';
+        expected += choice;
+        expected += '\'';
+    }
+    CPLError(CE_Failure, CPLE_IllegalArg,
+             "Invalid value '%s' for string argument '%s'. Should be "
+             "one among %s.",
+             value.c_str(), GetName().c_str(), expected.c_str());
+    return false;
+}
+
+/************************************************************************/
 /*                    GDALAlgorithmArg::RunValidationActions()          */
 /************************************************************************/
 
 bool GDALAlgorithmArg::RunValidationActions()
 {
+    if (GetType() == GAAT_STRING && !GetChoices().empty())
+    {
+        if (!ValidateChoice(Get<std::string>()))
+            return false;
+    }
+    else if (GetType() == GAAT_STRING_LIST && !GetChoices().empty())
+    {
+        const auto &values = Get<std::vector<std::string>>();
+        for (const std::string &value : values)
+        {
+            if (!ValidateChoice(value))
+                return false;
+        }
+    }
+
     for (const auto &f : m_validationActions)
     {
         if (!f())
@@ -1039,40 +1092,6 @@ bool GDALAlgorithm::ParseArgument(
 
         case GAAT_STRING:
         {
-            const auto &choices = arg->GetChoices();
-            for (const std::string &choice : choices)
-            {
-                if (EQUAL(value.c_str(), choice.c_str()))
-                {
-                    return arg->Set(choice.c_str());
-                }
-            }
-            for (const std::string &choice : arg->GetHiddenChoices())
-            {
-                if (EQUAL(value.c_str(), choice.c_str()))
-                {
-                    return arg->Set(choice.c_str());
-                }
-            }
-            if (!choices.empty())
-            {
-                std::string expected;
-                for (const auto &choice : choices)
-                {
-                    if (!expected.empty())
-                        expected += ", ";
-                    expected += '\'';
-                    expected += choice;
-                    expected += '\'';
-                }
-                ReportError(
-                    CE_Failure, CPLE_IllegalArg,
-                    "Invalid value '%s' for string argument '%s'. Should be "
-                    "one among %s.",
-                    value.c_str(), name.c_str(), expected.c_str());
-                return false;
-            }
-
             return arg->Set(value);
         }
 
@@ -1129,56 +1148,9 @@ bool GDALAlgorithm::ParseArgument(
             }
             auto &valueVector =
                 std::get<std::vector<std::string>>(inConstructionValues[arg]);
-            const auto &choices = arg->GetChoices();
-            const auto &hiddenChoices = arg->GetHiddenChoices();
             for (const char *v : aosTokens)
             {
-                bool found = false;
-                for (const std::string &choice : choices)
-                {
-                    if (EQUAL(choice.c_str(), v))
-                    {
-                        found = true;
-                        valueVector.push_back(choice);
-                        break;
-                    }
-                }
-                if (!found)
-                {
-                    for (const std::string &choice : hiddenChoices)
-                    {
-                        if (EQUAL(choice.c_str(), v))
-                        {
-                            found = true;
-                            valueVector.push_back(choice);
-                            break;
-                        }
-                    }
-                }
-                if (!found)
-                {
-                    if (!choices.empty())
-                    {
-                        std::string expected;
-                        for (const auto &choice : choices)
-                        {
-                            if (!expected.empty())
-                                expected += ", ";
-                            expected += '\'';
-                            expected += choice;
-                            expected += '\'';
-                        }
-                        ReportError(
-                            CE_Failure, CPLE_IllegalArg,
-                            "Invalid value '%s' for string argument '%s'. "
-                            "Should be "
-                            "one among %s.",
-                            v, name.c_str(), expected.c_str());
-                        return false;
-                    }
-
-                    valueVector.push_back(v);
-                }
+                valueVector.push_back(v);
             }
             break;
         }
