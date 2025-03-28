@@ -71,7 +71,6 @@ if (BUILD_DOCS)
     if (DOXYGEN_FAIL_ON_WARNINGS) 
             string(JOIN "\n" DOXYFILE_CONTENTS
                    ${DOXYFILE_CONTENTS}
-                   "FAIL_ON_WARNINGS=YES"
                    "WARN_AS_ERROR=FAIL_ON_WARNINGS_PRINT")
     endif()
 
