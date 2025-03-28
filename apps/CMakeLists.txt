@@ -48,6 +48,7 @@ add_library(
   gdalalg_vector_geom_make_valid.cpp
   gdalalg_vector_geom_segmentize.cpp
   gdalalg_vector_geom_simplify.cpp
+  gdalalg_vector_geom_buffer.cpp
   gdalalg_vector_reproject.cpp
   gdalalg_vector_select.cpp
   gdalalg_vector_sql.cpp
