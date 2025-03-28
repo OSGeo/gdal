@@ -156,14 +156,16 @@ OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
         // Saving the HRS in the layer structure
         if (poSRS)
         {
-            const char *pszAuthorityName = poSRS->GetAuthorityName(nullptr);
-            const char *pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
+            const char *pszTargetKey = nullptr;
+            const char *pszAuthorityName = nullptr;
+            const char *pszAuthorityCode = nullptr;
 
             // Reading Z units (in case of 3D vector file)
             if (poSRS->GetAuthorityCode("VERT_CS") != nullptr)
             {
                 const char *pszUnits = nullptr;
-                const double dfUnits = poSRS->GetLinearUnits(&pszUnits);
+                const double dfUnits =
+                    poSRS->GetTargetLinearUnits("VERT_CS", &pszUnits);
                 const auto IsAlmostEqual = [](double x, double y)
                 { return std::fabs(x - y) <= 1e-10; };
                 if (pszUnits)
@@ -181,6 +183,22 @@ OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
                         hMiraMonLayerPOL.pZUnit = strdup(pszUnits);
                     }
                 }
+            }
+
+            // Reading horizontal reference system and horizontal units
+            if (poSRS->IsProjected())
+                pszTargetKey = "PROJCS";
+            else if (poSRS->IsGeographic() || poSRS->IsDerivedGeographic())
+                pszTargetKey = "GEOGCS";
+            else if (poSRS->IsGeocentric())
+                pszTargetKey = "GEOCCS";
+            else if (poSRS->IsLocal())
+                pszTargetKey = "LOCAL_CS";
+
+            if (!poSRS->IsLocal())
+            {
+                pszAuthorityName = poSRS->GetAuthorityName(pszTargetKey);
+                pszAuthorityCode = poSRS->GetAuthorityCode(pszTargetKey);
             }
 
             if (pszAuthorityName && pszAuthorityCode &&
