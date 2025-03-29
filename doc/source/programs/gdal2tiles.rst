@@ -72,7 +72,7 @@ can publish a picture without proper georeferencing too.
 
 .. option:: -r <RESAMPLING>, --resampling=<RESAMPLING>
 
-  Resampling method (average, near, bilinear, cubic, cubicspline, lanczos, antialias, mode, max, min, med, q1, q3) - default 'average'.
+  Resampling method (average, near, bilinear, cubic, cubicspline, lanczos, mode, max, min, med, q1, q3) - default 'average'.
 
 .. option:: -s <SRS>, --s_srs=<SRS>
 

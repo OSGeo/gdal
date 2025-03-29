@@ -404,9 +404,6 @@ RUN if test "$(uname -m)" = "x86_64"; then ( \
     apk add --no-cache librasterlite2 \
     ); fi
 
-# Install Pillow for -antialias option of gdal2tiles
-RUN apk add --no-cache py3-pillow
-
 # Order layers starting with less frequently varying ones
 COPY --from=builder  /build_thirdparty/usr/ /usr/
 
