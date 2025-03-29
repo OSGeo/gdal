@@ -5561,7 +5561,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                 for (int i = 0; i < 6; i++)
                 {
                     osGeoTransform +=
-                        CPLSPrintf("%.16g ", m_adfGeoTransform[i]);
+                        CPLSPrintf("%.17g ", m_adfGeoTransform[i]);
                 }
                 CPLDebug("GDAL_netCDF", "szGeoTransform = %s",
                          osGeoTransform.c_str());
