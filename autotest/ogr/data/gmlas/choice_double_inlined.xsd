@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:l="http://example.com" targetNamespace="http://example.com" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified" version="2.0.0">
+   <xs:element name="main" type="l:main" abstract="false">
+   </xs:element>
+   <xs:complexType name="main" abstract="false">
+        <xs:sequence>
+           <xs:element name="a" minOccurs="1" maxOccurs="1">
+              <xs:complexType>
+                 <xs:choice minOccurs="1" maxOccurs="unbounded">
+                    <xs:element ref="l:b"/>
+                 </xs:choice>
+              </xs:complexType>
+           </xs:element>
+        </xs:sequence>
+   </xs:complexType>
+   <xs:element name="b" type="l:b" abstract="false"/>
+   <xs:complexType name="b" abstract="false">
+      <xs:attribute name="double_attr" type="xs:double" use="required"/>
+   </xs:complexType>
+</xs:schema>

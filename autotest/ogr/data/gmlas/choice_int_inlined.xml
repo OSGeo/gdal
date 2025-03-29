@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<l:main xmlns:l="http://example.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://example.com" xsi:schemaLocation="http://example.com choice_int_inlined.xsd">
+    <l:a>
+        <l:b int_attr="1"/>
+        <l:b int_attr="2"/>
+    </l:a>
+</l:main>
