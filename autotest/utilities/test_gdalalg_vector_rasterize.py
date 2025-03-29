@@ -356,7 +356,7 @@ def temp_cutline(input_csv):
                 "-l",
                 "cutline",
             ],
-            "Invalid value 'XXXXX' for string argument '--optimization'. Should be one among 'AUTO', 'RASTER', 'VECTOR'.",
+            "Invalid value 'XXXXX' for string argument 'optimization'. Should be one among 'AUTO', 'RASTER', 'VECTOR'.",
         ),
         (
             False,

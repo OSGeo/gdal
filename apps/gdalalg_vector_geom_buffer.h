@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "gdal vector geom set-type"
+ * Purpose:  "gdal vector geom buffer"
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,55 +10,46 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_VECTOR_GEOM_SET_TYPE_INCLUDED
-#define GDALALG_VECTOR_GEOM_SET_TYPE_INCLUDED
+#ifndef GDALALG_VECTOR_GEOM_BUFFER_INCLUDED
+#define GDALALG_VECTOR_GEOM_BUFFER_INCLUDED
 
 #include "gdalalg_vector_geom.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALVectorGeomSetTypeAlgorithm                    */
+/*                  GDALVectorGeomBufferAlgorithm                       */
 /************************************************************************/
 
-class GDALVectorGeomSetTypeAlgorithm final
+class GDALVectorGeomBufferAlgorithm final
     : public GDALVectorGeomAbstractAlgorithm
 {
   public:
-    static constexpr const char *NAME = "set-type";
+    static constexpr const char *NAME = "buffer";
     static constexpr const char *DESCRIPTION =
-        "Modify the geometry type of a vector dataset.";
+        "Compute a buffer around geometries of a vector dataset.";
     static constexpr const char *HELP_URL =
-        "/programs/gdal_vector_geom_set_type.html";
+        "/programs/gdal_vector_geom_buffer.html";
 
     static std::vector<std::string> GetAliases()
     {
         return {};
     }
 
-    explicit GDALVectorGeomSetTypeAlgorithm(bool standaloneStep);
-
     struct Options : public GDALVectorGeomAbstractAlgorithm::OptionsBase
     {
-        bool m_layerOnly = false;
-        bool m_featureGeomOnly = false;
-        std::string m_type{};
-        bool m_multi = false;
-        bool m_single = false;
-        bool m_linear = false;
-        bool m_curve = false;
-        bool m_xy = false;
-        bool m_xyz = false;
-        bool m_xym = false;
-        bool m_xyzm = false;
-        bool m_skip = false;
-
-        // Computed value from m_type
-        OGRwkbGeometryType m_eType = wkbUnknown;
+        double m_distance = 0;
+        std::string m_endCapStyle = "round";
+        std::string m_joinStyle = "round";
+        double m_mitreLimit = 5;
+        int m_quadrantSegments = 8;
+        std::string m_side = "both";
     };
 
     std::unique_ptr<OGRLayerWithTranslateFeature>
     CreateAlgLayer(OGRLayer &srcLayer) override;
+
+    explicit GDALVectorGeomBufferAlgorithm(bool standaloneStep);
 
   private:
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
@@ -68,4 +59,4 @@ class GDALVectorGeomSetTypeAlgorithm final
 
 //! @endcond
 
-#endif /* GDALALG_VECTOR_GEOM_SET_TYPE_INCLUDED */
+#endif /* GDALALG_VECTOR_GEOM_BUFFER_INCLUDED */

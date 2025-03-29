@@ -27,15 +27,9 @@
 
 GDALVectorGeomSetTypeAlgorithm::GDALVectorGeomSetTypeAlgorithm(
     bool standaloneStep)
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      standaloneStep)
+    : GDALVectorGeomAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      standaloneStep, m_opts)
 {
-    AddActiveLayerArg(&m_activeLayer);
-    AddArg("active-geometry", 0,
-           _("Geometry field name to which to restrict the processing (if not "
-             "specified, all)"),
-           &m_opts.m_geomField);
-
     AddArg("layer-only", 0, _("Only modify the layer geometry type"),
            &m_opts.m_layerOnly)
         .SetMutualExclusionGroup("only");
@@ -103,28 +97,9 @@ namespace
 /************************************************************************/
 
 class GDALVectorGeomSetTypeAlgorithmLayer final
-    : public GDALVectorPipelineOutputLayer
+    : public GDALVectorGeomOneToOneAlgorithmLayer<
+          GDALVectorGeomSetTypeAlgorithm>
 {
-  private:
-    const GDALVectorGeomSetTypeAlgorithm::Options m_opts;
-    OGRFeatureDefn *m_poFeatureDefn = nullptr;
-
-    CPL_DISALLOW_COPY_ASSIGN(GDALVectorGeomSetTypeAlgorithmLayer)
-
-    std::unique_ptr<OGRFeature>
-    TranslateFeature(std::unique_ptr<OGRFeature> poSrcFeature) const;
-
-    void TranslateFeature(
-        std::unique_ptr<OGRFeature> poSrcFeature,
-        std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
-    {
-        auto poDstFeature = TranslateFeature(std::move(poSrcFeature));
-        if (poDstFeature)
-            apoOutFeatures.push_back(std::move(poDstFeature));
-    }
-
-    OGRwkbGeometryType ConvertType(OGRwkbGeometryType eType) const;
-
   public:
     GDALVectorGeomSetTypeAlgorithmLayer(
         OGRLayer &oSrcLayer,
@@ -147,21 +122,6 @@ class GDALVectorGeomSetTypeAlgorithmLayer final
         return OGRLayer::GetFeatureCount(bForce);
     }
 
-    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                      bool bForce) override
-    {
-        return m_srcLayer.GetExtent(iGeomField, psExtent, bForce);
-    }
-
-    OGRFeature *GetFeature(GIntBig nFID) override
-    {
-        auto poSrcFeature =
-            std::unique_ptr<OGRFeature>(m_srcLayer.GetFeature(nFID));
-        if (!poSrcFeature)
-            return nullptr;
-        return TranslateFeature(std::move(poSrcFeature)).release();
-    }
-
     int TestCapability(const char *pszCap) override
     {
         if (EQUAL(pszCap, OLCRandomRead) || EQUAL(pszCap, OLCCurveGeometries) ||
@@ -175,6 +135,19 @@ class GDALVectorGeomSetTypeAlgorithmLayer final
         }
         return false;
     }
+
+  protected:
+    using GDALVectorGeomOneToOneAlgorithmLayer::TranslateFeature;
+
+    std::unique_ptr<OGRFeature>
+    TranslateFeature(std::unique_ptr<OGRFeature> poSrcFeature) const override;
+
+  private:
+    OGRFeatureDefn *m_poFeatureDefn = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorGeomSetTypeAlgorithmLayer)
+
+    OGRwkbGeometryType ConvertType(OGRwkbGeometryType eType) const;
 };
 
 /************************************************************************/
@@ -183,21 +156,19 @@ class GDALVectorGeomSetTypeAlgorithmLayer final
 
 GDALVectorGeomSetTypeAlgorithmLayer::GDALVectorGeomSetTypeAlgorithmLayer(
     OGRLayer &oSrcLayer, const GDALVectorGeomSetTypeAlgorithm::Options &opts)
-    : GDALVectorPipelineOutputLayer(oSrcLayer), m_opts(opts),
+    : GDALVectorGeomOneToOneAlgorithmLayer<GDALVectorGeomSetTypeAlgorithm>(
+          oSrcLayer, opts),
       m_poFeatureDefn(oSrcLayer.GetLayerDefn()->Clone())
 {
-    SetDescription(oSrcLayer.GetDescription());
-    SetMetadata(oSrcLayer.GetMetadata());
     m_poFeatureDefn->Reference();
 
     if (!m_opts.m_featureGeomOnly)
     {
         for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
         {
-            auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
-            if (m_opts.m_geomField.empty() ||
-                m_opts.m_geomField == poGeomFieldDefn->GetNameRef())
+            if (IsSelectedGeomField(i))
             {
+                auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
                 poGeomFieldDefn->SetType(
                     ConvertType(poGeomFieldDefn->GetType()));
             }
@@ -278,9 +249,7 @@ GDALVectorGeomSetTypeAlgorithmLayer::TranslateFeature(
         if (poGeom)
         {
             const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
-            if (!m_opts.m_layerOnly &&
-                (m_opts.m_geomField.empty() ||
-                 m_opts.m_geomField == poGeomFieldDefn->GetNameRef()))
+            if (!m_opts.m_layerOnly && IsSelectedGeomField(i))
             {
                 poGeom = poSrcFeature->StealGeometry(i);
                 const auto eTargetType = ConvertType(poGeom->getGeometryType());
@@ -310,18 +279,22 @@ GDALVectorGeomSetTypeAlgorithmLayer::TranslateFeature(
 }  // namespace
 
 /************************************************************************/
+/*           GDALVectorGeomSetTypeAlgorithm::CreateAlgLayer()           */
+/************************************************************************/
+
+std::unique_ptr<OGRLayerWithTranslateFeature>
+GDALVectorGeomSetTypeAlgorithm::CreateAlgLayer(OGRLayer &srcLayer)
+{
+    return std::make_unique<GDALVectorGeomSetTypeAlgorithmLayer>(srcLayer,
+                                                                 m_opts);
+}
+
+/************************************************************************/
 /*            GDALVectorGeomSetTypeAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALVectorGeomSetTypeAlgorithm::RunStep(GDALProgressFunc, void *)
 {
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
-    CPLAssert(poSrcDS);
-    CPLAssert(m_outputDataset.GetName().empty());
-    CPLAssert(!m_outputDataset.GetDatasetRef());
-
-    auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
-
     if (!m_opts.m_type.empty())
     {
         if (m_opts.m_multi || m_opts.m_single || m_opts.m_linear ||
@@ -344,28 +317,7 @@ bool GDALVectorGeomSetTypeAlgorithm::RunStep(GDALProgressFunc, void *)
         }
     }
 
-    for (auto &&poSrcLayer : poSrcDS->GetLayers())
-    {
-        if (m_activeLayer.empty() ||
-            m_activeLayer == poSrcLayer->GetDescription())
-        {
-            auto poLayer =
-                std::make_unique<GDALVectorGeomSetTypeAlgorithmLayer>(
-                    *poSrcLayer, m_opts);
-            outDS->AddLayer(*poSrcLayer, std::move(poLayer));
-        }
-        else
-        {
-            outDS->AddLayer(
-                *poSrcLayer,
-                std::make_unique<GDALVectorPipelinePassthroughLayer>(
-                    *poSrcLayer));
-        }
-    }
-
-    m_outputDataset.Set(std::move(outDS));
-
-    return true;
+    return GDALVectorGeomAbstractAlgorithm::RunStep(nullptr, nullptr);
 }
 
 //! @endcond

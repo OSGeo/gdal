@@ -1504,6 +1504,7 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     bool RunAllActions();
     void RunActions();
     bool RunValidationActions();
+    bool ValidateChoice(const std::string &value) const;
 };
 
 /************************************************************************/
@@ -1721,7 +1722,10 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
 
     /** Register an action that is executed, once and exactly once, if the
      * argument is explicitly set, at the latest by the ValidateArguments()
-     * method. If the provided function returns false, validation fails. */
+     * method. If the provided function returns false, validation fails.
+     * The validation function of a given argument can only check the value of
+     * this argumet, and cannot assume other arguments have already been set.
+     */
     GDALInConstructionAlgorithmArg &AddValidationAction(std::function<bool()> f)
     {
         m_validationActions.push_back(f);

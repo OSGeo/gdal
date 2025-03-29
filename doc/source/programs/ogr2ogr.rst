@@ -405,7 +405,7 @@ output coordinate system or even reprojecting the features during translation.
 
     The specified value of this option is the tolerance used to merge
     consecutive points of the output geometry using the
-    :cpp:func:`OGRGeometry::Simplify` method
+    :cpp:func:`OGRGeometry::SimplifyPreserveTopology` method
     The unit of the distance is in
     georeferenced units of the source vector dataset.
     This option is applied before the reprojection implied by :option:`-t_srs`
@@ -414,7 +414,7 @@ output coordinate system or even reprojecting the features during translation.
 
     The specified value of this option is the maximum distance between two
     consecutive points of the output geometry before intermediate points are added.
-    The unit of the distance is georeferenced units of the source raster.
+    The unit of the distance is georeferenced units of the source layer.
     This option is applied before the reprojection implied by :option:`-t_srs`
 
 .. option:: -makevalid

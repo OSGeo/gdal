@@ -1156,9 +1156,8 @@ TEST_F(test_gdal_algorithm, string_choices)
         MyAlgorithm alg;
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         CPLErrorReset();
-        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=invalid"}));
+        EXPECT_FALSE(alg.GetArg("val")->Set("invalid"));
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
-        EXPECT_TRUE(alg.m_val.empty());
     }
 }
 
@@ -1384,7 +1383,6 @@ TEST_F(test_gdal_algorithm, vector_string_choices)
         CPLErrorReset();
         EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=foo,invalid"}));
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
-        EXPECT_TRUE(alg.m_val.empty());
     }
 
     {
@@ -1394,7 +1392,6 @@ TEST_F(test_gdal_algorithm, vector_string_choices)
         EXPECT_FALSE(
             alg.ParseCommandLineArguments({"--val=foo", "--val=invalid"}));
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
-        EXPECT_TRUE(alg.m_val.empty());
     }
 }
 
@@ -2228,7 +2225,7 @@ TEST_F(test_gdal_algorithm,
         EXPECT_FALSE(
             alg.ParseCommandLineArguments({"foo", "bar", "my_output"}));
         EXPECT_STREQ(CPLGetLastErrorMsg(),
-                     "test: Invalid value 'bar' for string argument 'input'. "
+                     "Invalid value 'bar' for string argument 'input'. "
                      "Should be one among 'foo'.");
     }
 }
@@ -2261,7 +2258,7 @@ TEST_F(test_gdal_algorithm,
         EXPECT_FALSE(
             alg.ParseCommandLineArguments({"something", "foo", "bar"}));
         EXPECT_STREQ(CPLGetLastErrorMsg(),
-                     "test: Invalid value 'bar' for string argument 'output'. "
+                     "Invalid value 'bar' for string argument 'output'. "
                      "Should be one among 'foo'.");
     }
 }

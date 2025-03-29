@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "gdal vector geom set-type"
+ * Purpose:  "gdal vector geom swap-xy"
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,62 +10,45 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_VECTOR_GEOM_SET_TYPE_INCLUDED
-#define GDALALG_VECTOR_GEOM_SET_TYPE_INCLUDED
+#ifndef GDALALG_VECTOR_GEOM_SWAP_XY_INCLUDED
+#define GDALALG_VECTOR_GEOM_SWAP_XY_INCLUDED
 
 #include "gdalalg_vector_geom.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALVectorGeomSetTypeAlgorithm                    */
+/*                    GDALVectorGeomSwapXYAlgorithm                     */
 /************************************************************************/
 
-class GDALVectorGeomSetTypeAlgorithm final
+class GDALVectorGeomSwapXYAlgorithm final
     : public GDALVectorGeomAbstractAlgorithm
 {
   public:
-    static constexpr const char *NAME = "set-type";
+    static constexpr const char *NAME = "swap-xy";
     static constexpr const char *DESCRIPTION =
-        "Modify the geometry type of a vector dataset.";
+        "Swap X and Y coordinates of geometries of a vector dataset.";
     static constexpr const char *HELP_URL =
-        "/programs/gdal_vector_geom_set_type.html";
+        "/programs/gdal_vector_geom_swap_xy.html";
 
     static std::vector<std::string> GetAliases()
     {
         return {};
     }
 
-    explicit GDALVectorGeomSetTypeAlgorithm(bool standaloneStep);
-
     struct Options : public GDALVectorGeomAbstractAlgorithm::OptionsBase
     {
-        bool m_layerOnly = false;
-        bool m_featureGeomOnly = false;
-        std::string m_type{};
-        bool m_multi = false;
-        bool m_single = false;
-        bool m_linear = false;
-        bool m_curve = false;
-        bool m_xy = false;
-        bool m_xyz = false;
-        bool m_xym = false;
-        bool m_xyzm = false;
-        bool m_skip = false;
-
-        // Computed value from m_type
-        OGRwkbGeometryType m_eType = wkbUnknown;
     };
 
     std::unique_ptr<OGRLayerWithTranslateFeature>
     CreateAlgLayer(OGRLayer &srcLayer) override;
 
-  private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    explicit GDALVectorGeomSwapXYAlgorithm(bool standaloneStep);
 
+  private:
     Options m_opts{};
 };
 
 //! @endcond
 
-#endif /* GDALALG_VECTOR_GEOM_SET_TYPE_INCLUDED */
+#endif /* GDALALG_VECTOR_GEOM_SWAP_XY_INCLUDED */
