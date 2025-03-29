@@ -44,12 +44,9 @@ Driver capabilities
 Specification version
 ---------------------
 
-Starting with GDAL 2.2, the driver is able to create GeoPackage
-databases following the 1.0/1.0.1, 1.1 or 1.2 versions. For GDAL 2.2, it
-will automatically adjust to the minimum version required for the
-features of GeoPackage used. For GDAL 2.3 or later, it will default to
-1.2. Explicit version choice can be done by specifying the VERSION
-dataset creation option.
+GeoPackage version 1.0, 1.1, 1.2, 1.3 or 1.4 can be specified through the
+VERSION dataset creation option. Starting with GDAL 3.11, it defaults to 1.4.
+For earlier versions, it defaults to 1.2.
 
 Limitations
 -----------
@@ -281,11 +278,11 @@ raster) are available:
 
 -  .. dsco:: VERSION
       :choices: AUTO, 1.0, 1.1, 1.2, 1.3, 1.4
-      :Since: 2.2
+      :since: 2.2
 
       Set GeoPackage version
       (for application_id and user_version fields). In AUTO mode, this will
-      be equivalent to 1.2 starting with GDAL 2.3.
+      be equivalent to 1.4 starting with GDAL 3.11 (1.2 in prior versions)
       1.3 is available starting with GDAL 3.3
       1.4 is available starting with GDAL 3.7.1
 

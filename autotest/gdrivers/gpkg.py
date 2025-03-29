@@ -2863,7 +2863,7 @@ def test_gpkg_39():
     ds.ReleaseResultSet(sql_lyr)
     sql_lyr = ds.ExecuteSQL("PRAGMA user_version")
     f = sql_lyr.GetNextFeature()
-    if f["user_version"] != 10200:
+    if f["user_version"] != 10400:
         f.DumpReadable()
         pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
@@ -3389,7 +3389,7 @@ def test_gpkg_40():
     ds.ReleaseResultSet(sql_lyr)
     sql_lyr = ds.ExecuteSQL("PRAGMA user_version")
     f = sql_lyr.GetNextFeature()
-    if f["user_version"] != 10200:
+    if f["user_version"] != 10400:
         f.DumpReadable()
         pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
@@ -3778,11 +3778,12 @@ def test_gpkg_match_overview_factor():
 ###############################################################################
 
 
-def test_gpkg_wkt2():
+@pytest.mark.parametrize("version", ["1.2", "1.4"])
+def test_gpkg_wkt2(version):
 
     # WKT2-only compatible SRS with EPSG code
     filename = "/vsimem/test_gpkg_wkt2.gpkg"
-    ds = gdaltest.gpkg_dr.Create(filename, 1, 1)
+    ds = gdaltest.gpkg_dr.Create(filename, 1, 1, options=["VERSION=" + version])
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4979)  # WGS 84 3D
     sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -3825,7 +3826,7 @@ def test_gpkg_wkt2():
     lyr = ds.ExecuteSQL(
         "SELECT * FROM gpkg_extensions WHERE extension_name = 'gpkg_crs_wkt'"
     )
-    assert lyr.GetFeatureCount() == 1
+    assert lyr.GetFeatureCount() == (1 if version == "1.2" else 0)
     ds.ReleaseResultSet(lyr)
 
     ds = None

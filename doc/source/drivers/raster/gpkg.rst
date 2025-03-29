@@ -573,13 +573,14 @@ The following creation options are available:
       when AREA_OR_POINT metadata item is not set.
 
 -  .. co:: VERSION
-      :choices: AUTO, 1.0, 1.1, 1.2, 1.3
+      :choices: AUTO, 1.0, 1.1, 1.2, 1.3, 1.4
       :since: 2.2
 
       Set GeoPackage version
       (for application_id and user_version fields). In AUTO mode, this will
-      be equivalent to 1.2 starting with GDAL 2.3.
+      be equivalent to 1.4 starting with GDAL 3.11 (1.2 in prior versions)
       1.3 is available starting with GDAL 3.3
+      1.4 is available starting with GDAL 3.7.1
 
 -  .. co:: ADD_GPKG_OGR_CONTENTS
       :choices: YES, NO
