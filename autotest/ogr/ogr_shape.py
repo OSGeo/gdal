@@ -5900,7 +5900,7 @@ def test_ogr_shape_write_date_0000_00_00(tmp_vsimem):
 
 
 def test_ogr_shape_arrow_stream():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     ds = ogr.Open("data/poly.shp")
@@ -5936,7 +5936,7 @@ def test_ogr_shape_arrow_stream():
 
 
 def test_ogr_shape_arrow_stream_fid_optim(tmp_vsimem):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     ds = ogr.Open("data/poly.shp")

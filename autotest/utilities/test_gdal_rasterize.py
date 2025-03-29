@@ -346,7 +346,7 @@ def test_gdal_rasterize_6(gdal_rasterize_path, tmp_path):
 @pytest.mark.parametrize("sql_in_file", [False, True])
 def test_gdal_rasterize_7(gdal_rasterize_path, sql_in_file, tmp_path):
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
 
     input_csv = str(tmp_path / "test_gdal_rasterize_7.csv")
     output_tif = str(tmp_path / "test_gdal_rasterize_7.tif")

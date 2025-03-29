@@ -27,7 +27,7 @@ from osgeo import gdal
 def setup_and_cleanup():
 
     # importing gdal_array will allow numpy driver registration
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
 
     gdal.AllRegister()
 

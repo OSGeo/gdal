@@ -14,6 +14,7 @@
 
 import os
 
+import gdaltest
 import pytest
 import test_py_scripts
 
@@ -205,7 +206,7 @@ def test_gdal_merge_4(script_path, tmp_path, sample_tifs):
 
 
 def test_gdal_merge_5(script_path, tmp_path):
-    gdal_array = pytest.importorskip("osgeo.gdal_array")
+    gdal_array = gdaltest.importorskip_gdal_array()
     try:
         gdal_array.BandRasterIONumPy
     except AttributeError:

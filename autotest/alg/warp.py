@@ -1212,7 +1212,7 @@ def test_warp_weighted_average():
 )
 def test_warp_weighted_mode(dtype):
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     with gdal.GetDriverByName("MEM").Create("", 3, 3, eType=dtype) as src_ds:
@@ -1601,7 +1601,7 @@ def test_warp_55():
 @pytest.mark.parametrize("use_optim", ["YES", "NO"])
 def test_warp_56(use_optim):
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     pix_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
@@ -1700,7 +1700,7 @@ def test_warp_rms_2():
 @pytest.mark.parametrize("dtype", (gdal.GDT_Int16, gdal.GDT_Int32))
 def test_warp_mode_ties(tie_strategy, dtype):
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     # 1 and 5 are tied for the mode; 1 encountered first

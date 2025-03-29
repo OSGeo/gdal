@@ -26,7 +26,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 np = pytest.importorskip("numpy")
-gdal_array = pytest.importorskip("osgeo.gdal_array")
+gdal_array = gdaltest.importorskip_gdal_array()
 
 ###############################################################################
 # Test error cases in general VRTProcessedDataset XML structure

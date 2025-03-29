@@ -16,7 +16,7 @@ import pytest
 
 # test that numpy is available, if not skip all tests
 np = pytest.importorskip("numpy")
-pytest.importorskip("osgeo_utils.samples.gdallocationinfo")
+pytest.importorskip("osgeo_utils.samples.gdallocationinfo", exc_type=ImportError)
 
 from itertools import product
 

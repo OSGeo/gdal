@@ -68,7 +68,7 @@ def test_interpolateatpoint_throw():
 
 def test_interpolateatpoint_2_bands():
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     mem_ds = gdal.GetDriverByName("MEM").Create(
@@ -97,7 +97,7 @@ def test_interpolateatpoint_2_bands():
 
 def test_interpolateatpoint_bilinear_several_points():
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     mem_ds = gdal.GetDriverByName("MEM").Create(
@@ -136,7 +136,7 @@ def test_interpolateatpoint_bilinear_several_points():
 
 def test_interpolateatpoint_cubicspline_several_points():
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     mem_ds = gdal.GetDriverByName("MEM").Create(
@@ -167,7 +167,7 @@ def test_interpolateatpoint_cubicspline_several_points():
 
 def test_interpolateatpoint_cubic_several_points():
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     mem_ds = gdal.GetDriverByName("MEM").Create(
@@ -205,7 +205,7 @@ def test_interpolateatpoint_cubic_several_points():
 
 def test_interpolateatpoint_at_borders():
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     mem_ds = gdal.GetDriverByName("MEM").Create(

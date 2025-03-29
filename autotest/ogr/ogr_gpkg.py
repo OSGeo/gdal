@@ -8089,7 +8089,7 @@ def test_ogr_gpkg_arrow_stream_pyarrow_timezone(tmp_vsimem):
 
 
 def test_ogr_gpkg_arrow_stream_numpy(tmp_vsimem):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     filename = tmp_vsimem / "test.gpkg"
@@ -8383,7 +8383,7 @@ def test_ogr_gpkg_arrow_stream_numpy(tmp_vsimem):
 def test_ogr_gpkg_arrow_stream_numpy_multi_threading(
     tmp_vsimem, num_features, batch_size, num_threads
 ):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     filename = tmp_vsimem / "test.gpkg"
@@ -8431,7 +8431,7 @@ def test_ogr_gpkg_arrow_stream_numpy_multi_threading(
 
 
 def test_ogr_gpkg_arrow_stream_numpy_bool_field(tmp_vsimem):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     filename = tmp_vsimem / "test.gpkg"
@@ -8471,7 +8471,7 @@ def test_ogr_gpkg_arrow_stream_numpy_bool_field(tmp_vsimem):
 
 @pytest.mark.parametrize("with_filter", [False, True])
 def test_ogr_gpkg_arrow_stream_numpy_more_than_125_columns(tmp_vsimem, with_filter):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     filename = tmp_vsimem / "test.gpkg"
@@ -8507,7 +8507,7 @@ def test_ogr_gpkg_arrow_stream_numpy_more_than_125_columns(tmp_vsimem, with_filt
 
 @pytest.mark.parametrize("layer_type", ["direct", "sql"])
 def test_ogr_gpkg_arrow_stream_numpy_detailed_spatial_filter(tmp_vsimem, layer_type):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     filename = str(
@@ -10115,7 +10115,7 @@ def test_ogr_gpkg_sql_exact_spatial_filter_for_feature_count(tmp_vsimem):
 
 @pytest.mark.parametrize("too_big_field", ["huge_string", "huge_binary", "geometry"])
 def test_ogr_gpkg_arrow_stream_huge_array(tmp_vsimem, too_big_field):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     filename = tmp_vsimem / "test_ogr_gpkg_arrow_stream_huge_array.gpkg"
@@ -10867,7 +10867,7 @@ def test_ogr_gpkg_write_check_golden_file(tmp_path, src_filename):
 
 
 def test_ogr_gpkg_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     filename = str(tmp_vsimem / "datetime_as_string.gpkg")

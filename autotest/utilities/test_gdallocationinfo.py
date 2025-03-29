@@ -404,7 +404,7 @@ def test_gdallocationinfo_value_interpolate_invalid_method(gdallocationinfo_path
 
 def test_gdallocationinfo_interpolate_float_data(gdallocationinfo_path, tmp_path):
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
 
     dst_filename = str(tmp_path / "tmp_float.tif")
     driver = gdal.GetDriverByName("GTiff")

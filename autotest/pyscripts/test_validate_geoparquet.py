@@ -247,7 +247,7 @@ def test_validate_geoparquet_invalid_bbox(tmp_path, bbox, error_msg):
 
 def test_validate_geoparquet_invalid_wkb(tmp_path):
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     test_dir = str(tmp_path / "tmp.parquet")
@@ -275,7 +275,7 @@ def test_validate_geoparquet_invalid_wkb(tmp_path):
 
 def test_validate_geoparquet_geom_type_not_consistent_with_declaration(tmp_path):
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     test_dir = str(tmp_path / "tmp.parquet")
@@ -306,7 +306,7 @@ def test_validate_geoparquet_geom_type_not_consistent_with_declaration(tmp_path)
 
 def test_validate_geoparquet_invalid_winding_order(tmp_path):
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     test_dir = str(tmp_path / "tmp.parquet")

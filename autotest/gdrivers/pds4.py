@@ -1791,7 +1791,7 @@ def test_pds4_oblique_cylindrical_write():
 def test_pds4_read_right_to_left(tmp_path):
 
     numpy = pytest.importorskip("numpy")
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
 
     tmp_filename = str(tmp_path / "tmp.xml")
     ref_ds = gdal.Open("data/byte.tif")

@@ -804,7 +804,7 @@ def test_ogr_mem_consume_arrow_array_pycapsule_interface():
 
 
 def test_ogr_mem_arrow_stream_numpy():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
     import datetime
 
@@ -983,7 +983,7 @@ def test_ogr_mem_arrow_stream_numpy():
 
 
 def test_ogr_mem_arrow_stream_numpy_datetime_as_string():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("")
@@ -1091,7 +1091,7 @@ def test_ogr_mem_arrow_write_with_datetime_as_string():
     ],
 )
 def test_ogr_mem_arrow_stream_numpy_memlimit(limited_field):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("")
@@ -1265,7 +1265,7 @@ def test_ogr_mem_arrow_stream_numpy_memlimit(limited_field):
 
 
 def test_ogr_mem_arrow_stream_numpy_huge_string():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("")

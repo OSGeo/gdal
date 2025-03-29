@@ -983,7 +983,7 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
 @pytest.mark.parametrize("dtype", range(1, gdal.GDT_TypeCount))
 def test_vrt_derived_dtype(tmp_vsimem, dtype):
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     input_fname = tmp_vsimem / "input.tif"

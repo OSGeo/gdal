@@ -447,7 +447,7 @@ def test_thread_safe_BeginAsyncReader():
 def test_thread_safe_GetVirtualMem():
 
     pytest.importorskip("numpy")
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
 
     with gdal.OpenEx("data/byte.tif", gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         with pytest.raises(Exception, match="not supported"):

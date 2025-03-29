@@ -128,7 +128,7 @@ def test_vrt_read_3():
 
 def test_vrt_read_4():
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     data = np.zeros((1, 1), np.complex64)
@@ -962,7 +962,7 @@ def test_vrt_read_22():
 
 def test_vrt_read_23():
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     mem_ds = gdal.GetDriverByName("GTiff").Create("/vsimem/vrt_read_23.tif", 2, 1)
