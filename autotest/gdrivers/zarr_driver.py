@@ -119,7 +119,7 @@ _gdal_data_type_to_array_type = {
 )
 @pytest.mark.parametrize("use_optimized_code_paths", [True, False])
 def test_zarr_basic(
-    dtype, gdaltype, fill_value, nodata_value, use_optimized_code_paths
+    tmp_vsimem, dtype, gdaltype, fill_value, nodata_value, use_optimized_code_paths
 ):
 
     structtype = _gdal_data_type_to_array_type[gdaltype]
@@ -135,238 +135,234 @@ def test_zarr_basic(
         "zarr_format": 2,
     }
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
-        if gdaltype not in (gdal.GDT_CFloat16, gdal.GDT_CFloat32, gdal.GDT_CFloat64):
-            tile_0_0_data = struct.pack(dtype[0] + (structtype * 6), 1, 2, 3, 5, 6, 7)
-            tile_0_1_data = struct.pack(dtype[0] + (structtype * 6), 4, 0, 0, 8, 0, 0)
-        else:
-            tile_0_0_data = struct.pack(
-                dtype[0] + (structtype * 12), 1, 11, 2, 0, 3, 0, 5, 0, 6, 0, 7, 0
-            )
-            tile_0_1_data = struct.pack(
-                dtype[0] + (structtype * 12), 4, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0
-            )
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/0.0", tile_0_0_data)
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/0.1", tile_0_1_data)
-        with gdaltest.config_option(
-            "GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS",
-            "YES" if use_optimized_code_paths else "NO",
-        ):
-            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-            assert ds
-            rg = ds.GetRootGroup()
-            assert rg
-            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-        assert ar
-        assert ar.GetDimensionCount() == 2
-        assert [ar.GetDimensions()[i].GetSize() for i in range(2)] == [5, 4]
-        assert ar.GetBlockSize() == [2, 3]
-        if nodata_value is not None and math.isnan(nodata_value):
-            assert math.isnan(ar.GetNoDataValue())
-        else:
-            assert ar.GetNoDataValue() == nodata_value
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zarray", json.dumps(j))
+    if gdaltype not in (gdal.GDT_CFloat16, gdal.GDT_CFloat32, gdal.GDT_CFloat64):
+        tile_0_0_data = struct.pack(dtype[0] + (structtype * 6), 1, 2, 3, 5, 6, 7)
+        tile_0_1_data = struct.pack(dtype[0] + (structtype * 6), 4, 0, 0, 8, 0, 0)
+    else:
+        tile_0_0_data = struct.pack(
+            dtype[0] + (structtype * 12), 1, 11, 2, 0, 3, 0, 5, 0, 6, 0, 7, 0
+        )
+        tile_0_1_data = struct.pack(
+            dtype[0] + (structtype * 12), 4, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0
+        )
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/0.0", tile_0_0_data)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/0.1", tile_0_1_data)
+    with gdaltest.config_option(
+        "GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS",
+        "YES" if use_optimized_code_paths else "NO",
+    ):
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+    assert ar.GetDimensionCount() == 2
+    assert [ar.GetDimensions()[i].GetSize() for i in range(2)] == [5, 4]
+    assert ar.GetBlockSize() == [2, 3]
+    if nodata_value is not None and math.isnan(nodata_value):
+        assert math.isnan(ar.GetNoDataValue())
+    else:
+        assert ar.GetNoDataValue() == nodata_value
 
-        assert ar.GetOffset() is None
-        assert ar.GetScale() is None
-        assert ar.GetUnit() == ""
+    assert ar.GetOffset() is None
+    assert ar.GetScale() is None
+    assert ar.GetUnit() == ""
 
-        # Check reading one single value
-        assert ar[1, 2].Read(
+    # Check reading one single value
+    assert ar[1, 2].Read(
+        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    ) == struct.pack("d" * 1, 7)
+
+    structtype_read = structtype
+
+    # Read block 0,0
+    if gdaltype not in (gdal.GDT_CFloat16, gdal.GDT_CFloat32, gdal.GDT_CFloat64):
+        assert ar[0:2, 0:3].Read(
             buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)
-        ) == struct.pack("d" * 1, 7)
+        ) == struct.pack("d" * 6, 1, 2, 3, 5, 6, 7)
+        assert struct.unpack(structtype_read * 6, ar[0:2, 0:3].Read()) == (
+            1,
+            2,
+            3,
+            5,
+            6,
+            7,
+        )
+    else:
+        assert ar[0:2, 0:3].Read(
+            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_CFloat64)
+        ) == struct.pack("d" * 12, 1, 11, 2, 0, 3, 0, 5, 0, 6, 0, 7, 0)
+        assert struct.unpack(structtype * 12, ar[0:2, 0:3].Read()) == (
+            1,
+            11,
+            2,
+            0,
+            3,
+            0,
+            5,
+            0,
+            6,
+            0,
+            7,
+            0,
+        )
 
-        structtype_read = structtype
+    # Read block 0,1
+    assert ar[0:2, 3:4].Read(
+        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    ) == struct.pack("d" * 2, 4, 8)
 
-        # Read block 0,0
-        if gdaltype not in (gdal.GDT_CFloat16, gdal.GDT_CFloat32, gdal.GDT_CFloat64):
-            assert ar[0:2, 0:3].Read(
-                buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)
-            ) == struct.pack("d" * 6, 1, 2, 3, 5, 6, 7)
-            assert struct.unpack(structtype_read * 6, ar[0:2, 0:3].Read()) == (
+    # Read block 1,1 (missing)
+    nv = nodata_value if nodata_value else 0
+    assert ar[2:4, 3:4].Read(
+        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    ) == struct.pack("d" * 2, nv, nv)
+
+    # Read whole raster
+    assert ar.Read(
+        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    ) == struct.pack(
+        "d" * 20,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        nv,
+        nv,
+        nv,
+        nv,
+        nv,
+        nv,
+        nv,
+        nv,
+        nv,
+        nv,
+        nv,
+        nv,
+    )
+
+    if gdaltype not in (gdal.GDT_CFloat16, gdal.GDT_CFloat32, gdal.GDT_CFloat64):
+        assert ar.Read() == array.array(
+            structtype_read,
+            [
                 1,
                 2,
                 3,
+                4,
                 5,
                 6,
                 7,
-            )
-        else:
-            assert ar[0:2, 0:3].Read(
-                buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_CFloat64)
-            ) == struct.pack("d" * 12, 1, 11, 2, 0, 3, 0, 5, 0, 6, 0, 7, 0)
-            assert struct.unpack(structtype * 12, ar[0:2, 0:3].Read()) == (
+                8,
+                nv,
+                nv,
+                nv,
+                nv,
+                nv,
+                nv,
+                nv,
+                nv,
+                nv,
+                nv,
+                nv,
+                nv,
+            ],
+        )
+    else:
+        assert ar.Read() == array.array(
+            structtype,
+            [
                 1,
                 11,
                 2,
                 0,
                 3,
                 0,
+                4,
+                0,
                 5,
                 0,
                 6,
                 0,
                 7,
                 0,
-            )
-
-        # Read block 0,1
-        assert ar[0:2, 3:4].Read(
-            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)
-        ) == struct.pack("d" * 2, 4, 8)
-
-        # Read block 1,1 (missing)
-        nv = nodata_value if nodata_value else 0
-        assert ar[2:4, 3:4].Read(
-            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)
-        ) == struct.pack("d" * 2, nv, nv)
-
-        # Read whole raster
-        assert ar.Read(
-            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)
-        ) == struct.pack(
-            "d" * 20,
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            nv,
-            nv,
-            nv,
-            nv,
-            nv,
-            nv,
-            nv,
-            nv,
-            nv,
-            nv,
-            nv,
-            nv,
+                8,
+                0,
+                nv,
+                0,
+                nv,
+                0,
+                nv,
+                0,
+                nv,
+                0,
+                nv,
+                0,
+                nv,
+                0,
+                nv,
+                0,
+                nv,
+                0,
+                nv,
+                0,
+                nv,
+                0,
+                nv,
+                0,
+                nv,
+                0,
+            ],
         )
+    # Read with negative steps
+    assert ar.Read(
+        array_start_idx=[2, 1],
+        count=[2, 2],
+        array_step=[-1, -1],
+        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+    ) == struct.pack("d" * 4, nv, nv, 6, 5)
 
-        if gdaltype not in (gdal.GDT_CFloat16, gdal.GDT_CFloat32, gdal.GDT_CFloat64):
-            assert ar.Read() == array.array(
-                structtype_read,
-                [
-                    1,
-                    2,
-                    3,
-                    4,
-                    5,
-                    6,
-                    7,
-                    8,
-                    nv,
-                    nv,
-                    nv,
-                    nv,
-                    nv,
-                    nv,
-                    nv,
-                    nv,
-                    nv,
-                    nv,
-                    nv,
-                    nv,
-                ],
-            )
-        else:
-            assert ar.Read() == array.array(
-                structtype,
-                [
-                    1,
-                    11,
-                    2,
-                    0,
-                    3,
-                    0,
-                    4,
-                    0,
-                    5,
-                    0,
-                    6,
-                    0,
-                    7,
-                    0,
-                    8,
-                    0,
-                    nv,
-                    0,
-                    nv,
-                    0,
-                    nv,
-                    0,
-                    nv,
-                    0,
-                    nv,
-                    0,
-                    nv,
-                    0,
-                    nv,
-                    0,
-                    nv,
-                    0,
-                    nv,
-                    0,
-                    nv,
-                    0,
-                    nv,
-                    0,
-                    nv,
-                    0,
-                ],
-            )
-        # Read with negative steps
-        assert ar.Read(
-            array_start_idx=[2, 1],
-            count=[2, 2],
-            array_step=[-1, -1],
-            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
-        ) == struct.pack("d" * 4, nv, nv, 6, 5)
+    # array_step > 2
+    assert ar.Read(
+        array_start_idx=[0, 0],
+        count=[1, 2],
+        array_step=[0, 2],
+        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+    ) == struct.pack("d" * 2, 1, 3)
 
-        # array_step > 2
-        assert ar.Read(
-            array_start_idx=[0, 0],
-            count=[1, 2],
-            array_step=[0, 2],
-            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
-        ) == struct.pack("d" * 2, 1, 3)
+    assert ar.Read(
+        array_start_idx=[0, 0],
+        count=[3, 1],
+        array_step=[2, 0],
+        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+    ) == struct.pack("d" * 3, 1, nv, nv)
 
-        assert ar.Read(
-            array_start_idx=[0, 0],
-            count=[3, 1],
-            array_step=[2, 0],
-            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
-        ) == struct.pack("d" * 3, 1, nv, nv)
+    assert ar.Read(
+        array_start_idx=[0, 1],
+        count=[1, 2],
+        array_step=[0, 2],
+        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+    ) == struct.pack("d" * 2, 2, 4)
 
-        assert ar.Read(
-            array_start_idx=[0, 1],
-            count=[1, 2],
-            array_step=[0, 2],
-            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
-        ) == struct.pack("d" * 2, 2, 4)
-
-        assert ar.Read(
-            array_start_idx=[0, 0],
-            count=[1, 2],
-            array_step=[0, 3],
-            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
-        ) == struct.pack("d" * 2, 1, 4)
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    assert ar.Read(
+        array_start_idx=[0, 0],
+        count=[1, 2],
+        array_step=[0, 3],
+        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+    ) == struct.pack("d" * 2, 1, 4)
 
 
 @pytest.mark.parametrize(
     "fill_value,expected_read_data",
     [[base64.b64encode(b"xyz").decode("utf-8"), ["abc", "xyz"]], [None, ["abc", None]]],
 )
-def test_zarr_string(fill_value, expected_read_data):
+def test_zarr_string(tmp_vsimem, fill_value, expected_read_data):
 
     j = {
         "chunks": [1],
@@ -379,20 +375,16 @@ def test_zarr_string(fill_value, expected_read_data):
         "zarr_format": 2,
     }
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/0", b"abc")
-        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-        assert ds
-        rg = ds.GetRootGroup()
-        assert rg
-        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-        assert ar
-        assert ar.Read() == expected_read_data
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zarray", json.dumps(j))
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/0", b"abc")
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    assert ds
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+    assert ar.Read() == expected_read_data
 
 
 # Check that all required elements are present in .zarray
@@ -410,7 +402,7 @@ def test_zarr_string(fill_value, expected_read_data):
         "fill_value",
     ],
 )
-def test_zarr_invalid_json_remove_member(member):
+def test_zarr_invalid_json_remove_member(tmp_vsimem, member):
 
     j = {
         "chunks": [2, 3],
@@ -426,20 +418,17 @@ def test_zarr_invalid_json_remove_member(member):
     if member:
         del j[member]
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
-        with gdal.quiet_errors():
-            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-        if member == "fill_value":
-            assert ds is not None
-            assert gdal.GetLastErrorMsg() != ""
-        elif member is None:
-            assert ds
-        else:
-            assert ds is None
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zarray", json.dumps(j))
+    with gdal.quiet_errors():
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    if member == "fill_value":
+        assert ds is not None
+        assert gdal.GetLastErrorMsg() != ""
+    elif member is None:
+        assert ds
+    else:
+        assert ds is None
 
 
 # Check bad values of members in .zarray
@@ -480,7 +469,7 @@ def test_zarr_invalid_json_remove_member(member):
         {"zarr_format": 1},
     ],
 )
-def test_zarr_invalid_json_wrong_values(dict_update):
+def test_zarr_invalid_json_wrong_values(tmp_vsimem, dict_update):
 
     j = {
         "chunks": [2, 3],
@@ -495,14 +484,11 @@ def test_zarr_invalid_json_wrong_values(dict_update):
 
     j.update(dict_update)
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
-        with gdal.quiet_errors():
-            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-        assert ds is None
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zarray", json.dumps(j))
+    with gdal.quiet_errors():
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    assert ds is None
 
 
 # Check reading different compression methods
@@ -924,7 +910,7 @@ def test_zarr_read_array_attributes():
 
 
 @pytest.mark.parametrize("crs_member", ["projjson", "wkt", "url"])
-def test_zarr_read_crs(crs_member):
+def test_zarr_read_crs(tmp_vsimem, crs_member):
 
     zarray = {
         "chunks": [2, 3],
@@ -1029,32 +1015,28 @@ def test_zarr_read_crs(crs_member):
 
     zattrs = {"_CRS": {crs_member: zattrs_all["_CRS"][crs_member]}}
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(zarray))
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zattrs", json.dumps(zattrs))
-        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-        rg = ds.GetRootGroup()
-        assert rg
-        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-        srs = ar.GetSpatialRef()
-        assert srs is not None
-        assert srs.GetAuthorityCode(None) == "4326"
-        # Mapping is 1, 2 since the slowest varying axis in multidim
-        # mode is the lines, which matches latitude as the first axis of the CRS.
-        assert srs.GetDataAxisToSRSAxisMapping() == [1, 2]
-        assert len(ar.GetAttributes()) == 0
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zarray", json.dumps(zarray))
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zattrs", json.dumps(zattrs))
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    srs = ar.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == "4326"
+    # Mapping is 1, 2 since the slowest varying axis in multidim
+    # mode is the lines, which matches latitude as the first axis of the CRS.
+    assert srs.GetDataAxisToSRSAxisMapping() == [1, 2]
+    assert len(ar.GetAttributes()) == 0
 
-        # Open as classic CRS
-        ds = gdal.Open("/vsimem/test.zarr")
-        srs = ds.GetSpatialRef()
-        assert srs.GetAuthorityCode(None) == "4326"
-        # Inverted mapping in classic raster mode compared to multidim mode,
-        # because the first "axis" in our data model is columns.
-        assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    # Open as classic CRS
+    ds = gdal.Open(tmp_vsimem / "test.zarr")
+    srs = ds.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == "4326"
+    # Inverted mapping in classic raster mode compared to multidim mode,
+    # because the first "axis" in our data model is columns.
+    assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
 
 
 @pytest.mark.parametrize("use_get_names", [True, False])
@@ -1363,67 +1345,61 @@ def test_zarr_read_classic():
     )
 
 
-def test_zarr_read_classic_2d():
+def test_zarr_read_classic_2d(tmp_vsimem):
 
-    try:
-        src_ds = gdal.Open("data/byte.tif")
-        gdal.GetDriverByName("ZARR").CreateCopy(
-            "/vsimem/test.zarr", src_ds, strict=False
+    src_ds = gdal.Open("data/byte.tif")
+    gdal.GetDriverByName("ZARR").CreateCopy(
+        tmp_vsimem / "test.zarr", src_ds, strict=False
+    )
+    ds = gdal.Open(tmp_vsimem / "test.zarr")
+    assert ds is not None
+    assert len(ds.GetSubDatasets()) == 0
+    srs = ds.GetSpatialRef()
+    assert srs.GetDataAxisToSRSAxisMapping() == [1, 2]
+    ds = None
+
+
+def test_zarr_read_classic_2d_with_unrelated_auxiliary_1D_arrays(tmp_vsimem):
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr"
         )
-        ds = gdal.Open("/vsimem/test.zarr")
         assert ds is not None
-        assert len(ds.GetSubDatasets()) == 0
-        srs = ds.GetSpatialRef()
-        assert srs.GetDataAxisToSRSAxisMapping() == [1, 2]
-        ds = None
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+        rg = ds.GetRootGroup()
+        assert rg
+        assert rg.GetName() == "/"
 
+        dim0 = rg.CreateDimension("dim0", None, None, 2)
+        dim1 = rg.CreateDimension("dim1", None, None, 3)
 
-def test_zarr_read_classic_2d_with_unrelated_auxiliary_1D_arrays():
+        dt = gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        rg.CreateMDArray("main_array", [dim0, dim1], dt)
+        rg.CreateMDArray("x", [dim0], dt)
+        rg.CreateMDArray("y", [dim1], dt)
 
-    try:
+    create()
 
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr"
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-            assert rg.GetName() == "/"
+    ds = gdal.Open(tmp_vsimem / "test.zarr")
+    assert ds is not None
+    assert ds.RasterYSize == 2
+    assert ds.RasterXSize == 3
+    assert set(ds.GetSubDatasets()) == set(
+        [(f'ZARR:"{tmp_vsimem}/test.zarr":/main_array', "[2x3] /main_array (Float64)")]
+    )
+    ds = None
 
-            dim0 = rg.CreateDimension("dim0", None, None, 2)
-            dim1 = rg.CreateDimension("dim1", None, None, 3)
-
-            dt = gdal.ExtendedDataType.Create(gdal.GDT_Float64)
-            rg.CreateMDArray("main_array", [dim0, dim1], dt)
-            rg.CreateMDArray("x", [dim0], dt)
-            rg.CreateMDArray("y", [dim1], dt)
-
-        create()
-
-        ds = gdal.Open("/vsimem/test.zarr")
-        assert ds is not None
-        assert ds.RasterYSize == 2
-        assert ds.RasterXSize == 3
-        assert set(ds.GetSubDatasets()) == set(
-            [('ZARR:"/vsimem/test.zarr":/main_array', "[2x3] /main_array (Float64)")]
-        )
-        ds = None
-
-        ds = gdal.OpenEx("/vsimem/test.zarr", open_options=["LIST_ALL_ARRAYS=YES"])
-        assert set(ds.GetSubDatasets()) == set(
-            [
-                ('ZARR:"/vsimem/test.zarr":/main_array', "[2x3] /main_array (Float64)"),
-                ('ZARR:"/vsimem/test.zarr":/x', "[2] /x (Float64)"),
-                ('ZARR:"/vsimem/test.zarr":/y', "[3] /y (Float64)"),
-            ]
-        )
-        ds = None
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", open_options=["LIST_ALL_ARRAYS=YES"])
+    assert set(ds.GetSubDatasets()) == set(
+        [
+            (
+                f'ZARR:"{tmp_vsimem}/test.zarr":/main_array',
+                "[2x3] /main_array (Float64)",
+            ),
+            (f'ZARR:"{tmp_vsimem}/test.zarr":/x', "[2] /x (Float64)"),
+            (f'ZARR:"{tmp_vsimem}/test.zarr":/y', "[3] /y (Float64)"),
+        ]
+    )
+    ds = None
 
 
 def test_zarr_read_classic_3d_multiband():
@@ -1499,7 +1475,7 @@ def test_zarr_read_classic_3d_multiband():
     assert gdal.GetLastErrorMsg() != ""
 
 
-def test_zarr_read_classic_too_many_samples_3d():
+def test_zarr_read_classic_too_many_samples_3d(tmp_vsimem):
 
     j = {
         "chunks": [65537, 2, 1],
@@ -1512,43 +1488,40 @@ def test_zarr_read_classic_too_many_samples_3d():
         "zarr_format": 2,
     }
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
-        gdal.ErrorReset()
-        with gdal.quiet_errors():
-            ds = gdal.OpenEx("/vsimem/test.zarr", open_options=["MULTIBAND=NO"])
-        assert gdal.GetLastErrorMsg() != ""
-        assert len(ds.GetSubDatasets()) == 0
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zarray", json.dumps(j))
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", open_options=["MULTIBAND=NO"])
+    assert gdal.GetLastErrorMsg() != ""
+    assert len(ds.GetSubDatasets()) == 0
 
-        gdal.ErrorReset()
-        with gdaltest.error_handler():
-            assert (
-                gdal.OpenEx("/vsimem/test.zarr", open_options=["MULTIBAND=YES"]) is None
-            )
-        assert gdal.GetLastErrorMsg() != ""
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        assert (
+            gdal.OpenEx(tmp_vsimem / "test.zarr", open_options=["MULTIBAND=YES"])
+            is None
+        )
+    assert gdal.GetLastErrorMsg() != ""
 
 
 @pytest.mark.parametrize("interleave", ["BAND", "PIXEL"])
-def test_zarr_write_single_array_3d(interleave):
+def test_zarr_write_single_array_3d(tmp_vsimem, interleave):
 
     src_ds = gdal.Open("data/rgbsmall.tif")
     gdal.GetDriverByName("ZARR").CreateCopy(
-        "/vsimem/test.zarr", src_ds, options=["INTERLEAVE=" + interleave]
+        tmp_vsimem / "test.zarr", src_ds, options=["INTERLEAVE=" + interleave]
     )
-    ds = gdal.Open("/vsimem/test.zarr")
+    ds = gdal.Open(tmp_vsimem / "test.zarr")
     assert [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)] == [
         src_ds.GetRasterBand(i + 1).Checksum() for i in range(src_ds.RasterCount)
     ]
     assert [
         ds.GetRasterBand(i + 1).GetColorInterpretation() for i in range(ds.RasterCount)
     ] == [gdal.GCI_RedBand, gdal.GCI_GreenBand, gdal.GCI_BlueBand]
-    gdal.RmdirRecursive("/vsimem/test.zarr")
 
 
-def test_zarr_read_classic_4d():
+def test_zarr_read_classic_4d(tmp_vsimem):
 
     j = {
         "chunks": [3, 2, 1, 1],
@@ -1561,19 +1534,16 @@ def test_zarr_read_classic_4d():
         "zarr_format": 2,
     }
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
-        ds = gdal.OpenEx("/vsimem/test.zarr", open_options=["MULTIBAND=NO"])
-        subds = ds.GetSubDatasets()
-        assert len(subds) == 6
-        for i in range(len(subds)):
-            assert gdal.Open(subds[i][0]) is not None
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zarray", json.dumps(j))
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", open_options=["MULTIBAND=NO"])
+    subds = ds.GetSubDatasets()
+    assert len(subds) == 6
+    for i in range(len(subds)):
+        assert gdal.Open(subds[i][0]) is not None
 
 
-def test_zarr_read_classic_too_many_samples_4d():
+def test_zarr_read_classic_too_many_samples_4d(tmp_vsimem):
 
     j = {
         "chunks": [257, 256, 1, 1],
@@ -1586,16 +1556,13 @@ def test_zarr_read_classic_too_many_samples_4d():
         "zarr_format": 2,
     }
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
-        gdal.ErrorReset()
-        with gdal.quiet_errors():
-            ds = gdal.OpenEx("/vsimem/test.zarr", open_options=["MULTIBAND=NO"])
-        assert gdal.GetLastErrorMsg() != ""
-        assert len(ds.GetSubDatasets()) == 0
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zarray", json.dumps(j))
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", open_options=["MULTIBAND=NO"])
+    assert gdal.GetLastErrorMsg() != ""
+    assert len(ds.GetSubDatasets()) == 0
 
 
 def test_zarr_read_empty_shape():
@@ -1620,250 +1587,244 @@ def test_zarr_read_BLOSC_COMPRESSORS():
     "format,create_z_metadata",
     [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
 )
-def test_zarr_create_group(format, create_z_metadata):
+def test_zarr_create_group(tmp_path, format, create_z_metadata):
 
-    filename = "tmp/test.zarr"
-    try:
+    filename = tmp_path / "test.zarr"
 
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                filename,
-                options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-            assert rg.GetName() == "/"
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            filename,
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+        assert rg.GetName() == "/"
 
+        attr = rg.CreateAttribute("str_attr", [], gdal.ExtendedDataType.CreateString())
+        assert attr
+        assert attr.GetFullName() == "/_GLOBAL_/str_attr"
+        assert attr.Write("my_string") == gdal.CE_None
+
+        attr = rg.CreateAttribute(
+            "json_attr", [], gdal.ExtendedDataType.CreateString(0, gdal.GEDTST_JSON)
+        )
+        assert attr
+        assert attr.Write({"foo": "bar"}) == gdal.CE_None
+
+        attr = rg.CreateAttribute(
+            "str_array_attr", [2], gdal.ExtendedDataType.CreateString()
+        )
+        assert attr
+        assert attr.Write(["first_string", "second_string"]) == gdal.CE_None
+
+        with gdal.quiet_errors():
             attr = rg.CreateAttribute(
-                "str_attr", [], gdal.ExtendedDataType.CreateString()
+                "dim_2_not_supported", [2, 2], gdal.ExtendedDataType.CreateString()
             )
-            assert attr
-            assert attr.GetFullName() == "/_GLOBAL_/str_attr"
-            assert attr.Write("my_string") == gdal.CE_None
+            assert attr is None
 
-            attr = rg.CreateAttribute(
-                "json_attr", [], gdal.ExtendedDataType.CreateString(0, gdal.GEDTST_JSON)
-            )
-            assert attr
-            assert attr.Write({"foo": "bar"}) == gdal.CE_None
+        attr = rg.CreateAttribute(
+            "int_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Int32)
+        )
+        assert attr
+        assert attr.Write(12345678) == gdal.CE_None
 
-            attr = rg.CreateAttribute(
-                "str_array_attr", [2], gdal.ExtendedDataType.CreateString()
-            )
-            assert attr
-            assert attr.Write(["first_string", "second_string"]) == gdal.CE_None
+        attr = rg.CreateAttribute(
+            "uint_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt32)
+        )
+        assert attr
+        assert attr.Write(4000000000) == gdal.CE_None
 
-            with gdal.quiet_errors():
-                attr = rg.CreateAttribute(
-                    "dim_2_not_supported", [2, 2], gdal.ExtendedDataType.CreateString()
-                )
-                assert attr is None
+        attr = rg.CreateAttribute(
+            "int64_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Int64)
+        )
+        assert attr
+        assert attr.Write(12345678901234) == gdal.CE_None
 
-            attr = rg.CreateAttribute(
-                "int_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Int32)
-            )
-            assert attr
-            assert attr.Write(12345678) == gdal.CE_None
+        attr = rg.CreateAttribute(
+            "uint64_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt64)
+        )
+        assert attr
+        # We cannot write UINT64_MAX
+        # assert attr.Write(18000000000000000000) == gdal.CE_None
+        assert attr.Write(9000000000000000000) == gdal.CE_None
 
-            attr = rg.CreateAttribute(
-                "uint_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt32)
-            )
-            assert attr
-            assert attr.Write(4000000000) == gdal.CE_None
+        attr = rg.CreateAttribute(
+            "int_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_Int32)
+        )
+        assert attr
+        assert attr.Write([12345678, -12345678]) == gdal.CE_None
 
-            attr = rg.CreateAttribute(
-                "int64_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Int64)
-            )
-            assert attr
-            assert attr.Write(12345678901234) == gdal.CE_None
+        attr = rg.CreateAttribute(
+            "uint_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_UInt32)
+        )
+        assert attr
+        assert attr.Write([12345678, 4000000000]) == gdal.CE_None
 
-            attr = rg.CreateAttribute(
-                "uint64_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt64)
-            )
-            assert attr
-            # We cannot write UINT64_MAX
-            # assert attr.Write(18000000000000000000) == gdal.CE_None
-            assert attr.Write(9000000000000000000) == gdal.CE_None
+        attr = rg.CreateAttribute(
+            "int64_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_Int64)
+        )
+        assert attr
+        assert attr.Write([12345678091234, -12345678091234]) == gdal.CE_None
 
-            attr = rg.CreateAttribute(
-                "int_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_Int32)
-            )
-            assert attr
-            assert attr.Write([12345678, -12345678]) == gdal.CE_None
+        attr = rg.CreateAttribute(
+            "uint64_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_UInt64)
+        )
+        assert attr
+        # We cannot write UINT64_MAX
+        # assert attr.Write([12345678091234, 18000000000000000000]) == gdal.CE_None
+        assert attr.Write([12345678091234, 9000000000000000000]) == gdal.CE_None
 
-            attr = rg.CreateAttribute(
-                "uint_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_UInt32)
-            )
-            assert attr
-            assert attr.Write([12345678, 4000000000]) == gdal.CE_None
+        attr = rg.CreateAttribute(
+            "double_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        )
+        assert attr
+        assert attr.Write(12345678.5) == gdal.CE_None
 
-            attr = rg.CreateAttribute(
-                "int64_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_Int64)
-            )
-            assert attr
-            assert attr.Write([12345678091234, -12345678091234]) == gdal.CE_None
+        attr = rg.CreateAttribute(
+            "double_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        )
+        assert attr
+        assert attr.Write([12345678.5, -12345678.5]) == gdal.CE_None
 
-            attr = rg.CreateAttribute(
-                "uint64_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_UInt64)
-            )
-            assert attr
-            # We cannot write UINT64_MAX
-            # assert attr.Write([12345678091234, 18000000000000000000]) == gdal.CE_None
-            assert attr.Write([12345678091234, 9000000000000000000]) == gdal.CE_None
+        subgroup = rg.CreateGroup("foo")
+        assert subgroup
+        assert subgroup.GetName() == "foo"
+        assert subgroup.GetFullName() == "/foo"
+        assert rg.GetGroupNames() == ["foo"]
+        subgroup = rg.OpenGroup("foo")
+        assert subgroup
 
-            attr = rg.CreateAttribute(
-                "double_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
-            )
-            assert attr
-            assert attr.Write(12345678.5) == gdal.CE_None
+    create()
 
-            attr = rg.CreateAttribute(
-                "double_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
-            )
-            assert attr
-            assert attr.Write([12345678.5, -12345678.5]) == gdal.CE_None
+    if create_z_metadata == "YES":
+        f = gdal.VSIFOpenL(f"{filename}/.zmetadata", "rb")
+        assert f
+        data = gdal.VSIFReadL(1, 10000, f)
+        gdal.VSIFCloseL(f)
+        j = json.loads(data)
+        assert "foo/.zgroup" in j["metadata"]
 
-            subgroup = rg.CreateGroup("foo")
-            assert subgroup
-            assert subgroup.GetName() == "foo"
-            assert subgroup.GetFullName() == "/foo"
-            assert rg.GetGroupNames() == ["foo"]
-            subgroup = rg.OpenGroup("foo")
-            assert subgroup
-
-        create()
-
-        if create_z_metadata == "YES":
-            f = gdal.VSIFOpenL(filename + "/.zmetadata", "rb")
-            assert f
-            data = gdal.VSIFReadL(1, 10000, f)
-            gdal.VSIFCloseL(f)
-            j = json.loads(data)
-            assert "foo/.zgroup" in j["metadata"]
-
-        def update():
-            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
-            assert ds
-            rg = ds.GetRootGroup()
-            assert rg
-            assert rg.GetGroupNames() == ["foo"]
-
-            attr = rg.GetAttribute("str_attr")
-            assert attr
-            assert attr.Read() == "my_string"
-            assert attr.Write("my_string_modified") == gdal.CE_None
-
-            subgroup = rg.OpenGroup("foo")
-            assert subgroup
-            subgroup = rg.CreateGroup("bar")
-            assert subgroup
-            assert set(rg.GetGroupNames()) == set(["foo", "bar"])
-            subgroup = rg.OpenGroup("foo")
-            assert subgroup
-            subsubgroup = subgroup.CreateGroup("baz")
-            assert subsubgroup
-            ds = None
-
-        update()
-
-        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    def update():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
         assert ds
         rg = ds.GetRootGroup()
         assert rg
+        assert rg.GetGroupNames() == ["foo"]
 
         attr = rg.GetAttribute("str_attr")
         assert attr
-        assert attr.Read() == "my_string_modified"
+        assert attr.Read() == "my_string"
+        assert attr.Write("my_string_modified") == gdal.CE_None
 
-        attr = rg.GetAttribute("json_attr")
-        assert attr
-        assert attr.GetDataType().GetSubType() == gdal.GEDTST_JSON
-        assert attr.Read() == {"foo": "bar"}
-
-        attr = rg.GetAttribute("str_array_attr")
-        assert attr
-        assert attr.Read() == ["first_string", "second_string"]
-
-        attr = rg.GetAttribute("int_attr")
-        assert attr
-        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
-        assert attr.ReadAsInt() == 12345678
-        assert attr.ReadAsInt64() == 12345678
-        assert attr.ReadAsDouble() == 12345678
-
-        attr = rg.GetAttribute("uint_attr")
-        assert attr
-        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-        assert attr.ReadAsInt64() == 4000000000
-        assert attr.ReadAsDouble() == 4000000000
-
-        attr = rg.GetAttribute("int64_attr")
-        assert attr
-        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-        assert attr.ReadAsInt64() == 12345678901234
-        assert attr.ReadAsDouble() == 12345678901234
-
-        attr = rg.GetAttribute("uint64_attr")
-        assert attr
-        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-        assert attr.ReadAsInt64() == 9000000000000000000
-        assert attr.ReadAsDouble() == 9000000000000000000
-
-        attr = rg.GetAttribute("int_array_attr")
-        assert attr
-        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
-        assert attr.ReadAsIntArray() == (12345678, -12345678)
-        assert attr.ReadAsInt64Array() == (12345678, -12345678)
-        assert attr.ReadAsDoubleArray() == (12345678, -12345678)
-
-        attr = rg.GetAttribute("uint_array_attr")
-        assert attr
-        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-        assert attr.ReadAsInt64Array() == (12345678, 4000000000)
-        assert attr.ReadAsDoubleArray() == (12345678, 4000000000)
-
-        attr = rg.GetAttribute("int64_array_attr")
-        assert attr
-        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-        assert attr.ReadAsInt64Array() == (12345678091234, -12345678091234)
-        assert attr.ReadAsDoubleArray() == (12345678091234, -12345678091234)
-
-        attr = rg.GetAttribute("uint64_array_attr")
-        assert attr
-        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-        assert attr.ReadAsInt64Array() == (12345678091234, 9000000000000000000)
-        assert attr.ReadAsDoubleArray() == (12345678091234, 9000000000000000000)
-
-        attr = rg.GetAttribute("double_attr")
-        assert attr
-        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
-        assert attr.ReadAsDouble() == 12345678.5
-
-        attr = rg.GetAttribute("double_array_attr")
-        assert attr
-        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
-        assert attr.Read() == (12345678.5, -12345678.5)
-
-        assert set(rg.GetGroupNames()) == set(["foo", "bar"])
-        with gdal.quiet_errors():
-            assert rg.CreateGroup("not_opened_in_update_mode") is None
-            assert (
-                rg.CreateAttribute(
-                    "not_opened_in_update_mode",
-                    [],
-                    gdal.ExtendedDataType.CreateString(),
-                )
-                is None
-            )
         subgroup = rg.OpenGroup("foo")
         assert subgroup
-        subsubgroup = subgroup.OpenGroup("baz")
+        subgroup = rg.CreateGroup("bar")
+        assert subgroup
+        assert set(rg.GetGroupNames()) == set(["foo", "bar"])
+        subgroup = rg.OpenGroup("foo")
+        assert subgroup
+        subsubgroup = subgroup.CreateGroup("baz")
         assert subsubgroup
         ds = None
 
-    finally:
-        gdal.RmdirRecursive(filename)
+    update()
+
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    assert ds
+    rg = ds.GetRootGroup()
+    assert rg
+
+    attr = rg.GetAttribute("str_attr")
+    assert attr
+    assert attr.Read() == "my_string_modified"
+
+    attr = rg.GetAttribute("json_attr")
+    assert attr
+    assert attr.GetDataType().GetSubType() == gdal.GEDTST_JSON
+    assert attr.Read() == {"foo": "bar"}
+
+    attr = rg.GetAttribute("str_array_attr")
+    assert attr
+    assert attr.Read() == ["first_string", "second_string"]
+
+    attr = rg.GetAttribute("int_attr")
+    assert attr
+    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
+    assert attr.ReadAsInt() == 12345678
+    assert attr.ReadAsInt64() == 12345678
+    assert attr.ReadAsDouble() == 12345678
+
+    attr = rg.GetAttribute("uint_attr")
+    assert attr
+    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+    assert attr.ReadAsInt64() == 4000000000
+    assert attr.ReadAsDouble() == 4000000000
+
+    attr = rg.GetAttribute("int64_attr")
+    assert attr
+    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+    assert attr.ReadAsInt64() == 12345678901234
+    assert attr.ReadAsDouble() == 12345678901234
+
+    attr = rg.GetAttribute("uint64_attr")
+    assert attr
+    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+    assert attr.ReadAsInt64() == 9000000000000000000
+    assert attr.ReadAsDouble() == 9000000000000000000
+
+    attr = rg.GetAttribute("int_array_attr")
+    assert attr
+    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
+    assert attr.ReadAsIntArray() == (12345678, -12345678)
+    assert attr.ReadAsInt64Array() == (12345678, -12345678)
+    assert attr.ReadAsDoubleArray() == (12345678, -12345678)
+
+    attr = rg.GetAttribute("uint_array_attr")
+    assert attr
+    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+    assert attr.ReadAsInt64Array() == (12345678, 4000000000)
+    assert attr.ReadAsDoubleArray() == (12345678, 4000000000)
+
+    attr = rg.GetAttribute("int64_array_attr")
+    assert attr
+    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+    assert attr.ReadAsInt64Array() == (12345678091234, -12345678091234)
+    assert attr.ReadAsDoubleArray() == (12345678091234, -12345678091234)
+
+    attr = rg.GetAttribute("uint64_array_attr")
+    assert attr
+    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+    assert attr.ReadAsInt64Array() == (12345678091234, 9000000000000000000)
+    assert attr.ReadAsDoubleArray() == (12345678091234, 9000000000000000000)
+
+    attr = rg.GetAttribute("double_attr")
+    assert attr
+    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+    assert attr.ReadAsDouble() == 12345678.5
+
+    attr = rg.GetAttribute("double_array_attr")
+    assert attr
+    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+    assert attr.Read() == (12345678.5, -12345678.5)
+
+    assert set(rg.GetGroupNames()) == set(["foo", "bar"])
+    with gdal.quiet_errors():
+        assert rg.CreateGroup("not_opened_in_update_mode") is None
+        assert (
+            rg.CreateAttribute(
+                "not_opened_in_update_mode",
+                [],
+                gdal.ExtendedDataType.CreateString(),
+            )
+            is None
+        )
+    subgroup = rg.OpenGroup("foo")
+    assert subgroup
+    subsubgroup = subgroup.OpenGroup("baz")
+    assert subsubgroup
+    ds = None
 
 
 @pytest.mark.parametrize(
@@ -1881,38 +1842,32 @@ def test_zarr_create_group(format, create_z_metadata):
     ],
 )
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
-def test_zarr_create_group_errors(group_name, format):
+def test_zarr_create_group_errors(tmp_vsimem, group_name, format):
+    def at_creation():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr", options=["FORMAT=" + format]
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+        subgroup = rg.CreateGroup("foo")
+        assert subgroup
+        gdal.Mkdir(tmp_vsimem / "test.zarr/directory_with_that_name", 0)
+        with gdal.quiet_errors():
+            assert rg.CreateGroup(group_name) is None
 
-    try:
+    at_creation()
 
-        def at_creation():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr", options=["FORMAT=" + format]
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-            subgroup = rg.CreateGroup("foo")
-            assert subgroup
-            gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
-            with gdal.quiet_errors():
-                assert rg.CreateGroup(group_name) is None
+    def after_reopen():
+        ds = gdal.OpenEx(
+            tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+        )
+        rg = ds.GetRootGroup()
+        gdal.Mkdir(tmp_vsimem / "test.zarr/directory_with_that_name", 0)
+        with gdal.quiet_errors():
+            assert rg.CreateGroup(group_name) is None
 
-        at_creation()
-
-        def after_reopen():
-            ds = gdal.OpenEx(
-                "/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
-            )
-            rg = ds.GetRootGroup()
-            gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
-            with gdal.quiet_errors():
-                assert rg.CreateGroup(group_name) is None
-
-        after_reopen()
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    after_reopen()
 
 
 def getCompoundDT():
@@ -1957,7 +1912,7 @@ def getCompoundDT():
     ],
 )
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
-def test_zarr_create_array(datatype, nodata, format):
+def test_zarr_create_array(tmp_vsimem, datatype, nodata, format):
 
     error_expected = False
     if datatype.GetNumericDataType() in (gdal.GDT_CInt16, gdal.GDT_CInt32):
@@ -1965,87 +1920,80 @@ def test_zarr_create_array(datatype, nodata, format):
     elif format == "ZARR_V3" and datatype.GetClass() != gdal.GEDTC_NUMERIC:
         error_expected = True
 
-    try:
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr", options=["FORMAT=" + format]
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+        assert rg.GetName() == "/"
 
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr", options=["FORMAT=" + format]
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-            assert rg.GetName() == "/"
+        dim0 = rg.CreateDimension("dim0", None, None, 2)
+        dim1 = rg.CreateDimension("dim1", None, None, 3)
 
-            dim0 = rg.CreateDimension("dim0", None, None, 2)
-            dim1 = rg.CreateDimension("dim1", None, None, 3)
-
-            if error_expected:
-                with gdal.quiet_errors():
-                    ar = rg.CreateMDArray("my_ar", [dim0, dim1], datatype)
-                assert ar is None
-                return False
-            else:
+        if error_expected:
+            with gdal.quiet_errors():
                 ar = rg.CreateMDArray("my_ar", [dim0, dim1], datatype)
-                assert ar
-                if nodata:
-                    if datatype.GetClass() == gdal.GEDTC_STRING:
-                        assert ar.SetNoDataValueString(nodata) == gdal.CE_None
-                    elif datatype.GetClass() == gdal.GEDTC_NUMERIC:
-                        assert ar.SetNoDataValueDouble(nodata) == gdal.CE_None
-                    else:
-                        assert ar.SetNoDataValueRaw(nodata) == gdal.CE_None
-                return True
-
-        if create():
-            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-            assert ds
-            rg = ds.GetRootGroup()
-            assert rg
-            ar = rg.OpenMDArray("my_ar")
+            assert ar is None
+            return False
+        else:
+            ar = rg.CreateMDArray("my_ar", [dim0, dim1], datatype)
             assert ar
-            got_dt = ar.GetDataType()
-            if got_dt.GetClass() == gdal.GEDTC_COMPOUND:
-                comps = got_dt.GetComponents()
-                assert len(comps) == 2
-                assert comps[1].GetType().GetClass() == gdal.GEDTC_COMPOUND
-                comps[1] = gdal.EDTComponent.Create(
-                    comps[1].GetName(),
-                    comps[1].GetType().GetSize(),
-                    gdal.ExtendedDataType.CreateCompound(
-                        "",
-                        comps[1].GetType().GetSize(),
-                        comps[1].GetType().GetComponents(),
-                    ),
-                )
-                got_dt = gdal.ExtendedDataType.CreateCompound(
-                    "", got_dt.GetSize(), comps
-                )
-            assert got_dt == datatype
-            assert len(ar.GetDimensions()) == 2
-            assert [ar.GetDimensions()[i].GetSize() for i in range(2)] == [2, 3]
             if nodata:
                 if datatype.GetClass() == gdal.GEDTC_STRING:
-                    got_nodata = ar.GetNoDataValueAsString()
-                    assert got_nodata == nodata
+                    assert ar.SetNoDataValueString(nodata) == gdal.CE_None
                 elif datatype.GetClass() == gdal.GEDTC_NUMERIC:
-                    got_nodata = ar.GetNoDataValueAsDouble()
-                    if math.isnan(nodata):
-                        assert math.isnan(got_nodata)
-                    else:
-                        assert got_nodata == nodata
+                    assert ar.SetNoDataValueDouble(nodata) == gdal.CE_None
                 else:
-                    got_nodata = ar.GetNoDataValueAsRaw()
+                    assert ar.SetNoDataValueRaw(nodata) == gdal.CE_None
+            return True
+
+    if create():
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray("my_ar")
+        assert ar
+        got_dt = ar.GetDataType()
+        if got_dt.GetClass() == gdal.GEDTC_COMPOUND:
+            comps = got_dt.GetComponents()
+            assert len(comps) == 2
+            assert comps[1].GetType().GetClass() == gdal.GEDTC_COMPOUND
+            comps[1] = gdal.EDTComponent.Create(
+                comps[1].GetName(),
+                comps[1].GetType().GetSize(),
+                gdal.ExtendedDataType.CreateCompound(
+                    "",
+                    comps[1].GetType().GetSize(),
+                    comps[1].GetType().GetComponents(),
+                ),
+            )
+            got_dt = gdal.ExtendedDataType.CreateCompound("", got_dt.GetSize(), comps)
+        assert got_dt == datatype
+        assert len(ar.GetDimensions()) == 2
+        assert [ar.GetDimensions()[i].GetSize() for i in range(2)] == [2, 3]
+        if nodata:
+            if datatype.GetClass() == gdal.GEDTC_STRING:
+                got_nodata = ar.GetNoDataValueAsString()
+                assert got_nodata == nodata
+            elif datatype.GetClass() == gdal.GEDTC_NUMERIC:
+                got_nodata = ar.GetNoDataValueAsDouble()
+                if math.isnan(nodata):
+                    assert math.isnan(got_nodata)
+                else:
                     assert got_nodata == nodata
             else:
-                if format == "ZARR_V3":
-                    assert ar.GetNoDataValueAsRaw() is None or math.isnan(
-                        ar.GetNoDataValueAsDouble()
-                    )
-                else:
-                    assert ar.GetNoDataValueAsRaw() is None
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+                got_nodata = ar.GetNoDataValueAsRaw()
+                assert got_nodata == nodata
+        else:
+            if format == "ZARR_V3":
+                assert ar.GetNoDataValueAsRaw() is None or math.isnan(
+                    ar.GetNoDataValueAsDouble()
+                )
+            else:
+                assert ar.GetNoDataValueAsRaw() is None
 
 
 @pytest.mark.parametrize(
@@ -2063,50 +2011,44 @@ def test_zarr_create_array(datatype, nodata, format):
     ],
 )
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
-def test_zarr_create_array_errors(array_name, format):
-
-    try:
-
-        def at_creation():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr", options=["FORMAT=" + format]
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
+def test_zarr_create_array_errors(tmp_vsimem, array_name, format):
+    def at_creation():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr", options=["FORMAT=" + format]
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+        assert (
+            rg.CreateMDArray("foo", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+            is not None
+        )
+        gdal.Mkdir(tmp_vsimem / "test.zarr/directory_with_that_name", 0)
+        with gdal.quiet_errors():
             assert (
-                rg.CreateMDArray("foo", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
-                is not None
-            )
-            gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
-            with gdal.quiet_errors():
-                assert (
-                    rg.CreateMDArray(
-                        array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-                    )
-                    is None
+                rg.CreateMDArray(
+                    array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
                 )
-
-        at_creation()
-
-        def after_reopen():
-            ds = gdal.OpenEx(
-                "/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+                is None
             )
-            rg = ds.GetRootGroup()
-            gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
-            with gdal.quiet_errors():
-                assert (
-                    rg.CreateMDArray(
-                        array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-                    )
-                    is None
+
+    at_creation()
+
+    def after_reopen():
+        ds = gdal.OpenEx(
+            tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+        )
+        rg = ds.GetRootGroup()
+        gdal.Mkdir(tmp_vsimem / "test.zarr/directory_with_that_name", 0)
+        with gdal.quiet_errors():
+            assert (
+                rg.CreateMDArray(
+                    array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
                 )
+                is None
+            )
 
-        after_reopen()
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    after_reopen()
 
 
 @pytest.mark.parametrize(
@@ -2122,42 +2064,37 @@ def test_zarr_create_array_errors(array_name, format):
         ],
     ],
 )
-def test_zarr_create_array_compressor(compressor, options, expected_json):
+def test_zarr_create_array_compressor(tmp_vsimem, compressor, options, expected_json):
 
     compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
     if compressor != "NONE" and compressor not in compressors:
         pytest.skip("compressor %s not available" % compressor)
 
-    try:
-
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr"
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr"
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+        assert (
+            rg.CreateMDArray(
+                "test",
+                [],
+                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                ["COMPRESS=" + compressor] + options,
             )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-            assert (
-                rg.CreateMDArray(
-                    "test",
-                    [],
-                    gdal.ExtendedDataType.Create(gdal.GDT_Byte),
-                    ["COMPRESS=" + compressor] + options,
-                )
-                is not None
-            )
+            is not None
+        )
 
-        create()
+    create()
 
-        f = gdal.VSIFOpenL("/vsimem/test.zarr/test/.zarray", "rb")
-        assert f
-        data = gdal.VSIFReadL(1, 1000, f)
-        gdal.VSIFCloseL(f)
-        j = json.loads(data)
-        assert j["compressor"] == expected_json
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    f = gdal.VSIFOpenL(tmp_vsimem / "test.zarr/test/.zarray", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 1000, f)
+    gdal.VSIFCloseL(f)
+    j = json.loads(data)
+    assert j["compressor"] == expected_json
 
 
 @pytest.mark.parametrize(
@@ -2236,52 +2173,49 @@ def test_zarr_create_array_compressor(compressor, options, expected_json):
         ],
     ],
 )
-def test_zarr_create_array_compressor_v3(compressor, options, expected_json):
+def test_zarr_create_array_compressor_v3(
+    tmp_vsimem, compressor, options, expected_json
+):
 
     compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
     if compressor != "NONE" and compressor not in compressors:
         pytest.skip("compressor %s not available" % compressor)
 
-    try:
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr", options=["FORMAT=ZARR_V3"]
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+        dim = rg.CreateDimension("dim0", None, None, 2)
+        ar = rg.CreateMDArray(
+            "test",
+            [dim],
+            gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+            ["COMPRESS=" + compressor] + options,
+        )
+        assert ar.Write(array.array("b", [1, 2])) == gdal.CE_None
 
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr", options=["FORMAT=ZARR_V3"]
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-            dim = rg.CreateDimension("dim0", None, None, 2)
-            ar = rg.CreateMDArray(
-                "test",
-                [dim],
-                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
-                ["COMPRESS=" + compressor] + options,
-            )
-            assert ar.Write(array.array("b", [1, 2])) == gdal.CE_None
+    create()
 
-        create()
+    f = gdal.VSIFOpenL(tmp_vsimem / "test.zarr/test/zarr.json", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 1000, f)
+    gdal.VSIFCloseL(f)
+    j = json.loads(data)
+    if expected_json is None:
+        assert "codecs" not in j
+    else:
+        assert j["codecs"] == expected_json
 
-        f = gdal.VSIFOpenL("/vsimem/test.zarr/test/zarr.json", "rb")
-        assert f
-        data = gdal.VSIFReadL(1, 1000, f)
-        gdal.VSIFCloseL(f)
-        j = json.loads(data)
-        if expected_json is None:
-            assert "codecs" not in j
-        else:
-            assert j["codecs"] == expected_json
+    def read():
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("test")
+        assert ar.Read() == array.array("b", [1, 2])
 
-        def read():
-            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-            rg = ds.GetRootGroup()
-            ar = rg.OpenMDArray("test")
-            assert ar.Read() == array.array("b", [1, 2])
-
-        read()
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    read()
 
 
 @pytest.mark.parametrize(
@@ -2333,44 +2267,41 @@ def test_zarr_create_array_compressor_v3(compressor, options, expected_json):
         gdal.GDT_Float64,
     ],
 )
-def test_zarr_create_array_endian_v3(options, expected_json, gdal_data_type):
+def test_zarr_create_array_endian_v3(
+    tmp_vsimem, options, expected_json, gdal_data_type
+):
 
     array_type = _gdal_data_type_to_array_type[gdal_data_type]
 
-    try:
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr", options=["FORMAT=ZARR_V3"]
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+        dim0 = rg.CreateDimension("dim0", None, None, 2)
+        ar = rg.CreateMDArray(
+            "test", [dim0], gdal.ExtendedDataType.Create(gdal_data_type), options
+        )
+        assert ar.Write(array.array(array_type, [1, 2])) == gdal.CE_None
 
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr", options=["FORMAT=ZARR_V3"]
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-            dim0 = rg.CreateDimension("dim0", None, None, 2)
-            ar = rg.CreateMDArray(
-                "test", [dim0], gdal.ExtendedDataType.Create(gdal_data_type), options
-            )
-            assert ar.Write(array.array(array_type, [1, 2])) == gdal.CE_None
+    create()
 
-        create()
+    f = gdal.VSIFOpenL(tmp_vsimem / "test.zarr/test/zarr.json", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 1000, f)
+    gdal.VSIFCloseL(f)
+    j = json.loads(data)
+    assert j["codecs"] == expected_json
 
-        f = gdal.VSIFOpenL("/vsimem/test.zarr/test/zarr.json", "rb")
-        assert f
-        data = gdal.VSIFReadL(1, 1000, f)
-        gdal.VSIFCloseL(f)
-        j = json.loads(data)
-        assert j["codecs"] == expected_json
+    def read():
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("test")
+        assert ar.Read() == array.array(array_type, [1, 2])
 
-        def read():
-            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-            rg = ds.GetRootGroup()
-            ar = rg.OpenMDArray("test")
-            assert ar.Read() == array.array(array_type, [1, 2])
-
-        read()
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    read()
 
 
 @pytest.mark.parametrize(
@@ -2678,20 +2609,17 @@ def test_zarr_create_array_endian_v3(options, expected_json, gdal_data_type):
         ],
     ],
 )
-def test_zarr_read_invalid_zarr_v3(j, error_msg):
+def test_zarr_read_invalid_zarr_v3(tmp_vsimem, j, error_msg):
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/zarr.json", json.dumps(j))
-        gdal.ErrorReset()
-        with gdal.quiet_errors():
-            assert gdal.Open("/vsimem/test.zarr") is None
-        assert error_msg in gdal.GetLastErrorMsg()
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/zarr.json", json.dumps(j))
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        assert gdal.Open(tmp_vsimem / "test.zarr") is None
+    assert error_msg in gdal.GetLastErrorMsg()
 
 
-def test_zarr_read_data_type_fallback_zarr_v3():
+def test_zarr_read_data_type_fallback_zarr_v3(tmp_vsimem):
 
     j = {
         "zarr_format": 3,
@@ -2707,13 +2635,10 @@ def test_zarr_read_data_type_fallback_zarr_v3():
         "fill_value": 0,
     }
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/zarr.json", json.dumps(j))
-        ds = gdal.Open("/vsimem/test.zarr")
-        assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/zarr.json", json.dumps(j))
+    ds = gdal.Open(tmp_vsimem / "test.zarr")
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
 
 
 @pytest.mark.parametrize(
@@ -2728,7 +2653,7 @@ def test_zarr_read_data_type_fallback_zarr_v3():
         ("float64", str(bin(0x3FF8000000000000)), 1.5),
     ],
 )
-def test_zarr_read_fill_value_v3(data_type, fill_value, nodata):
+def test_zarr_read_fill_value_v3(tmp_vsimem, data_type, fill_value, nodata):
 
     j = {
         "zarr_format": 3,
@@ -2740,13 +2665,10 @@ def test_zarr_read_fill_value_v3(data_type, fill_value, nodata):
         "fill_value": fill_value,
     }
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/zarr.json", json.dumps(j))
-        ds = gdal.Open("/vsimem/test.zarr")
-        assert ds.GetRasterBand(1).GetNoDataValue() == nodata
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/zarr.json", json.dumps(j))
+    ds = gdal.Open(tmp_vsimem / "test.zarr")
+    assert ds.GetRasterBand(1).GetNoDataValue() == nodata
 
 
 @gdaltest.enable_exceptions()
@@ -2773,7 +2695,9 @@ def test_zarr_read_fill_value_v3(data_type, fill_value, nodata):
         ([1, "invalid"], None),
     ],
 )
-def test_zarr_read_fill_value_complex_datatype_v3(data_type, fill_value, nodata):
+def test_zarr_read_fill_value_complex_datatype_v3(
+    tmp_vsimem, data_type, fill_value, nodata
+):
 
     import copy
 
@@ -2806,48 +2730,42 @@ def test_zarr_read_fill_value_complex_datatype_v3(data_type, fill_value, nodata)
         "fill_value": fill_value,
     }
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/zarr.json", json.dumps(j))
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/zarr.json", json.dumps(j))
 
-        if nodata is None:
-            with pytest.raises(Exception):
-                gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-        else:
+    if nodata is None:
+        with pytest.raises(Exception):
+            gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    else:
 
-            def open_and_modify():
-                ds = gdal.OpenEx(
-                    "/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
-                )
-                rg = ds.GetRootGroup()
-                ar = rg.OpenMDArray("test")
-                dtype = (
-                    "d"
-                    if ar.GetDataType().GetNumericDataType() == gdal.GDT_CFloat64
-                    else "f"
-                )
-                assert ar.GetNoDataValueAsRaw() == bytes(
-                    array.array(dtype, nodata)
-                ), struct.unpack(dtype * 2, ar.GetNoDataValueAsRaw())
+        def open_and_modify():
+            ds = gdal.OpenEx(
+                tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+            )
+            rg = ds.GetRootGroup()
+            ar = rg.OpenMDArray("test")
+            dtype = (
+                "d"
+                if ar.GetDataType().GetNumericDataType() == gdal.GDT_CFloat64
+                else "f"
+            )
+            assert ar.GetNoDataValueAsRaw() == bytes(
+                array.array(dtype, nodata)
+            ), struct.unpack(dtype * 2, ar.GetNoDataValueAsRaw())
 
-                # To force a reserialization of the array
-                attr = ar.CreateAttribute(
-                    "attr", [], gdal.ExtendedDataType.CreateString()
-                )
-                attr.Write("foo")
+            # To force a reserialization of the array
+            attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
+            attr.Write("foo")
 
-            open_and_modify()
+        open_and_modify()
 
-            if not str(fill_value[0]).startswith("0x"):
-                f = gdal.VSIFOpenL("/vsimem/test.zarr/zarr.json", "rb")
-                assert f
-                data = gdal.VSIFReadL(1, 10000, f)
-                gdal.VSIFCloseL(f)
-                j = json.loads(data)
-                assert j["fill_value"] == fill_value
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+        if not str(fill_value[0]).startswith("0x"):
+            f = gdal.VSIFOpenL(tmp_vsimem / "test.zarr/zarr.json", "rb")
+            assert f
+            data = gdal.VSIFReadL(1, 10000, f)
+            gdal.VSIFCloseL(f)
+            j = json.loads(data)
+            assert j["fill_value"] == fill_value
 
 
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
@@ -2872,58 +2790,37 @@ def test_zarr_create_array_bad_compressor(tmp_vsimem, format):
 
 
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
-def test_zarr_create_array_attributes(format):
+def test_zarr_create_array_attributes(tmp_vsimem, format):
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr", options=["FORMAT=" + format]
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.CreateMDArray("test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        assert ar
+        assert ar.GetFullName() == "/test"
 
-    try:
+        attr = ar.CreateAttribute("str_attr", [], gdal.ExtendedDataType.CreateString())
+        assert attr
+        assert attr.GetFullName() == "/test/str_attr"
+        assert attr.Write("my_string") == gdal.CE_None
 
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr", options=["FORMAT=" + format]
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-            ar = rg.CreateMDArray(
-                "test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-            )
-            assert ar
-            assert ar.GetFullName() == "/test"
-
-            attr = ar.CreateAttribute(
-                "str_attr", [], gdal.ExtendedDataType.CreateString()
-            )
-            assert attr
-            assert attr.GetFullName() == "/test/str_attr"
-            assert attr.Write("my_string") == gdal.CE_None
-
-            with gdal.quiet_errors():
-                assert (
-                    ar.CreateAttribute(
-                        "invalid_2d", [2, 3], gdal.ExtendedDataType.CreateString()
-                    )
-                    is None
+        with gdal.quiet_errors():
+            assert (
+                ar.CreateAttribute(
+                    "invalid_2d", [2, 3], gdal.ExtendedDataType.CreateString()
                 )
-
-        create()
-
-        def update():
-            ds = gdal.OpenEx(
-                "/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+                is None
             )
-            assert ds
-            rg = ds.GetRootGroup()
-            assert rg
-            ar = rg.OpenMDArray("test")
-            assert ar
 
-            attr = ar.GetAttribute("str_attr")
-            assert attr
-            assert attr.Read() == "my_string"
-            assert attr.Write("my_string_modified") == gdal.CE_None
+    create()
 
-        update()
-
-        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
+    def update():
+        ds = gdal.OpenEx(
+            tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+        )
         assert ds
         rg = ds.GetRootGroup()
         assert rg
@@ -2932,92 +2829,86 @@ def test_zarr_create_array_attributes(format):
 
         attr = ar.GetAttribute("str_attr")
         assert attr
-        assert attr.Read() == "my_string_modified"
-        with gdal.quiet_errors():
-            assert attr.Write("foo") == gdal.CE_Failure
+        assert attr.Read() == "my_string"
+        assert attr.Write("my_string_modified") == gdal.CE_None
 
-        with gdal.quiet_errors():
-            assert (
-                ar.CreateAttribute(
-                    "another_attr", [], gdal.ExtendedDataType.CreateString()
-                )
-                is None
-            )
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    update()
 
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    assert ds
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray("test")
+    assert ar
 
-def test_zarr_create_array_set_crs():
+    attr = ar.GetAttribute("str_attr")
+    assert attr
+    assert attr.Read() == "my_string_modified"
+    with gdal.quiet_errors():
+        assert attr.Write("foo") == gdal.CE_Failure
 
-    try:
-
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr"
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-            ar = rg.CreateMDArray(
-                "test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-            )
-            assert ar
-            crs = osr.SpatialReference()
-            crs.ImportFromEPSG(4326)
-            assert ar.SetSpatialRef(crs) == gdal.CE_None
-
-        create()
-
-        f = gdal.VSIFOpenL("/vsimem/test.zarr/test/.zattrs", "rb")
-        assert f
-        data = gdal.VSIFReadL(1, 10000, f)
-        gdal.VSIFCloseL(f)
-        j = json.loads(data)
-        assert "_CRS" in j
-        crs = j["_CRS"]
-        assert "wkt" in crs
-        assert "url" in crs
-        if "projjson" in crs:
-            assert crs["projjson"]["type"] == "GeographicCRS"
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    with gdal.quiet_errors():
+        assert (
+            ar.CreateAttribute("another_attr", [], gdal.ExtendedDataType.CreateString())
+            is None
+        )
 
 
-def test_zarr_create_array_set_dimension_name():
+def test_zarr_create_array_set_crs(tmp_vsimem):
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr"
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.CreateMDArray("test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        assert ar
+        crs = osr.SpatialReference()
+        crs.ImportFromEPSG(4326)
+        assert ar.SetSpatialRef(crs) == gdal.CE_None
 
-    try:
+    create()
 
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr"
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
+    f = gdal.VSIFOpenL(tmp_vsimem / "test.zarr/test/.zattrs", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    j = json.loads(data)
+    assert "_CRS" in j
+    crs = j["_CRS"]
+    assert "wkt" in crs
+    assert "url" in crs
+    if "projjson" in crs:
+        assert crs["projjson"]["type"] == "GeographicCRS"
 
-            dim0 = rg.CreateDimension("dim0", None, None, 2)
-            dim0_ar = rg.CreateMDArray(
-                "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-            )
-            dim0.SetIndexingVariable(dim0_ar)
 
-            rg.CreateMDArray(
-                "test", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-            )
+def test_zarr_create_array_set_dimension_name(tmp_vsimem):
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr"
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
 
-        create()
+        dim0 = rg.CreateDimension("dim0", None, None, 2)
+        dim0_ar = rg.CreateMDArray(
+            "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        dim0.SetIndexingVariable(dim0_ar)
 
-        f = gdal.VSIFOpenL("/vsimem/test.zarr/test/.zattrs", "rb")
-        assert f
-        data = gdal.VSIFReadL(1, 10000, f)
-        gdal.VSIFCloseL(f)
-        j = json.loads(data)
-        assert "_ARRAY_DIMENSIONS" in j
-        assert j["_ARRAY_DIMENSIONS"] == ["dim0"]
+        rg.CreateMDArray("test", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
 
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    create()
+
+    f = gdal.VSIFOpenL(tmp_vsimem / "test.zarr/test/.zattrs", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    j = json.loads(data)
+    assert "_ARRAY_DIMENSIONS" in j
+    assert j["_ARRAY_DIMENSIONS"] == ["dim0"]
 
 
 @pytest.mark.parametrize(
@@ -3070,7 +2961,7 @@ def test_zarr_create_array_set_dimension_name():
 )
 @pytest.mark.parametrize("use_optimized_code_paths", [True, False])
 def test_zarr_write_array_content(
-    dtype, gdaltype, fill_value, nodata_value, use_optimized_code_paths
+    tmp_vsimem, dtype, gdaltype, fill_value, nodata_value, use_optimized_code_paths
 ):
 
     structtype = _gdal_data_type_to_array_type[gdaltype]
@@ -3087,126 +2978,116 @@ def test_zarr_write_array_content(
     }
 
     filename = (
-        "/vsimem/test"
+        f"{tmp_vsimem}/test"
         + dtype.replace("<", "lt").replace(">", "gt").replace("!", "not")
         + structtype
         + ".zarr"
     )
-    try:
-        gdal.Mkdir(filename, 0o755)
-        f = gdal.VSIFOpenL(filename + "/.zarray", "wb")
-        assert f
-        data = json.dumps(j)
-        gdal.VSIFWriteL(data, 1, len(data), f)
-        gdal.VSIFCloseL(f)
+    gdal.Mkdir(filename, 0o755)
+    f = gdal.VSIFOpenL(filename + "/.zarray", "wb")
+    assert f
+    data = json.dumps(j)
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
 
-        if gdaltype not in (gdal.GDT_CFloat16, gdal.GDT_CFloat32, gdal.GDT_CFloat64):
-            tile_0_0_data = struct.pack(dtype[0] + (structtype * 6), 1, 2, 3, 5, 6, 7)
-            tile_0_1_data = struct.pack(dtype[0] + (structtype * 6), 4, 0, 0, 8, 0, 0)
-        else:
-            tile_0_0_data = struct.pack(
-                dtype[0] + (structtype * 12), 1, 11, 2, 0, 3, 0, 5, 0, 6, 0, 7, 0
-            )
-            tile_0_1_data = struct.pack(
-                dtype[0] + (structtype * 12), 4, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0
-            )
-        gdal.FileFromMemBuffer(filename + "/0.0", tile_0_0_data)
-        gdal.FileFromMemBuffer(filename + "/0.1", tile_0_1_data)
-
-        with gdaltest.config_option(
-            "GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS",
-            "YES" if use_optimized_code_paths else "NO",
-        ):
-            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
-            assert ds
-            rg = ds.GetRootGroup()
-            assert rg
-            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-        assert ar
-
-        dt = gdal.ExtendedDataType.Create(
-            gdal.GDT_CFloat64
-            if gdaltype in (gdal.GDT_CFloat32, gdal.GDT_CFloat64)
-            else gdal.GDT_Float64
+    if gdaltype not in (gdal.GDT_CFloat16, gdal.GDT_CFloat32, gdal.GDT_CFloat64):
+        tile_0_0_data = struct.pack(dtype[0] + (structtype * 6), 1, 2, 3, 5, 6, 7)
+        tile_0_1_data = struct.pack(dtype[0] + (structtype * 6), 4, 0, 0, 8, 0, 0)
+    else:
+        tile_0_0_data = struct.pack(
+            dtype[0] + (structtype * 12), 1, 11, 2, 0, 3, 0, 5, 0, 6, 0, 7, 0
         )
+        tile_0_1_data = struct.pack(
+            dtype[0] + (structtype * 12), 4, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0
+        )
+    gdal.FileFromMemBuffer(filename + "/0.0", tile_0_0_data)
+    gdal.FileFromMemBuffer(filename + "/0.1", tile_0_1_data)
 
-        # Write all nodataset. That should cause tiles to be removed.
-        nv = nodata_value if nodata_value else 0
-        buf_nodata = array.array(
-            "d",
-            [nv]
+    with gdaltest.config_option(
+        "GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS",
+        "YES" if use_optimized_code_paths else "NO",
+    ):
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+
+    dt = gdal.ExtendedDataType.Create(
+        gdal.GDT_CFloat64
+        if gdaltype in (gdal.GDT_CFloat32, gdal.GDT_CFloat64)
+        else gdal.GDT_Float64
+    )
+
+    # Write all nodataset. That should cause tiles to be removed.
+    nv = nodata_value if nodata_value else 0
+    buf_nodata = array.array(
+        "d",
+        [nv]
+        * (
+            5
+            * 4
             * (
-                5
-                * 4
-                * (
-                    2
-                    if gdaltype
-                    in (gdal.GDT_CFloat16, gdal.GDT_CFloat32, gdal.GDT_CFloat64)
-                    else 1
-                )
-            ),
-        )
-        assert ar.Write(buf_nodata, buffer_datatype=dt) == gdal.CE_None
-        assert ar.Read(buffer_datatype=dt) == bytearray(buf_nodata)
-
-        if (
-            fill_value is None
-            or fill_value == 0
-            or not gdal.DataTypeIsComplex(gdaltype)
-        ):
-            assert gdal.VSIStatL(filename + "/0.0") is None
-
-        # Write all ones
-        ones = array.array(
-            "d",
-            [0]
-            * (
-                5
-                * 4
-                * (
-                    2
-                    if gdaltype
-                    in (gdal.GDT_CFloat16, gdal.GDT_CFloat32, gdal.GDT_CFloat64)
-                    else 1
-                )
-            ),
-        )
-        assert ar.Write(ones, buffer_datatype=dt) == gdal.CE_None
-        assert ar.Read(buffer_datatype=dt) == bytearray(ones)
-
-        # Write with odd array_step
-        assert (
-            ar.Write(
-                struct.pack("d" * 4, nv, nv, 6, 5),
-                array_start_idx=[2, 1],
-                count=[2, 2],
-                array_step=[-1, -1],
-                buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+                2
+                if gdaltype in (gdal.GDT_CFloat16, gdal.GDT_CFloat32, gdal.GDT_CFloat64)
+                else 1
             )
-            == gdal.CE_None
-        )
+        ),
+    )
+    assert ar.Write(buf_nodata, buffer_datatype=dt) == gdal.CE_None
+    assert ar.Read(buffer_datatype=dt) == bytearray(buf_nodata)
 
-        # Check back
-        assert ar.Read(
+    if fill_value is None or fill_value == 0 or not gdal.DataTypeIsComplex(gdaltype):
+        assert gdal.VSIStatL(filename + "/0.0") is None
+
+    # Write all ones
+    ones = array.array(
+        "d",
+        [0]
+        * (
+            5
+            * 4
+            * (
+                2
+                if gdaltype in (gdal.GDT_CFloat16, gdal.GDT_CFloat32, gdal.GDT_CFloat64)
+                else 1
+            )
+        ),
+    )
+    assert ar.Write(ones, buffer_datatype=dt) == gdal.CE_None
+    assert ar.Read(buffer_datatype=dt) == bytearray(ones)
+
+    # Write with odd array_step
+    assert (
+        ar.Write(
+            struct.pack("d" * 4, nv, nv, 6, 5),
             array_start_idx=[2, 1],
             count=[2, 2],
             array_step=[-1, -1],
             buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
-        ) == struct.pack("d" * 4, nv, nv, 6, 5)
+        )
+        == gdal.CE_None
+    )
 
-        # Force dirty block eviction
-        ar.Read(buffer_datatype=dt)
+    # Check back
+    assert ar.Read(
+        array_start_idx=[2, 1],
+        count=[2, 2],
+        array_step=[-1, -1],
+        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+    ) == struct.pack("d" * 4, nv, nv, 6, 5)
 
-        # Check back again
-        assert ar.Read(
-            array_start_idx=[2, 1],
-            count=[2, 2],
-            array_step=[-1, -1],
-            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
-        ) == struct.pack("d" * 4, nv, nv, 6, 5)
+    # Force dirty block eviction
+    ar.Read(buffer_datatype=dt)
 
-    finally:
-        gdal.RmdirRecursive(filename)
+    # Check back again
+    assert ar.Read(
+        array_start_idx=[2, 1],
+        count=[2, 2],
+        array_step=[-1, -1],
+        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+    ) == struct.pack("d" * 4, nv, nv, 6, 5)
 
 
 @pytest.mark.parametrize(
@@ -3219,76 +3100,66 @@ def test_zarr_write_array_content(
         (gdal.GDT_CFloat64, "d"),
     ],
 )
-def test_zarr_write_interleave(dt, array_type):
-
-    try:
-
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr"
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-
-            dim0 = rg.CreateDimension("dim0", None, None, 3)
-            dim1 = rg.CreateDimension("dim1", None, None, 2)
-
-            ar = rg.CreateMDArray(
-                "test",
-                [dim0, dim1],
-                gdal.ExtendedDataType.Create(dt),
-                ["BLOCKSIZE=2,2"],
-            )
-            assert (
-                ar.Write(
-                    array.array(
-                        array_type,
-                        [0, 2, 4]
-                        if dt != gdal.GDT_CFloat64
-                        else [0, 0.5, 2, 2.5, 4, 4.5],
-                    ),
-                    array_start_idx=[0, 0],
-                    count=[3, 1],
-                    array_step=[1, 0],
-                )
-                == gdal.CE_None
-            )
-            assert (
-                ar.Write(
-                    array.array(
-                        array_type,
-                        [1, 3, 5]
-                        if dt != gdal.GDT_CFloat64
-                        else [1, 1.5, 3, 3.5, 5, 5.5],
-                    ),
-                    array_start_idx=[0, 1],
-                    count=[3, 1],
-                    array_step=[1, 0],
-                )
-                == gdal.CE_None
-            )
-
-        create()
-
-        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
-        assert ds
+def test_zarr_write_interleave(tmp_vsimem, dt, array_type):
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr"
+        )
+        assert ds is not None
         rg = ds.GetRootGroup()
         assert rg
-        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-        assert ar.Read() == array.array(
-            array_type,
-            [0, 1, 2, 3, 4, 5]
-            if dt != gdal.GDT_CFloat64
-            else [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5],
-        )
-        if dt != gdal.GDT_CFloat64:
-            assert ar.Read(
-                buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-            ) == array.array("B", [0, 1, 2, 3, 4, 5])
 
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+        dim0 = rg.CreateDimension("dim0", None, None, 3)
+        dim1 = rg.CreateDimension("dim1", None, None, 2)
+
+        ar = rg.CreateMDArray(
+            "test",
+            [dim0, dim1],
+            gdal.ExtendedDataType.Create(dt),
+            ["BLOCKSIZE=2,2"],
+        )
+        assert (
+            ar.Write(
+                array.array(
+                    array_type,
+                    [0, 2, 4] if dt != gdal.GDT_CFloat64 else [0, 0.5, 2, 2.5, 4, 4.5],
+                ),
+                array_start_idx=[0, 0],
+                count=[3, 1],
+                array_step=[1, 0],
+            )
+            == gdal.CE_None
+        )
+        assert (
+            ar.Write(
+                array.array(
+                    array_type,
+                    [1, 3, 5] if dt != gdal.GDT_CFloat64 else [1, 1.5, 3, 3.5, 5, 5.5],
+                ),
+                array_start_idx=[0, 1],
+                count=[3, 1],
+                array_step=[1, 0],
+            )
+            == gdal.CE_None
+        )
+
+    create()
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+    assert ds
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar.Read() == array.array(
+        array_type,
+        [0, 1, 2, 3, 4, 5]
+        if dt != gdal.GDT_CFloat64
+        else [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5],
+    )
+    if dt != gdal.GDT_CFloat64:
+        assert ar.Read(
+            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        ) == array.array("B", [0, 1, 2, 3, 4, 5])
 
 
 @pytest.mark.parametrize(
@@ -3299,77 +3170,67 @@ def test_zarr_write_interleave(dt, array_type):
     ],
     ids=("ASCII", "UNICODE"),
 )
-def test_zarr_create_array_string(string_format, input_str, output_str):
-
-    try:
-
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr"
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-
-            dim0 = rg.CreateDimension("dim0", None, None, 2)
-
-            ar = rg.CreateMDArray(
-                "test",
-                [dim0],
-                gdal.ExtendedDataType.CreateString(10),
-                ["STRING_FORMAT=" + string_format, "COMPRESS=ZLIB"],
-            )
-            assert ar.Write(["ab", input_str]) == gdal.CE_None
-
-        create()
-
-        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
-        assert ds
+def test_zarr_create_array_string(tmp_vsimem, string_format, input_str, output_str):
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr"
+        )
+        assert ds is not None
         rg = ds.GetRootGroup()
         assert rg
-        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-        assert ar.Read() == ["ab", output_str]
 
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+        dim0 = rg.CreateDimension("dim0", None, None, 2)
+
+        ar = rg.CreateMDArray(
+            "test",
+            [dim0],
+            gdal.ExtendedDataType.CreateString(10),
+            ["STRING_FORMAT=" + string_format, "COMPRESS=ZLIB"],
+        )
+        assert ar.Write(["ab", input_str]) == gdal.CE_None
+
+    create()
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+    assert ds
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar.Read() == ["ab", output_str]
 
 
 @pytest.mark.parametrize(
     "srcfilename", ["data/zarr/unicode_le.zarr", "data/zarr/unicode_be.zarr"]
 )
-def test_zarr_update_array_string(srcfilename):
+def test_zarr_update_array_string(tmp_vsimem, srcfilename):
 
-    filename = "/vsimem/test.zarr"
+    filename = str(tmp_vsimem / "test.zarr")
 
-    try:
-        gdal.Mkdir(filename, 0)
-        gdal.FileFromMemBuffer(
-            filename + "/.zarray", open(srcfilename + "/.zarray", "rb").read()
-        )
-        gdal.FileFromMemBuffer(filename + "/0", open(srcfilename + "/0", "rb").read())
+    gdal.Mkdir(filename, 0)
+    gdal.FileFromMemBuffer(
+        filename + "/.zarray", open(srcfilename + "/.zarray", "rb").read()
+    )
+    gdal.FileFromMemBuffer(filename + "/0", open(srcfilename + "/0", "rb").read())
 
-        eta = "\u03B7"
+    eta = "\u03B7"
 
-        def update():
-            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
-            rg = ds.GetRootGroup()
-            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-            assert ar.Read() == ["\u00E9"]
-            assert ar.Write([eta]) == gdal.CE_None
-            assert gdal.GetLastErrorMsg() == ""
+    def update():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar.Read() == ["\u00E9"]
+        assert ar.Write([eta]) == gdal.CE_None
+        assert gdal.GetLastErrorMsg() == ""
 
-        update()
+    update()
 
-        def check():
-            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
-            rg = ds.GetRootGroup()
-            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-            assert ar.Read() == [eta]
+    def check():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar.Read() == [eta]
 
-        check()
-
-    finally:
-        gdal.RmdirRecursive(filename)
+    check()
 
 
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
@@ -3391,114 +3252,102 @@ def test_zarr_update_array_string(srcfilename):
     ],
 )
 def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator(
-    format, gdal_data_type
+    tmp_vsimem, format, gdal_data_type
 ):
 
     array_type = _gdal_data_type_to_array_type[gdal_data_type]
-    try:
 
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr", options=["FORMAT=" + format]
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-
-            dim0 = rg.CreateDimension("dim0", None, None, 2)
-            dim1 = rg.CreateDimension("dim1", None, None, 3)
-            dim2 = rg.CreateDimension("dim2", None, None, 4)
-
-            ar = rg.CreateMDArray(
-                "test",
-                [dim0, dim1, dim2],
-                gdal.ExtendedDataType.Create(gdal_data_type),
-                ["CHUNK_MEMORY_LAYOUT=F", "COMPRESS=gzip", "DIM_SEPARATOR=/"],
-            )
-            assert (
-                ar.Write(array.array(array_type, [i for i in range(2 * 3 * 4)]))
-                == gdal.CE_None
-            )
-
-        create()
-
-        if format == "ZARR_V2":
-            f = gdal.VSIFOpenL("/vsimem/test.zarr/test/.zarray", "rb")
-        else:
-            f = gdal.VSIFOpenL("/vsimem/test.zarr/test/zarr.json", "rb")
-        assert f
-        data = gdal.VSIFReadL(1, 10000, f)
-        gdal.VSIFCloseL(f)
-        j = json.loads(data)
-        if format == "ZARR_V2":
-            assert "order" in j
-            assert j["order"] == "F"
-        else:
-            assert "codecs" in j
-            assert j["codecs"] == [
-                {"name": "transpose", "configuration": {"order": "F"}},
-                {"name": "bytes", "configuration": {"endian": "little"}},
-                {"name": "gzip", "configuration": {"level": 6}},
-            ]
-
-        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
-        assert ds
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr", options=["FORMAT=" + format]
+        )
+        assert ds is not None
         rg = ds.GetRootGroup()
         assert rg
-        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-        assert ar.Read() == array.array(array_type, [i for i in range(2 * 3 * 4)])
 
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+        dim0 = rg.CreateDimension("dim0", None, None, 2)
+        dim1 = rg.CreateDimension("dim1", None, None, 3)
+        dim2 = rg.CreateDimension("dim2", None, None, 4)
+
+        ar = rg.CreateMDArray(
+            "test",
+            [dim0, dim1, dim2],
+            gdal.ExtendedDataType.Create(gdal_data_type),
+            ["CHUNK_MEMORY_LAYOUT=F", "COMPRESS=gzip", "DIM_SEPARATOR=/"],
+        )
+        assert (
+            ar.Write(array.array(array_type, [i for i in range(2 * 3 * 4)]))
+            == gdal.CE_None
+        )
+
+    create()
+
+    if format == "ZARR_V2":
+        f = gdal.VSIFOpenL(tmp_vsimem / "test.zarr/test/.zarray", "rb")
+    else:
+        f = gdal.VSIFOpenL(tmp_vsimem / "test.zarr/test/zarr.json", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    j = json.loads(data)
+    if format == "ZARR_V2":
+        assert "order" in j
+        assert j["order"] == "F"
+    else:
+        assert "codecs" in j
+        assert j["codecs"] == [
+            {"name": "transpose", "configuration": {"order": "F"}},
+            {"name": "bytes", "configuration": {"endian": "little"}},
+            {"name": "gzip", "configuration": {"level": 6}},
+        ]
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+    assert ds
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar.Read() == array.array(array_type, [i for i in range(2 * 3 * 4)])
 
 
-def test_zarr_create_unit_offset_scale():
-
-    try:
-
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr"
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-
-            ar = rg.CreateMDArray(
-                "test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-            )
-            assert ar.SetOffset(1.5) == gdal.CE_None
-            assert ar.SetScale(2.5) == gdal.CE_None
-            assert ar.SetUnit("my unit") == gdal.CE_None
-
-        create()
-
-        f = gdal.VSIFOpenL("/vsimem/test.zarr/test/.zattrs", "rb")
-        assert f
-        data = gdal.VSIFReadL(1, 10000, f)
-        gdal.VSIFCloseL(f)
-        j = json.loads(data)
-        assert "add_offset" in j
-        assert j["add_offset"] == 1.5
-        assert "scale_factor" in j
-        assert j["scale_factor"] == 2.5
-        assert "units" in j
-        assert j["units"] == "my unit"
-
-        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
-        assert ds
+def test_zarr_create_unit_offset_scale(tmp_vsimem):
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr"
+        )
+        assert ds is not None
         rg = ds.GetRootGroup()
         assert rg
-        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-        assert ar.GetOffset() == 1.5
-        assert ar.GetScale() == 2.5
-        assert ar.GetUnit() == "my unit"
 
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+        ar = rg.CreateMDArray("test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        assert ar.SetOffset(1.5) == gdal.CE_None
+        assert ar.SetScale(2.5) == gdal.CE_None
+        assert ar.SetUnit("my unit") == gdal.CE_None
+
+    create()
+
+    f = gdal.VSIFOpenL(tmp_vsimem / "test.zarr/test/.zattrs", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    j = json.loads(data)
+    assert "add_offset" in j
+    assert j["add_offset"] == 1.5
+    assert "scale_factor" in j
+    assert j["scale_factor"] == 2.5
+    assert "units" in j
+    assert j["units"] == "my unit"
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+    assert ds
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar.GetOffset() == 1.5
+    assert ar.GetScale() == 2.5
+    assert ar.GetUnit() == "my unit"
 
 
-def test_zarr_getcoordinatevariables():
+def test_zarr_getcoordinatevariables(tmp_vsimem):
 
     src_ds = gdal.OpenEx(
         "data/netcdf/expanded_form_of_grid_mapping.nc", gdal.OF_MULTIDIM_RASTER
@@ -3506,167 +3355,143 @@ def test_zarr_getcoordinatevariables():
     if src_ds is None:
         pytest.skip()
 
-    try:
+    def create(src_ds):
+        ds = gdal.MultiDimTranslate(tmp_vsimem / "test.zarr", src_ds, format="Zarr")
+        src_ds = None
+        assert ds
+        rg = ds.GetRootGroup()
 
-        def create(src_ds):
-            ds = gdal.MultiDimTranslate("/vsimem/test.zarr", src_ds, format="Zarr")
-            src_ds = None
-            assert ds
-            rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("temp")
+        coordinate_vars = ar.GetCoordinateVariables()
+        assert len(coordinate_vars) == 2
+        assert coordinate_vars[0].GetName() == "lat"
+        assert coordinate_vars[1].GetName() == "lon"
 
-            ar = rg.OpenMDArray("temp")
-            coordinate_vars = ar.GetCoordinateVariables()
-            assert len(coordinate_vars) == 2
-            assert coordinate_vars[0].GetName() == "lat"
-            assert coordinate_vars[1].GetName() == "lon"
+        assert len(coordinate_vars[0].GetCoordinateVariables()) == 0
 
-            assert len(coordinate_vars[0].GetCoordinateVariables()) == 0
-
-        create(src_ds)
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    create(src_ds)
 
 
-def test_zarr_create_copy():
+def test_zarr_create_copy(tmp_vsimem):
 
     tst = gdaltest.GDALTest("Zarr", "../../gcore/data/uint16.tif", 1, 4672)
 
-    try:
-        tst.testCreate(vsimem=1, new_filename="/vsimem/test.zarr")
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    tst.testCreate(vsimem=1, new_filename=tmp_vsimem / "test.zarr")
 
 
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
-def test_zarr_create(format):
+def test_zarr_create(tmp_vsimem, format):
 
-    try:
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr",
+        1,
+        1,
+        3,
+        options=["ARRAY_NAME=foo", "FORMAT=" + format, "SINGLE_ARRAY=NO"],
+    )
+    assert ds.GetGeoTransform(can_return_null=True) is None
+    assert ds.GetSpatialRef() is None
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    assert ds.GetRasterBand(1).SetNoDataValue(10) == gdal.CE_None
+    assert ds.GetRasterBand(1).GetOffset() is None
+    assert ds.GetRasterBand(1).SetOffset(1.5) == gdal.CE_None
+    assert ds.GetRasterBand(1).GetScale() is None
+    assert ds.GetRasterBand(1).SetScale(2.5) == gdal.CE_None
+    assert ds.GetRasterBand(1).GetUnitType() == ""
+    assert ds.GetRasterBand(1).SetUnitType("my_unit") == gdal.CE_None
+    assert ds.SetMetadata({"FOO": "BAR"}) == gdal.CE_None
+    ds = None
+
+    ds = gdal.Open(f"ZARR:{tmp_vsimem}/test.zarr:/foo_band1")
+    assert ds
+    assert ds.GetMetadata() == {"FOO": "BAR"}
+    assert ds.GetRasterBand(1).GetNoDataValue() == 10.0
+    assert ds.GetRasterBand(1).GetOffset() == 1.5
+
+
+def test_zarr_create_append_subdataset(tmp_vsimem):
+    def create():
         ds = gdal.GetDriverByName("Zarr").Create(
-            "/vsimem/test.zarr",
-            1,
-            1,
-            3,
-            options=["ARRAY_NAME=foo", "FORMAT=" + format, "SINGLE_ARRAY=NO"],
+            tmp_vsimem / "test.zarr", 3, 2, 1, options=["ARRAY_NAME=foo"]
         )
-        assert ds.GetGeoTransform(can_return_null=True) is None
-        assert ds.GetSpatialRef() is None
-        assert ds.GetRasterBand(1).GetNoDataValue() is None
-        assert ds.GetRasterBand(1).SetNoDataValue(10) == gdal.CE_None
-        assert ds.GetRasterBand(1).GetOffset() is None
-        assert ds.GetRasterBand(1).SetOffset(1.5) == gdal.CE_None
-        assert ds.GetRasterBand(1).GetScale() is None
-        assert ds.GetRasterBand(1).SetScale(2.5) == gdal.CE_None
-        assert ds.GetRasterBand(1).GetUnitType() == ""
-        assert ds.GetRasterBand(1).SetUnitType("my_unit") == gdal.CE_None
-        assert ds.SetMetadata({"FOO": "BAR"}) == gdal.CE_None
+        assert ds
+        ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
         ds = None
 
-        ds = gdal.Open("ZARR:/vsimem/test.zarr:/foo_band1")
+        # Same dimensions. Will reuse the ones of foo
+        ds = gdal.GetDriverByName("Zarr").Create(
+            tmp_vsimem / "test.zarr",
+            3,
+            2,
+            1,
+            options=["APPEND_SUBDATASET=YES", "ARRAY_NAME=bar"],
+        )
         assert ds
-        assert ds.GetMetadata() == {"FOO": "BAR"}
-        assert ds.GetRasterBand(1).GetNoDataValue() == 10.0
-        assert ds.GetRasterBand(1).GetOffset() == 1.5
+        ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+        ds = None
 
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+        # Different dimensions.
+        ds = gdal.GetDriverByName("Zarr").Create(
+            tmp_vsimem / "test.zarr",
+            30,
+            20,
+            1,
+            options=["APPEND_SUBDATASET=YES", "ARRAY_NAME=baz"],
+        )
+        assert ds
+        ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
+        ds = None
 
+    create()
 
-def test_zarr_create_append_subdataset():
+    def check():
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
 
-    try:
+        foo = rg.OpenMDArray("foo")
+        assert foo
+        assert foo.GetDimensions()[0].GetName() == "Y"
+        assert foo.GetDimensions()[1].GetName() == "X"
 
-        def create():
-            ds = gdal.GetDriverByName("Zarr").Create(
-                "/vsimem/test.zarr", 3, 2, 1, options=["ARRAY_NAME=foo"]
-            )
-            assert ds
-            ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
-            ds = None
+        bar = rg.OpenMDArray("bar")
+        assert bar
+        assert bar.GetDimensions()[0].GetName() == "Y"
+        assert bar.GetDimensions()[1].GetName() == "X"
 
-            # Same dimensions. Will reuse the ones of foo
-            ds = gdal.GetDriverByName("Zarr").Create(
-                "/vsimem/test.zarr",
-                3,
-                2,
-                1,
-                options=["APPEND_SUBDATASET=YES", "ARRAY_NAME=bar"],
-            )
-            assert ds
-            ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
-            ds = None
+        baz = rg.OpenMDArray("baz")
+        assert baz
+        assert baz.GetDimensions()[0].GetName() == "baz_Y"
+        assert baz.GetDimensions()[1].GetName() == "baz_X"
 
-            # Different dimensions.
-            ds = gdal.GetDriverByName("Zarr").Create(
-                "/vsimem/test.zarr",
-                30,
-                20,
-                1,
-                options=["APPEND_SUBDATASET=YES", "ARRAY_NAME=baz"],
-            )
-            assert ds
-            ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
-            ds = None
-
-        create()
-
-        def check():
-            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-            rg = ds.GetRootGroup()
-
-            foo = rg.OpenMDArray("foo")
-            assert foo
-            assert foo.GetDimensions()[0].GetName() == "Y"
-            assert foo.GetDimensions()[1].GetName() == "X"
-
-            bar = rg.OpenMDArray("bar")
-            assert bar
-            assert bar.GetDimensions()[0].GetName() == "Y"
-            assert bar.GetDimensions()[1].GetName() == "X"
-
-            baz = rg.OpenMDArray("baz")
-            assert baz
-            assert baz.GetDimensions()[0].GetName() == "baz_Y"
-            assert baz.GetDimensions()[1].GetName() == "baz_X"
-
-        check()
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    check()
 
 
 @pytest.mark.parametrize(
     "blocksize", ["1,2", "2,2,0", "4000000000,4000000000,4000000000"]
 )
-def test_zarr_create_array_invalid_blocksize(blocksize):
+def test_zarr_create_array_invalid_blocksize(tmp_vsimem, blocksize):
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr"
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
 
-    try:
+        dim0 = rg.CreateDimension("dim0", None, None, 2)
+        dim1 = rg.CreateDimension("dim1", None, None, 2)
+        dim2 = rg.CreateDimension("dim2", None, None, 2)
 
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr"
+        with gdal.quiet_errors():
+            ar = rg.CreateMDArray(
+                "test",
+                [dim0, dim1, dim2],
+                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                ["BLOCKSIZE=" + blocksize],
             )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
+            assert ar is None
 
-            dim0 = rg.CreateDimension("dim0", None, None, 2)
-            dim1 = rg.CreateDimension("dim1", None, None, 2)
-            dim2 = rg.CreateDimension("dim2", None, None, 2)
-
-            with gdal.quiet_errors():
-                ar = rg.CreateMDArray(
-                    "test",
-                    [dim0, dim1, dim2],
-                    gdal.ExtendedDataType.Create(gdal.GDT_Byte),
-                    ["BLOCKSIZE=" + blocksize],
-                )
-                assert ar is None
-
-        create()
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    create()
 
 
 def test_zarr_read_filters():
@@ -3680,191 +3505,177 @@ def test_zarr_read_filters():
     assert ar.Read() == array.array("i", [i for i in range(10)])
 
 
-def test_zarr_update_with_filters():
+def test_zarr_update_with_filters(tmp_vsimem):
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-        gdal.FileFromMemBuffer(
-            "/vsimem/test.zarr/.zarray",
-            open("data/zarr/delta_filter_i4.zarr/.zarray", "rb").read(),
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.zarr/.zarray",
+        open("data/zarr/delta_filter_i4.zarr/.zarray", "rb").read(),
+    )
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.zarr/0",
+        open("data/zarr/delta_filter_i4.zarr/0", "rb").read(),
+    )
+
+    def update():
+        ds = gdal.OpenEx(
+            tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
         )
-        gdal.FileFromMemBuffer(
-            "/vsimem/test.zarr/0", open("data/zarr/delta_filter_i4.zarr/0", "rb").read()
-        )
-
-        def update():
-            ds = gdal.OpenEx(
-                "/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
-            )
-            assert ds
-            rg = ds.GetRootGroup()
-            assert rg
-            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-            assert ar
-            assert ar.Read() == array.array("i", [i for i in range(10)])
-            assert (
-                ar.Write(array.array("i", [10 - i for i in range(10)])) == gdal.CE_None
-            )
-
-        update()
-
-        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
         assert ds
         rg = ds.GetRootGroup()
         assert rg
         ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
         assert ar
-        assert ar.Read() == array.array("i", [10 - i for i in range(10)])
+        assert ar.Read() == array.array("i", [i for i in range(10)])
+        assert ar.Write(array.array("i", [10 - i for i in range(10)])) == gdal.CE_None
 
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    update()
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+    assert ds
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+    assert ar.Read() == array.array("i", [10 - i for i in range(10)])
 
 
-def test_zarr_create_with_filter():
+def test_zarr_create_with_filter(tmp_vsimem):
 
     tst = gdaltest.GDALTest(
         "Zarr", "../../gcore/data/uint16.tif", 1, 4672, options=["FILTER=delta"]
     )
 
-    try:
-        tst.testCreate(
-            vsimem=1, new_filename="/vsimem/test.zarr", delete_output_file=False
+    tst.testCreate(
+        vsimem=1, new_filename=tmp_vsimem / "test.zarr", delete_output_file=False
+    )
+
+    f = gdal.VSIFOpenL(tmp_vsimem / "test.zarr/test/.zarray", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    j = json.loads(data)
+    assert "filters" in j
+    assert j["filters"] == [{"id": "delta", "dtype": "<u2"}]
+
+
+def test_zarr_pam_spatial_ref(tmp_vsimem):
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            tmp_vsimem / "test.zarr"
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+
+        dim0 = rg.CreateDimension("dim0", None, None, 2)
+        dim1 = rg.CreateDimension("dim1", None, None, 2)
+        rg.CreateMDArray(
+            "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
         )
 
-        f = gdal.VSIFOpenL("/vsimem/test.zarr/test/.zarray", "rb")
-        assert f
-        data = gdal.VSIFReadL(1, 10000, f)
-        gdal.VSIFCloseL(f)
-        j = json.loads(data)
-        assert "filters" in j
-        assert j["filters"] == [{"id": "delta", "dtype": "<u2"}]
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    create()
+
+    assert gdal.VSIStatL(tmp_vsimem / "test.zarr/pam.aux.xml") is None
+
+    def check_crs_before():
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar
+        crs = ar.GetSpatialRef()
+        assert crs is None
+
+    check_crs_before()
+
+    assert gdal.VSIStatL(tmp_vsimem / "zarr/pam.aux.xml") is None
+
+    def set_crs():
+        # Open in read-only
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar
+        crs = osr.SpatialReference()
+        crs.ImportFromEPSG(4326)
+        # lat first
+        crs.SetDataAxisToSRSAxisMapping([1, 2])
+        crs.SetCoordinateEpoch(2021.2)
+        assert ar.SetSpatialRef(crs) == gdal.CE_None
+
+    set_crs()
+
+    assert gdal.VSIStatL(tmp_vsimem / "test.zarr/pam.aux.xml") is not None
+
+    f = gdal.VSIFOpenL(tmp_vsimem / "test.zarr/pam.aux.xml", "rb+")
+    assert f
+    data = gdal.VSIFReadL(1, 1000, f).decode("utf-8")
+    assert data.endswith("</PAMDataset>\n")
+    data = data[0 : -len("</PAMDataset>\n")] + "<Other/>" + "</PAMDataset>\n"
+    gdal.VSIFSeekL(f, 0, 0)
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    def check_crs():
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar
+        crs = ar.GetSpatialRef()
+        assert crs is not None
+        assert crs.GetAuthorityCode(None) == "4326"
+        assert crs.GetDataAxisToSRSAxisMapping() == [1, 2]
+        assert crs.GetCoordinateEpoch() == 2021.2
+
+    check_crs()
+
+    def check_crs_classic_dataset():
+        ds = gdal.Open(tmp_vsimem / "test.zarr")
+        crs = ds.GetSpatialRef()
+        assert crs is not None
+        assert crs.GetAuthorityCode(None) == "4326"
+        assert crs.GetDataAxisToSRSAxisMapping() == [2, 1]
+
+    check_crs_classic_dataset()
+
+    def unset_crs():
+        # Open in read-only
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar
+        assert ar.SetSpatialRef(None) == gdal.CE_None
+
+    unset_crs()
+
+    f = gdal.VSIFOpenL(tmp_vsimem / "test.zarr/pam.aux.xml", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 1000, f).decode("utf-8")
+    gdal.VSIFCloseL(f)
+    assert "<Other />" in data
+
+    def check_unset_crs():
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar
+        crs = ar.GetSpatialRef()
+        assert crs is None
+
+    check_unset_crs()
 
 
-def test_zarr_pam_spatial_ref():
-
-    try:
-
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                "/vsimem/test.zarr"
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-
-            dim0 = rg.CreateDimension("dim0", None, None, 2)
-            dim1 = rg.CreateDimension("dim1", None, None, 2)
-            rg.CreateMDArray(
-                "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-            )
-
-        create()
-
-        assert gdal.VSIStatL("/vsimem/test.zarr/pam.aux.xml") is None
-
-        def check_crs_before():
-            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-            assert ds
-            rg = ds.GetRootGroup()
-            assert rg
-            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-            assert ar
-            crs = ar.GetSpatialRef()
-            assert crs is None
-
-        check_crs_before()
-
-        assert gdal.VSIStatL("/vsimem/test.zarr/pam.aux.xml") is None
-
-        def set_crs():
-            # Open in read-only
-            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-            assert ds
-            rg = ds.GetRootGroup()
-            assert rg
-            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-            assert ar
-            crs = osr.SpatialReference()
-            crs.ImportFromEPSG(4326)
-            # lat first
-            crs.SetDataAxisToSRSAxisMapping([1, 2])
-            crs.SetCoordinateEpoch(2021.2)
-            assert ar.SetSpatialRef(crs) == gdal.CE_None
-
-        set_crs()
-
-        assert gdal.VSIStatL("/vsimem/test.zarr/pam.aux.xml") is not None
-
-        f = gdal.VSIFOpenL("/vsimem/test.zarr/pam.aux.xml", "rb+")
-        assert f
-        data = gdal.VSIFReadL(1, 1000, f).decode("utf-8")
-        assert data.endswith("</PAMDataset>\n")
-        data = data[0 : -len("</PAMDataset>\n")] + "<Other/>" + "</PAMDataset>\n"
-        gdal.VSIFSeekL(f, 0, 0)
-        gdal.VSIFWriteL(data, 1, len(data), f)
-        gdal.VSIFCloseL(f)
-
-        def check_crs():
-            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-            assert ds
-            rg = ds.GetRootGroup()
-            assert rg
-            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-            assert ar
-            crs = ar.GetSpatialRef()
-            assert crs is not None
-            assert crs.GetAuthorityCode(None) == "4326"
-            assert crs.GetDataAxisToSRSAxisMapping() == [1, 2]
-            assert crs.GetCoordinateEpoch() == 2021.2
-
-        check_crs()
-
-        def check_crs_classic_dataset():
-            ds = gdal.Open("/vsimem/test.zarr")
-            crs = ds.GetSpatialRef()
-            assert crs is not None
-            assert crs.GetAuthorityCode(None) == "4326"
-            assert crs.GetDataAxisToSRSAxisMapping() == [2, 1]
-
-        check_crs_classic_dataset()
-
-        def unset_crs():
-            # Open in read-only
-            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-            assert ds
-            rg = ds.GetRootGroup()
-            assert rg
-            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-            assert ar
-            assert ar.SetSpatialRef(None) == gdal.CE_None
-
-        unset_crs()
-
-        f = gdal.VSIFOpenL("/vsimem/test.zarr/pam.aux.xml", "rb")
-        assert f
-        data = gdal.VSIFReadL(1, 1000, f).decode("utf-8")
-        gdal.VSIFCloseL(f)
-        assert "<Other />" in data
-
-        def check_unset_crs():
-            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-            assert ds
-            rg = ds.GetRootGroup()
-            assert rg
-            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-            assert ar
-            crs = ar.GetSpatialRef()
-            assert crs is None
-
-        check_unset_crs()
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
-
-
-def test_zarr_read_too_large_tile_size():
+def test_zarr_read_too_large_tile_size(tmp_vsimem):
 
     j = {
         "chunks": [1000000, 2000],
@@ -3877,92 +3688,83 @@ def test_zarr_read_too_large_tile_size():
         "zarr_format": 2,
     }
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
-        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-        assert ds is not None
-        with gdal.quiet_errors():
-            assert ds.GetRootGroup().OpenMDArray("test").Read() is None
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zarray", json.dumps(j))
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    with gdal.quiet_errors():
+        assert ds.GetRootGroup().OpenMDArray("test").Read() is None
 
 
-def test_zarr_read_recursive_array_loading():
+def test_zarr_read_recursive_array_loading(tmp_vsimem):
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
 
-        j = {"zarr_format": 2}
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zgroup", json.dumps(j))
+    j = {"zarr_format": 2}
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zgroup", json.dumps(j))
 
-        j = {
-            "chunks": [1],
-            "compressor": None,
-            "dtype": "!b1",
-            "fill_value": None,
-            "filters": None,
-            "order": "C",
-            "shape": [1],
-            "zarr_format": 2,
-        }
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/a/.zarray", json.dumps(j))
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/b/.zarray", json.dumps(j))
+    j = {
+        "chunks": [1],
+        "compressor": None,
+        "dtype": "!b1",
+        "fill_value": None,
+        "filters": None,
+        "order": "C",
+        "shape": [1],
+        "zarr_format": 2,
+    }
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/a/.zarray", json.dumps(j))
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/b/.zarray", json.dumps(j))
 
-        j = {"_ARRAY_DIMENSIONS": ["b"]}
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/a/.zattrs", json.dumps(j))
+    j = {"_ARRAY_DIMENSIONS": ["b"]}
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/a/.zattrs", json.dumps(j))
 
-        j = {"_ARRAY_DIMENSIONS": ["a"]}
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/b/.zattrs", json.dumps(j))
+    j = {"_ARRAY_DIMENSIONS": ["a"]}
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/b/.zattrs", json.dumps(j))
 
-        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-        assert ds is not None
-        with gdal.quiet_errors():
-            ar = ds.GetRootGroup().OpenMDArray("a")
-            assert ar
-            assert (
-                gdal.GetLastErrorMsg()
-                == "Attempt at recursively loading /vsimem/test.zarr/a/.zarray"
-            )
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    with gdal.quiet_errors():
+        ar = ds.GetRootGroup().OpenMDArray("a")
+        assert ar
+        assert (
+            gdal.GetLastErrorMsg()
+            == f"Attempt at recursively loading {tmp_vsimem}/test.zarr/a/.zarray"
+        )
 
 
-def test_zarr_read_too_deep_array_loading():
+def test_zarr_read_too_deep_array_loading(tmp_vsimem):
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
 
-        j = {"zarr_format": 2}
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zgroup", json.dumps(j))
+    j = {"zarr_format": 2}
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zgroup", json.dumps(j))
 
-        j = {
-            "chunks": [1],
-            "compressor": None,
-            "dtype": "!b1",
-            "fill_value": None,
-            "filters": None,
-            "order": "C",
-            "shape": [1],
-            "zarr_format": 2,
-        }
+    j = {
+        "chunks": [1],
+        "compressor": None,
+        "dtype": "!b1",
+        "fill_value": None,
+        "filters": None,
+        "order": "C",
+        "shape": [1],
+        "zarr_format": 2,
+    }
 
-        N = 33
-        for i in range(N):
-            gdal.FileFromMemBuffer("/vsimem/test.zarr/%d/.zarray" % i, json.dumps(j))
+    N = 33
+    for i in range(N):
+        gdal.FileFromMemBuffer(tmp_vsimem / f"test.zarr/{i}/.zarray", json.dumps(j))
 
-        for i in range(N - 1):
-            j = {"_ARRAY_DIMENSIONS": ["%d" % (i + 1)]}
-            gdal.FileFromMemBuffer("/vsimem/test.zarr/%d/.zattrs" % i, json.dumps(j))
+    for i in range(N - 1):
+        j = {"_ARRAY_DIMENSIONS": ["%d" % (i + 1)]}
+        gdal.FileFromMemBuffer(tmp_vsimem / f"test.zarr/{i}/.zattrs", json.dumps(j))
 
-        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-        assert ds is not None
-        with gdal.quiet_errors():
-            ar = ds.GetRootGroup().OpenMDArray("0")
-            assert ar
-            assert gdal.GetLastErrorMsg() == "Too deep call stack in LoadArray()"
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    with gdal.quiet_errors():
+        ar = ds.GetRootGroup().OpenMDArray("0")
+        assert ar
+        assert gdal.GetLastErrorMsg() == "Too deep call stack in LoadArray()"
 
 
 @pytest.mark.parametrize(
@@ -4023,674 +3825,636 @@ def test_zarr_read_nczarr_v2(filename, path):
 
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
 @pytest.mark.require_driver("netCDF")
-def test_zarr_cache_tile_presence(format):
+def test_zarr_cache_tile_presence(tmp_path, format):
 
-    filename = "tmp/test.zarr"
-    try:
-        # Create a Zarr array with sparse tiles
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                filename, options=["FORMAT=" + format]
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
+    filename = str(tmp_path / "test.zarr")
 
-            dim0 = rg.CreateDimension("dim0", None, None, 2)
-            dim1 = rg.CreateDimension("dim1", None, None, 5)
-            ar = rg.CreateMDArray(
-                "test",
-                [dim0, dim1],
-                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
-                ["BLOCKSIZE=1,2"],
-            )
-            assert ar
-            assert (
-                ar.Write(struct.pack("B" * 1, 10), array_start_idx=[0, 0], count=[1, 1])
-                == gdal.CE_None
-            )
-            assert (
-                ar.Write(
-                    struct.pack("B" * 1, 100), array_start_idx=[1, 3], count=[1, 1]
-                )
-                == gdal.CE_None
-            )
+    # Create a Zarr array with sparse tiles
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            filename, options=["FORMAT=" + format]
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
 
-        create()
+        dim0 = rg.CreateDimension("dim0", None, None, 2)
+        dim1 = rg.CreateDimension("dim1", None, None, 5)
+        ar = rg.CreateMDArray(
+            "test",
+            [dim0, dim1],
+            gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+            ["BLOCKSIZE=1,2"],
+        )
+        assert ar
+        assert (
+            ar.Write(struct.pack("B" * 1, 10), array_start_idx=[0, 0], count=[1, 1])
+            == gdal.CE_None
+        )
+        assert (
+            ar.Write(struct.pack("B" * 1, 100), array_start_idx=[1, 3], count=[1, 1])
+            == gdal.CE_None
+        )
 
-        # Create the tile presence cache
-        def open_with_cache_tile_presence_option():
-            ds = gdal.OpenEx(
-                filename,
-                gdal.OF_MULTIDIM_RASTER,
-                open_options=["CACHE_TILE_PRESENCE=YES"],
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg.OpenMDArray("test") is not None
+    create()
 
-        open_with_cache_tile_presence_option()
+    # Create the tile presence cache
+    def open_with_cache_tile_presence_option():
+        ds = gdal.OpenEx(
+            filename,
+            gdal.OF_MULTIDIM_RASTER,
+            open_options=["CACHE_TILE_PRESENCE=YES"],
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg.OpenMDArray("test") is not None
 
-        # Check that the cache exists
-        if format == "ZARR_V2":
-            cache_filename = filename + "/test/.zarray.gmac"
-        else:
-            cache_filename = filename + "/test/zarr.json.gmac"
-        assert gdal.VSIStatL(cache_filename) is not None
+    open_with_cache_tile_presence_option()
 
-        # Read content of the array
-        def read_content():
-            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            ar = rg.OpenMDArray("test")
-            assert ar is not None
-            assert struct.unpack("B" * 2 * 5, ar.Read()) == (
-                10,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                100,
-                0,
-            )
+    # Check that the cache exists
+    if format == "ZARR_V2":
+        cache_filename = filename + "/test/.zarray.gmac"
+    else:
+        cache_filename = filename + "/test/zarr.json.gmac"
+    assert gdal.VSIStatL(cache_filename) is not None
 
-        read_content()
+    # Read content of the array
+    def read_content():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("test")
+        assert ar is not None
+        assert struct.unpack("B" * 2 * 5, ar.Read()) == (
+            10,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            100,
+            0,
+        )
 
-        # again
-        open_with_cache_tile_presence_option()
+    read_content()
 
-        read_content()
+    # again
+    open_with_cache_tile_presence_option()
 
-        # Now alter the cache to mark a present tile as missing
-        def alter_cache():
-            ds = gdal.OpenEx(cache_filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg.GetMDArrayNames() == ["_test_tile_presence"]
-            ar = rg.OpenMDArray("_test_tile_presence")
-            assert struct.unpack("B" * 2 * 3, ar.Read()) == (1, 0, 0, 0, 1, 0)
-            assert (
-                ar.Write(struct.pack("B" * 1, 0), array_start_idx=[1, 1], count=[1, 1])
-                == gdal.CE_None
-            )
+    read_content()
 
-        alter_cache()
+    # Now alter the cache to mark a present tile as missing
+    def alter_cache():
+        ds = gdal.OpenEx(cache_filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg.GetMDArrayNames() == ["_test_tile_presence"]
+        ar = rg.OpenMDArray("_test_tile_presence")
+        assert struct.unpack("B" * 2 * 3, ar.Read()) == (1, 0, 0, 0, 1, 0)
+        assert (
+            ar.Write(struct.pack("B" * 1, 0), array_start_idx=[1, 1], count=[1, 1])
+            == gdal.CE_None
+        )
 
-        # Check that reading the array reflects the above modification
-        def read_content_altered():
-            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            ar = rg.OpenMDArray("test")
-            assert ar is not None
-            assert struct.unpack("B" * 2 * 5, ar.Read()) == (
-                10,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-            )
+    alter_cache()
 
-        read_content_altered()
+    # Check that reading the array reflects the above modification
+    def read_content_altered():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("test")
+        assert ar is not None
+        assert struct.unpack("B" * 2 * 5, ar.Read()) == (
+            10,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
 
-    finally:
-        gdal.RmdirRecursive(filename)
+    read_content_altered()
 
 
 @pytest.mark.parametrize("compression", ["NONE", "GZIP"])
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
-def test_zarr_advise_read(compression, format):
+def test_zarr_advise_read(tmp_path, compression, format):
 
-    filename = "tmp/test.zarr"
-    try:
-        dim0_size = 1230
-        dim1_size = 2570
-        dim0_blocksize = 20
-        dim1_blocksize = 30
-        data_ar = [(i % 256) for i in range(dim0_size * dim1_size)]
+    filename = str(tmp_path / "test.zarr")
 
-        # Create empty block
-        y_offset = dim0_blocksize
-        x_offset = dim1_blocksize
-        for y in range(dim0_blocksize):
-            for x in range(dim1_blocksize):
-                data_ar[dim1_size * (y + y_offset) + x + x_offset] = 0
+    dim0_size = 1230
+    dim1_size = 2570
+    dim0_blocksize = 20
+    dim1_blocksize = 30
+    data_ar = [(i % 256) for i in range(dim0_size * dim1_size)]
 
-        data = array.array("B", data_ar)
+    # Create empty block
+    y_offset = dim0_blocksize
+    x_offset = dim1_blocksize
+    for y in range(dim0_blocksize):
+        for x in range(dim1_blocksize):
+            data_ar[dim1_size * (y + y_offset) + x + x_offset] = 0
 
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                filename, options=["FORMAT=" + format]
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
+    data = array.array("B", data_ar)
 
-            dim0 = rg.CreateDimension("dim0", None, None, dim0_size)
-            dim1 = rg.CreateDimension("dim1", None, None, dim1_size)
-            ar = rg.CreateMDArray(
-                "test",
-                [dim0, dim1],
-                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
-                [
-                    "COMPRESS=" + compression,
-                    "BLOCKSIZE=%d,%d" % (dim0_blocksize, dim1_blocksize),
-                ],
-            )
-            assert ar
-            ar.SetNoDataValueDouble(0)
-            assert ar.Write(data) == gdal.CE_None
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            filename, options=["FORMAT=" + format]
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
 
-        create()
+        dim0 = rg.CreateDimension("dim0", None, None, dim0_size)
+        dim1 = rg.CreateDimension("dim1", None, None, dim1_size)
+        ar = rg.CreateMDArray(
+            "test",
+            [dim0, dim1],
+            gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+            [
+                "COMPRESS=" + compression,
+                "BLOCKSIZE=%d,%d" % (dim0_blocksize, dim1_blocksize),
+            ],
+        )
+        assert ar
+        ar.SetNoDataValueDouble(0)
+        assert ar.Write(data) == gdal.CE_None
 
-        def read():
-            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            ar = rg.OpenMDArray("test")
+    create()
 
-            with gdal.quiet_errors():
-                assert ar.AdviseRead(options=["CACHE_SIZE=1"]) == gdal.CE_Failure
+    def read():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("test")
 
-            got_data_before_advise_read = ar.Read(
-                array_start_idx=[40, 51], count=[2 * dim0_blocksize, 2 * dim1_blocksize]
-            )
+        with gdal.quiet_errors():
+            assert ar.AdviseRead(options=["CACHE_SIZE=1"]) == gdal.CE_Failure
 
-            assert ar.AdviseRead() == gdal.CE_None
-            assert ar.Read() == data
-
-            assert (
-                ar.AdviseRead(
-                    array_start_idx=[40, 51], count=[2 * dim0_blocksize, dim1_blocksize]
-                )
-                == gdal.CE_None
-            )
-            # Read more than AdviseRead() window
-            got_data = ar.Read(
-                array_start_idx=[40, 51], count=[2 * dim0_blocksize, 2 * dim1_blocksize]
-            )
-            assert got_data == got_data_before_advise_read
-
-        read()
-
-    finally:
-        gdal.RmdirRecursive(filename)
-
-
-def test_zarr_read_invalid_nczarr_dim():
-
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
-
-        j = {
-            "chunks": [1, 1],
-            "compressor": None,
-            "dtype": "!b1",
-            "fill_value": None,
-            "filters": None,
-            "order": "C",
-            "shape": [1, 1],
-            "zarr_format": 2,
-            "_NCZARR_ARRAY": {"dimrefs": ["/MyGroup/lon", "/OtherGroup/lat"]},
-        }
-
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
-
-        j = {
-            "chunks": [1],
-            "compressor": None,
-            "dtype": "!b1",
-            "fill_value": None,
-            "filters": None,
-            "order": "C",
-            "shape": [1],
-            "zarr_format": 2,
-        }
-
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/MyGroup/lon/.zarray", json.dumps(j))
-
-        j = {"_NCZARR_GROUP": {"dims": {"lon": 0}}}
-
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/MyGroup/.zgroup", json.dumps(j))
-
-        j = {
-            "chunks": [2],
-            "compressor": None,
-            "dtype": "!b1",
-            "fill_value": None,
-            "filters": None,
-            "order": "C",
-            "shape": [2],
-            "zarr_format": 2,
-        }
-
-        gdal.FileFromMemBuffer(
-            "/vsimem/test.zarr/OtherGroup/lat/.zarray", json.dumps(j)
+        got_data_before_advise_read = ar.Read(
+            array_start_idx=[40, 51], count=[2 * dim0_blocksize, 2 * dim1_blocksize]
         )
 
-        j = {"_NCZARR_GROUP": {"dims": {"lat": 2, "invalid.name": 2}}}
+        assert ar.AdviseRead() == gdal.CE_None
+        assert ar.Read() == data
 
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/OtherGroup/.zgroup", json.dumps(j))
+        assert (
+            ar.AdviseRead(
+                array_start_idx=[40, 51], count=[2 * dim0_blocksize, dim1_blocksize]
+            )
+            == gdal.CE_None
+        )
+        # Read more than AdviseRead() window
+        got_data = ar.Read(
+            array_start_idx=[40, 51], count=[2 * dim0_blocksize, 2 * dim1_blocksize]
+        )
+        assert got_data == got_data_before_advise_read
 
-        with gdal.quiet_errors():
-            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-            assert ds
-            rg = ds.GetRootGroup()
-            ar = rg.OpenMDArray("test")
-            assert ar
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    read()
 
 
-def test_zarr_read_nczar_repeated_array_names():
+def test_zarr_read_invalid_nczarr_dim(tmp_vsimem):
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
 
-        j = {
-            "_NCZARR_GROUP": {
-                "dims": {"lon": 1},
-                "vars": ["a", "a", "lon", "lon"],
-                "groups": ["g", "g"],
-            }
+    j = {
+        "chunks": [1, 1],
+        "compressor": None,
+        "dtype": "!b1",
+        "fill_value": None,
+        "filters": None,
+        "order": "C",
+        "shape": [1, 1],
+        "zarr_format": 2,
+        "_NCZARR_ARRAY": {"dimrefs": ["/MyGroup/lon", "/OtherGroup/lat"]},
+    }
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zarray", json.dumps(j))
+
+    j = {
+        "chunks": [1],
+        "compressor": None,
+        "dtype": "!b1",
+        "fill_value": None,
+        "filters": None,
+        "order": "C",
+        "shape": [1],
+        "zarr_format": 2,
+    }
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/MyGroup/lon/.zarray", json.dumps(j))
+
+    j = {"_NCZARR_GROUP": {"dims": {"lon": 0}}}
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/MyGroup/.zgroup", json.dumps(j))
+
+    j = {
+        "chunks": [2],
+        "compressor": None,
+        "dtype": "!b1",
+        "fill_value": None,
+        "filters": None,
+        "order": "C",
+        "shape": [2],
+        "zarr_format": 2,
+    }
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.zarr/OtherGroup/lat/.zarray", json.dumps(j)
+    )
+
+    j = {"_NCZARR_GROUP": {"dims": {"lat": 2, "invalid.name": 2}}}
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/OtherGroup/.zgroup", json.dumps(j))
+
+    with gdal.quiet_errors():
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("test")
+        assert ar
+
+
+def test_zarr_read_nczar_repeated_array_names(tmp_vsimem):
+
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
+
+    j = {
+        "_NCZARR_GROUP": {
+            "dims": {"lon": 1},
+            "vars": ["a", "a", "lon", "lon"],
+            "groups": ["g", "g"],
         }
+    }
 
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zgroup", json.dumps(j))
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zgroup", json.dumps(j))
 
-        j = {
-            "chunks": [1, 1],
-            "compressor": None,
-            "dtype": "!b1",
-            "fill_value": None,
-            "filters": None,
-            "order": "C",
-            "shape": [1, 1],
-            "zarr_format": 2,
-        }
+    j = {
+        "chunks": [1, 1],
+        "compressor": None,
+        "dtype": "!b1",
+        "fill_value": None,
+        "filters": None,
+        "order": "C",
+        "shape": [1, 1],
+        "zarr_format": 2,
+    }
 
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/a/.zarray", json.dumps(j))
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/a/.zarray", json.dumps(j))
 
-        j = {
-            "chunks": [1],
-            "compressor": None,
-            "dtype": "!b1",
-            "fill_value": None,
-            "filters": None,
-            "order": "C",
-            "shape": [1],
-            "zarr_format": 2,
-        }
+    j = {
+        "chunks": [1],
+        "compressor": None,
+        "dtype": "!b1",
+        "fill_value": None,
+        "filters": None,
+        "order": "C",
+        "shape": [1],
+        "zarr_format": 2,
+    }
 
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/lon/.zarray", json.dumps(j))
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/lon/.zarray", json.dumps(j))
 
-        with gdal.quiet_errors():
-            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-            assert ds
-            rg = ds.GetRootGroup()
-            assert rg.GetMDArrayNames() == ["lon", "a"]
-            ar = rg.OpenMDArray("a")
-            assert ar
-            assert rg.GetGroupNames() == ["g"]
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    with gdal.quiet_errors():
+        ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg.GetMDArrayNames() == ["lon", "a"]
+        ar = rg.OpenMDArray("a")
+        assert ar
+        assert rg.GetGroupNames() == ["g"]
 
 
-def test_zarr_read_test_overflow_in_AllocateWorkingBuffers_due_to_fortran():
+def test_zarr_read_test_overflow_in_AllocateWorkingBuffers_due_to_fortran(tmp_vsimem):
 
     if sys.maxsize < (1 << 32):
         pytest.skip()
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
 
-        j = {
-            "chunks": [(1 << 32) - 1, (1 << 32) - 1],
-            "compressor": None,
-            "dtype": "!b1",
-            "fill_value": None,
-            "filters": None,
-            "order": "F",
-            "shape": [1, 1],
-            "zarr_format": 2,
-        }
+    j = {
+        "chunks": [(1 << 32) - 1, (1 << 32) - 1],
+        "compressor": None,
+        "dtype": "!b1",
+        "fill_value": None,
+        "filters": None,
+        "order": "F",
+        "shape": [1, 1],
+        "zarr_format": 2,
+    }
 
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zarray", json.dumps(j))
 
-        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-        assert ds
-        rg = ds.GetRootGroup()
-        ar = rg.OpenMDArray("test")
-        with gdal.quiet_errors():
-            assert ar.Read(count=[1, 1]) is None
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    assert ds
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("test")
+    with gdal.quiet_errors():
+        assert ar.Read(count=[1, 1]) is None
 
 
-def test_zarr_read_test_overflow_in_AllocateWorkingBuffers_due_to_type_change():
+def test_zarr_read_test_overflow_in_AllocateWorkingBuffers_due_to_type_change(
+    tmp_vsimem,
+):
 
     if sys.maxsize < (1 << 32):
         pytest.skip()
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
 
-        j = {
-            "chunks": [(1 << 32) - 1, ((1 << 32) - 1) / 8],
-            "compressor": None,
-            "dtype": "<u8",
-            "fill_value": None,
-            "filters": None,
-            "order": "C",
-            "shape": [1, 1],
-            "zarr_format": 2,
-        }
+    j = {
+        "chunks": [(1 << 32) - 1, ((1 << 32) - 1) / 8],
+        "compressor": None,
+        "dtype": "<u8",
+        "fill_value": None,
+        "filters": None,
+        "order": "C",
+        "shape": [1, 1],
+        "zarr_format": 2,
+    }
 
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zarray", json.dumps(j))
 
-        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-        assert ds
-        rg = ds.GetRootGroup()
-        ar = rg.OpenMDArray("test")
-        with gdal.quiet_errors():
-            assert ar.Read(count=[1, 1]) is None
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    assert ds
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("test")
+    with gdal.quiet_errors():
+        assert ar.Read(count=[1, 1]) is None
 
 
-def test_zarr_read_do_not_crash_on_invalid_byteswap_on_ascii_string():
+def test_zarr_read_do_not_crash_on_invalid_byteswap_on_ascii_string(tmp_vsimem):
 
-    try:
-        gdal.Mkdir("/vsimem/test.zarr", 0)
+    gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
 
-        j = {
-            "chunks": [1],
-            "compressor": None,
-            "dtype": [["x", ">S2"]],  # byteswap here is not really valid...
-            "fill_value": base64.b64encode(b"XX").decode("utf-8"),
-            "filters": None,
-            "order": "C",
-            "shape": [1],
-            "zarr_format": 2,
-        }
+    j = {
+        "chunks": [1],
+        "compressor": None,
+        "dtype": [["x", ">S2"]],  # byteswap here is not really valid...
+        "fill_value": base64.b64encode(b"XX").decode("utf-8"),
+        "filters": None,
+        "order": "C",
+        "shape": [1],
+        "zarr_format": 2,
+    }
 
-        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr/.zarray", json.dumps(j))
 
-        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
-        assert ds
-        rg = ds.GetRootGroup()
-        rg.OpenMDArray("test")
-
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+    ds = gdal.OpenEx(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    assert ds
+    rg = ds.GetRootGroup()
+    rg.OpenMDArray("test")
 
 
 @pytest.mark.parametrize(
     "format,create_z_metadata",
     [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
 )
-def test_zarr_resize(format, create_z_metadata):
+def test_zarr_resize(tmp_vsimem, format, create_z_metadata):
 
-    filename = "/vsimem/test.zarr"
-    try:
+    filename = str(tmp_vsimem / "test.zarr")
 
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                filename,
-                options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            filename,
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+
+        dim0 = rg.CreateDimension("dim0", None, None, 2)
+        dim1 = rg.CreateDimension("dim1", None, None, 2)
+        var = rg.CreateMDArray(
+            "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        assert var.Write(struct.pack("B" * (2 * 2), 1, 2, 3, 4)) == gdal.CE_None
+
+    create()
+
+    def resize_read_only():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("test")
+
+        with gdal.quiet_errors():
+            assert var.Resize([5, 2]) == gdal.CE_Failure
+
+    resize_read_only()
+
+    def resize():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("test")
+        with gdal.quiet_errors():
+            assert var.Resize([1, 2]) == gdal.CE_Failure, "shrinking not allowed"
+
+        assert var.Resize([5, 2]) == gdal.CE_None
+        assert var.GetDimensions()[0].GetSize() == 5
+        assert var.GetDimensions()[1].GetSize() == 2
+        assert (
+            var.Write(
+                struct.pack("B" * (3 * 2), 5, 6, 7, 8, 9, 10),
+                array_start_idx=[2, 0],
+                count=[3, 2],
             )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
+            == gdal.CE_None
+        )
 
-            dim0 = rg.CreateDimension("dim0", None, None, 2)
-            dim1 = rg.CreateDimension("dim1", None, None, 2)
-            var = rg.CreateMDArray(
-                "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-            )
-            assert var.Write(struct.pack("B" * (2 * 2), 1, 2, 3, 4)) == gdal.CE_None
+    resize()
 
-        create()
-
-        def resize_read_only():
-            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
-            rg = ds.GetRootGroup()
-            var = rg.OpenMDArray("test")
-
-            with gdal.quiet_errors():
-                assert var.Resize([5, 2]) == gdal.CE_Failure
-
-        resize_read_only()
-
-        def resize():
-            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
-            rg = ds.GetRootGroup()
-            var = rg.OpenMDArray("test")
-            with gdal.quiet_errors():
-                assert var.Resize([1, 2]) == gdal.CE_Failure, "shrinking not allowed"
-
-            assert var.Resize([5, 2]) == gdal.CE_None
-            assert var.GetDimensions()[0].GetSize() == 5
-            assert var.GetDimensions()[1].GetSize() == 2
-            assert (
-                var.Write(
-                    struct.pack("B" * (3 * 2), 5, 6, 7, 8, 9, 10),
-                    array_start_idx=[2, 0],
-                    count=[3, 2],
-                )
-                == gdal.CE_None
-            )
-
-        resize()
-
-        if create_z_metadata == "YES":
-            f = gdal.VSIFOpenL(filename + "/.zmetadata", "rb")
-            assert f
-            data = gdal.VSIFReadL(1, 10000, f)
-            gdal.VSIFCloseL(f)
-            j = json.loads(data)
-            assert j["metadata"]["test/.zarray"]["shape"] == [5, 2]
-
-        def check():
-            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
-            rg = ds.GetRootGroup()
-            var = rg.OpenMDArray("test")
-            assert var.GetDimensions()[0].GetSize() == 5
-            assert var.GetDimensions()[1].GetSize() == 2
-            assert struct.unpack("B" * (5 * 2), var.Read()) == (
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
-            )
-
-        check()
-
-    finally:
-        gdal.RmdirRecursive(filename)
-
-
-@pytest.mark.parametrize("create_z_metadata", [True, False])
-def test_zarr_resize_XARRAY(create_z_metadata):
-
-    filename = "/vsimem/test.zarr"
-    try:
-
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-                filename,
-                options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
-            )
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-
-            dim0 = rg.CreateDimension("dim0", None, None, 2)
-            dim0_var = rg.CreateMDArray(
-                "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-            )
-            dim0.SetIndexingVariable(dim0_var)
-            dim1 = rg.CreateDimension("dim1", None, None, 2)
-            dim1_var = rg.CreateMDArray(
-                "dim1", [dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-            )
-            dim1.SetIndexingVariable(dim1_var)
-            var = rg.CreateMDArray(
-                "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-            )
-            assert var.Write(struct.pack("B" * (2 * 2), 1, 2, 3, 4)) == gdal.CE_None
-
-            var2 = rg.CreateMDArray(
-                "test2", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-            )
-            assert var2 is not None
-
-        create()
-
-        def resize():
-            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
-            rg = ds.GetRootGroup()
-            var = rg.OpenMDArray("test")
-            with gdal.quiet_errors():
-                assert var.Resize([1, 2]) == gdal.CE_Failure, "shrinking not allowed"
-
-            dim0 = rg.OpenMDArray("dim0")
-
-            assert var.Resize([5, 2]) == gdal.CE_None
-            assert var.GetDimensions()[0].GetSize() == 5
-            assert var.GetDimensions()[1].GetSize() == 2
-            assert (
-                var.Write(
-                    struct.pack("B" * (3 * 2), 5, 6, 7, 8, 9, 10),
-                    array_start_idx=[2, 0],
-                    count=[3, 2],
-                )
-                == gdal.CE_None
-            )
-
-            assert dim0.GetDimensions()[0].GetSize() == 5
-
-        resize()
-
-        if create_z_metadata:
-            f = gdal.VSIFOpenL(filename + "/.zmetadata", "rb")
-            assert f
-            data = gdal.VSIFReadL(1, 10000, f)
-            gdal.VSIFCloseL(f)
-            j = json.loads(data)
-            assert j["metadata"]["test/.zarray"]["shape"] == [5, 2]
-            assert j["metadata"]["dim0/.zarray"]["shape"] == [5]
-
-        def check():
-            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
-            rg = ds.GetRootGroup()
-            var = rg.OpenMDArray("test")
-            assert var.GetDimensions()[0].GetSize() == 5
-            assert var.GetDimensions()[1].GetSize() == 2
-            assert struct.unpack("B" * (5 * 2), var.Read()) == (
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
-            )
-
-            dim0 = rg.OpenMDArray("dim0")
-            assert dim0.GetDimensions()[0].GetSize() == 5
-
-            var2 = rg.OpenMDArray("test")
-            assert var2.GetDimensions()[0].GetSize() == 5
-
-        check()
-
-    finally:
-        gdal.RmdirRecursive(filename)
-
-
-###############################################################################
-
-
-def test_zarr_resize_dim_referenced_twice():
-
-    filename = "/vsimem/test.zarr"
-    try:
-
-        def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(filename)
-            assert ds is not None
-            rg = ds.GetRootGroup()
-            assert rg
-
-            dim0 = rg.CreateDimension("dim0", None, None, 2)
-            dim0_var = rg.CreateMDArray(
-                "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-            )
-            dim0.SetIndexingVariable(dim0_var)
-
-            var = rg.CreateMDArray(
-                "test", [dim0, dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-            )
-            assert var.Write(struct.pack("B" * (2 * 2), 1, 2, 3, 4)) == gdal.CE_None
-
-        create()
-
-        def resize():
-            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
-            rg = ds.GetRootGroup()
-            var = rg.OpenMDArray("test")
-
-            with gdal.quiet_errors():
-                assert var.Resize([3, 4]) == gdal.CE_Failure
-                assert var.Resize([4, 3]) == gdal.CE_Failure
-
-            assert var.Resize([3, 3]) == gdal.CE_None
-            assert var.GetDimensions()[0].GetSize() == 3
-            assert var.GetDimensions()[1].GetSize() == 3
-
-        resize()
-
+    if create_z_metadata == "YES":
         f = gdal.VSIFOpenL(filename + "/.zmetadata", "rb")
         assert f
         data = gdal.VSIFReadL(1, 10000, f)
         gdal.VSIFCloseL(f)
         j = json.loads(data)
-        assert j["metadata"]["test/.zarray"]["shape"] == [3, 3]
-        assert j["metadata"]["dim0/.zarray"]["shape"] == [3]
+        assert j["metadata"]["test/.zarray"]["shape"] == [5, 2]
 
-        def check():
-            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
-            rg = ds.GetRootGroup()
-            var = rg.OpenMDArray("test")
-            assert var.GetDimensions()[0].GetSize() == 3
-            assert var.GetDimensions()[1].GetSize() == 3
+    def check():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("test")
+        assert var.GetDimensions()[0].GetSize() == 5
+        assert var.GetDimensions()[1].GetSize() == 2
+        assert struct.unpack("B" * (5 * 2), var.Read()) == (
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+        )
 
-        check()
+    check()
 
-    finally:
-        gdal.RmdirRecursive(filename)
+
+@pytest.mark.parametrize("create_z_metadata", [True, False])
+def test_zarr_resize_XARRAY(tmp_vsimem, create_z_metadata):
+
+    filename = str(tmp_vsimem / "test.zarr")
+
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            filename,
+            options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+        )
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+
+        dim0 = rg.CreateDimension("dim0", None, None, 2)
+        dim0_var = rg.CreateMDArray(
+            "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        dim0.SetIndexingVariable(dim0_var)
+        dim1 = rg.CreateDimension("dim1", None, None, 2)
+        dim1_var = rg.CreateMDArray(
+            "dim1", [dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        dim1.SetIndexingVariable(dim1_var)
+        var = rg.CreateMDArray(
+            "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        assert var.Write(struct.pack("B" * (2 * 2), 1, 2, 3, 4)) == gdal.CE_None
+
+        var2 = rg.CreateMDArray(
+            "test2", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        assert var2 is not None
+
+    create()
+
+    def resize():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("test")
+        with gdal.quiet_errors():
+            assert var.Resize([1, 2]) == gdal.CE_Failure, "shrinking not allowed"
+
+        dim0 = rg.OpenMDArray("dim0")
+
+        assert var.Resize([5, 2]) == gdal.CE_None
+        assert var.GetDimensions()[0].GetSize() == 5
+        assert var.GetDimensions()[1].GetSize() == 2
+        assert (
+            var.Write(
+                struct.pack("B" * (3 * 2), 5, 6, 7, 8, 9, 10),
+                array_start_idx=[2, 0],
+                count=[3, 2],
+            )
+            == gdal.CE_None
+        )
+
+        assert dim0.GetDimensions()[0].GetSize() == 5
+
+    resize()
+
+    if create_z_metadata:
+        f = gdal.VSIFOpenL(filename + "/.zmetadata", "rb")
+        assert f
+        data = gdal.VSIFReadL(1, 10000, f)
+        gdal.VSIFCloseL(f)
+        j = json.loads(data)
+        assert j["metadata"]["test/.zarray"]["shape"] == [5, 2]
+        assert j["metadata"]["dim0/.zarray"]["shape"] == [5]
+
+    def check():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("test")
+        assert var.GetDimensions()[0].GetSize() == 5
+        assert var.GetDimensions()[1].GetSize() == 2
+        assert struct.unpack("B" * (5 * 2), var.Read()) == (
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+        )
+
+        dim0 = rg.OpenMDArray("dim0")
+        assert dim0.GetDimensions()[0].GetSize() == 5
+
+        var2 = rg.OpenMDArray("test")
+        assert var2.GetDimensions()[0].GetSize() == 5
+
+    check()
+
+
+###############################################################################
+
+
+def test_zarr_resize_dim_referenced_twice(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.zarr")
+
+    def create():
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(filename)
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+
+        dim0 = rg.CreateDimension("dim0", None, None, 2)
+        dim0_var = rg.CreateMDArray(
+            "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        dim0.SetIndexingVariable(dim0_var)
+
+        var = rg.CreateMDArray(
+            "test", [dim0, dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        assert var.Write(struct.pack("B" * (2 * 2), 1, 2, 3, 4)) == gdal.CE_None
+
+    create()
+
+    def resize():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("test")
+
+        with gdal.quiet_errors():
+            assert var.Resize([3, 4]) == gdal.CE_Failure
+            assert var.Resize([4, 3]) == gdal.CE_Failure
+
+        assert var.Resize([3, 3]) == gdal.CE_None
+        assert var.GetDimensions()[0].GetSize() == 3
+        assert var.GetDimensions()[1].GetSize() == 3
+
+    resize()
+
+    f = gdal.VSIFOpenL(filename + "/.zmetadata", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    j = json.loads(data)
+    assert j["metadata"]["test/.zarray"]["shape"] == [3, 3]
+    assert j["metadata"]["dim0/.zarray"]["shape"] == [3]
+
+    def check():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("test")
+        assert var.GetDimensions()[0].GetSize() == 3
+        assert var.GetDimensions()[1].GetSize() == 3
+
+    check()
 
 
 ###############################################################################
@@ -4701,10 +4465,10 @@ def test_zarr_resize_dim_referenced_twice():
     "format,create_z_metadata",
     [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
 )
-def test_zarr_multidim_rename_group_at_creation(format, create_z_metadata):
+def test_zarr_multidim_rename_group_at_creation(tmp_vsimem, format, create_z_metadata):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = "/vsimem/test.zarr"
+    filename = str(tmp_vsimem / "test.zarr")
 
     def test():
         ds = drv.CreateMultiDimensional(
@@ -4808,12 +4572,8 @@ def test_zarr_multidim_rename_group_at_creation(format, create_z_metadata):
 
         assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
 
-    try:
-        test()
-        reopen()
-
-    finally:
-        gdal.RmdirRecursive(filename)
+    test()
+    reopen()
 
 
 ###############################################################################
@@ -4824,10 +4584,12 @@ def test_zarr_multidim_rename_group_at_creation(format, create_z_metadata):
     "format,create_z_metadata",
     [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
 )
-def test_zarr_multidim_rename_group_after_reopening(format, create_z_metadata):
+def test_zarr_multidim_rename_group_after_reopening(
+    tmp_vsimem, format, create_z_metadata
+):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = "/vsimem/test.zarr"
+    filename = str(tmp_vsimem / "test.zarr")
 
     def create():
         ds = drv.CreateMultiDimensional(
@@ -4918,14 +4680,10 @@ def test_zarr_multidim_rename_group_after_reopening(format, create_z_metadata):
         attr2 = ar.GetAttribute("attr2")
         assert attr2.Read() == "bar2"
 
-    try:
-        create()
-        reopen_readonly()
-        rename()
-        reopen_after_rename()
-
-    finally:
-        gdal.RmdirRecursive(filename)
+    create()
+    reopen_readonly()
+    rename()
+    reopen_after_rename()
 
 
 ###############################################################################
@@ -4936,10 +4694,10 @@ def test_zarr_multidim_rename_group_after_reopening(format, create_z_metadata):
     "format,create_z_metadata",
     [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
 )
-def test_zarr_multidim_rename_array_at_creation(format, create_z_metadata):
+def test_zarr_multidim_rename_array_at_creation(tmp_vsimem, format, create_z_metadata):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = "/vsimem/test.zarr"
+    filename = str(tmp_vsimem / "test.zarr")
 
     def test():
         ds = drv.CreateMultiDimensional(
@@ -5013,12 +4771,8 @@ def test_zarr_multidim_rename_array_at_creation(format, create_z_metadata):
 
         assert set(group.GetMDArrayNames()) == {"ar_renamed", "other_ar"}
 
-    try:
-        test()
-        reopen()
-
-    finally:
-        gdal.RmdirRecursive(filename)
+    test()
+    reopen()
 
 
 ###############################################################################
@@ -5029,10 +4783,12 @@ def test_zarr_multidim_rename_array_at_creation(format, create_z_metadata):
     "format,create_z_metadata",
     [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
 )
-def test_zarr_multidim_rename_array_after_reopening(format, create_z_metadata):
+def test_zarr_multidim_rename_array_after_reopening(
+    tmp_vsimem, format, create_z_metadata
+):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = "/vsimem/test.zarr"
+    filename = str(tmp_vsimem / "test.zarr")
 
     def create():
         ds = drv.CreateMultiDimensional(
@@ -5114,14 +4870,10 @@ def test_zarr_multidim_rename_array_after_reopening(format, create_z_metadata):
         attr = ar.GetAttribute("attr")
         assert attr.Read() == "bar"
 
-    try:
-        create()
-        reopen_readonly()
-        rename()
-        reopen_after_rename()
-
-    finally:
-        gdal.RmdirRecursive(filename)
+    create()
+    reopen_readonly()
+    rename()
+    reopen_after_rename()
 
 
 ###############################################################################
@@ -5132,10 +4884,12 @@ def test_zarr_multidim_rename_array_after_reopening(format, create_z_metadata):
     "format,create_z_metadata",
     [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
 )
-def test_zarr_multidim_rename_attr_after_reopening(format, create_z_metadata):
+def test_zarr_multidim_rename_attr_after_reopening(
+    tmp_vsimem, format, create_z_metadata
+):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = "/vsimem/test.zarr"
+    filename = str(tmp_vsimem / "test.zarr")
 
     def create():
         ds = drv.CreateMultiDimensional(
@@ -5198,13 +4952,9 @@ def test_zarr_multidim_rename_attr_after_reopening(format, create_z_metadata):
         attr_renamed = ar.GetAttribute("attr_renamed")
         assert attr_renamed.Read() == "bar"
 
-    try:
-        create()
-        rename()
-        reopen_after_rename()
-
-    finally:
-        gdal.RmdirRecursive(filename)
+    create()
+    rename()
+    reopen_after_rename()
 
 
 ###############################################################################
@@ -5215,10 +4965,10 @@ def test_zarr_multidim_rename_attr_after_reopening(format, create_z_metadata):
     "format,create_z_metadata",
     [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
 )
-def test_zarr_multidim_rename_dim_at_creation(format, create_z_metadata):
+def test_zarr_multidim_rename_dim_at_creation(tmp_vsimem, format, create_z_metadata):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = "/vsimem/test.zarr"
+    filename = str(tmp_vsimem / "test.zarr")
 
     def create():
         ds = drv.CreateMultiDimensional(
@@ -5274,11 +5024,8 @@ def test_zarr_multidim_rename_dim_at_creation(format, create_z_metadata):
             "other_dim",
         }
 
-    try:
-        create()
-        reopen()
-    finally:
-        gdal.RmdirRecursive(filename)
+    create()
+    reopen()
 
 
 ###############################################################################
@@ -5289,10 +5036,12 @@ def test_zarr_multidim_rename_dim_at_creation(format, create_z_metadata):
     "format,create_z_metadata",
     [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
 )
-def test_zarr_multidim_rename_dim_after_reopening(format, create_z_metadata):
+def test_zarr_multidim_rename_dim_after_reopening(
+    tmp_vsimem, format, create_z_metadata
+):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = "/vsimem/test.zarr"
+    filename = str(tmp_vsimem / "test.zarr")
 
     def create():
         ds = drv.CreateMultiDimensional(
@@ -5354,12 +5103,9 @@ def test_zarr_multidim_rename_dim_after_reopening(format, create_z_metadata):
             "other_dim",
         ]
 
-    try:
-        create()
-        rename()
-        reopen_after_rename()
-    finally:
-        gdal.RmdirRecursive(filename)
+    create()
+    rename()
+    reopen_after_rename()
 
 
 ###############################################################################
@@ -5372,11 +5118,11 @@ def test_zarr_multidim_rename_dim_after_reopening(format, create_z_metadata):
 )
 @pytest.mark.parametrize("get_before_delete", [True, False])
 def test_zarr_multidim_delete_group_after_reopening(
-    format, create_z_metadata, get_before_delete
+    tmp_vsimem, format, create_z_metadata, get_before_delete
 ):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = "/vsimem/test.zarr"
+    filename = str(tmp_vsimem / "test.zarr")
 
     def create():
         ds = drv.CreateMultiDimensional(
@@ -5465,14 +5211,10 @@ def test_zarr_multidim_delete_group_after_reopening(
 
         assert set(rg.GetGroupNames()) == {"other_group"}
 
-    try:
-        create()
-        reopen_readonly()
-        delete()
-        reopen_after_delete()
-
-    finally:
-        gdal.RmdirRecursive(filename)
+    create()
+    reopen_readonly()
+    delete()
+    reopen_after_delete()
 
 
 ###############################################################################
@@ -5485,11 +5227,11 @@ def test_zarr_multidim_delete_group_after_reopening(
 )
 @pytest.mark.parametrize("get_before_delete", [True, False])
 def test_zarr_multidim_delete_array_after_reopening(
-    format, create_z_metadata, get_before_delete
+    tmp_vsimem, format, create_z_metadata, get_before_delete
 ):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = "/vsimem/test.zarr"
+    filename = str(tmp_vsimem / "test.zarr")
 
     def create():
         ds = drv.CreateMultiDimensional(
@@ -5560,14 +5302,10 @@ def test_zarr_multidim_delete_array_after_reopening(
 
         assert set(group.GetMDArrayNames()) == {"other_ar"}
 
-    try:
-        create()
-        reopen_readonly()
-        delete()
-        reopen_after_delete()
-
-    finally:
-        gdal.RmdirRecursive(filename)
+    create()
+    reopen_readonly()
+    delete()
+    reopen_after_delete()
 
 
 ###############################################################################
@@ -5580,11 +5318,11 @@ def test_zarr_multidim_delete_array_after_reopening(
 )
 @pytest.mark.parametrize("get_before_delete", [True, False])
 def test_zarr_multidim_delete_attribute_after_reopening(
-    format, create_z_metadata, get_before_delete
+    tmp_vsimem, format, create_z_metadata, get_before_delete
 ):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = "/vsimem/test.zarr"
+    filename = str(tmp_vsimem / "test.zarr")
 
     def create():
         ds = drv.CreateMultiDimensional(
@@ -5677,14 +5415,10 @@ def test_zarr_multidim_delete_attribute_after_reopening(
         ar = group.OpenMDArray("ar")
         assert set(x.GetName() for x in ar.GetAttributes()) == {"attr2"}
 
-    try:
-        create()
-        reopen_readonly()
-        delete()
-        reopen_after_delete()
-
-    finally:
-        gdal.RmdirRecursive(filename)
+    create()
+    reopen_readonly()
+    delete()
+    reopen_after_delete()
 
 
 ###############################################################################
@@ -5693,25 +5427,20 @@ def test_zarr_multidim_delete_attribute_after_reopening(
 
 @gdaltest.enable_exceptions()
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
-def test_zarr_driver_delete(format):
+def test_zarr_driver_delete(tmp_vsimem, format):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = "/vsimem/test.zarr"
+    filename = tmp_vsimem / "test.zarr"
 
-    try:
-        drv.Create(filename, 1, 1, options=["FORMAT=" + format])
+    drv.Create(filename, 1, 1, options=["FORMAT=" + format])
 
-        assert gdal.Open(filename)
+    assert gdal.Open(filename)
 
-        assert drv.Delete(filename) == gdal.CE_None
-        assert gdal.VSIStatL(filename) is None
+    assert drv.Delete(filename) == gdal.CE_None
+    assert gdal.VSIStatL(filename) is None
 
-        with pytest.raises(Exception):
-            gdal.Open(filename)
-
-    finally:
-        if gdal.VSIStatL(filename):
-            gdal.RmdirRecursive(filename)
+    with pytest.raises(Exception):
+        gdal.Open(filename)
 
 
 ###############################################################################
@@ -5720,35 +5449,28 @@ def test_zarr_driver_delete(format):
 
 @gdaltest.enable_exceptions()
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
-def test_zarr_driver_rename(format):
+def test_zarr_driver_rename(tmp_vsimem, format):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = "/vsimem/test.zarr"
-    newfilename = "/vsimem/newtest.zarr"
+    filename = str(tmp_vsimem / "test.zarr")
+    newfilename = str(tmp_vsimem / "newtest.zarr")
 
-    try:
-        drv.Create(filename, 1, 1, options=["FORMAT=" + format])
+    drv.Create(filename, 1, 1, options=["FORMAT=" + format])
 
-        with gdal.quiet_warnings():
-            # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
-            assert gdal.Open(filename)
+    with gdal.quiet_warnings():
+        # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
+        assert gdal.Open(filename)
 
-        assert drv.Rename(newfilename, filename) == gdal.CE_None
+    assert drv.Rename(newfilename, filename) == gdal.CE_None
 
-        assert gdal.VSIStatL(filename) is None
-        with pytest.raises(Exception):
-            gdal.Open(filename)
+    assert gdal.VSIStatL(filename) is None
+    with pytest.raises(Exception):
+        gdal.Open(filename)
 
-        assert gdal.VSIStatL(newfilename)
-        with gdal.quiet_warnings():
-            # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
-            assert gdal.Open(newfilename)
-
-    finally:
-        if gdal.VSIStatL(filename):
-            gdal.RmdirRecursive(filename)
-        if gdal.VSIStatL(newfilename):
-            gdal.RmdirRecursive(newfilename)
+    assert gdal.VSIStatL(newfilename)
+    with gdal.quiet_warnings():
+        # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
+        assert gdal.Open(newfilename)
 
 
 ###############################################################################
@@ -5757,41 +5479,36 @@ def test_zarr_driver_rename(format):
 
 @gdaltest.enable_exceptions()
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
-def test_zarr_driver_copy_files(format):
+def test_zarr_driver_copy_files(tmp_vsimem, format):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = "/vsimem/test.zarr"
-    newfilename = "/vsimem/newtest.zarr"
+    filename = str(tmp_vsimem / "test.zarr")
+    newfilename = str(tmp_vsimem / "newtest.zarr")
 
-    try:
-        drv.Create(filename, 1, 1, options=["FORMAT=" + format])
+    drv.Create(filename, 1, 1, options=["FORMAT=" + format])
 
+    assert gdal.Open(filename)
+
+    assert drv.CopyFiles(newfilename, filename) == gdal.CE_None
+
+    with gdal.quiet_warnings():
+        # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
+        assert gdal.VSIStatL(filename)
         assert gdal.Open(filename)
 
-        assert drv.CopyFiles(newfilename, filename) == gdal.CE_None
-
-        with gdal.quiet_warnings():
-            # ZARR_V3 gives: "Warning 1: fill_value = null is invalid" on open.
-            assert gdal.VSIStatL(filename)
-            assert gdal.Open(filename)
-
-            assert gdal.VSIStatL(newfilename)
-            assert gdal.Open(newfilename)
-
-    finally:
-        if gdal.VSIStatL(filename):
-            gdal.RmdirRecursive(filename)
-        if gdal.VSIStatL(newfilename):
-            gdal.RmdirRecursive(newfilename)
+        assert gdal.VSIStatL(newfilename)
+        assert gdal.Open(newfilename)
 
 
 ###############################################################################
 
 
 @gdaltest.enable_exceptions()
-def test_zarr_multidim_compute_statistics_update_metadata():
+def test_zarr_multidim_compute_statistics_update_metadata(tmp_vsimem):
 
-    filename = "/vsimem/test_netcdf_multidim_compute_statistics_update_metadata.zarr"
+    filename = str(
+        tmp_vsimem / "test_netcdf_multidim_compute_statistics_update_metadata.zarr"
+    )
 
     def test():
         drv = gdal.GetDriverByName("ZARR")
@@ -5816,12 +5533,8 @@ def test_zarr_multidim_compute_statistics_update_metadata():
         attr = ar.GetAttribute("actual_range")
         assert list(attr.Read()) == [1.5, 2.5]
 
-    try:
-        test()
-        reopen()
-    finally:
-        if gdal.VSIStatL(filename):
-            gdal.RmdirRecursive(filename)
+    test()
+    reopen()
 
 
 ###############################################################################
