@@ -4153,22 +4153,48 @@ void netCDFDataset::SetProjectionFromVar(
     }  // end if(has dims)
 
     // Process custom GeoTransform GDAL value.
-    if (!EQUAL(pszGridMappingValue, "") && !bGotCfGT)
+    if (!EQUAL(pszGridMappingValue, ""))
     {
-        // TODO: Read the GT values and detect for conflict with CF.
-        // This could resolve the GT precision loss issue.
-
         if (pszGeoTransform != nullptr)
         {
-            char **papszGeoTransform =
-                CSLTokenizeString2(pszGeoTransform, " ", CSLT_HONOURSTRINGS);
-            if (CSLCount(papszGeoTransform) == 6)
+            CPLStringList aosGeoTransform(
+                CSLTokenizeString2(pszGeoTransform, " ", CSLT_HONOURSTRINGS));
+            if (aosGeoTransform.size() == 6)
             {
-                bGotGdalGT = true;
+                std::array<double, 6> adfGeoTransformFromAttribute;
                 for (int i = 0; i < 6; i++)
-                    adfTempGeoTransform[i] = CPLAtof(papszGeoTransform[i]);
+                {
+                    adfGeoTransformFromAttribute[i] =
+                        CPLAtof(aosGeoTransform[i]);
+                }
+
+                if (bGotCfGT)
+                {
+                    double dfMaxDiff = 0.0;
+                    for (int i = 0; i < 6; i++)
+                    {
+                        dfMaxDiff =
+                            std::max(dfMaxDiff,
+                                     std::abs(adfTempGeoTransform[i] -
+                                              adfGeoTransformFromAttribute[i]));
+                    }
+
+                    if (dfMaxDiff > 0)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "GeoTransform read from attribute of %s "
+                                 "variable differs from value calculated from "
+                                 "dimension variables (max diff = %g). Using "
+                                 "value from attribute.",
+                                 pszGridMappingValue, dfMaxDiff);
+                    }
+                }
+
+                std::copy(adfGeoTransformFromAttribute.begin(),
+                          adfGeoTransformFromAttribute.end(),
+                          adfTempGeoTransform);
+                bGotGdalGT = true;
             }
-            CSLDestroy(papszGeoTransform);
         }
         else
         {
