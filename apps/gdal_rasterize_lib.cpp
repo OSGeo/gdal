@@ -185,8 +185,8 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
                         GDALRemoveBOM(pabyRet);
                         char *pszSQLStatement =
                             reinterpret_cast<char *>(pabyRet);
-                        psOptions->osSQL = CPLStrdup(
-                            CPLRemoveSQLComments(pszSQLStatement).c_str());
+                        psOptions->osSQL =
+                            CPLRemoveSQLComments(pszSQLStatement);
                         VSIFree(pszSQLStatement);
                     }
                 })

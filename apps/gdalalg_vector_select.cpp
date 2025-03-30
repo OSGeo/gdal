@@ -61,15 +61,17 @@ class GDALVectorSelectAlgorithmLayer final
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorSelectAlgorithmLayer)
 
-    std::unique_ptr<OGRFeature> TranslateFeature(OGRFeature *poSrcFeature) const
+    std::unique_ptr<OGRFeature>
+    TranslateFeature(std::unique_ptr<OGRFeature> poSrcFeature) const
     {
         auto poFeature = std::make_unique<OGRFeature>(m_poFeatureDefn);
         poFeature->SetFID(poSrcFeature->GetFID());
         const auto styleString = poSrcFeature->GetStyleString();
         if (styleString)
             poFeature->SetStyleString(styleString);
-        poFeature->SetFieldsFrom(
-            poSrcFeature, m_anMapSrcFieldsToDstFields.data(), false, false);
+        poFeature->SetFieldsFrom(poSrcFeature.get(),
+                                 m_anMapSrcFieldsToDstFields.data(), false,
+                                 false);
         int iDstGeomField = 0;
         for (int nSrcGeomField : m_anMapDstGeomFieldsToSrcGeomFields)
         {
@@ -84,7 +86,7 @@ class GDALVectorSelectAlgorithmLayer final
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
-        apoOutFeatures.push_back(TranslateFeature(poSrcFeature.release()));
+        apoOutFeatures.push_back(TranslateFeature(std::move(poSrcFeature)));
     }
 
   public:
@@ -262,7 +264,7 @@ class GDALVectorSelectAlgorithmLayer final
             std::unique_ptr<OGRFeature>(m_srcLayer.GetFeature(nFID));
         if (!poSrcFeature)
             return nullptr;
-        return TranslateFeature(poSrcFeature.get()).release();
+        return TranslateFeature(std::move(poSrcFeature)).release();
     }
 
     int TestCapability(const char *pszCap) override
