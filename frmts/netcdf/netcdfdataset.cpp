@@ -4170,23 +4170,30 @@ void netCDFDataset::SetProjectionFromVar(
 
                 if (bGotCfGT)
                 {
-                    double dfMaxDiff = 0.0;
+                    constexpr double GT_RELERROR_WARN_THRESHOLD = 1e-6;
+                    double dfMaxAbsoluteError = 0.0;
                     for (int i = 0; i < 6; i++)
                     {
-                        dfMaxDiff =
-                            std::max(dfMaxDiff,
-                                     std::abs(adfTempGeoTransform[i] -
-                                              adfGeoTransformFromAttribute[i]));
+                        double dfAbsoluteError =
+                            std::abs(adfTempGeoTransform[i] -
+                                     adfGeoTransformFromAttribute[i]);
+                        if (dfAbsoluteError >
+                            std::abs(adfGeoTransformFromAttribute[i] *
+                                     GT_RELERROR_WARN_THRESHOLD))
+                        {
+                            dfMaxAbsoluteError =
+                                std::max(dfMaxAbsoluteError, dfAbsoluteError);
+                        }
                     }
 
-                    if (dfMaxDiff > 0)
+                    if (dfMaxAbsoluteError > 0)
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "GeoTransform read from attribute of %s "
                                  "variable differs from value calculated from "
                                  "dimension variables (max diff = %g). Using "
                                  "value from attribute.",
-                                 pszGridMappingValue, dfMaxDiff);
+                                 pszGridMappingValue, dfMaxAbsoluteError);
                     }
                 }
 

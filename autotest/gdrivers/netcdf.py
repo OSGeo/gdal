@@ -6758,7 +6758,6 @@ def test_netcdf_geotransform_preserved_createcopy(tmp_path):
     res = 1.0 / 3600
     src.SetGeoTransform((25 - res / 2, res, 0, 80 + res / 2, 0, -res))
 
-    with gdaltest.error_raised(gdal.CE_Warning, match="differs from value calculated"):
-        dst = gdal.GetDriverByName("netCDF").CreateCopy(tmp_path / "test.nc", src)
+    dst = gdal.GetDriverByName("netCDF").CreateCopy(tmp_path / "test.nc", src)
 
     assert dst.GetGeoTransform() == src.GetGeoTransform()
