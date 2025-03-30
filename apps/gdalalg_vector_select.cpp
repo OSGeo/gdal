@@ -119,10 +119,9 @@ class GDALVectorSelectAlgorithmLayer final
         std::set<std::string> oSetUsedSetFieldsUC;
 
         const auto poSrcLayerDefn = m_srcLayer.GetLayerDefn();
-        for (int i = 0; i < poSrcLayerDefn->GetFieldCount(); ++i)
+        for (const auto poSrcFieldDefn : poSrcLayerDefn->GetFields())
         {
-            const auto poSrcFieldDefn = poSrcLayerDefn->GetFieldDefn(i);
-            auto oIter = oSetSelFieldsUC.find(
+            const auto oIter = oSetSelFieldsUC.find(
                 CPLString(poSrcFieldDefn->GetNameRef()).toupper());
             if (oIter != oSetSelFieldsUC.end())
             {
@@ -138,21 +137,21 @@ class GDALVectorSelectAlgorithmLayer final
             }
         }
 
-        for (int i = 0; i < poSrcLayerDefn->GetGeomFieldCount(); ++i)
+        for (const auto poSrcFieldDefn : poSrcLayerDefn->GetGeomFields())
         {
-            const auto poSrcFieldDefn = poSrcLayerDefn->GetGeomFieldDefn(i);
-            auto oIter = oSetSelFieldsUC.find(
+            const auto oIter = oSetSelFieldsUC.find(
                 CPLString(poSrcFieldDefn->GetNameRef()).toupper());
             if (oIter != oSetSelFieldsUC.end())
             {
-                m_anMapDstGeomFieldsToSrcGeomFields.push_back(i);
+                m_anMapDstGeomFieldsToSrcGeomFields.push_back(
+                    m_poFeatureDefn->GetGeomFieldCount());
                 OGRGeomFieldDefn oDstFieldDefn(*poSrcFieldDefn);
                 m_poFeatureDefn->AddGeomFieldDefn(&oDstFieldDefn);
                 oSetUsedSetFieldsUC.insert(*oIter);
             }
         }
 
-        auto oIter = oSetSelFieldsUC.find(
+        const auto oIter = oSetSelFieldsUC.find(
             CPLString(OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME).toupper());
         if (m_poFeatureDefn->GetGeomFieldCount() == 0 &&
             oIter != oSetSelFieldsUC.end() &&
@@ -198,10 +197,9 @@ class GDALVectorSelectAlgorithmLayer final
         }
 
         const auto poSrcLayerDefn = m_srcLayer.GetLayerDefn();
-        for (int i = 0; i < poSrcLayerDefn->GetFieldCount(); ++i)
+        for (const auto poSrcFieldDefn : poSrcLayerDefn->GetFields())
         {
-            const auto poSrcFieldDefn = poSrcLayerDefn->GetFieldDefn(i);
-            auto oIter = oSetSelFieldsUC.find(
+            const auto oIter = oSetSelFieldsUC.find(
                 CPLString(poSrcFieldDefn->GetNameRef()).toupper());
             if (oIter != oSetSelFieldsUC.end())
             {
@@ -225,14 +223,14 @@ class GDALVectorSelectAlgorithmLayer final
         }
         else
         {
-            for (int i = 0; i < poSrcLayerDefn->GetGeomFieldCount(); ++i)
+            for (const auto poSrcFieldDefn : poSrcLayerDefn->GetGeomFields())
             {
-                const auto poSrcFieldDefn = poSrcLayerDefn->GetGeomFieldDefn(i);
-                auto oIter = oSetSelFieldsUC.find(
+                const auto oIter = oSetSelFieldsUC.find(
                     CPLString(poSrcFieldDefn->GetNameRef()).toupper());
                 if (oIter == oSetSelFieldsUC.end())
                 {
-                    m_anMapDstGeomFieldsToSrcGeomFields.push_back(i);
+                    m_anMapDstGeomFieldsToSrcGeomFields.push_back(
+                        m_poFeatureDefn->GetGeomFieldCount());
                     OGRGeomFieldDefn oDstFieldDefn(*poSrcFieldDefn);
                     m_poFeatureDefn->AddGeomFieldDefn(&oDstFieldDefn);
                 }

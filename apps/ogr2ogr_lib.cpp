@@ -840,9 +840,9 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
 {
     CPLAssert(poFeatureDefn == nullptr);
 
-    OGRFeatureDefn *poSrcFieldDefn = poSrcLayer->GetLayerDefn();
+    OGRFeatureDefn *poSrcFeatureDefn = poSrcLayer->GetLayerDefn();
 
-    int nSrcFields = poSrcFieldDefn->GetFieldCount();
+    const int nSrcFields = poSrcFeatureDefn->GetFieldCount();
     pasListFields = static_cast<ListFieldDesc *>(
         CPLCalloc(sizeof(ListFieldDesc), nSrcFields));
     nListFieldCount = 0;
@@ -850,7 +850,7 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
     /* Establish the list of fields of list type */
     for (int i = 0; i < nSrcFields; ++i)
     {
-        OGRFieldType eType = poSrcFieldDefn->GetFieldDefn(i)->GetType();
+        OGRFieldType eType = poSrcFeatureDefn->GetFieldDefn(i)->GetType();
         if (eType == OFTIntegerList || eType == OFTInteger64List ||
             eType == OFTRealList || eType == OFTStringList)
         {
@@ -929,19 +929,19 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
     /* Now let's build the target feature definition */
 
     poFeatureDefn =
-        OGRFeatureDefn::CreateFeatureDefn(poSrcFieldDefn->GetName());
+        OGRFeatureDefn::CreateFeatureDefn(poSrcFeatureDefn->GetName());
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbNone);
 
-    for (int i = 0; i < poSrcFieldDefn->GetGeomFieldCount(); ++i)
+    for (const auto poSrcGeomFieldDefn : poSrcFeatureDefn->GetGeomFields())
     {
-        poFeatureDefn->AddGeomFieldDefn(poSrcFieldDefn->GetGeomFieldDefn(i));
+        poFeatureDefn->AddGeomFieldDefn(poSrcGeomFieldDefn);
     }
 
     int iListField = 0;
-    for (int i = 0; i < nSrcFields; ++i)
+    for (const auto poSrcFieldDefn : poSrcFeatureDefn->GetFields())
     {
-        const OGRFieldType eType = poSrcFieldDefn->GetFieldDefn(i)->GetType();
+        const OGRFieldType eType = poSrcFieldDefn->GetType();
         if (eType == OFTIntegerList || eType == OFTInteger64List ||
             eType == OFTRealList || eType == OFTStringList)
         {
@@ -951,12 +951,12 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
             iListField++;
             if (nMaxOccurrences == 1)
             {
-                OGRFieldDefn oFieldDefn(
-                    poSrcFieldDefn->GetFieldDefn(i)->GetNameRef(),
-                    (eType == OFTIntegerList)     ? OFTInteger
-                    : (eType == OFTInteger64List) ? OFTInteger64
-                    : (eType == OFTRealList)      ? OFTReal
-                                                  : OFTString);
+                OGRFieldDefn oFieldDefn(poSrcFieldDefn->GetNameRef(),
+                                        (eType == OFTIntegerList) ? OFTInteger
+                                        : (eType == OFTInteger64List)
+                                            ? OFTInteger64
+                                        : (eType == OFTRealList) ? OFTReal
+                                                                 : OFTString);
                 poFeatureDefn->AddFieldDefn(&oFieldDefn);
             }
             else
@@ -964,9 +964,8 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
                 for (int j = 0; j < nMaxOccurrences; j++)
                 {
                     CPLString osFieldName;
-                    osFieldName.Printf(
-                        "%s%d", poSrcFieldDefn->GetFieldDefn(i)->GetNameRef(),
-                        j + 1);
+                    osFieldName.Printf("%s%d", poSrcFieldDefn->GetNameRef(),
+                                       j + 1);
                     OGRFieldDefn oFieldDefn(
                         osFieldName.c_str(),
                         (eType == OFTIntegerList)     ? OFTInteger
@@ -980,7 +979,7 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
         }
         else
         {
-            poFeatureDefn->AddFieldDefn(poSrcFieldDefn->GetFieldDefn(i));
+            poFeatureDefn->AddFieldDefn(poSrcFieldDefn);
         }
     }
 
