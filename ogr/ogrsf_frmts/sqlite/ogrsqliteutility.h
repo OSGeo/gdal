@@ -95,4 +95,9 @@ void OGRSQLite_gdal_get_pixel_value_common(const char *pszFunctionName,
                                            sqlite3_value **argv,
                                            GDALDataset *poDS);
 
+#if defined(DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION) ||     \
+    defined(ALLOW_FORMAT_DUMPS)
+bool SQLCheckLineIsSafe(const char *pszLine);
+#endif
+
 #endif  // OGR_SQLITEUTILITY_H_INCLUDED

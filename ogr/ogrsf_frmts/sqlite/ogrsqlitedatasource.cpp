@@ -2394,87 +2394,9 @@ bool OGRSQLiteDataSource::Open(GDALOpenInfo *poOpenInfo)
                     if (STARTS_WITH(pszLine, "--"))
                         continue;
 
-                    // Reject a few words tat might have security implications
-                    // Basically we just want to allow CREATE TABLE and INSERT
-                    // INTO
-                    if (CPLString(pszLine).ifind("ATTACH") !=
-                            std::string::npos ||
-                        CPLString(pszLine).ifind("DETACH") !=
-                            std::string::npos ||
-                        CPLString(pszLine).ifind("PRAGMA") !=
-                            std::string::npos ||
-                        CPLString(pszLine).ifind("SELECT") !=
-                            std::string::npos ||
-                        CPLString(pszLine).ifind("UPDATE") !=
-                            std::string::npos ||
-                        CPLString(pszLine).ifind("REPLACE") !=
-                            std::string::npos ||
-                        CPLString(pszLine).ifind("DELETE") !=
-                            std::string::npos ||
-                        CPLString(pszLine).ifind("DROP") != std::string::npos ||
-                        CPLString(pszLine).ifind("ALTER") !=
-                            std::string::npos ||
-                        CPLString(pszLine).ifind("VIRTUAL") !=
-                            std::string::npos)
-                    {
-                        bool bOK = false;
-                        if (EQUAL(pszLine, "CREATE VIRTUAL TABLE SpatialIndex "
-                                           "USING VirtualSpatialIndex();"))
-                        {
-                            bOK = true;
-                        }
-                        // Accept creation of spatial index
-                        else if (STARTS_WITH_CI(pszLine,
-                                                "CREATE VIRTUAL TABLE "))
-                        {
-                            const char *pszStr =
-                                pszLine + strlen("CREATE VIRTUAL TABLE ");
-                            if (*pszStr == '"')
-                                pszStr++;
-                            while ((*pszStr >= 'a' && *pszStr <= 'z') ||
-                                   (*pszStr >= 'A' && *pszStr <= 'Z') ||
-                                   *pszStr == '_')
-                            {
-                                pszStr++;
-                            }
-                            if (*pszStr == '"')
-                                pszStr++;
-                            if (EQUAL(pszStr, " USING rtree(pkid, xmin, xmax, "
-                                              "ymin, ymax);"))
-                            {
-                                bOK = true;
-                            }
-                        }
-                        // Accept INSERT INTO idx_byte_metadata_geometry SELECT
-                        // rowid, ST_MinX(geometry), ST_MaxX(geometry),
-                        // ST_MinY(geometry), ST_MaxY(geometry) FROM
-                        // byte_metadata;
-                        else if (STARTS_WITH_CI(pszLine, "INSERT INTO idx_") &&
-                                 CPLString(pszLine).ifind("SELECT") !=
-                                     std::string::npos)
-                        {
-                            char **papszTokens =
-                                CSLTokenizeString2(pszLine, " (),,", 0);
-                            if (CSLCount(papszTokens) == 15 &&
-                                EQUAL(papszTokens[3], "SELECT") &&
-                                EQUAL(papszTokens[5], "ST_MinX") &&
-                                EQUAL(papszTokens[7], "ST_MaxX") &&
-                                EQUAL(papszTokens[9], "ST_MinY") &&
-                                EQUAL(papszTokens[11], "ST_MaxY") &&
-                                EQUAL(papszTokens[13], "FROM"))
-                            {
-                                bOK = true;
-                            }
-                            CSLDestroy(papszTokens);
-                        }
+                    if (!SQLCheckLineIsSafe(pszLine))
+                        return false;
 
-                        if (!bOK)
-                        {
-                            CPLError(CE_Failure, CPLE_NotSupported,
-                                     "Rejected statement: %s", pszLine);
-                            return false;
-                        }
-                    }
                     char *pszErrMsg = nullptr;
                     if (sqlite3_exec(hDB, pszLine, nullptr, nullptr,
                                      &pszErrMsg) != SQLITE_OK)

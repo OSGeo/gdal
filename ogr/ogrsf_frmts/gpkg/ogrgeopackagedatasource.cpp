@@ -1451,68 +1451,9 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
             if (STARTS_WITH(pszLine, "--"))
                 continue;
 
-            // Reject a few words tat might have security implications
-            // Basically we just want to allow CREATE TABLE and INSERT INTO
-            if (CPLString(pszLine).ifind("ATTACH") != std::string::npos ||
-                CPLString(pszLine).ifind("DETACH") != std::string::npos ||
-                CPLString(pszLine).ifind("PRAGMA") != std::string::npos ||
-                CPLString(pszLine).ifind("SELECT") != std::string::npos ||
-                CPLString(pszLine).ifind("UPDATE") != std::string::npos ||
-                CPLString(pszLine).ifind("REPLACE") != std::string::npos ||
-                CPLString(pszLine).ifind("DELETE") != std::string::npos ||
-                CPLString(pszLine).ifind("DROP") != std::string::npos ||
-                CPLString(pszLine).ifind("ALTER") != std::string::npos ||
-                CPLString(pszLine).ifind("VIRTUAL") != std::string::npos)
-            {
-                bool bOK = false;
-                // Accept creation of spatial index
-                if (STARTS_WITH_CI(pszLine, "CREATE VIRTUAL TABLE "))
-                {
-                    const char *pszStr =
-                        pszLine + strlen("CREATE VIRTUAL TABLE ");
-                    if (*pszStr == '"')
-                        pszStr++;
-                    while ((*pszStr >= 'a' && *pszStr <= 'z') ||
-                           (*pszStr >= 'A' && *pszStr <= 'Z') || *pszStr == '_')
-                    {
-                        pszStr++;
-                    }
-                    if (*pszStr == '"')
-                        pszStr++;
-                    if (EQUAL(pszStr,
-                              " USING rtree(id, minx, maxx, miny, maxy);"))
-                    {
-                        bOK = true;
-                    }
-                }
-                // Accept INSERT INTO rtree_poly_geom SELECT fid, ST_MinX(geom),
-                // ST_MaxX(geom), ST_MinY(geom), ST_MaxY(geom) FROM poly;
-                else if (STARTS_WITH_CI(pszLine, "INSERT INTO rtree_") &&
-                         CPLString(pszLine).ifind("SELECT") !=
-                             std::string::npos)
-                {
-                    char **papszTokens =
-                        CSLTokenizeString2(pszLine, " (),,", 0);
-                    if (CSLCount(papszTokens) == 15 &&
-                        EQUAL(papszTokens[3], "SELECT") &&
-                        EQUAL(papszTokens[5], "ST_MinX") &&
-                        EQUAL(papszTokens[7], "ST_MaxX") &&
-                        EQUAL(papszTokens[9], "ST_MinY") &&
-                        EQUAL(papszTokens[11], "ST_MaxY") &&
-                        EQUAL(papszTokens[13], "FROM"))
-                    {
-                        bOK = TRUE;
-                    }
-                    CSLDestroy(papszTokens);
-                }
+            if (!SQLCheckLineIsSafe(pszLine))
+                return false;
 
-                if (!bOK)
-                {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "Rejected statement: %s", pszLine);
-                    return FALSE;
-                }
-            }
             char *pszErrMsg = nullptr;
             if (sqlite3_exec(hDB, pszLine, nullptr, nullptr, &pszErrMsg) !=
                 SQLITE_OK)
