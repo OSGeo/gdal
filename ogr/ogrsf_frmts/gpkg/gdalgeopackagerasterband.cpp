@@ -3669,7 +3669,7 @@ int GDALGeoPackageRasterBand::GetOverviewCount()
 {
     GDALGeoPackageDataset *poGDS =
         cpl::down_cast<GDALGeoPackageDataset *>(poDS);
-    return poGDS->m_nOverviewCount;
+    return static_cast<int>(poGDS->m_apoOverviewDS.size());
 }
 
 /************************************************************************/
@@ -3680,9 +3680,9 @@ GDALRasterBand *GDALGeoPackageRasterBand::GetOverview(int nIdx)
 {
     GDALGeoPackageDataset *poGDS =
         reinterpret_cast<GDALGeoPackageDataset *>(poDS);
-    if (nIdx < 0 || nIdx >= poGDS->m_nOverviewCount)
+    if (nIdx < 0 || nIdx >= static_cast<int>(poGDS->m_apoOverviewDS.size()))
         return nullptr;
-    return poGDS->m_papoOverviewDS[nIdx]->GetRasterBand(nBand);
+    return poGDS->m_apoOverviewDS[nIdx]->GetRasterBand(nBand);
 }
 
 /************************************************************************/
