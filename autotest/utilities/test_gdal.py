@@ -88,6 +88,19 @@ def test_gdal_failure_during_finalize(gdal_path):
     assert "ret code = 1" in err
 
 
+def test_gdal_config_not_serialized_to_gdalg(tmp_path, gdal_path):
+
+    out_filename = str(tmp_path / "out.gdalg.json")
+    gdaltest.runexternal(
+        f"{gdal_path} raster reproject --config FOO=BAR ../gcore/data/byte.tif {out_filename}"
+    )
+    # Test that configuration option is not serialized
+    assert json.loads(gdal.VSIFile(out_filename, "rb").read()) == {
+        "command_line": "gdal raster reproject --input ../gcore/data/byte.tif --output-format stream --output streamed_dataset",
+        "type": "gdal_streamed_alg",
+    }
+
+
 def test_gdal_completion(gdal_path):
 
     out = gdaltest.runexternal(f"{gdal_path} completion gdal -").split(" ")
