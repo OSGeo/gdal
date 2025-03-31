@@ -531,7 +531,7 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
 }
 
 /************************************************************************/
-/*          GDALRasterEditAlgorithm::GDALRasterEditAlgorithm()          */
+/*          GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm()          */
 /************************************************************************/
 
 GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
@@ -540,6 +540,7 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
     AddProgressArg();
 
     AddArg(GDAL_ARG_NAME_INPUT, 'i', _("Input raster datasets"), &m_inputs)
+        .SetPositional()
         .SetMinCount(1)
         .SetAutoOpenDataset(false)
         .SetMetaVar("INPUTS");
@@ -555,7 +556,9 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
     AddArg("no-check-extent", 0, _("Do not check consistency of input extents"),
            &m_NoCheckExtent);
 
-    AddArg("calc", 0, _("Expression(s) to evaluate"), &m_expr).SetMinCount(1);
+    AddArg("calc", 0, _("Expression(s) to evaluate"), &m_expr)
+        .SetRequired()
+        .SetMinCount(1);
 }
 
 /************************************************************************/
