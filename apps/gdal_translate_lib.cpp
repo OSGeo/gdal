@@ -2632,6 +2632,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     if (EQUAL(psOptions->osFormat.c_str(), "VRT") &&
         (psOptions->aosCreateOptions.empty() ||
+         (psOptions->aosCreateOptions.size() == 1 &&
+          psOptions->aosCreateOptions.FetchNameValue("BLOCKXSIZE")) ||
+         (psOptions->aosCreateOptions.size() == 1 &&
+          psOptions->aosCreateOptions.FetchNameValue("BLOCKYSIZE")) ||
          (psOptions->aosCreateOptions.size() == 2 &&
           psOptions->aosCreateOptions.FetchNameValue("BLOCKXSIZE") &&
           psOptions->aosCreateOptions.FetchNameValue("BLOCKYSIZE"))))

@@ -32,8 +32,10 @@
 
 #define VRT_PROTOCOL_PREFIX "vrt://"
 
+constexpr int DEFAULT_BLOCK_SIZE = 128;
+
 /************************************************************************/
-/*                            VRTDataset()                             */
+/*                            VRTDataset()                              */
 /************************************************************************/
 
 VRTDataset::VRTDataset(int nXSize, int nYSize, int nBlockXSize, int nBlockYSize)
@@ -48,12 +50,24 @@ VRTDataset::VRTDataset(int nXSize, int nYSize, int nBlockXSize, int nBlockYSize)
     m_adfGeoTransform[4] = 0.0;
     m_adfGeoTransform[5] = 1.0;
     m_bBlockSizeSpecified = nBlockXSize > 0 && nBlockYSize > 0;
-    m_nBlockXSize = nBlockXSize > 0 ? nBlockXSize : std::min(128, nXSize);
-    m_nBlockYSize = nBlockYSize > 0 ? nBlockYSize : std::min(128, nYSize);
+    m_nBlockXSize =
+        nBlockXSize > 0 ? nBlockXSize : std::min(DEFAULT_BLOCK_SIZE, nXSize);
+    m_nBlockYSize =
+        nBlockYSize > 0 ? nBlockYSize : std::min(DEFAULT_BLOCK_SIZE, nYSize);
 
     GDALRegister_VRT();
 
     poDriver = static_cast<GDALDriver *>(GDALGetDriverByName("VRT"));
+}
+
+/************************************************************************/
+/*                          IsDefaultBlockSize()                        */
+/************************************************************************/
+
+/* static */ bool VRTDataset::IsDefaultBlockSize(int nBlockSize, int nDimension)
+{
+    return nBlockSize == DEFAULT_BLOCK_SIZE ||
+           (nBlockSize < DEFAULT_BLOCK_SIZE && nBlockSize == nDimension);
 }
 
 /*! @endcond */
@@ -2720,7 +2734,7 @@ void VRTDataset::BuildVirtualOverviews()
         }
         int nOvrXSize = static_cast<int>(0.5 + nRasterXSize * dfXRatio);
         int nOvrYSize = static_cast<int>(0.5 + nRasterYSize * dfYRatio);
-        if (nOvrXSize < 128 || nOvrYSize < 128)
+        if (nOvrXSize < DEFAULT_BLOCK_SIZE || nOvrYSize < DEFAULT_BLOCK_SIZE)
             break;
 
         // Look for a source overview whose size is very close to the
@@ -2736,7 +2750,16 @@ void VRTDataset::BuildVirtualOverviews()
             }
         }
 
-        VRTDataset *poOvrVDS = new VRTDataset(nOvrXSize, nOvrYSize);
+        int nBlockXSize = 0;
+        int nBlockYSize = 0;
+        l_poVRTBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+        if (VRTDataset::IsDefaultBlockSize(nBlockXSize, nRasterXSize))
+            nBlockXSize = 0;
+        if (VRTDataset::IsDefaultBlockSize(nBlockYSize, nRasterYSize))
+            nBlockYSize = 0;
+
+        VRTDataset *poOvrVDS =
+            new VRTDataset(nOvrXSize, nOvrYSize, nBlockXSize, nBlockYSize);
         m_apoOverviews.push_back(poOvrVDS);
 
         const auto CreateOverviewBand =
@@ -2822,6 +2845,20 @@ bool VRTDataset::AddVirtualOverview(int nOvFactor, const char *pszResampling)
     argv.AddString(CPLSPrintf("%d", nRasterYSize / nOvFactor));
     argv.AddString("-r");
     argv.AddString(pszResampling);
+
+    int nBlockXSize = 0;
+    int nBlockYSize = 0;
+    GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    if (!VRTDataset::IsDefaultBlockSize(nBlockXSize, nRasterXSize))
+    {
+        argv.AddString("-co");
+        argv.AddString(CPLSPrintf("BLOCKXSIZE=%d", nBlockXSize));
+    }
+    if (!VRTDataset::IsDefaultBlockSize(nBlockYSize, nRasterYSize))
+    {
+        argv.AddString("-co");
+        argv.AddString(CPLSPrintf("BLOCKYSIZE=%d", nBlockYSize));
+    }
 
     GDALTranslateOptions *psOptions =
         GDALTranslateOptionsNew(argv.List(), nullptr);
