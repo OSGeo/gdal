@@ -22,3 +22,8 @@ Available sub-commands
 
 - :ref:`gdal_vector_geom_set_type_subsubcommand`
 - :ref:`gdal_vector_geom_explode_collections_subsubcommand`
+- :ref:`gdal_vector_geom_make_valid_subsubcommand`
+- :ref:`gdal_vector_geom_segmentize_subsubcommand`
+- :ref:`gdal_vector_geom_simplify_subsubcommand`
+- :ref:`gdal_vector_geom_buffer_subsubcommand`
+- :ref:`gdal_vector_geom_swap_xy_subsubcommand`

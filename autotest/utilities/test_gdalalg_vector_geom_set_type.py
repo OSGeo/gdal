@@ -320,3 +320,25 @@ def test_gdalalg_vector_geom_set_type_type_autocomplete():
         f"{gdal_path} completion gdal vector geom set-type --geometry-type GEOMETRYC"
     ).split(" ")
     assert len(out) == 4
+
+
+@pytest.mark.require_driver("GDALG")
+def test_gdalalg_vector_geom_set_type_test_ogrsf(tmp_path):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    gdalg_filename = tmp_path / "tmp.gdalg.json"
+    open(gdalg_filename, "wb").write(
+        b'{"type": "gdal_streamed_alg","command_line": "gdal vector geom set-type --geometry-type=MULTIPOLYGON ../ogr/data/poly.shp --output-format=stream foo","relative_paths_relative_to_this_file":false}'
+    )
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {gdalg_filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+    assert "FAILURE" not in ret

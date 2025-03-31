@@ -46,9 +46,17 @@ Details for options can be found in :ref:`gdal_vector_edit_subcommand`.
 
 Details for options can be found in :ref:`gdal_vector_filter_subcommand`.
 
+* geom
+
+.. program-output:: gdal vector pipeline --help-doc=geom
+
+Details for options can be found in :ref:`gdal_vector_geom_subcommand`.
+
 * reproject
 
 .. program-output:: gdal vector pipeline --help-doc=reproject
+
+Details for options can be found in :ref:`gdal_vector_reproject_subcommand`.
 
 * select
 

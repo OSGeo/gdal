@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_GEOM_EXPLODE_COLLECTIONS_INCLUDED
 #define GDALALG_VECTOR_GEOM_EXPLODE_COLLECTIONS_INCLUDED
 
-#include "gdalalg_vector_pipeline.h"
+#include "gdalalg_vector_geom.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,8 +21,8 @@
 /*              GDALVectorGeomExplodeCollectionsAlgorithm               */
 /************************************************************************/
 
-class GDALVectorGeomExplodeCollectionsAlgorithm /* non final */
-    : public GDALVectorPipelineStepAlgorithm
+class GDALVectorGeomExplodeCollectionsAlgorithm final
+    : public GDALVectorGeomAbstractAlgorithm
 {
   public:
     static constexpr const char *NAME = "explode-collections";
@@ -36,9 +36,8 @@ class GDALVectorGeomExplodeCollectionsAlgorithm /* non final */
         return {};
     }
 
-    struct Options
+    struct Options : public GDALVectorGeomAbstractAlgorithm::OptionsBase
     {
-        std::string m_geomField{};
         std::string m_type{};
         bool m_skip = false;
 
@@ -46,29 +45,15 @@ class GDALVectorGeomExplodeCollectionsAlgorithm /* non final */
         OGRwkbGeometryType m_eType = wkbUnknown;
     };
 
-    explicit GDALVectorGeomExplodeCollectionsAlgorithm(
-        bool standaloneStep = false);
+    std::unique_ptr<OGRLayerWithTranslateFeature>
+    CreateAlgLayer(OGRLayer &srcLayer) override;
+
+    explicit GDALVectorGeomExplodeCollectionsAlgorithm(bool standaloneStep);
 
   private:
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
-    std::string m_activeLayer{};
     Options m_opts{};
-};
-
-/************************************************************************/
-/*            GDALVectorGeomExplodeCollectionsAlgorithmStandalone       */
-/************************************************************************/
-
-class GDALVectorGeomExplodeCollectionsAlgorithmStandalone final
-    : public GDALVectorGeomExplodeCollectionsAlgorithm
-{
-  public:
-    GDALVectorGeomExplodeCollectionsAlgorithmStandalone()
-        : GDALVectorGeomExplodeCollectionsAlgorithm(
-              /* standaloneStep = */ true)
-    {
-    }
 };
 
 //! @endcond

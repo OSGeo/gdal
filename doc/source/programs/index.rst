@@ -62,6 +62,11 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vector_geom
    gdal_vector_geom_set_type
    gdal_vector_geom_explode_collections
+   gdal_vector_geom_make_valid
+   gdal_vector_geom_segmentize
+   gdal_vector_geom_simplify
+   gdal_vector_geom_buffer
+   gdal_vector_geom_swap_xy
    gdal_vector_pipeline
    gdal_vector_rasterize
    gdal_vector_reproject
@@ -106,6 +111,11 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vector_geom_subcommand`: Geometry operations on a vector dataset
     - :ref:`gdal_vector_geom_set_type_subsubcommand`: Modify the geometry type of a vector dataset
     - :ref:`gdal_vector_geom_explode_collections_subsubcommand`: Explode geometries of type collection of a vector dataset
+    - :ref:`gdal_vector_geom_make_valid_subsubcommand`: Fix validity of geometries of a vector dataset
+    - :ref:`gdal_vector_geom_segmentize_subsubcommand`: Segmentize geometries of a vector dataset
+    - :ref:`gdal_vector_geom_simplify_subsubcommand`: Simplify geometries of a vector dataset
+    - :ref:`gdal_vector_geom_buffer_subsubcommand`: Compute a buffer around geometries of a vector dataset
+    - :ref:`gdal_vector_geom_swap_xy_subsubcommand`: Swap X and Y coordinates of geometries of a vector dataset
     - :ref:`gdal_vector_convert_subcommand`: Convert a vector dataset
     - :ref:`gdal_vector_pipeline_subcommand`: Process a vector dataset
     - :ref:`gdal_vector_reproject_subcommand`: Reproject a vector dataset

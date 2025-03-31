@@ -743,7 +743,8 @@ OGRLayer *GDALVectorPipelineOutputDataset::GetLayer(int idx)
 
 int GDALVectorPipelineOutputDataset::TestCapability(const char *pszCap)
 {
-    if (EQUAL(pszCap, ODsCRandomLayerRead))
+    if (EQUAL(pszCap, ODsCRandomLayerRead) ||
+        EQUAL(pszCap, ODsCMeasuredGeometries) || EQUAL(pszCap, ODsCZGeometries))
     {
         return m_srcDS.TestCapability(pszCap);
     }
