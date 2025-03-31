@@ -3942,6 +3942,37 @@ def test_ogr_geojson_starting_with_geometry_coordinates(tmp_vsimem):
 
 
 ###############################################################################
+# Test fix for https://github.com/qgis/QGIS/issues/61266
+
+
+@pytest.mark.parametrize(
+    "start,end",
+    [
+        ('{"type":"Point","coordinates":[', "2,49]}"),
+        ('{"type":"LineString","coordinates":[[', "2,49],[3,50]]}"),
+        ('{"type":"Polygon","coordinates":[[[', "0,0],[0,1],[1,1],[0,0]]]}"),
+        ('{"type":"MultiPoint","coordinates":[[', "2,49]]}"),
+        ('{"type":"MultiLineString","coordinates":[[[', "2,49],[3,50]]]}"),
+        ('{"type":"MultiPolygon","coordinates":[[[[', "0,0],[0,1],[1,1],[0,0]]]]}"),
+        ('{"type":"GeometryCollection","geometries":[', "]}"),
+    ],
+)
+def test_ogr_geojson_starting_with_geometry_type(tmp_vsimem, start, end):
+
+    tmpfilename = tmp_vsimem / "temp.json"
+    gdal.FileFromMemBuffer(
+        tmpfilename,
+        '{ "geometry":'
+        + start
+        + (" " * 10000)
+        + end
+        + ', "type":"Feature","properties":{}}',
+    )
+    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR)
+    assert ds is not None
+
+
+###############################################################################
 # Test serialization of Float32 values
 
 

@@ -247,7 +247,24 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
     // See https://github.com/OSGeo/gdal/issues/2720
     if (osWithoutSpace.find("{\"coordinates\":[") == 0 ||
         // and https://github.com/OSGeo/gdal/issues/2787
-        osWithoutSpace.find("{\"geometry\":{\"coordinates\":[") == 0)
+        osWithoutSpace.find("{\"geometry\":{\"coordinates\":[") == 0 ||
+        // and https://github.com/qgis/QGIS/issues/61266
+        osWithoutSpace.find(
+            "{\"geometry\":{\"type\":\"Point\",\"coordinates\":[") == 0 ||
+        osWithoutSpace.find(
+            "{\"geometry\":{\"type\":\"LineString\",\"coordinates\":[") == 0 ||
+        osWithoutSpace.find(
+            "{\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[") == 0 ||
+        osWithoutSpace.find(
+            "{\"geometry\":{\"type\":\"MultiPoint\",\"coordinates\":[") == 0 ||
+        osWithoutSpace.find(
+            "{\"geometry\":{\"type\":\"MultiLineString\",\"coordinates\":[") ==
+            0 ||
+        osWithoutSpace.find(
+            "{\"geometry\":{\"type\":\"MultiPolygon\",\"coordinates\":[") ==
+            0 ||
+        osWithoutSpace.find("{\"geometry\":{\"type\":\"GeometryCollection\","
+                            "\"geometries\":[") == 0)
     {
         return true;
     }
