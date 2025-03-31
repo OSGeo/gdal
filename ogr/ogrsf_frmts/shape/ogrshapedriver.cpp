@@ -131,26 +131,24 @@ static GDALDataset *OGRShapeDriverOpen(GDALOpenInfo *poOpenInfo)
         if (OGRShapeDriverIdentify(&oOpenInfo) == FALSE)
             return nullptr;
         oOpenInfo.eAccess = poOpenInfo->eAccess;
-        OGRShapeDataSource *poDS = new OGRShapeDataSource();
+        auto poDS = std::make_unique<OGRShapeDataSource>();
 
         if (!poDS->OpenZip(&oOpenInfo, poOpenInfo->pszFilename))
         {
-            delete poDS;
             return nullptr;
         }
 
-        return poDS;
+        return poDS.release();
     }
 
-    OGRShapeDataSource *poDS = new OGRShapeDataSource();
+    auto poDS = std::make_unique<OGRShapeDataSource>();
 
     if (!poDS->Open(poOpenInfo, true))
     {
-        delete poDS;
         return nullptr;
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -163,7 +161,7 @@ static GDALDataset *OGRShapeDriverCreate(const char *pszName, int /* nBands */,
                                          char ** /* papszOptions */)
 {
     bool bSingleNewFile = false;
-    CPLString osExt(CPLGetExtensionSafe(pszName));
+    const CPLString osExt(CPLGetExtensionSafe(pszName));
 
     /* -------------------------------------------------------------------- */
     /*      Is the target a valid existing directory?                       */
@@ -193,15 +191,14 @@ static GDALDataset *OGRShapeDriverCreate(const char *pszName, int /* nBands */,
              (EQUAL(osExt, "zip") && (CPLString(pszName).endsWith(".shp.zip") ||
                                       CPLString(pszName).endsWith(".SHP.ZIP"))))
     {
-        OGRShapeDataSource *poDS = new OGRShapeDataSource();
+        auto poDS = std::make_unique<OGRShapeDataSource>();
 
         if (!poDS->CreateZip(pszName))
         {
-            delete poDS;
             return nullptr;
         }
 
-        return poDS;
+        return poDS.release();
     }
 
     /* -------------------------------------------------------------------- */
@@ -223,16 +220,15 @@ static GDALDataset *OGRShapeDriverCreate(const char *pszName, int /* nBands */,
     /* -------------------------------------------------------------------- */
     /*      Return a new OGRDataSource()                                    */
     /* -------------------------------------------------------------------- */
-    OGRShapeDataSource *poDS = new OGRShapeDataSource();
+    auto poDS = std::make_unique<OGRShapeDataSource>();
 
     GDALOpenInfo oOpenInfo(pszName, GA_Update);
     if (!poDS->Open(&oOpenInfo, false, bSingleNewFile))
     {
-        delete poDS;
         return nullptr;
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -253,7 +249,7 @@ static CPLErr OGRShapeDriverDelete(const char *pszDataSource)
         return CE_Failure;
     }
 
-    CPLString osExt(CPLGetExtensionSafe(pszDataSource));
+    const CPLString osExt(CPLGetExtensionSafe(pszDataSource));
     if (VSI_ISREG(sStatBuf.st_mode) &&
         (EQUAL(osExt, "shz") ||
          (EQUAL(osExt, "zip") &&
@@ -280,23 +276,17 @@ static CPLErr OGRShapeDriverDelete(const char *pszDataSource)
     }
     else if (VSI_ISDIR(sStatBuf.st_mode))
     {
-        char **papszDirEntries = VSIReadDir(pszDataSource);
+        const CPLStringList aosDirEntries(VSIReadDir(pszDataSource));
 
-        for (int iFile = 0;
-             papszDirEntries != nullptr && papszDirEntries[iFile] != nullptr;
-             iFile++)
+        for (const char *pszEntry : cpl::Iterate(aosDirEntries))
         {
-            if (CSLFindString(
-                    papszExtensions,
-                    CPLGetExtensionSafe(papszDirEntries[iFile]).c_str()) != -1)
+            if (CSLFindString(papszExtensions,
+                              CPLGetExtensionSafe(pszEntry).c_str()) != -1)
             {
-                VSIUnlink(CPLFormFilenameSafe(pszDataSource,
-                                              papszDirEntries[iFile], nullptr)
+                VSIUnlink(CPLFormFilenameSafe(pszDataSource, pszEntry, nullptr)
                               .c_str());
             }
         }
-
-        CSLDestroy(papszDirEntries);
 
         VSIRmdir(pszDataSource);
     }
