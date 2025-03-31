@@ -281,10 +281,10 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags)
         CPLFree(dbuff);  // Safe to call with NULL
         return nullptr;
     }
-    if (dst.size > src.size)
+    if (dst.size > extrasize)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "DeflateBlock(): dst.size > src.size");
+                 "DeflateBlock(): dst.size > extrasize");
         CPLFree(dbuff);  // Safe to call with NULL
         return nullptr;
     }
