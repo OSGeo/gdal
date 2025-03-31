@@ -13,6 +13,7 @@
 ###############################################################################
 
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -176,7 +177,7 @@ def test_sieve_5():
 
 def test_sieve_6():
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     # Try 3002. Should run in less than 10 seconds

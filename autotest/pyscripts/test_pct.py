@@ -104,7 +104,7 @@ def test_rgb2pct_1(rgb2pct1_tif):
 
 
 def test_pct2rgb_help(script_path):
-    gdal_array = pytest.importorskip("osgeo.gdal_array")
+    gdal_array = gdaltest.importorskip_gdal_array()
     try:
         gdal_array.BandRasterIONumPy
     except AttributeError:
@@ -120,7 +120,7 @@ def test_pct2rgb_help(script_path):
 
 
 def test_pct2rgb_version(script_path):
-    gdal_array = pytest.importorskip("osgeo.gdal_array")
+    gdal_array = gdaltest.importorskip_gdal_array()
     try:
         gdal_array.BandRasterIONumPy
     except AttributeError:
@@ -136,7 +136,7 @@ def test_pct2rgb_version(script_path):
 
 
 def test_pct2rgb_1(script_path, tmp_path, rgb2pct1_tif):
-    gdal_array = pytest.importorskip("osgeo.gdal_array")
+    gdal_array = gdaltest.importorskip_gdal_array()
     try:
         gdal_array.BandRasterIONumPy
     except AttributeError:
@@ -165,7 +165,7 @@ def test_pct2rgb_1(script_path, tmp_path, rgb2pct1_tif):
 
 
 def test_pct2rgb_no_color_table(script_path, tmp_path, rgb2pct1_tif):
-    gdal_array = pytest.importorskip("osgeo.gdal_array")
+    gdal_array = gdaltest.importorskip_gdal_array()
     try:
         gdal_array.BandRasterIONumPy
     except AttributeError:
@@ -259,7 +259,7 @@ def test_rgb2pct_3(script_path, tmp_path, rgb2pct2_tif):
 
 @pytest.mark.require_driver("HFA")
 def test_pct2rgb_4(script_path, tmp_path):
-    gdal_array = pytest.importorskip("osgeo.gdal_array")
+    gdal_array = gdaltest.importorskip_gdal_array()
     try:
         gdal_array.BandRasterIONumPy
     except AttributeError:

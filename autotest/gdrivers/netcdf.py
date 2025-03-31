@@ -2920,7 +2920,7 @@ def test_netcdf_66(tmp_path):
 
 def test_netcdf_67():
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     # disable bottom-up mode to use the real file's blocks size

@@ -850,7 +850,7 @@ def test_lcp_21():
 
 def test_lcp_22():
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     mem_drv = gdal.GetDriverByName("MEM")

@@ -469,7 +469,7 @@ def test_ogr_adbc_test_ogrsf_geoparquet(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL):
 
 
 def test_ogr_adbc_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     if not _has_libduckdb():

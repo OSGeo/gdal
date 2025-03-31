@@ -1835,7 +1835,7 @@ def test_ogr_parquet_write_crs_without_id_in_datum_ensemble_members():
 
 
 def test_ogr_parquet_arrow_stream_numpy():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     ds = ogr.Open("data/parquet/test.parquet")
@@ -2040,7 +2040,7 @@ def test_ogr_parquet_arrow_stream_empty_file():
 
 
 def test_ogr_parquet_arrow_stream_numpy_with_fid_column():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     filename = "/vsimem/test_ogr_parquet_arrow_stream_numpy_with_fid_column.parquet"
@@ -2070,7 +2070,7 @@ def test_ogr_parquet_arrow_stream_numpy_with_fid_column():
 
 
 def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
     import datetime
 
@@ -2185,7 +2185,7 @@ def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
 
 
 def test_ogr_parquet_arrow_stream_numpy_detailed_spatial_filter(tmp_vsimem):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     filename = str(
@@ -2331,7 +2331,7 @@ def test_ogr_parquet_arrow_stream_numpy_detailed_spatial_filter(tmp_vsimem):
     ],
 )
 def test_ogr_parquet_arrow_stream_numpy_fast_attribute_filter(filter):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     ds = ogr.Open("data/parquet/test.parquet")
@@ -2359,7 +2359,7 @@ def test_ogr_parquet_arrow_stream_numpy_fast_attribute_filter(filter):
 
 
 def test_ogr_parquet_arrow_stream_numpy_attribute_filter_on_fid_without_fid_column():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     ds = ogr.Open("data/parquet/test.parquet")
@@ -2406,7 +2406,7 @@ def test_ogr_parquet_arrow_stream_numpy_attribute_filter_on_fid_without_fid_colu
 
 
 def test_ogr_parquet_arrow_stream_numpy_attribute_filter_on_fid_with_fid_column():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     filename = "/vsimem/test_ogr_parquet_arrow_stream_numpy_attribute_filter_on_fid_with_fid_column.parquet"
@@ -2578,7 +2578,7 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_on_decimal128():
 
 
 def test_ogr_parquet_arrow_stream_numpy_fast_spatial_and_attribute_filter():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     ds = ogr.Open("data/parquet/test.parquet")
@@ -2686,7 +2686,7 @@ def test_ogr_parquet_field_alternative_name_comment():
 def test_ogr_parquet_read_wkt_as_wkt_arrow_array(
     nullable_geom, ignore_geom_field, ignore_geom_before
 ):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     outfilename = "/vsimem/out.parquet"
@@ -2804,7 +2804,7 @@ def test_ogr_parquet_read_wkt_as_wkt_arrow_array(
 
 
 def test_ogr_parquet_read_wkt_with_dict_as_wkt_arrow_array():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     ds = ogr.Open("data/parquet/wkt_with_dict.parquet")
@@ -4200,7 +4200,7 @@ def test_ogr_parquet_ogr2ogr_reprojection(tmp_vsimem):
 
 
 def test_ogr_parquet_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     with gdal.OpenEx(

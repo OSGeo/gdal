@@ -14,6 +14,7 @@
 ###############################################################################
 
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, osr
@@ -24,7 +25,7 @@ from osgeo import gdal, osr
 
 def test_transformgeoloc_1():
 
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     # Setup 2x2 geolocation arrays in a memory dataset with lat/long values.
