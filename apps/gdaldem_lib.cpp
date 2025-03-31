@@ -4104,11 +4104,6 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
             throw std::invalid_argument("Invalid value for -alt");
         }
 
-        if (psOptions->az <= 0)
-        {
-            throw std::invalid_argument("Invalid value for -az");
-        }
-
         if (psOptions->bMultiDirectional && argParser->is_used_globally("-az"))
         {
             throw std::invalid_argument(
