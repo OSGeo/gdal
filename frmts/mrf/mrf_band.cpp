@@ -281,13 +281,6 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags)
         CPLFree(dbuff);  // Safe to call with NULL
         return nullptr;
     }
-    if (dst.size > extrasize)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "DeflateBlock(): dst.size > extrasize");
-        CPLFree(dbuff);  // Safe to call with NULL
-        return nullptr;
-    }
 
     // source size is used to hold the output size
     src.size = dst.size;
