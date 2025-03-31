@@ -5452,8 +5452,8 @@ def test_zarr_driver_delete(tmp_vsimem, format):
 def test_zarr_driver_rename(tmp_vsimem, format):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = str(tmp_vsimem / "test.zarr")
-    newfilename = str(tmp_vsimem / "newtest.zarr")
+    filename = tmp_vsimem / "test.zarr"
+    newfilename = tmp_vsimem / "newtest.zarr"
 
     drv.Create(filename, 1, 1, options=["FORMAT=" + format])
 
@@ -5482,8 +5482,8 @@ def test_zarr_driver_rename(tmp_vsimem, format):
 def test_zarr_driver_copy_files(tmp_vsimem, format):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = str(tmp_vsimem / "test.zarr")
-    newfilename = str(tmp_vsimem / "newtest.zarr")
+    filename = tmp_vsimem / "test.zarr"
+    newfilename = tmp_vsimem / "newtest.zarr"
 
     drv.Create(filename, 1, 1, options=["FORMAT=" + format])
 
