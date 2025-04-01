@@ -48,6 +48,7 @@ jobs:
         SWIG_URL: "${{ matrix.SWIG_URL }}"
         APPVEYOR: true # to skip some tests
         PYTHON_VERSION: "3.10.5"
+        CMAKE_POLICY_VERSION_MINIMUM: "3.5"  # cf https://cmake.org/cmake/help/latest/variable/CMAKE_POLICY_VERSION_MINIMUM.html
 
     steps:
 
