@@ -31,6 +31,7 @@ Available sub-commands
 - :ref:`gdal_raster_pipeline_subcommand`
 - :ref:`gdal_raster_reproject_subcommand`
 - :ref:`gdal_raster_resize_subcommand`
+- :ref:`gdal_raster_roughness_subcommand`
 - :ref:`gdal_raster_scale_subcommand`
 - :ref:`gdal_raster_select_subcommand`
 - :ref:`gdal_raster_slope_subcommand`

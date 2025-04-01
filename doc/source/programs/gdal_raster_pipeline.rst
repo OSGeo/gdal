@@ -70,6 +70,12 @@ Details for options can be found in :ref:`gdal_raster_reproject_subcommand`.
 
 Details for options can be found in :ref:`gdal_raster_resize_subcommand`.
 
+* roughness
+
+.. program-output:: gdal raster pipeline --help-doc=roughness
+
+Details for options can be found in :ref:`gdal_raster_roughness_subcommand`.
+
 * scale
 
 .. program-output:: gdal raster pipeline --help-doc=scale

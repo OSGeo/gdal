@@ -26,6 +26,7 @@
 #include "gdalalg_raster_pipeline.h"
 #include "gdalalg_raster_reproject.h"
 #include "gdalalg_raster_resize.h"
+#include "gdalalg_raster_roughness.h"
 #include "gdalalg_raster_scale.h"
 #include "gdalalg_raster_select.h"
 #include "gdalalg_raster_slope.h"
@@ -58,6 +59,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterReprojectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterMosaicAlgorithm>();
         RegisterSubAlgorithm<GDALRasterResizeAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALRasterRoughnessAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterContourAlgorithm>();
         RegisterSubAlgorithm<GDALRasterScaleAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterSelectAlgorithmStandalone>();

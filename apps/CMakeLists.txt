@@ -30,6 +30,7 @@ add_library(
   gdalalg_raster_read.cpp
   gdalalg_raster_reproject.cpp
   gdalalg_raster_resize.cpp
+  gdalalg_raster_roughness.cpp
   gdalalg_raster_scale.cpp
   gdalalg_raster_select.cpp
   gdalalg_raster_slope.cpp

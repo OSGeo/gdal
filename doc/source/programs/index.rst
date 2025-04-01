@@ -51,6 +51,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_pipeline
    gdal_raster_reproject
    gdal_raster_resize
+   gdal_raster_roughness
    gdal_raster_scale
    gdal_raster_select
    gdal_raster_slope
@@ -104,6 +105,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_pipeline_subcommand`: Process a raster dataset
     - :ref:`gdal_raster_reproject_subcommand`: Reproject a raster dataset
     - :ref:`gdal_raster_resize_subcommand`: Resize a raster dataset without changing the georeferenced extents
+    - :ref:`gdal_raster_roughness_subcommand`: Generate a roughness map.
     - :ref:`gdal_raster_scale_subcommand`: Scale the values of the bands of a raster dataset.
     - :ref:`gdal_raster_select_subcommand`: Select a subset of bands from a raster dataset.
     - :ref:`gdal_raster_slope_subcommand`: Generate a slope map.
