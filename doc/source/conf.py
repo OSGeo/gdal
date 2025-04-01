@@ -378,6 +378,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_tri",
+        "gdal-raster-tri",
+        "Generate a Terrain Ruggedness Index (TRI) map",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_unscale",
         "gdal-raster-unscale",
         "Convert scaled values of a raster dataset into unscaled values",

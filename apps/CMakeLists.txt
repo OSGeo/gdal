@@ -36,6 +36,7 @@ add_library(
   gdalalg_raster_slope.cpp
   gdalalg_raster_stack.cpp
   gdalalg_raster_tpi.cpp
+  gdalalg_raster_tri.cpp
   gdalalg_raster_unscale.cpp
   gdalalg_raster_write.cpp
   gdalalg_vector.cpp

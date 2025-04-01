@@ -100,6 +100,12 @@ Details for options can be found in :ref:`gdal_raster_slope_subcommand`.
 
 Details for options can be found in :ref:`gdal_raster_tpi_subcommand`.
 
+* tri
+
+.. program-output:: gdal raster pipeline --help-doc=tri
+
+Details for options can be found in :ref:`gdal_raster_tri_subcommand`.
+
 * unscale
 
 .. program-output:: gdal raster pipeline --help-doc=unscale
@@ -170,3 +176,4 @@ Examples
 
 .. spelling:word-list::
     tpi
+    tri
