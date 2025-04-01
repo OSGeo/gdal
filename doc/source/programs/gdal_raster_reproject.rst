@@ -56,6 +56,8 @@ of an individual source pixel is determined by the product of the weights
 determined for its row and column; the diagonal Cartesian distance is not
 calculated.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+
 Standard options
 ++++++++++++++++
 

@@ -40,6 +40,8 @@ unmodified.
 
 This command is the reverse operation of :ref:`gdal_raster_scale_subcommand`.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+
 Standard options
 ++++++++++++++++
 

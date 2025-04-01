@@ -23,6 +23,8 @@ Description
 :program:`gdal raster select` can be used to select and re-order a subset of
 raster bands from a raster dataset.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+
 Standard options
 ++++++++++++++++
 

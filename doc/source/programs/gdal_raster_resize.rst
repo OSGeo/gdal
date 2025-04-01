@@ -23,6 +23,8 @@ Description
 :program:`gdal raster resize` can be used to resize a raster dataset without
 changing the georeferenced extents.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+
 Standard options
 ++++++++++++++++
 

@@ -40,6 +40,8 @@ it to a single band with :option:`--band` and leave values of other bands unmodi
 
 This command is the reverse operation of :ref:`gdal_raster_unscale_subcommand`.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+
 Standard options
 ++++++++++++++++
 
