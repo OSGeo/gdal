@@ -1724,7 +1724,7 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
      * argument is explicitly set, at the latest by the ValidateArguments()
      * method. If the provided function returns false, validation fails.
      * The validation function of a given argument can only check the value of
-     * this argumet, and cannot assume other arguments have already been set.
+     * this argument, and cannot assume other arguments have already been set.
      */
     GDALInConstructionAlgorithmArg &AddValidationAction(std::function<bool()> f)
     {
