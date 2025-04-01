@@ -291,6 +291,9 @@ constexpr const char *GAAC_ESOTERIC = "Esoteric";
  * "output-format" argument */
 constexpr const char *GAAMDI_REQUIRED_CAPABILITIES = "required_capabilities";
 
+/** Argument metadata item that applies to "output-format" argument */
+constexpr const char *GAAMDI_VRT_COMPATIBLE = "vrt_compatible";
+
 /** Name of the argument for an input dataset. */
 constexpr const char *GDAL_ARG_NAME_INPUT = "input";
 

@@ -269,6 +269,21 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
                     ".gdalg.json extension)");
                 return false;
             }
+            if (isVRTOutput)
+            {
+                for (const auto &step : m_steps)
+                {
+                    if (!step->m_outputVRTCompatible)
+                    {
+                        step->ReportError(
+                            CE_Failure, CPLE_NotSupported,
+                            "VRT output is not supported. Consider using the "
+                            "GDALG driver instead (files with .gdalg.json "
+                            "extension)");
+                        return false;
+                    }
+                }
+            }
         }
     }
 

@@ -82,17 +82,32 @@ void GDALRasterPipelineStepAlgorithm::AddInputArgs(
 
 void GDALRasterPipelineStepAlgorithm::AddOutputArgs(bool hiddenForCLI)
 {
-    AddOutputFormatArg(&m_format, /* bStreamAllowed = */ true,
-                       /* bGDALGAllowed = */ true)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_RASTER, GDAL_DCAP_CREATECOPY})
-        .SetHiddenForCLI(hiddenForCLI);
+    m_outputFormatArg =
+        &(AddOutputFormatArg(&m_format, /* bStreamAllowed = */ true,
+                             /* bGDALGAllowed = */ true)
+              .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
+                               {GDAL_DCAP_RASTER, GDAL_DCAP_CREATECOPY})
+              .SetHiddenForCLI(hiddenForCLI));
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER,
                         /* positionalAndRequired = */ !hiddenForCLI)
         .SetHiddenForCLI(hiddenForCLI);
     m_outputDataset.SetInputFlags(GADV_NAME | GADV_OBJECT);
     AddCreationOptionsArg(&m_creationOptions).SetHiddenForCLI(hiddenForCLI);
     AddOverwriteArg(&m_overwrite).SetHiddenForCLI(hiddenForCLI);
+}
+
+/************************************************************************/
+/*        GDALRasterPipelineStepAlgorithm::SetOutputVRTCompatible()     */
+/************************************************************************/
+
+void GDALRasterPipelineStepAlgorithm::SetOutputVRTCompatible(bool b)
+{
+    m_outputVRTCompatible = b;
+    if (m_outputFormatArg)
+    {
+        m_outputFormatArg->AddMetadataItem(GAAMDI_VRT_COMPATIBLE,
+                                           {b ? "true" : "false"});
+    }
 }
 
 /************************************************************************/
@@ -141,8 +156,24 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 {
                     ret = true;
                 }
+                else if (!m_outputVRTCompatible &&
+                         (EQUAL(m_format.c_str(), "VRT") ||
+                          (m_format.empty() &&
+                           EQUAL(CPLGetExtensionSafe(
+                                     writeAlg.m_outputDataset.GetName().c_str())
+                                     .c_str(),
+                                 "VRT"))))
+                {
+                    ReportError(
+                        CE_Failure, CPLE_NotSupported,
+                        "VRT output is not supported. Consider using the "
+                        "GDALG driver instead (files with .gdalg.json "
+                        "extension)");
+                    ret = false;
+                }
                 else
                 {
+                    writeAlg.m_outputVRTCompatible = m_outputVRTCompatible;
                     writeAlg.m_inputDataset.Set(
                         m_outputDataset.GetDatasetRef());
                     if (writeAlg.Run(pfnProgress, pProgressData))

@@ -46,6 +46,8 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 
     bool m_standaloneStep = false;
 
+    bool m_outputVRTCompatible = false;
+
     // Input arguments
     GDALArgDatasetValue m_inputDataset{};
     std::vector<std::string> m_openOptions{};

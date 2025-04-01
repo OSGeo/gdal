@@ -2269,6 +2269,51 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddOutputDatasetArg(
             .SetIsOutput(true);
     if (positionalAndRequired)
         arg.SetPositional().SetRequired();
+
+    AddValidationAction(
+        [this, &arg, pValue]()
+        {
+            auto outputFormatArg = GetArg(GDAL_ARG_NAME_OUTPUT_FORMAT);
+            if (outputFormatArg && outputFormatArg->GetType() == GAAT_STRING &&
+                (!outputFormatArg->IsExplicitlySet() ||
+                 outputFormatArg->Get<std::string>().empty()) &&
+                arg.IsExplicitlySet())
+            {
+                const auto vrtCompatible =
+                    outputFormatArg->GetMetadataItem(GAAMDI_VRT_COMPATIBLE);
+                if (vrtCompatible && !vrtCompatible->empty() &&
+                    vrtCompatible->front() == "false" &&
+                    EQUAL(
+                        CPLGetExtensionSafe(pValue->GetName().c_str()).c_str(),
+                        "VRT"))
+                {
+                    ReportError(
+                        CE_Failure, CPLE_NotSupported,
+                        "VRT output is not supported.%s",
+                        outputFormatArg->GetDescription().find("GDALG") !=
+                                std::string::npos
+                            ? " Consider using the GDALG driver instead (files "
+                              "with .gdalg.json extension)"
+                            : "");
+                    return false;
+                }
+                else if (pValue->GetName().size() > strlen(".gdalg.json") &&
+                         EQUAL(pValue->GetName()
+                                   .substr(pValue->GetName().size() -
+                                           strlen(".gdalg.json"))
+                                   .c_str(),
+                               ".gdalg.json") &&
+                         outputFormatArg->GetDescription().find("GDALG") ==
+                             std::string::npos)
+                {
+                    ReportError(CE_Failure, CPLE_NotSupported,
+                                "GDALG output is not supported");
+                    return false;
+                }
+            }
+            return true;
+        });
+
     return arg;
 }
 
@@ -2532,8 +2577,33 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
             if (bStreamAllowed && EQUAL(val.c_str(), "stream"))
                 return true;
 
-            if (bGDALGAllowed && EQUAL(val.c_str(), "GDALG"))
-                return true;
+            if (EQUAL(val.c_str(), "GDALG"))
+            {
+                if (bGDALGAllowed)
+                {
+                    return true;
+                }
+                else
+                {
+                    ReportError(CE_Failure, CPLE_NotSupported,
+                                "GDALG output is not supported.");
+                    return false;
+                }
+            }
+
+            const auto vrtCompatible =
+                arg.GetMetadataItem(GAAMDI_VRT_COMPATIBLE);
+            if (vrtCompatible && !vrtCompatible->empty() &&
+                vrtCompatible->front() == "false" && EQUAL(val.c_str(), "VRT"))
+            {
+                ReportError(CE_Failure, CPLE_NotSupported,
+                            "VRT output is not supported.%s",
+                            bGDALGAllowed
+                                ? " Consider using the GDALG driver instead "
+                                  "(files with .gdalg.json extension)."
+                                : "");
+                return false;
+            }
 
             auto hDriver = GDALGetDriverByName(val.c_str());
             if (!hDriver)
@@ -2606,12 +2676,19 @@ FormatAutoCompleteFunction(const GDALAlgorithmArg &arg,
 {
     std::vector<std::string> res;
     auto poDM = GetGDALDriverManager();
+    const auto vrtCompatible = arg.GetMetadataItem(GAAMDI_VRT_COMPATIBLE);
+    const auto caps = arg.GetMetadataItem(GAAMDI_REQUIRED_CAPABILITIES);
     for (int i = 0; i < poDM->GetDriverCount(); ++i)
     {
         auto poDriver = poDM->GetDriver(i);
 
-        const auto caps = arg.GetMetadataItem(GAAMDI_REQUIRED_CAPABILITIES);
-        if (caps)
+        if (vrtCompatible && !vrtCompatible->empty() &&
+            vrtCompatible->front() == "false" &&
+            EQUAL(poDriver->GetDescription(), "VRT"))
+        {
+            // do nothing
+        }
+        else if (caps)
         {
             bool ok = true;
             for (const std::string &cap : *caps)
