@@ -25,7 +25,7 @@
 #endif
 
 /************************************************************************/
-/*          GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()    */
+/*        GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()  */
 /************************************************************************/
 
 GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
@@ -34,7 +34,8 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
     AddProgressArg();
     AddOutputFormatArg(&m_outputFormat)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
+                         {GDAL_DCAP_RASTER, GDAL_DCAP_CREATE})
+        .AddMetadataItem(GAAMDI_VRT_COMPATIBLE, {"false"});
     AddOpenOptionsArg(&m_openOptions);
     AddInputFormatsArg(&m_inputFormats)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR});
@@ -108,7 +109,7 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
 }
 
 /************************************************************************/
-/*                  GDALVectorRasterizeAlgorithm::RunImpl()               */
+/*                GDALVectorRasterizeAlgorithm::RunImpl()               */
 /************************************************************************/
 
 bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
