@@ -2,7 +2,8 @@
 GDAL
 ================================================================================
 
-.. include:: ./about_no_title.rst
+.. include:: ./about.rst
+   :start-line: 6
 
 .. toctree::
     :maxdepth: 2
