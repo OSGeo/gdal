@@ -94,6 +94,12 @@ Details for options can be found in :ref:`gdal_raster_select_subcommand`.
 
 Details for options can be found in :ref:`gdal_raster_slope_subcommand`.
 
+* tpi
+
+.. program-output:: gdal raster pipeline --help-doc=tpi
+
+Details for options can be found in :ref:`gdal_raster_tpi_subcommand`.
+
 * unscale
 
 .. program-output:: gdal raster pipeline --help-doc=unscale
@@ -157,3 +163,10 @@ Examples
 
         $ gdal raster pipeline --progress ! read in.tif ! reproject --dst-crs=EPSG:32632 ! write in_epsg_32632.gdalg.json --overwrite
         $ gdal raster info in_epsg_32632.gdalg.json
+
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    tpi

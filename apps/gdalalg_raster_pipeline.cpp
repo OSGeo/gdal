@@ -24,6 +24,7 @@
 #include "gdalalg_raster_select.h"
 #include "gdalalg_raster_slope.h"
 #include "gdalalg_raster_write.h"
+#include "gdalalg_raster_tpi.h"
 #include "gdalalg_raster_unscale.h"
 
 #include "cpl_conv.h"
@@ -268,6 +269,7 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     m_stepRegistry.Register<GDALRasterScaleAlgorithm>();
     m_stepRegistry.Register<GDALRasterSelectAlgorithm>();
     m_stepRegistry.Register<GDALRasterSlopeAlgorithm>();
+    m_stepRegistry.Register<GDALRasterTPIAlgorithm>();
     m_stepRegistry.Register<GDALRasterUnscaleAlgorithm>();
 }
 

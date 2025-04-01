@@ -371,6 +371,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_tpi",
+        "gdal-raster-tpi",
+        "Generate a Topographic Position Index (TPI) map",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_unscale",
         "gdal-raster-unscale",
         "Convert scaled values of a raster dataset into unscaled values",
