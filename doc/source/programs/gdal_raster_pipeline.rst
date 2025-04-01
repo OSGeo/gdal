@@ -46,6 +46,12 @@ Details for options can be found in :ref:`gdal_raster_astype_subcommand`.
 
 Details for options can be found in :ref:`gdal_raster_clip_subcommand`.
 
+* color-map
+
+.. program-output:: gdal raster pipeline --help-doc=color-map
+
+Details for options can be found in :ref:`gdal_raster_color_map_subcommand`.
+
 * edit
 
 .. program-output:: gdal raster pipeline --help-doc=edit

@@ -266,6 +266,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_color_map",
+        "gdal-raster-color-map",
+        "Generate a RGB or RGBA dataset from a single band, using a color map",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_contour",
         "gdal-raster-contour",
         "Creates a vector contour from a raster elevation model (DEM)",

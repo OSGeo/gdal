@@ -2280,22 +2280,22 @@ GDALColorRelief(GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand1,
 /*                     GDALGenerateVRTColorRelief()                     */
 /************************************************************************/
 
-static CPLErr GDALGenerateVRTColorRelief(const char *pszDstFilename,
-                                         GDALDatasetH hSrcDataset,
-                                         GDALRasterBandH hSrcBand,
-                                         const char *pszColorFilename,
-                                         ColorSelectionMode eColorSelectionMode,
-                                         bool bAddAlpha)
+static bool GDALGenerateVRTColorRelief(const char *pszDstFilename,
+                                       GDALDatasetH hSrcDataset,
+                                       GDALRasterBandH hSrcBand,
+                                       const char *pszColorFilename,
+                                       ColorSelectionMode eColorSelectionMode,
+                                       bool bAddAlpha)
 {
     const auto asColorAssociation = GDALColorReliefParseColorFile(
         hSrcBand, pszColorFilename, eColorSelectionMode);
     if (asColorAssociation.empty())
-        return CE_Failure;
+        return false;
 
     VSILFILE *fp = VSIFOpenL(pszDstFilename, "wt");
     if (fp == nullptr)
     {
-        return CE_Failure;
+        return false;
     }
 
     const int nXSize = GDALGetRasterBandXSize(hSrcBand);
@@ -2445,7 +2445,7 @@ static CPLErr GDALGenerateVRTColorRelief(const char *pszDstFilename,
 
     VSIFCloseL(fp);
 
-    return (bOK) ? CE_None : CE_Failure;
+    return bOK;
 }
 
 /************************************************************************/
@@ -3965,11 +3965,31 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
     {
         if (eUtilityMode == COLOR_RELIEF)
         {
-            GDALGenerateVRTColorRelief(
-                pszDest, hSrcDataset, hSrcBand, pszColorFilename,
-                psOptions->eColorSelectionMode, psOptions->bAddAlpha);
-
-            return GDALOpen(pszDest, GA_Update);
+            const bool bTmpFile = pszDest[0] == 0;
+            const std::string osTmpFile =
+                VSIMemGenerateHiddenFilename("tmp.vrt");
+            if (bTmpFile)
+                pszDest = osTmpFile.c_str();
+            GDALDatasetH hDS = nullptr;
+            if (GDALGenerateVRTColorRelief(
+                    pszDest, hSrcDataset, hSrcBand, pszColorFilename,
+                    psOptions->eColorSelectionMode, psOptions->bAddAlpha))
+            {
+                if (bTmpFile)
+                {
+                    const GByte *pabyData =
+                        VSIGetMemFileBuffer(pszDest, nullptr, false);
+                    hDS = GDALOpen(reinterpret_cast<const char *>(pabyData),
+                                   GA_Update);
+                }
+                else
+                {
+                    hDS = GDALOpen(pszDest, GA_Update);
+                }
+            }
+            if (bTmpFile)
+                VSIUnlink(pszDest);
+            return hDS;
         }
         else
         {
