@@ -42,7 +42,7 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
     m_outputDataset.SetInputFlags(GADV_NAME | GADV_OBJECT);
     AddCreationOptionsArg(&m_datasetCreationOptions);
-    AddArg("band", 'b', _("The band(s) to burn values into"), &m_bands);
+    AddBandArg(&m_bands, _("The band(s) to burn values into (1-based index)"));
     AddArg("invert", 0, _("Invert the rasterization"), &m_invert)
         .SetDefault(false);
     AddArg("all-touched", 0, _("Enables the ALL_TOUCHED rasterization option"),

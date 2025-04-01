@@ -32,7 +32,8 @@ GDALRasterScaleAlgorithm::GDALRasterScaleAlgorithm(bool standaloneStep)
                                       standaloneStep)
 {
     AddOutputDataTypeArg(&m_type);
-    AddArg("band", 'b', _("Select band to restrict the scaling"), &m_band);
+    AddBandArg(&m_band,
+               _("Select band to restrict the scaling (1-based index)"));
     AddArg("srcmin", 0, _("Minimum value of the source range"), &m_srcMin);
     AddArg("srcmax", 0, _("Maximum value of the source range"), &m_srcMax);
     AddArg("dstmin", 0, _("Minimum value of the destination range"), &m_dstMin);
