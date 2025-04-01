@@ -28,6 +28,12 @@ Potential steps are:
 
 .. program-output:: gdal raster pipeline --help-doc=read
 
+* aspect
+
+.. program-output:: gdal raster pipeline --help-doc=aspect
+
+Details for options can be found in :ref:`gdal_raster_aspect_subcommand`.
+
 * astype
 
 .. program-output:: gdal raster pipeline --help-doc=astype

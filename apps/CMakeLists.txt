@@ -15,6 +15,7 @@ add_library(
   gdalalg_pipeline.cpp
   gdalalg_raster.cpp
   gdalalg_raster_info.cpp
+  gdalalg_raster_aspect.cpp
   gdalalg_raster_astype.cpp
   gdalalg_raster_calc.cpp
   gdalalg_raster_clip.cpp

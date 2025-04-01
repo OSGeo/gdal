@@ -12,6 +12,7 @@
 
 #include "gdalalg_raster_pipeline.h"
 #include "gdalalg_raster_read.h"
+#include "gdalalg_raster_aspect.h"
 #include "gdalalg_raster_astype.h"
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_edit.h"
@@ -255,6 +256,7 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
 
     m_stepRegistry.Register<GDALRasterReadAlgorithm>();
     m_stepRegistry.Register<GDALRasterWriteAlgorithm>();
+    m_stepRegistry.Register<GDALRasterAspectAlgorithm>();
     m_stepRegistry.Register<GDALRasterAsTypeAlgorithm>();
     m_stepRegistry.Register<GDALRasterClipAlgorithm>();
     m_stepRegistry.Register<GDALRasterEditAlgorithm>();

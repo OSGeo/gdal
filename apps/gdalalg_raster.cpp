@@ -13,6 +13,7 @@
 #include "gdalalgorithm.h"
 
 #include "gdalalg_raster_info.h"
+#include "gdalalg_raster_aspect.h"
 #include "gdalalg_raster_astype.h"
 #include "gdalalg_raster_calc.h"
 #include "gdalalg_raster_clip.h"
@@ -45,6 +46,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
     GDALRasterAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
         RegisterSubAlgorithm<GDALRasterInfoAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterAspectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterAsTypeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterCalcAlgorithm>();
         RegisterSubAlgorithm<GDALRasterConvertAlgorithm>();
