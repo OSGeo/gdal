@@ -46,6 +46,12 @@ Details for options can be found in :ref:`gdal_raster_clip_subcommand`.
 
 Details for options can be found in :ref:`gdal_raster_edit_subcommand`.
 
+* hillshade
+
+.. program-output:: gdal raster pipeline --help-doc=hillshade
+
+Details for options can be found in :ref:`gdal_raster_hillshade_subcommand`.
+
 * reproject
 
 .. program-output:: gdal raster pipeline --help-doc=reproject

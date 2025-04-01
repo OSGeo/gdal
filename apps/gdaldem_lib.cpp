@@ -3749,34 +3749,42 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         osFormat = psOptions->osFormat;
     }
 
-    GDALDriverH hDriver = GDALGetDriverByName(osFormat);
-    if (hDriver == nullptr ||
-        (GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) == nullptr &&
-         GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) ==
-             nullptr))
+    GDALDriverH hDriver = nullptr;
+    if (!EQUAL(osFormat.c_str(), "stream"))
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Output driver `%s' not recognised to have output support.",
-                 osFormat.c_str());
-        fprintf(stderr, "The following format drivers are configured\n"
-                        "and support output:\n");
-
-        for (int iDr = 0; iDr < GDALGetDriverCount(); iDr++)
+        hDriver = GDALGetDriverByName(osFormat);
+        if (hDriver == nullptr ||
+            (GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) ==
+                 nullptr &&
+             GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) ==
+                 nullptr))
         {
-            hDriver = GDALGetDriver(iDr);
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Output driver `%s' not recognised to have output support.",
+                osFormat.c_str());
+            fprintf(stderr, "The following format drivers are configured\n"
+                            "and support output:\n");
 
-            if (GDALGetMetadataItem(hDriver, GDAL_DCAP_RASTER, nullptr) !=
-                    nullptr &&
-                (GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) !=
-                     nullptr ||
-                 GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) !=
-                     nullptr))
+            for (int iDr = 0; iDr < GDALGetDriverCount(); iDr++)
             {
-                fprintf(stderr, "  %s: %s\n", GDALGetDriverShortName(hDriver),
-                        GDALGetDriverLongName(hDriver));
+                hDriver = GDALGetDriver(iDr);
+
+                if (GDALGetMetadataItem(hDriver, GDAL_DCAP_RASTER, nullptr) !=
+                        nullptr &&
+                    (GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) !=
+                         nullptr ||
+                     GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY,
+                                         nullptr) != nullptr))
+                {
+                    fprintf(stderr, "  %s: %s\n",
+                            GDALGetDriverShortName(hDriver),
+                            GDALGetDriverLongName(hDriver));
+                }
             }
+
+            return nullptr;
         }
-        return nullptr;
     }
 
     double dfDstNoDataValue = 0.0;
@@ -4010,11 +4018,13 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
 
     const GDALDataType eSrcDT = GDALGetRasterDataType(hSrcBand);
 
-    if (GDALGetMetadataItem(hDriver, GDAL_DCAP_RASTER, nullptr) != nullptr &&
-        ((bForceUseIntermediateDataset ||
-          GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) == nullptr) &&
-         GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) !=
-             nullptr))
+    if (hDriver == nullptr ||
+        (GDALGetMetadataItem(hDriver, GDAL_DCAP_RASTER, nullptr) != nullptr &&
+         ((bForceUseIntermediateDataset ||
+           GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) ==
+               nullptr) &&
+          GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) !=
+              nullptr)))
     {
         GDALDatasetH hIntermediateDataset = nullptr;
 
@@ -4063,6 +4073,11 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
                 }
                 hIntermediateDataset = static_cast<GDALDatasetH>(poDS);
             }
+        }
+
+        if (!hDriver)
+        {
+            return hIntermediateDataset;
         }
 
         GDALDatasetH hOutDS = GDALCreateCopy(

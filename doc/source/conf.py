@@ -287,6 +287,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_hillshade",
+        "gdal-raster-hillshade",
+        "Generate a shaded relief map",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_mosaic",
         "gdal-raster-mosaic",
         "Build a mosaic",
