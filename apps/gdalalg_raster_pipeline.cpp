@@ -20,6 +20,7 @@
 #include "gdalalg_raster_resize.h"
 #include "gdalalg_raster_scale.h"
 #include "gdalalg_raster_select.h"
+#include "gdalalg_raster_slope.h"
 #include "gdalalg_raster_write.h"
 #include "gdalalg_raster_unscale.h"
 
@@ -262,6 +263,7 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     m_stepRegistry.Register<GDALRasterResizeAlgorithm>();
     m_stepRegistry.Register<GDALRasterScaleAlgorithm>();
     m_stepRegistry.Register<GDALRasterSelectAlgorithm>();
+    m_stepRegistry.Register<GDALRasterSlopeAlgorithm>();
     m_stepRegistry.Register<GDALRasterUnscaleAlgorithm>();
 }
 

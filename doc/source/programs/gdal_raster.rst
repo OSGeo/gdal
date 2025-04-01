@@ -32,6 +32,7 @@ Available sub-commands
 - :ref:`gdal_raster_resize_subcommand`
 - :ref:`gdal_raster_scale_subcommand`
 - :ref:`gdal_raster_select_subcommand`
+- :ref:`gdal_raster_slope_subcommand`
 - :ref:`gdal_raster_stack_subcommand`
 - :ref:`gdal_raster_unscale_subcommand`
 

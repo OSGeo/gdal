@@ -798,7 +798,7 @@ def test_gdaldem_lib_roughness():
 def test_gdaldem_lib_slope_ZevenbergenThorne(options, checksum):
 
     src_ds = gdal.Open("../gdrivers/data/n43.tif")
-    kwargs = {"format": "MEM", "alg": "ZevenbergenThorne", "zFactor": 30}
+    kwargs = {"format": "MEM", "alg": "ZevenbergenThorne"}
     kwargs.update(options)
     ds = gdal.DEMProcessing("", src_ds, "slope", **kwargs)
     assert ds is not None

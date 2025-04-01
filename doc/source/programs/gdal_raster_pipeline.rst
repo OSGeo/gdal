@@ -76,6 +76,12 @@ Details for options can be found in :ref:`gdal_raster_scale_subcommand`.
 
 Details for options can be found in :ref:`gdal_raster_select_subcommand`.
 
+* slope
+
+.. program-output:: gdal raster pipeline --help-doc=slope
+
+Details for options can be found in :ref:`gdal_raster_slope_subcommand`.
+
 * unscale
 
 .. program-output:: gdal raster pipeline --help-doc=unscale
