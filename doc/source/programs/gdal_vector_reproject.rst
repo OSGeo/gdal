@@ -71,6 +71,11 @@ Standard options
 
     .. include:: options/srs_def_gdalwarp.rst
 
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_vector_compatible.rst
+
 Examples
 --------
 

@@ -53,6 +53,12 @@ Standard options
     unless the mask is an alpha channel, or if it is explicitly selected
     to be a regular band of the output dataset (``--band mask``)
 
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+
 Examples
 --------
 

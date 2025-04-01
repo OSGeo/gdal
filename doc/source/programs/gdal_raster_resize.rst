@@ -55,6 +55,12 @@ Standard options
 
     ``average``: average resampling, computes the weighted average of all non-NODATA contributing pixels.
 
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+
 Examples
 --------
 

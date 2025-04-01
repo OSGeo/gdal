@@ -41,6 +41,11 @@ Standard options
   ``Int32``, ``UInt64``, ``Int64``, ``CInt16``, ``CInt32``, ``Float32``,
   ``Float64``, ``CFloat32``, ``CFloat64``.
 
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+
 Examples
 --------
 

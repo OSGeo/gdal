@@ -70,6 +70,19 @@ Advanced options
 
 .. include:: gdal_options/if.rst
 
+GDALG output (on-the-fly / streamed dataset)
+--------------------------------------------
+
+This program supports serializing the command line as a JSON file using the ``GDALG`` output format.
+The resulting file can then be opened as a vector dataset using the
+:ref:`vector.gdalg` driver, and apply the specified pipeline in a on-the-fly /
+streamed way.
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_vector_compatible.rst
+
 Examples
 --------
 

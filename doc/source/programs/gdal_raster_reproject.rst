@@ -273,6 +273,11 @@ The error threshold (in source dataset pixels) can be controlled with the
 :option:`--error-threshold` switch. If you want to compare a true pixel-by-pixel reprojection
 use ``--error-threshold=0`` which disables this approximator entirely.
 
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+
 Examples
 --------
 
