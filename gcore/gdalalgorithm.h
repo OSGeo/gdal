@@ -2214,75 +2214,93 @@ class CPL_DLL GDALAlgorithmRegistry
                                           GDAL_OF_MULTIDIM_RASTER);
 
     /** Add input dataset argument. */
-    GDALInConstructionAlgorithmArg &
-    AddInputDatasetArg(GDALArgDatasetValue *pValue,
-                       GDALArgDatasetValueType type = GDAL_OF_RASTER |
-                                                      GDAL_OF_VECTOR |
-                                                      GDAL_OF_MULTIDIM_RASTER,
-                       bool positionalAndRequired = true);
+    GDALInConstructionAlgorithmArg &AddInputDatasetArg(
+        GDALArgDatasetValue *pValue,
+        GDALArgDatasetValueType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
+                                       GDAL_OF_MULTIDIM_RASTER,
+        bool positionalAndRequired = true, const char *helpMessage = nullptr);
 
     /** Add input dataset argument. */
-    GDALInConstructionAlgorithmArg &
-    AddInputDatasetArg(std::vector<GDALArgDatasetValue> *pValue,
-                       GDALArgDatasetValueType type = GDAL_OF_RASTER |
-                                                      GDAL_OF_VECTOR |
-                                                      GDAL_OF_MULTIDIM_RASTER,
-                       bool positionalAndRequired = true);
+    GDALInConstructionAlgorithmArg &AddInputDatasetArg(
+        std::vector<GDALArgDatasetValue> *pValue,
+        GDALArgDatasetValueType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
+                                       GDAL_OF_MULTIDIM_RASTER,
+        bool positionalAndRequired = true, const char *helpMessage = nullptr);
 
     /** Add open option(s) argument. */
     GDALInConstructionAlgorithmArg &
-    AddOpenOptionsArg(std::vector<std::string> *pValue);
+    AddOpenOptionsArg(std::vector<std::string> *pValue,
+                      const char *helpMessage = nullptr);
 
     /** Add input format(s) argument. */
     GDALInConstructionAlgorithmArg &
-    AddInputFormatsArg(std::vector<std::string> *pValue);
+    AddInputFormatsArg(std::vector<std::string> *pValue,
+                       const char *helpMessage = nullptr);
 
     /** Add output dataset argument. */
-    GDALInConstructionAlgorithmArg &
-    AddOutputDatasetArg(GDALArgDatasetValue *pValue,
-                        GDALArgDatasetValueType type = GDAL_OF_RASTER |
-                                                       GDAL_OF_VECTOR |
-                                                       GDAL_OF_MULTIDIM_RASTER,
-                        bool positionalAndRequired = true);
+    GDALInConstructionAlgorithmArg &AddOutputDatasetArg(
+        GDALArgDatasetValue *pValue,
+        GDALArgDatasetValueType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
+                                       GDAL_OF_MULTIDIM_RASTER,
+        bool positionalAndRequired = true, const char *helpMessage = nullptr);
 
     /** Add \--overwrite argument. */
-    GDALInConstructionAlgorithmArg &AddOverwriteArg(bool *pValue);
+    GDALInConstructionAlgorithmArg &
+    AddOverwriteArg(bool *pValue, const char *helpMessage = nullptr);
 
     /** Add \--update argument. */
-    GDALInConstructionAlgorithmArg &AddUpdateArg(bool *pValue);
+    GDALInConstructionAlgorithmArg &
+    AddUpdateArg(bool *pValue, const char *helpMessage = nullptr);
 
     /** Add (non-CLI) output-string argument. */
-    GDALInConstructionAlgorithmArg &AddOutputStringArg(std::string *pValue);
+    GDALInConstructionAlgorithmArg &
+    AddOutputStringArg(std::string *pValue, const char *helpMessage = nullptr);
 
     /** Add output format argument. */
     GDALInConstructionAlgorithmArg &
     AddOutputFormatArg(std::string *pValue, bool bStreamAllowed = false,
-                       bool bGDALGAllowed = false);
+                       bool bGDALGAllowed = false,
+                       const char *helpMessage = nullptr);
 
     /** Add output data type argument. */
-    GDALInConstructionAlgorithmArg &AddOutputDataTypeArg(std::string *pValue);
+    GDALInConstructionAlgorithmArg &
+    AddOutputDataTypeArg(std::string *pValue,
+                         const char *helpMessage = nullptr);
 
     /** Add creation option(s) argument. */
     GDALInConstructionAlgorithmArg &
-    AddCreationOptionsArg(std::vector<std::string> *pValue);
+    AddCreationOptionsArg(std::vector<std::string> *pValue,
+                          const char *helpMessage = nullptr);
 
     /** Add layer creation option(s) argument. */
     GDALInConstructionAlgorithmArg &
-    AddLayerCreationOptionsArg(std::vector<std::string> *pValue);
+    AddLayerCreationOptionsArg(std::vector<std::string> *pValue,
+                               const char *helpMessage = nullptr);
 
     /** Add (single) layer name argument. */
-    GDALInConstructionAlgorithmArg &AddLayerNameArg(std::string *pValue);
+    GDALInConstructionAlgorithmArg &
+    AddLayerNameArg(std::string *pValue, const char *helpMessage = nullptr);
 
     /** Add (potentially multiple) layer name(s) argument. */
     GDALInConstructionAlgorithmArg &
-    AddLayerNameArg(std::vector<std::string> *pValue);
+    AddLayerNameArg(std::vector<std::string> *pValue,
+                    const char *helpMessage = nullptr);
+
+    /** Add (single) band argument. */
+    GDALInConstructionAlgorithmArg &
+    AddBandArg(int *pValue, const char *helpMessage = nullptr);
+
+    /** Add (potentially multiple) band argument. */
+    GDALInConstructionAlgorithmArg &
+    AddBandArg(std::vector<int> *pValue, const char *helpMessage = nullptr);
 
     /** Add bbox=xmin,ymin,xmax,ymax argument. */
     GDALInConstructionAlgorithmArg &
     AddBBOXArg(std::vector<double> *pValue, const char *helpMessage = nullptr);
 
     /** Add active layer argument. */
-    GDALInConstructionAlgorithmArg &AddActiveLayerArg(std::string *pValue);
+    GDALInConstructionAlgorithmArg &
+    AddActiveLayerArg(std::string *pValue, const char *helpMessage = nullptr);
 
     /** Add \--progress argument. */
     GDALInConstructionAlgorithmArg &AddProgressArg();

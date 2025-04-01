@@ -2562,6 +2562,63 @@ TEST_F(test_gdal_algorithm, arg_lco)
     }
 }
 
+TEST_F(test_gdal_algorithm, arg_band)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        int m_band{};
+
+        MyAlgorithm()
+        {
+            AddBandArg(&m_band);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--band=1"}));
+        EXPECT_EQ(alg.m_band, 1);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--band=0"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
+}
+
+TEST_F(test_gdal_algorithm, arg_band_vector)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        std::vector<int> m_band{};
+
+        MyAlgorithm()
+        {
+            AddBandArg(&m_band);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--band=1,2"}));
+        const std::vector<int> expected{1, 2};
+        EXPECT_EQ(alg.m_band, expected);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--band=1,0"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
+}
+
 TEST_F(test_gdal_algorithm, SetHiddenForCLI)
 {
     class MyAlgorithm : public MyAlgorithmWithDummyRun
