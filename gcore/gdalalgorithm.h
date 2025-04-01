@@ -2003,6 +2003,8 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Validate that all constraints are met. This method is automatically
      * executed by ParseCommandLineArguments() and Run(), and thus does
      * generally not need to be explicitly called.
+     * Derived classes overriding this method should generally call the base
+     * method.
      */
     virtual bool ValidateArguments();
 
@@ -2305,6 +2307,17 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Add \--progress argument. */
     GDALInConstructionAlgorithmArg &AddProgressArg();
 
+    /** Register an action that is executed by the ValidateArguments()
+     * method. If the provided function returns false, validation fails.
+     * Such validation function should typically be used to ensure
+     * cross-argument validation. For validation of individual arguments,
+     * GDALAlgorithmArg::AddValidationAction should rather be called.
+     */
+    void AddValidationAction(std::function<bool()> f)
+    {
+        m_validationActions.push_back(f);
+    }
+
     /** Add KEY=VALUE suggestion from open, creation options */
     static bool AddOptionsSuggestions(const char *pszXML, int datasetType,
                                       const std::string &currentValue,
@@ -2383,6 +2396,7 @@ class CPL_DLL GDALAlgorithmRegistry
     std::unique_ptr<GDALAlgorithm> m_selectedSubAlgHolder{};
     std::function<std::vector<std::string>(const std::vector<std::string> &)>
         m_autoCompleteFunction{};
+    std::vector<std::function<bool()>> m_validationActions{};
 
     GDALInConstructionAlgorithmArg &
     AddArg(std::unique_ptr<GDALInConstructionAlgorithmArg> arg);

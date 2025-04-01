@@ -2590,6 +2590,51 @@ TEST_F(test_gdal_algorithm, arg_band)
     }
 }
 
+TEST_F(test_gdal_algorithm, arg_band_with_input_dataset)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        GDALArgDatasetValue m_input{};
+        int m_band{};
+
+        MyAlgorithm()
+        {
+            AddInputDatasetArg(&m_input, GDAL_OF_RASTER, false);
+            AddBandArg(&m_band);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments(
+            {std::string("--input=")
+                 .append(tut::common::data_basedir)
+                 .append(SEP)
+                 .append("byte.tif"),
+             "--band=1"}));
+        EXPECT_EQ(alg.m_band, 1);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments(
+            {std::string("--input=")
+                 .append(tut::common::data_basedir)
+                 .append(SEP)
+                 .append("byte.tif"),
+             "--band=2"}));
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments(
+            {"--input=i_do_not_exist", "--band=1"}));
+    }
+}
+
 TEST_F(test_gdal_algorithm, arg_band_vector)
 {
     class MyAlgorithm : public MyAlgorithmWithDummyRun
@@ -2616,6 +2661,52 @@ TEST_F(test_gdal_algorithm, arg_band_vector)
         CPLErrorReset();
         EXPECT_FALSE(alg.ParseCommandLineArguments({"--band=1,0"}));
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
+}
+
+TEST_F(test_gdal_algorithm, arg_band_vector_with_input_dataset)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        GDALArgDatasetValue m_input{};
+        std::vector<int> m_band{};
+
+        MyAlgorithm()
+        {
+            AddInputDatasetArg(&m_input, GDAL_OF_RASTER, false);
+            AddBandArg(&m_band);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments(
+            {std::string("--input=")
+                 .append(tut::common::data_basedir)
+                 .append(SEP)
+                 .append("byte.tif"),
+             "--band=1"}));
+        const std::vector<int> expected{1};
+        EXPECT_EQ(alg.m_band, expected);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments(
+            {std::string("--input=")
+                 .append(tut::common::data_basedir)
+                 .append(SEP)
+                 .append("byte.tif"),
+             "--band=2"}));
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments(
+            {"--input=i_do_not_exist", "--band=1"}));
     }
 }
 
