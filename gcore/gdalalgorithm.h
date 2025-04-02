@@ -2003,9 +2003,12 @@ class CPL_DLL GDALAlgorithmRegistry
     virtual bool
     ParseCommandLineArguments(const std::vector<std::string> &args);
 
-    /** Validate that all constraints are met. This method is automatically
-     * executed by ParseCommandLineArguments() and Run(), and thus does
-     * generally not need to be explicitly called.
+    /** Validate that all constraints are met.
+     *
+     * This method may emit several errors if several constraints are not met.
+     *
+     * This method is automatically executed by ParseCommandLineArguments()
+     * and Run(), and thus does generally not need to be explicitly called.
      * Derived classes overriding this method should generally call the base
      * method.
      */
