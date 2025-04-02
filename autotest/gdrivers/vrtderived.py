@@ -1265,6 +1265,41 @@ def test_vrt_pixelfn_expression_invalid(
 
 
 ###############################################################################
+# Test multiplication / summation by a constant factor
+
+
+@pytest.mark.parametrize("fn", ["sum", "mul"])
+def test_vrt_pixelfn_constant_factor(tmp_vsimem, fn):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    k = 7
+
+    xml = f"""
+    <VRTDataset rasterXSize="20" rasterYSize="20">
+      <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
+        <PixelFunctionType>{fn}</PixelFunctionType>
+        <PixelFunctionArguments k="{k}" />
+        <SimpleSource>
+          <SourceFilename>data/byte.tif</SourceFilename>
+          <SourceBand>1</SourceBand>
+          <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+          <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    src = gdal.Open("data/byte.tif").ReadAsArray().astype(np.float32)
+    dst = gdal.Open(xml).ReadAsArray()
+
+    if fn == "sum":
+        np.testing.assert_array_equal(dst, src + k)
+    elif fn == "mul":
+        np.testing.assert_array_equal(dst, src * k)
+
+
+###############################################################################
 # Cleanup.
 
 
