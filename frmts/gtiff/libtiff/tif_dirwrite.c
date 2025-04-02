@@ -1379,7 +1379,6 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
         TIFFFreeDirectory(tif);
         tif->tif_flags &= ~TIFF_DIRTYDIRECT;
         tif->tif_flags &= ~TIFF_DIRTYSTRIP;
-        (*tif->tif_cleanup)(tif);
         /* Reset directory-related state for subsequent directories. */
         TIFFCreateDirectory(tif);
     }

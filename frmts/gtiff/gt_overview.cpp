@@ -66,10 +66,13 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize,
 {
     const toff_t nBaseDirOffset = TIFFCurrentDirOffset(hTIFF);
 
-    // This is a bit of a hack to cause (*tif->tif_cleanup)(tif); to be called.
-    // See https://trac.osgeo.org/gdal/ticket/2055
+#if !(defined(INTERNAL_LIBTIFF) || TIFFLIB_VERSION > 20240911)
+    // This is a bit of a hack to cause (*tif->tif_cleanup)(tif); to be
+    // called. See https://trac.osgeo.org/gdal/ticket/2055
+    // Fixed in libtiff > 4.7.0
     TIFFSetField(hTIFF, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
     TIFFFreeDirectory(hTIFF);
+#endif
 
     TIFFCreateDirectory(hTIFF);
 
