@@ -31,11 +31,6 @@ class GDALRasterUnscaleAlgorithm /* non final */
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_unscale.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALRasterUnscaleAlgorithm(bool standaloneStep = false);
 
   private:

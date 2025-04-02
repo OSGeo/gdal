@@ -30,11 +30,6 @@ class GDALRasterSelectAlgorithm /* non final */
         "Select a subset of bands from a raster dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_select.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALRasterSelectAlgorithm(bool standaloneStep = false);
 
   private:

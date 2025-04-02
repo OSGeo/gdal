@@ -1794,7 +1794,7 @@ class CPL_DLL GDALAlgorithmRegistry
     {
         AlgInfo info;
         info.m_name = MyAlgorithm::NAME;
-        info.m_aliases = MyAlgorithm::GetAliases();
+        info.m_aliases = MyAlgorithm::GetAliasesStatic();
         info.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
         { return std::make_unique<MyAlgorithm>(); };
         return Register(info);
@@ -2085,6 +2085,17 @@ class CPL_DLL GDALAlgorithmRegistry
     {
         return m_aliases;
     }
+
+    //! @cond Doxygen_Suppress
+    /** Return alias names. This method should be redefined in derived classes
+     * that want to define aliases.
+     */
+    static std::vector<std::string> GetAliasesStatic()
+    {
+        return {};
+    }
+
+    //! @endcond
 
     /** Used by the "gdal info" special algorithm when it first tries to
      * run "gdal raster info", to inherit from the potential special flags,

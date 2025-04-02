@@ -32,11 +32,6 @@ class GDALPipelineAlgorithm final
         "vector pipeline').";
     static constexpr const char *HELP_URL = "/programs/gdal_pipeline.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     GDALPipelineAlgorithm()
         : GDALDispatcherAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {

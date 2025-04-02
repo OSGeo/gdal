@@ -30,11 +30,6 @@ class GDALVectorSelectAlgorithm /* non final */
         "Select a subset of fields from a vector dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_vector_select.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALVectorSelectAlgorithm(bool standaloneStep = false);
 
   private:

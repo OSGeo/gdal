@@ -35,11 +35,6 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
     static constexpr const char *DESCRIPTION = "Vector commands.";
     static constexpr const char *HELP_URL = "/programs/gdal_vector.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     GDALVectorAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
         RegisterSubAlgorithm<GDALVectorInfoAlgorithm>();

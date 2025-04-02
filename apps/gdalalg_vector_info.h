@@ -29,11 +29,6 @@ class GDALVectorInfoAlgorithm final : public GDALAlgorithm
         "Return information on a vector dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_vector_info.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     GDALVectorInfoAlgorithm();
 
     void SetDataset(GDALDataset *poDS)

@@ -30,11 +30,6 @@ class GDALRasterStackAlgorithm final : public GDALAlgorithm
         "(VRT) or materialized.";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_stack.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALRasterStackAlgorithm();
 
   private:

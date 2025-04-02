@@ -29,11 +29,6 @@ class GDALRasterEditAlgorithm /* non final */
     static constexpr const char *DESCRIPTION = "Edit a raster dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_edit.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALRasterEditAlgorithm(bool standaloneStep = false);
 
   private:

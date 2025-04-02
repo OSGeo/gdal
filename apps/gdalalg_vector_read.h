@@ -29,11 +29,6 @@ class GDALVectorReadAlgorithm final : public GDALVectorPipelineStepAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_pipeline.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     GDALVectorReadAlgorithm();
 
   private:

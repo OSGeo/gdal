@@ -87,7 +87,7 @@ class GDALRasterPipelineAlgorithm final
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_pipeline.html";
 
-    static std::vector<std::string> GetAliases()
+    static std::vector<std::string> GetAliasesStatic()
     {
         return {
 #ifdef GDAL_PIPELINE_PROJ_NOSTALGIA

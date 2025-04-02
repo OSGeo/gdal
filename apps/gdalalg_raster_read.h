@@ -29,11 +29,6 @@ class GDALRasterReadAlgorithm final : public GDALRasterPipelineStepAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_pipeline.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     GDALRasterReadAlgorithm();
 
   private:

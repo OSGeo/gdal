@@ -31,11 +31,6 @@ class GDALVectorGeomSegmentizeAlgorithm final
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_geom_segmentize.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     struct Options : public GDALVectorGeomAbstractAlgorithm::OptionsBase
     {
         double m_maxLength = 0;

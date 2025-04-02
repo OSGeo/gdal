@@ -31,11 +31,6 @@ class GDALVectorGeomMakeValidAlgorithm final
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_geom_make_valid.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     struct Options : public GDALVectorGeomAbstractAlgorithm::OptionsBase
     {
         std::string m_method = "linework";

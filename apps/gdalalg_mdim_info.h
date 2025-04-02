@@ -29,11 +29,6 @@ class GDALMdimInfoAlgorithm final : public GDALAlgorithm
         "Return information on a multidimensional dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_mdim_info.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     GDALMdimInfoAlgorithm();
 
   private:

@@ -31,11 +31,6 @@ class GDALVectorGeomExplodeCollectionsAlgorithm final
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_geom_explode_collections.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     struct Options : public GDALVectorGeomAbstractAlgorithm::OptionsBase
     {
         std::string m_type{};

@@ -29,11 +29,6 @@ class GDALVectorFilterAlgorithm /* non final */
     static constexpr const char *DESCRIPTION = "Filter a vector dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_vector_filter.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALVectorFilterAlgorithm(bool standaloneStep = false);
 
   private:

@@ -32,11 +32,6 @@ class GDALRasterContourAlgorithm final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_contour.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALRasterContourAlgorithm();
 
     GDALDataset *GetDatasetRef()

@@ -2894,11 +2894,6 @@ class MyRedundantRasterAlgorithm : public MyAlgorithmWithDummyRun
     static constexpr const char *DESCRIPTION =
         "redundant with existing raster!!!";
     static constexpr const char *HELP_URL = "";
-
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
 };
 
 class MyAlgorithmWithAlias : public MyAlgorithmWithDummyRun
@@ -2908,7 +2903,7 @@ class MyAlgorithmWithAlias : public MyAlgorithmWithDummyRun
     static constexpr const char *DESCRIPTION = "";
     static constexpr const char *HELP_URL = "";
 
-    static std::vector<std::string> GetAliases()
+    static std::vector<std::string> GetAliasesStatic()
     {
         return {"alias", GDALAlgorithmRegistry::HIDDEN_ALIAS_SEPARATOR,
                 "hidden_alias"};
@@ -2922,7 +2917,7 @@ class MyAlgorithmWithRedundantAlias : public MyAlgorithmWithDummyRun
     static constexpr const char *DESCRIPTION = "";
     static constexpr const char *HELP_URL = "";
 
-    static std::vector<std::string> GetAliases()
+    static std::vector<std::string> GetAliasesStatic()
     {
         return {"alias"};
     }
@@ -2935,7 +2930,7 @@ class MyAlgorithmWithRedundantHiddenAlias : public MyAlgorithmWithDummyRun
     static constexpr const char *DESCRIPTION = "";
     static constexpr const char *HELP_URL = "";
 
-    static std::vector<std::string> GetAliases()
+    static std::vector<std::string> GetAliasesStatic()
     {
         return {GDALAlgorithmRegistry::HIDDEN_ALIAS_SEPARATOR, "hidden_alias"};
     }

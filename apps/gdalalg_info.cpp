@@ -32,11 +32,6 @@ class GDALInfoAlgorithm final
         "'gdal vector info').";
     static constexpr const char *HELP_URL = "/programs/gdal_info.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     GDALInfoAlgorithm() : GDALDispatcherAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
         // only for the help message

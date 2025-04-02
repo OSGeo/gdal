@@ -29,11 +29,6 @@ class GDALRasterOverviewAlgorithmDelete final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_overview_delete.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     GDALRasterOverviewAlgorithmDelete();
 
   private:

@@ -29,11 +29,6 @@ class GDALVectorClipAlgorithm /* non final */
     static constexpr const char *DESCRIPTION = "Clip a vector dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_vector_clip.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALVectorClipAlgorithm(bool standaloneStep = false);
 
   private:

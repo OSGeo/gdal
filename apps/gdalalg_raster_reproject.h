@@ -32,11 +32,6 @@ class GDALRasterReprojectAlgorithm /* non final */
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_reproject.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALRasterReprojectAlgorithm(bool standaloneStep = false);
 
   private:

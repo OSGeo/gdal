@@ -29,11 +29,6 @@ class GDALMdimConvertAlgorithm final : public GDALAlgorithm
         "Convert a multidimensional dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_mdim_convert.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALMdimConvertAlgorithm();
 
   private:

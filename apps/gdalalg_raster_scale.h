@@ -32,11 +32,6 @@ class GDALRasterScaleAlgorithm /* non final */
         "Scale the values of the bands of a raster dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_scale.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALRasterScaleAlgorithm(bool standaloneStep = false);
 
   private:
