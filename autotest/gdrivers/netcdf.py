@@ -6744,3 +6744,20 @@ def test_netcdf_LIST_ALL_ARRAYS():
             ('NETCDF:"data/netcdf/byte.nc":Band1', "[20x20] Band1 (8-bit integer)"),
         ]
     )
+
+
+###############################################################################
+# Test use of GeoTransform attribute to avoid precision loss
+# https://github.com/OSGeo/gdal/issues/11993
+
+
+def test_netcdf_geotransform_preserved_createcopy(tmp_path):
+
+    src = gdal.GetDriverByName("MEM").Create("", 3600, 3600)
+    src.SetProjection("EPSG:4326")
+    res = 1.0 / 3600
+    src.SetGeoTransform((25 - res / 2, res, 0, 80 + res / 2, 0, -res))
+
+    dst = gdal.GetDriverByName("netCDF").CreateCopy(tmp_path / "test.nc", src)
+
+    assert dst.GetGeoTransform() == src.GetGeoTransform()
