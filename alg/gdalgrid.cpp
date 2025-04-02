@@ -3725,8 +3725,10 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
                     papszNewParams, "radius",
                     CSLFetchNameValueDef(papszParams, "radius1", "1"));
             }
-            for (const char *pszItem : {"radius", "power", "smoothing",
-                                        "max_points", "min_points", "nodata"})
+            for (const char *pszItem :
+                 {"radius", "power", "smoothing", "max_points", "min_points",
+                  "nodata", "min_points_per_quadrant",
+                  "max_points_per_quadrant"})
             {
                 const char *pszValue = CSLFetchNameValue(papszParams, pszItem);
                 if (pszValue)
