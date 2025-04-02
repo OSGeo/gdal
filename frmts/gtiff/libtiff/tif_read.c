@@ -351,15 +351,14 @@ static int TIFFSeek(TIFF *tif, uint32_t row, uint16_t sample)
          * chunk strip */
         whole_strip = 1;
     }
-#else
-    whole_strip = 1;
-#endif
 
     if (!whole_strip)
     {
         /* 16 is for YCbCr mode where we may need to read 16 */
         /* lines at a time to get a decompressed line, and 5000 */
         /* is some constant value, for example for JPEG tables */
+
+        /* coverity[dead_error_line:SUPPRESS] */
         if (tif->tif_scanlinesize < TIFF_TMSIZE_T_MAX / 16 &&
             tif->tif_scanlinesize * 16 < TIFF_TMSIZE_T_MAX - 5000)
         {
@@ -370,6 +369,9 @@ static int TIFFSeek(TIFF *tif, uint32_t row, uint16_t sample)
             read_ahead = tif->tif_scanlinesize;
         }
     }
+#else
+    whole_strip = 1;
+#endif
 
     /*
      * If we haven't loaded this strip, do so now, possibly
@@ -383,18 +385,22 @@ static int TIFFSeek(TIFF *tif, uint32_t row, uint16_t sample)
             if (!TIFFFillStrip(tif, strip))
                 return (0);
         }
+#if defined(CHUNKY_STRIP_READ_SUPPORT)
         else
         {
             if (!TIFFFillStripPartial(tif, strip, read_ahead, 1))
                 return 0;
         }
+#endif
     }
 
+#if defined(CHUNKY_STRIP_READ_SUPPORT)
     /*
     ** If we already have some data loaded, do we need to read some more?
     */
     else if (!whole_strip)
     {
+        /* coverity[dead_error_line:SUPPRESS] */
         if (((tif->tif_rawdata + tif->tif_rawdataloaded) - tif->tif_rawcp) <
                 read_ahead &&
             (uint64_t)tif->tif_rawdataoff + tif->tif_rawdataloaded <
@@ -404,6 +410,7 @@ static int TIFFSeek(TIFF *tif, uint32_t row, uint16_t sample)
                 return 0;
         }
     }
+#endif
 
     if (row < tif->tif_row)
     {

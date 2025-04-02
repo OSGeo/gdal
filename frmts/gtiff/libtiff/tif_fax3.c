@@ -87,6 +87,10 @@ typedef struct
     int EOLcnt;                  /* count of EOL codes recognized */
     int eofReachedCount;         /* number of times decode has been called with
                                     EOF already reached */
+    int eolReachedCount;         /* number of times decode has been called with
+                                    EOL already reached */
+    int unexpectedReachedCount;  /* number of times decode has been called with
+                                    "unexpedted" already reached */
     TIFFFaxFillFunc fill;        /* fill routine */
     uint32_t *runs;              /* b&w runs for current/previous row */
     uint32_t nruns;              /* size of the refruns / curruns arrays */
@@ -174,6 +178,8 @@ static int Fax3PreDecode(TIFF *tif, uint16_t s)
     sp->data = 0;
     sp->EOLcnt = 0; /* force initial scan for EOL */
     sp->eofReachedCount = 0;
+    sp->eolReachedCount = 0;
+    sp->unexpectedReachedCount = 0;
     /*
      * Decoder assumes lsb-to-msb bit order.  Note that we select
      * this here rather than in Fax3SetupState so that viewers can
@@ -209,7 +215,12 @@ static void Fax3Unexpected(const char *module, TIFF *tif, uint32_t line,
                   line, isTiled(tif) ? "tile" : "strip",
                   (isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip), a0);
 }
-#define unexpected(table, a0) Fax3Unexpected(module, tif, sp->line, a0)
+#define unexpected(table, a0)                                                  \
+    do                                                                         \
+    {                                                                          \
+        Fax3Unexpected(module, tif, sp->line, a0);                             \
+        ++sp->unexpectedReachedCount;                                          \
+    } while (0)
 
 static void Fax3Extension(const char *module, TIFF *tif, uint32_t line,
                           uint32_t a0)
@@ -233,7 +244,12 @@ static void Fax3BadLength(const char *module, TIFF *tif, uint32_t line,
                     (isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip), a0,
                     lastx);
 }
-#define badlength(a0, lastx) Fax3BadLength(module, tif, sp->line, a0, lastx)
+#define badlength(a0, lastx)                                                   \
+    do                                                                         \
+    {                                                                          \
+        Fax3BadLength(module, tif, sp->line, a0, lastx);                       \
+        ++sp->eolReachedCount;                                                 \
+    } while (0)
 
 static void Fax3PrematureEOF(const char *module, TIFF *tif, uint32_t line,
                              uint32_t a0)
@@ -253,6 +269,37 @@ static void Fax3PrematureEOF(const char *module, TIFF *tif, uint32_t line,
 
 #define Nop
 
+static int CheckReachedCounters(TIFF *tif, const char *module,
+                                Fax3CodecState *sp)
+{
+    if (sp->eofReachedCount >= EOF_REACHED_COUNT_THRESHOLD)
+    {
+        TIFFErrorExtR(tif, module,
+                      "End of file (EOF) has already been reached %d times "
+                      "within that %s.",
+                      sp->eofReachedCount, isTiled(tif) ? "tile" : "strip");
+        return (-1);
+    }
+    if (sp->eolReachedCount >= EOF_REACHED_COUNT_THRESHOLD)
+    {
+        TIFFErrorExtR(tif, module,
+                      "Bad line length (EOL) has already been reached %d times "
+                      "within that %s",
+                      sp->eolReachedCount, isTiled(tif) ? "tile" : "strip");
+        return (-1);
+    }
+    if (sp->unexpectedReachedCount >= EOF_REACHED_COUNT_THRESHOLD)
+    {
+        TIFFErrorExtR(tif, module,
+                      "Bad code word (unexpected) has already been reached %d "
+                      "times within that %s",
+                      sp->unexpectedReachedCount,
+                      isTiled(tif) ? "tile" : "strip");
+        return (-1);
+    }
+    return (0);
+}
+
 /**
  * Decode the requested amount of G3 1D-encoded data.
  * @param buf destination buffer
@@ -269,14 +316,8 @@ static int Fax3Decode1D(TIFF *tif, uint8_t *buf, tmsize_t occ, uint16_t s)
         TIFFErrorExtR(tif, module, "Fractional scanlines cannot be read");
         return (-1);
     }
-    if (sp->eofReachedCount >= EOF_REACHED_COUNT_THRESHOLD)
-    {
-        TIFFErrorExtR(
-            tif, module,
-            "End of file has already been reached %d times within that strip",
-            sp->eofReachedCount);
+    if (CheckReachedCounters(tif, module, sp))
         return (-1);
-    }
     CACHE_STATE(tif, sp);
     thisrun = sp->curruns;
     while (occ > 0)
@@ -327,14 +368,8 @@ static int Fax3Decode2D(TIFF *tif, uint8_t *buf, tmsize_t occ, uint16_t s)
         TIFFErrorExtR(tif, module, "Fractional scanlines cannot be read");
         return (-1);
     }
-    if (sp->eofReachedCount >= EOF_REACHED_COUNT_THRESHOLD)
-    {
-        TIFFErrorExtR(
-            tif, module,
-            "End of file has already been reached %d times within that strip",
-            sp->eofReachedCount);
+    if (CheckReachedCounters(tif, module, sp))
         return (-1);
-    }
     CACHE_STATE(tif, sp);
     while (occ > 0)
     {
@@ -1563,14 +1598,8 @@ static int Fax4Decode(TIFF *tif, uint8_t *buf, tmsize_t occ, uint16_t s)
         TIFFErrorExtR(tif, module, "Fractional scanlines cannot be read");
         return (-1);
     }
-    if (sp->eofReachedCount >= EOF_REACHED_COUNT_THRESHOLD)
-    {
-        TIFFErrorExtR(
-            tif, module,
-            "End of file has already been reached %d times within that strip",
-            sp->eofReachedCount);
+    if (CheckReachedCounters(tif, module, sp))
         return (-1);
-    }
     CACHE_STATE(tif, sp);
     int start = sp->line;
     while (occ > 0)
@@ -1715,6 +1744,8 @@ static int Fax3DecodeRLE(TIFF *tif, uint8_t *buf, tmsize_t occ, uint16_t s)
         TIFFErrorExtR(tif, module, "Fractional scanlines cannot be read");
         return (-1);
     }
+    if (CheckReachedCounters(tif, module, sp))
+        return (-1);
     CACHE_STATE(tif, sp);
     thisrun = sp->curruns;
     while (occ > 0)
