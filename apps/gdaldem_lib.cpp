@@ -3759,12 +3759,11 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
              GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) ==
                  nullptr))
         {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Output driver `%s' not recognised to have output support.",
-                osFormat.c_str());
-            fprintf(stderr, "The following format drivers are configured\n"
-                            "and support output:\n");
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Output driver `%s' does not support writing.",
+                     osFormat.c_str());
+            fprintf(stderr, "The following format drivers are enabled\n"
+                            "and support writing:\n");
 
             for (int iDr = 0; iDr < GDALGetDriverCount(); iDr++)
             {
