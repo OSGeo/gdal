@@ -3846,8 +3846,8 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
             poPowerOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             static const char *const apszKnownOptions[] = {
-                "power",      "smoothing",  "radius1", "radius2", "angle",
-                "max_points", "min_points", "nodata",  nullptr};
+                "power", "smoothing",  "radius",     "radius1", "radius2",
+                "angle", "max_points", "min_points", "nodata",  nullptr};
             papszKnownOptions = apszKnownOptions;
 
             break;
