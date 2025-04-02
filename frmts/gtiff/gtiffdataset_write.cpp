@@ -5631,10 +5631,13 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
 
     if (bAppend)
     {
+#if !(defined(INTERNAL_LIBTIFF) || TIFFLIB_VERSION > 20240911)
         // This is a bit of a hack to cause (*tif->tif_cleanup)(tif); to be
         // called. See https://trac.osgeo.org/gdal/ticket/2055
+        // Fixed in libtiff > 4.7.0
         TIFFSetField(l_hTIFF, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
         TIFFFreeDirectory(l_hTIFF);
+#endif
         TIFFCreateDirectory(l_hTIFF);
     }
 
