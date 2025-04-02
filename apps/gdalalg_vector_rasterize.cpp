@@ -336,14 +336,13 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             else if (fileExists && m_overwrite)
             {
                 // Delete the existing file
-                CPLErrorStateBackuper oCPLErrorHandlerPusher(
-                    CPLQuietErrorHandler);
+                GDALClose(hDstDS);
+                hDstDS = nullptr;
                 if (VSIUnlink(m_outputDataset.GetName().c_str()) != 0)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Failed to delete existing dataset '%s'.",
                              m_outputDataset.GetName().c_str());
-                    GDALClose(hDstDS);
                     return false;
                 }
             }
