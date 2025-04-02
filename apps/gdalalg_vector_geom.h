@@ -90,7 +90,7 @@ class GDALVectorGeomAbstractAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                  GDALVectorGeomMakeValidAlgorithmLayer               */
+/*                  GDALVectorGeomOneToOneAlgorithmLayer                */
 /************************************************************************/
 
 template <class T>
