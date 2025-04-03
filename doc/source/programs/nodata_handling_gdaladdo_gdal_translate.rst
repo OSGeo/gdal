@@ -1,3 +1,9 @@
+:orphan:
+
+.. ==================================================
+.. Handling NoData with gdaladdo or gdal_translate
+.. ==================================================
+
 The details of how it is taken into account depends on the resampling kernel:
 
 - for nearest resampling, for each target pixel, one of the potential contributing
