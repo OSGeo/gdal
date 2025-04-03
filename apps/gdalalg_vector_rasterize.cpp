@@ -119,11 +119,6 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     CPLStringList aosOptions;
 
-    if (pfnProgress && pfnProgress != GDALDummyProgress)
-    {
-        aosOptions.AddString("-progress");
-    }
-
     if (m_bands.size())
     {
         for (int band : m_bands)

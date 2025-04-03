@@ -507,10 +507,18 @@ def test_gdalalg_vector_rasterize_add_option(tmp_vsimem):
 
     with temp_cutline(input_csv):
 
+        last_pct = [0]
+
+        def my_progress(pct, msg, user_data):
+            last_pct[0] = pct
+            return True
+
         rasterize = get_rasterize_alg()
         assert rasterize.ParseRunAndFinalize(
-            options + ["--update", input_csv, output_tif]
+            options + ["--update", input_csv, output_tif],
+            my_progress,
         )
+        assert last_pct[0] == 1.0
 
         target_ds = gdal.Open(output_tif)
         checksum = target_ds.GetRasterBand(2).Checksum()
