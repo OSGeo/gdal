@@ -1636,3 +1636,45 @@ def test_vsicurl_header_option(server):
         full_filename = f"/vsicurl?header.foo=bar&header.Accept=application%2Fjson&url=http%3A%2F%2Flocalhost%3A{server.port}%2Ftest_vsicurl_header_option.bin"
         statres = gdal.VSIStatL(full_filename)
         assert statres.size == 3
+
+
+###############################################################################
+# Test GDAL_HTTP_MAX_CACHED_CONNECTIONS
+# This test is rather dummy as it cannot check the effect of setting the option
+
+
+@gdaltest.enable_exceptions()
+def test_vsicurl_GDAL_HTTP_MAX_CACHED_CONNECTIONS(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("HEAD", "/test.bin", 200, {"Content-Length": "3"})
+
+    with gdal.config_option(
+        "GDAL_HTTP_MAX_CACHED_CONNECTIONS", "0"
+    ), webserver.install_http_handler(handler):
+        full_filename = f"/vsicurl/http://localhost:{server.port}/test.bin"
+        statres = gdal.VSIStatL(full_filename)
+        assert statres.size == 3
+
+
+###############################################################################
+# Test GDAL_HTTP_MAX_TOTAL_CONNECTIONS
+# This test is rather dummy as it cannot check the effect of setting the option
+
+
+@gdaltest.enable_exceptions()
+def test_vsicurl_GDAL_HTTP_MAX_TOTAL_CONNECTIONS(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("HEAD", "/test.bin", 200, {"Content-Length": "3"})
+
+    with gdal.config_option(
+        "GDAL_HTTP_MAX_TOTAL_CONNECTIONS", "0"
+    ), webserver.install_http_handler(handler):
+        full_filename = f"/vsicurl/http://localhost:{server.port}/test.bin"
+        statres = gdal.VSIStatL(full_filename)
+        assert statres.size == 3
