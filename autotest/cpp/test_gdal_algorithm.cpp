@@ -836,6 +836,238 @@ TEST_F(test_gdal_algorithm, int)
     }
 }
 
+TEST_F(test_gdal_algorithm, int_min_val_included)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        int m_val = 0;
+
+        MyAlgorithm()
+        {
+            auto &arg = AddArg("val", 0, "", &m_val).SetMinValueIncluded(0);
+            const auto [minVal, minValIncluded] = arg.GetMinValue();
+            EXPECT_EQ(minVal, 0);
+            EXPECT_TRUE(minValIncluded);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=0"}));
+        EXPECT_EQ(alg.m_val, 0);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=-1"}));
+    }
+}
+
+TEST_F(test_gdal_algorithm, int_min_val_excluded)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        int m_val = 0;
+
+        MyAlgorithm()
+        {
+            auto &arg = AddArg("val", 0, "", &m_val).SetMinValueExcluded(0);
+            const auto [minVal, minValIncluded] = arg.GetMinValue();
+            EXPECT_EQ(minVal, 0);
+            EXPECT_FALSE(minValIncluded);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=1"}));
+        EXPECT_EQ(alg.m_val, 1);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=0"}));
+    }
+}
+
+TEST_F(test_gdal_algorithm, int_max_val_included)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        int m_val = 0;
+
+        MyAlgorithm()
+        {
+            auto &arg = AddArg("val", 0, "", &m_val).SetMaxValueIncluded(5);
+            const auto [maxVal, maxValIncluded] = arg.GetMaxValue();
+            EXPECT_EQ(maxVal, 5);
+            EXPECT_TRUE(maxValIncluded);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=5"}));
+        EXPECT_EQ(alg.m_val, 5);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=6"}));
+    }
+}
+
+TEST_F(test_gdal_algorithm, int_max_val_excluded)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        int m_val = 0;
+
+        MyAlgorithm()
+        {
+            auto &arg = AddArg("val", 0, "", &m_val).SetMaxValueExcluded(5);
+            const auto [maxVal, maxValIncluded] = arg.GetMaxValue();
+            EXPECT_EQ(maxVal, 5);
+            EXPECT_FALSE(maxValIncluded);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=4"}));
+        EXPECT_EQ(alg.m_val, 4);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=5"}));
+    }
+}
+
+TEST_F(test_gdal_algorithm, double_min_val_included)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        double m_val = 0;
+
+        MyAlgorithm()
+        {
+            auto &arg = AddArg("val", 0, "", &m_val).SetMinValueIncluded(0);
+            const auto [minVal, minValIncluded] = arg.GetMinValue();
+            EXPECT_EQ(minVal, 0);
+            EXPECT_TRUE(minValIncluded);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=0"}));
+        EXPECT_EQ(alg.m_val, 0);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=-0.1"}));
+    }
+}
+
+TEST_F(test_gdal_algorithm, double_min_val_excluded)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        double m_val = 0;
+
+        MyAlgorithm()
+        {
+            auto &arg = AddArg("val", 0, "", &m_val).SetMinValueExcluded(0);
+            const auto [minVal, minValIncluded] = arg.GetMinValue();
+            EXPECT_EQ(minVal, 0);
+            EXPECT_FALSE(minValIncluded);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=0.1"}));
+        EXPECT_EQ(alg.m_val, 0.1);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=0"}));
+    }
+}
+
+TEST_F(test_gdal_algorithm, double_max_val_included)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        double m_val = 0;
+
+        MyAlgorithm()
+        {
+            auto &arg = AddArg("val", 0, "", &m_val).SetMaxValueIncluded(5);
+            const auto [maxVal, maxValIncluded] = arg.GetMaxValue();
+            EXPECT_EQ(maxVal, 5);
+            EXPECT_TRUE(maxValIncluded);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=5"}));
+        EXPECT_EQ(alg.m_val, 5);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=5.1"}));
+    }
+}
+
+TEST_F(test_gdal_algorithm, double_max_val_excluded)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        double m_val = 0;
+
+        MyAlgorithm()
+        {
+            auto &arg = AddArg("val", 0, "", &m_val).SetMaxValueExcluded(5);
+            const auto [maxVal, maxValIncluded] = arg.GetMaxValue();
+            EXPECT_EQ(maxVal, 5);
+            EXPECT_FALSE(maxValIncluded);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=4.9"}));
+        EXPECT_EQ(alg.m_val, 4.9);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=5"}));
+    }
+}
+
 TEST_F(test_gdal_algorithm, SetDisplayInJSONUsage)
 {
     class MyAlgorithm : public MyAlgorithmWithDummyRun
