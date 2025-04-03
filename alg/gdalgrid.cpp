@@ -423,7 +423,7 @@ static CPLErr GDALGridInverseDistanceToAPowerNearestNeighborPerQuadrant(
     // multimap), and use the closest n points based on distance until the max
     // is reached.
     // Do that by fetching the nearest point in quadrant 0, then the nearest
-    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quadrant 1, 2 and 3, and starting again with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
     GUInt32 anPerQuadrant[4] = {0};
@@ -798,7 +798,7 @@ static CPLErr GDALGridMovingAveragePerQuadrant(
     // multimap), and use the closest n points based on distance until the max
     // is reached.
     // Do that by fetching the nearest point in quadrant 0, then the nearest
-    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quadrant 1, 2 and 3, and starting again with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
     GUInt32 anPerQuadrant[4] = {0};
@@ -1210,7 +1210,7 @@ static CPLErr GDALGridDataMetricMinimumOrMaximumPerQuadrant(
     // multimap), and use the closest n points based on distance until the max
     // is reached.
     // Do that by fetching the nearest point in quadrant 0, then the nearest
-    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quadrant 1, 2 and 3, and starting again with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
     GUInt32 anPerQuadrant[4] = {0};
@@ -1663,7 +1663,7 @@ static CPLErr GDALGridDataMetricRangePerQuadrant(
     // multimap), and use the closest n points based on distance until the max
     // is reached.
     // Do that by fetching the nearest point in quadrant 0, then the nearest
-    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quadrant 1, 2 and 3, and starting again with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
     GUInt32 anPerQuadrant[4] = {0};
@@ -1925,7 +1925,7 @@ static CPLErr GDALGridDataMetricCountPerQuadrant(
     // multimap), and use the closest n points based on distance until the max
     // is reached.
     // Do that by fetching the nearest point in quadrant 0, then the nearest
-    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quadrant 1, 2 and 3, and starting again with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
     GUInt32 anPerQuadrant[4] = {0};
@@ -2189,7 +2189,7 @@ static CPLErr GDALGridDataMetricAverageDistancePerQuadrant(
     // multimap), and use the closest n points based on distance until the max
     // is reached.
     // Do that by fetching the nearest point in quadrant 0, then the nearest
-    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quadrant 1, 2 and 3, and starting again with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
     GUInt32 anPerQuadrant[4] = {0};
