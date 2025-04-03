@@ -72,7 +72,8 @@ GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool openForMixedRasterVector)
            _("Use subdataset of specified index (starting at 1), instead of "
              "the source dataset itself"),
            &m_subDS)
-        .SetCategory(GAAC_ESOTERIC);
+        .SetCategory(GAAC_ESOTERIC)
+        .SetMinValueIncluded(1);
 
     AddInputDatasetArg(&m_dataset, openForMixedRasterVector
                                        ? GDAL_OF_RASTER | GDAL_OF_VECTOR |

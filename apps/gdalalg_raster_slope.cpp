@@ -38,9 +38,11 @@ GDALRasterSlopeAlgorithm::GDALRasterSlopeAlgorithm(bool standaloneStep)
         .SetChoices("degree", "percent")
         .SetDefault(m_unit);
     AddArg("xscale", 0, _("Ratio of vertical units to horizontal X axis units"),
-           &m_xscale);
+           &m_xscale)
+        .SetMinValueExcluded(0);
     AddArg("yscale", 0, _("Ratio of vertical units to horizontal Y axis units"),
-           &m_yscale);
+           &m_yscale)
+        .SetMinValueExcluded(0);
     AddArg("gradient-alg", 0, _("Algorithm used to compute terrain gradient"),
            &m_gradientAlg)
         .SetChoices("Horn", "ZevenbergenThorne")

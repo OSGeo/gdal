@@ -29,28 +29,15 @@ GDALRasterResizeAlgorithm::GDALRasterResizeAlgorithm(bool standaloneStep)
     : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
-    auto &sizeArg = AddArg("size", 0, _("Target size in pixels"), &m_size)
-                        .SetMinCount(2)
-                        .SetMaxCount(2)
-                        .SetRequired()
-                        .SetRepeatedArgAllowed(false)
-                        .SetDisplayHintAboutRepetition(false)
-                        .SetMetaVar("<width>,<height>")
-                        .SetMutualExclusionGroup("resolution-size");
-    sizeArg.AddValidationAction(
-        [&sizeArg]()
-        {
-            const auto &val = sizeArg.Get<std::vector<int>>();
-            CPLAssert(val.size() == 2);
-            if (!(val[0] >= 0 && val[1] >= 0))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Target size should be positive or 0.");
-                return false;
-            }
-            return true;
-        });
-
+    AddArg("size", 0, _("Target size in pixels"), &m_size)
+        .SetMinCount(2)
+        .SetMaxCount(2)
+        .SetRequired()
+        .SetMinValueIncluded(0)
+        .SetRepeatedArgAllowed(false)
+        .SetDisplayHintAboutRepetition(false)
+        .SetMetaVar("<width>,<height>")
+        .SetMutualExclusionGroup("resolution-size");
     AddArg("resampling", 'r', _("Resampling method"), &m_resampling)
         .SetChoices("nearest", "bilinear", "cubic", "cubicspline", "lanczos",
                     "average", "mode")

@@ -30,24 +30,11 @@ GDALVectorGeomSimplifyAlgorithm::GDALVectorGeomSimplifyAlgorithm(
     : GDALVectorGeomAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep, m_opts)
 {
-    auto &arg =
-        AddArg("tolerance", 0, _("Distance tolerance for simplification."),
-               &m_opts.m_tolerance)
-            .SetPositional()
-            .SetRequired();
-    arg.AddValidationAction(
-        [this, &arg]()
-        {
-            const double val = arg.Get<double>();
-            if (!(val > 0))
-            {
-                ReportError(
-                    CE_Failure, CPLE_IllegalArg,
-                    "Value of 'tolerance' should be strictly positive.");
-                return false;
-            }
-            return true;
-        });
+    AddArg("tolerance", 0, _("Distance tolerance for simplification."),
+           &m_opts.m_tolerance)
+        .SetPositional()
+        .SetRequired()
+        .SetMinValueIncluded(0);
 }
 
 #ifdef HAVE_GEOS

@@ -69,6 +69,6 @@ def test_gdalalg_vector_geom_segmentize_error():
 
     alg = get_alg()
     with pytest.raises(
-        Exception, match="Value of 'max-length' should be strictly positive"
+        Exception, match="Value of argument 'max-length' is 0, but should be > 0"
     ):
         alg["max-length"] = 0

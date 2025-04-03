@@ -44,42 +44,12 @@ GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd()
                     "bilinear", "gauss", "average_magphase", "rms", "mode")
         .SetHiddenChoices("near");
 
-    auto &levelArg =
-        AddArg("levels", 0, _("Levels / decimation factors"), &m_levels);
-    levelArg.AddValidationAction(
-        [this, &levelArg]()
-        {
-            const auto &values = levelArg.Get<std::vector<int>>();
-            for (const auto &value : values)
-            {
-                if (value < 2)
-                {
-                    ReportError(CE_Failure, CPLE_IllegalArg,
-                                "Values of 'levels' argument should be "
-                                "integers greater or equal to 2.");
-                    return false;
-                }
-            }
-            return true;
-        });
-
-    auto &minSizeArg =
-        AddArg("min-size", 0,
-               _("Maximum width or height of the smallest overview level."),
-               &m_minSize);
-    minSizeArg.AddValidationAction(
-        [this, &minSizeArg]()
-        {
-            const int val = minSizeArg.Get<int>();
-            if (val <= 0)
-            {
-                ReportError(CE_Failure, CPLE_IllegalArg,
-                            "Value of 'min-size' should be an integer greater "
-                            "or equal to 1.");
-                return false;
-            }
-            return true;
-        });
+    AddArg("levels", 0, _("Levels / decimation factors"), &m_levels)
+        .SetMinValueIncluded(2);
+    AddArg("min-size", 0,
+           _("Maximum width or height of the smallest overview level."),
+           &m_minSize)
+        .SetMinValueIncluded(1);
 }
 
 /************************************************************************/

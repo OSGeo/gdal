@@ -114,7 +114,7 @@ def get_contour_alg():
         (
             ["--interval", "-10"],
             True,
-            "contour: Interval must be a positive number.",
+            "Value of argument 'interval' is -10, but should be > 0",
         ),
     ],
 )

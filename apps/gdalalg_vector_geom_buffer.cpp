@@ -43,11 +43,13 @@ GDALVectorGeomBufferAlgorithm::GDALVectorGeomBufferAlgorithm(
     AddArg("mitre-limit", 0,
            _("Mitre ratio limit (only affects mitered join style)."),
            &m_opts.m_mitreLimit)
-        .SetDefault(m_opts.m_mitreLimit);
+        .SetDefault(m_opts.m_mitreLimit)
+        .SetMinValueIncluded(0);
     AddArg("quadrant-segments", 0,
            _("Number of line segments used to approximate a quarter circle."),
            &m_opts.m_quadrantSegments)
-        .SetDefault(m_opts.m_quadrantSegments);
+        .SetDefault(m_opts.m_quadrantSegments)
+        .SetMinValueIncluded(1);
     AddArg("side", 0,
            _("Sets whether the computed buffer should be single-sided or not."),
            &m_opts.m_side)

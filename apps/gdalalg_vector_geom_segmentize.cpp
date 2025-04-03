@@ -30,23 +30,11 @@ GDALVectorGeomSegmentizeAlgorithm::GDALVectorGeomSegmentizeAlgorithm(
     : GDALVectorGeomAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep, m_opts)
 {
-    auto &arg = AddArg("max-length", 0, _("Maximum length of a segment"),
-                       &m_opts.m_maxLength)
-                    .SetPositional()
-                    .SetRequired();
-    arg.AddValidationAction(
-        [this, &arg]()
-        {
-            const double val = arg.Get<double>();
-            if (!(val > 0))
-            {
-                ReportError(
-                    CE_Failure, CPLE_IllegalArg,
-                    "Value of 'max-length' should be strictly positive.");
-                return false;
-            }
-            return true;
-        });
+    AddArg("max-length", 0, _("Maximum length of a segment"),
+           &m_opts.m_maxLength)
+        .SetPositional()
+        .SetRequired()
+        .SetMinValueExcluded(0);
 }
 
 namespace
