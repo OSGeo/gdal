@@ -43,8 +43,7 @@ class Win32IOInterface : public IOInterfaces
     virtual int     Close( void *io_handle ) const override;
 
     // Dummy implementation for now
-    // cppcheck-suppress functionStatic
-    const char     *LastError() const;
+    static const char     *LastError();
 };
 
 typedef struct {
@@ -352,7 +351,8 @@ int Win32IOInterface::Close( void *io_handle ) const
 /*      Return a string representation of the last error.               */
 /************************************************************************/
 
-const char *Win32IOInterface::LastError() const
+/* static */
+const char *Win32IOInterface::LastError()
 
 {
     return "";

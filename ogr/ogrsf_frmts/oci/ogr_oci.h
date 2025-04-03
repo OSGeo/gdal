@@ -388,8 +388,8 @@ class OGROCILoaderLayer final : public OGROCIWritableLayer
 
     OGRErr WriteFeatureStreamMode(OGRFeature *);
     OGRErr WriteFeatureVariableMode(OGRFeature *);
-    // cppcheck-suppress functionStatic
-    OGRErr WriteFeatureBinaryMode(OGRFeature *);
+
+    static OGRErr WriteFeatureBinaryMode(OGRFeature *);
 
   public:
     OGROCILoaderLayer(OGROCIDataSource *, const char *pszName,
