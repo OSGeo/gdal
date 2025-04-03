@@ -5568,7 +5568,7 @@ class VSIFile(BytesIO):
             elif isinstance(value, dict):
                 return self.SetAsStringList([f"{k}={str(value[k])}" for k in value])
             else:
-                return self.SetAsStringList([str(v)])
+                return self.SetAsStringList([str(value)])
         if type == GAAT_INTEGER_LIST:
             return self.SetAsIntegerList(value)
         if type == GAAT_REAL_LIST:
