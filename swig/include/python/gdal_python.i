@@ -5545,7 +5545,10 @@ class VSIFile(BytesIO):
         if type == GAAT_BOOLEAN:
             return self.SetAsBoolean(value)
         if type == GAAT_STRING:
-            return self.SetAsString(value)
+            if isinstance(value, str) or isinstance(value, int) or isinstance(value, float):
+                return self.SetAsString(str(value))
+            else:
+                raise "Unexpected value type %s for an argument of type String" % str(type(value))
         if type == GAAT_INTEGER:
             return self.SetAsInteger(value)
         if type == GAAT_REAL:
@@ -5562,6 +5565,8 @@ class VSIFile(BytesIO):
         if type == GAAT_STRING_LIST:
             if isinstance(value, list):
                 return self.SetAsStringList([str(v) for v in value])
+            elif isinstance(value, dict):
+                return self.SetAsStringList([f"{k}={str(value[k])}" for k in value])
             else:
                 return self.SetAsStringList([str(v)])
         if type == GAAT_INTEGER_LIST:
@@ -5573,6 +5578,8 @@ class VSIFile(BytesIO):
                 return self.SetDatasetNames([str(v) for v in value])
             elif isinstance(value[0], Dataset):
                 return self.SetDatasets(value)
+            else:
+                raise "Unexpected value type %s for an argument of type DatasetList" % str(type(value))
         raise Exception("Unhandled algorithm argument data type")
 
 %}
