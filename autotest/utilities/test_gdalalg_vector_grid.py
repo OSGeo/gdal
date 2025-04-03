@@ -14,8 +14,10 @@
 import os
 import sys
 
+import gdaltest
 import ogrtest
 import pytest
+import test_cli_utilities
 
 from osgeo import gdal, ogr
 
@@ -403,3 +405,21 @@ def test_gdalalg_vector_grid_overwrite_failed_unlink(tmp_path):
         raise
     finally:
         os.chmod(tmp_path, 0o755)
+
+
+def test_gdalalg_vector_grid_autocomplete():
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary not available")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal vector grid invdist last_word_is_complete=false"
+    ).split(" ")
+    assert "invdist" in out
+    assert "invdistnn" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal vector grid invdist last_word_is_complete=true"
+    ).split(" ")
+    assert out == [""]

@@ -26,6 +26,7 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL : public StepAlgorithm
 {
   public:
     std::vector<std::string> GetAutoComplete(std::vector<std::string> &args,
+                                             bool lastWordIsComplete,
                                              bool /* showAllOptions*/) override;
 
     bool Finalize() override;
@@ -93,7 +94,8 @@ GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetStepAlg(
 template <class StepAlgorithm>
 std::vector<std::string>
 GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetAutoComplete(
-    std::vector<std::string> &args, bool /* showAllOptions*/)
+    std::vector<std::string> &args, bool lastWordIsComplete,
+    bool /* showAllOptions*/)
 {
     std::vector<std::string> ret;
     if (args.size() <= 1)
@@ -130,8 +132,8 @@ GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetAutoComplete(
         auto curAlg = GetStepAlg(lastStep);
         if (curAlg)
         {
-            ret =
-                curAlg->GetAutoComplete(lastArgs, /* showAllOptions = */ false);
+            ret = curAlg->GetAutoComplete(lastArgs, lastWordIsComplete,
+                                          /* showAllOptions = */ false);
         }
     }
     return ret;

@@ -13,8 +13,13 @@ _gdal()
 {
   local cur prev
   COMPREPLY=()
-  _get_comp_words_by_ref cur prev
-  choices=$(gdal completion ${COMP_LINE})
+  _get_comp_words_by_ref cur
+  if test "$cur" = ""; then
+    last_word_is_complete="last_word_is_complete=true"
+  else
+    last_word_is_complete="last_word_is_complete=false"
+  fi
+  choices=$(gdal completion ${COMP_LINE} ${last_word_is_complete})
   if [[ "$cur" == "=" ]]; then
     mapfile -t COMPREPLY < <(compgen -W "$choices" --)
   elif [[ "$cur" == ":" ]]; then
