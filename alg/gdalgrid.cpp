@@ -2512,8 +2512,14 @@ CPLErr GDALGridLinear(const void *poOptionsIn, GUInt32 nPoints,
         {
             GDALGridNearestNeighborOptions sNeighbourOptions;
             sNeighbourOptions.nSizeOfStructure = sizeof(sNeighbourOptions);
-            sNeighbourOptions.dfRadius1 = dfRadius < 0.0 ? 0.0 : dfRadius;
-            sNeighbourOptions.dfRadius2 = dfRadius < 0.0 ? 0.0 : dfRadius;
+            sNeighbourOptions.dfRadius1 =
+                dfRadius < 0.0 || dfRadius >= std::numeric_limits<double>::max()
+                    ? 0.0
+                    : dfRadius;
+            sNeighbourOptions.dfRadius2 =
+                dfRadius < 0.0 || dfRadius >= std::numeric_limits<double>::max()
+                    ? 0.0
+                    : dfRadius;
             sNeighbourOptions.dfAngle = 0.0;
             sNeighbourOptions.dfNoDataValue = poOptions->dfNoDataValue;
             return GDALGridNearestNeighbor(&sNeighbourOptions, nPoints, padfX,

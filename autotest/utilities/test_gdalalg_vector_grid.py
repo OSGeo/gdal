@@ -306,12 +306,44 @@ def get_src_ds(geom3D):
         ("nearest", True, {"radius": 5, "nodata": -1}, 6336, "success", None),
         ("nearest", True, {"radius1": 5, "radius2": 7}, 23049, "success", None),
         ("nearest", True, {"radius1": 7, "radius2": 5}, 25006, "success", None),
+        #
+        # linear testing
+        #
+        ("linear", True, {}, 53743, "success", None),
+        ("linear", True, {"extent": [90, 990, 120, 1120]}, 638, "success", None),
+        (
+            "linear",
+            True,
+            {"extent": [90, 990, 120, 1120], "radius": 1},
+            21670,
+            "success",
+            None,
+        ),
+        (
+            "linear",
+            True,
+            {"extent": [90, 990, 120, 1120], "radius": 0},
+            19205,
+            "success",
+            None,
+        ),
+        (
+            "linear",
+            True,
+            {"extent": [90, 990, 120, 1120], "radius": 0, "nodata": -1},
+            20839,
+            "success",
+            None,
+        ),
     ],
 )
 def test_gdalalg_vector_grid_regular(subalg, geom3D, options, checksum, ret_value, msg):
 
     if "bbox" in options and not ogrtest.have_geos():
         pytest.skip("GEOS not available")
+
+    if subalg == "linear" and not gdal.HasTriangulation():
+        pytest.skip("qhull missing")
 
     alg = get_alg(subalg)
     alg["input"] = get_src_ds(geom3D)

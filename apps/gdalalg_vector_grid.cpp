@@ -14,6 +14,7 @@
 #include "gdalalg_vector_grid_average.h"
 #include "gdalalg_vector_grid_invdist.h"
 #include "gdalalg_vector_grid_invdistnn.h"
+#include "gdalalg_vector_grid_linear.h"
 #include "gdalalg_vector_grid_nearest.h"
 
 #include "cpl_conv.h"
@@ -37,6 +38,7 @@ GDALVectorGridAlgorithm::GDALVectorGridAlgorithm()
     RegisterSubAlgorithm<GDALVectorGridAverageAlgorithm>();
     RegisterSubAlgorithm<GDALVectorGridInvdistAlgorithm>();
     RegisterSubAlgorithm<GDALVectorGridInvdistNNAlgorithm>();
+    RegisterSubAlgorithm<GDALVectorGridLinearAlgorithm>();
     RegisterSubAlgorithm<GDALVectorGridNearestAlgorithm>();
 }
 
