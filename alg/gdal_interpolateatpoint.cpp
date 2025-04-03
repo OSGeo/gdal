@@ -124,13 +124,20 @@ bool GDALInterpExtractValuesWindow(GDALRasterBand *pBand,
             // Compose the cached block to the final buffer
             for (int j = 0; j < nLinesToCopy; j++)
             {
-                memcpy(padfAsDouble + ((nFirstLineInOutput + j) * nWidth +
-                                       nFirstColInOutput) *
-                                          nTypeFactor,
-                       poValue->data() +
-                           ((nFirstLineInCachedBlock + j) * nReqXSize +
-                            nFirstColInCachedBlock) *
-                               nTypeFactor,
+                const size_t dstOffset =
+                    (static_cast<size_t>(nFirstLineInOutput + j) * nWidth +
+                     nFirstColInOutput) *
+                    nTypeFactor;
+                const size_t srcOffset =
+                    (static_cast<size_t>(nFirstLineInCachedBlock + j) *
+                         nReqXSize +
+                     nFirstColInCachedBlock) *
+                    nTypeFactor;
+                if (srcOffset + nColsToCopy * nTypeFactor > poValue->size())
+                {
+                    return false;
+                }
+                memcpy(padfAsDouble + dstOffset, poValue->data() + srcOffset,
                        nColsToCopy * sizeof(T));
             }
         }
