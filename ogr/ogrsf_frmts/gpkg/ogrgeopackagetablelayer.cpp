@@ -108,7 +108,7 @@ OGRErr OGRGeoPackageTableLayer::UpdateExtent(const OGREnvelope *poExtent)
 {
     if (!m_poExtent)
     {
-        m_poExtent = new OGREnvelope(*poExtent);
+        m_poExtent = std::make_unique<OGREnvelope>(*poExtent);
     }
     m_poExtent->Merge(*poExtent);
     m_bExtentChanged = true;
@@ -1339,7 +1339,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 
     if (bReadExtent)
     {
-        m_poExtent = new OGREnvelope(oExtent);
+        m_poExtent = std::make_unique<OGREnvelope>(oExtent);
     }
 
     // Look for sub-types such as JSON
@@ -1519,9 +1519,6 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
     /* Clean up resources in memory */
     if (m_pszTableName)
         CPLFree(m_pszTableName);
-
-    if (m_poExtent)
-        delete m_poExtent;
 
     if (m_poUpdateStatement)
         sqlite3_finalize(m_poUpdateStatement);
@@ -4280,7 +4277,7 @@ OGRErr OGRGeoPackageTableLayer::IGetExtent(int /* iGeomField  */,
         if (GetExtentFromRTree(m_poDS->GetDB(), m_osRTreeName, psExtent->MinX,
                                psExtent->MinY, psExtent->MaxX, psExtent->MaxY))
         {
-            m_poExtent = new OGREnvelope(*psExtent);
+            m_poExtent = std::make_unique<OGREnvelope>(*psExtent);
             m_bExtentChanged = true;
             SaveExtent();
             return OGRERR_NONE;
@@ -4305,8 +4302,7 @@ OGRErr OGRGeoPackageTableLayer::IGetExtent(int /* iGeomField  */,
             pszC, pszC, pszC, pszC, m_pszTableName, pszC, pszC);
         auto oResult = SQLQuery(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
-        delete m_poExtent;
-        m_poExtent = nullptr;
+        m_poExtent.reset();
         if (oResult && oResult->RowCount() == 1 &&
             oResult->GetValue(0, 0) != nullptr)
         {
@@ -4314,7 +4310,7 @@ OGRErr OGRGeoPackageTableLayer::IGetExtent(int /* iGeomField  */,
             psExtent->MinY = CPLAtof(oResult->GetValue(1, 0));
             psExtent->MaxX = CPLAtof(oResult->GetValue(2, 0));
             psExtent->MaxY = CPLAtof(oResult->GetValue(3, 0));
-            m_poExtent = new OGREnvelope(*psExtent);
+            m_poExtent = std::make_unique<OGREnvelope>(*psExtent);
             m_bExtentChanged = true;
             SaveExtent();
         }
@@ -4357,8 +4353,7 @@ void OGRGeoPackageTableLayer::UpdateContentsToNullExtent()
 void OGRGeoPackageTableLayer::RecomputeExtent()
 {
     m_bExtentChanged = true;
-    delete m_poExtent;
-    m_poExtent = nullptr;
+    m_poExtent.reset();
     OGREnvelope sExtent;
     CPL_IGNORE_RET_VAL(GetExtent(&sExtent, true));
 }
