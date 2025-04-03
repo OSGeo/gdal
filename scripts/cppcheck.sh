@@ -55,6 +55,7 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
     printf "Running cppcheck on %s (can be long): " "$dirname"
     cppcheck --inline-suppr --template='{file}:{line},{severity},{id},{message}' \
         --enable=all --inconclusive ${POSIX} -UAFL_FRIENDLY -UANDROID \
+        -DCPPCHECK_STATIC=static \
         -UCOMPAT_WITH_ICC_CONVERSION_CHECK -DDEBUG -UDEBUG_BOOL \
         -D__linux \
         -DGBool=int -DCPL_HAS_GINT64=1 -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED \
