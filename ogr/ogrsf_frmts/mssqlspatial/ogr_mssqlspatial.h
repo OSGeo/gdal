@@ -515,8 +515,8 @@ class OGRMSSQLSpatialTableLayer final : public OGRMSSQLSpatialLayer
         bUpdateAccess = bFlag;
     }
 
-    // cppcheck-suppress functionStatic
-    OGRErr StartCopy();
+    static OGRErr StartCopy();
+
     // cppcheck-suppress functionStatic
     OGRErr EndCopy();
 

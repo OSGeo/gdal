@@ -34,6 +34,10 @@
 #else
 #define OGR_DEPRECATED(x)
 #endif
+
+#ifndef CPPCHECK_STATIC
+#define CPPCHECK_STATIC
+#endif
 //! @endcond
 
 class OGRLayerAttrIndex;
@@ -644,24 +648,22 @@ class CPL_DLL OGRSFDriverRegistrar
     static OGRSFDriverRegistrar *GetRegistrar()
         OGR_DEPRECATED("Use GDALDriverManager class instead");
 
-    // cppcheck-suppress functionStatic
-    void RegisterDriver(OGRSFDriver *poDriver)
+    CPPCHECK_STATIC void RegisterDriver(OGRSFDriver *poDriver)
         OGR_DEPRECATED("Use GDALDriverManager class instead");
 
-    // cppcheck-suppress functionStatic
-    int GetDriverCount(void)
-        OGR_DEPRECATED("Use GDALDriverManager class instead");
-    // cppcheck-suppress functionStatic
-    GDALDriver *GetDriver(int iDriver)
-        OGR_DEPRECATED("Use GDALDriverManager class instead");
-    // cppcheck-suppress functionStatic
-    GDALDriver *GetDriverByName(const char *)
+    CPPCHECK_STATIC int GetDriverCount(void)
         OGR_DEPRECATED("Use GDALDriverManager class instead");
 
-    // cppcheck-suppress functionStatic
-    int GetOpenDSCount() OGR_DEPRECATED("Use GDALDriverManager class instead");
-    // cppcheck-suppress functionStatic
-    OGRDataSource *GetOpenDS(int)
+    CPPCHECK_STATIC GDALDriver *GetDriver(int iDriver)
+        OGR_DEPRECATED("Use GDALDriverManager class instead");
+
+    CPPCHECK_STATIC GDALDriver *GetDriverByName(const char *)
+        OGR_DEPRECATED("Use GDALDriverManager class instead");
+
+    CPPCHECK_STATIC int GetOpenDSCount()
+        OGR_DEPRECATED("Use GDALDriverManager class instead");
+
+    CPPCHECK_STATIC OGRDataSource *GetOpenDS(int)
         OGR_DEPRECATED("Use GDALDriverManager class instead");
     //! @endcond
 };
