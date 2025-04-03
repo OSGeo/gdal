@@ -3,7 +3,7 @@ GDAL
 ================================================================================
 
 .. include:: ./about.rst
-   :start-line: 6
+   :start-after: .. descriptionstartshere
 
 .. toctree::
     :maxdepth: 2
