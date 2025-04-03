@@ -275,15 +275,6 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         aosOptions.AddString(m_optimization.c_str());
     }
 
-    if (m_openOptions.size())
-    {
-        for (const auto &oo : m_openOptions)
-        {
-            aosOptions.AddString("-oo");
-            aosOptions.AddString(oo.c_str());
-        }
-    }
-
     std::unique_ptr<GDALRasterizeOptions, decltype(&GDALRasterizeOptionsFree)>
         psOptions{GDALRasterizeOptionsNew(aosOptions.List(), nullptr),
                   GDALRasterizeOptionsFree};
