@@ -335,6 +335,50 @@ def get_src_ds(geom3D):
             "success",
             None,
         ),
+        #
+        # minimum testing
+        #
+        ("minimum", True, {}, 35715, "success", None),
+        ("minimum", True, {"radius": 5}, 23821, "success", None),
+        ("minimum", True, {"radius": 5, "nodata": -1}, 14538, "success", None),
+        ("minimum", True, {"radius1": 5, "radius2": 5}, 23821, "success", None),
+        ("minimum", True, {"radius": 5, "min-points": 2}, 60234, "success", None),
+        (
+            "minimum",
+            True,
+            {"radius": 5, "min-points-per-quadrant": 2},
+            0,
+            "success",
+            None,
+        ),
+        (
+            "minimum",
+            True,
+            {"radius": 20, "max-points-per-quadrant": 1},
+            53113,
+            "success",
+            None,
+        ),
+        #
+        # maximum testing
+        #
+        ("maximum", True, {}, 59558, "success", None),
+        #
+        # range testing
+        #
+        ("range", True, {}, 17860, "success", None),
+        #
+        # count testing
+        #
+        ("count", True, {"radius": 5}, 5966, "success", None),
+        #
+        # average-distance testing
+        #
+        ("average-distance", True, {}, 53719, "success", None),
+        #
+        # average-distance-points testing
+        #
+        ("average-distance-points", True, {}, 23830, "success", None),
     ],
 )
 def test_gdalalg_vector_grid_regular(subalg, geom3D, options, checksum, ret_value, msg):
