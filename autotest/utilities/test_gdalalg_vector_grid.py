@@ -298,6 +298,14 @@ def get_src_ds(geom3D):
             "success",
             None,
         ),
+        #
+        # nearest testing
+        #
+        ("nearest", True, {}, 58195, "success", None),
+        ("nearest", True, {"radius": 5}, 15619, "success", None),
+        ("nearest", True, {"radius": 5, "nodata": -1}, 6336, "success", None),
+        ("nearest", True, {"radius1": 5, "radius2": 7}, 23049, "success", None),
+        ("nearest", True, {"radius1": 7, "radius2": 5}, 25006, "success", None),
     ],
 )
 def test_gdalalg_vector_grid_regular(subalg, geom3D, options, checksum, ret_value, msg):
