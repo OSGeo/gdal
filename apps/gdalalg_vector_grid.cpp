@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_vector_grid.h"
+#include "gdalalg_vector_grid_average.h"
 #include "gdalalg_vector_grid_invdist.h"
 #include "gdalalg_vector_grid_invdistnn.h"
 
@@ -32,6 +33,7 @@
 GDALVectorGridAlgorithm::GDALVectorGridAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
+    RegisterSubAlgorithm<GDALVectorGridAverageAlgorithm>();
     RegisterSubAlgorithm<GDALVectorGridInvdistAlgorithm>();
     RegisterSubAlgorithm<GDALVectorGridInvdistNNAlgorithm>();
 }
