@@ -413,7 +413,6 @@ source band, a mask band, an alpha band will not be used during resampling
 (when using :option:`-outsize` or :option:`-tr`).
 
 .. include:: nodata_handling_gdaladdo_gdal_translate.rst
-   :start-line: 6
 
 C API
 -----

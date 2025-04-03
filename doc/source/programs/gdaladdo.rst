@@ -254,7 +254,6 @@ metadata set on the source band, a mask band, an alpha band will not be used
 during resampling.
 
 .. include:: nodata_handling_gdaladdo_gdal_translate.rst
-   :start-line: 6
 
 Multithreading
 --------------

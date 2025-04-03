@@ -1,8 +1,8 @@
 :orphan:
 
-==================================================
-Handling NoData with gdaladdo or gdal_translate
-==================================================
+.. ==================================================
+.. Handling NoData with gdaladdo or gdal_translate
+.. ==================================================
 
 The details of how it is taken into account depends on the resampling kernel:
 
