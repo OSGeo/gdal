@@ -263,9 +263,8 @@ MAIN_START(argc, argv)
 
                 printf("Output driver `%s' not recognised.\n",
                        osFormat.c_str());
-                printf(
-                    "The following format drivers are configured and support "
-                    "output:\n");
+                printf("The following format drivers are enabled and support "
+                       "writing:\n");
                 for (iDr = 0; iDr < GDALGetDriverCount(); iDr++)
                 {
                     hDriver = GDALGetDriver(iDr);

@@ -30,11 +30,6 @@ class GDALRasterResizeAlgorithm /* non final */
         "Resize a raster dataset without changing the georeferenced extents.";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_resize.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALRasterResizeAlgorithm(bool standaloneStep = false);
 
   private:

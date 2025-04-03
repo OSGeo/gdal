@@ -29,11 +29,6 @@ class GDALRasterInfoAlgorithm final : public GDALAlgorithm
         "Return information on a raster dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_info.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALRasterInfoAlgorithm(bool openForMixedRasterVector = false);
 
     GDALDataset *GetDatasetRef()

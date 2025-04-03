@@ -46,7 +46,7 @@ GDALRasterStackAlgorithm::GDALRasterStackAlgorithm()
         .SetMetaVar("INPUTS");
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
     AddCreationOptionsArg(&m_creationOptions);
-    AddArg("band", 'b', _("Specify input band(s) number."), &m_bands);
+    AddBandArg(&m_bands);
     AddOverwriteArg(&m_overwrite);
     {
         auto &arg =

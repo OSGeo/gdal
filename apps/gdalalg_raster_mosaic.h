@@ -29,11 +29,6 @@ class GDALRasterMosaicAlgorithm final : public GDALAlgorithm
         "Build a mosaic, either virtual (VRT) or materialized.";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_mosaic.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALRasterMosaicAlgorithm();
 
   private:

@@ -29,11 +29,6 @@ class GDALRasterClipAlgorithm /* non final */
     static constexpr const char *DESCRIPTION = "Clip a raster dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_clip.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALRasterClipAlgorithm(bool standaloneStep = false);
 
   private:

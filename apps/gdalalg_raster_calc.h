@@ -30,11 +30,6 @@ class GDALRasterCalcAlgorithm : public GDALAlgorithm
     static constexpr const char *DESCRIPTION = "Perform raster algebra";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_calc.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 

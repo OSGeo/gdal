@@ -56,6 +56,8 @@ of an individual source pixel is determined by the product of the weights
 determined for its row and column; the diagonal Cartesian distance is not
 calculated.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+
 Standard options
 ++++++++++++++++
 
@@ -270,6 +272,11 @@ than the threshold or all points have been exactly computed.
 The error threshold (in source dataset pixels) can be controlled with the
 :option:`--error-threshold` switch. If you want to compare a true pixel-by-pixel reprojection
 use ``--error-threshold=0`` which disables this approximator entirely.
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
 Examples
 --------

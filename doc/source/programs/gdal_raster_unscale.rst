@@ -40,6 +40,8 @@ unmodified.
 
 This command is the reverse operation of :ref:`gdal_raster_scale_subcommand`.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+
 Standard options
 ++++++++++++++++
 
@@ -54,6 +56,12 @@ Standard options
   Override output data type among ``Byte``, ``Int8``, ``UInt16``, ``Int16``, ``UInt32``,
   ``Int32``, ``UInt64``, ``Int64``, ``CInt16``, ``CInt32``, ``Float32``,
   ``Float64``, ``CFloat32``, ``CFloat64``.
+
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
 Examples
 --------

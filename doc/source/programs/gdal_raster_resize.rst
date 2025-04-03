@@ -23,6 +23,8 @@ Description
 :program:`gdal raster resize` can be used to resize a raster dataset without
 changing the georeferenced extents.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+
 Standard options
 ++++++++++++++++
 
@@ -52,6 +54,12 @@ Standard options
     ``lanczos``: Lanczos windowed sinc resampling.
 
     ``average``: average resampling, computes the weighted average of all non-NODATA contributing pixels.
+
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
 Examples
 --------

@@ -30,11 +30,6 @@ class GDALVectorEditAlgorithm /* non final */
         "Edit metadata of a vector dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_vector_edit.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALVectorEditAlgorithm(bool standaloneStep = false);
 
   private:

@@ -31,11 +31,6 @@ class GDALVectorGeomBufferAlgorithm final
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_geom_buffer.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     struct Options : public GDALVectorGeomAbstractAlgorithm::OptionsBase
     {
         double m_distance = 0;

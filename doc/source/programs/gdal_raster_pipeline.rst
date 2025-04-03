@@ -28,6 +28,12 @@ Potential steps are:
 
 .. program-output:: gdal raster pipeline --help-doc=read
 
+* aspect
+
+.. program-output:: gdal raster pipeline --help-doc=aspect
+
+Details for options can be found in :ref:`gdal_raster_aspect_subcommand`.
+
 * astype
 
 .. program-output:: gdal raster pipeline --help-doc=astype
@@ -40,11 +46,23 @@ Details for options can be found in :ref:`gdal_raster_astype_subcommand`.
 
 Details for options can be found in :ref:`gdal_raster_clip_subcommand`.
 
+* color-map
+
+.. program-output:: gdal raster pipeline --help-doc=color-map
+
+Details for options can be found in :ref:`gdal_raster_color_map_subcommand`.
+
 * edit
 
 .. program-output:: gdal raster pipeline --help-doc=edit
 
 Details for options can be found in :ref:`gdal_raster_edit_subcommand`.
+
+* hillshade
+
+.. program-output:: gdal raster pipeline --help-doc=hillshade
+
+Details for options can be found in :ref:`gdal_raster_hillshade_subcommand`.
 
 * reproject
 
@@ -58,6 +76,12 @@ Details for options can be found in :ref:`gdal_raster_reproject_subcommand`.
 
 Details for options can be found in :ref:`gdal_raster_resize_subcommand`.
 
+* roughness
+
+.. program-output:: gdal raster pipeline --help-doc=roughness
+
+Details for options can be found in :ref:`gdal_raster_roughness_subcommand`.
+
 * scale
 
 .. program-output:: gdal raster pipeline --help-doc=scale
@@ -69,6 +93,24 @@ Details for options can be found in :ref:`gdal_raster_scale_subcommand`.
 .. program-output:: gdal raster pipeline --help-doc=select
 
 Details for options can be found in :ref:`gdal_raster_select_subcommand`.
+
+* slope
+
+.. program-output:: gdal raster pipeline --help-doc=slope
+
+Details for options can be found in :ref:`gdal_raster_slope_subcommand`.
+
+* tpi
+
+.. program-output:: gdal raster pipeline --help-doc=tpi
+
+Details for options can be found in :ref:`gdal_raster_tpi_subcommand`.
+
+* tri
+
+.. program-output:: gdal raster pipeline --help-doc=tri
+
+Details for options can be found in :ref:`gdal_raster_tri_subcommand`.
 
 * unscale
 
@@ -133,3 +175,11 @@ Examples
 
         $ gdal raster pipeline --progress ! read in.tif ! reproject --dst-crs=EPSG:32632 ! write in_epsg_32632.gdalg.json --overwrite
         $ gdal raster info in_epsg_32632.gdalg.json
+
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    tpi
+    tri

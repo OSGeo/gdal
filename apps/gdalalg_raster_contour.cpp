@@ -47,7 +47,7 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
     AddCreationOptionsArg(&m_creationOptions);
 
     // gdal_contour specific options
-    AddArg("band", 'b', _("Specify input band number"), &m_band).SetDefault(1);
+    AddBandArg(&m_band).SetDefault(1);
     AddLayerNameArg(&m_outputLayerName).AddAlias("nln");
     AddArg("elevation-name", 0, _("Name of the elevation field"),
            &m_elevAttributeName);

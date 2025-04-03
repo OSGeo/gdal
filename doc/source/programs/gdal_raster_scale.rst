@@ -40,6 +40,8 @@ it to a single band with :option:`--band` and leave values of other bands unmodi
 
 This command is the reverse operation of :ref:`gdal_raster_unscale_subcommand`.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+
 Standard options
 ++++++++++++++++
 
@@ -100,6 +102,11 @@ Standard options
     with non-linear scaling with a non-integer exponent will cause input values lower
     than the minimum value of the source range to be mapped to not-a-number.
 
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
 Examples
 --------

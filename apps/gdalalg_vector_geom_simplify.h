@@ -31,11 +31,6 @@ class GDALVectorGeomSimplifyAlgorithm final
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_geom_simplify.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     struct Options : public GDALVectorGeomAbstractAlgorithm::OptionsBase
     {
         double m_tolerance = 0;

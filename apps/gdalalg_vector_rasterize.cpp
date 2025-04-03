@@ -25,7 +25,7 @@
 #endif
 
 /************************************************************************/
-/*          GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()    */
+/*        GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()  */
 /************************************************************************/
 
 GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
@@ -34,7 +34,8 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
     AddProgressArg();
     AddOutputFormatArg(&m_outputFormat)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
+                         {GDAL_DCAP_RASTER, GDAL_DCAP_CREATE})
+        .AddMetadataItem(GAAMDI_VRT_COMPATIBLE, {"false"});
     AddOpenOptionsArg(&m_openOptions);
     AddInputFormatsArg(&m_inputFormats)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR});
@@ -42,7 +43,7 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
     m_outputDataset.SetInputFlags(GADV_NAME | GADV_OBJECT);
     AddCreationOptionsArg(&m_datasetCreationOptions);
-    AddArg("band", 'b', _("The band(s) to burn values into"), &m_bands);
+    AddBandArg(&m_bands, _("The band(s) to burn values into (1-based index)"));
     AddArg("invert", 0, _("Invert the rasterization"), &m_invert)
         .SetDefault(false);
     AddArg("all-touched", 0, _("Enables the ALL_TOUCHED rasterization option"),
@@ -108,7 +109,7 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
 }
 
 /************************************************************************/
-/*                  GDALVectorRasterizeAlgorithm::RunImpl()               */
+/*                GDALVectorRasterizeAlgorithm::RunImpl()               */
 /************************************************************************/
 
 bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

@@ -33,11 +33,6 @@ class GDALVectorRasterizeAlgorithm final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_rasterize.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     GDALVectorRasterizeAlgorithm();
 
     void SetDataset(GDALDataset *poDS)

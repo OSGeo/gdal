@@ -84,6 +84,11 @@ Advanced options
 
 .. include:: gdal_options/if.rst
 
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_vector_compatible.rst
+
 Examples
 --------
 

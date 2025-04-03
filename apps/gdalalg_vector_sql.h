@@ -30,11 +30,6 @@ class GDALVectorSQLAlgorithm /* non final */
         "Apply SQL statement(s) to a dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_vector_sql.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALVectorSQLAlgorithm(bool standaloneStep = false);
 
   private:

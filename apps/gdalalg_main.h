@@ -29,11 +29,6 @@ class GDALMainAlgorithm final : public GDALAlgorithm
     static constexpr const char *DESCRIPTION = "Main gdal entry point.";
     static constexpr const char *HELP_URL = "/programs/index.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     GDALMainAlgorithm();
 
     bool

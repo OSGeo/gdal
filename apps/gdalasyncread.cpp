@@ -35,7 +35,7 @@ static void Usage()
            "       <src_dataset> <dst_dataset>\n\n");
 
     printf("%s\n\n", GDALVersionInfo("--version"));
-    printf("The following format drivers are configured and support output:\n");
+    printf("The following format drivers are enabled and support writing:\n");
     for (int iDr = 0; iDr < GDALGetDriverCount(); iDr++)
     {
         GDALDriverH hDriver = GDALGetDriver(iDr);
@@ -355,8 +355,8 @@ int main(int argc, char **argv)
 
     if (hDriver == nullptr)
     {
-        printf("The following format drivers are configured and support "
-               "output:\n");
+        printf("The following format drivers are enabled and support "
+               "writing:\n");
         for (int iDr = 0; iDr < GDALGetDriverCount(); iDr++)
         {
             GDALDriverH hDriver = GDALGetDriver(iDr);

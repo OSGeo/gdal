@@ -32,11 +32,6 @@ class GDALConvertAlgorithm
         "'gdal vector convert').";
     static constexpr const char *HELP_URL = "/programs/gdal_convert.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     GDALConvertAlgorithm()
         : GDALDispatcherAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {

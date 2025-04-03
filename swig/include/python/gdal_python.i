@@ -3492,7 +3492,7 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
 
 def DEMProcessingOptions(options=None, colorFilename=None, format=None,
               creationOptions=None, computeEdges=False, alg=None, band=1,
-              zFactor=None, scale=None, azimuth=None, altitude=None,
+              zFactor=None, scale=None, xscale=None, yscale=None, azimuth=None, altitude=None,
               combined=False, multiDirectional=False, igor=False,
               slopeFormat=None, trigonometric=False, zeroForFlat=False,
               addAlpha=None, colorSelection=None,
@@ -3519,6 +3519,10 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
         (hillshade only) vertical exaggeration used to pre-multiply the elevations.
     scale:
         ratio of vertical units to horizontal.
+    xscale:
+        Ratio of vertical units to horizontal X axis units.
+    yscale:
+        Ratio of vertical units to horizontal Y axis units.
     azimuth:
         (hillshade only) azimuth of the light, in degrees. 0 if it comes from the top of the raster, 90 from the east, ... The default value, 315, should rarely be changed as it is the value generally used to generate shaded maps.
     altitude:
@@ -3569,6 +3573,10 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
             new_options += ['-z', str(zFactor)]
         if scale is not None:
             new_options += ['-s', str(scale)]
+        if xscale is not None:
+            new_options += ['-xscale', str(xscale)]
+        if yscale is not None:
+            new_options += ['-yscale', str(yscale)]
         if azimuth is not None:
             new_options += ['-az', str(azimuth)]
         if altitude is not None:

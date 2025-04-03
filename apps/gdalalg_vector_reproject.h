@@ -30,11 +30,6 @@ class GDALVectorReprojectAlgorithm /* non final */
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_pipeline.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALVectorReprojectAlgorithm(bool standaloneStep = false);
 
   private:

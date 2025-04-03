@@ -832,8 +832,8 @@ void CPL_STDCALL CPLErrorReset()
  *                       CPLErrorSetState()
  **********************************************************************/
 
-static void CPLErrorSetState(CPLErr eErrClass, CPLErrorNum err_no,
-                             const char *pszMsg, GUInt32 *pnErrorCounter)
+void CPLErrorSetState(CPLErr eErrClass, CPLErrorNum err_no, const char *pszMsg,
+                      const GUInt32 *pnErrorCounter)
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();
     if (psCtx == nullptr)

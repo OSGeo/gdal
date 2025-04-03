@@ -26,11 +26,6 @@ class GDALMdimAlgorithm final : public GDALAlgorithm
     static constexpr const char *DESCRIPTION = "Multidimensional commands.";
     static constexpr const char *HELP_URL = "/programs/gdal_mdim.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     GDALMdimAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
         RegisterSubAlgorithm<GDALMdimInfoAlgorithm>();

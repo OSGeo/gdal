@@ -291,6 +291,9 @@ constexpr const char *GAAC_ESOTERIC = "Esoteric";
  * "output-format" argument */
 constexpr const char *GAAMDI_REQUIRED_CAPABILITIES = "required_capabilities";
 
+/** Argument metadata item that applies to "output-format" argument */
+constexpr const char *GAAMDI_VRT_COMPATIBLE = "vrt_compatible";
+
 /** Name of the argument for an input dataset. */
 constexpr const char *GDAL_ARG_NAME_INPUT = "input";
 
@@ -1791,7 +1794,7 @@ class CPL_DLL GDALAlgorithmRegistry
     {
         AlgInfo info;
         info.m_name = MyAlgorithm::NAME;
-        info.m_aliases = MyAlgorithm::GetAliases();
+        info.m_aliases = MyAlgorithm::GetAliasesStatic();
         info.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
         { return std::make_unique<MyAlgorithm>(); };
         return Register(info);
@@ -2000,9 +2003,14 @@ class CPL_DLL GDALAlgorithmRegistry
     virtual bool
     ParseCommandLineArguments(const std::vector<std::string> &args);
 
-    /** Validate that all constraints are met. This method is automatically
-     * executed by ParseCommandLineArguments() and Run(), and thus does
-     * generally not need to be explicitly called.
+    /** Validate that all constraints are met.
+     *
+     * This method may emit several errors if several constraints are not met.
+     *
+     * This method is automatically executed by ParseCommandLineArguments()
+     * and Run(), and thus does generally not need to be explicitly called.
+     * Derived classes overriding this method should generally call the base
+     * method.
      */
     virtual bool ValidateArguments();
 
@@ -2080,6 +2088,17 @@ class CPL_DLL GDALAlgorithmRegistry
     {
         return m_aliases;
     }
+
+    //! @cond Doxygen_Suppress
+    /** Return alias names. This method should be redefined in derived classes
+     * that want to define aliases.
+     */
+    static std::vector<std::string> GetAliasesStatic()
+    {
+        return {};
+    }
+
+    //! @endcond
 
     /** Used by the "gdal info" special algorithm when it first tries to
      * run "gdal raster info", to inherit from the potential special flags,
@@ -2214,78 +2233,107 @@ class CPL_DLL GDALAlgorithmRegistry
                                           GDAL_OF_MULTIDIM_RASTER);
 
     /** Add input dataset argument. */
-    GDALInConstructionAlgorithmArg &
-    AddInputDatasetArg(GDALArgDatasetValue *pValue,
-                       GDALArgDatasetValueType type = GDAL_OF_RASTER |
-                                                      GDAL_OF_VECTOR |
-                                                      GDAL_OF_MULTIDIM_RASTER,
-                       bool positionalAndRequired = true);
+    GDALInConstructionAlgorithmArg &AddInputDatasetArg(
+        GDALArgDatasetValue *pValue,
+        GDALArgDatasetValueType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
+                                       GDAL_OF_MULTIDIM_RASTER,
+        bool positionalAndRequired = true, const char *helpMessage = nullptr);
 
     /** Add input dataset argument. */
-    GDALInConstructionAlgorithmArg &
-    AddInputDatasetArg(std::vector<GDALArgDatasetValue> *pValue,
-                       GDALArgDatasetValueType type = GDAL_OF_RASTER |
-                                                      GDAL_OF_VECTOR |
-                                                      GDAL_OF_MULTIDIM_RASTER,
-                       bool positionalAndRequired = true);
+    GDALInConstructionAlgorithmArg &AddInputDatasetArg(
+        std::vector<GDALArgDatasetValue> *pValue,
+        GDALArgDatasetValueType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
+                                       GDAL_OF_MULTIDIM_RASTER,
+        bool positionalAndRequired = true, const char *helpMessage = nullptr);
 
     /** Add open option(s) argument. */
     GDALInConstructionAlgorithmArg &
-    AddOpenOptionsArg(std::vector<std::string> *pValue);
+    AddOpenOptionsArg(std::vector<std::string> *pValue,
+                      const char *helpMessage = nullptr);
 
     /** Add input format(s) argument. */
     GDALInConstructionAlgorithmArg &
-    AddInputFormatsArg(std::vector<std::string> *pValue);
+    AddInputFormatsArg(std::vector<std::string> *pValue,
+                       const char *helpMessage = nullptr);
 
     /** Add output dataset argument. */
-    GDALInConstructionAlgorithmArg &
-    AddOutputDatasetArg(GDALArgDatasetValue *pValue,
-                        GDALArgDatasetValueType type = GDAL_OF_RASTER |
-                                                       GDAL_OF_VECTOR |
-                                                       GDAL_OF_MULTIDIM_RASTER,
-                        bool positionalAndRequired = true);
+    GDALInConstructionAlgorithmArg &AddOutputDatasetArg(
+        GDALArgDatasetValue *pValue,
+        GDALArgDatasetValueType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
+                                       GDAL_OF_MULTIDIM_RASTER,
+        bool positionalAndRequired = true, const char *helpMessage = nullptr);
 
     /** Add \--overwrite argument. */
-    GDALInConstructionAlgorithmArg &AddOverwriteArg(bool *pValue);
+    GDALInConstructionAlgorithmArg &
+    AddOverwriteArg(bool *pValue, const char *helpMessage = nullptr);
 
     /** Add \--update argument. */
-    GDALInConstructionAlgorithmArg &AddUpdateArg(bool *pValue);
+    GDALInConstructionAlgorithmArg &
+    AddUpdateArg(bool *pValue, const char *helpMessage = nullptr);
 
     /** Add (non-CLI) output-string argument. */
-    GDALInConstructionAlgorithmArg &AddOutputStringArg(std::string *pValue);
+    GDALInConstructionAlgorithmArg &
+    AddOutputStringArg(std::string *pValue, const char *helpMessage = nullptr);
 
     /** Add output format argument. */
     GDALInConstructionAlgorithmArg &
     AddOutputFormatArg(std::string *pValue, bool bStreamAllowed = false,
-                       bool bGDALGAllowed = false);
+                       bool bGDALGAllowed = false,
+                       const char *helpMessage = nullptr);
 
     /** Add output data type argument. */
-    GDALInConstructionAlgorithmArg &AddOutputDataTypeArg(std::string *pValue);
+    GDALInConstructionAlgorithmArg &
+    AddOutputDataTypeArg(std::string *pValue,
+                         const char *helpMessage = nullptr);
 
     /** Add creation option(s) argument. */
     GDALInConstructionAlgorithmArg &
-    AddCreationOptionsArg(std::vector<std::string> *pValue);
+    AddCreationOptionsArg(std::vector<std::string> *pValue,
+                          const char *helpMessage = nullptr);
 
     /** Add layer creation option(s) argument. */
     GDALInConstructionAlgorithmArg &
-    AddLayerCreationOptionsArg(std::vector<std::string> *pValue);
+    AddLayerCreationOptionsArg(std::vector<std::string> *pValue,
+                               const char *helpMessage = nullptr);
 
     /** Add (single) layer name argument. */
-    GDALInConstructionAlgorithmArg &AddLayerNameArg(std::string *pValue);
+    GDALInConstructionAlgorithmArg &
+    AddLayerNameArg(std::string *pValue, const char *helpMessage = nullptr);
 
     /** Add (potentially multiple) layer name(s) argument. */
     GDALInConstructionAlgorithmArg &
-    AddLayerNameArg(std::vector<std::string> *pValue);
+    AddLayerNameArg(std::vector<std::string> *pValue,
+                    const char *helpMessage = nullptr);
+
+    /** Add (single) band argument. */
+    GDALInConstructionAlgorithmArg &
+    AddBandArg(int *pValue, const char *helpMessage = nullptr);
+
+    /** Add (potentially multiple) band argument. */
+    GDALInConstructionAlgorithmArg &
+    AddBandArg(std::vector<int> *pValue, const char *helpMessage = nullptr);
 
     /** Add bbox=xmin,ymin,xmax,ymax argument. */
     GDALInConstructionAlgorithmArg &
     AddBBOXArg(std::vector<double> *pValue, const char *helpMessage = nullptr);
 
     /** Add active layer argument. */
-    GDALInConstructionAlgorithmArg &AddActiveLayerArg(std::string *pValue);
+    GDALInConstructionAlgorithmArg &
+    AddActiveLayerArg(std::string *pValue, const char *helpMessage = nullptr);
 
     /** Add \--progress argument. */
     GDALInConstructionAlgorithmArg &AddProgressArg();
+
+    /** Register an action that is executed by the ValidateArguments()
+     * method. If the provided function returns false, validation fails.
+     * Such validation function should typically be used to ensure
+     * cross-argument validation. For validation of individual arguments,
+     * GDALAlgorithmArg::AddValidationAction should rather be called.
+     */
+    void AddValidationAction(std::function<bool()> f)
+    {
+        m_validationActions.push_back(f);
+    }
 
     /** Add KEY=VALUE suggestion from open, creation options */
     static bool AddOptionsSuggestions(const char *pszXML, int datasetType,
@@ -2365,6 +2413,7 @@ class CPL_DLL GDALAlgorithmRegistry
     std::unique_ptr<GDALAlgorithm> m_selectedSubAlgHolder{};
     std::function<std::vector<std::string>(const std::vector<std::string> &)>
         m_autoCompleteFunction{};
+    std::vector<std::function<bool()>> m_validationActions{};
 
     GDALInConstructionAlgorithmArg &
     AddArg(std::unique_ptr<GDALInConstructionAlgorithmArg> arg);

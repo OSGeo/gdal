@@ -38,6 +38,9 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     void AddInputArgs(bool openForMixedRasterVector, bool hiddenForCLI);
     void AddOutputArgs(bool hiddenForCLI);
 
+    void SetOutputVRTCompatible(bool b);
+
+    bool m_outputVRTCompatible = true;
     bool m_standaloneStep = false;
 
     // Input arguments
@@ -54,9 +57,13 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     std::string m_outputLayerName{};
 
   private:
+    GDALInConstructionAlgorithmArg *m_outputFormatArg = nullptr;
+
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
     GDALAlgorithm::ProcessGDALGOutputRet ProcessGDALGOutput() override;
     bool CheckSafeForStreamOutput() override;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALRasterPipelineStepAlgorithm)
 };
 
 /************************************************************************/
@@ -80,7 +87,7 @@ class GDALRasterPipelineAlgorithm final
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_pipeline.html";
 
-    static std::vector<std::string> GetAliases()
+    static std::vector<std::string> GetAliasesStatic()
     {
         return {
 #ifdef GDAL_PIPELINE_PROJ_NOSTALGIA

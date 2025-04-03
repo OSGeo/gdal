@@ -124,8 +124,8 @@ MAIN_START(argc, argv)
                     "Output driver `%s' not recognised or does not support "
                     "direct output file creation.\n",
                     sOptionsForBinary.osFormat.c_str());
-            fprintf(stderr, "The following format drivers are configured and "
-                            "support direct output:\n");
+            fprintf(stderr, "The following format drivers are enable and "
+                            "support direct writing:\n");
 
             for (int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++)
             {

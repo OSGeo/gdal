@@ -98,8 +98,8 @@ MAIN_START(argc, argv)
         {
             fprintf(stderr, "Output driver `%s' not recognised.\n",
                     sOptionsForBinary.osFormat.c_str());
-            fprintf(stderr, "The following format drivers are configured and "
-                            "support output:\n");
+            fprintf(stderr, "The following format drivers are enabled and "
+                            "support writing:\n");
             for (int iDr = 0; iDr < GDALGetDriverCount(); iDr++)
             {
                 hDriver = GDALGetDriver(iDr);

@@ -30,11 +30,6 @@ class GDALRasterAsTypeAlgorithm /* non final */
         "Modify the data type of bands of a raster dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_astype.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALRasterAsTypeAlgorithm(bool standaloneStep = false);
 
   private:

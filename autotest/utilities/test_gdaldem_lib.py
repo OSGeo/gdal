@@ -21,19 +21,49 @@ import pytest
 from osgeo import gdal, osr
 
 ###############################################################################
+# Test incorrect use of scale parameters
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        {"scale": 111120, "xscale": 1},
+        {"scale": 111120, "yscale": 1},
+        {"xscale": 1},
+        {"yscale": 1},
+    ],
+)
+def test_gdaldem_lib_hillshade_incorrect_use_of_scale_params(options):
+
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
+    kwargs = {"format": "MEM", "zFactor": 30}
+    kwargs.update(options)
+    with pytest.raises(Exception):
+        gdal.DEMProcessing("", src_ds, "hillshade", **kwargs)
+
+
+###############################################################################
 # Test gdaldem hillshade
 
 
-def test_gdaldem_lib_hillshade():
+@pytest.mark.parametrize(
+    "options,checksum",
+    [
+        ({"scale": 111120}, 45587),
+        ({"xscale": 111120, "yscale": 111120}, 45587),
+        ({"xscale": 111120, "yscale": 111120 + 1}, 45587),
+        ({}, 46008),
+    ],
+)
+def test_gdaldem_lib_hillshade(options, checksum):
 
     src_ds = gdal.Open("../gdrivers/data/n43.tif")
-    ds = gdal.DEMProcessing(
-        "", src_ds, "hillshade", format="MEM", scale=111120, zFactor=30
-    )
+    kwargs = {"format": "MEM", "zFactor": 30}
+    kwargs.update(options)
+    ds = gdal.DEMProcessing("", src_ds, "hillshade", **kwargs)
     assert ds is not None
 
-    cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 45587, "Bad checksum"
+    assert ds.GetRasterBand(1).Checksum() == checksum, "Bad checksum"
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
@@ -47,6 +77,85 @@ def test_gdaldem_lib_hillshade():
 
     src_ds = None
     ds = None
+
+
+###############################################################################
+# Test gdaldem hillshade with projected CRS
+
+
+@pytest.mark.parametrize("proj_unit", ["m", "ft", "us-ft"])
+def test_gdaldem_lib_hillshade_proj_crs(proj_unit):
+
+    src_ds = gdal.Warp(
+        "",
+        "../gdrivers/data/n43.tif",
+        format="MEM",
+        dstSRS=f"+proj=tmerc +datum=WGS84 +lon_0=-79.5 +units={proj_unit}",
+    )
+    ds = gdal.DEMProcessing("", src_ds, "hillshade", format="MEM", zFactor=30)
+    assert ds.GetRasterBand(1).Checksum() == 36233
+
+
+###############################################################################
+# Test gdaldem hillshade with projected CRS and different vertical unit
+
+
+@pytest.mark.parametrize(
+    "name,factor",
+    [("m", 1), ("unknown", 1), ("ft", 0.3048), ("us-ft", 0.3048006096012192)],
+)
+def test_gdaldem_lib_hillshade_projected_crs_vertical_units(name, factor):
+
+    gdaltest.importorskip_gdal_array()
+    pytest.importorskip("numpy")
+
+    src_ds = gdal.Warp(
+        "",
+        "../gdrivers/data/n43.tif",
+        outputType=gdal.GDT_Float32,
+        format="MEM",
+        dstSRS="+proj=tmerc +datum=WGS84 +lon_0=-79.5 +units=m",
+    )
+    src_ds.GetRasterBand(1).SetUnitType(name)
+    src_ds.GetRasterBand(1).SetNoDataValue(
+        src_ds.GetRasterBand(1).GetNoDataValue() / factor
+    )
+    src_ds.GetRasterBand(1).WriteArray(src_ds.GetRasterBand(1).ReadAsArray() / factor)
+    if name == "unknown":
+        with gdal.quiet_errors():
+            ds = gdal.DEMProcessing("", src_ds, "hillshade", format="MEM", zFactor=30)
+    else:
+        ds = gdal.DEMProcessing("", src_ds, "hillshade", format="MEM", zFactor=30)
+    assert ds.GetRasterBand(1).Checksum() == 36233
+
+
+###############################################################################
+# Test gdaldem hillshade with geographic CRS and different vertical unit
+
+
+@pytest.mark.parametrize(
+    "name,factor",
+    [("m", 1), ("unknown", 1), ("ft", 0.3048), ("us-ft", 0.3048006096012192)],
+)
+def test_gdaldem_lib_hillshade_geographic_crs_vertical_units(name, factor):
+
+    gdaltest.importorskip_gdal_array()
+    pytest.importorskip("numpy")
+
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/n43.tif", format="MEM", outputType=gdal.GDT_Float32
+    )
+    src_ds.GetRasterBand(1).SetUnitType(name)
+    src_ds.GetRasterBand(1).SetNoDataValue(
+        src_ds.GetRasterBand(1).GetNoDataValue() / factor
+    )
+    src_ds.GetRasterBand(1).WriteArray(src_ds.GetRasterBand(1).ReadAsArray() / factor)
+    if name == "unknown":
+        with gdal.quiet_errors():
+            ds = gdal.DEMProcessing("", src_ds, "hillshade", format="MEM", zFactor=30)
+    else:
+        ds = gdal.DEMProcessing("", src_ds, "hillshade", format="MEM", zFactor=30)
+    assert ds.GetRasterBand(1).Checksum() == 46008
 
 
 ###############################################################################
@@ -127,16 +236,24 @@ def test_gdaldem_lib_hillshade_float_png(tmp_vsimem):
 # Test gdaldem hillshade -combined
 
 
-def test_gdaldem_lib_hillshade_combined():
+@pytest.mark.parametrize(
+    "options,checksum",
+    [
+        ({"scale": 111120}, 43876),
+        ({"xscale": 111120, "yscale": 111120}, 43876),
+        ({"xscale": 111120, "yscale": 111120 + 0.1}, 43876),
+        ({}, 42176),
+    ],
+)
+def test_gdaldem_lib_hillshade_combined(options, checksum):
 
     src_ds = gdal.Open("../gdrivers/data/n43.tif")
-    ds = gdal.DEMProcessing(
-        "", src_ds, "hillshade", format="MEM", combined=True, scale=111120, zFactor=30
-    )
+    kwargs = {"format": "MEM", "combined": True, "zFactor": 30}
+    kwargs.update(options)
+    ds = gdal.DEMProcessing("", src_ds, "hillshade", **kwargs)
     assert ds is not None
 
-    cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 43876, "Bad checksum"
+    assert ds.GetRasterBand(1).Checksum() == checksum, "Bad checksum"
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
@@ -156,22 +273,24 @@ def test_gdaldem_lib_hillshade_combined():
 # Test gdaldem hillshade -alg ZevenbergenThorne
 
 
-def test_gdaldem_lib_hillshade_ZevenbergenThorne():
+@pytest.mark.parametrize(
+    "options,checksum",
+    [
+        ({"scale": 111120}, 46544),
+        ({"xscale": 111120, "yscale": 111120}, 46544),
+        ({"xscale": 111120, "yscale": 111120 + 0.1}, 46544),
+        ({}, 45373),
+    ],
+)
+def test_gdaldem_lib_hillshade_ZevenbergenThorne(options, checksum):
 
     src_ds = gdal.Open("../gdrivers/data/n43.tif")
-    ds = gdal.DEMProcessing(
-        "",
-        src_ds,
-        "hillshade",
-        format="MEM",
-        alg="ZevenbergenThorne",
-        scale=111120,
-        zFactor=30,
-    )
+    kwargs = {"format": "MEM", "alg": "ZevenbergenThorne", "zFactor": 30}
+    kwargs.update(options)
+    ds = gdal.DEMProcessing("", src_ds, "hillshade", **kwargs)
     assert ds is not None
 
-    cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 46544, "Bad checksum"
+    assert ds.GetRasterBand(1).Checksum() == checksum, "Bad checksum"
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
@@ -191,23 +310,29 @@ def test_gdaldem_lib_hillshade_ZevenbergenThorne():
 # Test gdaldem hillshade -alg ZevenbergenThorne -combined
 
 
-def test_gdaldem_lib_hillshade_ZevenbergenThorne_combined():
+@pytest.mark.parametrize(
+    "options,checksum",
+    [
+        ({"scale": 111120}, 43112),
+        ({"xscale": 111120, "yscale": 111120}, 43112),
+        ({"xscale": 111120, "yscale": 111120 + 0.1}, 43112),
+        ({}, 42340),
+    ],
+)
+def test_gdaldem_lib_hillshade_ZevenbergenThorne_combined(options, checksum):
 
     src_ds = gdal.Open("../gdrivers/data/n43.tif")
-    ds = gdal.DEMProcessing(
-        "",
-        src_ds,
-        "hillshade",
-        format="MEM",
-        alg="ZevenbergenThorne",
-        combined=True,
-        scale=111120,
-        zFactor=30,
-    )
+    kwargs = {
+        "format": "MEM",
+        "alg": "ZevenbergenThorne",
+        "combined": True,
+        "zFactor": 30,
+    }
+    kwargs.update(options)
+    ds = gdal.DEMProcessing("", src_ds, "hillshade", **kwargs)
     assert ds is not None
 
-    cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 43112, "Bad checksum"
+    assert ds.GetRasterBand(1).Checksum() == checksum, "Bad checksum"
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
@@ -661,23 +786,24 @@ def test_gdaldem_lib_roughness():
 # Test gdaldem slope -alg ZevenbergenThorne
 
 
-def test_gdaldem_lib_slope_ZevenbergenThorne():
+@pytest.mark.parametrize(
+    "options,checksum",
+    [
+        ({"scale": 111120}, 64393),
+        ({"xscale": 111120, "yscale": 111120}, 64393),
+        ({"xscale": 111120, "yscale": 111120 + 0.1}, 64393),
+        ({}, 65468),
+    ],
+)
+def test_gdaldem_lib_slope_ZevenbergenThorne(options, checksum):
 
     src_ds = gdal.Open("../gdrivers/data/n43.tif")
-    ds = gdal.DEMProcessing(
-        "",
-        src_ds,
-        "slope",
-        format="MEM",
-        alg="ZevenbergenThorne",
-        slopeFormat="degree",
-        scale=111120,
-        zFactor=30,
-    )
+    kwargs = {"format": "MEM", "alg": "ZevenbergenThorne"}
+    kwargs.update(options)
+    ds = gdal.DEMProcessing("", src_ds, "slope", **kwargs)
     assert ds is not None
 
-    cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 64393, "Bad checksum"
+    assert ds.GetRasterBand(1).Checksum() == checksum, "Bad checksum"
 
 
 ###############################################################################

@@ -30,11 +30,6 @@ class GDALVectorGeomAlgorithm /* non final */
         "Geometry operations on a vector dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_vector_geom.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALVectorGeomAlgorithm(bool standaloneStep = false);
 
   private:
@@ -46,7 +41,7 @@ class GDALVectorGeomAlgorithm /* non final */
     {
         GDALAlgorithmRegistry::AlgInfo info;
         info.m_name = MyAlgorithm::NAME;
-        info.m_aliases = MyAlgorithm::GetAliases();
+        info.m_aliases = MyAlgorithm::GetAliasesStatic();
         info.m_creationFunc = [standalone]() -> std::unique_ptr<GDALAlgorithm>
         { return std::make_unique<MyAlgorithm>(standalone); };
         return GDALAlgorithm::RegisterSubAlgorithm(info);

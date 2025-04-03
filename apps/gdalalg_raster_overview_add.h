@@ -29,11 +29,6 @@ class GDALRasterOverviewAlgorithmAdd final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_overview_add.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     GDALRasterOverviewAlgorithmAdd();
 
   private:

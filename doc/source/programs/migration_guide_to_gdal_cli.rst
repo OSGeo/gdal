@@ -126,6 +126,28 @@ compared to "minimum-x,minimum-y,maximum-x,maximum-y" for the ``--bbox`` option 
     gdal raster select --band 3,2,1 bgr.tif rgb.tif --overwrite
 
 
+* Expand a dataset with a color table to RGB
+
+.. code-block::
+
+    gdal_translate -expand rgb color_table.tif rgb.tif
+
+    ==>
+
+    gdal raster color-map color_table.tif rgb.tif --overwrite
+
+
+* Apply an external color-map to a dataset
+
+.. code-block::
+
+    gdaldem color-map color_table.tif color_map.txt rgb.tif
+
+    ==>
+
+    gdal raster color-map --color-map=color_map.txt color_table.tif rgb.tif --overwrite
+
+
 Vector commands
 ---------------
 

@@ -168,6 +168,15 @@ GUInt32 CPL_DLL CPL_STDCALL CPLGetErrorCounter(void);
 void CPL_DLL *CPL_STDCALL CPLGetErrorHandlerUserData(void);
 void CPL_DLL CPLErrorSetState(CPLErr eErrClass, CPLErrorNum err_no,
                               const char *pszMsg);
+#if defined(GDAL_COMPILATION) && defined(__cplusplus)
+extern "C++"
+{
+    void CPL_DLL CPLErrorSetState(CPLErr eErrClass, CPLErrorNum err_no,
+                                  const char *pszMsg,
+                                  const GUInt32 *pnErrorCounter);
+}
+#endif
+
 void CPL_DLL CPLCallPreviousHandler(CPLErr eErrClass, CPLErrorNum err_no,
                                     const char *pszMsg);
 /*! @cond Doxygen_Suppress */

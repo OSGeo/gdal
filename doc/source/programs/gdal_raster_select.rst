@@ -23,6 +23,8 @@ Description
 :program:`gdal raster select` can be used to select and re-order a subset of
 raster bands from a raster dataset.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+
 Standard options
 ++++++++++++++++
 
@@ -50,6 +52,12 @@ Standard options
     mask of the input dataset if it exists. Otherwise it is copied by default,
     unless the mask is an alpha channel, or if it is explicitly selected
     to be a regular band of the output dataset (``--band mask``)
+
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
 Examples
 --------

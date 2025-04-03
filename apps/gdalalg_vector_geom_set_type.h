@@ -31,11 +31,6 @@ class GDALVectorGeomSetTypeAlgorithm final
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_geom_set_type.html";
 
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
     explicit GDALVectorGeomSetTypeAlgorithm(bool standaloneStep);
 
     struct Options : public GDALVectorGeomAbstractAlgorithm::OptionsBase

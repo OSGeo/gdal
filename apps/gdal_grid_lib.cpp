@@ -697,8 +697,8 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Output driver `%s' not recognised.", osFormat.c_str());
-        fprintf(stderr, "The following format drivers are configured and "
-                        "support output:\n");
+        fprintf(stderr, "The following format drivers are enabled and "
+                        "support writing:\n");
         for (int iDr = 0; iDr < GDALGetDriverCount(); iDr++)
         {
             hDriver = GDALGetDriver(iDr);

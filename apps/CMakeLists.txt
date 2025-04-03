@@ -15,12 +15,15 @@ add_library(
   gdalalg_pipeline.cpp
   gdalalg_raster.cpp
   gdalalg_raster_info.cpp
+  gdalalg_raster_aspect.cpp
   gdalalg_raster_astype.cpp
   gdalalg_raster_calc.cpp
   gdalalg_raster_clip.cpp
+  gdalalg_raster_color_map.cpp
   gdalalg_raster_convert.cpp
   gdalalg_raster_edit.cpp
   gdalalg_raster_contour.cpp
+  gdalalg_raster_hillshade.cpp
   gdalalg_raster_mosaic.cpp
   gdalalg_raster_pipeline.cpp
   gdalalg_raster_overview_add.cpp
@@ -28,9 +31,13 @@ add_library(
   gdalalg_raster_read.cpp
   gdalalg_raster_reproject.cpp
   gdalalg_raster_resize.cpp
+  gdalalg_raster_roughness.cpp
   gdalalg_raster_scale.cpp
   gdalalg_raster_select.cpp
+  gdalalg_raster_slope.cpp
   gdalalg_raster_stack.cpp
+  gdalalg_raster_tpi.cpp
+  gdalalg_raster_tri.cpp
   gdalalg_raster_unscale.cpp
   gdalalg_raster_write.cpp
   gdalalg_vector.cpp
