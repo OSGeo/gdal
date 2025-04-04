@@ -65,7 +65,7 @@ Process :
 
   - for bugfixes releases, forward port additions of NEWS.md to master
 
-9) Update doc/source/about_no_title.rst, doc/source/download.rst and doc/source/download_past.rst
+9) Update doc/source/about.rst, doc/source/download.rst and doc/source/download_past.rst
    to advertise the new release and link to the release notes. Do that in a dedicated commit.
 
    (It is necessary to do that at that stage, so that the ReadTheDocs "stable" branch, based on the latest tag, proposes to download it)
@@ -359,7 +359,7 @@ or your message manually approved, with an administrator of the list.
     if master is 3.7.0dev
 
 23) For bugfixes releases, forward port to master changes done in
-    doc/source/about_no_title.rst, doc/source/download.rst and doc/source/download_past.rst
+    doc/source/about.rst, doc/source/download.rst and doc/source/download_past.rst
 
 24) For a feature release, enable a new version in the ReadTheDocs administration panel.
     a) Go to https://readthedocs.org/projects/gdal/versions/
