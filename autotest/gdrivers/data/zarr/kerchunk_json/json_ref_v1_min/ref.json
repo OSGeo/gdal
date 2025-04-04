@@ -1,0 +1,10 @@
+{
+    "version": 1,
+    "refs": {
+        ".zgroup": "{\"zarr_format\":2}",
+        ".zattrs": "{}",
+        "x/.zarray": "base64:eyJ6YXJyX2Zvcm1hdCI6IDIsICJzaGFwZSI6IFsxXSwiY2h1bmtzIjogWzFdLCAiY29tcHJlc3NvciI6IG51bGwsICJkdHlwZSI6ICI+dTEiLCAib3JkZXIiOiAiQyIsICJmaWx0ZXJzIjpbXSwgImZpbGxfdmFsdWUiOiBudWxsfQ==",
+        "x/.zattrs": "{}",
+        "x/0": [ "0.bin", 0, 1 ]
+    },
+}

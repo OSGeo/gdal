@@ -18,11 +18,14 @@
 constexpr const char *DRIVER_NAME = "Zarr";
 
 #define ZARRDriverIdentify PLUGIN_SYMBOL_NAME(ZARRDriverIdentify)
-#define ZARRDriverSetCommonMetadata                                            \
-    PLUGIN_SYMBOL_NAME(ZARRDriverSetCommonMetadata)
-
 int ZARRDriverIdentify(GDALOpenInfo *poOpenInfo);
 
+#define ZARRDriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(ZARRDriverSetCommonMetadata)
 void ZARRDriverSetCommonMetadata(GDALDriver *poDriver);
+
+#define ZARRIsLikelyKerchunkJSONRef                                            \
+    PLUGIN_SYMBOL_NAME(ZARRIsLikelyKerchunkJSONRef)
+bool ZARRIsLikelyKerchunkJSONRef(const GDALOpenInfo *poOpenInfo);
 
 #endif

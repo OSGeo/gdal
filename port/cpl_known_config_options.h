@@ -107,6 +107,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_GS_CREDENTIALS_FILE", // from cpl_google_cloud.cpp
    "CPL_GS_ENDPOINT", // from cpl_google_cloud.cpp
    "CPL_GS_TIMESTAMP", // from cpl_google_cloud.cpp
+   "CPL_JSON_MAX_SIZE", // from cpl_json.cpp
    "CPL_LOG", // from cpl_error.cpp
    "CPL_LOG_APPEND", // from cpl_error.cpp
    "CPL_LOG_ERRORS", // from cpl_error.cpp
@@ -120,6 +121,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_SOZIP_MIN_FILE_SIZE", // from cpl_minizip_zip.cpp
    "CPL_TIMESTAMP", // from cpl_error.cpp
    "CPL_TMPDIR", // from cogdriver.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, wcsutils.cpp
+   "CPL_VSI_MEM_MTIME", // from cpl_vsi_mem.cpp
    "CPL_VSIAZ_UNLINK_BATCH_SIZE", // from cpl_vsil_az.cpp
    "CPL_VSIGS_UNLINK_BATCH_SIZE", // from cpl_vsil_gs.cpp
    "CPL_VSIL_CURL_ADVISE_READ_TOTAL_BYTES_LIMIT", // from cpl_vsil_curl.cpp
@@ -217,6 +219,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "FGDB_STRING_WIDTH", // from FGdbUtils.cpp
    "FORCE_BLOCKSIZE", // from hfaopen.cpp
    "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", // from JPEG_band.cpp, jpgdataset.cpp
+   "GDAL_ALLOW_REMOTE_RESOURCE_TO_ACCESS_LOCAL_FILE", // from vsikerchunk.cpp
    "GDAL_BAG_BLOCK_SIZE", // from bagdataset.cpp
    "GDAL_BAG_MAX_SIZE_VARRES_MAP", // from bagdataset.cpp
    "GDAL_BAND_BLOCK_CACHE", // from gdalrasterband.cpp
@@ -1035,6 +1038,10 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "VSICURL_PC_SAS_TOKEN_URL", // from cpl_vsil_curl.cpp
    "VSICURL_PC_URL_SIGNING", // from cpl_vsil_curl.cpp
    "VSICURL_QUERY_STRING", // from cpl_vsil_curl.cpp
+   "VSIKERCHUNK_CACHE_DIR", // from vsikerchunk_json_ref.cpp
+   "VSIKERCHUNK_FOR_TESTS", // from vsikerchunk_json_ref.cpp
+   "VSIKERCHUNK_USE_CACHE", // from vsikerchunk_json_ref.cpp
+   "VSIKERCHUNK_USE_STREAMING_PARSER", // from vsikerchunk_json_ref.cpp
    "VSIS3_COPYFILE_USE_STREAMING_SOURCE", // from cpl_vsil_s3.cpp
    "VSIS3_SIMULATE_THREADING", // from cpl_vsil_s3.cpp
    "VSIS3_SYNC_MULTITHREADING", // from cpl_vsil_s3.cpp

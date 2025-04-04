@@ -1314,7 +1314,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
     if (osFormat != "2")
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Invalid value for zarr_format");
+                 "Invalid value for zarr_format: %s", osFormat.c_str());
         return nullptr;
     }
 
