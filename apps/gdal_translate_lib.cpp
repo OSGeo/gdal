@@ -1012,7 +1012,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     /*      Verify source window dimensions.                                */
     /* -------------------------------------------------------------------- */
-    if (psOptions->adfSrcWin[2] <= 0 || psOptions->adfSrcWin[3] <= 0)
+    if (poSrcDS->GetRasterXSize() != 0 && poSrcDS->GetRasterYSize() != 0 &&
+        (psOptions->adfSrcWin[2] <= 0 || psOptions->adfSrcWin[3] <= 0))
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -3591,6 +3592,7 @@ GDALTranslateOptionsNew(char **papszArgv,
 
         if (psOptionsForBinary)
         {
+            psOptionsForBinary->aosCreateOptions = psOptions->aosCreateOptions;
             if (!psOptions->osFormat.empty())
                 psOptionsForBinary->osFormat = psOptions->osFormat;
         }

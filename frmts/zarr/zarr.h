@@ -70,6 +70,11 @@ class ZarrDataset final : public GDALDataset
                                int nBands, GDALDataType eType,
                                char **papszOptions);
 
+    static GDALDataset *CreateCopy(const char *, GDALDataset *, int,
+                                   char **papszOptions,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData);
+
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override;
     char **GetMetadata(const char *pszDomain) override;

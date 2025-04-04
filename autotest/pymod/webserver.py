@@ -142,11 +142,13 @@ class FileHandler:
         else:
             start = 0
             end = len(filedata)
+            response_code = 200
             if "Range" in request.headers:
                 import re
 
                 res = re.search(r"bytes=(\d+)\-(\d+)", request.headers["Range"])
                 if res:
+                    response_code = 206
                     res = res.groups()
                     start = int(res[0])
                     end = int(res[1]) + 1
@@ -154,7 +156,7 @@ class FileHandler:
                         end = len(filedata)
             try:
                 data_slice = filedata[start:end]
-                request.send_response(200)
+                request.send_response(response_code)
                 if "Range" in request.headers:
                     request.send_header("Content-Range", "%d-%d" % (start, end - 1))
                 request.send_header("Content-Length", len(filedata))

@@ -186,6 +186,7 @@ struct GDALTranslateOptionsForBinary
     bool bQuiet = false;
     bool bCopySubDatasets = false;
     CPLStringList aosOpenOptions{};
+    CPLStringList aosCreateOptions{};
     std::string osFormat{};
 
     /* Allowed input drivers. */
