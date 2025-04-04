@@ -165,9 +165,20 @@ template <typename T>
 bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
                                 GDALRIOResampleAlg eResampleAlg,
                                 std::unique_ptr<DoublePointsCache> &cache,
-                                const double dfXIn, const double dfYIn, T &out)
+                                double dfXIn, double dfYIn, T &out)
 {
     const gdal::Vector2i rasterSize{pBand->GetXSize(), pBand->GetYSize()};
+
+    if (eResampleAlg == GRIORA_NearestNeighbour)
+    {
+        // Allow input coordinates right at the bottom or right edge
+        // with GRIORA_NearestNeighbour.
+        // "introduce" them in the pixel of the image.
+        if (dfXIn == rasterSize.x())
+            dfXIn -= 0.25;
+        if (dfYIn == rasterSize.y())
+            dfYIn -= 0.25;
+    }
     const gdal::Vector2d inLoc{dfXIn, dfYIn};
 
     int bGotNoDataValue = FALSE;
@@ -175,11 +186,6 @@ bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
 
     if (inLoc.x() < 0 || inLoc.x() > rasterSize.x() || inLoc.y() < 0 ||
         inLoc.y() > rasterSize.y())
-    {
-        return FALSE;
-    }
-    if (eResampleAlg == GRIORA_NearestNeighbour &&
-        (inLoc.x() == rasterSize.x() || inLoc.y() == rasterSize.y()))
     {
         return FALSE;
     }
