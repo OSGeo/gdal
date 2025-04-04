@@ -1246,7 +1246,7 @@ def test_ogr_parquet_statistics():
             sql += ", "
         else:
             sql = "SELECT "
-        sql += "MIN(" + name + "), MAX(" + name + ")"
+        sql += "MIN(" + name + "), MAX(" + name + ") AS my_max_" + name
     sql += ", COUNT(int32)"
     sql += " FROM test"
     sql_lyr = ds.ExecuteSQL(sql)
@@ -1262,7 +1262,7 @@ def test_ogr_parquet_statistics():
             i += 1
 
             fld_defn = sql_lyr.GetLayerDefn().GetFieldDefn(i)
-            assert fld_defn.GetName() == "MAX_" + name
+            assert fld_defn.GetName() == "my_max_" + name
             assert ogr.GetFieldTypeName(fld_defn.GetType()) == type, name
             assert ogr.GetFieldSubTypeName(fld_defn.GetSubType()) == subtype, name
             assert f[fld_defn.GetName()] == maxval, name

@@ -250,11 +250,13 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                     }
 
                     const char *pszMinMaxFieldName =
-                        CPLSPrintf("%s_%s",
-                                   (col_func == SWQCF_MIN)   ? "MIN"
-                                   : (col_func == SWQCF_MAX) ? "MAX"
-                                                             : "COUNT",
-                                   oSelect.column_defs[i].field_name);
+                        oSelect.column_defs[i].field_alias
+                            ? oSelect.column_defs[i].field_alias
+                            : CPLSPrintf("%s_%s",
+                                         (col_func == SWQCF_MIN)   ? "MIN"
+                                         : (col_func == SWQCF_MAX) ? "MAX"
+                                                                   : "COUNT",
+                                         oSelect.column_defs[i].field_name);
                     OGRFieldDefn oFieldDefn(pszMinMaxFieldName, eType);
                     oFieldDefn.SetSubType(eSubType);
                     poMemLayer->CreateField(&oFieldDefn);
