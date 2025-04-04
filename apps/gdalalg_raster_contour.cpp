@@ -58,7 +58,8 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
     AddArg("srcnodata", 0, _("Input pixel value to treat as 'nodata'"),
            &m_sNodata);
     AddArg("interval", 0, _("Elevation interval between contours"), &m_interval)
-        .SetMutualExclusionGroup("levels");
+        .SetMutualExclusionGroup("levels")
+        .SetMinValueExcluded(0);
     AddArg("levels", 0, _("List of contour levels"), &m_levels)
         .SetMutualExclusionGroup("levels");
     AddArg("exp-base", 'e', _("Base for exponential contour level generation"),
@@ -70,7 +71,8 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
            &m_polygonize);
     AddArg("group-transactions", 0,
            _("Group n features per transaction (default 100 000)"),
-           &m_groupTransactions);
+           &m_groupTransactions)
+        .SetMinValueIncluded(0);
     AddOverwriteArg(&m_overwrite);
 }
 

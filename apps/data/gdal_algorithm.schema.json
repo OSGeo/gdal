@@ -124,6 +124,22 @@
         "default": {
           "$comment": "Default value (optional)"
         },
+        "min_value": {
+          "type": "number",
+          "$comment": "Minimum value allowed"
+        },
+        "min_value_is_included": {
+          "type": "boolean",
+          "$comment": "Whether min_value is included"
+        },
+        "max_value": {
+          "type": "number",
+          "$comment": "Maximum value allowed"
+        },
+        "max_value_is_included": {
+          "type": "boolean",
+          "$comment": "Whether max_value is included"
+        },
         "required": {
           "type": "boolean",
           "$comment": "Whether this argument is required"

@@ -36,15 +36,20 @@ GDALRasterHillshadeAlgorithm::GDALRasterHillshadeAlgorithm(bool standaloneStep)
     AddBandArg(&m_band).SetDefault(m_band);
     AddArg("zfactor", 'z',
            _("Vertical exaggeration used to pre-multiply the elevations"),
-           &m_zfactor);
+           &m_zfactor)
+        .SetMinValueExcluded(0);
     AddArg("xscale", 0, _("Ratio of vertical units to horizontal X axis units"),
-           &m_xscale);
+           &m_xscale)
+        .SetMinValueExcluded(0);
     AddArg("yscale", 0, _("Ratio of vertical units to horizontal Y axis units"),
-           &m_yscale);
+           &m_yscale)
+        .SetMinValueExcluded(0);
     AddArg("azimuth", 0, _("Azimuth of the light, in degrees"), &m_azimuth)
         .SetDefault(m_azimuth);
     AddArg("altitude", 0, _("Altitude of the light, in degrees"), &m_altitude)
-        .SetDefault(m_altitude);
+        .SetDefault(m_altitude)
+        .SetMinValueIncluded(0)
+        .SetMaxValueIncluded(90);
     AddArg("gradient-alg", 0, _("Algorithm used to compute terrain gradient"),
            &m_gradientAlg)
         .SetChoices("Horn", "ZevenbergenThorne")

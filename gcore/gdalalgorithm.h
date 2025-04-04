@@ -681,6 +681,46 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return *this;
     }
 
+    /** Set the minimum (included) value allowed.
+     *
+     * Only taken into account on GAAT_INTEGER, GAAT_INTEGER_LIST,
+     * GAAT_REAL and GAAT_REAL_LIST arguments.
+     */
+    GDALAlgorithmArgDecl &SetMinValueIncluded(double min)
+    {
+        m_minVal = min;
+        m_minValIsIncluded = true;
+        return *this;
+    }
+
+    /** Set the minimum (excluded) value allowed.
+     *
+     * Only taken into account on GAAT_INTEGER, GAAT_INTEGER_LIST,
+     * GAAT_REAL and GAAT_REAL_LIST arguments.
+     */
+    GDALAlgorithmArgDecl &SetMinValueExcluded(double min)
+    {
+        m_minVal = min;
+        m_minValIsIncluded = false;
+        return *this;
+    }
+
+    /** Set the maximum (included) value allowed. */
+    GDALAlgorithmArgDecl &SetMaxValueIncluded(double max)
+    {
+        m_maxVal = max;
+        m_maxValIsIncluded = true;
+        return *this;
+    }
+
+    /** Set the maximum (excluded) value allowed. */
+    GDALAlgorithmArgDecl &SetMaxValueExcluded(double max)
+    {
+        m_maxVal = max;
+        m_maxValIsIncluded = false;
+        return *this;
+    }
+
     //! @cond Doxygen_Suppress
     GDALAlgorithmArgDecl &SetHiddenChoices()
     {
@@ -857,6 +897,18 @@ class CPL_DLL GDALAlgorithmArgDecl final
     inline const std::vector<std::string> &GetHiddenChoices() const
     {
         return m_hiddenChoices;
+    }
+
+    /** Return the minimum value and whether it is included. */
+    inline std::pair<double, bool> GetMinValue() const
+    {
+        return {m_minVal, m_minValIsIncluded};
+    }
+
+    /** Return the maximum value and whether it is included. */
+    inline std::pair<double, bool> GetMaxValue() const
+    {
+        return {m_maxVal, m_maxValIsIncluded};
     }
 
     /** Return whether the argument is required. Defaults to false.
@@ -1065,6 +1117,10 @@ class CPL_DLL GDALAlgorithmArgDecl final
     std::variant<bool, std::string, int, double, std::vector<std::string>,
                  std::vector<int>, std::vector<double>>
         m_defaultValue{};
+    double m_minVal = std::numeric_limits<double>::quiet_NaN();
+    double m_maxVal = std::numeric_limits<double>::quiet_NaN();
+    bool m_minValIsIncluded = false;
+    bool m_maxValIsIncluded = false;
 };
 
 /************************************************************************/
@@ -1216,6 +1272,18 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
         if (m_autoCompleteFunction)
             return m_autoCompleteFunction(currentValue);
         return {};
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::GetMinValue() */
+    inline std::pair<double, bool> GetMinValue() const
+    {
+        return m_decl.GetMinValue();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::GetMaxValue() */
+    inline std::pair<double, bool> GetMaxValue() const
+    {
+        return m_decl.GetMaxValue();
     }
 
     /** Return whether the argument value has been explicitly set with Set() */
@@ -1508,6 +1576,8 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     void RunActions();
     bool RunValidationActions();
     bool ValidateChoice(const std::string &value) const;
+    bool ValidateIntRange(int val) const;
+    bool ValidateRealRange(double val) const;
 };
 
 /************************************************************************/
@@ -1638,6 +1708,34 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     {
         m_decl.SetHiddenChoices(std::forward<T>(first),
                                 std::forward<U>(rest)...);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetMinValueIncluded() */
+    GDALInConstructionAlgorithmArg &SetMinValueIncluded(double min)
+    {
+        m_decl.SetMinValueIncluded(min);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetMinValueExcluded() */
+    GDALInConstructionAlgorithmArg &SetMinValueExcluded(double min)
+    {
+        m_decl.SetMinValueExcluded(min);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetMaxValueIncluded() */
+    GDALInConstructionAlgorithmArg &SetMaxValueIncluded(double max)
+    {
+        m_decl.SetMaxValueIncluded(max);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetMaxValueExcluded() */
+    GDALInConstructionAlgorithmArg &SetMaxValueExcluded(double max)
+    {
+        m_decl.SetMaxValueExcluded(max);
         return *this;
     }
 

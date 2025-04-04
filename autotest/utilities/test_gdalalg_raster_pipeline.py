@@ -458,7 +458,7 @@ def test_gdalalg_raster_pipeline_reproject_invalid_resolution(tmp_vsimem):
     pipeline = get_pipeline_alg()
     with pytest.raises(
         Exception,
-        match="Target resolution should be strictly positive",
+        match="Value of argument 'resolution' is -1, but should be > 0",
     ):
         pipeline.ParseRunAndFinalize(
             [

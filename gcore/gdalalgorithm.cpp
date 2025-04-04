@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cerrno>
+#include <cmath>
 #include <cstdlib>
 #include <map>
 
@@ -576,15 +577,117 @@ bool GDALAlgorithmArg::ValidateChoice(const std::string &value) const
 }
 
 /************************************************************************/
+/*                   GDALAlgorithmArg::ValidateIntRange()               */
+/************************************************************************/
+
+bool GDALAlgorithmArg::ValidateIntRange(int val) const
+{
+    bool ret = true;
+
+    const auto [minVal, minValIsIncluded] = GetMinValue();
+    if (!std::isnan(minVal))
+    {
+        if (minValIsIncluded && val < minVal)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Value of argument '%s' is %d, but should be >= %d",
+                     GetName().c_str(), val, static_cast<int>(minVal));
+            ret = false;
+        }
+        else if (!minValIsIncluded && val <= minVal)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Value of argument '%s' is %d, but should be > %d",
+                     GetName().c_str(), val, static_cast<int>(minVal));
+            ret = false;
+        }
+    }
+
+    const auto [maxVal, maxValIsIncluded] = GetMaxValue();
+    if (!std::isnan(maxVal))
+    {
+
+        if (maxValIsIncluded && val > maxVal)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Value of argument '%s' is %d, but should be <= %d",
+                     GetName().c_str(), val, static_cast<int>(maxVal));
+            ret = false;
+        }
+        else if (!maxValIsIncluded && val >= maxVal)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Value of argument '%s' is %d, but should be < %d",
+                     GetName().c_str(), val, static_cast<int>(maxVal));
+            ret = false;
+        }
+    }
+
+    return ret;
+}
+
+/************************************************************************/
+/*                   GDALAlgorithmArg::ValidateRealRange()              */
+/************************************************************************/
+
+bool GDALAlgorithmArg::ValidateRealRange(double val) const
+{
+    bool ret = true;
+
+    const auto [minVal, minValIsIncluded] = GetMinValue();
+    if (!std::isnan(minVal))
+    {
+        if (minValIsIncluded && val < minVal)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Value of argument '%s' is %g, but should be >= %g",
+                     GetName().c_str(), val, minVal);
+            ret = false;
+        }
+        else if (!minValIsIncluded && val <= minVal)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Value of argument '%s' is %g, but should be > %g",
+                     GetName().c_str(), val, minVal);
+            ret = false;
+        }
+    }
+
+    const auto [maxVal, maxValIsIncluded] = GetMaxValue();
+    if (!std::isnan(maxVal))
+    {
+
+        if (maxValIsIncluded && val > maxVal)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Value of argument '%s' is %g, but should be <= %g",
+                     GetName().c_str(), val, maxVal);
+            ret = false;
+        }
+        else if (!maxValIsIncluded && val >= maxVal)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Value of argument '%s' is %g, but should be < %g",
+                     GetName().c_str(), val, maxVal);
+            ret = false;
+        }
+    }
+
+    return ret;
+}
+
+/************************************************************************/
 /*                    GDALAlgorithmArg::RunValidationActions()          */
 /************************************************************************/
 
 bool GDALAlgorithmArg::RunValidationActions()
 {
+    bool ret = true;
+
     if (GetType() == GAAT_STRING && !GetChoices().empty())
     {
         if (!ValidateChoice(Get<std::string>()))
-            return false;
+            ret = false;
     }
     else if (GetType() == GAAT_STRING_LIST && !GetChoices().empty())
     {
@@ -592,16 +695,36 @@ bool GDALAlgorithmArg::RunValidationActions()
         for (const std::string &value : values)
         {
             if (!ValidateChoice(value))
-                return false;
+                ret = false;
         }
+    }
+
+    if (GetType() == GAAT_INTEGER)
+    {
+        ret = ValidateIntRange(Get<int>()) && ret;
+    }
+    else if (GetType() == GAAT_INTEGER_LIST)
+    {
+        for (int v : Get<std::vector<int>>())
+            ret = ValidateIntRange(v) && ret;
+    }
+    else if (GetType() == GAAT_REAL)
+    {
+        ret = ValidateRealRange(Get<double>()) && ret;
+    }
+    else if (GetType() == GAAT_REAL_LIST)
+    {
+        for (double v : Get<std::vector<double>>())
+            ret = ValidateRealRange(v) && ret;
     }
 
     for (const auto &f : m_validationActions)
     {
         if (!f())
-            return false;
+            ret = false;
     }
-    return true;
+
+    return ret;
 }
 
 /************************************************************************/
@@ -3936,6 +4059,29 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
                     break;
             }
         }
+
+        const auto [minVal, minValIsIncluded] = arg->GetMinValue();
+        if (!std::isnan(minVal))
+        {
+            if (arg->GetType() == GAAT_INTEGER ||
+                arg->GetType() == GAAT_INTEGER_LIST)
+                jArg.Add("min_value", static_cast<int>(minVal));
+            else
+                jArg.Add("min_value", minVal);
+            jArg.Add("min_value_is_included", minValIsIncluded);
+        }
+
+        const auto [maxVal, maxValIsIncluded] = arg->GetMaxValue();
+        if (!std::isnan(maxVal))
+        {
+            if (arg->GetType() == GAAT_INTEGER ||
+                arg->GetType() == GAAT_INTEGER_LIST)
+                jArg.Add("max_value", static_cast<int>(maxVal));
+            else
+                jArg.Add("max_value", maxVal);
+            jArg.Add("max_value_is_included", maxValIsIncluded);
+        }
+
         jArg.Add("required", arg->IsRequired());
         if (GDALAlgorithmArgTypeIsList(arg->GetType()))
         {

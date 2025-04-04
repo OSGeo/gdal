@@ -68,6 +68,6 @@ def test_gdalalg_vector_geom_simplify_error():
 
     alg = get_alg()
     with pytest.raises(
-        Exception, match="Value of 'tolerance' should be strictly positive"
+        Exception, match="Value of argument 'tolerance' is -1, but should be >= 0"
     ):
-        alg["tolerance"] = 0
+        alg["tolerance"] = -1
