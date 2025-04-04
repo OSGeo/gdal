@@ -178,6 +178,11 @@ bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
     {
         return FALSE;
     }
+    if (eResampleAlg == GRIORA_NearestNeighbour &&
+        (inLoc.x() == rasterSize.x() || inLoc.y() == rasterSize.y()))
+    {
+        return FALSE;
+    }
 
     // Downgrade the interpolation algorithm if the image is too small
     if ((rasterSize.x() < 4 || rasterSize.y() < 4) &&

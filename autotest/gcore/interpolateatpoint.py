@@ -46,9 +46,9 @@ def test_interpolateatpoint_outofrange():
     assert res is None
     res = ds.GetRasterBand(1).InterpolateAtPoint(20, 20, gdal.GRIORA_NearestNeighbour)
     assert res is None
-    res = ds.GetRasterBand(1).InterpolateAtPoint(19, 20, gdal.GRIORA_NearestNeighbour)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(18, 20, gdal.GRIORA_NearestNeighbour)
     assert res is None
-    res = ds.GetRasterBand(1).InterpolateAtPoint(20, 19, gdal.GRIORA_NearestNeighbour)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(20, 18, gdal.GRIORA_NearestNeighbour)
     assert res is None
     res = ds.GetRasterBand(1).InterpolateAtPoint(20, 20, gdal.GRIORA_Bilinear)
     assert res == pytest.approx(107.0, 1e-5)  # bilinear at the corner can interpolate.
