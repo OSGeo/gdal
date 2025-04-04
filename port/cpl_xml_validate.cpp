@@ -869,16 +869,15 @@ static xmlParserInputPtr CPLExternalEntityLoader(const char *URL,
         osModURL = URL;
     }
 
-    char *pszCPLSchema = CPLLoadSchemaStr(osModURL);
-    if (!pszCPLSchema)
+    char *pszSchema = CPLLoadSchemaStr(osModURL);
+    if (!pszSchema)
         return nullptr;
 
-    xmlChar *pszBuffer = xmlStrdup(reinterpret_cast<xmlChar *>(pszCPLSchema));
-    CPLFree(pszCPLSchema);
-    if (pszBuffer == nullptr)
-        return nullptr;
+    xmlParserInputPtr parser = xmlNewStringInputStream(
+        context, reinterpret_cast<const xmlChar *>(pszSchema));
+    CPLFree(pszSchema);
 
-    return xmlNewStringInputStream(context, pszBuffer);
+    return parser;
 }
 
 /************************************************************************/
