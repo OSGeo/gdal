@@ -1050,6 +1050,12 @@ def test_vrtmultidim_Source_classic_dataset():
 
 def _validate(content):
 
+    if gdaltest.is_travis_branch("build-windows-conda") or gdaltest.is_travis_branch(
+        "build-windows-minimum"
+    ):
+        print("validate skipped on that platform due to crash in lxml")
+        return
+
     try:
         from lxml import etree
     except ImportError:
