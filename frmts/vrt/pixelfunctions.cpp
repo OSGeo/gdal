@@ -489,8 +489,12 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
                            int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
-    if (nSources < 2)
+    if (nSources < 2 && CSLFetchNameValue(papszArgs, "k") == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "sum requires at least two sources or a specified constant k");
         return CE_Failure;
+    }
 
     double dfK = 0.0;
     if (FetchDoubleArg(papszArgs, "k", &dfK, &dfK) != CE_None)
@@ -637,8 +641,12 @@ static CPLErr MulPixelFunc(void **papoSources, int nSources, void *pData,
                            int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
-    if (nSources < 2)
+    if (nSources < 2 && CSLFetchNameValue(papszArgs, "k") == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "mul requires at least two sources or a specified constant k");
         return CE_Failure;
+    }
 
     double dfK = 1.0;
     if (FetchDoubleArg(papszArgs, "k", &dfK, &dfK) != CE_None)
