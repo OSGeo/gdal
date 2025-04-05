@@ -2062,7 +2062,8 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Instantiate an algorithm by its name (or its alias). */
     std::unique_ptr<GDALAlgorithm>
-    InstantiateSubAlgorithm(const std::string &name) const;
+    InstantiateSubAlgorithm(const std::string &name,
+                            bool suggestionAllowed = true) const;
 
     /** Return the potential arguments of the algorithm. */
     const std::vector<std::unique_ptr<GDALAlgorithmArg>> &GetArgs() const
@@ -2076,15 +2077,21 @@ class CPL_DLL GDALAlgorithmRegistry
         return m_args;
     }
 
+    /** Return a likely matching argument using a Damerau-Levenshtein distance */
+    std::string GetSuggestionForArgumentName(const std::string &osName) const;
+
     /** Return an argument from its long name, short name or an alias */
-    GDALAlgorithmArg *GetArg(const std::string &osName)
+    GDALAlgorithmArg *GetArg(const std::string &osName,
+                             bool suggestionAllowed = true)
     {
         return const_cast<GDALAlgorithmArg *>(
-            const_cast<const GDALAlgorithm *>(this)->GetArg(osName));
+            const_cast<const GDALAlgorithm *>(this)->GetArg(osName,
+                                                            suggestionAllowed));
     }
 
     /** Return an argument from its long name, short name or an alias */
-    const GDALAlgorithmArg *GetArg(const std::string &osName) const;
+    const GDALAlgorithmArg *GetArg(const std::string &osName,
+                                   bool suggestionAllowed = true) const;
 
     /** Set the calling path to this algorithm.
      *

@@ -604,6 +604,22 @@ TEST_F(test_gdal_algorithm, GDALInConstructionAlgorithmArg_AddAlias)
     EXPECT_NE(alg.GetArg("alias"), nullptr);
     EXPECT_EQ(alg.GetArg("invalid"), nullptr);
     EXPECT_EQ(alg.GetArg("-"), nullptr);
+
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_EQ(alg.GetArg("flig"), nullptr);
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "Argument 'flig' is unknown. Do you mean 'flag'?");
+    }
+
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_EQ(alg.GetArg("flga"), nullptr);
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "Argument 'flga' is unknown. Do you mean 'flag'?");
+    }
 }
 
 TEST_F(test_gdal_algorithm, GDALInConstructionAlgorithmArg_AddAlias_redundant)
@@ -749,8 +765,20 @@ TEST_F(test_gdal_algorithm, bool_flag)
         MyAlgorithm alg;
         CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
         CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--flig=invalid"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_STREQ(CPLGetLastErrorMsg(), "test: Option '--flig' is "
+                                           "unknown. Do you mean '--flag'?");
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
         EXPECT_FALSE(alg.ParseCommandLineArguments({"--invalid"}));
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "test: Option '--invalid' is unknown.");
     }
 
     {
@@ -3265,6 +3293,23 @@ TEST_F(test_gdal_algorithm, raster_pipeline_GetUsageForCLI)
     ASSERT_NE(pipeline, nullptr);
     pipeline->GetUsageForCLI(false);
     pipeline->GetUsageForCLI(true);
+
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_EQ(raster->InstantiateSubAlgorithm("pipline"), nullptr);
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "Algorithm 'pipline' is unknown. Do you mean 'pipeline'?");
+    }
+
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_EQ(raster->InstantiateSubAlgorithm("pipleine"), nullptr);
+        EXPECT_STREQ(
+            CPLGetLastErrorMsg(),
+            "Algorithm 'pipleine' is unknown. Do you mean 'pipeline'?");
+    }
 }
 
 TEST_F(test_gdal_algorithm, registry_c_api)
