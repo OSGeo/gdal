@@ -174,9 +174,9 @@ bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
         // Allow input coordinates right at the bottom or right edge
         // with GRIORA_NearestNeighbour.
         // "introduce" them in the pixel of the image.
-        if (dfXIn == rasterSize.x())
+        if (dfXIn >= rasterSize.x() && dfXIn <= rasterSize.x() + 1e-5)
             dfXIn -= 0.25;
-        if (dfYIn == rasterSize.y())
+        if (dfYIn >= rasterSize.y() && dfYIn <= rasterSize.y() + 1e-5)
             dfYIn -= 0.25;
     }
     const gdal::Vector2d inLoc{dfXIn, dfYIn};
