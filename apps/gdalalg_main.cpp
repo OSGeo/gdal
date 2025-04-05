@@ -76,13 +76,20 @@ bool GDALMainAlgorithm::ParseCommandLineArguments(
     }
     // Generic case: "gdal {subcommand} arguments"
     // where subcommand is a known subcommand
-    else if (args.size() >= 1 && InstantiateSubAlgorithm(args[0]))
+    else if (args.size() >= 1)
     {
-        return GDALAlgorithm::ParseCommandLineArguments(args);
+        const auto nCounter = CPLGetErrorCounter();
+        if (InstantiateSubAlgorithm(args[0]))
+            return GDALAlgorithm::ParseCommandLineArguments(args);
+        if (CPLGetErrorCounter() == nCounter + 1 &&
+            strstr(CPLGetLastErrorMsg(), "Do you mean"))
+        {
+            return false;
+        }
     }
+
     // Otherwise check if that is the shortest form of "gdal read mydataset"
     // where "read" is omitted: "gdal in.tif"
-    else
     {
         VSIStatBufL sStat;
         for (const auto &arg : args)
