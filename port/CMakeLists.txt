@@ -48,6 +48,7 @@ set(CPL_SOURCES
     cpl_findfile.cpp
     cpl_minixml.cpp
     cpl_multiproc.cpp
+    cpl_levenshtein.cpp
     cpl_list.cpp
     cpl_getexecpath.cpp
     cplstring.cpp
