@@ -531,7 +531,8 @@ static size_t VSICurlStreamingHandleWriteFuncForHeader(void *buffer,
                     // If moved permanently/temporarily, go on.
                     // Otherwise stop now.
                     if (!(psStruct->nHTTPCode == 301 ||
-                          psStruct->nHTTPCode == 302))
+                          psStruct->nHTTPCode == 302 ||
+                          psStruct->nHTTPCode == 303))
                         return 0;
                 }
                 else
@@ -892,7 +893,7 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count,
 
     // Reset buffer if we have followed link after a redirect.
     if (nSize >= 9 && InterpretRedirect() &&
-        (nHTTPCode == 301 || nHTTPCode == 302) &&
+        (nHTTPCode == 301 || nHTTPCode == 302 || nHTTPCode == 303) &&
         STARTS_WITH_CI(reinterpret_cast<char *>(buffer), "HTTP/"))
     {
         nHeaderSize = 0;
@@ -928,7 +929,7 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count,
             // If moved permanently/temporarily, go on.
             if (eExists == EXIST_UNKNOWN &&
                 !(InterpretRedirect() &&
-                  (nHTTPCode == 301 || nHTTPCode == 302)))
+                  (nHTTPCode == 301 || nHTTPCode == 302 || nHTTPCode == 303)))
             {
                 eExists = nHTTPCode == 200 ? EXIST_YES : EXIST_NO;
                 FileProp cachedFileProp;
@@ -938,7 +939,8 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count,
             }
         }
 
-        if (!(InterpretRedirect() && (nHTTPCode == 301 || nHTTPCode == 302)) &&
+        if (!(InterpretRedirect() &&
+              (nHTTPCode == 301 || nHTTPCode == 302 || nHTTPCode == 303)) &&
             !bHasComputedFileSize)
         {
             // Caution: When gzip compression is enabled, the content-length is
