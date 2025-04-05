@@ -74,6 +74,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vector_geom_simplify
    gdal_vector_geom_buffer
    gdal_vector_geom_swap_xy
+   gdal_vector_grid
    gdal_vector_pipeline
    gdal_vector_rasterize
    gdal_vector_reproject
@@ -130,6 +131,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vector_geom_simplify_subsubcommand`: Simplify geometries of a vector dataset
     - :ref:`gdal_vector_geom_buffer_subsubcommand`: Compute a buffer around geometries of a vector dataset
     - :ref:`gdal_vector_geom_swap_xy_subsubcommand`: Swap X and Y coordinates of geometries of a vector dataset
+    - :ref:`gdal_vector_grid_subcommand`: Create a regular grid from scattered points
     - :ref:`gdal_vector_convert_subcommand`: Convert a vector dataset
     - :ref:`gdal_vector_pipeline_subcommand`: Process a vector dataset
     - :ref:`gdal_vector_reproject_subcommand`: Reproject a vector dataset

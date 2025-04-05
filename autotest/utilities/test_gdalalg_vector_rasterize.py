@@ -507,10 +507,18 @@ def test_gdalalg_vector_rasterize_add_option(tmp_vsimem):
 
     with temp_cutline(input_csv):
 
+        last_pct = [0]
+
+        def my_progress(pct, msg, user_data):
+            last_pct[0] = pct
+            return True
+
         rasterize = get_rasterize_alg()
         assert rasterize.ParseRunAndFinalize(
-            options + ["--update", input_csv, output_tif]
+            options + ["--update", input_csv, output_tif],
+            my_progress,
         )
+        assert last_pct[0] == 1.0
 
         target_ds = gdal.Open(output_tif)
         checksum = target_ds.GetRasterBand(2).Checksum()
@@ -563,3 +571,36 @@ def test_gdalalg_vector_rasterize_dialect_warning(tmp_vsimem):
 
         # Check the warning
         assert expected_warning in gdal.GetLastErrorMsg(), gdal.GetLastErrorMsg()
+
+
+@pytest.mark.require_driver("CSV")
+def test_gdalalg_vector_rasterize_overwrite(tmp_vsimem):
+
+    input_csv = str(tmp_vsimem / "cutline.csv")
+    with temp_cutline(input_csv):
+
+        output_tif = str(tmp_vsimem / "rasterize_alg_1.tif")
+
+        # Create a raster to rasterize into.
+        with gdal.GetDriverByName("GTiff").Create(
+            output_tif, 12, 12, 3, gdal.GDT_Byte
+        ) as target_ds:
+            target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
+
+        rasterize = get_rasterize_alg()
+        with pytest.raises(
+            Exception,
+            match="Specify the --overwrite option to overwrite it or the --update option to update it",
+        ):
+            rasterize.ParseRunAndFinalize(
+                ["-b", "1,2,3", "--burn=200,220,240", input_csv, output_tif]
+            )
+
+        rasterize = get_rasterize_alg()
+        assert rasterize.ParseRunAndFinalize(
+            ["--burn=200,220,240", input_csv, output_tif, "--size=10,11", "--overwrite"]
+        )
+
+        with gdal.Open(output_tif) as ds:
+            assert ds.RasterXSize == 10
+            assert ds.RasterYSize == 11

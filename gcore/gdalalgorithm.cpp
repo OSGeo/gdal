@@ -4196,7 +4196,7 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
 
 std::vector<std::string>
 GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
-                               bool showAllOptions)
+                               bool lastWordIsComplete, bool showAllOptions)
 {
     // Get inner-most algorithm
     std::unique_ptr<GDALAlgorithm> curAlgHolder;
@@ -4206,6 +4206,19 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
         auto subAlg = curAlg->InstantiateSubAlgorithm(args.front());
         if (!subAlg)
             break;
+        if (args.size() == 1 && !lastWordIsComplete)
+        {
+            int nCount = 0;
+            for (const auto &subAlgName : curAlg->GetSubAlgorithmNames())
+            {
+                if (STARTS_WITH(subAlgName.c_str(), args.front().c_str()))
+                    nCount++;
+            }
+            if (nCount >= 2)
+            {
+                return curAlg->GetSubAlgorithmNames();
+            }
+        }
         showAllOptions = false;
         args.erase(args.begin());
         curAlgHolder = std::move(subAlg);
@@ -4213,7 +4226,8 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
     }
     if (curAlg != this)
     {
-        return curAlg->GetAutoComplete(args, /* showAllOptions = */ false);
+        return curAlg->GetAutoComplete(args, lastWordIsComplete,
+                                       /* showAllOptions = */ false);
     }
 
     std::vector<std::string> ret;

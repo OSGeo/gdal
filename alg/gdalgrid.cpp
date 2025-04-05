@@ -423,7 +423,7 @@ static CPLErr GDALGridInverseDistanceToAPowerNearestNeighborPerQuadrant(
     // multimap), and use the closest n points based on distance until the max
     // is reached.
     // Do that by fetching the nearest point in quadrant 0, then the nearest
-    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quadrant 1, 2 and 3, and starting again with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
     GUInt32 anPerQuadrant[4] = {0};
@@ -798,7 +798,7 @@ static CPLErr GDALGridMovingAveragePerQuadrant(
     // multimap), and use the closest n points based on distance until the max
     // is reached.
     // Do that by fetching the nearest point in quadrant 0, then the nearest
-    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quadrant 1, 2 and 3, and starting again with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
     GUInt32 anPerQuadrant[4] = {0};
@@ -1210,7 +1210,7 @@ static CPLErr GDALGridDataMetricMinimumOrMaximumPerQuadrant(
     // multimap), and use the closest n points based on distance until the max
     // is reached.
     // Do that by fetching the nearest point in quadrant 0, then the nearest
-    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quadrant 1, 2 and 3, and starting again with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
     GUInt32 anPerQuadrant[4] = {0};
@@ -1663,7 +1663,7 @@ static CPLErr GDALGridDataMetricRangePerQuadrant(
     // multimap), and use the closest n points based on distance until the max
     // is reached.
     // Do that by fetching the nearest point in quadrant 0, then the nearest
-    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quadrant 1, 2 and 3, and starting again with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
     GUInt32 anPerQuadrant[4] = {0};
@@ -1925,7 +1925,7 @@ static CPLErr GDALGridDataMetricCountPerQuadrant(
     // multimap), and use the closest n points based on distance until the max
     // is reached.
     // Do that by fetching the nearest point in quadrant 0, then the nearest
-    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quadrant 1, 2 and 3, and starting again with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
     GUInt32 anPerQuadrant[4] = {0};
@@ -2189,7 +2189,7 @@ static CPLErr GDALGridDataMetricAverageDistancePerQuadrant(
     // multimap), and use the closest n points based on distance until the max
     // is reached.
     // Do that by fetching the nearest point in quadrant 0, then the nearest
-    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quadrant 1, 2 and 3, and starting again with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
     GUInt32 anPerQuadrant[4] = {0};
@@ -2512,8 +2512,14 @@ CPLErr GDALGridLinear(const void *poOptionsIn, GUInt32 nPoints,
         {
             GDALGridNearestNeighborOptions sNeighbourOptions;
             sNeighbourOptions.nSizeOfStructure = sizeof(sNeighbourOptions);
-            sNeighbourOptions.dfRadius1 = dfRadius < 0.0 ? 0.0 : dfRadius;
-            sNeighbourOptions.dfRadius2 = dfRadius < 0.0 ? 0.0 : dfRadius;
+            sNeighbourOptions.dfRadius1 =
+                dfRadius < 0.0 || dfRadius >= std::numeric_limits<double>::max()
+                    ? 0.0
+                    : dfRadius;
+            sNeighbourOptions.dfRadius2 =
+                dfRadius < 0.0 || dfRadius >= std::numeric_limits<double>::max()
+                    ? 0.0
+                    : dfRadius;
             sNeighbourOptions.dfAngle = 0.0;
             sNeighbourOptions.dfNoDataValue = poOptions->dfNoDataValue;
             return GDALGridNearestNeighbor(&sNeighbourOptions, nPoints, padfX,
@@ -3725,8 +3731,10 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
                     papszNewParams, "radius",
                     CSLFetchNameValueDef(papszParams, "radius1", "1"));
             }
-            for (const char *pszItem : {"radius", "power", "smoothing",
-                                        "max_points", "min_points", "nodata"})
+            for (const char *pszItem :
+                 {"radius", "power", "smoothing", "max_points", "min_points",
+                  "nodata", "min_points_per_quadrant",
+                  "max_points_per_quadrant"})
             {
                 const char *pszValue = CSLFetchNameValue(papszParams, pszItem);
                 if (pszValue)
@@ -3846,8 +3854,8 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
             poPowerOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             static const char *const apszKnownOptions[] = {
-                "power",      "smoothing",  "radius1", "radius2", "angle",
-                "max_points", "min_points", "nodata",  nullptr};
+                "power", "smoothing",  "radius",     "radius1", "radius2",
+                "angle", "max_points", "min_points", "nodata",  nullptr};
             papszKnownOptions = apszKnownOptions;
 
             break;

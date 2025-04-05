@@ -25,7 +25,8 @@
 
 /** Return on stdout a space-separated list of choices for bash completion */
 static void EmitCompletion(std::unique_ptr<GDALAlgorithm> rootAlg,
-                           const std::vector<std::string> &argsIn)
+                           const std::vector<std::string> &argsIn,
+                           bool lastWordIsComplete)
 {
 #ifdef DEBUG_COMPLETION
     for (size_t i = 0; i < argsIn.size(); ++i)
@@ -61,8 +62,8 @@ static void EmitCompletion(std::unique_ptr<GDALAlgorithm> rootAlg,
         return;
     }
 
-    for (const auto &choice :
-         rootAlg->GetAutoComplete(args, /*showAllOptions = */ true))
+    for (const auto &choice : rootAlg->GetAutoComplete(
+             args, lastWordIsComplete, /*showAllOptions = */ true))
     {
         addSpace();
         ret += CPLString(choice).replaceAll(" ", "\\ ");
@@ -89,9 +90,15 @@ MAIN_START(argc, argv)
     {
         GDALAllRegister();
 
-        // Process lines like "gdal completion gdal raster"
+        const bool bLastWordIsComplete =
+            EQUAL(argv[argc - 1], "last_word_is_complete=true");
+        if (STARTS_WITH(argv[argc - 1], "last_word_is_complete="))
+            --argc;
+
+        // Process lines like "gdal completion gdal raster last_word_is_complete=true|false"
         EmitCompletion(std::move(alg),
-                       std::vector<std::string>(argv + 3, argv + argc));
+                       std::vector<std::string>(argv + 3, argv + argc),
+                       bLastWordIsComplete);
         return 0;
     }
 

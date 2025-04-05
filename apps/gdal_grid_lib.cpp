@@ -734,18 +734,6 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
     int nYSize;
     if (psOptions->dfXRes != 0 && psOptions->dfYRes != 0)
     {
-        if ((psOptions->dfXMax == psOptions->dfXMin) ||
-            (psOptions->dfYMax == psOptions->dfYMin))
-        {
-            CPLError(CE_Failure, CPLE_IllegalArg,
-                     "Invalid txe or tye parameters detected. Please check "
-                     "your -txe or -tye argument.");
-
-            if (pbUsageError)
-                *pbUsageError = TRUE;
-            return nullptr;
-        }
-
         double dfXSize = (std::fabs(psOptions->dfXMax - psOptions->dfXMin) +
                           (psOptions->dfXRes / 2.0)) /
                          psOptions->dfXRes;
@@ -1406,6 +1394,15 @@ GDALGridOptionsNew(char **papszArgv,
             {
                 psOptions->poSpatialFilter = std::move(psOptions->poClipSrc);
             }
+        }
+
+        if (psOptions->dfXRes != 0 && psOptions->dfYRes != 0 &&
+            !(psOptions->bIsXExtentSet && psOptions->bIsYExtentSet))
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "-txe ad -tye arguments must be provided when "
+                     "resolution is provided.");
+            return nullptr;
         }
 
         return psOptions.release();

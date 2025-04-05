@@ -35,16 +35,6 @@ class GDALVectorRasterizeAlgorithm final : public GDALAlgorithm
 
     GDALVectorRasterizeAlgorithm();
 
-    void SetDataset(GDALDataset *poDS)
-    {
-        auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-        if (arg)
-        {
-            arg->Set(poDS);
-            arg->SetSkipIfAlreadySet();
-        }
-    }
-
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 

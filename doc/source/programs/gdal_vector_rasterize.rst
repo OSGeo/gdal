@@ -78,7 +78,7 @@ Standard options
 .. option:: --sql <SQL>|@<filename>
 
     An SQL statement to be evaluated against the datasource to produce a virtual layer of features to be burned in.
-    Starting with GDAL 3.7, the @filename syntax can be used to indicate that the content is in the pointed filename.
+    The @filename syntax can be used to indicate that the content is in the pointed filename.
 
 .. include:: gdal_options/sql_dialect.rst
 

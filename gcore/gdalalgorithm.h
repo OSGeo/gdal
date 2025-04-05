@@ -2218,7 +2218,8 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Return auto completion suggestions */
     virtual std::vector<std::string>
-    GetAutoComplete(std::vector<std::string> &args, bool showAllOptions);
+    GetAutoComplete(std::vector<std::string> &args, bool lastWordIsComplete,
+                    bool showAllOptions);
 
   protected:
     friend class GDALInConstructionAlgorithmArg;

@@ -119,11 +119,6 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     CPLStringList aosOptions;
 
-    if (pfnProgress && pfnProgress != GDALDummyProgress)
-    {
-        aosOptions.AddString("-progress");
-    }
-
     if (m_bands.size())
     {
         for (int band : m_bands)
@@ -280,15 +275,6 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         aosOptions.AddString(m_optimization.c_str());
     }
 
-    if (m_openOptions.size())
-    {
-        for (const auto &oo : m_openOptions)
-        {
-            aosOptions.AddString("-oo");
-            aosOptions.AddString(oo.c_str());
-        }
-    }
-
     std::unique_ptr<GDALRasterizeOptions, decltype(&GDALRasterizeOptionsFree)>
         psOptions{GDALRasterizeOptionsNew(aosOptions.List(), nullptr),
                   GDALRasterizeOptionsFree};
@@ -336,14 +322,13 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             else if (fileExists && m_overwrite)
             {
                 // Delete the existing file
-                CPLErrorStateBackuper oCPLErrorHandlerPusher(
-                    CPLQuietErrorHandler);
+                GDALClose(hDstDS);
+                hDstDS = nullptr;
                 if (VSIUnlink(m_outputDataset.GetName().c_str()) != 0)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Failed to delete existing dataset '%s'.",
                              m_outputDataset.GetName().c_str());
-                    GDALClose(hDstDS);
                     return false;
                 }
             }
