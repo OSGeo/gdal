@@ -299,6 +299,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
                            GDALDataset *&poSrcDataset, int &nSrcXOff,
                            int &nSrcYOff);
 
+    static bool IsDefaultBlockSize(int nBlockSize, int nDimension);
+
     CPL_DISALLOW_COPY_ASSIGN(VRTDataset)
 
   protected:
