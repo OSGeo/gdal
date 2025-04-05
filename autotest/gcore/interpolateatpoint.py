@@ -463,3 +463,23 @@ def test_interpolateatgeolocation_1():
         assert ungeoreferenced_ds.GetRasterBand(1).InterpolateAtGeolocation(
             0, 0, None, gdal.GRIORA_NearestNeighbour
         )
+
+
+def test_interpolateatgeolocation_corners():
+
+    gdaltest.importorskip_gdal_array()
+
+    ds = gdal.Open("data/byte.tif")
+    band = ds.GetRasterBand(1)
+    data = band.ReadAsArray()
+
+    values = {}
+    for loc, coord in gdal.Info(ds, format="json")["cornerCoordinates"].items():
+        values[loc] = band.InterpolateAtGeolocation(
+            coord[0], coord[1], None, gdal.GRIORA_NearestNeighbour
+        )
+
+    assert values["upperLeft"] == data[0, 0]
+    assert values["upperRight"] == data[0, -1]
+    assert values["lowerLeft"] == data[-1, 0]
+    assert values["lowerRight"] == data[-1, -1]
