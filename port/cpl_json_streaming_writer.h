@@ -41,6 +41,8 @@ class CPL_DLL CPLJSonStreamingWriter
     std::string m_osIndentAcc{};
     int m_nLevel = 0;
     bool m_bNewLineEnabled = true;
+    std::string m_osTmpForSerialize{};
+    std::string m_osTmpForFormatString{};
 
     struct State
     {
@@ -55,16 +57,22 @@ class CPL_DLL CPLJSonStreamingWriter
     std::vector<State> m_states{};
     bool m_bWaitForValue = false;
 
-    void Print(const std::string &text);
     void IncIndent();
     void DecIndent();
-    static std::string FormatString(const std::string &str);
+    const std::string &FormatString(const std::string_view &str);
     void EmitCommaIfNeeded();
+
+    void Serialize(const char *pszStr, size_t nLength);
+
+  protected:
+    virtual void Serialize(const std::string_view &str);
 
   public:
     CPLJSonStreamingWriter(SerializationFuncType pfnSerializationFunc,
                            void *pUserData);
-    ~CPLJSonStreamingWriter();
+    virtual ~CPLJSonStreamingWriter();
+
+    void clear();
 
     void SetPrettyFormatting(bool bPretty)
     {
@@ -79,9 +87,12 @@ class CPL_DLL CPLJSonStreamingWriter
         return m_osStr;
     }
 
-    void Add(const std::string &str);
     void Add(const char *pszStr);
+    void Add(const std::string &str);
+    void Add(const std::string_view &str);
     void Add(bool bVal);
+
+    void AddSerializedValue(const std::string_view &str);
 
     void Add(int nVal)
     {
@@ -102,7 +113,7 @@ class CPL_DLL CPLJSonStreamingWriter
 
     void StartObj();
     void EndObj();
-    void AddObjKey(const std::string &key);
+    void AddObjKey(const std::string_view &key);
 
     struct CPL_DLL ObjectContext
     {
