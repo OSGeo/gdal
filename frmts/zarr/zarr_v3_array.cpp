@@ -425,6 +425,7 @@ bool ZarrV3Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
     constexpr uint64_t MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING = 1000;
     const char *const apszOpenOptions[] = {"IGNORE_FILENAME_RESTRICTIONS=YES",
                                            nullptr};
+    const auto nErrorBefore = CPLGetErrorCounter();
     if ((m_osDimSeparator == "/" && !m_anBlockSize.empty() &&
          m_anBlockSize.back() > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING) ||
         (m_osDimSeparator != "/" &&
@@ -441,11 +442,18 @@ bool ZarrV3Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
     }
     if (fp == nullptr)
     {
-        // Missing files are OK and indicate nodata_value
-        CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
-                     osFilename.c_str());
-        bMissingTileOut = true;
-        return true;
+        if (nErrorBefore != CPLGetErrorCounter())
+        {
+            return false;
+        }
+        else
+        {
+            // Missing files are OK and indicate nodata_value
+            CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
+                         osFilename.c_str());
+            bMissingTileOut = true;
+            return true;
+        }
     }
 
     bMissingTileOut = false;
