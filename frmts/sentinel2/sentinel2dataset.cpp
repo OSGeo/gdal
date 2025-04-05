@@ -142,6 +142,20 @@ static bool SENTINEL2GetTileInfo(const char *pszFilename, int *pnWidth,
                                  int *pnHeight, int *pnBits);
 
 /************************************************************************/
+/*                          IsS2Prefixed()                              */
+/************************************************************************/
+
+// IsS2Prefixed(pszStr, "foo") checks that pszStr starts with
+// "S2x_foo" where x=A/B/C/D
+static bool IsS2Prefixed(const char *pszStr, const char *pszPrefixAfterS2X)
+{
+    return pszStr[0] == 'S' && pszStr[1] == '2' && pszStr[2] >= 'A' &&
+           pszStr[2] <= 'Z' &&
+           (*pszPrefixAfterS2X == 0 ||
+            STARTS_WITH_CI(pszStr + 3, pszPrefixAfterS2X));
+}
+
+/************************************************************************/
 /*                           SENTINEL2GranuleInfo                       */
 /************************************************************************/
 
@@ -389,14 +403,10 @@ int SENTINEL2Dataset::Identify(GDALOpenInfo *poOpenInfo)
     /* Accept directly .zip as provided by https://scihub.esa.int/
      * First we check just by file name as it is faster than looking
      * inside to detect content. */
-    if ((STARTS_WITH_CI(pszJustFilename, "S2A_MSIL1C_") ||
-         STARTS_WITH_CI(pszJustFilename, "S2B_MSIL1C_") ||
-         STARTS_WITH_CI(pszJustFilename, "S2A_MSIL2A_") ||
-         STARTS_WITH_CI(pszJustFilename, "S2B_MSIL2A_") ||
-         STARTS_WITH_CI(pszJustFilename, "S2A_OPER_PRD_MSI") ||
-         STARTS_WITH_CI(pszJustFilename, "S2B_OPER_PRD_MSI") ||
-         STARTS_WITH_CI(pszJustFilename, "S2A_USER_PRD_MSI") ||
-         STARTS_WITH_CI(pszJustFilename, "S2B_USER_PRD_MSI")) &&
+    if ((IsS2Prefixed(pszJustFilename, "_MSIL1C_") ||
+         IsS2Prefixed(pszJustFilename, "_MSIL2A_") ||
+         IsS2Prefixed(pszJustFilename, "_OPER_PRD_MSI") ||
+         IsS2Prefixed(pszJustFilename, "_USER_PRD_MSI")) &&
         EQUAL(CPLGetExtensionSafe(pszJustFilename).c_str(), "zip"))
     {
         return TRUE;
@@ -497,10 +507,8 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     const char *pszJustFilename = CPLGetFilename(poOpenInfo->pszFilename);
-    if ((STARTS_WITH_CI(pszJustFilename, "S2A_OPER_PRD_MSI") ||
-         STARTS_WITH_CI(pszJustFilename, "S2B_OPER_PRD_MSI") ||
-         STARTS_WITH_CI(pszJustFilename, "S2A_USER_PRD_MSI") ||
-         STARTS_WITH_CI(pszJustFilename, "S2B_USER_PRD_MSI")) &&
+    if ((IsS2Prefixed(pszJustFilename, "_OPER_PRD_MSI") ||
+         IsS2Prefixed(pszJustFilename, "_USER_PRD_MSI")) &&
         EQUAL(CPLGetExtensionSafe(pszJustFilename).c_str(), "zip"))
     {
         const CPLString osBasename(CPLGetBasenameSafe(pszJustFilename));
@@ -525,8 +533,7 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
         GDALOpenInfo oOpenInfo(osFilename, GA_ReadOnly);
         return Open(&oOpenInfo);
     }
-    else if ((STARTS_WITH_CI(pszJustFilename, "S2A_MSIL1C_") ||
-              STARTS_WITH_CI(pszJustFilename, "S2B_MSIL1C_")) &&
+    else if (IsS2Prefixed(pszJustFilename, "_MSIL1C_") &&
              EQUAL(CPLGetExtensionSafe(pszJustFilename).c_str(), "zip"))
     {
         const CPLString osBasename(CPLGetBasenameSafe(pszJustFilename));
@@ -544,8 +551,7 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
         GDALOpenInfo oOpenInfo(osFilename, GA_ReadOnly);
         return Open(&oOpenInfo);
     }
-    else if ((STARTS_WITH_CI(pszJustFilename, "S2A_MSIL2A_") ||
-              STARTS_WITH_CI(pszJustFilename, "S2B_MSIL2A_")) &&
+    else if (IsS2Prefixed(pszJustFilename, "_MSIL2A_") &&
              EQUAL(CPLGetExtensionSafe(pszJustFilename).c_str(), "zip"))
     {
         const CPLString osBasename(CPLGetBasenameSafe(pszJustFilename));
@@ -621,12 +627,10 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
             if (VSI_ISREG(psEntry->nMode) &&
                 (STARTS_WITH_CI(pszInsideFilename, "MTD_MSIL2A") ||
                  STARTS_WITH_CI(pszInsideFilename, "MTD_MSIL1C") ||
-                 STARTS_WITH_CI(pszInsideFilename, "S2A_OPER_MTD_SAFL1B") ||
-                 STARTS_WITH_CI(pszInsideFilename, "S2B_OPER_MTD_SAFL1B") ||
-                 STARTS_WITH_CI(pszInsideFilename, "S2A_OPER_MTD_SAFL1C") ||
-                 STARTS_WITH_CI(pszInsideFilename, "S2B_OPER_MTD_SAFL1C") ||
-                 STARTS_WITH_CI(pszInsideFilename, "S2A_USER_MTD_SAFL2A") ||
-                 STARTS_WITH_CI(pszInsideFilename, "S2B_USER_MTD_SAFL2A")))
+                 IsS2Prefixed(pszInsideFilename, "_OPER_MTD_SAFL1B") ||
+                 IsS2Prefixed(pszInsideFilename, "_OPER_MTD_SAFL1C") ||
+                 IsS2Prefixed(pszInsideFilename, "_USER_MTD_SAFL2A") ||
+                 IsS2Prefixed(pszInsideFilename, "_USER_MTD_SAFL2A")))
             {
                 osFilename = osFilename + "/" + psEntry->pszName;
                 CPLDebug("SENTINEL2", "Trying %s", osFilename.c_str());
@@ -1751,8 +1755,7 @@ SENTINEL2GetMainMTDFilenameFromGranuleMTD(const char *pszFilename)
     for (char **papszIter = papszContents; papszIter && *papszIter; ++papszIter)
     {
         if (strlen(*papszIter) >= strlen("S2A_XXXX_MTD") &&
-            (STARTS_WITH_CI(*papszIter, "S2A_") ||
-             STARTS_WITH_CI(*papszIter, "S2B_")) &&
+            IsS2Prefixed(*papszIter, "") &&
             EQUALN(*papszIter + strlen("S2A_XXXX"), "_MTD", 4))
         {
             osMainMTD = CPLFormFilenameSafe(osTopDir, *papszIter, nullptr);
