@@ -1058,6 +1058,209 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
 }
 
 /************************************************************************/
+/*                      GDALWarpGetOptionList()                         */
+/************************************************************************/
+
+/** Return a XML string describing options accepted by
+ * GDALWarpOptions::papszWarpOptions.
+ *
+ * @since 3.11
+ */
+const char *GDALWarpGetOptionList(void)
+{
+    return "<OptionList>"
+           "<Option name='INIT_DEST' type='string' description='"
+           "Numeric value or NO_DATA. This option forces the destination image "
+           "to be initialized to the indicated value (for all bands) "
+           "or indicates that it should be initialized to the NO_DATA value in "
+           "padfDstNoDataReal/padfDstNoDataImag. If this value is not set the "
+           "destination image will be read and overlaid.'/>"
+           "<Option name='WRITE_FLUSH' type='boolean' description='"
+           "This option forces a flush to disk of data after "
+           "each chunk is processed. In some cases this helps ensure a serial "
+           " writing of the output data otherwise a block of data may be "
+           "written to disk each time a block of data is read for the input "
+           "buffer resulting in a lot of extra seeking around the disk, and "
+           "reduced IO throughput.' default='NO'/>"
+           "<Option name='SKIP_NOSOURCE' type='boolean' description='"
+           "Skip all processing for chunks for which there is no corresponding "
+           "input data. This will disable initializing the destination "
+           "(INIT_DEST) and all other processing, and so should be used "
+           "carefully.  Mostly useful to short circuit a lot of extra work "
+           "in mosaicing situations. gdalwarp will automatically enable this "
+           "option when it is assumed to be safe to do so.' default='NO'/>"
+#ifdef undocumented
+           "<Option name='ERROR_OUT_IF_EMPTY_SOURCE_WINDOW' type='boolean' "
+           "description='By default, if the source window corresponding to the "
+           "current target window fails to be determined due to reprojection "
+           "errors, the warping fails. Setting this option to NO prevent such "
+           "failure from happening. The warped VRT mechanism automatically "
+           "sets it to NO.'/>"
+#endif
+           "<Option name='UNIFIED_SRC_NODATA' type='string-select' "
+           "description='"
+           "This setting determines how to take into account nodata values "
+           "when there are several input bands. Consult "
+           "GDALWarpOptions::papszWarpOptions documentation for more details.'>"
+           "  <Value>AUTO</Value>"
+           "  <Value>PARTIAL</Value>"
+           "  <Value>YES</Value>"
+           "  <Value>NO</Value>"
+           "</Option>"
+           "<Option name='CUTLINE' type='string' description='"
+           "This may contain the WKT geometry for a cutline.  It will be "
+           "converted into a geometry by GDALWarpOperation::Initialize() and "
+           "assigned to the GDALWarpOptions hCutline field. The coordinates "
+           "must be expressed in source pixel/line coordinates. Note: this is "
+           "different from the assumptions made for the -cutline option "
+           "of the gdalwarp utility !'/>"
+           "<Option name='CUTLINE_BLEND_DIST' type='float' description='"
+           "This may be set with a distance in pixels which will be assigned "
+           "to the dfCutlineBlendDist field in the GDALWarpOptions.'/>"
+           "<Option name='CUTLINE_ALL_TOUCHED' type='boolean' description='"
+           "This may be set to TRUE to enable ALL_TOUCHED mode when "
+           "rasterizing cutline polygons. This is useful to ensure that that "
+           "all pixels overlapping the cutline polygon will be selected, not "
+           "just those whose center point falls within the polygon.' "
+           "default='NO'/>"
+           "<Option name='XSCALE' type='float' description='"
+           "Ratio expressing the resampling factor (number of destination "
+           "pixels per source pixel) along the target horizontal axis. The "
+           "scale is used to determine the number of source pixels along the "
+           "x-axis that are considered by the resampling algorithm. "
+           "Equals to one for no resampling, below one for downsampling "
+           "and above one for upsampling. This is automatically computed, "
+           "for each processing chunk, and may thus vary among them, depending "
+           "on the shape of output regions vs input regions. Such variations "
+           "can be undesired in some situations. If the resampling factor "
+           "can be considered as constant over the warped area, setting a "
+           "constant value can lead to more reproducible pixel output.'/>"
+           "<Option name='YSCALE' type='float' description='"
+           "Same as XSCALE, but along the horizontal axis.'/>"
+           "<Option name='OPTIMIZE_SIZE' type='boolean' description='"
+           "This defaults to FALSE, but may be set to TRUE typically when "
+           "writing to a compressed dataset (GeoTIFF with COMPRESS creation "
+           "option set for example) for achieving a smaller file size. This "
+           "is achieved by writing at once data aligned on full blocks of the "
+           "target dataset, which avoids partial writes of compressed blocks "
+           "and lost space when they are rewritten at the end of the file. "
+           "However sticking to target block size may cause major processing "
+           "slowdown for some particular reprojections. OPTIMIZE_SIZE mode "
+           "is automatically enabled when it is safe to do so. "
+           "As this parameter influences the shape of warping chunk, and by "
+           "default the XSCALE and YSCALE parameters are computed per warping "
+           "chunk, this parameter may influence the pixel output.' "
+           "default='NO'/>"
+           "<Option name='NUM_THREADS' type='string' description='"
+           "Can be set to a numeric value or ALL_CPUS to set the number of "
+           "threads to use to parallelize the computation part of the warping. "
+           "If not set, computation will be done in a single thread..'/>"
+           "<Option name='STREAMABLE_OUTPUT' type='boolean' description='"
+           "This defaults to FALSE, but may be set to TRUE typically when "
+           "writing to a streamed file. The gdalwarp utility automatically "
+           "sets this option when writing to /vsistdout/ or a named pipe "
+           "(on Unix). This option has performance impacts for some "
+           "reprojections. Note: band interleaved output is "
+           "not currently supported by the warping algorithm in a streamable "
+           "compatible way.' default='NO'/>"
+           "<Option name='SRC_COORD_PRECISION' type='float' description='"
+           "Advanced setting. This defaults to 0, to indicate that no rounding "
+           "of computing source image coordinates corresponding to the target "
+           "image must be done. If greater than 0 (and typically below 1), "
+           "this value, expressed in pixel, will be used to round computed "
+           "source image coordinates. The purpose of this option is to make "
+           "the results of warping with the approximated transformer more "
+           "reproducible and not sensitive to changes in warping memory size. "
+           "To achieve that, SRC_COORD_PRECISION must be at least 10 times "
+           "greater than the error threshold. The higher the "
+           "SRC_COORD_PRECISION/error_threshold ratio, the higher the "
+           "performance will be, since exact reprojections must statistically "
+           "be done with a frequency of "
+           "4*error_threshold/SRC_COORD_PRECISION.' default='0'/>"
+           "<Option name='SRC_ALPHA_MAX' type='float' description='"
+           "Maximum value for the alpha band of the source dataset. If the "
+           "value is not set and the alpha band has a NBITS metadata item, "
+           "it is used to set SRC_ALPHA_MAX = 2^NBITS-1. Otherwise, if the "
+           "value is not set and the alpha band is of type UInt16 "
+           "(resp Int16), 65535 (resp 32767) is used. "
+           "Otherwise, 255 is used.'/>"
+           "<Option name='DST_ALPHA_MAX' type='float' description='"
+           "Maximum value for the alpha band of the destination dataset. "
+           "If the value is not set and the alpha band has a NBITS metadata "
+           "item, it is used to set SRC_ALPHA_MAX = 2^NBITS-1. Otherwise, if "
+           "the value is not set and the alpha band is of type UInt16 "
+           "(resp Int16), 65535 (resp 32767) is used. "
+           "Otherwise, 255 is used.'/>"
+           "<Option name='SAMPLE_GRID' type='boolean' description='"
+           "Setting this option to YES will force the sampling to "
+           "include internal points as well as edge points which can be "
+           "important if the transformation is esoteric inside out, or if "
+           "large sections of the destination image are not transformable into "
+           "the source coordinate system.' default='NO'/>"
+           "<Option name='SAMPLE_STEPS' type='string' description='"
+           "Modifies the density of the sampling grid. Increasing this can "
+           "increase the computational cost, but improves the accuracy with "
+           "which the source region is computed. This can be set to ALL to "
+           "mean to sample along all edge points of the destination region "
+           "(if SAMPLE_GRID=NO or not specified), or all points of the "
+           "destination region if SAMPLE_GRID=YES.' default='21'/>"
+           "<Option name='SOURCE_EXTRA' type='int' description='"
+           "This is a number of extra pixels added around the source "
+           "window for a given request, and by default it is 1 to take care "
+           "of rounding error. Setting this larger will increase the amount of "
+           "data that needs to be read, but can avoid missing source data.' "
+           "default='1'/>"
+           "<Option name='APPLY_VERTICAL_SHIFT' type='boolean' description='"
+           "Force the use of vertical shift. This option is generally not "
+           "necessary, except when using an explicit coordinate transformation "
+           "(COORDINATE_OPERATION), and not specifying an explicit source and "
+           "target SRS.'/>"
+           "<Option name='MULT_FACTOR_VERTICAL_SHIFT' type='float' "
+           "description='"
+           "Multiplication factor for the vertical shift' default='1.0'/>"
+           "<Option name='EXCLUDED_VALUES' type='string' "
+           "description='"
+           "Comma-separated tuple of values (thus typically \"R,G,B\"), that "
+           "are ignored as contributing source pixels during resampling. "
+           "The number of values in the tuple must be the same as the number "
+           "of bands, excluding the alpha band. Several tuples of excluded "
+           "values may be specified using the \"(R1,G1,B2),(R2,G2,B2)\" syntax."
+           " Only taken into account by Average currently. This concept is a "
+           "bit similar to nodata/alpha, but the main difference is that "
+           "pixels matching one of the excluded value tuples are still "
+           "considered as valid, when determining the target pixel "
+           "validity/density.'/>"
+           "<Option name='EXCLUDED_VALUES_PCT_THRESHOLD' type='float' "
+           "min='0' max='100' description='"
+           "Minimum percentage of source pixels that must be set at one of "
+           "the EXCLUDED_VALUES to cause the excluded value, that is in "
+           "majority among source pixels, to be used as the target pixel "
+           "value. Only taken into account by Average currently.' "
+           "default='50'/>"
+           "<Option name='NODATA_VALUES_PCT_THRESHOLD' type='float' "
+           "min='0' max='100' description='"
+           "Minimum percentage of source pixels that must be at nodata (or "
+           "alpha=0 or any other way to express transparent pixel) to cause "
+           "the target pixel value to not be set. Default value is 100 (%), "
+           "which means that a target pixel is not set only if all "
+           "contributing source pixels are not set. Note that "
+           "NODATA_VALUES_PCT_THRESHOLD is taken into account before "
+           "EXCLUDED_VALUES_PCT_THRESHOLD. Only taken into account by Average "
+           "currently.' default='100'/>"
+           "<Option name='MODE_TIES' type='string-select' "
+           "description='"
+           "Strategy to use when breaking ties with MODE resampling. "
+           "By default, the first value encountered will be used. "
+           "Alternatively, the minimum or maximum value can be selected.' "
+           "default='FIRST'>"
+           "  <Value>FIRST</Value>"
+           "  <Value>MIN</Value>"
+           "  <Value>MAX</Value>"
+           "</Option>"
+           "</OptionList>";
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                           GDALWarpOptions                            */
 /* ==================================================================== */
@@ -1070,23 +1273,26 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * name=value format.  A suitable string list can be prepared with
  * CSLSetNameValue().
  *
+ * The available options can also be retrieved programmatically with
+ * GDALWarpGetOptionList().
+ *
  * The following values are currently supported:
  * <ul>
  * <li>INIT_DEST=[value] or INIT_DEST=NO_DATA: This option forces the
  * destination image to be initialized to the indicated value (for all bands)
  * or indicates that it should be initialized to the NO_DATA value in
- * padfDstNoDataReal/padfDstNoDataImag.  If this value isn't set the
+ * padfDstNoDataReal/padfDstNoDataImag. If this value isn't set the
  * destination image will be read and overlaid.</li>
  *
  * <li>WRITE_FLUSH=YES/NO: This option forces a flush to disk of data after
- * each chunk is processed.  In some cases this helps ensure a serial
+ * each chunk is processed. In some cases this helps ensure a serial
  * writing of the output data otherwise a block of data may be written to disk
  * each time a block of data is read for the input buffer resulting in a lot
- * of extra seeking around the disk, and reduced IO throughput.  The default
- * at this time is NO.</li>
+ * of extra seeking around the disk, and reduced IO throughput. The default
+ * is NO.</li>
  *
  * <li>SKIP_NOSOURCE=YES/NO: Skip all processing for chunks for which there
- * is no corresponding input data.  This will disable initializing the
+ * is no corresponding input data. This will disable initializing the
  * destination (INIT_DEST) and all other processing, and so should be used
  * carefully.  Mostly useful to short circuit a lot of extra work in mosaicing
  * situations. Starting with GDAL 2.4, gdalwarp will automatically enable this
@@ -1147,7 +1353,7 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * will be assigned to the dfCutlineBlendDist field in the GDALWarpOptions.</li>
  *
  * <li>CUTLINE_ALL_TOUCHED: This defaults to FALSE, but may be set to TRUE
- * to enable ALL_TOUCHEd mode when rasterizing cutline polygons.  This is
+ * to enable ALL_TOUCHED mode when rasterizing cutline polygons.  This is
  * useful to ensure that that all pixels overlapping the cutline polygon
  * will be selected, not just those whose center point falls within the
  * polygon.</li>

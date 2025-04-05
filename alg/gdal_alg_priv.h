@@ -157,6 +157,8 @@ constexpr const char *GDAL_APPROX_TRANSFORMER_CLASS_NAME =
 constexpr const char *GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME =
     "GDALGenImgProjTransformer";
 constexpr const char *GDAL_RPC_TRANSFORMER_CLASS_NAME = "GDALRPCTransformer";
+constexpr const char *GDAL_REPROJECTION_TRANSFORMER_CLASS_NAME =
+    "GDALReprojectionTransformer";
 
 bool GDALIsTransformer(void *hTransformerArg, const char *pszClassName);
 
@@ -270,6 +272,33 @@ struct GDALReprojectionTransformInfo
         delete;
     GDALReprojectionTransformInfo &
     operator=(const GDALReprojectionTransformInfo &) = delete;
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*      Approximate transformer.                                        */
+/* ==================================================================== */
+/************************************************************************/
+
+struct GDALApproxTransformInfo
+{
+    GDALTransformerInfo sTI;
+
+    GDALTransformerFunc pfnBaseTransformer = nullptr;
+    void *pBaseCBData = nullptr;
+    double dfMaxErrorForward = 0;
+    double dfMaxErrorReverse = 0;
+
+    int bOwnSubtransformer = 0;
+
+    GDALApproxTransformInfo() : sTI()
+    {
+        memset(&sTI, 0, sizeof(sTI));
+    }
+
+    GDALApproxTransformInfo(const GDALApproxTransformInfo &) = delete;
+    GDALApproxTransformInfo &
+    operator=(const GDALApproxTransformInfo &) = delete;
 };
 
 /************************************************************************/

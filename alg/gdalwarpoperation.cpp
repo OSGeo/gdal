@@ -375,6 +375,19 @@ int GDALWarpOperation::ValidateOptions()
         return FALSE;
     }
 
+    {
+        CPLStringList aosWO(CSLDuplicate(psOptions->papszWarpOptions));
+        // A few internal/undocumented options
+        aosWO.SetNameValue("EXTRA_ELTS", nullptr);
+        aosWO.SetNameValue("USE_GENERAL_CASE", nullptr);
+        aosWO.SetNameValue("ERROR_THRESHOLD", nullptr);
+        aosWO.SetNameValue("ERROR_OUT_IF_EMPTY_SOURCE_WINDOW", nullptr);
+        aosWO.SetNameValue("MULT_FACTOR_VERTICAL_SHIFT_PIPELINE", nullptr);
+        aosWO.SetNameValue("SRC_FILL_RATIO_HEURISTICS", nullptr);
+        GDALValidateOptions(GDALWarpGetOptionList(), aosWO.List(), "option",
+                            "warp options");
+    }
+
     const char *pszSampleSteps =
         CSLFetchNameValue(psOptions->papszWarpOptions, "SAMPLE_STEPS");
     if (pszSampleSteps)

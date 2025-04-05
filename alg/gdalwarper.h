@@ -255,6 +255,8 @@ typedef struct
     GWKTieStrategy eTieStrategy;
 } GDALWarpOptions;
 
+const char CPL_DLL *GDALWarpGetOptionList(void);
+
 GDALWarpOptions CPL_DLL *CPL_STDCALL GDALCreateWarpOptions(void);
 void CPL_DLL CPL_STDCALL GDALDestroyWarpOptions(GDALWarpOptions *);
 GDALWarpOptions CPL_DLL *CPL_STDCALL

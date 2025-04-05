@@ -1693,6 +1693,269 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
 }
 
 /************************************************************************/
+/*              GDALGetGenImgProjTranformerOptionList()                 */
+/************************************************************************/
+
+/** Return a XML string describing options accepted by
+ * GDALCreateGenImgProjTransformer2().
+ *
+ * @since 3.11
+ */
+const char *GDALGetGenImgProjTranformerOptionList(void)
+{
+    return "<OptionList>"
+           "<Option name='SRC_SRS' type='string' description='WKT SRS, or any "
+           "string recognized by OGRSpatialReference::SetFromUserInput(), to "
+           "be used as an override for CRS of input dataset'/>"
+           "<Option name='DST_SRS' type='string' description='WKT SRS, or any "
+           "string recognized by OGRSpatialReference::SetFromUserInput(), to "
+           "be used as an override for CRS of output dataset'/>"
+           "<Option name='PROMOTE_TO_3D' type='boolean' description='"
+           "Whether to promote SRC_SRS / DST_SRS to 3D.' "
+           "default='NO'/>"
+           "<Option name='COORDINATE_OPERATION' type='string' description='"
+           "Coordinate operation, as a PROJ or WKT string, used as an override "
+           "over the normally computed pipeline. The pipeline must take into "
+           "account the axis order of the source and target SRS.'/>"
+           "<Option name='ALLOW_BALLPARK' type='boolean' description='"
+           "Whether ballpark coordinate operations are allowed.' "
+           "default='YES'/>"
+           "<Option name='ONLY_BEST' type='string-select' "
+           "description='"
+           "By default (at least in the PROJ 9.x series), PROJ may use "
+           "coordinate operations that are not the \"best\" if resources "
+           "(typically grids) needed to use them are missing. It will then "
+           "fallback to other coordinate operations that have a lesser "
+           "accuracy, for example using Helmert transformations, or in the "
+           "absence of such operations, to ones with potential very rough "
+           " accuracy, using \"ballpark\" transformations (see "
+           "https://proj.org/glossary.html). "
+           "When calling this method with YES, PROJ will only consider the "
+           "\"best\" operation, and error out (at Transform() time) if they "
+           "cannot be used. This method may be used together with "
+           "ALLOW_BALLPARK=NO to only allow best operations that have a known "
+           "accuracy. Note that this method has no effect on PROJ versions "
+           "before 9.2. The default value for this option can be also set with "
+           "the PROJ_ONLY_BEST_DEFAULT environment variable, or with the "
+           "\"only_best_default\" setting of proj.ini. Setting "
+           "ONLY_BEST=YES/NO overrides such default value' default='AUTO'>"
+           "  <Value>AUTO</Value>"
+           "  <Value>YES</Value>"
+           "  <Value>NO</Value>"
+           "</Option>"
+           "<Option name='COORDINATE_EPOCH' type='float' description='"
+           "Coordinate epoch, expressed as a decimal year. Useful for "
+           "time-dependent coordinate operations.'/>"
+           "<Option name='SRC_COORDINATE_EPOCH' type='float' description='"
+           "Coordinate epoch of source CRS, expressed as a decimal year. "
+           "Useful for time-dependent coordinate operations.'/>"
+           "<Option name='DST_COORDINATE_EPOCH' type='float' description='"
+           "Coordinate epoch of target CRS, expressed as a decimal year. "
+           "Useful for time-dependent coordinate operations.'/>"
+           "<Option name='GCPS_OK' type='boolean' description='"
+           "Allow use of GCPs.' default='YES'/>"
+           "<Option name='REFINE_MINIMUM_GCPS' type='int' description='"
+           "The minimum amount of GCPs that should be available after the "
+           "refinement'/>"
+           "<Option name='REFINE_TOLERANCE' type='float' description='"
+           "The tolerance that specifies when a GCP will be eliminated.'/>"
+           "<Option name='MAX_GCP_ORDER' type='int' description='"
+           "The maximum order to use for GCP derived polynomials if possible. "
+           "The default is to autoselect based on the number of GCPs. A value "
+           "of -1 triggers use of Thin Plate Spline instead of polynomials.'/>"
+           "<Option name='GCP_ANTIMERIDIAN_UNWRAP' type='string-select' "
+           "description='"
+           "Whether to \"unwrap\" longitudes of ground control points that "
+           "span the antimeridian. For datasets with GCPs in "
+           "longitude/latitude coordinate space spanning the antimeridian, "
+           "longitudes will have a discontinuity on +/- 180 deg, and will "
+           "result in a subset of the GCPs with longitude in the [-180,-170] "
+           "range and another subset in [170, 180]. By default (AUTO), that "
+           "situation will be detected and longitudes in [-180,-170] will be "
+           "shifted to [180, 190] to get a continuous set. This option can be "
+           "set to YES to force that behavior (useful if no SRS information is "
+           "available), or to NO to disable it.' default='AUTO'>"
+           "  <Value>AUTO</Value>"
+           "  <Value>YES</Value>"
+           "  <Value>NO</Value>"
+           "</Option>"
+           "<Option name='SRC_METHOD' alias='METHOD' type='string-select' "
+           "description='"
+           "Force only one geolocation method to be considered on the source "
+           "dataset. Will be used for pixel/line to georef transformation on "
+           "the source dataset. NO_GEOTRANSFORM can be used to specify the "
+           "identity geotransform (ungeoreferenced image)'>"
+           "  <Value>GEOTRANSFORM</Value>"
+           "  <Value>GCP_POLYNOMIAL</Value>"
+           "  <Value>GCP_TPS</Value>"
+           "  <Value>GCP_HOMOGRAPHY</Value>"
+           "  <Value>GEOLOC_ARRAY</Value>"
+           "  <Value>RPC</Value>"
+           "  <Value>NO_GEOTRANSFORM</Value>"
+           "</Option>"
+           "<Option name='DST_METHOD' type='string-select' description='"
+           "Force only one geolocation method to be considered on the target "
+           "dataset. Will be used for pixel/line to georef transformation on "
+           "the targe dataset. NO_GEOTRANSFORM can be used to specify the "
+           "identity geotransform (ungeoreferenced image)'>"
+           "  <Value>GEOTRANSFORM</Value>"
+           "  <Value>GCP_POLYNOMIAL</Value>"
+           "  <Value>GCP_TPS</Value>"
+           "  <Value>GCP_HOMOGRAPHY</Value>"
+           "  <Value>GEOLOC_ARRAY</Value>"
+           "  <Value>RPC</Value>"
+           "  <Value>NO_GEOTRANSFORM</Value>"
+           "</Option>"
+           "<Option name='RPC_HEIGHT' type='float' description='"
+           "A fixed height to be used with RPC calculations. If RPC_HEIGHT and "
+           "RPC_DEM are not specified but that the RPC metadata domain contains"
+           " a HEIGHT_DEFAULT item (for example, the DIMAP driver may fill it),"
+           "this value will be used as the RPC_HEIGHT. Otherwise, if none of "
+           "RPC_HEIGHT and RPC_DEM are specified as transformer options and "
+           "if HEIGHT_DEFAULT is no available, a height of 0 will be used.'/>"
+           "<Option name='RPC_DEM' type='string' description='"
+           "Name of a GDAL dataset (a DEM file typically) used to extract "
+           "elevation offsets from. In this situation the Z passed into the "
+           "transformation function is assumed to be height above ground. "
+           "This option should be used in replacement of RPC_HEIGHT to provide "
+           "a way of defining a non uniform ground for the target scene.'/>"
+           "<Option name='RPC_HEIGHT_SCALE' type='float' description='"
+           "Factor used to multiply heights above ground. Useful when "
+           "elevation offsets of the DEM are not expressed in meters.'/>"
+           "<Option name='RPC_DEMINTERPOLATION' type='string-select' "
+           "description='DEM interpolation method' default='BILINEAR'>"
+           "  <Value>NEAR</Value>"
+           "  <Value>BILINEAR</Value>"
+           "  <Value>CUBIC</Value>"
+           "</Option>"
+           "<Option name='RPC_DEM_MISSING_VALUE' type='float' description='"
+           "Value of DEM height that must be used in case the DEM has nodata "
+           "value at the sampling point, or if its extent does not cover the "
+           "requested coordinate. When not specified, missing values will "
+           "cause a failed transform.'/>"
+           "<Option name='RPC_DEM_SRS' type='string' description='"
+           "WKT SRS, or any string recognized by "
+           "OGRSpatialReference::SetFromUserInput(), to be used as an "
+           "override for DEM SRS. Useful if DEM SRS does not have an explicit "
+           "vertical component.'/>"
+           "<Option name='RPC_DEM_APPLY_VDATUM_SHIFT' type='boolean' "
+           "description='"
+           "Whether the vertical component of a compound SRS for the DEM "
+           "should be used (when it is present). This is useful so as to "
+           "be able to transform the raw values from the DEM expressed with "
+           "respect to a geoid to the heights with respect to the WGS84 "
+           "ellipsoid. When this is enabled, the GTIFF_REPORT_COMPD_CS "
+           "configuration option will be also set temporarily so as to get "
+           "the vertical information from GeoTIFF files.' default='YES'/>"
+           "<Option name='RPC_PIXEL_ERROR_THRESHOLD' type='float' description='"
+           "Overrides the dfPixErrThreshold parameter, i.e. the error "
+           "(measured in pixels) allowed in the iterative solution of "
+           "pixel/line to lat/long computations (the other way is always "
+           "exact given the equations).'/>"
+           "<Option name='RPC_MAX_ITERATIONS' type='int' description='"
+           "Maximum number of iterations allowed in the iterative solution of "
+           "pixel/line to lat/long computations. Default value is 10 in the "
+           "absence of a DEM, or 20 if there is a DEM.'/>"
+           "<Option name='RPC_FOOTPRINT' type='string' description='"
+           "WKT or GeoJSON polygon (in long / lat coordinate space) with a "
+           "validity footprint for the RPC. Any coordinate transformation that "
+           "goes from or arrive outside this footprint will be considered "
+           "invalid. This* is useful in situations where the RPC values become "
+           "highly unstable outside of the area on which they have been "
+           "computed for, potentially leading to undesirable \"echoes\" / "
+           "false positives. This requires GDAL to be built against GEOS..'/>"
+           "<Option name='RPC_MAX_ITERATIONS' type='int' description='"
+           "Maximum number of iterations allowed in the iterative solution of "
+           "pixel/line to lat/long computations. Default value is 10 in the "
+           "absence of a DEM, or 20 if there is a DEM.'/>"
+           "<Option name='INSERT_CENTER_LONG' type='boolean' description='"
+           "May be set to FALSE to disable setting up a CENTER_LONG value on "
+           "the coordinate system to rewrap things around the center of the "
+           "image.' default='YES'/>"
+           "<Option name='SRC_APPROX_ERROR_IN_SRS_UNIT' type='float' "
+           "description='"
+           "Use an approximate transformer for the source transformer. Must be "
+           "defined together with SRC_APPROX_ERROR_IN_PIXEL to be taken into "
+           "account.'/>"
+           "<Option name='SRC_APPROX_ERROR_IN_PIXEL' type='float' "
+           "description='"
+           "Use an approximate transformer for the source transformer. Must be "
+           "defined together with SRC_APPROX_ERROR_IN_SRS_UNIT to be taken "
+           "into "
+           "account.'/>"
+           "<Option name='DST_APPROX_ERROR_IN_SRS_UNIT' type='float' "
+           "description='"
+           "Use an approximate transformer for the target transformer. Must be "
+           "defined together with DST_APPROX_ERROR_IN_PIXEL to be taken into "
+           "account.'/>"
+           "<Option name='DST_APPROX_ERROR_IN_PIXEL' type='float' "
+           "description='"
+           "Use an approximate transformer for the target transformer. Must be "
+           "defined together with DST_APPROX_ERROR_IN_SRS_UNIT to be taken "
+           "into "
+           "account.'/>"
+           "<Option name='REPROJECTION_APPROX_ERROR_IN_SRC_SRS_UNIT' "
+           "type='float' "
+           "description='"
+           "Use an approximate transformer for the coordinate reprojection. "
+           "Must be used together with "
+           "REPROJECTION_APPROX_ERROR_IN_DST_SRS_UNIT to be taken into "
+           "account.'/>"
+           "<Option name='REPROJECTION_APPROX_ERROR_IN_DST_SRS_UNIT' "
+           "type='float' "
+           "description='"
+           "Use an approximate transformer for the coordinate reprojection. "
+           "Must be used together with "
+           "REPROJECTION_APPROX_ERROR_IN_SRC_SRS_UNIT to be taken into "
+           "account.'/>"
+           "<Option name='AREA_OF_INTEREST' type='string' "
+           "description='"
+           "Area of interest, as "
+           "west_lon_deg,south_lat_deg,east_lon_deg,north_lat_deg, used to "
+           "compute the best coordinate operation between the source and "
+           "target SRS. If not specified, the bounding box of the source "
+           "raster will be used.'/>"
+           "<Option name='GEOLOC_BACKMAP_OVERSAMPLE_FACTOR' type='float' "
+           "min='0.1' max='2' description='"
+           "Oversample factor used to derive the size of the \"backmap\" used "
+           "for geolocation array transformers.' default='1.3'/>"
+           "<Option name='GEOLOC_USE_TEMP_DATASETS' type='boolean' "
+           "description='"
+           "Whether temporary GeoTIFF datasets should be used to store the "
+           "backmap. The default is NO, that is to use in-memory arrays, "
+           "unless the number of pixels of the geolocation array is greater "
+           "than 16 megapixels.' default='NO'/>"
+           "<Option name='GEOLOC_ARRAY' alias='SRC_GEOLOC_ARRAY' type='string' "
+           "description='"
+           "Name of a GDAL dataset containing a geolocation array and "
+           "associated metadata. This is an alternative to having geolocation "
+           "information described in the GEOLOCATION metadata domain of the "
+           "source dataset. The dataset specified may have a GEOLOCATION "
+           "metadata domain containing appropriate metadata, however default "
+           "values are assigned for all omitted items. X_BAND defaults to 1 "
+           "and Y_BAND to 2, however the dataset must contain exactly 2 bands. "
+           "PIXEL_OFFSET and LINE_OFFSET default to 0. PIXEL_STEP and "
+           "LINE_STEP default to the ratio of the width/height of the source "
+           "dataset divided by the with/height of the geolocation array. "
+           "SRS defaults to the spatial reference system of the geolocation "
+           "array dataset, if set, otherwise WGS84 is used. "
+           "GEOREFERENCING_CONVENTION is selected from the main metadata "
+           "domain if it is omitted from the GEOLOCATION domain, and if not "
+           "available TOP_LEFT_CORNER is assigned as a default. "
+           "If GEOLOC_ARRAY is set SRC_METHOD defaults to GEOLOC_ARRAY.'/>"
+           "<Option name='DST_GEOLOC_ARRAY' type='string' "
+           "description='"
+           "Name of a GDAL dataset that contains at least 2 bands with the X "
+           "and Y geolocation bands. This is an alternative to having "
+           "geolocation information described in the GEOLOCATION metadata "
+           "domain of the destination dataset. See SRC_GEOLOC_ARRAY "
+           "description for details, assumptions, and defaults. If this "
+           "option is set, DST_METHOD=GEOLOC_ARRAY will be assumed if not "
+           "set.'/>"
+           "</OptionList>";
+}
+
+/************************************************************************/
 /*                  GDALCreateGenImgProjTransformer2()                  */
 /************************************************************************/
 
@@ -1734,10 +1997,33 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
  * OGRSpatialReference::SetFromUserInput(),  to be used as an override for
  * hDstDS.
  * </li>
+ * <li>PROMOTE_TO_3D=YES/NO: whether to promote SRC_SRS / DST_SRS to 3D.
+ * Default is NO</li>
  * <li> COORDINATE_OPERATION: (GDAL &gt;= 3.0) Coordinate operation, as
  * a PROJ or WKT string, used as an override over the normally computed
  * pipeline. The pipeline must take into account the axis order of the source
- * and target SRS. <li> COORDINATE_EPOCH: (GDAL &gt;= 3.0) Coordinate epoch,
+ * and target SRS.
+ * </li>
+ * <li> ALLOW_BALLPARK=YES/NO: (GDAL &gt;= 3.11) Whether ballpark coordinate
+ * operations are allowed. Defaults to YES.</li>
+ * <li> ONLY_BEST=YES/NO/AUTO: (GDAL &gt;= 3.11) By default (at least in the
+ * PROJ 9.x series), PROJ may use coordinate
+ * operations that are not the "best" if resources (typically grids) needed
+ * to use them are missing. It will then fallback to other coordinate operations
+ * that have a lesser accuracy, for example using Helmert transformations,
+ * or in the absence of such operations, to ones with potential very rought
+ * accuracy, using "ballpark" transformations
+ * (see https://proj.org/glossary.html).
+ * When calling this method with YES, PROJ will only consider the
+ * "best" operation, and error out (at Transform() time) if they cannot be
+ * used.
+ * This method may be used together with ALLOW_BALLPARK=NO to
+ * only allow best operations that have a known accuracy.
+ * Note that this method has no effect on PROJ versions before 9.2.
+ * The default value for this option can be also set with the
+ * PROJ_ONLY_BEST_DEFAULT environment variable, or with the "only_best_default"
+ * setting of proj.ini. Calling SetOnlyBest() overrides such default value.</li>
+ * <li> COORDINATE_EPOCH: (GDAL &gt;= 3.0) Coordinate epoch,
  * expressed as a decimal year. Useful for time-dependent coordinate operations.
  * </li>
  * <li> SRC_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch of source CRS,
@@ -1772,7 +2058,7 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
  * GCP_POLYNOMIAL, GCP_TPS, GEOLOC_ARRAY, RPC to force only one geolocation
  * method to be considered on the source dataset. Will be used for pixel/line
  * to georef transformation on the source dataset. NO_GEOTRANSFORM can be
- * used to specify the identity geotransform (ungeoreference image)
+ * used to specify the identity geotransform (ungeoreferenced image)
  * </li>
  * <li> DST_METHOD: may have a value which is one of GEOTRANSFORM,
  * GCP_POLYNOMIAL, GCP_HOMOGRAPHY, GCP_TPS, GEOLOC_ARRAY (added in 3.5), RPC to
@@ -1780,7 +2066,7 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
  * geolocation method to be considered on the target dataset.  Will be used for
  * pixel/line to georef transformation on the destination dataset.
  * NO_GEOTRANSFORM can be used to specify the identity geotransform
- * (ungeoreference image)
+ * (ungeoreferenced image)
  * </li>
  * <li> RPC_HEIGHT: A fixed height to be used with RPC
  * calculations. If RPC_HEIGHT and RPC_DEM are not specified but that the RPC
@@ -1884,6 +2170,9 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
  * In which case, one can use the REPROJECTION_APPROX_ERROR_IN_SRC_SRS_UNIT and
  * REPROJECTION_APPROX_ERROR_IN_DST_SRS_UNIT options.
  *
+ * The list of supported options can also be programmatically obtained with
+ * GDALGetGenImgProjTranformerOptionList().
+ *
  * @param hSrcDS source dataset, or NULL.
  * @param hDstDS destination dataset (or NULL).
  * @param papszOptions NULL-terminated list of string options (or NULL).
@@ -1897,6 +2186,9 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                        CSLConstList papszOptions)
 
 {
+    GDALValidateOptions(GDALGetGenImgProjTranformerOptionList(), papszOptions,
+                        "option", "transformer options");
+
     double dfWestLongitudeDeg = 0.0;
     double dfSouthLatitudeDeg = 0.0;
     double dfEastLongitudeDeg = 0.0;
@@ -2388,6 +2680,18 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         {
             aosOptions.SetNameValue("DST_COORDINATE_EPOCH", pszDstCoordEpoch);
             oDstSRS.SetCoordinateEpoch(CPLAtof(pszDstCoordEpoch));
+        }
+
+        if (const char *pszAllowBallpark =
+                CSLFetchNameValue(papszOptions, "ALLOW_BALLPARK"))
+        {
+            aosOptions.SetNameValue("ALLOW_BALLPARK", pszAllowBallpark);
+        }
+
+        if (const char *pszOnlyBest =
+                CSLFetchNameValue(papszOptions, "ONLY_BEST"))
+        {
+            aosOptions.SetNameValue("ONLY_BEST", pszOnlyBest);
         }
 
         psInfo->pReprojectArg = GDALCreateReprojectionTransformerEx(
@@ -3170,9 +3474,29 @@ void *GDALCreateReprojectionTransformer(const char *pszSrcWKT,
  * decimal year. Useful for time-dependent coordinate operations.</li>
  * <li> SRC_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch of source CRS,
  * expressed as a decimal year. Useful for time-dependent coordinate
- *operations.</li> <li> DST_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch
+ *operations.</li>
+ * <li> DST_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch
  *of target CRS, expressed as a decimal year. Useful for time-dependent
  *coordinate operations.</li>
+ * <li> ALLOW_BALLPARK=YES/NO: (GDAL &gt;= 3.11) Whether ballpark coordinate
+ * operations are allowed. Defaults to YES.</li>
+ * <li> ONLY_BEST=YES/NO/AUTO: (GDAL &gt;= 3.11) By default (at least in the
+ * PROJ 9.x series), PROJ may use coordinate
+ * operations that are not the "best" if resources (typically grids) needed
+ * to use them are missing. It will then fallback to other coordinate operations
+ * that have a lesser accuracy, for example using Helmert transformations,
+ * or in the absence of such operations, to ones with potential very rought
+ * accuracy, using "ballpark" transformations
+ * (see https://proj.org/glossary.html).
+ * When calling this method with YES, PROJ will only consider the
+ * "best" operation, and error out (at Transform() time) if they cannot be
+ * used.
+ * This method may be used together with ALLOW_BALLPARK=NO to
+ * only allow best operations that have a known accuracy.
+ * Note that this method has no effect on PROJ versions before 9.2.
+ * The default value for this option can be also set with the
+ * PROJ_ONLY_BEST_DEFAULT environment variable, or with the "only_best_default"
+ * setting of proj.ini. Calling SetOnlyBest() overrides such default value.</li>
  * </ul>
  *
  * @return Handle for use with GDALReprojectionTransform(), or NULL if the
@@ -3228,6 +3552,16 @@ void *GDALCreateReprojectionTransformerEx(OGRSpatialReferenceH hSrcSRS,
         optionsFwd.SetSourceCenterLong(CPLAtof(pszCENTER_LONG));
     }
 
+    optionsFwd.SetBallparkAllowed(CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "ALLOW_BALLPARK", "YES")));
+
+    const char *pszOnlyBest =
+        CSLFetchNameValueDef(papszOptions, "ONLY_BEST", "AUTO");
+    if (!EQUAL(pszOnlyBest, "AUTO"))
+    {
+        optionsFwd.SetOnlyBest(CPLTestBool(pszOnlyBest));
+    }
+
     OGRCoordinateTransformation *poForwardTransform =
         OGRCreateCoordinateTransformation(poSrcSRS, poDstSRS, optionsFwd);
 
@@ -3258,7 +3592,7 @@ void *GDALCreateReprojectionTransformerEx(OGRSpatialReferenceH hSrcSRS,
 
     memcpy(psInfo->sTI.abySignature, GDAL_GTI2_SIGNATURE,
            strlen(GDAL_GTI2_SIGNATURE));
-    psInfo->sTI.pszClassName = "GDALReprojectionTransformer";
+    psInfo->sTI.pszClassName = GDAL_REPROJECTION_TRANSFORMER_CLASS_NAME;
     psInfo->sTI.pfnTransform = GDALReprojectionTransform;
     psInfo->sTI.pfnCleanup = GDALDestroyReprojectionTransformer;
     psInfo->sTI.pfnSerialize = GDALSerializeReprojectionTransformer;
@@ -3503,18 +3837,6 @@ static void *GDALDeserializeReprojectionTransformer(CPLXMLNode *psTree)
 /* ==================================================================== */
 /************************************************************************/
 
-typedef struct
-{
-    GDALTransformerInfo sTI;
-
-    GDALTransformerFunc pfnBaseTransformer;
-    void *pBaseCBData;
-    double dfMaxErrorForward;
-    double dfMaxErrorReverse;
-
-    int bOwnSubtransformer;
-} ApproxTransformInfo;
-
 /************************************************************************/
 /*                  GDALCreateSimilarApproxTransformer()                */
 /************************************************************************/
@@ -3526,23 +3848,20 @@ static void *GDALCreateSimilarApproxTransformer(void *hTransformArg,
     VALIDATE_POINTER1(hTransformArg, "GDALCreateSimilarApproxTransformer",
                       nullptr);
 
-    ApproxTransformInfo *psInfo =
-        static_cast<ApproxTransformInfo *>(hTransformArg);
+    GDALApproxTransformInfo *psInfo =
+        static_cast<GDALApproxTransformInfo *>(hTransformArg);
 
-    ApproxTransformInfo *psClonedInfo = static_cast<ApproxTransformInfo *>(
-        CPLMalloc(sizeof(ApproxTransformInfo)));
-
-    memcpy(psClonedInfo, psInfo, sizeof(ApproxTransformInfo));
-    if (psClonedInfo->pBaseCBData)
+    void *pBaseCBData = GDALCreateSimilarTransformer(psInfo->pBaseCBData,
+                                                     dfSrcRatioX, dfSrcRatioY);
+    if (pBaseCBData == nullptr)
     {
-        psClonedInfo->pBaseCBData = GDALCreateSimilarTransformer(
-            psInfo->pBaseCBData, dfSrcRatioX, dfSrcRatioY);
-        if (psClonedInfo->pBaseCBData == nullptr)
-        {
-            CPLFree(psClonedInfo);
-            return nullptr;
-        }
+        return nullptr;
     }
+
+    GDALApproxTransformInfo *psClonedInfo =
+        static_cast<GDALApproxTransformInfo *>(GDALCreateApproxTransformer2(
+            psInfo->pfnBaseTransformer, pBaseCBData, psInfo->dfMaxErrorForward,
+            psInfo->dfMaxErrorReverse));
     psClonedInfo->bOwnSubtransformer = TRUE;
 
     return psClonedInfo;
@@ -3556,8 +3875,8 @@ static CPLXMLNode *GDALSerializeApproxTransformer(void *pTransformArg)
 
 {
     CPLXMLNode *psTree;
-    ApproxTransformInfo *psInfo =
-        static_cast<ApproxTransformInfo *>(pTransformArg);
+    GDALApproxTransformInfo *psInfo =
+        static_cast<GDALApproxTransformInfo *>(pTransformArg);
 
     psTree = CPLCreateXMLNode(nullptr, CXT_Element, "ApproxTransformer");
 
@@ -3650,8 +3969,7 @@ GDALCreateApproxTransformer2(GDALTransformerFunc pfnBaseTransformer,
                              double dfMaxErrorReverse)
 
 {
-    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(
-        CPLMalloc(sizeof(ApproxTransformInfo)));
+    GDALApproxTransformInfo *psATInfo = new GDALApproxTransformInfo;
     psATInfo->pfnBaseTransformer = pfnBaseTransformer;
     psATInfo->pBaseCBData = pBaseTransformArg;
     psATInfo->dfMaxErrorForward = dfMaxErrorForward;
@@ -3677,7 +3995,8 @@ GDALCreateApproxTransformer2(GDALTransformerFunc pfnBaseTransformer,
 void GDALApproxTransformerOwnsSubtransformer(void *pCBData, int bOwnFlag)
 
 {
-    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
+    GDALApproxTransformInfo *psATInfo =
+        static_cast<GDALApproxTransformInfo *>(pCBData);
 
     psATInfo->bOwnSubtransformer = bOwnFlag;
 }
@@ -3701,12 +4020,13 @@ void GDALDestroyApproxTransformer(void *pCBData)
     if (pCBData == nullptr)
         return;
 
-    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
+    GDALApproxTransformInfo *psATInfo =
+        static_cast<GDALApproxTransformInfo *>(pCBData);
 
     if (psATInfo->bOwnSubtransformer)
         GDALDestroyTransformer(psATInfo->pBaseCBData);
 
-    CPLFree(pCBData);
+    delete psATInfo;
 }
 
 /************************************************************************/
@@ -3715,8 +4035,8 @@ void GDALDestroyApproxTransformer(void *pCBData)
 
 void GDALRefreshApproxTransformer(void *hTransformArg)
 {
-    ApproxTransformInfo *psInfo =
-        static_cast<ApproxTransformInfo *>(hTransformArg);
+    GDALApproxTransformInfo *psInfo =
+        static_cast<GDALApproxTransformInfo *>(hTransformArg);
 
     if (GDALIsTransformer(psInfo->pBaseCBData,
                           GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
@@ -3737,7 +4057,8 @@ static int GDALApproxTransformInternal(void *pCBData, int bDstToSrc,
                                        const double ySMETransformed[3],
                                        const double zSMETransformed[3])
 {
-    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
+    GDALApproxTransformInfo *psATInfo =
+        static_cast<GDALApproxTransformInfo *>(pCBData);
     const int nMiddle = (nPoints - 1) / 2;
 
 #ifdef notdef_sanify_check
@@ -3993,7 +4314,8 @@ int GDALApproxTransform(void *pCBData, int bDstToSrc, int nPoints, double *x,
                         double *y, double *z, int *panSuccess)
 
 {
-    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
+    GDALApproxTransformInfo *psATInfo =
+        static_cast<GDALApproxTransformInfo *>(pCBData);
     double x2[3] = {};
     double y2[3] = {};
     double z2[3] = {};
@@ -4113,8 +4435,8 @@ static void *GDALDeserializeApproxTransformer(CPLXMLNode *psTree)
 int GDALTransformLonLatToDestApproxTransformer(void *hTransformArg,
                                                double *pdfX, double *pdfY)
 {
-    ApproxTransformInfo *psInfo =
-        static_cast<ApproxTransformInfo *>(hTransformArg);
+    GDALApproxTransformInfo *psInfo =
+        static_cast<GDALApproxTransformInfo *>(hTransformArg);
 
     if (GDALIsTransformer(psInfo->pBaseCBData,
                           GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
@@ -4562,8 +4884,8 @@ static GDALTransformerInfo *GetGenImgProjTransformInfo(const char *pszFunc,
 
     if (EQUAL(psInfo->pszClassName, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
-        ApproxTransformInfo *psATInfo =
-            static_cast<ApproxTransformInfo *>(pTransformArg);
+        GDALApproxTransformInfo *psATInfo =
+            static_cast<GDALApproxTransformInfo *>(pTransformArg);
         psInfo = static_cast<GDALTransformerInfo *>(psATInfo->pBaseCBData);
 
         if (psInfo == nullptr ||
@@ -4661,7 +4983,7 @@ bool GDALTransformIsTranslationOnPixelBoundaries(GDALTransformerFunc,
     if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
         const auto *pApproxInfo =
-            static_cast<const ApproxTransformInfo *>(pTransformerArg);
+            static_cast<const GDALApproxTransformInfo *>(pTransformerArg);
         pTransformerArg = pApproxInfo->pBaseCBData;
     }
     if (GDALIsTransformer(pTransformerArg, GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
@@ -4709,7 +5031,7 @@ bool GDALTransformIsAffineNoRotation(GDALTransformerFunc, void *pTransformerArg)
     if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
         const auto *pApproxInfo =
-            static_cast<const ApproxTransformInfo *>(pTransformerArg);
+            static_cast<const GDALApproxTransformInfo *>(pTransformerArg);
         pTransformerArg = pApproxInfo->pBaseCBData;
     }
     if (GDALIsTransformer(pTransformerArg, GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
@@ -4740,7 +5062,7 @@ bool GDALTransformHasFastClone(void *pTransformerArg)
     if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
         const auto *pApproxInfo =
-            static_cast<const ApproxTransformInfo *>(pTransformerArg);
+            static_cast<const GDALApproxTransformInfo *>(pTransformerArg);
         pTransformerArg = pApproxInfo->pBaseCBData;
         // Fallback to next lines
     }

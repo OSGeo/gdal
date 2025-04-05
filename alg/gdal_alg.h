@@ -109,6 +109,8 @@ void *GDALCreateSimilarTransformer(void *psTransformerArg, double dfSrcRatioX,
    to image coordinates on another, potentially doing reprojection,
    utilizing GCPs or using the geotransform. */
 
+const char CPL_DLL *GDALGetGenImgProjTranformerOptionList(void);
+
 void CPL_DLL *
 GDALCreateGenImgProjTransformer(GDALDatasetH hSrcDS, const char *pszSrcWKT,
                                 GDALDatasetH hDstDS, const char *pszDstWKT,

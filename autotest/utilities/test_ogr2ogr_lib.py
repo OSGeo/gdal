@@ -3206,9 +3206,67 @@ def test_ogr2ogr_lib_datetime_in_shapefile(tmp_vsimem, OGR2OGR_USE_ARROW_API):
     else:
         assert "OGR2OGR: Using WriteArrowBatch()" not in got_msg
 
-    print(got_msg)
     assert "Field dt created as String field, though DateTime requested." in got_msg
 
     with ogr.Open(out_filename) as dst_ds:
         dst_lyr = dst_ds.GetLayer(0)
         assert [f.GetField("dt") for f in dst_lyr] == ["2022-05-31T12:34:56.789+05:30"]
+
+
+###############################################################################
+# Test that we warn if different coordinate operations are used
+
+
+@gdaltest.disable_exceptions()
+@pytest.mark.require_proj(9, 1)
+@pytest.mark.parametrize("source_format", ["Memory", "GPKG"])
+def test_ogr2ogr_lib_warn_different_coordinate_operations(tmp_vsimem, source_format):
+
+    if gdal.GetDriverByName(source_format) is None:
+        pytest.skip(f"Skipping as {source_format} is not available")
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4267)  # NAD27
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    src_lyr = src_ds.CreateLayer("test", srs=srs)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(-100 60)"))
+    src_lyr.CreateFeature(f)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(-70 40)"))
+    src_lyr.CreateFeature(f)
+
+    if source_format == "GPKG":
+        src_ds = gdal.VectorTranslate(tmp_vsimem / "tmp.gpkg", src_ds)
+
+    with gdal.quiet_errors():
+        gdal.VectorTranslate(
+            "",
+            src_ds,
+            format="Memory",
+            dstSRS="EPSG:4326",  # WGS 84
+        )
+        assert gdal.GetLastErrorMsg().startswith(
+            "Several coordinate operations have been used to transform layer test."
+        )
+
+    gdal.ErrorReset()
+    gdal.VectorTranslate(
+        "",
+        src_ds,
+        format="Memory",
+        dstSRS="EPSG:4326",  # WGS 84
+        coordinateOperationOptions={"WARN_ABOUT_DIFFERENT_COORD_OP": "NO"},
+    )
+    assert gdal.GetLastErrorMsg() == ""
+
+    # Try ALLOW_BALLPARK and ONLY_BEST options
+    with gdal.quiet_errors():
+        gdal.VectorTranslate(
+            "",
+            src_ds,
+            format="Memory",
+            dstSRS="EPSG:4326",  # WGS 84
+            coordinateOperationOptions=["ALLOW_BALLPARK=NO", "ONLY_BEST=YES"],
+        )

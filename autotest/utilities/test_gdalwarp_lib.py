@@ -4414,3 +4414,77 @@ def test_gdalwarp_lib_init_dest_no_source_window_mem():
     assert ds.GetRasterBand(1).GetNoDataValue() == 255
     ds.GetRasterBand(1).SetNoDataValue(0)
     assert ds.GetRasterBand(1).ComputeRasterMinMax() == (255, 255)
+
+
+###############################################################################
+# Test ALLOW_BALLPARK=NO transformer option
+
+
+def test_gdalwarp_lib_allow_ballpark_no():
+
+    src_ds = gdal.Open("../gcore/data/byte.tif")
+
+    with pytest.raises(
+        Exception,
+        match="Cannot find coordinate operations from `EPSG:26711' to `EPSG:4258'",
+    ):
+        gdal.Warp(
+            "",
+            src_ds,
+            format="MEM",
+            dstSRS="EPSG:4258",  # ETRS89
+            transformerOptions={"ALLOW_BALLPARK": "NO"},
+        )
+
+
+###############################################################################
+# Test ONLY_BEST=YES transformer option
+
+
+def test_gdalwarp_lib_only_best_yes():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4746)  # PD/83
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([15, 1, 0, 47, 0, -1])
+
+    with pytest.raises(
+        Exception,
+        match="Cannot find coordinate operations from `EPSG:4746' to `EPSG:4326'",
+    ):
+        gdal.Warp(
+            "",
+            src_ds,
+            format="MEM",
+            dstSRS="EPSG:4326",  # WGS 84
+            transformerOptions={"ALLOW_BALLPARK": "NO", "ONLY_BEST": "YES"},
+        )
+
+
+###############################################################################
+# Test that we warn if different coordinate operations are used
+
+
+@gdaltest.disable_exceptions()
+@pytest.mark.require_proj(9, 1)
+def test_gdalwarp_lib_warn_different_coordinate_operations():
+    src_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4267)  # NAD27
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([-100, 2, 0, 60, 0, -2])
+
+    with gdal.quiet_errors():
+        gdal.Warp(
+            "",
+            src_ds,
+            format="MEM",
+            dstSRS="EPSG:4326",  # WGS 84
+        )
+        assert (
+            gdal.GetLastErrorMsg()
+            == "Several coordinate operations are going to be used. Artifacts may appear. You may consider using the -wo ALLOW_BALLPARK=NO and/or -wo ONLY_BEST=YES warping options, or specify a particular coordinate operation with -ct"
+        )

@@ -29,6 +29,7 @@
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
 #include "ogr_proj_p.h"
+#include "ogrct_priv.h"
 
 #include "proj.h"
 #include "proj_experimental.h"
@@ -602,7 +603,7 @@ int OCTCoordinateTransformationOptionsSetBallparkAllowed(
  * operations that are not the "best" if resources (typically grids) needed
  * to use them are missing. It will then fallback to other coordinate operations
  * that have a lesser accuracy, for example using Helmert transformations,
- * or in the absence of such operations, to ones with potential very rought
+ * or in the absence of such operations, to ones with potential very rough
  * accuracy, using "ballpark" transformations
  * (see https://proj.org/glossary.html).
  *
@@ -653,6 +654,13 @@ int OCTCoordinateTransformationOptionsSetOnlyBest(
 //! @cond Doxygen_Suppress
 class OGRProjCT : public OGRCoordinateTransformation
 {
+    friend void
+    OGRProjCTDifferentOperationsStart(OGRCoordinateTransformation *poCT);
+    friend void
+    OGRProjCTDifferentOperationsStop(OGRCoordinateTransformation *poCT);
+    friend bool
+    OGRProjCTDifferentOperationsUsed(OGRCoordinateTransformation *poCT);
+
     class PjPtr
     {
         PJ *m_pj = nullptr;
@@ -793,6 +801,10 @@ class OGRProjCT : public OGRCoordinateTransformation
     int m_iCurTransformation = -1;
     OGRCoordinateTransformationOptions m_options{};
 
+    bool m_recordDifferentOperationsUsed = false;
+    std::string m_lastPjUsedPROJString{};
+    bool m_differentOperationsUsed = false;
+
     void ComputeThreshold();
     void DetectWebMercatorToWGS84();
 
@@ -854,6 +866,66 @@ class OGRProjCT : public OGRCoordinateTransformation
                   const OGRSpatialReference *poTarget, const char *pszTargetSRS,
                   const OGRCoordinateTransformationOptions &options);
 };
+
+/************************************************************************/
+/*                   OGRProjCTDifferentOperationsStart()                */
+/************************************************************************/
+
+void OGRProjCTDifferentOperationsStart(OGRCoordinateTransformation *poCT)
+{
+    auto poOGRCT = dynamic_cast<OGRProjCT *>(poCT);
+    if (poOGRCT)
+    {
+        poOGRCT->m_recordDifferentOperationsUsed = true;
+        poOGRCT->m_differentOperationsUsed = false;
+        poOGRCT->m_lastPjUsedPROJString.clear();
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRProjCTDifferentOperationsStart() called with a non "
+                 "OGRProjCT instance");
+    }
+}
+
+/************************************************************************/
+/*                   OGRProjCTDifferentOperationsStop()                 */
+/************************************************************************/
+
+void OGRProjCTDifferentOperationsStop(OGRCoordinateTransformation *poCT)
+{
+    auto poOGRCT = dynamic_cast<OGRProjCT *>(poCT);
+    if (poOGRCT)
+    {
+        poOGRCT->m_recordDifferentOperationsUsed = false;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRProjCTDifferentOperationsStop() called with a non "
+                 "OGRProjCT instance");
+    }
+}
+
+/************************************************************************/
+/*                   OGRProjCTDifferentOperationsUsed()                 */
+/************************************************************************/
+
+bool OGRProjCTDifferentOperationsUsed(OGRCoordinateTransformation *poCT)
+{
+    auto poOGRCT = dynamic_cast<OGRProjCT *>(poCT);
+    if (poOGRCT)
+    {
+        return poOGRCT->m_differentOperationsUsed;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRProjCTDifferentOperationsReset() called with a non "
+                 "OGRProjCT instance");
+        return false;
+    }
+}
 
 //! @endcond
 
@@ -1266,7 +1338,8 @@ OGRProjCT::OGRProjCT(const OGRProjCT &other)
       m_eStrategy(other.m_eStrategy),
       m_oTransformations(other.m_oTransformations),
       m_iCurTransformation(other.m_iCurTransformation),
-      m_options(other.m_options)
+      m_options(other.m_options), m_recordDifferentOperationsUsed(false),
+      m_lastPjUsedPROJString(std::string()), m_differentOperationsUsed(false)
 {
 }
 
@@ -2732,20 +2805,51 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
                 if (err == 0)
                     err = PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN;
             }
-            else if (m_options.d->bCheckWithInvertProj)
+            else
             {
-                // For some projections, we cannot detect if we are trying to
-                // reproject coordinates outside the validity area of the
-                // projection. So let's do the reverse reprojection and compare
-                // with the source coordinates.
-                coord = proj_trans(pj, m_bReversePj ? PJ_FWD : PJ_INV, coord);
-                if (fabs(coord.xyzt.x - xIn) > dfThreshold ||
-                    fabs(coord.xyzt.y - yIn) > dfThreshold)
+                if (m_recordDifferentOperationsUsed &&
+                    !m_differentOperationsUsed)
                 {
-                    bRet = FALSE;
-                    err = PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN;
-                    x[i] = HUGE_VAL;
-                    y[i] = HUGE_VAL;
+#if PROJ_VERSION_MAJOR > 9 ||                                                  \
+    (PROJ_VERSION_MAJOR == 9 && PROJ_VERSION_MINOR >= 1)
+
+                    PJ *lastOp = proj_trans_get_last_used_operation(pj);
+                    if (lastOp)
+                    {
+                        const char *projString = proj_as_proj_string(
+                            ctx, lastOp, PJ_PROJ_5, nullptr);
+                        if (projString)
+                        {
+                            if (m_lastPjUsedPROJString.empty())
+                            {
+                                m_lastPjUsedPROJString = projString;
+                            }
+                            else if (m_lastPjUsedPROJString != projString)
+                            {
+                                m_differentOperationsUsed = true;
+                            }
+                        }
+                        proj_destroy(lastOp);
+                    }
+#endif
+                }
+
+                if (m_options.d->bCheckWithInvertProj)
+                {
+                    // For some projections, we cannot detect if we are trying to
+                    // reproject coordinates outside the validity area of the
+                    // projection. So let's do the reverse reprojection and compare
+                    // with the source coordinates.
+                    coord =
+                        proj_trans(pj, m_bReversePj ? PJ_FWD : PJ_INV, coord);
+                    if (fabs(coord.xyzt.x - xIn) > dfThreshold ||
+                        fabs(coord.xyzt.y - yIn) > dfThreshold)
+                    {
+                        bRet = FALSE;
+                        err = PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN;
+                        x[i] = HUGE_VAL;
+                        y[i] = HUGE_VAL;
+                    }
                 }
             }
 

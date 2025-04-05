@@ -288,6 +288,8 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -ct <string>
 
+    .. versionadded:: 3.0
+
     A PROJ string (single step operation or multiple step string starting with
     +proj=pipeline), a WKT2 string describing a CoordinateOperation, or a
     urn:ogc:def:coordinateOperation:EPSG::XXXX URN overriding the default
@@ -298,7 +300,40 @@ output coordinate system or even reprojecting the features during translation.
     the pipeline if the source CRS has northing/easting axis order, and/or at
     the end of the pipeline if the target CRS has northing/easting axis order.
 
-    .. versionadded:: 3.0
+.. option:: -ct_opt <NAME>=<VALUE>
+
+    .. versionadded:: 3.11
+
+    Specify a coordinate operation option that influences how PROJ selects
+    coordinate operations when :option:`-ct` is *not* set.
+
+    The following options are available:
+
+    - ``ONLY_BEST``=``YES``/``NO``. By default (at least in the PROJ 9.x series), PROJ may use
+      coordinate operations that are not the "best" if resources
+      (typically grids) needed to use them are missing. It will then
+      fallback to other coordinate operations that have a lesser
+      accuracy, for example using Helmert transformations, or in the
+      absence of such operations, to ones with potential very rough
+      accuracy, using "ballpark" transformations (see
+      https://proj.org/glossary.html).
+      When calling this method with YES, PROJ will only consider the
+      "best" operation, and error out (at Transform() time) if they
+      cannot be used. This method may be used together with
+      ``ALLOW_BALLPARK``=``NO`` to only allow best operations that have a known
+      accuracy. Note that this method has no effect on PROJ versions
+      before 9.2. The default value for this option can be also set with
+      the ``PROJ_ONLY_BEST_DEFAULT`` environment variable, or with the
+      ``only_best_default`` setting of proj.ini. Setting
+      ONLY_BEST=YES/NO overrides such default value.
+
+    - ``ALLOW_BALLPARK``=``YES``/``NO``. Whether ballpark coordinate operations are
+      allowed. Default is YES.
+
+    - ``WARN_ABOUT_DIFFERENT_COORD_OP``=``YES``/``NO``. Can be set to NO to avoid GDAL
+      warning when different coordinate operations are used to transform the
+      different geometries of the dataset (or part of the same geometry).
+      Default is YES.
 
 .. option:: -preserve_fid
 

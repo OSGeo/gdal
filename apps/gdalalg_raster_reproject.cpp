@@ -12,8 +12,10 @@
 
 #include "gdalalg_raster_reproject.h"
 
+#include "gdal_alg.h"
 #include "gdal_priv.h"
 #include "gdal_utils.h"
+#include "gdalwarper.h"
 
 #include <cmath>
 
@@ -90,14 +92,41 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
              "raster have none."),
            &m_addAlpha)
         .SetCategory(GAAC_ADVANCED);
-    AddArg("warp-option", 0, _("Warping option(s)"), &m_warpOptions)
-        .AddAlias("wo")
-        .SetMetaVar("<NAME>=<VALUE>")
-        .SetCategory(GAAC_ADVANCED);
-    AddArg("transform-option", 0, _("Transform option(s)"), &m_transformOptions)
-        .AddAlias("to")
-        .SetMetaVar("<NAME>=<VALUE>")
-        .SetCategory(GAAC_ADVANCED);
+    {
+        auto &arg =
+            AddArg("warp-option", 0, _("Warping option(s)"), &m_warpOptions)
+                .AddAlias("wo")
+                .SetMetaVar("<NAME>=<VALUE>")
+                .SetCategory(GAAC_ADVANCED);
+        arg.AddValidationAction([this, &arg]()
+                                { return ValidateKeyValue(arg); });
+        arg.SetAutoCompleteFunction(
+            [](const std::string &currentValue)
+            {
+                std::vector<std::string> ret;
+                GDALAlgorithm::AddOptionsSuggestions(GDALWarpGetOptionList(), 0,
+                                                     currentValue, ret);
+                return ret;
+            });
+    }
+    {
+        auto &arg = AddArg("transform-option", 0, _("Transform option(s)"),
+                           &m_transformOptions)
+                        .AddAlias("to")
+                        .SetMetaVar("<NAME>=<VALUE>")
+                        .SetCategory(GAAC_ADVANCED);
+        arg.AddValidationAction([this, &arg]()
+                                { return ValidateKeyValue(arg); });
+        arg.SetAutoCompleteFunction(
+            [](const std::string &currentValue)
+            {
+                std::vector<std::string> ret;
+                GDALAlgorithm::AddOptionsSuggestions(
+                    GDALGetGenImgProjTranformerOptionList(), 0, currentValue,
+                    ret);
+                return ret;
+            });
+    }
     AddArg("error-threshold", 0, _("Error threshold"), &m_errorThreshold)
         .AddAlias("et")
         .SetCategory(GAAC_ADVANCED);
