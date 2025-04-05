@@ -244,8 +244,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libdeflate0 \
         libzstd1 bash libpq5 libssl3 libopenjp2-7 libspatialite8 \
         libmuparser2v5 \
-        # pil for antialias option of gdal2tiles
-        python3-pil \
     && apt-get install -y python-is-python3
 
 # Order layers starting with less frequently varying ones
