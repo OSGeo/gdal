@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vector grid nearest" subcommand
+ * Purpose:  gdal "vector gridding linear" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,45 +10,31 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_grid_nearest.h"
+#include "gdalalg_vector_gridding_linear.h"
 
 #include <limits>
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*    GDALVectorGridNearestAlgorithm::GDALVectorGridNearestAlgorithm()  */
+/*    GDALVectorGridLinearAlgorithm::GDALVectorGridLinearAlgorithm()    */
 /************************************************************************/
 
-GDALVectorGridNearestAlgorithm::GDALVectorGridNearestAlgorithm()
+GDALVectorGridLinearAlgorithm::GDALVectorGridLinearAlgorithm()
     : GDALVectorGridAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
-    AddRadiusArg();
-    AddRadius1AndRadius2Arg();
-    AddAngleArg();
+    m_radius = std::numeric_limits<double>::infinity();
+    AddRadiusArg().SetDefault(m_radius);
     AddNodataArg();
 }
 
 /************************************************************************/
-/*               GDALVectorGridNearestAlgorithm::RunImpl()              */
+/*               GDALVectorGridLinearAlgorithm::RunImpl()              */
 /************************************************************************/
 
-std::string GDALVectorGridNearestAlgorithm::GetGridAlgorithm() const
+std::string GDALVectorGridLinearAlgorithm::GetGridAlgorithm() const
 {
-    std::string ret =
-        CPLSPrintf("nearest:angle=%.17g:nodata=%.17g", m_angle, m_nodata);
-    if (m_radius > 0)
-    {
-        ret += CPLSPrintf(":radius=%.17g", m_radius);
-    }
-    else
-    {
-        if (m_radius1 > 0)
-            ret += CPLSPrintf(":radius1=%.17g", m_radius1);
-        if (m_radius2 > 0)
-            ret += CPLSPrintf(":radius2=%.17g", m_radius2);
-    }
-    return ret;
+    return CPLSPrintf("linear:radius=%.17g:nodata=%.17g", m_radius, m_nodata);
 }
 
 //! @endcond

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vector grid average" subcommand
+* Purpose:  gdal "vector gridding minimum/maximum/range/count/average-distance/average-distance-pts" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,53 +10,40 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_grid_average.h"
+#include "gdalalg_vector_gridding_data_metrics.h"
 
 #include <limits>
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*    GDALVectorGridAverageAlgorithm::GDALVectorGridAverageAlgorithm()  */
+/*            GDALVectorGridDataMetricsAbstractAlgorithm()              */
 /************************************************************************/
 
-GDALVectorGridAverageAlgorithm::GDALVectorGridAverageAlgorithm()
-    : GDALVectorGridAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALVectorGridDataMetricsAbstractAlgorithm::
+    GDALVectorGridDataMetricsAbstractAlgorithm(const std::string &name,
+                                               const std::string &description,
+                                               const std::string &helpURL,
+                                               const std::string &method)
+    : GDALVectorGridAbstractAlgorithm(name, description, helpURL),
+      m_method(method)
 {
     AddRadiusArg();
     AddRadius1AndRadius2Arg();
     AddAngleArg();
     AddMinPointsArg();
-    AddMaxPointsArg();
     AddMinMaxPointsPerQuadrantArg();
     AddNodataArg();
-
-    AddValidationAction(
-        [this]()
-        {
-            bool ret = true;
-            if (m_maxPoints < std::numeric_limits<int>::max() &&
-                m_minPointsPerQuadrant == 0 &&
-                m_maxPointsPerQuadrant == std::numeric_limits<int>::max())
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "'min-points-per-quadrant' and/or "
-                            "'max-points-per-quadrant' should be defined when "
-                            "'max-points' is.");
-                ret = false;
-            }
-            return ret;
-        });
 }
 
 /************************************************************************/
-/*               GDALVectorGridAverageAlgorithm::RunImpl()              */
+/*         GDALVectorGridDataMetricsAbstractAlgorithm::RunImpl()        */
 /************************************************************************/
 
-std::string GDALVectorGridAverageAlgorithm::GetGridAlgorithm() const
+std::string GDALVectorGridDataMetricsAbstractAlgorithm::GetGridAlgorithm() const
 {
-    std::string ret =
-        CPLSPrintf("average:angle=%.17g:nodata=%.17g", m_angle, m_nodata);
+    std::string ret = CPLSPrintf("%s:angle=%.17g:nodata=%.17g",
+                                 m_method.c_str(), m_angle, m_nodata);
     if (m_radius > 0)
     {
         ret += CPLSPrintf(":radius=%.17g", m_radius);
@@ -70,8 +57,6 @@ std::string GDALVectorGridAverageAlgorithm::GetGridAlgorithm() const
     }
     if (m_minPoints > 0)
         ret += CPLSPrintf(":min_points=%d", m_minPoints);
-    if (m_maxPoints < std::numeric_limits<int>::max())
-        ret += CPLSPrintf(":max_points=%d", m_maxPoints);
     if (m_minPointsPerQuadrant > 0)
         ret +=
             CPLSPrintf(":min_points_per_quadrant=%d", m_minPointsPerQuadrant);

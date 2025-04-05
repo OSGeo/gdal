@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vector grid" subcommand
+ * Purpose:  gdal "vector gridding" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,13 +10,13 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_grid.h"
-#include "gdalalg_vector_grid_average.h"
-#include "gdalalg_vector_grid_data_metrics.h"
-#include "gdalalg_vector_grid_invdist.h"
-#include "gdalalg_vector_grid_invdistnn.h"
-#include "gdalalg_vector_grid_linear.h"
-#include "gdalalg_vector_grid_nearest.h"
+#include "gdalalg_vector_gridding.h"
+#include "gdalalg_vector_gridding_average.h"
+#include "gdalalg_vector_gridding_data_metrics.h"
+#include "gdalalg_vector_gridding_invdist.h"
+#include "gdalalg_vector_gridding_invdistnn.h"
+#include "gdalalg_vector_gridding_linear.h"
+#include "gdalalg_vector_gridding_nearest.h"
 
 #include "cpl_conv.h"
 #include "gdal_priv.h"
@@ -57,7 +57,7 @@ bool GDALVectorGridAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
     CPLError(CE_Failure, CPLE_AppDefined,
              "The Run() method should not be called directly on the \"gdal "
-             "vector grid\" program.");
+             "vector gridding\" program.");
     return false;
 }
 
@@ -153,7 +153,7 @@ bool GDALVectorGridAbstractAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     if (m_outputDataset.GetDatasetRef())
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "gdal vector grid does not support outputting to an "
+                 "gdal vector gridding does not support outputting to an "
                  "already opened output dataset");
         return false;
     }

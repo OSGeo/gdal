@@ -1,7 +1,7 @@
-.. _gdal_vector_grid_subcommand:
+.. _gdal_vector_gridding_subcommand:
 
 ================================================================================
-"gdal vector grid" sub-command
+"gdal vector gridding" sub-command
 ================================================================================
 
 .. versionadded:: 3.11
@@ -10,12 +10,12 @@
 
     Create a regular grid from scattered points
 
-.. Index:: gdal vector grid
+.. Index:: gdal vector gridding
 
 Synopsis
 --------
 
-.. program-output:: gdal vector grid --help-doc
+.. program-output:: gdal vector gridding --help-doc
 
 Description
 -----------
@@ -377,7 +377,7 @@ Options
 Data metrics algorithms
 -----------------------
 
-Besides the interpolation functionality :program:`gdal vector grid` can be used to compute
+Besides the interpolation functionality :program:`gdal vector gridding` can be used to compute
 some data metrics using the specified window and output grid geometry. These
 metrics are:
 
@@ -463,8 +463,8 @@ Reading comma separated values
 
 Often you have a text file with a list of comma separated XYZ values to work
 with (so called CSV file). You can easily use that kind of data source in
-:program:`gdal vector grid`. All you need is to create a virtual dataset header (VRT) for your CSV
-file and use it as an input datasource for :program:`gdal vector grid`. You can find details
+:program:`gdal vector gridding`. All you need is to create a virtual dataset header (VRT) for your CSV
+file and use it as an input datasource for :program:`gdal vector gridding`. You can find details
 on the VRT format on the :ref:`vector.vrt` description page.
 
 Here is a small example. Let's say we have a CSV file called *dem.csv*
@@ -502,13 +502,13 @@ columns, switch columns, etc. OK, now the final step:
 
 .. code-block::
 
-    gdal vector grid invdist dem.vrt demv.tif
+    gdal vector gridding invdist dem.vrt demv.tif
 
 Or, if we do not wish to use a VRT file:
 
 .. code-block::
 
-    gdal vector grid invdist -l dem -oo X_POSSIBLE_NAMES=Easting \
+    gdal vector gridding invdist -l dem -oo X_POSSIBLE_NAMES=Easting \
     -oo Y_POSSIBLE_NAMES=Northing --zfield=Elevation dem.csv dem.tif
 
 If your CSV file does not contain column headers then it can be handled
@@ -528,7 +528,7 @@ Examples
 
    .. code-block:: bash
 
-       gdal vector grid invdist --power=2.0 --smoothing=1.0 --extent=85000,894000,89000,890000 \
+       gdal vector gridding invdist --power=2.0 --smoothing=1.0 --extent=85000,894000,89000,890000 \
            --size=400,400 -l dem dem.vrt dem.tif
 
    This example creates a raster TIFF file from the VRT datasource described in
@@ -540,7 +540,7 @@ Examples
 
    .. code-block:: bash
 
-       gdal vector grid invdist --zfield=Elevation --config GDAL_NUM_THREADS ALL_CPUS \
+       gdal vector gridding invdist --zfield=Elevation --config GDAL_NUM_THREADS ALL_CPUS \
            --power=2.0 --smoothing=1.0 --extent=85000,894000,89000,890000 \
            --size=400,400 -l dem dem.vrt dem.tif
 

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vector grid linear" subcommand
+ * Purpose:  gdal "vector gridding nearest" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,31 +10,45 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_grid_linear.h"
+#include "gdalalg_vector_gridding_nearest.h"
 
 #include <limits>
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*    GDALVectorGridLinearAlgorithm::GDALVectorGridLinearAlgorithm()    */
+/*    GDALVectorGridNearestAlgorithm::GDALVectorGridNearestAlgorithm()  */
 /************************************************************************/
 
-GDALVectorGridLinearAlgorithm::GDALVectorGridLinearAlgorithm()
+GDALVectorGridNearestAlgorithm::GDALVectorGridNearestAlgorithm()
     : GDALVectorGridAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
-    m_radius = std::numeric_limits<double>::infinity();
-    AddRadiusArg().SetDefault(m_radius);
+    AddRadiusArg();
+    AddRadius1AndRadius2Arg();
+    AddAngleArg();
     AddNodataArg();
 }
 
 /************************************************************************/
-/*               GDALVectorGridLinearAlgorithm::RunImpl()              */
+/*               GDALVectorGridNearestAlgorithm::RunImpl()              */
 /************************************************************************/
 
-std::string GDALVectorGridLinearAlgorithm::GetGridAlgorithm() const
+std::string GDALVectorGridNearestAlgorithm::GetGridAlgorithm() const
 {
-    return CPLSPrintf("linear:radius=%.17g:nodata=%.17g", m_radius, m_nodata);
+    std::string ret =
+        CPLSPrintf("nearest:angle=%.17g:nodata=%.17g", m_angle, m_nodata);
+    if (m_radius > 0)
+    {
+        ret += CPLSPrintf(":radius=%.17g", m_radius);
+    }
+    else
+    {
+        if (m_radius1 > 0)
+            ret += CPLSPrintf(":radius1=%.17g", m_radius1);
+        if (m_radius2 > 0)
+            ret += CPLSPrintf(":radius2=%.17g", m_radius2);
+    }
+    return ret;
 }
 
 //! @endcond

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vector grid minimum/maximum/range/count/average-distance/average-distance-pts" subcommand
+ * Purpose:  gdal "vector gridding minimum/maximum/range/count/average-distance/average-distance-pts" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_GRID_DATA_METRICS_INCLUDED
 #define GDALALG_VECTOR_GRID_DATA_METRICS_INCLUDED
 
-#include "gdalalg_vector_grid.h"
+#include "gdalalg_vector_gridding.h"
 
 //! @cond Doxygen_Suppress
 
@@ -25,7 +25,8 @@ class GDALVectorGridDataMetricsAbstractAlgorithm /* non final */
     : public GDALVectorGridAbstractAlgorithm
 {
   public:
-    static constexpr const char *HELP_URL = "/programs/gdal_vector_grid.html";
+    static constexpr const char *HELP_URL =
+        "/programs/gdal_vector_gridding.html";
 
   protected:
     GDALVectorGridDataMetricsAbstractAlgorithm(const std::string &name,

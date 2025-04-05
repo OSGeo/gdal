@@ -17,7 +17,7 @@
 #include "gdalalg_vector_convert.h"
 #include "gdalalg_vector_edit.h"
 #include "gdalalg_vector_geom.h"
-#include "gdalalg_vector_grid.h"
+#include "gdalalg_vector_gridding.h"
 #include "gdalalg_vector_pipeline.h"
 #include "gdalalg_vector_rasterize.h"
 #include "gdalalg_vector_filter.h"
