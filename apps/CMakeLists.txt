@@ -59,13 +59,13 @@ add_library(
   gdalalg_vector_geom_simplify.cpp
   gdalalg_vector_geom_buffer.cpp
   gdalalg_vector_geom_swap_xy.cpp
-  gdalalg_vector_grid.cpp
-  gdalalg_vector_grid_average.cpp
-  gdalalg_vector_grid_data_metrics.cpp
-  gdalalg_vector_grid_invdist.cpp
-  gdalalg_vector_grid_invdistnn.cpp
-  gdalalg_vector_grid_linear.cpp
-  gdalalg_vector_grid_nearest.cpp
+  gdalalg_vector_gridding.cpp
+  gdalalg_vector_gridding_average.cpp
+  gdalalg_vector_gridding_data_metrics.cpp
+  gdalalg_vector_gridding_invdist.cpp
+  gdalalg_vector_gridding_invdistnn.cpp
+  gdalalg_vector_gridding_linear.cpp
+  gdalalg_vector_gridding_nearest.cpp
   gdalalg_vector_output_abstract.cpp
   gdalalg_vector_reproject.cpp
   gdalalg_vector_select.cpp

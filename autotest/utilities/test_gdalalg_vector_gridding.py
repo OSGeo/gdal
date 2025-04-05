@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal vector grid' testing
+# Purpose:  'gdal vector gridding' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -23,11 +23,11 @@ from osgeo import gdal, ogr
 
 
 def get_alg(subalg):
-    return gdal.GetGlobalAlgorithmRegistry()["vector"]["grid"][subalg]
+    return gdal.GetGlobalAlgorithmRegistry()["vector"]["gridding"][subalg]
 
 
-def test_gdalalg_vector_grid_error():
-    alg = gdal.GetGlobalAlgorithmRegistry()["vector"]["grid"]
+def test_gdalalg_vector_gridding_error():
+    alg = gdal.GetGlobalAlgorithmRegistry()["vector"]["gridding"]
     with pytest.raises(Exception, match="method should not be called directly"):
         alg.Run()
 
@@ -381,7 +381,9 @@ def get_src_ds(geom3D):
         ("average-distance-points", True, {}, 23830, "success", None),
     ],
 )
-def test_gdalalg_vector_grid_regular(subalg, geom3D, options, checksum, ret_value, msg):
+def test_gdalalg_vector_gridding_regular(
+    subalg, geom3D, options, checksum, ret_value, msg
+):
 
     if "bbox" in options and not ogrtest.have_geos():
         pytest.skip("GEOS not available")
@@ -415,7 +417,7 @@ def test_gdalalg_vector_grid_regular(subalg, geom3D, options, checksum, ret_valu
         assert ds.GetRasterBand(1).GetNoDataValue() == options["nodata"]
 
 
-def test_gdalalg_vector_grid_progress(tmp_vsimem):
+def test_gdalalg_vector_gridding_progress(tmp_vsimem):
 
     last_pct = [0]
 
@@ -433,7 +435,7 @@ def test_gdalalg_vector_grid_progress(tmp_vsimem):
     assert last_pct[0] == 1.0
 
 
-def test_gdalalg_vector_grid_failed_update_existing_file(tmp_vsimem):
+def test_gdalalg_vector_gridding_failed_update_existing_file(tmp_vsimem):
 
     out_ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "out.tif", 1, 1)
 
@@ -442,12 +444,12 @@ def test_gdalalg_vector_grid_failed_update_existing_file(tmp_vsimem):
     alg["output"] = out_ds
     with pytest.raises(
         Exception,
-        match="gdal vector grid does not support outputting to an already opened output dataset",
+        match="gdal vector gridding does not support outputting to an already opened output dataset",
     ):
         alg.Run()
 
 
-def test_gdalalg_vector_grid_creation_option(tmp_vsimem):
+def test_gdalalg_vector_gridding_creation_option(tmp_vsimem):
 
     alg = get_alg("invdist")
     alg["input"] = get_src_ds(True)
@@ -458,7 +460,7 @@ def test_gdalalg_vector_grid_creation_option(tmp_vsimem):
         assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
 
 
-def test_gdalalg_vector_grid_extent():
+def test_gdalalg_vector_gridding_extent():
 
     alg = get_alg("invdist")
     alg["input"] = get_src_ds(True)
@@ -470,7 +472,7 @@ def test_gdalalg_vector_grid_extent():
     assert ds.GetGeoTransform() == (90.0, 0.1171875, 0.0, 1110.0, 0.0, -0.46875)
 
 
-def test_gdalalg_vector_grid_size():
+def test_gdalalg_vector_gridding_size():
 
     alg = get_alg("invdist")
     alg["input"] = get_src_ds(True)
@@ -483,7 +485,7 @@ def test_gdalalg_vector_grid_size():
     assert ds.RasterYSize == 20
 
 
-def test_gdalalg_vector_grid_resolution():
+def test_gdalalg_vector_gridding_resolution():
 
     alg = get_alg("invdist")
     alg["input"] = get_src_ds(True)
@@ -496,7 +498,7 @@ def test_gdalalg_vector_grid_resolution():
     assert ds.GetGeoTransform() == (90.0, 0.1, 0.0, 1110.0, 0.0, -0.2)
 
 
-def test_gdalalg_vector_grid_output_type():
+def test_gdalalg_vector_gridding_output_type():
 
     alg = get_alg("invdist")
     alg["input"] = get_src_ds(True)
@@ -508,7 +510,7 @@ def test_gdalalg_vector_grid_output_type():
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
 
 
-def test_gdalalg_vector_grid_crs():
+def test_gdalalg_vector_gridding_crs():
 
     alg = get_alg("invdist")
     alg["input"] = get_src_ds(True)
@@ -520,7 +522,7 @@ def test_gdalalg_vector_grid_crs():
     assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
 
 
-def test_gdalalg_vector_grid_overwrite(tmp_vsimem):
+def test_gdalalg_vector_gridding_overwrite(tmp_vsimem):
 
     out_filename = tmp_vsimem / "out.tif"
     with gdal.GetDriverByName("GTiff").Create(out_filename, 1, 1) as ds:
@@ -545,7 +547,7 @@ def test_gdalalg_vector_grid_overwrite(tmp_vsimem):
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
-def test_gdalalg_vector_grid_overwrite_failed_unlink(tmp_path):
+def test_gdalalg_vector_gridding_overwrite_failed_unlink(tmp_path):
 
     out_filename = tmp_path / "out.tif"
     with gdal.GetDriverByName("GTiff").Create(out_filename, 1, 1):
@@ -566,19 +568,19 @@ def test_gdalalg_vector_grid_overwrite_failed_unlink(tmp_path):
         os.chmod(tmp_path, 0o755)
 
 
-def test_gdalalg_vector_grid_autocomplete():
+def test_gdalalg_vector_gridding_autocomplete():
 
     gdal_path = test_cli_utilities.get_gdal_path()
     if gdal_path is None:
         pytest.skip("gdal binary not available")
 
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal vector grid invdist last_word_is_complete=false"
+        f"{gdal_path} completion gdal vector gridding invdist last_word_is_complete=false"
     ).split(" ")
     assert "invdist" in out
     assert "invdistnn" in out
 
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal vector grid invdist last_word_is_complete=true"
+        f"{gdal_path} completion gdal vector gridding invdist last_word_is_complete=true"
     ).split(" ")
     assert out == [""]

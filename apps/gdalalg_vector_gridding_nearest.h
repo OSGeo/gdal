@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vector grid nearest" subcommand
+ * Purpose:  gdal "vector gridding nearest" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_GRID_NEAREST_INCLUDED
 #define GDALALG_VECTOR_GRID_NEAREST_INCLUDED
 
-#include "gdalalg_vector_grid.h"
+#include "gdalalg_vector_gridding.h"
 
 //! @cond Doxygen_Suppress
 
@@ -29,7 +29,8 @@ class GDALVectorGridNearestAlgorithm final
     static constexpr const char *DESCRIPTION =
         "Create a regular grid from scattered points using nearest neighbor "
         "interpolation.";
-    static constexpr const char *HELP_URL = "/programs/gdal_vector_grid.html";
+    static constexpr const char *HELP_URL =
+        "/programs/gdal_vector_gridding.html";
 
     GDALVectorGridNearestAlgorithm();
 

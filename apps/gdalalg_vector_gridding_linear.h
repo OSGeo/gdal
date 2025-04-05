@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vector grid invdistnn" subcommand
+ * Purpose:  gdal "vector gridding linear" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,36 +10,31 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_VECTOR_GRID_INVDISTNN_INCLUDED
-#define GDALALG_VECTOR_GRID_INVDISTNN_INCLUDED
+#ifndef GDALALG_VECTOR_GRID_LINEAR_INCLUDED
+#define GDALALG_VECTOR_GRID_LINEAR_INCLUDED
 
-#include "gdalalg_vector_grid.h"
-
-#include <limits>
+#include "gdalalg_vector_gridding.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALVectorGridInvdistNNAlgorithm                  */
+/*                      GDALVectorGridLinearAlgorithm                   */
 /************************************************************************/
 
-class GDALVectorGridInvdistNNAlgorithm final
+class GDALVectorGridLinearAlgorithm final
     : public GDALVectorGridAbstractAlgorithm
 {
   public:
-    static constexpr const char *NAME = "invdistnn";
+    static constexpr const char *NAME = "linear";
     static constexpr const char *DESCRIPTION =
-        "Create a regular grid from scattered points using weighted inverse "
-        "distance interpolation nearest neighbour.";
-    static constexpr const char *HELP_URL = "/programs/gdal_vector_grid.html";
+        "Create a regular grid from scattered points using linear/barycentric "
+        "interpolation.";
+    static constexpr const char *HELP_URL =
+        "/programs/gdal_vector_gridding.html";
 
-    GDALVectorGridInvdistNNAlgorithm();
+    GDALVectorGridLinearAlgorithm();
 
     std::string GetGridAlgorithm() const override;
-
-  private:
-    double m_power = 2.0;
-    double m_smoothing = 0.0;
 };
 
 //! @endcond

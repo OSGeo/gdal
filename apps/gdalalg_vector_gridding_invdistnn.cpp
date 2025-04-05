@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
-* Purpose:  gdal "vector grid minimum/maximum/range/count/average-distance/average-distance-pts" subcommand
+ * Purpose:  gdal "vector gridding invdistnn" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,53 +10,49 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_grid_data_metrics.h"
+#include "gdalalg_vector_gridding_invdistnn.h"
 
 #include <limits>
 
 //! @cond Doxygen_Suppress
 
+#ifndef _
+#define _(x) (x)
+#endif
+
 /************************************************************************/
-/*            GDALVectorGridDataMetricsAbstractAlgorithm()              */
+/* GDALVectorGridInvdistNNAlgorithm::GDALVectorGridInvdistNNAlgorithm() */
 /************************************************************************/
 
-GDALVectorGridDataMetricsAbstractAlgorithm::
-    GDALVectorGridDataMetricsAbstractAlgorithm(const std::string &name,
-                                               const std::string &description,
-                                               const std::string &helpURL,
-                                               const std::string &method)
-    : GDALVectorGridAbstractAlgorithm(name, description, helpURL),
-      m_method(method)
+GDALVectorGridInvdistNNAlgorithm::GDALVectorGridInvdistNNAlgorithm()
+    : GDALVectorGridAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
+    AddArg("power", 0, _("Weighting power"), &m_power).SetDefault(m_power);
+    AddArg("smoothing", 0, _("Smoothing parameter"), &m_smoothing)
+        .SetDefault(m_smoothing);
+
     AddRadiusArg();
-    AddRadius1AndRadius2Arg();
-    AddAngleArg();
     AddMinPointsArg();
+    m_maxPoints = 12;
+    AddMaxPointsArg();
     AddMinMaxPointsPerQuadrantArg();
     AddNodataArg();
 }
 
 /************************************************************************/
-/*         GDALVectorGridDataMetricsAbstractAlgorithm::RunImpl()        */
+/*             GDALVectorGridInvdistNNAlgorithm::RunImpl()              */
 /************************************************************************/
 
-std::string GDALVectorGridDataMetricsAbstractAlgorithm::GetGridAlgorithm() const
+std::string GDALVectorGridInvdistNNAlgorithm::GetGridAlgorithm() const
 {
-    std::string ret = CPLSPrintf("%s:angle=%.17g:nodata=%.17g",
-                                 m_method.c_str(), m_angle, m_nodata);
-    if (m_radius > 0)
-    {
-        ret += CPLSPrintf(":radius=%.17g", m_radius);
-    }
-    else
-    {
-        if (m_radius1 > 0)
-            ret += CPLSPrintf(":radius1=%.17g", m_radius1);
-        if (m_radius2 > 0)
-            ret += CPLSPrintf(":radius2=%.17g", m_radius2);
-    }
+    std::string ret =
+        CPLSPrintf("invdistnn:power=%.17g:smoothing=%.17g:nodata=%.17g",
+                   m_power, m_smoothing, m_nodata);
+    ret += CPLSPrintf(":radius=%.17g", m_radius);
     if (m_minPoints > 0)
         ret += CPLSPrintf(":min_points=%d", m_minPoints);
+    if (m_maxPoints < std::numeric_limits<int>::max())
+        ret += CPLSPrintf(":max_points=%d", m_maxPoints);
     if (m_minPointsPerQuadrant > 0)
         ret +=
             CPLSPrintf(":min_points_per_quadrant=%d", m_minPointsPerQuadrant);

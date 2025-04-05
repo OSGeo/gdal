@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vector grid" subcommand
+ * Purpose:  gdal "vector gridding" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -26,10 +26,11 @@
 class GDALVectorGridAlgorithm final : public GDALAlgorithm
 {
   public:
-    static constexpr const char *NAME = "grid";
+    static constexpr const char *NAME = "gridding";
     static constexpr const char *DESCRIPTION =
         "Create a regular grid from scattered points.";
-    static constexpr const char *HELP_URL = "/programs/gdal_vector_grid.html";
+    static constexpr const char *HELP_URL =
+        "/programs/gdal_vector_gridding.html";
 
     GDALVectorGridAlgorithm();
 

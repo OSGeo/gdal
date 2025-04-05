@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vector grid invdist" subcommand
+ * Purpose:  gdal "vector gridding invdistnn" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,30 +10,31 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_VECTOR_GRID_INVDIST_INCLUDED
-#define GDALALG_VECTOR_GRID_INVDIST_INCLUDED
+#ifndef GDALALG_VECTOR_GRID_INVDISTNN_INCLUDED
+#define GDALALG_VECTOR_GRID_INVDISTNN_INCLUDED
 
-#include "gdalalg_vector_grid.h"
+#include "gdalalg_vector_gridding.h"
 
 #include <limits>
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                      GDALVectorGridInvdistAlgorithm                  */
+/*                    GDALVectorGridInvdistNNAlgorithm                  */
 /************************************************************************/
 
-class GDALVectorGridInvdistAlgorithm final
+class GDALVectorGridInvdistNNAlgorithm final
     : public GDALVectorGridAbstractAlgorithm
 {
   public:
-    static constexpr const char *NAME = "invdist";
+    static constexpr const char *NAME = "invdistnn";
     static constexpr const char *DESCRIPTION =
         "Create a regular grid from scattered points using weighted inverse "
-        "distance interpolation.";
-    static constexpr const char *HELP_URL = "/programs/gdal_vector_grid.html";
+        "distance interpolation nearest neighbour.";
+    static constexpr const char *HELP_URL =
+        "/programs/gdal_vector_gridding.html";
 
-    GDALVectorGridInvdistAlgorithm();
+    GDALVectorGridInvdistNNAlgorithm();
 
     std::string GetGridAlgorithm() const override;
 

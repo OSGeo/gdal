@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vector grid invdist" subcommand
+ * Purpose:  gdal "vector gridding invdist" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_grid_invdist.h"
+#include "gdalalg_vector_gridding_invdist.h"
 
 #include <limits>
 
