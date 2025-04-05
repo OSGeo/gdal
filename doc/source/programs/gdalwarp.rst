@@ -232,7 +232,8 @@ with control information.
     includes the minimum extent (edges lines/columns that are detected as
     blank, before actual warping, will be removed starting with GDAL 3.8).
     Alignment means that xmin / resx, ymin / resy,
-    xmax / resx and ymax / resy are integer values.
+    xmax / resx and ymax / resy are integer values. It does not necessarily
+    mean that the output grid aligns with the input grid.
 
 .. option:: -ts <width> <height>
 
