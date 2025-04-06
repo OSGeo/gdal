@@ -8,3 +8,5 @@ autotest/cpp/gdal_unit_test --gtest_filter=-test_cpl.CPLSM_signed:test_cpl.CPLSp
 
 pytest autotest/alg
 pytest autotest/gcore -k "not transformer and not virtualmem and not test_vrt_protocol_netcdf_component_name and not test_vsicrypt_3"
+pytest autotest/gdrivers/zarr*.py
+
