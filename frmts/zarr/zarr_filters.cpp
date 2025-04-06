@@ -70,6 +70,7 @@ static bool ZarrShuffleCompressor(const void *input_data, size_t input_size,
         return true;
     }
 
+#ifdef not_needed
     if (output_data == nullptr && output_size != nullptr)
     {
         *output_size = input_size;
@@ -92,6 +93,7 @@ static bool ZarrShuffleCompressor(const void *input_data, size_t input_size,
         }
         return ret;
     }
+#endif
 
     CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
     return false;
@@ -150,6 +152,7 @@ static bool ZarrShuffleDecompressor(const void *input_data, size_t input_size,
         return true;
     }
 
+#ifdef not_needed
     if (output_data == nullptr && output_size != nullptr)
     {
         *output_size = input_size;
@@ -172,6 +175,7 @@ static bool ZarrShuffleDecompressor(const void *input_data, size_t input_size,
         }
         return ret;
     }
+#endif
 
     CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
     return false;
@@ -325,6 +329,7 @@ static bool ZarrQuantizeDecompressor(const void *input_data, size_t input_size,
         return true;
     }
 
+#ifdef not_needed
     if (output_data == nullptr && output_size != nullptr)
     {
         *output_size = required_output_size;
@@ -347,6 +352,7 @@ static bool ZarrQuantizeDecompressor(const void *input_data, size_t input_size,
         }
         return ret;
     }
+#endif
 
     CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
     return false;
