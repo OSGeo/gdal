@@ -23,44 +23,6 @@
 #endif
 
 /************************************************************************/
-/*                        GetBaseCacheDirectory()                       */
-/************************************************************************/
-
-CPLString GMLASConfiguration::GetBaseCacheDirectory()
-{
-#ifdef _WIN32
-    const char *pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
-#else
-    const char *pszHome = CPLGetConfigOption("HOME", nullptr);
-#endif
-    if (pszHome != nullptr)
-    {
-        return CPLFormFilenameSafe(pszHome, ".gdal", nullptr);
-    }
-    else
-    {
-        const char *pszDir = CPLGetConfigOption("CPL_TMPDIR", nullptr);
-
-        if (pszDir == nullptr)
-            pszDir = CPLGetConfigOption("TMPDIR", nullptr);
-
-        if (pszDir == nullptr)
-            pszDir = CPLGetConfigOption("TEMP", nullptr);
-
-        const char *pszUsername = CPLGetConfigOption("USERNAME", nullptr);
-        if (pszUsername == nullptr)
-            pszUsername = CPLGetConfigOption("USER", nullptr);
-
-        if (pszDir != nullptr && pszUsername != nullptr)
-        {
-            return CPLFormFilenameSafe(
-                pszDir, CPLSPrintf(".gdal_%s", pszUsername), nullptr);
-        }
-    }
-    return CPLString();
-}
-
-/************************************************************************/
 /*                              Finalize()                              */
 /************************************************************************/
 
@@ -68,7 +30,7 @@ void GMLASConfiguration::Finalize()
 {
     if (m_bAllowXSDCache && m_osXSDCacheDirectory.empty())
     {
-        m_osXSDCacheDirectory = GetBaseCacheDirectory();
+        m_osXSDCacheDirectory = GDALGetCacheDirectory();
         if (m_osXSDCacheDirectory.empty())
         {
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -561,7 +523,7 @@ bool GMLASXLinkResolutionConf::LoadFromXML(CPLXMLNode *psRoot)
     m_osCacheDirectory = CPLGetXMLValue(psRoot, "CacheDirectory", "");
     if (m_osCacheDirectory.empty())
     {
-        m_osCacheDirectory = GMLASConfiguration::GetBaseCacheDirectory();
+        m_osCacheDirectory = GDALGetCacheDirectory();
         if (!m_osCacheDirectory.empty())
         {
             m_osCacheDirectory = CPLFormFilenameSafe(

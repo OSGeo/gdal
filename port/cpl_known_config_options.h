@@ -119,7 +119,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_SOZIP_ENABLED", // from cpl_minizip_zip.cpp
    "CPL_SOZIP_MIN_FILE_SIZE", // from cpl_minizip_zip.cpp
    "CPL_TIMESTAMP", // from cpl_error.cpp
-   "CPL_TMPDIR", // from cogdriver.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, ogrgmlasconf.cpp, wcsutils.cpp
+   "CPL_TMPDIR", // from cogdriver.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, wcsutils.cpp
    "CPL_VSIAZ_UNLINK_BATCH_SIZE", // from cpl_vsil_az.cpp
    "CPL_VSIGS_UNLINK_BATCH_SIZE", // from cpl_vsil_gs.cpp
    "CPL_VSIL_CURL_ADVISE_READ_TOTAL_BYTES_LIMIT", // from cpl_vsil_curl.cpp
@@ -521,7 +521,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "HFA_USE_ESRI_PE_STRING", // from hfadataset.cpp
    "HFA_USE_RRD", // from hfaband.cpp
    "HFA_WRITE_PE_STRING", // from hfaopen.cpp
-   "HOME", // from cpl_aws.cpp, cpl_azure.cpp, cpl_conv.cpp, cpl_google_cloud.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, ogrgmlasconf.cpp, wcsutils.cpp
+   "HOME", // from cpl_aws.cpp, cpl_azure.cpp, cpl_conv.cpp, cpl_google_cloud.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, wcsutils.cpp
    "IDB_OGR_FID", // from ogridblayer.cpp
    "IDRISIDIR", // from IdrisiDataset.cpp
    "INTERLEAVE_OVERVIEW", // from gt_overview.cpp
@@ -990,7 +990,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "SXF_RSC_FILENAME", // from ogrsxfdatasource.cpp
    "SXF_SET_VERTCS", // from ogrsxfdatasource.cpp
    "TAB_APPROX_GEOTRANSFORM", // from gdal_misc.cpp
-   "TEMP", // from cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, ogrgmlasconf.cpp, wcsutils.cpp
+   "TEMP", // from cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, wcsutils.cpp
    "THRESHOLD", // from ogrct.cpp
    "TIFF_READ_STREAMING", // from gtiffdataset_read.cpp
    "TIFF_USE_OVR", // from gtiffdataset_write.cpp
@@ -1001,16 +1001,16 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "TILEDB_INT_TYPE", // from tiledbsparse.cpp
    "TILEDB_WKB_GEOMETRY_TYPE", // from tiledbsparse.cpp
    "TILEDB_WRITE_IMAGE_STRUCTURE", // from tiledbdense.cpp
-   "TMPDIR", // from cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, ogrgmlasconf.cpp, wcsutils.cpp
+   "TMPDIR", // from cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, wcsutils.cpp
    "USE_OSR_FIND_MATCHES", // from FGdbUtils.cpp, ogropenfilegdbdatasource.cpp, ogrshapelayer.cpp
    "USE_RRD", // from gdaldefaultoverviews.cpp, gtiffdataset_write.cpp, pcidskdataset2.cpp
    "USE_SPILL", // from hfaband.cpp
    "USE_SQLITE_DEBUG_MEMALLOC", // from ogrsqlitedatasource.cpp
    "USE_TEMPFILE", // from ogrgpsbabeldatasource.cpp, ogrgpsbabelwritedatasource.cpp
    "USE_TILE_AS_BLOCK", // from jp2kakdataset.cpp
-   "USER", // from gdal_misc.cpp, gdalwmscache.cpp, isis3dataset.cpp, ogrgmlasconf.cpp, wcsutils.cpp
-   "USERNAME", // from gdal_misc.cpp, gdalwmscache.cpp, isis3dataset.cpp, ogrgmlasconf.cpp, wcsutils.cpp
-   "USERPROFILE", // from cpl_aws.cpp, cpl_azure.cpp, cpl_conv.cpp, cpl_google_cloud.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, ogrgmlasconf.cpp, wcsutils.cpp
+   "USER", // from gdal_misc.cpp, gdalwmscache.cpp, isis3dataset.cpp, wcsutils.cpp
+   "USERNAME", // from gdal_misc.cpp, gdalwmscache.cpp, isis3dataset.cpp, wcsutils.cpp
+   "USERPROFILE", // from cpl_aws.cpp, cpl_azure.cpp, cpl_conv.cpp, cpl_google_cloud.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, wcsutils.cpp
    "VRT_ALLOW_MEM_DRIVER", // from vrtrasterband.cpp
    "VRT_MIN_MAX_FROM_SOURCES", // from vrtsourcedrasterband.cpp
    "VRT_NUM_THREADS", // from vrtdataset.cpp
