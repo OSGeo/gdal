@@ -645,6 +645,7 @@ extern "C++"
 
 #include <iterator>  // For std::input_iterator_tag
 #include <memory>
+#include <string_view>
 #include <utility>  // For std::pair
 
     /*! @cond Doxygen_Suppress */
@@ -669,6 +670,60 @@ extern "C++"
     {
 
     /*! @cond Doxygen_Suppress */
+
+    /** Equivalent of C++20 std::string::starts_with(const char*) */
+    template <class StringType>
+    inline bool starts_with(const StringType &str, const char *prefix)
+    {
+        const size_t prefixLen = strlen(prefix);
+        return str.size() >= prefixLen &&
+               str.compare(0, prefixLen, prefix, prefixLen) == 0;
+    }
+
+    /** Equivalent of C++20 std::string::starts_with(const std::string &) */
+    template <class StringType>
+    inline bool starts_with(const StringType &str, const std::string &prefix)
+    {
+        return str.size() >= prefix.size() &&
+               str.compare(0, prefix.size(), prefix) == 0;
+    }
+
+    /** Equivalent of C++20 std::string::starts_with(std::string_view) */
+    template <class StringType>
+    inline bool starts_with(const StringType &str, std::string_view prefix)
+    {
+        return str.size() >= prefix.size() &&
+               str.compare(0, prefix.size(), prefix) == 0;
+    }
+
+    /** Equivalent of C++20 std::string::ends_with(const char*) */
+    template <class StringType>
+    inline bool ends_with(const StringType &str, const char *suffix)
+    {
+        const size_t suffixLen = strlen(suffix);
+        return str.size() >= suffixLen &&
+               str.compare(str.size() - suffixLen, suffixLen, suffix,
+                           suffixLen) == 0;
+    }
+
+    /** Equivalent of C++20 std::string::ends_with(const std::string &) */
+    template <class StringType>
+    inline bool ends_with(const StringType &str, const std::string &suffix)
+    {
+        return str.size() >= suffix.size() &&
+               str.compare(str.size() - suffix.size(), suffix.size(), suffix) ==
+                   0;
+    }
+
+    /** Equivalent of C++20 std::string::ends_with(std::string_view) */
+    template <class StringType>
+    inline bool ends_with(const StringType &str, std::string_view suffix)
+    {
+        return str.size() >= suffix.size() &&
+               str.compare(str.size() - suffix.size(), suffix.size(), suffix) ==
+                   0;
+    }
+
     /** Iterator for a CSLConstList */
     struct CPL_DLL CSLIterator
     {
