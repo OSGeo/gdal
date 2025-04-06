@@ -906,6 +906,16 @@ bool ZarrV2Array::FlushDirtyTile() const
         }
     }
 
+    if (m_psCompressor == nullptr && m_psDecompressor != nullptr)
+    {
+        // Case of imagecodecs_tiff
+
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Only decompression supported for '%s' compression method",
+                 m_osDecompressorId.c_str());
+        return false;
+    }
+
     VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "wb");
     if (fp == nullptr)
     {
@@ -1849,13 +1859,21 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
             CPLError(CE_Failure, CPLE_AppDefined, "Missing compressor id");
             return nullptr;
         }
-        psCompressor = CPLGetCompressor(osDecompressorId.c_str());
-        psDecompressor = CPLGetDecompressor(osDecompressorId.c_str());
-        if (psCompressor == nullptr || psDecompressor == nullptr)
+        if (osDecompressorId == "imagecodecs_tiff")
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Decompressor %s not handled",
-                     osDecompressorId.c_str());
-            return nullptr;
+            psDecompressor = ZarrGetTIFFDecompressor();
+        }
+        else
+        {
+            psCompressor = CPLGetCompressor(osDecompressorId.c_str());
+            psDecompressor = CPLGetDecompressor(osDecompressorId.c_str());
+            if (psCompressor == nullptr || psDecompressor == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Decompressor %s not handled",
+                         osDecompressorId.c_str());
+                return nullptr;
+            }
         }
     }
     else
