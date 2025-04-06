@@ -16,7 +16,17 @@ import os
 
 import numpy as np
 import zarr
-from numcodecs import LZ4, LZMA, Blosc, GZip, Quantize, Shuffle, Zlib, Zstd
+from numcodecs import (
+    LZ4,
+    LZMA,
+    Blosc,
+    FixedScaleOffset,
+    GZip,
+    Quantize,
+    Shuffle,
+    Zlib,
+    Zstd,
+)
 
 os.chdir(os.path.dirname(__file__))
 
@@ -204,5 +214,56 @@ z = zarr.open(
     chunks=(10, 10),
     compressor=None,
     filters=[quantize],
+)
+z[:] = data
+
+
+data = np.linspace(1000, 1001, 10, dtype="f8")
+
+filter = FixedScaleOffset(offset=1000, scale=10, dtype="f8", astype="u1")
+z = zarr.open(
+    "fixedscaleoffset_dtype_f8_astype_u1.zarr",
+    mode="w",
+    dtype="f8",
+    shape=(10),
+    chunks=(10),
+    compressor=None,
+    filters=[filter],
+)
+z[:] = data
+
+filter = FixedScaleOffset(offset=1000, scale=10, dtype="f8", astype="u2")
+z = zarr.open(
+    "fixedscaleoffset_dtype_f8_astype_u2.zarr",
+    mode="w",
+    dtype="f8",
+    shape=(10),
+    chunks=(10),
+    compressor=None,
+    filters=[filter],
+)
+z[:] = data
+
+filter = FixedScaleOffset(offset=1000, scale=10, dtype="f8", astype="u4")
+z = zarr.open(
+    "fixedscaleoffset_dtype_f8_astype_u4.zarr",
+    mode="w",
+    dtype="f8",
+    shape=(10),
+    chunks=(10),
+    compressor=None,
+    filters=[filter],
+)
+z[:] = data
+
+filter = FixedScaleOffset(offset=1000, scale=10, dtype="f4", astype="u1")
+z = zarr.open(
+    "fixedscaleoffset_dtype_f4_astype_u1.zarr",
+    mode="w",
+    dtype="f4",
+    shape=(10),
+    chunks=(10),
+    compressor=None,
+    filters=[filter],
 )
 z[:] = data
