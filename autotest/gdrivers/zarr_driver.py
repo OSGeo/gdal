@@ -5656,3 +5656,40 @@ def test_zarr_write_cleanup_create_dir_if_bad_blocksize_append_subdataset(
     assert os.path.exists(out_dirname)
     ds = gdal.Open(out_dirname)
     assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_imagecodecs_tiff():
+    with gdal.Open("data/zarr/uint16_imagecodecs_tiff.zarr") as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+    with pytest.raises(
+        Exception,
+        match="Only decompression supported for 'imagecodecs_tiff' compression method",
+    ):
+        with gdal.Open("data/zarr/uint16_imagecodecs_tiff.zarr", gdal.GA_Update) as ds:
+            ds.GetRasterBand(1).Fill(255)
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "dirname",
+    [
+        "data/zarr/uint16_imagecodecs_tiff_invalid_tiff.zarr",
+        "data/zarr/uint16_imagecodecs_tiff_inconsistent_size.zarr",
+        "data/zarr/uint16_imagecodecs_tiff_too_many_bands.zarr",
+    ],
+)
+def test_zarr_read_imagecodecs_tiff_errors(dirname):
+    assert gdal.VSIStatL(dirname)
+    with pytest.raises(Exception):
+        with gdal.Open(dirname) as ds:
+            ds.ReadRaster()
