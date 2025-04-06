@@ -574,6 +574,8 @@ bool ZarrV2Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
             EQUAL(osFilterId.c_str(), "shuffle") ? ZarrGetShuffleDecompressor()
             : EQUAL(osFilterId.c_str(), "quantize")
                 ? ZarrGetQuantizeDecompressor()
+            : EQUAL(osFilterId.c_str(), "fixedscaleoffset")
+                ? ZarrGetFixedScaleOffsetDecompressor()
                 : CPLGetDecompressor(osFilterId.c_str());
         CPLAssert(psFilterDecompressor);
 
@@ -857,10 +859,10 @@ bool ZarrV2Array::FlushDirtyTile() const
     for (const auto &oFilter : m_oFiltersArray)
     {
         const auto osFilterId = oFilter["id"].ToString();
-        if (osFilterId == "quantize")
+        if (osFilterId == "quantize" || osFilterId == "fixedscaleoffset")
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "quantize filter not supported for writing");
+                     "%s filter not supported for writing", osFilterId.c_str());
             return false;
         }
         const auto psFilterCompressor =
@@ -1904,7 +1906,8 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                 return nullptr;
             }
             if (!EQUAL(osFilterId.c_str(), "shuffle") &&
-                !EQUAL(osFilterId.c_str(), "quantize"))
+                !EQUAL(osFilterId.c_str(), "quantize") &&
+                !EQUAL(osFilterId.c_str(), "fixedscaleoffset"))
             {
                 const auto psFilterCompressor =
                     CPLGetCompressor(osFilterId.c_str());

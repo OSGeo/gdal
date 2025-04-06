@@ -33,6 +33,7 @@ const CPLCompressor *ZarrGetShuffleCompressor();
 const CPLCompressor *ZarrGetShuffleDecompressor();
 const CPLCompressor *ZarrGetQuantizeDecompressor();
 const CPLCompressor *ZarrGetTIFFDecompressor();
+const CPLCompressor *ZarrGetFixedScaleOffsetDecompressor();
 
 /************************************************************************/
 /*                            ZarrDataset                               */
