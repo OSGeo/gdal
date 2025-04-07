@@ -5817,4 +5817,40 @@ TEST_F(test_cpl, CPLLevenshteinDistance)
               std::numeric_limits<size_t>::max());
 }
 
+TEST_F(test_cpl, CPLLockFileEx)
+{
+    const std::string osLockFilename = CPLGenerateTempFilename(".lock");
+
+    ASSERT_EQ(CPLLockFileEx(nullptr, nullptr, nullptr), CLFS_API_MISUSE);
+
+    ASSERT_EQ(CPLLockFileEx(osLockFilename.c_str(), nullptr, nullptr),
+              CLFS_API_MISUSE);
+
+    CPLLockFileHandle hLockFileHandle = nullptr;
+
+    ASSERT_EQ(CPLLockFileEx(osLockFilename.c_str(), &hLockFileHandle, nullptr),
+              CLFS_OK);
+    ASSERT_NE(hLockFileHandle, nullptr);
+
+    // Check the lock file has been created
+    VSIStatBufL sStat;
+    ASSERT_EQ(VSIStatL(osLockFilename.c_str(), &sStat), 0);
+
+    {
+        CPLStringList aosOptions;
+        aosOptions.SetNameValue("WAIT_TIME", "0.1");
+        CPLLockFileHandle hLockFileHandle2 = nullptr;
+        ASSERT_EQ(CPLLockFileEx(osLockFilename.c_str(), &hLockFileHandle2,
+                                aosOptions.List()),
+                  CLFS_LOCK_BUSY);
+    }
+
+    CPLUnlockFileEx(hLockFileHandle);
+
+    // Check the lock file has been deleted
+    ASSERT_EQ(VSIStatL(osLockFilename.c_str(), &sStat), -1);
+
+    CPLUnlockFileEx(nullptr);
+}
+
 }  // namespace

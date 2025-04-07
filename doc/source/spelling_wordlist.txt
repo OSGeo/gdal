@@ -2430,6 +2430,7 @@ pgRouting
 pgsql
 pgw
 phGeometry
+phLockFileHandle
 Photogrammetric
 photometric
 photooverlay
