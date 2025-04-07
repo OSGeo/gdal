@@ -5605,9 +5605,15 @@ class VSIFile(BytesIO):
             else:
                 return self.SetAsStringList([str(value)])
         if type == GAAT_INTEGER_LIST:
-            return self.SetAsIntegerList(value)
+            if isinstance(value, int):
+                return self.SetAsIntegerList([value])
+            else:
+                return self.SetAsIntegerList(value)
         if type == GAAT_REAL_LIST:
-            return self.SetAsDoubleList(value)
+            if isinstance(value, int) or isinstance(value, float):
+                return self.SetAsDoubleList([float(value)])
+            else:
+                return self.SetAsDoubleList(value)
         if type == GAAT_DATASET_LIST:
             if isinstance(value, list) and (isinstance(value[0], str) or isinstance(value[0], os.PathLike)):
                 return self.SetDatasetNames([str(v) for v in value])
