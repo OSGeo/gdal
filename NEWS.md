@@ -359,6 +359,101 @@ XODR driver:
   system handlers as fsspec AbstractFileSystem
 * Fix typo in handling of Translate widthPct, heightPct
 * add relatedFieldNameMatch parameter to gdal.VectorTranslate()
+# GDAL/OGR 3.10.3 Release Notes
+
+GDAL 3.10.3 is a bugfix release.
+
+## Build
+
+* Fix build with -DWIN32_LEAN_AND_MEAN
+* Fix warnings when building against Poppler 25.03.00
+
+## GDAL 3.10.3
+
+### Port
+
+* cpl_http: retry "SSL connection timeout"
+* /vsigs/ (and /vsiaz/): invalidate cached state of files/directories when
+  changing authentication parameters (#11964)
+
+### Algorithms
+
+* Pansharpen: avoid I/O errors when extent of PAN and MS bands differ by less
+  than the resolution of the MS band (#11889)
+* Warp: fix reprojecting on empty source window with nodata != 0 and MEM driver
+  (#11992)
+
+### Utilities
+
+* gdaldem: allow -az zero or negative
+
+### Raster drivers
+
+AVIF driver:
+ * remove limitation that prevented from reading images bigger than 10 MB
+
+GRIB2 driver:
+ * fix reading Transverse Merctor with negative easting/falsing (#12015)
+ * also fix reading it with scale factor != 0.9996
+
+GTiff driver:
+ * fix 3.10.1 regression when reading a file just created in multi-threaded
+   mode with compression
+
+MBTiles driver:
+ * Fix update with WEBP compression
+
+MRF driver:
+ * allow deflate expansion
+
+PDF driver:
+ * Fix default value for DPI open option description
+
+## OGR 3.10.3
+
+### Core
+
+* SQLite dialect: make it compatible with SQLite 3.49.1 in SQLITE_DQS=0 mode
+
+### OGRSpatialReference
+
+* ogrct.cpp: fix potential crash in multi-threaded execution (#11860)
+
+### Utilities
+
+* ogr2ogr: fix -upsert with a GPKG source
+
+### Vector drivers
+
+CSV driver:
+ * fix parsing of 64 bit integers above 2^53
+
+GeoJSON driver:
+ * fix detection of features starting with
+   {"geometry":{"type":"xxxxx","coordinates":[... (qgis/QGIS#61266)
+
+GMLAS driver:
+ * fix reading multiple values of a StringList field that is a repeated element
+   (#12027)
+
+GPKG driver:
+ * make it compatible with SQLite 3.49.1 in SQLITE_DQS=0 mode
+ * fix SetNextByIndex() followed by GetNextFeature() without explicit call to
+   GetLayerDefn() (#11974)
+
+MiraMonVector driver:
+ * fix error: Unexpected Non-nullptr Return
+ * fixing a word in Catalan language
+ * writing VRS in metadata file + error in the zMin, zMax values of the header
+
+MSSQLSpatial driver:
+ * Fix creation of metadata tables related to "dbo"
+
+OpenCAD driver:
+ * add missing std:: qualifiers
+
+WFS driver:
+ * fix crash with GetFeatureCount() and client-side filters (#11920)
 
 # GDAL/OGR 3.10.2 "Gulf of Mexico" Release Notes
 
