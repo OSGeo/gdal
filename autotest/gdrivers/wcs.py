@@ -532,7 +532,10 @@ def test_wcs_6(wcs_server, tmp_path, server, version):
     ]
 
     tmpfile = tmp_path / f"{server}{version}.tiff"
-    gdal.Translate(str(tmpfile), ds, projWin=projwin, width=size)
+    # use resampleAlg = "bilinear" to prevent snapping projWin to pixel boundaries
+    gdal.Translate(
+        str(tmpfile), ds, projWin=projwin, width=size, resampleAlg="bilinear"
+    )
 
     assert tmpfile.exists()
 

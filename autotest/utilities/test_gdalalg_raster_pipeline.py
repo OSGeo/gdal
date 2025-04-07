@@ -751,8 +751,8 @@ def test_gdalalg_raster_pipeline_clip_bbox_crs(tmp_vsimem):
     )
 
     with gdal.Open(out_filename) as ds:
-        assert ds.RasterXSize == 5
-        assert ds.RasterYSize == 19
+        assert ds.RasterXSize == 6
+        assert ds.RasterYSize == 20
         assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"
         assert ds.GetGeoTransform() == pytest.approx(
             (441620.0, 60.0, 0.0, 3751140.0, 0.0, -60.0), rel=1e-8

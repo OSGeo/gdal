@@ -1629,7 +1629,7 @@ def test_vrt_protocol():
     assert ds.GetGeoTransform()[0] == 440840.0
     assert ds.GetGeoTransform()[3] == 3751140.0
     assert ds.GetRasterBand(1).XSize == 18
-    assert ds.GetRasterBand(1).YSize == 16
+    assert ds.GetRasterBand(1).YSize == 17
 
     with pytest.raises(Exception):
         gdal.Open("vrt://data/float32.tif?tr=120")

@@ -565,6 +565,26 @@ def test_gdal_translate_lib_103():
 
 
 ###############################################################################
+# Test that -projwin with nearest neighbor resampling produces an output
+# extent that includes all of -projwin
+
+
+def test_gdal_translate_lib_projwin_expand():
+
+    # Pixel size is 60. We should be able to shrink the corners by 59
+    # without losing any pixels
+    ds = gdal.Translate(
+        "",
+        "../gcore/data/byte.tif",
+        format="MEM",
+        projWin=[440720 + 59, 3751320 - 59, 441920.000 - 59, 3750120 + 59],
+    )
+
+    assert ds.RasterXSize == 20
+    assert ds.RasterYSize == 20
+
+
+###############################################################################
 # Test translate with a MEM source to a anonymous VRT
 
 
