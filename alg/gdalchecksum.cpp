@@ -107,7 +107,7 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
                 // allowed memory
                 nChunkXSize = nXSize;
             }
-            else
+            else if (nDstDataTypeSize > 0)
             {
                 // Otherwise compute a size that is a multiple of nBlockXSize
                 nChunkXSize = static_cast<int>(std::min(
@@ -241,7 +241,7 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
                 // allowed memory
                 nChunkXSize = nXSize;
             }
-            else
+            else if (nDstDataTypeSize > 0)
             {
                 // Otherwise compute a size that is a multiple of nBlockXSize
                 nChunkXSize = static_cast<int>(std::min(
