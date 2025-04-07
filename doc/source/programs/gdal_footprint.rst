@@ -46,7 +46,7 @@ proper mask bands.
     a single mask band, before being vectorized.
     The default value is ``union``: that is a pixel is valid if it is valid at least
     for one of the selected bands.
-    ``intersection`` means that a pixel is valid only ifit is valid for all
+    ``intersection`` means that a pixel is valid only if it is valid for all
     selected bands.
 
 .. option:: -ovr <index>
