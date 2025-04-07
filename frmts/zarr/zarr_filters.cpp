@@ -28,10 +28,10 @@ static bool ZarrShuffleCompressor(const void *input_data, size_t input_size,
     // 4 is the default of the shuffle numcodecs:
     // https://numcodecs.readthedocs.io/en/v0.10.0/shuffle.html
     const int eltSize = atoi(CSLFetchNameValueDef(options, "ELEMENTSIZE", "4"));
-    if (eltSize != 2 && eltSize != 4 && eltSize != 8)
+    if (eltSize != 1 && eltSize != 2 && eltSize != 4 && eltSize != 8)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Only ELEMENTSIZE=2,4,8 is supported");
+                 "Only ELEMENTSIZE=1,2,4,8 is supported");
         if (output_size)
             *output_size = 0;
         return false;
@@ -111,10 +111,10 @@ static bool ZarrShuffleDecompressor(const void *input_data, size_t input_size,
     // 4 is the default of the shuffle numcodecs:
     // https://numcodecs.readthedocs.io/en/v0.10.0/shuffle.html
     const int eltSize = atoi(CSLFetchNameValueDef(options, "ELEMENTSIZE", "4"));
-    if (eltSize != 2 && eltSize != 4 && eltSize != 8)
+    if (eltSize != 1 && eltSize != 2 && eltSize != 4 && eltSize != 8)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Only ELEMENTSIZE=2,4,8 is supported");
+                 "Only ELEMENTSIZE=1,2,4,8 is supported");
         if (output_size)
             *output_size = 0;
         return false;
