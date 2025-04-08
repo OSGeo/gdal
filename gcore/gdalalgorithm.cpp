@@ -1764,6 +1764,10 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
          overwriteArg->GetType() == GAAT_BOOLEAN && overwriteArg->Get<bool>());
     auto outputArg = algForOutput->GetArg(GDAL_ARG_NAME_OUTPUT);
     auto &val = arg->Get<GDALArgDatasetValue>();
+    const bool onlyInputSpecifiedInUpdateAndOutputNotRequired =
+        arg->GetName() == GDAL_ARG_NAME_INPUT && outputArg &&
+        !outputArg->IsExplicitlySet() && !outputArg->IsRequired() && update &&
+        !overwrite;
     if (!val.GetDatasetRef() && !val.IsNameSet())
     {
         ReportError(CE_Failure, CPLE_AppDefined,
@@ -1772,7 +1776,8 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         ret = false;
     }
     else if (!val.GetDatasetRef() && arg->AutoOpenDataset() &&
-             (!arg->IsOutput() || (arg == outputArg && update && !overwrite)))
+             (!arg->IsOutput() || (arg == outputArg && update && !overwrite) ||
+              onlyInputSpecifiedInUpdateAndOutputNotRequired))
     {
         int flags = val.GetType();
         bool assignToOutputArg = false;
@@ -1786,6 +1791,11 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
             if (!outputVal.GetDatasetRef() &&
                 outputVal.GetName() == val.GetName() &&
                 (outputVal.GetInputFlags() & GADV_OBJECT) != 0)
+            {
+                assignToOutputArg = true;
+                flags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
+            }
+            else if (onlyInputSpecifiedInUpdateAndOutputNotRequired)
             {
                 assignToOutputArg = true;
                 flags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
@@ -1847,6 +1857,10 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                 {
                     outputArg->Get<GDALArgDatasetValue>().Set(poDS);
                 }
+                else if (onlyInputSpecifiedInUpdateAndOutputNotRequired)
+                {
+                    outputArg->Get<GDALArgDatasetValue>().Set(poDS);
+                }
             }
             val.Set(poDS);
             poDS->ReleaseRef();
@@ -1855,6 +1869,11 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         {
             ret = false;
         }
+    }
+    else if (onlyInputSpecifiedInUpdateAndOutputNotRequired &&
+             val.GetDatasetRef())
+    {
+        outputArg->Get<GDALArgDatasetValue>().Set(val.GetDatasetRef());
     }
     return ret;
 }

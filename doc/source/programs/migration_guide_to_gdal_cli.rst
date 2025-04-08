@@ -148,6 +148,17 @@ compared to "minimum-x,minimum-y,maximum-x,maximum-y" for the ``--bbox`` option 
     gdal raster color-map --color-map=color_map.txt color_table.tif rgb.tif --overwrite
 
 
+* Convert nearly black values of the collar to black
+
+.. code-block::
+
+    nearblack -nb 1 -near 10 my.tif
+
+    ==>
+
+    gdal raster clean-collar --update --color-threshold=1 --pixel-distance=10 my.tif
+
+
 Vector commands
 ---------------
 
