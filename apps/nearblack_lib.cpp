@@ -36,10 +36,10 @@
 
 static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
                         int nSrcBands, int nDstBands, int nNearDist,
-                        int nMaxNonBlack, bool bNearWhite,
-                        const Colors &oColors, int *panLastLineCounts,
-                        bool bDoHorizontalCheck, bool bDoVerticalCheck,
-                        bool bBottomUp, int iLineFromTopOrBottom);
+                        int nMaxNonBlack, const Colors &oColors,
+                        int *panLastLineCounts, bool bDoHorizontalCheck,
+                        bool bDoVerticalCheck, bool bBottomUp,
+                        int iLineFromTopOrBottom);
 
 /************************************************************************/
 /*                            GDALNearblack()                           */
@@ -336,7 +336,6 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
 
     const int nMaxNonBlack = psOptions->nMaxNonBlack;
     const int nNearDist = psOptions->nNearDist;
-    const bool bNearWhite = psOptions->bNearWhite;
     const bool bSetAlpha = psOptions->bSetAlpha;
 
     /* -------------------------------------------------------------------- */
@@ -389,15 +388,13 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
         }
 
         ProcessLine(pabyLine, pabyMask, 0, nXSize - 1, nBands, nDstBands,
-                    nNearDist, nMaxNonBlack, bNearWhite, oColors,
-                    panLastLineCounts,
+                    nNearDist, nMaxNonBlack, oColors, panLastLineCounts,
                     true,   // bDoHorizontalCheck
                     true,   // bDoVerticalCheck
                     false,  // bBottomUp
                     iLine);
         ProcessLine(pabyLine, pabyMask, nXSize - 1, 0, nBands, nDstBands,
-                    nNearDist, nMaxNonBlack, bNearWhite, oColors,
-                    panLastLineCounts,
+                    nNearDist, nMaxNonBlack, oColors, panLastLineCounts,
                     true,   // bDoHorizontalCheck
                     false,  // bDoVerticalCheck
                     false,  // bBottomUp
@@ -462,15 +459,13 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
         }
 
         ProcessLine(pabyLine, pabyMask, 0, nXSize - 1, nBands, nDstBands,
-                    nNearDist, nMaxNonBlack, bNearWhite, oColors,
-                    panLastLineCounts,
+                    nNearDist, nMaxNonBlack, oColors, panLastLineCounts,
                     true,  // bDoHorizontalCheck
                     true,  // bDoVerticalCheck
                     true,  // bBottomUp
                     nYSize - 1 - iLine);
         ProcessLine(pabyLine, pabyMask, nXSize - 1, 0, nBands, nDstBands,
-                    nNearDist, nMaxNonBlack, bNearWhite, oColors,
-                    panLastLineCounts,
+                    nNearDist, nMaxNonBlack, oColors, panLastLineCounts,
                     true,   // bDoHorizontalCheck
                     false,  // bDoVerticalCheck
                     true,   // bBottomUp
@@ -515,12 +510,16 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
 
 static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
                         int nSrcBands, int nDstBands, int nNearDist,
-                        int nMaxNonBlack, bool bNearWhite,
-                        const Colors &oColors, int *panLastLineCounts,
-                        bool bDoHorizontalCheck, bool bDoVerticalCheck,
-                        bool bBottomUp, int iLineFromTopOrBottom)
+                        int nMaxNonBlack, const Colors &oColors,
+                        int *panLastLineCounts, bool bDoHorizontalCheck,
+                        bool bDoVerticalCheck, bool bBottomUp,
+                        int iLineFromTopOrBottom)
 {
-    const GByte nReplacevalue = bNearWhite ? 255 : 0;
+    const GByte nReplaceValue = !oColors.empty() && oColors.size() == 1 &&
+                                        !oColors[0].empty() &&
+                                        oColors[0][0] == 255
+                                    ? 255
+                                    : 0;
 
     /* -------------------------------------------------------------------- */
     /*      Vertical checking.                                              */
@@ -588,7 +587,7 @@ static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
 
             /***** replace the pixel values *****/
             for (int iBand = 0; iBand < nSrcBands; iBand++)
-                pabyLine[i * nDstBands + iBand] = nReplacevalue;
+                pabyLine[i * nDstBands + iBand] = nReplaceValue;
 
             /***** alpha *****/
             if (nDstBands > nSrcBands)
@@ -683,7 +682,7 @@ static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
                 /***** replace the pixel values *****/
 
                 for (int iBand = 0; iBand < nSrcBands; iBand++)
-                    pabyLine[i * nDstBands + iBand] = nReplacevalue;
+                    pabyLine[i * nDstBands + iBand] = nReplaceValue;
 
                 /***** alpha *****/
 
