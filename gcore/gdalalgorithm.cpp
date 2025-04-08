@@ -3820,6 +3820,39 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                 osRet += CPLSPrintf("%g", arg->GetDefault<double>());
                 osRet += ')';
             }
+            else if (arg->GetType() == GAAT_STRING_LIST &&
+                     arg->HasDefaultValue())
+            {
+                const auto &defaultVal =
+                    arg->GetDefault<std::vector<std::string>>();
+                if (defaultVal.size() == 1)
+                {
+                    osRet += " (default: ";
+                    osRet += defaultVal[0];
+                    osRet += ')';
+                }
+            }
+            else if (arg->GetType() == GAAT_INTEGER_LIST &&
+                     arg->HasDefaultValue())
+            {
+                const auto &defaultVal = arg->GetDefault<std::vector<int>>();
+                if (defaultVal.size() == 1)
+                {
+                    osRet += " (default: ";
+                    osRet += CPLSPrintf("%d", defaultVal[0]);
+                    osRet += ')';
+                }
+            }
+            else if (arg->GetType() == GAAT_REAL_LIST && arg->HasDefaultValue())
+            {
+                const auto &defaultVal = arg->GetDefault<std::vector<double>>();
+                if (defaultVal.size() == 1)
+                {
+                    osRet += " (default: ";
+                    osRet += CPLSPrintf("%g", defaultVal[0]);
+                    osRet += ')';
+                }
+            }
 
             if (arg->GetDisplayHintAboutRepetition())
             {
@@ -4056,10 +4089,53 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
                 case GAAT_REAL:
                     jArg.Add("default", arg->GetDefault<double>());
                     break;
-                case GAAT_DATASET:
                 case GAAT_STRING_LIST:
+                {
+                    const auto &val =
+                        arg->GetDefault<std::vector<std::string>>();
+                    if (val.size() == 1)
+                    {
+                        jArg.Add("default", val[0]);
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Unhandled default value for arg %s",
+                                 arg->GetName().c_str());
+                    }
+                    break;
+                }
                 case GAAT_INTEGER_LIST:
+                {
+                    const auto &val = arg->GetDefault<std::vector<int>>();
+                    if (val.size() == 1)
+                    {
+                        jArg.Add("default", val[0]);
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Unhandled default value for arg %s",
+                                 arg->GetName().c_str());
+                    }
+                    break;
+                }
                 case GAAT_REAL_LIST:
+                {
+                    const auto &val = arg->GetDefault<std::vector<double>>();
+                    if (val.size() == 1)
+                    {
+                        jArg.Add("default", val[0]);
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Unhandled default value for arg %s",
+                                 arg->GetName().c_str());
+                    }
+                    break;
+                }
+                case GAAT_DATASET:
                 case GAAT_DATASET_LIST:
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Unhandled default value for arg %s",
