@@ -3712,6 +3712,12 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                 osRet += " [OPTIONS]";
             for (const auto *arg : m_positionalArgs)
             {
+                const bool optional =
+                    (!arg->IsRequired() && !(GetName() == "pipeline" &&
+                                             arg->GetName() == "pipeline"));
+                osRet += ' ';
+                if (optional)
+                    osRet += '[';
                 const std::string &metavar = arg->GetMetaVar();
                 if (!metavar.empty() && metavar[0] == '<')
                 {
@@ -3719,10 +3725,12 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                 }
                 else
                 {
-                    osRet += " <";
+                    osRet += '<';
                     osRet += metavar;
                     osRet += '>';
                 }
+                if (optional)
+                    osRet += ']';
             }
         }
 
