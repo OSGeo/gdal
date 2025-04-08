@@ -439,8 +439,9 @@ MAIN_START(argc, argv)
 
         bool bPixelReport = true;
 
-        if (iPixel < 0 || iLine < 0 || iPixel >= GDALGetRasterXSize(hSrcDS) ||
-            iLine >= GDALGetRasterYSize(hSrcDS))
+        if (iPixel < 0 || iLine < 0 ||
+            dfPixel > static_cast<double>(GDALGetRasterXSize(hSrcDS) + 1e-5) ||
+            dfLine > static_cast<double>(GDALGetRasterYSize(hSrcDS) + 1e-5))
         {
             if (bAsXML)
                 osXML += "<Alert>Location is off this file! No further details "

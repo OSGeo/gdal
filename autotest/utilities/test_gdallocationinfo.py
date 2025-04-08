@@ -101,6 +101,20 @@ def test_gdallocationinfo_4(gdallocationinfo_path):
     assert ret.startswith(expected_ret)
 
 
+# Test -geoloc at lower right corner
+def test_gdallocationinfo_lr(gdallocationinfo_path):
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + " -geoloc ../gcore/data/byte.tif 441920.000 3750120.000"
+    )
+    ret = ret.replace("\r\n", "\n")
+    expected_ret = """Report:
+  Location: (20P,20L)
+  Band 1:
+    Value: 107"""
+    assert ret.startswith(expected_ret)
+
+
 ###############################################################################
 # Test -lifonly
 

@@ -124,13 +124,20 @@ bool GDALInterpExtractValuesWindow(GDALRasterBand *pBand,
             // Compose the cached block to the final buffer
             for (int j = 0; j < nLinesToCopy; j++)
             {
-                memcpy(padfAsDouble + ((nFirstLineInOutput + j) * nWidth +
-                                       nFirstColInOutput) *
-                                          nTypeFactor,
-                       poValue->data() +
-                           ((nFirstLineInCachedBlock + j) * nReqXSize +
-                            nFirstColInCachedBlock) *
-                               nTypeFactor,
+                const size_t dstOffset =
+                    (static_cast<size_t>(nFirstLineInOutput + j) * nWidth +
+                     nFirstColInOutput) *
+                    nTypeFactor;
+                const size_t srcOffset =
+                    (static_cast<size_t>(nFirstLineInCachedBlock + j) *
+                         nReqXSize +
+                     nFirstColInCachedBlock) *
+                    nTypeFactor;
+                if (srcOffset + nColsToCopy * nTypeFactor > poValue->size())
+                {
+                    return false;
+                }
+                memcpy(padfAsDouble + dstOffset, poValue->data() + srcOffset,
                        nColsToCopy * sizeof(T));
             }
         }
@@ -158,9 +165,20 @@ template <typename T>
 bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
                                 GDALRIOResampleAlg eResampleAlg,
                                 std::unique_ptr<DoublePointsCache> &cache,
-                                const double dfXIn, const double dfYIn, T &out)
+                                double dfXIn, double dfYIn, T &out)
 {
     const gdal::Vector2i rasterSize{pBand->GetXSize(), pBand->GetYSize()};
+
+    if (eResampleAlg == GRIORA_NearestNeighbour)
+    {
+        // Allow input coordinates right at the bottom or right edge
+        // with GRIORA_NearestNeighbour.
+        // "introduce" them in the pixel of the image.
+        if (dfXIn >= rasterSize.x() && dfXIn <= rasterSize.x() + 1e-5)
+            dfXIn -= 0.25;
+        if (dfYIn >= rasterSize.y() && dfYIn <= rasterSize.y() + 1e-5)
+            dfYIn -= 0.25;
+    }
     const gdal::Vector2d inLoc{dfXIn, dfYIn};
 
     int bGotNoDataValue = FALSE;
