@@ -3,16 +3,8 @@
 /* -------------------------------------------------------------------- */
 /*      Constants used in GDAL and in MiraMon                           */
 /* -------------------------------------------------------------------- */
-#ifndef GDAL_COMPILATION
-#ifdef _WIN64
-#include "gdal\release-1911-x64\cpl_port.h"  // For GUInt64
-#else
-#include "gdal\release-1911-32\cpl_port.h"  // For GUInt64
-#endif
-#else
 #include "cpl_port.h"  // For GUInt64
-CPL_C_START  // Necessary for compiling C in GDAL project
-#endif                 // GDAL_COMPILATION
+CPL_C_START            // Necessary for compiling C in GDAL project
 
 #if defined(_WIN32) && !defined(strcasecmp)
 #define strcasecmp stricmp
@@ -22,8 +14,8 @@ CPL_C_START  // Necessary for compiling C in GDAL project
 
 #define sprintf_UINT64 "%llu"
 
-// Type of the Feature ID: determines the maximum number of features in a layer.
-typedef GUInt64 MM_INTERNAL_FID;
+    // Type of the Feature ID: determines the maximum number of features in a layer.
+    typedef GUInt64 MM_INTERNAL_FID;
 // Offset to the coordinates of the Features.
 typedef GUInt64 MM_FILE_OFFSET;
 
@@ -91,7 +83,5 @@ enum MM_TipusNomCamp
 #define MM_DonaBytesNomEstesCamp(camp)                                         \
     ((MM_BYTE)((camp)->reserved_2[MM_OFFSET_RESERVED2_EXTENDED_NAME_SIZE]))
 
-#ifdef GDAL_COMPILATION
 CPL_C_END  // Necessary for compiling in GDAL project
-#endif
-#endif  //__MM_GDAL_CONSTANTS_H
+#endif     //__MM_GDAL_CONSTANTS_H

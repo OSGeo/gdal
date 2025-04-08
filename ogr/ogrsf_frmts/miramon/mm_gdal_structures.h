@@ -3,25 +3,11 @@
 /* -------------------------------------------------------------------- */
 /*      Constants used in GDAL and in MiraMon                           */
 /* -------------------------------------------------------------------- */
-#ifdef GDAL_COMPILATION
-#include "cpl_conv.h"  // For FILE_TYPE
+#include "cpl_conv.h"  // For VSILFILE
 #include "mm_gdal_constants.h"
-#else
-#include "F64_str.h"  // For FILE_64
-#include "mm_gdal\mm_gdal_constants.h"
-#endif
-
 #include "mm_constants.h"
 
-#ifdef GDAL_COMPILATION
 CPL_C_START  // Necessary for compiling in GDAL project
-#endif
-
-#ifdef GDAL_COMPILATION
-#define FILE_TYPE VSILFILE
-#else
-#define FILE_TYPE FILE_64
-#endif
 
     /* Internal field of an extended DBF. It is a copy of a MiraMon internal
 structure but translated to be understood by anyone who wants to
@@ -80,7 +66,7 @@ struct MM_DATA_BASE_XP  // MiraMon table Structure
     // Extended DBF file name
     char szFileName[MM_CPL_PATH_BUF_SIZE];  // In MiraMon code: szNomFitxer
 
-    FILE_TYPE *pfDataBase;  // In MiraMon code: pfBaseDades
+    VSILFILE *pfDataBase;  // In MiraMon code: pfBaseDades
 
     // Charset of the DBF
     MM_BYTE CharSet;
@@ -110,7 +96,6 @@ struct MM_DATA_BASE_XP  // MiraMon table Structure
     MM_BYTE reserved_2  // Used in extended DBF format to recompose BytesPerRecord
         [MM_MAX_LON_RESERVAT_2_BASE_DADES_XP];  // In MiraMon code: reservat_2
 };
-#ifdef GDAL_COMPILATION
+
 CPL_C_END  // Necessary for compiling in GDAL project
-#endif
-#endif  //__MM_GDAL_STRUCTURES_H
+#endif     //__MM_GDAL_STRUCTURES_H
