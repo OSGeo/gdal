@@ -15,24 +15,14 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifdef GDAL_COMPILATION
 #include "ogr_api.h"  // For CPL_C_START
 #include "mm_wrlayr.h"
 #include "mm_wrlayr.h"  // For MMReadHeader()
 #include "mm_gdal_functions.h"
 #include "mm_gdal_constants.h"
-#else
-#include "CmptCmp.h"                    // Compatibility between compilers
-#include "mm_gdal\mm_wrlayr.h"          // For MMReadHeader()
-#include "mm_gdal\mm_gdal_functions.h"  // For int MM_GetArcHeights()
-#include "mm_constants.h"
-#endif
-
 #include "mm_rdlayr.h"
 
-#ifdef GDAL_COMPILATION
 CPL_C_START  // Necessary for compiling in GDAL project
-#endif
 
     /* -------------------------------------------------------------------- */
     /*      Reading MiraMon format file functions                           */
@@ -41,7 +31,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
     // Initializes a MiraMon vector layer for reading
     int
     MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer,
-                      FILE_TYPE *m_fp, const char *pszFilename)
+                      VSILFILE *m_fp, const char *pszFilename)
 {
     char szResult[MM_MAX_ID_SNY + 10];
     char *pszSRS;
@@ -49,21 +39,21 @@ CPL_C_START  // Necessary for compiling in GDAL project
     memset(hMiraMonLayer, 0, sizeof(*hMiraMonLayer));
     if (MMReadHeader(m_fp, &hMiraMonLayer->TopHeader))
     {
-        MMCPLError(CE_Failure, CPLE_NoWriteAccess,
-                   "Error reading header of file %s", pszFilename);
+        CPLError(CE_Failure, CPLE_NoWriteAccess,
+                 "Error reading header of file %s", pszFilename);
         return 1;
     }
     hMiraMonLayer->ReadOrWrite = MM_READING_MODE;
     strcpy(hMiraMonLayer->pszFlags, "rb");
 
-    hMiraMonLayer->pszSrcLayerName = strdup_function(pszFilename);
+    hMiraMonLayer->pszSrcLayerName = CPLStrdup(pszFilename);
 
     hMiraMonLayer->LayerVersion =
         (char)MMGetVectorVersion(&hMiraMonLayer->TopHeader);
     if (hMiraMonLayer->LayerVersion == MM_UNKNOWN_VERSION)
     {
-        MMCPLError(CE_Failure, CPLE_NotSupported,
-                   "MiraMon version file unknown.");
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "MiraMon version file unknown.");
         return 1;
     }
     if (hMiraMonLayer->LayerVersion == MM_LAST_VERSION)
@@ -159,9 +149,9 @@ CPL_C_START  // Necessary for compiling in GDAL project
     {
         if (hMiraMonLayer->pSRS && strcmp(hMiraMonLayer->pSRS, "plane"))
         {
-            MMCPLWarning(CE_Warning, CPLE_NotSupported,
-                         "The MiraMon layer SRS has no equivalent "
-                         "in EPSG code");
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "The MiraMon layer SRS has no equivalent "
+                     "in EPSG code");
         }
     }
 
@@ -180,7 +170,7 @@ MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                            MM_N_VERTICES_TYPE nStartVertice,
                            MM_BOOLEAN bAvoidFirst, unsigned char VFG)
 {
-    FILE_TYPE *pF;
+    VSILFILE *pF;
     struct MM_AH *pArcHeader;
     struct MiraMonArcLayer *pMMArc;
     struct MM_ZD *pZDescription = nullptr;
@@ -195,7 +185,7 @@ MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
     if (hMiraMonLayer->TopHeader.bIs3d)
         pZDescription = pMMArc->pZSection.pZDescription;
 
-    fseek_function(pF, pArcHeader[i_elem].nOffset, SEEK_SET);
+    VSIFSeekL(pF, pArcHeader[i_elem].nOffset, SEEK_SET);
 
     if (hMiraMonLayer->bIsPolygon && (VFG & MM_POL_REVERSE_ARC))  // &&
         //nStartVertice > 0)
@@ -213,10 +203,10 @@ MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
         // Get the vertices far away from their place to be inverted later
         if (pArcHeader[i_elem].nElemCount !=
-            fread_function(hMiraMonLayer->ReadFeature.pCoord + nStartVertice +
-                               pArcHeader[i_elem].nElemCount,
-                           sizeof(*hMiraMonLayer->ReadFeature.pCoord),
-                           (size_t)pArcHeader[i_elem].nElemCount, pF))
+            VSIFReadL(hMiraMonLayer->ReadFeature.pCoord + nStartVertice +
+                          pArcHeader[i_elem].nElemCount,
+                      sizeof(*hMiraMonLayer->ReadFeature.pCoord),
+                      (size_t)pArcHeader[i_elem].nElemCount, pF))
         {
             return 1;
         }
@@ -277,10 +267,10 @@ MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
             return 1;
 
         if (pArcHeader[i_elem].nElemCount !=
-            fread_function(hMiraMonLayer->ReadFeature.pCoord + nStartVertice -
-                               (bAvoidFirst ? 1 : 0),
-                           sizeof(*hMiraMonLayer->ReadFeature.pCoord),
-                           (size_t)pArcHeader[i_elem].nElemCount, pF))
+            VSIFReadL(hMiraMonLayer->ReadFeature.pCoord + nStartVertice -
+                          (bAvoidFirst ? 1 : 0),
+                      sizeof(*hMiraMonLayer->ReadFeature.pCoord),
+                      (size_t)pArcHeader[i_elem].nElemCount, pF))
         {
             return 1;
         }
@@ -358,7 +348,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                     &pBuffer, pPolHeader->nOffset, 0))
     {
         if (pBuffer)
-            free_function(pBuffer);
+            VSIFree(pBuffer);
         return 1;
     }
 
@@ -366,7 +356,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
     if (MMReadFlush(&hMiraMonLayer->FlushPAL))
     {
         if (pBuffer)
-            free_function(pBuffer);
+            VSIFree(pBuffer);
         return 1;
     }
 
@@ -377,7 +367,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
             &hMiraMonLayer->ReadFeature.nMaxpNCoordRing,
             (MM_N_VERTICES_TYPE)hMiraMonLayer->ReadFeature.nNRings + 1, 10, 10))
     {
-        free_function(pBuffer);
+        VSIFree(pBuffer);
         return 1;
     }
 
@@ -386,7 +376,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                            (MM_INTERNAL_FID)pPolHeader->nArcsCount, 0,
                            0))  // Perhaps more memory than needed
     {
-        free_function(pBuffer);
+        VSIFree(pBuffer);
         return 1;
     }
 
@@ -402,7 +392,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
         if (MMReadBlockFromBuffer(&hMiraMonLayer->FlushPAL))
         {
             if (pBuffer)
-                free_function(pBuffer);
+                VSIFree(pBuffer);
             return 1;
         }
 
@@ -412,14 +402,14 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 &((hMiraMonLayer->pArcs + nIndex)->nIArc)))
         {
             if (pBuffer)
-                free_function(pBuffer);
+                VSIFree(pBuffer);
             return 1;
         }
 
         if (hMiraMonLayer->MMPolygon.MMArc.pArcHeader == nullptr)
         {
             if (pBuffer)
-                free_function(pBuffer);
+                VSIFree(pBuffer);
             return 1;
         }
 
@@ -427,7 +417,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
         if ((hMiraMonLayer->pArcs + nIndex)->nIArc >=
             hMiraMonLayer->MMPolygon.TopArcHeader.nElemCount)
         {
-            free_function(pBuffer);
+            VSIFree(pBuffer);
             return 1;
         }
 
@@ -438,7 +428,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 .pNCoordRing[hMiraMonLayer->ReadFeature.nNRings] >
             UINT64_MAX - pArcHeader->nElemCount)
         {
-            free_function(pBuffer);
+            VSIFree(pBuffer);
             return 1;
         }
 
@@ -446,7 +436,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 .pNCoordRing[hMiraMonLayer->ReadFeature.nNRings] >
             UINT64_MAX - pArcHeader->nElemCount)
         {
-            free_function(pBuffer);
+            VSIFree(pBuffer);
             return 1;
         }
 
@@ -461,7 +451,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 .pNCoordRing[hMiraMonLayer->ReadFeature.nNRings],
             0, 0))
     {
-        free_function(pBuffer);
+        VSIFree(pBuffer);
         return 1;
     }
 
@@ -479,7 +469,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
         if (MMReadBlockFromBuffer(&hMiraMonLayer->FlushPAL))
         {
             if (pBuffer)
-                free_function(pBuffer);
+                VSIFree(pBuffer);
             return 1;
         }
 
@@ -489,7 +479,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 &((hMiraMonLayer->pArcs + nIndex)->nIArc)))
         {
             if (pBuffer)
-                free_function(pBuffer);
+                VSIFree(pBuffer);
             return 1;
         }
 
@@ -504,7 +494,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                                        flag_z, nNAcumulVertices, bAvoidFirst,
                                        (hMiraMonLayer->pArcs + nIndex)->VFG))
         {
-            free_function(pBuffer);
+            VSIFree(pBuffer);
             return 1;
         }
 
@@ -514,7 +504,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 (MM_N_VERTICES_TYPE)hMiraMonLayer->ReadFeature.nNRings + 1, 10,
                 10))
         {
-            free_function(pBuffer);
+            VSIFree(pBuffer);
             return 1;
         }
 
@@ -522,7 +512,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 .pNCoordRing[hMiraMonLayer->ReadFeature.nNRings] >
             UINT64_MAX - hMiraMonLayer->ReadFeature.nNumpCoord)
         {
-            free_function(pBuffer);
+            VSIFree(pBuffer);
             return 1;
         }
 
@@ -543,7 +533,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
     }
     hMiraMonLayer->nNumArcs = pPolHeader->nArcsCount;
     if (pBuffer)
-        free_function(pBuffer);
+        VSIFree(pBuffer);
 
     return 0;
 }
@@ -552,7 +542,7 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
 int MMGetGeoFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer,
                               MM_INTERNAL_FID i_elem)
 {
-    FILE_TYPE *pF;
+    VSILFILE *pF;
     struct MM_ZD *pZDescription;
     uint32_t flag_z;
     int num;
@@ -570,10 +560,10 @@ int MMGetGeoFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer,
         pF = hMiraMonLayer->MMPoint.pF;
 
         // Getting to the i-th element offset
-        fseek_function(pF,
-                       hMiraMonLayer->nHeaderDiskSize +
-                           sizeof(MM_COORD_TYPE) * 2 * i_elem,
-                       SEEK_SET);
+        VSIFSeekL(pF,
+                  hMiraMonLayer->nHeaderDiskSize +
+                      sizeof(MM_COORD_TYPE) * 2 * i_elem,
+                  SEEK_SET);
 
         // Reading the point
         if (MMResizeMM_POINT2DPointer(&hMiraMonLayer->ReadFeature.pCoord,
@@ -582,8 +572,8 @@ int MMGetGeoFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer,
                                       1))
             return 1;
 
-        if (1 != fread_function(hMiraMonLayer->ReadFeature.pCoord,
-                                sizeof(MM_COORD_TYPE) * 2, 1, pF))
+        if (1 != VSIFReadL(hMiraMonLayer->ReadFeature.pCoord,
+                           sizeof(MM_COORD_TYPE) * 2, 1, pF))
         {
             return 1;
         }
@@ -621,11 +611,11 @@ int MMGetGeoFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 else
                 {
                     // Reading the first z coordinate
-                    fseek_function(pF, pZDescription->nOffsetZ, SEEK_SET);
+                    VSIFSeekL(pF, pZDescription->nOffsetZ, SEEK_SET);
                     if ((size_t)1 !=
-                        fread_function(
-                            &cz, sizeof(*hMiraMonLayer->ReadFeature.pZCoord), 1,
-                            pF))
+                        VSIFReadL(&cz,
+                                  sizeof(*hMiraMonLayer->ReadFeature.pZCoord),
+                                  1, pF))
                     {
                         return 1;
                     }
@@ -681,7 +671,7 @@ int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
     if (hMiraMonLayer->pMMBDXP)
         return 0;
 
-    pMMBDXP = hMiraMonLayer->pMMBDXP = calloc_function(sizeof(*pMMBDXP));
+    pMMBDXP = hMiraMonLayer->pMMBDXP = VSICalloc(1, sizeof(*pMMBDXP));
     if (!pMMBDXP)
         return 1;
 
@@ -706,9 +696,8 @@ int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
 
     if (MM_ReadExtendedDBFHeaderFromFile(szDBFFileName, pMMBDXP, pszRelFile))
     {
-        MMCPLError(CE_Failure, CPLE_NotSupported,
-                   "Error reading the format in the DBF file %s.",
-                   szDBFFileName);
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Error reading the format in the DBF file %s.", szDBFFileName);
         return 1;
     }
 
@@ -716,6 +705,4 @@ int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
     return 0;
 }
 
-#ifdef GDAL_COMPILATION
 CPL_C_END  // Necessary for compiling in GDAL project
-#endif

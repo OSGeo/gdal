@@ -4,23 +4,17 @@
 /*      Constants used in GDAL and in MiraMon         */
 /* -------------------------------------------------------------------- */
 
-#ifdef GDAL_COMPILATION
 #include "mm_gdal_constants.h"       // MM_BYTE
 #include "mm_gdal_structures.h"      // struct BASE_DADES_XP
 #include "mm_gdal_driver_structs.h"  // struct MMAdmDatabase
 CPL_C_START                          // Necessary for compiling in GDAL project
-#else
-#include "mm_constants.h"                    // MM_BYTE
-#include "mm_gdal\mm_gdal_structures.h"      // struct BASE_DADES_XP
-#include "mm_gdal\mm_gdal_driver_structs.h"  // struct MMAdmDatabase
-#endif
 
 #define nullptr NULL
 
     // Log. It should be temporal
     extern const char *MM_pszLogFilename;
 
-void fclose_and_nullify(FILE_TYPE **pFunc);
+void fclose_and_nullify(VSILFILE **pFunc);
 
 // MiraMon feature table descriptors
 #define MM_MAX_IDENTIFIER_SIZE 50
@@ -136,7 +130,7 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
                            MM_BYTES_PER_FIELD_TYPE_DBF novaamplada,
                            MM_BYTE nou_decimals);
 
-int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt,
+int MM_GetArcHeights(double *coord_z, VSILFILE *pF, MM_N_VERTICES_TYPE n_vrt,
                      struct MM_ZD *pZDescription, uint32_t flag);
 
 // Strings
@@ -146,7 +140,7 @@ char *MM_RemoveLeadingWhitespaceOfString(char *cadena);
 
 // DBF
 struct MM_ID_GRAFIC_MULTIPLE_RECORD *MMCreateExtendedDBFIndex(
-    FILE_TYPE *f, MM_EXT_DBF_N_RECORDS n_dbf,
+    VSILFILE *f, MM_EXT_DBF_N_RECORDS n_dbf,
     MM_FIRST_RECORD_OFFSET_TYPE offset_1era,
     MM_ACCUMULATED_BYTES_TYPE_DBF bytes_per_fitxa,
     MM_ACCUMULATED_BYTES_TYPE_DBF bytes_acumulats_id_grafic,
@@ -157,7 +151,21 @@ int MM_ReadExtendedDBFHeaderFromFile(const char *szFileName,
                                      struct MM_DATA_BASE_XP *pMMBDXP,
                                      const char *pszRelFile);
 
-#ifdef GDAL_COMPILATION
+// READING/CREATING MIRAMON METADATA
+char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
+                                      const char *key);
+
+int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *result,
+                                MM_BYTE direction);
+
+#define EPSG_FROM_MMSRS 0
+#define MMSRS_FROM_EPSG 1
+#define ReturnEPSGCodeSRSFromMMIDSRS(pMMSRS, szResult)                         \
+    MMReturnCodeFromMM_m_idofic((pMMSRS), (szResult), EPSG_FROM_MMSRS)
+#define ReturnMMIDSRSFromEPSGCodeSRS(pSRS, szResult)                           \
+    MMReturnCodeFromMM_m_idofic((pSRS), (szResult), MMSRS_FROM_EPSG)
+
+int MMCheck_REL_FILE(const char *szREL_file);
+
 CPL_C_END  // Necessary for compiling in GDAL project
-#endif
-#endif  //__MM_GDAL_FUNCTIONS_H
+#endif     //__MM_GDAL_FUNCTIONS_H

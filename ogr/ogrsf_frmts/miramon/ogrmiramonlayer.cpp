@@ -354,7 +354,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
         {
             if (!phMiraMonLayer->pMMBDXP->pfDataBase)
             {
-                if ((phMiraMonLayer->pMMBDXP->pfDataBase = fopen_function(
+                if ((phMiraMonLayer->pMMBDXP->pfDataBase = VSIFOpenL(
                          phMiraMonLayer->pMMBDXP->szFileName, "r")) == nullptr)
                 {
                     CPLDebugOnly("MiraMon", "File '%s' cannot be opened.",
@@ -663,51 +663,51 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
 
     if (hMiraMonLayerPOL.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "Destroying MiraMon polygons layer memory");
+        CPLDebugOnly("MiraMon", "Destroying MiraMon polygons layer memory");
     }
     MMDestroyLayer(&hMiraMonLayerPOL);
     if (hMiraMonLayerPOL.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "MiraMon polygons layer memory destroyed");
+        CPLDebugOnly("MiraMon", "MiraMon polygons layer memory destroyed");
     }
 
     if (hMiraMonLayerARC.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "Destroying MiraMon arcs layer memory");
+        CPLDebugOnly("MiraMon", "Destroying MiraMon arcs layer memory");
     }
     MMDestroyLayer(&hMiraMonLayerARC);
     if (hMiraMonLayerARC.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "MiraMon arcs layer memory destroyed");
+        CPLDebugOnly("MiraMon", "MiraMon arcs layer memory destroyed");
     }
 
     if (hMiraMonLayerPNT.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "Destroying MiraMon points layer memory");
+        CPLDebugOnly("MiraMon", "Destroying MiraMon points layer memory");
     }
     MMDestroyLayer(&hMiraMonLayerPNT);
     if (hMiraMonLayerPNT.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "MiraMon points layer memory destroyed");
+        CPLDebugOnly("MiraMon", "MiraMon points layer memory destroyed");
     }
 
     if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "Destroying MiraMon DBF table layer memory");
+        CPLDebugOnly("MiraMon", "Destroying MiraMon DBF table layer memory");
     }
     else
     {
-        MMCPLDebug("MiraMon", "Destroying MiraMon layer memory");
+        CPLDebugOnly("MiraMon", "Destroying MiraMon layer memory");
     }
 
     MMDestroyLayer(&hMiraMonLayerReadOrNonGeom);
     if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "MiraMon DBF table layer memory destroyed");
+        CPLDebugOnly("MiraMon", "MiraMon DBF table layer memory destroyed");
     }
     else
     {
-        MMCPLDebug("MiraMon", "MiraMon layer memory destroyed");
+        CPLDebugOnly("MiraMon", "MiraMon layer memory destroyed");
     }
 
     memset(&hMiraMonLayerReadOrNonGeom, 0, sizeof(hMiraMonLayerReadOrNonGeom));
@@ -715,9 +715,9 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
     memset(&hMiraMonLayerARC, 0, sizeof(hMiraMonLayerARC));
     memset(&hMiraMonLayerPOL, 0, sizeof(hMiraMonLayerPOL));
 
-    MMCPLDebug("MiraMon", "Destroying MiraMon temporary feature memory");
+    CPLDebugOnly("MiraMon", "Destroying MiraMon temporary feature memory");
     MMDestroyFeature(&hMMFeature);
-    MMCPLDebug("MiraMon", "MiraMon temporary feature memory");
+    CPLDebugOnly("MiraMon", "MiraMon temporary feature memory");
     memset(&hMMFeature, 0, sizeof(hMMFeature));
 
     /* -------------------------------------------------------------------- */
@@ -787,12 +787,12 @@ void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
     if (!phMiraMonLayer->pMultRecordIndex)
         return;
 
-    fseek_function(
-        phMiraMonLayer->pMMBDXP->pfDataBase,
-        phMiraMonLayer->pMultRecordIndex[iFID].offset +
-            (MM_FILE_OFFSET)nIRecord * phMiraMonLayer->pMMBDXP->BytesPerRecord +
-            phMiraMonLayer->pMMBDXP->pField[nIField].AccumulatedBytes,
-        SEEK_SET);
+    VSIFSeekL(phMiraMonLayer->pMMBDXP->pfDataBase,
+              phMiraMonLayer->pMultRecordIndex[iFID].offset +
+                  (MM_FILE_OFFSET)nIRecord *
+                      phMiraMonLayer->pMMBDXP->BytesPerRecord +
+                  phMiraMonLayer->pMMBDXP->pField[nIField].AccumulatedBytes,
+              SEEK_SET);
 }
 
 /****************************************************************************/
@@ -1110,10 +1110,10 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     {
                         GoToFieldOfMultipleRecord(nIElem, nIRecord, nIField);
 
-                        fread_function(phMiraMonLayer->szStringToOperate,
-                                       phMiraMonLayer->pMMBDXP->pField[nIField]
-                                           .BytesPerField,
-                                       1, phMiraMonLayer->pMMBDXP->pfDataBase);
+                        VSIFReadL(phMiraMonLayer->szStringToOperate,
+                                  phMiraMonLayer->pMMBDXP->pField[nIField]
+                                      .BytesPerField,
+                                  1, phMiraMonLayer->pMMBDXP->pfDataBase);
                         phMiraMonLayer
                             ->szStringToOperate[phMiraMonLayer->pMMBDXP
                                                     ->pField[nIField]
@@ -1173,10 +1173,10 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         memset(phMiraMonLayer->szStringToOperate, 0,
                                phMiraMonLayer->pMMBDXP->pField[nIField]
                                    .BytesPerField);
-                        fread_function(phMiraMonLayer->szStringToOperate,
-                                       phMiraMonLayer->pMMBDXP->pField[nIField]
-                                           .BytesPerField,
-                                       1, phMiraMonLayer->pMMBDXP->pfDataBase);
+                        VSIFReadL(phMiraMonLayer->szStringToOperate,
+                                  phMiraMonLayer->pMMBDXP->pField[nIField]
+                                      .BytesPerField,
+                                  1, phMiraMonLayer->pMMBDXP->pfDataBase);
                         phMiraMonLayer
                             ->szStringToOperate[phMiraMonLayer->pMMBDXP
                                                     ->pField[nIField]
@@ -1253,7 +1253,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                 memset(phMiraMonLayer->szStringToOperate, 0,
                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
-                fread_function(
+                VSIFReadL(
                     phMiraMonLayer->szStringToOperate,
                     phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField, 1,
                     phMiraMonLayer->pMMBDXP->pfDataBase);
@@ -1305,7 +1305,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     memset(
                         phMiraMonLayer->szStringToOperate, 0,
                         phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
-                    fread_function(
+                    VSIFReadL(
                         phMiraMonLayer->szStringToOperate,
                         phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField,
                         1, phMiraMonLayer->pMMBDXP->pfDataBase);
@@ -1362,7 +1362,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     memset(
                         phMiraMonLayer->szStringToOperate, 0,
                         phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
-                    fread_function(
+                    VSIFReadL(
                         phMiraMonLayer->szStringToOperate,
                         phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField,
                         1, phMiraMonLayer->pMMBDXP->pfDataBase);
@@ -1432,7 +1432,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                 memset(phMiraMonLayer->szStringToOperate, 0,
                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
-                fread_function(
+                VSIFReadL(
                     phMiraMonLayer->szStringToOperate,
                     phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField, 1,
                     phMiraMonLayer->pMMBDXP->pfDataBase);
@@ -1513,7 +1513,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                 memset(phMiraMonLayer->szStringToOperate, 0,
                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
-                fread_function(
+                VSIFReadL(
                     phMiraMonLayer->szStringToOperate,
                     phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField, 1,
                     phMiraMonLayer->pMMBDXP->pfDataBase);
@@ -2275,8 +2275,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             nRealNumRecords = nNumRecords = CSLCount(papszValues);
             if (nNumRecords == 0)
                 nNumRecords++;
-            hMMFeature.nNumMRecords =
-                max_function(hMMFeature.nNumMRecords, nNumRecords);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, nNumRecords);
             if (MMResizeMiraMonRecord(
                     &hMMFeature.pRecords, &hMMFeature.nMaxMRecords,
                     hMMFeature.nNumMRecords, MM_INC_NUMBER_OF_RECORDS,
@@ -2349,8 +2348,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             nRealNumRecords = nNumRecords = nCount;
             if (nNumRecords == 0)
                 nNumRecords++;
-            hMMFeature.nNumMRecords =
-                max_function(hMMFeature.nNumMRecords, nNumRecords);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, nNumRecords);
             if (MMResizeMiraMonRecord(
                     &hMMFeature.pRecords, &hMMFeature.nMaxMRecords,
                     hMMFeature.nNumMRecords, MM_INC_NUMBER_OF_RECORDS,
@@ -2430,8 +2428,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             nRealNumRecords = nNumRecords = nCount;
             if (nNumRecords == 0)
                 nNumRecords++;
-            hMMFeature.nNumMRecords =
-                max_function(hMMFeature.nNumMRecords, nNumRecords);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, nNumRecords);
             if (MMResizeMiraMonRecord(
                     &hMMFeature.pRecords, &hMMFeature.nMaxMRecords,
                     hMMFeature.nNumMRecords, MM_INC_NUMBER_OF_RECORDS,
@@ -2483,8 +2480,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             nRealNumRecords = nNumRecords = nCount;
             if (nNumRecords == 0)
                 nNumRecords++;
-            hMMFeature.nNumMRecords =
-                max_function(hMMFeature.nNumMRecords, nNumRecords);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, nNumRecords);
             if (MMResizeMiraMonRecord(
                     &hMMFeature.pRecords, &hMMFeature.nMaxMRecords,
                     hMMFeature.nNumMRecords, MM_INC_NUMBER_OF_RECORDS,
@@ -2530,7 +2526,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTString)
         {
-            hMMFeature.nNumMRecords = max_function(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2578,7 +2574,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         {
             char szDate[15];
 
-            hMMFeature.nNumMRecords = max_function(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2609,7 +2605,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTTime || eFType == OFTDateTime)
         {
-            hMMFeature.nNumMRecords = max_function(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2634,7 +2630,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTInteger)
         {
-            hMMFeature.nNumMRecords = max_function(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2689,7 +2685,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTInteger64)
         {
-            hMMFeature.nNumMRecords = max_function(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2715,7 +2711,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTReal)
         {
-            hMMFeature.nNumMRecords = max_function(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,

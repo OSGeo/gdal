@@ -15,26 +15,15 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifdef GDAL_COMPILATION
 #include "ogr_api.h"            // For CPL_C_START
 #include "mm_gdal_functions.h"  // For CPLStrlcpy()
-#include "mm_wrlayr.h"          // For calloc_function()...
-#else
-#include "CmptCmp.h"
-#include "mm_gdal\mm_gdal_functions.h"  // For CPLStrlcpy()
-#include "mm_gdal\mm_wrlayr.h"          // For calloc_function()...
-#endif                                  // GDAL_COMPILATION
+#include "mm_wrlayr.h"          // For VSIFCloseL()...
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
 
-#ifdef GDAL_COMPILATION
 CPL_C_START              // Necessary for compiling in GDAL project
 #include "cpl_string.h"  // For CPL_ENC_UTF8
-#else
-#ifdef _WIN64
-#include "gdal\release-1911-x64\cpl_string.h"  // For CPL_ENC_UTF8
-#else
-#include "gdal\release-1911-32\cpl_string.h"  // For CPL_ENC_UTF8
-#endif
-#endif
 
     char szInternalGraphicIdentifierEng[MM_MAX_IDENTIFIER_SIZE];
 char szInternalGraphicIdentifierCat[MM_MAX_IDENTIFIER_SIZE];
@@ -172,11 +161,11 @@ const char *MM_pszLogFilename = nullptr;
 static const char MM_EmptyString[] = {""};
 #define MM_SetEndOfString (*MM_EmptyString)
 
-void fclose_and_nullify(FILE_TYPE **pFunc)
+void fclose_and_nullify(VSILFILE **pFunc)
 {
     if (!pFunc || !(*pFunc))
         return;
-    fclose_function(*pFunc);
+    VSIFCloseL(*pFunc);
     *pFunc = nullptr;
 }
 
@@ -200,8 +189,8 @@ struct MM_FIELD *MM_CreateAllFields(MM_EXT_DBF_N_FIELDS nFields)
     // too large memory allocation attempts with corrupted datasets
     if (nFields > MM_ACCEPTABLE_NUMBER_OF_FIELDS)
     {
-        MMCPLError(CE_Failure, CPLE_OutOfMemory,
-                   "More than 20000 fields not accepted");
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "More than 20000 fields not accepted");
         return nullptr;
     }
 
@@ -213,7 +202,7 @@ struct MM_FIELD *MM_CreateAllFields(MM_EXT_DBF_N_FIELDS nFields)
         return nullptr;
 #endif
 
-    if ((camp = calloc_function(nFields * sizeof(*camp))) == nullptr)
+    if ((camp = VSICalloc(nFields, sizeof(*camp))) == nullptr)
         return nullptr;
 
     for (i = 0; i < nFields; i++)
@@ -225,8 +214,8 @@ static struct MM_DATA_BASE_XP *MM_CreateEmptyHeader(MM_EXT_DBF_N_FIELDS nFields)
 {
     struct MM_DATA_BASE_XP *data_base_XP;
 
-    if ((data_base_XP = (struct MM_DATA_BASE_XP *)calloc_function(
-             sizeof(struct MM_DATA_BASE_XP))) == nullptr)
+    if ((data_base_XP = (struct MM_DATA_BASE_XP *)VSICalloc(
+             1, sizeof(struct MM_DATA_BASE_XP))) == nullptr)
         return nullptr;
 
     if (nFields == 0)
@@ -238,7 +227,7 @@ static struct MM_DATA_BASE_XP *MM_CreateEmptyHeader(MM_EXT_DBF_N_FIELDS nFields)
         data_base_XP->pField = (struct MM_FIELD *)MM_CreateAllFields(nFields);
         if (!data_base_XP->pField)
         {
-            free_function(data_base_XP);
+            VSIFree(data_base_XP);
             return nullptr;
         }
     }
@@ -549,7 +538,7 @@ static char *MM_GiveNewStringWithCharacterInFront(const char *text,
         return nullptr;
 
     i = strlen(text);
-    if ((ptr = calloc_function(i + 2)) == nullptr)
+    if ((ptr = VSICalloc(1, i + 2)) == nullptr)
         return nullptr;
 
     *ptr = character;
@@ -567,7 +556,7 @@ static char *MM_SetSubIndexFieldNam(const char *nom_camp,
     size_t sizet_subindex;
     size_t sizet_nomcamp;
 
-    NomCamp_SubIndex = calloc_function(ampladamax);
+    NomCamp_SubIndex = VSICalloc(1, ampladamax);
     if (!NomCamp_SubIndex)
         return nullptr;
 
@@ -579,7 +568,7 @@ static char *MM_SetSubIndexFieldNam(const char *nom_camp,
     _subindex = MM_GiveNewStringWithCharacterInFront(subindex, '_');
     if (!_subindex)
     {
-        free_function(NomCamp_SubIndex);
+        VSIFree(NomCamp_SubIndex);
         return nullptr;
     }
 
@@ -592,7 +581,7 @@ static char *MM_SetSubIndexFieldNam(const char *nom_camp,
     else
         NomCamp_SubIndex = strcat(NomCamp_SubIndex, _subindex);
 
-    free_function(_subindex);
+    VSIFree(_subindex);
 
     return NomCamp_SubIndex;
 }
@@ -614,8 +603,8 @@ int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
         return 0;
 
     // Updating number of features in features table
-    fseek_function(MMAdmDB->pMMBDXP->pfDataBase, MM_FIRST_OFFSET_to_N_RECORDS,
-                   SEEK_SET);
+    VSIFSeekL(MMAdmDB->pMMBDXP->pfDataBase, MM_FIRST_OFFSET_to_N_RECORDS,
+              SEEK_SET);
 
     if (MMAdmDB->pMMBDXP->nRecords > UINT32_MAX)
     {
@@ -629,31 +618,31 @@ int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
     {
         GUInt32 nRecords32LowBits =
             (GUInt32)(MMAdmDB->pMMBDXP->nRecords & UINT32_MAX);
-        if (fwrite_function(&nRecords32LowBits, 4, 1,
-                            MMAdmDB->pMMBDXP->pfDataBase) != 1)
+        if (VSIFWriteL(&nRecords32LowBits, 4, 1,
+                       MMAdmDB->pMMBDXP->pfDataBase) != 1)
             return 1;
     }
 
-    fseek_function(MMAdmDB->pMMBDXP->pfDataBase, MM_SECOND_OFFSET_to_N_RECORDS,
-                   SEEK_SET);
+    VSIFSeekL(MMAdmDB->pMMBDXP->pfDataBase, MM_SECOND_OFFSET_to_N_RECORDS,
+              SEEK_SET);
     if (MMAdmDB->pMMBDXP->dbf_version == MM_MARCA_VERSIO_1_DBF_ESTESA)
     {
         /* from 16 to 19, position MM_SECOND_OFFSET_to_N_RECORDS */
         GUInt32 nRecords32HighBits =
             (GUInt32)(MMAdmDB->pMMBDXP->nRecords >> 32);
-        if (fwrite_function(&nRecords32HighBits, 4, 1,
-                            MMAdmDB->pMMBDXP->pfDataBase) != 1)
+        if (VSIFWriteL(&nRecords32HighBits, 4, 1,
+                       MMAdmDB->pMMBDXP->pfDataBase) != 1)
             return 1;
 
         /* from 20 to 27 */
-        if (fwrite_function(&(MMAdmDB->pMMBDXP->dbf_on_a_LAN), 8, 1,
-                            MMAdmDB->pMMBDXP->pfDataBase) != 1)
+        if (VSIFWriteL(&(MMAdmDB->pMMBDXP->dbf_on_a_LAN), 8, 1,
+                       MMAdmDB->pMMBDXP->pfDataBase) != 1)
             return 1;
     }
     else
     {
-        if (fwrite_function(&(MMAdmDB->pMMBDXP->dbf_on_a_LAN), 12, 1,
-                            MMAdmDB->pMMBDXP->pfDataBase) != 1)
+        if (VSIFWriteL(&(MMAdmDB->pMMBDXP->dbf_on_a_LAN), 12, 1,
+                       MMAdmDB->pMMBDXP->pfDataBase) != 1)
             return 1;
     }
 
@@ -682,9 +671,9 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
         strcpy(ModeLectura_previ, data_base_XP->ReadingMode);
         strcpy(data_base_XP->ReadingMode, "wb+");
 
-        if ((data_base_XP->pfDataBase =
-                 fopen_function(data_base_XP->szFileName,
-                                data_base_XP->ReadingMode)) == nullptr)
+        if ((data_base_XP->pfDataBase = VSIFOpenL(data_base_XP->szFileName,
+                                                  data_base_XP->ReadingMode)) ==
+            nullptr)
         {
             return FALSE;
         }
@@ -692,7 +681,7 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     else
     {
         // If it's open we just update the header
-        fseek_function(data_base_XP->pfDataBase, 0, SEEK_SET);
+        VSIFSeekL(data_base_XP->pfDataBase, 0, SEEK_SET);
     }
 
     if ((data_base_XP->nFields) > MM_MAX_N_CAMPS_DBF_CLASSICA)
@@ -722,36 +711,34 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     }
 
     // Writing header
-    fseek_function(data_base_XP->pfDataBase, 0, SEEK_SET);
+    VSIFSeekL(data_base_XP->pfDataBase, 0, SEEK_SET);
 
     /* Byte 0 */
-    if (fwrite_function(&(data_base_XP->dbf_version), 1, 1,
-                        data_base_XP->pfDataBase) != 1)
+    if (VSIFWriteL(&(data_base_XP->dbf_version), 1, 1,
+                   data_base_XP->pfDataBase) != 1)
     {
-        fclose_function(data_base_XP->pfDataBase);
+        VSIFCloseL(data_base_XP->pfDataBase);
         data_base_XP->pfDataBase = nullptr;
         return FALSE;
     }
 
     /* MM_BYTE from 1 to 3 */
     variable_byte = (MM_BYTE)(data_base_XP->year - 1900);
-    if (fwrite_function(&variable_byte, 1, 1, data_base_XP->pfDataBase) != 1)
+    if (VSIFWriteL(&variable_byte, 1, 1, data_base_XP->pfDataBase) != 1)
     {
-        fclose_function(data_base_XP->pfDataBase);
+        VSIFCloseL(data_base_XP->pfDataBase);
         data_base_XP->pfDataBase = nullptr;
         return FALSE;
     }
-    if (fwrite_function(&(data_base_XP->month), 1, 1,
-                        data_base_XP->pfDataBase) != 1)
+    if (VSIFWriteL(&(data_base_XP->month), 1, 1, data_base_XP->pfDataBase) != 1)
     {
-        fclose_function(data_base_XP->pfDataBase);
+        VSIFCloseL(data_base_XP->pfDataBase);
         data_base_XP->pfDataBase = nullptr;
         return FALSE;
     }
-    if (fwrite_function(&(data_base_XP->day), 1, 1, data_base_XP->pfDataBase) !=
-        1)
+    if (VSIFWriteL(&(data_base_XP->day), 1, 1, data_base_XP->pfDataBase) != 1)
     {
-        fclose_function(data_base_XP->pfDataBase);
+        VSIFCloseL(data_base_XP->pfDataBase);
         data_base_XP->pfDataBase = nullptr;
         return FALSE;
     }
@@ -760,31 +747,30 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     {
         GUInt32 nRecords32LowBits =
             (GUInt32)(data_base_XP->nRecords & UINT32_MAX);
-        if (fwrite_function(&nRecords32LowBits, 4, 1,
-                            data_base_XP->pfDataBase) != 1)
+        if (VSIFWriteL(&nRecords32LowBits, 4, 1, data_base_XP->pfDataBase) != 1)
         {
-            fclose_function(data_base_XP->pfDataBase);
+            VSIFCloseL(data_base_XP->pfDataBase);
             data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
     }
 
     /* from 8 a 9, position MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA */
-    if (fwrite_function(&(data_base_XP->FirstRecordOffset), 2, 1,
-                        data_base_XP->pfDataBase) != 1)
+    if (VSIFWriteL(&(data_base_XP->FirstRecordOffset), 2, 1,
+                   data_base_XP->pfDataBase) != 1)
     {
-        fclose_function(data_base_XP->pfDataBase);
+        VSIFCloseL(data_base_XP->pfDataBase);
         data_base_XP->pfDataBase = nullptr;
         return FALSE;
     }
     /* from 10 to 11, & from 12 to 13 */
     if (MM_ES_DBF_ESTESA(data_base_XP->dbf_version))
     {
-        if (fwrite_function(&(data_base_XP->BytesPerRecord),
-                            sizeof(MM_ACCUMULATED_BYTES_TYPE_DBF), 1,
-                            data_base_XP->pfDataBase) != 1)
+        if (VSIFWriteL(&(data_base_XP->BytesPerRecord),
+                       sizeof(MM_ACCUMULATED_BYTES_TYPE_DBF), 1,
+                       data_base_XP->pfDataBase) != 1)
         {
-            fclose_function(data_base_XP->pfDataBase);
+            VSIFCloseL(data_base_XP->pfDataBase);
             data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
@@ -792,35 +778,35 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     else
     {
         /* from 10 to 11 */
-        if (fwrite_function(&(data_base_XP->BytesPerRecord), 2, 1,
-                            data_base_XP->pfDataBase) != 1)
+        if (VSIFWriteL(&(data_base_XP->BytesPerRecord), 2, 1,
+                       data_base_XP->pfDataBase) != 1)
         {
-            fclose_function(data_base_XP->pfDataBase);
+            VSIFCloseL(data_base_XP->pfDataBase);
             data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
         /* from 12 to 13 */
-        if (fwrite_function(&(data_base_XP->reserved_1), 2, 1,
-                            data_base_XP->pfDataBase) != 1)
+        if (VSIFWriteL(&(data_base_XP->reserved_1), 2, 1,
+                       data_base_XP->pfDataBase) != 1)
         {
-            fclose_function(data_base_XP->pfDataBase);
+            VSIFCloseL(data_base_XP->pfDataBase);
             data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
     }
     /* byte 14 */
-    if (fwrite_function(&(data_base_XP->transaction_flag), 1, 1,
-                        data_base_XP->pfDataBase) != 1)
+    if (VSIFWriteL(&(data_base_XP->transaction_flag), 1, 1,
+                   data_base_XP->pfDataBase) != 1)
     {
-        fclose_function(data_base_XP->pfDataBase);
+        VSIFCloseL(data_base_XP->pfDataBase);
         data_base_XP->pfDataBase = nullptr;
         return FALSE;
     }
     /* byte 15 */
-    if (fwrite_function(&(data_base_XP->encryption_flag), 1, 1,
-                        data_base_XP->pfDataBase) != 1)
+    if (VSIFWriteL(&(data_base_XP->encryption_flag), 1, 1,
+                   data_base_XP->pfDataBase) != 1)
     {
-        fclose_function(data_base_XP->pfDataBase);
+        VSIFCloseL(data_base_XP->pfDataBase);
         data_base_XP->pfDataBase = nullptr;
         return FALSE;
     }
@@ -830,19 +816,19 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     {
         /* from 16 to 19, position MM_SECOND_OFFSET_to_N_RECORDS */
         GUInt32 nRecords32HighBits = (GUInt32)(data_base_XP->nRecords >> 32);
-        if (fwrite_function(&nRecords32HighBits, 4, 1,
-                            data_base_XP->pfDataBase) != 1)
+        if (VSIFWriteL(&nRecords32HighBits, 4, 1, data_base_XP->pfDataBase) !=
+            1)
         {
-            fclose_function(data_base_XP->pfDataBase);
+            VSIFCloseL(data_base_XP->pfDataBase);
             data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
 
         /* from 20 to 27 */
-        if (fwrite_function(&(data_base_XP->dbf_on_a_LAN), 8, 1,
-                            data_base_XP->pfDataBase) != 1)
+        if (VSIFWriteL(&(data_base_XP->dbf_on_a_LAN), 8, 1,
+                       data_base_XP->pfDataBase) != 1)
         {
-            fclose_function(data_base_XP->pfDataBase);
+            VSIFCloseL(data_base_XP->pfDataBase);
             data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
@@ -850,28 +836,28 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     else
     {
         /* from 16 to 27 */
-        if (fwrite_function(&(data_base_XP->dbf_on_a_LAN), 12, 1,
-                            data_base_XP->pfDataBase) != 1)
+        if (VSIFWriteL(&(data_base_XP->dbf_on_a_LAN), 12, 1,
+                       data_base_XP->pfDataBase) != 1)
         {
-            fclose_function(data_base_XP->pfDataBase);
+            VSIFCloseL(data_base_XP->pfDataBase);
             data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
     }
     /* byte 28 */
-    if (fwrite_function(&(data_base_XP->MDX_flag), 1, 1,
-                        data_base_XP->pfDataBase) != 1)
+    if (VSIFWriteL(&(data_base_XP->MDX_flag), 1, 1, data_base_XP->pfDataBase) !=
+        1)
     {
-        fclose_function(data_base_XP->pfDataBase);
+        VSIFCloseL(data_base_XP->pfDataBase);
         data_base_XP->pfDataBase = nullptr;
         return FALSE;
     }
 
     /* Byte 29 */
-    if (fwrite_function(&(data_base_XP->CharSet), 1, 1,
-                        data_base_XP->pfDataBase) != 1)
+    if (VSIFWriteL(&(data_base_XP->CharSet), 1, 1, data_base_XP->pfDataBase) !=
+        1)
     {
-        fclose_function(data_base_XP->pfDataBase);
+        VSIFCloseL(data_base_XP->pfDataBase);
         data_base_XP->pfDataBase = nullptr;
         return FALSE;
     }
@@ -879,20 +865,20 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     /* Bytes from 30 to 31, in position MM_SEGON_OFFSET_a_OFFSET_1a_FITXA */
     if (MM_ES_DBF_ESTESA(data_base_XP->dbf_version))
     {
-        if (fwrite_function(((char *)&(data_base_XP->FirstRecordOffset)) + 2, 2,
-                            1, data_base_XP->pfDataBase) != 1)
+        if (VSIFWriteL(((char *)&(data_base_XP->FirstRecordOffset)) + 2, 2, 1,
+                       data_base_XP->pfDataBase) != 1)
         {
-            fclose_function(data_base_XP->pfDataBase);
+            VSIFCloseL(data_base_XP->pfDataBase);
             data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
     }
     else
     {
-        if (fwrite_function(&(data_base_XP->reserved_2), 2, 1,
-                            data_base_XP->pfDataBase) != 1)
+        if (VSIFWriteL(&(data_base_XP->reserved_2), 2, 1,
+                       data_base_XP->pfDataBase) != 1)
         {
-            fclose_function(data_base_XP->pfDataBase);
+            VSIFCloseL(data_base_XP->pfDataBase);
             data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
@@ -911,11 +897,11 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
         {
             j = (short)strlen(data_base_XP->pField[i].FieldName);
 
-            retorn_fwrite = fwrite_function(&data_base_XP->pField[i].FieldName,
-                                            1, j, data_base_XP->pfDataBase);
+            retorn_fwrite = VSIFWriteL(&data_base_XP->pField[i].FieldName, 1, j,
+                                       data_base_XP->pfDataBase);
             if (retorn_fwrite != (size_t)j)
             {
-                fclose_function(data_base_XP->pfDataBase);
+                VSIFCloseL(data_base_XP->pfDataBase);
                 data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
@@ -947,7 +933,7 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
                                    TRUE &&
                                j < data_base_XP->nFields)
                         {
-                            free_function(c);
+                            VSIFree(c);
                             c = MM_SetSubIndexFieldNam(
                                 nom_temp, ++j,
                                 MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF);
@@ -959,7 +945,7 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
                                 c,
                                 sizeof(data_base_XP->pField[i]
                                            .ClassicalDBFFieldName));
-                            free_function(c);
+                            VSIFree(c);
                         }
                     }
                 }
@@ -974,11 +960,11 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             j = (short)strlen(data_base_XP->pField[i].ClassicalDBFFieldName);
 
             retorn_fwrite =
-                fwrite_function(&data_base_XP->pField[i].ClassicalDBFFieldName,
-                                1, j, data_base_XP->pfDataBase);
+                VSIFWriteL(&data_base_XP->pField[i].ClassicalDBFFieldName, 1, j,
+                           data_base_XP->pfDataBase);
             if (retorn_fwrite != (size_t)j)
             {
-                fclose_function(data_base_XP->pfDataBase);
+                VSIFCloseL(data_base_XP->pfDataBase);
                 data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
@@ -990,31 +976,31 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
         }
         else
         {
-            fclose_function(data_base_XP->pfDataBase);
+            VSIFCloseL(data_base_XP->pfDataBase);
             data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
 
-        if (fwrite_function(zero, 1, 11 - j, data_base_XP->pfDataBase) !=
+        if (VSIFWriteL(zero, 1, 11 - j, data_base_XP->pfDataBase) !=
             11 - (size_t)j)
         {
-            fclose_function(data_base_XP->pfDataBase);
+            VSIFCloseL(data_base_XP->pfDataBase);
             data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
         /* Byte 11, Field type */
-        if (fwrite_function(&data_base_XP->pField[i].FieldType, 1, 1,
-                            data_base_XP->pfDataBase) != 1)
+        if (VSIFWriteL(&data_base_XP->pField[i].FieldType, 1, 1,
+                       data_base_XP->pfDataBase) != 1)
         {
-            fclose_function(data_base_XP->pfDataBase);
+            VSIFCloseL(data_base_XP->pfDataBase);
             data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
         /* Bytes 12 to 15 --> Reserved */
-        if (fwrite_function(&data_base_XP->pField[i].reserved_1, 4, 1,
-                            data_base_XP->pfDataBase) != 1)
+        if (VSIFWriteL(&data_base_XP->pField[i].reserved_1, 4, 1,
+                       data_base_XP->pfDataBase) != 1)
         {
-            fclose_function(data_base_XP->pfDataBase);
+            VSIFCloseL(data_base_XP->pfDataBase);
             data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
@@ -1022,20 +1008,20 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
         if (MM_ES_DBF_ESTESA(data_base_XP->dbf_version) &&
             data_base_XP->pField[i].FieldType == 'C')
         {
-            if (fwrite_function((void *)&byte_zero, 1, 1,
-                                data_base_XP->pfDataBase) != 1)
+            if (VSIFWriteL((void *)&byte_zero, 1, 1,
+                           data_base_XP->pfDataBase) != 1)
             {
-                fclose_function(data_base_XP->pfDataBase);
+                VSIFCloseL(data_base_XP->pfDataBase);
                 data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
         }
         else
         {
-            if (fwrite_function(&data_base_XP->pField[i].BytesPerField, 1, 1,
-                                data_base_XP->pfDataBase) != 1)
+            if (VSIFWriteL(&data_base_XP->pField[i].BytesPerField, 1, 1,
+                           data_base_XP->pfDataBase) != 1)
             {
-                fclose_function(data_base_XP->pfDataBase);
+                VSIFCloseL(data_base_XP->pfDataBase);
                 data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
@@ -1044,19 +1030,19 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
         if (data_base_XP->pField[i].FieldType == 'N' ||
             data_base_XP->pField[i].FieldType == 'F')
         {
-            if (fwrite_function(&data_base_XP->pField[i].DecimalsIfFloat, 1, 1,
-                                data_base_XP->pfDataBase) != 1)
+            if (VSIFWriteL(&data_base_XP->pField[i].DecimalsIfFloat, 1, 1,
+                           data_base_XP->pfDataBase) != 1)
             {
-                fclose_function(data_base_XP->pfDataBase);
+                VSIFCloseL(data_base_XP->pfDataBase);
                 data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
         }
         else
         {
-            if (fwrite_function(zero, 1, 1, data_base_XP->pfDataBase) != 1)
+            if (VSIFWriteL(zero, 1, 1, data_base_XP->pfDataBase) != 1)
             {
-                fclose_function(data_base_XP->pfDataBase);
+                VSIFCloseL(data_base_XP->pfDataBase);
                 data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
@@ -1065,29 +1051,29 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             data_base_XP->pField[i].FieldType == 'C')
         {
             /* Bytes from 18 to 20 --> Reserved */
-            if (fwrite_function(&data_base_XP->pField[i].reserved_2,
-                                20 - 18 + 1, 1, data_base_XP->pfDataBase) != 1)
+            if (VSIFWriteL(&data_base_XP->pField[i].reserved_2, 20 - 18 + 1, 1,
+                           data_base_XP->pfDataBase) != 1)
             {
-                fclose_function(data_base_XP->pfDataBase);
+                VSIFCloseL(data_base_XP->pfDataBase);
                 data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
             /* Bytes from 21 to 24 --> OFFSET_BYTESxCAMP_CAMP_ESPECIAL, special fields, like C
                                     in extended DBF */
-            if (fwrite_function(&data_base_XP->pField[i].BytesPerField,
-                                sizeof(MM_BYTES_PER_FIELD_TYPE_DBF), 1,
-                                data_base_XP->pfDataBase) != 1)
+            if (VSIFWriteL(&data_base_XP->pField[i].BytesPerField,
+                           sizeof(MM_BYTES_PER_FIELD_TYPE_DBF), 1,
+                           data_base_XP->pfDataBase) != 1)
             {
-                fclose_function(data_base_XP->pfDataBase);
+                VSIFCloseL(data_base_XP->pfDataBase);
                 data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
 
             /* Bytes from 25 to 30 --> Reserved */
-            if (fwrite_function(&data_base_XP->pField[i].reserved_2[25 - 18],
-                                30 - 25 + 1, 1, data_base_XP->pfDataBase) != 1)
+            if (VSIFWriteL(&data_base_XP->pField[i].reserved_2[25 - 18],
+                           30 - 25 + 1, 1, data_base_XP->pfDataBase) != 1)
             {
-                fclose_function(data_base_XP->pfDataBase);
+                VSIFCloseL(data_base_XP->pfDataBase);
                 data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
@@ -1099,35 +1085,35 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
                        MM_OFFSET_RESERVAT2_BYTESxCAMP_CAMP_ESPECIAL,
                    '\0', 4);
             /* Bytes from 18 to 30 --> Reserved */
-            if (fwrite_function(&data_base_XP->pField[i].reserved_2, 13, 1,
-                                data_base_XP->pfDataBase) != 1)
+            if (VSIFWriteL(&data_base_XP->pField[i].reserved_2, 13, 1,
+                           data_base_XP->pfDataBase) != 1)
             {
-                fclose_function(data_base_XP->pfDataBase);
+                VSIFCloseL(data_base_XP->pfDataBase);
                 data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
         }
         /* Byte 31 --> MDX flag.    */
-        if (fwrite_function(&data_base_XP->pField[i].MDX_field_flag, 1, 1,
-                            data_base_XP->pfDataBase) != 1)
+        if (VSIFWriteL(&data_base_XP->pField[i].MDX_field_flag, 1, 1,
+                       data_base_XP->pfDataBase) != 1)
         {
-            fclose_function(data_base_XP->pfDataBase);
+            VSIFCloseL(data_base_XP->pfDataBase);
             data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
     }
 
     variable_byte = 13;
-    if (fwrite_function(&variable_byte, 1, 1, data_base_XP->pfDataBase) != 1)
+    if (VSIFWriteL(&variable_byte, 1, 1, data_base_XP->pfDataBase) != 1)
     {
-        fclose_function(data_base_XP->pfDataBase);
+        VSIFCloseL(data_base_XP->pfDataBase);
         data_base_XP->pfDataBase = nullptr;
         return FALSE;
     }
 
     if (data_base_XP->FirstRecordOffset != bytes_acumulats)
     {
-        fclose_function(data_base_XP->pfDataBase);
+        VSIFCloseL(data_base_XP->pfDataBase);
         data_base_XP->pfDataBase = nullptr;
         return FALSE;
     }
@@ -1142,17 +1128,17 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
                 MM_GiveOffsetExtendedFieldName(data_base_XP->pField + i);
             name_size = MM_DonaBytesNomEstesCamp(data_base_XP->pField + i);
 
-            fseek_function(data_base_XP->pfDataBase, bytes_acumulats, SEEK_SET);
+            VSIFSeekL(data_base_XP->pfDataBase, bytes_acumulats, SEEK_SET);
 
             strcpy(nom_camp, data_base_XP->pField[i].FieldName);
             //CanviaJocCaracPerEscriureDBF(nom_camp, JocCaracDBFaMM(data_base_XP->CharSet, ParMM.JocCaracDBFPerDefecte));
 
-            retorn_fwrite = fwrite_function(nom_camp, 1, name_size,
-                                            data_base_XP->pfDataBase);
+            retorn_fwrite =
+                VSIFWriteL(nom_camp, 1, name_size, data_base_XP->pfDataBase);
 
             if (retorn_fwrite != (size_t)name_size)
             {
-                fclose_function(data_base_XP->pfDataBase);
+                VSIFCloseL(data_base_XP->pfDataBase);
                 data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
@@ -1174,25 +1160,13 @@ MM_BOOLEAN MM_CreateAndOpenDBFFile(struct MM_DATA_BASE_XP *bd_xp,
 
     // Setting the current date
     currentTime = time(nullptr);
-#ifdef GDAL_COMPILATION
-    {
-        struct tm ltime;
-        VSILocalTime(&currentTime, &ltime);
 
-        bd_xp->year = (short int)(ltime.tm_year + 1900);
-        bd_xp->month = (MM_BYTE)(ltime.tm_mon + 1);
-        bd_xp->day = (MM_BYTE)ltime.tm_mday;
-    }
-#else
-    {
-        struct tm *pLocalTime;
-        pLocalTime = localtime(&currentTime);
+    struct tm ltime;
+    VSILocalTime(&currentTime, &ltime);
 
-        bd_xp->year = pLocalTime->tm_year + 1900;
-        bd_xp->month = pLocalTime->tm_mon + 1;
-        bd_xp->day = pLocalTime->tm_mday;
-    }
-#endif
+    bd_xp->year = (short int)(ltime.tm_year + 1900);
+    bd_xp->month = (MM_BYTE)(ltime.tm_mon + 1);
+    bd_xp->day = (MM_BYTE)ltime.tm_mday;
 
     CPLStrlcpy(bd_xp->szFileName, NomFitxer, sizeof(bd_xp->szFileName));
     return MM_OpenIfNeededAndUpdateEntireHeader(bd_xp);
@@ -1213,12 +1187,12 @@ void MM_ReleaseMainFields(struct MM_DATA_BASE_XP *data_base_XP)
                 szChain = data_base_XP->pField[i].Separator;
                 if (szChain[j])
                 {
-                    free_function(szChain[j]);
+                    VSIFree(szChain[j]);
                     szChain[j] = nullptr;
                 }
             }
         }
-        free_function(data_base_XP->pField);
+        VSIFree(data_base_XP->pField);
         data_base_XP->pField = nullptr;
         data_base_XP->nFields = 0;
     }
@@ -1232,7 +1206,7 @@ int MM_ReadExtendedDBFHeaderFromFile(const char *szFileName,
                                      const char *pszRelFile)
 {
     MM_BYTE variable_byte;
-    FILE_TYPE *pf;
+    VSILFILE *pf;
     unsigned short int two_bytes;
     MM_EXT_DBF_N_FIELDS nIField;
     uint16_t offset_primera_fitxa;
@@ -1256,32 +1230,32 @@ int MM_ReadExtendedDBFHeaderFromFile(const char *szFileName,
     CPLStrlcpy(pMMBDXP->szFileName, szFileName, sizeof(pMMBDXP->szFileName));
     strcpy(pMMBDXP->ReadingMode, "rb");
 
-    if ((pMMBDXP->pfDataBase = fopen_function(pMMBDXP->szFileName,
-                                              pMMBDXP->ReadingMode)) == nullptr)
+    if ((pMMBDXP->pfDataBase =
+             VSIFOpenL(pMMBDXP->szFileName, pMMBDXP->ReadingMode)) == nullptr)
         return 1;
 
     pf = pMMBDXP->pfDataBase;
 
-    fseek_function(pf, 0, SEEK_SET);
+    VSIFSeekL(pf, 0, SEEK_SET);
     /* ====== Header reading (32 bytes) =================== */
     offset_primera_fitxa = 0;
 
-    if (1 != fread_function(&(pMMBDXP->dbf_version), 1, 1, pf) ||
-        1 != fread_function(&variable_byte, 1, 1, pf) ||
-        1 != fread_function(&(pMMBDXP->month), 1, 1, pf) ||
-        1 != fread_function(&(pMMBDXP->day), 1, 1, pf))
+    if (1 != VSIFReadL(&(pMMBDXP->dbf_version), 1, 1, pf) ||
+        1 != VSIFReadL(&variable_byte, 1, 1, pf) ||
+        1 != VSIFReadL(&(pMMBDXP->month), 1, 1, pf) ||
+        1 != VSIFReadL(&(pMMBDXP->day), 1, 1, pf))
     {
         fclose_and_nullify(&pMMBDXP->pfDataBase);
         return 1;
     }
 
-    if (1 != fread_function(&nRecords32LowBits, 4, 1, pf))
+    if (1 != VSIFReadL(&nRecords32LowBits, 4, 1, pf))
     {
         fclose_and_nullify(&pMMBDXP->pfDataBase);
         return 1;
     }
 
-    if (1 != fread_function(&offset_primera_fitxa, 2, 1, pf))
+    if (1 != VSIFReadL(&offset_primera_fitxa, 2, 1, pf))
     {
         fclose_and_nullify(&pMMBDXP->pfDataBase);
         return 1;
@@ -1299,15 +1273,15 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
         }
     }
     else
-        offset_reintent = ftell_function(pf);
+        offset_reintent = VSIFTellL(pf);
 
-    if (1 != fread_function(&two_bytes, 2, 1, pf) ||
-        1 != fread_function(&(pMMBDXP->reserved_1), 2, 1, pf) ||
-        1 != fread_function(&(pMMBDXP->transaction_flag), 1, 1, pf) ||
-        1 != fread_function(&(pMMBDXP->encryption_flag), 1, 1, pf) ||
-        1 != fread_function(&(pMMBDXP->dbf_on_a_LAN), 12, 1, pf))
+    if (1 != VSIFReadL(&two_bytes, 2, 1, pf) ||
+        1 != VSIFReadL(&(pMMBDXP->reserved_1), 2, 1, pf) ||
+        1 != VSIFReadL(&(pMMBDXP->transaction_flag), 1, 1, pf) ||
+        1 != VSIFReadL(&(pMMBDXP->encryption_flag), 1, 1, pf) ||
+        1 != VSIFReadL(&(pMMBDXP->dbf_on_a_LAN), 12, 1, pf))
     {
-        free_function(pMMBDXP->pField);
+        VSIFree(pMMBDXP->pField);
         pMMBDXP->pField = nullptr;
         pMMBDXP->nFields = 0;
         fclose_and_nullify(&pMMBDXP->pfDataBase);
@@ -1330,11 +1304,11 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
     else
         pMMBDXP->nRecords = nRecords32LowBits;
 
-    if (1 != fread_function(&(pMMBDXP->MDX_flag), 1, 1, pf) ||
-        1 != fread_function(&(pMMBDXP->CharSet), 1, 1, pf) ||
-        1 != fread_function(&(pMMBDXP->reserved_2), 2, 1, pf))
+    if (1 != VSIFReadL(&(pMMBDXP->MDX_flag), 1, 1, pf) ||
+        1 != VSIFReadL(&(pMMBDXP->CharSet), 1, 1, pf) ||
+        1 != VSIFReadL(&(pMMBDXP->reserved_2), 2, 1, pf))
     {
-        free_function(pMMBDXP->pField);
+        VSIFree(pMMBDXP->pField);
         pMMBDXP->pField = nullptr;
         pMMBDXP->nFields = 0;
         fclose_and_nullify(&pMMBDXP->pfDataBase);
@@ -1344,19 +1318,19 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
     // Checking for a cpg file
     if (pMMBDXP->CharSet == 0)
     {
-        FILE_TYPE *f_cpg;
+        VSILFILE *f_cpg;
         char charset_cpg[11];
 
         strcpy(cpg_file, pMMBDXP->szFileName);
-        CPLStrlcpy(cpg_file, reset_extension(cpg_file, "cpg"),
+        CPLStrlcpy(cpg_file, CPLResetExtension(cpg_file, "cpg"),
                    sizeof(cpg_file));
-        f_cpg = fopen_function(cpg_file, "r");
+        f_cpg = VSIFOpenL(cpg_file, "r");
         if (f_cpg)
         {
             char *p;
             size_t read_bytes;
-            fseek_function(f_cpg, 0L, SEEK_SET);
-            if (11 > (read_bytes = fread_function(charset_cpg, 1, 10, f_cpg)))
+            VSIFSeekL(f_cpg, 0L, SEEK_SET);
+            if (11 > (read_bytes = VSIFReadL(charset_cpg, 1, 10, f_cpg)))
             {
                 charset_cpg[read_bytes] = '\0';
                 p = MM_stristr(charset_cpg, "UTF-8");
@@ -1369,7 +1343,7 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
                 if (p)
                     pMMBDXP->CharSet = MM_JOC_CARAC_ANSI_DBASE;
             }
-            fclose_function(f_cpg);
+            VSIFCloseL(f_cpg);
         }
     }
     if (MM_ES_DBF_ESTESA(pMMBDXP->dbf_version))
@@ -1385,7 +1359,7 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
                FirstRecordOffsetLow16Bits;
         if (nTmp > INT32_MAX)
         {
-            free_function(pMMBDXP->pField);
+            VSIFree(pMMBDXP->pField);
             pMMBDXP->pField = nullptr;
             pMMBDXP->nFields = 0;
             fclose_and_nullify(&pMMBDXP->pfDataBase);
@@ -1426,24 +1400,23 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
 
         pMMBDXP->nFields = 0;
 
-        fseek_function(pf, 0, SEEK_END);
-        if (32 - 1 < ftell_function(pf))
+        VSIFSeekL(pf, 0, SEEK_END);
+        if (32 - 1 < VSIFTellL(pf))
         {
-            fseek_function(pf, 32, SEEK_SET);
+            VSIFSeekL(pf, 32, SEEK_SET);
             do
             {
                 bytes_per_camp = 0;
-                fseek_function(
-                    pf,
-                    32 + (MM_FILE_OFFSET)pMMBDXP->nFields * 32 +
-                        (MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF + 1 + 4),
-                    SEEK_SET);
-                if (1 != fread_function(&bytes_per_camp, 1, 1, pf) ||
-                    1 != fread_function(&un_byte, 1, 1, pf) ||
-                    1 != fread_function(&tretze_bytes,
-                                        3 + sizeof(bytes_per_camp), 1, pf))
+                VSIFSeekL(pf,
+                          32 + (MM_FILE_OFFSET)pMMBDXP->nFields * 32 +
+                              (MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF + 1 + 4),
+                          SEEK_SET);
+                if (1 != VSIFReadL(&bytes_per_camp, 1, 1, pf) ||
+                    1 != VSIFReadL(&un_byte, 1, 1, pf) ||
+                    1 != VSIFReadL(&tretze_bytes, 3 + sizeof(bytes_per_camp), 1,
+                                   pf))
                 {
-                    free_function(pMMBDXP->pField);
+                    VSIFree(pMMBDXP->pField);
                     pMMBDXP->pField = nullptr;
                     pMMBDXP->nFields = 0;
                     fclose_and_nullify(&pMMBDXP->pfDataBase);
@@ -1461,7 +1434,7 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
 
     if (pMMBDXP->nFields != 0)
     {
-        free_function(pMMBDXP->pField);
+        VSIFree(pMMBDXP->pField);
         pMMBDXP->pField = MM_CreateAllFields(pMMBDXP->nFields);
         if (!pMMBDXP->pField)
         {
@@ -1472,32 +1445,29 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
     }
     else
     {
-        free_function(pMMBDXP->pField);
+        VSIFree(pMMBDXP->pField);
         pMMBDXP->pField = nullptr;
     }
 
-    fseek_function(pf, 32, SEEK_SET);
+    VSIFSeekL(pf, 32, SEEK_SET);
     for (nIField = 0; nIField < pMMBDXP->nFields; nIField++)
     {
-        if (1 != fread_function(pMMBDXP->pField[nIField].FieldName,
-                                MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF, 1, pf) ||
-            1 != fread_function(&(pMMBDXP->pField[nIField].FieldType), 1, 1,
-                                pf) ||
-            1 != fread_function(&(pMMBDXP->pField[nIField].reserved_1), 4, 1,
-                                pf) ||
-            1 != fread_function(&(pMMBDXP->pField[nIField].BytesPerField), 1, 1,
-                                pf) ||
-            1 != fread_function(&(pMMBDXP->pField[nIField].DecimalsIfFloat), 1,
-                                1, pf) ||
-            1 != fread_function(&(pMMBDXP->pField[nIField].reserved_2), 13, 1,
-                                pf) ||
-            1 != fread_function(&(pMMBDXP->pField[nIField].MDX_field_flag), 1,
-                                1, pf))
+        if (1 != VSIFReadL(pMMBDXP->pField[nIField].FieldName,
+                           MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF, 1, pf) ||
+            1 != VSIFReadL(&(pMMBDXP->pField[nIField].FieldType), 1, 1, pf) ||
+            1 != VSIFReadL(&(pMMBDXP->pField[nIField].reserved_1), 4, 1, pf) ||
+            1 != VSIFReadL(&(pMMBDXP->pField[nIField].BytesPerField), 1, 1,
+                           pf) ||
+            1 != VSIFReadL(&(pMMBDXP->pField[nIField].DecimalsIfFloat), 1, 1,
+                           pf) ||
+            1 != VSIFReadL(&(pMMBDXP->pField[nIField].reserved_2), 13, 1, pf) ||
+            1 !=
+                VSIFReadL(&(pMMBDXP->pField[nIField].MDX_field_flag), 1, 1, pf))
         {
-            free_function(pMMBDXP->pField);
+            VSIFree(pMMBDXP->pField);
             pMMBDXP->pField = nullptr;
             pMMBDXP->nFields = 0;
-            fclose_function(pf);
+            VSIFCloseL(pf);
             pMMBDXP->pfDataBase = nullptr;
             return 1;
         }
@@ -1515,10 +1485,10 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
         // We could potentially limit further...
         if (pMMBDXP->pField[nIField].BytesPerField > (uint32_t)(INT32_MAX - 1))
         {
-            free_function(pMMBDXP->pField);
+            VSIFree(pMMBDXP->pField);
             pMMBDXP->pField = nullptr;
             pMMBDXP->nFields = 0;
-            fclose_function(pf);
+            VSIFCloseL(pf);
             pMMBDXP->pfDataBase = nullptr;
             return 1;
         }
@@ -1527,19 +1497,19 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
         {
             if (!MM_ES_DBF_ESTESA(pMMBDXP->dbf_version))
             {
-                free_function(pMMBDXP->pField);
+                VSIFree(pMMBDXP->pField);
                 pMMBDXP->pField = nullptr;
                 pMMBDXP->nFields = 0;
-                fclose_function(pf);
+                VSIFCloseL(pf);
                 pMMBDXP->pfDataBase = nullptr;
                 return 1;
             }
             if (pMMBDXP->pField[nIField].FieldType != 'C')
             {
-                free_function(pMMBDXP->pField);
+                VSIFree(pMMBDXP->pField);
                 pMMBDXP->pField = nullptr;
                 pMMBDXP->nFields = 0;
-                fclose_function(pf);
+                VSIFCloseL(pf);
                 pMMBDXP->pfDataBase = nullptr;
                 return 1;
             }
@@ -1555,10 +1525,10 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
             if (pMMBDXP->pField[nIField - 1].AccumulatedBytes >
                 UINT32_MAX - pMMBDXP->pField[nIField - 1].BytesPerField)
             {
-                free_function(pMMBDXP->pField);
+                VSIFree(pMMBDXP->pField);
                 pMMBDXP->pField = nullptr;
                 pMMBDXP->nFields = 0;
-                fclose_function(pf);
+                VSIFCloseL(pf);
                 pMMBDXP->pfDataBase = nullptr;
                 return 1;
             }
@@ -1592,7 +1562,7 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
                     pMMBDXP->pField[nIField].FieldDescription[MM_DEF_LANGUAGE],
                     pszDesc, MM_MAX_LON_DESCRIPCIO_CAMP_DBF);
 
-                free_function(pszDesc);
+                VSIFree(pszDesc);
             }
             else
                 *pMMBDXP->pField[nIField].FieldDescription[MM_DEF_LANGUAGE] =
@@ -1614,7 +1584,7 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
                                    .FieldDescription[MM_DEF_LANGUAGE],
                                pszDesc, MM_MAX_LON_DESCRIPCIO_CAMP_DBF);
                 }
-                free_function(pszDesc);
+                VSIFree(pszDesc);
             }
             else
             {
@@ -1643,7 +1613,7 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
                                pszDesc, MM_MAX_LON_DESCRIPCIO_CAMP_DBF);
                 }
 
-                free_function(pszDesc);
+                VSIFree(pszDesc);
             }
             else
             {
@@ -1672,7 +1642,7 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
                                pszDesc, MM_MAX_LON_DESCRIPCIO_CAMP_DBF);
                 }
 
-                free_function(pszDesc);
+                VSIFree(pszDesc);
             }
             else
             {
@@ -1697,10 +1667,10 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
         if (pMMBDXP->pField[pMMBDXP->nFields - 1].AccumulatedBytes >
             UINT32_MAX - pMMBDXP->pField[pMMBDXP->nFields - 1].BytesPerField)
         {
-            free_function(pMMBDXP->pField);
+            VSIFree(pMMBDXP->pField);
             pMMBDXP->pField = nullptr;
             pMMBDXP->nFields = 0;
-            fclose_function(pf);
+            VSIFCloseL(pf);
             pMMBDXP->pfDataBase = nullptr;
             return 1;
         }
@@ -1714,7 +1684,7 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
         if (some_problems_when_reading == 0)
         {
             incoherent_record_size = FALSE;
-            fseek_function(pf, offset_reintent, SEEK_SET);
+            VSIFSeekL(pf, offset_reintent, SEEK_SET);
             some_problems_when_reading++;
             /* Reset IdGraficField as it might no longer be valid */
             pMMBDXP->IdGraficField = 0;
@@ -1722,10 +1692,10 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
         }
         else
         {
-            free_function(pMMBDXP->pField);
+            VSIFree(pMMBDXP->pField);
             pMMBDXP->pField = nullptr;
             pMMBDXP->nFields = 0;
-            fclose_function(pf);
+            VSIFCloseL(pf);
             pMMBDXP->pfDataBase = nullptr;
             return 1;
         }
@@ -1751,14 +1721,14 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
                 CPLStrlcpy(pMMBDXP->pField[nIField].ClassicalDBFFieldName,
                            pMMBDXP->pField[nIField].FieldName,
                            MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF);
-                fseek_function(pf, offset_nom_camp, SEEK_SET);
-                if (1 != fread_function(pMMBDXP->pField[nIField].FieldName,
-                                        mida_nom, 1, pf))
+                VSIFSeekL(pf, offset_nom_camp, SEEK_SET);
+                if (1 != VSIFReadL(pMMBDXP->pField[nIField].FieldName, mida_nom,
+                                   1, pf))
                 {
-                    free_function(pMMBDXP->pField);
+                    VSIFree(pMMBDXP->pField);
                     pMMBDXP->pField = nullptr;
                     pMMBDXP->nFields = 0;
-                    fclose_function(pf);
+                    VSIFCloseL(pf);
                     pMMBDXP->pfDataBase = nullptr;
                     return 1;
                 }
@@ -1767,22 +1737,20 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
                 // All field names to UTF-8
                 if (pMMBDXP->CharSet == MM_JOC_CARAC_ANSI_DBASE)
                 {
-                    pszString =
-                        CPLRecode_function(pMMBDXP->pField[nIField].FieldName,
-                                           CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+                    pszString = CPLRecode(pMMBDXP->pField[nIField].FieldName,
+                                          CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
                     CPLStrlcpy(pMMBDXP->pField[nIField].FieldName, pszString,
                                MM_MAX_LON_FIELD_NAME_DBF);
-                    CPLFree_function(pszString);
+                    CPLFree(pszString);
                 }
                 else if (pMMBDXP->CharSet == MM_JOC_CARAC_OEM850_DBASE)
                 {
                     MM_oemansi(pMMBDXP->pField[nIField].FieldName);
-                    pszString =
-                        CPLRecode_function(pMMBDXP->pField[nIField].FieldName,
-                                           CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+                    pszString = CPLRecode(pMMBDXP->pField[nIField].FieldName,
+                                          CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
                     CPLStrlcpy(pMMBDXP->pField[nIField].FieldName, pszString,
                                MM_MAX_LON_FIELD_NAME_DBF - 1);
-                    CPLFree_function(pszString);
+                    CPLFree(pszString);
                 }
             }
         }
@@ -1800,7 +1768,7 @@ void MM_ReleaseDBFHeader(struct MM_DATA_BASE_XP **data_base_XP)
         return;
 
     MM_ReleaseMainFields(*data_base_XP);
-    free_function(*data_base_XP);
+    VSIFree(*data_base_XP);
     *data_base_XP = nullptr;
 
     return;
@@ -2372,7 +2340,7 @@ int MM_SecureCopyStringFieldValue(char **pszStringDst, const char *pszStringSrc,
     {
         if (1 >= *nStringCurrentLength)
         {
-            void *new_ptr = realloc_function(*pszStringDst, 2);
+            void *new_ptr = VSIRealloc(*pszStringDst, 2);
             if (!new_ptr)
                 return 1;
             *pszStringDst = new_ptr;
@@ -2384,8 +2352,7 @@ int MM_SecureCopyStringFieldValue(char **pszStringDst, const char *pszStringSrc,
 
     if (strlen(pszStringSrc) >= *nStringCurrentLength)
     {
-        void *new_ptr =
-            realloc_function(*pszStringDst, strlen(pszStringSrc) + 1);
+        void *new_ptr = VSIRealloc(*pszStringDst, strlen(pszStringSrc) + 1);
         if (!new_ptr)
             return 1;
         (*pszStringDst) = new_ptr;
@@ -2425,15 +2392,15 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
             l_glop2 = data_base_XP->BytesPerRecord -
                       data_base_XP->pField[nIField + 1].AccumulatedBytes;
 
-        if ((record = calloc_function((size_t)data_base_XP->BytesPerRecord)) ==
+        if ((record = VSICalloc(1, (size_t)data_base_XP->BytesPerRecord)) ==
             nullptr)
             return 1;
 
         record[data_base_XP->BytesPerRecord - 1] = MM_SetEndOfString;
 
-        if ((whites = (char *)calloc_function((size_t)nNewWidth)) == nullptr)
+        if ((whites = (char *)VSICalloc(1, (size_t)nNewWidth)) == nullptr)
         {
-            free_function(record);
+            VSIFree(record);
             return 1;
         }
         memset(whites, ' ', nNewWidth);
@@ -2442,43 +2409,42 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
         i_reg = (canvi_amplada < 0 ? 0 : nfitx - 1);
         while (TRUE)
         {
-            if (0 != fseek_function(data_base_XP->pfDataBase,
-                                    data_base_XP->FirstRecordOffset +
-                                        (MM_FILE_OFFSET)i_reg *
-                                            data_base_XP->BytesPerRecord,
-                                    SEEK_SET))
+            if (0 != VSIFSeekL(data_base_XP->pfDataBase,
+                               data_base_XP->FirstRecordOffset +
+                                   (MM_FILE_OFFSET)i_reg *
+                                       data_base_XP->BytesPerRecord,
+                               SEEK_SET))
             {
-                free_function(whites);
-                free_function(record);
+                VSIFree(whites);
+                VSIFree(record);
                 return 1;
             }
 
-            if (1 != fread_function(record, data_base_XP->BytesPerRecord, 1,
-                                    data_base_XP->pfDataBase))
+            if (1 != VSIFReadL(record, data_base_XP->BytesPerRecord, 1,
+                               data_base_XP->pfDataBase))
             {
-                free_function(whites);
-                free_function(record);
+                VSIFree(whites);
+                VSIFree(record);
                 return 1;
             }
 
             if (0 !=
-                fseek_function(
+                VSIFSeekL(
                     data_base_XP->pfDataBase,
                     (MM_FILE_OFFSET)data_base_XP->FirstRecordOffset +
                         i_reg * ((MM_FILE_OFFSET)data_base_XP->BytesPerRecord +
                                  canvi_amplada),
                     SEEK_SET))
             {
-                free_function(whites);
-                free_function(record);
+                VSIFree(whites);
+                VSIFree(record);
                 return 1;
             }
 
-            if (1 !=
-                fwrite_function(record, l_glop1, 1, data_base_XP->pfDataBase))
+            if (1 != VSIFWriteL(record, l_glop1, 1, data_base_XP->pfDataBase))
             {
-                free_function(whites);
-                free_function(record);
+                VSIFree(whites);
+                VSIFree(record);
                 return 1;
             }
 
@@ -2490,13 +2456,13 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
                            (canvi_amplada < 0
                                 ? nNewWidth
                                 : data_base_XP->pField[nIField].BytesPerField));
-                    retorn_fwrite = fwrite_function(whites, nNewWidth, 1,
-                                                    data_base_XP->pfDataBase);
+                    retorn_fwrite = VSIFWriteL(whites, nNewWidth, 1,
+                                               data_base_XP->pfDataBase);
 
                     if (1 != retorn_fwrite)
                     {
-                        free_function(whites);
-                        free_function(record);
+                        VSIFree(whites);
+                        VSIFree(record);
                         return 1;
                     }
                     break;
@@ -2504,16 +2470,16 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
 
                     if (canvi_amplada >= 0)
                     {
-                        if (1 != fwrite_function(whites, canvi_amplada, 1,
-                                                 data_base_XP->pfDataBase) ||
+                        if (1 != VSIFWriteL(whites, canvi_amplada, 1,
+                                            data_base_XP->pfDataBase) ||
                             1 !=
-                                fwrite_function(
+                                VSIFWriteL(
                                     record + l_glop1,
                                     data_base_XP->pField[nIField].BytesPerField,
                                     1, data_base_XP->pfDataBase))
                         {
-                            free_function(whites);
-                            free_function(record);
+                            VSIFree(whites);
+                            VSIFree(record);
                             return 1;
                         }
                     }
@@ -2540,30 +2506,30 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
                                                .BytesPerField +
                                            l_glop1 - j));
 
-                        retorn_fwrite = fwrite_function(
-                            record + j, nNewWidth, 1, data_base_XP->pfDataBase);
+                        retorn_fwrite = VSIFWriteL(record + j, nNewWidth, 1,
+                                                   data_base_XP->pfDataBase);
                         if (1 != retorn_fwrite)
                         {
-                            free_function(whites);
-                            free_function(record);
+                            VSIFree(whites);
+                            VSIFree(record);
                             return 1;
                         }
                     }
 
                     break;
                 default:
-                    free_function(whites);
-                    free_function(record);
+                    VSIFree(whites);
+                    VSIFree(record);
                     return 1;
             }
             if (l_glop2)
             {
-                retorn_fwrite = fwrite_function(record + i_glop2, l_glop2, 1,
-                                                data_base_XP->pfDataBase);
+                retorn_fwrite = VSIFWriteL(record + i_glop2, l_glop2, 1,
+                                           data_base_XP->pfDataBase);
                 if (1 != retorn_fwrite)
                 {
-                    free_function(whites);
-                    free_function(record);
+                    VSIFree(whites);
+                    VSIFree(record);
                     return 1;
                 }
             }
@@ -2582,10 +2548,10 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
             }
         }
 
-        free_function(whites);
-        free_function(record);
+        VSIFree(whites);
+        VSIFree(record);
 
-        retorn_TruncaFitxer = TruncateFile_function(
+        retorn_TruncaFitxer = VSIFTruncateL(
             data_base_XP->pfDataBase,
             (MM_FILE_OFFSET)data_base_XP->FirstRecordOffset +
                 (MM_FILE_OFFSET)data_base_XP->nRecords *
@@ -2634,7 +2600,7 @@ static void MM_AdoptHeight(double *desti, const double *proposta, uint32_t flag)
     }
 }
 
-int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt,
+int MM_GetArcHeights(double *coord_z, VSILFILE *pF, MM_N_VERTICES_TYPE n_vrt,
                      struct MM_ZD *pZDescription, uint32_t flag)
 {
     MM_N_HEIGHT_TYPE i;
@@ -2660,7 +2626,7 @@ int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt,
     {
         if (n_vrt > (unsigned)(INT_MAX / n_alcada))
         {
-            MMCPLError(CE_Failure, CPLE_OutOfMemory, "Integer overflow");
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Integer overflow");
             return 1;
         }
         n_h_total = (MM_N_HEIGHT_TYPE)n_vrt * n_alcada;
@@ -2674,22 +2640,22 @@ int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt,
     {
         if (MMCheckSize_t(n_h_total, sizeof(double)))
             return 1;
-        if (nullptr == (palcada = alcada = calloc_function((size_t)n_h_total *
-                                                           sizeof(double))))
+        if (nullptr ==
+            (palcada = alcada = VSICalloc((size_t)n_h_total, sizeof(double))))
             return 1;
     }
 
-    if (fseek_function(pF, pZDescription->nOffsetZ, SEEK_SET))
+    if (VSIFSeekL(pF, pZDescription->nOffsetZ, SEEK_SET))
     {
         if (alcada)
-            free_function(alcada);
+            VSIFree(alcada);
         return 1;
     }
-    if (n_h_total != (MM_N_HEIGHT_TYPE)fread_function(palcada, sizeof(double),
-                                                      n_h_total, pF))
+    if (n_h_total !=
+        (MM_N_HEIGHT_TYPE)VSIFReadL(palcada, sizeof(double), n_h_total, pF))
     {
         if (alcada)
-            free_function(alcada);
+            VSIFree(alcada);
         return 1;
     }
 
@@ -2719,7 +2685,7 @@ int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt,
         }
     }
     if (alcada)
-        free_function(alcada);
+        VSIFree(alcada);
     return 0;
 }  // End of MM_GetArcHeights()
 
@@ -2798,7 +2764,7 @@ char *MM_RemoveWhitespacesFromEndOfString(char *str)
 }
 
 struct MM_ID_GRAFIC_MULTIPLE_RECORD *MMCreateExtendedDBFIndex(
-    FILE_TYPE *f, MM_EXT_DBF_N_RECORDS nNumberOfRecords,
+    VSILFILE *f, MM_EXT_DBF_N_RECORDS nNumberOfRecords,
     MM_FIRST_RECORD_OFFSET_TYPE offset_1era,
     MM_ACCUMULATED_BYTES_TYPE_DBF bytes_per_fitxa,
     MM_ACCUMULATED_BYTES_TYPE_DBF bytes_acumulats_id_grafic,
@@ -2819,40 +2785,37 @@ struct MM_ID_GRAFIC_MULTIPLE_RECORD *MMCreateExtendedDBFIndex(
 
     if (MMCheckSize_t(nNumberOfRecords, sizeof(*id)))
         return nullptr;
-    if (nullptr == (id = (struct MM_ID_GRAFIC_MULTIPLE_RECORD *)calloc_function(
-                        (size_t)nNumberOfRecords * sizeof(*id))))
+    if (nullptr == (id = (struct MM_ID_GRAFIC_MULTIPLE_RECORD *)VSICalloc(
+                        (size_t)nNumberOfRecords, sizeof(*id))))
         return nullptr;
 
     if (bytes_id_grafic == UINT32_MAX)
     {
-        free_function(id);
-        MMCPLError(CE_Failure, CPLE_OutOfMemory,
-                   "Overflow in bytes_id_graphic");
+        VSIFree(id);
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Overflow in bytes_id_graphic");
         return nullptr;
     }
 
-    if (nullptr ==
-        (fitxa = (char *)calloc_function((size_t)bytes_id_grafic + 1)))
+    if (nullptr == (fitxa = (char *)VSICalloc(1, (size_t)bytes_id_grafic + 1)))
     {
-        free_function(id);
+        VSIFree(id);
         return nullptr;
     }
     fitxa[bytes_id_grafic] = '\0';
 
-    fseek_function(f,
-                   (MM_FILE_OFFSET)offset_1era +
-                       (MM_FILE_OFFSET)bytes_acumulats_id_grafic,
-                   SEEK_SET);
+    VSIFSeekL(f,
+              (MM_FILE_OFFSET)offset_1era +
+                  (MM_FILE_OFFSET)bytes_acumulats_id_grafic,
+              SEEK_SET);
 
     i_dbf = 0;
     do
     {
         if (i_dbf == nNumberOfRecords ||
-            fread_function(fitxa, 1, bytes_id_grafic, f) !=
-                (size_t)bytes_id_grafic)
+            VSIFReadL(fitxa, 1, bytes_id_grafic, f) != (size_t)bytes_id_grafic)
         {
-            free_function(id);
-            free_function(fitxa);
+            VSIFree(id);
+            VSIFree(fitxa);
             return nullptr;
         }
         i_dbf++;
@@ -2865,14 +2828,14 @@ struct MM_ID_GRAFIC_MULTIPLE_RECORD *MMCreateExtendedDBFIndex(
     {
         if (i > id_grafic)
         {
-            free_function(id);
-            free_function(fitxa);
+            VSIFree(id);
+            VSIFree(fitxa);
             return nullptr;
         }
         i = id_grafic;
         if (i >= (MM_EXT_DBF_SIGNED_N_RECORDS)nNumberOfRecords)
         {
-            free_function(fitxa);
+            VSIFree(fitxa);
             return id;
         }
         id[(size_t)i].offset = (MM_FILE_OFFSET)offset_1era +
@@ -2887,22 +2850,22 @@ struct MM_ID_GRAFIC_MULTIPLE_RECORD *MMCreateExtendedDBFIndex(
 
             if (i_dbf == nNumberOfRecords)
             {
-                free_function(fitxa);
+                VSIFree(fitxa);
                 return id;
             }
-            fseek_function(f, bytes_final_id_principi_id1, SEEK_CUR);
-            if (fread_function(fitxa, 1, bytes_id_grafic, f) !=
+            VSIFSeekL(f, bytes_final_id_principi_id1, SEEK_CUR);
+            if (VSIFReadL(fitxa, 1, bytes_id_grafic, f) !=
                 (size_t)bytes_id_grafic)
             {
-                free_function(id);
-                free_function(fitxa);
+                VSIFree(id);
+                VSIFree(fitxa);
                 return nullptr;
             }
             if (1 != sscanf(fitxa, scanf_MM_EXT_DBF_SIGNED_N_RECORDS,
                             &id_grafic) ||
                 id_grafic >= (MM_EXT_DBF_SIGNED_N_RECORDS)nNumberOfRecords)
             {
-                free_function(fitxa);
+                VSIFree(fitxa);
                 return id;
             }
             i_dbf++;
@@ -2910,6 +2873,439 @@ struct MM_ID_GRAFIC_MULTIPLE_RECORD *MMCreateExtendedDBFIndex(
     }
 }  // End of MMCreateExtendedDBFIndex()
 
-#ifdef GDAL_COMPILATION
-CPL_C_END  // Necessary for compiling in GDAL project
+// READING/CREATING MIRAMON METADATA
+// Returns the value of an INI file. Used to read MiraMon metadata
+char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
+                                      const char *key)
+{
+    char *value = nullptr;
+    char *pszString;
+    const char *pszLine;
+    char *section_header = nullptr;
+    size_t key_len = 0;
+
+    VSILFILE *file = VSIFOpenL(filename, "rb");
+    if (file == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed, "Cannot open INI file %s.",
+                 filename);
+        return nullptr;
+    }
+
+    if (key)
+        key_len = strlen(key);
+
+    while ((pszLine = CPLReadLine2L(file, 10000, nullptr)) != nullptr)
+    {
+        pszString = CPLRecode(pszLine, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+
+        // Skip comments and empty lines
+        if (*pszString == ';' || *pszString == '#' || *pszString == '\n' ||
+            *pszString == '\r')
+        {
+            VSIFree(pszString);
+            // Move to next line
+            continue;
+        }
+
+        // Check for section header
+        if (*pszString == '[')
+        {
+            char *section_end = strchr(pszString, ']');
+            if (section_end != nullptr)
+            {
+                *section_end = '\0';  // Terminate the string at ']'
+                if (section_header)
+                    VSIFree(section_header);
+                section_header = CPLStrdup(pszString + 1);  // Skip the '['
+            }
+            VSIFree(pszString);
+            continue;
+        }
+
+        if (key)
+        {
+            // If the current line belongs to the desired section
+            if (section_header != nullptr &&
+                strcmp(section_header, section) == 0)
+            {
+                // Check if the line contains the desired key
+                if (strncmp(pszString, key, key_len) == 0 &&
+                    pszString[key_len] == '=')
+                {
+                    // Extract the value
+                    char *value_start = pszString + key_len + 1;
+                    char *value_end = strstr(value_start, "\r\n");
+                    if (value_end != nullptr)
+                    {
+                        *value_end =
+                            '\0';  // Terminate the string at newline character if found
+                    }
+                    else
+                    {
+                        value_end = strstr(value_start, "\n");
+                        if (value_end != nullptr)
+                        {
+                            *value_end =
+                                '\0';  // Terminate the string at newline character if found
+                        }
+                        else
+                        {
+                            value_end = strstr(value_start, "\r");
+                            if (value_end != nullptr)
+                            {
+                                *value_end =
+                                    '\0';  // Terminate the string at newline character if found
+                            }
+                        }
+                    }
+
+                    value = CPLStrdup(value_start);
+                    VSIFCloseL(file);
+                    VSIFree(section_header);  // Free allocated memory
+                    VSIFree(pszString);
+                    return value;
+                }
+            }
+        }
+        else
+        {
+            if (section_header)
+            {
+                if (!strcmp(section_header, section))
+                    value = section_header;  // Freed out
+                else
+                    value = nullptr;
+            }
+            else
+                value = nullptr;
+
+            VSIFCloseL(file);
+            VSIFree(pszString);
+            return value;
+        }
+        VSIFree(pszString);
+    }
+
+    if (section_header)
+        VSIFree(section_header);  // Free allocated memory
+    VSIFCloseL(file);
+    return value;
+}
+
+// Retrieves EPSG codes from a CSV file based on provided geodetic identifiers.
+int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
+                                MM_BYTE direction)
+{
+    char *aMMIDDBFFile = nullptr;  //m_idofic.dbf
+    VSILFILE *pfMMSRS = nullptr;
+    const char *pszLine;
+    size_t nLong;
+    char *id_geodes, *psidgeodes, *epsg;
+
+    if (!pMMSRS_or_pSRS)
+    {
+        return 1;
+    }
+
+    {
+#ifdef USE_ONLY_EMBEDDED_RESOURCE_FILES
+        const char *pszFilename = nullptr;
+#else
+        const char *pszFilename = CPLFindFile("gdal", "MM_m_idofic.csv");
 #endif
+#ifdef EMBED_RESOURCE_FILES
+        if (!pszFilename || EQUAL(pszFilename, "MM_m_idofic.csv"))
+        {
+            pfMMSRS = VSIFileFromMemBuffer(
+                nullptr, (GByte *)(MiraMonGetMM_m_idofic_csv()),
+                (int)(strlen(MiraMonGetMM_m_idofic_csv())),
+                /* bTakeOwnership = */ false);
+        }
+        else
+#endif
+            if (pszFilename)
+        {
+            aMMIDDBFFile = CPLStrdup(pszFilename);
+        }
+    }
+
+#ifdef EMBED_RESOURCE_FILES
+    if (!pfMMSRS)
+#endif
+    {
+        if (!aMMIDDBFFile)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Error opening data\\MM_m_idofic.csv.\n");
+            return 1;
+        }
+
+        // Opening the file with SRS information
+        if (nullptr == (pfMMSRS = VSIFOpenL(aMMIDDBFFile, "r")))
+        {
+            VSIFree(aMMIDDBFFile);
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Error opening data\\MM_m_idofic.csv.\n");
+            return 1;
+        }
+        VSIFree(aMMIDDBFFile);
+    }
+
+    // Checking the header of the csv file
+    pszLine = CPLReadLine2L(pfMMSRS, 10000, nullptr);
+
+    if (!pszLine)
+
+    {
+        VSIFCloseL(pfMMSRS);
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Wrong format in data\\MM_m_idofic.csv.\n");
+        return 1;
+    }
+    id_geodes = MM_stristr(pszLine, "ID_GEODES");
+    if (!id_geodes)
+    {
+        VSIFCloseL(pfMMSRS);
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Wrong format in data\\MM_m_idofic.csv.\n");
+        return 1;
+    }
+    id_geodes[strlen("ID_GEODES")] = '\0';
+    psidgeodes = MM_stristr(pszLine, "PSIDGEODES");
+    if (!psidgeodes)
+    {
+        VSIFCloseL(pfMMSRS);
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Wrong format in data\\MM_m_idofic.csv.\n");
+        return 1;
+    }
+    psidgeodes[strlen("PSIDGEODES")] = '\0';
+
+    // Is PSIDGEODES in first place?
+    if (strncmp(pszLine, psidgeodes, strlen("PSIDGEODES")))
+    {
+        VSIFCloseL(pfMMSRS);
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Wrong format in data\\MM_m_idofic.csv.\n");
+        return 1;
+    }
+    // Is ID_GEODES after PSIDGEODES?
+    if (strncmp(pszLine + strlen("PSIDGEODES") + 1, "ID_GEODES",
+                strlen("ID_GEODES")))
+    {
+        VSIFCloseL(pfMMSRS);
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Wrong format in data\\MM_m_idofic.csv.\n");
+        return 1;
+    }
+
+    // Looking for the information.
+    while ((pszLine = CPLReadLine2L(pfMMSRS, 10000, nullptr)) != nullptr)
+    {
+        id_geodes = strstr(pszLine, ";");
+        if (!id_geodes)
+        {
+            VSIFCloseL(pfMMSRS);
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Wrong format in data\\MM_m_idofic.csv.\n");
+            return 1;
+        }
+
+        psidgeodes = strstr(id_geodes + 1, ";");
+        if (!psidgeodes)
+        {
+            VSIFCloseL(pfMMSRS);
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Wrong format in data\\MM_m_idofic.csv.\n");
+            return 1;
+        }
+
+        id_geodes[(ptrdiff_t)psidgeodes - (ptrdiff_t)id_geodes] = '\0';
+        psidgeodes = CPLStrdup(pszLine);
+        psidgeodes[(ptrdiff_t)id_geodes - (ptrdiff_t)pszLine] = '\0';
+        id_geodes++;
+
+        if (direction == EPSG_FROM_MMSRS)
+        {
+            // I have pMMSRS and I want pSRS
+            if (strcmp(pMMSRS_or_pSRS, id_geodes))
+            {
+                VSIFree(psidgeodes);
+                continue;
+            }
+
+            epsg = strstr(psidgeodes, "EPSG:");
+            nLong = strlen("EPSG:");
+            if (epsg && !strncmp(epsg, psidgeodes, nLong))
+            {
+                if (epsg[nLong] != '\0')
+                {
+                    strcpy(szResult, epsg + nLong);
+                    VSIFree(psidgeodes);
+                    VSIFCloseL(pfMMSRS);
+                    return 0;  // found
+                }
+                else
+                {
+                    VSIFCloseL(pfMMSRS);
+                    *szResult = '\0';
+                    VSIFree(psidgeodes);
+                    return 1;  // not found
+                }
+            }
+        }
+        else
+        {
+            // I have pSRS and I want pMMSRS
+            epsg = strstr(psidgeodes, "EPSG:");
+            nLong = strlen("EPSG:");
+            if (epsg && !strncmp(epsg, psidgeodes, nLong))
+            {
+                if (epsg[nLong] != '\0')
+                {
+                    if (!strcmp(pMMSRS_or_pSRS, epsg + nLong))
+                    {
+                        strcpy(szResult, id_geodes);
+                        VSIFCloseL(pfMMSRS);
+                        VSIFree(psidgeodes);
+                        return 0;  // found
+                    }
+                }
+            }
+        }
+        VSIFree(psidgeodes);
+    }
+
+    VSIFCloseL(pfMMSRS);
+    return 1;  // not found
+}
+
+// Verifies the version of a MiraMon REL 4 file.
+int MMCheck_REL_FILE(const char *szREL_file)
+{
+    char *pszLine;
+    VSILFILE *pF;
+
+    // Does the REL file exist?
+    pF = VSIFOpenL(szREL_file, "r");
+    if (!pF)
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed, "The file %s must exist.",
+                 szREL_file);
+        return 1;
+    }
+    VSIFCloseL(pF);
+
+    // Does the REL file have VERSION?
+    pszLine =
+        MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO, nullptr);
+    if (!pszLine)
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "The file \"%s\" must be REL4. "
+                 "You can use ConvREL.exe from MiraMon software "
+                 " or GeM+ "
+                 "to convert this file to REL4.",
+                 szREL_file);
+        return 1;
+    }
+    VSIFree(pszLine);
+
+    // Does the REL file have the correct VERSION?
+    // Vers>=4?
+    pszLine =
+        MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO, KEY_Vers);
+    if (pszLine)
+    {
+        if (*pszLine == '\0' || atoi(pszLine) < (int)MM_VERS)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "The file \"%s\" must have %s>=%d.", szREL_file, KEY_Vers,
+                     MM_VERS);
+            VSIFree(pszLine);
+            return 1;
+        }
+        VSIFree(pszLine);
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "The file \"%s\" must have %s>=%d.", szREL_file, KEY_Vers,
+                 MM_VERS);
+        return 1;
+    }
+
+    // SubVers>=0?
+    pszLine = MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO,
+                                              KEY_SubVers);
+    if (pszLine)
+    {
+        if (*pszLine == '\0' || atoi(pszLine) < (int)MM_SUBVERS_ACCEPTED)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "The file \"%s\" must have %s>=%d.", szREL_file,
+                     KEY_SubVers, MM_SUBVERS_ACCEPTED);
+
+            VSIFree(pszLine);
+            return 1;
+        }
+        VSIFree(pszLine);
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "The file \"%s\" must have %s>=%d.", szREL_file, KEY_SubVers,
+                 MM_SUBVERS_ACCEPTED);
+        return 1;
+    }
+
+    // VersMetaDades>=4?
+    pszLine = MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO,
+                                              KEY_VersMetaDades);
+    if (pszLine)
+    {
+        if (*pszLine == '\0' || atoi(pszLine) < (int)MM_VERS_METADADES_ACCEPTED)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "The file \"%s\" must have %s>=%d.", szREL_file,
+                     KEY_VersMetaDades, MM_VERS_METADADES_ACCEPTED);
+            VSIFree(pszLine);
+            return 1;
+        }
+        VSIFree(pszLine);
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "The file \"%s\" must have %s>=%d.", szREL_file,
+                 KEY_VersMetaDades, MM_VERS_METADADES_ACCEPTED);
+        return 1;
+    }
+
+    // SubVersMetaDades>=0?
+    pszLine = MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO,
+                                              KEY_SubVersMetaDades);
+    if (pszLine)
+    {
+        if (*pszLine == '\0' || atoi(pszLine) < (int)MM_SUBVERS_METADADES)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "The file \"%s\" must have %s>=%d.", szREL_file,
+                     KEY_SubVersMetaDades, MM_SUBVERS_METADADES);
+            VSIFree(pszLine);
+            return 1;
+        }
+        VSIFree(pszLine);
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "The file \"%s\" must have %s>=%d.", szREL_file,
+                 KEY_SubVersMetaDades, MM_SUBVERS_METADADES);
+        return 1;
+    }
+    return 0;
+}
+
+CPL_C_END  // Necessary for compiling in GDAL project
