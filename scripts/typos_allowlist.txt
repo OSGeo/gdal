@@ -321,8 +321,8 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
 #define MM_IsDoubleInfinite(x) EsDoubleInfinit((x))
     https://www.miramon.cat/help/eng/GeMPlus/ClausREL.htm
     fprintf_function(pF, "[%s]" LineReturn, SECTION_VERSIO);
-        fprintf_function(pF, "NomCampPerimetre=%s" LineReturn,
-        fprintf_function(pF, "NomCampNPoligons=%s" LineReturn,
+        VSIFPrintfL(pF, "NomCampPerimetre=%s" LineReturn,
+        VSIFPrintfL(pF, "NomCampNPoligons=%s" LineReturn,
         MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO, nullptr);
         MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO, KEY_Vers);
     pszLine = MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO,
