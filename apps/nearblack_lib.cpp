@@ -148,20 +148,26 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
 
         if (bSetAlpha)
         {
-            // TODO(winkey): There should be a way to preserve alpha
-            // band data not in the collar.
-            if (nBands == 4)
+            if (nBands != 0 &&
+                GDALGetRasterColorInterpretation(
+                    GDALGetRasterBand(hSrcDataset, nBands)) == GCI_AlphaBand)
+            {
                 nBands--;
+            }
             else
+            {
                 nDstBands++;
+            }
         }
 
         if (bSetMask)
         {
-            if (nBands == 4)
+            if (nBands != 0 &&
+                GDALGetRasterColorInterpretation(
+                    GDALGetRasterBand(hSrcDataset, nBands)) == GCI_AlphaBand)
             {
-                nDstBands = 3;
-                nBands = 3;
+                nDstBands--;
+                nBands--;
             }
         }
 
@@ -178,6 +184,15 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
         {
             GDALSetGeoTransform(hDstDS, adfGeoTransform);
             GDALSetProjection(hDstDS, GDALGetProjectionRef(hSrcDataset));
+        }
+
+        if (bSetAlpha &&
+            GDALGetRasterColorInterpretation(GDALGetRasterBand(
+                hDstDS, GDALGetRasterCount(hDstDS))) != GCI_AlphaBand)
+        {
+            GDALSetRasterColorInterpretation(
+                GDALGetRasterBand(hDstDS, GDALGetRasterCount(hDstDS)),
+                GCI_AlphaBand);
         }
     }
     else
@@ -199,27 +214,46 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
             return nullptr;
         }
 
+        const bool bSrcLastIsAlpha =
+            (nBands != 0 && GDALGetRasterColorInterpretation(GDALGetRasterBand(
+                                hSrcDataset, nBands)) == GCI_AlphaBand);
+        const bool bDstLastIsAlpha =
+            (GDALGetRasterCount(hDstDS) != 0 &&
+             GDALGetRasterColorInterpretation(GDALGetRasterBand(
+                 hDstDS, GDALGetRasterCount(hDstDS))) == GCI_AlphaBand);
+
+        nDstBands = GDALGetRasterCount(hDstDS);
+        if (nDstBands - (bDstLastIsAlpha ? 1 : 0) !=
+            nBands - (bSrcLastIsAlpha ? 1 : 0))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Inconsistent number of source and destination bands.");
+            return nullptr;
+        }
+
         if (bSetAlpha)
         {
-            if (nBands != 4 &&
-                (nBands < 2 ||
-                 GDALGetRasterColorInterpretation(
-                     GDALGetRasterBand(hDstDS, nBands)) != GCI_AlphaBand))
+            if (!bDstLastIsAlpha)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Last band is not an alpha band.");
                 return nullptr;
             }
 
-            nBands--;
+            if (nBands == nDstBands && bSrcLastIsAlpha)
+                nBands--;
         }
 
         if (bSetMask)
         {
-            if (nBands == 4)
+            if (bSrcLastIsAlpha)
             {
-                nDstBands = 3;
-                nBands = 3;
+                nBands--;
+            }
+
+            if (bDstLastIsAlpha)
+            {
+                nDstBands--;
             }
         }
     }
