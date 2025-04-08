@@ -1,12 +1,12 @@
 HTTP/1.1 200 OK
-Date: Fri, 12 Jul 2024 14:16:47 GMT
+Date: Tue, 08 Apr 2025 23:33:06 GMT
 Server: Apache/2.4.52 (Ubuntu)
 Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
-Expires: Sat, 12 Jul 2025 14:16:47 GMT
+Expires: Wed, 08 Apr 2026 23:33:06 GMT
 Access-Control-Allow-Origin: *
 Vary: Accept,Accept-Encoding,Prefer
 Content-Type: application/json
-Content-Length: 11200
+Content-Length: 11195
 Keep-Alive: timeout=5, max=100
 Connection: Keep-Alive
 
@@ -37,7 +37,7 @@ Connection: Keep-Alive
          "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe?f=html"
       },
       {
-         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/dggs-list",
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/dggrs-list",
          "title" : "Discrete Global Grid Systems for ne_10m_lakes_europe",
          "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/dggs"
       },
@@ -231,7 +231,7 @@ Connection: Keep-Alive
    "title" : "ne_10m_lakes_europe",
    "extent" : {
       "spatial" : {
-         "bbox" : [ [ -180, -90, 180, 90.0002058236639 ] ]
+         "bbox" : [ [ -180, -90, 180, 90.000205823664 ] ]
       }
    },
    "crs" : [
@@ -244,7 +244,7 @@ Connection: Keep-Alive
    "id" : "NaturalEarth:physical:ne_10m_lakes_europe",
    "dataType" : "vector",
    "attribution" : "<a href='https://www.naturalearthdata.com/'>Natural Earth</a>",
-   "minScaleDenominator" : 4367830.1877243574709,
+   "minScaleDenominator" : 4367830.18772436,
    "minCellSize" : 0.010986328125,
    "geometryDimension" : 2
 }

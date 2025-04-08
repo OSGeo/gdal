@@ -1,15 +1,14 @@
 HTTP/1.1 200 OK
-Date: Tue, 20 Jun 2023 10:38:09 GMT
+Date: Tue, 08 Apr 2025 23:32:55 GMT
 Server: Apache/2.4.52 (Ubuntu)
-Expires: Wed, 12 Jun 2024 14:20:54 GMT
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Expires: Wed, 08 Apr 2026 23:32:55 GMT
 Access-Control-Allow-Origin: *
 Vary: Accept,Accept-Encoding,Prefer
-Content-Length: 16696
-Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
-Age: 591435
+Content-Type: application/json
+Content-Length: 16635
 Keep-Alive: timeout=5, max=100
 Connection: Keep-Alive
-Content-Type: application/json
 
 {
    "links" : [
@@ -213,33 +212,33 @@ Content-Type: application/json
       },
       {
          "title" : "ne_10m_lakes_europe",
-         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/ISEA9Diamonds",
-         "crs" : "http://www.opengis.net/def/crs/OGC/0/1534",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/ISEA9R",
+         "crs" : "http://www.opengis.net/def/crs/OGC/0/153456",
          "dataType" : "vector",
          "links" : [
             {
                "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
                "type" : "application/json",
-               "title" : "ISEA9DiamondsTileMatrixSet definition (as JSON)",
-               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/ISEA9Diamonds"
+               "title" : "ISEA9RTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/ISEA9R"
             },
             {
                "rel" : "self",
                "type" : "application/json",
-               "title" : "ISEA9Diamonds vector tileset for ne_10m_lakes_europe (as JSON)",
-               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/ISEA9Diamonds?f=json"
+               "title" : "ISEA9R vector tileset for ne_10m_lakes_europe (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/ISEA9R?f=json"
             },
             {
                "rel" : "self",
                "type" : "text/html",
-               "title" : "ISEA9Diamonds vector tileset for ne_10m_lakes_europe (as HTML)",
-               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/ISEA9Diamonds?f=html"
+               "title" : "ISEA9R vector tileset for ne_10m_lakes_europe (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/ISEA9R?f=html"
             },
             {
                "rel" : "self",
                "type" : "application/json+tilejson",
-               "title" : "ISEA9Diamonds vector tileset for ne_10m_lakes_europe (in TileJSON format)",
-               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/ISEA9Diamonds?f=tilejson"
+               "title" : "ISEA9R vector tileset for ne_10m_lakes_europe (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/ISEA9R?f=tilejson"
             }
          ]
       },

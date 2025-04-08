@@ -1,15 +1,14 @@
 HTTP/1.1 200 OK
-Date: Wed, 14 Feb 2024 05:33:25 GMT
+Date: Tue, 08 Apr 2025 23:33:31 GMT
 Server: Apache/2.4.52 (Ubuntu)
-Expires: Thu, 13 Feb 2025 04:01:39 GMT
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Expires: Wed, 08 Apr 2026 23:33:31 GMT
 Access-Control-Allow-Origin: *
 Vary: Accept,Accept-Encoding,Prefer
-Content-Length: 5775
-Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
-Age: 5505
+Content-Type: application/json
+Content-Length: 5756
 Keep-Alive: timeout=5, max=100
 Connection: Keep-Alive
-Content-Type: application/json
 
 {
    "title" : "Blue Marble Next Generation (2004)",
@@ -96,7 +95,7 @@ Content-Type: application/json
       {
          "id" : "blueMarble",
          "dataType" : "map",
-         "minScaleDenominator" : 1091957.5469310893677,
+         "minScaleDenominator" : 1091957.546932,
          "minCellSize" : 305.748113140705,
          "maxTileMatrix" : "9",
          "links" : [
@@ -111,19 +110,19 @@ Content-Type: application/json
             "properties" : { "a" : {
                "title" : "Alpha channel",
                "type" : "integer",
-               "x-ogc-property-seq" : 4
+               "x-ogc-propertySeq" : 4
             }, "b" : {
                "title" : "Blue channel",
                "type" : "integer",
-               "x-ogc-property-seq" : 3
+               "x-ogc-propertySeq" : 3
             }, "g" : {
                "title" : "Green channel",
                "type" : "integer",
-               "x-ogc-property-seq" : 2
+               "x-ogc-propertySeq" : 2
             }, "r" : {
                "title" : "Red channel",
                "type" : "integer",
-               "x-ogc-property-seq" : 1
+               "x-ogc-propertySeq" : 1
             } }
          }
       }
@@ -131,8 +130,8 @@ Content-Type: application/json
    "centerPoint" : {
       "coordinates" : [ 0, 0 ],
       "tileMatrix" : "4",
-      "scaleDenominator" : 34942641.501794859767,
-      "cellSize" : 9783.9396205025605,
+      "scaleDenominator" : 34942641.501795,
+      "cellSize" : 9783.93962050256,
       "crs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
    }
 }

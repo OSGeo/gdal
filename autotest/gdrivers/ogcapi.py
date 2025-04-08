@@ -333,6 +333,7 @@ def test_ogr_ogcapi_raster(api, collection, tmp_path):
     options = gdal.TranslateOptions(
         gdal.ParseCommandLine(
             f"-outsize 100 100 -oo API={api} -projwin -9.5377 53.5421 -9.0557 53.2953"
+            #        f"-outsize 100 100 -oo API={api} -projwin -9.5377 53.5421 -9.0557002 53.2953002197"
         )
     )
     out_path = str(tmp_path / "out.tif")
@@ -347,6 +348,7 @@ def test_ogr_ogcapi_raster(api, collection, tmp_path):
 
     control_image_ds = gdal.Open(control_image_path)
     out_ds = gdal.Open(out_path)
+
     assert [
         out_ds.GetRasterBand(i + 1).Checksum() for i in range(out_ds.RasterCount)
     ] == [
@@ -405,8 +407,8 @@ def test_ogc_api_raster_tiles():
         open_options=["API=TILES", "CACHE=NO", "TILEMATRIXSET=WorldMercatorWGS84Quad"],
     )
     assert ds.RasterCount == 4
-    assert ds.RasterXSize == 82734
-    assert ds.RasterYSize == 106149
+    assert ds.RasterXSize == 82735
+    assert ds.RasterYSize == 106151
     assert ds.GetGeoTransform() == pytest.approx(
         (
             -10902129.741315002,
@@ -418,7 +420,7 @@ def test_ogc_api_raster_tiles():
         )
     )
     assert ds.GetRasterBand(1).GetOverviewCount() == 16
-    assert ds.GetRasterBand(1).GetOverview(15).Checksum() == 5
+    assert ds.GetRasterBand(1).GetOverview(15).Checksum() == 35
     assert ds.GetRasterBand(1).ReadBlock(
         ds.RasterXSize // 2 // 256, ds.RasterYSize // 2 // 256
     )
