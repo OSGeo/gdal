@@ -2671,14 +2671,12 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
     std::vector<GDALArgDatasetValue> *pValue, GDALArgDatasetValueType type,
     bool positionalAndRequired, const char *helpMessage)
 {
-    auto &arg =
-        AddArg(
-            GDAL_ARG_NAME_INPUT, 'i',
-            MsgOrDefault(helpMessage,
-                         CPLSPrintf("Input %s datasets",
-                                    GDALArgDatasetValueTypeName(type).c_str())),
-            pValue, type)
-            .SetMetaVar("<INPUT>...");
+    auto &arg = AddArg(
+        GDAL_ARG_NAME_INPUT, 'i',
+        MsgOrDefault(helpMessage,
+                     CPLSPrintf("Input %s datasets",
+                                GDALArgDatasetValueTypeName(type).c_str())),
+        pValue, type);
     if (positionalAndRequired)
         arg.SetPositional().SetRequired();
     return arg;
@@ -4102,6 +4100,11 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                     osRet += '<';
                     osRet += metavar;
                     osRet += '>';
+                }
+                if (arg->GetType() == GAAT_DATASET_LIST &&
+                    arg->GetMaxCount() > 1)
+                {
+                    osRet += "...";
                 }
                 if (optional)
                     osRet += ']';
