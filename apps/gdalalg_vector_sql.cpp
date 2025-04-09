@@ -213,7 +213,9 @@ class GDALVectorSQLAlgorithmDatasetMultiLayer final : public GDALDataset
 
 bool GDALVectorSQLAlgorithm::RunStep(GDALProgressFunc, void *)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
+
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -224,8 +226,6 @@ bool GDALVectorSQLAlgorithm::RunStep(GDALProgressFunc, void *)
                     "in --statement");
         return false;
     }
-
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
 
     if (m_sql.size() == 1)
     {
