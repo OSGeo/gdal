@@ -20,6 +20,7 @@ Synopsis
 Available sub-commands
 ----------------------
 
+- :ref:`gdal_vector_cat_subcommand`
 - :ref:`gdal_vector_clip_subcommand`
 - :ref:`gdal_vector_convert_subcommand`
 - :ref:`gdal_vector_edit_subcommand`
