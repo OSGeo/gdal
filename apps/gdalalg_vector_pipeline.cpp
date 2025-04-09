@@ -65,6 +65,8 @@ void GDALVectorPipelineStepAlgorithm::AddInputArgs(bool hiddenForCLI)
     AddOpenOptionsArg(&m_openOptions).SetHiddenForCLI(hiddenForCLI);
     AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR,
                        /* positionalAndRequired = */ !hiddenForCLI)
+        .SetMinCount(1)
+        .SetMaxCount(1)
         .SetHiddenForCLI(hiddenForCLI);
     if (GetName() != "sql")
     {
@@ -151,7 +153,9 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         bool ret = false;
         if (readAlg.Run())
         {
-            m_inputDataset.Set(readAlg.m_outputDataset.GetDatasetRef());
+            m_inputDataset.clear();
+            m_inputDataset.resize(1);
+            m_inputDataset[0].Set(readAlg.m_outputDataset.GetDatasetRef());
             m_outputDataset.Set(nullptr);
             if (RunStep(nullptr, nullptr))
             {
@@ -161,7 +165,9 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 }
                 else
                 {
-                    writeAlg.m_inputDataset.Set(
+                    writeAlg.m_inputDataset.clear();
+                    writeAlg.m_inputDataset.resize(1);
+                    writeAlg.m_inputDataset[0].Set(
                         m_outputDataset.GetDatasetRef());
                     if (writeAlg.Run(pfnProgress, pProgressData))
                     {
@@ -528,7 +534,8 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
     // argument of the "write" step, in case they point to the same dataset.
     auto inputArg = steps.front().alg->GetArg(GDAL_ARG_NAME_INPUT);
     if (inputArg && inputArg->IsExplicitlySet() &&
-        inputArg->GetType() == GAAT_DATASET)
+        inputArg->GetType() == GAAT_DATASET_LIST &&
+        inputArg->Get<std::vector<GDALArgDatasetValue>>().size() == 1)
     {
         steps.front().alg->ProcessDatasetArg(inputArg, steps.back().alg.get());
     }

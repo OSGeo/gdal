@@ -153,17 +153,18 @@ OGRFeature *GDALVectorPipelineReadOutputDataset::GetNextFeature(
 
 bool GDALVectorReadAlgorithm::RunStep(GDALProgressFunc, void *)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
+
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
     if (m_inputLayerNames.empty())
     {
-        m_outputDataset.Set(m_inputDataset.GetDatasetRef());
+        m_outputDataset.Set(poSrcDS);
     }
     else
     {
-        auto poSrcDS = m_inputDataset.GetDatasetRef();
         auto poOutDS =
             std::make_unique<GDALVectorPipelineReadOutputDataset>(*poSrcDS);
         for (const auto &srcLayerName : m_inputLayerNames)
