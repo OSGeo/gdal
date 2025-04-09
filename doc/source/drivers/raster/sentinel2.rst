@@ -15,8 +15,7 @@ are also supported.
 The SENTINEL2 driver will be used if the main metadata .xml file at the
 root of a SENTINEL2 data product is opened (whose name is typically
 S2A_OPER_MTD_SAFL1C\_....xml). It can also accept directly .zip files
-downloaded from the `Sentinels Scientific Data
-Hub <https://scihub.copernicus.eu/>`__
+downloaded from the `Copernicus Browser <https://browser.dataspace.copernicus.eu/>`__.
 
 To be able to read the imagery, GDAL must be configured with at least
 one of the JPEG2000 capable drivers.
@@ -454,7 +453,7 @@ Examples
 See Also
 --------
 
--  `Sentinels Scientific Data Hub <https://scihub.esa.int/>`__
+-  `Copernicus Data Space Ecosystem <https://dataspace.copernicus.eu>`__
 -  `Sentinel 2 User
    guide <https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-2-msi>`__
 -  `Sentinel 2 User
