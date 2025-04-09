@@ -5592,10 +5592,14 @@ class VSIFile(BytesIO):
         if type == GAAT_REAL_LIST:
             return self.SetAsDoubleList(value)
         if type == GAAT_DATASET_LIST:
-            if isinstance(value[0], str) or isinstance(value[0], os.PathLike):
+            if isinstance(value, list) and (isinstance(value[0], str) or isinstance(value[0], os.PathLike)):
                 return self.SetDatasetNames([str(v) for v in value])
-            elif isinstance(value[0], Dataset):
+            elif isinstance(value, list) and isinstance(value[0], Dataset):
                 return self.SetDatasets(value)
+            elif isinstance(value, str) or isinstance(value, os.PathLike):
+                return self.SetDatasetNames([str(value)])
+            elif isinstance(value, Dataset):
+                return self.SetDatasets([value])
             else:
                 raise "Unexpected value type %s for an argument of type DatasetList" % str(type(value))
         raise Exception("Unhandled algorithm argument data type")
