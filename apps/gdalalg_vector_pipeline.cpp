@@ -68,7 +68,7 @@ void GDALVectorPipelineStepAlgorithm::AddInputArgs(bool hiddenForCLI)
         .SetMinCount(1)
         .SetMaxCount(1)
         .SetHiddenForCLI(hiddenForCLI);
-    if (GetName() != "sql")
+    if (GetName() != GDALVectorSQLAlgorithm::NAME)
     {
         AddArg("input-layer", 'l', _("Input layer name(s)"), &m_inputLayerNames)
             .AddAlias("layer")
@@ -106,7 +106,7 @@ void GDALVectorPipelineStepAlgorithm::AddOutputArgs(
            &m_appendLayer)
         .SetDefault(false)
         .SetHiddenForCLI(hiddenForCLI);
-    if (GetName() != "sql")
+    if (GetName() != GDALVectorSQLAlgorithm::NAME)
     {
         AddArg("output-layer", shortNameOutputLayerAllowed ? 'l' : 0,
                _("Output layer name"), &m_outputLayerName)
