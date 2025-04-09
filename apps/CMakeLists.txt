@@ -46,6 +46,7 @@ add_library(
   gdalalg_raster_write.cpp
   gdalalg_vector.cpp
   gdalalg_vector_info.cpp
+  gdalalg_vector_cat.cpp
   gdalalg_vector_clip.cpp
   gdalalg_vector_convert.cpp
   gdalalg_vector_edit.cpp

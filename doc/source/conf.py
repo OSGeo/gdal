@@ -442,6 +442,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_cat",
+        "gdal-vector_cat",
+        "Concatenate vector datasets",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector_clip",
         "gdal-vector-clip",
         "Clip a vector dataset",
