@@ -11,67 +11,63 @@ Before opening a GDAL supported raster datastore it is necessary to register dri
 
 Once the drivers are registered, the application should call the free standing :cpp:func:`GDALOpen` function to open a dataset, passing the name of the dataset and the access desired (GA_ReadOnly or GA_Update).
 
-In C++:
+.. tabs::
 
-.. code-block:: c++
+   .. code-tab:: c++
 
-    #include "gdal_priv.h"
+      #include "gdal_priv.h"
 
-    #include <errno.h>
+      #include <errno.h>
 
-    int main(int argc, const char* argv[])
-    {
-        if (argc != 2) {
-            return EINVAL;
-        }
-        const char* pszFilename = argv[1];
+      int main(int argc, const char* argv[])
+      {
+          if (argc != 2) {
+              return EINVAL;
+          }
+          const char* pszFilename = argv[1];
+     
+          GDALDatasetUniquePtr poDataset;
+          GDALAllRegister();
+          const GDALAccess eAccess = GA_ReadOnly;
+          poDataset = GDALDatasetUniquePtr(GDALDataset::FromHandle(GDALOpen( pszFilename, eAccess )));
+          if( !poDataset )
+          {
+              ...; // handle error
+          }
+          return 0;
+      }
 
-        GDALDatasetUniquePtr poDataset;
-        GDALAllRegister();
-        const GDALAccess eAccess = GA_ReadOnly;
-        poDataset = GDALDatasetUniquePtr(GDALDataset::FromHandle(GDALOpen( pszFilename, eAccess )));
-        if( !poDataset )
-        {
-            ...; // handle error
-        }
-        return 0;
-    }
+   .. code-tab:: c
 
-In C:
+      #include "gdal.h"
+      #include "cpl_conv.h" /* for CPLMalloc() */
 
-.. code-block:: c
+      #include <errno.h>
 
-    #include "gdal.h"
-    #include "cpl_conv.h" /* for CPLMalloc() */
+      int main(int argc, const char* argv[])
+      {
+          if (argc != 2) {
+              return EINVAL;
+          }
+          const char* pszFilename = argv[1];
+   
+          GDALDatasetH  hDataset;
+          GDALAllRegister();
+          const GDALAccess eAccess = GA_ReadOnly;
+          hDataset = GDALOpen( pszFilename, eAccess );
+          if( hDataset == NULL )
+          {
+              ...; // handle error
+          }
+          return 0;
+      }
 
-    #include <errno.h>
+   .. code-tab:: python
 
-    int main(int argc, const char* argv[])
-    {
-        if (argc != 2) {
-            return EINVAL;
-        }
-        const char* pszFilename = argv[1];
-
-        GDALDatasetH  hDataset;
-        GDALAllRegister();
-        const GDALAccess eAccess = GA_ReadOnly;
-        hDataset = GDALOpen( pszFilename, eAccess );
-        if( hDataset == NULL )
-        {
-            ...; // handle error
-        }
-        return 0;
-    }
-
-In Python:
-
-.. code-block:: python
-
-    from osgeo import gdal
-    dataset = gdal.Open(filename, gdal.GA_ReadOnly)
-    if not dataset:
-        ...
+      from osgeo import gdal
+      dataset = gdal.Open(filename, gdal.GA_ReadOnly)
+      if not dataset:
+          ...
 
 Note that if :cpp:func:`GDALOpen` returns NULL it means the open failed, and that an error messages will already have been emitted via :cpp:func:`CPLError`. If you want to control how errors are reported to the user review the :cpp:func:`CPLError` documentation. Generally speaking all of GDAL uses :cpp:func:`CPLError` for error reporting. Also, note that pszFilename need not actually be the name of a physical file (though it usually is). It's interpretation is driver dependent, and it might be an URL, a filename with additional parameters added at the end controlling the open or almost anything. Please try not to limit GDAL file selection dialogs to only selecting physical files.
 
@@ -95,185 +91,172 @@ In the general case, this is an affine transform.
 
 If we wanted to print some general information about the dataset we might do the following:
 
-In C++:
+.. tabs::
 
-.. code-block:: c++
+   .. code-tab:: c++
 
-    double        adfGeoTransform[6];
-    printf( "Driver: %s/%s\n",
-            poDataset->GetDriver()->GetDescription(),
-            poDataset->GetDriver()->GetMetadataItem( GDAL_DMD_LONGNAME ) );
-    printf( "Size is %dx%dx%d\n",
-            poDataset->GetRasterXSize(), poDataset->GetRasterYSize(),
-            poDataset->GetRasterCount() );
-    if( poDataset->GetProjectionRef()  != NULL )
-        printf( "Projection is `%s'\n", poDataset->GetProjectionRef() );
-    if( poDataset->GetGeoTransform( adfGeoTransform ) == CE_None )
-    {
-        printf( "Origin = (%.6f,%.6f)\n",
-                adfGeoTransform[0], adfGeoTransform[3] );
-        printf( "Pixel Size = (%.6f,%.6f)\n",
-                adfGeoTransform[1], adfGeoTransform[5] );
-    }
+      double        adfGeoTransform[6];
+      printf( "Driver: %s/%s\n",
+              poDataset->GetDriver()->GetDescription(),
+              poDataset->GetDriver()->GetMetadataItem( GDAL_DMD_LONGNAME ) );
+      printf( "Size is %dx%dx%d\n",
+              poDataset->GetRasterXSize(), poDataset->GetRasterYSize(),
+              poDataset->GetRasterCount() );
+      if( poDataset->GetProjectionRef()  != NULL )
+          printf( "Projection is `%s'\n", poDataset->GetProjectionRef() );
+      if( poDataset->GetGeoTransform( adfGeoTransform ) == CE_None )
+      {
+          printf( "Origin = (%.6f,%.6f)\n",
+                  adfGeoTransform[0], adfGeoTransform[3] );
+          printf( "Pixel Size = (%.6f,%.6f)\n",
+                  adfGeoTransform[1], adfGeoTransform[5] );
+      }
 
-In C:
+   .. code-tab:: c
 
-.. code-block:: c
+      GDALDriverH   hDriver;
+      double        adfGeoTransform[6];
+      hDriver = GDALGetDatasetDriver( hDataset );
+      printf( "Driver: %s/%s\n",
+              GDALGetDriverShortName( hDriver ),
+              GDALGetDriverLongName( hDriver ) );
+      printf( "Size is %dx%dx%d\n",
+              GDALGetRasterXSize( hDataset ),
+              GDALGetRasterYSize( hDataset ),
+              GDALGetRasterCount( hDataset ) );
+      if( GDALGetProjectionRef( hDataset ) != NULL )
+          printf( "Projection is `%s'\n", GDALGetProjectionRef( hDataset ) );
+      if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
+      {
+          printf( "Origin = (%.6f,%.6f)\n",
+                  adfGeoTransform[0], adfGeoTransform[3] );
+          printf( "Pixel Size = (%.6f,%.6f)\n",
+                  adfGeoTransform[1], adfGeoTransform[5] );
+      }
 
-    GDALDriverH   hDriver;
-    double        adfGeoTransform[6];
-    hDriver = GDALGetDatasetDriver( hDataset );
-    printf( "Driver: %s/%s\n",
-            GDALGetDriverShortName( hDriver ),
-            GDALGetDriverLongName( hDriver ) );
-    printf( "Size is %dx%dx%d\n",
-            GDALGetRasterXSize( hDataset ),
-            GDALGetRasterYSize( hDataset ),
-            GDALGetRasterCount( hDataset ) );
-    if( GDALGetProjectionRef( hDataset ) != NULL )
-        printf( "Projection is `%s'\n", GDALGetProjectionRef( hDataset ) );
-    if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
-    {
-        printf( "Origin = (%.6f,%.6f)\n",
-                adfGeoTransform[0], adfGeoTransform[3] );
-        printf( "Pixel Size = (%.6f,%.6f)\n",
-                adfGeoTransform[1], adfGeoTransform[5] );
-    }
+   .. code-tab:: python
 
-In Python:
-
-.. code-block:: python
-
-    print("Driver: {}/{}".format(dataset.GetDriver().ShortName,
-                                dataset.GetDriver().LongName))
-    print("Size is {} x {} x {}".format(dataset.RasterXSize,
-                                        dataset.RasterYSize,
-                                        dataset.RasterCount))
-    print("Projection is {}".format(dataset.GetProjection()))
-    geotransform = dataset.GetGeoTransform()
-    if geotransform:
-        print("Origin = ({}, {})".format(geotransform[0], geotransform[3]))
-        print("Pixel Size = ({}, {})".format(geotransform[1], geotransform[5]))
+      print("Driver: {}/{}".format(dataset.GetDriver().ShortName,
+                                  dataset.GetDriver().LongName))
+      print("Size is {} x {} x {}".format(dataset.RasterXSize,
+                                          dataset.RasterYSize,
+                                          dataset.RasterCount))
+      print("Projection is {}".format(dataset.GetProjection()))
+      geotransform = dataset.GetGeoTransform()
+      if geotransform:
+          print("Origin = ({}, {})".format(geotransform[0], geotransform[3]))
+          print("Pixel Size = ({}, {})".format(geotransform[1], geotransform[5]))
 
 Fetching a Raster Band
 ----------------------
 
 At this time access to raster data via GDAL is done one band at a time. Also, there is metadata, block sizes, color tables, and various other information available on a band by band basis. The following codes fetches a :cpp:class:`GDALRasterBand` object from the dataset (numbered 1 through :cpp:func:`GDALRasterBand::GetRasterCount`) and displays a little information about it.
 
-In C++:
+.. tabs::
 
-.. code-block:: c++
+   .. code-tab:: c++
 
-    GDALRasterBand  *poBand;
-    int             nBlockXSize, nBlockYSize;
-    int             bGotMin, bGotMax;
-    double          adfMinMax[2];
-    poBand = poDataset->GetRasterBand( 1 );
-    poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
-    printf( "Block=%dx%d Type=%s, ColorInterp=%s\n",
-            nBlockXSize, nBlockYSize,
-            GDALGetDataTypeName(poBand->GetRasterDataType()),
-            GDALGetColorInterpretationName(
-                poBand->GetColorInterpretation()) );
-    adfMinMax[0] = poBand->GetMinimum( &bGotMin );
-    adfMinMax[1] = poBand->GetMaximum( &bGotMax );
-    if( ! (bGotMin && bGotMax) )
-        GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
-    printf( "Min=%.3fd, Max=%.3f\n", adfMinMax[0], adfMinMax[1] );
-    if( poBand->GetOverviewCount() > 0 )
-        printf( "Band has %d overviews.\n", poBand->GetOverviewCount() );
-    if( poBand->GetColorTable() != NULL )
-        printf( "Band has a color table with %d entries.\n",
-                poBand->GetColorTable()->GetColorEntryCount() );
+      GDALRasterBand  *poBand;
+      int             nBlockXSize, nBlockYSize;
+      int             bGotMin, bGotMax;
+      double          adfMinMax[2];
+      poBand = poDataset->GetRasterBand( 1 );
+      poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+      printf( "Block=%dx%d Type=%s, ColorInterp=%s\n",
+              nBlockXSize, nBlockYSize,
+              GDALGetDataTypeName(poBand->GetRasterDataType()),
+              GDALGetColorInterpretationName(
+                  poBand->GetColorInterpretation()) );
+      adfMinMax[0] = poBand->GetMinimum( &bGotMin );
+      adfMinMax[1] = poBand->GetMaximum( &bGotMax );
+      if( ! (bGotMin && bGotMax) )
+          GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
+      printf( "Min=%.3fd, Max=%.3f\n", adfMinMax[0], adfMinMax[1] );
+      if( poBand->GetOverviewCount() > 0 )
+          printf( "Band has %d overviews.\n", poBand->GetOverviewCount() );
+      if( poBand->GetColorTable() != NULL )
+          printf( "Band has a color table with %d entries.\n",
+                  poBand->GetColorTable()->GetColorEntryCount() );
 
+   .. code-tab:: c
 
-In C:
+      GDALRasterBandH hBand;
+      int             nBlockXSize, nBlockYSize;
+      int             bGotMin, bGotMax;
+      double          adfMinMax[2];
+      hBand = GDALGetRasterBand( hDataset, 1 );
+      GDALGetBlockSize( hBand, &nBlockXSize, &nBlockYSize );
+      printf( "Block=%dx%d Type=%s, ColorInterp=%s\n",
+              nBlockXSize, nBlockYSize,
+              GDALGetDataTypeName(GDALGetRasterDataType(hBand)),
+              GDALGetColorInterpretationName(
+                  GDALGetRasterColorInterpretation(hBand)) );
+      adfMinMax[0] = GDALGetRasterMinimum( hBand, &bGotMin );
+      adfMinMax[1] = GDALGetRasterMaximum( hBand, &bGotMax );
+      if( ! (bGotMin && bGotMax) )
+          GDALComputeRasterMinMax( hBand, TRUE, adfMinMax );
+      printf( "Min=%.3fd, Max=%.3f\n", adfMinMax[0], adfMinMax[1] );
+      if( GDALGetOverviewCount(hBand) > 0 )
+          printf( "Band has %d overviews.\n", GDALGetOverviewCount(hBand));
+      if( GDALGetRasterColorTable( hBand ) != NULL )
+          printf( "Band has a color table with %d entries.\n",
+                  GDALGetColorEntryCount(
+                      GDALGetRasterColorTable( hBand ) ) );
 
-.. code-block:: c
+   .. code-tab:: python
 
-    GDALRasterBandH hBand;
-    int             nBlockXSize, nBlockYSize;
-    int             bGotMin, bGotMax;
-    double          adfMinMax[2];
-    hBand = GDALGetRasterBand( hDataset, 1 );
-    GDALGetBlockSize( hBand, &nBlockXSize, &nBlockYSize );
-    printf( "Block=%dx%d Type=%s, ColorInterp=%s\n",
-            nBlockXSize, nBlockYSize,
-            GDALGetDataTypeName(GDALGetRasterDataType(hBand)),
-            GDALGetColorInterpretationName(
-                GDALGetRasterColorInterpretation(hBand)) );
-    adfMinMax[0] = GDALGetRasterMinimum( hBand, &bGotMin );
-    adfMinMax[1] = GDALGetRasterMaximum( hBand, &bGotMax );
-    if( ! (bGotMin && bGotMax) )
-        GDALComputeRasterMinMax( hBand, TRUE, adfMinMax );
-    printf( "Min=%.3fd, Max=%.3f\n", adfMinMax[0], adfMinMax[1] );
-    if( GDALGetOverviewCount(hBand) > 0 )
-        printf( "Band has %d overviews.\n", GDALGetOverviewCount(hBand));
-    if( GDALGetRasterColorTable( hBand ) != NULL )
-        printf( "Band has a color table with %d entries.\n",
-                GDALGetColorEntryCount(
-                    GDALGetRasterColorTable( hBand ) ) );
+      band = dataset.GetRasterBand(1)
+      print("Band Type={}".format(gdal.GetDataTypeName(band.DataType)))
 
-In Python:
+      min = band.GetMinimum()
+      max = band.GetMaximum()
+      if not min or not max:
+          (min,max) = band.ComputeRasterMinMax(True)
+      print("Min={:.3f}, Max={:.3f}".format(min,max))
 
-.. code-block:: python
+      if band.GetOverviewCount() > 0:
+          print("Band has {} overviews".format(band.GetOverviewCount()))
 
-    band = dataset.GetRasterBand(1)
-    print("Band Type={}".format(gdal.GetDataTypeName(band.DataType)))
-
-    min = band.GetMinimum()
-    max = band.GetMaximum()
-    if not min or not max:
-        (min,max) = band.ComputeRasterMinMax(True)
-    print("Min={:.3f}, Max={:.3f}".format(min,max))
-
-    if band.GetOverviewCount() > 0:
-        print("Band has {} overviews".format(band.GetOverviewCount()))
-
-    if band.GetRasterColorTable():
-        print("Band has a color table with {} entries".format(band.GetRasterColorTable().GetCount()))
+      if band.GetRasterColorTable():
+          print("Band has a color table with {} entries".format(band.GetRasterColorTable().GetCount()))
 
 Reading Raster Data
 -------------------
 
-There are a few ways to read raster data, but the most common is via the :cpp:func:`GDALRasterBand::RasterIO` method. This method will automatically take care of data type conversion, up/down sampling and windowing. The following code will read the first scanline of data into a similarly sized buffer, converting it to floating point as part of the operation.
-
-In C++:
-
-.. code-block:: c++
-
-    float *pafScanline;
-    int   nXSize = poBand->GetXSize();
-    pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
-    poBand->RasterIO( GF_Read, 0, 0, nXSize, 1,
-                    pafScanline, nXSize, 1, GDT_Float32,
-                    0, 0 );
+There are a few ways to read raster data, but the most common is via the :cpp:func:`GDALRasterBand::RasterIO` method. This method will automatically take care of data type conversion, up/down sampling and windowing.
+The following code will read the first scanline of data into a similarly sized buffer, converting it to floating point as part of the operation.
 
 The pafScanline buffer should be freed with CPLFree() when it is no longer used.
 
-In C:
+.. tabs::
 
-.. code-block:: c
+   .. code-tab:: c++
 
-    float *pafScanline;
-    int   nXSize = GDALGetRasterBandXSize( hBand );
-    pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
-    GDALRasterIO( hBand, GF_Read, 0, 0, nXSize, 1,
-                pafScanline, nXSize, 1, GDT_Float32,
-                0, 0 );
+      float *pafScanline;
+      int   nXSize = poBand->GetXSize();
+      pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
+      poBand->RasterIO( GF_Read, 0, 0, nXSize, 1,
+                      pafScanline, nXSize, 1, GDT_Float32,
+                      0, 0 );
 
-The pafScanline buffer should be freed with CPLFree() when it is no longer used.
+   .. code-tab:: c
 
-In Python:
+      float *pafScanline;
+      int   nXSize = GDALGetRasterBandXSize( hBand );
+      pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
+      GDALRasterIO( hBand, GF_Read, 0, 0, nXSize, 1,
+                  pafScanline, nXSize, 1, GDT_Float32,
+                  0, 0 );
 
-.. code-block:: python
+   .. code-tab:: python
 
-    scanline = band.ReadRaster(xoff=0, yoff=0,
-                            xsize=band.XSize, ysize=1,
-                            buf_xsize=band.XSize, buf_ysize=1,
-                            buf_type=gdal.GDT_Float32)
+      scanline = band.ReadRaster(xoff=0, yoff=0,
+                              xsize=band.XSize, ysize=1,
+                              buf_xsize=band.XSize, buf_ysize=1,
+                              buf_type=gdal.GDT_Float32)
 
-Note that the returned scanline is of type string, and contains xsize*4 bytes of raw binary floating point data. This can be converted to Python values using the struct module from the standard library:
+Note that when using Python the returned scanline is of type string, and contains xsize*4 bytes of raw binary floating point data.
+This can be converted to Python values using the struct module from the standard library:
 
 .. code-block:: python
 
@@ -311,44 +294,40 @@ New files in GDAL supported formats may be created if the format driver supports
 
 To determine if a particular format supports Create or CreateCopy it is possible to check the DCAP_CREATE and DCAP_CREATECOPY metadata on the format driver object. Ensure that :cpp:func:`GDALAllRegister` has been called before calling :cpp:func:`GDALDriverManager::GetDriverByName`. In this example we fetch a driver, and determine whether it supports Create() and/or CreateCopy().
 
-In C++:
+.. tabs::
 
-.. code-block:: c++
+   .. code-tab:: c++
 
-    #include "cpl_string.h"
-    ...
-        const char *pszFormat = "GTiff";
-        GDALDriver *poDriver;
-        char **papszMetadata;
-        poDriver = GetGDALDriverManager()->GetDriverByName(pszFormat);
-        if( poDriver == NULL )
-            exit( 1 );
-        papszMetadata = poDriver->GetMetadata();
-        if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATE, FALSE ) )
-            printf( "Driver %s supports Create() method.\n", pszFormat );
-        if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATECOPY, FALSE ) )
-            printf( "Driver %s supports CreateCopy() method.\n", pszFormat );
+      #include "cpl_string.h"
+      ...
+      const char *pszFormat = "GTiff";
+      GDALDriver *poDriver;
+      char **papszMetadata;
+      poDriver = GetGDALDriverManager()->GetDriverByName(pszFormat);
+      if( poDriver == NULL )
+          exit( 1 );
+      papszMetadata = poDriver->GetMetadata();
+      if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATE, FALSE ) )
+          printf( "Driver %s supports Create() method.\n", pszFormat );
+      if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATECOPY, FALSE ) )
+          printf( "Driver %s supports CreateCopy() method.\n", pszFormat );
 
-In C:
+   .. code-tab:: c
 
-.. code-block:: c
+      #include "cpl_string.h"
+      ...
+      const char *pszFormat = "GTiff";
+      GDALDriverH hDriver = GDALGetDriverByName( pszFormat );
+      char **papszMetadata;
+      if( hDriver == NULL )
+          exit( 1 );
+      papszMetadata = GDALGetMetadata( hDriver, NULL );
+      if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATE, FALSE ) )
+          printf( "Driver %s supports Create() method.\n", pszFormat );
+      if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATECOPY, FALSE ) )
+          printf( "Driver %s supports CreateCopy() method.\n", pszFormat );
 
-        #include "cpl_string.h"
-        ...
-        const char *pszFormat = "GTiff";
-        GDALDriverH hDriver = GDALGetDriverByName( pszFormat );
-        char **papszMetadata;
-        if( hDriver == NULL )
-            exit( 1 );
-        papszMetadata = GDALGetMetadata( hDriver, NULL );
-        if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATE, FALSE ) )
-            printf( "Driver %s supports Create() method.\n", pszFormat );
-        if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATECOPY, FALSE ) )
-            printf( "Driver %s supports CreateCopy() method.\n", pszFormat );
-
-In Python:
-
-.. code-block:: python
+   .. code-tab:: python
 
     fileformat = "GTiff"
     driver = gdal.GetDriverByName(fileformat)
@@ -366,179 +345,162 @@ Using CreateCopy()
 
 The :cpp:func:`GDALDriver::CreateCopy` method can be used fairly simply as most information is collected from the source dataset. However, it includes options for passing format specific creation options, and for reporting progress to the user as a long dataset copy takes place. A simple copy from the a file named pszSrcFilename, to a new file named pszDstFilename using default options on a format whose driver was previously fetched might look like this:
 
-In C++:
+.. tabs::
 
-.. code-block:: c++
+   .. code-tab:: c++
 
-    GDALDataset *poSrcDS =
-    (GDALDataset *) GDALOpen( pszSrcFilename, GA_ReadOnly );
-    GDALDataset *poDstDS;
-    poDstDS = poDriver->CreateCopy( pszDstFilename, poSrcDS, FALSE,
-                                    NULL, NULL, NULL );
-    /* Once we're done, close properly the dataset */
-    if( poDstDS != NULL )
-        GDALClose( (GDALDatasetH) poDstDS );
-    GDALClose( (GDALDatasetH) poSrcDS );
+      GDALDataset *poSrcDS =
+      (GDALDataset *) GDALOpen( pszSrcFilename, GA_ReadOnly );
+      GDALDataset *poDstDS;
+      poDstDS = poDriver->CreateCopy( pszDstFilename, poSrcDS, FALSE,
+                                      NULL, NULL, NULL );
+      /* Once we're done, close properly the dataset */
+      if( poDstDS != NULL )
+          GDALClose( (GDALDatasetH) poDstDS );
+      GDALClose( (GDALDatasetH) poSrcDS );
 
-In C:
+   .. code-tab:: c
 
-.. code-block:: c
+      GDALDatasetH hSrcDS = GDALOpen( pszSrcFilename, GA_ReadOnly );
+      GDALDatasetH hDstDS;
+      hDstDS = GDALCreateCopy( hDriver, pszDstFilename, hSrcDS, FALSE,
+                              NULL, NULL, NULL );
+      /* Once we're done, close properly the dataset */
+      if( hDstDS != NULL )
+          GDALClose( hDstDS );
+      GDALClose(hSrcDS);
 
-    GDALDatasetH hSrcDS = GDALOpen( pszSrcFilename, GA_ReadOnly );
-    GDALDatasetH hDstDS;
-    hDstDS = GDALCreateCopy( hDriver, pszDstFilename, hSrcDS, FALSE,
-                            NULL, NULL, NULL );
-    /* Once we're done, close properly the dataset */
-    if( hDstDS != NULL )
-        GDALClose( hDstDS );
-    GDALClose(hSrcDS);
+   .. code-tab:: python
 
-In Python:
-
-.. code-block:: python
-
-    src_ds = gdal.Open(src_filename)
-    dst_ds = driver.CreateCopy(dst_filename, src_ds, strict=0)
-    # Once we're done, close properly the dataset
-    dst_ds = None
-    src_ds = None
+      src_ds = gdal.Open(src_filename)
+      dst_ds = driver.CreateCopy(dst_filename, src_ds, strict=0)
+      # Once we're done, close properly the dataset
+      dst_ds = None
+      src_ds = None
 
 Note that the CreateCopy() method returns a writable dataset, and that it must be closed properly to complete writing and flushing the dataset to disk. In the Python case this occurs automatically when "dst_ds" goes out of scope. The FALSE (or 0) value used for the bStrict option just after the destination filename in the CreateCopy() call indicates that the CreateCopy() call should proceed without a fatal error even if the destination dataset cannot be created to exactly match the input dataset. This might be because the output format does not support the pixel datatype of the input dataset, or because the destination cannot support writing georeferencing for instance.
 
 A more complex case might involve passing creation options, and using a predefined progress monitor like this:
 
-In C++:
+.. tabs::
 
-.. code-block:: c++
+   .. code-tab:: c++
 
-        #include "cpl_string.h"
-        ...
-        char **papszOptions = NULL;
-        papszOptions = CSLSetNameValue( papszOptions, "TILED", "YES" );
-        papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
-        poDstDS = poDriver->CreateCopy( pszDstFilename, poSrcDS, FALSE,
-                                        papszOptions, GDALTermProgress, NULL );
-        /* Once we're done, close properly the dataset */
-        if( poDstDS != NULL )
-            GDALClose( (GDALDatasetH) poDstDS );
-        CSLDestroy( papszOptions );
+      #include "cpl_string.h"
+      ...
+      char **papszOptions = NULL;
+      papszOptions = CSLSetNameValue( papszOptions, "TILED", "YES" );
+      papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
+      poDstDS = poDriver->CreateCopy( pszDstFilename, poSrcDS, FALSE,
+                                      papszOptions, GDALTermProgress, NULL );
+      /* Once we're done, close properly the dataset */
+      if( poDstDS != NULL )
+          GDALClose( (GDALDatasetH) poDstDS );
+      CSLDestroy( papszOptions );
 
-In C:
+   .. code-tab:: c
 
-.. code-block:: c
+      #include "cpl_string.h"
+      ...
+      char **papszOptions = NULL;
+      papszOptions = CSLSetNameValue( papszOptions, "TILED", "YES" );
+      papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
+      hDstDS = GDALCreateCopy( hDriver, pszDstFilename, hSrcDS, FALSE,
+                              papszOptions, GDALTermProgres, NULL );
+      /* Once we're done, close properly the dataset */
+      if( hDstDS != NULL )
+          GDALClose( hDstDS );
+      CSLDestroy( papszOptions );
 
-        #include "cpl_string.h"
-        ...
-        char **papszOptions = NULL;
-        papszOptions = CSLSetNameValue( papszOptions, "TILED", "YES" );
-        papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
-        hDstDS = GDALCreateCopy( hDriver, pszDstFilename, hSrcDS, FALSE,
-                                papszOptions, GDALTermProgres, NULL );
-        /* Once we're done, close properly the dataset */
-        if( hDstDS != NULL )
-            GDALClose( hDstDS );
-        CSLDestroy( papszOptions );
+   .. code-tab:: python
 
-In Python:
-
-.. code-block:: python
-
-    src_ds = gdal.Open(src_filename)
-    dst_ds = driver.CreateCopy(dst_filename, src_ds, strict=0,
-                            options=["TILED=YES", "COMPRESS=PACKBITS"])
-    # Once we're done, close properly the dataset
-    dst_ds = None
-    src_ds = None
+      src_ds = gdal.Open(src_filename)
+      dst_ds = driver.CreateCopy(dst_filename, src_ds, strict=0,
+                              options=["TILED=YES", "COMPRESS=PACKBITS"])
+      # Once we're done, close properly the dataset
+      dst_ds = None
+      src_ds = None
 
 Using Create()
 --------------
 
 For situations in which you are not just exporting an existing file to a new file, it is generally necessary to use the :cpp:func:`GDALDriver::Create` method (though some interesting options are possible through use of virtual files or in-memory files). The Create() method takes an options list much like CreateCopy(), but the image size, number of bands and band type must be provided explicitly.
 
-In C++:
+.. tabs::
 
-.. code-block:: c++
+   .. code-tab:: c++
 
-    GDALDataset *poDstDS;
-    char **papszOptions = NULL;
-    poDstDS = poDriver->Create( pszDstFilename, 512, 512, 1, GDT_Byte,
-                                papszOptions );
+      GDALDataset *poDstDS;
+      char **papszOptions = NULL;
+      poDstDS = poDriver->Create( pszDstFilename, 512, 512, 1, GDT_Byte,
+                                  papszOptions );
 
-In C:
+   .. code-tab:: c
 
-.. code-block:: c
+      GDALDatasetH hDstDS;
+      char **papszOptions = NULL;
+      hDstDS = GDALCreate( hDriver, pszDstFilename, 512, 512, 1, GDT_Byte,
+                          papszOptions );
 
-    GDALDatasetH hDstDS;
-    char **papszOptions = NULL;
-    hDstDS = GDALCreate( hDriver, pszDstFilename, 512, 512, 1, GDT_Byte,
-                        papszOptions );
+   .. code-tab:: python
 
-In Python:
-
-.. code-block:: python
-
-    dst_ds = driver.Create(dst_filename, xsize=512, ysize=512,
-                        bands=1, eType=gdal.GDT_Byte)
+      dst_ds = driver.Create(dst_filename, xsize=512, ysize=512,
+                          bands=1, eType=gdal.GDT_Byte)
 
 Once the dataset is successfully created, all appropriate metadata and raster data must be written to the file. What this is will vary according to usage, but a simple case with a projection, geotransform and raster data is covered here.
 
-In C++:
+.. tabs::
 
-.. code-block:: c++
+   .. code-tab:: c++
 
-    double adfGeoTransform[6] = { 444720, 30, 0, 3751320, 0, -30 };
-    OGRSpatialReference oSRS;
-    char *pszSRS_WKT = NULL;
-    GDALRasterBand *poBand;
-    GByte abyRaster[512*512];
-    poDstDS->SetGeoTransform( adfGeoTransform );
-    oSRS.SetUTM( 11, TRUE );
-    oSRS.SetWellKnownGeogCS( "NAD27" );
-    oSRS.exportToWkt( &pszSRS_WKT );
-    poDstDS->SetProjection( pszSRS_WKT );
-    CPLFree( pszSRS_WKT );
-    poBand = poDstDS->GetRasterBand(1);
-    poBand->RasterIO( GF_Write, 0, 0, 512, 512,
-                    abyRaster, 512, 512, GDT_Byte, 0, 0 );
-    /* Once we're done, close properly the dataset */
-    GDALClose( (GDALDatasetH) poDstDS );
+      double adfGeoTransform[6] = { 444720, 30, 0, 3751320, 0, -30 };
+      OGRSpatialReference oSRS;
+      char *pszSRS_WKT = NULL;
+      GDALRasterBand *poBand;
+      GByte abyRaster[512*512];
+      poDstDS->SetGeoTransform( adfGeoTransform );
+      oSRS.SetUTM( 11, TRUE );
+      oSRS.SetWellKnownGeogCS( "NAD27" );
+      oSRS.exportToWkt( &pszSRS_WKT );
+      poDstDS->SetProjection( pszSRS_WKT );
+      CPLFree( pszSRS_WKT );
+      poBand = poDstDS->GetRasterBand(1);
+      poBand->RasterIO( GF_Write, 0, 0, 512, 512,
+                      abyRaster, 512, 512, GDT_Byte, 0, 0 );
+      /* Once we're done, close properly the dataset */
+      GDALClose( (GDALDatasetH) poDstDS );
 
-In C:
+   .. code-tab:: c
 
-.. code-block:: c
+      double adfGeoTransform[6] = { 444720, 30, 0, 3751320, 0, -30 };
+      OGRSpatialReferenceH hSRS;
+      char *pszSRS_WKT = NULL;
+      GDALRasterBandH hBand;
+      GByte abyRaster[512*512];
+      GDALSetGeoTransform( hDstDS, adfGeoTransform );
+      hSRS = OSRNewSpatialReference( NULL );
+      OSRSetUTM( hSRS, 11, TRUE );
+      OSRSetWellKnownGeogCS( hSRS, "NAD27" );
+      OSRExportToWkt( hSRS, &pszSRS_WKT );
+      OSRDestroySpatialReference( hSRS );
+      GDALSetProjection( hDstDS, pszSRS_WKT );
+      CPLFree( pszSRS_WKT );
+      hBand = GDALGetRasterBand( hDstDS, 1 );
+      GDALRasterIO( hBand, GF_Write, 0, 0, 512, 512,
+                  abyRaster, 512, 512, GDT_Byte, 0, 0 );
+      /* Once we're done, close properly the dataset */
+      GDALClose( hDstDS );
 
-    double adfGeoTransform[6] = { 444720, 30, 0, 3751320, 0, -30 };
-    OGRSpatialReferenceH hSRS;
-    char *pszSRS_WKT = NULL;
-    GDALRasterBandH hBand;
-    GByte abyRaster[512*512];
-    GDALSetGeoTransform( hDstDS, adfGeoTransform );
-    hSRS = OSRNewSpatialReference( NULL );
-    OSRSetUTM( hSRS, 11, TRUE );
-    OSRSetWellKnownGeogCS( hSRS, "NAD27" );
-    OSRExportToWkt( hSRS, &pszSRS_WKT );
-    OSRDestroySpatialReference( hSRS );
-    GDALSetProjection( hDstDS, pszSRS_WKT );
-    CPLFree( pszSRS_WKT );
-    hBand = GDALGetRasterBand( hDstDS, 1 );
-    GDALRasterIO( hBand, GF_Write, 0, 0, 512, 512,
-                abyRaster, 512, 512, GDT_Byte, 0, 0 );
-    /* Once we're done, close properly the dataset */
-    GDALClose( hDstDS );
+   .. code-tab:: python
 
-In Python:
-
-.. code-block:: python
-
-    from osgeo import osr
-    import numpy
-    dst_ds.SetGeoTransform([444720, 30, 0, 3751320, 0, -30])
-    srs = osr.SpatialReference()
-    srs.SetUTM(11, 1)
-    srs.SetWellKnownGeogCS("NAD27")
-    dst_ds.SetProjection(srs.ExportToWkt())
-    raster = numpy.zeros((512, 512), dtype=numpy.uint8)
-    dst_ds.GetRasterBand(1).WriteArray(raster)
-    # Once we're done, close properly the dataset
-    dst_ds = None
-
+      from osgeo import osr
+      import numpy
+      dst_ds.SetGeoTransform([444720, 30, 0, 3751320, 0, -30])
+      srs = osr.SpatialReference()
+      srs.SetUTM(11, 1)
+      srs.SetWellKnownGeogCS("NAD27")
+      dst_ds.SetProjection(srs.ExportToWkt())
+      raster = numpy.zeros((512, 512), dtype=numpy.uint8)
+      dst_ds.GetRasterBand(1).WriteArray(raster)
+      # Once we're done, close properly the dataset
+      dst_ds = None
