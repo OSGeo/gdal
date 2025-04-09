@@ -2671,12 +2671,14 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
     std::vector<GDALArgDatasetValue> *pValue, GDALArgDatasetValueType type,
     bool positionalAndRequired, const char *helpMessage)
 {
-    auto &arg = AddArg(
-        GDAL_ARG_NAME_INPUT, 'i',
-        MsgOrDefault(helpMessage,
-                     CPLSPrintf("Input %s datasets",
-                                GDALArgDatasetValueTypeName(type).c_str())),
-        pValue, type);
+    auto &arg =
+        AddArg(
+            GDAL_ARG_NAME_INPUT, 'i',
+            MsgOrDefault(helpMessage,
+                         CPLSPrintf("Input %s datasets",
+                                    GDALArgDatasetValueTypeName(type).c_str())),
+            pValue, type)
+            .SetMetaVar("<INPUT>...");
     if (positionalAndRequired)
         arg.SetPositional().SetRequired();
     return arg;
@@ -4368,7 +4370,7 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
         osRet += '\n';
     }
 
-    if (!m_helpDocRequested)
+    if (!m_helpDocRequested && !usageOptions.isPipelineMain)
     {
         if (!m_helpURL.empty())
         {
@@ -4376,21 +4378,34 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
             osRet += GetHelpFullURL();
             osRet += '\n';
         }
-
-        if (!m_callPath.empty() && m_callPath[0] == "gdal")
-        {
-            osRet +=
-                "\nWARNING: the gdal command is provisionally provided as an "
-                "alternative interface to GDAL and OGR command line "
-                "utilities.\nThe project reserves the right to modify, "
-                "rename, reorganize, and change the behavior of the utility\n"
-                "until it is officially frozen in a future feature release of "
-                "GDAL.\n";
-        }
+        osRet += GetUsageForCLIEnd();
     }
 
     return osRet;
 }
+
+/************************************************************************/
+/*                   GDALAlgorithm::GetUsageForCLIEnd()                 */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+std::string GDALAlgorithm::GetUsageForCLIEnd() const
+{
+    std::string osRet;
+
+    if (!m_callPath.empty() && m_callPath[0] == "gdal")
+    {
+        osRet += "\nWARNING: the gdal command is provisionally provided as an "
+                 "alternative interface to GDAL and OGR command line "
+                 "utilities.\nThe project reserves the right to modify, "
+                 "rename, reorganize, and change the behavior of the utility\n"
+                 "until it is officially frozen in a future feature release of "
+                 "GDAL.\n";
+    }
+    return osRet;
+}
+
+//! @endcond
 
 /************************************************************************/
 /*                    GDALAlgorithm::GetUsageAsJSON()                   */
