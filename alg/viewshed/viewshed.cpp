@@ -339,7 +339,8 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     // Execute the viewshed algorithm.
     GDALRasterBand *pDstBand = poDstDS->GetRasterBand(1);
     ViewshedExecutor executor(*pSrcBand, *pDstBand, nX, nY, oOutExtent,
-                              oCurExtent, oOpts, oProgress);
+                              oCurExtent, oOpts, oProgress,
+                              /* emitWarningIfNoData = */ true);
     executor.run();
     oProgress.emit(1);
     return static_cast<bool>(poDstDS);
