@@ -35,6 +35,7 @@
 #include "gdalalg_raster_tpi.h"
 #include "gdalalg_raster_tri.h"
 #include "gdalalg_raster_unscale.h"
+#include "gdalalg_raster_viewshed.h"
 
 /************************************************************************/
 /*                         GDALRasterAlgorithm                          */
@@ -72,6 +73,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterTPIAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterTRIAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterUnscaleAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALRasterViewshedAlgorithm>();
     }
 
   private:
