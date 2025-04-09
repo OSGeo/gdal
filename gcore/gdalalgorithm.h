@@ -336,7 +336,8 @@ class CPL_DLL GDALArgDatasetValue final
     GDALArgDatasetValue() = default;
 
     /** Constructor by dataset name. */
-    explicit GDALArgDatasetValue(const std::string &name) : m_name(name)
+    explicit GDALArgDatasetValue(const std::string &name)
+        : m_name(name), m_nameSet(true)
     {
     }
 
