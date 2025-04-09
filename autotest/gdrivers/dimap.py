@@ -311,6 +311,7 @@ def test_dimap_2_vhr2020_ms_fs():
 
 def test_dimap2_pneo_primary_rpc_center_h():
     ds = gdal.Open("data/dimap2/primary_rpc_center_h/DIM_PNEO3_STD_x_1_1_F_1.XML")
+    assert ds.GetSpatialRef() is None
     assert ds.GetMetadata_Dict("RPC") == {
         "HEIGHT_DEFAULT": "123.45",
         "HEIGHT_OFF": "HEIGHT_OFF",
