@@ -453,7 +453,7 @@ Examples
 See Also
 --------
 
--  `Copernicus Data Space Ecosystem <https://dataspace.copernicus.eu//>`__
+-  `Copernicus Data Space Ecosystem <https://dataspace.copernicus.eu>`__
 -  `Sentinel 2 User
    guide <https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-2-msi>`__
 -  `Sentinel 2 User
