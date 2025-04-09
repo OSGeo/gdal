@@ -2062,29 +2062,32 @@ bool GDALAlgorithm::ValidateArguments()
             if (valueCount != arg->GetMinCount() &&
                 arg->GetMinCount() == arg->GetMaxCount())
             {
-                ReportError(
-                    CE_Failure, CPLE_AppDefined,
-                    "%d value(s) have been specified for argument '%s', "
-                    "whereas exactly %d were expected.",
-                    valueCount, arg->GetName().c_str(), arg->GetMinCount());
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "%d value%s been specified for argument '%s', "
+                            "whereas exactly %d %s expected.",
+                            valueCount, valueCount > 1 ? "s have" : " has",
+                            arg->GetName().c_str(), arg->GetMinCount(),
+                            arg->GetMinCount() > 1 ? "were" : "was");
                 ret = false;
             }
             else if (valueCount < arg->GetMinCount())
             {
-                ReportError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Only %d value(s) have been specified for argument '%s', "
-                    "whereas at least %d were expected.",
-                    valueCount, arg->GetName().c_str(), arg->GetMinCount());
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Only %d value%s been specified for argument '%s', "
+                            "whereas at least %d %s expected.",
+                            valueCount, valueCount > 1 ? "s have" : " has",
+                            arg->GetName().c_str(), arg->GetMinCount(),
+                            arg->GetMinCount() > 1 ? "were" : "was");
                 ret = false;
             }
             else if (valueCount > arg->GetMaxCount())
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
-                            "%d values have been specified for argument '%s', "
-                            "whereas at most %d were expected.",
-                            valueCount, arg->GetName().c_str(),
-                            arg->GetMaxCount());
+                            "%d value%s been specified for argument '%s', "
+                            "whereas at most %d %s expected.",
+                            valueCount, valueCount > 1 ? "s have" : " has",
+                            arg->GetName().c_str(), arg->GetMaxCount(),
+                            arg->GetMaxCount() > 1 ? "were" : "was");
                 ret = false;
             }
         }
