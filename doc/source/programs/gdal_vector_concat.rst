@@ -1,7 +1,7 @@
-.. _gdal_vector_cat_subcommand:
+.. _gdal_vector_concat_subcommand:
 
 ================================================================================
-"gdal vector cat" sub-command
+"gdal vector concat" sub-command
 ================================================================================
 
 .. versionadded:: 3.11
@@ -10,17 +10,17 @@
 
     Concatenate vector datasets
 
-.. Index:: gdal vector cat
+.. Index:: gdal vector concat
 
 Synopsis
 --------
 
-.. program-output:: gdal vector cat --help-doc
+.. program-output:: gdal vector concat --help-doc
 
 Description
 -----------
 
-:program:`gdal vector cat` concatenates several source datasets.
+:program:`gdal vector concat` concatenates several source datasets.
 
 It has 3 main modes:
 
@@ -152,7 +152,7 @@ Examples
 
    .. code-block:: bash
 
-       gdal vector cat --stack *.shp out.gpkg
+       gdal vector concat --stack *.shp out.gpkg
 
 .. example::
    :title: Adding a field to indicate the source layer, and reprojecting to a single CRS
@@ -163,4 +163,4 @@ Examples
 
    .. code-block:: bash
 
-       gdal vector cat --single --source-layer-field-name=country --dst-crs=EPSG:4258 france.shp germany.shp merged.shp
+       gdal vector concat --single --source-layer-field-name=country --dst-crs=EPSG:4258 france.shp germany.shp merged.shp

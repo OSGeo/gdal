@@ -228,7 +228,7 @@ def test_gdalalg_vector_pipeline_help_doc():
 
     assert "Usage: gdal vector pipeline [OPTIONS] <PIPELINE>" in out
     assert (
-        "<PIPELINE> is of the form: read|cat [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]"
+        "<PIPELINE> is of the form: read|concat [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]"
         in out
     )
 
