@@ -18,8 +18,8 @@ Synopsis
 .. program-output:: gdal vector pipeline --help-doc=main
 
 A pipeline chains several steps, separated with the `!` (quotation mark) character.
-The first step must be ``read`` or ``cat``, and the last one ``write``. Each step has its
-own positional or non-positional arguments. Apart from ``read``, ``cat`` and ``write``,
+The first step must be ``read`` or ``concat``, and the last one ``write``. Each step has its
+own positional or non-positional arguments. Apart from ``read``, ``concat`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:
@@ -28,11 +28,11 @@ Potential steps are:
 
 .. program-output:: gdal vector pipeline --help-doc=read
 
-* cat
+* concat
 
-.. program-output:: gdal vector pipeline --help-doc=cat
+.. program-output:: gdal vector pipeline --help-doc=concat
 
-Details for options can be found in :ref:`gdal_vector_cat_subcommand`.
+Details for options can be found in :ref:`gdal_vector_concat_subcommand`.
 
 * clip
 
@@ -139,4 +139,4 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal vector pipeline --progress ! cat --single --dst-crs=EPSG:32632 france.shp belgium.shp ! filter --where "pop > 1e6" ! write out.gpkg --overwrite
+        $ gdal vector pipeline --progress ! concat --single --dst-crs=EPSG:32632 france.shp belgium.shp ! filter --where "pop > 1e6" ! write out.gpkg --overwrite

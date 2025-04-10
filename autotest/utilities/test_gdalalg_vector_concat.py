@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal vector cat' testing
+# Purpose:  'gdal vector concat' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -19,14 +19,14 @@ from osgeo import gdal, ogr, osr
 
 
 def get_alg():
-    return gdal.GetGlobalAlgorithmRegistry()["vector"]["cat"]
+    return gdal.GetGlobalAlgorithmRegistry()["vector"]["concat"]
 
 
 def get_pipeline_alg():
     return gdal.GetGlobalAlgorithmRegistry()["vector"]["pipeline"]
 
 
-def test_gdalalg_vector_cat():
+def test_gdalalg_vector_concat():
 
     last_pct = [0]
 
@@ -58,7 +58,7 @@ def test_gdalalg_vector_cat():
     )
 
 
-def test_gdalalg_vector_cat_pipeline():
+def test_gdalalg_vector_concat_pipeline():
 
     last_pct = [0]
 
@@ -70,7 +70,7 @@ def test_gdalalg_vector_cat_pipeline():
     alg["input"] = ["../ogr/data/poly.shp", "../ogr/data/poly.shp"]
     alg["output"] = ""
     alg["output-format"] = "Memory"
-    alg["pipeline"] = "cat ! write"
+    alg["pipeline"] = "concat ! write"
     assert alg.Run(my_progress)
     assert last_pct[0] == 1.0
     ds = alg["output"].GetDataset()
@@ -79,7 +79,7 @@ def test_gdalalg_vector_cat_pipeline():
     assert len(lyr) == 20
 
 
-def test_gdalalg_vector_cat_dst_crs():
+def test_gdalalg_vector_concat_dst_crs():
 
     srs_4326 = osr.SpatialReference()
     srs_4326.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -154,7 +154,7 @@ def test_gdalalg_vector_cat_dst_crs():
     alg["output-format"] = "Memory"
     alg["dst-crs"] = "EPSG:4326"
     with pytest.raises(
-        Exception, match="cat: Layer 'test' of '' has no spatial reference system"
+        Exception, match="concat: Layer 'test' of '' has no spatial reference system"
     ):
         alg.Run()
 
@@ -172,7 +172,7 @@ def test_gdalalg_vector_cat_dst_crs():
     ogrtest.check_feature_geometry(f, "POINT (3 0)")
 
 
-def test_gdalalg_vector_cat_input_layer_name():
+def test_gdalalg_vector_concat_input_layer_name():
 
     alg = get_alg()
     alg["input"] = ["../ogr/data/poly.shp", "../ogr/data/idlink.dbf"]
@@ -189,7 +189,7 @@ def test_gdalalg_vector_cat_input_layer_name():
     "strategy,expected_fields",
     [(None, ["a", "b", "c"]), ("union", ["a", "b", "c"]), ("intersection", ["c"])],
 )
-def test_gdalalg_vector_cat_field_strategy(strategy, expected_fields):
+def test_gdalalg_vector_concat_field_strategy(strategy, expected_fields):
 
     ds1 = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds1.CreateLayer("test")
@@ -219,7 +219,7 @@ def test_gdalalg_vector_cat_field_strategy(strategy, expected_fields):
     assert set(got_fields) == set(expected_fields)
 
 
-def test_gdalalg_vector_cat_single():
+def test_gdalalg_vector_concat_single():
 
     ds1 = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds1.CreateLayer("test")
@@ -247,7 +247,7 @@ def test_gdalalg_vector_cat_single():
     assert set(got_fields) == set(["a", "b", "c"])
 
 
-def test_gdalalg_vector_cat_mode_default():
+def test_gdalalg_vector_concat_mode_default():
 
     ds1 = gdal.GetDriverByName("Memory").Create("ds1", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds1.CreateLayer("my_lyr_name_1")
@@ -286,7 +286,7 @@ def test_gdalalg_vector_cat_mode_default():
         alg.Run()
 
 
-def test_gdalalg_vector_cat_mode_stack():
+def test_gdalalg_vector_concat_mode_stack():
 
     ds1 = gdal.GetDriverByName("Memory").Create("ds1", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds1.CreateLayer("my_lyr_name_1")
@@ -330,7 +330,7 @@ def test_gdalalg_vector_cat_mode_stack():
         assert len(lyr) == 1
 
 
-def test_gdalalg_vector_cat_mode_single():
+def test_gdalalg_vector_concat_mode_single():
 
     ds1 = gdal.GetDriverByName("Memory").Create("ds1", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds1.CreateLayer("my_lyr_name_1")
@@ -356,7 +356,7 @@ def test_gdalalg_vector_cat_mode_single():
     assert len(ds.GetLayer(0)) == 4
 
 
-def test_gdalalg_vector_cat_stack_from_filesystem_source():
+def test_gdalalg_vector_concat_stack_from_filesystem_source():
 
     alg = get_alg()
     alg["input"] = "../ogr/data/poly.shp"
@@ -381,7 +381,7 @@ def test_gdalalg_vector_cat_stack_from_filesystem_source():
         ("src", "{LAYER_INDEX}", "0"),
     ],
 )
-def test_gdalalg_vector_cat_source_layer_field(
+def test_gdalalg_vector_concat_source_layer_field(
     source_layer_field_name, source_layer_field_content, expected_val
 ):
 
@@ -411,7 +411,7 @@ def test_gdalalg_vector_cat_source_layer_field(
 
 
 @pytest.mark.require_driver("GDALG")
-def test_gdalalg_vector_cat_test_ogrsf(tmp_path):
+def test_gdalalg_vector_concat_test_ogrsf(tmp_path):
 
     import test_cli_utilities
 
@@ -420,7 +420,7 @@ def test_gdalalg_vector_cat_test_ogrsf(tmp_path):
 
     gdalg_filename = tmp_path / "tmp.gdalg.json"
     open(gdalg_filename, "wb").write(
-        b'{"type": "gdal_streamed_alg","command_line": "gdal vector cat ../ogr/data/poly.shp --output-format=stream foo","relative_paths_relative_to_this_file":false}'
+        b'{"type": "gdal_streamed_alg","command_line": "gdal vector concat ../ogr/data/poly.shp --output-format=stream foo","relative_paths_relative_to_this_file":false}'
     )
 
     ret = gdaltest.runexternal(

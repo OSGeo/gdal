@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vector cat" subcommand
+ * Purpose:  gdal "vector concat" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,8 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_VECTOR_CAT_INCLUDED
-#define GDALALG_VECTOR_CAT_INCLUDED
+#ifndef GDALALG_VECTOR_CONCAT_INCLUDED
+#define GDALALG_VECTOR_CONCAT_INCLUDED
 
 #include "gdalalg_vector_pipeline.h"
 
@@ -20,18 +20,18 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                       GDALVectorCatAlgorithm                         */
+/*                       GDALVectorConcatAlgorithm                      */
 /************************************************************************/
 
-class GDALVectorCatAlgorithm /* non final */
+class GDALVectorConcatAlgorithm /* non final */
     : public GDALVectorPipelineStepAlgorithm
 {
   public:
-    static constexpr const char *NAME = "cat";
+    static constexpr const char *NAME = "concat";
     static constexpr const char *DESCRIPTION = "Concatenate vector datasets.";
-    static constexpr const char *HELP_URL = "/programs/gdal_vector_cat.html";
+    static constexpr const char *HELP_URL = "/programs/gdal_vector_concat.html";
 
-    explicit GDALVectorCatAlgorithm(bool bStandalone = false);
+    explicit GDALVectorConcatAlgorithm(bool bStandalone = false);
 
   private:
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
@@ -49,14 +49,15 @@ class GDALVectorCatAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                   GDALVectorCatAlgorithmStandalone                   */
+/*                   GDALVectorConcatAlgorithmStandalone                */
 /************************************************************************/
 
-class GDALVectorCatAlgorithmStandalone final : public GDALVectorCatAlgorithm
+class GDALVectorConcatAlgorithmStandalone final
+    : public GDALVectorConcatAlgorithm
 {
   public:
-    GDALVectorCatAlgorithmStandalone()
-        : GDALVectorCatAlgorithm(/* standaloneStep = */ true)
+    GDALVectorConcatAlgorithmStandalone()
+        : GDALVectorConcatAlgorithm(/* standaloneStep = */ true)
     {
     }
 };

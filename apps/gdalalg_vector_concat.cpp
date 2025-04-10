@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vector cat" subcommand
+ * Purpose:  gdal "vector concat" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_cat.h"
+#include "gdalalg_vector_concat.h"
 #include "gdalalg_vector_write.h"
 
 #include "cpl_conv.h"
@@ -32,10 +32,10 @@
 #endif
 
 /************************************************************************/
-/*          GDALVectorCatAlgorithm::GDALVectorCatAlgorithm()            */
+/*        GDALVectorConcatAlgorithm::GDALVectorConcatAlgorithm()        */
 /************************************************************************/
 
-GDALVectorCatAlgorithm::GDALVectorCatAlgorithm(bool bStandalone)
+GDALVectorConcatAlgorithm::GDALVectorConcatAlgorithm(bool bStandalone)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL, bStandalone)
 {
     if (!bStandalone)
@@ -54,7 +54,7 @@ GDALVectorCatAlgorithm::GDALVectorCatAlgorithm(bool bStandalone)
              "name the output vector layers (stack mode)"),
            &m_layerNameTemplate);
     AddArg("source-layer-field-name", 0,
-           _("Name of the new field to add to contain identification of the "
+           _("Name of the new field to add to contain identificoncation of the "
              "source layer, with value determined from "
              "'source-layer-field-content'"),
            &m_sourceLayerFieldName);
@@ -76,15 +76,15 @@ GDALVectorCatAlgorithm::GDALVectorCatAlgorithm(bool bStandalone)
 }
 
 /************************************************************************/
-/*                   GDALVectorCatOutputDatset                          */
+/*                   GDALVectorConcatOutputDataset                      */
 /************************************************************************/
 
-class GDALVectorCatOutputDatset final : public GDALDataset
+class GDALVectorConcatOutputDataset final : public GDALDataset
 {
     std::vector<std::unique_ptr<OGRLayer>> m_layers{};
 
   public:
-    GDALVectorCatOutputDatset() = default;
+    GDALVectorConcatOutputDataset() = default;
 
     void AddLayer(std::unique_ptr<OGRLayer> layer)
     {
@@ -115,13 +115,14 @@ class GDALVectorCatOutputDatset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                     GDALVectorCatRenamedLayer                        */
+/*                     GDALVectorConcatRenamedLayer                     */
 /************************************************************************/
 
-class GDALVectorCatRenamedLayer final : public OGRLayerDecorator
+class GDALVectorConcatRenamedLayer final : public OGRLayerDecorator
 {
   public:
-    GDALVectorCatRenamedLayer(OGRLayer *poSrcLayer, const std::string &newName)
+    GDALVectorConcatRenamedLayer(OGRLayer *poSrcLayer,
+                                 const std::string &newName)
         : OGRLayerDecorator(poSrcLayer, false), m_newName(newName)
     {
     }
@@ -172,10 +173,10 @@ static std::string BuildLayerName(const std::string &layerNameTemplate,
 }
 
 /************************************************************************/
-/*                   GDALVectorCatAlgorithm::RunStep()                  */
+/*                   GDALVectorConcatAlgorithm::RunStep()               */
 /************************************************************************/
 
-bool GDALVectorCatAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorConcatAlgorithm::RunStep(GDALProgressFunc, void *)
 {
     std::unique_ptr<OGRSpatialReference> poSrcCRS;
     if (!m_srsCrs.empty())
@@ -263,7 +264,7 @@ bool GDALVectorCatAlgorithm::RunStep(GDALProgressFunc, void *)
                               m_layerNameTemplate, iDS,
                               srcDS.GetDatasetRef()->GetDescription(), iLayer,
                               poLayer->GetName());
-                CPLDebugOnly("gdal_vector_cat", "%s,%s->%s",
+                CPLDebugOnly("gdal_vector_concat", "%s,%s->%s",
                              srcDS.GetDatasetRef()->GetDescription(),
                              poLayer->GetName(), outLayerName.c_str());
                 allLayerNames[outLayerName].push_back(std::move(layerDesc));
@@ -273,7 +274,7 @@ bool GDALVectorCatAlgorithm::RunStep(GDALProgressFunc, void *)
         ++iDS;
     }
 
-    auto poUnionDS = std::make_unique<GDALVectorCatOutputDatset>();
+    auto poUnionDS = std::make_unique<GDALVectorConcatOutputDataset>();
 
     bool ret = true;
     for (const auto &[outLayerName, listOfLayers] : allLayerNames)
@@ -298,8 +299,9 @@ bool GDALVectorCatAlgorithm::RunStep(GDALProgressFunc, void *)
                         ->GetDescription(),
                     listOfLayers[i].iLayer, poSrcLayer->GetName());
                 ret = !newSrcLayerName.empty() && ret;
-                auto poTmpLayer = std::make_unique<GDALVectorCatRenamedLayer>(
-                    poSrcLayer, newSrcLayerName);
+                auto poTmpLayer =
+                    std::make_unique<GDALVectorConcatRenamedLayer>(
+                        poSrcLayer, newSrcLayerName);
                 m_tempLayersKeeper.push_back(std::move(poTmpLayer));
                 papoSrcLayers.get()[i] = m_tempLayersKeeper.back().get();
             }
@@ -365,11 +367,11 @@ bool GDALVectorCatAlgorithm::RunStep(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                GDALVectorCatAlgorithm::RunImpl()                     */
+/*                GDALVectorConcatAlgorithm::RunImpl()                  */
 /************************************************************************/
 
-bool GDALVectorCatAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                     void *pProgressData)
+bool GDALVectorConcatAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                        void *pProgressData)
 {
     if (m_standaloneStep)
     {
