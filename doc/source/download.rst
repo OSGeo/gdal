@@ -192,24 +192,15 @@ GDAL master Conda builds
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 GDAL master builds are available in the `gdal-master <https://anaconda.org/gdal-master/gdal>`__
-channel. They are based on dependencies from the ``conda-forge`` channel.
-
-First, install mamba into the ``base`` environment, create a dedicated ``gdal_master_env``
-environment, and then activate the dedicated ``gdal_master_env`` environment.
+channel. They are based on dependencies from the ``conda-forge`` channel. The latest master
+build can be installed with the following command:
 
 ::
 
-    conda update -n base -c conda-forge conda
-    conda install -n base --override-channels -c conda-forge mamba 'python_abi=*=*cp*'
-    conda create --name gdal_master_env
-    conda activate gdal_master_env
+    conda install -c gdal-master -c conda-forge gdal-master::gdal
+        
+As with released versions of GDAL, additional drivers can be installed using `gdal-master::libgdal-{driver_name}`.
 
-Then install GDAL from the ``gdal-master`` channel:
-
-::
-
-    mamba install -c gdal-master gdal
-    mamba install -c gdal-master libgdal-arrow-parquet # if you need the Arrow and Parquet drivers
 
 .. _pixi:
 
