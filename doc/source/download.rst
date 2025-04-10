@@ -198,6 +198,8 @@ build can be installed with the following command:
 ::
 
     conda install -c gdal-master -c conda-forge gdal-master::gdal
+        
+As with released versions of GDAL, additional drivers can be installed using `gdal-master::libgdal-{driver_name}`.
 
 
 .. _pixi:
