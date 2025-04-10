@@ -15,6 +15,7 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "gdal_rat.h"
+#include "gdalalgorithm.h"
 
 #include <cerrno>
 #include <cstdlib>
@@ -2865,6 +2866,85 @@ CPLErr GDALDriver::SetMetadataItem(const char *pszName, const char *pszValue,
     }
     return GDALMajorObject::SetMetadataItem(pszName, pszValue, pszDomain);
 }
+
+/************************************************************************/
+/*                         InstantiateAlgorithm()                       */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+
+GDALAlgorithm *
+GDALDriver::InstantiateAlgorithm(const std::vector<std::string> &aosPath)
+{
+    pfnInstantiateAlgorithm = GetInstantiateAlgorithmCallback();
+    if (pfnInstantiateAlgorithm)
+        return pfnInstantiateAlgorithm(aosPath);
+    return nullptr;
+}
+
+/************************************************************************/
+/*                        DeclareAlgorithm()                            */
+/************************************************************************/
+
+void GDALDriver::DeclareAlgorithm(const std::vector<std::string> &aosPath)
+{
+    const std::string osDriverName = GetDescription();
+    auto &singleton = GDALGlobalAlgorithmRegistry::GetSingleton();
+
+    if (!singleton.HasDeclaredSubAlgorithm({"driver"}))
+    {
+        singleton.DeclareAlgorithm(
+            {"driver"},
+            []() -> std::unique_ptr<GDALAlgorithm>
+            {
+                return std::make_unique<GDALContainerAlgorithm>(
+                    "driver", "Command for driver specific operations.");
+            });
+    }
+
+    const std::vector<std::string> driverCommandPath = {
+        "driver", CPLString(osDriverName).tolower()};
+    if (!singleton.HasDeclaredSubAlgorithm(driverCommandPath))
+    {
+        singleton.DeclareAlgorithm(
+            driverCommandPath,
+            [osDriverName]() -> std::unique_ptr<GDALAlgorithm>
+            {
+                auto poDriver = GetGDALDriverManager()->GetDriverByName(
+                    osDriverName.c_str());
+                if (poDriver)
+                {
+                    const char *pszHelpTopic =
+                        poDriver->GetMetadataItem(GDAL_DMD_HELPTOPIC);
+                    return std::make_unique<GDALContainerAlgorithm>(
+                        CPLString(osDriverName).tolower(),
+                        std::string("Command for ")
+                            .append(osDriverName)
+                            .append(" driver specific operations."),
+                        pszHelpTopic ? std::string("/").append(pszHelpTopic)
+                                     : std::string());
+                }
+                return nullptr;
+            });
+    }
+
+    auto path = driverCommandPath;
+    path.insert(path.end(), aosPath.begin(), aosPath.end());
+
+    singleton.DeclareAlgorithm(
+        path,
+        [osDriverName, aosPath]() -> std::unique_ptr<GDALAlgorithm>
+        {
+            auto poDriver =
+                GetGDALDriverManager()->GetDriverByName(osDriverName.c_str());
+            if (poDriver)
+                return std::unique_ptr<GDALAlgorithm>(
+                    poDriver->InstantiateAlgorithm(aosPath));
+            return nullptr;
+        });
+}
+
+//! @endcond
 
 /************************************************************************/
 /*                   DoesDriverHandleExtension()                        */
