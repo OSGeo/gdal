@@ -38,12 +38,12 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
     AddProgressArg();
     AddOutputFormatArg(&m_outputFormat)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATECOPY});
+                         {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
     AddOpenOptionsArg(&m_openOptions);
     AddInputFormatsArg(&m_inputFormats)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
     AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
+    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR);
     AddCreationOptionsArg(&m_creationOptions);
 
     // gdal_contour specific options
