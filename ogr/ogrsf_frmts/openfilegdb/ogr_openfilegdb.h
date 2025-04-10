@@ -519,6 +519,11 @@ class OGROpenFileGDBDataSource final : public GDALDataset
 
     virtual CPLErr FlushCache(bool bAtClosing = false) override;
 
+    std::vector<std::unique_ptr<OGROpenFileGDBLayer>> &GetLayers()
+    {
+        return m_apoLayers;
+    }
+
     virtual int GetLayerCount() override
     {
         return static_cast<int>(m_apoLayers.size());
