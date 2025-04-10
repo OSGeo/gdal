@@ -980,24 +980,44 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             }
         }
 
-        psOptions->adfSrcWin[0] =
-            (psOptions->dfULX - adfGeoTransform[0]) / adfGeoTransform[1];
-        psOptions->adfSrcWin[1] =
-            (psOptions->dfULY - adfGeoTransform[3]) / adfGeoTransform[5];
+        bool bAlignToInputPixels =
+            psOptions->osResampling.empty() ||
+            EQUALN(psOptions->osResampling.c_str(), "NEAR", 4);
 
-        psOptions->adfSrcWin[2] =
-            (psOptions->dfLRX - psOptions->dfULX) / adfGeoTransform[1];
-        psOptions->adfSrcWin[3] =
-            (psOptions->dfLRY - psOptions->dfULY) / adfGeoTransform[5];
+        double dfULX = psOptions->dfULX;
+        double dfULY = psOptions->dfULY;
+
+        psOptions->adfSrcWin[0] =
+            (dfULX - adfGeoTransform[0]) / adfGeoTransform[1];
+        psOptions->adfSrcWin[1] =
+            (dfULY - adfGeoTransform[3]) / adfGeoTransform[5];
 
         // In case of nearest resampling, round to integer pixels (#6610)
-        if (psOptions->osResampling.empty() ||
-            EQUALN(psOptions->osResampling.c_str(), "NEAR", 4))
+        if (bAlignToInputPixels)
         {
-            psOptions->adfSrcWin[0] = floor(psOptions->adfSrcWin[0] + 0.001);
-            psOptions->adfSrcWin[1] = floor(psOptions->adfSrcWin[1] + 0.001);
-            psOptions->adfSrcWin[2] = floor(psOptions->adfSrcWin[2] + 0.5);
-            psOptions->adfSrcWin[3] = floor(psOptions->adfSrcWin[3] + 0.5);
+            psOptions->adfSrcWin[0] =
+                std::floor(psOptions->adfSrcWin[0] + 0.001);  // xoff
+            psOptions->adfSrcWin[1] =
+                std::floor(psOptions->adfSrcWin[1] + 0.001);  // yoff
+
+            dfULX = psOptions->adfSrcWin[0] * adfGeoTransform[1] +
+                    adfGeoTransform[0];
+            dfULY = psOptions->adfSrcWin[1] * adfGeoTransform[5] +
+                    adfGeoTransform[3];
+        }
+
+        // Calculate xsize and ysize based on the (possibly snapped) ULX, ULY
+        psOptions->adfSrcWin[2] =
+            (psOptions->dfLRX - dfULX) / adfGeoTransform[1];  // xsize
+        psOptions->adfSrcWin[3] =
+            (psOptions->dfLRY - dfULY) / adfGeoTransform[5];  // ysize
+
+        if (bAlignToInputPixels)
+        {
+            psOptions->adfSrcWin[2] =
+                std::ceil(psOptions->adfSrcWin[2] - 0.001);
+            psOptions->adfSrcWin[3] =
+                std::ceil(psOptions->adfSrcWin[3] - 0.001);
         }
 
         /*if( !bQuiet )

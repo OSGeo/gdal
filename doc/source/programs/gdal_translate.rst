@@ -187,11 +187,11 @@ resampling, and rescaling pixels in the process.
 
     .. note::
 
-        In GDAL 2.1.0 and 2.1.1, using -projwin with coordinates not aligned
-        with pixels will result in a sub-pixel shift. This has been corrected
-        in later versions. When selecting non-nearest neighbour resampling,
-        starting with GDAL 2.1.0, sub-pixel accuracy is however used to get
-        better results.
+        When using nearest-neighbor resampling, the window specified by 
+        :option:`-projwin` is expanded if necessary to match input
+        pixel boundaries. For other resampling algorithms, the window
+        is not modified.
+
 
 .. option:: -projwin_srs <srs_def>
 

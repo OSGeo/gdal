@@ -1,12 +1,12 @@
 HTTP/1.1 200 OK
-Date: Thu, 20 Jul 2023 17:27:39 GMT
+Date: Tue, 08 Apr 2025 23:33:18 GMT
 Server: Apache/2.4.52 (Ubuntu)
 Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
-Expires: Fri, 19 Jul 2024 17:27:39 GMT
+Expires: Wed, 08 Apr 2026 23:33:18 GMT
 Access-Control-Allow-Origin: *
 Vary: Accept,Accept-Encoding,Prefer
 Content-Type: application/json
-Content-Length: 5587
+Content-Length: 6303
 Keep-Alive: timeout=5, max=100
 Connection: Keep-Alive
 
@@ -98,10 +98,33 @@ Connection: Keep-Alive
          "templated" : true
       }
    ],
+   "layers" : [
+      {
+         "id" : "_2m",
+         "dataType" : "coverage",
+         "minScaleDenominator" : 8530.91833539914,
+         "minCellSize" : 2.38865713391176,
+         "maxTileMatrix" : "16",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/geodata",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m"
+            }
+         ],
+         "propertiesSchema" : {
+            "$schema" : "https://json-schema.org/draft/2020-12/schema",
+            "type" : "object",
+            "properties" : { "v" : {
+               "type" : "number",
+               "x-ogc-propertySeq" : 1
+            } }
+         }
+      }
+   ],
    "centerPoint" : {
-      "coordinates" : [ -97.0478533737652, 49.6424035030551 ],
+      "coordinates" : [ -97.0478533737652, 49.642403503055 ],
       "tileMatrix" : "11",
-      "scaleDenominator" : 272989.3867327723419,
+      "scaleDenominator" : 272989.386732772,
       "cellSize" : 76.4370282851763,
       "crs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
    }

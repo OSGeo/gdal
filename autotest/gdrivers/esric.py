@@ -211,8 +211,8 @@ def test_tpkx_default_full_extent(extent_source):
     if extent_source:
         open_options["EXTENT_SOURCE"] = extent_source
     ds = gdal.OpenEx("data/esric/Usa.tpkx", open_options=open_options)
-    assert ds.RasterXSize == 2532
-    assert ds.RasterYSize == 1921
+    assert ds.RasterXSize == 2533
+    assert ds.RasterYSize == 1922
     assert ds.RasterCount == 4
     assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
     assert ds.GetGeoTransform() == pytest.approx(
@@ -229,5 +229,5 @@ def test_tpkx_default_full_extent(extent_source):
     assert ds.GetFileList() == ["data/esric/Usa.tpkx"]
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
     assert ds.GetRasterBand(1).GetBlockSize() == [256, 256]
-    assert ds.GetRasterBand(1).Checksum() == 62015
+    assert ds.GetRasterBand(1).Checksum() == 59047
     assert ds.GetRasterBand(1).GetOverviewCount() == 3

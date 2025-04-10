@@ -1,12 +1,12 @@
 HTTP/1.1 200 OK
-Date: Thu, 20 Jul 2023 17:27:38 GMT
+Date: Tue, 08 Apr 2025 23:33:17 GMT
 Server: Apache/2.4.52 (Ubuntu)
 Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
-Expires: Fri, 19 Jul 2024 17:27:38 GMT
+Expires: Wed, 08 Apr 2026 23:33:17 GMT
 Access-Control-Allow-Origin: *
 Vary: Accept,Accept-Encoding,Prefer
 Content-Type: application/json
-Content-Length: 6766
+Content-Length: 8324
 Keep-Alive: timeout=5, max=100
 Connection: Keep-Alive
 
@@ -37,9 +37,45 @@ Connection: Keep-Alive
          "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m?f=html"
       },
       {
-         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/dggs-list",
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/dggrs-list",
          "title" : "Discrete Global Grid Systems for 2m",
          "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/dggs"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/schema",
+         "type" : "application/json",
+         "title" : "Schema (as JSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/schema?f=json"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/schema",
+         "type" : "text/plain",
+         "title" : "Schema (as ECON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/schema?f=econ"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/schema",
+         "type" : "text/html",
+         "title" : "Schema (as HTML)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/schema?f=html"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/queryables",
+         "type" : "application/json",
+         "title" : "Queryables (as JSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/queryables?f=json"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/queryables",
+         "type" : "text/plain",
+         "title" : "Queryables (as ECON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/queryables?f=econ"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/queryables",
+         "type" : "text/html",
+         "title" : "Queryables (as HTML)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/queryables?f=html"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/coverage",
@@ -69,19 +105,19 @@ Connection: Keep-Alive
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-coverage",
          "type" : "application/json",
          "title" : "Coverage tilesets available for this dataset (as JSON)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/coverage/tiles?f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/tiles?f=json"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-coverage",
          "type" : "text/plain",
          "title" : "Coverage tilesets available for this dataset (as ECON)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/coverage/tiles?f=econ"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/tiles?f=econ"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-coverage",
          "type" : "text/html",
          "title" : "Coverage tilesets available for this dataset (as HTML)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/coverage/tiles?f=html"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/tiles?f=html"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/map",
@@ -141,15 +177,15 @@ Connection: Keep-Alive
    "title" : "2m",
    "extent" : {
       "spatial" : {
-         "bbox" : [ [ -97.9354967393826, 48.9029217657901, -96.1602100081477, 50.3818852403202 ] ],
+         "bbox" : [ [ -97.9354967393826, 48.90292176579, -96.1602100081477, 50.3818852403202 ] ],
          "grid" : [
             {
                "cellsCount" : 82735,
-               "resolution" : 0.0000214576721
+               "resolution" : 0.00002145767211914
             },
             {
-               "cellsCount" : 68925,
-               "resolution" : 0.0000214576721
+               "cellsCount" : 68926,
+               "resolution" : 0.00002145767211914
             }
          ]
       }
@@ -164,6 +200,6 @@ Connection: Keep-Alive
    "id" : "HRDEM-RedRiver:DTM:2m",
    "dataType" : "coverage",
    "attribution" : "<a href='https://open.canada.ca/data/en/dataset/957782bf-847c-4644-a757-e383c0057995'>HRDEM (Natural Resources Canada)</a>",
-   "minScaleDenominator" : 8530.9183353991357,
-   "minCellSize" : 0.0000214576721
+   "minScaleDenominator" : 8530.91833539914,
+   "minCellSize" : 0.00002145767211914
 }

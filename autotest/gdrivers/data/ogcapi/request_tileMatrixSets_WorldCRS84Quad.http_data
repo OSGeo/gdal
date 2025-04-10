@@ -1,15 +1,14 @@
 HTTP/1.1 200 OK
-Date: Tue, 20 Jun 2023 10:38:13 GMT
+Date: Tue, 08 Apr 2025 23:33:07 GMT
 Server: Apache/2.4.52 (Ubuntu)
-Expires: Mon, 01 Apr 2024 08:45:51 GMT
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Expires: Wed, 08 Apr 2026 23:33:07 GMT
 Access-Control-Allow-Origin: *
 Vary: Accept,Accept-Encoding,Prefer
-Content-Length: 10207
-Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
-Age: 6832342
+Content-Type: application/json
+Content-Length: 10206
 Keep-Alive: timeout=5, max=100
 Connection: Keep-Alive
-Content-Type: application/json
 
 {
    "id" : "WorldCRS84Quad",
@@ -24,7 +23,7 @@ Content-Type: application/json
    "tileMatrices" : [
       {
          "id" : "0",
-         "scaleDenominator" : 279541132.0143588781357,
+         "scaleDenominator" : 279541132.01436,
          "cellSize" : 0.703125,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
@@ -35,7 +34,7 @@ Content-Type: application/json
       },
       {
          "id" : "1",
-         "scaleDenominator" : 139770566.0071794390678,
+         "scaleDenominator" : 139770566.00718,
          "cellSize" : 0.3515625,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
@@ -46,7 +45,7 @@ Content-Type: application/json
       },
       {
          "id" : "2",
-         "scaleDenominator" : 69885283.0035897195339,
+         "scaleDenominator" : 69885283.0035897,
          "cellSize" : 0.17578125,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
@@ -57,7 +56,7 @@ Content-Type: application/json
       },
       {
          "id" : "3",
-         "scaleDenominator" : 34942641.501794859767,
+         "scaleDenominator" : 34942641.501795,
          "cellSize" : 0.087890625,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
@@ -68,7 +67,7 @@ Content-Type: application/json
       },
       {
          "id" : "4",
-         "scaleDenominator" : 17471320.7508974298835,
+         "scaleDenominator" : 17471320.7508974,
          "cellSize" : 0.0439453125,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
@@ -79,7 +78,7 @@ Content-Type: application/json
       },
       {
          "id" : "5",
-         "scaleDenominator" : 8735660.3754487149417,
+         "scaleDenominator" : 8735660.3754487,
          "cellSize" : 0.02197265625,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
@@ -90,7 +89,7 @@ Content-Type: application/json
       },
       {
          "id" : "6",
-         "scaleDenominator" : 4367830.1877243574709,
+         "scaleDenominator" : 4367830.18772436,
          "cellSize" : 0.010986328125,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
@@ -101,7 +100,7 @@ Content-Type: application/json
       },
       {
          "id" : "7",
-         "scaleDenominator" : 2183915.0938621787354,
+         "scaleDenominator" : 2183915.09386218,
          "cellSize" : 0.0054931640625,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
@@ -112,8 +111,8 @@ Content-Type: application/json
       },
       {
          "id" : "8",
-         "scaleDenominator" : 1091957.5469310893677,
-         "cellSize" : 0.0027465820312,
+         "scaleDenominator" : 1091957.546932,
+         "cellSize" : 0.00274658203125,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 512,
@@ -123,8 +122,8 @@ Content-Type: application/json
       },
       {
          "id" : "9",
-         "scaleDenominator" : 545978.7734655446839,
-         "cellSize" : 0.0013732910156,
+         "scaleDenominator" : 545978.773465545,
+         "cellSize" : 0.001373291015625,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 1024,
@@ -134,8 +133,8 @@ Content-Type: application/json
       },
       {
          "id" : "10",
-         "scaleDenominator" : 272989.3867327723419,
-         "cellSize" : 0.0006866455078,
+         "scaleDenominator" : 272989.386732772,
+         "cellSize" : 0.0006866455078125,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 2048,
@@ -145,8 +144,8 @@ Content-Type: application/json
       },
       {
          "id" : "11",
-         "scaleDenominator" : 136494.693366386171,
-         "cellSize" : 0.0003433227539,
+         "scaleDenominator" : 136494.693366386,
+         "cellSize" : 0.00034332275390625,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 4096,
@@ -156,8 +155,8 @@ Content-Type: application/json
       },
       {
          "id" : "12",
-         "scaleDenominator" : 68247.3466831930855,
-         "cellSize" : 0.000171661377,
+         "scaleDenominator" : 68247.346683193,
+         "cellSize" : 0.00017166137695312,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 8192,
@@ -167,8 +166,8 @@ Content-Type: application/json
       },
       {
          "id" : "13",
-         "scaleDenominator" : 34123.6733415965427,
-         "cellSize" : 0.0000858306885,
+         "scaleDenominator" : 34123.6733415965,
+         "cellSize" : 0.00008583068847656,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 16384,
@@ -178,8 +177,8 @@ Content-Type: application/json
       },
       {
          "id" : "14",
-         "scaleDenominator" : 17061.8366707982714,
-         "cellSize" : 0.0000429153442,
+         "scaleDenominator" : 17061.8366707983,
+         "cellSize" : 0.00004291534423828,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 32768,
@@ -189,8 +188,8 @@ Content-Type: application/json
       },
       {
          "id" : "15",
-         "scaleDenominator" : 8530.9183353991357,
-         "cellSize" : 0.0000214576721,
+         "scaleDenominator" : 8530.91833539914,
+         "cellSize" : 0.00002145767211914,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 65536,
@@ -200,8 +199,8 @@ Content-Type: application/json
       },
       {
          "id" : "16",
-         "scaleDenominator" : 4265.4591676995678,
-         "cellSize" : 0.0000107288361,
+         "scaleDenominator" : 4265.45916769957,
+         "cellSize" : 0.00001072883605957,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 131072,
@@ -211,8 +210,8 @@ Content-Type: application/json
       },
       {
          "id" : "17",
-         "scaleDenominator" : 2132.7295838497839,
-         "cellSize" : 0.000005364418,
+         "scaleDenominator" : 2132.72958384978,
+         "cellSize" : 0.0000053644180298,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 262144,
@@ -222,8 +221,8 @@ Content-Type: application/json
       },
       {
          "id" : "18",
-         "scaleDenominator" : 1066.364791924892,
-         "cellSize" : 0.000002682209,
+         "scaleDenominator" : 1066.3647919249,
+         "cellSize" : 0.0000026822090149,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 524288,
@@ -234,7 +233,7 @@ Content-Type: application/json
       {
          "id" : "19",
          "scaleDenominator" : 533.182395962446,
-         "cellSize" : 0.0000013411045,
+         "cellSize" : 0.00000134110450745,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 1048576,
@@ -245,7 +244,7 @@ Content-Type: application/json
       {
          "id" : "20",
          "scaleDenominator" : 266.591197981223,
-         "cellSize" : 0.0000006705523,
+         "cellSize" : 0.00000067055225372,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 2097152,
@@ -255,8 +254,8 @@ Content-Type: application/json
       },
       {
          "id" : "21",
-         "scaleDenominator" : 133.2955989906115,
-         "cellSize" : 0.0000003352761,
+         "scaleDenominator" : 133.29559899061,
+         "cellSize" : 0.00000033527612686,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 4194304,
@@ -267,7 +266,7 @@ Content-Type: application/json
       {
          "id" : "22",
          "scaleDenominator" : 66.6477994953057,
-         "cellSize" : 0.0000001676381,
+         "cellSize" : 0.00000016763806343,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 8388608,
@@ -277,8 +276,8 @@ Content-Type: application/json
       },
       {
          "id" : "23",
-         "scaleDenominator" : 33.3238997476529,
-         "cellSize" : 0.000000083819,
+         "scaleDenominator" : 33.323899747653,
+         "cellSize" : 0.00000008381903172,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 16777216,
@@ -289,7 +288,7 @@ Content-Type: application/json
       {
          "id" : "24",
          "scaleDenominator" : 16.6619498738264,
-         "cellSize" : 0.0000000419095,
+         "cellSize" : 0.00000004190951586,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 33554432,
@@ -299,8 +298,8 @@ Content-Type: application/json
       },
       {
          "id" : "25",
-         "scaleDenominator" : 8.3309749369132,
-         "cellSize" : 0.0000000209548,
+         "scaleDenominator" : 8.33097493691322,
+         "cellSize" : 0.00000002095475793,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 67108864,
@@ -311,7 +310,7 @@ Content-Type: application/json
       {
          "id" : "26",
          "scaleDenominator" : 4.1654874684566,
-         "cellSize" : 0.0000000104774,
+         "cellSize" : 0.00000001047737896,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 134217728,
@@ -322,7 +321,7 @@ Content-Type: application/json
       {
          "id" : "27",
          "scaleDenominator" : 2.0827437342283,
-         "cellSize" : 0.0000000052387,
+         "cellSize" : 0.00000000523868948,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 268435456,
@@ -332,8 +331,8 @@ Content-Type: application/json
       },
       {
          "id" : "28",
-         "scaleDenominator" : 1.0413718671142,
-         "cellSize" : 0.0000000026193,
+         "scaleDenominator" : 1.04137186711415,
+         "cellSize" : 0.00000000261934474,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 536870912,
@@ -343,8 +342,8 @@ Content-Type: application/json
       },
       {
          "id" : "29",
-         "scaleDenominator" : 0.5206859335571,
-         "cellSize" : 0.0000000013097,
+         "scaleDenominator" : 0.520685933557076,
+         "cellSize" : 0.00000000130967237,
          "cornerOfOrigin" : "topLeft",
          "pointOfOrigin" : [ -180, 90 ],
          "matrixWidth" : 1073741824,

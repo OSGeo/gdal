@@ -1,5 +1,5 @@
-HTTP/1.1 200 OK
-Date: Tue, 20 Jun 2023 10:38:10 GMT
+HTTP/1.1 204 No Content
+Date: Tue, 08 Apr 2025 23:32:57 GMT
 Server: Apache/2.4.52 (Ubuntu)
 Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
 Access-Control-Allow-Origin: *

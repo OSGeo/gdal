@@ -1,12 +1,12 @@
 HTTP/1.1 200 OK
-Date: Wed, 14 Feb 2024 05:33:24 GMT
+Date: Tue, 08 Apr 2025 23:33:30 GMT
 Server: Apache/2.4.52 (Ubuntu)
-Expires: Tue, 11 Feb 2025 05:49:25 GMT
+Expires: Sat, 31 Jan 2026 19:30:04 GMT
 Access-Control-Allow-Origin: *
 Vary: Accept,Accept-Encoding,Prefer
-Content-Length: 7564
+Content-Length: 7567
 Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
-Age: 171838
+Age: 5803405
 Keep-Alive: timeout=5, max=100
 Connection: Keep-Alive
 Content-Type: application/json
@@ -38,7 +38,7 @@ Content-Type: application/json
          "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble?f=html"
       },
       {
-         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/dggs-list",
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/dggrs-list",
          "title" : "Discrete Global Grid Systems for Blue Marble Next Generation (2004)",
          "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/dggs"
       },
@@ -164,16 +164,16 @@ Content-Type: application/json
          "grid" : [
             {
                "cellsCount" : 131072,
-               "resolution" : 0.0027465820312
+               "resolution" : 0.00274658203125
             },
             {
                "cellsCount" : 65536,
-               "resolution" : 0.0027465820312
+               "resolution" : 0.00274658203125
             }
          ]
       },
       "temporal" : {
-         "interval" : [ [ "2004-01", "2004-12" ] ],
+         "interval" : [ [ "2004-01-01", "2004-12-01" ] ],
          "grid" : {
             "cellsCount" : 12,
             "resolution" : "P1M"
@@ -190,6 +190,6 @@ Content-Type: application/json
    "id" : "blueMarble",
    "dataType" : "map",
    "attribution" : "NASA Earth Observatory",
-   "minScaleDenominator" : 1091957.5469310893677,
-   "minCellSize" : 0.0027465820312
+   "minScaleDenominator" : 1091957.546932,
+   "minCellSize" : 0.00274658203125
 }
