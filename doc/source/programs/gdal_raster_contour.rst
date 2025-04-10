@@ -32,6 +32,8 @@ Standard options
 
 .. include:: gdal_options/co.rst
 
+.. include:: options/lco.rst
+
 .. include:: gdal_options/overwrite.rst
 
 .. option:: -b, --band <BAND>

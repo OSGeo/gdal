@@ -45,6 +45,7 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
     AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR);
     AddCreationOptionsArg(&m_creationOptions);
+    AddLayerCreationOptionsArg(&m_layerCreationOptions);
 
     // gdal_contour specific options
     AddBandArg(&m_band).SetDefault(1);
@@ -107,6 +108,13 @@ bool GDALRasterContourAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         aosOptions.AddString("-co");
         aosOptions.AddString(co);
     }
+
+    for (const auto &co : m_layerCreationOptions)
+    {
+        aosOptions.AddString("-lco");
+        aosOptions.AddString(co);
+    }
+
     if (m_band > 0)
     {
         aosOptions.AddString("-b");
