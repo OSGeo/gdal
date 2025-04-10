@@ -217,6 +217,12 @@ GDALDriverManager::~GDALDriverManager()
         delete poDriver;
     }
 
+    {
+        auto oIter = oMapNameToDrivers.find("MEMORY");
+        if (oIter != oMapNameToDrivers.end())
+            delete oIter->second;
+    }
+
     CleanupPythonDrivers();
 
     GDALDestroyGlobalThreadPool();
@@ -570,9 +576,39 @@ int GDALDriverManager::RegisterDriver(GDALDriver *poDriver, bool bHidden)
     oMapNameToDrivers[CPLString(poDriver->GetDescription()).toupper()] =
         poDriver;
 
+    if (EQUAL(poDriver->GetDescription(), "MEM"))
+    {
+        // Instanciate a Memory driver, that is the same as the MEM one,
+        // for legacy purposes. It can be queried through GetDriverByName()
+        // but doesn't appear in the driver list.
+        auto poMemoryDriver = new GDALDriver();
+        poMemoryDriver->SetDescription("Memory");
+        poMemoryDriver->SetMetadata(poDriver->GetMetadata());
+        poMemoryDriver->pfnOpen = poDriver->pfnOpen;
+        poMemoryDriver->pfnIdentify = poDriver->pfnIdentify;
+        poMemoryDriver->pfnCreate = poDriver->pfnCreate;
+        poMemoryDriver->pfnCreateMultiDimensional =
+            poDriver->pfnCreateMultiDimensional;
+        poMemoryDriver->pfnDelete = poDriver->pfnDelete;
+        oMapNameToDrivers[CPLString(poMemoryDriver->GetDescription())
+                              .toupper()] = poMemoryDriver;
+    }
+
     int iResult = nDrivers - 1;
 
     return iResult;
+}
+
+/************************************************************************/
+/*                      GetDriverByName_unlocked()                      */
+/************************************************************************/
+
+GDALDriver *
+GDALDriverManager::GetDriverByName_unlocked(const char *pszName) const
+{
+    const CPLString osName = CPLString(pszName).toupper();
+    auto oIter = oMapNameToDrivers.find(osName);
+    return oIter == oMapNameToDrivers.end() ? nullptr : oIter->second;
 }
 
 /************************************************************************/
@@ -1131,8 +1167,6 @@ void GDALDriverManager::ReorderDrivers()
 
     CPLMutexHolderD(&hDMMutex);
 
-    CPLAssert(static_cast<int>(oMapNameToDrivers.size()) == nDrivers);
-
     VSILFILE *fp = VSIFOpenL(m_osDriversIniPath.c_str(), "rb");
     if (fp == nullptr)
         return;
@@ -1163,26 +1197,29 @@ void GDALDriverManager::ReorderDrivers()
         {
             CPLString osUCDriverName(pszLine);
             osUCDriverName.toupper();
-            if (cpl::contains(oSetOrderedDrivers, osUCDriverName))
+            if (osUCDriverName != "MEMORY")
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Duplicated name %s in [order] section", pszLine);
-            }
-            else if (cpl::contains(oMapNameToDrivers, osUCDriverName))
-            {
-                aosOrderedDrivers.emplace_back(pszLine);
-                oSetOrderedDrivers.insert(osUCDriverName);
-            }
+                if (cpl::contains(oSetOrderedDrivers, osUCDriverName))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Duplicated name %s in [order] section", pszLine);
+                }
+                else if (cpl::contains(oMapNameToDrivers, osUCDriverName))
+                {
+                    aosOrderedDrivers.emplace_back(pszLine);
+                    oSetOrderedDrivers.insert(osUCDriverName);
+                }
 #ifdef DEBUG_VERBOSE
-            else
-            {
-                // Completely expected situation for "non-maximal" builds,
-                // but can help diagnose bad entries in drivers.ini
-                CPLDebug("GDAL",
-                         "Driver %s is listed in %s but not registered.",
-                         pszLine, m_osDriversIniPath.c_str());
-            }
+                else
+                {
+                    // Completely expected situation for "non-maximal" builds,
+                    // but can help diagnose bad entries in drivers.ini
+                    CPLDebug("GDAL",
+                             "Driver %s is listed in %s but not registered.",
+                             pszLine, m_osDriversIniPath.c_str());
+                }
 #endif
+            }
         }
     }
     VSIFCloseL(fp);

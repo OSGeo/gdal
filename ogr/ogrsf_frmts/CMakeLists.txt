@@ -10,9 +10,6 @@ target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogrsf_frmts>)
 set_property(TARGET ogrsf_frmts PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 add_dependencies(ogrsf_frmts generate_gdal_version_h)
 
-# Obligatory for building GDAL; always compile in.
-ogr_default_driver(mem "Read/write driver for MEMORY virtual files")
-
 # Exception to the rule: enable the GeoJSON driver by default, even if
 # OGR_BUILD_OPTIONAL_DRIVERS=OFF.
 if (NOT DEFINED OGR_ENABLE_DRIVER_GEOJSON AND

@@ -3402,14 +3402,14 @@ OGRLayer *MEMDataset::ExecuteSQL(const char *pszStatement,
 /*                          GDALRegister_MEM()                          */
 /************************************************************************/
 
-void GDALRegister_MEM_Internal(const char *pszDriverName)
+void GDALRegister_MEM()
 {
-    if (GDALGetDriverByName(pszDriverName) != nullptr)
+    if (GDALGetDriverByName("MEM") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription(pszDriverName);
+    poDriver->SetDescription("MEM");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
     poDriver->SetMetadataItem(
@@ -3485,9 +3485,4 @@ void GDALRegister_MEM_Internal(const char *pszDriverName)
     poDriver->pfnDelete = MEMDatasetDelete;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
-}
-
-void GDALRegister_MEM()
-{
-    GDALRegister_MEM_Internal("MEM");
 }

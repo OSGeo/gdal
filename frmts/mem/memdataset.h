@@ -38,10 +38,6 @@ CPL_C_END
 class MEMRasterBand;
 class OGRMemLayer;
 
-#ifdef GDAL_COMPILATION
-void GDALRegister_MEM_Internal(const char *pszDriverName);
-#endif
-
 class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
 {
     CPL_DISALLOW_COPY_ASSIGN(MEMDataset)
@@ -69,9 +65,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     virtual void                LeaveReadWrite();
 #endif
 
-#ifdef GDAL_COMPILATION
-    friend void GDALRegister_MEM_Internal(const char *pszDriverName);
-#endif
+    friend void GDALRegister_MEM();
 
     // cppcheck-suppress unusedPrivateFunction
     static GDALDataset *CreateBase(const char *pszFilename, int nXSize,

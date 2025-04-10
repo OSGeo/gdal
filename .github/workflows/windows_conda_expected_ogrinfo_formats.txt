@@ -19,7 +19,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   S57 -vector- (rw+v): IHO S-57 (ENC) (*.000)
   DGN -vector- (rw+v): Microstation DGN (*.dgn)
   OGR_VRT -vector- (rov): VRT - Virtual Datasource (*.vrt)
-  Memory -raster,multidimensional raster,vector- (rw+): In Memory raster, vector and multidimensional raster
   CSV -vector- (rw+uv): Comma Separated Value (.csv) (*.csv, *.tsv, *.psv)
   NAS -vector- (rov): NAS - ALKIS (*.xml)
   GML -vector- (rw+v): Geography Markup Language (GML) (*.gml, *.xml)
