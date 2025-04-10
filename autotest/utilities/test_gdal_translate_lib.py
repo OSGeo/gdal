@@ -758,6 +758,59 @@ def test_gdal_translate_lib_projwin_polar(tmp_vsimem):
 
 
 ###############################################################################
+# Test that a warning or error is issued when -projwin is partially or wholly
+# outside of the source
+
+
+@pytest.mark.parametrize("epo", (True, False))
+@pytest.mark.parametrize("eco", (True, False))
+@gdaltest.disable_exceptions()
+def test_gdal_translate_lib_projwin_partially_outside(epo, eco):
+
+    msg_type = gdal.CE_Failure if epo else gdal.CE_Warning
+
+    with gdaltest.error_raised(msg_type, "partially outside"):
+        ds = gdal.Translate(
+            "",
+            "../gcore/data/byte.tif",
+            format="VRT",
+            projWin=(440000, 3751320, 441920, 3750120),
+            errorIfWindowPartiallyOutsideSource=epo,
+            errorIfWindowCompletelyOutsideSource=eco,
+        )
+
+        if epo:
+            assert ds is None
+        else:
+            assert ds.RasterXSize == 32
+            assert ds.RasterYSize == 20
+
+
+@pytest.mark.parametrize("eco", (True, False))
+@pytest.mark.parametrize("epo", (True, False))
+@gdaltest.disable_exceptions()
+def test_gdal_translate_lib_projwin_completely_outside(epo, eco):
+
+    msg_type = gdal.CE_Failure if epo or eco else gdal.CE_Warning
+
+    with gdaltest.error_raised(msg_type, "completely outside"):
+        ds = gdal.Translate(
+            "",
+            "../gcore/data/byte.tif",
+            format="VRT",
+            projWin=(0, 120, 120, 0),
+            errorIfWindowPartiallyOutsideSource=epo,
+            errorIfWindowCompletelyOutsideSource=eco,
+        )
+
+        if epo or eco:
+            assert ds is None
+        else:
+            assert ds.RasterXSize == 3
+            assert ds.RasterYSize == 2
+
+
+###############################################################################
 # Test translate with a MEM source to a anonymous VRT
 
 

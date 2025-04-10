@@ -2538,7 +2538,9 @@ def TranslateOptions(options=None, format=None,
               overviewLevel = 'AUTO',
               colorInterpretation=None,
               callback=None, callback_data=None,
-              domainMetadataOptions = None):
+              domainMetadataOptions = None,
+              errorIfWindowPartiallyOutsideSource = False,
+              errorIfWindowCompletelyOutsideSource = False):
     """Create a TranslateOptions() object that can be passed to gdal.Translate()
 
     Parameters
@@ -2615,6 +2617,10 @@ def TranslateOptions(options=None, format=None,
         user data for callback
     domainMetadataOptions:
         list or dict of domain-specific metadata options
+    errorIfWindowCompletelyOutsideSource : bool, default=False
+         raise an error if the requested window is completely outside the source dataset. This corresponds to the ``-eco`` option of ``gdal_translate``.
+    errorIfWindowPartiallyOutsideSource : bool, default=False
+         raise an error if the requested window is partially outside the source dataset. This corresponds to the ``-epo`` option of ``gdal_translate``.
     """
 
     # Only used for tests
@@ -2736,6 +2742,12 @@ def TranslateOptions(options=None, format=None,
 
         if overviewLevel is not None and overviewLevel != 'AUTO':
             new_options += ['-ovr', overviewLevel]
+
+        if errorIfWindowCompletelyOutsideSource:
+            new_options.append('-eco')
+
+        if errorIfWindowPartiallyOutsideSource:
+            new_options.append('-epo')
 
     if return_option_list:
         return new_options
