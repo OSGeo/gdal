@@ -94,7 +94,7 @@ struct GDALTranslateOptions
     std::string osFormat{};
 
     /*! allow or suppress progress monitor and other non-error output */
-    bool bQuiet = true;
+    bool bQuiet = false;
 
     /*! the progress function to use */
     GDALProgressFunc pfnProgress = GDALDummyProgress;
