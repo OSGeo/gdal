@@ -12,4 +12,3 @@ sphinx-rtd-theme >= 3.0.0
 # sphinxcontrib-programoutput
 sphinxcontrib-spelling
 myst_nb
-recommonmark
