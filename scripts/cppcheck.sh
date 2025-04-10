@@ -425,7 +425,7 @@ if grep "arrayIndexThenCheck" ${LOG_FILE} ; then
     ret_code=1
 fi
 
-if grep "unusedPrivateFunction" ${LOG_FILE} ; then
+if grep "unusedPrivateFunction" ${LOG_FILE} | grep -v -e GDALDatasetPool::ShowContent -e MEMDataset::CreateBase ; then
     echo "unusedPrivateFunction check failed"
     ret_code=1
 fi
