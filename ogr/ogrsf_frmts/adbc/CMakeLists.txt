@@ -19,8 +19,7 @@ if(NOT TARGET ogr_ADBC)
 endif()
 
 gdal_standard_includes(ogr_ADBC)
-target_include_directories(ogr_ADBC PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
-                                            $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
+target_include_directories(ogr_ADBC PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 
 if (GDAL_USE_ADBCDRIVERMANAGER AND TARGET AdbcDriverManager::adbc_driver_manager_shared)
   gdal_target_link_libraries(ogr_ADBC PRIVATE AdbcDriverManager::adbc_driver_manager_shared)

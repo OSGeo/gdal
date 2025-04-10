@@ -41,8 +41,5 @@ if (STANDALONE)
 target_include_directories(gdal_TileDB PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../gcore
                                                ${CMAKE_CURRENT_SOURCE_DIR}/../mem
 )
-else()
-target_include_directories(gdal_TileDB PRIVATE
-                           ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem)
 endif()
 gdal_target_link_libraries(gdal_TileDB PRIVATE TileDB::tiledb_shared)

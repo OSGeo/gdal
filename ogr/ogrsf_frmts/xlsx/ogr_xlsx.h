@@ -16,7 +16,7 @@
 #include "ogrsf_frmts.h"
 
 #include "ogr_expat.h"
-#include "ogr_mem.h"
+#include "memdataset.h"
 
 #include <vector>
 #include <set>

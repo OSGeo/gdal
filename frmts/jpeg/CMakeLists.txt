@@ -21,7 +21,7 @@ endif()
 
 gdal_standard_includes(gdal_JPEG)
 
-target_include_directories(gdal_JPEG PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem ${GDAL_RASTER_FORMAT_SOURCE_DIR}/gtiff)
+target_include_directories(gdal_JPEG PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/gtiff)
 if (GDAL_USE_JPEG12_INTERNAL)
   target_sources(gdal_JPEG PRIVATE jpgdataset_12.cpp vsidataio_12.cpp)
   set_property(SOURCE jpgdataset_12.cpp vsidataio_12.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)

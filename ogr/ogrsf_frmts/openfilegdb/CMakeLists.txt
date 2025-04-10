@@ -57,7 +57,6 @@ endif()
 
 
 gdal_standard_includes(ogr_OpenFileGDB)
-target_include_directories(ogr_OpenFileGDB PRIVATE $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 
 add_executable(test_ofgdb_write EXCLUDE_FROM_ALL
                test_ofgdb_write.cpp

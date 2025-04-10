@@ -8,7 +8,6 @@ add_gdal_driver(
 
 gdal_standard_includes(gdal_LIBERTIFF)
 target_include_directories(gdal_LIBERTIFF PRIVATE
-    ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem
     ${GDAL_RASTER_FORMAT_SOURCE_DIR}/gtiff/libtiff
     ${PROJECT_SOURCE_DIR}/third_party/libertiff
 )
