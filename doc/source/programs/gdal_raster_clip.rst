@@ -77,6 +77,7 @@ Standard options
     the input dataset, unless :option:`--bbox-crs` is specified.
     The X and Y axis are the "GIS friendly ones", that is X is longitude or easting,
     and Y is latitude or northing.
+    The bounds are expended if necessary to match input pixel boundaries.
 
 .. option:: --bbox-crs <CRS>
 
