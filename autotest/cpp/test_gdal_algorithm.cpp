@@ -3696,4 +3696,80 @@ TEST_F(test_gdal_algorithm, raster_edit_failures_unset_metadata)
                  "edit: SetMetadataItem('foo', NULL) failed");
 }
 
+TEST_F(test_gdal_algorithm, register_plugin_algorithms)
+{
+    auto &singleton = GDALGlobalAlgorithmRegistry::GetSingleton();
+    bool flag = false;
+    singleton.DeclareAlgorithm(
+        {"foo", "bar"},
+        [&flag]() -> std::unique_ptr<GDALAlgorithm>
+        {
+            flag = true;
+            return std::make_unique<GDALContainerAlgorithm>("dummy");
+        });
+
+    {
+        EXPECT_NE(singleton.Instantiate("foo"), nullptr);
+        EXPECT_FALSE(flag);
+    }
+
+    {
+        auto got = singleton.GetDeclaredSubAlgorithmNames({"gdal"});
+        EXPECT_TRUE(std::find(got.begin(), got.end(), "foo") != got.end());
+        EXPECT_FALSE(flag);
+    }
+
+    {
+        auto got = singleton.GetDeclaredSubAlgorithmNames({"gdal", "foo"});
+        EXPECT_TRUE(std::find(got.begin(), got.end(), "bar") != got.end());
+        EXPECT_TRUE(flag);
+        flag = false;
+    }
+
+    {
+        auto got =
+            singleton.GetDeclaredSubAlgorithmNames({"gdal", "foo", "bar"});
+        EXPECT_TRUE(got.empty());
+        EXPECT_FALSE(flag);
+    }
+
+    {
+        auto got = singleton.GetDeclaredSubAlgorithmNames({"gdal", "bar"});
+        EXPECT_TRUE(got.empty());
+        EXPECT_FALSE(flag);
+    }
+
+    {
+        auto alg = singleton.InstantiateDeclaredSubAlgorithm({"gdal", "foo"});
+        ASSERT_NE(alg, nullptr);
+        EXPECT_TRUE(alg->HasSubAlgorithms());
+        EXPECT_EQ(alg->GetSubAlgorithmNames().size(), 1);
+        EXPECT_TRUE(flag);
+        flag = false;
+    }
+
+    {
+        auto alg =
+            singleton.InstantiateDeclaredSubAlgorithm({"gdal", "foo", "bar"});
+        ASSERT_NE(alg, nullptr);
+        EXPECT_TRUE(flag);
+        flag = false;
+    }
+
+    {
+        auto alg = singleton.Instantiate("foo")->InstantiateSubAlgorithm("bar");
+        ASSERT_NE(alg, nullptr);
+        EXPECT_TRUE(flag);
+    }
+
+    {
+        auto alg = singleton.InstantiateDeclaredSubAlgorithm({"gdal", "bar"});
+        ASSERT_EQ(alg, nullptr);
+    }
+
+    singleton.DeclareAlgorithm({"foo", "bar"},
+                               []() -> std::unique_ptr<GDALAlgorithm>
+                               { return nullptr; });
+}
+
 }  // namespace test_gdal_algorithm

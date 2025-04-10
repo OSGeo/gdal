@@ -102,6 +102,10 @@ std::vector<std::string> GDALAlgorithmRegistry::GetNames() const
     return res;
 }
 
+GDALGlobalAlgorithmRegistry::GDALGlobalAlgorithmRegistry() = default;
+
+GDALGlobalAlgorithmRegistry::~GDALGlobalAlgorithmRegistry() = default;
+
 /************************************************************************/
 /*              GDALGlobalAlgorithmRegistry::GetSingleton()             */
 /************************************************************************/
@@ -123,12 +127,146 @@ GDALGlobalAlgorithmRegistry::Instantiate(const std::string &name) const
     if (name == GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME)
         return std::make_unique<GDALMainAlgorithm>();
     auto alg = GDALAlgorithmRegistry::Instantiate(name);
+    if (!alg)
+    {
+        alg = InstantiateDeclaredSubAlgorithm(
+            {GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME, name});
+    }
     if (alg)
     {
-        alg->SetCallPath(
-            {std::string(GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME), name});
+        alg->SetCallPath({GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME, name});
     }
     return alg;
+}
+
+/************************************************************************/
+/*             GDALGlobalAlgorithmRegistry::DeclareAlgorithm()          */
+/************************************************************************/
+
+void GDALGlobalAlgorithmRegistry::DeclareAlgorithm(
+    const std::vector<std::string> &path, InstantiateFunc instantiateFunc)
+{
+    Node *curNode = &m_root;
+    for (size_t i = 0; i < path.size(); ++i)
+    {
+        const std::string &name = path[i];
+        auto iter = curNode->children.find(name);
+        if (iter == curNode->children.end())
+        {
+            Node newNode;
+            if (i + 1 == path.size())
+            {
+                newNode.instantiateFunc = instantiateFunc;
+            }
+            else
+            {
+                newNode.instantiateFunc =
+                    [name]() -> std::unique_ptr<GDALAlgorithm>
+                {
+                    return std::make_unique<GDALContainerAlgorithm>(
+                        name, std::string("Command for ").append(name));
+                };
+            }
+            curNode =
+                &(curNode->children.insert(std::pair(name, std::move(newNode)))
+                      .first->second);
+        }
+        else
+        {
+            curNode = &(iter->second);
+        }
+    }
+}
+
+/************************************************************************/
+/*            GDALGlobalAlgorithmRegistry::GetNodeFromPath()            */
+/************************************************************************/
+
+const GDALGlobalAlgorithmRegistry::Node *
+GDALGlobalAlgorithmRegistry::GetNodeFromPath(
+    const std::vector<std::string> &path) const
+{
+    if (!path.empty())
+    {
+        const Node *curNode = &m_root;
+        bool first = true;
+        for (const std::string &name : path)
+        {
+            if (first && name == GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME)
+            {
+                first = false;
+                continue;
+            }
+            first = false;
+            auto iter = curNode->children.find(name);
+            if (iter == curNode->children.end())
+                return nullptr;
+            curNode = &(iter->second);
+        }
+        return curNode;
+    }
+    return nullptr;
+}
+
+/************************************************************************/
+/*     GDALGlobalAlgorithmRegistry::GetDeclaredSubAlgorithmNames()      */
+/************************************************************************/
+
+std::vector<std::string>
+GDALGlobalAlgorithmRegistry::GetDeclaredSubAlgorithmNames(
+    const std::vector<std::string> &path) const
+{
+    const GDALGlobalAlgorithmRegistry::Node *node = GetNodeFromPath(path);
+    std::vector<std::string> ret;
+    if (node)
+    {
+        for (const auto &[name, subnode] : node->children)
+        {
+            // If there is an instantiation function, run it, to avoid
+            // reporting algorithms that might be in drivers built as
+            // deferred loaded plugins, but not available at runtime.
+            if (!subnode.instantiateFunc || subnode.instantiateFunc())
+            {
+                ret.push_back(name);
+            }
+        }
+    }
+    return ret;
+}
+
+/************************************************************************/
+/*       GDALGlobalAlgorithmRegistry::HasDeclaredSubAlgorithm()         */
+/************************************************************************/
+
+bool GDALGlobalAlgorithmRegistry::HasDeclaredSubAlgorithm(
+    const std::vector<std::string> &path) const
+{
+    return GetNodeFromPath(path) != nullptr;
+}
+
+/************************************************************************/
+/*     GDALGlobalAlgorithmRegistry::InstantiateDeclaredSubAlgorithm()   */
+/************************************************************************/
+
+std::unique_ptr<GDALAlgorithm>
+GDALGlobalAlgorithmRegistry::InstantiateDeclaredSubAlgorithm(
+    const std::vector<std::string> &path) const
+{
+    const GDALGlobalAlgorithmRegistry::Node *node = GetNodeFromPath(path);
+    if (node && node->instantiateFunc)
+    {
+        auto alg = node->instantiateFunc();
+        if (alg)
+        {
+            auto callPath = path;
+            if (path[0] != GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME)
+                callPath.insert(callPath.begin(),
+                                GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME);
+            alg->SetCallPath(callPath);
+        }
+        return alg;
+    }
+    return nullptr;
 }
 
 /************************************************************************/
