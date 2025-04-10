@@ -4,8 +4,6 @@ breathe
 fsspec
 numpy
 sphinx
-sphinx_bootstrap_theme
-sphinx-markdown-tables
 sphinx-tabs
 sphinxcontrib-bibtex
 sphinxcontrib-jquery
@@ -14,4 +12,3 @@ sphinx-rtd-theme >= 3.0.0
 # sphinxcontrib-programoutput
 sphinxcontrib-spelling
 myst_nb
-recommonmark
