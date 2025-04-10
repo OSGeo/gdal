@@ -2909,7 +2909,8 @@ void OGROpenFileGDBLayer::CreateIndex(const std::string &osIdxName,
 /*                                Repack()                              */
 /************************************************************************/
 
-bool OGROpenFileGDBLayer::Repack()
+bool OGROpenFileGDBLayer::Repack(GDALProgressFunc pfnProgress,
+                                 void *pProgressData)
 {
     if (!m_bEditable)
         return false;
@@ -2917,7 +2918,7 @@ bool OGROpenFileGDBLayer::Repack()
     if (!BuildLayerDefinition())
         return false;
 
-    return m_poLyrTable->Repack();
+    return m_poLyrTable->Repack(pfnProgress, pProgressData);
 }
 
 /************************************************************************/
