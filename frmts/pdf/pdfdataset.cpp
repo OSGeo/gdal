@@ -19,10 +19,12 @@
 
 #include "gdal_pdf.h"
 
+#include "cpl_json_streaming_writer.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_spawn.h"
 #include "cpl_string.h"
 #include "gdal_frmts.h"
+#include "gdalalgorithm.h"
 #include "ogr_spatialref.h"
 #include "ogr_geometry.h"
 
@@ -7712,6 +7714,88 @@ CPLString PDFSanitizeLayerName(const char *pszName)
 }
 
 /************************************************************************/
+/*                    GDALPDFListLayersAlgorithm                        */
+/************************************************************************/
+
+#ifdef HAVE_PDF_READ_SUPPORT
+
+class GDALPDFListLayersAlgorithm final : public GDALAlgorithm
+{
+  public:
+    GDALPDFListLayersAlgorithm()
+        : GDALAlgorithm("list-layers",
+                        std::string("List layers of a PDF dataset"),
+                        "/drivers/raster/pdf.html")
+    {
+        AddInputDatasetArg(&m_dataset, GDAL_OF_RASTER | GDAL_OF_VECTOR);
+        AddOutputFormatArg(&m_format).SetDefault(m_format).SetChoices("json",
+                                                                      "text");
+        AddOutputStringArg(&m_output);
+    }
+
+  protected:
+    bool RunImpl(GDALProgressFunc, void *) override
+    {
+        auto poDS = dynamic_cast<PDFDataset *>(m_dataset.GetDatasetRef());
+        if (!poDS)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined, "%s is not a PDF",
+                        m_dataset.GetName().c_str());
+            return false;
+        }
+        if (m_format == "json")
+        {
+            CPLJSonStreamingWriter oWriter(nullptr, nullptr);
+            oWriter.StartArray();
+            for (const auto &[key, value] : cpl::IterateNameValue(
+                     const_cast<CSLConstList>(poDS->GetMetadata("LAYERS"))))
+            {
+                CPL_IGNORE_RET_VAL(key);
+                oWriter.Add(value);
+            }
+            oWriter.EndArray();
+            m_output = oWriter.GetString();
+            m_output += '\n';
+        }
+        else
+        {
+            for (const auto &[key, value] : cpl::IterateNameValue(
+                     const_cast<CSLConstList>(poDS->GetMetadata("LAYERS"))))
+            {
+                CPL_IGNORE_RET_VAL(key);
+                m_output += value;
+                m_output += '\n';
+            }
+        }
+        return true;
+    }
+
+  private:
+    GDALArgDatasetValue m_dataset{};
+    std::string m_format = "json";
+    std::string m_output{};
+};
+
+/************************************************************************/
+/*                    GDALPDFInstantiateAlgorithm()                     */
+/************************************************************************/
+
+static GDALAlgorithm *
+GDALPDFInstantiateAlgorithm(const std::vector<std::string> &aosPath)
+{
+    if (aosPath.size() == 1 && aosPath[0] == "list-layers")
+    {
+        return std::make_unique<GDALPDFListLayersAlgorithm>().release();
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
+#endif  // HAVE_PDF_READ_SUPPORT
+
+/************************************************************************/
 /*                         GDALRegister_PDF()                           */
 /************************************************************************/
 
@@ -7729,6 +7813,7 @@ void GDALRegister_PDF()
 
 #ifdef HAVE_PDF_READ_SUPPORT
     poDriver->pfnOpen = PDFDataset::OpenWrapper;
+    poDriver->pfnInstantiateAlgorithm = GDALPDFInstantiateAlgorithm;
 #endif  // HAVE_PDF_READ_SUPPORT
 
     poDriver->pfnCreateCopy = GDALPDFCreateCopy;

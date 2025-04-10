@@ -234,6 +234,8 @@ void PDFDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
                               "GeoTransform SRS GCPs DatasetMetadata");
+
+    poDriver->DeclareAlgorithm({"list-layers"});
 #endif
 
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
