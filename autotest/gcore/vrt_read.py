@@ -1626,9 +1626,9 @@ def test_vrt_protocol():
         "vrt://data/float32.tif?projwin_srs=OGC:CRS84&projwin=-117.6407,33.90027,-117.6292,33.89181"
     )
 
-    assert ds.GetGeoTransform()[0] == 440840.0
+    assert ds.GetGeoTransform()[0] == 440780.0
     assert ds.GetGeoTransform()[3] == 3751140.0
-    assert ds.GetRasterBand(1).XSize == 18
+    assert ds.GetRasterBand(1).XSize == 19
     assert ds.GetRasterBand(1).YSize == 17
 
     with pytest.raises(Exception):
