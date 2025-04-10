@@ -1257,6 +1257,8 @@ DEFINE_DRIVER_METHOD_GET_CALLBACK(GetCreateCopyCallback, CreateCopyCallback)
 DEFINE_DRIVER_METHOD_GET_CALLBACK(GetDeleteCallback, DeleteCallback)
 DEFINE_DRIVER_METHOD_GET_CALLBACK(GetRenameCallback, RenameCallback)
 DEFINE_DRIVER_METHOD_GET_CALLBACK(GetCopyFilesCallback, CopyFilesCallback)
+DEFINE_DRIVER_METHOD_GET_CALLBACK(GetInstantiateAlgorithmCallback,
+                                  InstantiateAlgorithmCallback)
 
 //! @endcond
 
