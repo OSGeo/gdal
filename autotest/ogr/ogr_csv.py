@@ -2666,7 +2666,7 @@ def test_ogr_csv_string_quoting_always(tmp_vsimem):
 
 def test_ogr_csv_string_quoting_if_ambiguous(tmp_vsimem):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("foo"))
     lyr.CreateField(ogr.FieldDefn("bar"))
@@ -2701,7 +2701,7 @@ def test_ogr_csv_string_quoting_if_ambiguous(tmp_vsimem):
 
 def test_ogr_csv_string_quoting_if_needed(tmp_vsimem):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("foo"))
     lyr.CreateField(ogr.FieldDefn("bar"))

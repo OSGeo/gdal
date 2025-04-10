@@ -75,7 +75,7 @@ def get_alg():
 @pytest.mark.require_geos(3, 11, 0)
 def test_gdalalg_vector_geom_buffer(input_wkt, options, output_wkt):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
     src_lyr = src_ds.CreateLayer("the_layer", srs=srs)

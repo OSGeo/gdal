@@ -1808,7 +1808,7 @@ def test_ogr_oapif_crs_and_preferred_crs_open_options():
     )
     with webserver.install_http_handler(handler):
         out_ds = gdal.VectorTranslate(
-            "", ds, format="Memory", dstSRS="EPSG:32631", reproject=True
+            "", ds, format="MEM", dstSRS="EPSG:32631", reproject=True
         )
     out_lyr = out_ds.GetLayer(0)
     assert out_lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"

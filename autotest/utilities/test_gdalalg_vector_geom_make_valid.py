@@ -26,7 +26,7 @@ def get_alg():
 
 def test_gdalalg_vector_geom_make_valid():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
     src_lyr = src_ds.CreateLayer("the_layer", srs=srs)
@@ -73,7 +73,7 @@ def test_gdalalg_vector_geom_make_valid():
 
 def test_gdalalg_vector_geom_make_valid_active_layer():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -107,7 +107,7 @@ def test_gdalalg_vector_geom_make_valid_active_layer():
 
 def test_gdalalg_vector_geom_make_valid_active_geometry():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer", geom_type=ogr.wkbNone)
     src_lyr.CreateGeomField(ogr.GeomFieldDefn("a"))
     src_lyr.CreateGeomField(ogr.GeomFieldDefn("b"))
@@ -135,7 +135,7 @@ def test_gdalalg_vector_geom_make_valid_active_geometry():
 
 def test_gdalalg_vector_geom_make_valid_skip_lower_dim():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -164,7 +164,7 @@ def test_gdalalg_vector_geom_make_valid_skip_lower_dim():
 
 def test_gdalalg_vector_geom_make_valid_keep_lower_dim():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -207,7 +207,7 @@ def test_gdalalg_vector_geom_make_valid_keep_lower_dim():
 )
 def test_gdalalg_vector_geom_make_valid_options(input_wkt, options, output_wkt):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
 
     f = ogr.Feature(src_lyr.GetLayerDefn())

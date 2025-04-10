@@ -62,7 +62,7 @@ def test_ogr_style_styletable():
     assert style is not None
 
     # GetStyleTable()/SetStyleTable() on data source
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     assert ds.GetStyleTable() is None
     ds.SetStyleTable(None)
     assert ds.GetStyleTable() is None

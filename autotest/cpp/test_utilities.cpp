@@ -49,8 +49,8 @@ TEST_F(test_utilities, GDALFootprint)
     {
         CPLStringList aosArgv;
         aosArgv.AddString("-of");
-        aosArgv.AddString("Memory");
-        auto poMemDrv = GetGDALDriverManager()->GetDriverByName("Memory");
+        aosArgv.AddString("MEM");
+        auto poMemDrv = GetGDALDriverManager()->GetDriverByName("MEM");
         if (poMemDrv)
         {
             auto psOptions = GDALFootprintOptionsNew(aosArgv.List(), nullptr);
@@ -73,7 +73,7 @@ TEST_F(test_utilities, GDALFootprint)
     // Test if (psOptions == nullptr)
     // and if (poSrcDS->GetRasterCount() == 0)
     {
-        auto poMemDrv = GetGDALDriverManager()->GetDriverByName("Memory");
+        auto poMemDrv = GetGDALDriverManager()->GetDriverByName("MEM");
         if (poMemDrv)
         {
             auto poInDS = std::unique_ptr<GDALDataset>(

@@ -5430,7 +5430,7 @@ def test_ogr_pg_url(pg_autotest_ds, pg_version):
 @only_with_postgis
 def test_ogr_pg_copy_error(pg_ds):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer(
         "layer_polygon_with_multipolygon", geom_type=ogr.wkbPolygon
     )
@@ -5449,7 +5449,7 @@ def test_ogr_pg_copy_error(pg_ds):
 @only_with_postgis
 def test_ogr_pg_vector_translate_geography(pg_ds):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer(
         "test_ogr_pg_vector_translate_geography", geom_type=ogr.wkbNone
     )
@@ -6218,7 +6218,7 @@ def test_ogr_pg_ogr2ogr_with_multiple_dotted_table_name(pg_ds):
     tmp_schema = "tmp_schema_issue_10311"
     pg_ds.ExecuteSQL(f'CREATE SCHEMA "{tmp_schema}"')
     try:
-        src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+        src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
         lyr = src_ds.CreateLayer(tmp_schema + ".table1", geom_type=ogr.wkbNone)
         lyr.CreateField(ogr.FieldDefn("str"))
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -6301,7 +6301,7 @@ def test_ogr_pg_empty_search_path(pg_ds):
 @gdaltest.enable_exceptions()
 def test_ogr_pg_findfield(pg_ds):
 
-    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = src_ds.CreateLayer("test_very_long_field_name")
     src_lyr.CreateField(
         ogr.FieldDefn(
