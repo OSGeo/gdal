@@ -30,6 +30,7 @@ add_library(
   gdalalg_raster_index.cpp
   gdalalg_raster_mosaic.cpp
   gdalalg_raster_pipeline.cpp
+  gdalalg_raster_polygonize.cpp
   gdalalg_raster_overview_add.cpp
   gdalalg_raster_overview_delete.cpp
   gdalalg_raster_read.cpp

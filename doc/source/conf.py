@@ -358,6 +358,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_polygonize",
+        "gdal-raster-polygonize",
+        "Create a polygon feature dataset from a raster band",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_reproject",
         "gdal-raster-reproject",
         "Reproject a raster dataset",
