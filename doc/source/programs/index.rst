@@ -135,6 +135,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vector_command`: Entry point for vector commands
     - :ref:`gdal_vector_info_subcommand`: Get information on a vector dataset
     - :ref:`gdal_vector_clip_subcommand`: Clip a vector dataset
+    - :ref:`gdal_vector_convert_subcommand`: Convert a vector dataset
     - :ref:`gdal_vector_edit_subcommand`: Edit metadata of a vector dataset
     - :ref:`gdal_vector_filter_subcommand`: Filter a vector dataset
     - :ref:`gdal_vector_geom_subcommand`: Geometry operations on a vector dataset
