@@ -607,6 +607,12 @@ GDALDriver *
 GDALDriverManager::GetDriverByName_unlocked(const char *pszName) const
 {
     const CPLString osName = CPLString(pszName).toupper();
+    if (osName == "MEMORY")
+    {
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
+                     "DeprecationWarning: 'Memory' driver is deprecated since "
+                     "GDAL 3.11. Use 'MEM' onwards");
+    }
     auto oIter = oMapNameToDrivers.find(osName);
     return oIter == oMapNameToDrivers.end() ? nullptr : oIter->second;
 }
