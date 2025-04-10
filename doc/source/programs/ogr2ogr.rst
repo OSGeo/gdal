@@ -144,9 +144,7 @@ output coordinate system or even reprojecting the features during translation.
 
     Dataset creation option (format specific)
 
-.. option:: -lco <NAME>=<VALUE>
-
-    Layer creation option (format specific)
+.. include:: options/lco.rst
 
 .. option:: -nln <name>
 
