@@ -1467,24 +1467,39 @@ bool GDALAlgorithm::ParseCommandLineArguments(
         }
         else if (strArg.size() >= 2 && strArg[0] == '-')
         {
-            if (strArg.size() != 2)
+            for (size_t j = 1; j < strArg.size(); ++j)
             {
-                ReportError(
-                    CE_Failure, CPLE_IllegalArg,
-                    "Option '%s' not recognized. Should be either a long "
-                    "option or a one-letter short option.",
-                    strArg.c_str());
-                return false;
+                name.clear();
+                name += strArg[j];
+                auto iterArg = m_mapShortNameToArg.find(name);
+                if (iterArg == m_mapShortNameToArg.end())
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "Short name option '%s' is unknown.",
+                                name.c_str());
+                    return false;
+                }
+                arg = iterArg->second;
+                if (strArg.size() > 2)
+                {
+                    if (arg->GetType() != GAAT_BOOLEAN)
+                    {
+                        ReportError(CE_Failure, CPLE_IllegalArg,
+                                    "Invalid argument '%s'. Option '%s' is not "
+                                    "a boolean option.",
+                                    strArg.c_str(), name.c_str());
+                        return false;
+                    }
+
+                    if (!ParseArgument(arg, name, "true", inConstructionValues))
+                        return false;
+                }
             }
-            name = strArg;
-            auto iterArg = m_mapShortNameToArg.find(name.substr(1));
-            if (iterArg == m_mapShortNameToArg.end())
+            if (strArg.size() > 2)
             {
-                ReportError(CE_Failure, CPLE_IllegalArg,
-                            "Short name option '%s' is unknown.", name.c_str());
-                return false;
+                lArgs.erase(lArgs.begin() + i);
+                continue;
             }
-            arg = iterArg->second;
         }
         else
         {

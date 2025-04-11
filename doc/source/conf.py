@@ -218,6 +218,20 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_fs",
+        "gdal-fs",
+        "Entry point for GDAL Virtual file system (VSI) commands",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_fs_ls",
+        "gdal-fs-ls",
+        "List files of one of the GDAL Virtual file systems (VSI)",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_mdim",
         "gdal-mdim",
         "Entry point for multidimensional commands",
