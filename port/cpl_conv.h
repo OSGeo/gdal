@@ -297,6 +297,29 @@ int CPL_DLL CPLSymlink(const char *pszOldPath, const char *pszNewPath,
                        CSLConstList papszOptions);
 
 /* -------------------------------------------------------------------- */
+/*      Lock related functions.                                         */
+/* -------------------------------------------------------------------- */
+
+/** Return code of CPLLockFileEx(). */
+typedef enum
+{
+    CLFS_OK,                     /**< CPLLockFileEx() succeeded. */
+    CLFS_CANNOT_CREATE_LOCK,     /**< Lock file creation failed. */
+    CLFS_LOCK_BUSY,              /**< Lock already taken (and still alive). */
+    CLFS_API_MISUSE,             /**< API misuse. */
+    CLFS_THREAD_CREATION_FAILED, /**< Thread creation failed. */
+} CPLLockFileStatus;
+
+/** Handle type returned by CPLLockFileEx(). */
+typedef struct CPLLockFileStruct *CPLLockFileHandle;
+
+CPLLockFileStatus CPL_DLL CPLLockFileEx(const char *pszLockFileName,
+                                        CPLLockFileHandle *phLockFileHandle,
+                                        CSLConstList papszOptions);
+
+void CPL_DLL CPLUnlockFileEx(CPLLockFileHandle hLockFileHandle);
+
+/* -------------------------------------------------------------------- */
 /*      ZIP Creation.                                                   */
 /* -------------------------------------------------------------------- */
 

@@ -1,0 +1,137 @@
+{
+  "AREA_OR_POINT":"Area",
+  "COLOR_INTERPRETATION":"Gray",
+  "_CRS":{
+    "wkt":"PROJCRS[\"NAD27 \/ UTM zone 11N\",BASEGEOGCRS[\"NAD27\",DATUM[\"North American Datum 1927\",ELLIPSOID[\"Clarke 1866\",6378206.4,294.978698213898,LENGTHUNIT[\"metre\",1]]],PRIMEM[\"Greenwich\",0,ANGLEUNIT[\"degree\",0.0174532925199433]],ID[\"EPSG\",4267]],CONVERSION[\"UTM zone 11N\",METHOD[\"Transverse Mercator\",ID[\"EPSG\",9807]],PARAMETER[\"Latitude of natural origin\",0,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8801]],PARAMETER[\"Longitude of natural origin\",-117,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8802]],PARAMETER[\"Scale factor at natural origin\",0.9996,SCALEUNIT[\"unity\",1],ID[\"EPSG\",8805]],PARAMETER[\"False easting\",500000,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8806]],PARAMETER[\"False northing\",0,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8807]]],CS[Cartesian,2],AXIS[\"(E)\",east,ORDER[1],LENGTHUNIT[\"metre\",1]],AXIS[\"(N)\",north,ORDER[2],LENGTHUNIT[\"metre\",1]],USAGE[SCOPE[\"Engineering survey, topographic mapping.\"],AREA[\"North America - between 120°W and 114°W - onshore. Canada - Alberta; British Columbia; Northwest Territories; Nunavut. Mexico. United States (USA) - California; Idaho; Nevada; Oregon; Washington.\"],BBOX[26.93,-120,78.13,-114]],ID[\"EPSG\",26711]]",
+    "projjson":{
+      "$schema":"https:\/\/proj.org\/schemas\/v0.7\/projjson.schema.json",
+      "type":"ProjectedCRS",
+      "name":"NAD27 \/ UTM zone 11N",
+      "base_crs":{
+        "type":"GeographicCRS",
+        "name":"NAD27",
+        "datum":{
+          "type":"GeodeticReferenceFrame",
+          "name":"North American Datum 1927",
+          "ellipsoid":{
+            "name":"Clarke 1866",
+            "semi_major_axis":6378206.4,
+            "semi_minor_axis":6356583.8
+          }
+        },
+        "coordinate_system":{
+          "subtype":"ellipsoidal",
+          "axis":[
+            {
+              "name":"Geodetic latitude",
+              "abbreviation":"Lat",
+              "direction":"north",
+              "unit":"degree"
+            },
+            {
+              "name":"Geodetic longitude",
+              "abbreviation":"Lon",
+              "direction":"east",
+              "unit":"degree"
+            }
+          ]
+        },
+        "id":{
+          "authority":"EPSG",
+          "code":4267
+        }
+      },
+      "conversion":{
+        "name":"UTM zone 11N",
+        "method":{
+          "name":"Transverse Mercator",
+          "id":{
+            "authority":"EPSG",
+            "code":9807
+          }
+        },
+        "parameters":[
+          {
+            "name":"Latitude of natural origin",
+            "value":0,
+            "unit":"degree",
+            "id":{
+              "authority":"EPSG",
+              "code":8801
+            }
+          },
+          {
+            "name":"Longitude of natural origin",
+            "value":-117,
+            "unit":"degree",
+            "id":{
+              "authority":"EPSG",
+              "code":8802
+            }
+          },
+          {
+            "name":"Scale factor at natural origin",
+            "value":0.9996,
+            "unit":"unity",
+            "id":{
+              "authority":"EPSG",
+              "code":8805
+            }
+          },
+          {
+            "name":"False easting",
+            "value":500000,
+            "unit":"metre",
+            "id":{
+              "authority":"EPSG",
+              "code":8806
+            }
+          },
+          {
+            "name":"False northing",
+            "value":0,
+            "unit":"metre",
+            "id":{
+              "authority":"EPSG",
+              "code":8807
+            }
+          }
+        ]
+      },
+      "coordinate_system":{
+        "subtype":"Cartesian",
+        "axis":[
+          {
+            "name":"Easting",
+            "abbreviation":"E",
+            "direction":"east",
+            "unit":"metre"
+          },
+          {
+            "name":"Northing",
+            "abbreviation":"N",
+            "direction":"north",
+            "unit":"metre"
+          }
+        ]
+      },
+      "scope":"Engineering survey, topographic mapping.",
+      "area":"North America - between 120°W and 114°W - onshore. Canada - Alberta; British Columbia; Northwest Territories; Nunavut. Mexico. United States (USA) - California; Idaho; Nevada; Oregon; Washington.",
+      "bbox":{
+        "south_latitude":26.93,
+        "west_longitude":-120,
+        "north_latitude":78.13,
+        "east_longitude":-114
+      },
+      "id":{
+        "authority":"EPSG",
+        "code":26711
+      }
+    },
+    "url":"http:\/\/www.opengis.net\/def\/crs\/EPSG\/0\/26711"
+  },
+  "_ARRAY_DIMENSIONS":[
+    "Y",
+    "X"
+  ]
+}

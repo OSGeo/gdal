@@ -195,6 +195,16 @@ OGRLayer *OGRADBCDataset::ExecuteSQL(const char *pszStatement,
 }
 
 /************************************************************************/
+/*                       IsParquetExtension()                           */
+/************************************************************************/
+
+static bool IsParquetExtension(const char *pszStr)
+{
+    const std::string osExt = CPLGetExtensionSafe(pszStr);
+    return EQUAL(osExt.c_str(), "parquet") || EQUAL(osExt.c_str(), "parq");
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -219,8 +229,7 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
         (pszADBCDriverName && EQUAL(pszADBCDriverName, "adbc_driver_sqlite")) ||
         OGRADBCDriverIsSQLite3(poOpenInfo);
     bool bIsParquet =
-        OGRADBCDriverIsParquet(poOpenInfo) ||
-        EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "parquet");
+        OGRADBCDriverIsParquet(poOpenInfo) || IsParquetExtension(pszFilename);
     const char *pszSQL = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SQL");
     if (!bIsParquet && pszSQL)
     {
@@ -233,8 +242,7 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
             if (iPos2 != std::string::npos)
             {
                 const std::string osFilename = osSQL.substr(iPos, iPos2 - iPos);
-                if (EQUAL(CPLGetExtensionSafe(osFilename.c_str()).c_str(),
-                          "parquet"))
+                if (IsParquetExtension(osFilename.c_str()))
                 {
                     m_osParquetFilename = osFilename;
                     bIsParquet = true;
@@ -411,7 +419,7 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
         if (!pszSQL)
         {
             osSQL =
-                CPLSPrintf("SELECT * FROM '%s'",
+                CPLSPrintf("SELECT * FROM read_parquet('%s')",
                            OGRDuplicateCharacter(pszFilename, '\'').c_str());
             pszSQL = osSQL.c_str();
             bIsParquetLayer = true;

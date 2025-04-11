@@ -713,6 +713,56 @@ def test_zarr_read_shuffle_quantize_update_not_supported():
         assert gdal.GetLastErrorMsg() == "quantize filter not supported for writing"
 
 
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "data/zarr/fixedscaleoffset_dtype_f4_astype_u1.zarr",
+        "data/zarr/fixedscaleoffset_dtype_f8_astype_u1.zarr",
+        "data/zarr/fixedscaleoffset_dtype_f8_astype_u2.zarr",
+        "data/zarr/fixedscaleoffset_dtype_f8_astype_u4.zarr",
+    ],
+)
+def test_zarr_read_fixedscaleoffset(filename):
+
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+    if "dtype_f8" in filename:
+        assert ar.Read() == array.array(
+            "d",
+            [
+                1000.0,
+                1000.1,
+                1000.2,
+                1000.3,
+                1000.4,
+                1000.6,
+                1000.7,
+                1000.8,
+                1000.9,
+                1001.0,
+            ],
+        )
+    else:
+        assert ar.Read() == array.array(
+            "f",
+            [
+                1000.0,
+                1000.1,
+                1000.2,
+                1000.3,
+                1000.4,
+                1000.6,
+                1000.7,
+                1000.8,
+                1000.9,
+                1001.0,
+            ],
+        )
+
+
 @pytest.mark.parametrize("name", ["u1", "u2", "u4", "u8"])
 def test_zarr_read_fortran_order(name):
 
@@ -5656,3 +5706,40 @@ def test_zarr_write_cleanup_create_dir_if_bad_blocksize_append_subdataset(
     assert os.path.exists(out_dirname)
     ds = gdal.Open(out_dirname)
     assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_imagecodecs_tiff():
+    with gdal.Open("data/zarr/uint16_imagecodecs_tiff.zarr") as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+    with pytest.raises(
+        Exception,
+        match="Only decompression supported for 'imagecodecs_tiff' compression method",
+    ):
+        with gdal.Open("data/zarr/uint16_imagecodecs_tiff.zarr", gdal.GA_Update) as ds:
+            ds.GetRasterBand(1).Fill(255)
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "dirname",
+    [
+        "data/zarr/uint16_imagecodecs_tiff_invalid_tiff.zarr",
+        "data/zarr/uint16_imagecodecs_tiff_inconsistent_size.zarr",
+        "data/zarr/uint16_imagecodecs_tiff_too_many_bands.zarr",
+    ],
+)
+def test_zarr_read_imagecodecs_tiff_errors(dirname):
+    assert gdal.VSIStatL(dirname)
+    with pytest.raises(Exception):
+        with gdal.Open(dirname) as ds:
+            ds.ReadRaster()

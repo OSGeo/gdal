@@ -3613,6 +3613,15 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
 {
     VALIDATE_POINTER1(pszFilename, "GDALOpen", nullptr);
 
+    // Hack for the ZARR driver. We translate the CACHE_KERCHUNK_JSON
+    // into VSIKERCHUNK_USE_CACHE config option
+    std::unique_ptr<CPLConfigOptionSetter> poVSIKERCHUNK_USE_CACHESetter;
+    if (CPLFetchBool(papszOpenOptions, "CACHE_KERCHUNK_JSON", false))
+    {
+        poVSIKERCHUNK_USE_CACHESetter = std::make_unique<CPLConfigOptionSetter>(
+            "VSIKERCHUNK_USE_CACHE", "YES", false);
+    }
+
     // Do some sanity checks on incompatible flags with thread-safe mode.
     if ((nOpenFlags & GDAL_OF_THREAD_SAFE) != 0)
     {

@@ -775,7 +775,16 @@ int VSIMemFilesystemHandler::Stat(const char *pszFilename,
     {
         pStatBuf->st_size = poFile->nLength;
         pStatBuf->st_mode = S_IFREG;
-        pStatBuf->st_mtime = poFile->mTime;
+        if (const char *mtime =
+                CPLGetConfigOption("CPL_VSI_MEM_MTIME", nullptr))
+        {
+            pStatBuf->st_mtime =
+                static_cast<time_t>(std::strtoll(mtime, nullptr, 10));
+        }
+        else
+        {
+            pStatBuf->st_mtime = poFile->mTime;
+        }
     }
 
     return 0;

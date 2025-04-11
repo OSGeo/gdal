@@ -1,0 +1,9 @@
+{
+    "metadata": {
+        ".zgroup": {"zarr_format":2},
+        ".zattrs": {},
+        "ar/.zarray": {"zarr_format": 2, "shape": [3,4],"chunks": [2,3], "compressor": null, "dtype": ">u1", "order": "C", "filters":[], "fill_value": null},
+        "ar/.zattrs": {}
+    },
+    "record_size": 3
+}

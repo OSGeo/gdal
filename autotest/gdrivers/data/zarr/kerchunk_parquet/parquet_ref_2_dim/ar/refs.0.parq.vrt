@@ -1,0 +1,11 @@
+<OGRVRTDataSource>
+  <OGRVRTLayer name="refs.0.parq">
+    <SrcDataSource relativeToVRT="1" shared="1">refs.0.parq.csv</SrcDataSource>
+    <SrcLayer>refs.0.parq</SrcLayer>
+    <GeometryType>wkbNone</GeometryType>
+    <Field name="path" type="String" src="path"/>
+    <Field name="offset" type="Integer64" src="offset"/>
+    <Field name="size" type="Integer64" src="size"/>
+    <Field name="raw" type="Binary" src="raw"/>
+  </OGRVRTLayer>
+</OGRVRTDataSource>

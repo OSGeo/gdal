@@ -23,6 +23,72 @@
 
 class CPL_DLL CPLJSonStreamingParser
 {
+  public:
+    CPLJSonStreamingParser();
+    virtual ~CPLJSonStreamingParser();
+
+    void SetMaxDepth(size_t nVal);
+    void SetMaxStringSize(size_t nVal);
+
+    bool ExceptionOccurred() const
+    {
+        return m_bExceptionOccurred;
+    }
+
+    static std::string GetSerializedString(const char *pszStr);
+
+    virtual void Reset();
+    virtual bool Parse(const char *pStr, size_t nLength, bool bFinished);
+
+  protected:
+    bool EmitException(const char *pszMessage);
+    void StopParsing();
+
+    virtual void String(const char * /*pszValue*/, size_t /*nLength*/)
+    {
+    }
+
+    virtual void Number(const char * /*pszValue*/, size_t /*nLength*/)
+    {
+    }
+
+    virtual void Boolean(bool /*b*/)
+    {
+    }
+
+    virtual void Null()
+    {
+    }
+
+    virtual void StartObject()
+    {
+    }
+
+    virtual void EndObject()
+    {
+    }
+
+    virtual void StartObjectMember(const char * /*pszKey*/, size_t /*nLength*/)
+    {
+    }
+
+    virtual void StartArray()
+    {
+    }
+
+    virtual void EndArray()
+    {
+    }
+
+    virtual void StartArrayMember()
+    {
+    }
+
+    virtual void Exception(const char * /*pszMessage*/)
+    {
+    }
+
+  private:
     CPL_DISALLOW_COPY_ASSIGN(CPLJSonStreamingParser)
 
     enum State
@@ -80,71 +146,6 @@ class CPL_DLL CPLJSonStreamingParser
     bool CheckAndEmitTrueFalseOrNull(char ch);
     bool CheckStackEmpty();
     void DecodeUnicode();
-
-  protected:
-    bool EmitException(const char *pszMessage);
-    void StopParsing();
-
-  public:
-    CPLJSonStreamingParser();
-    virtual ~CPLJSonStreamingParser();
-
-    void SetMaxDepth(size_t nVal);
-    void SetMaxStringSize(size_t nVal);
-
-    bool ExceptionOccurred() const
-    {
-        return m_bExceptionOccurred;
-    }
-
-    static std::string GetSerializedString(const char *pszStr);
-
-    virtual void Reset();
-    virtual bool Parse(const char *pStr, size_t nLength, bool bFinished);
-
-    virtual void String(const char * /*pszValue*/, size_t /*nLength*/)
-    {
-    }
-
-    virtual void Number(const char * /*pszValue*/, size_t /*nLength*/)
-    {
-    }
-
-    virtual void Boolean(bool /*b*/)
-    {
-    }
-
-    virtual void Null()
-    {
-    }
-
-    virtual void StartObject()
-    {
-    }
-
-    virtual void EndObject()
-    {
-    }
-
-    virtual void StartObjectMember(const char * /*pszKey*/, size_t /*nLength*/)
-    {
-    }
-
-    virtual void StartArray()
-    {
-    }
-
-    virtual void EndArray()
-    {
-    }
-
-    virtual void StartArrayMember()
-    {
-    }
-
-    virtual void Exception(const char * /*pszMessage*/)
-    {
-    }
 };
 
 #endif  // __cplusplus
