@@ -363,8 +363,10 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
         /*      Report progress, and support interrupts. */
         /* --------------------------------------------------------------------
          */
-        if (!pfnProgress(0.10 + 0.90 * ((iY + 1) / static_cast<double>(nYSize)),
-                         "", pProgressArg))
+        if (!pfnProgress(
+                std::min(1.0, 0.10 + 0.90 * ((iY + 1) /
+                                             static_cast<double>(nYSize))),
+                "", pProgressArg))
         {
             CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
             eErr = CE_Failure;

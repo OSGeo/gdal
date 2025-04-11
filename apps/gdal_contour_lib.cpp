@@ -49,6 +49,7 @@ struct GDALContourOptions
     std::vector<std::string> aosFixedLevels{};
     CPLStringList aosOpenOptions{};
     CPLStringList aosCreationOptions{};
+    CPLStringList aosLayerCreationOptions{};
     bool bQuiet = false;
     std::string osDestDataSource{};
     std::string osSrcDataSource{};
@@ -159,7 +160,7 @@ CPLErr GDALContourProcessOptions(GDALContourOptions *psOptions,
             psOptions->bPolygonize
                 ? (psOptions->b3D ? wkbMultiPolygon25D : wkbMultiPolygon)
                 : (psOptions->b3D ? wkbLineString25D : wkbLineString),
-            psOptions->aosCreationOptions);
+            psOptions->aosLayerCreationOptions);
     };
 
     /* -------------------------------------------------------------------- */
@@ -209,9 +210,9 @@ CPLErr GDALContourProcessOptions(GDALContourOptions *psOptions,
 
         if (!*hDstDS)
         {
-            *hDstDS = OGR_Dr_CreateDataSource(
-                hDriver, psOptions->osDestDataSource.c_str(),
-                psOptions->aosCreationOptions);
+            *hDstDS =
+                GDALCreate(hDriver, psOptions->osDestDataSource.c_str(), 0, 0,
+                           0, GDT_Unknown, psOptions->aosCreationOptions);
         }
 
         if (*hDstDS == nullptr)
@@ -570,8 +571,10 @@ GDALContourAppOptionsGetParser(GDALContourOptions *psOptions,
 
         argParser->add_output_format_argument(psOptions->osFormat);
 
+        argParser->add_creation_options_argument(psOptions->aosCreationOptions);
+
         argParser->add_layer_creation_options_argument(
-            psOptions->aosCreationOptions);
+            psOptions->aosLayerCreationOptions);
     }
 
     return argParser;
