@@ -467,7 +467,7 @@ def test_ogrinfo_lib_fielddomains():
 
 def test_ogrinfo_lib_time_zones():
 
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds.CreateLayer("test")
     fld_defn = ogr.FieldDefn("unknown", ogr.OFTDateTime)
     fld_defn.SetTZFlag(ogr.TZFLAG_UNKNOWN)
@@ -604,7 +604,7 @@ def test_ogrinfo_lib_json_features_resolution():
 
 def test_ogrinfo_lib_layers():
 
-    ds = gdal.GetDriverByName("Memory").Create("dummy", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("dummy", 0, 0, 0, gdal.GDT_Unknown)
     ds.CreateLayer("foo")
     ds.CreateLayer("bar")
 
@@ -632,7 +632,7 @@ def test_ogrinfo_lib_layers():
 @pytest.mark.parametrize("epoch", ["2021.0", "2021.3"])
 def test_ogrinfo_lib_coordinate_epoch(epoch):
 
-    ds = gdal.GetDriverByName("Memory").Create("dummy", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("dummy", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     srs.SetCoordinateEpoch(float(epoch))

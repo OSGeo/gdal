@@ -794,7 +794,7 @@ def test_ogr_mvt_http(server):
 @pytest.mark.require_geos
 def test_ogr_mvt_write_one_layer():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
     lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
@@ -1099,7 +1099,7 @@ def test_ogr_mvt_write_one_layer():
 @pytest.mark.require_geos
 def test_ogr_mvt_write_conf():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1192,7 +1192,7 @@ def test_ogr_mvt_write_conf():
 @pytest.mark.require_geos
 def test_ogr_mvt_write_mbtiles():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1224,7 +1224,7 @@ def test_ogr_mvt_write_mbtiles():
 @gdaltest.enable_exceptions()
 def test_ogr_mvt_write_limitations_max_size(implicit_limitation, tmp_path):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
     lyr.CreateField(ogr.FieldDefn("field"))
 
@@ -1285,7 +1285,7 @@ def test_ogr_mvt_write_limitations_max_size(implicit_limitation, tmp_path):
 @pytest.mark.require_geos
 def test_ogr_mvt_write_polygon_repaired():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
     lyr.CreateField(ogr.FieldDefn("field"))
 
@@ -1377,7 +1377,7 @@ def test_ogr_mvt_write_polygon_repaired():
 @pytest.mark.require_geos
 def test_ogr_mvt_write_conflicting_innner_ring():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
     lyr.CreateField(ogr.FieldDefn("field"))
 
@@ -1416,7 +1416,7 @@ def test_ogr_mvt_write_conflicting_innner_ring():
 @pytest.mark.require_geos
 def test_ogr_mvt_write_limitations_max_size_polygon():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
     lyr.CreateField(ogr.FieldDefn("field"))
 
@@ -1459,7 +1459,7 @@ def test_ogr_mvt_write_limitations_max_size_polygon():
 @gdaltest.enable_exceptions()
 def test_ogr_mvt_write_limitations_max_features(implicit_limitation):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1518,7 +1518,7 @@ def test_ogr_mvt_write_limitations_max_features(implicit_limitation):
 @pytest.mark.require_geos
 def test_ogr_mvt_write_custom_tiling_scheme():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
     lyr = src_ds.CreateLayer("mylayer", srs=srs)
@@ -1724,7 +1724,7 @@ def test_ogr_mvt_write_errors():
 @pytest.mark.require_geos
 def test_ogr_mvt_write_reuse_temp_db():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1763,7 +1763,7 @@ def test_ogr_mvt_write_reuse_temp_db():
 )
 def test_ogr_mvt_write_custom_tiling_scheme_WorldCRS84Quad(tmp_vsimem, TILING_SCHEME):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
     lyr = src_ds.CreateLayer("mylayer", srs=srs)

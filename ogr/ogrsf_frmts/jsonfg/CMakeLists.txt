@@ -12,8 +12,7 @@ add_gdal_driver(
   STRONG_CXX_WFLAGS
   BUILTIN)
 gdal_standard_includes(ogr_JSONFG)
-target_include_directories(ogr_JSONFG PRIVATE $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>
-                                              $<TARGET_PROPERTY:ogr_GeoJSON,SOURCE_DIR>)
+target_include_directories(ogr_JSONFG PRIVATE $<TARGET_PROPERTY:ogr_GeoJSON,SOURCE_DIR>)
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(ogr_JSONFG libjson)
 else ()

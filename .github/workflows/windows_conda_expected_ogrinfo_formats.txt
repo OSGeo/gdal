@@ -1,4 +1,5 @@
 Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update, v:virtual-I/O s:subdatasets)
+  MEM -raster,multidimensional raster,vector- (rw+): In Memory raster, vector and multidimensional raster
   FITS -raster,vector- (rw+): Flexible Image Transport System (*.fits)
   PCIDSK -raster,vector- (rw+uv): PCIDSK Database File (*.pix)
   netCDF -raster,multidimensional raster,vector- (rw+us): Network Common Data Format (*.nc)
@@ -18,7 +19,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   S57 -vector- (rw+v): IHO S-57 (ENC) (*.000)
   DGN -vector- (rw+v): Microstation DGN (*.dgn)
   OGR_VRT -vector- (rov): VRT - Virtual Datasource (*.vrt)
-  Memory -vector- (rw+): Memory
   CSV -vector- (rw+uv): Comma Separated Value (.csv) (*.csv, *.tsv, *.psv)
   NAS -vector- (rov): NAS - ALKIS (*.xml)
   GML -vector- (rw+v): Geography Markup Language (GML) (*.gml, *.xml)

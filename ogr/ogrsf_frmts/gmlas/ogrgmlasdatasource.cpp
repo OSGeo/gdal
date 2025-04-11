@@ -14,7 +14,7 @@
 
 #include "ogr_gmlas.h"
 
-#include "ogr_mem.h"
+#include "memdataset.h"
 #include "cpl_sha256.h"
 
 #include <algorithm>

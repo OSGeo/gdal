@@ -14,7 +14,7 @@
 #define OGR_ODS_H_INCLUDED
 
 #include "ogrsf_frmts.h"
-#include "ogr_mem.h"
+#include "memdataset.h"
 
 #include "ogr_expat.h"
 

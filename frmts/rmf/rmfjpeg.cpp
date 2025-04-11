@@ -17,7 +17,7 @@
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
 #include "rmfdataset.h"
-#include "../mem/memdataset.h"
+#include "memdataset.h"
 
 /************************************************************************/
 /*                          JPEGDecompress()                            */

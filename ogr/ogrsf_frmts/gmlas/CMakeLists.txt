@@ -41,8 +41,7 @@ set_property(
   PROPERTY RESOURCE "${GDAL_DATA_FILES}")
 
 target_include_directories(
-  ogr_GMLAS PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/mem
-                    ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/pgdump)
+  ogr_GMLAS PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/pgdump)
 
 if (EMBED_RESOURCE_FILES)
     add_driver_embedded_resources(ogr_GMLAS OGR_ENABLE_DRIVER_GMLAS_PLUGIN embedded_resources.c)

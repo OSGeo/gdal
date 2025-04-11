@@ -31,7 +31,7 @@ from osgeo import gdal, ogr, osr
 def test_ogr2ogr_lib_1():
 
     srcDS = gdal.OpenEx("../ogr/data/poly.shp")
-    ds = gdal.VectorTranslate("", srcDS, format="Memory")
+    ds = gdal.VectorTranslate("", srcDS, format="MEM")
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
     feat0 = ds.GetLayer(0).GetFeature(0)
@@ -53,7 +53,7 @@ def test_ogr2ogr_lib_2():
     ds = gdal.VectorTranslate(
         "",
         srcDS,
-        format="Memory",
+        format="MEM",
         SQLStatement="select * from poly",
         SQLDialect="OGRSQL",
     )
@@ -70,7 +70,7 @@ def test_ogr2ogr_lib_2a(tmp_vsimem):
         "-- initial comment\nselect * from poly\n-- trailing comment",
     )
     ds = gdal.VectorTranslate(
-        "", srcDS, format="Memory", SQLStatement=f"@{tmp_vsimem}/sql.txt"
+        "", srcDS, format="MEM", SQLStatement=f"@{tmp_vsimem}/sql.txt"
     )
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
@@ -84,7 +84,7 @@ def test_ogr2ogr_lib_2b(tmp_vsimem):
         tmp_vsimem / "sql.txt", "\xEF\xBB\xBFselect * from poly".encode("LATIN1")
     )
     ds = gdal.VectorTranslate(
-        "", srcDS, format="Memory", SQLStatement=f"@{tmp_vsimem}/sql.txt"
+        "", srcDS, format="MEM", SQLStatement=f"@{tmp_vsimem}/sql.txt"
     )
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
@@ -96,13 +96,13 @@ def test_ogr2ogr_lib_2b(tmp_vsimem):
 def test_ogr2ogr_lib_3(tmp_vsimem):
 
     srcDS = gdal.OpenEx("../ogr/data/poly.shp")
-    ds = gdal.VectorTranslate("", srcDS, format="Memory", where="EAS_ID=171")
+    ds = gdal.VectorTranslate("", srcDS, format="MEM", where="EAS_ID=171")
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
 
     # Test @filename syntax
     gdal.FileFromMemBuffer(tmp_vsimem / "filter.txt", "EAS_ID=171")
     ds = gdal.VectorTranslate(
-        "", srcDS, format="Memory", where=f"@{tmp_vsimem}/filter.txt"
+        "", srcDS, format="MEM", where=f"@{tmp_vsimem}/filter.txt"
     )
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
 
@@ -144,7 +144,7 @@ def test_ogr2ogr_lib_4(tmp_vsimem):
 def test_ogr2ogr_lib_5():
 
     srcDS = gdal.OpenEx("../ogr/data/poly.shp")
-    ds = gdal.VectorTranslate("", srcDS, format="Memory", dstSRS="EPSG:4326")
+    ds = gdal.VectorTranslate("", srcDS, format="MEM", dstSRS="EPSG:4326")
     assert str(ds.GetLayer(0).GetSpatialRef()).find("1984") != -1
 
 
@@ -157,7 +157,7 @@ def test_ogr2ogr_lib_6():
     srcDS = gdal.OpenEx("../ogr/data/poly.shp")
     # Voluntary don't use the exact case of the source field names (#4502)
     ds = gdal.VectorTranslate(
-        "", srcDS, format="Memory", selectFields=["eas_id", "prfedea"]
+        "", srcDS, format="MEM", selectFields=["eas_id", "prfedea"]
     )
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 2
@@ -173,7 +173,7 @@ def test_ogr2ogr_lib_6():
 def test_ogr2ogr_lib_sel_fields_empty():
 
     srcDS = gdal.OpenEx("../ogr/data/poly.shp")
-    ds = gdal.VectorTranslate("", srcDS, format="Memory", selectFields=[])
+    ds = gdal.VectorTranslate("", srcDS, format="MEM", selectFields=[])
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 0
 
@@ -184,7 +184,7 @@ def test_ogr2ogr_lib_sel_fields_empty():
 
 def test_ogr2ogr_lib_sel_fields_with_space():
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = srcDS.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("with space"))
     lyr.CreateField(ogr.FieldDefn("with,comma"))
@@ -198,7 +198,7 @@ def test_ogr2ogr_lib_sel_fields_with_space():
     ds = gdal.VectorTranslate(
         "",
         srcDS,
-        format="Memory",
+        format="MEM",
         selectFields=["with space", "with,comma", 'with,double"quote'],
     )
     lyr = ds.GetLayer(0)
@@ -231,11 +231,11 @@ def test_ogr2ogr_lib_7(tmp_vsimem):
 def test_ogr2ogr_lib_8():
 
     srcDS = gdal.OpenEx("../ogr/data/poly.shp")
-    ds = gdal.VectorTranslate("", srcDS, format="Memory", layers=["poly"])
+    ds = gdal.VectorTranslate("", srcDS, format="MEM", layers=["poly"])
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
     # Test also with just a string and not an array
-    ds = gdal.VectorTranslate("", srcDS, format="Memory", layers="poly")
+    ds = gdal.VectorTranslate("", srcDS, format="MEM", layers="poly")
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -246,7 +246,7 @@ def test_ogr2ogr_lib_8():
 def test_ogr2ogr_lib_9():
 
     srcDS = gdal.OpenEx("../ogr/data/poly.shp")
-    ds = gdal.VectorTranslate("", srcDS, format="Memory", segmentizeMaxDist=100)
+    ds = gdal.VectorTranslate("", srcDS, format="MEM", segmentizeMaxDist=100)
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     feat = ds.GetLayer(0).GetNextFeature()
     assert feat.GetGeometryRef().GetGeometryRef(0).GetPointCount() == 36
@@ -277,7 +277,7 @@ def test_ogr2ogr_lib_11():
 
     srcDS = gdal.OpenEx("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate(
-        "", srcDS, format="Memory", spatFilter=[479609, 4764629, 479764, 4764817]
+        "", srcDS, format="MEM", spatFilter=[479609, 4764629, 479764, 4764817]
     )
     if ogrtest.have_geos():
         assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 4
@@ -301,7 +301,7 @@ def test_ogr2ogr_lib_12():
     ds = gdal.VectorTranslate(
         "",
         "../ogr/data/poly.shp",
-        format="Memory",
+        format="MEM",
         callback=mycallback,
         callback_data=tab,
     )
@@ -327,7 +327,7 @@ def test_ogr2ogr_lib_13():
         gdal.VectorTranslate(
             "",
             "../ogr/data/poly.shp",
-            format="Memory",
+            format="MEM",
             callback=mycallback_with_failure,
         )
 
@@ -353,7 +353,7 @@ def test_ogr2ogr_lib_15():
 
     srcDS = gdal.OpenEx("../ogr/data/poly.shp")
     with gdal.quiet_errors():
-        ds = gdal.VectorTranslate("", srcDS, format="Memory", zField="foo")
+        ds = gdal.VectorTranslate("", srcDS, format="MEM", zField="foo")
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPolygon
 
@@ -379,14 +379,14 @@ def test_ogr2ogr_lib_16():
         ["POINT ZM (1 2 3 4)", "layer_dim", "POINT ZM (1 2 3 4)"],
     ]
     for (wkt_before, dim, wkt_after) in tests:
-        srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+        srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
         geom = ogr.CreateGeometryFromWkt(wkt_before)
         lyr = srcDS.CreateLayer("test", geom_type=geom.GetGeometryType())
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometry(geom)
         lyr.CreateFeature(f)
 
-        ds = gdal.VectorTranslate("", srcDS, format="Memory", dim=dim)
+        ds = gdal.VectorTranslate("", srcDS, format="MEM", dim=dim)
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         if f.GetGeometryRef().ExportToIsoWkt() != wkt_after:
@@ -400,7 +400,7 @@ def test_ogr2ogr_lib_16():
 
 def test_ogr2ogr_lib_17():
 
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     gdal.VectorTranslate(ds, gdal.OpenEx("../ogr/data/poly.shp"))
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 10
@@ -413,7 +413,7 @@ def test_ogr2ogr_lib_17():
 
 def test_ogr2ogr_lib_18():
 
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     gdal.VectorTranslate(ds, gdal.OpenEx("../ogr/data/poly.shp"), limit=1)
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
@@ -426,7 +426,7 @@ def test_ogr2ogr_lib_18():
 
 def test_ogr2ogr_lib_19():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     lyr = src_ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("foo"))
     lyr.CreateField(ogr.FieldDefn("bar"))
@@ -435,7 +435,7 @@ def test_ogr2ogr_lib_19():
     f["bar"] = "foo"
     lyr.CreateFeature(f)
 
-    ds = gdal.VectorTranslate("", src_ds, format="Memory", selectFields=["foo"])
+    ds = gdal.VectorTranslate("", src_ds, format="MEM", selectFields=["foo"])
     gdal.VectorTranslate(
         ds, src_ds, accessMode="append", addFields=True, selectFields=["bar"]
     )
@@ -458,7 +458,7 @@ def test_ogr2ogr_lib_19():
 @pytest.mark.require_driver("GPKG")
 def test_ogr2ogr_lib_20(tmp_vsimem):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbNone)
     lyr.CreateGeomField(ogr.GeomFieldDefn("foo"))
 
@@ -470,7 +470,7 @@ def test_ogr2ogr_lib_20(tmp_vsimem):
 
 @pytest.mark.require_driver("GPKG")
 def test_ogr2ogr_lib_20a(tmp_vsimem):
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbNone)
     lyr.CreateGeomField(ogr.GeomFieldDefn("foo"))
     lyr.CreateGeomField(ogr.GeomFieldDefn("bar"))
@@ -489,7 +489,7 @@ def test_ogr2ogr_lib_20a(tmp_vsimem):
 
 def test_ogr2ogr_lib_21():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     lyr = src_ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("foo"))
     lyr.CreateField(ogr.FieldDefn("bar"))
@@ -498,7 +498,7 @@ def test_ogr2ogr_lib_21():
     f["bar"] = "foo"
     lyr.CreateFeature(f)
 
-    ds = gdal.VectorTranslate("", src_ds, format="Memory")
+    ds = gdal.VectorTranslate("", src_ds, format="MEM")
     with pytest.raises(Exception):
         gdal.VectorTranslate(ds, src_ds, accessMode="append", selectFields=["foo"])
 
@@ -513,7 +513,7 @@ def test_ogr2ogr_lib_21():
 def test_ogr2ogr_clipsrc_wkt_no_dst_geom():
 
     wkt = "POLYGON ((479461 4764494,479461 4764196,480012 4764196,480012 4764494,479461 4764494))"
-    ds = gdal.VectorTranslate("", "../ogr/data/poly.shp", format="Memory", clipSrc=wkt)
+    ds = gdal.VectorTranslate("", "../ogr/data/poly.shp", format="MEM", clipSrc=wkt)
     lyr = ds.GetLayer(0)
     fc = lyr.GetFeatureCount()
     assert fc == 1
@@ -583,7 +583,7 @@ def test_ogr2ogr_lib_ct():
     ds = gdal.VectorTranslate(
         "",
         "../ogr/data/poly.shp",
-        format="Memory",
+        format="MEM",
         dstSRS="EPSG:32630",
         reproject=True,
         coordinateOperation="+proj=affine +s11=-1",
@@ -606,7 +606,7 @@ def test_ogr2ogr_lib_ct_no_srs():
     ds = gdal.VectorTranslate(
         "",
         "../ogr/data/poly.shp",
-        format="Memory",
+        format="MEM",
         coordinateOperation="+proj=affine +s11=-1",
     )
     lyr = ds.GetLayer(0)
@@ -632,13 +632,13 @@ def test_ogr2ogr_lib_ct_no_srs():
 )
 def test_ogr2ogr_lib_convert_to_linear_promote_to_multi(geometryType):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     lyr = src_ds.CreateLayer("layer")
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("CIRCULARSTRING(0 0,1 0,0 0)"))
     lyr.CreateFeature(f)
 
-    ds = gdal.VectorTranslate("", src_ds, format="Memory", geometryType=geometryType)
+    ds = gdal.VectorTranslate("", src_ds, format="MEM", geometryType=geometryType)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     g = f.GetGeometryRef()
@@ -664,10 +664,10 @@ def test_ogr2ogr_lib_makevalid(tmp_vsimem):
 """,
     ):
         if make_valid_available:
-            ds = gdal.VectorTranslate("", tmpfilename, format="Memory", makeValid=True)
+            ds = gdal.VectorTranslate("", tmpfilename, format="MEM", makeValid=True)
         else:
             with pytest.raises(Exception):
-                gdal.VectorTranslate("", tmpfilename, format="Memory", makeValid=True)
+                gdal.VectorTranslate("", tmpfilename, format="MEM", makeValid=True)
             return
 
     lyr = ds.GetLayer(0)
@@ -707,14 +707,14 @@ def test_ogr2ogr_lib_sql_filename(tmp_vsimem):
 
 def test_ogr2ogr_emptyStrAsNull():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     lyr = src_ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("foo"))
     f = ogr.Feature(lyr.GetLayerDefn())
     f["foo"] = ""
     lyr.CreateFeature(f)
 
-    ds = gdal.VectorTranslate("", src_ds, format="Memory", emptyStrAsNull=True)
+    ds = gdal.VectorTranslate("", src_ds, format="MEM", emptyStrAsNull=True)
 
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -728,7 +728,7 @@ def test_ogr2ogr_emptyStrAsNull():
 
 def test_ogr2ogr_fielddomain_():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("layer")
 
     src_fld_defn = ogr.FieldDefn("foo")
@@ -765,7 +765,7 @@ def test_ogr2ogr_fielddomain_():
     f.SetField("bar", -1)  # does not exist in dictionary
     src_lyr.CreateFeature(f)
 
-    ds = gdal.VectorTranslate("", src_ds, format="Memory")
+    ds = gdal.VectorTranslate("", src_ds, format="MEM")
     lyr = ds.GetLayer(0)
     fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
     assert fld_defn.GetDomainName() == "my_domain"
@@ -774,7 +774,7 @@ def test_ogr2ogr_fielddomain_():
     assert domain.GetDomainType() == ogr.OFDT_GLOB
 
     # Test -resolveDomains
-    ds = gdal.VectorTranslate("", src_ds, format="Memory", resolveDomains=True)
+    ds = gdal.VectorTranslate("", src_ds, format="MEM", resolveDomains=True)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     assert lyr_defn.GetFieldCount() == 4
@@ -814,7 +814,7 @@ def test_ogr2ogr_fielddomain_():
 
 def test_ogr2ogr_assign_coord_epoch():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_ds.CreateLayer("layer")
 
     ds = gdal.VectorTranslate(
@@ -832,7 +832,7 @@ def test_ogr2ogr_assign_coord_epoch():
 @pytest.mark.require_proj(7, 2)
 def test_ogr2ogr_s_coord_epoch():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("layer")
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(120 -40)"))
@@ -858,7 +858,7 @@ def test_ogr2ogr_s_coord_epoch():
 @pytest.mark.require_proj(7, 2)
 def test_ogr2ogr_t_coord_epoch():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("layer")
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(120 -40)"))
@@ -884,7 +884,7 @@ def test_ogr2ogr_t_coord_epoch():
 @pytest.mark.require_driver("PGDump")
 def test_ogr2ogr_launder_geometry_column_name(tmp_vsimem):
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = srcDS.CreateLayer("test", geom_type=ogr.wkbNone)
     lyr.CreateGeomField(ogr.GeomFieldDefn("SHAPE", ogr.wkbPoint))
     out_filename = tmp_vsimem / "test_ogr2ogr_launder_geometry_column_name.sql"
@@ -981,7 +981,7 @@ def test_ogr2ogr_upsert(tmp_vsimem):
 @pytest.mark.require_driver("GeoJSONSeq")
 def test_ogr2ogr_lib_t_srs_ignored(tmp_vsimem):
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     srcLayer = srcDS.CreateLayer("test", srs=srs)
@@ -1024,7 +1024,7 @@ def test_ogr2ogr_lib_spat_srs_projected():
     # Check that we densify spatial filter geometry when not expressed in
     # the layer CRS
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     srcLayer = srcDS.CreateLayer("test", srs=srs)
@@ -1041,7 +1041,7 @@ def test_ogr2ogr_lib_spat_srs_projected():
     ds = gdal.VectorTranslate(
         "",
         srcDS,
-        format="Memory",
+        format="MEM",
         spatFilter=[130036.75, 6697405.5, 145400.4, 6756013.0],
         spatSRS="EPSG:3067",
     )
@@ -1059,7 +1059,7 @@ def test_ogr2ogr_lib_spat_srs_geographic():
     # Check that we densify spatial filter geometry when not expressed in
     # the layer CRS
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32661)
     srcLayer = srcDS.CreateLayer("test", srs=srs)
@@ -1071,7 +1071,7 @@ def test_ogr2ogr_lib_spat_srs_geographic():
     # Naive reprojection of the below bounding box to EPSG:32661 would
     # be [2000000, 2000000, 2000000, 3112951.14]
     ds = gdal.VectorTranslate(
-        "", srcDS, format="Memory", spatFilter=[-180, 80, 180, 90], spatSRS="EPSG:4326"
+        "", srcDS, format="MEM", spatFilter=[-180, 80, 180, 90], spatSRS="EPSG:4326"
     )
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
@@ -1196,7 +1196,7 @@ def test_ogr2ogr_lib_clipsrc_datasource(tmp_vsimem):
 @pytest.mark.require_geos
 def test_ogr2ogr_lib_clipsrc_discard_lower_dimensionality():
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     srcLayer = srcDS.CreateLayer("test", srs=srs, geom_type=ogr.wkbLineString)
@@ -1205,7 +1205,7 @@ def test_ogr2ogr_lib_clipsrc_discard_lower_dimensionality():
     srcLayer.CreateFeature(f)
 
     # Intersection of above geometry with clipSrc bounding box is a point
-    ds = gdal.VectorTranslate("", srcDS, format="Memory", clipSrc=[-1, -1, 0, 0])
+    ds = gdal.VectorTranslate("", srcDS, format="MEM", clipSrc=[-1, -1, 0, 0])
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 0
     ds = None
@@ -1220,7 +1220,7 @@ def test_ogr2ogr_lib_clipsrc_discard_lower_dimensionality():
 @pytest.mark.parametrize("clipSrc", [True, False])
 def test_ogr2ogr_lib_clip_invalid_polygon_inline(tmp_vsimem, clipSrc):
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     srcLayer = srcDS.CreateLayer("test", srs=srs, geom_type=ogr.wkbLineString)
@@ -1236,7 +1236,7 @@ def test_ogr2ogr_lib_clip_invalid_polygon_inline(tmp_vsimem, clipSrc):
         gdal.VectorTranslate(
             "",
             srcDS,
-            format="Memory",
+            format="MEM",
             clipSrc="POLYGON((0 0,1 1,0 1,1 0,0 0))" if clipSrc else None,
             clipDst="POLYGON((0 0,1 1,0 1,1 0,0 0))" if not clipSrc else None,
         )
@@ -1245,7 +1245,7 @@ def test_ogr2ogr_lib_clip_invalid_polygon_inline(tmp_vsimem, clipSrc):
         ds = gdal.VectorTranslate(
             "",
             srcDS,
-            format="Memory",
+            format="MEM",
             makeValid=True,
             clipSrc="POLYGON((0 0,1 1,0 1,1 0,0 0))" if clipSrc else None,
             clipDst="POLYGON((0 0,1 1,0 1,1 0,0 0))" if not clipSrc else None,
@@ -1265,7 +1265,7 @@ def test_ogr2ogr_lib_clip_invalid_polygon_inline(tmp_vsimem, clipSrc):
 @pytest.mark.parametrize("clipSrc", [True, False])
 def test_ogr2ogr_lib_clip_invalid_polygon(tmp_vsimem, clipSrc):
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     srcLayer = srcDS.CreateLayer("test", srs=srs, geom_type=ogr.wkbLineString)
@@ -1291,7 +1291,7 @@ def test_ogr2ogr_lib_clip_invalid_polygon(tmp_vsimem, clipSrc):
         gdal.VectorTranslate(
             "",
             srcDS,
-            format="Memory",
+            format="MEM",
             clipSrc=clip_path if clipSrc else None,
             clipDst=clip_path if not clipSrc else None,
         )
@@ -1300,7 +1300,7 @@ def test_ogr2ogr_lib_clip_invalid_polygon(tmp_vsimem, clipSrc):
         ds = gdal.VectorTranslate(
             "",
             srcDS,
-            format="Memory",
+            format="MEM",
             makeValid=True,
             clipSrc=clip_path if clipSrc else None,
             clipDst=clip_path if not clipSrc else None,
@@ -1318,7 +1318,7 @@ def test_ogr2ogr_lib_clip_invalid_polygon(tmp_vsimem, clipSrc):
 @pytest.mark.require_geos
 def test_ogr2ogr_lib_clipsrc_3d_polygon(tmp_vsimem):
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     srcLayer = srcDS.CreateLayer("test", srs=srs, geom_type=ogr.wkbLineString)
@@ -1342,7 +1342,7 @@ def test_ogr2ogr_lib_clipsrc_3d_polygon(tmp_vsimem):
     clip_ds = None
 
     with gdal.quiet_errors():
-        ds = gdal.VectorTranslate("", srcDS, format="Memory", clipSrc=clip_path)
+        ds = gdal.VectorTranslate("", srcDS, format="MEM", clipSrc=clip_path)
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2
 
@@ -1362,7 +1362,7 @@ def test_ogr2ogr_lib_clipsrc_3d_polygon(tmp_vsimem):
 @pytest.mark.require_geos
 def test_ogr2ogr_lib_clipsrc_argument_errors():
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srcDS.CreateLayer("test")
 
     with pytest.raises(Exception, match="-clipsrc option requires 1 argument"):
@@ -1494,7 +1494,7 @@ def test_ogr2ogr_lib_clipdst_datasource(tmp_vsimem):
 @pytest.mark.require_geos
 def test_ogr2ogr_lib_clipdst_discard_lower_dimensionality():
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     srcLayer = srcDS.CreateLayer("test", srs=srs, geom_type=ogr.wkbLineString)
@@ -1503,7 +1503,7 @@ def test_ogr2ogr_lib_clipdst_discard_lower_dimensionality():
     srcLayer.CreateFeature(f)
 
     # Intersection of above geometry with clipDst bounding box is a point -> no result
-    ds = gdal.VectorTranslate("", srcDS, format="Memory", clipDst=[-1, -1, 0, 0])
+    ds = gdal.VectorTranslate("", srcDS, format="MEM", clipDst=[-1, -1, 0, 0])
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 0
 
@@ -1517,7 +1517,7 @@ def test_ogr2ogr_lib_clipdst_discard_lower_dimensionality():
 def test_ogr2ogr_lib_clip_datasource_reprojection(tmp_vsimem, clipSrc):
 
     # Prepare the data layer to clip
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs_4326 = osr.SpatialReference()
     srs_4326.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     srs_4326.ImportFromEPSG(4326)
@@ -1549,7 +1549,7 @@ def test_ogr2ogr_lib_clip_datasource_reprojection(tmp_vsimem, clipSrc):
     dst_ds = gdal.VectorTranslate(
         "",
         srcDS,
-        format="Memory",
+        format="MEM",
         clipSrc=clip_path if clipSrc else None,
         clipDst=clip_path if not clipSrc else None,
     )
@@ -1570,7 +1570,7 @@ def test_ogr2ogr_lib_clip_datasource_reprojection(tmp_vsimem, clipSrc):
 @pytest.mark.require_geos
 def test_ogr2ogr_lib_clipdst_argument_errors():
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srcDS.CreateLayer("test")
 
     with pytest.raises(Exception, match="-clipdst option requires 1 argument"):
@@ -1589,14 +1589,14 @@ def test_ogr2ogr_lib_clipdst_argument_errors():
 
 def test_ogr2ogr_lib_explodecollections():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("layer")
     f = ogr.Feature(src_lyr.GetLayerDefn())
     wkt = "MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))"
     f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
     src_lyr.CreateFeature(f)
 
-    dst_ds = gdal.VectorTranslate("", src_ds, format="Memory", explodeCollections=True)
+    dst_ds = gdal.VectorTranslate("", src_ds, format="MEM", explodeCollections=True)
 
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 2, "wrong feature count"
@@ -1609,7 +1609,7 @@ def test_ogr2ogr_lib_explodecollections():
 @pytest.mark.require_driver("GPKG")
 def test_ogr2ogr_lib_fid_string_to_gpkg():
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srcLayer = srcDS.CreateLayer("test")
     srcLayer.CreateField(ogr.FieldDefn("fid"))
 
@@ -1626,7 +1626,7 @@ def test_ogr2ogr_lib_mapfieldtype():
 
     src_path = "../ogr/data/poly.shp"
     dst_ds = gdal.VectorTranslate(
-        "", src_path, format="Memory", mapFieldType=["Integer64=String"]
+        "", src_path, format="MEM", mapFieldType=["Integer64=String"]
     )
     assert dst_ds is not None
 
@@ -1654,7 +1654,7 @@ def test_ogr2ogr_lib_options_and_args():
     ds = gdal.VectorTranslate(
         "",
         "../ogr/data/poly.shp",
-        format="Memory",
+        format="MEM",
         selectFields=["eas_id", "prfedea"],
         options=raw_options_list,
     )
@@ -1674,7 +1674,7 @@ def test_ogr2ogr_lib_options_and_args():
 @pytest.mark.require_geos
 def test_ogr2ogr_lib_simplify():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("layer")
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0, 1 0, 10 0)"))
@@ -1683,11 +1683,9 @@ def test_ogr2ogr_lib_simplify():
     with gdaltest.enable_exceptions(), pytest.raises(
         Exception, match="Failed to parse"
     ):
-        gdal.VectorTranslate(
-            "", src_ds, format="Memory", simplifyTolerance="reasonable"
-        )
+        gdal.VectorTranslate("", src_ds, format="MEM", simplifyTolerance="reasonable")
 
-    dst_ds = gdal.VectorTranslate("", src_ds, format="Memory", simplifyTolerance=5)
+    dst_ds = gdal.VectorTranslate("", src_ds, format="MEM", simplifyTolerance=5)
 
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 1, "wrong feature count"
@@ -1722,7 +1720,7 @@ def test_ogr2ogr_lib_transaction_size(tmp_vsimem, transaction_size):
 
 def test_ogr2ogr_lib_dateTimeTo():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("layer")
     src_lyr.CreateField(ogr.FieldDefn("dt", ogr.OFTDateTime))
     src_lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
@@ -1799,7 +1797,7 @@ def test_ogr2ogr_lib_dateTimeTo():
 @pytest.mark.require_driver("GPKG")
 def test_ogr2ogr_lib_convert_list_type_to_JSON(tmp_vsimem):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("layer")
     src_lyr.CreateField(ogr.FieldDefn("strlist", ogr.OFTStringList))
     src_lyr.CreateField(ogr.FieldDefn("intlist", ogr.OFTIntegerList))
@@ -2023,7 +2021,7 @@ def test_width_precision_flags(
 ###############################################################################
 def test_ogr2ogr_lib_nlt_GEOMETRY_nlt_CURVE_TO_LINEAR():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbMultiCurve)
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("MULTICURVE(CIRCULARSTRING(0 0,1 1,2 0))"))
@@ -2031,7 +2029,7 @@ def test_ogr2ogr_lib_nlt_GEOMETRY_nlt_CURVE_TO_LINEAR():
     f = None
 
     dst_ds = gdal.VectorTranslate(
-        "", src_ds, format="Memory", geometryType=["GEOMETRY", "CONVERT_TO_LINEAR"]
+        "", src_ds, format="MEM", geometryType=["GEOMETRY", "CONVERT_TO_LINEAR"]
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetGeomType() == ogr.wkbUnknown
@@ -2056,10 +2054,10 @@ def test_ogr2ogr_lib_nlt_GEOMETRY_nlt_CURVE_TO_LINEAR():
 )
 def test_ogr2ogr_lib_invalid_nlt_combinations(nlt_value):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_ds.CreateLayer("test", geom_type=ogr.wkbMultiCurve)
     with pytest.raises(Exception, match="Unsupported combination of -nlt arguments"):
-        gdal.VectorTranslate("", src_ds, format="Memory", geometryType=nlt_value)
+        gdal.VectorTranslate("", src_ds, format="MEM", geometryType=nlt_value)
 
 
 ###############################################################################
@@ -2080,10 +2078,10 @@ def test_ogr2ogr_lib_invalid_nlt_combinations(nlt_value):
 )
 def test_ogr2ogr_lib_valid_nlt_combinations(nlt_value):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_ds.CreateLayer("test", geom_type=ogr.wkbMultiCurve)
     assert (
-        gdal.VectorTranslate("", src_ds, format="Memory", geometryType=nlt_value)
+        gdal.VectorTranslate("", src_ds, format="MEM", geometryType=nlt_value)
         is not None
     )
 
@@ -2163,7 +2161,7 @@ def test_ogr2ogr_lib_dict_arguments():
 def test_ogr2ogr_lib_reprojection_curve_geometries_output_supports_curve():
 
     ds = gdal.VectorTranslate(
-        "", "data/curvepolygon_epsg_32632.csv", format="Memory", dstSRS="EPSG:4326"
+        "", "data/curvepolygon_epsg_32632.csv", format="MEM", dstSRS="EPSG:4326"
     )
     lyr = ds.GetLayer(0)
 
@@ -2194,7 +2192,7 @@ def test_ogr2ogr_lib_reprojection_curve_geometries_forced_geom_type(geometryType
     ds = gdal.VectorTranslate(
         "",
         "data/curvepolygon_epsg_32632.csv",
-        format="Memory",
+        format="MEM",
         dstSRS="EPSG:4326",
         geometryType=geometryType,
     )
@@ -2306,7 +2304,7 @@ def test_translate_explodecollections_preserve_fid(tmp_vsimem, preserveFID):
 @pytest.mark.parametrize("limit", [None, 1])
 def test_ogr2ogr_lib_OGR2OGR_USE_ARROW_API_YES(limit):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     src_lyr.CreateField(ogr.FieldDefn("str_field"))
     fld_defn = ogr.FieldDefn("json_field")
@@ -2360,7 +2358,7 @@ def test_ogr2ogr_lib_OGR2OGR_USE_ARROW_API_YES(limit):
         out_ds = gdal.VectorTranslate(
             "",
             src_ds,
-            format="Memory",
+            format="MEM",
             limit=limit,
         )
 
@@ -2521,7 +2519,7 @@ def test_json_types(tmp_vsimem):
 @pytest.mark.require_driver("GPKG")
 def test_ogr2ogr_lib_accumulerated_errors(tmp_vsimem, enable_exceptions, enable_debug):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetFID(1)
@@ -2644,7 +2642,7 @@ def test_ogr2ogr_lib_gpkg_to_shp_truncated_field_names(tmp_vsimem):
 def test_ogr2ogr_lib_coordinate_precision(tmp_vsimem):
 
     # Source layer without SRS
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_ds.CreateLayer("test")
 
     out_filename = str(tmp_vsimem / "test_ogr2ogr_lib_coordinate_precision.gpkg")
@@ -2729,7 +2727,7 @@ def test_ogr2ogr_lib_coordinate_precision(tmp_vsimem):
     ds.Close()
 
     # Source layer with a geographic SRS
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     src_ds.CreateLayer("test", srs=srs)
@@ -2765,7 +2763,7 @@ def test_ogr2ogr_lib_coordinate_precision(tmp_vsimem):
     ds.Close()
 
     # Source layer with a projected SRS
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
     src_ds.CreateLayer("test", srs=srs)
@@ -2797,13 +2795,13 @@ def test_ogr2ogr_lib_coordinate_precision(tmp_vsimem):
 
 def test_ogr2ogr_lib_coordinate_precision_with_geom():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (1 1,9 9)"))
     src_lyr.CreateFeature(f)
 
-    out_ds = gdal.VectorTranslate("", src_ds, format="Memory", xyRes=10)
+    out_ds = gdal.VectorTranslate("", src_ds, format="MEM", xyRes=10)
     out_lyr = out_ds.GetLayer(0)
     f = out_lyr.GetNextFeature()
     if ogr.GetGEOSVersionMajor() > 0:
@@ -2817,7 +2815,7 @@ def test_ogr2ogr_lib_coordinate_precision_with_geom():
 
 def test_ogr2ogr_lib_not_enough_gcp():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_ds.CreateLayer("test")
 
     with pytest.raises(
@@ -2831,7 +2829,7 @@ def test_ogr2ogr_lib_not_enough_gcp():
 
 def test_ogr2ogr_lib_two_gcps():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 3)"))
@@ -2854,7 +2852,7 @@ def test_ogr2ogr_lib_two_gcps():
 @gdaltest.enable_exceptions()
 def test_ogr2ogr_lib_skip_invalid(tmp_vsimem):
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srcLayer = srcDS.CreateLayer("test")
     f = ogr.Feature(srcLayer.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
@@ -2864,7 +2862,7 @@ def test_ogr2ogr_lib_skip_invalid(tmp_vsimem):
     srcLayer.CreateFeature(f)
 
     with gdal.quiet_errors():
-        ds = gdal.VectorTranslate("", srcDS, format="Memory", skipInvalid=True)
+        ds = gdal.VectorTranslate("", srcDS, format="MEM", skipInvalid=True)
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
     ds = None
@@ -2912,9 +2910,7 @@ def test_ogr2ogr_lib_reproject_arrow(tmp_vsimem, source_driver, force_reproj_thr
             with gdaltest.error_handler(my_handler), gdaltest.config_options(
                 config_options
             ):
-                ds = gdal.VectorTranslate(
-                    "", src_ds, format="Memory", dstSRS="EPSG:4326"
-                )
+                ds = gdal.VectorTranslate("", src_ds, format="MEM", dstSRS="EPSG:4326")
 
             assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
 
@@ -2961,7 +2957,7 @@ def test_ogr2ogr_lib_reproject_arrow_optim_cannot_trigger(tmp_vsimem):
 
     config_options = {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
     with gdaltest.error_handler(my_handler), gdaltest.config_options(config_options):
-        ds = gdal.VectorTranslate("", src_filename, format="Memory", dstSRS="EPSG:4326")
+        ds = gdal.VectorTranslate("", src_filename, format="MEM", dstSRS="EPSG:4326")
 
     assert "OGR2OGR: Using WriteArrowBatch()" not in got_msg
 
@@ -2980,7 +2976,7 @@ def test_ogr2ogr_lib_reproject_arrow_optim_cannot_trigger(tmp_vsimem):
 @gdaltest.enable_exceptions()
 def test_ogr2ogr_lib_reproject_arrow_optim_ct(tmp_vsimem):
 
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32632)
     srcLayer = srcDS.CreateLayer("test", srs=srs)
@@ -2999,7 +2995,7 @@ def test_ogr2ogr_lib_reproject_arrow_optim_ct(tmp_vsimem):
         ds = gdal.VectorTranslate(
             "",
             srcDS,
-            format="Memory",
+            format="MEM",
             reproject=True,
             coordinateOperation="+proj=affine +s11=-1",
         )
@@ -3033,15 +3029,13 @@ def test_ogr2ogr_lib_reproject_arrow_optim_ct(tmp_vsimem):
 )
 def test_ogr2ogr_lib_explodecollections_empty_geoms(input_wkt, expected_output_wkt):
 
-    with gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown) as src_ds:
+    with gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown) as src_ds:
         src_lyr = src_ds.CreateLayer("test")
         f = ogr.Feature(src_lyr.GetLayerDefn())
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(input_wkt))
         src_lyr.CreateFeature(f)
 
-        out_ds = gdal.VectorTranslate(
-            "", src_ds, explodeCollections=True, format="Memory"
-        )
+        out_ds = gdal.VectorTranslate("", src_ds, explodeCollections=True, format="MEM")
         out_lyr = out_ds.GetLayer(0)
         f = out_lyr.GetNextFeature()
         assert f.GetGeometryRef().ExportToIsoWkt() == expected_output_wkt
@@ -3085,7 +3079,7 @@ def test_ogr2ogr_lib_arrow_datetime_as_string(tmp_vsimem):
     with gdaltest.error_handler(my_handler), gdaltest.config_options(
         {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
     ):
-        dst_ds = gdal.VectorTranslate("", src_filename, format="Memory")
+        dst_ds = gdal.VectorTranslate("", src_filename, format="MEM")
 
     assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
 
@@ -3219,13 +3213,13 @@ def test_ogr2ogr_lib_datetime_in_shapefile(tmp_vsimem, OGR2OGR_USE_ARROW_API):
 
 @gdaltest.disable_exceptions()
 @pytest.mark.require_proj(9, 1)
-@pytest.mark.parametrize("source_format", ["Memory", "GPKG"])
+@pytest.mark.parametrize("source_format", ["MEM", "GPKG"])
 def test_ogr2ogr_lib_warn_different_coordinate_operations(tmp_vsimem, source_format):
 
     if gdal.GetDriverByName(source_format) is None:
         pytest.skip(f"Skipping as {source_format} is not available")
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4267)  # NAD27
     srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -3244,7 +3238,7 @@ def test_ogr2ogr_lib_warn_different_coordinate_operations(tmp_vsimem, source_for
         gdal.VectorTranslate(
             "",
             src_ds,
-            format="Memory",
+            format="MEM",
             dstSRS="EPSG:4326",  # WGS 84
         )
         assert gdal.GetLastErrorMsg().startswith(
@@ -3255,7 +3249,7 @@ def test_ogr2ogr_lib_warn_different_coordinate_operations(tmp_vsimem, source_for
     gdal.VectorTranslate(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         dstSRS="EPSG:4326",  # WGS 84
         coordinateOperationOptions={"WARN_ABOUT_DIFFERENT_COORD_OP": "NO"},
     )
@@ -3266,7 +3260,7 @@ def test_ogr2ogr_lib_warn_different_coordinate_operations(tmp_vsimem, source_for
         gdal.VectorTranslate(
             "",
             src_ds,
-            format="Memory",
+            format="MEM",
             dstSRS="EPSG:4326",  # WGS 84
             coordinateOperationOptions=["ALLOW_BALLPARK=NO", "ONLY_BEST=YES"],
         )

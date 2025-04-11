@@ -16,7 +16,7 @@
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 #include "gdal_mdreader.h"
-#include "../mem/memdataset.h"
+#include "memdataset.h"
 
 #include "cpl_json.h"
 

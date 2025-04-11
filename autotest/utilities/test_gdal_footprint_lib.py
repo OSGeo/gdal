@@ -30,7 +30,7 @@ pytestmark = pytest.mark.require_geos
 
 def test_gdal_footprint_lib_basic():
 
-    out_ds = gdal.Footprint("", "../gcore/data/byte.tif", format="Memory")
+    out_ds = gdal.Footprint("", "../gcore/data/byte.tif", format="MEM")
     assert out_ds is not None
     lyr = out_ds.GetLayer(0)
     assert lyr.GetSpatialRef().GetAuthorityCode(None) == "26711"
@@ -50,7 +50,7 @@ def test_gdal_footprint_lib_basic():
 def test_gdal_footprint_lib_targetCoordinateSystem_pixel():
 
     out_ds = gdal.Footprint(
-        "", "../gcore/data/byte.tif", format="Memory", targetCoordinateSystem="pixel"
+        "", "../gcore/data/byte.tif", format="MEM", targetCoordinateSystem="pixel"
     )
     assert out_ds is not None
     lyr = out_ds.GetLayer(0)
@@ -70,7 +70,7 @@ def test_gdal_footprint_lib_targetCoordinateSystem_pixel():
 def test_gdal_footprint_lib_targetCoordinateSystem_georef():
 
     out_ds = gdal.Footprint(
-        "", "../gcore/data/byte.tif", format="Memory", targetCoordinateSystem="georef"
+        "", "../gcore/data/byte.tif", format="MEM", targetCoordinateSystem="georef"
     )
     assert out_ds is not None
     lyr = out_ds.GetLayer(0)
@@ -90,7 +90,7 @@ def test_gdal_footprint_lib_targetCoordinateSystem_georef():
 def test_gdal_footprint_lib_destSRS():
 
     out_ds = gdal.Footprint(
-        "", "../gcore/data/byte.tif", format="Memory", dstSRS="EPSG:4267"
+        "", "../gcore/data/byte.tif", format="MEM", dstSRS="EPSG:4267"
     )
     assert out_ds is not None
     lyr = out_ds.GetLayer(0)
@@ -136,7 +136,7 @@ def test_gdal_footprint_lib_srcNodata():
     out_ds = gdal.Footprint(
         "",
         "../gcore/data/byte.tif",
-        format="Memory",
+        format="MEM",
         targetCoordinateSystem="pixel",
         srcNodata=74,
     )
@@ -161,7 +161,7 @@ def test_gdal_footprint_lib_alpha_band():
     out_ds = gdal.Footprint(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         targetCoordinateSystem="pixel",
     )
     assert out_ds is not None
@@ -186,7 +186,7 @@ def test_gdal_footprint_lib_splitPolys():
     out_ds = gdal.Footprint(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         targetCoordinateSystem="pixel",
         splitPolys=True,
     )
@@ -215,7 +215,7 @@ def test_gdal_footprint_lib_convexHull():
     out_ds = gdal.Footprint(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         targetCoordinateSystem="pixel",
         convexHull=True,
     )
@@ -237,7 +237,7 @@ def test_gdal_footprint_lib_densify():
     out_ds = gdal.Footprint(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         targetCoordinateSystem="pixel",
         densify=0.5,
     )
@@ -263,7 +263,7 @@ def test_gdal_footprint_lib_simplify():
     out_ds = gdal.Footprint(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         targetCoordinateSystem="pixel",
         simplify=1,
     )
@@ -287,7 +287,7 @@ def test_gdal_footprint_lib_maxPoints():
     out_ds = gdal.Footprint(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         targetCoordinateSystem="pixel",
         maxPoints=4,
     )
@@ -313,7 +313,7 @@ def test_gdal_footprint_lib_ovr():
     out_ds = gdal.Footprint(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         targetCoordinateSystem="pixel",
         ovr=0,
     )
@@ -340,7 +340,7 @@ def test_gdal_footprint_lib_ovr_georef():
     out_ds = gdal.Footprint(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         ovr=0,
     )
     assert out_ds is not None
@@ -430,7 +430,7 @@ def test_gdal_footprint_footprint_rgba_overviews():
     out_ds = gdal.Footprint(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         targetCoordinateSystem="pixel",
         ovr=0,
     )
@@ -451,7 +451,7 @@ def test_gdal_footprint_lib_union():
     out_ds = gdal.Footprint(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         targetCoordinateSystem="pixel",
     )
     assert out_ds is not None
@@ -471,7 +471,7 @@ def test_gdal_footprint_lib_intersection_none():
     out_ds = gdal.Footprint(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         targetCoordinateSystem="pixel",
         combineBands="intersection",
     )
@@ -492,7 +492,7 @@ def test_gdal_footprint_lib_intersection_partial():
     out_ds = gdal.Footprint(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         targetCoordinateSystem="pixel",
         combineBands="intersection",
     )
@@ -507,7 +507,7 @@ def test_gdal_footprint_layerName():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
     src_ds.GetRasterBand(1).Fill(255)
-    out_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    out_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
     with pytest.raises(Exception, match="Cannot find layer non_existing"):
         gdal.Footprint(out_ds, src_ds, layerName="non_existing")
@@ -545,7 +545,7 @@ def test_gdal_footprint_wrong_output_format():
 def test_gdal_footprint_output_layer_has_crs_but_input_not():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
-    out_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    out_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     out_ds.CreateLayer("out_lyr", srs=srs)
@@ -564,7 +564,7 @@ def test_gdal_footprint_wrong_number_nodata_values():
         Exception,
         match="Number of values in -srcnodata should be 1 or the number of bands",
     ):
-        gdal.Footprint("", src_ds, format="Memory", srcNodata=[1, 2])
+        gdal.Footprint("", src_ds, format="MEM", srcNodata=[1, 2])
 
 
 ###############################################################################
@@ -572,7 +572,7 @@ def test_gdal_footprint_wrong_bands():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
     with pytest.raises(Exception, match="Invalid band number: 2"):
-        gdal.Footprint("", src_ds, format="Memory", bands=[2])
+        gdal.Footprint("", src_ds, format="MEM", bands=[2])
 
 
 ###############################################################################
@@ -587,7 +587,7 @@ def test_gdal_footprint_wrong_ovr_on_band_with_nodata():
         gdal.Footprint(
             "",
             src_ds,
-            format="Memory",
+            format="MEM",
             ovr=0,
         )
     src_ds.BuildOverviews("NEAR", [2])
@@ -598,7 +598,7 @@ def test_gdal_footprint_wrong_ovr_on_band_with_nodata():
         gdal.Footprint(
             "",
             src_ds,
-            format="Memory",
+            format="MEM",
             ovr=1,
         )
 
@@ -615,7 +615,7 @@ def test_gdal_footprint_wrong_ovr_on_band_with_alpha():
         gdal.Footprint(
             "",
             src_ds,
-            format="Memory",
+            format="MEM",
             ovr=0,
         )
     src_ds.BuildOverviews("NEAR", [2])
@@ -626,7 +626,7 @@ def test_gdal_footprint_wrong_ovr_on_band_with_alpha():
         gdal.Footprint(
             "",
             src_ds,
-            format="Memory",
+            format="MEM",
             ovr=1,
         )
 
@@ -645,7 +645,7 @@ def test_gdal_footprint_lib_targetCoordinateSystem_georef_error():
         gdal.Footprint(
             "",
             src_ds,
-            format="Memory",
+            format="MEM",
             targetCoordinateSystem="georef",
         )
 
@@ -661,7 +661,7 @@ def test_gdal_footprint_lib_minRingArea():
     out_ds = gdal.Footprint(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         targetCoordinateSystem="pixel",
         minRingArea="0.5",
     )
@@ -673,7 +673,7 @@ def test_gdal_footprint_lib_minRingArea():
     out_ds = gdal.Footprint(
         "",
         src_ds,
-        format="Memory",
+        format="MEM",
         targetCoordinateSystem="pixel",
         minRingArea="1.5",
     )
@@ -693,7 +693,7 @@ def test_gdal_footprint_lib_destSRS_and_targetCoordinateSystem_pixel_mutually_ex
         gdal.Footprint(
             "",
             "../gcore/data/byte.tif",
-            format="Memory",
+            format="MEM",
             dstSRS="EPSG:4267",
             targetCoordinateSystem="pixel",
         )
@@ -709,9 +709,7 @@ def test_gdal_footprint_lib_srcNodata_and_ovr_mutually_exclusive():
         Exception,
         match=r"-srcnodata \"<value>\[ <value>\]...\"' not allowed with '-ovr <index>",
     ):
-        gdal.Footprint(
-            "", "../gcore/data/byte.tif", format="Memory", srcNodata=0, ovr=0
-        )
+        gdal.Footprint("", "../gcore/data/byte.tif", format="MEM", srcNodata=0, ovr=0)
 
 
 ###############################################################################
@@ -721,7 +719,7 @@ def test_gdal_footprint_lib_srcNodata_and_ovr_mutually_exclusive():
 def test_gdal_footprint_lib_no_location():
 
     out_ds = gdal.Footprint(
-        "", "../gcore/data/byte.tif", format="Memory", locationFieldName=None
+        "", "../gcore/data/byte.tif", format="MEM", locationFieldName=None
     )
     assert out_ds is not None
     lyr = out_ds.GetLayer(0)
@@ -735,7 +733,7 @@ def test_gdal_footprint_lib_no_location():
 def test_gdal_footprint_lib_writeAbsolutePath():
 
     out_ds = gdal.Footprint(
-        "", "../gcore/data/byte.tif", format="Memory", writeAbsolutePath=True
+        "", "../gcore/data/byte.tif", format="MEM", writeAbsolutePath=True
     )
     assert out_ds is not None
     lyr = out_ds.GetLayer(0)

@@ -637,11 +637,11 @@ GDALMDArray::GetGridded(const std::string &osGridOptions,
         if (!poDrv)
         {
             pszExt = "mem";
-            poDrv = GetGDALDriverManager()->GetDriverByName("Memory");
+            poDrv = GetGDALDriverManager()->GetDriverByName("MEM");
             if (!poDrv)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot get driver FlatGeoBuf, GPKG or Memory");
+                         "Cannot get driver FlatGeoBuf, GPKG or MEM");
                 return nullptr;
             }
         }

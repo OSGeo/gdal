@@ -60,7 +60,7 @@ cellsize     1
     has_z = options_args and "with3d" in options_args and options_args["with3d"]
 
     if create_output:
-        ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+        ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
         assert ogr_ds is not None
 
         if polygonize:

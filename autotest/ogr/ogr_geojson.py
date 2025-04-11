@@ -2527,7 +2527,7 @@ def test_ogr_geojson_56_next(tmp_vsimem):
 def test_ogr_geojson_57(tmp_vsimem):
 
     # Standard case: EPSG:32662: WGS 84 / Plate Carre
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput(
         "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
@@ -2561,7 +2561,7 @@ def test_ogr_geojson_57(tmp_vsimem):
     assert json.loads(got) == json.loads(expected)
 
     # Polar case: EPSG:3995: WGS 84 / Arctic Polar Stereographic
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput(
         "+proj=stere +lat_0=90 +lat_ts=71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
@@ -2616,7 +2616,7 @@ def test_ogr_geojson_57(tmp_vsimem):
     )
 
     # Polar case: slice of spherical cap (not intersecting antimeridian, west hemisphere)
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput(
         "+proj=stere +lat_0=90 +lat_ts=71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
@@ -2650,7 +2650,7 @@ def test_ogr_geojson_57(tmp_vsimem):
     assert json.loads(got) == json.loads(expected)
 
     # Polar case: slice of spherical cap (not intersecting antimeridian, east hemisphere)
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput(
         "+proj=stere +lat_0=90 +lat_ts=71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
@@ -2701,7 +2701,7 @@ def test_ogr_geojson_57(tmp_vsimem):
     assert json.loads(got) == expected
 
     # Polar case: slice of spherical cap crossing the antimeridian
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput(
         "+proj=stere +lat_0=90 +lat_ts=71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
@@ -2759,7 +2759,7 @@ def test_ogr_geojson_57(tmp_vsimem):
         ), got
 
     # Polar case: EPSG:3031: WGS 84 / Antarctic Polar Stereographic
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput(
         "+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
@@ -2800,7 +2800,7 @@ def test_ogr_geojson_57(tmp_vsimem):
     )
 
     # Antimeridian case: EPSG:32660: WGS 84 / UTM zone 60N with polygon and line crossing
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput("+proj=utm +zone=60 +datum=WGS84 +units=m +no_defs")
     lyr = src_ds.CreateLayer("test", srs=sr)
@@ -2859,7 +2859,7 @@ def test_ogr_geojson_57(tmp_vsimem):
     )
 
     # Antimeridian case: EPSG:32660: WGS 84 / UTM zone 60N with polygon on west of antimeridian
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput("+proj=utm +zone=60 +datum=WGS84 +units=m +no_defs")
     lyr = src_ds.CreateLayer("test", srs=sr)
@@ -4807,7 +4807,7 @@ def test_ogr_geojson_arrow_stream_pyarrow_utc_plus_five(tmp_vsimem):
                 values.append(x.value)
         assert values == [1653982496789, 1653986096789]
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     mem_lyr = mem_ds.CreateLayer("test", geom_type=ogr.wkbPoint)
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
@@ -4853,7 +4853,7 @@ def test_ogr_geojson_arrow_stream_pyarrow_utc_minus_five(tmp_vsimem):
                 values.append(x.value)
         assert values == [1654018496789, 1654022096789]
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     mem_lyr = mem_ds.CreateLayer("test", geom_type=ogr.wkbPoint)
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
@@ -4899,7 +4899,7 @@ def test_ogr_geojson_arrow_stream_pyarrow_unknown_timezone(tmp_vsimem):
                 values.append(x.value)
         assert values == [1654000496789, 1654004096789]
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     mem_lyr = mem_ds.CreateLayer("test", geom_type=ogr.wkbPoint)
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)

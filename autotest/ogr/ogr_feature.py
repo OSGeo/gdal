@@ -678,7 +678,7 @@ def test_ogr_feature_native_data():
     assert f_clone.GetNativeData() is None
     assert f_clone.GetNativeMediaType() is None
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     lyr.SetMetadataItem("NATIVE_DATA", "native_data", "NATIVE_DATA")
     lyr.SetMetadataItem("NATIVE_MEDIA_TYPE", "native_media_type", "NATIVE_DATA")

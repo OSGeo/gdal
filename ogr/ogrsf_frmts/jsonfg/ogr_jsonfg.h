@@ -20,7 +20,7 @@
 #include "ogrgeojsonutils.h"
 #include "ogrgeojsonwriter.h"
 #include "ogrjsoncollectionstreamingparser.h"
-#include "ogr_mem.h"
+#include "memdataset.h"
 #include "directedacyclicgraph.hpp"
 
 #include <map>

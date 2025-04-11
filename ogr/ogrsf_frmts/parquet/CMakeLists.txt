@@ -33,12 +33,11 @@ if (STANDALONE)
 target_compile_definitions(ogr_Parquet PRIVATE STANDALONE)
 target_include_directories(ogr_Parquet PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../../port
                                                ${CMAKE_CURRENT_SOURCE_DIR}/../generic
-                                               ${CMAKE_CURRENT_SOURCE_DIR}/../mem
+                                               ${CMAKE_CURRENT_SOURCE_DIR}/../../frmts/mem
                                                ${CMAKE_CURRENT_SOURCE_DIR}/../..
 )
 else()
-target_include_directories(ogr_Parquet PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
-                                               $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
+target_include_directories(ogr_Parquet PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 endif()
 
 if(${Parquet_VERSION} VERSION_GREATER_EQUAL 10.0)

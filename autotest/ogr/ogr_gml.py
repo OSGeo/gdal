@@ -4472,7 +4472,7 @@ def test_ogr_gml_ogr2ogr_from_layer_with_name_geom_field(
     tmp_vsimem, use_create_geom_field, has_srs
 ):
 
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     if has_srs:
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(4326)
@@ -4523,7 +4523,7 @@ def test_ogr_gml_ogr2ogr_from_layers_with_inconsistent_srs(
     tmp_vsimem, first_layer_has_srs
 ):
 
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)

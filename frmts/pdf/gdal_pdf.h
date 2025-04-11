@@ -44,7 +44,7 @@
 #include "gdal_pam.h"
 #include "ogrsf_frmts.h"
 
-#include "ogr_mem.h"
+#include "memdataset.h"
 #include "pdfobject.h"
 
 #define PDFLIB_POPPLER 0

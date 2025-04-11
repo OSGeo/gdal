@@ -959,7 +959,7 @@ def test_gdal_grid_lib_average_distance_quadrant_ignore_extra_points():
 
 def test_gdal_grid_lib_skip_null_zfield():
 
-    mem_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     mem_lyr = mem_ds.CreateLayer("test")
     mem_lyr.CreateField(ogr.FieldDefn("val", ogr.OFTInteger))
     f = ogr.Feature(mem_lyr.GetLayerDefn())
@@ -1013,7 +1013,7 @@ def test_gdal_grid_lib_skip_null_zfield():
 
 def test_gdal_grid_lib_skip_nan_zvalue():
 
-    mem_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     mem_lyr = mem_ds.CreateLayer("test")
     f = ogr.Feature(mem_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0 10)"))
@@ -1080,7 +1080,7 @@ def test_gdal_grid_lib_dict_arguments():
 
 def test_gdal_grid_lib_errors():
 
-    mem_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     mem_ds.CreateLayer("test")
 
     with pytest.raises(Exception, match='Unable to find layer "invalid"'):

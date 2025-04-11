@@ -90,7 +90,7 @@ def test_gdalalg_vector_filter_where_error(tmp_vsimem):
 
 def test_gdalalg_vector_filter_bbox_active_layer():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
     src_lyr.CreateField(ogr.FieldDefn("foo"))
 
@@ -114,7 +114,7 @@ def test_gdalalg_vector_filter_bbox_active_layer():
     filter_alg["active-layer"] = "the_layer"
 
     assert filter_alg.ParseCommandLineArguments(
-        ["--where", "foo='bar'", "--of", "Memory", "--output", "memory_ds"]
+        ["--where", "foo='bar'", "--of", "MEM", "--output", "memory_ds"]
     )
     assert filter_alg.Run()
 

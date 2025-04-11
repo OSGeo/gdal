@@ -51,8 +51,7 @@ if(NOT TARGET gdal_PDF)
 endif()
 
 gdal_standard_includes(gdal_PDF)
-target_include_directories(gdal_PDF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/vrt ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem
-                                            ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/mem)
+target_include_directories(gdal_PDF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/vrt)
 
 if (EMBED_RESOURCE_FILES)
     add_driver_embedded_resources(gdal_PDF GDAL_ENABLE_DRIVER_PDF_PLUGIN embedded_resources.c)

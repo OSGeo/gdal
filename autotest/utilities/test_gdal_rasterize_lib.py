@@ -42,7 +42,7 @@ def test_gdal_rasterize_lib_1():
 
     # Create a layer to rasterize from.
 
-    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    vector_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     rast_lyr = vector_ds.CreateLayer("rast1", srs=sr)
 
     rast_lyr.GetLayerDefn()
@@ -152,7 +152,7 @@ def test_gdal_rasterize_lib_100():
 
     # Create a layer to rasterize from.
 
-    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    vector_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     rast_lyr = vector_ds.CreateLayer("rast1")
 
     wkt_geom = "POLYGON((20 20,20 80,80 80,80 20,20 20))"
@@ -183,7 +183,7 @@ def test_gdal_rasterize_lib_101():
 
     # Create a layer to rasterize from.
 
-    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    vector_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     rast_lyr = vector_ds.CreateLayer("rast1")
 
     # polygon with empty exterior ring
@@ -230,7 +230,7 @@ def test_gdal_rasterize_lib_102():
     }
     target_ds.SetMetadata(md, "RPC")
 
-    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    vector_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     rast_lyr = vector_ds.CreateLayer("", srs=sr)
@@ -286,7 +286,7 @@ def test_gdal_rasterize_lib_4():
 
         # Create a layer to rasterize from.
 
-        vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+        vector_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
         rast_lyr = vector_ds.CreateLayer("rast1", srs=sr)
 
         rast_lyr.GetLayerDefn()
@@ -342,7 +342,7 @@ def test_gdal_rasterize_lib_multipolygon():
     sr = osr.SpatialReference(sr_wkt)
 
     # Try rasterizing a multipolygon
-    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    vector_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     layer = vector_ds.CreateLayer("", sr)
     feature = ogr.Feature(layer.GetLayerDefn())
     feature.SetGeometryDirectly(
@@ -360,7 +360,7 @@ def test_gdal_rasterize_lib_multipolygon():
     cs1 = target_ds.GetRasterBand(1).Checksum()
 
     # And now each of its parts
-    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    vector_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     layer = vector_ds.CreateLayer("", sr)
     feature = ogr.Feature(layer.GetLayerDefn())
     feature.SetGeometryDirectly(
@@ -390,7 +390,7 @@ def test_gdal_rasterize_lib_inverse():
     sr = osr.SpatialReference(sr_wkt)
 
     # Try rasterizing a multipolygon
-    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    vector_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     layer = vector_ds.CreateLayer("", sr)
 
     feature = ogr.Feature(layer.GetLayerDefn())
@@ -557,7 +557,7 @@ def test_gdal_rasterize_lib_inverse_nested_polygons():
     target_ds.SetGeoTransform((0, 1, 0, 10, 0, -1))
 
     # Create a memory layer to rasterize from.
-    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    vector_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     rast_mem_lyr = vector_ds.CreateLayer("poly")
 
     # Add a multi polygon with nested polygons
@@ -683,7 +683,7 @@ def test_gdal_rasterize_lib_inverse_nested_polygons():
 def test_gdal_rasterize_lib_int64_attribute():
 
     # Try rasterizing a multipolygon
-    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    vector_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     layer = vector_ds.CreateLayer("")
     layer.CreateField(ogr.FieldDefn("val", ogr.OFTInteger64))
 
@@ -713,7 +713,7 @@ def test_gdal_rasterize_lib_int64_attribute():
 
 def test_gdal_rasterize_lib_invalid_layers():
 
-    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    vector_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     layer = vector_ds.CreateLayer("layer")
     layer.CreateField(ogr.FieldDefn("val", ogr.OFTInteger64))
 
@@ -729,7 +729,7 @@ def test_gdal_rasterize_lib_invalid_layers():
 
 def test_gdal_rasterize_lib_empty_layer():
 
-    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    vector_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     layer = vector_ds.CreateLayer("layer")
     layer.CreateField(ogr.FieldDefn("val", ogr.OFTInteger64))
 
@@ -743,7 +743,7 @@ def test_gdal_rasterize_lib_empty_layer():
 
 def test_gdal_rasterize_lib_too_small_resolution():
 
-    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    vector_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
     layer = vector_ds.CreateLayer("layer")
     layer.CreateField(ogr.FieldDefn("val", ogr.OFTInteger64))
 

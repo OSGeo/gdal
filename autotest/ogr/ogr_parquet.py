@@ -3442,7 +3442,7 @@ def test_ogr_parquet_IsArrowSchemaSupported_float16(tmp_vsimem):
 @gdaltest.enable_exceptions()
 def test_ogr_parquet_write_arrow_rewind_polygon(tmp_vsimem):
 
-    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = src_ds.CreateLayer("test")
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 1,1 1,0 0))"))
@@ -3545,7 +3545,7 @@ def test_ogr_parquet_write_from_wkb_large_binary(tmp_vsimem):
 def test_ogr_parquet_write_to_mem(tmp_vsimem, where):
 
     src_ds = gdal.OpenEx("data/parquet/test.parquet")
-    ds = gdal.VectorTranslate("", src_ds, format="Memory", where=where)
+    ds = gdal.VectorTranslate("", src_ds, format="MEM", where=where)
     lyr = ds.GetLayer(0)
     if where is None:
         f = lyr.GetNextFeature()

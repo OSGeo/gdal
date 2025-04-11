@@ -11,7 +11,7 @@
  ****************************************************************************/
 
 #include "ogreditablelayer.h"
-#include "../mem/ogr_mem.h"
+#include "memdataset.h"
 
 #include <map>
 

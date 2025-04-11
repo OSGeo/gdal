@@ -502,7 +502,7 @@ def test_ogr_sql_17():
 
 def test_ogr_sql_20():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
 
     feat = ogr.Feature(mem_lyr.GetLayerDefn())
@@ -523,7 +523,7 @@ def test_ogr_sql_20():
 
 def test_ogr_sql_21():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     mem_ds.CreateLayer("my_layer")
 
     with mem_ds.ExecuteSQL("SELECT *, fid from my_layer") as sql_lyr:
@@ -537,7 +537,7 @@ def test_ogr_sql_21():
 
 def test_ogr_sql_22():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
     mem_lyr.CreateField(ogr.FieldDefn("test", ogr.OFTString))
 
@@ -559,7 +559,7 @@ def test_ogr_sql_22():
 
 def test_ogr_sql_23():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
     mem_lyr.CreateField(ogr.FieldDefn("test", ogr.OFTString))
 
@@ -599,7 +599,7 @@ def test_ogr_sql_24():
 
 def test_ogr_sql_25():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
     mem_lyr.CreateField(ogr.FieldDefn("test", ogr.OFTString))
 
@@ -631,7 +631,7 @@ def test_ogr_sql_25():
 
 def test_ogr_sql_26():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
 
     feat = ogr.Feature(mem_lyr.GetLayerDefn())
@@ -678,7 +678,7 @@ def test_ogr_sql_27():
 @pytest.fixture(scope="module")
 def ds_for_invalid_statements():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
 
     new_geom_field_defn = ogr.GeomFieldDefn("geom", ogr.wkbUnknown)
@@ -855,7 +855,7 @@ def test_ogr_sql_invalid_statements(ds_for_invalid_statements, sql):
 
 def test_ogr_sql_29():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
     field_defn = ogr.FieldDefn("strfield", ogr.OFTString)
     lyr.CreateField(field_defn)
@@ -941,7 +941,7 @@ def test_ogr_sql_32(data_ds):
 
 def test_ogr_sql_33():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
 
     # We support with and without COLUMN keyword
@@ -1037,7 +1037,7 @@ def test_ogr_sql_35(data_ds):
 
 def test_ogr_sql_36():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("ogr_sql_36")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("ogr_sql_36")
     lyr = ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("floatfield", ogr.OFTReal))
@@ -1078,7 +1078,7 @@ def test_ogr_sql_36():
 
 def test_ogr_sql_count_and_null():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("ogr_sql_37")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("ogr_sql_37")
     lyr = ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("floatfield", ogr.OFTReal))
@@ -1326,7 +1326,7 @@ def test_ogr_sql_45():
 @pytest.fixture(scope="module")
 def ogr_sql_strit_quoting_ds():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("test")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("test")
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("from", ogr.OFTString))
@@ -1412,7 +1412,7 @@ def test_ogr_sql_47():
 
 def test_ogr_sql_48():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn("int_field", ogr.OFTInteger))
     for i in range(1000):
@@ -1468,7 +1468,7 @@ def test_ogr_sql_49(data_ds):
 
 def test_ogr_sql_field_names_same_case():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("id"))
     lyr.CreateField(ogr.FieldDefn("ID"))
@@ -1492,7 +1492,7 @@ def test_ogr_sql_field_names_same_case():
 
 def test_ogr_sql_string_int_array_comparison():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("id"))
     lyr.CreateField(ogr.FieldDefn("int_array", ogr.OFTIntegerList))
@@ -1539,7 +1539,7 @@ def test_ogr_sql_string_int_array_comparison():
 @pytest.mark.parametrize("dialect", [None, "OGRSQL"])
 def test_ogr_sql_attribute_filter_on_top_of_non_forward_where_clause(dialect):
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     mem_lyr = mem_ds.CreateLayer("test")
     f = ogr.Feature(mem_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON EMPTY"))
@@ -1573,7 +1573,7 @@ def test_ogr_sql_attribute_filter_on_top_of_non_forward_where_clause(dialect):
 
 def test_ogr_sql_min_max_string_field():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     mem_lyr = mem_ds.CreateLayer("test")
     mem_lyr.CreateField(ogr.FieldDefn("str_field"))
 
@@ -1670,7 +1670,7 @@ def test_ogr_sql_select_except_multiple_asterisk_2(data_ds):
 
 def test_ogr_sql_select_except_named_geometry():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer", geom_type=ogr.wkbNone)
     mem_lyr.CreateGeomField(ogr.GeomFieldDefn("named_geom", ogr.wkbUnknown))
     mem_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
@@ -1694,7 +1694,7 @@ def test_ogr_sql_select_except_named_geometry():
 
 @pytest.fixture()
 def select_except_join_ds():
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
 
     pt_lyr = mem_ds.CreateLayer("point")
     pt_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
@@ -1767,7 +1767,7 @@ def test_ogr_sql_select_except_join_3(select_except_join_ds):
 
 def test_ogr_sql_like_utf8():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test", options=["ADVERTIZE_UTF8=YES"])
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
 
@@ -1822,7 +1822,7 @@ def test_ogr_sql_like_utf8():
 
 def test_ogr_sql_ilike_utf8():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test", options=["ADVERTIZE_UTF8=YES"])
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
 
@@ -1884,7 +1884,7 @@ def test_ogr_sql_ilike_utf8():
 
 def test_ogr_sql_test_execute_sql_error_on_spatial_filter_mem_layer():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     ds.CreateLayer("test", geom_type=ogr.wkbNone)
     geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))")
     with pytest.raises(
@@ -1900,7 +1900,7 @@ def test_ogr_sql_test_execute_sql_error_on_spatial_filter_mem_layer():
 @pytest.fixture(scope="module")
 def ds_for_test_ogr_sql_on_null():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("test_ogr_sql_on_null")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("test_ogr_sql_on_null")
     lyr = ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("realfield", ogr.OFTReal))
@@ -2026,7 +2026,7 @@ def test_ogr_sql_on_null(where, feature_count, dialect, ds_for_test_ogr_sql_on_n
 
 def test_ogr_sql_ogr_style_hidden():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("test_ogr_sql_ogr_style_hidden")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("test_ogr_sql_ogr_style_hidden")
     lyr = ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
@@ -2103,7 +2103,7 @@ def test_ogr_sql_ogr_style_hidden():
 
 def test_ogr_sql_identifier_hidden():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("test_ogr_sql_ogr_style_hidden")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("test_ogr_sql_ogr_style_hidden")
     lyr = ds.CreateLayer("hidden")
     lyr.CreateField(ogr.FieldDefn("hidden", ogr.OFTString))
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -2140,7 +2140,7 @@ def test_ogr_sql_identifier_hidden():
 def test_ogr_sql_kahan_babuska_eumaier_summation(input, expected_output):
     """Test accurate SUM() implementation using Kahan-Babuska-Neumaier algorithm"""
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("v", ogr.OFTReal))
     for v in input:
@@ -2161,7 +2161,7 @@ def test_ogr_sql_kahan_babuska_eumaier_summation(input, expected_output):
 )
 def test_ogr_sql_max_expr_depth(operator):
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     ds.CreateLayer("test")
     with ds.ExecuteSQL("SELECT " + operator.join(["1"] * 127) + " FROM test") as _:
         pass
@@ -2170,7 +2170,7 @@ def test_ogr_sql_max_expr_depth(operator):
 
 
 def test_ogr_sql_max_expr_depth_other():
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     ds.CreateLayer("test")
 
     with ds.ExecuteSQL(

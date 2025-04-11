@@ -552,7 +552,7 @@ def test_ogr_arrow_read_arrow_json_extension():
     stream = lyr.GetArrowStream()
     schema = stream.GetSchema()
 
-    dst_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    dst_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     dst_lyr = dst_ds.CreateLayer("test")
     success, error_msg = dst_lyr.IsArrowSchemaSupported(schema)
     assert success

@@ -23,7 +23,7 @@ def get_edit_alg():
 
 def test_gdalalg_vector_edit_crs():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("the_layer")
     lyr.CreateField(ogr.FieldDefn("foo"))
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -35,7 +35,7 @@ def test_gdalalg_vector_edit_crs():
     alg["input"] = src_ds
 
     assert alg.ParseCommandLineArguments(
-        ["--crs=EPSG:4326", "--of", "Memory", "--output", "memory_ds"]
+        ["--crs=EPSG:4326", "--of", "MEM", "--output", "memory_ds"]
     )
     assert alg.Run()
 
@@ -50,7 +50,7 @@ def test_gdalalg_vector_edit_crs():
 
 def test_gdalalg_vector_edit_crs_none():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
     lyr = src_ds.CreateLayer("the_layer", srs=srs)
@@ -64,7 +64,7 @@ def test_gdalalg_vector_edit_crs_none():
     alg["input"] = src_ds
 
     assert alg.ParseCommandLineArguments(
-        ["--crs=none", "--of", "Memory", "--output", "memory_ds"]
+        ["--crs=none", "--of", "MEM", "--output", "memory_ds"]
     )
     assert alg.Run()
 
@@ -79,7 +79,7 @@ def test_gdalalg_vector_edit_crs_none():
 
 def test_gdalalg_vector_edit_dataset_metadata():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_ds.SetMetadataItem("A", "B")
     src_ds.SetMetadataItem("B", "C")
 
@@ -91,7 +91,7 @@ def test_gdalalg_vector_edit_dataset_metadata():
             "--metadata=C=D",
             "--unset-metadata=B",
             "--of",
-            "Memory",
+            "MEM",
             "--output",
             "memory_ds",
         ]
@@ -104,7 +104,7 @@ def test_gdalalg_vector_edit_dataset_metadata():
 
 def test_gdalalg_vector_edit_layer_metadata():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_layer = src_ds.CreateLayer("the_layer")
     src_layer.SetMetadataItem("A", "B")
     src_layer.SetMetadataItem("B", "C")
@@ -117,7 +117,7 @@ def test_gdalalg_vector_edit_layer_metadata():
             "--layer-metadata=C=D",
             "--unset-layer-metadata=B",
             "--of",
-            "Memory",
+            "MEM",
             "--output",
             "memory_ds",
         ]
@@ -130,14 +130,14 @@ def test_gdalalg_vector_edit_layer_metadata():
 
 def test_gdalalg_vector_edit_geometry_type_geometry():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_ds.CreateLayer("the_layer", geom_type=ogr.wkbPoint)
 
     alg = get_edit_alg()
     alg["input"] = src_ds
 
     assert alg.ParseCommandLineArguments(
-        ["--geometry-type=geometry", "--of", "Memory", "--output", "memory_ds"]
+        ["--geometry-type=geometry", "--of", "MEM", "--output", "memory_ds"]
     )
     assert alg.Run()
 
@@ -147,14 +147,14 @@ def test_gdalalg_vector_edit_geometry_type_geometry():
 
 def test_gdalalg_vector_edit_geometry_type_invalid():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_ds.CreateLayer("the_layer", geom_type=ogr.wkbPoint)
 
     alg = get_edit_alg()
     alg["input"] = src_ds
 
     assert alg.ParseCommandLineArguments(
-        ["--geometry-type=invalid", "--of", "Memory", "--output", "memory_ds"]
+        ["--geometry-type=invalid", "--of", "MEM", "--output", "memory_ds"]
     )
     with pytest.raises(Exception, match="edit: Invalid geometry type 'invalid'"):
         assert alg.Run()
@@ -162,7 +162,7 @@ def test_gdalalg_vector_edit_geometry_type_invalid():
 
 def test_gdalalg_vector_edit_active_layer():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_ds.CreateLayer("the_layer")
     src_ds.CreateLayer("other_layer")
 
@@ -171,7 +171,7 @@ def test_gdalalg_vector_edit_active_layer():
     alg["active-layer"] = "the_layer"
 
     assert alg.ParseCommandLineArguments(
-        ["--geometry-type=point", "--of", "Memory", "--output", "memory_ds"]
+        ["--geometry-type=point", "--of", "MEM", "--output", "memory_ds"]
     )
     assert alg.Run()
 

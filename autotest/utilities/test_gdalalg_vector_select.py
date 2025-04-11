@@ -75,7 +75,7 @@ def test_gdalalg_vector_select_fields():
 
 def test_gdalalg_vector_select_fields_geom_named(tmp_vsimem):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone, srs=None)
     src_lyr.CreateGeomField(ogr.GeomFieldDefn("geom_field"))
     src_lyr.CreateGeomField(ogr.GeomFieldDefn("geom_field2"))
@@ -85,7 +85,7 @@ def test_gdalalg_vector_select_fields_geom_named(tmp_vsimem):
     select_alg["input"] = src_ds
     select_alg["output"] = out_filename
     select_alg["fields"] = ["geom_field2"]
-    assert select_alg.ParseCommandLineArguments(["--of", "Memory"])
+    assert select_alg.ParseCommandLineArguments(["--of", "MEM"])
     assert select_alg.Run()
 
     ds = select_alg["output"].GetDataset()
@@ -216,7 +216,7 @@ def test_gdalalg_vector_select_fields_exclude_name_geom_fields_not_excluded(tmp_
 
 def test_gdalalg_vector_select_active_layer():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
     src_lyr.CreateField(ogr.FieldDefn("a"))
     src_lyr.CreateField(ogr.FieldDefn("b"))
@@ -231,7 +231,7 @@ def test_gdalalg_vector_select_active_layer():
     select_alg["active-layer"] = "the_layer"
 
     assert select_alg.ParseCommandLineArguments(
-        ["--fields=b", "--of", "Memory", "--output", "memory_ds"]
+        ["--fields=b", "--of", "MEM", "--output", "memory_ds"]
     )
     assert select_alg.Run()
 

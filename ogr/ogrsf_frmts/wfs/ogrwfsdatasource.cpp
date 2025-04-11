@@ -259,12 +259,10 @@ OGRLayer *OGRWFSDataSource::GetLayerByName(const char *pszNameIn)
         if (poLayerGetCapabilitiesLayer != nullptr)
             return poLayerGetCapabilitiesLayer;
 
-        GDALDriver *poMEMDrv =
-            GetGDALDriverManager()->GetDriverByName("Memory");
+        GDALDriver *poMEMDrv = GetGDALDriverManager()->GetDriverByName("MEM");
         if (poMEMDrv == nullptr)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot load 'Memory' driver");
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot load 'MEM' driver");
             return nullptr;
         }
 
@@ -2246,12 +2244,10 @@ OGRLayer *OGRWFSDataSource::ExecuteSQL(const char *pszSQLCommand,
             return nullptr;
         }
 
-        GDALDriver *poMEMDrv =
-            GetGDALDriverManager()->GetDriverByName("Memory");
+        GDALDriver *poMEMDrv = GetGDALDriverManager()->GetDriverByName("MEM");
         if (poMEMDrv == nullptr)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot load 'Memory' driver");
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot load 'MEM' driver");
             return nullptr;
         }
 

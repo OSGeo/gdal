@@ -25,7 +25,7 @@ def get_alg():
 
 def test_gdalalg_vector_geom_set_type_geometry_type():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -55,7 +55,7 @@ def test_gdalalg_vector_geom_set_type_geometry_type():
 
 def test_gdalalg_vector_geom_set_type_geometry_type_invalid():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
     alg = get_alg()
     alg["input"] = src_ds
@@ -74,7 +74,7 @@ def test_gdalalg_vector_geom_set_type_geometry_type_exclusive_with_other_option(
     other_option,
 ):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
     alg = get_alg()
     alg["input"] = src_ds
@@ -89,7 +89,7 @@ def test_gdalalg_vector_geom_set_type_geometry_type_exclusive_with_other_option(
 
 def test_gdalalg_vector_geom_set_type_geometry_type_failed_no_skip():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -115,7 +115,7 @@ def test_gdalalg_vector_geom_set_type_geometry_type_failed_no_skip():
 
 def test_gdalalg_vector_geom_set_type_geometry_type_failed_skip():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -148,7 +148,7 @@ def test_gdalalg_vector_geom_set_type_geometry_type_failed_skip():
 
 def test_gdalalg_vector_geom_set_type_geometry_type_layer_only():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -175,7 +175,7 @@ def test_gdalalg_vector_geom_set_type_geometry_type_layer_only():
 
 def test_gdalalg_vector_geom_set_type_geometry_type_feature_only():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -228,7 +228,7 @@ def test_gdalalg_vector_geom_set_type_geometry_type_feature_only():
 )
 def test_gdalalg_vector_geom_set_type_other_modifiers(modifier, in_wkt, out_wkt):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -253,7 +253,7 @@ def test_gdalalg_vector_geom_set_type_other_modifiers(modifier, in_wkt, out_wkt)
 
 def test_gdalalg_vector_geom_active_layer_active_geometry():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
     src_lyr = src_ds.CreateLayer("the_layer", geom_type=ogr.wkbNone)
     src_lyr.CreateGeomField(ogr.GeomFieldDefn("a"))

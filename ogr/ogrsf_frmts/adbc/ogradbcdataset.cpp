@@ -13,7 +13,7 @@
 
 #include "ogr_adbc.h"
 #include "ogradbcdrivercore.h"
-#include "ogr_mem.h"
+#include "memdataset.h"
 #include "ogr_p.h"
 #include "cpl_error.h"
 #include "cpl_json.h"

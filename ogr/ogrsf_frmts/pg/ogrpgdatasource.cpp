@@ -3061,7 +3061,7 @@ OGRLayer *OGRPGDataSource::ExecuteSQL(const char *pszSQLCommand,
             CPLDebug("PG", "Command Results Tuples = %d", PQntuples(hResult));
 
             GDALDriver *poMemDriver =
-                GetGDALDriverManager()->GetDriverByName("Memory");
+                GetGDALDriverManager()->GetDriverByName("MEM");
             if (poMemDriver)
             {
                 OGRPGLayer *poResultLayer =

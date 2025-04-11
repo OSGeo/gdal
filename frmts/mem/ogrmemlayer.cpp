@@ -12,7 +12,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
-#include "ogr_mem.h"
+#include "memdataset.h"
 
 #include <cstddef>
 #include <cstring>

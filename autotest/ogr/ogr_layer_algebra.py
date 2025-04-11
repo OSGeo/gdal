@@ -46,7 +46,7 @@ def is_same(A, B):
 @pytest.fixture()
 def mem_ds(request):
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource(request.node.name)
+    ds = ogr.GetDriverByName("MEM").CreateDataSource(request.node.name)
 
     return ds
 

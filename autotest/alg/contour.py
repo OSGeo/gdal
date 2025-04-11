@@ -189,7 +189,7 @@ def test_contour_2(input_tif, tmp_path):
 
 def test_contour_real_world_case():
 
-    ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     ogr_lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbLineString)
     field_defn = ogr.FieldDefn("ID", ogr.OFTInteger)
     ogr_lyr.CreateField(field_defn)
@@ -450,7 +450,7 @@ cellsize     1
 
 def test_contour_raster_acquisition_error():
 
-    ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     ogr_lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbLineString)
     field_defn = ogr.FieldDefn("ID", ogr.OFTInteger)
     ogr_lyr.CreateField(field_defn)
@@ -467,7 +467,7 @@ def test_contour_raster_acquisition_error():
 
 def test_contour_invalid_LEVEL_INTERVAL():
 
-    ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     ogr_lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbLineString)
     ds = gdal.Open("../gcore/data/byte.tif")
 
@@ -484,7 +484,7 @@ def test_contour_invalid_LEVEL_INTERVAL():
 @pytest.mark.require_driver("AAIGRID")
 def test_contour_min_value_is_multiple_of_interval(tmp_vsimem):
 
-    ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbLineString)
     lyr.CreateField(ogr.FieldDefn("ID", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("ELEV", ogr.OFTReal))
@@ -525,7 +525,7 @@ cellsize     1
 
 def test_contour_constant_raster_value(tmp_vsimem):
 
-    ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbLineString)
     lyr.CreateField(ogr.FieldDefn("ID", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("ELEV", ogr.OFTReal))
@@ -575,7 +575,7 @@ cellsize     1
     srcfilename = str(tmp_vsimem / "test.asc")
 
     def _create_output_ds():
-        ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+        ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
         lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbLineString)
         lyr.CreateField(ogr.FieldDefn("ID", ogr.OFTInteger))
         lyr.CreateField(ogr.FieldDefn("ELEV_MIN", ogr.OFTReal))

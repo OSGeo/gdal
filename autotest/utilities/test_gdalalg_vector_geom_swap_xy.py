@@ -20,7 +20,7 @@ def get_alg():
 
 def test_gdalalg_vector_geom_swap_xy():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
     src_lyr = src_ds.CreateLayer("the_layer", srs=srs)

@@ -1317,13 +1317,15 @@ def test_gdal_translate_lib_overview_level(tmp_vsimem):
 # Test copying a raster with no input band
 
 
-def test_gdal_translate_lib_no_input_band():
+@pytest.mark.require_driver("ENVI")
+def test_gdal_translate_lib_no_input_band(tmp_vsimem):
 
+    out_filename = tmp_vsimem / "out.img"
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 0)
     with pytest.raises(Exception):
-        gdal.Translate("", src_ds, format="MEM")
+        gdal.Translate(out_filename, src_ds, format="ENVI")
     with pytest.raises(Exception):
-        gdal.Translate("", src_ds, format="MEM", outputType=gdal.GDT_Int16)
+        gdal.Translate(out_filename, src_ds, format="ENVI", outputType=gdal.GDT_Int16)
 
 
 ###############################################################################

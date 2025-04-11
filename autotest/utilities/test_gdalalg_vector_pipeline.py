@@ -744,7 +744,7 @@ def test_gdalalg_vector_pipeline_reproject_missing_layer_crs(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out.shp")
 
     pipeline = get_pipeline_alg()
-    mem_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     mem_ds.CreateLayer("layer")
     pipeline["input"] = mem_ds
     pipeline[
@@ -839,7 +839,7 @@ def test_gdalalg_vector_pipeline_reproject_proj_string(tmp_vsimem):
 
 def test_gdalalg_vector_pipeline_geom_unknown_subalgorithm():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
     alg = get_pipeline_alg()
 
@@ -858,7 +858,7 @@ def test_gdalalg_vector_pipeline_geom_unknown_subalgorithm():
 
 def test_gdalalg_vector_pipeline_geom_set_type():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
 
     f = ogr.Feature(src_lyr.GetLayerDefn())

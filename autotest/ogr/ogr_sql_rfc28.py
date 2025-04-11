@@ -397,7 +397,7 @@ def test_ogr_rfc28_19(data_ds):
 
 def test_ogr_rfc28_20():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
     field_defn = ogr.FieldDefn("intfield", ogr.OFTInteger)
     lyr.CreateField(field_defn)
@@ -868,7 +868,7 @@ def test_ogr_rfc28_39(data_ds):
 
 def test_ogr_rfc28_40():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("DATE", ogr.OFTDateTime))
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -896,7 +896,7 @@ def test_ogr_rfc28_40():
 
 def test_ogr_rfc28_41():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
     field_defn = ogr.FieldDefn("a.b", ogr.OFTInteger)
     lyr.CreateField(field_defn)
@@ -923,7 +923,7 @@ def test_ogr_rfc28_41():
 
 def test_ogr_rfc28_42():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     fld_defn = ogr.FieldDefn("b", ogr.OFTInteger)
     fld_defn.SetSubType(ogr.OFSTBoolean)
@@ -991,7 +991,7 @@ def test_ogr_rfc28_42():
 
 def test_ogr_rfc28_43():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     fld_defn = ogr.FieldDefn("myint64", ogr.OFTInteger64)
     lyr.CreateField(fld_defn)
@@ -1049,7 +1049,7 @@ def test_ogr_rfc28_43():
 
 def test_ogr_rfc28_44():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr.withpoint")
     fld_defn = ogr.FieldDefn("field.withpoint", ogr.OFTInteger)
     lyr.CreateField(fld_defn)
@@ -1142,7 +1142,7 @@ def test_ogr_rfc28_45(data_ds):
 
 def test_ogr_rfc28_46():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr")
     fld_defn = ogr.FieldDefn("val", ogr.OFTInteger)
     lyr.CreateField(fld_defn)
@@ -1304,7 +1304,7 @@ def test_ogr_rfc28_47(data_ds):
 
 def test_ogr_rfc28_48():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr")
     fld_defn = ogr.FieldDefn("dt", ogr.OFTDateTime)
     lyr.CreateField(fld_defn)
@@ -1378,7 +1378,7 @@ def test_ogr_rfc28_48():
 ###############################################################################
 def test_ogr_rfc28_datetime_null():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr")
     fld_defn = ogr.FieldDefn("dt", ogr.OFTDateTime)
     lyr.CreateField(fld_defn)
@@ -1402,7 +1402,7 @@ def test_ogr_rfc28_datetime_null():
 ###############################################################################
 def test_ogr_rfc28_int_overflows():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr")
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
@@ -1455,7 +1455,7 @@ def test_ogr_rfc28_int_overflows():
 
 def test_ogr_rfc28_many_or():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr")
     fld_defn = ogr.FieldDefn("val", ogr.OFTInteger)
     lyr.CreateField(fld_defn)
@@ -1479,7 +1479,7 @@ def test_ogr_rfc28_many_or():
 
 def test_ogr_rfc28_many_and():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr")
     fld_defn = ogr.FieldDefn("val", ogr.OFTInteger)
     lyr.CreateField(fld_defn)
@@ -1504,7 +1504,7 @@ def test_ogr_rfc28_many_and():
 
 def test_ogr_rfc28_nested_or():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
     field = ogr.FieldDefn("fclass", ogr.OFTString)
     lyr.CreateField(field)
@@ -1557,7 +1557,7 @@ def test_ogr_rfc28_nested_or():
 
 def test_ogr_rfc28_order_by_two_columns():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr")
     fld_defn = ogr.FieldDefn("int_val", ogr.OFTInteger)
     lyr.CreateField(fld_defn)
@@ -1595,7 +1595,7 @@ def test_ogr_rfc28_order_by_two_columns():
 def test_ogr_rfc28_in_date_filter():
     """Test that date fields stored as ISO-8601 can be used with IN operator"""
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("ogr_in_date_filter", geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn("date_minus", ogr.OFTDate))
     lyr.CreateField(ogr.FieldDefn("date_slash", ogr.OFTDate))

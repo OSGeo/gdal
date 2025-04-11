@@ -23,4 +23,3 @@ endif()
 
 gdal_standard_includes(gdal_AVIF)
 gdal_target_link_libraries(gdal_AVIF PRIVATE AVIF::AVIF)
-target_include_directories(gdal_AVIF PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mem)

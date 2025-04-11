@@ -3899,7 +3899,7 @@ def test_ogr_sqlite_create_layer_names_with_parenthesis(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "test_ogr_sqlite_create_layer_names_with_parenthesis.db"
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_ds.CreateLayer("foo(bar)")
     gdal.ErrorReset()
     out_ds = gdal.VectorTranslate(tmpfilename, src_ds, format="SQLite")

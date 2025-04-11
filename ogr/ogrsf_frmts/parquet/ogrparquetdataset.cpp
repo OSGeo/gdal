@@ -11,7 +11,7 @@
  ****************************************************************************/
 
 #include "ogr_parquet.h"
-#include "ogr_mem.h"
+#include "memdataset.h"
 #include "ogr_swq.h"
 
 #include "../arrow_common/ograrrowdataset.hpp"

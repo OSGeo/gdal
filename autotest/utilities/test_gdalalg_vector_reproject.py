@@ -60,7 +60,7 @@ def test_gdalalg_vector_reproject_dataset_getnextfeature():
 
 def test_gdalalg_vector_reproject_active_layer():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -81,7 +81,7 @@ def test_gdalalg_vector_reproject_active_layer():
             "--src-crs=EPSG:4326",
             "--dst-crs=EPSG:32631",
             "--of",
-            "Memory",
+            "MEM",
             "--output",
             "memory_ds",
         ]
