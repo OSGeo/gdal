@@ -1685,8 +1685,6 @@ static bool JP2KAKCreateCopy_WriteTile(
 
     void *pabyBuffer = CPLMalloc(nXSize * GDALGetDataTypeSizeBytes(eType));
 
-    CPLAssert(!oTile.get_ycc());
-
     bool bRet = true;
     while (true)
     {
