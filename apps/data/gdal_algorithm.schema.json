@@ -79,8 +79,6 @@
       },
       "required": [
         "description",
-        "short_url",
-        "url",
         "sub_algorithms",
         "input_arguments",
         "output_arguments",
