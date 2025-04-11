@@ -12,6 +12,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
 import os
 import shutil
 import sys
@@ -3097,3 +3098,45 @@ def test_pdf_iso32000_invalid_srs():
 
     # Just test that this does not crash
     gdal.Open("data/pdf/invalid_srs.pdf")
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.skipif(not have_read_support(), reason="no read support available")
+def test_pdf_gdal_driver_pdf_list_layer():
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]
+    assert alg.GetName() == "driver"
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["pdf"]
+    assert alg.GetName() == "pdf"
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["pdf"]["list-layers"]
+    assert alg.GetName() == "list-layers"
+    alg["input"] = "data/pdf/adobe_style_geospatial.pdf"
+    assert alg.Run()
+    assert json.loads(alg["output-string"]) == [
+        "New_Data_Frame",
+        "New_Data_Frame.Graticule",
+        "Layers",
+        "Layers.Measured_Grid",
+        "Layers.Graticule",
+    ]
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["pdf"]["list-layers"]
+    alg["input"] = "data/pdf/adobe_style_geospatial.pdf"
+    alg["output-format"] = "text"
+    assert alg.Run()
+    assert (
+        alg["output-string"]
+        == "New_Data_Frame\nNew_Data_Frame.Graticule\nLayers\nLayers.Measured_Grid\nLayers.Graticule\n"
+    )
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["pdf"]["list-layers"]
+    assert alg.GetName() == "list-layers"
+    alg["input"] = "data/byte.tif"
+    with pytest.raises(Exception, match="is not a PDF"):
+        alg.Run()

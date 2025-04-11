@@ -4601,3 +4601,45 @@ def test_ogr_openfilegdb_write_check_golden_file(tmp_path, src_directory):
         assert (
             open(src_filename, "rb").read() == open(out_filename, "rb").read()
         ), filename
+
+
+###############################################################################
+# Test 'gdal driver openfilegdb repack'
+
+
+@gdaltest.enable_exceptions()
+def test_ogropenfilegdb_write_gdal_driver_openfilegdb_repack(tmp_path):
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]
+    assert alg.GetName() == "driver"
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["openfilegdb"]
+    assert alg.GetName() == "openfilegdb"
+
+    out_directory = str(tmp_path / "test.gdb")
+    gdal.VectorTranslate(
+        out_directory, "data/openfilegdb/polygon_golden.gdb", format="OpenFileGDB"
+    )
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["openfilegdb"]["repack"]
+    assert alg.GetName() == "repack"
+    alg["input"] = "data/poly.shp"
+    with pytest.raises(Exception, match="is not a FileGeoDatabase"):
+        alg.Run()
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["openfilegdb"]["repack"]
+    assert alg.GetName() == "repack"
+    alg["input"] = out_directory
+    assert alg.Run()
+
+    last_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        last_pct[0] = pct
+        return True
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["openfilegdb"]["repack"]
+    assert alg.GetName() == "repack"
+    alg["input"] = out_directory
+    assert alg.Run(my_progress)
+    assert last_pct[0] == 1.0

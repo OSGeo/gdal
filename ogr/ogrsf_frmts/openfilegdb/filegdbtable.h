@@ -14,6 +14,7 @@
 #define FILEGDBTABLE_H_INCLUDED
 
 #include "ogr_core.h"
+#include "cpl_progress.h"
 #include "cpl_vsi.h"
 #include "ogr_geometry.h"
 
@@ -610,7 +611,7 @@ class FileGDBTable
     bool SetTextUTF16();
 
     bool Sync(VSILFILE *fpTable = nullptr, VSILFILE *fpTableX = nullptr);
-    bool Repack();
+    bool Repack(GDALProgressFunc pfnProgress, void *pProgressData);
     void RecomputeExtent();
 
     //! Object should no longer be used after Close()

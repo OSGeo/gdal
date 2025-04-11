@@ -34,6 +34,7 @@ class GDALProxyDataset;
 class GDALProxyRasterBand;
 class GDALAsyncReader;
 class GDALRelationship;
+class GDALAlgorithm;
 
 /* -------------------------------------------------------------------- */
 /*      Pull in the public declarations.  This gets the C apis, and     */
@@ -2368,6 +2369,26 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     GDALSubdatasetInfo *(*pfnGetSubdatasetInfoFunc)(const char *pszFileName) =
         nullptr;
 
+    typedef GDALAlgorithm *(*InstantiateAlgorithmCallback)(
+        const std::vector<std::string> &aosPath);
+    InstantiateAlgorithmCallback pfnInstantiateAlgorithm = nullptr;
+
+    virtual InstantiateAlgorithmCallback GetInstantiateAlgorithmCallback()
+    {
+        return pfnInstantiateAlgorithm;
+    }
+
+    /** Instantiate an algorithm by its full path (omitting leading "gdal").
+     * For example {"driver", "pdf", "list-layers"}
+     */
+    GDALAlgorithm *
+    InstantiateAlgorithm(const std::vector<std::string> &aosPath);
+
+    /** Declare an algorithm by its full path (omitting leading "gdal").
+     * For example {"driver", "pdf", "list-layers"}
+     */
+    void DeclareAlgorithm(const std::vector<std::string> &aosPath);
+
     //! @endcond
 
     /* -------------------------------------------------------------------- */
@@ -2517,6 +2538,8 @@ class GDALPluginDriverProxy : public GDALDriver
     RenameCallback GetRenameCallback() override;
 
     CopyFilesCallback GetCopyFilesCallback() override;
+
+    InstantiateAlgorithmCallback GetInstantiateAlgorithmCallback() override;
     //! @endcond
 
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,

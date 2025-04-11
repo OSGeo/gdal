@@ -216,6 +216,12 @@ GDALAlgorithmArgDecl &GDALAlgorithmArgDecl::SetMaxCount(int count)
 }
 
 /************************************************************************/
+/*                 GDALAlgorithmArg::~GDALAlgorithmArg()                */
+/************************************************************************/
+
+GDALAlgorithmArg::~GDALAlgorithmArg() = default;
+
+/************************************************************************/
 /*                         GDALAlgorithmArg::Set()                      */
 /************************************************************************/
 
@@ -2096,6 +2102,56 @@ void GDALAlgorithm::SetPositional(GDALInConstructionAlgorithmArg *arg)
 //! @endcond
 
 /************************************************************************/
+/*                  GDALAlgorithm::HasSubAlgorithms()                   */
+/************************************************************************/
+
+bool GDALAlgorithm::HasSubAlgorithms() const
+{
+    if (!m_subAlgRegistry.empty())
+        return true;
+    return !GDALGlobalAlgorithmRegistry::GetSingleton()
+                .GetDeclaredSubAlgorithmNames(m_callPath)
+                .empty();
+}
+
+/************************************************************************/
+/*                GDALAlgorithm::GetSubAlgorithmNames()                 */
+/************************************************************************/
+
+std::vector<std::string> GDALAlgorithm::GetSubAlgorithmNames() const
+{
+    std::vector<std::string> ret = m_subAlgRegistry.GetNames();
+    const auto other = GDALGlobalAlgorithmRegistry::GetSingleton()
+                           .GetDeclaredSubAlgorithmNames(m_callPath);
+    ret.insert(ret.end(), other.begin(), other.end());
+    if (!other.empty())
+        std::sort(ret.begin(), ret.end());
+    return ret;
+}
+
+/************************************************************************/
+/*               GDALAlgorithm::InstantiateSubAlgorithm()               */
+/************************************************************************/
+
+std::unique_ptr<GDALAlgorithm>
+GDALAlgorithm::InstantiateSubAlgorithm(const std::string &name) const
+{
+    auto ret = m_subAlgRegistry.Instantiate(name);
+    auto childCallPath = m_callPath;
+    childCallPath.push_back(name);
+    if (!ret)
+    {
+        ret = GDALGlobalAlgorithmRegistry::GetSingleton()
+                  .InstantiateDeclaredSubAlgorithm(childCallPath);
+    }
+    if (ret)
+    {
+        ret->SetCallPath(childCallPath);
+    }
+    return ret;
+}
+
+/************************************************************************/
 /*                     GDALAlgorithm::AddArg()                          */
 /************************************************************************/
 
@@ -2146,7 +2202,7 @@ GDALAlgorithm::AddArg(std::unique_ptr<GDALInConstructionAlgorithmArg> arg)
     }
     m_args.emplace_back(std::move(arg));
     return *(
-        static_cast<GDALInConstructionAlgorithmArg *>(m_args.back().get()));
+        cpl::down_cast<GDALInConstructionAlgorithmArg *>(m_args.back().get()));
 }
 
 GDALInConstructionAlgorithmArg &
@@ -3666,30 +3722,33 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
         for (const auto &subAlgName : GetSubAlgorithmNames())
         {
             auto subAlg = InstantiateSubAlgorithm(subAlgName);
-            assert(subAlg);
-            const std::string &name(subAlg->GetName());
-            osRet += "  - ";
-            osRet += name;
-            osRet += ": ";
-            osRet.append(maxNameLen - name.size(), ' ');
-            osRet += subAlg->GetDescription();
-            if (!subAlg->m_aliases.empty())
+            if (subAlg)
             {
-                bool first = true;
-                for (const auto &alias : subAlg->GetAliases())
+                const std::string &name(subAlg->GetName());
+                osRet += "  - ";
+                osRet += name;
+                osRet += ": ";
+                osRet.append(maxNameLen - name.size(), ' ');
+                osRet += subAlg->GetDescription();
+                if (!subAlg->m_aliases.empty())
                 {
-                    if (alias == GDALAlgorithmRegistry::HIDDEN_ALIAS_SEPARATOR)
-                        break;
-                    if (first)
-                        osRet += " (alias: ";
-                    else
-                        osRet += ", ";
-                    osRet += alias;
-                    first = false;
-                }
-                if (!first)
-                {
-                    osRet += ')';
+                    bool first = true;
+                    for (const auto &alias : subAlg->GetAliases())
+                    {
+                        if (alias ==
+                            GDALAlgorithmRegistry::HIDDEN_ALIAS_SEPARATOR)
+                            break;
+                        if (first)
+                            osRet += " (alias: ";
+                        else
+                            osRet += ", ";
+                        osRet += alias;
+                        first = false;
+                    }
+                    if (!first)
+                    {
+                        osRet += ')';
+                    }
                 }
             }
             osRet += '\n';
@@ -4008,8 +4067,7 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
     for (const auto &subAlgName : GetSubAlgorithmNames())
     {
         auto subAlg = InstantiateSubAlgorithm(subAlgName);
-        assert(subAlg);
-        if (subAlg->m_displayInJSONUsage)
+        if (subAlg && subAlg->m_displayInJSONUsage)
         {
             CPLJSONDocument oSubDoc;
             CPL_IGNORE_RET_VAL(oSubDoc.LoadMemory(subAlg->GetUsageAsJSON()));
