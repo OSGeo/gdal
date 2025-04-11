@@ -2131,7 +2131,7 @@ def error_raised(type, match=""):
 
     assert any(
         [err["level"] == type and match in err["message"] for err in errors]
-    ), f'Did not receive an error of type {err_levels[type]} matching "{match}"'
+    ), f'Did not receive an error of type {err_levels[type]} matching "{match}". Received: {[(err["level"], err["message"]) for err in errors]}'
 
 
 ###############################################################################
