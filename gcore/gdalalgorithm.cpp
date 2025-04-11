@@ -216,6 +216,12 @@ GDALAlgorithmArgDecl &GDALAlgorithmArgDecl::SetMaxCount(int count)
 }
 
 /************************************************************************/
+/*                 GDALAlgorithmArg::~GDALAlgorithmArg()                */
+/************************************************************************/
+
+GDALAlgorithmArg::~GDALAlgorithmArg() = default;
+
+/************************************************************************/
 /*                         GDALAlgorithmArg::Set()                      */
 /************************************************************************/
 
@@ -2146,7 +2152,7 @@ GDALAlgorithm::AddArg(std::unique_ptr<GDALInConstructionAlgorithmArg> arg)
     }
     m_args.emplace_back(std::move(arg));
     return *(
-        static_cast<GDALInConstructionAlgorithmArg *>(m_args.back().get()));
+        cpl::down_cast<GDALInConstructionAlgorithmArg *>(m_args.back().get()));
 }
 
 GDALInConstructionAlgorithmArg &
