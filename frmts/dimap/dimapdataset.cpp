@@ -1479,9 +1479,13 @@ int DIMAPDataset::ReadImageInformation2()
 
     if (pszSRS != nullptr)
     {
-        OGRSpatialReference &oSRS = nGCPCount > 0 ? m_oGCPSRS : m_oSRS;
-        oSRS.SetFromUserInput(
-            pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
+        if (bHaveGeoTransform)
+        {
+            OGRSpatialReference &oSRS = m_oSRS;
+            oSRS.SetFromUserInput(
+                pszSRS,
+                OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
+        }
     }
     else
     {
@@ -1489,7 +1493,8 @@ int DIMAPDataset::ReadImageInformation2()
         // HORIZONTAL_CS_CODE is empty and the underlying raster
         // is georeferenced (rprinceley).
         const auto poSRS = poImageDS->GetSpatialRef();
-        if (poSRS)
+        double adfGTTmp[6];
+        if (poSRS && poImageDS->GetGeoTransform(adfGTTmp) == CE_None)
         {
             m_oSRS = *poSRS;
         }
