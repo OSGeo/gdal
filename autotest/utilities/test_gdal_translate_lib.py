@@ -585,6 +585,49 @@ def test_gdal_translate_lib_projwin_expand():
 
 
 ###############################################################################
+# Test -projwin_srs option
+
+
+def test_gdal_translate_lib_31():
+
+    ds = gdal.Translate(
+        "",
+        "../gcore/data/byte.tif",
+        projWin=(-117.6408, 33.9023, -117.6282, 33.8920),
+        projWinSRS="EPSG:4267",
+        format="MEM",
+    )
+
+    assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
+
+    gdaltest.check_geotransform(
+        gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
+        ds.GetGeoTransform(),
+        1e-6,
+    )
+
+
+def test_gdal_translate_lib_projwin_polar(tmp_vsimem):
+
+    src = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "in.tif", 16620, 30000, options={"SPARSE_OK": True}
+    )
+    src.SetGeoTransform((-640000.0, 90.0, 0.0, -655550.0, 0.0, -90.0))
+    src.SetProjection("EPSG:3413")
+
+    dst = gdal.Translate(
+        "", src, projWin=(-20, 80, -19, 79), projWinSRS="EPSG:4326", format="VRT"
+    )
+
+    dst_gt = dst.GetGeoTransform()
+    assert dst_gt[0] == 458900
+    assert dst_gt[3] == -975950
+
+    assert dst.RasterXSize == 723
+    assert dst.RasterYSize == 1192
+
+
+###############################################################################
 # Test translate with a MEM source to a anonymous VRT
 
 

@@ -847,7 +847,7 @@ def test_gdal_translate_31(gdal_translate_path, tmp_path):
     dst_tif = str(tmp_path / "test_gdal_translate_30.tif")
 
     gdaltest.runexternal(
-        f"{gdal_translate_path} -projwin_srs EPSG:4267 -projwin -117.641168620797 33.9023526904262 -117.628110837847 33.8915970129613 ../gcore/data/byte.tif {dst_tif}"
+        f"{gdal_translate_path} -projwin_srs EPSG:4267 -projwin -117.6408 33.9023 -117.6282 33.8920 ../gcore/data/byte.tif {dst_tif}"
     )
 
     ds = gdal.Open(dst_tif)
@@ -860,8 +860,6 @@ def test_gdal_translate_31(gdal_translate_path, tmp_path):
         ds.GetGeoTransform(),
         1e-6,
     )
-
-    ds = None
 
 
 ###############################################################################

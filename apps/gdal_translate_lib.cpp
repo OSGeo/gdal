@@ -956,10 +956,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                     OGRCoordinateTransformation *poCT =
                         OGRCreateCoordinateTransformation(&oSRSIn, &oSRSDS);
                     if (!(poCT &&
-                          poCT->Transform(1, &psOptions->dfULX,
-                                          &psOptions->dfULY) &&
-                          poCT->Transform(1, &psOptions->dfLRX,
-                                          &psOptions->dfLRY)))
+                          poCT->TransformBounds(
+                              psOptions->dfULX, psOptions->dfLRY,
+                              psOptions->dfLRX, psOptions->dfULY,
+                              &psOptions->dfULX, &psOptions->dfLRY,
+                              &psOptions->dfLRX, &psOptions->dfULY, 21)))
                     {
                         OGRCoordinateTransformation::DestroyCT(poCT);
 
