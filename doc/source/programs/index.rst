@@ -44,6 +44,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_contour
    gdal_raster_convert
    gdal_raster_edit
+   gdal_raster_footprint
    gdal_raster_hillshade
    gdal_raster_mosaic
    gdal_raster_overview
@@ -102,6 +103,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_convert_subcommand`: Convert a raster dataset
     - :ref:`gdal_raster_contour_subcommand`: Builds vector contour lines from a raster elevation model
     - :ref:`gdal_raster_edit_subcommand`: Edit in place a raster dataset
+    - :ref:`gdal_raster_footprint_subcommand`: Compute the footprint of a raster dataset.
     - :ref:`gdal_raster_hillshade_subcommand`: Generate a shaded relief map
     - :ref:`gdal_raster_mosaic_subcommand`: Build a mosaic, either virtual (VRT) or materialized.
     - :ref:`gdal_raster_overview_subcommand`: Manage overviews of a raster dataset
