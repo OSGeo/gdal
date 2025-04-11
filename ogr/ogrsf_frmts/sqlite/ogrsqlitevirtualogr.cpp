@@ -647,26 +647,32 @@ static int OGR2SQLITE_ConnectCreate(sqlite3 *hDB, void *pAux, int argc,
 
     bool bAddComma = false;
 
+    const OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
+
     const char *pszFIDColumn = poLayer->GetFIDColumn();
+    std::set<std::string> oSetNamesUC;
     if (pszFIDColumn[0])
     {
         osSQL += "\"";
         osSQL += SQLEscapeName(pszFIDColumn);
-        osSQL += "\" INTEGER HIDDEN PRIMARY KEY NOT NULL";
+        oSetNamesUC.insert(CPLString(pszFIDColumn).toupper());
+        if (poFDefn->GetFieldIndex(pszFIDColumn) >= 0)
+            osSQL += "\" INTEGER PRIMARY KEY NOT NULL";
+        else
+            osSQL += "\" INTEGER HIDDEN PRIMARY KEY NOT NULL";
         bAddComma = true;
         vtab->bHasFIDColumn = true;
     }
 
-    OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
     bool bHasOGR_STYLEField = false;
-    std::set<std::string> oSetNamesUC;
     for (int i = 0; i < poFDefn->GetFieldCount(); i++)
     {
+        const OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn(i);
+
         if (bAddComma)
             osSQL += ",";
         bAddComma = true;
 
-        OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn(i);
         if (EQUAL(poFieldDefn->GetNameRef(), "OGR_STYLE"))
             bHasOGR_STYLEField = true;
 
@@ -709,6 +715,9 @@ static int OGR2SQLITE_ConnectCreate(sqlite3 *hDB, void *pAux, int argc,
             }
         }
         osSQL += osType;
+
+        if (EQUAL(poFieldDefn->GetNameRef(), pszFIDColumn))
+            osSQL += " HIDDEN";
     }
 
     if (bAddComma)
@@ -729,7 +738,7 @@ static int OGR2SQLITE_ConnectCreate(sqlite3 *hDB, void *pAux, int argc,
     {
         osSQL += ",";
 
-        OGRGeomFieldDefn *poFieldDefn = poFDefn->GetGeomFieldDefn(i);
+        const OGRGeomFieldDefn *poFieldDefn = poFDefn->GetGeomFieldDefn(i);
 
         osSQL += "\"";
         if (i == 0)
