@@ -1161,6 +1161,9 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
         }
     }
 
+    /** Destructor */
+    virtual ~GDALAlgorithmArg();
+
     /** Return the argument declaration. */
     const GDALAlgorithmArgDecl &GetDeclaration() const
     {
