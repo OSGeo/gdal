@@ -56,7 +56,8 @@ class Cumulative
     Buf32 m_finalBuf{};
 
     void runExecutor(const std::string &srcFilename, Progress &progress,
-                     std::atomic<bool> &err, std::atomic<int> &running);
+                     std::atomic<bool> &err, std::atomic<int> &running,
+                     std::atomic<bool> &hasFoundNoData);
     void rollupRasters();
     void scaleOutput();
     bool writeOutput(DatasetPtr pDstDS);

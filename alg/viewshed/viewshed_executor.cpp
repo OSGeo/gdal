@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cassert>
+#include <cmath>
 #include <limits>
 
 #include "viewshed_executor.h"
@@ -102,12 +103,15 @@ double doMax(int nXOffset, int nYOffset, double dfThisPrev, double dfLast,
 /// @param curExtent  Extent of active raster.
 /// @param opts  Configuration options.
 /// @param progress  Reference to the progress tracker.
+/// @param emitWarningIfNoData  Whether a warning must be emitted if an input
+///                             pixel is at the nodata value.
 ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
                                    GDALRasterBand &dstBand, int nX, int nY,
                                    const Window &outExtent,
                                    const Window &curExtent, const Options &opts,
-                                   Progress &progress)
-    : m_pool(4), m_srcBand(srcBand), m_dstBand(dstBand), oOutExtent(outExtent),
+                                   Progress &progress, bool emitWarningIfNoData)
+    : m_pool(4), m_srcBand(srcBand), m_dstBand(dstBand),
+      m_emitWarningIfNoData(emitWarningIfNoData), oOutExtent(outExtent),
       oCurExtent(curExtent), m_nX(nX - oOutExtent.xStart), m_nY(nY),
       oOpts(opts), oProgress(progress),
       m_dfMaxDistance2(opts.maxDistance * opts.maxDistance)
@@ -115,6 +119,9 @@ ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
     if (m_dfMaxDistance2 == 0)
         m_dfMaxDistance2 = std::numeric_limits<double>::max();
     m_srcBand.GetDataset()->GetGeoTransform(m_adfTransform.data());
+    int hasNoData = false;
+    m_noDataValue = m_srcBand.GetNoDataValue(&hasNoData);
+    m_hasNoData = hasNoData;
 }
 
 // calculate the height adjustment factor.
@@ -223,6 +230,21 @@ ViewshedExecutor::adjustHeight(int nYOffset, std::vector<double> &vThisLineVal)
     // Find the starting point in the raster (m_nX may be outside)
     int nXStart = oCurExtent.clampX(m_nX);
 
+    const auto CheckNoData = [this](double val)
+    {
+        if (!m_hasFoundNoData &&
+            ((m_hasNoData && val == m_noDataValue) || std::isnan(val)))
+        {
+            m_hasFoundNoData = true;
+            if (m_emitWarningIfNoData)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Nodata value found in input DEM. Output will be "
+                         "likely incorrect");
+            }
+        }
+    };
+
     // If there is a height adjustment factor other than zero or a max distance,
     // calculate the adjusted height of the cell, stopping if we've exceeded the max
     // distance.
@@ -245,6 +267,7 @@ ViewshedExecutor::adjustHeight(int nYOffset, std::vector<double> &vThisLineVal)
                 nLeft = nXOffset + m_nX + 1;
                 break;
             }
+            CheckNoData(*pdfHeight);
             *pdfHeight -= m_dfHeightAdjFactor * dfR2 + m_dfZObserver;
         }
 
@@ -261,6 +284,7 @@ ViewshedExecutor::adjustHeight(int nYOffset, std::vector<double> &vThisLineVal)
                 nRight = nXOffset + m_nX;
                 break;
             }
+            CheckNoData(*pdfHeight);
             *pdfHeight -= m_dfHeightAdjFactor * dfR2 + m_dfZObserver;
         }
     }
@@ -270,6 +294,7 @@ ViewshedExecutor::adjustHeight(int nYOffset, std::vector<double> &vThisLineVal)
         double *pdfHeight = vThisLineVal.data();
         for (int i = 0; i < oCurExtent.xSize(); ++i)
         {
+            CheckNoData(*pdfHeight);
             *pdfHeight -= m_dfZObserver;
             pdfHeight++;
         }

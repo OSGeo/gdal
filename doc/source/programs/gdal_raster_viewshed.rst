@@ -1,46 +1,48 @@
-.. _gdal_viewshed:
+.. _gdal_raster_viewshed_subcommand:
 
 ================================================================================
-gdal_viewshed
+"gdal raster viewshed" sub-command
 ================================================================================
+
+.. versionadded:: 3.11
 
 .. only:: html
 
-    .. versionadded:: 3.1.0
+    Compute the viewshed of a raster dataset.
 
-    Calculates a viewshed raster from an input raster DEM using method defined in [Wang2000]_ for a user defined point.
-
-.. Index:: gdal_viewshed
+.. Index:: gdal raster viewshed
 
 Synopsis
 --------
 
-.. program-output:: gdal_viewshed --help-doc
+.. program-output:: gdal raster viewshed --help-doc
 
 Description
 -----------
 
-By default the :program:`gdal_viewshed` generates a binary visibility raster from one band
+:program:`gdal raster viewshed` creates a binary visibility raster from one band
 of the input raster elevation model (DEM). The output raster will be of type
-Byte. With the -mode flag can also return a minimum visible height raster of type Float64.
+Byte. Using the ``DEM`` or ``ground`` values of :option:`--mode` can also
+create a minimum visible height raster of type Float64.
 
-.. note::
-    The algorithm as implemented currently will only output meaningful results
-    if the georeferencing is in a projected coordinate reference system.
+It uses the method defined in [Wang2000]_ for a user defined point.
 
-.. program:: gdal_viewshed
+Standard options
+++++++++++++++++
 
-.. include:: options/help_and_help_general.rst
+.. include:: gdal_options/of_raster_create.rst
 
-.. include:: options/co.rst
+.. include:: gdal_options/co.rst
 
-.. option:: -b <band>
+.. include:: gdal_options/overwrite.rst
 
-   Select an input band **band** containing the DEM data. Bands are numbered from 1.
+.. option:: -b, --band <band>
+
+   Select an input band containing the DEM data. Bands are numbered from 1.
    Only a single band can be used. Only the part of the raster within the specified
    maximum distance around the observer point is processed.
 
-.. option:: -a_nodata <value>
+.. option:: --dstnodata <value>
 
    The value to be set for the cells in the output raster that have no data.
 
@@ -48,33 +50,25 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
         Currently, no special processing of input cells at a nodata
         value is done (which may result in erroneous results).
 
-.. option:: -ox <value>
+.. option:: -p, --pos, --position <X,Y> or <X,Y,H>
 
-   The X position of the observer (in SRS units).  If the coordinate is outside of the
-   raster, all space between the observer and the raster is assumed not to occlude
-   visibility of the raster. (Not supported in cumulative mode.)
+   The X,Y or X,Y,H(Height) position of the observer (in SRS units for X and Y,
+   and in the height unit of the DEM for H).
+   If the coordinate is outside of the raster, all space between the observer
+   and the raster is assumed not to occlude visibility of the raster. (Not supported in cumulative mode.)
+   If H is not specified, it defaults to 2.
 
-.. option:: -oy <value>
-
-   The Y position of the observer (in SRS units).  If the coordinate is outside of the
-   raster, all space between the observer and the raster is assumed not to occlude
-   visibility of the raster. (Not supported in cumulative mode.)
-
-.. option:: -oz <value>
-
-   The height of the observer above the DEM surface in the height unit of the DEM. Default: 2
-
-.. option:: -tz <value>
+.. option:: --target-height <value>
 
    The height of the target above the DEM surface in the height unit of the DEM. Default: 0
 
-.. option:: -md <value>
+.. option:: --max-distance <value>
 
    Maximum distance from observer to compute visibility.
    It is also used to clamp the extent of the output raster.
    (Not supported in cumulative mode)
 
-.. option:: -cc <value>
+.. option:: --curvature-coefficient <value>
 
    Coefficient to consider the effect of the curvature and refraction.
    When calculating visibility between two points (i.e. Line Of Sight or Viewshed),
@@ -117,54 +111,47 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
    Flat Earth        1                   0                    inf
    ================  ==================  ===================  =====================
 
-.. option:: -iv <value>
+.. option:: --invisible-value <value>
 
    Pixel value to set for invisible areas. (Not supported in cumulative mode) Default: 0
 
-.. option:: -ov <value>
+.. option:: --out-of-range-value <value>
 
    Pixel value to set for the cells that fall outside of the range specified by
    the observer location and the maximum distance. (Not supported in cumulative mode) Default: 0
 
-.. option:: -vv <value>
+.. option:: --visible-value <value>
 
    Pixel value to set for visible areas. (Not supported in cumulative mode) Default: 255
 
-.. option:: -om <output mode>
+.. option:: --mode normal|DEM|ground|cumulative
 
-  Sets what information the output contains.
+   Sets what information the output contains.
 
-  Possible values: NORMAL, DEM, GROUND, ACCUM
+   - ``normal`` (the default) returns a raster of type Byte containing visible locations.
 
-  NORMAL returns a raster of type Byte containing visible locations.
+   - ``DEM`` and ``ground`` return a raster of type Float64 containing the minimum target
+     height for the target to be visible from the DEM surface or ground level respectively.
+     That is to say, if the minimum target height for the target to be visible at a
+     point is ``h`` and the value of the input raster at that point is ``E``,
+     for ``DEM``, ``E + h`` will be the output value.
+     For ``ground``, ``h`` will be output value.
+     Options ``--target-height``, ``--invisible-value`` and ``--visible-value`` will
+     be ignored.
 
-  DEM and GROUND will return a raster of type Float64 containing the minimum target
-  height for target to be visible from the DEM surface or ground level respectively.
-  That is to say, if the minimum target height for the target to be visible at a
-  point is ``h`` and the value of the input raster at that point is ``E``,
-  for ``DEM``, ``E + h`` will be the output value.
-  For ``ground``, ``h`` will be output value.
-  Flags -tz, -iv and -vv will be ignored.
+   - ``cumulative`` creates an eight bit raster the same size as the input raster
+     where each cell represents the relative observability from a grid of observer points.
+     See the :option:`--observer-spacing` option.
 
-  Cumulative (ACCUM) mode will create an eight bit raster the same size as the input raster
-  where each cell represents the relative observability from a grid of observer points.
-  See the -os option.
+.. option:: --observer-spacing <value>
 
-  Default NORMAL
+   Cell spacing between observers (only supported in cumulative mode).
+   Default: 10
 
-.. option:: -os <value>
+.. option:: -j, --num-threads <value>
 
-   Cell Spacing between observers (only supported in cumulative mode) Default: 10
-
-.. option:: -j <value>
-
-   Number of jobs to run at once. (only supported in cumulative mode) Default: 3
-
-
-C API
------
-
-Functionality of this utility can be done from C with :cpp:func:`GDALViewshedGenerate`.
+   Number of jobs to run at once. (only supported in cumulative mode).
+   Default: 3
 
 Examples
 --------
@@ -183,11 +170,4 @@ Examples
 
    .. code-block:: bash
 
-       gdal_viewshed -md 500 -ox -10147017 -oy 5108065 source.tif destination.tif
-
-Reference
----------
-
-.. [Wang2000] Generating Viewsheds without Using Sightlines. Wang, Jianjun,
-   Robinson, Gary J., and White, Kevin. Photogrammetric Engineering and Remote
-   Sensing. p81. https://www.asprs.org/wp-content/uploads/pers/2000journal/january/2000_jan_87-90.pdf
+       gdal raster viewshed --max-distance=500 --pos=-10147017,5108065s source.tif destination.tif

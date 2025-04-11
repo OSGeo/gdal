@@ -83,6 +83,8 @@ class Viewshed
     Viewshed &operator=(const Viewshed &) = delete;
 };
 
+double CPL_DLL adjustCurveCoeff(double curveCoeff, GDALDatasetH hSrcDS);
+
 }  // namespace viewshed
 }  // namespace gdal
 

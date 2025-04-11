@@ -249,30 +249,6 @@ void validateArgs(Options &localOpts, const GDALArgumentParser &argParser)
         opts.nodataVal = 0;
 }
 
-// Adjust the coefficient of curvature for non-earth SRS.
-/// \param curveCoeff  Current curve coefficient
-/// \param hSrcDS  Source dataset
-/// \return  Adjusted curve coefficient.
-double adjustCurveCoeff(double curveCoeff, GDALDatasetH hSrcDS)
-{
-    const OGRSpatialReference *poSRS =
-        GDALDataset::FromHandle(hSrcDS)->GetSpatialRef();
-    if (poSRS)
-    {
-        OGRErr eSRSerr;
-        const double dfSemiMajor = poSRS->GetSemiMajor(&eSRSerr);
-        if (eSRSerr != OGRERR_FAILURE &&
-            fabs(dfSemiMajor - SRS_WGS84_SEMIMAJOR) >
-                0.05 * SRS_WGS84_SEMIMAJOR)
-        {
-            curveCoeff = 1.0;
-            CPLDebug("gdal_viewshed",
-                     "Using -cc=1.0 as a non-Earth CRS has been detected");
-        }
-    }
-    return curveCoeff;
-}
-
 }  // unnamed namespace
 }  // namespace gdal
 
@@ -324,7 +300,8 @@ MAIN_START(argc, argv)
     }
 
     if (!argParser.is_used("-cc"))
-        opts.curveCoeff = adjustCurveCoeff(opts.curveCoeff, hSrcDS);
+        opts.curveCoeff =
+            gdal::viewshed::adjustCurveCoeff(opts.curveCoeff, hSrcDS);
 
     /* -------------------------------------------------------------------- */
     /*      Invoke.                                                         */
