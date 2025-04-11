@@ -18,6 +18,7 @@ add_library(
   gdalalg_raster_aspect.cpp
   gdalalg_raster_astype.cpp
   gdalalg_raster_calc.cpp
+  gdalalg_raster_clean_collar.cpp
   gdalalg_raster_clip.cpp
   gdalalg_raster_color_map.cpp
   gdalalg_raster_convert.cpp

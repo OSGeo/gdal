@@ -1764,6 +1764,10 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
          overwriteArg->GetType() == GAAT_BOOLEAN && overwriteArg->Get<bool>());
     auto outputArg = algForOutput->GetArg(GDAL_ARG_NAME_OUTPUT);
     auto &val = arg->Get<GDALArgDatasetValue>();
+    const bool onlyInputSpecifiedInUpdateAndOutputNotRequired =
+        arg->GetName() == GDAL_ARG_NAME_INPUT && outputArg &&
+        !outputArg->IsExplicitlySet() && !outputArg->IsRequired() && update &&
+        !overwrite;
     if (!val.GetDatasetRef() && !val.IsNameSet())
     {
         ReportError(CE_Failure, CPLE_AppDefined,
@@ -1772,7 +1776,8 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         ret = false;
     }
     else if (!val.GetDatasetRef() && arg->AutoOpenDataset() &&
-             (!arg->IsOutput() || (arg == outputArg && update && !overwrite)))
+             (!arg->IsOutput() || (arg == outputArg && update && !overwrite) ||
+              onlyInputSpecifiedInUpdateAndOutputNotRequired))
     {
         int flags = val.GetType();
         bool assignToOutputArg = false;
@@ -1786,6 +1791,11 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
             if (!outputVal.GetDatasetRef() &&
                 outputVal.GetName() == val.GetName() &&
                 (outputVal.GetInputFlags() & GADV_OBJECT) != 0)
+            {
+                assignToOutputArg = true;
+                flags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
+            }
+            else if (onlyInputSpecifiedInUpdateAndOutputNotRequired)
             {
                 assignToOutputArg = true;
                 flags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
@@ -1847,6 +1857,10 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                 {
                     outputArg->Get<GDALArgDatasetValue>().Set(poDS);
                 }
+                else if (onlyInputSpecifiedInUpdateAndOutputNotRequired)
+                {
+                    outputArg->Get<GDALArgDatasetValue>().Set(poDS);
+                }
             }
             val.Set(poDS);
             poDS->ReleaseRef();
@@ -1855,6 +1869,11 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         {
             ret = false;
         }
+    }
+    else if (onlyInputSpecifiedInUpdateAndOutputNotRequired &&
+             val.GetDatasetRef())
+    {
+        outputArg->Get<GDALArgDatasetValue>().Set(val.GetDatasetRef());
     }
     return ret;
 }
@@ -3710,6 +3729,12 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                 osRet += " [OPTIONS]";
             for (const auto *arg : m_positionalArgs)
             {
+                const bool optional =
+                    (!arg->IsRequired() && !(GetName() == "pipeline" &&
+                                             arg->GetName() == "pipeline"));
+                osRet += ' ';
+                if (optional)
+                    osRet += '[';
                 const std::string &metavar = arg->GetMetaVar();
                 if (!metavar.empty() && metavar[0] == '<')
                 {
@@ -3717,10 +3742,12 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                 }
                 else
                 {
-                    osRet += " <";
+                    osRet += '<';
                     osRet += metavar;
                     osRet += '>';
                 }
+                if (optional)
+                    osRet += ']';
             }
         }
 
@@ -3811,6 +3838,39 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                 osRet += " (default: ";
                 osRet += CPLSPrintf("%g", arg->GetDefault<double>());
                 osRet += ')';
+            }
+            else if (arg->GetType() == GAAT_STRING_LIST &&
+                     arg->HasDefaultValue())
+            {
+                const auto &defaultVal =
+                    arg->GetDefault<std::vector<std::string>>();
+                if (defaultVal.size() == 1)
+                {
+                    osRet += " (default: ";
+                    osRet += defaultVal[0];
+                    osRet += ')';
+                }
+            }
+            else if (arg->GetType() == GAAT_INTEGER_LIST &&
+                     arg->HasDefaultValue())
+            {
+                const auto &defaultVal = arg->GetDefault<std::vector<int>>();
+                if (defaultVal.size() == 1)
+                {
+                    osRet += " (default: ";
+                    osRet += CPLSPrintf("%d", defaultVal[0]);
+                    osRet += ')';
+                }
+            }
+            else if (arg->GetType() == GAAT_REAL_LIST && arg->HasDefaultValue())
+            {
+                const auto &defaultVal = arg->GetDefault<std::vector<double>>();
+                if (defaultVal.size() == 1)
+                {
+                    osRet += " (default: ";
+                    osRet += CPLSPrintf("%g", defaultVal[0]);
+                    osRet += ')';
+                }
             }
 
             if (arg->GetDisplayHintAboutRepetition())
@@ -4048,10 +4108,53 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
                 case GAAT_REAL:
                     jArg.Add("default", arg->GetDefault<double>());
                     break;
-                case GAAT_DATASET:
                 case GAAT_STRING_LIST:
+                {
+                    const auto &val =
+                        arg->GetDefault<std::vector<std::string>>();
+                    if (val.size() == 1)
+                    {
+                        jArg.Add("default", val[0]);
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Unhandled default value for arg %s",
+                                 arg->GetName().c_str());
+                    }
+                    break;
+                }
                 case GAAT_INTEGER_LIST:
+                {
+                    const auto &val = arg->GetDefault<std::vector<int>>();
+                    if (val.size() == 1)
+                    {
+                        jArg.Add("default", val[0]);
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Unhandled default value for arg %s",
+                                 arg->GetName().c_str());
+                    }
+                    break;
+                }
                 case GAAT_REAL_LIST:
+                {
+                    const auto &val = arg->GetDefault<std::vector<double>>();
+                    if (val.size() == 1)
+                    {
+                        jArg.Add("default", val[0]);
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Unhandled default value for arg %s",
+                                 arg->GetName().c_str());
+                    }
+                    break;
+                }
+                case GAAT_DATASET:
                 case GAAT_DATASET_LIST:
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Unhandled default value for arg %s",

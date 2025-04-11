@@ -23,6 +23,7 @@ Available sub-commands
 - :ref:`gdal_raster_info_subcommand`
 - :ref:`gdal_raster_aspect_subcommand`
 - :ref:`gdal_raster_calc_subcommand`
+- :ref:`gdal_raster_clean_collar_subcommand`
 - :ref:`gdal_raster_clip_subcommand`
 - :ref:`gdal_raster_color_map_subcommand`
 - :ref:`gdal_raster_convert_subcommand`
