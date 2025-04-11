@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vector grid invdistnn" subcommand
+ * Purpose:  gdal "vector gridding average" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,45 +10,64 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_grid_invdistnn.h"
+#include "gdalalg_vector_gridding_average.h"
 
 #include <limits>
 
 //! @cond Doxygen_Suppress
 
-#ifndef _
-#define _(x) (x)
-#endif
-
 /************************************************************************/
-/* GDALVectorGridInvdistNNAlgorithm::GDALVectorGridInvdistNNAlgorithm() */
+/*    GDALVectorGridAverageAlgorithm::GDALVectorGridAverageAlgorithm()  */
 /************************************************************************/
 
-GDALVectorGridInvdistNNAlgorithm::GDALVectorGridInvdistNNAlgorithm()
+GDALVectorGridAverageAlgorithm::GDALVectorGridAverageAlgorithm()
     : GDALVectorGridAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
-    AddArg("power", 0, _("Weighting power"), &m_power).SetDefault(m_power);
-    AddArg("smoothing", 0, _("Smoothing parameter"), &m_smoothing)
-        .SetDefault(m_smoothing);
-
     AddRadiusArg();
+    AddRadius1AndRadius2Arg();
+    AddAngleArg();
     AddMinPointsArg();
-    m_maxPoints = 12;
     AddMaxPointsArg();
     AddMinMaxPointsPerQuadrantArg();
     AddNodataArg();
+
+    AddValidationAction(
+        [this]()
+        {
+            bool ret = true;
+            if (m_maxPoints < std::numeric_limits<int>::max() &&
+                m_minPointsPerQuadrant == 0 &&
+                m_maxPointsPerQuadrant == std::numeric_limits<int>::max())
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "'min-points-per-quadrant' and/or "
+                            "'max-points-per-quadrant' should be defined when "
+                            "'max-points' is.");
+                ret = false;
+            }
+            return ret;
+        });
 }
 
 /************************************************************************/
-/*             GDALVectorGridInvdistNNAlgorithm::RunImpl()              */
+/*               GDALVectorGridAverageAlgorithm::RunImpl()              */
 /************************************************************************/
 
-std::string GDALVectorGridInvdistNNAlgorithm::GetGridAlgorithm() const
+std::string GDALVectorGridAverageAlgorithm::GetGridAlgorithm() const
 {
     std::string ret =
-        CPLSPrintf("invdistnn:power=%.17g:smoothing=%.17g:nodata=%.17g",
-                   m_power, m_smoothing, m_nodata);
-    ret += CPLSPrintf(":radius=%.17g", m_radius);
+        CPLSPrintf("average:angle=%.17g:nodata=%.17g", m_angle, m_nodata);
+    if (m_radius > 0)
+    {
+        ret += CPLSPrintf(":radius=%.17g", m_radius);
+    }
+    else
+    {
+        if (m_radius1 > 0)
+            ret += CPLSPrintf(":radius1=%.17g", m_radius1);
+        if (m_radius2 > 0)
+            ret += CPLSPrintf(":radius2=%.17g", m_radius2);
+    }
     if (m_minPoints > 0)
         ret += CPLSPrintf(":min_points=%d", m_minPoints);
     if (m_maxPoints < std::numeric_limits<int>::max())

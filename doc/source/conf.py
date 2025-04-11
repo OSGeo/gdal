@@ -498,8 +498,8 @@ man_pages = [
         1,
     ),
     (
-        "programs/gdal_vector_grid",
-        "gdal-vector-grid",
+        "programs/gdal_vector_gridding",
+        "gdal-vector-gridding",
         "Create a regular grid from scattered points",
         [author_evenr],
         1,
