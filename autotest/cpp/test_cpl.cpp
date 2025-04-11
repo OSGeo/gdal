@@ -23,6 +23,7 @@
 #include "cpl_error.h"
 #include "cpl_float.h"
 #include "cpl_hash_set.h"
+#include "cpl_levenshtein.h"
 #include "cpl_list.h"
 #include "cpl_mask.h"
 #include "cpl_sha256.h"
@@ -5794,6 +5795,26 @@ TEST_F(test_cpl, CPLGreatestCommonDivisor)
     EXPECT_EQ(CPLGreatestCommonDivisor(2.999999, 3.0), 0);
     EXPECT_EQ(CPLGreatestCommonDivisor(2.9999999, 3.0), 0);
     EXPECT_EQ(CPLGreatestCommonDivisor(2.99999999, 3.0), 2.99999999);
+}
+
+TEST_F(test_cpl, CPLLevenshteinDistance)
+{
+    EXPECT_EQ(CPLLevenshteinDistance("", "", false), 0);
+    EXPECT_EQ(CPLLevenshteinDistance("a", "a", false), 0);
+    EXPECT_EQ(CPLLevenshteinDistance("a", "b", false), 1);
+    EXPECT_EQ(CPLLevenshteinDistance("a", "", false), 1);
+    EXPECT_EQ(CPLLevenshteinDistance("abc", "ac", false), 1);
+    EXPECT_EQ(CPLLevenshteinDistance("ac", "abc", false), 1);
+    EXPECT_EQ(CPLLevenshteinDistance("0ab1", "0xy1", false), 2);
+    EXPECT_EQ(CPLLevenshteinDistance("0ab1", "0xy1", true), 2);
+    EXPECT_EQ(CPLLevenshteinDistance("0ab1", "0ba1", false), 2);
+    EXPECT_EQ(CPLLevenshteinDistance("0ab1", "0ba1", true), 1);
+
+    std::string longStr(32768, 'x');
+    EXPECT_EQ(CPLLevenshteinDistance(longStr.c_str(), longStr.c_str(), true),
+              0);
+    EXPECT_EQ(CPLLevenshteinDistance(longStr.c_str(), "another_one", true),
+              std::numeric_limits<size_t>::max());
 }
 
 }  // namespace

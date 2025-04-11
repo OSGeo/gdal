@@ -36,7 +36,7 @@ def test_gdalalg_info_on_raster(args):
 
 def test_gdalalg_info_on_raster_invalid_arg():
     info = get_info_alg()
-    with pytest.raises(Exception, match="Long name option '--invalid' is unknown"):
+    with pytest.raises(Exception, match="Option '--invalid' is unknown"):
         assert info.ParseRunAndFinalize(
             ["--format=text", "--invalid", "data/utmsmall.tif"]
         )
@@ -62,13 +62,13 @@ def test_gdalalg_info_on_vector(args):
 
 def test_gdalalg_info_on_vector_invalid_arg():
     info = get_info_alg()
-    with pytest.raises(Exception, match="Long name option '--invalid' is unknown"):
+    with pytest.raises(Exception, match="Option '--invalid' is unknown"):
         assert info.ParseRunAndFinalize(["--format=text", "--invalid", "data/path.shp"])
 
 
 def test_gdalalg_info_invalid_arg():
     info = get_info_alg()
-    with pytest.raises(Exception, match="Long name option '--invalid' is unknown"):
+    with pytest.raises(Exception, match="Option '--invalid' is unknown"):
         assert info.ParseRunAndFinalize(["--invalid"])
 
 

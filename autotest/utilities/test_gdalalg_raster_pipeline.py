@@ -331,9 +331,7 @@ def test_gdalalg_raster_pipeline_invalid_step_during_parsing(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out.tif")
 
     pipeline = get_pipeline_alg()
-    with pytest.raises(
-        Exception, match="write: Long name option '--invalid' is unknown"
-    ):
+    with pytest.raises(Exception, match="write: Option '--invalid' is unknown"):
         pipeline.ParseRunAndFinalize(
             ["read", "../gcore/data/byte.tif", "!", "write", "--invalid", out_filename]
         )
