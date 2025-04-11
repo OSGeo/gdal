@@ -974,7 +974,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             }
             else
             {
-                CPLError(CE_None, CPLE_None,
+                CPLError(CE_Warning, CPLE_None,
                          "-projwin_srs ignored since the dataset has no "
                          "projection.");
             }
@@ -1094,6 +1094,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         const std::string osFormat = GetOutputDriverForRaster(pszDest);
         if (osFormat.empty())
         {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Could not identify an output driver for %s", pszDest);
             GDALTranslateOptionsFree(psOptions);
             return nullptr;
         }
@@ -1312,7 +1314,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                                     fabs(adfSrcGeoTransform[5]) +
                                 0.5;
         if (dfOXSize < 1 || !GDALIsValueInRange<int>(dfOXSize) ||
-            dfOYSize < 1 || !GDALIsValueInRange<int>(dfOXSize))
+            dfOYSize < 1 || !GDALIsValueInRange<int>(dfOYSize))
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "Invalid output size: %g x %g", dfOXSize, dfOYSize);
@@ -1327,7 +1329,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         double dfOXSize = ceil(psOptions->adfSrcWin[2] - 0.001);
         double dfOYSize = ceil(psOptions->adfSrcWin[3] - 0.001);
         if (dfOXSize < 1 || !GDALIsValueInRange<int>(dfOXSize) ||
-            dfOYSize < 1 || !GDALIsValueInRange<int>(dfOXSize))
+            dfOYSize < 1 || !GDALIsValueInRange<int>(dfOYSize))
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "Invalid output size: %g x %g", dfOXSize, dfOYSize);
