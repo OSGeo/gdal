@@ -139,7 +139,15 @@ struct GDALTranslateOptions
 
     /*! subwindow from the source image for copying based on pixel/line location
      */
-    std::array<double, 4> adfSrcWin{{0, 0, 0, 0}};
+    struct PixelLineWindow
+    {
+        double dfXOff{0};
+        double dfYOff{0};
+        double dfXSize{0};
+        double dfYSize{0};
+    };
+
+    PixelLineWindow srcWin{};
 
     /*! don't be forgiving of mismatches and lost data when translating to the
      * output format */
@@ -350,20 +358,20 @@ static void SrcToDst(double dfX, double dfY, double dfSrcXOff, double dfSrcYOff,
 /*                          GetSrcDstWindow()                           */
 /************************************************************************/
 
-static bool FixSrcDstWindow(std::array<double, 4> &padfSrcWin,
-                            std::array<double, 4> &padfDstWin,
+static bool FixSrcDstWindow(GDALTranslateOptions::PixelLineWindow &srcWin,
+                            GDALTranslateOptions::PixelLineWindow &dstWin,
                             int nSrcRasterXSize, int nSrcRasterYSize)
 
 {
-    const double dfSrcXOff = padfSrcWin[0];
-    const double dfSrcYOff = padfSrcWin[1];
-    const double dfSrcXSize = padfSrcWin[2];
-    const double dfSrcYSize = padfSrcWin[3];
+    const double dfSrcXOff = srcWin.dfXOff;
+    const double dfSrcYOff = srcWin.dfYOff;
+    const double dfSrcXSize = srcWin.dfXSize;
+    const double dfSrcYSize = srcWin.dfYSize;
 
-    const double dfDstXOff = padfDstWin[0];
-    const double dfDstYOff = padfDstWin[1];
-    const double dfDstXSize = padfDstWin[2];
-    const double dfDstYSize = padfDstWin[3];
+    const double dfDstXOff = dstWin.dfXOff;
+    const double dfDstYOff = dstWin.dfYOff;
+    const double dfDstXSize = dstWin.dfXSize;
+    const double dfDstYSize = dstWin.dfYSize;
 
     bool bModifiedX = false;
     bool bModifiedY = false;
@@ -415,10 +423,10 @@ static bool FixSrcDstWindow(std::array<double, 4> &padfSrcWin,
         return false;
     }
 
-    padfSrcWin[0] = dfModifiedSrcXOff;
-    padfSrcWin[1] = dfModifiedSrcYOff;
-    padfSrcWin[2] = dfModifiedSrcXSize;
-    padfSrcWin[3] = dfModifiedSrcYSize;
+    srcWin.dfXOff = dfModifiedSrcXOff;
+    srcWin.dfYOff = dfModifiedSrcYOff;
+    srcWin.dfXSize = dfModifiedSrcXSize;
+    srcWin.dfYSize = dfModifiedSrcYSize;
 
     /* -------------------------------------------------------------------- */
     /*      If we haven't had to modify the source rectangle, then the      */
@@ -472,10 +480,10 @@ static bool FixSrcDstWindow(std::array<double, 4> &padfSrcWin,
         return false;
     }
 
-    padfDstWin[0] = dfModifiedDstXOff;
-    padfDstWin[1] = dfModifiedDstYOff;
-    padfDstWin[2] = dfModifiedDstXSize;
-    padfDstWin[3] = dfModifiedDstYSize;
+    dstWin.dfXOff = dfModifiedDstXOff;
+    dstWin.dfYOff = dfModifiedDstYOff;
+    dstWin.dfXSize = dfModifiedDstXSize;
+    dstWin.dfYSize = dfModifiedDstYSize;
 
     return true;
 }
@@ -810,10 +818,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     /*      Collect some information from the source file.                  */
     /* -------------------------------------------------------------------- */
-    if (psOptions->adfSrcWin[2] == 0 && psOptions->adfSrcWin[3] == 0)
+    if (psOptions->srcWin.dfXSize == 0 && psOptions->srcWin.dfYSize == 0)
     {
-        psOptions->adfSrcWin[2] = poSrcDS->GetRasterXSize();
-        psOptions->adfSrcWin[3] = poSrcDS->GetRasterYSize();
+        psOptions->srcWin.dfXSize = poSrcDS->GetRasterXSize();
+        psOptions->srcWin.dfYSize = poSrcDS->GetRasterYSize();
     }
 
     /* -------------------------------------------------------------------- */
@@ -988,52 +996,52 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         double dfULX = psOptions->dfULX;
         double dfULY = psOptions->dfULY;
 
-        psOptions->adfSrcWin[0] =
+        psOptions->srcWin.dfXOff =
             (dfULX - adfGeoTransform[0]) / adfGeoTransform[1];
-        psOptions->adfSrcWin[1] =
+        psOptions->srcWin.dfYOff =
             (dfULY - adfGeoTransform[3]) / adfGeoTransform[5];
 
         // In case of nearest resampling, round to integer pixels (#6610)
         if (bAlignToInputPixels)
         {
-            psOptions->adfSrcWin[0] =
-                std::floor(psOptions->adfSrcWin[0] + 0.001);  // xoff
-            psOptions->adfSrcWin[1] =
-                std::floor(psOptions->adfSrcWin[1] + 0.001);  // yoff
+            psOptions->srcWin.dfXOff =
+                std::floor(psOptions->srcWin.dfXOff + 0.001);  // xoff
+            psOptions->srcWin.dfYOff =
+                std::floor(psOptions->srcWin.dfYOff + 0.001);  // yoff
 
-            dfULX = psOptions->adfSrcWin[0] * adfGeoTransform[1] +
+            dfULX = psOptions->srcWin.dfXOff * adfGeoTransform[1] +
                     adfGeoTransform[0];
-            dfULY = psOptions->adfSrcWin[1] * adfGeoTransform[5] +
+            dfULY = psOptions->srcWin.dfYOff * adfGeoTransform[5] +
                     adfGeoTransform[3];
         }
 
         // Calculate xsize and ysize based on the (possibly snapped) ULX, ULY
-        psOptions->adfSrcWin[2] =
+        psOptions->srcWin.dfXSize =
             (psOptions->dfLRX - dfULX) / adfGeoTransform[1];  // xsize
-        psOptions->adfSrcWin[3] =
+        psOptions->srcWin.dfYSize =
             (psOptions->dfLRY - dfULY) / adfGeoTransform[5];  // ysize
 
         if (bAlignToInputPixels)
         {
-            psOptions->adfSrcWin[2] =
-                std::ceil(psOptions->adfSrcWin[2] - 0.001);
-            psOptions->adfSrcWin[3] =
-                std::ceil(psOptions->adfSrcWin[3] - 0.001);
+            psOptions->srcWin.dfXSize =
+                std::ceil(psOptions->srcWin.dfXSize - 0.001);
+            psOptions->srcWin.dfYSize =
+                std::ceil(psOptions->srcWin.dfYSize - 0.001);
         }
 
         /*if( !bQuiet )
             fprintf( stdout,
                      "Computed -srcwin %g %g %g %g from projected window.\n",
-                     adfSrcWin[0],
-                     adfSrcWin[1],
-                     adfSrcWin[2],
-                     adfSrcWin[3] ); */
+                     srcWin.dfXOff,
+                     srcWin.dfYOff,
+                     srcWin.dfXSize,
+                     srcWin.dfYSize ); */
     }
 
     /* -------------------------------------------------------------------- */
     /*      Verify source window dimensions.                                */
     /* -------------------------------------------------------------------- */
-    if (psOptions->adfSrcWin[2] <= 0 || psOptions->adfSrcWin[3] <= 0)
+    if (psOptions->srcWin.dfXSize <= 0 || psOptions->srcWin.dfYSize <= 0)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -1042,8 +1050,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
              psOptions->dfLRX != 0.0 || psOptions->dfLRY != 0.0)
                 ? "Computed "
                 : "",
-            psOptions->adfSrcWin[0], psOptions->adfSrcWin[1],
-            psOptions->adfSrcWin[2], psOptions->adfSrcWin[3]);
+            psOptions->srcWin.dfXOff, psOptions->srcWin.dfYOff,
+            psOptions->srcWin.dfXSize, psOptions->srcWin.dfYSize);
         GDALTranslateOptionsFree(psOptions);
         return nullptr;
     }
@@ -1051,17 +1059,17 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     /*      Verify source window dimensions.                                */
     /* -------------------------------------------------------------------- */
-    else if (psOptions->adfSrcWin[0] <= -1 || psOptions->adfSrcWin[1] <= -1 ||
-             psOptions->adfSrcWin[0] + psOptions->adfSrcWin[2] >=
+    else if (psOptions->srcWin.dfXOff <= -1 || psOptions->srcWin.dfYOff <= -1 ||
+             psOptions->srcWin.dfXOff + psOptions->srcWin.dfXSize >=
                  poSrcDS->GetRasterXSize() + 1 ||
-             psOptions->adfSrcWin[1] + psOptions->adfSrcWin[3] >=
+             psOptions->srcWin.dfYOff + psOptions->srcWin.dfYSize >=
                  poSrcDS->GetRasterYSize() + 1)
     {
         const bool bCompletelyOutside =
-            psOptions->adfSrcWin[0] + psOptions->adfSrcWin[2] <= 0 ||
-            psOptions->adfSrcWin[1] + psOptions->adfSrcWin[3] <= 0 ||
-            psOptions->adfSrcWin[0] >= poSrcDS->GetRasterXSize() ||
-            psOptions->adfSrcWin[1] >= poSrcDS->GetRasterYSize();
+            psOptions->srcWin.dfXOff + psOptions->srcWin.dfXSize <= 0 ||
+            psOptions->srcWin.dfYOff + psOptions->srcWin.dfYSize <= 0 ||
+            psOptions->srcWin.dfXOff >= poSrcDS->GetRasterXSize() ||
+            psOptions->srcWin.dfYOff >= poSrcDS->GetRasterYSize();
         const bool bIsError =
             psOptions->bErrorOnPartiallyOutside ||
             (bCompletelyOutside && psOptions->bErrorOnCompletelyOutside);
@@ -1075,8 +1083,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                       psOptions->dfLRX != 0.0 || psOptions->dfLRY != 0.0)
                          ? "Computed "
                          : "",
-                     psOptions->adfSrcWin[0], psOptions->adfSrcWin[1],
-                     psOptions->adfSrcWin[2], psOptions->adfSrcWin[3],
+                     psOptions->srcWin.dfXOff, psOptions->srcWin.dfYOff,
+                     psOptions->srcWin.dfXSize, psOptions->srcWin.dfYSize,
                      bCompletelyOutside ? "completely" : "partially",
                      bIsError ? "" : " Going on however.");
         }
@@ -1200,9 +1208,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         psOptions->nOYSizePixel == 0 && psOptions->dfOYSizePct == 0.0 &&
         psOptions->dfXRes == 0.0;
     const bool bSpatialArrangementPreserved =
-        psOptions->adfSrcWin[0] == 0 && psOptions->adfSrcWin[1] == 0 &&
-        psOptions->adfSrcWin[2] == poSrcDS->GetRasterXSize() &&
-        psOptions->adfSrcWin[3] == poSrcDS->GetRasterYSize() && bKeepResolution;
+        psOptions->srcWin.dfXOff == 0 && psOptions->srcWin.dfYOff == 0 &&
+        psOptions->srcWin.dfXSize == poSrcDS->GetRasterXSize() &&
+        psOptions->srcWin.dfYSize == poSrcDS->GetRasterYSize() &&
+        bKeepResolution;
 
     if (psOptions->eOutputType == GDT_Unknown &&
         psOptions->asScaleParams.empty() && psOptions->adfExponent.empty() &&
@@ -1306,10 +1315,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             GDALTranslateOptionsFree(psOptions);
             return nullptr;
         }
-        const double dfOXSize = psOptions->adfSrcWin[2] / psOptions->dfXRes *
+        const double dfOXSize = psOptions->srcWin.dfXSize / psOptions->dfXRes *
                                     adfSrcGeoTransform[1] +
                                 0.5;
-        const double dfOYSize = psOptions->adfSrcWin[3] / psOptions->dfYRes *
+        const double dfOYSize = psOptions->srcWin.dfYSize / psOptions->dfYRes *
                                     fabs(adfSrcGeoTransform[5]) +
                                 0.5;
         if (dfOXSize < 1 || !GDALIsValueInRange<int>(dfOXSize) ||
@@ -1325,8 +1334,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     }
     else if (!bOutsizeExplicitlySet)
     {
-        double dfOXSize = ceil(psOptions->adfSrcWin[2] - 0.001);
-        double dfOYSize = ceil(psOptions->adfSrcWin[3] - 0.001);
+        double dfOXSize = ceil(psOptions->srcWin.dfXSize - 0.001);
+        double dfOYSize = ceil(psOptions->srcWin.dfYSize - 0.001);
         if (dfOXSize < 1 || !GDALIsValueInRange<int>(dfOXSize) ||
             dfOYSize < 1 || !GDALIsValueInRange<int>(dfOXSize))
         {
@@ -1347,7 +1356,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             else
             {
                 const double dfOXSize =
-                    psOptions->dfOXSizePct / 100 * psOptions->adfSrcWin[2];
+                    psOptions->dfOXSizePct / 100 * psOptions->srcWin.dfXSize;
                 if (dfOXSize < 1 || !GDALIsValueInRange<int>(dfOXSize))
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
@@ -1366,7 +1375,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             else
             {
                 const double dfOYSize =
-                    psOptions->dfOYSizePct / 100 * psOptions->adfSrcWin[3];
+                    psOptions->dfOYSizePct / 100 * psOptions->srcWin.dfYSize;
                 if (dfOYSize < 1 || !GDALIsValueInRange<int>(dfOYSize))
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
@@ -1381,8 +1390,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         if (psOptions->nOXSizePixel == 0 && psOptions->dfOXSizePct == 0.0)
         {
             const double dfOXSize = static_cast<double>(nOYSize) *
-                                        psOptions->adfSrcWin[2] /
-                                        psOptions->adfSrcWin[3] +
+                                        psOptions->srcWin.dfXSize /
+                                        psOptions->srcWin.dfYSize +
                                     0.5;
             if (dfOXSize < 1 || !GDALIsValueInRange<int>(dfOXSize))
             {
@@ -1396,8 +1405,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         else if (psOptions->nOYSizePixel == 0 && psOptions->dfOYSizePct == 0.0)
         {
             const double dfOYSize = static_cast<double>(nOXSize) *
-                                        psOptions->adfSrcWin[3] /
-                                        psOptions->adfSrcWin[2] +
+                                        psOptions->srcWin.dfYSize /
+                                        psOptions->srcWin.dfXSize +
                                     0.5;
             if (dfOYSize < 1 || !GDALIsValueInRange<int>(dfOYSize))
             {
@@ -1597,18 +1606,18 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         bHasDstGeoTransform = true;
         memcpy(adfDstGeoTransform, adfSrcGeoTransform, 6 * sizeof(double));
         adfDstGeoTransform[0] +=
-            psOptions->adfSrcWin[0] * adfDstGeoTransform[1] +
-            psOptions->adfSrcWin[1] * adfDstGeoTransform[2];
+            psOptions->srcWin.dfXOff * adfDstGeoTransform[1] +
+            psOptions->srcWin.dfYOff * adfDstGeoTransform[2];
         adfDstGeoTransform[3] +=
-            psOptions->adfSrcWin[0] * adfDstGeoTransform[4] +
-            psOptions->adfSrcWin[1] * adfDstGeoTransform[5];
+            psOptions->srcWin.dfXOff * adfDstGeoTransform[4] +
+            psOptions->srcWin.dfYOff * adfDstGeoTransform[5];
 
         const double dfX = static_cast<double>(nOXSize);
         const double dfY = static_cast<double>(nOYSize);
-        adfDstGeoTransform[1] *= psOptions->adfSrcWin[2] / dfX;
-        adfDstGeoTransform[2] *= psOptions->adfSrcWin[3] / dfY;
-        adfDstGeoTransform[4] *= psOptions->adfSrcWin[2] / dfX;
-        adfDstGeoTransform[5] *= psOptions->adfSrcWin[3] / dfY;
+        adfDstGeoTransform[1] *= psOptions->srcWin.dfXSize / dfX;
+        adfDstGeoTransform[2] *= psOptions->srcWin.dfYSize / dfY;
+        adfDstGeoTransform[4] *= psOptions->srcWin.dfXSize / dfX;
+        adfDstGeoTransform[5] *= psOptions->srcWin.dfYSize / dfY;
 
         if (psOptions->dfXRes != 0.0)
         {
@@ -1652,12 +1661,12 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
 
         for (int i = 0; i < nGCPs; i++)
         {
-            pasGCPs[i].dfGCPPixel -= psOptions->adfSrcWin[0];
-            pasGCPs[i].dfGCPLine -= psOptions->adfSrcWin[1];
+            pasGCPs[i].dfGCPPixel -= psOptions->srcWin.dfXOff;
+            pasGCPs[i].dfGCPLine -= psOptions->srcWin.dfYOff;
             pasGCPs[i].dfGCPPixel *=
-                nOXSize / static_cast<double>(psOptions->adfSrcWin[2]);
+                nOXSize / static_cast<double>(psOptions->srcWin.dfXSize);
             pasGCPs[i].dfGCPLine *=
-                nOYSize / static_cast<double>(psOptions->adfSrcWin[3]);
+                nOYSize / static_cast<double>(psOptions->srcWin.dfYSize);
         }
 
         poVDS->SetGCPs(nGCPs, pasGCPs, poSrcDSOri->GetGCPSpatialRef());
@@ -1670,8 +1679,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /*      To make the VRT to look less awkward (but this is optional      */
     /*      in fact), avoid negative values.                                */
     /* -------------------------------------------------------------------- */
-    std::array<double, 4> adfDstWin = {0.0, 0.0, static_cast<double>(nOXSize),
-                                       static_cast<double>(nOYSize)};
+    GDALTranslateOptions::PixelLineWindow dstWin{
+        0.0, 0.0, static_cast<double>(nOXSize), static_cast<double>(nOYSize)};
 
     // When specifying -tr with non-nearest resampling, make sure that the
     // size of target window precisely matches the requested resolution, to
@@ -1680,13 +1689,13 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         psOptions->dfXRes != 0.0 && !psOptions->osResampling.empty() &&
         !EQUALN(psOptions->osResampling.c_str(), "NEAR", 4))
     {
-        adfDstWin[2] = psOptions->adfSrcWin[2] * adfSrcGeoTransform[1] /
-                       adfDstGeoTransform[1];
-        adfDstWin[3] = psOptions->adfSrcWin[3] *
-                       fabs(adfSrcGeoTransform[5] / adfDstGeoTransform[5]);
+        dstWin.dfXSize = psOptions->srcWin.dfXSize * adfSrcGeoTransform[1] /
+                         adfDstGeoTransform[1];
+        dstWin.dfYSize = psOptions->srcWin.dfYSize *
+                         fabs(adfSrcGeoTransform[5] / adfDstGeoTransform[5]);
     }
 
-    const std::array<double, 4> adfSrcWinOri(psOptions->adfSrcWin);
+    GDALTranslateOptions::PixelLineWindow srcWinOri(psOptions->srcWin);
     const double dfRatioX =
         poSrcDS->GetRasterXSize() == 0
             ? 1.0
@@ -1697,11 +1706,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             ? 1.0
             : static_cast<double>(poSrcDSOri->GetRasterYSize()) /
                   poSrcDS->GetRasterYSize();
-    psOptions->adfSrcWin[0] /= dfRatioX;
-    psOptions->adfSrcWin[1] /= dfRatioY;
-    psOptions->adfSrcWin[2] /= dfRatioX;
-    psOptions->adfSrcWin[3] /= dfRatioY;
-    FixSrcDstWindow(psOptions->adfSrcWin, adfDstWin, poSrcDS->GetRasterXSize(),
+    psOptions->srcWin.dfXOff /= dfRatioX;
+    psOptions->srcWin.dfYOff /= dfRatioY;
+    psOptions->srcWin.dfXSize /= dfRatioX;
+    psOptions->srcWin.dfYSize /= dfRatioY;
+    FixSrcDstWindow(psOptions->srcWin, dstWin, poSrcDS->GetRasterXSize(),
                     poSrcDS->GetRasterYSize());
 
     /* -------------------------------------------------------------------- */
@@ -1729,9 +1738,9 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     }
 
     // Remove NITF_BLOCKA_ stuff if georeferencing is changed
-    if (!(psOptions->adfSrcWin[0] == 0 && psOptions->adfSrcWin[1] == 0 &&
-          psOptions->adfSrcWin[2] == poSrcDS->GetRasterXSize() &&
-          psOptions->adfSrcWin[3] == poSrcDS->GetRasterYSize() &&
+    if (!(psOptions->srcWin.dfXOff == 0 && psOptions->srcWin.dfYOff == 0 &&
+          psOptions->srcWin.dfXSize == poSrcDS->GetRasterXSize() &&
+          psOptions->srcWin.dfYSize == poSrcDS->GetRasterYSize() &&
           psOptions->nGCPCount == 0 && !bGotBounds && !bGotGeoTransform))
     {
         char **papszIter = papszMetadata;
@@ -1862,11 +1871,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             double dfLINE_SCALE =
                 CPLAtof(CSLFetchNameValueDef(papszMD, "LINE_SCALE", "1"));
 
-            dfSAMP_OFF -= adfSrcWinOri[0];
-            dfLINE_OFF -= adfSrcWinOri[1];
+            dfSAMP_OFF -= srcWinOri.dfXOff;
+            dfLINE_OFF -= srcWinOri.dfYOff;
 
-            const double df2 = adfSrcWinOri[2];
-            const double df3 = adfSrcWinOri[3];
+            const double df2 = srcWinOri.dfXSize;
+            const double df3 = srcWinOri.dfYSize;
             const double dfXRatio = nOXSize / df2;
             const double dfYRatio = nOYSize / df3;
 
@@ -2136,8 +2145,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         int nSrcBlockXSize, nSrcBlockYSize;
         poSrcBand->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
         if (bKeepResolution &&
-            (fmod(psOptions->adfSrcWin[0], nSrcBlockXSize)) == 0 &&
-            (fmod(psOptions->adfSrcWin[1], nSrcBlockYSize)) == 0)
+            (fmod(psOptions->srcWin.dfXOff, nSrcBlockXSize)) == 0 &&
+            (fmod(psOptions->srcWin.dfYOff, nSrcBlockYSize)) == 0)
         {
             aosAddBandOptions.SetNameValue("BLOCKXSIZE",
                                            CPLSPrintf("%d", nSrcBlockXSize));
@@ -2159,9 +2168,9 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         if (nSrcBand < 0)
         {
             poVRTBand->AddMaskBandSource(
-                poSrcBand, psOptions->adfSrcWin[0], psOptions->adfSrcWin[1],
-                psOptions->adfSrcWin[2], psOptions->adfSrcWin[3], adfDstWin[0],
-                adfDstWin[1], adfDstWin[2], adfDstWin[3]);
+                poSrcBand, psOptions->srcWin.dfXOff, psOptions->srcWin.dfYOff,
+                psOptions->srcWin.dfXSize, psOptions->srcWin.dfYSize,
+                dstWin.dfXOff, dstWin.dfYOff, dstWin.dfXSize, dstWin.dfYSize);
 
             // Color interpretation override
             if (!psOptions->anColorInterp.empty())
@@ -2420,10 +2429,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                                           ? nullptr
                                           : psOptions->osResampling.c_str());
         poVRTBand->ConfigureSource(
-            poSimpleSource, poSrcBand, FALSE, psOptions->adfSrcWin[0],
-            psOptions->adfSrcWin[1], psOptions->adfSrcWin[2],
-            psOptions->adfSrcWin[3], adfDstWin[0], adfDstWin[1], adfDstWin[2],
-            adfDstWin[3]);
+            poSimpleSource, poSrcBand, FALSE, psOptions->srcWin.dfXOff,
+            psOptions->srcWin.dfYOff, psOptions->srcWin.dfXSize,
+            psOptions->srcWin.dfYSize, dstWin.dfXOff, dstWin.dfYOff,
+            dstWin.dfXSize, dstWin.dfYSize);
 
         poVRTBand->AddSource(poSimpleSource);
 
@@ -2586,9 +2595,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                     cpl::down_cast<VRTSourcedRasterBand *>(
                         poVRTBand->GetMaskBand());
                 hMaskVRTBand->AddMaskBandSource(
-                    poSrcBand, psOptions->adfSrcWin[0], psOptions->adfSrcWin[1],
-                    psOptions->adfSrcWin[2], psOptions->adfSrcWin[3],
-                    adfDstWin[0], adfDstWin[1], adfDstWin[2], adfDstWin[3]);
+                    poSrcBand, psOptions->srcWin.dfXOff,
+                    psOptions->srcWin.dfYOff, psOptions->srcWin.dfXSize,
+                    psOptions->srcWin.dfYSize, dstWin.dfXOff, dstWin.dfYOff,
+                    dstWin.dfXSize, dstWin.dfYSize);
             }
         }
     }
@@ -2604,14 +2614,16 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                     GDALGetRasterBand(static_cast<GDALDataset *>(poVDS), 1)));
             if (psOptions->nMaskBand > 0)
                 hMaskVRTBand->AddSimpleSource(
-                    poSrcBand, psOptions->adfSrcWin[0], psOptions->adfSrcWin[1],
-                    psOptions->adfSrcWin[2], psOptions->adfSrcWin[3],
-                    adfDstWin[0], adfDstWin[1], adfDstWin[2], adfDstWin[3]);
+                    poSrcBand, psOptions->srcWin.dfXOff,
+                    psOptions->srcWin.dfYOff, psOptions->srcWin.dfXSize,
+                    psOptions->srcWin.dfYSize, dstWin.dfXOff, dstWin.dfYOff,
+                    dstWin.dfXSize, dstWin.dfYSize);
             else
                 hMaskVRTBand->AddMaskBandSource(
-                    poSrcBand, psOptions->adfSrcWin[0], psOptions->adfSrcWin[1],
-                    psOptions->adfSrcWin[2], psOptions->adfSrcWin[3],
-                    adfDstWin[0], adfDstWin[1], adfDstWin[2], adfDstWin[3]);
+                    poSrcBand, psOptions->srcWin.dfXOff,
+                    psOptions->srcWin.dfYOff, psOptions->srcWin.dfXSize,
+                    psOptions->srcWin.dfYSize, dstWin.dfXOff, dstWin.dfYOff,
+                    dstWin.dfXSize, dstWin.dfYSize);
         }
     }
     else if (psOptions->eMaskMode == MASK_AUTO && nSrcBandCount > 0 &&
@@ -2623,10 +2635,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 static_cast<VRTSourcedRasterBand *>(GDALGetMaskBand(
                     GDALGetRasterBand(static_cast<GDALDataset *>(poVDS), 1)));
             hMaskVRTBand->AddMaskBandSource(
-                poSrcDS->GetRasterBand(1), psOptions->adfSrcWin[0],
-                psOptions->adfSrcWin[1], psOptions->adfSrcWin[2],
-                psOptions->adfSrcWin[3], adfDstWin[0], adfDstWin[1],
-                adfDstWin[2], adfDstWin[3]);
+                poSrcDS->GetRasterBand(1), psOptions->srcWin.dfXOff,
+                psOptions->srcWin.dfYOff, psOptions->srcWin.dfXSize,
+                psOptions->srcWin.dfYSize, dstWin.dfXOff, dstWin.dfYOff,
+                dstWin.dfXSize, dstWin.dfYSize);
         }
     }
 
@@ -3574,8 +3586,10 @@ GDALTranslateOptionsNew(char **papszArgv,
 
         if (auto adfSrcWin = argParser->present<std::vector<double>>("-srcwin"))
         {
-            for (int i = 0; i < 4; ++i)
-                psOptions->adfSrcWin[i] = (*adfSrcWin)[i];
+            psOptions->srcWin.dfXOff = (*adfSrcWin)[0];
+            psOptions->srcWin.dfYOff = (*adfSrcWin)[1];
+            psOptions->srcWin.dfXSize = (*adfSrcWin)[2];
+            psOptions->srcWin.dfYSize = (*adfSrcWin)[3];
         }
 
         if (auto adfProjWin =
