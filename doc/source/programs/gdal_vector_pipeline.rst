@@ -18,8 +18,8 @@ Synopsis
 .. program-output:: gdal vector pipeline --help-doc=main
 
 A pipeline chains several steps, separated with the `!` (quotation mark) character.
-The first step must be ``read``, and the last one ``write``. Each step has its
-own positional or non-positional arguments. Apart from ``read`` and ``write``,
+The first step must be ``read`` or ``concat``, and the last one ``write``. Each step has its
+own positional or non-positional arguments. Apart from ``read``, ``concat`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:
@@ -27,6 +27,12 @@ Potential steps are:
 * read
 
 .. program-output:: gdal vector pipeline --help-doc=read
+
+* concat
+
+.. program-output:: gdal vector pipeline --help-doc=concat
+
+Details for options can be found in :ref:`gdal_vector_concat_subcommand`.
 
 * clip
 
@@ -127,3 +133,10 @@ Examples
 
         $ gdal vector pipeline --progress ! read in.gpkg ! reproject --dst-crs=EPSG:32632 ! write in_epsg_32632.gdalg.json --overwrite
         $ gdal vector info in_epsg_32632.gdalg.json
+
+.. example:: Union 2 source shapefiles (with similar structure), reproject them to EPSG:32632, keep only cities larger than 1 million inhabitants and write to a GeoPackage
+   :title:
+
+   .. code-block:: bash
+
+        $ gdal vector pipeline --progress ! concat --single --dst-crs=EPSG:32632 france.shp belgium.shp ! filter --where "pop > 1e6" ! write out.gpkg --overwrite

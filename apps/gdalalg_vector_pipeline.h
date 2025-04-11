@@ -38,6 +38,7 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 
     friend class GDALVectorPipelineAlgorithm;
     friend class GDALAbstractPipelineAlgorithm<GDALVectorPipelineStepAlgorithm>;
+    friend class GDALVectorConcatAlgorithm;
 
     virtual bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
 
@@ -49,7 +50,7 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     bool m_outputVRTCompatible = false;
 
     // Input arguments
-    GDALArgDatasetValue m_inputDataset{};
+    std::vector<GDALArgDatasetValue> m_inputDataset{};
     std::vector<std::string> m_openOptions{};
     std::vector<std::string> m_inputFormats{};
     std::vector<std::string> m_inputLayerNames{};

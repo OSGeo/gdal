@@ -336,7 +336,8 @@ class CPL_DLL GDALArgDatasetValue final
     GDALArgDatasetValue() = default;
 
     /** Constructor by dataset name. */
-    explicit GDALArgDatasetValue(const std::string &name) : m_name(name)
+    explicit GDALArgDatasetValue(const std::string &name)
+        : m_name(name), m_nameSet(true)
     {
     }
 
@@ -2130,8 +2131,11 @@ class CPL_DLL GDALAlgorithmRegistry
         bool isPipelineStep;
         /** Maximum width of the names of the options */
         size_t maxOptLen;
+        /** Whether this is a pipeline main */
+        bool isPipelineMain;
 
-        UsageOptions() : isPipelineStep(false), maxOptLen(0)
+        UsageOptions()
+            : isPipelineStep(false), maxOptLen(0), isPipelineMain(false)
         {
         }
     };
@@ -2485,6 +2489,10 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Return the list of arguments for CLI usage */
     std::pair<std::vector<std::pair<GDALAlgorithmArg *, std::string>>, size_t>
     GetArgNamesForCLI() const;
+
+    //! @cond Doxygen_Suppress
+    std::string GetUsageForCLIEnd() const;
+    //! @endcond
 
   private:
     const std::string m_name{};

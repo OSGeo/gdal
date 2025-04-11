@@ -23,6 +23,8 @@ Description
 :program:`gdal vector reproject` can be used to reproject a vector dataset.
 The program can reproject to any supported projection.
 
+This command can also be used as a step of :ref:`gdal_vector_pipeline_subcommand`.
+
 Standard options
 ++++++++++++++++
 
