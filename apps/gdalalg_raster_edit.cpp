@@ -55,6 +55,8 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
 
     AddBBOXArg(&m_bbox);
 
+    AddNodataDataTypeArg(&m_nodata, /* noneAllowed = */ true);
+
     {
         auto &arg = AddArg("metadata", 0, _("Add/update dataset metadata item"),
                            &m_metadata)
@@ -142,6 +144,18 @@ bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 ReportError(CE_Failure, CPLE_AppDefined,
                             "Setting extent failed");
                 return false;
+            }
+        }
+
+        if (!m_nodata.empty())
+        {
+            for (int i = 0; i < poDS->GetRasterCount(); ++i)
+            {
+                if (EQUAL(m_nodata.c_str(), "none"))
+                    poDS->GetRasterBand(i + 1)->DeleteNoDataValue();
+                else
+                    poDS->GetRasterBand(i + 1)->SetNoDataValue(
+                        CPLAtof(m_nodata.c_str()));
             }
         }
 
@@ -262,6 +276,12 @@ bool GDALRasterEditAlgorithm::RunStep(GDALProgressFunc, void *)
     {
         aosOptions.AddString("-mo");
         aosOptions.AddString((key + "=").c_str());
+    }
+
+    if (!m_nodata.empty())
+    {
+        aosOptions.AddString("-a_nodata");
+        aosOptions.AddString(m_nodata);
     }
 
     GDALTranslateOptions *psOptions =

@@ -3516,7 +3516,7 @@ GDALTranslateOptionsNew(char **papszArgv,
         {
             ++i;
             const std::string s = papszArgv[i];
-            if (EQUAL(s.c_str(), "none"))
+            if (EQUAL(s.c_str(), "none") || EQUAL(s.c_str(), "null"))
             {
                 psOptions->bUnsetNoData = true;
             }

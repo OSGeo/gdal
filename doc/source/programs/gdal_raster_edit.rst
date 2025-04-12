@@ -53,6 +53,12 @@ This subcommand is also available as a potential step of :ref:`gdal_raster_pipel
     'x' is longitude values for geographic CRS and easting for projected CRS.
     'y' is latitude values for geographic CRS and northing for projected CRS.
 
+.. option:: --nodata <value>
+
+    Override nodata value.
+
+    ``null`` or ``none`` can be specified to unset an existing nodata value.
+
 .. option:: --metadata <KEY>=<VALUE>
 
     Add/update metadata item, at the dataset level.

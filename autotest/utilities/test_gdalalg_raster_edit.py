@@ -102,6 +102,52 @@ def test_gdalalg_raster_edit_bbox_invalid(tmp_vsimem):
         )
 
 
+def test_gdalalg_raster_edit_nodata(tmp_vsimem):
+
+    tmp_filename = str(tmp_vsimem / "tmp.tif")
+    gdal.FileFromMemBuffer(tmp_filename, open("../gcore/data/byte.tif", "rb").read())
+
+    alg = get_edit_alg()
+    assert alg.ParseRunAndFinalize(
+        [
+            "--nodata=100",
+            tmp_filename,
+        ]
+    )
+
+    with gdal.OpenEx(tmp_filename) as ds:
+        assert ds.GetRasterBand(1).GetNoDataValue() == 100
+
+    alg = get_edit_alg()
+    assert alg.ParseRunAndFinalize(
+        [
+            "--nodata=none",
+            tmp_filename,
+        ]
+    )
+
+    with gdal.OpenEx(tmp_filename) as ds:
+        assert ds.GetRasterBand(1).GetNoDataValue() is None
+
+
+def test_gdalalg_raster_edit_nodata_invalid(tmp_vsimem):
+
+    tmp_filename = str(tmp_vsimem / "tmp.tif")
+    gdal.FileFromMemBuffer(tmp_filename, open("../gcore/data/byte.tif", "rb").read())
+
+    alg = get_edit_alg()
+    with pytest.raises(
+        Exception,
+        match="Value of 'nodata' should be 'none', a numeric value, 'nan', 'inf' or '-inf'",
+    ):
+        alg.ParseRunAndFinalize(
+            [
+                "--nodata=invalid",
+                tmp_filename,
+            ]
+        )
+
+
 def test_gdalalg_raster_edit_metadata(tmp_vsimem):
 
     tmp_filename = str(tmp_vsimem / "tmp.tif")
@@ -259,6 +305,48 @@ def test_gdalalg_raster_pipeline_edit_bbox(tmp_vsimem):
 
     with gdal.OpenEx(out_filename) as ds:
         assert ds.GetGeoTransform() == pytest.approx((1.0, 0.45, 0.0, 200.0, 0.0, -9.9))
+
+
+def test_gdalalg_raster_pipeline_edit_nodata(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "tmp.tif")
+    gdal.FileFromMemBuffer(out_filename, open("../gcore/data/byte.tif", "rb").read())
+
+    pipeline = get_pipeline_alg()
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            "../gcore/data/byte.tif",
+            "!",
+            "edit",
+            "--nodata=100",
+            "!",
+            "write",
+            "--overwrite",
+            out_filename,
+        ]
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRasterBand(1).GetNoDataValue() == 100
+
+    pipeline = get_pipeline_alg()
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            "../gcore/data/byte.tif",
+            "!",
+            "edit",
+            "--nodata=none",
+            "!",
+            "write",
+            "--overwrite",
+            out_filename,
+        ]
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRasterBand(1).GetNoDataValue() is None
 
 
 def test_gdalalg_raster_pipeline_edit_metadata(tmp_vsimem):
