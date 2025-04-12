@@ -3502,8 +3502,8 @@ TEST_F(test_gdal_algorithm, raster_edit_failures_dataset_0_0)
     CPLErrorReset();
     EXPECT_FALSE(edit->Run());
     EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
-    EXPECT_STREQ(CPLGetLastErrorMsg(),
-                 "edit: Cannot set extent because dataset has 0x0 dimension");
+    EXPECT_STREQ(CPLGetLastErrorMsg(), "edit: Cannot set extent because one of "
+                                       "dataset height or width is null");
 }
 
 TEST_F(test_gdal_algorithm, raster_edit_failures_set_spatial_ref_none)

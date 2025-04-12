@@ -21,6 +21,7 @@ add_library(
   gdalalg_raster_clip.cpp
   gdalalg_raster_color_map.cpp
   gdalalg_raster_convert.cpp
+  gdalalg_raster_create.cpp
   gdalalg_raster_edit.cpp
   gdalalg_raster_contour.cpp
   gdalalg_raster_hillshade.cpp

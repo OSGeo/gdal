@@ -26,6 +26,7 @@ Available sub-commands
 - :ref:`gdal_raster_clip_subcommand`
 - :ref:`gdal_raster_color_map_subcommand`
 - :ref:`gdal_raster_convert_subcommand`
+- :ref:`gdal_raster_create_subcommand`
 - :ref:`gdal_raster_hillshade_subcommand`
 - :ref:`gdal_raster_mosaic_subcommand`
 - :ref:`gdal_raster_overview_subcommand`

@@ -127,9 +127,9 @@ bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         {
             if (poDS->GetRasterXSize() == 0 || poDS->GetRasterYSize() == 0)
             {
-                ReportError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Cannot set extent because dataset has 0x0 dimension");
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Cannot set extent because one of dataset height "
+                            "or width is null");
                 return false;
             }
             double adfGT[6];

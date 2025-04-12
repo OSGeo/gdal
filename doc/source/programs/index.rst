@@ -43,6 +43,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_color_map
    gdal_raster_contour
    gdal_raster_convert
+   gdal_raster_create
    gdal_raster_edit
    gdal_raster_hillshade
    gdal_raster_mosaic
@@ -101,6 +102,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_color_map_subcommand`: Generate a RGB or RGBA dataset from a single band, using a color map
     - :ref:`gdal_raster_convert_subcommand`: Convert a raster dataset
     - :ref:`gdal_raster_contour_subcommand`: Builds vector contour lines from a raster elevation model
+    - :ref:`gdal_raster_create_subcommand`: Create a new raster dataset
     - :ref:`gdal_raster_edit_subcommand`: Edit in place a raster dataset
     - :ref:`gdal_raster_hillshade_subcommand`: Generate a shaded relief map
     - :ref:`gdal_raster_mosaic_subcommand`: Build a mosaic, either virtual (VRT) or materialized.
