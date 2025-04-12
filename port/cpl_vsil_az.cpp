@@ -766,33 +766,43 @@ int VSIAzureFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
         return nRet;
     }
 
-    if (osFilename.find('/', GetFSPrefix().size()) == std::string::npos)
+    if (osFilename.size() > GetFSPrefix().size() &&
+        osFilename.find('/', GetFSPrefix().size()) == std::string::npos)
     {
         osFilename += "/";
     }
 
-    if (osFilename.size() > GetFSPrefix().size())
+    // Special case for container
+    std::string osFilenameWithoutEndSlash(osFilename);
+    if (osFilename.size() > GetFSPrefix().size() &&
+        osFilenameWithoutEndSlash.back() == '/')
+        osFilenameWithoutEndSlash.pop_back();
+    if (osFilenameWithoutEndSlash.find('/', GetFSPrefix().size()) ==
+        std::string::npos)
     {
-        // Special case for container
-        std::string osFilenameWithoutEndSlash(osFilename);
-        if (osFilenameWithoutEndSlash.back() == '/')
-            osFilenameWithoutEndSlash.resize(osFilenameWithoutEndSlash.size() -
-                                             1);
-        if (osFilenameWithoutEndSlash.find('/', GetFSPrefix().size()) ==
-            std::string::npos)
+        char **papszFileList = ReadDir(GetFSPrefix().c_str());
+        if (osFilename.size() == GetFSPrefix().size())
         {
-            char **papszFileList = ReadDir(GetFSPrefix().c_str());
-            const int nIdx = CSLFindString(
-                papszFileList,
-                osFilenameWithoutEndSlash.substr(GetFSPrefix().size()).c_str());
             CSLDestroy(papszFileList);
-            if (nIdx >= 0)
+            if (papszFileList)
             {
                 pStatBuf->st_mtime = 0;
                 pStatBuf->st_size = 0;
                 pStatBuf->st_mode = S_IFDIR;
                 return 0;
             }
+            return -1;
+        }
+        const int nIdx = CSLFindString(
+            papszFileList,
+            osFilenameWithoutEndSlash.substr(GetFSPrefix().size()).c_str());
+        CSLDestroy(papszFileList);
+        if (nIdx >= 0)
+        {
+            pStatBuf->st_mtime = 0;
+            pStatBuf->st_size = 0;
+            pStatBuf->st_mode = S_IFDIR;
+            return 0;
         }
     }
 
