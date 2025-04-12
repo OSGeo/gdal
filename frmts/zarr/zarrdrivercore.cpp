@@ -75,6 +75,7 @@ void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
         "Float16 Float32 Float64 CFLoat16 CFloat32 CFloat64");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_SUBDATASETS, "YES");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,

@@ -79,6 +79,7 @@ void NITFDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/nitf.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "ntf");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
                               "Byte UInt16 Int16 UInt32 Int32 Float32");
 

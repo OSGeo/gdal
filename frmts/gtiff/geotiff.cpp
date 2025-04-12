@@ -1495,6 +1495,7 @@ void GDALRegister_GTiff()
         "   </Option>"
         "</OpenOptionList>");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");

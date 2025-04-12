@@ -514,6 +514,13 @@ typedef enum
  */
 #define GDAL_DMD_SUBDATASETS "DMD_SUBDATASETS"
 
+/** Capability set by a driver that can create subdatasets with the
+ * APPEND_SUBDATASET=YES creation option.
+ *
+ * @since 3.11
+ */
+#define GDAL_DCAP_CREATE_SUBDATASETS "DCAP_CREATE_SUBDATASETS"
+
 /** Capability set by a vector driver that supports field width and precision.
  *
  * This capability reflects that a vector driver includes the decimal separator
