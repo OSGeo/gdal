@@ -1128,7 +1128,19 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /*      This is needed for                                              */
     /*      gdal_translate foo.tif foo.tif.ovr -outsize 50% 50%             */
     /* -------------------------------------------------------------------- */
-    if (!psOptions->aosCreateOptions.FetchBool("APPEND_SUBDATASET", false))
+    if (psOptions->aosCreateOptions.FetchBool("APPEND_SUBDATASET", false))
+    {
+        if (GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE_SUBDATASETS,
+                                nullptr) == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Subdataset creation not supported for driver %s",
+                     GDALGetDescription(hDriver));
+            GDALTranslateOptionsFree(psOptions);
+            return nullptr;
+        }
+    }
+    else
     {
         if (!EQUAL(psOptions->osFormat.c_str(), "VRT"))
         {
