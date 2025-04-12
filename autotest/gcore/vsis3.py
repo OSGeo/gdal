@@ -1951,6 +1951,101 @@ def test_vsis3_opendir_synthetize_missing_directory(aws_test_config, webserver_p
 
 
 ###############################################################################
+# Test OpenDir() with a fake AWS server on /vsis3/ root
+
+
+def test_vsis3_opendir_from_prefix(aws_test_config, webserver_port):
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <ListAllMyBucketsResult>
+        <Buckets>
+            <Bucket>
+                <Name>bucket1</Name>
+            </Bucket>
+            <Bucket>
+                <Name>bucket2</Name>
+            </Bucket>
+        </Buckets>
+        </ListAllMyBucketsResult>
+        """,
+    )
+    handler.add(
+        "GET",
+        "/bucket1/",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix/>
+                <Marker/>
+                <Contents>
+                    <Key>test1.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>40</Size>
+                </Contents>
+                <Contents>
+                    <Key>test2.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>40</Size>
+                </Contents>
+            </ListBucketResult>
+        """,
+    )
+    handler.add(
+        "GET",
+        "/bucket2/",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix/>
+                <Marker/>
+                <Contents>
+                    <Key>test3.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>40</Size>
+                </Contents>
+            </ListBucketResult>
+        """,
+    )
+    with webserver.install_http_handler(handler):
+        d = gdal.OpenDir("/vsis3/")
+        assert d is not None
+        try:
+
+            entry = gdal.GetNextDirEntry(d)
+            assert entry.name == "bucket1"
+            assert entry.mode == 16384
+
+            entry = gdal.GetNextDirEntry(d)
+            assert entry.name == "bucket1/test1.txt"
+            assert entry.mode == 32768
+
+            entry = gdal.GetNextDirEntry(d)
+            assert entry.name == "bucket1/test2.txt"
+            assert entry.mode == 32768
+
+            entry = gdal.GetNextDirEntry(d)
+            assert entry.name == "bucket2"
+            assert entry.mode == 16384
+
+            entry = gdal.GetNextDirEntry(d)
+            assert entry.name == "bucket2/test3.txt"
+            assert entry.mode == 32768
+
+            assert gdal.GetNextDirEntry(d) is None
+
+        finally:
+            gdal.CloseDir(d)
+
+
+###############################################################################
 # Test simple PUT support with a fake AWS server
 
 
