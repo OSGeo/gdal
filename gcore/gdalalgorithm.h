@@ -152,6 +152,8 @@ bool CPL_DLL GDALAlgorithmArgGetRepeatedArgAllowed(GDALAlgorithmArgH);
 
 char CPL_DLL **GDALAlgorithmArgGetChoices(GDALAlgorithmArgH);
 
+char CPL_DLL **GDALAlgorithmArgGetMetadataItem(GDALAlgorithmArgH, const char *);
+
 bool CPL_DLL GDALAlgorithmArgIsExplicitlySet(GDALAlgorithmArgH);
 
 bool CPL_DLL GDALAlgorithmArgHasDefaultValue(GDALAlgorithmArgH);

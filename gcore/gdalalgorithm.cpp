@@ -2914,13 +2914,15 @@ GDALInConstructionAlgorithmArg &
 GDALAlgorithm::AddOutputDataTypeArg(std::string *pValue,
                                     const char *helpMessage)
 {
-    auto &arg = AddArg(GDAL_ARG_NAME_OUTPUT_DATA_TYPE, 0,
-                       MsgOrDefault(helpMessage, _("Output data type")), pValue)
-                    .AddAlias("ot")
-                    .AddAlias("datatype")
-                    .SetChoices("Byte", "Int8", "UInt16", "Int16", "UInt32",
-                                "Int32", "UInt64", "Int64", "CInt16", "CInt32",
-                                "Float32", "Float64", "CFloat32", "CFloat64");
+    auto &arg =
+        AddArg(GDAL_ARG_NAME_OUTPUT_DATA_TYPE, 0,
+               MsgOrDefault(helpMessage, _("Output data type")), pValue)
+            .AddAlias("ot")
+            .AddAlias("datatype")
+            .AddMetadataItem("type", {"GDALDataType"})
+            .SetChoices("Byte", "Int8", "UInt16", "Int16", "UInt32", "Int32",
+                        "UInt64", "Int64", "CInt16", "CInt32", "Float16",
+                        "Float32", "Float64", "CFloat32", "CFloat64");
     return arg;
 }
 
@@ -4909,6 +4911,28 @@ char **GDALAlgorithmArgGetChoices(GDALAlgorithmArgH hArg)
 {
     VALIDATE_POINTER1(hArg, __func__, nullptr);
     return CPLStringList(hArg->ptr->GetChoices()).StealList();
+}
+
+/************************************************************************/
+/*                  GDALAlgorithmArgGetMetadataItem()                   */
+/************************************************************************/
+
+/** Return the values of the metadate item of an argument.
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @param pszItem Name of the item. Must NOT be null.
+ * @return a NULL terminated list of values, which must be destroyed with
+ * CSLDestroy()
+
+ * @since 3.11
+ */
+char **GDALAlgorithmArgGetMetadataItem(GDALAlgorithmArgH hArg,
+                                       const char *pszItem)
+{
+    VALIDATE_POINTER1(hArg, __func__, nullptr);
+    VALIDATE_POINTER1(pszItem, __func__, nullptr);
+    const auto pVecOfStrings = hArg->ptr->GetMetadataItem(pszItem);
+    return pVecOfStrings ? CPLStringList(*pVecOfStrings).StealList() : nullptr;
 }
 
 /************************************************************************/
