@@ -4668,8 +4668,9 @@ bool CPL_DLL GDALBufferHasOnlyNoData(const void *pBuffer, double dfNoDataValue,
                                      int nBitsPerSample,
                                      GDALBufferSampleFormat nSampleFormat);
 
-void CPL_DLL GDALCopyNoDataValue(GDALRasterBand *poDstBand,
-                                 GDALRasterBand *poSrcBand);
+bool CPL_DLL GDALCopyNoDataValue(GDALRasterBand *poDstBand,
+                                 GDALRasterBand *poSrcBand,
+                                 bool *pbCannotBeExactlyRepresented = nullptr);
 
 double CPL_DLL GDALGetNoDataValueCastToDouble(int64_t nVal);
 double CPL_DLL GDALGetNoDataValueCastToDouble(uint64_t nVal);

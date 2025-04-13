@@ -5168,9 +5168,22 @@ double GDALAdjustNoDataCloseToFloatMax(double dfVal)
 /*                        GDALCopyNoDataValue()                         */
 /************************************************************************/
 
-void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
+/** Copy the nodata value from the source band to the target band if
+ * it can be exactly represented in the output data type.
+ *
+ * @param poDstBand Destination band.
+ * @param poSrcBand Source band band.
+ * @param[out] pbCannotBeExactlyRepresented Pointer to a boolean, or nullptr.
+ *             If the value cannot be exactly represented on the output data
+ *             type, *pbCannotBeExactlyRepresented will be set to true.
+ *
+ * @return true if the nodata value was successfully set.
+ */
+bool GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand,
+                         bool *pbCannotBeExactlyRepresented)
 {
-
+    if (pbCannotBeExactlyRepresented)
+        *pbCannotBeExactlyRepresented = false;
     int bSuccess;
     const auto eSrcDataType = poSrcBand->GetRasterDataType();
     const auto eDstDataType = poDstBand->GetRasterDataType();
@@ -5181,18 +5194,22 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
         {
             if (eDstDataType == GDT_Int64)
             {
-                poDstBand->SetNoDataValueAsInt64(nNoData);
+                return poDstBand->SetNoDataValueAsInt64(nNoData) == CE_None;
             }
             else if (eDstDataType == GDT_UInt64)
             {
                 if (nNoData >= 0)
-                    poDstBand->SetNoDataValueAsUInt64(
-                        static_cast<uint64_t>(nNoData));
+                {
+                    return poDstBand->SetNoDataValueAsUInt64(
+                               static_cast<uint64_t>(nNoData)) == CE_None;
+                }
             }
             else if (nNoData ==
                      static_cast<int64_t>(static_cast<double>(nNoData)))
             {
-                poDstBand->SetNoDataValue(static_cast<double>(nNoData));
+                const double dfValue = static_cast<double>(nNoData);
+                if (GDALIsValueExactAs(dfValue, eDstDataType))
+                    return poDstBand->SetNoDataValue(dfValue) == CE_None;
             }
         }
     }
@@ -5203,21 +5220,23 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
         {
             if (eDstDataType == GDT_UInt64)
             {
-                poDstBand->SetNoDataValueAsUInt64(nNoData);
+                return poDstBand->SetNoDataValueAsUInt64(nNoData) == CE_None;
             }
             else if (eDstDataType == GDT_Int64)
             {
                 if (nNoData <
                     static_cast<uint64_t>(cpl::NumericLimits<int64_t>::max()))
                 {
-                    poDstBand->SetNoDataValueAsInt64(
-                        static_cast<int64_t>(nNoData));
+                    return poDstBand->SetNoDataValueAsInt64(
+                               static_cast<int64_t>(nNoData)) == CE_None;
                 }
             }
             else if (nNoData ==
                      static_cast<uint64_t>(static_cast<double>(nNoData)))
             {
-                poDstBand->SetNoDataValue(static_cast<double>(nNoData));
+                const double dfValue = static_cast<double>(nNoData);
+                if (GDALIsValueExactAs(dfValue, eDstDataType))
+                    return poDstBand->SetNoDataValue(dfValue) == CE_None;
             }
         }
     }
@@ -5235,8 +5254,8 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
                     dfNoData ==
                         static_cast<double>(static_cast<int64_t>(dfNoData)))
                 {
-                    poDstBand->SetNoDataValueAsInt64(
-                        static_cast<int64_t>(dfNoData));
+                    return poDstBand->SetNoDataValueAsInt64(
+                               static_cast<int64_t>(dfNoData)) == CE_None;
                 }
             }
             else if (eDstDataType == GDT_UInt64)
@@ -5248,16 +5267,19 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
                     dfNoData ==
                         static_cast<double>(static_cast<uint64_t>(dfNoData)))
                 {
-                    poDstBand->SetNoDataValueAsInt64(
-                        static_cast<uint64_t>(dfNoData));
+                    return poDstBand->SetNoDataValueAsInt64(
+                               static_cast<uint64_t>(dfNoData)) == CE_None;
                 }
             }
             else
             {
-                poDstBand->SetNoDataValue(dfNoData);
+                return poDstBand->SetNoDataValue(dfNoData) == CE_None;
             }
         }
     }
+    if (pbCannotBeExactlyRepresented)
+        *pbCannotBeExactlyRepresented = true;
+    return false;
 }
 
 /************************************************************************/
