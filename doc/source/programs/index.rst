@@ -31,8 +31,6 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal
    gdal_info
    gdal_convert
-   gdal_fs
-   gdal_fs_ls
    gdal_mdim
    gdal_mdim_info
    gdal_mdim_convert
@@ -82,6 +80,8 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vector_reproject
    gdal_vector_select
    gdal_vector_sql
+   gdal_vfs
+   gdal_vfs_list
 
 .. only:: html
 
@@ -91,8 +91,6 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_program`: Main "gdal" entry point
     - :ref:`gdal_info_command`: Get information on a dataset
     - :ref:`gdal_convert_command`: Convert a dataset
-    - :ref:`gdal_fs_command`: Entry point for GDAL Virtual file system (VSI) commands
-    - :ref:`gdal_fs_ls_subcommand`: List files of one of the GDAL Virtual file systems (VSI)
     - :ref:`gdal_mdim_command`: Entry point for multidimensional commands
     - :ref:`gdal_mdim_info_subcommand`: Get information on a multidimensional dataset
     - :ref:`gdal_mdim_convert_subcommand`: Convert a multidimensional dataset
@@ -142,6 +140,8 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vector_select_subcommand`: Select a subset of fields from a vector dataset.
     - :ref:`gdal_vector_rasterize_subcommand`: Burns vector geometries into a raster
     - :ref:`gdal_vector_sql_subcommand`: Apply SQL statement(s) to a dataset
+    - :ref:`gdal_vfs_command`: Entry point for GDAL Virtual file system (VSI) commands
+    - :ref:`gdal_vfs_list_subcommand`: List files of one of the GDAL Virtual file systems (VSI)
 
 
 "Traditional" applications

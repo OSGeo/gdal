@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal fs' testing
+# Purpose:  'gdal vfs' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -17,10 +17,10 @@ from osgeo import gdal
 
 
 def get_alg():
-    return gdal.GetGlobalAlgorithmRegistry()["fs"]
+    return gdal.GetGlobalAlgorithmRegistry()["vfs"]
 
 
-def test_gdalalg_fs():
+def test_gdalalg_vfs():
 
     alg = get_alg()
     with pytest.raises(Exception):

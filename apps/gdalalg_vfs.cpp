@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "fs" subcommand
+ * Purpose:  gdal "vfs" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -12,23 +12,23 @@
 
 #include "gdalalgorithm.h"
 
-#include "gdalalg_fs_ls.h"
+#include "gdalalg_vfs_list.h"
 
 /************************************************************************/
-/*                           GDALFSAlgorithm                            */
+/*                           GDALVFSAlgorithm                           */
 /************************************************************************/
 
-class GDALFSAlgorithm final : public GDALAlgorithm
+class GDALVFSAlgorithm final : public GDALAlgorithm
 {
   public:
-    static constexpr const char *NAME = "fs";
+    static constexpr const char *NAME = "vfs";
     static constexpr const char *DESCRIPTION =
         "GDAL Virtual file system (VSI) commands.";
-    static constexpr const char *HELP_URL = "/programs/gdal_fs.html";
+    static constexpr const char *HELP_URL = "/programs/gdal_vfs.html";
 
-    GDALFSAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+    GDALVFSAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
-        RegisterSubAlgorithm<GDALFSListAlgorithm>();
+        RegisterSubAlgorithm<GDALVFSListAlgorithm>();
     }
 
   private:
@@ -36,9 +36,9 @@ class GDALFSAlgorithm final : public GDALAlgorithm
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The Run() method should not be called directly on the \"gdal "
-                 "fs\" program.");
+                 "vfs\" program.");
         return false;
     }
 };
 
-GDAL_STATIC_REGISTER_ALG(GDALFSAlgorithm);
+GDAL_STATIC_REGISTER_ALG(GDALVFSAlgorithm);
