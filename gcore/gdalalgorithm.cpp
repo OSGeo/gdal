@@ -887,6 +887,19 @@ GDALInConstructionAlgorithmArg::AddHiddenAlias(const std::string &alias)
 }
 
 /************************************************************************/
+/*           GDALInConstructionAlgorithmArg::AddShortNameAlias()        */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALInConstructionAlgorithmArg::AddShortNameAlias(char shortNameAlias)
+{
+    m_decl.AddShortNameAlias(shortNameAlias);
+    if (m_owner)
+        m_owner->AddShortNameAliasFor(this, shortNameAlias);
+    return *this;
+}
+
+/************************************************************************/
 /*             GDALInConstructionAlgorithmArg::SetPositional()          */
 /************************************************************************/
 
@@ -2097,6 +2110,29 @@ void GDALAlgorithm::AddAliasFor(GDALInConstructionAlgorithmArg *arg,
     else
     {
         m_mapLongNameToArg[alias] = arg;
+    }
+}
+
+//! @endcond
+
+/************************************************************************/
+/*                 GDALAlgorithm::AddShortNameAliasFor()                */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALAlgorithm::AddShortNameAliasFor(GDALInConstructionAlgorithmArg *arg,
+                                         char shortNameAlias)
+{
+    std::string alias;
+    alias += shortNameAlias;
+    if (cpl::contains(m_mapShortNameToArg, alias))
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Short name '%s' already declared.", alias.c_str());
+    }
+    else
+    {
+        m_mapShortNameToArg[alias] = arg;
     }
 }
 
@@ -3650,6 +3686,14 @@ GDALAlgorithm::GetArgNamesForCLI() const
         {
             opt += '-';
             opt += arg->GetShortName();
+            addComma = true;
+        }
+        for (char alias : arg->GetShortNameAliases())
+        {
+            if (addComma)
+                opt += ", ";
+            opt += "-";
+            opt += alias;
             addComma = true;
         }
         for (const std::string &alias : arg->GetAliases())
