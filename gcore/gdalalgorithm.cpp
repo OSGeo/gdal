@@ -4362,17 +4362,13 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
     else if (!args.empty() && STARTS_WITH(args.back().c_str(), "/vsi"))
     {
         auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-        if (!arg)
+        for (const char *name :
+             {"dataset", "filename", "like", "source", "destination"})
         {
-            arg = GetArg("dataset");
-        }
-        if (!arg)
-        {
-            arg = GetArg("filename");
-        }
-        if (!arg)
-        {
-            arg = GetArg("like");
+            if (!arg)
+            {
+                arg = GetArg(name);
+            }
         }
         if (arg)
         {
