@@ -31,9 +31,10 @@
 GDALVFSListAlgorithm::GDALVFSListAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL), m_oWriter(JSONPrint, this)
 {
-    AddArg("filename", 0, _("File or directory name"), &m_filename)
-        .SetPositional()
-        .SetRequired();
+    auto &arg = AddArg("filename", 0, _("File or directory name"), &m_filename)
+                    .SetPositional()
+                    .SetRequired();
+    SetAutoCompleteFunctionForFilename(arg, 0);
 
     AddOutputFormatArg(&m_format).SetDefault("json").SetChoices("json", "text");
 
