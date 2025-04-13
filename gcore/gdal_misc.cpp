@@ -1074,7 +1074,62 @@ bool GDALIsValueExactAs(double dfValue, GDALDataType eDT)
 }
 
 /************************************************************************/
-/*                        GDALGetNonComplexDataType()                */
+/*                         GDALIsValueInRangeOf()                       */
+/************************************************************************/
+
+/**
+ * \brief Check whether the provided value can be represented in the range
+ * of the data type, possibly with rounding.
+ *
+ * Only implemented for non-complex data types
+ *
+ * @param dfValue value to check.
+ * @param eDT target data type.
+ *
+ * @return true if the provided value can be represented in the range
+ * of the data type, possibly with rounding.
+ * @since GDAL 3.11
+ */
+bool GDALIsValueInRangeOf(double dfValue, GDALDataType eDT)
+{
+    switch (eDT)
+    {
+        case GDT_Byte:
+            return GDALIsValueInRange<uint8_t>(dfValue);
+        case GDT_Int8:
+            return GDALIsValueInRange<int8_t>(dfValue);
+        case GDT_UInt16:
+            return GDALIsValueInRange<uint16_t>(dfValue);
+        case GDT_Int16:
+            return GDALIsValueInRange<int16_t>(dfValue);
+        case GDT_UInt32:
+            return GDALIsValueInRange<uint32_t>(dfValue);
+        case GDT_Int32:
+            return GDALIsValueInRange<int32_t>(dfValue);
+        case GDT_UInt64:
+            return GDALIsValueInRange<uint64_t>(dfValue);
+        case GDT_Int64:
+            return GDALIsValueInRange<int64_t>(dfValue);
+        case GDT_Float16:
+            return GDALIsValueInRange<GFloat16>(dfValue);
+        case GDT_Float32:
+            return GDALIsValueInRange<float>(dfValue);
+        case GDT_Float64:
+            return true;
+        case GDT_Unknown:
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat16:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_TypeCount:
+            break;
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                        GDALGetNonComplexDataType()                   */
 /************************************************************************/
 /**
  * \brief Return the base data type for the specified input.
