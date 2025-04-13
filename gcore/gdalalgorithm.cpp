@@ -2285,52 +2285,80 @@ inline const char *MsgOrDefault(const char *helpMessage,
 }
 
 /************************************************************************/
-/*                 GDALAlgorithm::AddInputDatasetArg()                  */
+/*          GDALAlgorithm::SetAutoCompleteFunctionForFilename()         */
 /************************************************************************/
 
-GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
-    GDALArgDatasetValue *pValue, GDALArgDatasetValueType type,
-    bool positionalAndRequired, const char *helpMessage)
+/* static */
+void GDALAlgorithm::SetAutoCompleteFunctionForFilename(
+    GDALInConstructionAlgorithmArg &arg, GDALArgDatasetValueType type)
 {
-    auto &arg = AddArg(
-        GDAL_ARG_NAME_INPUT, 'i',
-        MsgOrDefault(helpMessage,
-                     CPLSPrintf("Input %s dataset",
-                                GDALArgDatasetValueTypeName(type).c_str())),
-        pValue, type);
-    if (positionalAndRequired)
-        arg.SetPositional().SetRequired();
-
     arg.SetAutoCompleteFunction(
-        [type](const std::string &currentValue)
+        [type](const std::string &currentValue) -> std::vector<std::string>
         {
             std::vector<std::string> oRet;
 
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                VSIStatBufL sStat;
+                if (!currentValue.empty() && currentValue.back() != '/' &&
+                    VSIStatL(currentValue.c_str(), &sStat) == 0)
+                {
+                    return oRet;
+                }
+            }
+
             auto poDM = GetGDALDriverManager();
             std::set<std::string> oExtensions;
-            for (int i = 0; i < poDM->GetDriverCount(); ++i)
+            if (type)
             {
-                auto poDriver = poDM->GetDriver(i);
-                if (((type & GDAL_OF_RASTER) != 0 &&
-                     poDriver->GetMetadataItem(GDAL_DCAP_RASTER)) ||
-                    ((type & GDAL_OF_VECTOR) != 0 &&
-                     poDriver->GetMetadataItem(GDAL_DCAP_VECTOR)) ||
-                    ((type & GDAL_OF_MULTIDIM_RASTER) != 0 &&
-                     poDriver->GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER)))
+                for (int i = 0; i < poDM->GetDriverCount(); ++i)
                 {
-                    const char *pszExtensions =
-                        poDriver->GetMetadataItem(GDAL_DMD_EXTENSIONS);
-                    if (pszExtensions)
+                    auto poDriver = poDM->GetDriver(i);
+                    if (((type & GDAL_OF_RASTER) != 0 &&
+                         poDriver->GetMetadataItem(GDAL_DCAP_RASTER)) ||
+                        ((type & GDAL_OF_VECTOR) != 0 &&
+                         poDriver->GetMetadataItem(GDAL_DCAP_VECTOR)) ||
+                        ((type & GDAL_OF_MULTIDIM_RASTER) != 0 &&
+                         poDriver->GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER)))
                     {
-                        const CPLStringList aosExts(
-                            CSLTokenizeString2(pszExtensions, " ", 0));
-                        for (const char *pszExt : cpl::Iterate(aosExts))
-                            oExtensions.insert(CPLString(pszExt).tolower());
+                        const char *pszExtensions =
+                            poDriver->GetMetadataItem(GDAL_DMD_EXTENSIONS);
+                        if (pszExtensions)
+                        {
+                            const CPLStringList aosExts(
+                                CSLTokenizeString2(pszExtensions, " ", 0));
+                            for (const char *pszExt : cpl::Iterate(aosExts))
+                                oExtensions.insert(CPLString(pszExt).tolower());
+                        }
                     }
                 }
             }
 
-            std::string osDir = CPLGetDirnameSafe(currentValue.c_str());
+            std::string osDir;
+            const CPLStringList aosVSIPrefixes(VSIGetFileSystemsPrefixes());
+            std::string osPrefix;
+            if (STARTS_WITH(currentValue.c_str(), "/vsi"))
+            {
+                for (const char *pszPrefix : cpl::Iterate(aosVSIPrefixes))
+                {
+                    if (STARTS_WITH(currentValue.c_str(), pszPrefix))
+                    {
+                        osPrefix = pszPrefix;
+                        break;
+                    }
+                }
+                if (osPrefix.empty())
+                    return aosVSIPrefixes;
+                if (currentValue == osPrefix)
+                    osDir = osPrefix;
+            }
+            if (osDir.empty())
+            {
+                osDir = CPLGetDirnameSafe(currentValue.c_str());
+                if (!osPrefix.empty() && osDir.size() < osPrefix.size())
+                    osDir = osPrefix;
+            }
+
             auto psDir = VSIOpenDir(osDir.c_str(), 0, nullptr);
             const std::string osSep = VSIGetDirectorySeparator(osDir.c_str());
             if (currentValue.empty())
@@ -2346,9 +2374,11 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
                                      currentFilename.c_str())) &&
                         strcmp(psEntry->pszName, ".") != 0 &&
                         strcmp(psEntry->pszName, "..") != 0 &&
-                        !strstr(psEntry->pszName, ".aux.xml"))
+                        (oExtensions.empty() ||
+                         !strstr(psEntry->pszName, ".aux.xml")))
                     {
-                        if (cpl::contains(
+                        if (oExtensions.empty() ||
+                            cpl::contains(
                                 oExtensions,
                                 CPLString(CPLGetExtensionSafe(psEntry->pszName))
                                     .tolower()) ||
@@ -2370,6 +2400,26 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
             }
             return oRet;
         });
+}
+
+/************************************************************************/
+/*                 GDALAlgorithm::AddInputDatasetArg()                  */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
+    GDALArgDatasetValue *pValue, GDALArgDatasetValueType type,
+    bool positionalAndRequired, const char *helpMessage)
+{
+    auto &arg = AddArg(
+        GDAL_ARG_NAME_INPUT, 'i',
+        MsgOrDefault(helpMessage,
+                     CPLSPrintf("Input %s dataset",
+                                GDALArgDatasetValueTypeName(type).c_str())),
+        pValue, type);
+    if (positionalAndRequired)
+        arg.SetPositional().SetRequired();
+
+    SetAutoCompleteFunctionForFilename(arg, type);
 
     return arg;
 }
@@ -4312,6 +4362,18 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
     else if (!args.empty() && STARTS_WITH(args.back().c_str(), "/vsi"))
     {
         auto arg = GetArg(GDAL_ARG_NAME_INPUT);
+        if (!arg)
+        {
+            arg = GetArg("dataset");
+        }
+        if (!arg)
+        {
+            arg = GetArg("filename");
+        }
+        if (!arg)
+        {
+            arg = GetArg("like");
+        }
         if (arg)
         {
             ret = arg->GetAutoCompleteChoices(args.back());

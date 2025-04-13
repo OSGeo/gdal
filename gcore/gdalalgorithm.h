@@ -2301,6 +2301,11 @@ class CPL_DLL GDALAlgorithmRegistry
                                            const std::string &helpMessage,
                                            double *pValue);
 
+    /** Register an auto complete function for a filename argument */
+    static void
+    SetAutoCompleteFunctionForFilename(GDALInConstructionAlgorithmArg &arg,
+                                       GDALArgDatasetValueType type);
+
     /** Add dataset argument. */
     GDALInConstructionAlgorithmArg &
     AddArg(const std::string &longName, char chShortName,
