@@ -1832,6 +1832,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr SetNoDataValue(double dfNoData);
     virtual CPLErr SetNoDataValueAsInt64(int64_t nNoData);
     virtual CPLErr SetNoDataValueAsUInt64(uint64_t nNoData);
+    CPLErr SetNoDataValueAsString(const char *pszNoData,
+                                  bool *pbCannotBeExactlyRepresented = nullptr);
     virtual CPLErr DeleteNoDataValue();
     virtual CPLErr SetColorTable(GDALColorTable *poCT);
     virtual CPLErr SetColorInterpretation(GDALColorInterp eColorInterp);
