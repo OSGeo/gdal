@@ -13,6 +13,7 @@
 #include "gdalalgorithm.h"
 
 #include "gdalalg_vfs_copy.h"
+#include "gdalalg_vfs_delete.h"
 #include "gdalalg_vfs_list.h"
 
 /************************************************************************/
@@ -30,6 +31,7 @@ class GDALVFSAlgorithm final : public GDALAlgorithm
     GDALVFSAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
         RegisterSubAlgorithm<GDALVFSCopyAlgorithm>();
+        RegisterSubAlgorithm<GDALVFSDeleteAlgorithm>();
         RegisterSubAlgorithm<GDALVFSListAlgorithm>();
     }
 

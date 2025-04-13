@@ -24,6 +24,7 @@ Available sub-commands
 ----------------------
 
 - :ref:`gdal_vfs_copy_subcommand`
+- :ref:`gdal_vfs_delete_subcommand`
 - :ref:`gdal_vfs_list_subcommand`
 
 Examples

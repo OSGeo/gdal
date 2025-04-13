@@ -547,6 +547,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vfs_delete",
+        "gdal-vfs-delete",
+        "Delete files located on GDAL Virtual file systems (VSI)",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vfs_list",
         "gdal-vfs-list",
         "List files of one of the GDAL Virtual file systems (VSI)",
