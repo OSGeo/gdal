@@ -3505,3 +3505,19 @@ def test_ogr_gmlas_choice_inlined(filename, attrname, value):
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert f[attrname] == value
+
+
+###############################################################################
+# Test opening a CityGML 2.0 file without schema location
+
+
+@pytest.mark.require_curl()
+def test_ogr_gmlas_citygml_lod2_no_schema_location():
+
+    url = "https://schemas.opengis.net/citygml/2.0/cityGMLBase.xsd"
+    conn = gdaltest.gdalurlopen(url, timeout=4)
+    if conn is None:
+        pytest.skip(f"cannot open {url}")
+
+    ds = gdal.OpenEx("GMLAS:data/gmlas/lod2_empty_no_schema_location.gml")
+    assert ds.GetLayerCount() == 1537
