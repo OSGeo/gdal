@@ -1298,8 +1298,6 @@ hibase
 hicover
 hidensity
 hiduff
-hiearchical
-Hiearchical
 hieast
 hielev
 hifuel
@@ -3483,6 +3481,7 @@ vetoers
 vetos
 Vexcel
 vfk
+vfs
 Viersen
 viewshed
 Viewshed

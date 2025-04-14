@@ -561,6 +561,13 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return *this;
     }
 
+    /** Declare a shortname alias.*/
+    GDALAlgorithmArgDecl &AddShortNameAlias(char shortNameAlias)
+    {
+        m_shortNameAliases.push_back(shortNameAlias);
+        return *this;
+    }
+
     /** Declare an hidden alias (i.e. not exposed in usage).
      * Must be 2 characters at least. */
     GDALAlgorithmArgDecl &AddHiddenAlias(const std::string &alias)
@@ -856,6 +863,12 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return m_aliases;
     }
 
+    /** Return the shortname aliases (potentially none) */
+    inline const std::vector<char> &GetShortNameAliases() const
+    {
+        return m_shortNameAliases;
+    }
+
     /** Return the description */
     inline const std::string &GetDescription() const
     {
@@ -1114,6 +1127,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     std::map<std::string, std::vector<std::string>> m_metadata{};
     std::vector<std::string> m_aliases{};
     std::vector<std::string> m_hiddenAliases{};
+    std::vector<char> m_shortNameAliases{};
     std::vector<std::string> m_choices{};
     std::vector<std::string> m_hiddenChoices{};
     std::variant<bool, std::string, int, double, std::vector<std::string>,
@@ -1188,6 +1202,12 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     inline const std::vector<std::string> &GetAliases() const
     {
         return m_decl.GetAliases();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::GetShortNameAliases() */
+    inline const std::vector<char> &GetShortNameAliases() const
+    {
+        return m_decl.GetShortNameAliases();
     }
 
     /** Alias for GDALAlgorithmArgDecl::GetDescription() */
@@ -1618,6 +1638,9 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
 
     /** Add a non-documented alias for the argument */
     GDALInConstructionAlgorithmArg &AddHiddenAlias(const std::string &alias);
+
+    /** Add a shortname alias for the argument */
+    GDALInConstructionAlgorithmArg &AddShortNameAlias(char shortNameAlias);
 
     /** Alias for GDALAlgorithmArgDecl::SetPositional() */
     GDALInConstructionAlgorithmArg &SetPositional();
@@ -2287,6 +2310,11 @@ class CPL_DLL GDALAlgorithmRegistry
                                            const std::string &helpMessage,
                                            double *pValue);
 
+    /** Register an auto complete function for a filename argument */
+    static void
+    SetAutoCompleteFunctionForFilename(GDALInConstructionAlgorithmArg &arg,
+                                       GDALArgDatasetValueType type);
+
     /** Add dataset argument. */
     GDALInConstructionAlgorithmArg &
     AddArg(const std::string &longName, char chShortName,
@@ -2456,6 +2484,10 @@ class CPL_DLL GDALAlgorithmRegistry
     //! @cond Doxygen_Suppress
     void AddAliasFor(GDALInConstructionAlgorithmArg *arg,
                      const std::string &alias);
+
+    void AddShortNameAliasFor(GDALInConstructionAlgorithmArg *arg,
+                              char shortNameAlias);
+
     void SetPositional(GDALInConstructionAlgorithmArg *arg);
 
     //! @endcond

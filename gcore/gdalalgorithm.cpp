@@ -887,6 +887,19 @@ GDALInConstructionAlgorithmArg::AddHiddenAlias(const std::string &alias)
 }
 
 /************************************************************************/
+/*           GDALInConstructionAlgorithmArg::AddShortNameAlias()        */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALInConstructionAlgorithmArg::AddShortNameAlias(char shortNameAlias)
+{
+    m_decl.AddShortNameAlias(shortNameAlias);
+    if (m_owner)
+        m_owner->AddShortNameAliasFor(this, shortNameAlias);
+    return *this;
+}
+
+/************************************************************************/
 /*             GDALInConstructionAlgorithmArg::SetPositional()          */
 /************************************************************************/
 
@@ -1467,24 +1480,39 @@ bool GDALAlgorithm::ParseCommandLineArguments(
         }
         else if (strArg.size() >= 2 && strArg[0] == '-')
         {
-            if (strArg.size() != 2)
+            for (size_t j = 1; j < strArg.size(); ++j)
             {
-                ReportError(
-                    CE_Failure, CPLE_IllegalArg,
-                    "Option '%s' not recognized. Should be either a long "
-                    "option or a one-letter short option.",
-                    strArg.c_str());
-                return false;
+                name.clear();
+                name += strArg[j];
+                auto iterArg = m_mapShortNameToArg.find(name);
+                if (iterArg == m_mapShortNameToArg.end())
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "Short name option '%s' is unknown.",
+                                name.c_str());
+                    return false;
+                }
+                arg = iterArg->second;
+                if (strArg.size() > 2)
+                {
+                    if (arg->GetType() != GAAT_BOOLEAN)
+                    {
+                        ReportError(CE_Failure, CPLE_IllegalArg,
+                                    "Invalid argument '%s'. Option '%s' is not "
+                                    "a boolean option.",
+                                    strArg.c_str(), name.c_str());
+                        return false;
+                    }
+
+                    if (!ParseArgument(arg, name, "true", inConstructionValues))
+                        return false;
+                }
             }
-            name = strArg;
-            auto iterArg = m_mapShortNameToArg.find(name.substr(1));
-            if (iterArg == m_mapShortNameToArg.end())
+            if (strArg.size() > 2)
             {
-                ReportError(CE_Failure, CPLE_IllegalArg,
-                            "Short name option '%s' is unknown.", name.c_str());
-                return false;
+                lArgs.erase(lArgs.begin() + i);
+                continue;
             }
-            arg = iterArg->second;
         }
         else
         {
@@ -2088,6 +2116,29 @@ void GDALAlgorithm::AddAliasFor(GDALInConstructionAlgorithmArg *arg,
 //! @endcond
 
 /************************************************************************/
+/*                 GDALAlgorithm::AddShortNameAliasFor()                */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALAlgorithm::AddShortNameAliasFor(GDALInConstructionAlgorithmArg *arg,
+                                         char shortNameAlias)
+{
+    std::string alias;
+    alias += shortNameAlias;
+    if (cpl::contains(m_mapShortNameToArg, alias))
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Short name '%s' already declared.", alias.c_str());
+    }
+    else
+    {
+        m_mapShortNameToArg[alias] = arg;
+    }
+}
+
+//! @endcond
+
+/************************************************************************/
 /*                   GDALAlgorithm::SetPositional()                     */
 /************************************************************************/
 
@@ -2320,52 +2371,80 @@ inline const char *MsgOrDefault(const char *helpMessage,
 }
 
 /************************************************************************/
-/*                 GDALAlgorithm::AddInputDatasetArg()                  */
+/*          GDALAlgorithm::SetAutoCompleteFunctionForFilename()         */
 /************************************************************************/
 
-GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
-    GDALArgDatasetValue *pValue, GDALArgDatasetValueType type,
-    bool positionalAndRequired, const char *helpMessage)
+/* static */
+void GDALAlgorithm::SetAutoCompleteFunctionForFilename(
+    GDALInConstructionAlgorithmArg &arg, GDALArgDatasetValueType type)
 {
-    auto &arg = AddArg(
-        GDAL_ARG_NAME_INPUT, 'i',
-        MsgOrDefault(helpMessage,
-                     CPLSPrintf("Input %s dataset",
-                                GDALArgDatasetValueTypeName(type).c_str())),
-        pValue, type);
-    if (positionalAndRequired)
-        arg.SetPositional().SetRequired();
-
     arg.SetAutoCompleteFunction(
-        [type](const std::string &currentValue)
+        [type](const std::string &currentValue) -> std::vector<std::string>
         {
             std::vector<std::string> oRet;
 
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                VSIStatBufL sStat;
+                if (!currentValue.empty() && currentValue.back() != '/' &&
+                    VSIStatL(currentValue.c_str(), &sStat) == 0)
+                {
+                    return oRet;
+                }
+            }
+
             auto poDM = GetGDALDriverManager();
             std::set<std::string> oExtensions;
-            for (int i = 0; i < poDM->GetDriverCount(); ++i)
+            if (type)
             {
-                auto poDriver = poDM->GetDriver(i);
-                if (((type & GDAL_OF_RASTER) != 0 &&
-                     poDriver->GetMetadataItem(GDAL_DCAP_RASTER)) ||
-                    ((type & GDAL_OF_VECTOR) != 0 &&
-                     poDriver->GetMetadataItem(GDAL_DCAP_VECTOR)) ||
-                    ((type & GDAL_OF_MULTIDIM_RASTER) != 0 &&
-                     poDriver->GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER)))
+                for (int i = 0; i < poDM->GetDriverCount(); ++i)
                 {
-                    const char *pszExtensions =
-                        poDriver->GetMetadataItem(GDAL_DMD_EXTENSIONS);
-                    if (pszExtensions)
+                    auto poDriver = poDM->GetDriver(i);
+                    if (((type & GDAL_OF_RASTER) != 0 &&
+                         poDriver->GetMetadataItem(GDAL_DCAP_RASTER)) ||
+                        ((type & GDAL_OF_VECTOR) != 0 &&
+                         poDriver->GetMetadataItem(GDAL_DCAP_VECTOR)) ||
+                        ((type & GDAL_OF_MULTIDIM_RASTER) != 0 &&
+                         poDriver->GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER)))
                     {
-                        const CPLStringList aosExts(
-                            CSLTokenizeString2(pszExtensions, " ", 0));
-                        for (const char *pszExt : cpl::Iterate(aosExts))
-                            oExtensions.insert(CPLString(pszExt).tolower());
+                        const char *pszExtensions =
+                            poDriver->GetMetadataItem(GDAL_DMD_EXTENSIONS);
+                        if (pszExtensions)
+                        {
+                            const CPLStringList aosExts(
+                                CSLTokenizeString2(pszExtensions, " ", 0));
+                            for (const char *pszExt : cpl::Iterate(aosExts))
+                                oExtensions.insert(CPLString(pszExt).tolower());
+                        }
                     }
                 }
             }
 
-            std::string osDir = CPLGetDirnameSafe(currentValue.c_str());
+            std::string osDir;
+            const CPLStringList aosVSIPrefixes(VSIGetFileSystemsPrefixes());
+            std::string osPrefix;
+            if (STARTS_WITH(currentValue.c_str(), "/vsi"))
+            {
+                for (const char *pszPrefix : cpl::Iterate(aosVSIPrefixes))
+                {
+                    if (STARTS_WITH(currentValue.c_str(), pszPrefix))
+                    {
+                        osPrefix = pszPrefix;
+                        break;
+                    }
+                }
+                if (osPrefix.empty())
+                    return aosVSIPrefixes;
+                if (currentValue == osPrefix)
+                    osDir = osPrefix;
+            }
+            if (osDir.empty())
+            {
+                osDir = CPLGetDirnameSafe(currentValue.c_str());
+                if (!osPrefix.empty() && osDir.size() < osPrefix.size())
+                    osDir = osPrefix;
+            }
+
             auto psDir = VSIOpenDir(osDir.c_str(), 0, nullptr);
             const std::string osSep = VSIGetDirectorySeparator(osDir.c_str());
             if (currentValue.empty())
@@ -2381,9 +2460,11 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
                                      currentFilename.c_str())) &&
                         strcmp(psEntry->pszName, ".") != 0 &&
                         strcmp(psEntry->pszName, "..") != 0 &&
-                        !strstr(psEntry->pszName, ".aux.xml"))
+                        (oExtensions.empty() ||
+                         !strstr(psEntry->pszName, ".aux.xml")))
                     {
-                        if (cpl::contains(
+                        if (oExtensions.empty() ||
+                            cpl::contains(
                                 oExtensions,
                                 CPLString(CPLGetExtensionSafe(psEntry->pszName))
                                     .tolower()) ||
@@ -2405,6 +2486,26 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
             }
             return oRet;
         });
+}
+
+/************************************************************************/
+/*                 GDALAlgorithm::AddInputDatasetArg()                  */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
+    GDALArgDatasetValue *pValue, GDALArgDatasetValueType type,
+    bool positionalAndRequired, const char *helpMessage)
+{
+    auto &arg = AddArg(
+        GDAL_ARG_NAME_INPUT, 'i',
+        MsgOrDefault(helpMessage,
+                     CPLSPrintf("Input %s dataset",
+                                GDALArgDatasetValueTypeName(type).c_str())),
+        pValue, type);
+    if (positionalAndRequired)
+        arg.SetPositional().SetRequired();
+
+    SetAutoCompleteFunctionForFilename(arg, type);
 
     return arg;
 }
@@ -3639,6 +3740,14 @@ GDALAlgorithm::GetArgNamesForCLI() const
             opt += arg->GetShortName();
             addComma = true;
         }
+        for (char alias : arg->GetShortNameAliases())
+        {
+            if (addComma)
+                opt += ", ";
+            opt += "-";
+            opt += alias;
+            addComma = true;
+        }
         for (const std::string &alias : arg->GetAliases())
         {
             if (addComma)
@@ -4351,6 +4460,14 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
     else if (!args.empty() && STARTS_WITH(args.back().c_str(), "/vsi"))
     {
         auto arg = GetArg(GDAL_ARG_NAME_INPUT);
+        for (const char *name :
+             {"dataset", "filename", "like", "source", "destination"})
+        {
+            if (!arg)
+            {
+                arg = GetArg(name);
+            }
+        }
         if (arg)
         {
             ret = arg->GetAutoCompleteChoices(args.back());

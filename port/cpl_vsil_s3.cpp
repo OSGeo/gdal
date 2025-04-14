@@ -62,55 +62,29 @@ namespace cpl
 /*                             VSIDIRS3                                 */
 /************************************************************************/
 
-struct VSIDIRS3 : public VSIDIRWithMissingDirSynthesis
+struct VSIDIRS3 : public VSIDIRS3Like
 {
-    int nRecurseDepth = 0;
-
-    std::string osNextMarker{};
-    int nPos = 0;
-
-    std::string osBucket{};
-    std::string osObjectKey{};
-    VSICurlFilesystemHandlerBase *poFS = nullptr;
-    IVSIS3LikeFSHandler *poS3FS = nullptr;
-    IVSIS3LikeHandleHelper *poS3HandleHelper = nullptr;
-    int nMaxFiles = 0;
-    bool bCacheEntries = true;
-    bool m_bSynthetizeMissingDirectories = false;
-    std::string m_osFilterPrefix{};
-
-    explicit VSIDIRS3(IVSIS3LikeFSHandler *poFSIn)
-        : poFS(poFSIn), poS3FS(poFSIn)
+    explicit VSIDIRS3(IVSIS3LikeFSHandler *poFSIn) : VSIDIRS3Like(poFSIn)
     {
     }
 
-    explicit VSIDIRS3(VSICurlFilesystemHandlerBase *poFSIn) : poFS(poFSIn)
+    explicit VSIDIRS3(VSICurlFilesystemHandlerBase *poFSIn)
+        : VSIDIRS3Like(poFSIn)
     {
     }
 
-    ~VSIDIRS3()
-    {
-        delete poS3HandleHelper;
-    }
-
-    VSIDIRS3(const VSIDIRS3 &) = delete;
-    VSIDIRS3 &operator=(const VSIDIRS3 &) = delete;
-
-    const VSIDIREntry *NextDirEntry() override;
-
-    bool IssueListDir();
+    bool IssueListDir() override;
     bool
     AnalyseS3FileList(const std::string &osBaseURL, const char *pszXML,
                       const std::set<std::string> &oSetIgnoredStorageClasses,
                       bool &bIsTruncated);
-    void clear();
 };
 
 /************************************************************************/
 /*                                clear()                               */
 /************************************************************************/
 
-void VSIDIRS3::clear()
+void VSIDIRS3Like::clear()
 {
     osNextMarker.clear();
     nPos = 0;
@@ -498,39 +472,39 @@ bool VSIDIRS3::IssueListDir()
 
     while (true)
     {
-        poS3HandleHelper->ResetQueryParameters();
-        const std::string osBaseURL(poS3HandleHelper->GetURL());
+        poHandleHelper->ResetQueryParameters();
+        const std::string osBaseURL(poHandleHelper->GetURL());
 
         CURL *hCurlHandle = curl_easy_init();
 
         if (!osBucket.empty())
         {
             if (nRecurseDepth == 0)
-                poS3HandleHelper->AddQueryParameter("delimiter", "/");
+                poHandleHelper->AddQueryParameter("delimiter", "/");
             if (!l_osNextMarker.empty())
-                poS3HandleHelper->AddQueryParameter("marker", l_osNextMarker);
+                poHandleHelper->AddQueryParameter("marker", l_osNextMarker);
             if (!osMaxKeys.empty())
-                poS3HandleHelper->AddQueryParameter("max-keys", osMaxKeys);
+                poHandleHelper->AddQueryParameter("max-keys", osMaxKeys);
             if (!osObjectKey.empty())
-                poS3HandleHelper->AddQueryParameter(
+                poHandleHelper->AddQueryParameter(
                     "prefix", osObjectKey + "/" + m_osFilterPrefix);
             else if (!m_osFilterPrefix.empty())
-                poS3HandleHelper->AddQueryParameter("prefix", m_osFilterPrefix);
+                poHandleHelper->AddQueryParameter("prefix", m_osFilterPrefix);
         }
 
         struct curl_slist *headers = VSICurlSetOptions(
-            hCurlHandle, poS3HandleHelper->GetURL().c_str(), nullptr);
+            hCurlHandle, poHandleHelper->GetURL().c_str(), nullptr);
 
         headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("GET", headers));
+            headers, poHandleHelper->GetCurlHeaders("GET", headers));
         // Disable automatic redirection
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
 
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
 
         CurlRequestHelper requestHelper;
-        const long response_code =
-            requestHelper.perform(hCurlHandle, headers, poFS, poS3HandleHelper);
+        const long response_code = requestHelper.perform(
+            hCurlHandle, headers, poFS, poHandleHelper.get());
 
         NetworkStatisticsLogger::LogGET(requestHelper.sWriteFuncData.nSize);
 
@@ -538,7 +512,7 @@ bool VSIDIRS3::IssueListDir()
             requestHelper.sWriteFuncData.pBuffer == nullptr)
         {
             if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
-                poS3HandleHelper->CanRestartOnError(
+                poHandleHelper->CanRestartOnError(
                     requestHelper.sWriteFuncData.pBuffer,
                     requestHelper.sWriteFuncHeaderData.pBuffer, false))
             {
@@ -574,13 +548,42 @@ bool VSIDIRS3::IssueListDir()
 /*                           NextDirEntry()                             */
 /************************************************************************/
 
-const VSIDIREntry *VSIDIRS3::NextDirEntry()
+const VSIDIREntry *VSIDIRS3Like::NextDirEntry()
 {
-    while (true)
+    constexpr int ARBITRARY_LIMIT = 10;
+    for (int i = 0; i < ARBITRARY_LIMIT; ++i)
     {
         if (nPos < static_cast<int>(aoEntries.size()))
         {
             auto &entry = aoEntries[nPos];
+            if (osBucket.empty())
+            {
+                if (m_subdir)
+                {
+                    if (auto subentry = m_subdir->NextDirEntry())
+                    {
+                        const std::string name = std::string(entry->pszName)
+                                                     .append("/")
+                                                     .append(subentry->pszName);
+                        CPLFree(const_cast<VSIDIREntry *>(subentry)->pszName);
+                        const_cast<VSIDIREntry *>(subentry)->pszName =
+                            CPLStrdup(name.c_str());
+                        return subentry;
+                    }
+                    m_subdir.reset();
+                    nPos++;
+                    continue;
+                }
+                else if (nRecurseDepth != 0)
+                {
+                    m_subdir.reset(VSIOpenDir(std::string(poFS->GetFSPrefix())
+                                                  .append(entry->pszName)
+                                                  .c_str(),
+                                              nRecurseDepth - 1, nullptr));
+                    if (m_subdir)
+                        return entry.get();
+                }
+            }
             nPos++;
             return entry.get();
         }
@@ -593,6 +596,11 @@ const VSIDIREntry *VSIDIRS3::NextDirEntry()
             return nullptr;
         }
     }
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "More than %d consecutive List Blob "
+             "requests returning no blobs",
+             ARBITRARY_LIMIT);
+    return nullptr;
 }
 
 /************************************************************************/
@@ -3275,8 +3283,8 @@ VSIDIR *IVSIS3LikeFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
         osObjectKey = osDirnameWithoutPrefix.substr(nSlashPos + 1);
     }
 
-    IVSIS3LikeHandleHelper *poS3HandleHelper =
-        CreateHandleHelper(osBucket.c_str(), true);
+    auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+        CreateHandleHelper(osBucket.c_str(), true));
     if (poS3HandleHelper == nullptr)
     {
         return nullptr;
@@ -3284,8 +3292,7 @@ VSIDIR *IVSIS3LikeFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
 
     VSIDIRS3 *dir = new VSIDIRS3(this);
     dir->nRecurseDepth = nRecurseDepth;
-    dir->poFS = this;
-    dir->poS3HandleHelper = poS3HandleHelper;
+    dir->poHandleHelper = std::move(poS3HandleHelper);
     dir->osBucket = std::move(osBucket);
     dir->osObjectKey = std::move(osObjectKey);
     dir->nMaxFiles = atoi(CSLFetchNameValueDef(papszOptions, "MAXFILES", "0"));

@@ -173,6 +173,14 @@ def test_gdal_completion(gdal_path):
         == "** description:\\ Target\\ resolution\\ (in\\ destination\\ CRS\\ units)"
     )
 
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster convert --input /vsi"
+    ).split(" ")
+    assert "/vsimem/" in out
+
+    # Just run it. Result will depend on local configuration
+    gdaltest.runexternal(f"{gdal_path} completion gdal raster convert --input /vsis3/")
+
 
 def test_gdal_completion_co(gdal_path):
 

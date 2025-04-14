@@ -1012,6 +1012,49 @@ struct VSIDIRWithMissingDirSynthesis : public VSIDIR
 };
 
 /************************************************************************/
+/*                          VSIDIRS3Like                                */
+/************************************************************************/
+
+struct VSIDIRS3Like : public VSIDIRWithMissingDirSynthesis
+{
+    int nRecurseDepth = 0;
+
+    std::string osNextMarker{};
+    int nPos = 0;
+
+    std::string osBucket{};
+    std::string osObjectKey{};
+    VSICurlFilesystemHandlerBase *poFS = nullptr;
+    IVSIS3LikeFSHandler *poS3FS = nullptr;
+    std::unique_ptr<IVSIS3LikeHandleHelper> poHandleHelper{};
+    int nMaxFiles = 0;
+    bool bCacheEntries = true;
+    bool m_bSynthetizeMissingDirectories = false;
+    std::string m_osFilterPrefix{};
+
+    // used when listing only the file system prefix
+    std::unique_ptr<VSIDIR, decltype(&VSICloseDir)> m_subdir{nullptr,
+                                                             VSICloseDir};
+
+    explicit VSIDIRS3Like(IVSIS3LikeFSHandler *poFSIn)
+        : poFS(poFSIn), poS3FS(poFSIn)
+    {
+    }
+
+    explicit VSIDIRS3Like(VSICurlFilesystemHandlerBase *poFSIn) : poFS(poFSIn)
+    {
+    }
+
+    VSIDIRS3Like(const VSIDIRS3Like &) = delete;
+    VSIDIRS3Like &operator=(const VSIDIRS3Like &) = delete;
+
+    const VSIDIREntry *NextDirEntry() override;
+
+    virtual bool IssueListDir() = 0;
+    void clear();
+};
+
+/************************************************************************/
 /*                         CurlRequestHelper                            */
 /************************************************************************/
 
