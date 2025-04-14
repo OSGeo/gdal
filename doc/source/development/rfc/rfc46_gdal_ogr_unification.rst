@@ -497,7 +497,7 @@ Layer
 
 -  OGRLayer extends GDALMajorObject. Drivers can now define layer
    metadata items that can be retrieved with the usual
-   GetMetadata()/GetMetadateItem() API.
+   GetMetadata()/GetMetadataItem() API.
 
 -  The GetInfo() method has been removed. It has never been implemented
    in any in-tree drivers and has been deprecated for a long time.
