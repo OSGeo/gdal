@@ -785,6 +785,89 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
     if (osXSDFilenames.empty())
     {
         aoXSDs = topElementParser.GetXSDs();
+        if (aoXSDs.empty())
+        {
+            const std::map<std::string, std::string> mapWellKnownURIToLocation =
+                {
+                    {"http://www.opengis.net/citygml/2.0",
+                     "https://schemas.opengis.net/citygml/2.0/cityGMLBase.xsd"},
+                    {"http://www.opengis.net/citygml/appearance/2.0",
+                     "https://schemas.opengis.net/citygml/appearance/2.0/"
+                     "appearance.xsd"},
+                    {"http://www.opengis.net/citygml/bridge/2.0",
+                     "https://schemas.opengis.net/citygml/bridge/2.0/"
+                     "bridge.xsd"},
+                    {"http://www.opengis.net/citygml/building/2.0",
+                     "https://schemas.opengis.net/citygml/building/2.0/"
+                     "building.xsd"},
+                    {
+                        "http://www.opengis.net/citygml/cityfurniture/2.0",
+                        "https://schemas.opengis.net/citygml/cityfurniture/2.0/"
+                        "cityFurniture.xsd",
+                    },
+                    {"http://www.opengis.net/citygml/cityobjectgroup/2.0",
+                     "https://schemas.opengis.net/citygml/cityobjectgroup/2.0/"
+                     "cityObjectGroup.xsd"},
+                    {"http://www.opengis.net/citygml/generics/2.0",
+                     "https://schemas.opengis.net/citygml/generics/2.0/"
+                     "generics.xsd"},
+                    {"http://www.opengis.net/citygml/landuse/2.0",
+                     "https://schemas.opengis.net/citygml/landuse/2.0/"
+                     "landUse.xsd"},
+                    {"http://www.opengis.net/citygml/relief/2.0",
+                     "https://schemas.opengis.net/citygml/relief/2.0/"
+                     "relief.xsd"},
+                    // { "http://www.opengis.net/citygml/textures/2.0",  } ,
+                    {"http://www.opengis.net/citygml/transportation/2.0",
+                     "https://schemas.opengis.net/citygml/transportation/2.0/"
+                     "transportation.xsd"},
+                    {"http://www.opengis.net/citygml/tunnel/2.0",
+                     "https://schemas.opengis.net/citygml/tunnel/2.0/"
+                     "tunnel.xsd"},
+                    {"http://www.opengis.net/citygml/vegetation/2.0",
+                     "https://schemas.opengis.net/citygml/vegetation/2.0/"
+                     "vegetation.xsd"},
+                    {"http://www.opengis.net/citygml/waterbody/2.0",
+                     "https://schemas.opengis.net/citygml/waterbody/2.0/"
+                     "waterBody.xsd"},
+                    {"http://www.w3.org/1999/xlink",
+                     "https://www.w3.org/1999/xlink.xsd"},
+                    {"urn:oasis:names:tc:ciq:xsdschema:xAL:2.0",
+                     "https://schemas.opengis.net/citygml/xAL/xAL.xsd"},
+                };
+
+            bool cityGML2Found = false;
+            for (const auto &[uri, prefix] :
+                 topElementParser.GetMapDocNSURIToPrefix())
+            {
+                if (uri == "http://www.opengis.net/citygml/2.0")
+                    cityGML2Found = true;
+            }
+
+            for (const auto &[uri, prefix] :
+                 topElementParser.GetMapDocNSURIToPrefix())
+            {
+                const auto iter = mapWellKnownURIToLocation.find(uri);
+                if (iter != mapWellKnownURIToLocation.end())
+                {
+                    aoXSDs.push_back(PairURIFilename(uri, iter->second));
+                }
+                else if (cityGML2Found && uri == "http://www.opengis.net/gml")
+                {
+                    aoXSDs.push_back(PairURIFilename(
+                        uri,
+                        "https://schemas.opengis.net/gml/3.1.1/base/gml.xsd"));
+                }
+                else if (uri != "http://www.w3.org/2001/XMLSchema-instance")
+                {
+                    CPLDebug("GMLAS",
+                             "Could not find schema location for %s(%s)",
+                             prefix.c_str(), uri.c_str());
+                }
+            }
+
+            m_aoXSDsManuallyPassed = aoXSDs;
+        }
     }
     else
     {
