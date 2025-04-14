@@ -1500,6 +1500,12 @@ uint64_t AdjustValue<uint64_t>(uint64_t value, uint64_t nRoundUpBitTest)
     return AdjustValueInt(value, nRoundUpBitTest);
 }
 
+template <> GFloat16 AdjustValue<GFloat16>(GFloat16 value, uint64_t)
+{
+    using std::nextafter;
+    return nextafter(value, cpl::NumericLimits<GFloat16>::max());
+}
+
 template <> float AdjustValue<float>(float value, uint64_t)
 {
     return std::nextafter(value, std::numeric_limits<float>::max());
@@ -1595,6 +1601,14 @@ int64_t RoundValueDiscardLsb<int64_t, int64_t>(const void *ptr, uint64_t nMask,
                                                uint64_t nRoundUpBitTest)
 {
     return RoundValueDiscardLsbSigned<int64_t>(ptr, nMask, nRoundUpBitTest);
+}
+
+template <>
+uint16_t RoundValueDiscardLsb<GFloat16, uint16_t>(const void *ptr,
+                                                  uint64_t nMask,
+                                                  uint64_t nRoundUpBitTest)
+{
+    return RoundValueDiscardLsbUnsigned<uint16_t>(ptr, nMask, nRoundUpBitTest);
 }
 
 template <>
@@ -1895,9 +1909,16 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
                                         nPlanarConfig, panMaskOffsetLsb,
                                         bHasNoData, nNoDataValue);
     }
+    else if (nBitsPerSample == 16 && nSampleFormat == SAMPLEFORMAT_IEEEFP)
+    {
+        const GFloat16 fNoDataValue = static_cast<GFloat16>(dfNoDataValue);
+        DiscardLsbT<GFloat16, uint16_t>(pabyBuffer, nBytes, iBand, nBands,
+                                        nPlanarConfig, panMaskOffsetLsb,
+                                        bHasNoData, fNoDataValue);
+    }
     else if (nBitsPerSample == 32 && nSampleFormat == SAMPLEFORMAT_IEEEFP)
     {
-        float fNoDataValue = static_cast<float>(dfNoDataValue);
+        const float fNoDataValue = static_cast<float>(dfNoDataValue);
         DiscardLsbT<float, uint32_t>(pabyBuffer, nBytes, iBand, nBands,
                                      nPlanarConfig, panMaskOffsetLsb,
                                      bHasNoData, fNoDataValue);
@@ -4974,7 +4995,8 @@ static GTiffDataset::MaskOffset *GetDiscardLsbOption(TIFF *hTIFF,
         {
             const int nBits = atoi(aosTokens[nTokens == 1 ? 0 : i]);
             const int nMaxBits = (nSampleFormat == SAMPLEFORMAT_IEEEFP)
-                                     ? ((nBitsPerSample == 32)   ? 23 - 1
+                                     ? ((nBitsPerSample == 16)   ? 11 - 1
+                                        : (nBitsPerSample == 32) ? 23 - 1
                                         : (nBitsPerSample == 64) ? 53 - 1
                                                                  : 0)
                                  : nSampleFormat == SAMPLEFORMAT_INT
@@ -5285,14 +5307,14 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
 #ifdef HAVE_JXL
     if ((l_nCompression == COMPRESSION_JXL ||
          l_nCompression == COMPRESSION_JXL_DNG_1_7) &&
-        eType != GDT_Float32)
+        eType != GDT_Float16 && eType != GDT_Float32)
     {
         // Reflects tif_jxl's GetJXLDataType()
         if (eType != GDT_Byte && eType != GDT_UInt16)
         {
             ReportError(pszFilename, CE_Failure, CPLE_NotSupported,
                         "Data type %s not supported for JXL compression. Only "
-                        "Byte, UInt16, Float32 are supported",
+                        "Byte, UInt16, Float16, Float32 are supported",
                         GDALGetDataTypeName(eType));
             return nullptr;
         }
@@ -5669,9 +5691,11 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         l_nSampleFormat = SAMPLEFORMAT_INT;
     else if (eType == GDT_CInt16 || eType == GDT_CInt32)
         l_nSampleFormat = SAMPLEFORMAT_COMPLEXINT;
-    else if (eType == GDT_Float32 || eType == GDT_Float64)
+    else if (eType == GDT_Float16 || eType == GDT_Float32 ||
+             eType == GDT_Float64)
         l_nSampleFormat = SAMPLEFORMAT_IEEEFP;
-    else if (eType == GDT_CFloat32 || eType == GDT_CFloat64)
+    else if (eType == GDT_CFloat16 || eType == GDT_CFloat32 ||
+             eType == GDT_CFloat64)
         l_nSampleFormat = SAMPLEFORMAT_COMPLEXIEEEFP;
     else
         l_nSampleFormat = SAMPLEFORMAT_UINT;
@@ -6562,8 +6586,7 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     /* -------------------------------------------------------------------- */
     for (int iBand = 0; iBand < l_nBands; ++iBand)
     {
-        if (poDS->m_nBitsPerSample == 8 ||
-            (poDS->m_nBitsPerSample == 16 && eType != GDT_Float32) ||
+        if (poDS->m_nBitsPerSample == 8 || poDS->m_nBitsPerSample == 16 ||
             poDS->m_nBitsPerSample == 32 || poDS->m_nBitsPerSample == 64 ||
             poDS->m_nBitsPerSample == 128)
         {

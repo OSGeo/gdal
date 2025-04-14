@@ -5105,9 +5105,10 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
     bool bTreatAsOdd = false;
     if (m_nSampleFormat == SAMPLEFORMAT_IEEEFP)
     {
-        if (m_nBitsPerSample == 16 || m_nBitsPerSample == 24)
+        if (m_nBitsPerSample == 24)
             bTreatAsOdd = true;
-        else if (m_nBitsPerSample != 32 && m_nBitsPerSample != 64)
+        else if (m_nBitsPerSample != 16 && m_nBitsPerSample != 32 &&
+                 m_nBitsPerSample != 64)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Cannot open TIFF file with SampleFormat=IEEEFP "

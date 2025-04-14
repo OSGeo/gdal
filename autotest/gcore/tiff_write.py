@@ -7694,8 +7694,7 @@ def test_tiff_write_157():
 
     # Check that we properly deserialize Float16 values
     ds = gdal.Open("/vsimem/tiff_write_157.tif")
-    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "16"
-    got = struct.unpack("f" * 14, ds.ReadRaster())
+    got = struct.unpack("e" * 14, ds.ReadRaster())
     expected = [
         0.0,
         -0.0,
@@ -7771,7 +7770,7 @@ def test_tiff_write_157():
     ds = None
 
     ds = gdal.Open("/vsimem/tiff_write_157.tif")
-    got = struct.unpack("f" * 18, ds.ReadRaster())
+    got = struct.unpack("e" * 18, ds.ReadRaster())
     ds = None
     expected = (
         0.0,
@@ -9796,8 +9795,7 @@ def test_tiff_write_jpegxl_float16(tmp_vsimem):
         outfilename, src_ds, options=["COMPRESS=JXL", "JXL_LOSSLESS=YES"]
     )
     ds = gdal.Open(outfilename)
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
-    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "16"
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float16
     assert ds.GetRasterBand(1).Checksum() == 4672
 
 

@@ -5161,6 +5161,12 @@ template <class T> static inline bool IsEqualToNoData(T value, T noDataValue)
     return value == noDataValue;
 }
 
+template <> bool IsEqualToNoData<GFloat16>(GFloat16 value, GFloat16 noDataValue)
+{
+    using std::isnan;
+    return isnan(noDataValue) ? isnan(value) : value == noDataValue;
+}
+
 template <> bool IsEqualToNoData<float>(float value, float noDataValue)
 {
     return std::isnan(noDataValue) ? std::isnan(value) : value == noDataValue;
@@ -5332,6 +5338,14 @@ bool GDALBufferHasOnlyNoData(const void *pBuffer, double dfNoDataValue,
                    static_cast<const uint64_t *>(pBuffer),
                    static_cast<uint64_t>(static_cast<int64_t>(dfNoDataValue)),
                    nWidth, nHeight, nLineStride, nComponents);
+    }
+    if (nBitsPerSample == 16 && nSampleFormat == GSF_FLOATING_POINT)
+    {
+        return (std::isnan(dfNoDataValue) ||
+                GDALIsValueInRange<GFloat16>(dfNoDataValue)) &&
+               HasOnlyNoDataT(static_cast<const GFloat16 *>(pBuffer),
+                              static_cast<GFloat16>(dfNoDataValue), nWidth,
+                              nHeight, nLineStride, nComponents);
     }
     if (nBitsPerSample == 32 && nSampleFormat == GSF_FLOATING_POINT)
     {

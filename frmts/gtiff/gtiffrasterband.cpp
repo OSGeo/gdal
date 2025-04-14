@@ -47,7 +47,9 @@ GTiffRasterBand::GTiffRasterBand(GTiffDataset *poDSIn, int nBandIn)
     }
     else if (nBitsPerSample <= 16)
     {
-        if (nSampleFormat == SAMPLEFORMAT_INT)
+        if (nBitsPerSample == 16 && nSampleFormat == SAMPLEFORMAT_IEEEFP)
+            eDataType = GDT_Float16;
+        else if (nSampleFormat == SAMPLEFORMAT_INT)
             eDataType = GDT_Int16;
         else
             eDataType = GDT_UInt16;
@@ -56,6 +58,8 @@ GTiffRasterBand::GTiffRasterBand(GTiffDataset *poDSIn, int nBandIn)
     {
         if (nSampleFormat == SAMPLEFORMAT_COMPLEXINT)
             eDataType = GDT_CInt16;
+        else if (nSampleFormat == SAMPLEFORMAT_COMPLEXIEEEFP)
+            eDataType = GDT_CFloat16;
         else if (nSampleFormat == SAMPLEFORMAT_IEEEFP)
             eDataType = GDT_Float32;
         else if (nSampleFormat == SAMPLEFORMAT_INT)

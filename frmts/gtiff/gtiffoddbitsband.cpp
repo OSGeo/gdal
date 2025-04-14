@@ -26,7 +26,7 @@ GTiffOddBitsBand::GTiffOddBitsBand(GTiffDataset *m_poGDSIn, int nBandIn)
 
 {
     eDataType = GDT_Unknown;
-    if ((m_poGDS->m_nBitsPerSample == 16 || m_poGDS->m_nBitsPerSample == 24) &&
+    if (m_poGDS->m_nBitsPerSample == 24 &&
         m_poGDS->m_nSampleFormat == SAMPLEFORMAT_IEEEFP)
         eDataType = GDT_Float32;
     // FIXME ? in autotest we currently open gcore/data/int24.tif
