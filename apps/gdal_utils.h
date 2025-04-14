@@ -334,6 +334,10 @@ GDALTileIndexOptions CPL_DLL *
 GDALTileIndexOptionsNew(char **papszArgv,
                         GDALTileIndexOptionsForBinary *psOptionsForBinary);
 
+void CPL_DLL GDALTileIndexOptionsSetProgress(GDALTileIndexOptions *psOptions,
+                                             GDALProgressFunc pfnProgress,
+                                             void *pProgressData);
+
 void CPL_DLL GDALTileIndexOptionsFree(GDALTileIndexOptions *psOptions);
 
 GDALDatasetH CPL_DLL GDALTileIndex(const char *pszDest, int nSrcCount,

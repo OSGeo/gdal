@@ -84,6 +84,8 @@ struct GDALTileIndexOptions
     double dfMaxPixelSize = std::numeric_limits<double>::quiet_NaN();
     std::vector<GDALTileIndexRasterMetadata> aoFetchMD{};
     std::set<std::string> oSetFilenameFilters{};
+    GDALProgressFunc pfnProgress = nullptr;
+    void *pProgressData = nullptr;
 };
 
 /************************************************************************/
@@ -986,6 +988,8 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
     /* -------------------------------------------------------------------- */
     /*      loop over GDAL files, processing.                               */
     /* -------------------------------------------------------------------- */
+    int iCur = 0;
+    int nTotal = nSrcCount + 1;
     while (true)
     {
         const std::string osSrcFilename = oGDALTileIndexTileIterator.next();
@@ -1284,7 +1288,19 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                      "Failed to create feature in tile index.");
             return nullptr;
         }
+
+        ++iCur;
+        if (psOptions->pfnProgress &&
+            !psOptions->pfnProgress(static_cast<double>(iCur) / nTotal, "",
+                                    psOptions->pProgressData))
+        {
+            return nullptr;
+        }
+        if (iCur >= nSrcCount)
+            ++nTotal;
     }
+    if (psOptions->pfnProgress)
+        psOptions->pfnProgress(1.0, "", psOptions->pProgressData);
 
     return GDALDataset::ToHandle(poTileIndexDS.release());
 }
@@ -1468,6 +1484,28 @@ GDALTileIndexOptionsNew(char **papszArgv,
 void GDALTileIndexOptionsFree(GDALTileIndexOptions *psOptions)
 {
     delete psOptions;
+}
+
+/************************************************************************/
+/*                 GDALTileIndexOptionsSetProgress()                    */
+/************************************************************************/
+
+/**
+ * Set a progress function.
+ *
+ * @param psOptions the options struct for GDALTileIndex().
+ * @param pfnProgress the progress callback.
+ * @param pProgressData the user data for the progress callback.
+ *
+ * @since GDAL 3.11
+ */
+
+void GDALTileIndexOptionsSetProgress(GDALTileIndexOptions *psOptions,
+                                     GDALProgressFunc pfnProgress,
+                                     void *pProgressData)
+{
+    psOptions->pfnProgress = pfnProgress;
+    psOptions->pProgressData = pProgressData;
 }
 
 #undef CHECK_HAS_ENOUGH_ADDITIONAL_ARGS
