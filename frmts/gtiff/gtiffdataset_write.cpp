@@ -1911,14 +1911,14 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
     }
     else if (nBitsPerSample == 16 && nSampleFormat == SAMPLEFORMAT_IEEEFP)
     {
-        GFloat16 fNoDataValue = static_cast<GFloat16>(dfNoDataValue);
+        const GFloat16 fNoDataValue = static_cast<GFloat16>(dfNoDataValue);
         DiscardLsbT<GFloat16, uint16_t>(pabyBuffer, nBytes, iBand, nBands,
                                         nPlanarConfig, panMaskOffsetLsb,
                                         bHasNoData, fNoDataValue);
     }
     else if (nBitsPerSample == 32 && nSampleFormat == SAMPLEFORMAT_IEEEFP)
     {
-        float fNoDataValue = static_cast<float>(dfNoDataValue);
+        const float fNoDataValue = static_cast<float>(dfNoDataValue);
         DiscardLsbT<float, uint32_t>(pabyBuffer, nBytes, iBand, nBands,
                                      nPlanarConfig, panMaskOffsetLsb,
                                      bHasNoData, fNoDataValue);
