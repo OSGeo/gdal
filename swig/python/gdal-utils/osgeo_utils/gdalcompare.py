@@ -190,7 +190,9 @@ def compare_band(golden_band, new_band, id, options=None):
     else:
         # check a bit deeper in case of Float data type for which the Checksum() function is not reliable
         if golden_band.DataType in (gdal.GDT_Float32, gdal.GDT_Float64):
-            if golden_band.ComputeRasterMinMax() != new_band.ComputeRasterMinMax():
+            if golden_band.ComputeRasterMinMax(
+                can_return_none=True
+            ) != new_band.ComputeRasterMinMax(can_return_none=True):
                 my_print("Band %s statistics difference:" % 1)
                 my_print("  Golden: " + str(golden_band.ComputeBandStats()))
                 my_print("  New:    " + str(new_band.ComputeBandStats()))
