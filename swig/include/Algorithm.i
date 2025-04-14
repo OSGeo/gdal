@@ -118,6 +118,12 @@ public:
   }
 %clear char **;
 
+%apply (char **CSL) {char **};
+  char **GetMetadataItem(const char* item) {
+    return GDALAlgorithmArgGetMetadataItem( self, item );
+  }
+%clear char **;
+
   bool IsExplicitlySet() {
     return GDALAlgorithmArgIsExplicitlySet(self);
   }

@@ -15,9 +15,7 @@ from osgeo import gdal
 
 
 def get_astype_alg():
-    reg = gdal.GetGlobalAlgorithmRegistry()
-    raster = reg.InstantiateAlg("raster")
-    return raster.InstantiateSubAlgorithm("astype")
+    return gdal.GetGlobalAlgorithmRegistry()["raster"]["astype"]
 
 
 def test_gdalalg_raster_astype(tmp_vsimem):
@@ -25,13 +23,24 @@ def test_gdalalg_raster_astype(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out.tif")
 
     alg = get_astype_alg()
-    assert alg.ParseRunAndFinalize(
-        [
-            "--datatype=UInt16",
-            "../gcore/data/rgbsmall.tif",
-            out_filename,
-        ],
-    )
+    alg["datatype"] = "UInt16"
+    alg["input"] = "../gcore/data/rgbsmall.tif"
+    alg["output"] = out_filename
+    assert alg.Run() and alg.Finalize()
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+
+
+def test_gdalalg_raster_astype_as_gdt(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    alg = get_astype_alg()
+    alg["datatype"] = gdal.GDT_UInt16
+    alg["input"] = "../gcore/data/rgbsmall.tif"
+    alg["output"] = out_filename
+    assert alg.Run() and alg.Finalize()
 
     with gdal.OpenEx(out_filename) as ds:
         assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
