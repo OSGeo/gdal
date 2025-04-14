@@ -1156,7 +1156,7 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
         const double dfMaxY =
             std::max(std::max(adfY[0], adfY[1]), std::max(adfY[2], adfY[3]));
         const double dfRes =
-            (dfMaxX - dfMinX) * (dfMaxY - dfMinY) / nXSize / nYSize;
+            sqrt((dfMaxX - dfMinX) * (dfMaxY - dfMinY) / nXSize / nYSize);
         if (!std::isnan(psOptions->dfMinPixelSize) &&
             dfRes < psOptions->dfMinPixelSize)
         {
