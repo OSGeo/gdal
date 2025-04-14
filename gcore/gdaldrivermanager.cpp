@@ -578,7 +578,7 @@ int GDALDriverManager::RegisterDriver(GDALDriver *poDriver, bool bHidden)
 
     if (EQUAL(poDriver->GetDescription(), "MEM"))
     {
-        // Instanciate a Memory driver, that is the same as the MEM one,
+        // Instantiate a Memory driver, that is the same as the MEM one,
         // for legacy purposes. It can be queried through GetDriverByName()
         // but doesn't appear in the driver list.
         auto poMemoryDriver = new GDALDriver();
