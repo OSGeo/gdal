@@ -809,12 +809,13 @@ def test_stats_all_nodata():
     with pytest.raises(Exception):
         ds.GetRasterBand(1).ComputeRasterMinMax()
 
-    with pytest.raises(Exception):
-        ds.GetRasterBand(1).ComputeRasterMinMax(can_return_none=True)
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(can_return_none=True) is None
 
-    with pytest.raises(Exception):
-        # can_return_null also accepted for similarity with other methods
-        ds.GetRasterBand(1).ComputeRasterMinMax(can_return_null=True)
+    with gdaltest.disable_exceptions(), gdal.quiet_errors():
+        assert ds.GetRasterBand(1).ComputeRasterMinMax(can_return_none=True) is None
+
+    # can_return_null also accepted for similarity with other methods
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(can_return_null=True) is None
 
     approx_ok = 1
     force = 1
