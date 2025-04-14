@@ -49,7 +49,8 @@ jobs:
             -DBUILD_TESTING=ON \
             -DDOXYGEN_FAIL_ON_WARNINGS=ON \
             -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF \
-            -DOGR_BUILD_OPTIONAL_DRIVERS=OFF
+            -DOGR_BUILD_OPTIONAL_DRIVERS=OFF \
+            -DGDAL_ENABLE_DRIVER_GTI=ON
           cmake --build . -j$(nproc)
 
     - name: Print versions
