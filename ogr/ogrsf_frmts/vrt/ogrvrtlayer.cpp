@@ -619,7 +619,7 @@ try_again:
     if (EQUAL(osSrcDSName.c_str(), "@dummy@"))
     {
         GDALDriver *poMemDriver =
-            OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+            GetGDALDriverManager()->GetDriverByName("MEM");
         if (poMemDriver != nullptr)
         {
             poSrcDS =

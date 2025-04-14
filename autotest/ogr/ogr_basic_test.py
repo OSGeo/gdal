@@ -690,7 +690,7 @@ def test_ogr_basic_invalid_unicode():
     except Exception:
         pass
 
-    data_source = ogr.GetDriverByName("Memory").CreateDataSource("")
+    data_source = ogr.GetDriverByName("MEM").CreateDataSource("")
     layer = data_source.CreateLayer("test")
     layer.CreateField(ogr.FieldDefn("attr", ogr.OFTString))
     feature = ogr.Feature(layer.GetLayerDefn())
@@ -702,7 +702,7 @@ def test_ogr_basic_invalid_unicode():
 
 def test_ogr_basic_dataset_slice():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     ds.CreateLayer("lyr1")
     ds.CreateLayer("lyr2")
     ds.CreateLayer("lyr3")
@@ -719,7 +719,7 @@ def test_ogr_basic_dataset_slice():
 
 def test_ogr_basic_dataset_iter():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     ds.CreateLayer("lyr1")
     ds.CreateLayer("lyr2")
     ds.CreateLayer("lyr3")
@@ -736,7 +736,7 @@ def test_ogr_basic_dataset_iter():
 
 def test_ogr_basic_dataset_getitem():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     ds.CreateLayer("lyr1")
     ds.CreateLayer("lyr2")
     ds.CreateLayer("lyr3")
@@ -765,7 +765,7 @@ def test_ogr_basic_feature_iterator():
 
 def test_ogr_basic_dataset_copy_layer_dst_srswkt():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = ds.CreateLayer("lyr1")
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
@@ -777,7 +777,7 @@ def test_ogr_basic_dataset_copy_layer_dst_srswkt():
 
 def test_ogr_basic_dataset_copy_layer_metadata():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = ds.CreateLayer("lyr1")
     src_lyr.SetMetadataItem("foo", "bar")
     out_lyr = ds.CopyLayer(src_lyr, "lyr2")
@@ -786,7 +786,7 @@ def test_ogr_basic_dataset_copy_layer_metadata():
 
 def test_ogr_basic_dataset_no_copy_layer_metadata():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = ds.CreateLayer("lyr1")
     src_lyr.SetMetadataItem("foo", "bar")
     out_lyr = ds.CopyLayer(src_lyr, "lyr2", options=["COPY_MD=NO"])
@@ -834,7 +834,7 @@ def test_ogr_basic_float32_formatting():
 def test_ogr_basic_get_geometry_types():
     """Test Layer.GetGeometryTypes()"""
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn("str2", ogr.OFTString))

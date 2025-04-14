@@ -9,4 +9,3 @@ add_gdal_driver(
           PLUGIN_CAPABLE
           NO_DEPS)
 gdal_standard_includes(ogr_Selafin)
-target_include_directories(ogr_Selafin PRIVATE $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)

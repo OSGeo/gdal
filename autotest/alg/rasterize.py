@@ -36,7 +36,7 @@ def test_rasterize_1():
 
     # Create a memory layer to rasterize from.
 
-    rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
+    rast_ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("wrk")
     rast_mem_lyr = rast_ogr_ds.CreateLayer("poly", srs=sr)
 
     # Add a polygon.
@@ -141,7 +141,7 @@ def test_rasterize_3():
 
     # Create a memory layer to rasterize from.
 
-    rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
+    rast_ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("wrk")
     rast_mem_lyr = rast_ogr_ds.CreateLayer("poly")
 
     # Add polygons and linestrings.
@@ -197,7 +197,7 @@ def test_rasterize_4():
     target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
-    rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
+    rast_ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("wrk")
     rast_mem_lyr = rast_ogr_ds.CreateLayer("poly", srs=sr)
     # Setup Schema
     ogrtest.quick_create_layer_def(rast_mem_lyr, [("CELSIUS", ogr.OFTReal)])
@@ -254,7 +254,7 @@ def test_rasterize_5():
 
     # Create a memory layer to rasterize from.
 
-    rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
+    rast_ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("wrk")
     rast_mem_lyr = rast_ogr_ds.CreateLayer("poly", srs=sr)
 
     # Add polygons.
@@ -487,7 +487,7 @@ def test_rasterize_all_touched_issue_7523():
     target_ds.SetGeoTransform((475435, 5, 0, 424145, 0, -5))
     target_ds.SetProjection(sr_wkt)
 
-    vect_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    vect_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = vect_ds.CreateLayer("test", sr)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(
@@ -923,7 +923,7 @@ def test_rasterize_bugfix_gh8437(wkt, options, nbands):
     target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
-    rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
+    rast_ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("wrk")
     rast_mem_lyr = rast_ogr_ds.CreateLayer("poly", srs=sr)
 
     # Add a polygon.
@@ -979,7 +979,7 @@ def test_rasterize_bugfix_gh8918(wkt):
     target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
-    rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
+    rast_ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("wrk")
     rast_mem_lyr = rast_ogr_ds.CreateLayer("poly", srs=sr)
 
     # Add a polygon.

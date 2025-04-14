@@ -20,7 +20,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_api.h"
 
-#include "../mem/memdataset.h"
+#include "memdataset.h"
 
 #include "ecwdrivercore.h"
 

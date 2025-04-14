@@ -3217,11 +3217,192 @@ static CPLErr MEMDatasetDelete(const char * /* fileName */)
 }
 
 /************************************************************************/
+/*                           ICreateLayer()                             */
+/************************************************************************/
+
+OGRLayer *MEMDataset::ICreateLayer(const char *pszLayerName,
+                                   const OGRGeomFieldDefn *poGeomFieldDefn,
+                                   CSLConstList papszOptions)
+{
+    // Create the layer object.
+
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRSIn =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
+
+    OGRSpatialReference *poSRS = nullptr;
+    if (poSRSIn)
+    {
+        poSRS = poSRSIn->Clone();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+    auto poLayer = std::make_unique<OGRMemLayer>(pszLayerName, poSRS, eType);
+    if (poSRS)
+    {
+        poSRS->Release();
+    }
+
+    if (CPLFetchBool(papszOptions, "ADVERTIZE_UTF8", false))
+        poLayer->SetAdvertizeUTF8(true);
+
+    poLayer->SetDataset(this);
+    poLayer->SetFIDColumn(CSLFetchNameValueDef(papszOptions, "FID", ""));
+
+    // Add layer to data source layer list.
+    m_apoLayers.emplace_back(std::move(poLayer));
+    return m_apoLayers.back().get();
+}
+
+/************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+OGRErr MEMDataset::DeleteLayer(int iLayer)
+
+{
+    if (iLayer >= 0 && iLayer < static_cast<int>(m_apoLayers.size()))
+    {
+        m_apoLayers.erase(m_apoLayers.begin() + iLayer);
+        return OGRERR_NONE;
+    }
+
+    return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int MEMDataset::TestCapability(const char *pszCap)
+
+{
+    if (EQUAL(pszCap, ODsCCreateLayer))
+        return TRUE;
+    else if (EQUAL(pszCap, ODsCDeleteLayer))
+        return TRUE;
+    else if (EQUAL(pszCap, ODsCCreateGeomFieldAfterCreateLayer))
+        return TRUE;
+    else if (EQUAL(pszCap, ODsCCurveGeometries))
+        return TRUE;
+    else if (EQUAL(pszCap, ODsCMeasuredGeometries))
+        return TRUE;
+    else if (EQUAL(pszCap, ODsCZGeometries))
+        return TRUE;
+    else if (EQUAL(pszCap, ODsCRandomLayerWrite))
+        return TRUE;
+    else if (EQUAL(pszCap, ODsCAddFieldDomain))
+        return TRUE;
+    else if (EQUAL(pszCap, ODsCDeleteFieldDomain))
+        return TRUE;
+    else if (EQUAL(pszCap, ODsCUpdateFieldDomain))
+        return TRUE;
+
+    return FALSE;
+}
+
+/************************************************************************/
+/*                              GetLayer()                              */
+/************************************************************************/
+
+OGRLayer *MEMDataset::GetLayer(int iLayer)
+
+{
+    if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))
+        return nullptr;
+
+    return m_apoLayers[iLayer].get();
+}
+
+/************************************************************************/
+/*                           AddFieldDomain()                           */
+/************************************************************************/
+
+bool MEMDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
+                                std::string &failureReason)
+{
+    if (GetFieldDomain(domain->GetName()) != nullptr)
+    {
+        failureReason = "A domain of identical name already exists";
+        return false;
+    }
+    const std::string domainName(domain->GetName());
+    m_oMapFieldDomains[domainName] = std::move(domain);
+    return true;
+}
+
+/************************************************************************/
+/*                           DeleteFieldDomain()                        */
+/************************************************************************/
+
+bool MEMDataset::DeleteFieldDomain(const std::string &name,
+                                   std::string &failureReason)
+{
+    const auto iter = m_oMapFieldDomains.find(name);
+    if (iter == m_oMapFieldDomains.end())
+    {
+        failureReason = "Domain does not exist";
+        return false;
+    }
+
+    m_oMapFieldDomains.erase(iter);
+
+    for (auto &poLayer : m_apoLayers)
+    {
+        for (int j = 0; j < poLayer->GetLayerDefn()->GetFieldCount(); ++j)
+        {
+            OGRFieldDefn *poFieldDefn =
+                poLayer->GetLayerDefn()->GetFieldDefn(j);
+            if (poFieldDefn->GetDomainName() == name)
+            {
+                auto oTemporaryUnsealer(poFieldDefn->GetTemporaryUnsealer());
+                poFieldDefn->SetDomainName(std::string());
+            }
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                           UpdateFieldDomain()                        */
+/************************************************************************/
+
+bool MEMDataset::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
+                                   std::string &failureReason)
+{
+    const std::string domainName(domain->GetName());
+    const auto iter = m_oMapFieldDomains.find(domainName);
+    if (iter == m_oMapFieldDomains.end())
+    {
+        failureReason = "No matching domain found";
+        return false;
+    }
+    m_oMapFieldDomains[domainName] = std::move(domain);
+    return true;
+}
+
+/************************************************************************/
+/*                              ExecuteSQL()                            */
+/************************************************************************/
+
+OGRLayer *MEMDataset::ExecuteSQL(const char *pszStatement,
+                                 OGRGeometry *poSpatialFilter,
+                                 const char *pszDialect)
+{
+    if (EQUAL(pszStatement, "PRAGMA read_only=1"))  // as used by VDV driver
+    {
+        for (auto &poLayer : m_apoLayers)
+            poLayer->SetUpdatable(false);
+        return nullptr;
+    }
+    return GDALDataset::ExecuteSQL(pszStatement, poSpatialFilter, pszDialect);
+}
+
+/************************************************************************/
 /*                          GDALRegister_MEM()                          */
 /************************************************************************/
 
 void GDALRegister_MEM()
-
 {
     if (GDALGetDriverByName("MEM") != nullptr)
         return;
@@ -3231,7 +3412,9 @@ void GDALRegister_MEM()
     poDriver->SetDescription("MEM");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "In Memory Raster");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_LONGNAME,
+        "In Memory raster, vector and multidimensional raster");
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONDATATYPES,
         "Byte Int8 Int16 UInt16 Int32 UInt32 Int64 UInt64 Float32 Float64 "
@@ -3246,6 +3429,47 @@ void GDALRegister_MEM()
         "       <Value>PIXEL</Value>"
         "   </Option>"
         "</CreationOptionList>");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_DELETE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_DELETE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_REORDER_FIELDS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONFIELDDATATYPES,
+        "Integer Integer64 Real String Date DateTime Time IntegerList "
+        "Integer64List RealList StringList Binary");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
+                              "WidthPrecision Nullable Default Unique "
+                              "Comment AlternativeName Domain");
+    poDriver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,
+                              "Name Type WidthPrecision Nullable Default "
+                              "Unique Domain AlternativeName Comment");
+
+    poDriver->SetMetadataItem(
+        GDAL_DS_LAYER_CREATIONOPTIONLIST,
+        "<LayerCreationOptionList>"
+        "  <Option name='ADVERTIZE_UTF8' type='boolean' description='Whether "
+        "the layer will contain UTF-8 strings' default='NO'/>"
+        "  <Option name='FID' type='string' description="
+        "'Name of the FID column to create' default='' />"
+        "</LayerCreationOptionList>");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_COORDINATE_EPOCH, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_FIELD_DOMAINS, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES,
+                              "Coded Range Glob");
+
+    poDriver->SetMetadataItem(GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS,
+                              "Name Type Nullable SRS CoordinateEpoch");
 
     // Define GDAL_NO_OPEN_FOR_MEM_DRIVER macro to undefine Open() method for
     // MEM driver.  Otherwise, bad user input can trigger easily a GDAL crash

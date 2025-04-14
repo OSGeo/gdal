@@ -25,7 +25,7 @@ def get_alg():
 
 def _src_ds_two_fields():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer", geom_type=ogr.wkbNone)
     src_lyr.CreateGeomField(ogr.GeomFieldDefn("a", ogr.wkbMultiPoint))
     src_lyr.CreateGeomField(ogr.GeomFieldDefn("b", ogr.wkbMultiLineString))
@@ -155,7 +155,7 @@ def test_gdalalg_vector_geom_explode_collections_active_geometry_b():
 
 def test_gdalalg_vector_geom_explode_collections_active_layer():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
     src_lyr = src_ds.CreateLayer("the_layer", geom_type=ogr.wkbMultiPoint)
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -198,7 +198,7 @@ def test_gdalalg_vector_geom_explode_collections_active_layer():
 
 def test_gdalalg_vector_geom_explode_collections_geometry_type():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -225,7 +225,7 @@ def test_gdalalg_vector_geom_explode_collections_geometry_type():
 
 def test_gdalalg_vector_geom_explode_collections_geometry_type_skip():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -267,7 +267,7 @@ def test_gdalalg_vector_geom_explode_collections_geometry_type_skip():
 
 def test_gdalalg_vector_geom_explode_collections_type_invalid():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
     alg = get_alg()
     alg["input"] = src_ds

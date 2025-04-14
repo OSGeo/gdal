@@ -85,7 +85,7 @@ def test_ogr_fielddomain_range():
     assert domain.GetFieldSubType() == ogr.OFSTNone
     assert domain.GetMinAsString() == "2023-07-03T12:13:14"
     assert domain.GetMaxAsString() == "2023-07-03T12:13:15"
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     ds.AddFieldDomain(domain)
     ret = gdal.VectorInfo(ds, format="json")
     assert ret["domains"] == {
@@ -165,7 +165,7 @@ def test_ogr_fielddomain_glob():
 
 def test_ogr_fielddomain_mem_driver():
 
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
     assert ds.GetFieldDomainNames() is None
 
@@ -222,7 +222,7 @@ def test_ogr_fielddomain_get_set_domain_name():
 
 
 def test_delete_domain_assigned_to_field():
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     assert ds.AddFieldDomain(
         ogr.CreateGlobFieldDomain("name", "desc", ogr.OFTString, ogr.OFSTNone, "*")
     )
@@ -283,7 +283,7 @@ def test_delete_domain_assigned_to_field():
 
 
 def test_update_field_domain():
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     assert ds.AddFieldDomain(
         ogr.CreateGlobFieldDomain("name", "desc", ogr.OFTString, ogr.OFSTNone, "*")
     )

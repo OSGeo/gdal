@@ -177,7 +177,7 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
 /*                  BuildMemDatasetWithRowGroupExtents()                */
 /************************************************************************/
 
-/** Builds a Memory dataset that contains, for each row-group of the input file,
+/** Builds a MEM dataset that contains, for each row-group of the input file,
  * the feature count and spatial extent of the features of this row group,
  * using Parquet statistics. This assumes that the Parquet file declares
  * a "covering":{"bbox":{ ... }} metadata item.
@@ -193,7 +193,7 @@ static GDALDataset *BuildMemDatasetWithRowGroupExtents(OGRParquetLayer *poLayer)
     if (poLayer->GeomColsBBOXParquet(0, iParquetXMin, iParquetYMin,
                                      iParquetXMax, iParquetYMax))
     {
-        auto poMemDrv = GetGDALDriverManager()->GetDriverByName("Memory");
+        auto poMemDrv = GetGDALDriverManager()->GetDriverByName("MEM");
         if (!poMemDrv)
             return nullptr;
         auto poMemDS = std::unique_ptr<GDALDataset>(

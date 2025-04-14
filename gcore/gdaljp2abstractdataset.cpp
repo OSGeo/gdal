@@ -331,7 +331,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
     if (papszGMLJP2 == nullptr)
         return;
     GDALDriver *const poMemDriver =
-        static_cast<GDALDriver *>(GDALGetDriverByName("Memory"));
+        GDALDriver::FromHandle(GDALGetDriverByName("MEM"));
     if (poMemDriver == nullptr)
         return;
 

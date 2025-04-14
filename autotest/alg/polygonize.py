@@ -33,7 +33,7 @@ def test_polygonize_1(is_int_polygonize):
     src_band = src_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     mem_layer = mem_ds.CreateLayer("poly", None, ogr.wkbPolygon)
@@ -77,7 +77,7 @@ def test_polygonize_2():
     src_band = src_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     mem_layer = mem_ds.CreateLayer("poly", None, ogr.wkbPolygon)
@@ -128,7 +128,7 @@ def test_polygonize_3():
     src_band = src_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     mem_layer = mem_ds.CreateLayer("poly", None, ogr.wkbPolygon)
@@ -166,7 +166,7 @@ def test_polygonize_4():
     src_band = src_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     mem_layer = mem_ds.CreateLayer("poly", None, ogr.wkbPolygon)
@@ -216,7 +216,7 @@ def test_polygonize_5():
     src_band = src_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     mem_layer = mem_ds.CreateLayer("poly", None, ogr.wkbPolygon)
@@ -263,7 +263,7 @@ def test_polygonize_6():
     src_band = src_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     mem_layer = mem_ds.CreateLayer("poly", None, ogr.wkbPolygon)
@@ -309,7 +309,7 @@ def test_polygonize_7():
     src_band = src_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     mem_layer = mem_ds.CreateLayer("poly", None, ogr.wkbPolygon)
@@ -365,7 +365,7 @@ def test_polygonize_8():
     mask_band = mask_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     ######################################

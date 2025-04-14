@@ -11,7 +11,7 @@
  ****************************************************************************/
 
 #include "ogr_ods.h"
-#include "ogr_mem.h"
+#include "memdataset.h"
 #include "ogr_p.h"
 #include "cpl_conv.h"
 #include "cpl_vsi_error.h"

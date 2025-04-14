@@ -2581,11 +2581,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
                                                     : nullptr;
     }
 
-    GDALDriver *GetDriverByName_unlocked(const char *pszName) const
-    {
-        auto oIter = oMapNameToDrivers.find(CPLString(pszName).toupper());
-        return oIter == oMapNameToDrivers.end() ? nullptr : oIter->second;
-    }
+    GDALDriver *GetDriverByName_unlocked(const char *pszName) const;
 
     static void CleanupPythonDrivers();
 

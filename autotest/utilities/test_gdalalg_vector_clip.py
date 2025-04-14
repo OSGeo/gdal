@@ -116,7 +116,7 @@ def test_gdalalg_vector_clip_general_behavior(tmp_vsimem):
 
 def test_gdalalg_vector_clip_bbox():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     src_lyr.CreateField(ogr.FieldDefn("foo"))
 
@@ -137,7 +137,7 @@ def test_gdalalg_vector_clip_bbox():
     clip["input"] = src_ds
 
     assert clip.ParseCommandLineArguments(
-        ["--bbox", "0.2,0.3,0.7,0.8", "--of", "Memory", "--output", "memory_ds"]
+        ["--bbox", "0.2,0.3,0.7,0.8", "--of", "MEM", "--output", "memory_ds"]
     )
     assert clip.Run()
 
@@ -154,7 +154,7 @@ def test_gdalalg_vector_clip_bbox():
 
 def test_gdalalg_vector_clip_bbox_srs():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs_wgs84 = osr.SpatialReference()
     srs_wgs84.SetFromUserInput("WGS84")
     srs_wgs84.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -176,7 +176,7 @@ def test_gdalalg_vector_clip_bbox_srs():
             "--bbox-crs",
             "EPSG:3857",
             "--of",
-            "Memory",
+            "MEM",
             "--output",
             "memory_ds",
         ]
@@ -197,7 +197,7 @@ def test_gdalalg_vector_clip_bbox_srs():
 
 def test_gdalalg_vector_clip_split_multipart():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbPolygon)
     src_lyr.CreateField(ogr.FieldDefn("foo"))
 
@@ -221,7 +221,7 @@ def test_gdalalg_vector_clip_split_multipart():
     clip["input"] = src_ds
 
     assert clip.ParseCommandLineArguments(
-        ["--bbox", "-0.1,0.3,1.1,0.7", "--of", "Memory", "--output", "memory_ds"]
+        ["--bbox", "-0.1,0.3,1.1,0.7", "--of", "MEM", "--output", "memory_ds"]
     )
     assert clip.Run()
 
@@ -267,7 +267,7 @@ def test_gdalalg_vector_clip_split_multipart():
 )
 def test_gdalalg_vector_clip_geom(clip_geom):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     src_lyr.CreateField(ogr.FieldDefn("foo"))
 
@@ -285,7 +285,7 @@ def test_gdalalg_vector_clip_geom(clip_geom):
     clip["input"] = src_ds
 
     assert clip.ParseCommandLineArguments(
-        ["--geometry", clip_geom, "--of", "Memory", "--output", "memory_ds"]
+        ["--geometry", clip_geom, "--of", "MEM", "--output", "memory_ds"]
     )
     assert clip.Run()
 
@@ -309,7 +309,7 @@ def test_gdalalg_vector_clip_geom(clip_geom):
 )
 def test_gdalalg_vector_clip_geom_srs(clip_geom):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs_wgs84 = osr.SpatialReference()
     srs_wgs84.SetFromUserInput("WGS84")
     srs_wgs84.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -334,7 +334,7 @@ def test_gdalalg_vector_clip_geom_srs(clip_geom):
             "--geometry-crs",
             "EPSG:3857",
             "--of",
-            "Memory",
+            "MEM",
             "--output",
             "memory_ds",
         ]
@@ -355,7 +355,7 @@ def test_gdalalg_vector_clip_geom_srs(clip_geom):
 
 def test_gdalalg_vector_clip_geom_not_rectangle():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     src_lyr.CreateField(ogr.FieldDefn("foo"))
 
@@ -381,7 +381,7 @@ def test_gdalalg_vector_clip_geom_not_rectangle():
             "--geometry",
             "POLYGON ((0 0,0 1,1 1,1 0,0.8 0,0.8 0.8,0.2 0.8,0.2 0,0 0))",
             "--of",
-            "Memory",
+            "MEM",
             "--output",
             "memory_ds",
         ]
@@ -401,7 +401,7 @@ def test_gdalalg_vector_clip_geom_not_rectangle():
 
 def test_gdalalg_vector_clip_intersection_incompatible_geometry_type():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbLineString)
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -416,7 +416,7 @@ def test_gdalalg_vector_clip_intersection_incompatible_geometry_type():
             "--geometry",
             "POLYGON ((0 0,0 1,1 1,1 0,0 0))",
             "--of",
-            "Memory",
+            "MEM",
             "--output",
             "memory_ds",
         ]
@@ -430,7 +430,7 @@ def test_gdalalg_vector_clip_intersection_incompatible_geometry_type():
 
 def test_gdalalg_vector_clip_intersection_promote_simple_type_to_multi():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbMultiPolygon)
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -449,7 +449,7 @@ def test_gdalalg_vector_clip_intersection_promote_simple_type_to_multi():
             "--geometry",
             "POLYGON ((0 0,0 1,1 1,1 0,0 0))",
             "--of",
-            "Memory",
+            "MEM",
             "--output",
             "memory_ds",
         ]
@@ -467,7 +467,7 @@ def test_gdalalg_vector_clip_intersection_promote_simple_type_to_multi():
 
 def test_gdalalg_vector_clip_like_vector():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     src_lyr.CreateField(ogr.FieldDefn("foo"))
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -476,7 +476,7 @@ def test_gdalalg_vector_clip_like_vector():
     src_lyr.CreateFeature(f)
 
     # Create "like" dataset
-    like_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    like_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     like_lyr = like_ds.CreateLayer("test")
     f = ogr.Feature(like_lyr.GetLayerDefn())
     f.SetGeometry(
@@ -488,7 +488,7 @@ def test_gdalalg_vector_clip_like_vector():
     clip["input"] = src_ds
     clip["like"] = like_ds
 
-    assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
+    assert clip.ParseCommandLineArguments(["--of", "MEM", "--output", "memory_ds"])
     assert clip.Run()
 
     out_ds = clip["output"].GetDataset()
@@ -505,7 +505,7 @@ def test_gdalalg_vector_clip_like_vector():
 
 def test_gdalalg_vector_clip_like_vector_invalid_geom():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     src_lyr.CreateField(ogr.FieldDefn("foo"))
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -514,9 +514,7 @@ def test_gdalalg_vector_clip_like_vector_invalid_geom():
     src_lyr.CreateFeature(f)
 
     # Create "like" dataset
-    like_ds = gdal.GetDriverByName("Memory").Create(
-        "clip_ds", 0, 0, 0, gdal.GDT_Unknown
-    )
+    like_ds = gdal.GetDriverByName("MEM").Create("clip_ds", 0, 0, 0, gdal.GDT_Unknown)
     like_lyr = like_ds.CreateLayer("test")
     f = ogr.Feature(like_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0,1 1,0 1,1 0,0 0))"))
@@ -526,7 +524,7 @@ def test_gdalalg_vector_clip_like_vector_invalid_geom():
     clip["input"] = src_ds
     clip["like"] = like_ds
 
-    assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
+    assert clip.ParseCommandLineArguments(["--of", "MEM", "--output", "memory_ds"])
     with gdal.quiet_errors(), pytest.raises(
         Exception, match="Geometry of feature 0 of clip_ds is invalid"
     ):
@@ -535,7 +533,7 @@ def test_gdalalg_vector_clip_like_vector_invalid_geom():
 
 def test_gdalalg_vector_clip_like_vector_like_layer():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     src_lyr.CreateField(ogr.FieldDefn("foo"))
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -544,7 +542,7 @@ def test_gdalalg_vector_clip_like_vector_like_layer():
     src_lyr.CreateFeature(f)
 
     # Create "like" dataset
-    like_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    like_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     like_ds.CreateLayer("unused")
     like_lyr = like_ds.CreateLayer("my_layer")
     f = ogr.Feature(like_lyr.GetLayerDefn())
@@ -558,7 +556,7 @@ def test_gdalalg_vector_clip_like_vector_like_layer():
     clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(
-        ["--like-layer", "my_layer", "--of", "Memory", "--output", "memory_ds"]
+        ["--like-layer", "my_layer", "--of", "MEM", "--output", "memory_ds"]
     )
     assert clip.Run()
 
@@ -576,10 +574,10 @@ def test_gdalalg_vector_clip_like_vector_like_layer():
 
 def test_gdalalg_vector_clip_like_vector_like_layer_invalid():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
     # Create "like" dataset
-    like_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    like_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     like_ds.CreateLayer("test")
 
     clip = get_clip_alg()
@@ -587,7 +585,7 @@ def test_gdalalg_vector_clip_like_vector_like_layer_invalid():
     clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(
-        ["--like-layer", "invalid", "--of", "Memory", "--output", "memory_ds"]
+        ["--like-layer", "invalid", "--of", "MEM", "--output", "memory_ds"]
     )
     with pytest.raises(
         Exception, match="Failed to identify source layer from clipping dataset."
@@ -597,7 +595,7 @@ def test_gdalalg_vector_clip_like_vector_like_layer_invalid():
 
 def test_gdalalg_vector_clip_like_vector_like_sql():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     src_lyr.CreateField(ogr.FieldDefn("foo"))
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -606,7 +604,7 @@ def test_gdalalg_vector_clip_like_vector_like_sql():
     src_lyr.CreateFeature(f)
 
     # Create "like" dataset
-    like_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    like_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     like_ds.CreateLayer("unused")
     like_lyr = like_ds.CreateLayer("my_layer")
     f = ogr.Feature(like_lyr.GetLayerDefn())
@@ -624,7 +622,7 @@ def test_gdalalg_vector_clip_like_vector_like_sql():
             "--like-sql",
             "SELECT * FROM my_layer",
             "--of",
-            "Memory",
+            "MEM",
             "--output",
             "memory_ds",
         ]
@@ -645,7 +643,7 @@ def test_gdalalg_vector_clip_like_vector_like_sql():
 
 def test_gdalalg_vector_clip_like_vector_like_where():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     src_lyr.CreateField(ogr.FieldDefn("foo"))
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -654,7 +652,7 @@ def test_gdalalg_vector_clip_like_vector_like_where():
     src_lyr.CreateFeature(f)
 
     # Create "like" dataset
-    like_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    like_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     like_lyr = like_ds.CreateLayer("my_layer")
     like_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
     f = ogr.Feature(like_lyr.GetLayerDefn())
@@ -674,7 +672,7 @@ def test_gdalalg_vector_clip_like_vector_like_where():
     clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(
-        ["--like-where", "id=1", "--of", "Memory", "--output", "memory_ds"]
+        ["--like-where", "id=1", "--of", "MEM", "--output", "memory_ds"]
     )
     assert clip.Run()
 
@@ -692,7 +690,7 @@ def test_gdalalg_vector_clip_like_vector_like_where():
 
 def test_gdalalg_vector_clip_like_vector_like_where_empty():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     src_lyr.CreateField(ogr.FieldDefn("foo"))
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -701,7 +699,7 @@ def test_gdalalg_vector_clip_like_vector_like_where_empty():
     src_lyr.CreateFeature(f)
 
     # Create "like" dataset
-    like_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    like_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     like_lyr = like_ds.CreateLayer("my_layer")
     like_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
 
@@ -710,7 +708,7 @@ def test_gdalalg_vector_clip_like_vector_like_where_empty():
     clip["like"] = like_ds
 
     assert clip.ParseCommandLineArguments(
-        ["--like-where", "id=1", "--of", "Memory", "--output", "memory_ds"]
+        ["--like-where", "id=1", "--of", "MEM", "--output", "memory_ds"]
     )
     with pytest.raises(Exception, match="No clipping geometry found"):
         clip.Run()
@@ -718,7 +716,7 @@ def test_gdalalg_vector_clip_like_vector_like_where_empty():
 
 def test_gdalalg_vector_clip_like_vector_srs():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs_wgs84 = osr.SpatialReference()
     srs_wgs84.SetFromUserInput("WGS84")
     srs_wgs84.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -728,7 +726,7 @@ def test_gdalalg_vector_clip_like_vector_srs():
     src_lyr.CreateFeature(f)
 
     # Create "like" dataset
-    like_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    like_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs_3857 = osr.SpatialReference()
     srs_3857.SetFromUserInput("EPSG:3857")
     srs_3857.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -746,7 +744,7 @@ def test_gdalalg_vector_clip_like_vector_srs():
     clip["input"] = src_ds
     clip["like"] = like_ds
 
-    assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
+    assert clip.ParseCommandLineArguments(["--of", "MEM", "--output", "memory_ds"])
     assert clip.Run()
 
     out_ds = clip["output"].GetDataset()
@@ -762,7 +760,7 @@ def test_gdalalg_vector_clip_like_vector_srs():
 
 def test_gdalalg_vector_clip_like_raster():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     src_lyr.CreateField(ogr.FieldDefn("foo"))
     f = ogr.Feature(src_lyr.GetLayerDefn())
@@ -778,7 +776,7 @@ def test_gdalalg_vector_clip_like_raster():
     clip["input"] = src_ds
     clip["like"] = like_ds
 
-    assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
+    assert clip.ParseCommandLineArguments(["--of", "MEM", "--output", "memory_ds"])
     assert clip.Run()
 
     out_ds = clip["output"].GetDataset()
@@ -794,7 +792,7 @@ def test_gdalalg_vector_clip_like_raster():
 
 def test_gdalalg_vector_clip_like_raster_srs():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs_wgs84 = osr.SpatialReference()
     srs_wgs84.SetFromUserInput("WGS84")
     srs_wgs84.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -819,7 +817,7 @@ def test_gdalalg_vector_clip_like_raster_srs():
     clip["input"] = src_ds
     clip["like"] = like_ds
 
-    assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
+    assert clip.ParseCommandLineArguments(["--of", "MEM", "--output", "memory_ds"])
     assert clip.Run()
 
     out_ds = clip["output"].GetDataset()
@@ -846,14 +844,14 @@ def test_gdalalg_vector_clip_missing_arg(tmp_vsimem):
 
 def test_gdalalg_vector_clip_geometry_invalid():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_ds.CreateLayer("test")
 
     clip = get_clip_alg()
     clip["input"] = src_ds
 
     assert clip.ParseCommandLineArguments(
-        ["--geometry", "invalid", "--of", "Memory", "--output", "memory_ds"]
+        ["--geometry", "invalid", "--of", "MEM", "--output", "memory_ds"]
     )
     with pytest.raises(
         Exception,
@@ -864,7 +862,7 @@ def test_gdalalg_vector_clip_geometry_invalid():
 
 def test_gdalalg_vector_clip_like_vector_too_many_layers():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_ds.CreateLayer("test")
 
     # Create "like" dataset
@@ -874,7 +872,7 @@ def test_gdalalg_vector_clip_like_vector_too_many_layers():
     clip["input"] = src_ds
     clip["like"] = like_ds
 
-    assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
+    assert clip.ParseCommandLineArguments(["--of", "MEM", "--output", "memory_ds"])
     with pytest.raises(
         Exception,
         match="clip: Dataset '' has no geotransform matrix. Its bounds cannot be established",
@@ -884,11 +882,11 @@ def test_gdalalg_vector_clip_like_vector_too_many_layers():
 
 def test_gdalalg_vector_clip_like_raster_no_geotransform():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_ds.CreateLayer("test")
 
     # Create "like" dataset
-    like_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    like_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     like_ds.CreateLayer("test1")
     like_ds.CreateLayer("test2")
 
@@ -896,7 +894,7 @@ def test_gdalalg_vector_clip_like_raster_no_geotransform():
     clip["input"] = src_ds
     clip["like"] = like_ds
 
-    assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
+    assert clip.ParseCommandLineArguments(["--of", "MEM", "--output", "memory_ds"])
     with pytest.raises(
         Exception, match="clip: Only single layer dataset can be specified with --like"
     ):
@@ -905,16 +903,16 @@ def test_gdalalg_vector_clip_like_raster_no_geotransform():
 
 def test_gdalalg_vector_clip_like_neither_raster_no_vector():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
     # Create "like" dataset
-    like_ds = gdal.GetDriverByName("Memory").Create("clip", 0, 0, 0, gdal.GDT_Unknown)
+    like_ds = gdal.GetDriverByName("MEM").Create("clip", 0, 0, 0, gdal.GDT_Unknown)
 
     clip = get_clip_alg()
     clip["input"] = src_ds
     clip["like"] = like_ds
 
-    assert clip.ParseCommandLineArguments(["--of", "Memory", "--output", "memory_ds"])
+    assert clip.ParseCommandLineArguments(["--of", "MEM", "--output", "memory_ds"])
     with pytest.raises(
         Exception,
         match="clip: Cannot get extent from clip dataset",
@@ -958,7 +956,7 @@ def test_gdalalg_vector_clip_dataset_getnextfeature():
 
 def test_gdalalg_vector_clip_bbox_active_layer():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
     src_lyr.CreateField(ogr.FieldDefn("foo"))
 
@@ -982,7 +980,7 @@ def test_gdalalg_vector_clip_bbox_active_layer():
     clip["active-layer"] = "the_layer"
 
     assert clip.ParseCommandLineArguments(
-        ["--bbox", "0.2,0.3,0.7,0.8", "--of", "Memory", "--output", "memory_ds"]
+        ["--bbox", "0.2,0.3,0.7,0.8", "--of", "MEM", "--output", "memory_ds"]
     )
     assert clip.Run()
 

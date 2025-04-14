@@ -537,7 +537,7 @@ GDALDataset *OGRCSWLayer::FetchGetRecords()
 
     if (!poDS->GetOutputSchema().empty())
     {
-        GDALDriver *poDrv = (GDALDriver *)GDALGetDriverByName("Memory");
+        GDALDriver *poDrv = GDALDriver::FromHandle(GDALGetDriverByName("MEM"));
         if (poDrv == nullptr)
             return nullptr;
         CPLXMLNode *psRoot = CPLParseXMLFile(osTmpFileName);

@@ -22,7 +22,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   DTED -raster- (rwv): DTED Elevation Raster (*.dt0, *.dt1, *.dt2)
   PNG -raster- (rwv): Portable Network Graphics (*.png)
   JPEG -raster- (rwv): JPEG JFIF (*.jpg, *.jpeg)
-  MEM -raster,multidimensional raster- (rw+): In Memory Raster
+  MEM -raster,multidimensional raster,vector- (rw+): In Memory raster, vector and multidimensional raster
   JDEM -raster- (rov): Japanese DEM (.mem) (*.mem)
   GIF -raster- (rwv): Graphics Interchange Format (.gif) (*.gif)
   BIGGIF -raster- (rov): Graphics Interchange Format (.gif) (*.gif)

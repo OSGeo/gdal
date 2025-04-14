@@ -10048,7 +10048,7 @@ def test_ogr_gpkg_write_flushcache(tmp_vsimem):
 @gdaltest.enable_exceptions()
 def test_ogr_gpkg_write_arrow_fallback_types(tmp_vsimem):
 
-    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = src_ds.CreateLayer("test")
     src_lyr.CreateField(ogr.FieldDefn("string", ogr.OFTString))
     src_lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
@@ -10502,7 +10502,7 @@ def test_ogr_gpkg_geom_coord_precision(
 
     # Test Arrow interface
     lyr.ResetReading()
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     mem_lyr = mem_ds.CreateLayer("test", geom_type=ogr.wkbNone)
     mem_lyr.CreateGeomField(ogr.GeomFieldDefn("my_geom"))
     mem_lyr.WriteArrow(lyr)

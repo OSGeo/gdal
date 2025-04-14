@@ -22,7 +22,7 @@
 #include "hdf5dataset.h"
 #include "hdf5drivercore.h"
 #include "ogr_spatialref.h"
-#include "../mem/memdataset.h"
+#include "memdataset.h"
 
 #include <algorithm>
 

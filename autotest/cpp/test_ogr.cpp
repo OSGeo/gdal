@@ -1491,7 +1491,7 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
         ASSERT_TRUE(oIter != poLayer->end());
     }
 
-    poDS.reset(GetGDALDriverManager()->GetDriverByName("Memory")->Create(
+    poDS.reset(GetGDALDriverManager()->GetDriverByName("MEM")->Create(
         "", 0, 0, 0, GDT_Unknown, nullptr));
     int nCountLayers = 0;
     for (auto poLayer : poDS->GetLayers())
@@ -2112,7 +2112,7 @@ TEST_F(test_ogr, InitStyleString_with_style_name)
 TEST_F(test_ogr, OGR_L_GetArrowStream)
 {
     auto poDS = std::unique_ptr<GDALDataset>(
-        GetGDALDriverManager()->GetDriverByName("Memory")->Create(
+        GetGDALDriverManager()->GetDriverByName("MEM")->Create(
             "", 0, 0, 0, GDT_Unknown, nullptr));
     auto poLayer = poDS->CreateLayer("test");
     {
@@ -4532,7 +4532,7 @@ TEST_F(test_ogr, OGRFeature_SetGeomField)
 TEST_F(test_ogr, GetArrowStream_DateTime_As_String)
 {
     auto poDS = std::unique_ptr<GDALDataset>(
-        GetGDALDriverManager()->GetDriverByName("Memory")->Create(
+        GetGDALDriverManager()->GetDriverByName("MEM")->Create(
             "", 0, 0, 0, GDT_Unknown, nullptr));
     auto poLayer = poDS->CreateLayer("test", nullptr, wkbNone);
     OGRFieldDefn oFieldDefn("dt", OFTDateTime);

@@ -34,7 +34,7 @@
 #include "ogr_p.h"
 #include "ogr_schema_override.h"
 #include "parsexsd.h"
-#include "../mem/ogr_mem.h"
+#include "memdataset.h"
 
 /************************************************************************/
 /*                   ReplaceSpaceByPct20IfNeeded()                      */

@@ -1158,7 +1158,8 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
 
     auto poDrv = poDS->GetDriver();
     const bool bCanReopenBaseDS =
-        !(poDrv && EQUAL(poDrv->GetDescription(), "Memory"));
+        !(poDrv && (EQUAL(poDrv->GetDescription(), "MEM") ||
+                    EQUAL(poDrv->GetDescription(), "Memory")));
     OGRSQLiteSelectLayer *poLayer = new OGRSQLiteExecuteSQLLayer(
         pszTmpDBName, poSQLiteDS, pszStatement, hSQLStmt,
         bUseStatementForGetNextFeature, bEmptyLayer, bCanReopenBaseDS,

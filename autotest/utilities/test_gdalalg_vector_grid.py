@@ -33,7 +33,7 @@ def test_gdalalg_vector_grid_error():
 
 
 def get_src_ds(geom3D):
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     src_lyr.CreateField(ogr.FieldDefn("z", ogr.OFTReal))
     for x, y, z in [

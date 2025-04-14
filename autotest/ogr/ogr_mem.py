@@ -32,7 +32,7 @@ def module_disable_exceptions():
 @pytest.fixture()
 def mem_ds(request, poly_feat):
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource(request.node.name)
+    ds = ogr.GetDriverByName("MEM").CreateDataSource(request.node.name)
 
     assert (
         ds.TestCapability(ogr.ODsCCreateLayer) != 0
@@ -538,7 +538,7 @@ def test_ogr_mem_16(mem_ds):
 
 def test_ogr_mem_17():
 
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds.CreateLayer("ogr_mem_1")
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
@@ -614,7 +614,7 @@ def test_ogr_mem_coordinate_epoch():
     srs.ImportFromEPSG(4326)
     srs.SetCoordinateEpoch(2021.3)
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("foo", srs=srs)
     srs = lyr.GetSpatialRef()
     assert srs.GetAuthorityCode(None) == "4326"
@@ -627,7 +627,7 @@ def test_ogr_mem_coordinate_epoch():
 
 def test_ogr_mem_alter_geom_field_defn():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("foo")
     assert lyr.TestCapability(ogr.OLCAlterGeomFieldDefn)
 
@@ -701,7 +701,7 @@ def test_ogr_mem_alter_geom_field_defn():
 def test_ogr_mem_arrow_stream_pycapsule_interface():
     import ctypes
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("foo")
 
     stream = lyr.__arrow_c_stream__()
@@ -748,7 +748,7 @@ def test_ogr_mem_arrow_stream_pycapsule_interface():
 @gdaltest.enable_exceptions()
 def test_ogr_mem_consume_arrow_stream_pycapsule_interface():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("foo", geom_type=ogr.wkbNone)
     lyr.CreateGeomField(ogr.GeomFieldDefn("my_geometry"))
     lyr.CreateField(ogr.FieldDefn("foo"))
@@ -776,7 +776,7 @@ def test_ogr_mem_consume_arrow_array_pycapsule_interface():
     if int(pyarrow.__version__.split(".")[0]) < 14:
         pytest.skip("pyarrow >= 14 needed")
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("foo")
     lyr.CreateField(ogr.FieldDefn("foo"))
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -808,7 +808,7 @@ def test_ogr_mem_arrow_stream_numpy():
     numpy = pytest.importorskip("numpy")
     import datetime
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("foo")
     stream = lyr.GetArrowStreamAsNumPy()
 
@@ -986,7 +986,7 @@ def test_ogr_mem_arrow_stream_numpy_datetime_as_string():
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("foo")
 
     field = ogr.FieldDefn("datetime", ogr.OFTDateTime)
@@ -1029,7 +1029,7 @@ def test_ogr_mem_arrow_stream_numpy_datetime_as_string():
 @gdaltest.enable_exceptions()
 def test_ogr_mem_arrow_write_with_datetime_as_string():
 
-    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = src_ds.CreateLayer("src_lyr", geom_type=ogr.wkbNone)
 
     field = ogr.FieldDefn("dt", ogr.OFTDateTime)
@@ -1050,7 +1050,7 @@ def test_ogr_mem_arrow_write_with_datetime_as_string():
     f.SetField("dt", "2022-05-31T12:34:56+12:30")
     src_lyr.CreateFeature(f)
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     dst_lyr = ds.CreateLayer("dst_lyr")
 
     stream = src_lyr.GetArrowStream(["DATETIME_AS_STRING=YES"])
@@ -1094,7 +1094,7 @@ def test_ogr_mem_arrow_stream_numpy_memlimit(limited_field):
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("foo")
 
     field = ogr.FieldDefn("str", ogr.OFTString)
@@ -1268,7 +1268,7 @@ def test_ogr_mem_arrow_stream_numpy_huge_string():
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("foo")
     field = ogr.FieldDefn("str", ogr.OFTString)
     lyr.CreateField(field)
@@ -1300,7 +1300,7 @@ def test_ogr_mem_arrow_stream_numpy_huge_string():
 def test_ogr_mem_arrow_stream_pyarrow():
     pytest.importorskip("pyarrow")
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("foo")
     stream = lyr.GetArrowStreamAsPyArrow()
 
@@ -1330,7 +1330,7 @@ def test_ogr_mem_arrow_stream_pyarrow():
 def test_ogr_mem_arrow_stream_pyarrow_geoarrow_no_crs_metadata():
     pytest.importorskip("pyarrow")
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("foo")
 
     stream = lyr.GetArrowStreamAsPyArrow(["GEOMETRY_METADATA_ENCODING=GEOARROW"])
@@ -1347,7 +1347,7 @@ def test_ogr_mem_arrow_stream_pyarrow_geoarrow_no_crs_metadata():
 def test_ogr_mem_arrow_stream_pyarrow_geoarrow_metadata():
     pytest.importorskip("pyarrow")
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
     lyr = ds.CreateLayer("foo", srs=srs)
@@ -1467,7 +1467,7 @@ def test_ogr_mem_update_feature(mem_ds):
 
 def test_ogr_mem_get_supported_srs_list():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("foo")
     assert lyr.GetSupportedSRSList() is None
     assert lyr.SetActiveSRS(0, None) != ogr.OGRERR_NONE
@@ -1479,7 +1479,7 @@ def test_ogr_mem_get_supported_srs_list():
 @gdaltest.enable_exceptions()
 def test_ogr_mem_write_arrow():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = ds.CreateLayer("src_lyr")
 
     field_def = ogr.FieldDefn("field_bool", ogr.OFTInteger)
@@ -1631,7 +1631,7 @@ def test_ogr_mem_write_arrow():
 @pytest.mark.parametrize("fid_type", [ogr.OFTInteger, ogr.OFTInteger64, ogr.OFTString])
 def test_ogr_mem_write_arrow_types_of_fid(fid_type):
 
-    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = src_ds.CreateLayer("src_lyr")
 
     src_lyr.CreateField(ogr.FieldDefn("id", fid_type))
@@ -1640,7 +1640,7 @@ def test_ogr_mem_write_arrow_types_of_fid(fid_type):
     src_feature["id"] = 2
     src_lyr.CreateFeature(src_feature)
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     dst_lyr = ds.CreateLayer("dst_lyr")
 
     stream = src_lyr.GetArrowStream()
@@ -1674,7 +1674,7 @@ def test_ogr_mem_write_arrow_types_of_fid(fid_type):
 @gdaltest.enable_exceptions()
 def test_ogr_mem_write_arrow_error_negative_fid():
 
-    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = src_ds.CreateLayer("src_lyr")
 
     src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
@@ -1683,7 +1683,7 @@ def test_ogr_mem_write_arrow_error_negative_fid():
     src_feature["id"] = -2
     src_lyr.CreateFeature(src_feature)
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     dst_lyr = ds.CreateLayer("dst_lyr")
 
     stream = src_lyr.GetArrowStream()
@@ -1742,7 +1742,7 @@ def test_ogr_mem_write_arrow_accepted_field_type_mismatch(
         if platform.machine() not in ("x86_64", "AMD64"):
             pytest.skip("Skipping test on platform.machine() = " + platform.machine())
 
-    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = src_ds.CreateLayer("src_lyr")
 
     src_lyr.CreateField(ogr.FieldDefn("my_field", input_type))
@@ -1753,7 +1753,7 @@ def test_ogr_mem_write_arrow_accepted_field_type_mismatch(
             src_feature["my_field"] = v
         src_lyr.CreateFeature(src_feature)
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     dst_lyr = ds.CreateLayer("dst_lyr")
     dst_lyr.CreateField(ogr.FieldDefn("my_field", output_type))
 
@@ -1809,7 +1809,7 @@ def test_ogr_mem_write_pyarrow():
     pa = pytest.importorskip("pyarrow")
     np = pytest.importorskip("numpy")  # for float16
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
 
     fid = pa.array([None for i in range(5)], type=pa.int32())
@@ -2877,7 +2877,7 @@ def test_ogr_mem_write_pyarrow():
 def test_ogr_mem_write_pyarrow_geometry_in_large_binary():
     pa = pytest.importorskip("pyarrow")
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
 
     import struct
@@ -2918,7 +2918,7 @@ def test_ogr_mem_write_pyarrow_geometry_in_large_binary():
 def test_ogr_mem_write_pyarrow_invalid_dict_index(dict_values):
     pa = pytest.importorskip("pyarrow")
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
 
     dictionary = pa.array(dict_values)
@@ -2959,7 +2959,7 @@ def test_ogr_mem_write_pyarrow_invalid_dict_index(dict_values):
 def test_ogr_mem_arrow_json():
     pytest.importorskip("pyarrow")
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("foo")
     field_def = ogr.FieldDefn("field_json", ogr.OFTString)
     field_def.SetSubType(ogr.OFSTJSON)
@@ -2980,6 +2980,6 @@ def test_ogr_mem_arrow_json():
 
 def test_ogr_mem_lyr_get_dataset():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("foo")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("foo")
     lyr = ds.CreateLayer("test")
     assert lyr.GetDataset().GetDescription() == "foo"
