@@ -1525,9 +1525,6 @@ static CPLErr MinOrMaxPixelFunc(void **papoSources, int nSources, void *pData,
                                 int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
-    if (nSources < 2)
-        return CE_Failure;
-
     if (GDALDataTypeIsComplex(eSrcType))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
