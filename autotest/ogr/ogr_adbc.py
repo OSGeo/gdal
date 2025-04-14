@@ -110,6 +110,27 @@ def test_ogr_adbc_sqlite3():
 ###############################################################################
 
 
+@pytest.mark.require_driver("GPKG")
+def test_ogr_adbc_create_empty_gpkg_and_open(tmp_path):
+
+    if not _has_sqlite_driver():
+        pytest.skip("adbc_driver_sqlite missing")
+
+    filename = tmp_path / "out.gpkg"
+    ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    with pytest.raises(Exception):
+        ogr.Open(filename)
+
+    with gdal.OpenEx(filename, allowed_drivers=["ADBC"]) as ds:
+        assert ds.GetLayerCount() == 6
+
+    with ogr.Open("ADBC:" + str(filename)) as ds:
+        assert ds.GetLayerCount() == 6
+
+
+###############################################################################
+
+
 def test_ogr_adbc_sql_open_option():
 
     if not _has_sqlite_driver():
