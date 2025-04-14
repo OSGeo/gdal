@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vfs delete" subcommand
+ * Purpose:  gdal "vsi delete" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vfs_delete.h"
+#include "gdalalg_vsi_delete.h"
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -25,10 +25,10 @@
 #endif
 
 /************************************************************************/
-/*            GDALVFSDeleteAlgorithm::GDALVFSDeleteAlgorithm()          */
+/*            GDALVSIDeleteAlgorithm::GDALVSIDeleteAlgorithm()          */
 /************************************************************************/
 
-GDALVFSDeleteAlgorithm::GDALVFSDeleteAlgorithm()
+GDALVSIDeleteAlgorithm::GDALVSIDeleteAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
     {
@@ -55,10 +55,10 @@ GDALVFSDeleteAlgorithm::GDALVFSDeleteAlgorithm()
 }
 
 /************************************************************************/
-/*                    GDALVFSDeleteAlgorithm::RunImpl()                 */
+/*                    GDALVSIDeleteAlgorithm::RunImpl()                 */
 /************************************************************************/
 
-bool GDALVFSDeleteAlgorithm::RunImpl(GDALProgressFunc, void *)
+bool GDALVSIDeleteAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
     bool ret = false;
     VSIStatBufL sStat;

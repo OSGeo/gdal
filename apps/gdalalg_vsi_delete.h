@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vfs delete" subcommand
+ * Purpose:  gdal "vsi delete" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,31 +10,31 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_VFS_DELETE_INCLUDED
-#define GDALALG_VFS_DELETE_INCLUDED
+#ifndef GDALALG_VSI_DELETE_INCLUDED
+#define GDALALG_VSI_DELETE_INCLUDED
 
 #include "gdalalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                        GDALVFSDeleteAlgorithm                        */
+/*                        GDALVSIDeleteAlgorithm                        */
 /************************************************************************/
 
-class GDALVFSDeleteAlgorithm final : public GDALAlgorithm
+class GDALVSIDeleteAlgorithm final : public GDALAlgorithm
 {
   public:
     static constexpr const char *NAME = "delete";
     static constexpr const char *DESCRIPTION =
         "Delete files located on GDAL Virtual file systems (VSI).";
-    static constexpr const char *HELP_URL = "/programs/gdal_vfs_delete.html";
+    static constexpr const char *HELP_URL = "/programs/gdal_vsi_delete.html";
 
     static std::vector<std::string> GetAliasesStatic()
     {
         return {"rm", "rmdir", "del"};
     }
 
-    GDALVFSDeleteAlgorithm();
+    GDALVSIDeleteAlgorithm();
 
   private:
     std::string m_filename{};

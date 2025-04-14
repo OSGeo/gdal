@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vfs" subcommand
+ * Purpose:  gdal "vsi" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -12,27 +12,27 @@
 
 #include "gdalalgorithm.h"
 
-#include "gdalalg_vfs_copy.h"
-#include "gdalalg_vfs_delete.h"
-#include "gdalalg_vfs_list.h"
+#include "gdalalg_vsi_copy.h"
+#include "gdalalg_vsi_delete.h"
+#include "gdalalg_vsi_list.h"
 
 /************************************************************************/
-/*                           GDALVFSAlgorithm                           */
+/*                           GDALVSIAlgorithm                           */
 /************************************************************************/
 
-class GDALVFSAlgorithm final : public GDALAlgorithm
+class GDALVSIAlgorithm final : public GDALAlgorithm
 {
   public:
-    static constexpr const char *NAME = "vfs";
+    static constexpr const char *NAME = "vsi";
     static constexpr const char *DESCRIPTION =
         "GDAL Virtual file system (VSI) commands.";
-    static constexpr const char *HELP_URL = "/programs/gdal_vfs.html";
+    static constexpr const char *HELP_URL = "/programs/gdal_vsi.html";
 
-    GDALVFSAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+    GDALVSIAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
-        RegisterSubAlgorithm<GDALVFSCopyAlgorithm>();
-        RegisterSubAlgorithm<GDALVFSDeleteAlgorithm>();
-        RegisterSubAlgorithm<GDALVFSListAlgorithm>();
+        RegisterSubAlgorithm<GDALVSICopyAlgorithm>();
+        RegisterSubAlgorithm<GDALVSIDeleteAlgorithm>();
+        RegisterSubAlgorithm<GDALVSIListAlgorithm>();
     }
 
   private:
@@ -40,9 +40,9 @@ class GDALVFSAlgorithm final : public GDALAlgorithm
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The Run() method should not be called directly on the \"gdal "
-                 "vfs\" program.");
+                 "vsi\" program.");
         return false;
     }
 };
 
-GDAL_STATIC_REGISTER_ALG(GDALVFSAlgorithm);
+GDAL_STATIC_REGISTER_ALG(GDALVSIAlgorithm);

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal vfs copy' testing
+# Purpose:  'gdal vsi copy' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -17,24 +17,24 @@ from osgeo import gdal
 
 
 def get_alg():
-    return gdal.GetGlobalAlgorithmRegistry()["vfs"]["copy"]
+    return gdal.GetGlobalAlgorithmRegistry()["vsi"]["copy"]
 
 
-def test_gdalalg_vfs_copy_empty_source():
+def test_gdalalg_vsi_copy_empty_source():
 
     alg = get_alg()
     with pytest.raises(Exception, match="Source filename cannot be empty"):
         alg["source"] = ""
 
 
-def test_gdalalg_vfs_copy_empty_destination():
+def test_gdalalg_vsi_copy_empty_destination():
 
     alg = get_alg()
     with pytest.raises(Exception, match="Destination filename cannot be empty"):
         alg["destination"] = ""
 
 
-def test_gdalalg_vfs_copy_single_dir_destination(tmp_vsimem):
+def test_gdalalg_vsi_copy_single_dir_destination(tmp_vsimem):
 
     alg = get_alg()
     alg["source"] = "../gcore/data/byte.tif"
@@ -43,7 +43,7 @@ def test_gdalalg_vfs_copy_single_dir_destination(tmp_vsimem):
     assert gdal.VSIStatL(tmp_vsimem / "byte.tif").size == 736
 
 
-def test_gdalalg_vfs_copy_single_file_destination(tmp_vsimem):
+def test_gdalalg_vsi_copy_single_file_destination(tmp_vsimem):
 
     alg = get_alg()
     alg["source"] = "../gcore/data/byte.tif"
@@ -52,7 +52,7 @@ def test_gdalalg_vfs_copy_single_file_destination(tmp_vsimem):
     assert gdal.VSIStatL(tmp_vsimem / "out.tif").size == 736
 
 
-def test_gdalalg_vfs_copy_single_progress(tmp_vsimem):
+def test_gdalalg_vsi_copy_single_progress(tmp_vsimem):
 
     last_pct = [0]
 
@@ -68,7 +68,7 @@ def test_gdalalg_vfs_copy_single_progress(tmp_vsimem):
     assert gdal.VSIStatL(tmp_vsimem / "byte.tif").size == 736
 
 
-def test_gdalalg_vfs_copy_single_source_does_not_exist():
+def test_gdalalg_vsi_copy_single_source_does_not_exist():
 
     alg = get_alg()
     alg["source"] = "/i_do/not/exist.bin"
@@ -77,7 +77,7 @@ def test_gdalalg_vfs_copy_single_source_does_not_exist():
         alg.Run()
 
 
-def test_gdalalg_vfs_copy_single_source_is_directory():
+def test_gdalalg_vsi_copy_single_source_is_directory():
 
     alg = get_alg()
     alg["source"] = "../gcore"
@@ -86,7 +86,7 @@ def test_gdalalg_vfs_copy_single_source_is_directory():
         alg.Run()
 
 
-def test_gdalalg_vfs_copy_recursive_destination_does_not_exist(tmp_vsimem):
+def test_gdalalg_vsi_copy_recursive_destination_does_not_exist(tmp_vsimem):
 
     gdal.Mkdir(tmp_vsimem / "src", 0o755)
     gdal.FileFromMemBuffer(tmp_vsimem / "src" / "a", "foo")
@@ -109,7 +109,7 @@ def test_gdalalg_vfs_copy_recursive_destination_does_not_exist(tmp_vsimem):
     assert set(res) == set(gdal.ReadDirRecursive(tmp_vsimem / "src"))
 
 
-def test_gdalalg_vfs_copy_recursive_destination_exists(tmp_vsimem):
+def test_gdalalg_vsi_copy_recursive_destination_exists(tmp_vsimem):
 
     gdal.Mkdir(tmp_vsimem / "src", 0o755)
     gdal.FileFromMemBuffer(tmp_vsimem / "src" / "a", "foo")
@@ -130,7 +130,7 @@ def test_gdalalg_vfs_copy_recursive_destination_exists(tmp_vsimem):
     )
 
 
-def test_gdalalg_vfs_copy_recursive_source_ends_slash_star(tmp_vsimem):
+def test_gdalalg_vsi_copy_recursive_source_ends_slash_star(tmp_vsimem):
 
     gdal.Mkdir(tmp_vsimem / "src", 0o755)
     gdal.FileFromMemBuffer(tmp_vsimem / "src" / "a", "foo")
@@ -146,7 +146,7 @@ def test_gdalalg_vfs_copy_recursive_source_ends_slash_star(tmp_vsimem):
     assert set(res) == set(gdal.ReadDirRecursive(tmp_vsimem / "src"))
 
 
-def test_gdalalg_vfs_copy_source_ends_slash_star(tmp_vsimem):
+def test_gdalalg_vsi_copy_source_ends_slash_star(tmp_vsimem):
 
     gdal.Mkdir(tmp_vsimem / "src", 0o755)
     gdal.FileFromMemBuffer(tmp_vsimem / "src" / "a", "foo")
@@ -161,7 +161,7 @@ def test_gdalalg_vfs_copy_source_ends_slash_star(tmp_vsimem):
     assert set(res) == set(["a", "subdir/"])
 
 
-def test_gdalalg_vfs_copy_recursive_destination_cannot_be_created(tmp_vsimem):
+def test_gdalalg_vsi_copy_recursive_destination_cannot_be_created(tmp_vsimem):
 
     gdal.Mkdir(tmp_vsimem / "src", 0o755)
     gdal.FileFromMemBuffer(tmp_vsimem / "src" / "a", "foo")
@@ -176,7 +176,7 @@ def test_gdalalg_vfs_copy_recursive_destination_cannot_be_created(tmp_vsimem):
         alg.Run()
 
 
-def test_gdalalg_vfs_copy_recursive_destination_cannot_be_created_skip(tmp_vsimem):
+def test_gdalalg_vsi_copy_recursive_destination_cannot_be_created_skip(tmp_vsimem):
 
     gdal.Mkdir(tmp_vsimem / "src", 0o755)
     gdal.FileFromMemBuffer(tmp_vsimem / "src" / "a", "foo")

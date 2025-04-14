@@ -1,7 +1,7 @@
-.. _gdal_vfs_command:
+.. _gdal_vsi_command:
 
 ================================================================================
-"gdal vfs" command
+"gdal vsi" command
 ================================================================================
 
 .. versionadded:: 3.11
@@ -10,7 +10,7 @@
 
     Entry point for GDAL Virtual file system (VSI) commands
 
-.. Index:: gdal vfs
+.. Index:: gdal vsi
 
 The subcommands of :program:`gdal vs` allow manipulation of files located
 on the :ref:`virtual_file_systems`.
@@ -18,14 +18,14 @@ on the :ref:`virtual_file_systems`.
 Synopsis
 --------
 
-.. program-output:: gdal vfs --help-doc
+.. program-output:: gdal vsi --help-doc
 
 Available sub-commands
 ----------------------
 
-- :ref:`gdal_vfs_copy_subcommand`
-- :ref:`gdal_vfs_delete_subcommand`
-- :ref:`gdal_vfs_list_subcommand`
+- :ref:`gdal_vsi_copy_subcommand`
+- :ref:`gdal_vsi_delete_subcommand`
+- :ref:`gdal_vsi_list_subcommand`
 
 Examples
 --------
@@ -35,4 +35,4 @@ Examples
 
    .. code-block:: console
 
-       $ gdal vfs list -lR --of=text /vsis3/bucket
+       $ gdal vsi list -lR --of=text /vsis3/bucket

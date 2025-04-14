@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vfs copy" subcommand
+ * Purpose:  gdal "vsi copy" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vfs_copy.h"
+#include "gdalalg_vsi_copy.h"
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -25,10 +25,10 @@
 #endif
 
 /************************************************************************/
-/*              GDALVFSCopyAlgorithm::GDALVFSCopyAlgorithm()            */
+/*              GDALVSICopyAlgorithm::GDALVSICopyAlgorithm()            */
 /************************************************************************/
 
-GDALVFSCopyAlgorithm::GDALVFSCopyAlgorithm()
+GDALVSICopyAlgorithm::GDALVSICopyAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
     {
@@ -77,10 +77,10 @@ GDALVFSCopyAlgorithm::GDALVFSCopyAlgorithm()
 }
 
 /************************************************************************/
-/*                    GDALVFSCopyAlgorithm::RunImpl()                   */
+/*                    GDALVSICopyAlgorithm::RunImpl()                   */
 /************************************************************************/
 
-bool GDALVFSCopyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+bool GDALVSICopyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                    void *pProgressData)
 {
     if (m_recursive || cpl::ends_with(m_source, "/*") ||
@@ -156,15 +156,15 @@ bool GDALVFSCopyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                 GDALVFSCopyAlgorithm::CopySingle()                   */
+/*                 GDALVSICopyAlgorithm::CopySingle()                   */
 /************************************************************************/
 
-bool GDALVFSCopyAlgorithm::CopySingle(const std::string &src,
+bool GDALVSICopyAlgorithm::CopySingle(const std::string &src,
                                       const std::string &dstIn, uint64_t size,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData) const
 {
-    CPLDebug("gdal_vfs_copy", "Copying file %s...", src.c_str());
+    CPLDebug("gdal_vsi_copy", "Copying file %s...", src.c_str());
     VSIStatBufL sStat;
     std::string dst = dstIn;
     const bool bExists =
@@ -183,10 +183,10 @@ bool GDALVFSCopyAlgorithm::CopySingle(const std::string &src,
 }
 
 /************************************************************************/
-/*                 GDALVFSCopyAlgorithm::CopyRecursive()                */
+/*                 GDALVSICopyAlgorithm::CopyRecursive()                */
 /************************************************************************/
 
-bool GDALVFSCopyAlgorithm::CopyRecursive(const std::string &srcIn,
+bool GDALVSICopyAlgorithm::CopyRecursive(const std::string &srcIn,
                                          const std::string &dst, int depth,
                                          int maxdepth, uint64_t &curAmount,
                                          uint64_t totalAmount,
@@ -199,7 +199,7 @@ bool GDALVFSCopyAlgorithm::CopyRecursive(const std::string &srcIn,
 
     if (pfnProgress && depth == 0)
     {
-        CPLDebug("gdal_vfs_copy", "Listing source files...");
+        CPLDebug("gdal_vsi_copy", "Listing source files...");
         std::unique_ptr<VSIDIR, decltype(&VSICloseDir)> dir(
             VSIOpenDir(src.c_str(), maxdepth, nullptr), VSICloseDir);
         if (dir)
@@ -217,7 +217,7 @@ bool GDALVFSCopyAlgorithm::CopyRecursive(const std::string &srcIn,
         }
     }
 
-    CPLDebug("gdal_vfs_copy", "Copying directory %s...", src.c_str());
+    CPLDebug("gdal_vsi_copy", "Copying directory %s...", src.c_str());
     std::unique_ptr<VSIDIR, decltype(&VSICloseDir)> dir(
         VSIOpenDir(src.c_str(), 0, nullptr), VSICloseDir);
     if (dir)

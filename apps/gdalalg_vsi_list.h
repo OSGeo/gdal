@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vfs list" subcommand
+ * Purpose:  gdal "vsi list" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,8 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_VFS_LIST_INCLUDED
-#define GDALALG_VFS_LIST_INCLUDED
+#ifndef GDALALG_VSI_LIST_INCLUDED
+#define GDALALG_VSI_LIST_INCLUDED
 
 #include "gdalalgorithm.h"
 
@@ -20,25 +20,25 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                          GDALVFSListAlgorithm                        */
+/*                          GDALVSIListAlgorithm                        */
 /************************************************************************/
 
 struct VSIDIREntry;
 
-class GDALVFSListAlgorithm final : public GDALAlgorithm
+class GDALVSIListAlgorithm final : public GDALAlgorithm
 {
   public:
     static constexpr const char *NAME = "list";
     static constexpr const char *DESCRIPTION =
         "List files of one of the GDAL Virtual file systems (VSI).";
-    static constexpr const char *HELP_URL = "/programs/gdal_vfs_list.html";
+    static constexpr const char *HELP_URL = "/programs/gdal_vsi_list.html";
 
     static std::vector<std::string> GetAliasesStatic()
     {
         return {"ls"};
     }
 
-    GDALVFSListAlgorithm();
+    GDALVSIListAlgorithm();
 
   private:
     CPLJSonStreamingWriter m_oWriter;
