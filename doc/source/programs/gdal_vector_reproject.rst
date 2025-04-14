@@ -65,13 +65,13 @@ Standard options
     Set source spatial reference. If not specified the SRS found in the input
     dataset will be used.
 
-    .. include:: options/srs_def_gdalwarp.rst
+    .. include:: gdal_options/srs_def_gdal_raster_reproject.rst
 
 .. option:: -d, --dst-crs <SRC-CRS>
 
     Set destination spatial reference.
 
-    .. include:: options/srs_def_gdalwarp.rst
+    .. include:: gdal_options/srs_def_gdal_raster_reproject.rst
 
 .. GDALG output (on-the-fly / streamed dataset)
 .. --------------------------------------------
