@@ -4917,7 +4917,7 @@ char **GDALAlgorithmArgGetChoices(GDALAlgorithmArgH hArg)
 /*                  GDALAlgorithmArgGetMetadataItem()                   */
 /************************************************************************/
 
-/** Return the values of the metadate item of an argument.
+/** Return the values of the metadata item of an argument.
  *
  * @param hArg Handle to an argument. Must NOT be null.
  * @param pszItem Name of the item. Must NOT be null.
