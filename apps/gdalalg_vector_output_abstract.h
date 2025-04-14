@@ -22,7 +22,8 @@
 /*                  GDALVectorOutputAbstractAlgorithm                   */
 /************************************************************************/
 
-class GDALVectorOutputAbstractAlgorithm /* non-final*/ : public GDALAlgorithm
+class CPL_DLL
+    GDALVectorOutputAbstractAlgorithm /* non-final*/ : public GDALAlgorithm
 {
   protected:
     GDALVectorOutputAbstractAlgorithm(const std::string &name,

@@ -21,7 +21,8 @@
 /*                     GDALRasterIndexAlgorithm                         */
 /************************************************************************/
 
-class GDALRasterIndexAlgorithm final : public GDALVectorOutputAbstractAlgorithm
+class CPL_DLL GDALRasterIndexAlgorithm /* non final */
+    : public GDALVectorOutputAbstractAlgorithm
 {
   public:
     static constexpr const char *NAME = "index";
@@ -31,10 +32,25 @@ class GDALRasterIndexAlgorithm final : public GDALVectorOutputAbstractAlgorithm
 
     GDALRasterIndexAlgorithm();
 
+    GDALRasterIndexAlgorithm(const std::string &name,
+                             const std::string &description,
+                             const std::string &helpURL);
+
+  protected:
+    void AddCommonOptions();
+
+    // Virtual method that may be overridden by derived classes to add options
+    // to GDALTileIndex()
+    virtual bool AddExtraOptions([[maybe_unused]] CPLStringList &aosOptions)
+    {
+        return true;
+    }
+
+    std::vector<GDALArgDatasetValue> m_inputDatasets{};
+
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
-    std::vector<GDALArgDatasetValue> m_inputDatasets{};
     bool m_recursive = false;
     std::vector<std::string> m_filenameFilter{};
     double m_minPixelSize = 0;

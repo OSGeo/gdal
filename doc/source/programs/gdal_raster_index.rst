@@ -26,6 +26,9 @@ outlining the raster.
 This output is suitable for use with `MapServer <http://mapserver.org/>`__ as a
 raster tileindex
 
+See :ref:`gdal_driver_gti_create_subcommand` for an extension of this command
+that create files to be used as input for the :ref:`GTI <raster.gti>` driver.
+
 The following options are available:
 
 Standard options

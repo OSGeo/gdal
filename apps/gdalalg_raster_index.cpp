@@ -30,12 +30,42 @@
 GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()
     : GDALVectorOutputAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
-
     AddProgressArg();
     AddInputDatasetArg(&m_inputDatasets, GDAL_OF_RASTER)
         .SetAutoOpenDataset(false);
     GDALVectorOutputAbstractAlgorithm::AddAllOutputArgs();
 
+    AddCommonOptions();
+
+    AddArg("source-crs-field-name", 0,
+           _("Name of the field to store the CRS of each dataset"),
+           &m_sourceCrsName)
+        .SetMinCharCount(1);
+    AddArg("source-crs-format", 0,
+           _("Format in which the CRS of each dataset must be written"),
+           &m_sourceCrsFormat)
+        .SetMinCharCount(1)
+        .SetDefault(m_sourceCrsFormat)
+        .SetChoices("auto", "WKT", "EPSG", "PROJ");
+}
+
+/************************************************************************/
+/*          GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()        */
+/************************************************************************/
+
+GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm(
+    const std::string &name, const std::string &description,
+    const std::string &helpURL)
+    : GDALVectorOutputAbstractAlgorithm(name, description, helpURL)
+{
+}
+
+/************************************************************************/
+/*              GDALRasterIndexAlgorithm::AddCommonOptions()            */
+/************************************************************************/
+
+void GDALRasterIndexAlgorithm::AddCommonOptions()
+{
     AddArg("recursive", 0,
            _("Whether input directories should be explored recursively."),
            &m_recursive);
@@ -64,16 +94,6 @@ GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()
     AddArg("dst-crs", 0, _("Destination CRS"), &m_crs)
         .SetIsCRSArg()
         .AddHiddenAlias("t_srs");
-
-    AddArg("source-crs-field-name", 0,
-           _("Name of the field to store the CRS of each dataset"),
-           &m_sourceCrsName)
-        .SetMinCharCount(1);
-    AddArg("source-crs-format", 0,
-           _("Format in which the CRS of each dataset must be written"),
-           &m_sourceCrsFormat)
-        .SetDefault(m_sourceCrsFormat)
-        .SetChoices("auto", "WKT", "EPSG", "PROJ");
 
     {
         auto &arg =
@@ -170,6 +190,9 @@ bool GDALRasterIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         aosOptions.push_back("-mo");
         aosOptions.push_back(s);
     }
+
+    if (!AddExtraOptions(aosOptions))
+        return false;
 
     std::unique_ptr<GDALTileIndexOptions, decltype(&GDALTileIndexOptionsFree)>
         options(GDALTileIndexOptionsNew(aosOptions.List(), nullptr),

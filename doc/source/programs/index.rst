@@ -31,6 +31,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal
    gdal_info
    gdal_convert
+   gdal_driver_gti_create
    gdal_mdim
    gdal_mdim_info
    gdal_mdim_convert
@@ -94,6 +95,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_program`: Main "gdal" entry point
     - :ref:`gdal_info_command`: Get information on a dataset
     - :ref:`gdal_convert_command`: Convert a dataset
+    - :ref:`gdal_driver_gti_create_subcommand`: Create an index of raster datasets compatible of the GDAL Tile Index (GTI) driver
     - :ref:`gdal_mdim_command`: Entry point for multidimensional commands
     - :ref:`gdal_mdim_info_subcommand`: Get information on a multidimensional dataset
     - :ref:`gdal_mdim_convert_subcommand`: Convert a multidimensional dataset

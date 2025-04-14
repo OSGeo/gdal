@@ -37,6 +37,8 @@
 #include "gdal_thread_pool.h"
 #include "gdal_utils.h"
 
+#include "gdalalg_raster_index.h"
+
 #ifdef USE_NEON_OPTIMIZATIONS
 #define USE_SSE2_OPTIM
 #define USE_SSE41_OPTIM
@@ -49,6 +51,10 @@
 #define USE_SSE41_OPTIM
 #include <smmintrin.h>
 #endif
+#endif
+
+#ifndef _
+#define _(x) (x)
 #endif
 
 // Semantincs of indices of a GeoTransform (double[6]) matrix
@@ -4817,6 +4823,236 @@ void GDALTileIndexDataset::RasterIOJob::Func(void *pData)
 }
 
 /************************************************************************/
+/*                     GDALGTICreateAlgorithm                           */
+/************************************************************************/
+
+class GDALGTICreateAlgorithm final : public GDALRasterIndexAlgorithm
+{
+  public:
+    static constexpr const char *NAME = "create";
+    static constexpr const char *DESCRIPTION =
+        "Create an index of raster datasets compatible of the GDAL Tile Index "
+        "(GTI) driver.";
+    static constexpr const char *HELP_URL =
+        "/programs/gdal_driver_gti_create.html";
+
+    GDALGTICreateAlgorithm();
+
+  protected:
+    bool AddExtraOptions(CPLStringList &aosOptions) override;
+
+  private:
+    std::string m_xmlFilename{};
+    std::vector<double> m_resolution{};
+    std::vector<double> m_bbox{};
+    std::string m_dataType{};
+    int m_bandCount = 0;
+    std::vector<double> m_nodata{};
+    std::vector<std::string> m_colorInterpretation{};
+    bool m_mask = false;
+    std::vector<std::string> m_fetchedMetadata{};
+};
+
+/************************************************************************/
+/*          GDALGTICreateAlgorithm::GDALGTICreateAlgorithm()            */
+/************************************************************************/
+
+GDALGTICreateAlgorithm::GDALGTICreateAlgorithm()
+    : GDALRasterIndexAlgorithm(NAME, DESCRIPTION, HELP_URL)
+{
+    AddProgressArg();
+    AddInputDatasetArg(&m_inputDatasets, GDAL_OF_RASTER)
+        .SetAutoOpenDataset(false);
+    GDALVectorOutputAbstractAlgorithm::AddAllOutputArgs();
+
+    AddCommonOptions();
+
+    AddArg("xml-filename", 0,
+           _("Filename of the XML Virtual Tile Index file to generate, that "
+             "can be used as an input for the GDAL GTI / Virtual Raster Tile "
+             "Index driver"),
+           &m_xmlFilename)
+        .SetMinCharCount(1);
+
+    AddArg("resolution", 0,
+           _("Resolution (in destination CRS units) of the virtual mosaic"),
+           &m_resolution)
+        .SetMinCount(2)
+        .SetMaxCount(2)
+        .SetMinValueExcluded(0)
+        .SetRepeatedArgAllowed(false)
+        .SetDisplayHintAboutRepetition(false)
+        .SetMetaVar("<xres>,<yres>");
+
+    AddBBOXArg(
+        &m_bbox,
+        _("Bounding box (in destination CRS units) of the virtual mosaic"));
+    AddOutputDataTypeArg(&m_dataType, _("Datatype of the virtual mosaic"));
+    AddArg("band-count", 0, _("Number of bands of the virtual mosaic"),
+           &m_bandCount)
+        .SetMinValueIncluded(1);
+    AddArg("nodata", 0, _("Nodata value(s) of the bands of the virtual mosaic"),
+           &m_nodata);
+    AddArg("color-interpretation", 0,
+           _("Color interpretation(s) of the bands of the virtual mosaic"),
+           &m_colorInterpretation)
+        .SetChoices("red", "green", "blue", "alpha", "gray", "undefined");
+    AddArg("mask", 0, _("Defines that the virtual mosaic has a mask band"),
+           &m_mask);
+    AddArg("fetch-metadata", 0,
+           _("Fetch a metadata item from source rasters and write it as a "
+             "field in the index."),
+           &m_fetchedMetadata)
+        .SetMetaVar("<gdal-metadata-name>,<field-name>,<field-type>")
+        .SetPackedValuesAllowed(false)
+        .AddValidationAction(
+            [this]()
+            {
+                for (const std::string &s : m_fetchedMetadata)
+                {
+                    const CPLStringList aosTokens(
+                        CSLTokenizeString2(s.c_str(), ",", 0));
+                    if (aosTokens.size() != 3)
+                    {
+                        ReportError(
+                            CE_Failure, CPLE_IllegalArg,
+                            "'%s' is not of the form "
+                            "<gdal-metadata-name>,<field-name>,<field-type>",
+                            s.c_str());
+                        return false;
+                    }
+                    bool ok = false;
+                    for (const char *type : {"String", "Integer", "Integer64",
+                                             "Real", "Date", "DateTime"})
+                    {
+                        if (EQUAL(aosTokens[2], type))
+                            ok = true;
+                    }
+                    if (!ok)
+                    {
+                        ReportError(CE_Failure, CPLE_IllegalArg,
+                                    "'%s' has an invalid field type '%s'. It "
+                                    "should be one of 'String', 'Integer', "
+                                    "'Integer64', 'Real', 'Date', 'DateTime'.",
+                                    s.c_str(), aosTokens[2]);
+                        return false;
+                    }
+                }
+                return true;
+            });
+}
+
+/************************************************************************/
+/*            GDALGTICreateAlgorithm::AddExtraOptions()                 */
+/************************************************************************/
+
+bool GDALGTICreateAlgorithm::AddExtraOptions(CPLStringList &aosOptions)
+{
+    if (!m_xmlFilename.empty())
+    {
+        aosOptions.push_back("-gti_filename");
+        aosOptions.push_back(m_xmlFilename);
+    }
+    if (!m_resolution.empty())
+    {
+        aosOptions.push_back("-tr");
+        aosOptions.push_back(CPLSPrintf("%.17g", m_resolution[0]));
+        aosOptions.push_back(CPLSPrintf("%.17g", m_resolution[1]));
+    }
+    if (!m_bbox.empty())
+    {
+        aosOptions.push_back("-te");
+        aosOptions.push_back(CPLSPrintf("%.17g", m_bbox[0]));
+        aosOptions.push_back(CPLSPrintf("%.17g", m_bbox[1]));
+        aosOptions.push_back(CPLSPrintf("%.17g", m_bbox[2]));
+        aosOptions.push_back(CPLSPrintf("%.17g", m_bbox[3]));
+    }
+    if (!m_dataType.empty())
+    {
+        aosOptions.push_back("-ot");
+        aosOptions.push_back(m_dataType);
+    }
+    if (m_bandCount > 0)
+    {
+        aosOptions.push_back("-bandcount");
+        aosOptions.push_back(CPLSPrintf("%d", m_bandCount));
+
+        if (!m_nodata.empty() && m_nodata.size() != 1 &&
+            static_cast<int>(m_nodata.size()) != m_bandCount)
+        {
+            ReportError(CE_Failure, CPLE_IllegalArg,
+                        "%d nodata values whereas one or %d were expected",
+                        static_cast<int>(m_nodata.size()), m_bandCount);
+            return false;
+        }
+
+        if (!m_colorInterpretation.empty() &&
+            m_colorInterpretation.size() != 1 &&
+            static_cast<int>(m_colorInterpretation.size()) != m_bandCount)
+        {
+            ReportError(
+                CE_Failure, CPLE_IllegalArg,
+                "%d color interpretations whereas one or %d were expected",
+                static_cast<int>(m_colorInterpretation.size()), m_bandCount);
+            return false;
+        }
+    }
+    if (!m_nodata.empty())
+    {
+        std::string val;
+        for (double v : m_nodata)
+        {
+            if (!val.empty())
+                val += ',';
+            val += CPLSPrintf("%.17g", v);
+        }
+        aosOptions.push_back("-nodata");
+        aosOptions.push_back(val);
+    }
+    if (!m_colorInterpretation.empty())
+    {
+        std::string val;
+        for (const std::string &s : m_colorInterpretation)
+        {
+            if (!val.empty())
+                val += ',';
+            val += s;
+        }
+        aosOptions.push_back("-colorinterp");
+        aosOptions.push_back(val);
+    }
+    if (m_mask)
+        aosOptions.push_back("-mask");
+    for (const std::string &s : m_fetchedMetadata)
+    {
+        aosOptions.push_back("-fetch_md");
+        const CPLStringList aosTokens(CSLTokenizeString2(s.c_str(), ",", 0));
+        for (const char *token : aosTokens)
+        {
+            aosOptions.push_back(token);
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                 GDALTileIndexInstantiateAlgorithm()                  */
+/************************************************************************/
+
+static GDALAlgorithm *
+GDALTileIndexInstantiateAlgorithm(const std::vector<std::string> &aosPath)
+{
+    if (aosPath.size() == 1 && aosPath[0] == "create")
+    {
+        return std::make_unique<GDALGTICreateAlgorithm>().release();
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
+/************************************************************************/
 /*                         GDALRegister_GTI()                           */
 /************************************************************************/
 
@@ -4858,6 +5094,9 @@ void GDALRegister_GTI()
         "'Number of worker threads for reading. Can be set to ALL_CPUS' "
         "default='ALL_CPUS'/>"
         "</OpenOptionList>");
+
+    poDriver->DeclareAlgorithm({"create"});
+    poDriver->pfnInstantiateAlgorithm = GDALTileIndexInstantiateAlgorithm;
 
 #ifdef BUILT_AS_PLUGIN
     // Used by gdaladdo and test_gdaladdo.py
