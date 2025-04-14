@@ -24,6 +24,7 @@ add_library(
   gdalalg_raster_edit.cpp
   gdalalg_raster_contour.cpp
   gdalalg_raster_hillshade.cpp
+  gdalalg_raster_index.cpp
   gdalalg_raster_mosaic.cpp
   gdalalg_raster_pipeline.cpp
   gdalalg_raster_overview_add.cpp
