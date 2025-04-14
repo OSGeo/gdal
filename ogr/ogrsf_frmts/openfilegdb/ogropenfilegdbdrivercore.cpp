@@ -306,6 +306,8 @@ void OGROpenFileGDBDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->pfnIdentify = OGROpenFileGDBDriverIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
+
+    poDriver->DeclareAlgorithm({"repack"});
 }
 
 /************************************************************************/

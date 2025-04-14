@@ -239,7 +239,7 @@ class OGROpenFileGDBLayer final : public OGRLayer
     void CreateSpatialIndex();
     void CreateIndex(const std::string &osIdxName,
                      const std::string &osExpression);
-    bool Repack();
+    bool Repack(GDALProgressFunc pfnProgress, void *pProgressData);
     void RecomputeExtent();
 
     bool CheckFreeListConsistency();
@@ -518,6 +518,11 @@ class OGROpenFileGDBDataSource final : public GDALDataset
     bool Create(const char *pszName);
 
     virtual CPLErr FlushCache(bool bAtClosing = false) override;
+
+    std::vector<std::unique_ptr<OGROpenFileGDBLayer>> &GetLayers()
+    {
+        return m_apoLayers;
+    }
 
     virtual int GetLayerCount() override
     {

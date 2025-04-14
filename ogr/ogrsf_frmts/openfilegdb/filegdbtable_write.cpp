@@ -2425,7 +2425,7 @@ void FileGDBTable::WholeFileRewriter::Rollback()
 /*                                Repack()                              */
 /************************************************************************/
 
-bool FileGDBTable::Repack()
+bool FileGDBTable::Repack(GDALProgressFunc pfnProgress, void *pProgressData)
 {
     if (!m_bUpdate || !Sync())
         return false;
@@ -2455,6 +2455,8 @@ bool FileGDBTable::Repack()
 
     std::vector<GByte> abyBufferOffsets;
     abyBufferOffsets.resize(TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize);
+
+    constexpr double RATIO_SCAN = 0.2;
 
     // Scan all features
     for (uint32_t iPage = 0; !bRepackNeeded && iPage < m_n1024BlocksPresent;
@@ -2499,10 +2501,20 @@ bool FileGDBTable::Repack()
                 nExpectedOffset += nFeatureSize;
             }
         }
+
+        bRepackNeeded =
+            (!pfnProgress ||
+             pfnProgress(RATIO_SCAN * static_cast<double>(iPage + 1) /
+                             m_n1024BlocksPresent,
+                         "", pProgressData)) &&
+            bRepackNeeded;
     }
 
     if (!bRepackNeeded)
     {
+        if (pfnProgress)
+            pfnProgress(1.0, "", pProgressData);
+
         if (m_nFileSize > nExpectedOffset)
         {
             CPLDebug("OpenFileGDB",
@@ -2595,6 +2607,15 @@ bool FileGDBTable::Repack()
                        m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE, 1,
                        oWholeFileRewriter.m_fpTableX) != 1)
             return false;
+
+        if (pfnProgress &&
+            !pfnProgress(RATIO_SCAN + (1.0 - RATIO_SCAN) *
+                                          static_cast<double>(iPage + 1) /
+                                          m_n1024BlocksPresent,
+                         "", pProgressData))
+        {
+            return false;
+        }
     }
 
     m_nRowBufferMaxSize = nRowBufferMaxSize;

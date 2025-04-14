@@ -1997,34 +1997,18 @@ class CPL_DLL GDALAlgorithmRegistry
     }
 
     /** Returns whether this algorithm has sub-algorithms */
-    bool HasSubAlgorithms() const
-    {
-        return !m_subAlgRegistry.empty();
-    }
+    bool HasSubAlgorithms() const;
 
     /** Get the names of registered algorithms.
      *
      * This only returns the main name of each algorithm, not its potential
      * alternate names.
      */
-    std::vector<std::string> GetSubAlgorithmNames() const
-    {
-        return m_subAlgRegistry.GetNames();
-    }
+    std::vector<std::string> GetSubAlgorithmNames() const;
 
     /** Instantiate an algorithm by its name (or its alias). */
     std::unique_ptr<GDALAlgorithm>
-    InstantiateSubAlgorithm(const std::string &name) const
-    {
-        auto ret = m_subAlgRegistry.Instantiate(name);
-        if (ret)
-        {
-            auto childCallPath = m_callPath;
-            childCallPath.push_back(name);
-            ret->SetCallPath(childCallPath);
-        }
-        return ret;
-    }
+    InstantiateSubAlgorithm(const std::string &name) const;
 
     /** Return the potential arguments of the algorithm. */
     const std::vector<std::unique_ptr<GDALAlgorithmArg>> &GetArgs() const
@@ -2573,6 +2557,27 @@ struct GDALAlgorithmHS
     }
 };
 
+/************************************************************************/
+/*                       GDALContainerAlgorithm                         */
+/************************************************************************/
+
+class CPL_DLL GDALContainerAlgorithm : public GDALAlgorithm
+{
+  public:
+    explicit GDALContainerAlgorithm(
+        const std::string &name, const std::string &description = std::string(),
+        const std::string &helpURL = std::string())
+        : GDALAlgorithm(name, description, helpURL)
+    {
+    }
+
+  protected:
+    bool RunImpl(GDALProgressFunc, void *) override
+    {
+        return false;
+    }
+};
+
 //! @endcond
 
 /************************************************************************/
@@ -2593,6 +2598,44 @@ class CPL_DLL GDALGlobalAlgorithmRegistry final : public GDALAlgorithmRegistry
     /** Instantiate an algorithm by its name or one of its alias. */
     std::unique_ptr<GDALAlgorithm>
     Instantiate(const std::string &name) const override;
+
+    /** Instantiation function */
+    using InstantiateFunc = std::function<std::unique_ptr<GDALAlgorithm>()>;
+
+    /** Declare the algorithm designed by its path (omitting leading path)
+     * and provide its instantiation method.
+     * For example {"driver", "pdf", "list-layers"}
+     *
+     * This is typically used by plugins to register extra algorithms.
+     */
+    void DeclareAlgorithm(const std::vector<std::string> &path,
+                          InstantiateFunc instantiateFunc);
+
+    /** Return the direct declared (as per DeclareAlgorithm()) subalgorithms
+     * of the given path. */
+    std::vector<std::string>
+    GetDeclaredSubAlgorithmNames(const std::vector<std::string> &path) const;
+
+    /** Return whether a subalgorithm is declared at the given path. */
+    bool HasDeclaredSubAlgorithm(const std::vector<std::string> &path) const;
+
+    /** Instantiate a declared (as per DeclareAlgorithm()) subalgorithm. */
+    std::unique_ptr<GDALAlgorithm>
+    InstantiateDeclaredSubAlgorithm(const std::vector<std::string> &path) const;
+
+  private:
+    struct Node
+    {
+        InstantiateFunc instantiateFunc{};
+        std::map<std::string, Node> children{};
+    };
+
+    Node m_root{};
+
+    GDALGlobalAlgorithmRegistry();
+    ~GDALGlobalAlgorithmRegistry();
+
+    const Node *GetNodeFromPath(const std::vector<std::string> &path) const;
 };
 
 /************************************************************************/
