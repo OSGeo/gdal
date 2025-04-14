@@ -2927,6 +2927,42 @@ GDALAlgorithm::AddOutputDataTypeArg(std::string *pValue,
 }
 
 /************************************************************************/
+/*                 GDALAlgorithm::AddNodataDataTypeArg()                */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddNodataDataTypeArg(std::string *pValue, bool noneAllowed,
+                                    const std::string &optionName,
+                                    const char *helpMessage)
+{
+    auto &arg =
+        AddArg(optionName, 0,
+               MsgOrDefault(helpMessage,
+                            _("Assign a specified nodata value to output bands "
+                              "('none', numeric value, 'nan', 'inf', '-inf')")),
+               pValue);
+    arg.AddValidationAction(
+        [this, pValue, noneAllowed, optionName]()
+        {
+            if (!(noneAllowed && EQUAL(pValue->c_str(), "none")))
+            {
+                char *endptr = nullptr;
+                CPLStrtod(pValue->c_str(), &endptr);
+                if (endptr != pValue->c_str() + pValue->size())
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "Value of '%s' should be 'none', a "
+                                "numeric value, 'nan', 'inf' or '-inf'",
+                                optionName.c_str());
+                    return false;
+                }
+            }
+            return true;
+        });
+    return arg;
+}
+
+/************************************************************************/
 /*                 GDALAlgorithm::AddOutputStringArg()                  */
 /************************************************************************/
 

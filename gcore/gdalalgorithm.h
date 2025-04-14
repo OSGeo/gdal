@@ -2390,6 +2390,12 @@ class CPL_DLL GDALAlgorithmRegistry
     AddOutputDataTypeArg(std::string *pValue,
                          const char *helpMessage = nullptr);
 
+    /** Add nodata argument. */
+    GDALInConstructionAlgorithmArg &
+    AddNodataDataTypeArg(std::string *pValue, bool noneAllowed,
+                         const std::string &optionName = "nodata",
+                         const char *helpMessage = nullptr);
+
     /** Add creation option(s) argument. */
     GDALInConstructionAlgorithmArg &
     AddCreationOptionsArg(std::vector<std::string> *pValue,
