@@ -730,6 +730,15 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return *this;
     }
 
+    /** Sets the minimum number of characters (for arguments of type
+     * GAAT_STRING and GAAT_STRING_LIST)
+     */
+    GDALAlgorithmArgDecl &SetMinCharCount(int count)
+    {
+        m_minCharCount = count;
+        return *this;
+    }
+
     //! @cond Doxygen_Suppress
     GDALAlgorithmArgDecl &SetHiddenChoices()
     {
@@ -924,6 +933,14 @@ class CPL_DLL GDALAlgorithmArgDecl final
     inline std::pair<double, bool> GetMaxValue() const
     {
         return {m_maxVal, m_maxValIsIncluded};
+    }
+
+    /** Return the minimum number of characters (for arguments of type
+     * GAAT_STRING and GAAT_STRING_LIST)
+     */
+    inline int GetMinCharCount() const
+    {
+        return m_minCharCount;
     }
 
     /** Return whether the argument is required. Defaults to false.
@@ -1137,6 +1154,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     double m_maxVal = std::numeric_limits<double>::quiet_NaN();
     bool m_minValIsIncluded = false;
     bool m_maxValIsIncluded = false;
+    int m_minCharCount = 0;
 };
 
 /************************************************************************/
@@ -1309,6 +1327,12 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     inline std::pair<double, bool> GetMaxValue() const
     {
         return m_decl.GetMaxValue();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::GetMinCharCount() */
+    inline int GetMinCharCount() const
+    {
+        return m_decl.GetMinCharCount();
     }
 
     /** Return whether the argument value has been explicitly set with Set() */
@@ -1764,6 +1788,13 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     GDALInConstructionAlgorithmArg &SetMaxValueExcluded(double max)
     {
         m_decl.SetMaxValueExcluded(max);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetMinCharCount() */
+    GDALInConstructionAlgorithmArg &SetMinCharCount(int count)
+    {
+        m_decl.SetMinCharCount(count);
         return *this;
     }
 

@@ -705,7 +705,43 @@ bool GDALAlgorithmArg::RunValidationActions()
         }
     }
 
-    if (GetType() == GAAT_INTEGER)
+    if (GetType() == GAAT_STRING)
+    {
+        const int nMinCharCount = GetMinCharCount();
+        if (nMinCharCount > 0)
+        {
+            const auto &val = Get<std::string>();
+            if (val.size() < static_cast<size_t>(nMinCharCount))
+            {
+                CPLError(
+                    CE_Failure, CPLE_IllegalArg,
+                    "Value of argument '%s' is '%s', but should have at least "
+                    "%d character(s)",
+                    GetName().c_str(), val.c_str(), nMinCharCount);
+                ret = false;
+            }
+        }
+    }
+    else if (GetType() == GAAT_STRING_LIST)
+    {
+        const int nMinCharCount = GetMinCharCount();
+        if (nMinCharCount > 0)
+        {
+            for (const auto &val : Get<std::vector<std::string>>())
+            {
+                if (val.size() < static_cast<size_t>(nMinCharCount))
+                {
+                    CPLError(
+                        CE_Failure, CPLE_IllegalArg,
+                        "Value of argument '%s' is '%s', but should have at "
+                        "least %d character(s)",
+                        GetName().c_str(), val.c_str(), nMinCharCount);
+                    ret = false;
+                }
+            }
+        }
+    }
+    else if (GetType() == GAAT_INTEGER)
     {
         ret = ValidateIntRange(Get<int>()) && ret;
     }

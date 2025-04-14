@@ -1068,6 +1068,58 @@ TEST_F(test_gdal_algorithm, double_max_val_excluded)
     }
 }
 
+TEST_F(test_gdal_algorithm, string_min_char_count)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        std::string m_val{};
+
+        MyAlgorithm()
+        {
+            AddArg("val", 0, "", &m_val).SetMinCharCount(2);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=ab"}));
+        EXPECT_STREQ(alg.m_val.c_str(), "ab");
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=a"}));
+    }
+}
+
+TEST_F(test_gdal_algorithm, string_vector_min_char_count)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        std::vector<std::string> m_val{};
+
+        MyAlgorithm()
+        {
+            AddArg("val", 0, "", &m_val).SetMinCharCount(2);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=ab"}));
+        EXPECT_STREQ(alg.m_val[0].c_str(), "ab");
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=a"}));
+    }
+}
+
 TEST_F(test_gdal_algorithm, SetDisplayInJSONUsage)
 {
     class MyAlgorithm : public MyAlgorithmWithDummyRun
