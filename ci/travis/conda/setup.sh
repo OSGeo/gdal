@@ -19,7 +19,9 @@ git clone  https://github.com/conda-forge/gdal-feedstock.git
 
 cd gdal-feedstock
 
-patch -p1 < ../ci/travis/conda/libgdal-adbc.patch
+# FIXME: build failure
+# patch -p1 < ../ci/travis/conda/libgdal-adbc.patch
+
 patch -p1 < ../ci/travis/conda/muparser.patch
 
 # Patch version = "X.Y.Z" to "X.Y.99"
