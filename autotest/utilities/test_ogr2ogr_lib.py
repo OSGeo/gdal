@@ -694,7 +694,7 @@ def test_ogr2ogr_lib_sql_filename(tmp_vsimem):
         """-- initial comment\nselect\n'--''--' as literalfield,* from --comment\npoly\n-- trailing comment""",
     ):
         ds = gdal.VectorTranslate(
-            "", "../ogr/data/poly.shp", options=f"-f Memory -sql @{tmp_vsimem}/my.sql"
+            "", "../ogr/data/poly.shp", options=f"-f MEM -sql @{tmp_vsimem}/my.sql"
         )
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 10
@@ -818,7 +818,7 @@ def test_ogr2ogr_assign_coord_epoch():
     src_ds.CreateLayer("layer")
 
     ds = gdal.VectorTranslate(
-        "", src_ds, options="-f Memory -a_srs EPSG:7665 -a_coord_epoch 2021.3"
+        "", src_ds, options="-f MEM -a_srs EPSG:7665 -a_coord_epoch 2021.3"
     )
     lyr = ds.GetLayer(0)
     srs = lyr.GetSpatialRef()
@@ -842,7 +842,7 @@ def test_ogr2ogr_s_coord_epoch():
     ds = gdal.VectorTranslate(
         "",
         src_ds,
-        options="-f Memory -s_srs EPSG:9000 -s_coord_epoch 2030 -t_srs EPSG:7844",
+        options="-f MEM -s_srs EPSG:9000 -s_coord_epoch 2030 -t_srs EPSG:7844",
     )
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -868,7 +868,7 @@ def test_ogr2ogr_t_coord_epoch():
     ds = gdal.VectorTranslate(
         "",
         src_ds,
-        options="-f Memory -t_srs EPSG:9000 -t_coord_epoch 2030 -s_srs EPSG:7844",
+        options="-f MEM -t_srs EPSG:9000 -t_coord_epoch 2030 -s_srs EPSG:7844",
     )
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1739,25 +1739,25 @@ def test_ogr2ogr_lib_dateTimeTo():
 
     with gdal.quiet_errors():
         with pytest.raises(Exception):
-            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo")
+            gdal.VectorTranslate("", src_ds, options="-f MEM -dateTimeTo")
         with pytest.raises(Exception):
-            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo foo")
+            gdal.VectorTranslate("", src_ds, options="-f MEM -dateTimeTo foo")
         with pytest.raises(Exception):
-            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTCx")
+            gdal.VectorTranslate("", src_ds, options="-f MEM -dateTimeTo UTCx")
         with pytest.raises(Exception):
-            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTCx12")
+            gdal.VectorTranslate("", src_ds, options="-f MEM -dateTimeTo UTCx12")
         with pytest.raises(Exception):
-            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC+15")
+            gdal.VectorTranslate("", src_ds, options="-f MEM -dateTimeTo UTC+15")
         with pytest.raises(Exception):
-            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC+12:")
+            gdal.VectorTranslate("", src_ds, options="-f MEM -dateTimeTo UTC+12:")
         with pytest.raises(Exception):
-            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC+12:3")
+            gdal.VectorTranslate("", src_ds, options="-f MEM -dateTimeTo UTC+12:3")
         with pytest.raises(Exception):
-            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC+12:34")
+            gdal.VectorTranslate("", src_ds, options="-f MEM -dateTimeTo UTC+12:34")
         with pytest.raises(Exception):
-            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC+12:345")
+            gdal.VectorTranslate("", src_ds, options="-f MEM -dateTimeTo UTC+12:345")
 
-    dst_ds = gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC+03:00")
+    dst_ds = gdal.VectorTranslate("", src_ds, options="-f MEM -dateTimeTo UTC+03:00")
     dst_lyr = dst_ds.GetLayer(0)
     f = dst_lyr.GetNextFeature()
     assert f["dt"] == "2023/02/01 02:19:56.789+03"
@@ -1769,22 +1769,22 @@ def test_ogr2ogr_lib_dateTimeTo():
     f = dst_lyr.GetNextFeature()
     assert not f.IsFieldSet("dt")
 
-    dst_ds = gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC")
+    dst_ds = gdal.VectorTranslate("", src_ds, options="-f MEM -dateTimeTo UTC")
     dst_lyr = dst_ds.GetLayer(0)
     f = dst_lyr.GetNextFeature()
     assert f["dt"] == "2023/01/31 23:19:56.789+00"
 
-    dst_ds = gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC-13:15")
+    dst_ds = gdal.VectorTranslate("", src_ds, options="-f MEM -dateTimeTo UTC-13:15")
     dst_lyr = dst_ds.GetLayer(0)
     f = dst_lyr.GetNextFeature()
     assert f["dt"] == "2023/01/31 10:04:56.789-1315"
 
-    dst_ds = gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC-13:30")
+    dst_ds = gdal.VectorTranslate("", src_ds, options="-f MEM -dateTimeTo UTC-13:30")
     dst_lyr = dst_ds.GetLayer(0)
     f = dst_lyr.GetNextFeature()
     assert f["dt"] == "2023/01/31 09:49:56.789-1330"
 
-    dst_ds = gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC-13:45")
+    dst_ds = gdal.VectorTranslate("", src_ds, options="-f MEM -dateTimeTo UTC-13:45")
     dst_lyr = dst_ds.GetLayer(0)
     f = dst_lyr.GetNextFeature()
     assert f["dt"] == "2023/01/31 09:34:56.789-1345"
@@ -2821,7 +2821,7 @@ def test_ogr2ogr_lib_not_enough_gcp():
     with pytest.raises(
         Exception, match="Failed to compute GCP transform: Not enough points available"
     ):
-        gdal.VectorTranslate("", src_ds, options="-f Memory -gcp 0 0 0 0")
+        gdal.VectorTranslate("", src_ds, options="-f MEM -gcp 0 0 0 0")
 
 
 ###############################################################################
@@ -2836,7 +2836,7 @@ def test_ogr2ogr_lib_two_gcps():
     src_lyr.CreateFeature(f)
 
     out_ds = gdal.VectorTranslate(
-        "", src_ds, options="-f Memory -gcp 1 2 200 300 -gcp 3 4 300 400"
+        "", src_ds, options="-f MEM -gcp 1 2 200 300 -gcp 3 4 300 400"
     )
     out_lyr = out_ds.GetLayer(0)
     f = out_lyr.GetNextFeature()

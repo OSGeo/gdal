@@ -144,7 +144,7 @@ def test_gdalalg_vector_wrong_layer_name(tmp_vsimem):
         convert.ParseRunAndFinalize(
             [
                 "../ogr/data/poly.shp",
-                "--of=Memory",
+                "--of=MEM",
                 "--output=empty",
                 "--layer",
                 "invalid",
