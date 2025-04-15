@@ -140,6 +140,8 @@ MAIN_START(argc, argv)
         alg->IsProgressBarRequested() ? GDALTermProgress : nullptr;
     void *pProgressData = nullptr;
 
+    alg->SetCalledFromCommandLine();
+
     int ret = 0;
     if (alg->Run(pfnProgress, pProgressData) && alg->Finalize())
     {

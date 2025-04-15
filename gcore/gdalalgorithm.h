@@ -2324,6 +2324,7 @@ class CPL_DLL GDALAlgorithmRegistry
      */
     bool PropagateSpecialActionTo(GDALAlgorithm *target)
     {
+        target->m_calledFromCommandLine = m_calledFromCommandLine;
         target->m_progressBarRequested = m_progressBarRequested;
         if (m_specialActionRequested)
         {
@@ -2340,6 +2341,18 @@ class CPL_DLL GDALAlgorithmRegistry
     virtual std::vector<std::string>
     GetAutoComplete(std::vector<std::string> &args, bool lastWordIsComplete,
                     bool showAllOptions);
+
+    /** Set whether the algorithm is called from the command line. */
+    void SetCalledFromCommandLine()
+    {
+        m_calledFromCommandLine = true;
+    }
+
+    /** Return whether the algorithm is called from the command line. */
+    bool IsCalledFromCommandLine() const
+    {
+        return m_calledFromCommandLine;
+    }
 
   protected:
     friend class GDALInConstructionAlgorithmArg;
@@ -2638,6 +2651,7 @@ class CPL_DLL GDALAlgorithmRegistry
     bool m_displayInJSONUsage = true;
     bool m_specialActionRequested = false;
     bool m_helpRequested = false;
+    bool m_calledFromCommandLine = false;
 
     // Used by program-output directives in .rst files
     bool m_helpDocRequested = false;
