@@ -189,7 +189,7 @@ bool GDALSOZIPCreateBaseAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         if (!psDir)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
-                        "%s is not a valid .zip file\n",
+                        "%s is not a valid .zip file",
                         m_inputFilenames[0].c_str());
             return false;
         }
@@ -261,7 +261,7 @@ bool GDALSOZIPCreateBaseAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
             else
             {
-                ReportError(CE_Failure, CPLE_AppDefined, "Cannot find %s\n",
+                ReportError(CE_Failure, CPLE_AppDefined, "%s does not exist",
                             aosFiles[i].c_str());
                 return false;
             }
@@ -283,10 +283,15 @@ bool GDALSOZIPCreateBaseAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                               int(i + 1), static_cast<int>(aosFiles.size())));
         }
 
-        if (VSIStatL(aosFiles[i].c_str(), &sBuf) != 0 ||
-            VSI_ISDIR(sBuf.st_mode))
+        if (VSIStatL(aosFiles[i].c_str(), &sBuf) != 0)
         {
-            ReportError(CE_Failure, CPLE_AppDefined, "%s is not a regular file",
+            ReportError(CE_Failure, CPLE_AppDefined, "%s does not exist",
+                        aosFiles[i].c_str());
+            return false;
+        }
+        else if (VSI_ISDIR(sBuf.st_mode))
+        {
+            ReportError(CE_Failure, CPLE_AppDefined, "%s is a directory",
                         aosFiles[i].c_str());
             return false;
         }
@@ -412,8 +417,8 @@ bool GDALSOZIPListAlgorithm::RunImpl(GDALProgressFunc, void *)
         VSICloseDir);
     if (!psDir)
     {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "%s is not a valid .zip file\n", m_zipFilename.c_str());
+        ReportError(CE_Failure, CPLE_AppDefined, "%s is not a valid .zip file",
+                    m_zipFilename.c_str());
         return false;
     }
 
@@ -529,8 +534,8 @@ bool GDALSOZIPValidateAlgorithm::RunImpl(GDALProgressFunc, void *)
         VSICloseDir);
     if (!psDir)
     {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "%s is not a valid .zip file\n", m_zipFilename.c_str());
+        ReportError(CE_Failure, CPLE_AppDefined, "%s is not a valid .zip file",
+                    m_zipFilename.c_str());
         return false;
     }
 
@@ -828,7 +833,7 @@ bool GDALSOZIPValidateAlgorithm::RunImpl(GDALProgressFunc, void *)
     else
     {
         ReportError(CE_Failure, CPLE_AppDefined,
-                    "%s is not a valid SOZip file!\n", m_zipFilename.c_str());
+                    "%s is not a valid SOZip file!", m_zipFilename.c_str());
     }
     return ret;
 }

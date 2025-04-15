@@ -11,6 +11,9 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
+import sys
+
 import pytest
 
 from osgeo import gdal
@@ -93,6 +96,50 @@ def test_gdalalg_sozip_create(tmp_vsimem, enable_sozip):
     assert md["Content-Type"] == "application/octet-stream"
 
 
+def test_gdalalg_sozip_create_non_existing_input(tmp_vsimem):
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["create"]
+    alg["input"] = tmp_vsimem / "non_existing"
+    alg["output"] = tmp_vsimem / "out.zip"
+    with pytest.raises(Exception, match="does not exist"):
+        assert alg.Run()
+
+
+def test_gdalalg_sozip_create_non_existing_input_with_progress(tmp_vsimem):
+    def my_progress(pct, msg, user_data):
+        return True
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["create"]
+    alg["input"] = tmp_vsimem / "non_existing"
+    alg["output"] = tmp_vsimem / "out.zip"
+    with pytest.raises(Exception, match="does not exist"):
+        assert alg.Run(my_progress)
+
+
+def test_gdalalg_sozip_create_input_is_directory(tmp_vsimem):
+
+    gdal.Mkdir(tmp_vsimem / "dir", 0o755)
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["create"]
+    alg["input"] = tmp_vsimem / "dir"
+    alg["output"] = tmp_vsimem / "out.zip"
+    with pytest.raises(Exception, match="is a directory"):
+        assert alg.Run()
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="not linux")
+def test_gdalalg_sozip_create_failed_adding(tmp_path):
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["create"]
+    input_filename = tmp_path / "cannot_read"
+    open(input_filename, "wb").close()
+    os.chmod(input_filename, 0)
+    alg["input"] = input_filename
+    alg["output"] = tmp_path / "out.zip"
+    with pytest.raises(Exception, match=f"Failed adding {input_filename}"):
+        assert alg.Run()
+
+
 def test_gdalalg_sozip_create_recursive_and_optimize_and_validate(tmp_vsimem):
 
     create_source_files(tmp_vsimem)
@@ -101,7 +148,17 @@ def test_gdalalg_sozip_create_recursive_and_optimize_and_validate(tmp_vsimem):
     alg["input"] = tmp_vsimem
     alg["recursive"] = True
     alg["output"] = tmp_vsimem / "out.zip"
-    assert alg.Run()
+
+    last_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        last_pct[0] = pct
+        return True
+
+    assert alg.Run(my_progress)
+
+    assert last_pct[0] == 1.0
+
     assert (
         alg["output-string"]
         == f"Adding {tmp_vsimem}/a... (1/3)\nAdding {tmp_vsimem}/b... (2/3)\nAdding {tmp_vsimem}/subdir/c... (3/3)\n"
@@ -128,6 +185,18 @@ def test_gdalalg_sozip_create_recursive_and_optimize_and_validate(tmp_vsimem):
         gdal.VSIStatL(f"/vsizip/{tmp_vsimem}/out2.zip{tmp_vsimem}/subdir/c").size == 1
     )
 
+    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["optimize"]
+    alg["input"] = tmp_vsimem / "out.zip"
+    alg["output"] = tmp_vsimem / "out2.zip"
+    with pytest.raises(Exception, match="already exists. Use --overwrite"):
+        alg.Run()
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["optimize"]
+    alg["input"] = tmp_vsimem / "i_do_not_exist.zip"
+    alg["output"] = tmp_vsimem / "out3.zip"
+    with pytest.raises(Exception, match="is not a valid .zip file"):
+        alg.Run()
+
     alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["validate"]
     alg["input"] = tmp_vsimem / "out.zip"
     assert alg.Run()
@@ -136,3 +205,19 @@ def test_gdalalg_sozip_create_recursive_and_optimize_and_validate(tmp_vsimem):
         "is a valid .zip file, and contains 1 SOZip-enabled file(s)"
         in alg["output-string"]
     )
+
+
+def test_gdalalg_sozip_list_not_a_zip():
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["list"]
+    alg["input"] = "/i_do/not/exist.zip"
+    with pytest.raises(Exception, match="is not a valid .zip file"):
+        assert alg.Run()
+
+
+def test_gdalalg_sozip_validate_not_a_zip():
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["validate"]
+    alg["input"] = "/i_do/not/exist.zip"
+    with pytest.raises(Exception, match="is not a valid .zip file"):
+        assert alg.Run()
