@@ -102,7 +102,7 @@ The :program:`sozip` utility can be used to:
 .. option:: --enable-sozip={auto|yes|no}
 
     In ``auto`` mode, a file is seek-optimized only if its size is above the
-    value of :option:`--sozip-chunk-size`.
+    value of :option:`--sozip-min-file-size`.
     In ``yes`` mode, all input files will be seek-optimized.
     In ``no`` mode, no input files will be seek-optimized.
 
