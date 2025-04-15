@@ -435,6 +435,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_sozip",
+        "gdal-sozip",
+        "SOZIP (Seek-Optimized ZIP) related commands.",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector",
         "gdal-vector",
         "Entry point for vector commands",

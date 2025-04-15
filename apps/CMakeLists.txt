@@ -45,6 +45,7 @@ add_library(
   gdalalg_raster_tri.cpp
   gdalalg_raster_unscale.cpp
   gdalalg_raster_write.cpp
+  gdalalg_sozip.cpp
   gdalalg_vector.cpp
   gdalalg_vector_info.cpp
   gdalalg_vector_clip.cpp
