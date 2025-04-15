@@ -1639,6 +1639,11 @@ class OGRGMLASLayer final : public OGRLayer
     CPLString
     CreateLinkForAttrToOtherLayer(const CPLString &osFieldName,
                                   const CPLString &osTargetLayerXPath);
+
+    const std::map<CPLString, int> &GetMapFieldXPathToOGRFieldIdx() const
+    {
+        return m_oMapFieldXPathToOGRFieldIdx;
+    }
 };
 
 /************************************************************************/
@@ -1888,6 +1893,16 @@ class GMLASReader final : public DefaultHandler
     /*    e.g  (layer Bar, field_xpath) -> [foo.1, foo.2] */
     std::map<std::pair<OGRGMLASLayer *, CPLString>, std::vector<CPLString>>
         m_oMapFieldXPathToLinkValue{};
+
+    /* Map layer's XPath to layer (for layers that are not group) */
+    std::map<CPLString, OGRGMLASLayer *> m_oMapXPathToLayer{};
+
+    /* Map OGR field XPath to layer (for layers that are group) */
+    std::map<CPLString, OGRGMLASLayer *> m_oMapFieldXPathToGroupLayer{};
+
+    /* Map layer's XPath to layer (for layers that are repeated sequences) */
+    std::map<CPLString, std::vector<OGRGMLASLayer *>>
+        m_oMapXPathToLayerRepeadedSequence{};
 
     void SetField(OGRFeature *poFeature, OGRGMLASLayer *poLayer, int nAttrIdx,
                   const CPLString &osAttrValue);
