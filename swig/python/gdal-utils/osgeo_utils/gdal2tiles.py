@@ -3935,7 +3935,7 @@ function ExtDraggableObject(src, opt_drag) {
             zoom: %(beginzoom)s,
             minZoom: %(minzoom)s,
             maxZoom: %(maxzoom)s,
-            layers: [osm]
+            layers: [osm, lyr]
         });
 
         var basemaps = {"OpenStreetMap": osm, "CartoDB Positron": cartodb, "Without background": white}
