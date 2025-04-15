@@ -5907,3 +5907,43 @@ def test_ogr_geojson_invalid_geoms(geojson):
         gdal.ErrorReset()
         ogr.Open(json.dumps(geojson))
         assert gdal.GetLastErrorMsg() != "", json.dumps(geojson)
+
+
+@pytest.mark.require_driver("SQLite")
+def test_ogr_geojson_sqlite_dialect_id_property():
+
+    j = {
+        "type": "FeatureCollection",
+        "name": "test",
+        "features": [
+            {"type": "Feature", "properties": {"id": 5, "foo": "bar"}, "geometry": None}
+        ],
+    }
+
+    with ogr.Open(json.dumps(j)) as ds:
+
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFIDColumn() == "id"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "id"
+
+        with ds.ExecuteSQL("SELECT * FROM test", dialect="SQLite") as sql_lyr:
+            assert sql_lyr.GetFeatureCount() == 1
+            f = sql_lyr.GetNextFeature()
+            assert f["id"] == 5
+            assert f["foo"] == "bar"
+
+        with ds.ExecuteSQL(
+            "SELECT * FROM test WHERE id = 5", dialect="SQLite"
+        ) as sql_lyr:
+            assert sql_lyr.GetFeatureCount() == 1
+            f = sql_lyr.GetNextFeature()
+            assert f["id"] == 5
+            assert f["foo"] == "bar"
+
+        with ds.ExecuteSQL(
+            "SELECT * FROM test WHERE ROWID = 5", dialect="SQLite"
+        ) as sql_lyr:
+            assert sql_lyr.GetFeatureCount() == 1
+            f = sql_lyr.GetNextFeature()
+            assert f["id"] == 5
+            assert f["foo"] == "bar"
