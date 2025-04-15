@@ -8,7 +8,7 @@
 
 .. only:: html
 
-    Copy files located on GDAL Virtual file systems (VSI)
+    Copy files located on GDAL Virtual System Interface (VSI)
 
 .. Index:: gdal vsi copy
 

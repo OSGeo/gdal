@@ -30,7 +30,7 @@ class GDALVSIListAlgorithm final : public GDALAlgorithm
   public:
     static constexpr const char *NAME = "list";
     static constexpr const char *DESCRIPTION =
-        "List files of one of the GDAL Virtual file systems (VSI).";
+        "List files of one of the GDAL Virtual System Interface (VSI).";
     static constexpr const char *HELP_URL = "/programs/gdal_vsi_list.html";
 
     static std::vector<std::string> GetAliasesStatic()

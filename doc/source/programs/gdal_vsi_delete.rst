@@ -8,7 +8,7 @@
 
 .. only:: html
 
-    Delete files located on GDAL Virtual file systems (VSI)
+    Delete files located on GDAL Virtual System Interface (VSI)
 
 .. Index:: gdal vsi delete
 

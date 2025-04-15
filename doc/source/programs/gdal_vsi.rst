@@ -8,7 +8,7 @@
 
 .. only:: html
 
-    Entry point for GDAL Virtual file system (VSI) commands
+    Entry point for GDAL Virtual System Interface (VSI) commands
 
 .. Index:: gdal vsi
 

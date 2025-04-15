@@ -26,7 +26,7 @@ class GDALVSIDeleteAlgorithm final : public GDALAlgorithm
   public:
     static constexpr const char *NAME = "delete";
     static constexpr const char *DESCRIPTION =
-        "Delete files located on GDAL Virtual file systems (VSI).";
+        "Delete files located on GDAL Virtual System Interface (VSI).";
     static constexpr const char *HELP_URL = "/programs/gdal_vsi_delete.html";
 
     static std::vector<std::string> GetAliasesStatic()

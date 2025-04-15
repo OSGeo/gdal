@@ -8,7 +8,7 @@
 
 .. only:: html
 
-    List files of one of the GDAL Virtual file systems (VSI)
+    List files of one of the GDAL Virtual System Interface (VSI)
 
 .. Index:: gdal vsi list
 

@@ -25,7 +25,7 @@ class GDALVSIAlgorithm final : public GDALAlgorithm
   public:
     static constexpr const char *NAME = "vsi";
     static constexpr const char *DESCRIPTION =
-        "GDAL Virtual file system (VSI) commands.";
+        "GDAL Virtual System Interface (VSI) commands.";
     static constexpr const char *HELP_URL = "/programs/gdal_vsi.html";
 
     GDALVSIAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)

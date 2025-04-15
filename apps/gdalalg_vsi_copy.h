@@ -26,7 +26,7 @@ class GDALVSICopyAlgorithm final : public GDALAlgorithm
   public:
     static constexpr const char *NAME = "copy";
     static constexpr const char *DESCRIPTION =
-        "Copy files located on GDAL Virtual file systems (VSI).";
+        "Copy files located on GDAL Virtual System Interface (VSI).";
     static constexpr const char *HELP_URL = "/programs/gdal_vsi_copy.html";
 
     static std::vector<std::string> GetAliasesStatic()
