@@ -5492,9 +5492,17 @@ class VSIFile(BytesIO):
         """
 
         if self.HasSubAlgorithms():
-            return self.InstantiateSubAlgorithm(key)
+            subalg = self.InstantiateSubAlgorithm(key)
+            if not subalg:
+                raise Exception(f"'{key}' is not a valid sub-algorithm of '{self.GetName()}'")
+            return subalg
         else:
-            return self.GetActualAlgorithm().GetArg(key).Get()
+            actual_alg = self.GetActualAlgorithm()
+            arg = actual_alg.GetArg(key)
+            if not arg:
+                raise Exception(f"'{key}' is not a valid argument of '{actual_alg.GetName()}'")
+            return arg.Get()
+
 
     def __setitem__(self, key, value):
         """Set the value of an argument.
@@ -5521,8 +5529,11 @@ class VSIFile(BytesIO):
            >>> alg["input"] = [one_ds, two_ds]
         """
 
-        if not self.GetArg(key).Set(value):
-            raise Exception(f"Cannot set argument {key} to {value}")
+        arg = self.GetArg(key)
+        if not arg:
+            raise Exception(f"'{key}' is not a valid argument of '{self.GetName()}'")
+        if not arg.Set(value):
+            raise Exception(f"Cannot set argument '{key}' to '{value}'")
 %}
 }
 
