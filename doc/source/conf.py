@@ -302,6 +302,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_index",
+        "gdal-raster-index",
+        "Create a vector index of raster datasets",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_mosaic",
         "gdal-raster-mosaic",
         "Build a mosaic",

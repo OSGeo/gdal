@@ -255,6 +255,13 @@ std::string CPL_DLL GDALRasterizeAppGetParserUsage();
 std::string CPL_DLL
 GDALDEMAppGetParserUsage(const std::string &osProcessingMode);
 
+GDALDatasetH GDALTileIndexInternal(const char *pszDest,
+                                   GDALDatasetH hTileIndexDS, OGRLayerH hLayer,
+                                   int nSrcCount,
+                                   const char *const *papszSrcDSNames,
+                                   const GDALTileIndexOptions *psOptionsIn,
+                                   int *pbUsageError);
+
 #endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* GDAL_UTILS_PRIV_H_INCLUDED */

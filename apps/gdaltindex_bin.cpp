@@ -58,6 +58,12 @@ MAIN_START(argc, argv)
         Usage();
     }
 
+    if (!(sOptionsForBinary.bQuiet))
+    {
+        GDALTileIndexOptionsSetProgress(psOptions.get(), GDALTermProgress,
+                                        nullptr);
+    }
+
     int bUsageError = FALSE;
     GDALDatasetH hOutDS = GDALTileIndex(
         sOptionsForBinary.osDest.c_str(), sOptionsForBinary.aosSrcFiles.size(),

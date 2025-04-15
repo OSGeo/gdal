@@ -428,7 +428,7 @@ def test_gdaltindex_lib_fetch_md(tmp_path, four_tiles):
     f = lyr.GetNextFeature()
     assert f["foo_field"] == "bar"
     assert f["dt"] == "2023/12/20 16:10:00"
-    assert f["pixel_size"] == pytest.approx(0.01)
+    assert f["pixel_size"] == pytest.approx(0.1)
     del ds
 
     gdal.TileIndex(

@@ -24,6 +24,7 @@ add_library(
   gdalalg_raster_edit.cpp
   gdalalg_raster_contour.cpp
   gdalalg_raster_hillshade.cpp
+  gdalalg_raster_index.cpp
   gdalalg_raster_mosaic.cpp
   gdalalg_raster_pipeline.cpp
   gdalalg_raster_overview_add.cpp
@@ -64,6 +65,7 @@ add_library(
   gdalalg_vector_grid_invdistnn.cpp
   gdalalg_vector_grid_linear.cpp
   gdalalg_vector_grid_nearest.cpp
+  gdalalg_vector_output_abstract.cpp
   gdalalg_vector_reproject.cpp
   gdalalg_vector_select.cpp
   gdalalg_vector_sql.cpp

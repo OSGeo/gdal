@@ -84,6 +84,8 @@ struct GDALTileIndexOptions
     double dfMaxPixelSize = std::numeric_limits<double>::quiet_NaN();
     std::vector<GDALTileIndexRasterMetadata> aoFetchMD{};
     std::set<std::string> oSetFilenameFilters{};
+    GDALProgressFunc pfnProgress = nullptr;
+    void *pProgressData = nullptr;
 };
 
 /************************************************************************/
@@ -509,6 +511,17 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                            const GDALTileIndexOptions *psOptionsIn,
                            int *pbUsageError)
 {
+    return GDALTileIndexInternal(pszDest, nullptr, nullptr, nSrcCount,
+                                 papszSrcDSNames, psOptionsIn, pbUsageError);
+}
+
+GDALDatasetH GDALTileIndexInternal(const char *pszDest,
+                                   GDALDatasetH hTileIndexDS, OGRLayerH hLayer,
+                                   int nSrcCount,
+                                   const char *const *papszSrcDSNames,
+                                   const GDALTileIndexOptions *psOptionsIn,
+                                   int *pbUsageError)
+{
     if (nSrcCount == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "No input dataset specified.");
@@ -546,94 +559,112 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
     /*      Open or create the target datasource                            */
     /* -------------------------------------------------------------------- */
 
-    if (psOptions->bOverwrite)
-    {
-        CPLPushErrorHandler(CPLQuietErrorHandler);
-        auto hDriver = GDALIdentifyDriver(pszDest, nullptr);
-        if (hDriver)
-            GDALDeleteDataset(hDriver, pszDest);
-        else
-            VSIUnlink(pszDest);
-        CPLPopErrorHandler();
-    }
-
-    auto poTileIndexDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-        pszDest, GDAL_OF_VECTOR | GDAL_OF_UPDATE, nullptr, nullptr, nullptr));
-    OGRLayer *poLayer = nullptr;
-    std::string osFormat;
-    int nMaxFieldSize = 254;
+    std::unique_ptr<GDALDataset> poTileIndexDSUnique;
+    GDALDataset *poTileIndexDS = GDALDataset::FromHandle(hTileIndexDS);
+    OGRLayer *poLayer = OGRLayer::FromHandle(hLayer);
     bool bExistingLayer = false;
+    std::string osFormat;
 
-    if (poTileIndexDS != nullptr)
+    if (!hTileIndexDS)
     {
-        auto poDriver = poTileIndexDS->GetDriver();
-        if (poDriver)
-            osFormat = poDriver->GetDescription();
-
-        if (poTileIndexDS->GetLayerCount() == 1)
+        if (psOptions->bOverwrite)
         {
-            poLayer = poTileIndexDS->GetLayer(0);
-        }
-        else
-        {
-            if (psOptions->osIndexLayerName.empty())
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "-lyr_name must be specified.");
-                if (pbUsageError)
-                    *pbUsageError = true;
-                return nullptr;
-            }
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            poLayer = poTileIndexDS->GetLayerByName(
-                psOptions->osIndexLayerName.c_str());
+            auto hDriver = GDALIdentifyDriver(pszDest, nullptr);
+            if (hDriver)
+                GDALDeleteDataset(hDriver, pszDest);
+            else
+                VSIUnlink(pszDest);
             CPLPopErrorHandler();
         }
-    }
-    else
-    {
-        if (psOptions->osFormat.empty())
+
+        poTileIndexDSUnique.reset(
+            GDALDataset::Open(pszDest, GDAL_OF_VECTOR | GDAL_OF_UPDATE, nullptr,
+                              nullptr, nullptr));
+
+        if (poTileIndexDSUnique != nullptr)
         {
-            const auto aoDrivers = GetOutputDriversFor(pszDest, GDAL_OF_VECTOR);
-            if (aoDrivers.empty())
+            auto poDriver = poTileIndexDSUnique->GetDriver();
+            if (poDriver)
+                osFormat = poDriver->GetDescription();
+
+            if (poTileIndexDSUnique->GetLayerCount() == 1)
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot guess driver for %s", pszDest);
-                return nullptr;
+                poLayer = poTileIndexDSUnique->GetLayer(0);
             }
             else
             {
-                if (aoDrivers.size() > 1)
+                if (psOptions->osIndexLayerName.empty())
                 {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Several drivers matching %s extension. Using %s",
-                             CPLGetExtensionSafe(pszDest).c_str(),
-                             aoDrivers[0].c_str());
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Multiple layers detected: -lyr_name must be "
+                             "specified.");
+                    if (pbUsageError)
+                        *pbUsageError = true;
+                    return nullptr;
                 }
-                osFormat = aoDrivers[0];
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                poLayer = poTileIndexDSUnique->GetLayerByName(
+                    psOptions->osIndexLayerName.c_str());
+                CPLPopErrorHandler();
             }
         }
         else
         {
-            osFormat = psOptions->osFormat;
-        }
-        if (!EQUAL(osFormat.c_str(), "ESRI Shapefile"))
-            nMaxFieldSize = 0;
+            if (psOptions->osFormat.empty())
+            {
+                const auto aoDrivers =
+                    GetOutputDriversFor(pszDest, GDAL_OF_VECTOR);
+                if (aoDrivers.empty())
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot guess driver for %s", pszDest);
+                    return nullptr;
+                }
+                else
+                {
+                    if (aoDrivers.size() > 1)
+                    {
+                        CPLError(
+                            CE_Warning, CPLE_AppDefined,
+                            "Several drivers matching %s extension. Using %s",
+                            CPLGetExtensionSafe(pszDest).c_str(),
+                            aoDrivers[0].c_str());
+                    }
+                    osFormat = aoDrivers[0];
+                }
+            }
+            else
+            {
+                osFormat = psOptions->osFormat;
+            }
 
-        auto poDriver =
-            GetGDALDriverManager()->GetDriverByName(osFormat.c_str());
-        if (poDriver == nullptr)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined, "%s driver not available.",
-                     osFormat.c_str());
-            return nullptr;
+            auto poDriver =
+                GetGDALDriverManager()->GetDriverByName(osFormat.c_str());
+            if (poDriver == nullptr)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "%s driver not available.", osFormat.c_str());
+                return nullptr;
+            }
+
+            poTileIndexDSUnique.reset(
+                poDriver->Create(pszDest, 0, 0, 0, GDT_Unknown, nullptr));
+            if (!poTileIndexDSUnique)
+                return nullptr;
         }
 
-        poTileIndexDS.reset(
-            poDriver->Create(pszDest, 0, 0, 0, GDT_Unknown, nullptr));
-        if (!poTileIndexDS)
-            return nullptr;
+        poTileIndexDS = poTileIndexDSUnique.get();
     }
+
+    if (osFormat.empty())
+    {
+        if (auto poOutDrv = poTileIndexDS->GetDriver())
+            osFormat = poOutDrv->GetDescription();
+    }
+
+    const int nMaxFieldSize =
+        EQUAL(osFormat.c_str(), "ESRI Shapefile") ? 254 : 0;
 
     if (poLayer)
     {
@@ -986,6 +1017,8 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
     /* -------------------------------------------------------------------- */
     /*      loop over GDAL files, processing.                               */
     /* -------------------------------------------------------------------- */
+    int iCur = 0;
+    int nTotal = nSrcCount + 1;
     while (true)
     {
         const std::string osSrcFilename = oGDALTileIndexTileIterator.next();
@@ -1152,7 +1185,7 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
         const double dfMaxY =
             std::max(std::max(adfY[0], adfY[1]), std::max(adfY[2], adfY[3]));
         const double dfRes =
-            (dfMaxX - dfMinX) * (dfMaxY - dfMinY) / nXSize / nYSize;
+            sqrt((dfMaxX - dfMinX) * (dfMaxY - dfMinY) / nXSize / nYSize);
         if (!std::isnan(psOptions->dfMinPixelSize) &&
             dfRes < psOptions->dfMinPixelSize)
         {
@@ -1284,9 +1317,24 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                      "Failed to create feature in tile index.");
             return nullptr;
         }
-    }
 
-    return GDALDataset::ToHandle(poTileIndexDS.release());
+        ++iCur;
+        if (psOptions->pfnProgress &&
+            !psOptions->pfnProgress(static_cast<double>(iCur) / nTotal, "",
+                                    psOptions->pProgressData))
+        {
+            return nullptr;
+        }
+        if (iCur >= nSrcCount)
+            ++nTotal;
+    }
+    if (psOptions->pfnProgress)
+        psOptions->pfnProgress(1.0, "", psOptions->pProgressData);
+
+    if (poTileIndexDSUnique)
+        return GDALDataset::ToHandle(poTileIndexDSUnique.release());
+    else
+        return GDALDataset::ToHandle(poTileIndexDS);
 }
 
 /************************************************************************/
@@ -1468,6 +1516,28 @@ GDALTileIndexOptionsNew(char **papszArgv,
 void GDALTileIndexOptionsFree(GDALTileIndexOptions *psOptions)
 {
     delete psOptions;
+}
+
+/************************************************************************/
+/*                 GDALTileIndexOptionsSetProgress()                    */
+/************************************************************************/
+
+/**
+ * Set a progress function.
+ *
+ * @param psOptions the options struct for GDALTileIndex().
+ * @param pfnProgress the progress callback.
+ * @param pProgressData the user data for the progress callback.
+ *
+ * @since GDAL 3.11
+ */
+
+void GDALTileIndexOptionsSetProgress(GDALTileIndexOptions *psOptions,
+                                     GDALProgressFunc pfnProgress,
+                                     void *pProgressData)
+{
+    psOptions->pfnProgress = pfnProgress;
+    psOptions->pProgressData = pProgressData;
 }
 
 #undef CHECK_HAS_ENOUGH_ADDITIONAL_ARGS
