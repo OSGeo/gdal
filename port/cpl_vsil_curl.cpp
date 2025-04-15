@@ -514,6 +514,10 @@ VSICurlHandle::~VSICurlHandle()
     {
         m_oThreadAdviseRead.join();
     }
+    if (m_hCurlMultiHandleForAdviseRead)
+    {
+        curl_multi_cleanup(m_hCurlMultiHandleForAdviseRead);
+    }
 
     if (!m_bCached)
     {
@@ -3279,6 +3283,31 @@ size_t VSICurlHandle::GetAdviseReadTotalBytesLimit() const
 }
 
 /************************************************************************/
+/*                       VSICURLMultiInit()                             */
+/************************************************************************/
+
+static CURLM *VSICURLMultiInit()
+{
+    CURLM *hCurlMultiHandle = curl_multi_init();
+
+    if (const char *pszMAXCONNECTS =
+            CPLGetConfigOption("GDAL_HTTP_MAX_CACHED_CONNECTIONS", nullptr))
+    {
+        curl_multi_setopt(hCurlMultiHandle, CURLMOPT_MAXCONNECTS,
+                          atoi(pszMAXCONNECTS));
+    }
+
+    if (const char *pszMAX_TOTAL_CONNECTIONS =
+            CPLGetConfigOption("GDAL_HTTP_MAX_TOTAL_CONNECTIONS", nullptr))
+    {
+        curl_multi_setopt(hCurlMultiHandle, CURLMOPT_MAX_TOTAL_CONNECTIONS,
+                          atoi(pszMAX_TOTAL_CONNECTIONS));
+    }
+
+    return hCurlMultiHandle;
+}
+
+/************************************************************************/
 /*                         AdviseRead()                                 */
 /************************************************************************/
 
@@ -3383,7 +3412,8 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
     // coverity[uninit_member,copy_constructor_call]
     const auto task = [this, aosHTTPOptions](const std::string &osURL)
     {
-        CURLM *hMultiHandle = curl_multi_init();
+        if (!m_hCurlMultiHandleForAdviseRead)
+            m_hCurlMultiHandleForAdviseRead = VSICURLMultiInit();
 
         NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix().c_str());
         NetworkStatisticsFile oContextFile(m_osFilename.c_str());
@@ -3398,8 +3428,8 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
         // results out of order.
         if (CPLTestBool(CPLGetConfigOption("GDAL_HTTP_MULTIPLEX", "YES")))
         {
-            curl_multi_setopt(hMultiHandle, CURLMOPT_PIPELINING,
-                              CURLPIPE_MULTIPLEX);
+            curl_multi_setopt(m_hCurlMultiHandleForAdviseRead,
+                              CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
         }
 #endif
 
@@ -3488,7 +3518,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER,
                                        headers);
             aHeaders.push_back(headers);
-            curl_multi_add_handle(hMultiHandle, hCurlHandle);
+            curl_multi_add_handle(m_hCurlMultiHandleForAdviseRead, hCurlHandle);
         }
 
         size_t nTotalDownloaded = 0;
@@ -3557,7 +3587,8 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
         while (true)
         {
             int still_running;
-            while (curl_multi_perform(hMultiHandle, &still_running) ==
+            while (curl_multi_perform(m_hCurlMultiHandleForAdviseRead,
+                                      &still_running) ==
                    CURLM_CALL_MULTI_PERFORM)
             {
                 // loop
@@ -3571,14 +3602,15 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
             do
             {
                 int msgq = 0;
-                msg = curl_multi_info_read(hMultiHandle, &msgq);
+                msg = curl_multi_info_read(m_hCurlMultiHandleForAdviseRead,
+                                           &msgq);
                 if (msg && (msg->msg == CURLMSG_DONE))
                 {
                     DealWithRequest(msg->easy_handle);
                 }
             } while (msg);
 
-            CPLMultiPerformWait(hMultiHandle, repeats);
+            CPLMultiPerformWait(m_hCurlMultiHandleForAdviseRead, repeats);
         }
         CPLHTTPRestoreSigPipeHandler(old_handler);
 
@@ -3589,7 +3621,8 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
             {
                 DealWithRequest(aHandles[i]);
             }
-            curl_multi_remove_handle(hMultiHandle, aHandles[i]);
+            curl_multi_remove_handle(m_hCurlMultiHandleForAdviseRead,
+                                     aHandles[i]);
             VSICURLResetHeaderAndWriterFunctions(aHandles[i]);
             curl_easy_cleanup(aHandles[i]);
             CPLFree(apszRanges[i]);
@@ -3599,8 +3632,6 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
         }
 
         NetworkStatisticsLogger::LogGET(nTotalDownloaded);
-
-        VSICURLMultiCleanup(hMultiHandle);
     };
     m_oThreadAdviseRead = std::thread(task, l_osURL);
 }
@@ -3797,7 +3828,7 @@ CURLM *VSICurlFilesystemHandlerBase::GetCurlMultiHandleFor(
     auto &conn = GetConnectionCache()[this];
     if (conn.hCurlMultiHandle == nullptr)
     {
-        conn.hCurlMultiHandle = curl_multi_init();
+        conn.hCurlMultiHandle = VSICURLMultiInit();
     }
     return conn.hCurlMultiHandle;
 }
@@ -4149,7 +4180,13 @@ const char *VSICurlFilesystemHandlerBase::GetActualURL(const char *pszFilename)
     "directory listing.' default='YES'/>"                                      \
     "  <Option name='CPL_VSIL_CURL_ADVISE_READ_TOTAL_BYTES_LIMIT' "            \
     "type='integer' description='Maximum number of bytes AdviseRead() is "     \
-    "allowed to fetch at once' default='104857600'/>"
+    "allowed to fetch at once' default='104857600'/>"                          \
+    "  <Option name='GDAL_HTTP_MAX_CACHED_CONNECTIONS' type='integer' "        \
+    "description='Maximum amount of connections that libcurl may keep alive "  \
+    "in its connection cache after use'/>"                                     \
+    "  <Option name='GDAL_HTTP_MAX_TOTAL_CONNECTIONS' type='integer' "         \
+    "description='Maximum number of simultaneously open connections in "       \
+    "total'/>"
 
 const char *VSICurlFilesystemHandlerBase::GetOptionsStatic()
 {

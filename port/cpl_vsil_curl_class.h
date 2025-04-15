@@ -430,6 +430,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
     std::vector<std::unique_ptr<AdviseReadRange>> m_aoAdviseReadRanges{};
     std::thread m_oThreadAdviseRead{};
+    CURLM *m_hCurlMultiHandleForAdviseRead = nullptr;
 
   protected:
     virtual struct curl_slist *

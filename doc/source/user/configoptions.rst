@@ -954,6 +954,18 @@ Networking options
       http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPROXYAUTH for more
       information.
 
+-  .. config:: GDAL_HTTP_MAX_CACHED_CONNECTIONS
+      :since: 3.11
+
+      Maximum amount of connections that libcurl may keep alive in its connection
+      cache after use. Cf https://curl.se/libcurl/c/CURLMOPT_MAXCONNECTS.html
+
+-  .. config:: GDAL_HTTP_MAX_TOTAL_CONNECTIONS
+      :since: 3.11
+
+      Maximum number of simultaneously open connections in total.
+      Cf https://curl.se/libcurl/c/CURLMOPT_MAX_TOTAL_CONNECTIONS.html
+
 -  .. config:: CPL_CURL_GZIP
       :choices: YES, NO
 
