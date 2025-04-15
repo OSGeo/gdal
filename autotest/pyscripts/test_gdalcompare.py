@@ -320,3 +320,37 @@ def test_gdalcompare_different_overview(tmp_vsimem, captured_print, source_filen
         )
         == 1
     )
+
+
+###############################################################################
+# Test case of https://github.com/OSGeo/gdal/issues/12137
+
+
+def test_gdalcompare_float32_only_nodata(tmp_vsimem):
+
+    filename_all_nodata = str(tmp_vsimem / "all_nodata.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        filename_all_nodata, 1, 1, 1, gdal.GDT_Float32
+    )
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    ds.Close()
+
+    assert (
+        gdalcompare.find_diff(
+            filename_all_nodata, filename_all_nodata, options=["SKIP_BINARY"]
+        )
+        == 0
+    )
+
+    filename_all_zero = str(tmp_vsimem / "all_zero.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        filename_all_zero, 1, 1, 1, gdal.GDT_Float32
+    )
+    ds.Close()
+
+    assert (
+        gdalcompare.find_diff(
+            filename_all_zero, filename_all_nodata, options=["SKIP_BINARY"]
+        )
+        == 2
+    )

@@ -982,7 +982,13 @@ def ComputeRasterMinMax(self, *args, **kwargs):
         kwargs["can_return_none"] = kwargs["can_return_null"];
         del kwargs["can_return_null"]
 
-    return $action(self, *args, **kwargs)
+    if "can_return_none" in kwargs and kwargs["can_return_none"]:
+        try:
+            return $action(self, *args, **kwargs)
+        except Exception:
+            return None
+    else:
+        return $action(self, *args, **kwargs)
 %}
 
 }
