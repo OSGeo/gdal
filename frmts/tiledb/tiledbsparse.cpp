@@ -344,7 +344,7 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "CreateLayer() failed: no more than one layer per dataset "
-                 "supported on a array object. Create a dataset with the "
+                 "supported on an array object. Create a dataset with the "
                  "CREATE_GROUP=YES creation option or open such group "
                  "to enable multiple layer creation.");
         return nullptr;
