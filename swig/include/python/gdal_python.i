@@ -5183,6 +5183,117 @@ def quiet_warnings():
     finally:
         PopErrorHandler()
 
+
+@contextlib.contextmanager
+def run(algorithm=None, arguments={}, progress=None, optimize_single_output=True, finalize=True, **kwargs):
+    """Run a GDAL algorithm as a context manager
+
+       .. versionadded: 3.11
+
+       Parameters
+       ----------
+       algorithm: str or list[str]
+            Path to the algorithm. For example "raster info", or ["raster", "info"].
+       arguments: dict
+            Input arguments of the algorithm. For example {"format": "json", "input": "byte.tif"}
+       progress: callable
+            Progress function whose arguments are a progress ratio, a string and a user data
+       optimize_single_output: bool
+            Whether to return a single value when there is a single output argument, and to
+            deserialize automatically JSON responses as a dict, and return a osgeo.gdal.Dataset
+            when possible.
+       finalize: bool
+            Whether to run :py:func:`gdal.Algorithm.Finalize` when the context is released.
+       kwargs:
+            Instead of using the ``arguments`` parameter, it is possible to pass
+            algorithm arguments directly as named parameters of gdal.run().
+            If the named argument has dash characters in it, the corresponding
+            parameter must replace them with an underscore character.
+            For example ``dst_crs`` as a a parameter of gdal.run(), instead of
+            ``dst-crs`` which is the name to use on the command line.
+
+       Returns
+       -------
+            A context manager with the output arguments of the algorithm
+
+       Example
+       -------
+
+       >>> with gdal.run(["raster", "info"], {"input": "byte.tif"}) as res:
+       ...     print(res["bands"])
+
+       >>> with gdal.run("raster reproject", input="byte.tif", output_format="MEM", dst_crs="EPSG:4326") as ds
+       ...     print(ds.ReadAsArray())
+    """
+
+    if isinstance(algorithm, list):
+        alg = GetGlobalAlgorithmRegistry()
+        parent_name = "gdal"
+        for i, v in enumerate(algorithm):
+            if i == 0 and v == "gdal":
+                continue
+            subalg = alg[v]
+            if not subalg:
+                raise Exception(f"{v} is not a valid sub-algorithm of {parent_name}")
+            alg = subalg
+            parent_name = alg.GetName()
+    elif isinstance(algorithm, str):
+        if algorithm.startswith("gdal "):
+            algorithm = algorithm[len("gdal "):]
+        alg = GetGlobalAlgorithmRegistry()
+        parent_name = "gdal"
+        for i, v in enumerate(algorithm.split(' ')):
+            if i == 0 and v == "gdal":
+                continue
+            subalg = alg[v]
+            if not subalg:
+                raise Exception(f"{v} is not a valid sub-algorithm of {parent_name}")
+            alg = subalg
+            parent_name = alg.GetName()
+    else:
+        raise Exception("Wrong type for algorithm. Expected string or list of string")
+
+    for k in arguments:
+        alg[k.replace('_', '-')] = arguments[k]
+
+    for k in kwargs:
+        alg[k.replace('_', '-')] = kwargs[k]
+
+    assert alg.Run(progress)
+
+    count_output = 0
+    if optimize_single_output:
+        for name in alg.GetArgNames():
+            arg = alg.GetArg(name)
+            if arg.IsOutput():
+                count_output += 1
+
+    res = {}
+    for name in alg.GetArgNames():
+        arg = alg.GetArg(name)
+        if arg.IsOutput():
+            val = alg[name]
+            if name == "output-string" and count_output == 1:
+                if (val.startswith('{') and (val.endswith('}') or val.endswith('}\n'))) or \
+                   (val.startswith('[') and (val.endswith(']') or val.endswith(']\n'))):
+                    import json
+                    res = json.loads(val)
+                else:
+                    res = val
+            elif count_output == 1:
+                if arg.GetType() == GAAT_DATASET:
+                    res = val.GetDataset()
+                else:
+                    res = val
+            else:
+                res[name] = val
+
+    yield res
+
+    if finalize:
+        assert alg.Finalize()
+
+
 %}
 
 

@@ -455,3 +455,54 @@ def test_gdal_algorithm_getter_setter():
 
     with pytest.raises(Exception):
         alg["no-mask"] = "bar"
+
+
+def test_gdal_run():
+
+    with pytest.raises(
+        Exception, match="i_do_not_exist is not a valid sub-algorithm of gdal"
+    ):
+        with gdal.run("i_do_not_exist"):
+            pass
+
+    with pytest.raises(
+        Exception, match="i_do_not_exist is not a valid sub-algorithm of gdal"
+    ):
+        with gdal.run(["i_do_not_exist"]):
+            pass
+
+    with pytest.raises(
+        Exception, match="Wrong type for algorithm. Expected string or list of string"
+    ):
+        with gdal.run(None):
+            pass
+
+    with gdal.run("raster info", {"input": "../gcore/data/byte.tif"}) as res:
+        assert len(res["bands"]) == 1
+
+    with gdal.run("gdal raster info", input="../gcore/data/byte.tif") as res:
+        assert len(res["bands"]) == 1
+
+    with gdal.run(
+        "raster info", {"input": "../gcore/data/byte.tif"}, optimize_single_output=False
+    ) as res:
+        assert len(res) == 1
+        assert res["output-string"].startswith("{")
+
+    with gdal.run(
+        ["gdal", "raster", "reproject"],
+        input="../gcore/data/byte.tif",
+        output_format="MEM",
+        dst_crs="EPSG:4326",
+    ) as ds:
+        assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+
+    with gdal.run(
+        ["raster", "reproject"],
+        {
+            "input": "../gcore/data/byte.tif",
+            "output-format": "MEM",
+            "dst-crs": "EPSG:4326",
+        },
+    ) as ds:
+        assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"

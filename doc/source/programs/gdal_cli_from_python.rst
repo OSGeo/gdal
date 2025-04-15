@@ -12,14 +12,10 @@ Raster commands
 .. code-block:: python
 
     from osgeo import gdal
-    import json
 
     gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["info"]
-    alg["input"] = "byte.tif"
-    alg.Run()
-    info = json.loads(alg["output-string"])
-    print(info)
+    with gdal.run(["raster", "info"], {"input": "byte.tif"}) as info:
+        print(info)
 
 
 * Converting a georeferenced netCDF file to cloud-optimized GeoTIFF
@@ -27,23 +23,20 @@ Raster commands
 .. code-block:: python
 
     from osgeo import gdal
+
     gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["convert"]
-    alg["input"] = "in.nc"
-    alg["output"] = "out.tif"
-    alg["output-format"] = "COG"
-    alg["overwrite"] = True  # if the output file may exist
-    alg.Run()
-    alg.Finalize() # ensure output dataset is closed
+    with gdal.run(["raster", "convert"], {"input": "in.tif", "output": "out.tif", "output-format": "COG", "overwrite": True}):
+        pass
 
 or
 
 .. code-block:: python
 
     from osgeo import gdal
+
     gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["convert"]
-    alg.ParseRunAndFinalize(["--input=in.nc", "--output-format=COG", "--output=out.tif", "--overwrite"])
+    with gdal.run(["raster", "convert"], input="in.tif", output="out.tif", output_format="COG", overwrite=True):
+        pass
 
 
 * Reprojecting a GeoTIFF file to a Deflate compressed tiled GeoTIFF file
@@ -51,24 +44,10 @@ or
 .. code-block:: python
 
     from osgeo import gdal
+
     gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["reproject"]
-    alg["input"] = "in.tif"
-    alg["output"] = "out.tif"
-    alg["dst-crs"] = "EPSG:4326"
-    alg["creation-options"] = ["TILED=YES", "COMPRESS=DEFLATE"]
-    alg["overwrite"] = True  # if the output file may exist
-    alg.Run()
-    alg.Finalize() # ensure output dataset is closed
-
-or
-
-.. code-block:: python
-
-    from osgeo import gdal
-    gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["reproject"]
-    alg.ParseRunAndFinalize(["--input=in.tif", "--output=out.tif", "--dst-crs=EPSG:4326", "--co=TILED=YES,COMPRESS=DEFLATE", "--overwrite"])
+    with gdal.run(["raster", "reproject"], {"input": "in.tif", "output": "out.tif", "dst-crs": "EPSG:4326", "creation-options": { "TILED": "YES", "COMPRESS": "DEFLATE"} }):
+        pass
 
 
 * Reprojecting a (possibly in-memory) dataset to a in-memory dataset
@@ -76,15 +55,10 @@ or
 .. code-block:: python
 
     from osgeo import gdal
-    gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["reproject"]
-    alg["input"] = input_ds
-    alg["output"] = "dummy_name"
-    alg["output-format"] = "MEM"
-    alg["dst-crs"] = "EPSG:4326"
-    alg.Run()
-    output_ds = alg["output"].GetDataset()
 
+    gdal.UseExceptions()
+    with gdal.run(["raster", "reproject"], {"input": "in.tif", "output-format": "MEM", "dst-crs": "EPSG:4326"}) as ds:
+        print(ds.ReadAsArray())
 
 
 Vector commands
@@ -95,14 +69,10 @@ Vector commands
 .. code-block:: python
 
     from osgeo import gdal
-    import json
 
     gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["vector"]["info"]
-    alg["input"] = "poly.gpkg"
-    alg.Run()
-    info = json.loads(alg["output-string"])
-    print(info)
+    with gdal.run(["raster", "info"], {"input": "poly.gpkg"}) as info:
+        print(info)
 
 
 * Converting a shapefile to a GeoPackage
@@ -110,19 +80,7 @@ Vector commands
 .. code-block:: python
 
     from osgeo import gdal
+
     gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["vector"]["convert"]
-    alg["input"] = "in.shp"
-    alg["output"] = "out.gpkg"
-    alg["overwrite"] = True  # if the output file may exist
-    alg.Run()
-    alg.Finalize() # ensure output dataset is closed
-
-or
-
-.. code-block:: python
-
-    from osgeo import gdal
-    gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["vector"]["convert"]
-    alg.ParseRunAndFinalize(["--input=in.shp", "--output=out.gpkg", "--overwrite"])
+    with gdal.run(["raster", "convert"], {"input": "in.shp", "output": "out.gpkg", "overwrite": True}):
+        pass
