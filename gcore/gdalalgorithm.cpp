@@ -4265,6 +4265,18 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
         jArg.Add("name", arg->GetName());
         jArg.Add("type", GDALAlgorithmArgTypeName(arg->GetType()));
         jArg.Add("description", arg->GetDescription());
+
+        const auto &metaVar = arg->GetMetaVar();
+        if (!metaVar.empty() && metaVar != CPLString(arg->GetName()).toupper())
+        {
+            if (metaVar.front() == '<' && metaVar.back() == '>' &&
+                metaVar.substr(1, metaVar.size() - 2).find('>') ==
+                    std::string::npos)
+                jArg.Add("metavar", metaVar.substr(1, metaVar.size() - 2));
+            else
+                jArg.Add("metavar", metaVar);
+        }
+
         const auto &choices = arg->GetChoices();
         if (!choices.empty())
         {

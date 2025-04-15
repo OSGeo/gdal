@@ -112,6 +112,10 @@
           "type": "string",
           "$comment": "Argument description"
         },
+        "metavar": {
+          "type": "string",
+          "$comment": "Hint on the expected value of the argument"
+        },
         "choices": {
           "type": "array",
           "items": {
