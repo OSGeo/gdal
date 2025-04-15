@@ -17,6 +17,8 @@ Example:
 
     gdalinfo /vsizip/my.zip/my.tif
 
+The leading vsi in /vsiPREFIX/ stands for Virtual System Interface.
+
 Chaining
 --------
 

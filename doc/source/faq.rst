@@ -38,6 +38,19 @@ Common Portability Library. Think of it as GDAL internal cross-platform standard
 
 CPL, or parts of it, is used by some projects external to GDAL (eg. MITAB, libgeotiff).
 
+What does VSI stand for?
++++++++++++++++++++++++++
+
+Virtual System Interface. This is the name of the input/output abstraction layer
+that is implemented by different Virtual File Systems (VFS) to provide access
+to regular files, in-memory files, network accessible files, compressed files, etc.
+
+See :ref:`virtual_file_systems` for a list of the available VFS.
+
+The VSI functions retain exactly the same calling pattern as the original
+Standard C functions they relate to, for the parts where they are common, and
+also extend it to provide more specialized functionality.
+
 When was the GDAL project started?
 ++++++++++++++++++++++++++++++++++
 
