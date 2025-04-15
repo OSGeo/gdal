@@ -1191,9 +1191,9 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - -
      - extract module from a single raster band (real or complex)
    * - **mul**
-     - >= 2
+     - >= 1
      - ``k`` (optional)
-     - multiply 2 or more raster bands. If the optional ``k`` parameter is provided then the result is multiplied by the scalar ``k``.
+     - multiply 1 or more raster bands. If the optional ``k`` parameter is provided then the result is multiplied by the scalar ``k``.
    * - **norm_diff**
      - 2
      - -
@@ -1227,9 +1227,9 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - -
      - perform the square root of a single raster band (real only)
    * - **sum**
-     - >= 2
+     - >= 1
      - ``k`` (optional)
-     - sum 2 or more raster bands. If the optional ``k`` parameter is provided then it is added to each element of the result
+     - sum 1 or more raster bands. If the optional ``k`` parameter is provided then it is added to each element of the result
 
 .. example::
    :title: VRT expression with a simple condition

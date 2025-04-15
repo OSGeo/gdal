@@ -66,8 +66,8 @@ def _validate(content):
 # Verify raster band subClass
 
 
-def test_vrtderived_1():
-    filename = "tmp/derived.vrt"
+def test_vrtderived_1(tmp_vsimem):
+    filename = tmp_vsimem / "derived.vrt"
     vrt_ds = gdal.GetDriverByName("VRT").Create(filename, 50, 50, 0)
 
     options = [
@@ -94,8 +94,7 @@ def test_vrtderived_1():
     )
     assert expected_md_read in md_read["source_0"]
 
-    xmlstring = open(filename).read()
-    gdal.Unlink(filename)
+    xmlstring = gdal.VSIFile(filename, "r").read()
 
     node = gdal.ParseXMLString(xmlstring)
     node = _xmlsearch(node, gdal.CXT_Element, "VRTRasterBand")
@@ -108,8 +107,8 @@ def test_vrtderived_1():
 # Verify derived raster band pixel function type
 
 
-def test_vrtderived_2():
-    filename = "tmp/derived.vrt"
+def test_vrtderived_2(tmp_vsimem):
+    filename = tmp_vsimem / "derived.vrt"
     vrt_ds = gdal.GetDriverByName("VRT").Create(filename, 50, 50, 0)
 
     options = [
@@ -136,8 +135,7 @@ def test_vrtderived_2():
     assert ret != 0
     vrt_ds = None
 
-    xmlstring = open(filename).read()
-    gdal.Unlink(filename)
+    xmlstring = gdal.VSIFile(filename, "r").read()
 
     node = gdal.ParseXMLString(xmlstring)
     node = _xmlsearch(node, gdal.CXT_Element, "VRTRasterBand")
@@ -153,8 +151,8 @@ def test_vrtderived_2():
 # Verify derived raster band transfer type
 
 
-def test_vrtderived_3():
-    filename = "tmp/derived.vrt"
+def test_vrtderived_3(tmp_vsimem):
+    filename = tmp_vsimem / "derived.vrt"
     vrt_ds = gdal.GetDriverByName("VRT").Create(filename, 50, 50, 0)
 
     options = [
@@ -175,8 +173,7 @@ def test_vrtderived_3():
     vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources")
     vrt_ds = None
 
-    xmlstring = open(filename).read()
-    gdal.Unlink(filename)
+    xmlstring = gdal.VSIFile(filename, "r").read()
 
     node = gdal.ParseXMLString(xmlstring)
     node = _xmlsearch(node, gdal.CXT_Element, "VRTRasterBand")
@@ -189,8 +186,8 @@ def test_vrtderived_3():
 # Check handling of invalid derived raster band transfer type
 
 
-def test_vrtderived_4():
-    filename = "tmp/derived.vrt"
+def test_vrtderived_4(tmp_vsimem):
+    filename = tmp_vsimem / "derived.vrt"
     vrt_ds = gdal.GetDriverByName("VRT").Create(filename, 50, 50, 0)
 
     options = [
@@ -904,18 +901,16 @@ def test_vrtderived_15():
 # Check the effect of the SkipNonContributingSources element
 
 
-def test_vrtderived_skip_non_contributing_sources():
+def test_vrtderived_skip_non_contributing_sources(tmp_path):
 
     pytest.importorskip("numpy")
 
     def create_vrt(SkipNonContributingSources):
         Trace = ""
         if SkipNonContributingSources:
-            Trace = 'open("tmp/num_sources_skip_true.txt", "wt").write(str(len(in_ar)))'
+            Trace = f'open(r"{tmp_path}/num_sources_skip_true.txt", "wt").write(str(len(in_ar)))'
         else:
-            Trace = (
-                'open("tmp/num_sources_skip_false.txt", "wt").write(str(len(in_ar)))'
-            )
+            Trace = f'open(r"{tmp_path}/num_sources_skip_false.txt", "wt").write(str(len(in_ar)))'
         SkipNonContributingSources = "true" if SkipNonContributingSources else "false"
         ret = f"""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
@@ -952,25 +947,25 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
     with gdaltest.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
         assert ds.ReadRaster(0, 0, 20, 20) == ref_ds.ReadRaster(0, 0, 20, 20)
 
-        assert int(open("tmp/num_sources_skip_true.txt", "rt").read()) == 2
-        os.unlink("tmp/num_sources_skip_true.txt")
+        assert int(open(tmp_path / "num_sources_skip_true.txt", "rt").read()) == 2
+        os.unlink(tmp_path / "num_sources_skip_true.txt")
 
         assert ds.ReadRaster(0, 0, 1, 1) == ref_ds.ReadRaster(0, 0, 1, 1)
 
-        assert int(open("tmp/num_sources_skip_true.txt", "rt").read()) == 1
-        os.unlink("tmp/num_sources_skip_true.txt")
+        assert int(open(tmp_path / "num_sources_skip_true.txt", "rt").read()) == 1
+        os.unlink(tmp_path / "num_sources_skip_true.txt")
 
         assert ds.ReadRaster(10, 0, 10, 10) == ref_ds.ReadRaster(10, 0, 10, 10)
 
-        assert int(open("tmp/num_sources_skip_true.txt", "rt").read()) == 1
-        os.unlink("tmp/num_sources_skip_true.txt")
+        assert int(open(tmp_path / "num_sources_skip_true.txt", "rt").read()) == 1
+        os.unlink(tmp_path / "num_sources_skip_true.txt")
 
         assert ds.ReadRaster(0, 10, 1, 1) == ref_ds.ReadRaster(0, 10, 1, 1)
 
-        assert not os.path.exists("tmp/num_sources_skip_true.txt")
+        assert not os.path.exists(tmp_path / "num_sources_skip_true.txt")
 
-        assert int(open("tmp/num_sources_skip_false.txt", "rt").read()) == 2
-        os.unlink("tmp/num_sources_skip_false.txt")
+        assert int(open(tmp_path / "num_sources_skip_false.txt", "rt").read()) == 2
+        os.unlink(tmp_path / "num_sources_skip_false.txt")
 
     xml = ds.GetMetadata("xml:VRT")[0]
     assert "<SkipNonContributingSources>true</SkipNonContributingSources>" in xml
@@ -1265,11 +1260,35 @@ def test_vrt_pixelfn_expression_invalid(
 
 
 ###############################################################################
-# Cleanup.
+# Test multiplication / summation by a constant factor
 
 
-def test_vrtderived_cleanup():
-    try:
-        os.remove("tmp/derived.vrt")
-    except OSError:
-        pass
+@pytest.mark.parametrize("fn", ["sum", "mul"])
+def test_vrt_pixelfn_constant_factor(tmp_vsimem, fn):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    k = 7
+
+    xml = f"""
+    <VRTDataset rasterXSize="20" rasterYSize="20">
+      <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
+        <PixelFunctionType>{fn}</PixelFunctionType>
+        <PixelFunctionArguments k="{k}" />
+        <SimpleSource>
+          <SourceFilename>data/byte.tif</SourceFilename>
+          <SourceBand>1</SourceBand>
+          <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+          <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    src = gdal.Open("data/byte.tif").ReadAsArray().astype(np.float32)
+    dst = gdal.Open(xml).ReadAsArray()
+
+    if fn == "sum":
+        np.testing.assert_array_equal(dst, src + k)
+    elif fn == "mul":
+        np.testing.assert_array_equal(dst, src * k)
