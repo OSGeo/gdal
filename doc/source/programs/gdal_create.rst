@@ -35,7 +35,7 @@ like creating a PDF file from a XML composition file.
 
 .. option:: -outsize <xsize> <ysize>
 
-    Set the size of the output file in pixels. First figure is width. Second one
+    Set the size of the output file in pixels. First value is width. Second one
     is height.
 
 .. option:: -bands <count>

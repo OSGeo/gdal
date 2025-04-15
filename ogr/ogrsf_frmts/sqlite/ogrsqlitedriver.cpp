@@ -295,6 +295,8 @@ void RegisterOGRSQLite()
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "SQLite / Spatialite / RasterLite2");
+    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_SUBDATASETS, "YES");
 #else
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "SQLite / Spatialite");
 #endif

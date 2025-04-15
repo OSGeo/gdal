@@ -175,78 +175,13 @@ GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(GDALDataType eDT,
                                                     double dfValue,
                                                     int bComplex)
 {
-    if (!bComplex && !GDALDataTypeIsComplex(eDT))
+    if (!bComplex && !GDALDataTypeIsComplex(eDT) && eDT != GDT_Unknown)
     {
-        switch (eDT)
+        // Do not return `GDT_Float16` because that type is not supported everywhere
+        const auto eDTMod = eDT == GDT_Float16 ? GDT_Float32 : eDT;
+        if (GDALIsValueExactAs(dfValue, eDTMod))
         {
-            case GDT_Byte:
-            {
-                if (GDALIsValueExactAs<uint8_t>(dfValue))
-                    return eDT;
-                break;
-            }
-            case GDT_Int8:
-            {
-                if (GDALIsValueExactAs<int8_t>(dfValue))
-                    return eDT;
-                break;
-            }
-            case GDT_UInt16:
-            {
-                if (GDALIsValueExactAs<uint16_t>(dfValue))
-                    return eDT;
-                break;
-            }
-            case GDT_Int16:
-            {
-                if (GDALIsValueExactAs<int16_t>(dfValue))
-                    return eDT;
-                break;
-            }
-            case GDT_UInt32:
-            {
-                if (GDALIsValueExactAs<uint32_t>(dfValue))
-                    return eDT;
-                break;
-            }
-            case GDT_Int32:
-            {
-                if (GDALIsValueExactAs<int32_t>(dfValue))
-                    return eDT;
-                break;
-            }
-            case GDT_UInt64:
-            {
-                if (GDALIsValueExactAs<uint64_t>(dfValue))
-                    return eDT;
-                break;
-            }
-            case GDT_Int64:
-            {
-                if (GDALIsValueExactAs<int64_t>(dfValue))
-                    return eDT;
-                break;
-            }
-            // Do not return `GDT_Float16` because that type is not supported everywhere
-            case GDT_Float16:
-            case GDT_Float32:
-            {
-                if (GDALIsValueExactAs<float>(dfValue))
-                    return GDT_Float32;
-                break;
-            }
-            case GDT_Float64:
-            {
-                return eDT;
-            }
-            case GDT_Unknown:
-            case GDT_CInt16:
-            case GDT_CInt32:
-            case GDT_CFloat16:
-            case GDT_CFloat32:
-            case GDT_CFloat64:
-            case GDT_TypeCount:
-                break;
+            return eDTMod;
         }
     }
 
@@ -1074,7 +1009,62 @@ bool GDALIsValueExactAs(double dfValue, GDALDataType eDT)
 }
 
 /************************************************************************/
-/*                        GDALGetNonComplexDataType()                */
+/*                         GDALIsValueInRangeOf()                       */
+/************************************************************************/
+
+/**
+ * \brief Check whether the provided value can be represented in the range
+ * of the data type, possibly with rounding.
+ *
+ * Only implemented for non-complex data types
+ *
+ * @param dfValue value to check.
+ * @param eDT target data type.
+ *
+ * @return true if the provided value can be represented in the range
+ * of the data type, possibly with rounding.
+ * @since GDAL 3.11
+ */
+bool GDALIsValueInRangeOf(double dfValue, GDALDataType eDT)
+{
+    switch (eDT)
+    {
+        case GDT_Byte:
+            return GDALIsValueInRange<uint8_t>(dfValue);
+        case GDT_Int8:
+            return GDALIsValueInRange<int8_t>(dfValue);
+        case GDT_UInt16:
+            return GDALIsValueInRange<uint16_t>(dfValue);
+        case GDT_Int16:
+            return GDALIsValueInRange<int16_t>(dfValue);
+        case GDT_UInt32:
+            return GDALIsValueInRange<uint32_t>(dfValue);
+        case GDT_Int32:
+            return GDALIsValueInRange<int32_t>(dfValue);
+        case GDT_UInt64:
+            return GDALIsValueInRange<uint64_t>(dfValue);
+        case GDT_Int64:
+            return GDALIsValueInRange<int64_t>(dfValue);
+        case GDT_Float16:
+            return GDALIsValueInRange<GFloat16>(dfValue);
+        case GDT_Float32:
+            return GDALIsValueInRange<float>(dfValue);
+        case GDT_Float64:
+            return true;
+        case GDT_Unknown:
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat16:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_TypeCount:
+            break;
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                        GDALGetNonComplexDataType()                   */
 /************************************************************************/
 /**
  * \brief Return the base data type for the specified input.
@@ -5178,9 +5168,22 @@ double GDALAdjustNoDataCloseToFloatMax(double dfVal)
 /*                        GDALCopyNoDataValue()                         */
 /************************************************************************/
 
-void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
+/** Copy the nodata value from the source band to the target band if
+ * it can be exactly represented in the output data type.
+ *
+ * @param poDstBand Destination band.
+ * @param poSrcBand Source band band.
+ * @param[out] pbCannotBeExactlyRepresented Pointer to a boolean, or nullptr.
+ *             If the value cannot be exactly represented on the output data
+ *             type, *pbCannotBeExactlyRepresented will be set to true.
+ *
+ * @return true if the nodata value was successfully set.
+ */
+bool GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand,
+                         bool *pbCannotBeExactlyRepresented)
 {
-
+    if (pbCannotBeExactlyRepresented)
+        *pbCannotBeExactlyRepresented = false;
     int bSuccess;
     const auto eSrcDataType = poSrcBand->GetRasterDataType();
     const auto eDstDataType = poDstBand->GetRasterDataType();
@@ -5191,18 +5194,22 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
         {
             if (eDstDataType == GDT_Int64)
             {
-                poDstBand->SetNoDataValueAsInt64(nNoData);
+                return poDstBand->SetNoDataValueAsInt64(nNoData) == CE_None;
             }
             else if (eDstDataType == GDT_UInt64)
             {
                 if (nNoData >= 0)
-                    poDstBand->SetNoDataValueAsUInt64(
-                        static_cast<uint64_t>(nNoData));
+                {
+                    return poDstBand->SetNoDataValueAsUInt64(
+                               static_cast<uint64_t>(nNoData)) == CE_None;
+                }
             }
             else if (nNoData ==
                      static_cast<int64_t>(static_cast<double>(nNoData)))
             {
-                poDstBand->SetNoDataValue(static_cast<double>(nNoData));
+                const double dfValue = static_cast<double>(nNoData);
+                if (GDALIsValueExactAs(dfValue, eDstDataType))
+                    return poDstBand->SetNoDataValue(dfValue) == CE_None;
             }
         }
     }
@@ -5213,21 +5220,23 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
         {
             if (eDstDataType == GDT_UInt64)
             {
-                poDstBand->SetNoDataValueAsUInt64(nNoData);
+                return poDstBand->SetNoDataValueAsUInt64(nNoData) == CE_None;
             }
             else if (eDstDataType == GDT_Int64)
             {
                 if (nNoData <
                     static_cast<uint64_t>(cpl::NumericLimits<int64_t>::max()))
                 {
-                    poDstBand->SetNoDataValueAsInt64(
-                        static_cast<int64_t>(nNoData));
+                    return poDstBand->SetNoDataValueAsInt64(
+                               static_cast<int64_t>(nNoData)) == CE_None;
                 }
             }
             else if (nNoData ==
                      static_cast<uint64_t>(static_cast<double>(nNoData)))
             {
-                poDstBand->SetNoDataValue(static_cast<double>(nNoData));
+                const double dfValue = static_cast<double>(nNoData);
+                if (GDALIsValueExactAs(dfValue, eDstDataType))
+                    return poDstBand->SetNoDataValue(dfValue) == CE_None;
             }
         }
     }
@@ -5245,8 +5254,8 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
                     dfNoData ==
                         static_cast<double>(static_cast<int64_t>(dfNoData)))
                 {
-                    poDstBand->SetNoDataValueAsInt64(
-                        static_cast<int64_t>(dfNoData));
+                    return poDstBand->SetNoDataValueAsInt64(
+                               static_cast<int64_t>(dfNoData)) == CE_None;
                 }
             }
             else if (eDstDataType == GDT_UInt64)
@@ -5258,16 +5267,19 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
                     dfNoData ==
                         static_cast<double>(static_cast<uint64_t>(dfNoData)))
                 {
-                    poDstBand->SetNoDataValueAsInt64(
-                        static_cast<uint64_t>(dfNoData));
+                    return poDstBand->SetNoDataValueAsInt64(
+                               static_cast<uint64_t>(dfNoData)) == CE_None;
                 }
             }
             else
             {
-                poDstBand->SetNoDataValue(dfNoData);
+                return poDstBand->SetNoDataValue(dfNoData) == CE_None;
             }
         }
     }
+    if (pbCannotBeExactlyRepresented)
+        *pbCannotBeExactlyRepresented = true;
+    return false;
 }
 
 /************************************************************************/

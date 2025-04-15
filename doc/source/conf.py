@@ -288,6 +288,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_create",
+        "gdal-raster-create",
+        "Create a new raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_edit",
         "gdal-raster-edit",
         "Edit in place a raster dataset",

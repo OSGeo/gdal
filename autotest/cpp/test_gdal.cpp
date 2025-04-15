@@ -837,6 +837,15 @@ TEST_F(test_gdal, GDALIsValueInRange)
         !GDALIsValueInRange<double>(cpl::NumericLimits<double>::quiet_NaN()));
 }
 
+TEST_F(test_gdal, GDALIsValueInRangeOf)
+{
+    for (int eDT = GDT_Byte; eDT <= GDT_TypeCount; ++eDT)
+    {
+        EXPECT_TRUE(GDALIsValueInRangeOf(0, static_cast<GDALDataType>(eDT)));
+    }
+    EXPECT_FALSE(GDALIsValueInRangeOf(-1, GDT_Byte));
+}
+
 #ifdef _MSC_VER
 #pragma warning(push)
 // overflow in constant arithmetic

@@ -587,71 +587,6 @@ EditISIS3MetadataForBandChange(const char *pszJSON, int nSrcBandCount,
 }
 
 /************************************************************************/
-/*                       AdjustNoDataValue()                            */
-/************************************************************************/
-
-static double AdjustNoDataValue(double dfInputNoDataValue,
-                                GDALRasterBand *poBand,
-                                const GDALTranslateOptions *psOptions)
-{
-    bool bSignedByte = false;
-    const char *pszPixelType =
-        psOptions->aosCreateOptions.FetchNameValue("PIXELTYPE");
-    if (pszPixelType == nullptr && poBand->GetRasterDataType() == GDT_Byte)
-    {
-        poBand->EnablePixelTypeSignedByteWarning(false);
-        pszPixelType = poBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
-        poBand->EnablePixelTypeSignedByteWarning(true);
-    }
-    if (pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE"))
-        bSignedByte = true;
-    int bClamped = FALSE;
-    int bRounded = FALSE;
-    double dfVal = 0.0;
-    const GDALDataType eBandType = poBand->GetRasterDataType();
-    if (bSignedByte)
-    {
-        if (dfInputNoDataValue < -128.0)
-        {
-            dfVal = -128.0;
-            bClamped = TRUE;
-        }
-        else if (dfInputNoDataValue > 127.0)
-        {
-            dfVal = 127.0;
-            bClamped = TRUE;
-        }
-        else
-        {
-            dfVal = static_cast<int>(floor(dfInputNoDataValue + 0.5));
-            if (dfVal != dfInputNoDataValue)
-                bRounded = TRUE;
-        }
-    }
-    else
-    {
-        dfVal = GDALAdjustValueToDataType(eBandType, dfInputNoDataValue,
-                                          &bClamped, &bRounded);
-    }
-
-    if (bClamped)
-    {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "for band %d, nodata value has been clamped "
-                 "to %.0f, the original value being out of range.",
-                 poBand->GetBand(), dfVal);
-    }
-    else if (bRounded)
-    {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "for band %d, nodata value has been rounded "
-                 "to %.0f, %s being an integer datatype.",
-                 poBand->GetBand(), dfVal, GDALGetDataTypeName(eBandType));
-    }
-    return dfVal;
-}
-
-/************************************************************************/
 /*                             GDALTranslate()                          */
 /************************************************************************/
 
@@ -1128,7 +1063,19 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /*      This is needed for                                              */
     /*      gdal_translate foo.tif foo.tif.ovr -outsize 50% 50%             */
     /* -------------------------------------------------------------------- */
-    if (!psOptions->aosCreateOptions.FetchBool("APPEND_SUBDATASET", false))
+    if (psOptions->aosCreateOptions.FetchBool("APPEND_SUBDATASET", false))
+    {
+        if (GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE_SUBDATASETS,
+                                nullptr) == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Subdataset creation not supported for driver %s",
+                     GDALGetDescription(hDriver));
+            GDALTranslateOptionsFree(psOptions);
+            return nullptr;
+        }
+    }
+    else
     {
         if (!EQUAL(psOptions->osFormat.c_str(), "VRT"))
         {
@@ -2496,87 +2443,46 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
          */
         if (psOptions->bSetNoData)
         {
-            if (poVRTBand->GetRasterDataType() == GDT_Int64)
+            const char *pszPixelType =
+                psOptions->aosCreateOptions.FetchNameValue("PIXELTYPE");
+            if (pszPixelType == nullptr &&
+                poVRTBand->GetRasterDataType() == GDT_Byte)
             {
-                if (psOptions->osNoData.find('.') != std::string::npos ||
-                    CPLGetValueType(psOptions->osNoData.c_str()) ==
-                        CPL_VALUE_STRING)
-                {
-                    const double dfNoData =
-                        CPLAtof(psOptions->osNoData.c_str());
-                    if (GDALIsValueExactAs<int64_t>(dfNoData))
-                    {
-                        poVRTBand->SetNoDataValueAsInt64(
-                            static_cast<int64_t>(dfNoData));
-                    }
-                    else
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Cannot set nodata value %s on a Int64 band",
-                                 psOptions->osNoData.c_str());
-                    }
-                }
-                else
-                {
-                    errno = 0;
-                    const auto val =
-                        std::strtoll(psOptions->osNoData.c_str(), nullptr, 10);
-                    if (errno == 0)
-                    {
-                        poVRTBand->SetNoDataValueAsInt64(
-                            static_cast<int64_t>(val));
-                    }
-                    else
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Cannot set nodata value %s on a Int64 band",
-                                 psOptions->osNoData.c_str());
-                    }
-                }
+                poVRTBand->EnablePixelTypeSignedByteWarning(false);
+                pszPixelType =
+                    poVRTBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+                poVRTBand->EnablePixelTypeSignedByteWarning(true);
             }
-            else if (poVRTBand->GetRasterDataType() == GDT_UInt64)
+
+            bool bCannotBeExactlyRepresented = false;
+
+            if (pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE"))
             {
-                if (psOptions->osNoData.find('.') != std::string::npos ||
-                    CPLGetValueType(psOptions->osNoData.c_str()) ==
-                        CPL_VALUE_STRING)
+                char *endptr = nullptr;
+                const double dfVal =
+                    CPLStrtod(psOptions->osNoData.c_str(), &endptr);
+                if (endptr == psOptions->osNoData.c_str() +
+                                  psOptions->osNoData.size() &&
+                    dfVal >= -128.0 && dfVal <= 127.0 &&
+                    static_cast<int8_t>(dfVal) == dfVal)
                 {
-                    const double dfNoData =
-                        CPLAtof(psOptions->osNoData.c_str());
-                    if (GDALIsValueExactAs<uint64_t>(dfNoData))
-                    {
-                        poVRTBand->SetNoDataValueAsUInt64(
-                            static_cast<uint64_t>(dfNoData));
-                    }
-                    else
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Cannot set nodata value %s on a UInt64 band",
-                                 psOptions->osNoData.c_str());
-                    }
+                    poVRTBand->SetNoDataValue(dfVal);
                 }
                 else
                 {
-                    errno = 0;
-                    const auto val =
-                        std::strtoull(psOptions->osNoData.c_str(), nullptr, 10);
-                    if (errno == 0)
-                    {
-                        poVRTBand->SetNoDataValueAsUInt64(
-                            static_cast<uint64_t>(val));
-                    }
-                    else
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Cannot set nodata value %s on a UInt64 band",
-                                 psOptions->osNoData.c_str());
-                    }
+                    bCannotBeExactlyRepresented = true;
                 }
             }
             else
             {
-                const double dfVal = AdjustNoDataValue(
-                    CPLAtof(psOptions->osNoData.c_str()), poVRTBand, psOptions);
-                poVRTBand->SetNoDataValue(dfVal);
+                poVRTBand->SetNoDataValueAsString(psOptions->osNoData.c_str(),
+                                                  &bCannotBeExactlyRepresented);
+            }
+            if (bCannotBeExactlyRepresented)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Nodata value was not set to output band, "
+                         "as it cannot be represented on its data type.");
             }
         }
 
@@ -2758,7 +2664,7 @@ static void AttachDomainMetadata(GDALDatasetH hDS,
 static void CopyBandInfo(GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
                          int bCanCopyStatsMetadata, int bCopyScale,
                          int bCopyNoData, bool bCopyRAT,
-                         const GDALTranslateOptions *psOptions)
+                         const GDALTranslateOptions * /*psOptions*/)
 
 {
 
@@ -2809,23 +2715,19 @@ static void CopyBandInfo(GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
 
     if (bCopyNoData)
     {
-        if (poSrcBand->GetRasterDataType() != GDT_Int64 &&
-            poSrcBand->GetRasterDataType() != GDT_UInt64 &&
-            poDstBand->GetRasterDataType() != GDT_Int64 &&
-            poDstBand->GetRasterDataType() != GDT_UInt64)
+        int bSuccess = FALSE;
+        CPL_IGNORE_RET_VAL(poSrcBand->GetNoDataValue(&bSuccess));
+        if (bSuccess)
         {
-            int bSuccess = FALSE;
-            double dfNoData = poSrcBand->GetNoDataValue(&bSuccess);
-            if (bSuccess)
+            bool bCannotBeExactlyRepresented = false;
+            if (!GDALCopyNoDataValue(poDstBand, poSrcBand,
+                                     &bCannotBeExactlyRepresented) &&
+                bCannotBeExactlyRepresented)
             {
-                const double dfVal =
-                    AdjustNoDataValue(dfNoData, poDstBand, psOptions);
-                poDstBand->SetNoDataValue(dfVal);
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Source nodata value was not copied to output band, "
+                         "as it cannot be represented on its data type.");
             }
-        }
-        else
-        {
-            GDALCopyNoDataValue(poDstBand, poSrcBand);
         }
     }
 
@@ -3516,7 +3418,7 @@ GDALTranslateOptionsNew(char **papszArgv,
         {
             ++i;
             const std::string s = papszArgv[i];
-            if (EQUAL(s.c_str(), "none"))
+            if (EQUAL(s.c_str(), "none") || EQUAL(s.c_str(), "null"))
             {
                 psOptions->bUnsetNoData = true;
             }

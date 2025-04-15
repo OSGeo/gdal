@@ -279,7 +279,9 @@ def test_gdal_translate_lib_nodata_uint64():
 @pytest.mark.parametrize("nodata", (1 << 65, 3.2))
 def test_gdal_translate_lib_nodata_uint64_invalid(nodata):
 
-    with gdaltest.error_raised(gdal.CE_Warning, "Cannot set nodata value"):
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "Nodata value was not set to output band"
+    ):
         ds = gdal.Translate(
             "",
             "../gcore/data/byte.tif",
@@ -310,7 +312,9 @@ def test_gdal_translate_lib_nodata_int64():
 @pytest.mark.parametrize("nodata", (1 << 65, 3.2))
 def test_gdal_translate_lib_nodata_int64_invalid(nodata):
 
-    with gdaltest.error_raised(gdal.CE_Warning, "Cannot set nodata value"):
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "Nodata value was not set to output band"
+    ):
         ds = gdal.Translate(
             "",
             "../gcore/data/byte.tif",

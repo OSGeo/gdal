@@ -2491,6 +2491,115 @@ uint64_t CPL_STDCALL GDALGetRasterNoDataValueAsUInt64(GDALRasterBandH hBand,
 }
 
 /************************************************************************/
+/*                        SetNoDataValueAsString()                      */
+/************************************************************************/
+
+/**
+ * \brief Set the no data value for this band.
+ *
+ * Depending on drivers, changing the no data value may or may not have an
+ * effect on the pixel values of a raster that has just been created. It is
+ * thus advised to explicitly called Fill() if the intent is to initialize
+ * the raster to the nodata value.
+ * In any case, changing an existing no data value, when one already exists and
+ * the dataset exists or has been initialized, has no effect on the pixel whose
+ * value matched the previous nodata value.
+ *
+ * To clear the nodata value, use DeleteNoDataValue().
+ *
+ * @param pszNoData the value to set.
+ * @param[out] pbCannotBeExactlyRepresented Pointer to a boolean, or nullptr.
+ *             If the value cannot be exactly represented on the output data
+ *             type, *pbCannotBeExactlyRepresented will be set to true.
+ *
+ * @return CE_None on success, or CE_Failure on failure.  If unsupported
+ * by the driver, CE_Failure is returned but no error message will have
+ * been emitted.
+ *
+ * @since 3.11
+ */
+
+CPLErr
+GDALRasterBand::SetNoDataValueAsString(const char *pszNoData,
+                                       bool *pbCannotBeExactlyRepresented)
+{
+    if (pbCannotBeExactlyRepresented)
+        *pbCannotBeExactlyRepresented = false;
+    if (eDataType == GDT_Int64)
+    {
+        if (strchr(pszNoData, '.') ||
+            CPLGetValueType(pszNoData) == CPL_VALUE_STRING)
+        {
+            char *endptr = nullptr;
+            const double dfVal = CPLStrtod(pszNoData, &endptr);
+            if (endptr == pszNoData + strlen(pszNoData) &&
+                GDALIsValueExactAs<int64_t>(dfVal))
+            {
+                return SetNoDataValueAsInt64(static_cast<int64_t>(dfVal));
+            }
+        }
+        else
+        {
+            try
+            {
+                const auto val = std::stoll(pszNoData);
+                return SetNoDataValueAsInt64(static_cast<int64_t>(val));
+            }
+            catch (const std::exception &)
+            {
+            }
+        }
+    }
+    else if (eDataType == GDT_UInt64)
+    {
+        if (strchr(pszNoData, '.') ||
+            CPLGetValueType(pszNoData) == CPL_VALUE_STRING)
+        {
+            char *endptr = nullptr;
+            const double dfVal = CPLStrtod(pszNoData, &endptr);
+            if (endptr == pszNoData + strlen(pszNoData) &&
+                GDALIsValueExactAs<uint64_t>(dfVal))
+            {
+                return SetNoDataValueAsUInt64(static_cast<uint64_t>(dfVal));
+            }
+        }
+        else
+        {
+            try
+            {
+                const auto val = std::stoull(pszNoData);
+                return SetNoDataValueAsUInt64(static_cast<uint64_t>(val));
+            }
+            catch (const std::exception &)
+            {
+            }
+        }
+    }
+    else if (eDataType == GDT_Float32)
+    {
+        char *endptr = nullptr;
+        const float fVal = CPLStrtof(pszNoData, &endptr);
+        if (endptr == pszNoData + strlen(pszNoData))
+        {
+            return SetNoDataValue(fVal);
+        }
+    }
+    else
+    {
+        char *endptr = nullptr;
+        const double dfVal = CPLStrtod(pszNoData, &endptr);
+        if (endptr == pszNoData + strlen(pszNoData) &&
+            GDALIsValueExactAs(dfVal, eDataType))
+        {
+            return SetNoDataValue(dfVal);
+        }
+    }
+    if (pbCannotBeExactlyRepresented)
+        *pbCannotBeExactlyRepresented = true;
+    return CE_Failure;
+}
+
+/************************************************************************/
 /*                           SetNoDataValue()                           */
 /************************************************************************/
 
@@ -2517,7 +2626,7 @@ uint64_t CPL_STDCALL GDALGetRasterNoDataValueAsUInt64(GDALRasterBandH hBand,
  * @param dfNoData the value to set.
  *
  * @return CE_None on success, or CE_Failure on failure.  If unsupported
- * by the driver, CE_Failure is returned by no error message will have
+ * by the driver, CE_Failure is returned but no error message will have
  * been emitted.
  */
 
@@ -2590,7 +2699,7 @@ CPLErr CPL_STDCALL GDALSetRasterNoDataValue(GDALRasterBandH hBand,
  * @param nNoDataValue the value to set.
  *
  * @return CE_None on success, or CE_Failure on failure.  If unsupported
- * by the driver, CE_Failure is returned by no error message will have
+ * by the driver, CE_Failure is returned but no error message will have
  * been emitted.
  *
  * @since GDAL 3.5
@@ -2662,7 +2771,7 @@ CPLErr CPL_STDCALL GDALSetRasterNoDataValueAsInt64(GDALRasterBandH hBand,
  * @param nNoDataValue the value to set.
  *
  * @return CE_None on success, or CE_Failure on failure.  If unsupported
- * by the driver, CE_Failure is returned by no error message will have
+ * by the driver, CE_Failure is returned but no error message will have
  * been emitted.
  *
  * @since GDAL 3.5
@@ -2720,7 +2829,7 @@ CPLErr CPL_STDCALL GDALSetRasterNoDataValueAsUInt64(GDALRasterBandH hBand,
  * This method is the same as the C function GDALDeleteRasterNoDataValue().
  *
  * @return CE_None on success, or CE_Failure on failure.  If unsupported
- * by the driver, CE_Failure is returned by no error message will have
+ * by the driver, CE_Failure is returned but no error message will have
  * been emitted.
  *
  * @since GDAL 2.1

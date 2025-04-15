@@ -32,7 +32,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   Interlis 2 -vector- (rov): Interlis 2 (*.xtf, *.xml, *.ili)
   OGR_GMT -vector- (rw+v): GMT ASCII Vectors (.gmt) (*.gmt)
   GPKG -raster,vector- (rw+uvs): GeoPackage (*.gpkg, *.gpkg.zip)
-  SQLite -raster,vector- (rw+uv): SQLite / Spatialite / RasterLite2 (*.sqlite, *.db)
+  SQLite -raster,vector- (rw+uvs): SQLite / Spatialite / RasterLite2 (*.sqlite, *.db)
   ODBC -vector- (ro): Open Database Connectivity (ODBC) (*.mdb, *.accdb)
   WAsP -vector- (rw+v): WAsP .map format (*.map)
   PGeo -vector- (ro): ESRI Personal GeoDatabase (*.mdb)

@@ -80,6 +80,22 @@ def test_gdalalg_raster_convert_append(tmp_vsimem):
         assert len(ds.GetSubDatasets()) == 2
 
 
+@pytest.mark.require_driver("HFA")
+def test_gdalalg_raster_convert_failed_append(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "test.img"
+
+    convert = get_convert_alg()
+    assert convert.ParseRunAndFinalize(["data/utmsmall.tif", out_filename])
+
+    convert = get_convert_alg()
+    with pytest.raises(
+        Exception,
+        match="Subdataset creation not supported for driver HFA",
+    ):
+        convert.ParseRunAndFinalize(["data/utmsmall.tif", out_filename, "--append"])
+
+
 def test_gdalalg_raster_convert_error_output_already_set():
     convert = get_convert_alg()
     convert["output"] = gdal.GetDriverByName("MEM").Create("", 1, 1)

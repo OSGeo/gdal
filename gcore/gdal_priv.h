@@ -1833,6 +1833,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr SetNoDataValue(double dfNoData);
     virtual CPLErr SetNoDataValueAsInt64(int64_t nNoData);
     virtual CPLErr SetNoDataValueAsUInt64(uint64_t nNoData);
+    CPLErr SetNoDataValueAsString(const char *pszNoData,
+                                  bool *pbCannotBeExactlyRepresented = nullptr);
     virtual CPLErr DeleteNoDataValue();
     virtual CPLErr SetColorTable(GDALColorTable *poCT);
     virtual CPLErr SetColorInterpretation(GDALColorInterp eColorInterp);
@@ -4687,8 +4689,9 @@ bool CPL_DLL GDALBufferHasOnlyNoData(const void *pBuffer, double dfNoDataValue,
                                      int nBitsPerSample,
                                      GDALBufferSampleFormat nSampleFormat);
 
-void CPL_DLL GDALCopyNoDataValue(GDALRasterBand *poDstBand,
-                                 GDALRasterBand *poSrcBand);
+bool CPL_DLL GDALCopyNoDataValue(GDALRasterBand *poDstBand,
+                                 GDALRasterBand *poSrcBand,
+                                 bool *pbCannotBeExactlyRepresented = nullptr);
 
 double CPL_DLL GDALGetNoDataValueCastToDouble(int64_t nVal);
 double CPL_DLL GDALGetNoDataValueCastToDouble(uint64_t nVal);

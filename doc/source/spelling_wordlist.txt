@@ -2367,6 +2367,7 @@ passthrough
 pathname
 PAux
 pauxdataset
+pbCannotBeExactlyRepresented
 pbf
 pbHasNoData
 pbHasNoDataValue

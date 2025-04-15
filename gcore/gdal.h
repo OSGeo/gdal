@@ -87,6 +87,7 @@ GDALDataType CPL_DLL CPL_STDCALL GDALFindDataTypeForValue(double dValue,
 double CPL_DLL GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
                                          int *pbClamped, int *pbRounded);
 bool CPL_DLL GDALIsValueExactAs(double dfValue, GDALDataType eDT);
+bool CPL_DLL GDALIsValueInRangeOf(double dfValue, GDALDataType eDT);
 GDALDataType CPL_DLL CPL_STDCALL GDALGetNonComplexDataType(GDALDataType);
 int CPL_DLL CPL_STDCALL GDALDataTypeIsConversionLossy(GDALDataType eTypeFrom,
                                                       GDALDataType eTypeTo);
@@ -513,6 +514,13 @@ typedef enum
  * for vector drivers.
  */
 #define GDAL_DMD_SUBDATASETS "DMD_SUBDATASETS"
+
+/** Capability set by a driver that can create subdatasets with the
+ * APPEND_SUBDATASET=YES creation option.
+ *
+ * @since 3.11
+ */
+#define GDAL_DCAP_CREATE_SUBDATASETS "DCAP_CREATE_SUBDATASETS"
 
 /** Capability set by a vector driver that supports field width and precision.
  *
