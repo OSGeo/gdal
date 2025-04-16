@@ -2425,6 +2425,10 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddUpdateArg(bool *pValue, const char *helpMessage = nullptr);
 
+    /** Add \--append argument. */
+    GDALInConstructionAlgorithmArg &
+    AddAppendUpdateArg(bool *pValue, const char *helpMessage = nullptr);
+
     /** Add (non-CLI) output-string argument. */
     GDALInConstructionAlgorithmArg &
     AddOutputStringArg(std::string *pValue, const char *helpMessage = nullptr);

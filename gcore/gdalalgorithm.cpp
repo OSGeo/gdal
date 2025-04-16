@@ -38,6 +38,8 @@ constexpr const char *GDAL_ARG_NAME_OUTPUT_DATA_TYPE = "output-data-type";
 
 constexpr const char *GDAL_ARG_NAME_OPEN_OPTION = "open-option";
 
+constexpr const char *GDAL_ARG_NAME_APPEND_UPDATE = "append-update";
+
 //! @cond Doxygen_Suppress
 struct GDALAlgorithmArgHS
 {
@@ -1845,8 +1847,13 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
     bool ret = true;
 
     const auto updateArg = algForOutput->GetArg(GDAL_ARG_NAME_UPDATE);
-    const bool update = (updateArg && updateArg->GetType() == GAAT_BOOLEAN &&
-                         updateArg->Get<bool>());
+    const auto appendUpdateArg =
+        algForOutput->GetArg(GDAL_ARG_NAME_APPEND_UPDATE);
+    const bool update =
+        (updateArg && updateArg->GetType() == GAAT_BOOLEAN &&
+         updateArg->Get<bool>()) ||
+        (appendUpdateArg && appendUpdateArg->GetType() == GAAT_BOOLEAN &&
+         appendUpdateArg->Get<bool>());
     const auto overwriteArg = algForOutput->GetArg(GDAL_ARG_NAME_OVERWRITE);
     const bool overwrite =
         (arg->IsOutput() && overwriteArg &&
@@ -2752,6 +2759,21 @@ GDALAlgorithm::AddUpdateArg(bool *pValue, const char *helpMessage)
                       helpMessage,
                       _("Whether to open existing dataset in update mode")),
                   pValue)
+        .SetDefault(false);
+}
+
+/************************************************************************/
+/*                GDALAlgorithm::AddAppendUpdateArg()                   */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddAppendUpdateArg(bool *pValue, const char *helpMessage)
+{
+    return AddArg("append", 0,
+                  MsgOrDefault(helpMessage,
+                               _("Whether to append to an existing dataset")),
+                  pValue)
+        .AddHiddenAlias(GDAL_ARG_NAME_APPEND_UPDATE)
         .SetDefault(false);
 }
 
