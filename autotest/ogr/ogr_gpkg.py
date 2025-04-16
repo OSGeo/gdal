@@ -11079,3 +11079,37 @@ def test_ogr_gpkg_set_next_by_index(tmp_vsimem):
         lyr.SetNextByIndex(0)
         f = lyr.GetNextFeature()
         assert f["foo"] == "bar"
+
+
+###############################################################################
+# Test 'gdal driver gpkg repack'
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_gdal_driver_gpkg_repack(tmp_path):
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]
+    assert alg.GetName() == "driver"
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["gpkg"]
+    assert alg.GetName() == "gpkg"
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["gpkg"]["repack"]
+    assert alg.GetName() == "repack"
+    alg["dataset"] = "data/poly.shp"
+    with pytest.raises(Exception, match="is not a GeoPackage"):
+        alg.Run()
+
+    ds = gdal.VectorTranslate(tmp_path / "test.gpkg", "data/poly.shp")
+    ds.ExecuteSQL("DELETE FROM poly")
+    ds.Close()
+
+    size_before = os.stat(tmp_path / "test.gpkg").st_size
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["gpkg"]["repack"]
+    assert alg.GetName() == "repack"
+    alg["dataset"] = tmp_path / "test.gpkg"
+    assert alg.Run()
+
+    size_after = os.stat(tmp_path / "test.gpkg").st_size
+    assert size_after < size_before
