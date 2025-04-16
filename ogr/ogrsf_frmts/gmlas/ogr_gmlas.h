@@ -452,8 +452,6 @@ class GMLASConfiguration
     bool Load(const char *pszFilename);
     void Finalize();
 
-    static CPLString GetBaseCacheDirectory();
-
     static std::string GetDefaultConfFile(bool &bUnlinkAfterUse);
 };
 

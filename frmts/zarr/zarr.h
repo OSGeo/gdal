@@ -32,6 +32,8 @@
 const CPLCompressor *ZarrGetShuffleCompressor();
 const CPLCompressor *ZarrGetShuffleDecompressor();
 const CPLCompressor *ZarrGetQuantizeDecompressor();
+const CPLCompressor *ZarrGetTIFFDecompressor();
+const CPLCompressor *ZarrGetFixedScaleOffsetDecompressor();
 
 /************************************************************************/
 /*                            ZarrDataset                               */
@@ -67,6 +69,11 @@ class ZarrDataset final : public GDALDataset
     static GDALDataset *Create(const char *pszName, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
                                char **papszOptions);
+
+    static GDALDataset *CreateCopy(const char *, GDALDataset *, int,
+                                   char **papszOptions,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData);
 
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override;

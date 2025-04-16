@@ -5736,3 +5736,66 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
 
     return dfReplacementVal;
 }
+
+/************************************************************************/
+/*                        GDALGetCacheDirectory()                       */
+/************************************************************************/
+
+/** Return the root path of the GDAL cache.
+ *
+ * If the GDAL_CACHE_DIRECTORY configuration option is set, its value will
+ * be returned.
+ * Otherwise if the XDG_CACHE_HOME environment variable is set,
+ * ${XDG_CACHE_HOME}/.gdal will be returned.
+ * Otherwise ${HOME}/.gdal on Unix or$ ${USERPROFILE}/.gdal on Windows will
+ * be returned.
+ * Otherwise ${CPL_TMPDIR|TMPDIR|TEMP}/.gdal_${USERNAME|USER} will be returned.
+ * Otherwise empty string will be returned.
+ *
+ * @since GDAL 3.11
+ */
+std::string GDALGetCacheDirectory()
+{
+    if (const char *pszGDAL_CACHE_DIRECTORY =
+            CPLGetConfigOption("GDAL_CACHE_DIRECTORY", nullptr))
+    {
+        return pszGDAL_CACHE_DIRECTORY;
+    }
+
+    if (const char *pszXDG_CACHE_HOME =
+            CPLGetConfigOption("XDG_CACHE_HOME", nullptr))
+    {
+        return CPLFormFilenameSafe(pszXDG_CACHE_HOME, "gdal", nullptr);
+    }
+
+#ifdef _WIN32
+    const char *pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
+#else
+    const char *pszHome = CPLGetConfigOption("HOME", nullptr);
+#endif
+    if (pszHome != nullptr)
+    {
+        return CPLFormFilenameSafe(pszHome, ".gdal", nullptr);
+    }
+    else
+    {
+        const char *pszDir = CPLGetConfigOption("CPL_TMPDIR", nullptr);
+
+        if (pszDir == nullptr)
+            pszDir = CPLGetConfigOption("TMPDIR", nullptr);
+
+        if (pszDir == nullptr)
+            pszDir = CPLGetConfigOption("TEMP", nullptr);
+
+        const char *pszUsername = CPLGetConfigOption("USERNAME", nullptr);
+        if (pszUsername == nullptr)
+            pszUsername = CPLGetConfigOption("USER", nullptr);
+
+        if (pszDir != nullptr && pszUsername != nullptr)
+        {
+            return CPLFormFilenameSafe(
+                pszDir, CPLSPrintf(".gdal_%s", pszUsername), nullptr);
+        }
+    }
+    return std::string();
+}

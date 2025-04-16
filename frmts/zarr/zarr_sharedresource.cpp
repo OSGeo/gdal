@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "zarr.h"
+#include "vsikerchunk.h"
 
 #include "cpl_json.h"
 
@@ -52,6 +53,11 @@ ZarrSharedResource::Create(const std::string &osRootDirectoryName,
 
 ZarrSharedResource::~ZarrSharedResource()
 {
+    // We try to clean caches at dataset closing, especially for Parquet
+    // references, since closing Parquet datasets when the virtual file
+    // systems are destroyed can be too late and cause crashes.
+    VSIKerchunkFileSystemsCleanCache();
+
     if (m_bZMetadataModified)
     {
         CPLJSONDocument oDoc;
@@ -75,6 +81,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
         const std::string osZarrayFilename(CPLFormFilenameSafe(
             m_osRootDirectoryName.c_str(), ".zarray", nullptr));
         VSIStatBufL sStat;
+        const auto nErrorCount = CPLGetErrorCounter();
         if (VSIStatL(osZarrayFilename.c_str(), &sStat) == 0)
         {
             CPLJSONDocument oDoc;
@@ -105,6 +112,12 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
                 return nullptr;
 
             return poRG;
+        }
+        else if (CPLGetErrorCounter() > nErrorCount &&
+                 strstr(CPLGetLastErrorMsg(),
+                        "Generation of Kerchunk Parquet cache"))
+        {
+            return nullptr;
         }
 
         const std::string osZmetadataFilename(CPLFormFilenameSafe(

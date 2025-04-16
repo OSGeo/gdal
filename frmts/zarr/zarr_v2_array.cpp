@@ -471,6 +471,7 @@ bool ZarrV2Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
     constexpr uint64_t MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING = 1000;
     const char *const apszOpenOptions[] = {"IGNORE_FILENAME_RESTRICTIONS=YES",
                                            nullptr};
+    const auto nErrorBefore = CPLGetErrorCounter();
     if ((m_osDimSeparator == "/" && !m_anBlockSize.empty() &&
          m_anBlockSize.back() > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING) ||
         (m_osDimSeparator != "/" &&
@@ -487,11 +488,18 @@ bool ZarrV2Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
     }
     if (fp == nullptr)
     {
-        // Missing files are OK and indicate nodata_value
-        CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
-                     osFilename.c_str());
-        bMissingTileOut = true;
-        return true;
+        if (nErrorBefore != CPLGetErrorCounter())
+        {
+            return false;
+        }
+        else
+        {
+            // Missing files are OK and indicate nodata_value
+            CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
+                         osFilename.c_str());
+            bMissingTileOut = true;
+            return true;
+        }
     }
 
     bMissingTileOut = false;
@@ -566,6 +574,8 @@ bool ZarrV2Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
             EQUAL(osFilterId.c_str(), "shuffle") ? ZarrGetShuffleDecompressor()
             : EQUAL(osFilterId.c_str(), "quantize")
                 ? ZarrGetQuantizeDecompressor()
+            : EQUAL(osFilterId.c_str(), "fixedscaleoffset")
+                ? ZarrGetFixedScaleOffsetDecompressor()
                 : CPLGetDecompressor(osFilterId.c_str());
         CPLAssert(psFilterDecompressor);
 
@@ -849,10 +859,10 @@ bool ZarrV2Array::FlushDirtyTile() const
     for (const auto &oFilter : m_oFiltersArray)
     {
         const auto osFilterId = oFilter["id"].ToString();
-        if (osFilterId == "quantize")
+        if (osFilterId == "quantize" || osFilterId == "fixedscaleoffset")
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "quantize filter not supported for writing");
+                     "%s filter not supported for writing", osFilterId.c_str());
             return false;
         }
         const auto psFilterCompressor =
@@ -896,6 +906,16 @@ bool ZarrV2Array::FlushDirtyTile() const
                 return false;
             }
         }
+    }
+
+    if (m_psCompressor == nullptr && m_psDecompressor != nullptr)
+    {
+        // Case of imagecodecs_tiff
+
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Only decompression supported for '%s' compression method",
+                 m_osDecompressorId.c_str());
+        return false;
     }
 
     VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "wb");
@@ -1294,7 +1314,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
     if (osFormat != "2")
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Invalid value for zarr_format");
+                 "Invalid value for zarr_format: %s", osFormat.c_str());
         return nullptr;
     }
 
@@ -1841,13 +1861,21 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
             CPLError(CE_Failure, CPLE_AppDefined, "Missing compressor id");
             return nullptr;
         }
-        psCompressor = CPLGetCompressor(osDecompressorId.c_str());
-        psDecompressor = CPLGetDecompressor(osDecompressorId.c_str());
-        if (psCompressor == nullptr || psDecompressor == nullptr)
+        if (osDecompressorId == "imagecodecs_tiff")
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Decompressor %s not handled",
-                     osDecompressorId.c_str());
-            return nullptr;
+            psDecompressor = ZarrGetTIFFDecompressor();
+        }
+        else
+        {
+            psCompressor = CPLGetCompressor(osDecompressorId.c_str());
+            psDecompressor = CPLGetDecompressor(osDecompressorId.c_str());
+            if (psCompressor == nullptr || psDecompressor == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Decompressor %s not handled",
+                         osDecompressorId.c_str());
+                return nullptr;
+            }
         }
     }
     else
@@ -1878,7 +1906,8 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                 return nullptr;
             }
             if (!EQUAL(osFilterId.c_str(), "shuffle") &&
-                !EQUAL(osFilterId.c_str(), "quantize"))
+                !EQUAL(osFilterId.c_str(), "quantize") &&
+                !EQUAL(osFilterId.c_str(), "fixedscaleoffset"))
             {
                 const auto psFilterCompressor =
                     CPLGetCompressor(osFilterId.c_str());

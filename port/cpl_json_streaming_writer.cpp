@@ -33,16 +33,31 @@ CPLJSonStreamingWriter::~CPLJSonStreamingWriter()
     CPLAssert(m_states.empty());
 }
 
-void CPLJSonStreamingWriter::Print(const std::string &text)
+void CPLJSonStreamingWriter::clear()
+{
+    m_nLevel = 0;
+    m_osStr.clear();
+    m_osIndentAcc.clear();
+    m_states.clear();
+    m_bWaitForValue = false;
+}
+
+void CPLJSonStreamingWriter::Serialize(const std::string_view &str)
 {
     if (m_pfnSerializationFunc)
     {
-        m_pfnSerializationFunc(text.c_str(), m_pUserData);
+        m_osTmpForSerialize = str;
+        m_pfnSerializationFunc(m_osTmpForSerialize.c_str(), m_pUserData);
     }
     else
     {
-        m_osStr += text;
+        m_osStr.append(str);
     }
+}
+
+void CPLJSonStreamingWriter::Serialize(const char *pszStr, size_t nLength)
+{
+    Serialize(std::string_view(pszStr, nLength));
 }
 
 void CPLJSonStreamingWriter::SetIndentationSize(int nSpaces)
@@ -67,45 +82,46 @@ void CPLJSonStreamingWriter::DecIndent()
         m_osIndentAcc.resize(m_osIndentAcc.size() - m_osIndent.size());
 }
 
-std::string CPLJSonStreamingWriter::FormatString(const std::string &str)
+const std::string &
+CPLJSonStreamingWriter::FormatString(const std::string_view &str)
 {
-    std::string ret;
-    ret += '"';
+    m_osTmpForFormatString.clear();
+    m_osTmpForFormatString += '"';
     for (char ch : str)
     {
         switch (ch)
         {
             case '"':
-                ret += "\\\"";
+                m_osTmpForFormatString += "\\\"";
                 break;
             case '\\':
-                ret += "\\\\";
+                m_osTmpForFormatString += "\\\\";
                 break;
             case '\b':
-                ret += "\\b";
+                m_osTmpForFormatString += "\\b";
                 break;
             case '\f':
-                ret += "\\f";
+                m_osTmpForFormatString += "\\f";
                 break;
             case '\n':
-                ret += "\\n";
+                m_osTmpForFormatString += "\\n";
                 break;
             case '\r':
-                ret += "\\r";
+                m_osTmpForFormatString += "\\r";
                 break;
             case '\t':
-                ret += "\\t";
+                m_osTmpForFormatString += "\\t";
                 break;
             default:
                 if (static_cast<unsigned char>(ch) < ' ')
-                    ret += CPLSPrintf("\\u%04X", ch);
+                    m_osTmpForFormatString += CPLSPrintf("\\u%04X", ch);
                 else
-                    ret += ch;
+                    m_osTmpForFormatString += ch;
                 break;
         }
     }
-    ret += '"';
-    return ret;
+    m_osTmpForFormatString += '"';
+    return m_osTmpForFormatString;
 }
 
 void CPLJSonStreamingWriter::EmitCommaIfNeeded()
@@ -118,14 +134,14 @@ void CPLJSonStreamingWriter::EmitCommaIfNeeded()
     {
         if (!m_states.back().bFirstChild)
         {
-            Print(",");
+            Serialize(",", 1);
             if (m_bPretty && !m_bNewLineEnabled)
-                Print(" ");
+                Serialize(" ", 1);
         }
         if (m_bPretty && m_bNewLineEnabled)
         {
-            Print("\n");
-            Print(m_osIndentAcc);
+            Serialize("\n", 1);
+            Serialize(m_osIndentAcc.c_str(), m_osIndentAcc.size());
         }
         m_states.back().bFirstChild = false;
     }
@@ -134,7 +150,7 @@ void CPLJSonStreamingWriter::EmitCommaIfNeeded()
 void CPLJSonStreamingWriter::StartObj()
 {
     EmitCommaIfNeeded();
-    Print("{");
+    Serialize("{", 1);
     IncIndent();
     m_states.emplace_back(State(true));
 }
@@ -149,18 +165,18 @@ void CPLJSonStreamingWriter::EndObj()
     {
         if (m_bPretty && m_bNewLineEnabled)
         {
-            Print("\n");
-            Print(m_osIndentAcc);
+            Serialize("\n", 1);
+            Serialize(m_osIndentAcc.c_str(), m_osIndentAcc.size());
         }
     }
     m_states.pop_back();
-    Print("}");
+    Serialize("}", 1);
 }
 
 void CPLJSonStreamingWriter::StartArray()
 {
     EmitCommaIfNeeded();
-    Print("[");
+    Serialize("[", 1);
     IncIndent();
     m_states.emplace_back(State(false));
 }
@@ -174,53 +190,68 @@ void CPLJSonStreamingWriter::EndArray()
     {
         if (m_bPretty && m_bNewLineEnabled)
         {
-            Print("\n");
-            Print(m_osIndentAcc);
+            Serialize("\n", 1);
+            Serialize(m_osIndentAcc.c_str(), m_osIndentAcc.size());
         }
     }
     m_states.pop_back();
-    Print("]");
+    Serialize("]", 1);
 }
 
-void CPLJSonStreamingWriter::AddObjKey(const std::string &key)
+void CPLJSonStreamingWriter::AddObjKey(const std::string_view &key)
 {
     CPLAssert(!m_states.empty());
     CPLAssert(m_states.back().bIsObj);
     CPLAssert(!m_bWaitForValue);
     EmitCommaIfNeeded();
-    Print(FormatString(key));
-    Print(m_bPretty ? ": " : ":");
+    Serialize(FormatString(key));
+    if (m_bPretty)
+        Serialize(": ", 2);
+    else
+        Serialize(":", 1);
     m_bWaitForValue = true;
 }
 
 void CPLJSonStreamingWriter::Add(bool bVal)
 {
     EmitCommaIfNeeded();
-    Print(bVal ? "true" : "false");
-}
-
-void CPLJSonStreamingWriter::Add(const std::string &str)
-{
-    EmitCommaIfNeeded();
-    Print(FormatString(str));
+    Serialize(bVal ? "true" : "false", bVal ? 4 : 5);
 }
 
 void CPLJSonStreamingWriter::Add(const char *pszStr)
 {
     EmitCommaIfNeeded();
-    Print(FormatString(pszStr));
+    Serialize(FormatString(std::string_view(pszStr)));
+}
+
+void CPLJSonStreamingWriter::Add(const std::string_view &str)
+{
+    EmitCommaIfNeeded();
+    Serialize(FormatString(str));
+}
+
+void CPLJSonStreamingWriter::Add(const std::string &str)
+{
+    EmitCommaIfNeeded();
+    Serialize(FormatString(str));
+}
+
+void CPLJSonStreamingWriter::AddSerializedValue(const std::string_view &str)
+{
+    EmitCommaIfNeeded();
+    Serialize(str);
 }
 
 void CPLJSonStreamingWriter::Add(std::int64_t nVal)
 {
     EmitCommaIfNeeded();
-    Print(CPLSPrintf(CPL_FRMT_GIB, static_cast<GIntBig>(nVal)));
+    Serialize(CPLSPrintf(CPL_FRMT_GIB, static_cast<GIntBig>(nVal)));
 }
 
 void CPLJSonStreamingWriter::Add(std::uint64_t nVal)
 {
     EmitCommaIfNeeded();
-    Print(CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nVal)));
+    Serialize(CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nVal)));
 }
 
 void CPLJSonStreamingWriter::Add(GFloat16 hfVal, int nPrecision)
@@ -228,17 +259,18 @@ void CPLJSonStreamingWriter::Add(GFloat16 hfVal, int nPrecision)
     EmitCommaIfNeeded();
     if (CPLIsNan(hfVal))
     {
-        Print("\"NaN\"");
+        Serialize("\"NaN\"", 5);
     }
     else if (CPLIsInf(hfVal))
     {
-        Print(hfVal > 0 ? "\"Infinity\"" : "\"-Infinity\"");
+        Serialize(hfVal > 0 ? "\"Infinity\"" : "\"-Infinity\"",
+                  hfVal > 0 ? 10 : 11);
     }
     else
     {
         char szFormatting[10];
         snprintf(szFormatting, sizeof(szFormatting), "%%.%dg", nPrecision);
-        Print(CPLSPrintf(szFormatting, float(hfVal)));
+        Serialize(CPLSPrintf(szFormatting, float(hfVal)));
     }
 }
 
@@ -247,17 +279,18 @@ void CPLJSonStreamingWriter::Add(float fVal, int nPrecision)
     EmitCommaIfNeeded();
     if (std::isnan(fVal))
     {
-        Print("\"NaN\"");
+        Serialize("\"NaN\"", 5);
     }
     else if (std::isinf(fVal))
     {
-        Print(fVal > 0 ? "\"Infinity\"" : "\"-Infinity\"");
+        Serialize(fVal > 0 ? "\"Infinity\"" : "\"-Infinity\"",
+                  fVal > 0 ? 10 : 11);
     }
     else
     {
         char szFormatting[10];
         snprintf(szFormatting, sizeof(szFormatting), "%%.%dg", nPrecision);
-        Print(CPLSPrintf(szFormatting, fVal));
+        Serialize(CPLSPrintf(szFormatting, fVal));
     }
 }
 
@@ -266,24 +299,24 @@ void CPLJSonStreamingWriter::Add(double dfVal, int nPrecision)
     EmitCommaIfNeeded();
     if (std::isnan(dfVal))
     {
-        Print("\"NaN\"");
+        Serialize("\"NaN\"", 5);
     }
     else if (std::isinf(dfVal))
     {
-        Print(dfVal > 0 ? "\"Infinity\"" : "\"-Infinity\"");
+        Serialize(dfVal > 0 ? "\"Infinity\"" : "\"-Infinity\"");
     }
     else
     {
         char szFormatting[10];
         snprintf(szFormatting, sizeof(szFormatting), "%%.%dg", nPrecision);
-        Print(CPLSPrintf(szFormatting, dfVal));
+        Serialize(CPLSPrintf(szFormatting, dfVal));
     }
 }
 
 void CPLJSonStreamingWriter::AddNull()
 {
     EmitCommaIfNeeded();
-    Print("null");
+    Serialize("null", 4);
 }
 
 /*! @endcond */

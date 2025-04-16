@@ -12,6 +12,7 @@
 
 #include "zarr.h"
 #include "zarrdrivercore.h"
+#include "vsikerchunk.h"
 
 #include "cpl_minixml.h"
 
@@ -44,6 +45,28 @@ GDALDataset *ZarrDataset::OpenMultidim(const char *pszFilename,
     CPLString osFilename(pszFilename);
     if (osFilename.back() == '/')
         osFilename.pop_back();
+
+    // Syntaxic sugar to detect Parquet reference files automatically
+    if (!STARTS_WITH(pszFilename, "/vsikerchunk"))
+    {
+        const std::string osZmetadataFilename(
+            CPLFormFilenameSafe(osFilename.c_str(), ".zmetadata", nullptr));
+        CPLJSONDocument oDoc;
+        bool bOK;
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            bOK = oDoc.Load(osZmetadataFilename);
+        }
+        if (bOK && oDoc.GetRoot().GetObj("record_size").IsValid())
+        {
+            const std::string osKerchunkParquetRefFilename =
+                CPLSPrintf("%s{%s}", PARQUET_REF_FS_PREFIX, osFilename.c_str());
+            CPLDebugOnly("ZARR", "Opening %s",
+                         osKerchunkParquetRefFilename.c_str());
+            return OpenMultidim(osKerchunkParquetRefFilename.c_str(),
+                                bUpdateMode, papszOpenOptionsIn);
+        }
+    }
 
     auto poSharedResource = ZarrSharedResource::Create(osFilename, bUpdateMode);
     poSharedResource->SetOpenOptions(papszOpenOptionsIn);
@@ -230,6 +253,53 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
+    // Used by gdal_translate kerchunk_ref.json kerchunk_parq.parq -of ZARR -co CONVERT_TO_KERCHUNK_PARQUET_REFERENCE=YES
+    if (STARTS_WITH(poOpenInfo->pszFilename, "ZARR_DUMMY:"))
+    {
+        class ZarrDummyDataset final : public GDALDataset
+        {
+          public:
+            ZarrDummyDataset()
+            {
+                nRasterXSize = 0;
+                nRasterYSize = 0;
+            }
+        };
+
+        auto poDS = std::make_unique<ZarrDummyDataset>();
+        poDS->SetDescription(poOpenInfo->pszFilename + strlen("ZARR_DUMMY:"));
+        return poDS.release();
+    }
+
+    const bool bKerchunkCached = CPLFetchBool(poOpenInfo->papszOpenOptions,
+                                              "CACHE_KERCHUNK_JSON", false);
+
+    if (ZARRIsLikelyKerchunkJSONRef(poOpenInfo))
+    {
+        GDALOpenInfo oOpenInfo(std::string("ZARR:\"")
+                                   .append(bKerchunkCached
+                                               ? JSON_REF_CACHED_FS_PREFIX
+                                               : JSON_REF_FS_PREFIX)
+                                   .append("{")
+                                   .append(poOpenInfo->pszFilename)
+                                   .append("}\"")
+                                   .c_str(),
+                               GA_ReadOnly);
+        oOpenInfo.nOpenFlags = poOpenInfo->nOpenFlags;
+        oOpenInfo.papszOpenOptions = poOpenInfo->papszOpenOptions;
+        return Open(&oOpenInfo);
+    }
+    else if (STARTS_WITH(poOpenInfo->pszFilename, JSON_REF_FS_PREFIX) ||
+             STARTS_WITH(poOpenInfo->pszFilename, JSON_REF_CACHED_FS_PREFIX))
+    {
+        GDALOpenInfo oOpenInfo(
+            std::string("ZARR:").append(poOpenInfo->pszFilename).c_str(),
+            GA_ReadOnly);
+        oOpenInfo.nOpenFlags = poOpenInfo->nOpenFlags;
+        oOpenInfo.papszOpenOptions = poOpenInfo->papszOpenOptions;
+        return Open(&oOpenInfo);
+    }
+
     CPLString osFilename(poOpenInfo->pszFilename);
     CPLString osArrayOfInterest;
     std::vector<uint64_t> anExtraDimIndices;
@@ -240,6 +310,24 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
         if (aosTokens.size() < 2)
             return nullptr;
         osFilename = aosTokens[1];
+
+        if (!cpl::starts_with(osFilename, JSON_REF_FS_PREFIX) &&
+            !cpl::starts_with(osFilename, JSON_REF_CACHED_FS_PREFIX) &&
+            CPLGetExtensionSafe(osFilename) == "json")
+        {
+            VSIStatBufL sStat;
+            if (VSIStatL(osFilename.c_str(), &sStat) == 0 &&
+                !VSI_ISDIR(sStat.st_mode))
+            {
+                osFilename =
+                    std::string(bKerchunkCached ? JSON_REF_CACHED_FS_PREFIX
+                                                : JSON_REF_FS_PREFIX)
+                        .append("{")
+                        .append(osFilename)
+                        .append("}");
+            }
+        }
+
         std::string osErrorMsg;
         if (osFilename == "http" || osFilename == "https")
         {
@@ -993,6 +1081,16 @@ void ZarrDriver::InitMetadata()
                     CPLCreateXMLNode(psInterleaveNode, CXT_Element, "Value");
                 CPLCreateXMLNode(poValueNode, CXT_Text, "PIXEL");
             }
+
+            auto psConvertToParquet =
+                CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+            CPLAddXMLAttributeAndValue(psConvertToParquet, "name",
+                                       "CONVERT_TO_KERCHUNK_PARQUET_REFERENCE");
+            CPLAddXMLAttributeAndValue(psConvertToParquet, "type", "boolean");
+            CPLAddXMLAttributeAndValue(
+                psConvertToParquet, "description",
+                "Whether to convert a Kerchunk JSON reference store to a "
+                "Kerchunk Parquet reference store. (CreateCopy() only)");
 
             char *pszXML = CPLSerializeXMLTree(oTree.get());
             GDALDriver::SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, pszXML);
@@ -1779,6 +1877,40 @@ CPLErr ZarrRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
+/*                     ZarrDataset::CreateCopy()                        */
+/************************************************************************/
+
+/* static */
+GDALDataset *ZarrDataset::CreateCopy(const char *pszFilename,
+                                     GDALDataset *poSrcDS, int bStrict,
+                                     char **papszOptions,
+                                     GDALProgressFunc pfnProgress,
+                                     void *pProgressData)
+{
+    if (CPLFetchBool(papszOptions, "CONVERT_TO_KERCHUNK_PARQUET_REFERENCE",
+                     false))
+    {
+        if (VSIKerchunkConvertJSONToParquet(poSrcDS->GetDescription(),
+                                            pszFilename, pfnProgress,
+                                            pProgressData))
+        {
+            GDALOpenInfo oOpenInfo(
+                std::string("ZARR:\"").append(pszFilename).append("\"").c_str(),
+                GA_ReadOnly);
+            return Open(&oOpenInfo);
+        }
+    }
+    else
+    {
+        auto poDriver = GetGDALDriverManager()->GetDriverByName(DRIVER_NAME);
+        return poDriver->DefaultCreateCopy(pszFilename, poSrcDS, bStrict,
+                                           papszOptions, pfnProgress,
+                                           pProgressData);
+    }
+    return nullptr;
+}
+
+/************************************************************************/
 /*                          GDALRegister_Zarr()                         */
 /************************************************************************/
 
@@ -1788,12 +1920,15 @@ void GDALRegister_Zarr()
     if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
+    VSIInstallKerchunkFileSystems();
+
     GDALDriver *poDriver = new ZarrDriver();
     ZARRDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = ZarrDataset::Open;
     poDriver->pfnCreateMultiDimensional = ZarrDataset::CreateMultiDimensional;
     poDriver->pfnCreate = ZarrDataset::Create;
+    poDriver->pfnCreateCopy = ZarrDataset::CreateCopy;
     poDriver->pfnDelete = ZarrDatasetDelete;
     poDriver->pfnRename = ZarrDatasetRename;
     poDriver->pfnCopyFiles = ZarrDatasetCopyFiles;

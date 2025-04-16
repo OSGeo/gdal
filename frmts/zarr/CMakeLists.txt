@@ -3,6 +3,7 @@ add_gdal_driver(
   SOURCES zarr_array.cpp
           zarr_v2_array.cpp
           zarr_v3_array.cpp
+          zarr_compressors.cpp
           zarr_filters.cpp
           zarr_attribute.cpp
           zarr_v3_codec.cpp
@@ -12,6 +13,9 @@ add_gdal_driver(
           zarr_v3_group.cpp
           zarr_sharedresource.cpp
           zarrdriver.cpp
+          vsikerchunk.cpp
+          vsikerchunk_json_ref.cpp
+          vsikerchunk_parquet_ref.cpp
   CORE_SOURCES
           zarrdrivercore.cpp
   STRONG_CXX_WFLAGS

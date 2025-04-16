@@ -4716,6 +4716,8 @@ GDALGetColorInterpFromSTACCommonName(const char *pszName);
 const char CPL_DLL *
 GDALGetSTACCommonNameFromColorInterp(GDALColorInterp eInterp);
 
+std::string CPL_DLL GDALGetCacheDirectory();
+
 // Macro used so that Identify and driver metadata methods in drivers built
 // as plugin can be duplicated in libgdal core and in the driver under different
 // names

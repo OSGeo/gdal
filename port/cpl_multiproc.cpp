@@ -636,60 +636,16 @@ void CPLDestroyCond(CPLCond * /* hCond */)
 
 /************************************************************************/
 /*                            CPLLockFile()                             */
-/*                                                                      */
-/*      Lock a file.  This implementation has a terrible race           */
-/*      condition.  If we don't succeed in opening the lock file, we    */
-/*      assume we can create one and own the target file, but other     */
-/*      processes might easily try creating the target file at the      */
-/*      same time, overlapping us.  Death!  Mayhem!  The traditional    */
-/*      solution is to use open() with _O_CREAT|_O_EXCL but this        */
-/*      function and these arguments aren't trivially portable.         */
-/*      Also, this still leaves a race condition on NFS drivers         */
-/*      (apparently).                                                   */
 /************************************************************************/
 
 void *CPLLockFile(const char *pszPath, double dfWaitInSeconds)
 
 {
-    /* -------------------------------------------------------------------- */
-    /*      We use a lock file with a name derived from the file we want    */
-    /*      to lock to represent the file being locked.  Note that for      */
-    /*      the stub implementation the target file does not even need      */
-    /*      to exist to be locked.                                          */
-    /* -------------------------------------------------------------------- */
-    char *pszLockFilename =
-        static_cast<char *>(CPLMalloc(strlen(pszPath) + 30));
-    snprintf(pszLockFilename, strlen(pszPath) + 30, "%s.lock", pszPath);
-
-    FILE *fpLock = fopen(pszLockFilename, "r");
-    while (fpLock != nullptr && dfWaitInSeconds > 0.0)
-    {
-        fclose(fpLock);
-        CPLSleep(std::min(dfWaitInSeconds, 0.5));
-        dfWaitInSeconds -= 0.5;
-
-        fpLock = fopen(pszLockFilename, "r");
-    }
-
-    if (fpLock != nullptr)
-    {
-        fclose(fpLock);
-        CPLFree(pszLockFilename);
-        return nullptr;
-    }
-
-    fpLock = fopen(pszLockFilename, "w");
-
-    if (fpLock == nullptr)
-    {
-        CPLFree(pszLockFilename);
-        return nullptr;
-    }
-
-    fwrite("held\n", 1, 5, fpLock);
-    fclose(fpLock);
-
-    return pszLockFilename;
+    CPLLockFileHandle hHandle = nullptr;
+    CPLStringList aosOptions;
+    aosOptions.SetNameValue("WAIT_TIME", CPLSPrintf("%f", dfWaitInSeconds));
+    CPLLockFileEx(pszPath, &hHandle, aosOptions);
+    return hHandle;
 }
 
 /************************************************************************/
@@ -699,14 +655,7 @@ void *CPLLockFile(const char *pszPath, double dfWaitInSeconds)
 void CPLUnlockFile(void *hLock)
 
 {
-    char *pszLockFilename = static_cast<char *>(hLock);
-
-    if (hLock == nullptr)
-        return;
-
-    VSIUnlink(pszLockFilename);
-
-    CPLFree(pszLockFilename);
+    CPLUnlockFileEx(static_cast<CPLLockFileHandle>(hLock));
 }
 
 /************************************************************************/

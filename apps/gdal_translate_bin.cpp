@@ -128,6 +128,13 @@ MAIN_START(argc, argv)
     /*      Attempt to open source file.                                    */
     /* -------------------------------------------------------------------- */
 
+    if (EQUAL(sOptionsForBinary.osFormat.c_str(), "ZARR") &&
+        CPLTestBool(sOptionsForBinary.aosCreateOptions.FetchNameValueDef(
+            "CONVERT_TO_KERCHUNK_PARQUET_REFERENCE", "FALSE")))
+    {
+        sOptionsForBinary.osSource = "ZARR_DUMMY:" + sOptionsForBinary.osSource;
+    }
+
     GDALDatasetH hDataset =
         GDALOpenEx(sOptionsForBinary.osSource.c_str(),
                    GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
