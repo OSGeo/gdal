@@ -12,6 +12,8 @@
 ###############################################################################
 
 
+import pytest
+
 from osgeo import gdal
 
 
@@ -28,6 +30,8 @@ def check(alg, expected_name):
 
 def test_driver_algorithms():
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]
-    if alg:
-        check(alg, "driver")
+    try:
+        alg = gdal.GetGlobalAlgorithmRegistry()["driver"]
+    except Exception:
+        pytest.skip("no drivers")
+    check(alg, "driver")

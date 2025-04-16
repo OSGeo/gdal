@@ -5184,74 +5184,60 @@ def quiet_warnings():
         PopErrorHandler()
 
 
-@contextlib.contextmanager
-def run(algorithm=None, arguments={}, progress=None, optimize_single_output=True, finalize=True, **kwargs):
-    """Run a GDAL algorithm as a context manager
+def Run(*alg, arguments={}, progress=None, **kwargs):
+    """Run a GDAL algorithm and return it.
 
        .. versionadded: 3.11
 
+       This method can also be used within a context manager, in which case
+       :py:meth:`osgeo.gdal.Algorithm.Finalize` will be called at the exit of the
+       context manager.  An exception will be raised if the algorithm fails,
+       even if `gdal.UseExceptions()` has not been called.
+
        Parameters
        ----------
-       algorithm: str or list[str]
-            Path to the algorithm. For example "raster info", or ["raster", "info"].
+       alg: str, list[str], tuple[str] or Algorithm
+            Path to the algorithm or algorithm instance itself. For example "raster info", ["raster", "info"] or "raster", "info".
        arguments: dict
             Input arguments of the algorithm. For example {"format": "json", "input": "byte.tif"}
        progress: callable
             Progress function whose arguments are a progress ratio, a string and a user data
-       optimize_single_output: bool
-            Whether to return a single value when there is a single output argument, and to
-            deserialize automatically JSON responses as a dict, and return a osgeo.gdal.Dataset
-            when possible.
-       finalize: bool
-            Whether to run :py:func:`gdal.Algorithm.Finalize` when the context is released.
        kwargs:
             Instead of using the ``arguments`` parameter, it is possible to pass
-            algorithm arguments directly as named parameters of gdal.run().
+            algorithm arguments directly as named parameters of gdal.Run().
             If the named argument has dash characters in it, the corresponding
             parameter must replace them with an underscore character.
-            For example ``dst_crs`` as a a parameter of gdal.run(), instead of
+            For example ``dst_crs`` as a a parameter of gdal.Run(), instead of
             ``dst-crs`` which is the name to use on the command line.
 
        Returns
        -------
-            A context manager with the output arguments of the algorithm
+            An algorithm
 
        Example
        -------
 
-       >>> with gdal.run(["raster", "info"], {"input": "byte.tif"}) as res:
-       ...     print(res["bands"])
+       >>> alg = gdal.Run(["raster", "info"], {"input": "byte.tif"})
+       >>> print(alg.output()["bands"])
 
-       >>> with gdal.run("raster reproject", input="byte.tif", output_format="MEM", dst_crs="EPSG:4326") as ds
-       ...     print(ds.ReadAsArray())
+       >>> with gdal.Run("raster", "reproject", input="byte.tif", output_format="MEM", dst_crs="EPSG:4326") as alg
+       ...     print(alg.output().ReadAsArray())
     """
 
-    if isinstance(algorithm, list):
-        alg = GetGlobalAlgorithmRegistry()
-        parent_name = "gdal"
-        for i, v in enumerate(algorithm):
-            if i == 0 and v == "gdal":
-                continue
-            subalg = alg[v]
-            if not subalg:
-                raise Exception(f"{v} is not a valid sub-algorithm of {parent_name}")
-            alg = subalg
-            parent_name = alg.GetName()
-    elif isinstance(algorithm, str):
-        if algorithm.startswith("gdal "):
-            algorithm = algorithm[len("gdal "):]
-        alg = GetGlobalAlgorithmRegistry()
-        parent_name = "gdal"
-        for i, v in enumerate(algorithm.split(' ')):
-            if i == 0 and v == "gdal":
-                continue
-            subalg = alg[v]
-            if not subalg:
-                raise Exception(f"{v} is not a valid sub-algorithm of {parent_name}")
-            alg = subalg
-            parent_name = alg.GetName()
+    new_alg = []
+    for v in alg:
+        if isinstance(v, dict):
+            arguments = v
+            break
+        new_alg.append(v)
+    alg = new_alg
+
+    if len(alg) == 1 and isinstance(alg[0], Algorithm):
+        alg = alg[0]
+    elif len(alg) >= 1 and (isinstance(alg[0], list) or isinstance(alg[0], str)):
+        alg = Algorithm(*alg)
     else:
-        raise Exception("Wrong type for algorithm. Expected string or list of string")
+        raise RuntimeError("Wrong type for alg. Expected string, list of strings or Algorithm")
 
     for k in arguments:
         alg[k.replace('_', '-')] = arguments[k]
@@ -5259,40 +5245,11 @@ def run(algorithm=None, arguments={}, progress=None, optimize_single_output=True
     for k in kwargs:
         alg[k.replace('_', '-')] = kwargs[k]
 
-    assert alg.Run(progress)
+    if not alg.Run(progress):
+        # We go here only if gdal.UseExceptions() has not been called
+        raise RuntimeError("Algorithm.Run() failed: %s" % GetLastErrorMsg())
 
-    count_output = 0
-    if optimize_single_output:
-        for name in alg.GetArgNames():
-            arg = alg.GetArg(name)
-            if arg.IsOutput():
-                count_output += 1
-
-    res = {}
-    for name in alg.GetArgNames():
-        arg = alg.GetArg(name)
-        if arg.IsOutput():
-            val = alg[name]
-            if name == "output-string" and count_output == 1:
-                if (val.startswith('{') and (val.endswith('}') or val.endswith('}\n'))) or \
-                   (val.startswith('[') and (val.endswith(']') or val.endswith(']\n'))):
-                    import json
-                    res = json.loads(val)
-                else:
-                    res = val
-            elif count_output == 1:
-                if arg.GetType() == GAAT_DATASET:
-                    res = val.GetDataset()
-                else:
-                    res = val
-            else:
-                res[name] = val
-
-    yield res
-
-    if finalize:
-        assert alg.Finalize()
-
+    return alg
 
 %}
 
@@ -5588,7 +5545,10 @@ class VSIFile(BytesIO):
            >>> gdal.GetGlobalAlgorithmRegistry()["raster"]
         """
 
-        return self.InstantiateAlg(key)
+        alg = self.InstantiateAlg(key)
+        if not alg:
+            raise RuntimeError(f"'{key}' is not a valid algorithm")
+        return alg
 %}
 }
 
@@ -5598,6 +5558,155 @@ class VSIFile(BytesIO):
 
 %extend GDALAlgorithmHS {
 %pythoncode %{
+
+    def __init__(self, *path):
+
+        """Instantiate an existing GDAL algorithm from its path.
+
+           .. versionadded: 3.11
+
+           Parameters
+           ----------
+           path: str, list[str] or tuple[str]
+                Path to the algorithm. For example "raster info", ["raster", "info"] or "raster", "info"
+
+           Returns
+           -------
+                An algorithm
+
+           Example
+           -------
+
+           >>> alg = gdal.Algorithm("raster", "info")
+           >>> # or alg = gdal.Algorithm(["raster", "info"])
+           >>> # or alg = gdal.Algorithm("raster info")
+           >>> alg.Run()
+           >>> print(alg.Output()["bands"])
+        """
+
+        alg = None
+        if len(path) == 1:
+            if isinstance(path[0], list):
+                alg = GetGlobalAlgorithmRegistry()
+                for i, v in enumerate(path[0]):
+                    if i == 0 and v == "gdal":
+                        continue
+                    alg = alg[v]
+            elif isinstance(path[0], str):
+                alg = GetGlobalAlgorithmRegistry()
+                for v in path[0].lstrip("gdal ").split(' '):
+                    alg = alg[v]
+        elif len(path) > 1:
+            alg = GetGlobalAlgorithmRegistry()
+            for i, v in enumerate(path):
+                if i == 0 and v == "gdal":
+                    continue
+                alg = alg[v]
+        if not alg:
+            raise RuntimeError("Wrong type for algorithm path. Expected string or list of strings")
+
+        self.this = alg.this
+        self.thisown = True
+
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        if hasattr(self, "has_run") and not self.Finalize():
+            # We go here only if gdal.UseExceptions() has not been called
+            raise RuntimeError("Algorithm.Finalize() failed: %s" % GetLastErrorMsg())
+
+    def _get_arg_value(self, arg, parse_json):
+        val = arg.Get()
+        if parse_json and arg.GetType() == GAAT_STRING and \
+           ((val.startswith('{') and (val.endswith('}') or val.endswith('}\n'))) or \
+           (val.startswith('[') and (val.endswith(']') or val.endswith(']\n')))):
+            import json
+            try:
+                return json.loads(val)
+            except Exception:
+                return val
+        elif arg.GetType() == GAAT_DATASET:
+            return val.GetDataset()
+        else:
+            return val
+
+
+    def Output(self, parse_json=True):
+        """Return the single output value of this algorithm, after it has been run.
+
+           If there are multiple output values, this method will raise an exception,
+           and the :py:meth:`Outputs` (plural) method should be called instead.
+
+           Arguments of type GAAT_DATASET are returned as a
+           :py:class:`osgeo.gdal.Dataset` instance.
+
+           Parameters
+           -----------
+           parse_json: bool, default=True
+               Whether a JSON string should be returned as a dict or list (instead of a string).
+
+           Returns
+           -------
+           The single output argument value
+
+           Example
+           -------
+           >>> with gdal.Run("raster", "info", input="byte.tif") as alg:
+           ...    print(alg.Output()["bands"])
+        """
+
+        if not hasattr(self, "has_run"):
+            raise RuntimeError("Algorithm.Run() must be called before")
+
+        count_output = 0
+        val = None
+        for name in self.GetArgNames():
+            arg = self.GetArg(name)
+            if arg.IsOutput():
+                count_output += 1
+                if count_output == 2:
+                    raise RuntimeError("Cannot use 'output' method on this algorithm as it supports multiple output arguments. Use 'Outputs' (plural) insead")
+                val = self._get_arg_value(arg, parse_json)
+        return val
+
+
+    def Outputs(self, parse_json=True):
+        """Return the output value(s) of this algorithm as a dict, after it has been run.
+
+           Most algorithms only return a single output, in which case the :py:meth:`Output`
+           method (singular) is preferable for easier use.
+
+           Arguments of type GAAT_DATASET are returned as a
+           :py:class:`osgeo.gdal.Dataset` instance.
+
+           Parameters
+           -----------
+           parse_json: bool, default=True
+               Whether a JSON string should be returned as a dict or list (instead of a string).
+
+           Returns
+           -------
+           A dict whose keys are arguments that have outputs and whose values
+           are the argument values.
+
+           Example
+           -------
+           >>> with gdal.Run("raster", "reproject", input="byte.tif", output_format="MEM", dst_crs="EPSG:4326") as alg:
+           ...    print(alg.Outputs()["output"].ReadAsArray())
+        """
+
+        if not hasattr(self, "has_run"):
+            raise RuntimeError("Algorithm.Run() must be called before")
+
+        res = {}
+        for name in self.GetArgNames():
+            arg = self.GetArg(name)
+            if arg.IsOutput():
+                res[name] = self._get_arg_value(arg, parse_json)
+        return res
+
 
     def __getitem__(self, key):
         """Get the value of an argument.
@@ -5621,15 +5730,15 @@ class VSIFile(BytesIO):
         """
 
         if self.HasSubAlgorithms():
-            subalg = self.InstantiateSubAlgorithm(key)
+            subalg = self.InstantiateSubAlgorithm(key.replace('_', '-'))
             if not subalg:
-                raise Exception(f"'{key}' is not a valid sub-algorithm of '{self.GetName()}'")
+                raise RuntimeError(f"'{key}' is not a valid sub-algorithm of '{self.GetName()}'")
             return subalg
         else:
             actual_alg = self.GetActualAlgorithm()
-            arg = actual_alg.GetArg(key)
+            arg = actual_alg.GetArg(key.replace('_', '-'))
             if not arg:
-                raise Exception(f"'{key}' is not a valid argument of '{actual_alg.GetName()}'")
+                raise RuntimeError(f"'{key}' is not a valid argument of '{actual_alg.GetName()}'")
             return arg.Get()
 
 
@@ -5658,14 +5767,37 @@ class VSIFile(BytesIO):
            >>> alg["input"] = [one_ds, two_ds]
         """
 
-        arg = self.GetArg(key)
+        arg = self.GetArg(key.replace('_', '-'))
         if not arg:
-            raise Exception(f"'{key}' is not a valid argument of '{self.GetName()}'")
+            raise RuntimeError(f"'{key}' is not a valid argument of '{self.GetName()}'")
         if not arg.Set(value):
-            raise Exception(f"Cannot set argument '{key}' to '{value}'")
+            raise RuntimeError(f"Cannot set argument '{key}' to '{value}'")
 %}
 }
 
+%pythonprepend GDALAlgorithmHS::Run %{
+    self.has_run = True
+%}
+
+%pythonprepend GDALAlgorithmHS::ParseCommandLineArguments %{
+    # Convert PathLike to str
+    import copy
+    args = copy.deepcopy(args)
+    if isinstance(args[0], list):
+        for i in range(len(args[0])):
+            args[0][i] = str(args[0][i])
+
+%}
+
+%pythonprepend GDALAlgorithmHS::ParseRunAndFinalize %{
+    # Convert PathLike to str
+    import copy
+    args = copy.deepcopy(args)
+    if isinstance(args[0], list):
+        for i in range(len(args[0])):
+            args[0][i] = str(args[0][i])
+
+%}
 
 /* -------------------------------------------------------------------- */
 /* GDALAlgorithmArgHS                                                   */
@@ -5675,6 +5807,17 @@ class VSIFile(BytesIO):
 %pythoncode %{
 
     def Get(self):
+        """Return the argument value in its native type.
+
+           Note: using the ``[]`` operator of Algorithm is also a convenient
+           way of getting the value of an argument.
+
+           Examples
+           --------
+           >>> arg = alg.GetArg("output")
+           >>> arg.Get()
+        """
+
         type = self.GetType()
         if type == GAAT_BOOLEAN:
             return self.GetAsBoolean()
@@ -5692,9 +5835,21 @@ class VSIFile(BytesIO):
             return self.GetAsIntegerList()
         if type == GAAT_REAL_LIST:
             return self.GetAsDoubleList()
-        raise Exception("Unhandled algorithm argument data type")
+
+        # should not happen
+        raise RuntimeError("Unhandled algorithm argument data type")
 
     def Set(self, value):
+        """Sets the value of an argument.
+
+           Note: using the ``[]`` operator of Algorithm is also a convenient
+           way of setting the value of an argument.
+
+           Examples
+           --------
+           >>> arg = alg.GetArg("input")
+           >>> arg.Set("in.tif")
+        """
 
         if isinstance(value, os.PathLike):
             value = str(value)
@@ -5712,7 +5867,7 @@ class VSIFile(BytesIO):
             elif isinstance(value, str) or isinstance(value, float):
                 return self.SetAsString(str(value))
             else:
-                raise "Unexpected value type %s for an argument of type String" % str(type(value))
+                raise TypeError("Unexpected value type %s for an argument of type String" % str(type(value)))
         if type == GAAT_INTEGER:
             return self.SetAsInteger(value)
         if type == GAAT_REAL:
@@ -5753,28 +5908,10 @@ class VSIFile(BytesIO):
             elif isinstance(value, Dataset):
                 return self.SetDatasets([value])
             else:
-                raise "Unexpected value type %s for an argument of type DatasetList" % str(type(value))
-        raise Exception("Unhandled algorithm argument data type")
+                raise TypeError("Unexpected value type %s for an argument of type DatasetList" % str(type(value)))
+
+        # should not happen
+        raise RuntimeError("Unhandled algorithm argument data type")
 
 %}
 }
-
-%pythonprepend GDALAlgorithmHS::ParseCommandLineArguments %{
-    # Convert PathLike to str
-    import copy
-    args = copy.deepcopy(args)
-    if isinstance(args[0], list):
-        for i in range(len(args[0])):
-            args[0][i] = str(args[0][i])
-
-%}
-
-%pythonprepend GDALAlgorithmHS::ParseRunAndFinalize %{
-    # Convert PathLike to str
-    import copy
-    args = copy.deepcopy(args)
-    if isinstance(args[0], list):
-        for i in range(len(args[0])):
-            args[0][i] = str(args[0][i])
-
-%}
