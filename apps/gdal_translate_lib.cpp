@@ -94,7 +94,7 @@ struct GDALTranslateOptions
     std::string osFormat{};
 
     /*! allow or suppress progress monitor and other non-error output */
-    bool bQuiet = true;
+    bool bQuiet = false;
 
     /*! the progress function to use */
     GDALProgressFunc pfnProgress = GDALDummyProgress;
@@ -1014,7 +1014,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             CPLErr eErr = bIsError ? CE_Failure : CE_Warning;
 
             CPLError(eErr, CPLE_AppDefined,
-                     "%s-srcwin %g %g %g %g falls %s outside raster extent.%s",
+                     "%s-srcwin %g %g %g %g falls %s outside source raster "
+                     "extent.%s",
                      (psOptions->dfULX != 0.0 || psOptions->dfULY != 0.0 ||
                       psOptions->dfLRX != 0.0 || psOptions->dfLRY != 0.0)
                          ? "Computed "
@@ -1022,7 +1023,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                      psOptions->srcWin.dfXOff, psOptions->srcWin.dfYOff,
                      psOptions->srcWin.dfXSize, psOptions->srcWin.dfYSize,
                      bCompletelyOutside ? "completely" : "partially",
-                     bIsError ? "" : " Going on however.");
+                     bIsError
+                         ? ""
+                         : " Pixels outside the source raster extent will be "
+                           "set to the NoData value (if defined), or zero.");
         }
         if (bIsError)
         {
