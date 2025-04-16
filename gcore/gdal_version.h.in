@@ -30,7 +30,7 @@
 #endif
 
 #ifndef GDAL_RELEASE_NICKNAME
-#define GDAL_RELEASE_NICKNAME   ""
+#define GDAL_RELEASE_NICKNAME   "Eganville"
 #endif
 
 #endif
