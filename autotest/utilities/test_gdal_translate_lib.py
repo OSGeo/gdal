@@ -762,12 +762,11 @@ def test_gdal_translate_lib_projwin_polar(tmp_vsimem):
 # outside of the source
 
 
-@pytest.mark.parametrize("epo", (True, False))
-@pytest.mark.parametrize("eco", (True, False))
+@pytest.mark.parametrize("error", ("partially", "completely", False, True))
 @gdaltest.disable_exceptions()
-def test_gdal_translate_lib_projwin_partially_outside(epo, eco):
+def test_gdal_translate_lib_projwin_partially_outside(error):
 
-    msg_type = gdal.CE_Failure if epo else gdal.CE_Warning
+    msg_type = gdal.CE_Failure if error in ("partially", True) else gdal.CE_Warning
 
     with gdaltest.error_raised(msg_type, "partially outside"):
         ds = gdal.Translate(
@@ -775,23 +774,26 @@ def test_gdal_translate_lib_projwin_partially_outside(epo, eco):
             "../gcore/data/byte.tif",
             format="VRT",
             projWin=(440000, 3751320, 441920, 3750120),
-            errorIfWindowPartiallyOutsideSource=epo,
-            errorIfWindowCompletelyOutsideSource=eco,
+            errorIfWindowOutsideSource=error,
         )
 
-        if epo:
+        if error in ("partially", True):
             assert ds is None
         else:
+            assert ds is not None
             assert ds.RasterXSize == 32
             assert ds.RasterYSize == 20
 
 
-@pytest.mark.parametrize("eco", (True, False))
-@pytest.mark.parametrize("epo", (True, False))
+@pytest.mark.parametrize("error", ("partially", "completely", False, True))
 @gdaltest.disable_exceptions()
-def test_gdal_translate_lib_projwin_completely_outside(epo, eco):
+def test_gdal_translate_lib_projwin_completely_outside(error):
 
-    msg_type = gdal.CE_Failure if epo or eco else gdal.CE_Warning
+    msg_type = (
+        gdal.CE_Failure
+        if error in {"partially", "completely", True}
+        else gdal.CE_Warning
+    )
 
     with gdaltest.error_raised(msg_type, "completely outside"):
         ds = gdal.Translate(
@@ -799,15 +801,27 @@ def test_gdal_translate_lib_projwin_completely_outside(epo, eco):
             "../gcore/data/byte.tif",
             format="VRT",
             projWin=(0, 120, 120, 0),
-            errorIfWindowPartiallyOutsideSource=epo,
-            errorIfWindowCompletelyOutsideSource=eco,
+            errorIfWindowOutsideSource=error,
         )
 
-        if epo or eco:
+        if error in {"partially", "completely", True}:
             assert ds is None
         else:
+            assert ds is not None
             assert ds.RasterXSize == 3
             assert ds.RasterYSize == 2
+
+
+def test_gdal_translate_lib_projwin_invalid_error_if_window_outside_source():
+
+    with pytest.raises(RuntimeError, match="errorIfWindowOutsideSource must be one of"):
+        gdal.Translate(
+            "",
+            "../gcore/data/byte.tif",
+            format="VRT",
+            projWin=(0, 120, 120, 0),
+            errorIfWindowOutsideSource="possibly",
+        )
 
 
 ###############################################################################
