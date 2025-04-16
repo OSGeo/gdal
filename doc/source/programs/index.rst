@@ -40,6 +40,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_aspect
    gdal_raster_astype
    gdal_raster_calc
+   gdal_raster_clean_collar
    gdal_raster_clip
    gdal_raster_color_map
    gdal_raster_contour
@@ -106,6 +107,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_aspect_subcommand`: Generate an aspect map.
     - :ref:`gdal_raster_astype_subcommand`: Modify the data type of bands of a raster dataset
     - :ref:`gdal_raster_calc_subcommand`: Perform raster algebra
+    - :ref:`gdal_raster_clean_collar_subcommand`: Clean the collar of a raster dataset, removing noise
     - :ref:`gdal_raster_clip_subcommand`: Clip a raster dataset
     - :ref:`gdal_raster_color_map_subcommand`: Generate a RGB or RGBA dataset from a single band, using a color map
     - :ref:`gdal_raster_convert_subcommand`: Convert a raster dataset

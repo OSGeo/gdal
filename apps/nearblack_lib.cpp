@@ -36,10 +36,10 @@
 
 static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
                         int nSrcBands, int nDstBands, int nNearDist,
-                        int nMaxNonBlack, bool bNearWhite,
-                        const Colors &oColors, int *panLastLineCounts,
-                        bool bDoHorizontalCheck, bool bDoVerticalCheck,
-                        bool bBottomUp, int iLineFromTopOrBottom);
+                        int nMaxNonBlack, const Colors &oColors,
+                        int *panLastLineCounts, bool bDoHorizontalCheck,
+                        bool bDoVerticalCheck, bool bBottomUp,
+                        int iLineFromTopOrBottom);
 
 /************************************************************************/
 /*                            GDALNearblack()                           */
@@ -148,20 +148,26 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
 
         if (bSetAlpha)
         {
-            // TODO(winkey): There should be a way to preserve alpha
-            // band data not in the collar.
-            if (nBands == 4)
+            if (nBands != 0 &&
+                GDALGetRasterColorInterpretation(
+                    GDALGetRasterBand(hSrcDataset, nBands)) == GCI_AlphaBand)
+            {
                 nBands--;
+            }
             else
+            {
                 nDstBands++;
+            }
         }
 
         if (bSetMask)
         {
-            if (nBands == 4)
+            if (nBands != 0 &&
+                GDALGetRasterColorInterpretation(
+                    GDALGetRasterBand(hSrcDataset, nBands)) == GCI_AlphaBand)
             {
-                nDstBands = 3;
-                nBands = 3;
+                nDstBands--;
+                nBands--;
             }
         }
 
@@ -178,6 +184,15 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
         {
             GDALSetGeoTransform(hDstDS, adfGeoTransform);
             GDALSetProjection(hDstDS, GDALGetProjectionRef(hSrcDataset));
+        }
+
+        if (bSetAlpha &&
+            GDALGetRasterColorInterpretation(GDALGetRasterBand(
+                hDstDS, GDALGetRasterCount(hDstDS))) != GCI_AlphaBand)
+        {
+            GDALSetRasterColorInterpretation(
+                GDALGetRasterBand(hDstDS, GDALGetRasterCount(hDstDS)),
+                GCI_AlphaBand);
         }
     }
     else
@@ -199,27 +214,46 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
             return nullptr;
         }
 
+        const bool bSrcLastIsAlpha =
+            (nBands != 0 && GDALGetRasterColorInterpretation(GDALGetRasterBand(
+                                hSrcDataset, nBands)) == GCI_AlphaBand);
+        const bool bDstLastIsAlpha =
+            (GDALGetRasterCount(hDstDS) != 0 &&
+             GDALGetRasterColorInterpretation(GDALGetRasterBand(
+                 hDstDS, GDALGetRasterCount(hDstDS))) == GCI_AlphaBand);
+
+        nDstBands = GDALGetRasterCount(hDstDS);
+        if (nDstBands - (bDstLastIsAlpha ? 1 : 0) !=
+            nBands - (bSrcLastIsAlpha ? 1 : 0))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Inconsistent number of source and destination bands.");
+            return nullptr;
+        }
+
         if (bSetAlpha)
         {
-            if (nBands != 4 &&
-                (nBands < 2 ||
-                 GDALGetRasterColorInterpretation(
-                     GDALGetRasterBand(hDstDS, nBands)) != GCI_AlphaBand))
+            if (!bDstLastIsAlpha)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Last band is not an alpha band.");
                 return nullptr;
             }
 
-            nBands--;
+            if (nBands == nDstBands && bSrcLastIsAlpha)
+                nBands--;
         }
 
         if (bSetMask)
         {
-            if (nBands == 4)
+            if (bSrcLastIsAlpha)
             {
-                nDstBands = 3;
-                nBands = 3;
+                nBands--;
+            }
+
+            if (bDstLastIsAlpha)
+            {
+                nDstBands--;
             }
         }
     }
@@ -336,7 +370,6 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
 
     const int nMaxNonBlack = psOptions->nMaxNonBlack;
     const int nNearDist = psOptions->nNearDist;
-    const bool bNearWhite = psOptions->bNearWhite;
     const bool bSetAlpha = psOptions->bSetAlpha;
 
     /* -------------------------------------------------------------------- */
@@ -389,15 +422,13 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
         }
 
         ProcessLine(pabyLine, pabyMask, 0, nXSize - 1, nBands, nDstBands,
-                    nNearDist, nMaxNonBlack, bNearWhite, oColors,
-                    panLastLineCounts,
+                    nNearDist, nMaxNonBlack, oColors, panLastLineCounts,
                     true,   // bDoHorizontalCheck
                     true,   // bDoVerticalCheck
                     false,  // bBottomUp
                     iLine);
         ProcessLine(pabyLine, pabyMask, nXSize - 1, 0, nBands, nDstBands,
-                    nNearDist, nMaxNonBlack, bNearWhite, oColors,
-                    panLastLineCounts,
+                    nNearDist, nMaxNonBlack, oColors, panLastLineCounts,
                     true,   // bDoHorizontalCheck
                     false,  // bDoVerticalCheck
                     false,  // bBottomUp
@@ -462,15 +493,13 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
         }
 
         ProcessLine(pabyLine, pabyMask, 0, nXSize - 1, nBands, nDstBands,
-                    nNearDist, nMaxNonBlack, bNearWhite, oColors,
-                    panLastLineCounts,
+                    nNearDist, nMaxNonBlack, oColors, panLastLineCounts,
                     true,  // bDoHorizontalCheck
                     true,  // bDoVerticalCheck
                     true,  // bBottomUp
                     nYSize - 1 - iLine);
         ProcessLine(pabyLine, pabyMask, nXSize - 1, 0, nBands, nDstBands,
-                    nNearDist, nMaxNonBlack, bNearWhite, oColors,
-                    panLastLineCounts,
+                    nNearDist, nMaxNonBlack, oColors, panLastLineCounts,
                     true,   // bDoHorizontalCheck
                     false,  // bDoVerticalCheck
                     true,   // bBottomUp
@@ -515,12 +544,16 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
 
 static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
                         int nSrcBands, int nDstBands, int nNearDist,
-                        int nMaxNonBlack, bool bNearWhite,
-                        const Colors &oColors, int *panLastLineCounts,
-                        bool bDoHorizontalCheck, bool bDoVerticalCheck,
-                        bool bBottomUp, int iLineFromTopOrBottom)
+                        int nMaxNonBlack, const Colors &oColors,
+                        int *panLastLineCounts, bool bDoHorizontalCheck,
+                        bool bDoVerticalCheck, bool bBottomUp,
+                        int iLineFromTopOrBottom)
 {
-    const GByte nReplacevalue = bNearWhite ? 255 : 0;
+    const GByte nReplaceValue = !oColors.empty() && oColors.size() == 1 &&
+                                        !oColors[0].empty() &&
+                                        oColors[0][0] == 255
+                                    ? 255
+                                    : 0;
 
     /* -------------------------------------------------------------------- */
     /*      Vertical checking.                                              */
@@ -588,7 +621,7 @@ static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
 
             /***** replace the pixel values *****/
             for (int iBand = 0; iBand < nSrcBands; iBand++)
-                pabyLine[i * nDstBands + iBand] = nReplacevalue;
+                pabyLine[i * nDstBands + iBand] = nReplaceValue;
 
             /***** alpha *****/
             if (nDstBands > nSrcBands)
@@ -683,7 +716,7 @@ static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
                 /***** replace the pixel values *****/
 
                 for (int iBand = 0; iBand < nSrcBands; iBand++)
-                    pabyLine[i * nDstBands + iBand] = nReplacevalue;
+                    pabyLine[i * nDstBands + iBand] = nReplaceValue;
 
                 /***** alpha *****/
 

@@ -616,15 +616,51 @@ class CPL_DLL GDALAlgorithmArgDecl final
     template <class T> GDALAlgorithmArgDecl &SetDefault(const T &value)
     {
         m_hasDefaultValue = true;
-        if constexpr (std::is_same_v<T, int>)
+        if constexpr (std::is_same_v<T, std::string>)
+        {
+            if (m_type == GAAT_STRING_LIST)
+            {
+                m_defaultValue = std::vector<std::string>{value};
+                return *this;
+            }
+        }
+        else if constexpr (std::is_same_v<T, int>)
         {
             if (m_type == GAAT_REAL)
             {
                 m_defaultValue = static_cast<double>(value);
                 return *this;
             }
+            else if (m_type == GAAT_INTEGER_LIST)
+            {
+                m_defaultValue = std::vector<int>{value};
+                return *this;
+            }
+            else if (m_type == GAAT_REAL_LIST)
+            {
+                m_defaultValue =
+                    std::vector<double>{static_cast<double>(value)};
+                return *this;
+            }
         }
-        m_defaultValue = value;
+        else if constexpr (std::is_same_v<T, double>)
+        {
+            if (m_type == GAAT_REAL_LIST)
+            {
+                m_defaultValue = std::vector<double>{value};
+                return *this;
+            }
+        }
+        try
+        {
+            m_defaultValue = value;
+        }
+        catch (const std::bad_variant_access &)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Argument %s: SetDefault(): unexpected type for value",
+                     GetName().c_str());
+        }
         return *this;
     }
 
@@ -1695,11 +1731,41 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     GDALInConstructionAlgorithmArg &SetDefault(const T &value)
     {
         m_decl.SetDefault(value);
+
         if constexpr (!std::is_same_v<T, GDALArgDatasetValue> &&
                       !std::is_same_v<T, std::vector<GDALArgDatasetValue>>)
         {
-            if (m_decl.HasDefaultValue())
-                *std::get<T *>(m_value) = value;
+            switch (m_decl.GetType())
+            {
+                case GAAT_BOOLEAN:
+                    *std::get<bool *>(m_value) = m_decl.GetDefault<bool>();
+                    break;
+                case GAAT_STRING:
+                    *std::get<std::string *>(m_value) =
+                        m_decl.GetDefault<std::string>();
+                    break;
+                case GAAT_INTEGER:
+                    *std::get<int *>(m_value) = m_decl.GetDefault<int>();
+                    break;
+                case GAAT_REAL:
+                    *std::get<double *>(m_value) = m_decl.GetDefault<double>();
+                    break;
+                case GAAT_STRING_LIST:
+                    *std::get<std::vector<std::string> *>(m_value) =
+                        m_decl.GetDefault<std::vector<std::string>>();
+                    break;
+                case GAAT_INTEGER_LIST:
+                    *std::get<std::vector<int> *>(m_value) =
+                        m_decl.GetDefault<std::vector<int>>();
+                    break;
+                case GAAT_REAL_LIST:
+                    *std::get<std::vector<double> *>(m_value) =
+                        m_decl.GetDefault<std::vector<double>>();
+                    break;
+                case GAAT_DATASET:
+                case GAAT_DATASET_LIST:
+                    break;
+            }
         }
         return *this;
     }

@@ -260,6 +260,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_clean_collar",
+        "gdal-raster-collar",
+        "Clean the collar of a raster dataset, removing noise",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_clip",
         "gdal-raster-clip",
         "Clip a raster dataset",
