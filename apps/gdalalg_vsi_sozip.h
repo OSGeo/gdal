@@ -37,3 +37,5 @@ class GDALVSISOZIPAlgorithm final : public GDALAlgorithm
         return false;
     }
 };
+
+//! @endcond
