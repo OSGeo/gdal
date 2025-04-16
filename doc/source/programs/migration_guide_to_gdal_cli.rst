@@ -237,3 +237,14 @@ Vector commands
     ==>
 
     gdal vector pipeline ! read in.shp ! filter --where "country='Greenland'" ! select --fields population,_ogr_geometry_ ! write out.gpkg
+
+
+* Creating a GeoPackage stacking all input shapefiles in separate layers.
+
+.. code-block::
+
+    ogrmerge -f GPKG -o merged.gpkg *.shp
+
+    ==>
+
+    gdal vector concat --stack *.shp merged.gpkg

@@ -13,6 +13,7 @@
 #include "gdalalg_vector_pipeline.h"
 #include "gdalalg_vector_read.h"
 #include "gdalalg_vector_clip.h"
+#include "gdalalg_vector_concat.h"
 #include "gdalalg_vector_edit.h"
 #include "gdalalg_vector_filter.h"
 #include "gdalalg_vector_geom.h"
@@ -65,8 +66,13 @@ void GDALVectorPipelineStepAlgorithm::AddInputArgs(bool hiddenForCLI)
     AddOpenOptionsArg(&m_openOptions).SetHiddenForCLI(hiddenForCLI);
     AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR,
                        /* positionalAndRequired = */ !hiddenForCLI)
+        .SetMinCount(1)
+        .SetMaxCount((GetName() == GDALVectorPipelineAlgorithm::NAME ||
+                      GetName() == GDALVectorConcatAlgorithm::NAME)
+                         ? INT_MAX
+                         : 1)
         .SetHiddenForCLI(hiddenForCLI);
-    if (GetName() != "sql")
+    if (GetName() != GDALVectorSQLAlgorithm::NAME)
     {
         AddArg("input-layer", 'l', _("Input layer name(s)"), &m_inputLayerNames)
             .AddAlias("layer")
@@ -104,7 +110,8 @@ void GDALVectorPipelineStepAlgorithm::AddOutputArgs(
            &m_appendLayer)
         .SetDefault(false)
         .SetHiddenForCLI(hiddenForCLI);
-    if (GetName() != "sql")
+    if (GetName() != GDALVectorSQLAlgorithm::NAME &&
+        GetName() != GDALVectorConcatAlgorithm::NAME)
     {
         AddArg("output-layer", shortNameOutputLayerAllowed ? 'l' : 0,
                _("Output layer name"), &m_outputLayerName)
@@ -151,7 +158,9 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         bool ret = false;
         if (readAlg.Run())
         {
-            m_inputDataset.Set(readAlg.m_outputDataset.GetDatasetRef());
+            m_inputDataset.clear();
+            m_inputDataset.resize(1);
+            m_inputDataset[0].Set(readAlg.m_outputDataset.GetDatasetRef());
             m_outputDataset.Set(nullptr);
             if (RunStep(nullptr, nullptr))
             {
@@ -161,7 +170,9 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 }
                 else
                 {
-                    writeAlg.m_inputDataset.Set(
+                    writeAlg.m_inputDataset.clear();
+                    writeAlg.m_inputDataset.resize(1);
+                    writeAlg.m_inputDataset[0].Set(
                         m_outputDataset.GetDatasetRef());
                     if (writeAlg.Run(pfnProgress, pProgressData))
                     {
@@ -239,6 +250,7 @@ GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()
                   /* shortNameOutputLayerAllowed=*/false);
 
     m_stepRegistry.Register<GDALVectorReadAlgorithm>();
+    m_stepRegistry.Register<GDALVectorConcatAlgorithm>();
     m_stepRegistry.Register<GDALVectorWriteAlgorithm>();
     m_stepRegistry.Register<GDALVectorClipAlgorithm>();
     m_stepRegistry.Register<GDALVectorEditAlgorithm>();
@@ -382,7 +394,8 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
             {
                 steps.resize(steps.size() + 1);
             }
-            else if (value == "from" && curStep.alg->GetName() == "read")
+            else if (value == "from" &&
+                     curStep.alg->GetName() == GDALVectorReadAlgorithm::NAME)
             {
                 // do nothing
             }
@@ -448,19 +461,23 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
         return false;
     }
 
-    if (steps.front().alg->GetName() != GDALVectorReadAlgorithm::NAME)
+    if (steps.front().alg->GetName() != GDALVectorReadAlgorithm::NAME &&
+        steps.front().alg->GetName() != GDALVectorConcatAlgorithm::NAME)
     {
-        ReportError(CE_Failure, CPLE_AppDefined, "First step should be '%s'",
-                    GDALVectorReadAlgorithm::NAME);
+        ReportError(
+            CE_Failure, CPLE_AppDefined, "First step should be '%s' or '%s'",
+            GDALVectorReadAlgorithm::NAME, GDALVectorConcatAlgorithm::NAME);
         return false;
     }
     for (size_t i = 1; i < steps.size() - 1; ++i)
     {
-        if (steps[i].alg->GetName() == GDALVectorReadAlgorithm::NAME)
+        if (steps[i].alg->GetName() == GDALVectorReadAlgorithm::NAME ||
+            steps[i].alg->GetName() == GDALVectorConcatAlgorithm::NAME)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
-                        "Only first step can be '%s'",
-                        GDALVectorReadAlgorithm::NAME);
+                        "Only first step can be '%s' or '%s'",
+                        GDALVectorReadAlgorithm::NAME,
+                        GDALVectorConcatAlgorithm::NAME);
             return false;
         }
     }
@@ -528,7 +545,8 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
     // argument of the "write" step, in case they point to the same dataset.
     auto inputArg = steps.front().alg->GetArg(GDAL_ARG_NAME_INPUT);
     if (inputArg && inputArg->IsExplicitlySet() &&
-        inputArg->GetType() == GAAT_DATASET)
+        inputArg->GetType() == GAAT_DATASET_LIST &&
+        inputArg->Get<std::vector<GDALArgDatasetValue>>().size() == 1)
     {
         steps.front().alg->ProcessDatasetArg(inputArg, steps.back().alg.get());
     }
@@ -574,11 +592,14 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
         }
     }
 
-    std::string ret = GDALAlgorithm::GetUsageForCLI(shortUsage, usageOptions);
+    UsageOptions usageOptionsMain(usageOptions);
+    usageOptionsMain.isPipelineMain = true;
+    std::string ret =
+        GDALAlgorithm::GetUsageForCLI(shortUsage, usageOptionsMain);
     if (shortUsage)
         return ret;
 
-    ret += "\n<PIPELINE> is of the form: read [READ-OPTIONS] "
+    ret += "\n<PIPELINE> is of the form: read|concat [READ-OPTIONS] "
            "( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]\n";
 
     if (m_helpDocCategory == "main")
@@ -610,9 +631,18 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
         alg->SetCallPath({name});
         ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
     }
+    {
+        const auto name = GDALVectorConcatAlgorithm::NAME;
+        ret += '\n';
+        auto alg = GetStepAlg(name);
+        assert(alg);
+        alg->SetCallPath({name});
+        ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
+    }
     for (const std::string &name : m_stepRegistry.GetNames())
     {
         if (name != GDALVectorReadAlgorithm::NAME &&
+            name != GDALVectorConcatAlgorithm::NAME &&
             name != GDALVectorWriteAlgorithm::NAME)
         {
             ret += '\n';
@@ -630,6 +660,8 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
         alg->SetCallPath({name});
         ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
     }
+
+    ret += GetUsageForCLIEnd();
 
     return ret;
 }

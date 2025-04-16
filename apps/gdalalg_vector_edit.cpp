@@ -209,11 +209,12 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 
 bool GDALVectorEditAlgorithm::RunStep(GDALProgressFunc, void *)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
+
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
     const int nLayerCount = poSrcDS->GetLayerCount();
 
     bool bChangeGeomType = false;

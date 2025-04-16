@@ -41,11 +41,12 @@ GDALVectorWriteAlgorithm::GDALVectorWriteAlgorithm()
 bool GDALVectorWriteAlgorithm::RunStep(GDALProgressFunc pfnProgress,
                                        void *pProgressData)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
 
     if (m_format == "stream")
     {
-        m_outputDataset.Set(m_inputDataset.GetDatasetRef());
+        m_outputDataset.Set(poSrcDS);
         return true;
     }
 
@@ -95,7 +96,7 @@ bool GDALVectorWriteAlgorithm::RunStep(GDALProgressFunc pfnProgress,
 
     GDALDatasetH hOutDS =
         GDALDataset::ToHandle(m_outputDataset.GetDatasetRef());
-    GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
+    GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
     auto poRetDS = GDALDataset::FromHandle(
         GDALVectorTranslate(m_outputDataset.GetName().c_str(), hOutDS, 1,
                             &hSrcDS, psOptions, nullptr));

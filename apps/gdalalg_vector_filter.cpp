@@ -49,11 +49,12 @@ GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm(bool standaloneStep)
 
 bool GDALVectorFilterAlgorithm::RunStep(GDALProgressFunc, void *)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
+
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
     const int nLayerCount = poSrcDS->GetLayerCount();
 
     bool ret = true;
@@ -90,7 +91,7 @@ bool GDALVectorFilterAlgorithm::RunStep(GDALProgressFunc, void *)
 
     if (ret)
     {
-        m_outputDataset.Set(m_inputDataset.GetDatasetRef());
+        m_outputDataset.Set(poSrcDS);
     }
 
     return ret;

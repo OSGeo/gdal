@@ -1859,7 +1859,13 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         (arg->IsOutput() && overwriteArg &&
          overwriteArg->GetType() == GAAT_BOOLEAN && overwriteArg->Get<bool>());
     auto outputArg = algForOutput->GetArg(GDAL_ARG_NAME_OUTPUT);
-    auto &val = arg->Get<GDALArgDatasetValue>();
+    auto &val = [arg]() -> GDALArgDatasetValue &
+    {
+        if (arg->GetType() == GAAT_DATASET_LIST)
+            return arg->Get<std::vector<GDALArgDatasetValue>>()[0];
+        else
+            return arg->Get<GDALArgDatasetValue>();
+    }();
     const bool onlyInputSpecifiedInUpdateAndOutputNotRequired =
         arg->GetName() == GDAL_ARG_NAME_INPUT && outputArg &&
         !outputArg->IsExplicitlySet() && !outputArg->IsRequired() && update &&
@@ -2056,29 +2062,32 @@ bool GDALAlgorithm::ValidateArguments()
             if (valueCount != arg->GetMinCount() &&
                 arg->GetMinCount() == arg->GetMaxCount())
             {
-                ReportError(
-                    CE_Failure, CPLE_AppDefined,
-                    "%d value(s) have been specified for argument '%s', "
-                    "whereas exactly %d were expected.",
-                    valueCount, arg->GetName().c_str(), arg->GetMinCount());
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "%d value%s been specified for argument '%s', "
+                            "whereas exactly %d %s expected.",
+                            valueCount, valueCount > 1 ? "s have" : " has",
+                            arg->GetName().c_str(), arg->GetMinCount(),
+                            arg->GetMinCount() > 1 ? "were" : "was");
                 ret = false;
             }
             else if (valueCount < arg->GetMinCount())
             {
-                ReportError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Only %d value(s) have been specified for argument '%s', "
-                    "whereas at least %d were expected.",
-                    valueCount, arg->GetName().c_str(), arg->GetMinCount());
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Only %d value%s been specified for argument '%s', "
+                            "whereas at least %d %s expected.",
+                            valueCount, valueCount > 1 ? "s have" : " has",
+                            arg->GetName().c_str(), arg->GetMinCount(),
+                            arg->GetMinCount() > 1 ? "were" : "was");
                 ret = false;
             }
             else if (valueCount > arg->GetMaxCount())
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
-                            "%d values have been specified for argument '%s', "
-                            "whereas at most %d were expected.",
-                            valueCount, arg->GetName().c_str(),
-                            arg->GetMaxCount());
+                            "%d value%s been specified for argument '%s', "
+                            "whereas at most %d %s expected.",
+                            valueCount, valueCount > 1 ? "s have" : " has",
+                            arg->GetName().c_str(), arg->GetMaxCount(),
+                            arg->GetMaxCount() > 1 ? "were" : "was");
                 ret = false;
             }
         }
@@ -2087,56 +2096,68 @@ bool GDALAlgorithm::ValidateArguments()
             arg->AutoOpenDataset())
         {
             auto &listVal = arg->Get<std::vector<GDALArgDatasetValue>>();
-            for (auto &val : listVal)
+            if (listVal.size() == 1)
             {
-                if (!val.GetDatasetRef() && val.GetName().empty())
-                {
-                    ReportError(
-                        CE_Failure, CPLE_AppDefined,
-                        "Argument '%s' has no dataset object or dataset name.",
-                        arg->GetName().c_str());
+                if (!ProcessDatasetArg(arg.get(), this))
                     ret = false;
-                }
-                else if (!val.GetDatasetRef())
+            }
+            else
+            {
+                for (auto &val : listVal)
                 {
-                    int flags = val.GetType() | GDAL_OF_VERBOSE_ERROR;
-
-                    CPLStringList aosOpenOptions;
-                    CPLStringList aosAllowedDrivers;
-                    if (arg->GetName() == GDAL_ARG_NAME_INPUT)
+                    if (!val.GetDatasetRef() && val.GetName().empty())
                     {
-                        const auto ooArg = GetArg(GDAL_ARG_NAME_OPEN_OPTION);
-                        if (ooArg && ooArg->GetType() == GAAT_STRING_LIST)
-                        {
-                            aosOpenOptions = CPLStringList(
-                                ooArg->Get<std::vector<std::string>>());
-                        }
-
-                        const auto ifArg = GetArg(GDAL_ARG_NAME_INPUT_FORMAT);
-                        if (ifArg && ifArg->GetType() == GAAT_STRING_LIST)
-                        {
-                            aosAllowedDrivers = CPLStringList(
-                                ifArg->Get<std::vector<std::string>>());
-                        }
-
-                        const auto updateArg = GetArg(GDAL_ARG_NAME_UPDATE);
-                        if (updateArg && updateArg->GetType() == GAAT_BOOLEAN &&
-                            updateArg->Get<bool>())
-                        {
-                            flags |= GDAL_OF_UPDATE;
-                        }
-                    }
-
-                    auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-                        val.GetName().c_str(), flags, aosAllowedDrivers.List(),
-                        aosOpenOptions.List()));
-                    if (poDS)
-                    {
-                        val.Set(std::move(poDS));
-                    }
-                    else
-                    {
+                        ReportError(CE_Failure, CPLE_AppDefined,
+                                    "Argument '%s' has no dataset object or "
+                                    "dataset name.",
+                                    arg->GetName().c_str());
                         ret = false;
+                    }
+                    else if (!val.GetDatasetRef())
+                    {
+                        int flags = val.GetType() | GDAL_OF_VERBOSE_ERROR;
+
+                        CPLStringList aosOpenOptions;
+                        CPLStringList aosAllowedDrivers;
+                        if (arg->GetName() == GDAL_ARG_NAME_INPUT)
+                        {
+                            const auto ooArg =
+                                GetArg(GDAL_ARG_NAME_OPEN_OPTION);
+                            if (ooArg && ooArg->GetType() == GAAT_STRING_LIST)
+                            {
+                                aosOpenOptions = CPLStringList(
+                                    ooArg->Get<std::vector<std::string>>());
+                            }
+
+                            const auto ifArg =
+                                GetArg(GDAL_ARG_NAME_INPUT_FORMAT);
+                            if (ifArg && ifArg->GetType() == GAAT_STRING_LIST)
+                            {
+                                aosAllowedDrivers = CPLStringList(
+                                    ifArg->Get<std::vector<std::string>>());
+                            }
+
+                            const auto updateArg = GetArg(GDAL_ARG_NAME_UPDATE);
+                            if (updateArg &&
+                                updateArg->GetType() == GAAT_BOOLEAN &&
+                                updateArg->Get<bool>())
+                            {
+                                flags |= GDAL_OF_UPDATE;
+                            }
+                        }
+
+                        auto poDS = std::unique_ptr<GDALDataset>(
+                            GDALDataset::Open(val.GetName().c_str(), flags,
+                                              aosAllowedDrivers.List(),
+                                              aosOpenOptions.List()));
+                        if (poDS)
+                        {
+                            val.Set(std::move(poDS));
+                        }
+                        else
+                        {
+                            ret = false;
+                        }
                     }
                 }
             }
@@ -4101,6 +4122,11 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                     osRet += metavar;
                     osRet += '>';
                 }
+                if (arg->GetType() == GAAT_DATASET_LIST &&
+                    arg->GetMaxCount() > 1)
+                {
+                    osRet += "...";
+                }
                 if (optional)
                     osRet += ']';
             }
@@ -4233,7 +4259,8 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                 if (arg->GetMinCount() > 0 &&
                     arg->GetMinCount() == arg->GetMaxCount())
                 {
-                    osRet += CPLSPrintf(" [%d values]", arg->GetMaxCount());
+                    if (arg->GetMinCount() != 1)
+                        osRet += CPLSPrintf(" [%d values]", arg->GetMaxCount());
                 }
                 else if (arg->GetMinCount() > 0 &&
                          arg->GetMaxCount() < GDALAlgorithmArgDecl::UNBOUNDED)
@@ -4368,7 +4395,7 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
         osRet += '\n';
     }
 
-    if (!m_helpDocRequested)
+    if (!m_helpDocRequested && !usageOptions.isPipelineMain)
     {
         if (!m_helpURL.empty())
         {
@@ -4376,21 +4403,34 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
             osRet += GetHelpFullURL();
             osRet += '\n';
         }
-
-        if (!m_callPath.empty() && m_callPath[0] == "gdal")
-        {
-            osRet +=
-                "\nWARNING: the gdal command is provisionally provided as an "
-                "alternative interface to GDAL and OGR command line "
-                "utilities.\nThe project reserves the right to modify, "
-                "rename, reorganize, and change the behavior of the utility\n"
-                "until it is officially frozen in a future feature release of "
-                "GDAL.\n";
-        }
+        osRet += GetUsageForCLIEnd();
     }
 
     return osRet;
 }
+
+/************************************************************************/
+/*                   GDALAlgorithm::GetUsageForCLIEnd()                 */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+std::string GDALAlgorithm::GetUsageForCLIEnd() const
+{
+    std::string osRet;
+
+    if (!m_callPath.empty() && m_callPath[0] == "gdal")
+    {
+        osRet += "\nWARNING: the gdal command is provisionally provided as an "
+                 "alternative interface to GDAL and OGR command line "
+                 "utilities.\nThe project reserves the right to modify, "
+                 "rename, reorganize, and change the behavior of the utility\n"
+                 "until it is officially frozen in a future feature release of "
+                 "GDAL.\n";
+    }
+    return osRet;
+}
+
+//! @endcond
 
 /************************************************************************/
 /*                    GDALAlgorithm::GetUsageAsJSON()                   */

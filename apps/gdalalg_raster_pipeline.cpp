@@ -556,7 +556,10 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
         }
     }
 
-    std::string ret = GDALAlgorithm::GetUsageForCLI(shortUsage, usageOptions);
+    UsageOptions usageOptionsMain(usageOptions);
+    usageOptionsMain.isPipelineMain = true;
+    std::string ret =
+        GDALAlgorithm::GetUsageForCLI(shortUsage, usageOptionsMain);
     if (shortUsage)
         return ret;
 
@@ -608,6 +611,8 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
         alg->SetCallPath({name});
         ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
     }
+
+    ret += GetUsageForCLIEnd();
 
     return ret;
 }

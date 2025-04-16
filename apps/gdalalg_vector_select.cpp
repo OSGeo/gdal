@@ -288,11 +288,11 @@ class GDALVectorSelectAlgorithmLayer final
 
 bool GDALVectorSelectAlgorithm::RunStep(GDALProgressFunc, void *)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
+
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
-
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
 
     auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
 

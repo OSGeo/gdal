@@ -47,7 +47,9 @@ GDALVectorReprojectAlgorithm::GDALVectorReprojectAlgorithm(bool standaloneStep)
 
 bool GDALVectorReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
+
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -62,8 +64,6 @@ bool GDALVectorReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
     OGRSpatialReference oDstCRS;
     oDstCRS.SetFromUserInput(m_dstCrs.c_str());
     oDstCRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
 
     auto reprojectedDataset =
         std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);

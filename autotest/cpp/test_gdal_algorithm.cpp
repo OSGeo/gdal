@@ -2284,7 +2284,7 @@ TEST_F(test_gdal_algorithm, min_max_count_equal)
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         EXPECT_FALSE(alg.ValidateArguments());
         EXPECT_STREQ(CPLGetLastErrorMsg(),
-                     "test: 1 value(s) have been specified for argument 'arg', "
+                     "test: 1 value has been specified for argument 'arg', "
                      "whereas exactly 2 were expected.");
     }
 }

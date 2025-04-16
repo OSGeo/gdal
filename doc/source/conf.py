@@ -449,6 +449,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_concat",
+        "gdal-vector_concat",
+        "Concatenate vector datasets",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector_convert",
         "gdal-vector-convert",
         "Convert a vector dataset",

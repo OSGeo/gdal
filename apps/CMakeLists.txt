@@ -47,6 +47,7 @@ add_library(
   gdalalg_vector.cpp
   gdalalg_vector_info.cpp
   gdalalg_vector_clip.cpp
+  gdalalg_vector_concat.cpp
   gdalalg_vector_convert.cpp
   gdalalg_vector_edit.cpp
   gdalalg_vector_pipeline.cpp

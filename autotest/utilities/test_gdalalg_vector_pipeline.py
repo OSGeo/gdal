@@ -228,7 +228,7 @@ def test_gdalalg_vector_pipeline_help_doc():
 
     assert "Usage: gdal vector pipeline [OPTIONS] <PIPELINE>" in out
     assert (
-        "<PIPELINE> is of the form: read [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]"
+        "<PIPELINE> is of the form: read|concat [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]"
         in out
     )
 
@@ -360,6 +360,35 @@ def test_gdalalg_vector_pipeline_read_read():
         pipeline.ParseRunAndFinalize(
             ["read", "../ogr/data/poly.shp", "!", "read", "../ogr/data/poly.shp"]
         )
+
+
+def test_gdalalg_vector_pipeline_read_read_several_input():
+
+    pipeline = get_pipeline_alg()
+    with pytest.raises(
+        Exception,
+        match="read: Positional values starting at '../ogr/data/poly.dbf' are not expected.",
+    ):
+        pipeline.ParseRunAndFinalize(
+            [
+                "read",
+                "../ogr/data/poly.shp",
+                "../ogr/data/poly.dbf",
+                "!",
+                "write",
+                "/vsimem/poly.shp",
+            ]
+        )
+
+    pipeline = get_pipeline_alg()
+    pipeline["input"] = ["../ogr/data/poly.shp", "../ogr/data/poly.dbf"]
+    pipeline["output"] = "/vsimem/poly.shp"
+    pipeline["pipeline"] = "read ! write"
+    with pytest.raises(
+        Exception,
+        match="read: 2 values have been specified for argument 'input', whereas exactly 1 was expected.",
+    ):
+        pipeline.Run()
 
 
 def test_gdalalg_vector_pipeline_write_write():
