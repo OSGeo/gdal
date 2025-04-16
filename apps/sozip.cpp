@@ -166,6 +166,7 @@ MAIN_START(nArgc, papszArgv)
     assert(alg);
 
     std::vector<std::string> args;
+    args.push_back("vsi");
     args.push_back("sozip");
 
     if (bValidate)
