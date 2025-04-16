@@ -14,6 +14,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_json.h"
+#include "cpl_levenshtein.h"
 #include "cpl_minixml.h"
 
 #include "gdalalgorithm.h"
@@ -24,6 +25,7 @@
 #include <cerrno>
 #include <cmath>
 #include <cstdlib>
+#include <limits>
 #include <map>
 
 #ifndef _
@@ -1459,6 +1461,7 @@ bool GDALAlgorithm::ParseCommandLineArguments(
         }
         else
         {
+            const auto nCounter = CPLGetErrorCounter();
             m_selectedSubAlgHolder = InstantiateSubAlgorithm(args[0]);
             if (m_selectedSubAlgHolder)
             {
@@ -1474,8 +1477,12 @@ bool GDALAlgorithm::ParseCommandLineArguments(
             }
             else
             {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Unknown command: '%s'", args[0].c_str());
+                if (!(CPLGetErrorCounter() == nCounter + 1 &&
+                      strstr(CPLGetLastErrorMsg(), "Do you mean")))
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Unknown command: '%s'", args[0].c_str());
+                }
                 return false;
             }
         }
@@ -1500,11 +1507,23 @@ bool GDALAlgorithm::ParseCommandLineArguments(
             const auto equalPos = strArg.find('=');
             name = (equalPos != std::string::npos) ? strArg.substr(0, equalPos)
                                                    : strArg;
-            auto iterArg = m_mapLongNameToArg.find(name.substr(2));
+            const std::string nameWithoutDash = name.substr(2);
+            const auto iterArg = m_mapLongNameToArg.find(nameWithoutDash);
             if (iterArg == m_mapLongNameToArg.end())
             {
-                ReportError(CE_Failure, CPLE_IllegalArg,
-                            "Long name option '%s' is unknown.", name.c_str());
+                const std::string bestCandidate =
+                    GetSuggestionForArgumentName(nameWithoutDash);
+                if (!bestCandidate.empty())
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "Option '%s' is unknown. Do you mean '--%s'?",
+                                name.c_str(), bestCandidate.c_str());
+                }
+                else
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "Option '%s' is unknown.", name.c_str());
+                }
                 return false;
             }
             arg = iterArg->second;
@@ -2108,10 +2127,91 @@ bool GDALAlgorithm::ValidateArguments()
 }
 
 /************************************************************************/
+/*                GDALAlgorithm::InstantiateSubAlgorithm                */
+/************************************************************************/
+
+std::unique_ptr<GDALAlgorithm>
+GDALAlgorithm::InstantiateSubAlgorithm(const std::string &name,
+                                       bool suggestionAllowed) const
+{
+    auto ret = m_subAlgRegistry.Instantiate(name);
+    auto childCallPath = m_callPath;
+    childCallPath.push_back(name);
+    if (!ret)
+    {
+        ret = GDALGlobalAlgorithmRegistry::GetSingleton()
+                  .InstantiateDeclaredSubAlgorithm(childCallPath);
+    }
+    if (ret)
+    {
+        ret->SetCallPath(childCallPath);
+    }
+    else if (suggestionAllowed)
+    {
+        std::string bestCandidate;
+        size_t bestDistance = std::numeric_limits<size_t>::max();
+        for (const std::string &candidate : GetSubAlgorithmNames())
+        {
+            const size_t distance =
+                CPLLevenshteinDistance(name.c_str(), candidate.c_str(),
+                                       /* transpositionAllowed = */ true);
+            if (distance < bestDistance)
+            {
+                bestCandidate = candidate;
+                bestDistance = distance;
+            }
+            else if (distance == bestDistance)
+            {
+                bestCandidate.clear();
+            }
+        }
+        if (!bestCandidate.empty() && bestDistance <= 2)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Algorithm '%s' is unknown. Do you mean '%s'?",
+                     name.c_str(), bestCandidate.c_str());
+        }
+    }
+    return ret;
+}
+
+/************************************************************************/
+/*             GDALAlgorithm::GetSuggestionForArgumentName()            */
+/************************************************************************/
+
+std::string
+GDALAlgorithm::GetSuggestionForArgumentName(const std::string &osName) const
+{
+    std::string bestCandidate;
+    size_t bestDistance = std::numeric_limits<size_t>::max();
+    for (const auto &[key, value] : m_mapLongNameToArg)
+    {
+        CPL_IGNORE_RET_VAL(value);
+        const size_t distance = CPLLevenshteinDistance(
+            osName.c_str(), key.c_str(), /* transpositionAllowed = */ true);
+        if (distance < bestDistance)
+        {
+            bestCandidate = key;
+            bestDistance = distance;
+        }
+        else if (distance == bestDistance)
+        {
+            bestCandidate.clear();
+        }
+    }
+    if (!bestCandidate.empty() && bestDistance <= 2)
+    {
+        return bestCandidate;
+    }
+    return std::string();
+}
+
+/************************************************************************/
 /*                      GDALAlgorithm::GetArg()                         */
 /************************************************************************/
 
-const GDALAlgorithmArg *GDALAlgorithm::GetArg(const std::string &osName) const
+const GDALAlgorithmArg *GDALAlgorithm::GetArg(const std::string &osName,
+                                              bool suggestionAllowed) const
 {
     const auto nPos = osName.find_first_not_of('-');
     if (nPos == std::string::npos)
@@ -2127,6 +2227,19 @@ const GDALAlgorithmArg *GDALAlgorithm::GetArg(const std::string &osName) const
         if (oIter != m_mapShortNameToArg.end())
             return oIter->second;
     }
+
+    if (suggestionAllowed)
+    {
+        const std::string bestCandidate = GetSuggestionForArgumentName(osName);
+        ;
+        if (!bestCandidate.empty())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Argument '%s' is unknown. Do you mean '%s'?",
+                     osName.c_str(), bestCandidate.c_str());
+        }
+    }
+
     return nullptr;
 }
 
@@ -2213,28 +2326,6 @@ std::vector<std::string> GDALAlgorithm::GetSubAlgorithmNames() const
     ret.insert(ret.end(), other.begin(), other.end());
     if (!other.empty())
         std::sort(ret.begin(), ret.end());
-    return ret;
-}
-
-/************************************************************************/
-/*               GDALAlgorithm::InstantiateSubAlgorithm()               */
-/************************************************************************/
-
-std::unique_ptr<GDALAlgorithm>
-GDALAlgorithm::InstantiateSubAlgorithm(const std::string &name) const
-{
-    auto ret = m_subAlgRegistry.Instantiate(name);
-    auto childCallPath = m_callPath;
-    childCallPath.push_back(name);
-    if (!ret)
-    {
-        ret = GDALGlobalAlgorithmRegistry::GetSingleton()
-                  .InstantiateDeclaredSubAlgorithm(childCallPath);
-    }
-    if (ret)
-    {
-        ret->SetCallPath(childCallPath);
-    }
     return ret;
 }
 
@@ -4456,7 +4547,8 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
     GDALAlgorithm *curAlg = this;
     while (!args.empty() && !args.front().empty() && args.front()[0] != '-')
     {
-        auto subAlg = curAlg->InstantiateSubAlgorithm(args.front());
+        auto subAlg = curAlg->InstantiateSubAlgorithm(
+            args.front(), /* suggestionAllowed = */ false);
         if (!subAlg)
             break;
         if (args.size() == 1 && !lastWordIsComplete)

@@ -57,7 +57,7 @@ def test_gdal_invalid_command_line(gdal_path):
 
     out, err = gdaltest.runexternal_out_and_err(f"{gdal_path} --invalid")
     assert out == ""
-    assert "Long name option '--invalid' is unknown" in err
+    assert "Option '--invalid' is unknown" in err
     assert "Usage: " in err
     assert "ret code = 1" in err
 
@@ -99,6 +99,18 @@ def test_gdal_config_not_serialized_to_gdalg(tmp_path, gdal_path):
         "command_line": "gdal raster reproject --input ../gcore/data/byte.tif --output-format stream --output streamed_dataset",
         "type": "gdal_streamed_alg",
     }
+
+
+def test_gdal_suggestions(gdal_path):
+
+    _, err = gdaltest.runexternal_out_and_err(f"{gdal_path} rastr")
+    assert "Algorithm 'rastr' is unknown. Do you mean 'raster'?" in err
+
+    _, err = gdaltest.runexternal_out_and_err(f"{gdal_path} raster nifo")
+    assert "Algorithm 'nifo' is unknown. Do you mean 'info'?" in err
+
+    _, err = gdaltest.runexternal_out_and_err(f"{gdal_path} raster info --frmt=json")
+    assert "Option '--frmt' is unknown. Do you mean '--format'?" in err
 
 
 def test_gdal_completion(gdal_path):
@@ -431,11 +443,15 @@ def test_gdal_algorithm_getter_setter():
 
     alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["info"]
 
-    with pytest.raises(Exception, match="'foo' is not a valid argument of 'info'"):
-        alg["foo"]
+    with pytest.raises(
+        Exception, match="'not_existing' is not a valid argument of 'info'"
+    ):
+        alg["not_existing"]
 
-    with pytest.raises(Exception, match="'foo' is not a valid argument of 'info'"):
-        alg["foo"] = "bar"
+    with pytest.raises(
+        Exception, match="'not_existing' is not a valid argument of 'info'"
+    ):
+        alg["not_existing"] = "bar"
 
     with pytest.raises(Exception):
         alg["no-mask"] = "bar"

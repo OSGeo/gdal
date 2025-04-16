@@ -412,9 +412,7 @@ def test_gdalalg_vector_pipeline_invalid_step_during_parsing(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out.shp")
 
     pipeline = get_pipeline_alg()
-    with pytest.raises(
-        Exception, match="write: Long name option '--invalid' is unknown"
-    ):
+    with pytest.raises(Exception, match="write: Option '--invalid' is unknown"):
         pipeline.ParseRunAndFinalize(
             ["read", "../ogr/data/poly.shp", "!", "write", "--invalid", out_filename]
         )

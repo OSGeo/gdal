@@ -46,7 +46,7 @@ def test_gdalalg_convert_vector(tmp_vsimem):
 
 def test_gdalalg_convert_on_raster_invalid_arg():
     convert = get_convert_alg()
-    with pytest.raises(Exception, match="Long name option '--invalid' is unknown"):
+    with pytest.raises(Exception, match="Option '--invalid' is unknown"):
         assert convert.ParseRunAndFinalize(
             ["--of=MEM", "--invalid", "data/utmsmall.tif", "out"]
         )
