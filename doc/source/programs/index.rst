@@ -87,10 +87,10 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vector_reproject
    gdal_vector_select
    gdal_vector_sql
-   gdal_vfs
-   gdal_vfs_copy
-   gdal_vfs_delete
-   gdal_vfs_list
+   gdal_vsi
+   gdal_vsi_copy
+   gdal_vsi_delete
+   gdal_vsi_list
 
 .. only:: html
 
@@ -157,10 +157,10 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vector_select_subcommand`: Select a subset of fields from a vector dataset.
     - :ref:`gdal_vector_rasterize_subcommand`: Burns vector geometries into a raster
     - :ref:`gdal_vector_sql_subcommand`: Apply SQL statement(s) to a dataset
-    - :ref:`gdal_vfs_command`: Entry point for GDAL Virtual file system (VSI) commands
-    - :ref:`gdal_vfs_copy_subcommand`: Copy files located on GDAL Virtual file systems (VSI)
-    - :ref:`gdal_vfs_delete_subcommand`: Delete files located on GDAL Virtual file systems (VSI)
-    - :ref:`gdal_vfs_list_subcommand`: List files of one of the GDAL Virtual file systems (VSI)
+    - :ref:`gdal_vsi_command`: Entry point for GDAL Virtual System Interface (VSI) commands
+    - :ref:`gdal_vsi_copy_subcommand`: Copy files located on GDAL Virtual System Interface (VSI)
+    - :ref:`gdal_vsi_delete_subcommand`: Delete files located on GDAL Virtual System Interface (VSI)
+    - :ref:`gdal_vsi_list_subcommand`: List files of one of the GDAL Virtual System Interface (VSI)
 
 
 "Traditional" applications

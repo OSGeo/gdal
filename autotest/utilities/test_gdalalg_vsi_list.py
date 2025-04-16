@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal vfs list' testing
+# Purpose:  'gdal vsi list' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -20,7 +20,7 @@ from osgeo import gdal
 
 
 def get_alg():
-    return gdal.GetGlobalAlgorithmRegistry()["vfs"]["list"]
+    return gdal.GetGlobalAlgorithmRegistry()["vsi"]["list"]
 
 
 def del_last_modification_date(j):
@@ -34,7 +34,7 @@ def del_last_modification_date(j):
             del_last_modification_date(j[k])
 
 
-def test_gdalalg_vfs_list(tmp_vsimem):
+def test_gdalalg_vsi_list(tmp_vsimem):
 
     alg = get_alg()
     alg["filename"] = tmp_vsimem / "i_do_not_exist"

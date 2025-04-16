@@ -1,31 +1,31 @@
-.. _gdal_vfs_copy_subcommand:
+.. _gdal_vsi_copy_subcommand:
 
 ================================================================================
-"gdal vfs copy" sub-command
+"gdal vsi copy" sub-command
 ================================================================================
 
 .. versionadded:: 3.11
 
 .. only:: html
 
-    Copy files located on GDAL Virtual file systems (VSI)
+    Copy files located on GDAL Virtual System Interface (VSI)
 
-.. Index:: gdal vfs copy
+.. Index:: gdal vsi copy
 
 Synopsis
 --------
 
-.. program-output:: gdal vfs copy --help-doc
+.. program-output:: gdal vsi copy --help-doc
 
 Description
 -----------
 
-:program:`gdal vfs copy` copy files and directories located on :ref:`virtual_file_systems`.
+:program:`gdal vsi copy` copy files and directories located on :ref:`virtual_file_systems`.
 
 It can copy files and directories between different virtual file systems.
 
-This is the equivalent of the UNIX ``cp`` command, and ``gdal vfs cp`` is an
-alias for ``gdal vfs copy``.
+This is the equivalent of the UNIX ``cp`` command, and ``gdal vsi cp`` is an
+alias for ``gdal vsi copy``.
 
 Options
 +++++++
@@ -46,11 +46,11 @@ Examples
 
    .. code-block:: console
 
-       $ gdal vfs copy -r /vsis3/bucket/my_dir .
+       $ gdal vsi copy -r /vsis3/bucket/my_dir .
 
 .. example::
    :title: Copy recursively files from /vsis3/bucket/my_dir to local directory, *without* creating a my_dir directory, and with progress bar
 
    .. code-block:: console
 
-       $ gdal vfs copy --progress -r /vsis3/bucket/my_dir/* .
+       $ gdal vsi copy --progress -r /vsis3/bucket/my_dir/* .

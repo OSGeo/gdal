@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal vfs delete' testing
+# Purpose:  'gdal vsi delete' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -19,17 +19,17 @@ from osgeo import gdal
 
 
 def get_alg():
-    return gdal.GetGlobalAlgorithmRegistry()["vfs"]["delete"]
+    return gdal.GetGlobalAlgorithmRegistry()["vsi"]["delete"]
 
 
-def test_gdalalg_vfs_delete_empty_filename():
+def test_gdalalg_vsi_delete_empty_filename():
 
     alg = get_alg()
     with pytest.raises(Exception, match="Filename cannot be empty"):
         alg["filename"] = ""
 
 
-def test_gdalalg_vfs_delete_file(tmp_vsimem):
+def test_gdalalg_vsi_delete_file(tmp_vsimem):
 
     gdal.FileFromMemBuffer(tmp_vsimem / "test", "test")
 
@@ -40,7 +40,7 @@ def test_gdalalg_vfs_delete_file(tmp_vsimem):
     assert gdal.VSIStatL(tmp_vsimem / "test") is None
 
 
-def test_gdalalg_vfs_delete_file_not_existing():
+def test_gdalalg_vsi_delete_file_not_existing():
 
     alg = get_alg()
     alg["filename"] = "/i_do/not/exist"
@@ -48,7 +48,7 @@ def test_gdalalg_vfs_delete_file_not_existing():
         alg.Run()
 
 
-def test_gdalalg_vfs_delete_dir(tmp_path):
+def test_gdalalg_vsi_delete_dir(tmp_path):
 
     gdal.Mkdir(tmp_path / "subdir", 0o755)
 
@@ -60,7 +60,7 @@ def test_gdalalg_vfs_delete_dir(tmp_path):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="incompatible platform")
-def test_gdalalg_vfs_delete_file_failed():
+def test_gdalalg_vsi_delete_file_failed():
 
     alg = get_alg()
     alg["filename"] = "/dev/null"
@@ -68,7 +68,7 @@ def test_gdalalg_vfs_delete_file_failed():
         alg.Run()
 
 
-def test_gdalalg_vfs_delete_dir_recursive(tmp_path):
+def test_gdalalg_vsi_delete_dir_recursive(tmp_path):
 
     gdal.Mkdir(tmp_path / "subdir", 0o755)
     open(tmp_path / "subdir" / "file", "wb").close()

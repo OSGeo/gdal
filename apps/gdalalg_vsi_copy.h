@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vfs copy" subcommand
+ * Purpose:  gdal "vsi copy" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,31 +10,31 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_VFS_COPY_INCLUDED
-#define GDALALG_VFS_COPY_INCLUDED
+#ifndef GDALALG_VSI_COPY_INCLUDED
+#define GDALALG_VSI_COPY_INCLUDED
 
 #include "gdalalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                          GDALVFSCopyAlgorithm                        */
+/*                          GDALVSICopyAlgorithm                        */
 /************************************************************************/
 
-class GDALVFSCopyAlgorithm final : public GDALAlgorithm
+class GDALVSICopyAlgorithm final : public GDALAlgorithm
 {
   public:
     static constexpr const char *NAME = "copy";
     static constexpr const char *DESCRIPTION =
-        "Copy files located on GDAL Virtual file systems (VSI).";
-    static constexpr const char *HELP_URL = "/programs/gdal_vfs_copy.html";
+        "Copy files located on GDAL Virtual System Interface (VSI).";
+    static constexpr const char *HELP_URL = "/programs/gdal_vsi_copy.html";
 
     static std::vector<std::string> GetAliasesStatic()
     {
         return {"cp"};
     }
 
-    GDALVFSCopyAlgorithm();
+    GDALVSICopyAlgorithm();
 
   private:
     std::string m_source{};

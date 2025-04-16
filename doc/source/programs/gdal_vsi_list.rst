@@ -1,29 +1,29 @@
-.. _gdal_vfs_list_subcommand:
+.. _gdal_vsi_list_subcommand:
 
 ================================================================================
-"gdal vfs list" sub-command
+"gdal vsi list" sub-command
 ================================================================================
 
 .. versionadded:: 3.11
 
 .. only:: html
 
-    List files of one of the GDAL Virtual file systems (VSI)
+    List files of one of the GDAL Virtual System Interface (VSI)
 
-.. Index:: gdal vfs list
+.. Index:: gdal vsi list
 
 Synopsis
 --------
 
-.. program-output:: gdal vfs list --help-doc
+.. program-output:: gdal vsi list --help-doc
 
 Description
 -----------
 
-:program:`gdal vfs list` list files of :ref:`virtual_file_systems`.
+:program:`gdal vsi list` list files of :ref:`virtual_file_systems`.
 
-This is the equivalent of the UNIX ``ls`` command, and ``gdal vfs ls`` is an
-alias for ``gdal vfs list``.
+This is the equivalent of the UNIX ``ls`` command, and ``gdal vsi ls`` is an
+alias for ``gdal vsi list``.
 
 By default, it outputs file names, at the immediate level, without details,
 and in JSON format.
@@ -73,4 +73,4 @@ Examples
 
    .. code-block:: console
 
-       $ gdal vfs list -lR --of=text /vsis3/bucket
+       $ gdal vsi list -lR --of=text /vsis3/bucket

@@ -75,10 +75,10 @@ add_library(
   gdalalg_vector_select.cpp
   gdalalg_vector_sql.cpp
   gdalalg_vector_write.cpp
-  gdalalg_vfs.cpp
-  gdalalg_vfs_copy.cpp
-  gdalalg_vfs_delete.cpp
-  gdalalg_vfs_list.cpp
+  gdalalg_vsi.cpp
+  gdalalg_vsi_copy.cpp
+  gdalalg_vsi_delete.cpp
+  gdalalg_vsi_list.cpp
   gdalinfo_lib.cpp
   gdalbuildvrt_lib.cpp
   gdal_grid_lib.cpp

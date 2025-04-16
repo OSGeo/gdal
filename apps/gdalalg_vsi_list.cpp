@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vfs list" subcommand
+ * Purpose:  gdal "vsi list" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vfs_list.h"
+#include "gdalalg_vsi_list.h"
 
 #include "cpl_string.h"
 #include "cpl_time.h"
@@ -25,10 +25,10 @@
 #endif
 
 /************************************************************************/
-/*              GDALVFSListAlgorithm::GDALVFSListAlgorithm()            */
+/*              GDALVSIListAlgorithm::GDALVSIListAlgorithm()            */
 /************************************************************************/
 
-GDALVFSListAlgorithm::GDALVFSListAlgorithm()
+GDALVSIListAlgorithm::GDALVSIListAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL), m_oWriter(JSONPrint, this)
 {
     auto &arg = AddArg("filename", 0, _("File or directory name"), &m_filename)
@@ -58,10 +58,10 @@ GDALVFSListAlgorithm::GDALVFSListAlgorithm()
 }
 
 /************************************************************************/
-/*                   GDALVFSListAlgorithm::Print()                      */
+/*                   GDALVSIListAlgorithm::Print()                      */
 /************************************************************************/
 
-void GDALVFSListAlgorithm::Print(const char *str)
+void GDALVSIListAlgorithm::Print(const char *str)
 {
     if (m_stdout)
         fwrite(str, 1, strlen(str), stdout);
@@ -70,13 +70,13 @@ void GDALVFSListAlgorithm::Print(const char *str)
 }
 
 /************************************************************************/
-/*                  GDALVFSListAlgorithm::JSONPrint()                   */
+/*                  GDALVSIListAlgorithm::JSONPrint()                   */
 /************************************************************************/
 
-/* static */ void GDALVFSListAlgorithm::JSONPrint(const char *pszTxt,
+/* static */ void GDALVSIListAlgorithm::JSONPrint(const char *pszTxt,
                                                   void *pUserData)
 {
-    static_cast<GDALVFSListAlgorithm *>(pUserData)->Print(pszTxt);
+    static_cast<GDALVSIListAlgorithm *>(pUserData)->Print(pszTxt);
 }
 
 /************************************************************************/
@@ -97,10 +97,10 @@ static int GetDepth(const std::string &filename)
 }
 
 /************************************************************************/
-/*                 GDALVFSListAlgorithm::PrintEntry()                   */
+/*                 GDALVSIListAlgorithm::PrintEntry()                   */
 /************************************************************************/
 
-void GDALVFSListAlgorithm::PrintEntry(const VSIDIREntry *entry)
+void GDALVSIListAlgorithm::PrintEntry(const VSIDIREntry *entry)
 {
     std::string filename;
     if (m_format == "json" && m_JSONAsTree)
@@ -243,10 +243,10 @@ void GDALVFSListAlgorithm::PrintEntry(const VSIDIREntry *entry)
 }
 
 /************************************************************************/
-/*                    GDALVFSListAlgorithm::RunImpl()                   */
+/*                    GDALVSIListAlgorithm::RunImpl()                   */
 /************************************************************************/
 
-bool GDALVFSListAlgorithm::RunImpl(GDALProgressFunc, void *)
+bool GDALVSIListAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
     VSIStatBufL sStat;
     if (VSIStatL(m_filename.c_str(), &sStat) != 0)
