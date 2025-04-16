@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "vsi" subcommand
+ * Purpose:  gdal "vsi sozip" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -12,39 +12,28 @@
 
 #include "gdalalgorithm.h"
 
-#include "gdalalg_vsi_copy.h"
-#include "gdalalg_vsi_delete.h"
-#include "gdalalg_vsi_list.h"
-#include "gdalalg_vsi_sozip.h"
+//! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                           GDALVSIAlgorithm                           */
+/*                         GDALVSISOZIPAlgorithm                        */
 /************************************************************************/
 
-class GDALVSIAlgorithm final : public GDALAlgorithm
+class GDALVSISOZIPAlgorithm final : public GDALAlgorithm
 {
   public:
-    static constexpr const char *NAME = "vsi";
+    static constexpr const char *NAME = "sozip";
     static constexpr const char *DESCRIPTION =
-        "GDAL Virtual System Interface (VSI) commands.";
-    static constexpr const char *HELP_URL = "/programs/gdal_vsi.html";
+        "Seek-optimized ZIP (SOZIP) commands.";
+    static constexpr const char *HELP_URL = "/programs/gdal_vsi_sozip.html";
 
-    GDALVSIAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
-    {
-        RegisterSubAlgorithm<GDALVSICopyAlgorithm>();
-        RegisterSubAlgorithm<GDALVSIDeleteAlgorithm>();
-        RegisterSubAlgorithm<GDALVSIListAlgorithm>();
-        RegisterSubAlgorithm<GDALVSISOZIPAlgorithm>();
-    }
+    GDALVSISOZIPAlgorithm();
 
   private:
     bool RunImpl(GDALProgressFunc, void *) override
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The Run() method should not be called directly on the \"gdal "
-                 "vsi\" program.");
+                 "sozip\" program.");
         return false;
     }
 };
-
-GDAL_STATIC_REGISTER_ALG(GDALVSIAlgorithm);

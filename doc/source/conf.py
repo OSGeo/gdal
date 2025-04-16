@@ -261,7 +261,7 @@ man_pages = [
     ),
     (
         "programs/gdal_raster_clean_collar",
-        "gdal-raster-collar",
+        "gdal-raster-clean-collar",
         "Clean the collar of a raster dataset, removing noise",
         [author_evenr],
         1,
@@ -599,6 +599,13 @@ man_pages = [
         "programs/gdal_vsi_list",
         "gdal-vsi-list",
         "List files of one of the GDAL Virtual System Interface (VSI)",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vsi_sozip",
+        "gdal-vsi-sozip",
+        "SOZIP (Seek-Optimized ZIP) related commands.",
         [author_evenr],
         1,
     ),

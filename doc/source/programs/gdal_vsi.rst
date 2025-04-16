@@ -26,6 +26,7 @@ Available sub-commands
 - :ref:`gdal_vsi_copy_subcommand`
 - :ref:`gdal_vsi_delete_subcommand`
 - :ref:`gdal_vsi_list_subcommand`
+- :ref:`gdal_vsi_sozip_subcommand`
 
 Examples
 --------

@@ -68,6 +68,26 @@ def test_sozip_create(sozip_path, tmp_path):
 ###############################################################################
 
 
+def test_sozip_create_recurse(sozip_path, tmp_path):
+
+    gdal.Mkdir(tmp_path / "subdir", 0o755)
+    with gdal.VSIFile(tmp_path / "subdir" / "a", "wb") as f:
+        f.write(b"x" * 10001)
+
+    output_zip = str(tmp_path / "sozip.zip")
+
+    (out, err) = gdaltest.runexternal_out_and_err(
+        f"{sozip_path} -r --sozip-min-file-size 1000 --sozip-chunk-size 128 -j {output_zip} {tmp_path}"
+    )
+    assert err is None or err == "", "got error/warning"
+
+    md = gdal.GetFileMetadata(f"/vsizip/{output_zip}/a", "ZIP")
+    assert md["SOZIP_VALID"] == "YES"
+
+
+###############################################################################
+
+
 def test_sozip_append(sozip_path, tmp_path):
 
     output_zip = str(tmp_path / "sozip.zip")
@@ -109,6 +129,11 @@ def test_sozip_validate(sozip_path, tmp_path):
     assert err is None or err == "", "got error/warning"
     assert "File byte.tif has a valid SOZip index, using chunk_size = 128" in out
     assert "sozip.zip is a valid .zip file, and contains 1 SOZip-enabled file(s)" in out
+
+    (out2, err) = gdaltest.runexternal_out_and_err(
+        f"{sozip_path} --validate --verbose {output_zip}"
+    )
+    assert len(out2) > len(out)
 
 
 ###############################################################################

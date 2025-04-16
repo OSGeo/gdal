@@ -91,6 +91,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vsi_copy
    gdal_vsi_delete
    gdal_vsi_list
+   gdal_vsi_sozip
 
 .. only:: html
 
@@ -161,6 +162,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vsi_copy_subcommand`: Copy files located on GDAL Virtual System Interface (VSI)
     - :ref:`gdal_vsi_delete_subcommand`: Delete files located on GDAL Virtual System Interface (VSI)
     - :ref:`gdal_vsi_list_subcommand`: List files of one of the GDAL Virtual System Interface (VSI)
+    - :ref:`gdal_vsi_sozip_subcommand`: SOZIP (Seek-Optimized ZIP) related commands
 
 
 "Traditional" applications

@@ -79,6 +79,7 @@ add_library(
   gdalalg_vsi_copy.cpp
   gdalalg_vsi_delete.cpp
   gdalalg_vsi_list.cpp
+  gdalalg_vsi_sozip.cpp
   gdalinfo_lib.cpp
   gdalbuildvrt_lib.cpp
   gdal_grid_lib.cpp
