@@ -66,7 +66,6 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_tpi
    gdal_raster_tri
    gdal_raster_unscale
-   gdal_sozip
    gdal_vector
    gdal_vector_info
    gdal_vector_clip
@@ -92,6 +91,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vsi_copy
    gdal_vsi_delete
    gdal_vsi_list
+   gdal_vsi_sozip
 
 .. only:: html
 
@@ -136,7 +136,6 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_tpi_subcommand`: Generate a Topographic Position Index (TPI) map.
     - :ref:`gdal_raster_tri_subcommand`: Generate a Terrain Ruggedness Index (TRI) map.
     - :ref:`gdal_raster_unscale_subcommand`: Convert scaled values of a raster dataset into unscaled values.
-    - :ref:`gdal_sozip_command`: SOZIP (Seek-Optimized ZIP) related commands
     - :ref:`gdal_vector_command`: Entry point for vector commands
     - :ref:`gdal_vector_info_subcommand`: Get information on a vector dataset
     - :ref:`gdal_vector_clip_subcommand`: Clip a vector dataset
@@ -163,6 +162,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vsi_copy_subcommand`: Copy files located on GDAL Virtual System Interface (VSI)
     - :ref:`gdal_vsi_delete_subcommand`: Delete files located on GDAL Virtual System Interface (VSI)
     - :ref:`gdal_vsi_list_subcommand`: List files of one of the GDAL Virtual System Interface (VSI)
+    - :ref:`gdal_vsi_sozip_subcommand`: SOZIP (Seek-Optimized ZIP) related commands
 
 
 "Traditional" applications

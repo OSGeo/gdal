@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal sozip' testing
+# Purpose:  'gdal vsi sozip' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -19,14 +19,14 @@ import pytest
 from osgeo import gdal
 
 
-def test_gdalalg_sozip():
+def test_gdalalg_vsi_sozip():
     with pytest.raises(Exception, match="should not be called directly"):
-        gdal.GetGlobalAlgorithmRegistry()["sozip"].Run()
+        gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"].Run()
 
 
-def test_gdalalg_sozip_create_no_zip_extension():
+def test_gdalalg_vsi_sozip_create_no_zip_extension():
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["create"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["create"]
     with pytest.raises(Exception, match="Extension of zip filename should be .zip"):
         alg["output"] = "foo"
 
@@ -40,11 +40,11 @@ def create_source_files(tmp_vsimem):
 
 
 @pytest.mark.parametrize("enable_sozip", ["auto", "yes", "no"])
-def test_gdalalg_sozip_create(tmp_vsimem, enable_sozip):
+def test_gdalalg_vsi_sozip_create(tmp_vsimem, enable_sozip):
 
     create_source_files(tmp_vsimem)
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["create"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["create"]
     alg["input"] = tmp_vsimem / "b"
     alg["output"] = tmp_vsimem / "out.zip"
     alg["quiet"] = True
@@ -56,7 +56,7 @@ def test_gdalalg_sozip_create(tmp_vsimem, enable_sozip):
 
     assert gdal.VSIStatL(f"/vsizip/{tmp_vsimem}/out.zip/b").size == 40000
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["validate"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["validate"]
     alg["input"] = tmp_vsimem / "out.zip"
     assert alg.Run()
     if enable_sozip == "yes":
@@ -75,7 +75,7 @@ def test_gdalalg_sozip_create(tmp_vsimem, enable_sozip):
             in alg["output-string"]
         )
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["create"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["create"]
     alg["input"] = tmp_vsimem / "subdir" / "c"
     alg["output"] = tmp_vsimem / "out.zip"
     alg["no-paths"] = True
@@ -96,31 +96,31 @@ def test_gdalalg_sozip_create(tmp_vsimem, enable_sozip):
     assert md["Content-Type"] == "application/octet-stream"
 
 
-def test_gdalalg_sozip_create_non_existing_input(tmp_vsimem):
+def test_gdalalg_vsi_sozip_create_non_existing_input(tmp_vsimem):
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["create"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["create"]
     alg["input"] = tmp_vsimem / "non_existing"
     alg["output"] = tmp_vsimem / "out.zip"
     with pytest.raises(Exception, match="does not exist"):
         assert alg.Run()
 
 
-def test_gdalalg_sozip_create_non_existing_input_with_progress(tmp_vsimem):
+def test_gdalalg_vsi_sozip_create_non_existing_input_with_progress(tmp_vsimem):
     def my_progress(pct, msg, user_data):
         return True
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["create"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["create"]
     alg["input"] = tmp_vsimem / "non_existing"
     alg["output"] = tmp_vsimem / "out.zip"
     with pytest.raises(Exception, match="does not exist"):
         assert alg.Run(my_progress)
 
 
-def test_gdalalg_sozip_create_input_is_directory(tmp_vsimem):
+def test_gdalalg_vsi_sozip_create_input_is_directory(tmp_vsimem):
 
     gdal.Mkdir(tmp_vsimem / "dir", 0o755)
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["create"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["create"]
     alg["input"] = tmp_vsimem / "dir"
     alg["output"] = tmp_vsimem / "out.zip"
     with pytest.raises(Exception, match="is a directory"):
@@ -128,9 +128,9 @@ def test_gdalalg_sozip_create_input_is_directory(tmp_vsimem):
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="not linux")
-def test_gdalalg_sozip_create_failed_adding(tmp_path):
+def test_gdalalg_vsi_sozip_create_failed_adding(tmp_path):
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["create"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["create"]
     input_filename = tmp_path / "cannot_read"
     open(input_filename, "wb").close()
     os.chmod(input_filename, 0)
@@ -140,11 +140,11 @@ def test_gdalalg_sozip_create_failed_adding(tmp_path):
         assert alg.Run()
 
 
-def test_gdalalg_sozip_create_recursive_and_optimize_and_validate(tmp_vsimem):
+def test_gdalalg_vsi_sozip_create_recursive_and_optimize_and_validate(tmp_vsimem):
 
     create_source_files(tmp_vsimem)
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["create"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["create"]
     alg["input"] = tmp_vsimem
     alg["recursive"] = True
     alg["output"] = tmp_vsimem / "out.zip"
@@ -171,7 +171,7 @@ def test_gdalalg_sozip_create_recursive_and_optimize_and_validate(tmp_vsimem):
     assert gdal.VSIStatL(f"/vsizip/{tmp_vsimem}/out.zip{tmp_vsimem}/b").size == 40000
     assert gdal.VSIStatL(f"/vsizip/{tmp_vsimem}/out.zip{tmp_vsimem}/subdir/c").size == 1
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["optimize"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["optimize"]
     alg["input"] = tmp_vsimem / "out.zip"
     alg["output"] = tmp_vsimem / "out2.zip"
     assert alg.Run()
@@ -185,19 +185,19 @@ def test_gdalalg_sozip_create_recursive_and_optimize_and_validate(tmp_vsimem):
         gdal.VSIStatL(f"/vsizip/{tmp_vsimem}/out2.zip{tmp_vsimem}/subdir/c").size == 1
     )
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["optimize"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["optimize"]
     alg["input"] = tmp_vsimem / "out.zip"
     alg["output"] = tmp_vsimem / "out2.zip"
     with pytest.raises(Exception, match="already exists. Use --overwrite"):
         alg.Run()
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["optimize"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["optimize"]
     alg["input"] = tmp_vsimem / "i_do_not_exist.zip"
     alg["output"] = tmp_vsimem / "out3.zip"
     with pytest.raises(Exception, match="is not a valid .zip file"):
         alg.Run()
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["validate"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["validate"]
     alg["input"] = tmp_vsimem / "out.zip"
     assert alg.Run()
     assert "a has a valid SOZip index, using chunk_size = 32768" in alg["output-string"]
@@ -207,17 +207,17 @@ def test_gdalalg_sozip_create_recursive_and_optimize_and_validate(tmp_vsimem):
     )
 
 
-def test_gdalalg_sozip_list_not_a_zip():
+def test_gdalalg_vsi_sozip_list_not_a_zip():
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["list"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["list"]
     alg["input"] = "/i_do/not/exist.zip"
     with pytest.raises(Exception, match="is not a valid .zip file"):
         assert alg.Run()
 
 
-def test_gdalalg_sozip_validate_not_a_zip():
+def test_gdalalg_vsi_sozip_validate_not_a_zip():
 
-    alg = gdal.GetGlobalAlgorithmRegistry()["sozip"]["validate"]
+    alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["validate"]
     alg["input"] = "/i_do/not/exist.zip"
     with pytest.raises(Exception, match="is not a valid .zip file"):
         assert alg.Run()

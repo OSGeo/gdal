@@ -435,13 +435,6 @@ man_pages = [
         1,
     ),
     (
-        "programs/gdal_sozip",
-        "gdal-sozip",
-        "SOZIP (Seek-Optimized ZIP) related commands.",
-        [author_evenr],
-        1,
-    ),
-    (
         "programs/gdal_vector",
         "gdal-vector",
         "Entry point for vector commands",
@@ -606,6 +599,13 @@ man_pages = [
         "programs/gdal_vsi_list",
         "gdal-vsi-list",
         "List files of one of the GDAL Virtual System Interface (VSI)",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vsi_sozip",
+        "gdal-vsi-sozip",
+        "SOZIP (Seek-Optimized ZIP) related commands.",
         [author_evenr],
         1,
     ),

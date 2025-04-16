@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalgorithm.h"
+#include "gdalalg_vsi_sozip.h"
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -25,15 +25,16 @@
 #endif
 
 /************************************************************************/
-/*                    GDALSOZIPCreateBaseAlgorithm                      */
+/*                    GDALVSISOZIPCreateBaseAlgorithm                   */
 /************************************************************************/
 
-class GDALSOZIPCreateBaseAlgorithm /* non final */ : public GDALAlgorithm
+class GDALVSISOZIPCreateBaseAlgorithm /* non final */ : public GDALAlgorithm
 {
   protected:
-    GDALSOZIPCreateBaseAlgorithm(const std::string &name,
-                                 const std::string &description,
-                                 const std::string &helpURL, bool optimizeFrom)
+    GDALVSISOZIPCreateBaseAlgorithm(const std::string &name,
+                                    const std::string &description,
+                                    const std::string &helpURL,
+                                    bool optimizeFrom)
         : GDALAlgorithm(name, description, helpURL),
           m_optimizeFrom(optimizeFrom)
     {
@@ -143,11 +144,11 @@ class GDALSOZIPCreateBaseAlgorithm /* non final */ : public GDALAlgorithm
 };
 
 /************************************************************************/
-/*                 GDALSOZIPCreateBaseAlgorithm::RunImpl()              */
+/*                GDALVSISOZIPCreateBaseAlgorithm::RunImpl()            */
 /************************************************************************/
 
-bool GDALSOZIPCreateBaseAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                           void *pProgressData)
+bool GDALVSISOZIPCreateBaseAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                              void *pProgressData)
 {
     CPLStringList aosOptions;
     aosOptions.SetNameValue("SOZIP_ENABLED", m_mode.c_str());
@@ -343,54 +344,55 @@ bool GDALSOZIPCreateBaseAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                     GDALSOZIPCreateAlgorithm                         */
+/*                    GDALVSISOZIPCreateAlgorithm                       */
 /************************************************************************/
 
-class GDALSOZIPCreateAlgorithm final : public GDALSOZIPCreateBaseAlgorithm
+class GDALVSISOZIPCreateAlgorithm final : public GDALVSISOZIPCreateBaseAlgorithm
 {
   public:
     static constexpr const char *NAME = "create";
     static constexpr const char *DESCRIPTION =
         "Create a Seek-optimized ZIP (SOZIP) file.";
-    static constexpr const char *HELP_URL = "/programs/gdal_sozip.html";
+    static constexpr const char *HELP_URL = "/programs/gdal_vsi_sozip.html";
 
-    GDALSOZIPCreateAlgorithm()
-        : GDALSOZIPCreateBaseAlgorithm(NAME, DESCRIPTION, HELP_URL, false)
+    GDALVSISOZIPCreateAlgorithm()
+        : GDALVSISOZIPCreateBaseAlgorithm(NAME, DESCRIPTION, HELP_URL, false)
     {
     }
 };
 
 /************************************************************************/
-/*                   GDALSOZIPOptimizeAlgorithm                         */
+/*                  GDALVSISOZIPOptimizeAlgorithm                       */
 /************************************************************************/
 
-class GDALSOZIPOptimizeAlgorithm final : public GDALSOZIPCreateBaseAlgorithm
+class GDALVSISOZIPOptimizeAlgorithm final
+    : public GDALVSISOZIPCreateBaseAlgorithm
 {
   public:
     static constexpr const char *NAME = "optimize";
     static constexpr const char *DESCRIPTION =
         "Create a Seek-optimized ZIP (SOZIP) file from a regular ZIP file.";
-    static constexpr const char *HELP_URL = "/programs/gdal_sozip.html";
+    static constexpr const char *HELP_URL = "/programs/gdal_vsi_sozip.html";
 
-    GDALSOZIPOptimizeAlgorithm()
-        : GDALSOZIPCreateBaseAlgorithm(NAME, DESCRIPTION, HELP_URL, true)
+    GDALVSISOZIPOptimizeAlgorithm()
+        : GDALVSISOZIPCreateBaseAlgorithm(NAME, DESCRIPTION, HELP_URL, true)
     {
     }
 };
 
 /************************************************************************/
-/*                      GDALSOZIPListAlgorithm                          */
+/*                      GDALVSISOZIPListAlgorithm                       */
 /************************************************************************/
 
-class GDALSOZIPListAlgorithm final : public GDALAlgorithm
+class GDALVSISOZIPListAlgorithm final : public GDALAlgorithm
 {
   public:
     static constexpr const char *NAME = "list";
     static constexpr const char *DESCRIPTION =
         "List content of a ZIP file, with SOZIP related information.";
-    static constexpr const char *HELP_URL = "/programs/gdal_sozip.html";
+    static constexpr const char *HELP_URL = "/programs/gdal_vsi_sozip.html";
 
-    GDALSOZIPListAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+    GDALVSISOZIPListAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
         AddArg("input", 'i', _("Input ZIP filename"), &m_zipFilename)
             .SetRequired()
@@ -406,10 +408,10 @@ class GDALSOZIPListAlgorithm final : public GDALAlgorithm
 };
 
 /************************************************************************/
-/*                 GDALSOZIPListAlgorithm::RunImpl()                    */
+/*                 GDALVSISOZIPListAlgorithm::RunImpl()                 */
 /************************************************************************/
 
-bool GDALSOZIPListAlgorithm::RunImpl(GDALProgressFunc, void *)
+bool GDALVSISOZIPListAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
     std::unique_ptr<VSIDIR, decltype(&VSICloseDir)> psDir(
         VSIOpenDir(std::string("/vsizip/").append(m_zipFilename).c_str(), -1,
@@ -471,18 +473,18 @@ bool GDALSOZIPListAlgorithm::RunImpl(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                      GDALSOZIPValidateAlgorithm                      */
+/*                      GDALVSISOZIPValidateAlgorithm                   */
 /************************************************************************/
 
-class GDALSOZIPValidateAlgorithm final : public GDALAlgorithm
+class GDALVSISOZIPValidateAlgorithm final : public GDALAlgorithm
 {
   public:
     static constexpr const char *NAME = "validate";
     static constexpr const char *DESCRIPTION =
         "Validate a ZIP file, possibly using SOZIP optimization.";
-    static constexpr const char *HELP_URL = "/programs/gdal_sozip.html";
+    static constexpr const char *HELP_URL = "/programs/gdal_vsi_sozip.html";
 
-    GDALSOZIPValidateAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+    GDALVSISOZIPValidateAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
         AddArg("input", 'i', _("Input ZIP filename"), &m_zipFilename)
             .SetRequired()
@@ -523,10 +525,10 @@ class GDALSOZIPValidateAlgorithm final : public GDALAlgorithm
 };
 
 /************************************************************************/
-/*                 GDALSOZIPValidateAlgorithm::RunImpl()                */
+/*                 GDALVSISOZIPValidateAlgorithm::RunImpl()             */
 /************************************************************************/
 
-bool GDALSOZIPValidateAlgorithm::RunImpl(GDALProgressFunc, void *)
+bool GDALVSISOZIPValidateAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
     std::unique_ptr<VSIDIR, decltype(&VSICloseDir)> psDir(
         VSIOpenDir(std::string("/vsizip/").append(m_zipFilename).c_str(), -1,
@@ -839,35 +841,16 @@ bool GDALSOZIPValidateAlgorithm::RunImpl(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                         GDALSOZIPAlgorithm                           */
+/*               GDALVSISOZIPAlgorithm::GDALVSISOZIPAlgorithm()         */
 /************************************************************************/
 
-class GDALSOZIPAlgorithm final : public GDALAlgorithm
+GDALVSISOZIPAlgorithm::GDALVSISOZIPAlgorithm()
+    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
-  public:
-    static constexpr const char *NAME = "sozip";
-    static constexpr const char *DESCRIPTION =
-        "Seek-optimized ZIP (SOZIP) commands.";
-    static constexpr const char *HELP_URL = "/programs/gdal_sozip.html";
-
-    GDALSOZIPAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
-    {
-        RegisterSubAlgorithm<GDALSOZIPCreateAlgorithm>();
-        RegisterSubAlgorithm<GDALSOZIPOptimizeAlgorithm>();
-        RegisterSubAlgorithm<GDALSOZIPListAlgorithm>();
-        RegisterSubAlgorithm<GDALSOZIPValidateAlgorithm>();
-    }
-
-  private:
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "The Run() method should not be called directly on the \"gdal "
-                 "sozip\" program.");
-        return false;
-    }
-};
-
-GDAL_STATIC_REGISTER_ALG(GDALSOZIPAlgorithm);
+    RegisterSubAlgorithm<GDALVSISOZIPCreateAlgorithm>();
+    RegisterSubAlgorithm<GDALVSISOZIPOptimizeAlgorithm>();
+    RegisterSubAlgorithm<GDALVSISOZIPListAlgorithm>();
+    RegisterSubAlgorithm<GDALVSISOZIPValidateAlgorithm>();
+}
 
 //! @endcond

@@ -45,7 +45,6 @@ add_library(
   gdalalg_raster_tri.cpp
   gdalalg_raster_unscale.cpp
   gdalalg_raster_write.cpp
-  gdalalg_sozip.cpp
   gdalalg_vector.cpp
   gdalalg_vector_info.cpp
   gdalalg_vector_clip.cpp
@@ -80,6 +79,7 @@ add_library(
   gdalalg_vsi_copy.cpp
   gdalalg_vsi_delete.cpp
   gdalalg_vsi_list.cpp
+  gdalalg_vsi_sozip.cpp
   gdalinfo_lib.cpp
   gdalbuildvrt_lib.cpp
   gdal_grid_lib.cpp

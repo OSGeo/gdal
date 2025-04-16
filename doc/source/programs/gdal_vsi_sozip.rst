@@ -1,7 +1,7 @@
-.. _gdal_sozip_command:
+.. _gdal_vsi_sozip_subcommand:
 
 ================================================================================
-"gdal sozip" command
+"gdal vsi sozip" command
 ================================================================================
 
 .. versionadded:: 3.11
@@ -10,12 +10,12 @@
 
     SOZIP (Seek-Optimized ZIP) related commands
 
-.. Index:: gdal sozip
+.. Index:: gdal vsi sozip
 
 Description
 -----------
 
-The :program:`gdal sozip` utility can be used to:
+The :program:`gdal vsi sozip` utility can be used to:
 
 - create a :ref:`sozip_intro` file
 - append files to an existing ZIP/SOZip file
@@ -26,11 +26,11 @@ The :program:`gdal sozip` utility can be used to:
 Synopsis
 --------
 
-.. program-output:: gdal sozip --help-doc
+.. program-output:: gdal vsi sozip --help-doc
 
 
-"gdal sozip create"
--------------------
+"gdal vsi sozip create"
+-----------------------
 
 Description
 +++++++++++
@@ -40,7 +40,7 @@ Adds one or several files to a new or existing zip file.
 Synopsis
 ++++++++
 
-.. program-output:: gdal sozip create --help-doc
+.. program-output:: gdal vsi sozip create --help-doc
 
 Options
 +++++++
@@ -112,18 +112,18 @@ Examples
 
    .. code-block:: bash
 
-        gdal sozip create my.gpkg my.gpkg.zip
+        gdal vsi sozip create my.gpkg my.gpkg.zip
 
 .. example::
    :title: Create a, potentially seek-optimized, ZIP file from the content of a source directory:
 
    .. code-block:: bash
 
-       gdal sozip create -r source_dir/ my.gpkg.zip
+       gdal vsi sozip create -r source_dir/ my.gpkg.zip
 
 
-"gdal sozip optimize"
----------------------
+"gdal vsi sozip optimize"
+-------------------------
 
 Description
 +++++++++++
@@ -134,7 +134,7 @@ SOZip optimization when relevant.
 Synopsis
 ++++++++
 
-.. program-output:: gdal sozip optimize --help-doc
+.. program-output:: gdal vsi sozip optimize --help-doc
 
 Options
 +++++++
@@ -190,11 +190,11 @@ Examples
 
    .. code-block:: bash
 
-        gdal sozip optimize in.zip sozip_optimized.zip
+        gdal vsi sozip optimize in.zip sozip_optimized.zip
 
 
-"gdal sozip list"
------------------
+"gdal vsi sozip list"
+---------------------
 
 Description
 +++++++++++
@@ -206,7 +206,7 @@ whether each file is seek-optimized.
 Synopsis
 ++++++++
 
-.. program-output:: gdal sozip list --help-doc
+.. program-output:: gdal vsi sozip list --help-doc
 
 Options
 +++++++
@@ -223,11 +223,11 @@ Examples
 
    .. code-block:: bash
 
-        gdal sozip list my.zip
+        gdal vsi sozip list my.zip
 
 
-"gdal sozip validate"
----------------------
+"gdal vsi sozip validate"
+-------------------------
 
 Description
 +++++++++++
@@ -240,7 +240,7 @@ done in a more thorougful way.
 Synopsis
 ++++++++
 
-.. program-output:: gdal sozip list --help-doc
+.. program-output:: gdal vsi sozip list --help-doc
 
 Options
 +++++++
@@ -265,4 +265,4 @@ Examples
 
    .. code-block:: bash
 
-        gdal sozip validate my.zip
+        gdal vsi sozip validate my.zip
