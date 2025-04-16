@@ -339,10 +339,35 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     // Execute the viewshed algorithm.
     GDALRasterBand *pDstBand = poDstDS->GetRasterBand(1);
     ViewshedExecutor executor(*pSrcBand, *pDstBand, nX, nY, oOutExtent,
-                              oCurExtent, oOpts, oProgress);
+                              oCurExtent, oOpts, oProgress,
+                              /* emitWarningIfNoData = */ true);
     executor.run();
     oProgress.emit(1);
     return static_cast<bool>(poDstDS);
+}
+
+// Adjust the coefficient of curvature for non-earth SRS.
+/// \param curveCoeff  Current curve coefficient
+/// \param hSrcDS  Source dataset
+/// \return  Adjusted curve coefficient.
+double adjustCurveCoeff(double curveCoeff, GDALDatasetH hSrcDS)
+{
+    const OGRSpatialReference *poSRS =
+        GDALDataset::FromHandle(hSrcDS)->GetSpatialRef();
+    if (poSRS)
+    {
+        OGRErr eSRSerr;
+        const double dfSemiMajor = poSRS->GetSemiMajor(&eSRSerr);
+        if (eSRSerr != OGRERR_FAILURE &&
+            fabs(dfSemiMajor - SRS_WGS84_SEMIMAJOR) >
+                0.05 * SRS_WGS84_SEMIMAJOR)
+        {
+            curveCoeff = 1.0;
+            CPLDebug("gdal_viewshed",
+                     "Using -cc=1.0 as a non-Earth CRS has been detected");
+        }
+    }
+    return curveCoeff;
 }
 
 }  // namespace viewshed

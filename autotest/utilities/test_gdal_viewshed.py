@@ -46,11 +46,9 @@ def viewshed_input(tmp_path):
 
     fname = str(tmp_path / "test_gdal_viewshed_in.tif")
 
-    gdaltest.runexternal(
-        test_cli_utilities.get_gdalwarp_path()
-        + " -t_srs EPSG:32617 -overwrite ../gdrivers/data/n43.tif "
-        + fname,
-    )
+    ds = gdal.Warp(fname, "../gdrivers/data/n43.tif", dstSRS="EPSG:32617")
+    ds.GetRasterBand(1).DeleteNoDataValue()
+    ds.Close()
 
     return fname
 

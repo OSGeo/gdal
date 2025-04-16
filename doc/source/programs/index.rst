@@ -66,6 +66,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_tpi
    gdal_raster_tri
    gdal_raster_unscale
+   gdal_raster_viewshed
    gdal_vector
    gdal_vector_info
    gdal_vector_clip
@@ -136,6 +137,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_tpi_subcommand`: Generate a Topographic Position Index (TPI) map.
     - :ref:`gdal_raster_tri_subcommand`: Generate a Terrain Ruggedness Index (TRI) map.
     - :ref:`gdal_raster_unscale_subcommand`: Convert scaled values of a raster dataset into unscaled values.
+    - :ref:`gdal_raster_viewshed_subcommand`: Compute the viewshed of a raster dataset.
     - :ref:`gdal_vector_command`: Entry point for vector commands
     - :ref:`gdal_vector_info_subcommand`: Get information on a vector dataset
     - :ref:`gdal_vector_clip_subcommand`: Clip a vector dataset

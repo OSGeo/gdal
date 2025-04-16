@@ -435,6 +435,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_viewshed",
+        "gdal-raster-viewshed",
+        "Compute the viewshed of a raster dataset.",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector",
         "gdal-vector",
         "Entry point for vector commands",

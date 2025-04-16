@@ -45,6 +45,7 @@ Available sub-commands
 - :ref:`gdal_raster_tpi_subcommand`
 - :ref:`gdal_raster_tri_subcommand`
 - :ref:`gdal_raster_unscale_subcommand`
+- :ref:`gdal_raster_viewshed_subcommand`
 
 Examples
 --------

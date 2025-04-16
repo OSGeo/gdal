@@ -35,13 +35,24 @@ class ViewshedExecutor
   public:
     ViewshedExecutor(GDALRasterBand &srcBand, GDALRasterBand &dstBand, int nX,
                      int nY, const Window &oOutExtent, const Window &oCurExtent,
-                     const Options &opts, Progress &oProgress);
+                     const Options &opts, Progress &oProgress,
+                     bool emitWarningIfNoData);
     bool run();
+
+    /** Return whether an input pixel is at the nodata value. */
+    bool hasFoundNoData() const
+    {
+        return m_hasFoundNoData;
+    }
 
   private:
     CPLWorkerThreadPool m_pool;
     GDALRasterBand &m_srcBand;
     GDALRasterBand &m_dstBand;
+    double m_noDataValue = 0;
+    bool m_hasNoData = false;
+    bool m_emitWarningIfNoData = false;
+    bool m_hasFoundNoData = false;
     const Window oOutExtent;
     const Window oCurExtent;
     const int m_nX;
