@@ -55,6 +55,7 @@ class GDALRasterContourAlgorithm final : public GDALAlgorithm
     std::vector<std::string> m_inputFormats{};
     GDALArgDatasetValue m_outputDataset{};
     std::vector<std::string> m_creationOptions{};
+    std::vector<std::string> m_layerCreationOptions{};
 
     // gdal_contour specific arguments
     int m_band = 1;                   // -b

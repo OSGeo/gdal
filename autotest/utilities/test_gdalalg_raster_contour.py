@@ -132,7 +132,7 @@ cellsize     1
 
     gdal.FileFromMemBuffer(tmp_filename, dem.encode("ascii"))
 
-    pipeline = get_contour_alg()
+    alg = get_contour_alg()
     alg_options = [
         tmp_filename,
         tmp_out_filename,
@@ -144,11 +144,11 @@ cellsize     1
 
     if isinstance(expected_elev_values, str):
         with pytest.raises(RuntimeError):
-            assert pipeline.ParseRunAndFinalize(alg_options)
+            assert alg.ParseRunAndFinalize(alg_options)
         assert gdal.GetLastErrorMsg() == expected_elev_values
 
     else:
-        assert pipeline.ParseRunAndFinalize(alg_options)
+        assert alg.ParseRunAndFinalize(alg_options)
 
         with gdal.OpenEx(tmp_out_filename) as ds:
             lyr = ds.GetLayer()
@@ -179,7 +179,7 @@ cellsize     1
 
     gdal.FileFromMemBuffer(tmp_filename, dem.encode("ascii"))
 
-    pipeline = get_contour_alg()
+    alg = get_contour_alg()
     alg_options = [
         tmp_filename,
         tmp_out_filename,
@@ -191,14 +191,35 @@ cellsize     1
         "ELEV_MAX",
     ]
 
-    assert pipeline.ParseRunAndFinalize(alg_options)
+    assert alg.ParseRunAndFinalize(alg_options)
 
     # Run it again without --overwrite
-    pipeline = get_contour_alg()
+    alg = get_contour_alg()
     with pytest.raises(RuntimeError, match="already exists"):
-        pipeline.ParseRunAndFinalize(alg_options)
+        alg.ParseRunAndFinalize(alg_options)
 
     # Run it again with --overwrite
-    pipeline = get_contour_alg()
+    alg = get_contour_alg()
     alg_options.append("--overwrite")
-    assert pipeline.ParseRunAndFinalize(alg_options)
+    assert alg.ParseRunAndFinalize(alg_options)
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_raster_contour_creation_options(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "out.gpkg"
+
+    alg = get_contour_alg()
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["output"] = out_filename
+    alg["interval"] = 10
+    alg["creation-option"] = {"METADATA_TABLES": "YES"}
+    alg["layer-creation-option"] = {"DESCRIPTION": "my_desc"}
+    assert alg.Run()
+    assert alg.Finalize()
+    with ogr.Open(out_filename) as ds:
+        with ds.ExecuteSQL(
+            "SELECT * FROM sqlite_master WHERE name LIKE '%metadata%'"
+        ) as sql_lyr:
+            assert sql_lyr.GetFeatureCount() == 2
+        assert ds.GetLayer(0).GetMetadata_Dict() == {"DESCRIPTION": "my_desc"}

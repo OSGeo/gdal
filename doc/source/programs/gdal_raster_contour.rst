@@ -32,6 +32,8 @@ Standard options
 
 .. include:: gdal_options/co.rst
 
+.. include:: options/lco.rst
+
 .. include:: gdal_options/overwrite.rst
 
 .. option:: -b, --band <BAND>
@@ -42,7 +44,7 @@ Standard options
 
     Provides a name for the output vector layer. Defaults to "contour".
 
-.. option:: -elevation-name <ELEVATION-NAME>
+.. option:: --elevation-name <ELEVATION-NAME>
 
     Provides a name for the attribute in which to put the elevation. If not provided no elevation attribute is attached. Ignored in polygonal contouring (-p) mode.
 

@@ -34,6 +34,7 @@ Available sub-commands
 - :ref:`gdal_raster_mosaic_subcommand`
 - :ref:`gdal_raster_overview_subcommand`
 - :ref:`gdal_raster_pipeline_subcommand`
+- :ref:`gdal_raster_polygonize_subcommand`
 - :ref:`gdal_raster_reproject_subcommand`
 - :ref:`gdal_raster_resize_subcommand`
 - :ref:`gdal_raster_roughness_subcommand`
