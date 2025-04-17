@@ -36,6 +36,7 @@ class GDALRasterClipAlgorithm /* non final */
 
     std::vector<double> m_bbox{};
     std::string m_bboxCrs{};
+    bool m_allowExtentOutsideSource{false};
     GDALArgDatasetValue m_likeDataset{};
 };
 

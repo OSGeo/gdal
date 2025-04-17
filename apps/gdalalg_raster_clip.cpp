@@ -40,6 +40,9 @@ GDALRasterClipAlgorithm::GDALRasterClipAlgorithm(bool standaloneStep)
            &m_likeDataset, GDAL_OF_RASTER)
         .SetMetaVar("DATASET")
         .SetMutualExclusionGroup("exclusion-group");
+    AddArg("allow-bbox-outside-source", 0,
+           _("Allow clipping box to include pixels outside input dataset"),
+           &m_allowExtentOutsideSource);
 }
 
 /************************************************************************/
@@ -55,7 +58,6 @@ bool GDALRasterClipAlgorithm::RunStep(GDALProgressFunc, void *)
     CPLStringList aosOptions;
     aosOptions.AddString("-of");
     aosOptions.AddString("VRT");
-    aosOptions.AddString("-eco");
     if (!m_bbox.empty())
     {
         aosOptions.AddString("-projwin");
@@ -124,6 +126,13 @@ bool GDALRasterClipAlgorithm::RunStep(GDALProgressFunc, void *)
         ReportError(CE_Failure, CPLE_AppDefined,
                     "Either --bbox or --like must be specified");
         return false;
+    }
+
+    if (!m_allowExtentOutsideSource)
+    {
+        // Unless we've specifically allowed the bounding box to extend beyond
+        // the source raster, raise an error.
+        aosOptions.AddString("-epo");
     }
 
     GDALTranslateOptions *psOptions =
