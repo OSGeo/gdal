@@ -13,7 +13,7 @@
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 
 def get_reproject_alg():
@@ -33,15 +33,13 @@ def test_gdalalg_raster_reproject(tmp_vsimem):
         return True
 
     alg = get_reproject_alg()
-    assert alg.ParseRunAndFinalize(
-        [
-            "--src-crs=EPSG:32611",
-            "--dst-crs=EPSG:4326",
-            "../gcore/data/byte.tif",
-            out_filename,
-        ],
-        my_progress,
-    )
+    alg["src-crs"] = "EPSG:32611"
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    alg["dst-crs"] = srs
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["output"] = out_filename
+    assert alg.Run(my_progress) and alg.Finalize()
     assert last_pct[0] == 1.0
 
     with gdal.OpenEx(out_filename) as ds:

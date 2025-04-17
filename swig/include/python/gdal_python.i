@@ -5875,6 +5875,8 @@ class VSIFile(BytesIO):
                     return self.SetAsString(str(value))
             elif isinstance(value, str) or isinstance(value, float) or isinstance(value, os.PathLike):
                 return self.SetAsString(str(value))
+            elif isinstance(value, osr.SpatialReference):
+                return self.SetAsString(value.ExportToWkt(["FORMAT=WKT2_2019"]))
             elif isinstance(value, list) and len(value) >= 1 and (isinstance(value[0], str) or isinstance(value[0], int) or isinstance(value[0], float) or isinstance(value[0], os.PathLike)):
                 if len(value) > 1:
                     raise RuntimeError("Only one value supported for an argument of type String")
