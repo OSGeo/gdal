@@ -19,7 +19,7 @@ Description
 -----------
 
 The :program:`gdal_translate` utility can be used to convert raster data between
-different formats, potentially performing some operations like subsettings,
+different formats, potentially performing some operations like subsetting,
 resampling, and rescaling pixels in the process.
 
 .. program:: gdal_translate
@@ -72,7 +72,7 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -tr <xres> <yres>
 
-    set target resolution. The values must be expressed in georeferenced units.
+    Set target resolution. The values must be expressed in georeferenced units.
     Both must be positive values. This is mutually exclusive with
     :option:`-outsize`, :option:`-a_ullr`, and :option:`-a_gt`.
 
@@ -87,13 +87,13 @@ resampling, and rescaling pixels in the process.
     equal to 1, to select an overview level below the AUTO one. Or specify NONE to
     force the base resolution to be used (can be useful if overviews have been
     generated with a low quality resampling method, and a higher quality resampling method
-    is specified with :option:`-r`.
+    is specified with :option:`-r`.)
 
-    When :option:`-ovr` is specified to an integer value,
-    and none of :option:`-outsize` and :option:`-tr` is specified, the size of
+    When :option:`-ovr` is specified as an integer value,
+    and neither :option:`-outsize` nor :option:`-tr` is specified, the size of
     the overview will be used as the output size.
 
-    When :option:`-ovr` is specified, values of :option:`-srcwin`, when specified,
+    When :option:`-ovr` is specified, values of :option:`-srcwin`
     should be expressed as pixel offset and size of the full resolution source dataset.
     Similarly when using :option:`-outsize` with percentage values, they refer to the size
     of the full resolution source dataset.
@@ -165,7 +165,7 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -unscale
 
-    Apply the scale/offset metadata for the bands to convert scaled values to
+    Apply the scale/offset metadata for the bands to convert linearly-scaled values to
     unscaled values.  It is also often necessary to reset the output datatype
     with the :option:`-ot` switch.
     The unscaled value is computed from the scaled raw value with the following
@@ -176,22 +176,41 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -srcwin <xoff> <yoff> <xsize> <ysize>
 
-    Selects a subwindow from the source image for copying based on pixel/line location.
+    Selects a subwindow from the source image for copying based on pixel/line
+    location. Pixel/line offsets (``xoff`` and ``yoff``) are measured from the
+    left and top of the image.
+    If the subwindow extends beyond the bounds of the source dataset,
+    output pixels will be written with a value of zero, unless a NoData value is
+    defined either in the source dataset or by :option:`-a_nodata`.
+    Alternatively, :program:`gdal_translate` can issue an error in this case
+    if so directed by options :option:`-epo` or :option:`-eco`.
 
 .. option:: -projwin <ulx> <uly> <lrx> <lry>
 
     Selects a subwindow from the source image for copying
     (like :option:`-srcwin`) but with the corners given in georeferenced
     coordinates (by default expressed in the SRS of the dataset. Can be
-    changed with :option:`-projwin_srs`).
+    changed with :option:`-projwin_srs`). If the subwindow extends beyond
+    the bounds of the source dataset, output pixels will be written with a value
+    of zero, unless a NoData value is defined either in the source dataset or
+    by :option:`-a_nodata`. Alternatively, :program:`gdal_translate` can issue
+    an error in this case if so directed by options :option:`-epo` or :option:`-eco`.
+
+    .. note::
+
+        Beginning with GDAL 3.11, the extent described by :option:`-projwin` will
+        be transformed into the dataset SRS and used to select a subwindow.
+        Before GDAL 3.11, only the two corner points were transformed into the
+        dataset SRS, and these two transformed points were used to define an extent
+        in the dataset SRS. Depending on the SRS involved, the subwindow selected in 
+        GDAL 3.11 may be substantially larger than in previous versions.
 
     .. note::
 
         When using nearest-neighbor resampling, the window specified by 
-        :option:`-projwin` is expanded if necessary to match input
-        pixel boundaries. For other resampling algorithms, the window
+        :option:`-projwin` is expanded (rounded, for GDAL < 3.11) if necessary
+        to match input pixel boundaries. For other resampling algorithms, the window
         is not modified.
-
 
 .. option:: -projwin_srs <srs_def>
 
@@ -207,7 +226,7 @@ resampling, and rescaling pixels in the process.
     (Error when Partially Outside) If this option is set, :option:`-srcwin` or
     :option:`-projwin` values that falls partially outside the source raster
     extent will be considered as an error. The default behavior is to accept
-    such requests, when they were considered as an error before.
+    such requests.
 
 .. option:: -eco
 
