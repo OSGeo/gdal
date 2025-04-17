@@ -154,16 +154,25 @@ static CPLErr OGROpenFileGDBDriverDelete(const char *pszFilename)
 /*                    OpenFileGDBRepackAlgorithm                        */
 /************************************************************************/
 
+#ifndef _
+#define _(x) x
+#endif
+
 class OpenFileGDBRepackAlgorithm final : public GDALAlgorithm
 {
   public:
     OpenFileGDBRepackAlgorithm()
-        : GDALAlgorithm("repack", std::string("Repack a FileGDB dataset"),
+        : GDALAlgorithm("repack", "Repack a FileGeoDatabase dataset",
                         "/drivers/vector/openfilegdb.html")
     {
         AddProgressArg();
-        AddInputDatasetArg(&m_dataset,
-                           GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_UPDATE);
+
+        constexpr int type = GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_UPDATE;
+        auto &arg =
+            AddArg("dataset", 0, _("FileGeoDatabase dataset"), &m_dataset, type)
+                .SetPositional()
+                .SetRequired();
+        SetAutoCompleteFunctionForFilename(arg, type);
     }
 
   protected:

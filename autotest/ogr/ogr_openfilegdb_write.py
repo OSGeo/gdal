@@ -4623,13 +4623,13 @@ def test_ogropenfilegdb_write_gdal_driver_openfilegdb_repack(tmp_path):
 
     alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["openfilegdb"]["repack"]
     assert alg.GetName() == "repack"
-    alg["input"] = "data/poly.shp"
+    alg["dataset"] = "data/poly.shp"
     with pytest.raises(Exception, match="is not a FileGeoDatabase"):
         alg.Run()
 
     alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["openfilegdb"]["repack"]
     assert alg.GetName() == "repack"
-    alg["input"] = out_directory
+    alg["dataset"] = out_directory
     assert alg.Run()
 
     last_pct = [0]
@@ -4640,6 +4640,6 @@ def test_ogropenfilegdb_write_gdal_driver_openfilegdb_repack(tmp_path):
 
     alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["openfilegdb"]["repack"]
     assert alg.GetName() == "repack"
-    alg["input"] = out_directory
+    alg["dataset"] = out_directory
     assert alg.Run(my_progress)
     assert last_pct[0] == 1.0

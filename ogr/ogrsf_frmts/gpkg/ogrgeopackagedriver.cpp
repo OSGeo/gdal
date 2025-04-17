@@ -13,6 +13,7 @@
 #include "ogr_geopackage.h"
 
 #include "tilematrixset.hpp"
+#include "gdalalgorithm.h"
 
 #include <cctype>
 
@@ -409,7 +410,7 @@ static CPLErr OGRGeoPackageDriverDelete(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                         RegisterOGRGeoPackage()                       */
+/*                          GDALGPKGDriver                              */
 /************************************************************************/
 
 class GDALGPKGDriver final : public GDALDriver
@@ -576,6 +577,70 @@ void GDALGPKGDriver::InitializeCreationOptionList()
 
     SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, osOptions.c_str());
 }
+
+/************************************************************************/
+/*                    OGRGeoPackageRepackAlgorithm                      */
+/************************************************************************/
+
+#ifndef _
+#define _(x) x
+#endif
+
+class OGRGeoPackageRepackAlgorithm final : public GDALAlgorithm
+{
+  public:
+    OGRGeoPackageRepackAlgorithm()
+        : GDALAlgorithm("repack", "Repack/vacuum in-place a GeoPackage dataset",
+                        "/drivers/vector/gpkg.html")
+    {
+        constexpr int type = GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_UPDATE;
+        auto &arg =
+            AddArg("dataset", 0, _("GeoPackage dataset"), &m_dataset, type)
+                .SetPositional()
+                .SetRequired();
+        SetAutoCompleteFunctionForFilename(arg, type);
+    }
+
+  protected:
+    bool RunImpl(GDALProgressFunc, void *) override
+    {
+        auto poDS =
+            dynamic_cast<GDALGeoPackageDataset *>(m_dataset.GetDatasetRef());
+        if (!poDS)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined, "%s is not a GeoPackage",
+                        m_dataset.GetName().c_str());
+            return false;
+        }
+        CPLErrorReset();
+        delete poDS->ExecuteSQL("VACUUM", nullptr, nullptr);
+        return CPLGetLastErrorType() == CE_None;
+    }
+
+  private:
+    GDALArgDatasetValue m_dataset{};
+};
+
+/************************************************************************/
+/*               OGRGeoPackageDriverInstantiateAlgorithm()              */
+/************************************************************************/
+
+static GDALAlgorithm *
+OGRGeoPackageDriverInstantiateAlgorithm(const std::vector<std::string> &aosPath)
+{
+    if (aosPath.size() == 1 && aosPath[0] == "repack")
+    {
+        return std::make_unique<OGRGeoPackageRepackAlgorithm>().release();
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
+/************************************************************************/
+/*                         RegisterOGRGeoPackage()                       */
+/************************************************************************/
 
 void RegisterOGRGeoPackage()
 {
@@ -762,6 +827,9 @@ void RegisterOGRGeoPackage()
     poDriver->pfnCreateCopy = GDALGeoPackageDataset::CreateCopy;
     poDriver->pfnDelete = OGRGeoPackageDriverDelete;
     poDriver->pfnGetSubdatasetInfoFunc = OGRGeoPackageDriverGetSubdatasetInfo;
+
+    poDriver->pfnInstantiateAlgorithm = OGRGeoPackageDriverInstantiateAlgorithm;
+    poDriver->DeclareAlgorithm({"repack"});
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
