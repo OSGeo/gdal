@@ -6,12 +6,10 @@ unless exactly one of the following parameters is provided.
 
 Parameters
 ----------
+name : str / dict, optional
+    SRS description in a format understood by :py:meth:`SetFromUserInput`.
 epsg : int, optional
     EPSG CRS code, as understood by :py:meth:`ImportFromEPSG`
-esri : list, optional
-    ESRI ``.prj`` text, as understood by :py:meth:`ImportFromESRI`
-proj4 : str, optional
-    PROJ CRS string, as understood by :py:meth:`ImportFromProj4`
 wkt : str, optional
     WKT CRS string, as understood by :py:meth:`ImportFromWkt`
 
@@ -19,7 +17,7 @@ Examples
 --------
 >>> osr.SpatialReference(epsg=5646).GetName()
 'NAD83 / Vermont (ftUS)'
->>> osr.SpatialReference(proj4='+proj=utm +zone=18 +datum=WGS84').GetUTMZone()
+>>> osr.SpatialReference('+proj=utm +zone=18 +datum=WGS84').GetUTMZone()
 18
 ";
 
