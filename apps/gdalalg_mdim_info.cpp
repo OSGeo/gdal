@@ -35,7 +35,7 @@ GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()
     AddInputFormatsArg(&m_inputFormats)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
                          {GDAL_DCAP_MULTIDIM_RASTER});
-    AddInputDatasetArg(&m_dataset, GDAL_OF_MULTIDIM_RASTER);
+    AddInputDatasetArg(&m_dataset, GDAL_OF_MULTIDIM_RASTER).AddAlias("dataset");
     AddOutputStringArg(&m_output);
     AddArg(
         "detailed", 0,
