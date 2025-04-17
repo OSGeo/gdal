@@ -168,16 +168,23 @@ For Windows, a similar ``scripts/setdevenv.bat`` script exists (it currently ass
     cd c:\dev\gdal\build
     ..\scripts\setdevenv.bat
 
+Alternatively, on Windows, you can set up a PowerShell development environment using the ``scripts/setdevenv.ps1`` script:
+
+.. code-block:: ps1
+
+    cd c:\dev\gdal\build
+    ..\scripts\setdevenv.ps1
+
 To verify that environment variables have been set correctly, you can check the version of a GDAL binary:
 
 .. code-block:: bash
 
     gdalinfo --version
-    # GDAL 3.7.0dev-5327c149f5-dirty, released 2018/99/99 (debug build)
+    # GDAL 3.11.0dev-c4a2e0b926-dirty, released 2025/04/10
 
 and the Python bindings:
 
 .. code-block:: bash
 
     python3 -c 'from osgeo import gdal; print(gdal.__version__)'
-    # 3.7.0dev-5327c149f5-dirty
+    # 3.11.0dev-c4a2e0b926-dirty
