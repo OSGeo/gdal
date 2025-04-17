@@ -15,38 +15,7 @@
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdal raster clip [OPTIONS] <INPUT> <OUTPUT>
-
-    Clip a raster dataset.
-
-    Positional arguments:
-      -i, --input <INPUT>                                  Input raster dataset [required]
-      -o, --output <OUTPUT>                                Output raster dataset [required]
-
-    Common Options:
-      -h, --help                                           Display help message and exit
-      --version                                            Display GDAL version and exit
-      --json-usage                                         Display usage as JSON document and exit
-      --drivers                                            Display driver list as JSON document and exit
-      --config <KEY>=<VALUE>                               Configuration option [may be repeated]
-      --progress                                           Display progress bar
-
-    Options:
-      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format
-      --co, --creation-option <KEY>=<VALUE>                Creation option [may be repeated]
-      --overwrite                                          Whether overwriting existing output is allowed
-      --bbox <BBOX>                                        Clipping bounding box as xmin,ymin,xmax,ymax
-                                                           Mutually exclusive with --like
-      --bbox-crs <BBOX-CRS>                                CRS of clipping bounding box
-      --like <DATASET>                                     Raster dataset to use as a template for bounds
-                                                           Mutually exclusive with --bbox
-
-    Advanced Options:
-      --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
-      --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
-
+.. program-output:: gdal raster clip --help-doc
 
 Description
 -----------
@@ -77,16 +46,25 @@ Standard options
     the input dataset, unless :option:`--bbox-crs` is specified.
     The X and Y axis are the "GIS friendly ones", that is X is longitude or easting,
     and Y is latitude or northing.
-    The bounds are expended if necessary to match input pixel boundaries.
+    The bounds are expanded if necessary to match input pixel boundaries.
+    By default, :program:`gdal raster clip` will produce an error if the bounds indicated
+    by :option:`--bbox` are greater than the extents of input dataset. This check can be
+    bypassed using :option:`--allow-bbox-outside-source`.
 
 .. option:: --bbox-crs <CRS>
 
     CRS in which the <xmin>,<ymin>,<xmax>,<ymax> values of :option:`--bbox`
     are expressed. If not specified, it is assumed to be the CRS of the input
     dataset.
-    Not that specifying --bbox-crs does not involve doing raster reprojection.
+    Note that specifying :option:`--bbox-crs` does not cause the raster to be reprojected.
     Instead, the bounds are reprojected from the bbox-crs to the CRS of the
     input dataset.
+
+.. option:: --allow-bbox-outside-source
+
+    If set, allows the bounds indicated by :option:`--bbox` to cover an extent that is greater
+    than the input dataset. Output pixels from areas beyond the input extent will be set to
+    zero or the NoData value of the input dataset.
 
 .. option:: --like <DATASET>
 

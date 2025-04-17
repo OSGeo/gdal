@@ -728,6 +728,44 @@ def test_gdalalg_raster_pipeline_clip_like_error(tmp_vsimem):
         )
 
 
+@pytest.mark.parametrize("allow_bbox_outside_source", (True, False))
+@pytest.mark.parametrize("bbox_pos", ("partially outside", "completely outside"))
+def test_gdalalg_raster_pipeline_clip_bbox_outside_source(
+    tmp_vsimem, bbox_pos, allow_bbox_outside_source
+):
+
+    pipeline = get_pipeline_alg()
+
+    flags = []
+    if allow_bbox_outside_source:
+        flags.append("--allow-bbox-outside-source")
+    if bbox_pos == "partially outside":
+        flags.append("--bbox=0,0,441920,3751320")
+    elif bbox_pos == "completely outside":
+        flags.append("--bbox=0,100,0,100")
+
+    try:
+        pipeline.ParseRunAndFinalize(
+            [
+                "read",
+                "../gcore/data/byte.tif",
+                "!",
+                "clip",
+            ]
+            + flags
+            + [
+                "!",
+                "write",
+                tmp_vsimem / "out.tif",
+            ]
+        )
+    except Exception as e:
+        assert not allow_bbox_outside_source
+        assert bbox_pos in str(e)
+    else:
+        assert allow_bbox_outside_source
+
+
 def test_gdalalg_raster_pipeline_clip_bbox_crs(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.tif")
@@ -741,6 +779,7 @@ def test_gdalalg_raster_pipeline_clip_bbox_crs(tmp_vsimem):
             "clip",
             "--bbox=-117.631,33.89,-117.628,33.9005",
             "--bbox-crs=NAD27",
+            "--allow-bbox-outside-source",
             "!",
             "write",
             "--overwrite",
