@@ -27,9 +27,9 @@ Dependencies
 programs against it, called -devel on many systems.  This is not
 special about gdal.)
 
- * SWIG (4 or greater).  
+ * SWIG (4 or greater).
 
- * libgdal (3.9.0 or greater).
+ * libgdal (3.11.0 or greater).
 
  * numpy (1.0.0 or greater).  This is not force-required by the build,
    but many examples and utilities will not work without it.  At least
