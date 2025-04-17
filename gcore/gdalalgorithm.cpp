@@ -1992,6 +1992,20 @@ bool GDALAlgorithm::ValidateArguments()
     if (m_specialActionRequested)
         return true;
 
+    // If only --output=format=MEM is specified and not --output,
+    // then set empty name for --output.
+    auto outputArg = GetArg(GDAL_ARG_NAME_OUTPUT);
+    auto outputFormatArg = GetArg(GDAL_ARG_NAME_OUTPUT_FORMAT);
+    if (outputArg && outputFormatArg && outputFormatArg->IsExplicitlySet() &&
+        !outputArg->IsExplicitlySet() &&
+        outputFormatArg->GetType() == GAAT_STRING &&
+        EQUAL(outputFormatArg->Get<std::string>().c_str(), "MEM") &&
+        outputArg->GetType() == GAAT_DATASET &&
+        (outputArg->Get<GDALArgDatasetValue>().GetInputFlags() & GADV_NAME))
+    {
+        outputArg->Get<GDALArgDatasetValue>().Set("");
+    }
+
     // The method may emit several errors if several constraints are not met.
     bool ret = true;
     std::map<std::string, std::string> mutualExclusionGroupUsed;

@@ -4,125 +4,152 @@
 How to use "gdal" CLI algorithms from Python
 ================================================================================
 
-Raster commands
----------------
+Principles
+----------
 
-* Getting information on a raster dataset as JSON
+"gdal" CLI algorithms are available as :py:class:`osgeo.gdal.Algorithm` instances.
 
-.. code-block:: python
+A convenient way to access an algorithm and run it is to use the :py:func:`osgeo.gdal.Run`
+function.
 
-    from osgeo import gdal
-    import json
+.. py:function:: Run(*alg, arguments={}, progress=None, **kwargs)
 
-    gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["info"]
-    alg["input"] = "byte.tif"
-    alg.Run()
-    info = json.loads(alg["output-string"])
-    print(info)
+   Run a GDAL algorithm and return it.
 
+   .. versionadded: 3.11
 
-* Converting a georeferenced netCDF file to cloud-optimized GeoTIFF
-
-.. code-block:: python
-
-    from osgeo import gdal
-    gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["convert"]
-    alg["input"] = "in.nc"
-    alg["output"] = "out.tif"
-    alg["output-format"] = "COG"
-    alg["overwrite"] = True  # if the output file may exist
-    alg.Run()
-    alg.Finalize() # ensure output dataset is closed
-
-or
-
-.. code-block:: python
-
-    from osgeo import gdal
-    gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["convert"]
-    alg.ParseRunAndFinalize(["--input=in.nc", "--output-format=COG", "--output=out.tif", "--overwrite"])
+   :param alg: Path to the algorithm or algorithm instance itself. For example "raster info", or ["raster", "info"] or "raster", "info".
+   :type alg: str, list[str], tuple[str], Algorithm
+   :param arguments: Input arguments of the algorithm. For example {"format": "json", "input": "byte.tif"}
+   :type arguments: dict
+   :param progress: Progress function whose arguments are a progress ratio, a string and a user data
+   :type progress: callable
+   :param kwargs: Instead of using the ``arguments`` parameter, it is possible to pass
+                  algorithm arguments directly as named parameters of gdal.Run().
+                  If the named argument has dash characters in it, the corresponding
+                  parameter must replace them with an underscore character.
+                  For example ``dst_crs`` as a a parameter of gdal.Run(), instead of
+                  ``dst-crs`` which is the name to use on the command line.
+   :rtype: a :py:class:`osgeo.gdal.Algorithm` instance
 
 
-* Reprojecting a GeoTIFF file to a Deflate compressed tiled GeoTIFF file
+If you do not need to access output value(s) of the algorithm, you can call
+``Run`` directly:
+``gdal.Run(["raster", "convert"], input="in.tif", output="out.tif")``
+
+The name of algorithm arguments are the long names as documented in the
+documentation page of each algorithm. They can also be obtained with
+:py:meth:`osgeo.gdal.Algorithm.GetArgNames`.
 
 .. code-block:: python
 
-    from osgeo import gdal
-    gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["reproject"]
-    alg["input"] = "in.tif"
-    alg["output"] = "out.tif"
-    alg["dst-crs"] = "EPSG:4326"
-    alg["creation-options"] = ["TILED=YES", "COMPRESS=DEFLATE"]
-    alg["overwrite"] = True  # if the output file may exist
-    alg.Run()
-    alg.Finalize() # ensure output dataset is closed
+    >>> gdal.Algorithm("raster", "convert").GetArgNames()
+    ['help', 'help-doc', 'version', 'json-usage', 'drivers', 'config', 'progress', 'output-format', 'open-option', 'input-format', 'input', 'output', 'creation-option', 'overwrite', 'append']
 
-or
+For a command such as :ref:`gdal_raster_info_subcommand` that returns a JSON
+output, you can get the return value of :py:func:`osgeo.gdal.Run` and call the
+:py:meth:`osgeo.gdal.Algorithm.Output` method.
 
 .. code-block:: python
 
-    from osgeo import gdal
-    gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["reproject"]
-    alg.ParseRunAndFinalize(["--input=in.tif", "--output=out.tif", "--dst-crs=EPSG:4326", "--co=TILED=YES,COMPRESS=DEFLATE", "--overwrite"])
+    alg = gdal.Run("raster", "info", input="byte.tif")
+    info_as_dict = alg.Output()
 
-
-* Reprojecting a (possibly in-memory) dataset to a in-memory dataset
-
-.. code-block:: python
-
-    from osgeo import gdal
-    gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["reproject"]
-    alg["input"] = input_ds
-    alg["output"] = "dummy_name"
-    alg["output-format"] = "MEM"
-    alg["dst-crs"] = "EPSG:4326"
-    alg.Run()
-    output_ds = alg["output"].GetDataset()
-
-
-
-Vector commands
----------------
-
-* Getting information on a vector dataset as JSON
+If the return value is a dataset, :py:func:`osgeo.gdal.Run` can be used
+within a context manager, in which case :py:meth:`osgeo.gdal.Algorithm.Finalize`
+will be called at the exit of the context manager.
 
 .. code-block:: python
 
-    from osgeo import gdal
-    import json
-
-    gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["vector"]["info"]
-    alg["input"] = "poly.gpkg"
-    alg.Run()
-    info = json.loads(alg["output-string"])
-    print(info)
+    with gdal.Run("raster reproject", input=src_ds, output_format="MEM",
+                  dst_crs="EPSG:4326"}) as alg:
+        values = alg.Output().ReadAsArray()
 
 
-* Converting a shapefile to a GeoPackage
+Raster commands examples
+------------------------
 
-.. code-block:: python
+.. example::
+   :title: Getting information on a raster dataset as JSON
 
-    from osgeo import gdal
-    gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["vector"]["convert"]
-    alg["input"] = "in.shp"
-    alg["output"] = "out.gpkg"
-    alg["overwrite"] = True  # if the output file may exist
-    alg.Run()
-    alg.Finalize() # ensure output dataset is closed
+   .. code-block:: python
 
-or
+        from osgeo import gdal
 
-.. code-block:: python
+        gdal.UseExceptions()
+        alg = gdal.Run("raster", "info", input="byte.tif")
+        info_as_dict = alg.Output()
 
-    from osgeo import gdal
-    gdal.UseExceptions()
-    alg = gdal.GetGlobalAlgorithmRegistry()["vector"]["convert"]
-    alg.ParseRunAndFinalize(["--input=in.shp", "--output=out.gpkg", "--overwrite"])
+
+.. example::
+   :title: Converting a georeferenced netCDF file to cloud-optimized GeoTIFF
+
+   .. code-block:: python
+
+        from osgeo import gdal
+
+        gdal.UseExceptions()
+        gdal.Run("raster", "convert", input="in.tif", output="out.tif",
+                 output_format="COG", overwrite=True)
+
+   or
+
+   .. code-block:: python
+
+        from osgeo import gdal
+
+        gdal.UseExceptions()
+        gdal.Run(["raster", "convert"], {"input": "in.tif", "output": "out.tif", "output-format": "COG", "overwrite": True})
+
+
+.. example::
+   :title: Reprojecting a GeoTIFF file to a Deflate-compressed tiled GeoTIFF file
+
+   .. code-block:: python
+
+        from osgeo import gdal
+
+        gdal.UseExceptions()
+        gdal.Run("raster", "reproject", input="in.tif", output="out.tif",
+                  dst_crs="EPSG:4326",
+                  creation_options={ "TILED": "YES", "COMPRESS": "DEFLATE"})
+
+
+.. example::
+   :title: Reprojecting a (possibly in-memory) dataset to a in-memory dataset
+
+   .. code-block:: python
+
+        from osgeo import gdal
+
+        gdal.UseExceptions()
+        with gdal.Run("raster", "reproject", input=src_ds, output_format="MEM",
+                      dst_crs="EPSG:4326"}) as alg:
+            values = alg.Output().ReadAsArray()
+
+
+Vector commands examples
+------------------------
+
+
+.. example::
+   :title: Getting information on a vector dataset as JSON
+
+   .. code-block:: python
+
+        from osgeo import gdal
+
+        gdal.UseExceptions()
+        alg = gdal.Run("raster", "info", input="poly.gpkg"})
+        info_as_dict = alg.Output()
+
+
+.. example::
+   :title: Converting a shapefile to a GeoPackage
+
+   .. code-block:: python
+
+        from osgeo import gdal
+
+        gdal.UseExceptions()
+        gdal.Run("raster", "convert", input="in.shp", output="out.gpkg", overwrite=True)

@@ -455,3 +455,106 @@ def test_gdal_algorithm_getter_setter():
 
     with pytest.raises(Exception):
         alg["no-mask"] = "bar"
+
+
+def test_gdal_algorithm():
+
+    with pytest.raises(RuntimeError, match="'i_do_not_exist' is not a valid algorithm"):
+        gdal.Algorithm("i_do_not_exist")
+
+    with pytest.raises(RuntimeError, match="'i_do_not_exist' is not a valid algorithm"):
+        gdal.Algorithm(["i_do_not_exist"])
+
+    with pytest.raises(
+        RuntimeError, match="'i_do_not_exist' is not a valid sub-algorithm"
+    ):
+        gdal.Algorithm(["raster", "i_do_not_exist"])
+
+    with pytest.raises(
+        RuntimeError,
+        match="Wrong type for algorithm path. Expected string or list of strings",
+    ):
+        gdal.Algorithm(None)
+
+    with pytest.raises(
+        RuntimeError,
+        match="Wrong type for algorithm path. Expected string or list of strings",
+    ):
+        gdal.Algorithm()
+
+    alg = gdal.Algorithm(["raster", "info"])
+    assert alg.GetName() == "info"
+
+    alg = gdal.Algorithm("raster info")
+    assert alg.GetName() == "info"
+
+    alg = gdal.Algorithm("raster", "info")
+    assert alg.GetName() == "info"
+
+    with pytest.raises(RuntimeError, match=r"Algorithm.Run\(\) must be called before"):
+        alg.Output()
+
+    with pytest.raises(RuntimeError, match=r"Algorithm.Run\(\) must be called before"):
+        alg.Output()
+
+    with gdal.Algorithm("raster info") as alg:
+        assert alg.GetName() == "info"
+
+
+def test_gdal_run():
+
+    with pytest.raises(RuntimeError, match="'i_do_not_exist' is not a valid algorithm"):
+        with gdal.Run("i_do_not_exist"):
+            pass
+
+    with pytest.raises(RuntimeError, match="'i_do_not_exist' is not a valid algorithm"):
+        with gdal.Run(["i_do_not_exist"]):
+            pass
+
+    with pytest.raises(
+        RuntimeError, match="'i_do_not_exist' is not a valid sub-algorithm"
+    ):
+        with gdal.Run(["raster", "i_do_not_exist"]):
+            pass
+
+    with pytest.raises(
+        RuntimeError,
+        match="Wrong type for alg. Expected string, list of strings or Algorithm",
+    ):
+        gdal.Run(None)
+
+    with gdal.Run("raster", "info", {"input": "../gcore/data/byte.tif"}) as alg:
+        assert len(alg.Output()["bands"]) == 1
+
+    with gdal.Run("raster info", {"input": "../gcore/data/byte.tif"}) as alg:
+        assert len(alg.Output()["bands"]) == 1
+
+    with gdal.Run("gdal raster info", input="../gcore/data/byte.tif") as alg:
+        assert len(alg.Output()["bands"]) == 1
+
+    with gdal.Run(
+        gdal.Algorithm("raster info"), {"input": "../gcore/data/byte.tif"}
+    ) as alg:
+        assert len(alg.Output()["bands"]) == 1
+
+    alg = gdal.Run("raster info", {"input": "../gcore/data/byte.tif"})
+    assert len(alg.Outputs()) == 1
+    assert alg.Outputs(parse_json=False)["output-string"].startswith("{")
+
+    with gdal.Run(
+        ["gdal", "raster", "reproject"],
+        input="../gcore/data/byte.tif",
+        output_format="MEM",
+        dst_crs="EPSG:4326",
+    ) as alg:
+        assert alg.Output().GetSpatialRef().GetAuthorityCode(None) == "4326"
+
+    with gdal.Run(
+        ["raster", "reproject"],
+        {
+            "input": "../gcore/data/byte.tif",
+            "output-format": "MEM",
+            "dst-crs": "EPSG:4326",
+        },
+    ) as alg:
+        assert alg.Output().GetSpatialRef().GetAuthorityCode(None) == "4326"
