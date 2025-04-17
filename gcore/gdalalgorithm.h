@@ -1524,6 +1524,16 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
         return Set(std::string(value ? value : ""));
     }
 
+    /** Set the value for a GAAT_STRING argument from a GDALDataType
+     * It cannot be called several times for a given argument.
+     * Validation checks and other actions are run.
+     * Return true if success.
+     */
+    bool Set(GDALDataType dt)
+    {
+        return Set(GDALGetDataTypeName(dt));
+    }
+
     /** Set the value for a GAAT_INTEGER (or GAAT_REAL) argument.
      * It cannot be called several times for a given argument.
      * Validation checks and other actions are run.
@@ -1622,6 +1632,13 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
 
     /** Set the value of the argument. */
     inline GDALAlgorithmArg &operator=(const char *value)
+    {
+        Set(value);
+        return *this;
+    }
+
+    /** Set the value of the argument. */
+    inline GDALAlgorithmArg &operator=(GDALDataType value)
     {
         Set(value);
         return *this;

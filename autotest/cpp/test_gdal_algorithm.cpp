@@ -358,6 +358,9 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
         arg = std::string("y");
         EXPECT_STREQ(val.c_str(), "y");
 
+        arg = GDT_Byte;
+        EXPECT_STREQ(val.c_str(), "Byte");
+
         arg.Set("foo");
         {
             CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
