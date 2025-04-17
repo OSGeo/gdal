@@ -275,6 +275,72 @@ bool GDALAlgorithmArg::ProcessString(std::string &value) const
 
 bool GDALAlgorithmArg::Set(const std::string &value)
 {
+    switch (m_decl.GetType())
+    {
+        case GAAT_BOOLEAN:
+            if (EQUAL(value.c_str(), "1") || EQUAL(value.c_str(), "TRUE") ||
+                EQUAL(value.c_str(), "YES") || EQUAL(value.c_str(), "ON"))
+            {
+                return Set(true);
+            }
+            else if (EQUAL(value.c_str(), "0") ||
+                     EQUAL(value.c_str(), "FALSE") ||
+                     EQUAL(value.c_str(), "NO") || EQUAL(value.c_str(), "OFF"))
+            {
+                return Set(false);
+            }
+            break;
+
+        case GAAT_INTEGER:
+        case GAAT_INTEGER_LIST:
+        {
+            errno = 0;
+            char *endptr = nullptr;
+            const auto v = std::strtoll(value.c_str(), &endptr, 10);
+            if (errno == 0 && v >= INT_MIN && v <= INT_MAX &&
+                endptr == value.c_str() + value.size())
+            {
+                if (m_decl.GetType() == GAAT_INTEGER)
+                    return Set(static_cast<int>(v));
+                else
+                    return Set(std::vector<int>{static_cast<int>(v)});
+            }
+            break;
+        }
+
+        case GAAT_REAL:
+        case GAAT_REAL_LIST:
+        {
+            char *endptr = nullptr;
+            const double v = CPLStrtod(value.c_str(), &endptr);
+            if (endptr == value.c_str() + value.size())
+            {
+                if (m_decl.GetType() == GAAT_REAL)
+                    return Set(v);
+                else
+                    return Set(std::vector<double>{v});
+            }
+            break;
+        }
+
+        case GAAT_STRING:
+            break;
+
+        case GAAT_STRING_LIST:
+            return Set(std::vector<std::string>{value});
+
+        case GAAT_DATASET:
+            return SetDatasetName(value);
+
+        case GAAT_DATASET_LIST:
+        {
+            std::vector<GDALArgDatasetValue> v;
+            v.resize(1);
+            v[0].Set(value);
+            return Set(std::move(v));
+        }
+    }
+
     if (m_decl.GetType() != GAAT_STRING)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -290,10 +356,34 @@ bool GDALAlgorithmArg::Set(const std::string &value)
 
 bool GDALAlgorithmArg::Set(int value)
 {
-    if (m_decl.GetType() == GAAT_REAL)
+    if (m_decl.GetType() == GAAT_BOOLEAN)
+    {
+        if (value == 1)
+            return Set(true);
+        else if (value == 0)
+            return Set(false);
+    }
+    else if (m_decl.GetType() == GAAT_REAL)
     {
         return Set(static_cast<double>(value));
     }
+    else if (m_decl.GetType() == GAAT_STRING)
+    {
+        return Set(std::to_string(value));
+    }
+    else if (m_decl.GetType() == GAAT_INTEGER_LIST)
+    {
+        return Set(std::vector<int>{value});
+    }
+    else if (m_decl.GetType() == GAAT_REAL_LIST)
+    {
+        return Set(std::vector<double>{static_cast<double>(value)});
+    }
+    else if (m_decl.GetType() == GAAT_STRING_LIST)
+    {
+        return Set(std::vector<std::string>{std::to_string(value)});
+    }
+
     if (m_decl.GetType() != GAAT_INTEGER)
     {
         CPLError(
@@ -307,7 +397,29 @@ bool GDALAlgorithmArg::Set(int value)
 
 bool GDALAlgorithmArg::Set(double value)
 {
-    if (m_decl.GetType() != GAAT_REAL)
+    if (m_decl.GetType() == GAAT_INTEGER && value >= INT_MIN &&
+        value <= INT_MAX && static_cast<int>(value) == value)
+    {
+        return Set(static_cast<int>(value));
+    }
+    else if (m_decl.GetType() == GAAT_STRING)
+    {
+        return Set(std::to_string(value));
+    }
+    else if (m_decl.GetType() == GAAT_INTEGER_LIST && value >= INT_MIN &&
+             value <= INT_MAX && static_cast<int>(value) == value)
+    {
+        return Set(std::vector<int>{static_cast<int>(value)});
+    }
+    else if (m_decl.GetType() == GAAT_REAL_LIST)
+    {
+        return Set(std::vector<double>{value});
+    }
+    else if (m_decl.GetType() == GAAT_STRING_LIST)
+    {
+        return Set(std::vector<std::string>{std::to_string(value)});
+    }
+    else if (m_decl.GetType() != GAAT_REAL)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -400,6 +512,54 @@ bool GDALAlgorithmArg::SetFrom(const GDALArgDatasetValue &other)
 
 bool GDALAlgorithmArg::Set(const std::vector<std::string> &value)
 {
+    if (m_decl.GetType() == GAAT_INTEGER_LIST)
+    {
+        std::vector<int> v_i;
+        for (const std::string &s : value)
+        {
+            errno = 0;
+            char *endptr = nullptr;
+            const auto v = std::strtoll(s.c_str(), &endptr, 10);
+            if (errno == 0 && v >= INT_MIN && v <= INT_MAX &&
+                endptr == s.c_str() + s.size())
+            {
+                v_i.push_back(v);
+            }
+            else
+            {
+                break;
+            }
+        }
+        if (v_i.size() == value.size())
+            return Set(v_i);
+    }
+    else if (m_decl.GetType() == GAAT_REAL_LIST)
+    {
+        std::vector<double> v_d;
+        for (const std::string &s : value)
+        {
+            char *endptr = nullptr;
+            const double v = CPLStrtod(s.c_str(), &endptr);
+            if (endptr == s.c_str() + s.size())
+            {
+                v_d.push_back(v);
+            }
+            else
+            {
+                break;
+            }
+        }
+        if (v_d.size() == value.size())
+            return Set(v_d);
+    }
+    else if ((m_decl.GetType() == GAAT_INTEGER ||
+              m_decl.GetType() == GAAT_REAL ||
+              m_decl.GetType() == GAAT_STRING) &&
+             value.size() == 1)
+    {
+        return Set(value[0]);
+    }
+
     if (m_decl.GetType() != GAAT_STRING_LIST)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -428,6 +588,28 @@ bool GDALAlgorithmArg::Set(const std::vector<std::string> &value)
 
 bool GDALAlgorithmArg::Set(const std::vector<int> &value)
 {
+    if (m_decl.GetType() == GAAT_REAL_LIST)
+    {
+        std::vector<double> v_d;
+        for (int i : value)
+            v_d.push_back(i);
+        return Set(v_d);
+    }
+    else if (m_decl.GetType() == GAAT_STRING_LIST)
+    {
+        std::vector<std::string> v_s;
+        for (int i : value)
+            v_s.push_back(std::to_string(i));
+        return Set(v_s);
+    }
+    else if ((m_decl.GetType() == GAAT_INTEGER ||
+              m_decl.GetType() == GAAT_REAL ||
+              m_decl.GetType() == GAAT_STRING) &&
+             value.size() == 1)
+    {
+        return Set(value[0]);
+    }
+
     if (m_decl.GetType() != GAAT_INTEGER_LIST)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -441,6 +623,38 @@ bool GDALAlgorithmArg::Set(const std::vector<int> &value)
 
 bool GDALAlgorithmArg::Set(const std::vector<double> &value)
 {
+    if (m_decl.GetType() == GAAT_INTEGER_LIST)
+    {
+        std::vector<int> v_i;
+        for (double d : value)
+        {
+            if (d >= INT_MIN && d <= INT_MAX && static_cast<int>(d) == d)
+            {
+                v_i.push_back(static_cast<int>(d));
+            }
+            else
+            {
+                break;
+            }
+        }
+        if (v_i.size() == value.size())
+            return Set(v_i);
+    }
+    else if (m_decl.GetType() == GAAT_STRING_LIST)
+    {
+        std::vector<std::string> v_s;
+        for (double d : value)
+            v_s.push_back(std::to_string(d));
+        return Set(v_s);
+    }
+    else if ((m_decl.GetType() == GAAT_INTEGER ||
+              m_decl.GetType() == GAAT_REAL ||
+              m_decl.GetType() == GAAT_STRING) &&
+             value.size() == 1)
+    {
+        return Set(value[0]);
+    }
+
     if (m_decl.GetType() != GAAT_REAL_LIST)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
