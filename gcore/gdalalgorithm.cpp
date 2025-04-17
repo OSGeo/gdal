@@ -681,6 +681,13 @@ bool GDALAlgorithmArg::Set(std::vector<GDALArgDatasetValue> &&value)
     return RunAllActions();
 }
 
+GDALAlgorithmArg &
+GDALAlgorithmArg::operator=(std::unique_ptr<GDALDataset> value)
+{
+    Set(std::move(value));
+    return *this;
+}
+
 bool GDALAlgorithmArg::SetFrom(const GDALAlgorithmArg &other)
 {
     if (m_decl.GetType() != other.GetType())

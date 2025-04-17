@@ -1592,6 +1592,72 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
      */
     bool Set(std::vector<GDALArgDatasetValue> &&value);
 
+    /** Set the value of the argument. */
+    inline GDALAlgorithmArg &operator=(bool value)
+    {
+        Set(value);
+        return *this;
+    }
+
+    /** Set the value of the argument. */
+    inline GDALAlgorithmArg &operator=(int value)
+    {
+        Set(value);
+        return *this;
+    }
+
+    /** Set the value of the argument. */
+    inline GDALAlgorithmArg &operator=(double value)
+    {
+        Set(value);
+        return *this;
+    }
+
+    /** Set the value of the argument. */
+    inline GDALAlgorithmArg &operator=(const std::string &value)
+    {
+        Set(value);
+        return *this;
+    }
+
+    /** Set the value of the argument. */
+    inline GDALAlgorithmArg &operator=(const char *value)
+    {
+        Set(value);
+        return *this;
+    }
+
+    /** Set the value of the argument. */
+    inline GDALAlgorithmArg &operator=(const std::vector<int> &value)
+    {
+        Set(value);
+        return *this;
+    }
+
+    /** Set the value of the argument. */
+    inline GDALAlgorithmArg &operator=(const std::vector<double> &value)
+    {
+        Set(value);
+        return *this;
+    }
+
+    /** Set the value of the argument. */
+    inline GDALAlgorithmArg &operator=(const std::vector<std::string> &value)
+    {
+        Set(value);
+        return *this;
+    }
+
+    /** Set the value of the argument. */
+    inline GDALAlgorithmArg &operator=(GDALDataset *value)
+    {
+        Set(value);
+        return *this;
+    }
+
+    /** Set the value of the argument. */
+    GDALAlgorithmArg &operator=(std::unique_ptr<GDALDataset> value);
+
     /** Set the value for another argument.
      * For GAAT_DATASET, it will reference the dataset pointed by other.m_poDS.
      * It cannot be called several times for a given argument.
@@ -2157,8 +2223,34 @@ class CPL_DLL GDALAlgorithmRegistry
     }
 
     /** Return an argument from its long name, short name or an alias */
+    GDALAlgorithmArg &operator[](const std::string &osName)
+    {
+        auto alg = GetArg(osName, false);
+        if (!alg)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Argument '%s' does not exist", osName.c_str());
+            return m_dummyArg;
+        }
+        return *alg;
+    }
+
+    /** Return an argument from its long name, short name or an alias */
     const GDALAlgorithmArg *GetArg(const std::string &osName,
                                    bool suggestionAllowed = true) const;
+
+    /** Return an argument from its long name, short name or an alias */
+    const GDALAlgorithmArg &operator[](const std::string &osName) const
+    {
+        const auto alg = GetArg(osName, false);
+        if (!alg)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Argument '%s' does not exist", osName.c_str());
+            return m_dummyArg;
+        }
+        return *alg;
+    }
 
     /** Set the calling path to this algorithm.
      *
@@ -2670,6 +2762,10 @@ class CPL_DLL GDALAlgorithmRegistry
     std::function<std::vector<std::string>(const std::vector<std::string> &)>
         m_autoCompleteFunction{};
     std::vector<std::function<bool()>> m_validationActions{};
+
+    std::string m_dummyVal{};
+    GDALAlgorithmArg m_dummyArg{
+        GDALAlgorithmArgDecl("dummy", 0, "", GAAT_STRING), &m_dummyVal};
 
     GDALInConstructionAlgorithmArg &
     AddArg(std::unique_ptr<GDALInConstructionAlgorithmArg> arg);

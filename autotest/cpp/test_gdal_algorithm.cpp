@@ -151,6 +151,9 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
         arg.Set("off");
         EXPECT_EQ(val, false);
 
+        arg = true;
+        EXPECT_EQ(val, true);
+
         arg.Set(false);
         {
             CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
@@ -238,6 +241,9 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
         arg.Set(std::vector<std::string>{"3"});
         EXPECT_EQ(val, 3);
 
+        arg = 4;
+        EXPECT_EQ(val, 4);
+
         arg.Set(0);
         {
             CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
@@ -296,6 +302,9 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
         arg.Set(std::vector<std::string>{"3.5"});
         EXPECT_EQ(val, 3.5);
 
+        arg = 4.5;
+        EXPECT_EQ(val, 4.5);
+
         arg.Set(0);
         {
             CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
@@ -342,6 +351,12 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
 
         arg.Set(std::vector<std::string>{"bar"});
         EXPECT_STREQ(val.c_str(), "bar");
+
+        arg = "x";
+        EXPECT_STREQ(val.c_str(), "x");
+
+        arg = std::string("y");
+        EXPECT_STREQ(val.c_str(), "y");
 
         arg.Set("foo");
         {
@@ -514,6 +529,12 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
             EXPECT_EQ(CPLAtof(val[0].c_str()), 1.5);
             EXPECT_EQ(CPLAtof(val[1].c_str()), 2.5);
         }
+
+        {
+            arg = std::vector<std::string>{"foo", "bar"};
+            const std::vector<std::string> expected{"foo", "bar"};
+            EXPECT_EQ(val, expected);
+        }
     }
     {
         std::vector<int> val;
@@ -567,6 +588,12 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
         {
             arg.Set(std::vector<std::string>{"7"});
             const std::vector<int> expected{7};
+            EXPECT_EQ(val, expected);
+        }
+
+        {
+            arg = std::vector<int>{4, 5};
+            const std::vector<int> expected{4, 5};
             EXPECT_EQ(val, expected);
         }
 
@@ -670,6 +697,12 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
         {
             arg.Set(std::vector<std::string>{"7.5"});
             const std::vector<double> expected{7.5};
+            EXPECT_EQ(val, expected);
+        }
+
+        {
+            arg = std::vector<double>{4, 5};
+            const std::vector<double> expected{4, 5};
             EXPECT_EQ(val, expected);
         }
 
@@ -877,6 +910,29 @@ TEST_F(test_gdal_algorithm, GDALInConstructionAlgorithmArg_AddAlias)
     EXPECT_NE(alg.GetArg("alias"), nullptr);
     EXPECT_EQ(alg.GetArg("invalid"), nullptr);
     EXPECT_EQ(alg.GetArg("-"), nullptr);
+
+    EXPECT_STREQ(alg["flag"].GetName().c_str(), "flag");
+
+    alg["flag"] = true;
+    EXPECT_EQ(alg.m_flag, true);
+
+    EXPECT_STREQ(const_cast<const MyAlgorithm &>(alg)["flag"].GetName().c_str(),
+                 "flag");
+
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_STREQ(alg["invalid"].GetName().c_str(), "dummy");
+        EXPECT_NE(CPLGetLastErrorType(), CE_None);
+    }
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_STREQ(
+            const_cast<const MyAlgorithm &>(alg)["invalid"].GetName().c_str(),
+            "dummy");
+        EXPECT_NE(CPLGetLastErrorType(), CE_None);
+    }
 
     {
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
