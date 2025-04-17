@@ -150,11 +150,12 @@ cmake -DCMAKE_BUILD_TYPE=Debug \
       -DBUILD_PYTHON_BINDINGS=ON \
       -DBUILD_JAVA_BINDINGS=ON \
       -DGDAL_JAVA_GENERATE_JAVADOC=ON \
+      -DGDAL_ENABLE_DRIVER_GTI=ON \
       -B cmake-build-doc -S .
 cmake --build cmake-build-doc --target man doczip -j$(nproc)
 mkdir -p man/man1
 cp cmake-build-doc/doc/build/man/*.1 man/man1
-cp cmake-build-doc/doc/gdal${COMPRESSED_VERSION}doc.zip .
+cp cmake-build-doc/doc/gdal*doc.zip "${CWD}/../.."
 rm -rf cmake-build-doc
 
 if test ! -f "man/man1/gdalinfo.1"; then
