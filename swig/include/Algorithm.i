@@ -164,7 +164,7 @@ public:
     return GDALAlgorithmArgGetAsInteger(self);
   }
 
-  int GetAsDouble() {
+  double GetAsDouble() {
     return GDALAlgorithmArgGetAsDouble(self);
   }
 
