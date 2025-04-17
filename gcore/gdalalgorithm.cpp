@@ -524,7 +524,7 @@ bool GDALAlgorithmArg::Set(const std::vector<std::string> &value)
             if (errno == 0 && v >= INT_MIN && v <= INT_MAX &&
                 endptr == s.c_str() + s.size())
             {
-                v_i.push_back(v);
+                v_i.push_back(static_cast<int>(v));
             }
             else
             {
