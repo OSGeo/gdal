@@ -65,8 +65,9 @@ Other topics
 ## New installed files
 
 * Headers: gdal_fwd.h, gdal_typetraits.h, gdal_minmax_element.hpp, gdalalgorithm.h
-* Binaries: gdalenhance
+* Binaries: gdal, gdalenhance
 * Data files: gdal_algorithm.schema.json
+* Man pages: a lot related to the gdal subcommands
 
 ## New optional dependencies
 
