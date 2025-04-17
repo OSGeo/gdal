@@ -55,6 +55,7 @@ bool GDALRasterClipAlgorithm::RunStep(GDALProgressFunc, void *)
     CPLStringList aosOptions;
     aosOptions.AddString("-of");
     aosOptions.AddString("VRT");
+    aosOptions.AddString("-eco");
     if (!m_bbox.empty())
     {
         aosOptions.AddString("-projwin");

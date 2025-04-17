@@ -728,6 +728,24 @@ def test_gdalalg_raster_pipeline_clip_like_error(tmp_vsimem):
         )
 
 
+def test_gdalalg_raster_pipeline_clip_bbox_outside_source(tmp_vsimem):
+
+    pipeline = get_pipeline_alg()
+    with pytest.raises(Exception, match="completely outside source raster extent"):
+        pipeline.ParseRunAndFinalize(
+            [
+                "read",
+                "../gcore/data/byte.tif",
+                "!",
+                "clip",
+                "--bbox=0,100,0,100",
+                "!",
+                "write",
+                tmp_vsimem / "out.tif",
+            ]
+        )
+
+
 def test_gdalalg_raster_pipeline_clip_bbox_crs(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.tif")
