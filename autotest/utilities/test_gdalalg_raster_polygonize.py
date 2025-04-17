@@ -31,7 +31,7 @@ def test_gdalalg_raster_polygonize():
     alg = get_alg()
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     assert alg.Run(my_progress)
     assert last_pct[0] == 1.0
     ds = alg["output"].GetDataset()
@@ -158,7 +158,7 @@ def test_gdalalg_raster_polygonize_overwrite(tmp_vsimem):
 
 def test_gdalalg_raster_polygonize_cannot_find_layer():
 
-    out_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    out_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
     alg = get_alg()
     alg["input"] = "../gcore/data/byte.tif"
@@ -170,7 +170,7 @@ def test_gdalalg_raster_polygonize_cannot_find_layer():
 
 def test_gdalalg_raster_polygonize_cannot_find_field():
 
-    out_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    out_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     out_ds.CreateLayer("polygonize")
 
     alg = get_alg()
@@ -186,7 +186,7 @@ def test_gdalalg_raster_polygonize_layer_and_field_name():
     alg = get_alg()
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["layer"] = "foo"
     alg["attribute-name"] = "bar"
     assert alg.Run()
@@ -201,7 +201,7 @@ def test_gdalalg_raster_polygonize_float32():
     alg = get_alg()
     alg["input"] = "../gcore/data/float32.tif"
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayerByName("polygonize")
@@ -215,7 +215,7 @@ def test_gdalalg_raster_polygonize_int64():
     alg = get_alg()
     alg["input"] = "../gcore/data/int64.tif"
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayerByName("polygonize")
@@ -229,7 +229,7 @@ def test_gdalalg_raster_polygonize_connectedness():
     alg = get_alg()
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["connectedness"] = 8
     assert alg.Run()
     ds = alg["output"].GetDataset()

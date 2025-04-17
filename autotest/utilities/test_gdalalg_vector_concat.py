@@ -37,7 +37,7 @@ def test_gdalalg_vector_concat():
     alg = get_alg()
     alg["input"] = ["../ogr/data/poly.shp", "../ogr/data/poly.shp"]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     assert alg.Run(my_progress)
     assert last_pct[0] == 1.0
     ds = alg["output"].GetDataset()
@@ -69,7 +69,7 @@ def test_gdalalg_vector_concat_pipeline():
     alg = get_pipeline_alg()
     alg["input"] = ["../ogr/data/poly.shp", "../ogr/data/poly.shp"]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["pipeline"] = "concat ! write"
     assert alg.Run(my_progress)
     assert last_pct[0] == 1.0
@@ -89,13 +89,13 @@ def test_gdalalg_vector_concat_dst_crs():
     srs_32631.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     srs_32631.ImportFromEPSG(32631)
 
-    ds1 = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds1 = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds1.CreateLayer("test", srs=srs_4326)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 49)"))
     lyr.CreateFeature(f)
 
-    ds2 = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds2 = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds2.CreateLayer("test", srs=srs_32631)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (500000 0)"))
@@ -104,7 +104,7 @@ def test_gdalalg_vector_concat_dst_crs():
     alg = get_alg()
     alg["input"] = [ds1, ds2]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayerByName("test")
@@ -117,7 +117,7 @@ def test_gdalalg_vector_concat_dst_crs():
     alg = get_alg()
     alg["input"] = [ds1, ds2]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["dst-crs"] = "EPSG:4326"
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -131,7 +131,7 @@ def test_gdalalg_vector_concat_dst_crs():
     alg = get_alg()
     alg["input"] = [ds1, ds2]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["dst-crs"] = "EPSG:32631"
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -142,7 +142,7 @@ def test_gdalalg_vector_concat_dst_crs():
     f = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(f, "POINT (500000 0)")
 
-    ds3 = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds3 = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds3.CreateLayer("test")
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (500000 0)"))
@@ -151,7 +151,7 @@ def test_gdalalg_vector_concat_dst_crs():
     alg = get_alg()
     alg["input"] = [ds3]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["dst-crs"] = "EPSG:4326"
     with pytest.raises(
         Exception, match="concat: Layer 'test' of '' has no spatial reference system"
@@ -161,7 +161,7 @@ def test_gdalalg_vector_concat_dst_crs():
     alg = get_alg()
     alg["input"] = [ds3]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["src-crs"] = "EPSG:32631"
     alg["dst-crs"] = "EPSG:4326"
     assert alg.Run()
@@ -177,7 +177,7 @@ def test_gdalalg_vector_concat_input_layer_name():
     alg = get_alg()
     alg["input"] = ["../ogr/data/poly.shp", "../ogr/data/idlink.dbf"]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["input-layer"] = "idlink"
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -191,12 +191,12 @@ def test_gdalalg_vector_concat_input_layer_name():
 )
 def test_gdalalg_vector_concat_field_strategy(strategy, expected_fields):
 
-    ds1 = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds1 = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds1.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("a"))
     lyr.CreateField(ogr.FieldDefn("c"))
 
-    ds2 = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds2 = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds2.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("b"))
     lyr.CreateField(ogr.FieldDefn("c"))
@@ -204,7 +204,7 @@ def test_gdalalg_vector_concat_field_strategy(strategy, expected_fields):
     alg = get_alg()
     alg["input"] = [ds1, ds2]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     if strategy:
         alg["field-strategy"] = strategy
     assert alg.Run()
@@ -221,12 +221,12 @@ def test_gdalalg_vector_concat_field_strategy(strategy, expected_fields):
 
 def test_gdalalg_vector_concat_single():
 
-    ds1 = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds1 = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds1.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("a"))
     lyr.CreateField(ogr.FieldDefn("c"))
 
-    ds2 = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds2 = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds2.CreateLayer("test2")
     lyr.CreateField(ogr.FieldDefn("b"))
     lyr.CreateField(ogr.FieldDefn("c"))
@@ -234,7 +234,7 @@ def test_gdalalg_vector_concat_single():
     alg = get_alg()
     alg["input"] = [ds1, ds2]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["mode"] = "single"
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -249,12 +249,12 @@ def test_gdalalg_vector_concat_single():
 
 def test_gdalalg_vector_concat_mode_default():
 
-    ds1 = gdal.GetDriverByName("Memory").Create("ds1", 0, 0, 0, gdal.GDT_Unknown)
+    ds1 = gdal.GetDriverByName("MEM").Create("ds1", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds1.CreateLayer("my_lyr_name_1")
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     lyr = ds1.CreateLayer("my_lyr_name_2")
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
-    ds2 = gdal.GetDriverByName("Memory").Create("ds2", 0, 0, 0, gdal.GDT_Unknown)
+    ds2 = gdal.GetDriverByName("MEM").Create("ds2", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds2.CreateLayer("my_lyr_name_1")
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     lyr = ds2.CreateLayer("my_lyr_name_2")
@@ -263,7 +263,7 @@ def test_gdalalg_vector_concat_mode_default():
     alg = get_alg()
     alg["input"] = [ds1, ds2]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     assert alg.Run()
     ds = alg["output"].GetDataset()
     assert ds.GetLayerCount() == 2
@@ -277,7 +277,7 @@ def test_gdalalg_vector_concat_mode_default():
     alg = get_alg()
     alg["input"] = [ds1, ds2]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["output-layer"] = "not_allowed"
     with pytest.raises(
         Exception,
@@ -288,12 +288,12 @@ def test_gdalalg_vector_concat_mode_default():
 
 def test_gdalalg_vector_concat_mode_stack():
 
-    ds1 = gdal.GetDriverByName("Memory").Create("ds1", 0, 0, 0, gdal.GDT_Unknown)
+    ds1 = gdal.GetDriverByName("MEM").Create("ds1", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds1.CreateLayer("my_lyr_name_1")
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     lyr = ds1.CreateLayer("my_lyr_name_2")
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
-    ds2 = gdal.GetDriverByName("Memory").Create("ds2", 0, 0, 0, gdal.GDT_Unknown)
+    ds2 = gdal.GetDriverByName("MEM").Create("ds2", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds2.CreateLayer("my_lyr_name_1")
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     lyr = ds2.CreateLayer("my_lyr_name_2")
@@ -302,7 +302,7 @@ def test_gdalalg_vector_concat_mode_stack():
     alg = get_alg()
     alg["input"] = [ds1, ds2]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["mode"] = "stack"
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -319,7 +319,7 @@ def test_gdalalg_vector_concat_mode_stack():
     alg = get_alg()
     alg["input"] = [ds1, ds2]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["mode"] = "stack"
     alg["output-layer"] = "{DS_INDEX}-{LAYER_INDEX}"
     assert alg.Run()
@@ -332,12 +332,12 @@ def test_gdalalg_vector_concat_mode_stack():
 
 def test_gdalalg_vector_concat_mode_single():
 
-    ds1 = gdal.GetDriverByName("Memory").Create("ds1", 0, 0, 0, gdal.GDT_Unknown)
+    ds1 = gdal.GetDriverByName("MEM").Create("ds1", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds1.CreateLayer("my_lyr_name_1")
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     lyr = ds1.CreateLayer("my_lyr_name_2")
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
-    ds2 = gdal.GetDriverByName("Memory").Create("ds2", 0, 0, 0, gdal.GDT_Unknown)
+    ds2 = gdal.GetDriverByName("MEM").Create("ds2", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds2.CreateLayer("my_lyr_name_1")
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     lyr = ds2.CreateLayer("my_lyr_name_2")
@@ -346,7 +346,7 @@ def test_gdalalg_vector_concat_mode_single():
     alg = get_alg()
     alg["input"] = [ds1, ds2]
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["mode"] = "single"
     alg["output-layer"] = "my-output-layer"
     assert alg.Run()
@@ -361,7 +361,7 @@ def test_gdalalg_vector_concat_stack_from_filesystem_source():
     alg = get_alg()
     alg["input"] = "../ogr/data/poly.shp"
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["mode"] = "stack"
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -385,14 +385,14 @@ def test_gdalalg_vector_concat_source_layer_field(
     source_layer_field_name, source_layer_field_content, expected_val
 ):
 
-    ds1 = gdal.GetDriverByName("Memory").Create("my_ds_name", 0, 0, 0, gdal.GDT_Unknown)
+    ds1 = gdal.GetDriverByName("MEM").Create("my_ds_name", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds1.CreateLayer("my_lyr_name")
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
 
     alg = get_alg()
     alg["input"] = ds1
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     if source_layer_field_name:
         alg["source-layer-field-name"] = source_layer_field_name
     if source_layer_field_content:

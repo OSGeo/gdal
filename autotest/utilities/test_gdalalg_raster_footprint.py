@@ -31,7 +31,7 @@ def test_gdalalg_raster_footprint():
     alg = get_alg()
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     assert alg.Run(my_progress)
     assert last_pct[0] == 1.0
     ds = alg["output"].GetDataset()
@@ -90,7 +90,7 @@ def test_gdalalg_raster_footprint_output_layer():
     alg = get_alg()
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["output-layer"] = "foo"
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -129,7 +129,7 @@ def test_gdalalg_raster_footprint_band():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["output-layer"] = "foo"
     alg["band"] = 1
     assert alg.Run()
@@ -141,7 +141,7 @@ def test_gdalalg_raster_footprint_band():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["output-layer"] = "foo"
     alg["band"] = 2
     assert alg.Run()
@@ -153,7 +153,7 @@ def test_gdalalg_raster_footprint_band():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["output-layer"] = "foo"
     alg["band"] = [2, 3]
     assert alg.Run()
@@ -165,7 +165,7 @@ def test_gdalalg_raster_footprint_band():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["output-layer"] = "foo"
     alg["band"] = [2, 3]
     alg["combine-bands"] = "intersection"
@@ -185,7 +185,7 @@ def test_gdalalg_raster_footprint_overview():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["overview"] = 0
     with pytest.raises(
         Exception,
@@ -199,7 +199,7 @@ def test_gdalalg_raster_footprint_overview():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["overview"] = 0
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -210,7 +210,7 @@ def test_gdalalg_raster_footprint_overview():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["overview"] = 1
     with pytest.raises(
         Exception,
@@ -227,7 +227,7 @@ def test_gdalalg_raster_footprint_srcnodata():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["srcnodata"] = 255
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -250,7 +250,7 @@ def test_gdalalg_raster_footprint_srcnodata_several(use_setnodatavalue):
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     if not use_setnodatavalue:
         alg["srcnodata"] = [0, 1]
     assert alg.Run()
@@ -269,7 +269,7 @@ def test_gdalalg_raster_footprint_coordinate_system():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer(0)
@@ -282,7 +282,7 @@ def test_gdalalg_raster_footprint_coordinate_system():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["coordinate-system"] = "pixel"
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -295,7 +295,7 @@ def test_gdalalg_raster_footprint_coordinate_system():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["coordinate-system"] = "georeferenced"
     with pytest.raises(
         Exception,
@@ -309,7 +309,7 @@ def test_gdalalg_raster_dst_crs():
     alg = get_alg()
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["dst-crs"] = "EPSG:4267"
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -328,7 +328,7 @@ def test_gdalalg_raster_footprint_split_multipolygons():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer(0)
@@ -341,7 +341,7 @@ def test_gdalalg_raster_footprint_split_multipolygons():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["split-multipolygons"] = True
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -362,7 +362,7 @@ def test_gdalalg_raster_footprint_convex_hull():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["convex-hull"] = True
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -382,7 +382,7 @@ def test_gdalalg_raster_footprint_densify():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["densify-distance"] = 0.5
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -404,7 +404,7 @@ def test_gdalalg_raster_footprint_simplify():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["simplify-tolerance"] = 1
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -421,7 +421,7 @@ def test_gdalalg_raster_footprint_min_ring_area():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["min-ring-area"] = 1.1
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -432,7 +432,7 @@ def test_gdalalg_raster_footprint_min_ring_area():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["min-ring-area"] = 0.9
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -452,7 +452,7 @@ def test_gdalalg_raster_footprint_max_points():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["max-points"] = 30
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -476,7 +476,7 @@ def test_gdalalg_raster_footprint_location_field():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["location-field"] = "foo"
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -493,7 +493,7 @@ def test_gdalalg_raster_footprint_no_location_field():
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["no-location-field"] = True
     assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -506,7 +506,7 @@ def test_gdalalg_raster_footprint_absolute_path():
     alg = get_alg()
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
-    alg["output-format"] = "Memory"
+    alg["output-format"] = "MEM"
     alg["absolute-path"] = True
     assert alg.Run()
     ds = alg["output"].GetDataset()
