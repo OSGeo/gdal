@@ -1436,14 +1436,14 @@ static bool DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
             char szFormat[20];
             snprintf(szFormat, sizeof(szFormat), "%%%d.%df", nWidth,
                      psDBF->panFieldDecimals[iField]);
-            CPLsnprintf(szSField, sizeof(szSField), szFormat,
-                        *STATIC_CAST(double *, pValue));
+            const double value = *STATIC_CAST(double *, pValue);
+            CPLsnprintf(szSField, sizeof(szSField), szFormat, value);
             szSField[sizeof(szSField) - 1] = '\0';
             if (STATIC_CAST(int, strlen(szSField)) >
                 psDBF->panFieldSize[iField])
             {
                 szSField[psDBF->panFieldSize[iField]] = '\0';
-                nRetResult = false;
+                nRetResult = psDBF->sHooks.Atof(szSField) == value;
             }
             memcpy(REINTERPRET_CAST(char *,
                                     pabyRec + psDBF->panFieldOffset[iField]),

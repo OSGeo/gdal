@@ -3418,6 +3418,9 @@ def test_ogr_shape_78(tmp_vsimem):
     fd.SetPrecision(1)
     lyr.CreateField(fd)
 
+    fd = ogr.FieldDefn("dblfield3", ogr.OFTReal)
+    lyr.CreateField(fd)
+
     # Integer values up to 2^53 can be exactly converted into a double.
     gdal.ErrorReset()
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -3441,6 +3444,13 @@ def test_ogr_shape_78(tmp_vsimem):
         lyr.CreateFeature(f)
     assert gdal.GetLastErrorMsg() != "", "did not get expected error/warning"
 
+    # Likely precision loss
+    gdal.ErrorReset()
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("dblfield3", 1623819823.809)
+    lyr.CreateFeature(f)
+    assert gdal.GetLastErrorMsg() == ""
+
     gdal.ErrorReset()
     ds = None
 
@@ -3448,6 +3458,12 @@ def test_ogr_shape_78(tmp_vsimem):
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetField("dblfield") == 9007199254740992.0
+    f = lyr.GetNextFeature()
+    assert f.IsFieldNull("dblfield")
+    f = lyr.GetNextFeature()
+    assert f.GetField("dblfield") == 9007199254740994.0
+    f = lyr.GetNextFeature()
+    assert f.GetField("dblfield3") == 1623819823.809
     ds = None
 
 
