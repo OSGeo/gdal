@@ -2746,7 +2746,7 @@ def TranslateOptions(options=None, format=None,
             elif errorIfWindowOutsideSource == "completely":
                 new_options.append('-eco')
             else:
-                raise RuntimeError("errorIfWindowOutsideSource must be one of 'partially', 'completely', or None")
+                raise RuntimeError("errorIfWindowOutsideSource must be one of True / 'partially', False, or 'completely'")
 
 
     if return_option_list:
