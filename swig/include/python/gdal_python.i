@@ -5851,57 +5851,109 @@ class VSIFile(BytesIO):
            >>> arg.Set("in.tif")
         """
 
-        if isinstance(value, os.PathLike):
-            value = str(value)
+        arg_type = self.GetType()
 
-        type = self.GetType()
-        if type == GAAT_BOOLEAN:
-            return self.SetAsBoolean(value)
-        if type == GAAT_STRING:
+        def ToInt(v):
+            if int(v) == v:
+                return int(v)
+            raise TypeError(f"{v} is not an integer")
+
+        if arg_type == GAAT_BOOLEAN:
+            if value in (1, "1", "yes", "YES", "true", "True", "TRUE", "on", "ON"):
+                return self.SetAsBoolean(True)
+            elif value in (0, "0", "no", "NO", "false", "False", "FALSE", "off", "OFF"):
+                return self.SetAsBoolean(False)
+            else:
+                return self.SetAsBoolean(value)
+
+        if arg_type == GAAT_STRING:
             if isinstance(value, int):
                 metadata_item = self.GetMetadataItem("type")
                 if metadata_item and ("GDALDataType" in metadata_item) and value >= GDT_Byte and value < GDT_TypeCount:
                     return self.SetAsString(GetDataTypeName(value))
                 else:
                     return self.SetAsString(str(value))
-            elif isinstance(value, str) or isinstance(value, float):
+            elif isinstance(value, str) or isinstance(value, float) or isinstance(value, os.PathLike):
                 return self.SetAsString(str(value))
-            else:
-                raise TypeError("Unexpected value type %s for an argument of type String" % str(type(value)))
-        if type == GAAT_INTEGER:
-            return self.SetAsInteger(value)
-        if type == GAAT_REAL:
-            return self.SetAsDouble(value)
-        if type == GAAT_DATASET:
+            elif isinstance(value, list) and len(value) >= 1 and (isinstance(value[0], str) or isinstance(value[0], int) or isinstance(value[0], float) or isinstance(value[0], os.PathLike)):
+                if len(value) > 1:
+                    raise RuntimeError("Only one value supported for an argument of type String")
+                return self.Set(value[0])
+            raise TypeError("Unexpected value type %s for an argument of type String" % str(type(value)))
+
+        if arg_type == GAAT_INTEGER:
+            if isinstance(value, int):
+                return self.SetAsInteger(value)
+            elif isinstance(value, str):
+                return self.SetAsInteger(int(value))
+            elif isinstance(value, float):
+                return self.SetAsInteger(ToInt(value))
+            elif isinstance(value, list) and len(value) >= 1 and (isinstance(value[0], str) or isinstance(value[0], int) or isinstance(value[0], float)):
+                if len(value) > 1:
+                    raise RuntimeError("Only one value supported for an argument of type Integer")
+                return self.Set(value[0])
+            raise TypeError("Unexpected value type %s for an argument of type Integer" % str(type(value)))
+
+        if arg_type == GAAT_REAL:
+            if isinstance(value, str):
+                return self.SetAsDouble(float(value))
+            elif isinstance(value, int) or isinstance(value, float):
+                return self.SetAsDouble(value)
+            elif isinstance(value, list) and len(value) >= 1 and (isinstance(value[0], str) or isinstance(value[0], int) or isinstance(value[0], float)):
+                if len(value) > 1:
+                        raise RuntimeError("Only one value supported for an argument of type Real")
+                return self.Set(value[0])
+            raise TypeError("Unexpected value type %s for an argument of type Real" % str(type(value)))
+
+        if arg_type == GAAT_DATASET:
             if isinstance(value, str) or isinstance(value, os.PathLike):
                 self.GetAsDatasetValue().SetName(str(value))
                 return True
             elif isinstance(value, Dataset):
                 self.GetAsDatasetValue().SetDataset(value)
                 return True
-            else:
+            elif isinstance(value, list) and len(value) >= 1 and (isinstance(value[0], str) or isinstance(value[0], os.PathLike) or isinstance(value[0], Dataset) or isinstance(value[0], ArgDatasetValue)):
+                if len(value) > 1:
+                    raise RuntimeError("Only one value supported for an argument of type Dataset")
+                return self.Set(value[0])
+            elif isinstance(value, ArgDatasetValue):
                 return self.SetAsDatasetValue(value)
-        if type == GAAT_STRING_LIST:
+            raise TypeError("Unexpected value type %s for an argument of type Dataset" % str(type(value)))
+
+        if arg_type == GAAT_STRING_LIST:
             if isinstance(value, list):
                 return self.SetAsStringList([str(v) for v in value])
             elif isinstance(value, dict):
                 return self.SetAsStringList([f"{k}={str(value[k])}" for k in value])
             else:
                 return self.SetAsStringList([str(value)])
-        if type == GAAT_INTEGER_LIST:
+
+        if arg_type == GAAT_INTEGER_LIST:
             if isinstance(value, int):
                 return self.SetAsIntegerList([value])
+            elif isinstance(value, float):
+                return self.SetAsIntegerList([ToInt(value)])
+            elif isinstance(value, str):
+                return self.SetAsIntegerList([int(value)])
+            elif isinstance(value, list) and len(value) >= 1 and isinstance(value[0], str):
+                return self.SetAsIntegerList([int(v) for v in value])
+            elif isinstance(value, list) and len(value) >= 1 and isinstance(value[0], float):
+                return self.SetAsIntegerList([ToInt(v) for v in value])
             else:
                 return self.SetAsIntegerList(value)
-        if type == GAAT_REAL_LIST:
-            if isinstance(value, int) or isinstance(value, float):
+
+        if arg_type == GAAT_REAL_LIST:
+            if isinstance(value, int) or isinstance(value, float) or isinstance(value, str):
                 return self.SetAsDoubleList([float(value)])
+            elif isinstance(value, list) and len(value) >= 1 and isinstance(value[0], str):
+                return self.SetAsDoubleList([float(v) for v in value])
             else:
                 return self.SetAsDoubleList(value)
-        if type == GAAT_DATASET_LIST:
-            if isinstance(value, list) and (isinstance(value[0], str) or isinstance(value[0], os.PathLike)):
+
+        if arg_type == GAAT_DATASET_LIST:
+            if isinstance(value, list) and len(value) > 0 and (isinstance(value[0], str) or isinstance(value[0], os.PathLike)):
                 return self.SetDatasetNames([str(v) for v in value])
-            elif isinstance(value, list) and isinstance(value[0], Dataset):
+            elif isinstance(value, list) and (len(value) == 0 or isinstance(value[0], Dataset)):
                 return self.SetDatasets(value)
             elif isinstance(value, str) or isinstance(value, os.PathLike):
                 return self.SetDatasetNames([str(value)])

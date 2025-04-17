@@ -174,3 +174,278 @@ def test_algorithm_dataset_value(tmp_path):
         match="Dataset object 'output' is created by algorithm and cannot be set as an input",
     ):
         output_arg.SetDataset(None)
+
+
+###############################################################################
+# Test Set() on an argument of type Bool
+
+
+def test_algorithm_arg_set_bool():
+    reg = gdal.GetGlobalAlgorithmRegistry()
+    alg = reg["raster"]["info"]
+
+    alg["no-mask"] = True
+    assert alg["no-mask"] == True
+
+    alg["no-mask"] = 1
+    assert alg["no-mask"] == True
+
+    alg["no-mask"] = 0
+    assert alg["no-mask"] == False
+
+    alg["no-mask"] = "True"
+    assert alg["no-mask"] == True
+
+
+###############################################################################
+# Test Set() on an argument of type Int
+
+
+def test_algorithm_arg_set_int():
+    reg = gdal.GetGlobalAlgorithmRegistry()
+    alg = reg["raster"]["info"]
+
+    alg["subdataset"] = 1
+    assert alg["subdataset"] == 1
+
+    alg["subdataset"] = 1.0
+    assert alg["subdataset"] == 1
+
+    alg["subdataset"] = "1"
+    assert alg["subdataset"] == 1
+
+    alg["subdataset"] = [1]
+    assert alg["subdataset"] == 1
+
+    alg["subdataset"] = [1.0]
+    assert alg["subdataset"] == 1
+
+    alg["subdataset"] = ["1"]
+    assert alg["subdataset"] == 1
+
+    with pytest.raises(TypeError):
+        alg["subdataset"] = None
+
+    with pytest.raises(TypeError):
+        alg["subdataset"] = 1.5
+
+    with pytest.raises(TypeError):
+        alg["subdataset"] = []
+
+    with pytest.raises(TypeError):
+        alg["subdataset"] = [None]
+
+    with pytest.raises(TypeError):
+        alg["subdataset"] = [1.5]
+
+    with pytest.raises(
+        RuntimeError, match="Only one value supported for an argument of type Integer"
+    ):
+        alg["subdataset"] = [1, 2]
+
+
+###############################################################################
+# Test Set() on an argument of type Real
+
+
+def test_algorithm_arg_set_real():
+    reg = gdal.GetGlobalAlgorithmRegistry()
+    alg = reg["vector"]["geom"]["simplify"]
+
+    alg["tolerance"] = 1
+    assert alg["tolerance"] == 1
+
+    alg["tolerance"] = 1.5
+    assert alg["tolerance"] == 1.5
+
+    alg["tolerance"] = "1.5"
+    assert alg["tolerance"] == 1.5
+
+    alg["tolerance"] = [1]
+    assert alg["tolerance"] == 1
+
+    alg["tolerance"] = [1.5]
+    assert alg["tolerance"] == 1.5
+
+    alg["tolerance"] = ["1.5"]
+    assert alg["tolerance"] == 1.5
+
+    with pytest.raises(TypeError):
+        alg["tolerance"] = None
+
+    with pytest.raises(TypeError):
+        alg["tolerance"] = []
+
+    with pytest.raises(TypeError):
+        alg["tolerance"] = [None]
+
+    with pytest.raises(
+        RuntimeError, match="Only one value supported for an argument of type Real"
+    ):
+        alg["tolerance"] = [1, 2]
+
+
+###############################################################################
+# Test Set() on an argument of type String
+
+
+def test_algorithm_arg_set_string(tmp_path):
+    reg = gdal.GetGlobalAlgorithmRegistry()
+    alg = reg["raster"]["info"]
+
+    alg["mdd"] = "foo"
+    assert alg["mdd"] == "foo"
+
+    alg["mdd"] = 5
+    assert alg["mdd"] == "5"
+
+    alg["mdd"] = 5.5
+    assert alg["mdd"] == "5.5"
+
+    alg["mdd"] = tmp_path
+    assert alg["mdd"] == str(tmp_path)
+
+    alg["mdd"] = ["foo"]
+    assert alg["mdd"] == "foo"
+
+    alg["mdd"] = [5]
+    assert alg["mdd"] == "5"
+
+    alg["mdd"] = [5.5]
+    assert alg["mdd"] == "5.5"
+
+    alg["mdd"] = [tmp_path]
+    assert alg["mdd"] == str(tmp_path)
+
+    with pytest.raises(TypeError):
+        alg["mdd"] = None
+
+    with pytest.raises(TypeError):
+        alg["mdd"] = []
+
+    with pytest.raises(TypeError):
+        alg["mdd"] = [None]
+
+    with pytest.raises(
+        RuntimeError, match="Only one value supported for an argument of type String"
+    ):
+        alg["mdd"] = ["foo", "bar"]
+
+
+###############################################################################
+# Test Set() on an argument of type IntegerList
+
+
+def test_algorithm_arg_set_int_list():
+    reg = gdal.GetGlobalAlgorithmRegistry()
+    alg = reg["raster"]["overview"]["add"]
+
+    alg["levels"] = 2
+    assert alg["levels"] == [2]
+
+    alg["levels"] = "2"
+    assert alg["levels"] == [2]
+
+    alg["levels"] = 2.0
+    assert alg["levels"] == [2]
+
+    alg["levels"] = [2, 4]
+    assert alg["levels"] == [2, 4]
+
+    alg["levels"] = ["2", "4"]
+    assert alg["levels"] == [2, 4]
+
+    alg["levels"] = [2.0, 4.0]
+    assert alg["levels"] == [2, 4]
+
+    with pytest.raises(TypeError):
+        alg["levels"] = None
+
+    with pytest.raises(TypeError):
+        alg["levels"] = [None]
+
+    with pytest.raises(TypeError):
+        alg["levels"] = 2.5
+
+
+###############################################################################
+# Test Set() on an argument of type DoubleList
+
+
+def test_algorithm_arg_set_double_list():
+    reg = gdal.GetGlobalAlgorithmRegistry()
+    alg = reg["raster"]["footprint"]
+
+    alg["srcnodata"] = 2
+    assert alg["srcnodata"] == [2]
+
+    alg["srcnodata"] = "2"
+    assert alg["srcnodata"] == [2]
+
+    alg["srcnodata"] = 2.5
+    assert alg["srcnodata"] == [2.5]
+
+    alg["srcnodata"] = [2, 4]
+    assert alg["srcnodata"] == [2, 4]
+
+    alg["srcnodata"] = ["2", "4"]
+    assert alg["srcnodata"] == [2, 4]
+
+    alg["srcnodata"] = [2.5, 4.5]
+    assert alg["srcnodata"] == [2.5, 4.5]
+
+    with pytest.raises(TypeError):
+        alg["srcnodata"] = None
+
+    with pytest.raises(TypeError):
+        alg["srcnodata"] = [None]
+
+
+###############################################################################
+# Test Set() on an argument of type Dataset
+
+
+def test_algorithm_arg_set_dataset(tmp_path):
+    reg = gdal.GetGlobalAlgorithmRegistry()
+    alg = reg["raster"]["info"]
+
+    alg["input"] = tmp_path
+    alg["input"] = "foo"
+    alg["input"] = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    alg["input"] = [tmp_path]
+    alg["input"] = ["foo"]
+    alg["input"] = [gdal.GetDriverByName("MEM").Create("", 1, 1)]
+
+    with pytest.raises(TypeError):
+        alg["input"] = None
+    with pytest.raises(TypeError):
+        alg["input"] = []
+    with pytest.raises(TypeError):
+        alg["input"] = [None]
+    with pytest.raises(
+        RuntimeError, match="Only one value supported for an argument of type Dataset"
+    ):
+        alg["input"] = ["foo", "bar"]
+
+
+###############################################################################
+# Test Set() on an argument of type DatasetList
+
+
+def test_algorithm_arg_set_dataset_list(tmp_path):
+    reg = gdal.GetGlobalAlgorithmRegistry()
+    alg = reg["raster"]["mosaic"]
+
+    alg["input"] = tmp_path
+    alg["input"] = "foo"
+    alg["input"] = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    alg["input"] = [tmp_path]
+    alg["input"] = ["foo"]
+    alg["input"] = [gdal.GetDriverByName("MEM").Create("", 1, 1)]
+    alg["input"] = []
+    alg["input"] = ["foo", "bar"]
+
+    with pytest.raises(TypeError):
+        alg["input"] = None
+    with pytest.raises(TypeError):
+        alg["input"] = [None]
