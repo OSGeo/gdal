@@ -276,6 +276,7 @@ CPL_C_END
 #include <vector>
 
 class GDALDataset;
+class OGRSpatialReference;
 
 /** Common argument category */
 constexpr const char *GAAC_COMMON = "Common";
@@ -1534,6 +1535,14 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
         return Set(GDALGetDataTypeName(dt));
     }
 
+    /** Set the value for a GAAT_STRING argument (representing a CRS)
+     * from a OGRSpatialReference
+     * It cannot be called several times for a given argument.
+     * Validation checks and other actions are run.
+     * Return true if success.
+     */
+    bool Set(const OGRSpatialReference &);
+
     /** Set the value for a GAAT_INTEGER (or GAAT_REAL) argument.
      * It cannot be called several times for a given argument.
      * Validation checks and other actions are run.
@@ -1639,6 +1648,13 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
 
     /** Set the value of the argument. */
     inline GDALAlgorithmArg &operator=(GDALDataType value)
+    {
+        Set(value);
+        return *this;
+    }
+
+    /** Set the value of the argument. */
+    inline GDALAlgorithmArg &operator=(const OGRSpatialReference &value)
     {
         Set(value);
         return *this;

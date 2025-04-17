@@ -19,6 +19,7 @@
 
 #include "gdalalgorithm.h"
 #include "gdal_priv.h"
+#include "ogr_spatialref.h"
 
 #include <algorithm>
 #include <cassert>
@@ -686,6 +687,12 @@ GDALAlgorithmArg::operator=(std::unique_ptr<GDALDataset> value)
 {
     Set(std::move(value));
     return *this;
+}
+
+bool GDALAlgorithmArg::Set(const OGRSpatialReference &value)
+{
+    const char *const apszOptions[] = {"FORMAT=WKT2_2019", nullptr};
+    return Set(value.exportToWkt(apszOptions));
 }
 
 bool GDALAlgorithmArg::SetFrom(const GDALAlgorithmArg &other)

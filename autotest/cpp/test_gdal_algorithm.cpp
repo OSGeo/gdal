@@ -16,6 +16,7 @@
 #include "cpl_string.h"
 #include "gdalalgorithm.h"
 #include "gdal_priv.h"
+#include "ogr_spatialref.h"
 
 #include "test_data.h"
 
@@ -360,6 +361,11 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
 
         arg = GDT_Byte;
         EXPECT_STREQ(val.c_str(), "Byte");
+
+        OGRSpatialReference srs;
+        srs.SetFromUserInput("WGS84");
+        arg = srs;
+        EXPECT_EQ(val.find("GEOGCRS["), 0);
 
         arg.Set("foo");
         {
