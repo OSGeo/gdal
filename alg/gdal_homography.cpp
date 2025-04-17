@@ -262,7 +262,7 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
     {
         return FALSE;
     }
-    if (abs(h_normalized(6, 0)) < 1.0e-15)
+    if (std::abs(h_normalized(6, 0)) < 1.0e-15)
     {
         return FALSE;
     }
@@ -366,11 +366,11 @@ void GDALComposeHomographies(const double *padfH1, const double *padfH2,
  * into a georeferenced (geo_x, geo_y) location.
  * \code{.c}
  *  *pdfGeoX = (padfHomography[0] + dfPixel * padfHomography[1]
- *                                + dfLine  * padfHomography[2]) / 
+ *                                + dfLine  * padfHomography[2]) /
  *             (padfHomography[6] + dfPixel * padfHomography[7]
  *                                + dfLine  * padfHomography[8]);
  *  *pdfGeoY = (padfHomography[3] + dfPixel * padfHomography[4]
- *                                + dfLine  * padfHomography[5]) / 
+ *                                + dfLine  * padfHomography[5]) /
  *             (padfHomography[6] + dfPixel * padfHomography[7]
  *                                + dfLine  * padfHomography[8]);
  * \endcode
@@ -391,7 +391,7 @@ int GDALApplyHomography(const double *padfHomography, double dfPixel,
 {
     double w = padfHomography[6] + dfPixel * padfHomography[7] +
                dfLine * padfHomography[8];
-    if (abs(w) < 1.0e-15)
+    if (std::abs(w) < 1.0e-15)
     {
         return FALSE;
     }
@@ -570,7 +570,7 @@ int GDALHomographyTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
     for (int i = 0; i < nPointCount; i++)
     {
         double w = homography[6] + x[i] * homography[7] + y[i] * homography[8];
-        if (abs(w) < 1.0e-15)
+        if (std::abs(w) < 1.0e-15)
         {
             panSuccess[i] = FALSE;
             ret = FALSE;
