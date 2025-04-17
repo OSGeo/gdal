@@ -1,5 +1,26 @@
 %feature("docstring") OSRSpatialReferenceShadow "
 Python proxy of an :cpp:class:`OGRSpatialReference`.
+
+Create a new spatial reference object. An empty object will be created
+unless exactly one of the following parameters is provided.
+
+Parameters
+----------
+epsg : int, optional
+    EPSG CRS code, as understood by :py:meth:`ImportFromEPSG`
+esri : list, optional
+    ESRI ``.prj`` text, as understood by :py:meth:`ImportFromESRI`
+proj4 : str, optional
+    PROJ CRS string, as understood by :py:meth:`ImportFromProj4`
+wkt : str, optional
+    WKT CRS string, as understood by :py:meth:`ImportFromWkt`
+
+Examples
+--------
+>>> osr.SpatialReference(epsg=5646).GetName()
+'NAD83 / Vermont (ftUS)'
+>>> osr.SpatialReference(proj4='+proj=utm +zone=18 +datum=WGS84').GetUTMZone()
+18
 ";
 
 %extend OSRSpatialReferenceShadow {

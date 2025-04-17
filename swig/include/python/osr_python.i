@@ -53,6 +53,14 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
         _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
+        if len(kwargs) > 1:
+            raise ValueError("Must specify at most one of: wkt, epsg, esri, proj4")
+
+        orig_kwargs = kwargs.copy()
+        for k in ("epsg", "esri", "proj4"):
+            if k in kwargs:
+                del kwargs[k]
+
         try:
             with ExceptionMgr(useExceptions=True):
                 this = _osr.new_SpatialReference(*args, **kwargs)
@@ -67,6 +75,13 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
                 self.this.append(this)
             except __builtin__.Exception:
                 self.this = this
+
+        if "epsg" in orig_kwargs:
+            self.ImportFromEPSG(orig_kwargs["epsg"])
+        if "esri" in orig_kwargs:
+            self.ImportFromESRI(orig_kwargs["esri"])
+        if "proj4" in orig_kwargs:
+            self.ImportFromProj4(orig_kwargs["proj4"])
 
   %}
 

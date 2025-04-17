@@ -2489,3 +2489,53 @@ def test_osr_basic_GetAuthorityListFromDatabase():
     ret = osr.GetAuthorityListFromDatabase()
     assert "EPSG" in ret
     assert "PROJ" in ret
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "arg,value",
+    (
+        pytest.param("epsg", 4326, id="epsg"),
+        pytest.param("proj4", "+proj=utm +zone=18 +datum=WGS84", id="proj4"),
+        pytest.param(
+            "esri",
+            [
+                "Projection    STATEPLANE",
+                "Fipszone      903",
+                "Datum         NAD83",
+                "Spheroid      GRS80",
+                "Units         FEET",
+                "Zunits        NO",
+                "Xshift        0.0",
+                "Yshift        0.0",
+                "Parameters    ",
+                "",
+            ],
+            id="esri",
+        ),
+        pytest.param(
+            "wkt",
+            'PROJCS["NAD83 / Vermont (ftUS)",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",42.5],PARAMETER["central_meridian",-72.5],PARAMETER["scale_factor",0.999964286],PARAMETER["false_easting",1640416.6667],PARAMETER["false_northing",0],UNIT["US survey foot",0.304800609601219,AUTHORITY["EPSG","9003"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","5646"]]',
+            id="wkt",
+        ),
+    ),
+)
+def test_osr_basic_constructor(arg, value):
+
+    srs = osr.SpatialReference(**{arg: value})
+
+    assert srs.ExportToWkt() != ""
+
+
+def test_osr_basic_constructor_overspecified():
+
+    with pytest.raises(ValueError, match="at most one"):
+        osr.SpatialReference(epsg=4326, proj4="+proj=utm +zone=18 +datum=WGS84")
+
+
+def test_osr_basic_constructor_invalid_kwarg():
+
+    with pytest.raises(TypeError, match="invalid keyword argument"):
+        osr.SpatialReference(description="VT State Plane")
