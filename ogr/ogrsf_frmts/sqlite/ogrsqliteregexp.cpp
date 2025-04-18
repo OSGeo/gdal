@@ -209,7 +209,8 @@ static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc,
 {
     CPLAssert(argc == 2);
 
-    const char *re = (const char *)sqlite3_value_text(argv[0]);
+    const char *re =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
     if (!re)
     {
         sqlite3_result_error(ctx, "no regexp", -1);
@@ -222,7 +223,8 @@ static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc,
         return;
     }
 
-    const char *str = (const char *)sqlite3_value_text(argv[1]);
+    const char *str =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[1]));
     if (!str)
     {
         sqlite3_result_error(ctx, "no string", -1);
@@ -230,7 +232,7 @@ static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc,
     }
 
     /* simple LRU cache */
-    cache_entry *cache = (cache_entry *)sqlite3_user_data(ctx);
+    cache_entry *cache = static_cast<cache_entry *>(sqlite3_user_data(ctx));
     CPLAssert(cache);
 
     bool found = false;
