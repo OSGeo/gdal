@@ -2,27 +2,32 @@
 
 Create a multidimensional array within a group.
 
+It is recommended that the GDALDimension objects passed in aoDimensions
+belong to this group, either by retrieving them with :py:func:`osgeo.gdal.Group.GetDimensions`
+or creating a new one with :py:func:`osgeo.gdal.Group.CreateDimension`.
+
 See :cpp:func:`GDALGroup::CreateMDArray`.
 
 Parameters
 ----------
-osName : str
+name : str
     name
-aoDimensions : list
+dimensions : list
     List of dimensions, ordered from the slowest varying
     dimension first to the fastest varying dimension last.
     Might be empty for a scalar array (if supported by driver)
-oDataType: GDALExtendedDataType
-papszOptions : CSLConstList
+data_type: :py:class:`osgeo.gdal.ExtendedDataType`
+options: dict/list
+    an optional dict or list of driver specific ``NAME=VALUE`` option strings.
 
 Returns
 -------
 
-GDALMDArray - the new array
+MDArray:
+    the new :py:class:`osgeo.gdal.MDArray` or ``None`` on failure.
 
 Examples
 --------
->>> from osgeo import gdal
 >>> drv = gdal.GetDriverByName('MEM')
 >>> mem_ds = drv.CreateMultiDimensional('myds')
 >>> rg = mem_ds.GetRootGroup()
