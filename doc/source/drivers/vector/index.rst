@@ -61,6 +61,7 @@ Vector drivers
    libkml
    lvbag
    mapml
+   mem
    memory
    miramon
    mitab
