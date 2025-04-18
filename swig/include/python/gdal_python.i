@@ -1110,6 +1110,42 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
 %pythoncode %{
 
+    def ReadAsMaskedArray(self, xoff=0, yoff=0, xsize=None, ysize=None, 
+                    buf_xsize=None, buf_ysize=None, buf_type=None,
+                    resample_alg=gdalconst.GRIORA_NearestNeighbour,
+                    callback=None,
+                    callback_data=None,
+                    band_list=None):
+        """
+        Read a window from raster bands into a NumPy masked array.
+
+        Parameters are the same as for :py:meth:`ReadAsArray`.
+        """
+
+        import numpy as np
+
+        arr = self.ReadAsArray(xoff=xoff, yoff=yoff, xsize=xsize, ysize=ysize, 
+                               buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
+                               resample_alg=resample_alg, band_list=band_list)
+        
+        if band_list is None:
+            band_list = [i+1 for i in range(self.RasterCount)]
+        
+        all_valid = all(self.GetRasterBand(band).GetMaskFlags() == GMF_ALL_VALID for band in band_list)
+
+        if all_valid:
+            return np.ma.masked_array(arr, False)
+       
+        masks = [self.GetRasterBand(band).GetMaskBand().ReadAsArray(
+                xoff=xoff, yoff=yoff,
+                win_xsize=xsize, win_ysize=ysize,
+                buf_xsize=buf_xsize, buf_ysize=buf_ysize,
+                resample_alg=gdalconst.GRIORA_Mode) != 255
+                 for band in band_list]
+
+        return np.ma.masked_array(arr, np.vstack(masks))
+
+
     def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None,
                     buf_xsize=None, buf_ysize=None, buf_type=None,
                     resample_alg=gdalconst.GRIORA_NearestNeighbour,
