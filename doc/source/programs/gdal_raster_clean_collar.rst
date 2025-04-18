@@ -1,7 +1,7 @@
-.. _gdal_raster_clean_collar_subcommand:
+.. _gdal_raster_clean_collar:
 
 ================================================================================
-"gdal raster clean-collar" sub-command
+``gdal raster clean-collar``
 ================================================================================
 
 .. versionadded:: 3.11

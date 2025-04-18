@@ -1,7 +1,7 @@
-.. _gdal_raster_unscale_subcommand:
+.. _gdal_raster_unscale:
 
 ================================================================================
-"gdal raster unscale" sub-command
+``gdal raster unscale``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -38,9 +38,9 @@ formula:
 If one of the input bands has no scale/offset metadata, its values are kept
 unmodified.
 
-This command is the reverse operation of :ref:`gdal_raster_scale_subcommand`.
+This command is the reverse operation of :ref:`gdal_raster_scale`.
 
-This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
 Standard options
 ++++++++++++++++

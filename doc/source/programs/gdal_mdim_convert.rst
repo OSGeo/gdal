@@ -1,7 +1,7 @@
-.. _gdal_mdim_convert_subcommand:
+.. _gdal_mdim_convert:
 
 ================================================================================
-"gdal mdim convert" sub-command
+``gdal mdim convert``
 ================================================================================
 
 .. versionadded:: 3.11

@@ -1,7 +1,7 @@
-.. _gdal_raster_index_subcommand:
+.. _gdal_raster_index:
 
 ================================================================================
-"gdal raster index" sub-command
+``gdal raster index``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -26,7 +26,7 @@ outlining the raster.
 This output is suitable for use with `MapServer <http://mapserver.org/>`__ as a
 raster tileindex
 
-See :ref:`gdal_driver_gti_create_subcommand` for an extension of this command
+See :ref:`gdal_driver_gti_create` for an extension of this command
 that create files to be used as input for the :ref:`GTI <raster.gti>` driver.
 
 The following options are available:

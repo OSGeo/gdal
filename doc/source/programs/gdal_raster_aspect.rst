@@ -1,7 +1,7 @@
-.. _gdal_raster_aspect_subcommand:
+.. _gdal_raster_aspect:
 
 ================================================================================
-"gdal raster aspect" sub-command
+``gdal raster aspect``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -23,7 +23,7 @@ Description
 :program:`gdal raster aspect` generates an aspect map, from any
 GDAL-supported elevation raster.
 
-This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
 It outputs a 32-bit float raster with values between 0° and 360° representing
 the azimuth that slopes are facing. The definition of the azimuth is such that:

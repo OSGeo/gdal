@@ -1,7 +1,7 @@
-.. _gdal_convert_command:
+.. _gdal_convert:
 
 ================================================================================
-"gdal convert" command
+``gdal convert``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -12,8 +12,8 @@
 
 .. Index:: gdal convert
 
-Acts as a shortcut for :ref:`gdal_raster_convert_subcommand` or
-:ref:`gdal_vector_convert_subcommand` depending on the nature of the specified dataset.
+Acts as a shortcut for :ref:`gdal_raster_convert` or
+:ref:`gdal_vector_convert` depending on the nature of the specified dataset.
 
 Synopsis
 --------

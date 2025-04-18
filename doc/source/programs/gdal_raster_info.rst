@@ -1,7 +1,7 @@
-.. _gdal_raster_info_subcommand:
+.. _gdal_raster_info:
 
 ================================================================================
-"gdal raster info" sub-command
+``gdal raster info``
 ================================================================================
 
 .. versionadded:: 3.11

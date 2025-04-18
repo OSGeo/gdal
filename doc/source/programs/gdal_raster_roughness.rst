@@ -1,7 +1,7 @@
-.. _gdal_raster_roughness_subcommand:
+.. _gdal_raster_roughness:
 
 ================================================================================
-"gdal raster roughness" sub-command
+``gdal raster roughness``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -24,7 +24,7 @@ Description
 computed from the elevation. Roughness is the largest inter-cell difference
 of a central pixel and its surrounding cell, as defined in Wilson et al. (2007, Marine Geodesy 30:3-35).
 
-This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
 The roughness value -9999 is used as the nodata value.
 

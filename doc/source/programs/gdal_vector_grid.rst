@@ -1,7 +1,7 @@
-.. _gdal_vector_grid_subcommand:
+.. _gdal_vector_grid:
 
 ================================================================================
-"gdal vector grid" sub-command
+``gdal vector grid``
 ================================================================================
 
 .. versionadded:: 3.11

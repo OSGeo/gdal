@@ -1,7 +1,7 @@
-.. _gdal_raster_astype_subcommand:
+.. _gdal_raster_astype:
 
 ================================================================================
-"gdal raster astype" sub-command
+``gdal raster astype``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -24,7 +24,7 @@ Description
 have a specific data type. Values may be truncated or rounded if the output
 data type is "smaller" than the input one.
 
-This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
 Standard options
 ++++++++++++++++

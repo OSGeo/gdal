@@ -1,7 +1,7 @@
-.. _gdal_raster_calc_subcommand:
+.. _gdal_raster_calc:
 
 ================================================================================
-"gdal raster calc" sub-command
+``gdal raster calc``
 ================================================================================
 
 .. versionadded:: 3.11

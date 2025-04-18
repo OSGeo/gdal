@@ -1,7 +1,7 @@
-.. _gdal_mdim_command:
+.. _gdal_mdim:
 
 ================================================================================
-"gdal mdim" command
+``gdal mdim``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -20,8 +20,8 @@ Synopsis
 Available sub-commands
 ----------------------
 
-- :ref:`gdal_mdim_info_subcommand`
-- :ref:`gdal_mdim_convert_subcommand`
+- :ref:`gdal_mdim_info`
+- :ref:`gdal_mdim_convert`
 
 Examples
 --------

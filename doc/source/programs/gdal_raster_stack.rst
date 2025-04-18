@@ -1,7 +1,7 @@
-.. _gdal_raster_stack_subcommand:
+.. _gdal_raster_stack:
 
 ================================================================================
-"gdal raster stack" sub-command
+``gdal raster stack``
 ================================================================================
 
 .. versionadded:: 3.11

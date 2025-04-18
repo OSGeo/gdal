@@ -1,7 +1,7 @@
-.. _gdal_raster_overview_delete_subcommand:
+.. _gdal_raster_overview_delete:
 
 ================================================================================
-"gdal raster overview delete" sub-command
+``gdal raster overview delete``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -27,7 +27,7 @@ of a dataset.
 
     For most file formats (including GeoTIFF or GeoPackage), the space
     previously occupied by the removed overviews may not be reclaimed.
-    It might be needed for use :ref:`gdal_raster_convert_subcommand` to create
+    It might be needed for use :ref:`gdal_raster_convert` to create
     a new compact dataset.
 
 .. option:: --dataset <DATASET>

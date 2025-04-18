@@ -1,7 +1,7 @@
-.. _gdal_vsi_command:
+.. _gdal_vsi:
 
 ================================================================================
-"gdal vsi" command
+``gdal vsi``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -23,10 +23,10 @@ Synopsis
 Available sub-commands
 ----------------------
 
-- :ref:`gdal_vsi_copy_subcommand`
-- :ref:`gdal_vsi_delete_subcommand`
-- :ref:`gdal_vsi_list_subcommand`
-- :ref:`gdal_vsi_sozip_subcommand`
+- :ref:`gdal_vsi_copy`
+- :ref:`gdal_vsi_delete`
+- :ref:`gdal_vsi_list`
+- :ref:`gdal_vsi_sozip`
 
 Examples
 --------

@@ -46,7 +46,7 @@ documentation page of each algorithm. They can also be obtained with
     >>> gdal.Algorithm("raster", "convert").GetArgNames()
     ['help', 'help-doc', 'version', 'json-usage', 'drivers', 'config', 'progress', 'output-format', 'open-option', 'input-format', 'input', 'output', 'creation-option', 'overwrite', 'append']
 
-For a command such as :ref:`gdal_raster_info_subcommand` that returns a JSON
+For a command such as :ref:`gdal_raster_info` that returns a JSON
 output, you can get the return value of :py:func:`osgeo.gdal.Run` and call the
 :py:meth:`osgeo.gdal.Algorithm.Output` method.
 

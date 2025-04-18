@@ -1,7 +1,7 @@
-.. _gdal_raster_color_map_subcommand:
+.. _gdal_raster_color_map:
 
 ================================================================================
-"gdal raster color-map" sub-command
+``gdal raster color-map``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -25,7 +25,7 @@ single band, using a color map, either attached directly to a raster band,
 or from an external text file. It is typically used to create hypsometric maps
 from a DEM.
 
-This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
 Standard options
 ++++++++++++++++

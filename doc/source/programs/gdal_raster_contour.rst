@@ -1,7 +1,7 @@
-.. _gdal_raster_contour_subcommand:
+.. _gdal_raster_contour:
 
 ================================================================================
-"gdal raster contour" sub-command
+``gdal raster contour``
 ================================================================================
 
 .. versionadded:: 3.11

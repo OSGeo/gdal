@@ -1,7 +1,7 @@
-.. _gdal_raster_pipeline_subcommand:
+.. _gdal_raster_pipeline:
 
 ================================================================================
-"gdal raster pipeline" sub-command
+``gdal raster pipeline``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -32,91 +32,91 @@ Potential steps are:
 
 .. program-output:: gdal raster pipeline --help-doc=aspect
 
-Details for options can be found in :ref:`gdal_raster_aspect_subcommand`.
+Details for options can be found in :ref:`gdal_raster_aspect`.
 
 * astype
 
 .. program-output:: gdal raster pipeline --help-doc=astype
 
-Details for options can be found in :ref:`gdal_raster_astype_subcommand`.
+Details for options can be found in :ref:`gdal_raster_astype`.
 
 * clip
 
 .. program-output:: gdal raster pipeline --help-doc=clip
 
-Details for options can be found in :ref:`gdal_raster_clip_subcommand`.
+Details for options can be found in :ref:`gdal_raster_clip`.
 
 * color-map
 
 .. program-output:: gdal raster pipeline --help-doc=color-map
 
-Details for options can be found in :ref:`gdal_raster_color_map_subcommand`.
+Details for options can be found in :ref:`gdal_raster_color_map`.
 
 * edit
 
 .. program-output:: gdal raster pipeline --help-doc=edit
 
-Details for options can be found in :ref:`gdal_raster_edit_subcommand`.
+Details for options can be found in :ref:`gdal_raster_edit`.
 
 * hillshade
 
 .. program-output:: gdal raster pipeline --help-doc=hillshade
 
-Details for options can be found in :ref:`gdal_raster_hillshade_subcommand`.
+Details for options can be found in :ref:`gdal_raster_hillshade`.
 
 * reproject
 
 .. program-output:: gdal raster pipeline --help-doc=reproject
 
-Details for options can be found in :ref:`gdal_raster_reproject_subcommand`.
+Details for options can be found in :ref:`gdal_raster_reproject`.
 
 * resize
 
 .. program-output:: gdal raster pipeline --help-doc=resize
 
-Details for options can be found in :ref:`gdal_raster_resize_subcommand`.
+Details for options can be found in :ref:`gdal_raster_resize`.
 
 * roughness
 
 .. program-output:: gdal raster pipeline --help-doc=roughness
 
-Details for options can be found in :ref:`gdal_raster_roughness_subcommand`.
+Details for options can be found in :ref:`gdal_raster_roughness`.
 
 * scale
 
 .. program-output:: gdal raster pipeline --help-doc=scale
 
-Details for options can be found in :ref:`gdal_raster_scale_subcommand`.
+Details for options can be found in :ref:`gdal_raster_scale`.
 
 * select
 
 .. program-output:: gdal raster pipeline --help-doc=select
 
-Details for options can be found in :ref:`gdal_raster_select_subcommand`.
+Details for options can be found in :ref:`gdal_raster_select`.
 
 * slope
 
 .. program-output:: gdal raster pipeline --help-doc=slope
 
-Details for options can be found in :ref:`gdal_raster_slope_subcommand`.
+Details for options can be found in :ref:`gdal_raster_slope`.
 
 * tpi
 
 .. program-output:: gdal raster pipeline --help-doc=tpi
 
-Details for options can be found in :ref:`gdal_raster_tpi_subcommand`.
+Details for options can be found in :ref:`gdal_raster_tpi`.
 
 * tri
 
 .. program-output:: gdal raster pipeline --help-doc=tri
 
-Details for options can be found in :ref:`gdal_raster_tri_subcommand`.
+Details for options can be found in :ref:`gdal_raster_tri`.
 
 * unscale
 
 .. program-output:: gdal raster pipeline --help-doc=unscale
 
-Details for options can be found in :ref:`gdal_raster_unscale_subcommand`.
+Details for options can be found in :ref:`gdal_raster_unscale`.
 
 * write
 

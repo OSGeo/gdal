@@ -1,7 +1,7 @@
-.. _gdal_vector_info_subcommand:
+.. _gdal_vector_info:
 
 ================================================================================
-"gdal vector info" sub-command
+``gdal vector info``
 ================================================================================
 
 .. versionadded:: 3.11

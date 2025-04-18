@@ -1,7 +1,7 @@
-.. _gdal_raster_hillshade_subcommand:
+.. _gdal_raster_hillshade:
 
 ================================================================================
-"gdal raster hillshade" sub-command
+``gdal raster hillshade``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -23,7 +23,7 @@ Description
 :program:`gdal raster hillshade` generates a shaded relief map, from any
 GDAL-supported elevation raster.
 
-This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
 It generates an 8-bit raster with a nice shaded relief effect. It is very useful
 for visualizing the terrain. You can optionally specify the azimuth and altitude
@@ -44,7 +44,7 @@ appropriate ratio from the units of the CRS, as well as the potential value of
 the units of the raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitsType`, if it
 is metre, foot international or US survey foot). Note that for geographic CRS,
 the result for source datasets at high latitudes may be incorrect, and prior
-reprojection to a polar projection might be needed using :ref:`gdal_raster_reproject_subcommand`.
+reprojection to a polar projection might be needed using :ref:`gdal_raster_reproject`.
 
 If x (east-west) and y (north-south) units are identical, but z (elevation) units
 are different, the :option:`--xscale` and :option:`--yscale` can be used to set

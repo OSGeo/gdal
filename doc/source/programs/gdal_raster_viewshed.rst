@@ -1,7 +1,7 @@
-.. _gdal_raster_viewshed_subcommand:
+.. _gdal_raster_viewshed:
 
 ================================================================================
-"gdal raster viewshed" sub-command
+``gdal raster viewshed``
 ================================================================================
 
 .. versionadded:: 3.11

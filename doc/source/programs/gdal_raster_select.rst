@@ -1,7 +1,7 @@
-.. _gdal_raster_select_subcommand:
+.. _gdal_raster_select:
 
 ================================================================================
-"gdal raster select" sub-command
+``gdal raster select``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -23,7 +23,7 @@ Description
 :program:`gdal raster select` can be used to select and re-order a subset of
 raster bands from a raster dataset.
 
-This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
 Standard options
 ++++++++++++++++

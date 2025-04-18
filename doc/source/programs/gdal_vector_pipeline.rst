@@ -1,7 +1,7 @@
-.. _gdal_vector_pipeline_subcommand:
+.. _gdal_vector_pipeline:
 
 ================================================================================
-"gdal vector pipeline" sub-command
+``gdal vector pipeline``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -32,49 +32,49 @@ Potential steps are:
 
 .. program-output:: gdal vector pipeline --help-doc=concat
 
-Details for options can be found in :ref:`gdal_vector_concat_subcommand`.
+Details for options can be found in :ref:`gdal_vector_concat`.
 
 * clip
 
 .. program-output:: gdal vector pipeline --help-doc=clip
 
-Details for options can be found in :ref:`gdal_vector_clip_subcommand`.
+Details for options can be found in :ref:`gdal_vector_clip`.
 
 * edit
 
 .. program-output:: gdal vector pipeline --help-doc=edit
 
-Details for options can be found in :ref:`gdal_vector_edit_subcommand`.
+Details for options can be found in :ref:`gdal_vector_edit`.
 
 * filter
 
 .. program-output:: gdal vector pipeline --help-doc=filter
 
-Details for options can be found in :ref:`gdal_vector_filter_subcommand`.
+Details for options can be found in :ref:`gdal_vector_filter`.
 
 * geom
 
 .. program-output:: gdal vector pipeline --help-doc=geom
 
-Details for options can be found in :ref:`gdal_vector_geom_subcommand`.
+Details for options can be found in :ref:`gdal_vector_geom`.
 
 * reproject
 
 .. program-output:: gdal vector pipeline --help-doc=reproject
 
-Details for options can be found in :ref:`gdal_vector_reproject_subcommand`.
+Details for options can be found in :ref:`gdal_vector_reproject`.
 
 * select
 
 .. program-output:: gdal vector pipeline --help-doc=select
 
-Details for options can be found in :ref:`gdal_vector_select_subcommand`.
+Details for options can be found in :ref:`gdal_vector_select`.
 
 * sql
 
 .. program-output:: gdal vector pipeline --help-doc=sql
 
-Details for options can be found in :ref:`gdal_vector_sql_subcommand`.
+Details for options can be found in :ref:`gdal_vector_sql`.
 
 * write
 

@@ -1,7 +1,7 @@
-.. _gdal_driver_gti_create_subcommand:
+.. _gdal_driver_gti_create:
 
 ================================================================================
-"gdal driver gti create" sub-command
+``gdal driver gti create``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -24,7 +24,7 @@ Description
 input raster file, an attribute containing the filename, and a polygon geometry
 outlining the raster, to be used as input for the :ref:`GTI <raster.gti>` driver.
 
-This is an extension of :ref:`gdal_raster_index_subcommand`.
+This is an extension of :ref:`gdal_raster_index`.
 
 There are two possibilities:
 

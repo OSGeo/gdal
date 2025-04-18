@@ -1,7 +1,7 @@
-.. _gdal_vector_geom_segmentize_subsubcommand:
+.. _gdal_vector_geom_segmentize:
 
 ================================================================================
-"gdal vector geom segmentize" sub-sub-command
+``gdal vector geom segmentize``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -26,7 +26,7 @@ intermediate points.
 
 It runs the :cpp:func:`OGRGeometry::segmentize` operation.
 
-It can also be used as a step of :ref:`gdal_vector_pipeline_subcommand`.
+It can also be used as a step of :ref:`gdal_vector_pipeline`.
 
 Standard options
 ++++++++++++++++

@@ -1,7 +1,7 @@
-.. _gdal_raster_tri_subcommand:
+.. _gdal_raster_tri:
 
 ================================================================================
-"gdal raster tri" sub-command
+``gdal raster tri``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -24,7 +24,7 @@ Description
 from the elevation. TRI stands for Terrain Ruggedness Index, which measures the
 difference between a central pixel and its surrounding cells.
 
-This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
 Value -9999 is used as the nodata value.
 

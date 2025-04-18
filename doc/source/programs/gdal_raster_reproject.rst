@@ -1,7 +1,7 @@
-.. _gdal_raster_reproject_subcommand:
+.. _gdal_raster_reproject:
 
 ================================================================================
-"gdal raster reproject" sub-command
+``gdal raster reproject``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -56,7 +56,7 @@ of an individual source pixel is determined by the product of the weights
 determined for its row and column; the diagonal Cartesian distance is not
 calculated.
 
-This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
 Standard options
 ++++++++++++++++

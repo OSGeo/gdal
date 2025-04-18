@@ -1,7 +1,7 @@
-.. _gdal_raster_slope_subcommand:
+.. _gdal_raster_slope:
 
 ================================================================================
-"gdal raster slope" sub-command
+``gdal raster slope``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -23,7 +23,7 @@ Description
 :program:`gdal raster slope` generates a slope map, from any
 GDAL-supported elevation raster.
 
-This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
 It generates a 32-bit float raster with slope values. You have the option of
 specifying the type of slope value you want: degrees or percent slope. In cases
@@ -44,7 +44,7 @@ appropriate ratio from the units of the CRS, as well as the potential value of
 the units of the raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitsType`, if it
 is metre, foot international or US survey foot). Note that for geographic CRS,
 the result for source datasets at high latitudes may be incorrect, and prior
-reprojection to a polar projection might be needed using :ref:`gdal_raster_reproject_subcommand`.
+reprojection to a polar projection might be needed using :ref:`gdal_raster_reproject`.
 
 If x (east-west) and y (north-south) units are identical, but z (elevation) units
 are different, the :option:`--xscale` and :option:`--yscale` can be used to set

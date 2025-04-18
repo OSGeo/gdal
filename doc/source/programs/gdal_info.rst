@@ -1,7 +1,7 @@
-.. _gdal_info_command:
+.. _gdal_info:
 
 ================================================================================
-"gdal info" command
+``gdal info``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -12,8 +12,8 @@
 
 .. Index:: gdal info
 
-Acts as a shortcut for :ref:`gdal_raster_info_subcommand` or
-:ref:`gdal_vector_info_subcommand` depending on the nature of the specified dataset.
+Acts as a shortcut for :ref:`gdal_raster_info` or
+:ref:`gdal_vector_info` depending on the nature of the specified dataset.
 
 Synopsis
 --------

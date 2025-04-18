@@ -1,7 +1,7 @@
-.. _gdal_vector_clip_subcommand:
+.. _gdal_vector_clip:
 
 ================================================================================
-"gdal vector clip" sub-command
+``gdal vector clip``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -25,7 +25,7 @@ georeferenced coordinates.
 
 Either :option:`--bbox`, :option:`--geometry` or :option:`--like` must be specified.
 
-``clip`` can also be used as a step of :ref:`gdal_vector_pipeline_subcommand`.
+``clip`` can also be used as a step of :ref:`gdal_vector_pipeline`.
 
 Clipping sometimes results in geometries that are of a type not compatible
 with the geometry type. This program splits multi-geometries or geometry
