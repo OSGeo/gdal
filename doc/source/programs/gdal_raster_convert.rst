@@ -1,7 +1,7 @@
-.. _gdal_raster_convert_subcommand:
+.. _gdal_raster_convert:
 
 ================================================================================
-"gdal raster convert" sub-command
+``gdal raster convert``
 ================================================================================
 
 .. versionadded:: 3.11

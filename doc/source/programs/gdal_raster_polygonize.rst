@@ -1,7 +1,7 @@
-.. _gdal_raster_polygonize_subcommand:
+.. _gdal_raster_polygonize:
 
 ================================================================================
-"gdal raster polygonize" sub-command
+``gdal raster polygonize``
 ================================================================================
 
 .. versionadded:: 3.11

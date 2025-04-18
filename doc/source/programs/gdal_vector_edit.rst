@@ -1,7 +1,7 @@
-.. _gdal_vector_edit_subcommand:
+.. _gdal_vector_edit:
 
 ================================================================================
-"gdal vector edit" sub-command
+``gdal vector edit``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -23,7 +23,7 @@ Description
 :program:`gdal vector edit` can be used to edit metadata of a vector dataset:
 its CRS, the layer geometry type, dataset and layer metadata.
 
-``edit`` can also be used as a step of :ref:`gdal_vector_pipeline_subcommand`.
+``edit`` can also be used as a step of :ref:`gdal_vector_pipeline`.
 
 Features are not modified.
 

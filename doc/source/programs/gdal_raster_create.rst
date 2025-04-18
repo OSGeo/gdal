@@ -1,7 +1,7 @@
-.. _gdal_raster_create_subcommand:
+.. _gdal_raster_create:
 
 ================================================================================
-"gdal raster create" sub-command
+``gdal raster create``
 ================================================================================
 
 .. versionadded:: 3.11

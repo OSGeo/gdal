@@ -1,7 +1,7 @@
-.. _gdal_vector_geom_explode_collections_subsubcommand:
+.. _gdal_vector_geom_explode_collections:
 
 ================================================================================
-"gdal vector geom explode-collections" sub-sub-command
+``gdal vector geom explode-collections``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -29,7 +29,7 @@ corresponding target features will be generated: one with a geometry
 are not recursively exploded, i.e. ``GEOMETRYCOLLECTION(GEOMETRYCOLLECTION(POINT (1 2),POINT(3 4))``
 will be exploded as ``GEOMETRYCOLLECTION(POINT (1 2),POINT(3 4))``.
 
-It can also be used as a step of :ref:`gdal_vector_pipeline_subcommand`.
+It can also be used as a step of :ref:`gdal_vector_pipeline`.
 
 Standard options
 ++++++++++++++++

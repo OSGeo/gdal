@@ -1,7 +1,7 @@
-.. _gdal_raster_overview_subcommand:
+.. _gdal_raster_overview:
 
 ================================================================================
-"gdal raster overview" sub-command
+``gdal raster overview``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -20,5 +20,5 @@ Synopsis
 Available sub-commands
 ----------------------
 
-- :ref:`gdal_raster_overview_add_subcommand`
-- :ref:`gdal_raster_overview_delete_subcommand`
+- :ref:`gdal_raster_overview_add`
+- :ref:`gdal_raster_overview_delete`

@@ -1,7 +1,7 @@
-.. _gdal_raster_footprint_subcommand:
+.. _gdal_raster_footprint:
 
 ================================================================================
-"gdal raster footprint" sub-command
+``gdal raster footprint``
 ================================================================================
 
 .. versionadded:: 3.11

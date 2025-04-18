@@ -1,7 +1,7 @@
-.. _gdal_vector_geom_buffer_subsubcommand:
+.. _gdal_vector_geom_buffer:
 
 ================================================================================
-"gdal vector geom buffer" sub-sub-command
+``gdal vector geom buffer``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -32,7 +32,7 @@ empty results.
 See https://postgis.net/docs/ST_Buffer.html for graphical illustrations of the
 effect of the different parameters.
 
-This command can also be used as a step of :ref:`gdal_vector_pipeline_subcommand`.
+This command can also be used as a step of :ref:`gdal_vector_pipeline`.
 
 .. note:: This command requires a GDAL build against the GEOS library.
 

@@ -1,7 +1,7 @@
-.. _gdal_raster_tpi_subcommand:
+.. _gdal_raster_tpi:
 
 ================================================================================
-"gdal raster tpi" sub-command
+``gdal raster tpi``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -25,7 +25,7 @@ from the elevation. TPI stands for Topographic Position Index, which is defined
 as the difference between a central pixel and the mean of its surrounding cells
 (see Wilson et al 2007, Marine Geodesy 30:3-35).
 
-This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
 Value -9999 is used as the nodata value.
 

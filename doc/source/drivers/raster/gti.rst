@@ -385,7 +385,7 @@ How to build a GTI compatible index ?
 ----------------------------------------
 
 The :ref:`gdaltindex` program, or starting with GDA 3.11,
-:ref:`gdal_driver_gti_create_subcommand`, may be used to generate both a vector tile index,
+:ref:`gdal_driver_gti_create`, may be used to generate both a vector tile index,
 and optionally a wrapping .gti XML file.
 
 A GTI compatible index may also be created by any programmatic means, provided

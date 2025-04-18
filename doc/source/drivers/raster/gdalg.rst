@@ -20,8 +20,8 @@ substantially different.
 
 The subset of commands of :program:`gdal` that can generate such streamed datasets
 indicate support for writing ``GDALG`` in the ``--help`` description for
-``--output-format``. This includes :ref:`gdal_raster_pipeline_subcommand`,
-:ref:`gdal_raster_mosaic_subcommand` or :ref:`gdal_raster_stack_subcommand`.
+``--output-format``. This includes :ref:`gdal_raster_pipeline`,
+:ref:`gdal_raster_mosaic` or :ref:`gdal_raster_stack`.
 
 It is recommended that GDALG files use the ``.gdalg.json`` extension.
 
@@ -39,7 +39,7 @@ to generate a materialized dataset, but using the ``stream`` output format.
 If such file is saved as ``mosaic.gdalg.json``, it can be for example read with
 ``gdal raster info mosaic.gdalg.json``.
 
-In the case of a :ref:`gdal_raster_pipeline_subcommand`, the final ``write`` step can be
+In the case of a :ref:`gdal_raster_pipeline`, the final ``write`` step can be
 omitted.
 
 .. code-block:: json

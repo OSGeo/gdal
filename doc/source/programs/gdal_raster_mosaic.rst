@@ -1,7 +1,7 @@
-.. _gdal_raster_mosaic_subcommand:
+.. _gdal_raster_mosaic:
 
 ================================================================================
-"gdal raster mosaic" sub-command
+``gdal raster mosaic``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -67,7 +67,7 @@ The following options are available:
     `lowest` will pick the largest values of pixel dimensions within the set of source rasters.
 
     `average` will compute an average of pixel dimensions within the set of source rasters.
-    
+
     `common` determines the greatest common divisor of the source pixel dimensions, e.g. 0.2 for source pixel dimensions of 0.4 and 0.6.
 
     <xres>,<yres>. The values must be expressed in georeferenced units.

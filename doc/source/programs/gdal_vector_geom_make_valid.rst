@@ -1,7 +1,7 @@
-.. _gdal_vector_geom_make_valid_subsubcommand:
+.. _gdal_vector_geom_make_valid:
 
 ================================================================================
-"gdal vector geom make-valid" sub-sub-command
+``gdal vector geom make-valid``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -27,7 +27,7 @@ It runs the :cpp:func:`OGRGeometry::MakeValid` operation,
 followed by :cpp:func:`OGRGeometryFactory::removeLowerDimensionSubGeoms`
 (unless :option:`--keep-lower-dim` is set)
 
-It can also be used as a step of :ref:`gdal_vector_pipeline_subcommand`.
+It can also be used as a step of :ref:`gdal_vector_pipeline`.
 
 .. note:: This command requires a GDAL build against the GEOS library.
 

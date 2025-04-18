@@ -1,7 +1,7 @@
-.. _gdal_raster_edit_subcommand:
+.. _gdal_raster_edit:
 
 ================================================================================
-"gdal raster edit" sub-command
+``gdal raster edit``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -22,7 +22,7 @@ Description
 
 :program:`gdal raster edit` can be used to edit a raster dataset.
 
-This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
 .. option:: --dataset <DATASET>
 

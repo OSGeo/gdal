@@ -1,7 +1,7 @@
-.. _gdal_vector_rasterize_subcommand:
+.. _gdal_vector_rasterize:
 
 ================================================================================
-"gdal vector rasterize" sub-command
+``gdal vector rasterize``
 ================================================================================
 
 .. versionadded:: 3.11

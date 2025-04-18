@@ -1,7 +1,7 @@
-.. _gdal_vector_filter_subcommand:
+.. _gdal_vector_filter:
 
 ================================================================================
-"gdal vector filter" sub-command
+``gdal vector filter``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -23,7 +23,7 @@ Description
 :program:`gdal vector filter` can be used to filter a vector dataset from
 their spatial extent or a SQL WHERE clause.
 
-``filter`` can also be used as a step of :ref:`gdal_vector_pipeline_subcommand`.
+``filter`` can also be used as a step of :ref:`gdal_vector_pipeline`.
 
 
 Standard options

@@ -1,7 +1,7 @@
-.. _gdal_vector_concat_subcommand:
+.. _gdal_vector_concat:
 
 ================================================================================
-"gdal vector concat" sub-command
+``gdal vector concat``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -48,7 +48,7 @@ used as the target CRS, and features of other source layers that do no match
 this CRS will be reprojected to it. :option:`--dst-crs` can be used to select
 a given destination CRS.
 
-This command can also be used as the first step of :ref:`gdal_vector_pipeline_subcommand`.
+This command can also be used as the first step of :ref:`gdal_vector_pipeline`.
 
 Standard options
 ++++++++++++++++

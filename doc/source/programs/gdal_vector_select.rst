@@ -1,7 +1,7 @@
-.. _gdal_vector_select_subcommand:
+.. _gdal_vector_select:
 
 ================================================================================
-"gdal vector select" sub-command
+``gdal vector select``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -22,7 +22,7 @@ Description
 
 :program:`gdal vector select` can be used to select a subset of fields.
 
-``select`` can also be used as a step of :ref:`gdal_vector_pipeline_subcommand`.
+``select`` can also be used as a step of :ref:`gdal_vector_pipeline`.
 
 Standard options
 ++++++++++++++++

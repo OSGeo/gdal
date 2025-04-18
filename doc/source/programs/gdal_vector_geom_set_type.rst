@@ -1,7 +1,7 @@
-.. _gdal_vector_geom_set_type_subsubcommand:
+.. _gdal_vector_geom_set_type:
 
 ================================================================================
-"gdal vector geom set-type" sub-sub-command
+``gdal vector geom set-type``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -23,7 +23,7 @@ Description
 :program:`gdal vector geom set-type` can be used to modify the geometry type
 of geometry fields at the layer and/or feature level.
 
-It can also be used as a step of :ref:`gdal_vector_pipeline_subcommand`.
+It can also be used as a step of :ref:`gdal_vector_pipeline`.
 
 The following groups of options can be combined together:
 -  :option:`--multi` / :option:`--single`

@@ -1,7 +1,7 @@
-.. _gdal_vector_geom_simplify_subsubcommand:
+.. _gdal_vector_geom_simplify:
 
 ================================================================================
-"gdal vector geom simplify" sub-sub-command
+``gdal vector geom simplify``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -32,7 +32,7 @@ preserves the topology per feature, but not for a whole layer.
 Thus gaps or overlaps between geometries that were initially contiguous may
 happen.
 
-This command can also be used as a step of :ref:`gdal_vector_pipeline_subcommand`.
+This command can also be used as a step of :ref:`gdal_vector_pipeline`.
 
 .. note:: This command requires a GDAL build against the GEOS library.
 

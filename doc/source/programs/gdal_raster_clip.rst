@@ -1,7 +1,7 @@
-.. _gdal_raster_clip_subcommand:
+.. _gdal_raster_clip:
 
 ================================================================================
-"gdal raster clip" sub-command
+``gdal raster clip``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -29,7 +29,7 @@ The output dataset is in the same SRS as the input one, and the original
 resolution is preserved. Bounds are rounded to match whole pixel locations
 (i.e. there is no resampling involved)
 
-``clip`` can also be used as a step of :ref:`gdal_raster_pipeline_subcommand`.
+``clip`` can also be used as a step of :ref:`gdal_raster_pipeline`.
 
 Standard options
 ++++++++++++++++

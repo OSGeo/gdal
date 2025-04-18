@@ -1,7 +1,7 @@
-.. _gdal_raster_overview_add_subcommand:
+.. _gdal_raster_overview_add:
 
 ================================================================================
-"gdal raster overview add" sub-command
+``gdal raster overview add``
 ================================================================================
 
 .. versionadded:: 3.11

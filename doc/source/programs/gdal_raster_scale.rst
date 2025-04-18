@@ -1,7 +1,7 @@
-.. _gdal_raster_scale_subcommand:
+.. _gdal_raster_scale:
 
 ================================================================================
-"gdal raster scale" sub-command
+``gdal raster scale``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -38,9 +38,9 @@ unless :option:`--no-clip` is set.
 By default, the scaling is applied to all bands. It is possible to restrict
 it to a single band with :option:`--band` and leave values of other bands unmodified.
 
-This command is the reverse operation of :ref:`gdal_raster_unscale_subcommand`.
+This command is the reverse operation of :ref:`gdal_raster_unscale`.
 
-This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline_subcommand`
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
 
 Standard options
 ++++++++++++++++
@@ -93,7 +93,7 @@ Standard options
 
     .. note::
 
-        :ref:`gdal_raster_unscale_subcommand` assumes linear scaling, and
+        :ref:`gdal_raster_unscale` assumes linear scaling, and
         this cannot unscale values back to the original ones.
 
 .. option:: --no-clip
