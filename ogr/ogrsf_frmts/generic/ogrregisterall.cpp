@@ -45,9 +45,6 @@ void OGRRegisterAllInternal()
 #ifdef VRT_ENABLED
     RegisterOGRVRT();
 #endif
-#ifdef MEM_ENABLED
-    RegisterOGRMEM();
-#endif
 #ifdef CSV_ENABLED
     RegisterOGRCSV();
 #endif
