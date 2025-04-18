@@ -722,7 +722,7 @@ std::shared_ptr<GDALDimension> GDALGroup::CreateDimension(
  * @param papszOptions Driver specific options determining how the array
  * should be created.
  *
- * @return the new array, or nullptr if case of error
+ * @return the new array, or nullptr in case of error
  */
 std::shared_ptr<GDALMDArray> GDALGroup::CreateMDArray(
     CPL_UNUSED const std::string &osName,

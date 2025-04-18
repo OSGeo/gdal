@@ -10,6 +10,7 @@
 %include "gdal_band_docs.i"
 %include "gdal_dataset_docs.i"
 %include "gdal_driver_docs.i"
+%include "gdal_mdm_docs.i"
 %include "gdal_operations_docs.i"
 
 %init %{
