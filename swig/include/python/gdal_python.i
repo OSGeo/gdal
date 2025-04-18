@@ -599,15 +599,18 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
   def ReadAsMaskedArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                   buf_xsize=None, buf_ysize=None, buf_type=None,
                   resample_alg=gdalconst.GRIORA_NearestNeighbour,
+                  mask_resample_alg=gdalconst.GRIORA_NearestNeighbour,
                   callback=None,
                   callback_data=None):
       """
       Read a window of this raster band into a NumPy masked array.
 
       Values of the mask will be ``True`` where pixels are invalid.
+        
+      Starting in GDAL 3.11, if resampling (``buf_xsize`` != ``xsize``, or ``buf_ysize`` != ``ysize``) the mask
+      band will be resampled using the algorithm specified by ``mask_resample_alg``.
 
-      See :py:meth:`ReadAsArray` for a description of arguments.
-
+      See :py:meth:`ReadAsArray` for a description of additional arguments.
       """
       import numpy
       array = self.ReadAsArray(xoff=xoff, yoff=yoff,
@@ -625,7 +628,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                                          win_ysize=win_ysize,
                                          buf_xsize=buf_xsize,
                                          buf_ysize=buf_ysize,
-                                         resample_alg=resample_alg).astype(bool)
+                                         resample_alg=mask_resample_alg).astype(bool)
       else:
           mask_array = None
       return numpy.ma.array(array, mask=mask_array)
@@ -1113,13 +1116,19 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     def ReadAsMaskedArray(self, xoff=0, yoff=0, xsize=None, ysize=None, 
                     buf_xsize=None, buf_ysize=None, buf_type=None,
                     resample_alg=gdalconst.GRIORA_NearestNeighbour,
+                    mask_resample_alg=gdalconst.GRIORA_NearestNeighbour,
                     callback=None,
                     callback_data=None,
                     band_list=None):
         """
         Read a window from raster bands into a NumPy masked array.
 
-        Parameters are the same as for :py:meth:`ReadAsArray`.
+        Values of the mask will be ``True`` where pixels are invalid.
+
+        If resampling (``buf_xsize`` != ``xsize``, or ``buf_ysize`` != ``ysize``) the mask band will be resampled
+        using the algorithm specified by ``mask_resample_alg``.
+
+        See :py:meth:`ReadAsArray` for a description of additional arguments.
         """
 
         import numpy as np
@@ -1140,7 +1149,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                 xoff=xoff, yoff=yoff,
                 win_xsize=xsize, win_ysize=ysize,
                 buf_xsize=buf_xsize, buf_ysize=buf_ysize,
-                resample_alg=gdalconst.GRIORA_Mode) != 255
+                resample_alg=mask_resample_alg) != 255
                  for band in band_list]
 
         return np.ma.masked_array(arr, np.vstack(masks))
