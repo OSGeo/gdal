@@ -1682,24 +1682,26 @@ static bool CheckOptions(const char *pszDest, GDALDatasetH hDstDS,
 
 static bool ProcessCutlineOptions(int nSrcCount, GDALDatasetH *pahSrcDS,
                                   GDALWarpAppOptions *psOptions,
-                                  OGRGeometryH &hCutline)
+                                  std::unique_ptr<OGRGeometry> &poCutline)
 {
     if (!psOptions->osCutlineDSNameOrWKT.empty())
     {
         CPLErr eError;
+        OGRGeometryH hCutline = nullptr;
         eError = LoadCutline(psOptions->osCutlineDSNameOrWKT,
                              psOptions->osCutlineSRS, psOptions->osCLayer,
                              psOptions->osCWHERE, psOptions->osCSQL, &hCutline);
+        poCutline.reset(OGRGeometry::FromHandle(hCutline));
         if (eError == CE_Failure)
         {
             return false;
         }
     }
 
-    if (psOptions->bCropToCutline && hCutline != nullptr)
+    if (psOptions->bCropToCutline && poCutline)
     {
         CPLErr eError;
-        eError = CropToCutline(OGRGeometry::FromHandle(hCutline),
+        eError = CropToCutline(poCutline.get(),
                                psOptions->aosTransformerOptions.List(),
                                psOptions->aosWarpOptions.List(), nSrcCount,
                                pahSrcDS, psOptions->dfMinX, psOptions->dfMinY,
@@ -2499,10 +2501,9 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
     /*      If we have a cutline datasource read it and attach it in the    */
     /*      warp options.                                                   */
     /* -------------------------------------------------------------------- */
-    OGRGeometryH hCutline = nullptr;
-    if (!ProcessCutlineOptions(nSrcCount, pahSrcDS, psOptions, hCutline))
+    std::unique_ptr<OGRGeometry> poCutline;
+    if (!ProcessCutlineOptions(nSrcCount, pahSrcDS, psOptions, poCutline))
     {
-        OGR_G_DestroyGeometry(hCutline);
         return nullptr;
     }
 
@@ -2536,7 +2537,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                               bInitDestSetByUser, hUniqueTransformArg);
         if (!hDstDS)
         {
-            OGR_G_DestroyGeometry(hCutline);
             return nullptr;
         }
 #ifdef DEBUG
@@ -2631,7 +2631,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Input file %s has no raster bands.",
                      GDALGetDescription(hSrcDS));
-            OGR_G_DestroyGeometry(hCutline);
             GDALReleaseDataset(hDstDS);
             return nullptr;
         }
@@ -2730,7 +2729,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                 hSrcDS, hDstDS, psOptions->aosTransformerOptions.List()));
             if (hTransformArg == nullptr)
             {
-                OGR_G_DestroyGeometry(hCutline);
                 GDALReleaseDataset(hDstDS);
                 return nullptr;
             }
@@ -2750,7 +2748,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
             if (!bSuccess && CPLGetErrorCounter() > nErrorCounterBefore &&
                 strstr(CPLGetLastErrorMsg(), "No inverse operation"))
             {
-                OGR_G_DestroyGeometry(hCutline);
                 GDALReleaseDataset(hDstDS);
                 return nullptr;
             }
@@ -2933,7 +2930,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                 hWrkSrcDS, psOptions, bVRT ? hDstDS : nullptr, bErrorOccurred);
             if (bErrorOccurred)
             {
-                OGR_G_DestroyGeometry(hCutline);
                 GDALReleaseDataset(hWrkSrcDS);
                 GDALReleaseDataset(hDstDS);
                 return nullptr;
@@ -3021,7 +3017,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                      "Destination dataset has %d bands, but at least %d "
                      "are needed",
                      GDALGetRasterCount(hDstDS), nNeededDstBands);
-            OGR_G_DestroyGeometry(hCutline);
             GDALReleaseDataset(hWrkSrcDS);
             GDALReleaseDataset(hDstDS);
             return nullptr;
@@ -3049,7 +3044,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "-srcband[%d] = %d is invalid", i,
                              psOptions->anSrcBands[i]);
-                    OGR_G_DestroyGeometry(hCutline);
                     GDALReleaseDataset(hWrkSrcDS);
                     GDALReleaseDataset(hDstDS);
                     return nullptr;
@@ -3060,7 +3054,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "-dstband[%d] = %d is invalid", i,
                              psOptions->anDstBands[i]);
-                    OGR_G_DestroyGeometry(hCutline);
                     GDALReleaseDataset(hWrkSrcDS);
                     GDALReleaseDataset(hDstDS);
                     return nullptr;
@@ -3171,16 +3164,15 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         /*      pixel/line coordinate system and insert into warp options. */
         /* --------------------------------------------------------------------
          */
-        if (hCutline != nullptr)
+        if (poCutline)
         {
             CPLErr eError;
             eError = TransformCutlineToSource(
-                GDALDataset::FromHandle(hWrkSrcDS),
-                OGRGeometry::FromHandle(hCutline), &(psWO->papszWarpOptions),
+                GDALDataset::FromHandle(hWrkSrcDS), poCutline.get(),
+                &(psWO->papszWarpOptions),
                 psOptions->aosTransformerOptions.List());
             if (eError == CE_Failure)
             {
-                OGR_G_DestroyGeometry(hCutline);
                 GDALReleaseDataset(hWrkSrcDS);
                 GDALReleaseDataset(hDstDS);
                 return nullptr;
@@ -3208,7 +3200,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                 // In case of error, reacquire psWO->pTransformerArg
                 hTransformArg.reset(psWO->pTransformerArg);
             }
-            OGR_G_DestroyGeometry(hCutline);
             GDALReleaseDataset(hWrkSrcDS);
             if (eErr != CE_None)
             {
@@ -3276,8 +3267,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
     {
         bHasGotErr = true;
     }
-
-    OGR_G_DestroyGeometry(hCutline);
 
     if (bHasGotErr || bDropDstDSRef)
         GDALReleaseDataset(hDstDS);
