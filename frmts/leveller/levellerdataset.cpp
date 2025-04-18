@@ -367,7 +367,7 @@ class digital_axis
 
   protected:
     int m_eStyle;
-    size_t m_fixedEnd;
+    int m_fixedEnd;
     double m_d[2];
 };
 
