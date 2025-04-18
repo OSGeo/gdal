@@ -2968,7 +2968,8 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         /*      Setup warp options. */
         /* --------------------------------------------------------------------
          */
-        GDALWarpOptions *psWO = GDALCreateWarpOptions();
+        std::unique_ptr<GDALWarpOptions, decltype(&GDALDestroyWarpOptions)>
+            psWO(GDALCreateWarpOptions(), GDALDestroyWarpOptions);
 
         psWO->papszWarpOptions = CSLDuplicate(psOptions->aosWarpOptions.List());
         psWO->eWorkingDataType = psOptions->eWorkingType;
@@ -3020,7 +3021,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                      "Destination dataset has %d bands, but at least %d "
                      "are needed",
                      GDALGetRasterCount(hDstDS), nNeededDstBands);
-            GDALDestroyWarpOptions(psWO);
             OGR_G_DestroyGeometry(hCutline);
             GDALReleaseDataset(hWrkSrcDS);
             GDALReleaseDataset(hDstDS);
@@ -3049,7 +3049,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "-srcband[%d] = %d is invalid", i,
                              psOptions->anSrcBands[i]);
-                    GDALDestroyWarpOptions(psWO);
                     OGR_G_DestroyGeometry(hCutline);
                     GDALReleaseDataset(hWrkSrcDS);
                     GDALReleaseDataset(hDstDS);
@@ -3061,7 +3060,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "-dstband[%d] = %d is invalid", i,
                              psOptions->anDstBands[i]);
-                    GDALDestroyWarpOptions(psWO);
                     OGR_G_DestroyGeometry(hCutline);
                     GDALReleaseDataset(hWrkSrcDS);
                     GDALReleaseDataset(hDstDS);
@@ -3094,8 +3092,8 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         /*      Setup NODATA options. */
         /* --------------------------------------------------------------------
          */
-        SetupNoData(pszDest, iSrc, hSrcDS, hWrkSrcDS, hDstDS, psWO, psOptions,
-                    bEnableDstAlpha, bInitDestSetByUser);
+        SetupNoData(pszDest, iSrc, hSrcDS, hWrkSrcDS, hDstDS, psWO.get(),
+                    psOptions, bEnableDstAlpha, bInitDestSetByUser);
 
         oProgress.Do(0);
 
@@ -3105,7 +3103,7 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         /*      if we can safely enable SKIP_NOSOURCE optimization. */
         /* --------------------------------------------------------------------
          */
-        SetupSkipNoSource(iSrc, hDstDS, psWO, psOptions);
+        SetupSkipNoSource(iSrc, hDstDS, psWO.get(), psOptions);
 
         /* --------------------------------------------------------------------
          */
@@ -3123,11 +3121,10 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         int nWarpDstYSize = GDALGetRasterYSize(hDstDS);
 
         if (!AdjustOutputExtentForRPC(hSrcDS, hDstDS, pfnTransformer,
-                                      hTransformArg.get(), psWO, psOptions,
-                                      nWarpDstXOff, nWarpDstYOff, nWarpDstXSize,
-                                      nWarpDstYSize))
+                                      hTransformArg.get(), psWO.get(),
+                                      psOptions, nWarpDstXOff, nWarpDstYOff,
+                                      nWarpDstXSize, nWarpDstYSize))
         {
-            GDALDestroyWarpOptions(psWO);
             GDALReleaseDataset(hWrkSrcDS);
             continue;
         }
@@ -3144,7 +3141,7 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         if (!psOptions->bNoVShift)
         {
             // Can modify psWO->papszWarpOptions
-            if (ApplyVerticalShift(hWrkSrcDS, psOptions, psWO))
+            if (ApplyVerticalShift(hWrkSrcDS, psOptions, psWO.get()))
             {
                 bUseApproxTransformer = false;
             }
@@ -3183,7 +3180,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                 psOptions->aosTransformerOptions.List());
             if (eError == CE_Failure)
             {
-                GDALDestroyWarpOptions(psWO);
                 OGR_G_DestroyGeometry(hCutline);
                 GDALReleaseDataset(hWrkSrcDS);
                 GDALReleaseDataset(hDstDS);
@@ -3206,13 +3202,12 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
             // In case of success, hDstDS has become the owner of hTransformArg
             // so we need to release it
             psWO->pTransformerArg = hTransformArg.release();
-            CPLErr eErr = GDALInitializeWarpedVRT(hDstDS, psWO);
+            CPLErr eErr = GDALInitializeWarpedVRT(hDstDS, psWO.get());
             if (eErr != CE_None)
             {
                 // In case of error, reacquire psWO->pTransformerArg
                 hTransformArg.reset(psWO->pTransformerArg);
             }
-            GDALDestroyWarpOptions(psWO);
             OGR_G_DestroyGeometry(hCutline);
             GDALReleaseDataset(hWrkSrcDS);
             if (eErr != CE_None)
@@ -3247,7 +3242,7 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         GDALWarpOperation oWO;
         psWO->pTransformerArg = hTransformArg.get();
 
-        if (oWO.Initialize(psWO) == CE_None)
+        if (oWO.Initialize(psWO.get()) == CE_None)
         {
             CPLErr eErr;
             if (psOptions->bMulti)
@@ -3269,8 +3264,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         /*      Cleanup */
         /* --------------------------------------------------------------------
          */
-        GDALDestroyWarpOptions(psWO);
-
         GDALReleaseDataset(hWrkSrcDS);
     }
 
