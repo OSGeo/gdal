@@ -4078,7 +4078,7 @@ struct GDALNoDataValues
           bGotFloat16NoDataValue(false), hfNoDataValue(GFloat16(0.0f))
     {
         dfNoDataValue = poRasterBand->GetNoDataValue(&bGotNoDataValue);
-        bGotNoDataValue = bGotNoDataValue && !CPLIsNan(dfNoDataValue);
+        bGotNoDataValue = bGotNoDataValue && !std::isnan(dfNoDataValue);
 
         ComputeFloatNoDataValue(eDataType, dfNoDataValue, bGotNoDataValue,
                                 fNoDataValue, bGotFloatNoDataValue);
@@ -4322,9 +4322,10 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                         break;
                     case GDT_Float16:
                     {
+                        using namespace std;
                         const GFloat16 hfValue =
                             static_cast<GFloat16 *>(pData)[iOffset];
-                        if (CPLIsNan(hfValue) ||
+                        if (isnan(hfValue) ||
                             (sNoDataValues.bGotFloat16NoDataValue &&
                              ARE_REAL_EQUAL(hfValue,
                                             sNoDataValues.hfNoDataValue)))
@@ -4336,7 +4337,7 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                     {
                         const float fValue =
                             static_cast<float *>(pData)[iOffset];
-                        if (CPLIsNan(fValue) ||
+                        if (std::isnan(fValue) ||
                             (sNoDataValues.bGotFloatNoDataValue &&
                              ARE_REAL_EQUAL(fValue,
                                             sNoDataValues.fNoDataValue)))
@@ -4377,7 +4378,7 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                             static_cast<GFloat16 *>(pData)[iOffset * 2];
                         const double dfImag =
                             static_cast<GFloat16 *>(pData)[iOffset * 2 + 1];
-                        if (CPLIsNan(dfReal) || CPLIsNan(dfImag))
+                        if (std::isnan(dfReal) || std::isnan(dfImag))
                             continue;
                         dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
                         break;
@@ -4593,9 +4594,10 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                             break;
                         case GDT_Float16:
                         {
+                            using namespace std;
                             const GFloat16 hfValue =
                                 static_cast<GFloat16 *>(pData)[iOffset];
-                            if (CPLIsNan(hfValue) ||
+                            if (isnan(hfValue) ||
                                 (sNoDataValues.bGotFloat16NoDataValue &&
                                  ARE_REAL_EQUAL(hfValue,
                                                 sNoDataValues.hfNoDataValue)))
@@ -4607,7 +4609,7 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                         {
                             const float fValue =
                                 static_cast<float *>(pData)[iOffset];
-                            if (CPLIsNan(fValue) ||
+                            if (std::isnan(fValue) ||
                                 (sNoDataValues.bGotFloatNoDataValue &&
                                  ARE_REAL_EQUAL(fValue,
                                                 sNoDataValues.fNoDataValue)))
@@ -4644,7 +4646,7 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                                 static_cast<GFloat16 *>(pData)[iOffset * 2];
                             double dfImag =
                                 static_cast<GFloat16 *>(pData)[iOffset * 2 + 1];
-                            if (CPLIsNan(dfReal) || CPLIsNan(dfImag))
+                            if (std::isnan(dfReal) || std::isnan(dfImag))
                                 continue;
                             dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
                             break;
@@ -6306,9 +6308,10 @@ static inline double GetPixelValue(GDALDataType eDataType, bool bSignedByte,
             break;
         case GDT_Float16:
         {
+            using namespace std;
             const GFloat16 hfValue =
                 static_cast<const GFloat16 *>(pData)[iOffset];
-            if (CPLIsNan(hfValue) ||
+            if (isnan(hfValue) ||
                 (sNoDataValues.bGotFloat16NoDataValue &&
                  ARE_REAL_EQUAL(hfValue, sNoDataValues.hfNoDataValue)))
             {
@@ -6321,7 +6324,7 @@ static inline double GetPixelValue(GDALDataType eDataType, bool bSignedByte,
         case GDT_Float32:
         {
             const float fValue = static_cast<const float *>(pData)[iOffset];
-            if (CPLIsNan(fValue) ||
+            if (std::isnan(fValue) ||
                 (sNoDataValues.bGotFloatNoDataValue &&
                  ARE_REAL_EQUAL(fValue, sNoDataValues.fNoDataValue)))
             {
@@ -6347,7 +6350,7 @@ static inline double GetPixelValue(GDALDataType eDataType, bool bSignedByte,
             break;
         case GDT_CFloat16:
             dfValue = static_cast<const GFloat16 *>(pData)[iOffset * 2];
-            if (isnan(dfValue))
+            if (std::isnan(dfValue))
             {
                 bValid = false;
                 return 0.0;
