@@ -384,7 +384,7 @@ their syntax and semantics.
 How to build a GTI compatible index ?
 ----------------------------------------
 
-The :ref:`gdaltindex` program, or starting with GDA 3.11,
+The :ref:`gdaltindex` program, or starting with GDAL 3.11,
 :ref:`gdal_driver_gti_create`, may be used to generate both a vector tile index,
 and optionally a wrapping .gti XML file.
 
