@@ -99,4 +99,4 @@ Examples
 
    .. code-block:: bash
 
-       gdal_calc -i "A=input.tif" -o=result.tif --calc="A > 0 ? A : NaN"
+       gdal raster calc -i "A=input.tif" -o result.tif --calc="A > 0 ? A : NaN"
