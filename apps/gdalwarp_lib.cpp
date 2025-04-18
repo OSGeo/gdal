@@ -1146,7 +1146,8 @@ static bool CanUseBuildVRT(int nSrcCount, GDALDatasetH *pahSrcDS)
 
 static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
                                GDALDatasetH *pahSrcDS,
-                               GDALWarpAppOptions *psOptions)
+                               GDALWarpAppOptions *psOptions,
+                               TransformerUniquePtr &hUniqueTransformArg)
 {
     const auto SetDstSRS = [psOptions](const std::string &osTargetSRS)
     {
@@ -1202,7 +1203,6 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
     aosTmpGTiffCreateOptions.SetNameValue("TILED", "YES");
     aosTmpGTiffCreateOptions.SetNameValue("BLOCKXSIZE", "4096");
     aosTmpGTiffCreateOptions.SetNameValue("BLOCKYSIZE", "4096");
-    TransformerUniquePtr hUniqueTransformArg;
     auto hTmpDS = GDALWarpCreateOutput(
         nSrcCount, pahSrcDS, osTmpFilename, "GTiff",
         oClonedOptions.aosTransformerOptions.List(),
@@ -1253,6 +1253,7 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
 
 static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                                    int nSrcCount, GDALDatasetH *pahSrcDS,
+                                   TransformerUniquePtr hUniqueTransformArg,
                                    GDALWarpAppOptions *psOptions,
                                    int *pbUsageError);
 
@@ -1282,7 +1283,7 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
         auto pProgressData = psOptions->pProgressData;
         psOptions->pProgressData = nullptr;
 
-        auto hTmpDS = GDALWarpDirect("", nullptr, nSrcCount, pahSrcDS,
+        auto hTmpDS = GDALWarpDirect("", nullptr, nSrcCount, pahSrcDS, nullptr,
                                      psOptions, pbUsageError);
         if (hTmpDS)
         {
@@ -1335,13 +1336,14 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
     double dfStartPctCreateCopy = 0.0;
     if (hTmpDS == nullptr)
     {
+        TransformerUniquePtr hUniqueTransformArg;
 #ifdef HAVE_TIFF
         // Special processing for COG output. As some of its options do
         // on-the-fly reprojection, take them into account now, and remove them
         // from the COG creation stage.
         if (EQUAL(psOptions->osFormat.c_str(), "COG") &&
             !DealWithCOGOptions(aosCreateOptions, nSrcCount, pahSrcDS,
-                                psOptions))
+                                psOptions, hUniqueTransformArg))
         {
             return nullptr;
         }
@@ -1360,7 +1362,8 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
         osTmpFilename = pszDest;
         osTmpFilename += ".tmp.tif";
         hTmpDS = GDALWarpDirect(osTmpFilename, nullptr, nSrcCount, pahSrcDS,
-                                psOptions, pbUsageError);
+                                std::move(hUniqueTransformArg), psOptions,
+                                pbUsageError);
         GDALDestroyScaledProgress(psOptions->pProgressData);
         psOptions->pfnProgress = nullptr;
         psOptions->pProgressData = nullptr;
@@ -1460,8 +1463,8 @@ GDALDatasetH GDALWarp(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         }
     }
 
-    auto ret = GDALWarpDirect(pszDest, hDstDS, nSrcCount, pahSrcDS, psOptions,
-                              pbUsageError);
+    auto ret = GDALWarpDirect(pszDest, hDstDS, nSrcCount, pahSrcDS, nullptr,
+                              psOptions, pbUsageError);
 
     return ret;
 }
@@ -2435,6 +2438,7 @@ static bool AdjustOutputExtentForRPC(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 
 static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                                    int nSrcCount, GDALDatasetH *pahSrcDS,
+                                   TransformerUniquePtr hUniqueTransformArg,
                                    GDALWarpAppOptions *psOptions,
                                    int *pbUsageError)
 {
@@ -2505,7 +2509,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
     /* -------------------------------------------------------------------- */
     /*      If the target dataset does not exist, we need to create it.     */
     /* -------------------------------------------------------------------- */
-    TransformerUniquePtr hUniqueTransformArg;
     const bool bInitDestSetByUser =
         (psOptions->aosWarpOptions.FetchNameValue("INIT_DEST") != nullptr);
 
