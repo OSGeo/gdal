@@ -17,6 +17,7 @@
 
 #include <cerrno>
 #include <cstddef>
+#include <cstdlib>
 #include <cstring>
 #include <ctime>
 #if HAVE_FCNTL_H
