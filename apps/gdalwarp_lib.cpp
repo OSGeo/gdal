@@ -319,6 +319,28 @@ static double GetAverageSegmentLength(const OGRGeometry *poGeom)
 }
 
 /************************************************************************/
+/*                          FetchSrcMethod()                            */
+/************************************************************************/
+
+static const char *FetchSrcMethod(CSLConstList papszTO,
+                                  const char *pszDefault = nullptr)
+{
+    const char *pszMethod = CSLFetchNameValue(papszTO, "SRC_METHOD");
+    if (!pszMethod)
+        pszMethod = CSLFetchNameValueDef(papszTO, "METHOD", pszDefault);
+    return pszMethod;
+}
+
+static const char *FetchSrcMethod(const CPLStringList &aosTO,
+                                  const char *pszDefault = nullptr)
+{
+    const char *pszMethod = aosTO.FetchNameValue("SRC_METHOD");
+    if (!pszMethod)
+        pszMethod = aosTO.FetchNameValueDef("METHOD", pszDefault);
+    return pszMethod;
+}
+
+/************************************************************************/
 /*                          GetSrcDSProjection()                        */
 /*                                                                      */
 /* Takes into account SRC_SRS transformer option in priority, and then  */
@@ -334,7 +356,7 @@ static CPLString GetSrcDSProjection(GDALDatasetH hDS, CSLConstList papszTO)
         return pszProjection ? pszProjection : "";
     }
 
-    const char *pszMethod = CSLFetchNameValue(papszTO, "METHOD");
+    const char *pszMethod = FetchSrcMethod(papszTO);
     char **papszMD = nullptr;
     const OGRSpatialReferenceH hSRS = GDALGetSpatialRef(hDS);
     const char *pszGeolocationDataset =
@@ -2338,9 +2360,7 @@ static bool AdjustOutputExtentForRPC(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     if (CPLTestBool(CSLFetchNameValueDef(psWO->papszWarpOptions,
                                          "SKIP_NOSOURCE", "NO")) &&
         GDALGetMetadata(hSrcDS, "RPC") != nullptr &&
-        EQUAL(
-            psOptions->aosTransformerOptions.FetchNameValueDef("METHOD", "RPC"),
-            "RPC") &&
+        EQUAL(FetchSrcMethod(psOptions->aosTransformerOptions, "RPC"), "RPC") &&
         CPLTestBool(
             CPLGetConfigOption("RESTRICT_OUTPUT_DATASET_UPDATE", "YES")))
     {
@@ -2484,8 +2504,7 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
          !(psOptions->dfMinX == 0.0 && psOptions->dfMinY == 0.0 &&
            psOptions->dfMaxX == 0.0 && psOptions->dfMaxY == 0.0));
 
-    const char *pszMethod =
-        psOptions->aosTransformerOptions.FetchNameValue("METHOD");
+    const char *pszMethod = FetchSrcMethod(psOptions->aosTransformerOptions);
     if (pszMethod && EQUAL(pszMethod, "GCP_TPS") &&
         psOptions->dfErrorThreshold > 0 &&
         !psOptions->aosTransformerOptions.FetchNameValue(
@@ -3525,7 +3544,7 @@ static GDALDatasetH GDALWarpCreateOutput(
         oDstSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         oDstSRS.SetFromUserInput(pszDstSRS);
         const char *pszProjection = oDstSRS.GetAttrValue("PROJECTION");
-        const char *pszMethod = CSLFetchNameValue(papszTO, "METHOD");
+        const char *pszMethod = FetchSrcMethod(papszTO);
         double adfSrcGT[6] = {0};
         // This MAX_LAT values is equivalent to the semi_major_axis * PI
         // easting/northing value only for EPSG:3857, but it is also quite
@@ -4234,7 +4253,7 @@ static GDALDatasetH GDALWarpCreateOutput(
         // If no reprojection or geometry change is involved, and that the
         // source image is north-up, preserve source resolution instead of
         // forcing square pixels.
-        const char *pszMethod = CSLFetchNameValue(papszTO, "METHOD");
+        const char *pszMethod = FetchSrcMethod(papszTO);
         double adfThisGeoTransformTmp[6];
         if (!psOptions->bSquarePixels && bNeedsSuggestedWarpOutput &&
             psOptions->dfXRes == 0 && psOptions->dfYRes == 0 &&
@@ -4769,7 +4788,7 @@ static GDALDatasetH GDALWarpCreateOutput(
             {
                 const OGRSpatialReferenceH hSrcSRS =
                     GDALGetSpatialRef(pahSrcDS[0]);
-                const char *pszMethod = CSLFetchNameValue(papszTO, "METHOD");
+                const char *pszMethod = FetchSrcMethod(papszTO);
                 if (hSrcSRS &&
                     (pszMethod == nullptr || EQUAL(pszMethod, "GEOTRANSFORM")))
                 {
@@ -5747,7 +5766,7 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
     const auto CheckSingleMethod = [psOptions]()
     {
         const char *pszMethod =
-            psOptions->aosTransformerOptions.FetchNameValue("METHOD");
+            FetchSrcMethod(psOptions->aosTransformerOptions);
         if (pszMethod)
             CPLError(CE_Warning, CPLE_IllegalArg,
                      "Warning: only one METHOD can be used. Method %s is "
@@ -5815,7 +5834,7 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
                 [psOptions, CheckSingleMethod](const std::string &)
                 {
                     CheckSingleMethod();
-                    psOptions->aosTransformerOptions.SetNameValue("METHOD",
+                    psOptions->aosTransformerOptions.SetNameValue("SRC_METHOD",
                                                                   "GCP_TPS");
                 })
             .help(_("Force use of thin plate spline transformer based on "
@@ -5827,7 +5846,7 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
                 [psOptions, CheckSingleMethod](const std::string &)
                 {
                     CheckSingleMethod();
-                    psOptions->aosTransformerOptions.SetNameValue("METHOD",
+                    psOptions->aosTransformerOptions.SetNameValue("SRC_METHOD",
                                                                   "RPC");
                 })
             .help(_("Force use of RPCs."));
@@ -5839,7 +5858,7 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
                 {
                     CheckSingleMethod();
                     psOptions->aosTransformerOptions.SetNameValue(
-                        "METHOD", "GEOLOC_ARRAY");
+                        "SRC_METHOD", "GEOLOC_ARRAY");
                 })
             .help(_("Force use of Geolocation Arrays."));
     }
@@ -5851,7 +5870,7 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
             [psOptions](const std::string &s)
             {
                 const char *pszMethod =
-                    psOptions->aosTransformerOptions.FetchNameValue("METHOD");
+                    FetchSrcMethod(psOptions->aosTransformerOptions);
                 if (pszMethod)
                     CPLError(
                         CE_Warning, CPLE_IllegalArg,
