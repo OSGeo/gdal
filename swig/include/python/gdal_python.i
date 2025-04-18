@@ -605,6 +605,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       Read a window of this raster band into a NumPy masked array.
 
       Values of the mask will be ``True`` where pixels are invalid.
+        
+      When downsampling (``buf_xsize`` > ``win_xsize``, or ``buf_ysize`` > ``win_ysize``), the mask will be resampled using mode (majority) resampling.
+
 
       See :py:meth:`ReadAsArray` for a description of arguments.
 
@@ -625,7 +628,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                                          win_ysize=win_ysize,
                                          buf_xsize=buf_xsize,
                                          buf_ysize=buf_ysize,
-                                         resample_alg=resample_alg).astype(bool)
+                                         resample_alg=gdal.GRIORA_Mode).astype(bool)
       else:
           mask_array = None
       return numpy.ma.array(array, mask=mask_array)
@@ -1119,7 +1122,11 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         """
         Read a window from raster bands into a NumPy masked array.
 
-        Parameters are the same as for :py:meth:`ReadAsArray`.
+        Values of the mask will be ``True`` where pixels are invalid.
+
+        When downsampling (``buf_xsize`` > ``xsize``, or ``buf_ysize`` > ``ysize``), the mask will be resampled using mode (majority) resampling.
+
+        See :py:meth:`ReadAsArray` for a description of arguments.
         """
 
         import numpy as np

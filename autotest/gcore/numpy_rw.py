@@ -1095,6 +1095,33 @@ def test_numpy_rw_masked_array_3():
 
 
 ###############################################################################
+# Test mask downsampling in ReadAsMaskedArray
+
+
+def test_numpy_rw_masked_array_mask_downsampling():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 2, eType=gdal.GDT_Int16)
+    ds.GetRasterBand(1).SetNoDataValue(-999)
+    ds.WriteArray(numpy.array([[-999, 1], [-999, -999]]))
+    band = ds.GetRasterBand(1)
+
+    # 75% nodata
+    assert ds.ReadAsMaskedArray(buf_xsize=1, buf_ysize=1).mask == True
+    assert band.ReadAsMaskedArray(buf_xsize=1, buf_ysize=1).mask == True
+
+    # 50% nodata (nodata pixel encountered first)
+    assert ds.ReadAsMaskedArray(ysize=1, buf_xsize=1, buf_ysize=1).mask == False
+    assert band.ReadAsMaskedArray(win_ysize=1, buf_xsize=1, buf_ysize=1).mask == False
+
+    # 50% nodata (valid pixel encountered first)
+    assert ds.ReadAsMaskedArray(xoff=1, xsize=1, buf_xsize=1, buf_ysize=1).mask == True
+    assert (
+        band.ReadAsMaskedArray(xoff=1, win_xsize=1, buf_xsize=1, buf_ysize=1).mask
+        == True
+    )
+
+
+###############################################################################
 # Test type code mapping
 
 
