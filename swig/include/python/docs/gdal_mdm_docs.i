@@ -4,7 +4,7 @@ Create a multidimensional array within a group.
 
 It is recommended that the GDALDimension objects passed in ``dimensions``
 belong to this group, either by retrieving them with :py:meth:`GetDimensions`
-or creating a new one with :py:func:`osgeo.gdal.Group.CreateDimension`.
+or creating a new one with :py:meth:`CreateDimension`.
 
 See :cpp:func:`GDALGroup::CreateMDArray`.
 
