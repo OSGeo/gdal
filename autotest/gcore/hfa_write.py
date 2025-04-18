@@ -471,3 +471,10 @@ def test_hfa_create_gcp():
     assert len(ds.GetGCPs()) == 1
     ds = None
     gdal.GetDriverByName("HFA").Delete(filename)
+
+
+@pytest.mark.require_driver("L1B")
+def test_hfa_create_copy_from_ysize_0(tmp_vsimem):
+    src_ds = gdal.Open("../gdrivers/data/l1b/n12gac8bit_truncated_ysize_0_1band.l1b")
+    with pytest.raises(Exception, match="nXSize == 0 || nYSize == 0 not supported"):
+        gdal.GetDriverByName("HFA").CreateCopy(tmp_vsimem / "out.img", src_ds)
