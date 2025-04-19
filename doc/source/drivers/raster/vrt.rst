@@ -1051,6 +1051,13 @@ additional pixel functions can be defined in :ref:`C++ <cpp_pixel_functions>`
 or :ref:`Python <python_pixel_functions>` and registered with GDAL using
 a unique key.
 
+A VRTRasterBand can be made a VRTDerivedRasterBand by setting attribute subClass="VRTDerivedRasterBand".
+
+Some of the common subelements for VRTRasterBand (whose subClass="VRTDerivedRasterBand") are listed here. They can be used with built-in, C++, or Python pixel functions.
+
+- **PixelFunctionType**: (required): A pixel function with this name must be defined.
+- **SkipNonContributingSources**: (optional, added in GDAL 3.7, defaults to false) = true/false: Whether sources that do not intersect the VRTRasterBand RasterIO() requested region should be omitted. By default, data for all sources, including ones that do not intersect it, are passed to the pixel function. By setting this parameter to false, only sources that intersect the requested region will be passed.
+
 .. example::
    :title: Calculating a derived band
    :id: vrt-derived-1
@@ -1445,8 +1452,6 @@ set to VRTDerivedRasterBand) are :
 - **PixelFunctionCode** (required if PixelFunctionType is of the form "function_name", ignored otherwise). The in-lined code of a Python module, that must be at least have a function whose name is given by PixelFunctionType.
 
 - **BufferRadius** (optional, defaults to 0): Amount of extra pixels, with respect to the original RasterIO() request to satisfy, that are fetched at the left, right, bottom and top of the input and output buffers passed to the pixel function. Note that the values of the output buffer in this buffer zone will be ignored.
-
-- **SkipNonContributingSources** (optional, added in GDAL 3.7, defaults to false) = true/false: Whether sources that do not intersect the VRTRasterBand RasterIO() requested region should be omitted. By default, data for all sources, including ones that do not intersect it, are passed to the pixel function. By setting this parameter to false, only sources that intersect the requested region will be passed.
 
 The signature of the Python pixel function must have the following arguments:
 
