@@ -606,6 +606,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       Read a window of this raster band into a NumPy masked array.
 
       Values of the mask will be ``True`` where pixels are invalid.
+        
+      When downsampling (``buf_xsize`` > ``win_xsize``, or ``buf_ysize`` > ``win_ysize``), the mask will be resampled using mode (majority) resampling.
+
 
       See :py:meth:`ReadAsArray` for a description of arguments.
 
@@ -626,7 +629,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                                          win_ysize=win_ysize,
                                          buf_xsize=buf_xsize,
                                          buf_ysize=buf_ysize,
-                                         resample_alg=resample_alg).astype(bool)
+                                         resample_alg=gdal.GRIORA_Mode).astype(bool)
       else:
           mask_array = None
       return numpy.ma.array(array, mask=mask_array)
@@ -1110,6 +1113,46 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 %clear (GIntBig*);
 
 %pythoncode %{
+
+    def ReadAsMaskedArray(self, xoff=0, yoff=0, xsize=None, ysize=None, 
+                    buf_xsize=None, buf_ysize=None, buf_type=None,
+                    resample_alg=gdalconst.GRIORA_NearestNeighbour,
+                    callback=None,
+                    callback_data=None,
+                    band_list=None):
+        """
+        Read a window from raster bands into a NumPy masked array.
+
+        Values of the mask will be ``True`` where pixels are invalid.
+
+        When downsampling (``buf_xsize`` > ``xsize``, or ``buf_ysize`` > ``ysize``), the mask will be resampled using mode (majority) resampling.
+
+        See :py:meth:`ReadAsArray` for a description of arguments.
+        """
+
+        import numpy as np
+
+        arr = self.ReadAsArray(xoff=xoff, yoff=yoff, xsize=xsize, ysize=ysize, 
+                               buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
+                               resample_alg=resample_alg, band_list=band_list)
+        
+        if band_list is None:
+            band_list = [i+1 for i in range(self.RasterCount)]
+        
+        all_valid = all(self.GetRasterBand(band).GetMaskFlags() == GMF_ALL_VALID for band in band_list)
+
+        if all_valid:
+            return np.ma.masked_array(arr, False)
+       
+        masks = [self.GetRasterBand(band).GetMaskBand().ReadAsArray(
+                xoff=xoff, yoff=yoff,
+                win_xsize=xsize, win_ysize=ysize,
+                buf_xsize=buf_xsize, buf_ysize=buf_ysize,
+                resample_alg=gdalconst.GRIORA_Mode) != 255
+                 for band in band_list]
+
+        return np.ma.masked_array(arr, np.vstack(masks))
+
 
     def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None,
                     buf_xsize=None, buf_ysize=None, buf_type=None,
