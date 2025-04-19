@@ -66,8 +66,10 @@ Standard options
 .. option:: --geometry <WKT_or_GeoJSON>
 
     Geometry as a WKT or GeoJSON string to which to clip the dataset.
-    It is assumed to be in the CRS of
-    the input dataset, unless :option:`--geometry-crs` is specified.
+    If the input geometry is GeoJSON, its CRS is assumed to be WGS84, unless there is
+    a CRS defined in the GeoJSON geometry or :option:`--geometry-crs` is specified.
+    If the input geometry is WKT, its CRS is assumed to be the one of the input dataset,
+    unless :option:`--geometry-crs` is specified.
     The X and Y axis are the "GIS friendly ones", that is X is longitude or easting,
     and Y is latitude or northing.
     Mutually exclusive with :option:`--bbox` and :option:`--like`.

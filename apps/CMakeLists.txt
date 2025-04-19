@@ -6,6 +6,7 @@ add_library(
   commonutils.h
   gdal_utils.h
   gdalargumentparser.cpp
+  gdalalg_clip_common.cpp
   gdalalg_convert.cpp
   gdalalg_info.cpp
   gdalalg_main.cpp
