@@ -732,6 +732,7 @@ after_loop:
     if (occ > 0)
     {
         memset(op, 0, (size_t)occ);
+        sp->read_error = 1;
         TIFFErrorExtR(tif, module,
                       "Not enough data at scanline %" PRIu32 " (short %" PRIu64
                       " bytes)",

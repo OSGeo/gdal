@@ -862,16 +862,38 @@ static int fpDiff(TIFF *tif, uint8_t *cp0, tmsize_t cc)
 
 static int PredictorEncodeRow(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
 {
+    static const char module[] = "PredictorEncodeRow";
     TIFFPredictorState *sp = PredictorState(tif);
+    uint8_t *working_copy;
+    int result_code;
 
     assert(sp != NULL);
     assert(sp->encodepfunc != NULL);
     assert(sp->encoderow != NULL);
 
-    /* XXX horizontal differencing alters user's data XXX */
-    if (!(*sp->encodepfunc)(tif, bp, cc))
+    /*
+     * Do predictor manipulation in a working buffer to avoid altering
+     * the callers buffer, like for PredictorEncodeTile().
+     * https://gitlab.com/libtiff/libtiff/-/issues/5
+     */
+    working_copy = (uint8_t *)_TIFFmallocExt(tif, cc);
+    if (working_copy == NULL)
+    {
+        TIFFErrorExtR(tif, module,
+                      "Out of memory allocating %" PRId64 " byte temp buffer.",
+                      (int64_t)cc);
         return 0;
-    return (*sp->encoderow)(tif, bp, cc, s);
+    }
+    memcpy(working_copy, bp, cc);
+
+    if (!(*sp->encodepfunc)(tif, working_copy, cc))
+    {
+        _TIFFfreeExt(tif, working_copy);
+        return 0;
+    }
+    result_code = (*sp->encoderow)(tif, working_copy, cc, s);
+    _TIFFfreeExt(tif, working_copy);
+    return result_code;
 }
 
 static int PredictorEncodeTile(TIFF *tif, uint8_t *bp0, tmsize_t cc0,

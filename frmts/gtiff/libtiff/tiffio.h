@@ -154,6 +154,18 @@ typedef struct
     float d_gammaB;
 } TIFFDisplay;
 
+/* YCbCr->RGB support for TIFFYCbCrToRGBInit() and TIFFYCbCrToRGB()
+ * Attention:
+ * Functions TIFFYCbCrToRGBInit() and TIFFYCbCrToRGB() require a user provided
+ * large memory buffer, where several tables can be setup.
+ * The pointers to these tables are stored in the structure TIFFYCbCrToRGB,
+ * which is located at the beginning of the buffer. Thus, this memory has to be
+ * allocated as follows:
+ *     TIFFYCbCrToRGB *ycbcr = (TIFFYCbCrToRGB *)_TIFFmalloc(
+ *         TIFFroundup_32(sizeof(TIFFYCbCrToRGB), sizeof(long)) +
+ *         4 * 256 * sizeof(TIFFRGBValue) + 2 * 256 * sizeof(int) +
+ *         3 * 256 * sizeof(int32_t));
+ */
 typedef struct
 {                           /* YCbCr->RGB support */
     TIFFRGBValue *clamptab; /* range clamping table */

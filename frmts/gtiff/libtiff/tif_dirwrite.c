@@ -35,6 +35,9 @@
 #define TIFFCvtNativeToIEEEFloat(tif, n, fp)
 #define TIFFCvtNativeToIEEEDouble(tif, n, dp)
 #else
+/* If your machine does not support IEEE floating point then you will need to
+ * add support to tif_machdep.c to convert between the native format and
+ * IEEE format. */
 extern void TIFFCvtNativeToIEEEFloat(TIFF *tif, uint32_t n, float *fp);
 extern void TIFFCvtNativeToIEEEDouble(TIFF *tif, uint32_t n, double *dp);
 #endif
@@ -2967,7 +2970,7 @@ static int TIFFWriteDirectoryTagCheckedFloatArray(TIFF *tif, uint32_t *ndir,
         EvaluateIFDdatasizeWrite(tif, count, 4, ndir);
         return 1;
     }
-    TIFFCvtNativeToIEEEFloat(tif, count, &value);
+    TIFFCvtNativeToIEEEFloat(tif, count, value);
     if (tif->tif_flags & TIFF_SWAB)
         TIFFSwabArrayOfFloat(value, count);
     return (TIFFWriteDirectoryTagData(tif, ndir, dir, tag, TIFF_FLOAT, count,
@@ -2986,7 +2989,7 @@ static int TIFFWriteDirectoryTagCheckedDoubleArray(TIFF *tif, uint32_t *ndir,
         EvaluateIFDdatasizeWrite(tif, count, 8, ndir);
         return 1;
     }
-    TIFFCvtNativeToIEEEDouble(tif, count, &value);
+    TIFFCvtNativeToIEEEDouble(tif, count, value);
     if (tif->tif_flags & TIFF_SWAB)
         TIFFSwabArrayOfDouble(value, count);
     return (TIFFWriteDirectoryTagData(tif, ndir, dir, tag, TIFF_DOUBLE, count,
