@@ -1051,6 +1051,12 @@ additional pixel functions can be defined in :ref:`C++ <cpp_pixel_functions>`
 or :ref:`Python <python_pixel_functions>` and registered with GDAL using
 a unique key.
 
+Some of the Common subelements for VRTRasterBand (whose subclass specification must be set
+to VRTDerivedRasterBand) are :
+
+- **PixelFunctionType**: (required): A pixel function with this name must be defined.
+- **SkipNonContributingSources**: (optional, added in GDAL 3.7, defaults to false) = true/false: Whether sources that do not intersect the VRTRasterBand RasterIO() requested region should be omitted. By default, data for all sources, including ones that do not intersect it, are passed to the pixel function. By setting this parameter to false, only sources that intersect the requested region will be passed.
+
 .. example::
    :title: Calculating a derived band
    :id: vrt-derived-1
