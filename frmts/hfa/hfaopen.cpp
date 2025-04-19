@@ -2227,6 +2227,12 @@ HFAHandle HFACreate(const char *pszFilename, int nXSize, int nYSize, int nBands,
                     EPTType eDataType, char **papszOptions)
 
 {
+    if (nXSize == 0 || nYSize == 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "nXSize == 0 || nYSize == 0 not supported");
+        return nullptr;
+    }
     int nBlockSize = 64;
     const char *pszValue = CSLFetchNameValue(papszOptions, "BLOCKSIZE");
 

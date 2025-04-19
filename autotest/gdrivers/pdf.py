@@ -3140,3 +3140,15 @@ def test_pdf_gdal_driver_pdf_list_layer():
     alg["input"] = "data/byte.tif"
     with pytest.raises(Exception, match="is not a PDF"):
         alg.Run()
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("L1B")
+def test_pdf_create_copy_from_ysize_0(tmp_vsimem):
+    src_ds = gdal.Open("../gdrivers/data/l1b/n12gac8bit_truncated_ysize_0_1band.l1b")
+    with pytest.raises(Exception, match="nWidth == 0 || nHeight == 0 not supported"):
+        gdal.GetDriverByName("PDF").CreateCopy(tmp_vsimem / "out.pdf", src_ds)
