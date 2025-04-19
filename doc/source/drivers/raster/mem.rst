@@ -1,17 +1,21 @@
 .. _raster.mem:
 
 ================================================================================
-MEM -- In Memory Raster
+MEM -- In Memory datasets
 ================================================================================
 
 .. shortname:: MEM
 
 .. built_in_by_default::
 
-GDAL supports the ability to hold rasters in a temporary in-memory
+GDAL supports the ability to hold datasets in a temporary in-memory
 format. This is primarily useful for temporary datasets in scripts or
 internal to applications. It is not generally of any use to application
 end-users.
+
+This page documents its raster capabilities. Starting with GDAL 3.11, this
+driver has been unified with the long-time existing Memory driver to offer
+both raster and :ref:`vector <vector.mem>` capabilities.
 
 Memory datasets should support for most kinds of auxiliary information
 including metadata, coordinate systems, georeferencing, GCPs, color
