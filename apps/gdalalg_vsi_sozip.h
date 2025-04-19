@@ -10,6 +10,9 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#ifndef GDALALG_VSI_SOZIP_INCLUDED
+#define GDALALG_VSI_SOZIP_INCLUDED
+
 #include "gdalalgorithm.h"
 
 //! @cond Doxygen_Suppress
@@ -39,3 +42,5 @@ class GDALVSISOZIPAlgorithm final : public GDALAlgorithm
 };
 
 //! @endcond
+
+#endif
