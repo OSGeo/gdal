@@ -618,52 +618,102 @@ class CPL_DLL GDALAlgorithmArgDecl final
     template <class T> GDALAlgorithmArgDecl &SetDefault(const T &value)
     {
         m_hasDefaultValue = true;
-        if constexpr (std::is_same_v<T, std::string>)
-        {
-            if (m_type == GAAT_STRING_LIST)
-            {
-                m_defaultValue = std::vector<std::string>{value};
-                return *this;
-            }
-        }
-        else if constexpr (std::is_same_v<T, int>)
-        {
-            if (m_type == GAAT_REAL)
-            {
-                m_defaultValue = static_cast<double>(value);
-                return *this;
-            }
-            else if (m_type == GAAT_INTEGER_LIST)
-            {
-                m_defaultValue = std::vector<int>{value};
-                return *this;
-            }
-            else if (m_type == GAAT_REAL_LIST)
-            {
-                m_defaultValue =
-                    std::vector<double>{static_cast<double>(value)};
-                return *this;
-            }
-        }
-        else if constexpr (std::is_same_v<T, double>)
-        {
-            if (m_type == GAAT_REAL_LIST)
-            {
-                m_defaultValue = std::vector<double>{value};
-                return *this;
-            }
-        }
         try
         {
-            m_defaultValue = value;
+            switch (m_type)
+            {
+                case GAAT_BOOLEAN:
+                {
+                    if constexpr (std::is_same_v<T, bool>)
+                    {
+                        m_defaultValue = value;
+                        return *this;
+                    }
+                    break;
+                }
+
+                case GAAT_STRING:
+                {
+                    if constexpr (std::is_same_v<T, std::string>)
+                    {
+                        m_defaultValue = value;
+                        return *this;
+                    }
+                    break;
+                }
+
+                case GAAT_INTEGER:
+                {
+                    if constexpr (std::is_same_v<T, int>)
+                    {
+                        m_defaultValue = value;
+                        return *this;
+                    }
+                    break;
+                }
+
+                case GAAT_REAL:
+                {
+                    if constexpr (std::is_assignable_v<double &, T>)
+                    {
+                        m_defaultValue = static_cast<double>(value);
+                        return *this;
+                    }
+                    break;
+                }
+
+                case GAAT_STRING_LIST:
+                {
+                    if constexpr (std::is_same_v<T, std::string>)
+                    {
+                        m_defaultValue = std::vector<std::string>{value};
+                        return *this;
+                    }
+                    break;
+                }
+
+                case GAAT_INTEGER_LIST:
+                {
+                    if constexpr (std::is_same_v<T, int>)
+                    {
+                        m_defaultValue = std::vector<int>{value};
+                        return *this;
+                    }
+                    break;
+                }
+
+                case GAAT_REAL_LIST:
+                {
+                    if constexpr (std::is_assignable_v<double &, T>)
+                    {
+                        m_defaultValue =
+                            std::vector<double>{static_cast<double>(value)};
+                        return *this;
+                    }
+                    break;
+                }
+
+                case GAAT_DATASET:
+                case GAAT_DATASET_LIST:
+                    break;
+            }
         }
         catch (const std::bad_variant_access &)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Argument %s: SetDefault(): unexpected type for value",
-                     GetName().c_str());
+            // should not happen
+            // fallthrough
         }
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Argument %s: SetDefault(): unexpected type for value",
+                 GetName().c_str());
         return *this;
+    }
+
+    /** Declare a default value for the argument.
+     */
+    GDALAlgorithmArgDecl &SetDefault(const char *value)
+    {
+        return SetDefault(std::string(value));
     }
 
     /** Declare the minimum number of values for the argument. Defaults to 0.
@@ -1835,36 +1885,47 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
         if constexpr (!std::is_same_v<T, GDALArgDatasetValue> &&
                       !std::is_same_v<T, std::vector<GDALArgDatasetValue>>)
         {
-            switch (m_decl.GetType())
+            try
             {
-                case GAAT_BOOLEAN:
-                    *std::get<bool *>(m_value) = m_decl.GetDefault<bool>();
-                    break;
-                case GAAT_STRING:
-                    *std::get<std::string *>(m_value) =
-                        m_decl.GetDefault<std::string>();
-                    break;
-                case GAAT_INTEGER:
-                    *std::get<int *>(m_value) = m_decl.GetDefault<int>();
-                    break;
-                case GAAT_REAL:
-                    *std::get<double *>(m_value) = m_decl.GetDefault<double>();
-                    break;
-                case GAAT_STRING_LIST:
-                    *std::get<std::vector<std::string> *>(m_value) =
-                        m_decl.GetDefault<std::vector<std::string>>();
-                    break;
-                case GAAT_INTEGER_LIST:
-                    *std::get<std::vector<int> *>(m_value) =
-                        m_decl.GetDefault<std::vector<int>>();
-                    break;
-                case GAAT_REAL_LIST:
-                    *std::get<std::vector<double> *>(m_value) =
-                        m_decl.GetDefault<std::vector<double>>();
-                    break;
-                case GAAT_DATASET:
-                case GAAT_DATASET_LIST:
-                    break;
+                switch (m_decl.GetType())
+                {
+                    case GAAT_BOOLEAN:
+                        *std::get<bool *>(m_value) = m_decl.GetDefault<bool>();
+                        break;
+                    case GAAT_STRING:
+                        *std::get<std::string *>(m_value) =
+                            m_decl.GetDefault<std::string>();
+                        break;
+                    case GAAT_INTEGER:
+                        *std::get<int *>(m_value) = m_decl.GetDefault<int>();
+                        break;
+                    case GAAT_REAL:
+                        *std::get<double *>(m_value) =
+                            m_decl.GetDefault<double>();
+                        break;
+                    case GAAT_STRING_LIST:
+                        *std::get<std::vector<std::string> *>(m_value) =
+                            m_decl.GetDefault<std::vector<std::string>>();
+                        break;
+                    case GAAT_INTEGER_LIST:
+                        *std::get<std::vector<int> *>(m_value) =
+                            m_decl.GetDefault<std::vector<int>>();
+                        break;
+                    case GAAT_REAL_LIST:
+                        *std::get<std::vector<double> *>(m_value) =
+                            m_decl.GetDefault<std::vector<double>>();
+                        break;
+                    case GAAT_DATASET:
+                    case GAAT_DATASET_LIST:
+                        break;
+                }
+            }
+            catch (const std::bad_variant_access &)
+            {
+                // I don't think that can happen, but Coverity Scan thinks so
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Argument %s: SetDefault(): unexpected type for value",
+                         GetName().c_str());
             }
         }
         return *this;
