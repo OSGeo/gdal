@@ -62,7 +62,11 @@ string(REPLACE "if (--interpreter_counter != 0) // another sub-interpreter may s
        _CONTENTS "${_CONTENTS}")
 
 # Works around https://github.com/swig/swig/issues/3061
+# For SWIG 4.3.0:
 string(REPLACE "# define SWIG_HEAPTYPES" "// Below is disabled because of https://github.com/swig/swig/issues/3061\n// # define SWIG_HEAPTYPES"
+       _CONTENTS "${_CONTENTS}")
+# For SWIG 4.3.1:
+string(REPLACE "#define SWIG_HEAPTYPES" "// Below is disabled because of https://github.com/swig/swig/issues/3061\n// # define SWIG_HEAPTYPES"
        _CONTENTS "${_CONTENTS}")
 
 file(WRITE ${FILE} "${_CONTENTS}")
