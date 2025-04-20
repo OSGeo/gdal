@@ -271,7 +271,7 @@ class VSIKerchunkJSONRefParser final : public CPLJSonStreamingParser
 {
   public:
     explicit VSIKerchunkJSONRefParser(
-        const std::shared_ptr<VSIKerchunkRefFile> refFile)
+        const std::shared_ptr<VSIKerchunkRefFile> &refFile)
         : m_refFile(refFile)
     {
         m_oWriter.SetPrettyFormatting(false);
@@ -733,7 +733,7 @@ VSIKerchunkJSONRefFileSystem::LoadInternal(const std::string &osJSONFilename,
         }
     }
 
-    const auto oRoot = oDoc.GetRoot();
+    auto oRoot = oDoc.GetRoot();
     const auto oVersion = oRoot.GetObj("version");
     CPLJSONObject oRefs;
     if (!oVersion.IsValid())
@@ -742,7 +742,7 @@ VSIKerchunkJSONRefFileSystem::LoadInternal(const std::string &osJSONFilename,
 
         CPLDebugOnly("VSIKerchunkJSONRefFileSystem",
                      "'version' key not found. Assuming version 0");
-        oRefs = oRoot;
+        oRefs = std::move(oRoot);
         if (!oRefs.GetObj(".zgroup").IsValid())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1178,13 +1178,15 @@ bool VSIKerchunkRefFile::ConvertToParquetRef(const std::string &osCacheDir,
                     uint64_t nTotalChunkCount = 1;
                     for (int i = 0; i < oShape.Size(); ++i)
                     {
-                        if (oShape[i].ToLong() == 0 || oChunks[i].ToLong() == 0)
+                        const auto nShape = oShape[i].ToLong();
+                        const auto nChunk = oChunks[i].ToLong();
+                        if (nShape == 0 || nChunk == 0)
                         {
                             bOK = false;
                             break;
                         }
-                        const uint64_t nChunkCount = DIV_ROUND_UP(
-                            oShape[i].ToLong(), oChunks[i].ToLong());
+                        const uint64_t nChunkCount =
+                            DIV_ROUND_UP(nShape, nChunk);
                         if (nChunkCount > std::numeric_limits<uint64_t>::max() /
                                               nTotalChunkCount)
                         {
@@ -1560,7 +1562,7 @@ VSIKerchunkJSONRefFileSystem::Open(const char *pszFilename,
     }
     else
     {
-        const std::string osVSIPath = VSIKerchunkMorphURIToVSIPath(
+        std::string osVSIPath = VSIKerchunkMorphURIToVSIPath(
             *(keyInfo.posURI), CPLGetPathSafe(osJSONFilename.c_str()));
         if (osVSIPath.empty())
             return nullptr;
@@ -1568,7 +1570,7 @@ VSIKerchunkJSONRefFileSystem::Open(const char *pszFilename,
             keyInfo.nSize
                 ? CPLSPrintf("/vsisubfile/%" PRIu64 "_%u,%s", keyInfo.nOffset,
                              keyInfo.nSize, osVSIPath.c_str())
-                : osVSIPath;
+                : std::move(osVSIPath);
         CPLDebugOnly("VSIKerchunkJSONRefFileSystem", "Opening %s",
                      osPath.c_str());
         CPLConfigOptionSetter oSetter("GDAL_DISABLE_READDIR_ON_OPEN",
@@ -1615,10 +1617,8 @@ int VSIKerchunkJSONRefFileSystem::Stat(const char *pszFilename,
     const auto oIter = refFile->GetMapKeys().find(osKey);
     if (oIter == refFile->GetMapKeys().end())
     {
-        if (cpl::contains(refFile->GetMapKeys(),
-                          std::string(osKey).append("/.zgroup")) ||
-            cpl::contains(refFile->GetMapKeys(),
-                          std::string(osKey).append("/.zarray")))
+        if (cpl::contains(refFile->GetMapKeys(), osKey + "/.zgroup") ||
+            cpl::contains(refFile->GetMapKeys(), osKey + "/.zarray"))
         {
             pStatBuf->st_mode = S_IFDIR;
             return 0;
@@ -1698,7 +1698,7 @@ char **VSIKerchunkJSONRefFileSystem::ReadDirEx(const char *pszDirname,
             std::string subKey = key.substr(osAskedKey.size() + 1);
             const auto nPos = subKey.find('/');
             if (nPos == std::string::npos)
-                set.insert(subKey);
+                set.insert(std::move(subKey));
             else
                 set.insert(subKey.substr(0, nPos));
         }
