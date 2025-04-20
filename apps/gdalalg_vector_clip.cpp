@@ -76,30 +76,41 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
           m_eSrcLayerGeomType(oSrcLayer.GetGeomType()),
           m_eFlattenSrcLayerGeomType(wkbFlatten(m_eSrcLayerGeomType)),
           m_bSrcLayerGeomTypeIsCollection(OGR_GT_IsSubClassOf(
-              m_eFlattenSrcLayerGeomType, wkbGeometryCollection))
+              m_eFlattenSrcLayerGeomType, wkbGeometryCollection)),
+          m_poFeatureDefn(oSrcLayer.GetLayerDefn()->Clone())
     {
         SetDescription(oSrcLayer.GetDescription());
         SetMetadata(oSrcLayer.GetMetadata());
         oSrcLayer.SetSpatialFilter(m_poClipGeom.get());
+        m_poFeatureDefn->Reference();
+    }
+
+    ~GDALVectorClipAlgorithmLayer()
+    {
+        m_poFeatureDefn->Release();
     }
 
     OGRFeatureDefn *GetLayerDefn() override
     {
-        return m_srcLayer.GetLayerDefn();
+        return m_poFeatureDefn;
     }
 
     void TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
+        std::unique_ptr<OGRGeometry> poIntersection;
         auto poGeom = poSrcFeature->GetGeometryRef();
-        if (!poGeom)
-            return;
-
-        auto poIntersection = std::unique_ptr<OGRGeometry>(
-            poGeom->Intersection(m_poClipGeom.get()));
+        if (poGeom)
+        {
+            poIntersection.reset(poGeom->Intersection(m_poClipGeom.get()));
+        }
         if (!poIntersection)
             return;
+        poIntersection->assignSpatialReference(
+            m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef());
+
+        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn);
 
         const auto eFeatGeomType =
             wkbFlatten(poIntersection->getGeometryType());
@@ -156,10 +167,11 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
     }
 
   private:
-    std::unique_ptr<OGRGeometry> m_poClipGeom{};
+    std::unique_ptr<OGRGeometry> const m_poClipGeom{};
     const OGRwkbGeometryType m_eSrcLayerGeomType;
     const OGRwkbGeometryType m_eFlattenSrcLayerGeomType;
     const bool m_bSrcLayerGeomTypeIsCollection;
+    OGRFeatureDefn *const m_poFeatureDefn;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorClipAlgorithmLayer)
 };

@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import ogrtest
 import pytest
 
@@ -997,3 +998,25 @@ def test_gdalalg_vector_clip_bbox_active_layer():
     out_lyr = out_ds.GetLayer(1)
     out_f = out_lyr.GetNextFeature()
     ogrtest.check_feature_geometry(out_f, "POLYGON ((10 10,10 11,11 11,10 10))")
+
+
+@pytest.mark.require_driver("GDALG")
+def test_gdalalg_vector_clip_test_ogrsf(tmp_path):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    gdalg_filename = tmp_path / "tmp.gdalg.json"
+    open(gdalg_filename, "wb").write(
+        b'{"type": "gdal_streamed_alg","command_line": "gdal vector clip ../ogr/data/poly.shp --like ../ogr/data/poly.shp --output-format=stream foo","relative_paths_relative_to_this_file":false}'
+    )
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {gdalg_filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+    assert "FAILURE" not in ret
