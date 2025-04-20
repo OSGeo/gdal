@@ -282,6 +282,14 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags)
         return nullptr;
     }
 
+    if (src.size + extrasize < dst.size)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "DeflateBlock(): too small buffer");
+        CPLFree(dbuff);
+        return nullptr;
+    }
+
     // source size is used to hold the output size
     src.size = dst.size;
     // If we didn't allocate a buffer, the receiver can use it already
@@ -819,12 +827,16 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
 
     buf_mgr filedst = {static_cast<char *>(outbuff), poMRFDS->pbsize};
     auto start_time = steady_clock::now();
-    Compress(filedst, filesrc);
+    if (Compress(filedst, filesrc) != CE_None)
+    {
+        return CE_Failure;
+    }
 
     // Where the output is, in case we deflate
     void *usebuff = outbuff;
     if (dodeflate)
     {
+        CPLAssert(poMRFDS->pbsize <= filedst.size);
         usebuff = DeflateBlock(filedst, poMRFDS->pbsize - filedst.size,
                                deflate_flags);
         if (!usebuff)
@@ -1272,10 +1284,13 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 
         // Compress functions need to return the compressed size in
         // the bytes in buffer field
-        Compress(dst, src);
+        if (Compress(dst, src) != CE_None)
+            return CE_Failure;
+
         void *usebuff = dst.buffer;
         if (dodeflate)
         {
+            CPLAssert(dst.size <= poMRFDS->pbsize);
             usebuff =
                 DeflateBlock(dst, poMRFDS->pbsize - dst.size, deflate_flags);
             if (!usebuff)
