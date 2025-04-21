@@ -34,6 +34,6 @@ for feat in lyr:
     if geom is not None and geom.GetGeometryType() == ogr.wkbPoint:
         print("%.3f, %.3f" % (geom.GetX(), geom.GetY()))
     else:
-        print("no point geometry\n")
+        print("no point geometry")
 
 ds = None
