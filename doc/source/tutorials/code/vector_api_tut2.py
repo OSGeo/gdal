@@ -2,7 +2,7 @@ import sys
 from osgeo import gdal
 from osgeo import ogr
 
-
+gdal.UseExceptions()
 driverName = "ESRI Shapefile"
 drv = gdal.GetDriverByName(driverName)
 if drv is None:
