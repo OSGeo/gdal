@@ -36,4 +36,4 @@ for feat in lyr:
     else:
         print("no point geometry")
 
-ds = None
+ds.Close()
