@@ -801,16 +801,17 @@ CPLErr GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
         {
             if (psOptions->padfDstNoDataReal == nullptr)
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
+                CPLError(CE_Warning, CPLE_AppDefined,
                          "BAND_INIT was set to NO_DATA, but a NoData value was "
                          "not defined.");
-                return CE_Failure;
             }
-
-            adfInitRealImag[0] = psOptions->padfDstNoDataReal[iBand];
-            if (psOptions->padfDstNoDataImag != nullptr)
+            else
             {
-                adfInitRealImag[1] = psOptions->padfDstNoDataImag[iBand];
+                adfInitRealImag[0] = psOptions->padfDstNoDataReal[iBand];
+                if (psOptions->padfDstNoDataImag != nullptr)
+                {
+                    adfInitRealImag[1] = psOptions->padfDstNoDataImag[iBand];
+                }
             }
         }
         else
