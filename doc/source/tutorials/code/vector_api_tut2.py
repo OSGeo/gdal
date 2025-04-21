@@ -6,7 +6,7 @@ gdal.UseExceptions()
 driverName = "ESRI Shapefile"
 drv = gdal.GetDriverByName(driverName)
 if drv is None:
-    print("%s driver not available.\n" % driverName)
+    print("%s driver not available." % driverName)
     sys.exit(1)
 
 ds = drv.Create("point_out.shp", 0, 0, 0, gdal.GDT_Unknown)
