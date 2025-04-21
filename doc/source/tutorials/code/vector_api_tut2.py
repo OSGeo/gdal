@@ -42,4 +42,4 @@ while len(linelist) == 3:
     linestring = input()
     linelist = linestring.split()
 
-ds = None
+ds.Close()
