@@ -37,8 +37,6 @@ while len(linelist) == 3:
 
     lyr.CreateFeature(feat)
 
-    feat.Destroy()
-
     linestring = input()
     linelist = linestring.split()
 
