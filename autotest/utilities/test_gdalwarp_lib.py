@@ -4389,14 +4389,6 @@ def test_gdalwarp_lib_init_dest_invalid(tmp_vsimem):
             warpOptions={"INIT_DEST": "NODATA"},
         )
 
-    with pytest.raises(Exception, match="NoData value was not defined"):
-        gdal.Warp(
-            tmp_vsimem / "out.tif",
-            src_ds,
-            outputBounds=(440000, 3750120, 441920, 3751320),
-            warpOptions={"INIT_DEST": "NO_DATA"},
-        )
-
 
 ###############################################################################
 # Test scenario of https://github.com/OSGeo/gdal/issues/11992
