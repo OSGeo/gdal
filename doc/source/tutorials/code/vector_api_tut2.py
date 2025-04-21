@@ -35,9 +35,7 @@ while len(linelist) == 3:
 
     feat.SetGeometry(pt)
 
-    if lyr.CreateFeature(feat) != 0:
-        print("Failed to create feature in shapefile.\n")
-        sys.exit(1)
+    lyr.CreateFeature(feat)
 
     feat.Destroy()
 
