@@ -10,9 +10,6 @@ if drv is None:
     sys.exit(1)
 
 ds = drv.Create("point_out.shp", 0, 0, 0, gdal.GDT_Unknown)
-if ds is None:
-    print("Creation of output file failed.\n")
-    sys.exit(1)
 
 lyr = ds.CreateLayer("point_out", None, ogr.wkbPoint)
 if lyr is None:
