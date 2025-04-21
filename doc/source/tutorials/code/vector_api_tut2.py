@@ -16,9 +16,7 @@ lyr = ds.CreateLayer("point_out", None, ogr.wkbPoint)
 field_defn = ogr.FieldDefn("Name", ogr.OFTString)
 field_defn.SetWidth(32)
 
-if lyr.CreateField(field_defn) != 0:
-    print("Creating Name field failed.\n")
-    sys.exit(1)
+lyr.CreateField(field_defn
 
 # Expected format of user input: x y name
 linestring = input()
