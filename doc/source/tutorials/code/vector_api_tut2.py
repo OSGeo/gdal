@@ -12,9 +12,6 @@ if drv is None:
 ds = drv.Create("point_out.shp", 0, 0, 0, gdal.GDT_Unknown)
 
 lyr = ds.CreateLayer("point_out", None, ogr.wkbPoint)
-if lyr is None:
-    print("Layer creation failed.\n")
-    sys.exit(1)
 
 field_defn = ogr.FieldDefn("Name", ogr.OFTString)
 field_defn.SetWidth(32)
