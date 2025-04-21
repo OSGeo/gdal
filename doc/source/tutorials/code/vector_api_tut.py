@@ -5,9 +5,6 @@ from osgeo import ogr
 gdal.UseExceptions()
 
 ds = gdal.OpenEx("point", gdal.OF_VECTOR)
-if ds is None:
-    print("Open failed.\n")
-    sys.exit(1)
 
 lyr = ds.GetLayerByName("point")
 
