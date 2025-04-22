@@ -999,7 +999,9 @@ def test_rasterize_bugfix_gh8918(wkt):
 
     assert target_ds.GetRasterBand(1).Checksum() == 36
 
+
 ###############################################################################
+
 
 def test_rasterize_bugfix_gh12129():
     # Setup working spatial reference
@@ -1018,7 +1020,11 @@ def test_rasterize_bugfix_gh12129():
 
     # Add a polygon.
     feat = ogr.Feature(rast_mem_lyr.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.Geometry(wkt="POLYGON ((163899.27734375 167988.154296875,163909.339662057 167743.621912878,163628.300781257 167745.908203129,163661.337890632 167785.683593765,163700 167880,163780.000000007 167860.000000011,163835.751953125 167942.617187511,163899.27734375 167988.154296875))"))
+    feat.SetGeometryDirectly(
+        ogr.Geometry(
+            wkt="POLYGON ((163899.27734375 167988.154296875,163909.339662057 167743.621912878,163628.300781257 167745.908203129,163661.337890632 167785.683593765,163700 167880,163780.000000007 167860.000000011,163835.751953125 167942.617187511,163899.27734375 167988.154296875))"
+        )
+    )
 
     rast_mem_lyr.CreateFeature(feat)
 
@@ -1031,11 +1037,12 @@ def test_rasterize_bugfix_gh12129():
         options=["ALL_TOUCHED=YES"],
     )
 
-    
     print(target_ds.GetRasterBand(1))
     checksum = target_ds.GetRasterBand(1).Checksum()
     expected = 120
     if checksum != expected:
         print("checksum: " + str(checksum))
-        gdal.GetDriverByName("GTiff").CreateCopy("/tmp/rasterize_gh12129.tif", target_ds)
+        gdal.GetDriverByName("GTiff").CreateCopy(
+            "/tmp/rasterize_gh12129.tif", target_ds
+        )
         pytest.fail("Did not get expected image checksum")
