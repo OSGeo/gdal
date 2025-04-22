@@ -125,6 +125,29 @@ Examples
 
 ";
 
+%feature("docstring") CreateVector "
+
+Create a new vector :py:class:`Dataset` with this driver.
+This method is an alias for ``Create(name, 0, 0, 0, gdal.GDT_Unknown)``.
+
+Parameters
+----------
+utf8_path : str
+   Path of the dataset to create.
+
+Returns
+-------
+Dataset
+
+Examples
+--------
+>>> with gdal.GetDriverByName('ESRI Shapefile').CreateVector('test.shp') as ds:
+...     print(ds.GetLayerCount())
+... 
+0
+
+";
+
 %feature("docstring") Delete "
 Delete a :py:class:`Dataset`.
 See :cpp:func:`GDALDriver::Delete`.
