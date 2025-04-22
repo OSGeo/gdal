@@ -5332,6 +5332,43 @@ TEST_F(test_cpl, CPLStrtod)
     }
 }
 
+TEST_F(test_cpl, CPLStringToComplex)
+{
+    const auto EXPECT_PARSED = [](const char *str, double real, double imag)
+    {
+        double r = -999;
+        double i = -999;
+        EXPECT_EQ(CPLStringToComplex(str, &r, &i), CE_None)
+            << "Unexpected error parsing " << str;
+        EXPECT_EQ(r, real);
+        EXPECT_EQ(i, imag);
+    };
+    const auto EXPECT_ERROR = [](const char *str)
+    {
+        CPLErrorStateBackuper state(CPLQuietErrorHandler);
+        double r, i;
+        EXPECT_EQ(CPLStringToComplex(str, &r, &i), CE_Failure)
+            << "Did not receive expected error parsing " << str;
+    };
+
+    EXPECT_PARSED("05401", 5401, 0);
+    EXPECT_PARSED("-5401", -5401, 0);
+    EXPECT_PARSED(" 611.2-38.4i", 611.2, -38.4);
+    EXPECT_PARSED("611.2+38.4i ", 611.2, 38.4);
+    EXPECT_PARSED("-611.2+38.4i", -611.2, 38.4);
+
+    EXPECT_ERROR("-611.2+38.4ii");
+    EXPECT_ERROR("-611.2+38.4ji");
+    EXPECT_ERROR("-611.2+38.4ij");
+    EXPECT_ERROR("f-611.2+38.4i");
+    EXPECT_ERROR("-611.2+f38.4i");
+    EXPECT_ERROR("-611.2+-38.4i");
+    EXPECT_ERROR("611.2+38.4");
+    EXPECT_ERROR("38.4i");
+    EXPECT_ERROR("38.4x");
+    EXPECT_ERROR("invalid");
+}
+
 TEST_F(test_cpl, CPLForceToASCII)
 {
     {
