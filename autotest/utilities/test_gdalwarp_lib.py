@@ -4488,3 +4488,19 @@ def test_gdalwarp_lib_warn_different_coordinate_operations():
             gdal.GetLastErrorMsg()
             == "Several coordinate operations are going to be used. Artifacts may appear. You may consider using the -to ALLOW_BALLPARK=NO and/or -to ONLY_BEST=YES transform options, or specify a particular coordinate operation with -ct"
         )
+
+
+###############################################################################
+# Test that invalid NoData values cause an error
+
+
+def test_gdalwarp_lib_invalid_dstnodata(tmp_vsimem):
+
+    with pytest.raises(RuntimeError, match="Error parsing dstnodata"):
+        gdal.Warp(tmp_vsimem / "out.tif", "../gcore/data/byte.tif", dstNodata="bad")
+
+
+def test_gdalwarp_lib_invalid_srcnodata(tmp_vsimem):
+
+    with pytest.raises(RuntimeError, match="Error parsing srcnodata"):
+        gdal.Warp(tmp_vsimem / "out.tif", "../gcore/data/byte.tif", srcNodata="bad")
