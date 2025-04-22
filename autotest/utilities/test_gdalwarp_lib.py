@@ -4377,22 +4377,24 @@ def test_gdalwarp_lib_cubic_multiband_uint16_4sample_optim():
 # Test invalid values of INIT_DEST
 
 
-def test_gdalwarp_lib_init_dest_invalid(tmp_vsimem):
+@pytest.mark.parametrize("init_dest", ("NODATA", "32.6x"))
+def test_gdalwarp_lib_init_dest_invalid(tmp_vsimem, init_dest):
 
-    src_ds = gdal.Open("../gcore/data/byte.tif")
-
-    with pytest.raises(Exception, match="Unexpected value of BAND_INIT"):
+    with pytest.raises(Exception, match="Error parsing INIT_DEST"):
         gdal.Warp(
             tmp_vsimem / "out.tif",
-            src_ds,
+            "../gcore/data/byte.tif",
             outputBounds=(440000, 3750120, 441920, 3751320),
-            warpOptions={"INIT_DEST": "NODATA"},
+            warpOptions={"INIT_DEST": init_dest},
         )
+
+
+def test_gdalwarp_lib_init_dest_nodata_invalid(tmp_vsimem):
 
     with pytest.raises(Exception, match="NoData value was not defined"):
         gdal.Warp(
             tmp_vsimem / "out.tif",
-            src_ds,
+            "../gcore/data/byte.tif",
             outputBounds=(440000, 3750120, 441920, 3751320),
             warpOptions={"INIT_DEST": "NO_DATA"},
         )

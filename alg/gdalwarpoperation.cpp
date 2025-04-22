@@ -802,7 +802,7 @@ CPLErr GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
             if (psOptions->padfDstNoDataReal == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "BAND_INIT was set to NO_DATA, but a NoData value was "
+                         "INIT_DEST was set to NO_DATA, but a NoData value was "
                          "not defined.");
                 return CE_Failure;
             }
@@ -815,18 +815,13 @@ CPLErr GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
         }
         else
         {
-            for (const char *c = pszBandInit; *c != '\0'; c++)
+            if (CPLStringToComplex(pszBandInit, &adfInitRealImag[0],
+                                   &adfInitRealImag[1]) != CE_None)
             {
-                if (std::isalpha(*c) && *c != 'i')
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Unexpected value of BAND_INIT: %s", pszBandInit);
-                    return CE_Failure;
-                }
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Error parsing INIT_DEST");
+                return CE_Failure;
             }
-
-            CPLStringToComplex(pszBandInit, adfInitRealImag + 0,
-                               adfInitRealImag + 1);
         }
 
         GByte *pBandData = static_cast<GByte *>(pDstBuffer) + iBand * nBandSize;
