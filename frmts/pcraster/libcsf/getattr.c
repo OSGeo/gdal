@@ -3,7 +3,7 @@
 
 /* read an attribute (LIBRARY_INTERNAL)
  * MgetAttribute reads an attribute if it is available.
- * Be aware that you can't pass a simple pointer to some 
+ * Be aware that you can't pass a simple pointer to some
  * (array of) structure(s) due to alignment en endian problems.
  * At some time there will be a separate get function for each attribute
  * returns 0 if the attribute is not found, arg id if
@@ -20,6 +20,7 @@ CSF_ATTR_ID CsfGetAttribute(
 {
 	ATTR_CNTRL_BLOCK b;
 	CSF_FADDR pos;
+	int i;
 	PRECOND(CsfValidSize(elSize));
 	CHECKHANDLE_GOTO(m, error);
 
@@ -29,19 +30,18 @@ CSF_ATTR_ID CsfGetAttribute(
 		goto error;
 	}
 
-	if (CsfGetAttrBlock(m, id, &b) != 0) 
+	if (CsfGetAttrBlockAndIdx(m, id, &b, &i) != 0)
 	{
-		int i = CsfGetAttrIndex(id, &b);
 		*nmemb =	b.attrs[i].attrSize;
 		POSTCOND( ((*nmemb) % elSize) == 0);
 		*nmemb /= elSize;
 		POSTCOND( (*nmemb) > 0);
 		pos =	b.attrs[i].attrOffset;
-		(void)csf_fseek(m->fp, pos, SEEK_SET); 
+		(void)csf_fseek(m->fp, pos, SEEK_SET);
 		m->read(attr,elSize, (size_t)(*nmemb),m->fp);
 		return(id);
 	}
-	else 
+	else
 		*nmemb = 0;
 error:	return(0);	/* not available  or an error */
 } /* MgetAttribute */

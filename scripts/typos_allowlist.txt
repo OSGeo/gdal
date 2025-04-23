@@ -266,7 +266,7 @@ int CPL_DLL creat(const char *path, mode_t mode)
     msg = msg.replace("overfow", "overflow")
     msg = msg.replace("divison", "division")
     msg = msg.replace("behaviour", "behavior")
-scan-build -o $GDAL_TOPDIR/scanbuildoutput -sarif -v -enable-checker alpha.unix.cstring.OutOfBounds,alpha.unix.cstring.BufferOverlap,optin.cplusplus.VirtualCall,optin.cplusplus.UninitializedObject make -j4
+scan-build -o $GDAL_TOPDIR/scanbuildoutput -sarif -v -enable-checker alpha.unix.cstring.OutOfBounds,alpha.unix.cstring.BufferOverlap,optin.cplusplus.VirtualCall,optin.cplusplus.UninitializedObject make -j$(nproc)
         "JPNG",
         "       <Value>JPNG</Value>"
              || poDS->current.comp == IL_JPNG
@@ -321,8 +321,8 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
 #define MM_IsDoubleInfinite(x) EsDoubleInfinit((x))
     https://www.miramon.cat/help/eng/GeMPlus/ClausREL.htm
     fprintf_function(pF, "[%s]" LineReturn, SECTION_VERSIO);
-        fprintf_function(pF, "NomCampPerimetre=%s" LineReturn,
-        fprintf_function(pF, "NomCampNPoligons=%s" LineReturn,
+        VSIFPrintfL(pF, "NomCampPerimetre=%s" LineReturn,
+        VSIFPrintfL(pF, "NomCampNPoligons=%s" LineReturn,
         MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO, nullptr);
         MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO, KEY_Vers);
     pszLine = MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO,
@@ -344,3 +344,7 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
 * <li>MITRE_LIMIT=double</li>
         DESCRIPTION=Staatliche Verwaltungs- und Sozialdienste wie öffentliche Verwaltung, Katastrophenschutz, Schulen und Krankenhäuser, die von öffentlichen oder privaten Einrichtungen erbracht werden, soweit sie in den Anwendungsbereich der Richtlinie 2007/2/EG fallen. Dieser Datensatz enthält Informationen zu Feuerwehrleitstellen.
     # Disable cfchecker validation as it fails with a '(5): co-ordinate variable not monotonic'
+* do not emit warnings about not having used [Dont]UseExceptions() if run under
+                // Hack for a file called MANAL_2023030103.grb2 that
+            .AddAlias("ot")
+        EXPECT_EQ(raster->InstantiateSubAlgorithm("pipleine"), nullptr);

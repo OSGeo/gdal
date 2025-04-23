@@ -4,12 +4,14 @@ on:
     push:
         paths-ignore:
             - 'doc/**'
+            - 'docker/**'
         branches-ignore:
             - 'backport**'
             - 'dependabot**'
     pull_request:
         paths-ignore:
             - 'doc/**'
+            - 'docker/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -25,9 +27,9 @@ jobs:
     runs-on: macos-14
     steps:
 
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
+      - uses: conda-incubator/setup-miniconda@505e6394dae86d6a5c7fbb6e3fb8938e3e863830 # v3.1.1
         with:
             channels: conda-forge
             auto-update-conda: true

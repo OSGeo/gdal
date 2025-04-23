@@ -7,28 +7,12 @@
  ******************************************************************************
  * Copyright (c) 2015, Victor Chernetsky, <victor at amigocloud dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_amigocloud.h"
 #include "ogr_pgdump.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 #include <sstream>
 
 CPLString OGRAMIGOCLOUDGetOptionValue(const char *pszFilename,
@@ -39,9 +23,8 @@ CPLString OGRAMIGOCLOUDGetOptionValue(const char *pszFilename,
 /************************************************************************/
 
 OGRAmigoCloudDataSource::OGRAmigoCloudDataSource()
-    : pszName(nullptr), pszProjectId(nullptr), papoLayers(nullptr), nLayers(0),
-      bReadWrite(false), bUseHTTPS(true), bMustCleanPersistent(false),
-      bHasOGRMetadataFunction(-1)
+    : pszProjectId(nullptr), papoLayers(nullptr), nLayers(0), bReadWrite(false),
+      bUseHTTPS(true), bMustCleanPersistent(false), bHasOGRMetadataFunction(-1)
 {
 }
 
@@ -66,7 +49,6 @@ OGRAmigoCloudDataSource::~OGRAmigoCloudDataSource()
         CSLDestroy(papszOptions);
     }
 
-    CPLFree(pszName);
     CPLFree(pszProjectId);
 }
 
@@ -117,7 +99,7 @@ OGRLayer *OGRAmigoCloudDataSource::GetLayerByName(const char *pszLayerName)
 {
     if (nLayers > 1)
     {
-        return OGRDataSource::GetLayerByName(pszLayerName);
+        return GDALDataset::GetLayerByName(pszLayerName);
     }
     else if (nLayers == 1)
     {
@@ -217,7 +199,6 @@ int OGRAmigoCloudDataSource::Open(const char *pszFilename,
 
     bReadWrite = CPL_TO_BOOL(bUpdateIn);
 
-    pszName = CPLStrdup(pszFilename);
     pszProjectId = CPLStrdup(pszFilename + strlen("AMIGOCLOUD:"));
     char *pchSpace = strchr(pszProjectId, ' ');
     if (pchSpace)

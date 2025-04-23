@@ -8,28 +8,14 @@
  * Copyright (c) 1998, 2002, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2015, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"  // Must be first.
 
 #include "gtiff.h"
+
+#include "tiff_common.h"
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -40,6 +26,7 @@
 #include "tif_jxl.h"
 #include "xtiffio.h"
 #include <cctype>
+#include <cmath>
 
 // Needed to expose WEBP_LOSSLESS option
 #ifdef WEBP_SUPPORT
@@ -106,16 +93,11 @@ void GTIFFGetOverviewBlockSize(GDALRasterBandH hBand, int *pnBlockXSize,
         if (nOvrBlockSize < 64 || nOvrBlockSize > 4096 ||
             !CPLIsPowerOfTwo(nOvrBlockSize))
         {
-            static bool bHasWarned = false;
-            if (!bHasWarned)
-            {
-                CPLError(CE_Warning, CPLE_NotSupported,
+            CPLErrorOnce(CE_Warning, CPLE_NotSupported,
                          "Wrong value for GDAL_TIFF_OVR_BLOCKSIZE : %s. "
                          "Should be a power of 2 between 64 and 4096. "
                          "Defaulting to 128",
                          pszVal);
-                bHasWarned = true;
-            }
             nOvrBlockSize = 128;
         }
 
@@ -509,68 +491,7 @@ char **GTiffDatasetReadRPCTag(TIFF *hTIFF)
         nCount != 92)
         return nullptr;
 
-    CPLStringList asMD;
-    asMD.SetNameValue(RPC_ERR_BIAS, CPLOPrintf("%.15g", padfRPCTag[0]));
-    asMD.SetNameValue(RPC_ERR_RAND, CPLOPrintf("%.15g", padfRPCTag[1]));
-    asMD.SetNameValue(RPC_LINE_OFF, CPLOPrintf("%.15g", padfRPCTag[2]));
-    asMD.SetNameValue(RPC_SAMP_OFF, CPLOPrintf("%.15g", padfRPCTag[3]));
-    asMD.SetNameValue(RPC_LAT_OFF, CPLOPrintf("%.15g", padfRPCTag[4]));
-    asMD.SetNameValue(RPC_LONG_OFF, CPLOPrintf("%.15g", padfRPCTag[5]));
-    asMD.SetNameValue(RPC_HEIGHT_OFF, CPLOPrintf("%.15g", padfRPCTag[6]));
-    asMD.SetNameValue(RPC_LINE_SCALE, CPLOPrintf("%.15g", padfRPCTag[7]));
-    asMD.SetNameValue(RPC_SAMP_SCALE, CPLOPrintf("%.15g", padfRPCTag[8]));
-    asMD.SetNameValue(RPC_LAT_SCALE, CPLOPrintf("%.15g", padfRPCTag[9]));
-    asMD.SetNameValue(RPC_LONG_SCALE, CPLOPrintf("%.15g", padfRPCTag[10]));
-    asMD.SetNameValue(RPC_HEIGHT_SCALE, CPLOPrintf("%.15g", padfRPCTag[11]));
-
-    CPLString osField;
-    CPLString osMultiField;
-
-    for (int i = 0; i < 20; ++i)
-    {
-        osField.Printf("%.15g", padfRPCTag[12 + i]);
-        if (i > 0)
-            osMultiField += " ";
-        else
-            osMultiField = "";
-        osMultiField += osField;
-    }
-    asMD.SetNameValue(RPC_LINE_NUM_COEFF, osMultiField);
-
-    for (int i = 0; i < 20; ++i)
-    {
-        osField.Printf("%.15g", padfRPCTag[32 + i]);
-        if (i > 0)
-            osMultiField += " ";
-        else
-            osMultiField = "";
-        osMultiField += osField;
-    }
-    asMD.SetNameValue(RPC_LINE_DEN_COEFF, osMultiField);
-
-    for (int i = 0; i < 20; ++i)
-    {
-        osField.Printf("%.15g", padfRPCTag[52 + i]);
-        if (i > 0)
-            osMultiField += " ";
-        else
-            osMultiField = "";
-        osMultiField += osField;
-    }
-    asMD.SetNameValue(RPC_SAMP_NUM_COEFF, osMultiField);
-
-    for (int i = 0; i < 20; ++i)
-    {
-        osField.Printf("%.15g", padfRPCTag[72 + i]);
-        if (i > 0)
-            osMultiField += " ";
-        else
-            osMultiField = "";
-        osMultiField += osField;
-    }
-    asMD.SetNameValue(RPC_SAMP_DEN_COEFF, osMultiField);
-
-    return asMD.StealList();
+    return gdal::tiff_common::TIFFRPCTagToRPCMetadata(padfRPCTag).StealList();
 }
 
 /************************************************************************/
@@ -580,10 +501,10 @@ char **GTiffDatasetReadRPCTag(TIFF *hTIFF)
 CPLString GTiffFormatGDALNoDataTagValue(double dfNoData)
 {
     CPLString osVal;
-    if (CPLIsNan(dfNoData))
+    if (std::isnan(dfNoData))
         osVal = "nan";
     else
-        osVal.Printf("%.18g", dfNoData);
+        osVal.Printf("%.17g", dfNoData);
     return osVal;
 }
 
@@ -700,8 +621,8 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
     if (!TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE, &(l_nBitsPerSample)))
         l_nBitsPerSample = 1;
 
-    CPLString osTmpFilenameIn;
-    osTmpFilenameIn.Printf("%s%p", szJPEGGTiffDatasetTmpPrefix, hTIFF);
+    const CPLString osTmpFilenameIn(
+        VSIMemGenerateHiddenFilename("gtiffdataset_jpg_tmp"));
     VSILFILE *fpTmp = nullptr;
     CPLString osTmp;
     char **papszLocalParameters = nullptr;
@@ -722,12 +643,16 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
                                            CPLSPrintf("%u", l_nBitsPerSample));
     papszLocalParameters = CSLSetNameValue(papszLocalParameters,
                                            "JPEGTABLESMODE", pszJPEGTablesMode);
+    papszLocalParameters =
+        CSLSetNameValue(papszLocalParameters, "WRITE_JPEGTABLE_TAG", "NO");
 
+    bool bTileInterleaving;
     TIFF *hTIFFTmp =
         GTiffDataset::CreateLL(osTmpFilenameIn, nInMemImageWidth,
                                nInMemImageHeight, (nBands <= 4) ? nBands : 1,
                                (l_nBitsPerSample <= 8) ? GDT_Byte : GDT_UInt16,
-                               0.0, 0, papszLocalParameters, &fpTmp, osTmp);
+                               0.0, 0, papszLocalParameters, &fpTmp, osTmp,
+                               /* bCreateCopy=*/false, bTileInterleaving);
     CSLDestroy(papszLocalParameters);
     if (hTIFFTmp)
     {
@@ -774,45 +699,6 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
     VSIUnlink(osTmpFilenameIn);
 }
 
-/************************************************************************/
-/*                       PrepareTIFFErrorFormat()                       */
-/*                                                                      */
-/*      sometimes the "module" has stuff in it that has special         */
-/*      meaning in a printf() style format, so we try to escape it.     */
-/*      For now we hope the only thing we have to escape is %'s.        */
-/************************************************************************/
-
-static char *PrepareTIFFErrorFormat(const char *module, const char *fmt)
-
-{
-    const size_t nModuleSize = strlen(module);
-    const size_t nModFmtSize = nModuleSize * 2 + strlen(fmt) + 2;
-    char *pszModFmt = static_cast<char *>(CPLMalloc(nModFmtSize));
-
-    size_t iOut = 0;  // Used after for.
-
-    for (size_t iIn = 0; iIn < nModuleSize; ++iIn)
-    {
-        if (module[iIn] == '%')
-        {
-            CPLAssert(iOut < nModFmtSize - 2);
-            pszModFmt[iOut++] = '%';
-            pszModFmt[iOut++] = '%';
-        }
-        else
-        {
-            CPLAssert(iOut < nModFmtSize - 1);
-            pszModFmt[iOut++] = module[iIn];
-        }
-    }
-    CPLAssert(iOut < nModFmtSize);
-    pszModFmt[iOut] = '\0';
-    strcat(pszModFmt, ":");
-    strcat(pszModFmt, fmt);
-
-    return pszModFmt;
-}
-
 #if !defined(SUPPORTS_LIBTIFF_OPEN_OPTIONS)
 
 /************************************************************************/
@@ -830,7 +716,7 @@ static void GTiffWarningHandler(const char *module, const char *fmt, va_list ap)
     if (strstr(fmt, "nknown field") != nullptr)
         return;
 
-    char *pszModFmt = PrepareTIFFErrorFormat(module, fmt);
+    char *pszModFmt = gdal::tiff_common::PrepareTIFFErrorFormat(module, fmt);
     if (strstr(fmt, "does not end in null byte") != nullptr)
     {
         CPLString osMsg;
@@ -867,7 +753,7 @@ static void GTiffErrorHandler(const char *module, const char *fmt, va_list ap)
                   "Use BIGTIFF=YES creation option.";
     }
 
-    char *pszModFmt = PrepareTIFFErrorFormat(module, fmt);
+    char *pszModFmt = gdal::tiff_common::PrepareTIFFErrorFormat(module, fmt);
     CPLErrorV(CE_Failure, CPLE_AppDefined, pszModFmt, ap);
     CPLFree(pszModFmt);
     return;
@@ -899,7 +785,7 @@ int GTiffWarningHandlerExt(TIFF *tif, void *user_data, const char *module,
     if (strstr(fmt, "nknown field") != nullptr)
         return 1;
 
-    char *pszModFmt = PrepareTIFFErrorFormat(module, fmt);
+    char *pszModFmt = gdal::tiff_common::PrepareTIFFErrorFormat(module, fmt);
     if (strstr(fmt, "does not end in null byte") != nullptr)
     {
         CPLString osMsg;
@@ -945,7 +831,7 @@ int GTiffErrorHandlerExt(TIFF *tif, void *user_data, const char *module,
                   "Use BIGTIFF=YES creation option.";
     }
 
-    char *pszModFmt = PrepareTIFFErrorFormat(module, fmt);
+    char *pszModFmt = gdal::tiff_common::PrepareTIFFErrorFormat(module, fmt);
     CPLErrorV(CE_Failure, CPLE_AppDefined, pszModFmt, ap);
     CPLFree(pszModFmt);
     return 1;
@@ -996,6 +882,7 @@ static void GTiffTagExtender(TIFF *tif)
 static std::mutex oDeleteMutex;
 #ifdef HAVE_JXL
 static TIFFCodec *pJXLCodec = nullptr;
+static TIFFCodec *pJXLCodecDNG17 = nullptr;
 #endif
 
 void GTiffOneTimeInit()
@@ -1013,6 +900,8 @@ void GTiffOneTimeInit()
     if (pJXLCodec == nullptr)
     {
         pJXLCodec = TIFFRegisterCODEC(COMPRESSION_JXL, "JXL", TIFFInitJXL);
+        pJXLCodecDNG17 =
+            TIFFRegisterCODEC(COMPRESSION_JXL_DNG_1_7, "JXL", TIFFInitJXL);
     }
 #endif
 
@@ -1037,6 +926,9 @@ static void GDALDeregister_GTiff(GDALDriver *)
     if (pJXLCodec)
         TIFFUnRegisterCODEC(pJXLCodec);
     pJXLCodec = nullptr;
+    if (pJXLCodecDNG17)
+        TIFFUnRegisterCODEC(pJXLCodecDNG17);
+    pJXLCodecDNG17 = nullptr;
 #endif
 }
 
@@ -1070,7 +962,10 @@ static const struct
     {COMPRESSION_LERC, "LERC_DEFLATE", true},
     {COMPRESSION_LERC, "LERC_ZSTD", true},
     COMPRESSION_ENTRY(WEBP, true),
-    COMPRESSION_ENTRY(JXL, true),
+    // COMPRESSION_JXL_DNG_1_7 must be *before* COMPRESSION_JXL
+    {COMPRESSION_JXL_DNG_1_7, "JXL", true},
+    {COMPRESSION_JXL, "JXL",
+     true},  // deprecated. No longer used for writing since GDAL 3.11
 
     // Compression methods in read-only
     COMPRESSION_ENTRY(OJPEG, false),
@@ -1345,7 +1240,8 @@ void GDALRegister_GTiff()
         osOptions += ""
                      "   <Option name='PREDICTOR' type='int' "
                      "description='Predictor Type (1=default, 2=horizontal "
-                     "differencing, 3=floating point prediction)'/>";
+                     "differencing, 3=floating point prediction)' "
+                     "default='1'/>";
     osOptions +=
         ""
         "   <Option name='DISCARD_LSB' type='string' description='Number of "
@@ -1356,7 +1252,7 @@ void GDALRegister_GTiff()
         osOptions +=
             ""
             "   <Option name='JPEG_QUALITY' type='int' description='JPEG "
-            "quality 1-100' default='75'/>"
+            "quality 1-100' min='1' max='100' default='75'/>"
             "   <Option name='JPEGTABLESMODE' type='int' description='Content "
             "of JPEGTABLES tag. 0=no JPEGTABLES tag, 1=Quantization tables "
             "only, 2=Huffman tables only, 3=Both' default='1'/>";
@@ -1373,23 +1269,24 @@ void GDALRegister_GTiff()
 #ifdef LIBDEFLATE_SUPPORT
         osOptions += ""
                      "   <Option name='ZLEVEL' type='int' description='DEFLATE "
-                     "compression level 1-12' default='6'/>";
+                     "compression level 1-12' min='1' max='12' default='6'/>";
 #else
         osOptions += ""
                      "   <Option name='ZLEVEL' type='int' description='DEFLATE "
-                     "compression level 1-9' default='6'/>";
+                     "compression level 1-9' min='1' max='9' default='6'/>";
 #endif
     }
     if (bHasLZMA)
         osOptions +=
             ""
             "   <Option name='LZMA_PRESET' type='int' description='LZMA "
-            "compression level 0(fast)-9(slow)' default='6'/>";
+            "compression level 0(fast)-9(slow)' min='0' max='9' default='6'/>";
     if (bHasZSTD)
         osOptions +=
             ""
             "   <Option name='ZSTD_LEVEL' type='int' description='ZSTD "
-            "compression level 1(fast)-22(slow)' default='9'/>";
+            "compression level 1(fast)-22(slow)' min='1' max='22' "
+            "default='9'/>";
     if (bHasLERC)
     {
         osOptions +=
@@ -1422,16 +1319,16 @@ void GDALRegister_GTiff()
         "   <Option name='JXL_LOSSLESS' type='boolean' description='Whether "
         "JPEGXL compression should be lossless' default='YES'/>"
         "   <Option name='JXL_EFFORT' type='int' description='Level of effort "
-        "1(fast)-9(slow)' default='5'/>"
+        "1(fast)-9(slow)' min='1' max='9' default='5'/>"
         "   <Option name='JXL_DISTANCE' type='float' description='Distance "
         "level for lossy compression (0=mathematically lossless, 1.0=visually "
-        "lossless, usual range [0.5,3])' default='1.0' min='0.1' max='15.0'/>";
+        "lossless, usual range [0.5,3])' default='1.0' min='0.01' max='25.0'/>";
 #ifdef HAVE_JxlEncoderSetExtraChannelDistance
     osOptions += "   <Option name='JXL_ALPHA_DISTANCE' type='float' "
                  "description='Distance level for alpha channel "
                  "(-1=same as non-alpha channels, "
                  "0=mathematically lossless, 1.0=visually lossless, "
-                 "usual range [0.5,3])' default='-1' min='-1' max='15.0'/>";
+                 "usual range [0.5,3])' default='-1' min='-1' max='25.0'/>";
 #endif
 #endif
     osOptions +=
@@ -1446,14 +1343,15 @@ void GDALRegister_GTiff()
         "       <Value>PIXEL</Value>"
         "   </Option>"
         "   <Option name='TILED' type='boolean' description='Switch to tiled "
-        "format'/>"
+        "format' default='NO'/>"
         "   <Option name='TFW' type='boolean' description='Write out world "
         "file'/>"
         "   <Option name='RPB' type='boolean' description='Write out .RPB "
         "(RPC) file'/>"
         "   <Option name='RPCTXT' type='boolean' description='Write out "
         "_RPC.TXT file'/>"
-        "   <Option name='BLOCKXSIZE' type='int' description='Tile Width'/>"
+        "   <Option name='BLOCKXSIZE' type='int' description='Tile Width' "
+        "default='256'/>"
         "   <Option name='BLOCKYSIZE' type='int' description='Tile/Strip "
         "Height'/>"
         "   <Option name='PHOTOMETRIC' type='string-select'>"
@@ -1488,7 +1386,7 @@ void GDALRegister_GTiff()
         "       <Value>SIGNEDBYTE</Value>"
         "   </Option>"
         "   <Option name='BIGTIFF' type='string-select' description='Force "
-        "creation of BigTIFF file'>"
+        "creation of BigTIFF file' default='IF_NEEDED'>"
         "     <Value>YES</Value>"
         "     <Value>NO</Value>"
         "     <Value>IF_NEEDED</Value>"
@@ -1597,7 +1495,14 @@ void GDALRegister_GTiff()
         "   </Option>"
         "</OpenOptionList>");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS GCPs NoData "
+                              "ColorInterpretation RasterValues "
+                              "DatasetMetadata BandMetadata");
 
 #ifdef INTERNAL_LIBTIFF
     poDriver->SetMetadataItem("LIBTIFF", "INTERNAL");

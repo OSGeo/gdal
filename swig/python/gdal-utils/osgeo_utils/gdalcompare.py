@@ -10,23 +10,7 @@
 #  Copyright (c) 2012, Frank Warmerdam <warmerdam@pobox.com>
 #  Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
-#  Permission is hereby granted, free of charge, to any person obtaining a
-#  copy of this software and associated documentation files (the "Software"),
-#  to deal in the Software without restriction, including without limitation
-#  the rights to use, copy, modify, merge, publish, distribute, sublicense,
-#  and/or sell copies of the Software, and to permit persons to whom the
-#  Software is furnished to do so, subject to the following conditions:
-#
-#  The above copyright notice and this permission notice shall be included
-#  in all copies or substantial portions of the Software.
-#
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-#  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-#  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-#  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-#  DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 # ******************************************************************************
 
 import array
@@ -206,7 +190,9 @@ def compare_band(golden_band, new_band, id, options=None):
     else:
         # check a bit deeper in case of Float data type for which the Checksum() function is not reliable
         if golden_band.DataType in (gdal.GDT_Float32, gdal.GDT_Float64):
-            if golden_band.ComputeRasterMinMax() != new_band.ComputeRasterMinMax():
+            if golden_band.ComputeRasterMinMax(
+                can_return_none=True
+            ) != new_band.ComputeRasterMinMax(can_return_none=True):
                 my_print("Band %s statistics difference:" % 1)
                 my_print("  Golden: " + str(golden_band.ComputeBandStats()))
                 my_print("  New:    " + str(new_band.ComputeBandStats()))
@@ -489,7 +475,7 @@ def find_diff(
 
 def Usage(isError=True):
     f = sys.stderr if isError else sys.stdout
-    print("Usage: gdalcompare.py [--help] [--help-general]", file=f)
+    print("Usage: gdalcompare [--help] [--help-general]", file=f)
     print("                      [-dumpdiffs] [-skip_binary] [-skip_overviews]", file=f)
     print("                      [-skip_geolocation] [-skip_geotransform]", file=f)
     print("                      [-skip_metadata] [-skip_rpc] [-skip_srs]", file=f)

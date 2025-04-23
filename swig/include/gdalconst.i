@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     gdalconst.i
  * Project:  GDAL Python Interface
@@ -9,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2005, Kevin Ruland
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 #ifdef SWIGPYTHON
@@ -47,6 +30,7 @@
 #include "gdalwarper.h"
 #include "cpl_string.h"
 #include "cpl_minixml.h"
+#include "gdalalgorithm.h"
 %}
 
 // GDALDataType
@@ -59,10 +43,12 @@
 %constant GDT_Int32     = GDT_Int32;
 %constant GDT_UInt64    = GDT_UInt64;
 %constant GDT_Int64     = GDT_Int64;
+%constant GDT_Float16   = GDT_Float16;
 %constant GDT_Float32   = GDT_Float32;
 %constant GDT_Float64   = GDT_Float64;
 %constant GDT_CInt16    = GDT_CInt16;
 %constant GDT_CInt32    = GDT_CInt32;
+%constant GDT_CFloat16  = GDT_CFloat16;
 %constant GDT_CFloat32  = GDT_CFloat32;
 %constant GDT_CFloat64  = GDT_CFloat64;
 %constant GDT_TypeCount = GDT_TypeCount;
@@ -101,9 +87,34 @@
 %constant GCI_MagentaBand   = GCI_MagentaBand;
 %constant GCI_YellowBand    = GCI_YellowBand;
 %constant GCI_BlackBand     = GCI_BlackBand;
-%constant GCI_YCbCr_YBand     = GCI_YCbCr_YBand;
-%constant GCI_YCbCr_CrBand     = GCI_YCbCr_CrBand;
-%constant GCI_YCbCr_CbBand     = GCI_YCbCr_CbBand;
+%constant GCI_YCbCr_YBand   = GCI_YCbCr_YBand;
+%constant GCI_YCbCr_CrBand  = GCI_YCbCr_CrBand;
+%constant GCI_YCbCr_CbBand  = GCI_YCbCr_CbBand;
+%constant GCI_PanBand       = GCI_PanBand;
+%constant GCI_CoastalBand   = GCI_CoastalBand;
+%constant GCI_RedEdgeBand   = GCI_RedEdgeBand;
+
+%constant GCI_IR_Start      = GCI_IR_Start;  // just a marker, not an enumeration value
+%constant GCI_NIRBand       = GCI_NIRBand;
+%constant GCI_SWIRBand      = GCI_SWIRBand;
+%constant GCI_MWIRBand      = GCI_MWIRBand;
+%constant GCI_LWIRBand      = GCI_LWIRBand;
+%constant GCI_TIRBand       = GCI_TIRBand;
+%constant GCI_OtherIRBand   = GCI_OtherIRBand;
+%constant GCI_IR_End        = GCI_IR_End;  // just a marker, not an enumeration value
+
+%constant GCI_SAR_Start     = GCI_SAR_Start;  // just a marker, not an enumeration value
+%constant GCI_SAR_Ka_Band   = GCI_SAR_Ka_Band;
+%constant GCI_SAR_K_Band    = GCI_SAR_K_Band;
+%constant GCI_SAR_Ku_Band   = GCI_SAR_Ku_Band;
+%constant GCI_SAR_X_Band    = GCI_SAR_X_Band;
+%constant GCI_SAR_C_Band    = GCI_SAR_C_Band;
+%constant GCI_SAR_S_Band    = GCI_SAR_S_Band;
+%constant GCI_SAR_L_Band    = GCI_SAR_L_Band;
+%constant GCI_SAR_P_Band    = GCI_SAR_P_Band;
+%constant GCI_SAR_End       = GCI_SAR_End;  // just a marker, not an enumeration value
+
+%constant GCI_Max           = GCI_Max;
 
 // GDALResampleAlg
 
@@ -172,6 +183,7 @@
 %constant OF_UPDATE = GDAL_OF_UPDATE;
 %constant OF_SHARED = GDAL_OF_SHARED;
 %constant OF_VERBOSE_ERROR = GDAL_OF_VERBOSE_ERROR;
+%constant OF_THREAD_SAFE = GDAL_OF_THREAD_SAFE;
 
 #if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
 
@@ -193,6 +205,7 @@
 %constant char *DMD_CREATIONFIELDDATATYPES  = GDAL_DMD_CREATIONFIELDDATATYPES;
 %constant char *DMD_CREATIONFIELDDATASUBTYPES  = GDAL_DMD_CREATIONFIELDDATASUBTYPES;
 %constant char *DMD_CREATION_FIELD_DEFN_FLAGS  = GDAL_DMD_CREATION_FIELD_DEFN_FLAGS;
+%constant char *DMD_UPDATE_ITEMS  = GDAL_DMD_UPDATE_ITEMS;
 %constant char *DMD_SUBDATASETS        = GDAL_DMD_SUBDATASETS;
 %constant char *DMD_CREATION_FIELD_DOMAIN_TYPES    = GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES;
 %constant char *DMD_ALTER_GEOM_FIELD_DEFN_FLAGS    = GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS;
@@ -206,6 +219,7 @@
 %constant char *DCAP_CREATECOPY = GDAL_DCAP_CREATECOPY;
 %constant char *DCAP_CREATECOPY_MULTIDIMENSIONAL = GDAL_DCAP_CREATECOPY_MULTIDIMENSIONAL;
 %constant char *DCAP_MULTIDIM_RASTER = GDAL_DCAP_MULTIDIM_RASTER;
+%constant char *DCAP_UPDATE     = GDAL_DCAP_UPDATE;
 %constant char *DCAP_SUBCREATECOPY = GDAL_DCAP_SUBCREATECOPY;
 %constant char *DCAP_VIRTUALIO  = GDAL_DCAP_VIRTUALIO;
 %constant char *DCAP_RASTER     = GDAL_DCAP_RASTER;
@@ -296,6 +310,8 @@
 #define GDAL_DMD_CREATIONFIELDDATASUBTYPES "DMD_CREATIONFIELDDATASUBTYPES"
 #define GDAL_DMD_CREATION_FIELD_DEFN_FLAGS "DMD_CREATION_FIELD_DEFN_FLAGS"
 #define DMD_CREATION_FIELD_DEFN_FLAGS "DMD_CREATIONFIELDDATASUBTYPES"
+#define GDAL_DMD_UPDATE_ITEMS "DMD_UPDATE_ITEMS"
+#define DMD_UPDATE_ITEMS "DMD_UPDATE_ITEMS"
 #define DMD_SUBDATASETS "DMD_SUBDATASETS"
 #define GDAL_DMD_SUBDATASETS "DMD_SUBDATASETS"
 #define DMD_CREATION_FIELD_DOMAIN_TYPES "DMD_CREATION_FIELD_DOMAIN_TYPES"
@@ -317,6 +333,8 @@
 #define GDAL_DCAP_CREATE_MULTIDIMENSIONAL "DCAP_CREATE_MULTIDIMENSIONAL"
 #define DCAP_CREATECOPY "DCAP_CREATECOPY"
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
+#define DCAP_UPDATE     "DCAP_UPDATE"
+#define GDAL_DCAP_UPDATE     "DCAP_UPDATE"
 #define DCAP_CREATECOPY_MULTIDIMENSIONAL "DCAP_CREATECOPY_MULTIDIMENSIONAL"
 #define GDAL_DCAP_CREATECOPY_MULTIDIMENSIONAL "DCAP_CREATECOPY_MULTIDIMENSIONAL"
 #define DCAP_MULTIDIM_RASTER "DCAP_MULTIDIM_RASTER"
@@ -477,6 +495,17 @@
 %constant GRT_COMPOSITE = GRT_COMPOSITE;
 %constant GRT_ASSOCIATION = GRT_ASSOCIATION;
 %constant GRT_AGGREGATION = GRT_AGGREGATION;
+
+// GDALAlgorithmArgType
+%constant GAAT_BOOLEAN      = GAAT_BOOLEAN;
+%constant GAAT_STRING       = GAAT_STRING;
+%constant GAAT_INTEGER      = GAAT_INTEGER;
+%constant GAAT_REAL         = GAAT_REAL;
+%constant GAAT_DATASET      = GAAT_DATASET;
+%constant GAAT_STRING_LIST  = GAAT_STRING_LIST;
+%constant GAAT_INTEGER_LIST = GAAT_INTEGER_LIST;
+%constant GAAT_REAL_LIST    = GAAT_REAL_LIST;
+%constant GAAT_DATASET_LIST = GAAT_DATASET_LIST;
 
 #ifdef SWIGPYTHON
 %thread;

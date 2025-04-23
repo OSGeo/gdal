@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  GDAL Utilities Public Declarations.
@@ -10,23 +9,7 @@
  * Copyright (c) 2007-2015, Even Rouault <even.rouault at spatialys.com>
  * Copyright (c) 2015, Faza Mahamood
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef GDAL_UTILS_H_INCLUDED
@@ -190,6 +173,40 @@ GDALDatasetH CPL_DLL GDALGrid(const char *pszDest, GDALDatasetH hSrcDS,
                               const GDALGridOptions *psOptions,
                               int *pbUsageError);
 
+/*! Options for GDALContour(). Opaque type */
+typedef struct GDALContourOptions GDALContourOptions;
+
+/** Opaque type */
+typedef struct GDALContourOptionsForBinary GDALContourOptionsForBinary;
+
+GDALContourOptions CPL_DLL *
+GDALContourOptionsNew(char **papszArgv,
+                      GDALContourOptionsForBinary *psOptionsForBinary);
+
+void CPL_DLL GDALContourOptionsFree(GDALContourOptions *psOptions);
+
+void CPL_DLL GDALContourOptionsSetProgress(GDALContourOptions *psOptions,
+                                           GDALProgressFunc pfnProgress,
+                                           void *pProgressData);
+
+///@cond Doxygen_Suppress
+// Cannot be in gdal_utils_priv.h because it's used in the bindings (that
+// define CPL_SUPRESS_CPLUSPLUS making it impossible to import this header
+// because it uses CPLStringList which is a C++ class and it's not included
+// if CPL_SUPRESS_CPLUSPLUS is on).
+void CPL_DLL GDALContourOptionsSetDestDataSource(GDALContourOptions *psOptions,
+                                                 const char *pszDestDatasource);
+
+// Finally got the third star! https://wiki.c2.com/?ThreeStarProgrammer
+CPLErr CPL_DLL GDALContourProcessOptions(GDALContourOptions *psOptions,
+                                         char ***ppapszStringOptions,
+                                         GDALDatasetH *hSrcDS,
+                                         GDALRasterBandH *hBand,
+                                         GDALDatasetH *hDstDS,
+                                         OGRLayerH *hLayer);
+
+///@endcond
+
 /*! Options for GDALRasterize(). Opaque type */
 typedef struct GDALRasterizeOptions GDALRasterizeOptions;
 
@@ -316,6 +333,10 @@ typedef struct GDALTileIndexOptionsForBinary GDALTileIndexOptionsForBinary;
 GDALTileIndexOptions CPL_DLL *
 GDALTileIndexOptionsNew(char **papszArgv,
                         GDALTileIndexOptionsForBinary *psOptionsForBinary);
+
+void CPL_DLL GDALTileIndexOptionsSetProgress(GDALTileIndexOptions *psOptions,
+                                             GDALProgressFunc pfnProgress,
+                                             void *pProgressData);
 
 void CPL_DLL GDALTileIndexOptionsFree(GDALTileIndexOptions *psOptions);
 

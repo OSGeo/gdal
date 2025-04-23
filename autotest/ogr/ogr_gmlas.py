@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  GMLAS driver testing.
@@ -13,23 +12,7 @@
 # ******************************************************************************
 # Copyright (c) 2016, Even Rouault, <even dot rouault at spatialys dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import difflib
@@ -598,7 +581,7 @@ def test_ogr_gmlas_abstractgeometry():
 # Test validation against schema
 
 
-class MyHandler(object):
+class MyHandler:
     def __init__(self):
         self.error_list = []
 
@@ -2312,7 +2295,7 @@ def test_ogr_gmlas_writer_gml():
         "GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml",
         open_options=["EXPOSE_METADATA_LAYERS=YES", "@HASH=hash"],
     )
-    tmp_ds = gdal.VectorTranslate("", src_ds, format="Memory")
+    tmp_ds = gdal.VectorTranslate("", src_ds, format="MEM")
     src_ds = None
     # Test also with GMLAS: prefix as it is likely people might use it
     # as it is needed for the read side.
@@ -2371,7 +2354,7 @@ def test_ogr_gmlas_writer_gml_assign_srs():
         "GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml",
         open_options=["EXPOSE_METADATA_LAYERS=YES", "@HASH=hash"],
     )
-    tmp_ds = gdal.VectorTranslate("", src_ds, format="Memory")
+    tmp_ds = gdal.VectorTranslate("", src_ds, format="MEM")
     src_ds = None
 
     ret_ds = gdal.VectorTranslate(
@@ -2447,7 +2430,7 @@ def test_ogr_gmlas_writer_gml_original_xml():
             "CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>true</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>",
         ],
     )
-    tmp_ds = gdal.VectorTranslate("", src_ds, format="Memory")
+    tmp_ds = gdal.VectorTranslate("", src_ds, format="MEM")
     src_ds = None
     ret_ds = gdal.VectorTranslate(
         "/vsimem/ogr_gmlas_writer_gml.xml",
@@ -2500,7 +2483,7 @@ def test_ogr_gmlas_writer_options():
         "GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml",
         open_options=["@HASH=hash"],
     )
-    tmp_ds = gdal.VectorTranslate("", src_ds, format="Memory")
+    tmp_ds = gdal.VectorTranslate("", src_ds, format="MEM")
     src_ds = None
     ret_ds = gdal.VectorTranslate(
         "/vsimem/ogr_gmlas_writer_options.xml",
@@ -2551,7 +2534,7 @@ def test_ogr_gmlas_writer_options():
         "GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml",
         open_options=["@HASH=hash", "EXPOSE_METADATA_LAYERS=YES"],
     )
-    tmp_ds = gdal.VectorTranslate("", src_ds, format="Memory")
+    tmp_ds = gdal.VectorTranslate("", src_ds, format="MEM")
     src_ds = None
     ret_ds = gdal.VectorTranslate(
         "/vsimem/ogr_gmlas_writer_options.xml",
@@ -2586,7 +2569,7 @@ def test_ogr_gmlas_writer_options():
         "GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml",
         open_options=["@HASH=hash", "EXPOSE_METADATA_LAYERS=YES"],
     )
-    tmp_ds = gdal.VectorTranslate("", src_ds, format="Memory")
+    tmp_ds = gdal.VectorTranslate("", src_ds, format="MEM")
     src_ds = None
     ret_ds = gdal.VectorTranslate(
         "/vsimem/ogr_gmlas_writer_options.xml",
@@ -2651,7 +2634,7 @@ def test_ogr_gmlas_writer_errors():
     with gdal.quiet_errors():
         ret_ds = gdal.VectorTranslate(
             "/vsimem/valid.xml",
-            gdal.GetDriverByName("Memory").Create("", 0, 0, 0, 0),
+            gdal.GetDriverByName("MEM").Create("", 0, 0, 0, 0),
             format="GMLAS",
         )
     assert (
@@ -2661,7 +2644,7 @@ def test_ogr_gmlas_writer_errors():
 
     # Missing input schemas
     src_ds = gdal.OpenEx("GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml")
-    tmp_ds = gdal.VectorTranslate("", src_ds, format="Memory")
+    tmp_ds = gdal.VectorTranslate("", src_ds, format="MEM")
     src_ds = None
     with gdal.quiet_errors():
         ret_ds = gdal.VectorTranslate("/vsimem/valid.xml", tmp_ds, format="GMLAS")
@@ -2691,7 +2674,7 @@ def test_ogr_gmlas_writer_errors():
         "GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml",
         open_options=["EXPOSE_METADATA_LAYERS=YES"],
     )
-    tmp_ds = gdal.VectorTranslate("", src_ds, format="Memory")
+    tmp_ds = gdal.VectorTranslate("", src_ds, format="MEM")
     src_ds = None
     with gdal.quiet_errors():
         ret_ds = gdal.VectorTranslate(
@@ -2766,7 +2749,7 @@ def test_ogr_gmlas_writer_errors():
     gdal.Unlink("/vsimem/valid.xml")
 
     # _ogr_layers_metadata not found
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, 0)
     src_ds.CreateLayer("_ogr_other_metadata")
     with gdal.quiet_errors():
         ret_ds = gdal.VectorTranslate("/vsimem/valid.xml", src_ds, format="GMLAS")
@@ -2776,7 +2759,7 @@ def test_ogr_gmlas_writer_errors():
     )
 
     # _ogr_fields_metadata not found
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, 0)
     src_ds.CreateLayer("_ogr_other_metadata")
     src_ds.CreateLayer("_ogr_layers_metadata")
     with gdal.quiet_errors():
@@ -2787,7 +2770,7 @@ def test_ogr_gmlas_writer_errors():
     )
 
     # _ogr_layer_relationships not found
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, 0)
     src_ds.CreateLayer("_ogr_other_metadata")
     src_ds.CreateLayer("_ogr_layers_metadata")
     src_ds.CreateLayer("_ogr_fields_metadata")
@@ -2799,7 +2782,7 @@ def test_ogr_gmlas_writer_errors():
     )
 
     # Cannot find field layer_name in _ogr_layers_metadata layer
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, 0)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, 0)
     src_ds.CreateLayer("_ogr_other_metadata")
     src_ds.CreateLayer("_ogr_layers_metadata")
     src_ds.CreateLayer("_ogr_fields_metadata")
@@ -3472,3 +3455,69 @@ def test_ogr_gmlas_force_opening(tmp_vsimem):
 
     ds = gdal.OpenEx("data/gmlas/gmlas_test1.xml", allowed_drivers=["GMLAS"])
     assert ds.GetDriver().GetDescription() == "GMLAS"
+
+
+###############################################################################
+# Test we don't crash on a OSSFuzz generated xsd
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gmlas_ossfuzz_70511():
+
+    with gdal.quiet_errors(), pytest.raises(
+        Exception, match="Cannot get type definition for attribute y"
+    ):
+        gdal.OpenEx("GMLAS:", open_options=["XSD=data/gmlas/test_ossfuzz_70511.xsd"])
+
+
+###############################################################################
+# Test we don't spend too much time parsing documents featuring the billion
+# laugh attack
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gmlas_billion_laugh():
+
+    with gdal.quiet_errors(), pytest.raises(Exception, match="File probably corrupted"):
+        with gdal.OpenEx("GMLAS:data/gml/billionlaugh.gml") as ds:
+            assert ds.GetDriver().GetDescription() == "GMLAS"
+            for lyr in ds:
+                for f in lyr:
+                    pass
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/12027
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "filename, attrname, value",
+    [
+        ("data/gmlas/choice_str_inlined.xml", "a_b_str_attr", ["val1", "val2"]),
+        ("data/gmlas/choice_int_inlined.xml", "a_b_int_attr", [1, 2]),
+        ("data/gmlas/choice_int64_inlined.xml", "a_b_int64_attr", [123456789123, 2]),
+        ("data/gmlas/choice_double_inlined.xml", "a_b_double_attr", [1.5, 2.5]),
+    ],
+)
+def test_ogr_gmlas_choice_inlined(filename, attrname, value):
+    with gdal.OpenEx(f"GMLAS:{filename}") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f[attrname] == value
+
+
+###############################################################################
+# Test opening a CityGML 2.0 file without schema location
+
+
+@pytest.mark.require_curl()
+def test_ogr_gmlas_citygml_lod2_no_schema_location():
+
+    url = "https://schemas.opengis.net/citygml/2.0/cityGMLBase.xsd"
+    conn = gdaltest.gdalurlopen(url, timeout=4)
+    if conn is None:
+        pytest.skip(f"cannot open {url}")
+
+    ds = gdal.OpenEx("GMLAS:data/gmlas/lod2_empty_no_schema_location.gml")
+    assert ds.GetLayerCount() == 1537

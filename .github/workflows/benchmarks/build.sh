@@ -2,8 +2,12 @@
 
 set -eu
 
+# for precompiled headers
+ccache --set-config sloppiness=pch_defines,time_macros,include_file_mtime,include_file_ctime
+
 CMAKE_ARGS=(
         "-DUSE_CCACHE=ON" \
+        "-DUSE_PRECOMPILED_HEADERS=ON" \
         "-DCMAKE_BUILD_TYPE=Release" \
         "-DCMAKE_INSTALL_PREFIX=/usr" \
         "-DGDAL_USE_TIFF_INTERNAL=ON" \

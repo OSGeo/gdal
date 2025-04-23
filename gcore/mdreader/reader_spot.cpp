@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2014-2015 NextGIS <info@nextgis.ru>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -47,12 +31,12 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
                                    char **papszSiblingFiles)
     : GDALMDReaderPleiades(pszPath, papszSiblingFiles)
 {
-    const char *pszDirName = CPLGetDirname(pszPath);
+    const std::string osDirName = CPLGetDirnameSafe(pszPath);
 
     if (m_osIMDSourceFilename.empty())
     {
         std::string osIMDSourceFilename =
-            CPLFormFilename(pszDirName, "METADATA.DIM", nullptr);
+            CPLFormFilenameSafe(osDirName.c_str(), "METADATA.DIM", nullptr);
 
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
@@ -61,7 +45,7 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
         else
         {
             osIMDSourceFilename =
-                CPLFormFilename(pszDirName, "metadata.dim", nullptr);
+                CPLFormFilenameSafe(osDirName.c_str(), "metadata.dim", nullptr);
             if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
             {
                 m_osIMDSourceFilename = std::move(osIMDSourceFilename);
@@ -77,7 +61,7 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
         if (EQUAL(CPLGetFilename(pszPath), "IMAGERY.TIF"))
         {
             std::string osIMDSourceFilename =
-                CPLSPrintf("%s\\METADATA.DIM", CPLGetPath(pszPath));
+                CPLGetPathSafe(pszPath) + "\\METADATA.DIM";
 
             if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
             {
@@ -86,7 +70,7 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
             else
             {
                 osIMDSourceFilename =
-                    CPLSPrintf("%s\\metadata.dim", CPLGetPath(pszPath));
+                    CPLGetPathSafe(pszPath) + "\\metadata.dim";
                 if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
                 {
                     m_osIMDSourceFilename = std::move(osIMDSourceFilename);

@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test SQLite driver functionality.
@@ -11,25 +10,10 @@
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
 import os
 import shutil
 
@@ -3915,7 +3899,7 @@ def test_ogr_sqlite_create_layer_names_with_parenthesis(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "test_ogr_sqlite_create_layer_names_with_parenthesis.db"
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_ds.CreateLayer("foo(bar)")
     gdal.ErrorReset()
     out_ds = gdal.VectorTranslate(tmpfilename, src_ds, format="SQLite")
@@ -4094,6 +4078,49 @@ def test_ogr_sql_ST_Area_on_ellipsoid(tmp_vsimem, require_spatialite):
         assert f[0] is None
 
 
+###############################################################################
+# Test ST_Length(geom, use_ellipsoid=True)
+
+
+def test_ogr_sql_ST_Length_on_ellipsoid(tmp_vsimem, require_spatialite):
+
+    tmpfilename = tmp_vsimem / "test_ogr_sql_ST_Length_on_ellipsoid.db"
+
+    ds = ogr.GetDriverByName("SQLite").CreateDataSource(
+        tmpfilename, options=["SPATIALITE=YES"]
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4258)
+    lyr = ds.CreateLayer("my_layer", srs=srs)
+    geom_colname = lyr.GetGeometryColumn()
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt("LINESTRING(2 49,3 49,3 48,2 49)")
+    )
+    lyr.CreateFeature(feat)
+    feat = None
+
+    with ds.ExecuteSQL(f"SELECT ST_Length({geom_colname}, 1) FROM my_layer") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] == pytest.approx(317885.7863996293)
+
+    with gdal.quiet_errors():
+        with ds.ExecuteSQL(
+            f"SELECT ST_Length({geom_colname}, 0) FROM my_layer"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] == pytest.approx(317885.7863996293)
+
+    with ds.ExecuteSQL("SELECT ST_Length(null, 1) FROM my_layer") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] is None
+
+    with gdal.quiet_errors():
+        with ds.ExecuteSQL("SELECT ST_Length(X'FF', 1) FROM my_layer") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] is None
+
+
 def test_ogr_sqlite_stddev():
     """Test STDDEV_POP() and STDDEV_SAMP"""
 
@@ -4104,3 +4131,468 @@ def test_ogr_sqlite_stddev():
         f = sql_lyr.GetNextFeature()
         assert f.GetField(0) == pytest.approx(0.5, rel=1e-15)
         assert f.GetField(1) == pytest.approx(0.5**0.5, rel=1e-15)
+
+
+@pytest.mark.parametrize(
+    "input_values,expected_res",
+    [
+        ([], None),
+        ([1], 1),
+        ([2.5, None, 1], 1.75),
+        ([3, 2.2, 1], 2.2),
+        ([1, "invalid"], None),
+    ],
+)
+def test_ogr_sqlite_median(input_values, expected_res):
+    """Test MEDIAN"""
+
+    ds = ogr.Open(":memory:", update=1)
+    ds.ExecuteSQL("CREATE TABLE test(v)")
+    for v in input_values:
+        ds.ExecuteSQL(
+            "INSERT INTO test VALUES (%s)"
+            % (
+                "NULL"
+                if v is None
+                else ("'" + v + "'")
+                if isinstance(v, str)
+                else str(v)
+            )
+        )
+    if expected_res is None and input_values:
+        with pytest.raises(Exception), gdaltest.error_handler():
+            with ds.ExecuteSQL("SELECT MEDIAN(v) FROM test"):
+                pass
+    else:
+        with ds.ExecuteSQL("SELECT MEDIAN(v) FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == pytest.approx(expected_res)
+        with ds.ExecuteSQL("SELECT PERCENTILE(v, 50) FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == pytest.approx(expected_res)
+        with ds.ExecuteSQL("SELECT PERCENTILE_CONT(v, 0.5) FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == pytest.approx(expected_res)
+
+
+def test_ogr_sqlite_percentile():
+    """Test PERCENTILE"""
+
+    ds = ogr.Open(":memory:", update=1)
+    ds.ExecuteSQL("CREATE TABLE test(v)")
+    ds.ExecuteSQL("INSERT INTO test VALUES (5),(6),(4),(7),(3),(8),(2),(9),(1),(10)")
+
+    with pytest.raises(Exception), gdaltest.error_handler():
+        with ds.ExecuteSQL("SELECT PERCENTILE(v, 'invalid') FROM test"):
+            pass
+    with pytest.raises(Exception), gdaltest.error_handler():
+        with ds.ExecuteSQL("SELECT PERCENTILE(v, -0.1) FROM test"):
+            pass
+    with pytest.raises(Exception), gdaltest.error_handler():
+        with ds.ExecuteSQL("SELECT PERCENTILE(v, 100.1) FROM test"):
+            pass
+    with pytest.raises(Exception), gdaltest.error_handler():
+        with ds.ExecuteSQL("SELECT PERCENTILE(v, v) FROM test"):
+            pass
+
+
+def test_ogr_sqlite_percentile_cont():
+    """Test PERCENTILE_CONT"""
+
+    ds = ogr.Open(":memory:", update=1)
+    ds.ExecuteSQL("CREATE TABLE test(v)")
+    ds.ExecuteSQL("INSERT INTO test VALUES (5),(6),(4),(7),(3),(8),(2),(9),(1),(10)")
+
+    with pytest.raises(Exception), gdaltest.error_handler():
+        with ds.ExecuteSQL("SELECT PERCENTILE_CONT(v, 'invalid') FROM test"):
+            pass
+    with pytest.raises(Exception), gdaltest.error_handler():
+        with ds.ExecuteSQL("SELECT PERCENTILE_CONT(v, -0.1) FROM test"):
+            pass
+    with pytest.raises(Exception), gdaltest.error_handler():
+        with ds.ExecuteSQL("SELECT PERCENTILE_CONT(v, 1.1) FROM test"):
+            pass
+
+
+@pytest.mark.parametrize(
+    "input_values,expected_res",
+    [
+        ([], None),
+        ([1, 2, None, 3, 2], 2),
+        (["foo", "bar", "baz", "bar"], "bar"),
+        ([1, "foo", 2, "foo", "bar"], "foo"),
+        ([1, "foo", 2, "foo", 1], "foo"),
+    ],
+)
+def test_ogr_sqlite_mode(input_values, expected_res):
+    """Test MODE"""
+
+    ds = ogr.Open(":memory:", update=1)
+    ds.ExecuteSQL("CREATE TABLE test(v)")
+    for v in input_values:
+        ds.ExecuteSQL(
+            "INSERT INTO test VALUES (%s)"
+            % (
+                "NULL"
+                if v is None
+                else ("'" + v + "'")
+                if isinstance(v, str)
+                else str(v)
+            )
+        )
+    if expected_res is None and input_values:
+        with pytest.raises(Exception), gdaltest.error_handler():
+            with ds.ExecuteSQL("SELECT MODE(v) FROM test"):
+                pass
+    else:
+        with ds.ExecuteSQL("SELECT MODE(v) FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == expected_res
+
+
+def test_ogr_sqlite_run_deferred_actions_before_start_transaction():
+
+    ds = ogr.Open(":memory:", update=1)
+    lyr = ds.CreateLayer("test")
+    ds.StartTransaction()
+    ds.ExecuteSQL("INSERT INTO test VALUES (1, NULL)")
+    ds.RollbackTransaction()
+    ds.StartTransaction()
+    ds.ExecuteSQL("INSERT INTO test VALUES (1, NULL)")
+    ds.CommitTransaction()
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 1
+
+
+######################################################################
+# Test schema override open option with SQLite driver
+#
+@pytest.mark.parametrize(
+    "open_options, expected_field_types, expected_field_names, expected_warning",
+    [
+        (
+            [],
+            [
+                ogr.OFTString,
+                ogr.OFTInteger,
+                ogr.OFTReal,
+                ogr.OFTInteger,  # bool subType
+                ogr.OFTString,  # int string
+                ogr.OFTString,  # real string
+                (ogr.OFTString, ogr.OFSTNone),  # json subType
+                ogr.OFTString,  # uuid subType
+            ],
+            [],
+            None,
+        ),
+        # Override string field with integer
+        (
+            [
+                r'OGR_SCHEMA={"layers": [{"name": "test_point", "fields": [{ "name": "str", "type": "Integer" }]}]}'
+            ],
+            [
+                ogr.OFTInteger,  # <-- overridden
+                ogr.OFTInteger,
+                ogr.OFTReal,
+                ogr.OFTInteger,  # bool subType
+                ogr.OFTString,  # int string
+                ogr.OFTString,  # real string
+                ogr.OFTString,  # json subType
+                ogr.OFTString,  # uuid subType
+            ],
+            [],
+            None,
+        ),
+        # Override full schema and JSON/UUID subtype
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "schemaType": "Full", "fields": [{ "name": "json_str", "subType": "JSON", "new_name": "json_str" }, {"name": "uuid_str", "subType": "UUID" }]}]}'
+            ],
+            [
+                (ogr.OFTString, ogr.OFSTJSON),  # json subType
+                (ogr.OFTString, ogr.OFSTUUID),  # uuid subType
+            ],
+            ["json_str"],
+            None,
+        ),
+        # Test width and precision override
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "real", "width": 7, "precision": 3 }]}]}'
+            ],
+            [
+                ogr.OFTString,
+                ogr.OFTInteger,
+                ogr.OFTReal,
+                ogr.OFTInteger,  # bool subType
+                ogr.OFTString,  # int string
+                ogr.OFTString,  # real string
+                (ogr.OFTString, ogr.OFSTNone),  # json subType
+                ogr.OFTString,  # uuid subType
+            ],
+            [],
+            None,
+        ),
+        # Test boolean and short integer subtype
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "int", "subType": "Boolean" }, { "name": "real", "type": "Integer", "subType": "Int16" }]}]}'
+            ],
+            [
+                ogr.OFTString,
+                (ogr.OFTInteger, ogr.OFSTBoolean),  # bool overridden subType
+                (ogr.OFTInteger, ogr.OFSTInt16),  # int16 overridden subType
+                ogr.OFTInteger,  # bool subType
+                ogr.OFTString,  # int string
+                ogr.OFTString,  # real string
+                ogr.OFTString,  # json subType
+                ogr.OFTString,  # uuid subType
+            ],
+            [],
+            None,
+        ),
+        # Test real and int str override
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "int_str", "type": "Integer" }, { "name": "real_str", "type": "Real" }]}]}'
+            ],
+            [
+                ogr.OFTString,
+                ogr.OFTInteger,
+                ogr.OFTReal,
+                ogr.OFTInteger,  # bool subType
+                ogr.OFTInteger,  # int string
+                ogr.OFTReal,  # real string
+                ogr.OFTString,  # json subType
+                ogr.OFTString,  # uuid subType
+            ],
+            [],
+            None,
+        ),
+        # Test invalid schema
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "str", "type": "xxxxx" }]}]}'
+            ],
+            [],
+            [],
+            "Unsupported field type: xxxxx for field str",
+        ),
+        # Test invalid field name
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "xxxxx", "type": "String", "new_name": "new_str" }]}]}'
+            ],
+            [],
+            [],
+            "Field xxxxx not found",
+        ),
+        # Test invalid layer name
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "xxxxx", "fields": [{ "name": "str", "type": "String" }]}]}'
+            ],
+            [],
+            [],
+            "Layer xxxxx not found",
+        ),
+    ],
+)
+def test_ogr_sqlite_schema_override(
+    tmp_path, open_options, expected_field_types, expected_field_names, expected_warning
+):
+
+    # Create SQLite database
+    sqlite_db = tmp_path / "test_ogr_sqlite_schema_override.db"
+    ds = ogr.GetDriverByName("SQLite").CreateDataSource(str(sqlite_db))
+    lyr = ds.CreateLayer("test_point")
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("real", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("bool", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("int_str", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("real_str", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("json_str", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("uuid_str", ogr.OFTString))
+
+    # Insert some data
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("str", "1")
+    feat.SetField("int", 2)
+    feat.SetField("real", 3.4)
+    feat.SetField("bool", 1)
+    feat.SetField("int_str", "2")
+    feat.SetField("real_str", "3.4")
+    feat.SetField("json_str", '{"key": "foo"}')
+    feat.SetField("uuid_str", "123e4567-e89b-12d3-a456-426614174000")
+    lyr.CreateFeature(feat)
+    feat = None
+
+    gdal.ErrorReset()
+
+    try:
+        schema = open_options[0].split("=")[1]
+        open_options = open_options[1:]
+    except IndexError:
+        schema = None
+
+    with gdal.quiet_errors():
+
+        if schema:
+            open_options.append("OGR_SCHEMA=" + schema)
+        else:
+            open_options = []
+
+        # Validate the JSON schema
+        if not expected_warning and schema:
+            schema = json.loads(schema)
+            gdaltest.validate_json(schema, "ogr_fields_override.schema.json")
+
+        # Check error if expected_field_types is empty
+        if not expected_field_types:
+            with gdaltest.disable_exceptions():
+                ds = gdal.OpenEx(
+                    sqlite_db,
+                    gdal.OF_VECTOR | gdal.OF_READONLY,
+                    open_options=open_options,
+                    allowed_drivers=["SQLite"],
+                )
+                assert (
+                    gdal.GetLastErrorMsg().find(expected_warning) != -1
+                ), f"Warning {expected_warning} not found, got {gdal.GetLastErrorMsg()} instead"
+                assert ds is None
+        else:
+
+            ds = gdal.OpenEx(
+                sqlite_db,
+                gdal.OF_VECTOR | gdal.OF_READONLY,
+                open_options=open_options,
+                allowed_drivers=["SQLite"],
+            )
+
+            assert ds is not None
+
+            lyr = ds.GetLayer(0)
+
+            assert lyr.GetFeatureCount() == 1
+
+            lyr_defn = lyr.GetLayerDefn()
+
+            assert lyr_defn.GetFieldCount() == len(expected_field_types)
+
+            if len(expected_field_names) == 0:
+                expected_field_names = [
+                    "str",
+                    "int",
+                    "real",
+                    "bool",
+                    "int_str",
+                    "real_str",
+                    "json_str",
+                    "uuid_str",
+                ]
+
+            feat = lyr.GetNextFeature()
+
+            # Check field types
+            for i in range(len(expected_field_names)):
+                try:
+                    expected_type, expected_subtype = expected_field_types[i]
+                    assert feat.GetFieldDefnRef(i).GetType() == expected_type
+                    assert feat.GetFieldDefnRef(i).GetSubType() == expected_subtype
+                except TypeError:
+                    expected_type = expected_field_types[i]
+                    assert feat.GetFieldDefnRef(i).GetType() == expected_type
+                assert feat.GetFieldDefnRef(i).GetName() == expected_field_names[i]
+
+            # Test width and precision override
+            if len(open_options) > 0 and "precision" in open_options[0]:
+                assert feat.GetFieldDefnRef(2).GetWidth() == 7
+                assert feat.GetFieldDefnRef(2).GetPrecision() == 3
+
+            # Check feature content
+            if len(expected_field_names) > 0:
+                if "int" in expected_field_names:
+                    int_sub_type = feat.GetFieldDefnRef("int").GetSubType()
+                    assert (
+                        feat.GetFieldAsInteger("int") == 1
+                        if int_sub_type == ogr.OFSTBoolean
+                        else 2
+                    )
+                if "str" in expected_field_names:
+                    assert feat.GetFieldAsString("str") == "1"
+                if "new_str" in expected_field_names:
+                    assert feat.GetFieldAsString("new_str") == "1"
+                if "real_str" in expected_field_names:
+                    assert feat.GetFieldAsDouble("real_str") == 3.4
+                if "int_str" in expected_field_names:
+                    assert feat.GetFieldAsInteger("int_str") == 2
+            else:
+                assert feat.GetFieldAsInteger("int") == 2
+                assert feat.GetFieldAsString("str") == "1"
+
+            if expected_warning:
+                assert (
+                    gdal.GetLastErrorMsg().find(expected_warning) != -1
+                ), f"Warning {expected_warning} not found, got {gdal.GetLastErrorMsg()} instead"
+
+
+######################################################################
+# Test field operations rolling back changes.
+#
+
+
+@pytest.mark.parametrize("start_transaction", [False, True])
+def test_ogr_sqlite_field_operations_rollback(tmp_vsimem, start_transaction):
+
+    filename = str(tmp_vsimem / "test.db")
+    with ogr.GetDriverByName("SQLite").CreateDataSource(filename) as ds:
+        ogrtest.check_transaction_rollback(ds, start_transaction, test_geometry=False)
+
+
+@pytest.mark.parametrize("start_transaction", [False, True])
+def test_ogr_sqlite_field_operations_savepoint_rollback(tmp_vsimem, start_transaction):
+
+    filename = str(tmp_vsimem / "test_savepoint.db")
+    with ogr.GetDriverByName("SQLite").CreateDataSource(filename) as ds:
+        ogrtest.check_transaction_rollback_with_savepoint(
+            ds, start_transaction, test_geometry=False
+        )
+
+
+@pytest.mark.parametrize("auto_begin_transaction", [False, True])
+@pytest.mark.parametrize("start_transaction", [False, True])
+@pytest.mark.parametrize(
+    "release_to,rollback_to,expected",
+    (
+        ([1], [], ["fld3"]),
+        ([2], [], ["fld3"]),
+        ([3], [], ["fld3"]),
+        ([4], [], ["fld3"]),
+        ([], [1], ["fld1", "fld2", "fld3", "fld4", "fld5"]),
+        ([], [2], ["fld1", "fld3", "fld4", "fld5"]),
+        ([], [3], ["fld1", "fld3", "fld5"]),
+        ([], [4], ["fld3", "fld5"]),
+    ),
+)
+def test_ogr_sqlite_field_operations_savepoint_release(
+    tmp_vsimem,
+    auto_begin_transaction,
+    start_transaction,
+    release_to,
+    rollback_to,
+    expected,
+):
+
+    filename = str(tmp_vsimem / "test_savepoint_release.db")
+    ogrtest.check_transaction_savepoint_release(
+        filename,
+        "SQLite",
+        auto_begin_transaction,
+        start_transaction,
+        release_to,
+        rollback_to,
+        expected,
+        test_geometry=False,
+    )

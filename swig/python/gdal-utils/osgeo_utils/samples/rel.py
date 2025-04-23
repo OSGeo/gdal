@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL Python samples
 # Purpose:  Script to produce a shaded relief image from elevation data
@@ -10,23 +9,7 @@
 # Copyright (c) 2003, Andrey Kiselev <dron@remotesensing.org>
 # Copyright (c) 2009, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import math
@@ -83,6 +66,8 @@ def ParseType(typ):
         return gdal.GDT_Int32
     if typ == "UInt32":
         return gdal.GDT_UInt32
+    if typ == "Float16":
+        return gdal.GDT_Float16
     if typ == "Float32":
         return gdal.GDT_Float32
     if typ == "Float64":
@@ -91,6 +76,8 @@ def ParseType(typ):
         return gdal.GDT_CInt16
     if typ == "CInt32":
         return gdal.GDT_CInt32
+    if typ == "CFloat16":
+        return gdal.GDT_CFloat16
     if typ == "CFloat32":
         return gdal.GDT_CFloat32
     if typ == "CFloat64":

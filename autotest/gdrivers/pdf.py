@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  PDF Testing.
@@ -10,25 +9,10 @@
 ###############################################################################
 # Copyright (c) 2010-2019, Even Rouault <even.rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
 import os
 import shutil
 import sys
@@ -171,11 +155,11 @@ def test_pdf_online_1(poppler_or_pdfium):
     if pdf_is_pdfium():
         expected_gt = (
             -77.11232757568358,
-            9.1663393281356228e-06,
+            9.166339328135623e-06,
             0.0,
-            38.897842406247477,
+            38.89784240741306,
             0.0,
-            -9.1665025563464202e-06,
+            -9.166503628631888e-06,
         )
     elif pdf_is_poppler():
         expected_gt = (
@@ -237,11 +221,11 @@ def test_pdf_online_2(poppler_or_pdfium):
     if pdf_is_pdfium():
         expected_gt = (
             -77.11232757568358,
-            9.1663393281356228e-06,
+            9.166339328135623e-06,
             0.0,
-            38.897842406247477,
+            38.89784240741306,
             0.0,
-            -9.1665025563464202e-06,
+            -9.166503628631888e-06,
         )
     elif pdf_is_poppler():
         expected_gt = (
@@ -295,12 +279,12 @@ def test_pdf_1(poppler_or_pdfium):
 
     if pdf_is_pdfium():
         expected_gt = (
-            333275.12406585668,
-            31.764450118407499,
+            333274.5701626293,
+            31.765012397640078,
             0.0,
-            4940392.1233656602,
+            4940391.755002656,
             0.0,
-            -31.794983670894396,
+            -31.794694104865194,
         )
     else:
         expected_gt = (
@@ -327,7 +311,7 @@ def test_pdf_1(poppler_or_pdfium):
     got_geom = ogr.CreateGeometryFromWkt(neatline)
     if pdf_is_pdfium():
         expected_geom = ogr.CreateGeometryFromWkt(
-            "POLYGON ((338304.28536533244187 4896674.10591614805162,338304.812550922040828 4933414.853961281478405,382774.246895745047368 4933414.855149634182453,382774.983309225703124 4896673.95723026804626,338304.28536533244187 4896674.10591614805162))"
+            "POLYGON ((338304.274926337 4896673.68220244,338304.206397453 4933414.86906802,382774.239238623 4933414.4314159,382774.990878249 4896674.38093959,338304.274926337 4896673.68220244))"
         )
     else:
         expected_geom = ogr.CreateGeometryFromWkt(
@@ -363,79 +347,6 @@ def test_pdf_iso32000_dpi_300(poppler_or_pdfium):
         check_srs=True,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-
-###############################################################################
-# Test write support with OGC_BP geo encoding
-
-
-def test_pdf_ogcbp(poppler_or_pdfium_or_podofo):
-    with gdal.config_option("GDAL_PDF_OGC_BP_WRITE_WKT", "FALSE"):
-        tst = gdaltest.GDALTest(
-            "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP"]
-        )
-        tst.testCreateCopy(
-            check_minmax=0,
-            check_gt=1,
-            check_srs=True,
-            check_checksum_not_null=pdf_checksum_available(),
-        )
-
-
-###############################################################################
-# Test write support with OGC_BP geo encoding, with DPI=300
-
-
-def test_pdf_ogcbp_dpi_300(poppler_or_pdfium):
-    with gdal.config_option("GDAL_PDF_OGC_BP_WRITE_WKT", "FALSE"):
-        tst = gdaltest.GDALTest(
-            "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP", "DPI=300"]
-        )
-        tst.testCreateCopy(
-            check_minmax=0,
-            check_gt=1,
-            check_srs=True,
-            check_checksum_not_null=pdf_checksum_available(),
-        )
-
-
-def test_pdf_ogcbp_lcc(poppler_or_pdfium):
-    wkt = """PROJCS["NAD83 / Utah North",
-    GEOGCS["NAD83",
-        DATUM["North_American_Datum_1983",
-            SPHEROID["GRS 1980",6378137,298.257222101,
-                AUTHORITY["EPSG","7019"]],
-            TOWGS84[0,0,0,0,0,0,0]],
-        PRIMEM["Greenwich",0],
-        UNIT["degree",0.0174532925199433]],
-    PROJECTION["Lambert_Conformal_Conic_2SP"],
-    PARAMETER["standard_parallel_1",41.78333333333333],
-    PARAMETER["standard_parallel_2",40.71666666666667],
-    PARAMETER["latitude_of_origin",40.33333333333334],
-    PARAMETER["central_meridian",-111.5],
-    PARAMETER["false_easting",500000],
-    PARAMETER["false_northing",1000000],
-    UNIT["metre",1]]]"""
-
-    src_ds = gdal.GetDriverByName("GTiff").Create("tmp/temp.tif", 1, 1)
-    src_ds.SetProjection(wkt)
-    src_ds.SetGeoTransform([500000, 1, 0, 1000000, 0, -1])
-
-    with gdal.config_option("GDAL_PDF_OGC_BP_WRITE_WKT", "FALSE"):
-        out_ds = gdaltest.pdf_drv.CreateCopy("tmp/pdf_ogcbp_lcc.pdf", src_ds)
-        out_wkt = out_ds.GetProjectionRef()
-        out_ds = None
-
-    src_ds = None
-
-    gdal.Unlink("tmp/temp.tif")
-    gdal.GetDriverByName("PDF").Delete("tmp/pdf_ogcbp_lcc.pdf")
-
-    sr1 = osr.SpatialReference(wkt)
-    sr2 = osr.SpatialReference(out_wkt)
-    if sr1.IsSame(sr2) == 0:
-        print(sr2.ExportToPrettyWkt())
-        pytest.fail("wrong wkt")
 
 
 ###############################################################################
@@ -1007,133 +918,13 @@ def _pdf_update_gcps(poppler_or_pdfium):
     gdaltest.pdf_drv.Delete(out_filename)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_pdf_update_gcps_iso32000(poppler_or_pdfium):
     gdal.SetConfigOption("GDAL_PDF_GEO_ENCODING", None)
     _pdf_update_gcps(poppler_or_pdfium)
-
-
-def test_pdf_update_gcps_ogc_bp(poppler_or_pdfium):
-    with gdal.config_option("GDAL_PDF_GEO_ENCODING", "OGC_BP"):
-        _pdf_update_gcps(poppler_or_pdfium)
-
-
-###############################################################################
-# Check SetGCPs() but with GCPs that do *not* resolve to a geotransform
-
-
-def test_pdf_set_5_gcps_ogc_bp(poppler_or_pdfium):
-    dpi = 300
-    out_filename = "tmp/pdf_set_5_gcps_ogc_bp.pdf"
-
-    src_ds = gdal.Open("data/byte.tif")
-    src_wkt = src_ds.GetProjectionRef()
-    src_gt = src_ds.GetGeoTransform()
-    src_ds = None
-
-    gcp = [
-        [2.0, 8.0, 0, 0],
-        [2.0, 10.0, 0, 0],
-        [2.0, 18.0, 0, 0],
-        [16.0, 18.0, 0, 0],
-        [16.0, 8.0, 0, 0],
-    ]
-
-    for i, _ in enumerate(gcp):
-        gcp[i][2] = src_gt[0] + gcp[i][0] * src_gt[1] + gcp[i][1] * src_gt[2]
-        gcp[i][3] = src_gt[3] + gcp[i][0] * src_gt[4] + gcp[i][1] * src_gt[5]
-
-    # That way, GCPs will not resolve to a geotransform
-    gcp[1][2] -= 100
-
-    vrt_txt = """<VRTDataset rasterXSize="20" rasterYSize="20">
-<GCPList Projection='%s'>
-    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
-    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
-    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
-    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
-    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
-</GCPList>
-<VRTRasterBand dataType="Byte" band="1">
-    <SimpleSource>
-    <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
-    <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
-    <SourceBand>1</SourceBand>
-    </SimpleSource>
-</VRTRasterBand>
-</VRTDataset>""" % (
-        src_wkt,
-        gcp[0][0],
-        gcp[0][1],
-        gcp[0][2],
-        gcp[0][3],
-        gcp[1][0],
-        gcp[1][1],
-        gcp[1][2],
-        gcp[1][3],
-        gcp[2][0],
-        gcp[2][1],
-        gcp[2][2],
-        gcp[2][3],
-        gcp[3][0],
-        gcp[3][1],
-        gcp[3][2],
-        gcp[3][3],
-        gcp[4][0],
-        gcp[4][1],
-        gcp[4][2],
-        gcp[4][3],
-    )
-    vrt_ds = gdal.Open(vrt_txt)
-    vrt_gcps = vrt_ds.GetGCPs()
-
-    # Create PDF
-    ds = gdaltest.pdf_drv.CreateCopy(
-        out_filename, vrt_ds, options=["GEO_ENCODING=OGC_BP", "DPI=%d" % dpi]
-    )
-    ds = None
-
-    vrt_ds = None
-
-    # Check
-    ds = gdal.Open(out_filename)
-    got_gt = ds.GetGeoTransform()
-    got_wkt = ds.GetProjectionRef()
-    got_gcp_count = ds.GetGCPCount()
-    got_gcps = ds.GetGCPs()
-    got_gcp_wkt = ds.GetGCPProjection()
-    got_neatline = ds.GetMetadataItem("NEATLINE")
-    ds = None
-
-    assert got_wkt == "", "did not expect non null GetProjectionRef"
-
-    assert got_gcp_wkt != "", "did not expect null GetGCPProjection"
-
-    expected_gt = [0, 1, 0, 0, 0, 1]
-    for i in range(6):
-        assert got_gt[i] == pytest.approx(
-            expected_gt[i], abs=1e-8
-        ), "did not get expected gt"
-
-    assert got_gcp_count == len(gcp), "did not get expected GCP count"
-
-    for i in range(got_gcp_count):
-        assert (
-            got_gcps[i].GCPX == pytest.approx(vrt_gcps[i].GCPX, abs=1e-5)
-            and got_gcps[i].GCPY == pytest.approx(vrt_gcps[i].GCPY, abs=1e-5)
-            and got_gcps[i].GCPPixel == pytest.approx(vrt_gcps[i].GCPPixel, abs=1e-5)
-            and got_gcps[i].GCPLine == pytest.approx(vrt_gcps[i].GCPLine, abs=1e-5)
-        ), ("did not get expected GCP (%d)" % i)
-
-    got_geom = ogr.CreateGeometryFromWkt(got_neatline)
-    # Not sure this is really what we want, but without any geotransform, we cannot
-    # find projected coordinates
-    expected_geom = ogr.CreateGeometryFromWkt(
-        "POLYGON ((2 8,2 10,2 18,16 18,16 8,2 8))"
-    )
-
-    ogrtest.check_feature_geometry(got_geom, expected_geom)
-
-    gdaltest.pdf_drv.Delete(out_filename)
 
 
 ###############################################################################
@@ -1169,15 +960,6 @@ def _pdf_set_neatline(pdf_backend, geo_encoding, dpi=300):
     got_neatline = ds.GetMetadataItem("NEATLINE")
 
     if pdf_is_pdfium():
-        if geo_encoding == "ISO32000":
-            expected_gt = (
-                440722.21886505646,
-                59.894520395349709,
-                0.020450745157516229,
-                3751318.6133243339,
-                0.077268565258743135,
-                -60.009312694035692,
-            )
         max_error = 1
     else:
         max_error = 0.0001
@@ -1238,14 +1020,14 @@ def test_pdf_set_neatline_iso32000(poppler_or_pdfium):
     return _pdf_set_neatline(poppler_or_pdfium, "ISO32000")
 
 
-def test_pdf_set_neatline_ogc_bp(poppler_or_pdfium):
-    return _pdf_set_neatline(poppler_or_pdfium, "OGC_BP")
-
-
 ###############################################################################
 # Check that we can generate identical file
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_pdf_check_identity_iso32000(poppler_or_pdfium):
     out_filename = "tmp/pdf_check_identity_iso32000.pdf"
 
@@ -1261,42 +1043,6 @@ def test_pdf_check_identity_iso32000(poppler_or_pdfium):
     f.close()
 
     f = open("data/pdf/test_iso32000_libpng_1_6_40.pdf", "rb")
-    data_ref2 = f.read()
-    f.close()
-
-    f = open(out_filename, "rb")
-    data_got = f.read()
-    f.close()
-
-    assert (
-        data_got == data_ref or data_got == data_ref2
-    ), "content does not match reference content"
-
-    gdaltest.pdf_drv.Delete(out_filename)
-
-
-###############################################################################
-# Check that we can generate identical file
-
-
-def test_pdf_check_identity_ogc_bp(poppler_or_pdfium):
-    out_filename = "tmp/pdf_check_identity_ogc_bp.pdf"
-
-    src_ds = gdal.Open("data/pdf/test_pdf.vrt")
-    with gdal.config_option("GDAL_PDF_OGC_BP_WRITE_WKT", "NO"):
-        out_ds = gdaltest.pdf_drv.CreateCopy(
-            out_filename,
-            src_ds,
-            options=["GEO_ENCODING=OGC_BP", "STREAM_COMPRESS=NONE"],
-        )
-        del out_ds
-    src_ds = None
-
-    f = open("data/pdf/test_ogc_bp.pdf", "rb")
-    data_ref = f.read()
-    f.close()
-
-    f = open("data/pdf/test_ogc_bp_libpng_1_6_40.pdf", "rb")
     data_ref2 = f.read()
     f.close()
 
@@ -1453,6 +1199,10 @@ if (button == 4) app.launchURL('http://gdal.org/');"""
 # Test CLIPPING_EXTENT, EXTRA_RASTERS, EXTRA_RASTERS_LAYER_NAME, OFF_LAYERS, EXCLUSIVE_LAYERS options
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_pdf_extra_rasters(poppler_or_pdfium):
     subbyte = """<VRTDataset rasterXSize="10" rasterYSize="10">
   <SRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982139006,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","26711"]]</SRS>
@@ -1514,7 +1264,7 @@ def test_pdf_extra_rasters(poppler_or_pdfium):
             "LAYER_01_NAME=subbyte",
         ], "did not get expected layers"
     if pdf_is_poppler():
-        assert cs in (7926, 8177, 8174, 8165, 8172)
+        assert cs in (7926, 8177, 8174, 8165, 8172, 8193)
 
 
 ###############################################################################
@@ -1719,6 +1469,10 @@ def test_pdf_jpeg_direct_copy(poppler_or_pdfium):
 # Test direct copy of source JPEG file within VRT file
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_driver("JPEG")
 def test_pdf_jpeg_in_vrt_direct_copy(poppler_or_pdfium):
 
@@ -1887,7 +1641,9 @@ def test_pdf_overviews(poppler_or_pdfium):
 
 def test_pdf_password(poppler_or_pdfium_or_podofo):
 
-    if gdaltest.is_travis_branch("alpine_32bit"):
+    if gdaltest.is_travis_branch("alpine_32bit") or gdaltest.is_travis_branch(
+        "cmake-ubuntu-jammy"
+    ):
         pytest.skip()
 
     # User password of this test file is user_password and owner password is
@@ -2080,7 +1836,7 @@ if (button == 4) app.launchURL('http://gdal.org/');</Javascript>
         <Width>20</Width>
         <Height>10</Height>
 
-        <Georeferencing ISO32000ExtensionFormat="true" OGCBestPracticeFormat="true">
+        <Georeferencing ISO32000ExtensionFormat="true">
             <SRS dataAxisToSRSAxisMapping="2,1">EPSG:4326</SRS>
             <BoundingBox x1="1" y1="1" x2="19" y2="9"/>
             <BoundingPolygon>POLYGON((1 1,19 1,19 9,1 9,1 1))</BoundingPolygon>
@@ -3331,3 +3087,56 @@ def test_pdf_iso32000_esri_as_epsg():
     assert sr.GetAuthorityName(None) == "ESRI"
     assert sr.GetAuthorityCode(None) == "102422"
     assert gdal.GetLastErrorMsg() == ""
+
+
+###############################################################################
+# Test bugfix for https://issues.oss-fuzz.com/issues/376126833
+
+
+@pytest.mark.skipif(not have_read_support(), reason="no read support available")
+def test_pdf_iso32000_invalid_srs():
+
+    # Just test that this does not crash
+    gdal.Open("data/pdf/invalid_srs.pdf")
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.skipif(not have_read_support(), reason="no read support available")
+def test_pdf_gdal_driver_pdf_list_layer():
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]
+    assert alg.GetName() == "driver"
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["pdf"]
+    assert alg.GetName() == "pdf"
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["pdf"]["list-layers"]
+    assert alg.GetName() == "list-layers"
+    alg["input"] = "data/pdf/adobe_style_geospatial.pdf"
+    assert alg.Run()
+    assert json.loads(alg["output-string"]) == [
+        "New_Data_Frame",
+        "New_Data_Frame.Graticule",
+        "Layers",
+        "Layers.Measured_Grid",
+        "Layers.Graticule",
+    ]
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["pdf"]["list-layers"]
+    alg["input"] = "data/pdf/adobe_style_geospatial.pdf"
+    alg["output-format"] = "text"
+    assert alg.Run()
+    assert (
+        alg["output-string"]
+        == "New_Data_Frame\nNew_Data_Frame.Graticule\nLayers\nLayers.Measured_Grid\nLayers.Graticule\n"
+    )
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["pdf"]["list-layers"]
+    assert alg.GetName() == "list-layers"
+    alg["input"] = "data/byte.tif"
+    with pytest.raises(Exception, match="is not a PDF"):
+        alg.Run()

@@ -5,15 +5,6 @@ if (CMAKE_CXX_FLAGS)
   string(REPLACE "/WX " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
 endif ()
 
-set(GDAL_DATA_FILES
-    LICENSE.TXT
-    ${CMAKE_CURRENT_SOURCE_DIR}/data/template_tiles.mapml
-)
-set_property(
-  TARGET ${GDAL_LIB_TARGET_NAME}
-  APPEND
-  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
-
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/osgeo/")
 set(GDAL_PYTHON_CSOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/extensions/")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/extensions/")
@@ -35,6 +26,7 @@ set(GDAL_PYTHON_CSOURCES
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/gdal_band_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/gdal_dataset_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/gdal_driver_docs.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/gdal_mdm_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/gdal_operations_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_featuredef_docs.i
@@ -104,6 +96,14 @@ set(GDAL_PYTHON_CSOURCES
         COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/__init__.py" "${CMAKE_CURRENT_BINARY_DIR}/osgeo"
         DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/__init__.py")
       list(APPEND GDAL_PYTHON_PYSOURCES "${CMAKE_CURRENT_BINARY_DIR}/osgeo/__init__.py")
+  endif()
+
+  if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+      add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_fsspec.py"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/gdal_fsspec.py" "${CMAKE_CURRENT_BINARY_DIR}/osgeo"
+        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/gdal_fsspec.py")
+      list(APPEND GDAL_PYTHON_PYSOURCES "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_fsspec.py")
   endif()
 
   foreach(_file IN ITEMS ${GDAL_PYTHON_CSOURCES})
@@ -454,7 +454,22 @@ if __name__ == '__main__':
     set(INSTALL_ARGS "${INSTALL_ARGS} --install-layout=${GDAL_PYTHON_INSTALL_LAYOUT}")
     set(SETUPTOOLS_USE_DISTUTILS stdlib)
   elseif ("${SITE_PACKAGE_DIR}" MATCHES "dist-packages")
-    set(INSTALL_ARGS "${INSTALL_ARGS} --install-layout=deb")
+
+    # We are running on Debian, but test if our setuptools version supports
+    # Debian --install-layout
+    # This might not be the case if using a regular (non-Debian patched) Python
+    # installation or setuptools (cf https://github.com/OSGeo/gdal/issues/11636)
+    execute_process(
+        COMMAND env GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY=yes ${Python_EXECUTABLE_CMAKE} setup.py install --help
+        OUTPUT_VARIABLE SETUP_INSTALL_HELP
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+    # If so, uses it.
+    if ("${SETUP_INSTALL_HELP}" MATCHES "install-layout")
+        set(INSTALL_ARGS "${INSTALL_ARGS} --install-layout=deb")
+    endif()
+
     if (NOT DEFINED GDAL_PYTHON_INSTALL_LIB AND "${PREFIX_FOR_TRIMMEDSYSCONFIG}" STREQUAL "/usr/local")
         # Scenario of https://github.com/OSGeo/gdal/issues/10242
         # For some reason patched setuptools of Debian fails to install by default
@@ -544,6 +559,7 @@ elseif (Python_Development_FOUND)
             ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal.py
             ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalconst.py
             ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalnumeric.py
+            ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_fsspec.py
             ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gnm.py
             ${CMAKE_CURRENT_BINARY_DIR}/osgeo/ogr.py
             ${CMAKE_CURRENT_BINARY_DIR}/osgeo/osr.py
@@ -554,6 +570,7 @@ elseif (Python_Development_FOUND)
           ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal.py
           ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalconst.py
           ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalnumeric.py
+          ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_fsspec.py
           ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gnm.py
           ${CMAKE_CURRENT_BINARY_DIR}/osgeo/ogr.py
           ${CMAKE_CURRENT_BINARY_DIR}/osgeo/osr.py

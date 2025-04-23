@@ -10,23 +10,7 @@
  *  Copyright (c) 2016 Alexandr Borzykh
  *  Copyright (c) 2016, NextGIS <info@nextgis.com>
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to
- *deal in the Software without restriction, including without limitation the
- *rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- *sell copies of the Software, and to permit persons to whom the Software is
- *  furnished to do so, subject to the following conditions:
- *
- *  The above copyright notice and this permission notice shall be included in
- *all copies or substantial portions of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- *FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- *IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *******************************************************************************/
 #include "cpl_conv.h"
 #include "gdal_pam.h"
@@ -242,11 +226,12 @@ int GDALCADDataset::Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
         {
             // TODO: Add support clipping region in neatline
             CPLString osImgFilename = pImage->getFilePath();
-            CPLString osImgPath = CPLGetPath(osImgFilename);
+            CPLString osImgPath = CPLGetPathSafe(osImgFilename);
             if (osImgPath.empty())
             {
-                osImgFilename = CPLFormFilename(CPLGetPath(osCADFilename),
-                                                osImgFilename, nullptr);
+                osImgFilename =
+                    CPLFormFilenameSafe(CPLGetPathSafe(osCADFilename).c_str(),
+                                        osImgFilename, nullptr);
             }
 
             if (!CPLCheckForFile(const_cast<char *>(osImgFilename.c_str()),
@@ -339,9 +324,9 @@ char **GDALCADDataset::GetFileList()
 
     /* duplicated papszFileList = CSLAddString( papszFileList, osCADFilename
      * );*/
-    const char *pszPRJFilename = GetPrjFilePath();
-    if (nullptr != pszPRJFilename)
-        papszFileList = CSLAddString(papszFileList, pszPRJFilename);
+    const std::string osPRJFilename = GetPrjFilePath();
+    if (!osPRJFilename.empty())
+        papszFileList = CSLAddString(papszFileList, osPRJFilename.c_str());
 
     for (size_t i = 0; i < poCADFile->GetLayersCount(); ++i)
     {
@@ -410,11 +395,11 @@ const OGRSpatialReference *GDALCADDataset::GetSpatialRef() const
         }
         else
         {
-            const char *pszPRJFilename = GetPrjFilePath();
-            if (pszPRJFilename && pszPRJFilename[0])  // check if path exists
+            const std::string osPRJFilename = GetPrjFilePath();
+            if (!osPRJFilename.empty())  // check if path exists
             {
                 CPLPushErrorHandler(CPLQuietErrorHandler);
-                char **papszPRJData = CSLLoad(pszPRJFilename);
+                char **papszPRJData = CSLLoad(osPRJFilename.c_str());
                 CPLPopErrorHandler();
 
                 if (poSpatialReference->importFromESRI(papszPRJData) !=
@@ -435,17 +420,17 @@ const OGRSpatialReference *GDALCADDataset::GetSpatialRef() const
     return poSpatialReference;
 }
 
-const char *GDALCADDataset::GetPrjFilePath() const
+const std::string GDALCADDataset::GetPrjFilePath() const
 {
-    const char *pszPRJFilename = CPLResetExtension(osCADFilename, "prj");
-    if (CPLCheckForFile((char *)pszPRJFilename, nullptr) == TRUE)
-        return pszPRJFilename;
+    std::string osPRJFilename = CPLResetExtensionSafe(osCADFilename, "prj");
+    if (CPLCheckForFile(osPRJFilename.data(), nullptr) == TRUE)
+        return osPRJFilename;
 
-    pszPRJFilename = CPLResetExtension(osCADFilename, "PRJ");
-    if (CPLCheckForFile((char *)pszPRJFilename, nullptr) == TRUE)
-        return pszPRJFilename;
+    osPRJFilename = CPLResetExtensionSafe(osCADFilename, "PRJ");
+    if (CPLCheckForFile(osPRJFilename.data(), nullptr) == TRUE)
+        return osPRJFilename;
 
-    return "";
+    return std::string();
 }
 
 CPLErr GDALCADDataset::GetGeoTransform(double *padfGeoTransform)

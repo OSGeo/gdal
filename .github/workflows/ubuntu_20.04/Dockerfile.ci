@@ -2,7 +2,7 @@
 # so any change in dependencies locations might have to be reflected in
 # coverity_scan/build/sh as well
 
-FROM ubuntu:20.04
+FROM ubuntu:20.04@sha256:8e5c4f0285ecbb4ead070431d29b576a530d3166df73ec44affc1cd27555141b
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -49,9 +49,9 @@ RUN apt-get update -y \
     liblz4-dev \
     liblzma-dev \
     libmono-system-drawing4.0-cil \
+    libmuparser-dev \
     libmysqlclient-dev \
     libnetcdf-dev \
-    libogdi-dev \
     libopenexr-dev \
     libopenjp2-7-dev \
     libpcre2-dev \
@@ -74,8 +74,6 @@ RUN apt-get update -y \
     make \
     mono-mcs \
     numactl \
-    ocl-icd-opencl-dev \
-    opencl-c-headers \
     openjdk-8-jdk-headless \
     pkg-config \
     python3-dev \
@@ -123,9 +121,6 @@ RUN mkdir tiledb \
     && cd ../.. \
     && rm -rf tiledeb
 
-# Workaround bug in ogdi packaging
-RUN ln -s /usr/lib/ogdi/libvrf.so /usr/lib
-
 # Build libjxl
 # libjxl being still unstable, if the main branch fails to compile/test
 # you can replace JXL_TREEISH=main by JXL_TREEISH=sha1_of_known_working_commit
@@ -168,10 +163,10 @@ RUN wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_
   && rm -rf FileGDB_API_1_5_1-64gcc51.tar.gz \
   && echo "/usr/local/FileGDB_API/lib" > /etc/ld.so.conf.d/filegdbapi.conf
 
-# Build and install GEOS (3.11dev)
-ENV GEOS_SHA1=c8bba596e9cdcf8ad55d804bfa9ba6e4394722a1
+# Build and install GEOS
+ENV GEOS_VERSION=3.11.0
 RUN mkdir geos \
-    && wget -q https://github.com/libgeos/geos/archive/${GEOS_SHA1}.tar.gz -O - \
+    && wget -q https://github.com/libgeos/geos/archive/${GEOS_VERSION}.tar.gz -O - \
         | tar xz -C geos --strip-components=1 \
     && cd geos \
     && mkdir build_cmake \
@@ -183,12 +178,12 @@ RUN mkdir geos \
     && rm -rf geos
 
 # Install pdfium
-RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_9/releases/download/pdfium_6309_v1/install-ubuntu2004-rev6309.tar.gz \
-  && tar -xzf install-ubuntu2004-rev6309.tar.gz \
+RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_11/releases/download/pdfium_7047_v1/install-ubuntu2004-rev7047.tar.gz \
+  && tar -xzf install-ubuntu2004-rev7047.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev6309.tar.gz install
+  && rm -rf install-ubuntu2004-rev7047.tar.gz install
 
 # HANA: client side
 # Install hdbsql tool
@@ -200,7 +195,7 @@ RUN curl -v -j -k -s -L -H "Cookie: eula_3_2_agreed=tools.hana.ondemand.com/deve
   && rm hanaclient*
 ENV PATH=/usr/sap/hdbclient:$PATH
 
-RUN python3 -m pip install hdbcli
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install hdbcli
 
 # Download and compile odbc-cpp-wrapper
 ENV ODBCCPP_VERSION=1.1
@@ -224,7 +219,7 @@ RUN wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | 
  && apt-get install -y -V libarrow-dev libparquet-dev libarrow-dataset-dev \
  && rm ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
  && rm -rf /var/lib/apt/lists/* \
- && python3 -m pip install pyarrow==11.0.0
+ && PYTHON_CMD=python3 && $PYTHON_CMD -m pip install pyarrow==11.0.0
 
 # Build libQB3
 # Used by the MRF driver
@@ -260,7 +255,7 @@ RUN mkdir sqlite \
     && rm -rf sqlite
 
 # Build libOpenDRIVE
-ARG OPENDRIVE_VERSION=0.5.0-gdal
+ARG OPENDRIVE_VERSION=0.6.0-gdal
 RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
     wget -q https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
     && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
@@ -274,7 +269,10 @@ RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
     && rm -rf libOpenDRIVE-${OPENDRIVE_VERSION} \
     ); fi
 
+# Install exprtk
+RUN wget -q -P /usr/local/include https://raw.githubusercontent.com/ArashPartow/exprtk/refs/heads/master/exprtk.hpp
+
 RUN ldconfig
 
 COPY requirements.txt /tmp/
-RUN python3 -m pip install -U -r /tmp/requirements.txt
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U -r /tmp/requirements.txt

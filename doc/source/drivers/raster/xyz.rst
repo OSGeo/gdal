@@ -53,15 +53,18 @@ Open options
 |about-open-options|
 This driver supports the following open options:
 
-.. oo:: COLUMN_ORDER
-   :choices: AUTO, XYZ, YXZ
-   :since: 3.10
-   :default: AUTO
+-  .. oo:: COLUMN_ORDER
+     :choices: AUTO, XYZ, YXZ
+     :since: 3.10
+     :default: AUTO
 
-   Specifies the order of the columns. It overrides the header.
+     Specifies the order of the columns. It overrides the header.
 
 Creation options
 ----------------
+
+|about-creation-options|
+This driver supports the following creation options:
 
 -  .. co:: COLUMN_SEPARATOR
       :choices: <string>

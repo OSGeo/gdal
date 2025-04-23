@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Author:   Frank Warmerdam, warmerdam@pobox.com
@@ -10,23 +9,7 @@
  * Copyright (c) 1998, Frank Warmerdam
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef CPL_VSI_H_INCLUDED
@@ -42,10 +25,10 @@
  *
  * Standard C Covers
  *
- * The VSI functions are intended to be hookable aliases for Standard C
- * I/O, memory allocation and other system functions. They are intended
- * to allow virtualization of disk I/O so that non file data sources
- * can be made to appear as files, and so that additional error trapping
+ * The VSI (Virtual System Interface) functions are intended to be hookable
+ * aliases for Standard C I/O, memory allocation and other system functions.
+ * They are intended to allow virtualization of disk I/O so that non file data
+ * sources can be made to appear as files, and so that additional error trapping
  * and reporting can be interested.  The memory access API is aliased
  * so that special application memory management services can be used.
  *
@@ -397,6 +380,8 @@ char CPL_DLL **VSIReadDir(const char *);
 char CPL_DLL **VSIReadDirRecursive(const char *pszPath);
 char CPL_DLL **VSIReadDirEx(const char *pszPath, int nMaxFiles);
 char CPL_DLL **VSISiblingFiles(const char *pszPath);
+char CPL_DLL **VSIGlob(const char *pszPattern, const char *const *papszOptions,
+                       GDALProgressFunc pProgressFunc, void *pProgressData);
 
 const char CPL_DLL *VSIGetDirectorySeparator(const char *pszPath);
 
@@ -546,6 +531,8 @@ VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
 GByte CPL_DLL *VSIGetMemFileBuffer(const char *pszFilename,
                                    vsi_l_offset *pnDataLength,
                                    int bUnlinkAndSeize);
+
+const char CPL_DLL *VSIMemGenerateHiddenFilename(const char *pszFilename);
 
 /** Callback used by VSIStdoutSetRedirection() */
 typedef size_t (*VSIWriteFunction)(const void *ptr, size_t size, size_t nmemb,

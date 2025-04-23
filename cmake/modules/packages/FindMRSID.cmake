@@ -20,7 +20,7 @@ configure
 find_path(MRSID_INCLUDE_DIR NAMES lt_base.h)
 
 if( MRSID_INCLUDE_DIR )
-  find_library( MRSID_LIBRARY NAMES lti_dsdk ltidsdk)
+  find_library( MRSID_LIBRARY NAMES lti_dsdk ltidsdk NAMES_PER_DIR)
 endif()
 
 if(MRSID_INCLUDE_DIR AND MRSID_LIBRARY)

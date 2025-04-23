@@ -89,7 +89,7 @@ if test "${CIFUZZ:-}" = "True"; then
             -L$SRC_DIR/build -lgdal \
             -lproj \
             -Wl,-Bstatic -lzstd -lwebp -llzma -lexpat -lsqlite3 -lgif -ljpeg -lz \
-            -Wl,-Bdynamic -ldl -lpthread
+            -Wl,-Bdynamic -ldl -lpthread -lclang_rt.builtins
 
   echo "Building ogr_fuzzer"
   $CXX $CXXFLAGS \
@@ -103,7 +103,7 @@ if test "${CIFUZZ:-}" = "True"; then
             -L$SRC_DIR/build -lgdal \
             -L$SRC/install/lib -lproj \
             -Wl,-Bstatic -lzstd -lwebp -llzma -lexpat -lsqlite3 -lgif -ljpeg -lz \
-            -Wl,-Bdynamic -ldl -lpthread
+            -Wl,-Bdynamic -ldl -lpthread -lclang_rt.builtins
 
   echo "Building gdal_fuzzer_seed_corpus.zip"
   cd $(dirname $0)/../autotest/gcore/data
@@ -145,7 +145,12 @@ curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.13.2.tar.
     rm freetype-2.13.2.tar.xz
 
 rm -rf poppler
-git clone --depth 1 https://anongit.freedesktop.org/git/poppler/poppler.git poppler
+# Poppler git server is too unreliable. Use a snapshot of a given version
+#git clone --depth 1 https://anongit.freedesktop.org/git/poppler/poppler.git poppler
+curl -L https://poppler.freedesktop.org/poppler-24.10.0.tar.xz > poppler-24.10.0.tar.xz && \
+    tar xJf poppler-24.10.0.tar.xz && \
+    mv poppler-24.10.0 poppler && \
+    rm poppler-24.10.0.tar.xz
 
 # Build xerces-c from source to avoid upstream bugs
 rm -rf xerces-c
@@ -153,7 +158,10 @@ git clone --depth 1 https://gitbox.apache.org/repos/asf/xerces-c.git
 
 # Build sqlite from source to avoid upstream bugs
 rm -rf sqlite
-git clone --depth 1 https://github.com/sqlite/sqlite sqlite
+curl -L https://sqlite.org/2024/sqlite-autoconf-3470000.tar.gz > sqlite-autoconf-3470000.tar.gz && \
+    tar xzf sqlite-autoconf-3470000.tar.gz && \
+    mv sqlite-autoconf-3470000 sqlite && \
+    rm sqlite-autoconf-3470000.tar.gz
 
 # libxerces-c-dev${ARCH_SUFFIX}
 # libsqlite3-dev${ARCH_SUFFIX}
@@ -181,7 +189,7 @@ NON_FUZZING_CXXFLAGS="$NON_FUZZING_CFLAGS -stdlib=libc++"
 
 # build sqlite
 cd sqlite
-CFLAGS="$NON_FUZZING_CFLAGS -DSQLITE_ENABLE_COLUMN_METADATA" ./configure --prefix=$SRC/install --enable-rtree --disable-tcl
+CFLAGS="$NON_FUZZING_CFLAGS -DSQLITE_ENABLE_COLUMN_METADATA" ./configure --prefix=$SRC/install --enable-rtree
 make clean -s
 make -j$(nproc) -s
 make install
@@ -338,7 +346,7 @@ if [ "$ARCHITECTURE" = "x86_64" ]; then
 fi
 # poppler related
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lpoppler -ljpeg -lfreetype -lfontconfig -lpng"
-export EXTRA_LIBS="$EXTRA_LIBS -Wl,-Bdynamic -ldl -lpthread"
+export EXTRA_LIBS="$EXTRA_LIBS -Wl,-Bdynamic -ldl -lpthread -lclang_rt.builtins"
 
 # to find sqlite3.h
 export CXXFLAGS="$CXXFLAGS -I$SRC/install/include"

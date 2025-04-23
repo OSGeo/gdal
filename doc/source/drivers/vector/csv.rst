@@ -84,7 +84,7 @@ per line must be present. Lines may be terminated by a DOS (CR/LF) or
 Unix (LF) style line terminators. Each record should have the same
 number of fields. The driver will also accept a semicolon, a tabulation,
 a pipe, or a space character as field separator.
-Starting with GDAL 3.8, the autodection will select the separator with the
+Starting with GDAL 3.8, the autodetection will select the separator with the
 most occurrences if there are several candidates  on the first line of the CSV
 file (and warn about that). The :oo:`SEPARATOR` open option may also be set to
 define the desired separator.
@@ -115,8 +115,8 @@ Example (employee.csv):
 ::
 
    ID,Salary,Name,Comments
+   131,11000.0,Jane Lake,Chief Technical Officer
    132,55000.0,John Walker,"The ""big"" cheese."
-   133,11000.0,Jane Lake,Cleaning Staff
 
 Note that the Comments value for the first data record is placed in
 double quotes because the value contains quotes, and those quotes have
@@ -413,6 +413,16 @@ The following open options are supported:
 
       Maximum number of bytes for a line (-1=unlimited).
 
+-  .. oo:: OGR_SCHEMA
+      :choices: <filename>|<json string>
+      :since: 3.11.0
+
+      Partially or totally overrides the auto-detected schema to use for creating the layer.
+      The overrides are defined as a JSON list of field definitions.
+      This can be a filename, a URL or JSON string conformant with the `ogr_fields_override.schema.json schema <https://raw.githubusercontent.com/OSGeo/gdal/refs/heads/master/ogr/data/ogr_fields_override.schema.json>`_
+      This option takes precedence over any other option and over the .csvt file.
+
+
 Creation Issues
 ---------------
 
@@ -502,7 +512,7 @@ The following configuration options are available:
       Number of decimals for coordinate
       values. A heuristic is used to remove insignificant
       trailing 00000x or 99999x that can appear when formatting decimal
-      numbers.
+      numbers. Examples: 6 gives 120.864, 24.1818; 2 gives 1.2E+02, 24.0.
 
 -  .. config:: OGR_WKT_ROUND
       :choices: YES, NO
@@ -550,7 +560,7 @@ Examples
     $ cat input.csv
     WKT,ID,Name
     "LINESTRING (-900 -1450,-900 100)",0,900W
-    
+
     $ ogr2ogr -segmentize 400 -lco GEOMETRY=AS_WKT \
       -sql "SELECT ID, Name FROM input" output.csv input.csv
 

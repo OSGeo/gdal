@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  SSE2 helper
@@ -8,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef GDALSSE_PRIV_H_INCLUDED
@@ -39,12 +22,17 @@
 #if (defined(__x86_64) || defined(_M_X64) || defined(USE_SSE2)) &&             \
     !defined(USE_SSE2_EMULATION)
 
-/* Requires SSE2 */
-#include <emmintrin.h>
 #include <string.h>
 
-#ifdef __SSE4_1__
+#ifdef USE_NEON_OPTIMIZATIONS
+#include "include_sse2neon.h"
+#else
+/* Requires SSE2 */
+#include <emmintrin.h>
+
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
 #include <smmintrin.h>
+#endif
 #endif
 
 #include "gdal_priv_templates.hpp"
@@ -232,7 +220,7 @@ class XMMReg2Double
     inline void nsLoad2Val(const unsigned char *ptr)
     {
         __m128i xmm_i = GDALCopyInt16ToXMM(ptr);
-#ifdef __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
         xmm_i = _mm_cvtepu8_epi32(xmm_i);
 #else
         xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
@@ -244,7 +232,7 @@ class XMMReg2Double
     inline void nsLoad2Val(const short *ptr)
     {
         __m128i xmm_i = GDALCopyInt32ToXMM(ptr);
-#ifdef __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
         xmm_i = _mm_cvtepi16_epi32(xmm_i);
 #else
         xmm_i = _mm_unpacklo_epi16(
@@ -258,7 +246,7 @@ class XMMReg2Double
     inline void nsLoad2Val(const unsigned short *ptr)
     {
         __m128i xmm_i = GDALCopyInt32ToXMM(ptr);
-#ifdef __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
         xmm_i = _mm_cvtepu16_epi32(xmm_i);
 #else
         xmm_i = _mm_unpacklo_epi16(
@@ -272,7 +260,7 @@ class XMMReg2Double
                                 XMMReg2Double &high)
     {
         __m128i xmm_i = GDALCopyInt32ToXMM(ptr);
-#ifdef __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
         xmm_i = _mm_cvtepu8_epi32(xmm_i);
 #else
         xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());

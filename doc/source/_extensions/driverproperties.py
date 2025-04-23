@@ -2,6 +2,10 @@
 
 import docutils.statemachine
 import sphinx.locale
+from docutils import nodes
+from sphinx.locale import _
+from sphinx.util import logging
+from sphinx.util.docutils import SphinxDirective
 
 sphinx.locale.admonitionlabels["shortname"] = ""
 sphinx.locale.admonitionlabels["built_in_by_default"] = ""  # 'Built-in by default'
@@ -22,97 +26,107 @@ sphinx.locale.admonitionlabels[
 def setup(app):
     app.add_node(
         shortname,
-        html=(visit_shortname_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_shortname_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("shortname", ShortName)
 
     app.add_node(
         built_in_by_default,
-        html=(visit_built_in_by_default_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_built_in_by_default_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("built_in_by_default", BuiltInByDefault)
 
     app.add_node(
         build_dependencies,
-        html=(visit_build_dependencies_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_build_dependencies_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("build_dependencies", BuildDependencies)
 
     app.add_node(
         supports_create,
-        html=(visit_supports_create_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_supports_create_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("supports_create", CreateDirective)
 
     app.add_node(
         supports_createcopy,
-        html=(visit_supports_createcopy_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_supports_createcopy_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("supports_createcopy", CreateCopyDirective)
 
     app.add_node(
         supports_georeferencing,
-        html=(visit_supports_georeferencing_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_supports_georeferencing_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("supports_georeferencing", GeoreferencingDirective)
 
     app.add_node(
         supports_virtualio,
-        html=(visit_supports_virtualio_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_supports_virtualio_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("supports_virtualio", VirtualIODirective)
 
     app.add_node(
         supports_multidimensional,
-        html=(visit_supports_multidimensional_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_supports_multidimensional_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("supports_multidimensional", MultiDimensionalDirective)
 
     app.add_node(
         deprecated_driver,
-        html=(visit_deprecated_driver_node, depart_node),
-        latex=(visit_admonition, depart_node),
-        text=(visit_admonition, depart_node),
+        html=(visit_deprecated_driver_node_html, depart_node_html),
+        latex=(visit_admonition_generic, depart_node_generic),
+        text=(visit_admonition_generic, depart_node_generic),
     )
     app.add_directive("deprecated_driver", DeprecatedDriverDirective)
 
     app.connect("env-purge-doc", purge_driverproperties)
+    app.connect("env-merge-info", merge_driverproperties)
+
+    app.add_node(driver_index)
+    app.add_directive("driver_index", DriverIndex)
+    app.connect("doctree-resolved", create_driver_index)
 
     return {"parallel_read_safe": True, "parallel_write_safe": True}
 
 
-from docutils import nodes
-
-
-def visit_admonition(self, node):
+def visit_admonition_generic(self, node):
     self.visit_admonition(node)
 
 
-def depart_node(self, node):
+def depart_node_generic(self, node):
     self.depart_admonition(node)
+
+
+def visit_admonition_html(self, node, name: str = ""):
+    self.body.append(self.starttag(node, "div", CLASS=("admonition " + name)))
+
+
+def depart_node_html(self, node):
+    self.body.append("</div>\n")
 
 
 class shortname(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_shortname_node(self, node):
+def visit_shortname_node_html(self, node):
     self.body.append(self.starttag(node, "div", CLASS=("admonition shortname")))
 
 
@@ -120,7 +134,7 @@ class built_in_by_default(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_built_in_by_default_node(self, node):
+def visit_built_in_by_default_node_html(self, node):
     self.body.append(
         self.starttag(node, "div", CLASS=("admonition built_in_by_default"))
     )
@@ -130,7 +144,7 @@ class build_dependencies(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_build_dependencies_node(self, node):
+def visit_build_dependencies_node_html(self, node):
     self.body.append(
         self.starttag(node, "div", CLASS=("admonition build_dependencies"))
     )
@@ -140,7 +154,7 @@ class supports_create(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_supports_create_node(self, node):
+def visit_supports_create_node_html(self, node):
     self.body.append(self.starttag(node, "div", CLASS=("admonition supports_create")))
 
 
@@ -148,7 +162,7 @@ class supports_createcopy(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_supports_createcopy_node(self, node):
+def visit_supports_createcopy_node_html(self, node):
     self.body.append(
         self.starttag(node, "div", CLASS=("admonition supports_createcopy"))
     )
@@ -158,7 +172,7 @@ class supports_georeferencing(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_supports_georeferencing_node(self, node):
+def visit_supports_georeferencing_node_html(self, node):
     self.body.append(
         self.starttag(node, "div", CLASS=("admonition supports_georeferencing"))
     )
@@ -168,7 +182,7 @@ class supports_virtualio(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_supports_virtualio_node(self, node):
+def visit_supports_virtualio_node_html(self, node):
     self.body.append(
         self.starttag(node, "div", CLASS=("admonition supports_virtualio"))
     )
@@ -178,7 +192,7 @@ class supports_multidimensional(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_supports_multidimensional_node(self, node):
+def visit_supports_multidimensional_node_html(self, node):
     self.body.append(
         self.starttag(node, "div", CLASS=("admonition supports_multidimensional"))
     )
@@ -188,12 +202,8 @@ class deprecated_driver(nodes.Admonition, nodes.Element):
     pass
 
 
-def visit_deprecated_driver_node(self, node):
+def visit_deprecated_driver_node_html(self, node):
     self.body.append(self.starttag(node, "div", CLASS=("danger deprecated_driver")))
-
-
-from docutils.parsers.rst import Directive
-from sphinx.locale import _
 
 
 def finish_directive(_self, directive, node):
@@ -219,7 +229,66 @@ def finish_directive(_self, directive, node):
     return [targetnode, node]
 
 
-class ShortName(Directive):
+class DriverPropertyDirective(SphinxDirective):
+    def driver_properties(self):
+
+        if not hasattr(self.env, "gdal_drivers"):
+            self.env.gdal_drivers = {}
+
+        # Search for a .. shortname:: directive in the current document
+        try:
+            short_name_node = next(self.env.parser.document.findall(shortname))
+            short_name = short_name_node.children[1].astext()
+
+        except StopIteration:
+            if "plscenes" in self.env.docname:
+                return {}
+
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                "Driver does not have a 'shortname' directive.",
+                location=self.env.docname,
+            )
+
+            return {}
+
+        if short_name not in self.env.gdal_drivers:
+            # Initialize driver properties object
+            try:
+                long_name_node = next(self.env.parser.document.findall(nodes.title))
+            except StopIteration:
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    "Driver document does not have a title.",
+                    location=self.env.docname,
+                )
+
+                return {}
+
+            long_name = long_name_node.astext()
+            if " -- " in long_name:
+                long_name = long_name.split(" -- ")[1].strip()
+            if " - " in long_name and "OGC API" not in long_name:
+                long_name = long_name.split(" - ")[1].strip()
+
+            self.env.gdal_drivers[short_name] = {
+                "docname": self.env.docname,
+                "short_name": short_name,
+                "long_name": long_name,
+                "built_in_by_default": False,
+                "supports_create": False,
+                "supports_createcopy": False,
+                "supports_georeferencing": False,
+                "supports_virtualio": False,
+                "supports_multidimensional": False,
+                "deprecated": False,
+                "requirements": "",
+            }
+
+        return self.env.gdal_drivers[short_name]
+
+
+class ShortName(SphinxDirective):
 
     # this enables content in the directive
     has_content = True
@@ -232,12 +301,13 @@ class ShortName(Directive):
         return finish_directive(self, "shortname", node)
 
 
-class BuiltInByDefault(Directive):
+class BuiltInByDefault(DriverPropertyDirective):
 
     # this enables content in the directive
     has_content = True
 
     def run(self):
+        self.driver_properties()["built_in_by_default"] = True
 
         if not self.content:
             self.content = docutils.statemachine.StringList(
@@ -251,12 +321,13 @@ class BuiltInByDefault(Directive):
         return finish_directive(self, "built_in_by_default", node)
 
 
-class BuildDependencies(Directive):
+class BuildDependencies(DriverPropertyDirective):
 
     # this enables content in the directive
     has_content = True
 
     def run(self):
+        self.driver_properties()["requirements"] = ", ".join(self.content)
 
         assert (
             self.content
@@ -267,12 +338,13 @@ class BuildDependencies(Directive):
         return finish_directive(self, "build_dependencies", node)
 
 
-class CreateDirective(Directive):
+class CreateDirective(DriverPropertyDirective):
 
     # this enables content in the directive
     has_content = True
 
     def run(self):
+        self.driver_properties()["supports_create"] = True
 
         if not self.content:
             self.content = docutils.statemachine.StringList(
@@ -284,12 +356,13 @@ class CreateDirective(Directive):
         return finish_directive(self, "supports_create", node)
 
 
-class CreateCopyDirective(Directive):
+class CreateCopyDirective(DriverPropertyDirective):
 
     # this enables content in the directive
     has_content = True
 
     def run(self):
+        self.driver_properties()["supports_createcopy"] = True
 
         if not self.content:
             self.content = docutils.statemachine.StringList(
@@ -303,12 +376,13 @@ class CreateCopyDirective(Directive):
         return finish_directive(self, "supports_createcopy", node)
 
 
-class GeoreferencingDirective(Directive):
+class GeoreferencingDirective(DriverPropertyDirective):
 
     # this enables content in the directive
     has_content = True
 
     def run(self):
+        self.driver_properties()["supports_georeferencing"] = True
 
         if not self.content:
             self.content = docutils.statemachine.StringList(
@@ -320,12 +394,13 @@ class GeoreferencingDirective(Directive):
         return finish_directive(self, "supports_georeferencing", node)
 
 
-class VirtualIODirective(Directive):
+class VirtualIODirective(DriverPropertyDirective):
 
     # this enables content in the directive
     has_content = True
 
     def run(self):
+        self.driver_properties()["supports_virtualio"] = True
 
         if not self.content:
             self.content = docutils.statemachine.StringList(
@@ -339,12 +414,13 @@ class VirtualIODirective(Directive):
         return finish_directive(self, "supports_virtualio", node)
 
 
-class MultiDimensionalDirective(Directive):
+class MultiDimensionalDirective(DriverPropertyDirective):
 
     # this enables content in the directive
     has_content = True
 
     def run(self):
+        self.driver_properties()["supports_multidimensional"] = True
 
         if not self.content:
             self.content = docutils.statemachine.StringList(
@@ -358,12 +434,13 @@ class MultiDimensionalDirective(Directive):
         return finish_directive(self, "supports_multidimensional", node)
 
 
-class DeprecatedDriverDirective(Directive):
+class DeprecatedDriverDirective(DriverPropertyDirective):
 
     # this enables content in the directive
     has_content = True
 
     def run(self):
+        self.driver_properties()["deprecated"] = True
 
         explanation = []
         version_targeted_for_removal = [
@@ -419,7 +496,135 @@ class DeprecatedDriverDirective(Directive):
         return finish_directive(self, "deprecated_driver", node)
 
 
+### Driver Index
+
+
+class driver_index(nodes.General, nodes.Element):
+    pass
+
+
+class DriverIndex(SphinxDirective):
+
+    has_content = True
+    required_arguments = 0
+    option_spec = {"type": str}
+
+    def run(self):
+        index_placeholder = driver_index("")
+
+        if "type" in self.options:
+            index_placeholder["driver_type"] = self.options["type"]
+
+        return [index_placeholder]
+
+
+def create_driver_index(app, doctree, fromdocname):
+    # This event handler is called on "doctree-resolved"
+    # It replaces the driver_index placeholder(s) with
+    # tables of drivers.
+
+    env = app.builder.env
+
+    if not hasattr(env, "gdal_drivers"):
+        env.gdal_drivers = {}
+
+    for node in doctree.findall(driver_index):
+
+        if "driver_type" in node and node["driver_type"] == "vector":
+            columns = {
+                "short_name": {"name": "Short Name", "width": 10},
+                "long_name": {"name": "Long Name", "width": 20},
+                "supports_create": {"name": "Creation", "width": 10},
+                "supports_georeferencing": {"name": "Georeferencing", "width": 10},
+                "requirements": {"name": "Build Requirements", "width": 20},
+            }
+        else:
+            columns = {
+                "short_name": {"name": "Short Name", "width": 10},
+                "long_name": {"name": "Long Name", "width": 35},
+                "supports_create": {"name": "Creation (1)", "width": 10},
+                "supports_createcopy": {"name": "Copy (2)", "width": 10},
+                "supports_georeferencing": {"name": "Georeferencing", "width": 10},
+                "requirements": {"name": "Build Requirements", "width": 25},
+            }
+
+        tgroup = nodes.tgroup(cols=len(columns))
+
+        for col in columns:
+            colspec = nodes.colspec(colwidth=columns[col]["width"])
+            tgroup.append(colspec)
+
+        header = nodes.row()
+        for col in columns:
+            header.append(nodes.entry("", nodes.paragraph(text=columns[col]["name"])))
+        tgroup.append(nodes.thead("", header))
+
+        tbody = nodes.tbody()
+
+        for short_name in sorted(env.gdal_drivers, key=str.casefold):
+            driver_properties = env.gdal_drivers[short_name]
+
+            if (
+                "driver_type" in node
+                and node["driver_type"] not in driver_properties["docname"]
+            ):
+                continue
+
+            row = nodes.row()
+
+            for col in columns:
+                cell = nodes.entry()
+                row.append(cell)
+
+                if col == "short_name":
+                    ref = nodes.reference(
+                        refuri=app.builder.get_relative_uri(
+                            fromdocname, driver_properties["docname"]
+                        ),
+                        internal=True,
+                    )
+                    ref.append(nodes.Text(short_name))
+                    para = nodes.paragraph()
+                    para.append(ref)
+                    cell.append(para)
+                else:
+                    value = driver_properties[col]
+
+                    if col == "requirements" and not value:
+                        if driver_properties["built_in_by_default"]:
+                            value = "Built-in by default"
+
+                    if type(value) is bool:
+                        if value:
+                            cell.append(nodes.strong("Yes", "Yes"))
+                        else:
+                            cell.append(nodes.Text("No"))
+                    else:
+                        cell.append(nodes.Text(value))
+
+            tbody.append(row)
+
+        tgroup.append(tbody)
+
+        table = nodes.table("", tgroup)
+        node.replace_self(table)
+
+
+def merge_driverproperties(app, env, docnames, other):
+    if not hasattr(env, "gdal_drivers"):
+        env.gdal_drivers = {}
+
+    if hasattr(other, "gdal_drivers"):
+        for k, v in other.gdal_drivers.items():
+            env.gdal_drivers[k] = v
+
+
 def purge_driverproperties(app, env, docname):
+    if hasattr(env, "gdal_drivers"):
+        env.gdal_drivers = {
+            k: v for k, v in env.gdal_drivers.items() if v["docname"] != docname
+        }
+
     for directive in [
         "all_shortname",
         "all_built_in_by_default",

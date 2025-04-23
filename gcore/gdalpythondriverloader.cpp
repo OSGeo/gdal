@@ -8,23 +8,7 @@
  * Copyright (c) 2017-2019, Even Rouault, <even dot rouault at spatialys dot
  *com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_conv.h"
@@ -142,7 +126,7 @@ static bool InitializePythonAndLoadGDALPythonDriverModule()
         "import json\n"
         "import inspect\n"
         "import sys\n"
-        "class BaseLayer(object):\n"
+        "class BaseLayer:\n"
         "   RandomRead='RandomRead'\n"
         "   FastSpatialFilter='FastSpatialFilter'\n"
         "   FastFeatureCount='FastFeatureCount'\n"
@@ -157,11 +141,11 @@ static bool InitializePythonAndLoadGDALPythonDriverModule()
         "BaseLayer'\n"
         "       return _gdal_python_driver.layer_featureCount(self, force)\n"
         "\n"
-        "class BaseDataset(object):\n"
+        "class BaseDataset:\n"
         "   def __init__(self):\n"
         "       pass\n"
         "\n"
-        "class BaseDriver(object):\n"
+        "class BaseDriver:\n"
         "   def __init__(self):\n"
         "       pass\n"
         "\n"
@@ -351,15 +335,10 @@ class PythonPluginLayer final : public OGRLayer
     const char *GetFIDColumn() override;
     OGRErr SetAttributeFilter(const char *) override;
 
-    void SetSpatialFilter(OGRGeometry *) override;
-    void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
+    OGRErr ISetSpatialFilter(int iGeomField, const OGRGeometry *) override;
 
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     char **GetMetadata(const char *pszDomain = "") override;
 };
@@ -527,19 +506,16 @@ void PythonPluginLayer::StoreSpatialFilter()
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void PythonPluginLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr PythonPluginLayer::ISetSpatialFilter(int iGeomField,
+                                            const OGRGeometry *poGeom)
 {
-    OGRLayer::SetSpatialFilter(poGeom);
-    StoreSpatialFilter();
-}
-
-void PythonPluginLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    StoreSpatialFilter();
+    const OGRErr eErr = OGRLayer::ISetSpatialFilter(iGeomField, poGeom);
+    if (eErr == OGRERR_NONE)
+        StoreSpatialFilter();
+    return eErr;
 }
 
 /************************************************************************/
@@ -696,10 +672,11 @@ GIntBig PythonPluginLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                           GetExtent()                                */
+/*                          IGetExtent()                                */
 /************************************************************************/
 
-OGRErr PythonPluginLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr PythonPluginLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                     bool bForce)
 {
     GIL_Holder oHolder(false);
     if (PyObject_HasAttrString(m_poLayer, "extent"))
@@ -712,7 +689,7 @@ OGRErr PythonPluginLayer::GetExtent(OGREnvelope *psExtent, int bForce)
             if (ErrOccurredEmitCPLError())
             {
                 Py_DecRef(poRet);
-                return OGRLayer::GetExtent(psExtent, bForce);
+                return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
             }
 
             if (poRet == Py_None)
@@ -752,7 +729,7 @@ OGRErr PythonPluginLayer::GetExtent(OGREnvelope *psExtent, int bForce)
             Py_DecRef(poRet);
         }
     }
-    return OGRLayer::GetExtent(psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/
@@ -1633,7 +1610,7 @@ bool PythonPluginDriver::LoadPlugin()
                  GetPyExceptionString().c_str());
         return false;
     }
-    const CPLString osPluginModuleName(CPLGetBasename(m_osFilename));
+    const CPLString osPluginModuleName(CPLGetBasenameSafe(m_osFilename));
     PyObject *poModule =
         PyImport_ExecCodeModule(osPluginModuleName, poCompiledString);
     Py_DecRef(poCompiledString);
@@ -1972,22 +1949,22 @@ void GDALDriverManager::AutoLoadPythonDrivers()
     const int nSearchPaths = CSLCount(papszSearchPaths);
     for (int iDir = 0; iDir < nSearchPaths; ++iDir)
     {
-        CPLString osABISpecificDir =
-            CPLFormFilename(papszSearchPaths[iDir], osABIVersion, nullptr);
+        std::string osABISpecificDir =
+            CPLFormFilenameSafe(papszSearchPaths[iDir], osABIVersion, nullptr);
 
         VSIStatBufL sStatBuf;
-        if (VSIStatL(osABISpecificDir, &sStatBuf) != 0)
+        if (VSIStatL(osABISpecificDir.c_str(), &sStatBuf) != 0)
             osABISpecificDir = papszSearchPaths[iDir];
 
-        char **papszFiles = CPLReadDir(osABISpecificDir);
+        char **papszFiles = CPLReadDir(osABISpecificDir.c_str());
         for (int i = 0; papszFiles && papszFiles[i]; i++)
         {
             if ((STARTS_WITH_CI(papszFiles[i], "gdal_") ||
                  STARTS_WITH_CI(papszFiles[i], "ogr_")) &&
-                EQUAL(CPLGetExtension(papszFiles[i]), "py"))
+                EQUAL(CPLGetExtensionSafe(papszFiles[i]).c_str(), "py"))
             {
-                aosPythonFiles.push_back(
-                    CPLFormFilename(osABISpecificDir, papszFiles[i], nullptr));
+                aosPythonFiles.push_back(CPLFormFilenameSafe(
+                    osABISpecificDir.c_str(), papszFiles[i], nullptr));
             }
         }
         CSLDestroy(papszFiles);

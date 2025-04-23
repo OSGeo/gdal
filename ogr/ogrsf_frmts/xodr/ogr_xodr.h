@@ -2,28 +2,12 @@
  * Project:  OpenGIS Simple Features for OpenDRIVE
  * Purpose:  Definition of OGR driver components for OpenDRIVE.
  * Author:   Michael Scholz, German Aerospace Center (DLR)
- *           Gülsen Bardak, German Aerospace Center (DLR)        
+ *           Gülsen Bardak, German Aerospace Center (DLR)
  *
  ******************************************************************************
  * Copyright 2024 German Aerospace Center (DLR), Institute of Transportation Systems
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #pragma once
@@ -78,7 +62,7 @@ class OGRXODRLayer : public OGRLayer
   protected:
     RoadElements m_roadElements{};
     bool m_bDissolveTIN{false};
-    OGRSpatialReference m_poSRS{};
+    OGRSpatialReference m_oSRS{};
     /* Unique feature ID which is automatically incremented for any new road feature creation. */
     int m_nNextFID{0};
 
@@ -114,7 +98,7 @@ class OGRXODRLayer : public OGRLayer
     OGRXODRLayer(const RoadElements &xodrRoadElements,
                  const std::string &proj4Defn);
     /**
-     * \param dissolveTriangulatedSurface True if original triangulated surface meshes from 
+     * \param dissolveTriangulatedSurface True if original triangulated surface meshes from
      * libOpenDRIVE are to be dissolved into simpler geometries.
      * Only applicable for layer types derived from meshes.
     */
@@ -240,7 +224,7 @@ class OGRXODRDataSource : public GDALDataset
 
     /**
      * Retrieves all necessary road elements from the underlying OpenDRIVE structure.
-     * 
+     *
      * \param roads Roads of the dataset.
     */
     RoadElements createRoadElements(const std::vector<odr::Road> &roads);
@@ -250,7 +234,7 @@ class OGRXODRDataSource : public GDALDataset
 
     int GetLayerCount() override
     {
-        return m_apoLayers.size();
+        return static_cast<int>(m_apoLayers.size());
     }
 
     OGRLayer *GetLayer(int) override;

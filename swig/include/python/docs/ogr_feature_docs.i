@@ -581,7 +581,7 @@ Returns the native media type for the feature.
 
 The native media type is the identifier for the format of the native
 data. It follows the IANA RFC 2045
-(seehttps://en.wikipedia.org/wiki/Media_type), e.g.
+(see https://en.wikipedia.org/wiki/Media_type), e.g.
 \"application/vnd.geo+json\" for JSon.
 
 See :cpp:func:`OGRFeature::GetNativeMediaType` and :ref:`rfc-60`.

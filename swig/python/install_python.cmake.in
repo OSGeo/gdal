@@ -1,4 +1,4 @@
-cmake_policy(VERSION 3.9)
+cmake_policy(VERSION 3.16)
 
 if(DEFINED ENV{DESTDIR})
   set(ROOT_DIR_ARG "--root=$ENV{DESTDIR}")

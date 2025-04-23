@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test AddBand() with VRTDerivedRasterBand.
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2011, Antonio Valentino
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -37,6 +20,10 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
@@ -79,8 +66,8 @@ def _validate(content):
 # Verify raster band subClass
 
 
-def test_vrtderived_1():
-    filename = "tmp/derived.vrt"
+def test_vrtderived_1(tmp_vsimem):
+    filename = tmp_vsimem / "derived.vrt"
     vrt_ds = gdal.GetDriverByName("VRT").Create(filename, 50, 50, 0)
 
     options = [
@@ -107,8 +94,7 @@ def test_vrtderived_1():
     )
     assert expected_md_read in md_read["source_0"]
 
-    xmlstring = open(filename).read()
-    gdal.Unlink(filename)
+    xmlstring = gdal.VSIFile(filename, "r").read()
 
     node = gdal.ParseXMLString(xmlstring)
     node = _xmlsearch(node, gdal.CXT_Element, "VRTRasterBand")
@@ -121,8 +107,8 @@ def test_vrtderived_1():
 # Verify derived raster band pixel function type
 
 
-def test_vrtderived_2():
-    filename = "tmp/derived.vrt"
+def test_vrtderived_2(tmp_vsimem):
+    filename = tmp_vsimem / "derived.vrt"
     vrt_ds = gdal.GetDriverByName("VRT").Create(filename, 50, 50, 0)
 
     options = [
@@ -149,8 +135,7 @@ def test_vrtderived_2():
     assert ret != 0
     vrt_ds = None
 
-    xmlstring = open(filename).read()
-    gdal.Unlink(filename)
+    xmlstring = gdal.VSIFile(filename, "r").read()
 
     node = gdal.ParseXMLString(xmlstring)
     node = _xmlsearch(node, gdal.CXT_Element, "VRTRasterBand")
@@ -166,8 +151,8 @@ def test_vrtderived_2():
 # Verify derived raster band transfer type
 
 
-def test_vrtderived_3():
-    filename = "tmp/derived.vrt"
+def test_vrtderived_3(tmp_vsimem):
+    filename = tmp_vsimem / "derived.vrt"
     vrt_ds = gdal.GetDriverByName("VRT").Create(filename, 50, 50, 0)
 
     options = [
@@ -188,8 +173,7 @@ def test_vrtderived_3():
     vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources")
     vrt_ds = None
 
-    xmlstring = open(filename).read()
-    gdal.Unlink(filename)
+    xmlstring = gdal.VSIFile(filename, "r").read()
 
     node = gdal.ParseXMLString(xmlstring)
     node = _xmlsearch(node, gdal.CXT_Element, "VRTRasterBand")
@@ -202,8 +186,8 @@ def test_vrtderived_3():
 # Check handling of invalid derived raster band transfer type
 
 
-def test_vrtderived_4():
-    filename = "tmp/derived.vrt"
+def test_vrtderived_4(tmp_vsimem):
+    filename = tmp_vsimem / "derived.vrt"
     vrt_ds = gdal.GetDriverByName("VRT").Create(filename, 50, 50, 0)
 
     options = [
@@ -241,12 +225,7 @@ def test_vrtderived_5():
 
 def test_vrtderived_6():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
         ds = gdal.Open("data/vrt/python_ones.vrt")
@@ -332,12 +311,7 @@ def test_vrtderived_7():
 
 def test_vrtderived_8():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "NO"):
         ds = gdal.Open("data/vrt/n43_hillshade.vrt")
@@ -357,12 +331,7 @@ def test_vrtderived_8():
 
 def test_vrtderived_9():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     # Missing PixelFunctionType
     with gdal.quiet_errors():
@@ -650,12 +619,7 @@ def one_pix_func(
 
 def test_vrtderived_10():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     content = """<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
@@ -719,12 +683,7 @@ def test_vrtderived_10():
 
 def test_vrtderived_11():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     gdal.FileFromMemBuffer(
         "/vsimem/n43_hillshade.vrt",
@@ -755,23 +714,23 @@ def test_vrtderived_11():
 
 def test_vrtderived_12():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     for dt in [
         "Byte",
+        "Int8",
         "UInt16",
         "Int16",
         "UInt32",
         "Int32",
+        "UInt64",
+        "Int64",
+        "Float16",
         "Float32",
         "Float64",
         "CInt16",
         "CInt32",
+        "CFloat16",
         "CFloat32",
         "CFloat64",
     ]:
@@ -790,18 +749,30 @@ def test_vrtderived_12():
             "GDAL_VRT_ENABLE_PYTHON", "YES"
         ), gdaltest.error_handler():
             cs = ds.GetRasterBand(1).Checksum()
-        # CInt16/CInt32 do not map to native numpy types
-        if dt == "CInt16" or dt == "CInt32":
-            expected_cs = -1  # error
+        # CInt16/CInt32/CFloat16 do not map to native numpy types
+        if dt == "CInt16" or dt == "CInt32" or dt == "CFloat16":
+            expected_cs = [-1]  # error
+        elif dt == "Float16":
+            # Might or might not be supported by GDAL
+            expected_cs = [-1, 100]
         else:
-            expected_cs = 100
-        if cs != expected_cs:
+            expected_cs = [100]
+        if cs not in expected_cs:
             print(dt)
             print(gdal.GetLastErrorMsg())
-            pytest.fail("invalid checksum")
+            if len(expected_cs) == 1:
+                pytest.fail(
+                    "invalid checksum, datatype %s, have %d, expected %d"
+                    % (dt, cs, expected_cs[0])
+                )
+            else:
+                pytest.fail(
+                    "invalid checksum, datatype %s, have %d, expected one of [%d, %d]"
+                    % (dt, cs, expected_cs[0], expected_cs[1])
+                )
 
     # Same for SourceTransferType
-    for dt in ["CInt16", "CInt32"]:
+    for dt in ["CInt16", "CInt32", "CFloat16"]:
         ds = gdal.Open(
             """<VRTDataset rasterXSize="10" rasterYSize="10">
 <VRTRasterBand dataType="%s" band="1" subClass="VRTDerivedRasterBand">
@@ -830,12 +801,7 @@ def test_vrtderived_12():
 
 def test_vrtderived_13():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
         # Will test the VRTDerivedRasterBand::IGetDataCoverageStatus() interface
@@ -855,12 +821,7 @@ def test_vrtderived_13():
 
 def test_vrtderived_14():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
         ds = gdal.GetDriverByName("VRT").CreateCopy(
@@ -910,12 +871,7 @@ def vrtderived_15_worker(args_dict):
 
 def test_vrtderived_15():
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     gdal.SetConfigOption("GDAL_VRT_ENABLE_PYTHON", "YES")
 
@@ -945,23 +901,16 @@ def test_vrtderived_15():
 # Check the effect of the SkipNonContributingSources element
 
 
-def test_vrtderived_skip_non_contributing_sources():
+def test_vrtderived_skip_non_contributing_sources(tmp_path):
 
-    try:
-        import numpy
-
-        numpy.ones
-    except (ImportError, AttributeError):
-        pytest.skip()
+    pytest.importorskip("numpy")
 
     def create_vrt(SkipNonContributingSources):
         Trace = ""
         if SkipNonContributingSources:
-            Trace = 'open("tmp/num_sources_skip_true.txt", "wt").write(str(len(in_ar)))'
+            Trace = f'open(r"{tmp_path}/num_sources_skip_true.txt", "wt").write(str(len(in_ar)))'
         else:
-            Trace = (
-                'open("tmp/num_sources_skip_false.txt", "wt").write(str(len(in_ar)))'
-            )
+            Trace = f'open(r"{tmp_path}/num_sources_skip_false.txt", "wt").write(str(len(in_ar)))'
         SkipNonContributingSources = "true" if SkipNonContributingSources else "false"
         ret = f"""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
@@ -998,25 +947,25 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
     with gdaltest.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
         assert ds.ReadRaster(0, 0, 20, 20) == ref_ds.ReadRaster(0, 0, 20, 20)
 
-        assert int(open("tmp/num_sources_skip_true.txt", "rt").read()) == 2
-        os.unlink("tmp/num_sources_skip_true.txt")
+        assert int(open(tmp_path / "num_sources_skip_true.txt", "rt").read()) == 2
+        os.unlink(tmp_path / "num_sources_skip_true.txt")
 
         assert ds.ReadRaster(0, 0, 1, 1) == ref_ds.ReadRaster(0, 0, 1, 1)
 
-        assert int(open("tmp/num_sources_skip_true.txt", "rt").read()) == 1
-        os.unlink("tmp/num_sources_skip_true.txt")
+        assert int(open(tmp_path / "num_sources_skip_true.txt", "rt").read()) == 1
+        os.unlink(tmp_path / "num_sources_skip_true.txt")
 
         assert ds.ReadRaster(10, 0, 10, 10) == ref_ds.ReadRaster(10, 0, 10, 10)
 
-        assert int(open("tmp/num_sources_skip_true.txt", "rt").read()) == 1
-        os.unlink("tmp/num_sources_skip_true.txt")
+        assert int(open(tmp_path / "num_sources_skip_true.txt", "rt").read()) == 1
+        os.unlink(tmp_path / "num_sources_skip_true.txt")
 
         assert ds.ReadRaster(0, 10, 1, 1) == ref_ds.ReadRaster(0, 10, 1, 1)
 
-        assert not os.path.exists("tmp/num_sources_skip_true.txt")
+        assert not os.path.exists(tmp_path / "num_sources_skip_true.txt")
 
-        assert int(open("tmp/num_sources_skip_false.txt", "rt").read()) == 2
-        os.unlink("tmp/num_sources_skip_false.txt")
+        assert int(open(tmp_path / "num_sources_skip_false.txt", "rt").read()) == 2
+        os.unlink(tmp_path / "num_sources_skip_false.txt")
 
     xml = ds.GetMetadata("xml:VRT")[0]
     assert "<SkipNonContributingSources>true</SkipNonContributingSources>" in xml
@@ -1028,6 +977,8 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
 
 @pytest.mark.parametrize("dtype", range(1, gdal.GDT_TypeCount))
 def test_vrt_derived_dtype(tmp_vsimem, dtype):
+
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     input_fname = tmp_vsimem / "input.tif"
@@ -1063,17 +1014,281 @@ def identity(in_ar, out_ar, *args, **kwargs):
     with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
         with gdal.Open(vrt_xml) as vrt_ds:
             arr = vrt_ds.ReadAsArray()
-            if dtype not in {gdal.GDT_CInt16, gdal.GDT_CInt32}:
+            # The complex int/float types are not available in numpy.
+            # Float16 may or may not be supported by GDAL.
+            if dtype not in {
+                gdal.GDT_CInt16,
+                gdal.GDT_CInt32,
+                gdal.GDT_Float16,
+                gdal.GDT_CFloat16,
+            }:
                 assert arr[0, 0] == 1
             assert vrt_ds.GetRasterBand(1).DataType == dtype
 
 
 ###############################################################################
-# Cleanup.
+# Test arbitrary expression pixel functions
 
 
-def test_vrtderived_cleanup():
-    try:
-        os.remove("tmp/derived.vrt")
-    except OSError:
-        pass
+def vrt_expression_xml(tmpdir, expression, dialect, sources):
+
+    drv = gdal.GetDriverByName("GTiff")
+
+    nx = 1
+    ny = 1
+
+    expression = expression.replace("<", "&lt;").replace(">", "&gt;")
+
+    xml = f"""<VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
+              <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+                 <PixelFunctionType>expression</PixelFunctionType>
+                 <PixelFunctionArguments expression="{expression}" dialect="{dialect}" />"""
+
+    for i, source in enumerate(sources):
+        if type(source) is tuple:
+            source_name, source_value = source
+        else:
+            source_name = ""
+            source_value = source
+
+        src_fname = tmpdir / f"source_{i}.tif"
+
+        with drv.Create(src_fname, 1, 1, 1, gdal.GDT_Float64) as ds:
+            ds.GetRasterBand(1).Fill(source_value)
+
+        xml += f"""<SimpleSource name="{source_name}">
+                     <SourceFilename relativeToVRT="0">{src_fname}</SourceFilename>
+                     <SourceBand>1</SourceBand>
+                   </SimpleSource>"""
+
+    xml += "</VRTRasterBand></VRTDataset>"
+
+    return xml
+
+
+@pytest.mark.parametrize(
+    "expression,sources,result,dialects",
+    [
+        pytest.param("A", [("A", 77)], 77, None, id="identity"),
+        pytest.param(
+            "(NIR-R)/(NIR+R)",
+            [("NIR", 77), ("R", 63)],
+            (77 - 63) / (77 + 63),
+            None,
+            id="simple expression",
+        ),
+        pytest.param(
+            "if (A > B) 1.5*C ; else A",
+            [("A", 77), ("B", 63), ("C", 18)],
+            27,
+            ["exprtk"],
+            id="exprtk conditional (explicit)",
+        ),
+        pytest.param(
+            "(A > B) ? 1.5*C : A",
+            [("A", 77), ("B", 63), ("C", 18)],
+            27,
+            ["muparser"],
+            id="muparser conditional (explicit)",
+        ),
+        pytest.param(
+            "(A > B)*(1.5*C) + (A <= B)*(A)",
+            [("A", 77), ("B", 63), ("C", 18)],
+            27,
+            None,
+            id="conditional (implicit)",
+        ),
+        pytest.param(
+            "B2 * PopDensity",
+            [("PopDensity", 3), ("", 7)],
+            21,
+            None,
+            id="implicit source name",
+        ),
+        pytest.param(
+            "B1 / sum(BANDS)",
+            [("", 3), ("", 5), ("", 31)],
+            3 / (3 + 5 + 31),
+            None,
+            id="use of BANDS variable",
+        ),
+        pytest.param(
+            "B1 / sum(B2, B3) ",
+            [("", 3), ("", 5), ("", 31)],
+            3 / (5 + 31),
+            None,
+            id="aggregate specified inputs",
+        ),
+        pytest.param(
+            "var q[2] := {B2, B3}; B1 * q",
+            [("", 3), ("", 5), ("", 31)],
+            15,  # First value in returned vector. This behavior doesn't seem desirable
+            # but I haven't figured out how to detect a vector return.
+            ["exprtk"],
+            id="return vector",
+        ),
+        pytest.param(
+            "B1 + B2 + B3",
+            (5, 9, float("nan")),
+            float("nan"),
+            None,
+            id="nan propagated via arithmetic",
+        ),
+        pytest.param(
+            "if (B3) B1 ; else B2",
+            (5, 9, float("nan")),
+            5,
+            ["exprtk"],
+            id="exprtk nan = truth in conditional?",
+        ),
+        pytest.param(
+            "B3 ? B1 : B2",
+            (5, 9, float("nan")),
+            5,
+            ["muparser"],
+            id="muparser nan = truth in conditional?",
+        ),
+        pytest.param(
+            "if (B3 > 0) B1 ; else B2",
+            (5, 9, float("nan")),
+            9,
+            ["exprtk"],
+            id="exprtk nan comparison is false in conditional",
+        ),
+        pytest.param(
+            "(B3 > 0) ? B1 : B2",
+            (5, 9, float("nan")),
+            9,
+            ["muparser"],
+            id="muparser nan comparison is false in conditional",
+        ),
+        pytest.param(
+            "if (B1 > 5) B1",
+            (1,),
+            float("nan"),
+            ["exprtk"],
+            id="expression returns nodata",
+        ),
+        pytest.param(
+            "ZB[1] + B[1]",
+            [("ZB[1]", 7), ("B[1]", 3)],
+            10,
+            ["muparser"],
+            id="index substitution works correctly",
+        ),
+    ],
+)
+@pytest.mark.parametrize("dialect", ("exprtk", "muparser"))
+def test_vrt_pixelfn_expression(
+    tmp_vsimem, expression, sources, result, dialect, dialects
+):
+    pytest.importorskip("numpy")
+
+    if not gdaltest.gdal_has_vrt_expression_dialect(dialect):
+        pytest.skip(f"Expression dialect {dialect} is not available")
+
+    if dialects and dialect not in dialects:
+        pytest.skip(f"Expression not supported for dialect {dialect}")
+
+    xml = vrt_expression_xml(tmp_vsimem, expression, dialect, sources)
+
+    with gdal.Open(xml) as ds:
+        assert pytest.approx(ds.ReadAsArray()[0][0], nan_ok=True) == result
+
+
+@pytest.mark.parametrize(
+    "expression,sources,dialect,exception",
+    [
+        pytest.param(
+            "A*B + C",
+            [("A", 77), ("B", 63)],
+            "exprtk",
+            "Undefined symbol",
+            id="exprtk undefined variable",
+        ),
+        pytest.param(
+            "A*B + C",
+            [("A", 77), ("B", 63)],
+            "muparser",
+            "Unexpected token",
+            id="muparser undefined variable",
+        ),
+        pytest.param(
+            "(".join(["asin", "sin", "acos", "cos"] * 100) + "(X" + 100 * 4 * ")",
+            [("X", 0.5)],
+            "exprtk",
+            "exceeds maximum allowed stack depth",
+            id="expression is too complex",
+        ),
+        pytest.param(
+            " ".join(["sin(x) + cos(x)"] * 10000),
+            [("x", 0.5)],
+            "exprtk",
+            "exceeds maximum of 100000 set by GDAL_EXPRTK_MAX_EXPRESSION_LENGTH",
+            id="expression is too long",
+        ),
+        pytest.param(
+            "B@1",
+            [("B@1", 3)],
+            "muparser",
+            "Invalid variable name",
+            id="invalid variable name",
+        ),
+    ],
+)
+def test_vrt_pixelfn_expression_invalid(
+    tmp_vsimem, expression, sources, dialect, exception
+):
+    pytest.importorskip("numpy")
+
+    if not gdaltest.gdal_has_vrt_expression_dialect(dialect):
+        pytest.skip(f"Expression dialect {dialect} is not available")
+
+    messages = []
+
+    def handle(ecls, ecode, emsg):
+        messages.append(emsg)
+
+    xml = vrt_expression_xml(tmp_vsimem, expression, dialect, sources)
+
+    with gdaltest.error_handler(handle):
+        ds = gdal.Open(xml)
+        if ds:
+            assert ds.ReadAsArray() is None
+
+    assert exception in "".join(messages)
+
+
+###############################################################################
+# Test multiplication / summation by a constant factor
+
+
+@pytest.mark.parametrize("fn", ["sum", "mul"])
+def test_vrt_pixelfn_constant_factor(tmp_vsimem, fn):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    k = 7
+
+    xml = f"""
+    <VRTDataset rasterXSize="20" rasterYSize="20">
+      <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
+        <PixelFunctionType>{fn}</PixelFunctionType>
+        <PixelFunctionArguments k="{k}" />
+        <SimpleSource>
+          <SourceFilename>data/byte.tif</SourceFilename>
+          <SourceBand>1</SourceBand>
+          <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+          <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    src = gdal.Open("data/byte.tif").ReadAsArray().astype(np.float32)
+    dst = gdal.Open(xml).ReadAsArray()
+
+    if fn == "sum":
+        np.testing.assert_array_equal(dst, src + k)
+    elif fn == "mul":
+        np.testing.assert_array_equal(dst, src * k)

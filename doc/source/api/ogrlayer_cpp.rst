@@ -9,6 +9,14 @@
 OGRLayer C++ API
 ================================================================================
 
+Include file
+------------
+
+:file:`ogrsf_frmts.h`
+
+OGRLayer class
+--------------
+
 .. doxygenclass:: OGRLayer
    :project: api
    :members:

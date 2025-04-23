@@ -8,23 +8,7 @@
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -200,12 +184,10 @@ static inline void gvBurnScanlineInt64UserBurnValue(GDALRasterizeInfo *psInfo,
 /************************************************************************/
 /*                           gvBurnScanline()                           */
 /************************************************************************/
-static void gvBurnScanline(void *pCBData, int nY, int nXStart, int nXEnd,
-                           double dfVariant)
+static void gvBurnScanline(GDALRasterizeInfo *psInfo, int nY, int nXStart,
+                           int nXEnd, double dfVariant)
 
 {
-    GDALRasterizeInfo *psInfo = static_cast<GDALRasterizeInfo *>(pCBData);
-
     if (nXStart > nXEnd)
         return;
 
@@ -260,6 +242,10 @@ static void gvBurnScanline(void *pCBData, int nY, int nXStart, int nXEnd,
             gvBurnScanlineBasic<std::uint64_t>(psInfo, nY, nXStart, nXEnd,
                                                dfVariant);
             break;
+        case GDT_Float16:
+            gvBurnScanlineBasic<GFloat16>(psInfo, nY, nXStart, nXEnd,
+                                          dfVariant);
+            break;
         case GDT_Float32:
             gvBurnScanlineBasic<float>(psInfo, nY, nXStart, nXEnd, dfVariant);
             break;
@@ -268,6 +254,7 @@ static void gvBurnScanline(void *pCBData, int nY, int nXStart, int nXEnd,
             break;
         case GDT_CInt16:
         case GDT_CInt32:
+        case GDT_CFloat16:
         case GDT_CFloat32:
         case GDT_CFloat64:
         case GDT_Unknown:
@@ -324,10 +311,10 @@ static inline void gvBurnPointInt64UserBurnValue(GDALRasterizeInfo *psInfo,
 /************************************************************************/
 /*                            gvBurnPoint()                             */
 /************************************************************************/
-static void gvBurnPoint(void *pCBData, int nY, int nX, double dfVariant)
+static void gvBurnPoint(GDALRasterizeInfo *psInfo, int nY, int nX,
+                        double dfVariant)
 
 {
-    GDALRasterizeInfo *psInfo = static_cast<GDALRasterizeInfo *>(pCBData);
 
     CPLAssert(nY >= 0 && nY < psInfo->nYSize);
     CPLAssert(nX >= 0 && nX < psInfo->nXSize);
@@ -387,6 +374,9 @@ static void gvBurnPoint(void *pCBData, int nY, int nX, double dfVariant)
         case GDT_UInt64:
             gvBurnPointBasic<std::uint64_t>(psInfo, nY, nX, dfVariant);
             break;
+        case GDT_Float16:
+            gvBurnPointBasic<GFloat16>(psInfo, nY, nX, dfVariant);
+            break;
         case GDT_Float32:
             gvBurnPointBasic<float>(psInfo, nY, nX, dfVariant);
             break;
@@ -395,6 +385,7 @@ static void gvBurnPoint(void *pCBData, int nY, int nX, double dfVariant)
             break;
         case GDT_CInt16:
         case GDT_CInt32:
+        case GDT_CFloat16:
         case GDT_CFloat32:
         case GDT_CFloat64:
         case GDT_Unknown:
@@ -546,9 +537,35 @@ static void GDALCollectRingsFromGeometry(const OGRGeometry *poShape,
     }
 }
 
-/************************************************************************/
-/*                       gv_rasterize_one_shape()                       */
-/************************************************************************/
+/************************************************************************
+ *                       gv_rasterize_one_shape()
+ *
+ * @param pabyChunkBuf buffer to which values will be burned
+ * @param nXOff chunk column offset from left edge of raster
+ * @param nYOff chunk scanline offset from top of raster
+ * @param nXSize number of columns in chunk
+ * @param nYSize number of rows in chunk
+ * @param nBands number of bands in chunk
+ * @param eType data type of pabyChunkBuf
+ * @param nPixelSpace number of bytes between adjacent pixels in chunk
+ *                    (0 to calculate automatically)
+ * @param nLineSpace number of bytes between adjacent scanlines in chunk
+ *                   (0 to calculate automatically)
+ * @param nBandSpace number of bytes between adjacent bands in chunk
+ *                   (0 to calculate automatically)
+ * @param bAllTouched burn value to all touched pixels?
+ * @param poShape geometry to rasterize, in original coordinates
+ * @param eBurnValueType type of value to be burned (must be Float64 or Int64)
+ * @param padfBurnValues array of nBands values to burn (Float64), or nullptr
+ * @param panBurnValues array of nBands values to burn (Int64), or nullptr
+ * @param eBurnValueSrc whether to burn values from padfBurnValues /
+ *                      panBurnValues, or from the Z or M values of poShape
+ * @param eMergeAlg whether the burn value should replace or be added to the
+ *                  existing values
+ * @param pfnTransformer transformer from CRS of geometry to pixel/line
+ *                       coordinates of raster
+ * @param pTransformArg arguments to pass to pfnTransformer
+ ************************************************************************/
 static void gv_rasterize_one_shape(
     unsigned char *pabyChunkBuf, int nXOff, int nYOff, int nXSize, int nYSize,
     int nBands, GDALDataType eType, int nPixelSpace, GSpacing nLineSpace,
@@ -621,10 +638,13 @@ static void gv_rasterize_one_shape(
     /*      Transform polygon geometries into a set of rings and a part     */
     /*      size list.                                                      */
     /* -------------------------------------------------------------------- */
-    std::vector<double> aPointX;
-    std::vector<double> aPointY;
-    std::vector<double> aPointVariant;
-    std::vector<int> aPartSize;
+    std::vector<double>
+        aPointX;  // coordinate X values from all rings/components
+    std::vector<double>
+        aPointY;  // coordinate Y values from all rings/components
+    std::vector<double> aPointVariant;  // coordinate Z values
+    std::vector<int> aPartSize;  // number of X/Y/(Z) values associated with
+                                 // each ring/component
 
     GDALCollectRingsFromGeometry(poShape, aPointX, aPointY, aPointVariant,
                                  aPartSize, eBurnValueSrc);
@@ -1661,11 +1681,17 @@ CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
             OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
             if (!poSRS)
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Failed to fetch spatial reference on layer %s "
-                         "to build transformer, assuming matching coordinate "
-                         "systems.",
-                         poLayer->GetLayerDefn()->GetName());
+                if (poDS->GetSpatialRef() != nullptr ||
+                    poDS->GetGCPSpatialRef() != nullptr ||
+                    poDS->GetMetadata("RPC") != nullptr)
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Failed to fetch spatial reference on layer %s "
+                        "to build transformer, assuming matching coordinate "
+                        "systems.",
+                        poLayer->GetLayerDefn()->GetName());
+                }
             }
             else
             {

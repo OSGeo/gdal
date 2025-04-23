@@ -7,27 +7,11 @@
  ******************************************************************************
  * Copyright (c) 2016, Planet Labs
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_plscenes.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 #include <time.h>
 
 /************************************************************************/
@@ -266,8 +250,8 @@ json_object *OGRPLScenesDataV1Dataset::RunRequest(const char *pszURL,
         psResult = (CPLHTTPResult *)CPLCalloc(1, sizeof(CPLHTTPResult));
         vsi_l_offset nDataLengthLarge = 0;
         CPLString osURL(pszURL);
-        if (osURL[osURL.size() - 1] == '/')
-            osURL.resize(osURL.size() - 1);
+        if (osURL.back() == '/')
+            osURL.pop_back();
         if (pszPostContent != nullptr)
         {
             osURL += "&POSTFIELDS=";
@@ -626,7 +610,11 @@ retry:
             {
                 // Set a dummy name so that PAM goes here
                 CPLPushErrorHandler(CPLQuietErrorHandler);
-                poOutDS->SetDescription("/vsimem/tmp/ogrplscenesDataV1");
+
+                const std::string osTmpFilename =
+                    VSIMemGenerateHiddenFilename("ogrplscenesDataV1");
+
+                poOutDS->SetDescription(osTmpFilename.c_str());
 
                 /* Attach scene metadata. */
                 poLayer->SetAttributeFilter(
@@ -663,8 +651,9 @@ retry:
                 delete poFeat;
 
                 poOutDS->FlushCache(false);
-                VSIUnlink("/vsimem/tmp/ogrplscenesDataV1");
-                VSIUnlink("/vsimem/tmp/ogrplscenesDataV1.aux.xml");
+                VSIUnlink(osTmpFilename.c_str());
+                VSIUnlink(
+                    std::string(osTmpFilename).append(".aux.xml").c_str());
                 CPLPopErrorHandler();
             }
         }

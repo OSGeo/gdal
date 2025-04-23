@@ -5,8 +5,8 @@
 
 .. _python_vector_api:
 
-Python Vector API
-=================
+Vector API
+==========
 
 This page contains classes, methods, functions that relate to the GDAL :ref:`vector_data_model`. The :py:class:`Driver` and :py:class:`Dataset` classes, which applies to both vector and raster data, are documented with the :ref:`python_raster_api`.
 

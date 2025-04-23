@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements Open FileGDB OGR driver.
@@ -8,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_OPENFILEGDB_H_INCLUDED
@@ -44,7 +27,7 @@
 
 using namespace OpenFileGDB;
 
-std::string OFGDBGenerateUUID();
+std::string OFGDBGenerateUUID(bool bInit = false);
 
 int OGROpenFileGDBIsComparisonOp(int op);
 
@@ -256,7 +239,7 @@ class OGROpenFileGDBLayer final : public OGRLayer
     void CreateSpatialIndex();
     void CreateIndex(const std::string &osIdxName,
                      const std::string &osExpression);
-    bool Repack();
+    bool Repack(GDALProgressFunc pfnProgress, void *pProgressData);
     void RecomputeExtent();
 
     bool CheckFreeListConsistency();
@@ -282,25 +265,16 @@ class OGROpenFileGDBLayer final : public OGRLayer
     virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
-
-    OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
-                       int bForce) override;
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                        bool bForce) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *poGeom) override;
 
     virtual OGRErr SetAttributeFilter(const char *pszFilter) override;
 
@@ -438,7 +412,7 @@ class OGROpenFileGDBFeatureDefn : public OGRFeatureDefn
 /*                       OGROpenFileGDBDataSource                       */
 /************************************************************************/
 
-class OGROpenFileGDBDataSource final : public OGRDataSource
+class OGROpenFileGDBDataSource final : public GDALDataset
 {
     friend class OGROpenFileGDBLayer;
     friend class GDALOpenFileGDBRasterBand;
@@ -545,9 +519,9 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
 
     virtual CPLErr FlushCache(bool bAtClosing = false) override;
 
-    virtual const char *GetName() override
+    std::vector<std::unique_ptr<OGROpenFileGDBLayer>> &GetLayers()
     {
-        return m_osDirName.c_str();
+        return m_apoLayers;
     }
 
     virtual int GetLayerCount() override

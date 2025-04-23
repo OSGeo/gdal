@@ -29,6 +29,7 @@
 #include <cstring>
 
 #include "cpl_conv.h"
+#include "cpl_character_sets.h"
 
 #include "utf8.h"
 
@@ -91,27 +92,11 @@ char CPL_DLL *CPLRecode(const char *pszSource, const char *pszSrcEncoding,
          EQUAL(pszDstEncoding, CPL_ENC_ISO8859_1)))
         return CPLStrdup(pszSource);
 
-    /* -------------------------------------------------------------------- */
-    /*      For ZIP file handling                                           */
-    /*      (CP437 might be missing even on some iconv, like on Mac)        */
-    /* -------------------------------------------------------------------- */
-    if (EQUAL(pszSrcEncoding, "CP437") &&
-        EQUAL(pszDstEncoding, CPL_ENC_UTF8))  //
+    // A few hard coded CPxxx/ISO-8859-x to UTF-8 tables
+    if (EQUAL(pszDstEncoding, CPL_ENC_UTF8) &&
+        CPLGetConversionTableToUTF8(pszSrcEncoding))
     {
-        bool bIsAllPrintableASCII = true;
-        const size_t nCharCount = strlen(pszSource);
-        for (size_t i = 0; i < nCharCount; i++)
-        {
-            if (pszSource[i] < 32 || pszSource[i] > 126)
-            {
-                bIsAllPrintableASCII = false;
-                break;
-            }
-        }
-        if (bIsAllPrintableASCII)
-        {
-            return CPLStrdup(pszSource);
-        }
+        return CPLRecodeStub(pszSource, pszSrcEncoding, pszDstEncoding);
     }
 
 #ifdef CPL_RECODE_ICONV

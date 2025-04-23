@@ -1,15 +1,14 @@
 HTTP/1.1 200 OK
-Date: Tue, 20 Jun 2023 10:38:09 GMT
+Date: Tue, 08 Apr 2025 23:32:56 GMT
 Server: Apache/2.4.52 (Ubuntu)
-Expires: Wed, 12 Jun 2024 14:20:54 GMT
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Expires: Wed, 08 Apr 2026 23:32:56 GMT
 Access-Control-Allow-Origin: *
 Vary: Accept,Accept-Encoding,Prefer
-Content-Length: 6393
-Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
-Age: 591435
+Content-Type: application/json
+Content-Length: 6901
 Keep-Alive: timeout=5, max=100
 Connection: Keep-Alive
-Content-Type: application/json
 
 {
    "title" : "ne_10m_lakes_europe",
@@ -101,7 +100,7 @@ Content-Type: application/json
          "id" : "ne_10m_lakes_europe",
          "dataType" : "vector",
          "geometryDimension" : 2,
-         "minScaleDenominator" : 4367830.1877243574709,
+         "minScaleDenominator" : 4367830.18772436,
          "minCellSize" : 0.010986328125,
          "maxTileMatrix" : "6",
          "links" : [
@@ -111,37 +110,49 @@ Content-Type: application/json
             }
          ],
          "propertiesSchema" : {
+            "$schema" : "https://json-schema.org/draft/2020-12/schema",
             "type" : "object",
             "properties" : { "altitude" : {
-               "type" : "integer"
+               "type" : "integer",
+               "x-ogc-propertySeq" : 6
             }, "featurecla" : {
-               "type" : "string"
+               "type" : "string",
+               "x-ogc-propertySeq" : 9
             }, "funkyname" : {
-               "type" : "integer"
+               "type" : "integer",
+               "x-ogc-propertySeq" : 11
             }, "id" : {
-               "type" : "integer"
+               "type" : "integer",
+               "x-ogc-propertySeq" : 1
             }, "lge_id" : {
-               "type" : "string"
+               "type" : "string",
+               "x-ogc-propertySeq" : 3
             }, "lke_type" : {
-               "type" : "string"
+               "type" : "string",
+               "x-ogc-propertySeq" : 5
             }, "name" : {
-               "type" : "string"
+               "type" : "string",
+               "x-ogc-propertySeq" : 2
             }, "note" : {
-               "type" : "string"
+               "type" : "string",
+               "x-ogc-propertySeq" : 10
             }, "objectid" : {
-               "type" : "integer"
+               "type" : "integer",
+               "x-ogc-propertySeq" : 7
             }, "pfafstette" : {
-               "type" : "integer"
+               "type" : "integer",
+               "x-ogc-propertySeq" : 4
             }, "scalerank" : {
-               "type" : "integer"
+               "type" : "integer",
+               "x-ogc-propertySeq" : 8
             } }
          }
       }
    ],
    "centerPoint" : {
-      "coordinates" : [ 0, 0.000102911832 ],
+      "coordinates" : [ 0, 0.00010291183195197 ],
       "tileMatrix" : "3",
-      "scaleDenominator" : 34942641.501794859767,
+      "scaleDenominator" : 34942641.501795,
       "cellSize" : 0.087890625,
       "crs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
    }

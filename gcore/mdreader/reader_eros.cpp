@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2014-2015, NextGIS info@nextgis.ru
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -46,8 +30,8 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
                                    char **papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
-    CPLString osBaseName = CPLGetBasename(pszPath);
-    CPLString osDirName = CPLGetDirname(pszPath);
+    const CPLString osBaseName = CPLGetBasenameSafe(pszPath);
+    const CPLString osDirName = CPLGetDirnameSafe(pszPath);
     char szMetadataName[512] = {0};
     size_t i;
     if (osBaseName.size() > 511)
@@ -57,7 +41,7 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
         if (STARTS_WITH_CI(osBaseName + i, "."))
         {
             std::string osPassFileName =
-                CPLFormFilename(osDirName, szMetadataName, "pass");
+                CPLFormFilenameSafe(osDirName, szMetadataName, "pass");
             if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
             {
                 m_osIMDSourceFilename = std::move(osPassFileName);
@@ -66,7 +50,7 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
             else
             {
                 osPassFileName =
-                    CPLFormFilename(osDirName, szMetadataName, "PASS");
+                    CPLFormFilenameSafe(osDirName, szMetadataName, "PASS");
                 if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
                 {
                     m_osIMDSourceFilename = std::move(osPassFileName);
@@ -80,14 +64,15 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
     if (m_osIMDSourceFilename.empty())
     {
         std::string osPassFileName =
-            CPLFormFilename(osDirName, szMetadataName, "pass");
+            CPLFormFilenameSafe(osDirName, szMetadataName, "pass");
         if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
         {
             m_osIMDSourceFilename = std::move(osPassFileName);
         }
         else
         {
-            osPassFileName = CPLFormFilename(osDirName, szMetadataName, "PASS");
+            osPassFileName =
+                CPLFormFilenameSafe(osDirName, szMetadataName, "PASS");
             if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
             {
                 m_osIMDSourceFilename = std::move(osPassFileName);
@@ -96,14 +81,14 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
     }
 
     std::string osRPCFileName =
-        CPLFormFilename(osDirName, szMetadataName, "rpc");
+        CPLFormFilenameSafe(osDirName, szMetadataName, "rpc");
     if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
     {
         m_osRPBSourceFilename = std::move(osRPCFileName);
     }
     else
     {
-        osRPCFileName = CPLFormFilename(osDirName, szMetadataName, "RPC");
+        osRPCFileName = CPLFormFilenameSafe(osDirName, szMetadataName, "RPC");
         if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
             m_osRPBSourceFilename = std::move(osRPCFileName);

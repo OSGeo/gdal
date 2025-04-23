@@ -1,3 +1,22 @@
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/helpers/GdalCMakeMinimumRequired.cmake")
+cmake_minimum_required(VERSION ${GDAL_CMAKE_VERSION_MIN}...${GDAL_CMAKE_VERSION_MAX})
+
+if(NOT DEFINED PROJECT_SOURCE_DIR)
+    # Standalone plugin building
+    project(gdal_GEOR)
+    include("${PROJECT_SOURCE_DIR}/../../cmake/helpers/SetupStandalonePlugin.cmake")
+    include(CheckDependentLibrariesZLIB)
+    include(CheckDependentLibrariesJpeg)
+    include(CheckDependentLibrariesOracle)
+    if (GDAL_USE_ZLIB_INTERNAL)
+        message(FATAL_ERROR "Internal zlib not supported for GeoRaster standalone plugin build")
+    endif()
+    if (GDAL_USE_JPEG_INTERNAL)
+        message(FATAL_ERROR "Internal libjpeg not supported for GeoRaster standalone plugin build")
+    endif()
+    standalone_driver_finalize(GDAL_ENABLE_DRIVER_GEOR)
+endif()
+
 add_gdal_driver(
   TARGET gdal_GEOR
   SOURCES georaster_dataset.cpp georaster_priv.h georaster_rasterband.cpp georaster_wrapper.cpp oci_wrapper.cpp

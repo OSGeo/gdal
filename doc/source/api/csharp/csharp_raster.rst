@@ -15,40 +15,40 @@ The :file:`Band` class contains the following :file:`ReadRaster`/:file:`WriteRas
 
 .. code-block:: C#
 
-    public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, byte[] buffer, 
+    public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, byte[] buffer,
         int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
-        
-    public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, byte[] buffer, 
+
+    public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, byte[] buffer,
         int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
-        
-    public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, short[] buffer, 
+
+    public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, short[] buffer,
         int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
-        
-    public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, short[] buffer, 
+
+    public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, short[] buffer,
         int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
-        
-    public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, int[] buffer, 
+
+    public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, int[] buffer,
         int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
-        
-    public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, int[] buffer, 
+
+    public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, int[] buffer,
         int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
-        
-    public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, float[] buffer, 
+
+    public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, float[] buffer,
         int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
-        
-    public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, float[] buffer, 
+
+    public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, float[] buffer,
         int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
-        
-    public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, double[] buffer, 
+
+    public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, double[] buffer,
         int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
-        
-    public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, double[] buffer, 
+
+    public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, double[] buffer,
         int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
-        
+
     public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, IntPtr buffer, i
         nt buf_xSize, int buf_ySize, DataType buf_type, int pixelSpace, int lineSpace){}
-  
-    public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, IntPtr buffer, 
+
+    public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, IntPtr buffer,
         int buf_xSize, int buf_ySize, DataType buf_type, int pixelSpace, int lineSpace){}
 
 The only difference between these functions is the actual type of the buffer parameter.
@@ -76,7 +76,7 @@ When reading the image this way the C# API will copy the image data between the 
     band.ReadRaster(0, 0, width, height, r, width, height, 0, 0);
     // Copying the pixels into the C# bitmap
     int i, j;
-    for (i = 0; i< width; i++) 
+    for (i = 0; i< width; i++)
     {
         for (j=0; j<height; j++)
         {
@@ -113,13 +113,13 @@ Raster data can be read into the C# bitmap directly using the following approach
     Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format8bppIndexed);
     // Obtaining the bitmap buffer
     BitmapData bitmapData = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format8bppIndexed);
-    try 
+    try
     {
         int stride = bitmapData.Stride;
         IntPtr buf = bitmapData.Scan0;
         band.ReadRaster(0, 0, width, height, buf, width, height, DataType.GDT_Byte, 1, stride);
     }
-    finally 
+    finally
     {
         bitmap.UnlockBits(bitmapData);
     }
@@ -167,7 +167,7 @@ When reading images with indexed color representations, the programmer might hav
     Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format8bppIndexed);
     // Obtaining the bitmap buffer
     BitmapData bitmapData = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format8bppIndexed);
-    try 
+    try
         {
             int iCol = ct.GetCount();
             ColorPalette pal = bitmap.Palette;
@@ -177,13 +177,13 @@ When reading images with indexed color representations, the programmer might hav
                 pal.Entries[i] = Color.FromArgb(ce.c4, ce.c1, ce.c2, ce.c3);
             }
             bitmap.Palette = pal;
-                
+
             int stride = bitmapData.Stride;
             IntPtr buf = bitmapData.Scan0;
 
             band.ReadRaster(0, 0, width, height, buf, width, height, DataType.GDT_Byte, 1, stride);
             }
-            finally 
+            finally
             {
                 bitmap.UnlockBits(bitmapData);
             }
@@ -199,19 +199,19 @@ When reading grayscale images, the programmer should create a sufficient palette
     Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format8bppIndexed);
     // Obtaining the bitmap buffer
     BitmapData bitmapData = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format8bppIndexed);
-    try 
+    try
         {
-            ColorPalette pal = bitmap.Palette; 
-            for(int i = 0; i < 256; i++) 
-                pal.Entries[i] = Color.FromArgb( 255, i, i, i ); 
+            ColorPalette pal = bitmap.Palette;
+            for(int i = 0; i < 256; i++)
+                pal.Entries[i] = Color.FromArgb( 255, i, i, i );
             bitmap.Palette = pal;
-                
+
             int stride = bitmapData.Stride;
             IntPtr buf = bitmapData.Scan0;
 
             band.ReadRaster(0, 0, width, height, buf, width, height, DataType.GDT_Byte, 1, stride);
         }
-        finally 
+        finally
         {
             bitmap.UnlockBits(bitmapData);
         }
@@ -224,5 +224,3 @@ The following examples demonstrate the usage of the GDAL raster operations menti
 * :source_file:`swig/csharp/apps/GDALRead.cs`
 * :source_file:`swig/csharp/apps/GDALReadDirect.cs`
 * :source_file:`swig/csharp/apps/GDALReadDirect.cs`
-
-.. note:: This document was amended from the previous version at `https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpRaster <https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpRaster>`__

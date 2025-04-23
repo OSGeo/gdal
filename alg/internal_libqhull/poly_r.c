@@ -1180,9 +1180,9 @@ int qh_pointid(qhT *qh, pointT *point) {
     /* coverity[divide_arg] */
     id= offset / qh->hull_dim;
   } else {
-    id = qh_setindex(qh->other_points, point);
-    if (id >= 0) {
-      id += qh->num_points;
+    const int idx = qh_setindex(qh->other_points, point);
+    if (idx >= 0) {
+      id = (ptr_intT)idx + qh->num_points;
     } else {
       return qh_IDunknown;
     }

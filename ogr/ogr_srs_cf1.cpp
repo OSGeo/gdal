@@ -8,23 +8,7 @@
  * Copyright (c) 2004, Frank Warmerdam
  * Copyright (c) 2007-2024, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_core.h"
@@ -1305,8 +1289,7 @@ NCDFGetProjAttribs(const OGR_SRSNode *poPROJCS, const char *pszProjection)
                     // Default is to not write as it is not CF-1.
                     bWriteVal = false;
                     // Test if there is no standard_parallel1.
-                    if (oValMap.find(std::string(CF_PP_STD_PARALLEL_1)) ==
-                        oValMap.end())
+                    if (!cpl::contains(oValMap, CF_PP_STD_PARALLEL_1))
                     {
                         // If scale factor != 1.0, write value for GDAL, but
                         // this is not supported by CF-1.
@@ -1362,7 +1345,7 @@ NCDFGetProjAttribs(const OGR_SRSNode *poPROJCS, const char *pszProjection)
             const auto &osGDALAtt = oValIter.first;
             const double dfValue = oValIter.second;
 
-            const auto &oAttIter = oAttMap.find(osGDALAtt);
+            const auto oAttIter = oAttMap.find(osGDALAtt);
 
             if (oAttIter != oAttMap.end())
             {
@@ -1695,7 +1678,7 @@ OGRSpatialReference::exportToCF1(char **ppszGridMappingName,
                     {
                         if (!osVal.empty())
                             osVal += ',';
-                        osVal += CPLSPrintf("%.18g", dfVal);
+                        osVal += CPLSPrintf("%.17g", dfVal);
                     }
                     aosKeyValues.AddNameValue(param.key.c_str(), osVal.c_str());
                 }

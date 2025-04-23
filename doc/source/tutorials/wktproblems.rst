@@ -102,7 +102,7 @@ parameter relating it to EPSG or some other authority space. However, in
 SF WKT the name itself is the only key.
 
 By convention OGR and Cadcorp have translated the datum names in a
-particular way from the EPSG database in order to produce comparible
+particular way from the EPSG database in order to produce comparable
 names. The rule is to convert all non alphanumeric characters to
 underscores, then to strip any leading, trailing or repeating
 underscores. This produces well behaved datum names like

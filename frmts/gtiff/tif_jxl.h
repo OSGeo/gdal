@@ -25,9 +25,15 @@
 #ifndef TIFF_JXL_H_DEFINED
 #define TIFF_JXL_H_DEFINED
 
+#include "tiffio.h"
+
 #ifndef COMPRESSION_JXL
 #define COMPRESSION_JXL                                                        \
     50002 /* JPEGXL: WARNING not registered in Adobe-maintained registry */
+#endif
+
+#ifndef COMPRESSION_JXL_DNG_1_7
+#define COMPRESSION_JXL_DNG_1_7 52546 /* JPEGXL from DNG 1.7 specification */
 #endif
 
 #ifndef TIFFTAG_JXL_LOSSYNESS

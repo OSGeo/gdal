@@ -186,20 +186,32 @@ if sys.platform == 'win32':
 
 numpy_include_dir = '.'
 numpy_error_msg = ""
-try:
-    numpy_include_dir = get_numpy_include()
-    HAVE_NUMPY = numpy_include_dir != '.'
-    if not HAVE_NUMPY:
-        numpy_error_msg = "numpy found, but numpy headers were not found!"
-except ImportError:
-    HAVE_NUMPY = False
-    numpy_error_msg = "numpy not available!"
 
-if not HAVE_NUMPY:
-   if "GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY" in os.environ:
-      print("WARNING: " + numpy_error_msg + " Array support will not be enabled.")
-   else:
-      raise Exception(numpy_error_msg + " This error may happen if you build/install using setup.py directly, but should normally not happen if you install using pip install. If you still want to build the bindings without numpy support, define the GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY environment variable")
+do_numpy_detection = True
+if "GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY" in os.environ:
+    v = os.environ["GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY"].upper()
+    if v in ('YES', '1', 'ON', 'TRUE'):
+        do_numpy_detection = False
+    elif v not in ('NO', '0', 'OFF', 'FALSE'):
+        raise Exception("Unrecognized value for GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY")
+
+if do_numpy_detection:
+    try:
+        numpy_include_dir = get_numpy_include()
+        HAVE_NUMPY = numpy_include_dir != '.'
+        if not HAVE_NUMPY:
+            numpy_error_msg = "numpy found, but numpy headers were not found!"
+    except ImportError:
+        HAVE_NUMPY = False
+        numpy_error_msg = "numpy not available!"
+
+    if not HAVE_NUMPY:
+        if "GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY" in os.environ:
+            print("WARNING: " + numpy_error_msg + " Array support will not be enabled.")
+        else:
+            raise Exception(numpy_error_msg + " This error may happen if you build/install using setup.py directly, but should normally not happen if you install using pip install. If you still want to build the bindings without numpy support, define the GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY environment variable")
+else:
+    HAVE_NUMPY = False
 
 class gdal_ext(build_ext):
 
@@ -273,7 +285,11 @@ class gdal_ext(build_ext):
         global include_dirs, library_dirs
 
         try:
-            library_version = self.get_gdal_config("version").replace("dev", "")
+            library_version = self.get_gdal_config("version")
+            for suffix in ("dev", "beta", "RC"):
+                pos = library_version.find(suffix)
+                if pos > 0:
+                    library_version = library_version[0:pos]
             library_version_num = [int(x) for x in library_version.split('.')]
             gdal_python_version = [int(x) for x in version.split('.')]
             if library_version_num < gdal_python_version:
@@ -321,6 +337,14 @@ class gdal_ext(build_ext):
         # the Extension() instantiations below because we want to use the same
         # logic to resolve the location of gdal-config throughout.
         ext.extra_compile_args.extend(self.extra_cflags)
+
+        # Work around "swig/python detected a memory leak" bug
+        # Cf https://github.com/swig/swig/issues/2638#issuecomment-2345002698
+        if self.get_compiler() == 'msvc':
+            ext.extra_compile_args.append("/DSWIG_PYTHON_SILENT_MEMLEAK")
+        else:
+            ext.extra_compile_args.append("-DSWIG_PYTHON_SILENT_MEMLEAK")
+
         return build_ext.build_extension(self, ext)
 
 

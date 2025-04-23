@@ -7,26 +7,11 @@
  ******************************************************************************
  * Copyright (c) 2022, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ograrrowarrayhelper.h"
+#include "ogrlayerarrow.h"
 #include "ogr_p.h"
 
 #include <limits>
@@ -48,8 +33,8 @@
         nMemLimit = atoi(pszOGR_ARROW_MEM_LIMIT);
     else
     {
-        const uint64_t nUsableRAM = CPLGetUsablePhysicalRAM();
-        if (nUsableRAM > 0 && nUsableRAM / 4 < nMemLimit)
+        const auto nUsableRAM = CPLGetUsablePhysicalRAM();
+        if (nUsableRAM > 0 && static_cast<uint64_t>(nUsableRAM / 4) < nMemLimit)
             nMemLimit = static_cast<uint32_t>(nUsableRAM / 4);
     }
     return nMemLimit;
@@ -110,6 +95,8 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
             nTZFlagOverride = OGR_TZFLAG_UTC;
         }
     }
+    const bool bDateTimeAsString =
+        aosArrowArrayStreamOptions.FetchBool(GAS_OPT_DATETIME_AS_STRING, false);
 
     if (m_bIncludeFID)
     {
@@ -238,6 +225,20 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
                     }
                     break;
                 }
+
+                case OFTDateTime:
+                {
+                    if (!bDateTimeAsString)
+                    {
+                        nEltSize = sizeof(int64_t);
+                        break;
+                    }
+                    else
+                    {
+                        [[fallthrough]];
+                    }
+                }
+
                 case OFTString:
                 case OFTBinary:
                 {
@@ -269,12 +270,6 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
                 case OFTTime:
                 {
                     nEltSize = sizeof(int32_t);
-                    break;
-                }
-
-                case OFTDateTime:
-                {
-                    nEltSize = sizeof(int64_t);
                     break;
                 }
 

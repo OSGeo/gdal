@@ -1,0 +1,121 @@
+---
+jupytext:
+  formats: md:myst
+  text_representation:
+    extension: .md
+    format_name: myst
+kernelspec:
+  display_name: Python 3
+  language: python
+  name: python3
+---
+
+# Examples
+
+## Getting information on a raster dataset using dedicated methods
+
+The following snippet uses individual API methods to retrieve characters of
+a GDAL raster dataset and its bands.
+
+```{code-cell}
+
+from osgeo import gdal
+import json
+
+gdal.UseExceptions()
+
+ds = gdal.Open("data/byte.tif")
+print(f"Width: {ds.RasterXSize}")
+print(f"Height: {ds.RasterYSize}")
+print(f"Number of bands: {ds.RasterCount}")
+```
+
+```{code-cell}
+srs = ds.GetSpatialRef()
+srs_unit = ""
+if srs:
+    srs_as_projjson = json.loads(srs.ExportToPROJJSON())
+    print("SRS:")
+    srs_type = srs_as_projjson["type"]
+    print(f"  Type: {srs_type}")
+    name = srs_as_projjson["name"]
+    print(f"  Name: {name}")
+    if "id" in srs_as_projjson:
+        id = srs_as_projjson["id"]
+        authority = id["authority"]
+        code = id["code"]
+        print(f"  Id: {authority}:{code}")
+    srs_unit = " " + srs_as_projjson["coordinate_system"]["axis"][0]["unit"]
+```
+
+```{code-cell}
+geotransform = ds.GetGeoTransform()
+if geotransform[2] == 0 and geotransform[4] == 0:
+    print(f"Upper-left corner georeferenced position: X={geotransform[0]}{srs_unit}, Y={geotransform[3]}{srs_unit}")
+    print(f"Horizontal resolution: {geotransform[1]}{srs_unit}")
+    print(f"Vertical resolution: {geotransform[5]}{srs_unit} (negative value indicates a north-up image)")
+else:
+    print(f"Geotransformation matrix: {geotransform}")
+print(f"Metadata: {ds.GetMetadata()}")
+```
+
+```{code-cell}
+for idx, band in enumerate(ds):
+    print(f"Band {idx+1}:")
+    print(f"  Data type: {gdal.GetDataTypeName(band.DataType)}")
+    block_width, block_height = band.GetBlockSize()
+    print(f"  Block width: {block_width}")
+    print(f"  Block height: {block_height}")
+    print(f"  Metadata: {band.GetMetadata()}")
+```
+
+```{code-cell}
+:tags: [remove-output]
+
+# Explicitly close the dataset. May be needed in creation/update scenarios, to
+# make sure all data is properly flushed to storage, or even in read-only
+# scenarios, if you want to delete the file afterwards (on Windows).
+# You may also use a context manager with "with gdal.Open(...) as ds" as shown
+# in later examples.
+ds.Close()
+```
+
+## Getting information on a raster dataset using gdal.Info()
+
+The following snippet uses the {py:func}`osgeo.gdal.Info()` method to retrieve characters of
+a GDAL raster dataset and its bands, as a JSON document.
+
+```{code-cell}
+:tags: [hide-output]
+
+from osgeo import gdal
+import pprint
+
+gdal.UseExceptions()
+
+with gdal.Open("data/byte.tif") as ds:
+    info = gdal.Info(ds, format='json')
+    del info["stac"]  # to avoid cluttering below output
+    pprint.pprint(info, indent=2, width=100)
+```
+
+## Reading a whole raster as a numpy array
+
+The following snippet uses the {py:func}`osgeo.gdal.Dataset.ReadAsArray()`
+method to retrieve the pixel values of all the bands of a dataset as a
+[numpy array](https://numpy.org/doc/stable/reference/generated/numpy.array.html).
+
+A 2D array is returned for a single band image. A 3D array, with first dimension
+being the band one, is returned for images with multiple bands.
+
+```{code-cell}
+:tags: [hide-output]
+
+from osgeo import gdal
+
+gdal.UseExceptions()
+
+with gdal.Open("data/byte.tif") as ds:
+    array = ds.ReadAsArray()
+    print(array)
+```

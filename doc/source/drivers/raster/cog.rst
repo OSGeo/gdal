@@ -43,6 +43,105 @@ General creation options
 
       Sets the tile width and height in pixels. Must be divisible by 16.
 
+-  .. co:: INTERLEAVE
+      :choices: BAND, PIXEL, TILE
+      :since: 3.11
+
+      Set the interleaving to use
+
+      * ``PIXEL``: for each spatial block, one TIFF tile/strip gathering values for
+        all bands is used . This matches the ``contiguous`` planar configuration in
+        TIFF terminology.
+        This is also known as a ``BIP (Band Interleaved Per Pixel)`` organization.
+        Such method is the default, and may be slightly less
+        efficient than BAND interleaving for some purposes, but some applications
+        only support pixel interleaved TIFF files. On the other hand, image-based
+        compression methods may perform better using PIXEL interleaving. For JPEG
+        PHOTOMETRIC=YCbCr, pixel interleaving is required. It is also required for
+        WebP compression.
+
+        Prior to GDAL 3.11, INTERLEAVE=PIXEL was the only possible interleaving
+        output by the COG driver.
+
+        Assuming a pixel[band][y][x] indexed array, when using CreateCopy(),
+        the pseudo code for the file disposition is:
+
+        ::
+
+          for y in 0 ... numberOfBlocksInHeight - 1:
+              for x in 0 ... numberOfTilesInWidth - 1:
+                  for j in 0 ... blockHeight - 1:
+                      for i in 0 ... blockWidth -1:
+                          start_new_strip_or_tile()
+                          for band in 0 ... numberBands -1:
+                              write(pixel[band][y*blockHeight+j][x*blockWidth+i])
+                          end_new_strip_or_tile()
+                      end_for
+                  end_for
+              end_for
+          end_for
+
+
+      * ``BAND``: for each spatial block, one TIFF tile/strip is used for each band.
+        This matches the contiguous ``separate`` configuration in TIFF terminology.
+        This is also known as a ``BSQ (Band SeQuential)`` organization.
+
+        In addition to that, when using CreateCopy(), data for the first band is
+        written first, followed by data for the second band, etc.
+        The pseudo code for the file disposition is:
+
+        ::
+
+          for y in 0 ... numberOfBlocksInHeight - 1:
+              for x in 0 ... numberOfTilesInWidth - 1:
+                  start_new_strip_or_tile()
+                  for band in 0 ... numberBands -1:
+                      for j in 0 ... blockHeight - 1:
+                          for i in 0 ... blockWidth -1:
+                              write(pixel[band][y*blockHeight+j][x*blockWidth+i])
+                          end_for
+                      end_for
+                  end_new_strip_or_tile()
+              end_for
+          end_for
+
+
+      * ``TILE`` (added in 3.11): this is a sort of
+        compromise between PIXEL and BAND, using the ``separate`` configuration,
+        but where data for a same spatial block is written for all bands, before
+        the data of the next spatial block.
+        When the block height is 1, this is also known as a
+        ``BIL (Band Interleaved per Line)`` organization.
+
+        Such a layout may be useful for writing hyperspectral datasets (several
+        hundred of bands), to get a compromise between efficient spatial query,
+        and partial band selection.
+
+        Assuming a pixel[band][y][x] indexed array, when using CreateCopy(),
+        the pseudo code for the file disposition is:
+
+        ::
+
+          for y in 0 ... numberOfBlocksInHeight - 1:
+              for x in 0 ... numberOfTilesInWidth - 1:
+                  for band in 0 ... numberBands -1:
+                      start_new_strip_or_tile()
+                      for j in 0 ... blockHeight - 1:
+                          for i in 0 ... blockWidth -1:
+                              write(pixel[band][y*blockHeight+j][x*blockWidth+i])
+                          end_for
+                      end_for
+                      end_new_strip_or_tile()
+                  end_for
+              end_for
+          end_for
+
+
+      Starting with GDAL 3.5, when copying from a source dataset with multiple bands
+      which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
+      is not specified, the source dataset INTERLEAVE will be automatically taken
+      into account, unless the COMPRESS creation option is specified.
+
 -  .. co:: COMPRESS
       :choices: NONE, LZW, JPEG, DEFLATE, ZSTD, WEBP, LERC, LERC_DEFLATE, LERC_ZSTD, LZMA
       :default: LZW
@@ -53,12 +152,10 @@ General creation options
       * ``JPEG`` should generally only be used with
         Byte data (8 bit per channel). But if GDAL is built with internal libtiff and
         libjpeg, it is    possible to read and write TIFF files with 12bit JPEG compressed TIFF
-        files (seen as UInt16 bands with NBITS=12). See the `"8 and 12 bit
-        JPEG in TIFF" <http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG>`__ wiki
-        page for more details.
+        files (seen as UInt16 bands with NBITS=12).
         For the COG driver, JPEG compression for 3 or 4-band images automatically
         selects the PHOTOMETRIC=YCBCR colorspace with a 4:2:2 subsampling of the Y,Cb,Cr
-        components.
+        components with the default INTERLEAVE=PIXEL.
         For a input dataset (single-band or 3-band), plus an alpha band,
         the alpha band will be converted as a 1-bit DEFLATE compressed mask.
 
@@ -66,6 +163,10 @@ General creation options
 
       * ``ZSTD`` is available when using internal libtiff and if GDAL built against
         libzstd >=1.0, or if built against external libtiff with zstd support.
+
+      * ``WEBP`` is available when using internal libtiff and if GDAL built against
+        libwebp, or if built against external libtiff with WebP support.
+        It can only be used with the default INTERLEAVE=PIXEL.
 
       * ``LERC`` is available when using internal libtiff.
 
@@ -127,7 +228,7 @@ General creation options
       The higher, the smaller file and slower compression time.
 
 -  .. co:: JXL_DISTANCE
-      :choices: 0.1-15
+      :choices: 0.01-25
       :default: 1.0
 
       Distance level for lossy JPEG-XL compression.
@@ -139,7 +240,7 @@ General creation options
       The recommended range is [0.5,3].
 
 -  .. co:: JXL_ALPHA_DISTANCE
-      :choices: -1, 0, 0.1-15
+      :choices: -1, 0, 0.01-25
       :default: -1
       :since: 3.7
 
@@ -561,11 +662,18 @@ line).
      mask.TileByteCounts[i], but none of them actually need to be read)
    * trailer of mask data (4 bytes)
 
+   This is only written if INTERLEAVE=PIXEL.
+
+- ``INTERLEAVE=BAND`` or ``INTERLEAVE=TILE``: (GDAL >= 3.11)
+  Reflects the value of the INTERLEAVE creation option.
+  Omission implies INTERLEAVE=PIXEL.
+
+
 .. note::
 
     The content of the header ghost area can be retrieved by getting the
     ``GDAL_STRUCTURAL_METADATA`` metadata item of the ``TIFF`` metadata domain
-    on the datasett object (with GetMetadataItem())
+    on the dataset object (with GetMetadataItem())
 
 .. _cog.tile_data_leader_trailer:
 
@@ -578,7 +686,8 @@ that follows it. This leader is *ghost* in the sense that the
 TileOffsets[] array does not point to it, but points to the real payload. Hence
 the offset of the leader is TileOffsets[i]-4.
 
-An optimized reader seeing the ``BLOCK_LEADER=SIZE_AS_UINT4`` metadata item will thus look for TileOffset[i]
+For INTERLEAVE=PIXEL or INTERLEAVE=TILE, an optimized reader seeing the
+``BLOCK_LEADER=SIZE_AS_UINT4`` metadata item will thus look for TileOffset[i]
 and TileOffset[i+1] to deduce it must fetch the data starting at
 offset=TileOffset[i] - 4 and of size=TileOffset[i+1]-TileOffset[i]+4. It then
 checks the 4 first bytes to see if the size in this leader marker is
@@ -588,6 +697,9 @@ BLOCK_TRAILER). In the case where there is a mask and
 MASK_INTERLEAVED_WITH_IMAGERY=YES, then the tile size indicated in the leader
 will be < TileOffset[i+1]-TileOffset[i] since the data for the mask will
 follow the imagery data (see MASK_INTERLEAVED_WITH_IMAGERY=YES)
+
+For INTERLEAVE=BAND, the above paragraph applies but the successor of tile i
+is not tile i+1, but tile i+nTilesPerBand.
 
 Each tile data is immediately followed by a trailer, consisting of the repetition
 of the last 4 bytes of the payload of the tile data. The size of this trailer is
@@ -612,8 +724,12 @@ See Also
 --------
 
 - :ref:`raster.gtiff` driver
--  `How to generate and read cloud optimized GeoTIFF
-   files <https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF>`__ (before GDAL 3.1)
 - If your source dataset is an internally tiled geotiff with the desired georeferencing and compression,
   using `cogger <https://github.com/airbusgeo/cogger>`__ (possibly along with gdaladdo to create overviews) will
   be much faster than the COG driver.
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+      nTilesPerBand

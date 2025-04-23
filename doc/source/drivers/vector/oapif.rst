@@ -58,6 +58,9 @@ evaluated on client-side.
 
 Rectangular spatial filtering is forward to the server as well.
 
+Starting with GDAL 3.10, the ``DATETIME`` open option can also be specified for
+temporal filtering.
+
 CRS support
 -----------
 
@@ -140,6 +143,13 @@ The following open options are available:
       them in the axis order mandated by the CRS authority, but in a more traditional
       "GIS friendly" order, with longitude/easting first, latitude/northing second.
       Do not set this option unless actual problems arise.
+
+-  .. oo:: DATETIME
+      :since: 3.10
+
+       Temporal filter. Its value should match the ones mentioned at
+       `paragraph Parameter datetime of the OGC API Features specification <https://docs.ogc.org/is/17-069r3/17-069r3.html#_parameter_datetime>`__
+
 
 Examples
 --------

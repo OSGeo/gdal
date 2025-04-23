@@ -1,0 +1,50 @@
+commit 16c3aa25b9e9401b91cd70f2118c7a86f12140b4
+Author: Theodore Tsirpanis <teo@tsirpanis.gr>
+Date:   Thu Oct 10 12:43:05 2024 +0300
+
+    Re-enable `TILEDB_CCACHE` support.
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fef5de5ce..d84fb3d6b 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -105,6 +105,12 @@ else()
+   set(CMAKE_CXX_EXTENSIONS OFF)
+ endif()
+ 
++if (TILEDB_CCACHE)
++  include(FindCcache)
++  set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
++  set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE})
++endif()
++
+ # Set -fvisibility=hidden (or equivalent) flags by default.
+ set(CMAKE_C_VISIBILITY_PRESET hidden)
+ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+diff --git a/cmake/Modules/FindCcache.cmake b/cmake/Modules/FindCcache.cmake
+index 06be83ea3..c981e9dcf 100644
+--- a/cmake/Modules/FindCcache.cmake
++++ b/cmake/Modules/FindCcache.cmake
+@@ -1,16 +1,9 @@
+ ## cf https://stackoverflow.com/questions/1815688/how-to-use-ccache-with-cmake
+ ## leading to https://invent.kde.org/kde/konsole/merge_requests/26/diffs
+-find_program(CCACHE_FOUND NAMES "sccache" "ccache")
+-set(CCACHE_SUPPORT ON CACHE BOOL "Enable ccache support")
+-if (CCACHE_FOUND AND CCACHE_SUPPORT)
+-  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" # GNU is GNU GCC
+-      OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+-    # without this compiler messages in `make` backend would be uncolored
+-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fdiagnostics-color=auto")
+-  endif()
+-  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${CCACHE_FOUND})
+-  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE_FOUND})
+-  message(STATUS "Found ccache: ${CCACHE_FOUND}")
+-else()
+-  message(FATAL_ERROR "Unable to find ccache")
++find_program(CCACHE REQUIRED NAMES "sccache" "ccache")
++
++if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" # GNU is GNU GCC
++    OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
++  # without this compiler messages in `make` backend would be uncolored
++  set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fdiagnostics-color=auto")
+ endif()

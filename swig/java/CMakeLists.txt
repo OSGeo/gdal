@@ -191,6 +191,7 @@ if (Java_Runtime_FOUND AND BUILD_TESTING)
   file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/tmp_test)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tmp_test)
   file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test_data/byte.tif DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/tmp_test)
+  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test_data/iso_8859_1.csv DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/tmp_test)
 
   if (WIN32)
     set(CLASSPATH_SEPARATOR "\\;")
@@ -229,9 +230,8 @@ if (Java_Runtime_FOUND AND BUILD_TESTING)
   add_test(NAME java_OSRTest COMMAND ${JAVA_RUN} OSRTest)
   add_test(NAME java_test_ogrfielddomains COMMAND ${JAVA_RUN} test_ogrfielddomains)
 
-  foreach (
-    test_name IN
-    ITEMS java_GDALOverviews
+  set(JAVA_TEST_LIST
+          java_GDALOverviews
           java_gdalinfo
           java_ogr2ogr_1
           java_ogrinfo_1
@@ -247,7 +247,14 @@ if (Java_Runtime_FOUND AND BUILD_TESTING)
           java_testgetpoints
           java_ogrtindex
           java_OSRTest
-          java_test_ogrfielddomains)
+          java_test_ogrfielddomains
+  )
+  if (OGR_ENABLE_DRIVER_CSV)
+      add_test(NAME java_OGRTest COMMAND ${JAVA_RUN} OGRTest)
+      list(APPEND JAVA_TEST_LIST java_OGRTest)
+  endif()
+
+  foreach (test_name IN LISTS JAVA_TEST_LIST)
     set_property(TEST ${test_name} PROPERTY ENVIRONMENT "${TEST_ENV}")
   endforeach ()
 

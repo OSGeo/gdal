@@ -25,7 +25,7 @@ The following vars are set if LERC is found.
 include(FindPackageHandleStandardArgs)
 
 find_path(LERC_INCLUDE_DIR NAMES Lerc_c_api.h)
-find_library(LERC_LIBRARY NAMES Lerc lerc)
+find_library(LERC_LIBRARY NAMES Lerc lerc NAMES_PER_DIR)
 
 mark_as_advanced(LERC_INCLUDE_DIR LERC_LIBRARY)
 find_package_handle_standard_args(LERC

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL
 # Purpose:  Script to translate GDAL supported raster into XYZ ASCII
@@ -11,23 +10,7 @@
 # Copyright (c) 2002, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2020-2021, Idan Miara <idan@miara.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 import sys
 import textwrap
@@ -91,7 +74,10 @@ def gdal2xyz(
 
     result = None
 
-    progress_callback = get_progress_callback(progress_callback)
+    if dstfile == "/vsistdout/":
+        progress_callback = None
+    else:
+        progress_callback = get_progress_callback(progress_callback)
 
     # Open source file.
     ds = open_ds(srcfile)
@@ -111,11 +97,11 @@ def gdal2xyz(
 
     # Open the output file.
     if dstfile is not None:
-        dst_fh = open(dstfile, "wt")
+        dst_fh = gdal.VSIFOpenL(dstfile, "wb")
     elif return_np_arrays:
         dst_fh = None
     else:
-        dst_fh = sys.stdout
+        dst_fh = gdal.VSIFOpenL("/vsistdout/", "wb")
 
     if dst_fh:
         if dt == gdal.GDT_Int32 or dt == gdal.GDT_UInt32:
@@ -212,8 +198,10 @@ def gdal2xyz(
 
             if dst_fh:
                 band_str = band_format % tuple(x_i_data)
-                line = frmt % (float(geo_x), float(geo_y), band_str)
-                dst_fh.write(line)
+                line = (frmt % (float(geo_x), float(geo_y), band_str)).encode("UTF-8")
+                if gdal.VSIFWriteL(line, len(line), 1, dst_fh) != 1:
+                    gdal.VSIFCloseL(dst_fh)
+                    raise IOError("Cannot write into destination file")
             if return_np_arrays:
                 if pre_allocate_np_arrays:
                     all_geo_x[idx] = geo_x
@@ -232,6 +220,9 @@ def gdal2xyz(
             all_geo_y = all_geo_y[:idx]
             all_data = all_data[:idx, :]
         result = all_geo_x, all_geo_y, all_data.transpose(), nodata
+
+    if dst_fh:
+        gdal.VSIFCloseL(dst_fh)
 
     return result
 

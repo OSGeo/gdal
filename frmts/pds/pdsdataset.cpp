@@ -13,23 +13,7 @@
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 // Set up PDS NULL values
@@ -592,8 +576,8 @@ void PDSDataset::ParseSRS()
         // acknowledged in
         // https://pds-imaging.jpl.nasa.gov/documentation/Cassini_BIDRSIS.PDF in
         // the middle of page 10
-        oProj4String.Printf("+proj=ob_tran +o_proj=eqc +o_lon_p=%.18g "
-                            "+o_lat_p=%.18g +lon_0=%.18g",
+        oProj4String.Printf("+proj=ob_tran +o_proj=eqc +o_lon_p=%.17g "
+                            "+o_lat_p=%.17g +lon_0=%.17g",
                             -poleRotation, 180 - poleLatitude, poleLongitude);
         oSRS.SetFromUserInput(oProj4String);
     }
@@ -695,16 +679,17 @@ void PDSDataset::ParseSRS()
     /*      Check for a .prj and world file to override the georeferencing. */
     /* ==================================================================== */
     {
-        const CPLString osPath = CPLGetPath(pszFilename);
-        const CPLString osName = CPLGetBasename(pszFilename);
-        const char *pszPrjFile = CPLFormCIFilename(osPath, osName, "prj");
+        const CPLString osPath = CPLGetPathSafe(pszFilename);
+        const CPLString osName = CPLGetBasenameSafe(pszFilename);
+        const std::string osPrjFile =
+            CPLFormCIFilenameSafe(osPath, osName, "prj");
 
-        VSILFILE *fp = VSIFOpenL(pszPrjFile, "r");
+        VSILFILE *fp = VSIFOpenL(osPrjFile.c_str(), "r");
         if (fp != nullptr)
         {
             VSIFCloseL(fp);
 
-            char **papszLines = CSLLoad(pszPrjFile);
+            char **papszLines = CSLLoad(osPrjFile.c_str());
 
             m_oSRS.importFromESRI(papszLines);
             CSLDestroy(papszLines);
@@ -862,8 +847,9 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
         }
         else
         {
-            CPLString osTPath = CPLGetPath(GetDescription());
-            m_osImageFilename = CPLFormCIFilename(osTPath, osFilename, nullptr);
+            CPLString osTPath = CPLGetPathSafe(GetDescription());
+            m_osImageFilename =
+                CPLFormCIFilenameSafe(osTPath, osFilename, nullptr);
             osExternalCube = m_osImageFilename;
         }
     }
@@ -1217,7 +1203,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
     int nPixelOffset;
     vsi_l_offset nBandOffset;
 
-    const auto CPLSM64 = [](int x) { return CPLSM(static_cast<GInt64>(x)); };
+    const auto CPLSM64 = [](int x) { return CPLSM(static_cast<int64_t>(x)); };
 
     try
     {
@@ -1346,9 +1332,9 @@ int PDSDataset::ParseCompressedImage()
     const CPLString osFileName =
         CleanString(GetKeyword("COMPRESSED_FILE.FILE_NAME", ""));
 
-    const CPLString osPath = CPLGetPath(GetDescription());
+    const CPLString osPath = CPLGetPathSafe(GetDescription());
     const CPLString osFullFileName =
-        CPLFormFilename(osPath, osFileName, nullptr);
+        CPLFormFilenameSafe(osPath, osFileName, nullptr);
 
     poCompressedDS =
         GDALDataset::FromHandle(GDALOpen(osFullFileName, GA_ReadOnly));
@@ -1441,11 +1427,11 @@ GDALDataset *PDSDataset::Open(GDALOpenInfo *poOpenInfo)
     if (EQUAL(osEncodingType, "ZIP") && !osCompressedFilename.empty() &&
         !osUncompressedFilename.empty())
     {
-        const CPLString osPath = CPLGetPath(poDS->GetDescription());
+        const CPLString osPath = CPLGetPathSafe(poDS->GetDescription());
         osCompressedFilename =
-            CPLFormFilename(osPath, osCompressedFilename, nullptr);
+            CPLFormFilenameSafe(osPath, osCompressedFilename, nullptr);
         osUncompressedFilename =
-            CPLFormFilename(osPath, osUncompressedFilename, nullptr);
+            CPLFormFilenameSafe(osPath, osUncompressedFilename, nullptr);
         if (VSIStatExL(osCompressedFilename, &sStat, VSI_STAT_EXISTS_FLAG) ==
                 0 &&
             VSIStatExL(osUncompressedFilename, &sStat, VSI_STAT_EXISTS_FLAG) !=

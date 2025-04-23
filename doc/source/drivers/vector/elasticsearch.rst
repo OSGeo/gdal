@@ -250,7 +250,7 @@ Starting with GDAL 2.2, SQL requests, involving a single layer, with
 WHERE and ORDER BY statements will be translated as Elasticsearch
 queries.
 
-Otherwise, if specifying "ES" as the dialect of ExecuteSQL(), a JSON 
+Otherwise, if specifying "ES" as the dialect of ExecuteSQL(), a JSON
 string with a serialized `Elastic Search
 filter <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-filters.html>`__
 can be passed. The search will be done on all indices and types, unless
@@ -312,9 +312,9 @@ Aggregations
 
 The driver can support issuing aggregation requests to an index. ElasticSearch
 aggregations can potentially be rather complex, so the driver currently limits
-to geohash grid based spatial aggegrations, with additional fields with
+to geohash grid based spatial aggregation, with additional fields with
 statistical indicators (min, max, average, .), which can be used for example
-to generate heatmaps. The specification of the aggegation is done through
+to generate heatmaps. The specification of the aggregation is done through
 the :oo:`AGGREGATION` open option, whose value is a JSON serialized object whose
 members are:
 
@@ -324,7 +324,7 @@ members are:
   `geohash grid aggregation <https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html>`__. For documents with points encoded as GeoJSON, this will
   be for example `geometry.coordinates`. When this property is not specified,
   the driver will analyze the mapping and use the geometry field definition
-  found into it (provided there is a single one). Note that aggegration on
+  found into it (provided there is a single one). Note that aggregation on
   geo_shape geometries is only supported since Elasticsearch 7 and may require
   a non-free license.
 
@@ -347,22 +347,22 @@ members are:
   fields should be added, that can have the following members:
 
       * ``min`` (optional): array with the paths to index properties on which
-        to compute the minimum during aggegation.
+        to compute the minimum during aggregation.
 
       * ``max`` (optional): array with the paths to index properties on which
-        to compute the maximum  during aggegation.
+        to compute the maximum  during aggregation.
 
       * ``avg`` (optional): array with the paths to index properties on which
-        to compute the average during aggegation.
+        to compute the average during aggregation.
 
       * ``sum`` (optional): array with the paths to index properties on which
-        to compute the sum during aggegation.
+        to compute the sum during aggregation.
 
       * ``count`` (optional): array with the paths to index properties on which
-        to compute the value_count during aggegation.
+        to compute the value_count during aggregation.
 
       * ``stats`` (optional): array with the paths to index properties on which
-        to compute all the above indicators during aggegation.
+        to compute all the above indicators during aggregation.
 
   When using a GeoJSON mapping, the path to an index property is typically
   ``property.some_name``.

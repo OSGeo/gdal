@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  GDAL Utilities Private Declarations.
@@ -8,23 +7,7 @@
  * ****************************************************************************
  * Copyright (c) 2015, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef GDAL_UTILS_PRIV_H_INCLUDED
@@ -36,8 +19,7 @@
 #include "cpl_string.h"
 #include "gdal_utils.h"
 
-/* This file is only meant at being used by the XXXX_bin.cpp and XXXX_lib.cpp
- * files */
+/* This file is only meant at being used by the XXXX_bin.cpp and XXXX_lib.cpp */
 
 CPL_C_START
 
@@ -58,10 +40,10 @@ struct GDALInfoOptionsForBinary
 
 struct GDALDEMProcessingOptionsForBinary
 {
-    std::string osProcessing;
-    std::string osSrcFilename;
-    std::string osColorFilename;
-    std::string osDstFilename;
+    std::string osProcessing{};
+    std::string osSrcFilename{};
+    std::string osColorFilename{};
+    std::string osDstFilename{};
     bool bQuiet = false;
 };
 
@@ -83,12 +65,21 @@ struct GDALVectorTranslateOptionsForBinary
     std::string osDestDataSource{};
     bool bQuiet = false;
     CPLStringList aosOpenOptions{};
-    std::string osFormat;
+    std::string osFormat{};
     GDALVectorTranslateAccessMode eAccessMode = ACCESS_CREATION;
     bool bShowUsageIfError = false;
 
     /* Allowed input drivers. */
     CPLStringList aosAllowInputDrivers{};
+};
+
+struct GDALContourOptionsForBinary
+{
+    CPLStringList aosOpenOptions{};
+    CPLStringList aosCreationOptions{};
+    bool bQuiet = false;
+    std::string osDestDataSource{};
+    std::string osSrcDataSource{};
 };
 
 struct GDALMultiDimInfoOptionsForBinary
@@ -195,6 +186,7 @@ struct GDALTranslateOptionsForBinary
     bool bQuiet = false;
     bool bCopySubDatasets = false;
     CPLStringList aosOpenOptions{};
+    CPLStringList aosCreateOptions{};
     std::string osFormat{};
 
     /* Allowed input drivers. */
@@ -246,11 +238,15 @@ std::string CPL_DLL GDALMultiDimInfoAppGetParserUsage();
 
 std::string CPL_DLL GDALGridGetParserUsage();
 
+std::string CPL_DLL GDALContourGetParserUsage();
+
 std::string CPL_DLL GDALBuildVRTGetParserUsage();
 
 std::string CPL_DLL GDALTileIndexAppGetParserUsage();
 
 std::string CPL_DLL GDALFootprintAppGetParserUsage();
+
+std::string CPL_DLL GDALRasterizeAppGetParserUsage();
 
 /**
  * Returns the gdaldem usage help string
@@ -259,6 +255,13 @@ std::string CPL_DLL GDALFootprintAppGetParserUsage();
  */
 std::string CPL_DLL
 GDALDEMAppGetParserUsage(const std::string &osProcessingMode);
+
+GDALDatasetH GDALTileIndexInternal(const char *pszDest,
+                                   GDALDatasetH hTileIndexDS, OGRLayerH hLayer,
+                                   int nSrcCount,
+                                   const char *const *papszSrcDSNames,
+                                   const GDALTileIndexOptions *psOptionsIn,
+                                   int *pbUsageError);
 
 #endif /* #ifndef DOXYGEN_SKIP */
 

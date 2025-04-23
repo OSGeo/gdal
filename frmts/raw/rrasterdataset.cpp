@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2016, Even Rouault, <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -36,6 +20,7 @@
 #include "ogr_spatialref.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <memory>
 
@@ -330,7 +315,7 @@ static void GetMinMax(const T *buffer, int nBufXSize, int nBufYSize,
         for (int iX = 0; iX < nBufXSize; iX++)
         {
             const double dfVal = buffer[iY * nLineSpace + iX * nPixelSpace];
-            if (dfVal != dfNoDataValue && !CPLIsNan(dfVal))
+            if (dfVal != dfNoDataValue && !std::isnan(dfVal))
             {
                 dfMin = std::min(dfMin, dfVal);
                 dfMax = std::max(dfMax, dfVal);
@@ -548,7 +533,7 @@ void RRASTERDataset::RewriteHeader()
     int bGotNoDataValue = false;
     double dfNoDataValue = GetRasterBand(1)->GetNoDataValue(&bGotNoDataValue);
     if (bGotNoDataValue)
-        VSIFPrintfL(fp, "nodatavalue=%.18g\n", dfNoDataValue);
+        VSIFPrintfL(fp, "nodatavalue=%.17g\n", dfNoDataValue);
 
 #if CPL_IS_LSB
     VSIFPrintfL(fp, "byteorder=%s\n", m_bNativeOrder ? "little" : "big");
@@ -573,8 +558,8 @@ void RRASTERDataset::RewriteHeader()
             osMinValue.clear();
             break;
         }
-        osMinValue += CPLSPrintf("%.18g", poBand->m_dfMin);
-        osMaxValue += CPLSPrintf("%.18g", poBand->m_dfMax);
+        osMinValue += CPLSPrintf("%.17g", poBand->m_dfMin);
+        osMaxValue += CPLSPrintf("%.17g", poBand->m_dfMax);
     }
     if (!osMinValue.empty())
     {
@@ -636,7 +621,7 @@ void RRASTERDataset::RewriteHeader()
                     else if (eColType == GFT_Real)
                     {
                         osRatValues +=
-                            CPLSPrintf("%.18g", poRAT->GetValueAsDouble(j, i));
+                            CPLSPrintf("%.17g", poRAT->GetValueAsDouble(j, i));
                     }
                     else
                     {
@@ -769,12 +754,12 @@ void RRASTERDataset::RewriteHeader()
     VSIFPrintfL(fp, "nrows=%d\n", nRasterYSize);
     VSIFPrintfL(fp, "ncols=%d\n", nRasterXSize);
 
-    VSIFPrintfL(fp, "xmin=%.18g\n", m_adfGeoTransform[0]);
-    VSIFPrintfL(fp, "ymin=%.18g\n",
+    VSIFPrintfL(fp, "xmin=%.17g\n", m_adfGeoTransform[0]);
+    VSIFPrintfL(fp, "ymin=%.17g\n",
                 m_adfGeoTransform[3] + nRasterYSize * m_adfGeoTransform[5]);
-    VSIFPrintfL(fp, "xmax=%.18g\n",
+    VSIFPrintfL(fp, "xmax=%.17g\n",
                 m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1]);
-    VSIFPrintfL(fp, "ymax=%.18g\n", m_adfGeoTransform[3]);
+    VSIFPrintfL(fp, "ymax=%.17g\n", m_adfGeoTransform[3]);
 
     if (!m_oSRS.IsEmpty())
     {
@@ -933,7 +918,7 @@ int RRASTERDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
     if (poOpenInfo->nHeaderBytes < 40 || poOpenInfo->fpL == nullptr ||
-        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "grd"))
+        !poOpenInfo->IsExtensionEqualToCI("grd"))
     {
         return FALSE;
     }
@@ -1025,7 +1010,7 @@ bool RRASTERDataset::ComputeSpacings(const CPLString &osBandOrder, int nCols,
 
 static float CastToFloat(double dfVal)
 {
-    if (CPLIsInf(dfVal) || CPLIsNan(dfVal) ||
+    if (std::isinf(dfVal) || std::isnan(dfVal) ||
         (dfVal >= -std::numeric_limits<float>::max() &&
          dfVal <= std::numeric_limits<float>::max()))
     {
@@ -1191,25 +1176,25 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    CPLString osDirname(CPLGetDirname(poOpenInfo->pszFilename));
-    CPLString osBasename(CPLGetBasename(poOpenInfo->pszFilename));
-    CPLString osGRDExtension(CPLGetExtension(poOpenInfo->pszFilename));
+    CPLString osDirname(CPLGetDirnameSafe(poOpenInfo->pszFilename));
+    CPLString osBasename(CPLGetBasenameSafe(poOpenInfo->pszFilename));
+    CPLString osGRDExtension(poOpenInfo->osExtension);
     CPLString osGRIExtension((osGRDExtension[0] == 'g') ? "gri" : "GRI");
     char **papszSiblings = poOpenInfo->GetSiblingFiles();
     if (papszSiblings)
     {
-        int iFile =
-            CSLFindString(papszSiblings,
-                          CPLFormFilename(nullptr, osBasename, osGRIExtension));
+        int iFile = CSLFindString(
+            papszSiblings,
+            CPLFormFilenameSafe(nullptr, osBasename, osGRIExtension).c_str());
         if (iFile < 0)
             return nullptr;
         poDS->m_osGriFilename =
-            CPLFormFilename(osDirname, papszSiblings[iFile], nullptr);
+            CPLFormFilenameSafe(osDirname, papszSiblings[iFile], nullptr);
     }
     else
     {
         poDS->m_osGriFilename =
-            CPLFormFilename(osDirname, osBasename, osGRIExtension);
+            CPLFormFilenameSafe(osDirname, osBasename, osGRIExtension);
     }
 
     VSILFILE *fpImage =
@@ -1435,7 +1420,7 @@ GDALDataset *RRASTERDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    CPLString osGRDExtension(CPLGetExtension(pszFilename));
+    CPLString osGRDExtension(CPLGetExtensionSafe(pszFilename));
     if (!EQUAL(osGRDExtension, "grd"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1457,7 +1442,7 @@ GDALDataset *RRASTERDataset::Create(const char *pszFilename, int nXSize,
     const std::string osGRIExtension((osGRDExtension[0] == 'g') ? "gri"
                                                                 : "GRI");
     const std::string osGriFilename(
-        CPLResetExtension(pszFilename, osGRIExtension.c_str()));
+        CPLResetExtensionSafe(pszFilename, osGRIExtension.c_str()));
 
     // Try to create the file.
     VSILFILE *fpImage = VSIFOpenL(osGriFilename.c_str(), "wb+");
@@ -1569,6 +1554,11 @@ void GDALRegister_RRASTER()
     poDriver->pfnIdentify = RRASTERDataset::Identify;
     poDriver->pfnCreate = RRASTERDataset::Create;
     poDriver->pfnCreateCopy = RRASTERDataset::CreateCopy;
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "GeoTransform SRS NoData "
+                                                     "RasterValues "
+                                                     "DatasetMetadata");
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

@@ -8,23 +8,7 @@
  * Copyright (c) 2010, Tamas Szekeres
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_mssqlspatial.h"
@@ -35,7 +19,6 @@
 
 OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() : bDSUpdate(false)
 {
-    pszName = nullptr;
     pszCatalog = nullptr;
     papoLayers = nullptr;
     nLayers = 0;
@@ -83,7 +66,6 @@ OGRMSSQLSpatialDataSource::~OGRMSSQLSpatialDataSource()
 
     CPLFree(papoLayers);
 
-    CPLFree(pszName);
     CPLFree(pszCatalog);
 
     CPLFree(pszConnection);
@@ -810,8 +792,6 @@ int OGRMSSQLSpatialDataSource::Open(const char *pszNewName, bool bUpdate,
         return FALSE;
     }
 
-    pszName = CPLStrdup(pszNewName);
-
     char **papszTableNames = nullptr;
     char **papszSchemaNames = nullptr;
     char **papszGeomColumnNames = nullptr;
@@ -1232,8 +1212,8 @@ OGRLayer *OGRMSSQLSpatialDataSource::ExecuteSQL(const char *pszSQLCommand,
     /*      Use generic implementation for recognized dialects              */
     /* -------------------------------------------------------------------- */
     if (IsGenericSQLDialect(pszDialect))
-        return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                         pszDialect);
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
     /* -------------------------------------------------------------------- */
     /*      Special case DELLAYER: command.                                 */
@@ -1380,9 +1360,7 @@ OGRErr OGRMSSQLSpatialDataSource::InitializeMetadataTables()
         CPLODBCStatement oStmt(&oSession);
 
         oStmt.Append(
-            "IF NOT EXISTS (SELECT * FROM sys.objects WHERE "
-            "object_id = OBJECT_ID(N'[dbo].[geometry_columns]') AND type in "
-            "(N'U')) "
+            "IF OBJECT_ID(N'[geometry_columns]', N'U') IS NULL "
             "CREATE TABLE geometry_columns (f_table_catalog varchar(128) not "
             "null, "
             "f_table_schema varchar(128) not null, f_table_name varchar(256) "
@@ -1393,9 +1371,7 @@ OGRErr OGRMSSQLSpatialDataSource::InitializeMetadataTables()
             "CONSTRAINT geometry_columns_pk PRIMARY KEY (f_table_catalog, "
             "f_table_schema, f_table_name, f_geometry_column));\n");
 
-        oStmt.Append("IF NOT EXISTS (SELECT * FROM sys.objects "
-                     "WHERE object_id = OBJECT_ID(N'[dbo].[spatial_ref_sys]') "
-                     "AND type in (N'U')) "
+        oStmt.Append("IF OBJECT_ID(N'[spatial_ref_sys]', N'U') IS NULL "
                      "CREATE TABLE spatial_ref_sys (srid integer not null "
                      "PRIMARY KEY, auth_name varchar(256), auth_srid integer, "
                      "srtext varchar(2048), proj4text varchar(2048))");

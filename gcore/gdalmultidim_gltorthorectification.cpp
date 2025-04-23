@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2023, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_priv.h"
@@ -239,8 +223,8 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
     auto pRawNoDataValue = GetRawNoDataValue();
     std::vector<GByte> abyNoData(16);
     if (pRawNoDataValue)
-        GDALCopyWords(pRawNoDataValue, GetDataType().GetNumericDataType(), 0,
-                      abyNoData.data(), eBufferDT, 0, 1);
+        GDALCopyWords64(pRawNoDataValue, GetDataType().GetNumericDataType(), 0,
+                        abyNoData.data(), eBufferDT, 0, 1);
 
     const auto nBufferDTSize = bufferDataType.GetSize();
     const int nCopyWordsDstStride =
@@ -262,8 +246,9 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
                     static_cast<GByte *>(pDstBuffer) +
                     (iY * bufferStride[0] + iX * bufferStride[1]) *
                         static_cast<int>(nBufferDTSize);
-                GDALCopyWords(abyNoData.data(), eBufferDT, 0, pabyDstBuffer,
-                              eBufferDT, nCopyWordsDstStride, nCopyWordsCount);
+                GDALCopyWords64(abyNoData.data(), eBufferDT, 0, pabyDstBuffer,
+                                eBufferDT, nCopyWordsDstStride,
+                                nCopyWordsCount);
             }
         }
     };
@@ -417,9 +402,10 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
                 const GByte *pabySrcBuffer =
                     parentValues.data() +
                     (iSrcY * nXCount + iSrcX) * nBandCount * nBufferDTSize;
-                GDALCopyWords(pabySrcBuffer, eBufferDT,
-                              static_cast<int>(nBufferDTSize), pabyDstBuffer,
-                              eBufferDT, nCopyWordsDstStride, nCopyWordsCount);
+                GDALCopyWords64(pabySrcBuffer, eBufferDT,
+                                static_cast<int>(nBufferDTSize), pabyDstBuffer,
+                                eBufferDT, nCopyWordsDstStride,
+                                nCopyWordsCount);
                 if (bSomeBandInvalids)
                 {
                     for (size_t i = 0; i < count[2]; ++i)
@@ -428,18 +414,19 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
                             arrayStartIdx[2] + i * arrayStep[2]);
                         if (!m_abyBandValidity[iBand])
                         {
-                            GDALCopyWords(abyNoData.data(), eBufferDT, 0,
-                                          pabyDstBuffer +
-                                              i * nCopyWordsDstStride,
-                                          eBufferDT, 0, 1);
+                            GDALCopyWords64(abyNoData.data(), eBufferDT, 0,
+                                            pabyDstBuffer +
+                                                i * nCopyWordsDstStride,
+                                            eBufferDT, 0, 1);
                         }
                     }
                 }
             }
             else
             {
-                GDALCopyWords(abyNoData.data(), eBufferDT, 0, pabyDstBuffer,
-                              eBufferDT, nCopyWordsDstStride, nCopyWordsCount);
+                GDALCopyWords64(abyNoData.data(), eBufferDT, 0, pabyDstBuffer,
+                                eBufferDT, nCopyWordsDstStride,
+                                nCopyWordsCount);
             }
         }
     }

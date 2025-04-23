@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION ${GDAL_CMAKE_VERSION_MIN}...${GDAL_CMAKE_VERSION_
 if(NOT DEFINED PROJECT_SOURCE_DIR)
     # Standalone plugin building
     project(gdal_JP2OpenJPEG)
-    # The driver depends on some non expored headers. Make sure the version we
+    # The driver depends on some non exported headers. Make sure the version we
     # build against against is the same as this source tree.
     set(STRICT_VERSION_CHECK ON)
     include("${PROJECT_SOURCE_DIR}/../../cmake/helpers/SetupStandalonePlugin.cmake" )

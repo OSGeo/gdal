@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2021, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "zarr.h"
@@ -35,6 +19,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
 #include <limits>
 #include <map>
@@ -1511,7 +1496,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                           ZarrArray::IRead()                         */
+/*                           ZarrArray::IWrite()                        */
 /************************************************************************/
 
 bool ZarrArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -2648,10 +2633,11 @@ void ZarrArray::ParentRenamed(const std::string &osNewParentFullName)
     // The parent necessarily exist, since it notified us
     CPLAssert(poParent);
 
-    m_osFilename =
-        CPLFormFilename(CPLFormFilename(poParent->GetDirectoryName().c_str(),
-                                        m_osName.c_str(), nullptr),
-                        CPLGetFilename(m_osFilename.c_str()), nullptr);
+    m_osFilename = CPLFormFilenameSafe(
+        CPLFormFilenameSafe(poParent->GetDirectoryName().c_str(),
+                            m_osName.c_str(), nullptr)
+            .c_str(),
+        CPLGetFilename(m_osFilename.c_str()), nullptr);
 }
 
 /************************************************************************/
@@ -2683,10 +2669,10 @@ bool ZarrArray::Rename(const std::string &osNewName)
     }
 
     const std::string osRootDirectoryName(
-        CPLGetDirname(CPLGetDirname(m_osFilename.c_str())));
-    const std::string osOldDirectoryName =
-        CPLFormFilename(osRootDirectoryName.c_str(), m_osName.c_str(), nullptr);
-    const std::string osNewDirectoryName = CPLFormFilename(
+        CPLGetDirnameSafe(CPLGetDirnameSafe(m_osFilename.c_str()).c_str()));
+    const std::string osOldDirectoryName = CPLFormFilenameSafe(
+        osRootDirectoryName.c_str(), m_osName.c_str(), nullptr);
+    const std::string osNewDirectoryName = CPLFormFilenameSafe(
         osRootDirectoryName.c_str(), osNewName.c_str(), nullptr);
 
     if (VSIRename(osOldDirectoryName.c_str(), osNewDirectoryName.c_str()) != 0)
@@ -2700,8 +2686,8 @@ bool ZarrArray::Rename(const std::string &osNewName)
                                                  osNewDirectoryName);
 
     m_osFilename =
-        CPLFormFilename(osNewDirectoryName.c_str(),
-                        CPLGetFilename(m_osFilename.c_str()), nullptr);
+        CPLFormFilenameSafe(osNewDirectoryName.c_str(),
+                            CPLGetFilename(m_osFilename.c_str()), nullptr);
 
     if (poParent)
     {
@@ -2739,6 +2725,7 @@ void ZarrArray::ParseSpecialAttributes(
             if (item.IsValid())
             {
                 poSRS = std::make_shared<OGRSpatialReference>();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 if (poSRS->SetFromUserInput(
                         item.ToString().c_str(),
                         OGRSpatialReference::
@@ -2763,6 +2750,7 @@ void ZarrArray::ParseSpecialAttributes(
             if (gridMappingArray)
             {
                 poSRS = std::make_shared<OGRSpatialReference>();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 CPLStringList aosKeyValues;
                 for (const auto &poAttr : gridMappingArray->GetAttributes())
                 {
@@ -2778,7 +2766,7 @@ void ZarrArray::ParseSpecialAttributes(
                         {
                             if (!osVal.empty())
                                 osVal += ',';
-                            osVal += CPLSPrintf("%.18g", val);
+                            osVal += CPLSPrintf("%.17g", val);
                         }
                         aosKeyValues.SetNameValue(poAttr->GetName().c_str(),
                                                   osVal.c_str());
@@ -2813,10 +2801,12 @@ void ZarrArray::ParseSpecialAttributes(
         }
         if (iDimX > 0 && iDimY > 0)
         {
-            if (poSRS->GetDataAxisToSRSAxisMapping() == std::vector<int>{2, 1})
+            const auto &oMapping = poSRS->GetDataAxisToSRSAxisMapping();
+            if (oMapping == std::vector<int>{2, 1} ||
+                oMapping == std::vector<int>{2, 1, 3})
                 poSRS->SetDataAxisToSRSAxisMapping({iDimY, iDimX});
-            else if (poSRS->GetDataAxisToSRSAxisMapping() ==
-                     std::vector<int>{1, 2})
+            else if (oMapping == std::vector<int>{1, 2} ||
+                     oMapping == std::vector<int>{1, 2, 3})
                 poSRS->SetDataAxisToSRSAxisMapping({iDimX, iDimY});
         }
 

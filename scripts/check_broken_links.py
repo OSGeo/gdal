@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
-#
 #  Project:  GDAL
 #  Purpose:  Check validity of <a href="XXXX"> links
 #  Author:   Even Rouault <even.rouault at spatialys.com>

@@ -93,8 +93,7 @@ if python_version < minimum_supported_python_version_for_this_gdal_version:
     if fail_on_unsupported_version:
         raise Exception(msg)
     else:
-        from warnings import warn, simplefilter
-        simplefilter('always', DeprecationWarning)
+        from warnings import warn
         warn(msg, DeprecationWarning)
 elif this_python_version_will_be_deprecated_in_gdal_version:
     msg = 'You are using Python {} with GDAL {}. ' \
@@ -106,6 +105,5 @@ elif this_python_version_will_be_deprecated_in_gdal_version:
                ver_str(next_version_of_gdal_will_use_python_version),
                ver_str(this_python_version_will_be_deprecated_in_gdal_version))
 
-    from warnings import warn, simplefilter
-    simplefilter('always', DeprecationWarning)
+    from warnings import warn
     warn(msg, DeprecationWarning)

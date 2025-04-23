@@ -1,6 +1,4 @@
 dnl ***************************************************************************
-dnl $Id$
-dnl
 dnl Project:  GDAL AmigoCloud Plugin
 dnl Purpose:  Configure source file.
 dnl Author:   Victor Chernetsky victor@amigocloud.com

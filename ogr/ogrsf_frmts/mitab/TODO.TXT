@@ -33,7 +33,3 @@ MITAB Library - ToDo, Open Questions:
    MapInfo Versions 5.0 and up when the inside/outside ring relationship
    is not properly written.
 
-
-------------
-$Id$
-------------

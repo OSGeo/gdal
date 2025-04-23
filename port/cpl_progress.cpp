@@ -7,33 +7,19 @@
  ******************************************************************************
  * Copyright (c) 2013, Frank Warmerdam
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_progress.h"
 
 #include <cmath>
 #include <cstdio>
+#include <ctime>
 
 #include <algorithm>
 
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                         GDALDummyProgress()                          */
@@ -180,6 +166,31 @@ void CPL_STDCALL GDALDestroyScaledProgress(void *pData)
 }
 
 /************************************************************************/
+/*                      GDALTermProgressWidth()                         */
+/************************************************************************/
+
+static constexpr int GDALTermProgressWidth(int nMaxTicks, int nMajorTickSpacing)
+{
+    int nWidth = 0;
+    for (int i = 0; i <= nMaxTicks; i++)
+    {
+        if (i % nMajorTickSpacing == 0)
+        {
+            int nPercent = (i * 100) / nMaxTicks;
+            do
+            {
+                nWidth++;
+            } while (nPercent /= 10);
+        }
+        else
+        {
+            nWidth += 1;
+        }
+    }
+    return nWidth;
+}
+
+/************************************************************************/
 /*                          GDALTermProgress()                          */
 /************************************************************************/
 
@@ -195,6 +206,11 @@ void CPL_STDCALL GDALDestroyScaledProgress(void *pData)
 0...10...20...30...40...50...60...70...80...90...100 - done.
 \endverbatim
 
+ * Starting with GDAL 3.11, for tasks estimated to take more than 10 seconds,
+ * an estimated remaining time is also displayed at the end. And for tasks
+ * taking more than 5 seconds to complete, the total time is displayed upon
+ * completion.
+ *
  * Every 2.5% of progress another number or period is emitted.  Note that
  * GDALTermProgress() uses internal static data to keep track of the last
  * percentage reported and will get confused if two terminal based progress
@@ -216,30 +232,140 @@ int CPL_STDCALL GDALTermProgress(double dfComplete,
                                  CPL_UNUSED const char *pszMessage,
                                  CPL_UNUSED void *pProgressArg)
 {
-    const int nThisTick =
-        std::min(40, std::max(0, static_cast<int>(dfComplete * 40.0)));
+    constexpr int MAX_TICKS = 40;
+    constexpr int MAJOR_TICK_SPACING = 4;
+    constexpr int LENGTH_OF_0_TO_100_PROGRESS =
+        GDALTermProgressWidth(MAX_TICKS, MAJOR_TICK_SPACING);
+
+    const int nThisTick = std::min(
+        MAX_TICKS, std::max(0, static_cast<int>(dfComplete * MAX_TICKS)));
 
     // Have we started a new progress run?
     static int nLastTick = -1;
-    if (nThisTick < nLastTick && nLastTick >= 39)
+    static time_t nStartTime = 0;
+    // whether estimated remaining time is displayed
+    static bool bETADisplayed = false;
+    // number of characters displayed during last progress call
+    static int nCharacterCountLastTime = 0;
+    // maximum number of characters displayed during previous calls
+    static int nCharacterCountMax = 0;
+    if (nThisTick < nLastTick && nLastTick >= MAX_TICKS - 1)
+    {
+        bETADisplayed = false;
         nLastTick = -1;
+        nCharacterCountLastTime = 0;
+        nCharacterCountMax = 0;
+    }
 
     if (nThisTick <= nLastTick)
         return TRUE;
 
+    const time_t nCurTime = time(nullptr);
+    if (nLastTick < 0)
+        nStartTime = nCurTime;
+
+    constexpr int MIN_DELAY_FOR_ETA = 5;  // in seconds
+    if (nCurTime - nStartTime >= MIN_DELAY_FOR_ETA && dfComplete > 0 &&
+        dfComplete < 0.5)
+    {
+        static bool bIsTTY = CPLIsInteractive(stdout);
+        bETADisplayed = bIsTTY;
+    }
+    if (bETADisplayed)
+    {
+        for (int i = 0; i < nCharacterCountLastTime; ++i)
+            fprintf(stdout, "\b");
+        nLastTick = -1;
+        nCharacterCountLastTime = 0;
+
+#ifdef _WIN32
+        constexpr const char *WINDOWS_TERMINAL_ENV_VAR = "WT_SESSION";
+        constexpr const char *CONEMU_ENV_VAR = "ConEmuANSI";
+#endif
+        static const bool bAllowOSC94 = CPLTestBool(CPLGetConfigOption(
+            "GDAL_TERM_PROGRESS_OSC_9_4",
+#ifdef _WIN32
+            // Detect if we are running under Windows Terminal
+            (CPLGetConfigOption(WINDOWS_TERMINAL_ENV_VAR, nullptr) != nullptr ||
+             // or ConEmu
+             CPLGetConfigOption(CONEMU_ENV_VAR, nullptr) != nullptr)
+                ? "YES"
+                : "NO"
+#else
+            "YES"
+#endif
+            ));
+        if (bAllowOSC94)
+        {
+            // Implement OSC 9;4 progress reporting protocol
+            // https://conemu.github.io/en/AnsiEscapeCodes.html#ConEmu_specific_OSC
+            if (nThisTick == MAX_TICKS)
+                fprintf(stdout, "\x1b]9;4;0;100\x07");
+            else
+                fprintf(stdout, "\x1b]9;4;1;%d\x07",
+                        (nThisTick * 100) / MAX_TICKS);
+        }
+    }
+
     while (nThisTick > nLastTick)
     {
         ++nLastTick;
-        if (nLastTick % 4 == 0)
-            fprintf(stdout, "%d", (nLastTick / 4) * 10);
+        if (nLastTick % MAJOR_TICK_SPACING == 0)
+        {
+            const int nPercent = (nLastTick * 100) / MAX_TICKS;
+            nCharacterCountLastTime += fprintf(stdout, "%d", nPercent);
+        }
         else
-            fprintf(stdout, ".");
+        {
+            nCharacterCountLastTime += fprintf(stdout, ".");
+        }
     }
 
-    if (nThisTick == 40)
-        fprintf(stdout, " - done.\n");
+    if (nThisTick == MAX_TICKS)
+    {
+        nCharacterCountLastTime += fprintf(stdout, " - done");
+        if (nCurTime - nStartTime >= MIN_DELAY_FOR_ETA)
+        {
+            const int nElapsed = static_cast<int>(nCurTime - nStartTime);
+            const int nHours = nElapsed / 3600;
+            const int nMins = (nElapsed % 3600) / 60;
+            const int nSecs = nElapsed % 60;
+            nCharacterCountLastTime +=
+                fprintf(stdout, " in %02d:%02d:%02d.", nHours, nMins, nSecs);
+            for (int i = nCharacterCountLastTime; i < nCharacterCountMax; ++i)
+                nCharacterCountLastTime += fprintf(stdout, " ");
+        }
+        else
+        {
+            fprintf(stdout, ".");
+        }
+        fprintf(stdout, "\n");
+    }
     else
+    {
+        if (bETADisplayed)
+        {
+            for (int i = nCharacterCountLastTime;
+                 i < LENGTH_OF_0_TO_100_PROGRESS; ++i)
+                nCharacterCountLastTime += fprintf(stdout, " ");
+
+            const double dfETA =
+                (nCurTime - nStartTime) * (1.0 / dfComplete - 1);
+            const int nETA = static_cast<int>(dfETA + 0.5);
+            const int nHours = nETA / 3600;
+            const int nMins = (nETA % 3600) / 60;
+            const int nSecs = nETA % 60;
+            nCharacterCountLastTime +=
+                fprintf(stdout, " - estimated remaining time: %02d:%02d:%02d",
+                        nHours, nMins, nSecs);
+            for (int i = nCharacterCountLastTime; i < nCharacterCountMax; ++i)
+                nCharacterCountLastTime += fprintf(stdout, " ");
+        }
         fflush(stdout);
+    }
+
+    if (nCharacterCountLastTime > nCharacterCountMax)
+        nCharacterCountMax = nCharacterCountLastTime;
 
     return TRUE;
 }

@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2019, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef CPL_JSON_STREAMING_WRITER_H
@@ -36,6 +20,8 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+
+#include "cpl_float.h"
 #include "cpl_port.h"
 
 class CPL_DLL CPLJSonStreamingWriter
@@ -55,6 +41,8 @@ class CPL_DLL CPLJSonStreamingWriter
     std::string m_osIndentAcc{};
     int m_nLevel = 0;
     bool m_bNewLineEnabled = true;
+    std::string m_osTmpForSerialize{};
+    std::string m_osTmpForFormatString{};
 
     struct State
     {
@@ -69,16 +57,22 @@ class CPL_DLL CPLJSonStreamingWriter
     std::vector<State> m_states{};
     bool m_bWaitForValue = false;
 
-    void Print(const std::string &text);
     void IncIndent();
     void DecIndent();
-    static std::string FormatString(const std::string &str);
+    const std::string &FormatString(const std::string_view &str);
     void EmitCommaIfNeeded();
+
+    void Serialize(const char *pszStr, size_t nLength);
+
+  protected:
+    virtual void Serialize(const std::string_view &str);
 
   public:
     CPLJSonStreamingWriter(SerializationFuncType pfnSerializationFunc,
                            void *pUserData);
-    ~CPLJSonStreamingWriter();
+    virtual ~CPLJSonStreamingWriter();
+
+    void clear();
 
     void SetPrettyFormatting(bool bPretty)
     {
@@ -93,9 +87,12 @@ class CPL_DLL CPLJSonStreamingWriter
         return m_osStr;
     }
 
-    void Add(const std::string &str);
     void Add(const char *pszStr);
+    void Add(const std::string &str);
+    void Add(const std::string_view &str);
     void Add(bool bVal);
+
+    void AddSerializedValue(const std::string_view &str);
 
     void Add(int nVal)
     {
@@ -109,13 +106,14 @@ class CPL_DLL CPLJSonStreamingWriter
 
     void Add(std::int64_t nVal);
     void Add(std::uint64_t nVal);
+    void Add(GFloat16 hfVal, int nPrecision = 5);
     void Add(float fVal, int nPrecision = 9);
-    void Add(double dfVal, int nPrecision = 18);
+    void Add(double dfVal, int nPrecision = 17);
     void AddNull();
 
     void StartObj();
     void EndObj();
-    void AddObjKey(const std::string &key);
+    void AddObjKey(const std::string_view &key);
 
     struct CPL_DLL ObjectContext
     {

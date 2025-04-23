@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GeoPackage raster functionality.
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2014, Even Rouault <even dot rouault at spatialys dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -850,6 +833,10 @@ def test_gpkg_10():
 # Single band with 32 bit color table
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.parametrize("tile_drv_name", ["JPEG", "WEBP"])
 def test_gpkg_11(tile_drv_name):
 
@@ -2876,7 +2863,7 @@ def test_gpkg_39():
     ds.ReleaseResultSet(sql_lyr)
     sql_lyr = ds.ExecuteSQL("PRAGMA user_version")
     f = sql_lyr.GetNextFeature()
-    if f["user_version"] != 10200:
+    if f["user_version"] != 10400:
         f.DumpReadable()
         pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
@@ -3402,7 +3389,7 @@ def test_gpkg_40():
     ds.ReleaseResultSet(sql_lyr)
     sql_lyr = ds.ExecuteSQL("PRAGMA user_version")
     f = sql_lyr.GetNextFeature()
-    if f["user_version"] != 10200:
+    if f["user_version"] != 10400:
         f.DumpReadable()
         pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
@@ -3791,11 +3778,12 @@ def test_gpkg_match_overview_factor():
 ###############################################################################
 
 
-def test_gpkg_wkt2():
+@pytest.mark.parametrize("version", ["1.2", "1.4"])
+def test_gpkg_wkt2(version):
 
     # WKT2-only compatible SRS with EPSG code
     filename = "/vsimem/test_gpkg_wkt2.gpkg"
-    ds = gdaltest.gpkg_dr.Create(filename, 1, 1)
+    ds = gdaltest.gpkg_dr.Create(filename, 1, 1, options=["VERSION=" + version])
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4979)  # WGS 84 3D
     sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -3838,7 +3826,7 @@ def test_gpkg_wkt2():
     lyr = ds.ExecuteSQL(
         "SELECT * FROM gpkg_extensions WHERE extension_name = 'gpkg_crs_wkt'"
     )
-    assert lyr.GetFeatureCount() == 1
+    assert lyr.GetFeatureCount() == (1 if version == "1.2" else 0)
     ds.ReleaseResultSet(lyr)
 
     ds = None
@@ -4206,6 +4194,18 @@ def test_gpkg_sql_gdal_get_layer_pixel_value():
     ds.ReleaseResultSet(sql_lyr)
     assert f[0] == 156
 
+    with ds.ExecuteSQL(
+        "select gdal_get_layer_pixel_value('byte', 1, 'georef', 440780 + 30, 3751080 - 30)"
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] == 156
+
+    with ds.ExecuteSQL(
+        "select gdal_get_layer_pixel_value('byte', 1, 'georef', 440780 + 30, 3751080 - 30, 'cubicspline')"
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] == pytest.approx(150.1388888888889)
+
     sql_lyr = ds.ExecuteSQL(
         "select gdal_get_layer_pixel_value('float32', 1, 'pixel', 0, 1)"
     )
@@ -4348,3 +4348,62 @@ def test_gpkg_rename_raster_table(data_type, tmp_vsimem):
     gdal.VSIFCloseL(f)
 
     assert "weird" not in content
+
+
+###############################################################################
+# Test GetDataCoverageStatus() is used on the source dataset
+
+
+def test_gpkg_copy_using_get_data_coverage_status(tmp_vsimem):
+
+    tmp_gtiff = str(tmp_vsimem / "tmp.tif")
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_gtiff,
+        1024,
+        768,
+        1,
+        options=["TILED=YES", "BLOCKXSIZE=256", "BLOCKYSIZE=256", "SPARSE_OK=YES"],
+    )
+    src_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
+    src_ds.WriteRaster(512, 256, 256, 256, b"\x01" * (256 * 256))
+
+    tmp_gpkg = str(tmp_vsimem / "tmp.gpkg")
+    gdaltest.gpkg_dr.CreateCopy(tmp_gpkg, src_ds)
+
+    ds = gdal.Open(tmp_gpkg)
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+    with ds.ExecuteSQL("SELECT COUNT(*) FROM tmp") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 1024, 768)
+    assert (
+        flags
+        == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)
+        and pct == 100.0 / 12
+    )
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 1024, 256)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 512, 1024, 256)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 512, 768)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(768, 0, 256, 768)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(512, 256, 256, 256)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(512 + 1, 256 + 2, 3, 4)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(512 - 1, 256 - 1, 2, 2)
+    assert (
+        flags
+        == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)
+        and pct == 25.0
+    )

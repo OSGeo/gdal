@@ -15,7 +15,9 @@
 #endif
 
 #ifndef PNG_INTEL_SSE_IMPLEMENTATION
-#if defined(__SSE4_1__) || defined(__AVX__)
+#if defined(USE_NEON_OPTIMIZATIONS)
+#define PNG_INTEL_SSE_IMPLEMENTATION 3
+#elif defined(__SSE4_1__) || defined(__AVX__)
 /* We are not actually using AVX, but checking for AVX is the best
    way we can detect SSE4.1 and SSSE3 on MSVC.
 */
@@ -30,7 +32,11 @@
 #endif
 #endif
 
+#if defined(USE_NEON_OPTIMIZATIONS)
+#include "include_sse2neon.h"
+#else
 #include <immintrin.h>
+#endif
 
 /* Functions in this file look at most 3 pixels (a,b,c) to predict the 4th (d).
  * They're positioned like this:

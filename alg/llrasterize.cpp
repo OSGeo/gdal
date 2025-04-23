@@ -8,23 +8,7 @@
  * Copyright (c) 2000, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -75,7 +59,8 @@ void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
                                int nPartCount, const int *panPartSize,
                                const double *padfX, const double *padfY,
                                const double *dfVariant,
-                               llScanlineFunc pfnScanlineFunc, void *pCBData,
+                               llScanlineFunc pfnScanlineFunc,
+                               GDALRasterizeInfo *pCBData,
                                bool bAvoidBurningSamePoints)
 {
     if (!nPartCount)
@@ -248,7 +233,7 @@ void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
 void GDALdllImagePoint(int nRasterXSize, int nRasterYSize, int nPartCount,
                        const int * /*panPartSize*/, const double *padfX,
                        const double *padfY, const double *padfVariant,
-                       llPointFunc pfnPointFunc, void *pCBData)
+                       llPointFunc pfnPointFunc, GDALRasterizeInfo *pCBData)
 {
     for (int i = 0; i < nPartCount; i++)
     {
@@ -270,7 +255,7 @@ void GDALdllImagePoint(int nRasterXSize, int nRasterYSize, int nPartCount,
 void GDALdllImageLine(int nRasterXSize, int nRasterYSize, int nPartCount,
                       const int *panPartSize, const double *padfX,
                       const double *padfY, const double *padfVariant,
-                      llPointFunc pfnPointFunc, void *pCBData)
+                      llPointFunc pfnPointFunc, GDALRasterizeInfo *pCBData)
 {
     if (!nPartCount)
         return;
@@ -288,8 +273,7 @@ void GDALdllImageLine(int nRasterXSize, int nRasterYSize, int nPartCount,
             double dfVariant = 0.0;
             double dfVariant1 = 0.0;
             if (padfVariant != nullptr &&
-                static_cast<GDALRasterizeInfo *>(pCBData)->eBurnValueSource !=
-                    GBV_UserBurnValue)
+                pCBData->eBurnValueSource != GBV_UserBurnValue)
             {
                 dfVariant = padfVariant[n + j - 1];
                 dfVariant1 = padfVariant[n + j];
@@ -396,13 +380,11 @@ void GDALdllImageLine(int nRasterXSize, int nRasterYSize, int nPartCount,
 /*      will be drawn with the burn value.                              */
 /************************************************************************/
 
-void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
-                                int nPartCount, const int *panPartSize,
-                                const double *padfX, const double *padfY,
-                                const double *padfVariant,
-                                llPointFunc pfnPointFunc, void *pCBData,
-                                bool bAvoidBurningSamePoints,
-                                bool bIntersectOnly)
+void GDALdllImageLineAllTouched(
+    int nRasterXSize, int nRasterYSize, int nPartCount, const int *panPartSize,
+    const double *padfX, const double *padfY, const double *padfVariant,
+    llPointFunc pfnPointFunc, GDALRasterizeInfo *pCBData,
+    bool bAvoidBurningSamePoints, bool bIntersectOnly)
 
 {
     // This is an epsilon to detect geometries that are aligned with pixel

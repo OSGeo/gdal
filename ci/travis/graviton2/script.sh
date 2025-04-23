@@ -9,7 +9,8 @@ export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 (cd "$PWD/build" && make quicktest)
 
 # install test dependencies
-sudo python3 -m pip install -U -r "$PWD/autotest/requirements.txt"
+export PYTHON_CMD=python3
+sudo $PYTHON_CMD -m pip install -U -r "$PWD/autotest/requirements.txt"
 
 # Run all the Python autotests
 cd build

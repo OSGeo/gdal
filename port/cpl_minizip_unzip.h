@@ -1,4 +1,3 @@
-/* $Id$ */
 /* Modified version by Even Rouault. :
      - Addition of cpl_unzGetCurrentFileZStreamPos
      - Decoration of symbol names unz* -> cpl_unz*

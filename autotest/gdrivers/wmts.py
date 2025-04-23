@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  WMTS driver test suite.
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2015, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import shutil
@@ -880,6 +863,7 @@ def test_wmts_15():
             </TileMatrix>
         </TileMatrixSet>
     </Contents>
+    <ServiceMetadataURL xlink:href="/vsimem/do_not_use"/>
 </Capabilities>""",
     )
 
@@ -2017,3 +2001,32 @@ def test_wmts_force_opening_no_match():
 
     drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["WMTS"])
     assert drv is None
+
+
+###############################################################################
+# Test bug fix for https://github.com/OSGeo/gdal/issues/11387
+
+
+@pytest.mark.require_proj(9)
+@gdaltest.enable_exceptions()
+def test_wmts_read_esri_code_disguised_as_epsg_and_wrong_axis_order():
+
+    with gdaltest.error_handler():
+        with gdal.Open(
+            "data/wmts/WMTSCapabilities_THEMIS_NightIR_ControlledMosaics_100m_v2_oct2018.xml"
+        ) as ds:
+            assert gdal.GetLastErrorMsg().startswith(
+                "Auto-correcting wrongly swapped TileMatrix.TopLeftCorner coordinates"
+            )
+            assert ds.GetSpatialRef().GetAuthorityName(None) == "ESRI"
+            assert ds.GetSpatialRef().GetAuthorityCode(None) == "104905"
+            assert ds.GetGeoTransform() == pytest.approx(
+                (
+                    -180.0,
+                    0.0013717509172233527,
+                    0.0,
+                    65.00121128452162,
+                    0.0,
+                    -0.0013717509172233527,
+                )
+            )

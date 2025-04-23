@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2010, Frank Warmerdam
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_string.h"
@@ -169,7 +153,7 @@ int LOSLASDataset::Identify(GDALOpenInfo *poOpenInfo)
         return FALSE;
 
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    const char *pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExt = poOpenInfo->osExtension.c_str();
     if (!EQUAL(pszExt, "las") && !EQUAL(pszExt, "los") && !EQUAL(pszExt, "geo"))
         return FALSE;
 #endif
@@ -196,9 +180,7 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The LOSLAS driver does not support update access to existing"
-                 " datasets.");
+        ReportUpdateNotSupportedByDriver("LOSLAS");
         return nullptr;
     }
 
@@ -258,17 +240,17 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     poDS->SetBand(1, std::move(poBand));
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "las"))
+    if (poOpenInfo->IsExtensionEqualToCI("las"))
     {
         poDS->GetRasterBand(1)->SetDescription("Latitude Offset (arc seconds)");
     }
-    else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "los"))
+    else if (poOpenInfo->IsExtensionEqualToCI("los"))
     {
         poDS->GetRasterBand(1)->SetDescription(
             "Longitude Offset (arc seconds)");
         poDS->GetRasterBand(1)->SetMetadataItem("positive_value", "west");
     }
-    else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "geo"))
+    else if (poOpenInfo->IsExtensionEqualToCI("geo"))
     {
         poDS->GetRasterBand(1)->SetDescription("Geoid undulation (meters)");
     }

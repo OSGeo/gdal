@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -34,6 +18,7 @@
 
 #include <algorithm>
 #include <cinttypes>
+#include <cmath>
 #include <cwchar>
 #include <errno.h>
 #include <limits.h>
@@ -83,7 +68,7 @@ bool FileGDBTable::Create(const char *pszFilename, int nTablxOffsetSize,
     m_bGeomTypeHasM = bGeomTypeHasM;
     m_bHasReadGDBIndexes = TRUE;
 
-    if (!EQUAL(CPLGetExtension(pszFilename), "gdbtable"))
+    if (!EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "gdbtable"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "FileGDB table extension must be gdbtable");
@@ -100,7 +85,8 @@ bool FileGDBTable::Create(const char *pszFilename, int nTablxOffsetSize,
         return false;
     }
 
-    const std::string osTableXName = CPLResetExtension(pszFilename, "gdbtablx");
+    const std::string osTableXName =
+        CPLResetExtensionSafe(pszFilename, "gdbtablx");
     m_fpTableX = VSIFOpenL(osTableXName.c_str(), "wb+");
     if (m_fpTableX == nullptr)
     {
@@ -2142,12 +2128,12 @@ bool FileGDBTable::WholeFileRewriter::Begin()
 #endif
                                        ));
 
-    m_osGdbTablx = CPLFormFilename(
-        CPLGetPath(m_oTable.m_osFilename.c_str()),
-        CPLGetBasename(m_oTable.m_osFilename.c_str()), "gdbtablx");
+    m_osGdbTablx = CPLFormFilenameSafe(
+        CPLGetPathSafe(m_oTable.m_osFilename.c_str()).c_str(),
+        CPLGetBasenameSafe(m_oTable.m_osFilename.c_str()).c_str(), "gdbtablx");
 
-    m_osBackupGdbTable =
-        CPLResetExtension(m_oTable.m_osFilename.c_str(), "_backup.gdbtable");
+    m_osBackupGdbTable = CPLResetExtensionSafe(m_oTable.m_osFilename.c_str(),
+                                               "_backup.gdbtable");
     VSIStatBufL sStat;
     if (VSIStatL(m_osBackupGdbTable.c_str(), &sStat) == 0)
     {
@@ -2158,7 +2144,7 @@ bool FileGDBTable::WholeFileRewriter::Begin()
     }
 
     m_osBackupGdbTablx =
-        CPLResetExtension(m_osGdbTablx.c_str(), "_backup.gdbtablx");
+        CPLResetExtensionSafe(m_osGdbTablx.c_str(), "_backup.gdbtablx");
 
     if (m_bModifyInPlace)
     {
@@ -2203,10 +2189,10 @@ bool FileGDBTable::WholeFileRewriter::Begin()
     }
     else
     {
-        m_osTmpGdbTable = CPLResetExtension(m_oTable.m_osFilename.c_str(),
-                                            "_compress.gdbtable");
+        m_osTmpGdbTable = CPLResetExtensionSafe(m_oTable.m_osFilename.c_str(),
+                                                "_compress.gdbtable");
         m_osTmpGdbTablx =
-            CPLResetExtension(m_osGdbTablx.c_str(), "_compress.gdbtablx");
+            CPLResetExtensionSafe(m_osGdbTablx.c_str(), "_compress.gdbtablx");
 
         m_fpOldGdbtable = m_oTable.m_fpTable;
         m_fpOldGdbtablx = m_oTable.m_fpTableX;
@@ -2439,7 +2425,7 @@ void FileGDBTable::WholeFileRewriter::Rollback()
 /*                                Repack()                              */
 /************************************************************************/
 
-bool FileGDBTable::Repack()
+bool FileGDBTable::Repack(GDALProgressFunc pfnProgress, void *pProgressData)
 {
     if (!m_bUpdate || !Sync())
         return false;
@@ -2469,6 +2455,8 @@ bool FileGDBTable::Repack()
 
     std::vector<GByte> abyBufferOffsets;
     abyBufferOffsets.resize(TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize);
+
+    constexpr double RATIO_SCAN = 0.2;
 
     // Scan all features
     for (uint32_t iPage = 0; !bRepackNeeded && iPage < m_n1024BlocksPresent;
@@ -2513,10 +2501,20 @@ bool FileGDBTable::Repack()
                 nExpectedOffset += nFeatureSize;
             }
         }
+
+        bRepackNeeded =
+            (!pfnProgress ||
+             pfnProgress(RATIO_SCAN * static_cast<double>(iPage + 1) /
+                             m_n1024BlocksPresent,
+                         "", pProgressData)) &&
+            bRepackNeeded;
     }
 
     if (!bRepackNeeded)
     {
+        if (pfnProgress)
+            pfnProgress(1.0, "", pProgressData);
+
         if (m_nFileSize > nExpectedOffset)
         {
             CPLDebug("OpenFileGDB",
@@ -2609,6 +2607,15 @@ bool FileGDBTable::Repack()
                        m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE, 1,
                        oWholeFileRewriter.m_fpTableX) != 1)
             return false;
+
+        if (pfnProgress &&
+            !pfnProgress(RATIO_SCAN + (1.0 - RATIO_SCAN) *
+                                          static_cast<double>(iPage + 1) /
+                                          m_n1024BlocksPresent,
+                         "", pProgressData))
+        {
+            return false;
+        }
     }
 
     m_nRowBufferMaxSize = nRowBufferMaxSize;

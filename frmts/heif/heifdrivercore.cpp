@@ -6,23 +6,7 @@
  ******************************************************************************
  * Copyright (c) 2020, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "include_libheif.h"
@@ -33,42 +17,51 @@
 /*                    HEIFDriverIdentifySimplified()                    */
 /************************************************************************/
 
-int HEIFDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
+static const GByte FTYP_4CC[] = {'f', 't', 'y', 'p'};
+static const GByte supportedBrands[][4]{
+    {'a', 'v', 'i', 'f'}, {'h', 'e', 'i', 'c'}, {'h', 'e', 'i', 'x'},
+    {'j', '2', 'k', 'i'}, {'j', 'p', 'e', 'g'}, {'m', 'i', 'a', 'f'},
+    {'m', 'i', 'f', '1'}, {'m', 'i', 'f', '2'}, {'v', 'v', 'i', 'c'}};
 
+int HEIFDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
 {
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "HEIF:"))
+    {
         return true;
-
-    if (poOpenInfo->nHeaderBytes < 12 || poOpenInfo->fpL == nullptr)
+    }
+    if (poOpenInfo->nHeaderBytes < 16 || poOpenInfo->fpL == nullptr)
+    {
         return false;
-
-    // Simplistic test...
-    const unsigned char abySig1[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x20"
-                                    "ftypheic";
-    const unsigned char abySig2[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x18"
-                                    "ftypheic";
-    const unsigned char abySig3[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x18"
-                                    "ftypmif1"
-                                    "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "mif1heic";
-    return (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig1)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig1, sizeof(abySig1)) == 0) ||
-           (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig2)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig2, sizeof(abySig2)) == 0) ||
-           (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig3)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig3, sizeof(abySig3)) == 0);
+    }
+    if (memcmp(poOpenInfo->pabyHeader + 4, FTYP_4CC, sizeof(FTYP_4CC)) != 0)
+    {
+        return false;
+    }
+    uint32_t lengthBigEndian;
+    memcpy(&lengthBigEndian, poOpenInfo->pabyHeader, sizeof(uint32_t));
+    uint32_t lengthHostEndian = CPL_MSBWORD32(lengthBigEndian);
+    if (lengthHostEndian > static_cast<uint32_t>(poOpenInfo->nHeaderBytes))
+    {
+        lengthHostEndian = static_cast<uint32_t>(poOpenInfo->nHeaderBytes);
+    }
+    for (const GByte *supportedBrand : supportedBrands)
+    {
+        if (memcmp(poOpenInfo->pabyHeader + 8, supportedBrand, 4) == 0)
+        {
+            return true;
+        }
+    }
+    for (uint32_t offset = 16; offset + 4 <= lengthHostEndian; offset += 4)
+    {
+        for (const GByte *supportedBrand : supportedBrands)
+        {
+            if (memcmp(poOpenInfo->pabyHeader + offset, supportedBrand, 4) == 0)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 /************************************************************************/
@@ -93,6 +86,9 @@ void HEIFDriverSetCommonMetadata(GDALDriver *poDriver)
 
     poDriver->pfnIdentify = HEIFDriverIdentifySimplified;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+#ifdef HAS_CUSTOM_FILE_WRITER
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
+#endif
 }
 
 /************************************************************************/

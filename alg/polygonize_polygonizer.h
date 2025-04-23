@@ -6,23 +6,7 @@
  ******************************************************************************
  * Copyright (c) 2023, kikitte.lee <kikitte.lee@gmail.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef POLYGONIZE_POLYGONIZER_H_INCLUDED
@@ -41,6 +25,8 @@
 
 #include "cpl_error.h"
 #include "ogr_api.h"
+#include "ogr_geometry.h"
+#include "ogrsf_frmts.h"
 
 namespace gdal
 {
@@ -67,20 +53,30 @@ struct RPolygon
 {
     IndexType iBottomRightRow{0};
     IndexType iBottomRightCol{0};
+
+    struct ArcStruct
+    {
+        std::unique_ptr<Arc> poArc{};
+        // each element is the next arc index of the current arc
+        unsigned nConnection = 0;
+        // does arc follows the right-hand rule with
+        bool bFollowRighthand = false;
+
+        ArcStruct(unsigned nConnectionIn, bool bFollowRighthandIn)
+            : poArc(std::make_unique<Arc>()), nConnection(nConnectionIn),
+              bFollowRighthand(bFollowRighthandIn)
+        {
+        }
+    };
+
     // arc object list
-    std::vector<Arc *> oArcs{};
-    // does arc follows the right-hand rule with
-    std::vector<bool> oArcRighthandFollow{};
-    // each element is the next arc index of the current arc
-    std::vector<std::size_t> oArcConnections{};
+    std::vector<ArcStruct> oArcs{};
 
     RPolygon() = default;
 
     RPolygon(const RPolygon &) = delete;
 
     RPolygon &operator=(const RPolygon &) = delete;
-
-    ~RPolygon();
 
     /**
      * create a new arc object
@@ -175,7 +171,7 @@ template <typename PolyIdType, typename DataType> class Polygonizer
         return poTheOuterPolygon_;
     }
 
-    void processLine(const PolyIdType *panThisLineId,
+    bool processLine(const PolyIdType *panThisLineId,
                      const DataType *panLastLineVal, TwoArm *poThisLineArm,
                      TwoArm *poLastLineArm, IndexType nCurrentRow,
                      IndexType nCols);
@@ -187,9 +183,12 @@ template <typename PolyIdType, typename DataType> class Polygonizer
 template <typename DataType>
 class OGRPolygonWriter : public PolygonReceiver<DataType>
 {
-    OGRLayerH hOutLayer_;
+    OGRLayer *poOutLayer_ = nullptr;
     int iPixValField_;
     double *padfGeoTransform_;
+    std::unique_ptr<OGRFeature> poFeature_{};
+    OGRPolygon *poPolygon_ =
+        nullptr;  // = poFeature_->GetGeometryRef(), owned by poFeature
 
     CPLErr eErr_{CE_None};
 

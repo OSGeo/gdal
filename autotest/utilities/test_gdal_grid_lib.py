@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_grid testing
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2008-2015, Even Rouault <even dot rouault at spatialys dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import array
@@ -175,6 +158,7 @@ def test_gdal_grid_lib_2(tmp_vsimem, env):
 
 # May fail on minimum builds without qhull
 @gdaltest.disable_exceptions()
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_3():
 
     wkt = "POLYGON ((37.3495241627097 55.6901648563184 187.680953979492,37.349543273449 55.6901565410051 187.714370727539,37.3495794832707 55.6901531392856 187.67333984375,37.3496210575104 55.6901595647556 187.6396484375,37.3496398329735 55.6901716597552 187.596603393555,37.3496726900339 55.6901780852222 187.681350708008,37.3496793955565 55.6901829988139 187.933898925781,37.3496921360493 55.6901860225623 187.934280395508,37.3497162759304 55.6902037870796 187.435394287109,37.3497484624386 55.6902094566047 187.515319824219,37.3497618734837 55.6902241973661 190.329940795898,37.3497511446476 55.690238560154 190.345748901367,37.3497404158115 55.6902567026153 190.439697265625,37.3497142642736 55.6902650179072 189.086044311523,37.349688783288 55.6902608602615 187.763305664062,37.3496626317501 55.6902468754498 187.53678894043,37.3496378213167 55.6902412059301 187.598648071289,37.3496103286743 55.6902400720261 187.806274414062,37.3495902121067 55.6902313787607 187.759521484375,37.3495734483004 55.6902177719067 187.578125,37.349532879889 55.6902035980954 187.56965637207,37.3495161160827 55.6901939599008 187.541793823242,37.3495187982917 55.6901754394418 187.610427856445,37.3495241627097 55.6901648563184 187.680953979492))"
@@ -227,6 +211,7 @@ def _shift_by(geom, dx, dy):
 
 
 @pytest.mark.parametrize("alg", ["invdist", "invdistnn"])
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_invdistnn_quadrant_all_params(alg):
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10,1 0 100000000)"
@@ -253,6 +238,7 @@ def test_gdal_grid_lib_invdistnn_quadrant_all_params(alg):
 
 
 @pytest.mark.parametrize("alg", ["invdist", "invdistnn"])
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_invdistnn_quadrant_insufficient_radius(alg):
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
@@ -272,6 +258,7 @@ def test_gdal_grid_lib_invdistnn_quadrant_insufficient_radius(alg):
     _compare_arrays(ds, [[0.0]])  # insufficient radius. should be > sqrt(2)
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_invdistnn_quadrant_min_points_not_reached():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
@@ -291,6 +278,7 @@ def test_gdal_grid_lib_invdistnn_quadrant_min_points_not_reached():
     _compare_arrays(ds, [[0.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_invdistnn_quadrant_missing_point_in_one_quadrant():
 
     # Missing point in 0.5 -0.5 quadrant
@@ -311,6 +299,7 @@ def test_gdal_grid_lib_invdistnn_quadrant_missing_point_in_one_quadrant():
     _compare_arrays(ds, [[0.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_invdistnn_quadrant_ignore_extra_points():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10,1 0 100000000)"
@@ -341,6 +330,7 @@ def test_gdal_grid_lib_invdistnn_quadrant_ignore_extra_points():
     _compare_arrays(ds, [[10.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_average_quadrant_all_params():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10,1 0 100)"
@@ -362,6 +352,7 @@ def test_gdal_grid_lib_average_quadrant_all_params():
     _compare_arrays(ds, [[expected_val]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_average_quadrant_insufficient_radius():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
@@ -381,6 +372,7 @@ def test_gdal_grid_lib_average_quadrant_insufficient_radius():
     _compare_arrays(ds, [[0.0]])  # insufficient radius. should be > sqrt(2)
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_average_quadrant_min_points_not_reached():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
@@ -400,6 +392,7 @@ def test_gdal_grid_lib_average_quadrant_min_points_not_reached():
     _compare_arrays(ds, [[0.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_average_quadrant_missing_point_in_one_quadrant():
 
     # Missing point in 0.5 -0.5 quadrant
@@ -420,6 +413,7 @@ def test_gdal_grid_lib_average_quadrant_missing_point_in_one_quadrant():
     _compare_arrays(ds, [[0.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_average_quadrant_ignore_extra_points():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10,1 0 100000000)"
@@ -450,6 +444,7 @@ def test_gdal_grid_lib_average_quadrant_ignore_extra_points():
     _compare_arrays(ds, [[10.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_minimum_quadrant_all_params():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 9,1 0 5)"
@@ -469,6 +464,7 @@ def test_gdal_grid_lib_minimum_quadrant_all_params():
     _compare_arrays(ds, [[5.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_minimum_quadrant_insufficient_radius():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
@@ -488,6 +484,7 @@ def test_gdal_grid_lib_minimum_quadrant_insufficient_radius():
     _compare_arrays(ds, [[0.0]])  # insufficient radius. should be > sqrt(2)
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_minimum_quadrant_min_points_not_reached():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
@@ -507,6 +504,7 @@ def test_gdal_grid_lib_minimum_quadrant_min_points_not_reached():
     _compare_arrays(ds, [[0.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_minimum_quadrant_missing_point_in_one_quadrant():
 
     # Missing point in 0.5 -0.5 quadrant
@@ -527,6 +525,7 @@ def test_gdal_grid_lib_minimum_quadrant_missing_point_in_one_quadrant():
     _compare_arrays(ds, [[0.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_minimum_quadrant_ignore_extra_points():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10,1 0 1)"
@@ -546,6 +545,7 @@ def test_gdal_grid_lib_minimum_quadrant_ignore_extra_points():
     _compare_arrays(ds, [[10.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_maximum_quadrant_all_params():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 11,1 0 50)"
@@ -565,6 +565,7 @@ def test_gdal_grid_lib_maximum_quadrant_all_params():
     _compare_arrays(ds, [[50.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_maximum_quadrant_insufficient_radius():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
@@ -584,6 +585,7 @@ def test_gdal_grid_lib_maximum_quadrant_insufficient_radius():
     _compare_arrays(ds, [[0.0]])  # insufficient radius. should be > sqrt(2)
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_maximum_quadrant_min_points_not_reached():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
@@ -603,6 +605,7 @@ def test_gdal_grid_lib_maximum_quadrant_min_points_not_reached():
     _compare_arrays(ds, [[0.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_maximum_quadrant_missing_point_in_one_quadrant():
 
     # Missing point in 0.5 -0.5 quadrant
@@ -623,6 +626,7 @@ def test_gdal_grid_lib_maximum_quadrant_missing_point_in_one_quadrant():
     _compare_arrays(ds, [[0.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_maximum_quadrant_ignore_extra_points():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10,1 0 100)"
@@ -642,6 +646,7 @@ def test_gdal_grid_lib_maximum_quadrant_ignore_extra_points():
     _compare_arrays(ds, [[10.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_range_quadrant_all_params():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 1,1 0 50)"
@@ -661,6 +666,7 @@ def test_gdal_grid_lib_range_quadrant_all_params():
     _compare_arrays(ds, [[50.0 - 1.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_range_quadrant_insufficient_radius():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 0)"
@@ -680,6 +686,7 @@ def test_gdal_grid_lib_range_quadrant_insufficient_radius():
     _compare_arrays(ds, [[0.0]])  # insufficient radius. should be > sqrt(2)
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_range_quadrant_min_points_not_reached():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 0)"
@@ -699,6 +706,7 @@ def test_gdal_grid_lib_range_quadrant_min_points_not_reached():
     _compare_arrays(ds, [[0.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_range_quadrant_missing_point_in_one_quadrant():
 
     # Missing point in 0.5 -0.5 quadrant
@@ -719,6 +727,7 @@ def test_gdal_grid_lib_range_quadrant_missing_point_in_one_quadrant():
     _compare_arrays(ds, [[0.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_range_quadrant_ignore_extra_points():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 1,1 0 100)"
@@ -738,6 +747,7 @@ def test_gdal_grid_lib_range_quadrant_ignore_extra_points():
     _compare_arrays(ds, [[9.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_count_quadrant_all_params():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 1,1 0 50)"
@@ -757,6 +767,7 @@ def test_gdal_grid_lib_count_quadrant_all_params():
     _compare_arrays(ds, [[5]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_count_quadrant_insufficient_radius():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 0)"
@@ -776,6 +787,7 @@ def test_gdal_grid_lib_count_quadrant_insufficient_radius():
     _compare_arrays(ds, [[0.0]])  # insufficient radius. should be > sqrt(2)
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_count_quadrant_min_points_not_reached():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 0)"
@@ -795,6 +807,7 @@ def test_gdal_grid_lib_count_quadrant_min_points_not_reached():
     _compare_arrays(ds, [[0.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_count_quadrant_missing_point_in_one_quadrant():
 
     # Missing point in 0.5 -0.5 quadrant
@@ -815,6 +828,7 @@ def test_gdal_grid_lib_count_quadrant_missing_point_in_one_quadrant():
     _compare_arrays(ds, [[0.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_count_quadrant_ignore_extra_points():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 1,1 0 100)"
@@ -834,6 +848,7 @@ def test_gdal_grid_lib_count_quadrant_ignore_extra_points():
     _compare_arrays(ds, [[4.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_average_distance_quadrant_all_params():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 1,1 0 50)"
@@ -855,6 +870,7 @@ def test_gdal_grid_lib_average_distance_quadrant_all_params():
     _compare_arrays(ds, [[expected_val]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_average_distance_quadrant_insufficient_radius():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 0)"
@@ -874,6 +890,7 @@ def test_gdal_grid_lib_average_distance_quadrant_insufficient_radius():
     _compare_arrays(ds, [[0.0]])  # insufficient radius. should be > sqrt(2)
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_average_distance_quadrant_min_points_not_reached():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 0)"
@@ -893,6 +910,7 @@ def test_gdal_grid_lib_average_distance_quadrant_min_points_not_reached():
     _compare_arrays(ds, [[0.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_average_distance_quadrant_missing_point_in_one_quadrant():
 
     # Missing point in 0.5 -0.5 quadrant
@@ -913,6 +931,7 @@ def test_gdal_grid_lib_average_distance_quadrant_missing_point_in_one_quadrant()
     _compare_arrays(ds, [[0.0]])
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_average_distance_quadrant_ignore_extra_points():
 
     wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 1,1 0 100)"
@@ -940,7 +959,7 @@ def test_gdal_grid_lib_average_distance_quadrant_ignore_extra_points():
 
 def test_gdal_grid_lib_skip_null_zfield():
 
-    mem_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     mem_lyr = mem_ds.CreateLayer("test")
     mem_lyr.CreateField(ogr.FieldDefn("val", ogr.OFTInteger))
     f = ogr.Feature(mem_lyr.GetLayerDefn())
@@ -994,7 +1013,7 @@ def test_gdal_grid_lib_skip_null_zfield():
 
 def test_gdal_grid_lib_skip_nan_zvalue():
 
-    mem_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     mem_lyr = mem_ds.CreateLayer("test")
     f = ogr.Feature(mem_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0 10)"))
@@ -1061,7 +1080,7 @@ def test_gdal_grid_lib_dict_arguments():
 
 def test_gdal_grid_lib_errors():
 
-    mem_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     mem_ds.CreateLayer("test")
 
     with pytest.raises(Exception, match='Unable to find layer "invalid"'):

@@ -8,23 +8,7 @@
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
  * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrsf_frmts.h"
@@ -49,14 +33,8 @@ void OGRRegisterAllInternal()
 #ifdef MITAB_ENABLED
     RegisterOGRTAB();
 #endif
-#ifdef NTF_ENABLED
-    RegisterOGRNTF();
-#endif
 #ifdef LVBAG_ENABLED
     RegisterOGRLVBAG();
-#endif
-#ifdef SDTS_ENABLED
-    RegisterOGRSDTS();
 #endif
 #ifdef S57_ENABLED
     RegisterOGRS57();
@@ -66,9 +44,6 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef VRT_ENABLED
     RegisterOGRVRT();
-#endif
-#ifdef MEM_ENABLED
-    RegisterOGRMEM();
 #endif
 #ifdef CSV_ENABLED
     RegisterOGRCSV();
@@ -119,9 +94,6 @@ void OGRRegisterAllInternal()
 #ifdef MSSQLSPATIAL_ENABLED
     RegisterOGRMSSQLSpatial();
 #endif
-#ifdef OGDI_ENABLED
-    RegisterOGROGDI();
-#endif
 #ifdef PG_ENABLED
     RegisterOGRPG();
 #endif
@@ -156,9 +128,6 @@ void OGRRegisterAllInternal()
 #ifdef IDB_ENABLED
     RegisterOGRIDB();
 #endif
-#ifdef GEOCONCEPT_ENABLED
-    RegisterOGRGeoconcept();
-#endif
 #ifdef GEORSS_ENABLED
     RegisterOGRGeoRSS();
 #endif
@@ -180,6 +149,8 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef WFS_ENABLED
     RegisterOGRWFS();
+#endif
+#ifdef OAPIF_ENABLED
     RegisterOGROAPIF();
 #endif
 #ifdef SOSI_ENABLED
@@ -187,9 +158,6 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef EDIGEO_ENABLED
     RegisterOGREDIGEO();
-#endif
-#ifdef SVG_ENABLED
-    RegisterOGRSVG();
 #endif
 #ifdef IDRISI_ENABLED
     RegisterOGRIdrisi();
@@ -269,19 +237,24 @@ void OGRRegisterAllInternal()
 #ifdef XODR_ENABLED
     RegisterOGRXODR();
 #endif
+#ifdef ADBC_ENABLED
+    RegisterOGRADBC();
+#endif
 
     // NOTE: you need to generally insert your own driver before that line.
 
     // NOTE: frmts/drivers.ini in the same directory should be kept in same
     // order as this file
 
-/* Put TIGER and AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */
-#ifdef TIGER_ENABLED
-    RegisterOGRTiger();
-#endif
+/* Put AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */
 #ifdef AVC_ENABLED
     RegisterOGRAVCBin();
     RegisterOGRAVCE00();
+#endif
+
+    // Last but not the least
+#ifdef AIVECTOR_ENABLED
+    RegisterOGRAIVector();
 #endif
 
 } /* OGRRegisterAll */

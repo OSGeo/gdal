@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGRFieldDomain
@@ -9,23 +8,7 @@
 ###############################################################################
 # Copyright (c) 2021, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import pytest
@@ -102,7 +85,7 @@ def test_ogr_fielddomain_range():
     assert domain.GetFieldSubType() == ogr.OFSTNone
     assert domain.GetMinAsString() == "2023-07-03T12:13:14"
     assert domain.GetMaxAsString() == "2023-07-03T12:13:15"
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     ds.AddFieldDomain(domain)
     ret = gdal.VectorInfo(ds, format="json")
     assert ret["domains"] == {
@@ -182,7 +165,7 @@ def test_ogr_fielddomain_glob():
 
 def test_ogr_fielddomain_mem_driver():
 
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
 
     assert ds.GetFieldDomainNames() is None
 
@@ -239,7 +222,7 @@ def test_ogr_fielddomain_get_set_domain_name():
 
 
 def test_delete_domain_assigned_to_field():
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     assert ds.AddFieldDomain(
         ogr.CreateGlobFieldDomain("name", "desc", ogr.OFTString, ogr.OFSTNone, "*")
     )
@@ -300,7 +283,7 @@ def test_delete_domain_assigned_to_field():
 
 
 def test_update_field_domain():
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     assert ds.AddFieldDomain(
         ogr.CreateGlobFieldDomain("name", "desc", ogr.OFTString, ogr.OFSTNone, "*")
     )

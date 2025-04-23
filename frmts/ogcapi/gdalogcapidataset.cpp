@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2020, Even Rouault, <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_error.h"
@@ -35,9 +19,7 @@
 #include "ogrsf_frmts.h"
 #include "ogr_spatialref.h"
 
-#ifdef OGR_ENABLE_DRIVER_GML
 #include "parsexsd.h"
-#endif
 
 #include <algorithm>
 #include <memory>
@@ -98,7 +80,7 @@ class OGCAPIDataset final : public GDALDataset
 
     bool InitFromFile(GDALOpenInfo *poOpenInfo);
     bool InitFromURL(GDALOpenInfo *poOpenInfo);
-    void ProcessScale(const CPLJSONObject &oScaleDenominator,
+    bool ProcessScale(const CPLJSONObject &oScaleDenominator,
                       const double dfXMin, const double dfYMin,
                       const double dfXMax, const double dfYMax);
     bool InitFromCollection(GDALOpenInfo *poOpenInfo, CPLJSONDocument &oDoc);
@@ -315,19 +297,11 @@ class OGCAPITiledLayer final
         return -1;
     }
 
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
-
-    void SetSpatialFilter(OGRGeometry *) override;
-
-    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     OGRFeature *GetFeature(GIntBig nFID) override;
     int TestCapability(const char *) override;
@@ -511,10 +485,15 @@ bool OGCAPIDataset::Download(const CPLString &osURL, const char *pszPostContent,
 
     if (psResult->pszErrBuf != nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                 psResult->pabyData
-                     ? reinterpret_cast<const char *>(psResult->pabyData)
-                     : psResult->pszErrBuf);
+        std::string osErrorMsg(psResult->pszErrBuf);
+        const char *pszData =
+            reinterpret_cast<const char *>(psResult->pabyData);
+        if (pszData)
+        {
+            osErrorMsg += ", ";
+            osErrorMsg.append(pszData, CPLStrnlen(pszData, 1000));
+        }
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMsg.c_str());
         CPLHTTPDestroyResult(psResult);
         return false;
     }
@@ -633,8 +612,7 @@ OGCAPIDataset::OpenTile(const CPLString &osURLPattern, int nMatrix, int nColumn,
     if (bEmptyContent)
         return nullptr;
 
-    CPLString osTempFile;
-    osTempFile.Printf("/vsimem/ogcapi/%p", this);
+    const CPLString osTempFile(VSIMemGenerateHiddenFilename("ogcapi"));
     VSIFCloseL(VSIFileFromMemBuffer(osTempFile.c_str(),
                                     reinterpret_cast<GByte *>(&m_osTileData[0]),
                                     m_osTileData.size(), false));
@@ -662,7 +640,7 @@ int OGCAPIDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:"))
         return TRUE;
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "moaw"))
+    if (poOpenInfo->IsExtensionEqualToCI("moaw"))
         return TRUE;
     if (poOpenInfo->IsSingleAllowedDriver("OGCAPI"))
     {
@@ -767,7 +745,7 @@ bool OGCAPIDataset::InitFromFile(GDALOpenInfo *poOpenInfo)
 /*                        ProcessScale()                          */
 /************************************************************************/
 
-void OGCAPIDataset::ProcessScale(const CPLJSONObject &oScaleDenominator,
+bool OGCAPIDataset::ProcessScale(const CPLJSONObject &oScaleDenominator,
                                  const double dfXMin, const double dfYMin,
                                  const double dfXMax, const double dfYMax)
 
@@ -779,6 +757,8 @@ void OGCAPIDataset::ProcessScale(const CPLJSONObject &oScaleDenominator,
         constexpr double HALF_CIRCUMFERENCE = 6378137 * M_PI;
         dfRes = dfScaleDenominator / ((HALF_CIRCUMFERENCE / 180) / 0.28e-3);
     }
+    if (dfRes == 0.0)
+        return false;
 
     double dfXSize = (dfXMax - dfXMin) / dfRes;
     double dfYSize = (dfYMax - dfYMin) / dfRes;
@@ -794,6 +774,8 @@ void OGCAPIDataset::ProcessScale(const CPLJSONObject &oScaleDenominator,
     m_adfGeoTransform[1] = (dfXMax - dfXMin) / nRasterXSize;
     m_adfGeoTransform[3] = dfYMax;
     m_adfGeoTransform[5] = -(dfYMax - dfYMin) / nRasterYSize;
+
+    return true;
 }
 
 /************************************************************************/
@@ -832,20 +814,21 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo *poOpenInfo,
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MINX") == nullptr;
     const double dfXMin =
         CPLAtof(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MINX",
-                                     CPLSPrintf("%.18g", oBbox[0].ToDouble())));
+                                     CPLSPrintf("%.17g", oBbox[0].ToDouble())));
     const double dfYMin =
         CPLAtof(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MINY",
-                                     CPLSPrintf("%.18g", oBbox[1].ToDouble())));
+                                     CPLSPrintf("%.17g", oBbox[1].ToDouble())));
     const double dfXMax =
         CPLAtof(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MAXX",
-                                     CPLSPrintf("%.18g", oBbox[2].ToDouble())));
+                                     CPLSPrintf("%.17g", oBbox[2].ToDouble())));
     const double dfYMax =
         CPLAtof(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MAXY",
-                                     CPLSPrintf("%.18g", oBbox[3].ToDouble())));
+                                     CPLSPrintf("%.17g", oBbox[3].ToDouble())));
 
     auto oScaleDenominator = oRoot["scaleDenominator"];
 
-    ProcessScale(oScaleDenominator, dfXMin, dfYMin, dfXMax, dfYMax);
+    if (!ProcessScale(oScaleDenominator, dfXMin, dfYMin, dfXMax, dfYMax))
+        return false;
 
     bool bFoundMap = false;
 
@@ -1260,10 +1243,10 @@ bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo *poOpenInfo,
                      "        <ServerUrl>%s</ServerUrl>"
                      "    </Service>"
                      "    <DataWindow>"
-                     "        <UpperLeftX>%.18g</UpperLeftX>"
-                     "        <UpperLeftY>%.18g</UpperLeftY>"
-                     "        <LowerRightX>%.18g</LowerRightX>"
-                     "        <LowerRightY>%.18g</LowerRightY>"
+                     "        <UpperLeftX>%.17g</UpperLeftX>"
+                     "        <UpperLeftY>%.17g</UpperLeftY>"
+                     "        <LowerRightX>%.17g</LowerRightX>"
+                     "        <LowerRightY>%.17g</LowerRightY>"
                      "        <SizeX>%d</SizeX>"
                      "        <SizeY>%d</SizeY>"
                      "    </DataWindow>"
@@ -1531,10 +1514,10 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo *poOpenInfo,
                      "        <ServerUrl>%s</ServerUrl>"
                      "    </Service>"
                      "    <DataWindow>"
-                     "        <UpperLeftX>%.18g</UpperLeftX>"
-                     "        <UpperLeftY>%.18g</UpperLeftY>"
-                     "        <LowerRightX>%.18g</LowerRightX>"
-                     "        <LowerRightY>%.18g</LowerRightY>"
+                     "        <UpperLeftX>%.17g</UpperLeftX>"
+                     "        <UpperLeftY>%.17g</UpperLeftY>"
+                     "        <LowerRightX>%.17g</LowerRightX>"
+                     "        <LowerRightY>%.17g</LowerRightY>"
                      "        <SizeX>%d</SizeX>"
                      "        <SizeY>%d</SizeY>"
                      "    </DataWindow>"
@@ -1645,7 +1628,6 @@ GDALColorInterp OGCAPIMapWrapperBand::GetColorInterpretation()
 /*                           ParseXMLSchema()                           */
 /************************************************************************/
 
-#ifdef OGR_ENABLE_DRIVER_GML
 static bool
 ParseXMLSchema(const std::string &osURL,
                std::vector<std::unique_ptr<OGRFieldDefn>> &apoFields,
@@ -1655,7 +1637,9 @@ ParseXMLSchema(const std::string &osURL,
 
     std::vector<GMLFeatureClass *> apoClasses;
     bool bFullyUnderstood = false;
-    bool bHaveSchema = GMLParseXSD(osURL.c_str(), apoClasses, bFullyUnderstood);
+    bool bUseSchemaImports = false;
+    bool bHaveSchema = GMLParseXSD(osURL.c_str(), bUseSchemaImports, apoClasses,
+                                   bFullyUnderstood);
     if (bHaveSchema && apoClasses.size() == 1)
     {
         auto poGMLFeatureClass = apoClasses[0];
@@ -1688,7 +1672,6 @@ ParseXMLSchema(const std::string &osURL,
 
     return false;
 }
-#endif
 
 /************************************************************************/
 /*                         InitWithTilesAPI()                           */
@@ -1960,14 +1943,12 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
             }
         }
 
-#ifdef OGR_ENABLE_DRIVER_GML
         std::vector<std::unique_ptr<OGRFieldDefn>> apoFields;
         bool bGotSchema = false;
         if (!osXMLSchemaURL.empty())
         {
             bGotSchema = ParseXMLSchema(osXMLSchemaURL, apoFields, eGeomType);
         }
-#endif
 
         for (const auto &tileMatrix : tms->tileMatrixList())
         {
@@ -2015,10 +1996,8 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
                     tileMatrix, eGeomType));
             poLayer->SetMinMaxXY(minCol, minRow, maxCol, maxRow);
             poLayer->SetExtent(dfXMin, dfYMin, dfXMax, dfYMax);
-#ifdef OGR_ENABLE_DRIVER_GML
             if (bGotSchema)
                 poLayer->SetFields(apoFields);
-#endif
             m_apoLayers.emplace_back(std::move(poLayer));
         }
 
@@ -2118,10 +2097,10 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
                     "        <TileXMultiplier>%d</TileXMultiplier>"
                     "    </Service>"
                     "    <DataWindow>"
-                    "        <UpperLeftX>%.18g</UpperLeftX>"
-                    "        <UpperLeftY>%.18g</UpperLeftY>"
-                    "        <LowerRightX>%.18g</LowerRightX>"
-                    "        <LowerRightY>%.18g</LowerRightY>"
+                    "        <UpperLeftX>%.17g</UpperLeftX>"
+                    "        <UpperLeftY>%.17g</UpperLeftY>"
+                    "        <LowerRightX>%.17g</LowerRightX>"
+                    "        <LowerRightY>%.17g</LowerRightY>"
                     "        <TileLevel>0</TileLevel>"
                     "        <TileY>%d</TileY>"
                     "        <SizeX>%d</SizeX>"
@@ -2251,10 +2230,10 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
             argv.AddString("-of");
             argv.AddString("VRT");
             argv.AddString("-projwin");
-            argv.AddString(CPLSPrintf("%.18g", dfXMin));
-            argv.AddString(CPLSPrintf("%.18g", dfYMax));
-            argv.AddString(CPLSPrintf("%.18g", dfXMax));
-            argv.AddString(CPLSPrintf("%.18g", dfYMin));
+            argv.AddString(CPLSPrintf("%.17g", dfXMin));
+            argv.AddString(CPLSPrintf("%.17g", dfYMax));
+            argv.AddString(CPLSPrintf("%.17g", dfXMax));
+            argv.AddString(CPLSPrintf("%.17g", dfYMin));
             GDALTranslateOptions *psOptions =
                 GDALTranslateOptionsNew(argv.List(), nullptr);
             GDALDatasetH hCroppedDS = GDALTranslate(
@@ -2522,19 +2501,19 @@ GDALDataset *OGCAPITiledLayer::OpenTile(int nX, int nY, bool &bEmptyContent)
             m_bInvertAxis ? m_oTileMatrix.mTopLeftX : m_oTileMatrix.mTopLeftY;
         aosOpenOptions.SetNameValue(
             "@GEOREF_TOPX",
-            CPLSPrintf("%.18g", dfOriX + nX * m_oTileMatrix.mResX *
+            CPLSPrintf("%.17g", dfOriX + nX * m_oTileMatrix.mResX *
                                              m_oTileMatrix.mTileWidth));
         aosOpenOptions.SetNameValue(
             "@GEOREF_TOPY",
-            CPLSPrintf("%.18g", dfOriY - nY * m_oTileMatrix.mResY *
+            CPLSPrintf("%.17g", dfOriY - nY * m_oTileMatrix.mResY *
                                              m_oTileMatrix.mTileHeight));
         aosOpenOptions.SetNameValue(
             "@GEOREF_TILEDIMX",
-            CPLSPrintf("%.18g", nCoalesce * m_oTileMatrix.mResX *
+            CPLSPrintf("%.17g", nCoalesce * m_oTileMatrix.mResX *
                                     m_oTileMatrix.mTileWidth));
         aosOpenOptions.SetNameValue(
             "@GEOREF_TILEDIMY",
-            CPLSPrintf("%.18g",
+            CPLSPrintf("%.17g",
                        m_oTileMatrix.mResY * m_oTileMatrix.mTileWidth));
 
         papszOpenOptions = aosOpenOptions.List();
@@ -2784,61 +2763,66 @@ void OGCAPITiledLayer::SetExtent(double dfXMin, double dfYMin, double dfXMax,
 }
 
 /************************************************************************/
-/*                            GetExtent()                               */
+/*                           IGetExtent()                               */
 /************************************************************************/
 
-OGRErr OGCAPITiledLayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
+OGRErr OGCAPITiledLayer::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,
+                                    bool /* bForce */)
 {
     *psExtent = m_sEnvelope;
     return OGRERR_NONE;
 }
 
 /************************************************************************/
-/*                         SetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
-void OGCAPITiledLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr OGCAPITiledLayer::ISetSpatialFilter(int iGeomField,
+                                           const OGRGeometry *poGeomIn)
 {
-    OGRLayer::SetSpatialFilter(poGeomIn);
-
-    OGREnvelope sEnvelope;
-    if (m_poFilterGeom != nullptr)
-        sEnvelope = m_sFilterEnvelope;
-    else
-        sEnvelope = m_sEnvelope;
-
-    const double dfTileDim = m_oTileMatrix.mResX * m_oTileMatrix.mTileWidth;
-    const double dfOriX =
-        m_bInvertAxis ? m_oTileMatrix.mTopLeftY : m_oTileMatrix.mTopLeftX;
-    const double dfOriY =
-        m_bInvertAxis ? m_oTileMatrix.mTopLeftX : m_oTileMatrix.mTopLeftY;
-    if (sEnvelope.MinX - dfOriX >= -10 * dfTileDim &&
-        dfOriY - sEnvelope.MinY >= -10 * dfTileDim &&
-        sEnvelope.MaxX - dfOriX <= 10 * dfTileDim &&
-        dfOriY - sEnvelope.MaxY <= 10 * dfTileDim)
+    const OGRErr eErr = OGRLayer::ISetSpatialFilter(iGeomField, poGeomIn);
+    if (eErr == OGRERR_NONE)
     {
-        m_nCurMinX = std::max(
-            m_nMinX,
-            static_cast<int>(floor((sEnvelope.MinX - dfOriX) / dfTileDim)));
-        m_nCurMinY = std::max(
-            m_nMinY,
-            static_cast<int>(floor((dfOriY - sEnvelope.MaxY) / dfTileDim)));
-        m_nCurMaxX = std::min(
-            m_nMaxX,
-            static_cast<int>(floor((sEnvelope.MaxX - dfOriX) / dfTileDim)));
-        m_nCurMaxY = std::min(
-            m_nMaxY,
-            static_cast<int>(floor((dfOriY - sEnvelope.MinY) / dfTileDim)));
-    }
-    else
-    {
-        m_nCurMinX = m_nMinX;
-        m_nCurMinY = m_nMinY;
-        m_nCurMaxX = m_nMaxX;
-        m_nCurMaxY = m_nMaxY;
-    }
+        OGREnvelope sEnvelope;
+        if (m_poFilterGeom != nullptr)
+            sEnvelope = m_sFilterEnvelope;
+        else
+            sEnvelope = m_sEnvelope;
 
-    ResetReading();
+        const double dfTileDim = m_oTileMatrix.mResX * m_oTileMatrix.mTileWidth;
+        const double dfOriX =
+            m_bInvertAxis ? m_oTileMatrix.mTopLeftY : m_oTileMatrix.mTopLeftX;
+        const double dfOriY =
+            m_bInvertAxis ? m_oTileMatrix.mTopLeftX : m_oTileMatrix.mTopLeftY;
+        if (sEnvelope.MinX - dfOriX >= -10 * dfTileDim &&
+            dfOriY - sEnvelope.MinY >= -10 * dfTileDim &&
+            sEnvelope.MaxX - dfOriX <= 10 * dfTileDim &&
+            dfOriY - sEnvelope.MaxY <= 10 * dfTileDim)
+        {
+            m_nCurMinX = std::max(
+                m_nMinX,
+                static_cast<int>(floor((sEnvelope.MinX - dfOriX) / dfTileDim)));
+            m_nCurMinY = std::max(
+                m_nMinY,
+                static_cast<int>(floor((dfOriY - sEnvelope.MaxY) / dfTileDim)));
+            m_nCurMaxX = std::min(
+                m_nMaxX,
+                static_cast<int>(floor((sEnvelope.MaxX - dfOriX) / dfTileDim)));
+            m_nCurMaxY = std::min(
+                m_nMaxY,
+                static_cast<int>(floor((dfOriY - sEnvelope.MinY) / dfTileDim)));
+        }
+        else
+        {
+            m_nCurMinX = m_nMinX;
+            m_nCurMinY = m_nMinY;
+            m_nCurMaxX = m_nMaxX;
+            m_nCurMaxY = m_nMaxY;
+        }
+
+        ResetReading();
+    }
+    return eErr;
 }
 
 /************************************************************************/

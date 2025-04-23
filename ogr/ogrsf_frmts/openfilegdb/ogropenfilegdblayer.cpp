@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -778,7 +762,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                                 "OpenFileGDB",
                                 "For field %s, XML definition "
                                 "mentions %s as default value whereas "
-                                ".gdbtable header mentions %.18g. Using %s",
+                                ".gdbtable header mentions %.17g. Using %s",
                                 poGDBField->GetName().c_str(), pszDefaultValue,
                                 psDefault->Real, pszDefaultValue);
                         }
@@ -927,15 +911,16 @@ void OGROpenFileGDBLayer::ResetReading()
 }
 
 /***********************************************************************/
-/*                         SetSpatialFilter()                          */
+/*                        ISetSpatialFilter()                          */
 /***********************************************************************/
 
-void OGROpenFileGDBLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGROpenFileGDBLayer::ISetSpatialFilter(int iGeomField,
+                                              const OGRGeometry *poGeom)
 {
     if (!BuildLayerDefinition())
-        return;
+        return OGRERR_FAILURE;
 
-    OGRLayer::SetSpatialFilter(poGeom);
+    OGRLayer::ISetSpatialFilter(iGeomField, poGeom);
 
     if (m_bFilterIsEnvelope)
     {
@@ -952,7 +937,7 @@ void OGROpenFileGDBLayer::SetSpatialFilter(OGRGeometry *poGeom)
                                         "contains the layer spatial extent");
 #endif
                 poGeom = nullptr;
-                OGRLayer::SetSpatialFilter(poGeom);
+                OGRLayer::ISetSpatialFilter(iGeomField, poGeom);
             }
         }
     }
@@ -1007,6 +992,8 @@ void OGROpenFileGDBLayer::SetSpatialFilter(OGRGeometry *poGeom)
     }
 
     BuildCombinedIterator();
+
+    return OGRERR_NONE;
 }
 
 /***********************************************************************/
@@ -2054,10 +2041,11 @@ OGRErr OGROpenFileGDBLayer::SetNextByIndex(GIntBig nIndex)
 }
 
 /***********************************************************************/
-/*                           GetExtent()                               */
+/*                          IGetExtent()                               */
 /***********************************************************************/
 
-OGRErr OGROpenFileGDBLayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
+OGRErr OGROpenFileGDBLayer::IGetExtent(int /* iGeomField */,
+                                       OGREnvelope *psExtent, bool /* bForce */)
 {
     if (!BuildLayerDefinition())
         return OGRERR_FAILURE;
@@ -2080,11 +2068,11 @@ OGRErr OGROpenFileGDBLayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
 }
 
 /***********************************************************************/
-/*                           GetExtent3D()                             */
+/*                          IGetExtent3D()                             */
 /***********************************************************************/
 
-OGRErr OGROpenFileGDBLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
-                                        int bForce)
+OGRErr OGROpenFileGDBLayer::IGetExtent3D(int iGeomField,
+                                         OGREnvelope3D *psExtent, bool bForce)
 {
     if (!BuildLayerDefinition())
         return OGRERR_FAILURE;
@@ -2109,7 +2097,7 @@ OGRErr OGROpenFileGDBLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
             {
                 if (OGR_GT_HasZ(m_eGeomType))
                 {
-                    return OGRLayer::GetExtent3D(iGeomField, psExtent, bForce);
+                    return OGRLayer::IGetExtent3D(iGeomField, psExtent, bForce);
                 }
                 psExtent->MinZ = std::numeric_limits<double>::infinity();
                 psExtent->MaxZ = -std::numeric_limits<double>::infinity();
@@ -2118,7 +2106,7 @@ OGRErr OGROpenFileGDBLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
         }
     }
 
-    return OGRLayer::GetExtent3D(iGeomField, psExtent, bForce);
+    return OGRLayer::IGetExtent3D(iGeomField, psExtent, bForce);
 }
 
 /***********************************************************************/

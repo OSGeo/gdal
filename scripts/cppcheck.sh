@@ -55,11 +55,13 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
     printf "Running cppcheck on %s (can be long): " "$dirname"
     cppcheck --inline-suppr --template='{file}:{line},{severity},{id},{message}' \
         --enable=all --inconclusive ${POSIX} -UAFL_FRIENDLY -UANDROID \
+        -DCPPCHECK_STATIC=static \
         -UCOMPAT_WITH_ICC_CONVERSION_CHECK -DDEBUG -UDEBUG_BOOL \
         -D__linux \
         -DGBool=int -DCPL_HAS_GINT64=1 -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED \
         -DHAVE_SFCGAL -DHAVE_SPATIALITE -DSPATIALITE_412_OR_LATER \
         -D_SC_NPROCESSORS_ONLN -DHAVE_SCHED_GETAFFINITY \
+        -DHAVE_TIFF -DHAVE_GEOTIFF \
         -DHAVE_SQLITE -DSQLITE_VERSION_NUMBER=3031001 -DHAVE_SQLITE_VFS \
         -DHAVE_RASTERLITE2 \
         -DHAVE_CURL -DLIBCURL_VERSION_NUM=0x073800 \
@@ -110,7 +112,11 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DPCIDSK_FRMT_UINT64="\"%llu\"" \
         -DGNMGFIDFormat="\"%lld\"" \
         -DGDAL_RELEASE_NAME="\"dummy\"" \
+        -DGDAL_RELEASE_NICKNAME="\"dummy\"" \
         "-DBANDMAP_TYPE=int*" \
+        -DSQLITE_UTF8=1 \
+        -DSQLITE_DETERMINISTIC=0x000000800 \
+        -DSQLITE_INNOCUOUS=0x000200000 \
         --include="${CPL_CONFIG_H}" \
         --include=port/cpl_port.h \
         -I "${CPL_CONFIG_H_DIR}" \
@@ -120,6 +126,8 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -i ogrdissolve.cpp \
         -i gdalasyncread.cpp \
         -i gdaltorture.cpp \
+        -i vsifilesystemregistrar.cpp \
+        -i external_deferred_plugins.cpp \
         $dirname \
         -j "$(nproc)" >>${LOG_FILE} 2>&1 &
     # Display some progress to avoid Travis-CI killing the job after 10 minutes
@@ -138,10 +146,6 @@ done
 ret_code=0
 
 grep -v "unmatchedSuppression" ${LOG_FILE} | grep -v -e " yacc.c" -e PublicDecompWT -e "kdu_cache_wrapper.h" > ${LOG_FILE}.tmp
-mv ${LOG_FILE}.tmp ${LOG_FILE}
-
-# I don't want to care about SDE
-grep -v -e "frmts/sde" -e  "ogr/ogrsf_frmts/sde" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 # I don't want to care about flatbuffers
@@ -176,6 +180,12 @@ mv ${LOG_FILE}.tmp ${LOG_FILE}
 grep -v -e "The expression '0 <= yystate' is always true" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 grep -v -e "The comparison '0 <= yystate' is always true" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
+# False positives with cppcheck of ubuntu 20.04
+grep -v -e "ogrlinestring.cpp:.*warning,accessMoved"  ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+grep -v -e "ogrgeometrycollection.cpp:.*warning,accessMoved"  ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 if grep "null pointer" ${LOG_FILE} ; then
@@ -368,7 +378,7 @@ if grep "noConstructor" ${LOG_FILE} ; then
     ret_code=1
 fi
 
-if grep "noExplicitConstructor" ${LOG_FILE} ; then
+if grep "noExplicitConstructor" ${LOG_FILE} | grep -v -e port/cpl_float.h ; then
     echo "noExplicitConstructor check failed"
     ret_code=1
 fi
@@ -405,7 +415,7 @@ if grep "functionStatic" ${LOG_FILE} | grep -v -e OGRSQLiteDataSource::OpenRaste
     ret_code=1
 fi
 
-if grep "knownConditionTrueFalse" ${LOG_FILE} ; then
+if grep "knownConditionTrueFalse" ${LOG_FILE} | grep -v -e gcore/gdal_priv_templates.hpp ; then
     echo "knownConditionTrueFalse check failed"
     ret_code=1
 fi
@@ -415,7 +425,7 @@ if grep "arrayIndexThenCheck" ${LOG_FILE} ; then
     ret_code=1
 fi
 
-if grep "unusedPrivateFunction" ${LOG_FILE} ; then
+if grep "unusedPrivateFunction" ${LOG_FILE} | grep -v -e GDALDatasetPool::ShowContent -e MEMDataset::CreateBase ; then
     echo "unusedPrivateFunction check failed"
     ret_code=1
 fi

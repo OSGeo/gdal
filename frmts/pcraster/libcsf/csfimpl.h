@@ -200,6 +200,7 @@ void  CsfGetVarType(void *dest, const CSF_VAR_TYPE *src, CSF_CR cellRepr);
 void  CsfReadAttrBlock( MAP *m, CSF_FADDR32 pos, ATTR_CNTRL_BLOCK *b);
 int   CsfWriteAttrBlock(MAP *m, CSF_FADDR32 pos, ATTR_CNTRL_BLOCK *b);
 int   CsfGetAttrIndex(CSF_ATTR_ID id, const ATTR_CNTRL_BLOCK *b);
+CSF_FADDR32 CsfGetAttrBlockAndIdx(MAP *m, CSF_ATTR_ID id, ATTR_CNTRL_BLOCK *b, int *i);
 CSF_FADDR32 CsfGetAttrBlock(MAP *m, CSF_ATTR_ID id, ATTR_CNTRL_BLOCK *b);
 CSF_FADDR32 CsfGetAttrPosSize(MAP *m, CSF_ATTR_ID id, size_t *size);
 size_t CsfWriteSwapped(void *buf, size_t size, size_t n, FILE  *f);

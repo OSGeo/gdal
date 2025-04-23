@@ -9,5 +9,13 @@
 Spatial Reference System C++ API
 ================================================================================
 
+Include file
+------------
+
+:file:`ogr_spatialref.h`
+
+Spatial Reference System C++ API
+--------------------------------
+
 .. doxygenfile:: ogr_spatialref.h
    :project: api

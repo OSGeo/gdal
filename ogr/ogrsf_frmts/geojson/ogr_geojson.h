@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Definitions of OGR OGRGeoJSON driver types.
@@ -9,23 +8,7 @@
  * Copyright (c) 2007, Mateusz Loskot
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_GEOJSON_H_INCLUDED
@@ -33,12 +16,15 @@
 
 #include "cpl_port.h"
 #include "ogrsf_frmts.h"
-#include "../mem/ogr_mem.h"
+#include "memdataset.h"
 
 #include <cstdio>
 #include <vector>  // Used by OGRGeoJSONLayer.
 #include "ogrgeojsonutils.h"
 #include "ogrgeojsonwriter.h"
+
+constexpr const char *INVALID_CONTENT_FOR_JSON_LIKE =
+    "__INVALID_CONTENT_FOR_JSON_LIKE__";
 
 class OGRGeoJSONDataSource;
 
@@ -61,6 +47,16 @@ class OGRGeoJSONLayer final : public OGRMemLayer
   public:
     static const char *const DefaultName;
     static const OGRwkbGeometryType DefaultGeometryType;
+
+    static const char *GetValidLayerName(const char *pszName)
+    {
+        if (pszName == nullptr || pszName[0] == 0)
+        {
+            // Can happen for example if reading from /vsistdin/
+            pszName = OGRGeoJSONLayer::DefaultName;
+        }
+        return pszName;
+    }
 
     OGRGeoJSONLayer(const char *pszName, OGRSpatialReference *poSRS,
                     OGRwkbGeometryType eGType, OGRGeoJSONDataSource *poDS,
@@ -96,11 +92,11 @@ class OGRGeoJSONLayer final : public OGRMemLayer
                                   int nFlags) override;
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
-    virtual OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
-                               int bForce = TRUE) override;
+
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce = true) override;
+    virtual OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                                bool bForce = true) override;
 
     GDALDataset *GetDataset() override;
 
@@ -188,14 +184,9 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
     int TestCapability(const char *pszCap) override;
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
 
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-    {
-        return iGeomField == 0
-                   ? OGRGeoJSONWriteLayer::GetExtent(psExtent, bForce)
-                   : OGRERR_FAILURE;
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     OGRErr SyncToDisk() override;
 
@@ -233,18 +224,14 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
 /*                           OGRGeoJSONDataSource                       */
 /************************************************************************/
 
-class OGRGeoJSONDataSource final : public OGRDataSource
+class OGRGeoJSONDataSource final : public GDALDataset
 {
   public:
     OGRGeoJSONDataSource();
     virtual ~OGRGeoJSONDataSource();
 
-    //
-    // OGRDataSource Interface
-    //
     int Open(GDALOpenInfo *poOpenInfo, GeoJSONSourceType nSrcType,
              const char *pszJSonFlavor);
-    const char *GetName() override;
     int GetLayerCount() override;
     OGRLayer *GetLayer(int nLayer) override;
     OGRLayer *ICreateLayer(const char *pszName,
@@ -308,6 +295,9 @@ class OGRGeoJSONDataSource final : public OGRDataSource
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
     CPLErr Close() override;
+
+    // Analyze the OGR_SCHEMA open options and apply changes to the feature definition, return false in case of a critical error
+    bool DealWithOgrSchemaOpenOption(const GDALOpenInfo *poOpenInfo);
 
     static const size_t SPACE_FOR_BBOX = 130;
 

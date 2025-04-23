@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022, Planet Labs
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_PARQUET_H
@@ -270,16 +254,11 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
     OGRFeature *GetNextFeature() override;
 
     GIntBig GetFeatureCount(int bForce) override;
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                     int bForce = TRUE) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
-
-    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     OGRErr SetAttributeFilter(const char *pszFilter) override;
 
@@ -304,9 +283,12 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
 
 class OGRParquetDataset final : public OGRArrowDataset
 {
+    std::shared_ptr<arrow::fs::FileSystem> m_poFS{};
+
   public:
     explicit OGRParquetDataset(
         const std::shared_ptr<arrow::MemoryPool> &poMemoryPool);
+    ~OGRParquetDataset();
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,
@@ -314,6 +296,11 @@ class OGRParquetDataset final : public OGRArrowDataset
     void ReleaseResultSet(OGRLayer *poResultsSet) override;
 
     int TestCapability(const char *) override;
+
+    void SetFileSystem(const std::shared_ptr<arrow::fs::FileSystem> &fs)
+    {
+        m_poFS = fs;
+    }
 };
 
 /************************************************************************/

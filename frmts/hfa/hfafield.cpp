@@ -9,23 +9,7 @@
  * Copyright (c) 1999, Intergraph Corporation
  * Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -40,6 +24,7 @@
 #include <fcntl.h>
 #endif
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <vector>
 
@@ -55,7 +40,7 @@ namespace
 
 int FloatToIntClamp(float fValue)
 {
-    if (CPLIsNan(fValue))
+    if (std::isnan(fValue))
         return 0;
     if (fValue >= static_cast<float>(std::numeric_limits<int>::max()))
         return std::numeric_limits<int>::max();
@@ -1011,7 +996,7 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
                     std::numeric_limits<int>::max() ||
                 static_cast<double>(fNumber) <
                     std::numeric_limits<int>::min() ||
-                CPLIsNan(fNumber))
+                std::isnan(fNumber))
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Too large for int: %f",
                          fNumber);
@@ -1035,7 +1020,7 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
             dfDoubleRet = dfNumber;
             if (dfNumber > std::numeric_limits<int>::max() ||
                 dfNumber < std::numeric_limits<int>::min() ||
-                CPLIsNan(dfNumber))
+                std::isnan(dfNumber))
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Too large for int: %f",
                          dfNumber);
@@ -1247,7 +1232,7 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
                 {
                     nIntRet = nMin;
                 }
-                else if (CPLIsNan(dfDoubleRet))
+                else if (std::isnan(dfDoubleRet))
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "NaN converted to INT_MAX.");

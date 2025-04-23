@@ -7,34 +7,19 @@
  ******************************************************************************
  * Copyright (c) 2017-2018, Planet Labs
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_priv.h"
+#include "ogrsf_frmts.h"
 #include "cpl_http.h"
 #include "cpl_conv.h"
-#include "ogrgeojsonreader.h"
-#include "ogrgeojsonwriter.h"
+#include "ogrlibjsonutils.h"
 #include "ogr_swq.h"
 #include "eeda.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <vector>
 #include <map>
 #include <set>
@@ -155,23 +140,13 @@ class GDALEEDALayer final : public OGRLayer
         return -1;
     }
 
-    virtual void SetSpatialFilter(OGRGeometry *poGeom) CPL_OVERRIDE;
-
-    virtual void SetSpatialFilter(int iGeomField,
-                                  OGRGeometry *poGeom) CPL_OVERRIDE
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *poGeom) override;
 
     virtual OGRErr SetAttributeFilter(const char *) CPL_OVERRIDE;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) CPL_OVERRIDE;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) CPL_OVERRIDE
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 };
 
 /************************************************************************/
@@ -794,12 +769,12 @@ CPLString GDALEEDALayer::BuildFilter(swq_expr_node *poNode, bool bIsAndTopLevel)
             poNode->papoSubExpr[1]->field_type == SWQ_INTEGER64)
         {
             osFilter +=
-                CPLSPrintf(CPL_FRMT_GIB, poNode->papoSubExpr[1]->int_value);
+                CPLSPrintf("%" PRId64, poNode->papoSubExpr[1]->int_value);
         }
         else if (poNode->papoSubExpr[1]->field_type == SWQ_FLOAT)
         {
             osFilter +=
-                CPLSPrintf("%.18g", poNode->papoSubExpr[1]->float_value);
+                CPLSPrintf("%.17g", poNode->papoSubExpr[1]->float_value);
         }
         else
         {
@@ -885,12 +860,12 @@ CPLString GDALEEDALayer::BuildFilter(swq_expr_node *poNode, bool bIsAndTopLevel)
                 poNode->papoSubExpr[i]->field_type == SWQ_INTEGER64)
             {
                 osFilter +=
-                    CPLSPrintf(CPL_FRMT_GIB, poNode->papoSubExpr[i]->int_value);
+                    CPLSPrintf("%" PRId64, poNode->papoSubExpr[i]->int_value);
             }
             else if (poNode->papoSubExpr[i]->field_type == SWQ_FLOAT)
             {
                 osFilter +=
-                    CPLSPrintf("%.18g", poNode->papoSubExpr[i]->float_value);
+                    CPLSPrintf("%.17g", poNode->papoSubExpr[i]->float_value);
             }
             else
             {
@@ -958,10 +933,11 @@ OGRErr GDALEEDALayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void GDALEEDALayer::SetSpatialFilter(OGRGeometry *poGeomIn)
+OGRErr GDALEEDALayer::ISetSpatialFilter(int /* iGeomField */,
+                                        const OGRGeometry *poGeomIn)
 {
     if (poGeomIn)
     {
@@ -980,13 +956,15 @@ void GDALEEDALayer::SetSpatialFilter(OGRGeometry *poGeomIn)
         InstallFilter(poGeomIn);
 
     ResetReading();
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
 /*                                GetExtent()                           */
 /************************************************************************/
 
-OGRErr GDALEEDALayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
+OGRErr GDALEEDALayer::IGetExtent(int /* iGeomField*/, OGREnvelope *psExtent,
+                                 bool /* bForce */)
 {
     psExtent->MinX = -180;
     psExtent->MinY = -90;
@@ -1245,11 +1223,16 @@ void GDALRegister_EEDA()
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Earth Engine Data API");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/eeda.html");
     poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, "EEDA:");
-    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
-                              "<OpenOptionList>"
-                              "  <Option name='COLLECTION' type='string' "
-                              "description='Collection name'/>"
-                              "</OpenOptionList>");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='COLLECTION' type='string' "
+        "description='Collection name'/>"
+        "  <Option name='VSI_PATH_FOR_AUTH' type='string' "
+        "description='/vsigs/... path onto which a "
+        "GOOGLE_APPLICATION_CREDENTIALS path specific "
+        "option is set'/>"
+        "</OpenOptionList>");
 
     poDriver->pfnOpen = GDALEEDAOpen;
     poDriver->pfnIdentify = GDALEEDAdentify;

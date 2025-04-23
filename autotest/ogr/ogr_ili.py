@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Interlis driver testing.
@@ -148,88 +147,6 @@ def test_ogr_interlis1_4():
 
 
 ###############################################################################
-# Write Ili1 transfer file without model.
-
-
-def test_ogr_interlis1_5(tmp_path):
-
-    ds = ogr.Open("data/ili/format-default.itf,data/ili/format-default.imd")
-
-    lyr = ds.GetLayerByName("FormatTests__FormatTable")
-    feat = lyr.GetNextFeature()
-
-    driver = ogr.GetDriverByName("Interlis 1")
-    outfile = tmp_path / "interlis1_5.itf"
-
-    with gdal.quiet_errors():
-        dst_ds = driver.CreateDataSource(outfile)
-
-    dst_lyr = dst_ds.CreateLayer("FormatTests__FormatTable")
-
-    layer_defn = lyr.GetLayerDefn()
-    for i in range(layer_defn.GetFieldCount()):
-        dst_lyr.CreateField(layer_defn.GetFieldDefn(i))
-    dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
-    dst_feat.SetFrom(feat)
-    dst_lyr.CreateFeature(dst_feat)
-
-    dst_ds = None
-
-    with open(outfile) as f:
-        itf = f.read()
-        expected = """MTID INTERLIS1
-MODL OGR
-ETOP
-TOPI FormatTests
-TABL FormatTable
-OBJE 0 0 aa_bb cc^dd @ 1
-ETAB
-ETOP
-EMOD
-ENDE"""
-        assert expected in itf, "Interlis output doesn't match."
-
-
-###############################################################################
-# Write Ili1 transfer file.
-
-
-def test_ogr_interlis1_6(tmp_path):
-
-    ds = ogr.Open("data/ili/format-default.itf,data/ili/format-default.imd")
-    lyr = ds.GetLayerByName("FormatTests__FormatTable")
-    feat = lyr.GetNextFeature()
-
-    driver = ogr.GetDriverByName("Interlis 1")
-    outfile = tmp_path / "interlis1_6.itf"
-    dst_ds = driver.CreateDataSource(f"{outfile},data/ili/format-default.imd")
-
-    dst_lyr = dst_ds.CreateLayer("test")
-
-    layer_defn = lyr.GetLayerDefn()
-    for i in range(layer_defn.GetFieldCount()):
-        dst_lyr.CreateField(layer_defn.GetFieldDefn(i))
-    dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
-    dst_feat.SetFrom(feat)
-    dst_lyr.CreateFeature(dst_feat)
-
-    dst_ds = None
-
-    with open(outfile) as f:
-        itf = f.read()
-        expected = """MTID INTERLIS1
-MODL FormatDefault
-TOPI FormatTests
-TABL test
-OBJE 1 0 aa_bb cc^dd @ 1
-ETAB
-ETOP
-EMOD
-ENDE"""
-        assert expected in itf, "Interlis output doesn't match."
-
-
-###############################################################################
 # Ili1 character encoding test.
 
 
@@ -260,43 +177,6 @@ def test_ogr_interlis1_7(tmp_path):
             feat.DumpReadable()
             print(feat.GetFieldAsString(i))
             pytest.fail("field value wrong.")
-
-    # Write back
-    driver = ogr.GetDriverByName("Interlis 1")
-    outfile = tmp_path / "interlis1_7.itf"
-    dst_ds = driver.CreateDataSource(f"{outfile},data/ili/format-default.imd")
-
-    dst_lyr = dst_ds.CreateLayer("FormatTests__FormatTable")
-
-    layer_defn = lyr.GetLayerDefn()
-    for i in range(layer_defn.GetFieldCount()):
-        dst_lyr.CreateField(layer_defn.GetFieldDefn(i))
-    dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
-    dst_feat.SetFrom(feat)
-    dst_lyr.CreateFeature(dst_feat)
-
-    dst_ds = None
-
-    try:
-        # Python 3
-        f = open(outfile, encoding="iso-8859-1")
-    except TypeError:
-        f = open(outfile)
-    itf = f.read()
-    expected = """MTID INTERLIS1
-MODL FormatDefault
-TABL FormatTable
-OBJE 2 0 äöü ÄÖÜ @ 1
-ETAB
-ETOP
-EMOD
-ENDE"""
-    try:
-        # Python 2
-        expected = expected.decode("utf8").encode("iso-8859-1")
-    except Exception:
-        pass
-    assert expected in itf, "Interlis output doesn't match."
 
 
 ###############################################################################
@@ -803,51 +683,6 @@ def test_ogr_interlis1_13_linear():
 
 
 ###############################################################################
-# Write Ili1 Arcs.
-
-
-def test_ogr_interlis1_14(tmp_path):
-
-    ds = ogr.Open("data/ili/Beispiel.itf,data/ili/Beispiel.imd")
-    lyr = ds.GetLayerByName("Bodenbedeckung__Strasse")
-    feat = lyr.GetNextFeature()
-
-    driver = ogr.GetDriverByName("Interlis 1")
-    outfile = tmp_path / "interlis1_14.itf"
-    dst_ds = driver.CreateDataSource(f"{outfile},data/ili/Beispiel.imd")
-
-    dst_lyr = dst_ds.CreateLayer("Bodenbedeckung__Strasse", None, ogr.wkbMultiCurve)
-
-    layer_defn = lyr.GetLayerDefn()
-    for i in range(layer_defn.GetFieldCount()):
-        dst_lyr.CreateField(layer_defn.GetFieldDefn(i))
-    dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
-    dst_feat.SetFrom(feat)
-    dst_lyr.CreateFeature(dst_feat)
-
-    dst_ds = None
-
-    with open(outfile) as f:
-        itf = f.read()
-        expected = """////
-MTID INTERLIS1
-MODL Beispiel
-TABL Strasse
-OBJE 3 100
-STPT 190.26 208
-ARCP 187 186
-LIPT 173.1 171
-LIPT 141.08 152.94
-ELIN
-ETAB
-ETOP
-EMOD
-ENDE
-"""
-        assert expected in itf, "Interlis output doesn't match."
-
-
-###############################################################################
 # Reading Ili2 without model
 
 
@@ -949,95 +784,6 @@ def test_ogr_interlis2_2():
     for i in range(feat.GetGeomFieldCount()):
         geom = feat.GetGeomFieldRef(i)
         ogrtest.check_feature_geometry(geom, geom_field_values[i])
-
-
-###############################################################################
-# Write Ili2 transfer file.
-
-
-def test_ogr_interlis2_3(tmp_path):
-
-    ds = ogr.Open("data/ili/RoadsExdm2ien.xml,data/ili/RoadsExdm2ien.imd")
-
-    lyr = ds.GetLayerByName("RoadsExdm2ien.RoadsExtended.RoadSign")
-    feat = lyr.GetNextFeature()
-
-    driver = ogr.GetDriverByName("Interlis 2")
-    outfile = tmp_path / "interlis2_3.xtf"
-    dst_ds = driver.CreateDataSource(f"{outfile},data/ili/RoadsExdm2ien.imd")
-
-    dst_lyr = dst_ds.CreateLayer("RoadsExdm2ien.RoadsExtended.RoadSign")
-
-    dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
-    dst_feat.SetFrom(feat)
-    dst_lyr.CreateFeature(dst_feat)
-
-    lyr = ds.GetLayerByName("RoadsExdm2ben.Roads.LandCover")
-    feat = lyr.GetNextFeature()
-
-    dst_lyr = dst_ds.CreateLayer("RoadsExdm2ben.Roads.LandCover")
-
-    dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
-    dst_feat.SetFrom(feat)
-    dst_lyr.CreateFeature(dst_feat)
-
-    dst_ds = None
-
-    with open(outfile) as f:
-        xtf = f.read()
-        expected = """<?xml version="1.0" encoding="utf-8" ?>
-<TRANSFER xmlns="http://www.interlis.ch/INTERLIS2.3">
-<HEADERSECTION SENDER="OGR/GDAL"""
-        assert expected in xtf, "Interlis output doesn't match."
-        expected = """<MODELS>
-<MODEL NAME="RoadsExdm2ben" URI="http://www.interlis.ch/models" VERSION="2005-06-16"/>
-<MODEL NAME="RoadsExdm2ien" URI="http://www.interlis.ch/models" VERSION="2005-06-16"/>
-</MODELS>
-</HEADERSECTION>
-<DATASECTION>
-<RoadsExdm2ien.RoadsExtended BID="RoadsExdm2ien.RoadsExtended">
-<RoadsExdm2ien.RoadsExtended.RoadSign TID="501">
-<Position>
-<COORD><C1>69.389</C1><C2>92.056</C2></COORD>
-</Position>
-<Type>prohibition.noparking</Type>
-</RoadsExdm2ien.RoadsExtended.RoadSign>
-<RoadsExdm2ben.Roads.LandCover TID="16">
-<Geometry>
-<SURFACE>
-<BOUNDARY>
-<POLYLINE>
-<COORD><C1>39.038</C1><C2>60.315</C2></COORD>
-<COORD><C1>41.2</C1><C2>59.302</C2></COORD>
-<COORD><C1>43.362</C1><C2>60.315</C2></COORD>
-<COORD><C1>44.713</C1><C2>66.268</C2></COORD>
-<COORD><C1>45.794</C1><C2>67.66200000000001</C2></COORD>
-<COORD><C1>48.766</C1><C2>67.408</C2></COORD>
-<COORD><C1>53.36</C1><C2>64.11499999999999</C2></COORD>
-<COORD><C1>56.197</C1><C2>62.595</C2></COORD>
-<COORD><C1>57.818</C1><C2>63.862</C2></COORD>
-<COORD><C1>58.899</C1><C2>68.928</C2></COORD>
-<COORD><C1>55.927</C1><C2>72.348</C2></COORD>
-<COORD><C1>47.955</C1><C2>75.515</C2></COORD>
-<COORD><C1>42.281</C1><C2>75.38800000000001</C2></COORD>
-<COORD><C1>39.308</C1><C2>73.235</C2></COORD>
-<COORD><C1>36.741</C1><C2>69.688</C2></COORD>
-<COORD><C1>35.525</C1><C2>66.268</C2></COORD>
-<COORD><C1>35.661</C1><C2>63.735</C2></COORD>
-<COORD><C1>37.957</C1><C2>61.455</C2></COORD>
-<COORD><C1>39.038</C1><C2>60.315</C2></COORD>
-</POLYLINE>
-</BOUNDARY>
-</SURFACE>
-</Geometry>
-<Type>water</Type>
-</RoadsExdm2ben.Roads.LandCover>
-</RoadsExdm2ien.RoadsExtended>
-</DATASECTION>
-</TRANSFER>"""
-        expected = expected.replace(".11499999999999", ".115")
-        xtf = xtf.replace(".11499999999999", ".115")
-        assert expected in xtf, "Interlis output doesn't match."
 
 
 ###############################################################################
@@ -1200,22 +946,3 @@ def test_ogr_interlis_arc2():
     for i in range(feat.GetGeomFieldCount()):
         geom = feat.GetGeomFieldRef(i)
         ogrtest.check_feature_geometry(geom, geom_field_values[i])
-
-
-###############################################################################
-# Test failure in creation of ILI2 dataset
-
-
-def test_ogr_interlis2_create_file_error():
-
-    with pytest.raises(
-        Exception, match="model file not specified in destination filename"
-    ):
-        ogr.GetDriverByName("Interlis 2").CreateDataSource("tmp/out.xtf")
-
-    with pytest.raises(
-        Exception, match="Failed to create XTF file /i_do/not/exist/out.xtf"
-    ):
-        ogr.GetDriverByName("Interlis 2").CreateDataSource(
-            "/i_do/not/exist/out.xtf,data/ili/ch.bazl.sicherheitszonenplan.oereb_20131118.imd"
-        )

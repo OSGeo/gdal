@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xfdu:XFDU xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xfdu="urn:ccsds:schema:xfdu:1" xsi:schemaLocation="urn:ccsds:schema:xfdu:1 ./support/schemas/rcm_prod_manifest.xsd">
+    <!-- lots of stuff omitted -->
+</xfdu:XFDU>

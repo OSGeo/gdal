@@ -8,23 +8,7 @@
  * Copyright (c) 2007, ITC
  * Copyright (c) 2008-2017, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ******************************************************************************
  *
  */
@@ -903,14 +887,66 @@ CPLErr GRIBRasterBand::LoadData()
 }
 
 /************************************************************************/
+/*                       IsGdalinfoInteractive()                        */
+/************************************************************************/
+
+#ifdef BUILD_APPS
+static bool IsGdalinfoInteractive()
+{
+    static const bool bIsGdalinfoInteractive = []()
+    {
+        if (CPLIsInteractive(stdout))
+        {
+            std::string osPath;
+            osPath.resize(1024);
+            if (CPLGetExecPath(&osPath[0], static_cast<int>(osPath.size())))
+            {
+                osPath = CPLGetBasenameSafe(osPath.c_str());
+            }
+            return osPath == "gdalinfo";
+        }
+        return false;
+    }();
+    return bIsGdalinfoInteractive;
+}
+#endif
+
+/************************************************************************/
 /*                             GetMetaData()                            */
 /************************************************************************/
 char **GRIBRasterBand::GetMetadata(const char *pszDomain)
 {
     FindMetaData();
-    if (m_nGribVersion == 2 &&
+    if ((pszDomain == nullptr || pszDomain[0] == 0) && m_nGribVersion == 2 &&
         CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
     {
+#ifdef BUILD_APPS
+        // Detect slow execution of e.g.
+        // "gdalinfo /vsis3/noaa-hrrr-bdp-pds/hrrr.20220804/conus/hrrr.t00z.wrfsfcf01.grib2"
+        GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
+        if (poGDS->m_bSideCarIdxUsed && !poGDS->m_bWarnedGdalinfoNomd &&
+            poGDS->GetRasterCount() > 10 &&
+            !VSIIsLocal(poGDS->GetDescription()) && IsGdalinfoInteractive())
+        {
+            if (poGDS->m_nFirstMetadataQueriedTimeStamp)
+            {
+                if (time(nullptr) - poGDS->m_nFirstMetadataQueriedTimeStamp > 2)
+                {
+                    poGDS->m_bWarnedGdalinfoNomd = true;
+
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "If metadata does not matter, faster result could be "
+                        "obtained by adding the -nomd switch to gdalinfo");
+                }
+            }
+            else
+            {
+                poGDS->m_nFirstMetadataQueriedTimeStamp = time(nullptr);
+            }
+        }
+#endif
+
         FindPDSTemplateGRIB2();
     }
     return GDALPamRasterBand::GetMetadata(pszDomain);
@@ -1012,6 +1048,34 @@ double GRIBRasterBand::GetNoDataValue(int *pbSuccess)
     if (m_Grib_MetaData == nullptr)
     {
         GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
+
+#ifdef BUILD_APPS
+        // Detect slow execution of e.g.
+        // "gdalinfo /vsis3/noaa-hrrr-bdp-pds/hrrr.20220804/conus/hrrr.t00z.wrfsfcf01.grib2"
+
+        if (poGDS->m_bSideCarIdxUsed && !poGDS->m_bWarnedGdalinfoNonodata &&
+            poGDS->GetRasterCount() > 10 &&
+            !VSIIsLocal(poGDS->GetDescription()) && IsGdalinfoInteractive())
+        {
+            if (poGDS->m_nFirstNodataQueriedTimeStamp)
+            {
+                if (time(nullptr) - poGDS->m_nFirstNodataQueriedTimeStamp > 2)
+                {
+                    poGDS->m_bWarnedGdalinfoNonodata = true;
+
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "If nodata value does not matter, faster result "
+                             "could be obtained by adding the -nonodata switch "
+                             "to gdalinfo");
+                }
+            }
+            else
+            {
+                poGDS->m_nFirstNodataQueriedTimeStamp = time(nullptr);
+            }
+        }
+#endif
+
         ReadGribData(poGDS->fp, start, subgNum, nullptr, &m_Grib_MetaData);
         if (m_Grib_MetaData == nullptr)
         {
@@ -1316,7 +1380,7 @@ CPLErr GRIBDataset::GetGeoTransform(double *padfTransform)
 /************************************************************************/
 
 std::unique_ptr<gdal::grib::InventoryWrapper>
-GRIBDataset::Inventory(VSILFILE *fp, GDALOpenInfo *poOpenInfo)
+GRIBDataset::Inventory(GDALOpenInfo *poOpenInfo)
 {
     std::unique_ptr<gdal::grib::InventoryWrapper> pInventories;
 
@@ -1354,6 +1418,9 @@ GRIBDataset::Inventory(VSILFILE *fp, GDALOpenInfo *poOpenInfo)
         if (pInventories->result() <= 0 || pInventories->length() == 0)
             pInventories = nullptr;
         VSIFCloseL(fpSideCar);
+#ifdef BUILD_APPS
+        m_bSideCarIdxUsed = true;
+#endif
     }
     else
         CPLDebug("GRIB", "Failed opening sidecar %s",
@@ -1396,10 +1463,7 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
     // for other thread safe formats
     CPLMutexHolderD(&hGRIBMutex);
 
-    CPLString tmpFilename;
-    tmpFilename.Printf("/vsimem/gribdataset-%p", poOpenInfo);
-
-    VSILFILE *memfp = VSIFileFromMemBuffer(tmpFilename, poOpenInfo->pabyHeader,
+    VSILFILE *memfp = VSIFileFromMemBuffer(nullptr, poOpenInfo->pabyHeader,
                                            poOpenInfo->nHeaderBytes, FALSE);
     if (memfp == nullptr ||
         ReadSECT0(memfp, &buff, &buffLen, -1, sect0, &gribLen, &version) < 0)
@@ -1407,7 +1471,6 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
         if (memfp != nullptr)
         {
             VSIFCloseL(memfp);
-            VSIUnlink(tmpFilename);
         }
         free(buff);
         char *errMsg = errSprintf(nullptr);
@@ -1417,15 +1480,12 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
     VSIFCloseL(memfp);
-    VSIUnlink(tmpFilename);
     free(buff);
 
     // Confirm the requested access is supported.
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The GRIB driver does not support update access to existing "
-                 "datasets.");
+        ReportUpdateNotSupportedByDriver("GRIB");
         return nullptr;
     }
 
@@ -1447,7 +1507,7 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
     // The band-data that is read is stored into the first RasterBand,
     // simply so that the same portion of the file is not read twice.
 
-    auto pInventories = Inventory(poDS->fp, poOpenInfo);
+    auto pInventories = poDS->Inventory(poOpenInfo);
     if (pInventories->result() <= 0)
     {
         char *errMsg = errSprintf(nullptr);
@@ -2435,7 +2495,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         case GS3_TRANSVERSE_MERCATOR:
             oSRS.SetTM(meta->gds.latitude_of_origin,
                        Lon360to180(meta->gds.central_meridian),
-                       std::abs(meta->gds.scaleLat1 - 0.9996) < 1e8
+                       std::abs(meta->gds.scaleLat1 - 0.9996) < 1e-8
                            ? 0.9996
                            : meta->gds.scaleLat1,
                        meta->gds.x0, meta->gds.y0);
@@ -2594,7 +2654,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         // case of latlon).
         rMinX = meta->gds.lon1;
         // Latitude in degrees, to be transformed to meters.
-        rMaxY = meta->gds.lat1;
+        double dfGridOriY = meta->gds.lat1;
 
         if (m_poSRS == nullptr || m_poLL == nullptr ||
             !m_poSRS->IsSame(&oSRS) || !m_poLL->IsSame(&oLL))
@@ -2604,13 +2664,78 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         }
 
         // Transform it to meters.
-        if ((m_poCT != nullptr) && m_poCT->Transform(1, &rMinX, &rMaxY))
+        if ((m_poCT != nullptr) && m_poCT->Transform(1, &rMinX, &dfGridOriY))
         {
             if (meta->gds.scan == GRIB2BIT_2)  // Y is minY, GDAL wants maxY.
             {
-                // -1 because we GDAL needs the coordinates of the centre of
-                // the pixel.
-                rMaxY += (meta->gds.Ny - 1) * meta->gds.Dy;
+                const char *pszConfigOpt = CPLGetConfigOption(
+                    "GRIB_LATITUDE_OF_FIRST_GRID_POINT_IS_SOUTHERN_MOST",
+                    nullptr);
+                bool bLatOfFirstPointIsSouthernMost =
+                    !pszConfigOpt || CPLTestBool(pszConfigOpt);
+
+                // Hack for a file called MANAL_2023030103.grb2 that
+                // uses LCC and has Latitude of false origin = 30
+                // Longitude of false origin = 140
+                // Latitude of 1st standard parallel = 60
+                // Latitude of 2nd standard parallel = 30
+                // but whose (meta->gds.lon1, meta->gds.lat1) qualifies the
+                // northern-most point of the grid and not the bottom-most one
+                // as it should given the scan == GRIB2BIT_2
+                if (!pszConfigOpt && meta->gds.projType == GS3_LAMBERT &&
+                    std::fabs(meta->gds.scaleLat1 - 60) <= 1e-8 &&
+                    std::fabs(meta->gds.scaleLat2 - 30) <= 1e-8 &&
+                    std::fabs(meta->gds.meshLat - 30) <= 1e-8 &&
+                    std::fabs(Lon360to180(meta->gds.orientLon) - 140) <= 1e-8)
+                {
+                    double dfXCenterProj = Lon360to180(meta->gds.orientLon);
+                    double dfYCenterProj = meta->gds.meshLat;
+                    if (m_poCT->Transform(1, &dfXCenterProj, &dfYCenterProj))
+                    {
+                        double dfXCenterGridNominal =
+                            rMinX + nRasterXSize * meta->gds.Dx / 2;
+                        double dfYCenterGridNominal =
+                            dfGridOriY + nRasterYSize * meta->gds.Dy / 2;
+                        double dfXCenterGridBuggy = dfXCenterGridNominal;
+                        double dfYCenterGridBuggy =
+                            dfGridOriY - nRasterYSize * meta->gds.Dy / 2;
+                        const auto SQR = [](double x) { return x * x; };
+                        if (SQR(dfXCenterGridBuggy - dfXCenterProj) +
+                                SQR(dfYCenterGridBuggy - dfYCenterProj) <
+                            SQR(10) *
+                                (SQR(dfXCenterGridNominal - dfXCenterProj) +
+                                 SQR(dfYCenterGridNominal - dfYCenterProj)))
+                        {
+                            CPLError(
+                                CE_Warning, CPLE_AppDefined,
+                                "Likely buggy grid registration for GRIB2 "
+                                "product: heuristics shows that the "
+                                "latitudeOfFirstGridPoint is likely to qualify "
+                                "the latitude of the northern-most grid point "
+                                "instead of the southern-most grid point as "
+                                "expected. Please report to data producer. "
+                                "This heuristics can be disabled by setting "
+                                "the "
+                                "GRIB_LATITUDE_OF_FIRST_GRID_POINT_IS_SOUTHERN_"
+                                "MOST configuration option to YES.");
+                            bLatOfFirstPointIsSouthernMost = false;
+                        }
+                    }
+                }
+                if (bLatOfFirstPointIsSouthernMost)
+                {
+                    // -1 because we GDAL needs the coordinates of the centre of
+                    // the pixel.
+                    rMaxY = dfGridOriY + (meta->gds.Ny - 1) * meta->gds.Dy;
+                }
+                else
+                {
+                    rMaxY = dfGridOriY;
+                }
+            }
+            else
+            {
+                rMaxY = dfGridOriY;
             }
             rPixelSizeX = meta->gds.Dx;
             rPixelSizeY = meta->gds.Dy;
@@ -2618,7 +2743,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         else
         {
             rMinX = 0.0;
-            rMaxY = 0.0;
+            // rMaxY = 0.0;
 
             rPixelSizeX = 1.0;
             rPixelSizeY = -1.0;
@@ -2680,6 +2805,13 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
             if (rPixelSizeX * nRasterXSize > 360 + rPixelSizeX / 4)
                 CPLDebug("GRIB", "Cannot properly handle GRIB2 files with "
                                  "overlaps and 0-360 longitudes");
+            else if (rMinX == 180)
+            {
+                // Case of https://github.com/OSGeo/gdal/issues/10655
+                CPLDebug("GRIB", "Shifting longitudes from %lf:%lf to %lf:%lf",
+                         rMinX, rMaxX, -180.0, Lon360to180(rMaxX));
+                rMinX = -180;
+            }
             else if (fabs(360 - rPixelSizeX * nRasterXSize) < rPixelSizeX / 4 &&
                      rMinX <= 180 && meta->gds.projType == GS3_LATLON)
             {
@@ -2736,6 +2868,7 @@ static void GDALDeregister_GRIB(GDALDriver *)
 {
     if (hGRIBMutex != nullptr)
     {
+        MetanameCleanup();
         CPLDestroyMutex(hGRIBMutex);
         hGRIBMutex = nullptr;
     }

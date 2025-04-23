@@ -13,15 +13,7 @@ gnmanalyse
 Synopsis
 --------
 
-.. code-block::
-
-    gnmanalyse [--help] [--help-general] [-q] [-quiet] [--long-usage]
-               [dijkstra <start_gfid> <end_gfid [-alo <NAME>=<VALUE>]...]
-               [kpaths <start_gfid> <end_gfid> <k> [-alo <NAME>=<VALUE>]...]
-               [resource [-alo <NAME>=<VALUE>]...]
-               [-ds <ds_name>][-f <ds_format>][-l <layer_name>]
-               [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...
-               <gnm_name>
+.. program-output:: gnmanalyse --help-doc
 
 Description
 -----------

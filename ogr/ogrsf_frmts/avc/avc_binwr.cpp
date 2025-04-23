@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Name:     avc_binwr.c
  * Project:  Arc/Info vector coverage (AVC)  E00->BIN conversion library
  * Language: ANSI C
@@ -9,23 +8,7 @@
  **********************************************************************
  * Copyright (c) 1999-2001, Daniel Morissette
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  **********************************************************************
  *
  * $Log: avc_binwr.c,v $
@@ -907,7 +890,6 @@ int AVCBinWriteCnt(AVCBinFile *psFile, AVCCnt *psCnt)
  **********************************************************************/
 static int _AVCBinWriteLab(AVCRawBinFile *psFile, AVCLab *psLab, int nPrecision)
 {
-
     AVCRawBinWriteInt32(psFile, psLab->nValue);
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -981,7 +963,6 @@ int AVCBinWriteLab(AVCBinFile *psFile, AVCLab *psLab)
  **********************************************************************/
 static int _AVCBinWriteTol(AVCRawBinFile *psFile, AVCTol *psTol, int nPrecision)
 {
-
     AVCRawBinWriteInt32(psFile, psTol->nIndex);
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -1322,7 +1303,6 @@ int AVCBinWriteTxt(AVCBinFile *psFile, AVCTxt *psTxt)
 static int _AVCBinWriteRxp(AVCRawBinFile *psFile, AVCRxp *psRxp,
                            CPL_UNUSED int nPrecision)
 {
-
     AVCRawBinWriteInt32(psFile, psRxp->n1);
     if (CPLGetLastErrorNo() != 0)
         return -1;

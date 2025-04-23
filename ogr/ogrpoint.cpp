@@ -8,23 +8,7 @@
  * Copyright (c) 1999, Frank Warmerdam
  * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -152,12 +136,6 @@ OGRPoint *OGRPoint::createXYM(double x, double y, double m)
 OGRPoint::OGRPoint(const OGRPoint &) = default;
 
 /************************************************************************/
-/*                             ~OGRPoint()                              */
-/************************************************************************/
-
-OGRPoint::~OGRPoint() = default;
-
-/************************************************************************/
 /*                       operator=( const OGRPoint& )                   */
 /************************************************************************/
 
@@ -174,7 +152,10 @@ OGRPoint &OGRPoint::operator=(const OGRPoint &other)
 {
     if (this != &other)
     {
-        OGRGeometry::operator=(other);
+        // Slightly more efficient to avoid OGRGeometry::operator=(other);
+        // but do what it does to avoid a call to empty()
+        assignSpatialReference(other.getSpatialReference());
+        flags = other.flags;
 
         x = other.x;
         y = other.y;
@@ -263,7 +244,7 @@ void OGRPoint::flattenTo2D()
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 
-void OGRPoint::setCoordinateDimension(int nNewDimension)
+bool OGRPoint::setCoordinateDimension(int nNewDimension)
 
 {
     if (nNewDimension == 2)
@@ -272,6 +253,7 @@ void OGRPoint::setCoordinateDimension(int nNewDimension)
         flags |= OGR_G_3D;
 
     setMeasured(FALSE);
+    return true;
 }
 
 /************************************************************************/
@@ -368,7 +350,7 @@ OGRErr OGRPoint::importFromWkb(const unsigned char *pabyData, size_t nSize,
     }
 
     // Detect coordinates are not NaN --> NOT EMPTY.
-    if (!(CPLIsNan(x) && CPLIsNan(y)))
+    if (!(std::isnan(x) && std::isnan(y)))
         flags |= OGR_G_NOT_EMPTY_POINT;
 
     return OGRERR_NONE;

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Oracle Spatial Driver
  * Purpose:  Oracle Spatial OGR Driver Declarations.
@@ -8,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam <warmerdam@pobox.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_OCI_H_INCLUDED
@@ -35,6 +18,7 @@
 #include "cpl_error.h"
 
 #include <map>
+#include <set>
 
 /* -------------------------------------------------------------------- */
 /*      Low level Oracle spatial declarations.                          */
@@ -262,6 +246,8 @@ class OGROCILayer CPL_NON_FINAL : public OGRLayer
     char *pszFIDName;
     int iFIDColumn;
 
+    std::set<int> setFieldIndexWithTimeStampWithTZ{};
+
     OGRGeometry *TranslateGeometry();
     OGRGeometry *TranslateGeometryElement(int *piElement, int nGType,
                                           int nDimension, int nEType,
@@ -402,8 +388,8 @@ class OGROCILoaderLayer final : public OGROCIWritableLayer
 
     OGRErr WriteFeatureStreamMode(OGRFeature *);
     OGRErr WriteFeatureVariableMode(OGRFeature *);
-    // cppcheck-suppress functionStatic
-    OGRErr WriteFeatureBinaryMode(OGRFeature *);
+
+    static OGRErr WriteFeatureBinaryMode(OGRFeature *);
 
   public:
     OGROCILoaderLayer(OGROCIDataSource *, const char *pszName,
@@ -413,15 +399,6 @@ class OGROCILoaderLayer final : public OGROCIWritableLayer
 
     virtual void ResetReading() override;
     virtual GIntBig GetFeatureCount(int) override;
-
-    virtual void SetSpatialFilter(OGRGeometry *) override
-    {
-    }
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
 
     virtual OGRErr SetAttributeFilter(const char *) override
     {
@@ -509,12 +486,8 @@ class OGROCITableLayer final : public OGROCIWritableLayer
     virtual void ResetReading() override;
     virtual GIntBig GetFeatureCount(int) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 
@@ -525,13 +498,8 @@ class OGROCITableLayer final : public OGROCIWritableLayer
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     virtual int TestCapability(const char *) override;
 
@@ -564,12 +532,11 @@ class OGROCISelectLayer final : public OGROCILayer
 /*                           OGROCIDataSource                           */
 /************************************************************************/
 
-class OGROCIDataSource final : public OGRDataSource
+class OGROCIDataSource final : public GDALDataset
 {
     OGROCILayer **papoLayers;
     int nLayers;
 
-    char *pszName;
     char *pszDBName;
 
     int bDSUpdate;
@@ -596,11 +563,6 @@ class OGROCIDataSource final : public OGRDataSource
              int bTestOpen);
     int OpenTable(const char *pszTableName, int nSRID, int bUpdate,
                   int bTestOpen, char **papszOpenOptionsIn);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {

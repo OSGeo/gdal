@@ -5,24 +5,24 @@
 #
 # FindDotnet
 # ----------
-# 
+#
 # Find DotNet executable, and initialize functions for adding dotnet projects.
-# 
+#
 # Results are reported in the following variables::
-# 
+#
 #   DOTNET_FOUND          - True if dotnet executable is found
 #   DOTNET_EXE            - Dotnet executable
 #   DOTNET_VERSION        - Dotnet version as reported by dotnet executable
 #   DOTNET_SDKS           - Dotnet SDKs loaded as reported by dotnet executable
 #   NUGET_EXE             - Nuget executable (WIN32 only)
 #   NUGET_CACHE_PATH      - Nuget package cache path
-# 
+#
 # The following functions are defined to add dotnet/msbuild projects:
-# 
+#
 # ADD_DOTNET -- add a project to be built by dotnet.
-# 
+#
 # ```
-# ADD_DOTNET(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU] 
+# ADD_DOTNET(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU]
 #            [CONFIG configuration]
 #            [PLATFORM platform]
 #            [PACKAGE nuget_package_dependencies... ]
@@ -34,12 +34,12 @@
 #            [ARGUMENTS additional_build_args...]
 #            [PACK_ARGUMENTS additional_pack_args...])
 # ```
-# 
-# RUN_DOTNET -- Run a project with `dotnet run`. The `OUTPUT` argument represents artifacts 
+#
+# RUN_DOTNET -- Run a project with `dotnet run`. The `OUTPUT` argument represents artifacts
 #               produced by running the .NET program, and can be consumed from other build steps.
-# 
+#
 # ```
-# RUN_DOTNET(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU] 
+# RUN_DOTNET(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU]
 #            [ARGUMENTS program_args...]
 #            [OUTPUT outputs...]
 #            [CONFIG configuration]
@@ -49,11 +49,11 @@
 #            [CUSTOM_BUILDPROPS <CustomProp>value</CustomProp>....]
 #            [SOURCES additional_file_dependencies... ])
 # ```
-# 
+#
 # ADD_MSBUILD -- add a project to be built by msbuild. Windows-only. When building in Unix systems, msbuild targets are skipped.
-# 
+#
 # ```
-# ADD_MSBUILD(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU] 
+# ADD_MSBUILD(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU]
 #            [CONFIG configuration]
 #            [PLATFORM platform]
 #            [PACKAGE output_nuget_packages... ]
@@ -68,7 +68,7 @@
 # and if the program fails to build or run, the build fails. Currently only .NET Core App framework is supported.
 # Multiple smoke tests will be run one-by-one to avoid global resource conflicts.
 #
-# SMOKETEST_DOTNET(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU] 
+# SMOKETEST_DOTNET(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU]
 #                 [ARGUMENTS program_args...]
 #                 [CONFIG configuration]
 #                 [PLATFORM platform]
@@ -76,12 +76,12 @@
 #                 [OUTPUT_PATH output_path relative to cmake binary output dir]
 #                 [CUSTOM_BUILDPROPS <CustomProp>value</CustomProp>....]
 #                 [SOURCES additional_file_dependencies... ])
-# 
+#
 # For all the above functions, `RELEASE|DEBUG` overrides `CONFIG`, `X86|X64|ANYCPU` overrides PLATFORM.
 #
 #
 # DOTNET_REGISTER_LOCAL_REPOSITORY -- register a local NuGet package repository.
-# 
+#
 # ```
 # DOTNET_REGISTER_LOCAL_REPOSITORY(repo_name repo_path)
 # ```
@@ -97,7 +97,7 @@
 #             [ARGUMENTS additional_dotnet_test_args...]
 #             [OUTPUT_PATH output_path relative to cmake binary output dir])
 # ```
-# 
+#
 # GEN_DOTNET_PROPS -- Generates a Directory.Build.props file. The created file is populated with MSBuild properties:
 #  - DOTNET_PACKAGE_VERSION: a version string that can be referenced in the actual project file as $(DOTNET_PACKAGE_VERSION).
 #    The version string value can be set with PACKAGE_VERSION argument, and defaults to '1.0.0'.
@@ -111,10 +111,7 @@
 #                  [PACKAGE_VERSION version]
 #                  [XML_INJECT xml_injection])
 # ```
-# 
-# Require 3.5 for batch copy multiple files
-
-cmake_minimum_required(VERSION 3.5.0)
+#
 
 IF(DOTNET_FOUND)
     RETURN()
@@ -184,11 +181,11 @@ ENDFUNCTION()
 FUNCTION(DOTNET_GET_DEPS _DN_PROJECT arguments)
     CMAKE_PARSE_ARGUMENTS(
         # prefix
-        _DN 
+        _DN
         # options (flags)
-        "RELEASE;DEBUG;X86;X64;ANYCPU;NETCOREAPP" 
+        "RELEASE;DEBUG;X86;X64;ANYCPU;NETCOREAPP"
         # oneValueArgs
-        "NAME;CONFIG;PLATFORM;VERSION;OUTPUT_PATH" 
+        "NAME;CONFIG;PLATFORM;VERSION;OUTPUT_PATH"
         # multiValueArgs
         "PACKAGE;DEPENDS;ARGUMENTS;PACK_ARGUMENTS;OUTPUT;SOURCES;CUSTOM_BUILDPROPS,BUILD_OPTIONS"
         # the input arguments
@@ -199,7 +196,7 @@ FUNCTION(DOTNET_GET_DEPS _DN_PROJECT arguments)
     GET_FILENAME_COMPONENT(_DN_projname "${_DN_PROJECT}" NAME)
     STRING(REGEX REPLACE "\\.[^.]*$" "" _DN_projname_noext ${_DN_projname})
 
-    FILE(GLOB_RECURSE DOTNET_deps 
+    FILE(GLOB_RECURSE DOTNET_deps
         ${_DN_proj_dir}/*.cs
         ${_DN_proj_dir}/*.fs
         ${_DN_proj_dir}/*.vb
@@ -328,14 +325,14 @@ ENDMACRO()
 
 MACRO(DOTNET_BUILD_COMMANDS)
     IF(${DOTNET_IS_MSBUILD})
-        SET(build_dotnet_cmds 
+        SET(build_dotnet_cmds
             COMMAND ${CMAKE_COMMAND} -E echo "======= Building msbuild project ${DOTNET_PROJNAME} [${DOTNET_CONFIG} ${DOTNET_PLATFORM}]"
             COMMAND ${NUGET_EXE} restore -Force ${DOTNET_PROJPATH}
             COMMAND ${DOTNET_EXE} msbuild ${DOTNET_PROJPATH} /t:Clean ${DOTNET_BUILD_PROPERTIES} /p:Configuration="${DOTNET_CONFIG}"
             COMMAND ${DOTNET_EXE} msbuild ${DOTNET_PROJPATH} /t:Build ${DOTNET_BUILD_PROPERTIES} /p:Configuration="${DOTNET_CONFIG}" ${DOTNET_ARGUMENTS})
         SET(build_dotnet_type "msbuild")
     ELSE()
-        SET(build_dotnet_cmds 
+        SET(build_dotnet_cmds
             COMMAND ${CMAKE_COMMAND} -E echo "======= Building .NET project ${DOTNET_PROJNAME} [${DOTNET_CONFIG} ${DOTNET_PLATFORM}]")
         foreach (_src ${DOTNET_SOURCES} )
             LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} add ${DOTNET_PROJPATH} reference ${_src})
@@ -362,10 +359,10 @@ MACRO(DOTNET_BUILD_COMMANDS)
             MESSAGE("-- Adding ${build_dotnet_type} project ${DOTNET_PROJPATH} (no nupkg)")
         ENDIF()
     endif()
-    
-    LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} pack 
-                        --no-build --no-restore ${DOTNET_PROJPATH} 
-                        -c ${DOTNET_CONFIG} ${DOTNET_BUILD_PROPERTIES} ${DOTNET_PACK_OPTIONS} 
+
+    LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} pack
+                        --no-build --no-restore ${DOTNET_PROJPATH}
+                        -c ${DOTNET_CONFIG} ${DOTNET_BUILD_PROPERTIES} ${DOTNET_PACK_OPTIONS}
                         --output ${CMAKE_CURRENT_BINARY_DIR} -p:PackageVersion=${DOTNET_PACKAGE_VERSION} )
     LIST(APPEND DOTNET_OUTPUTS ${CMAKE_CURRENT_BINARY_DIR}/${DOTNET_PROJNAME}.buildtimestamp)
     LIST(APPEND build_dotnet_cmds COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${DOTNET_PROJNAME}.buildtimestamp)
@@ -416,7 +413,7 @@ FUNCTION(RUN_DOTNET DOTNET_PROJECT)
         COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${DOTNET_PROJNAME}.runtimestamp
         WORKING_DIRECTORY ${DOTNET_OUTPUT_PATH})
     ADD_CUSTOM_TARGET(
-        ${DOTNET_PROJNAME} 
+        ${DOTNET_PROJNAME}
         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${DOTNET_PROJNAME}.runtimestamp ${DOTNET_RUN_OUTPUT})
     ADD_DOTNET_DEPENDENCY_TARGETS()
 ENDFUNCTION()
@@ -469,9 +466,9 @@ FUNCTION(GEN_DOTNET_PROPS target_props_file)
         # prefix
         _DNP
         # options (flags)
-        "" 
+        ""
         # oneValueArgs
-        "PACKAGE_VERSION;XML_INJECT" 
+        "PACKAGE_VERSION;XML_INJECT"
         # multiValueArgs
         ""
         # the input arguments

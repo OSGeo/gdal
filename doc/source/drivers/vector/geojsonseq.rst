@@ -120,6 +120,14 @@ The following layer creation options are supported:
       if they start and end with brackets and braces, even if they do
       not have their subtype set to JSON.
 
+-  .. lco:: WRITE_BBOX
+      :choices: YES, NO
+      :default: NO
+      :since: 3.10
+
+      Set to YES to write a bbox property with the bounding box of the
+      geometry at the feature level.
+
 Geometry coordinate precision
 -----------------------------
 

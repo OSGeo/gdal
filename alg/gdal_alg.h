@@ -9,23 +9,7 @@
  * Copyright (c) 2001, Frank Warmerdam
  * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef GDAL_ALG_H_INCLUDED
@@ -125,6 +109,8 @@ void *GDALCreateSimilarTransformer(void *psTransformerArg, double dfSrcRatioX,
    to image coordinates on another, potentially doing reprojection,
    utilizing GCPs or using the geotransform. */
 
+const char CPL_DLL *GDALGetGenImgProjTranformerOptionList(void);
+
 void CPL_DLL *
 GDALCreateGenImgProjTransformer(GDALDatasetH hSrcDS, const char *pszSrcWKT,
                                 GDALDatasetH hDstDS, const char *pszDstWKT,
@@ -132,7 +118,7 @@ GDALCreateGenImgProjTransformer(GDALDatasetH hSrcDS, const char *pszSrcWKT,
                                 int nOrder);
 void CPL_DLL *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS,
                                                GDALDatasetH hDstDS,
-                                               char **papszOptions);
+                                               CSLConstList papszOptions);
 void CPL_DLL *GDALCreateGenImgProjTransformer3(
     const char *pszSrcWKT, const double *padfSrcGeoTransform,
     const char *pszDstWKT, const double *padfDstGeoTransform);
@@ -181,6 +167,16 @@ int CPL_DLL GDALGCPTransform(void *pTransformArg, int bDstToSrc,
                              int nPointCount, double *x, double *y, double *z,
                              int *panSuccess);
 
+/* Homography transformer ... forward is to georef coordinates */
+void CPL_DLL *GDALCreateHomographyTransformer(double adfHomography[9]);
+void CPL_DLL *
+GDALCreateHomographyTransformerFromGCPs(int nGCPCount,
+                                        const GDAL_GCP *pasGCPList);
+void CPL_DLL GDALDestroyHomographyTransformer(void *pTransformArg);
+int CPL_DLL GDALHomographyTransform(void *pTransformArg, int bDstToSrc,
+                                    int nPointCount, double *x, double *y,
+                                    double *z, int *panSuccess);
+
 /* Thin Plate Spine transformer ... forward is to georef coordinates */
 
 void CPL_DLL *GDALCreateTPSTransformer(int nGCPCount,
@@ -218,7 +214,7 @@ void CPL_DLL *GDALCreateRPCTransformerV1(GDALRPCInfoV1 *psRPC, int bReversed,
 void CPL_DLL *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPC,
                                          int bReversed,
                                          double dfPixErrThreshold,
-                                         char **papszOptions);
+                                         CSLConstList papszOptions);
 
 void CPL_DLL GDALDestroyRPCTransformer(void *pTransformArg);
 int CPL_DLL GDALRPCTransform(void *pTransformArg, int bDstToSrc,
@@ -310,6 +306,9 @@ typedef struct
     int nElevFieldMax;
     int nIDField;
     int nNextID;
+
+    GIntBig nWrittenFeatureCountSinceLastCommit;
+    GIntBig nTransactionCommitInterval;
 } OGRContourWriterInfo;
 
 CPLErr CPL_DLL OGRContourWriter(double, int, double *, double *, void *pInfo);

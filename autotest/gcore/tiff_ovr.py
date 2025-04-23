@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Overview Support (mostly a GeoTIFF issue).
@@ -11,23 +10,7 @@
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import array
@@ -122,6 +105,10 @@ def mfloat32_tif(tmp_path):
     yield dst_fname
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_ovr_1(mfloat32_tif, both_endian):
 
     ds = gdal.Open(mfloat32_tif)
@@ -151,6 +138,10 @@ def test_tiff_ovr_1(mfloat32_tif, both_endian):
 # Open target file in update mode, and create internal overviews.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_ovr_3(mfloat32_tif, both_endian):
 
     src_ds = gdal.Open(mfloat32_tif, gdal.GA_Update)
@@ -172,6 +163,24 @@ def test_tiff_ovr_3(mfloat32_tif, both_endian):
     tiff_ovr_check(src_ds)
 
     src_ds = None
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_invalid_ovr_factor(tmp_path):
+    tif_fname = str(tmp_path / "byte.tif")
+
+    shutil.copyfile("data/byte.tif", tif_fname)
+
+    ds = gdal.Open(tif_fname, gdal.GA_Update)
+    with pytest.raises(
+        Exception,
+        match=r"panOverviewList\[1\] = 0 is invalid\. It must be a positive value",
+    ):
+        ds.BuildOverviews(overviewlist=[2, 0])
 
 
 ###############################################################################
@@ -279,6 +288,8 @@ def test_tiff_ovr_6(tmp_path, both_endian):
         callback_data=tab,
         options=["USE_RRD=YES"],
     )
+    if gdal.GetLastErrorMsg() == "This build does not support creating .aux overviews":
+        pytest.skip(gdal.GetLastErrorMsg())
     assert tab[0] == 1.0
 
     try:
@@ -531,6 +542,10 @@ def test_tiff_ovr_12(tmp_path, both_endian):
 # Test gaussian resampling
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_ovr_13(mfloat32_tif, both_endian):
 
     ds = gdal.Open(mfloat32_tif)
@@ -608,6 +623,10 @@ def test_tiff_ovr_15(tmp_path, both_endian):
 # Test mode resampling on non-byte dataset
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_ovr_16(tmp_path, both_endian):
 
     tif_fname = str(tmp_path / "ovr16.tif")
@@ -1675,6 +1694,33 @@ def test_tiff_ovr_43(tmp_path, both_endian):
 
 
 ###############################################################################
+# Test that we do not propagate PHOTOMETRIC=YCBCR on overviews when
+# COMPRESS_OVERVIEW != JPEG
+
+
+@pytest.mark.require_creation_option("GTiff", "JPEG")
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_do_not_propagate_photometric_ycbcr_if_ovr_if_not_jpeg(tmp_path):
+
+    tif_fname = str(tmp_path / "test.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tif_fname, 8, 8, 3, options=["COMPRESS=JPEG", "PHOTOMETRIC=YCBCR"]
+    )
+    ds.GetRasterBand(1).Fill(255)
+    ds.GetRasterBand(2).Fill(255)
+    ds.GetRasterBand(3).Fill(255)
+    ds = None
+
+    with gdal.Open(tif_fname, gdal.GA_Update) as ds:
+        with gdal.config_option("COMPRESS_OVERVIEW", "DEFLATE"):
+            ds.BuildOverviews("NEAR", [2])
+
+    with gdal.Open(tif_fname) as ds:
+        assert ds.GetRasterBand(1).GetOverview(0).ComputeRasterMinMax() == (255, 255)
+
+
+###############################################################################
 # Test that we can change overview block size through GDAL_TIFF_OVR_BLOCKSIZE configuration
 # option
 
@@ -2426,6 +2472,7 @@ def test_tiff_ovr_color_table_bug_3336_bis():
 
 def test_tiff_ovr_nodata_multiband():
 
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     temp_path = "/vsimem/test.tif"
@@ -2642,7 +2689,9 @@ def test_tiff_ovr_fallback_to_multiband_overview_generate():
         "data/byte.tif",
         options="-b 1 -b 1 -b 1 -co INTERLEAVE=BAND -co TILED=YES -outsize 1024 1024",
     )
-    with gdaltest.config_option("GDAL_OVR_CHUNK_MAX_SIZE", "1000"):
+    with gdaltest.config_options(
+        {"GDAL_OVR_CHUNK_MAX_SIZE": "1000", "GDAL_OVR_TEMP_DRIVER": "MEM"}
+    ):
         ds.BuildOverviews("NEAR", overviewlist=[2, 4, 8])
     ds = None
 
@@ -2947,3 +2996,38 @@ def test_tiff_ovr_JXL_ALPHA_DISTANCE_OVERVIEW(tmp_vsimem):
     assert ds.GetRasterBand(4).Checksum() != cs4
     del ds
     gdal.Unlink(tmpfilename + ".ovr")
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/11555
+
+
+def test_tiff_ovr_internal_mask_issue_11555(tmp_vsimem):
+
+    if "debug build" in gdal.VersionInfo("--version") and "CI" in os.environ:
+        pytest.skip("test skipped on CI for debug builds (to keep things fast)")
+
+    tmpfilename = str(tmp_vsimem / "test.tif")
+    gdal.FileFromMemBuffer(tmpfilename, open("data/test_11555.tif", "rb").read())
+
+    ds = gdal.Open(tmpfilename, gdal.GA_Update)
+    ds.BuildOverviews("bilinear", [2])
+    del ds
+
+    ds = gdal.Open(tmpfilename)
+
+    # Check that we have non-zero data when mask = 255
+    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 5270, 1, 1) == b"\x7F"
+    assert ds.GetRasterBand(2).GetOverview(0).ReadRaster(0, 5270, 1, 1) == b"\x7F"
+    assert (
+        ds.GetRasterBand(1).GetMaskBand().GetOverview(0).ReadRaster(0, 5270, 1, 1)
+        == b"\xFF"
+    )
+
+    # Check that we have zero data when mask = 0
+    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 5271, 1, 1) == b"\x00"
+    assert ds.GetRasterBand(2).GetOverview(0).ReadRaster(0, 5271, 1, 1) == b"\x00"
+    assert (
+        ds.GetRasterBand(1).GetMaskBand().GetOverview(0).ReadRaster(0, 5271, 1, 1)
+        == b"\x00"
+    )

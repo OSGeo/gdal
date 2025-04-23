@@ -88,6 +88,10 @@ PKG_CONFIG_LIBDIR=/tmp/install/lib/pkgconfig cmake .. \
  -DSFCGAL_CONFIG=disabled \
  -DHDF5_C_COMPILER_EXECUTABLE=disabled \
  -DHDF5_CXX_COMPILER_EXECUTABLE=disabled
+
+echo "Check that GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS:BOOL=ON"
+(grep "GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS:BOOL=ON" CMakeCache.txt > /dev/null && echo "yes") || (echo "Missing" && /bin/false)
+
 make -j$(nproc)
 make install
 cd ..

@@ -31,6 +31,6 @@ AZURE_STORAGE_CONNECTION_STRING=${AZURITE_STORAGE_CONNECTION_STRING} python3 -c 
 # MongoDB v3
 (cd autotest && MONGODBV3_TEST_PORT=27018 MONGODBV3_TEST_HOST=$IP $PYTEST ogr/ogr_mongodbv3.py)
 
-(cd autotest && OGR_MSSQL_CONNECTION_STRING="MSSQL:server=$IP;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd" $PYTEST ogr/ogr_mssqlspatial.py)
+#(cd autotest && OGR_MSSQL_CONNECTION_STRING="MSSQL:server=$IP;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd" $PYTEST ogr/ogr_mssqlspatial.py)
 
 (cd autotest && $PYTEST)

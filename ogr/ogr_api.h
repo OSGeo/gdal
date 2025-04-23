@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  C API for OGR Geometry, Feature, Layers, DataSource and drivers.
@@ -9,23 +8,7 @@
  * Copyright (c) 2002, Frank Warmerdam
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_API_H_INCLUDED
@@ -43,6 +26,7 @@
 #include "cpl_progress.h"
 #include "cpl_minixml.h"
 #include "ogr_core.h"
+#include "gdal_fwd.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -55,36 +39,6 @@ bool CPL_DLL OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch);
 /* -------------------------------------------------------------------- */
 /*      Geometry related functions (ogr_geometry.h)                     */
 /* -------------------------------------------------------------------- */
-#ifndef DEFINEH_OGRGeometryH
-/*! @cond Doxygen_Suppress */
-#define DEFINEH_OGRGeometryH
-/*! @endcond */
-#ifdef DEBUG
-typedef struct OGRGeometryHS *OGRGeometryH;
-#else
-/** Opaque type for a geometry */
-typedef void *OGRGeometryH;
-#endif
-#endif /* DEFINEH_OGRGeometryH */
-
-#ifndef DEFINED_OGRSpatialReferenceH
-/*! @cond Doxygen_Suppress */
-#define DEFINED_OGRSpatialReferenceH
-/*! @endcond */
-
-#ifndef DOXYGEN_XML
-#ifdef DEBUG
-typedef struct OGRSpatialReferenceHS *OGRSpatialReferenceH;
-typedef struct OGRCoordinateTransformationHS *OGRCoordinateTransformationH;
-#else
-/** Opaque type for a spatial reference system */
-typedef void *OGRSpatialReferenceH;
-/** Opaque type for a coordinate transformation object */
-typedef void *OGRCoordinateTransformationH;
-#endif
-#endif
-
-#endif /* DEFINED_OGRSpatialReferenceH */
 
 struct _CPLXMLNode;
 
@@ -92,9 +46,6 @@ struct _CPLXMLNode;
 
 /** Value for a unknown coordinate precision. */
 #define OGR_GEOM_COORD_PRECISION_UNKNOWN 0
-
-/** Opaque type for OGRGeomCoordinatePrecision */
-typedef struct OGRGeomCoordinatePrecision *OGRGeomCoordinatePrecisionH;
 
 OGRGeomCoordinatePrecisionH CPL_DLL OGRGeomCoordinatePrecisionCreate(void);
 void CPL_DLL OGRGeomCoordinatePrecisionDestroy(OGRGeomCoordinatePrecisionH);
@@ -171,9 +122,6 @@ OGRErr CPL_DLL OGR_G_ExportToWkb(OGRGeometryH, OGRwkbByteOrder,
 OGRErr CPL_DLL OGR_G_ExportToIsoWkb(OGRGeometryH, OGRwkbByteOrder,
                                     unsigned char *);
 
-/** Opaque type for WKB export options */
-typedef struct OGRwkbExportOptions OGRwkbExportOptions;
-
 OGRwkbExportOptions CPL_DLL *OGRwkbExportOptionsCreate(void);
 void CPL_DLL OGRwkbExportOptionsDestroy(OGRwkbExportOptions *);
 void CPL_DLL OGRwkbExportOptionsSetByteOrder(OGRwkbExportOptions *,
@@ -225,8 +173,6 @@ OGRSpatialReferenceH CPL_DLL OGR_G_GetSpatialReference(OGRGeometryH);
 OGRErr CPL_DLL OGR_G_Transform(OGRGeometryH, OGRCoordinateTransformationH);
 OGRErr CPL_DLL OGR_G_TransformTo(OGRGeometryH, OGRSpatialReferenceH);
 
-/** Opaque type for a geometry transformer. */
-typedef struct OGRGeomTransformer *OGRGeomTransformerH;
 OGRGeomTransformerH CPL_DLL
 OGR_GeomTransformer_Create(OGRCoordinateTransformationH,
                            CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
@@ -281,6 +227,7 @@ OGRGeometryH CPL_DLL OGR_G_SymDifference(OGRGeometryH,
 double CPL_DLL OGR_G_Distance(OGRGeometryH, OGRGeometryH);
 double CPL_DLL OGR_G_Distance3D(OGRGeometryH, OGRGeometryH);
 double CPL_DLL OGR_G_Length(OGRGeometryH);
+double CPL_DLL OGR_G_GeodesicLength(OGRGeometryH);
 double CPL_DLL OGR_G_Area(OGRGeometryH);
 double CPL_DLL OGR_G_GeodesicArea(OGRGeometryH);
 bool CPL_DLL OGR_G_IsClockwise(OGRGeometryH hGeom);
@@ -311,6 +258,7 @@ OGRGeometryH CPL_DLL OGR_G_SetPrecision(OGRGeometryH, double dfGridSize,
                                         int nFlags) CPL_WARN_UNUSED_RESULT;
 
 OGRGeometryH CPL_DLL OGR_G_Polygonize(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_BuildArea(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
 
 /*! @cond Doxygen_Suppress */
 /* backward compatibility (non-standard methods) */
@@ -392,9 +340,6 @@ int CPL_DLL OGRGetGenerate_DB2_V72_BYTE_ORDER(void);
 void CPL_DLL OGRSetNonLinearGeometriesEnabledFlag(int bFlag);
 int CPL_DLL OGRGetNonLinearGeometriesEnabledFlag(void);
 
-/** Opaque type for a prepared geometry */
-typedef struct _OGRPreparedGeometry *OGRPreparedGeometryH;
-
 int CPL_DLL OGRHasPreparedGeometrySupport(void);
 OGRPreparedGeometryH CPL_DLL OGRCreatePreparedGeometry(OGRGeometryH hGeom);
 void CPL_DLL OGRDestroyPreparedGeometry(OGRPreparedGeometryH hPreparedGeom);
@@ -406,32 +351,6 @@ int CPL_DLL OGRPreparedGeometryContains(OGRPreparedGeometryH hPreparedGeom,
 /* -------------------------------------------------------------------- */
 /*      Feature related (ogr_feature.h)                                 */
 /* -------------------------------------------------------------------- */
-
-#ifndef DEFINE_OGRFeatureH
-/*! @cond Doxygen_Suppress */
-#define DEFINE_OGRFeatureH
-/*! @endcond */
-#ifdef DEBUG
-typedef struct OGRFieldDefnHS *OGRFieldDefnH;
-typedef struct OGRFeatureDefnHS *OGRFeatureDefnH;
-typedef struct OGRFeatureHS *OGRFeatureH;
-typedef struct OGRStyleTableHS *OGRStyleTableH;
-#else
-/** Opaque type for a field definition (OGRFieldDefn) */
-typedef void *OGRFieldDefnH;
-/** Opaque type for a feature definition (OGRFeatureDefn) */
-typedef void *OGRFeatureDefnH;
-/** Opaque type for a feature (OGRFeature) */
-typedef void *OGRFeatureH;
-/** Opaque type for a style table (OGRStyleTable) */
-typedef void *OGRStyleTableH;
-#endif
-/** Opaque type for a geometry field definition (OGRGeomFieldDefn) */
-typedef struct OGRGeomFieldDefnHS *OGRGeomFieldDefnH;
-
-/** Opaque type for a field domain definition (OGRFieldDomain) */
-typedef struct OGRFieldDomainHS *OGRFieldDomainH;
-#endif /* DEFINE_OGRFeatureH */
 
 /* OGRFieldDefn */
 
@@ -461,6 +380,8 @@ int CPL_DLL OGR_Fld_IsIgnored(OGRFieldDefnH hDefn);
 void CPL_DLL OGR_Fld_SetIgnored(OGRFieldDefnH hDefn, int);
 int CPL_DLL OGR_Fld_IsNullable(OGRFieldDefnH hDefn);
 void CPL_DLL OGR_Fld_SetNullable(OGRFieldDefnH hDefn, int);
+void CPL_DLL OGR_Fld_SetGenerated(OGRFieldDefnH hDefn, int);
+int CPL_DLL OGR_Fld_IsGenerated(OGRFieldDefnH hDefn);
 int CPL_DLL OGR_Fld_IsUnique(OGRFieldDefnH hDefn);
 void CPL_DLL OGR_Fld_SetUnique(OGRFieldDefnH hDefn, int);
 const char CPL_DLL *OGR_Fld_GetDefault(OGRFieldDefnH hDefn);
@@ -472,7 +393,9 @@ const char CPL_DLL *OGR_Fld_GetComment(OGRFieldDefnH hDefn);
 void CPL_DLL OGR_Fld_SetComment(OGRFieldDefnH hDefn, const char *);
 
 const char CPL_DLL *OGR_GetFieldTypeName(OGRFieldType);
+OGRFieldType CPL_DLL OGR_GetFieldTypeByName(const char *);
 const char CPL_DLL *OGR_GetFieldSubTypeName(OGRFieldSubType);
+OGRFieldSubType CPL_DLL OGR_GetFieldSubTypeByName(const char *);
 int CPL_DLL OGR_AreTypeSubTypeCompatible(OGRFieldType eType,
                                          OGRFieldSubType eSubType);
 
@@ -682,19 +605,6 @@ const char CPL_DLL *OGR_GlobFldDomain_GetGlob(OGRFieldDomainH);
 /*      ogrsf_frmts.h                                                   */
 /* -------------------------------------------------------------------- */
 
-#ifdef DEBUG
-typedef struct OGRLayerHS *OGRLayerH;
-typedef struct OGRDataSourceHS *OGRDataSourceH;
-typedef struct OGRDriverHS *OGRSFDriverH;
-#else
-/** Opaque type for a layer (OGRLayer) */
-typedef void *OGRLayerH;
-/** Opaque type for a OGR datasource (OGRDataSource) */
-typedef void *OGRDataSourceH;
-/** Opaque type for a OGR driver (OGRSFDriver) */
-typedef void *OGRSFDriverH;
-#endif
-
 /* OGRLayer */
 
 const char CPL_DLL *OGR_L_GetName(OGRLayerH);
@@ -742,7 +652,7 @@ OGRFeatureH CPL_DLL OGR_L_GetNextFeature(OGRLayerH) CPL_WARN_UNUSED_RESULT;
 /** Conveniency macro to iterate over features of a layer.
  *
  * Typical usage is:
- * <pre>
+ * \code{.cpp}
  * OGR_FOR_EACH_FEATURE_BEGIN(hFeat, hLayer)
  * {
  *      // Do something, including continue, break;
@@ -750,14 +660,14 @@ OGRFeatureH CPL_DLL OGR_L_GetNextFeature(OGRLayerH) CPL_WARN_UNUSED_RESULT;
  *      // outside of the loop, in which case use OGR_F_Destroy(hFeat))
  * }
  * OGR_FOR_EACH_FEATURE_END(hFeat)
- * </pre>
+ * \endcode
  *
  * In C++, you might want to use instead range-based loop:
- * <pre>
+ * \code{.cpp}
  * for( auto&& poFeature: poLayer )
  * {
  * }
- * </pre>
+ * \endcode
  *
  * @param hFeat variable name for OGRFeatureH. The variable will be declared
  *              inside the macro body.
@@ -963,16 +873,6 @@ void CPL_DLL OGRCleanupAll(void);
 /* -------------------------------------------------------------------- */
 /*      ogrsf_featurestyle.h                                            */
 /* -------------------------------------------------------------------- */
-
-#ifdef DEBUG
-typedef struct OGRStyleMgrHS *OGRStyleMgrH;
-typedef struct OGRStyleToolHS *OGRStyleToolH;
-#else
-/** Style manager opaque type */
-typedef void *OGRStyleMgrH;
-/** Style tool opaque type */
-typedef void *OGRStyleToolH;
-#endif
 
 /* OGRStyleMgr */
 

@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2018-2020, Björn Harrtell <bjorn at wololo dot org>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrsf_frmts.h"
@@ -34,6 +18,7 @@
 #include "cpl_time.h"
 #include "ogr_p.h"
 #include "ograrrowarrayhelper.h"
+#include "ogrlayerarrow.h"
 #include "ogr_recordbatch.h"
 
 #include "ogr_flatgeobuf.h"
@@ -42,6 +27,7 @@
 #include "geometrywriter.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <new>
 #include <stdexcept>
@@ -86,7 +72,9 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(const Header *poHeader, GByte *headerBuf,
     m_hasM = m_poHeader->has_m();
     m_hasT = m_poHeader->has_t();
     const auto envelope = m_poHeader->envelope();
-    if (envelope && envelope->size() == 4)
+    if (envelope && envelope->size() == 4 && std::isfinite((*envelope)[0]) &&
+        std::isfinite((*envelope)[1]) && std::isfinite((*envelope)[2]) &&
+        std::isfinite((*envelope)[3]))
     {
         m_sExtent.MinX = (*envelope)[0];
         m_sExtent.MinY = (*envelope)[1];
@@ -455,7 +443,7 @@ void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount,
             if (osCoordinateEpoch.find('.') != std::string::npos)
             {
                 while (osCoordinateEpoch.back() == '0')
-                    osCoordinateEpoch.resize(osCoordinateEpoch.size() - 1);
+                    osCoordinateEpoch.pop_back();
             }
 
             std::string osWKT("COORDINATEMETADATA[");
@@ -551,8 +539,7 @@ bool OGRFlatGeobufLayer::CreateFinalFile()
     // no spatial index requested, we are (almost) done
     if (!m_bCreateSpatialIndexAtClose)
     {
-        if (m_poFpWrite == nullptr || m_featuresCount == 0 ||
-            !SupportsSeekWhileWriting(m_osFilename))
+        if (m_poFpWrite == nullptr || !SupportsSeekWhileWriting(m_osFilename))
         {
             return true;
         }
@@ -561,14 +548,24 @@ bool OGRFlatGeobufLayer::CreateFinalFile()
         VSIFSeekL(m_poFpWrite, 0, SEEK_SET);
         m_writeOffset = 0;
         std::vector<double> extentVector;
-        extentVector.push_back(m_sExtent.MinX);
-        extentVector.push_back(m_sExtent.MinY);
-        extentVector.push_back(m_sExtent.MaxX);
-        extentVector.push_back(m_sExtent.MaxY);
+        if (!m_sExtent.IsInit())
+        {
+            extentVector.resize(4, std::numeric_limits<double>::quiet_NaN());
+        }
+        else
+        {
+            extentVector.push_back(m_sExtent.MinX);
+            extentVector.push_back(m_sExtent.MinY);
+            extentVector.push_back(m_sExtent.MaxX);
+            extentVector.push_back(m_sExtent.MaxY);
+        }
         writeHeader(m_poFpWrite, m_featuresCount, &extentVector);
         // Sanity check to verify that the dummy header and the real header
         // have the same size.
-        CPLAssert(m_writeOffset == m_offsetAfterHeader);
+        if (m_featuresCount)
+        {
+            CPLAssert(m_writeOffset == m_offsetAfterHeader);
+        }
         CPL_IGNORE_RET_VAL(m_writeOffset);  // otherwise checkers might tell the
                                             // member is not used
         return true;
@@ -1497,6 +1494,8 @@ begin:
     }
 
     const GIntBig nFeatureIdxStart = m_featuresPos;
+    const bool bDateTimeAsString = m_aosArrowArrayStreamOptions.FetchBool(
+        GAS_OPT_DATETIME_AS_STRING, false);
 
     const uint32_t nMemLimit = OGRArrowArrayHelper::GetMemLimit();
     while (iFeat < sHelper.m_nMaxBatchSize)
@@ -1867,6 +1866,58 @@ begin:
                         offset += sizeof(double);
                         break;
 
+                    case ColumnType::DateTime:
+                    {
+                        if (!bDateTimeAsString)
+                        {
+                            if (offset + sizeof(uint32_t) > size)
+                            {
+                                CPLErrorInvalidSize("datetime length ");
+                                goto error;
+                            }
+                            uint32_t len;
+                            memcpy(&len, data + offset, sizeof(int32_t));
+                            CPL_LSBPTR32(&len);
+                            offset += sizeof(uint32_t);
+                            if (len > size - offset || len > 32)
+                            {
+                                CPLErrorInvalidSize("datetime value");
+                                goto error;
+                            }
+                            if (!isIgnored)
+                            {
+                                OGRField ogrField;
+                                if (ParseDateTime(
+                                        reinterpret_cast<const char *>(data +
+                                                                       offset),
+                                        len, &ogrField))
+                                {
+                                    sHelper.SetDateTime(
+                                        psArray, iFeat, brokenDown,
+                                        sHelper.m_anTZFlags[i], ogrField);
+                                }
+                                else
+                                {
+                                    char str[32 + 1];
+                                    memcpy(str, data + offset, len);
+                                    str[len] = '\0';
+                                    if (OGRParseDate(str, &ogrField, 0))
+                                    {
+                                        sHelper.SetDateTime(
+                                            psArray, iFeat, brokenDown,
+                                            sHelper.m_anTZFlags[i], ogrField);
+                                    }
+                                }
+                            }
+                            offset += len;
+                            break;
+                        }
+                        else
+                        {
+                            [[fallthrough]];
+                        }
+                    }
+
                     case ColumnType::String:
                     case ColumnType::Json:
                     case ColumnType::Binary:
@@ -1908,50 +1959,6 @@ begin:
                                 goto error;
                             }
                             memcpy(outPtr, data + offset, len);
-                        }
-                        offset += len;
-                        break;
-                    }
-
-                    case ColumnType::DateTime:
-                    {
-                        if (offset + sizeof(uint32_t) > size)
-                        {
-                            CPLErrorInvalidSize("datetime length ");
-                            goto error;
-                        }
-                        uint32_t len;
-                        memcpy(&len, data + offset, sizeof(int32_t));
-                        CPL_LSBPTR32(&len);
-                        offset += sizeof(uint32_t);
-                        if (len > size - offset || len > 32)
-                        {
-                            CPLErrorInvalidSize("datetime value");
-                            goto error;
-                        }
-                        if (!isIgnored)
-                        {
-                            OGRField ogrField;
-                            if (ParseDateTime(reinterpret_cast<const char *>(
-                                                  data + offset),
-                                              len, &ogrField))
-                            {
-                                sHelper.SetDateTime(psArray, iFeat, brokenDown,
-                                                    sHelper.m_anTZFlags[i],
-                                                    ogrField);
-                            }
-                            else
-                            {
-                                char str[32 + 1];
-                                memcpy(str, data + offset, len);
-                                str[len] = '\0';
-                                if (OGRParseDate(str, &ogrField, 0))
-                                {
-                                    sHelper.SetDateTime(
-                                        psArray, iFeat, brokenDown,
-                                        sHelper.m_anTZFlags[i], ogrField);
-                                }
-                            }
                         }
                         offset += len;
                         break;
@@ -2300,7 +2307,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         // the size of the FlatBuffer, but WKB might be a good approximation.
         // Takes an extra security margin of 10%
         flatbuffers::Offset<FlatGeobuf::Geometry> geometryOffset = 0;
-        if (ogrGeometry != nullptr)
+        if (ogrGeometry && !ogrGeometry->IsEmpty())
         {
             const auto nWKBSize = ogrGeometry->WkbSize();
             if (nWKBSize > feature_max_buffer_size - nWKBSize / 10)
@@ -2390,14 +2397,15 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     }
 }
 
-OGRErr OGRFlatGeobufLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRFlatGeobufLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                      bool bForce)
 {
     if (m_sExtent.IsInit())
     {
         *psExtent = m_sExtent;
         return OGRERR_NONE;
     }
-    return OGRLayer::GetExtent(psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
@@ -2448,14 +2456,14 @@ void OGRFlatGeobufLayer::ResetReading()
 std::string OGRFlatGeobufLayer::GetTempFilePath(const CPLString &fileName,
                                                 CSLConstList papszOptions)
 {
-    const CPLString osDirname(CPLGetPath(fileName.c_str()));
-    const CPLString osBasename(CPLGetBasename(fileName.c_str()));
+    const CPLString osDirname(CPLGetPathSafe(fileName.c_str()));
+    const CPLString osBasename(CPLGetBasenameSafe(fileName.c_str()));
     const char *pszTempDir = CSLFetchNameValue(papszOptions, "TEMPORARY_DIR");
     std::string osTempFile =
-        pszTempDir ? CPLFormFilename(pszTempDir, osBasename, nullptr)
+        pszTempDir ? CPLFormFilenameSafe(pszTempDir, osBasename, nullptr)
         : (STARTS_WITH(fileName, "/vsi") && !STARTS_WITH(fileName, "/vsimem/"))
-            ? CPLGenerateTempFilename(osBasename)
-            : CPLFormFilename(osDirname, osBasename, nullptr);
+            ? CPLGenerateTempFilenameSafe(osBasename)
+            : CPLFormFilenameSafe(osDirname, osBasename, nullptr);
     osTempFile += "_temp.fgb";
     return osTempFile;
 }

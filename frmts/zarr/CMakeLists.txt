@@ -3,6 +3,8 @@ add_gdal_driver(
   SOURCES zarr_array.cpp
           zarr_v2_array.cpp
           zarr_v3_array.cpp
+          zarr_compressors.cpp
+          zarr_filters.cpp
           zarr_attribute.cpp
           zarr_v3_codec.cpp
           zarr_dimension.cpp
@@ -11,6 +13,9 @@ add_gdal_driver(
           zarr_v3_group.cpp
           zarr_sharedresource.cpp
           zarrdriver.cpp
+          vsikerchunk.cpp
+          vsikerchunk_json_ref.cpp
+          vsikerchunk_parquet_ref.cpp
   CORE_SOURCES
           zarrdrivercore.cpp
   STRONG_CXX_WFLAGS
@@ -23,8 +28,7 @@ if(NOT TARGET gdal_Zarr)
 endif()
 
 gdal_standard_includes(gdal_Zarr)
-target_include_directories(gdal_Zarr PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem
-                                             ${GDAL_RASTER_FORMAT_SOURCE_DIR}/netcdf)
+target_include_directories(gdal_Zarr PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/netcdf)
 
 if (GDAL_USE_BLOSC)
   target_compile_definitions(gdal_Zarr PRIVATE -DHAVE_BLOSC)

@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2017, Alan Thomas <alant@outlook.com.au>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_dxf.h"
@@ -162,9 +146,9 @@ OGRDXFFeature::GetColor(OGRDXFDataSource *const poDS,
         (poBlockFeature &&
          poBlockFeature->oStyleProperties.count("Hidden") > 0))
     {
-        // Hidden objects should never be shown no matter what happens,
-        // so they can be treated as if they are on a frozen layer
-        iHidden = 2;
+        // Hidden objects should never be shown no matter what happens
+        iHidden = 1;
+        oStyleProperties["Hidden"] = "1";
     }
     else
     {
@@ -182,13 +166,13 @@ OGRDXFFeature::GetColor(OGRDXFDataSource *const poDS,
             if (pszBlockHidden && atoi(pszBlockHidden) == 2)
                 iHidden = 2;
         }
-    }
 
-    // If this feature is on a frozen layer, make the object totally
-    // hidden so it won't reappear if we regenerate the style string again
-    // during block insertion
-    if (iHidden == 2)
-        oStyleProperties["Hidden"] = "1";
+        // If this feature is on a frozen layer (other than layer 0), make the
+        // object totally hidden so it won't reappear if we regenerate the style
+        // string again during block insertion
+        if (iHidden == 2 && !EQUAL(GetFieldAsString("Layer"), "0"))
+            oStyleProperties["Hidden"] = "1";
+    }
 
     // Helpful constants
     const int C_BYLAYER = 256;

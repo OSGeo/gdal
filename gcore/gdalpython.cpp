@@ -8,23 +8,7 @@
  * Copyright (c) 2017-2019, Even Rouault, <even dot rouault at spatialys dot
  *com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_conv.h"
@@ -285,11 +269,11 @@ static bool LoadPythonAPI()
                 for (const char *pszPathPart : aosPathParts)
                 {
                     struct stat sStat;
-                    CPLString osPythonBinary(
-                        CPLFormFilename(pszPathPart, "python", nullptr));
+                    std::string osPythonBinary(
+                        CPLFormFilenameSafe(pszPathPart, "python", nullptr));
                     if (iTry == 0)
                         osPythonBinary += "3";
-                    if (lstat(osPythonBinary, &sStat) != 0)
+                    if (lstat(osPythonBinary.c_str(), &sStat) != 0)
                         continue;
 
                     CPLDebug("GDAL", "Found %s", osPythonBinary.c_str());
@@ -312,8 +296,9 @@ static bool LoadPythonAPI()
                             const int nBufSize = 2048;
                             std::vector<char> oFilename(nBufSize);
                             char *szPointerFilename = &oFilename[0];
-                            int nBytes = static_cast<int>(readlink(
-                                osPythonBinary, szPointerFilename, nBufSize));
+                            int nBytes = static_cast<int>(
+                                readlink(osPythonBinary.c_str(),
+                                         szPointerFilename, nBufSize));
                             if (nBytes != -1)
                             {
                                 szPointerFilename[std::min(nBytes,
@@ -325,14 +310,17 @@ static bool LoadPythonAPI()
 
                                 if (STARTS_WITH(osFilename, "python"))
                                 {
-                                    CPLString osResolvedFullLink;
+                                    std::string osResolvedFullLink;
                                     // If the filename is again a symlink,
                                     // resolve it
                                     if (CPLIsFilenameRelative(osFilename))
                                     {
-                                        osResolvedFullLink = CPLFormFilename(
-                                            CPLGetPath(osPythonBinary),
-                                            osFilename, nullptr);
+                                        osResolvedFullLink =
+                                            CPLFormFilenameSafe(
+                                                CPLGetPathSafe(
+                                                    osPythonBinary.c_str())
+                                                    .c_str(),
+                                                osFilename, nullptr);
                                     }
                                     else
                                     {
@@ -341,8 +329,8 @@ static bool LoadPythonAPI()
                                     if (oSetAlreadyTriedLinks.find(
                                             osResolvedFullLink) ==
                                             oSetAlreadyTriedLinks.end() &&
-                                        lstat(osResolvedFullLink, &sStat) ==
-                                            0 &&
+                                        lstat(osResolvedFullLink.c_str(),
+                                              &sStat) == 0 &&
                                         S_ISLNK(sStat.st_mode))
                                     {
                                         osPythonBinary =
@@ -378,7 +366,7 @@ static bool LoadPythonAPI()
                                                         "-c", pszPrintVersion,
                                                         nullptr};
                         const CPLString osTmpFilename(
-                            "/vsimem/LoadPythonAPI/out.txt");
+                            VSIMemGenerateHiddenFilename("out.txt"));
                         VSILFILE *fout = VSIFOpenL(osTmpFilename, "wb+");
                         if (CPLSpawn(apszArgv, nullptr, fout, FALSE) == 0)
                         {
@@ -428,10 +416,10 @@ static bool LoadPythonAPI()
         const char *const apszPythonSO[] = {
             "libpython3.8." SO_EXT,  "libpython3.9." SO_EXT,
             "libpython3.10." SO_EXT, "libpython3.11." SO_EXT,
-            "libpython3.12." SO_EXT, "libpython3.7m." SO_EXT,
-            "libpython3.6m." SO_EXT, "libpython3.5m." SO_EXT,
-            "libpython3.4m." SO_EXT, "libpython3.3." SO_EXT,
-            "libpython3.2." SO_EXT};
+            "libpython3.12." SO_EXT, "libpython3.13." SO_EXT,
+            "libpython3.7m." SO_EXT, "libpython3.6m." SO_EXT,
+            "libpython3.5m." SO_EXT, "libpython3.4m." SO_EXT,
+            "libpython3.3." SO_EXT,  "libpython3.2." SO_EXT};
         for (size_t i = 0;
              libHandle == nullptr && i < CPL_ARRAYSIZE(apszPythonSO); ++i)
         {
@@ -533,7 +521,7 @@ static bool LoadPythonAPI()
     // in the PATH
     if (libHandle == nullptr)
     {
-        CPLString osDLLName;
+        std::string osDLLName;
         char *pszPath = getenv("PATH");
         if (pszPath != nullptr
 #ifdef DEBUG
@@ -549,11 +537,11 @@ static bool LoadPythonAPI()
                 for (const char *pszPathPart : aosPathParts)
                 {
                     VSIStatBufL sStat;
-                    CPLString osPythonBinary(
-                        CPLFormFilename(pszPathPart, "python.exe", nullptr));
+                    std::string osPythonBinary(CPLFormFilenameSafe(
+                        pszPathPart, "python.exe", nullptr));
                     if (iTry == 1)
                         osPythonBinary += "3";
-                    if (VSIStatL(osPythonBinary, &sStat) != 0)
+                    if (VSIStatL(osPythonBinary.c_str(), &sStat) != 0)
                         continue;
 
                     CPLDebug("GDAL", "Found %s", osPythonBinary.c_str());
@@ -568,9 +556,10 @@ static bool LoadPythonAPI()
                                  STARTS_WITH_CI(pszFilename, "libpython3.")) &&
                                 // do not load minimum API dll
                                 !EQUAL(pszFilename, "python3.dll") &&
-                                EQUAL(CPLGetExtension(pszFilename), "dll"))
+                                EQUAL(CPLGetExtensionSafe(pszFilename).c_str(),
+                                      "dll"))
                             {
-                                osDLLName = CPLFormFilename(
+                                osDLLName = CPLFormFilenameSafe(
                                     pszPathPart, pszFilename, nullptr);
                                 osPythonBinaryUsed = osPythonBinary;
                                 break;
@@ -581,16 +570,18 @@ static bool LoadPythonAPI()
                     // In python3.2, the dll is in the DLLs subdirectory
                     if (osDLLName.empty())
                     {
-                        const CPLString osDLLsDir(
-                            CPLFormFilename(pszPathPart, "DLLs", nullptr));
-                        const CPLStringList aosFiles(VSIReadDir(osDLLsDir));
+                        const std::string osDLLsDir(
+                            CPLFormFilenameSafe(pszPathPart, "DLLs", nullptr));
+                        const CPLStringList aosFiles(
+                            VSIReadDir(osDLLsDir.c_str()));
                         for (const char *pszFilename : aosFiles)
                         {
                             if (STARTS_WITH_CI(pszFilename, "python") &&
-                                EQUAL(CPLGetExtension(pszFilename), "dll"))
+                                EQUAL(CPLGetExtensionSafe(pszFilename).c_str(),
+                                      "dll"))
                             {
-                                osDLLName = CPLFormFilename(
-                                    osDLLsDir, pszFilename, nullptr);
+                                osDLLName = CPLFormFilenameSafe(
+                                    osDLLsDir.c_str(), pszFilename, nullptr);
                                 break;
                             }
                         }
@@ -609,7 +600,7 @@ static bool LoadPythonAPI()
             UINT uOldErrorMode;
             uOldErrorMode =
                 SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
-            libHandle = LoadLibrary(osDLLName);
+            libHandle = LoadLibrary(osDLLName.c_str());
             SetErrorMode(uOldErrorMode);
             if (libHandle != nullptr)
             {
@@ -623,9 +614,9 @@ static bool LoadPythonAPI()
     if (libHandle == nullptr)
     {
         const char *const apszPythonSO[] = {
-            "python38.dll",  "python39.dll", "python310.dll", "python311.dll",
-            "python312.dll", "python37.dll", "python36.dll",  "python35.dll",
-            "python34.dll",  "python33.dll", "python32.dll"};
+            "python38.dll",  "python39.dll",  "python310.dll", "python311.dll",
+            "python312.dll", "python313.dll", "python37.dll",  "python36.dll",
+            "python35.dll",  "python34.dll",  "python33.dll",  "python32.dll"};
         UINT uOldErrorMode;
         uOldErrorMode =
             SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
@@ -662,13 +653,14 @@ static bool LoadPythonAPI()
 #ifdef _WIN32
     if (!osPythonBinaryUsed.empty() && getenv("PYTHONHOME") == nullptr)
     {
-        const char *pszPythonHome = CPLGetDirname(osPythonBinaryUsed.c_str());
+        std::string osPythonHome =
+            CPLGetDirnameSafe(osPythonBinaryUsed.c_str());
         VSIStatBufL sStat;
         bool bOK = false;
         // Test Windows Conda layout
-        const char *pszDirEncodings =
-            CPLFormFilename(pszPythonHome, "lib/encodings", nullptr);
-        if (VSIStatL(pszDirEncodings, &sStat) == 0)
+        std::string osDirEncodings =
+            CPLFormFilenameSafe(osPythonHome.c_str(), "lib/encodings", nullptr);
+        if (VSIStatL(osDirEncodings.c_str(), &sStat) == 0)
         {
             bOK = true;
         }
@@ -679,13 +671,13 @@ static bool LoadPythonAPI()
                 CSLTokenizeString2(osPythonVersion.c_str(), ".", 0));
             if (aosVersionTokens.size() >= 3)
             {
-                pszPythonHome = CPLGetDirname(pszPythonHome);
-                pszDirEncodings = CPLFormFilename(
-                    pszPythonHome,
+                osPythonHome = CPLGetDirnameSafe(osPythonHome.c_str());
+                osDirEncodings = CPLFormFilenameSafe(
+                    osPythonHome.c_str(),
                     CPLSPrintf("lib/python%s.%s/encodings", aosVersionTokens[0],
                                aosVersionTokens[1]),
                     nullptr);
-                if (VSIStatL(pszDirEncodings, &sStat) == 0)
+                if (VSIStatL(osDirEncodings.c_str(), &sStat) == 0)
                 {
                     bOK = true;
                 }
@@ -694,12 +686,13 @@ static bool LoadPythonAPI()
         if (bOK)
         {
             static wchar_t wszPythonHome[4096];
-            wchar_t *pwszPythonHome =
-                CPLRecodeToWChar(pszPythonHome, CPL_ENC_UTF8, CPL_ENC_UCS2);
+            wchar_t *pwszPythonHome = CPLRecodeToWChar(
+                osPythonHome.c_str(), CPL_ENC_UTF8, CPL_ENC_UCS2);
             const size_t nLength = wcslen(pwszPythonHome) + 1;
             if (nLength <= sizeof(wszPythonHome))
             {
-                CPLDebug("GDAL", "Call Py_SetPythonHome(%s)", pszPythonHome);
+                CPLDebug("GDAL", "Call Py_SetPythonHome(%s)",
+                         osPythonHome.c_str());
                 memcpy(wszPythonHome, pwszPythonHome,
                        nLength * sizeof(wchar_t));
                 // The string must reside in static storage

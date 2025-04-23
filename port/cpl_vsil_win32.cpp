@@ -8,23 +8,7 @@
  * Copyright (c) 2000, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_vsi_virtual.h"
@@ -887,7 +871,6 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
                                     VSIStatBufL *pStatBuf, int nFlags)
 
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszFilename =
@@ -952,7 +935,6 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
         return nResult;
     }
     else
-#endif
     {
         (void)nFlags;
         return (VSI_STAT64(pszFilename, pStatBuf));
@@ -967,7 +949,6 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
 int VSIWin32FilesystemHandler::Unlink(const char *pszFilename)
 
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszFilename =
@@ -978,7 +959,6 @@ int VSIWin32FilesystemHandler::Unlink(const char *pszFilename)
         return nResult;
     }
     else
-#endif
     {
         return unlink(pszFilename);
     }
@@ -991,7 +971,6 @@ int VSIWin32FilesystemHandler::Unlink(const char *pszFilename)
 int VSIWin32FilesystemHandler::Rename(const char *oldpath, const char *newpath)
 
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszOldPath =
@@ -1005,7 +984,6 @@ int VSIWin32FilesystemHandler::Rename(const char *oldpath, const char *newpath)
         return nResult;
     }
     else
-#endif
     {
         return rename(oldpath, newpath);
     }
@@ -1015,11 +993,9 @@ int VSIWin32FilesystemHandler::Rename(const char *oldpath, const char *newpath)
 /*                               Mkdir()                                */
 /************************************************************************/
 
-int VSIWin32FilesystemHandler::Mkdir(const char *pszPathname, long nMode)
+int VSIWin32FilesystemHandler::Mkdir(const char *pszPathname, long /* nMode */)
 
 {
-    (void)nMode;
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszFilename =
@@ -1030,7 +1006,6 @@ int VSIWin32FilesystemHandler::Mkdir(const char *pszPathname, long nMode)
         return nResult;
     }
     else
-#endif
     {
         return mkdir(pszPathname);
     }
@@ -1043,7 +1018,6 @@ int VSIWin32FilesystemHandler::Mkdir(const char *pszPathname, long nMode)
 int VSIWin32FilesystemHandler::Rmdir(const char *pszPathname)
 
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszFilename =
@@ -1054,7 +1028,6 @@ int VSIWin32FilesystemHandler::Rmdir(const char *pszPathname)
         return nResult;
     }
     else
-#endif
     {
         return rmdir(pszPathname);
     }
@@ -1067,7 +1040,6 @@ int VSIWin32FilesystemHandler::Rmdir(const char *pszPathname)
 char **VSIWin32FilesystemHandler::ReadDirEx(const char *pszPath, int nMaxFiles)
 
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         struct _wfinddata_t c_file;
@@ -1107,7 +1079,6 @@ char **VSIWin32FilesystemHandler::ReadDirEx(const char *pszPath, int nMaxFiles)
         return oDir.StealList();
     }
     else
-#endif
     {
         struct _finddata_t c_file;
         intptr_t hFile;
@@ -1208,7 +1179,6 @@ bool VSIWin32FilesystemHandler::IsLocal(const char *pszPath)
 std::string VSIWin32FilesystemHandler::GetCanonicalFilename(
     const std::string &osFilename) const
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszFilename =
@@ -1224,7 +1194,6 @@ std::string VSIWin32FilesystemHandler::GetCanonicalFilename(
         return osRet;
     }
     else
-#endif
     {
         char longPath[MAX_PATH];
         DWORD result = GetLongPathNameA(osFilename.c_str(), longPath, MAX_PATH);

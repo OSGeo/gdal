@@ -1,0 +1,70 @@
+name: Docker
+
+on:
+    pull_request:
+        paths:
+            - 'docker/**'
+            - '.github/workflows/docker.yml'
+
+    # Allows you to run this workflow manually from the Actions tab
+    workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+
+  docker_builds:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: alpine-small-amd64
+            image_name: alpine-small
+            arch: amd64
+
+          - name: alpine-normal-amd64
+            image_name: alpine-small
+            arch: amd64
+
+          - name: ubuntu-small-amd64
+            image_name: ubuntu-small
+            arch: amd64
+
+          - name: ubuntu-small-arm64
+            image_name: ubuntu-small
+            arch: arm64
+
+          - name: ubuntu-full-amd64-proprietary-sdks
+            image_name: ubuntu-full
+            arch: amd64
+
+          - name: ubuntu-full-arm64
+            image_name: ubuntu-full
+            arch: arm64
+
+    name: ${{ matrix.name }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Build
+        shell: bash -l {0}
+        run: |
+          docker run --rm --privileged linuxkit/binfmt:v0.8
+          cd docker/${{ matrix.image_name }}
+          if test "${{ matrix.name }}" = "ubuntu-full-amd64-proprietary-sdks"; then
+            ./build.sh --platform linux/${{ matrix.arch }} --with-oracle --with-mrsid --with-ecw
+          else
+            ./build.sh --platform linux/${{ matrix.arch }}
+          fi
+          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.image_name }}-latest-${{ matrix.arch }} gdalinfo --formats
+          docker run --rm ghcr.io/osgeo/gdal:${{ matrix.image_name }}-latest-${{ matrix.arch }} ogrinfo --formats

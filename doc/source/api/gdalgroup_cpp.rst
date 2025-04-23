@@ -9,6 +9,14 @@
 GDALGroup C++ API
 ================================================================================
 
+Include file
+------------
+
+:file:`gdal_priv.h`
+
+GDALGroup class
+---------------
+
 .. doxygenclass:: GDALGroup
    :project: api
    :members:

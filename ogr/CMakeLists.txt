@@ -56,12 +56,22 @@ add_library(
   ogr_expat.cpp
   ogrpgeogeometry.cpp
   ogr_geocoding.cpp
+  ogr_schema_override.cpp
   ogrgeomfielddefn.cpp
   ograpispy.cpp
   ogr_xerces.cpp
   ogr_geo_utils.cpp
   ogr_proj_p.cpp
-  ogr_wkb.cpp)
+  ogr_wkb.cpp
+  ogrvrtgeometrytypes.cpp
+  ogr2kmlgeometry.cpp
+  ogrlibjsonutils.cpp
+  ogrgeojsongeometry.cpp
+  ogrgeojsonwriter.cpp
+  ogresrijsongeometry.cpp
+  ogrmitabspatialref.cpp
+  mitab_bounds.cpp
+)
 add_dependencies(ogr generate_gdal_version_h)
 
 set(GDAL_DATA_FILES
@@ -75,6 +85,7 @@ set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/pci_datum.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/data/pci_ellips.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/data/stateplane.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/ogr_fields_override.schema.json
 )
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}
@@ -84,9 +95,13 @@ set_property(
 include(GdalStandardIncludes)
 gdal_standard_includes(ogr)
 target_compile_options(ogr PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
-target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 set_property(TARGET ogr PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogr>)
+
+target_compile_definitions(ogr PUBLIC $<$<CONFIG:DEBUG>:GDAL_DEBUG>)
+if (USE_PRECOMPILED_HEADERS)
+    target_precompile_headers(ogr REUSE_FROM gdal_priv_header)
+endif()
 
 if (GDAL_USE_ZLIB_INTERNAL)
   gdal_add_vendored_lib(ogr libz)
@@ -95,8 +110,6 @@ endif ()
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(ogr libjson)
 endif ()
-
-target_compile_definitions(ogr PRIVATE HAVE_MITAB)
 
 gdal_target_link_libraries(ogr PRIVATE PROJ::proj)
 
@@ -109,6 +122,9 @@ endif ()
 if (GDAL_USE_SFCGAL)
   target_compile_definitions(ogr PRIVATE -DHAVE_SFCGAL=1)
   gdal_target_link_libraries(ogr PRIVATE SFCGAL::SFCGAL)
+  string(REGEX REPLACE "^([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1" SFCGAL_VERSION_MAJOR "${SFCGAL_VERSION_STRING}")
+  string(REGEX REPLACE "^[0-9]+\\.([0-9]+)\\.[0-9]+" "\\1" SFCGAL_VERSION_MINOR "${SFCGAL_VERSION_STRING}")
+  string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" SFCGAL_VERSION_PATCH "${SFCGAL_VERSION_STRING}")
   # work around for SFCGAL 1.3.7 on Ubuntu 20.04/Debian
   if (SFCGAL_VERSION_STRING VERSION_EQUAL "1.3.7")
     if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -121,6 +137,11 @@ if (GDAL_USE_SFCGAL)
     endif ()
   endif ()
 endif ()
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/ogr_sfcgal.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/ogr_sfcgal.h
+)
+target_include_directories(ogr PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 if (NOT GDAL_USE_ZLIB_INTERNAL)
   target_compile_definitions(ogr PRIVATE -DHAVE_ZLIB_H -DHAVE_ZLIB)
@@ -180,7 +201,7 @@ add_custom_target(check_swq_parser_md5 ALL
                   COMMAND ${CMAKE_COMMAND}
                       "-DIN_FILE=swq_parser.y"
                       "-DTARGET=generate_swq_parser"
-                      "-DEXPECTED_MD5SUM=9aa3dfdf31343882217863b82a009d64   "
+                      "-DEXPECTED_MD5SUM=c3eaca734f3005e73586cc697e481f94"
                       "-DFILENAME_CMAKE=${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
                       -P "${PROJECT_SOURCE_DIR}/cmake/helpers/check_md5sum.cmake"
                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"

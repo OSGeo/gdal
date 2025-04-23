@@ -8,23 +8,7 @@
 ###############################################################################
 # Copyright (c) 2022, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import json
@@ -317,6 +301,7 @@ def test_ogrinfo_lib_json_relationships():
 # Test json output with OFSTJSON field
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_OFSTJSON():
 
     ds = gdal.OpenEx(
@@ -375,6 +360,7 @@ def test_ogrinfo_lib_json_OFSTJSON():
 # Test json output with -fields=NO
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_fields_NO():
 
     ds = gdal.OpenEx(
@@ -398,6 +384,7 @@ def test_ogrinfo_lib_json_fields_NO():
 # Test json output with -geom=NO
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_geom_NO():
 
     ds = gdal.OpenEx(
@@ -480,7 +467,7 @@ def test_ogrinfo_lib_fielddomains():
 
 def test_ogrinfo_lib_time_zones():
 
-    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds.CreateLayer("test")
     fld_defn = ogr.FieldDefn("unknown", ogr.OFTDateTime)
     fld_defn.SetTZFlag(ogr.TZFLAG_UNKNOWN)
@@ -617,7 +604,7 @@ def test_ogrinfo_lib_json_features_resolution():
 
 def test_ogrinfo_lib_layers():
 
-    ds = gdal.GetDriverByName("Memory").Create("dummy", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("dummy", 0, 0, 0, gdal.GDT_Unknown)
     ds.CreateLayer("foo")
     ds.CreateLayer("bar")
 
@@ -645,7 +632,7 @@ def test_ogrinfo_lib_layers():
 @pytest.mark.parametrize("epoch", ["2021.0", "2021.3"])
 def test_ogrinfo_lib_coordinate_epoch(epoch):
 
-    ds = gdal.GetDriverByName("Memory").Create("dummy", 0, 0, 0, gdal.GDT_Unknown)
+    ds = gdal.GetDriverByName("MEM").Create("dummy", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     srs.SetCoordinateEpoch(float(epoch))

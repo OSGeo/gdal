@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2018-2019, Björn Harrtell <bjorn at wololo dot org>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrsf_frmts.h"
@@ -115,22 +99,31 @@ OGRMultiPoint *GeometryReader::readMultiPoint()
 
 OGRMultiLineString *GeometryReader::readMultiLineString()
 {
-    const auto pEnds = m_geometry->ends();
-    if (pEnds == nullptr)
-        return CPLErrorInvalidPointer("MultiLineString ends data");
+    const auto ends = m_geometry->ends();
     auto mls = std::make_unique<OGRMultiLineString>();
-    m_offset = 0;
-    for (uint32_t i = 0; i < pEnds->size(); i++)
+    if (ends == nullptr || ends->size() < 2)
     {
-        const auto e = pEnds->Get(i);
-        if (e < m_offset)
-            return CPLErrorInvalidLength("MultiLineString");
-        m_length = e - m_offset;
-        const auto ls = readSimpleCurve<OGRLineString>();
-        if (ls == nullptr)
+        m_length = m_length / 2;
+        const auto part = readSimpleCurve<OGRLineString>();
+        if (part == nullptr)
             return nullptr;
-        mls->addGeometryDirectly(ls);
-        m_offset = e;
+        mls->addGeometryDirectly(part);
+    }
+    else
+    {
+        m_offset = 0;
+        for (uint32_t i = 0; i < ends->size(); i++)
+        {
+            const auto e = ends->Get(i);
+            if (e < m_offset)
+                return CPLErrorInvalidLength("MultiLineString");
+            m_length = e - m_offset;
+            const auto ls = readSimpleCurve<OGRLineString>();
+            if (ls == nullptr)
+                return nullptr;
+            mls->addGeometryDirectly(ls);
+            m_offset = e;
+        }
     }
     return mls.release();
 }

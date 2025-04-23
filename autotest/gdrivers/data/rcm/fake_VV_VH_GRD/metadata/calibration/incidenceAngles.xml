@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<incidenceAngles xmlns="rcmGsProductSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="rcmGsProductSchema ../../support/schemas/rcm_prod_incidenceAngles.xsd">
+	<pixelFirstAnglesValue>0</pixelFirstAnglesValue>
+	<stepSize>-23</stepSize>
+	<numberOfValues>1</numberOfValues>
+	<angles units="deg">0</angles>
+</incidenceAngles>

@@ -8,23 +8,7 @@
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2010-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -171,21 +155,9 @@ int GDALJP2Box::ReadBox()
         if (VSIFReadL(abyXLBox, 8, 1, fpVSIL) != 1)
             return FALSE;
 
-#ifdef CPL_HAS_GINT64
         CPL_MSBPTR64(abyXLBox);
         memcpy(&nBoxLength, abyXLBox, 8);
-#else
-        // In case we lack a 64 bit integer type
-        if (abyXLBox[0] != 0 || abyXLBox[1] != 0 || abyXLBox[2] != 0 ||
-            abyXLBox[3] != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Box size requires a 64 bit integer type");
-            return FALSE;
-        }
-        CPL_MSBPTR32(abyXLBox + 4);
-        memcpy(&nBoxLength, abyXLBox + 4, 4);
-#endif
+
         if (nBoxLength < 0)
         {
             CPLDebug("GDALJP2", "Invalid length for box %s", szBoxType);

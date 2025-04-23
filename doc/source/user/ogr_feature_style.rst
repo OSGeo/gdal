@@ -293,7 +293,7 @@ representation. Note again that all parameters are optional:
   list of ids so that an application never has to rely on understanding
   system-specific ids.
 
-  Here is the current list of OGR pen ids (this could grow time):
+  Here is the current list of OGR pen ids (this could grow in time):
 
   -  ogr-pen-0: solid (the default when no id is provided)
   -  ogr-pen-1: null pen (invisible)

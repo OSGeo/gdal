@@ -8,29 +8,14 @@
  * Copyright (c) 1998, 2000, Frank Warmerdam
  * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "gdal_rat.h"
+#include "gdalalgorithm.h"
 
 #include <cerrno>
 #include <cstdlib>
@@ -123,7 +108,13 @@ GDALDataset *GDALDriver::Open(GDALOpenInfo *poOpenInfo, bool bSetOpenOptions)
 
     if (poDS)
     {
-        poDS->nOpenFlags = poOpenInfo->nOpenFlags & ~GDAL_OF_FROM_GDALOPEN;
+        // Only set GDAL_OF_THREAD_SAFE if the driver itself has set it in
+        // poDS->nOpenFlags
+        int nOpenFlags = poOpenInfo->nOpenFlags &
+                         ~(GDAL_OF_FROM_GDALOPEN | GDAL_OF_THREAD_SAFE);
+        if (poDS->nOpenFlags & GDAL_OF_THREAD_SAFE)
+            nOpenFlags |= GDAL_OF_THREAD_SAFE;
+        poDS->nOpenFlags = nOpenFlags;
 
         if (strlen(poDS->GetDescription()) == 0)
             poDS->SetDescription(poOpenInfo->pszFilename);
@@ -205,8 +196,8 @@ GDALDataset *GDALDriver::Create(const char *pszFilename, int nXSize, int nYSize,
     /*      Does this format support creation.                              */
     /* -------------------------------------------------------------------- */
     pfnCreate = GetCreateCallback();
-    if (pfnCreate == nullptr && pfnCreateEx == nullptr &&
-        pfnCreateVectorOnly == nullptr)
+    if (CPL_UNLIKELY(pfnCreate == nullptr && pfnCreateEx == nullptr &&
+                     pfnCreateVectorOnly == nullptr))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "GDALDriver::Create() ... no create method implemented"
@@ -217,7 +208,7 @@ GDALDataset *GDALDriver::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     /*      Do some rudimentary argument checking.                          */
     /* -------------------------------------------------------------------- */
-    if (nBands < 0)
+    if (CPL_UNLIKELY(nBands < 0))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to create dataset with %d bands is illegal,"
@@ -226,14 +217,22 @@ GDALDataset *GDALDriver::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
     }
 
-    if (GetMetadataItem(GDAL_DCAP_RASTER) != nullptr &&
-        GetMetadataItem(GDAL_DCAP_VECTOR) == nullptr &&
-        (nXSize < 1 || nYSize < 1))
+    if (CPL_UNLIKELY(GetMetadataItem(GDAL_DCAP_RASTER) != nullptr &&
+                     GetMetadataItem(GDAL_DCAP_VECTOR) == nullptr &&
+                     (nXSize < 1 || nYSize < 1)))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to create %dx%d dataset is illegal,"
                  "sizes must be larger than zero.",
                  nXSize, nYSize);
+        return nullptr;
+    }
+
+    if (CPL_UNLIKELY(nBands != 0 &&
+                     (eType == GDT_Unknown || eType == GDT_TypeCount)))
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Illegal GDT_Unknown/GDT_TypeCount argument");
         return nullptr;
     }
 
@@ -851,8 +850,16 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
     /*      Copy image data.                                                */
     /* -------------------------------------------------------------------- */
     if (eErr == CE_None && nDstBands > 0)
-        eErr = GDALDatasetCopyWholeRaster(poSrcDS, poDstDS, nullptr,
-                                          pfnProgress, pProgressData);
+    {
+        const char *const apszCopyRasterOptionsSkipHoles[] = {"SKIP_HOLES=YES",
+                                                              nullptr};
+        const bool bSkipHoles = CPLTestBool(
+            CSLFetchNameValueDef(papszOptions, "SKIP_HOLES", "FALSE"));
+        eErr = GDALDatasetCopyWholeRaster(
+            poSrcDS, poDstDS,
+            bSkipHoles ? apszCopyRasterOptionsSkipHoles : nullptr, pfnProgress,
+            pProgressData);
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Should we copy some masks over?                                 */
@@ -1063,8 +1070,7 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
                 {
                     CPLString osFilename(pszFileInList);
                     osFilename.replaceAll('\\', '/');
-                    if (oSetExistingDestFiles.find(osFilename) !=
-                        oSetExistingDestFiles.end())
+                    if (cpl::contains(oSetExistingDestFiles, osFilename))
                     {
                         oSetExistingDestFilesFoundInSource.insert(osFilename);
                     }
@@ -1078,8 +1084,8 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
         {
             for (const std::string &osFilename : oSetExistingDestFiles)
             {
-                if (oSetExistingDestFilesFoundInSource.find(osFilename) ==
-                    oSetExistingDestFilesFoundInSource.end())
+                if (!cpl::contains(oSetExistingDestFilesFoundInSource,
+                                   osFilename))
                 {
                     VSIUnlink(osFilename.c_str());
                 }
@@ -1464,13 +1470,35 @@ bool GDALDriver::CanVectorTranslateFrom(
     if (!ppapszFailureReasons)
     {
         for (const char *pszReason :
-             cpl::Iterate(CSLConstList(papszFailureReasons)))
+             cpl::Iterate(static_cast<CSLConstList>(papszFailureReasons)))
         {
             CPLDebug("GDAL", "%s", pszReason);
         }
         CSLDestroy(papszFailureReasons);
     }
     return bRet;
+}
+
+bool GDALDriver::HasOpenOption(const char *pszOpenOptionName) const
+{
+    if (pszOpenOptionName == nullptr)
+        return false;
+
+    // Const cast is safe here since we are only reading the metadata
+    auto pszOOMd{const_cast<GDALDriver *>(this)->GetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST)};
+    if (pszOOMd == nullptr)
+        return false;
+
+    const CPLXMLTreeCloser oXml{CPLParseXMLString(pszOOMd)};
+    for (CPLXMLNode *option = oXml->psChild; option != nullptr;
+         option = option->psNext)
+    {
+        if (EQUAL(CPLGetXMLValue(CPLGetXMLNode(option, "name"), nullptr, ""),
+                  pszOpenOptionName))
+            return true;
+    }
+    return false;
 }
 
 /************************************************************************/
@@ -1981,6 +2009,23 @@ CPLErr CPL_STDCALL GDALCopyDatasetFiles(GDALDriverH hDriver,
 }
 
 /************************************************************************/
+/*                       GDALDriverHasOpenOption()                      */
+/************************************************************************/
+
+/**
+ * \brief Returns TRUE if the given open option is supported by the driver.
+ * @param hDriver the handle of the driver
+ * @param pszOpenOptionName name of the open option to be checked
+ * @return TRUE if the driver supports the open option
+ * @since GDAL 3.11
+ */
+bool GDALDriverHasOpenOption(GDALDriverH hDriver, const char *pszOpenOptionName)
+{
+    VALIDATE_POINTER1(hDriver, "GDALDriverHasOpenOption", false);
+    return GDALDriver::FromHandle(hDriver)->HasOpenOption(pszOpenOptionName);
+}
+
+/************************************************************************/
 /*                       GDALGetDriverShortName()                       */
 /************************************************************************/
 
@@ -2125,10 +2170,11 @@ int CPL_STDCALL GDALValidateCreationOptions(GDALDriverH hDriver,
     osDriver.Printf("driver %s",
                     GDALDriver::FromHandle(hDriver)->GetDescription());
     bool bFoundOptionToRemove = false;
+    constexpr const char *const apszExcludedOptions[] = {
+        "APPEND_SUBDATASET", "COPY_SRC_MDD", "SRC_MDD", "SKIP_HOLES"};
     for (const char *pszCO : cpl::Iterate(papszCreationOptions))
     {
-        for (const char *pszExcludedOptions :
-             {"APPEND_SUBDATASET", "COPY_SRC_MDD", "SRC_MDD"})
+        for (const char *pszExcludedOptions : apszExcludedOptions)
         {
             if (STARTS_WITH_CI(pszCO, pszExcludedOptions) &&
                 pszCO[strlen(pszExcludedOptions)] == '=')
@@ -2147,8 +2193,7 @@ int CPL_STDCALL GDALValidateCreationOptions(GDALDriverH hDriver,
         for (const char *pszCO : cpl::Iterate(papszCreationOptions))
         {
             bool bMatch = false;
-            for (const char *pszExcludedOptions :
-                 {"APPEND_SUBDATASET", "COPY_SRC_MDD", "SRC_MDD"})
+            for (const char *pszExcludedOptions : apszExcludedOptions)
             {
                 if (STARTS_WITH_CI(pszCO, pszExcludedOptions) &&
                     pszCO[strlen(pszExcludedOptions)] == '=')
@@ -2823,6 +2868,85 @@ CPLErr GDALDriver::SetMetadataItem(const char *pszName, const char *pszValue,
 }
 
 /************************************************************************/
+/*                         InstantiateAlgorithm()                       */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+
+GDALAlgorithm *
+GDALDriver::InstantiateAlgorithm(const std::vector<std::string> &aosPath)
+{
+    pfnInstantiateAlgorithm = GetInstantiateAlgorithmCallback();
+    if (pfnInstantiateAlgorithm)
+        return pfnInstantiateAlgorithm(aosPath);
+    return nullptr;
+}
+
+/************************************************************************/
+/*                        DeclareAlgorithm()                            */
+/************************************************************************/
+
+void GDALDriver::DeclareAlgorithm(const std::vector<std::string> &aosPath)
+{
+    const std::string osDriverName = GetDescription();
+    auto &singleton = GDALGlobalAlgorithmRegistry::GetSingleton();
+
+    if (!singleton.HasDeclaredSubAlgorithm({"driver"}))
+    {
+        singleton.DeclareAlgorithm(
+            {"driver"},
+            []() -> std::unique_ptr<GDALAlgorithm>
+            {
+                return std::make_unique<GDALContainerAlgorithm>(
+                    "driver", "Command for driver specific operations.");
+            });
+    }
+
+    const std::vector<std::string> driverCommandPath = {
+        "driver", CPLString(osDriverName).tolower()};
+    if (!singleton.HasDeclaredSubAlgorithm(driverCommandPath))
+    {
+        singleton.DeclareAlgorithm(
+            driverCommandPath,
+            [osDriverName]() -> std::unique_ptr<GDALAlgorithm>
+            {
+                auto poDriver = GetGDALDriverManager()->GetDriverByName(
+                    osDriverName.c_str());
+                if (poDriver)
+                {
+                    const char *pszHelpTopic =
+                        poDriver->GetMetadataItem(GDAL_DMD_HELPTOPIC);
+                    return std::make_unique<GDALContainerAlgorithm>(
+                        CPLString(osDriverName).tolower(),
+                        std::string("Command for ")
+                            .append(osDriverName)
+                            .append(" driver specific operations."),
+                        pszHelpTopic ? std::string("/").append(pszHelpTopic)
+                                     : std::string());
+                }
+                return nullptr;
+            });
+    }
+
+    auto path = driverCommandPath;
+    path.insert(path.end(), aosPath.begin(), aosPath.end());
+
+    singleton.DeclareAlgorithm(
+        path,
+        [osDriverName, aosPath]() -> std::unique_ptr<GDALAlgorithm>
+        {
+            auto poDriver =
+                GetGDALDriverManager()->GetDriverByName(osDriverName.c_str());
+            if (poDriver)
+                return std::unique_ptr<GDALAlgorithm>(
+                    poDriver->InstantiateAlgorithm(aosPath));
+            return nullptr;
+        });
+}
+
+//! @endcond
+
+/************************************************************************/
 /*                   DoesDriverHandleExtension()                        */
 /************************************************************************/
 
@@ -2845,6 +2969,23 @@ static bool DoesDriverHandleExtension(GDALDriverH hDriver, const char *pszExt)
         }
     }
     return bRet;
+}
+
+/************************************************************************/
+/*                     IsOnlyExpectedGDBDrivers()                       */
+/************************************************************************/
+
+static bool IsOnlyExpectedGDBDrivers(const CPLStringList &aosDriverNames)
+{
+    for (const char *pszDrvName : aosDriverNames)
+    {
+        if (!EQUAL(pszDrvName, "OpenFileGDB") &&
+            !EQUAL(pszDrvName, "FileGDB") && !EQUAL(pszDrvName, "GPSBabel"))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 /************************************************************************/
@@ -2875,7 +3016,7 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
 {
     CPLStringList aosDriverNames;
 
-    std::string osExt = CPLGetExtension(pszDestDataset);
+    std::string osExt = CPLGetExtensionSafe(pszDestDataset);
     if (EQUAL(osExt.c_str(), "zip"))
     {
         const CPLString osLower(CPLString(pszDestDataset).tolower());
@@ -2887,6 +3028,12 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
         {
             osExt = "gpkg.zip";
         }
+    }
+    else if (EQUAL(osExt.c_str(), "json"))
+    {
+        const CPLString osLower(CPLString(pszDestDataset).tolower());
+        if (osLower.endsWith(".gdalg.json"))
+            return nullptr;
     }
 
     const int nDriverCount = GDALGetDriverCount();
@@ -2966,6 +3113,15 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
                 aosDriverNames.Clear();
                 aosDriverNames.AddString(osDrvName.c_str());
             }
+        }
+        else if (EQUAL(osExt.c_str(), "gdb") &&
+                 IsOnlyExpectedGDBDrivers(aosDriverNames))
+        {
+            // Do not warn about that case given that FileGDB write support
+            // forwards to OpenFileGDB one. And also consider GPSBabel as too
+            // marginal to deserve the warning.
+            aosDriverNames.Clear();
+            aosDriverNames.AddString("OpenFileGDB");
         }
         else if (aosDriverNames.size() >= 2)
         {

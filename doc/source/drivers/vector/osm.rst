@@ -10,6 +10,17 @@ OSM - OpenStreetMap XML and PBF
 This driver reads OpenStreetMap files, in .osm (XML based) and .pbf
 (optimized binary) formats.
 
+The driver reconstructs point, line and polygon geometries from the OpenStreetMap
+base objects, which are nodes, ways and relations. Such operation can be very
+slow for large files. Consequently, except for small extracts of the
+OSM database (that is .pbf files of a few megabytes at most), using this driver
+for interactive reading is not appropriate. It is better used to import an OSM file
+into a proper GIS format such as GeoPackage.
+Even if the driver can theoretically deal with arbitrarily large OSM files,
+it is not recommended to use it to import the whole planet.
+A tool such as `osm2pgsql <https://osm2pgsql.org>`__ which imports into a PostgreSQL
+database is much better suited for such operation.
+
 The driver is available if GDAL is built with SQLite support and, for
 .osm XML files, with Expat support.
 
@@ -204,7 +215,7 @@ You can convert a .osm or .pbf file without downloading it :
 
 ::
 
-   wget -O - http://www.example.com/some.pbf | 
+   wget -O - http://www.example.com/some.pbf |
    ogr2ogr -f SQLite my.sqlite /vsistdin/
 
    or
@@ -216,7 +227,7 @@ And to combine the above steps :
 
 ::
 
-   wget -O - http://www.example.com/some.osm.bz2 | 
+   wget -O - http://www.example.com/some.osm.bz2 |
    bzcat | ogr2ogr -f SQLite my.sqlite /vsistdin/
 
 Open options

@@ -54,11 +54,12 @@ static int GNMFileDriverIdentify(GDALOpenInfo *poOpenInfo)
         if (EQUAL(papszFiles[i], ".") || EQUAL(papszFiles[i], ".."))
             continue;
 
-        if (EQUAL(CPLGetBasename(papszFiles[i]), GNM_SYSLAYER_META))
+        const CPLString osBasename = CPLGetBasenameSafe(papszFiles[i]);
+        if (EQUAL(osBasename, GNM_SYSLAYER_META))
             bHasMeta = true;
-        else if (EQUAL(CPLGetBasename(papszFiles[i]), GNM_SYSLAYER_GRAPH))
+        else if (EQUAL(osBasename, GNM_SYSLAYER_GRAPH))
             bHasGraph = true;
-        else if (EQUAL(CPLGetBasename(papszFiles[i]), GNM_SYSLAYER_FEATURES))
+        else if (EQUAL(osBasename, GNM_SYSLAYER_FEATURES))
             bHasFeatures = true;
 
         if (bHasMeta && bHasGraph && bHasFeatures)

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GXF Reader
  * Purpose:  Majority of Geosoft GXF reading code.
@@ -10,23 +9,7 @@
  * Copyright (c) 1998, Frank Warmerdam
  * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -429,7 +412,7 @@ GXFHandle GXFOpen(const char *pszFilename)
 void GXFClose(GXFHandle hGXF)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
 
     CPLFree(psGXF->panRawLineOffset);
     CPLFree(psGXF->pszUnitName);
@@ -650,7 +633,7 @@ static CPLErr GXFReadRawScanlineFrom(GXFInfo_t *psGXF, vsi_l_offset iOffset,
 CPLErr GXFGetScanline(GXFHandle hGXF, int iScanline, double *padfLineBuf)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
     CPLErr nErr;
     int iRawScanline;
 
@@ -715,7 +698,7 @@ CPLErr GXFGetScanline(GXFHandle hGXF, int iScanline, double *padfLineBuf)
 CPLErr GXFGetRawScanline(GXFHandle hGXF, int iScanline, double *padfLineBuf)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
     CPLErr eErr;
 
     /* -------------------------------------------------------------------- */
@@ -771,7 +754,7 @@ CPLErr GXFGetRawScanline(GXFHandle hGXF, int iScanline, double *padfLineBuf)
 static void GXFScanForZMinMax(GXFHandle hGXF)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
     int iLine, iPixel;
     double *padfScanline;
 
@@ -858,7 +841,7 @@ CPLErr GXFGetRawInfo(GXFHandle hGXF, int *pnXSize, int *pnYSize, int *pnSense,
                      double *pdfZMin, double *pdfZMax, double *pdfDummy)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
 
     if (pnXSize != NULL)
         *pnXSize = psGXF->nRawXSize;
@@ -906,7 +889,7 @@ CPLErr GXFGetRawInfo(GXFHandle hGXF, int *pnXSize, int *pnYSize, int *pnSense,
 char **GXFGetMapProjection(GXFHandle hGXF)
 
 {
-    return (((GXFInfo_t *)hGXF)->papszMapProjection);
+    return ((hGXF)->papszMapProjection);
 }
 
 /************************************************************************/
@@ -928,7 +911,7 @@ char **GXFGetMapProjection(GXFHandle hGXF)
 char **GXFGetMapDatumTransform(GXFHandle hGXF)
 
 {
-    return (((GXFInfo_t *)hGXF)->papszMapDatumTransform);
+    return ((hGXF)->papszMapDatumTransform);
 }
 
 /************************************************************************/
@@ -965,7 +948,7 @@ CPLErr GXFGetRawPosition(GXFHandle hGXF, double *pdfXOrigin, double *pdfYOrigin,
                          double *pdfRotation)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
 
     if (pdfXOrigin != NULL)
         *pdfXOrigin = psGXF->dfXOrigin;
@@ -1021,7 +1004,7 @@ CPLErr GXFGetPosition(GXFHandle hGXF, double *pdfXOrigin, double *pdfYOrigin,
                       double *pdfRotation)
 
 {
-    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    GXFInfo_t *psGXF = hGXF;
     double dfCXOrigin, dfCYOrigin, dfCXPixelSize, dfCYPixelSize;
 
     switch (psGXF->nSense)

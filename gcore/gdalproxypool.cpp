@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -80,6 +64,17 @@ struct _GDALProxyPoolCacheEntry
     GDALProxyPoolCacheEntry *next;
 };
 
+// This variable prevents a dataset that is going to be opened in
+// GDALDatasetPool::_RefDataset from increasing refCount if, during its
+// opening, it creates a GDALProxyPoolDataset.
+// We increment it before opening or closing a cached dataset and decrement
+// it afterwards
+// The typical use case is a VRT made of simple sources that are VRT
+// We don't want the "inner" VRT to take a reference on the pool, otherwise
+// there is a high chance that this reference will not be dropped and the pool
+// remain ghost.
+static thread_local int refCountOfDisabledRefCount = 0;
+
 class GDALDatasetPool
 {
   private:
@@ -88,7 +83,7 @@ class GDALDatasetPool
     /* Ref count of the pool singleton */
     /* Taken by "toplevel" GDALProxyPoolDataset in its constructor and released
      */
-    /* in its destructor. See also refCountOfDisableRefCount for the difference
+    /* in its destructor. See also refCountOfDisabledRefCount for the difference
      */
     /* between toplevel and inner GDALProxyPoolDataset */
     int refCount = 0;
@@ -99,19 +94,6 @@ class GDALDatasetPool
     int64_t nRAMUsage = 0;
     GDALProxyPoolCacheEntry *firstEntry = nullptr;
     GDALProxyPoolCacheEntry *lastEntry = nullptr;
-
-    /* This variable prevents a dataset that is going to be opened in
-     * GDALDatasetPool::_RefDataset */
-    /* from increasing refCount if, during its opening, it creates a
-     * GDALProxyPoolDataset */
-    /* We increment it before opening or closing a cached dataset and decrement
-     * it afterwards */
-    /* The typical use case is a VRT made of simple sources that are VRT */
-    /* We don't want the "inner" VRT to take a reference on the pool, otherwise
-     * there is */
-    /* a high chance that this reference will not be dropped and the pool remain
-     * ghost */
-    int refCountOfDisableRefCount = 0;
 
     /* Caution : to be sure that we don't run out of entries, size must be at */
     /* least greater or equal than the maximum number of threads */
@@ -256,6 +238,9 @@ GDALDatasetPool::_RefDataset(const char *pszFileName, GDALAccess eAccess,
                              CSLConstList papszOpenOptions, int bShared,
                              bool bForceOpen, const char *pszOwner)
 {
+    CPLMutex **pMutex = GDALGetphDLMutex();
+    CPLMutexHolderD(pMutex);
+
     if (bInDestruction)
         return nullptr;
 
@@ -293,9 +278,9 @@ GDALDatasetPool::_RefDataset(const char *pszFileName, GDALAccess eAccess,
             /* dataset */
             GDALSetResponsiblePIDForCurrentThread(candidate->responsiblePID);
 
-            refCountOfDisableRefCount++;
+            refCountOfDisabledRefCount++;
             GDALClose(candidate->poDS);
-            refCountOfDisableRefCount--;
+            refCountOfDisabledRefCount--;
 
             candidate->poDS = nullptr;
             GDALSetResponsiblePIDForCurrentThread(responsiblePID);
@@ -340,7 +325,7 @@ GDALDatasetPool::_RefDataset(const char *pszFileName, GDALAccess eAccess,
     {
         GDALProxyPoolCacheEntry *next = cur->next;
 
-        if (cur->pszFileNameAndOpenOptions &&
+        if (cur->refCount >= 0 && cur->pszFileNameAndOpenOptions &&
             osFilenameAndOO == cur->pszFileNameAndOpenOptions &&
             ((bShared && cur->responsiblePID == responsiblePID &&
               ((cur->pszOwner == nullptr && pszOwner == nullptr) ||
@@ -414,16 +399,25 @@ GDALDatasetPool::_RefDataset(const char *pszFileName, GDALAccess eAccess,
     cur->pszFileNameAndOpenOptions = CPLStrdup(osFilenameAndOO.c_str());
     cur->pszOwner = (pszOwner) ? CPLStrdup(pszOwner) : nullptr;
     cur->responsiblePID = responsiblePID;
-    cur->refCount = 1;
+    cur->refCount = -1;  // to mark loading of dataset in progress
     cur->nRAMUsage = 0;
 
-    refCountOfDisableRefCount++;
-    int nFlag = ((eAccess == GA_Update) ? GDAL_OF_UPDATE : GDAL_OF_READONLY) |
-                GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR;
+    refCountOfDisabledRefCount++;
+    const int nFlag =
+        ((eAccess == GA_Update) ? GDAL_OF_UPDATE : GDAL_OF_READONLY) |
+        GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR;
     CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
-    cur->poDS = GDALDataset::Open(pszFileName, nFlag, nullptr, papszOpenOptions,
+
+    // Release mutex while opening dataset to avoid lock contention.
+    CPLReleaseMutex(*pMutex);
+    auto poDS = GDALDataset::Open(pszFileName, nFlag, nullptr, papszOpenOptions,
                                   nullptr);
-    refCountOfDisableRefCount--;
+    CPLAcquireMutex(*pMutex, 1000.0);
+
+    cur->poDS = poDS;
+    cur->refCount = 1;
+
+    refCountOfDisabledRefCount--;
 
     if (cur->poDS)
     {
@@ -489,9 +483,9 @@ void GDALDatasetPool::_CloseDatasetIfZeroRefCount(const char *pszFileName,
             CPLFree(cur->pszOwner);
             cur->pszOwner = nullptr;
 
-            refCountOfDisableRefCount++;
+            refCountOfDisabledRefCount++;
             GDALClose(poDS);
-            refCountOfDisableRefCount--;
+            refCountOfDisabledRefCount--;
 
             GDALSetResponsiblePIDForCurrentThread(responsiblePID);
             break;
@@ -499,6 +493,23 @@ void GDALDatasetPool::_CloseDatasetIfZeroRefCount(const char *pszFileName,
 
         cur = next;
     }
+}
+
+/************************************************************************/
+/*                       GDALGetMaxDatasetPoolSize()                    */
+/************************************************************************/
+
+/** Return the maximum number of datasets simultaneously opened in the
+ * dataset pool.
+ */
+int GDALGetMaxDatasetPoolSize()
+{
+    int nSize = atoi(CPLGetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "100"));
+    if (nSize < 2)
+        nSize = 2;
+    else if (nSize > 1000)
+        nSize = 1000;
+    return nSize;
 }
 
 /************************************************************************/
@@ -510,12 +521,6 @@ void GDALDatasetPool::Ref()
     CPLMutexHolderD(GDALGetphDLMutex());
     if (singleton == nullptr)
     {
-        int l_maxSize =
-            atoi(CPLGetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "100"));
-        if (l_maxSize < 2)
-            l_maxSize = 2;
-        else if (l_maxSize > 1000)
-            l_maxSize = 1000;
 
         // Try to not consume more than 25% of the usable RAM
         GIntBig l_nMaxRAMUsage =
@@ -531,9 +536,10 @@ void GDALDatasetPool::Ref()
                 l_nMaxRAMUsage *= 1024 * 1024 * 1024;
         }
 
-        singleton = new GDALDatasetPool(l_maxSize, l_nMaxRAMUsage);
+        singleton =
+            new GDALDatasetPool(GDALGetMaxDatasetPoolSize(), l_nMaxRAMUsage);
     }
-    if (singleton->refCountOfDisableRefCount == 0)
+    if (refCountOfDisabledRefCount == 0)
         singleton->refCount++;
 }
 
@@ -543,7 +549,7 @@ void GDALDatasetPool::PreventDestroy()
     CPLMutexHolderD(GDALGetphDLMutex());
     if (!singleton)
         return;
-    singleton->refCountOfDisableRefCount++;
+    refCountOfDisabledRefCount++;
 }
 
 /* keep that in sync with gdaldrivermanager.cpp */
@@ -566,7 +572,7 @@ void GDALDatasetPool::Unref()
         CPLAssert(false);
         return;
     }
-    if (singleton->refCountOfDisableRefCount == 0)
+    if (refCountOfDisabledRefCount == 0)
     {
         singleton->refCount--;
         if (singleton->refCount == 0)
@@ -583,8 +589,8 @@ void GDALDatasetPool::ForceDestroy()
     CPLMutexHolderD(GDALGetphDLMutex());
     if (!singleton)
         return;
-    singleton->refCountOfDisableRefCount--;
-    CPLAssert(singleton->refCountOfDisableRefCount == 0);
+    refCountOfDisabledRefCount--;
+    CPLAssert(refCountOfDisabledRefCount == 0);
     singleton->refCount = 0;
     delete singleton;
     singleton = nullptr;
@@ -607,7 +613,6 @@ GDALDatasetPool::RefDataset(const char *pszFileName, GDALAccess eAccess,
                             char **papszOpenOptions, int bShared,
                             bool bForceOpen, const char *pszOwner)
 {
-    CPLMutexHolderD(GDALGetphDLMutex());
     return singleton->_RefDataset(pszFileName, eAccess, papszOpenOptions,
                                   bShared, bForceOpen, pszOwner);
 }
@@ -1171,7 +1176,7 @@ GDALProxyPoolDatasetH GDALProxyPoolDatasetCreate(
 /*                       GDALProxyPoolDatasetDelete()                   */
 /************************************************************************/
 
-void CPL_DLL GDALProxyPoolDatasetDelete(GDALProxyPoolDatasetH hProxyPoolDataset)
+void GDALProxyPoolDatasetDelete(GDALProxyPoolDatasetH hProxyPoolDataset)
 {
     delete reinterpret_cast<GDALProxyPoolDataset *>(hProxyPoolDataset);
 }

@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrshape.h"
@@ -64,7 +48,7 @@ static int OGRShapeDriverIdentify(GDALOpenInfo *poOpenInfo)
     {
         return FALSE;
     }
-    const std::string osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    const std::string &osExt = poOpenInfo->osExtension;
     if (EQUAL(osExt.c_str(), "SHP") || EQUAL(osExt.c_str(), "SHX"))
     {
         return poOpenInfo->nHeaderBytes >= 4 &&
@@ -134,7 +118,7 @@ static GDALDataset *OGRShapeDriverOpen(GDALOpenInfo *poOpenInfo)
     }
 #endif
 
-    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    CPLString osExt(CPLGetExtensionSafe(poOpenInfo->pszFilename));
     if (!STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") &&
         (EQUAL(osExt, "shz") ||
          (EQUAL(osExt, "zip") &&
@@ -147,26 +131,24 @@ static GDALDataset *OGRShapeDriverOpen(GDALOpenInfo *poOpenInfo)
         if (OGRShapeDriverIdentify(&oOpenInfo) == FALSE)
             return nullptr;
         oOpenInfo.eAccess = poOpenInfo->eAccess;
-        OGRShapeDataSource *poDS = new OGRShapeDataSource();
+        auto poDS = std::make_unique<OGRShapeDataSource>();
 
         if (!poDS->OpenZip(&oOpenInfo, poOpenInfo->pszFilename))
         {
-            delete poDS;
             return nullptr;
         }
 
-        return poDS;
+        return poDS.release();
     }
 
-    OGRShapeDataSource *poDS = new OGRShapeDataSource();
+    auto poDS = std::make_unique<OGRShapeDataSource>();
 
     if (!poDS->Open(poOpenInfo, true))
     {
-        delete poDS;
         return nullptr;
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -179,7 +161,7 @@ static GDALDataset *OGRShapeDriverCreate(const char *pszName, int /* nBands */,
                                          char ** /* papszOptions */)
 {
     bool bSingleNewFile = false;
-    CPLString osExt(CPLGetExtension(pszName));
+    const CPLString osExt(CPLGetExtensionSafe(pszName));
 
     /* -------------------------------------------------------------------- */
     /*      Is the target a valid existing directory?                       */
@@ -209,15 +191,14 @@ static GDALDataset *OGRShapeDriverCreate(const char *pszName, int /* nBands */,
              (EQUAL(osExt, "zip") && (CPLString(pszName).endsWith(".shp.zip") ||
                                       CPLString(pszName).endsWith(".SHP.ZIP"))))
     {
-        OGRShapeDataSource *poDS = new OGRShapeDataSource();
+        auto poDS = std::make_unique<OGRShapeDataSource>();
 
         if (!poDS->CreateZip(pszName))
         {
-            delete poDS;
             return nullptr;
         }
 
-        return poDS;
+        return poDS.release();
     }
 
     /* -------------------------------------------------------------------- */
@@ -239,16 +220,15 @@ static GDALDataset *OGRShapeDriverCreate(const char *pszName, int /* nBands */,
     /* -------------------------------------------------------------------- */
     /*      Return a new OGRDataSource()                                    */
     /* -------------------------------------------------------------------- */
-    OGRShapeDataSource *poDS = new OGRShapeDataSource();
+    auto poDS = std::make_unique<OGRShapeDataSource>();
 
     GDALOpenInfo oOpenInfo(pszName, GA_Update);
     if (!poDS->Open(&oOpenInfo, false, bSingleNewFile))
     {
-        delete poDS;
         return nullptr;
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -269,7 +249,7 @@ static CPLErr OGRShapeDriverDelete(const char *pszDataSource)
         return CE_Failure;
     }
 
-    CPLString osExt(CPLGetExtension(pszDataSource));
+    const CPLString osExt(CPLGetExtensionSafe(pszDataSource));
     if (VSI_ISREG(sStatBuf.st_mode) &&
         (EQUAL(osExt, "shz") ||
          (EQUAL(osExt, "zip") &&
@@ -288,29 +268,25 @@ static CPLErr OGRShapeDriverDelete(const char *pszDataSource)
     {
         for (int iExt = 0; papszExtensions[iExt] != nullptr; iExt++)
         {
-            const char *pszFile =
-                CPLResetExtension(pszDataSource, papszExtensions[iExt]);
-            if (VSIStatL(pszFile, &sStatBuf) == 0)
-                VSIUnlink(pszFile);
+            const std::string osFile =
+                CPLResetExtensionSafe(pszDataSource, papszExtensions[iExt]);
+            if (VSIStatL(osFile.c_str(), &sStatBuf) == 0)
+                VSIUnlink(osFile.c_str());
         }
     }
     else if (VSI_ISDIR(sStatBuf.st_mode))
     {
-        char **papszDirEntries = VSIReadDir(pszDataSource);
+        const CPLStringList aosDirEntries(VSIReadDir(pszDataSource));
 
-        for (int iFile = 0;
-             papszDirEntries != nullptr && papszDirEntries[iFile] != nullptr;
-             iFile++)
+        for (const char *pszEntry : cpl::Iterate(aosDirEntries))
         {
             if (CSLFindString(papszExtensions,
-                              CPLGetExtension(papszDirEntries[iFile])) != -1)
+                              CPLGetExtensionSafe(pszEntry).c_str()) != -1)
             {
-                VSIUnlink(CPLFormFilename(pszDataSource, papszDirEntries[iFile],
-                                          nullptr));
+                VSIUnlink(CPLFormFilenameSafe(pszDataSource, pszEntry, nullptr)
+                              .c_str());
             }
         }
-
-        CSLDestroy(papszDirEntries);
 
         VSIRmdir(pszDataSource);
     }
@@ -436,6 +412,9 @@ void RegisterOGRShape()
     poDriver->SetMetadataItem(GDAL_DCAP_RENAME_LAYERS, "YES");
 
     poDriver->SetMetadataItem(GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS, "SRS");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "Features");
 
     poDriver->pfnOpen = OGRShapeDriverOpen;
     poDriver->pfnIdentify = OGRShapeDriverIdentify;

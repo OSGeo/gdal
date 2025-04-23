@@ -69,6 +69,8 @@ build_gdal_specialized_fuzzer()
 
 build_fuzzer gtiff_mmap $(dirname $0)/gdal_fuzzer.cpp -DREGISTER_FUNC=GDALRegister_GTiff -DGTIFF_USE_MMAP
 
+build_fuzzer libertiff $(dirname $0)/gdal_fuzzer.cpp -DREGISTER_FUNC=GDALRegister_LIBERTIFF -DDRIVER_NAME="\"LIBERTIFF\""
+
 fuzzerFiles="$(dirname $0)/*.cpp"
 for F in $fuzzerFiles; do
     if test $F != "$(dirname $0)/fuzzingengine.cpp"; then
@@ -78,7 +80,6 @@ for F in $fuzzerFiles; do
 done
 
 build_ogr_specialized_fuzzer dxf RegisterOGRDXF "/vsimem/test" "/vsimem/test"
-build_ogr_specialized_fuzzer ogr_sdts RegisterOGRSDTS "/vsimem/test.tar" "/vsitar//vsimem/test.tar/TR01CATD.DDF"
 build_ogr_specialized_fuzzer openfilegdb RegisterOGROpenFileGDB "/vsimem/test.gdb.tar" "/vsimem/test.gdb.tar"
 build_ogr_specialized_fuzzer shape OGRRegisterAll "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.shp"
 build_ogr_specialized_fuzzer mitab_mif OGRRegisterAll "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.mif"
@@ -112,7 +113,6 @@ build_gdal_specialized_fuzzer rraster GDALRegister_RRASTER "/vsimem/test.tar" "/
 build_gdal_specialized_fuzzer aig GDALRegister_AIGrid "/vsimem/test.tar" "/vsitar//vsimem/test.tar/hdr.adf"
 # mrf can use indirectly the GTiff driver
 build_gdal_specialized_fuzzer mrf "GDALRegister_mrf();GDALRegister_GTiff" "/vsimem/test.tar" "/vsitar//vsimem/test.tar/byte.mrf"
-build_gdal_specialized_fuzzer gdal_sdts GDALRegister_SDTS "/vsimem/test.tar" "/vsitar//vsimem/test.tar/1107CATD.DDF"
 build_gdal_specialized_fuzzer gdal_vrt GDALAllRegister "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.vrt"
 build_gdal_specialized_fuzzer ers GDALRegister_ERS "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.ers"
 build_gdal_specialized_fuzzer zarr GDALRegister_Zarr "/vsimem/test.tar" "/vsitar//vsimem/test.tar"

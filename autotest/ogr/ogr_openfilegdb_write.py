@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  OpenFileGDB driver testing (write side)
@@ -10,25 +9,10 @@
 ###############################################################################
 # Copyright (c) 2022, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import struct
 import sys
 
@@ -1546,6 +1530,7 @@ def test_ogr_openfilegdb_write_spatial_index(
 ###############################################################################
 
 
+@gdaltest.enable_exceptions()
 def test_ogr_openfilegdb_write_attribute_index(tmp_vsimem):
 
     dirname = tmp_vsimem / "out.gdb"
@@ -1589,31 +1574,35 @@ def test_ogr_openfilegdb_write_attribute_index(tmp_vsimem):
     f = None
 
     # Errors of index creation
-    with gdal.quiet_errors():
-        gdal.ErrorReset()
+    with pytest.raises(
+        Exception, match="Invalid index name: cannot be greater than 16 characters"
+    ):
         ds.ExecuteSQL("CREATE INDEX this_name_is_wayyyyy_tooo_long ON test(int16)")
-        assert gdal.GetLastErrorMsg() != ""
 
-        gdal.ErrorReset()
+    with pytest.raises(Exception, match="Invalid layer name: non_existing_layer"):
         ds.ExecuteSQL("CREATE INDEX idx_int16 ON non_existing_layer(int16)")
-        assert gdal.GetLastErrorMsg() != ""
 
-        gdal.ErrorReset()
+    with pytest.raises(Exception, match="Cannot find field invalid_field"):
         ds.ExecuteSQL("CREATE INDEX invalid_field ON test(invalid_field)")
-        assert gdal.GetLastErrorMsg() != ""
 
-        # Reserved keyword
-        gdal.ErrorReset()
+    with pytest.raises(
+        Exception, match="Invalid index name: must not be a reserved keyword"
+    ):
         ds.ExecuteSQL("CREATE INDEX SELECT ON test(int16)")
-        assert gdal.GetLastErrorMsg() != ""
 
-        gdal.ErrorReset()
+    with pytest.raises(Exception, match="Invalid index name: must start with a letter"):
         ds.ExecuteSQL("CREATE INDEX _starting_by_ ON test(int16)")
-        assert gdal.GetLastErrorMsg() != ""
 
-        gdal.ErrorReset()
+    with pytest.raises(
+        Exception,
+        match="Invalid index name: must contain only alpha numeric character or _",
+    ):
         ds.ExecuteSQL("CREATE INDEX a&b ON test(int16)")
-        assert gdal.GetLastErrorMsg() != ""
+
+    with pytest.raises(
+        Exception, match="Creation of multiple-column indices is not supported"
+    ):
+        ds.ExecuteSQL("CREATE INDEX index_on_two_cols ON test(int16, int32)")
 
     # Create indexes
     gdal.ErrorReset()
@@ -1631,20 +1620,18 @@ def test_ogr_openfilegdb_write_attribute_index(tmp_vsimem):
     fld_defn = ogr.FieldDefn("unindexed", ogr.OFTString)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-    with gdal.quiet_errors():
+    with pytest.raises(Exception, match="An index with same name already exists"):
         # Re-using an index name
-        gdal.ErrorReset()
         ds.ExecuteSQL("CREATE INDEX idx_int16 ON test(unindexed)")
-        assert gdal.GetLastErrorMsg() != ""
 
+    with pytest.raises(Exception, match="Field int16 has already a registered index"):
         # Trying to index twice a field
-        gdal.ErrorReset()
         ds.ExecuteSQL("CREATE INDEX int16_again ON test(int16)")
-        assert gdal.GetLastErrorMsg() != ""
 
-        gdal.ErrorReset()
+    with pytest.raises(
+        Exception, match="Field lower_str has already a registered index"
+    ):
         ds.ExecuteSQL("CREATE INDEX lower_str_again ON test(lower_str)")
-        assert gdal.GetLastErrorMsg() != ""
 
     ds = None
 
@@ -4267,18 +4254,19 @@ def test_ogr_openfilegdb_write_new_datetime_types(tmp_vsimem):
 
     filename = str(tmp_vsimem / "out.gdb")
     with gdal.quiet_errors():
+        gdal.ErrorReset()
         ds = gdal.VectorTranslate(
             filename,
             "data/filegdb/arcgis_pro_32_types.gdb",
-            format="OpenFileGDB",
             layers=["date_types", "date_types_high_precision"],
             layerCreationOptions=["TARGET_ARCGIS_VERSION=ARCGIS_PRO_3_2_OR_LATER"],
         )
+        assert gdal.GetLastErrorMsg() == ""
 
     lyr = ds.GetLayerByName("date_types")
     lyr_defn = lyr.GetLayerDefn()
 
-    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("date_"))
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("date"))
     assert fld_defn.GetType() == ogr.OFTDateTime
     assert fld_defn.GetDefault() == "'2023/02/01 04:05:06'"
 
@@ -4295,13 +4283,13 @@ def test_ogr_openfilegdb_write_new_datetime_types(tmp_vsimem):
     assert fld_defn.GetDefault() == "'2023/02/01 04:05:06.000+06:00'"
 
     f = lyr.GetNextFeature()
-    assert f["date_"] == "2023/11/29 13:14:15+00"
+    assert f["date"] == "2023/11/29 13:14:15+00"
     assert f["date_only"] == "2023/11/29"
     assert f["time_only"] == "13:14:15"
     assert f["timestamp_offset"] == "2023/11/29 13:14:15-05"
 
     f = lyr.GetNextFeature()
-    assert f["date_"] == "2023/12/31 00:01:01+00"
+    assert f["date"] == "2023/12/31 00:01:01+00"
     assert f["date_only"] == "2023/12/31"
     assert f["time_only"] == "00:01:01"
     assert f["timestamp_offset"] == "2023/12/31 00:01:01+10"
@@ -4310,13 +4298,13 @@ def test_ogr_openfilegdb_write_new_datetime_types(tmp_vsimem):
     lyr_defn = lyr.GetLayerDefn()
 
     f = lyr.GetNextFeature()
-    assert f["date_"] == "2023/11/29 13:14:15.678+00"
+    assert f["date"] == "2023/11/29 13:14:15.678+00"
     assert f["date_only"] == "2023/11/29"
     assert f["time_only"] == "13:14:15"
     assert f["timestamp_offset"] == "2023/11/29 13:14:15-05"
 
     f = lyr.GetNextFeature()
-    assert f["date_"] == "2023/12/31 00:01:01.001+00"
+    assert f["date"] == "2023/12/31 00:01:01.001+00"
     assert f["date_only"] == "2023/12/31"
     assert f["time_only"] == "00:01:01"
     assert f["timestamp_offset"] == "2023/12/31 00:01:01+10"
@@ -4565,3 +4553,93 @@ def test_ogr_openfilegdb_repair_corrupted_header(tmp_vsimem):
         ds = ogr.Open(filename)
     assert gdal.GetLastErrorMsg() == ""
     assert ds.GetLayerCount() == 1
+
+
+###############################################################################
+# Test writing special value OGRUnsetMarker = -21121 in a int32 field
+
+
+def test_ogr_openfilegdb_write_OGRUnsetMarker(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "out.gdb")
+    with ogr.GetDriverByName("OpenFileGDB").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("i32", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["i32"] = -21121
+        lyr.CreateFeature(f)
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["i32"] == -21121
+
+
+###############################################################################
+# Verify that we can generate an output that is byte-identical to the expected golden file.
+
+
+@pytest.mark.parametrize(
+    "src_directory",
+    [
+        # Generated with:
+        # ogr2ogr autotest/ogr/data/openfilegdb/polygon_golden.gdb '{"type":"Feature","properties":{"foo":"bar"},"geometry":{"type":"Polygon","coordinates":[[[0,0],[0,1],[1,0],[0,0]]]}}' --config OPENFILEGDB_CREATOR GDAL --config OPENFILEGDB_REPRODUCIBLE_UUID YES -f openfilegdb
+        "data/openfilegdb/polygon_golden.gdb",
+    ],
+)
+def test_ogr_openfilegdb_write_check_golden_file(tmp_path, src_directory):
+
+    out_directory = str(tmp_path / "test.gdb")
+    with gdaltest.config_options(
+        {"OPENFILEGDB_CREATOR": "GDAL", "OPENFILEGDB_REPRODUCIBLE_UUID": "YES"}
+    ):
+        gdal.VectorTranslate(out_directory, src_directory, format="OpenFileGDB")
+    for filename in os.listdir(src_directory):
+        src_filename = os.path.join(src_directory, filename)
+        out_filename = os.path.join(out_directory, filename)
+
+        assert os.stat(src_filename).st_size == os.stat(out_filename).st_size, filename
+        assert (
+            open(src_filename, "rb").read() == open(out_filename, "rb").read()
+        ), filename
+
+
+###############################################################################
+# Test 'gdal driver openfilegdb repack'
+
+
+@gdaltest.enable_exceptions()
+def test_ogropenfilegdb_write_gdal_driver_openfilegdb_repack(tmp_path):
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]
+    assert alg.GetName() == "driver"
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["openfilegdb"]
+    assert alg.GetName() == "openfilegdb"
+
+    out_directory = str(tmp_path / "test.gdb")
+    gdal.VectorTranslate(
+        out_directory, "data/openfilegdb/polygon_golden.gdb", format="OpenFileGDB"
+    )
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["openfilegdb"]["repack"]
+    assert alg.GetName() == "repack"
+    alg["dataset"] = "data/poly.shp"
+    with pytest.raises(Exception, match="is not a FileGeoDatabase"):
+        alg.Run()
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["openfilegdb"]["repack"]
+    assert alg.GetName() == "repack"
+    alg["dataset"] = out_directory
+    assert alg.Run()
+
+    last_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        last_pct[0] = pct
+        return True
+
+    alg = gdal.GetGlobalAlgorithmRegistry()["driver"]["openfilegdb"]["repack"]
+    assert alg.GetName() == "repack"
+    alg["dataset"] = out_directory
+    assert alg.Run(my_progress)
+    assert last_pct[0] == 1.0

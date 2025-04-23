@@ -9,23 +9,7 @@
  ******************************************************************************
  * Copyright (c) 2016, Even Rouault, <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_GMLAS_INCLUDED
@@ -468,7 +452,7 @@ class GMLASConfiguration
     bool Load(const char *pszFilename);
     void Finalize();
 
-    static CPLString GetBaseCacheDirectory();
+    static std::string GetDefaultConfFile(bool &bUnlinkAfterUse);
 };
 
 /************************************************************************/
@@ -1161,7 +1145,7 @@ class GMLASSchemaAnalyzer
                        const XSModelGroup *poModelGroup2);
     XSModelGroupDefinition *
     GetGroupDefinition(const XSModelGroup *poModelGroup);
-    void SetFieldFromAttribute(GMLASField &oField, XSAttributeUse *poAttr,
+    bool SetFieldFromAttribute(GMLASField &oField, XSAttributeUse *poAttr,
                                const CPLString &osXPathPrefix,
                                const CPLString &osNamePrefix = CPLString());
     void GetConcreteImplementationTypes(
@@ -1390,6 +1374,13 @@ class OGRGMLASDataSource final : public GDALDataset
     // Pointers are also included in m_apoLayers
     std::vector<OGRGMLASLayer *> m_apoSWEDataArrayLayersRef{};
 
+    // Path to gmlasconf.xml. It is a /vsimem temporary file if
+    // m_bUnlinkConfigFileAfterUse is set.
+    std::string m_osConfigFile{};
+
+    // Whether m_osConfigFile should be removed at closing.
+    bool m_bUnlinkConfigFileAfterUse = false;
+
     void TranslateClasses(OGRGMLASLayer *poParentLayer,
                           const GMLASFeatureClass &oFC);
 
@@ -1409,6 +1400,8 @@ class OGRGMLASDataSource final : public GDALDataset
 
   public:
     OGRGMLASDataSource();
+
+    ~OGRGMLASDataSource();
 
     virtual int GetLayerCount() override;
     virtual OGRLayer *GetLayer(int) override;
@@ -1644,6 +1637,11 @@ class OGRGMLASLayer final : public OGRLayer
     CPLString
     CreateLinkForAttrToOtherLayer(const CPLString &osFieldName,
                                   const CPLString &osTargetLayerXPath);
+
+    const std::map<CPLString, int> &GetMapFieldXPathToOGRFieldIdx() const
+    {
+        return m_oMapFieldXPathToOGRFieldIdx;
+    }
 };
 
 /************************************************************************/
@@ -1792,6 +1790,9 @@ class GMLASReader final : public DefaultHandler
     /** Stack of contexts to build XML tree of GML Geometry */
     std::vector<NodeLastChild> m_apsXMLNodeStack{};
 
+    /** Counter used to prevent XML billion laugh attacks */
+    int m_nEntityCounter = 0;
+
     /** Maximum allowed number of XML nesting level */
     int m_nMaxLevel = 100;
 
@@ -1890,6 +1891,16 @@ class GMLASReader final : public DefaultHandler
     /*    e.g  (layer Bar, field_xpath) -> [foo.1, foo.2] */
     std::map<std::pair<OGRGMLASLayer *, CPLString>, std::vector<CPLString>>
         m_oMapFieldXPathToLinkValue{};
+
+    /* Map layer's XPath to layer (for layers that are not group) */
+    std::map<CPLString, OGRGMLASLayer *> m_oMapXPathToLayer{};
+
+    /* Map OGR field XPath to layer (for layers that are group) */
+    std::map<CPLString, OGRGMLASLayer *> m_oMapFieldXPathToGroupLayer{};
+
+    /* Map layer's XPath to layer (for layers that are repeated sequences) */
+    std::map<CPLString, std::vector<OGRGMLASLayer *>>
+        m_oMapXPathToLayerRepeadedSequence{};
 
     void SetField(OGRFeature *poFeature, OGRGMLASLayer *poLayer, int nAttrIdx,
                   const CPLString &osAttrValue);
@@ -2047,6 +2058,8 @@ class GMLASReader final : public DefaultHandler
 
     virtual void characters(const XMLCh *const chars,
                             const XMLSize_t length) override;
+
+    void startEntity(const XMLCh *const name) override;
 
     bool RunFirstPass(GDALProgressFunc pfnProgress, void *pProgressData,
                       bool bRemoveUnusedLayers, bool bRemoveUnusedFields,

@@ -8,23 +8,7 @@
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_string.h"
@@ -282,14 +266,14 @@ CPLErr GenBinDataset::GetGeoTransform(double *padfTransform)
 char **GenBinDataset::GetFileList()
 
 {
-    const CPLString osPath = CPLGetPath(GetDescription());
-    const CPLString osName = CPLGetBasename(GetDescription());
+    const CPLString osPath = CPLGetPathSafe(GetDescription());
+    const CPLString osName = CPLGetBasenameSafe(GetDescription());
 
     // Main data file, etc.
     char **papszFileList = GDALPamDataset::GetFileList();
 
     // Header file.
-    const CPLString osFilename = CPLFormCIFilename(osPath, osName, "hdr");
+    const CPLString osFilename = CPLFormCIFilenameSafe(osPath, osName, "hdr");
     papszFileList = CSLAddString(papszFileList, osFilename);
 
     return papszFileList;
@@ -417,24 +401,25 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Now we need to tear apart the filename to form a .HDR           */
     /*      filename.                                                       */
     /* -------------------------------------------------------------------- */
-    const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
-    const CPLString osName = CPLGetBasename(poOpenInfo->pszFilename);
+    const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
+    const CPLString osName = CPLGetBasenameSafe(poOpenInfo->pszFilename);
     CPLString osHDRFilename;
 
     char **papszSiblingFiles = poOpenInfo->GetSiblingFiles();
     if (papszSiblingFiles)
     {
-        const int iFile = CSLFindString(
-            papszSiblingFiles, CPLFormFilename(nullptr, osName, "hdr"));
+        const int iFile =
+            CSLFindString(papszSiblingFiles,
+                          CPLFormFilenameSafe(nullptr, osName, "hdr").c_str());
         if (iFile < 0)  // return if there is no corresponding .hdr file
             return nullptr;
 
         osHDRFilename =
-            CPLFormFilename(osPath, papszSiblingFiles[iFile], nullptr);
+            CPLFormFilenameSafe(osPath, papszSiblingFiles[iFile], nullptr);
     }
     else
     {
-        osHDRFilename = CPLFormCIFilename(osPath, osName, "hdr");
+        osHDRFilename = CPLFormCIFilenameSafe(osPath, osName, "hdr");
     }
 
     const bool bSelectedHDR = EQUAL(osHDRFilename, poOpenInfo->pszFilename);

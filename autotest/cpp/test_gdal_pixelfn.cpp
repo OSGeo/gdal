@@ -7,23 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2022, Momtchil Momtchev <momtchil@momtchev.com>
 /*
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_unit_test.h"
@@ -170,11 +154,25 @@ struct test_gdal_pixelfn : public ::testing::Test
         src_ += SEP;
         src_ += "pixelfn.vrt";
     }
+
+    void SetUp() override
+    {
+        if (GDALGetMetadataItem(GDALGetDriverByName("VRT"),
+                                GDAL_DMD_OPENOPTIONLIST, nullptr) == nullptr)
+        {
+            GTEST_SKIP() << "VRT driver Open() missing";
+        }
+    }
 };
 
 // Test constant parameters in a custom pixel function
 TEST_F(test_gdal_pixelfn, custom_pixel_fn_constant_parameters)
 {
+    if (!GDALGetDriverByName("GTiff"))
+    {
+        GTEST_SKIP() << "GTiff driver missing";
+    }
+
     GDALAddDerivedBandPixelFuncWithArgs("custom", CustomPixelFuncWithMetadata,
                                         pszFuncMetadata);
     GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
@@ -195,6 +193,11 @@ TEST_F(test_gdal_pixelfn, custom_pixel_fn_constant_parameters)
 // Test registering of a custom pixel function without metadata
 TEST_F(test_gdal_pixelfn, custom_pixel_fn_without_metadata)
 {
+    if (!GDALGetDriverByName("GTiff"))
+    {
+        GTEST_SKIP() << "GTiff driver missing";
+    }
+
     GDALAddDerivedBandPixelFuncWithArgs("custom2", CustomPixelFunc, nullptr);
     GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
     ASSERT_TRUE(nullptr != ds);
@@ -218,6 +221,11 @@ TEST_F(test_gdal_pixelfn, custom_pixel_fn_without_metadata)
 // Test the registering of a custom pixel function without args
 TEST_F(test_gdal_pixelfn, custom_pixel_fn_without_args)
 {
+    if (!GDALGetDriverByName("GTiff"))
+    {
+        GTEST_SKIP() << "GTiff driver missing";
+    }
+
     GDALAddDerivedBandPixelFunc("custom3", CustomPixelFuncNoArgs);
     GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
     ASSERT_TRUE(nullptr != ds);

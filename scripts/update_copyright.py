@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
-#
 # Project:  GDAL/OGR
 # Purpose:  Update copyright info in headers
 # Author:   Even Rouault <even dot rouault at spatialys.com>

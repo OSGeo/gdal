@@ -35,36 +35,7 @@ Driver capabilities
 Build Instructions
 ------------------
 
-CMake builds
-++++++++++++
-
 See the ``GDAL_USE_PUBLICDECOMPWT`` option of :ref:`building_from_source`.
-
-Other build systems
-+++++++++++++++++++
-
-Clone the EUMETSAT library for wavelet decompression into ``frmts/msg``.
-
-If you are building with Visual Studio 6.0, extract the .vc makefiles
-for the PublicDecompWT from the file `PublicDecompWTMakefiles.zip`
-stored in that directory.
-
-If you build using the GNUMakefile, use *--with-msg* option to enable
-MSG driver:
-
-::
-
-   ./configure --with-msg
-
-If you find that some adjustments are needed in the makefile and/or the msg
-source files, please "commit" them. The EUMETSAT library promises to be
-"platform independent", but as we are working with Microsoft Windows and
-Visual Studio 6.0, we did not have the facilities to check if the rest
-of the msg driver is. Furthermore, apply steps 4 to 7 from the :ref:`raster_driver_tut`, section "Adding
-Driver to GDAL Tree".
-
-MSG Wiki page is available at http://trac.osgeo.org/gdal/wiki/MSG. It's
-dedicated to document building and usage hints
 
 Specification of Source Dataset
 -------------------------------

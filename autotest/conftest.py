@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import absolute_import, division, print_function
-
 import os
 import sys
 
@@ -239,10 +237,12 @@ def pytest_collection_modifyitems(config, items):
             actual_version = [0, 0, 0]
             for build_info_item in gdal.VersionInfo("BUILD_INFO").strip().split("\n"):
                 if build_info_item.startswith("CURL_VERSION="):
-                    actual_version = [
-                        int(x)
-                        for x in build_info_item[len("CURL_VERSION=") :].split(".")
-                    ]
+                    curl_version = build_info_item[len("CURL_VERSION=") :]
+                    # Remove potential -rcX postfix.
+                    dashrc_pos = curl_version.find("-rc")
+                    if dashrc_pos > 0:
+                        curl_version = curl_version[0:dashrc_pos]
+                    actual_version = [int(x) for x in curl_version.split(".")]
 
             if actual_version < required_version:
                 item.add_marker(

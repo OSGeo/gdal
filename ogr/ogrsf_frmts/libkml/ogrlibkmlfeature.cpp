@@ -8,23 +8,7 @@
  * Copyright (c) 2010, Brian Case
  * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 #include "libkml_headers.h"
@@ -225,9 +209,7 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
                     int bUseSimpleField)
 {
     FeaturePtr poKmlFeature = nullptr;
-
-    struct fieldconfig oFC;
-    get_fieldconfig(&oFC);
+    const auto &oFC = poOgrLayer->GetFieldConfig();
 
     /***** geometry *****/
     OGRGeometry *poOgrGeom = poOgrFeat->GetGeometryRef();
@@ -456,6 +438,8 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
             }
 
             ElementPtr poKmlElement = geom2kml(poOgrGeom, -1, poKmlFactory);
+            if (!poKmlElement)
+                return nullptr;
 
             poKmlPhotoOverlay->set_point(AsPoint(std::move(poKmlElement)));
         }
@@ -678,7 +662,7 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
         link->set_href(pszURL);
 
         // Collada 3D file?
-        if (EQUAL(CPLGetExtension(pszURL), "dae") &&
+        if (EQUAL(CPLGetExtensionSafe(pszURL).c_str(), "dae") &&
             CPLTestBool(CPLGetConfigOption("LIBKML_ADD_RESOURCE_MAP", "TRUE")))
         {
             VSILFILE *fp = nullptr;
@@ -713,12 +697,12 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
                         {
                             CPLString osImage(pszInitFrom);
                             osImage.resize(pszInitFromEnd - pszInitFrom);
-                            const char *const pszExtension =
-                                CPLGetExtension(osImage);
-                            if (EQUAL(pszExtension, "jpg") ||
-                                EQUAL(pszExtension, "jpeg") ||
-                                EQUAL(pszExtension, "png") ||
-                                EQUAL(pszExtension, "gif"))
+                            const std::string osExtension =
+                                CPLGetExtensionSafe(osImage);
+                            if (EQUAL(osExtension.c_str(), "jpg") ||
+                                EQUAL(osExtension.c_str(), "jpeg") ||
+                                EQUAL(osExtension.c_str(), "png") ||
+                                EQUAL(osExtension.c_str(), "gif"))
                             {
                                 if (!resourceMap)
                                     resourceMap =
@@ -729,12 +713,14 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
                                 {
                                     if (STARTS_WITH(pszURL, "http"))
                                         alias->set_targethref(CPLSPrintf(
-                                            "%s/%s", CPLGetPath(pszURL),
+                                            "%s/%s",
+                                            CPLGetPathSafe(pszURL).c_str(),
                                             osImage.c_str()));
                                     else
                                         alias->set_targethref(
-                                            CPLFormFilename(CPLGetPath(pszURL),
-                                                            osImage, nullptr));
+                                            CPLFormFilenameSafe(
+                                                CPLGetPathSafe(pszURL).c_str(),
+                                                osImage, nullptr));
                                 }
                                 else
                                     alias->set_targethref(osImage);
@@ -809,9 +795,19 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
         const PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
         poKmlFeature = poKmlPlacemark;
 
-        ElementPtr poKmlElement = geom2kml(poOgrGeom, -1, poKmlFactory);
+        if (poOgrGeom)
+        {
+            ElementPtr poKmlElement = geom2kml(poOgrGeom, -1, poKmlFactory);
+            if (!poKmlElement)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot translate feature: %s",
+                         poOgrFeat->DumpReadableAsString().c_str());
+                return nullptr;
+            }
 
-        poKmlPlacemark->set_geometry(AsGeometry(std::move(poKmlElement)));
+            poKmlPlacemark->set_geometry(AsGeometry(std::move(poKmlElement)));
+        }
     }
 
     if (!camera)
@@ -826,13 +822,13 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
 
     /***** fields *****/
     field2kml(poOgrFeat, poOgrLayer, poKmlFactory, poKmlFeature,
-              bUseSimpleField);
+              bUseSimpleField, oFC);
 
     return poKmlFeature;
 }
 
 OGRFeature *kml2feat(PlacemarkPtr poKmlPlacemark, OGRLIBKMLDataSource *poOgrDS,
-                     OGRLayer *poOgrLayer, OGRFeatureDefn *poOgrFeatDefn,
+                     OGRLIBKMLLayer *poOgrLayer, OGRFeatureDefn *poOgrFeatDefn,
                      OGRSpatialReference *poOgrSRS)
 {
     OGRFeature *poOgrFeat = new OGRFeature(poOgrFeatDefn);
@@ -865,14 +861,15 @@ OGRFeature *kml2feat(PlacemarkPtr poKmlPlacemark, OGRLIBKMLDataSource *poOgrDS,
     }
 
     /***** fields *****/
-    kml2field(poOgrFeat, AsFeature(poKmlPlacemark));
+    kml2field(poOgrFeat, AsFeature(poKmlPlacemark),
+              poOgrLayer->GetFieldConfig());
 
     return poOgrFeat;
 }
 
 OGRFeature *kmlgroundoverlay2feat(GroundOverlayPtr poKmlOverlay,
                                   OGRLIBKMLDataSource * /* poOgrDS */,
-                                  OGRLayer * /* poOgrLayer */,
+                                  OGRLIBKMLLayer *poOgrLayer,
                                   OGRFeatureDefn *poOgrFeatDefn,
                                   OGRSpatialReference *poOgrSRS)
 {
@@ -893,7 +890,7 @@ OGRFeature *kmlgroundoverlay2feat(GroundOverlayPtr poKmlOverlay,
     }
 
     /***** fields *****/
-    kml2field(poOgrFeat, AsFeature(poKmlOverlay));
+    kml2field(poOgrFeat, AsFeature(poKmlOverlay), poOgrLayer->GetFieldConfig());
 
     return poOgrFeat;
 }

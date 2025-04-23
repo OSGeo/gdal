@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -319,31 +303,26 @@ int VSIArchiveFilesystemHandler::FindFileInArchive(
 /*                           CompactFilename()                          */
 /************************************************************************/
 
-static CPLString CompactFilename(const char *pszArchiveInFileNameIn)
+static std::string CompactFilename(const char *pszArchiveInFileNameIn)
 {
-    char *pszArchiveInFileName = CPLStrdup(pszArchiveInFileNameIn);
+    std::string osRet(pszArchiveInFileNameIn);
 
     // Replace a/../b by b and foo/a/../b by foo/b.
     while (true)
     {
-        char *pszPrevDir = strstr(pszArchiveInFileName, "/../");
-        if (pszPrevDir == nullptr || pszPrevDir == pszArchiveInFileName)
+        size_t nSlashDotDot = osRet.find("/../");
+        if (nSlashDotDot == std::string::npos || nSlashDotDot == 0)
             break;
-
-        char *pszPrevSlash = pszPrevDir - 1;
-        while (pszPrevSlash != pszArchiveInFileName && *pszPrevSlash != '/')
-            pszPrevSlash--;
-        if (pszPrevSlash == pszArchiveInFileName)
-            memmove(pszArchiveInFileName, pszPrevDir + 4,
-                    strlen(pszPrevDir + 4) + 1);
+        size_t nPos = nSlashDotDot - 1;
+        while (nPos > 0 && osRet[nPos] != '/')
+            --nPos;
+        if (nPos == 0)
+            osRet = osRet.substr(nSlashDotDot + strlen("/../"));
         else
-            memmove(pszPrevSlash + 1, pszPrevDir + 4,
-                    strlen(pszPrevDir + 4) + 1);
+            osRet = osRet.substr(0, nPos + 1) +
+                    osRet.substr(nSlashDotDot + strlen("/../"));
     }
-
-    CPLString osFileInArchive = pszArchiveInFileName;
-    CPLFree(pszArchiveInFileName);
-    return osFileInArchive;
+    return osRet;
 }
 
 /************************************************************************/
@@ -432,7 +411,7 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
             {
                 const char lastC = osFileInArchive.back();
                 if (IsEitherSlash(lastC))
-                    osFileInArchive.resize(osFileInArchive.size() - 1);
+                    osFileInArchive.pop_back();
             }
 
             return archiveFilename;

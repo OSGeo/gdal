@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' class='svglite' width='504.00pt' height='360.00pt' viewBox='0 0 504.00 360.00'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: none;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA='>
+    <rect x='0.00' y='0.00' width='504.00' height='360.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+</g>
+<defs>
+  <clipPath id='cpNjAuNjB8NDk4LjUyfDIzLjQ0fDMyNy45Nw=='>
+    <rect x='60.60' y='23.44' width='437.92' height='304.53' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpNjAuNjB8NDk4LjUyfDIzLjQ0fDMyNy45Nw==)'>
+<polyline points='146.86,327.97 146.86,23.44 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='279.56,327.97 279.56,23.44 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='412.26,327.97 412.26,23.44 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='60.60,292.83 498.52,292.83 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='60.60,234.27 498.52,234.27 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='60.60,175.70 498.52,175.70 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='60.60,117.14 498.52,117.14 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='60.60,58.58 498.52,58.58 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='80.50,327.97 80.50,23.44 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='213.21,327.97 213.21,23.44 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='345.91,327.97 345.91,23.44 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='478.62,327.97 478.62,23.44 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<rect x='80.50' y='32.22' width='2.65' height='52.71' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='80.50' y='266.48' width='398.11' height='52.71' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='80.50' y='149.35' width='106.16' height='52.71' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='80.50' y='90.79' width='3.98' height='52.71' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='80.50' y='207.91' width='283.99' height='52.71' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+</g>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+<text x='55.67' y='296.04' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>Linux</text>
+<text x='55.67' y='237.47' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>Windows</text>
+<text x='55.67' y='178.91' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>OSX</text>
+<text x='55.67' y='120.35' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>Other</text>
+<text x='55.67' y='61.78' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>FreeBSD</text>
+<polyline points='57.86,292.83 60.60,292.83 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='57.86,234.27 60.60,234.27 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='57.86,175.70 60.60,175.70 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='57.86,117.14 60.60,117.14 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='57.86,58.58 60.60,58.58 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='80.50,330.71 80.50,327.97 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='213.21,330.71 213.21,327.97 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='345.91,330.71 345.91,327.97 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='478.62,330.71 478.62,327.97 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<text x='80.50' y='339.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>0</text>
+<text x='213.21' y='339.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>100</text>
+<text x='345.91' y='339.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>200</text>
+<text x='478.62' y='339.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>300</text>
+<text x='279.56' y='352.10' text-anchor='middle' style='font-size: 11.00px; font-family: Arial;'>Number of Respondents</text>
+<text transform='translate(13.50,175.70) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: Arial;'>Operating System</text>
+<text x='60.60' y='15.10' style='font-size: 13.20px; font-family: Arial;'>The operating system I execute GDAL on most is...</text>
+</g>
+</svg>

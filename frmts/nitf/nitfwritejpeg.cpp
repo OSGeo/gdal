@@ -11,23 +11,7 @@
  * Portions Copyright (c) Her majesty the Queen in right of Canada as
  * represented by the Minister of National Defence, 2006.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifdef JPEG_SUPPORTED
@@ -218,7 +202,7 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
 
-    const double nTotalPixels = static_cast<double>(nXSize * nYSize);
+    const double nTotalPixels = static_cast<double>(nXSize) * nYSize;
 
     int nBlockXSizeToRead = nBlockXSize;
     if (nBlockXSize * nBlockXOff + nBlockXSize > nXSize)
@@ -248,22 +232,38 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
                 static_cast<GSpacing>(nBands) * nWorkDTSize * nBlockXSize,
                 nWorkDTSize, nullptr);
 
-#if !defined(JPEG_LIB_MK1_OR_12BIT)
             /* Repeat the last pixel till the end of the line */
             /* to minimize discontinuity */
             if (nBlockXSizeToRead < nBlockXSize)
             {
                 for (int iBand = 0; iBand < nBands; iBand++)
                 {
-                    GByte bVal =
-                        pabyScanline[nBands * (nBlockXSizeToRead - 1) + iBand];
-                    for (int iX = nBlockXSizeToRead; iX < nBlockXSize; iX++)
+#if defined(JPEG_LIB_MK1_OR_12BIT)
+                    if (eWorkDT == GDT_UInt16)
                     {
-                        pabyScanline[nBands * iX + iBand] = bVal;
+                        GUInt16 *panScanline =
+                            reinterpret_cast<GUInt16 *>(pabyScanline);
+                        const GUInt16 nVal =
+                            panScanline[nBands * (nBlockXSizeToRead - 1) +
+                                        iBand];
+                        for (int iX = nBlockXSizeToRead; iX < nBlockXSize; iX++)
+                        {
+                            panScanline[nBands * iX + iBand] = nVal;
+                        }
+                    }
+                    else
+#endif
+                    {
+                        GByte bVal =
+                            pabyScanline[nBands * (nBlockXSizeToRead - 1) +
+                                         iBand];
+                        for (int iX = nBlockXSizeToRead; iX < nBlockXSize; iX++)
+                        {
+                            pabyScanline[nBands * iX + iBand] = bVal;
+                        }
                     }
                 }
             }
-#endif
         }
 
 #if defined(JPEG_LIB_MK1_OR_12BIT)
@@ -272,7 +272,7 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
         {
             GUInt16 *panScanline = reinterpret_cast<GUInt16 *>(pabyScanline);
 
-            for (int iPixel = 0; iPixel < nXSize * nBands; iPixel++)
+            for (int iPixel = 0; iPixel < nBlockXSize * nBands; iPixel++)
             {
                 if (panScanline[iPixel] > 4095)
                 {

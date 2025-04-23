@@ -11,23 +11,7 @@
  * Copyright (c) 2014, Sebastian Walter <sebastian dot walter at fu-berlin dot
  *de>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_string.h"
@@ -125,12 +109,12 @@ bool VICARKeywordHandler::Ingest(VSILFILE *fp, const GByte *pabyHeader)
     /*      There is a EOL!   e.G.  h4231_0000.nd4.06                       */
     /* -------------------------------------------------------------------- */
 
-    GUInt64 nPixelOffset;
-    GUInt64 nLineOffset;
-    GUInt64 nBandOffset;
-    GUInt64 nImageOffsetWithoutNBB;
-    GUInt64 nNBB;
-    GUInt64 nImageSize;
+    uint64_t nPixelOffset;
+    uint64_t nLineOffset;
+    uint64_t nBandOffset;
+    uint64_t nImageOffsetWithoutNBB;
+    uint64_t nNBB;
+    uint64_t nImageSize;
     if (!VICARDataset::GetSpacings(*this, nPixelOffset, nLineOffset,
                                    nBandOffset, nImageOffsetWithoutNBB, nNBB,
                                    nImageSize))
@@ -144,7 +128,7 @@ bool VICARKeywordHandler::Ingest(VSILFILE *fp, const GByte *pabyHeader)
     const vsi_l_offset nEOCI = (nEOCI2 << 32) | nEOCI1;
 
     if (nImageOffsetWithoutNBB >
-        std::numeric_limits<GUInt64>::max() - nImageSize)
+        std::numeric_limits<uint64_t>::max() - nImageSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid label values");
         return false;

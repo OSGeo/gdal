@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2018-2020, Björn Harrtell <bjorn at wololo dot org>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_flatgeobuf.h"
@@ -107,10 +91,12 @@ static CPLErr OGRFlatGoBufDriverDelete(const char *pszDataSource)
              papszDirEntries != nullptr && papszDirEntries[iFile] != nullptr;
              iFile++)
         {
-            if (EQUAL(CPLGetExtension(papszDirEntries[iFile]), "fgb"))
+            if (EQUAL(CPLGetExtensionSafe(papszDirEntries[iFile]).c_str(),
+                      "fgb"))
             {
-                VSIUnlink(CPLFormFilename(pszDataSource, papszDirEntries[iFile],
-                                          nullptr));
+                VSIUnlink(CPLFormFilenameSafe(pszDataSource,
+                                              papszDirEntries[iFile], nullptr)
+                              .c_str());
             }
         }
 
@@ -261,7 +247,7 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             if (strcmp(aosFiles[i], ".") == 0 || strcmp(aosFiles[i], "..") == 0)
                 continue;
-            if (EQUAL(CPLGetExtension(aosFiles[i]), "fgb"))
+            if (EQUAL(CPLGetExtensionSafe(aosFiles[i]).c_str(), "fgb"))
                 nCountFGB++;
             else
                 nCountNonFGB++;
@@ -274,10 +260,10 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         for (int i = 0; i < aosFiles.size(); i++)
         {
-            if (EQUAL(CPLGetExtension(aosFiles[i]), "fgb"))
+            if (EQUAL(CPLGetExtensionSafe(aosFiles[i]).c_str(), "fgb"))
             {
-                CPLString osFilename(CPLFormFilename(poOpenInfo->pszFilename,
-                                                     aosFiles[i], nullptr));
+                const CPLString osFilename(CPLFormFilenameSafe(
+                    poOpenInfo->pszFilename, aosFiles[i], nullptr));
                 VSILFILE *fp = VSIFOpenL(osFilename, "rb");
                 if (fp)
                 {
@@ -351,7 +337,7 @@ GDALDataset *OGRFlatGeobufDataset::Create(const char *pszName, int /* nBands */,
     }
 
     bool bIsDir = false;
-    if (!EQUAL(CPLGetExtension(pszName), "fgb"))
+    if (!EQUAL(CPLGetExtensionSafe(pszName).c_str(), "fgb"))
     {
         if (VSIMkdir(pszName, 0755) != 0)
         {
@@ -395,7 +381,7 @@ int OGRFlatGeobufDataset::TestCapability(const char *pszCap)
 
 static CPLString LaunderLayerName(const char *pszLayerName)
 {
-    std::string osRet(CPLLaunderForFilename(pszLayerName, nullptr));
+    std::string osRet(CPLLaunderForFilenameSafe(pszLayerName, nullptr));
     if (osRet != pszLayerName)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -440,7 +426,7 @@ OGRFlatGeobufDataset::ICreateLayer(const char *pszLayerName,
     CPLString osFilename;
 
     if (m_bIsDir)
-        osFilename = CPLFormFilename(
+        osFilename = CPLFormFilenameSafe(
             GetDescription(), LaunderLayerName(pszLayerName).c_str(), "fgb");
     else
         osFilename = GetDescription();

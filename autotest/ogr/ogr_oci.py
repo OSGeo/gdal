@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Oracle OCI driver functionality.
@@ -54,7 +53,10 @@ def setup_tests():
     gdaltest.oci_ds.ExecuteSQL("DELLAYER:xpoly")
     gdaltest.oci_ds.ExecuteSQL("DELLAYER:testsrs")
     gdaltest.oci_ds.ExecuteSQL("DELLAYER:testsrs2")
-    gdaltest.oci_ds.ExecuteSQL("drop table geom_test")
+    try:
+        gdaltest.oci_ds.ExecuteSQL("drop table geom_test")
+    except Exception:
+        pass
     gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_POINT")
     gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_POINT3")
     gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_LINESTRING")
@@ -67,6 +69,7 @@ def setup_tests():
     gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_GEOMETRYCOLLECTION")
     gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_NONE")
     gdaltest.oci_ds.ExecuteSQL("DELLAYER:testdate")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:testdate_with_tz")
     gdaltest.oci_ds.ExecuteSQL("DELLAYER:ogr_oci_20")
     gdaltest.oci_ds.ExecuteSQL("DELLAYER:ogr_oci_20bis")
     gdaltest.oci_ds.ExecuteSQL("DELLAYER:ogr_oci_21")
@@ -721,7 +724,7 @@ def test_ogr_oci_18():
 # Test date / datetime
 
 
-def test_ogr_oci_19():
+def test_ogr_oci_datetime_no_tz():
 
     lyr = gdaltest.oci_ds.CreateLayer("testdate", geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn("MYDATE", ogr.OFTDate))
@@ -730,16 +733,68 @@ def test_ogr_oci_19():
     feat.SetField("MYDATE", "2015/02/03")
     feat.SetField("MYDATETIME", "2015/02/03 11:33:44")
     lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("MYDATETIME", "2015/02/03 11:33:44.12345")
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("MYDATETIME", "2015/02/03 11:33:44.12345+0530")  # Timezone lost
+    lyr.CreateFeature(feat)
     lyr.SyncToDisk()
 
-    sql_lyr = gdaltest.oci_ds.ExecuteSQL("SELECT MYDATE, MYDATETIME FROM testdate")
-    assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTDate
-    assert sql_lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTDateTime
-    f = sql_lyr.GetNextFeature()
-    if f.GetField(0) != "2015/02/03" or f.GetField(1) != "2015/02/03 11:33:44":
-        f.DumpReadable()
-        pytest.fail()
-    gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
+    with gdaltest.oci_ds.ExecuteSQL(
+        "SELECT MYDATE, MYDATETIME FROM testdate"
+    ) as sql_lyr:
+        assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTDate
+        assert sql_lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTDateTime
+        assert sql_lyr.GetLayerDefn().GetFieldDefn(1).GetTZFlag() == ogr.TZFLAG_UNKNOWN
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == "2015/02/03"
+        assert f.GetField(1) == "2015/02/03 11:33:44"
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(1) == "2015/02/03 11:33:44.123"
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(1) == "2015/02/03 11:33:44.123"  # Timezone lost
+
+
+###############################################################################
+# Test date / datetime with time zone
+
+
+def test_ogr_oci_datetime_with_tz():
+
+    lyr = gdaltest.oci_ds.CreateLayer(
+        "testdate_with_tz",
+        geom_type=ogr.wkbNone,
+        options=["TIMESTAMP_WITH_TIME_ZONE=YES"],
+    )
+    lyr.CreateField(ogr.FieldDefn("MYDATETIME", ogr.OFTDateTime))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("MYDATETIME", "2015/02/03 11:33:44.567+0530")
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("MYDATETIME", "2015/02/03 11:33:44-0530")
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("MYDATETIME", "2015/02/03 11:33:44+00")
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("MYDATETIME", "2015/02/03 11:33:44")  # UTC assumed...
+    lyr.CreateFeature(feat)
+    lyr.SyncToDisk()
+
+    with gdaltest.oci_ds.ExecuteSQL(
+        "SELECT MYDATETIME FROM testdate_with_tz"
+    ) as sql_lyr:
+        assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTDateTime
+        assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetTZFlag() == ogr.TZFLAG_MIXED_TZ
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == "2015/02/03 11:33:44.567+0530"
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == "2015/02/03 11:33:44-0530"
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == "2015/02/03 11:33:44+00"
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == "2015/02/03 11:33:44+00"  # UTC assumed...
 
 
 ###############################################################################

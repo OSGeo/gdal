@@ -18,16 +18,22 @@ Source Code
 Current Release
 ...............
 
-* **2024-06-26** `gdal-3.9.1.tar.gz`_ `3.9.1 Release Notes`_ (`3.9.1 md5`_)
+* **2025-04-07** `gdal-3.10.3.tar.gz`_ `3.10.3 "Gulf of Mexico" Release Notes`_ (`3.10.3 md5`_)
 
-.. _`3.9.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.9.1/NEWS.md
-.. _`gdal-3.9.1.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.9.1/gdal-3.9.1.tar.gz
-.. _`3.9.1 md5`: https://github.com/OSGeo/gdal/releases/download/v3.9.1/gdal-3.9.1.tar.gz.md5
+.. _`3.10.3 "Gulf of Mexico" Release Notes`: https://github.com/OSGeo/gdal/blob/v3.10.3/NEWS.md
+.. _`gdal-3.10.3.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.10.3/gdal-3.10.3.tar.gz
+.. _`3.10.3 md5`: https://github.com/OSGeo/gdal/releases/download/v3.10.3/gdal-3.10.3.tar.gz.md5
 
 Past Releases
 .............
 
-Links to :ref:`download_past` are also available.
+.. only:: html
+
+    Links to :ref:`download_past` are also available.
+
+.. only:: not html
+
+    Links to `past releases <https://gdal.org/en/latest/download_past.html>`__ are also available.
 
 .. _source:
 
@@ -47,6 +53,13 @@ command
 
 Additional information is available about :ref:`build_requirements` and :ref:`building_from_source`.
 
+Maintenance policy
+..................
+
+The GDAL upstream team only maintains the branch on which the latest release has
+been done, with bugfixes releases issued roughly every 2 months.
+So, for example, during the development phase of GDAL 3.10.0, GDAL 3.9.x bugfixes
+releases are done based on the release/3.9 branch, but not older branches (GDAL 3.8.x or older).
 
 .. _binaries:
 
@@ -64,7 +77,7 @@ Windows
 ................................................................................
 
 Windows builds are available via `Conda Forge`_ (64-bit only). See the
-:ref:`conda` section for more detailed information. GDAL is also distributed
+:ref:`conda` or :ref:`pixi` section for more detailed information. GDAL is also distributed
 by `GISInternals`_ and `OSGeo4W`_ and through the `NuGet`_ and :ref:`vcpkg` package managers.
 
 .. _`Conda Forge`: https://anaconda.org/conda-forge/gdal
@@ -75,7 +88,7 @@ by `GISInternals`_ and `OSGeo4W`_ and through the `NuGet`_ and :ref:`vcpkg` pack
 Linux
 ................................................................................
 
-Packages are available for `Debian`_, `Alpine_`, `Fedora_`, and other distributions.
+Packages are available for `Debian`_, `Alpine`_, `Fedora`_, and other distributions.
 
 .. _`Debian`: https://tracker.debian.org/pkg/gdal
 .. _`Alpine`: https://pkgs.alpinelinux.org/package/edge/community/x86/gdal
@@ -88,6 +101,25 @@ Mac OS
 GDAL packages are available on `Homebrew`_.
 
 .. _`Homebrew`: https://formulae.brew.sh/formula/gdal
+
+
+Android
+.......
+
+GDAL can be installed using :ref:`vcpkg`. You may also refer to `vcpkg Android support <https://learn.microsoft.com/en-us/vcpkg/users/platforms/android>`__ for general instructions.
+
+For example to install default configuration for the ``arm64-android`` target:
+
+.. code-block:: shell
+
+    git clone https://github.com/Microsoft/vcpkg.git
+    cd vcpkg
+    ./bootstrap-vcpkg.sh  # ./bootstrap-vcpkg.bat for Windows
+    ./vcpkg integrate install
+    export ANDROID_NDK_HOME=/path/to/android_ndk_home  # to adapt
+    ./vcpkg search gdal --featurepackages  # list optional features
+    ./vcpkg install gdal:arm64-android  # install with default configuration
+    ./vcpkg install gdal[poppler,netcdf]:arm64-android  # install with Poppler and netdf support
 
 
 Cross-Platform Package Managers
@@ -113,10 +145,40 @@ available through `conda-forge <https://anaconda.org/conda-forge/gdal>`__.
 
     conda install [-c channel] [package...]
 
+GDAL is available as several subpackages:
+
+- ``gdal``: Python bindings and Python utilities (depends on libgdal-core)
+- ``libgdal``: meta-package gathering all below libgdal-* packages (except libgdal-arrow-parquet)
+- ``libgdal-arrow-parquet``: :ref:`vector.arrow` and :ref:`vector.parquet` drivers as a plugin (depends on libgdal-core)
+- ``libgdal-avif``: :ref:`raster.avif` driver as a plugin (depends on libgdal-core, available since GDAL 3.10.0)
+- ``libgdal-core``: core library and C++ utilities, with a number of builtin drivers (available since GDAL 3.9.1)
+- ``libgdal-fits``: :ref:`raster.fits` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-grib``: :ref:`raster.grib` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-hdf4``: :ref:`raster.hdf4` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-hdf5``: :ref:`raster.hdf5` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-heif``: :ref:`raster.heif` driver as a plugin (depends on libgdal-core, available since GDAL 3.10.0)
+- ``libgdal-jp2openjpeg``: :ref:`raster.jp2openjpeg` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-kea``: :ref:`raster.kea` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-netcdf``: :ref:`raster.netcdf` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-pdf``: :ref:`raster.pdf` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-postgisraster``: :ref:`raster.postgisraster` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-pg``: :ref:`vector.pg` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-tiledb``: :ref:`raster.tiledb` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-xls``: :ref:`vector.xls` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+
+
+To install the ``gdal`` package (Python bindings and utilities), and ``libgdal-core``:
 
 ::
 
     conda install -c conda-forge gdal
+
+
+To install the ``libgdal`` meta-package with all available drivers, but libgdal-arrow-parquet:
+
+::
+
+    conda install -c conda-forge libgdal
 
 
 To install the Arrow and Parquet drivers as plugins:
@@ -130,25 +192,41 @@ GDAL master Conda builds
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 GDAL master builds are available in the `gdal-master <https://anaconda.org/gdal-master/gdal>`__
-channel. They are based on dependencies from the ``conda-forge`` channel.
-
-First, install mamba into the ``base`` environment, create a dedicated ``gdal_master_env``
-environment, and then activate the dedicated ``gdal_master_env`` environment.
+channel. They are based on dependencies from the ``conda-forge`` channel. The latest master
+build can be installed with the following command:
 
 ::
 
-    conda update -n base -c conda-forge conda
-    conda install -n base --override-channels -c conda-forge mamba 'python_abi=*=*cp*'
-    conda create --name gdal_master_env
-    conda activate gdal_master_env
+    conda install -c gdal-master -c conda-forge gdal-master::gdal
+        
+As with released versions of GDAL, additional drivers can be installed using `gdal-master::libgdal-{driver_name}`.
 
-Then install GDAL from the ``gdal-master`` channel:
+
+.. _pixi:
+
+pixi
+^^^^
+
+`Pixi <https://pixi.sh/latest/>`__  is a package management tool for developers. It allows the developer
+to install libraries and applications in a reproducible way. Packages for GDAL are
+available through the `conda-forge <https://anaconda.org/conda-forge/gdal>`__ channel.
+
+If you want to be able to use GDAL as part of a project:
 
 ::
 
-    mamba install -c gdal-master gdal
-    mamba install -c gdal-master libgdal-arrow-parquet # if you need the Arrow and Parquet drivers
+    pixi init name-of-project
+    cd name-of-project
+    pixi add gdal libgdal-core
+    pixi add libgdal-arrow-parquet # if you need the Arrow and Parquet drivers
+    pixi shell
 
+Pixi supports using tools like GDAL and OGR globally, similar to conda's base environment, without having to use an activate command:
+
+::
+
+    pixi global install gdal libgdal-core
+    pixi global install libgdal-arrow-parquet # if you need the Arrow and Parquet drivers
 
 .. _vcpkg:
 
@@ -158,13 +236,15 @@ vcpkg
 The GDAL port in the `vcpkg <https://github.com/Microsoft/vcpkg>`__ dependency manager is kept up to date by Microsoft team members and community contributors.
 You can download and install GDAL using the vcpkg as follows:
 
-::
+.. code-block:: shell
 
     git clone https://github.com/Microsoft/vcpkg.git
     cd vcpkg
     ./bootstrap-vcpkg.sh  # ./bootstrap-vcpkg.bat for Windows
     ./vcpkg integrate install
-    ./vcpkg install gdal
+    ./vcpkg search gdal --featurepackages  # list optional features
+    ./vcpkg install gdal  # install with default configuration
+    ./vcpkg install gdal[poppler,netcdf]  # install with Poppler and netdf support
 
 If the version is out of date, please `create an issue or pull request <https://github.com/Microsoft/vcpkg>`__ on the vcpkg repository.
 
@@ -209,6 +289,4 @@ Information on the content of the different configurations can be found at
 Documentation
 -------------
 
-Besides being included when downloading the software, the documentation is
-also available independently as a `PDF file <https://gdal.org/gdal.pdf>`_,
-and `a ZIP of individual HTML pages <https://github.com/OSGeo/gdal-docs/archive/refs/heads/master.zip>`_ for offline browsing. (The ZIP also includes the PDF.) The documentation reflects the latest state of the development branch of the software.
+|offline-download|

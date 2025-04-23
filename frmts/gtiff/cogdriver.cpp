@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2019, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -78,7 +62,8 @@ static CPLString GetTmpFilename(const char *pszFilename, const char *pszExt)
     if (!bSupportsRandomWrite ||
         CPLGetConfigOption("CPL_TMPDIR", nullptr) != nullptr)
     {
-        osTmpFilename = CPLGenerateTempFilename(CPLGetBasename(pszFilename));
+        osTmpFilename = CPLGenerateTempFilenameSafe(
+            CPLGetBasenameSafe(pszFilename).c_str());
     }
     else
         osTmpFilename = pszFilename;
@@ -267,13 +252,13 @@ static bool COGGetWarpingCharacteristics(
                 aosOptions.AddString("VRT");
                 aosOptions.AddString("-projwin");
                 aosOptions.AddString(
-                    CPLSPrintf("%.18g", adfSrcGeoTransform[0]));
-                aosOptions.AddString(CPLSPrintf("%.18g", maxLat));
+                    CPLSPrintf("%.17g", adfSrcGeoTransform[0]));
+                aosOptions.AddString(CPLSPrintf("%.17g", maxLat));
                 aosOptions.AddString(
-                    CPLSPrintf("%.18g", adfSrcGeoTransform[0] +
+                    CPLSPrintf("%.17g", adfSrcGeoTransform[0] +
                                             poSrcDS->GetRasterXSize() *
                                                 adfSrcGeoTransform[1]));
-                aosOptions.AddString(CPLSPrintf("%.18g", minLat));
+                aosOptions.AddString(CPLSPrintf("%.17g", minLat));
                 auto psOptions =
                     GDALTranslateOptionsNew(aosOptions.List(), nullptr);
                 poTmpDS.reset(GDALDataset::FromHandle(GDALTranslate(
@@ -615,10 +600,10 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
     papszArg = CSLAddString(papszArg, "-t_srs");
     papszArg = CSLAddString(papszArg, osTargetSRS);
     papszArg = CSLAddString(papszArg, "-te");
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMinX));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMinY));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMaxX));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMaxY));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfMinX));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfMinY));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfMaxX));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfMaxY));
     papszArg = CSLAddString(papszArg, "-ts");
     papszArg = CSLAddString(papszArg, CPLSPrintf("%d", nXSize));
     papszArg = CSLAddString(papszArg, CPLSPrintf("%d", nYSize));
@@ -632,8 +617,8 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
     {
         // Try to produce exactly square pixels
         papszArg = CSLAddString(papszArg, "-tr");
-        papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfRes));
-        papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfRes));
+        papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfRes));
+        papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfRes));
     }
     else
     {
@@ -737,19 +722,25 @@ GDALCOGCreator::~GDALCOGCreator()
     // may reference the later
     m_poRGBMaskDS.reset();
 
-    if (m_poReprojectedDS)
+    // Config option just for testing purposes
+    const bool bDeleteTempFiles =
+        CPLTestBool(CPLGetConfigOption("COG_DELETE_TEMP_FILES", "YES"));
+    if (bDeleteTempFiles)
     {
-        CPLString osProjectedDSName(m_poReprojectedDS->GetDescription());
-        m_poReprojectedDS.reset();
-        VSIUnlink(osProjectedDSName);
-    }
-    if (!m_osTmpOverviewFilename.empty())
-    {
-        VSIUnlink(m_osTmpOverviewFilename);
-    }
-    if (!m_osTmpMskOverviewFilename.empty())
-    {
-        VSIUnlink(m_osTmpMskOverviewFilename);
+        if (m_poReprojectedDS)
+        {
+            CPLString osProjectedDSName(m_poReprojectedDS->GetDescription());
+            m_poReprojectedDS.reset();
+            VSIUnlink(osProjectedDSName);
+        }
+        if (!m_osTmpOverviewFilename.empty())
+        {
+            VSIUnlink(m_osTmpOverviewFilename);
+        }
+        if (!m_osTmpMskOverviewFilename.empty())
+        {
+            VSIUnlink(m_osTmpMskOverviewFilename);
+        }
     }
 }
 
@@ -771,6 +762,21 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         CPLError(CE_Failure, CPLE_NotSupported,
                  "COG driver does not support 0-band source raster");
         return nullptr;
+    }
+
+    const CPLString osCompress = CSLFetchNameValueDef(
+        papszOptions, "COMPRESS", gbHasLZW ? "LZW" : "NONE");
+
+    const char *pszInterleave =
+        CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "PIXEL");
+    if (EQUAL(osCompress, "WEBP"))
+    {
+        if (!EQUAL(pszInterleave, "PIXEL"))
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "COMPRESS=WEBP only supported for INTERLEAVE=PIXEL");
+            return nullptr;
+        }
     }
 
     CPLConfigOptionSetter oSetterReportDirtyBlockFlushing(
@@ -887,9 +893,7 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         }
     }
 
-    CPLString osCompress = CSLFetchNameValueDef(papszOptions, "COMPRESS",
-                                                gbHasLZW ? "LZW" : "NONE");
-    if (EQUAL(osCompress, "JPEG") &&
+    if (EQUAL(osCompress, "JPEG") && EQUAL(pszInterleave, "PIXEL") &&
         (poCurDS->GetRasterCount() == 2 || poCurDS->GetRasterCount() == 4) &&
         poCurDS->GetRasterBand(poCurDS->GetRasterCount())
                 ->GetColorInterpretation() == GCI_AlphaBand)
@@ -1208,7 +1212,7 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
     if (EQUAL(osCompress, "JPEG"))
     {
         aosOptions.SetNameValue("JPEG_QUALITY", pszQuality);
-        if (nBands == 3)
+        if (nBands == 3 && EQUAL(pszInterleave, "PIXEL"))
             aosOptions.SetNameValue("PHOTOMETRIC", "YCBCR");
     }
     else if (EQUAL(osCompress, "WEBP"))
@@ -1326,7 +1330,8 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
     }
 
     std::unique_ptr<CPLConfigOptionSetter> poPhotometricSetter;
-    if (nBands == 3 && EQUAL(pszOverviewCompress, "JPEG"))
+    if (nBands == 3 && EQUAL(pszOverviewCompress, "JPEG") &&
+        EQUAL(pszInterleave, "PIXEL"))
     {
         poPhotometricSetter.reset(
             new CPLConfigOptionSetter("PHOTOMETRIC_OVERVIEW", "YCBCR", true));
@@ -1356,6 +1361,16 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
          papszSrcMDDIter && *papszSrcMDDIter; ++papszSrcMDDIter)
         aosOptions.AddNameValue("SRC_MDD", *papszSrcMDDIter);
     CSLDestroy(papszSrcMDD);
+
+    if (EQUAL(pszInterleave, "TILE"))
+    {
+        aosOptions.SetNameValue("INTERLEAVE", "BAND");
+        aosOptions.SetNameValue("@TILE_INTERLEAVE", "YES");
+    }
+    else
+    {
+        aosOptions.SetNameValue("INTERLEAVE", pszInterleave);
+    }
 
     CPLDebug("COG", "Generating final product: start");
     auto poRet =
@@ -1491,10 +1506,12 @@ void GDALCOGDriver::InitializeCreationOptionList()
         osOptions += "   <Option name='QUALITY' type='int' "
                      "description='" +
                      osJPEG_WEBP +
-                     " quality 1-100' default='75'/>"
+                     " quality 1-100' min='1' max='100' default='75'/>"
                      "   <Option name='OVERVIEW_QUALITY' type='int' "
                      "description='Overview " +
-                     osJPEG_WEBP + " quality 1-100' default='75'/>";
+                     osJPEG_WEBP +
+                     " quality 1-100' min='1' max='100' "
+                     "default='75'/>";
     }
     if (bHasLERC)
     {
@@ -1512,16 +1529,16 @@ void GDALCOGDriver::InitializeCreationOptionList()
         "   <Option name='JXL_LOSSLESS' type='boolean' description='Whether "
         "JPEGXL compression should be lossless' default='YES'/>"
         "   <Option name='JXL_EFFORT' type='int' description='Level of effort "
-        "1(fast)-9(slow)' default='5'/>"
+        "1(fast)-9(slow)' min='1' max='9' default='5'/>"
         "   <Option name='JXL_DISTANCE' type='float' description='Distance "
         "level for lossy compression (0=mathematically lossless, 1.0=visually "
-        "lossless, usual range [0.5,3])' default='1.0' min='0.1' max='15.0'/>";
+        "lossless, usual range [0.5,3])' default='1.0' min='0.01' max='25.0'/>";
 #ifdef HAVE_JxlEncoderSetExtraChannelDistance
     osOptions += "   <Option name='JXL_ALPHA_DISTANCE' type='float' "
                  "description='Distance level for alpha channel "
                  "(-1=same as non-alpha channels, "
                  "0=mathematically lossless, 1.0=visually lossless, "
-                 "usual range [0.5,3])' default='-1' min='-1' max='15.0'/>";
+                 "usual range [0.5,3])' default='-1' min='-1' max='25.0'/>";
 #endif
 #endif
     osOptions +=
@@ -1533,6 +1550,11 @@ void GDALCOGDriver::InitializeCreationOptionList()
         "(16)'/>"
         "   <Option name='BLOCKSIZE' type='int' "
         "description='Tile size in pixels' min='128' default='512'/>"
+        "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
+        "       <Value>BAND</Value>"
+        "       <Value>PIXEL</Value>"
+        "       <Value>TILE</Value>"
+        "   </Option>"
         "   <Option name='BIGTIFF' type='string-select' description='"
         "Force creation of BigTIFF file'>"
         "     <Value>YES</Value>"
@@ -1555,7 +1577,7 @@ void GDALCOGDriver::InitializeCreationOptionList()
         "   </Option>"
         "  <Option name='OVERVIEW_COUNT' type='int' min='0' "
         "description='Number of overviews'/>"
-        "  <Option name='TILING_SCHEME' type='string' description='"
+        "  <Option name='TILING_SCHEME' type='string-select' description='"
         "Which tiling scheme to use pre-defined value or custom inline/outline "
         "JSON definition' default='CUSTOM'>"
         "    <Value>CUSTOM</Value>";

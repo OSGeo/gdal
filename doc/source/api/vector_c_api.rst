@@ -14,3 +14,6 @@ ogr_core.h and ogr_api.h: Vector C API
 
 .. doxygenfile:: ogr_api.h
    :project: api
+
+.. doxygenfile:: gdal_adbc.h
+   :project: api

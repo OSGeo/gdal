@@ -8,23 +8,7 @@
  * Copyright (c) 1998, 2002, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2015, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef GTIFFDATASET_H_INCLUDED
@@ -53,9 +37,6 @@ enum class GTiffProfile : GByte
 
 // This must be a #define, since it is used in a XSTRINGIFY() macro
 #define DEFAULT_WEBP_LEVEL 75
-
-constexpr const char *const szJPEGGTiffDatasetTmpPrefix =
-    "/vsimem/gtiffdataset_jpg_tmp_";
 
 class GTiffBitmapBand;
 class GTiffDataset;
@@ -324,6 +305,7 @@ class GTiffDataset final : public GDALPamDataset
     bool m_bWriteKnownIncompatibleEdition : 1;
     bool m_bHasUsedReadEncodedAPI : 1;  // for debugging
     bool m_bWriteCOGLayout : 1;
+    bool m_bTileInterleave : 1;
 
     void ScanDirectories();
     bool ReadStrile(int nBlockId, void *pOutputBuffer,
@@ -345,9 +327,8 @@ class GTiffDataset final : public GDALPamDataset
 
     int GetJPEGOverviewCount();
 
-    bool IsBlockAvailable(int nBlockId, vsi_l_offset *pnOffset = nullptr,
-                          vsi_l_offset *pnSize = nullptr,
-                          bool *pbErrOccurred = nullptr);
+    bool IsBlockAvailable(int nBlockId, vsi_l_offset *pnOffset,
+                          vsi_l_offset *pnSize, bool *pbErrOccurred);
 
     void ApplyPamInfo();
     void PushMetadataToPam();
@@ -459,6 +440,10 @@ class GTiffDataset final : public GDALPamDataset
 
     bool IsWholeBlock(int nXOff, int nYOff, int nXSize, int nYSize) const;
 
+    void *CacheMultiRange(int nXOff, int nYOff, int nXSize, int nYSize,
+                          int nBufXSize, int nBufYSize, const int *panBandMap,
+                          int nBandCount, GDALRasterIOExtraArg *psExtraArg);
+
     static void ThreadDecompressionFunc(void *pData);
 
     static GTIF *GTIFNew(TIFF *hTIFF);
@@ -561,7 +546,8 @@ class GTiffDataset final : public GDALPamDataset
                           int nBands, GDALDataType eType,
                           double dfExtraSpaceForOverviews,
                           int nColorTableMultiplier, char **papszParamList,
-                          VSILFILE **pfpL, CPLString &osTmpFilename);
+                          VSILFILE **pfpL, CPLString &osTmpFilename,
+                          bool bCreateCopy, bool &bTileInterleavingOut);
 
     CPLErr WriteEncodedTileOrStrip(uint32_t tile_or_strip, void *data,
                                    int bPreserveDataBuffer);

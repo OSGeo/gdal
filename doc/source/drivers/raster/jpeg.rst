@@ -20,8 +20,8 @@ IMAGE_STRUCTURE domain.
 
 EXIF metadata can be read from JPEG files (but this will not result in a
 georeferenced image even if the EXIF_GPSLatitude and EXIF_GPSLongitude
-tags are set). But if an ESRI world file exists with the .jgw,
-.jpgw/.jpegw or .wld suffixes, it will be read and used to establish the
+tags are set). But if an ESRI :ref:`world file <raster.wld>` exists with the
+.jgw, .jpgw/.jpegw or .wld suffixes, it will be read and used to establish the
 geotransform for the image. If available a MapInfo .tab file will also
 be used for georeferencing. Overviews can be built for JPEG files as an
 external .ovr file.
@@ -169,7 +169,8 @@ The following creation options are supported:
       :choices: YES
 
       Force the generation of an associated ESRI world
-      file (with the extension .wld).
+      file (with the extension .wld). See :ref:`World Files <raster.wld>`
+      section for details.
 
 -  .. co:: QUALITY
       :choices: 1-100

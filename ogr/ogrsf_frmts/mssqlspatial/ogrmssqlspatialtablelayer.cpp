@@ -8,29 +8,14 @@
  * Copyright (c) 2010, Tamas Szekeres
  * Copyright (c) 2010-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "ogr_mssqlspatial.h"
 #include "ogr_p.h"
 
+#include <cmath>
 #include <memory>
 #include <string_view>
 
@@ -608,10 +593,10 @@ OGRMSSQLSpatialTableLayer::BuildStatement(const char *pszColumns)
         if (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY ||
             nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
         {
-            if (!CPLIsInf(m_sFilterEnvelope.MinX) &&
-                !CPLIsInf(m_sFilterEnvelope.MinY) &&
-                !CPLIsInf(m_sFilterEnvelope.MaxX) &&
-                !CPLIsInf(m_sFilterEnvelope.MaxY))
+            if (!std::isinf(m_sFilterEnvelope.MinX) &&
+                !std::isinf(m_sFilterEnvelope.MinY) &&
+                !std::isinf(m_sFilterEnvelope.MaxX) &&
+                !std::isinf(m_sFilterEnvelope.MaxY))
             {
                 if (pszQuery == nullptr)
                     poStatement->Append(" where ");
@@ -697,28 +682,16 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature(GIntBig nFeatureId)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /*                                                                      */
 /*      For Geometry or Geography types we can use an optimized         */
-/*      statement in other cases we use standard OGRLayer::GetExtent()  */
+/*      statement in other cases we use standard OGRLayer::IGetExtent() */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField,
-                                            OGREnvelope *psExtent, int bForce)
+OGRErr OGRMSSQLSpatialTableLayer::IGetExtent(int iGeomField,
+                                             OGREnvelope *psExtent, bool bForce)
 {
     GetLayerDefn();
-
-    // Make sure we have a geometry field:
-    if (iGeomField < 0 || iGeomField >= poFeatureDefn->GetGeomFieldCount() ||
-        poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone)
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return OGRERR_FAILURE;
-    }
 
     // If we have a geometry or geography type:
     if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY ||
@@ -813,10 +786,7 @@ OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField,
     }
 
     // Fall back to generic implementation (loading all features)
-    if (iGeomField == 0)
-        return OGRLayer::GetExtent(psExtent, bForce);
-    else
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

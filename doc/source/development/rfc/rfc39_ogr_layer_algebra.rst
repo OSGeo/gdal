@@ -19,7 +19,7 @@ for commonly needed overlay analysis methods.
 The basic functionality for spatial analysis with GDAL is provided by
 GEOS. However, GEOS operates on geometries and typically people work
 with geospatial data layers. Vector data layers are represented in GDAL
-by OGRLayer objects. Thus, there is a need for spatial analaysis
+by OGRLayer objects. Thus, there is a need for spatial analysis
 operations that work on layers.
 
 Unfortunately there is no standard for spatial analysis operations API,

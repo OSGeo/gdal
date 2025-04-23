@@ -11,23 +11,7 @@
  * Portions Copyright (c) Her majesty the Queen in right of Canada as
  * represented by the Minister of National Defence, 2006.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef NITFDRIVERCORE_H
@@ -35,7 +19,7 @@
 
 #include "gdal_priv.h"
 
-constexpr const char *DRIVER_NAME = "NITF";
+constexpr const char *NITF_DRIVER_NAME = "NITF";
 
 #define NITFDriverIdentify PLUGIN_SYMBOL_NAME(NITFDriverIdentify)
 #define NITFDriverSetCommonMetadata                                            \
@@ -44,5 +28,28 @@ constexpr const char *DRIVER_NAME = "NITF";
 int NITFDriverIdentify(GDALOpenInfo *poOpenInfo);
 
 void NITFDriverSetCommonMetadata(GDALDriver *poDriver);
+
+constexpr const char *RPFTOC_DRIVER_NAME = "RPFTOC";
+
+#define RPFTOCDriverIdentify PLUGIN_SYMBOL_NAME(RPFTOCDriverIdentify)
+#define RPFTOCDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(RPFTOCDriverSetCommonMetadata)
+#define RPFTOCIsNonNITFFileTOC PLUGIN_SYMBOL_NAME(RPFTOCIsNonNITFFileTOC)
+
+int RPFTOCDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void RPFTOCDriverSetCommonMetadata(GDALDriver *poDriver);
+
+int RPFTOCIsNonNITFFileTOC(GDALOpenInfo *poOpenInfo, const char *pszFilename);
+
+constexpr const char *ECRGTOC_DRIVER_NAME = "ECRGTOC";
+
+#define ECRGTOCDriverIdentify PLUGIN_SYMBOL_NAME(ECRGTOCDriverIdentify)
+#define ECRGTOCDriverSetCommonMetadata                                         \
+    PLUGIN_SYMBOL_NAME(ECRGTOCDriverSetCommonMetadata)
+
+int ECRGTOCDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void ECRGTOCDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

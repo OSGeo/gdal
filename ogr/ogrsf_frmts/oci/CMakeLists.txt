@@ -5,7 +5,7 @@ if(NOT DEFINED PROJECT_SOURCE_DIR)
     # Standalone plugin building
     project(ogr_OCI)
     include("${PROJECT_SOURCE_DIR}/../../../cmake/helpers/SetupStandalonePlugin.cmake" )
-    include(CheckDependentLibrariesOCI)
+    include(CheckDependentLibrariesOracle)
     standalone_driver_finalize(OGR_ENABLE_DRIVER_OCI)
 endif()
 

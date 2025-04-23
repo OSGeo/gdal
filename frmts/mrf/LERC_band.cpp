@@ -24,6 +24,8 @@ Authors:  Lucian Plesea
 #include <vector>
 #include "LERCV1/Lerc1Image.h"
 
+#include "gdal_priv_templates.hpp"
+
 // Requires lerc at least 2v4, where the c_api changed, but there is no good way
 // to check
 #include <Lerc_c_api.h>
@@ -189,7 +191,10 @@ template <typename T>
 static bool Lerc1ImgUFill(Lerc1Image &zImg, T *dst, const ILImage &img,
                           GInt32 stride)
 {
-    const T ndv = static_cast<T>(img.hasNoData ? img.NoDataValue : 0);
+    const T ndv =
+        static_cast<T>(img.hasNoData && GDALIsValueInRange<T>(img.NoDataValue)
+                           ? img.NoDataValue
+                           : 0);
     if (img.pagesize.y != zImg.getHeight() || img.pagesize.x != zImg.getWidth())
         return false;
     int w = img.pagesize.x;

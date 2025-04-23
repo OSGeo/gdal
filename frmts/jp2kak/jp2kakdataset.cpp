@@ -8,23 +8,7 @@
  * Copyright (c) 2002, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -708,7 +692,7 @@ GDALDataset *JP2KAKDataset::Open(GDALOpenInfo *poOpenInfo)
     KakaduInitialize();
 
     // Handle setting up datasource for JPIP.
-    const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExtension = poOpenInfo->osExtension.c_str();
     std::vector<GByte> abySubfileHeader(16);  // leave in this scope
     if (poOpenInfo->nHeaderBytes < 16)
     {
@@ -1701,8 +1685,6 @@ static bool JP2KAKCreateCopy_WriteTile(
 
     void *pabyBuffer = CPLMalloc(nXSize * GDALGetDataTypeSizeBytes(eType));
 
-    CPLAssert(!oTile.get_ycc());
-
     bool bRet = true;
     while (true)
     {
@@ -2389,22 +2371,24 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
 #ifdef KAKADU_JPX
     jpx_family_tgt jpx_family;
     jpx_target jpx_out;
-    const bool bIsJPX = !EQUAL(CPLGetExtension(pszFilename), "jpf") &&
-                        !EQUAL(CPLGetExtension(pszFilename), "jpc") &&
-                        !EQUAL(CPLGetExtension(pszFilename), "j2k") &&
-                        !(pszCodec != NULL && EQUAL(pszCodec, "J2K"));
+    const bool bIsJPX =
+        !EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "jpf") &&
+        !EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "jpc") &&
+        !EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "j2k") &&
+        !(pszCodec != NULL && EQUAL(pszCodec, "J2K"));
 #endif
 
     kdu_compressed_target *poOutputFile = nullptr;
     jp2_target jp2_out;
     const char *pszCodec = CSLFetchNameValueDef(papszOptions, "CODEC", nullptr);
-    const bool bIsJP2 = (!EQUAL(CPLGetExtension(pszFilename), "jpc") &&
-                         !EQUAL(CPLGetExtension(pszFilename), "j2k") &&
+    const bool bIsJP2 =
+        (!EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "jpc") &&
+         !EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "j2k") &&
 #ifdef KAKADU_JPX
-                         !bIsJPX &&
+         !bIsJPX &&
 #endif
-                         !(pszCodec != nullptr && EQUAL(pszCodec, "J2K"))) ||
-                        (pszCodec != nullptr && EQUAL(pszCodec, "JP2"));
+         !(pszCodec != nullptr && EQUAL(pszCodec, "J2K"))) ||
+        (pszCodec != nullptr && EQUAL(pszCodec, "JP2"));
     kdu_codestream oCodeStream;
 
     vsil_target oVSILTarget;
@@ -2472,7 +2456,6 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
     // Set some particular parameters.
     oCodeStream.access_siz()->parse_string(
         CPLString().Printf("Clayers=%d", layer_count).c_str());
-    oCodeStream.access_siz()->parse_string("Cycc=no");
     if (eType == GDT_Int16 || eType == GDT_UInt16)
         oCodeStream.access_siz()->parse_string(
             "Qstep=0.0000152588");  // 1. / (1 << 16)
@@ -2487,6 +2470,8 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
 
     // Set some user-overridable parameters.
     const char *const apszParams[] = {
+        "Cycc",
+        "yes",
         "Corder",
         "PCRL",
         "Cprecincts",
@@ -2903,7 +2888,9 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
         std::vector<int> precisions(num_components);
         for (int i = 0; i < num_components; ++i)
         {
-            stripe_bufs[i] = pBuffer + nXSize * nDataTypeSizeBytes * i;
+            stripe_bufs[i] = pBuffer + static_cast<size_t>(nXSize) *
+                                           nDataTypeSizeBytes * i *
+                                           stripe_height;
             is_signed[i] = CPL_TO_BOOL(GDALDataTypeIsSigned(eType));
             precisions[i] = nBits;
         }
@@ -2918,6 +2905,9 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
                 for (int i = 0; i < num_components; ++i)
                 {
                     stripe_heights[i] = nHeight;
+                    stripe_bufs[i] = pBuffer + static_cast<size_t>(nXSize) *
+                                                   nDataTypeSizeBytes * i *
+                                                   nHeight;
                 }
             }
             if (poSrcDS->RasterIO(GF_Read, 0, iY, nXSize, nHeight, pBuffer,

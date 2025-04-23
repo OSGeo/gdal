@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test support for the various "EMPTY" WKT geometry representations.

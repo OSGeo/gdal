@@ -8,23 +8,7 @@
  * Copyright (c) 2014, Mikhail Gusev
  * Copyright (c) 2014-2015, NextGIS <info@nextgis.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "commonutils.h"
@@ -57,9 +41,10 @@ enum operation
 /************************************************************************/
 
 static void Usage(bool bIsError, const char *pszAdditionalMsg = nullptr,
-                  bool bShort = true) CPL_NO_RETURN;
+                  bool bShort = true, bool bHelpDoc = false) CPL_NO_RETURN;
 
-static void Usage(bool bIsError, const char *pszAdditionalMsg, bool bShort)
+static void Usage(bool bIsError, const char *pszAdditionalMsg, bool bShort,
+                  bool bHelpDoc)
 {
     fprintf(
         bIsError ? stderr : stdout,
@@ -78,6 +63,11 @@ static void Usage(bool bIsError, const char *pszAdditionalMsg, bool bShort)
         "                 [delete]\n"
         "                 [change [-bl <gfid>][-unbl <gfid>][-unblall]]\n"
         "                 <gnm_name> [<layer> [<layer>]...]\n");
+
+    if (bHelpDoc)
+    {
+        exit(0);
+    }
 
     if (bShort)
     {
@@ -243,6 +233,11 @@ MAIN_START(nArgc, papszArgv)
         else if (EQUAL(papszArgv[iArg], "--help"))
         {
             Usage(false);
+        }
+
+        else if (EQUAL(papszArgv[iArg], "--help-doc"))
+        {
+            Usage(false, nullptr, true, true);
         }
 
         else if (EQUAL(papszArgv[iArg], "--long-usage"))
@@ -523,25 +518,27 @@ MAIN_START(nArgc, papszArgv)
     }
     else if (stOper == op_create)
     {
-        const char *pszPath;
-        const char *pszNetworkName = CSLFetchNameValue(papszDSCO, GNM_MD_NAME);
+        std::string osPath;
+        std::string osNetworkName =
+            CSLFetchNameValueDef(papszDSCO, GNM_MD_NAME, "");
 
         if (pszDataSource == nullptr)
             Usage(true, "No network dataset provided");
 
         // the DSCO have priority on input keys
-        if (nullptr == pszNetworkName)
+        if (osNetworkName.empty())
         {
-            pszPath = CPLGetPath(pszDataSource);
-            pszNetworkName = CPLGetBasename(pszDataSource);
-            papszDSCO = CSLAddNameValue(papszDSCO, GNM_MD_NAME, pszNetworkName);
+            osPath = CPLGetPathSafe(pszDataSource);
+            osNetworkName = CPLGetBasenameSafe(pszDataSource);
+            papszDSCO =
+                CSLAddNameValue(papszDSCO, GNM_MD_NAME, osNetworkName.c_str());
         }
         else
         {
-            pszPath = pszDataSource;
+            osPath = pszDataSource;
         }
 
-        if (pszNetworkName == nullptr)
+        if (osNetworkName.empty())
             Usage(true, "No dataset name provided");
 
         const char *pszFinalSRS = CSLFetchNameValue(papszDSCO, GNM_MD_SRS);
@@ -569,8 +566,8 @@ MAIN_START(nArgc, papszArgv)
             if (!CPLFetchBool(papszMD, GDAL_DCAP_GNM, false))
                 Usage(true, "not a GNM driver");
 
-            poDS = cpl::down_cast<GNMNetwork *>(
-                poDriver->Create(pszPath, 0, 0, 0, GDT_Unknown, papszDSCO));
+            poDS = cpl::down_cast<GNMNetwork *>(poDriver->Create(
+                osPath.c_str(), 0, 0, 0, GDT_Unknown, papszDSCO));
 
             if (nullptr == poDS)
             {
@@ -578,7 +575,9 @@ MAIN_START(nArgc, papszArgv)
                     stderr,
                     "\nFAILURE: Failed to create network in a new dataset at "
                     "%s and with driver %s\n",
-                    CPLFormFilename(pszPath, pszNetworkName, nullptr),
+                    CPLFormFilenameSafe(osPath.c_str(), osNetworkName.c_str(),
+                                        nullptr)
+                        .c_str(),
                     pszFormat);
                 nRet = 1;
             }
@@ -587,7 +586,9 @@ MAIN_START(nArgc, papszArgv)
                 if (bQuiet == FALSE)
                     printf("\nNetwork created successfully in a "
                            "new dataset at %s\n",
-                           CPLFormFilename(pszPath, pszNetworkName, nullptr));
+                           CPLFormFilenameSafe(osPath.c_str(),
+                                               osNetworkName.c_str(), nullptr)
+                               .c_str());
             }
         }
     }

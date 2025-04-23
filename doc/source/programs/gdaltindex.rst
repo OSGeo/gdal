@@ -13,22 +13,7 @@ gdaltindex
 Synopsis
 --------
 
-.. code-block::
-
-    gdaltindex [--help] [--help-general]
-            [-overwrite] [-recursive] [-filename_filter <val>]...
-            [-min_pixel_size <val>] [-max_pixel_size <val>]
-            [-f <format>] [-tileindex <field_name>] [-write_absolute_path]
-            [-skip_different_projection] [-t_srs <target_srs>]
-            [-src_srs_name <field_name>] [-src_srs_format {AUTO|WKT|EPSG|PROJ}]
-            [-lyr_name <name>] [-lco <NAME>=<VALUE>]...
-            [-gti_filename <name>]
-            [-tr <xres> <yres>] [-te <xmin> <ymin> <xmax> <ymax>]
-            [-ot <datatype>] [-bandcount <val>] [-nodata <val>[,<val>...]]
-            [-colorinterp <val>[,<val>...]] [-mask]
-            [-mo <KEY>=<VALUE>]...
-            [-fetch_md <gdal_md_name> <fld_name> <fld_type>]...
-            <index_file> <file_or_dir> [<file_or_dir>]...
+.. program-output:: gdaltindex --help-doc
 
 Description
 -----------
@@ -303,34 +288,42 @@ specified.
 Examples
 --------
 
-- Produce a shapefile (``doq_index.shp``) with a record for every
-  image that the utility found in the ``doq`` folder. Each record holds
-  information that points to the location of the image and also a bounding rectangle
-  shape showing the bounds of the image:
+.. example::
 
-::
+   Produce a shapefile (``doq_index.shp``) with a record for every
+   image that the utility found in the ``doq`` folder. Each record holds
+   information that points to the location of the image and also a bounding rectangle
+   shape showing the bounds of the image:
 
-    gdaltindex doq_index.shp doq/*.tif
+   .. code-block:: bash
 
-- Perform the same command as before, but now we create a GeoPackage instead of a Shapefile.
+      gdaltindex doq_index.shp doq/*.tif
 
-::
+.. example::
 
-    gdaltindex -f GPKG doq_index.gpkg doq/*.tif
+   Perform the same command as before, but now we create a GeoPackage instead of a Shapefile.
 
-- The :option:`-t_srs` option can also be used to transform all input rasters
-  into the same output projection:
+   .. code-block:: bash
 
-::
+      gdaltindex -f GPKG doq_index.gpkg doq/*.tif
 
-    gdaltindex -t_srs EPSG:4326 -src_srs_name src_srs tile_index_mixed_srs.shp *.tif
+.. example::
 
-- Make a tile index from files listed in a text file, with metadata suitable
-  for use by the GDAL GTI / Virtual Raster Tile Index driver.
+   The :option:`-t_srs` option can also be used to transform all input rasters
+   into the same output projection:
 
-::
+   .. code-block:: bash
 
-    gdaltindex tile_index.gti.gpkg -datatype Byte -tr 60 60 -colorinterp Red,Green,Blue --optfile my_list.txt
+       gdaltindex -t_srs EPSG:4326 -src_srs_name src_srs tile_index_mixed_srs.shp *.tif
+
+.. example::
+
+   Make a tile index from files listed in a text file, with metadata suitable
+   for use by the GDAL GTI / Virtual Raster Tile Index driver.
+
+   .. code-block:: bash
+
+       gdaltindex tile_index.gti.gpkg -ot Byte -tr 60 60 -colorinterp Red,Green,Blue --optfile my_list.txt
 
 C API
 -----

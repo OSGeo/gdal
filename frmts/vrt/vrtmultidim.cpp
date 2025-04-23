@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     vrtmultidim.cpp
  * Purpose:  Implementation of VRTDriver
@@ -8,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2019, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 /*! @cond Doxygen_Suppress */
@@ -407,7 +390,7 @@ VRTGroup::GetDimensionFromFullName(const std::string &name,
                 return nullptr;
             }
         }
-        auto poDim(curGroup->GetDimension(aosTokens[aosTokens.size() - 1]));
+        auto poDim(curGroup->GetDimension(aosTokens.back()));
         if (!poDim)
         {
             if (bEmitError)
@@ -1172,9 +1155,9 @@ void VRTMDArraySourceRegularlySpaced::Serialize(CPLXMLNode *psParent,
     CPLXMLNode *psSource =
         CPLCreateXMLNode(psParent, CXT_Element, "RegularlySpacedValues");
     CPLAddXMLAttributeAndValue(psSource, "start",
-                               CPLSPrintf("%.18g", m_dfStart));
+                               CPLSPrintf("%.17g", m_dfStart));
     CPLAddXMLAttributeAndValue(psSource, "increment",
-                               CPLSPrintf("%.18g", m_dfIncrement));
+                               CPLSPrintf("%.17g", m_dfIncrement));
 }
 
 /************************************************************************/
@@ -1954,8 +1937,8 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
 
     const std::string osFilename =
         m_bRelativeToVRT
-            ? std::string(CPLProjectRelativeFilename(
-                  m_poDstArray->GetVRTPath().c_str(), m_osFilename.c_str()))
+            ? CPLProjectRelativeFilenameSafe(m_poDstArray->GetVRTPath().c_str(),
+                                             m_osFilename.c_str())
             : m_osFilename;
     const std::string key(CreateKey(osFilename));
 
@@ -2566,13 +2549,13 @@ void VRTMDArray::Serialize(CPLXMLNode *psParent, const char *pszVRTPath) const
     if (m_bHasOffset)
     {
         CPLCreateXMLElementAndValue(psArray, "Offset",
-                                    CPLSPrintf("%.18g", m_dfOffset));
+                                    CPLSPrintf("%.17g", m_dfOffset));
     }
 
     if (m_bHasScale)
     {
         CPLCreateXMLElementAndValue(psArray, "Scale",
-                                    CPLSPrintf("%.18g", m_dfScale));
+                                    CPLSPrintf("%.17g", m_dfScale));
     }
 
     for (const auto &poSource : m_sources)
@@ -2626,9 +2609,13 @@ class VRTArraySource : public VRTSource
             bIncludeOutOfRange, bApproxOK, pfnProgress, pProgressData);
     }
 
-    CPLErr
-    XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
-            std::map<CPLString, GDALDataset *> &oMapSharedSources) override;
+    const char *GetType() const override
+    {
+        return "ArraySource";
+    }
+
+    CPLErr XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
+                   VRTMapSharedResources &oMapSharedSources) override;
     CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
 };
 
@@ -2681,8 +2668,8 @@ ParseSingleSourceArray(const CPLXMLNode *psSingleSourceArray,
     }
     const std::string osSourceFilename(
         bRelativeToVRT
-            ? CPLProjectRelativeFilename(pszVRTPath, pszSourceFilename)
-            : pszSourceFilename);
+            ? CPLProjectRelativeFilenameSafe(pszVRTPath, pszSourceFilename)
+            : std::string(pszSourceFilename));
     auto poDS = std::unique_ptr<GDALDataset>(
         GDALDataset::Open(osSourceFilename.c_str(),
                           GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VERBOSE_ERROR,
@@ -2705,9 +2692,8 @@ ParseSingleSourceArray(const CPLXMLNode *psSingleSourceArray,
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTArraySource::XMLInit(
-    const CPLXMLNode *psTree, const char *pszVRTPath,
-    std::map<CPLString, GDALDataset *> & /*oMapSharedSources*/)
+CPLErr VRTArraySource::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
+                               VRTMapSharedResources & /*oMapSharedSources*/)
 {
     const auto poArray = ParseArray(psTree, pszVRTPath, "ArraySource");
     if (!poArray)
@@ -2977,9 +2963,9 @@ static std::shared_ptr<GDALMDArray> ParseArray(const CPLXMLNode *psTree,
 /*                       VRTParseArraySource()                          */
 /************************************************************************/
 
-VRTSource *
-VRTParseArraySource(const CPLXMLNode *psChild, const char *pszVRTPath,
-                    std::map<CPLString, GDALDataset *> &oMapSharedSources)
+VRTSource *VRTParseArraySource(const CPLXMLNode *psChild,
+                               const char *pszVRTPath,
+                               VRTMapSharedResources &oMapSharedSources)
 {
     VRTSource *poSource = nullptr;
 

@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2014, Oslandia <info at oslandia dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_WASP_H_INCLUDED
@@ -183,7 +167,7 @@ class OGRWAsPLayer final : public OGRLayer,
 /*                           OGRWAsPDataSource                          */
 /************************************************************************/
 
-class OGRWAsPDataSource final : public OGRDataSource
+class OGRWAsPDataSource final : public GDALDataset
 {
     CPLString sFilename;
     VSILFILE *hFile;
@@ -196,11 +180,6 @@ class OGRWAsPDataSource final : public OGRDataSource
     /** @note takes ownership of hFile (i.e. responsibility for closing) */
     OGRWAsPDataSource(const char *pszName, VSILFILE *hFile);
     virtual ~OGRWAsPDataSource();
-
-    virtual const char *GetName() override
-    {
-        return sFilename.c_str();
-    }
 
     virtual int GetLayerCount() override
     {
@@ -216,33 +195,6 @@ class OGRWAsPDataSource final : public OGRDataSource
 
     virtual int TestCapability(const char *) override;
     OGRErr Load(bool bSilent = false);
-};
-
-/************************************************************************/
-/*                             OGRWAsPDriver                            */
-/************************************************************************/
-
-class OGRWAsPDriver final : public OGRSFDriver
-{
-
-  public:
-    ~OGRWAsPDriver()
-    {
-    }
-
-    virtual const char *GetName() override
-    {
-        return "WAsP";
-    }
-
-    virtual OGRDataSource *Open(const char *, int) override;
-
-    virtual OGRDataSource *CreateDataSource(const char *pszName,
-                                            char ** = nullptr) override;
-
-    virtual OGRErr DeleteDataSource(const char *pszName) override;
-
-    virtual int TestCapability(const char *) override;
 };
 
 #endif /* ndef OGR_WASP_H_INCLUDED */

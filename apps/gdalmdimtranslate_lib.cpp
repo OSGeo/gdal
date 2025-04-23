@@ -7,23 +7,7 @@
  * ****************************************************************************
  * Copyright (c) 2019, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -54,6 +38,8 @@ struct GDALMultiDimTranslateOptions
     bool bStrict = false;
     void *pProgressData = nullptr;
     bool bUpdate = false;
+    bool bOverwrite = false;
+    bool bNoOverwrite = false;
 };
 
 /*************************************************************************/
@@ -100,7 +86,7 @@ GDALMultiDimTranslateAppOptionsGetParser(
         .action([psOptions](const std::string &s)
                 { psOptions->aosArrayOptions.AddString(s.c_str()); })
         .help(_("Option passed to GDALGroup::GetMDArrayNames() to filter "
-                "reported arrays."));
+                "arrays."));
 
     group.add_argument("-group")
         .metavar("<group_spec>")
@@ -136,6 +122,16 @@ GDALMultiDimTranslateAppOptionsGetParser(
         .flag()
         .store_into(psOptions->bStrict)
         .help(_("Turn warnings into failures."));
+
+    // Undocumented option used by gdal mdim convert
+    argParser->add_argument("--overwrite")
+        .store_into(psOptions->bOverwrite)
+        .hidden();
+
+    // Undocumented option used by gdal mdim convert
+    argParser->add_argument("--no-overwrite")
+        .store_into(psOptions->bNoOverwrite)
+        .hidden();
 
     if (psOptionsForBinary)
     {
@@ -1804,18 +1800,46 @@ GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         pszDest = GDALGetDescription(hDstDS);
 #endif
 
+    if (psOptions && psOptions->bOverwrite && !EQUAL(pszDest, ""))
+    {
+        VSIRmdirRecursive(pszDest);
+    }
+    else if (psOptions && psOptions->bNoOverwrite && !EQUAL(pszDest, ""))
+    {
+        VSIStatBufL sStat;
+        if (VSIStatL(pszDest, &sStat) == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "File '%s' already exists. Specify the --overwrite "
+                     "option to overwrite it.",
+                     pszDest);
+            return nullptr;
+        }
+        else if (std::unique_ptr<GDALDataset>(GDALDataset::Open(pszDest)))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Dataset '%s' already exists. Specify the --overwrite "
+                     "option to overwrite it.",
+                     pszDest);
+            return nullptr;
+        }
+    }
+
 #ifdef this_is_dead_code_for_now
     if (hDstDS == nullptr)
 #endif
     {
         if (osFormat.empty())
         {
-            if (EQUAL(CPLGetExtension(pszDest), "nc"))
+            if (EQUAL(CPLGetExtensionSafe(pszDest).c_str(), "nc"))
                 osFormat = "netCDF";
             else
                 osFormat = GetOutputDriverForRaster(pszDest);
             if (osFormat.empty())
             {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot determine output driver for dataset name '%s'",
+                         pszDest);
                 return nullptr;
             }
         }

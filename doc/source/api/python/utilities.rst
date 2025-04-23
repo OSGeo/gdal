@@ -5,8 +5,8 @@
 
 .. _python_utilities:
 
-Python Utilities
-================
+Utilities API
+=============
 
 Raster Utilities
 ----------------

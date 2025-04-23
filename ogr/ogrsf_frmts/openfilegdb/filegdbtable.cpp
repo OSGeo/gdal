@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -32,6 +16,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cinttypes>
+#include <cmath>
 #include <errno.h>
 #include <limits.h>
 #include <stddef.h>
@@ -885,14 +870,15 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
 
     m_nHeaderBufferMaxSize = GetInt32(abyHeader + 8, 0);
 
-    CPLString osTableXName;
+    std::string osTableXName;
     if (m_bUpdate || (m_nValidRecordCount > 0 &&
                       !CPLTestBool(CPLGetConfigOption(
                           "OPENFILEGDB_IGNORE_GDBTABLX", "false"))))
     {
-        osTableXName = CPLFormFilename(CPLGetPath(pszFilename),
-                                       CPLGetBasename(pszFilename), "gdbtablx");
-        m_fpTableX = VSIFOpenL(osTableXName, m_bUpdate ? "r+b" : "rb");
+        osTableXName = CPLFormFilenameSafe(
+            CPLGetPathSafe(pszFilename).c_str(),
+            CPLGetBasenameSafe(pszFilename).c_str(), "gdbtablx");
+        m_fpTableX = VSIFOpenL(osTableXName.c_str(), m_bUpdate ? "r+b" : "rb");
         if (m_fpTableX == nullptr)
         {
             if (m_bUpdate)
@@ -1848,7 +1834,7 @@ int FileGDBDoubleDateToOGRDate(double dfVal, bool bHighPrecision,
 {
     // 25569: Number of days between 1899/12/30 00:00:00 and 1970/01/01 00:00:00
     double dfSeconds = (dfVal - 25569.0) * 3600.0 * 24.0;
-    if (CPLIsNan(dfSeconds) ||
+    if (std::isnan(dfSeconds) ||
         dfSeconds <
             static_cast<double>(std::numeric_limits<GIntBig>::min()) + 1000 ||
         dfSeconds >
@@ -1890,7 +1876,7 @@ int FileGDBDoubleDateToOGRDate(double dfVal, bool bHighPrecision,
 int FileGDBDoubleTimeToOGRTime(double dfVal, OGRField *psField)
 {
     double dfSeconds = dfVal * 3600.0 * 24.0;
-    if (CPLIsNan(dfSeconds) || dfSeconds < 0 || dfSeconds > 86400)
+    if (std::isnan(dfSeconds) || dfSeconds < 0 || dfSeconds > 86400)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "FileGDBDoubleTimeToOGRTime: Invalid time: %lf", dfVal);
@@ -2493,14 +2479,15 @@ int FileGDBTable::GetIndexCount()
 
     m_bHasReadGDBIndexes = TRUE;
 
-    const char *pszIndexesName =
-        CPLFormFilename(CPLGetPath(m_osFilename.c_str()),
-                        CPLGetBasename(m_osFilename.c_str()), "gdbindexes");
-    VSILFILE *fpIndexes = VSIFOpenL(pszIndexesName, "rb");
+    const std::string osIndexesName = CPLFormFilenameSafe(
+        CPLGetPathSafe(m_osFilename.c_str()).c_str(),
+        CPLGetBasenameSafe(m_osFilename.c_str()).c_str(), "gdbindexes");
+    VSILFILE *fpIndexes = VSIFOpenL(osIndexesName.c_str(), "rb");
     VSIStatBufL sStat;
     if (fpIndexes == nullptr)
     {
-        if (VSIStatExL(pszIndexesName, &sStat, VSI_STAT_EXISTS_FLAG) == 0)
+        if (VSIStatExL(osIndexesName.c_str(), &sStat, VSI_STAT_EXISTS_FLAG) ==
+            0)
             returnError();
         else
             return 0;
@@ -2535,8 +2522,8 @@ int FileGDBTable::GetIndexCount()
         const int iBlockKeyFieldIdx = GetFieldIdx("block_key");
         if (iBlockKeyFieldIdx >= 0)
         {
-            std::string osAtxFilename =
-                CPLResetExtension(m_osFilename.c_str(), "blk_key_index.atx");
+            const std::string osAtxFilename = CPLResetExtensionSafe(
+                m_osFilename.c_str(), "blk_key_index.atx");
             if (VSIStatExL(osAtxFilename.c_str(), &sStat,
                            VSI_STAT_EXISTS_FLAG) == 0)
             {
@@ -2552,6 +2539,7 @@ int FileGDBTable::GetIndexCount()
         CPLDebug("OpenFileGDB", ".gdbindexes v9 not handled yet");
         return 0;
     }
+
     returnErrorAndCleanupIf(nIndexCount >=
                                 static_cast<size_t>(GetFieldCount() + 1) * 10,
                             VSIFree(pabyIdx));
@@ -2559,37 +2547,83 @@ int FileGDBTable::GetIndexCount()
     GUInt32 i;
     for (i = 0; i < nIndexCount; i++)
     {
-        returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
+        returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
                                     sizeof(GUInt32),
                                 VSIFree(pabyIdx));
-        GUInt32 nIdxNameCarCount = GetUInt32(pabyCur, 0);
+        const GUInt32 nIdxNameCharCount = GetUInt32(pabyCur, 0);
         pabyCur += sizeof(GUInt32);
-        returnErrorAndCleanupIf(nIdxNameCarCount > 1024, VSIFree(pabyIdx));
-        returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
-                                    2 * nIdxNameCarCount,
+        returnErrorAndCleanupIf(nIdxNameCharCount > 1024, VSIFree(pabyIdx));
+        returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
+                                    2 * nIdxNameCharCount,
                                 VSIFree(pabyIdx));
         const std::string osIndexName(
-            ReadUTF16String(pabyCur, nIdxNameCarCount));
-        pabyCur += 2 * nIdxNameCarCount;
+            ReadUTF16String(pabyCur, nIdxNameCharCount));
+        pabyCur += 2 * nIdxNameCharCount;
+
+        // 4 "magic fields"
+        returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
+                                    sizeof(GUInt16) + sizeof(GUInt32) +
+                                        sizeof(GUInt16) + sizeof(GUInt32),
+                                VSIFree(pabyIdx));
+        // const GUInt16 nMagic1 = GetUInt16(pabyCur, 0);
+        const GUInt32 nMagic2 = GetUInt32(pabyCur + sizeof(GUInt16), 0);
+        const GUInt16 nMagic3 =
+            GetUInt16(pabyCur + sizeof(GUInt16) + sizeof(GUInt32), 0);
+        if (!((nMagic2 == 2 && nMagic3 == 0) ||
+              (nMagic2 == 4 && nMagic3 == 0) ||
+              (nMagic2 == 16 && nMagic3 == 65535)))
+        {
+            // Cf files a00000029.gdbindexes, a000000ea.gdbindexes, a000000ed.gdbindexes,
+            // a000000f8.gdbindexes, a000000fb.gdbindexes, a00000103.gdbindexes
+            // from https://github.com/OSGeo/gdal/issues/11295#issuecomment-2491158506
+            CPLDebug("OpenFileGDB", "Reading %s", osIndexesName.c_str());
+            CPLDebug(
+                "OpenFileGDB",
+                "Strange (deleted?) index descriptor at index %u of name %s", i,
+                osIndexName.c_str());
+
+            // Skip magic fields
+            pabyCur += sizeof(GUInt16);
+
+            const GUInt32 nColNameCharCount = nMagic2;
+            pabyCur += sizeof(GUInt32);
+            returnErrorAndCleanupIf(nColNameCharCount > 1024, VSIFree(pabyIdx));
+            returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
+                                        2 * nColNameCharCount,
+                                    VSIFree(pabyIdx));
+            pabyCur += 2 * nColNameCharCount;
+
+            // Skip magic field
+            returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
+                                        sizeof(GUInt16),
+                                    VSIFree(pabyIdx));
+            pabyCur += sizeof(GUInt16);
+
+            continue;
+        }
 
         // Skip magic fields
-        pabyCur += 2 + 4 + 2 + 4;
+        pabyCur += sizeof(GUInt16) + sizeof(GUInt32) + sizeof(GUInt16) +
+                   sizeof(GUInt32);
 
-        returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
+        returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
                                     sizeof(GUInt32),
                                 VSIFree(pabyIdx));
-        GUInt32 nColNameCarCount = GetUInt32(pabyCur, 0);
+        const GUInt32 nColNameCharCount = GetUInt32(pabyCur, 0);
         pabyCur += sizeof(GUInt32);
-        returnErrorAndCleanupIf(nColNameCarCount > 1024, VSIFree(pabyIdx));
-        returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
-                                    2 * nColNameCarCount,
+        returnErrorAndCleanupIf(nColNameCharCount > 1024, VSIFree(pabyIdx));
+        returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
+                                    2 * nColNameCharCount,
                                 VSIFree(pabyIdx));
         const std::string osExpression(
-            ReadUTF16String(pabyCur, nColNameCarCount));
-        pabyCur += 2 * nColNameCarCount;
+            ReadUTF16String(pabyCur, nColNameCharCount));
+        pabyCur += 2 * nColNameCharCount;
 
         // Skip magic field
-        pabyCur += 2;
+        returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
+                                    sizeof(GUInt16),
+                                VSIFree(pabyIdx));
+        pabyCur += sizeof(GUInt16);
 
         auto poIndex = std::make_unique<FileGDBIndex>();
         poIndex->m_osIndexName = osIndexName;
@@ -2637,12 +2671,12 @@ bool FileGDBTable::HasSpatialIndex()
 {
     if (m_nHasSpatialIndex < 0)
     {
-        const char *pszSpxName =
-            CPLFormFilename(CPLGetPath(m_osFilename.c_str()),
-                            CPLGetBasename(m_osFilename.c_str()), "spx");
+        const std::string osSpxName = CPLFormFilenameSafe(
+            CPLGetPathSafe(m_osFilename.c_str()).c_str(),
+            CPLGetBasenameSafe(m_osFilename.c_str()).c_str(), "spx");
         VSIStatBufL sStat;
         m_nHasSpatialIndex =
-            (VSIStatExL(pszSpxName, &sStat, VSI_STAT_EXISTS_FLAG) == 0);
+            (VSIStatExL(osSpxName.c_str(), &sStat, VSI_STAT_EXISTS_FLAG) == 0);
     }
     return m_nHasSpatialIndex != FALSE;
 }
@@ -2730,56 +2764,8 @@ void FileGDBTable::GetMinMaxProjYForSpatialIndex(double &dfYMin,
         return;
     double dfMinLat;
     double dfMaxLat;
-    // Determined through experimentation, e.g with the following script
-#if 0
-    from osgeo import gdal, ogr, osr
-    import struct
-    gdal.RmdirRecursive('test.gdb')
-    ds = ogr.GetDriverByName('FileGDB').CreateDataSource('test.gdb')
-    srs = osr.SpatialReference()
-#srs.SetFromUserInput(                                                         \
-    "+proj=tmerc +lon_0=-40 +lat_0=60 +k=0.9 +x_0=00000 +y_0=00000 +datum=WGS84")
-    srs.SetFromUserInput("+proj=merc +lon_0=-40 +lat_0=60 +k=0.9 +x_0=00000 +y_0=00000 +datum=WGS84")
-    srs_lonlat = srs.CloneGeogCS()
-    srs_lonlat.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-    ct = osr.CoordinateTransformation(srs, srs_lonlat)
-    grid_step = 0.1
-    lyr = ds.CreateLayer('test', geom_type=ogr.wkbPoint, srs=srs)
-#Add 2 dummy features to set the grid_step to what we want
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
-    lyr.CreateFeature(f)
-    f = ogr.Feature(lyr.GetLayerDefn())
-    y = (2**0.5) * grid_step
-    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%f %f)' % (y, y)))
-    lyr.CreateFeature(f)
-    ds = None
-    ds = ogr.GetDriverByName('FileGDB').Open('test.gdb', update=1)
-    lyr = ds.GetLayer(0)
-    lyr.DeleteFeature(1)
-    lyr.DeleteFeature(2)
-    y = 1e9 # some big value
-    f = ogr.Feature(lyr.GetLayerDefn())
-    g = ogr.CreateGeometryFromWkt('POINT(0 %f)' % y)
-    f.SetGeometry(g)
-    lyr.CreateFeature(f)
-    f = ogr.Feature(lyr.GetLayerDefn())
-    g = ogr.CreateGeometryFromWkt('POINT(0 %f)' % -y)
-    f.SetGeometry(g)
-    lyr.CreateFeature(f)
-    ds = None
-    f = open('test.gdb/a00000009.spx', 'rb')
-    f.seek(4)
-    n = ord(f.read(1))
-    for x in range(n):
-        f.seek(1372 + x * 8, 0)
-        v = struct.unpack('Q', f.read(8))[0]
-        x = (v >> 31 & 0x7fffffff - (1 << 29))
-        y = (v & 0x7fffffff) - (1 << 29)
-        print(x, y)  # the y value will be clamped
-        print(ct.TransformPoint(srs.GetProjParm( osr.SRS_PP_FALSE_EASTING, 0.0 ), y * grid_step))
-#endif
 
+    // Determined through experimentation, e.g with the `find_srs_latitude_limits.py` script.
     if (EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR))
     {
         dfMinLat = -90;
@@ -3300,16 +3286,16 @@ bool FileGDBOGRGeometryConverterImpl::ReadPartDefs(
         nCurves = 0;
         return true;
     }
-    returnErrorIf(nPoints > static_cast<GUInt32>(pabyEnd - pabyCur));
+    returnErrorIf(nPoints > static_cast<size_t>(pabyEnd - pabyCur));
     if (bIsMultiPatch)
         returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd));
     returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nParts));
-    returnErrorIf(nParts > static_cast<GUInt32>(pabyEnd - pabyCur));
+    returnErrorIf(nParts > static_cast<size_t>(pabyEnd - pabyCur));
     returnErrorIf(nParts > static_cast<GUInt32>(INT_MAX) / sizeof(GUInt32));
     if (bHasCurveDesc)
     {
         returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nCurves));
-        returnErrorIf(nCurves > static_cast<GUInt32>(pabyEnd - pabyCur));
+        returnErrorIf(nCurves > static_cast<size_t>(pabyEnd - pabyCur));
     }
     else
         nCurves = 0;
@@ -3330,7 +3316,7 @@ bool FileGDBOGRGeometryConverterImpl::ReadPartDefs(
     {
         GUInt32 nTmp;
         returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nTmp));
-        returnErrorIf(nTmp > static_cast<GUInt32>(pabyEnd - pabyCur));
+        returnErrorIf(nTmp > static_cast<size_t>(pabyEnd - pabyCur));
         panPointCount[i] = nTmp;
         nSumNPartsM1 += nTmp;
     }

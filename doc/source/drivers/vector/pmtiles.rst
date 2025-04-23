@@ -1,7 +1,7 @@
 .. _vector.pmtiles:
 
 ================================================================================
-PMTiles -- ProtoMaps Tiles
+PMTiles
 ================================================================================
 
 .. versionadded:: 3.8
@@ -11,7 +11,7 @@ PMTiles -- ProtoMaps Tiles
 .. built_in_by_default::
 
 This driver supports reading and writing `PMTiles <https://github.com/protomaps/PMTiles>`__
-datasets containing vector tiles, encoded in the MapVector Tiles (MVT) format.
+datasets containing vector tiles, encoded in the Mapbox Vector Tiles (MVT) format.
 
 PMTiles is a single-file archive format for tiled data. A PMTiles archive can
 be hosted on a commodity storage platform such as S3, and enables low-cost,

@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2023, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -98,7 +82,6 @@ class OGRGTFSLayer final : public OGRLayer
     OGRFeature *GetNextFeature() override;
     int TestCapability(const char *) override;
     GIntBig GetFeatureCount(int bForce) override;
-    OGRErr SetAttributeFilter(const char *) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {
@@ -353,21 +336,12 @@ OGRFeature *OGRGTFSLayer::GetNextFeature()
                 }
             }
         }
-        if (m_poFilterGeom == nullptr ||
-            FilterGeometry(poFeature->GetGeometryRef()))
+        if ((!m_poFilterGeom || FilterGeometry(poFeature->GetGeometryRef())) &&
+            (!m_poAttrQuery || m_poAttrQuery->Evaluate(poFeature.get())))
         {
             return poFeature.release();
         }
     }
-}
-
-/***********************************************************************/
-/*                       SetAttributeFilter()                          */
-/***********************************************************************/
-
-OGRErr OGRGTFSLayer::SetAttributeFilter(const char *pszFilter)
-{
-    return m_poUnderlyingLayer->SetAttributeFilter(pszFilter);
 }
 
 /***********************************************************************/
@@ -376,7 +350,7 @@ OGRErr OGRGTFSLayer::SetAttributeFilter(const char *pszFilter)
 
 GIntBig OGRGTFSLayer::GetFeatureCount(int bForce)
 {
-    if (m_poFilterGeom != nullptr)
+    if (m_poFilterGeom || m_poAttrQuery)
         return OGRLayer::GetFeatureCount(bForce);
     return m_poUnderlyingLayer->GetFeatureCount(bForce);
 }
@@ -573,7 +547,7 @@ int OGRGTFSDataset::Identify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
 
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "zip"))
+    if (!poOpenInfo->IsExtensionEqualToCI("zip"))
         return FALSE;
 
     // Check first filename in ZIP
@@ -633,7 +607,7 @@ GDALDataset *OGRGTFSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     const std::string osBaseDir(
         (!STARTS_WITH(pszGTFSFilename, "/vsizip/") &&
-         EQUAL(CPLGetExtension(pszGTFSFilename), "zip"))
+         EQUAL(CPLGetExtensionSafe(pszGTFSFilename).c_str(), "zip"))
             ? std::string("/vsizip/{").append(pszGTFSFilename).append("}")
             : std::string(pszGTFSFilename));
 
@@ -644,7 +618,7 @@ GDALDataset *OGRGTFSDataset::Open(GDALOpenInfo *poOpenInfo)
     std::string osShapesFilename;
     for (const char *pszFilename : cpl::Iterate(aosFilenames))
     {
-        if (!EQUAL(CPLGetExtension(pszFilename), "txt"))
+        if (!EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "txt"))
             continue;
         for (const char *pszFilenameInDir : apszRequiredFiles)
         {
@@ -670,7 +644,7 @@ GDALDataset *OGRGTFSDataset::Open(GDALOpenInfo *poOpenInfo)
                 {
                     poDS->m_apoLayers.emplace_back(
                         std::make_unique<OGRGTFSLayer>(
-                            osBaseDir, CPLGetBasename(pszFilename),
+                            osBaseDir, CPLGetBasenameSafe(pszFilename).c_str(),
                             std::move(poCSVDataset)));
                 }
             }

@@ -8,23 +8,7 @@
  * Copyright (c) 1998, 2002, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2015, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gtiffrasterband.h"
@@ -63,7 +47,9 @@ GTiffRasterBand::GTiffRasterBand(GTiffDataset *poDSIn, int nBandIn)
     }
     else if (nBitsPerSample <= 16)
     {
-        if (nSampleFormat == SAMPLEFORMAT_INT)
+        if (nBitsPerSample == 16 && nSampleFormat == SAMPLEFORMAT_IEEEFP)
+            eDataType = GDT_Float16;
+        else if (nSampleFormat == SAMPLEFORMAT_INT)
             eDataType = GDT_Int16;
         else
             eDataType = GDT_UInt16;
@@ -72,6 +58,8 @@ GTiffRasterBand::GTiffRasterBand(GTiffDataset *poDSIn, int nBandIn)
     {
         if (nSampleFormat == SAMPLEFORMAT_COMPLEXINT)
             eDataType = GDT_CInt16;
+        else if (nSampleFormat == SAMPLEFORMAT_COMPLEXIEEEFP)
+            eDataType = GDT_CFloat16;
         else if (nSampleFormat == SAMPLEFORMAT_IEEEFP)
             eDataType = GDT_Float32;
         else if (nSampleFormat == SAMPLEFORMAT_INT)
@@ -182,7 +170,12 @@ GTiffRasterBand::GTiffRasterBand(GTiffDataset *poDSIn, int nBandIn)
             if (nBand > nBaseSamples && nBand - nBaseSamples - 1 < count &&
                 (v[nBand - nBaseSamples - 1] == EXTRASAMPLE_ASSOCALPHA ||
                  v[nBand - nBaseSamples - 1] == EXTRASAMPLE_UNASSALPHA))
+            {
+                if (v[nBand - nBaseSamples - 1] == EXTRASAMPLE_ASSOCALPHA)
+                    m_oGTiffMDMD.SetMetadataItem("ALPHA", "PREMULTIPLIED",
+                                                 "IMAGE_STRUCTURE");
                 m_eBandInterp = GCI_AlphaBand;
+            }
             else
                 m_eBandInterp = GCI_Undefined;
         }
@@ -326,19 +319,21 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         else
         {
             bCanUseMultiThreadedRead = false;
-            GTiffRasterBand *poBandForCache = this;
+            GTiffDataset *poDSForCache = m_poGDS;
+            int nBandForCache = nBand;
             if (!m_poGDS->m_bStreamingIn && m_poGDS->m_bBlockOrderRowMajor &&
                 m_poGDS->m_bLeaderSizeAsUInt4 &&
                 m_poGDS->m_bMaskInterleavedWithImagery &&
                 m_poGDS->m_poImageryDS)
             {
-                poBandForCache = cpl::down_cast<GTiffRasterBand *>(
-                    m_poGDS->m_poImageryDS->GetRasterBand(1));
+                poDSForCache = m_poGDS->m_poImageryDS;
+                nBandForCache = 1;
             }
-            bufferedDataFreer.Init(poBandForCache->CacheMultiRange(
-                                       nXOff, nYOff, nXSize, nYSize, nBufXSize,
-                                       nBufYSize, psExtraArg),
-                                   poBandForCache->m_poGDS->m_hTIFF);
+            bufferedDataFreer.Init(
+                poDSForCache->CacheMultiRange(nXOff, nYOff, nXSize, nYSize,
+                                              nBufXSize, nBufYSize,
+                                              &nBandForCache, 1, psExtraArg),
+                poDSForCache->m_hTIFF);
         }
     }
 
@@ -390,7 +385,8 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
              !m_poGDS->m_bLoadedBlockDirty &&
              (m_poGDS->nBands == 1 ||
               m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE) &&
-             (nXOff % nBlockXSize) == 0 && (nYOff % nBlockYSize) == 0 &&
+             !m_poGDS->m_bLeaderSizeAsUInt4 && (nXOff % nBlockXSize) == 0 &&
+             (nYOff % nBlockYSize) == 0 &&
              (nXOff + nXSize == nRasterXSize || (nXSize % nBlockXSize) == 0) &&
              (nYOff + nYSize == nRasterYSize || (nYSize % nBlockYSize) == 0))
     {

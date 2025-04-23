@@ -571,7 +571,6 @@ void GNMGraph::TraceTargets(std::queue<GNMGFID> &vertexQueue,
                             std::set<GNMGFID> &markedVertIds,
                             GNMPATH &connectedIds)
 {
-    GNMCONSTVECTOR::const_iterator it;
     std::queue<GNMGFID> neighbours_queue;
 
     // See all given vertices except thouse that have been already seen.
@@ -591,11 +590,8 @@ void GNMGraph::TraceTargets(std::queue<GNMGFID> &vertexQueue,
             LPGNMCONSTVECTOR panOutcomeEdgeIDs = GetOutEdges(nCurVertID);
             if (nullptr != panOutcomeEdgeIDs)
             {
-                for (it = panOutcomeEdgeIDs->begin();
-                     it != panOutcomeEdgeIDs->end(); ++it)
+                for (const GNMGFID nCurEdgeID : *panOutcomeEdgeIDs)
                 {
-                    GNMGFID nCurEdgeID = *it;
-
                     // ISSUE: think about to return a sequence of vertices and
                     // edges (which is more universal), as now we are going to
                     // return only sequence of edges.

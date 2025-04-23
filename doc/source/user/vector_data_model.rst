@@ -36,9 +36,10 @@ Additional intermediate classes contain functionality that is used by multiple g
 
 The :cpp:class:`OGRGeometryFactory` is used to convert well known text (WKT) and well known binary (WKB) format data into the appropriate :cpp:class:`OGRGeometry` subclass. These are predefined ASCII and binary formats for representing all the types of simple features geometries.
 
-The :cpp:class:`OGRGeometry` includes a reference to an :cpp:class:`OGRSpatialReference` object, defining the spatial reference system of that geometry. This is normally a reference to a shared spatial reference object with reference counting for each of the :cpp:class:`OGRGeometry` objects using it.
+The :cpp:class:`OGRGeometry` includes a reference to an :cpp:class:`OGRSpatialReference` object, defining the spatial reference system of that geometry. This is normally a reference to a shared spatial reference object with reference counting for each of the :cpp:class:`OGRGeometry` objects using it. Note however that in the general case, all geometric processing done by GDAL is done in a planar way, ignoring potential discontinuity issues at the poles or the antimeridian. :cpp:func:`OGRGeometryFactory::transformWithOptions` can be used in some cases to split geometries at the poles or the antimeridian.
 
 While it is theoretically possible to derive other or more specific geometry classes from the existing :cpp:class:`OGRGeometry` classes, this isn't an aspect that has been well thought out. In particular, it would be possible to create specialized classes using the :cpp:class:`OGRGeometryFactory` without modifying it.
+
 
 Compatibility issues with non-linear geometries
 +++++++++++++++++++++++++++++++++++++++++++++++

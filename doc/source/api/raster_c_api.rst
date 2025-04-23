@@ -11,3 +11,13 @@ gdal.h: Raster C API
 
 .. doxygenfile:: gdal.h
    :project: api
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+     nSrcHeight
+     nSrcWidth
+     pSrc
+     pDst
+     SetMetadataItem

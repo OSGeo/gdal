@@ -8,23 +8,7 @@
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
  * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -433,6 +417,30 @@ void OGRFeatureDefn::AddFieldDefn(const OGRFieldDefn *poNewDefn)
     apoFieldDefn.emplace_back(std::make_unique<OGRFieldDefn>(poNewDefn));
 }
 
+/**
+ * \brief Add a new field definition taking ownership of the passed field.
+ *
+ * To add a new field definition to a layer definition, do not use this
+ * function directly, but use OGRLayer::CreateField() instead.
+ *
+ * This method should only be called while there are no OGRFeature
+ * objects in existence based on this OGRFeatureDefn.
+ *
+ * @param poNewDefn the definition of the new field.
+ */
+
+void OGRFeatureDefn::AddFieldDefn(std::unique_ptr<OGRFieldDefn> &&poNewDefn)
+{
+    if (m_bSealed)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "OGRFeatureDefn::AddFieldDefn() not allowed on a sealed object");
+        return;
+    }
+    apoFieldDefn.push_back(std::move(poNewDefn));
+}
+
 /************************************************************************/
 /*                        OGR_FD_AddFieldDefn()                         */
 /************************************************************************/
@@ -499,6 +507,42 @@ OGRErr OGRFeatureDefn::DeleteFieldDefn(int iField)
 }
 
 /************************************************************************/
+/*                          StealGeomFieldDefn()                       */
+/************************************************************************/
+
+std::unique_ptr<OGRGeomFieldDefn> OGRFeatureDefn::StealGeomFieldDefn(int iField)
+{
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFeatureDefn::StealGeomFieldDefn() not allowed on a sealed "
+                 "object");
+        return nullptr;
+    }
+    if (iField < 0 || iField >= GetGeomFieldCount())
+        return nullptr;
+
+    std::unique_ptr<OGRGeomFieldDefn> poFieldDef =
+        std::move(apoGeomFieldDefn.at(iField));
+    apoGeomFieldDefn.erase(apoGeomFieldDefn.begin() + iField);
+    return poFieldDef;
+}
+
+/************************************************************************/
+/*                          StealFieldDefn()                           */
+/************************************************************************/
+
+std::unique_ptr<OGRFieldDefn> OGRFeatureDefn::StealFieldDefn(int iField)
+{
+    if (iField < 0 || iField >= GetFieldCount())
+        return nullptr;
+
+    std::unique_ptr<OGRFieldDefn> poFDef = std::move(apoFieldDefn.at(iField));
+    apoFieldDefn.erase(apoFieldDefn.begin() + iField);
+    return poFDef;
+}
+
+/************************************************************************/
 /*                       OGR_FD_DeleteFieldDefn()                       */
 /************************************************************************/
 
@@ -549,7 +593,6 @@ OGRErr OGR_FD_DeleteFieldDefn(OGRFeatureDefnH hDefn, int iField)
  */
 
 OGRErr OGRFeatureDefn::ReorderFieldDefns(const int *panMap)
-
 {
     if (m_bSealed)
     {

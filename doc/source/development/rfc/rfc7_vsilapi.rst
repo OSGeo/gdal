@@ -96,7 +96,7 @@ Implementation
 --------------
 
 The whole source tree ( port, gcore, frmts, ogr, swig/include ) will be
-altered adequatly so that the compilation works in VSIL_STRICT_ENFORCE
+altered adequately so that the compilation works in VSIL_STRICT_ENFORCE
 mode. Ticket #3799 contains a patch with the implementation. The
 compilation doesn't add any new warning. The autotest suite still works
 after this change.
@@ -108,7 +108,7 @@ process have been compiled.
 
 In the conversion process, a misuse of POSIX FILE API with a large file
 handler was discovered in the ceos2 driver, but the function happened to
-be unusued.
+be unused.
 
 Voting History
 --------------

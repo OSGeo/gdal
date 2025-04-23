@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Author:   Frank Warmerdam, warmerdam@pobox.com

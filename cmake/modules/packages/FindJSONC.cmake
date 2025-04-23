@@ -26,6 +26,7 @@ find_path(JSONC_INCLUDE_DIR
           PATH_SUFFIXES json-c json)
 find_library(JSONC_LIBRARY
              NAMES json-c json
+             NAMES_PER_DIR
              HINTS ${PC_JSONC_LIBRARY_DIRS}
                    ${JSONC_ROOT}/lib)
 mark_as_advanced(JSONC_LIBRARY JSONC_INCLUDE_DIR)

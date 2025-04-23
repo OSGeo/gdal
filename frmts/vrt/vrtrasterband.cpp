@@ -8,28 +8,13 @@
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
 #include "vrtdataset.h"
 
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
@@ -342,9 +327,8 @@ VRTParseColorTable(const CPLXMLNode *psColorTable)
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr
-VRTRasterBand::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
-                       std::map<CPLString, GDALDataset *> &oMapSharedSources)
+CPLErr VRTRasterBand::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
+                              VRTMapSharedResources &oMapSharedSources)
 
 {
     /* -------------------------------------------------------------------- */
@@ -533,8 +517,9 @@ VRTRasterBand::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
         if (pszVRTPath != nullptr &&
             atoi(CPLGetXMLValue(psFileNameNode, "relativetoVRT", "0")))
         {
-            pszSrcDSName =
-                CPLStrdup(CPLProjectRelativeFilename(pszVRTPath, pszFilename));
+            pszSrcDSName = CPLStrdup(
+                CPLProjectRelativeFilenameSafe(pszVRTPath, pszFilename)
+                    .c_str());
         }
         else
             pszSrcDSName = CPLStrdup(pszFilename);
@@ -617,9 +602,19 @@ VRTRasterBand::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
 CPLString VRTSerializeNoData(double dfVal, GDALDataType eDataType,
                              int nPrecision)
 {
-    if (CPLIsNan(dfVal))
+    if (std::isnan(dfVal))
     {
         return "nan";
+    }
+    else if (eDataType == GDT_Float16 && dfVal == -6.55e4)
+    {
+        // To avoid rounding out of the range of GFloat16
+        return "-6.55e4";
+    }
+    else if (eDataType == GDT_Float16 && dfVal == 6.55e4)
+    {
+        // To avoid rounding out of the range of GFloat16
+        return "6.55e4";
     }
     else if (eDataType == GDT_Float32 &&
              dfVal == -std::numeric_limits<float>::max())
@@ -666,15 +661,17 @@ CPLXMLNode *VRTRasterBand::SerializeToXML(const char *pszVRTPath,
     // serialized at the dataset level.
     if (dynamic_cast<VRTWarpedRasterBand *>(this) == nullptr)
     {
-        if (nBlockXSize != 128 &&
-            !(nBlockXSize < 128 && nBlockXSize == nRasterXSize))
+        if (!VRTDataset::IsDefaultBlockSize(nBlockXSize, nRasterXSize))
+        {
             CPLSetXMLValue(psTree, "#blockXSize",
                            CPLSPrintf("%d", nBlockXSize));
+        }
 
-        if (nBlockYSize != 128 &&
-            !(nBlockYSize < 128 && nBlockYSize == nRasterYSize))
+        if (!VRTDataset::IsDefaultBlockSize(nBlockYSize, nRasterYSize))
+        {
             CPLSetXMLValue(psTree, "#blockYSize",
                            CPLSPrintf("%d", nBlockYSize));
+        }
     }
 
     CPLXMLNode *psMD = oMDMD.Serialize();
@@ -900,7 +897,8 @@ bool VRTRasterBand::IsNoDataValueInDataTypeRange() const
     if (!m_bNoDataValueSet)
         return true;
     if (!std::isfinite(m_dfNoDataValue))
-        return eDataType == GDT_Float32 || eDataType == GDT_Float64;
+        return eDataType == GDT_Float16 || eDataType == GDT_Float32 ||
+               eDataType == GDT_Float64;
     GByte abyTempBuffer[2 * sizeof(double)];
     CPLAssert(GDALGetDataTypeSizeBytes(eDataType) <=
               static_cast<int>(sizeof(abyTempBuffer)));

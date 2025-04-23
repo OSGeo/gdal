@@ -4,16 +4,10 @@
 /*      Necessary functions to read/write a MiraMon Vector File         */
 /* -------------------------------------------------------------------- */
 
-#ifdef GDAL_COMPILATION
 #include "mm_gdal_constants.h"
 #include "mm_gdal_structures.h"
 
 CPL_C_START  // Necessary for compiling in GDAL project
-#else
-#include <stdio.h>  // For FILE
-#include "mm_constants.h"
-#include "mm_gdal\mm_gdal_structures.h"
-#endif
 
 // For MetaData
 #define SECTION_VERSIO "VERSIO"
@@ -45,6 +39,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define KEY_CreationDate "CreationDate"
 #define SECTION_SPATIAL_REFERENCE_SYSTEM "SPATIAL_REFERENCE_SYSTEM"
 #define SECTION_HORIZONTAL "HORIZONTAL"
+#define SECTION_VERTICAL "VERTICAL"
 #define KEY_HorizontalSystemIdentifier "HorizontalSystemIdentifier"
 #define SECTION_TAULA_PRINCIPAL "TAULA_PRINCIPAL"
 #define KEY_IdGrafic "IdGrafic"
@@ -258,7 +253,7 @@ struct MM_FLUSH_INFO
     GUInt64 NTimesFlushed;
 
     // Pointer to an OPEN file where to flush.
-    FILE_TYPE *pF;
+    VSILFILE *pF;
     // Offset in the disk where to flush
     MM_FILE_OFFSET OffsetWhereToFlush;
 
@@ -291,6 +286,7 @@ struct MiraMonVectorMetaData
     char *pXUnit;    // X units if pszSRS is empty.
     char *pYUnit;    // Y units if pszSRS is empty. If Y units is empty,
                      // X unit will be assigned as Y unit by default.
+    char *pZUnit;    // In 3D cases, Z unit can be assigned.
 
     struct MMBoundingBox hBB;  // Bounding box of the entire layer
 
@@ -491,19 +487,19 @@ struct MiraMonPointLayer
 {
     // Name of the layer with extension
     char pszLayerName[MM_CPL_PATH_BUF_SIZE];
-    FILE_TYPE *pF;
+    VSILFILE *pF;
 
     // Coordinates x,y of the points
     struct MM_FLUSH_INFO FlushTL;
     char *pTL;                             // (II mode)
     char pszTLName[MM_CPL_PATH_BUF_SIZE];  // Temporary file where to flush
-    FILE_TYPE *pFTL;  // Pointer to temporary file where to flush
+    VSILFILE *pFTL;  // Pointer to temporary file where to flush
 
     // Z section
     // Temporary file where the Z coordinates are stored
     // if necessary
     char psz3DLayerName[MM_CPL_PATH_BUF_SIZE];
-    FILE_TYPE *pF3d;
+    VSILFILE *pF3d;
     struct MM_ZSection pZSection;
 
     // MiraMon table (extended DBF)
@@ -517,7 +513,7 @@ struct MiraMonNodeLayer
 {
     char
         pszLayerName[MM_CPL_PATH_BUF_SIZE];  // Name of the layer with extension
-    FILE_TYPE *pF;
+    VSILFILE *pF;
 
     // Header of every node
     GUInt32 nSizeNodeHeader;
@@ -528,7 +524,7 @@ struct MiraMonNodeLayer
     struct MM_FLUSH_INFO FlushNL;          // (II mode)
     char *pNL;                             //
     char pszNLName[MM_CPL_PATH_BUF_SIZE];  // Temporary file where to flush
-    FILE_TYPE *pFNL;  // Pointer to temporary file where to flush
+    VSILFILE *pFNL;  // Pointer to temporary file where to flush
 
     struct MMAdmDatabase MMAdmDB;
 
@@ -540,12 +536,12 @@ struct MiraMonArcLayer
 {
     char
         pszLayerName[MM_CPL_PATH_BUF_SIZE];  // Name of the layer with extension
-    FILE_TYPE *pF;
+    VSILFILE *pF;
 
     // Temporal file where the Z coordinates are stored
     // if necessary
     char psz3DLayerName[MM_CPL_PATH_BUF_SIZE];
-    FILE_TYPE *pF3d;
+    VSILFILE *pF3d;
 
     // Header of every arc
     GUInt32 nSizeArcHeader;
@@ -557,7 +553,7 @@ struct MiraMonArcLayer
     unsigned short int nALElementSize;     // 16 bytes: 2 doubles (coordinates)
     char *pAL;                             // Arc List  // (II mode)
     char pszALName[MM_CPL_PATH_BUF_SIZE];  // Temporary file where to flush
-    FILE_TYPE *pFAL;  // Pointer to temporary file where to flush
+    VSILFILE *pFAL;  // Pointer to temporary file where to flush
 
     // Z section
     struct MM_ZSection pZSection;
@@ -581,14 +577,14 @@ struct MiraMonPolygonLayer
 {
     char
         pszLayerName[MM_CPL_PATH_BUF_SIZE];  // Name of the layer with extension
-    FILE_TYPE *pF;
+    VSILFILE *pF;
 
     // PS part
     struct MM_FLUSH_INFO FlushPS;
     unsigned short int nPSElementSize;
     char *pPS;                             // Polygon side (II mode)
     char pszPSName[MM_CPL_PATH_BUF_SIZE];  // Temporary file where to flush
-    FILE_TYPE *pFPS;  // Pointer to temporary file where to flush
+    VSILFILE *pFPS;  // Pointer to temporary file where to flush
 
     // Header of every polygon
     MM_INTERNAL_FID nMaxPolHeader;  // Number of pPolHeader allocated
@@ -600,7 +596,7 @@ struct MiraMonPolygonLayer
     unsigned short int nPALElementSize;
     char *pPAL;                             // Polygon Arc List  // (II mode)
     char pszPALName[MM_CPL_PATH_BUF_SIZE];  // Temporary file where to flush
-    FILE_TYPE *pFPAL;  // Pointer to temporary file where to flush
+    VSILFILE *pFPAL;  // Pointer to temporary file where to flush
 
     // Arc layer associated to the arc layer
     struct MM_TH TopArcHeader;
@@ -674,7 +670,7 @@ struct MiraMonFeature
 struct MiraMonVectMapInfo
 {
     char pszMapName[MM_CPL_PATH_BUF_SIZE];
-    FILE_TYPE *fMMMap;
+    VSILFILE *fMMMap;
     int nNumberOfLayers;
 };
 
@@ -739,6 +735,7 @@ struct MiraMonVectLayerInfo
     // EPSG code of the spatial reference system.
     char *pSRS;
     int nSRS_EPSG;  // Ref. system if has EPSG code.
+    char *pZUnit;   // In case of 3D data, Z unit can be assigned.
 
 // Used to write the precision of the reserved fields in the DBF
 #define MM_SRS_LAYER_IS_UNKNOWN_TYPE 0
@@ -829,7 +826,5 @@ enum TreatmentVariable
     MMTVCategorical
 };
 
-#ifdef GDAL_COMPILATION
 CPL_C_END  // Necessary for compiling in GDAL project
-#endif
-#endif  //__MM_GDAL_DRIVER_STRUCTS_H
+#endif     //__MM_GDAL_DRIVER_STRUCTS_H

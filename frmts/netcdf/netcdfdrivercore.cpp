@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2023, Even Rouault, <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrsf_frmts.h"
@@ -104,25 +88,24 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
         (poOpenInfo->nHeaderBytes > HDF5_SIG_OFFSET + HDF5_SIG_LEN &&
          memcmp(pszHeader + HDF5_SIG_OFFSET, HDF5_SIG, HDF5_SIG_LEN) == 0))
     {
+        // Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
+
         // If only the netCDF driver is allowed, immediately recognize the file
         if (poOpenInfo->IsSingleAllowedDriver("netCDF"))
         {
             return NCDF_FORMAT_NC4;
         }
 
-        // Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
-        // If HDF5 is not supported in GDAL, this driver will try to open the
-        // file. Else, make sure this driver does not try to open HDF5 files. If
-        // user really wants to open with this driver, use NETCDF:file.h5
-        // format.  This check should be relaxed, but there is no clear way to
-        // make a difference.
+        // If there is a HDF5 GDAL driver available, delegate to it.
+        // Otherwise open it with this driver.
+        // If the user really wants to open with this driver, use NETCDF:file.h5
+        // format.
 
-// Check for HDF5 support in GDAL.
-#ifdef HAVE_HDF5
+        // Check for HDF5 driver availability.
         if (bCheckExt)
         {
             // Check by default.
-            const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+            const char *pszExtension = poOpenInfo->osExtension.c_str();
             if (!(EQUAL(pszExtension, "nc") || EQUAL(pszExtension, "cdf") ||
                   EQUAL(pszExtension, "nc2") || EQUAL(pszExtension, "nc4") ||
                   EQUAL(pszExtension, "nc3") || EQUAL(pszExtension, "grd") ||
@@ -134,38 +117,35 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
                 }
             }
         }
-#endif
 
         return NCDF_FORMAT_NC4;
     }
     else if (STARTS_WITH_CI(pszHeader, "\016\003\023\001"))
     {
-        // Check for HDF4 support in libnetcdf.
 #ifdef NETCDF_HAS_HDF4
-        // If only the netCDF driver is allowed, immediately recognize the file
+        // There is HDF4 support in libnetcdf and only the netCDF driver is
+        // allowed ==> immediately recognize the file.
         if (poOpenInfo->IsSingleAllowedDriver("netCDF"))
         {
             return NCDF_FORMAT_HDF4;
         }
 #endif
 
-        // Requires HDF4 support in libnetcdf, but if HDF4 is supported by GDAL
-        // don't try to open.
-        // If user really wants to open with this driver, use NETCDF:file.hdf
-        // syntax.
+        // If there is a HDF4 GDAL driver available, delegate to it.
+        // Otherwise open it with this driver.
+        // If the user really wants to open with this driver, use NETCDF:file.hdf
+        // format.
 
-// Check for HDF4 support in GDAL.
-#ifdef HAVE_HDF4
+        // Check for HDF4 driver availability.
         if (bCheckExt && GDALGetDriverByName("HDF4") != nullptr)
         {
             // Check by default.
             // Always treat as HDF4 file.
             return NCDF_FORMAT_HDF4;
         }
-#endif
 
-// Check for HDF4 support in libnetcdf.
 #ifdef NETCDF_HAS_HDF4
+        // There is HDF4 support in libnetcdf.
         return NCDF_FORMAT_HDF4;
 #else
         return NCDF_FORMAT_NONE;
@@ -174,7 +154,7 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
 
     // The HDF5 signature of netCDF 4 files can be at offsets 512, 1024, 2048,
     // etc.
-    const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExtension = poOpenInfo->osExtension.c_str();
     if (poOpenInfo->fpL != nullptr &&
         (!bCheckExt || EQUAL(pszExtension, "nc") ||
          EQUAL(pszExtension, "cdf") || EQUAL(pszExtension, "nc4") ||
@@ -349,6 +329,9 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
         "<OpenOptionList>"
+        "   <Option name='LIST_ALL_ARRAYS' type='boolean' "
+        "description='Whether to list all arrays, and not only those whose "
+        "dimension count is 2 or more' default='NO'/>"
         "   <Option name='HONOUR_VALID_RANGE' type='boolean' scope='raster' "
         "description='Whether to set to nodata pixel values outside of the "
         "validity range' default='YES'/>"
@@ -493,12 +476,7 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
 #ifdef NETCDF_HAS_HDF4
     poDriver->SetMetadataItem("NETCDF_HAS_HDF4", "YES");
 #endif
-#ifdef HAVE_HDF4
-    poDriver->SetMetadataItem("GDAL_HAS_HDF4", "YES");
-#endif
-#ifdef HAVE_HDF5
-    poDriver->SetMetadataItem("GDAL_HAS_HDF5", "YES");
-#endif
+
     poDriver->SetMetadataItem("NETCDF_HAS_NETCDF_MEM", "YES");
 
 #ifdef ENABLE_NCDUMP
@@ -555,6 +533,17 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
         "   <Option name='USE_DEFAULT_FILL_AS_NODATA' type='boolean' "
         "description='Whether the default fill value should be used as nodata "
         "when there is no _FillValue or missing_value attribute' default='NO'/>"
+        "   <Option name='RAW_DATA_CHUNK_CACHE_SIZE' type='integer' "
+        "description='The total size of the libnetcdf raw data chunk cache, "
+        "in bytes. Only for netCDF4/HDF5 files'/>"
+        "   <Option name='CHUNK_SLOTS' type='integer' "
+        "description='The number of chunk slots in the libnetcdf raw data "
+        "chunk cache. "
+        "Only for netCDF4/HDF5 files'/>"
+        "   <Option name='PREEMPTION' type='float' min='0' max='1' "
+        "description='Indicates how much chunks from libnetcdf chunk cache "
+        "that have been fully read are favored for preemption. "
+        "Only for netCDF4/HDF5 files'/>"
         "</MultiDimArrayOpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DMD_MULTIDIM_ATTRIBUTE_CREATIONOPTIONLIST,
@@ -582,6 +571,11 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_MULTIDIMENSIONAL, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS "  // if not already set...
+                              "DatasetMetadata BandMetadata RasterValues");
 }
 
 /************************************************************************/

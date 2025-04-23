@@ -1,6 +1,7 @@
 add_gdal_driver(TARGET gdal_DDS
                 SOURCES ddsdataset.cpp
                 CORE_SOURCES ddsdrivercore.cpp
+                SKIP_GDAL_PRIV_HEADER  # because of issue with _REENTRANT
                 PLUGIN_CAPABLE
                 NO_SHARED_SYMBOL_WITH_CORE)
 

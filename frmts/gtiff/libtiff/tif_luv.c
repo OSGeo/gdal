@@ -951,7 +951,8 @@ static
     int
     uv_encode(double u, double v, int em) /* encode (u',v') coordinates */
 {
-    register int vi, ui;
+    unsigned int vi;
+    int ui;
 
     /* check for NaN */
     if (u != u || v != v)
@@ -980,8 +981,9 @@ static
     int
     uv_decode(double *up, double *vp, int c) /* decode (u',v') index */
 {
-    int upper, lower;
-    register int ui, vi;
+    unsigned int upper, lower;
+    int ui;
+    unsigned int vi;
 
     if (c < 0 || c >= UV_NDIVS)
         return (-1);
@@ -1772,10 +1774,10 @@ static int LogLuvVGetField(TIFF *tif, uint32_t tag, va_list ap)
 }
 
 static const TIFFField LogLuvFields[] = {
-    {TIFFTAG_SGILOGDATAFMT, 0, 0, TIFF_SHORT, 0, TIFF_SETGET_INT,
-     TIFF_SETGET_UNDEFINED, FIELD_PSEUDO, TRUE, FALSE, "SGILogDataFmt", NULL},
-    {TIFFTAG_SGILOGENCODE, 0, 0, TIFF_SHORT, 0, TIFF_SETGET_INT,
-     TIFF_SETGET_UNDEFINED, FIELD_PSEUDO, TRUE, FALSE, "SGILogEncode", NULL}};
+    {TIFFTAG_SGILOGDATAFMT, 0, 0, TIFF_SHORT, 0, TIFF_SETGET_INT, FIELD_PSEUDO,
+     TRUE, FALSE, "SGILogDataFmt", NULL},
+    {TIFFTAG_SGILOGENCODE, 0, 0, TIFF_SHORT, 0, TIFF_SETGET_INT, FIELD_PSEUDO,
+     TRUE, FALSE, "SGILogEncode", NULL}};
 
 int TIFFInitSGILog(TIFF *tif, int scheme)
 {

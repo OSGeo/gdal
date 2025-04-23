@@ -96,3 +96,11 @@ cpl_vsi.h
 .. seealso::
 
    :ref:`cpl_cpp_api`.
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    subdir
+    subsubdir
+

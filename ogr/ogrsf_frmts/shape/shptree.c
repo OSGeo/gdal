@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2012-2024, Even Rouault <even dot rouault at spatialys.com>
  *
  * SPDX-License-Identifier: MIT OR LGPL-2.0-or-later
  ******************************************************************************
@@ -678,6 +678,8 @@ SHPTreeDiskHandle SHPOpenDiskTree(const char *pszQIXFilename,
 
     hDiskTree = STATIC_CAST(SHPTreeDiskHandle,
                             calloc(1, sizeof(struct SHPDiskTreeInfo)));
+    if (!hDiskTree)
+        return SHPLIB_NULLPTR;
 
     if (psHooks == SHPLIB_NULLPTR)
         SASetupDefaultHooks(&(hDiskTree->sHooks));

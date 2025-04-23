@@ -10,8 +10,7 @@ add_gdal_driver(
           PLUGIN_CAPABLE
           NO_DEPS)
 gdal_standard_includes(ogr_ODS)
-target_include_directories(ogr_ODS PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-                                           $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
+target_include_directories(ogr_ODS PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 add_executable(testparser EXCLUDE_FROM_ALL testparser.cpp)
 
 if (GDAL_USE_EXPAT)
@@ -35,7 +34,7 @@ add_custom_target(check_ods_formula_parser_md5 ALL
                   COMMAND ${CMAKE_COMMAND}
                       "-DIN_FILE=ods_formula_parser.y"
                       "-DTARGET=generate_ods_formula_parser"
-                      "-DEXPECTED_MD5SUM=acf825ac2d574098a64c74c864aee15e"
+                      "-DEXPECTED_MD5SUM=4471312c8be1baeef3509fb36ab668df"
                       "-DFILENAME_CMAKE=${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
                       -P "${PROJECT_SOURCE_DIR}/cmake/helpers/check_md5sum.cmake"
                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"

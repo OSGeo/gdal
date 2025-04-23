@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic GDAL open
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -192,17 +175,20 @@ def test_basic_test_8():
         license_text.startswith("GDAL/OGR is released under the MIT license")
         or "GDAL/OGR Licensing" in license_text
     )
+    if "EMBED_RESOURCE_FILES=YES" in gdal.VersionInfo("BUILD_INFO"):
+        assert len(license_text) > 1000
 
-    # Use a subprocess to avoid the cached license text
-    env = os.environ.copy()
-    env["GDAL_DATA"] = "tmp"
-    with open("tmp/LICENSE.TXT", "wt") as f:
-        f.write("fake_license")
-    license_text = subprocess.check_output(
-        [sys.executable, "basic_test_subprocess.py"], env=env
-    ).decode("utf-8")
-    os.unlink("tmp/LICENSE.TXT")
-    assert license_text.startswith("fake_license")
+    if "USE_ONLY_EMBEDDED_RESOURCE_FILES=YES" not in gdal.VersionInfo("BUILD_INFO"):
+        # Use a subprocess to avoid the cached license text
+        env = os.environ.copy()
+        env["GDAL_DATA"] = "tmp"
+        with open("tmp/LICENSE.TXT", "wt") as f:
+            f.write("fake_license")
+        license_text = subprocess.check_output(
+            [sys.executable, "basic_test_subprocess.py"], env=env
+        ).decode("utf-8")
+        os.unlink("tmp/LICENSE.TXT")
+        assert license_text.startswith("fake_license")
 
 
 ###############################################################################
@@ -235,7 +221,7 @@ def test_basic_test_9():
 # Test gdal.PushErrorHandler() with a Python error handler as a method (#5186)
 
 
-class my_python_error_handler_class(object):
+class my_python_error_handler_class:
     def __init__(self):
         self.eErrClass = None
         self.err_no = None
@@ -990,3 +976,51 @@ def test_band_getitem():
 
     with pytest.raises(IndexError):
         ds[5]
+
+
+def test_colorinterp():
+
+    d = {}
+    for c in range(gdal.GCI_Max + 1):
+        name = gdal.GetColorInterpretationName(c)
+        assert name not in d
+        d[name] = c
+        assert gdal.GetColorInterpretationByName(name) == c
+
+
+def test_ComputeMinMaxLocation():
+
+    ds = gdal.Open("data/byte.tif")
+    ret = ds.GetRasterBand(1).ComputeMinMaxLocation()
+    assert (
+        ret.min == 74
+        and ret.max == 255
+        and ret.minX == 9
+        and ret.minY == 17
+        and ret.maxX == 2
+        and ret.maxY == 18
+    )
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Float64)
+    ds.GetRasterBand(1).Fill(float("nan"))
+    ret = ds.GetRasterBand(1).ComputeMinMaxLocation()
+    assert ret is None
+
+
+def test_create_numpy_types():
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    drv = gdal.GetDriverByName("MEM")
+
+    with drv.Create("", 1, 1, eType=np.int16) as ds:
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Int16
+
+    with drv.Create("", 1, 1, eType=np.dtype("float32")) as ds:
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
+
+    with pytest.raises(Exception, match="must be a GDAL data type code or NumPy type"):
+        drv.Create("", 1, 1, eType=str)
+
+    with pytest.raises(Exception, match="must be a GDAL data type code or NumPy type"):
+        drv.Create("", 1, 1, eType=[1, 2, 3])

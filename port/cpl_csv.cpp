@@ -8,23 +8,7 @@
  * Copyright (c) 1999, Frank Warmerdam
  * Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -663,45 +647,74 @@ CSVReadParseLineGeneric(void *fp, const char *(*pfnReadLine)(void *, size_t),
         return CSVSplitLine(pszLine, pszDelimiter, bKeepLeadingAndClosingQuotes,
                             bMergeDelimiter);
 
+    const size_t nDelimiterLength = strlen(pszDelimiter);
+    bool bInString = false;           // keep in that scope !
+    std::string osWorkLine(pszLine);  // keep in that scope !
+    size_t i = 0;                     // keep in that scope !
+
     try
     {
-        // We must now count the quotes in our working string, and as
-        // long as it is odd, keep adding new lines.
-        std::string osWorkLine(pszLine);
-
-        size_t i = 0;
-        int nCount = 0;
-
         while (true)
         {
-            for (; i < osWorkLine.size(); i++)
+            for (; i < osWorkLine.size(); ++i)
             {
                 if (osWorkLine[i] == '\"')
-                    nCount++;
+                {
+                    if (!bInString)
+                    {
+                        // Only consider " as the start of a quoted string
+                        // if it is the first character of the line, or
+                        // if it is immediately after the field delimiter.
+                        if (i == 0 ||
+                            (i >= nDelimiterLength &&
+                             osWorkLine.compare(i - nDelimiterLength,
+                                                nDelimiterLength, pszDelimiter,
+                                                nDelimiterLength) == 0))
+                        {
+                            bInString = true;
+                        }
+                    }
+                    else if (i + 1 < osWorkLine.size() &&
+                             osWorkLine[i + 1] == '"')
+                    {
+                        // Escaped double quote in a quoted string
+                        ++i;
+                    }
+                    else
+                    {
+                        bInString = false;
+                    }
+                }
             }
 
-            if (nCount % 2 == 0)
-                break;
+            if (!bInString)
+            {
+                return CSVSplitLine(osWorkLine.c_str(), pszDelimiter,
+                                    bKeepLeadingAndClosingQuotes,
+                                    bMergeDelimiter);
+            }
 
-            pszLine = pfnReadLine(fp, nMaxLineSize);
-            if (pszLine == nullptr)
+            const char *pszNewLine = pfnReadLine(fp, nMaxLineSize);
+            if (pszNewLine == nullptr)
                 break;
 
             osWorkLine.append("\n");
-            osWorkLine.append(pszLine);
+            osWorkLine.append(pszNewLine);
         }
-
-        char **papszReturn =
-            CSVSplitLine(osWorkLine.c_str(), pszDelimiter,
-                         bKeepLeadingAndClosingQuotes, bMergeDelimiter);
-
-        return papszReturn;
     }
     catch (const std::exception &e)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
-        return nullptr;
     }
+
+    if (bInString)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CSV file has unbalanced number of double-quotes. Corrupted "
+                 "data will likely be returned");
+    }
+
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1492,13 +1505,13 @@ will take in a CSV filename and return a full path to the file. The
 returned string should be to an internal static buffer so that the
 caller doesn't have to free the result.
 
-<b>Example:</b><br>
+Example:
 
 The listgeo utility uses the following override function if the user
 specified a CSV file directory with the -t commandline switch (argument
-put into CSVDirName).  <p>
+put into CSVDirName).
 
-<pre>
+\code{.cpp}
 
     ...
     SetCSVFilenameHook( CSVFileOverride );
@@ -1513,7 +1526,7 @@ static const char *CSVFileOverride( const char * pszInput )
 
     return szPath;
 }
-</pre>
+\endcode
 
 */
 

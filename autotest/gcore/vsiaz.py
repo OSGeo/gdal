@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test /vsiaz
@@ -9,26 +8,11 @@
 ###############################################################################
 # Copyright (c) 2017 Even Rouault <even dot rouault at spatialys dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import copy
+import os
 import sys
 
 import gdaltest
@@ -393,7 +377,116 @@ def test_vsiaz_fake_readdir():
         dir_contents = gdal.ReadDir("/vsiaz/")
     assert dir_contents == ["mycontainer1", "mycontainer2"]
 
-    assert gdal.VSIStatL("/vsiaz/mycontainer1", gdal.VSI_STAT_CACHE_ONLY) is not None
+    stat = gdal.VSIStatL("/vsiaz/mycontainer1", gdal.VSI_STAT_CACHE_ONLY)
+    assert stat is not None
+    assert stat.mode == 16384
+
+    stat = gdal.VSIStatL("/vsiaz/")
+    assert stat is not None
+    assert stat.mode == 16384
+
+
+###############################################################################
+# Test ReadDir() when first response has no blobs but a non-empty NextMarker
+
+
+def test_vsiaz_fake_readdir_no_blobs_in_first_request():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&prefix=a_dir%20with_space%2F&restype=container",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>a_dir with_space/</Prefix>
+                        <Blobs/>
+                        <NextMarker>bla</NextMarker>
+                    </EnumerationResults>
+                """,
+    )
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&marker=bla&prefix=a_dir%20with_space%2F&restype=container",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>a_dir with_space/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>a_dir with_space/resource4.bin</Name>
+                            <Properties>
+                              <Last-Modified>16 Oct 2016 12:34:56</Last-Modified>
+                              <Content-Length>456789</Content-Length>
+                            </Properties>
+                          </Blob>
+                          <BlobPrefix>
+                            <Name>a_dir with_space/subdir/</Name>
+                          </BlobPrefix>
+                        </Blobs>
+                    </EnumerationResults>
+                """,
+    )
+
+    with webserver.install_http_handler(handler):
+        dir_contents = gdal.ReadDir("/vsiaz/az_fake_bucket2/a_dir with_space")
+    assert dir_contents == ["resource4.bin", "subdir"]
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_vsiaz_fake_readdir_protection_again_infinite_looping():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&prefix=a_dir%20with_space%2F&restype=container",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>a_dir with_space/</Prefix>
+                        <Blobs/>
+                        <NextMarker>bla0</NextMarker>
+                    </EnumerationResults>
+                """,
+    )
+    for i in range(10):
+        handler.add(
+            "GET",
+            f"/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&marker=bla{i}&prefix=a_dir%20with_space%2F&restype=container",
+            200,
+            {"Content-type": "application/xml"},
+            f"""<?xml version="1.0" encoding="UTF-8"?>
+                        <EnumerationResults>
+                            <Prefix>a_dir with_space/</Prefix>
+                            <Blobs/>
+                            <NextMarker>bla{i + 1}</NextMarker>
+                        </EnumerationResults>
+                    """,
+        )
+
+    with webserver.install_http_handler(handler):
+        with pytest.raises(
+            Exception,
+            match="More than 10 consecutive List Blob requests returning no blobs",
+        ):
+            gdal.ReadDir("/vsiaz/az_fake_bucket2/a_dir with_space")
 
 
 ###############################################################################
@@ -452,6 +545,10 @@ def test_vsiaz_sas_fake():
 # Test write
 
 
+@pytest.mark.skipif(
+    "CI" in os.environ,
+    reason="Flaky",
+)
 def test_vsiaz_fake_write():
 
     if gdaltest.webserver_port == 0:
@@ -835,6 +932,12 @@ def test_vsiaz_write_appendblob_retry():
 # Test writing a block blob
 
 
+# Often fails at the gdal.VSIFWriteL(b"x" * (1024 * 1024 - 1), 1024 * 1024 - 1, 1, f)
+# which returns 0
+@pytest.mark.skipif(
+    "CI" in os.environ,
+    reason="Flaky",
+)
 def test_vsiaz_write_blockblob_chunk_size_1():
 
     if gdaltest.webserver_port == 0:

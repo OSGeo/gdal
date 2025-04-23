@@ -788,11 +788,17 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(
     }
 
     const char *pszMsg =
-        "Missing AZURE_STORAGE_ACCOUNT+"
-        "(AZURE_STORAGE_ACCESS_KEY or AZURE_STORAGE_SAS_TOKEN or "
-        "AZURE_NO_SIGN_REQUEST) or "
-        "AZURE_STORAGE_CONNECTION_STRING "
-        "configuration options or Azure CLI configuration file";
+        "No valid Azure credentials found. "
+        "For authenticated requests, you need to set "
+        "AZURE_STORAGE_ACCOUNT, AZURE_STORAGE_ACCESS_KEY, "
+        "AZURE_STORAGE_SAS_TOKEN, "
+        "AZURE_STORAGE_CONNECTION_STRING, or other configuration "
+        "options. Consult "
+        "https://gdal.org/en/stable/user/"
+        "virtual_file_systems.html#vsiaz-microsoft-azure-blob-files "
+        "for more details. "
+        "For unauthenticated requests on public resources, set the "
+        "AZURE_NO_SIGN_REQUEST configuration option to YES.";
     CPLDebug("AZURE", "%s", pszMsg);
     VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
     return false;

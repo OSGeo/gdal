@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -47,7 +31,7 @@
 #include "ogr_core.h"
 #include "ogr_feature.h"
 #include "ogr_geometry.h"
-#include "ogr_mem.h"
+#include "memdataset.h"
 #include "ogrsf_frmts.h"
 #include "ogr_swq.h"
 
@@ -206,15 +190,15 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
         sscanf(pszFilenameWithoutPath, "a%08x.gdbtable", &unInterestTable) == 1)
     {
         nInterestTable = static_cast<int>(unInterestTable);
-        m_osDirName = CPLGetPath(m_osDirName);
+        m_osDirName = CPLGetPathSafe(m_osDirName);
     }
 
-    if (EQUAL(CPLGetExtension(m_osDirName), "zip") &&
+    if (EQUAL(CPLGetExtensionSafe(m_osDirName).c_str(), "zip") &&
         !STARTS_WITH(m_osDirName, "/vsizip/"))
     {
         m_osDirName = "/vsizip/" + m_osDirName;
     }
-    else if (EQUAL(CPLGetExtension(m_osDirName), "tar") &&
+    else if (EQUAL(CPLGetExtensionSafe(m_osDirName).c_str(), "tar") &&
              !STARTS_WITH(m_osDirName, "/vsitar/"))
     {
         m_osDirName = "/vsitar/" + m_osDirName;
@@ -229,7 +213,7 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
         for (int i = 0; papszDir && papszDir[i] != nullptr; i++)
         {
             VSIStatBufL sStat;
-            if (EQUAL(CPLGetExtension(papszDir[i]), "gdb") &&
+            if (EQUAL(CPLGetExtensionSafe(papszDir[i]).c_str(), "gdb") &&
                 VSIStatL(CPLSPrintf("%s/%s", m_osDirName.c_str(), papszDir[i]),
                          &sStat) == 0 &&
                 VSI_ISDIR(sStat.st_mode))
@@ -251,8 +235,8 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
         CSLDestroy(papszDir);
     }
 
-    const std::string osTransactionBackupDirname =
-        CPLFormFilename(m_osDirName.c_str(), ".ogrtransaction_backup", nullptr);
+    const std::string osTransactionBackupDirname = CPLFormFilenameSafe(
+        m_osDirName.c_str(), ".ogrtransaction_backup", nullptr);
     VSIStatBufL sStat;
     if (VSIStatL(osTransactionBackupDirname.c_str(), &sStat) == 0)
     {
@@ -285,7 +269,7 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
 
     /* Explore catalog table */
     m_osGDBSystemCatalogFilename =
-        CPLFormFilename(m_osDirName, "a00000001", "gdbtable");
+        CPLFormFilenameSafe(m_osDirName, "a00000001", "gdbtable");
     if (!FileExists(m_osGDBSystemCatalogFilename.c_str()) ||
         !oTable.Open(m_osGDBSystemCatalogFilename.c_str(),
                      poOpenInfo->eAccess == GA_Update))
@@ -296,9 +280,9 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
             auto poLayer = std::make_unique<OGROpenFileGDBLayer>(
                 this, poOpenInfo->pszFilename, pszLyrName, "", "",
                 eAccess == GA_Update);
-            const char *pszTablX =
-                CPLResetExtension(poOpenInfo->pszFilename, "gdbtablx");
-            if ((!FileExists(pszTablX) &&
+            const std::string osTablX =
+                CPLResetExtensionSafe(poOpenInfo->pszFilename, "gdbtablx");
+            if ((!FileExists(osTablX.c_str()) &&
                  poLayer->GetLayerDefn()->GetFieldCount() == 0 &&
                  poLayer->GetFeatureCount() == 0) ||
                 !poLayer->IsValidLayerDefn())
@@ -345,7 +329,7 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
                 if (strcmp(psField->String, "GDB_SpatialRefs") == 0)
                 {
                     // Normally a00000003
-                    m_osGDBSpatialRefsFilename = CPLFormFilename(
+                    m_osGDBSpatialRefsFilename = CPLFormFilenameSafe(
                         m_osDirName, CPLSPrintf("a%08x.gdbtable", i + 1),
                         nullptr);
                 }
@@ -353,7 +337,7 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
                 {
                     // Normally a00000004 but it has been seen in some datasets
                     // to not be a00000004
-                    m_osGDBItemsFilename = CPLFormFilename(
+                    m_osGDBItemsFilename = CPLFormFilenameSafe(
                         m_osDirName, CPLSPrintf("a%08x.gdbtable", i + 1),
                         nullptr);
                     iGDBItems = i;
@@ -362,7 +346,7 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
                 {
                     // Normally a00000006 but can be a00000005 sometimes (e.g
                     // autotest/ogr/data/filegdb/Domains.gdb)
-                    m_osGDBItemRelationshipsFilename = CPLFormFilename(
+                    m_osGDBItemRelationshipsFilename = CPLFormFilenameSafe(
                         m_osDirName, CPLSPrintf("a%08x.gdbtable", i + 1),
                         nullptr);
                 }
@@ -454,16 +438,15 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
         for (const auto &oIter : m_osMapNameToIdx)
         {
             // test if layer is already added
-            if (OGRDataSource::GetLayerByName(oIter.first.c_str()))
+            if (GDALDataset::GetLayerByName(oIter.first.c_str()))
                 continue;
 
             if (bListAllTables || !IsPrivateLayerName(oIter.first))
             {
                 const int idx = oIter.second;
-                CPLString osFilename(CPLFormFilename(
+                const CPLString osFilename(CPLFormFilenameSafe(
                     m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable"));
-                if (oSetIgnoredRasterLayerTableNum.find(idx) ==
-                        oSetIgnoredRasterLayerTableNum.end() &&
+                if (!cpl::contains(oSetIgnoredRasterLayerTableNum, idx) &&
                     FileExists(osFilename))
                 {
                     m_apoLayers.emplace_back(
@@ -528,17 +511,16 @@ OGRLayer *OGROpenFileGDBDataSource::AddLayer(
     const CPLString &osDocumentation, OGRwkbGeometryType eGeomType,
     const std::string &osParentDefinition)
 {
-    std::map<std::string, int>::const_iterator oIter =
-        m_osMapNameToIdx.find(osName);
+    const auto oIter = m_osMapNameToIdx.find(osName);
     int idx = 0;
     if (oIter != m_osMapNameToIdx.end())
         idx = oIter->second;
     if (idx > 0 && (nInterestTable <= 0 || nInterestTable == idx))
     {
-        m_osMapNameToIdx.erase(osName);
+        m_osMapNameToIdx.erase(oIter);
 
-        CPLString osFilename =
-            CPLFormFilename(m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable");
+        const CPLString osFilename = CPLFormFilenameSafe(
+            m_osDirName, CPLOPrintf("a%08x", idx).c_str(), "gdbtable");
         if (FileExists(osFilename))
         {
             nCandidateLayers++;
@@ -546,9 +528,9 @@ OGRLayer *OGROpenFileGDBDataSource::AddLayer(
             if (m_papszFiles != nullptr)
             {
                 const CPLString osSDC =
-                    CPLResetExtension(osFilename, "gdbtable.sdc");
+                    CPLResetExtensionSafe(osFilename, "gdbtable.sdc");
                 const CPLString osCDF =
-                    CPLResetExtension(osFilename, "gdbtable.cdf");
+                    CPLResetExtensionSafe(osFilename, "gdbtable.cdf");
                 if (FileExists(osCDF))
                 {
                     nLayersCDF++;
@@ -679,7 +661,7 @@ bool OGROpenFileGDBDataSource::OpenFileGDBv10(
 
     FileGDBTable oTable;
 
-    CPLString osFilename(CPLFormFilename(
+    const CPLString osFilename(CPLFormFilenameSafe(
         m_osDirName, CPLSPrintf("a%08x.gdbtable", iGDBItems + 1), nullptr));
 
     // Normally we don't need to update in update mode the GDB_Items table,
@@ -1000,7 +982,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(
     CPLDebug("OpenFileGDB", "FileGDB v9");
 
     /* Fetch names of layers */
-    CPLString osFilename(CPLFormFilename(
+    CPLString osFilename(CPLFormFilenameSafe(
         m_osDirName, CPLSPrintf("a%08x", iGDBObjectClasses + 1), "gdbtable"));
     if (!poTable->Open(osFilename, false))
         return FALSE;
@@ -1056,7 +1038,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(
     poTable = std::make_unique<FileGDBTable>();
 
     /* Find tables that are spatial layers */
-    osFilename = CPLFormFilename(
+    osFilename = CPLFormFilenameSafe(
         m_osDirName, CPLSPrintf("a%08x", iGDBFeatureClasses + 1), "gdbtable");
     if (!poTable->Open(osFilename, false))
         return FALSE;
@@ -1226,13 +1208,12 @@ std::unique_ptr<OGROpenFileGDBLayer>
 OGROpenFileGDBDataSource::BuildLayerFromName(const char *pszName)
 {
 
-    std::map<std::string, int>::const_iterator oIter =
-        m_osMapNameToIdx.find(pszName);
+    const auto oIter = m_osMapNameToIdx.find(pszName);
     if (oIter != m_osMapNameToIdx.end())
     {
-        int idx = oIter->second;
-        CPLString osFilename(
-            CPLFormFilename(m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable"));
+        const int idx = oIter->second;
+        const CPLString osFilename(CPLFormFilenameSafe(
+            m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable"));
         if (FileExists(osFilename))
         {
             return std::make_unique<OGROpenFileGDBLayer>(
@@ -1305,7 +1286,7 @@ char **OGROpenFileGDBDataSource::GetMetadata(const char *pszDomain)
 {
     if (pszDomain && EQUAL(pszDomain, "SUBDATASETS"))
         return m_aosSubdatasets.List();
-    return OGRDataSource::GetMetadata(pszDomain);
+    return GDALDataset::GetMetadata(pszDomain);
 }
 
 /************************************************************************/
@@ -1388,15 +1369,16 @@ class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
         return poBaseLayer->GetFIDColumn();
     }
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override
     {
-        return poBaseLayer->GetExtent(psExtent, bForce);
+        return poBaseLayer->GetExtent(iGeomField, psExtent, bForce);
     }
 
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
+    virtual OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                                bool bForce) override
     {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+        return poBaseLayer->GetExtent3D(iGeomField, psExtent, bForce);
     }
 
     virtual GIntBig GetFeatureCount(int bForce) override;
@@ -1719,6 +1701,13 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                 const std::string osLayerName = afterOn.substr(0, nOpenParPos);
                 const std::string osExpression = afterOn.substr(
                     nOpenParPos + 1, afterOn.size() - nOpenParPos - 2);
+                if (osExpression.find(',') != std::string::npos)
+                {
+                    CPLError(
+                        CE_Failure, CPLE_NotSupported,
+                        "Creation of multiple-column indices is not supported");
+                    return nullptr;
+                }
                 auto poLayer = GetLayerByName(osLayerName.c_str());
                 if (poLayer)
                 {
@@ -1803,7 +1792,7 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
         bool bSuccess = true;
         for (auto &poLayer : m_apoLayers)
         {
-            if (!poLayer->Repack())
+            if (!poLayer->Repack(nullptr, nullptr))
                 bSuccess = false;
         }
         return new OGROpenFileGDBSingleFeatureLayer(
@@ -1815,7 +1804,7 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
         auto poLayer = GetLayerByName(pszLayerName);
         if (poLayer)
         {
-            const bool bSuccess = poLayer->Repack();
+            const bool bSuccess = poLayer->Repack(nullptr, nullptr);
             return new OGROpenFileGDBSingleFeatureLayer(
                 "result", bSuccess ? "true" : "false");
         }
@@ -2085,8 +2074,7 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
         }
     }
 
-    return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                     pszDialect);
+    return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter, pszDialect);
 }
 
 /***********************************************************************/
@@ -2126,8 +2114,8 @@ char **OGROpenFileGDBDataSource::GetFileList()
         if (osFilenameRadix.empty() ||
             strncmp(*papszIter, osFilenameRadix, osFilenameRadix.size()) == 0)
         {
-            osStringList.AddString(
-                CPLFormFilename(m_osDirName, *papszIter, nullptr));
+            osStringList.push_back(
+                CPLFormFilenameSafe(m_osDirName, *papszIter, nullptr));
         }
     }
     CSLDestroy(papszFiles);

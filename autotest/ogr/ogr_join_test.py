@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR JOIN support.
@@ -429,7 +428,7 @@ def test_ogr_join_21():
 
 def test_ogr_join_22():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("first")
     ogrtest.quick_create_layer_def(lyr, [["id.1"], ["id2"]])
     ogrtest.quick_create_feature(lyr, ["key1", "key2"], None)
@@ -458,7 +457,7 @@ def test_ogr_join_22():
 
 def test_ogr_join_23():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("first")
     ogrtest.quick_create_layer_def(lyr, [["f"]])
     ogrtest.quick_create_feature(lyr, [None], None)
@@ -489,7 +488,7 @@ def test_ogr_join_23():
 
 def test_ogr_join_on_special_field():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr1 = ds.CreateLayer("lyr1", options=["FID=fid1"])
     lyr1.CreateField(ogr.FieldDefn("a"))
     lyr2 = ds.CreateLayer("lyr2", options=["FID=fid2"])

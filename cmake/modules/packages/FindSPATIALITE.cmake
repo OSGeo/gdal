@@ -43,6 +43,7 @@ find_path(SPATIALITE_INCLUDE_DIR
           PATH_SUFFIXES include)
 find_library(SPATIALITE_LIBRARY
              NAMES spatialite_i spatialite
+             NAMES_PER_DIR
              HINTS ${SPATIALITE_ROOT} ${PC_SPATIALITE_LIBRARY_DIRS}
              PATH_SUFFIXES lib)
 mark_as_advanced(SPATIALITE_LIBRARY SPATIALITE_INCLUDE_DIR)

@@ -25,7 +25,11 @@ CFLAGS="-Wextra -Werror" CXXFLAGS="-Wextra -Werror" cmake .. \
          -DGDAL_USE_POSTGRESQL=OFF \
          -DGDAL_USE_WEBP=OFF \
          -DBUILD_CSHARP_BINDINGS=OFF \
+         "-DUSE_PRECOMPILED_HEADERS=ON" \
          -DCMAKE_UNITY_BUILD=ON
+
+echo "Check that GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS:BOOL=ON"
+(grep "GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS:BOOL=ON" CMakeCache.txt > /dev/null && echo "yes") || (echo "Missing" && /bin/false)
 
 NPROC=$(sysctl -n hw.ncpu)
 echo "NPROC=${NPROC}"

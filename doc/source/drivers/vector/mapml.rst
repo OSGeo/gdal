@@ -114,7 +114,7 @@ The following dataset creation options are supported:
 
       Max value for extent.xmax value.
 
--  .. dsco:: EXTENT_YMAX_MINi
+-  .. dsco:: EXTENT_YMAX_MIN
 
       Min value for extent.ymax value.
 

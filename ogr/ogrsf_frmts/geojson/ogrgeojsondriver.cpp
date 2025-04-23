@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2007, Mateusz Loskot
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -74,13 +58,8 @@ class OGRESRIFeatureServiceLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     GIntBig GetFeatureCount(int bForce = TRUE) override;
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce = true) override;
 
     int TestCapability(const char *pszCap) override;
 
@@ -306,10 +285,12 @@ GIntBig OGRESRIFeatureServiceLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                               GetExtent()                            */
+/*                              IGetExtent()                            */
 /************************************************************************/
 
-OGRErr OGRESRIFeatureServiceLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRESRIFeatureServiceLayer::IGetExtent(int iGeomField,
+                                              OGREnvelope *psExtent,
+                                              bool bForce)
 {
     OGRErr eErr = OGRERR_FAILURE;
     CPLString osNewURL =
@@ -344,7 +325,7 @@ OGRErr OGRESRIFeatureServiceLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     }
     CPLHTTPDestroyResult(pResult);
     if (eErr == OGRERR_FAILURE)
-        eErr = OGRLayer::GetExtent(psExtent, bForce);
+        eErr = OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
     return eErr;
 }
 
@@ -725,6 +706,19 @@ void RegisterOGRGeoJSON()
         "  <Option name='DATE_AS_STRING' type='boolean' description='Whether "
         "to expose date/time/date-time content using dedicated OGR "
         "date/time/date-time types or as a OGR String' default='NO'/>"
+        "  <Option name='FOREIGN_MEMBERS' type='string-select' "
+        "description='Whether and how foreign members at the feature level "
+        "should be processed as OGR fields' default='AUTO'>"
+        "    <Value>AUTO</Value>"
+        "    <Value>ALL</Value>"
+        "    <Value>NONE</Value>"
+        "    <Value>STAC</Value>"
+        "  </Option>"
+        "  <Option name='OGR_SCHEMA' type='string' description='"
+        "Partially or totally overrides the auto-detected schema to use for "
+        "creating the layer. "
+        "The overrides are defined as a JSON list of field definitions. "
+        "This can be a filename or a JSON string or a URL.'/>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
@@ -792,6 +786,9 @@ void RegisterOGRGeoJSON()
     poDriver->SetMetadataItem(GDAL_DCAP_FLUSHCACHE_CONSISTENT_STATE, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION, "YES");
 
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "Features");
+
     poDriver->pfnOpen = OGRGeoJSONDriverOpen;
     poDriver->pfnIdentify = OGRGeoJSONDriverIdentify;
     poDriver->pfnCreate = OGRGeoJSONDriverCreate;
@@ -799,4 +796,10 @@ void RegisterOGRGeoJSON()
     poDriver->pfnUnloadDriver = OGRGeoJSONDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
+
+#ifdef BUILT_AS_PLUGIN
+    RegisterOGRTopoJSON();
+    RegisterOGRESRIJSON();
+    RegisterOGRGeoJSONSeq();
+#endif
 }

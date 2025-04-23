@@ -36,12 +36,42 @@ gdal_dependent_format(jpeg "JPEG image format" "GDAL_USE_JPEG OR GDAL_USE_JPEG_I
 # base driver provide frmt core functions
 gdal_optional_format(raw "Raw formats:EOSAT FAST Format, FARSITE LCP and Vexcel MFF2 Image")
 # JPEG must be defined before GTiff
-gdal_format(gtiff "GeoTIFF image format")
+
+# Exception to the rule: enable the GTiff driver by default, even if
+# GDAL_BUILD_OPTIONAL_DRIVERS=OFF.
+if (NOT DEFINED GDAL_ENABLE_DRIVER_GTIFF AND
+    DEFINED GDAL_BUILD_OPTIONAL_DRIVERS AND
+    NOT GDAL_BUILD_OPTIONAL_DRIVERS AND
+    (GDAL_USE_TIFF OR GDAL_USE_TIFF_INTERNAL) AND
+    (GDAL_USE_GEOTIFF OR GDAL_USE_GEOTIFF_INTERNAL))
+    message(WARNING "Enabling GDAL_ENABLE_DRIVER_GTIFF=ON, despite GDAL_BUILD_OPTIONAL_DRIVERS=OFF. You can of course override this choice by setting GDAL_ENABLE_DRIVER_GTIFF=OFF")
+    option(GDAL_ENABLE_DRIVER_GTIFF "Set ON to build GeoTIFF image format format" ON)
+endif()
+
+gdal_dependent_format(gtiff "GeoTIFF image format" "GDAL_USE_TIFF OR GDAL_USE_TIFF_INTERNAL;GDAL_USE_GEOTIFF OR GDAL_USE_GEOTIFF_INTERNAL")
 set_package_properties(TIFF PROPERTIES PURPOSE "gdal_GTIFF: GeoTIFF image format")
 gdal_format(mem "Read/write data in Memory")
-gdal_format(vrt "Virtual GDAL Datasets")
+
+# Exception to the rule: enable the VRT driver by default, even if
+# GDAL_BUILD_OPTIONAL_DRIVERS=OFF.
+if (NOT DEFINED GDAL_ENABLE_DRIVER_VRT AND
+    DEFINED GDAL_BUILD_OPTIONAL_DRIVERS AND
+    NOT GDAL_BUILD_OPTIONAL_DRIVERS)
+    message(WARNING "Enabling GDAL_ENABLE_DRIVER_VRT=ON, despite GDAL_BUILD_OPTIONAL_DRIVERS=OFF. You can of course override this choice by setting GDAL_ENABLE_DRIVER_VRT=OFF")
+    option(GDAL_ENABLE_DRIVER_VRT "Set ON to build Virtual GDAL Datasets" ON)
+endif()
+
+gdal_optional_format(vrt "Virtual GDAL Datasets")
+if (NOT GDAL_ENABLE_DRIVER_VRT)
+    # Even if we don't enable the driver (Open method), we still need to compile
+    # Most of it
+    add_subdirectory(vrt)
+endif()
+
 # Note: derived is derived of vrt
-add_subdirectory(derived)
+gdal_optional_format(derived "Derived datasets")
+
+gdal_optional_format(gti "GDAL Tile Index")
 
 # default formats
 
@@ -49,25 +79,21 @@ if (CMAKE_BUILD_TYPE MATCHES "Debug" OR GDAL_ENABLE_DRIVER_NULL)
   gdal_optional_format(null "NULL dummy driver")
 endif ()
 
-gdal_format(hfa "Erdas Imagine .img")
-gdal_optional_format(sdts "SDTS translator")
+gdal_optional_format(libertiff "GeoTIFF support through libertiff library")
+gdal_optional_format(hfa "Erdas Imagine .img")
 gdal_optional_format(nitf "National Imagery Transmission Format")
 gdal_optional_format(gxf "GXF")
 gdal_optional_format(aaigrid "Arc/Info ASCII Grid Format.")
 gdal_optional_format(ceos "CEOS translator")
 gdal_optional_format(ceos2 "ASI CEOS translator" DRIVER_NAME_OPTION "SAR_CEOS")
-gdal_optional_format(xpm "XPM image format")
 gdal_optional_format(dted "Military Elevation Data")
 gdal_optional_format(jdem "JDEM driver")
 gdal_optional_format(envisat "Envisat")
-gdal_optional_format(elas "Earth Resources Laboratory Applications Software")
-gdal_optional_format(fit "FIT driver")
 gdal_optional_format(l1b "NOAA Polar Orbiter Level 1b Data Set (AVHRR)")
 gdal_optional_format(rs2 "RS2 -- RadarSat 2 XML Product")
 gdal_optional_format(ilwis "Raster Map")
 gdal_optional_format(rmf "RMF --- Raster Matrix Format")
 gdal_optional_format(leveller "Daylon Leveller heightfield")
-gdal_optional_format(sgi "SGI Image driver")
 gdal_optional_format(srtmhgt "SRTM HGT File Read Support")
 gdal_optional_format(idrisi "Idrisi Raster Format")
 gdal_optional_format(gsg "Implements the Golden Software Surfer 7 Binary Grid Format.")
@@ -81,13 +107,12 @@ gdal_optional_format(adrg "ADRG reader and ASRP/USRP Reader")
 gdal_optional_format(coasp "DRDC Configurable Airborne SAR Processor (COASP) data reader")
 gdal_optional_format(tsx "TerraSAR-X XML Product Support")
 gdal_optional_format(terragen "Terragen&trade; Terrain File")
-gdal_optional_format(blx "Magellan BLX Topo File Format")
 gdal_optional_format(msgn "Meteosat Second Generation (MSG) Native Archive Format (.nat)")
 gdal_optional_format(til "EarthWatch .TIL Driver")
-gdal_optional_format(r "R Object Data Store")
 gdal_optional_format(northwood "NWT_GRD/NWT_GRC -- Northwood/Vertical Mapper File Format")
 gdal_optional_format(saga "SAGA GIS Binary Driver")
 gdal_optional_format(xyz "ASCII Gridded XYZ")
+include(avif/driver_declaration.cmake)
 gdal_dependent_format(heif "HEIF" "GDAL_USE_HEIF")
 gdal_optional_format(esric "ESRI compact cache")
 gdal_optional_format(hf2 "HF2/HFZ heightfield raster")
@@ -108,13 +133,12 @@ gdal_optional_format(grib "WMO General Regularly-distributed Information in Bina
 gdal_optional_format(bmp "Microsoft Windows Device Independent Bitmap")
 gdal_optional_format(tga "TGA")
 gdal_optional_format(stacta "STACTA")
+gdal_optional_format(snap_tiff "SNAP TIFF")
 
-# optional Formats
 gdal_optional_format(bsb "Maptech/NOAA BSB Nautical Chart Format")
 gdal_dependent_format(aigrid "Arc/Info Binary Grid Format" "OGR_ENABLE_DRIVER_AVC")
 gdal_optional_format(usgsdem "USGS ASCII DEM (and CDED)")
 gdal_optional_format(airsar "AirSAR Polarimetric Format")
-gdal_optional_format(ozi "OZF2/OZFX3 raster")
 gdal_optional_format(pcidsk "PCI Geomatics Database File")
 gdal_optional_format(sigdem "Scaled Integer Gridded DEM .sigdem Driver")
 gdal_dependent_format(msg "Meteosat Second Generation" "GDAL_USE_PUBLICDECOMPWT")
@@ -122,6 +146,8 @@ gdal_optional_format(rik "RIK -- Swedish Grid Maps")
 gdal_optional_format(stacit "STACIT")
 gdal_optional_format(pdf "Geospatial PDF") # write only if none of GDAL_USE_POPPLER, GDAL_USE_PODOFO or GDAL_USE_PDFIUM
                                            # is set
+gdal_optional_format(rcm "Radarsat Constellation Mission")
+gdal_optional_format(gdalg "GDAL Streamed Algorithm Format")
 
 # formats with external library dependency
 gdal_dependent_format(png "PNG image format" "GDAL_USE_PNG OR GDAL_USE_PNG_INTERNAL")
@@ -142,7 +168,6 @@ gdal_dependent_format(ogcapi "OGCAPI" "GDAL_USE_CURL")
 gdal_dependent_format(gta "Generic Tagged Arrays" "GDAL_USE_GTA")
 gdal_dependent_format(webp "WebP" "GDAL_USE_WEBP")
 gdal_dependent_format(hdf4 "Hierarchical Data Format Release 4 (HDF4)" "GDAL_USE_HDF4")
-gdal_dependent_format(rasterlite "Rasterlite - Rasters in SQLite DB" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_SQLITE")
 gdal_dependent_format(mbtiles "MBTile" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_GPKG;OGR_ENABLE_DRIVER_MVT")
 gdal_dependent_format(postgisraster "PostGIS Raster driver" "GDAL_USE_POSTGRESQL")
 gdal_dependent_format(dds "DirectDraw Surface" "GDAL_USE_CRNLIB")
@@ -151,7 +176,6 @@ include(openjpeg/driver_declaration.cmake)
 include(tiledb/driver_declaration.cmake)
 gdal_dependent_format(exr "EXR support via OpenEXR library" "GDAL_USE_OPENEXR")
 gdal_dependent_format(pcraster "PCRaster CSF 2.0 raster file driver" "GDAL_USE_LIBCSF OR GDAL_USE_LIBCSF_INTERNAL")
-gdal_dependent_format(rdb "RIEGL RDB Map Pixel (.mpx) driver" "rdb_FOUND")
 gdal_dependent_format(jpegxl "JPEG-XL" "GDAL_USE_JXL")
 gdal_dependent_format(basisu_ktx2 "Basis Universal and KTX2 texture formats" "GDAL_USE_BASISU")
 
@@ -159,14 +183,10 @@ gdal_dependent_format(basisu_ktx2 "Basis Universal and KTX2 texture formats" "GD
 # driver with proprietary libraries Kakadu software SDK
 include(jp2kak/driver_declaration.cmake)
 gdal_dependent_format(jpipkak "JPIP Streaming" "GDAL_USE_KDU")
-# Luratech SDK
-gdal_dependent_format(jp2lura "JPEG-2000 (based on Luratech)" "GDAL_USE_LURATECH")
-# ESRI ArcSDE C API SDK
-gdal_dependent_format(sde "ESRI ArcSDE Raster" "HAVE_SDE")
 # LizardTech's decoding software development kit (DSDK)
 include(mrsid/driver_declaration.cmake)
-gdal_dependent_format(georaster "Oracle Spatial GeoRaster" "GDAL_USE_ORACLE" DRIVER_NAME_OPTION GEOR)
-gdal_dependent_format(ecw "ERDAS JPEG2000 (.jp2)" "GDAL_USE_ECW")
+include(georaster/driver_declaration.cmake)
+include(ecw/driver_declaration.cmake)
 
 # Register all frmt drivers according to FRMT_<driver> flags
 gdal_standard_includes(gdal_frmts)
@@ -176,7 +196,6 @@ if (ENABLE_GNM)
   target_include_directories(gdal_frmts PRIVATE $<TARGET_PROPERTY:gnm_frmts,SOURCE_DIR>)
 endif ()
 target_include_directories(
-  gdal_frmts PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
-                     $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
+  gdal_frmts PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gdal_frmts>)
 set_property(TARGET gdal_frmts PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})

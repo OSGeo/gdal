@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR SQL capabilities added as part of RFC 28 implementation.
@@ -11,23 +10,7 @@
 # Copyright (c) 2010, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 
@@ -414,7 +397,7 @@ def test_ogr_rfc28_19(data_ds):
 
 def test_ogr_rfc28_20():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
     field_defn = ogr.FieldDefn("intfield", ogr.OFTInteger)
     lyr.CreateField(field_defn)
@@ -741,12 +724,11 @@ def test_ogr_rfc28_union_all_three_branch_and(data_ds):
 # Test lack of end-of-string character
 
 
+@gdaltest.enable_exceptions()
 def test_ogr_rfc28_33(data_ds):
 
-    with gdal.quiet_errors():
-        lyr = data_ds.ExecuteSQL("select * from idlink where name='foo")
-
-    assert lyr is None
+    with pytest.raises(Exception, match="Did not find end-of-string character"):
+        data_ds.ExecuteSQL("select * from idlink'")
 
 
 ###############################################################################
@@ -886,7 +868,7 @@ def test_ogr_rfc28_39(data_ds):
 
 def test_ogr_rfc28_40():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("DATE", ogr.OFTDateTime))
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -914,7 +896,7 @@ def test_ogr_rfc28_40():
 
 def test_ogr_rfc28_41():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
     field_defn = ogr.FieldDefn("a.b", ogr.OFTInteger)
     lyr.CreateField(field_defn)
@@ -941,7 +923,7 @@ def test_ogr_rfc28_41():
 
 def test_ogr_rfc28_42():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     fld_defn = ogr.FieldDefn("b", ogr.OFTInteger)
     fld_defn.SetSubType(ogr.OFSTBoolean)
@@ -1009,7 +991,7 @@ def test_ogr_rfc28_42():
 
 def test_ogr_rfc28_43():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     fld_defn = ogr.FieldDefn("myint64", ogr.OFTInteger64)
     lyr.CreateField(fld_defn)
@@ -1067,7 +1049,7 @@ def test_ogr_rfc28_43():
 
 def test_ogr_rfc28_44():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr.withpoint")
     fld_defn = ogr.FieldDefn("field.withpoint", ogr.OFTInteger)
     lyr.CreateField(fld_defn)
@@ -1160,7 +1142,7 @@ def test_ogr_rfc28_45(data_ds):
 
 def test_ogr_rfc28_46():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr")
     fld_defn = ogr.FieldDefn("val", ogr.OFTInteger)
     lyr.CreateField(fld_defn)
@@ -1322,7 +1304,7 @@ def test_ogr_rfc28_47(data_ds):
 
 def test_ogr_rfc28_48():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr")
     fld_defn = ogr.FieldDefn("dt", ogr.OFTDateTime)
     lyr.CreateField(fld_defn)
@@ -1396,7 +1378,7 @@ def test_ogr_rfc28_48():
 ###############################################################################
 def test_ogr_rfc28_datetime_null():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr")
     fld_defn = ogr.FieldDefn("dt", ogr.OFTDateTime)
     lyr.CreateField(fld_defn)
@@ -1420,7 +1402,7 @@ def test_ogr_rfc28_datetime_null():
 ###############################################################################
 def test_ogr_rfc28_int_overflows():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr")
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
@@ -1473,7 +1455,7 @@ def test_ogr_rfc28_int_overflows():
 
 def test_ogr_rfc28_many_or():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr")
     fld_defn = ogr.FieldDefn("val", ogr.OFTInteger)
     lyr.CreateField(fld_defn)
@@ -1497,7 +1479,7 @@ def test_ogr_rfc28_many_or():
 
 def test_ogr_rfc28_many_and():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr")
     fld_defn = ogr.FieldDefn("val", ogr.OFTInteger)
     lyr.CreateField(fld_defn)
@@ -1522,7 +1504,7 @@ def test_ogr_rfc28_many_and():
 
 def test_ogr_rfc28_nested_or():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
     field = ogr.FieldDefn("fclass", ogr.OFTString)
     lyr.CreateField(field)
@@ -1575,7 +1557,7 @@ def test_ogr_rfc28_nested_or():
 
 def test_ogr_rfc28_order_by_two_columns():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("lyr")
     fld_defn = ogr.FieldDefn("int_val", ogr.OFTInteger)
     lyr.CreateField(fld_defn)
@@ -1613,7 +1595,7 @@ def test_ogr_rfc28_order_by_two_columns():
 def test_ogr_rfc28_in_date_filter():
     """Test that date fields stored as ISO-8601 can be used with IN operator"""
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("ogr_in_date_filter", geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn("date_minus", ogr.OFTDate))
     lyr.CreateField(ogr.FieldDefn("date_slash", ogr.OFTDate))

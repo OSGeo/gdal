@@ -47,7 +47,7 @@ force: int, default=False
 can_return_null: int, default=False
     Whether None can be returned in the response.
 geom_field: int, default=0
-    Ithe index of the geometry field on which to compute the extent.
+    The index of the geometry field on which to compute the extent.
     Can be iterated over using :py:func:`range` and :py:func:`GetGeomFieldCount`.
 
 Returns

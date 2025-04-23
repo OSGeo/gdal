@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  SQLite SQL dialect testing.
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2012-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import json
@@ -69,7 +52,7 @@ def require_ogr_sql_sqlite():
     ds = None
     gdal.Unlink("/vsimem/ogr_sql_sqlite_available.db")
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     sql_lyr = ds.ExecuteSQL("SELECT * FROM sqlite_master", dialect="SQLite")
     ds.ReleaseResultSet(sql_lyr)
     assert sql_lyr is not None
@@ -93,7 +76,7 @@ def require_ogr_sql_sqlite():
 
 
 def test_ogr_sql_sqlite_1():
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     for geom in [ogr.wkbNone, ogr.wkbUnknown]:
         lyr = ds.CreateLayer("my_layer", geom_type=geom)
         field_defn = ogr.FieldDefn("intfield", ogr.OFTInteger)
@@ -378,7 +361,7 @@ def test_ogr_sql_sqlite_1():
 
 def test_ogr_sql_sqlite_2():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
@@ -641,7 +624,7 @@ def test_ogr_sql_sqlite_6():
 
 def test_ogr_sql_sqlite_7():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
 
     lyr = ds.CreateLayer("my_layer")
     field_defn = ogr.FieldDefn("intfield", ogr.OFTInteger)
@@ -751,7 +734,7 @@ def test_ogr_sql_sqlite_10():
 
 def test_ogr_sql_sqlite_11():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
 
     lyr = ds.CreateLayer("my_layer")
     field_defn = ogr.FieldDefn("intfield", ogr.OFTInteger)
@@ -777,7 +760,7 @@ def test_ogr_sql_sqlite_11():
 
 def test_ogr_sql_sqlite_12():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
 
     # Invalid SQL
     with gdal.quiet_errors():
@@ -803,7 +786,7 @@ def test_ogr_sql_sqlite_12():
 
 def test_ogr_sql_sqlite_13():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
@@ -944,7 +927,7 @@ def test_ogr_sql_sqlite_13():
 
 def ogr_sql_sqlite_14_and_15(sql):
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
@@ -1432,7 +1415,7 @@ def test_ogr_sql_geocode(with_webserver, service, template):
 
         with gdal.config_options(options):
 
-            ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+            ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
 
             if service == "BING":
                 name_field = "Name"
@@ -1569,7 +1552,7 @@ def test_ogr_sql_reverse_geocode(with_webserver, service, template):
 
         with gdal.config_options(options):
 
-            ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+            ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
 
             if service == "GEONAMES":
                 name_field = "name"
@@ -1664,7 +1647,7 @@ def test_ogr_sql_reverse_geocode(with_webserver, service, template):
 
 def test_ogr_sql_sqlite_24():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
 
     # Very short string
     sql_lyr = ds.ExecuteSQL(
@@ -1767,7 +1750,7 @@ def test_ogr_sql_sqlite_25():
     # if ogrtest.has_spatialite is True:
     #    return 'skip'
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
 
     # Test ST_AsText, ST_GeomFromText, ST_AsBinary, ST_GeomFromWKB
     sql_lyr = ds.ExecuteSQL(
@@ -1822,7 +1805,7 @@ def test_ogr_sql_sqlite_26():
     # if ogrtest.has_spatialite is True:
     #    return 'skip'
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
 
     geom1_wkt = "POLYGON((0 0,0 1,1 1,1 0,0 0))"
     geom2_wkt = "POLYGON((0.5 0.5,0.5 1.5,1.5 1.5,1.5 0.5,0.5 0.5))"
@@ -1985,7 +1968,7 @@ def test_ogr_sql_sqlite_26():
 
 def test_ogr_sql_sqlite_27():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("DATE", ogr.OFTDateTime))
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -2011,7 +1994,7 @@ def test_ogr_sql_sqlite_27():
 
 def test_ogr_sql_sqlite_28():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
 
     # Invalid parameters
     for sql in ["SELECT hstore_get_value('a')"]:
@@ -2052,7 +2035,7 @@ def test_ogr_sql_sqlite_28():
 
 def test_ogr_sql_sqlite_29():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbCircularString)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("CIRCULARSTRING(0 0,1 0,0 0)"))
@@ -2076,7 +2059,7 @@ def test_ogr_sql_sqlite_29():
 
 def test_ogr_sql_sqlite_30():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("testm", geom_type=ogr.wkbLineStringM)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING M (1 2 3)"))
@@ -2114,7 +2097,7 @@ def test_ogr_sql_sqlite_30():
 
 def test_ogr_sql_sqlite_31():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("50M3 @w35Om3 N@M3", ogr.OFTInteger))
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -2138,7 +2121,7 @@ def test_ogr_sql_sqlite_31():
 
 def test_ogr_sql_sqlite_geomcollection_in_geomcollection():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbLineStringM)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(
@@ -2174,7 +2157,7 @@ def test_ogr_sql_sqlite_st_makevalid():
     # Check if MakeValid() is available
     make_valid_available = ogrtest.have_geos()
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     sql = "SELECT ST_MakeValid(ST_GeomFromText('POLYGON ((0 0,1 1,1 0,0 1,0 0))'))"
     with gdal.quiet_errors():
         sql_lyr = ds.ExecuteSQL(sql, dialect="SQLite")
@@ -2199,7 +2182,7 @@ def test_ogr_sql_sqlite_st_makevalid():
 
 def test_ogr_sql_sqlite_field_names_same_case():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("id"))
     lyr.CreateField(ogr.FieldDefn("ID"))
@@ -2224,7 +2207,7 @@ def test_ogr_sql_sqlite_field_names_same_case():
 
 def test_ogr_sql_sqlite_attribute_and_geom_field_name_same():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn("foo"))
     lyr.CreateGeomField(ogr.GeomFieldDefn("foo"))
@@ -2283,7 +2266,7 @@ def sqlite_has_json_each():
 )
 def test_ogr_sql_sqlite_json_each():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn("jsonprop"))
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -2318,7 +2301,7 @@ def testogr_sql_sqlite_spatial_filter(driver):
 
     filename = None
     if driver == "memory":
-        ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+        ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     elif driver == "shape":
         filename = "/vsimem/test.shp"
         ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(filename)
@@ -2355,7 +2338,7 @@ def testogr_sql_sqlite_spatial_filter(driver):
 @gdaltest.enable_exceptions()
 def testogr_sql_sqlite_named_FID_column():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test", options=["FID=myfid"])
     lyr.CreateField(ogr.FieldDefn("foo"))
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -2419,7 +2402,7 @@ def testogr_sql_sqlite_named_FID_column():
 )
 def test_ogr_sql_sqlite_unsupported(sql):
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("foo"))
     with pytest.raises(Exception):
@@ -2433,7 +2416,7 @@ def test_ogr_sql_sqlite_unsupported(sql):
 @gdaltest.enable_exceptions()
 def test_ogr_sql_sqlite_like_utf8():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test", options=["ADVERTIZE_UTF8=YES"])
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
 
@@ -2486,11 +2469,11 @@ def test_ogr_sql_sqlite_like_utf8():
 @gdaltest.enable_exceptions()
 def test_ogr_sql_sqlite_execute_sql_error_on_spatial_filter_mem_layer():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     ds.CreateLayer("test")
     geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))")
     with pytest.raises(
-        Exception, match="Cannot set spatial filter: no geometry field selected"
+        Exception, match="Cannot set spatial filter: no geometry field present in layer"
     ):
         ds.ExecuteSQL("SELECT 1 FROM test", spatialFilter=geom, dialect="SQLITE")
 
@@ -2507,6 +2490,6 @@ def test_ogr_sql_sqlite_execute_sql_error_on_spatial_filter_shp_layer(tmp_vsimem
     ds.CreateLayer("test")
     geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))")
     with pytest.raises(
-        Exception, match="Cannot set spatial filter: no geometry field selected"
+        Exception, match="Cannot set spatial filter: no geometry field present in layer"
     ):
         ds.ExecuteSQL("SELECT 1 FROM test", spatialFilter=geom, dialect="SQLITE")

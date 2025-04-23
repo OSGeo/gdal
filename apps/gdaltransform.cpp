@@ -8,23 +8,7 @@
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -40,37 +24,35 @@
 #include "gdal_alg.h"
 #include "gdalwarper.h"
 #include "gdal.h"
-#include "gdal_version.h"
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 #include "commonutils.h"
 
-#ifdef _WIN32
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
-
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr,
+                  bool bHelpDoc = false)
 
 {
     fprintf(bIsError ? stderr : stdout,
             "Usage: gdaltransform [--help] [--help-general]\n"
-            "    [-i] [-s_srs <srs_def>] [-t_srs <srs_def>] [-to "
-            ">NAME>=<VALUE>]...\n"
-            "    [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>]\n"
-            "    [-ct <proj_string>] [-order <n>] [-tps] [-rpc] [-geoloc] \n"
-            "    [-gcp <pixel> <line> <easting> <northing> [elevation]]...\n"
-            "    [-output_xy] [-E] [-field_sep <sep>] [-ignore_extra_input]\n"
-            "    [<srcfile> [<dstfile>]]\n"
-            "\n");
+            "       [-i] [-s_srs <srs_def>] [-t_srs <srs_def>] "
+            "[-to >NAME>=<VALUE>]...\n"
+            "       [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>]\n"
+            "       [-ct <proj_string>] [-order <n>] [-tps] [-rpc] [-geoloc] \n"
+            "       [-gcp <pixel> <line> <easting> <northing> [elevation]]...\n"
+            "       [-output_xy] [-E] [-field_sep <sep>] "
+            "[-ignore_extra_input]\n"
+            "       [<srcfile> [<dstfile>]]\n");
 
+    if (bHelpDoc)
+        exit(0);
+
+    fprintf(bIsError ? stderr : stdout, "\n");
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
@@ -168,6 +150,10 @@ MAIN_START(argc, argv)
         else if (EQUAL(argv[i], "--help"))
         {
             Usage(false);
+        }
+        else if (EQUAL(argv[i], "--help-doc"))
+        {
+            Usage(false, nullptr, true);
         }
         else if (EQUAL(argv[i], "-t_srs"))
         {
@@ -376,7 +362,7 @@ MAIN_START(argc, argv)
     if (!bCoordOnCommandLine)
     {
         // Is it an interactive terminal ?
-        if (isatty(static_cast<int>(fileno(stdin))))
+        if (CPLIsInteractive(stdin))
         {
             if (pszSrcFilename != nullptr)
             {
@@ -402,6 +388,11 @@ MAIN_START(argc, argv)
             if (fgets(szLine, sizeof(szLine) - 1, stdin) == nullptr)
                 break;
 
+            size_t nLen = strlen(szLine);
+            if (nLen && szLine[nLen - 1] == '\n')
+                szLine[--nLen] = 0;
+            if (nLen && szLine[nLen - 1] == '\r')
+                szLine[--nLen] = 0;
             const CPLStringList aosTokens(CSLTokenizeString(szLine));
             const int nCount = aosTokens.size();
 

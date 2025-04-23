@@ -84,6 +84,12 @@ CPLErr QB3_Band::Compress(buf_mgr &dst, buf_mgr &src)
         // Quality of 90 and above trigger the better encoding
         qb3_set_encoder_mode(pQB3, (img.quality > 90) ? QB3M_BEST : QB3M_BASE);
 
+#if defined(QB3_HAS_FTL)
+        // Quality below 5 triggers the faster encoding, when available
+        if (img.quality < 5)
+            qb3_set_encoder_mode(pQB3, QB3M_FTL);
+#endif
+
         dst.size = qb3_encode(pQB3, src.buffer, dst.buffer);
         if (0 == dst.size)
         {

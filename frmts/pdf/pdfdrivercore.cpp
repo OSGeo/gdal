@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2023, Even Rouault, <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "pdfdrivercore.h"
@@ -45,7 +29,7 @@ static const char *const szOpenOptionList =
     "  </Option>"
 #endif
     "  <Option name='DPI' type='float' description='Resolution in Dot Per "
-    "Inch' default='72' alt_config_option='GDAL_PDF_DPI'/>"
+    "Inch' default='150' alt_config_option='GDAL_PDF_DPI'/>"
     "  <Option name='USER_PWD' type='string' description='Password' "
     "alt_config_option='PDF_USER_PWD'/>"
 #ifdef HAVE_MULTIPLE_PDF_BACKENDS
@@ -103,7 +87,7 @@ int PDFDatasetIdentify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 128)
         return FALSE;
 
-    return STARTS_WITH((const char *)poOpenInfo->pabyHeader, "%PDF");
+    return memcmp(poOpenInfo->pabyHeader, "%PDF", 4) == 0;
 }
 
 /************************************************************************/
@@ -166,8 +150,6 @@ void PDFDriverSetCommonMetadata(GDALDriver *poDriver)
         "description='Format of geo-encoding' default='ISO32000'>\n"
         "     <Value>NONE</Value>\n"
         "     <Value>ISO32000</Value>\n"
-        "     <Value>OGC_BP</Value>\n"
-        "     <Value>BOTH</Value>\n"
         "   </Option>\n"
         "   <Option name='NEATLINE' type='string' description='Neatline'/>\n"
         "   <Option name='DPI' type='float' description='DPI' default='72'/>\n"
@@ -248,6 +230,12 @@ void PDFDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS GCPs DatasetMetadata");
+
+    poDriver->DeclareAlgorithm({"list-layers"});
 #endif
 
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");

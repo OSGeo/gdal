@@ -7,24 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2014-2019, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "mongocxxv3_headers.h"
@@ -197,12 +180,8 @@ class OGRMongoDBv3Layer final : public OGRLayer
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr SetAttributeFilter(const char *pszFilter) override;
 
-    void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
-
-    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
     int TestCapability(const char *pszCap) override;
     OGRFeatureDefn *GetLayerDefn() override;
     OGRErr CreateField(const OGRFieldDefn *poFieldIn, int) override;
@@ -2181,22 +2160,13 @@ OGRErr OGRMongoDBv3Layer::SetAttributeFilter(const char *pszFilter)
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGRMongoDBv3Layer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
+OGRErr OGRMongoDBv3Layer::ISetSpatialFilter(int iGeomField,
+                                            const OGRGeometry *poGeomIn)
 
 {
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone)
-    {
-        if (iGeomField != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
-        }
-        return;
-    }
     m_iGeomFieldFilter = iGeomField;
 
     m_oQuerySpat = bsoncxx::builder::basic::make_document();
@@ -2220,7 +2190,7 @@ void OGRMongoDBv3Layer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
         if (sEnvelope.MinX == -180 && sEnvelope.MinY == -90 &&
             sEnvelope.MaxX == 180 && sEnvelope.MaxY == 90)
         {
-            return;
+            return OGRERR_NONE;
         }
 
         try
@@ -2254,8 +2224,10 @@ void OGRMongoDBv3Layer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s: %s",
                      "SetSpatialFilter()", ex.what());
+            return OGRERR_FAILURE;
         }
     }
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

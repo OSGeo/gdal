@@ -5,8 +5,8 @@
 
 .. _python_mdim_api:
 
-Python Multi-dimensional array API
-==================================
+Multi-dimensional array API
+===========================
 
 .. autoclass:: osgeo.gdal.Group
     :members:

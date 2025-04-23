@@ -163,12 +163,32 @@ struct tiff
     TIFFHeaderUnion tif_header; /* file's header block Classic/BigTIFF union */
     uint16_t tif_header_size;   /* file's header block and its length */
     uint32_t tif_row;           /* current scanline */
-    tdir_t tif_curdir;          /* current directory (index) */
-    uint32_t tif_curstrip;      /* current strip for read/write */
-    uint64_t tif_curoff;        /* current offset for read/write */
-    uint64_t tif_lastvalidoff;  /* last valid offset allowed for rewrite in
-                                   place. Used only by TIFFAppendToStrip() */
-    uint64_t tif_dataoff;       /* current offset for writing dir (IFD) */
+
+    /* There are IFDs in the file and an "active" IFD in memory,
+     * from which fields are "set" and "get".
+     * tif_curdir is set to:
+     *   a) TIFF_NON_EXISTENT_DIR_NUMBER if there is no IFD in the file
+     *      or the state is unknown,
+     *      or the last read (i.e. TIFFFetchDirectory()) failed,
+     *      or a custom directory was written.
+     *   b) IFD index of last IFD written in the file. In this case the
+     *      active IFD is a new (empty) one and tif_diroff is zero.
+     *      If writing fails, tif_curdir is not changed.
+     *   c) IFD index of IFD read from file into memory (=active IFD),
+     *      even if IFD is corrupt and TIFFReadDirectory() returns 0.
+     *      Then tif_diroff contains the offset of the IFD in the file.
+     *   d) IFD index 0, whenever a custom directory or an unchained SubIFD
+     *      was read. */
+    tdir_t tif_curdir; /* current directory (index) */
+    /* tif_curdircount: number of directories (main-IFDs) in file:
+     * - TIFF_NON_EXISTENT_DIR_NUMBER means 'dont know number of IFDs'.
+     * - 0 means 'empty file opened for writing, but no IFD written yet' */
+    tdir_t tif_curdircount;
+    uint32_t tif_curstrip;     /* current strip for read/write */
+    uint64_t tif_curoff;       /* current offset for read/write */
+    uint64_t tif_lastvalidoff; /* last valid offset allowed for rewrite in
+                                  place. Used only by TIFFAppendToStrip() */
+    uint64_t tif_dataoff;      /* current offset for writing dir (IFD) */
     /* SubIFD support */
     uint16_t tif_nsubifd;   /* remaining subifds to write */
     uint64_t tif_subifdoff; /* offset for patching SubIFD link */
@@ -238,6 +258,7 @@ struct tiff
     tmsize_t tif_max_single_mem_alloc;    /* in bytes. 0 for unlimited */
     tmsize_t tif_max_cumulated_mem_alloc; /* in bytes. 0 for unlimited */
     tmsize_t tif_cur_cumulated_mem_alloc; /* in bytes */
+    int tif_warn_about_unknown_tags;
 };
 
 struct TIFFOpenOptions
@@ -248,6 +269,7 @@ struct TIFFOpenOptions
     void *warnhandler_user_data;       /* may be NULL */
     tmsize_t max_single_mem_alloc;     /* in bytes. 0 for unlimited */
     tmsize_t max_cumulated_mem_alloc;  /* in bytes. 0 for unlimited */
+    int warn_about_unknown_tags;
 };
 
 #define isPseudoTag(t) (t > 0xffff) /* is tag value normal or pseudo */
@@ -378,6 +400,8 @@ typedef size_t TIFFIOSize_t;
 extern "C"
 {
 #endif
+    extern int _tiffDummyMapProc(thandle_t fd, void **pbase, toff_t *psize);
+    extern void _tiffDummyUnmapProc(thandle_t fd, void *base, toff_t size);
     extern int _TIFFgetMode(TIFFOpenOptions *opts, thandle_t clientdata,
                             const char *mode, const char *module);
     extern int _TIFFNoRowEncode(TIFF *tif, uint8_t *pp, tmsize_t cc,

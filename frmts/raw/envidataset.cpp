@@ -9,23 +9,7 @@
  * Copyright (c) 2002, Frank Warmerdam
  * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -101,8 +85,7 @@ static int ITTVISToUSGSZone(int nITTVISZone)
 
 ENVIDataset::ENVIDataset()
     : fpImage(nullptr), fp(nullptr), pszHDRFilename(nullptr),
-      bFoundMapinfo(false), bHeaderDirty(false), bFillFile(false),
-      interleave(BSQ)
+      bFoundMapinfo(false), bHeaderDirty(false), bFillFile(false)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -233,15 +216,15 @@ CPLErr ENVIDataset::FlushCache(bool bAtClosing)
     const int iENVIType = GetEnviType(band->GetRasterDataType());
     bOK &= VSIFPrintfL(fp, "data type = %d\n", iENVIType) >= 0;
     const char *pszInterleaving = nullptr;
-    switch (interleave)
+    switch (eInterleave)
     {
-        case BIP:
+        case Interleave::BIP:
             pszInterleaving = "bip";  // Interleaved by pixel.
             break;
-        case BIL:
+        case Interleave::BIL:
             pszInterleaving = "bil";  // Interleaved by line.
             break;
-        case BSQ:
+        case Interleave::BSQ:
             pszInterleaving = "bsq";  // Band sequential by default.
             break;
         default:
@@ -341,7 +324,7 @@ CPLErr ENVIDataset::FlushCache(bool bAtClosing)
     if (bHasNoData)
     {
         bOK &=
-            VSIFPrintfL(fp, "data ignore value = %.18g\n", dfNoDataValue) >= 0;
+            VSIFPrintfL(fp, "data ignore value = %.17g\n", dfNoDataValue) >= 0;
     }
 
     // Write "data offset values", if needed
@@ -363,7 +346,7 @@ CPLErr ENVIDataset::FlushCache(bool bAtClosing)
                 double dfValue = GetRasterBand(i)->GetOffset(&bHasValue);
                 if (!bHasValue)
                     dfValue = 0;
-                bOK &= VSIFPrintfL(fp, "%.18g", dfValue) >= 0;
+                bOK &= VSIFPrintfL(fp, "%.17g", dfValue) >= 0;
                 if (i != nBands)
                     bOK &= VSIFPrintfL(fp, ", ") >= 0;
             }
@@ -390,7 +373,7 @@ CPLErr ENVIDataset::FlushCache(bool bAtClosing)
                 double dfValue = GetRasterBand(i)->GetScale(&bHasValue);
                 if (!bHasValue)
                     dfValue = 1;
-                bOK &= VSIFPrintfL(fp, "%.18g", dfValue) >= 0;
+                bOK &= VSIFPrintfL(fp, "%.17g", dfValue) >= 0;
                 if (i != nBands)
                     bOK &= VSIFPrintfL(fp, ", ") >= 0;
             }
@@ -1798,7 +1781,7 @@ static unsigned byteSwapUInt(unsigned swapMe)
 
 void ENVIDataset::ProcessStatsFile()
 {
-    osStaFilename = CPLResetExtension(pszHDRFilename, "sta");
+    osStaFilename = CPLResetExtensionSafe(pszHDRFilename, "sta");
     VSILFILE *fpStaFile = VSIFOpenL(osStaFilename, "rb");
 
     if (!fpStaFile)
@@ -2024,49 +2007,52 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     {
         // First try hdr as an extra extension
         osHdrFilename =
-            CPLFormFilename(nullptr, poOpenInfo->pszFilename, "hdr");
+            CPLFormFilenameSafe(nullptr, poOpenInfo->pszFilename, "hdr");
         fpHeader = VSIFOpenL(osHdrFilename, pszMode);
 
         if (fpHeader == nullptr && VSIIsCaseSensitiveFS(osHdrFilename))
         {
             osHdrFilename =
-                CPLFormFilename(nullptr, poOpenInfo->pszFilename, "HDR");
+                CPLFormFilenameSafe(nullptr, poOpenInfo->pszFilename, "HDR");
             fpHeader = VSIFOpenL(osHdrFilename, pszMode);
         }
 
         // Otherwise, try .hdr as a replacement extension
         if (fpHeader == nullptr)
         {
-            osHdrFilename = CPLResetExtension(poOpenInfo->pszFilename, "hdr");
+            osHdrFilename =
+                CPLResetExtensionSafe(poOpenInfo->pszFilename, "hdr");
             fpHeader = VSIFOpenL(osHdrFilename, pszMode);
         }
 
         if (fpHeader == nullptr && VSIIsCaseSensitiveFS(osHdrFilename))
         {
-            osHdrFilename = CPLResetExtension(poOpenInfo->pszFilename, "HDR");
+            osHdrFilename =
+                CPLResetExtensionSafe(poOpenInfo->pszFilename, "HDR");
             fpHeader = VSIFOpenL(osHdrFilename, pszMode);
         }
     }
     else
     {
         // Now we need to tear apart the filename to form a .HDR filename.
-        CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
+        CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
         CPLString osName = CPLGetFilename(poOpenInfo->pszFilename);
 
         // First try hdr as an extra extension
-        int iFile = CSLFindString(papszSiblingFiles,
-                                  CPLFormFilename(nullptr, osName, "hdr"));
+        int iFile =
+            CSLFindString(papszSiblingFiles,
+                          CPLFormFilenameSafe(nullptr, osName, "hdr").c_str());
         if (iFile < 0)
         {
             // Otherwise, try .hdr as a replacement extension
             iFile = CSLFindString(papszSiblingFiles,
-                                  CPLResetExtension(osName, "hdr"));
+                                  CPLResetExtensionSafe(osName, "hdr").c_str());
         }
 
         if (iFile >= 0)
         {
             osHdrFilename =
-                CPLFormFilename(osPath, papszSiblingFiles[iFile], nullptr);
+                CPLFormFilenameSafe(osPath, papszSiblingFiles[iFile], nullptr);
             fpHeader = VSIFOpenL(osHdrFilename, pszMode);
         }
     }
@@ -2100,7 +2086,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     }
 
     // Has the user selected the .hdr file to open?
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "hdr"))
+    if (poOpenInfo->IsExtensionEqualToCI("hdr"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The selected file is an ENVI header file, but to "
@@ -2113,7 +2099,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     }
 
     // Has the user selected the .sta (stats) file to open?
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "sta"))
+    if (poOpenInfo->IsExtensionEqualToCI("sta"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The selected file is an ENVI statistics file. "
@@ -2135,7 +2121,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     // In case, there is no interleave keyword, we try to derive it from the
     // file extension.
     CPLString osInterleave = poDS->m_aosHeader.FetchNameValueDef(
-        "interleave", CPLGetExtension(poOpenInfo->pszFilename));
+        "interleave", poOpenInfo->osExtension.c_str());
 
     if (!STARTS_WITH_CI(osInterleave, "BSQ") &&
         !STARTS_WITH_CI(osInterleave, "BIP") &&
@@ -2307,7 +2293,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
     if (STARTS_WITH_CI(osInterleave, "bil"))
     {
-        poDS->interleave = BIL;
+        poDS->eInterleave = Interleave::BIL;
         poDS->SetMetadataItem("INTERLEAVE", "LINE", "IMAGE_STRUCTURE");
         if (nSamples > std::numeric_limits<int>::max() / (nDataSize * nBands))
         {
@@ -2320,7 +2306,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     }
     else if (STARTS_WITH_CI(osInterleave, "bip"))
     {
-        poDS->interleave = BIP;
+        poDS->eInterleave = Interleave::BIP;
         poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
         if (nSamples > std::numeric_limits<int>::max() / (nDataSize * nBands))
         {
@@ -2333,7 +2319,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     }
     else
     {
-        poDS->interleave = BSQ;
+        poDS->eInterleave = Interleave::BSQ;
         poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
         if (nSamples > std::numeric_limits<int>::max() / nDataSize)
         {
@@ -2401,9 +2387,12 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     {
         char **papszBandNames = poDS->SplitList(pszBandNames);
         char **papszWL = poDS->SplitList(pszWaveLength);
+        const char *pszFWHM = poDS->m_aosHeader["fwhm"];
+        char **papszFWHM = pszFWHM ? poDS->SplitList(pszFWHM) : nullptr;
 
         const char *pszWLUnits = nullptr;
         const int nWLCount = CSLCount(papszWL);
+        const int nFWHMCount = CSLCount(papszFWHM);
         if (papszWL)
         {
             // If WL information is present, process wavelength units.
@@ -2460,6 +2449,29 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
             CPLString osBandId = CPLSPrintf("Band_%i", i + 1);
             poDS->SetMetadataItem(osBandId, osBandName.c_str());
 
+            const auto ConvertWaveLength =
+                [pszWLUnits](double dfVal) -> const char *
+            {
+                if (EQUAL(pszWLUnits, "Micrometers") || EQUAL(pszWLUnits, "um"))
+                {
+                    return CPLSPrintf("%.3f", dfVal);
+                }
+                else if (EQUAL(pszWLUnits, "Nanometers") ||
+                         EQUAL(pszWLUnits, "nm"))
+                {
+                    return CPLSPrintf("%.3f", dfVal / 1000);
+                }
+                else if (EQUAL(pszWLUnits, "Millimeters") ||
+                         EQUAL(pszWLUnits, "mm"))
+                {
+                    return CPLSPrintf("%.3f", dfVal * 1000);
+                }
+                else
+                {
+                    return nullptr;
+                }
+            };
+
             // Set wavelength metadata to band.
             if (papszWL && nWLCount > i)
             {
@@ -2470,11 +2482,29 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
                 {
                     poDS->GetRasterBand(i + 1)->SetMetadataItem(
                         "wavelength_units", pszWLUnits);
+
+                    if (const char *pszVal =
+                            ConvertWaveLength(CPLAtof(papszWL[i])))
+                    {
+                        poDS->GetRasterBand(i + 1)->SetMetadataItem(
+                            "CENTRAL_WAVELENGTH_UM", pszVal, "IMAGERY");
+                    }
+                }
+            }
+
+            if (papszFWHM && nFWHMCount > i && pszWLUnits)
+            {
+                if (const char *pszVal =
+                        ConvertWaveLength(CPLAtof(papszFWHM[i])))
+                {
+                    poDS->GetRasterBand(i + 1)->SetMetadataItem(
+                        "FWHM_UM", pszVal, "IMAGERY");
                 }
             }
         }
         CSLDestroy(papszWL);
         CSLDestroy(papszBandNames);
+        CSLDestroy(papszFWHM);
     }
 
     // Apply "default bands" if we have it to set RGB color interpretation.
@@ -2719,19 +2749,19 @@ GDALDataset *ENVIDataset::Create(const char *pszFilename, int nXSize,
     }
 
     // Create the .hdr filename.
-    const char *pszHDRFilename = nullptr;
+    std::string osHDRFilename;
     const char *pszSuffix = CSLFetchNameValue(papszOptions, "SUFFIX");
     if (pszSuffix && STARTS_WITH_CI(pszSuffix, "ADD"))
-        pszHDRFilename = CPLFormFilename(nullptr, pszFilename, "hdr");
+        osHDRFilename = CPLFormFilenameSafe(nullptr, pszFilename, "hdr");
     else
-        pszHDRFilename = CPLResetExtension(pszFilename, "hdr");
+        osHDRFilename = CPLResetExtensionSafe(pszFilename, "hdr");
 
     // Open the file.
-    fp = VSIFOpenL(pszHDRFilename, "wt");
+    fp = VSIFOpenL(osHDRFilename.c_str(), "wt");
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Attempt to create file `%s' failed.", pszHDRFilename);
+                 "Attempt to create file `%s' failed.", osHDRFilename.c_str());
         return nullptr;
     }
 
@@ -2838,8 +2868,8 @@ CPLErr ENVIRasterBand::SetNoDataValue(double dfNoDataValue)
             dfOtherBandNoData != dfNoDataValue)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Nodata value of band %d (%.18g) is different from nodata "
-                     "value from band %d (%.18g). Only the later will be "
+                     "Nodata value of band %d (%.17g) is different from nodata "
+                     "value from band %d (%.17g). Only the later will be "
                      "written in the ENVI header as the \"data ignore value\"",
                      nBand, dfNoDataValue, nOtherBand, dfOtherBandNoData);
         }
@@ -2909,6 +2939,11 @@ void GDALRegister_ENVI()
         "       <Value>BSQ</Value>"
         "   </Option>"
         "</CreationOptionList>");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
+                              "GeoTransform SRS GCPs NoData "
+                              "RasterValues DatasetMetadata");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->pfnOpen = ENVIDataset::Open;

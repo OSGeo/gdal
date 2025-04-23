@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -90,7 +74,7 @@ void FileGDBTable::AddEntryToFreelist(uint64_t nOffset, uint32_t nSize)
         return;
 
     const std::string osFilename =
-        CPLResetExtension(m_osFilename.c_str(), "freelist");
+        CPLResetExtensionSafe(m_osFilename.c_str(), "freelist");
     VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "rb+");
     if (fp == nullptr)
     {
@@ -255,7 +239,7 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
         return OFFSET_MINUS_ONE;
 
     const std::string osFilename =
-        CPLResetExtension(m_osFilename.c_str(), "freelist");
+        CPLResetExtensionSafe(m_osFilename.c_str(), "freelist");
     VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "rb+");
     m_nHasFreeList = fp != nullptr;
     if (fp == nullptr)
@@ -372,7 +356,7 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
                 break;
             }
 
-            if (aSetReadPages.find(nPrevPage) != aSetReadPages.end())
+            if (cpl::contains(aSetReadPages, nPrevPage))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Cyclic page refererencing in %s", osFilename.c_str());
@@ -545,7 +529,7 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
 bool FileGDBTable::CheckFreeListConsistency()
 {
     const std::string osFilename =
-        CPLResetExtension(m_osFilename.c_str(), "freelist");
+        CPLResetExtensionSafe(m_osFilename.c_str(), "freelist");
     VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "rb");
     if (fp == nullptr)
         return true;
@@ -585,7 +569,7 @@ bool FileGDBTable::CheckFreeListConsistency()
     uint32_t nFreePage = GetUInt32(abyTrailer.data() + sizeof(uint32_t), 0);
     while (nFreePage != MINUS_ONE)
     {
-        if (setVisitedPages.find(nFreePage) != setVisitedPages.end())
+        if (cpl::contains(setVisitedPages, nFreePage))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cyclic page refererencing in free pages");
@@ -629,7 +613,7 @@ bool FileGDBTable::CheckFreeListConsistency()
         uint32_t nActualCount = 0;
         while (nPageIdx != MINUS_ONE)
         {
-            if (setVisitedPages.find(nPageIdx) != setVisitedPages.end())
+            if (cpl::contains(setVisitedPages, nPageIdx))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Cyclic page refererencing or page referenced more "
@@ -666,6 +650,9 @@ bool FileGDBTable::CheckFreeListConsistency()
             {
                 const uint32_t nFreeAreaSize = GetUInt32(
                     abyPage.data() + nPageHeaderSize + i * nEntrySize, 0);
+                assert(iSlot + 1 <
+                       static_cast<int>(CPL_ARRAYSIZE(anHoleSizes)));
+                // coverity[overrun-local]
                 if (nFreeAreaSize < anHoleSizes[iSlot] ||
                     nFreeAreaSize >= anHoleSizes[iSlot + 1])
                 {
@@ -706,7 +693,7 @@ bool FileGDBTable::CheckFreeListConsistency()
                     return false;
                 }
 
-                if (aSetOffsets.find(nOffset) != aSetOffsets.end())
+                if (cpl::contains(aSetOffsets, nOffset))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Page %u contains free area that points to "
@@ -757,7 +744,7 @@ void FileGDBTable::DeleteFreeList()
 {
     m_bFreelistCanBeDeleted = false;
     m_nHasFreeList = -1;
-    VSIUnlink(CPLResetExtension(m_osFilename.c_str(), "freelist"));
+    VSIUnlink(CPLResetExtensionSafe(m_osFilename.c_str(), "freelist").c_str());
 }
 
 } /* namespace OpenFileGDB */

@@ -9,23 +9,7 @@
  * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2013, Kyle Shannon <kyle at pobox dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -349,7 +333,7 @@ OGRErr OGRSpatialReference::importFromESRI(char **papszPrj)
         const double dfZone = OSR_GDV(papszPrj, "zone", 0.0);
 
         if (dfZone < std::numeric_limits<int>::min() ||
-            dfZone > std::numeric_limits<int>::max() || CPLIsNan(dfZone))
+            dfZone > std::numeric_limits<int>::max() || std::isnan(dfZone))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "zone out of range: %f",
                      dfZone);
@@ -366,7 +350,7 @@ OGRErr OGRSpatialReference::importFromESRI(char **papszPrj)
 
             if (dfFipszone < std::numeric_limits<int>::min() ||
                 dfFipszone > std::numeric_limits<int>::max() ||
-                CPLIsNan(dfFipszone))
+                std::isnan(dfFipszone))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "fipszone out of range: %f", dfFipszone);
@@ -468,7 +452,7 @@ OGRErr OGRSpatialReference::importFromESRI(char **papszPrj)
         const double dfStdPCount = OSR_GDV(papszPrj, "PARAM_1", 0.0);
         // TODO(schwehr): What is a reasonable range for StdPCount?
         if (dfStdPCount < 0 || dfStdPCount > std::numeric_limits<int>::max() ||
-            CPLIsNan(dfStdPCount))
+            std::isnan(dfStdPCount))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "StdPCount out of range: %lf",
                      dfStdPCount);

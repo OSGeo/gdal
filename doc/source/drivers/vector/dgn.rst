@@ -122,6 +122,25 @@ Creation Issues
 -  DGN files can only have one layer. Attempts to create more than one
    layer in a DGN file will fail.
 
+Open options
+------------
+
+.. versionadded:: 3.10
+
+|about-open-options|
+The following open options are supported:
+
+- .. oo:: ENCODING
+     :since: 3.10
+     :choices: <encoding>
+
+     An encoding name supported by :cpp:func:`CPLRecode` (i.e. an
+     `iconv <https://en.wikipedia.org/wiki/Iconv>`__ name)
+     that indicates the encoding used by Text elements in the DGN file, to
+     recode them to UTF-8. If not specified (or specified to UTF-8), no
+     recoding will be done.
+
+
 Dataset creation options
 ------------------------
 
@@ -179,6 +198,20 @@ The following dataset-creation options are supported:
 
       Override the origin of the design plane. By
       default the origin from the seed file is used.
+
+-  .. dsco:: ENCODING
+      :since: 3.10
+      :choices: <encoding>
+
+      An encoding name supported by :cpp:func:`CPLRecode` (i.e. an
+      `iconv <https://en.wikipedia.org/wiki/Iconv>`__ name)
+      that indicates the encoding used by Text elements in the DGN file, to
+      recode them from UTF-8. If not specified (or specified to UTF-8), no
+      recoding will be done. "ISO-8859-1" (ISO Latin1) is supported even on
+      builds without iconv support.
+      Note that no fields in the DGN file itself contain the encoding name,
+      hence it is the responsibility of the reader to open the file with the
+      same value for the ENCODING open option.
 
 --------------
 

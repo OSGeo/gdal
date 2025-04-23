@@ -8,7 +8,6 @@
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id$ */
 
 #ifndef ZUTIL_H
 #define ZUTIL_H
@@ -93,89 +92,6 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 
 #define PRESET_DICT 0x20 /* preset dictionary flag in zlib header */
 
-        /* target dependencies */
-
-#if defined(MSDOS) || (defined(WINDOWS) && !defined(_WIN32))
-#  define OS_CODE  0x00
-#  ifndef Z_SOLO
-#    if defined(__TURBOC__) || defined(__BORLANDC__)
-#      if (__STDC__ == 1) && (defined(__LARGE__) || defined(__COMPACT__))
-         /* Allow compilation with ANSI keywords only enabled */
-         void _Cdecl farfree( void *block );
-         void *_Cdecl farmalloc( unsigned long nbytes );
-#      else
-#        include <alloc.h>
-#      endif
-#    else /* MSC or DJGPP */
-#      include <malloc.h>
-#    endif
-#  endif
-#endif
-
-#ifdef AMIGA
-#  define OS_CODE  1
-#endif
-
-#if defined(VAXC) || defined(VMS)
-#  define OS_CODE  2
-#  define F_OPEN(name, mode) \
-     fopen((name), (mode), "mbc=60", "ctx=stm", "rfm=fix", "mrs=512")
-#endif
-
-#ifdef __370__
-#  if __TARGET_LIB__ < 0x20000000
-#    define OS_CODE 4
-#  elif __TARGET_LIB__ < 0x40000000
-#    define OS_CODE 11
-#  else
-#    define OS_CODE 8
-#  endif
-#endif
-
-#if defined(ATARI) || defined(atarist)
-#  define OS_CODE  5
-#endif
-
-#ifdef OS2
-#  define OS_CODE  6
-#  if defined(M_I86) && !defined(Z_SOLO)
-#    include <malloc.h>
-#  endif
-#endif
-
-#if defined(MACOS) || defined(TARGET_OS_MAC)
-#  define OS_CODE  7
-#  ifndef Z_SOLO
-#    if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
-#      include <unix.h> /* for fdopen */
-#    else
-#      ifndef fdopen
-#        define fdopen(fd,mode) NULL /* No fdopen() */
-#      endif
-#    endif
-#  endif
-#endif
-
-#ifdef __acorn
-#  define OS_CODE 13
-#endif
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  define OS_CODE  10
-#endif
-
-#ifdef _BEOS_
-#  define OS_CODE  16
-#endif
-
-#ifdef __TOS_OS400__
-#  define OS_CODE 18
-#endif
-
-#ifdef __APPLE__
-#  define OS_CODE 19
-#endif
-
 #if defined(_BEOS_) || defined(RISCOS)
 #  define fdopen(fd,mode) NULL /* No fdopen() */
 #endif
@@ -203,10 +119,6 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #endif
 
         /* common defaults */
-
-#ifndef OS_CODE
-#  define OS_CODE  3     /* assume Unix */
-#endif
 
 #ifndef F_OPEN
 #  define F_OPEN(name, mode) fopen((name), (mode))

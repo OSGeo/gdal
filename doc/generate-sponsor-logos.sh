@@ -19,3 +19,4 @@ inkscape --export-png=images/sponsors/logo-koordinates.png --export-width=$BRONZ
 inkscape --export-png=images/sponsors/logo-frontiersi.png --export-width=$BRONZE_WIDTH images/sponsors/logo-FrontierSI.svg
 inkscape --export-png=images/sponsors/logo-aerometrex.png --export-width=$BRONZE_WIDTH images/sponsors/logo-aerometrex.svg
 inkscape --export-png=images/sponsors/logo-geoczech.png --export-width=$BRONZE_WIDTH images/sponsors/logo-geoczech.svg
+inkscape --export-png=images/sponsors/logo-linz.png --export-width=$BRONZE_WIDTH images/sponsors/logo-linz.svg

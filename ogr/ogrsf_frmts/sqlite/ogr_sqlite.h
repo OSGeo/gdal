@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Private definitions for OGR/SQLite driver.
@@ -9,23 +8,7 @@
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2009-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_SQLITE_H_INCLUDED
@@ -171,6 +154,8 @@ class OGRSQLiteLayer CPL_NON_FINAL : public OGRLayer,
                                                 bool bSpatialite2D,
                                                 bool bUseComprGeom,
                                                 GByte *pabyData);
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteLayer)
 
   protected:
     OGRSQLiteFeatureDefn *m_poFeatureDefn = nullptr;
@@ -355,6 +340,8 @@ class OGRSQLiteTableLayer final : public OGRSQLiteLayer
     OGRErr RunAddGeometryColumn(const OGRSQLiteGeomFieldDefn *poGeomField,
                                 bool bAddColumnsForNonSpatialite);
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteTableLayer)
+
   public:
     explicit OGRSQLiteTableLayer(OGRSQLiteDataSource *);
     virtual ~OGRSQLiteTableLayer();
@@ -370,9 +357,9 @@ class OGRSQLiteTableLayer final : public OGRSQLiteLayer
     virtual const char *GetName() override;
 
     virtual GIntBig GetFeatureCount(int) override;
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override;
+
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
@@ -382,8 +369,8 @@ class OGRSQLiteTableLayer final : public OGRSQLiteLayer
         return m_bLayerDefnError;
     }
 
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *) override;
     virtual OGRErr SetAttributeFilter(const char *) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
@@ -489,6 +476,8 @@ class OGRSQLiteViewLayer final : public OGRSQLiteLayer
 
     CPLErr EstablishFeatureDefn();
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteViewLayer)
+
   public:
     explicit OGRSQLiteViewLayer(OGRSQLiteDataSource *);
     virtual ~OGRSQLiteViewLayer();
@@ -515,12 +504,8 @@ class OGRSQLiteViewLayer final : public OGRSQLiteLayer
     virtual OGRFeature *GetNextFeature() override;
     virtual GIntBig GetFeatureCount(int) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *) override;
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
-    {
-        OGRSQLiteLayer::SetSpatialFilter(iGeomField, poGeom);
-    }
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *poGeom) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 
@@ -563,23 +548,14 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
     virtual OGRFeature *GetNextFeature() override;
     virtual GIntBig GetFeatureCount(int) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
+    virtual OGRErr ISetSpatialFilter(int iGeomField,
+                                     const OGRGeometry *) override;
     virtual OGRErr SetAttributeFilter(const char *) override;
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override
-    {
-        return GetExtent(0, psExtent, bForce);
-    }
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
@@ -611,7 +587,7 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
         return OGRSQLiteLayer::GetSpatialRef();
     }
 
-    virtual int InstallFilter(OGRGeometry *poGeomIn) override
+    virtual int InstallFilter(const OGRGeometry *poGeomIn) override
     {
         return OGRSQLiteLayer::InstallFilter(poGeomIn);
     }
@@ -646,15 +622,10 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
         return OGRSQLiteLayer::TestCapability(pszCap);
     }
 
-    virtual OGRErr BaseGetExtent(OGREnvelope *psExtent, int bForce) override
-    {
-        return OGRSQLiteLayer::GetExtent(psExtent, bForce);
-    }
-
     virtual OGRErr BaseGetExtent(int iGeomField, OGREnvelope *psExtent,
-                                 int bForce) override
+                                 bool bForce) override
     {
-        return OGRSQLiteLayer::GetExtent(iGeomField, psExtent, bForce);
+        return OGRSQLiteLayer::IGetExtent(iGeomField, psExtent, bForce);
     }
 
     bool
@@ -675,8 +646,7 @@ class OGR2SQLITEModule;
 
 class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 {
-    OGRSQLiteLayer **m_papoLayers = nullptr;
-    int m_nLayers = 0;
+    std::vector<std::unique_ptr<OGRSQLiteLayer>> m_apoLayers{};
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
@@ -710,7 +680,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     void SaveStatistics();
 
-    std::vector<OGRLayer *> m_apoInvisibleLayers{};
+    std::vector<std::unique_ptr<OGRLayer>> m_apoInvisibleLayers{};
 
 #ifdef HAVE_RASTERLITE2
     void *m_hRL2Ctxt = nullptr;
@@ -745,6 +715,8 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     void PostInitSpatialite();
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteDataSource)
+
   public:
     OGRSQLiteDataSource();
     virtual ~OGRSQLiteDataSource();
@@ -760,7 +732,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     virtual int GetLayerCount() override
     {
-        return m_nLayers;
+        return static_cast<int>(m_apoLayers.size());
     }
 
     virtual OGRLayer *GetLayer(int) override;
@@ -784,6 +756,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
+    virtual OGRErr StartTransaction(int bForce = FALSE) override;
     virtual OGRErr CommitTransaction() override;
     virtual OGRErr RollbackTransaction() override;
 
@@ -894,10 +867,12 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
 class RL2RasterBand final : public GDALPamRasterBand
 {
-    bool m_bHasNoData;
-    double m_dfNoDataValue;
-    GDALColorInterp m_eColorInterp;
-    GDALColorTable *m_poCT;
+    bool m_bHasNoData = false;
+    double m_dfNoDataValue = 0;
+    GDALColorInterp m_eColorInterp = GCI_Undefined;
+    GDALColorTable *m_poCT = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(RL2RasterBand)
 
   public:
     RL2RasterBand(int nBandIn, int nPixelType, GDALDataType eDT, int nBits,
@@ -922,7 +897,7 @@ class RL2RasterBand final : public GDALPamRasterBand
 };
 #endif  // HAVE_RASTERLITE2
 
-CPLString OGRSQLiteFieldDefnToSQliteFieldDefn(OGRFieldDefn *poFieldDefn,
+CPLString OGRSQLiteFieldDefnToSQliteFieldDefn(const OGRFieldDefn *poFieldDefn,
                                               bool bSQLiteDialectInternalUse,
                                               bool bStrict);
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     gdal.i
  * Project:  GDAL Python Interface
@@ -9,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2005, Kevin Ruland
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 %include constraints.i
@@ -68,6 +51,7 @@ using namespace std;
 
 #include "gdal.h"
 #include "gdal_alg.h"
+
 #include "gdalwarper.h"
 #include "ogr_srs_api.h"
 
@@ -156,13 +140,15 @@ typedef enum {
     /*! Thirty two bit signed integer */        GDT_Int32 = 5,
     /*! 64 bit unsigned integer */              GDT_UInt64 = 12,
     /*! 64 bit signed integer */                GDT_Int64 = 13,
+    /*! Sixteen bit floating point */           GDT_Float16 = 15,
     /*! Thirty two bit floating point */        GDT_Float32 = 6,
     /*! Sixty four bit floating point */        GDT_Float64 = 7,
     /*! Complex Int16 */                        GDT_CInt16 = 8,
     /*! Complex Int32 */                        GDT_CInt32 = 9,
+    /*! Complex Float16 */                      GDT_CFloat16 = 16,
     /*! Complex Float32 */                      GDT_CFloat32 = 10,
     /*! Complex Float64 */                      GDT_CFloat64 = 11,
-    GDT_TypeCount = 15          /* maximum type # + 1 */
+    GDT_TypeCount = 17          /* maximum type # + 1 */
 } GDALDataType;
 
 /*! Types of color interpretation for raster bands. */
@@ -251,10 +237,10 @@ typedef enum {
 
 %rename (AsyncStatusType) GDALAsyncStatusType;
 typedef enum {
-	GARIO_PENDING = 0,
-	GARIO_UPDATE = 1,
-	GARIO_ERROR = 2,
-	GARIO_COMPLETE = 3
+    GARIO_PENDING = 0,
+    GARIO_UPDATE = 1,
+    GARIO_ERROR = 2,
+    GARIO_COMPLETE = 3
 } GDALAsyncStatusType;
 
 /** Cardinality of relationship.
@@ -358,6 +344,9 @@ $1;
 %rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
 %rename (ApplyGeoTransform) GDALApplyGeoTransform;
 %rename (InvGeoTransform) GDALInvGeoTransform;
+%rename (GCPsToHomography) GDALGCPsToHomography;
+%rename (ApplyHomography) GDALApplyHomography;
+%rename (InvHomography) GDALInvHomography;
 %rename (VersionInfo) GDALVersionInfo;
 %rename (AllRegister) GDALAllRegister;
 %rename (GetCacheMax) wrapper_GDALGetCacheMax;
@@ -369,6 +358,7 @@ $1;
 %rename (GetDataTypeByName) GDALGetDataTypeByName;
 %rename (DataTypeUnion) GDALDataTypeUnion;
 %rename (GetColorInterpretationName) GDALGetColorInterpretationName;
+%rename (GetColorInterpretationByName) GDALGetColorInterpretationByName;
 %rename (GetPaletteInterpretationName) GDALGetPaletteInterpretationName;
 %rename (DecToDMS) GDALDecToDMS;
 %rename (PackedDMSToDec) GDALPackedDMSToDec;
@@ -562,7 +552,7 @@ void GDAL_GCP_set_Id( GDAL_GCP *gcp, const char * pszId ) {
 %inline
 {
 int wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
-    	                             double argout[6], int bApproxOK = 1 )
+                                     double argout[6], int bApproxOK = 1 )
 {
     return GDALGCPsToGeoTransform(nGCPs, pGCPs, argout, bApproxOK);
 }
@@ -570,7 +560,24 @@ int wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 #else
 %apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
 RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
-    	                             double argout[6], int bApproxOK = 1 );
+                                     double argout[6], int bApproxOK = 1 );
+%clear (RETURN_NONE);
+#endif
+
+#ifdef SWIGJAVA
+%rename (GCPsToHomography) wrapper_GDALGCPsToHomography;
+%inline
+{
+int wrapper_GDALGCPsToHomography( int nGCPs, GDAL_GCP const * pGCPs,
+    	                             double argout[9] )
+{
+    return GDALGCPsToHomography(nGCPs, pGCPs, argout);
+}
+}
+#else
+%apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
+RETURN_NONE GDALGCPsToHomography( int nGCPs, GDAL_GCP const * pGCPs,
+    	                             double argout[9]);
 %clear (RETURN_NONE);
 #endif
 
@@ -627,6 +634,8 @@ RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 //************************************************************************
 %include "Operations.i"
 
+%include "Algorithm.i"
+
 %apply (double argin[ANY]) {(double padfGeoTransform[6])};
 %apply (double *OUTPUT) {(double *pdfGeoX)};
 %apply (double *OUTPUT) {(double *pdfGeoY)};
@@ -649,6 +658,29 @@ RETURN_NONE GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
 #endif
 %clear (double *gt_in);
 %clear (double *gt_out);
+
+%apply (double argin[ANY]) {(double padfHomography[9])};
+%apply (double *OUTPUT) {(double *pdfGeoX)};
+%apply (double *OUTPUT) {(double *pdfGeoY)};
+int GDALApplyHomography( double padfHomography[9],
+                            double dfPixel, double dfLine,
+                            double *pdfGeoX, double *pdfGeoY );
+%clear (double *padfHomography);
+%clear (double *pdfGeoX);
+%clear (double *pdfGeoY);
+
+%apply (double argin[ANY]) {double h_in[9]};
+%apply (double argout[ANY]) {double h_out[9]};
+#ifdef SWIGJAVA
+// FIXME: we should implement correctly the IF_FALSE_RETURN_NONE typemap
+int GDALInvHomography( double h_in[9], double h_out[9] );
+#else
+%apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
+RETURN_NONE GDALInvHomography( double h_in[9], double h_out[9] );
+%clear (RETURN_NONE);
+#endif
+%clear (double *h_in);
+%clear (double *h_out);
 
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char *request};
@@ -724,6 +756,8 @@ GDALDataType GDALGetDataTypeByName( const char * pszDataTypeName );
 GDALDataType GDALDataTypeUnion( GDALDataType a, GDALDataType b );
 
 const char *GDALGetColorInterpretationName( GDALColorInterp eColorInterp );
+
+GDALColorInterp GDALGetColorInterpretationByName( const char* pszColorInterpName );
 
 const char *GDALGetPaletteInterpretationName( GDALPaletteInterp ePaletteInterp );
 
@@ -906,7 +940,7 @@ GDALDatasetShadow* OpenShared( char const* utf8_path, GDALAccess eAccess = GA_Re
 GDALDriverShadow *IdentifyDriver( const char *utf8_path,
                                   char **papszSiblings = NULL ) {
     return (GDALDriverShadow *) GDALIdentifyDriver( utf8_path,
-	                                            papszSiblings );
+                                                papszSiblings );
 }
 %}
 %clear char **papszSiblings;
@@ -1708,6 +1742,133 @@ GDALDatasetShadow* wrapper_GDALGrid( const char* dest,
     return hDSRet;
 }
 %}
+
+
+//************************************************************************
+// gdal.Contour()
+//************************************************************************
+#ifdef SWIGJAVA
+%rename (ContourOptions) GDALContourOptions;
+#endif
+
+struct GDALContourOptions {
+    %extend {
+        GDALContourOptions(char** options) {
+            return GDALContourOptionsNew(options, NULL);
+        }
+
+        ~GDALContourOptions() {
+            GDALContourOptionsFree( self );
+        }
+    }
+};
+
+/* Note: we must use 2 distinct names due to different ownership of the result */
+
+#ifdef SWIGJAVA
+%rename (Contour) wrapper_GDALContourDestDS;
+#endif
+%inline %{
+
+int wrapper_GDALContourDestDS(  GDALDatasetShadow* dstDS,
+                                GDALDatasetShadow* srcDS,
+                                GDALContourOptions* options,
+                                GDALProgressFunc callback=NULL,
+                                void* callback_data=NULL)
+{
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALContourOptionsNew(NULL, NULL);
+        }
+        GDALContourOptionsSetProgress(options, callback, callback_data);
+    }
+
+#ifdef SWIGPYTHON
+    std::vector<ErrorStruct> aoErrors;
+    if( GetUseExceptions() )
+    {
+        PushStackingErrorHandler(&aoErrors);
+    }
+#endif
+
+    char** papszStringOptions = NULL;
+    GDALRasterBandH hBand = NULL;
+    OGRLayerH hLayer = NULL;
+    const CPLErr err = GDALContourProcessOptions(options, &papszStringOptions, &srcDS, &hBand, &dstDS, &hLayer);
+    bool bRet = (err == CE_None && GDALContourGenerateEx(hBand, hLayer, papszStringOptions, callback, callback_data) == CE_None);
+    if( bFreeOptions )
+        GDALContourOptionsFree(options);
+#ifdef SWIGPYTHON
+    if( GetUseExceptions() )
+    {
+        PopStackingErrorHandler(&aoErrors, bRet);
+    }
+#endif
+    CSLDestroy(papszStringOptions);
+    return bRet;
+}
+%}
+
+#ifdef SWIGJAVA
+%rename (Contour) wrapper_GDALContourDestName;
+#endif
+%newobject wrapper_GDALContourDestName;
+
+%inline %{
+GDALDatasetShadow* wrapper_GDALContourDestName( const char* dest,
+                                                  GDALDatasetShadow* srcDS,
+                                                  GDALContourOptions* options,
+                                                  GDALProgressFunc callback=NULL,
+                                                  void* callback_data=NULL)
+{
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALContourOptionsNew(NULL, NULL);
+        }
+        GDALContourOptionsSetProgress(options, callback, callback_data);
+    }
+
+#ifdef SWIGPYTHON
+    std::vector<ErrorStruct> aoErrors;
+    if( GetUseExceptions() )
+    {
+        PushStackingErrorHandler(&aoErrors);
+    }
+#endif
+
+    GDALContourOptionsSetDestDataSource(options, dest);
+    char** papszStringOptions = NULL;
+    GDALRasterBandH hBand = NULL;
+    OGRLayerH hLayer = NULL;
+    GDALDatasetH dstDS = NULL;
+    CPLErr err = GDALContourProcessOptions(options, &papszStringOptions, &srcDS, &hBand, &dstDS, &hLayer);
+    if (err == CE_None )
+    {
+        err = GDALContourGenerateEx(hBand, hLayer, papszStringOptions, callback, callback_data);
+    }
+
+    if( bFreeOptions )
+        GDALContourOptionsFree(options);
+#ifdef SWIGPYTHON
+    if( GetUseExceptions() )
+    {
+        PopStackingErrorHandler(&aoErrors, dstDS != NULL);
+    }
+#endif
+    CSLDestroy(papszStringOptions);
+    return dstDS;
+}
+%}
+
+
 
 //************************************************************************
 // gdal.Rasterize()

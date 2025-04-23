@@ -1,3 +1,14 @@
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/helpers/GdalCMakeMinimumRequired.cmake")
+cmake_minimum_required(VERSION ${GDAL_CMAKE_VERSION_MIN}...${GDAL_CMAKE_VERSION_MAX})
+
+if(NOT DEFINED PROJECT_SOURCE_DIR)
+    # Standalone plugin building
+    project(gdal_ECW_JP2ECW)
+    include("${PROJECT_SOURCE_DIR}/../../cmake/helpers/SetupStandalonePlugin.cmake" )
+    include(CheckDependentLibrariesECW)
+    standalone_driver_finalize(GDAL_ENABLE_DRIVER_ECW)
+endif()
+
 set(SOURCE ecwdataset.cpp ecwcreatecopy.cpp ecwasyncreader.cpp jp2userbox.cpp)
 add_gdal_driver(
   TARGET gdal_ECW_JP2ECW

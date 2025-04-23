@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2007, Frank Warmerdam
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -69,6 +53,47 @@ CPLErr GDALAllValidMaskBand::IReadBlock(int /* nXBlockOff */,
     memset(pImage, 255, static_cast<size_t>(nBlockXSize) * nBlockYSize);
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr GDALAllValidMaskBand::IRasterIO(GDALRWFlag eRWFlag, int, int, int, int,
+                                       void *pData, int nBufXSize,
+                                       int nBufYSize, GDALDataType eBufType,
+                                       GSpacing nPixelSpace,
+                                       GSpacing nLineSpace,
+                                       GDALRasterIOExtraArg *)
+{
+    if (eRWFlag != GF_Read)
+    {
+        return CE_Failure;
+    }
+
+    GByte *pabyData = static_cast<GByte *>(pData);
+    GByte byVal = 255;
+    for (int iY = 0; iY < nBufYSize; ++iY)
+    {
+        GDALCopyWords64(&byVal, GDT_Byte, 0, pabyData + iY * nLineSpace,
+                        eBufType, static_cast<int>(nPixelSpace), nBufXSize);
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                   EmitErrorMessageIfWriteNotSupported()              */
+/************************************************************************/
+
+bool GDALAllValidMaskBand::EmitErrorMessageIfWriteNotSupported(
+    const char *pszCaller) const
+{
+    ReportError(CE_Failure, CPLE_NoWriteAccess,
+                "%s: attempt to write to an all-valid implicit mask band.",
+                pszCaller);
+
+    return true;
 }
 
 /************************************************************************/

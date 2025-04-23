@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 // WARNING: Linux glibc ONLY
@@ -634,7 +618,7 @@ int CPL_DLL __xstat(int ver, const char *path, struct stat *buf)
         std::string newpath;
         if ((!osCurDir.empty() && path[0] != '/'))
         {
-            newpath = CPLFormFilename(osCurDir.c_str(), path, nullptr);
+            newpath = CPLFormFilenameSafe(osCurDir.c_str(), path, nullptr);
             path = newpath.c_str();
         }
         const int ret = VSIStatL(path, &sStatBufL);
@@ -679,17 +663,20 @@ int CPL_DLL __lxstat(int ver, const char *path, struct stat *buf)
         std::string newpath;
         if ((!osCurDir.empty() && path[0] != '/'))
         {
-            newpath = CPLFormFilename(osCurDir.c_str(), path, nullptr);
-            path = newpath.c_str();
+            newpath = CPLFormFilenameSafe(osCurDir.c_str(), path, nullptr);
         }
-        const int ret = VSIStatL(path, &sStatBufL);
-        sStatBufL.st_ino = static_cast<int>(CPLHashSetHashStr(path));
+        else
+        {
+            newpath = path;
+        }
+        const int ret = VSIStatL(newpath.c_str(), &sStatBufL);
+        sStatBufL.st_ino = static_cast<int>(CPLHashSetHashStr(newpath.c_str()));
         if (ret == 0)
         {
             copyVSIStatBufLToBuf(&sStatBufL, buf);
             if (DEBUG_VSIPRELOAD_COND)
                 fprintf(stderr, "__lxstat(%s) ret = 0, mode = %d, size=%d\n",
-                        path, sStatBufL.st_mode,
+                        newpath.c_str(), sStatBufL.st_mode,
                         static_cast<int>(sStatBufL.st_size));
         }
         return ret;
@@ -726,7 +713,7 @@ int CPL_DLL __xstat64(int ver, const char *path, struct stat64 *buf)
         std::string newpath;
         if ((!osCurDir.empty() && path[0] != '/'))
         {
-            newpath = CPLFormFilename(osCurDir.c_str(), path, nullptr);
+            newpath = CPLFormFilenameSafe(osCurDir.c_str(), path, nullptr);
             path = newpath.c_str();
         }
         auto oIter = oSetFilesToPreventRecursion.insert(path);
@@ -1064,8 +1051,9 @@ static int myopen(const char *path, int flags, ...)
     if (DEBUG_VSIPRELOAD_COND)
     {
         if (!osCurDir.empty() && path[0] != '/')
-            fprintf(stderr, "open(%s)\n",
-                    CPLFormFilename(osCurDir.c_str(), path, nullptr));
+            fprintf(
+                stderr, "open(%s)\n",
+                CPLFormFilenameSafe(osCurDir.c_str(), path, nullptr).c_str());
         else
             fprintf(stderr, "open(%s)\n", path);
     }
@@ -1078,17 +1066,16 @@ static int myopen(const char *path, int flags, ...)
         (flags & O_DIRECTORY) != 0)
     {
         VSIStatBufL sStatBufL;
-        char *newname = const_cast<char *>(
-            CPLFormFilename(osCurDir.c_str(), path, nullptr));
+        char *newname = CPLStrdup(
+            CPLFormFilenameSafe(osCurDir.c_str(), path, nullptr).c_str());
         if (strchr(osCurDir.c_str(), '/') != nullptr && strcmp(path, "..") == 0)
         {
-            char *lastslash = strrchr(newname, '/');
-            if (lastslash != nullptr)
+            for (int i = 0; i < 2; ++i)
             {
+                char *lastslash = strrchr(newname, '/');
+                if (!lastslash)
+                    break;
                 *lastslash = 0;
-                lastslash = strrchr(newname, '/');
-                if (lastslash != nullptr)
-                    *lastslash = 0;
             }
         }
         if (VSIStatL(newname, &sStatBufL) == 0 && S_ISDIR(sStatBufL.st_mode))
@@ -1099,6 +1086,7 @@ static int myopen(const char *path, int flags, ...)
         }
         else
             fd = -1;
+        CPLFree(newname);
     }
     else if (STARTS_WITH(path, "/vsi"))
         fd = VSIFopenHelper(path, flags);
@@ -1134,8 +1122,9 @@ int CPL_DLL open64(const char *path, int flags, ...)
     if (DEBUG_VSIPRELOAD_COND)
     {
         if (!osCurDir.empty() && path[0] != '/')
-            fprintf(stderr, "open64(%s)\n",
-                    CPLFormFilename(osCurDir.c_str(), path, nullptr));
+            fprintf(
+                stderr, "open64(%s)\n",
+                CPLFormFilenameSafe(osCurDir.c_str(), path, nullptr).c_str());
         else
             fprintf(stderr, "open64(%s)\n", path);
     }
@@ -1148,17 +1137,16 @@ int CPL_DLL open64(const char *path, int flags, ...)
         (flags & O_DIRECTORY) != 0)
     {
         VSIStatBufL sStatBufL;
-        char *newname = const_cast<char *>(
-            CPLFormFilename(osCurDir.c_str(), path, nullptr));
+        char *newname = CPLStrdup(
+            CPLFormFilenameSafe(osCurDir.c_str(), path, nullptr).c_str());
         if (strchr(osCurDir.c_str(), '/') != nullptr && strcmp(path, "..") == 0)
         {
-            char *lastslash = strrchr(newname, '/');
-            if (lastslash != nullptr)
+            for (int i = 0; i < 2; ++i)
             {
+                char *lastslash = strrchr(newname, '/');
+                if (!lastslash)
+                    break;
                 *lastslash = 0;
-                lastslash = strrchr(newname, '/');
-                if (lastslash != nullptr)
-                    *lastslash = 0;
             }
         }
         if (VSIStatL(newname, &sStatBufL) == 0 && S_ISDIR(sStatBufL.st_mode))
@@ -1169,6 +1157,7 @@ int CPL_DLL open64(const char *path, int flags, ...)
         }
         else
             fd = -1;
+        CPLFree(newname);
     }
     else if (STARTS_WITH(path, "/vsi"))
         fd = VSIFopenHelper(path, flags);
@@ -1428,17 +1417,23 @@ int CPL_DLL __fxstatat(int ver, int dirfd, const char *pathname,
     if (!osCurDir.empty() || STARTS_WITH(pathname, "/vsi"))
     {
         VSIStatBufL sStatBufL;
+        std::string osPathname;
         if (!osCurDir.empty() && dirfd == AT_FDCWD && pathname[0] != '/')
-            pathname = CPLFormFilename(osCurDir.c_str(), pathname, nullptr);
-        const int ret = VSIStatL(pathname, &sStatBufL);
-        sStatBufL.st_ino = static_cast<int>(CPLHashSetHashStr(pathname));
+            osPathname =
+                CPLFormFilenameSafe(osCurDir.c_str(), pathname, nullptr);
+        else
+            osPathname = pathname;
+        const int ret = VSIStatL(osPathname.c_str(), &sStatBufL);
+        sStatBufL.st_ino =
+            static_cast<int>(CPLHashSetHashStr(osPathname.c_str()));
         if (ret == 0)
         {
             copyVSIStatBufLToBuf(&sStatBufL, buf);
             if (DEBUG_VSIPRELOAD_COND)
                 fprintf(stderr,
                         "__fxstatat(%s) ret = 0, mode = %d, size = %d\n",
-                        pathname, buf->st_mode, static_cast<int>(buf->st_size));
+                        osPathname.c_str(), buf->st_mode,
+                        static_cast<int>(buf->st_size));
         }
         return ret;
     }
@@ -1597,13 +1592,17 @@ DIR CPL_DLL *opendir(const char *name)
     if (!osCurDir.empty() || STARTS_WITH(name, "/vsi"))
     {
         char **papszDir;
+        std::string osName;
         if (!osCurDir.empty() && name[0] != '/')
-            name = CPLFormFilename(osCurDir.c_str(), name, nullptr);
-        papszDir = VSIReadDir(name);
+            osName = CPLFormFilenameSafe(osCurDir.c_str(), name, nullptr);
+        else
+            osName = name;
+        papszDir = VSIReadDir(osName.c_str());
         if (papszDir == nullptr)
         {
             VSIStatBufL sStatBufL;
-            if (VSIStatL(name, &sStatBufL) == 0 && S_ISDIR(sStatBufL.st_mode))
+            if (VSIStatL(osName.c_str(), &sStatBufL) == 0 &&
+                S_ISDIR(sStatBufL.st_mode))
             {
                 papszDir = static_cast<char **>(CPLMalloc(sizeof(char *)));
                 papszDir[0] = nullptr;
@@ -1615,7 +1614,12 @@ DIR CPL_DLL *opendir(const char *name)
         {
             VSIDIRPreload *mydir =
                 static_cast<VSIDIRPreload *>(malloc(sizeof(VSIDIRPreload)));
-            mydir->pszDirname = CPLStrdup(name);
+            if (!mydir)
+            {
+                CSLDestroy(papszDir);
+                return nullptr;
+            }
+            mydir->pszDirname = CPLStrdup(osName.c_str());
             mydir->papszDir = papszDir;
             mydir->nIter = 0;
             mydir->fd = -1;
@@ -1648,7 +1652,8 @@ static bool filldir(VSIDIRPreload *mydir)
     mydir->ent.d_reclen = sizeof(mydir->ent);
     VSIStatBufL sStatBufL;
     CPL_IGNORE_RET_VAL(VSIStatL(
-        CPLFormFilename(mydir->pszDirname, pszName, nullptr), &sStatBufL));
+        CPLFormFilenameSafe(mydir->pszDirname, pszName, nullptr).c_str(),
+        &sStatBufL));
     if (DEBUG_VSIPRELOAD_COND && S_ISDIR(sStatBufL.st_mode))
         fprintf(stderr, "%s is dir\n", pszName);
     mydir->ent.d_type = S_ISDIR(sStatBufL.st_mode)   ? DT_DIR

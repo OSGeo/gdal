@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Private definitions for OGR/PostgreSQL driver.
@@ -9,23 +8,7 @@
  * Copyright (c) 2000, Frank Warmerdam
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_PG_H_INCLUDED
@@ -253,16 +236,11 @@ class OGRPGLayer CPL_NON_FINAL : public OGRLayer
         return poFeatureDefn;
     }
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override
-    {
-        return GetExtent(0, psExtent, bForce);
-    }
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override;
-
-    OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
-                       int bForce) override;
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                        bool bForce) override;
 
     virtual OGRErr StartTransaction() override;
     virtual OGRErr CommitTransaction() override;
@@ -361,8 +339,6 @@ class OGRPGTableLayer final : public OGRPGLayer
 
     CPLString m_osFirstGeometryFieldName{};
 
-    std::vector<bool> m_abGeneratedColumns{};
-
     std::string m_osLCOGeomType{};
 
     virtual CPLString GetFromClauseForGetExtent() override
@@ -393,12 +369,8 @@ class OGRPGTableLayer final : public OGRPGLayer
     virtual OGRFeature *GetNextFeature() override;
     virtual GIntBig GetFeatureCount(int) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 
@@ -425,13 +397,8 @@ class OGRPGTableLayer final : public OGRPGLayer
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override
-    {
-        return GetExtent(0, psExtent, bForce);
-    }
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     const char *GetTableName()
     {
@@ -460,6 +427,8 @@ class OGRPGTableLayer final : public OGRPGLayer
                                              int &nEntryCountOut,
                                              GDALProgressFunc pfnProgress,
                                              void *pProgressData) override;
+
+    int FindFieldIndex(const char *pszFieldName, int bExactMatch) override;
 
     // follow methods are not base class overrides
     void SetLaunderFlag(int bFlag)
@@ -564,12 +533,8 @@ class OGRPGResultLayer final : public OGRPGLayer
     virtual void ResetReading() override;
     virtual GIntBig GetFeatureCount(int) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
-
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     virtual int TestCapability(const char *) override;
 
@@ -582,7 +547,7 @@ class OGRPGResultLayer final : public OGRPGLayer
 /*                           OGRPGDataSource                            */
 /************************************************************************/
 
-class OGRPGDataSource final : public OGRDataSource
+class OGRPGDataSource final : public GDALDataset
 {
     OGRPGDataSource(const OGRPGDataSource &) = delete;
     OGRPGDataSource &operator=(const OGRPGDataSource &) = delete;
@@ -596,8 +561,6 @@ class OGRPGDataSource final : public OGRDataSource
 
     OGRPGTableLayer **papoLayers = nullptr;
     int nLayers = 0;
-
-    char *pszName = nullptr;
 
     bool m_bUTF8ClientEncoding = false;
 
@@ -659,6 +622,9 @@ class OGRPGDataSource final : public OGRDataSource
 
     std::optional<std::string> FindSchema(const char *pszSchemaNameIn);
 
+    bool IsSuperUser();
+    bool OGRSystemTablesEventTriggerExists();
+
   public:
     PGver sPostgreSQLVersion = {0, 0, 0};
     PGver sPostGISVersion = {0, 0, 0};
@@ -702,11 +668,6 @@ class OGRPGDataSource final : public OGRDataSource
     OpenTable(CPLString &osCurrentSchema, const char *pszTableName,
               const char *pszSchemaName, const char *pszDescription,
               const char *pszGeomColForced, int bUpdate, int bTestOpen);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;

@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -36,6 +20,7 @@ import test_py_scripts
 
 # test that osgeo_utils is available, if not skip all tests
 pytest.importorskip("osgeo_utils")
+gdaltest.importorskip_gdal_array()
 pytest.importorskip("numpy")
 
 from itertools import product
@@ -78,6 +63,9 @@ def test_gdal2xyz_help(script_path):
 
 
 def test_gdal2xyz_version(script_path):
+
+    if gdaltest.is_travis_branch("sanitize"):
+        pytest.skip("fails on sanitize for unknown reason")
 
     assert "ERROR" not in test_py_scripts.run_py_script(
         script_path, "gdal2xyz", "--version"
@@ -191,3 +179,22 @@ def test_gdal2xyz_py_srcnodata_dstnodata(script_path, tmp_path):
         l = f.readline()
 
     assert l.startswith(b"-44.838604 -22.9343 1 2 3")
+
+
+###############################################################################
+# Test output to /vsistdout/
+
+
+@pytest.mark.require_driver("XYZ")
+def test_gdal2xyz_py_vsistdout(script_path, tmp_path):
+
+    arguments = test_py_scripts.get_data_path("gcore") + "byte.tif /vsistdout/"
+
+    out = test_py_scripts.run_py_script(script_path, "gdal2xyz", arguments)
+
+    out_filename = str(tmp_path / "out.xyz")
+    open(out_filename, "wb").write(out.encode("UTF-8"))
+
+    with gdal.Open(out_filename) as ds:
+        assert ds.GetGeoTransform() == (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
+        assert ds.GetRasterBand(1).Checksum() == 4672

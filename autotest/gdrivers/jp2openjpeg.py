@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for JP2OpenJPEG driver.
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -389,6 +372,10 @@ def test_jp2openjpeg_12():
 # Check that PAM overrides internal GCPs (#5279)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_jp2openjpeg_13():
 
     # Create a dataset with GCPs
@@ -1446,6 +1433,10 @@ def test_jp2openjpeg_32():
 # Test crazy tile size
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_jp2openjpeg_33():
 
     src_ds = gdal.Open(
@@ -2744,10 +2735,10 @@ def test_jp2openjpeg_45():
     )
     del out_ds
 
-    dircontent = gdal.ReadDir("/vsimem/")
+    dircontent = gdal.ReadDir("/vsimem/.#!HIDDEN!#.")
     if dircontent:
         for filename in dircontent:
-            assert not filename.startswith("gmljp2")
+            assert "gmljp2" not in filename
 
     ds = ogr.Open("/vsimem/jp2openjpeg_45.jp2")
     assert ds.GetLayerCount() == 1
@@ -3818,6 +3809,10 @@ def test_jp2openjpeg_mosaic():
 
 
 @pytest.mark.require_curl()
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_jp2openjpeg_vrt_protocol():
 
     (webserver_process, webserver_port) = webserver.launch(
@@ -3924,3 +3919,29 @@ def test_jp2openjpeg_unsupported_srs_for_gmljp2(tmp_vsimem):
     assert ds.GetSpatialRef().IsSame(ref_srs)
     # Check that we do *not* have a GMLJP2 box
     assert "xml:gml.root-instance" not in ds.GetMetadataDomainList()
+
+
+###############################################################################
+# Verify that we can generate an output that is byte-identical to the expected golden file.
+# (might be risky depending on libopenjp2...)
+
+
+@pytest.mark.parametrize(
+    "src_filename,creation_options",
+    [
+        # Created with gdal_translate autotest/gcore/data/byte.tif autotest/gdrivers/data/jpeg2000/byte_lossless_openjp2_golden.jp2 -of jp2openjpeg -co QUALITY=100 -co REVERSIBLE=YES -co COMMENT=
+        (
+            "data/jpeg2000/byte_lossless_openjp2_golden.jp2",
+            ["QUALITY=100", "REVERSIBLE=YES", "COMMENT="],
+        ),
+    ],
+)
+def test_jp2openjpeg_write_check_golden_file(tmp_path, src_filename, creation_options):
+
+    out_filename = str(tmp_path / "test.jp2")
+    with gdal.Open(src_filename) as src_ds:
+        gdal.GetDriverByName("JP2OpenJPEG").CreateCopy(
+            out_filename, src_ds, options=creation_options
+        )
+    assert os.stat(src_filename).st_size == os.stat(out_filename).st_size
+    assert open(src_filename, "rb").read() == open(out_filename, "rb").read()

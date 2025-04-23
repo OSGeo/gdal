@@ -8,23 +8,7 @@
  * Copyright (c) 1998, 2002, Frank Warmerdam
  * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_string.h"
@@ -114,8 +98,8 @@ MAIN_START(argc, argv)
         {
             fprintf(stderr, "Output driver `%s' not recognised.\n",
                     sOptionsForBinary.osFormat.c_str());
-            fprintf(stderr, "The following format drivers are configured and "
-                            "support output:\n");
+            fprintf(stderr, "The following format drivers are enabled and "
+                            "support writing:\n");
             for (int iDr = 0; iDr < GDALGetDriverCount(); iDr++)
             {
                 hDriver = GDALGetDriver(iDr);
@@ -143,6 +127,13 @@ MAIN_START(argc, argv)
     /* -------------------------------------------------------------------- */
     /*      Attempt to open source file.                                    */
     /* -------------------------------------------------------------------- */
+
+    if (EQUAL(sOptionsForBinary.osFormat.c_str(), "ZARR") &&
+        CPLTestBool(sOptionsForBinary.aosCreateOptions.FetchNameValueDef(
+            "CONVERT_TO_KERCHUNK_PARQUET_REFERENCE", "FALSE")))
+    {
+        sOptionsForBinary.osSource = "ZARR_DUMMY:" + sOptionsForBinary.osSource;
+    }
 
     GDALDatasetH hDataset =
         GDALOpenEx(sOptionsForBinary.osSource.c_str(),
@@ -210,22 +201,24 @@ MAIN_START(argc, argv)
         else
         {
             char **papszSubdatasets = GDALGetMetadata(hDataset, "SUBDATASETS");
+            const int nSubdatasets = CSLCount(papszSubdatasets) / 2;
             char *pszSubDest = static_cast<char *>(
                 CPLMalloc(strlen(sOptionsForBinary.osDest.c_str()) + 32));
 
-            CPLString osPath = CPLGetPath(sOptionsForBinary.osDest.c_str());
-            CPLString osBasename =
-                CPLGetBasename(sOptionsForBinary.osDest.c_str());
-            CPLString osExtension =
-                CPLGetExtension(sOptionsForBinary.osDest.c_str());
+            const CPLString osPath =
+                CPLGetPathSafe(sOptionsForBinary.osDest.c_str());
+            const CPLString osBasename =
+                CPLGetBasenameSafe(sOptionsForBinary.osDest.c_str());
+            const CPLString osExtension =
+                CPLGetExtensionSafe(sOptionsForBinary.osDest.c_str());
             CPLString osTemp;
 
             const char *pszFormat = nullptr;
-            if (CSLCount(papszSubdatasets) / 2 < 10)
+            if (nSubdatasets < 10)
             {
                 pszFormat = "%s_%d";
             }
-            else if (CSLCount(papszSubdatasets) / 2 < 100)
+            else if (nSubdatasets < 100)
             {
                 pszFormat = "%s_%002d";
             }
@@ -241,7 +234,7 @@ MAIN_START(argc, argv)
                 char *pszSource =
                     CPLStrdup(strstr(papszSubdatasets[i], "=") + 1);
                 osTemp = CPLSPrintf(pszFormat, osBasename.c_str(), i / 2 + 1);
-                osTemp = CPLFormFilename(osPath, osTemp, osExtension);
+                osTemp = CPLFormFilenameSafe(osPath, osTemp, osExtension);
                 strcpy(pszSubDest, osTemp.c_str());
                 hDataset = GDALOpenEx(pszSource, GDAL_OF_RASTER, nullptr,
                                       sOptionsForBinary.aosOpenOptions.List(),

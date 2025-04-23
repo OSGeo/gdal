@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for ADRG driver.
@@ -10,27 +9,8 @@
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2007-2009, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
-
-import os
-import shutil
 
 import gdaltest
 import pytest
@@ -73,91 +53,6 @@ def test_adrg_read_subdataset_img():
         filename_absolute=1,
     )
     tst.testOpen()
-
-
-###############################################################################
-# Test copying.
-
-
-def test_adrg_copy():
-
-    drv = gdal.GetDriverByName("ADRG")
-    srcds = gdal.Open("data/adrg/SMALL_ADRG/ABCDEF01.GEN")
-
-    dstds = drv.CreateCopy("tmp/ABCDEF01.GEN", srcds)
-
-    chksum = dstds.GetRasterBand(1).Checksum()
-
-    assert chksum == 62833, "Wrong checksum"
-
-    dstds = None
-
-    drv.Delete("tmp/ABCDEF01.GEN")
-
-
-###############################################################################
-# Test creating a fake 2 subdataset image and reading it.
-
-
-def test_adrg_2subdatasets():
-
-    drv = gdal.GetDriverByName("ADRG")
-    srcds = gdal.Open("data/adrg/SMALL_ADRG/ABCDEF01.GEN")
-
-    with gdal.config_option("ADRG_SIMULATE_MULTI_IMG", "ON"):
-        dstds = drv.CreateCopy("tmp/XXXXXX01.GEN", srcds)
-        del dstds
-
-    shutil.copy("tmp/XXXXXX01.IMG", "tmp/XXXXXX02.IMG")
-
-    ds = gdal.Open("tmp/TRANSH01.THF")
-    assert ds.RasterCount == 0, "did not expected non 0 RasterCount"
-    ds = None
-
-    ds = gdal.Open("ADRG:tmp/XXXXXX01.GEN,tmp/XXXXXX02.IMG")
-    chksum = ds.GetRasterBand(1).Checksum()
-
-    assert chksum == 62833, "Wrong checksum"
-
-    md = ds.GetMetadata("")
-    assert md["ADRG_NAM"] == "XXXXXX02", "metadata wrong."
-
-    ds = None
-
-    os.remove("tmp/XXXXXX01.GEN")
-    os.remove("tmp/XXXXXX01.GEN.aux.xml")
-    os.remove("tmp/XXXXXX01.IMG")
-    os.remove("tmp/XXXXXX02.IMG")
-    os.remove("tmp/TRANSH01.THF")
-
-
-###############################################################################
-# Test creating an in memory copy.
-
-
-def test_adrg_copy_vsimem():
-
-    drv = gdal.GetDriverByName("ADRG")
-    srcds = gdal.Open("data/adrg/SMALL_ADRG/ABCDEF01.GEN")
-
-    dstds = drv.CreateCopy("/vsimem/ABCDEF01.GEN", srcds)
-
-    chksum = dstds.GetRasterBand(1).Checksum()
-
-    assert chksum == 62833, "Wrong checksum"
-
-    dstds = None
-
-    # Reopen file
-    ds = gdal.Open("/vsimem/ABCDEF01.GEN")
-
-    chksum = ds.GetRasterBand(1).Checksum()
-    assert chksum == 62833, "Wrong checksum"
-
-    ds = None
-
-    drv.Delete("/vsimem/ABCDEF01.GEN")
-    gdal.Unlink("/vsimem/TRANSH01.THF")
 
 
 ###############################################################################
@@ -213,3 +108,23 @@ def test_adrg_zna_18():
 
 
 ###############################################################################
+# Test reading dataset with 2 subdataset image
+
+
+def test_adrg_read_2subdatasets():
+
+    ds = gdal.Open("data/adrg/subdataset/TRANSH01.THF")
+    assert ds.RasterCount == 0, "did not expected non 0 RasterCount"
+    ds = None
+
+    ds = gdal.Open(
+        "ADRG:data/adrg/subdataset/XXXXXX01.GEN,data/adrg/subdataset/XXXXXX02.IMG"
+    )
+    chksum = ds.GetRasterBand(1).Checksum()
+
+    assert chksum == 62833, "Wrong checksum"
+
+    md = ds.GetMetadata("")
+    assert md["ADRG_NAM"] == "XXXXXX02", "metadata wrong."
+
+    ds = None

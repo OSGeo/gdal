@@ -7,23 +7,7 @@
  * ****************************************************************************
  * Copyright (c) 2019, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -179,6 +163,9 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *bytes,
         case GDT_UInt64:
             DumpValue<std::uint64_t>(serializer, bytes);
             break;
+        case GDT_Float16:
+            DumpValue<GFloat16>(serializer, bytes);
+            break;
         case GDT_Float32:
             DumpValue<float>(serializer, bytes);
             break;
@@ -190,6 +177,9 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *bytes,
             break;
         case GDT_CInt32:
             DumpComplexValue<GInt32>(serializer, bytes);
+            break;
+        case GDT_CFloat16:
+            DumpComplexValue<GFloat16>(serializer, bytes);
             break;
         case GDT_CFloat32:
             DumpComplexValue<float>(serializer, bytes);
@@ -1222,7 +1212,7 @@ char *GDALMultiDimInfo(GDALDatasetH hDataset,
                 }
                 curGroup = std::move(curGroupNew);
             }
-            const char *pszArrayName = aosTokens[aosTokens.size() - 1];
+            const char *pszArrayName = aosTokens.back();
             auto array(curGroup->OpenMDArray(pszArrayName));
             if (!array)
             {

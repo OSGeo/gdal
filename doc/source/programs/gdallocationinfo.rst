@@ -13,15 +13,7 @@ gdallocationinfo
 Synopsis
 --------
 
-.. code-block::
-
-    Usage: gdallocationinfo [--help] [--help-general]
-                            [-xml] [-lifonly] [-valonly]
-                            [-E] [-field_sep <sep>] [-ignore_extra_input]
-                            [-b <band>]... [-overview <overview_level>]
-                            [[-l_srs <srs_def>] | [-geoloc] | [-wgs84]]
-                            [-oo <NAME>=<VALUE>]... <srcfile> [<x> <y>]
-
+.. program-output:: gdallocationinfo --help-doc
 
 Description
 -----------
@@ -37,6 +29,7 @@ reporting options are provided.
 .. option:: -xml
 
     The output report will be XML formatted for convenient post processing.
+    (:example:`xml`).
 
 .. option:: -lifonly
 
@@ -53,6 +46,22 @@ reporting options are provided.
 
     Selects a band to query.  Multiple bands can be listed.  By default all
     bands are queried.
+
+.. option:: -r {nearest|bilinear|cubic|cubicspline}
+
+    .. versionadded:: 3.10
+
+    Select a sampling algorithm. The default is ``nearest``.
+
+    The available methods are:
+
+    ``nearest`` applies a nearest neighbour.
+
+    ``bilinear`` applies a bilinear convolution kernel.
+
+    ``cubic`` applies a cubic convolution kernel.
+
+    ``cubicspline`` applies a B-Spline convolution kernel.
 
 .. option:: -overview <overview_level>
 
@@ -147,54 +156,59 @@ gdallocationinfo in the future.
 Examples
 --------
 
-Simple example reporting on pixel (256,256) on the file utm.tif.
+.. example::
+   :title: Reporting on pixel (256,256) on the file :file:`utm.tif`
 
-::
+   .. code-block:: console
 
-    $ gdallocationinfo utm.tif 256 256
-    Report:
-    Location: (256P,256L)
-    Band 1:
-        Value: 115
+       $ gdallocationinfo utm.tif 256 256
+       Report:
+       Location: (256P,256L)
+       Band 1:
+           Value: 115
 
-Query a VRT file providing the location in WGS84, and getting the result in xml.
 
-::
+.. example::
+   :title: Querying a VRT file providing the location in WGS84, and getting the result in XML
+   :id: xml
 
-    $ gdallocationinfo -xml -wgs84 utm.vrt -117.5 33.75
-    <Report pixel="217" line="282">
-        <BandReport band="1">
-            <LocationInfo>
-            <File>utm.tif</File>
-            </LocationInfo>
-            <Value>16</Value>
-        </BandReport>
-    </Report>
+   .. code-block:: console
 
-Reading location from stdin.
+       $ gdallocationinfo -xml -wgs84 utm.vrt -117.5 33.75
+       <Report pixel="217" line="282">
+           <BandReport band="1">
+               <LocationInfo>
+               <File>utm.tif</File>
+               </LocationInfo>
+               <Value>16</Value>
+           </BandReport>
+       </Report>
 
-::
+.. example::
+   :title: Reading locations from stdin
 
-    $ cat coordinates.txt
-    443020 3748359
-    441197 3749005
-    443852 3747743
+   .. code-block:: console
 
-    $ cat coordinates.txt | gdallocationinfo -geoloc utmsmall.tif
-    Report:
-      Location: (38P,49L)
-      Band 1:
-        Value: 214
-    Report:
-      Location: (7P,38L)
-      Band 1:
-        Value: 107
-    Report:
-      Location: (52P,59L)
-      Band 1:
-        Value: 148
+       $ cat coordinates.txt
+       443020 3748359
+       441197 3749005
+       443852 3747743
 
-    $ cat coordinates.txt | gdallocationinfo -geoloc -valonly -E -field_sep , utmsmall.tif
-    443020,3748359,214
-    441197,3749005,107
-    443852,3747743,148
+       $ cat coordinates.txt | gdallocationinfo -geoloc utmsmall.tif
+       Report:
+         Location: (38P,49L)
+         Band 1:
+           Value: 214
+       Report:
+         Location: (7P,38L)
+         Band 1:
+           Value: 107
+       Report:
+         Location: (52P,59L)
+         Band 1:
+           Value: 148
+
+       $ cat coordinates.txt | gdallocationinfo -geoloc -valonly -E -field_sep , utmsmall.tif
+       443020,3748359,214
+       441197,3749005,107
+       443852,3747743,148

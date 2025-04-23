@@ -15,23 +15,7 @@
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -61,7 +45,7 @@ static int OGRSQLiteDriverIdentify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
 
-    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    CPLString osExt(CPLGetExtensionSafe(poOpenInfo->pszFilename));
     if (EQUAL(osExt, "gpkg") && GDALGetDriverByName("GPKG") != nullptr)
     {
         return FALSE;
@@ -116,15 +100,18 @@ static int OGRSQLiteDriverIdentify(GDALOpenInfo *poOpenInfo)
         return FALSE;
 
 #ifdef ENABLE_SQL_SQLITE_FORMAT
-    if (STARTS_WITH((const char *)poOpenInfo->pabyHeader, "-- SQL SQLITE"))
+    if (STARTS_WITH(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                    "-- SQL SQLITE"))
     {
         return TRUE;
     }
-    if (STARTS_WITH((const char *)poOpenInfo->pabyHeader, "-- SQL RASTERLITE"))
+    if (STARTS_WITH(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                    "-- SQL RASTERLITE"))
     {
         return -1;
     }
-    if (STARTS_WITH((const char *)poOpenInfo->pabyHeader, "-- SQL MBTILES"))
+    if (STARTS_WITH(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                    "-- SQL MBTILES"))
     {
         if (GDALGetDriverByName("MBTILES") != nullptr)
             return FALSE;
@@ -134,7 +121,8 @@ static int OGRSQLiteDriverIdentify(GDALOpenInfo *poOpenInfo)
     }
 #endif
 
-    if (!STARTS_WITH((const char *)poOpenInfo->pabyHeader, "SQLite format 3"))
+    if (!STARTS_WITH(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                     "SQLite format 3"))
         return FALSE;
 
     // In case we are opening /vsizip/foo.zip with a .gpkg inside
@@ -163,11 +151,11 @@ static GDALDataset *OGRSQLiteDriverOpen(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check VirtualShape:xxx.shp syntax                               */
     /* -------------------------------------------------------------------- */
-    int nLen = (int)strlen(poOpenInfo->pszFilename);
+    const auto nLen = strlen(poOpenInfo->pszFilename);
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "VirtualShape:") && nLen > 4 &&
         EQUAL(poOpenInfo->pszFilename + nLen - 4, ".SHP"))
     {
-        OGRSQLiteDataSource *poDS = new OGRSQLiteDataSource();
+        auto poDS = std::make_unique<OGRSQLiteDataSource>();
 
         char **papszOptions = CSLAddString(nullptr, "SPATIALITE=YES");
         int nRet = poDS->Create(":memory:", papszOptions);
@@ -175,36 +163,32 @@ static GDALDataset *OGRSQLiteDriverOpen(GDALOpenInfo *poOpenInfo)
         CSLDestroy(papszOptions);
         if (!nRet)
         {
-            delete poDS;
             return nullptr;
         }
 
         char *pszSQLiteFilename =
             CPLStrdup(poOpenInfo->pszFilename + strlen("VirtualShape:"));
-        GDALDataset *poSQLiteDS = (GDALDataset *)GDALOpenEx(
-            pszSQLiteFilename, GDAL_OF_VECTOR, nullptr, nullptr, nullptr);
-        if (poSQLiteDS == nullptr)
+        if (!std::unique_ptr<GDALDataset>(GDALDataset::Open(
+                pszSQLiteFilename, GDAL_OF_VECTOR, nullptr, nullptr, nullptr)))
         {
             CPLFree(pszSQLiteFilename);
-            delete poDS;
             return nullptr;
         }
-        delete poSQLiteDS;
 
         char *pszLastDot = strrchr(pszSQLiteFilename, '.');
         if (pszLastDot)
             *pszLastDot = '\0';
 
-        const char *pszTableName = CPLGetBasename(pszSQLiteFilename);
+        const std::string osTableName = CPLGetBasenameSafe(pszSQLiteFilename);
 
         char *pszSQL = CPLStrdup(CPLSPrintf(
             "CREATE VIRTUAL TABLE %s USING VirtualShape(%s, CP1252, -1)",
-            pszTableName, pszSQLiteFilename));
+            osTableName.c_str(), pszSQLiteFilename));
         poDS->ExecuteSQL(pszSQL, nullptr, nullptr);
         CPLFree(pszSQL);
         CPLFree(pszSQLiteFilename);
         poDS->DisableUpdate();
-        return poDS;
+        return poDS.release();
     }
 
     /* -------------------------------------------------------------------- */
@@ -311,6 +295,8 @@ void RegisterOGRSQLite()
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "SQLite / Spatialite / RasterLite2");
+    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_SUBDATASETS, "YES");
 #else
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "SQLite / Spatialite");
 #endif
@@ -333,6 +319,11 @@ void RegisterOGRSQLite()
         "description='Whether to promote 1-bit monochrome raster as 8-bit, so "
         "as to have higher quality overviews' default='YES'/>"
 #endif
+        "  <Option name='OGR_SCHEMA' type='string' description='"
+        "Partially or totally overrides the auto-detected schema to use for "
+        "creating the layer. "
+        "The overrides are defined as a JSON list of field definitions. "
+        "This can be a filename or a JSON string or a URL.'/>"
         "</OpenOptionList>");
 
     CPLString osCreationOptions(
@@ -480,6 +471,9 @@ void RegisterOGRSQLite()
 #ifdef SQLITE_HAS_COLUMN_METADATA
     poDriver->SetMetadataItem("SQLITE_HAS_COLUMN_METADATA", "YES");
 #endif
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "Features");
 
     poDriver->pfnOpen = OGRSQLiteDriverOpen;
     poDriver->pfnIdentify = OGRSQLiteDriverIdentify;

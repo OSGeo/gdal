@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR MVT driver functionality.
@@ -9,23 +8,7 @@
 ###############################################################################
 # Copyright (c) 2018, Even Rouault <even dot rouault at spatialys dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import json
@@ -811,7 +794,7 @@ def test_ogr_mvt_http(server):
 @pytest.mark.require_geos
 def test_ogr_mvt_write_one_layer():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
     lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
@@ -1116,7 +1099,7 @@ def test_ogr_mvt_write_one_layer():
 @pytest.mark.require_geos
 def test_ogr_mvt_write_conf():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1209,7 +1192,7 @@ def test_ogr_mvt_write_conf():
 @pytest.mark.require_geos
 def test_ogr_mvt_write_mbtiles():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1237,9 +1220,11 @@ def test_ogr_mvt_write_mbtiles():
 
 @pytest.mark.require_driver("SQLite")
 @pytest.mark.require_geos
-def test_ogr_mvt_write_limitations_max_size():
+@pytest.mark.parametrize("implicit_limitation", [True, False])
+@gdaltest.enable_exceptions()
+def test_ogr_mvt_write_limitations_max_size(implicit_limitation, tmp_path):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
     lyr.CreateField(ogr.FieldDefn("field"))
 
@@ -1261,10 +1246,22 @@ def test_ogr_mvt_write_limitations_max_size():
         out_ds = gdal.VectorTranslate(
             "/vsimem/out.mbtiles",
             src_ds,
-            datasetCreationOptions=["MAX_SIZE=100", "SIMPLIFICATION=1"],
+            datasetCreationOptions=[
+                "@MAX_SIZE_FOR_TEST=101" if implicit_limitation else "MAX_SIZE=101",
+                "SIMPLIFICATION=1",
+            ],
         )
     assert out_ds is not None
-    out_ds = None
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        out_ds.Close()
+    if implicit_limitation:
+        assert (
+            gdal.GetLastErrorMsg()
+            == "At least one tile exceeded the default maximum tile size of 101 bytes and was encoded at lower resolution"
+        )
+    else:
+        assert gdal.GetLastErrorMsg() == ""
 
     out_ds = ogr.Open("/vsimem/out.mbtiles")
     assert out_ds is not None
@@ -1288,7 +1285,7 @@ def test_ogr_mvt_write_limitations_max_size():
 @pytest.mark.require_geos
 def test_ogr_mvt_write_polygon_repaired():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
     lyr.CreateField(ogr.FieldDefn("field"))
 
@@ -1380,7 +1377,7 @@ def test_ogr_mvt_write_polygon_repaired():
 @pytest.mark.require_geos
 def test_ogr_mvt_write_conflicting_innner_ring():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
     lyr.CreateField(ogr.FieldDefn("field"))
 
@@ -1419,7 +1416,7 @@ def test_ogr_mvt_write_conflicting_innner_ring():
 @pytest.mark.require_geos
 def test_ogr_mvt_write_limitations_max_size_polygon():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
     lyr.CreateField(ogr.FieldDefn("field"))
 
@@ -1458,9 +1455,11 @@ def test_ogr_mvt_write_limitations_max_size_polygon():
 
 @pytest.mark.require_driver("SQLite")
 @pytest.mark.require_geos
-def test_ogr_mvt_write_limitations_max_features():
+@pytest.mark.parametrize("implicit_limitation", [True, False])
+@gdaltest.enable_exceptions()
+def test_ogr_mvt_write_limitations_max_features(implicit_limitation):
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1479,10 +1478,21 @@ def test_ogr_mvt_write_limitations_max_features():
         "/vsimem/out.mbtiles",
         src_ds,
         format="MVT",
-        datasetCreationOptions=["MAX_FEATURES=1"],
+        datasetCreationOptions=[
+            "@MAX_FEATURES_FOR_TEST=1" if implicit_limitation else "MAX_FEATURES=1"
+        ],
     )
     assert out_ds is not None
-    out_ds = None
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        out_ds.Close()
+    if implicit_limitation:
+        assert (
+            gdal.GetLastErrorMsg()
+            == "At least one tile exceeded the default maximum number of features per tile (1) and was truncated to satisfy it."
+        )
+    else:
+        assert gdal.GetLastErrorMsg() == ""
 
     out_ds = ogr.Open("/vsimem/out.mbtiles")
     assert out_ds is not None
@@ -1508,7 +1518,7 @@ def test_ogr_mvt_write_limitations_max_features():
 @pytest.mark.require_geos
 def test_ogr_mvt_write_custom_tiling_scheme():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
     lyr = src_ds.CreateLayer("mylayer", srs=srs)
@@ -1714,7 +1724,7 @@ def test_ogr_mvt_write_errors():
 @pytest.mark.require_geos
 def test_ogr_mvt_write_reuse_temp_db():
 
-    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1743,4 +1753,46 @@ def test_ogr_mvt_write_reuse_temp_db():
 
 
 ###############################################################################
-#
+
+
+@pytest.mark.require_driver("SQLite")
+@pytest.mark.require_geos
+@pytest.mark.parametrize(
+    "TILING_SCHEME",
+    ["EPSG:4326,-180,90,180", "EPSG:4326,-180,90,180,2,1", "EPSG:4326,-180,90,180,1,1"],
+)
+def test_ogr_mvt_write_custom_tiling_scheme_WorldCRS84Quad(tmp_vsimem, TILING_SCHEME):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+    lyr = src_ds.CreateLayer("mylayer", srs=srs)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(120 40)"))
+    lyr.CreateFeature(f)
+
+    filename = str(tmp_vsimem / "out")
+    out_ds = gdal.VectorTranslate(
+        filename,
+        src_ds,
+        format="MVT",
+        datasetCreationOptions=["TILING_SCHEME=" + TILING_SCHEME],
+    )
+    assert out_ds is not None
+    out_ds = None
+
+    if TILING_SCHEME == "EPSG:4326,-180,90,180,1,1":
+        # If explicitly setting tile_matrix_width_zoom_0 == 1,
+        # we have no tiles beyond longitude 0 degree
+        with pytest.raises(Exception):
+            ogr.Open(filename + "/0")
+    else:
+        out_ds = ogr.Open(filename + "/0")
+        assert out_ds is not None
+        out_lyr = out_ds.GetLayerByName("mylayer")
+        assert out_lyr.GetSpatialRef().ExportToWkt().find("4326") >= 0
+        out_f = out_lyr.GetNextFeature()
+        ogrtest.check_feature_geometry(
+            out_f, "MULTIPOINT ((120.0146484375 39.990234375))"
+        )

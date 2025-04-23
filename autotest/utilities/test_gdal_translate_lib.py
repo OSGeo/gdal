@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  test librarified gdal_translate
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2015, Faza Mahamood <fazamhd at gmail dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import collections
@@ -202,9 +185,9 @@ def test_gdal_translate_lib_6(tmp_path):
 # Test oXSizePct and oYSizePct option
 
 
-def test_gdal_translate_lib_7(tmp_path):
+def test_gdal_translate_lib_7(tmp_vsimem):
 
-    dst_tif = str(tmp_path / "test7.tif")
+    dst_tif = tmp_vsimem / "test7.tif"
 
     ds = gdal.Open("../gcore/data/byte.tif")
     ds = gdal.Translate(dst_tif, ds, widthPct=200.0, heightPct=200.0)
@@ -212,7 +195,21 @@ def test_gdal_translate_lib_7(tmp_path):
 
     assert ds.GetRasterBand(1).Checksum() == 18784, "Bad checksum"
 
-    ds = None
+
+def test_gdal_translate_lib_7_error(tmp_vsimem):
+
+    with pytest.raises(Exception, match="Invalid output width"):
+        gdal.Translate(
+            tmp_vsimem / "out.tif",
+            "../gcore/data/byte.tif",
+            widthPct=1,
+            heightPct=200.0,
+        )
+
+    with pytest.raises(Exception, match="Invalid output height"):
+        gdal.Translate(
+            tmp_vsimem / "out.tif", "../gcore/data/byte.tif", widthPct=200, heightPct=1
+        )
 
 
 ###############################################################################
@@ -266,14 +263,34 @@ def test_gdal_translate_lib_9(tmp_path):
 
 def test_gdal_translate_lib_nodata_uint64():
 
-    ds = gdal.Open("../gcore/data/byte.tif")
     noData = (1 << 64) - 1
-    ds = gdal.Translate("", ds, format="MEM", outputType=gdal.GDT_UInt64, noData=noData)
+    ds = gdal.Translate(
+        "",
+        "../gcore/data/byte.tif",
+        format="MEM",
+        outputType=gdal.GDT_UInt64,
+        noData=noData,
+    )
     assert ds is not None
 
     assert ds.GetRasterBand(1).GetNoDataValue() == noData, "Bad nodata value"
 
-    ds = None
+
+@pytest.mark.parametrize("nodata", (1 << 65, 3.2))
+def test_gdal_translate_lib_nodata_uint64_invalid(nodata):
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "Nodata value was not set to output band"
+    ):
+        ds = gdal.Translate(
+            "",
+            "../gcore/data/byte.tif",
+            format="MEM",
+            outputType=gdal.GDT_Int64,
+            noData=nodata,
+        )
+    assert ds is not None
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
 
 
 ###############################################################################
@@ -292,6 +309,23 @@ def test_gdal_translate_lib_nodata_int64():
     ds = None
 
 
+@pytest.mark.parametrize("nodata", (1 << 65, 3.2))
+def test_gdal_translate_lib_nodata_int64_invalid(nodata):
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "Nodata value was not set to output band"
+    ):
+        ds = gdal.Translate(
+            "",
+            "../gcore/data/byte.tif",
+            format="MEM",
+            outputType=gdal.GDT_Int64,
+            noData=nodata,
+        )
+    assert ds is not None
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+
+
 ###############################################################################
 # Test nodata=-inf
 
@@ -305,20 +339,29 @@ def test_gdal_translate_lib_nodata_minus_inf():
 
 
 ###############################################################################
-# Test srcWin option
+# Test -srcwin option
 
 
-def test_gdal_translate_lib_10(tmp_path):
+def test_gdal_translate_lib_10(tmp_vsimem):
 
-    dst_tif = str(tmp_path / "test10.tif")
-
-    ds = gdal.Open("../gcore/data/byte.tif")
-    ds = gdal.Translate(dst_tif, ds, srcWin=[0, 0, 1, 1])
-    assert ds is not None
+    ds = gdal.Translate(
+        tmp_vsimem / "out.tif", "../gcore/data/byte.tif", srcWin=(0, 0, 1, 1)
+    )
 
     assert ds.GetRasterBand(1).Checksum() == 2, "Bad checksum"
 
-    ds = None
+
+def test_gdal_translate_lib_srcwin_invalid(tmp_vsimem):
+
+    with pytest.raises(Exception, match="Invalid output size"):
+        gdal.Translate(
+            tmp_vsimem / "out.tif", "../gcore/data/byte.tif", srcWin=(0, 0, 2 << 33, 1)
+        )
+
+    with pytest.raises(Exception, match="Invalid output size"):
+        gdal.Translate(
+            tmp_vsimem / "out.tif", "../gcore/data/byte.tif", srcWin=(0, 0, 1, 2 << 33)
+        )
 
 
 ###############################################################################
@@ -558,6 +601,76 @@ def test_gdal_translate_lib_scale_0_255_input_range():
 
 
 ###############################################################################
+# Test error cases of -projwin
+
+
+def test_gdal_translate_lib_projwin_rotated():
+
+    with pytest.raises(Exception, match="not supported"):
+
+        gdal.Translate(
+            "",
+            "../gcore/data/geomatrix.tif",
+            format="VRT",
+            projWin=[1840936, 1143965, 1840999, 1143922],
+        )
+
+
+def test_gdal_translate_lib_projwin_srs_no_source_srs():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
+    src_ds.SetGeoTransform((0, 1, 0, 10, 0, -1))
+
+    with gdaltest.error_raised(gdal.CE_Warning, "projwin_srs ignored"):
+        gdal.Translate(
+            "", src_ds, format="VRT", projWin=[2, 4, 4, 2], projWinSRS="EPSG:4326"
+        )
+
+
+def test_gdal_translate_lib_srcwin_negative():
+
+    with pytest.raises(Exception, match="negative width and/or height"):
+
+        gdal.Translate(
+            "",
+            "../gcore/data/byte.tif",
+            format="VRT",
+            projWin=[440720.000, 3751320.000, 441920.000, 3751320.000],
+        )
+
+
+def test_gdal_translate_lib_cannot_identify_format(tmp_vsimem):
+
+    with pytest.raises(Exception, match="Could not identify an output driver"):
+
+        gdal.Translate(tmp_vsimem / "out.txt", "../gcore/data/byte.tif")
+
+
+def test_gdal_translate_lib_invalid_format(tmp_vsimem):
+
+    with pytest.raises(Exception, match="Output driver .* not recognised"):
+
+        gdal.Translate(
+            tmp_vsimem / "out.txt", "../gcore/data/byte.tif", format="JPEG3000"
+        )
+
+
+def test_gdal_translate_lib_no_raster_capabilites(tmp_vsimem):
+
+    with pytest.raises(Exception, match="no raster capabilities"):
+        gdal.Translate(
+            tmp_vsimem / "byte.shp", "../gcore/data/byte.tif", format="ESRI Shapefile"
+        )
+
+
+@pytest.mark.require_driver("DOQ1")
+def test_gdal_translate_lib_no_creation_capabilites(tmp_vsimem):
+
+    with pytest.raises(Exception, match="no creation capabilities"):
+        gdal.Translate(tmp_vsimem / "byte.doq", "../gcore/data/byte.tif", format="DOQ1")
+
+
+###############################################################################
 # Test that -projwin with nearest neighbor resampling uses integer source
 # pixel boundaries (#6610)
 
@@ -582,6 +695,136 @@ def test_gdal_translate_lib_103():
 
 
 ###############################################################################
+# Test that -projwin with nearest neighbor resampling produces an output
+# extent that includes all of -projwin
+
+
+def test_gdal_translate_lib_projwin_expand():
+
+    # Pixel size is 60. We should be able to shrink the corners by 59
+    # without losing any pixels
+    ds = gdal.Translate(
+        "",
+        "../gcore/data/byte.tif",
+        format="MEM",
+        projWin=[440720 + 59, 3751320 - 59, 441920.000 - 59, 3750120 + 59],
+    )
+
+    assert ds.RasterXSize == 20
+    assert ds.RasterYSize == 20
+
+
+###############################################################################
+# Test -projwin_srs option
+
+
+def test_gdal_translate_lib_31():
+
+    ds = gdal.Translate(
+        "",
+        "../gcore/data/byte.tif",
+        projWin=(-117.6408, 33.9023, -117.6282, 33.8920),
+        projWinSRS="EPSG:4267",
+        format="MEM",
+    )
+
+    assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
+
+    gdaltest.check_geotransform(
+        gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
+        ds.GetGeoTransform(),
+        1e-6,
+    )
+
+
+def test_gdal_translate_lib_projwin_polar(tmp_vsimem):
+
+    src = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "in.tif", 16620, 30000, options={"SPARSE_OK": True}
+    )
+    src.SetGeoTransform((-640000.0, 90.0, 0.0, -655550.0, 0.0, -90.0))
+    src.SetProjection("EPSG:3413")
+
+    dst = gdal.Translate(
+        "", src, projWin=(-20, 80, -19, 79), projWinSRS="EPSG:4326", format="VRT"
+    )
+
+    dst_gt = dst.GetGeoTransform()
+    assert dst_gt[0] == 458900
+    assert dst_gt[3] == -975950
+
+    assert dst.RasterXSize == 723
+    assert dst.RasterYSize == 1192
+
+
+###############################################################################
+# Test that a warning or error is issued when -projwin is partially or wholly
+# outside of the source
+
+
+@pytest.mark.parametrize("error", ("partially", "completely", False, True))
+@gdaltest.disable_exceptions()
+def test_gdal_translate_lib_projwin_partially_outside(error):
+
+    msg_type = gdal.CE_Failure if error in ("partially", True) else gdal.CE_Warning
+
+    with gdaltest.error_raised(msg_type, "partially outside"):
+        ds = gdal.Translate(
+            "",
+            "../gcore/data/byte.tif",
+            format="VRT",
+            projWin=(440000, 3751320, 441920, 3750120),
+            errorIfWindowOutsideSource=error,
+        )
+
+        if error in ("partially", True):
+            assert ds is None
+        else:
+            assert ds is not None
+            assert ds.RasterXSize == 32
+            assert ds.RasterYSize == 20
+
+
+@pytest.mark.parametrize("error", ("partially", "completely", False, True))
+@gdaltest.disable_exceptions()
+def test_gdal_translate_lib_projwin_completely_outside(error):
+
+    msg_type = (
+        gdal.CE_Failure
+        if error in {"partially", "completely", True}
+        else gdal.CE_Warning
+    )
+
+    with gdaltest.error_raised(msg_type, "completely outside"):
+        ds = gdal.Translate(
+            "",
+            "../gcore/data/byte.tif",
+            format="VRT",
+            projWin=(0, 120, 120, 0),
+            errorIfWindowOutsideSource=error,
+        )
+
+        if error in {"partially", "completely", True}:
+            assert ds is None
+        else:
+            assert ds is not None
+            assert ds.RasterXSize == 3
+            assert ds.RasterYSize == 2
+
+
+def test_gdal_translate_lib_projwin_invalid_error_if_window_outside_source():
+
+    with pytest.raises(RuntimeError, match="errorIfWindowOutsideSource must be one of"):
+        gdal.Translate(
+            "",
+            "../gcore/data/byte.tif",
+            format="VRT",
+            projWin=(0, 120, 120, 0),
+            errorIfWindowOutsideSource="possibly",
+        )
+
+
+###############################################################################
 # Test translate with a MEM source to a anonymous VRT
 
 
@@ -597,6 +840,10 @@ def test_gdal_translate_lib_104():
 # Test GCPs propagation in "VRT path"
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_lib_gcp_vrt_path():
 
     src_ds = gdal.Open("../gcore/data/gcps.vrt")
@@ -613,6 +860,10 @@ def test_gdal_translate_lib_gcp_vrt_path():
 # Test RPC propagation in "VRT path"
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_lib_rcp_vrt_path():
 
     src_ds = gdal.Open("../gcore/data/rpc.vrt")
@@ -624,6 +875,10 @@ def test_gdal_translate_lib_rcp_vrt_path():
 # Test GeoLocation propagation in "VRT path"
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_lib_geolocation_vrt_path(tmp_vsimem):
 
     src_ds = gdal.Open("../gcore/data/sstgeo.vrt")
@@ -642,7 +897,12 @@ def test_gdal_translate_lib_colorinterp():
     src_ds = gdal.Open("../gcore/data/rgbsmall.tif")
 
     # Less bands specified than available
-    ds = gdal.Translate("", src_ds, options="-f MEM -colorinterp blue,gray")
+    ds = gdal.Translate(
+        "",
+        src_ds,
+        format="MEM",
+        colorInterpretation=[gdal.GCI_BlueBand, gdal.GCI_GrayIndex],
+    )
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_BlueBand
     assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GrayIndex
     assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
@@ -650,7 +910,10 @@ def test_gdal_translate_lib_colorinterp():
     # More bands specified than available and a unknown color interpretation
     with gdal.quiet_errors():
         ds = gdal.Translate(
-            "", src_ds, options="-f MEM -colorinterp alpha,red,undefined,foo"
+            "",
+            src_ds,
+            format="MEM",
+            colorInterpretation=["alpha", "red", "undefined", "foo"],
         )
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_AlphaBand
     assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_RedBand
@@ -1125,13 +1388,15 @@ def test_gdal_translate_lib_overview_level(tmp_vsimem):
 # Test copying a raster with no input band
 
 
-def test_gdal_translate_lib_no_input_band():
+@pytest.mark.require_driver("ENVI")
+def test_gdal_translate_lib_no_input_band(tmp_vsimem):
 
+    out_filename = tmp_vsimem / "out.img"
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 0)
     with pytest.raises(Exception):
-        gdal.Translate("", src_ds, format="MEM")
+        gdal.Translate(out_filename, src_ds, format="ENVI")
     with pytest.raises(Exception):
-        gdal.Translate("", src_ds, format="MEM", outputType=gdal.GDT_Int16)
+        gdal.Translate(out_filename, src_ds, format="ENVI", outputType=gdal.GDT_Int16)
 
 
 ###############################################################################
@@ -1281,11 +1546,15 @@ def test_gdal_translate_ovr_rpc():
     src_rpc = src_ds.GetMetadata("RPC")
     ovr_rpc = ds.GetMetadata("RPC")
     assert ovr_rpc
-    assert float(ovr_rpc["LINE_OFF"]) == pytest.approx(0.5 * float(src_rpc["LINE_OFF"]))
+    assert float(ovr_rpc["LINE_OFF"]) == pytest.approx(
+        0.5 * (float(src_rpc["LINE_OFF"]) + 0.5) - 0.5
+    )
     assert float(ovr_rpc["LINE_SCALE"]) == pytest.approx(
         0.5 * float(src_rpc["LINE_SCALE"])
     )
-    assert float(ovr_rpc["SAMP_OFF"]) == pytest.approx(0.5 * float(src_rpc["SAMP_OFF"]))
+    assert float(ovr_rpc["SAMP_OFF"]) == pytest.approx(
+        0.5 * (float(src_rpc["SAMP_OFF"]) + 0.5) - 0.5
+    )
     assert float(ovr_rpc["SAMP_SCALE"]) == pytest.approx(
         0.5 * float(src_rpc["SAMP_SCALE"])
     )

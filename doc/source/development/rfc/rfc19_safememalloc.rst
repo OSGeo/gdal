@@ -26,7 +26,7 @@ scanlines, whole image buffers, etc.. Currently no overflow checking is
 done, thus leading to potential allocation of not large enough buffers.
 Overflow can occur when raster dimensions are very large (this can be
 the case with a WMS raster source for example) or when a dataset is
-corrupted, intentionnaly or unintentionnaly. This can lead to latter
+corrupted, intentionally or unintentionally. This can lead to latter
 crash.
 
 This RFC introduces new API to allocate memory when the computation of

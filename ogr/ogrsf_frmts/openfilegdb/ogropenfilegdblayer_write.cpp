@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -56,6 +40,7 @@
 #include "filegdbtable.h"
 #include "filegdbtable_priv.h"
 #include "filegdb_coordprec_write.h"
+#include "filegdb_reserved_keywords.h"
 
 /*************************************************************************/
 /*                            StringToWString()                          */
@@ -153,20 +138,11 @@ static std::wstring EscapeReservedKeywords(const std::wstring &name)
     std::string newName = WStringToString(name);
     std::string upperName = CPLString(newName).toupper();
 
-    // From ESRI docs
-    static const char *const RESERVED_WORDS[] = {
-        "OBJECTID", "ADD",    "ALTER",  "AND",   "AS",     "ASC",    "BETWEEN",
-        "BY",       "COLUMN", "CREATE", "DATE",  "DELETE", "DESC",   "DROP",
-        "EXISTS",   "FOR",    "FROM",   "IN",    "INSERT", "INTO",   "IS",
-        "LIKE",     "NOT",    "NULL",   "OR",    "ORDER",  "SELECT", "SET",
-        "TABLE",    "UPDATE", "VALUES", "WHERE", nullptr};
-
     // Append an underscore to any FGDB reserved words used as field names
     // This is the same behavior ArcCatalog follows.
-    for (int i = 0; RESERVED_WORDS[i] != nullptr; i++)
+    for (const char *pszKeyword : apszRESERVED_WORDS)
     {
-        const char *w = RESERVED_WORDS[i];
-        if (upperName == w)
+        if (upperName == pszKeyword)
         {
             newName += '_';
             break;
@@ -208,34 +184,34 @@ static void XMLSerializeGeomFieldBase(CPLXMLNode *psRoot,
     }
     CPLCreateXMLElementAndValue(
         psSpatialReference, "XOrigin",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetXOrigin()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetXOrigin()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "YOrigin",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetYOrigin()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetYOrigin()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "XYScale",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetXYScale()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetXYScale()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "ZOrigin",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetZOrigin()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetZOrigin()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "ZScale",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetZScale()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetZScale()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "MOrigin",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetMOrigin()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetMOrigin()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "MScale",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetMScale()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetMScale()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "XYTolerance",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetXYTolerance()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetXYTolerance()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "ZTolerance",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetZTolerance()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetZTolerance()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "MTolerance",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetMTolerance()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetMTolerance()));
     CPLCreateXMLElementAndValue(psSpatialReference, "HighPrecision", "true");
     if (poSRS)
     {
@@ -410,6 +386,12 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
     const auto eFlattenType = wkbFlatten(OGR_GT_GetLinear(m_eGeomType));
     if (eFlattenType == wkbNone)
         eTableGeomType = FGTGT_NONE;
+    else if (CPLTestBool(m_aosCreationOptions.FetchNameValueDef(
+                 "CREATE_MULTIPATCH", "FALSE")))
+    {
+        // For compatibility with FileGDB driver
+        eTableGeomType = FGTGT_MULTIPATCH;
+    }
     else if (eFlattenType == wkbPoint)
         eTableGeomType = FGTGT_POINT;
     else if (eFlattenType == wkbMultiPoint)
@@ -419,16 +401,17 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
     {
         eTableGeomType = FGTGT_LINE;
     }
-    else if (OGR_GT_IsSurface(eFlattenType) ||
-             OGR_GT_IsSubClassOf(eFlattenType, wkbMultiSurface))
-    {
-        eTableGeomType = FGTGT_POLYGON;
-    }
-    else if (eFlattenType == wkbTIN || eFlattenType == wkbPolyhedralSurface ||
+    else if (wkbFlatten(m_eGeomType) == wkbTIN ||
+             wkbFlatten(m_eGeomType) == wkbPolyhedralSurface ||
              m_eGeomType == wkbGeometryCollection25D ||
              m_eGeomType == wkbSetZ(wkbUnknown))
     {
         eTableGeomType = FGTGT_MULTIPATCH;
+    }
+    else if (OGR_GT_IsSurface(eFlattenType) ||
+             OGR_GT_IsSubClassOf(eFlattenType, wkbMultiSurface))
+    {
+        eTableGeomType = FGTGT_POLYGON;
     }
     else
     {
@@ -824,7 +807,7 @@ static CPLXMLNode *CreateXMLFieldDefinition(const OGRFieldDefn *poFieldDefn,
         {
             auto psDefaultValue = CPLCreateXMLElementAndValue(
                 GPFieldInfoEx, "DefaultValueNumeric",
-                CPLSPrintf("%.18g", psDefault->Real));
+                CPLSPrintf("%.17g", psDefault->Real));
             if (!bArcGISPro32OrLater)
             {
                 CPLAddXMLAttributeAndValue(
@@ -843,7 +826,7 @@ static CPLXMLNode *CreateXMLFieldDefinition(const OGRFieldDefn *poFieldDefn,
         {
             CPLCreateXMLElementAndValue(
                 GPFieldInfoEx, "DefaultValueNumeric",
-                CPLSPrintf("%.18g", FileGDBOGRDateToDoubleDate(
+                CPLSPrintf("%.17g", FileGDBOGRDateToDoubleDate(
                                         psDefault, /* bConvertToUTC = */ true,
                                         poGDBFieldDefn->IsHighPrecision())));
         }
@@ -886,6 +869,7 @@ static CPLXMLNode *CreateXMLFieldDefinition(const OGRFieldDefn *poFieldDefn,
         }
     }
     const char *pszFieldType = "";
+    CPL_IGNORE_RET_VAL(pszFieldType);  // Make CSA happy
     int nLength = 0;
     switch (poGDBFieldDefn->GetType())
     {
@@ -1007,7 +991,7 @@ static bool GetDefault(const OGRFieldDefn *poField, FileGDBFieldType eType,
             if (osDefaultVal[0] == '\'' && osDefaultVal.back() == '\'')
             {
                 osDefaultVal = osDefaultVal.substr(1);
-                osDefaultVal.resize(osDefaultVal.size() - 1);
+                osDefaultVal.pop_back();
                 char *pszTmp =
                     CPLUnescapeString(osDefaultVal.c_str(), nullptr, CPLES_SQL);
                 osDefaultVal = pszTmp;
@@ -1036,7 +1020,7 @@ static bool GetDefault(const OGRFieldDefn *poField, FileGDBFieldType eType,
             if (osDefaultVal[0] == '\'' && osDefaultVal.back() == '\'')
             {
                 osDefaultVal = osDefaultVal.substr(1);
-                osDefaultVal.resize(osDefaultVal.size() - 1);
+                osDefaultVal.pop_back();
                 char *pszTmp =
                     CPLUnescapeString(osDefaultVal.c_str(), nullptr, CPLES_SQL);
                 osDefaultVal = pszTmp;
@@ -2181,11 +2165,21 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
                     eFlattenType != wkbPolyhedralSurface &&
                     eFlattenType != wkbGeometryCollection)
                 {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "Can only insert a "
-                             "TIN/PolyhedralSurface/GeometryCollection in a "
-                             "esriGeometryMultiPatch layer");
-                    return false;
+                    if (CPLTestBool(m_aosCreationOptions.FetchNameValueDef(
+                            "CREATE_MULTIPATCH", "FALSE")) &&
+                        eFlattenType == wkbMultiPolygon)
+                    {
+                        // ok
+                    }
+                    else
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_NotSupported,
+                            "Can only insert a "
+                            "TIN/PolyhedralSurface/GeometryCollection in a "
+                            "esriGeometryMultiPatch layer");
+                        return false;
+                    }
                 }
                 break;
             }
@@ -2265,6 +2259,7 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
             }
             continue;
         }
+        memset(&fields[idxFileGDB], 0, sizeof(OGRField));
         switch (m_poLyrTable->GetField(idxFileGDB)->GetType())
         {
             case FGFT_UNDEFINED:
@@ -2914,7 +2909,8 @@ void OGROpenFileGDBLayer::CreateIndex(const std::string &osIdxName,
 /*                                Repack()                              */
 /************************************************************************/
 
-bool OGROpenFileGDBLayer::Repack()
+bool OGROpenFileGDBLayer::Repack(GDALProgressFunc pfnProgress,
+                                 void *pProgressData)
 {
     if (!m_bEditable)
         return false;
@@ -2922,7 +2918,7 @@ bool OGROpenFileGDBLayer::Repack()
     if (!BuildLayerDefinition())
         return false;
 
-    return m_poLyrTable->Repack();
+    return m_poLyrTable->Repack(pfnProgress, pProgressData);
 }
 
 /************************************************************************/
@@ -2966,19 +2962,20 @@ bool OGROpenFileGDBLayer::BeginEmulatedTransaction()
 
     bool bRet = true;
 
-    const std::string osThisDirname = CPLGetPath(m_osGDBFilename.c_str());
-    const std::string osThisBasename = CPLGetBasename(m_osGDBFilename.c_str());
+    const std::string osThisDirname = CPLGetPathSafe(m_osGDBFilename.c_str());
+    const std::string osThisBasename =
+        CPLGetBasenameSafe(m_osGDBFilename.c_str());
     char **papszFiles = VSIReadDir(osThisDirname.c_str());
     for (char **papszIter = papszFiles;
          papszIter != nullptr && *papszIter != nullptr; ++papszIter)
     {
-        const std::string osBasename = CPLGetBasename(*papszIter);
+        const std::string osBasename = CPLGetBasenameSafe(*papszIter);
         if (osBasename == osThisBasename)
         {
-            std::string osDestFilename = CPLFormFilename(
+            const std::string osDestFilename = CPLFormFilenameSafe(
                 m_poDS->GetBackupDirName().c_str(), *papszIter, nullptr);
-            std::string osSourceFilename =
-                CPLFormFilename(osThisDirname.c_str(), *papszIter, nullptr);
+            const std::string osSourceFilename =
+                CPLFormFilenameSafe(osThisDirname.c_str(), *papszIter, nullptr);
             if (CPLCopyFile(osDestFilename.c_str(), osSourceFilename.c_str()) !=
                 0)
             {
@@ -3041,8 +3038,9 @@ bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
 
     bool bRet = true;
 
-    const std::string osThisDirname = CPLGetPath(m_osGDBFilename.c_str());
-    const std::string osThisBasename = CPLGetBasename(m_osGDBFilename.c_str());
+    const std::string osThisDirname = CPLGetPathSafe(m_osGDBFilename.c_str());
+    const std::string osThisBasename =
+        CPLGetBasenameSafe(m_osGDBFilename.c_str());
 
     // Delete files in working directory that match our basename
     {
@@ -3050,11 +3048,11 @@ bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
         for (char **papszIter = papszFiles;
              papszIter != nullptr && *papszIter != nullptr; ++papszIter)
         {
-            const std::string osBasename = CPLGetBasename(*papszIter);
+            const std::string osBasename = CPLGetBasenameSafe(*papszIter);
             if (osBasename == osThisBasename)
             {
-                std::string osDestFilename =
-                    CPLFormFilename(osThisDirname.c_str(), *papszIter, nullptr);
+                const std::string osDestFilename = CPLFormFilenameSafe(
+                    osThisDirname.c_str(), *papszIter, nullptr);
                 VSIUnlink(osDestFilename.c_str());
             }
         }
@@ -3068,13 +3066,13 @@ bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
         for (char **papszIter = papszFiles;
              papszIter != nullptr && *papszIter != nullptr; ++papszIter)
         {
-            const std::string osBasename = CPLGetBasename(*papszIter);
+            const std::string osBasename = CPLGetBasenameSafe(*papszIter);
             if (osBasename == osThisBasename)
             {
                 bBackupFound = true;
-                std::string osDestFilename =
-                    CPLFormFilename(osThisDirname.c_str(), *papszIter, nullptr);
-                std::string osSourceFilename = CPLFormFilename(
+                const std::string osDestFilename = CPLFormFilenameSafe(
+                    osThisDirname.c_str(), *papszIter, nullptr);
+                const std::string osSourceFilename = CPLFormFilenameSafe(
                     m_poDS->GetBackupDirName().c_str(), *papszIter, nullptr);
                 if (CPLCopyFile(osDestFilename.c_str(),
                                 osSourceFilename.c_str()) != 0)

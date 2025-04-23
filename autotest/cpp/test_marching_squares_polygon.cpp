@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL algorithms
  * Purpose:  Tests for the marching squares algorithm
@@ -8,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2018, Hugo Mercier, <hugo dot mercier at oslandia dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_unit_test.h"
@@ -304,37 +287,77 @@ TEST_F(test_ms_polygon, four_pixels_2)
     //  NaN                 NaN                NaN                NaN
 
     std::vector<double> data = {155.0, 155.01, 154.99, 155.0};
-    TestPolygonWriter w;
     {
-        PolygonRingAppender<TestPolygonWriter> appender(w);
-        const double levels[] = {155.0};
-        FixedLevelRangeIterator levelGenerator(
-            levels, 1, -std::numeric_limits<double>::infinity(),
-            std::numeric_limits<double>::infinity());
-        SegmentMerger<PolygonRingAppender<TestPolygonWriter>,
-                      FixedLevelRangeIterator>
-            writer(appender, levelGenerator, /* polygonize */ true);
-        ContourGenerator<decltype(writer), FixedLevelRangeIterator> cg(
-            2, 2, false, NaN, writer, levelGenerator);
-        cg.feedLine(&data[0]);
-        cg.feedLine(&data[2]);
+        TestPolygonWriter w;
+        {
+            PolygonRingAppender<TestPolygonWriter> appender(w);
+            const double levels[] = {155.0};
+            FixedLevelRangeIterator levelGenerator(
+                levels, 1, -std::numeric_limits<double>::infinity(),
+                std::numeric_limits<double>::infinity());
+            SegmentMerger<PolygonRingAppender<TestPolygonWriter>,
+                          FixedLevelRangeIterator>
+                writer(appender, levelGenerator, /* polygonize */ true);
+            ContourGenerator<decltype(writer), FixedLevelRangeIterator> cg(
+                2, 2, false, NaN, writer, levelGenerator);
+            cg.feedLine(&data[0]);
+            cg.feedLine(&data[2]);
+        }
+        EXPECT_EQ(w.polygons_.size(), 2);
+        {
+            std::ostringstream ostr;
+            w.out(ostr, 155.0);
+            // "Polygon #0"
+            EXPECT_EQ(
+                ostr.str(),
+                "{ { (1.4999,2) (1.4999,1.5) (0.5,0.5001) (0,0.5001) (0,1) "
+                "(0,1.5) (0,2) (0.5,2) (1,2) (1.4999,2) } } ");
+        }
+        {
+            std::ostringstream ostr;
+            w.out(ostr, Inf);
+            // "Polygon #1"
+            EXPECT_EQ(
+                ostr.str(),
+                "{ { (1.5,2) (2,2) (2,1.5) (2,1) (2,0.5) (2,0) (1.5,0) (1,0) "
+                "(0.5,0) (0,0) (0,0.5) (0,0.5001) (0.5,0.5001) (1.4999,1.5) "
+                "(1.4999,2) (1.5,2) } } ");
+        }
     }
+
     {
-        std::ostringstream ostr;
-        w.out(ostr, 155.0);
-        // "Polygon #0"
-        EXPECT_EQ(ostr.str(),
-                  "{ { (1.4999,2) (1.4999,1.5) (0.5,0.5001) (0,0.5001) (0,1) "
-                  "(0,1.5) (0,2) (0.5,2) (1,2) (1.4999,2) } } ");
-    }
-    {
-        std::ostringstream ostr;
-        w.out(ostr, Inf);
-        // "Polygon #1"
-        EXPECT_EQ(ostr.str(),
-                  "{ { (1.5,2) (2,2) (2,1.5) (2,1) (2,0.5) (2,0) (1.5,0) (1,0) "
-                  "(0.5,0) (0,0) (0,0.5) (0,0.5001) (0.5,0.5001) (1.4999,1.5) "
-                  "(1.4999,2) (1.5,2) } } ");
+        TestPolygonWriter w;
+        {
+            PolygonRingAppender<TestPolygonWriter> appender(w);
+            const double levels[] = {155.0};
+            FixedLevelRangeIterator levelGenerator(
+                levels, 1, -std::numeric_limits<double>::infinity(),
+                std::numeric_limits<double>::infinity());
+            SegmentMerger<PolygonRingAppender<TestPolygonWriter>,
+                          FixedLevelRangeIterator>
+                writer(appender, levelGenerator, /* polygonize */ true);
+            writer.setSkipLevels({1});
+            ContourGenerator<decltype(writer), FixedLevelRangeIterator> cg(
+                2, 2, false, NaN, writer, levelGenerator);
+            cg.feedLine(&data[0]);
+            cg.feedLine(&data[2]);
+        }
+        {
+            EXPECT_EQ(w.polygons_.size(), 2);
+            auto iter = w.polygons_.find(Inf);
+            ASSERT_TRUE(iter != w.polygons_.end());
+            EXPECT_TRUE(iter->second.empty());
+        }
+
+        {
+            std::ostringstream ostr;
+            w.out(ostr, 155.0);
+            // "Polygon #0"
+            EXPECT_EQ(
+                ostr.str(),
+                "{ { (1.4999,2) (1.4999,1.5) (0.5,0.5001) (0,0.5001) (0,1) "
+                "(0,1.5) (0,2) (0.5,2) (1,2) (1.4999,2) } } ");
+        }
     }
 }
 

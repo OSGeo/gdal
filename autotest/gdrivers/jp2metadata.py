@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test JP2 metadata support.
@@ -9,23 +8,7 @@
 ###############################################################################
 # Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -38,7 +21,7 @@ from osgeo import gdal
 
 def have_jpeg2000_capable_driver():
     # JP2MrSID doesn't manage to open data/jpeg2000/IMG_md_ple_R1C1.jp2
-    for drv_name in ["JP2KAK", "JP2LURA", "JP2ECW", "JP2OpenJPEG"]:
+    for drv_name in ["JP2KAK", "JP2ECW", "JP2OpenJPEG"]:
         if gdal.GetDriverByName(drv_name):
             return True
     return False
@@ -57,7 +40,7 @@ def test_jp2metadata_1():
     ds = gdal.Open("data/jpeg2000/erdas_foo.jp2")
     wkt = ds.GetProjectionRef()
     gt = ds.GetGeoTransform()
-    assert wkt.startswith('PROJCS["ETRS89')
+    assert wkt.startswith('PROJCS["ETRS89') or wkt.startswith('PROJCS["EUREF-FIN')
     expected_gt = (356000.0, 0.5, 0.0, 7596000.0, 0.0, -0.5)
     for i in range(6):
         assert gt[i] == pytest.approx(expected_gt[i], abs=1e-5)

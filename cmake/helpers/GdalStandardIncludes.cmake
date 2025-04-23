@@ -21,6 +21,7 @@ function(gdal_standard_includes _TARGET)
                                  $<TARGET_PROPERTY:ogr,SOURCE_DIR>
                                  $<TARGET_PROPERTY:ogrsf_frmts,SOURCE_DIR> # ogr/ogrsf_frmts
                                  $<TARGET_PROPERTY:gdal_frmts,SOURCE_DIR> # frmts
+                                 $<TARGET_PROPERTY:gdal_frmts,SOURCE_DIR>/mem # frmts/mem
                                  )
     endif()
 endfunction()

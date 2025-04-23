@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:24.04@sha256:6e75a10070b0fcb0bead763c5118a369bc7cc30dfc1b0749c491bbb21f15c3c7
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -37,9 +37,9 @@ RUN apt-get update && \
     liblcms2-2 \
     liblz4-dev \
     liblzma-dev \
+    libmuparser-dev \
     libmysqlclient-dev \
     libnetcdf-dev \
-    libogdi-dev \
     libopenexr-dev \
     libopenjp2-7-dev \
     libpcre3-dev \
@@ -71,6 +71,26 @@ RUN apt-get update && \
     unixodbc-dev \
     wget \
     zip
+
+# libavif development build
+RUN apt-get install -y --allow-unauthenticated libaom-dev libyuv-dev
+RUN git clone --depth 1 https://github.com/AOMediaCodec/libavif.git libavif-git && \
+    cd libavif-git && \
+    mkdir build && \
+    cd build && \
+    cmake -DAVIF_CODEC_AOM=SYSTEM .. && \
+    make -j$(nproc) && \
+    make install
+
+# libheif development build
+RUN apt-get install -y --allow-unauthenticated libaom-dev libbrotli-dev libde265-dev libx265-dev
+RUN git clone --depth 1 https://github.com/strukturag/libheif.git libheif-git && \
+    cd libheif-git && \
+    mkdir build && \
+    cd build && \
+    cmake --preset=develop .. && \
+    make -j$(nproc) && \
+    make install
 
 # MSSQL: client side
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
@@ -107,7 +127,7 @@ RUN mkdir mongocxx \
     && rm -rf mongocxx
 
 # Build libOpenDRIVE
-ARG OPENDRIVE_VERSION=0.5.0-gdal
+ARG OPENDRIVE_VERSION=0.6.0-gdal
 RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
     wget -q https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
     && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
@@ -137,13 +157,31 @@ RUN curl -L -O https://download.oracle.com/otn_software/linux/instantclient/1990
     && apt-get install -y libaio1t64 \
     && ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1
 
-# Workaround libogdi packaging issue
-# Cf https://lists.debian.org/debian-gis/2024/04/msg00006.html
-RUN ln -s /usr/lib/x86_64-linux-gnu/ogdi/4.1/libvrf.so /usr/lib/x86_64-linux-gnu
-
 COPY requirements.txt /tmp/
-RUN python3 -m pip install -U --break-system-packages -r /tmp/requirements.txt
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U --break-system-packages -r /tmp/requirements.txt
 
 # cfchecker requires udunits2
 RUN apt-get install -y --allow-unauthenticated libudunits2-0 libudunits2-data
-RUN python3 -m pip install --break-system-packages cfchecker
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages cfchecker
+
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages fsspec
+
+# Manually install ADBC packages from Ubuntu 22.04 as there are no 24.04 packages at time of writing.
+RUN curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-manager102_14-1_amd64.deb \
+    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-manager-dev_14-1_amd64.deb \
+    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-sqlite102_14-1_amd64.deb \
+    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-sqlite-dev_14-1_amd64.deb \
+    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-snowflake102_14-1_amd64.deb \
+    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-snowflake-dev_14-1_amd64.deb \
+    && dpkg -i libadbc-driver-manager102_14-1_amd64.deb \
+    && dpkg -i libadbc-driver-manager-dev_14-1_amd64.deb \
+    && dpkg -i libadbc-driver-sqlite102_14-1_amd64.deb \
+    && dpkg -i libadbc-driver-sqlite-dev_14-1_amd64.deb \
+    && dpkg -i libadbc-driver-snowflake102_14-1_amd64.deb \
+    && dpkg -i libadbc-driver-snowflake-dev_14-1_amd64.deb
+
+# Install libduckdb
+RUN curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/v1.1.3/libduckdb-linux-amd64.zip \
+    && unzip libduckdb-linux-amd64.zip libduckdb.so \
+    && mv libduckdb.so /usr/lib/x86_64-linux-gnu \
+    && rm -f libduckdb-linux-amd64.zip

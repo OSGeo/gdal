@@ -44,12 +44,9 @@ Driver capabilities
 Specification version
 ---------------------
 
-Starting with GDAL 2.2, the driver is able to create GeoPackage
-databases following the 1.0/1.0.1, 1.1 or 1.2 versions. For GDAL 2.2, it
-will automatically adjust to the minimum version required for the
-features of GeoPackage used. For GDAL 2.3 or later, it will default to
-1.2. Explicit version choice can be done by specifying the VERSION
-dataset creation option.
+GeoPackage version 1.0, 1.1, 1.2, 1.3 or 1.4 can be specified through the
+VERSION dataset creation option. Starting with GDAL 3.11, it defaults to 1.4.
+For earlier versions, it defaults to 1.2.
 
 Limitations
 -----------
@@ -122,6 +119,10 @@ Spatialite, are also available :
 -  ST_Area(geom *Geometry*): compute the area in square units of the geometry SRS.
 -  ST_Area(geom *Geometry*, use_ellipsoid *boolean*): (GDAL >= 3.9): compute
    the area in square meters, considering the geometry on the ellipsoid
+   (use_ellipsoid must be set to true/1).
+-  ST_Length(geom *Geometry*): (GDAL >= 3.10): compute the area in units of the geometry SRS.
+-  ST_Length(geom *Geometry*, use_ellipsoid *boolean*): (GDAL >= 3.10): compute
+   the area in meters, considering the geometry on the ellipsoid
    (use_ellipsoid must be set to true/1).
 -  SetSRID(geom *Geometry*, srs_id *Integer*): overrides the geometry' SRS ID,
    without reprojection.
@@ -277,11 +278,11 @@ raster) are available:
 
 -  .. dsco:: VERSION
       :choices: AUTO, 1.0, 1.1, 1.2, 1.3, 1.4
-      :Since: 2.2
+      :since: 2.2
 
       Set GeoPackage version
       (for application_id and user_version fields). In AUTO mode, this will
-      be equivalent to 1.2 starting with GDAL 2.3.
+      be equivalent to 1.4 starting with GDAL 3.11 (1.2 in prior versions)
       1.3 is available starting with GDAL 3.3
       1.4 is available starting with GDAL 3.7.1
 
@@ -804,6 +805,18 @@ Examples
       ogrinfo my_spatial.gpkg \
         -sql "SELECT poly.id, other.foo FROM poly JOIN other_schema.other USING (id)" \
         -oo PRELUDE_STATEMENTS="ATTACH DATABASE 'other.gpkg' AS other_schema"
+
+Secure deletion
+---------------
+
+Depending on how SQLite3 is built, `secure deletion <https://www.sqlite.org/pragma.html#pragma_secure_delete>`__
+might or might not be enabled.
+Starting with GDAL 3.10, secure deletion is always enabled, unless
+``SECURE_DELETE`` is specified through the :config:`OGR_SQLITE_PRAGMA`
+configuration option.
+Note that secure deletion does not recover potential lost space, so running
+a `VACUUM <https://sqlite.org/lang_vacuum.html>`__ query is recommended to fully
+optimized a database that has been subject to updates or deletions.
 
 See Also
 --------

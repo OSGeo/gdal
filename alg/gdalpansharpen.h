@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2015, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef GDALPANSHARPEN_H_INCLUDED
@@ -156,29 +140,32 @@ typedef struct
     CPLErr eErr;
 } GDALPansharpenJob;
 
-typedef struct
+struct GDALPansharpenResampleJob
 {
-    GDALDataset *poMEMDS;
-    int nXOff;
-    int nYOff;
-    int nXSize;
-    int nYSize;
-    double dfXOff;
-    double dfYOff;
-    double dfXSize;
-    double dfYSize;
-    void *pBuffer;
-    GDALDataType eDT;
-    int nBufXSize;
-    int nBufYSize;
-    int nBandCount;
-    GDALRIOResampleAlg eResampleAlg;
-    GSpacing nBandSpace;
+    GDALDataset *poMEMDS = nullptr;
+    int nXOff = 0;
+    int nYOff = 0;
+    int nXSize = 0;
+    int nYSize = 0;
+    double dfXOff = 0;
+    double dfYOff = 0;
+    double dfXSize = 0;
+    double dfYSize = 0;
+    void *pBuffer = nullptr;
+    GDALDataType eDT = GDT_Unknown;
+    int nBufXSize = 0;
+    int nBufYSize = 0;
+    int nBandCount = 0;
+    GDALRIOResampleAlg eResampleAlg = GRIORA_NearestNeighbour;
+    GSpacing nBandSpace = 0;
 
 #ifdef DEBUG_TIMING
-    struct timeval *ptv;
+    struct timeval *ptv = nullptr;
 #endif
-} GDALPansharpenResampleJob;
+
+    CPLErr eErr = CE_Failure;
+    std::string osLastErrorMsg{};
+};
 
 class CPLWorkerThreadPool;
 

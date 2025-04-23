@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2023, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -50,7 +34,7 @@
 #include "gdal_priv.h"
 #include "ogr_api.h"
 #include "ogr_core.h"
-#include "ogr_mem.h"
+#include "memdataset.h"
 #include "ogrsf_frmts.h"
 #include "ogr_spatialref.h"
 #include "gdalargumentparser.h"
@@ -123,7 +107,7 @@ struct GDALFootprintOptions
     /*! Whether to force writing absolute paths in location field. */
     bool bAbsolutePath = false;
 
-    std::string osSrcNoData;
+    std::string osSrcNoData{};
 };
 
 static std::unique_ptr<GDALArgumentParser> GDALFootprintAppOptionsGetParser(
@@ -294,6 +278,8 @@ static std::unique_ptr<GDALArgumentParser> GDALFootprintAppOptionsGetParser(
 class GDALFootprintMaskBand final : public GDALRasterBand
 {
     GDALRasterBand *m_poSrcBand = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALFootprintMaskBand)
 
   public:
     explicit GDALFootprintMaskBand(GDALRasterBand *poSrcBand)
@@ -582,7 +568,8 @@ GetOutputLayerAndUpdateDstDS(const char *pszDest, GDALDatasetH &hDstDS,
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Several drivers matching %s extension. Using %s",
-                             CPLGetExtension(pszDest), aoDrivers[0].c_str());
+                             CPLGetExtensionSafe(pszDest).c_str(),
+                             aoDrivers[0].c_str());
                 }
                 osFormat = aoDrivers[0];
             }
@@ -620,25 +607,31 @@ GetOutputLayerAndUpdateDstDS(const char *pszDest, GDALDatasetH &hDstDS,
     /* -------------------------------------------------------------------- */
     auto poDstDS = GDALDataset::FromHandle(hDstDS);
     OGRLayer *poLayer = nullptr;
-    if (!psOptions->osDestLayerName.empty())
+
+    if (!bCreateOutput)
     {
-        poLayer = poDstDS->GetLayerByName(psOptions->osDestLayerName.c_str());
-        if (!poLayer)
+        if (poDstDS->GetLayerCount() == 1 && poDstDS->GetDriver() &&
+            EQUAL(poDstDS->GetDriver()->GetDescription(), "ESRI Shapefile"))
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot find layer %s",
-                     psOptions->osDestLayerName.c_str());
-            return nullptr;
+            poLayer = poDstDS->GetLayer(0);
+        }
+        else if (!psOptions->osDestLayerName.empty())
+        {
+            poLayer =
+                poDstDS->GetLayerByName(psOptions->osDestLayerName.c_str());
+            if (!poLayer)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cannot find layer %s",
+                         psOptions->osDestLayerName.c_str());
+                return nullptr;
+            }
+        }
+        else
+        {
+            poLayer = poDstDS->GetLayerByName(DEFAULT_LAYER_NAME);
         }
     }
-    else if (poDstDS->GetLayerCount() == 1 && poDstDS->GetDriver() &&
-             EQUAL(poDstDS->GetDriver()->GetDescription(), "ESRI Shapefile"))
-    {
-        poLayer = poDstDS->GetLayer(0);
-    }
-    else
-    {
-        poLayer = poDstDS->GetLayerByName(DEFAULT_LAYER_NAME);
-    }
+
     if (!poLayer)
     {
         std::string osDestLayerName = psOptions->osDestLayerName;
@@ -647,7 +640,7 @@ GetOutputLayerAndUpdateDstDS(const char *pszDest, GDALDatasetH &hDstDS,
             if (poDstDS->GetDriver() &&
                 EQUAL(poDstDS->GetDriver()->GetDescription(), "ESRI Shapefile"))
             {
-                osDestLayerName = CPLGetBasename(pszDest);
+                osDestLayerName = CPLGetBasenameSafe(pszDest);
             }
             else
             {
@@ -1042,7 +1035,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
             CPLAssert(poGeom);
             if (poGeom->getGeometryType() == wkbPolygon)
             {
-                poMP->addGeometryDirectly(poGeom.release());
+                poMP->addGeometry(std::move(poGeom));
             }
         }
         poMemLayer = std::make_unique<OGRMemLayer>("", nullptr, wkbUnknown);
@@ -1109,7 +1102,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
                         }
                     }
                     if (!poNewPoly->IsEmpty())
-                        poMP->addGeometryDirectly(poNewPoly.release());
+                        poMP->addGeometry(std::move(poNewPoly));
                 }
                 poGeom = std::move(poMP);
             }
@@ -1201,8 +1194,8 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
                 char *pszCurDir = CPLGetCurrentDir();
                 if (pszCurDir)
                 {
-                    osFilename = CPLProjectRelativeFilename(pszCurDir,
-                                                            osFilename.c_str());
+                    osFilename = CPLProjectRelativeFilenameSafe(
+                        pszCurDir, osFilename.c_str());
                     CPLFree(pszCurDir);
                 }
             }

@@ -1,0 +1,220 @@
+{
+  "$id": "https://gdal.org/gdal_algorithm.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Validate the output of the 'gdal [command] [subcommand] --json-usage'",
+
+  "oneOf": [
+    {
+      "$ref": "#/definitions/algorithm"
+    }
+  ],
+
+  "definitions": {
+
+    "algorithm": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "$comment": "Algorithm name. Normally always set, except for the top 'gdal' algorithm"
+        },
+        "full_path": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "$comment": "Full path to get to this algorithm. For example, for 'gdal raster info', this will be [\"gdal\", \"raster\", \"info\"]"
+        },
+        "description": {
+          "type": "string",
+          "$comment": "One sentence description of the algorithm"
+        },
+        "short_url": {
+          "type": "string",
+          "$comment": "URL to the help page, without the server. For example \"/programs/gdal_raster_info.html\""
+        },
+        "url": {
+          "type": "string",
+          "$comment": "Full URL to the help page. For example \"https://gdal.org/programs/gdal_raster_info.html\""
+        },
+        "sub_algorithms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/algorithm"
+          },
+          "$comment": "Names of the immediate sub-algorithm of this algorithm. For example, or 'gdal raster', this will be [\"info\", \"convert\", ...]"
+        },
+        "input_arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/argument"
+          },
+          "$comment": "Input arguments of the algorithm"
+        },
+        "output_arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/argument"
+          },
+          "$comment": "Output arguments of the algorithm, that is arguments that are set by the algorithm (typically an output dataset)"
+        },
+        "input_output_arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/argument"
+          },
+          "$comment": "Arguments of the algorithm that are both read and written by it."
+        },
+        "pipeline_algorithms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/algorithm"
+          },
+          "$comment": "For pipeline algorithm, description of the accepted step algorithms. Only present for such pipeline algorithms"
+        },
+        "supports_streamed_output": {
+          "type": "boolean",
+          "$comment": "Whether the algorithm supports a streamed output dataset"
+        }
+      },
+      "required": [
+        "description",
+        "sub_algorithms",
+        "input_arguments",
+        "output_arguments",
+        "input_output_arguments"
+      ],
+      "additionalProperties": false
+    },
+
+    "argument": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "$comment": "Argument name"
+        },
+        "type": {
+          "enum": [
+            "boolean",
+            "integer",
+            "real",
+            "string",
+            "dataset",
+            "integer_list",
+            "real_list",
+            "string_list",
+            "dataset_list"
+          ],
+          "$comment": "Argument type"
+        },
+        "description": {
+          "type": "string",
+          "$comment": "Argument description"
+        },
+        "metavar": {
+          "type": "string",
+          "$comment": "Hint on the expected value of the argument"
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "$comment": "Valid values for the argument, when it accepts an enumeration as a value"
+        },
+        "default": {
+          "$comment": "Default value (optional)"
+        },
+        "min_value": {
+          "type": "number",
+          "$comment": "Minimum value allowed"
+        },
+        "min_value_is_included": {
+          "type": "boolean",
+          "$comment": "Whether min_value is included"
+        },
+        "max_value": {
+          "type": "number",
+          "$comment": "Maximum value allowed"
+        },
+        "max_value_is_included": {
+          "type": "boolean",
+          "$comment": "Whether max_value is included"
+        },
+        "required": {
+          "type": "boolean",
+          "$comment": "Whether this argument is required"
+        },
+        "packed_values_allowed": {
+          "type": "boolean",
+          "$comment": "For command-line specification, for multi-valued arguments (type: integer_list, real_list, string_list), whether comma-separated values are accepted. e.g. '--my-arg=first,second'"
+        },
+        "repeated_arg_allowed": {
+          "type": "boolean",
+          "$comment": "For command-line specification, for multi-valued arguments (type: integer_list, real_list, string_list), whether several repetition of the argument are accepted. e.g. '--my-arg first --my-arg second'"
+        },
+        "min_count": {
+          "type": "integer",
+          "$comment": "For multi-valued arguments (type: integer_list, real_list, string_list, dataset_list), minimum number of values"
+        },
+        "max_count": {
+          "type": "integer",
+          "$comment": "For multi-valued arguments (type: integer_list, real_list, string_list, dataset_list), maximum number of values"
+        },
+        "category": {
+          "type": "string",
+          "$comment": "Category of the argument. Common categories include \"Base\", \"Advanced\", \"Esoteric\", but algorithms may define their own categories."
+        },
+        "mutual_exclusion_group": {
+          "type": "string",
+          "$comment": "Identifier shared by several arguments to mean they are mutually exclusive."
+        },
+        "metadata": {
+          "type": "object",
+          "$comment": "Object whose keys are metadata item names. This is typically used for type=dataset arguments. e.g. \"metadata\":{ \"required_capabilities\":[ \"DCAP_RASTER\", \"DCAP_CREATECOPY\" ] }"
+        },
+        "dataset_type": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "raster",
+              "vector",
+              "multidim_raster"
+            ]
+          },
+          "$comment": "Type of accepted datasets. Only used for type=dataset or type=dataset_list."
+        },
+        "input_flags": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "name",
+              "dataset"
+            ]
+          },
+          "$comment": "Which fields of a dataset argument may be set, by the user, when the argument is dealt as an input dataset. Only used for type=dataset or type=dataset_list."
+        },
+        "output_flags": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "name",
+              "dataset"
+            ]
+          },
+          "$comment": "Which fields of a dataset argument may be set, by the algorithm, when the argument is dealt as an output dataset. Only used for type=dataset or type=dataset_list."
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "description",
+        "required",
+        "category"
+      ],
+      "additionalProperties": false
+    }
+
+  }
+}

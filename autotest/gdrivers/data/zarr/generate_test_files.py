@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Zarr driver
@@ -9,23 +8,7 @@
 ###############################################################################
 # Copyright (c) 2021, Even Rouault <even.rouault@spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import lzma
@@ -33,7 +16,17 @@ import os
 
 import numpy as np
 import zarr
-from numcodecs import LZ4, LZMA, Blosc, GZip, Zlib, Zstd
+from numcodecs import (
+    LZ4,
+    LZMA,
+    Blosc,
+    FixedScaleOffset,
+    GZip,
+    Quantize,
+    Shuffle,
+    Zlib,
+    Zstd,
+)
 
 os.chdir(os.path.dirname(__file__))
 
@@ -83,6 +76,17 @@ z[:] = [1, 2]
 
 z = zarr.open(
     "zstd.zarr", mode="w", dtype="u1", shape=(2,), chunks=(2,), compressor=Zstd()
+)
+z[:] = [1, 2]
+
+z = zarr.open(
+    "shuffle.zarr",
+    mode="w",
+    dtype="u2",
+    shape=(2,),
+    chunks=(2,),
+    compressor=None,
+    filters=[Shuffle(elementsize=2)],
 )
 z[:] = [1, 2]
 
@@ -198,3 +202,68 @@ z = zarr.open(
     compressor=None,
 )
 z[0] = (1, (2, 3, 1000, 4), "AAA", -1)
+
+
+data = np.arange(100, dtype="f8").reshape(10, 10) / 10
+quantize = Quantize(digits=1, dtype="f8", astype="f4")
+z = zarr.open(
+    "quantize.zarr",
+    mode="w",
+    dtype="f8",
+    shape=(10, 10),
+    chunks=(10, 10),
+    compressor=None,
+    filters=[quantize],
+)
+z[:] = data
+
+
+data = np.linspace(1000, 1001, 10, dtype="f8")
+
+filter = FixedScaleOffset(offset=1000, scale=10, dtype="f8", astype="u1")
+z = zarr.open(
+    "fixedscaleoffset_dtype_f8_astype_u1.zarr",
+    mode="w",
+    dtype="f8",
+    shape=(10),
+    chunks=(10),
+    compressor=None,
+    filters=[filter],
+)
+z[:] = data
+
+filter = FixedScaleOffset(offset=1000, scale=10, dtype="f8", astype="u2")
+z = zarr.open(
+    "fixedscaleoffset_dtype_f8_astype_u2.zarr",
+    mode="w",
+    dtype="f8",
+    shape=(10),
+    chunks=(10),
+    compressor=None,
+    filters=[filter],
+)
+z[:] = data
+
+filter = FixedScaleOffset(offset=1000, scale=10, dtype="f8", astype="u4")
+z = zarr.open(
+    "fixedscaleoffset_dtype_f8_astype_u4.zarr",
+    mode="w",
+    dtype="f8",
+    shape=(10),
+    chunks=(10),
+    compressor=None,
+    filters=[filter],
+)
+z[:] = data
+
+filter = FixedScaleOffset(offset=1000, scale=10, dtype="f4", astype="u1")
+z = zarr.open(
+    "fixedscaleoffset_dtype_f4_astype_u1.zarr",
+    mode="w",
+    dtype="f4",
+    shape=(10),
+    chunks=(10),
+    compressor=None,
+    filters=[filter],
+)
+z[:] = data

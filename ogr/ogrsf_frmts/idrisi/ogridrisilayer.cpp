@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_conv.h"
@@ -105,12 +89,12 @@ bool OGRIdrisiLayer::Detect_AVL_ADC(const char *pszFilename)
     // --------------------------------------------------------------------
     //      Look for .adc file
     // --------------------------------------------------------------------
-    const char *pszADCFilename = CPLResetExtension(pszFilename, "adc");
-    VSILFILE *fpADC = VSIFOpenL(pszADCFilename, "rb");
+    std::string osADCFilename = CPLResetExtensionSafe(pszFilename, "adc");
+    VSILFILE *fpADC = VSIFOpenL(osADCFilename.c_str(), "rb");
     if (fpADC == nullptr)
     {
-        pszADCFilename = CPLResetExtension(pszFilename, "ADC");
-        fpADC = VSIFOpenL(pszADCFilename, "rb");
+        osADCFilename = CPLResetExtensionSafe(pszFilename, "ADC");
+        fpADC = VSIFOpenL(osADCFilename.c_str(), "rb");
     }
 
     char **papszADC = nullptr;
@@ -120,7 +104,7 @@ bool OGRIdrisiLayer::Detect_AVL_ADC(const char *pszFilename)
         fpADC = nullptr;
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        papszADC = CSLLoad2(pszADCFilename, 1024, 256, nullptr);
+        papszADC = CSLLoad2(osADCFilename.c_str(), 1024, 256, nullptr);
         CPLPopErrorHandler();
         CPLErrorReset();
     }
@@ -166,12 +150,12 @@ bool OGRIdrisiLayer::Detect_AVL_ADC(const char *pszFilename)
     // --------------------------------------------------------------------
     //      Look for .avl file
     // --------------------------------------------------------------------
-    const char *pszAVLFilename = CPLResetExtension(pszFilename, "avl");
-    fpAVL = VSIFOpenL(pszAVLFilename, "rb");
+    std::string osAVLFilename = CPLResetExtensionSafe(pszFilename, "avl");
+    fpAVL = VSIFOpenL(osAVLFilename.c_str(), "rb");
     if (fpAVL == nullptr)
     {
-        pszAVLFilename = CPLResetExtension(pszFilename, "AVL");
-        fpAVL = VSIFOpenL(pszAVLFilename, "rb");
+        osAVLFilename = CPLResetExtensionSafe(pszFilename, "AVL");
+        fpAVL = VSIFOpenL(osAVLFilename.c_str(), "rb");
     }
     if (fpAVL == nullptr)
     {
@@ -580,13 +564,14 @@ void OGRIdrisiLayer::SetExtent(double dfMinXIn, double dfMinYIn,
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                            IGetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRIdrisiLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRIdrisiLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                  bool bForce)
 {
     if (!bExtentValid)
-        return OGRLayer::GetExtent(psExtent, bForce);
+        return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 
     psExtent->MinX = dfMinX;
     psExtent->MinY = dfMinY;

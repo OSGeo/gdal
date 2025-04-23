@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test various OGR SQL support options.
@@ -102,7 +101,9 @@ def test_ogr_sql_execute_sql(tmp_path, use_gdal):
     with pytest.raises(Exception):
         lyr.GetName()
 
-    assert get_lyr().GetFeatureCount() == 10
+    # This leaks memory
+    if not gdaltest.is_travis_branch("sanitize"):
+        assert get_lyr().GetFeatureCount() == 10
 
     # Check that we can actually remove the files (i.e. references on dataset have been dropped)
     os.unlink(tmp_path / "test_ogr_sql_execute_sql.shp")
@@ -419,6 +420,7 @@ def test_ogr_sql_13(data_ds):
 # Verify selection of, and on ogr_style and ogr_geom_wkt.
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_ogr_sql_14():
 
     expect = [
@@ -452,6 +454,7 @@ def test_ogr_sql_15(data_ds):
 ###############################################################################
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_ogr_sql_16():
 
     expect = [2]
@@ -465,6 +468,7 @@ def test_ogr_sql_16():
 ###############################################################################
 # Test the RFC 21 CAST operator.
 #
+@pytest.mark.require_driver("MapInfo File")
 def test_ogr_sql_17():
 
     expect = ["1", "2"]
@@ -498,7 +502,7 @@ def test_ogr_sql_17():
 
 def test_ogr_sql_20():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
 
     feat = ogr.Feature(mem_lyr.GetLayerDefn())
@@ -519,7 +523,7 @@ def test_ogr_sql_20():
 
 def test_ogr_sql_21():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     mem_ds.CreateLayer("my_layer")
 
     with mem_ds.ExecuteSQL("SELECT *, fid from my_layer") as sql_lyr:
@@ -533,7 +537,7 @@ def test_ogr_sql_21():
 
 def test_ogr_sql_22():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
     mem_lyr.CreateField(ogr.FieldDefn("test", ogr.OFTString))
 
@@ -555,7 +559,7 @@ def test_ogr_sql_22():
 
 def test_ogr_sql_23():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
     mem_lyr.CreateField(ogr.FieldDefn("test", ogr.OFTString))
 
@@ -595,7 +599,7 @@ def test_ogr_sql_24():
 
 def test_ogr_sql_25():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
     mem_lyr.CreateField(ogr.FieldDefn("test", ogr.OFTString))
 
@@ -627,7 +631,7 @@ def test_ogr_sql_25():
 
 def test_ogr_sql_26():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
 
     feat = ogr.Feature(mem_lyr.GetLayerDefn())
@@ -674,7 +678,7 @@ def test_ogr_sql_27():
 @pytest.fixture(scope="module")
 def ds_for_invalid_statements():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
 
     new_geom_field_defn = ogr.GeomFieldDefn("geom", ogr.wkbUnknown)
@@ -851,7 +855,7 @@ def test_ogr_sql_invalid_statements(ds_for_invalid_statements, sql):
 
 def test_ogr_sql_29():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
     field_defn = ogr.FieldDefn("strfield", ogr.OFTString)
     lyr.CreateField(field_defn)
@@ -937,7 +941,7 @@ def test_ogr_sql_32(data_ds):
 
 def test_ogr_sql_33():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
 
     # We support with and without COLUMN keyword
@@ -1033,7 +1037,7 @@ def test_ogr_sql_35(data_ds):
 
 def test_ogr_sql_36():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("ogr_sql_36")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("ogr_sql_36")
     lyr = ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("floatfield", ogr.OFTReal))
@@ -1074,7 +1078,7 @@ def test_ogr_sql_36():
 
 def test_ogr_sql_count_and_null():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("ogr_sql_37")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("ogr_sql_37")
     lyr = ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("floatfield", ogr.OFTReal))
@@ -1206,11 +1210,11 @@ def test_ogr_sql_42(data_ds):
 
 def test_ogr_sql_43(data_ds):
 
-    sql = "SELECT '\"' as a, '\\'' as b, '''' as c FROM poly"
+    sql = "SELECT '\"' as a, '\\' as b, '''' as c FROM poly"
     with data_ds.ExecuteSQL(sql) as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         assert feat["a"] == '"'
-        assert feat["b"] == "'"
+        assert feat["b"] == "\\"
         assert feat["c"] == "'"
 
 
@@ -1285,6 +1289,7 @@ def test_ogr_sql_hstore_get_value_valid(data_ds, sql, expected):
 # Test 64 bit GetFeatureCount()
 
 
+@pytest.mark.require_driver("OGR_VRT")
 def test_ogr_sql_45():
 
     ds = ogr.Open(
@@ -1321,7 +1326,7 @@ def test_ogr_sql_45():
 @pytest.fixture(scope="module")
 def ogr_sql_strit_quoting_ds():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("test")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("test")
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("from", ogr.OFTString))
@@ -1407,7 +1412,7 @@ def test_ogr_sql_47():
 
 def test_ogr_sql_48():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn("int_field", ogr.OFTInteger))
     for i in range(1000):
@@ -1463,7 +1468,7 @@ def test_ogr_sql_49(data_ds):
 
 def test_ogr_sql_field_names_same_case():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("id"))
     lyr.CreateField(ogr.FieldDefn("ID"))
@@ -1487,7 +1492,7 @@ def test_ogr_sql_field_names_same_case():
 
 def test_ogr_sql_string_int_array_comparison():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("id"))
     lyr.CreateField(ogr.FieldDefn("int_array", ogr.OFTIntegerList))
@@ -1534,7 +1539,7 @@ def test_ogr_sql_string_int_array_comparison():
 @pytest.mark.parametrize("dialect", [None, "OGRSQL"])
 def test_ogr_sql_attribute_filter_on_top_of_non_forward_where_clause(dialect):
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     mem_lyr = mem_ds.CreateLayer("test")
     f = ogr.Feature(mem_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON EMPTY"))
@@ -1568,7 +1573,7 @@ def test_ogr_sql_attribute_filter_on_top_of_non_forward_where_clause(dialect):
 
 def test_ogr_sql_min_max_string_field():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     mem_lyr = mem_ds.CreateLayer("test")
     mem_lyr.CreateField(ogr.FieldDefn("str_field"))
 
@@ -1665,7 +1670,7 @@ def test_ogr_sql_select_except_multiple_asterisk_2(data_ds):
 
 def test_ogr_sql_select_except_named_geometry():
 
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer", geom_type=ogr.wkbNone)
     mem_lyr.CreateGeomField(ogr.GeomFieldDefn("named_geom", ogr.wkbUnknown))
     mem_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
@@ -1689,7 +1694,7 @@ def test_ogr_sql_select_except_named_geometry():
 
 @pytest.fixture()
 def select_except_join_ds():
-    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_ds = ogr.GetDriverByName("MEM").CreateDataSource("my_ds")
 
     pt_lyr = mem_ds.CreateLayer("point")
     pt_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
@@ -1762,7 +1767,7 @@ def test_ogr_sql_select_except_join_3(select_except_join_ds):
 
 def test_ogr_sql_like_utf8():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test", options=["ADVERTIZE_UTF8=YES"])
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
 
@@ -1817,7 +1822,7 @@ def test_ogr_sql_like_utf8():
 
 def test_ogr_sql_ilike_utf8():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test", options=["ADVERTIZE_UTF8=YES"])
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
 
@@ -1879,7 +1884,7 @@ def test_ogr_sql_ilike_utf8():
 
 def test_ogr_sql_test_execute_sql_error_on_spatial_filter_mem_layer():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     ds.CreateLayer("test", geom_type=ogr.wkbNone)
     geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))")
     with pytest.raises(
@@ -1895,7 +1900,7 @@ def test_ogr_sql_test_execute_sql_error_on_spatial_filter_mem_layer():
 @pytest.fixture(scope="module")
 def ds_for_test_ogr_sql_on_null():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("test_ogr_sql_on_null")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("test_ogr_sql_on_null")
     lyr = ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("realfield", ogr.OFTReal))
@@ -1946,6 +1951,13 @@ def get_available_dialects():
         ("(NOT intfield = 0) AND NOT (intfield IS NULL)", 1),
         ("NOT (intfield = 0 OR intfield IS NOT NULL)", 0),
         ("(NOT intfield = 0) AND NOT (intfield IS NOT NULL)", 0),
+        ("intfield <> 0 AND intfield <> 2", 1),
+        ("intfield IS NOT NULL AND intfield NOT IN (2)", 1),
+        ("NOT(intfield NOT IN (1) AND NULL NOT IN (1))", 1),
+        ("NOT(intfield IS NOT NULL AND intfield NOT IN (2))", 1),
+        ("NOT(NOT(intfield IS NOT NULL AND intfield NOT IN (2)))", 1),
+        ("NOT (intfield = 0 AND intfield = 0)", 1),
+        ("(intfield NOT IN (1) AND NULL NOT IN (1)) IS NULL", 1),
         # realfield
         ("1 + realfield >= 0", 1),
         ("realfield = 0", 0),
@@ -2014,7 +2026,7 @@ def test_ogr_sql_on_null(where, feature_count, dialect, ds_for_test_ogr_sql_on_n
 
 def test_ogr_sql_ogr_style_hidden():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("test_ogr_sql_ogr_style_hidden")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("test_ogr_sql_ogr_style_hidden")
     lyr = ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
@@ -2091,7 +2103,7 @@ def test_ogr_sql_ogr_style_hidden():
 
 def test_ogr_sql_identifier_hidden():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("test_ogr_sql_ogr_style_hidden")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("test_ogr_sql_ogr_style_hidden")
     lyr = ds.CreateLayer("hidden")
     lyr.CreateField(ogr.FieldDefn("hidden", ogr.OFTString))
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -2128,7 +2140,7 @@ def test_ogr_sql_identifier_hidden():
 def test_ogr_sql_kahan_babuska_eumaier_summation(input, expected_output):
     """Test accurate SUM() implementation using Kahan-Babuska-Neumaier algorithm"""
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("v", ogr.OFTReal))
     for v in input:
@@ -2142,3 +2154,73 @@ def test_ogr_sql_kahan_babuska_eumaier_summation(input, expected_output):
             assert math.isnan(f["SUM_v"])
         else:
             assert f["SUM_v"] == expected_output
+
+
+@pytest.mark.parametrize(
+    "operator", ["+", "-", "*", "/", "%", "<", "<=", "=<", "=", "<>", ">", ">=", "=>"]
+)
+def test_ogr_sql_max_expr_depth(operator):
+
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
+    ds.CreateLayer("test")
+    with ds.ExecuteSQL("SELECT " + operator.join(["1"] * 127) + " FROM test") as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL("SELECT " + operator.join(["1"] * 128) + " FROM test")
+
+
+def test_ogr_sql_max_expr_depth_other():
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
+    ds.CreateLayer("test")
+
+    with ds.ExecuteSQL(
+        "SELECT CAST(" + "+".join(["1"] * 126) + " AS CHARACTER) FROM test"
+    ) as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL(
+            "SELECT CAST(" + "+".join(["1"] * 127) + " AS CHARACTER) FROM test"
+        )
+
+    with ds.ExecuteSQL(
+        "SELECT 'a' IN (CAST(" + "+".join(["1"] * 125) + " AS CHARACTER)) FROM test"
+    ) as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL(
+            "SELECT 'a' IN (CAST(" + "+".join(["1"] * 126) + " AS CHARACTER)) FROM test"
+        )
+
+    with ds.ExecuteSQL("SELECT NOT " + "+".join(["1"] * 126) + " FROM test") as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL("SELECT NOT " + "+".join(["1"] * 127) + " FROM test")
+
+    with ds.ExecuteSQL("SELECT 1 AND " + "+".join(["1"] * 126) + " FROM test") as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL("SELECT 1 AND " + "+".join(["1"] * 127) + " FROM test")
+
+    with ds.ExecuteSQL("SELECT 1 OR " + "+".join(["1"] * 126) + " FROM test") as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL("SELECT 1 OR " + "+".join(["1"] * 127) + " FROM test")
+
+    with ds.ExecuteSQL("SELECT " + "+".join(["1"] * 126) + " IS NULL FROM test") as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL("SELECT " + "+".join(["1"] * 127) + " IS NULL FROM test")
+
+    with ds.ExecuteSQL(
+        "SELECT " + "+".join(["1"] * 125) + " IS NOT NULL FROM test"
+    ) as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL("SELECT " + "+".join(["1"] * 126) + " IS NOT NULL FROM test")
+
+    with ds.ExecuteSQL(
+        "SELECT SUBSTR('a', " + "+".join(["1"] * 126) + ") FROM test"
+    ) as _:
+        pass
+    with pytest.raises(Exception, match="Maximum expression depth reached"):
+        ds.ExecuteSQL("SELECT SUBSTR('a', " + "+".join(["1"] * 127) + ") FROM test")

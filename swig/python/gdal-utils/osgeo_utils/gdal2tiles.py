@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # ******************************************************************************
-#  $Id$
 #
 # Project:  Google Summer of Code 2007, 2008 (http://code.google.com/soc/)
 # Support:  BRGM (http://www.brgm.fr)
@@ -17,26 +16,8 @@
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 # Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
-#  Permission is hereby granted, free of charge, to any person obtaining a
-#  copy of this software and associated documentation files (the "Software"),
-#  to deal in the Software without restriction, including without limitation
-#  the rights to use, copy, modify, merge, publish, distribute, sublicense,
-#  and/or sell copies of the Software, and to permit persons to whom the
-#  Software is furnished to do so, subject to the following conditions:
-#
-#  The above copyright notice and this permission notice shall be included
-#  in all copies or substantial portions of the Software.
-#
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-#  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-#  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-#  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-#  DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 # ******************************************************************************
-
-from __future__ import division
 
 import contextlib
 import glob
@@ -60,18 +41,7 @@ from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 
 Options = Any
 
-try:
-    import numpy
-    from PIL import Image
-
-    import osgeo.gdal_array as gdalarray
-
-    numpy_available = True
-except ImportError:
-    # 'antialias' resampling is not available
-    numpy_available = False
-
-__version__ = "$Id$"
+__version__ = gdal.__version__
 
 resampling_list = (
     "average",
@@ -145,7 +115,7 @@ class UnsupportedTileMatrixSet(Exception):
     pass
 
 
-class TileMatrixSet(object):
+class TileMatrixSet:
     def __init__(self) -> None:
         self.identifier = None
         self.srs = None
@@ -344,7 +314,7 @@ Class is available under the open-source GDAL license (www.gdal.org).
 MAXZOOMLEVEL = 32
 
 
-class GlobalMercator(object):
+class GlobalMercator:
     r"""
     TMS Global Mercator Profile
     ---------------------------
@@ -563,7 +533,7 @@ class GlobalMercator(object):
         return quadKey
 
 
-class GlobalGeodetic(object):
+class GlobalGeodetic:
     r"""
     TMS Global Geodetic Profile
     ---------------------------
@@ -660,7 +630,7 @@ class GlobalGeodetic(object):
         return (b[1], b[0], b[3], b[2])
 
 
-class Zoomify(object):
+class Zoomify:
     """
     Tiles compatible with the Zoomify viewer
     ----------------------------------------
@@ -723,8 +693,8 @@ class GDALError(Exception):
 def exit_with_error(message: str, details: str = "") -> NoReturn:
     # Message printing and exit code kept from the way it worked using the OptionParser (in case
     # someone parses the error output)
-    sys.stderr.write("Usage: gdal2tiles.py [options] input_file [output]\n\n")
-    sys.stderr.write("gdal2tiles.py: error: %s\n" % message)
+    sys.stderr.write("Usage: gdal2tiles [options] input_file [output]\n\n")
+    sys.stderr.write("gdal2tiles: error: %s\n" % message)
     if details:
         sys.stderr.write("\n\n%s\n" % details)
 
@@ -925,40 +895,6 @@ def scale_query_to_tile(dsquery, dstile, options, tilefilename=""):
                 exit_with_error(
                     "RegenerateOverview() failed on %s, error %d" % (tilefilename, res)
                 )
-
-    elif options.resampling == "antialias" and numpy_available:
-
-        if tilefilename.startswith("/vsi"):
-            raise Exception(
-                "Outputting to /vsi file systems with antialias mode is not supported"
-            )
-
-        # Scaling by PIL (Python Imaging Library) - improved Lanczos
-        array = numpy.zeros((querysize, querysize, tilebands), numpy.uint8)
-        for i in range(tilebands):
-            array[:, :, i] = gdalarray.BandReadAsArray(
-                dsquery.GetRasterBand(i + 1), 0, 0, querysize, querysize
-            )
-        if options.tiledriver == "JPEG" and tilebands == 2:
-            im = Image.fromarray(array[:, :, 0], "L")
-        elif options.tiledriver == "JPEG" and tilebands == 4:
-            im = Image.fromarray(array[:, :, 0:3], "RGB")
-        else:
-            im = Image.fromarray(array, "RGBA")
-        im1 = im.resize((tile_size, tile_size), Image.LANCZOS)
-        if os.path.exists(tilefilename):
-            im0 = Image.open(tilefilename)
-            im1 = Image.composite(im1, im0, im1)
-
-        params = {}
-        if options.tiledriver == "WEBP":
-            if options.webp_lossless:
-                params["lossless"] = True
-            else:
-                params["quality"] = options.webp_quality
-        elif options.tiledriver == "JPEG":
-            params["quality"] = options.jpeg_quality
-        im1.save(tilefilename, options.tiledriver, **params)
 
     else:
 
@@ -1456,21 +1392,18 @@ def create_base_tile(tile_job_info: "TileJobInfo", tile_detail: "TileDetail") ->
 
     del data
 
-    if options.resampling != "antialias":
-        # Write a copy of tile to png/jpg
-        out_drv.CreateCopy(
-            tilefilename,
-            dstile
-            if tile_job_info.tile_driver != "JPEG"
-            else remove_alpha_band(dstile),
-            strict=0,
-            options=_get_creation_options(options),
-        )
+    # Write a copy of tile to png/jpg
+    out_drv.CreateCopy(
+        tilefilename,
+        dstile if tile_job_info.tile_driver != "JPEG" else remove_alpha_band(dstile),
+        strict=0,
+        options=_get_creation_options(options),
+    )
 
-        # Remove useless side car file
-        aux_xml = tilefilename + ".aux.xml"
-        if gdal.VSIStatL(aux_xml) is not None:
-            gdal.Unlink(aux_xml)
+    # Remove useless side car file
+    aux_xml = tilefilename + ".aux.xml"
+    if gdal.VSIStatL(aux_xml) is not None:
+        gdal.Unlink(aux_xml)
 
     del dstile
 
@@ -1677,21 +1610,18 @@ def create_overview_tile(
         return
 
     scale_query_to_tile(dsquery, dstile, options, tilefilename=tilefilename)
+
     # Write a copy of tile to png/jpg
-    if options.resampling != "antialias":
-        # Write a copy of tile to png/jpg
-        out_driver.CreateCopy(
-            tilefilename,
-            dstile
-            if tile_job_info.tile_driver != "JPEG"
-            else remove_alpha_band(dstile),
-            strict=0,
-            options=_get_creation_options(options),
-        )
-        # Remove useless side car file
-        aux_xml = tilefilename + ".aux.xml"
-        if gdal.VSIStatL(aux_xml) is not None:
-            gdal.Unlink(aux_xml)
+    out_driver.CreateCopy(
+        tilefilename,
+        dstile if tile_job_info.tile_driver != "JPEG" else remove_alpha_band(dstile),
+        strict=0,
+        options=_get_creation_options(options),
+    )
+    # Remove useless side car file
+    aux_xml = tilefilename + ".aux.xml"
+    if gdal.VSIStatL(aux_xml) is not None:
+        gdal.Unlink(aux_xml)
 
     if options.verbose:
         logger.debug(
@@ -2110,11 +2040,11 @@ def options_post_processing(
         options.url += os.path.basename(out_path) + "/"
 
     # Supported options
-    if options.resampling == "antialias" and not numpy_available:
-        exit_with_error(
-            "'antialias' resampling algorithm is not available.",
-            "Install PIL (Python Imaging Library) and numpy.",
+    if options.resampling == "antialias":
+        print(
+            "Use of --resampling antialias is deprecated. It is now an equivalent of lanczos"
         )
+        options.resampling = "lanczos"
 
     if options.tiledriver == "WEBP":
         if gdal.GetDriverByName(options.tiledriver) is None:
@@ -2142,7 +2072,7 @@ def options_post_processing(
     return options
 
 
-class TileDetail(object):
+class TileDetail:
     tx = 0
     ty = 0
     tz = 0
@@ -2161,9 +2091,6 @@ class TileDetail(object):
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
 
-    def __unicode__(self):
-        return "TileDetail %s\n%s\n%s\n" % (self.tx, self.ty, self.tz)
-
     def __str__(self):
         return "TileDetail %s\n%s\n%s\n" % (self.tx, self.ty, self.tz)
 
@@ -2171,7 +2098,7 @@ class TileDetail(object):
         return "TileDetail %s\n%s\n%s\n" % (self.tx, self.ty, self.tz)
 
 
-class TileJobInfo(object):
+class TileJobInfo:
     """
     Plain object to hold tile job configuration for a dataset
     """
@@ -2212,7 +2139,7 @@ class Gdal2TilesError(Exception):
     pass
 
 
-class GDAL2Tiles(object):
+class GDAL2Tiles:
     def __init__(self, input_file: str, output_folder: str, options: Options) -> None:
         """Constructor function - initialization"""
         self.out_drv = None
@@ -2395,15 +2322,19 @@ class GDAL2Tiles(object):
                 self.warped_input_dataset = reproject_dataset(
                     input_dataset, self.in_srs, self.out_srs
                 )
-
-                if in_nodata:
-                    self.warped_input_dataset = update_no_data_values(
-                        self.warped_input_dataset, in_nodata, options=self.options
-                    )
-                else:
+                if not in_nodata:
                     self.warped_input_dataset = update_alpha_value_for_non_alpha_inputs(
                         self.warped_input_dataset, options=self.options
                     )
+            else:
+                self.warped_input_dataset = gdal.GetDriverByName("VRT").CreateCopy(
+                    "", input_dataset
+                )
+
+            if in_nodata:
+                self.warped_input_dataset = update_no_data_values(
+                    self.warped_input_dataset, in_nodata, options=self.options
+                )
 
             if self.warped_input_dataset and self.options.verbose:
                 logger.debug(
@@ -2609,11 +2540,10 @@ class GDAL2Tiles(object):
                 # one, generate an oversample temporary VRT file, and tile from
                 # it
                 oversample_factor = 1 << (self.tmaxz - self.nativezoom)
-                if self.options.resampling in ("average", "antialias"):
-                    resampleAlg = "average"
-                elif self.options.resampling in (
+                if self.options.resampling in (
                     "near",
                     "bilinear",
+                    "average",
                     "cubic",
                     "cubicspline",
                     "lanczos",
@@ -4005,7 +3935,7 @@ function ExtDraggableObject(src, opt_drag) {
             zoom: %(beginzoom)s,
             minZoom: %(minzoom)s,
             maxZoom: %(maxzoom)s,
-            layers: [osm]
+            layers: [osm, lyr]
         });
 
         var basemaps = {"OpenStreetMap": osm, "CartoDB Positron": cartodb, "Without background": white}
@@ -4479,7 +4409,7 @@ def worker_tile_details(
     return tile_job_info, tile_details
 
 
-class ProgressBar(object):
+class ProgressBar:
     def __init__(self, total_items: int, progress_cbk=gdal.TermProgress_nocb) -> None:
         self.total_items = total_items
         self.nb_items_done = 0
@@ -4648,7 +4578,7 @@ def multi_threaded_tiling(
     shutil.rmtree(os.path.dirname(conf.src_file))
 
 
-class DividedCache(object):
+class DividedCache:
     def __init__(self, nb_processes):
         self.nb_processes = nb_processes
 

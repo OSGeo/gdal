@@ -10,43 +10,17 @@
  * Copyright (c) 2013, NextGIS
  * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "ogr_sxf.h"
 
-extern "C" void RegisterOGRSXF();
-
-/************************************************************************/
-/*                       ~OGRSXFDriver()                         */
-/************************************************************************/
-
-OGRSXFDriver::~OGRSXFDriver()
-{
-}
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *OGRSXFDriver::Open(GDALOpenInfo *poOpenInfo)
+static GDALDataset *OGRSXFDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
     /* -------------------------------------------------------------------- */
@@ -54,7 +28,7 @@ GDALDataset *OGRSXFDriver::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
 
     VSIStatBufL sStatBuf;
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "sxf") ||
+    if (!poOpenInfo->IsExtensionEqualToCI("sxf") ||
         VSIStatL(poOpenInfo->pszFilename, &sStatBuf) != 0 ||
         !VSI_ISREG(sStatBuf.st_mode))
         return nullptr;
@@ -75,10 +49,10 @@ GDALDataset *OGRSXFDriver::Open(GDALOpenInfo *poOpenInfo)
 /*                              Identify()                              */
 /************************************************************************/
 
-int OGRSXFDriver::Identify(GDALOpenInfo *poOpenInfo)
+static int OGRSXFDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "sxf") ||
-        !poOpenInfo->bStatOK || poOpenInfo->bIsDirectory)
+    if (!poOpenInfo->IsExtensionEqualToCI("sxf") || !poOpenInfo->bStatOK ||
+        poOpenInfo->bIsDirectory)
     {
         return GDAL_IDENTIFY_FALSE;
     }
@@ -97,10 +71,10 @@ int OGRSXFDriver::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           DeleteDataSource()                         */
+/*                          GRSXFDriverDelete()                         */
 /************************************************************************/
 
-CPLErr OGRSXFDriver::DeleteDataSource(const char *pszName)
+static CPLErr OGRSXFDriverDelete(const char *pszName)
 {
     // TODO: add more extensions if aplicable
     static const char *const apszExtensions[] = {"szf", "rsc", "SZF", "RSC",
@@ -117,9 +91,10 @@ CPLErr OGRSXFDriver::DeleteDataSource(const char *pszName)
 
     for (int iExt = 0; apszExtensions[iExt] != nullptr; iExt++)
     {
-        const char *pszFile = CPLResetExtension(pszName, apszExtensions[iExt]);
-        if (VSIStatL(pszFile, &sStatBuf) == 0)
-            VSIUnlink(pszFile);
+        const std::string osFile =
+            CPLResetExtensionSafe(pszName, apszExtensions[iExt]);
+        if (VSIStatL(osFile.c_str(), &sStatBuf) == 0)
+            VSIUnlink(osFile.c_str());
     }
 
     return CE_None;
@@ -133,7 +108,7 @@ void RegisterOGRSXF()
     if (GDALGetDriverByName("SXF") != nullptr)
         return;
 
-    OGRSXFDriver *poDriver = new OGRSXFDriver;
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription("SXF");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
@@ -155,9 +130,9 @@ void RegisterOGRSXF()
         "if exist' default='NO'/>"
         "</OpenOptionList>");
 
-    poDriver->pfnOpen = OGRSXFDriver::Open;
-    poDriver->pfnDelete = OGRSXFDriver::DeleteDataSource;
-    poDriver->pfnIdentify = OGRSXFDriver::Identify;
+    poDriver->pfnOpen = OGRSXFDriverOpen;
+    poDriver->pfnDelete = OGRSXFDriverDelete;
+    poDriver->pfnIdentify = OGRSXFDriverIdentify;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

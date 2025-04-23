@@ -47,6 +47,9 @@
 #define TIFFCvtIEEEFloatToNative(tif, n, fp)
 #define TIFFCvtIEEEDoubleToNative(tif, n, dp)
 #else
+/* If your machine does not support IEEE floating point then you will need to
+ * add support to tif_machdep.c to convert between the native format and
+ * IEEE format. */
 extern void TIFFCvtIEEEFloatToNative(TIFF *, uint32_t, float *);
 extern void TIFFCvtIEEEDoubleToNative(TIFF *, uint32_t, double *);
 #endif
@@ -2781,7 +2784,7 @@ TIFFReadDirEntryFloatArray(TIFF *tif, TIFFDirEntry *direntry, float **value)
         case TIFF_FLOAT:
             if (tif->tif_flags & TIFF_SWAB)
                 TIFFSwabArrayOfLong((uint32_t *)origdata, count);
-            TIFFCvtIEEEDoubleToNative(tif, count, (float *)origdata);
+            TIFFCvtIEEEFloatToNative(tif, count, (float *)origdata);
             *value = (float *)origdata;
             return (TIFFReadDirEntryErrOk);
     }
@@ -4281,7 +4284,6 @@ int TIFFReadDirectory(TIFF *tif)
         tif->tif_curdir = 0;
     else
         tif->tif_curdir++;
-    (*tif->tif_cleanup)(tif); /* cleanup any previous compression state */
 
     TIFFReadDirectoryCheckOrder(tif, dir, dircount);
 
@@ -4313,6 +4315,11 @@ int TIFFReadDirectory(TIFF *tif)
     /* free any old stuff and reinit */
     TIFFFreeDirectory(tif);
     TIFFDefaultDirectory(tif);
+
+    /* After setup a fresh directory indicate that now active IFD is also
+     * present on file, even if its entries could not be read successfully
+     * below.  */
+    tif->tif_dir.td_iswrittentofile = TRUE;
 
     /* Allocate arrays for offset values outside IFD entry for IFD data size
      * checking. Note: Counter are reset within TIFFFreeDirectory(). */
@@ -4398,10 +4405,13 @@ int TIFFReadDirectory(TIFF *tif)
             TIFFReadDirectoryFindFieldInfo(tif, dp->tdir_tag, &fii);
             if (fii == FAILED_FII)
             {
-                TIFFWarningExtR(tif, module,
-                                "Unknown field with tag %" PRIu16 " (0x%" PRIx16
-                                ") encountered",
-                                dp->tdir_tag, dp->tdir_tag);
+                if (tif->tif_warn_about_unknown_tags)
+                {
+                    TIFFWarningExtR(tif, module,
+                                    "Unknown field with tag %" PRIu16
+                                    " (0x%" PRIx16 ") encountered",
+                                    dp->tdir_tag, dp->tdir_tag);
+                }
                 /* the following knowingly leaks the
                    anonymous field structure */
                 const TIFFField *fld = _TIFFCreateAnonField(
@@ -5191,7 +5201,7 @@ bad:
     if (dir)
         _TIFFfreeExt(tif, dir);
     return (0);
-}
+} /*-- TIFFReadDirectory() --*/
 
 static void TIFFReadDirectoryCheckOrder(TIFF *tif, TIFFDirEntry *dir,
                                         uint16_t dircount)
@@ -5275,8 +5285,7 @@ int TIFFReadCustomDirectory(TIFF *tif, toff_t diroff,
     uint16_t di;
     const TIFFField *fip;
     uint32_t fii;
-    (*tif->tif_cleanup)(tif); /* cleanup any previous compression state */
-    _TIFFSetupFields(tif, infoarray);
+
     dircount = TIFFFetchDirectory(tif, diroff, &dir, NULL);
     if (!dircount)
     {
@@ -5285,9 +5294,40 @@ int TIFFReadCustomDirectory(TIFF *tif, toff_t diroff,
                       diroff);
         return 0;
     }
-    TIFFFreeDirectory(tif);
-    _TIFFmemset(&tif->tif_dir, 0, sizeof(TIFFDirectory));
     TIFFReadDirectoryCheckOrder(tif, dir, dircount);
+
+    /*
+     * Mark duplicates of any tag to be ignored (bugzilla 1994)
+     * to avoid certain pathological problems.
+     */
+    {
+        TIFFDirEntry *ma;
+        uint16_t mb;
+        for (ma = dir, mb = 0; mb < dircount; ma++, mb++)
+        {
+            TIFFDirEntry *na;
+            uint16_t nb;
+            for (na = ma + 1, nb = mb + 1; nb < dircount; na++, nb++)
+            {
+                if (ma->tdir_tag == na->tdir_tag)
+                {
+                    na->tdir_ignore = TRUE;
+                }
+            }
+        }
+    }
+
+    /* Free any old stuff and reinit. */
+    TIFFFreeDirectory(tif);
+    /* Even if custom directories do not need the default settings of a standard
+     * IFD, the pointer to the TIFFSetField() and TIFFGetField() (i.e.
+     * tif->tif_tagmethods.vsetfield and tif->tif_tagmethods.vgetfield) need to
+     * be initialized, which is done in TIFFDefaultDirectory().
+     * After that, the field array for the custom tags needs to be setup again.
+     */
+    TIFFDefaultDirectory(tif);
+    _TIFFSetupFields(tif, infoarray);
+
     /* Allocate arrays for offset values outside IFD entry for IFD data size
      * checking. Note: Counter are reset within TIFFFreeDirectory(). */
     tif->tif_dir.td_dirdatasize_offsets =
@@ -5308,18 +5348,25 @@ int TIFFReadCustomDirectory(TIFF *tif, toff_t diroff,
         TIFFReadDirectoryFindFieldInfo(tif, dp->tdir_tag, &fii);
         if (fii == FAILED_FII)
         {
-            TIFFWarningExtR(tif, module,
-                            "Unknown field with tag %" PRIu16 " (0x%" PRIx16
-                            ") encountered",
-                            dp->tdir_tag, dp->tdir_tag);
+            if (tif->tif_warn_about_unknown_tags)
+            {
+                TIFFWarningExtR(tif, module,
+                                "Unknown field with tag %" PRIu16 " (0x%" PRIx16
+                                ") encountered",
+                                dp->tdir_tag, dp->tdir_tag);
+            }
             const TIFFField *fld = _TIFFCreateAnonField(
                 tif, dp->tdir_tag, (TIFFDataType)dp->tdir_type);
             if (fld == NULL || !_TIFFMergeFields(tif, fld, 1))
             {
-                TIFFWarningExtR(tif, module,
-                                "Registering anonymous field with tag %" PRIu16
-                                " (0x%" PRIx16 ") failed",
-                                dp->tdir_tag, dp->tdir_tag);
+                if (tif->tif_warn_about_unknown_tags)
+                {
+                    TIFFWarningExtR(
+                        tif, module,
+                        "Registering anonymous field with tag %" PRIu16
+                        " (0x%" PRIx16 ") failed",
+                        dp->tdir_tag, dp->tdir_tag);
+                }
                 dp->tdir_ignore = TRUE;
             }
             else
@@ -6237,19 +6284,19 @@ static int TIFFFetchNormalTag(TIFF *tif, TIFFDirEntry *dp, int recover)
     }
     fip = tif->tif_fields[fii];
     assert(fip != NULL); /* should not happen */
-    assert(fip->set_field_type !=
+    assert(fip->set_get_field_type !=
            TIFF_SETGET_OTHER); /* if so, we shouldn't arrive here but deal with
                                   this in specialized code */
-    assert(fip->set_field_type !=
+    assert(fip->set_get_field_type !=
            TIFF_SETGET_INT); /* if so, we shouldn't arrive here as this is only
                                 the case for pseudo-tags */
     err = TIFFReadDirEntryErrOk;
-    switch (fip->set_field_type)
+    switch (fip->set_get_field_type)
     {
         case TIFF_SETGET_UNDEFINED:
             TIFFErrorExtR(
                 tif, "TIFFFetchNormalTag",
-                "Defined set_field_type of custom tag %u (%s) is "
+                "Defined set_get_field_type of custom tag %u (%s) is "
                 "TIFF_SETGET_UNDEFINED and thus tag is not read from file",
                 fip->field_tag, fip->field_name);
             break;

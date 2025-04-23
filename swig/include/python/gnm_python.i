@@ -1,5 +1,4 @@
 /*
- * $Id$
  *
  * python specific code for ogr bindings.
  */

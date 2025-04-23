@@ -17,6 +17,8 @@ Example:
 
     gdalinfo /vsizip/my.zip/my.tif
 
+The leading vsi in /vsiPREFIX/ stands for Virtual System Interface.
+
 Chaining
 --------
 
@@ -83,6 +85,7 @@ Examples:
     /vsizip/my.zip/my.tif  (relative path to the .zip)
     /vsizip//home/even/my.zip/subdir/my.tif  (absolute path to the .zip)
     /vsizip/c:\users\even\my.zip\subdir\my.tif
+    /vsizip/{/vsizip/my.zip/subdir/subzip.zip}/subdir_in_subzip/my.shp  (alternate syntax for a nested .zip)
 
 .kmz, .ods and .xlsx extensions are also detected as valid extensions for zip-compatible archives.
 
@@ -200,7 +203,7 @@ Examples:
     /vsitar//home/even/my.tar/subdir/my.tif # (absolute path to the .tar)
     /vsitar/c:\users\even\my.tar\subdir\my.tif
 
-Starting with GDAL 2.2, an alternate syntax is available so as to enable chaining and not being dependent on .tar extension, e.g.: :file:`/vsitar/{/path/to/the/archive}/path/inside/the/tar/file`. Note that :file:`/path/to/the/archive` may also itself use this alternate syntax.
+Starting with GDAL 2.2, an alternate syntax is available so as to enable chaining and not being dependent on .tar extension, e.g.: ``/vsitar/{/path/to/the/archive}/path/inside/the/tar/file``. Note that :file:`/path/to/the/archive` may also itself use this alternate syntax.
 
 .. _vsi7z:
 
@@ -227,7 +230,7 @@ Default extensions recognized by this virtual file system are:
 ``mpkx`` and ``ppkx`` (Esri ArcGIS Pro Project Package).
 
 An alternate syntax is available so as to enable chaining and not being
-dependent on those extensions, e.g.: :file:`/vsi7z/{/path/to/the/archive}/path/inside/the/archive`.
+dependent on those extensions, e.g.: ``/vsi7z/{/path/to/the/archive}/path/inside/the/archive``.
 Note that :file:`/path/to/the/archive` may also itself use this alternate syntax.
 
 Note that random seeking within a large compressed file will be inefficient when
@@ -257,7 +260,7 @@ is the relative path to the file inside the archive.`
 The default extension recognized by this virtual file system is: ``rar``
 
 An alternate syntax is available so as to enable chaining and not being
-dependent on those extensions, e.g.: :file:`/vsirar/{/path/to/the/archive}/path/inside/the/archive`.
+dependent on those extensions, e.g.: ``/vsirar/{/path/to/the/archive}/path/inside/the/archive``.
 Note that :file:`/path/to/the/archive` may also itself use this alternate syntax.
 
 Note that random seeking within a large compressed file will be inefficient when
@@ -381,10 +384,12 @@ Starting with GDAL 2.3, options can be passed in the filename with the following
 - retry_delay=number_in_seconds: default to 30. Setting this option overrides the behavior of the :config:`GDAL_HTTP_RETRY_DELAY` configuration option.
 - retry_codes=``ALL`` or comma-separated list of HTTP error codes. Setting this option overrides the behavior of the :config:`GDAL_HTTP_RETRY_CODES` configuration option. (GDAL >= 3.10)
 - list_dir=yes/no: whether an attempt to read the file list of the directory where the file is located should be done. Default to YES.
+- empty_dir=yes/no: whether to disable directory listing and disable logic in drivers to probe for individual side-car files. Default to NO.
 - useragent=value: HTTP UserAgent header
 - referer=value: HTTP Referer header
 - cookie=value: HTTP Cookie header
 - header_file=value: Filename that contains one or several "Header: Value" lines
+- header.<key>=<value>: HTTP request header of name <key> and value <value>. (GDAL >= 3.11). e.g. ``header.Accept=application%2Fjson``
 - unsafessl=yes/no
 - low_speed_time=value
 - low_speed_limit=value
@@ -412,6 +417,16 @@ As an alternative, starting with GDAL 3.6, the
 :config:`GDAL_HTTP_HEADERS` configuration option can also be
 used to specify headers. :config:`CPL_CURL_VERBOSE=YES` allows one to see them and more, when combined with ``--debug``.
 
+Starting with GDAL 3.10, the ``Authorization`` header is no longer automatically
+forwarded when redirections are followed.
+That behavior can be configured by setting the
+:config:`CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT` configuration option.
+
+Starting with GDAL 3.11, a query string can be appended to a given /vsicurl/ filename by taking its value from the
+``VSICURL_QUERY_STRING`` path-specific option set with :cpp:func:`VSISetPathSpecificOption`.
+This can for example be used when managing Shared Access Signatures (SAS) on application side, and not
+wanting to include the signature as part of the filename propagated through GDAL.
+
 Starting with GDAL 2.3, the :config:`GDAL_HTTP_MAX_RETRY` (number of attempts) and :config:`GDAL_HTTP_RETRY_DELAY` (in seconds) configuration option can be set, so that request retries are done in case of HTTP errors 429, 502, 503 or 504.
 
 Starting with GDAL 3.6, the following configuration options control the TCP keep-alive functionality (cf https://daniel.haxx.se/blog/2020/02/10/curl-ootw-keepalive-time/ for a detailed explanation):
@@ -430,6 +445,11 @@ Starting with GDAL 3.7, the following configuration options control support for 
 More generally options of :cpp:func:`CPLHTTPFetch` available through configuration options are available.
 Starting with GDAL 3.7, the above configuration options can also be specified
 as path-specific options with :cpp:func:`VSISetPathSpecificOption`.
+
+Starting with GDAL 3.11, the following configuration options control the number of HTTP connections:
+
+- :config:`GDAL_HTTP_MAX_CACHED_CONNECTIONS` = integer_number. Maximum amount of connections that libcurl may keep alive in its connection cache after use. Cf https://curl.se/libcurl/c/CURLMOPT_MAXCONNECTS.html
+- :config:`GDAL_HTTP_MAX_TOTAL_CONNECTIONS` = integer_number. Maximum number of simultaneously open connections in total. Cf https://curl.se/libcurl/c/CURLMOPT_MAX_TOTAL_CONNECTIONS.html
 
 The file can be cached in RAM by setting the configuration option :config:`VSI_CACHE` to ``TRUE``. The cache size defaults to 25 MB, but can be modified by setting the configuration option :config:`VSI_CACHE_SIZE` (in bytes). Content in that cache is discarded when the file handle is closed.
 
@@ -555,7 +575,8 @@ The following configuration options are specific to the /vsis3/ handler:
       :default: s3.amazonaws.com
 
       Allows the use of /vsis3/ with non-AWS remote object stores that use the
-      AWS S3 protocol.
+      AWS S3 protocol. Starting with GDAL 3.11, this can be a URL starting
+      with ``http://`` or ``https://``.
 
 -  .. config:: AWS_HTTPS
       :choices: YES, NO
@@ -563,6 +584,8 @@ The following configuration options are specific to the /vsis3/ handler:
 
       If ``YES``, AWS resources will be accessed using HTTPS. If ``NO``, HTTP
       will be used.
+      No longer needed starting with GDAL 3.11, because :config:`AWS_S3_ENDPOINT`
+      can include the protocol, and when doing so, this option is ignored.
 
 -  .. config:: AWS_VIRTUAL_HOSTING
       :choices: TRUE, FALSE
@@ -623,8 +646,9 @@ Since GDAL 3.1, the :cpp:func:`VSIRmdirRecursive` operation is supported (using 
 
 The :config:`CPL_VSIS3_CREATE_DIR_OBJECT` configuration option can be set to NO to prevent the :cpp:func:`VSIMkdir` operation from creating an empty object with the name of the directory terminated with a slash directory. By default GDAL creates such object, so that empty directories can be modeled, but this may cause compatibility problems with applications that do not expect such empty objects.
 
-
 Starting with GDAL 3.5, profiles that use IAM role assumption (see https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html) are handled. The ``role_arn`` and ``source_profile`` keywords are required in such profiles. The optional ``external_id``, ``mfa_serial`` and ``role_session_name`` can be specified. ``credential_source`` is not supported currently.
+
+Support for AWS Single-Sign On (AWS IAM Identity Center) parameters in ``~/.aws/config`` and cached SSO files in ``~/.aws/sso/cache`` is implemented since GDAL 3.10.1.
 
 .. _vsis3_imds:
 
@@ -839,7 +863,7 @@ The following configuration options are specific to the /vsiaz/ handler:
 
      object_id of the managed identity you would like the token for, when using
      Azure Instance Metadata Service (IMDS) authentication in a Azure
-     Virtual Matchine. Required if your VM has multiple user-assigned managed identities.
+     Virtual Machine. Required if your VM has multiple user-assigned managed identities.
      This option may be set as a path-specific option with :cpp:func:`VSISetPathSpecificOption`
 
 - .. config:: AZURE_IMDS_CLIENT_ID
@@ -847,7 +871,7 @@ The following configuration options are specific to the /vsiaz/ handler:
 
      client_id of the managed identity you would like the token for, when using
      Azure Instance Metadata Service (IMDS) authentication in a Azure
-     Virtual Matchine. Required if your VM has multiple user-assigned managed identities.
+     Virtual Machine. Required if your VM has multiple user-assigned managed identities.
      This option may be set as a path-specific option with :cpp:func:`VSISetPathSpecificOption`
 
 - .. config:: AZURE_IMDS_MSI_RES_ID
@@ -855,7 +879,7 @@ The following configuration options are specific to the /vsiaz/ handler:
 
      msi_res_id (Azure Resource ID) of the managed identity you would like the token for, when using
      Azure Instance Metadata Service (IMDS) authentication in a Azure
-     Virtual Matchine. Required if your VM has multiple user-assigned managed identities.
+     Virtual Machine. Required if your VM has multiple user-assigned managed identities.
      This option may be set as a path-specific option with :cpp:func:`VSISetPathSpecificOption`
 
 Several authentication methods are possible, and are attempted in the following order:

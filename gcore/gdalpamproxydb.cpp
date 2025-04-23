@@ -10,23 +10,7 @@
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -105,8 +89,9 @@ void GDALPamProxyDB::LoadDB()
     /*      Open the database relating original names to proxy .aux.xml     */
     /*      file names.                                                     */
     /* -------------------------------------------------------------------- */
-    CPLString osDBName = CPLFormFilename(osProxyDBDir, "gdal_pam_proxy", "dat");
-    VSILFILE *fpDB = VSIFOpenL(osDBName, "r");
+    const std::string osDBName =
+        CPLFormFilenameSafe(osProxyDBDir, "gdal_pam_proxy", "dat");
+    VSILFILE *fpDB = VSIFOpenL(osDBName.c_str(), "r");
 
     nUpdateCounter = 0;
     if (fpDB == nullptr)
@@ -201,9 +186,10 @@ void GDALPamProxyDB::SaveDB()
     /*      Open the database relating original names to proxy .aux.xml     */
     /*      file names.                                                     */
     /* -------------------------------------------------------------------- */
-    CPLString osDBName = CPLFormFilename(osProxyDBDir, "gdal_pam_proxy", "dat");
+    const std::string osDBName =
+        CPLFormFilenameSafe(osProxyDBDir, "gdal_pam_proxy", "dat");
 
-    void *hLock = CPLLockFile(osDBName, 1.0);
+    void *hLock = CPLLockFile(osDBName.c_str(), 1.0);
 
     // proceed even if lock fails - we need CPLBreakLockFile()!
     if (hLock == nullptr)
@@ -214,7 +200,7 @@ void GDALPamProxyDB::SaveDB()
                  osDBName.c_str());
     }
 
-    VSILFILE *fpDB = VSIFOpenL(osDBName, "w");
+    VSILFILE *fpDB = VSIFOpenL(osDBName.c_str(), "w");
     if (fpDB == nullptr)
     {
         if (hLock)
@@ -242,7 +228,7 @@ void GDALPamProxyDB::SaveDB()
                  "Failed to write complete %s Pam Proxy DB.\n%s",
                  osDBName.c_str(), VSIStrerror(errno));
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpDB));
-        VSIUnlink(osDBName);
+        VSIUnlink(osDBName.c_str());
         if (hLock)
             CPLUnlockFile(hLock);
         return;
@@ -266,7 +252,7 @@ void GDALPamProxyDB::SaveDB()
                      "Failed to write complete %s Pam Proxy DB.\n%s",
                      osDBName.c_str(), VSIStrerror(errno));
             CPL_IGNORE_RET_VAL(VSIFCloseL(fpDB));
-            VSIUnlink(osDBName);
+            VSIUnlink(osDBName.c_str());
             if (hLock)
                 CPLUnlockFile(hLock);
             return;
@@ -295,6 +281,7 @@ static void InitProxyDB()
     {
         CPLMutexHolderD(&hProxyDBLock);
         // cppcheck-suppress identicalInnerCondition
+        // cppcheck-suppress knownConditionTrueFalse
         if (!bProxyDBInitialized)
         {
             const char *pszProxyDir =

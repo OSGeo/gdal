@@ -8,23 +8,7 @@
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -219,13 +203,13 @@ OGRCSVDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     // If the target is not a simple .csv then create it as a directory.
     CPLString osDirName;
 
-    if (EQUAL(CPLGetExtension(pszName), "csv"))
+    if (EQUAL(CPLGetExtensionSafe(pszName).c_str(), "csv"))
     {
-        osDirName = CPLGetPath(pszName);
+        osDirName = CPLGetPathSafe(pszName);
         if (osDirName == "")
             osDirName = ".";
 
-        // HACK: CPLGetPath("/vsimem/foo.csv") = "/vsimem", but this is not
+        // HACK: CPLGetPathSafe("/vsimem/foo.csv") = "/vsimem", but this is not
         // recognized afterwards as a valid directory name.
         if (osDirName == "/vsimem")
             osDirName = "/vsimem/";
@@ -249,7 +233,7 @@ OGRCSVDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     // Force it to open as a datasource.
     auto poDS = std::make_unique<OGRCSVDataSource>();
 
-    if (EQUAL(CPLGetExtension(pszName), "csv"))
+    if (EQUAL(CPLGetExtensionSafe(pszName).c_str(), "csv"))
     {
         poDS->CreateForSingleFile(osDirName, pszName);
     }
@@ -442,6 +426,15 @@ void RegisterOGRCSV()
         "  <Option name='MAX_LINE_SIZE' type='int' description='Maximum number "
         "of bytes for a line (-1=unlimited)' default='" STRINGIFY(
             OGR_CSV_DEFAULT_MAX_LINE_SIZE) "'/>"
+                                           "  <Option name='OGR_SCHEMA' "
+                                           "type='string' description='"
+                                           "Partially or totally overrides the "
+                                           "auto-detected schema to use for "
+                                           "creating the layer. "
+                                           "The overrides are defined as a "
+                                           "JSON list of field definitions. "
+                                           "This can be a filename or a JSON "
+                                           "string or a URL.'/>"
                                            "</OpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
@@ -452,6 +445,9 @@ void RegisterOGRCSV()
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
                               "Boolean Int16 Float32");
     poDriver->SetMetadataItem(GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "Features");
 
     poDriver->pfnOpen = OGRCSVDriverOpen;
     poDriver->pfnIdentify = OGRCSVDriverIdentify;

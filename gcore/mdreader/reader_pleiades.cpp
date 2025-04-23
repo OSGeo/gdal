@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2014-2018 NextGIS <info@nextgis.ru>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -51,17 +35,19 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
     : GDALMDReaderBase(pszPath, papszSiblingFiles), m_osBaseFilename(pszPath),
       m_osIMDSourceFilename(CPLString()), m_osRPBSourceFilename(CPLString())
 {
-    const CPLString osBaseName = CPLGetBasename(pszPath);
+    const CPLString osBaseName = CPLGetBasenameSafe(pszPath);
     const size_t nBaseNameLen = osBaseName.size();
     if (nBaseNameLen < 4 || nBaseNameLen > 511)
         return;
 
-    const CPLString osDirName = CPLGetDirname(pszPath);
+    const CPLString osDirName = CPLGetDirnameSafe(pszPath);
 
-    std::string osIMDSourceFilename = CPLFormFilename(
-        osDirName, CPLSPrintf("DIM_%s", osBaseName.c_str() + 4), "XML");
-    std::string osRPBSourceFilename = CPLFormFilename(
-        osDirName, CPLSPrintf("RPC_%s", osBaseName.c_str() + 4), "XML");
+    std::string osIMDSourceFilename = CPLFormFilenameSafe(
+        osDirName, (std::string("DIM_") + (osBaseName.c_str() + 4)).c_str(),
+        "XML");
+    std::string osRPBSourceFilename = CPLFormFilenameSafe(
+        osDirName, (std::string("RPC_") + (osBaseName.c_str() + 4)).c_str(),
+        "XML");
 
     // find last underline
     char sBaseName[512];
@@ -99,8 +85,8 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
     }
     else
     {
-        osIMDSourceFilename =
-            CPLFormFilename(osDirName, CPLSPrintf("DIM_%s", sBaseName), "XML");
+        osIMDSourceFilename = CPLFormFilenameSafe(
+            osDirName, ("DIM_" + std::string(sBaseName)).c_str(), "XML");
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
             m_osIMDSourceFilename = std::move(osIMDSourceFilename);
@@ -113,8 +99,8 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
     }
     else
     {
-        osRPBSourceFilename =
-            CPLFormFilename(osDirName, CPLSPrintf("RPC_%s", sBaseName), "XML");
+        osRPBSourceFilename = CPLFormFilenameSafe(
+            osDirName, ("RPC_" + std::string(sBaseName)).c_str(), "XML");
         if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
         {
             m_osRPBSourceFilename = std::move(osRPBSourceFilename);
@@ -184,25 +170,26 @@ void GDALMDReaderPleiades::LoadMetadata()
     if (m_bIsMetadataLoad)
         return;
 
+    CPLXMLTreeCloser oIMDTree(nullptr);
     if (!m_osIMDSourceFilename.empty())
     {
-        CPLXMLNode *psNode = CPLParseXMLFile(m_osIMDSourceFilename);
+        oIMDTree.reset(CPLParseXMLFile(m_osIMDSourceFilename));
 
-        if (psNode != nullptr)
+        if (oIMDTree)
         {
-            CPLXMLNode *psisdNode = CPLSearchXMLNode(psNode, "=Dimap_Document");
+            const CPLXMLNode *psisdNode =
+                CPLSearchXMLNode(oIMDTree.get(), "=Dimap_Document");
 
             if (psisdNode != nullptr)
             {
                 m_papszIMDMD = ReadXMLToList(psisdNode->psChild, m_papszIMDMD);
             }
-            CPLDestroyXMLNode(psNode);
         }
     }
 
     if (!m_osRPBSourceFilename.empty())
     {
-        m_papszRPCMD = LoadRPCXmlFile();
+        m_papszRPCMD = LoadRPCXmlFile(oIMDTree.get());
     }
 
     m_papszDEFAULTMD =
@@ -328,35 +315,54 @@ static const char *const apszRPCTXT20ValItemsPleiades[] = {
     RPC_LINE_NUM_COEFF, RPC_LINE_DEN_COEFF, RPC_SAMP_NUM_COEFF,
     RPC_SAMP_DEN_COEFF, nullptr};
 
-char **GDALMDReaderPleiades::LoadRPCXmlFile()
+char **GDALMDReaderPleiades::LoadRPCXmlFile(const CPLXMLNode *psDIMRootNode)
 {
-    CPLXMLNode *pNode = CPLParseXMLFile(m_osRPBSourceFilename);
+    CPLXMLTreeCloser oNode(CPLParseXMLFile(m_osRPBSourceFilename));
 
-    if (nullptr == pNode)
+    if (!oNode)
         return nullptr;
 
-    // search Global_RFM
-    char **papszRawRPCList = nullptr;
-    CPLXMLNode *pGRFMNode = CPLSearchXMLNode(pNode, "=Global_RFM");
+    CPLStringList aosRPC;
 
-    if (pGRFMNode != nullptr)
+    // Fetch the "average" height from the Center Point in the DIM_xx.XML file
+    if (psDIMRootNode)
     {
-        papszRawRPCList = ReadXMLToList(pGRFMNode->psChild, papszRawRPCList);
-    }
-    else
-    {
-        pGRFMNode = CPLSearchXMLNode(pNode, "=Rational_Function_Model");
-
-        if (pGRFMNode != nullptr)
+        const CPLXMLNode *psDimMainNode =
+            CPLSearchXMLNode(psDIMRootNode, "=Dimap_Document");
+        if (psDimMainNode)
         {
-            papszRawRPCList =
-                ReadXMLToList(pGRFMNode->psChild, papszRawRPCList);
+            // This is an WGS 84 ellipsoidal height.
+            const char *pszH = CPLGetXMLValue(
+                psDimMainNode, "Dataset_Content.Dataset_Extent.Center.H",
+                nullptr);
+            if (pszH)
+            {
+                aosRPC.SetNameValue("HEIGHT_DEFAULT", pszH);
+            }
         }
     }
 
-    if (nullptr == papszRawRPCList)
+    // search Global_RFM
+    CPLStringList aosRawRPCList;
+    CPLXMLNode *pGRFMNode = CPLSearchXMLNode(oNode.get(), "=Global_RFM");
+
+    if (pGRFMNode != nullptr)
     {
-        CPLDestroyXMLNode(pNode);
+        aosRawRPCList = ReadXMLToList(pGRFMNode->psChild, nullptr);
+    }
+    else
+    {
+        pGRFMNode = CPLSearchXMLNode(oNode.get(), "=Rational_Function_Model");
+
+        if (pGRFMNode != nullptr)
+        {
+            aosRawRPCList =
+                ReadXMLToList(pGRFMNode->psChild, aosRawRPCList.StealList());
+        }
+    }
+
+    if (aosRawRPCList.empty())
+    {
         return nullptr;
     }
 
@@ -414,9 +420,9 @@ char **GDALMDReaderPleiades::LoadRPCXmlFile()
     // Precompute the offset that will be applied to LINE_OFF and SAMP_OFF
     // in order to use the RPCs with the standard 0,0 convention
     double topleftOffset;
-    CPLXMLNode *psDoc = CPLGetXMLNode(pNode, "=Dimap_Document");
+    CPLXMLNode *psDoc = CPLGetXMLNode(oNode.get(), "=Dimap_Document");
     if (!psDoc)
-        psDoc = CPLGetXMLNode(pNode, "=PHR_DIMAP_Document");
+        psDoc = CPLGetXMLNode(oNode.get(), "=PHR_DIMAP_Document");
     const char *pszMetadataProfile = CPLGetXMLValue(
         psDoc, "Metadata_Identification.METADATA_PROFILE", "PHR_SENSOR");
     if (EQUAL(pszMetadataProfile, "PHR_SENSOR") ||
@@ -438,11 +444,10 @@ char **GDALMDReaderPleiades::LoadRPCXmlFile()
     }
 
     // format list
-    char **papszRPB = nullptr;
     for (int i = 0; apszRPBMapPleiades[i] != nullptr; i += 2)
     {
         const char *pszValue =
-            CSLFetchNameValue(papszRawRPCList, apszRPBMapPleiades[i + 1]);
+            aosRawRPCList.FetchNameValue(apszRPBMapPleiades[i + 1]);
         if ((i == 0 || i == 2) && pszValue)  //i.e. LINE_OFF or SAMP_OFF
         {
             CPLString osField;
@@ -452,13 +457,11 @@ char **GDALMDReaderPleiades::LoadRPCXmlFile()
             else
                 dfVal += nPixelOffShift;
             osField.Printf("%.15g", dfVal);
-            papszRPB =
-                CSLAddNameValue(papszRPB, apszRPBMapPleiades[i], osField);
+            aosRPC.SetNameValue(apszRPBMapPleiades[i], osField);
         }
         else
         {
-            papszRPB =
-                CSLAddNameValue(papszRPB, apszRPBMapPleiades[i], pszValue);
+            aosRPC.SetNameValue(apszRPBMapPleiades[i], pszValue);
         }
     }
 
@@ -473,18 +476,15 @@ char **GDALMDReaderPleiades::LoadRPCXmlFile()
             // """When using the inverse model (ground --> image), the user
             // supplies geographic coordinates (lon, lat) and an altitude
             // (alt)"""
-            const char *pszValue = CSLFetchNameValue(
-                papszRawRPCList,
-                CPLSPrintf("Inverse_Model.%s_%d",
-                           apszRPCTXT20ValItemsPleiades[i], j));
+            const char *pszValue = aosRawRPCList.FetchNameValue(CPLSPrintf(
+                "Inverse_Model.%s_%d", apszRPCTXT20ValItemsPleiades[i], j));
             if (nullptr != pszValue)
             {
                 value = value + " " + CPLString(pszValue);
             }
             else
             {
-                pszValue = CSLFetchNameValue(
-                    papszRawRPCList,
+                pszValue = aosRawRPCList.FetchNameValue(
                     CPLSPrintf("GroundtoImage_Values.%s_%d",
                                apszRPCTXT20ValItemsPleiades[i], j));
                 if (nullptr != pszValue)
@@ -493,11 +493,8 @@ char **GDALMDReaderPleiades::LoadRPCXmlFile()
                 }
             }
         }
-        papszRPB =
-            CSLAddNameValue(papszRPB, apszRPCTXT20ValItemsPleiades[i], value);
+        aosRPC.SetNameValue(apszRPCTXT20ValItemsPleiades[i], value);
     }
 
-    CSLDestroy(papszRawRPCList);
-    CPLDestroyXMLNode(pNode);
-    return papszRPB;
+    return aosRPC.StealList();
 }

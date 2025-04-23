@@ -10,23 +10,7 @@
  * Copyright (c) 2007, Philippe P. Vachon <philippe@cowpig.ca>
  * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_frmts.h"
@@ -529,9 +513,13 @@ int PALSARJaxaDataset::Identify(GDALOpenInfo *poOpenInfo)
         return 0;
 
     /* First, check that this is a PALSAR image indeed */
-    if (!STARTS_WITH_CI((char *)(poOpenInfo->pabyHeader + 60), "AL") ||
-        !STARTS_WITH_CI(CPLGetBasename((char *)(poOpenInfo->pszFilename)) + 4,
-                        "ALPSR"))
+    if (!STARTS_WITH_CI((char *)(poOpenInfo->pabyHeader + 60), "AL"))
+    {
+        return 0;
+    }
+    const std::string osBasename = CPLGetBasenameSafe(poOpenInfo->pszFilename);
+    if (osBasename.size() < 9 ||
+        !STARTS_WITH_CI(osBasename.c_str() + 4, "ALPSR"))
     {
         return 0;
     }
@@ -579,10 +567,7 @@ GDALDataset *PALSARJaxaDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(
-            CE_Failure, CPLE_NotSupported,
-            "The JAXAPALSAR driver does not support update access to existing"
-            " datasets.\n");
+        ReportUpdateNotSupportedByDriver("JAXAPALSAR");
         return nullptr;
     }
 
@@ -594,14 +579,16 @@ GDALDataset *PALSARJaxaDataset::Open(GDALOpenInfo *poOpenInfo)
 
     /* Try to read each of the polarizations */
     const size_t nImgFileLen =
-        strlen(CPLGetDirname(poOpenInfo->pszFilename)) + strlen(pszSuffix) + 8;
+        CPLGetDirnameSafe(poOpenInfo->pszFilename).size() + strlen(pszSuffix) +
+        8;
     char *pszImgFile = (char *)CPLMalloc(nImgFileLen);
 
     int nBandNum = 1;
 
     /* HH */
     snprintf(pszImgFile, nImgFileLen, "%s%sIMG-HH%s",
-             CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix);
+             CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str(), SEP_STRING,
+             pszSuffix);
     VSILFILE *fpHH = VSIFOpenL(pszImgFile, "rb");
     if (fpHH != nullptr)
     {
@@ -611,7 +598,8 @@ GDALDataset *PALSARJaxaDataset::Open(GDALOpenInfo *poOpenInfo)
 
     /* HV */
     snprintf(pszImgFile, nImgFileLen, "%s%sIMG-HV%s",
-             CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix);
+             CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str(), SEP_STRING,
+             pszSuffix);
     VSILFILE *fpHV = VSIFOpenL(pszImgFile, "rb");
     if (fpHV != nullptr)
     {
@@ -621,7 +609,8 @@ GDALDataset *PALSARJaxaDataset::Open(GDALOpenInfo *poOpenInfo)
 
     /* VH */
     snprintf(pszImgFile, nImgFileLen, "%s%sIMG-VH%s",
-             CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix);
+             CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str(), SEP_STRING,
+             pszSuffix);
     VSILFILE *fpVH = VSIFOpenL(pszImgFile, "rb");
     if (fpVH != nullptr)
     {
@@ -631,7 +620,8 @@ GDALDataset *PALSARJaxaDataset::Open(GDALOpenInfo *poOpenInfo)
 
     /* VV */
     snprintf(pszImgFile, nImgFileLen, "%s%sIMG-VV%s",
-             CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix);
+             CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str(), SEP_STRING,
+             pszSuffix);
     VSILFILE *fpVV = VSIFOpenL(pszImgFile, "rb");
     if (fpVV != nullptr)
     {
@@ -666,10 +656,12 @@ GDALDataset *PALSARJaxaDataset::Open(GDALOpenInfo *poOpenInfo)
 
     /* read metadata from Leader file. */
     const size_t nLeaderFilenameLen =
-        strlen(CPLGetDirname(poOpenInfo->pszFilename)) + strlen(pszSuffix) + 5;
+        strlen(CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str()) +
+        strlen(pszSuffix) + 5;
     char *pszLeaderFilename = (char *)CPLMalloc(nLeaderFilenameLen);
     snprintf(pszLeaderFilename, nLeaderFilenameLen, "%s%sLED%s",
-             CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix);
+             CPLGetDirnameSafe(poOpenInfo->pszFilename).c_str(), SEP_STRING,
+             pszSuffix);
 
     VSILFILE *fpLeader = VSIFOpenL(pszLeaderFilename, "rb");
     /* check if the leader is actually present */

@@ -18,3 +18,4 @@ User oriented documentation
    coordinate_epoch
    configoptions
    gdal_python_utilities
+   security

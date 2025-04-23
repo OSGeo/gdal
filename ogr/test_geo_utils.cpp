@@ -9,41 +9,55 @@ int main(int /* argc */, char * /* argv */[])
     const double lonB = 2.00001;
 
     double heading = OGR_GreatCircle_InitialHeading(latA, lonA, latB, lonB);
-    double distance = OGR_GreatCircle_Distance(latA, lonA, latB, lonB);
+    double distance = OGR_GreatCircle_Distance(latA, lonA, latB, lonB,
+                                               OGR_GREATCIRCLE_DEFAULT_RADIUS);
     double latC = 0.0;
     double lonC = 0.0;
-    OGR_GreatCircle_ExtendPosition(latA, lonA, distance, heading, &latC, &lonC);
+    OGR_GreatCircle_ExtendPosition(latA, lonA, distance, heading,
+                                   OGR_GREATCIRCLE_DEFAULT_RADIUS, &latC,
+                                   &lonC);
     printf("heading=%f, distance=%f\n", heading, distance);
     printf("%.15f=%.15f, %.15f=%.15f\n", latB, latC, lonB, lonC);
 
     heading = OGR_GreatCircle_InitialHeading(latB, lonB, latA, lonA);
-    distance = OGR_GreatCircle_Distance(latB, lonB, latA, lonA);
-    OGR_GreatCircle_ExtendPosition(latB, lonB, distance, heading, &latC, &lonC);
+    distance = OGR_GreatCircle_Distance(latB, lonB, latA, lonA,
+                                        OGR_GREATCIRCLE_DEFAULT_RADIUS);
+    OGR_GreatCircle_ExtendPosition(latB, lonB, distance, heading,
+                                   OGR_GREATCIRCLE_DEFAULT_RADIUS, &latC,
+                                   &lonC);
     printf("heading=%f, distance=%f\n", heading, distance);
     printf("%.15f=%.15f, %.15f=%.15f\n", latA, latC, lonA, lonC);
 
-    OGR_GreatCircle_ExtendPosition(0, 100, 100000, 0, &latC, &lonC);
+    OGR_GreatCircle_ExtendPosition(
+        0, 100, 100000, 0, OGR_GREATCIRCLE_DEFAULT_RADIUS, &latC, &lonC);
     printf("lat=%.15f, lon=%.15f\n", latC, lonC);
 
-    OGR_GreatCircle_ExtendPosition(0, 100, 100000, 90, &latC, &lonC);
+    OGR_GreatCircle_ExtendPosition(
+        0, 100, 100000, 90, OGR_GREATCIRCLE_DEFAULT_RADIUS, &latC, &lonC);
     printf("lat=%.15f, lon=%.15f\n", latC, lonC);
 
-    OGR_GreatCircle_ExtendPosition(0, 100, 100000, 180, &latC, &lonC);
+    OGR_GreatCircle_ExtendPosition(
+        0, 100, 100000, 180, OGR_GREATCIRCLE_DEFAULT_RADIUS, &latC, &lonC);
     printf("lat=%.15f, lon=%.15f\n", latC, lonC);
 
-    OGR_GreatCircle_ExtendPosition(0, 100, 100000, 270, &latC, &lonC);
+    OGR_GreatCircle_ExtendPosition(
+        0, 100, 100000, 270, OGR_GREATCIRCLE_DEFAULT_RADIUS, &latC, &lonC);
     printf("lat=%.15f, lon=%.15f\n", latC, lonC);
 
-    OGR_GreatCircle_ExtendPosition(0, 0, 100000, 0, &latC, &lonC);
+    OGR_GreatCircle_ExtendPosition(
+        0, 0, 100000, 0, OGR_GREATCIRCLE_DEFAULT_RADIUS, &latC, &lonC);
     printf("lat=%.15f, lon=%.15f\n", latC, lonC);
 
-    OGR_GreatCircle_ExtendPosition(0, 0, 100000, 90, &latC, &lonC);
+    OGR_GreatCircle_ExtendPosition(
+        0, 0, 100000, 90, OGR_GREATCIRCLE_DEFAULT_RADIUS, &latC, &lonC);
     printf("lat=%.15f, lon=%.15f\n", latC, lonC);
 
-    OGR_GreatCircle_ExtendPosition(0, 0, 100000, 180, &latC, &lonC);
+    OGR_GreatCircle_ExtendPosition(
+        0, 0, 100000, 180, OGR_GREATCIRCLE_DEFAULT_RADIUS, &latC, &lonC);
     printf("lat=%.15f, lon=%.15f\n", latC, lonC);
 
-    OGR_GreatCircle_ExtendPosition(0, 0, 100000, 270, &latC, &lonC);
+    OGR_GreatCircle_ExtendPosition(
+        0, 0, 100000, 270, OGR_GREATCIRCLE_DEFAULT_RADIUS, &latC, &lonC);
     printf("lat=%.15f, lon=%.15f\n", latC, lonC);
 
     return 0;

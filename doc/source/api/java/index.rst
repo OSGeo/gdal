@@ -6,7 +6,7 @@ Java bindings
 
 The GDAL project has SWIG generated Java bindings for GDAL and OGR.
 
-Generally speaking the classes and methods mostly match those of the GDAL and OGR C++ classes. You can find the `​Javadoc <http://gdal.org/java>`__ of the API of the Java bindings.
+Generally speaking the classes and methods mostly match those of the GDAL and OGR C++ classes. You can find the `Javadoc <../../java>`__ of the API of the Java bindings.
 
 Due to the fact the Java garbage collector works in a separate thread from the main thread, it is necessary to configure GDAL with multi-threading support, even if you do not use GDAL API from several Java threads.
 
@@ -52,7 +52,7 @@ On Windows:
 Maven Users
 -----------
 
-The Java bindings are available from the ​`Maven Central <http://search.maven.org/>`__ repository. All that is needed is to declare a dependency.
+The Java bindings are available from the `Maven Central <http://search.maven.org/>`__ repository. All that is needed is to declare a dependency.
 
 
 .. code-block:: xml
@@ -68,7 +68,7 @@ The Java bindings are available from the ​`Maven Central <http://search.maven.
 Useful Links
 ------------
 
-* ​`Javadoc <http://gdal.org/java>`__ of the API of the Java bindings.
+* `Javadoc <../../java>`__ of the API of the Java bindings.
 * `gdalinfo.java <https://github.com/OSGeo/gdal/tree/master/swig/java/apps/gdalinfo.java>`__ Sample Java program similar to gdalinfo utility.
 * `All Java sample programs <https://github.com/OSGeo/gdal/tree/master/swig/java/apps/>`__
 * `Tamas Szekeres' Windows daily builds <http://www.gisinternals.com/sdk>`__ : Tamas Szekeres maintains a complete set of Win32 and Win64 binary packages that include the GDAL Java bindings. These packages are based on the current development and stable branches built from the GDAL source repository.

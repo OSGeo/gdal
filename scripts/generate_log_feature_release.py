@@ -20,7 +20,7 @@ os.system(
 )
 
 
-class Commit(object):
+class Commit:
     def __init__(self):
         self.metadata = ""
         self.message = ""

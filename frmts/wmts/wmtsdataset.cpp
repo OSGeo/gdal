@@ -8,23 +8,7 @@
  **********************************************************************
  * Copyright (c) 2015, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_http.h"
@@ -174,7 +158,8 @@ class WMTSDataset final : public GDALPamDataset
                                         const char *pszOperation);
     static int ReadTMS(CPLXMLNode *psContents, const CPLString &osIdentifier,
                        const CPLString &osMaxTileMatrixIdentifier,
-                       int nMaxZoomLevel, WMTSTileMatrixSet &oTMS);
+                       int nMaxZoomLevel, WMTSTileMatrixSet &oTMS,
+                       bool &bHasWarnedAutoSwap);
     static int ReadTMLimits(
         CPLXMLNode *psTMSLimits,
         std::map<CPLString, WMTSTileMatrixLimits> &aoMapTileMatrixLimits);
@@ -604,7 +589,7 @@ CPLString WMTSDataset::FixCRSName(const char *pszCRS)
     while (osRet.size() && (osRet.back() == ' ' || osRet.back() == '\r' ||
                             osRet.back() == '\n'))
     {
-        osRet.resize(osRet.size() - 1);
+        osRet.pop_back();
     }
     return osRet;
 }
@@ -615,10 +600,9 @@ CPLString WMTSDataset::FixCRSName(const char *pszCRS)
 
 int WMTSDataset::ReadTMS(CPLXMLNode *psContents, const CPLString &osIdentifier,
                          const CPLString &osMaxTileMatrixIdentifier,
-                         int nMaxZoomLevel, WMTSTileMatrixSet &oTMS)
+                         int nMaxZoomLevel, WMTSTileMatrixSet &oTMS,
+                         bool &bHasWarnedAutoSwap)
 {
-    bool bHasWarnedAutoSwap = false;
-
     for (CPLXMLNode *psIter = psContents->psChild; psIter != nullptr;
          psIter = psIter->psNext)
     {
@@ -645,9 +629,10 @@ int WMTSDataset::ReadTMS(CPLXMLNode *psContents, const CPLString &osIdentifier,
                      pszSupportedCRS);
             return FALSE;
         }
-        int bSwap = !STARTS_WITH_CI(pszSupportedCRS, "EPSG:") &&
-                    (oTMS.oSRS.EPSGTreatsAsLatLong() ||
-                     oTMS.oSRS.EPSGTreatsAsNorthingEasting());
+        const bool bSwap =
+            !STARTS_WITH_CI(pszSupportedCRS, "EPSG:") &&
+            (CPL_TO_BOOL(oTMS.oSRS.EPSGTreatsAsLatLong()) ||
+             CPL_TO_BOOL(oTMS.oSRS.EPSGTreatsAsNorthingEasting()));
         CPLXMLNode *psBB = CPLGetXMLNode(psIter, "BoundingBox");
         oTMS.bBoundingBoxValid = false;
         if (psBB != nullptr)
@@ -756,16 +741,21 @@ int WMTSDataset::ReadTMS(CPLXMLNode *psContents, const CPLString &osIdentifier,
             }
 
             // Hack for http://osm.geobretagne.fr/gwc01/service/wmts?request=getcapabilities
-            if (STARTS_WITH_CI(l_pszIdentifier, "EPSG:4326:") &&
-                oTM.dfTLY == -180.0)
+            // or https://trek.nasa.gov/tiles/Mars/EQ/THEMIS_NightIR_ControlledMosaics_100m_v2_oct2018/1.0.0/WMTSCapabilities.xml
+            if (oTM.dfTLY == -180.0 &&
+                (STARTS_WITH_CI(l_pszIdentifier, "EPSG:4326:") ||
+                 (oTMS.oSRS.IsGeographic() && oTM.dfTLX == 90)))
             {
                 if (!bHasWarnedAutoSwap)
                 {
                     bHasWarnedAutoSwap = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Auto-correcting wrongly swapped "
-                             "TileMatrix.TopLeftCorner coordinates. This "
-                             "should be reported to the server administrator.");
+                             "TileMatrix.TopLeftCorner coordinates. "
+                             "They should be in latitude, longitude order "
+                             "but are presented in longitude, latitude order. "
+                             "This should be reported to the server "
+                             "administrator.");
                 }
                 std::swap(oTM.dfTLX, oTM.dfTLY);
             }
@@ -1226,20 +1216,21 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (STARTS_WITH(osGetCapabilitiesURL, "/vsimem/"))
     {
-        const char *pszHref = CPLGetXMLValue(
-            psXML, "=Capabilities.ServiceMetadataURL.href", nullptr);
-        if (pszHref)
-            osGetCapabilitiesURL = pszHref;
+        osGetCapabilitiesURL = GetOperationKVPURL(psXML, "GetCapabilities");
+        if (osGetCapabilitiesURL.empty())
+        {
+            // (ERO) I'm not even sure this is correct at all...
+            const char *pszHref = CPLGetXMLValue(
+                psXML, "=Capabilities.ServiceMetadataURL.href", nullptr);
+            if (pszHref)
+                osGetCapabilitiesURL = pszHref;
+        }
         else
         {
-            osGetCapabilitiesURL = GetOperationKVPURL(psXML, "GetCapabilities");
-            if (!osGetCapabilitiesURL.empty())
-            {
-                osGetCapabilitiesURL =
-                    CPLURLAddKVP(osGetCapabilitiesURL, "service", "WMTS");
-                osGetCapabilitiesURL = CPLURLAddKVP(
-                    osGetCapabilitiesURL, "request", "GetCapabilities");
-            }
+            osGetCapabilitiesURL =
+                CPLURLAddKVP(osGetCapabilitiesURL, "service", "WMTS");
+            osGetCapabilitiesURL = CPLURLAddKVP(osGetCapabilitiesURL, "request",
+                                                "GetCapabilities");
         }
     }
     CPLString osCapabilitiesFilename(osGetCapabilitiesURL);
@@ -1261,6 +1252,8 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
     std::map<CPLString, OGREnvelope> aoMapBoundingBox;
     std::map<CPLString, WMTSTileMatrixLimits> aoMapTileMatrixLimits;
     std::map<CPLString, CPLString> aoMapDimensions;
+    bool bHasWarnedAutoSwap = false;
+    bool bHasWarnedAutoSwapBoundingBox = false;
 
     // Collect TileMatrixSet identifiers
     std::set<std::string> oSetTMSIdentifiers;
@@ -1446,7 +1439,8 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                             // 13-082_WMTS_Simple_Profile/schemas/wmts/1.0/profiles/WMTSSimple/examples/wmtsGetCapabilities_response_OSM.xml
                             WMTSTileMatrixSet oTMS;
                             if (ReadTMS(psContents, osSingleTileMatrixSet,
-                                        CPLString(), -1, oTMS))
+                                        CPLString(), -1, oTMS,
+                                        bHasWarnedAutoSwap))
                             {
                                 osCRS = oTMS.osSRS;
                             }
@@ -1463,9 +1457,10 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                     !osUpperCorner.empty() &&
                     oSRS.SetFromUserInput(FixCRSName(osCRS)) == OGRERR_NONE)
                 {
-                    int bSwap = !STARTS_WITH_CI(osCRS, "EPSG:") &&
-                                (oSRS.EPSGTreatsAsLatLong() ||
-                                 oSRS.EPSGTreatsAsNorthingEasting());
+                    const bool bSwap =
+                        !STARTS_WITH_CI(osCRS, "EPSG:") &&
+                        (CPL_TO_BOOL(oSRS.EPSGTreatsAsLatLong()) ||
+                         CPL_TO_BOOL(oSRS.EPSGTreatsAsNorthingEasting()));
                     char **papszLC = CSLTokenizeString(osLowerCorner);
                     char **papszUC = CSLTokenizeString(osUpperCorner);
                     if (CSLCount(papszLC) == 2 && CSLCount(papszUC) == 2)
@@ -1475,6 +1470,30 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                         sEnvelope.MinY = CPLAtof(papszLC[(bSwap) ? 0 : 1]);
                         sEnvelope.MaxX = CPLAtof(papszUC[(bSwap) ? 1 : 0]);
                         sEnvelope.MaxY = CPLAtof(papszUC[(bSwap) ? 0 : 1]);
+
+                        if (bSwap && oSRS.IsGeographic() &&
+                            (std::fabs(sEnvelope.MinY) > 90 ||
+                             std::fabs(sEnvelope.MaxY) > 90))
+                        {
+                            if (!bHasWarnedAutoSwapBoundingBox)
+                            {
+                                bHasWarnedAutoSwapBoundingBox = true;
+                                CPLError(
+                                    CE_Warning, CPLE_AppDefined,
+                                    "Auto-correcting wrongly swapped "
+                                    "ows:%s coordinates. "
+                                    "They should be in latitude, longitude "
+                                    "order "
+                                    "but are presented in longitude, latitude "
+                                    "order. "
+                                    "This should be reported to the server "
+                                    "administrator.",
+                                    psSubIter->pszValue);
+                            }
+                            std::swap(sEnvelope.MinX, sEnvelope.MinY);
+                            std::swap(sEnvelope.MaxX, sEnvelope.MaxY);
+                        }
+
                         aoMapBoundingBox[osCRS] = sEnvelope;
                     }
                     CSLDestroy(papszLC);
@@ -1583,7 +1602,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
 
         WMTSTileMatrixSet oTMS;
         if (!ReadTMS(psContents, osSelectTMS, osMaxTileMatrixIdentifier,
-                     nUserMaxZoomLevel, oTMS))
+                     nUserMaxZoomLevel, oTMS, bHasWarnedAutoSwap))
         {
             CPLDestroyXMLNode(psXML);
             delete poDS;
@@ -2318,7 +2337,10 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                 nTileY, (bExtendBeyondDateLine) ? nSizeX1 : nSizeX, nSizeY,
                 oTM.nTileWidth, oTM.nTileHeight, nBands,
                 GDALGetDataTypeName(eDataType), osOtherXML.c_str()));
-            GDALDataset *poWMSDS = (GDALDataset *)GDALOpenEx(
+            const auto eLastErrorType = CPLGetLastErrorType();
+            const auto eLastErrorNum = CPLGetLastErrorNo();
+            const std::string osLastErrorMsg = CPLGetLastErrorMsg();
+            GDALDataset *poWMSDS = GDALDataset::Open(
                 osStr, GDAL_OF_RASTER | GDAL_OF_SHARED | GDAL_OF_VERBOSE_ERROR,
                 nullptr, nullptr, nullptr);
             if (poWMSDS == nullptr)
@@ -2327,6 +2349,11 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                 delete poDS;
                 return nullptr;
             }
+            // Restore error state to what it was prior to WMS dataset opening
+            // if WMS dataset opening did not cause any new error to be emitted
+            if (CPLGetLastErrorType() == CE_None)
+                CPLErrorSetState(eLastErrorType, eLastErrorNum,
+                                 osLastErrorMsg.c_str());
 
             VRTDatasetH hVRTDS = VRTCreate(nRasterXSize, nRasterYSize);
             for (int iBand = 1; iBand <= nBands; iBand++)

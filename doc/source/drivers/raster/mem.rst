@@ -1,17 +1,21 @@
 .. _raster.mem:
 
 ================================================================================
-MEM -- In Memory Raster
+MEM -- In Memory datasets
 ================================================================================
 
 .. shortname:: MEM
 
 .. built_in_by_default::
 
-GDAL supports the ability to hold rasters in a temporary in-memory
+GDAL supports the ability to hold datasets in a temporary in-memory
 format. This is primarily useful for temporary datasets in scripts or
 internal to applications. It is not generally of any use to application
 end-users.
+
+This page documents its raster capabilities. Starting with GDAL 3.11, this
+driver has been unified with the long-time existing Memory driver to offer
+both raster and :ref:`vector <vector.mem>` capabilities.
 
 Memory datasets should support for most kinds of auxiliary information
 including metadata, coordinate systems, georeferencing, GCPs, color
@@ -63,19 +67,41 @@ or
    the next.
 -  GEOTRANSFORM: Set the affine transformation coefficients. 6 real
    numbers with '/' as separator (optional)
--  SPATIALREFERENCE: (GDAL >= 3.7) Set the projection. The coordinate reference 
-   systems that can be passed are anything supported by the 
-   OGRSpatialReference.SetFromUserInput() as per '-a_srs' in  
+-  SPATIALREFERENCE: (GDAL >= 3.7) Set the projection. The coordinate reference
+   systems that can be passed are anything supported by the
+   OGRSpatialReference.SetFromUserInput() as per '-a_srs' in
    :ref:`gdal_translate`. If the passed string includes comma or double-quote characters (typically WKT),
    it should be surrounded by double-quote characters and the double-quote characters inside it
    should be escaped with anti-slash.
    e.g ``SPATIALREFERENCE="GEOGCRS[\"WGS 84\",[... snip ...],ID[\"EPSG\",4326]]"``
 
+.. warning::
+
+    Starting with GDAL 3.10, opening a MEM dataset using the above syntax is no
+    longer enabled by default for security reasons.
+    If you want to allow it, define the ``GDAL_MEM_ENABLE_OPEN`` configuration
+    option to ``YES``, or build GDAL with the ``GDAL_MEM_ENABLE_OPEN`` compilation
+    definition.
+
+    .. config:: GDAL_MEM_ENABLE_OPEN
+       :choices: YES, NO
+       :default: NO
+       :since: 3.10
+
+       Whether opening a MEM dataset with the ``MEM:::`` syntax is allowed.
+
 
 Creation Options
 ----------------
 
-There are no supported creation options.
+|about-creation-options|
+This driver supports the following creation option:
+
+-  .. co:: INTERLEAVE
+      :choices: BAND, PIXEL
+      :default: BAND
+
+      Set the interleaving to use
 
 The MEM format is one of the few that supports the AddBand() method. The
 AddBand() method supports DATAPOINTER, PIXELOFFSET and LINEOFFSET

@@ -27,10 +27,10 @@ Georeferencing
 --------------
 
 Georeferencing information can come from different sources : internal
-(GeoJP2 or GMLJP2 boxes), worldfile .j2w/.wld sidecar files, or PAM
-(Persistent Auxiliary metadata) .aux.xml sidecar files. By default,
-information is fetched in following order (first listed is the highest
-priority): PAM, GeoJP2, GMLJP2, WORLDFILE.
+(GeoJP2 or GMLJP2 boxes), :ref:`worldfile <raster.wld>` .j2w/.wld sidecar
+files, or PAM (Persistent Auxiliary metadata) .aux.xml sidecar files. By
+default, information is fetched in following order (first listed is the
+highest priority): PAM, GeoJP2, GMLJP2, WORLDFILE.
 
 Starting with GDAL 2.2, the allowed sources and their priority order can
 be changed with the :config:`GDAL_GEOREF_SOURCES` configuration option (or
@@ -70,6 +70,7 @@ The following creation options are supported.
       :choices: YES
 
       to write an ESRI world file (with the extension .j2w).
+      See :ref:`World Files <raster.wld>` section for details.
 
 -  .. co:: COMPRESSION
 

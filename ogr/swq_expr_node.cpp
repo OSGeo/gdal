@@ -9,23 +9,7 @@
  * Copyright (C) 2010 Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef DOXYGEN_SKIP
@@ -35,9 +19,11 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cinttypes>
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <queue>
 #include <vector>
 
 #include "cpl_conv.h"
@@ -236,6 +222,7 @@ swq_expr_node &swq_expr_node::operator=(const swq_expr_node &other)
         if (other.string_value)
             string_value = CPLStrdup(other.string_value);
         bHidden = other.bHidden;
+        nDepth = other.nDepth;
     }
     return *this;
 }
@@ -272,6 +259,7 @@ swq_expr_node &swq_expr_node::operator=(swq_expr_node &&other)
         std::swap(geometry_value, other.geometry_value);
         std::swap(string_value, other.string_value);
         bHidden = other.bHidden;
+        nDepth = other.nDepth;
     }
     return *this;
 }
@@ -300,6 +288,8 @@ void swq_expr_node::PushSubExpression(swq_expr_node *child)
         CPLRealloc(papoSubExpr, sizeof(void *) * nSubExprCount));
 
     papoSubExpr[nSubExprCount - 1] = child;
+
+    nDepth = std::max(nDepth, 1 + child->nDepth);
 }
 
 /************************************************************************/
@@ -321,19 +311,13 @@ void swq_expr_node::ReverseSubExpressions()
 /*      Check argument types, etc.                                      */
 /************************************************************************/
 
-swq_field_type swq_expr_node::Check(
-    swq_field_list *poFieldList, int bAllowFieldsInSecondaryTables,
-    int bAllowMismatchTypeOnFieldComparison,
-    swq_custom_func_registrar *poCustomFuncRegistrar, int nDepth)
+swq_field_type
+swq_expr_node::Check(swq_field_list *poFieldList,
+                     int bAllowFieldsInSecondaryTables,
+                     int bAllowMismatchTypeOnFieldComparison,
+                     swq_custom_func_registrar *poCustomFuncRegistrar)
 
 {
-    if (nDepth == 32)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too many recursion levels in expression");
-        return SWQ_ERROR;
-    }
-
     /* -------------------------------------------------------------------- */
     /*      Otherwise we take constants literally.                          */
     /* -------------------------------------------------------------------- */
@@ -404,8 +388,7 @@ swq_field_type swq_expr_node::Check(
     {
         if (papoSubExpr[i]->Check(poFieldList, bAllowFieldsInSecondaryTables,
                                   bAllowMismatchTypeOnFieldComparison,
-                                  poCustomFuncRegistrar,
-                                  nDepth + 1) == SWQ_ERROR)
+                                  poCustomFuncRegistrar) == SWQ_ERROR)
             return SWQ_ERROR;
     }
 
@@ -443,7 +426,7 @@ void swq_expr_node::Dump(FILE *fp, int depth)
     {
         if (field_type == SWQ_INTEGER || field_type == SWQ_INTEGER64 ||
             field_type == SWQ_BOOLEAN)
-            fprintf(fp, "%s  " CPL_FRMT_GIB "\n", spaces, int_value);
+            fprintf(fp, "%s  %" PRId64 "\n", spaces, int_value);
         else if (field_type == SWQ_FLOAT)
             fprintf(fp, "%s  %.15g\n", spaces, float_value);
         else if (field_type == SWQ_GEOMETRY)
@@ -554,7 +537,7 @@ char *swq_expr_node::Unparse(swq_field_list *field_list, char chColumnQuote)
 
         if (field_type == SWQ_INTEGER || field_type == SWQ_INTEGER64 ||
             field_type == SWQ_BOOLEAN)
-            osExpr.Printf(CPL_FRMT_GIB, int_value);
+            osExpr.Printf("%" PRId64, int_value);
         else if (field_type == SWQ_FLOAT)
         {
             osExpr.Printf("%.15g", float_value);
@@ -680,6 +663,21 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char **apszSubExpr)
         return osExpr;
     }
 
+    const auto AddSubExpr = [this, apszSubExpr, &osExpr](int idx)
+    {
+        if (papoSubExpr[idx]->eNodeType == SNT_COLUMN ||
+            papoSubExpr[idx]->eNodeType == SNT_CONSTANT)
+        {
+            osExpr += apszSubExpr[idx];
+        }
+        else
+        {
+            osExpr += '(';
+            osExpr += apszSubExpr[idx];
+            osExpr += ')';
+        }
+    };
+
     switch (nOperation)
     {
         // Binary infix operators.
@@ -699,63 +697,52 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char **apszSubExpr)
         case SWQ_DIVIDE:
         case SWQ_MODULUS:
             CPLAssert(nSubExprCount >= 2);
-            if (papoSubExpr[0]->eNodeType == SNT_COLUMN ||
-                papoSubExpr[0]->eNodeType == SNT_CONSTANT)
-            {
-                osExpr += apszSubExpr[0];
-            }
-            else
-            {
-                osExpr += "(";
-                osExpr += apszSubExpr[0];
-                osExpr += ")";
-            }
+            AddSubExpr(0);
             osExpr += " ";
             osExpr += poOp->pszName;
             osExpr += " ";
-            if (papoSubExpr[1]->eNodeType == SNT_COLUMN ||
-                papoSubExpr[1]->eNodeType == SNT_CONSTANT)
-            {
-                osExpr += apszSubExpr[1];
-            }
-            else
-            {
-                osExpr += "(";
-                osExpr += apszSubExpr[1];
-                osExpr += ")";
-            }
+            AddSubExpr(1);
             if ((nOperation == SWQ_LIKE || nOperation == SWQ_ILIKE) &&
                 nSubExprCount == 3)
-                osExpr += CPLSPrintf(" ESCAPE (%s)", apszSubExpr[2]);
+            {
+                osExpr += " ESCAPE ";
+                AddSubExpr(2);
+            }
             break;
 
         case SWQ_NOT:
             CPLAssert(nSubExprCount == 1);
-            osExpr.Printf("NOT (%s)", apszSubExpr[0]);
+            osExpr = "NOT ";
+            AddSubExpr(0);
             break;
 
         case SWQ_ISNULL:
             CPLAssert(nSubExprCount == 1);
-            osExpr.Printf("%s IS NULL", apszSubExpr[0]);
+            AddSubExpr(0);
+            osExpr += " IS NULL";
             break;
 
         case SWQ_IN:
-            osExpr.Printf("%s IN (", apszSubExpr[0]);
+            AddSubExpr(0);
+            osExpr += " IN(";
             for (int i = 1; i < nSubExprCount; i++)
             {
                 if (i > 1)
                     osExpr += ",";
-                osExpr += "(";
-                osExpr += apszSubExpr[i];
-                osExpr += ")";
+                AddSubExpr(i);
             }
             osExpr += ")";
             break;
 
         case SWQ_BETWEEN:
             CPLAssert(nSubExprCount == 3);
-            osExpr.Printf("%s %s (%s) AND (%s)", apszSubExpr[0], poOp->pszName,
-                          apszSubExpr[1], apszSubExpr[2]);
+            AddSubExpr(0);
+            osExpr += ' ';
+            osExpr += poOp->pszName;
+            osExpr += ' ';
+            AddSubExpr(1);
+            osExpr += " AND ";
+            AddSubExpr(2);
             break;
 
         case SWQ_CAST:
@@ -776,7 +763,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char **apszSubExpr)
                     osExpr += apszSubExpr[i] + 1;
                 }
                 else
-                    osExpr += apszSubExpr[i];
+                    AddSubExpr(i);
 
                 if (i == 1 && nSubExprCount > 2)
                     osExpr += "(";
@@ -795,9 +782,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char **apszSubExpr)
             {
                 if (i > 0)
                     osExpr += ",";
-                osExpr += "(";
-                osExpr += apszSubExpr[i];
-                osExpr += ")";
+                AddSubExpr(i);
             }
             osExpr += ")";
             break;
@@ -958,6 +943,99 @@ void swq_expr_node::ReplaceBetweenByGEAndLERecurse()
 }
 
 /************************************************************************/
+/*                      ReplaceInByOrRecurse()                          */
+/************************************************************************/
+
+void swq_expr_node::ReplaceInByOrRecurse()
+{
+    if (eNodeType != SNT_OPERATION)
+        return;
+
+    if (nOperation != SWQ_IN)
+    {
+        for (int i = 0; i < nSubExprCount; i++)
+            papoSubExpr[i]->ReplaceInByOrRecurse();
+        return;
+    }
+
+    nOperation = SWQ_OR;
+    swq_expr_node *poExprLeft = papoSubExpr[0]->Clone();
+    for (int i = 1; i < nSubExprCount; ++i)
+    {
+        papoSubExpr[i - 1] = new swq_expr_node(SWQ_EQ);
+        papoSubExpr[i - 1]->PushSubExpression(poExprLeft->Clone());
+        papoSubExpr[i - 1]->PushSubExpression(papoSubExpr[i]);
+    }
+    delete poExprLeft;
+    --nSubExprCount;
+
+    RebalanceAndOr();
+}
+
+/************************************************************************/
+/*                         RebalanceAndOr()                             */
+/************************************************************************/
+
+void swq_expr_node::RebalanceAndOr()
+{
+    std::queue<swq_expr_node *> nodes;
+    nodes.push(this);
+    while (!nodes.empty())
+    {
+        swq_expr_node *node = nodes.front();
+        nodes.pop();
+        if (node->eNodeType == SNT_OPERATION)
+        {
+            const swq_op eOp = node->nOperation;
+            if ((eOp == SWQ_OR || eOp == SWQ_AND) && node->nSubExprCount > 2)
+            {
+                std::vector<swq_expr_node *> exprs;
+                for (int i = 0; i < node->nSubExprCount; i++)
+                {
+                    node->papoSubExpr[i]->RebalanceAndOr();
+                    exprs.push_back(node->papoSubExpr[i]);
+                }
+                node->nSubExprCount = 0;
+                CPLFree(node->papoSubExpr);
+                node->papoSubExpr = nullptr;
+
+                while (exprs.size() > 2)
+                {
+                    std::vector<swq_expr_node *> new_exprs;
+                    for (size_t i = 0; i < exprs.size(); i++)
+                    {
+                        if (i + 1 < exprs.size())
+                        {
+                            auto cur_expr = new swq_expr_node(eOp);
+                            cur_expr->field_type = SWQ_BOOLEAN;
+                            cur_expr->PushSubExpression(exprs[i]);
+                            cur_expr->PushSubExpression(exprs[i + 1]);
+                            i++;
+                            new_exprs.push_back(cur_expr);
+                        }
+                        else
+                        {
+                            new_exprs.push_back(exprs[i]);
+                        }
+                    }
+                    exprs = std::move(new_exprs);
+                }
+                CPLAssert(exprs.size() == 2);
+                node->PushSubExpression(exprs[0]);
+                node->PushSubExpression(exprs[1]);
+            }
+            else
+            {
+                for (int i = 0; i < node->nSubExprCount; i++)
+                {
+                    nodes.push(node->papoSubExpr[i]);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                   PushNotOperationDownToStack()                      */
 /************************************************************************/
 
@@ -1080,6 +1158,15 @@ void swq_expr_node::PushNotOperationDownToStack()
 
     for (int i = 0; i < nSubExprCount; i++)
         papoSubExpr[i]->PushNotOperationDownToStack();
+}
+
+/************************************************************************/
+/*                        HasReachedMaxDepth()                          */
+/************************************************************************/
+
+bool swq_expr_node::HasReachedMaxDepth() const
+{
+    return nDepth == 128;
 }
 
 #endif  // #ifndef DOXYGEN_SKIP

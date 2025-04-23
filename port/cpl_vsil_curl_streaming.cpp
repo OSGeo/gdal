@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2012-2015, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -218,7 +202,13 @@ class VSICurlStreamingFSHandler : public VSIFilesystemHandler
   protected:
     CPLMutex *hMutex = nullptr;
 
-    virtual VSICurlStreamingHandle *CreateFileHandle(const char *pszURL);
+    virtual VSICurlStreamingHandle *CreateFileHandle(const char *pszFilename,
+                                                     const char *pszURL);
+
+    virtual std::string GetNonStreamingPrefix() const
+    {
+        return "/vsicurl/";
+    }
 
   public:
     VSICurlStreamingFSHandler();
@@ -230,10 +220,13 @@ class VSICurlStreamingFSHandler : public VSIFilesystemHandler
     virtual int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
                      int nFlags) override;
 
-    virtual CPLString GetFSPrefix()
+    virtual CPLString GetFSPrefix() const
     {
         return "/vsicurl_streaming/";
     }
+
+    std::string
+    GetNonStreamingFilename(const std::string &osFilename) const override;
 
     const char *GetActualURL(const char *pszFilename) override;
 
@@ -339,7 +332,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     void SetURL(const char *pszURL);
 
   public:
-    VSICurlStreamingHandle(VSICurlStreamingFSHandler *poFS, const char *pszURL);
+    VSICurlStreamingHandle(VSICurlStreamingFSHandler *poFS,
+                           const char *pszFilename, const char *pszURL);
     ~VSICurlStreamingHandle() override;
 
     int Seek(vsi_l_offset nOffset, int nWhence) override;
@@ -380,9 +374,9 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
 /************************************************************************/
 
 VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler *poFS,
+                                               const char *pszFilename,
                                                const char *pszURL)
-    : m_poFS(poFS), m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(
-                        (poFS->GetFSPrefix() + pszURL).c_str())),
+    : m_poFS(poFS), m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename)),
       m_oRetryParameters(m_aosHTTPOptions), m_pszURL(CPLStrdup(pszURL))
 {
     FileProp cachedFileProp;
@@ -537,7 +531,8 @@ static size_t VSICurlStreamingHandleWriteFuncForHeader(void *buffer,
                     // If moved permanently/temporarily, go on.
                     // Otherwise stop now.
                     if (!(psStruct->nHTTPCode == 301 ||
-                          psStruct->nHTTPCode == 302))
+                          psStruct->nHTTPCode == 302 ||
+                          psStruct->nHTTPCode == 303))
                         return 0;
                 }
                 else
@@ -898,7 +893,7 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count,
 
     // Reset buffer if we have followed link after a redirect.
     if (nSize >= 9 && InterpretRedirect() &&
-        (nHTTPCode == 301 || nHTTPCode == 302) &&
+        (nHTTPCode == 301 || nHTTPCode == 302 || nHTTPCode == 303) &&
         STARTS_WITH_CI(reinterpret_cast<char *>(buffer), "HTTP/"))
     {
         nHeaderSize = 0;
@@ -934,7 +929,7 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count,
             // If moved permanently/temporarily, go on.
             if (eExists == EXIST_UNKNOWN &&
                 !(InterpretRedirect() &&
-                  (nHTTPCode == 301 || nHTTPCode == 302)))
+                  (nHTTPCode == 301 || nHTTPCode == 302 || nHTTPCode == 303)))
             {
                 eExists = nHTTPCode == 200 ? EXIST_YES : EXIST_NO;
                 FileProp cachedFileProp;
@@ -944,7 +939,8 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count,
             }
         }
 
-        if (!(InterpretRedirect() && (nHTTPCode == 301 || nHTTPCode == 302)) &&
+        if (!(InterpretRedirect() &&
+              (nHTTPCode == 301 || nHTTPCode == 302 || nHTTPCode == 303)) &&
             !bHasComputedFileSize)
         {
             // Caution: When gzip compression is enabled, the content-length is
@@ -1595,9 +1591,10 @@ void VSICurlStreamingFSHandler::ReleaseMutex()
 /************************************************************************/
 
 VSICurlStreamingHandle *
-VSICurlStreamingFSHandler::CreateFileHandle(const char *pszURL)
+VSICurlStreamingFSHandler::CreateFileHandle(const char *pszFilename,
+                                            const char *pszURL)
 {
-    return new VSICurlStreamingHandle(this, pszURL);
+    return new VSICurlStreamingHandle(this, pszFilename, pszURL);
 }
 
 /************************************************************************/
@@ -1621,7 +1618,7 @@ VSIVirtualHandle *VSICurlStreamingFSHandler::Open(const char *pszFilename,
     }
 
     VSICurlStreamingHandle *poHandle =
-        CreateFileHandle(pszFilename + GetFSPrefix().size());
+        CreateFileHandle(pszFilename, pszFilename + GetFSPrefix().size());
     // If we didn't get a filelist, check that the file really exists.
     if (poHandle == nullptr || !poHandle->Exists(pszFilename, papszOptions))
     {
@@ -1687,7 +1684,7 @@ int VSICurlStreamingFSHandler::Stat(const char *pszFilename,
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
     VSICurlStreamingHandle *poHandle =
-        CreateFileHandle(pszFilename + GetFSPrefix().size());
+        CreateFileHandle(pszFilename, pszFilename + GetFSPrefix().size());
     if (poHandle == nullptr)
     {
         return -1;
@@ -1715,10 +1712,23 @@ const char *VSICurlStreamingFSHandler::GetActualURL(const char *pszFilename)
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
         return pszFilename;
     auto poHandle = std::unique_ptr<VSICurlStreamingHandle>(
-        CreateFileHandle(pszFilename + GetFSPrefix().size()));
+        CreateFileHandle(pszFilename, pszFilename + GetFSPrefix().size()));
     if (poHandle == nullptr)
         return pszFilename;
     return CPLSPrintf("%s", poHandle->GetURL());
+}
+
+/************************************************************************/
+/*                       GetNonStreamingFilename()                      */
+/************************************************************************/
+
+std::string VSICurlStreamingFSHandler::GetNonStreamingFilename(
+    const std::string &osFilename) const
+{
+    if (STARTS_WITH(osFilename.c_str(), GetFSPrefix().c_str()))
+        return GetNonStreamingPrefix() +
+               osFilename.substr(GetFSPrefix().size());
+    return osFilename;
 }
 
 /************************************************************************/
@@ -1728,9 +1738,6 @@ const char *VSICurlStreamingFSHandler::GetActualURL(const char *pszFilename)
 class IVSIS3LikeStreamingFSHandler : public VSICurlStreamingFSHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeStreamingFSHandler)
-
-  protected:
-    virtual std::string GetNonStreamingPrefix() const = 0;
 
   public:
     IVSIS3LikeStreamingFSHandler() = default;
@@ -1762,7 +1769,7 @@ class VSIS3StreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     CPL_DISALLOW_COPY_ASSIGN(VSIS3StreamingFSHandler)
 
   protected:
-    CPLString GetFSPrefix() override
+    CPLString GetFSPrefix() const override
     {
         return "/vsis3_streaming/";
     }
@@ -1772,7 +1779,8 @@ class VSIS3StreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
         return "/vsis3/";
     }
 
-    VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
+    VSICurlStreamingHandle *CreateFileHandle(const char *pszFilename,
+                                             const char *pszURL) override;
 
   public:
     VSIS3StreamingFSHandler() = default;
@@ -1815,6 +1823,7 @@ class VSIS3LikeStreamingHandle final : public VSICurlStreamingHandle
 
   public:
     VSIS3LikeStreamingHandle(IVSIS3LikeStreamingFSHandler *poFS,
+                             const char *pszFilename,
                              IVSIS3LikeHandleHelper *poS3HandleHelper);
     ~VSIS3LikeStreamingHandle() override;
 };
@@ -1824,13 +1833,15 @@ class VSIS3LikeStreamingHandle final : public VSICurlStreamingHandle
 /************************************************************************/
 
 VSICurlStreamingHandle *
-VSIS3StreamingFSHandler::CreateFileHandle(const char *pszURL)
+VSIS3StreamingFSHandler::CreateFileHandle(const char *pszFilename,
+                                          const char *pszURL)
 {
     VSIS3HandleHelper *poS3HandleHelper =
         VSIS3HandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str(), false);
     if (poS3HandleHelper)
     {
-        return new VSIS3LikeStreamingHandle(this, poS3HandleHelper);
+        return new VSIS3LikeStreamingHandle(this, pszFilename,
+                                            poS3HandleHelper);
     }
     return nullptr;
 }
@@ -1840,9 +1851,10 @@ VSIS3StreamingFSHandler::CreateFileHandle(const char *pszURL)
 /************************************************************************/
 
 VSIS3LikeStreamingHandle::VSIS3LikeStreamingHandle(
-    IVSIS3LikeStreamingFSHandler *poFS,
+    IVSIS3LikeStreamingFSHandler *poFS, const char *pszFilename,
     IVSIS3LikeHandleHelper *poS3HandleHelper)
-    : VSICurlStreamingHandle(poFS, poS3HandleHelper->GetURL().c_str()),
+    : VSICurlStreamingHandle(poFS, pszFilename,
+                             poS3HandleHelper->GetURL().c_str()),
       m_poS3HandleHelper(poS3HandleHelper)
 {
 }
@@ -1890,7 +1902,7 @@ bool VSIS3LikeStreamingHandle::CanRestartOnError(const char *pszErrorMsg,
 class VSIGSStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
 {
   protected:
-    CPLString GetFSPrefix() override
+    CPLString GetFSPrefix() const override
     {
         return "/vsigs_streaming/";
     }
@@ -1900,7 +1912,8 @@ class VSIGSStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
         return "/vsigs/";
     }
 
-    VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
+    VSICurlStreamingHandle *CreateFileHandle(const char *pszFilename,
+                                             const char *pszURL) override;
 
   public:
     VSIGSStreamingFSHandler()
@@ -1917,13 +1930,15 @@ class VSIGSStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
 /************************************************************************/
 
 VSICurlStreamingHandle *
-VSIGSStreamingFSHandler::CreateFileHandle(const char *pszURL)
+VSIGSStreamingFSHandler::CreateFileHandle(const char *pszFilename,
+                                          const char *pszURL)
 {
     VSIGSHandleHelper *poGCHandleHelper =
         VSIGSHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str());
     if (poGCHandleHelper)
     {
-        return new VSIS3LikeStreamingHandle(this, poGCHandleHelper);
+        return new VSIS3LikeStreamingHandle(this, pszFilename,
+                                            poGCHandleHelper);
     }
     return nullptr;
 }
@@ -1935,7 +1950,7 @@ VSIGSStreamingFSHandler::CreateFileHandle(const char *pszURL)
 class VSIAzureStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
 {
   protected:
-    CPLString GetFSPrefix() override
+    CPLString GetFSPrefix() const override
     {
         return "/vsiaz_streaming/";
     }
@@ -1945,7 +1960,8 @@ class VSIAzureStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
         return "/vsiaz/";
     }
 
-    VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
+    VSICurlStreamingHandle *CreateFileHandle(const char *pszFilename,
+                                             const char *pszURL) override;
 
   public:
     VSIAzureStreamingFSHandler()
@@ -1962,13 +1978,14 @@ class VSIAzureStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
 /************************************************************************/
 
 VSICurlStreamingHandle *
-VSIAzureStreamingFSHandler::CreateFileHandle(const char *pszURL)
+VSIAzureStreamingFSHandler::CreateFileHandle(const char *pszFilename,
+                                             const char *pszURL)
 {
     VSIAzureBlobHandleHelper *poHandleHelper =
         VSIAzureBlobHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str());
     if (poHandleHelper)
     {
-        return new VSIS3LikeStreamingHandle(this, poHandleHelper);
+        return new VSIS3LikeStreamingHandle(this, pszFilename, poHandleHelper);
     }
     return nullptr;
 }
@@ -1982,7 +1999,7 @@ class VSIOSSStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     CPL_DISALLOW_COPY_ASSIGN(VSIOSSStreamingFSHandler)
 
   protected:
-    CPLString GetFSPrefix() override
+    CPLString GetFSPrefix() const override
     {
         return "/vsioss_streaming/";
     }
@@ -1992,7 +2009,8 @@ class VSIOSSStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
         return "/vsioss/";
     }
 
-    VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
+    VSICurlStreamingHandle *CreateFileHandle(const char *pszFilename,
+                                             const char *pszURL) override;
 
   public:
     VSIOSSStreamingFSHandler() = default;
@@ -2010,13 +2028,15 @@ class VSIOSSStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
 /************************************************************************/
 
 VSICurlStreamingHandle *
-VSIOSSStreamingFSHandler::CreateFileHandle(const char *pszURL)
+VSIOSSStreamingFSHandler::CreateFileHandle(const char *pszFilename,
+                                           const char *pszURL)
 {
     VSIOSSHandleHelper *poOSSHandleHelper =
         VSIOSSHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str(), false);
     if (poOSSHandleHelper)
     {
-        return new VSIS3LikeStreamingHandle(this, poOSSHandleHelper);
+        return new VSIS3LikeStreamingHandle(this, pszFilename,
+                                            poOSSHandleHelper);
     }
     return nullptr;
 }
@@ -2028,7 +2048,7 @@ VSIOSSStreamingFSHandler::CreateFileHandle(const char *pszURL)
 class VSISwiftStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
 {
   protected:
-    CPLString GetFSPrefix() override
+    CPLString GetFSPrefix() const override
     {
         return "/vsiswift_streaming/";
     }
@@ -2038,7 +2058,8 @@ class VSISwiftStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
         return "/vsiswift/";
     }
 
-    VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
+    VSICurlStreamingHandle *CreateFileHandle(const char *pszFilename,
+                                             const char *pszURL) override;
 
   public:
     VSISwiftStreamingFSHandler()
@@ -2055,13 +2076,14 @@ class VSISwiftStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
 /************************************************************************/
 
 VSICurlStreamingHandle *
-VSISwiftStreamingFSHandler::CreateFileHandle(const char *pszURL)
+VSISwiftStreamingFSHandler::CreateFileHandle(const char *pszFilename,
+                                             const char *pszURL)
 {
     VSISwiftHandleHelper *poHandleHelper =
         VSISwiftHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str());
     if (poHandleHelper)
     {
-        return new VSIS3LikeStreamingHandle(this, poHandleHelper);
+        return new VSIS3LikeStreamingHandle(this, pszFilename, poHandleHelper);
     }
     return nullptr;
 }

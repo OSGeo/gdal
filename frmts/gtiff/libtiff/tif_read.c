@@ -351,15 +351,14 @@ static int TIFFSeek(TIFF *tif, uint32_t row, uint16_t sample)
          * chunk strip */
         whole_strip = 1;
     }
-#else
-    whole_strip = 1;
-#endif
 
     if (!whole_strip)
     {
         /* 16 is for YCbCr mode where we may need to read 16 */
         /* lines at a time to get a decompressed line, and 5000 */
         /* is some constant value, for example for JPEG tables */
+
+        /* coverity[dead_error_line:SUPPRESS] */
         if (tif->tif_scanlinesize < TIFF_TMSIZE_T_MAX / 16 &&
             tif->tif_scanlinesize * 16 < TIFF_TMSIZE_T_MAX - 5000)
         {
@@ -370,6 +369,9 @@ static int TIFFSeek(TIFF *tif, uint32_t row, uint16_t sample)
             read_ahead = tif->tif_scanlinesize;
         }
     }
+#else
+    whole_strip = 1;
+#endif
 
     /*
      * If we haven't loaded this strip, do so now, possibly
@@ -383,18 +385,22 @@ static int TIFFSeek(TIFF *tif, uint32_t row, uint16_t sample)
             if (!TIFFFillStrip(tif, strip))
                 return (0);
         }
+#if defined(CHUNKY_STRIP_READ_SUPPORT)
         else
         {
             if (!TIFFFillStripPartial(tif, strip, read_ahead, 1))
                 return 0;
         }
+#endif
     }
 
+#if defined(CHUNKY_STRIP_READ_SUPPORT)
     /*
     ** If we already have some data loaded, do we need to read some more?
     */
     else if (!whole_strip)
     {
+        /* coverity[dead_error_line:SUPPRESS] */
         if (((tif->tif_rawdata + tif->tif_rawdataloaded) - tif->tif_rawcp) <
                 read_ahead &&
             (uint64_t)tif->tif_rawdataoff + tif->tif_rawdataloaded <
@@ -404,6 +410,7 @@ static int TIFFSeek(TIFF *tif, uint32_t row, uint16_t sample)
                 return 0;
         }
     }
+#endif
 
     if (row < tif->tif_row)
     {
@@ -463,6 +470,12 @@ int TIFFReadScanline(TIFF *tif, void *buf, uint32_t row, uint16_t sample)
 
         if (e)
             (*tif->tif_postdecode)(tif, (uint8_t *)buf, tif->tif_scanlinesize);
+    }
+    else
+    {
+        /* See TIFFReadEncodedStrip comment regarding TIFFTAG_FAXFILLFUNC. */
+        if (buf)
+            memset(buf, 0, (size_t)tif->tif_scanlinesize);
     }
     return (e > 0 ? 1 : -1);
 }
@@ -549,7 +562,13 @@ tmsize_t TIFFReadEncodedStrip(TIFF *tif, uint32_t strip, void *buf,
     if ((size != (tmsize_t)(-1)) && (size < stripsize))
         stripsize = size;
     if (!TIFFFillStrip(tif, strip))
+    {
+        /* The output buf may be NULL, in particular if TIFFTAG_FAXFILLFUNC
+           is being used. Thus, memset must be conditional on buf not NULL. */
+        if (buf)
+            memset(buf, 0, (size_t)stripsize);
         return ((tmsize_t)(-1));
+    }
     if ((*tif->tif_decodestrip)(tif, buf, stripsize, plane) <= 0)
         return ((tmsize_t)(-1));
     (*tif->tif_postdecode)(tif, buf, stripsize);
@@ -967,9 +986,15 @@ tmsize_t TIFFReadEncodedTile(TIFF *tif, uint32_t tile, void *buf, tmsize_t size)
         size = tilesize;
     else if (size > tilesize)
         size = tilesize;
-    if (TIFFFillTile(tif, tile) &&
-        (*tif->tif_decodetile)(tif, (uint8_t *)buf, size,
-                               (uint16_t)(tile / td->td_stripsperimage)))
+    if (!TIFFFillTile(tif, tile))
+    {
+        /* See TIFFReadEncodedStrip comment regarding TIFFTAG_FAXFILLFUNC. */
+        if (buf)
+            memset(buf, 0, (size_t)size);
+        return ((tmsize_t)(-1));
+    }
+    else if ((*tif->tif_decodetile)(tif, (uint8_t *)buf, size,
+                                    (uint16_t)(tile / td->td_stripsperimage)))
     {
         (*tif->tif_postdecode)(tif, (uint8_t *)buf, size);
         return (size);
@@ -1555,9 +1580,16 @@ int TIFFReadFromUserBuffer(TIFF *tif, uint32_t strile, void *inbuf,
 
     if (TIFFIsTiled(tif))
     {
-        if (!TIFFStartTile(tif, strile) ||
-            !(*tif->tif_decodetile)(tif, (uint8_t *)outbuf, outsize,
-                                    (uint16_t)(strile / td->td_stripsperimage)))
+        if (!TIFFStartTile(tif, strile))
+        {
+            ret = 0;
+            /* See related TIFFReadEncodedStrip comment. */
+            if (outbuf)
+                memset(outbuf, 0, (size_t)outsize);
+        }
+        else if (!(*tif->tif_decodetile)(
+                     tif, (uint8_t *)outbuf, outsize,
+                     (uint16_t)(strile / td->td_stripsperimage)))
         {
             ret = 0;
         }
@@ -1577,9 +1609,16 @@ int TIFFReadFromUserBuffer(TIFF *tif, uint32_t strile, void *inbuf,
         {
             stripsperplane =
                 TIFFhowmany_32_maxuint_compat(td->td_imagelength, rowsperstrip);
-            if (!TIFFStartStrip(tif, strile) ||
-                !(*tif->tif_decodestrip)(tif, (uint8_t *)outbuf, outsize,
-                                         (uint16_t)(strile / stripsperplane)))
+            if (!TIFFStartStrip(tif, strile))
+            {
+                ret = 0;
+                /* See related TIFFReadEncodedStrip comment. */
+                if (outbuf)
+                    memset(outbuf, 0, (size_t)outsize);
+            }
+            else if (!(*tif->tif_decodestrip)(
+                         tif, (uint8_t *)outbuf, outsize,
+                         (uint16_t)(strile / stripsperplane)))
             {
                 ret = 0;
             }

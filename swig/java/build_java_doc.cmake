@@ -31,7 +31,6 @@ execute_process(COMMAND ${Java_JAVADOC_EXECUTABLE}
                         -d "${BUILD_DIR}/java"
                         -sourcepath "${BUILD_DIR}/org_patched"
                         -subpackages org.gdal
-                        -link http://java.sun.com/javase/6/docs/api
                         -windowtitle "GDAL/OGR ${GDAL_VERSION} Java bindings API"
                 WORKING_DIRECTORY "${BUILD_DIR}")
 

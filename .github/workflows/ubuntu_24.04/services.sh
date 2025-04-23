@@ -7,9 +7,9 @@ set -ex
 ##################
 
 # MSSQL: server side
-docker rm -f gdal-sql1
-docker pull mcr.microsoft.com/mssql/server:2017-latest
-docker run  -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=DummyPassw0rd'  -p 1433:1433 --name gdal-sql1 -d mcr.microsoft.com/mssql/server:2017-latest
+#docker rm -f gdal-sql1
+#docker pull mcr.microsoft.com/mssql/server:2017-latest
+#docker run  -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=DummyPassw0rd'  -p 1433:1433 --name gdal-sql1 -d mcr.microsoft.com/mssql/server:2017-latest
 
 # MySQL 8
 docker rm -f gdal-mysql1
@@ -38,7 +38,7 @@ docker run --name gdal-mongo -p 27018:27017 -d mongo:4.4
 sleep 10
 
 # MSSQL
-docker exec -t gdal-sql1 /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U SA -P DummyPassw0rd -Q "CREATE DATABASE TestDB"
+#docker exec -t gdal-sql1 /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U SA -P DummyPassw0rd -Q "CREATE DATABASE TestDB"
 
 # MySQL
 docker exec gdal-mysql1 sh -c "echo 'CREATE DATABASE test; SELECT Version()' | mysql -uroot -ppasswd"

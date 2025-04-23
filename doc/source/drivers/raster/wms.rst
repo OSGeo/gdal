@@ -33,7 +33,7 @@ other content before the ``<GDAL_WMS>`` element.
 <Service name="WMS">                                                       Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS, TiledWMS, VirtualEarth or AGS. (required)
 <Version>1.1.1</Version>                                                   WMS version. (optional, defaults to 1.1.1)
 <ServerUrl>http://host.domain.com/wms.cgi?</ServerUrl>                     WMS server URL. (required)
-<SRS>EPSG:4326</SRS>                                                       Image projection (optional, defaults to EPSG:4326 in WMS and 102100 in AGS, WMS version 1.1.1 or below only and ArcGIS Server). For ArcGIS Server the spatial reference can be specified as either a well-known ID or as a `spatial reference json object <http://resources.arcgis.com/en/help/rest/apiref/geometry.html#sr>`__
+<SRS>EPSG:4326</SRS>                                                       Image projection (optional, defaults to EPSG:4326 in WMS and 102100 in AGS, WMS version 1.1.1 or below only and ArcGIS Server). For ArcGIS Server the spatial reference can be specified as either a well-known ID or as a `spatial reference json object <https://developers.arcgis.com/rest/services-reference/enterprise/geometry-objects/#spatial-reference>`__
 <CRS>CRS:83</CRS>                                                          Image projection (optional, defaults to EPSG:4326, WMS version 1.3.0 or above only)
 <ImageFormat>image/jpeg</ImageFormat>                                      Format in which to request data. Paletted formats like image/gif will be converted to RGB. (optional, defaults to image/jpeg)
 <Transparent>FALSE</Transparent>                                           Set to TRUE to include "transparent=TRUE" in the WMS GetMap request (optional defaults to FALSE).  The request format and BandsCount need to support alpha.
@@ -279,18 +279,18 @@ ArcGIS REST API
 ~~~~~~~~~~~~~~~
 
 Access to ArcGIS REST `map service
-resource <http://resources.arcgis.com/en/help/rest/apiref/mapserver.html>`__
+resource <https://developers.arcgis.com/rest/services-reference/enterprise/map-service/>`__
 (untiled requests).
 
 AGS layers can be
-`queried <http://resources.arcgis.com/en/help/rest/apiref/identify.html>`__
+`queried <https://developers.arcgis.com/rest/services-reference/enterprise/identify-map-service/>`__
 (through a GetFeatureInfo request) with the gdallocationinfo utility, or
 with a GetMetadataItem("Pixel_iCol_iLine", "LocationInfo") call on a
 band object.
 
 ::
 
-   gdallocationinfo -wgs84 "<GDAL_WMS><Service name=\"AGS\"><ServerUrl>http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer</ServerUrl><BBoxOrder>xyXY</BBoxOrder><SRS>3857</SRS></Service><DataWindow><UpperLeftX>-20037508.34</UpperLeftX><UpperLeftY>20037508.34</UpperLeftY><LowerRightX>20037508.34</LowerRightX><LowerRightY>-20037508.34</LowerRightY><SizeX>512</SizeX><SizeY>512</SizeY></DataWindow></GDAL_WMS>" -75.704 39.75
+   gdallocationinfo -wgs84 "<GDAL_WMS><Service name=\"AGS\"><ServerUrl>https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer</ServerUrl><BBoxOrder>xyXY</BBoxOrder><SRS>3857</SRS></Service><DataWindow><UpperLeftX>-20037508.34</UpperLeftX><UpperLeftY>20037508.34</UpperLeftY><LowerRightX>20037508.34</LowerRightX><LowerRightY>-20037508.34</LowerRightY><SizeX>512</SizeX><SizeY>512</SizeY></DataWindow></GDAL_WMS>" -75.704 39.75
 
 
 Internet Imaging Protocol (IIP) (GDAL 2.1 and later)
@@ -503,5 +503,5 @@ See Also
 -  `OnEarth Tiled WMS
    specification <http://web.archive.org/web/20130511182803/http://onearth.jpl.nasa.gov/tiled.html>`__
 -  `ArcGIS Server REST
-   API <http://resources.arcgis.com/en/help/rest/apiref/>`__
+   API <https://developers.arcgis.com/rest/>`__
 -  :ref:`raster.wmts` driver page.

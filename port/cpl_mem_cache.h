@@ -86,6 +86,10 @@ template <typename K, typename V> struct KeyValuePair
     KeyValuePair(const K &k, V &&v) : key(k), value(std::move(v))
     {
     }
+
+  private:
+    KeyValuePair(const KeyValuePair &) = delete;
+    KeyValuePair &operator=(const KeyValuePair &) = delete;
 };
 
 /**

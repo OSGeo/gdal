@@ -8,7 +8,6 @@ add_gdal_driver(
           nitffile.c
           nitfimage.c
           nitfaridpcm.cpp
-          nitfbilevel.cpp
           rpftocfile.cpp
           nitfdes.c
           nitf_gcprpc.cpp
@@ -22,11 +21,16 @@ add_gdal_driver(
 )
 
 set(GDAL_DATA_FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/data/nitf_spec.xml
     ${CMAKE_CURRENT_SOURCE_DIR}/data/nitf_spec.xsd
-    ${CMAKE_CURRENT_SOURCE_DIR}/data/gt_datum.csv
-    ${CMAKE_CURRENT_SOURCE_DIR}/data/gt_ellips.csv
 )
+if (NOT USE_ONLY_EMBEDDED_RESOURCE_FILES)
+    list(APPEND GDAL_DATA_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/data/nitf_spec.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/data/gt_datum.csv
+        ${CMAKE_CURRENT_SOURCE_DIR}/data/gt_ellips.csv
+    )
+endif()
+
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}
   APPEND
@@ -41,6 +45,23 @@ target_include_directories(gdal_NITF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/gt
                                              ${GDAL_RASTER_FORMAT_SOURCE_DIR}/vrt)
 
 set_property(SOURCE nitfwritejpeg.cpp nitfwritejpeg_12.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
+
+# When build as plugin, initialize all drivers from GDALRegister_NITF
+if (GDAL_ENABLE_DRIVER_NITF_PLUGIN)
+  target_compile_definitions(gdal_NITF PRIVATE -DNITF_PLUGIN)
+endif ()
+
+if (GDAL_ENABLE_DRIVER_GTIFF)
+  target_sources(gdal_NITF PRIVATE nitfbilevel.cpp)
+  target_compile_definitions(gdal_NITF PRIVATE -DHAVE_TIFF)
+endif()
+
+if (EMBED_RESOURCE_FILES)
+    add_driver_embedded_resources(gdal_NITF GDAL_ENABLE_DRIVER_NITF_PLUGIN embedded_resources.c)
+endif()
+if (USE_ONLY_EMBEDDED_RESOURCE_FILES)
+    target_compile_definitions(gdal_NITF PRIVATE USE_ONLY_EMBEDDED_RESOURCE_FILES)
+endif()
 
 if (GDAL_USE_TIFF_INTERNAL)
   gdal_add_vendored_lib(gdal_NITF libtiff)
@@ -66,11 +87,11 @@ if (GDAL_ENABLE_DRIVER_JPEG)
   endif ()
 endif()
 
-if (NOT GDAL_USE_TIFF_INTERNAL)
+if (GDAL_USE_TIFF AND NOT GDAL_USE_TIFF_INTERNAL)
   gdal_target_link_libraries(gdal_NITF PRIVATE TIFF::TIFF)
 endif ()
 
-add_executable(nitfdump EXCLUDE_FROM_ALL nitfdump.c nitffile.c nitfimage.c rpftocfile.cpp nitfbilevel.cpp nitfaridpcm.cpp mgrs.c)
+add_executable(nitfdump EXCLUDE_FROM_ALL nitfdump.c nitffile.c nitfimage.c rpftocfile.cpp nitfaridpcm.cpp mgrs.c nitfdes.c)
 if (GDAL_USE_TIFF_INTERNAL)
   target_sources(nitfdump PRIVATE $<TARGET_OBJECTS:libtiff>)
   gdal_add_vendored_lib(nitfdump libtiff)
@@ -110,8 +131,15 @@ if (GDAL_USE_TIFF_INTERNAL)
   if (GDAL_USE_LERC_INTERNAL)
     target_sources(nitfdump PRIVATE $<TARGET_OBJECTS:lerc>)
   endif ()
-else()
+elseif(GDAL_USE_TIFF AND GDAL_ENABLE_DRIVER_GTIFF)
   target_link_libraries(nitfdump PRIVATE TIFF::TIFF)
 endif()
-target_include_directories(nitfdump PRIVATE $<TARGET_PROPERTY:gdal_NITF,SOURCE_DIR> $<TARGET_PROPERTY:gdal_GTIFF,SOURCE_DIR>)
+target_include_directories(nitfdump PRIVATE $<TARGET_PROPERTY:gdal_NITF,SOURCE_DIR>)
 target_link_libraries(nitfdump PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
+
+if (GDAL_ENABLE_DRIVER_GTIFF)
+  target_sources(nitfdump PRIVATE nitfbilevel.cpp)
+  target_include_directories(nitfdump PRIVATE $<TARGET_PROPERTY:gdal_GTIFF,SOURCE_DIR>)
+  target_compile_definitions(nitfdump PRIVATE -DHAVE_TIFF)
+endif()
+

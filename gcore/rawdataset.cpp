@@ -8,23 +8,7 @@
  * Copyright (c) 1999, Frank Warmerdam
  * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -474,6 +458,11 @@ void RawRasterBand::DoByteSwap(void *pBuffer, size_t nValues, int nByteSkip,
                             nValues, nByteSkip);
         }
     }
+    else if (eDataType == GDT_Float16 || eDataType == GDT_CFloat16)
+    {
+        // No VAX support for GFloat16
+        std::abort();
+    }
     else if (eDataType == GDT_Float32 || eDataType == GDT_CFloat32)
     {
         GByte *pPtr = static_cast<GByte *>(pBuffer);
@@ -660,8 +649,8 @@ CPLErr RawRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
     // Copy data from disk buffer to user block buffer.
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
-    GDALCopyWords(pLineStart, eDataType, nPixelOffset, pImage, eDataType,
-                  nDTSize, nBlockXSize);
+    GDALCopyWords64(pLineStart, eDataType, nPixelOffset, pImage, eDataType,
+                    nDTSize, nBlockXSize);
 
     // Pre-cache block cache of other bands
     if (poDS != nullptr && poDS->GetRasterCount() > 1 && IsBIP())
@@ -682,9 +671,9 @@ CPLErr RawRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                 poBlock = poOtherBand->GetLockedBlockRef(0, nBlockYOff, true);
                 if (poBlock != nullptr)
                 {
-                    GDALCopyWords(poOtherBand->pLineStart, eDataType,
-                                  nPixelOffset, poBlock->GetDataRef(),
-                                  eDataType, nDTSize, nBlockXSize);
+                    GDALCopyWords64(poOtherBand->pLineStart, eDataType,
+                                    nPixelOffset, poBlock->GetDataRef(),
+                                    eDataType, nDTSize, nBlockXSize);
                     poBlock->DropLock();
                 }
             }
@@ -779,8 +768,8 @@ CPLErr RawRasterBand::BIPWriteBlock(int nBlockYOff, int nCallingBand,
 
         GByte *pabyOut = static_cast<GByte *>(pLineStart) + iBand * nDTSize;
 
-        GDALCopyWords(pabyThisImage, eDataType, nDTSize, pabyOut, eDataType,
-                      nPixelOffset, nBlockXSize);
+        GDALCopyWords64(pabyThisImage, eDataType, nDTSize, pabyOut, eDataType,
+                        nPixelOffset, nBlockXSize);
 
         if (poBlock != nullptr)
         {
@@ -839,8 +828,8 @@ CPLErr RawRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
         eErr = AccessLine(nBlockYOff);
 
     // Copy data from user buffer into disk buffer.
-    GDALCopyWords(pImage, eDataType, nDTSize, pLineStart, eDataType,
-                  nPixelOffset, nBlockXSize);
+    GDALCopyWords64(pImage, eDataType, nDTSize, pLineStart, eDataType,
+                    nPixelOffset, nBlockXSize);
 
     nLoadedScanline = nBlockYOff;
     bLoadedScanlineDirty = true;
@@ -1172,7 +1161,7 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 // subsample, if needed.
                 if (nXSize == nBufXSize && nYSize == nBufYSize)
                 {
-                    GDALCopyWords(
+                    GDALCopyWords64(
                         pabyData, eDataType, nPixelOffset,
                         static_cast<GByte *>(pData) + iLine * nLineSpace,
                         eBufType, static_cast<int>(nPixelSpace), nXSize);
@@ -1181,7 +1170,7 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 {
                     for (int iPixel = 0; iPixel < nBufXSize; iPixel++)
                     {
-                        GDALCopyWords(
+                        GDALCopyWords64(
                             pabyData + static_cast<vsi_l_offset>(
                                            iPixel * dfSrcXInc + EPS) *
                                            nPixelOffset,
@@ -1299,23 +1288,23 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 // subsample, if needed.
                 if (nXSize == nBufXSize && nYSize == nBufYSize)
                 {
-                    GDALCopyWords(static_cast<GByte *>(pData) +
-                                      iLine * nLineSpace,
-                                  eBufType, static_cast<int>(nPixelSpace),
-                                  pabyData, eDataType, nPixelOffset, nXSize);
+                    GDALCopyWords64(static_cast<GByte *>(pData) +
+                                        iLine * nLineSpace,
+                                    eBufType, static_cast<int>(nPixelSpace),
+                                    pabyData, eDataType, nPixelOffset, nXSize);
                 }
                 else
                 {
                     for (int iPixel = 0; iPixel < nBufXSize; iPixel++)
                     {
-                        GDALCopyWords(static_cast<GByte *>(pData) +
-                                          iLine * nLineSpace +
-                                          iPixel * nPixelSpace,
-                                      eBufType, static_cast<int>(nPixelSpace),
-                                      pabyData + static_cast<vsi_l_offset>(
-                                                     iPixel * dfSrcXInc + EPS) *
-                                                     nPixelOffset,
-                                      eDataType, nPixelOffset, 1);
+                        GDALCopyWords64(
+                            static_cast<GByte *>(pData) + iLine * nLineSpace +
+                                iPixel * nPixelSpace,
+                            eBufType, static_cast<int>(nPixelSpace),
+                            pabyData + static_cast<vsi_l_offset>(
+                                           iPixel * dfSrcXInc + EPS) *
+                                           nPixelOffset,
+                            eDataType, nPixelOffset, 1);
                     }
                 }
 
@@ -1776,17 +1765,17 @@ bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands, int nDTSize,
         try
         {
             nExpectedFileSize =
-                (CPLSM(static_cast<GUInt64>(nHeaderSize)) +
-                 CPLSM(static_cast<GUInt64>(nBandOffset)) *
-                     CPLSM(static_cast<GUInt64>(nBands - 1)) +
+                (CPLSM(static_cast<uint64_t>(nHeaderSize)) +
+                 CPLSM(static_cast<uint64_t>(nBandOffset)) *
+                     CPLSM(static_cast<uint64_t>(nBands - 1)) +
                  (nLineOffset >= 0
-                      ? CPLSM(static_cast<GUInt64>(nYSize - 1)) *
-                            CPLSM(static_cast<GUInt64>(nLineOffset))
-                      : CPLSM(static_cast<GUInt64>(0))) +
+                      ? CPLSM(static_cast<uint64_t>(nYSize - 1)) *
+                            CPLSM(static_cast<uint64_t>(nLineOffset))
+                      : CPLSM(static_cast<uint64_t>(0))) +
                  (nPixelOffset >= 0
-                      ? CPLSM(static_cast<GUInt64>(nXSize - 1)) *
-                            CPLSM(static_cast<GUInt64>(nPixelOffset))
-                      : CPLSM(static_cast<GUInt64>(0))))
+                      ? CPLSM(static_cast<uint64_t>(nXSize - 1)) *
+                            CPLSM(static_cast<uint64_t>(nPixelOffset))
+                      : CPLSM(static_cast<uint64_t>(0))))
                     .v();
         }
         catch (...)

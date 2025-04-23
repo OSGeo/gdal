@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-#  $Id$
 #
 # Purpose:  Module for retiling (merging) tiles and building tiled pyramids
 # Author:   Christian Meuller, christian.mueller@nvoe.at
@@ -10,26 +9,8 @@
 # Copyright (c) 2007, Christian Mueller
 # Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
-from __future__ import print_function
-
 import os
 import sys
 
@@ -39,7 +20,7 @@ from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 progress = gdal.TermProgress_nocb
 
 
-class AffineTransformDecorator(object):
+class AffineTransformDecorator:
     """A class providing some useful methods for affine Transformations"""
 
     def __init__(self, transform):
@@ -70,7 +51,7 @@ class AffineTransformDecorator(object):
         return [xlist, ylist]
 
 
-class DataSetCache(object):
+class DataSetCache:
     """A class for caching source tiles"""
 
     def __init__(self):
@@ -100,7 +81,7 @@ class DataSetCache(object):
         del self.dict
 
 
-class tile_info(object):
+class tile_info:
     """A class holding info how to tile"""
 
     def __init__(self, xsize, ysize, tileWidth, tileHeight, overlap):
@@ -129,7 +110,7 @@ class tile_info(object):
         print("overlap:     %d" % self.overlap)
 
 
-class mosaic_info(object):
+class mosaic_info:
     """A class holding information about a GDAL file or a GDAL fileset"""
 
     def __init__(self, filename, inputDS):
@@ -965,7 +946,7 @@ def UsageFormat():
 
 def Usage(isError):
     f = sys.stderr if isError else sys.stdout
-    print("Usage: gdal_retile.py [--help] [--help-general]", file=f)
+    print("Usage: gdal_retile [--help] [--help-general]", file=f)
     print("        [-v] [-q] [-co <NAME>=<VALUE>]... [-of <out_format>]", file=f)
     print("        [-ps <pixelWidth> <pixelHeight>]", file=f)
     print("        [-overlap <val_in_pixel>]", file=f)

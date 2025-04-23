@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test "shared" open, and various refcount based stuff.
@@ -83,15 +82,17 @@ def test_ogr_refcount_2():
 # Verify that releasing the datasources has the expected behaviour.
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_ogr_refcount_3():
 
     ds_1 = ogr.OpenShared("data/idlink.dbf")
-    ds_3 = ogr.OpenShared("data/idlink.dbf")
-
     assert ds_1 is not None
-    assert ds_3 is not None
 
-    ds_3.Release()
+    ds_2 = ogr.OpenShared("data/idlink.dbf")
+    assert ds_2 is not None
+    assert ds_1.GetRefCount() == 2
+    assert ds_2.GetRefCount() == 2
+    ds_2.Release()
 
     assert ds_1.GetRefCount() == 1
 

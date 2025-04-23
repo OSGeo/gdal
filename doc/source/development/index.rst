@@ -14,4 +14,5 @@ Development
     testing
     dev_documentation
     cmake
+    rfc_process
     rfc/index

@@ -8,23 +8,7 @@
 ###############################################################################
 # Copyright (c) 2020, Esri
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import pytest
@@ -40,7 +24,7 @@ pytestmark = pytest.mark.require_driver("ESRIC")
 @pytest.fixture()
 def esric_ds():
 
-    ds = gdal.Open("data/esric/Layers/conf.xml")
+    ds = gdal.Open("/vsitar/data/esric/Layers.tar/Layers/conf.xml")
     assert ds is not None, "open failed"
 
     return ds
@@ -227,8 +211,8 @@ def test_tpkx_default_full_extent(extent_source):
     if extent_source:
         open_options["EXTENT_SOURCE"] = extent_source
     ds = gdal.OpenEx("data/esric/Usa.tpkx", open_options=open_options)
-    assert ds.RasterXSize == 2532
-    assert ds.RasterYSize == 1921
+    assert ds.RasterXSize == 2533
+    assert ds.RasterYSize == 1922
     assert ds.RasterCount == 4
     assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
     assert ds.GetGeoTransform() == pytest.approx(
@@ -245,5 +229,5 @@ def test_tpkx_default_full_extent(extent_source):
     assert ds.GetFileList() == ["data/esric/Usa.tpkx"]
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
     assert ds.GetRasterBand(1).GetBlockSize() == [256, 256]
-    assert ds.GetRasterBand(1).Checksum() == 62015
+    assert ds.GetRasterBand(1).Checksum() == 59047
     assert ds.GetRasterBand(1).GetOverviewCount() == 3

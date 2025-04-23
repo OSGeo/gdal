@@ -40,6 +40,12 @@ The following open options are available:
       To specify the collection if not specified
       in the connection string.
 
+-  .. oo:: VSI_PATH_FOR_AUTH
+      :since: 3.10
+
+      /vsigs/... path onto which a GOOGLE_APPLICATION_CREDENTIALS path specific
+      option is set
+
 Authentication methods
 ----------------------
 
@@ -48,7 +54,9 @@ The following authentication methods can be used:
 -  Authentication Bearer header passed through the EEDA_BEARER or
    :config:`EEDA_BEARER_FILE` configuration options.
 -  Service account private key file, through the
-   :config:`GOOGLE_APPLICATION_CREDENTIALS` configuration option.
+   :config:`GOOGLE_APPLICATION_CREDENTIALS` configuration option, or set
+   as a path-specific option whose value is set in the VSI_PATH_FOR_AUTH
+   open option.
 -  OAuth2 Service Account authentication through the
    :config:`EEDA_PRIVATE_KEY`/
    :config:`EEDA_PRIVATE_KEY_FILE` +

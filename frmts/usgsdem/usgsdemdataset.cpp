@@ -11,23 +11,7 @@
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_frmts.h"
@@ -35,6 +19,7 @@
 #include "ogr_spatialref.h"
 
 #include <algorithm>
+#include <cmath>
 
 typedef struct
 {
@@ -452,7 +437,7 @@ CPLErr USGSDEMRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
             dyStart = dyStart / 3600.0;
 
         double dygap = (dfYMin - dyStart) / poGDS->adfGeoTransform[5] + 0.5;
-        if (dygap <= INT_MIN || dygap >= INT_MAX || !CPLIsFinite(dygap))
+        if (dygap <= INT_MIN || dygap >= INT_MAX || !std::isfinite(dygap))
         {
             CPLFree(sBuffer.buffer);
             return CE_Failure;
@@ -935,9 +920,7 @@ GDALDataset *USGSDEMDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->eAccess == GA_Update)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The USGSDEM driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("USGSDEM");
         return nullptr;
     }
 
@@ -981,47 +964,10 @@ void GDALRegister_USGSDEM()
                               "USGS Optional ASCII DEM (and CDED)");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
                               "drivers/raster/usgsdem.html");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Int16");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "   <Option name='PRODUCT' type='string-select' description='Specific "
-        "Product Type'>"
-        "       <Value>DEFAULT</Value>"
-        "       <Value>CDED50K</Value>"
-        "   </Option>"
-        "   <Option name='TOPLEFT' type='string' description='Top left product "
-        "corner (i.e. 117d15w,52d30n'/>"
-        "   <Option name='RESAMPLE' type='string-select' "
-        "description='Resampling kernel to use if resampled.'>"
-        "       <Value>Nearest</Value>"
-        "       <Value>Bilinear</Value>"
-        "       <Value>Cubic</Value>"
-        "       <Value>CubicSpline</Value>"
-        "   </Option>"
-        "   <Option name='TEMPLATE' type='string' description='File to default "
-        "metadata from.'/>"
-        "   <Option name='DEMLevelCode' type='int' description='DEM Level (1, "
-        "2 or 3 if set)'/>"
-        "   <Option name='DataSpecVersion' type='int' description='Data and "
-        "Specification version/revision (eg. 1020)'/>"
-        "   <Option name='PRODUCER' type='string' description='Producer Agency "
-        "(up to 60 characters)'/>"
-        "   <Option name='OriginCode' type='string' description='Origin code "
-        "(up to 4 characters, YT for Yukon)'/>"
-        "   <Option name='ProcessCode' type='string' description='Processing "
-        "Code (8=ANUDEM, 9=FME, A=TopoGrid)'/>"
-        "   <Option name='ZRESOLUTION' type='float' description='Scaling "
-        "factor for elevation values'/>"
-        "   <Option name='NTS' type='string' description='NTS Mapsheet name, "
-        "used to derive TOPLEFT.'/>"
-        "   <Option name='INTERNALNAME' type='string' description='Dataset "
-        "name written into file header.'/>"
-        "</CreationOptionList>");
+
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = USGSDEMDataset::Open;
-    poDriver->pfnCreateCopy = USGSDEMCreateCopy;
     poDriver->pfnIdentify = USGSDEMDataset::Identify;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);

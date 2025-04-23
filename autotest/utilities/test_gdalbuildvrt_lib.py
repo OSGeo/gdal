@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  test librarified gdalbuildvrt
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2016, Even Rouault <even dot rouault @ spatialys dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import pathlib
@@ -97,6 +80,10 @@ def test_gdalbuildvrt_lib_2():
 # Test creating overviews
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalbuildvrt_lib_ovr(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "my.vrt"
@@ -616,7 +603,7 @@ def test_gdalbuildvrt_lib_bandList_subset_of_bands_from_multiple_band_source():
 
 ###############################################################################
 def test_gdalbuildvrt_lib_warnings_and_custom_error_handler():
-    class GdalErrorHandler(object):
+    class GdalErrorHandler:
         def __init__(self):
             self.got_failure = False
             self.got_warning = False
@@ -668,6 +655,12 @@ def test_gdalbuildvrt_lib_strict_mode():
 
 
 ###############################################################################
+
+
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalbuildvrt_lib_te_touching_on_edge(tmp_vsimem):
 
     tmp_filename = tmp_vsimem / "test_gdalbuildvrt_lib_te_touching_on_edge.vrt"
@@ -794,6 +787,10 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgba(tmp_vsimem):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgb_mask(tmp_vsimem):
 
     # UInt16, VRTNodata=0
@@ -903,3 +900,72 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgb_mask(tmp_vsimem):
     assert struct.unpack(
         "f" * 3, vrt_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Float32)
     ) == pytest.approx((1.0, 1.001, 2.0))
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "dtype,nodata",
+    [
+        (gdal.GDT_Byte, float("nan")),
+        (gdal.GDT_UInt16, -1),
+    ],
+)
+def test_gdalbuildvrt_lib_nodata_invalid(tmp_vsimem, dtype, nodata):
+
+    drv = gdal.GetDriverByName("GTiff")
+    with drv.Create(tmp_vsimem / "in.tif", 1, 1, eType=dtype) as ds:
+        ds.GetRasterBand(1).Fill(1)
+        ds.SetGeoTransform((0, 1, 0, 1, 0, -1))
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "cannot represent the specified NoData value"
+    ):
+        gdal.BuildVRT("", [tmp_vsimem / "in.tif"], VRTNodata=nodata)
+
+
+###############################################################################
+
+
+# Test --resolution=common
+# Also tested by C++ test_cpl.CPLGreatestCommonDivisor
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "resolutions,expected",
+    [
+        ([5 / 3600, 3 / 3600], 1 / 3600),
+        ([5, 3], 1),
+        ([5 / 3600, 2.5 / 3600], 2.5 / 3600),
+        ([1 / 10, 1], 1 / 10),
+        ([1 / 10, 1 / 3], 1 / 30),
+        ([1 / 17, 1 / 13], 1 / 221),
+        ([1 / 17, 1 / 3600], 1 / 61200),
+        ([2.9999999, 3], "common resolution"),
+    ],
+)
+def test_gdalbuildvrt_resolution_common(tmp_vsimem, resolutions, expected):
+
+    inputs = []
+
+    width = 5
+    height = 5
+
+    for i, res in enumerate(resolutions):
+        fname = tmp_vsimem / f"in_{i}.tif"
+        inputs.append(fname)
+
+        nx = round(width / res)
+        ny = round(height / res)
+
+        with gdal.GetDriverByName("GTiff").Create(fname, nx, ny) as ds:
+            ds.SetGeoTransform((0, res, 0, height, 0, -res))
+
+    if type(expected) is str:
+        with pytest.raises(Exception, match=expected):
+            gdal.BuildVRT("", inputs, resolution="common", strict=True)
+    else:
+        with gdal.BuildVRT("", inputs, resolution="common", strict=True) as ds:
+            gt = ds.GetGeoTransform()
+            assert gt[1] == expected
+            assert -gt[5] == expected

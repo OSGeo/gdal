@@ -56,12 +56,12 @@ endif()
 
 find_library(SFCGAL_LIBRARY_RELEASE NAMES SFCGAL
              HINTS ${SC_SFCGAL_LIBDIR}
-             PATH ${SFCGAL_ROOT}
+             PATHS ${SFCGAL_ROOT}
              PATH_SUFFIXES lib Lib
              )
 find_library(SFCGAL_LIBRARY_DEBUG NAMES SFCGALd
              HINTS ${SC_SFCGAL_LIBDIR}
-             PATH ${SFCGAL_ROOT}
+             PATHS ${SFCGAL_ROOT}
              PATH_SUFFIXES lib Lib
              )
 include(SelectLibraryConfigurations)

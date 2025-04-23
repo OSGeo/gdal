@@ -4,7 +4,7 @@
 FAQ
 ================================================================================
 
-.. TODO maybe migrate the chapters 2 and following of https://trac.osgeo.org/gdal/wiki/FAQ
+.. TODO maybe migrate the chapters 2 and following of http://web.archive.org/web/https://trac.osgeo.org/gdal/wiki/FAQ
 
 .. only:: not latex
 
@@ -38,6 +38,19 @@ Common Portability Library. Think of it as GDAL internal cross-platform standard
 
 CPL, or parts of it, is used by some projects external to GDAL (eg. MITAB, libgeotiff).
 
+What does VSI stand for?
++++++++++++++++++++++++++
+
+Virtual System Interface. This is the name of the input/output abstraction layer
+that is implemented by different Virtual File Systems (VFS) to provide access
+to regular files, in-memory files, network accessible files, compressed files, etc.
+
+See :ref:`virtual_file_systems` for a list of the available VFS.
+
+The VSI functions retain exactly the same calling pattern as the original
+Standard C functions they relate to, for the parts where they are common, and
+also extend it to provide more specialized functionality.
+
 When was the GDAL project started?
 ++++++++++++++++++++++++++++++++++
 
@@ -61,7 +74,12 @@ You can use GDAL/OGR on all modern flavors of Unix: Linux, FreeBSD, Mac OS X; al
 Is there a graphical user interface to GDAL/OGR?
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
-See :ref:`software_using_gdal`:
+Plenty! Among the available options, `QGIS <https://qgis.org>`__ is an excellent
+free and open source application with a rich graphical user interface. It
+allows users to display most GDAL raster and vector supported formats and
+provides access to most GDAL utilities through its Processing toolbox.
+
+You can also consult the :ref:`list of software using GDAL <software_using_gdal>`.
 
 .. toctree::
    :hidden:
@@ -87,10 +105,24 @@ How do I add support for a new format?
 
 To some extent this is now covered by the :ref:`raster_driver_tut` and :ref:`vector_driver_tut`
 
+What about file formats for 3D models?
+++++++++++++++++++++++++++++++++++++++
+
+While some vector drivers in GDAL support 3D geometries (e.g. reading CityGML or
+AIXM through the GML driver, or 3D geometries in GeoPackage), 3-dimensional scenes or
+models formats (such as glTF, OBJ, 3DS, etc.) are out-of-scope for GDAL.
+Users may consider a library such as `ASSIMP (Open-Asset-Importer-Library) <https://github.com/assimp/assimp>`__
+for such formats.
+
 Is GDAL thread-safe ?
 +++++++++++++++++++++
 
 See :ref:`multithreading`
+
+Does GDAL provide a Section 508 information?
+++++++++++++++++++++++++++++++++++++++++++++
+
+No, GDAL itself is an open-source software and project, not a Vendor. If your organization considers they need a `VPAT or Section 508 <https://www.section508.gov/sell/acr/>`_ form to be able to use GDAL, it is their responsibility to complete the needed steps themselves.
 
 How do I cite GDAL ?
 ++++++++++++++++++++
@@ -98,3 +130,9 @@ How do I cite GDAL ?
 See `CITATION`_
 
 .. _`CITATION`: https://github.com/OSGeo/gdal/blob/master/CITATION
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    glTF

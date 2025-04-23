@@ -8,23 +8,7 @@
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2009, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_string.h"
@@ -33,13 +17,6 @@
 #include "rawdataset.h"
 
 #include <vector>
-
-enum Interleave
-{
-    BSQ,
-    BIL,
-    BIP
-};
 
 /************************************************************************/
 /* ==================================================================== */
@@ -69,7 +46,7 @@ class CPGDataset final : public RawDataset
     int nLoadedStokesLine;
     float *padfStokesMatrix;
 
-    int nInterleave;
+    Interleave eInterleave = Interleave::BSQ;
     static int AdjustFilename(char **, const char *, const char *);
     static int FindType1(const char *pszWorkname);
     static int FindType2(const char *pszWorkname);
@@ -117,7 +94,7 @@ class CPGDataset final : public RawDataset
 
 CPGDataset::CPGDataset()
     : nGCPCount(0), pasGCPList(nullptr), nLoadedStokesLine(-1),
-      padfStokesMatrix(nullptr), nInterleave(0)
+      padfStokesMatrix(nullptr)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -260,9 +237,10 @@ int CPGDataset::AdjustFilename(char **pszFilename, const char *pszPolarization,
     // TODO: Eventually we should handle upper/lower case.
     if (EQUAL(pszPolarization, "stokes"))
     {
-        const char *pszNewName = CPLResetExtension(*pszFilename, pszExtension);
+        const std::string osNewName =
+            CPLResetExtensionSafe(*pszFilename, pszExtension);
         CPLFree(*pszFilename);
-        *pszFilename = CPLStrdup(pszNewName);
+        *pszFilename = CPLStrdup(osNewName.c_str());
     }
     else if (strlen(pszPolarization) == 2)
     {
@@ -277,15 +255,17 @@ int CPGDataset::AdjustFilename(char **pszFilename, const char *pszPolarization,
             return FALSE;
 
         strncpy(subptr, pszPolarization, 2);
-        const char *pszNewName = CPLResetExtension(*pszFilename, pszExtension);
+        const std::string osNewName =
+            CPLResetExtensionSafe(*pszFilename, pszExtension);
         CPLFree(*pszFilename);
-        *pszFilename = CPLStrdup(pszNewName);
+        *pszFilename = CPLStrdup(osNewName.c_str());
     }
     else
     {
-        const char *pszNewName = CPLResetExtension(*pszFilename, pszExtension);
+        const std::string osNewName =
+            CPLResetExtensionSafe(*pszFilename, pszExtension);
         CPLFree(*pszFilename);
-        *pszFilename = CPLStrdup(pszNewName);
+        *pszFilename = CPLStrdup(osNewName.c_str());
     }
     VSIStatBufL sStatBuf;
     return VSIStatL(*pszFilename, &sStatBuf) == 0;
@@ -390,7 +370,7 @@ CPLErr CPGDataset::LoadStokesLine(int iLine, int bNativeOrder)
     /*      Load all the pixel data associated with this scanline.          */
     /*      Retains same interleaving as original dataset.                  */
     /* -------------------------------------------------------------------- */
-    if (nInterleave == BIP)
+    if (eInterleave == Interleave::BIP)
     {
         const int offset = nRasterXSize * iLine * nDataSize * 16;
         const int nBytesToRead = nDataSize * nRasterXSize * 16;
@@ -409,7 +389,7 @@ CPLErr CPGDataset::LoadStokesLine(int iLine, int bNativeOrder)
             return CE_Failure;
         }
     }
-    else if (nInterleave == BIL)
+    else if (eInterleave == Interleave::BIL)
     {
         for (int band_index = 0; band_index < 16; band_index++)
         {
@@ -823,7 +803,8 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
 GDALDataset *CPGDataset::InitializeType3Dataset(const char *pszFilename)
 {
     int iBytesPerPixel = 0;
-    int iInterleave = -1;
+    Interleave::eInterleave = Interleave::BSQ;
+    bool bInterleaveSpecified = false;
     int nLines = 0;
     int nSamples = 0;
     int nBands = 0;
@@ -858,11 +839,20 @@ GDALDataset *CPGDataset::InitializeType3Dataset(const char *pszFilename)
         {
 
             if (STARTS_WITH_CI(papszTokens[2], "BSQ"))
-                iInterleave = BSQ;
+            {
+                bInterleaveSpecified = true;
+                eInterleave = Interleave::BSQ;
+            }
             else if (STARTS_WITH_CI(papszTokens[2], "BIL"))
-                iInterleave = BIL;
+            {
+                bInterleaveSpecified = true;
+                eInterleave = Interleave::BIL;
+            }
             else if (STARTS_WITH_CI(papszTokens[2], "BIP"))
-                iInterleave = BIP;
+            {
+                bInterleaveSpecified = true;
+                eInterleave = Interleave::BIP;
+            }
             else
             {
                 CPLError(
@@ -992,7 +982,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset(const char *pszFilename)
     }
 
     if (!GDALCheckDatasetDimensions(nSamples, nLines) ||
-        !GDALCheckBandCount(nBands, FALSE) || iInterleave == -1 ||
+        !GDALCheckBandCount(nBands, FALSE) || !bInterleaveSpecified ||
         iBytesPerPixel == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1011,13 +1001,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset(const char *pszFilename)
 
     poDS->nRasterXSize = nSamples;
     poDS->nRasterYSize = nLines;
-
-    if (iInterleave == BSQ)
-        poDS->nInterleave = BSQ;
-    else if (iInterleave == BIL)
-        poDS->nInterleave = BIL;
-    else
-        poDS->nInterleave = BIP;
+    poDS->eInterleave = eInterleave;
 
     /* -------------------------------------------------------------------- */
     /*      Open the 16 bands.                                              */
@@ -1154,9 +1138,7 @@ GDALDataset *CPGDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The CPG driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("CPG");
         return nullptr;
     }
 
@@ -1408,7 +1390,7 @@ CPLErr CPG_STOKESRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     float *M = poGDS->padfStokesMatrix;
     float *pafLine = reinterpret_cast<float *>(pImage);
 
-    if (poGDS->nInterleave == BIP)
+    if (poGDS->eInterleave == RawDataset::Interleave::BIP)
     {
         step = 16;
         m11 = M11;

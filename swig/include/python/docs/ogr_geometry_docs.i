@@ -31,6 +31,36 @@ float:
 
 ";
 
+%feature("docstring")  Length "
+Compute geometry length.
+
+The returned length is a 2D Cartesian (planar) area in units of the
+spatial reference system in use, so potentially 'degrees' for a
+geometry expressed in a geographic SRS.
+
+For more details: :cpp:func:`OGR_G_Length`
+
+Returns
+--------
+float:
+    the length of the geometry in units of the spatial reference
+    system in use, or 0.0 for unsupported geometry types.
+
+";
+
+%feature("docstring")  GeodesicLength "
+Compute geometry length, considered as a curve on the underlying
+ellipsoid of the SRS attached to the geometry.
+
+For more details: :cpp:func:`OGR_G_GeodesicLength`
+
+Returns
+--------
+float:
+    the area in meters, or a negative value for unsupported geometry types.
+
+";
+
 %feature("docstring")  DumpReadable "
 Dump geometry in well known text format to indicated output file.
 
@@ -844,6 +874,17 @@ Geometry:
     A new geometry or None on failure.
 ";
 
+%feature("docstring")  BuildArea "
+Polygonize a linework assuming inner polygons are holes.
+
+For more details: :cpp:func:`OGR_G_BuildArea`
+
+Returns
+--------
+Geometry:
+    A new geometry or None on failure.
+";
+
 %feature("docstring")  SwapXY "
 Swap x and y coordinates.
 
@@ -851,6 +892,65 @@ For more details: :cpp:func:`OGR_G_SwapXY`
 
 .. versionadded:: 2.3.0
 
+";
+
+
+%feature("docstring")  AddPoint "
+Add a point to a geometry (line string or point).
+
+The vertex count of the line string is increased by one, and assigned from
+the passed location value.
+
+The geometry is promoted to include a Z component, if it does not already
+have one, even if the Z parameter is not explicitly specified. To avoid that
+use AddPoint_2D.
+
+This is the same as :cpp:func:`OGR_G_AddPoint`
+
+Parameters
+-----------
+X: float
+    x coordinate of point to add.
+Y: float
+    y coordinate of point to add.
+Z: float
+    z coordinate of point to add. Defaults to 0
+
+Examples
+-------
+>>> ogr.GeometryTypeToName(pt.GetGeometryType())
+'Point'
+>>> pt.AddPoint(3, 7)
+>>> ogr.GeometryTypeToName(pt.GetGeometryType())
+'3D Point'
+";
+
+%feature("docstring")  AddPoint_2D "
+Add a point to a geometry (line string or point).
+
+The vertex count of the line string is increased by one, and assigned from
+the passed location value.
+
+If the geometry includes a Z or M component, the value for those components
+for the added point will be 0.
+
+This is the same as :cpp:func:`OGR_G_AddPoint_2D`
+
+Parameters
+-----------
+X: float
+    x coordinate of point to add.
+Y: float
+    y coordinate of point to add.
+
+Examples
+--------
+>>> pt = ogr.Geometry(ogr.wkbPoint)
+>>> ogr.GeometryTypeToName(pt.GetGeometryType())
+'Point'
+>>> pt.AddPoint_2D(3, 7)
+>>> ogr.GeometryTypeToName(pt.GetGeometryType())
+'Point'
 ";
 
 }

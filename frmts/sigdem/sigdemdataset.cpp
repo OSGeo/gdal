@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2018, Paul Austin <paul.austin@revolsys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "sigdemdataset.h"
@@ -278,7 +262,8 @@ GDALDataset *SIGDEMDataset::CreateCopy(const char *pszFilename,
     {
         if (!EQUAL(pszProjection, ""))
         {
-            CPLString osPrjFilename = CPLResetExtension(pszFilename, "prj");
+            const CPLString osPrjFilename =
+                CPLResetExtensionSafe(pszFilename, "prj");
             VSILFILE *fpProj = VSIFOpenL(osPrjFilename, "wt");
             if (fpProj != nullptr)
             {
@@ -369,12 +354,13 @@ GDALDataset *SIGDEMDataset::Open(GDALOpenInfo *poOpenInfo)
     else
     {
         CPLString osPrjFilename =
-            CPLResetExtension(poOpenInfo->pszFilename, "prj");
+            CPLResetExtensionSafe(poOpenInfo->pszFilename, "prj");
         VSIStatBufL sStatBuf;
         int nRet = VSIStatL(osPrjFilename, &sStatBuf);
         if (nRet != 0 && VSIIsCaseSensitiveFS(osPrjFilename))
         {
-            osPrjFilename = CPLResetExtension(poOpenInfo->pszFilename, "PRJ");
+            osPrjFilename =
+                CPLResetExtensionSafe(poOpenInfo->pszFilename, "PRJ");
             nRet = VSIStatL(osPrjFilename, &sStatBuf);
         }
 

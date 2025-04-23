@@ -26,7 +26,7 @@ spatio-temporal (time series of
 2D raster) or spatio-vertical-temporal (2D + Z dimension + time dimension) data which
 are becoming increasingly more available. GDAL current raster model is however strongly
 2D oriented. A number of drivers, such as netCDF, HDF4, HDF5, work around that
-limitation by using raster bands or subdatasets to expose muliple 2D slices of what
+limitation by using raster bands or subdatasets to expose multiple 2D slices of what
 is intrinsically a N>2 Multidimensional dataset. It is desirable to have a
 proper API, and driver support, to be able to expose those multidimensional
 arrays as such, and be able to perform slice and trim operations on them.

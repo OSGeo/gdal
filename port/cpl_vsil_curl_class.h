@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2010-2018, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef CPL_VSIL_CURL_CLASS_H_INCLUDED
@@ -42,6 +26,7 @@
 #include "cpl_curl_priv.h"
 
 #include <algorithm>
+#include <atomic>
 #include <condition_variable>
 #include <set>
 #include <map>
@@ -95,6 +80,7 @@ class FileProp
     std::string osRedirectURL{};
     bool bHasComputedFileSize = false;
     bool bIsDirectory = false;
+    bool bIsAzureFolder = false;
     int nMode = 0;  // st_mode member of struct stat
     bool bS3LikeRedirect = false;
     std::string ETag{};
@@ -115,7 +101,8 @@ struct WriteFuncStruct
     bool bMultiRange = false;
     vsi_l_offset nStartOffset = 0;
     vsi_l_offset nEndOffset = 0;
-    int nHTTPCode = 0;
+    int nHTTPCode = 0;       // potentially after redirect
+    int nFirstHTTPCode = 0;  // the one of the redirect
     vsi_l_offset nContentLength = 0;
     bool bFoundContentRange = false;
     bool bError = false;
@@ -282,7 +269,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
     char **ReadDirInternal(const char *pszDirname, int nMaxFiles,
                            bool *pbGotFileList);
-    void InvalidateDirContent(const char *pszDirname);
+    void InvalidateDirContent(const std::string &osDirname);
 
     virtual const char *GetDebugKey() const = 0;
 
@@ -333,7 +320,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     void SetCachedDirList(const char *pszURL, CachedDirList &oCachedDirList);
     bool ExistsInCacheDirList(const std::string &osDirname, bool *pbIsDir);
 
-    virtual std::string GetURLFromFilename(const std::string &osFilename);
+    virtual std::string GetURLFromFilename(const std::string &osFilename) const;
 
     std::string
     GetStreamingFilename(const std::string &osFilename) const override = 0;
@@ -411,16 +398,21 @@ class VSICurlHandle : public VSIVirtualHandle
     bool m_bUseHead = false;
     bool m_bUseRedirectURLIfNoQueryStringParams = false;
 
+    mutable std::atomic<bool> m_bInterrupt = false;
+
     // Specific to Planetary Computer signing:
     // https://planetarycomputer.microsoft.com/docs/concepts/sas/
     mutable bool m_bPlanetaryComputerURLSigning = false;
     mutable std::string m_osPlanetaryComputerCollection{};
     void ManagePlanetaryComputerSigning() const;
 
+    void UpdateQueryString() const;
+
     int ReadMultiRangeSingleGet(int nRanges, void **ppData,
                                 const vsi_l_offset *panOffsets,
                                 const size_t *panSizes);
-    std::string GetRedirectURLIfValid(bool &bHasExpired) const;
+    std::string GetRedirectURLIfValid(bool &bHasExpired,
+                                      CPLStringList &aosHTTPOptions) const;
 
     void UpdateRedirectInfo(CURL *hCurlHandle,
                             const WriteFuncStruct &sWriteFuncHeaderData);
@@ -438,6 +430,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
     std::vector<std::unique_ptr<AdviseReadRange>> m_aoAdviseReadRanges{};
     std::thread m_oThreadAdviseRead{};
+    CURLM *m_hCurlMultiHandleForAdviseRead = nullptr;
 
   protected:
     virtual struct curl_slist *
@@ -496,6 +489,11 @@ class VSICurlHandle : public VSIVirtualHandle
     int Error() override;
     int Flush() override;
     int Close() override;
+
+    void Interrupt() override
+    {
+        m_bInterrupt = true;
+    }
 
     bool HasPRead() const override
     {
@@ -1015,6 +1013,49 @@ struct VSIDIRWithMissingDirSynthesis : public VSIDIR
 };
 
 /************************************************************************/
+/*                          VSIDIRS3Like                                */
+/************************************************************************/
+
+struct VSIDIRS3Like : public VSIDIRWithMissingDirSynthesis
+{
+    int nRecurseDepth = 0;
+
+    std::string osNextMarker{};
+    int nPos = 0;
+
+    std::string osBucket{};
+    std::string osObjectKey{};
+    VSICurlFilesystemHandlerBase *poFS = nullptr;
+    IVSIS3LikeFSHandler *poS3FS = nullptr;
+    std::unique_ptr<IVSIS3LikeHandleHelper> poHandleHelper{};
+    int nMaxFiles = 0;
+    bool bCacheEntries = true;
+    bool m_bSynthetizeMissingDirectories = false;
+    std::string m_osFilterPrefix{};
+
+    // used when listing only the file system prefix
+    std::unique_ptr<VSIDIR, decltype(&VSICloseDir)> m_subdir{nullptr,
+                                                             VSICloseDir};
+
+    explicit VSIDIRS3Like(IVSIS3LikeFSHandler *poFSIn)
+        : poFS(poFSIn), poS3FS(poFSIn)
+    {
+    }
+
+    explicit VSIDIRS3Like(VSICurlFilesystemHandlerBase *poFSIn) : poFS(poFSIn)
+    {
+    }
+
+    VSIDIRS3Like(const VSIDIRS3Like &) = delete;
+    VSIDIRS3Like &operator=(const VSIDIRS3Like &) = delete;
+
+    const VSIDIREntry *NextDirEntry() override;
+
+    virtual bool IssueListDir() = 0;
+    void clear();
+};
+
+/************************************************************************/
 /*                         CurlRequestHelper                            */
 /************************************************************************/
 
@@ -1188,7 +1229,8 @@ void VSICURLInitWriteFuncStruct(cpl::WriteFuncStruct *psStruct, VSILFILE *fp,
                                 void *pReadCbkUserData);
 size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb,
                               void *req);
-void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle = nullptr);
+void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle = nullptr,
+                         std::atomic<bool> *pbInterrupt = nullptr);
 void VSICURLResetHeaderAndWriterFunctions(CURL *hCurlHandle);
 
 int VSICurlParseUnixPermissions(const char *pszPermissions);

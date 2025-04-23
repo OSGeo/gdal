@@ -8,23 +8,7 @@
  * Copyright (c) 2010, Brian Case
  * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 #include "libkml_headers.h"
@@ -273,7 +257,7 @@ static char *OGRLIBKMLSanitizeUTF8String(const char *pszString)
 
 void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
                KmlFactory *poKmlFactory, FeaturePtr poKmlFeature,
-               int bUseSimpleFieldIn)
+               int bUseSimpleFieldIn, const fieldconfig &oFC)
 {
     const bool bUseSimpleField = CPL_TO_BOOL(bUseSimpleFieldIn);
     SchemaDataPtr poKmlSchemaData = nullptr;
@@ -292,10 +276,6 @@ void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
             poKmlSchemaData->set_schemaurl(oKmlSchemaURL);
         }
     }
-
-    /***** Get the field config *****/
-    struct fieldconfig oFC;
-    get_fieldconfig(&oFC);
 
     TimeSpanPtr poKmlTimeSpan = nullptr;
 
@@ -338,6 +318,13 @@ void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
                     continue;
                 }
 
+                /***** id *****/
+                if (EQUAL(name, oFC.idfield))
+                {
+                    poKmlFeature->set_id(pszUTF8String);
+                    CPLFree(pszUTF8String);
+                    continue;
+                }
                 /***** name *****/
                 if (EQUAL(name, oFC.namefield))
                 {
@@ -1123,7 +1110,7 @@ static const char *TrimSpaces(CPLString &oText)
 
     // Trim trailing spaces.
     while (!oText.empty() && oText.back() == ' ')
-        oText.resize(oText.size() - 1);
+        oText.pop_back();
 
     // Skip leading newline and spaces.
     const char *pszText = oText.c_str();
@@ -1157,13 +1144,19 @@ static void kmldatetime2ogr(OGRFeature *poOgrFeat, const char *pszOGRField,
  function to read kml into ogr fields
 ******************************************************************************/
 
-void kml2field(OGRFeature *poOgrFeat, FeaturePtr poKmlFeature)
+void kml2field(OGRFeature *poOgrFeat, FeaturePtr poKmlFeature,
+               const fieldconfig &oFC)
 {
-    /***** get the field config *****/
+    /***** id *****/
 
-    struct fieldconfig oFC;
-    get_fieldconfig(&oFC);
+    if (poKmlFeature->has_id())
+    {
+        const std::string oKmlId = poKmlFeature->get_id();
+        int iField = poOgrFeat->GetFieldIndex(oFC.idfield);
 
+        if (iField > -1)
+            poOgrFeat->SetField(iField, oKmlId.c_str());
+    }
     /***** name *****/
 
     if (poKmlFeature->has_name())
@@ -1552,15 +1545,13 @@ void kml2field(OGRFeature *poOgrFeat, FeaturePtr poKmlFeature)
 ******************************************************************************/
 
 SimpleFieldPtr FieldDef2kml(const OGRFieldDefn *poOgrFieldDef,
-                            KmlFactory *poKmlFactory, bool bApproxOK)
+                            KmlFactory *poKmlFactory, bool bApproxOK,
+                            const fieldconfig &oFC)
 {
-    /***** Get the field config. *****/
-    struct fieldconfig oFC;
-    get_fieldconfig(&oFC);
-
     const char *pszFieldName = poOgrFieldDef->GetNameRef();
 
-    if (EQUAL(pszFieldName, oFC.namefield) ||
+    if (EQUAL(pszFieldName, oFC.idfield) ||
+        EQUAL(pszFieldName, oFC.namefield) ||
         EQUAL(pszFieldName, oFC.descfield) ||
         EQUAL(pszFieldName, oFC.tsfield) ||
         EQUAL(pszFieldName, oFC.beginfield) ||
@@ -1724,6 +1715,7 @@ void kml2FeatureDef(SchemaPtr poKmlSchema, OGRFeatureDefn *poOgrFeatureDefn)
 
 void get_fieldconfig(struct fieldconfig *oFC)
 {
+    oFC->idfield = CPLGetConfigOption("LIBKML_ID_FIELD", "id");
     oFC->namefield = CPLGetConfigOption("LIBKML_NAME_FIELD", "Name");
     oFC->descfield =
         CPLGetConfigOption("LIBKML_DESCRIPTION_FIELD", "description");

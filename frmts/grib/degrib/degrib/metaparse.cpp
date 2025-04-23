@@ -475,6 +475,10 @@ static int ParseSect2_Wx (float *rdat, sInt4 nrdat, sInt4 *idat,
 
    buffLen = 0;
    buffer = (char *) malloc ((nidat + 1) * sizeof (char));
+   if( !buffer ) {
+       errSprintf ("Out of memory\n");
+       return -1;
+   }
    while (groupLen > 0) {
       for (j = 0; j < groupLen; j++) {
          buffer[buffLen] = (char) idat[loc];
@@ -600,6 +604,10 @@ static int ParseSect2_Hazard (float *rdat, sInt4 nrdat, sInt4 *idat,
 
    buffLen = 0;
    buffer = (char *) malloc ((nidat + 1) * sizeof (char));
+   if (!buffer) {
+       errSprintf ("Out of memory\n");
+       return -1;
+   }
    while (groupLen > 0) {
       for (j = 0; j < groupLen; j++) {
          buffer[buffLen] = (char) idat[loc];

@@ -19,7 +19,10 @@ BENCHMARK_OPTIONS=(
 # Run target build and compare its results to the reference one.
 # Fail if we get results 20% slower or more.
 # Retry if that fails a first time.
+# dist=no is needed because pytest-benchmark doesn't like other values of dist
+# and in conftest.py/pytest.ini we set by default --dist=loadgroup
 BENCHMARK_COMPARE_OPTIONS=(
+        "--dist=no" \
         "--benchmark-compare-fail=min:20%" \
         "--benchmark-compare=0001_ref" \
 )

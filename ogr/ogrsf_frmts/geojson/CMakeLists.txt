@@ -1,12 +1,10 @@
-# should not be a plugin - dependency from elastic
 add_gdal_driver(
-  TARGET ogr_geojson
+  TARGET ogr_GeoJSON
   SOURCES ogrgeojsondatasource.cpp
           ogrgeojsonlayer.cpp
           ogrgeojsonreader.cpp
           ogrgeojsonutils.cpp
           ogrgeojsonwritelayer.cpp
-          ogrgeojsonwriter.cpp
           ogrgeojsondriver.cpp
           ogrgeojsonseqdriver.cpp
           ogresrijsonreader.cpp
@@ -14,11 +12,15 @@ add_gdal_driver(
           ogrtopojsonreader.cpp
           ogrtopojsondriver.cpp
           ogrjsoncollectionstreamingparser.cpp
-  BUILTIN)
-gdal_standard_includes(ogr_geojson)
-target_include_directories(ogr_geojson PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_DIR>)
+  PLUGIN_CAPABLE_IF "NOT GDAL_USE_JSONC_INTERNAL"
+  NO_DEPS)
+gdal_standard_includes(ogr_GeoJSON)
+target_include_directories(ogr_GeoJSON PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_DIR>)
 if (GDAL_USE_JSONC_INTERNAL)
-  gdal_add_vendored_lib(ogr_geojson libjson)
+  gdal_add_vendored_lib(ogr_GeoJSON libjson)
 else ()
-  gdal_target_link_libraries(ogr_geojson PRIVATE ${JSONC_TARGET})
+  gdal_target_link_libraries(ogr_GeoJSON PRIVATE ${JSONC_TARGET})
 endif ()
+if (OGR_ENABLE_DRIVER_GEOJSON_PLUGIN)
+  target_compile_definitions(ogr_GeoJSON PRIVATE BUILT_AS_PLUGIN)
+endif()

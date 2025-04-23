@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2007, ITC
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ******************************************************************************/
 
 #include "cpl_port.h"  // Must be first.
@@ -58,16 +42,20 @@ XRITHeaderParser::XRITHeaderParser(std::ifstream &ifile)
         {
             unsigned char *buf =
                 (unsigned char *)std::malloc(totalHeaderLength);
-            std::memcpy(
-                buf, probeBuf,
-                probeSize);  // save what we have already read when probing
-            ifile.read((char *)buf + probeSize,
-                       totalHeaderLength -
-                           probeSize);  // read the rest of the header section
-            parseHeader(buf, totalHeaderLength);
-            std::free(buf);
+            if (buf)
+            {
+                std::memcpy(
+                    buf, probeBuf,
+                    probeSize);  // save what we have already read when probing
+                ifile.read(
+                    (char *)buf + probeSize,
+                    totalHeaderLength -
+                        probeSize);  // read the rest of the header section
+                parseHeader(buf, totalHeaderLength);
+                std::free(buf);
 
-            m_isValid = true;
+                m_isValid = true;
+            }
         }
     }
 

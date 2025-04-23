@@ -10,23 +10,7 @@
  * Copyright (c) 2014, Sebastian Walter <sebastian dot walter at fu-berlin dot
  *de>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 constexpr int VICAR_NULL1 = 0;
@@ -44,16 +28,23 @@ constexpr double VICAR_NULL3 = -32768.0;
 #include "pdsdrivercore.h"
 #include "json_utils.h"
 
+#if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
 #include "gtiff.h"
 #include "geotiff.h"
 #include "tifvsi.h"
 #include "xtiffio.h"
 #include "gt_wkt_srs_priv.h"
+#endif
 
 #include <exception>
 #include <limits>
 #include <string>
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
+#if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
 /* GeoTIFF 1.0 geokeys */
 
 static const geokey_t GTiffAsciiKeys[] = {GTCitationGeoKey, GeogCitationGeoKey,
@@ -84,6 +75,7 @@ static const geokey_t GTiffShortKeys[] = {
     ProjectionGeoKey,       GeogPrimeMeridianGeoKey, GeogLinearUnitsGeoKey,
     GeogAzimuthUnitsGeoKey, VerticalCSTypeGeoKey,    VerticalDatumGeoKey,
     VerticalUnitsGeoKey};
+#endif
 
 /************************************************************************/
 /*                     OGRVICARBinaryPrefixesLayer                      */
@@ -1382,7 +1374,7 @@ static void WriteLabelItemValue(std::string &osLabel, const CPLJSONObject &obj)
     else if (eType == CPLJSONObject::Type::Long)
     {
         std::string osVal(
-            CPLSPrintf("%.18g", static_cast<double>(obj.ToLong())));
+            CPLSPrintf("%.17g", static_cast<double>(obj.ToLong())));
         if (osVal.find('.') == std::string::npos)
             osVal += ".0";
         osLabel += osVal;
@@ -1394,7 +1386,7 @@ static void WriteLabelItemValue(std::string &osLabel, const CPLJSONObject &obj)
             dfVal <= static_cast<double>(std::numeric_limits<GIntBig>::max()) &&
             static_cast<double>(static_cast<GIntBig>(dfVal)) == dfVal)
         {
-            std::string osVal(CPLSPrintf("%.18g", dfVal));
+            std::string osVal(CPLSPrintf("%.17g", dfVal));
             if (osVal.find('.') == std::string::npos)
                 osVal += ".0";
             osLabel += osVal;
@@ -1661,6 +1653,7 @@ void VICARDataset::BuildLabel()
 
     const auto eType = GetRasterBand(1)->GetRasterDataType();
     const char *pszFormat = "";
+    CPL_IGNORE_RET_VAL(pszFormat);  // Make CSA happy
     switch (eType)
     {
         case GDT_Byte:
@@ -1762,7 +1755,9 @@ void VICARDataset::BuildLabel()
         }
         if (!m_oSRS.IsEmpty())
         {
+#if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
             BuildLabelPropertyGeoTIFF(oLabel);
+#endif
         }
     }
 
@@ -1900,6 +1895,7 @@ void VICARDataset::BuildLabelPropertyMap(CPLJSONObject &oLabel)
 /*                    BuildLabelPropertyGeoTIFF()                       */
 /************************************************************************/
 
+#if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
 void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
 {
     auto oProperty = GetOrCreateJSONObject(oLabel, "PROPERTY");
@@ -1913,8 +1909,8 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
 
     // Create a in-memory GeoTIFF file
 
-    char szFilename[100] = {};
-    snprintf(szFilename, sizeof(szFilename), "/vsimem/vicar_tmp_%p.tif", this);
+    const std::string osTmpFilename(
+        VSIMemGenerateHiddenFilename("vicar_tmp.tif"));
     GDALDriver *poGTiffDriver =
         GDALDriver::FromHandle(GDALGetDriverByName("GTiff"));
     if (poGTiffDriver == nullptr)
@@ -1923,8 +1919,8 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
         return;
     }
     const char *const apszOptions[] = {"GEOTIFF_VERSION=1.0", nullptr};
-    auto poDS = std::unique_ptr<GDALDataset>(
-        poGTiffDriver->Create(szFilename, 1, 1, 1, GDT_Byte, apszOptions));
+    auto poDS = std::unique_ptr<GDALDataset>(poGTiffDriver->Create(
+        osTmpFilename.c_str(), 1, 1, 1, GDT_Byte, apszOptions));
     if (!poDS)
         return;
     poDS->SetSpatialRef(&m_oSRS);
@@ -1935,14 +1931,14 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
     poDS.reset();
 
     // Open it with libtiff/libgeotiff
-    VSILFILE *fpL = VSIFOpenL(szFilename, "r");
+    VSILFILE *fpL = VSIFOpenL(osTmpFilename.c_str(), "r");
     if (fpL == nullptr)
     {
-        VSIUnlink(szFilename);
+        VSIUnlink(osTmpFilename.c_str());
         return;
     }
 
-    TIFF *hTIFF = VSI_TIFFOpen(szFilename, "r", fpL);
+    TIFF *hTIFF = VSI_TIFFOpen(osTmpFilename.c_str(), "r", fpL);
     CPLAssert(hTIFF);
 
     GTIF *hGTIF = GTIFNew(hTIFF);
@@ -1966,7 +1962,7 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
         if (GDALGTIFKeyGetDOUBLE(hGTIF, gkey, &val, 0, 1))
         {
             oGeoTIFF.Add(CPLString(GTIFKeyName(gkey)).toupper(),
-                         CPLSPrintf("%.18g", val));
+                         CPLSPrintf("%.17g", val));
         }
     }
 
@@ -1999,7 +1995,7 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
             {
                 if (i > 0)
                     osVal += ',';
-                osVal += CPLSPrintf("%.18g", padfValues[i]);
+                osVal += CPLSPrintf("%.17g", padfValues[i]);
             }
             osVal += ')';
             oGeoTIFF.Add(kv.second, osVal);
@@ -2008,8 +2004,9 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
 
     XTIFFClose(hTIFF);
     CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
-    VSIUnlink(szFilename);
+    VSIUnlink(osTmpFilename.c_str());
 }
+#endif
 
 /************************************************************************/
 /*                       ReadProjectionFromMapGroup()                   */
@@ -2313,6 +2310,7 @@ void VICARDataset::ReadProjectionFromMapGroup()
 /*                    ReadProjectionFromGeoTIFFGroup()                  */
 /************************************************************************/
 
+#if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
 void VICARDataset::ReadProjectionFromGeoTIFFGroup()
 {
     m_bGeoRefFormatIsMIPL = true;
@@ -2320,8 +2318,8 @@ void VICARDataset::ReadProjectionFromGeoTIFFGroup()
     // We will build a in-memory temporary GeoTIFF file from the VICAR GEOTIFF
     // metadata items.
 
-    char szFilename[100] = {};
-    snprintf(szFilename, sizeof(szFilename), "/vsimem/vicar_tmp_%p.tif", this);
+    const std::string osTmpFilename(
+        VSIMemGenerateHiddenFilename("vicar_tmp.tif"));
 
     /* -------------------------------------------------------------------- */
     /*      Initialization of libtiff and libgeotiff.                       */
@@ -2332,11 +2330,11 @@ void VICARDataset::ReadProjectionFromGeoTIFFGroup()
     /* -------------------------------------------------------------------- */
     /*      Initialize access to the memory geotiff structure.              */
     /* -------------------------------------------------------------------- */
-    VSILFILE *fpL = VSIFOpenL(szFilename, "w");
+    VSILFILE *fpL = VSIFOpenL(osTmpFilename.c_str(), "w");
     if (fpL == nullptr)
         return;
 
-    TIFF *hTIFF = VSI_TIFFOpen(szFilename, "w", fpL);
+    TIFF *hTIFF = VSI_TIFFOpen(osTmpFilename.c_str(), "w", fpL);
 
     if (hTIFF == nullptr)
     {
@@ -2451,7 +2449,7 @@ void VICARDataset::ReadProjectionFromGeoTIFFGroup()
     /*      Get georeferencing from file.                                   */
     /* -------------------------------------------------------------------- */
     auto poGTiffDS =
-        std::unique_ptr<GDALDataset>(GDALDataset::Open(szFilename));
+        std::unique_ptr<GDALDataset>(GDALDataset::Open(osTmpFilename.c_str()));
     if (poGTiffDS)
     {
         auto poSRS = poGTiffDS->GetSpatialRef();
@@ -2469,8 +2467,9 @@ void VICARDataset::ReadProjectionFromGeoTIFFGroup()
             GDALDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, pszAreaOrPoint);
     }
 
-    VSIUnlink(szFilename);
+    VSIUnlink(osTmpFilename.c_str());
 }
+#endif
 
 /************************************************************************/
 /*                                Open()                                */
@@ -2612,11 +2611,13 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         poDS->ReadProjectionFromMapGroup();
     }
+#if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
     else if (poDS->GetKeyword("GEOTIFF.GTMODELTYPEGEOKEY")[0] != '\0' ||
              poDS->GetKeyword("GEOTIFF.MODELTIEPOINTTAG")[0] != '\0')
     {
         poDS->ReadProjectionFromGeoTIFFGroup();
     }
+#endif
 
     if (!poDS->m_bGotTransform)
         poDS->m_bGotTransform = CPL_TO_BOOL(GDALReadWorldFile(
@@ -2629,15 +2630,15 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Compute the line offsets.                                        */
     /* -------------------------------------------------------------------- */
 
-    GUInt64 nPixelOffset;
-    GUInt64 nLineOffset;
-    GUInt64 nBandOffset;
-    GUInt64 nImageOffsetWithoutNBB;
-    GUInt64 nNBB;
-    GUInt64 nImageSize;
+    uint64_t nPixelOffset;
+    uint64_t nLineOffset;
+    uint64_t nBandOffset;
+    uint64_t nImageOffsetWithoutNBB;
+    uint64_t nNBB;
+    uint64_t nImageSize;
     if (!GetSpacings(poDS->oKeywords, nPixelOffset, nLineOffset, nBandOffset,
                      nImageOffsetWithoutNBB, nNBB, nImageSize) ||
-        nImageOffsetWithoutNBB > std::numeric_limits<GUInt64>::max() -
+        nImageOffsetWithoutNBB > std::numeric_limits<uint64_t>::max() -
                                      (nNBB + nBandOffset * (nBands - 1)))
     {
         CPLDebug("VICAR", "Invalid spacings found");
@@ -2649,7 +2650,20 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
     if (nNBB != 0)
     {
         const char *pszBLType = poDS->GetKeyword("BLTYPE", nullptr);
+#ifdef USE_ONLY_EMBEDDED_RESOURCE_FILES
+        const char *pszVicarConf = nullptr;
+#else
         const char *pszVicarConf = CPLFindFile("gdal", "vicar.json");
+#endif
+        CPLJSONDocument oDoc;
+        if (!pszVicarConf || EQUAL(pszVicarConf, "vicar.json"))
+        {
+#ifdef EMBED_RESOURCE_FILES
+            oDoc.LoadMemory(VICARGetEmbeddedConf());
+            pszVicarConf = "__embedded__";
+#endif
+        }
+
         if (pszBLType && pszVicarConf && poDS->m_nRecordSize > 0)
         {
 
@@ -2691,8 +2705,7 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
                          "BREALFMT=%s layout not supported.", value);
             }
 
-            CPLJSONDocument oDoc;
-            if (oDoc.Load(pszVicarConf))
+            if (EQUAL(pszVicarConf, "__embedded__") || oDoc.Load(pszVicarConf))
             {
                 const auto oRoot = oDoc.GetRoot();
                 if (oRoot.GetType() == CPLJSONObject::Type::Object)
@@ -3063,22 +3076,22 @@ GDALDataType VICARDataset::GetDataTypeFromFormat(const char *pszFormat)
 /************************************************************************/
 
 bool VICARDataset::GetSpacings(const VICARKeywordHandler &keywords,
-                               GUInt64 &nPixelOffset, GUInt64 &nLineOffset,
-                               GUInt64 &nBandOffset,
-                               GUInt64 &nImageOffsetWithoutNBB, GUInt64 &nNBB,
-                               GUInt64 &nImageSize)
+                               uint64_t &nPixelOffset, uint64_t &nLineOffset,
+                               uint64_t &nBandOffset,
+                               uint64_t &nImageOffsetWithoutNBB, uint64_t &nNBB,
+                               uint64_t &nImageSize)
 {
     const GDALDataType eDataType =
         GetDataTypeFromFormat(keywords.GetKeyword("FORMAT", ""));
     if (eDataType == GDT_Unknown)
         return false;
-    const GUInt64 nItemSize = GDALGetDataTypeSizeBytes(eDataType);
+    const uint64_t nItemSize = GDALGetDataTypeSizeBytes(eDataType);
     const char *value = keywords.GetKeyword("ORG", "BSQ");
     // number of bytes of binary prefix before each record
     nNBB = atoi(keywords.GetKeyword("NBB", ""));
-    const GUInt64 nCols64 = atoi(keywords.GetKeyword("NS", ""));
-    const GUInt64 nRows64 = atoi(keywords.GetKeyword("NL", ""));
-    const GUInt64 nBands64 = atoi(keywords.GetKeyword("NB", ""));
+    const uint64_t nCols64 = atoi(keywords.GetKeyword("NS", ""));
+    const uint64_t nRows64 = atoi(keywords.GetKeyword("NL", ""));
+    const uint64_t nBands64 = atoi(keywords.GetKeyword("NB", ""));
     try
     {
         if (EQUAL(value, "BIP"))
@@ -3117,9 +3130,9 @@ bool VICARDataset::GetSpacings(const VICARKeywordHandler &keywords,
         return false;
     }
 
-    const GUInt64 nLabelSize = atoi(keywords.GetKeyword("LBLSIZE", ""));
-    const GUInt64 nRecordSize = atoi(keywords.GetKeyword("RECSIZE", ""));
-    const GUInt64 nNLB = atoi(keywords.GetKeyword("NLB", ""));
+    const uint64_t nLabelSize = atoi(keywords.GetKeyword("LBLSIZE", ""));
+    const uint64_t nRecordSize = atoi(keywords.GetKeyword("RECSIZE", ""));
+    const uint64_t nNLB = atoi(keywords.GetKeyword("NLB", ""));
     try
     {
         nImageOffsetWithoutNBB =

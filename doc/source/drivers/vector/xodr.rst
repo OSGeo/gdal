@@ -7,11 +7,11 @@ XODR -- OpenDRIVE Road Description Format
 
 .. shortname:: XODR
 
-.. build_dependencies:: libOpenDRIVE >= 0.5.0, GEOS
+.. build_dependencies:: libOpenDRIVE >= 0.6.0, GEOS
 
-This driver provides read access to road network elements of OpenDRIVE datasets.
+This driver provides read access to road network elements of ASAM OpenDRIVE datasets.
 
-`OpenDRIVE <https://www.asam.net/standards/detail/opendrive/>`_ is an open industry format for lane-detailed description of road networks, commonly used in applications of the automotive and transportation systems domains. It bundles polynomial, continuous road geometry modelling with all necessary topological links and semantic information from traffic-regulating infrastructure (signs and traffic lights).
+`ASAM OpenDRIVE <https://www.asam.net/standards/detail/opendrive/>`_ is an open industry format for lane-detailed description of road networks, commonly used in applications of the automotive and transportation systems domains. It bundles polynomial, continuous road geometry modelling with all necessary topological links and semantic information from traffic-regulating infrastructure (signs and traffic lights).
 
 Driver capabilities
 -------------------

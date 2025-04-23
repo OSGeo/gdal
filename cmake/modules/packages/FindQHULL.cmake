@@ -33,6 +33,7 @@ else()
   set(_library_name qhull_r qhullstatic_r)
 endif()
 find_library(QHULL_LIBRARY NAMES ${_library_name}
+             NAMES_PER_DIR
              HINTS ${PC_QHULL_LIBRARY_DIRS})
 unset(_library_name)
 

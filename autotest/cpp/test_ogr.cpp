@@ -7,23 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2006, Mateusz Loskot <mateusz@loskot.net>
 /*
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_unit_test.h"
@@ -32,9 +16,11 @@
 #include "ogrsf_frmts.h"
 #include "../../ogr/ogrsf_frmts/osm/gpb.h"
 #include "ogr_recordbatch.h"
+#include "ogrlayerarrow.h"
 
 #include <string>
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <limits>
 
@@ -50,7 +36,6 @@ namespace
 // Common fixture with test data
 struct test_ogr : public ::testing::Test
 {
-    std::string drv_shape_{"ESRI Shapefile"};
     std::string data_{tut::common::data_basedir};
     std::string data_tmp_{tut::common::tmp_basedir};
 };
@@ -59,14 +44,6 @@ struct test_ogr : public ::testing::Test
 TEST_F(test_ogr, GetGDALDriverManager)
 {
     ASSERT_TRUE(nullptr != GetGDALDriverManager());
-}
-
-// Test if Shapefile driver is registered
-TEST_F(test_ogr, Shapefile_driver)
-{
-    GDALDriver *drv =
-        GetGDALDriverManager()->GetDriverByName(drv_shape_.c_str());
-    ASSERT_TRUE(nullptr != drv);
 }
 
 template <class T>
@@ -93,6 +70,7 @@ void testSpatialReferenceLeakOnCopy(OGRSpatialReference *poSRS)
         ASSERT_GT(nCurCount, nLastCount);
         nLastCount = nCurCount;
 
+        // coverity[copy_assignment_call]
         value3 = value;
         ASSERT_EQ(nLastCount, poSRS->GetReferenceCount());
     }
@@ -286,7 +264,7 @@ template <> OGRPolyhedralSurface *make()
 
 template <class T> void testCopyEquals()
 {
-    T *poOrigin = make<T>();
+    auto poOrigin = std::unique_ptr<T>(make<T>());
     ASSERT_TRUE(nullptr != poOrigin);
 
     T value2(*poOrigin);
@@ -312,7 +290,8 @@ template <class T> void testCopyEquals()
         << poOrigin->getGeometryName()
         << ": assignment operator changed a value";
 
-    OGRGeometryFactory::destroyGeometry(poOrigin);
+    value3 = T();
+    ASSERT_TRUE(value3.IsEmpty());
 }
 
 // Test if copy constructor and assignment operators succeeds on copying the
@@ -335,6 +314,116 @@ TEST_F(test_ogr, SpatialReference_leak_copy_constructor)
     testCopyEquals<OGRTriangle>();
     testCopyEquals<OGRPolyhedralSurface>();
     testCopyEquals<OGRTriangulatedSurface>();
+}
+
+// Test crazy usage of OGRGeometryCollection copy constructor
+TEST_F(test_ogr, OGRGeometryCollection_copy_constructor_illegal_use)
+{
+    OGRGeometryCollection gc;
+    gc.addGeometryDirectly(new OGRPoint(1, 2));
+
+    OGRMultiPolygon mp;
+    mp.addGeometryDirectly(new OGRPolygon());
+
+    OGRGeometryCollection *mp_as_gc = &mp;
+    CPLErrorReset();
+    {
+        CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+        // coverity[copy_assignment_call]
+        *mp_as_gc = gc;
+    }
+    EXPECT_STREQ(CPLGetLastErrorMsg(),
+                 "Illegal use of OGRGeometryCollection::operator=(): trying to "
+                 "assign an incompatible sub-geometry");
+    EXPECT_TRUE(mp.IsEmpty());
+}
+
+// Test crazy usage of OGRCurvePolygon copy constructor
+TEST_F(test_ogr, OGRCurvePolygon_copy_constructor_illegal_use)
+{
+    OGRCurvePolygon cp;
+    auto poCC = new OGRCircularString();
+    poCC->addPoint(0, 0);
+    poCC->addPoint(1, 1);
+    poCC->addPoint(2, 0);
+    poCC->addPoint(1, -1);
+    poCC->addPoint(0, 0);
+    cp.addRingDirectly(poCC);
+
+    OGRPolygon poly;
+    auto poLR = new OGRLinearRing();
+    poLR->addPoint(0, 0);
+    poLR->addPoint(1, 1);
+    poLR->addPoint(2, 0);
+    poLR->addPoint(1, -1);
+    poLR->addPoint(0, 0);
+    poly.addRingDirectly(poLR);
+
+    OGRCurvePolygon *poly_as_cp = &poly;
+    CPLErrorReset();
+    {
+        CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+        // coverity[copy_assignment_call]
+        *poly_as_cp = cp;
+    }
+    EXPECT_STREQ(CPLGetLastErrorMsg(),
+                 "Illegal use of OGRCurvePolygon::operator=(): trying to "
+                 "assign an incompatible sub-geometry");
+    EXPECT_TRUE(poly.IsEmpty());
+}
+
+template <class T> void testMove()
+{
+    auto poSRS = new OGRSpatialReference();
+    {
+        auto poOrigin = std::unique_ptr<T>(make<T>());
+        ASSERT_TRUE(nullptr != poOrigin);
+        poOrigin->assignSpatialReference(poSRS);
+
+        T valueCopy(*poOrigin);
+        const int refCountBefore = poSRS->GetReferenceCount();
+        T fromMoved(std::move(*poOrigin));
+        EXPECT_EQ(poSRS->GetReferenceCount(), refCountBefore);
+
+        ASSERT_TRUE(CPL_TO_BOOL(fromMoved.Equals(&valueCopy)))
+            << valueCopy.getGeometryName()
+            << ": move constructor changed a value";
+        EXPECT_EQ(fromMoved.getSpatialReference(), poSRS);
+
+        T valueCopy2(valueCopy);
+        EXPECT_EQ(valueCopy.getSpatialReference(), poSRS);
+        T value3;
+        const int refCountBefore2 = poSRS->GetReferenceCount();
+        value3 = std::move(valueCopy);
+        EXPECT_EQ(poSRS->GetReferenceCount(), refCountBefore2);
+
+        ASSERT_TRUE(CPL_TO_BOOL(value3.Equals(&valueCopy2)))
+            << valueCopy2.getGeometryName()
+            << ": move assignment operator changed a value";
+        EXPECT_EQ(value3.getSpatialReference(), poSRS);
+    }
+    EXPECT_EQ(poSRS->GetReferenceCount(), 1);
+    poSRS->Release();
+}
+
+TEST_F(test_ogr, geometry_move)
+{
+    testMove<OGRPoint>();
+    testMove<OGRLineString>();
+    testMove<OGRLinearRing>();
+    testMove<OGRCircularString>();
+    testMove<OGRCompoundCurve>();
+    testMove<OGRCurvePolygon>();
+    testMove<OGRPolygon>();
+    testMove<OGRGeometryCollection>();
+    testMove<OGRMultiSurface>();
+    testMove<OGRMultiPolygon>();
+    testMove<OGRMultiPoint>();
+    testMove<OGRMultiCurve>();
+    testMove<OGRMultiLineString>();
+    testMove<OGRTriangle>();
+    testMove<OGRPolyhedralSurface>();
+    testMove<OGRTriangulatedSurface>();
 }
 
 TEST_F(test_ogr, geometry_get_point)
@@ -1332,6 +1421,12 @@ TEST_F(test_ogr, OGRToOGCGeomType)
 // Test layer, dataset-feature and layer-feature iterators
 TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
 {
+    if (!GDALGetDriverByName("ESRI Shapefile"))
+    {
+        GTEST_SKIP() << "ESRI Shapefile driver missing";
+        return;
+    }
+
     std::string file(data_ + SEP + "poly.shp");
     GDALDatasetUniquePtr poDS(GDALDataset::Open(file.c_str(), GDAL_OF_VECTOR));
     ASSERT_TRUE(poDS != nullptr);
@@ -1396,7 +1491,7 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
         ASSERT_TRUE(oIter != poLayer->end());
     }
 
-    poDS.reset(GetGDALDriverManager()->GetDriverByName("Memory")->Create(
+    poDS.reset(GetGDALDriverManager()->GetDriverByName("MEM")->Create(
         "", 0, 0, 0, GDT_Unknown, nullptr));
     int nCountLayers = 0;
     for (auto poLayer : poDS->GetLayers())
@@ -2017,7 +2112,7 @@ TEST_F(test_ogr, InitStyleString_with_style_name)
 TEST_F(test_ogr, OGR_L_GetArrowStream)
 {
     auto poDS = std::unique_ptr<GDALDataset>(
-        GetGDALDriverManager()->GetDriverByName("Memory")->Create(
+        GetGDALDriverManager()->GetDriverByName("MEM")->Create(
             "", 0, 0, 0, GDT_Unknown, nullptr));
     auto poLayer = poDS->CreateLayer("test");
     {
@@ -2386,6 +2481,36 @@ TEST_F(test_ogr, feature_defn_geomfields_iterator)
         ++i;
     }
     EXPECT_EQ(i, oFDefn.GetGeomFieldCount());
+}
+
+// Test OGRGeomFieldDefn copy constructor
+TEST_F(test_ogr, geom_field_defn_copy_constructor)
+{
+    {
+        OGRGeomFieldDefn oGeomFieldDefn("field1", wkbPoint);
+        oGeomFieldDefn.SetNullable(false);
+        OGRGeomFieldDefn oGeomFieldDefn2("field2", wkbLineString);
+        oGeomFieldDefn2 = oGeomFieldDefn;
+        EXPECT_TRUE(oGeomFieldDefn2.IsSame(&oGeomFieldDefn));
+    }
+
+    {
+        OGRSpatialReference oSRS;
+        oSRS.SetFromUserInput("WGS84");
+        EXPECT_EQ(oSRS.GetReferenceCount(), 1);
+        OGRGeomFieldDefn oGeomFieldDefn("field1", wkbPoint);
+        oGeomFieldDefn.SetSpatialRef(&oSRS);
+        EXPECT_EQ(oSRS.GetReferenceCount(), 2);
+        OGRGeomFieldDefn oGeomFieldDefn2("field2", wkbLineString);
+        oGeomFieldDefn2 = oGeomFieldDefn;
+        EXPECT_EQ(oSRS.GetReferenceCount(), 3);
+        EXPECT_TRUE(oGeomFieldDefn2.IsSame(&oGeomFieldDefn));
+
+        // oGeomFieldDefn2 already points to oSRS
+        oGeomFieldDefn2 = oGeomFieldDefn;
+        EXPECT_EQ(oSRS.GetReferenceCount(), 3);
+        EXPECT_TRUE(oGeomFieldDefn2.IsSame(&oGeomFieldDefn));
+    }
 }
 
 // Test GDALDataset QueryLoggerFunc callback
@@ -4198,6 +4323,318 @@ TEST_F(test_ogr, OGRCurve_reversePoints)
         CPLFree(pszWKT);
         delete poGeom;
     }
+}
+
+// Test OGRGeometryFactory::transformWithOptions()
+TEST_F(test_ogr, transformWithOptions)
+{
+    // Projected CRS to national geographic CRS (not including poles or antimeridian)
+    auto [poGeom, err] = OGRGeometryFactory::createFromWkt(
+        "LINESTRING(700000 6600000, 700001 6600001)");
+    ASSERT_NE(poGeom, nullptr);
+
+    OGRSpatialReference oEPSG_2154;
+    oEPSG_2154.importFromEPSG(2154);  // "RGF93 v1 / Lambert-93"
+    OGRSpatialReference oEPSG_4171;
+    oEPSG_4171.importFromEPSG(4171);  // "RGF93 v1"
+    oEPSG_4171.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+        OGRCreateCoordinateTransformation(&oEPSG_2154, &oEPSG_4171));
+    OGRGeometryFactory::TransformWithOptionsCache oCache;
+    auto poNewGeom =
+        std::unique_ptr<OGRGeometry>(OGRGeometryFactory::transformWithOptions(
+            poGeom.get(), poCT.get(), nullptr, oCache));
+    ASSERT_NE(poNewGeom, nullptr);
+    EXPECT_NEAR(poNewGeom->toLineString()->getX(0), 3, 1e-8);
+    EXPECT_NEAR(poNewGeom->toLineString()->getY(0), 46.5, 1e-8);
+}
+
+#ifdef HAVE_GEOS
+
+// Test OGRGeometryFactory::transformWithOptions()
+TEST_F(test_ogr, transformWithOptions_GEOS)
+{
+    // Projected CRS to national geographic CRS including antimeridian
+    auto [poGeom, err] = OGRGeometryFactory::createFromWkt(
+        "LINESTRING(657630.64 4984896.17,815261.43 4990738.26)");
+    ASSERT_NE(poGeom, nullptr);
+
+    OGRSpatialReference oEPSG_6329;
+    oEPSG_6329.importFromEPSG(6329);  // "NAD83(2011) / UTM zone 60N"
+    OGRSpatialReference oEPSG_6318;
+    oEPSG_6318.importFromEPSG(6318);  // "NAD83(2011)"
+    oEPSG_6318.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+        OGRCreateCoordinateTransformation(&oEPSG_6329, &oEPSG_6318));
+    OGRGeometryFactory::TransformWithOptionsCache oCache;
+    auto poNewGeom =
+        std::unique_ptr<OGRGeometry>(OGRGeometryFactory::transformWithOptions(
+            poGeom.get(), poCT.get(), nullptr, oCache));
+    ASSERT_NE(poNewGeom, nullptr);
+    EXPECT_EQ(poNewGeom->getGeometryType(), wkbMultiLineString);
+    if (poNewGeom->getGeometryType() == wkbMultiLineString)
+    {
+        const auto poMLS = poNewGeom->toMultiLineString();
+        EXPECT_EQ(poMLS->getNumGeometries(), 2);
+        if (poMLS->getNumGeometries() == 2)
+        {
+            const auto poLS = poMLS->getGeometryRef(0);
+            EXPECT_EQ(poLS->getNumPoints(), 2);
+            if (poLS->getNumPoints() == 2)
+            {
+                EXPECT_NEAR(poLS->getX(0), 179, 1e-6);
+                EXPECT_NEAR(poLS->getY(0), 45, 1e-6);
+                EXPECT_NEAR(poLS->getX(1), 180, 1e-6);
+                EXPECT_NEAR(poLS->getY(1), 45.004384301691303, 1e-6);
+            }
+        }
+    }
+}
+#endif
+
+// Test OGRCurvePolygon::addRingDirectly
+TEST_F(test_ogr, OGRCurvePolygon_addRingDirectly)
+{
+    OGRCurvePolygon cp;
+    OGRGeometry *ring;
+
+    // closed CircularString
+    OGRGeometryFactory::createFromWkt(
+        "CIRCULARSTRING (0 0, 1 1, 2 0, 1 -1, 0 0)", nullptr, &ring);
+    ASSERT_TRUE(ring);
+    EXPECT_EQ(cp.addRingDirectly(ring->toCurve()), OGRERR_NONE);
+
+    // open CircularString
+    OGRGeometryFactory::createFromWkt("CIRCULARSTRING (0 0, 1 1, 2 0)", nullptr,
+                                      &ring);
+    ASSERT_TRUE(ring);
+    {
+        CPLConfigOptionSetter oSetter("OGR_GEOMETRY_ACCEPT_UNCLOSED_RING", "NO",
+                                      false);
+        ASSERT_EQ(cp.addRingDirectly(ring->toCurve()),
+                  OGRERR_UNSUPPORTED_GEOMETRY_TYPE);
+    }
+    EXPECT_EQ(cp.addRingDirectly(ring->toCurve()), OGRERR_NONE);
+
+    // closed CompoundCurve
+    OGRGeometryFactory::createFromWkt(
+        "COMPOUNDCURVE( CIRCULARSTRING (0 0, 1 1, 2 0), (2 0, 0 0))", nullptr,
+        &ring);
+    ASSERT_TRUE(ring);
+    EXPECT_EQ(cp.addRingDirectly(ring->toCurve()), OGRERR_NONE);
+
+    // closed LineString
+    OGRGeometryFactory::createFromWkt("LINESTRING (0 0, 1 0, 1 1, 0 1, 0 0)",
+                                      nullptr, &ring);
+    ASSERT_TRUE(ring);
+    EXPECT_EQ(cp.addRingDirectly(ring->toCurve()), OGRERR_NONE);
+
+    // LinearRing
+    auto lr = std::make_unique<OGRLinearRing>();
+    lr->addPoint(0, 0);
+    lr->addPoint(1, 0);
+    lr->addPoint(1, 1);
+    lr->addPoint(0, 1);
+    lr->addPoint(0, 0);
+    ASSERT_TRUE(ring);
+    ASSERT_EQ(cp.addRingDirectly(lr.get()), OGRERR_UNSUPPORTED_GEOMETRY_TYPE);
+}
+
+// Test OGRPolygon::addRingDirectly
+TEST_F(test_ogr, OGRPolygon_addRingDirectly)
+{
+    OGRPolygon p;
+    OGRGeometry *ring;
+
+    // closed CircularString
+    OGRGeometryFactory::createFromWkt(
+        "CIRCULARSTRING (0 0, 1 1, 2 0, 1 -1, 0 0)", nullptr, &ring);
+    ASSERT_TRUE(ring);
+    EXPECT_EQ(p.addRingDirectly(ring->toCurve()),
+              OGRERR_UNSUPPORTED_GEOMETRY_TYPE);
+    delete ring;
+
+    // closed LineString
+    OGRGeometryFactory::createFromWkt("LINESTRING (0 0, 1 0, 1 1, 0 1, 0 0)",
+                                      nullptr, &ring);
+    ASSERT_TRUE(ring);
+    EXPECT_EQ(p.addRingDirectly(ring->toCurve()),
+              OGRERR_UNSUPPORTED_GEOMETRY_TYPE);
+    delete ring;
+
+    // open LineString
+    OGRGeometryFactory::createFromWkt("LINESTRING (0 0, 1 0)", nullptr, &ring);
+    ASSERT_TRUE(ring);
+    EXPECT_EQ(p.addRingDirectly(ring->toCurve()),
+              OGRERR_UNSUPPORTED_GEOMETRY_TYPE);
+    delete ring;
+
+    // LinearRing
+    auto lr = std::make_unique<OGRLinearRing>();
+    lr->addPoint(0, 0);
+    lr->addPoint(1, 0);
+    lr->addPoint(1, 1);
+    lr->addPoint(0, 1);
+    lr->addPoint(0, 0);
+    ASSERT_EQ(p.addRingDirectly(lr.release()), OGRERR_NONE);
+}
+
+TEST_F(test_ogr, OGRFeature_SetGeometry)
+{
+    OGRFeatureDefn *poFeatureDefn = new OGRFeatureDefn();
+    poFeatureDefn->Reference();
+
+    OGRFeature oFeat(poFeatureDefn);
+    auto [poGeom, err] = OGRGeometryFactory::createFromWkt("POINT (3 7)");
+    ASSERT_EQ(err, OGRERR_NONE);
+
+    ASSERT_EQ(oFeat.SetGeometry(std::move(poGeom)), OGRERR_NONE);
+    EXPECT_EQ(oFeat.GetGeometryRef()->toPoint()->getX(), 3);
+    EXPECT_EQ(oFeat.GetGeometryRef()->toPoint()->getY(), 7);
+
+    // set it again to make sure previous feature geometry is freed
+    std::tie(poGeom, err) = OGRGeometryFactory::createFromWkt("POINT (2 8)");
+    ASSERT_EQ(err, OGRERR_NONE);
+    ASSERT_EQ(oFeat.SetGeometry(std::move(poGeom)), OGRERR_NONE);
+    EXPECT_EQ(oFeat.GetGeometryRef()->toPoint()->getX(), 2);
+    EXPECT_EQ(oFeat.GetGeometryRef()->toPoint()->getY(), 8);
+
+    poFeatureDefn->Release();
+}
+
+TEST_F(test_ogr, OGRFeature_SetGeomField)
+{
+    OGRFeatureDefn *poFeatureDefn = new OGRFeatureDefn();
+    poFeatureDefn->Reference();
+
+    OGRGeomFieldDefn oGeomField("second", wkbPoint);
+    poFeatureDefn->AddGeomFieldDefn(&oGeomField);
+
+    OGRFeature oFeat(poFeatureDefn);
+
+    // failure
+    {
+        auto [poGeom, err] = OGRGeometryFactory::createFromWkt("POINT (3 7)");
+        ASSERT_EQ(err, OGRERR_NONE);
+        EXPECT_EQ(oFeat.SetGeomField(13, std::move(poGeom)), OGRERR_FAILURE);
+    }
+
+    // success
+    {
+        auto [poGeom, err] = OGRGeometryFactory::createFromWkt("POINT (3 7)");
+        ASSERT_EQ(err, OGRERR_NONE);
+        EXPECT_EQ(oFeat.SetGeomField(1, std::move(poGeom)), OGRERR_NONE);
+    }
+
+    poFeatureDefn->Release();
+}
+
+TEST_F(test_ogr, GetArrowStream_DateTime_As_String)
+{
+    auto poDS = std::unique_ptr<GDALDataset>(
+        GetGDALDriverManager()->GetDriverByName("MEM")->Create(
+            "", 0, 0, 0, GDT_Unknown, nullptr));
+    auto poLayer = poDS->CreateLayer("test", nullptr, wkbNone);
+    OGRFieldDefn oFieldDefn("dt", OFTDateTime);
+    poLayer->CreateField(&oFieldDefn);
+    struct ArrowArrayStream stream;
+    CPLStringList aosOptions;
+    aosOptions.SetNameValue("INCLUDE_FID", "NO");
+    aosOptions.SetNameValue("DATETIME_AS_STRING", "YES");
+    ASSERT_TRUE(poLayer->GetArrowStream(&stream, aosOptions.List()));
+    struct ArrowSchema schema;
+    memset(&schema, 0, sizeof(schema));
+    EXPECT_EQ(stream.get_schema(&stream, &schema), 0);
+    EXPECT_TRUE(schema.n_children == 1 &&
+                strcmp(schema.children[0]->format, "u") == 0)
+        << schema.n_children;
+    if (schema.n_children == 1 && strcmp(schema.children[0]->format, "u") == 0)
+    {
+        EXPECT_TRUE(schema.children[0]->metadata != nullptr);
+        if (schema.children[0]->metadata)
+        {
+            auto oMapKeyValue =
+                OGRParseArrowMetadata(schema.children[0]->metadata);
+            EXPECT_EQ(oMapKeyValue.size(), 1);
+            if (oMapKeyValue.size() == 1)
+            {
+                EXPECT_STREQ(oMapKeyValue.begin()->first.c_str(),
+                             "GDAL:OGR:type");
+                EXPECT_STREQ(oMapKeyValue.begin()->second.c_str(), "DateTime");
+            }
+        }
+    }
+    schema.release(&schema);
+    stream.release(&stream);
+}
+
+// Test OGRFeatureDefn::GetFieldSubTypeByName()
+TEST_F(test_ogr, OGRFieldDefnGetFieldSubTypeByName)
+{
+    for (int i = 0; i < OFSTMaxSubType; i++)
+    {
+        const char *pszName =
+            OGRFieldDefn::GetFieldSubTypeName(static_cast<OGRFieldSubType>(i));
+        if (pszName != nullptr)
+        {
+            EXPECT_EQ(OGRFieldDefn::GetFieldSubTypeByName(pszName), i);
+        }
+    }
+}
+
+// Test OGRFeatureDefn::GetFieldTypeByName()
+TEST_F(test_ogr, OGRFieldDefnGetFieldTypeByName)
+{
+    for (int i = 0; i < OFTMaxType; i++)
+    {
+        // deprecated types
+        if (i == OFTWideString || i == OFTWideStringList)
+        {
+            continue;
+        }
+        const char *pszName =
+            OGRFieldDefn::GetFieldTypeName(static_cast<OGRFieldType>(i));
+        if (pszName != nullptr)
+        {
+            EXPECT_EQ(OGRFieldDefn::GetFieldTypeByName(pszName), i);
+        }
+    }
+}
+
+// Test OGRGeometryFactory::GetDefaultArcStepSize()
+TEST_F(test_ogr, GetDefaultArcStepSize)
+{
+    if (CPLGetConfigOption("OGR_ARC_STEPSIZE", nullptr) == nullptr)
+    {
+        EXPECT_EQ(OGRGeometryFactory::GetDefaultArcStepSize(), 4.0);
+    }
+    {
+        CPLConfigOptionSetter oSetter("OGR_ARC_STEPSIZE", "0.00001",
+                                      /* bSetOnlyIfUndefined = */ false);
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        EXPECT_EQ(OGRGeometryFactory::GetDefaultArcStepSize(), 1e-2);
+        EXPECT_TRUE(
+            strstr(CPLGetLastErrorMsg(),
+                   "Too small value for OGR_ARC_STEPSIZE. Clamping it to"));
+    }
+    {
+        CPLConfigOptionSetter oSetter("OGR_ARC_STEPSIZE", "190",
+                                      /* bSetOnlyIfUndefined = */ false);
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        EXPECT_EQ(OGRGeometryFactory::GetDefaultArcStepSize(), 180);
+        EXPECT_TRUE(
+            strstr(CPLGetLastErrorMsg(),
+                   "Too large value for OGR_ARC_STEPSIZE. Clamping it to"));
+    }
+}
+
+TEST_F(test_ogr, OGRPolygon_two_vertex_constructor)
+{
+    OGRPolygon p(1, 2, 3, 4);
+    char *outWKT = nullptr;
+    p.exportToWkt(&outWKT, wkbVariantIso);
+    EXPECT_STREQ(outWKT, "POLYGON ((1 2,1 4,3 4,3 2,1 2))");
+    CPLFree(outWKT);
 }
 
 }  // namespace

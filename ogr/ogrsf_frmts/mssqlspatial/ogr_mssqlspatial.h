@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MSSQL Spatial driver
  * Purpose:  Definition of classes for OGR MSSQL Spatial driver.
@@ -8,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2010, Tamas Szekeres
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_MSSQLSPATIAL_H_INCLUDED
@@ -458,13 +441,8 @@ class OGRMSSQLSpatialTableLayer final : public OGRMSSQLSpatialLayer
     OGRErr CreateSpatialIndex();
     void DropSpatialIndex();
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override
-    {
-        return GetExtent(0, psExtent, bForce);
-    }
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual GIntBig GetFeatureCount(int) override;
 
@@ -537,8 +515,8 @@ class OGRMSSQLSpatialTableLayer final : public OGRMSSQLSpatialLayer
         bUpdateAccess = bFlag;
     }
 
-    // cppcheck-suppress functionStatic
-    OGRErr StartCopy();
+    static OGRErr StartCopy();
+
     // cppcheck-suppress functionStatic
     OGRErr EndCopy();
 
@@ -569,14 +547,6 @@ class OGRMSSQLSpatialSelectLayer final : public OGRMSSQLSpatialLayer
 
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce) override
-    {
-        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
-    }
-
     virtual int TestCapability(const char *) override;
 };
 
@@ -584,7 +554,7 @@ class OGRMSSQLSpatialSelectLayer final : public OGRMSSQLSpatialLayer
 /*                           OGRODBCDataSource                          */
 /************************************************************************/
 
-class OGRMSSQLSpatialDataSource final : public OGRDataSource
+class OGRMSSQLSpatialDataSource final : public GDALDataset
 {
     typedef struct
     {
@@ -596,8 +566,6 @@ class OGRMSSQLSpatialDataSource final : public OGRDataSource
 
     OGRMSSQLSpatialTableLayer **papoLayers;
     int nLayers;
-
-    char *pszName;
 
     char *pszCatalog;
 
@@ -646,11 +614,6 @@ class OGRMSSQLSpatialDataSource final : public OGRDataSource
                   const char *pszGeomCol, int nCoordDimension, int nSRID,
                   const char *pszSRText, OGRwkbGeometryType eType,
                   bool bUpdate);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;

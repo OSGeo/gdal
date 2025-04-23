@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_rasterize testing
@@ -11,23 +10,7 @@
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import sys
@@ -56,6 +39,7 @@ def gdal_rasterize_path():
 # Simple polygon rasterization (adapted from alg/rasterize.py).
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_gdal_rasterize_1(gdal_rasterize_path, tmp_path):
 
     output_tif = str(tmp_path / "rast1.tif")
@@ -139,7 +123,6 @@ def test_gdal_rasterize_2(gdal_rasterize_path, tmp_path):
     output_tif = str(tmp_path / "rast2.tif")
 
     # Create a raster to rasterize into.
-
     target_ds = gdal.GetDriverByName("GTiff").Create(
         output_tif, 12, 12, 3, gdal.GDT_Byte
     )
@@ -363,7 +346,7 @@ def test_gdal_rasterize_6(gdal_rasterize_path, tmp_path):
 @pytest.mark.parametrize("sql_in_file", [False, True])
 def test_gdal_rasterize_7(gdal_rasterize_path, sql_in_file, tmp_path):
 
-    pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
 
     input_csv = str(tmp_path / "test_gdal_rasterize_7.csv")
     output_tif = str(tmp_path / "test_gdal_rasterize_7.tif")
@@ -425,7 +408,7 @@ def test_gdal_rasterize_8(gdal_rasterize_path, tmp_path):
     f.write('"LINESTRING (0 0, 5 5, 10 0, 10 10)",1'.encode("ascii"))
     f.close()
 
-    cmds = f"""{input_csv} {output_tif} -init 0 -burn 1 -tr 1 1"""
+    cmds = f"""{input_csv} {output_tif} -tr 1 1 -init 0 -burn 1"""
 
     gdaltest.runexternal(gdal_rasterize_path + " " + cmds)
 
@@ -434,3 +417,33 @@ def test_gdal_rasterize_8(gdal_rasterize_path, tmp_path):
     assert cs == 21, "Did not rasterize line data properly"
 
     ds = None
+
+
+###############################################################################
+# Test that -ts also accepts double and warns if not integer
+
+
+@pytest.mark.require_driver("CSV")
+def test_gdal_rasterize_ts_1(tmp_path, gdal_rasterize_path):
+
+    output_tif = str(tmp_path / "rast2.tif")
+
+    # Create a raster to rasterize into.
+    target_ds = gdal.GetDriverByName("GTiff").Create(
+        output_tif, 12, 12, 3, gdal.GDT_Byte
+    )
+    target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
+
+    # Close TIF file
+    target_ds = None
+
+    # Run the algorithm.
+    (_, err) = gdaltest.runexternal_out_and_err(
+        f"{gdal_rasterize_path} -at -burn 200 -ts 100.0 200.0 ../alg/data/cutline.csv {output_tif}"
+    )
+    assert err is None or err == "", f"got error/warning {err}"
+
+    (_, err) = gdaltest.runexternal_out_and_err(
+        f"{gdal_rasterize_path} -at -burn 200 -ts 100.4 200.6 ../alg/data/cutline.csv {output_tif}"
+    )
+    assert "-ts values parsed as 100 200" in err

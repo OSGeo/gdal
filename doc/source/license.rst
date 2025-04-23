@@ -7,8 +7,7 @@ License
 License
 --------------------------------------------------------------------------------
 
-In general GDAL/OGR is licensed under an MIT style license with the
-following terms:
+In general, the GDAL/OGR source code is licensed under the MIT license, whose terms are:
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -28,6 +27,13 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
-The full licensing terms are available in the `LICENSE.TXT`_ file.
+Some files are licensed under BSD 2-clause, BSD 3-clause or other non-copyleft
+licenses. The full licensing terms are available in the `LICENSE.TXT`_ file.
+
+Note however that GDAL can be built against many dependencies, each of them with
+their own licensing terms (possibly LGPL, GPL or proprietary), hence the use of
+a GDAL binary can be subject to less permissive licensing terms than MIT, and it
+is the responsibility of users to check that they comply with the overall
+licensing terms.
 
 .. _`LICENSE.TXT`: https://raw.githubusercontent.com/OSGeo/gdal/master/LICENSE.TXT

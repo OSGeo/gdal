@@ -7,29 +7,15 @@
  ******************************************************************************
  * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_pdf.h"
 #include "pdfcreatecopy.h"
 #include "memdataset.h"
 #include "pdfcreatefromcomposition.h"
+
+#include <cmath>
 
 /************************************************************************/
 /*                      PDFWritableVectorDataset()                      */
@@ -121,8 +107,8 @@ PDFWritableVectorDataset::ICreateLayer(const char *pszLayerName,
     if (poSRSClone)
         poSRSClone->Release();
 
-    papoLayers =
-        (OGRLayer **)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer *));
+    papoLayers = static_cast<OGRLayer **>(
+        CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer *)));
     papoLayers[nLayers] = poLayer;
     nLayers++;
 
@@ -203,7 +189,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
     {
         nWidth = 1024;
         const double dfHeight = nWidth * dfRatio;
-        if (dfHeight < 1 || dfHeight > INT_MAX || CPLIsNan(dfHeight))
+        if (dfHeight < 1 || dfHeight > INT_MAX || std::isnan(dfHeight))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid image dimensions");
             return OGRERR_FAILURE;
@@ -214,7 +200,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
     {
         nHeight = 1024;
         const double dfWidth = nHeight / dfRatio;
-        if (dfWidth < 1 || dfWidth > INT_MAX || CPLIsNan(dfWidth))
+        if (dfWidth < 1 || dfWidth > INT_MAX || std::isnan(dfWidth))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid image dimensions");
             return OGRERR_FAILURE;
@@ -377,9 +363,9 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
         else
             osLayerName = papszLayerNames[i];
 
-        oWriter.WriteOGRLayer((OGRDataSourceH)this, i, pszOGRDisplayField,
-                              pszOGRLinkField, osLayerName, bWriteOGRAttributes,
-                              iObj);
+        oWriter.WriteOGRLayer(GDALDataset::ToHandle(this), i,
+                              pszOGRDisplayField, pszOGRLinkField, osLayerName,
+                              bWriteOGRAttributes, iObj);
     }
 
     CSLDestroy(papszLayerNames);

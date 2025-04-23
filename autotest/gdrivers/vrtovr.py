@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test overviews support in VRT driver
@@ -9,23 +8,7 @@
 ###############################################################################
 # Copyright (c) 2010, 2020, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import struct
@@ -34,6 +17,11 @@ import gdaltest
 import pytest
 
 from osgeo import gdal
+
+pytestmark = pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 
 ###############################################################################
 # Simple test
@@ -295,37 +283,50 @@ def test_vrtovr_virtual_with_preexisting_implicit_ovr():
 # overviews
 
 
-def test_vrtovr_external_ovr_has_priority_over_implicit():
+def test_vrtovr_external_ovr_has_priority_over_implicit(tmp_vsimem):
 
-    src_ds = gdal.GetDriverByName("GTiff").Create("/vsimem/in.tif", 100, 100)
-    src_ds.GetRasterBand(1).Fill(255)
-    vrt_ds = gdal.Translate("/vsimem/test.vrt", src_ds, format="VRT")
-    src_ds = None
-    with gdaltest.config_option("VRT_VIRTUAL_OVERVIEWS", "YES"):
-        vrt_ds.BuildOverviews("NEAR", [2, 4])
-    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 2
-    vrt_ds = None
+    tmp_vrt = tmp_vsimem / "tmp.vrt"
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "in.tif", 100, 100
+    ) as src_ds:
+        src_ds.GetRasterBand(1).Fill(255)
+        vrt_ds = gdal.Translate(tmp_vrt, src_ds, format="VRT")
+        with gdaltest.config_option("VRT_VIRTUAL_OVERVIEWS", "YES"):
+            vrt_ds.BuildOverviews("NEAR", [2, 4])
+        assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 2
+        vrt_ds = None
 
-    vrt_ds = gdal.Open("/vsimem/test.vrt")
-    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 2
-    assert vrt_ds.GetRasterBand(1).GetOverview(0).Checksum() != 0
-    # Build external overviews
-    vrt_ds.BuildOverviews("NONE", [2])
-    vrt_ds = None
+    with gdal.Open(tmp_vrt) as vrt_ds:
+        assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 2
+        assert vrt_ds.GetRasterBand(1).GetOverview(0).Checksum() != 0
+        # Build external overviews
+        vrt_ds.BuildOverviews("NONE", [2])
 
     # Check that external overviews has the priority
-    vrt_ds = gdal.Open("/vsimem/test.vrt")
-    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
-    assert vrt_ds.GetRasterBand(1).GetOverview(0).Checksum() == 0
-    vrt_ds = None
-
-    gdal.GetDriverByName("GTiff").Delete("/vsimem/in.tif")
-    gdal.Unlink("/vsimem/test.vrt")
+    with gdal.Open(tmp_vrt) as vrt_ds:
+        assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
+        assert vrt_ds.GetRasterBand(1).GetOverview(0).Checksum() == 0
 
 
 ###############################################################################
-# Cleanup.
+# Test that non-default block size propagates to virtual overviews
 
 
-def test_vrtovr_cleanup():
-    pass
+def test_vrtovr_virtual_block_size(tmp_vsimem):
+
+    tmp_vrt = tmp_vsimem / "tmp.vrt"
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "in.tif", 100, 100
+    ) as src_ds:
+        vrt_ds = gdal.Translate(
+            tmp_vrt,
+            src_ds,
+            format="VRT",
+            creationOptions=["BLOCKXSIZE=32", "BLOCKYSIZE=64"],
+        )
+        with gdaltest.config_option("VRT_VIRTUAL_OVERVIEWS", "YES"):
+            vrt_ds.BuildOverviews("NEAR", [2])
+        vrt_ds = None
+
+    with gdal.Open(tmp_vrt) as vrt_ds:
+        assert vrt_ds.GetRasterBand(1).GetOverview(0).GetBlockSize() == [32, 64]

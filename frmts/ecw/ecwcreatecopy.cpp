@@ -8,23 +8,7 @@
  * Copyright (c) 2001, 2004, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 // ncsjpcbuffer.h needs the min and max macros.
@@ -843,7 +827,8 @@ CPLErr GDALECWCompressor::Initialize(
             SetParameter(CNCSJP2FileView::JP2_COMPRESS_PROFILE_NITF_BIIF_EPJE);
 
         pszOption = CSLFetchNameValue(papszOptions, "CODESTREAM_ONLY");
-        if (pszOption == nullptr && EQUAL(CPLGetExtension(pszFilename), "j2k"))
+        if (pszOption == nullptr &&
+            EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "j2k"))
             pszOption = "YES";
         if (pszOption != nullptr)
             SetParameter(CNCSJP2FileView::JP2_COMPRESS_CODESTREAM_ONLY,
@@ -1526,7 +1511,7 @@ GDALDataset *ECWCreateCopyECW(const char *pszFilename, GDALDataset *poSrcDS,
         return nullptr;
     }
 
-    if (!EQUAL(CPLGetExtension(pszFilename), "ecw"))
+    if (!EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "ecw"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "ECW driver does not support creating ECW files\n"
@@ -1621,7 +1606,7 @@ GDALDataset *ECWCreateCopyJPEG2000(const char *pszFilename,
         return nullptr;
     }
 
-    if (EQUAL(CPLGetExtension(pszFilename), "ecw"))
+    if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "ecw"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "JP2ECW driver does not support creating JPEG2000 files\n"

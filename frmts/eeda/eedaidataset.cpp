@@ -7,30 +7,13 @@
  ******************************************************************************
  * Copyright (c) 2017-2018, Planet Labs
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_priv.h"
 #include "cpl_http.h"
 #include "cpl_conv.h"
-#include "ogrgeojsonreader.h"
-#include "ogrgeojsonwriter.h"
+#include "ogrlibjsonutils.h"
 #include "eeda.h"
 
 #include <algorithm>
@@ -433,7 +416,7 @@ bool GDALEEDAIRasterBand::DecodeGDALDataset(const GByte *pabyData, int nDataLen,
 {
     GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
 
-    CPLString osTmpFilename(CPLSPrintf("/vsimem/eeai/%p", this));
+    const CPLString osTmpFilename(VSIMemGenerateHiddenFilename("eedai"));
     VSIFCloseL(VSIFileFromMemBuffer(
         osTmpFilename, const_cast<GByte *>(pabyData), nDataLen, false));
     const char *const apszDrivers[] = {"PNG", "JPEG", "GTIFF", nullptr};
@@ -1558,6 +1541,10 @@ void GDALRegister_EEDAI()
         "   </Option>"
         "  <Option name='BLOCK_SIZE' type='integer' "
         "description='Size of a block' default='256'/>"
+        "  <Option name='VSI_PATH_FOR_AUTH' type='string' "
+        "description='/vsigs/... path onto which a "
+        "GOOGLE_APPLICATION_CREDENTIALS path specific "
+        "option is set'/>"
         "</OpenOptionList>");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
 

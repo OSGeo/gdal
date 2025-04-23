@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     gdal_java.i
  * Project:  GDAL SWIG Interface
@@ -308,12 +307,12 @@ import java.lang.Integer;
   }
 %enddef
 
-  DEFINE_READ_MDA_DATA(char,    GDT_Byte)
-  DEFINE_READ_MDA_DATA(short,   GDT_Int16)
-  DEFINE_READ_MDA_DATA(int,     GDT_Int32)
-  DEFINE_READ_MDA_DATA(int64_t, GDT_Int64)
-  DEFINE_READ_MDA_DATA(float,   GDT_Float32)
-  DEFINE_READ_MDA_DATA(double,  GDT_Float64)
+  DEFINE_READ_MDA_DATA(char,     GDT_Byte)
+  DEFINE_READ_MDA_DATA(short,    GDT_Int16)
+  DEFINE_READ_MDA_DATA(int,      GDT_Int32)
+  DEFINE_READ_MDA_DATA(int64_t,  GDT_Int64)
+  DEFINE_READ_MDA_DATA(float,    GDT_Float32)
+  DEFINE_READ_MDA_DATA(double,   GDT_Float64)
 
 %define DEFINE_WRITE_MDA_DATA(ctype, buffer_type_code)
   %apply(int nList, GInt64 *pList) { (int starts,  GInt64 *startsValues) };
@@ -359,12 +358,12 @@ import java.lang.Integer;
   }
 %enddef
 
-  DEFINE_WRITE_MDA_DATA(char   , GDT_Byte)
-  DEFINE_WRITE_MDA_DATA(short  , GDT_Int16)
-  DEFINE_WRITE_MDA_DATA(int    , GDT_Int32)
-  DEFINE_WRITE_MDA_DATA(int64_t, GDT_Int64)
-  DEFINE_WRITE_MDA_DATA(float  , GDT_Float32)
-  DEFINE_WRITE_MDA_DATA(double , GDT_Float64)
+  DEFINE_WRITE_MDA_DATA(char    , GDT_Byte)
+  DEFINE_WRITE_MDA_DATA(short   , GDT_Int16)
+  DEFINE_WRITE_MDA_DATA(int     , GDT_Int32)
+  DEFINE_WRITE_MDA_DATA(int64_t , GDT_Int64)
+  DEFINE_WRITE_MDA_DATA(float   , GDT_Float32)
+  DEFINE_WRITE_MDA_DATA(double  , GDT_Float64)
 
 } /* extend */
 
@@ -563,6 +562,17 @@ import org.gdal.gdalconst.gdalconstConstants;
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 %}
+
+%extend GDALDatasetShadow {
+%proxycode %{
+  public int Close() {
+    int ret = gdalJNI.Dataset_CloseInternal(swigCPtr, this);
+    swigCPtr = 0;
+    swigCMemOwn = false;
+    return ret;
+  }
+%}
+}
 
 %typemap(javacode) GDALDatasetShadow %{
 
@@ -1112,6 +1122,7 @@ import java.awt.Color;
 
 %typemap(javaimports) GDALRasterBandShadow %{
 import org.gdal.gdalconst.gdalconstConstants;
+import org.gdal.osr.SpatialReference;
 %}
 
 
@@ -1312,7 +1323,8 @@ import org.gdal.gdalconst.gdalconstConstants;
 // Add a Java reference to prevent premature garbage collection and resulting use
 // of dangling C++ pointer. Intended for methods that return pointers or
 // references to a member variable.
-%typemap(javaout) GDALRasterBandShadow* GetRasterBand,
+%typemap(javaout) GDALDatasetShadow* GetThreadSafeDataset,
+                  GDALRasterBandShadow* GetRasterBand,
                   GDALRasterBandShadow* GetOverview,
                   GDALRasterBandShadow* GetMaskBand,
                   GDALColorTableShadow* GetColorTable,
@@ -1431,3 +1443,17 @@ import org.gdal.gdalconst.gdalconstConstants;
 %include callback.i
 
 %include typemaps_java.i
+
+
+// Also defined in python/gdal_python.i and csharp/gdal_csharp.i
+
+%rename (GetMemFileBuffer) wrapper_VSIGetMemFileBuffer;
+
+%apply (GByte* outBytes) {GByte*};
+%inline %{
+GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_path, vsi_l_offset *length)
+{
+    return VSIGetMemFileBuffer(utf8_path, length, 0);
+}
+%}
+%clear GByte*;

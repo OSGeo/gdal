@@ -21,6 +21,9 @@ The driver does support creating new files, but the input data must be
 exactly formatted as a SRTM-3 or SRTM-1 cell. That is the size, and
 bounds must be appropriate for a cell.
 
+Starting with GDAL 3.10, the driver also supports reading and writing 0.5
+degree resolution SRTM HGT files.
+
 See Also:
 
 -  `SRTM

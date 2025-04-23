@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2020, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -94,7 +78,7 @@ static std::string RemoveTrailingSlash(const std::string &osFilename)
 {
     std::string osWithoutSlash(osFilename);
     if (!osWithoutSlash.empty() && osWithoutSlash.back() == '/')
-        osWithoutSlash.resize(osWithoutSlash.size() - 1);
+        osWithoutSlash.pop_back();
     return osWithoutSlash;
 }
 
@@ -165,7 +149,8 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 
   protected:
     VSICurlHandle *CreateFileHandle(const char *pszFilename) override;
-    std::string GetURLFromFilename(const std::string &osFilename) override;
+    std::string
+    GetURLFromFilename(const std::string &osFilename) const override;
 
     char **GetFileList(const char *pszFilename, int nMaxFiles,
                        bool *pbGotFileList) override;
@@ -1201,7 +1186,8 @@ void VSIADLSWriteHandle::InvalidateParentDirectory()
     m_poFS->InvalidateCachedData(m_poHandleHelper->GetURLNoKVP().c_str());
 
     const std::string osFilenameWithoutSlash(RemoveTrailingSlash(m_osFilename));
-    m_poFS->InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
+    m_poFS->InvalidateDirContent(
+        CPLGetDirnameSafe(osFilenameWithoutSlash.c_str()));
 }
 
 /************************************************************************/
@@ -1268,18 +1254,17 @@ void VSIADLSFSHandler::ClearCache()
 /*                          GetURLFromFilename()                        */
 /************************************************************************/
 
-std::string VSIADLSFSHandler::GetURLFromFilename(const std::string &osFilename)
+std::string
+VSIADLSFSHandler::GetURLFromFilename(const std::string &osFilename) const
 {
-    std::string osFilenameWithoutPrefix =
+    const std::string osFilenameWithoutPrefix =
         osFilename.substr(GetFSPrefix().size());
-    VSIAzureBlobHandleHelper *poHandleHelper =
+    auto poHandleHelper = std::unique_ptr<VSIAzureBlobHandleHelper>(
         VSIAzureBlobHandleHelper::BuildFromURI(osFilenameWithoutPrefix.c_str(),
-                                               GetFSPrefix().c_str());
-    if (poHandleHelper == nullptr)
+                                               GetFSPrefix().c_str()));
+    if (!poHandleHelper)
         return std::string();
-    std::string osURL(poHandleHelper->GetURLNoKVP());
-    delete poHandleHelper;
-    return osURL;
+    return poHandleHelper->GetURLNoKVP();
 }
 
 /************************************************************************/
@@ -1332,7 +1317,7 @@ int VSIADLSFSHandler::Rename(const char *oldpath, const char *newpath)
 
     InvalidateCachedData(GetURLFromFilename(oldpath).c_str());
     InvalidateCachedData(GetURLFromFilename(newpath).c_str());
-    InvalidateDirContent(CPLGetDirname(oldpath));
+    InvalidateDirContent(CPLGetDirnameSafe(oldpath));
 
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(oldpath));
     const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
@@ -1459,7 +1444,7 @@ int VSIADLSFSHandler::MkdirInternal(const char *pszDirname, long nMode,
     InvalidateCachedData(GetURLFromFilename(osDirname.c_str()).c_str());
     InvalidateCachedData(
         GetURLFromFilename(osDirnameWithoutEndSlash.c_str()).c_str());
-    InvalidateDirContent(CPLGetDirname(osDirnameWithoutEndSlash.c_str()));
+    InvalidateDirContent(CPLGetDirnameSafe(osDirnameWithoutEndSlash.c_str()));
 
     int nRet = 0;
 
@@ -1607,7 +1592,7 @@ int VSIADLSFSHandler::RmdirInternal(const char *pszDirname, bool bRecursive)
     InvalidateCachedData(GetURLFromFilename(osDirname.c_str()).c_str());
     InvalidateCachedData(
         GetURLFromFilename(osDirnameWithoutEndSlash.c_str()).c_str());
-    InvalidateDirContent(CPLGetDirname(osDirnameWithoutEndSlash.c_str()));
+    InvalidateDirContent(CPLGetDirnameSafe(osDirnameWithoutEndSlash.c_str()));
     if (bRecursive)
     {
         PartialClearCache(osDirnameWithoutEndSlash.c_str());
@@ -1847,7 +1832,8 @@ int VSIADLSFSHandler::CopyObject(const char *oldpath, const char *newpath,
 
             const std::string osFilenameWithoutSlash(
                 RemoveTrailingSlash(newpath));
-            InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
+            InvalidateDirContent(
+                CPLGetDirnameSafe(osFilenameWithoutSlash.c_str()));
         }
 
         curl_easy_cleanup(hCurlHandle);
@@ -1873,7 +1859,7 @@ bool VSIADLSFSHandler::UploadFile(
     if (event == Event::CREATE_FILE)
     {
         InvalidateCachedData(poHandleHelper->GetURLNoKVP().c_str());
-        InvalidateDirContent(CPLGetDirname(osFilename.c_str()));
+        InvalidateDirContent(CPLGetDirnameSafe(osFilename.c_str()));
     }
 
     const CPLStringList aosHTTPOptions(

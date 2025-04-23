@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022, Planet Labs
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_ARROW_H
@@ -314,19 +298,14 @@ class OGRArrowLayer CPL_NON_FINAL
         return m_osFIDColumn.c_str();
     }
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRArrowLayer)
-    OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                     int bForce = TRUE) override;
-    OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
-                       int bForce = TRUE) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                        bool bForce) override;
     OGRErr SetAttributeFilter(const char *pszFilter) override;
 
-    void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
-
-    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     int TestCapability(const char *pszCap) override;
 
@@ -351,6 +330,13 @@ class OGRArrowDataset CPL_NON_FINAL : public GDALPamDataset
     std::unique_ptr<OGRArrowLayer> m_poLayer{};
     std::vector<std::string> m_aosDomainNames{};
     std::map<std::string, int> m_oMapDomainNameToCol{};
+
+  protected:
+    void close()
+    {
+        m_poLayer.reset();
+        m_poMemoryPool.reset();
+    }
 
   public:
     explicit OGRArrowDataset(

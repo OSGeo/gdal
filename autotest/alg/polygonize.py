@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Polygonize() algorithm.
@@ -10,23 +9,7 @@
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 
@@ -50,7 +33,7 @@ def test_polygonize_1(is_int_polygonize):
     src_band = src_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     mem_layer = mem_ds.CreateLayer("poly", None, ogr.wkbPolygon)
@@ -94,7 +77,7 @@ def test_polygonize_2():
     src_band = src_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     mem_layer = mem_ds.CreateLayer("poly", None, ogr.wkbPolygon)
@@ -145,7 +128,7 @@ def test_polygonize_3():
     src_band = src_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     mem_layer = mem_ds.CreateLayer("poly", None, ogr.wkbPolygon)
@@ -183,7 +166,7 @@ def test_polygonize_4():
     src_band = src_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     mem_layer = mem_ds.CreateLayer("poly", None, ogr.wkbPolygon)
@@ -233,7 +216,7 @@ def test_polygonize_5():
     src_band = src_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     mem_layer = mem_ds.CreateLayer("poly", None, ogr.wkbPolygon)
@@ -280,7 +263,7 @@ def test_polygonize_6():
     src_band = src_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     mem_layer = mem_ds.CreateLayer("poly", None, ogr.wkbPolygon)
@@ -326,7 +309,7 @@ def test_polygonize_7():
     src_band = src_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     mem_layer = mem_ds.CreateLayer("poly", None, ogr.wkbPolygon)
@@ -382,7 +365,7 @@ def test_polygonize_8():
     mask_band = mask_ds.GetRasterBand(1)
 
     # Create a memory OGR datasource to put results in.
-    mem_drv = ogr.GetDriverByName("Memory")
+    mem_drv = ogr.GetDriverByName("MEM")
     mem_ds = mem_drv.CreateDataSource("out")
 
     ######################################

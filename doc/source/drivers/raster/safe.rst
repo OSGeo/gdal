@@ -43,7 +43,7 @@ If the product contains multiple measurements (for example multiple
 polarizations), each one is available as a raster band - if the swath is
 the same. When the swath is the same, the geographic area is the same.
 
-If the product contains multiple swaths and multiple polatizations, the
+If the product contains multiple swaths and multiple polarizations, the
 driver shows the first swath by default. To access other swaths, the
 user must select a specific subdataset.
 

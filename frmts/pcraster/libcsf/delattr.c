@@ -17,6 +17,7 @@ CSF_ATTR_ID MdelAttribute(
 	CSF_ATTR_ID id)   /* identification of attribute */
 {
 	ATTR_CNTRL_BLOCK b;
+	int i;
 	CSF_FADDR32 pos;
 
 	if (! WRITE_ENABLE(m))
@@ -25,11 +26,11 @@ CSF_ATTR_ID MdelAttribute(
 		goto error;
 	}
 
-	pos = CsfGetAttrBlock(m, id, &b);
+	pos = CsfGetAttrBlockAndIdx(m, id, &b, &i);
 	if (pos == 0)
 		goto error;
 
-	b.attrs[CsfGetAttrIndex(id, &b)].attrId = ATTR_NOT_USED;
+	b.attrs[i].attrId = ATTR_NOT_USED;
 	if (CsfWriteAttrBlock(m, pos, &b))
 	{
 		M_ERROR(WRITE_ERROR);

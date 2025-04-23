@@ -8,23 +8,7 @@
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "bsb_read.h"
@@ -584,24 +568,24 @@ void BSBDataset::ScanForGCPs(bool isNos, const char *pszFilename)
 
 void BSBDataset::ScanForGCPsNos(const char *pszFilename)
 {
-    const char *extension = CPLGetExtension(pszFilename);
+    const std::string extension = CPLGetExtensionSafe(pszFilename);
 
     // pseudointelligently try and guess whether we want a .geo or a .GEO
-    const char *geofile = nullptr;
-    if (extension[1] == 'O')
+    std::string geofile;
+    if (extension.size() >= 2 && extension[1] == 'O')
     {
-        geofile = CPLResetExtension(pszFilename, "GEO");
+        geofile = CPLResetExtensionSafe(pszFilename, "GEO");
     }
     else
     {
-        geofile = CPLResetExtension(pszFilename, "geo");
+        geofile = CPLResetExtensionSafe(pszFilename, "geo");
     }
 
-    FILE *gfp = VSIFOpen(geofile, "r");  // Text files
+    FILE *gfp = VSIFOpen(geofile.c_str(), "r");  // Text files
     if (gfp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Couldn't find a matching .GEO file: %s", geofile);
+                 "Couldn't find a matching .GEO file: %s", geofile.c_str());
         return;
     }
 
@@ -834,9 +818,7 @@ GDALDataset *BSBDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The BSB driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("BSB");
         return nullptr;
     }
 

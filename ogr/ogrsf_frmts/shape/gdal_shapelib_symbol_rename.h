@@ -32,6 +32,7 @@
 #define DBFReadIntegerAttribute gdal_DBFReadIntegerAttribute
 #define DBFReadLogicalAttribute gdal_DBFReadLogicalAttribute
 #define DBFReadStringAttribute gdal_DBFReadStringAttribute
+#define DBFReadDateAttribute gdal_DBFReadDateAttribute
 #define DBFReadTuple gdal_DBFReadTuple
 #define DBFReorderFields gdal_DBFReorderFields
 #define DBFSetLastModifiedDate gdal_DBFSetLastModifiedDate
@@ -45,6 +46,7 @@
 #define DBFWriteLogicalAttribute gdal_DBFWriteLogicalAttribute
 #define DBFWriteNULLAttribute gdal_DBFWriteNULLAttribute
 #define DBFWriteStringAttribute gdal_DBFWriteStringAttribute
+#define DBFWriteDateAttribute gdal_DBFWriteDateAttribute
 #define DBFWriteTuple gdal_DBFWriteTuple
 #define frame_dummy gdal_frame_dummy
 #define SASetupDefaultHooks gdal_SASetupDefaultHooks

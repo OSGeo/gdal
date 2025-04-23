@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Elasticsearch Translator
  * Purpose:
@@ -8,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2011, Adam Estrada
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_ELASTIC_H_INCLUDED
@@ -205,21 +188,13 @@ class OGRElasticLayer final : public OGRLayer
 
     virtual GIntBig GetFeatureCount(int bForce) override;
 
-    virtual void SetSpatialFilter(OGRGeometry *poGeom) override
-    {
-        SetSpatialFilter(0, poGeom);
-    }
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
-    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
     virtual OGRErr SetAttributeFilter(const char *pszFilter) override;
 
-    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override
-    {
-        return GetExtent(0, psExtent, bForce);
-    }
-
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
-                             int bForce = TRUE) override;
+    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                              bool bForce) override;
 
     virtual OGRErr SyncToDisk() override;
 
@@ -323,8 +298,8 @@ class OGRElasticAggregationLayer final
     GIntBig GetFeatureCount(int bForce) override;
     int TestCapability(const char *) override;
 
-    using OGRLayer::SetSpatialFilter;
-    void SetSpatialFilter(OGRGeometry *poGeom) override;
+    OGRErr ISetSpatialFilter(int iGeomField,
+                             const OGRGeometry *poGeom) override;
 
     GDALDataset *GetDataset() override;
 

@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2015, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_frmts.h"
@@ -331,7 +315,7 @@ GDALDataset *CALSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     // Create a TIFF header for a single-strip CCITTFAX4 file.
     poDS->osTIFFHeaderFilename =
-        CPLSPrintf("/vsimem/cals/header_%p.tiff", poDS);
+        VSIMemGenerateHiddenFilename("cals_header.tiff");
     VSILFILE *fp = VSIFOpenL(poDS->osTIFFHeaderFilename, "wb");
     const int nTagCount = 10;
     const int nHeaderSize = 4 + 4 + 2 + nTagCount * 12 + 4;
@@ -359,7 +343,7 @@ GDALDataset *CALSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     // Create a /vsisparse/ description file assembling the TIFF header
     // with the FAX4 codestream that starts at offset 2048 of the CALS file.
-    poDS->osSparseFilename = CPLSPrintf("/vsimem/cals/sparse_%p.xml", poDS);
+    poDS->osSparseFilename = VSIMemGenerateHiddenFilename("cals_sparse.xml");
     fp = VSIFOpenL(poDS->osSparseFilename, "wb");
     CPLAssert(fp);
     VSIFPrintfL(fp,
@@ -473,7 +457,8 @@ GDALDataset *CALSDataset::CreateCopy(const char *pszFilename,
 
     // Write a in-memory TIFF with just the TIFF header to figure out
     // how large it will be.
-    CPLString osTmpFilename(CPLSPrintf("/vsimem/cals/tmp_%p", poSrcDS));
+    const CPLString osTmpFilename(
+        VSIMemGenerateHiddenFilename("tmp_tif_header"));
     char **papszOptions = nullptr;
     papszOptions = CSLSetNameValue(papszOptions, "COMPRESS", "CCITTFAX4");
     papszOptions = CSLSetNameValue(papszOptions, "NBITS", "1");

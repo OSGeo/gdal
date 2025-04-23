@@ -1,0 +1,12 @@
+diff --git a/recipe/meta.yaml b/recipe/meta.yaml
+index d3bbc43..8bef37d 100644
+--- a/recipe/meta.yaml
++++ b/recipe/meta.yaml
+@@ -58,6 +58,7 @@ requirements:
+     - libwebp-base
+     - libxml2
+     - lz4-c
++    - muparser
+     - openssl
+     - pcre2
+     - proj

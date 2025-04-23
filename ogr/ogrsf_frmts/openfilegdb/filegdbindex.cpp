@@ -7,28 +7,13 @@
  ******************************************************************************
  * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
 #include "filegdbtable_priv.h"
 
+#include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
@@ -1014,7 +999,7 @@ static const char *FileGDBValueToStr(OGRFieldType eOGRFieldType,
         case OFTInteger:
             return CPLSPrintf("%d", psValue->Integer);
         case OFTReal:
-            return CPLSPrintf("%.18g", psValue->Real);
+            return CPLSPrintf("%.17g", psValue->Real);
         case OFTString:
             return psValue->String;
         case OFTDateTime:
@@ -1041,9 +1026,9 @@ static const char *FileGDBValueToStr(OGRFieldType eOGRFieldType,
 
 int FileGDBIndex::GetMaxWidthInBytes(const FileGDBTable *poTable) const
 {
-    const char *pszAtxName = CPLResetExtension(
+    const std::string osAtxName = CPLResetExtensionSafe(
         poTable->GetFilename().c_str(), (GetIndexName() + ".atx").c_str());
-    VSILFILE *fpCurIdx = VSIFOpenL(pszAtxName, "rb");
+    VSILFILE *fpCurIdx = VSIFOpenL(osAtxName.c_str(), "rb");
     if (fpCurIdx == nullptr)
         return 0;
 
@@ -1145,12 +1130,14 @@ int FileGDBIndexIterator::SetConstraint(int nFieldIdx, FileGDBSQLOp op,
         return FALSE;
     }
 
-    const char *pszAtxName =
-        CPLFormFilename(CPLGetPath(poParent->GetFilename().c_str()),
-                        CPLGetBasename(poParent->GetFilename().c_str()),
-                        CPLSPrintf("%s.atx", poIndex->GetIndexName().c_str()));
+    const std::string osAtxName =
+        CPLFormFilenameSafe(
+            CPLGetPathSafe(poParent->GetFilename().c_str()).c_str(),
+            CPLGetBasenameSafe(poParent->GetFilename().c_str()).c_str(),
+            poIndex->GetIndexName().c_str())
+            .append(".atx");
 
-    if (!ReadTrailer(pszAtxName))
+    if (!ReadTrailer(osAtxName.c_str()))
         return FALSE;
     returnErrorIf(m_nValueCountInIdx >
                   static_cast<GUInt64>(poParent->GetValidRecordCount()));
@@ -2498,11 +2485,11 @@ bool FileGDBSpatialIndexIteratorImpl::Init()
 {
     const bool errorRetValue = false;
 
-    const char *pszSpxName =
-        CPLFormFilename(CPLGetPath(poParent->GetFilename().c_str()),
-                        CPLGetBasename(poParent->GetFilename().c_str()), "spx");
+    const std::string osSpxName = CPLFormFilenameSafe(
+        CPLGetPathSafe(poParent->GetFilename().c_str()).c_str(),
+        CPLGetBasenameSafe(poParent->GetFilename().c_str()).c_str(), "spx");
 
-    if (!ReadTrailer(pszSpxName))
+    if (!ReadTrailer(osSpxName.c_str()))
         return false;
 
     returnErrorIf(m_nValueSize != sizeof(uint64_t));
@@ -2526,7 +2513,8 @@ bool FileGDBSpatialIndexIteratorImpl::Init()
         // The FileGDB driver does not use the .spx file in that situation,
         // so do we.
         CPLDebug("OpenFileGDB",
-                 "Cannot use %s as the grid resolution is invalid", pszSpxName);
+                 "Cannot use %s as the grid resolution is invalid",
+                 osSpxName.c_str());
         return false;
     }
 
@@ -2559,7 +2547,7 @@ bool FileGDBSpatialIndexIteratorImpl::Init()
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Cannot use %s as the index depth(=1) is suspicious "
                          "(it should rather be 2)",
-                         pszSpxName);
+                         osSpxName.c_str());
                 return false;
             }
         }

@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022, Planet Labs
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifdef STANDALONE
@@ -372,17 +356,12 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
             m_eGeomEncoding = OGRArrowGeomEncoding::WKT;
         else if (EQUAL(pszGeomEncoding, "GEOARROW_INTERLEAVED"))
         {
-            static bool bHasWarned = false;
-            if (!bHasWarned)
-            {
-                bHasWarned = true;
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
-                    "Use of GEOMETRY_ENCODING=GEOARROW_INTERLEAVED is not "
-                    "recommended. "
-                    "GeoParquet 1.1 uses GEOMETRY_ENCODING=GEOARROW (struct) "
-                    "instead.");
-            }
+            CPLErrorOnce(
+                CE_Warning, CPLE_AppDefined,
+                "Use of GEOMETRY_ENCODING=GEOARROW_INTERLEAVED is not "
+                "recommended. "
+                "GeoParquet 1.1 uses GEOMETRY_ENCODING=GEOARROW (struct) "
+                "instead.");
             m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_FSL_GENERIC;
         }
         else if (EQUAL(pszGeomEncoding, "GEOARROW") ||
@@ -482,6 +461,12 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
     // Undocumented option. Not clear it is useful besides unit test purposes
     if (!CPLTestBool(CSLFetchNameValueDef(papszOptions, "STATISTICS", "YES")))
         m_oWriterPropertiesBuilder.disable_statistics();
+
+#if PARQUET_VERSION_MAJOR >= 12
+    // Undocumented option. Not clear it is useful to disable it.
+    if (CPLTestBool(CSLFetchNameValueDef(papszOptions, "PAGE_INDEX", "YES")))
+        m_oWriterPropertiesBuilder.enable_write_page_index();
+#endif
 
     if (m_eGeomEncoding == OGRArrowGeomEncoding::WKB && eGType != wkbNone)
     {
@@ -1280,6 +1265,29 @@ bool OGRParquetWriterLayer::IsArrowSchemaSupported(
     {
         osErrorMsg = "float16 not supported";
         return false;
+    }
+    if (schema->format[0] == 'v' && schema->format[1] == 'u')
+    {
+        osErrorMsg = "StringView not supported";
+        return false;
+    }
+    if (schema->format[0] == 'v' && schema->format[1] == 'z')
+    {
+        osErrorMsg = "BinaryView not supported";
+        return false;
+    }
+    if (schema->format[0] == '+' && schema->format[1] == 'v')
+    {
+        if (schema->format[2] == 'l')
+        {
+            osErrorMsg = "ListView not supported";
+            return false;
+        }
+        else if (schema->format[2] == 'L')
+        {
+            osErrorMsg = "LargeListView not supported";
+            return false;
+        }
     }
     for (int64_t i = 0; i < schema->n_children; ++i)
     {

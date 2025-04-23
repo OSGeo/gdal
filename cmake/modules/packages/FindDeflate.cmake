@@ -49,9 +49,11 @@ set(CMAKE_FIND_LIBRARY_PREFIXES "lib" "")
 if(NOT Deflate_LIBRARY)
   find_library(Deflate_LIBRARY_RELEASE
                NAMES ${Deflate_NAMES}
+               NAMES_PER_DIR
                PATH_SUFFIXES lib)
   find_library(Deflate_LIBRARY_DEBUG
                NAMES ${Deflate_NAMES_DEBUG}
+               NAMES_PER_DIR
                PATH_SUFFIXES lib)
 
   include(SelectLibraryConfigurations)

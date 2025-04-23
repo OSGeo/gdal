@@ -11,23 +11,7 @@
  * Copyright (c) 1999, 2000, Stephane Villeneuve
  * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  **********************************************************************/
 
 #include "mitab_ogr_driver.h"
@@ -46,12 +30,12 @@ static int OGRTABDriverIdentify(GDALOpenInfo *poOpenInfo)
         return -1;  // Unsure.
     if (poOpenInfo->fpL == nullptr)
         return FALSE;
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MIF") ||
-        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MID"))
+    if (poOpenInfo->IsExtensionEqualToCI("MIF") ||
+        poOpenInfo->IsExtensionEqualToCI("MID"))
     {
         return TRUE;
     }
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "TAB"))
+    if (poOpenInfo->IsExtensionEqualToCI("TAB"))
     {
         for (int i = 0; i < poOpenInfo->nHeaderBytes; i++)
         {
@@ -88,8 +72,8 @@ static GDALDataset *OGRTABDriverOpen(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MIF") ||
-        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MID"))
+    if (poOpenInfo->IsExtensionEqualToCI("MIF") ||
+        poOpenInfo->IsExtensionEqualToCI("MID"))
     {
         if (poOpenInfo->eAccess == GA_Update)
             return nullptr;
@@ -267,6 +251,9 @@ void RegisterOGRTAB()
     poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES_READ, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES_WRITE, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "Features");
 
     poDriver->pfnOpen = OGRTABDriverOpen;
     poDriver->pfnIdentify = OGRTABDriverIdentify;

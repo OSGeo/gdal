@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     GDALTestIO.java
  * Project:  GDAL Java Interface
@@ -11,23 +10,7 @@
  ******************************************************************************
  * Copyright (c) 2009, Even Rouault
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 import java.nio.ByteBuffer;
@@ -39,6 +22,7 @@ import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
 import org.gdal.gdalconst.gdalconst;
+import org.gdal.gdal.*;
 
 public class GDALTestIO implements Runnable
 {
@@ -164,7 +148,9 @@ public class GDALTestIO implements Runnable
         gdal.AllRegister();
 
         testInt64();
-        
+
+        testGetMemFileBuffer();
+
         int nbIters = 50;
 
         method = METHOD_JAVA_ARRAYS;
@@ -202,12 +188,12 @@ public class GDALTestIO implements Runnable
 
         System.out.println("Success !");
     }
-    
+
     private static void testInt64() {
-        
+
         long[] data1;
         long[] data2;
-        
+
         int xSz = 5;
         int ySz = 2;
         int nBands = 1;
@@ -228,6 +214,22 @@ public class GDALTestIO implements Runnable
         for (int i = 0; i < data1.length; i++) {
             if (data1[i] != data2[i])
                 throw new RuntimeException("int64 write and read values are not the same "+data1[i]+" "+data2[i]);
+        }
+
+        dataset.Close();
+        dataset.Close();
+    }
+
+    private static void testGetMemFileBuffer()
+    {
+        gdal.FileFromMemBuffer("/vsimem/test", new byte[] {1, 2, 3});
+        for(int iter = 0; iter < 2; iter++)
+        {
+            byte[] res = gdal.GetMemFileBuffer("/vsimem/test");
+            if (res.length != 3 )
+                throw new RuntimeException("res.length != 3");
+            if (res[0] != 1 || res[1] != 2 || res[2] != 3)
+                throw new RuntimeException("res != {1, 2, 3}");
         }
     }
 }

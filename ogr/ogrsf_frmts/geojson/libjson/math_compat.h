@@ -18,6 +18,11 @@
 #endif
 #endif
 
+#ifdef __MINGW32__
+#undef isnan
+#define isnan(x) __builtin_isnan(x)
+#endif
+
 #ifndef HAVE_DECL_ISINF
 #ifdef HAVE_DECL__FINITE
 #include <float.h>
@@ -29,6 +34,11 @@
 #endif
 #endif
 
+#ifdef __MINGW32__
+#undef isinf
+#define isinf(x) __builtin_isinf(x)
+#endif
+
 #ifndef HAVE_DECL_INFINITY
 #include <float.h>
 #define INFINITY (DBL_MAX + DBL_MAX)
@@ -36,7 +46,9 @@
 #endif
 
 #ifndef HAVE_DECL_NAN
+#ifndef NAN
 #define NAN (INFINITY - INFINITY)
+#endif
 #define HAVE_DECL_NAN
 #endif
 

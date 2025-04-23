@@ -8,23 +8,7 @@
  * Copyright (c) 2005, Frank Warmerdam
  * Copyright (c) 2009, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -54,7 +38,7 @@
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-#include "ogrgeojsonwriter.h"
+#include "ogrlibjsonutils.h"
 
 /**
  * \class GDALRasterAttributeTable
@@ -664,11 +648,57 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
 
         snprintf(szValue, sizeof(szValue), "%d",
                  static_cast<int>(GetTypeOfCol(iCol)));
-        CPLCreateXMLElementAndValue(psCol, "Type", szValue);
+        CPLXMLNode *psType =
+            CPLCreateXMLElementAndValue(psCol, "Type", szValue);
+        const char *pszTypeStr = "String";
+        switch (GetTypeOfCol(iCol))
+        {
+            case GFT_Integer:
+                pszTypeStr = "Integer";
+                break;
+            case GFT_Real:
+                pszTypeStr = "Real";
+                break;
+            case GFT_String:
+                break;
+        }
+        CPLAddXMLAttributeAndValue(psType, "typeAsString", pszTypeStr);
 
         snprintf(szValue, sizeof(szValue), "%d",
                  static_cast<int>(GetUsageOfCol(iCol)));
-        CPLCreateXMLElementAndValue(psCol, "Usage", szValue);
+        CPLXMLNode *psUsage =
+            CPLCreateXMLElementAndValue(psCol, "Usage", szValue);
+        const char *pszUsageStr = "";
+
+#define USAGE_STR(x)                                                           \
+    case GFU_##x:                                                              \
+        pszUsageStr = #x;                                                      \
+        break
+        switch (GetUsageOfCol(iCol))
+        {
+            USAGE_STR(Generic);
+            USAGE_STR(PixelCount);
+            USAGE_STR(Name);
+            USAGE_STR(Min);
+            USAGE_STR(Max);
+            USAGE_STR(MinMax);
+            USAGE_STR(Red);
+            USAGE_STR(Green);
+            USAGE_STR(Blue);
+            USAGE_STR(Alpha);
+            USAGE_STR(RedMin);
+            USAGE_STR(GreenMin);
+            USAGE_STR(BlueMin);
+            USAGE_STR(AlphaMin);
+            USAGE_STR(RedMax);
+            USAGE_STR(GreenMax);
+            USAGE_STR(BlueMax);
+            USAGE_STR(AlphaMax);
+            case GFU_MaxCount:
+                break;
+        }
+#undef USAGE_STR
+        CPLAddXMLAttributeAndValue(psUsage, "usageAsString", pszUsageStr);
     }
 
     /* -------------------------------------------------------------------- */

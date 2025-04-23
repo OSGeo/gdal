@@ -115,6 +115,17 @@ The following configuration options are available:
 
      Equivalent of :oo:`READ_MODE`. See :ref:`gml_performance`.
 
+- .. config:: GML_DOWNLOAD_SCHEMA
+     :choices: YES, NO
+     :since: 3.10
+
+     Equivalent of :oo:`DOWNLOAD_SCHEMA`.
+
+- .. config:: GML_USE_SCHEMA_IMPORT
+     :choices: YES, NO
+
+     Equivalent of :oo:`USE_SCHEMA_IMPORT`.
+
 
 Parsers
 -------
@@ -609,8 +620,8 @@ The following open options are supported:
       :choices: YES, NO
       :default: YES
 
-      Whether to download the
-      remote application schema if needed (only for WFS currently).
+      Whether to download the remote application schema if needed
+      (only if the document looks like a WFS response currently).
 
 -  .. oo:: REGISTRY
       :choices: <filename>
@@ -625,6 +636,22 @@ The following open options are supported:
 
       Whether to use gml:boundedBy at feature level as feature geometry,
       if there are no other geometry.
+
+-  .. oo:: USE_SCHEMA_IMPORT
+      :choices: YES, NO
+      :default: NO
+
+      Whether to use schema imports in XSD files so that
+      the feature types corresponding to imported schema can be detected.
+
+-  .. oo:: OGR_SCHEMA
+      :choices: <filename>|<json string>
+      :since: 3.11.0
+
+      Partially or totally overrides the auto-detected schema to use for creating the layer.
+      The overrides are applied to the schema detected from the GML file or the `.xsd` or the `.gfs`` file if present.
+      The overrides are defined as a JSON list of field definitions.
+      This can be a filename, a URL or JSON string conformant with the `ogr_fields_override.schema.json schema <https://raw.githubusercontent.com/OSGeo/gdal/refs/heads/master/ogr/data/ogr_fields_override.schema.json>`_
 
 
 .. note::

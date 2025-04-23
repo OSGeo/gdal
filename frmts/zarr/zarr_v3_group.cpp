@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2021, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "zarr.h"
@@ -64,9 +48,9 @@ std::shared_ptr<ZarrArray> ZarrV3Group::OpenZarrArray(const std::string &osName,
         return oIter->second;
 
     const std::string osSubDir =
-        CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+        CPLFormFilenameSafe(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
     const std::string osZarrayFilename =
-        CPLFormFilename(osSubDir.c_str(), "zarr.json", nullptr);
+        CPLFormFilenameSafe(osSubDir.c_str(), "zarr.json", nullptr);
 
     VSIStatBufL sStat;
     if (VSIStatL(osZarrayFilename.c_str(), &sStat) == 0)
@@ -92,7 +76,7 @@ void ZarrV3Group::LoadAttributes() const
     m_bAttributesLoaded = true;
 
     const std::string osFilename =
-        CPLFormFilename(m_osDirectoryName.c_str(), "zarr.json", nullptr);
+        CPLFormFilenameSafe(m_osDirectoryName.c_str(), "zarr.json", nullptr);
 
     VSIStatBufL sStat;
     if (VSIStatL(osFilename.c_str(), &sStat) == 0)
@@ -122,11 +106,11 @@ void ZarrV3Group::ExploreDirectory() const
     {
         if (VSI_ISDIR(psEntry->nMode))
         {
-            const std::string osSubDir = CPLFormFilename(
+            const std::string osSubDir = CPLFormFilenameSafe(
                 m_osDirectoryName.c_str(), psEntry->pszName, nullptr);
             VSIStatBufL sStat;
-            std::string osZarrJsonFilename =
-                CPLFormFilename(osSubDir.c_str(), "zarr.json", nullptr);
+            const std::string osZarrJsonFilename =
+                CPLFormFilenameSafe(osSubDir.c_str(), "zarr.json", nullptr);
             if (VSIStatL(osZarrJsonFilename.c_str(), &sStat) == 0)
             {
                 CPLJSONDocument oDoc;
@@ -204,8 +188,8 @@ ZarrV3Group::~ZarrV3Group()
         oRoot.Add("zarr_format", 3);
         oRoot.Add("node_type", "group");
         oRoot.Add("attributes", m_oAttrGroup.Serialize());
-        const std::string osZarrJsonFilename =
-            CPLFormFilename(m_osDirectoryName.c_str(), "zarr.json", nullptr);
+        const std::string osZarrJsonFilename = CPLFormFilenameSafe(
+            m_osDirectoryName.c_str(), "zarr.json", nullptr);
         oDoc.Save(osZarrJsonFilename);
     }
 }
@@ -225,9 +209,9 @@ ZarrV3Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
         return oIter->second;
 
     const std::string osSubDir =
-        CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+        CPLFormFilenameSafe(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
     const std::string osSubDirZarrJsonFilename =
-        CPLFormFilename(osSubDir.c_str(), "zarr.json", nullptr);
+        CPLFormFilenameSafe(osSubDir.c_str(), "zarr.json", nullptr);
 
     VSIStatBufL sStat;
     // Explicit group
@@ -264,6 +248,11 @@ ZarrV3Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
     // Implicit group
     if (VSIStatL(osSubDir.c_str(), &sStat) == 0 && VSI_ISDIR(sStat.st_mode))
     {
+        // Note: Python zarr v3.0.2 still generates implicit groups
+        // See https://github.com/zarr-developers/zarr-python/issues/2794
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Support for Zarr V3 implicit group is now deprecated, and "
+                 "may be removed in a future version");
         auto poSubGroup = ZarrV3Group::Create(m_poSharedResource, GetFullName(),
                                               osName, osSubDir);
         poSubGroup->m_poParent =
@@ -302,7 +291,7 @@ std::shared_ptr<ZarrV3Group> ZarrV3Group::CreateOnDisk(
     }
 
     const std::string osZarrJsonFilename(
-        CPLFormFilename(osDirectoryName.c_str(), "zarr.json", nullptr));
+        CPLFormFilenameSafe(osDirectoryName.c_str(), "zarr.json", nullptr));
     VSILFILE *fp = VSIFOpenL(osZarrJsonFilename.c_str(), "wb");
     if (!fp)
     {
@@ -358,7 +347,7 @@ ZarrV3Group::CreateGroup(const std::string &osName,
     }
 
     const std::string osDirectoryName =
-        CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+        CPLFormFilenameSafe(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
     auto poGroup = CreateOnDisk(m_poSharedResource, GetFullName(), osName,
                                 osDirectoryName);
     if (!poGroup)
@@ -433,6 +422,12 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
             dtype.Set(dummy, "int64");
             break;
         }
+        case GDT_Float16:
+        {
+            elt.nativeType = DtypeElt::NativeType::IEEEFP;
+            dtype.Set(dummy, "float16");
+            break;
+        }
         case GDT_Float32:
         {
             elt.nativeType = DtypeElt::NativeType::IEEEFP;
@@ -452,6 +447,12 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
             bUnsupported = true;
             break;
         }
+        case GDT_CFloat16:
+        {
+            elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
+            dtype.Set(dummy, "complex32");
+            break;
+        }
         case GDT_CFloat32:
         {
             elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
@@ -466,8 +467,8 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
         }
         case GDT_TypeCount:
         {
-            static_assert(GDT_TypeCount == GDT_Int8 + 1,
-                          "GDT_TypeCount == GDT_Int8 + 1");
+            static_assert(GDT_TypeCount == GDT_CFloat16 + 1,
+                          "GDT_TypeCount == GDT_CFloat16 + 1");
             break;
         }
     }
@@ -553,7 +554,7 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         CSLFetchNameValueDef(papszOptions, "DIM_SEPARATOR", "/");
 
     const std::string osArrayDirectory =
-        CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+        CPLFormFilenameSafe(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
     if (VSIMkdir(osArrayDirectory.c_str(), 0755) != 0)
     {
         VSIStatBufL sStat;
@@ -584,13 +585,13 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         oCodecs.Add(oCodec);
     }
 
-    // Not documented
-    const char *pszEndian = CSLFetchNameValue(papszOptions, "@ENDIAN");
-    if (pszEndian)
+    // Not documented option, but 'bytes' codec is required
+    const char *pszEndian =
+        CSLFetchNameValueDef(papszOptions, "@ENDIAN", "little");
     {
         CPLJSONObject oCodec;
-        oCodec.Add("name", "endian");
-        oCodec.Add("configuration", ZarrV3CodecEndian::GetConfiguration(
+        oCodec.Add("name", "bytes");
+        oCodec.Add("configuration", ZarrV3CodecBytes::GetConfiguration(
                                         EQUAL(pszEndian, "little")));
         oCodecs.Add(oCodec);
     }
@@ -659,6 +660,18 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
                                                       typesize, blocksize));
         oCodecs.Add(oCodec);
     }
+    else if (EQUAL(pszCompressor, "ZSTD"))
+    {
+        CPLJSONObject oCodec;
+        oCodec.Add("name", "zstd");
+        const char *pszLevel =
+            CSLFetchNameValueDef(papszOptions, "ZSTD_LEVEL", "13");
+        const bool bChecksum = CPLTestBool(
+            CSLFetchNameValueDef(papszOptions, "ZSTD_CHECKSUM", "FALSE"));
+        oCodec.Add("configuration", ZarrV3CodecZstd::GetConfiguration(
+                                        atoi(pszLevel), bChecksum));
+        oCodecs.Add(oCodec);
+    }
     else if (!EQUAL(pszCompressor, "NONE"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -688,11 +701,17 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     if (!poArray)
         return nullptr;
     poArray->SetNew(true);
-    std::string osFilename =
-        CPLFormFilename(osArrayDirectory.c_str(), "zarr.json", nullptr);
+    const std::string osFilename =
+        CPLFormFilenameSafe(osArrayDirectory.c_str(), "zarr.json", nullptr);
     poArray->SetFilename(osFilename);
     poArray->SetDimSeparator(pszDimSeparator);
     poArray->SetDtype(dtype);
+    if (oCodecs.Size() > 0 &&
+        oCodecs[oCodecs.Size() - 1].GetString("name") != "bytes")
+    {
+        poArray->SetStructuralInfo(
+            "COMPRESSOR", oCodecs[oCodecs.Size() - 1].ToString().c_str());
+    }
     if (poCodecs)
         poArray->SetCodecs(std::move(poCodecs));
     poArray->SetUpdatable(true);

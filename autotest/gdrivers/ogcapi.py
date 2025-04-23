@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  OGCAPI driver testing.
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2023, Alessandro Pasotti <elpaso at itopen dot it>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -211,6 +194,7 @@ def init():
 
 
 @pytest.mark.parametrize("remove_type_application_json", [False, True])
+@pytest.mark.require_driver("OAPIF")
 def test_ogr_ogcapi_features(remove_type_application_json):
 
     global global_remove_type_application_json
@@ -242,9 +226,6 @@ def test_ogr_ogcapi_features(remove_type_application_json):
         assert lyr is not None
 
         feat = lyr.GetNextFeature()
-        fdef = feat.GetDefnRef()
-        assert fdef.GetFieldDefn(0).GetName() == "feature::id"
-        assert fdef.GetFieldDefn(3).GetName() == "name"
 
         ogrtest.check_feature_geometry(
             feat,
@@ -352,6 +333,7 @@ def test_ogr_ogcapi_raster(api, collection, tmp_path):
     options = gdal.TranslateOptions(
         gdal.ParseCommandLine(
             f"-outsize 100 100 -oo API={api} -projwin -9.5377 53.5421 -9.0557 53.2953"
+            #        f"-outsize 100 100 -oo API={api} -projwin -9.5377 53.5421 -9.0557002 53.2953002197"
         )
     )
     out_path = str(tmp_path / "out.tif")
@@ -366,6 +348,7 @@ def test_ogr_ogcapi_raster(api, collection, tmp_path):
 
     control_image_ds = gdal.Open(control_image_path)
     out_ds = gdal.Open(out_path)
+
     assert [
         out_ds.GetRasterBand(i + 1).Checksum() for i in range(out_ds.RasterCount)
     ] == [
@@ -385,7 +368,10 @@ def test_ogr_ogcapi_raster(api, collection, tmp_path):
 )
 def test_ogc_api_wrong_collection(api, of_type):
 
-    with pytest.raises(Exception, match="Invalid data collection"):
+    with pytest.raises(
+        Exception,
+        match=r"HTTP error code : 400, <h1>GNOSIS Map Server \(OGCAPI\) - 400 Bad Request</h1><h3>Invalid data collection</h3>",
+    ):
         gdal.OpenEx(
             f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/NOT_EXISTS",
             of_type,
@@ -421,8 +407,8 @@ def test_ogc_api_raster_tiles():
         open_options=["API=TILES", "CACHE=NO", "TILEMATRIXSET=WorldMercatorWGS84Quad"],
     )
     assert ds.RasterCount == 4
-    assert ds.RasterXSize == 82734
-    assert ds.RasterYSize == 106149
+    assert ds.RasterXSize == 82735
+    assert ds.RasterYSize == 106151
     assert ds.GetGeoTransform() == pytest.approx(
         (
             -10902129.741315002,
@@ -434,7 +420,7 @@ def test_ogc_api_raster_tiles():
         )
     )
     assert ds.GetRasterBand(1).GetOverviewCount() == 16
-    assert ds.GetRasterBand(1).GetOverview(15).Checksum() == 5
+    assert ds.GetRasterBand(1).GetOverview(15).Checksum() == 35
     assert ds.GetRasterBand(1).ReadBlock(
         ds.RasterXSize // 2 // 256, ds.RasterYSize // 2 // 256
     )

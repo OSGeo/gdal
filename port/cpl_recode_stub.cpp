@@ -36,6 +36,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_character_sets.c"
 
 static unsigned utf8decode(const char *p, const char *end, int *len);
 static unsigned utf8towc(const char *src, unsigned srclen, wchar_t *dst,
@@ -161,39 +162,118 @@ char *CPLRecodeStub(const char *pszSource, const char *pszSrcEncoding,
         return pszResult;
     }
 
-#ifdef _WIN32
-    /* ---------------------------------------------------------------------*/
-    /*      CPXXX to UTF8                                                   */
-    /* ---------------------------------------------------------------------*/
-    if (STARTS_WITH(pszSrcEncoding, "CP") &&
-        strcmp(pszDstEncoding, CPL_ENC_UTF8) == 0)
+    // A few hard coded CPxxx/ISO-8859-x to UTF-8 tables
+    if (EQUAL(pszDstEncoding, CPL_ENC_UTF8))
     {
-        int nCode = atoi(pszSrcEncoding + 2);
-        if (nCode > 0)
+        const auto pConvTable = CPLGetConversionTableToUTF8(pszSrcEncoding);
+        if (pConvTable)
+        {
+            const auto convTable = *pConvTable;
+            const size_t nCharCount = strlen(pszSource);
+            char *pszResult =
+                static_cast<char *>(CPLCalloc(1, nCharCount * 3 + 1));
+            size_t iDst = 0;
+            unsigned char *pabyResult =
+                reinterpret_cast<unsigned char *>(pszResult);
+            for (size_t i = 0; i < nCharCount; ++i)
+            {
+                const unsigned char nChar =
+                    static_cast<unsigned char>(pszSource[i]);
+                if (nChar <= 127)
+                {
+                    pszResult[iDst] = pszSource[i];
+                    ++iDst;
+                }
+                else
+                {
+                    const unsigned char nShiftedChar = nChar - 128;
+                    if (convTable[nShiftedChar][0])
+                    {
+                        pabyResult[iDst] = convTable[nShiftedChar][0];
+                        ++iDst;
+                        CPLAssert(convTable[nShiftedChar][1]);
+                        pabyResult[iDst] = convTable[nShiftedChar][1];
+                        ++iDst;
+                        if (convTable[nShiftedChar][2])
+                        {
+                            pabyResult[iDst] = convTable[nShiftedChar][2];
+                            ++iDst;
+                        }
+                    }
+                    else
+                    {
+                        // Skip the invalid sequence in the input string.
+                        if (!bHaveWarned2)
+                        {
+                            bHaveWarned2 = true;
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "One or several characters couldn't be "
+                                     "converted correctly from %s to %s. "
+                                     "This warning will not be emitted anymore",
+                                     pszSrcEncoding, pszDstEncoding);
+                        }
+                    }
+                }
+            }
+
+            pszResult[iDst] = 0;
+            return pszResult;
+        }
+    }
+
+#ifdef _WIN32
+    const auto MapEncodingToWindowsCodePage = [](const char *pszEncoding)
+    {
+        // Cf https://learn.microsoft.com/fr-fr/windows/win32/intl/code-page-identifiers
+        if (STARTS_WITH(pszEncoding, "CP"))
+        {
+            const int nCode = atoi(pszEncoding + strlen("CP"));
+            if (nCode > 0)
+                return nCode;
+            else if (EQUAL(pszEncoding, "CP_OEMCP"))
+                return CP_OEMCP;
+            else if (EQUAL(pszEncoding, "CP_ACP"))
+                return CP_ACP;
+        }
+        else if (STARTS_WITH(pszEncoding, "WINDOWS-"))
+        {
+            const int nCode = atoi(pszEncoding + strlen("WINDOWS-"));
+            if (nCode > 0)
+                return nCode;
+        }
+        else if (STARTS_WITH(pszEncoding, "ISO-8859-"))
+        {
+            const int nCode = atoi(pszEncoding + strlen("ISO-8859-"));
+            if ((nCode >= 1 && nCode <= 9) || nCode == 13 || nCode == 15)
+                return 28590 + nCode;
+        }
+
+        // Return a negative value, since CP_ACP = 0
+        return -1;
+    };
+
+    /* ---------------------------------------------------------------------*/
+    /*     XXX to UTF8                                                      */
+    /* ---------------------------------------------------------------------*/
+    if (strcmp(pszDstEncoding, CPL_ENC_UTF8) == 0)
+    {
+        const int nCode = MapEncodingToWindowsCodePage(pszSrcEncoding);
+        if (nCode >= 0)
         {
             return CPLWin32Recode(pszSource, nCode, CP_UTF8);
         }
-        else if (EQUAL(pszSrcEncoding, "CP_OEMCP"))
-            return CPLWin32Recode(pszSource, CP_OEMCP, CP_UTF8);
-        else if (EQUAL(pszSrcEncoding, "CP_ACP"))
-            return CPLWin32Recode(pszSource, CP_ACP, CP_UTF8);
     }
 
     /* ---------------------------------------------------------------------*/
-    /*      UTF8 to CPXXX                                                   */
+    /*      UTF8 to XXX                                                     */
     /* ---------------------------------------------------------------------*/
-    if (strcmp(pszSrcEncoding, CPL_ENC_UTF8) == 0 &&
-        STARTS_WITH(pszDstEncoding, "CP"))
+    if (strcmp(pszSrcEncoding, CPL_ENC_UTF8) == 0)
     {
-        int nCode = atoi(pszDstEncoding + 2);
-        if (nCode > 0)
+        const int nCode = MapEncodingToWindowsCodePage(pszDstEncoding);
+        if (nCode >= 0)
         {
             return CPLWin32Recode(pszSource, CP_UTF8, nCode);
         }
-        else if (EQUAL(pszDstEncoding, "CP_OEMCP"))
-            return CPLWin32Recode(pszSource, CP_UTF8, CP_OEMCP);
-        else if (EQUAL(pszDstEncoding, "CP_ACP"))
-            return CPLWin32Recode(pszSource, CP_UTF8, CP_ACP);
     }
 #endif
 
@@ -216,30 +296,6 @@ char *CPLRecodeStub(const char *pszSource, const char *pszSrcEncoding,
         }
 
         utf8froma(pszResult, nCharCount * 2 + 1, pszSource, nCharCount);
-
-        return pszResult;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      UTF-8 to anything else is treated as UTF-8 to ISO-8859-1        */
-    /*      with a warning.                                                 */
-    /* -------------------------------------------------------------------- */
-    if (strcmp(pszSrcEncoding, CPL_ENC_UTF8) == 0 &&
-        strcmp(pszDstEncoding, CPL_ENC_ISO8859_1) == 0)
-    {
-        int nCharCount = static_cast<int>(strlen(pszSource));
-        char *pszResult = static_cast<char *>(CPLCalloc(1, nCharCount + 1));
-
-        if (!bHaveWarned2)
-        {
-            bHaveWarned2 = true;
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Recode from UTF-8 to %s not supported, "
-                     "treated as UTF-8 to ISO-8859-1.",
-                     pszDstEncoding);
-        }
-
-        utf8toa(pszSource, nCharCount, pszResult, nCharCount + 1);
 
         return pszResult;
     }

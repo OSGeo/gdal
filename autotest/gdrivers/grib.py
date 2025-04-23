@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GRIB driver.
@@ -11,23 +10,7 @@
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -1732,7 +1715,8 @@ def test_grib_grib2_write_data_encodings_warnings_and_errors():
     tests += [["data/byte.tif", ["JPEG2000_DRIVER=DERIVED"]]]  # Read-only driver
     tests += [["../gcore/data/cfloat32.tif", []]]  # complex data type
     tests += [["data/aaigrid/float64.asc", []]]  # no projection
-    tests += [["data/test_nosrs.vrt", []]]  # no geotransform
+    if gdaltest.vrt_has_open_support():
+        tests += [["data/test_nosrs.vrt", []]]  # no geotransform
     tests += [["data/envi/rotation.img", []]]  # geotransform with rotation terms
     gdal.GetDriverByName("GTiff").Create(
         "/vsimem/huge.tif", 65535, 65535, 1, options=["SPARSE_OK=YES"]
@@ -2419,3 +2403,44 @@ def test_grib_grib2_template_5_42_CCDS_aes_decompression():
         assert ds.GetRasterBand(1).Checksum() == 41970
     else:
         assert ds.GetRasterBand(1).Checksum() == -1
+
+
+# https://github.com/OSGeo/gdal/issues/10655
+def test_grib_grib2_minx_180():
+    ds = gdal.Open("data/grib/minx_180.grib2")
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx((-180.0625, 0.125, 0.0, 90.0625, 0.0, -0.125), rel=1e-6)
+
+
+def test_grib_grib2_MANAL_2023030103_fake_wrong_grid_origin_latitude():
+    with gdal.quiet_errors():
+        ds = gdal.Open(
+            "data/grib/MANAL_2023030103_fake_wrong_grid_origin_latitude.grb2"
+        )
+    assert (
+        gdal.GetLastErrorMsg()
+        == "Likely buggy grid registration for GRIB2 product: heuristics shows that the latitudeOfFirstGridPoint is likely to qualify the latitude of the northern-most grid point instead of the southern-most grid point as expected. Please report to data producer. This heuristics can be disabled by setting the GRIB_LATITUDE_OF_FIRST_GRID_POINT_IS_SOUTHERN_MOST configuration option to YES."
+    )
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx(
+        (-2442500.0217935005, 5000.0, 0.0, 2042500.0318467868, 0.0, -5000.0), rel=1e-6
+    )
+
+
+# Test reading a Transverse Mercator projection with negative false easting/northing (#12015)
+
+
+def test_grib_grib2_tmerc_negative_false_easting_false_northing(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
+    src_ds.SetProjection(
+        "+proj=tmerc +lat_0=-1 +lon_0=-2 +k=1 +x_0=-300000 +y_0=-400000"
+    )
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    out_filename = tmp_vsimem / "tmp.grb2"
+    gdal.GetDriverByName("GRIB").CreateCopy(out_filename, src_ds)
+    with gdal.Open(out_filename) as ds:
+        assert (
+            "+proj=tmerc +lat_0=-1 +lon_0=-2 +k=1 +x_0=-300000 +y_0=-400000"
+            in ds.GetSpatialRef().ExportToProj4()
+        )

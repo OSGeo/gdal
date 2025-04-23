@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "wmsmetadataset.h"
@@ -380,10 +364,34 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode *psXML,
     const char *pszMaxXLocal = nullptr;
     const char *pszMaxYLocal = nullptr;
 
-    const char *pszSRSTagName =
-        VersionStringToInt(osVersion.c_str()) >= VersionStringToInt("1.3.0")
-            ? "CRS"
-            : "SRS";
+    const bool bIsWMS130 =
+        VersionStringToInt(osVersion.c_str()) >= VersionStringToInt("1.3.0");
+
+    const auto GetCRS = [bIsWMS130](const CPLXMLNode *psNode)
+    {
+        const char *pszVal =
+            CPLGetXMLValue(psNode, bIsWMS130 ? "CRS" : "SRS", nullptr);
+        if (!pszVal && !bIsWMS130)
+        {
+            // Some WMS servers have a non-conformant WMS 1.1.1 implementation
+            // that use "CRS" instead of "SRS"
+            // like https://mapy.geoportal.gov.pl/wss/service/PZGIK/BDOO/WMS/aktualne?service=wms&request=getcapabilities
+            pszVal = CPLGetXMLValue(psNode, "CRS", nullptr);
+            if (pszVal)
+            {
+                static bool bWarned = false;
+                if (!bWarned)
+                {
+                    bWarned = true;
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "WMS server uses non-standard CRS attribute for "
+                             "WMS 1.1.0. Things might mis-behave. Perhaps try "
+                             "using VERSION=1.3.0");
+                }
+            }
+        }
+        return pszVal;
+    };
 
     /* Use local bounding box if available, otherwise use the one */
     /* that comes from an upper layer */
@@ -395,7 +403,7 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode *psXML,
             strcmp(psIter->pszValue, "BoundingBox") == 0)
         {
             psSRS = psIter;
-            pszSRSLocal = CPLGetXMLValue(psSRS, pszSRSTagName, nullptr);
+            pszSRSLocal = GetCRS(psSRS);
             if (osPreferredSRS.empty() || pszSRSLocal == nullptr)
                 break;
             if (EQUAL(osPreferredSRS, pszSRSLocal))
@@ -409,7 +417,7 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode *psXML,
     if (psSRS == nullptr)
     {
         psSRS = CPLGetXMLNode(psXML, "LatLonBoundingBox");
-        pszSRSLocal = CPLGetXMLValue(psXML, pszSRSTagName, nullptr);
+        pszSRSLocal = GetCRS(psSRS);
         if (pszSRSLocal == nullptr)
             pszSRSLocal = "EPSG:4326";
     }

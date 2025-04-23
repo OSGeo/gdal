@@ -181,27 +181,10 @@ OGRGeometry *GNMGenericLayer::GetSpatialFilter()
     return m_poLayer->GetSpatialFilter();
 }
 
-void GNMGenericLayer::SetSpatialFilter(OGRGeometry *poGeometry)
+OGRErr GNMGenericLayer::ISetSpatialFilter(int iGeomField,
+                                          const OGRGeometry *poGeometry)
 {
-    m_poLayer->SetSpatialFilter(poGeometry);
-}
-
-void GNMGenericLayer::SetSpatialFilterRect(double dfMinX, double dfMinY,
-                                           double dfMaxX, double dfMaxY)
-{
-    m_poLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
-}
-
-void GNMGenericLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeometry)
-{
-    m_poLayer->SetSpatialFilter(iGeomField, poGeometry);
-}
-
-void GNMGenericLayer::SetSpatialFilterRect(int iGeomField, double dfMinX,
-                                           double dfMinY, double dfMaxX,
-                                           double dfMaxY)
-{
-    m_poLayer->SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX, dfMaxY);
+    return m_poLayer->SetSpatialFilter(iGeomField, poGeometry);
 }
 
 OGRErr GNMGenericLayer::SetAttributeFilter(const char *pszFilter)
@@ -279,13 +262,8 @@ GIntBig GNMGenericLayer::GetFeatureCount(int bForce)
     return m_poLayer->GetFeatureCount(bForce);
 }
 
-OGRErr GNMGenericLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    return m_poLayer->GetExtent(psExtent, bForce);
-}
-
-OGRErr GNMGenericLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                  int bForce)
+OGRErr GNMGenericLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                   bool bForce)
 {
     return m_poLayer->GetExtent(iGeomField, psExtent, bForce);
 }

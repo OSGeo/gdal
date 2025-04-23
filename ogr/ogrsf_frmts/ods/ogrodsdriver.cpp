@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_conv.h"
@@ -55,7 +39,7 @@ static int OGRODSDriverIdentify(GDALOpenInfo *poOpenInfo)
                       "<office:document-content") != nullptr;
     }
 
-    const char *pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+    const char *pszExt = poOpenInfo->osExtension.c_str();
     if (!EQUAL(pszExt, "ODS") && !EQUAL(pszExt, "ODS}"))
         return FALSE;
 
@@ -186,7 +170,7 @@ static GDALDataset *OGRODSDriverCreate(const char *pszName, int /* nXSize */,
                                        char **papszOptions)
 
 {
-    if (!EQUAL(CPLGetExtension(pszName), "ODS"))
+    if (!EQUAL(CPLGetExtensionSafe(pszName).c_str(), "ODS"))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "File extension should be ODS");
         return nullptr;
@@ -255,6 +239,9 @@ void RegisterOGRODS()
     poDriver->SetMetadataItem(GDAL_DCAP_REORDER_FIELDS, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "Features");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,

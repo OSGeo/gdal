@@ -181,26 +181,25 @@
 
 static const TIFFField ojpegFields[] = {
     {TIFFTAG_JPEGIFOFFSET, 1, 1, TIFF_LONG8, 0, TIFF_SETGET_UINT64,
-     TIFF_SETGET_UNDEFINED, FIELD_OJPEG_JPEGINTERCHANGEFORMAT, TRUE, FALSE,
-     "JpegInterchangeFormat", NULL},
-    {TIFFTAG_JPEGIFBYTECOUNT, 1, 1, TIFF_LONG8, 0, TIFF_SETGET_UINT64,
-     TIFF_SETGET_UNDEFINED, FIELD_OJPEG_JPEGINTERCHANGEFORMATLENGTH, TRUE,
-     FALSE, "JpegInterchangeFormatLength", NULL},
-    {TIFFTAG_JPEGQTABLES, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_LONG8, 0,
-     TIFF_SETGET_C32_UINT64, TIFF_SETGET_UNDEFINED, FIELD_OJPEG_JPEGQTABLES,
-     FALSE, TRUE, "JpegQTables", NULL},
-    {TIFFTAG_JPEGDCTABLES, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_LONG8, 0,
-     TIFF_SETGET_C32_UINT64, TIFF_SETGET_UNDEFINED, FIELD_OJPEG_JPEGDCTABLES,
-     FALSE, TRUE, "JpegDcTables", NULL},
-    {TIFFTAG_JPEGACTABLES, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_LONG8, 0,
-     TIFF_SETGET_C32_UINT64, TIFF_SETGET_UNDEFINED, FIELD_OJPEG_JPEGACTABLES,
-     FALSE, TRUE, "JpegAcTables", NULL},
-    {TIFFTAG_JPEGPROC, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16,
-     TIFF_SETGET_UNDEFINED, FIELD_OJPEG_JPEGPROC, FALSE, FALSE, "JpegProc",
+     FIELD_OJPEG_JPEGINTERCHANGEFORMAT, TRUE, FALSE, "JpegInterchangeFormat",
      NULL},
+    {TIFFTAG_JPEGIFBYTECOUNT, 1, 1, TIFF_LONG8, 0, TIFF_SETGET_UINT64,
+     FIELD_OJPEG_JPEGINTERCHANGEFORMATLENGTH, TRUE, FALSE,
+     "JpegInterchangeFormatLength", NULL},
+    {TIFFTAG_JPEGQTABLES, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_LONG8, 0,
+     TIFF_SETGET_C32_UINT64, FIELD_OJPEG_JPEGQTABLES, FALSE, TRUE,
+     "JpegQTables", NULL},
+    {TIFFTAG_JPEGDCTABLES, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_LONG8, 0,
+     TIFF_SETGET_C32_UINT64, FIELD_OJPEG_JPEGDCTABLES, FALSE, TRUE,
+     "JpegDcTables", NULL},
+    {TIFFTAG_JPEGACTABLES, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_LONG8, 0,
+     TIFF_SETGET_C32_UINT64, FIELD_OJPEG_JPEGACTABLES, FALSE, TRUE,
+     "JpegAcTables", NULL},
+    {TIFFTAG_JPEGPROC, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16,
+     FIELD_OJPEG_JPEGPROC, FALSE, FALSE, "JpegProc", NULL},
     {TIFFTAG_JPEGRESTARTINTERVAL, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16,
-     TIFF_SETGET_UNDEFINED, FIELD_OJPEG_JPEGRESTARTINTERVAL, FALSE, FALSE,
-     "JpegRestartInterval", NULL},
+     FIELD_OJPEG_JPEGRESTARTINTERVAL, FALSE, FALSE, "JpegRestartInterval",
+     NULL},
 };
 
 #ifndef LIBJPEG_ENCAP_EXTERNAL
@@ -755,6 +754,9 @@ static int OJPEGPreDecode(TIFF *tif, uint16_t s)
         if (OJPEGWriteHeaderInfo(tif) == 0)
             return (0);
     }
+
+    sp->subsampling_convert_state = 0;
+
     while (sp->write_curstrile < m)
     {
         if (sp->libjpeg_jpeg_query_style == 0)
@@ -840,12 +842,14 @@ static int OJPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
     (void)s;
     if (!sp->decoder_ok)
     {
+        memset(buf, 0, (size_t)cc);
         TIFFErrorExtR(tif, module,
                       "Cannot decode: decoder not correctly initialized");
         return 0;
     }
     if (sp->libjpeg_session_active == 0)
     {
+        memset(buf, 0, (size_t)cc);
         /* This should normally not happen, except that it does when */
         /* using TIFFReadScanline() which calls OJPEGPostDecode() for */
         /* each scanline, which assumes that a whole strile was read */
@@ -859,17 +863,24 @@ static int OJPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
     }
     if (sp->error_in_raw_data_decoding)
     {
+        memset(buf, 0, (size_t)cc);
         return 0;
     }
     if (sp->libjpeg_jpeg_query_style == 0)
     {
         if (OJPEGDecodeRaw(tif, buf, cc) == 0)
+        {
+            memset(buf, 0, (size_t)cc);
             return (0);
+        }
     }
     else
     {
         if (OJPEGDecodeScanlines(tif, buf, cc) == 0)
+        {
+            memset(buf, 0, (size_t)cc);
             return (0);
+        }
     }
     return (1);
 }

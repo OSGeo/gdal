@@ -5,8 +5,8 @@
 
 .. _python_raster_api:
 
-Python Raster API
-=================
+Raster API
+==========
 
 This page contains classes, methods, functions that relate to the GDAL :ref:`raster_data_model`:
 

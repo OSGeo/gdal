@@ -8,23 +8,7 @@
  * Copyright (c) 2018, Ivan Lucena
  * Copyright (c) 2018, Even Rouault
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef GDAL_FRMTS_RAW_BYNDATASET_H_INCLUDED
@@ -210,11 +194,8 @@ class BYNDataset final : public RawDataset
     mutable OGRSpatialReference m_oSRS{};
     BYNHeader hHeader;
 
-    void UpdateHeader();
-
     CPL_DISALLOW_COPY_ASSIGN(BYNDataset)
 
-    static void header2buffer(const BYNHeader *pohHeader, GByte *pabyBuf);
     static void buffer2header(const GByte *pabyBuf, BYNHeader *pohHeader);
 
     CPLErr Close() override;
@@ -224,16 +205,11 @@ class BYNDataset final : public RawDataset
     ~BYNDataset();
 
     CPLErr GetGeoTransform(double *padfTransform) override;
-    CPLErr SetGeoTransform(double *padfTransform) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
-    static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
-                               int nBands, GDALDataType eType,
-                               char **papszOptions);
 };
 
 /************************************************************************/
@@ -256,7 +232,6 @@ class BYNRasterBand final : public RawRasterBand
 
     double GetNoDataValue(int *pbSuccess = nullptr) override;
     double GetScale(int *pbSuccess = nullptr) override;
-    CPLErr SetScale(double dfNewValue) override;
 };
 
 #endif  // GDAL_FRMTS_RAW_BYNDATASET_H_INCLUDED

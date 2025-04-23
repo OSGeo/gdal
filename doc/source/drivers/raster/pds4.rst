@@ -194,10 +194,7 @@ The following dataset creation options are available:
           and not creating from an existing PDS4 file, the
           data/pds4_template.xml file will be used. For GDAL utilities to
           find this default PDS4 template, GDAL's data directory should be
-          defined in your environment (typically on Windows builds). Consult
-          the
-          `wiki <https://trac.osgeo.org/gdal/wiki/FAQInstallationAndBuilding#HowtosetGDAL_DATAvariable>`__
-          for more information.
+          defined in your environment (typically on Windows builds).
 
    -  .. co:: LATITUDE_TYPE
          :choices: Planetocentric, Planetographic
@@ -536,12 +533,6 @@ Converting a shapefile to a PDS4 dataset with a CSV-delimited table
 ::
 
    $ ogr2ogr my_out_pds4.xml in.shp
-
-Limitations
------------
-
-As a new driver and new format, please report any issues to the bug
-tracker, as explained on the `wiki <https://trac.osgeo.org/gdal/wiki>`__
 
 See Also:
 ---------

@@ -5,7 +5,7 @@
  * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2012-2014, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2012-2024, Even Rouault <even dot rouault at spatialys.com>
  *
  * SPDX-License-Identifier: MIT OR LGPL-2.0-or-later
  ******************************************************************************/
@@ -128,6 +128,8 @@ SBNSearchHandle SBNOpenDiskTree(const char *pszSBNFilename,
     /* -------------------------------------------------------------------- */
     SBNSearchHandle hSBN =
         STATIC_CAST(SBNSearchHandle, calloc(1, sizeof(struct SBNSearchInfo)));
+    if (!hSBN)
+        return SHPLIB_NULLPTR;
 
     if (psHooks == SHPLIB_NULLPTR)
         SASetupDefaultHooks(&(hSBN->sHooks));

@@ -19,8 +19,22 @@ the ``doc`` subdirectory.
 Building documentation
 ######################
 
-Documentation can be generated with Makefile targets, from the ``doc`` subdirectory
-of the GDAL source repository (only on Unix systems).
+Documentation can be generated with the CMake targets listed below. These
+targets are only available if the CMake ``BUILD_DOCS=ON`` variable is set,
+which is the default if Doxygen and Sphinx are detected.
+
+.. note::
+
+   CMake will attempt to detect Sphinx at configuration time (i.e, when ``cmake``
+   is first run). If Sphinx is provided via a Conda or a Python virtual environment,
+   that environment should be activated during CMake configuration.
+
+.. note::
+
+   Because some documentation pages execute GDAL command-line utilities or Python
+   code when generating, these GDAL components must also be available to build the
+   documentation without warnings. See :ref:`build instructions <minimal_build>` for hints on reducing
+   this build time.
 
 The following targets are available:
 
@@ -29,30 +43,22 @@ The following targets are available:
 
 * ``man``: build MAN pages into the ``doc/build/man`` directory.
 
-* ``latexpdf``: build PDF documentation into the ``doc/build/pdf`` directory
+* ``latexpdf``: build PDF documentation into the ``doc/build/latex`` directory
 
-* ``doxygen``: regenerate API Doxygen XML and HTML output, that is used by the
-  ``html`` target. Doxygen content is not automatically rebuilt when source files
-  are modified, hence this target must be explicitly run to refresh it.
+* ``doxygen_xml`` : regenerate API Doxygen XML outputs, used by the above targets.
 
-* ``doxygen_check_warnings``: same as ``doxygen``, but errors out when Doxygen
-  emits a warning (the ``doxygen`` target is tolerant to Doxygen warnings).
-  This can be useful to reproduce one of the continuous integration checks that
-  verifies that there are no Doxygen warnings.
-  Requires Doxygen >= 1.9.3 to be warning free.
+* ``doxygen_html``: generate Doxygen HTML documentation (this is distinct from the
+  API documentation included in the ``html`` target above).
 
-* ``clean``: clean the ``doc/build`` directory.
+If ``BUILD_TESTING`` is enabled, the documentation can be spell-checked using
+the ``doc-spelling`` test (invoked using ``ctest -V -R doc-spelling --output-on-failure``.)
+Documentation generated from C/C++ API (Doxygen) and Python API is included in
+the check. Words unknown to the spell checker but still considered valid should
+be added to the list in :file:`doc/source/spelling_wordlist.txt`
 
-It is also possible to run those targets as CMake targets. In that case, the
-output directory will be the ``doc/build`` subdirectory of the CMake
-build directory. To only clean the documentation, the ``clean_doc`` target can
-be invoked.
-Note: those CMake targets are only available if the CMake BUILD_DOCS=ON variable
-is set (it is set by default if build preconditions are met, that is if Doxygen,
-Sphinx and make are available)
-
-To visualize documentation changes while editing, it may be useful to install the |sphinx-autobuild| python package.
-Once installed, running ``sphinx-autobuild -b html source build`` from the ``doc`` subdirectory will build documentation
+To visualize documentation changes while editing, it may be useful to install the |sphinx-autobuild| Python package.
+Once installed, running ``sphinx-autobuild -b html source_dir build_dir`` with appropriate values of ``source_dir`` and
+``build_dir`` will build documentation
 and serve it on a local web server at ``http://127.0.0.1:8000``. The pages served will be automatically refreshed as changes
 are made to underlying ``rst`` documentation files.
 
@@ -67,13 +73,17 @@ Docstrings may be found in two locations. If the function was defined in Python
 placed within the function definition. If the function is defined in C++ only,
 then the docstring should be placed in a separate file
 containing only docstrings (located in :source_file:`swig/include/python/docs`).
-Sphinx loads the Python bindings when generating documentation, so for it to see any changes
-the following steps must be completed:
 
-- rebuild the Python bindings from the build directory (``cmake --build . --target python_binding``)
-- make the updated Python bindings visible to Python, either by installing them, or by running ``scripts/setdevenv.sh``
-  from the build directory
-- update the timestamp of the ``rst`` files associated with the page where the documentation appears (e.g., ``touch doc/source/api/python/osgeo.ogr.rst``)
+Sphinx loads the Python bindings when generating documentation, so for it to see any changes
+the updated Python module must be loadable by the Python interpreter Sphinx is using. When building
+documentation using CMake (e..g, ``cmake --build . --target html``) this will be done automatically.
+If using ``sphinx-build`` or ``sphinx-autobuild`` manually, the updated Python bindings must be
+rebuilt (``cmake --build . --target python_binding``) and made visible to Python, either by installing
+them or by sourcing  ``scripts/setdevenv.sh`` from the build directory. 
+
+Sphinx cannot detect changes to the Python module, so when iteratively rebuilding Python API documentation it is
+necessary to manually update the timestamp of the ``rst`` files associated with the page where the modified 
+documentation appears (e.g., ``touch doc/source/api/python/osgeo.ogr.rst``)
 
 
 .. _rst_style:
@@ -105,7 +115,7 @@ A reStructuredText document is written in plain text.  Without the need for comp
      - `` ``monospace`` `` (double back quote)
      - ``monospace``
 
-.. warning:: Use of basic markup is **not recommend**! Where possible use sphinx inline directives (described below) to logically mark commands, parameters, options, input, and files. By using directives consistently these items can be styled appropriately.
+.. warning:: Use of the basic markup above is **not recommended**! Where possible use sphinx inline directives (described below) to logically mark commands, parameters, options, input, and files. By using directives consistently these items can be styled appropriately.
 
 Lists
 -----
@@ -264,13 +274,13 @@ External files
 
 Text snippets, large blocks of downloadable code, and even zip files or other binary sources can all be included as part of the documentation.
 
-To include link to sample file, use the ``download`` directive::
+To include a link to a file, use the ``download`` directive::
 
    :download:`An external file <example.txt>`
 
 The result of this code will generate a standard link to an :download:`external file <example.txt>`
 
-To include the contents of a file, use ``literalinclude`` directive::
+To include the contents of a file, use the ``literalinclude`` directive::
 
    Example of :command:`gdalinfo` use:
 
@@ -335,6 +345,46 @@ To reference a method or function::
 
   :cpp:func:`MyClass::MyMethod`
   :cpp:func:`MyFunction`
+
+
+Command-line program usage
+--------------------------
+
+To document a command-line tool, use the ``example`` directive.
+An example may have a title as well as an id that can be used to generate
+a cross-reference from the same document.
+
+.. code-block:: rst
+
+    .. example::
+       :title: Listing files
+       :id: basic-ls
+
+       Files can be listed as follows:
+
+       .. code-block:: bash
+
+          ls
+
+    The ``ls`` command is demonstrated in :example:`basic-ls`.
+
+If the output of a command is to be included in the listing, the code language
+should be set to ``console``:
+
+.. code-block:: rst
+
+   .. code-block:: console
+
+   $ gdalinfo --version
+   GDAL 3.4.1, released 2021/12/27
+
+To run the command and collect its output when the documentation is built, use the ``command-output`` directive.
+
+.. code-block:: rst
+
+   .. command-output:: ogrinfo poly.shp
+      :cwd: ../../../autotest/ogr/data
+
 
 .. _config_option_syntax:
 
@@ -402,3 +452,44 @@ Use ``describe`` to document create parameters::
   .. describe:: WORLDFILE=YES
 
      Force the generation of an associated ESRI world file (with the extension .wld).
+
+MyST-NB - Executable notebooks
+##############################
+
+Quoting `MyST-NB documentation <https://myst-nb.readthedocs.io/en/latest/index.html>`__,
+"MyST-NB is a module within the Executable Books Project, an international
+collaboration to build open source tools that facilitate publishing computational
+narratives using the Jupyter ecosystem. It is also a core component of Jupyter Book."
+
+The documentation is written in a special markdown dialect, MyST Markdown,
+that can include code cells:
+
+.. code-block:: markdown
+
+    ```{code-cell}
+    :tags: [hide-output]
+
+    from osgeo import gdal
+    import pprint
+
+    gdal.UseExceptions()
+
+    with gdal.Open("data/byte.tif") as ds:
+        info = gdal.Info(ds, format='json')
+        del info["stac"]  # to avoid cluttering below output
+        pprint.pprint(info, indent=2, width=100)
+    ```
+
+See :file:`doc/source/api/python/python_examples.myst` for an example.
+
+Consult how to author `text-based notebooks <https://myst-nb.readthedocs.io/en/latest/authoring/text-notebooks.html>`__
+for more details.
+
+Building full GDAL documentation, even in incremental mode, is rather slow.
+It is possible to partly render to HTML a MyST file with:
+
+.. code-block:: shell
+
+    $ mystnb-docutils-html5 --nb-read-as-md=true source/api/python/python_examples.myst > out.html
+
+You will get some warnings, but executable run will be executed and rendered.

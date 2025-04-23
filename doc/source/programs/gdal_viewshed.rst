@@ -15,17 +15,7 @@ gdal_viewshed
 Synopsis
 --------
 
-.. code-block::
-
-   gdal_viewshed [--help] [--help-general] [-b <band>]
-                 [-a_nodata <value>] [-f <formatname>]
-                 [-oz <observer_height>] [-tz <target_height>] [-md <max_distance>]
-                 -ox <observer_x> -oy <observer_y>
-                 [-vv <visibility>] [-iv <invisibility>]
-                 [-ov <out_of_range>] [-cc <curvature_coef>]
-                 [-co <NAME>=<VALUE>]...
-                 [-q] [-om <output mode>]
-                 <src_filename> <dst_filename>
+.. program-output:: gdal_viewshed --help-doc
 
 Description
 -----------
@@ -62,13 +52,13 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 
    The X position of the observer (in SRS units).  If the coordinate is outside of the
    raster, all space between the observer and the raster is assumed not to occlude
-   visibility of the raster.
+   visibility of the raster. (Not supported in cumulative mode.)
 
 .. option:: -oy <value>
 
    The Y position of the observer (in SRS units).  If the coordinate is outside of the
    raster, all space between the observer and the raster is assumed not to occlude
-   visibility of the raster.
+   visibility of the raster. (Not supported in cumulative mode.)
 
 .. option:: -oz <value>
 
@@ -80,8 +70,9 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 
 .. option:: -md <value>
 
-   Maximum distance from observer to compute visibiliy.
+   Maximum distance from observer to compute visibility.
    It is also used to clamp the extent of the output raster.
+   (Not supported in cumulative mode)
 
 .. option:: -cc <value>
 
@@ -128,52 +119,71 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 
 .. option:: -iv <value>
 
-   Pixel value to set for invisible areas. Default: 0
+   Pixel value to set for invisible areas. (Not supported in cumulative mode) Default: 0
 
 .. option:: -ov <value>
 
    Pixel value to set for the cells that fall outside of the range specified by
-   the observer location and the maximum distance. Default: 0
+   the observer location and the maximum distance. (Not supported in cumulative mode) Default: 0
 
 .. option:: -vv <value>
 
-   Pixel value to set for visible areas. Default: 255
+   Pixel value to set for visible areas. (Not supported in cumulative mode) Default: 255
 
 .. option:: -om <output mode>
 
   Sets what information the output contains.
 
-  Possible values: NORMAL, DEM, GROUND
+  Possible values: NORMAL, DEM, GROUND, ACCUM
 
   NORMAL returns a raster of type Byte containing visible locations.
 
   DEM and GROUND will return a raster of type Float64 containing the minimum target
   height for target to be visible from the DEM surface or ground level respectively.
+  That is to say, if the minimum target height for the target to be visible at a
+  point is ``h`` and the value of the input raster at that point is ``E``,
+  for ``DEM``, ``E + h`` will be the output value.
+  For ``ground``, ``h`` will be output value.
   Flags -tz, -iv and -vv will be ignored.
 
+  Cumulative (ACCUM) mode will create an eight bit raster the same size as the input raster
+  where each cell represents the relative observability from a grid of observer points.
+  See the -os option.
+
   Default NORMAL
+
+.. option:: -os <value>
+
+   Cell Spacing between observers (only supported in cumulative mode) Default: 10
+
+.. option:: -j <value>
+
+   Number of jobs to run at once. (only supported in cumulative mode) Default: 3
+
 
 C API
 -----
 
 Functionality of this utility can be done from C with :cpp:func:`GDALViewshedGenerate`.
 
-Example
--------
+Examples
+--------
 
-Screenshot of 2 combined viewshed analysis, with the yellow pixels showing the area that is
-visible from the both observation locations (the green dots), while the small green area is
-only visible from one location.
+.. example::
+
+   Screenshot of 2 combined viewshed analysis, with the yellow pixels showing the area that is
+   visible from the both observation locations (the green dots), while the small green area is
+   only visible from one location.
 
 
-.. figure:: ../../images/gdal_viewshed.png
+   .. figure:: ../../images/gdal_viewshed.png
 
 
-Create a viewshed raster with a radius of 500 for a person standing at location (-10147017, 5108065).
+   Create a viewshed raster with a radius of 500 for a person standing at location (-10147017, 5108065).
 
-.. code-block:: bash
+   .. code-block:: bash
 
-    gdal_viewshed -md 500 -ox -10147017 -oy 5108065 source.tif destination.tif
+       gdal_viewshed -md 500 -ox -10147017 -oy 5108065 source.tif destination.tif
 
 Reference
 ---------

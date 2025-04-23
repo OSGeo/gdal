@@ -169,6 +169,7 @@ foreach(_comp IN LISTS Oracle_known_components)
     if(_nextcomp GREATER -1)
         find_library(Oracle_${_comp}_LIBRARY
                      NAMES ${Oracle_${_comp}_lib}
+                     NAMES_PER_DIR
                      PATHS ${ORACLE_LIB_LOCATION}
                      NO_DEFAULT_PATH
         )

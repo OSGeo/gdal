@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     gdal_array.i
  * Project:  GDAL Python Interface
@@ -9,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 %feature("autodoc");
@@ -360,11 +343,17 @@ static GDALDataType NumpyTypeToGDALType(PyArrayObject *psArray)
       case NPY_CFLOAT:
         return GDT_CFloat32;
 
+      // case NPY_CHALF
+      //   return GDT_CFloat16;
+
       case NPY_DOUBLE:
         return GDT_Float64;
 
       case NPY_FLOAT:
         return GDT_Float32;
+
+      case NPY_HALF:
+        return GDT_Float16;
 
       case NPY_INT32:
         return GDT_Int32;
@@ -1014,6 +1003,9 @@ static bool AddNumpyArrayToDict(PyObject *dict,
         { 'e', NPY_FLOAT16, 2 },
         { 'f', NPY_FLOAT32, 4 },
         { 'g', NPY_FLOAT64, 8 },
+        // { 'E', NPY_COMPLEX32, 4 },
+        // { 'F', NPY_COMPLEX64, 8 },
+        // { 'G', NPY_COMPLEX128, 16 },
     };
     const size_t nEltsInMapArrowTypeToNumpyType =
         sizeof(MapArrowTypeToNumpyType) / sizeof(MapArrowTypeToNumpyType[0]);
@@ -2020,9 +2012,9 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
     GIntBig        nLineSpace = virtualmem->nLineSpace; /* if bAuto == TRUE */
     int numpytype;
 
-    if( datatype == GDT_CInt16 || datatype == GDT_CInt32 )
+    if( datatype == GDT_CInt16 || datatype == GDT_CInt32 || datatype == GDT_CFloat16 )
     {
-        PyErr_SetString( PyExc_RuntimeError, "GDT_CInt16 and GDT_CInt32 not supported for now" );
+        PyErr_SetString( PyExc_RuntimeError, "GDT_CInt16, GDT_CInt32, and GDT_CFloat16 not supported for now" );
         SWIG_fail;
     }
 
@@ -2036,10 +2028,12 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
         case GDT_UInt32: numpytype = NPY_UINT32; break;
         case GDT_Int64: numpytype = NPY_INT64; break;
         case GDT_UInt64: numpytype = NPY_UINT64; break;
+        case GDT_Float16: numpytype = NPY_FLOAT16; break;
         case GDT_Float32: numpytype = NPY_FLOAT32; break;
         case GDT_Float64: numpytype = NPY_FLOAT64; break;
         //case GDT_CInt16: numpytype = NPY_INT16; break;
         //case GDT_CInt32: numpytype = NPY_INT32; break;
+        //case GDT_CFloat16: numpytype = NPY_CHALF; break;
         case GDT_CFloat32: numpytype = NPY_CFLOAT; break;
         case GDT_CFloat64: numpytype = NPY_CDOUBLE; break;
         default: numpytype = NPY_UBYTE; break;
@@ -2225,15 +2219,21 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
     }
     else if( nType == NPY_STRING )
     {
-        // have to convert array of strings to a char **
-        char **papszStringData = (char**)CPLCalloc(sizeof(char*), nLength);
-
         // max size of string
-        int nMaxLen = PyArray_ITEMSIZE(psArray);
-        char *pszBuffer = (char*)CPLMalloc((nMaxLen+1) * sizeof(char));
+        const size_t nMaxLen = PyArray_ITEMSIZE(psArray);
+        char *pszBuffer = (char*)VSIMalloc(nMaxLen+1);
+        if (!pszBuffer)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "Out of memory in RATValuesIONumPyWrite()" );
+            return CE_Failure;
+        }
         // make sure there is a null char on the end
         // as there won't be if this string is the maximum size
         pszBuffer[nMaxLen] = '\0';
+
+        // have to convert array of strings to a char **
+        char **papszStringData = (char**)CPLCalloc(sizeof(char*), nLength);
 
         // we can't just use the memory location in the array
         // since long strings won't be null terminated
@@ -2376,13 +2376,20 @@ codes = {gdalconst.GDT_Byte: numpy.uint8,
          gdalconst.GDT_Int32: numpy.int32,
          gdalconst.GDT_UInt64: numpy.uint64,
          gdalconst.GDT_Int64: numpy.int64,
+         gdalconst.GDT_Float16: numpy.float16,
          gdalconst.GDT_Float32: numpy.float32,
          gdalconst.GDT_Float64: numpy.float64,
          gdalconst.GDT_CInt16: numpy.complex64,
          gdalconst.GDT_CInt32: numpy.complex64,
-         gdalconst.GDT_CFloat32:  numpy.complex64,
+         gdalconst.GDT_CFloat16: numpy.complex64,
+         gdalconst.GDT_CFloat32: numpy.complex64,
          gdalconst.GDT_CFloat64: numpy.complex128}
 
+np_class_to_gdal_code = { v : k for k, v in codes.items() }
+# since several things map to complex64 we must carefully select
+# the opposite that is an exact match (ticket 1518)
+np_class_to_gdal_code[numpy.complex64] = gdalconst.GDT_CFloat32
+np_dtype_to_gdal_code = { numpy.dtype(k) : v for k, v in np_class_to_gdal_code.items() }
 
 def OpenArray(array, prototype_ds=None, interleave='band'):
 
@@ -2404,31 +2411,21 @@ def OpenArray(array, prototype_ds=None, interleave='band'):
 
     return ds
 
-
 def flip_code(code):
-    if isinstance(code, (numpy.dtype, type)):
-        # since several things map to complex64 we must carefully select
-        # the opposite that is an exact match (ticket 1518)
-        if code == numpy.complex64:
-            return gdalconst.GDT_CFloat32
-
-        for key, value in codes.items():
-            if value == code:
-                return key
-        return None
-    else:
-        try:
-            return codes[code]
-        except KeyError:
-            return None
+    try:
+        return NumericTypeCodeToGDALTypeCode(code)
+    except TypeError:
+        return GDALTypeCodeToNumericTypeCode(code)
 
 def NumericTypeCodeToGDALTypeCode(numeric_type):
-    if not isinstance(numeric_type, (numpy.dtype, type)):
-        raise TypeError("Input must be a type")
-    return flip_code(numeric_type)
+    if isinstance(numeric_type, type):
+        return np_class_to_gdal_code.get(numeric_type, None)
+    elif isinstance(numeric_type, numpy.dtype):
+        return np_dtype_to_gdal_code.get(numeric_type, None)
+    raise TypeError("Input must be a type")
 
 def GDALTypeCodeToNumericTypeCode(gdal_code):
-    return flip_code(gdal_code)
+    return codes.get(gdal_code, None)
 
 def _RaiseException():
     if gdal.GetUseExceptions():

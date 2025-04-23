@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdalinfo testing
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import json
@@ -124,6 +107,7 @@ def test_gdalinfo_5(gdalinfo_path, tmp_path):
 # Test a dataset with overviews and RAT
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdalinfo_6(gdalinfo_path):
 
     ret = gdaltest.runexternal(gdalinfo_path + " ../gdrivers/data/hfa/int.img")
@@ -135,6 +119,10 @@ def test_gdalinfo_6(gdalinfo_path):
 # Test a dataset with GCPs
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalinfo_7(gdalinfo_path):
 
     ret = gdaltest.runexternal(
@@ -340,7 +328,26 @@ def test_gdalinfo_19(gdalinfo_path, tmp_path):
 def test_gdalinfo_20(gdalinfo_path):
 
     ret = gdaltest.runexternal(gdalinfo_path + " --formats", check_memleak=False)
-    assert "GTiff -raster- (rw+vs): GeoTIFF" in ret
+    assert "GTiff -raster- (rw+uvs): GeoTIFF" in ret
+
+
+###############################################################################
+# Test --formats -json
+
+
+@pytest.mark.require_driver("VRT")
+def test_gdalinfo_formats_json(gdalinfo_path):
+
+    ret = json.loads(
+        gdaltest.runexternal(gdalinfo_path + " --formats -json", check_memleak=False)
+    )
+    assert {
+        "short_name": "VRT",
+        "long_name": "Virtual Raster",
+        "scopes": ["raster", "multidimensional_raster"],
+        "capabilities": ["open", "create", "create_copy", "update", "virtual_io"],
+        "file_extensions": ["vrt"],
+    } in ret
 
 
 ###############################################################################
@@ -537,6 +544,7 @@ def test_gdalinfo_stats(gdalinfo_path, tmp_path):
 # Test a dataset with overviews and RAT
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdalinfo_33(gdalinfo_path):
 
     ret = gdaltest.runexternal(gdalinfo_path + " -json ../gdrivers/data/hfa/int.img")
@@ -549,6 +557,10 @@ def test_gdalinfo_33(gdalinfo_path):
 # Test a dataset with GCPs
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalinfo_34(gdalinfo_path):
 
     ret = gdaltest.runexternal(gdalinfo_path + " -json ../gcore/data/gcps.vrt")

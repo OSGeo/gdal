@@ -8,23 +8,7 @@
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -34,10 +18,12 @@
 #include <string.h>
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_mask.h"
 #include "cpl_minixml.h"
 #include "cpl_progress.h"
@@ -325,8 +311,8 @@ static CPLErr GDALWarpNoDataMaskerT(const double *padfNoData, size_t nPixels,
                                     int *pbOutAllValid)
 {
     // Nothing to do if value is out of range.
-    if (padfNoData[0] < std::numeric_limits<T>::min() ||
-        padfNoData[0] > std::numeric_limits<T>::max() + 0.000001 ||
+    if (padfNoData[0] < cpl::NumericLimits<T>::min() ||
+        padfNoData[0] > cpl::NumericLimits<T>::max() + 0.000001 ||
         padfNoData[1] != 0.0)
     {
         *pbOutAllValid = TRUE;
@@ -397,7 +383,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
         {
             const float fNoData = static_cast<float>(padfNoData[0]);
             const float *pafData = reinterpret_cast<float *>(*ppImageData);
-            const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(fNoData));
+            const bool bIsNoDataNan = CPL_TO_BOOL(std::isnan(fNoData));
 
             // Nothing to do if value is out of range.
             if (padfNoData[1] != 0.0)
@@ -410,7 +396,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
             for (size_t iOffset = 0; iOffset < nPixels; ++iOffset)
             {
                 float fVal = pafData[iOffset];
-                if ((bIsNoDataNan && CPLIsNan(fVal)) ||
+                if ((bIsNoDataNan && std::isnan(fVal)) ||
                     (!bIsNoDataNan && ARE_REAL_EQUAL(fVal, fNoData)))
                 {
                     bAllValid = FALSE;
@@ -425,7 +411,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
         {
             const double dfNoData = padfNoData[0];
             const double *padfData = reinterpret_cast<double *>(*ppImageData);
-            const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(dfNoData));
+            const bool bIsNoDataNan = CPL_TO_BOOL(std::isnan(dfNoData));
 
             // Nothing to do if value is out of range.
             if (padfNoData[1] != 0.0)
@@ -438,7 +424,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
             for (size_t iOffset = 0; iOffset < nPixels; ++iOffset)
             {
                 double dfVal = padfData[iOffset];
-                if ((bIsNoDataNan && CPLIsNan(dfVal)) ||
+                if ((bIsNoDataNan && std::isnan(dfVal)) ||
                     (!bIsNoDataNan && ARE_REAL_EQUAL(dfVal, dfNoData)))
                 {
                     bAllValid = FALSE;
@@ -453,7 +439,8 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
         {
             const int nWordSize = GDALGetDataTypeSizeBytes(eType);
 
-            const bool bIsNoDataRealNan = CPL_TO_BOOL(CPLIsNan(padfNoData[0]));
+            const bool bIsNoDataRealNan =
+                CPL_TO_BOOL(std::isnan(padfNoData[0]));
 
             double *padfWrk =
                 static_cast<double *>(CPLMalloc(nXSize * sizeof(double) * 2));
@@ -466,7 +453,8 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
 
                 for (int iPixel = 0; iPixel < nXSize; ++iPixel)
                 {
-                    if (((bIsNoDataRealNan && CPLIsNan(padfWrk[iPixel * 2])) ||
+                    if (((bIsNoDataRealNan &&
+                          std::isnan(padfWrk[iPixel * 2])) ||
                          (!bIsNoDataRealNan &&
                           ARE_REAL_EQUAL(padfWrk[iPixel * 2], padfNoData[0]))))
                     {
@@ -1070,6 +1058,209 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
 }
 
 /************************************************************************/
+/*                      GDALWarpGetOptionList()                         */
+/************************************************************************/
+
+/** Return a XML string describing options accepted by
+ * GDALWarpOptions::papszWarpOptions.
+ *
+ * @since 3.11
+ */
+const char *GDALWarpGetOptionList(void)
+{
+    return "<OptionList>"
+           "<Option name='INIT_DEST' type='string' description='"
+           "Numeric value or NO_DATA. This option forces the destination image "
+           "to be initialized to the indicated value (for all bands) "
+           "or indicates that it should be initialized to the NO_DATA value in "
+           "padfDstNoDataReal/padfDstNoDataImag. If this value is not set the "
+           "destination image will be read and overlaid.'/>"
+           "<Option name='WRITE_FLUSH' type='boolean' description='"
+           "This option forces a flush to disk of data after "
+           "each chunk is processed. In some cases this helps ensure a serial "
+           " writing of the output data otherwise a block of data may be "
+           "written to disk each time a block of data is read for the input "
+           "buffer resulting in a lot of extra seeking around the disk, and "
+           "reduced IO throughput.' default='NO'/>"
+           "<Option name='SKIP_NOSOURCE' type='boolean' description='"
+           "Skip all processing for chunks for which there is no corresponding "
+           "input data. This will disable initializing the destination "
+           "(INIT_DEST) and all other processing, and so should be used "
+           "carefully.  Mostly useful to short circuit a lot of extra work "
+           "in mosaicing situations. gdalwarp will automatically enable this "
+           "option when it is assumed to be safe to do so.' default='NO'/>"
+#ifdef undocumented
+           "<Option name='ERROR_OUT_IF_EMPTY_SOURCE_WINDOW' type='boolean' "
+           "description='By default, if the source window corresponding to the "
+           "current target window fails to be determined due to reprojection "
+           "errors, the warping fails. Setting this option to NO prevent such "
+           "failure from happening. The warped VRT mechanism automatically "
+           "sets it to NO.'/>"
+#endif
+           "<Option name='UNIFIED_SRC_NODATA' type='string-select' "
+           "description='"
+           "This setting determines how to take into account nodata values "
+           "when there are several input bands. Consult "
+           "GDALWarpOptions::papszWarpOptions documentation for more details.'>"
+           "  <Value>AUTO</Value>"
+           "  <Value>PARTIAL</Value>"
+           "  <Value>YES</Value>"
+           "  <Value>NO</Value>"
+           "</Option>"
+           "<Option name='CUTLINE' type='string' description='"
+           "This may contain the WKT geometry for a cutline.  It will be "
+           "converted into a geometry by GDALWarpOperation::Initialize() and "
+           "assigned to the GDALWarpOptions hCutline field. The coordinates "
+           "must be expressed in source pixel/line coordinates. Note: this is "
+           "different from the assumptions made for the -cutline option "
+           "of the gdalwarp utility !'/>"
+           "<Option name='CUTLINE_BLEND_DIST' type='float' description='"
+           "This may be set with a distance in pixels which will be assigned "
+           "to the dfCutlineBlendDist field in the GDALWarpOptions.'/>"
+           "<Option name='CUTLINE_ALL_TOUCHED' type='boolean' description='"
+           "This may be set to TRUE to enable ALL_TOUCHED mode when "
+           "rasterizing cutline polygons. This is useful to ensure that that "
+           "all pixels overlapping the cutline polygon will be selected, not "
+           "just those whose center point falls within the polygon.' "
+           "default='NO'/>"
+           "<Option name='XSCALE' type='float' description='"
+           "Ratio expressing the resampling factor (number of destination "
+           "pixels per source pixel) along the target horizontal axis. The "
+           "scale is used to determine the number of source pixels along the "
+           "x-axis that are considered by the resampling algorithm. "
+           "Equals to one for no resampling, below one for downsampling "
+           "and above one for upsampling. This is automatically computed, "
+           "for each processing chunk, and may thus vary among them, depending "
+           "on the shape of output regions vs input regions. Such variations "
+           "can be undesired in some situations. If the resampling factor "
+           "can be considered as constant over the warped area, setting a "
+           "constant value can lead to more reproducible pixel output.'/>"
+           "<Option name='YSCALE' type='float' description='"
+           "Same as XSCALE, but along the horizontal axis.'/>"
+           "<Option name='OPTIMIZE_SIZE' type='boolean' description='"
+           "This defaults to FALSE, but may be set to TRUE typically when "
+           "writing to a compressed dataset (GeoTIFF with COMPRESS creation "
+           "option set for example) for achieving a smaller file size. This "
+           "is achieved by writing at once data aligned on full blocks of the "
+           "target dataset, which avoids partial writes of compressed blocks "
+           "and lost space when they are rewritten at the end of the file. "
+           "However sticking to target block size may cause major processing "
+           "slowdown for some particular reprojections. OPTIMIZE_SIZE mode "
+           "is automatically enabled when it is safe to do so. "
+           "As this parameter influences the shape of warping chunk, and by "
+           "default the XSCALE and YSCALE parameters are computed per warping "
+           "chunk, this parameter may influence the pixel output.' "
+           "default='NO'/>"
+           "<Option name='NUM_THREADS' type='string' description='"
+           "Can be set to a numeric value or ALL_CPUS to set the number of "
+           "threads to use to parallelize the computation part of the warping. "
+           "If not set, computation will be done in a single thread..'/>"
+           "<Option name='STREAMABLE_OUTPUT' type='boolean' description='"
+           "This defaults to FALSE, but may be set to TRUE typically when "
+           "writing to a streamed file. The gdalwarp utility automatically "
+           "sets this option when writing to /vsistdout/ or a named pipe "
+           "(on Unix). This option has performance impacts for some "
+           "reprojections. Note: band interleaved output is "
+           "not currently supported by the warping algorithm in a streamable "
+           "compatible way.' default='NO'/>"
+           "<Option name='SRC_COORD_PRECISION' type='float' description='"
+           "Advanced setting. This defaults to 0, to indicate that no rounding "
+           "of computing source image coordinates corresponding to the target "
+           "image must be done. If greater than 0 (and typically below 1), "
+           "this value, expressed in pixel, will be used to round computed "
+           "source image coordinates. The purpose of this option is to make "
+           "the results of warping with the approximated transformer more "
+           "reproducible and not sensitive to changes in warping memory size. "
+           "To achieve that, SRC_COORD_PRECISION must be at least 10 times "
+           "greater than the error threshold. The higher the "
+           "SRC_COORD_PRECISION/error_threshold ratio, the higher the "
+           "performance will be, since exact reprojections must statistically "
+           "be done with a frequency of "
+           "4*error_threshold/SRC_COORD_PRECISION.' default='0'/>"
+           "<Option name='SRC_ALPHA_MAX' type='float' description='"
+           "Maximum value for the alpha band of the source dataset. If the "
+           "value is not set and the alpha band has a NBITS metadata item, "
+           "it is used to set SRC_ALPHA_MAX = 2^NBITS-1. Otherwise, if the "
+           "value is not set and the alpha band is of type UInt16 "
+           "(resp Int16), 65535 (resp 32767) is used. "
+           "Otherwise, 255 is used.'/>"
+           "<Option name='DST_ALPHA_MAX' type='float' description='"
+           "Maximum value for the alpha band of the destination dataset. "
+           "If the value is not set and the alpha band has a NBITS metadata "
+           "item, it is used to set SRC_ALPHA_MAX = 2^NBITS-1. Otherwise, if "
+           "the value is not set and the alpha band is of type UInt16 "
+           "(resp Int16), 65535 (resp 32767) is used. "
+           "Otherwise, 255 is used.'/>"
+           "<Option name='SAMPLE_GRID' type='boolean' description='"
+           "Setting this option to YES will force the sampling to "
+           "include internal points as well as edge points which can be "
+           "important if the transformation is esoteric inside out, or if "
+           "large sections of the destination image are not transformable into "
+           "the source coordinate system.' default='NO'/>"
+           "<Option name='SAMPLE_STEPS' type='string' description='"
+           "Modifies the density of the sampling grid. Increasing this can "
+           "increase the computational cost, but improves the accuracy with "
+           "which the source region is computed. This can be set to ALL to "
+           "mean to sample along all edge points of the destination region "
+           "(if SAMPLE_GRID=NO or not specified), or all points of the "
+           "destination region if SAMPLE_GRID=YES.' default='21'/>"
+           "<Option name='SOURCE_EXTRA' type='int' description='"
+           "This is a number of extra pixels added around the source "
+           "window for a given request, and by default it is 1 to take care "
+           "of rounding error. Setting this larger will increase the amount of "
+           "data that needs to be read, but can avoid missing source data.' "
+           "default='1'/>"
+           "<Option name='APPLY_VERTICAL_SHIFT' type='boolean' description='"
+           "Force the use of vertical shift. This option is generally not "
+           "necessary, except when using an explicit coordinate transformation "
+           "(COORDINATE_OPERATION), and not specifying an explicit source and "
+           "target SRS.'/>"
+           "<Option name='MULT_FACTOR_VERTICAL_SHIFT' type='float' "
+           "description='"
+           "Multiplication factor for the vertical shift' default='1.0'/>"
+           "<Option name='EXCLUDED_VALUES' type='string' "
+           "description='"
+           "Comma-separated tuple of values (thus typically \"R,G,B\"), that "
+           "are ignored as contributing source pixels during resampling. "
+           "The number of values in the tuple must be the same as the number "
+           "of bands, excluding the alpha band. Several tuples of excluded "
+           "values may be specified using the \"(R1,G1,B2),(R2,G2,B2)\" syntax."
+           " Only taken into account by Average currently. This concept is a "
+           "bit similar to nodata/alpha, but the main difference is that "
+           "pixels matching one of the excluded value tuples are still "
+           "considered as valid, when determining the target pixel "
+           "validity/density.'/>"
+           "<Option name='EXCLUDED_VALUES_PCT_THRESHOLD' type='float' "
+           "min='0' max='100' description='"
+           "Minimum percentage of source pixels that must be set at one of "
+           "the EXCLUDED_VALUES to cause the excluded value, that is in "
+           "majority among source pixels, to be used as the target pixel "
+           "value. Only taken into account by Average currently.' "
+           "default='50'/>"
+           "<Option name='NODATA_VALUES_PCT_THRESHOLD' type='float' "
+           "min='0' max='100' description='"
+           "Minimum percentage of source pixels that must be at nodata (or "
+           "alpha=0 or any other way to express transparent pixel) to cause "
+           "the target pixel value to not be set. Default value is 100 (%), "
+           "which means that a target pixel is not set only if all "
+           "contributing source pixels are not set. Note that "
+           "NODATA_VALUES_PCT_THRESHOLD is taken into account before "
+           "EXCLUDED_VALUES_PCT_THRESHOLD. Only taken into account by Average "
+           "currently.' default='100'/>"
+           "<Option name='MODE_TIES' type='string-select' "
+           "description='"
+           "Strategy to use when breaking ties with MODE resampling. "
+           "By default, the first value encountered will be used. "
+           "Alternatively, the minimum or maximum value can be selected.' "
+           "default='FIRST'>"
+           "  <Value>FIRST</Value>"
+           "  <Value>MIN</Value>"
+           "  <Value>MAX</Value>"
+           "</Option>"
+           "</OptionList>";
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                           GDALWarpOptions                            */
 /* ==================================================================== */
@@ -1082,23 +1273,26 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * name=value format.  A suitable string list can be prepared with
  * CSLSetNameValue().
  *
+ * The available options can also be retrieved programmatically with
+ * GDALWarpGetOptionList().
+ *
  * The following values are currently supported:
  * <ul>
  * <li>INIT_DEST=[value] or INIT_DEST=NO_DATA: This option forces the
  * destination image to be initialized to the indicated value (for all bands)
  * or indicates that it should be initialized to the NO_DATA value in
- * padfDstNoDataReal/padfDstNoDataImag.  If this value isn't set the
+ * padfDstNoDataReal/padfDstNoDataImag. If this value isn't set the
  * destination image will be read and overlaid.</li>
  *
  * <li>WRITE_FLUSH=YES/NO: This option forces a flush to disk of data after
- * each chunk is processed.  In some cases this helps ensure a serial
+ * each chunk is processed. In some cases this helps ensure a serial
  * writing of the output data otherwise a block of data may be written to disk
  * each time a block of data is read for the input buffer resulting in a lot
- * of extra seeking around the disk, and reduced IO throughput.  The default
- * at this time is NO.</li>
+ * of extra seeking around the disk, and reduced IO throughput. The default
+ * is NO.</li>
  *
  * <li>SKIP_NOSOURCE=YES/NO: Skip all processing for chunks for which there
- * is no corresponding input data.  This will disable initializing the
+ * is no corresponding input data. This will disable initializing the
  * destination (INIT_DEST) and all other processing, and so should be used
  * carefully.  Mostly useful to short circuit a lot of extra work in mosaicing
  * situations. Starting with GDAL 2.4, gdalwarp will automatically enable this
@@ -1159,10 +1353,24 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * will be assigned to the dfCutlineBlendDist field in the GDALWarpOptions.</li>
  *
  * <li>CUTLINE_ALL_TOUCHED: This defaults to FALSE, but may be set to TRUE
- * to enable ALL_TOUCHEd mode when rasterizing cutline polygons.  This is
+ * to enable ALL_TOUCHED mode when rasterizing cutline polygons.  This is
  * useful to ensure that that all pixels overlapping the cutline polygon
  * will be selected, not just those whose center point falls within the
  * polygon.</li>
+ *
+ * <li>XSCALE: Ratio expressing the resampling factor (number of destination
+ * pixels per source pixel) along the target horizontal axis.
+ * The scale is used to determine the number of source pixels along the x-axis
+ * that are considered by the resampling algorithm.
+ * Equals to one for no resampling, below one for downsampling
+ * and above one for upsampling. This is automatically computed, for each
+ * processing chunk, and may thus vary among them, depending on the
+ * shape of output regions vs input regions. Such variations can be undesired
+ * in some situations. If the resampling factor can be considered as constant
+ * over the warped area, setting a constant value can lead to more reproducible
+ * pixel output.</li>
+ *
+ * <li>YSCALE: Same as XSCALE, but along the horizontal axis.</li>
  *
  * <li>OPTIMIZE_SIZE: This defaults to FALSE, but may be set to TRUE
  * typically when writing to a compressed dataset (GeoTIFF with
@@ -1173,7 +1381,11 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * of the file. However sticking to target block size may cause major
  * processing slowdown for some particular reprojections. Starting
  * with GDAL 3.8, OPTIMIZE_SIZE mode is automatically enabled when it is safe
- * to do so.</li>
+ * to do so.
+ * As this parameter influences the shape of warping chunk, and by default the
+ * XSCALE and YSCALE parameters are computed per warping chunk, this parameter may
+ * influence the pixel output.
+ * </li>
  *
  * <li>NUM_THREADS: (GDAL >= 1.10) Can be set to a numeric value or ALL_CPUS to
  * set the number of threads to use to parallelize the computation part of the
@@ -1221,7 +1433,7 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * is sufficient.  Depending on the transformation in effect, the source
  * window may be a bit too small, or even missing large areas.  Problem
  * situations are those where the transformation is very non-linear or
- * "inside out".  Examples are transforming from WGS84 to Polar Steregraphic
+ * "inside out".  Examples are transforming from WGS84 to Polar Stereographic
  * for areas around the pole, or transformations where some of the image is
  * untransformable.  The following options provide some additional control
  * to deal with errors in computing the source window:
@@ -1279,6 +1491,10 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * EXCLUDED_VALUES_PCT_THRESHOLD.
  * Only taken into account by Average currently.</li>
  *
+ * <li>MODE_TIES=FIRST/MIN/MAX: (GDAL >= 3.11) Strategy to use when breaking
+ * ties with MODE resampling. By default, the first value encountered will be used.
+ * Alternatively, the minimum or maximum value can be selected.</li>
+ *
  * </ul>
  */
 
@@ -1300,6 +1516,7 @@ GDALWarpOptions *CPL_STDCALL GDALCreateWarpOptions()
     psOptions->eResampleAlg = GRA_NearestNeighbour;
     psOptions->pfnProgress = GDALDummyProgress;
     psOptions->eWorkingDataType = GDT_Unknown;
+    psOptions->eTieStrategy = GWKTS_First;
 
     return psOptions;
 }
@@ -1533,6 +1750,32 @@ void CPL_STDCALL GDALWarpResolveWorkingDataType(GDALWarpOptions *psOptions)
 
     psOptions->eWorkingDataType = GDT_Byte;
 
+    // If none of the provided input nodata values can be represented in the
+    // data type of the corresponding source band, ignore them.
+    if (psOptions->hSrcDS && psOptions->padfSrcNoDataReal)
+    {
+        int nCountInvalidSrcNoDataReal = 0;
+        for (int iBand = 0; iBand < psOptions->nBandCount; iBand++)
+        {
+            GDALRasterBandH hSrcBand = GDALGetRasterBand(
+                psOptions->hSrcDS, psOptions->panSrcBands[iBand]);
+
+            if (hSrcBand &&
+                !GDALIsValueExactAs(psOptions->padfSrcNoDataReal[iBand],
+                                    GDALGetRasterDataType(hSrcBand)))
+            {
+                nCountInvalidSrcNoDataReal++;
+            }
+        }
+        if (nCountInvalidSrcNoDataReal == psOptions->nBandCount)
+        {
+            CPLFree(psOptions->padfSrcNoDataReal);
+            psOptions->padfSrcNoDataReal = nullptr;
+            CPLFree(psOptions->padfSrcNoDataImag);
+            psOptions->padfSrcNoDataImag = nullptr;
+        }
+    }
+
     for (int iBand = 0; iBand < psOptions->nBandCount; iBand++)
     {
         if (psOptions->hDstDS != nullptr)
@@ -1741,8 +1984,8 @@ CPLXMLNode *CPL_STDCALL GDALSerializeWarpOptions(const GDALWarpOptions *psWO)
         CPLCreateXMLElementAndValue(psTree, "SourceDataset",
                                     GDALGetDescription(psWO->hSrcDS));
 
-        char **papszOpenOptions =
-            (static_cast<GDALDataset *>(psWO->hSrcDS))->GetOpenOptions();
+        CSLConstList papszOpenOptions =
+            GDALDataset::FromHandle(psWO->hSrcDS)->GetOpenOptions();
         GDALSerializeOpenOptionsToXML(psTree, papszOpenOptions);
     }
 
@@ -1801,7 +2044,7 @@ CPLXMLNode *CPL_STDCALL GDALSerializeWarpOptions(const GDALWarpOptions *psWO)
 
         if (psWO->padfSrcNoDataImag != nullptr)
         {
-            if (CPLIsNan(psWO->padfSrcNoDataImag[i]))
+            if (std::isnan(psWO->padfSrcNoDataImag[i]))
                 CPLCreateXMLElementAndValue(psBand, "SrcNoDataImag", "nan");
             else
                 CPLCreateXMLElementAndValue(
@@ -1826,7 +2069,7 @@ CPLXMLNode *CPL_STDCALL GDALSerializeWarpOptions(const GDALWarpOptions *psWO)
 
         if (psWO->padfDstNoDataImag != nullptr)
         {
-            if (CPLIsNan(psWO->padfDstNoDataImag[i]))
+            if (std::isnan(psWO->padfDstNoDataImag[i]))
                 CPLCreateXMLElementAndValue(psBand, "DstNoDataImag", "nan");
             else
                 CPLCreateXMLElementAndValue(
@@ -2063,7 +2306,7 @@ GDALWarpOptions *CPL_STDCALL GDALDeserializeWarpOptions(CPLXMLNode *psTree)
                 CPLString().Printf(
                     "%.16g", -std::numeric_limits<float>::max()) == pszValueIn)
             {
-                return -std::numeric_limits<float>::max();
+                return std::numeric_limits<float>::lowest();
             }
             else if (eDataType == GDT_Float32 &&
                      CPLString().Printf("%.16g",

@@ -116,6 +116,7 @@ else( UNIX )
   find_program(
     csharp_mono_compiler # variable is added to the cache, we removed it below
     NAMES ${chsarp_mono_names}
+    NAMES_PER_DIR
     PATHS ${csharp_mono_paths}
   )
 

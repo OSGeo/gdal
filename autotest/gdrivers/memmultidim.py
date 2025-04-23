@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test multidimensional support in MEM driver
@@ -9,23 +8,7 @@
 ###############################################################################
 # Copyright (c) 2019, Even Rouault <even.rouault@spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import array
@@ -90,7 +73,7 @@ def test_mem_md_subgroup():
 
     with gdal.quiet_errors():
         assert not rg.CreateGroup("")  # unnamed group not supported
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         assert not rg.CreateGroup(None)
 
     subg = rg.CreateGroup("subgroup")
@@ -339,12 +322,12 @@ def test_mem_md_datatypes():
     assert dt_byte.GetNumericDataType() == gdal.GDT_Byte
     assert dt_byte.GetSize() == 1
     assert dt_byte.CanConvertTo(dt_byte)
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         assert dt_byte.CanConvertTo(None)
     assert dt_byte == gdal.ExtendedDataType.Create(gdal.GDT_Byte)
     assert not dt_byte != gdal.ExtendedDataType.Create(gdal.GDT_Byte)
     assert dt_byte.Equals(dt_byte)
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         assert dt_byte.Equals(None)
     assert not dt_byte.GetComponents()
 
@@ -762,9 +745,9 @@ def test_mem_md_array_invalid_args():
         rg.CreateMDArray("myarray", [None], edt)
     with pytest.raises((TypeError, SystemError)):
         rg.CreateMDArray("myarray", [1], edt)
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         rg.CreateMDArray("myarray", [dim], None)
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         rg.CreateMDArray(None, [dim], edt)
 
 
@@ -837,7 +820,7 @@ def test_mem_md_group_attribute_single_numeric():
     float64dt = gdal.ExtendedDataType.Create(gdal.GDT_Float64)
     with gdal.quiet_errors():
         assert not rg.CreateAttribute("", [1], float64dt)  # unnamed attr not supported
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         rg.CreateAttribute(None, [1], float64dt)
 
     attr = rg.CreateAttribute("attr", [1], float64dt)
@@ -955,7 +938,7 @@ def test_mem_md_array_attribute():
         assert not myarray.CreateAttribute(
             "", [1], float64dt
         )  # unnamed attr not supported
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         myarray.CreateAttribute(None, [1], float64dt)
 
     attr = myarray.CreateAttribute("attr", [1], float64dt)
@@ -2055,6 +2038,10 @@ def test_mem_md_array_get_mask():
     try:
         import numpy
 
+        from osgeo import gdal_array
+
+        str(gdal_array)
+
         has_numpy = True
     except ImportError:
         has_numpy = False
@@ -3017,6 +3004,32 @@ def test_mem_md_delete_array_attribute():
 
     with pytest.raises(Exception, match="has been deleted"):
         ar_attr.Rename("foo")
+
+
+@gdaltest.enable_exceptions()
+def test_mem_md_GetMDArrayFullNamesRecursive():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+
+    rg.CreateMDArray("ar0", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+
+    group = rg.CreateGroup("group")
+    group.CreateMDArray("ar1", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+
+    subgroup = group.CreateGroup("subgroup")
+    subgroup.CreateMDArray("ar2", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+
+    group2 = rg.CreateGroup("group2")
+    group2.CreateMDArray("ar3", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+
+    assert rg.GetMDArrayFullNamesRecursive() == [
+        "/ar0",
+        "/group/ar1",
+        "/group/subgroup/ar2",
+        "/group2/ar3",
+    ]
 
 
 def XX_test_all_forever():

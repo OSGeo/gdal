@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION ${GDAL_CMAKE_VERSION_MIN}...${GDAL_CMAKE_VERSION_
 if(NOT DEFINED PROJECT_SOURCE_DIR)
     # Standalone plugin building
     project(gdal_TileDB)
-    # The driver depends on some non expored headers. Make sure the version we
+    # The driver depends on some non exported headers. Make sure the version we
     # build against against is the same as this source tree.
     set(STRICT_VERSION_CHECK ON)
     include("${PROJECT_SOURCE_DIR}/../../cmake/helpers/SetupStandalonePlugin.cmake" )
@@ -41,8 +41,5 @@ if (STANDALONE)
 target_include_directories(gdal_TileDB PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../gcore
                                                ${CMAKE_CURRENT_SOURCE_DIR}/../mem
 )
-else()
-target_include_directories(gdal_TileDB PRIVATE
-                           ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem)
 endif()
 gdal_target_link_libraries(gdal_TileDB PRIVATE TileDB::tiledb_shared)

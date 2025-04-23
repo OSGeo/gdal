@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Library version of gdaltindex testing
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2023, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -108,7 +91,7 @@ def test_gdaltindex_lib_basic(four_tile_index):
 
 
 def test_gdaltindex_lib_already_existing_rasters(four_tiles, four_tile_index, tmp_path):
-    class GdalErrorHandler(object):
+    class GdalErrorHandler:
         def __init__(self):
             self.warnings = []
 
@@ -163,7 +146,7 @@ def test_gdaltindex_skipDifferentProjection(tmp_path, four_tile_index):
     ds.SetGeoTransform([47, 0.1, 0, 2, 0, -0.1])
     ds = None
 
-    class GdalErrorHandler(object):
+    class GdalErrorHandler:
         def __init__(self):
             self.warning = None
 
@@ -234,6 +217,7 @@ def test_gdaltindex_lib_outputSRS_writeAbsoluePath(tmp_path, four_tile_index):
 # Test -f, -lyr_name
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_gdaltindex_lib_format_layerName(tmp_path, four_tiles):
 
     index_mif = str(tmp_path / "test_gdaltindex6.mif")
@@ -444,7 +428,7 @@ def test_gdaltindex_lib_fetch_md(tmp_path, four_tiles):
     f = lyr.GetNextFeature()
     assert f["foo_field"] == "bar"
     assert f["dt"] == "2023/12/20 16:10:00"
-    assert f["pixel_size"] == pytest.approx(0.01)
+    assert f["pixel_size"] == pytest.approx(0.1)
     del ds
 
     gdal.TileIndex(
@@ -458,3 +442,19 @@ def test_gdaltindex_lib_fetch_md(tmp_path, four_tiles):
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f["foo_field"] == "bar"
+
+
+###############################################################################
+# Test -ot
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdaltindex_lib_ot(tmp_path, four_tiles):
+
+    index_filename = str(tmp_path / "test_gdaltindex_lib_ot.gpkg")
+
+    gdal.TileIndex(index_filename, four_tiles[0], options="-ot UInt16")
+
+    ds = ogr.Open(index_filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetMetadataItem("DATA_TYPE") == "UInt16"

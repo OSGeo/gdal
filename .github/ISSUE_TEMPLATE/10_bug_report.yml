@@ -10,6 +10,14 @@ body:
 
         The GDAL project is made of contributions from various individuals and organizations, each with their own focus. The issue you are facing is not necessarily in the priority list of those contributors and consequently there is no guarantee that it will be addressed in a timely manner. If this bug report or feature request is high-priority for you, and you cannot address it yourself, we suggest engaging a GDAL developer or support organisation and financially sponsoring a fix.
 
+  - type: markdown
+    attributes:
+      value: |
+
+        - [ ] I'm using LLM/AI-suggested procedures
+
+        Using GDAL still requires thinking. While LLMs can sometimes provide useful guidance about how to use GDAL, the most precise documentation is the source code itself, with the test suite being the next most useful place for discovering how to use a feature. Please tell us in the ticket if you are using LLM-suggested procedures.
+
   - type: textarea
     id: what
     attributes:

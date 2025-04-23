@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Virtual GDAL Datasets
  * Purpose:  Declaration of virtual gdal dataset classes.
@@ -9,23 +8,7 @@
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef VIRTUALDATASET_H_INCLUDED
@@ -41,15 +24,18 @@
 #include "gdal_vrt.h"
 #include "gdal_rat.h"
 
+#include <atomic>
+#include <deque>
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 CPLErr GDALRegisterDefaultPixelFunc();
 void GDALVRTRegisterDefaultProcessedDatasetFuncs();
-CPLString VRTSerializeNoData(double dfVal, GDALDataType eDataType,
-                             int nPrecision);
+CPLString CPL_DLL VRTSerializeNoData(double dfVal, GDALDataType eDataType,
+                                     int nPrecision);
 
 #if 0
 int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
@@ -101,6 +87,37 @@ class VRTOverviewInfo
 
         return true;
     }
+};
+
+/************************************************************************/
+/*                            VRTMapSharedResources                     */
+/************************************************************************/
+
+/** Map of shared datasets */
+class CPL_DLL VRTMapSharedResources
+{
+  public:
+    VRTMapSharedResources() = default;
+
+    /** Return a dataset from its key */
+    GDALDataset *Get(const std::string &osKey) const;
+
+    /** Inserts a dataset. It must be kept alive while this
+     * VRTMapSharedResources is alive.
+     */
+    void Insert(const std::string &osKey, GDALDataset *poDS);
+
+    /** To be called before any attempt at using this instance in a
+     * multi-threaded context.
+     */
+    void InitMutex();
+
+  private:
+    std::mutex oMutex{};
+    std::mutex *poMutex = nullptr;
+    std::map<std::string, GDALDataset *> oMap{};
+
+    CPL_DISALLOW_COPY_ASSIGN(VRTMapSharedResources)
 };
 
 /************************************************************************/
@@ -159,36 +176,48 @@ class CPL_DLL VRTSource
                                 void *pProgressData) = 0;
 
     virtual CPLErr XMLInit(const CPLXMLNode *psTree, const char *,
-                           std::map<CPLString, GDALDataset *> &) = 0;
+                           VRTMapSharedResources &) = 0;
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) = 0;
 
     virtual void GetFileList(char ***ppapszFileList, int *pnSize,
                              int *pnMaxSize, CPLHashSet *hSetFiles);
 
-    virtual int IsSimpleSource()
+    /** Returns whether this instance can be cast to a VRTSimpleSource
+     * (and its subclasses).
+     */
+    virtual bool IsSimpleSource() const
     {
-        return FALSE;
+        return false;
     }
+
+    virtual const CPLString &GetName() const
+    {
+        return m_osName;
+    }
+
+    /** Returns a string with the VRTSource class type.
+     * This method must be implemented in all subclasses
+     */
+    virtual const char *GetType() const = 0;
 
     virtual CPLErr FlushCache(bool /*bAtClosing*/)
     {
         return CE_None;
     }
+
+  protected:
+    CPLString m_osName{};
 };
 
-typedef VRTSource *(*VRTSourceParser)(
-    const CPLXMLNode *, const char *,
-    std::map<CPLString, GDALDataset *> &oMapSharedSources);
+typedef VRTSource *(*VRTSourceParser)(const CPLXMLNode *, const char *,
+                                      VRTMapSharedResources &oMapSharedSources);
 
-VRTSource *
-VRTParseCoreSources(const CPLXMLNode *psTree, const char *,
-                    std::map<CPLString, GDALDataset *> &oMapSharedSources);
-VRTSource *
-VRTParseFilterSources(const CPLXMLNode *psTree, const char *,
-                      std::map<CPLString, GDALDataset *> &oMapSharedSources);
-VRTSource *
-VRTParseArraySource(const CPLXMLNode *psTree, const char *,
-                    std::map<CPLString, GDALDataset *> &oMapSharedSources);
+VRTSource *VRTParseCoreSources(const CPLXMLNode *psTree, const char *,
+                               VRTMapSharedResources &oMapSharedSources);
+VRTSource *VRTParseFilterSources(const CPLXMLNode *psTree, const char *,
+                                 VRTMapSharedResources &oMapSharedSources);
+VRTSource *VRTParseArraySource(const CPLXMLNode *psTree, const char *,
+                               VRTMapSharedResources &oMapSharedSources);
 
 /************************************************************************/
 /*                              VRTDataset                              */
@@ -205,6 +234,7 @@ class VRTWarpedDataset;
 class VRTPansharpenedDataset;
 class VRTProcessedDataset;
 class VRTGroup;
+class VRTSimpleSource;
 
 class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 {
@@ -215,6 +245,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     friend struct VRTFlushCacheStruct<VRTProcessedDataset>;
     friend class VRTSourcedRasterBand;
     friend class VRTSimpleSource;
+    friend struct VRTSourcedRasterBandRasterIOJob;
     friend VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize);
 
     std::vector<gdal::GCP> m_asGCPs{};
@@ -229,8 +260,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     VRTRasterBand *m_poMaskBand = nullptr;
 
-    int m_bCompatibleForDatasetIO = -1;
-    int CheckCompatibleForDatasetIO();
+    mutable int m_nCompatibleForDatasetIO = -1;
+    bool CheckCompatibleForDatasetIO() const;
 
     // Virtual (ie not materialized) overviews, created either implicitly
     // when it is cheap to do it, or explicitly.
@@ -242,15 +273,22 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     char **m_papszXMLVRTMetadata = nullptr;
 
-    std::map<CPLString, GDALDataset *> m_oMapSharedSources{};
+    VRTMapSharedResources m_oMapSharedSources{};
     std::shared_ptr<VRTGroup> m_poRootGroup{};
 
+    // Used by VRTSourcedRasterBand::IRasterIO() in single-threaded situations
     VRTSource::WorkingState m_oWorkingState{};
 
-    static constexpr const char *const apszSpecialSyntax[] = {
-        "NITF_IM:{ANY}:{FILENAME}", "PDF:{ANY}:{FILENAME}",
-        "RASTERLITE:{FILENAME},{ANY}", "TILEDB:\"{FILENAME}\":{ANY}",
-        "TILEDB:{FILENAME}:{ANY}"};
+    // Used by VRTSourcedRasterBand::IRasterIO() when using multi-threading
+    struct QueueWorkingStates
+    {
+        std::mutex oMutex{};
+        std::vector<std::unique_ptr<VRTSource::WorkingState>> oStates{};
+    };
+
+    QueueWorkingStates m_oQueueWorkingStates{};
+
+    bool m_bMultiThreadedRasterIOLastUsed = false;
 
     VRTRasterBand *InitBand(const char *pszSubclass, int nBand,
                             bool bAllowPansharpenedOrProcessed);
@@ -260,6 +298,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     bool GetShiftedDataset(int nXOff, int nYOff, int nXSize, int nYSize,
                            GDALDataset *&poSrcDataset, int &nSrcXOff,
                            int &nSrcYOff);
+
+    static bool IsDefaultBlockSize(int nBlockSize, int nDimension);
 
     CPL_DISALLOW_COPY_ASSIGN(VRTDataset)
 
@@ -311,6 +351,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
                                    const char *pszDomain = "") override;
 
     virtual char **GetMetadata(const char *pszDomain = "") override;
+    virtual const char *GetMetadataItem(const char *pszName,
+                                        const char *pszDomain = "") override;
 
     virtual int GetGCPCount() override;
 
@@ -362,6 +404,12 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     void ClearStatistics() override;
 
+    /** To be called when a new source is added, to invalidate cached states. */
+    void SourceAdded()
+    {
+        m_nCompatibleForDatasetIO = -1;
+    }
+
     /* Used by PDF driver for example */
     GDALDataset *GetSingleSimpleSource();
     void BuildVirtualOverviews();
@@ -396,9 +444,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
                            CSLConstList papszOptions);
     static CPLErr Delete(const char *pszFilename);
 
-    static std::string BuildSourceFilename(const char *pszFilename,
-                                           const char *pszVRTPath,
-                                           bool bRelativeToVRT);
+    static int GetNumThreads(GDALDataset *poDS);
 };
 
 /************************************************************************/
@@ -412,10 +458,16 @@ class CPL_DLL VRTWarpedDataset final : public VRTDataset
 {
     GDALWarpOperation *m_poWarper;
 
-    int m_nOverviewCount;
-    VRTWarpedDataset **m_papoOverviews;
+    bool m_bIsOverview = false;
+    std::vector<VRTWarpedDataset *> m_apoOverviews{};
     int m_nSrcOvrLevel;
 
+    bool GetOverviewSize(GDALDataset *poSrcDS, int iOvr, int iSrcOvr,
+                         int &nOvrXSize, int &nOvrYSize, double &dfSrcRatioX,
+                         double &dfSrcRatioY) const;
+    int GetOverviewCount() const;
+    int GetSrcOverviewLevel(int iOvr, bool &bThisLevelOnlyOut) const;
+    VRTWarpedDataset *CreateImplicitOverview(int iOvr) const;
     void CreateImplicitOverviews();
 
     friend class VRTWarpedRasterBand;
@@ -587,6 +639,15 @@ class VRTProcessedDataset final : public VRTDataset
 #pragma GCC diagnostic pop
 #endif
 
+  protected:
+    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                             int nXSize, int nYSize, void *pData, int nBufXSize,
+                             int nBufYSize, GDALDataType eBufType,
+                             int nBandCount, BANDMAP_TYPE panBandMap,
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GSpacing nBandSpace,
+                             GDALRasterIOExtraArg *psExtraArg) override;
+
   private:
     friend class VRTProcessedRasterBand;
 
@@ -637,6 +698,9 @@ class VRTProcessedDataset final : public VRTDataset
     //! Directory of the VRT
     std::string m_osVRTPath{};
 
+    //! Source of source dataset generated with GDALTranslate
+    std::unique_ptr<GDALDataset> m_poVRTSrcDS{};
+
     //! Source dataset
     std::unique_ptr<GDALDataset> m_poSrcDS{};
 
@@ -655,6 +719,34 @@ class VRTProcessedDataset final : public VRTDataset
     //! Output buffer of a processing step
     std::vector<NoInitByte> m_abyOutput{};
 
+    //! Provenance of OutputBands.count and OutputBands.dataType
+    enum class ValueProvenance
+    {
+        FROM_VRTRASTERBAND,
+        FROM_SOURCE,
+        FROM_LAST_STEP,
+        USER_PROVIDED,
+    };
+
+    //! Provenance of OutputBands.count attribute
+    ValueProvenance m_outputBandCountProvenance = ValueProvenance::FROM_SOURCE;
+
+    //! Value of OutputBands.count attribute if m_outputBandCountProvenance = USER_PROVIDED
+    int m_outputBandCountValue = 0;
+
+    //! Provenance of OutputBands.dataType attribute
+    ValueProvenance m_outputBandDataTypeProvenance =
+        ValueProvenance::FROM_SOURCE;
+
+    //! Value of OutputBands.dataType attribute if m_outputBandDataTypeProvenance = USER_PROVIDED
+    GDALDataType m_outputBandDataTypeValue = GDT_Unknown;
+
+    //! Number of temporary bytes we need per output pixel.
+    int m_nWorkingBytesPerPixel = 1;
+
+    //! Value of CPLGetUsablePhysicalRAM() / 10 * 4
+    GIntBig m_nAllowedRAMUsage = 0;
+
     CPLErr Init(const CPLXMLNode *, const char *,
                 const VRTProcessedDataset *poParentDS,
                 GDALDataset *poParentSrcDS, int iOvrLevel);
@@ -663,7 +755,8 @@ class VRTProcessedDataset final : public VRTDataset
                    GDALDataType &eCurrentDT, int &nCurrentBandCount,
                    std::vector<double> &adfInNoData,
                    std::vector<double> &adfOutNoData);
-    bool ProcessRegion(int nXOff, int nYOff, int nBufXSize, int nBufYSize);
+    bool ProcessRegion(int nXOff, int nYOff, int nBufXSize, int nBufYSize,
+                       GDALProgressFunc pfnProgress, void *pProgressData);
 };
 
 /************************************************************************/
@@ -725,7 +818,7 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL : public GDALRasterBand
     virtual ~VRTRasterBand();
 
     virtual CPLErr XMLInit(const CPLXMLNode *, const char *,
-                           std::map<CPLString, GDALDataset *> &);
+                           VRTMapSharedResources &);
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
                                        bool &bHasWarnedAboutRAMUsage,
                                        size_t &nAccRAMUsage);
@@ -868,7 +961,7 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
                                    const char *pszDomain = "") override;
 
     virtual CPLErr XMLInit(const CPLXMLNode *, const char *,
-                           std::map<CPLString, GDALDataset *> &) override;
+                           VRTMapSharedResources &) override;
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
                                        bool &bHasWarnedAboutRAMUsage,
                                        size_t &nAccRAMUsage) override;
@@ -944,6 +1037,10 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
         GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
         int nBufXSize, int nBufYSize, GDALRasterIOExtraArg *psExtraArg) const;
 
+    bool CanMultiThreadRasterIO(double dfXOff, double dfYOff, double dfXSize,
+                                double dfYSize,
+                                int &nContributingSources) const;
+
     virtual CPLErr IReadBlock(int, int, void *) override;
 
     virtual void GetFileList(char ***ppapszFileList, int *pnSize,
@@ -986,9 +1083,16 @@ class CPL_DLL VRTWarpedRasterBand final : public VRTRasterBand
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview(int) override;
 
+    bool
+    EmitErrorMessageIfWriteNotSupported(const char *pszCaller) const override;
+
   private:
     int m_nIRasterIOCounter =
         0;  //! Protects against infinite recursion inside IRasterIO()
+
+    int GetBestOverviewLevel(int &nXOff, int &nYOff, int &nXSize, int &nYSize,
+                             int nBufXSize, int nBufYSize,
+                             GDALRasterIOExtraArg *psExtraArg) const;
 };
 
 /************************************************************************/
@@ -1107,7 +1211,7 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
     void SetPixelFunctionLanguage(const char *pszLanguage);
 
     virtual CPLErr XMLInit(const CPLXMLNode *, const char *,
-                           std::map<CPLString, GDALDataset *> &) override;
+                           VRTMapSharedResources &) override;
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
                                        bool &bHasWarnedAboutRAMUsage,
                                        size_t &nAccRAMUsage) override;
@@ -1150,7 +1254,7 @@ class CPL_DLL VRTRawRasterBand CPL_NON_FINAL : public VRTRasterBand
     virtual ~VRTRawRasterBand();
 
     virtual CPLErr XMLInit(const CPLXMLNode *, const char *,
-                           std::map<CPLString, GDALDataset *> &) override;
+                           VRTMapSharedResources &) override;
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
                                        bool &bHasWarnedAboutRAMUsage,
                                        size_t &nAccRAMUsage) override;
@@ -1199,9 +1303,8 @@ class VRTDriver final : public GDALDriver
     virtual CPLErr SetMetadata(char **papszMetadata,
                                const char *pszDomain = "") override;
 
-    VRTSource *
-    ParseSource(const CPLXMLNode *psSrc, const char *pszVRTPath,
-                std::map<CPLString, GDALDataset *> &oMapSharedSources);
+    VRTSource *ParseSource(const CPLXMLNode *psSrc, const char *pszVRTPath,
+                           VRTMapSharedResources &oMapSharedSources);
     void AddSourceParser(const char *pszElementName, VRTSourceParser pfnParser);
 };
 
@@ -1215,7 +1318,7 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
 
   private:
     // Owned by the VRTDataset
-    std::map<CPLString, GDALDataset *> *m_poMapSharedSources = nullptr;
+    VRTMapSharedResources *m_poMapSharedSources = nullptr;
 
     mutable GDALRasterBand *m_poRasterBand = nullptr;
 
@@ -1223,7 +1326,11 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     // from which the mask band is taken.
     mutable GDALRasterBand *m_poMaskBandMainBand = nullptr;
 
-    CPLStringList m_aosOpenOptions{};
+    CPLStringList m_aosOpenOptionsOri{};  // as read in the original source XML
+    CPLStringList
+        m_aosOpenOptions{};  // same as above, but potentially augmented with ROOT_PATH
+    bool m_bSrcDSNameFromVRT =
+        false;  // whereas content in m_osSrcDSName is a <VRTDataset> XML node
 
     void OpenSource() const;
 
@@ -1236,15 +1343,21 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     int m_nBand = 0;
     bool m_bGetMaskBand = false;
 
-    double m_dfSrcXOff = 0;
-    double m_dfSrcYOff = 0;
-    double m_dfSrcXSize = 0;
-    double m_dfSrcYSize = 0;
+    /* Value for uninitialized source or destination window. It is chosen such
+     * that SrcToDst() and DstToSrc() are no-ops if both source and destination
+     * windows are unset.
+     */
+    static constexpr double UNINIT_WINDOW = -1.0;
 
-    double m_dfDstXOff = 0;
-    double m_dfDstYOff = 0;
-    double m_dfDstXSize = 0;
-    double m_dfDstYSize = 0;
+    double m_dfSrcXOff = UNINIT_WINDOW;
+    double m_dfSrcYOff = UNINIT_WINDOW;
+    double m_dfSrcXSize = UNINIT_WINDOW;
+    double m_dfSrcYSize = UNINIT_WINDOW;
+
+    double m_dfDstXOff = UNINIT_WINDOW;
+    double m_dfDstYOff = UNINIT_WINDOW;
+    double m_dfDstXSize = UNINIT_WINDOW;
+    double m_dfDstYSize = UNINIT_WINDOW;
 
     CPLString m_osResampling{};
 
@@ -1275,6 +1388,22 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
         return true;
     }
 
+    /** Returns whether the source window is set */
+    bool IsSrcWinSet() const
+    {
+        return m_dfSrcXOff != UNINIT_WINDOW || m_dfSrcYOff != UNINIT_WINDOW ||
+               m_dfSrcXSize != UNINIT_WINDOW || m_dfSrcYSize != UNINIT_WINDOW;
+    }
+
+    /** Returns whether the destination window is set */
+    bool IsDstWinSet() const
+    {
+        return m_dfDstXOff != UNINIT_WINDOW || m_dfDstYOff != UNINIT_WINDOW ||
+               m_dfDstXSize != UNINIT_WINDOW || m_dfDstYSize != UNINIT_WINDOW;
+    }
+
+    void AddSourceFilenameNode(const char *pszVRTPath, CPLXMLNode *psSrc);
+
   public:
     VRTSimpleSource();
     VRTSimpleSource(const VRTSimpleSource *poSrcSource, double dfXDstRatio,
@@ -1282,7 +1411,7 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     virtual ~VRTSimpleSource();
 
     virtual CPLErr XMLInit(const CPLXMLNode *psTree, const char *,
-                           std::map<CPLString, GDALDataset *> &) override;
+                           VRTMapSharedResources &) override;
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
 
     CPLErr ParseSrcRectAndDstRect(const CPLXMLNode *psSrc);
@@ -1292,7 +1421,9 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     void SetSrcMaskBand(GDALRasterBand *);
     void SetSrcWindow(double, double, double, double);
     void SetDstWindow(double, double, double, double);
-    void GetDstWindow(double &, double &, double &, double &);
+    void GetDstWindow(double &, double &, double &, double &) const;
+    bool DstWindowIntersects(double dfXOff, double dfYOff, double dfXSize,
+                             double dfYSize) const;
 
     const std::string &GetSourceDatasetName() const
     {
@@ -1333,21 +1464,23 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     virtual void GetFileList(char ***ppapszFileList, int *pnSize,
                              int *pnMaxSize, CPLHashSet *hSetFiles) override;
 
-    virtual int IsSimpleSource() override
+    bool IsSimpleSource() const override
     {
-        return TRUE;
+        return true;
     }
 
-    virtual const char *GetType()
-    {
-        return "SimpleSource";
-    }
+    /** Returns the same value as GetType() called on objects that are exactly
+     * instances of VRTSimpleSource.
+     */
+    static const char *GetTypeStatic();
+
+    const char *GetType() const override;
 
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
     GDALRasterBand *GetRasterBand() const;
     GDALRasterBand *GetMaskBandMainBand();
-    int IsSameExceptBandNumber(VRTSimpleSource *poOtherSource);
+    bool IsSameExceptBandNumber(const VRTSimpleSource *poOtherSource) const;
     CPLErr DatasetRasterIO(GDALDataType eVRTBandDataType, int nXOff, int nYOff,
                            int nXSize, int nYSize, void *pData, int nBufXSize,
                            int nBufYSize, GDALDataType eBufType, int nBandCount,
@@ -1395,10 +1528,12 @@ class VRTAveragedSource final : public VRTSimpleSource
 
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
 
-    virtual const char *GetType() override
-    {
-        return "AveragedSource";
-    }
+    /** Returns the same value as GetType() called on objects that are exactly
+     * instances of VRTAveragedSource.
+     */
+    static const char *GetTypeStatic();
+
+    const char *GetType() const override;
 };
 
 /************************************************************************/
@@ -1437,13 +1572,15 @@ class VRTNoDataFromMaskSource final : public VRTSimpleSource
                        double dfRemappedValue);
 
     virtual CPLErr XMLInit(const CPLXMLNode *psTree, const char *,
-                           std::map<CPLString, GDALDataset *> &) override;
+                           VRTMapSharedResources &) override;
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
 
-    virtual const char *GetType() override
-    {
-        return "VRTNoDataFromMaskSource";
-    }
+    /** Returns the same value as GetType() called on objects that are exactly
+     * instances of VRTNoDataFromMaskSource.
+     */
+    static const char *GetTypeStatic();
+
+    const char *GetType() const override;
 };
 
 /************************************************************************/
@@ -1481,6 +1618,7 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
     double m_dfDstMin = 0;
     double m_dfDstMax = 0;
     double m_dfExponent = 1;
+    bool m_bClip = true;  // Only taken into account for non-linear scaling
 
     int m_nColorTableComponent = 0;
 
@@ -1530,12 +1668,14 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
 
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
     virtual CPLErr XMLInit(const CPLXMLNode *, const char *,
-                           std::map<CPLString, GDALDataset *> &) override;
+                           VRTMapSharedResources &) override;
 
-    virtual const char *GetType() override
-    {
-        return "ComplexSource";
-    }
+    /** Returns the same value as GetType() called on objects that are exactly
+     * instances of VRTComplexSource.
+     */
+    static const char *GetTypeStatic();
+
+    const char *GetType() const override;
 
     bool AreValuesUnchanged() const;
 
@@ -1553,7 +1693,7 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
 
     void SetLinearScaling(double dfOffset, double dfScale);
     void SetPowerScaling(double dfExponent, double dfSrcMin, double dfSrcMax,
-                         double dfDstMin, double dfDstMax);
+                         double dfDstMin, double dfDstMax, bool bClip = true);
     void SetColorTableComponent(int nComponent);
 };
 
@@ -1577,6 +1717,8 @@ class VRTFilteredSource CPL_NON_FINAL : public VRTComplexSource
   public:
     VRTFilteredSource();
     virtual ~VRTFilteredSource();
+
+    const char *GetType() const override = 0;
 
     void SetExtraEdgePixels(int);
     void SetFilteringDataTypesSupported(int, GDALDataType *);
@@ -1610,8 +1752,10 @@ class VRTKernelFilteredSource CPL_NON_FINAL : public VRTFilteredSource
   public:
     VRTKernelFilteredSource();
 
+    const char *GetType() const override;
+
     virtual CPLErr XMLInit(const CPLXMLNode *psTree, const char *,
-                           std::map<CPLString, GDALDataset *> &) override;
+                           VRTMapSharedResources &) override;
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
 
     virtual CPLErr FilterData(int nXSize, int nYSize, GDALDataType eType,
@@ -1634,8 +1778,10 @@ class VRTAverageFilteredSource final : public VRTKernelFilteredSource
     explicit VRTAverageFilteredSource(int nKernelSize);
     virtual ~VRTAverageFilteredSource();
 
+    const char *GetType() const override;
+
     virtual CPLErr XMLInit(const CPLXMLNode *psTree, const char *,
-                           std::map<CPLString, GDALDataset *> &) override;
+                           VRTMapSharedResources &) override;
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
 };
 
@@ -1651,7 +1797,7 @@ class VRTFuncSource final : public VRTSource
     virtual ~VRTFuncSource();
 
     virtual CPLErr XMLInit(const CPLXMLNode *, const char *,
-                           std::map<CPLString, GDALDataset *> &) override
+                           VRTMapSharedResources &) override
     {
         return CE_Failure;
     }
@@ -1672,6 +1818,8 @@ class VRTFuncSource final : public VRTSource
                                 GUIntBig *panHistogram, int bIncludeOutOfRange,
                                 int bApproxOK, GDALProgressFunc pfnProgress,
                                 void *pProgressData) override;
+
+    const char *GetType() const override;
 
     VRTImageReadFunc pfnReadFunc;
     void *pCBData;

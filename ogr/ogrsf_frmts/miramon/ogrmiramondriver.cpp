@@ -6,26 +6,22 @@
  ******************************************************************************
  * Copyright (c) 2024, Xavier Pons
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrmiramon.h"
+
+#include <cmath>
+
+bool MM_IsNANDouble(double x)
+{
+    return std::isnan(x);
+}
+
+bool MM_IsDoubleInfinite(double x)
+{
+    return std::isinf(x);
+}
 
 /****************************************************************************/
 /*                    OGRMMDriverIdentify()                                 */
@@ -36,9 +32,9 @@ static int OGRMiraMonDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
     if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes < 7)
         return FALSE;
-    else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "PNT") ||
-             EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ARC") ||
-             EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "POL"))
+    else if (poOpenInfo->IsExtensionEqualToCI("PNT") ||
+             poOpenInfo->IsExtensionEqualToCI("ARC") ||
+             poOpenInfo->IsExtensionEqualToCI("POL"))
     {
         // Format
         if ((poOpenInfo->pabyHeader[0] == 'P' &&
@@ -88,8 +84,7 @@ static GDALDataset *OGRMiraMonDriverOpen(GDALOpenInfo *poOpenInfo)
 
     if (poDS && poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "MiraMonVector driver does not support update.");
+        GDALDataset::ReportUpdateNotSupportedByDriver("MiraMonVector");
         return nullptr;
     }
 

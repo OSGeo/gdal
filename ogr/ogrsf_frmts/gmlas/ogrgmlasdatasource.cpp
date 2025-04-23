@@ -9,28 +9,12 @@
  ******************************************************************************
  * Copyright (c) 2016, Even Rouault, <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_gmlas.h"
 
-#include "ogr_mem.h"
+#include "memdataset.h"
 #include "cpl_sha256.h"
 
 #include <algorithm>
@@ -187,6 +171,18 @@ OGRGMLASDataSource::OGRGMLASDataSource()
     {
         OGRFieldDefn oFieldDefn(szVALUE, OFTString);
         m_poOtherMetadataLayer->CreateField(&oFieldDefn);
+    }
+}
+
+/************************************************************************/
+/*                        ~OGRGMLASDataSource()                         */
+/************************************************************************/
+
+OGRGMLASDataSource::~OGRGMLASDataSource()
+{
+    if (m_bUnlinkConfigFileAfterUse)
+    {
+        VSIUnlink(m_osConfigFile.c_str());
     }
 }
 
@@ -472,7 +468,8 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
                 {
                     oFeature.SetField(
                         szVALUE,
-                        CPLFormFilename(pszCurDir, osConfigFile, nullptr));
+                        CPLFormFilenameSafe(pszCurDir, osConfigFile, nullptr)
+                            .c_str());
                 }
                 else
                 {
@@ -524,7 +521,7 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
             CPLIsFilenameRelative(m_osGMLFilename) && pszCurDir != nullptr)
         {
             osAbsoluteGMLFilename =
-                CPLFormFilename(pszCurDir, m_osGMLFilename, nullptr);
+                CPLFormFilenameSafe(pszCurDir, m_osGMLFilename, nullptr);
         }
         else
             osAbsoluteGMLFilename = m_osGMLFilename;
@@ -538,7 +535,7 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
     for (int i = 0; i < static_cast<int>(aoXSDs.size()); i++)
     {
         const CPLString osURI(aoXSDs[i].first);
-        const CPLString osXSDFilename(aoXSDs[i].second);
+        const std::string osXSDFilename(aoXSDs[i].second);
 
         oSetVisitedURI.insert(osURI);
 
@@ -561,10 +558,10 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
             const CPLString osAbsoluteXSDFilename(
                 (osXSDFilename.find("http://") != 0 &&
                  osXSDFilename.find("https://") != 0 &&
-                 CPLIsFilenameRelative(osXSDFilename))
-                    ? CPLString(
-                          CPLFormFilename(CPLGetDirname(osAbsoluteGMLFilename),
-                                          osXSDFilename, nullptr))
+                 CPLIsFilenameRelative(osXSDFilename.c_str()))
+                    ? CPLFormFilenameSafe(
+                          CPLGetDirnameSafe(osAbsoluteGMLFilename).c_str(),
+                          osXSDFilename.c_str(), nullptr)
                     : osXSDFilename);
             oFeature.SetField(szVALUE, osAbsoluteXSDFilename.c_str());
             CPL_IGNORE_RET_VAL(
@@ -656,7 +653,8 @@ OGRGMLASDataSource::BuildXSDVector(const CPLString &osXSDFilenames)
             CPLIsFilenameRelative(papszTokens[i]) && pszCurDir != nullptr)
         {
             aoXSDs.push_back(PairURIFilename(
-                "", CPLFormFilename(pszCurDir, papszTokens[i], nullptr)));
+                "", CPLFormFilenameSafe(pszCurDir, papszTokens[i], nullptr)
+                        .c_str()));
         }
         else
         {
@@ -674,16 +672,14 @@ OGRGMLASDataSource::BuildXSDVector(const CPLString &osXSDFilenames)
 
 bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
 {
-    CPLString osConfigFile = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
-                                                  szCONFIG_FILE_OPTION, "");
-    if (osConfigFile.empty())
+    m_osConfigFile = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                          szCONFIG_FILE_OPTION, "");
+    if (m_osConfigFile.empty())
     {
-        const char *pszConfigFile =
-            CPLFindFile("gdal", szDEFAULT_CONF_FILENAME);
-        if (pszConfigFile)
-            osConfigFile = pszConfigFile;
+        m_osConfigFile =
+            GMLASConfiguration::GetDefaultConfFile(m_bUnlinkConfigFileAfterUse);
     }
-    if (osConfigFile.empty())
+    if (m_osConfigFile.empty())
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "No configuration file found. Using hard-coded defaults");
@@ -691,7 +687,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        if (!m_oConf.Load(osConfigFile))
+        if (!m_oConf.Load(m_osConfigFile.c_str()))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Loading of configuration failed");
@@ -740,10 +736,10 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
         m_oConf.m_nMaximumFieldsForFlattening);
     oAnalyzer.SetAlwaysGenerateOGRId(m_oConf.m_bAlwaysGenerateOGRId);
 
-    m_osGMLFilename =
-        STARTS_WITH_CI(poOpenInfo->pszFilename, szGMLAS_PREFIX)
-            ? CPLExpandTilde(poOpenInfo->pszFilename + strlen(szGMLAS_PREFIX))
-            : poOpenInfo->pszFilename;
+    m_osGMLFilename = STARTS_WITH_CI(poOpenInfo->pszFilename, szGMLAS_PREFIX)
+                          ? CPLExpandTildeSafe(poOpenInfo->pszFilename +
+                                               strlen(szGMLAS_PREFIX))
+                          : poOpenInfo->pszFilename;
 
     CPLString osXSDFilenames =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, szXSD_OPTION, "");
@@ -789,6 +785,89 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
     if (osXSDFilenames.empty())
     {
         aoXSDs = topElementParser.GetXSDs();
+        if (aoXSDs.empty())
+        {
+            const std::map<std::string, std::string> mapWellKnownURIToLocation =
+                {
+                    {"http://www.opengis.net/citygml/2.0",
+                     "https://schemas.opengis.net/citygml/2.0/cityGMLBase.xsd"},
+                    {"http://www.opengis.net/citygml/appearance/2.0",
+                     "https://schemas.opengis.net/citygml/appearance/2.0/"
+                     "appearance.xsd"},
+                    {"http://www.opengis.net/citygml/bridge/2.0",
+                     "https://schemas.opengis.net/citygml/bridge/2.0/"
+                     "bridge.xsd"},
+                    {"http://www.opengis.net/citygml/building/2.0",
+                     "https://schemas.opengis.net/citygml/building/2.0/"
+                     "building.xsd"},
+                    {
+                        "http://www.opengis.net/citygml/cityfurniture/2.0",
+                        "https://schemas.opengis.net/citygml/cityfurniture/2.0/"
+                        "cityFurniture.xsd",
+                    },
+                    {"http://www.opengis.net/citygml/cityobjectgroup/2.0",
+                     "https://schemas.opengis.net/citygml/cityobjectgroup/2.0/"
+                     "cityObjectGroup.xsd"},
+                    {"http://www.opengis.net/citygml/generics/2.0",
+                     "https://schemas.opengis.net/citygml/generics/2.0/"
+                     "generics.xsd"},
+                    {"http://www.opengis.net/citygml/landuse/2.0",
+                     "https://schemas.opengis.net/citygml/landuse/2.0/"
+                     "landUse.xsd"},
+                    {"http://www.opengis.net/citygml/relief/2.0",
+                     "https://schemas.opengis.net/citygml/relief/2.0/"
+                     "relief.xsd"},
+                    // { "http://www.opengis.net/citygml/textures/2.0",  } ,
+                    {"http://www.opengis.net/citygml/transportation/2.0",
+                     "https://schemas.opengis.net/citygml/transportation/2.0/"
+                     "transportation.xsd"},
+                    {"http://www.opengis.net/citygml/tunnel/2.0",
+                     "https://schemas.opengis.net/citygml/tunnel/2.0/"
+                     "tunnel.xsd"},
+                    {"http://www.opengis.net/citygml/vegetation/2.0",
+                     "https://schemas.opengis.net/citygml/vegetation/2.0/"
+                     "vegetation.xsd"},
+                    {"http://www.opengis.net/citygml/waterbody/2.0",
+                     "https://schemas.opengis.net/citygml/waterbody/2.0/"
+                     "waterBody.xsd"},
+                    {"http://www.w3.org/1999/xlink",
+                     "https://www.w3.org/1999/xlink.xsd"},
+                    {"urn:oasis:names:tc:ciq:xsdschema:xAL:2.0",
+                     "https://schemas.opengis.net/citygml/xAL/xAL.xsd"},
+                };
+
+            bool cityGML2Found = false;
+            for (const auto &[uri, prefix] :
+                 topElementParser.GetMapDocNSURIToPrefix())
+            {
+                if (uri == "http://www.opengis.net/citygml/2.0")
+                    cityGML2Found = true;
+            }
+
+            for (const auto &[uri, prefix] :
+                 topElementParser.GetMapDocNSURIToPrefix())
+            {
+                const auto iter = mapWellKnownURIToLocation.find(uri);
+                if (iter != mapWellKnownURIToLocation.end())
+                {
+                    aoXSDs.push_back(PairURIFilename(uri, iter->second));
+                }
+                else if (cityGML2Found && uri == "http://www.opengis.net/gml")
+                {
+                    aoXSDs.push_back(PairURIFilename(
+                        uri,
+                        "https://schemas.opengis.net/gml/3.1.1/base/gml.xsd"));
+                }
+                else if (uri != "http://www.w3.org/2001/XMLSchema-instance")
+                {
+                    CPLDebug("GMLAS",
+                             "Could not find schema location for %s(%s)",
+                             prefix.c_str(), uri.c_str());
+                }
+            }
+
+            m_aoXSDsManuallyPassed = aoXSDs;
+        }
     }
     else
     {
@@ -865,9 +944,9 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
                                             szHANDLE_MULTIPLE_IMPORTS_OPTION,
                                             m_oConf.m_bHandleMultipleImports);
 
-    bool bRet =
-        oAnalyzer.Analyze(m_oCache, CPLGetDirname(m_osGMLFilename), aoXSDs,
-                          m_bSchemaFullChecking, m_bHandleMultipleImports);
+    bool bRet = oAnalyzer.Analyze(
+        m_oCache, CPLGetDirnameSafe(m_osGMLFilename).c_str(), aoXSDs,
+        m_bSchemaFullChecking, m_bHandleMultipleImports);
     if (!bRet)
     {
         return false;
@@ -882,7 +961,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
 
     const std::set<CPLString> &oSetSchemaURLs = oAnalyzer.GetSchemaURLS();
 
-    FillOtherMetadataLayer(poOpenInfo, osConfigFile, aoXSDs, oSetSchemaURLs);
+    FillOtherMetadataLayer(poOpenInfo, m_osConfigFile, aoXSDs, oSetSchemaURLs);
 
     if (CPLFetchBool(poOpenInfo->papszOpenOptions,
                      szEXPOSE_METADATA_LAYERS_OPTION,

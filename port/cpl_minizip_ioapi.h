@@ -1,4 +1,3 @@
-/* $Id$ */
 
 /* Modified version by Even Rouault. :
       - change fill_fopen_filefunc to cpl_fill_fopen_filefunc

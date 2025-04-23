@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Various test of GDAL core.
@@ -10,32 +9,18 @@
 ###############################################################################
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
+import datetime
 import os
 import shutil
 
 import gdaltest
 import pytest
+from test_py_scripts import run_py_script_as_external_script
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 
 ###############################################################################
@@ -115,6 +100,8 @@ def test_misc_4():
 
 
 ###############################################################################
+
+
 def get_filename(drv, dirname):
 
     filename = "%s/foo" % dirname
@@ -134,6 +121,10 @@ def get_filename(drv, dirname):
         filename += ".kmz"
     elif drv.ShortName == "RRASTER":
         filename += ".grd"
+    elif drv.ShortName == "KEA":
+        filename += ".kea"
+    elif drv.ShortName == "GPKG":
+        filename += ".gpkg"
 
     return filename
 
@@ -269,7 +260,7 @@ def test_misc_5():
 
 
 ###############################################################################
-class misc_6_interrupt_callback_class(object):
+class misc_6_interrupt_callback_class:
     def __init__(self):
         pass
 
@@ -297,30 +288,155 @@ def misc_6_internal(datatype, nBands, setDriversDone):
         drv = gdal.GetDriver(i)
         md = drv.GetMetadata()
         if ("DCAP_CREATECOPY" in md or "DCAP_CREATE" in md) and "DCAP_RASTER" in md:
-            # print ('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
-
-            skip = False
-            # FIXME: A few cases that crashes and should be investigated
-            if drv.ShortName == "JPEG2000":
-                if (nBands == 2 or nBands >= 5) or not (
-                    datatype == gdal.GDT_Byte
-                    or datatype == gdal.GDT_Int16
-                    or datatype == gdal.GDT_UInt16
-                ):
-                    skip = True
-
-            if skip is False:
-                dirname = "tmp/tmp/tmp_%s_%d_%s" % (
-                    drv.ShortName,
-                    nBands,
-                    gdal.GetDataTypeName(datatype),
-                )
+            dirname = "tmp/tmp/tmp_%s_%d_%s" % (
+                drv.ShortName,
+                nBands,
+                gdal.GetDataTypeName(datatype),
+            )
+            try:
+                os.mkdir(dirname)
+            except OSError:
                 try:
-                    os.mkdir(dirname)
+                    os.stat(dirname)
+                    # Hum the directory already exists... Not expected, but let's try to go on
                 except OSError:
+                    reason = (
+                        "Cannot create %s before drv = %s, nBands = %d, datatype = %s"
+                        % (
+                            dirname,
+                            drv.ShortName,
+                            nBands,
+                            gdal.GetDataTypeName(datatype),
+                        )
+                    )
+                    pytest.fail(reason)
+
+            filename = get_filename(drv, dirname)
+
+            dst_ds = drv.CreateCopy(filename, ds)
+            has_succeeded = dst_ds is not None
+            if dst_ds:
+                # check that domain == None doesn't crash
+                dst_ds.GetMetadata(None)
+                dst_ds.GetMetadataItem("", None)
+            dst_ds = None
+
+            size = 0
+            stat = gdal.VSIStatL(filename)
+            if stat is not None:
+                size = stat.size
+
+            try:
+                shutil.rmtree(dirname)
+            except OSError:
+                reason = (
+                    "Cannot remove %s after drv = %s, nBands = %d, datatype = %s"
+                    % (
+                        dirname,
+                        drv.ShortName,
+                        nBands,
+                        gdal.GetDataTypeName(datatype),
+                    )
+                )
+                pytest.fail(reason)
+
+            if has_succeeded and drv.ShortName not in setDriversDone and nBands > 0:
+                setDriversDone.add(drv.ShortName)
+
+                # The first list of drivers fail to detect short writing
+                # The second one is because they are verbose in stderr
+                if (
+                    "DCAP_VIRTUALIO" in md
+                    and size != 0
+                    and drv.ShortName
+                    not in [
+                        "JPEG2000",
+                        "KMLSUPEROVERLAY",
+                        "HF2",
+                        "ZMap",
+                        "DDS",
+                        "TileDB",
+                    ]
+                    and drv.ShortName not in ["GIF", "JP2ECW", "JP2Lura"]
+                ):
+
+                    for j in range(10):
+                        truncated_size = (size * j) / 10
+                        vsimem_filename = (
+                            "/vsimem/test_truncate/||maxlength=%d||" % truncated_size
+                        ) + get_filename(drv, "")[1:]
+                        # print('drv = %s, nBands = %d, datatype = %s, truncated_size = %d' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype), truncated_size))
+                        dst_ds = drv.CreateCopy(vsimem_filename, ds)
+                        error_detected = False
+                        if dst_ds is None:
+                            error_detected = True
+                        else:
+                            gdal.ErrorReset()
+                            dst_ds = None
+                            if gdal.GetLastErrorMsg() != "":
+                                error_detected = True
+                        if not error_detected:
+                            msg = (
+                                "write error not detected with with drv = %s, nBands = %d, datatype = %s, truncated_size = %d"
+                                % (
+                                    drv.ShortName,
+                                    nBands,
+                                    gdal.GetDataTypeName(datatype),
+                                    truncated_size,
+                                )
+                            )
+                            print(msg)
+
+                        fl = gdal.ReadDirRecursive("/vsimem/test_truncate")
+                        if fl is not None:
+                            for myf in fl:
+                                gdal.Unlink("/vsimem/test_truncate/" + myf)
+                            fl = gdal.ReadDirRecursive("/vsimem/test_truncate")
+                            if fl is not None:
+                                print(fl)
+
+                if drv.ShortName not in [
+                    "ECW",
+                    "JP2ECW",
+                    "VRT",
+                    "XPM",
+                    "JPEG2000",
+                    "FIT",
+                    "RST",
+                    "INGR",
+                    "USGSDEM",
+                    "KMLSUPEROVERLAY",
+                    "GMT",
+                    "NULL",
+                ]:
+                    dst_ds = drv.CreateCopy(
+                        filename, ds, callback=misc_6_interrupt_callback_class().cbk
+                    )
+                    if dst_ds is not None:
+                        dst_ds = None
+
+                        try:
+                            shutil.rmtree(dirname)
+                        except OSError:
+                            pass
+
+                        pytest.fail(
+                            "interruption did not work with drv = %s, nBands = %d, datatype = %s"
+                            % (
+                                drv.ShortName,
+                                nBands,
+                                gdal.GetDataTypeName(datatype),
+                            )
+                        )
+
+                    dst_ds = None
+
                     try:
-                        os.stat(dirname)
-                        # Hum the directory already exists... Not expected, but let's try to go on
+                        shutil.rmtree(dirname)
+                    except OSError:
+                        pass
+                    try:
+                        os.mkdir(dirname)
                     except OSError:
                         reason = (
                             "Cannot create %s before drv = %s, nBands = %d, datatype = %s"
@@ -333,143 +449,6 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                         )
                         pytest.fail(reason)
 
-                filename = get_filename(drv, dirname)
-
-                dst_ds = drv.CreateCopy(filename, ds)
-                has_succeeded = dst_ds is not None
-                if dst_ds:
-                    # check that domain == None doesn't crash
-                    dst_ds.GetMetadata(None)
-                    dst_ds.GetMetadataItem("", None)
-                dst_ds = None
-
-                size = 0
-                stat = gdal.VSIStatL(filename)
-                if stat is not None:
-                    size = stat.size
-
-                try:
-                    shutil.rmtree(dirname)
-                except OSError:
-                    reason = (
-                        "Cannot remove %s after drv = %s, nBands = %d, datatype = %s"
-                        % (
-                            dirname,
-                            drv.ShortName,
-                            nBands,
-                            gdal.GetDataTypeName(datatype),
-                        )
-                    )
-                    pytest.fail(reason)
-
-                if has_succeeded and drv.ShortName not in setDriversDone and nBands > 0:
-                    setDriversDone.add(drv.ShortName)
-
-                    # The first list of drivers fail to detect short writing
-                    # The second one is because they are verbose in stderr
-                    if (
-                        "DCAP_VIRTUALIO" in md
-                        and size != 0
-                        and drv.ShortName
-                        not in [
-                            "JPEG2000",
-                            "KMLSUPEROVERLAY",
-                            "HF2",
-                            "ZMap",
-                            "DDS",
-                            "TileDB",
-                        ]
-                        and drv.ShortName not in ["GIF", "JP2ECW", "JP2Lura"]
-                    ):
-
-                        for j in range(10):
-                            truncated_size = (size * j) / 10
-                            vsimem_filename = (
-                                "/vsimem/test_truncate/||maxlength=%d||"
-                                % truncated_size
-                            ) + get_filename(drv, "")[1:]
-                            # print('drv = %s, nBands = %d, datatype = %s, truncated_size = %d' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype), truncated_size))
-                            dst_ds = drv.CreateCopy(vsimem_filename, ds)
-                            error_detected = False
-                            if dst_ds is None:
-                                error_detected = True
-                            else:
-                                gdal.ErrorReset()
-                                dst_ds = None
-                                if gdal.GetLastErrorMsg() != "":
-                                    error_detected = True
-                            if not error_detected:
-                                msg = (
-                                    "write error not detected with with drv = %s, nBands = %d, datatype = %s, truncated_size = %d"
-                                    % (
-                                        drv.ShortName,
-                                        nBands,
-                                        gdal.GetDataTypeName(datatype),
-                                        truncated_size,
-                                    )
-                                )
-                                print(msg)
-
-                            fl = gdal.ReadDirRecursive("/vsimem/test_truncate")
-                            if fl is not None:
-                                for myf in fl:
-                                    gdal.Unlink("/vsimem/test_truncate/" + myf)
-                                fl = gdal.ReadDirRecursive("/vsimem/test_truncate")
-                                if fl is not None:
-                                    print(fl)
-
-                    if drv.ShortName not in [
-                        "ECW",
-                        "JP2ECW",
-                        "VRT",
-                        "XPM",
-                        "JPEG2000",
-                        "FIT",
-                        "RST",
-                        "INGR",
-                        "USGSDEM",
-                        "KMLSUPEROVERLAY",
-                        "GMT",
-                    ]:
-                        dst_ds = drv.CreateCopy(
-                            filename, ds, callback=misc_6_interrupt_callback_class().cbk
-                        )
-                        if dst_ds is not None:
-                            dst_ds = None
-
-                            try:
-                                shutil.rmtree(dirname)
-                            except OSError:
-                                pass
-
-                            pytest.fail(
-                                "interruption did not work with drv = %s, nBands = %d, datatype = %s"
-                                % (
-                                    drv.ShortName,
-                                    nBands,
-                                    gdal.GetDataTypeName(datatype),
-                                )
-                            )
-
-                        dst_ds = None
-
-                        try:
-                            shutil.rmtree(dirname)
-                        except OSError:
-                            pass
-                        try:
-                            os.mkdir(dirname)
-                        except OSError:
-                            reason = (
-                                "Cannot create %s before drv = %s, nBands = %d, datatype = %s"
-                                % (
-                                    dirname,
-                                    drv.ShortName,
-                                    nBands,
-                                    gdal.GetDataTypeName(datatype),
-                                )
-                            )
-                            pytest.fail(reason)
     ds = None
 
 
@@ -515,6 +494,76 @@ def test_misc_6():
                 gdal.GDT_CFloat64,
             ):
                 misc_6_internal(datatype, nBands, setDriversDone)
+
+
+@pytest.mark.parametrize(
+    "driver_name",
+    [
+        gdal.GetDriver(i).GetName()
+        for i in range(gdal.GetDriverCount())
+        if "DCAP_UPDATE" in gdal.GetDriver(i).GetMetadata()
+        and [
+            "DCAP_CREATECOPY" in gdal.GetDriver(i).GetMetadata()
+            or "DCAP_CREATE" in gdal.GetDriver(i).GetMetadata()
+        ]
+        and "DCAP_RASTER" in gdal.GetDriver(i).GetMetadata()
+    ],
+)
+def test_update_metadata(tmp_path, tmp_vsimem, driver_name):
+    if driver_name in ("OpenFileGDB"):
+        pytest.skip("OpenFileGDB does not support creating raster datasets")
+
+    drv = gdal.GetDriverByName(driver_name)
+    if "DCAP_VIRTUALIO" in drv.GetMetadata() and driver_name not in (
+        "KEA",
+        "netCDF",
+        "TileDB",
+    ):
+        # drivers listed above do not allow writing to /vsimem
+        dirname = tmp_vsimem
+    else:
+        dirname = tmp_path
+
+    filename = get_filename(drv, dirname)
+
+    # create a test dataset that can be updated
+    # ECW driver requires at size to be at least 128x128
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "in.tif", 128, 128
+    ) as src_ds:
+        src_ds.GetRasterBand(1).Fill(3)
+        src_ds.SetGeoTransform((20, 0.1, 0, 40, 0, -0.1))
+        dst_ds = gdal.Translate(
+            filename, src_ds, outputSRS="EPSG:4326", format=driver_name
+        )
+        assert dst_ds
+        dst_ds.Close()
+
+    update_ds = gdal.OpenEx(filename, gdal.GA_Update, allowed_drivers=[driver_name])
+    assert update_ds
+
+    flags_str = drv.GetMetadataItem(gdal.DMD_UPDATE_ITEMS)
+    if "RasterValues" in flags_str:
+        assert (
+            update_ds.GetRasterBand(1).WriteRaster(
+                0, 0, 1, 1, b"\x00", buf_type=gdal.GDT_Byte
+            )
+            == gdal.CE_None
+        )
+    if "GeoTransform" in flags_str and drv.ShortName not in ("netCDF",):
+        assert update_ds.SetGeoTransform([0, 1, 0, 0, 0, -1]) == gdal.CE_None
+    if "SRS" in flags_str and drv.ShortName not in ("netCDF",):
+        srs = osr.SpatialReference()
+        srs.SetFromUserInput("WGS84")
+        assert update_ds.SetSpatialRef(srs) == gdal.CE_None
+    if "NoData" in flags_str:
+        assert update_ds.GetRasterBand(1).SetNoDataValue(0) == gdal.CE_None
+    if "DatasetMetadata" in flags_str:
+        assert update_ds.SetMetadata({"FOO": "BAR"}) == gdal.CE_None
+    if "BandMetadata" in flags_str:
+        assert update_ds.GetRasterBand(1).SetMetadata({"FOO": "BAR"}) == gdal.CE_None
+
+    update_ds.Close()
 
 
 ###############################################################################
@@ -749,6 +798,70 @@ def test_misc_13():
     with gdal.quiet_errors():
         out_ds = gdal.GetDriverByName("GTiff").CreateCopy("/vsimem/out.tif", ds)
     assert out_ds is None
+
+
+###############################################################################
+# Test parsing of CPL_DEBUG and CPL_TIMESTAMP
+
+
+@pytest.fixture
+def debug_output():
+
+    messages = []
+
+    def handle(ecls, ecode, emsg):
+        messages.append(emsg)
+
+    def log_message(category, message):
+        messages.clear()
+        gdal.Debug(category, message)
+        return messages[0] if messages else None
+
+    log_message.handle = handle
+
+    with gdaltest.error_handler(handle):
+        yield log_message
+
+
+@pytest.mark.parametrize(
+    "booleans",
+    [("YES", "NO"), ("TRUE", "FALSE"), ("ON", "OFF"), ("1", "0")],
+    ids="_".join,
+)
+def test_misc_cpl_debug(debug_output, booleans):
+
+    on, off = booleans
+
+    assert debug_output("GDAL", "msg") is None
+
+    with gdal.config_option("CPL_DEBUG", off):
+        assert debug_output("GDAL", "msg") is None
+
+    with gdal.config_option("CPL_DEBUG", on):
+        assert debug_output("GDAL", "message") == "GDAL: message"
+
+        with gdal.config_option("CPL_TIMESTAMP", off):
+            assert debug_output("GDAL", "message") == "GDAL: message"
+
+        with gdal.config_option("CPL_TIMESTAMP", on):
+            output = debug_output("GDAL", "message")
+            assert str(datetime.datetime.now().year) in output
+            assert output.endswith("GDAL: message")
+
+
+def test_misc_cpl_debug_filtering(debug_output):
+
+    with gdal.config_option("CPL_DEBUG", "GDAL"):
+        assert debug_output("GDAL", "msg") == "GDAL: msg"
+        assert debug_output("GDAL_WARP", "msg") is None
+        assert debug_output("", "msg") == ": msg"
+
+    with gdal.config_option("CPL_DEBUG", "GDAL_WARP_TRANSLATE_ETC"):
+        assert debug_output("GDAL", "msg") == "GDAL: msg"
+        assert debug_output("TRANSLATE", "msg") == "TRANSLATE: msg"
+
+    with gdal.config_option("CPL_DEBUG", ""):
+        assert debug_output("GDAL", "msg") == "GDAL: msg"
 
 
 ###############################################################################
@@ -994,6 +1107,57 @@ def test_misc_general_cmd_line_processor(tmp_path):
         ["program", 2, tmp_path / "a_path", "a_string"]
     )
     assert processed == ["program", "2", str(tmp_path / "a_path"), "a_string"]
+
+
+###############################################################################
+# Test GDALDriverHasOpenOption()
+
+
+@pytest.mark.require_driver("GTiff")
+@pytest.mark.parametrize(
+    "driver_name,open_option,expected",
+    [
+        ("GTiff", "XXXX", False),
+        ("GTiff", "GEOTIFF_KEYS_FLAVOR", True),
+    ],
+)
+def test_misc_gdal_driver_has_open_option(driver_name, open_option, expected):
+    driver = gdal.GetDriverByName(driver_name)
+    assert driver is not None
+    assert driver.HasOpenOption(open_option) == expected
+
+
+###############################################################################
+# Test gdal.quiet_errors() and gdal.quiet_warnings()
+
+
+@pytest.mark.parametrize("context", ("quiet_errors", "quiet_warnings"))
+def test_misc_quiet_errors(tmp_path, context):
+
+    script = f"""
+from osgeo import gdal
+
+with gdal.{context}():
+    gdal.Error(gdal.CE_Debug, gdal.CPLE_AppDefined, "Debug")
+    gdal.Error(gdal.CE_Warning, gdal.CPLE_AppDefined, "Warning")
+    gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "Failure") 
+"""
+
+    with open(tmp_path / "script.py", "w") as f:
+        f.write(script)
+
+    out, err = run_py_script_as_external_script(
+        tmp_path, "script", "", return_stderr=True
+    )
+    if context == "quiet_errors":
+        assert "Debug" in err
+        assert "Warning" not in err
+        assert "Failure" not in err
+
+    if context == "quiet_warnings":
+        assert "Debug" in err
+        assert "Warning" not in err
+        assert "Failure" in err
 
 
 ###############################################################################

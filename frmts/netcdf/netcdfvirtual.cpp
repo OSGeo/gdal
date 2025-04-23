@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2019, Winor Chen <wchen329 at wisc.edu>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 #include "netcdfdataset.h"
 #include "netcdfvirtual.h"
@@ -154,12 +138,12 @@ void netCDFVID::nc_resize_vdim(int dimid, size_t dimlen)
 
 void netCDFVID::nc_set_define_mode()
 {
-    nc_redef(ncid);
+    m_poDS->SetDefineMode(true);
 }
 
 void netCDFVID::nc_set_data_mode()
 {
-    nc_enddef(ncid);
+    m_poDS->SetDefineMode(false);
 }
 
 void netCDFVID::nc_vmap()
@@ -168,7 +152,7 @@ void netCDFVID::nc_vmap()
 
     for (size_t itr_d = 0; itr_d < dimList.size(); itr_d++)
     {
-        int realDimID;
+        int realDimID = -1;
         netCDFVDimension &dim = dimList[itr_d];
 
         if (!dim.isValid())
@@ -176,13 +160,14 @@ void netCDFVID::nc_vmap()
             continue;  // don't do anywork if variable is invalid
         }
 
-        nc_def_dim(ncid, dim.getName().c_str(), dim.getLen(), &realDimID);
+        NCDF_ERR(
+            nc_def_dim(ncid, dim.getName().c_str(), dim.getLen(), &realDimID));
         dimList[itr_d].setRealID(realDimID);
     }
 
     for (size_t itr_v = 0; itr_v < varList.size(); itr_v++)
     {
-        int realVarID;
+        int realVarID = -1;
         netCDFVVariable &var = varList[itr_v];
 
         if (!var.isValid())
@@ -199,8 +184,8 @@ void netCDFVID::nc_vmap()
                 virtualDIDToDim(var.getDimIds()[dimct]).getRealID();
         }
 
-        nc_def_var(ncid, var.getName().c_str(), var.getType(),
-                   var.getDimCount(), newdims.get(), &realVarID);
+        NCDF_ERR(nc_def_var(ncid, var.getName().c_str(), var.getType(),
+                            var.getDimCount(), newdims.get(), &realVarID));
         var.setRealID(realVarID);
 
         // Now write each of its attributes

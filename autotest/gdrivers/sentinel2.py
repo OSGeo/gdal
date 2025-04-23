@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Sentinel2 support.
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2015, Even Rouault, <even.rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -244,6 +227,9 @@ def test_sentinel2_l1c_2():
         pprint.pprint(got_md)
         pytest.fail()
 
+    assert band.GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY") == "0.665"
+    assert band.GetMetadataItem("FWHM_UM", "IMAGERY") == "0.030"
+
     assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
     assert band.DataType == gdal.GDT_UInt16
@@ -252,7 +238,7 @@ def test_sentinel2_l1c_2():
 
     band = ds.GetRasterBand(4)
 
-    assert band.GetColorInterpretation() == gdal.GCI_Undefined
+    assert band.GetColorInterpretation() == gdal.GCI_NIRBand
 
     got_md = band.GetMetadata()
     expected_md = {
@@ -843,7 +829,7 @@ def test_sentinel2_l1c_tile_3():
 
     band = ds.GetRasterBand(4)
 
-    assert band.GetColorInterpretation() == gdal.GCI_Undefined
+    assert band.GetColorInterpretation() == gdal.GCI_NIRBand
 
     got_md = band.GetMetadata()
     expected_md = {
@@ -2618,7 +2604,7 @@ def test_sentinel2_l1c_safe_compact_2():
 
     band = ds.GetRasterBand(4)
 
-    assert band.GetColorInterpretation() == gdal.GCI_Undefined
+    assert band.GetColorInterpretation() == gdal.GCI_NIRBand
 
     got_md = band.GetMetadata()
     expected_md = {
@@ -2804,7 +2790,7 @@ def test_sentinel2_l1c_processing_baseline_5_09__1():
 
     band = ds.GetRasterBand(4)
 
-    assert band.GetColorInterpretation() == gdal.GCI_Undefined
+    assert band.GetColorInterpretation() == gdal.GCI_NIRBand
 
     got_md = band.GetMetadata()
     expected_md = {
@@ -2900,13 +2886,13 @@ def test_sentinel2_l1c_processing_baseline_5_09__2():
         pprint.pprint(got_md)
         pytest.fail()
 
-    assert band.GetColorInterpretation() == gdal.GCI_Undefined
+    assert band.GetColorInterpretation() == gdal.GCI_RedEdgeBand
 
     assert band.DataType == gdal.GDT_UInt16
 
     band = ds.GetRasterBand(4)
 
-    assert band.GetColorInterpretation() == gdal.GCI_Undefined
+    assert band.GetColorInterpretation() == gdal.GCI_NIRBand
 
     got_md = band.GetMetadata()
     expected_md = {
@@ -3035,7 +3021,7 @@ def test_sentinel2_l2a_processing_baseline_5_09__1():
 
     band = ds.GetRasterBand(4)
 
-    assert band.GetColorInterpretation() == gdal.GCI_Undefined
+    assert band.GetColorInterpretation() == gdal.GCI_NIRBand
 
     got_md = band.GetMetadata()
     expected_md = {
@@ -3158,13 +3144,13 @@ def test_sentinel2_l2a_processing_baseline_5_09__2():
         pprint.pprint(got_md)
         pytest.fail()
 
-    assert band.GetColorInterpretation() == gdal.GCI_Undefined
+    assert band.GetColorInterpretation() == gdal.GCI_RedEdgeBand
 
     assert band.DataType == gdal.GDT_UInt16
 
     band = ds.GetRasterBand(4)
 
-    assert band.GetColorInterpretation() == gdal.GCI_Undefined
+    assert band.GetColorInterpretation() == gdal.GCI_NIRBand
 
     got_md = band.GetMetadata()
     expected_md = {

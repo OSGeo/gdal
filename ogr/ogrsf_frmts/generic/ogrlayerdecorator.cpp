@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2012-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef DOXYGEN_SKIP
@@ -52,36 +36,12 @@ OGRGeometry *OGRLayerDecorator::GetSpatialFilter()
     return m_poDecoratedLayer->GetSpatialFilter();
 }
 
-void OGRLayerDecorator::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGRLayerDecorator::ISetSpatialFilter(int iGeomField,
+                                            const OGRGeometry *poGeom)
 {
     if (!m_poDecoratedLayer)
-        return;
-    m_poDecoratedLayer->SetSpatialFilter(poGeom);
-}
-
-void OGRLayerDecorator::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    if (!m_poDecoratedLayer)
-        return;
-    m_poDecoratedLayer->SetSpatialFilter(iGeomField, poGeom);
-}
-
-void OGRLayerDecorator::SetSpatialFilterRect(double dfMinX, double dfMinY,
-                                             double dfMaxX, double dfMaxY)
-{
-    if (!m_poDecoratedLayer)
-        return;
-    m_poDecoratedLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
-}
-
-void OGRLayerDecorator::SetSpatialFilterRect(int iGeomField, double dfMinX,
-                                             double dfMinY, double dfMaxX,
-                                             double dfMaxY)
-{
-    if (!m_poDecoratedLayer)
-        return;
-    m_poDecoratedLayer->SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX,
-                                             dfMaxY);
+        return OGRERR_FAILURE;
+    return m_poDecoratedLayer->SetSpatialFilter(iGeomField, poGeom);
 }
 
 OGRErr OGRLayerDecorator::SetAttributeFilter(const char *poAttrFilter)
@@ -214,19 +174,20 @@ GIntBig OGRLayerDecorator::GetFeatureCount(int bForce)
     return m_poDecoratedLayer->GetFeatureCount(bForce);
 }
 
-OGRErr OGRLayerDecorator::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    if (!m_poDecoratedLayer)
-        return OGRERR_FAILURE;
-    return m_poDecoratedLayer->GetExtent(psExtent, bForce);
-}
-
-OGRErr OGRLayerDecorator::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                    int bForce)
+OGRErr OGRLayerDecorator::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                     bool bForce)
 {
     if (!m_poDecoratedLayer)
         return OGRERR_FAILURE;
     return m_poDecoratedLayer->GetExtent(iGeomField, psExtent, bForce);
+}
+
+OGRErr OGRLayerDecorator::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                                       bool bForce)
+{
+    if (!m_poDecoratedLayer)
+        return OGRERR_FAILURE;
+    return m_poDecoratedLayer->GetExtent3D(iGeomField, psExtent, bForce);
 }
 
 int OGRLayerDecorator::TestCapability(const char *pszCapability)

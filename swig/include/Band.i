@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     Band.i
  * Project:  GDAL Python Interface
@@ -9,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2005, Kevin Ruland
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 /************************************************************************
@@ -293,6 +276,10 @@ public:
 
   GDALRasterBandShadow *GetOverview(int i) {
     return (GDALRasterBandShadow*) GDALGetOverview( self, i );
+  }
+
+  GDALRasterBandShadow *GetSampleOverview(GUIntBig nDesiredSamples) {
+    return (GDALRasterBandShadow*) GDALGetRasterSampleOverview( self, nDesiredSamples );
   }
 
 #if defined (SWIGJAVA)
@@ -664,6 +651,62 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
 }
 %clear (GDALDataType *buf_type);
 %clear (int band_list, int *pband_list );
+
+%apply (double *OUTPUT){double *pdfRealValue, double *pdfImagValue};
+#if !defined(SWIGPYTHON)
+%apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
+#endif
+  CPLErr InterpolateAtPoint( double pixel, double line,
+                             GDALRIOResampleAlg interpolation,
+                             double *pdfRealValue,
+                             double *pdfImagValue ) {
+    if (pdfRealValue) *pdfRealValue = 0;
+    if (pdfImagValue) *pdfImagValue = 0;
+    return GDALRasterInterpolateAtPoint( self, pixel, line, interpolation, pdfRealValue, pdfImagValue );
+  }
+#if !defined(SWIGPYTHON)
+%clear (CPLErr);
+#endif
+
+
+%apply (double *OUTPUT){double *pdfRealValue, double *pdfImagValue};
+#if !defined(SWIGPYTHON)
+%apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
+#endif
+%apply (char **options) { char ** transformerOptions };
+  CPLErr InterpolateAtGeolocation( double geolocX, double geolocY,
+                                   OSRSpatialReferenceShadow* srs,
+                                   GDALRIOResampleAlg interpolation,
+                                   double *pdfRealValue,
+                                   double *pdfImagValue, char** transformerOptions = NULL ) {
+    if (pdfRealValue) *pdfRealValue = 0;
+    if (pdfImagValue) *pdfImagValue = 0;
+    return GDALRasterInterpolateAtGeolocation( self, geolocX, geolocY,
+                (OGRSpatialReferenceH)srs, interpolation,
+                pdfRealValue, pdfImagValue, transformerOptions );
+  }
+#if !defined(SWIGPYTHON)
+%clear (CPLErr);
+%clear char ** transformerOptions;
+#endif
+
+
+%apply (double *OUTPUT){double *pdfMin, double *pdfMax};
+%apply (int *OUTPUT){int *pnMinX, int *pnMinY};
+%apply (int *OUTPUT){int *pnMaxX, int *pnMaxY};
+#if !defined(SWIGPYTHON)
+%apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
+#endif
+  CPLErr ComputeMinMaxLocation( double *pdfMin, double *pdfMax,
+                                int *pnMinX, int *pnMinY,
+                                int *pnMaxX, int *pnMaxY ) {
+    return GDALComputeRasterMinMaxLocation( self, pdfMin, pdfMax,
+                                            pnMinX, pnMinY,
+                                            pnMaxX, pnMaxY );
+  }
+#if !defined(SWIGPYTHON)
+%clear (CPLErr);
+#endif
 
 %newobject AsMDArray;
   GDALMDArrayHS *AsMDArray()

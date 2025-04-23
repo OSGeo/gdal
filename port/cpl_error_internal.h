@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_error_internal.h
  * Project:  CPL - Common Portability Library
@@ -9,23 +8,7 @@
  **********************************************************************
  * Copyright (c) 2019, Even Rouault, <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef CPL_ERROR_INTERNAL_H_INCLUDED
@@ -36,10 +19,12 @@
 
 #include "cpl_error.h"
 #include "cpl_string.h"
+
+#include <mutex>
 #include <vector>
 
 /************************************************************************/
-/*                      ErrorHandlerAccumulator()                       */
+/*                CPLErrorHandlerAccumulatorStruct                      */
 /************************************************************************/
 
 class CPL_DLL CPLErrorHandlerAccumulatorStruct
@@ -60,9 +45,51 @@ class CPL_DLL CPLErrorHandlerAccumulatorStruct
     }
 };
 
-void CPL_DLL CPLInstallErrorHandlerAccumulator(
-    std::vector<CPLErrorHandlerAccumulatorStruct> &aoErrors);
-void CPL_DLL CPLUninstallErrorHandlerAccumulator();
+/************************************************************************/
+/*                       CPLErrorAccumulator                            */
+/************************************************************************/
+
+/** Class typically used by a worker thread to store errors emitted by their
+ * worker functions, and replay them in the main thread.
+ *
+ * An instance of CPLErrorAccumulator can be shared by several
+ * threads. Each thread calls InstallForCurrentScope() in its processing
+ * function. The main thread may invoke ReplayErrors() to replay errors (and
+ * warnings).
+ *
+ * @since 3.11
+ */
+class CPL_DLL CPLErrorAccumulator
+{
+  public:
+    /** Constructor */
+    CPLErrorAccumulator() = default;
+
+    struct CPL_DLL Context
+    {
+        ~Context();
+    };
+
+    /** Install a temporary error handler that will store errors and warnings.
+     */
+    Context InstallForCurrentScope() CPL_WARN_UNUSED_RESULT;
+
+    /** Return error list. */
+    const std::vector<CPLErrorHandlerAccumulatorStruct> &GetErrors() const
+    {
+        return errors;
+    }
+
+    /** Replay stored errors. */
+    void ReplayErrors();
+
+  private:
+    std::mutex mutex{};
+    std::vector<CPLErrorHandlerAccumulatorStruct> errors{};
+
+    static void CPL_STDCALL Accumulator(CPLErr eErr, CPLErrorNum no,
+                                        const char *msg);
+};
 
 #endif
 

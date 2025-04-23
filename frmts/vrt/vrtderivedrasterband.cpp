@@ -9,23 +9,7 @@
  * Copyright (c) 2005 Vexcel Corp.
  * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 #include "cpl_minixml.h"
@@ -105,6 +89,9 @@ static PyObject *GDALCreateNumpyArray(PyObject *pCreateArray, void *pBuffer,
         case GDT_UInt64:
             pszDataType = "uint64";
             break;
+        case GDT_Float16:
+            pszDataType = "float16";
+            break;
         case GDT_Float32:
             pszDataType = "float32";
             break;
@@ -113,6 +100,9 @@ static PyObject *GDALCreateNumpyArray(PyObject *pCreateArray, void *pBuffer,
             break;
         case GDT_CInt16:
         case GDT_CInt32:
+            CPLAssert(FALSE);
+            break;
+        case GDT_CFloat16:
             CPLAssert(FALSE);
             break;
         case GDT_CFloat32:
@@ -720,7 +710,7 @@ bool VRTDerivedRasterBand::InitializePython()
             CPLString osException = GetPyExceptionString();
             if (!osException.empty() && osException.back() == '\n')
             {
-                osException.resize(osException.size() - 1);
+                osException.pop_back();
             }
             if (osException.find("ModuleNotFoundError") == 0)
             {
@@ -828,10 +818,10 @@ CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
                     }
 
                     oAdditionalArgs.push_back(std::pair<CPLString, CPLString>(
-                        osValue, CPLSPrintf("%.18g", dfVal)));
+                        osValue, CPLSPrintf("%.17g", dfVal)));
                     CPLDebug("VRT",
                              "Added builtin pixel function argument %s = %s",
-                             osValue.c_str(), CPLSPrintf("%.18g", dfVal));
+                             osValue.c_str(), CPLSPrintf("%.17g", dfVal));
                 }
             }
         }
@@ -1225,18 +1215,21 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     {
         eErr = CE_Failure;
 
-        // numpy doesn't have native cint16/cint32
-        if (eSrcType == GDT_CInt16 || eSrcType == GDT_CInt32)
+        // numpy doesn't have native cint16/cint32/cfloat16
+        if (eSrcType == GDT_CInt16 || eSrcType == GDT_CInt32 ||
+            eSrcType == GDT_CFloat16)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CInt16/CInt32/CFloat16 data type not supported for "
+                     "SourceTransferType");
+            goto end;
+        }
+        if (eDataType == GDT_CInt16 || eDataType == GDT_CInt32 ||
+            eDataType == GDT_CFloat16)
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
-                "CInt16/CInt32 data type not supported for SourceTransferType");
-            goto end;
-        }
-        if (eDataType == GDT_CInt16 || eDataType == GDT_CInt32)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "CInt16/CInt32 data type not supported for data type");
+                "CInt16/CInt32/CFloat16 data type not supported for data type");
             goto end;
         }
 
@@ -1380,6 +1373,31 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             papszArgs = CSLSetNameValue(papszArgs, pszKey, pszValue);
         }
 
+        CPLString osSourceNames;
+        for (int iBuffer = 0; iBuffer < nBufferCount; iBuffer++)
+        {
+            int iSource = anMapBufferIdxToSourceIdx[iBuffer];
+            const VRTSource *poSource = papoSources[iSource];
+
+            if (iBuffer > 0)
+            {
+                osSourceNames += "|";
+            }
+
+            const auto &osName = poSource->GetName();
+            if (osName.empty())
+            {
+                osSourceNames += "B" + std::to_string(iBuffer + 1);
+            }
+            else
+            {
+                osSourceNames += osName;
+            }
+        }
+
+        papszArgs =
+            CSLSetNameValue(papszArgs, "SOURCE_NAMES", osSourceNames.c_str());
+
         eErr = (poPixelFunc->first)(
             static_cast<void **>(pBuffers), nBufferCount, pData, nBufXSize,
             nBufYSize, eSrcType, eBufType, static_cast<int>(nPixelSpace),
@@ -1416,9 +1434,9 @@ int VRTDerivedRasterBand::IGetDataCoverageStatus(
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTDerivedRasterBand::XMLInit(
-    const CPLXMLNode *psTree, const char *pszVRTPath,
-    std::map<CPLString, GDALDataset *> &oMapSharedSources)
+CPLErr VRTDerivedRasterBand::XMLInit(const CPLXMLNode *psTree,
+                                     const char *pszVRTPath,
+                                     VRTMapSharedResources &oMapSharedSources)
 
 {
     const CPLErr eErr =

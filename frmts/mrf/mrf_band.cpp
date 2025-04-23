@@ -58,6 +58,7 @@
 #include "ogr_spatialref.h"
 
 #include <vector>
+#include <algorithm>
 #include <cassert>
 #include <zlib.h>
 #if defined(ZSTD_SUPPORT)
@@ -190,11 +191,7 @@ static int ZPack(const buf_mgr &src, buf_mgr &dst, int flags)
     stream.next_out = (Bytef *)dst.buffer;
     stream.avail_out = (uInt)dst.size;
 
-    int level = flags & ZFLAG_LMASK;
-    if (level > 9)
-        level = 9;
-    if (level < 1)
-        level = 1;
+    int level = std::clamp(flags & ZFLAG_LMASK, 1, 9);
     int wb = MAX_WBITS;
     // if gz flag is set, ignore raw request
     if (flags & ZFLAG_GZ)
@@ -208,7 +205,10 @@ static int ZPack(const buf_mgr &src, buf_mgr &dst, int flags)
 
     err = deflateInit2(&stream, level, Z_DEFLATED, wb, memlevel, strategy);
     if (err != Z_OK)
+    {
+        deflateEnd(&stream);
         return err;
+    }
 
     err = deflate(&stream, Z_FINISH);
     if (err != Z_STREAM_END)
@@ -278,13 +278,6 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags)
 
     if (!ZPack(src, dst, flags))
     {
-        CPLFree(dbuff);  // Safe to call with NULL
-        return nullptr;
-    }
-    if (dst.size > src.size)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "DeflateBlock(): dst.size > src.size");
         CPLFree(dbuff);  // Safe to call with NULL
         return nullptr;
     }

@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_dxf.h"
@@ -38,7 +22,7 @@ static int OGRDXFDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
     if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes == 0)
         return FALSE;
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "dxf"))
+    if (poOpenInfo->IsExtensionEqualToCI("dxf"))
         return TRUE;
     const char *pszIter = (const char *)poOpenInfo->pabyHeader;
     bool bFoundZero = false;
@@ -145,6 +129,28 @@ void RegisterOGRDXF()
         "file' default='trailer.dxf'/>"
         "  <Option name='FIRST_ENTITY' type='int' description='Identifier of "
         "first entity'/>"
+        "  <Option name='INSUNITS' type='string-select' "
+        "description='Drawing units for the model space ($INSUNITS system "
+        "variable)' default='AUTO'>"
+        "    <Value>AUTO</Value>"
+        "    <Value>HEADER_VALUE</Value>"
+        "    <Value alias='0'>UNITLESS</Value>"
+        "    <Value alias='1'>INCHES</Value>"
+        "    <Value alias='2'>FEET</Value>"
+        "    <Value alias='4'>MILLIMETERS</Value>"
+        "    <Value alias='5'>CENTIMETERS</Value>"
+        "    <Value alias='6'>METERS</Value>"
+        "    <Value alias='21'>US_SURVEY_FEET</Value>"
+        "  </Option>"
+        "  <Option name='MEASUREMENT' type='string-select' "
+        "description='Whether the current drawing uses imperial or metric "
+        "hatch "
+        "pattern and linetype ($MEASUREMENT system variable)' "
+        "default='HEADER_VALUE'>"
+        "    <Value>HEADER_VALUE</Value>"
+        "    <Value alias='0'>IMPERIAL</Value>"
+        "    <Value alias='1'>METRIC</Value>"
+        "  </Option>"
         "</CreationOptionList>");
 
     poDriver->SetMetadataItem(

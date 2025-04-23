@@ -1,8 +1,10 @@
-# depends from frmts/aigrid, avc
 add_gdal_driver(
   TARGET ogr_Shape
   SOURCES shape2ogr.cpp shp_vsi.c ogrshapedatasource.cpp ogrshapedriver.cpp ogrshapelayer.cpp
-  BUILTIN)
+  PLUGIN_CAPABLE
+  NO_DEPS
+  STRONG_CXX_WFLAGS
+)
 gdal_standard_includes(ogr_Shape)
 target_include_directories(ogr_Shape PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 
@@ -18,7 +20,11 @@ if (GDAL_USE_SHAPELIB_INTERNAL)
   endif ()
   target_compile_definitions(shapelib PUBLIC -DUSE_CPL)
   set_property(TARGET shapelib PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
-  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:shapelib>)
+  if (OGR_ENABLE_DRIVER_SHAPE_PLUGIN)
+      target_sources(ogr_Shape PRIVATE $<TARGET_OBJECTS:shapelib>)
+  else()
+      target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:shapelib>)
+  endif()
   gdal_add_vendored_lib(ogr_Shape shapelib)
 elseif (HAVE_SHAPELIB)
   gdal_target_link_libraries(ogr_Shape PRIVATE SHAPELIB::shp)

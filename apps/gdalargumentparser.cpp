@@ -6,23 +6,7 @@
  * ****************************************************************************
  * Copyright (c) 2024, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_version_full/gdal_version.h"
@@ -41,7 +25,7 @@ GDALArgumentParser::GDALArgumentParser(const std::string &program_name,
                                        bool bForBinary)
     : ArgumentParser(program_name, "", default_arguments::none)
 {
-    set_usage_max_line_width(120);
+    set_usage_max_line_width(80);
     set_usage_break_on_mutex();
     add_usage_newline();
 
@@ -53,11 +37,23 @@ GDALArgumentParser::GDALArgumentParser(const std::string &program_name,
                 [this](const auto &)
                 {
                     std::cout << usage() << std::endl << std::endl;
-                    std::cout << _("Note: ") << m_program_name
+                    std::cout << _("Note: ") << m_parser_path
                               << _(" --long-usage for full help.") << std::endl;
                     std::exit(0);
                 })
             .help(_("Shows short help message and exits."));
+
+        // Used by program-output directives in .rst files
+        add_argument("--help-doc")
+            .flag()
+            .hidden()
+            .action(
+                [this](const auto &)
+                {
+                    std::cout << usage() << std::endl;
+                    std::exit(0);
+                })
+            .help(_("Display help message for use by documentation."));
 
         add_argument("--long-usage")
             .flag()

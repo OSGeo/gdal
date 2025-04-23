@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test RasterizeLayer() and related calls.
@@ -9,23 +8,7 @@
 ###############################################################################
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import struct
@@ -53,7 +36,7 @@ def test_rasterize_1():
 
     # Create a memory layer to rasterize from.
 
-    rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
+    rast_ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("wrk")
     rast_mem_lyr = rast_ogr_ds.CreateLayer("poly", srs=sr)
 
     # Add a polygon.
@@ -128,6 +111,10 @@ def test_rasterize_2():
             burn_values=[200, 220, 240],
             options=["ALL_TOUCHED=TRUE"],
         )
+        assert (
+            "Failed to fetch spatial reference on layer cutline to build transformer, assuming matching coordinate systems"
+            in gdal.GetLastErrorMsg()
+        )
 
     assert err == 0, "got non-zero result code from RasterizeLayer"
 
@@ -147,20 +134,15 @@ def test_rasterize_2():
 
 def test_rasterize_3():
 
-    # Setup working spatial reference
-    sr_wkt = 'LOCAL_CS["arbitrary"]'
-    sr = osr.SpatialReference(sr_wkt)
-
     # Create a memory raster to rasterize into.
 
     target_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 3, gdal.GDT_Byte)
     target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
-    target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
 
-    rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
-    rast_mem_lyr = rast_ogr_ds.CreateLayer("poly", srs=sr)
+    rast_ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("wrk")
+    rast_mem_lyr = rast_ogr_ds.CreateLayer("poly")
 
     # Add polygons and linestrings.
     wkt_geom = [
@@ -177,6 +159,7 @@ def test_rasterize_3():
 
     # Run the algorithm.
 
+    gdal.ErrorReset()
     err = gdal.RasterizeLayer(
         target_ds,
         [3, 2, 1],
@@ -184,6 +167,7 @@ def test_rasterize_3():
         burn_values=[10, 10, 55],
         options=["BURN_VALUE_FROM=Z"],
     )
+    assert gdal.GetLastErrorMsg() == ""
 
     assert err == 0, "got non-zero result code from RasterizeLayer"
 
@@ -213,7 +197,7 @@ def test_rasterize_4():
     target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
-    rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
+    rast_ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("wrk")
     rast_mem_lyr = rast_ogr_ds.CreateLayer("poly", srs=sr)
     # Setup Schema
     ogrtest.quick_create_layer_def(rast_mem_lyr, [("CELSIUS", ogr.OFTReal)])
@@ -270,7 +254,7 @@ def test_rasterize_5():
 
     # Create a memory layer to rasterize from.
 
-    rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
+    rast_ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("wrk")
     rast_mem_lyr = rast_ogr_ds.CreateLayer("poly", srs=sr)
 
     # Add polygons.
@@ -503,7 +487,7 @@ def test_rasterize_all_touched_issue_7523():
     target_ds.SetGeoTransform((475435, 5, 0, 424145, 0, -5))
     target_ds.SetProjection(sr_wkt)
 
-    vect_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    vect_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = vect_ds.CreateLayer("test", sr)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(
@@ -853,6 +837,9 @@ def test_rasterize_merge_alg_add_polygon(wkt):
 
 
 ###############################################################################
+
+
+@pytest.mark.require_driver("GeoJSON")
 def test_rasterize_bugfix_gh6981():
 
     bad_geometry = {
@@ -936,7 +923,7 @@ def test_rasterize_bugfix_gh8437(wkt, options, nbands):
     target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
-    rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
+    rast_ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("wrk")
     rast_mem_lyr = rast_ogr_ds.CreateLayer("poly", srs=sr)
 
     # Add a polygon.
@@ -992,7 +979,7 @@ def test_rasterize_bugfix_gh8918(wkt):
     target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
-    rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
+    rast_ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("wrk")
     rast_mem_lyr = rast_ogr_ds.CreateLayer("poly", srs=sr)
 
     # Add a polygon.

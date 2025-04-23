@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic OGR functionality against test shapefiles.
@@ -449,8 +448,11 @@ def test_ogr_basic_10():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
+    # --config OPENFILEGDB_REPRODUCIBLE_UUID=YES helps avoiding unsigned-integer-overflow
+    # under UBSAN.
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_test_ogrsf_path() + " -all_drivers"
+        test_cli_utilities.get_test_ogrsf_path()
+        + " -all_drivers --config OPENFILEGDB_REPRODUCIBLE_UUID=YES"
     )
 
     assert "INFO" in ret
@@ -688,7 +690,7 @@ def test_ogr_basic_invalid_unicode():
     except Exception:
         pass
 
-    data_source = ogr.GetDriverByName("Memory").CreateDataSource("")
+    data_source = ogr.GetDriverByName("MEM").CreateDataSource("")
     layer = data_source.CreateLayer("test")
     layer.CreateField(ogr.FieldDefn("attr", ogr.OFTString))
     feature = ogr.Feature(layer.GetLayerDefn())
@@ -700,7 +702,7 @@ def test_ogr_basic_invalid_unicode():
 
 def test_ogr_basic_dataset_slice():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     ds.CreateLayer("lyr1")
     ds.CreateLayer("lyr2")
     ds.CreateLayer("lyr3")
@@ -717,7 +719,7 @@ def test_ogr_basic_dataset_slice():
 
 def test_ogr_basic_dataset_iter():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     ds.CreateLayer("lyr1")
     ds.CreateLayer("lyr2")
     ds.CreateLayer("lyr3")
@@ -734,7 +736,7 @@ def test_ogr_basic_dataset_iter():
 
 def test_ogr_basic_dataset_getitem():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     ds.CreateLayer("lyr1")
     ds.CreateLayer("lyr2")
     ds.CreateLayer("lyr3")
@@ -763,7 +765,7 @@ def test_ogr_basic_feature_iterator():
 
 def test_ogr_basic_dataset_copy_layer_dst_srswkt():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = ds.CreateLayer("lyr1")
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
@@ -775,7 +777,7 @@ def test_ogr_basic_dataset_copy_layer_dst_srswkt():
 
 def test_ogr_basic_dataset_copy_layer_metadata():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = ds.CreateLayer("lyr1")
     src_lyr.SetMetadataItem("foo", "bar")
     out_lyr = ds.CopyLayer(src_lyr, "lyr2")
@@ -784,7 +786,7 @@ def test_ogr_basic_dataset_copy_layer_metadata():
 
 def test_ogr_basic_dataset_no_copy_layer_metadata():
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = ds.CreateLayer("lyr1")
     src_lyr.SetMetadataItem("foo", "bar")
     out_lyr = ds.CopyLayer(src_lyr, "lyr2", options=["COPY_MD=NO"])
@@ -832,7 +834,7 @@ def test_ogr_basic_float32_formatting():
 def test_ogr_basic_get_geometry_types():
     """Test Layer.GetGeometryTypes()"""
 
-    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("layer")
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn("str2", ogr.OFTString))
@@ -1228,6 +1230,8 @@ def test_driver_open_throw_2():
 
     with gdaltest.enable_exceptions():
         drv = ogr.GetDriverByName("MapInfo File")
+        if not drv:
+            pytest.skip("MapInfo driver not available")
 
         assert isinstance(drv, ogr.Driver)
 

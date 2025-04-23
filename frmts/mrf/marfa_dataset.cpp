@@ -316,6 +316,12 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                                config, "Rsets.scale",
                                CPLOPrintf("%d", panOverviewList[0]).c_str()),
                            nullptr);
+                if (scale == 0.0)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid Rsets.scale value");
+                    throw CE_Failure;
+                }
 
                 if (static_cast<int>(scale) != 2 &&
                     (EQUALN("Avg", pszResampling, 3) ||
@@ -617,7 +623,7 @@ GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
         else if (poOpenInfo->eAccess == GA_ReadOnly && fn.size() > 600 &&
                  (fn[262] == 0 || fn[262] == 32) &&
                  STARTS_WITH(fn.c_str() + 257, "ustar") &&
-                 strlen(CPLGetPath(fn.c_str())) == 0 &&
+                 strlen(CPLGetPathSafe(fn.c_str()).c_str()) == 0 &&
                  STARTS_WITH(fn.c_str() + 512, "<MRF_META>"))
         {  // An MRF inside a tar
             insidefn = string("/vsitar/") + pszFileName + "/" + pszHeader;
@@ -1389,7 +1395,7 @@ CPLXMLNode *MRFDataset::BuildConfig()
             options += optlist[i];
             options += ' ';
         }
-        options.resize(options.size() - 1);
+        options.pop_back();
         CPLCreateXMLElementAndValue(config, "Options", options);
     }
 
@@ -1625,7 +1631,7 @@ static inline bool is_absolute(const CPLString &name)
 // returns true if name was modified
 static inline bool make_absolute(CPLString &name, const CPLString &path)
 {
-    if (!is_absolute(path) && (path.find_first_of("/\\") != string::npos))
+    if (!is_absolute(name) && (path.find_first_of("/\\") != string::npos))
     {
         name = path.substr(0, path.find_last_of("/\\") + 1) + name;
         return true;
@@ -1643,9 +1649,12 @@ GDALDataset *MRFDataset::GetSrcDS()
     if (source.empty())
         return nullptr;
 
+    // Stub out the error handler
+    CPLPushErrorHandler(CPLQuietErrorHandler);
     // Try open the source dataset as is
     poSrcDS =
         GDALDataset::FromHandle(GDALOpenShared(source.c_str(), GA_ReadOnly));
+    CPLPopErrorHandler();
 
     // It the open fails, try again with the current dataset path prepended
     if (!poSrcDS && make_absolute(source, fname))

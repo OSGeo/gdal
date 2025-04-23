@@ -4,23 +4,7 @@
  ******************************************************************************
  * Copyright (c) 2016, Andrew Sudorgin
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_minixml.h"
@@ -185,11 +169,11 @@ int PhPrfDataset::Identify(GDALOpenInfo *poOpenInfo)
         return FALSE;
     }
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), PH_PRF_EXT))
+    if (poOpenInfo->IsExtensionEqualToCI(PH_PRF_EXT))
     {
         return TRUE;
     }
-    else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), PH_DEM_EXT))
+    else if (poOpenInfo->IsExtensionEqualToCI(PH_DEM_EXT))
     {
         return TRUE;
     }
@@ -371,11 +355,11 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
 {
     ph_format eFormat;
 
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), PH_PRF_EXT))
+    if (poOpenInfo->IsExtensionEqualToCI(PH_PRF_EXT))
     {
         eFormat = ph_megatiff;
     }
-    else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), PH_DEM_EXT))
+    else if (poOpenInfo->IsExtensionEqualToCI(PH_DEM_EXT))
     {
         eFormat = ph_xdem;
     }
@@ -401,9 +385,9 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
     int nSizeY = 0;
     int nBandCount = 0;
     GDALDataType eResultDatatype = GDT_Unknown;
-    CPLString osPartsBasePath(CPLGetPath(poOpenInfo->pszFilename));
+    CPLString osPartsBasePath(CPLGetPathSafe(poOpenInfo->pszFilename));
     CPLString osPartsPath(osPartsBasePath + "/" +
-                          CPLGetBasename(poOpenInfo->pszFilename));
+                          CPLGetBasenameSafe(poOpenInfo->pszFilename));
     CPLString osPartsExt;
     double adfGeoTrans[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     bool bGeoTransOk = false;
@@ -624,8 +608,9 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    const char *pszPrj = CPLResetExtension(poOpenInfo->pszFilename, "prj");
-    VSILFILE *const fp = VSIFOpenL(pszPrj, "rt");
+    const std::string osPrj =
+        CPLResetExtensionSafe(poOpenInfo->pszFilename, "prj");
+    VSILFILE *const fp = VSIFOpenL(osPrj.c_str(), "rt");
     if (fp != nullptr)
     {
         const size_t nBufMax = 100000;

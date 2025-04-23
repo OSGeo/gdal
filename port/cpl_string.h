@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_string.h
  * Project:  CPL - Common Portability Library
@@ -10,23 +9,7 @@
  * Copyright (c) 1998, Daniel Morissette
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef CPL_STRING_H_INCLUDED
@@ -127,6 +110,9 @@ int CPL_DLL CPLTestBoolean(const char *pszValue);
 bool CPL_DLL CPLTestBool(const char *pszValue);
 bool CPL_DLL CPLFetchBool(CSLConstList papszStrList, const char *pszKey,
                           bool bDefault);
+
+CPLErr CPL_DLL CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
+                                  bool *pbUnitSpecified);
 
 const char CPL_DLL *CPLParseNameValue(const char *pszNameValue, char **ppszKey);
 const char CPL_DLL *CPLParseNameValueSep(const char *pszNameValue,
@@ -282,6 +268,15 @@ int CPL_DLL CPLStrlenUTF8(const char *pszUTF8Str);
 int CPL_DLL CPLCanRecode(const char *pszTestStr, const char *pszSrcEncoding,
                          const char *pszDstEncoding) CPL_WARN_UNUSED_RESULT;
 CPL_C_END
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+extern "C++"
+{
+    std::string CPL_DLL CPLRemoveSQLComments(const std::string &osInput);
+}
+
+#endif
 
 /************************************************************************/
 /*                              CPLString                               */
@@ -492,7 +487,20 @@ extern "C++"
         }
 
         CPLStringList &AddString(const char *pszNewString);
+        CPLStringList &AddString(const std::string &newString);
         CPLStringList &AddStringDirectly(char *pszNewString);
+
+        /** Add a string to the list */
+        void push_back(const char *pszNewString)
+        {
+            AddString(pszNewString);
+        }
+
+        /** Add a string to the list */
+        void push_back(const std::string &osStr)
+        {
+            AddString(osStr.c_str());
+        }
 
         CPLStringList &InsertString(int nInsertAtLineNo, const char *pszNewLine)
         {
@@ -637,6 +645,7 @@ extern "C++"
 
 #include <iterator>  // For std::input_iterator_tag
 #include <memory>
+#include <string_view>
 #include <utility>  // For std::pair
 
     /*! @cond Doxygen_Suppress */
@@ -661,6 +670,60 @@ extern "C++"
     {
 
     /*! @cond Doxygen_Suppress */
+
+    /** Equivalent of C++20 std::string::starts_with(const char*) */
+    template <class StringType>
+    inline bool starts_with(const StringType &str, const char *prefix)
+    {
+        const size_t prefixLen = strlen(prefix);
+        return str.size() >= prefixLen &&
+               str.compare(0, prefixLen, prefix, prefixLen) == 0;
+    }
+
+    /** Equivalent of C++20 std::string::starts_with(const std::string &) */
+    template <class StringType>
+    inline bool starts_with(const StringType &str, const std::string &prefix)
+    {
+        return str.size() >= prefix.size() &&
+               str.compare(0, prefix.size(), prefix) == 0;
+    }
+
+    /** Equivalent of C++20 std::string::starts_with(std::string_view) */
+    template <class StringType>
+    inline bool starts_with(const StringType &str, std::string_view prefix)
+    {
+        return str.size() >= prefix.size() &&
+               str.compare(0, prefix.size(), prefix) == 0;
+    }
+
+    /** Equivalent of C++20 std::string::ends_with(const char*) */
+    template <class StringType>
+    inline bool ends_with(const StringType &str, const char *suffix)
+    {
+        const size_t suffixLen = strlen(suffix);
+        return str.size() >= suffixLen &&
+               str.compare(str.size() - suffixLen, suffixLen, suffix,
+                           suffixLen) == 0;
+    }
+
+    /** Equivalent of C++20 std::string::ends_with(const std::string &) */
+    template <class StringType>
+    inline bool ends_with(const StringType &str, const std::string &suffix)
+    {
+        return str.size() >= suffix.size() &&
+               str.compare(str.size() - suffix.size(), suffix.size(), suffix) ==
+                   0;
+    }
+
+    /** Equivalent of C++20 std::string::ends_with(std::string_view) */
+    template <class StringType>
+    inline bool ends_with(const StringType &str, std::string_view suffix)
+    {
+        return str.size() >= suffix.size() &&
+               str.compare(str.size() - suffix.size(), suffix.size(), suffix) ==
+                   0;
+    }
+
     /** Iterator for a CSLConstList */
     struct CPL_DLL CSLIterator
     {

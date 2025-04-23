@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test SPOT DIMAP driver.
@@ -9,28 +8,13 @@
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
 import shutil
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -41,6 +25,10 @@ pytestmark = pytest.mark.require_driver("DIMAP")
 # Open and verify a the GCPs and metadata.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_dimap_1():
 
     shutil.copy("data/dimap/METADATA.DIM", "tmp")
@@ -244,6 +232,14 @@ def test_dimap_2_vhr2020_ms_fs():
         "Red Edge",
         "Deep Blue",
     ]
+    assert [ds.GetRasterBand(i + 1).GetColorInterpretation() for i in range(6)] == [
+        gdal.GCI_RedBand,
+        gdal.GCI_GreenBand,
+        gdal.GCI_BlueBand,
+        gdal.GCI_NIRBand,
+        gdal.GCI_RedEdgeBand,
+        gdal.GCI_CoastalBand,
+    ]
     rgb_ds = gdal.Open("data/dimap2/vhr2020_ms_fs/MS-FS/IMG_RGB_R1C1.TIF")
     ned_ds = gdal.Open("data/dimap2/vhr2020_ms_fs/MS-FS/IMG_NED_R1C1.TIF")
     assert ds.ReadRaster() == rgb_ds.ReadRaster() + ned_ds.ReadRaster()
@@ -251,3 +247,101 @@ def test_dimap_2_vhr2020_ms_fs():
         0, 0, 1663, 1366, 100, 100
     ) + ned_ds.ReadRaster(0, 0, 1663, 1366, 100, 100)
     assert ds.GetRasterBand(1).ReadRaster() == rgb_ds.GetRasterBand(1).ReadRaster()
+
+    md = ds.GetRasterBand(1).GetMetadata()
+    assert md == {
+        "RADIANCE_BIAS": "25.8609873087",
+        "RADIANCE_CALIBRATION_DATE": "2020-02-05T09:56:28.208790Z",
+        "RADIANCE_GAIN": "0.00270666432682",
+        "RADIANCE_MEASURE_DESC": "Reflectance (RHO) to TOA Radiance (L). Formulae "
+        "L=RHO/GAIN+BIAS",
+        "RADIANCE_MEASURE_UNCERTAINTY": "0",
+        "RADIANCE_MEASURE_UNIT": "watt/m2/steradian/micrometer",
+        "SOLAR_IRRADIANCE_BIAS": "0",
+        "SOLAR_IRRADIANCE_CALIBRATION_DATE": "2019-05-20T09:07:00Z",
+        "SOLAR_IRRADIANCE_GAIN": "0",
+        "SOLAR_IRRADIANCE_MEASURE_DESC": "Solar irradiance value of raw radiometric "
+        "Band",
+        "SOLAR_IRRADIANCE_MEASURE_UNCERTAINTY": "0",
+        "SOLAR_IRRADIANCE_MEASURE_UNIT": "watt/m2/micron",
+        "SOLAR_IRRADIANCE_VALUE": "1553.1",
+        "SPECTRAL_RANGE_BIAS": "0",
+        "SPECTRAL_RANGE_CALIBRATION_DATE": "2019-05-20T09:07:00Z",
+        "SPECTRAL_RANGE_FWHM_MAX": "690",
+        "SPECTRAL_RANGE_FWHM_MIN": "619",
+        "SPECTRAL_RANGE_GAIN": "0",
+        "SPECTRAL_RANGE_MEASURE_DESC": "Spectral Range values of raw radiometric Band",
+        "SPECTRAL_RANGE_MEASURE_UNCERTAINTY": "0",
+        "SPECTRAL_RANGE_MEASURE_UNIT": "nanometer",
+    }
+
+    md = ds.GetRasterBand(1).GetMetadata("IMAGERY")
+    assert md == {"CENTRAL_WAVELENGTH_UM": "0.655", "FWHM_UM": "0.071"}
+
+    md = ds.GetRasterBand(2).GetMetadata()
+    assert md == {
+        "RADIANCE_BIAS": "50.2160963834",
+        "RADIANCE_CALIBRATION_DATE": "2020-02-05T09:56:28.208790Z",
+        "RADIANCE_GAIN": "0.00259610396266",
+        "RADIANCE_MEASURE_DESC": "Reflectance (RHO) to TOA Radiance (L). Formulae "
+        "L=RHO/GAIN+BIAS",
+        "RADIANCE_MEASURE_UNCERTAINTY": "0",
+        "RADIANCE_MEASURE_UNIT": "watt/m2/steradian/micrometer",
+        "SOLAR_IRRADIANCE_BIAS": "0",
+        "SOLAR_IRRADIANCE_CALIBRATION_DATE": "2019-05-20T09:07:00Z",
+        "SOLAR_IRRADIANCE_GAIN": "0",
+        "SOLAR_IRRADIANCE_MEASURE_DESC": "Solar irradiance value of raw radiometric "
+        "Band",
+        "SOLAR_IRRADIANCE_MEASURE_UNCERTAINTY": "0",
+        "SOLAR_IRRADIANCE_MEASURE_UNIT": "watt/m2/micron",
+        "SOLAR_IRRADIANCE_VALUE": "1817.5",
+        "SPECTRAL_RANGE_BIAS": "0",
+        "SPECTRAL_RANGE_CALIBRATION_DATE": "2019-05-20T09:07:00Z",
+        "SPECTRAL_RANGE_FWHM_MAX": "0.591",
+        "SPECTRAL_RANGE_FWHM_MIN": "0.533",
+        "SPECTRAL_RANGE_GAIN": "0",
+        "SPECTRAL_RANGE_MEASURE_DESC": "Spectral Range values of raw radiometric Band",
+        "SPECTRAL_RANGE_MEASURE_UNCERTAINTY": "0",
+        "SPECTRAL_RANGE_MEASURE_UNIT": "micrometer",
+    }
+
+    md = ds.GetRasterBand(2).GetMetadata("IMAGERY")
+    assert md == {"CENTRAL_WAVELENGTH_UM": "0.562", "FWHM_UM": "0.058"}
+
+
+def test_dimap2_pneo_primary_rpc_center_h():
+    ds = gdal.Open("data/dimap2/primary_rpc_center_h/DIM_PNEO3_STD_x_1_1_F_1.XML")
+    assert ds.GetSpatialRef() is None
+    assert ds.GetMetadata_Dict("RPC") == {
+        "HEIGHT_DEFAULT": "123.45",
+        "HEIGHT_OFF": "HEIGHT_OFF",
+        "HEIGHT_SCALE": "HEIGHT_SCALE",
+        "LAT_OFF": "LAT_OFF",
+        "LAT_SCALE": "LAT_SCALE",
+        "LINE_DEN_COEFF": " LINE_DEN_COEFF_1 LINE_DEN_COEFF_2 LINE_DEN_COEFF_3 LINE_DEN_COEFF_4 "
+        "LINE_DEN_COEFF_5 LINE_DEN_COEFF_6 LINE_DEN_COEFF_7 LINE_DEN_COEFF_8 "
+        "LINE_DEN_COEFF_9 LINE_DEN_COEFF_10 LINE_DEN_COEFF_11 LINE_DEN_COEFF_12 "
+        "LINE_DEN_COEFF_13 LINE_DEN_COEFF_14 LINE_DEN_COEFF_15 LINE_DEN_COEFF_16 "
+        "LINE_DEN_COEFF_17 LINE_DEN_COEFF_18 LINE_DEN_COEFF_19 LINE_DEN_COEFF_20",
+        "LINE_NUM_COEFF": " LINE_NUM_COEFF_1 LINE_NUM_COEFF_2 LINE_NUM_COEFF_3 LINE_NUM_COEFF_4 "
+        "LINE_NUM_COEFF_5 LINE_NUM_COEFF_6 LINE_NUM_COEFF_7 LINE_NUM_COEFF_8 "
+        "LINE_NUM_COEFF_9 LINE_NUM_COEFF_10 LINE_NUM_COEFF_11 LINE_NUM_COEFF_12 "
+        "LINE_NUM_COEFF_13 LINE_NUM_COEFF_14 LINE_NUM_COEFF_15 LINE_NUM_COEFF_16 "
+        "LINE_NUM_COEFF_17 LINE_NUM_COEFF_18 LINE_NUM_COEFF_19 LINE_NUM_COEFF_20",
+        "LINE_OFF": "10906",
+        "LINE_SCALE": "10918",
+        "LONG_OFF": "LONG_OFF",
+        "LONG_SCALE": "LONG_SCALE",
+        "SAMP_DEN_COEFF": " SAMP_DEN_COEFF_1 SAMP_DEN_COEFF_2 SAMP_DEN_COEFF_3 SAMP_DEN_COEFF_4 "
+        "SAMP_DEN_COEFF_5 SAMP_DEN_COEFF_6 SAMP_DEN_COEFF_7 SAMP_DEN_COEFF_8 "
+        "SAMP_DEN_COEFF_9 SAMP_DEN_COEFF_10 SAMP_DEN_COEFF_11 SAMP_DEN_COEFF_12 "
+        "SAMP_DEN_COEFF_13 SAMP_DEN_COEFF_14 SAMP_DEN_COEFF_15 SAMP_DEN_COEFF_16 "
+        "SAMP_DEN_COEFF_17 SAMP_DEN_COEFF_18 SAMP_DEN_COEFF_19 SAMP_DEN_COEFF_20",
+        "SAMP_NUM_COEFF": " SAMP_NUM_COEFF_1 SAMP_NUM_COEFF_2 SAMP_NUM_COEFF_3 SAMP_NUM_COEFF_4 "
+        "SAMP_NUM_COEFF_5 SAMP_NUM_COEFF_6 SAMP_NUM_COEFF_7 SAMP_NUM_COEFF_8 "
+        "SAMP_NUM_COEFF_9 SAMP_NUM_COEFF_10 SAMP_NUM_COEFF_11 SAMP_NUM_COEFF_12 "
+        "SAMP_NUM_COEFF_13 SAMP_NUM_COEFF_14 SAMP_NUM_COEFF_15 SAMP_NUM_COEFF_16 "
+        "SAMP_NUM_COEFF_17 SAMP_NUM_COEFF_18 SAMP_NUM_COEFF_19 SAMP_NUM_COEFF_20",
+        "SAMP_OFF": "7024",
+        "SAMP_SCALE": "7036",
+    }

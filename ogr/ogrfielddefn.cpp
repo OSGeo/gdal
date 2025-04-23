@@ -8,23 +8,7 @@
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
  * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -84,6 +68,7 @@ OGRFieldDefn::OGRFieldDefn(const OGRFieldDefn *poPrototype)
       bIgnore(FALSE),  // TODO(schwehr): Can we use IsIgnored()?
       eSubType(poPrototype->GetSubType()), bNullable(poPrototype->IsNullable()),
       bUnique(poPrototype->IsUnique()),
+      m_bGenerated(poPrototype->IsGenerated()),
       m_osDomainName(poPrototype->m_osDomainName),
       m_osComment(poPrototype->GetComment()),
       m_nTZFlag(poPrototype->GetTZFlag())
@@ -122,6 +107,66 @@ OGRFieldDefn::~OGRFieldDefn()
     CPLFree(pszName);
     CPLFree(pszAlternativeName);
     CPLFree(pszDefault);
+}
+
+/************************************************************************/
+/*                             OGRFieldDefn::OGRFieldDefn()             */
+/************************************************************************/
+
+/**
+ * @brief OGRFieldDefn::OGRFieldDefn copy constructor.
+ * @param oOther the object to copy.
+ * @since GDAL 3.11
+ */
+OGRFieldDefn::OGRFieldDefn(const OGRFieldDefn &oOther)
+    : pszName(CPLStrdup(oOther.pszName)),
+      pszAlternativeName(CPLStrdup(oOther.pszAlternativeName)),
+      eType(oOther.eType), eJustify(oOther.eJustify), nWidth(oOther.nWidth),
+      nPrecision(oOther.nPrecision),
+      pszDefault(oOther.pszDefault ? CPLStrdup(oOther.pszDefault) : nullptr),
+      bIgnore(oOther.bIgnore), eSubType(oOther.eSubType),
+      bNullable(oOther.bNullable), bUnique(oOther.bUnique),
+      m_bGenerated(oOther.m_bGenerated), m_osDomainName(oOther.m_osDomainName),
+      m_osComment(oOther.m_osComment), m_nTZFlag(oOther.m_nTZFlag),
+      m_bSealed(oOther.m_bSealed)
+{
+}
+
+/************************************************************************/
+/*                           OGRFieldDefn::operator=()                  */
+/************************************************************************/
+
+/**
+ * @brief OGRFieldDefn::operator = assignment operator.
+ * @param oOther the object to copy.
+ * @return the current object.
+ * @since GDAL 3.11
+ */
+OGRFieldDefn &OGRFieldDefn::operator=(const OGRFieldDefn &oOther)
+{
+    if (&oOther != this)
+    {
+        CPLFree(pszName);
+        pszName = CPLStrdup(oOther.pszName);
+        CPLFree(pszAlternativeName);
+        pszAlternativeName = CPLStrdup(oOther.pszAlternativeName);
+        eType = oOther.eType;
+        eJustify = oOther.eJustify;
+        nWidth = oOther.nWidth;
+        nPrecision = oOther.nPrecision;
+        CPLFree(pszDefault);
+        pszDefault = oOther.pszDefault ? CPLStrdup(oOther.pszDefault) : nullptr;
+        bIgnore = oOther.bIgnore;
+        eSubType = oOther.eSubType;
+        bNullable = oOther.bNullable;
+        bUnique = oOther.bUnique;
+        m_bGenerated = oOther.m_bGenerated;
+        m_osDomainName = oOther.m_osDomainName;
+        m_osComment = oOther.m_osComment;
+        m_nTZFlag = oOther.m_nTZFlag;
+        m_bSealed = oOther.m_bSealed;
+    }
+    return *this;
 }
 
 /************************************************************************/
@@ -880,6 +925,63 @@ const char *OGRFieldDefn::GetFieldTypeName(OGRFieldType eType)
 }
 
 /************************************************************************/
+/*                          GetFieldTypeByName()                        */
+/************************************************************************/
+/**
+ * \brief Fetch field type by name.
+ * @param pszName the name of the field type.
+ * @return the field type or OFTString if there is no match with known type names.
+ * @since GDAL 3.11.0
+ */
+OGRFieldType OGRFieldDefn::GetFieldTypeByName(const char *pszName)
+{
+    if (EQUAL(pszName, "integer"))
+        return OFTInteger;
+    if (EQUAL(pszName, "integer64"))
+        return OFTInteger64;
+    if (EQUAL(pszName, "real"))
+        return OFTReal;
+    if (EQUAL(pszName, "string"))
+        return OFTString;
+    if (EQUAL(pszName, "integerlist"))
+        return OFTIntegerList;
+    if (EQUAL(pszName, "integer64list"))
+        return OFTInteger64List;
+    if (EQUAL(pszName, "reallist"))
+        return OFTRealList;
+    if (EQUAL(pszName, "stringlist"))
+        return OFTStringList;
+    if (EQUAL(pszName, "binary"))
+        return OFTBinary;
+    if (EQUAL(pszName, "date"))
+        return OFTDate;
+    if (EQUAL(pszName, "time"))
+        return OFTTime;
+    if (EQUAL(pszName, "datetime"))
+        return OFTDateTime;
+
+    return OFTString;
+}
+
+/************************************************************************/
+/*                       OGR_GetFieldTypeByName()                       */
+/************************************************************************/
+/**
+ * \brief Fetch field type by name.
+ *
+ * This function is the same as the CPP method
+ * OGRFieldDefn::GetFieldTypeByName().
+ *
+ * @param pszName the name of the field type.
+ * @return the field type or OFTString if there is no match with known type names.
+ * @since GDAL 3.9.4
+ */
+OGRFieldType OGR_GetFieldTypeByName(const char *pszName)
+{
+    return OGRFieldDefn::GetFieldTypeByName(pszName);
+}
+
+/************************************************************************/
 /*                        OGR_GetFieldTypeName()                        */
 /************************************************************************/
 /**
@@ -939,6 +1041,49 @@ const char *OGRFieldDefn::GetFieldSubTypeName(OGRFieldSubType eSubType)
             return "UUID";
     }
     return "None";
+}
+
+/************************************************************************/
+/*                        GetFieldSubTypeByName()                       */
+/************************************************************************/
+/**
+ * \brief Fetch field subtype by name.
+ * @param pszName the name of the field subtype.
+ * @return the field subtype.
+ * @since GDAL 3.11.0
+ */
+OGRFieldSubType OGRFieldDefn::GetFieldSubTypeByName(const char *pszName)
+{
+    if (EQUAL(pszName, "boolean"))
+        return OFSTBoolean;
+    if (EQUAL(pszName, "int16"))
+        return OFSTInt16;
+    if (EQUAL(pszName, "float32"))
+        return OFSTFloat32;
+    if (EQUAL(pszName, "json"))
+        return OFSTJSON;
+    if (EQUAL(pszName, "uuid"))
+        return OFSTUUID;
+
+    return OFSTNone;
+}
+
+/************************************************************************/
+/*                       OGR_GetFieldSubTypeByName()                    */
+/************************************************************************/
+/**
+ * \brief Fetch field subtype by name.
+ *
+ * This function is the same as the CPP method
+ * OGRFieldDefn::GetFieldSubTypeByName().
+ *
+ * @param pszName the name of the field subtype.
+ * @return the field subtype.
+ * @since GDAL 3.11.0
+ */
+OGRFieldSubType OGR_GetFieldSubTypeByName(const char *pszName)
+{
+    return OGRFieldDefn::GetFieldSubTypeByName(pszName);
 }
 
 /************************************************************************/
@@ -1631,6 +1776,55 @@ void OGRFieldDefn::SetNullable(int bNullableIn)
 void OGR_Fld_SetNullable(OGRFieldDefnH hDefn, int bNullableIn)
 {
     OGRFieldDefn::FromHandle(hDefn)->SetNullable(bNullableIn);
+}
+
+/************************************************************************/
+/*                        OGR_Fld_SetGenerated()                        */
+/************************************************************************/
+
+/**
+ * \brief Set whether this field is a generated field.
+ *
+ * By default, fields are not generated, so this method is generally called with
+ * TRUE to set a generated field.
+ *
+ * This method is the same as the C++ method OGRFieldDefn::SetGenerated().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
+ *
+ * @param hDefn handle to the field definition
+ * @param bGeneratedIn FALSE if the field is a generated field.
+ * @since GDAL 3.11
+ */
+
+void OGR_Fld_SetGenerated(OGRFieldDefnH hDefn, int bGeneratedIn)
+{
+    OGRFieldDefn::FromHandle(hDefn)->SetGenerated(bGeneratedIn);
+}
+
+/************************************************************************/
+/*                             OGR_Fld_IsGenerated()                    */
+/************************************************************************/
+
+/**
+ * \brief Return whether this field is a generated field.
+ *
+ * By default, fields are not generated.
+ *
+ * This method is the same as the C++ method OGRFieldDefn::IsGenerated().
+ *
+ * @param hDefn handle to the field definition
+ * @return TRUE if the field is a generated field.
+ * @since GDAL 3.11
+ */
+
+int OGR_Fld_IsGenerated(OGRFieldDefnH hDefn)
+{
+    return OGRFieldDefn::FromHandle(hDefn)->IsGenerated();
 }
 
 /************************************************************************/
@@ -2331,6 +2525,7 @@ OGRCodedFieldDomain::~OGRCodedFieldDomain()
 /*                       OGRRangeFieldDomain()                          */
 /************************************************************************/
 
+// cppcheck-suppress uninitMemberVar
 OGRRangeFieldDomain::OGRRangeFieldDomain(
     const std::string &osName, const std::string &osDescription,
     OGRFieldType eFieldType, OGRFieldSubType eFieldSubType,

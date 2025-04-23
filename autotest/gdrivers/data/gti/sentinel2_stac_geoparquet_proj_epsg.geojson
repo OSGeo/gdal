@@ -1,0 +1,7 @@
+{
+"type": "FeatureCollection",
+"name": "sentinel2_stac_geoparquet",
+"features": [
+{ "type": "Feature", "properties": { "type": "Feature", "stac_version": "1.1.0", "assets.rededge3.href": "https://e84-earth-search-sentinel-data.s3.us-west-2.amazonaws.com/sentinel-2-c1-l2a/12/S/VD/2023/12/S2A_T12SVD_20231213T181818_L2A/B07.tif", "assets.rededge3.title": "Red Edge 3 - 20m", "assets.rededge3.type": "image/tiff; application=geotiff; profile=cloud-optimized", "assets.rededge3.roles": [ "data", "reflectance" ], "assets.rededge3.eo:bands": [ { "name": "B07", "common_name": "rededge", "center_wavelength": 0.783, "full_width_half_max": 0.028 } ], "assets.rededge3.gsd": 20.0, "assets.rededge3.proj:shape": [ 5490, 5490 ], "assets.rededge3.proj:transform": [ 20, 0, 399960, 0, -20, 3900000 ], "assets.rededge3.raster:bands": [ { "nodata": 0, "data_type": "uint16", "spatial_resolution": 20, "scale": 0.0001, "offset": -0.1 } ], "assets.rededge3.file:checksum": "1220f2623a57da9b09fe8253c2dc9a6377227041e86d192715c6d753638cb0977d99", "assets.rededge3.file:size": 53583888, "proj:epsg": 32612 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -112.099469246340007, 35.238074627405702 ], [ -112.086441301193005, 34.249018117524301 ], [ -111.171637815685003, 34.254252630787903 ], [ -110.892875963752005, 35.136386493702297 ], [ -110.892735914686995, 35.243021163215097 ], [ -112.099469246340007, 35.238074627405702 ] ] ] } }
+]
+}

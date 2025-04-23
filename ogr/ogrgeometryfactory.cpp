@@ -9,23 +9,7 @@
  * Copyright (c) 1999, Frank Warmerdam
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -44,7 +28,8 @@
 #ifdef HAVE_GEOS
 #include "geos_c.h"
 #endif
-#include "ogrgeojsonreader.h"
+
+#include "ogrgeojsongeometry.h"
 
 #include <cassert>
 #include <climits>
@@ -494,6 +479,37 @@ OGRErr OGRGeometryFactory::createFromWkt(const char *pszData,
 
 {
     return createFromWkt(&pszData, poSR, ppoReturn);
+}
+
+/**
+ * \brief Create a geometry object of the appropriate type from its
+ * well known text representation.
+ *
+ * The C function OGR_G_CreateFromWkt() is the same as this method.
+ *
+ * @param pszData input zero terminated string containing well known text
+ *                representation of the geometry to be created.
+ * @param poSR pointer to the spatial reference to be assigned to the
+ *             created geometry object.  This may be NULL.
+
+ * @return a pair of the newly created geometry an error code of OGRERR_NONE
+ * if all goes well, otherwise any of OGRERR_NOT_ENOUGH_DATA,
+ * OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or OGRERR_CORRUPT_DATA.
+ *
+ * @since GDAL 3.11
+ */
+
+std::pair<std::unique_ptr<OGRGeometry>, OGRErr>
+OGRGeometryFactory::createFromWkt(const char *pszData,
+                                  const OGRSpatialReference *poSR)
+
+{
+    std::unique_ptr<OGRGeometry> poGeom;
+    OGRGeometry *poTmpGeom;
+    auto err = createFromWkt(&pszData, poSR, &poTmpGeom);
+    poGeom.reset(poTmpGeom);
+
+    return {std::move(poGeom), err};
 }
 
 /************************************************************************/
@@ -1994,7 +2010,7 @@ OGRGeometry *OGRGeometryFactory::organizePolygons(OGRGeometry **papoPolygons,
                                 // If it is outside, then i cannot be inside j.
                                 break;
                             }
-                            previousPoint = point;
+                            previousPoint = std::move(point);
                         }
                         if (!b_i_inside_j && k == nPoints && nPoints > 2)
                         {
@@ -2036,7 +2052,7 @@ OGRGeometry *OGRGeometryFactory::organizePolygons(OGRGeometry **papoPolygons,
                                     // j.
                                     break;
                                 }
-                                previousPoint = point;
+                                previousPoint = std::move(point);
                             }
                         }
                     }
@@ -3302,15 +3318,15 @@ static void AlterPole(OGRGeometry *poGeom, OGRPoint *poPole,
 }
 
 /************************************************************************/
-/*                          IsPolarToWGS84()                            */
+/*                        IsPolarToGeographic()                         */
 /*                                                                      */
 /* Returns true if poCT transforms from a projection that includes one  */
 /* of the pole in a continuous way.                                     */
 /************************************************************************/
 
-static bool IsPolarToWGS84(OGRCoordinateTransformation *poCT,
-                           OGRCoordinateTransformation *poRevCT,
-                           bool &bIsNorthPolarOut)
+static bool IsPolarToGeographic(OGRCoordinateTransformation *poCT,
+                                OGRCoordinateTransformation *poRevCT,
+                                bool &bIsNorthPolarOut)
 {
     bool bIsNorthPolar = false;
     bool bIsSouthPolar = false;
@@ -3366,17 +3382,16 @@ static bool IsPolarToWGS84(OGRCoordinateTransformation *poCT,
 }
 
 /************************************************************************/
-/*                     TransformBeforePolarToWGS84()                    */
+/*                 TransformBeforePolarToGeographic()                   */
 /*                                                                      */
 /* Transform the geometry (by intersection), so as to cut each geometry */
 /* that crosses the pole, in 2 parts. Do also tricks for geometries     */
 /* that just touch the pole.                                            */
 /************************************************************************/
 
-static OGRGeometry *
-TransformBeforePolarToWGS84(OGRCoordinateTransformation *poRevCT,
-                            bool bIsNorthPolar, OGRGeometry *poDstGeom,
-                            bool &bNeedPostCorrectionOut)
+static std::unique_ptr<OGRGeometry> TransformBeforePolarToGeographic(
+    OGRCoordinateTransformation *poRevCT, bool bIsNorthPolar,
+    std::unique_ptr<OGRGeometry> poDstGeom, bool &bNeedPostCorrectionOut)
 {
     const int nSign = (bIsNorthPolar) ? 1 : -1;
 
@@ -3429,19 +3444,19 @@ TransformBeforePolarToWGS84(OGRCoordinateTransformation *poRevCT,
     {
         if (bContainsPole || bContainsNearPoleAntimeridian)
         {
-            OGRGeometry *poNewGeom = poDstGeom->Difference(&oCutter);
+            auto poNewGeom =
+                std::unique_ptr<OGRGeometry>(poDstGeom->Difference(&oCutter));
             if (poNewGeom)
             {
                 if (bContainsNearPoleAntimeridian)
-                    RemovePoint(poNewGeom, &oPole);
-                delete poDstGeom;
-                poDstGeom = poNewGeom;
+                    RemovePoint(poNewGeom.get(), &oPole);
+                poDstGeom = std::move(poNewGeom);
             }
         }
 
         if (bRegularTouchesPole)
         {
-            AlterPole(poDstGeom, &oPole);
+            AlterPole(poDstGeom.get(), &oPole);
         }
 
         bNeedPostCorrectionOut = true;
@@ -3450,15 +3465,15 @@ TransformBeforePolarToWGS84(OGRCoordinateTransformation *poRevCT,
 }
 
 /************************************************************************/
-/*                        IsAntimeridianProjToWGS84()                   */
+/*                   IsAntimeridianProjToGeographic()                   */
 /*                                                                      */
 /* Returns true if poCT transforms from a projection that includes the  */
 /* antimeridian in a continuous way.                                    */
 /************************************************************************/
 
-static bool IsAntimeridianProjToWGS84(OGRCoordinateTransformation *poCT,
-                                      OGRCoordinateTransformation *poRevCT,
-                                      OGRGeometry *poDstGeometry)
+static bool IsAntimeridianProjToGeographic(OGRCoordinateTransformation *poCT,
+                                           OGRCoordinateTransformation *poRevCT,
+                                           OGRGeometry *poDstGeometry)
 {
     const bool bBackupEmitErrors = poCT->GetEmitErrors();
     poRevCT->SetEmitErrors(false);
@@ -3634,15 +3649,15 @@ struct SortPointsByAscendingY
 };
 
 /************************************************************************/
-/*                  TransformBeforeAntimeridianToWGS84()                */
+/*              TransformBeforeAntimeridianToGeographic()               */
 /*                                                                      */
 /* Transform the geometry (by intersection), so as to cut each geometry */
 /* that crosses the antimeridian, in 2 parts.                           */
 /************************************************************************/
 
-static OGRGeometry *TransformBeforeAntimeridianToWGS84(
+static std::unique_ptr<OGRGeometry> TransformBeforeAntimeridianToGeographic(
     OGRCoordinateTransformation *poCT, OGRCoordinateTransformation *poRevCT,
-    OGRGeometry *poDstGeom, bool &bNeedPostCorrectionOut)
+    std::unique_ptr<OGRGeometry> poDstGeom, bool &bNeedPostCorrectionOut)
 {
     OGREnvelope sEnvelope;
     poDstGeom->getEnvelope(&sEnvelope);
@@ -3662,7 +3677,7 @@ static OGRGeometry *TransformBeforeAntimeridianToWGS84(
     // Collect points that are the intersection of the lines of the geometry
     // with the antimeridian
     std::vector<OGRRawPoint> aoPoints;
-    CollectPointsOnAntimeridian(poDstGeom, poCT, poRevCT, aoPoints);
+    CollectPointsOnAntimeridian(poDstGeom.get(), poCT, poRevCT, aoPoints);
     if (aoPoints.empty())
         return poDstGeom;
 
@@ -3726,11 +3741,11 @@ static OGRGeometry *TransformBeforeAntimeridianToWGS84(
 #endif
 
     // Get the geometry without the antimeridian
-    OGRGeometry *poInter = poDstGeom->Difference(&oPolyToCut);
+    auto poInter =
+        std::unique_ptr<OGRGeometry>(poDstGeom->Difference(&oPolyToCut));
     if (poInter != nullptr)
     {
-        delete poDstGeom;
-        poDstGeom = poInter;
+        poDstGeom = std::move(poInter);
         bNeedPostCorrectionOut = true;
     }
 
@@ -3821,9 +3836,22 @@ static void SnapCoordsCloseToLatLongBounds(OGRGeometry *poGeom)
 
 struct OGRGeometryFactory::TransformWithOptionsCache::Private
 {
+    const OGRSpatialReference *poSourceCRS = nullptr;
+    const OGRSpatialReference *poTargetCRS = nullptr;
+    const OGRCoordinateTransformation *poCT = nullptr;
     std::unique_ptr<OGRCoordinateTransformation> poRevCT{};
     bool bIsPolar = false;
     bool bIsNorthPolar = false;
+
+    void clear()
+    {
+        poSourceCRS = nullptr;
+        poTargetCRS = nullptr;
+        poCT = nullptr;
+        poRevCT.reset();
+        bIsPolar = false;
+        bIsNorthPolar = false;
+    }
 };
 
 /************************************************************************/
@@ -3844,13 +3872,80 @@ OGRGeometryFactory::TransformWithOptionsCache::~TransformWithOptionsCache()
 }
 
 /************************************************************************/
+/*              isTransformWithOptionsRegularTransform()                */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+/*static */
+bool OGRGeometryFactory::isTransformWithOptionsRegularTransform(
+    [[maybe_unused]] const OGRSpatialReference *poSourceCRS,
+    [[maybe_unused]] const OGRSpatialReference *poTargetCRS,
+    CSLConstList papszOptions)
+{
+    if (papszOptions)
+        return false;
+
+#ifdef HAVE_GEOS
+    if (poSourceCRS && poTargetCRS && poSourceCRS->IsProjected() &&
+        poTargetCRS->IsGeographic() &&
+        poTargetCRS->GetAxisMappingStrategy() == OAMS_TRADITIONAL_GIS_ORDER &&
+        // check that angular units is degree
+        std::fabs(poTargetCRS->GetAngularUnits(nullptr) -
+                  CPLAtof(SRS_UA_DEGREE_CONV)) <=
+            1e-8 * CPLAtof(SRS_UA_DEGREE_CONV))
+    {
+        double dfWestLong = 0.0;
+        double dfSouthLat = 0.0;
+        double dfEastLong = 0.0;
+        double dfNorthLat = 0.0;
+        if (poSourceCRS->GetAreaOfUse(&dfWestLong, &dfSouthLat, &dfEastLong,
+                                      &dfNorthLat, nullptr) &&
+            !(dfSouthLat == -90.0 || dfNorthLat == 90.0 ||
+              dfWestLong == -180.0 || dfEastLong == 180.0 ||
+              dfWestLong > dfEastLong))
+        {
+            // Not a global geographic CRS
+            return true;
+        }
+        return false;
+    }
+#endif
+
+    return true;
+}
+
+//! @endcond
+
+/************************************************************************/
 /*                       transformWithOptions()                         */
 /************************************************************************/
 
 /** Transform a geometry.
+ *
+ * This is an enhanced version of OGRGeometry::Transform().
+ *
+ * When reprojecting geometries from a Polar Stereographic projection or a
+ * projection naturally crossing the antimeridian (like UTM Zone 60) to a
+ * geographic CRS, it will cut geometries along the antimeridian. So a
+ * LineString might be returned as a MultiLineString.
+ *
+ * The WRAPDATELINE=YES option might be specified for circumstances to correct
+ * geometries that incorrectly go from a longitude on a side of the antimeridian
+ * to the other side, like a LINESTRING(-179 0,179 0) will be transformed to
+ * a MULTILINESTRING ((-179 0,-180 0),(180 0,179 0)). For that use case, hCT
+ * might be NULL.
+ *
+ * Supported options in papszOptions are:
+ * <ul>
+ * <li>WRAPDATELINE=YES</li>
+ * <li>DATELINEOFFSET=longitude_gap_in_degree. Defaults to 10.</li>
+ * </ul>
+ *
+ * This is the same as the C function OGR_GeomTransformer_Transform().
+ *
  * @param poSrcGeom source geometry
  * @param poCT coordinate transformation object, or NULL.
- * @param papszOptions options. Including WRAPDATELINE=YES and DATELINEOFFSET=.
+ * @param papszOptions NULL terminated list of options, or NULL.
  * @param cache Cache. May increase performance if persisted between invocations
  * @return (new) transformed geometry.
  */
@@ -3858,65 +3953,68 @@ OGRGeometry *OGRGeometryFactory::transformWithOptions(
     const OGRGeometry *poSrcGeom, OGRCoordinateTransformation *poCT,
     char **papszOptions, CPL_UNUSED const TransformWithOptionsCache &cache)
 {
-    OGRGeometry *poDstGeom = poSrcGeom->clone();
-    if (poCT != nullptr)
+    auto poDstGeom = std::unique_ptr<OGRGeometry>(poSrcGeom->clone());
+    if (poCT)
     {
 #ifdef HAVE_GEOS
         bool bNeedPostCorrection = false;
-
-        auto poSourceCRS = poCT->GetSourceCS();
-        auto poTargetCRS = poCT->GetTargetCS();
-        if (poSourceCRS != nullptr && poTargetCRS != nullptr &&
-            poSourceCRS->IsProjected() && poTargetCRS->IsGeographic())
+        const auto poSourceCRS = poCT->GetSourceCS();
+        const auto poTargetCRS = poCT->GetTargetCS();
+        const auto eSrcGeomType = wkbFlatten(poSrcGeom->getGeometryType());
+        // Check if we are transforming from projected coordinates to
+        // geographic coordinates, with a chance that there might be polar or
+        // anti-meridian discontinuities. If so, create the inverse transform.
+        if (eSrcGeomType != wkbPoint && eSrcGeomType != wkbMultiPoint &&
+            (poSourceCRS != cache.d->poSourceCRS ||
+             poTargetCRS != cache.d->poTargetCRS || poCT != cache.d->poCT))
         {
-            OGRSpatialReference oSRSWGS84;
-            oSRSWGS84.SetWellKnownGeogCS("WGS84");
-            oSRSWGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            if (poTargetCRS->IsSame(&oSRSWGS84))
+            cache.d->clear();
+            cache.d->poSourceCRS = poSourceCRS;
+            cache.d->poTargetCRS = poTargetCRS;
+            cache.d->poCT = poCT;
+            if (poSourceCRS && poTargetCRS &&
+                !isTransformWithOptionsRegularTransform(
+                    poSourceCRS, poTargetCRS, papszOptions))
             {
-                if (cache.d->poRevCT == nullptr ||
-                    !cache.d->poRevCT->GetTargetCS()->IsSame(poSourceCRS))
+                cache.d->poRevCT.reset(OGRCreateCoordinateTransformation(
+                    poTargetCRS, poSourceCRS));
+                cache.d->bIsNorthPolar = false;
+                cache.d->bIsPolar = false;
+                cache.d->poRevCT.reset(poCT->GetInverse());
+                if (cache.d->poRevCT &&
+                    IsPolarToGeographic(poCT, cache.d->poRevCT.get(),
+                                        cache.d->bIsNorthPolar))
                 {
-                    cache.d->poRevCT.reset(OGRCreateCoordinateTransformation(
-                        &oSRSWGS84, poSourceCRS));
-                    cache.d->bIsNorthPolar = false;
-                    cache.d->bIsPolar = false;
-                    if (cache.d->poRevCT &&
-                        IsPolarToWGS84(poCT, cache.d->poRevCT.get(),
-                                       cache.d->bIsNorthPolar))
-                    {
-                        cache.d->bIsPolar = true;
-                    }
+                    cache.d->bIsPolar = true;
                 }
-                auto poRevCT = cache.d->poRevCT.get();
-                if (poRevCT != nullptr)
-                {
-                    if (cache.d->bIsPolar)
-                    {
-                        poDstGeom = TransformBeforePolarToWGS84(
-                            poRevCT, cache.d->bIsNorthPolar, poDstGeom,
-                            bNeedPostCorrection);
-                    }
-                    else if (IsAntimeridianProjToWGS84(poCT, poRevCT,
-                                                       poDstGeom))
-                    {
-                        poDstGeom = TransformBeforeAntimeridianToWGS84(
-                            poCT, poRevCT, poDstGeom, bNeedPostCorrection);
-                    }
-                }
+            }
+        }
+
+        if (auto poRevCT = cache.d->poRevCT.get())
+        {
+            if (cache.d->bIsPolar)
+            {
+                poDstGeom = TransformBeforePolarToGeographic(
+                    poRevCT, cache.d->bIsNorthPolar, std::move(poDstGeom),
+                    bNeedPostCorrection);
+            }
+            else if (IsAntimeridianProjToGeographic(poCT, poRevCT,
+                                                    poDstGeom.get()))
+            {
+                poDstGeom = TransformBeforeAntimeridianToGeographic(
+                    poCT, poRevCT, std::move(poDstGeom), bNeedPostCorrection);
             }
         }
 #endif
         OGRErr eErr = poDstGeom->transform(poCT);
         if (eErr != OGRERR_NONE)
         {
-            delete poDstGeom;
             return nullptr;
         }
 #ifdef HAVE_GEOS
         if (bNeedPostCorrection)
         {
-            SnapCoordsCloseToLatLongBounds(poDstGeom);
+            SnapCoordsCloseToLatLongBounds(poDstGeom.get());
         }
 #endif
     }
@@ -3926,16 +4024,11 @@ OGRGeometry *OGRGeometryFactory::transformWithOptions(
         if (poDstGeom->getSpatialReference() &&
             !poDstGeom->getSpatialReference()->IsGeographic())
         {
-            static bool bHasWarned = false;
-            if (!bHasWarned)
-            {
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
-                    "WRAPDATELINE is without effect when reprojecting to a "
-                    "non-geographic CRS");
-                bHasWarned = true;
-            }
-            return poDstGeom;
+            CPLErrorOnce(
+                CE_Warning, CPLE_AppDefined,
+                "WRAPDATELINE is without effect when reprojecting to a "
+                "non-geographic CRS");
+            return poDstGeom.release();
         }
         // TODO and we should probably also test that the axis order + data axis
         // mapping is long-lat...
@@ -3958,9 +4051,9 @@ OGRGeometry *OGRGeometryFactory::transformWithOptions(
             OGREnvelope sEnvelope;
             poDstGeom->getEnvelope(&sEnvelope);
             if (sEnvelope.MinX >= -360.0 && sEnvelope.MaxX <= -180.0)
-                AddOffsetToLon(poDstGeom, 360.0);
+                AddOffsetToLon(poDstGeom.get(), 360.0);
             else if (sEnvelope.MinX >= 180.0 && sEnvelope.MaxX <= 360.0)
-                AddOffsetToLon(poDstGeom, -360.0);
+                AddOffsetToLon(poDstGeom.get(), -360.0);
             else
             {
                 OGRwkbGeometryType eNewType;
@@ -3971,38 +4064,35 @@ OGRGeometry *OGRGeometryFactory::transformWithOptions(
                 else
                     eNewType = wkbGeometryCollection;
 
-                OGRGeometry *poMultiGeom = createGeometry(eNewType);
-                OGRGeometryCollection *poMulti =
-                    poMultiGeom->toGeometryCollection();
+                auto poMulti = std::unique_ptr<OGRGeometryCollection>(
+                    createGeometry(eNewType)->toGeometryCollection());
 
                 double dfDateLineOffset = CPLAtofM(
                     CSLFetchNameValueDef(papszOptions, "DATELINEOFFSET", "10"));
                 if (dfDateLineOffset <= 0.0 || dfDateLineOffset >= 360.0)
                     dfDateLineOffset = 10.0;
 
-                CutGeometryOnDateLineAndAddToMulti(poMulti, poDstGeom,
-                                                   dfDateLineOffset);
+                CutGeometryOnDateLineAndAddToMulti(
+                    poMulti.get(), poDstGeom.get(), dfDateLineOffset);
 
                 if (poMulti->getNumGeometries() == 0)
                 {
-                    delete poMultiGeom;
+                    // do nothing
                 }
-                else if (poMulti->getNumGeometries() == 1)
+                else if (poMulti->getNumGeometries() == 1 &&
+                         (eType == wkbPolygon || eType == wkbLineString))
                 {
-                    delete poDstGeom;
-                    poDstGeom = poMulti->getGeometryRef(0)->clone();
-                    delete poMultiGeom;
+                    poDstGeom = poMulti->stealGeometry(0);
                 }
                 else
                 {
-                    delete poDstGeom;
-                    poDstGeom = poMultiGeom;
+                    poDstGeom = std::move(poMulti);
                 }
             }
         }
     }
 
-    return poDstGeom;
+    return poDstGeom.release();
 }
 
 /************************************************************************/
@@ -4039,14 +4129,16 @@ struct OGRGeomTransformer
  * a MULTILINESTRING ((-179 0,-180 0),(180 0,179 0)). For that use case, hCT
  * might be NULL.
  *
+ * Supported options in papszOptions are:
+ * <ul>
+ * <li>WRAPDATELINE=YES</li>
+ * <li>DATELINEOFFSET=longitude_gap_in_degree. Defaults to 10.</li>
+ * </ul>
+ *
+ * This is the same as the C++ method OGRGeometryFactory::transformWithOptions().
+
  * @param hCT Coordinate transformation object (will be cloned) or NULL.
  * @param papszOptions NULL terminated list of options, or NULL.
- *                     Supported options are:
- *                     <ul>
- *                         <li>WRAPDATELINE=YES</li>
- *                         <li>DATELINEOFFSET=longitude_gap_in_degree. Defaults
- * to 10.</li>
- *                     </ul>
  * @return transformer object to free with OGR_GeomTransformer_Destroy()
  * @since GDAL 3.1
  */
@@ -4100,13 +4192,37 @@ void OGR_GeomTransformer_Destroy(OGRGeomTransformerH hTransformer)
 }
 
 /************************************************************************/
-/*                       OGRGF_GetDefaultStepSize()                     */
+/*                OGRGeometryFactory::GetDefaultArcStepSize()           */
 /************************************************************************/
 
-static double OGRGF_GetDefaultStepSize()
+/** Return the default value of the angular step used when stroking curves
+ * as lines. Defaults to 4 degrees.
+ * Can be modified by setting the OGR_ARC_STEPSIZE configuration option.
+ * Valid values are in [1e-2, 180] degree range.
+ * @since 3.11
+ */
+
+/* static */
+double OGRGeometryFactory::GetDefaultArcStepSize()
 {
-    // coverity[tainted_data]
-    return CPLAtofM(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4"));
+    const double dfVal = CPLAtofM(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4"));
+    constexpr double MIN_VAL = 1e-2;
+    if (dfVal < MIN_VAL)
+    {
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
+                     "Too small value for OGR_ARC_STEPSIZE. Clamping it to %f",
+                     MIN_VAL);
+        return MIN_VAL;
+    }
+    constexpr double MAX_VAL = 180;
+    if (dfVal > MAX_VAL)
+    {
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
+                     "Too large value for OGR_ARC_STEPSIZE. Clamping it to %f",
+                     MAX_VAL);
+        return MAX_VAL;
+    }
+    return dfVal;
 }
 
 /************************************************************************/
@@ -4169,7 +4285,7 @@ OGRGeometry *OGRGeometryFactory::approximateArcAngles(
     // Support default arc step setting.
     if (dfMaxAngleStepSizeDegrees < 1e-6)
     {
-        dfMaxAngleStepSizeDegrees = OGRGF_GetDefaultStepSize();
+        dfMaxAngleStepSizeDegrees = OGRGeometryFactory::GetDefaultArcStepSize();
     }
 
     // Determine maximum interpolation gap. This is the largest straight-line
@@ -5063,8 +5179,8 @@ int OGRGeometryFactory::GetCurveParameters(double x0, double y0, double x1,
                                            double &alpha0, double &alpha1,
                                            double &alpha2)
 {
-    if (CPLIsNan(x0) || CPLIsNan(y0) || CPLIsNan(x1) || CPLIsNan(y1) ||
-        CPLIsNan(x2) || CPLIsNan(y2))
+    if (std::isnan(x0) || std::isnan(y0) || std::isnan(x1) || std::isnan(y1) ||
+        std::isnan(x2) || std::isnan(y2))
     {
         return FALSE;
     }
@@ -5110,7 +5226,7 @@ int OGRGeometryFactory::GetCurveParameters(double x0, double y0, double x1,
     dy12 *= dfInvScale;
 
     const double det = dx01 * dy12 - dx12 * dy01;
-    if (fabs(det) < 1.0e-8 || CPLIsNan(det))
+    if (fabs(det) < 1.0e-8 || std::isnan(det))
     {
         return FALSE;
     }
@@ -5165,7 +5281,7 @@ static void OGRGeometryFactoryStrokeArc(OGRLineString *poLine, double cx,
     // Constant angle between all points, so as to not depend on winding order.
     const double dfNumSteps = fabs((alpha1 - alpha0) / dfStep) + 0.5;
     if (dfNumSteps >= std::numeric_limits<int>::max() ||
-        dfNumSteps <= std::numeric_limits<int>::min() || CPLIsNan(dfNumSteps))
+        dfNumSteps <= std::numeric_limits<int>::min() || std::isnan(dfNumSteps))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "OGRGeometryFactoryStrokeArc: bogus steps: "
@@ -5362,7 +5478,7 @@ OGRLineString *OGRGeometryFactory::curveToLineString(
     // support default arc step setting.
     if (dfMaxAngleStepSizeDegrees < 1e-6)
     {
-        dfMaxAngleStepSizeDegrees = OGRGF_GetDefaultStepSize();
+        dfMaxAngleStepSizeDegrees = OGRGeometryFactory::GetDefaultArcStepSize();
     }
 
     double dfStep = dfMaxAngleStepSizeDegrees / 180 * M_PI;
@@ -5448,7 +5564,7 @@ OGRLineString *OGRGeometryFactory::curveToLineString(
                 dfAlphaRatio *= -1;
             }
             else if (dfAlphaRatio >= std::numeric_limits<GUInt32>::max() ||
-                     CPLIsNan(dfAlphaRatio))
+                     std::isnan(dfAlphaRatio))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "AlphaRatio too large: %lf", dfAlphaRatio);

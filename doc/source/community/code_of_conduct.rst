@@ -19,7 +19,7 @@ claims any affiliation with the GDAL project.
 
 It applies to in-person events (such as conferences and related social events),
 IRC, public and private mailing lists, the issue tracker, the wiki, blogs,
-Twitter, and any other forums which the community uses for communication and
+social media, and any other forums which the community uses for communication and
 interactions.
 
 This code is not exhaustive or complete. It serves to distill our common

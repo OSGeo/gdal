@@ -13,16 +13,7 @@ ogrtindex
 Synopsis
 --------
 
-.. code-block::
-
-    ogrtindex [--help] [--help-general]
-              [-lnum <n>]... [-lname <name>]... [-f <output_format>]
-              [-write_absolute_path] [-skip_different_projection]
-              [-t_srs <target_srs>]
-              [-src_srs_name <field_name>] [-src_srs_format {AUTO|WKT|EPSG|PROJ}]
-              [-accept_different_schemas]
-              <output_dataset> <src_dataset> <src_dataset>...
-
+.. program-output:: ogrtindex --help-doc
 
 Description
 -----------
@@ -100,13 +91,15 @@ independent records.
 If the tile index already exists it will be appended to, otherwise it
 will be created.
 
-Example
--------
+Examples
+--------
 
-This example would create a shapefile (:file:`tindex.shp`) containing
-a tile index of the ``BL2000_LINK`` layers in all the NTF files
-in the :file:`wrk` directory:
+.. example::
 
-.. code-block::
+   This example would create a shapefile (:file:`tindex.shp`) containing
+   a tile index of the ``BL2000_LINK`` layers in all the NTF files
+   in the :file:`wrk` directory:
 
-    ogrtindex tindex.shp wrk/*.NTF
+   .. code-block:: bash
+
+       ogrtindex tindex.shp wrk/*.NTF

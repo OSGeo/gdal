@@ -18,15 +18,17 @@ wget -q "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
 
 (
     cd proj
+    export PROJ_DB_CACHE_PARAM=""
 
     if [ -n "${RSYNC_REMOTE:-}" ]; then
         echo "Downloading cache..."
-        rsync -ra "${RSYNC_REMOTE}/proj/${GCC_ARCH}/" "$HOME/"
+        rsync -ra "${RSYNC_REMOTE}/proj/${GCC_ARCH}/" "$HOME/.cache/"
         echo "Finished"
-
+    fi
+    if [ -n "${WITH_CCACHE:-}" ]; then
         export CC="ccache ${GCC_ARCH}-linux-gnu-gcc"
         export CXX="ccache ${GCC_ARCH}-linux-gnu-g++"
-        export PROJ_DB_CACHE_DIR="$HOME/.cache"
+        export PROJ_DB_CACHE_PARAM="-DPROJ_DB_CACHE_DIR=$HOME/.cache"
 
         ccache -M 100M
     fi
@@ -35,21 +37,22 @@ wget -q "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
     export CXXFLAGS="-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -g"
 
     cmake . \
+        -G Ninja \
         -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_INSTALL_PREFIX=${PROJ_INSTALL_PREFIX:-/usr/local} \
-        -DBUILD_TESTING=OFF
+        -DBUILD_TESTING=OFF \
+        $PROJ_DB_CACHE_PARAM
 
-    make "-j$(nproc)"
-    make install DESTDIR="${DESTDIR}"
+    ninja
+    DESTDIR="${DESTDIR}" ninja install
 
     if [ -n "${RSYNC_REMOTE:-}" ]; then
-        ccache -s
-
         echo "Uploading cache..."
-        rsync -ra --delete "$HOME/.cache" "${RSYNC_REMOTE}/proj/${GCC_ARCH}/"
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/proj/${GCC_ARCH}/"
         echo "Finished"
-
-        rm -rf "$HOME/.cache"
+    fi
+    if [ -n "${WITH_CCACHE:-}" ]; then
+        ccache -s
         unset CC
         unset CXX
     fi
@@ -97,9 +100,6 @@ else
     done;
 fi
 
-apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y patchelf
-rm -rf /var/lib/apt/lists/*
 patchelf --set-soname libinternalproj.so.${PROJ_SO_FIRST} ${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO}
 for i in "${DESTDIR}${PROJ_INSTALL_PREFIX}/bin"/*; do
   patchelf --replace-needed libproj.so.${PROJ_SO_FIRST} libinternalproj.so.${PROJ_SO_FIRST} $i;

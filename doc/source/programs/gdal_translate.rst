@@ -13,37 +13,13 @@ gdal_translate
 Synopsis
 --------
 
-.. code-block::
-
-
-    gdal_translate [--help] [--help-general] [--long-usage]
-       [-ot {Byte/Int8/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/
-             CInt16/CInt32/CFloat32/CFloat64}] [-strict]
-       [-if <format>]... [-of <format>]
-       [-b <band>] [-mask <band>] [-expand {gray|rgb|rgba}]
-       [-outsize <xsize>[%]|0 <ysize>[%]|0] [-tr <xres> <yres>]
-       [-ovr <level>|AUTO|AUTO-<n>|NONE]
-       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
-       [-unscale] [-scale[_bn] [<src_min> <src_max> [<dst_min> <dst_max>]]]... [-exponent[_bn] <exp_val>]...
-       [-srcwin <xoff> <yoff> <xsize> <ysize>] [-epo] [-eco]
-       [-projwin <ulx> <uly> <lrx> <lry>] [-projwin_srs <srs_def>]
-       [-a_srs <srs_def>] [-a_coord_epoch <epoch>]
-       [-a_ullr <ulx> <uly> <lrx> <lry>] [-a_nodata <value>]
-       [-a_gt <gt0> <gt1> <gt2> <gt3> <gt4> <gt5>]
-       [-a_scale <value>] [-a_offset <value>]
-       [-nogcp] [-gcp <pixel> <line> <easting> <northing> [<elevation>]]...
-       |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]
-       |-colorinterp {red|green|blue|alpha|gray|undefined},...]
-       [-mo <META-TAG>=<VALUE>]... [-dmo "DOMAIN:META-TAG=VALUE"]... [-q] [-sds]
-       [-co <NAME>=<VALUE>]... [-stats] [-norat] [-noxmp]
-       [-oo <NAME>=<VALUE>]...
-       <src_dataset> <dst_dataset>
+.. program-output:: gdal_translate --help-doc
 
 Description
 -----------
 
 The :program:`gdal_translate` utility can be used to convert raster data between
-different formats, potentially performing some operations like subsettings,
+different formats, potentially performing some operations like subsetting,
 resampling, and rescaling pixels in the process.
 
 .. program:: gdal_translate
@@ -96,7 +72,7 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -tr <xres> <yres>
 
-    set target resolution. The values must be expressed in georeferenced units.
+    Set target resolution. The values must be expressed in georeferenced units.
     Both must be positive values. This is mutually exclusive with
     :option:`-outsize`, :option:`-a_ullr`, and :option:`-a_gt`.
 
@@ -111,13 +87,13 @@ resampling, and rescaling pixels in the process.
     equal to 1, to select an overview level below the AUTO one. Or specify NONE to
     force the base resolution to be used (can be useful if overviews have been
     generated with a low quality resampling method, and a higher quality resampling method
-    is specified with :option:`-r`.
+    is specified with :option:`-r`.)
 
-    When :option:`-ovr` is specified to an integer value,
-    and none of :option:`-outsize` and :option:`-tr` is specified, the size of
+    When :option:`-ovr` is specified as an integer value,
+    and neither :option:`-outsize` nor :option:`-tr` is specified, the size of
     the overview will be used as the output size.
 
-    When :option:`-ovr` is specified, values of :option:`-srcwin`, when specified,
+    When :option:`-ovr` is specified, values of :option:`-srcwin`
     should be expressed as pixel offset and size of the full resolution source dataset.
     Similarly when using :option:`-outsize` with percentage values, they refer to the size
     of the full resolution source dataset.
@@ -146,7 +122,9 @@ resampling, and rescaling pixels in the process.
 
     Rescale the input pixels values from the range **src_min** to **src_max**
     to the range **dst_min** to **dst_max**.
-    If omitted the output range is 0 to 255.
+    If omitted the output range is from the minimum value to the maximum value allowed
+    for integer data types (for example from 0 to 255 for Byte output) or from 0 to 1
+    for floating-point data types.
     If omitted the input range is automatically computed from the
     source dataset, in its whole (not just the window of interest potentially
     specified with :option:`-srcwin` or :option:`-projwin`). This may be a
@@ -156,26 +134,38 @@ resampling, and rescaling pixels in the process.
     formats that support serializing statistics computations (GeoTIFF, VRT...)
     Note that the values specified after :option:`-scale` are only used to compute a scale and
     offset to apply to the input raster values. In particular, ``src_min`` and
-    ``src_max`` are not used to clip input values.
+    ``src_max`` are not used to clip input values unless :option:`-exponent`
+    is also specified.
+    Instead of being clipped, source values that are outside the range of ``src_min`` and ``src_max`` will be scaled to values outside the range of ``dst_min`` and ``dst_max``.
+    If clipping without exponential scaling is desired,
+    ``-exponent 1`` can be used.
     :option:`-scale` can be repeated several times (if specified only once,
     it also applies to all bands of the output dataset), so as to specify per
-    band parameters. It is also possible to use the "-scale_bn" syntax where bn
-    is a band number (e.g. "-scale_2" for the 2nd band of the output dataset)
+    band parameters. It is also possible to use the ``-scale_bn`` syntax where bn
+    is a band number (e.g. ``-scale_2`` for the 2nd band of the output dataset)
     to specify the parameters of one or several specific bands.
 
 .. option:: -exponent <exp_val>
 
-    To apply non-linear scaling with a power function. exp_val is the exponent
+    Apply non-linear scaling with a power function. ``exp_val`` is the exponent
     of the power function (must be positive). This option must be used with the
-    -scale option. If specified only once, -exponent applies to all bands of
+    :option:`-scale` option. If specified only once, :option:`-exponent` applies
+    to all bands of
     the output image. It can be repeated several times so as to specify per
-    band parameters. It is also possible to use the "-exponent_bn" syntax where
-    bn is a band number (e.g. "-exponent_2" for the 2nd band of the output
+    band parameters. It is also possible to use the ``-exponent_bn`` syntax where
+    bn is a band number (e.g. ``-exponent_2`` for the 2nd band of the output
     dataset) to specify the parameters of one or several specific bands.
+
+    The scaled value ``Dst`` is calculated from the source value ``Src`` with the following
+    formula:
+
+    .. math::
+        {Dst} = \left( {Dst}_{max} - {Dst}_{min} \right) \times \operatorname{max} \left( 0, \operatorname{min} \left( 1, \left( \frac{{Src} - {Src}_{min}}{{Src}_{max}-{Src}_{min}} \right)^{exp\_val} \right) \right) + {Dst}_{min}
+
 
 .. option:: -unscale
 
-    Apply the scale/offset metadata for the bands to convert scaled values to
+    Apply the scale/offset metadata for the bands to convert linearly-scaled values to
     unscaled values.  It is also often necessary to reset the output datatype
     with the :option:`-ot` switch.
     The unscaled value is computed from the scaled raw value with the following
@@ -186,22 +176,41 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -srcwin <xoff> <yoff> <xsize> <ysize>
 
-    Selects a subwindow from the source image for copying based on pixel/line location.
+    Selects a subwindow from the source image for copying based on pixel/line
+    location. Pixel/line offsets (``xoff`` and ``yoff``) are measured from the
+    left and top of the image.
+    If the subwindow extends beyond the bounds of the source dataset,
+    output pixels will be written with a value of zero, unless a NoData value is
+    defined either in the source dataset or by :option:`-a_nodata`.
+    Alternatively, :program:`gdal_translate` can issue an error in this case
+    if so directed by options :option:`-epo` or :option:`-eco`.
 
 .. option:: -projwin <ulx> <uly> <lrx> <lry>
 
     Selects a subwindow from the source image for copying
     (like :option:`-srcwin`) but with the corners given in georeferenced
     coordinates (by default expressed in the SRS of the dataset. Can be
-    changed with :option:`-projwin_srs`).
+    changed with :option:`-projwin_srs`). If the subwindow extends beyond
+    the bounds of the source dataset, output pixels will be written with a value
+    of zero, unless a NoData value is defined either in the source dataset or
+    by :option:`-a_nodata`. Alternatively, :program:`gdal_translate` can issue
+    an error in this case if so directed by options :option:`-epo` or :option:`-eco`.
 
     .. note::
 
-        In GDAL 2.1.0 and 2.1.1, using -projwin with coordinates not aligned
-        with pixels will result in a sub-pixel shift. This has been corrected
-        in later versions. When selecting non-nearest neighbour resampling,
-        starting with GDAL 2.1.0, sub-pixel accuracy is however used to get
-        better results.
+        Beginning with GDAL 3.11, the extent described by :option:`-projwin` will
+        be transformed into the dataset SRS and used to select a subwindow.
+        Before GDAL 3.11, only the two corner points were transformed into the
+        dataset SRS, and these two transformed points were used to define an extent
+        in the dataset SRS. Depending on the SRS involved, the subwindow selected in 
+        GDAL 3.11 may be substantially larger than in previous versions.
+
+    .. note::
+
+        When using nearest-neighbor resampling, the window specified by 
+        :option:`-projwin` is expanded (rounded, for GDAL < 3.11) if necessary
+        to match input pixel boundaries. For other resampling algorithms, the window
+        is not modified.
 
 .. option:: -projwin_srs <srs_def>
 
@@ -217,7 +226,7 @@ resampling, and rescaling pixels in the process.
     (Error when Partially Outside) If this option is set, :option:`-srcwin` or
     :option:`-projwin` values that falls partially outside the source raster
     extent will be considered as an error. The default behavior is to accept
-    such requests, when they were considered as an error before.
+    such requests.
 
 .. option:: -eco
 
@@ -289,14 +298,14 @@ resampling, and rescaling pixels in the process.
     nodata value, this does not cause pixel values that are equal to that nodata
     value to be changed to the value specified with this option.
 
-.. option:: -colorinterp_X <red|green|blue|alpha|gray|undefined>
+.. option:: -colorinterp_X <red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...>
 
     Override the color interpretation of band X (where X is a valid band number,
     starting at 1)
 
     .. versionadded:: 2.3
 
-.. option:: -colorinterp {red|green|blue|alpha|gray|undefined},...
+.. option:: -colorinterp {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...},...
 
     Override the color interpretation of all specified bands. For
     example -colorinterp red,green,blue,alpha for a 4 band output dataset.
@@ -325,7 +334,7 @@ resampling, and rescaling pixels in the process.
     The creation options available vary by format driver, and some
     simple formats have no creation options at all. A list of options
     supported for a format can be listed with the
-    :ref:`--formats <raster_common_options_formats>`
+    :ref:`--format <raster_common_options_format>`
     command line option but the documentation for the format is the
     definitive source of information on driver creation options.
     See :ref:`raster_drivers` format
@@ -434,28 +443,34 @@ This utility is also callable from C with :cpp:func:`GDALTranslate`.
 Examples
 --------
 
-::
+.. example::
+   :title: Creating a tiled GeoTIFF
 
-    gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
+   .. code-block:: bash
 
-
-To create a JPEG-compressed TIFF with internal mask from a RGBA dataset
-
-::
-
-    gdal_translate rgba.tif withmask.tif -b 1 -b 2 -b 3 -mask 4 -co COMPRESS=JPEG \
-      -co PHOTOMETRIC=YCBCR --config GDAL_TIFF_INTERNAL_MASK YES
+      gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
 
 
-To create a RGBA dataset from a RGB dataset with a mask
+.. example::
+   :title: Creating a JPEG-compressed TIFF with internal mask from a RGBA dataset
 
-::
+   .. code-block:: bash
 
-    gdal_translate withmask.tif rgba.tif -b 1 -b 2 -b 3 -b mask
+      gdal_translate rgba.tif withmask.tif -b 1 -b 2 -b 3 -mask 4 -co COMPRESS=JPEG \
+        -co PHOTOMETRIC=YCBCR --config GDAL_TIFF_INTERNAL_MASK YES
 
 
-Subsetting using :option:`-projwin` and :option:`-outsize`:
+.. example::
+   :title: Creating a RGBA dataset from a RGB dataset with a mask
 
-.. code-block:: bash
+   .. code-block:: bash
 
-   gdal_translate -projwin -20037500 10037500 0 0 -outsize 100 100 frmt_wms_googlemaps_tms.xml junk.png
+       gdal_translate withmask.tif rgba.tif -b 1 -b 2 -b 3 -b mask
+
+
+.. example::
+   :title: Subsetting using :option:`-projwin` and :option:`-outsize`
+
+   .. code-block:: bash
+
+      gdal_translate -projwin -20037500 10037500 0 0 -outsize 100 100 frmt_wms_googlemaps_tms.xml junk.png

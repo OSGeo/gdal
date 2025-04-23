@@ -8,23 +8,7 @@
  * Copyright (c) 2010, 2014, Even Rouault <even dot rouault at spatialys dot
  *com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -48,16 +32,6 @@ static inline double dist(double x0, double y0, double x1, double y1)
 }
 
 /************************************************************************/
-/*                         OGRCircularString()                          */
-/************************************************************************/
-
-/**
- * \brief Create an empty circular string.
- */
-
-OGRCircularString::OGRCircularString() = default;
-
-/************************************************************************/
 /*              OGRCircularString( const OGRCircularString& )           */
 /************************************************************************/
 
@@ -71,12 +45,6 @@ OGRCircularString::OGRCircularString() = default;
  */
 
 OGRCircularString::OGRCircularString(const OGRCircularString &) = default;
-
-/************************************************************************/
-/*                        ~OGRCircularString()                          */
-/************************************************************************/
-
-OGRCircularString::~OGRCircularString() = default;
 
 /************************************************************************/
 /*                  operator=( const OGRCircularString& )               */
@@ -294,7 +262,7 @@ void OGRCircularString::ExtendEnvelopeWithCircular(
         if (OGRGeometryFactory::GetCurveParameters(
                 x0, y0, x1, y1, x2, y2, R, cx, cy, alpha0, alpha1, alpha2))
         {
-            if (CPLIsNan(alpha0) || CPLIsNan(alpha2))
+            if (std::isnan(alpha0) || std::isnan(alpha2))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "GetCurveParameters returned NaN");
@@ -359,10 +327,12 @@ void OGRCircularString::getEnvelope(OGREnvelope3D *psEnvelope) const
 /*                     OGRCircularString::segmentize()                  */
 /************************************************************************/
 
-void OGRCircularString::segmentize(double dfMaxLength)
+bool OGRCircularString::segmentize(double dfMaxLength)
 {
-    if (!IsValidFast() || nPointCount == 0)
-        return;
+    if (!IsValidFast())
+        return false;
+    if (nPointCount == 0)
+        return true;
 
     // So as to make sure that the same line followed in both directions
     // result in the same segmentized line.
@@ -371,12 +341,14 @@ void OGRCircularString::segmentize(double dfMaxLength)
          paoPoints[0].y < paoPoints[nPointCount - 1].y))
     {
         reversePoints();
-        segmentize(dfMaxLength);
+        const bool bRet = segmentize(dfMaxLength);
         reversePoints();
+        return bRet;
     }
 
     std::vector<OGRRawPoint> aoRawPoint;
     std::vector<double> adfZ;
+    bool bRet = true;
     for (int i = 0; i < nPointCount - 2; i += 2)
     {
         const double x0 = paoPoints[i].x;
@@ -411,11 +383,12 @@ void OGRCircularString::segmentize(double dfMaxLength)
                 const double dfVal =
                     1 + 2 * std::floor(dfSegmentLength1 / dfMaxLength / 2.0);
                 if (dfVal >= std::numeric_limits<int>::max() || dfVal < 0.0 ||
-                    CPLIsNan(dfVal))
+                    std::isnan(dfVal))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "segmentize nIntermediatePoints invalid: %lf",
                              dfVal);
+                    bRet = false;
                     break;
                 }
                 const int nIntermediatePoints = static_cast<int>(dfVal);
@@ -446,11 +419,12 @@ void OGRCircularString::segmentize(double dfMaxLength)
                 const double dfVal =
                     1 + 2 * std::floor(dfSegmentLength2 / dfMaxLength / 2.0);
                 if (dfVal >= std::numeric_limits<int>::max() || dfVal < 0.0 ||
-                    CPLIsNan(dfVal))
+                    std::isnan(dfVal))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "segmentize nIntermediatePoints invalid 2: %lf",
                              dfVal);
+                    bRet = false;
                     break;
                 }
                 int nIntermediatePoints = static_cast<int>(dfVal);
@@ -484,11 +458,12 @@ void OGRCircularString::segmentize(double dfMaxLength)
                 const double dfVal =
                     1 + 2 * std::ceil(dfSegmentLength1 / dfMaxLength / 2.0);
                 if (dfVal >= std::numeric_limits<int>::max() || dfVal < 0.0 ||
-                    CPLIsNan(dfVal))
+                    std::isnan(dfVal))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "segmentize nIntermediatePoints invalid 2: %lf",
                              dfVal);
+                    bRet = false;
                     break;
                 }
                 int nIntermediatePoints = static_cast<int>(dfVal);
@@ -514,11 +489,12 @@ void OGRCircularString::segmentize(double dfMaxLength)
                 const double dfVal =
                     1 + 2 * std::ceil(dfSegmentLength2 / dfMaxLength / 2.0);
                 if (dfVal >= std::numeric_limits<int>::max() || dfVal < 0.0 ||
-                    CPLIsNan(dfVal))
+                    std::isnan(dfVal))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "segmentize nIntermediatePoints invalid 3: %lf",
                              dfVal);
+                    bRet = false;
                     break;
                 }
                 const int nIntermediatePoints = static_cast<int>(dfVal);
@@ -561,6 +537,7 @@ void OGRCircularString::segmentize(double dfMaxLength)
             memcpy(padfZ, &adfZ[0], sizeof(double) * nPointCount);
         }
     }
+    return bRet;
 }
 
 /************************************************************************/
@@ -918,11 +895,25 @@ double OGRCircularString::get_GeodesicArea(
     if (!poSRSOverride)
         poSRSOverride = getSpatialReference();
 
-    OGRLineString *poLS = CurveToLine();
-    const double dfArea = poLS->get_GeodesicArea(poSRSOverride);
-    delete poLS;
+    auto poLS = std::unique_ptr<OGRLineString>(CurveToLine());
+    return poLS->get_GeodesicArea(poSRSOverride);
+}
 
-    return dfArea;
+/************************************************************************/
+/*                        get_GeodesicLength()                          */
+/************************************************************************/
+
+double OGRCircularString::get_GeodesicLength(
+    const OGRSpatialReference *poSRSOverride) const
+{
+    if (IsEmpty())
+        return 0;
+
+    if (!poSRSOverride)
+        poSRSOverride = getSpatialReference();
+
+    auto poLS = std::unique_ptr<OGRLineString>(CurveToLine());
+    return poLS->get_GeodesicLength(poSRSOverride);
 }
 
 //! @cond Doxygen_Suppress

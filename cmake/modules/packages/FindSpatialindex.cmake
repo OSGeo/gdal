@@ -12,7 +12,7 @@
 #
 
 find_path(SPATIALINDEX_INCLUDE_DIR NAMES SpatialIndex.h PATH_SUFFIXES spatialindex)
-find_library(SPATIALINDEX_LIBRARY NAMES spatialindex_i spatialindex)
+find_library(SPATIALINDEX_LIBRARY NAMES spatialindex_i spatialindex NAMES_PER_DIR)
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Spatialindex FOUND_VAR SPATIALINDEX_FOUND
                                   REQUIRED_VARS SPATIALINDEX_LIBRARY MYSQL_SPATIALINDEX_DIR)

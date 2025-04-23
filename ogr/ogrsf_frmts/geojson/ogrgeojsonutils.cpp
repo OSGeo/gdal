@@ -8,23 +8,7 @@
  * Copyright (c) 2007, Mateusz Loskot
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrgeojsonutils.h"
@@ -263,7 +247,24 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
     // See https://github.com/OSGeo/gdal/issues/2720
     if (osWithoutSpace.find("{\"coordinates\":[") == 0 ||
         // and https://github.com/OSGeo/gdal/issues/2787
-        osWithoutSpace.find("{\"geometry\":{\"coordinates\":[") == 0)
+        osWithoutSpace.find("{\"geometry\":{\"coordinates\":[") == 0 ||
+        // and https://github.com/qgis/QGIS/issues/61266
+        osWithoutSpace.find(
+            "{\"geometry\":{\"type\":\"Point\",\"coordinates\":[") == 0 ||
+        osWithoutSpace.find(
+            "{\"geometry\":{\"type\":\"LineString\",\"coordinates\":[") == 0 ||
+        osWithoutSpace.find(
+            "{\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[") == 0 ||
+        osWithoutSpace.find(
+            "{\"geometry\":{\"type\":\"MultiPoint\",\"coordinates\":[") == 0 ||
+        osWithoutSpace.find(
+            "{\"geometry\":{\"type\":\"MultiLineString\",\"coordinates\":[") ==
+            0 ||
+        osWithoutSpace.find(
+            "{\"geometry\":{\"type\":\"MultiPolygon\",\"coordinates\":[") ==
+            0 ||
+        osWithoutSpace.find("{\"geometry\":{\"type\":\"GeometryCollection\","
+                            "\"geometries\":[") == 0)
     {
         return true;
     }
@@ -1030,163 +1031,6 @@ GeoJSONSourceType JSONFGDriverGetSourceType(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           GeoJSONPropertyToFieldType()               */
-/************************************************************************/
-
-constexpr GIntBig MY_INT64_MAX = (((GIntBig)0x7FFFFFFF) << 32) | 0xFFFFFFFF;
-constexpr GIntBig MY_INT64_MIN = ((GIntBig)0x80000000) << 32;
-
-OGRFieldType GeoJSONPropertyToFieldType(json_object *poObject,
-                                        OGRFieldSubType &eSubType,
-                                        bool bArrayAsString)
-{
-    eSubType = OFSTNone;
-
-    if (poObject == nullptr)
-    {
-        return OFTString;
-    }
-
-    json_type type = json_object_get_type(poObject);
-
-    if (json_type_boolean == type)
-    {
-        eSubType = OFSTBoolean;
-        return OFTInteger;
-    }
-    else if (json_type_double == type)
-        return OFTReal;
-    else if (json_type_int == type)
-    {
-        GIntBig nVal = json_object_get_int64(poObject);
-        if (!CPL_INT64_FITS_ON_INT32(nVal))
-        {
-            if (nVal == MY_INT64_MIN || nVal == MY_INT64_MAX)
-            {
-                static bool bWarned = false;
-                if (!bWarned)
-                {
-                    bWarned = true;
-                    CPLError(
-                        CE_Warning, CPLE_AppDefined,
-                        "Integer values probably ranging out of 64bit integer "
-                        "range have been found. Will be clamped to "
-                        "INT64_MIN/INT64_MAX");
-                }
-            }
-            return OFTInteger64;
-        }
-        else
-        {
-            return OFTInteger;
-        }
-    }
-    else if (json_type_string == type)
-        return OFTString;
-    else if (json_type_array == type)
-    {
-        if (bArrayAsString)
-        {
-            eSubType = OFSTJSON;
-            return OFTString;
-        }
-        const auto nSize = json_object_array_length(poObject);
-        if (nSize == 0)
-        {
-            eSubType = OFSTJSON;
-            return OFTString;
-        }
-        OGRFieldType eType = OFTIntegerList;
-        for (auto i = decltype(nSize){0}; i < nSize; i++)
-        {
-            json_object *poRow = json_object_array_get_idx(poObject, i);
-            if (poRow != nullptr)
-            {
-                type = json_object_get_type(poRow);
-                if (type == json_type_string)
-                {
-                    if (i == 0 || eType == OFTStringList)
-                    {
-                        eType = OFTStringList;
-                    }
-                    else
-                    {
-                        eSubType = OFSTJSON;
-                        return OFTString;
-                    }
-                }
-                else if (type == json_type_double)
-                {
-                    if (eSubType == OFSTNone &&
-                        (i == 0 || eType == OFTRealList ||
-                         eType == OFTIntegerList || eType == OFTInteger64List))
-                    {
-                        eType = OFTRealList;
-                    }
-                    else
-                    {
-                        eSubType = OFSTJSON;
-                        return OFTString;
-                    }
-                }
-                else if (type == json_type_int)
-                {
-                    if (eSubType == OFSTNone && eType == OFTIntegerList)
-                    {
-                        GIntBig nVal = json_object_get_int64(poRow);
-                        if (!CPL_INT64_FITS_ON_INT32(nVal))
-                            eType = OFTInteger64List;
-                    }
-                    else if (eSubType == OFSTNone &&
-                             (eType == OFTInteger64List ||
-                              eType == OFTRealList))
-                    {
-                        // ok
-                    }
-                    else
-                    {
-                        eSubType = OFSTJSON;
-                        return OFTString;
-                    }
-                }
-                else if (type == json_type_boolean)
-                {
-                    if (i == 0 ||
-                        (eType == OFTIntegerList && eSubType == OFSTBoolean))
-                    {
-                        eSubType = OFSTBoolean;
-                    }
-                    else
-                    {
-                        eSubType = OFSTJSON;
-                        return OFTString;
-                    }
-                }
-                else
-                {
-                    eSubType = OFSTJSON;
-                    return OFTString;
-                }
-            }
-            else
-            {
-                eSubType = OFSTJSON;
-                return OFTString;
-            }
-        }
-
-        return eType;
-    }
-    else if (json_type_object == type)
-    {
-        eSubType = OFSTJSON;
-        return OFTString;
-    }
-
-    return OFTString;  // null
-}
-
-/************************************************************************/
 /*                        GeoJSONStringPropertyToFieldType()            */
 /************************************************************************/
 
@@ -1223,29 +1067,75 @@ OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONGetGeometryName()                */
+/*                   GeoJSONHTTPFetchWithContentTypeHeader()            */
 /************************************************************************/
 
-const char *OGRGeoJSONGetGeometryName(OGRGeometry const *poGeometry)
+CPLHTTPResult *GeoJSONHTTPFetchWithContentTypeHeader(const char *pszURL)
 {
-    CPLAssert(nullptr != poGeometry);
+    std::string osHeaders;
+    const char *pszGDAL_HTTP_HEADERS =
+        CPLGetConfigOption("GDAL_HTTP_HEADERS", nullptr);
+    bool bFoundAcceptHeader = false;
+    if (pszGDAL_HTTP_HEADERS)
+    {
+        bool bHeadersDone = false;
+        // Compatibility hack for "HEADERS=Accept: text/plain, application/json"
+        if (strstr(pszGDAL_HTTP_HEADERS, "\r\n") == nullptr)
+        {
+            const char *pszComma = strchr(pszGDAL_HTTP_HEADERS, ',');
+            if (pszComma != nullptr && strchr(pszComma, ':') == nullptr)
+            {
+                osHeaders = pszGDAL_HTTP_HEADERS;
+                bFoundAcceptHeader =
+                    STARTS_WITH_CI(pszGDAL_HTTP_HEADERS, "Accept:");
+                bHeadersDone = true;
+            }
+        }
+        if (!bHeadersDone)
+        {
+            // We accept both raw headers with \r\n as a separator, or as
+            // a comma separated list of foo: bar values.
+            const CPLStringList aosTokens(
+                strstr(pszGDAL_HTTP_HEADERS, "\r\n")
+                    ? CSLTokenizeString2(pszGDAL_HTTP_HEADERS, "\r\n", 0)
+                    : CSLTokenizeString2(pszGDAL_HTTP_HEADERS, ",",
+                                         CSLT_HONOURSTRINGS));
+            for (int i = 0; i < aosTokens.size(); ++i)
+            {
+                if (!osHeaders.empty())
+                    osHeaders += "\r\n";
+                if (!bFoundAcceptHeader)
+                    bFoundAcceptHeader =
+                        STARTS_WITH_CI(aosTokens[i], "Accept:");
+                osHeaders += aosTokens[i];
+            }
+        }
+    }
+    if (!bFoundAcceptHeader)
+    {
+        if (!osHeaders.empty())
+            osHeaders += "\r\n";
+        osHeaders += "Accept: text/plain, application/json";
+    }
 
-    const OGRwkbGeometryType eType = wkbFlatten(poGeometry->getGeometryType());
+    CPLStringList aosOptions;
+    aosOptions.SetNameValue("HEADERS", osHeaders.c_str());
+    CPLHTTPResult *pResult = CPLHTTPFetch(pszURL, aosOptions.List());
 
-    if (wkbPoint == eType)
-        return "Point";
-    else if (wkbLineString == eType)
-        return "LineString";
-    else if (wkbPolygon == eType)
-        return "Polygon";
-    else if (wkbMultiPoint == eType)
-        return "MultiPoint";
-    else if (wkbMultiLineString == eType)
-        return "MultiLineString";
-    else if (wkbMultiPolygon == eType)
-        return "MultiPolygon";
-    else if (wkbGeometryCollection == eType)
-        return "GeometryCollection";
+    if (nullptr == pResult || 0 == pResult->nDataLen ||
+        0 != CPLGetLastErrorNo())
+    {
+        CPLHTTPDestroyResult(pResult);
+        return nullptr;
+    }
 
-    return "Unknown";
+    if (0 != pResult->nStatus)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Curl reports error: %d: %s",
+                 pResult->nStatus, pResult->pszErrBuf);
+        CPLHTTPDestroyResult(pResult);
+        return nullptr;
+    }
+
+    return pResult;
 }

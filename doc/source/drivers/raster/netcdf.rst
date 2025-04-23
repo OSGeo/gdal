@@ -277,6 +277,14 @@ Open options
 |about-open-options|
 The following open options are available:
 
+-  .. oo:: LIST_ALL_ARRAYS
+      :choices: YES, NO
+      :default: NO
+      :since: 3.11
+
+      In classic 2D mode, whereas the subdataset list should include all arrays,
+      including those with 1 dimension.
+
 -  .. oo:: HONOUR_VALID_RANGE
       :choices: YES, NO
       :since: 2.2
@@ -287,7 +295,7 @@ The following open options are available:
       valid_min, valid_max or valid_range attributes.
 
 -  .. oo:: IGNORE_XY_AXIS_NAME_CHECKS
-      :choices: YES, NOA
+      :choices: YES, NO
       :default: NO
       :since: 3.4.2
 
@@ -482,7 +490,7 @@ The following creation options are available:
       these variables by default. In import the CF "grid_mapping" variable
       takes precedence and the GDAL tags are used if they do not conflict
       with CF metadata. In GDAL 4, spatial_ref will not be exported. The
-      crs_wkt CF metatata attribute will be used instead.
+      crs_wkt CF metadata attribute will be used instead.
 
 -  .. co:: WRITE_LONLAT
       :choices: YES, NO, IF_NEEDED
@@ -617,6 +625,17 @@ Configuration Options
       geotransform has been found, and that geotransform is within the bounds
       -180,360 -90,90, if YES assume OGC:CRS84.
 
+-  .. config:: GDAL_NETCDF_REPORT_EXTRA_DIM_VALUES
+      :choices: YES, NO
+      :default: NO
+      :since: 3.10.1
+
+      For a netCDF dataset stored on a remote file system (``/vsicurl/``, ``/vsis3/``),
+      getting the content of the ``NETCDF_DIM_{dim_name}_VALUES`` metadata item
+      can be a slow operation when the dimension is unlimited. It is thus disabled
+      by default for such remote files. By setting this configuration option to YES,
+      you force GDAL to get the content of such metadata items.
+
 VSI Virtual File System API support
 -----------------------------------
 
@@ -682,9 +701,9 @@ The :cpp:func:`GDALGroup::GetMDArrayNames` method supports the following options
 - SHOW_ALL=YES/NO. Defaults to NO. If set to YES, all variables will be listed.
 - SHOW_ZERO_DIM=YES/NO. Defaults to NO. If set to NO, variables with 0-dimension
   will not be listed.
-- SHOW_COORDINATES=YES/NO. Defaults to YES. If set to NO, variables refererenced
+- SHOW_COORDINATES=YES/NO. Defaults to YES. If set to NO, variables referenced
   in the ``coordinates`` attribute of another variable will not be listed.
-- SHOW_BOUNDS=YES/NO. Defaults to YES. If set to NO, variables refererenced
+- SHOW_BOUNDS=YES/NO. Defaults to YES. If set to NO, variables referenced
   in the ``bounds`` attribute of another variable will not be listed.
 - SHOW_INDEXING=YES/NO. Defaults to YES. If set to NO,
   single-dimensional variables whose name is equal to the name of their indexing
@@ -699,6 +718,28 @@ The :cpp:func:`GDALGroup::OpenMDArray` method supports the following options:
 - USE_DEFAULT_FILL_AS_NODATA=YES/NO. (GDAL >= 3.6) Defaults to NO. If set to YES, the default
   fill value will be used as nodata when there is no _FillValue or missing_value
   attribute (except on variables of type Byte, UByte, Char)
+
+- RAW_DATA_CHUNK_CACHE_SIZE=<integer>. (GDAL >= 3.10, advanced libnetcdf parameter)
+  The total size of the libnetcdf raw data chunk cache, in bytes. Default value
+  (at least for some versions of libnetcdf) is 1 MB. Only for netCDF4/HDF5 files.
+
+- CHUNK_SLOTS=<integer>. (GDAL >= 3.10, advanced libnetcdf parameter)
+  The total size of the libnetcdf raw data chunk cache, in bytes.
+  Default value (at least for some versions of libnetcdf) is 521.
+  Only for netCDF4/HDF5 files.
+
+- PREEMPTION=<float> between 0 and 1. (GDAL >= 3.10, advanced libnetcdf parameter)
+  Indicates how much chunks from libnetcdf chunk cache that have been fully read
+  are favored for preemption.
+  A value of zero means fully read chunks are treated no differently than other
+  chunks (the preemption is strictly least-recently used) while a value of one
+  means fully read chunks are always preempted before other chunks.
+  Default value (at least for some versions of libnetcdf) is 0.75.
+  Only for netCDF4/HDF5 files.
+
+For RAW_DATA_CHUNK_CACHE_SIZE, CHUNK_SLOTS and PREEMPTION, consult
+`nc_set_var_chunk_cache <https://docs.unidata.ucar.edu/netcdf-c/current/group__variables.html#ga2788cbfc6880ec70c304292af2bc7546>`__ and
+`documentation about netCDF chunk cacke <https://docs.unidata.ucar.edu/nug/current/netcdf_perf_chunking.html>`__
 
 The :cpp:func:`GDALGroup::CreateMDArray` method supports the following options:
 
@@ -727,9 +768,6 @@ This driver is compiled with the UNIDATA NetCDF library.
 
 You need to download or compile the NetCDF library before configuring
 GDAL with NetCDF support.
-
-See `NetCDF GDAL wiki <http://trac.osgeo.org/gdal/wiki/NetCDF>`__ for
-build instructions and information regarding HDF4, NetCDF-4 and HDF5.
 
 See Also:
 ---------

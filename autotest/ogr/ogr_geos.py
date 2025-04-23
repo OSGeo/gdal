@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GEOS integration in OGR - geometric operations.
@@ -331,7 +330,13 @@ def test_ogr_geos_pointzm_empty():
 
     # GEOS 3.12 returns MULTIPOINT ZM EMPTY, but also accept POINT ZM EMPTY
     # to be future proof...
-    assert g2.ExportToIsoWkt() in ("MULTIPOINT ZM EMPTY", "POINT ZM EMPTY")
+    # Also accept "POINT EMPTY", as returned by GEOS 3.13.1
+    # (cf https://github.com/libgeos/geos/issues/1248)
+    assert g2.ExportToIsoWkt() in (
+        "POINT EMPTY",
+        "MULTIPOINT ZM EMPTY",
+        "POINT ZM EMPTY",
+    )
 
 
 ###############################################################################

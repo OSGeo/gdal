@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Fake HTTP server
@@ -9,23 +8,7 @@
 ###############################################################################
 # Copyright (c) 2010-2012, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import contextlib
@@ -55,7 +38,7 @@ def install_http_handler(handler_instance):
         custom_handler = None
 
 
-class RequestResponse(object):
+class RequestResponse:
     def __init__(
         self,
         method,
@@ -92,7 +75,7 @@ class RequestResponse(object):
         )
 
 
-class FileHandler(object):
+class FileHandler:
     """
     Handler that serves files from a dictionary and/or a fallback VSI location.
     """
@@ -159,11 +142,13 @@ class FileHandler(object):
         else:
             start = 0
             end = len(filedata)
+            response_code = 200
             if "Range" in request.headers:
                 import re
 
                 res = re.search(r"bytes=(\d+)\-(\d+)", request.headers["Range"])
                 if res:
+                    response_code = 206
                     res = res.groups()
                     start = int(res[0])
                     end = int(res[1]) + 1
@@ -171,7 +156,7 @@ class FileHandler(object):
                         end = len(filedata)
             try:
                 data_slice = filedata[start:end]
-                request.send_response(200)
+                request.send_response(response_code)
                 if "Range" in request.headers:
                     request.send_header("Content-Range", "%d-%d" % (start, end - 1))
                 request.send_header("Content-Length", len(filedata))
@@ -213,7 +198,7 @@ class FileHandler(object):
         self.send_response(request, filedata)
 
 
-class BaseMockedHttpHandler(object):
+class BaseMockedHttpHandler:
     @staticmethod
     def _process_req_resp(req_resp, request):
         if req_resp.custom_method:

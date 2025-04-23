@@ -14,23 +14,7 @@
  ******************************************************************************
  * Copyright (c) 2016, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -2020,8 +2004,8 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
         }
     }
 
-    CPLString osCoverageName(CSLFetchNameValueDef(papszOptions, "COVERAGE",
-                                                  CPLGetBasename(pszName)));
+    const std::string osCoverageName(CSLFetchNameValueDef(
+        papszOptions, "COVERAGE", CPLGetBasenameSafe(pszName).c_str()));
     // Check if the coverage already exists
     rl2CoveragePtr cvg = nullptr;
     char *pszSQL = sqlite3_mprintf(
@@ -2035,7 +2019,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     if (nRowCount == 1)
     {
         cvg = rl2_create_coverage_from_dbms(poDS->GetDB(), nullptr,
-                                            osCoverageName);
+                                            osCoverageName.c_str());
         if (cvg == nullptr)
         {
             delete poDS;
@@ -2087,7 +2071,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
         }
 
         if (rl2_create_dbms_coverage(
-                poDS->GetDB(), osCoverageName, nSampleType, nPixelType,
+                poDS->GetDB(), osCoverageName.c_str(), nSampleType, nPixelType,
                 nBandCount, nCompression, nQuality, nTileWidth, nTileHeight,
                 nSRSId, dfXRes, dfYRes, pNoData, pPalette, bStrictResolution,
                 bMixedResolutions, bSectionPaths, bSectionMD5, bSectionSummary,
@@ -2108,7 +2092,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     if (cvg == nullptr)
     {
         cvg = rl2_create_coverage_from_dbms(poDS->GetDB(), nullptr,
-                                            osCoverageName);
+                                            osCoverageName.c_str());
         if (cvg == nullptr)
         {
             if (pPalette)
@@ -2125,8 +2109,8 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     double dfYMax = adfGeoTransform[3];
     double dfYMin = dfYMax + adfGeoTransform[5] * poSrcDS->GetRasterYSize();
 
-    CPLString osSectionName(
-        CSLFetchNameValueDef(papszOptions, "SECTION", CPLGetBasename(pszName)));
+    CPLString osSectionName(CSLFetchNameValueDef(
+        papszOptions, "SECTION", CPLGetBasenameSafe(pszName).c_str()));
     const bool bPyramidize = CPLFetchBool(papszOptions, "PYRAMIDIZE", false);
     RasterLite2CallbackData cbk_data;
     cbk_data.poSrcDS = poSrcDS;
@@ -2164,7 +2148,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     GDALOpenInfo oOpenInfo(
         CPLSPrintf("RASTERLITE2:%s:%s",
                    EscapeNameAndQuoteIfNeeded(pszName).c_str(),
-                   EscapeNameAndQuoteIfNeeded(osCoverageName).c_str()),
+                   EscapeNameAndQuoteIfNeeded(osCoverageName.c_str()).c_str()),
         GDAL_OF_RASTER | GDAL_OF_UPDATE);
     poDS->Open(&oOpenInfo);
     return poDS;

@@ -8,23 +8,7 @@
  * Copyright (c) 2015, Even Rouault <even.rouault at spatialys.com>
  * Copyright (c) 2015, Airbus DS Geo SA (weighted Brovey algorithm)
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -42,6 +26,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_multiproc.h"
 #include "cpl_vsi.h"
 #include "../frmts/mem/memdataset.h"
@@ -666,8 +651,9 @@ void GDALPansharpenOperation::WeightedBrovey3(
 
 /* We restrict to 64bit processors because they are guaranteed to have SSE2 */
 /* Could possibly be used too on 32bit, but we would need to check at runtime */
-#if defined(__x86_64) || defined(_M_X64)
+#if defined(__x86_64) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
 
+#define USE_SSE2
 #include "gdalsse_priv.h"
 
 template <class T, int NINPUT, int NOUTPUT>
@@ -815,7 +801,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
     }
 
     if (nMaxValue == 0)
-        nMaxValue = std::numeric_limits<T>::max();
+        nMaxValue = cpl::NumericLimits<T>::max();
     size_t j;
     if (psOptions->nInputSpectralBands == 3 &&
         psOptions->nOutPansharpenedBands == 3 &&
@@ -1024,6 +1010,12 @@ CPLErr GDALPansharpenOperation::WeightedBrovey(
                            nBandValues, nMaxValue);
             break;
 
+        case GDT_Float16:
+            WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
+                           static_cast<GFloat16 *>(pDataBuf), nValues,
+                           nBandValues, nMaxValue);
+            break;
+
         case GDT_Float32:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
                            static_cast<float *>(pDataBuf), nValues, nBandValues,
@@ -1103,6 +1095,12 @@ CPLErr GDALPansharpenOperation::WeightedBrovey(
             WeightedBrovey3<WorkDataType, std::int64_t, FALSE>(
                 pPanBuffer, pUpsampledSpectralBuffer,
                 static_cast<std::int64_t *>(pDataBuf), nValues, nBandValues, 0);
+            break;
+
+        case GDT_Float16:
+            WeightedBrovey3<WorkDataType, GFloat16, FALSE>(
+                pPanBuffer, pUpsampledSpectralBuffer,
+                static_cast<GFloat16 *>(pDataBuf), nValues, nBandValues, 0);
             break;
 
         case GDT_Float32:
@@ -1227,13 +1225,17 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
     sExtraArg.dfXSize = nXSize * m_adfPanToMSGT[1];
     sExtraArg.dfYSize = nYSize * m_adfPanToMSGT[5];
     if (sExtraArg.dfXOff + sExtraArg.dfXSize > aMSBands[0]->GetXSize())
-        sExtraArg.dfXOff = aMSBands[0]->GetXSize() - sExtraArg.dfXSize;
+        sExtraArg.dfXSize = aMSBands[0]->GetXSize() - sExtraArg.dfXOff;
     if (sExtraArg.dfYOff + sExtraArg.dfYSize > aMSBands[0]->GetYSize())
-        sExtraArg.dfYOff = aMSBands[0]->GetYSize() - sExtraArg.dfYSize;
+        sExtraArg.dfYSize = aMSBands[0]->GetYSize() - sExtraArg.dfYOff;
     int nSpectralXOff = static_cast<int>(sExtraArg.dfXOff);
     int nSpectralYOff = static_cast<int>(sExtraArg.dfYOff);
     int nSpectralXSize = static_cast<int>(0.49999 + sExtraArg.dfXSize);
     int nSpectralYSize = static_cast<int>(0.49999 + sExtraArg.dfYSize);
+    if (nSpectralXOff + nSpectralXSize > aMSBands[0]->GetXSize())
+        nSpectralXSize = aMSBands[0]->GetXSize() - nSpectralXOff;
+    if (nSpectralYOff + nSpectralYSize > aMSBands[0]->GetYSize())
+        nSpectralYSize = aMSBands[0]->GetYSize() - nSpectralYOff;
     if (nSpectralXSize == 0)
         nSpectralXSize = 1;
     if (nSpectralYSize == 0)
@@ -1380,17 +1382,15 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                     pasJobs[i].dfXSize = sExtraArg.dfXSize;
                     pasJobs[i].dfYSize =
                         (iNextStartLine - iStartLine) * m_adfPanToMSGT[5];
-                    if (pasJobs[i].dfXOff + pasJobs[i].dfXSize >
-                        aMSBands[0]->GetXSize())
+                    if (pasJobs[i].dfXOff + pasJobs[i].dfXSize > nXSizeExtract)
                     {
-                        pasJobs[i].dfXOff =
-                            aMSBands[0]->GetXSize() - pasJobs[i].dfXSize;
+                        pasJobs[i].dfXSize = nYSizeExtract - pasJobs[i].dfXOff;
                     }
                     if (pasJobs[i].dfYOff + pasJobs[i].dfYSize >
                         aMSBands[0]->GetYSize())
                     {
-                        pasJobs[i].dfYOff =
-                            aMSBands[0]->GetYSize() - pasJobs[i].dfYSize;
+                        pasJobs[i].dfYSize =
+                            aMSBands[0]->GetYSize() - pasJobs[i].dfYOff;
                     }
                     pasJobs[i].nXOff = static_cast<int>(pasJobs[i].dfXOff);
                     pasJobs[i].nYOff = static_cast<int>(pasJobs[i].dfYOff);
@@ -1398,6 +1398,14 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                         static_cast<int>(0.4999 + pasJobs[i].dfXSize);
                     pasJobs[i].nYSize =
                         static_cast<int>(0.4999 + pasJobs[i].dfYSize);
+                    if (pasJobs[i].nXOff + pasJobs[i].nXSize > nXSizeExtract)
+                    {
+                        pasJobs[i].nXSize = nXSizeExtract - pasJobs[i].nXOff;
+                    }
+                    if (pasJobs[i].nYOff + pasJobs[i].nYSize > nYSizeExtract)
+                    {
+                        pasJobs[i].nYSize = nYSizeExtract - pasJobs[i].nYOff;
+                    }
                     if (pasJobs[i].nXSize == 0)
                         pasJobs[i].nXSize = 1;
                     if (pasJobs[i].nYSize == 0)
@@ -1415,6 +1423,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
 #ifdef DEBUG_TIMING
                     pasJobs[i].ptv = &tv;
 #endif
+                    pasJobs[i].eErr = CE_Failure;
+
                     ahJobData[i] = &(pasJobs[i]);
                 }
 #ifdef DEBUG_TIMING
@@ -1423,6 +1433,21 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                 poThreadPool->SubmitJobs(PansharpenResampleJobThreadFunc,
                                          ahJobData);
                 poThreadPool->WaitCompletion();
+
+                for (int i = 0; i < nTasks; i++)
+                {
+                    if (pasJobs[i].eErr == CE_Failure)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                                 pasJobs[i].osLastErrorMsg.c_str());
+                        GDALClose(poMEMDS);
+                        VSIFree(pSpectralBuffer);
+                        VSIFree(pUpsampledSpectralBuffer);
+                        VSIFree(pPanBuffer);
+
+                        return CE_Failure;
+                    }
+                }
             }
         }
 
@@ -1479,7 +1504,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                 nBandBitDepth = atoi(pszNBITS);
             if (nBandBitDepth < nBitDepth)
             {
-                if (eWorkDataType == GDT_Byte)
+                if (eWorkDataType == GDT_Byte && nBitDepth >= 0 &&
+                    nBitDepth <= 8)
                 {
                     ClampValues(
                         reinterpret_cast<GByte *>(pUpsampledSpectralBuffer) +
@@ -1487,7 +1513,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                         static_cast<size_t>(nXSize) * nYSize,
                         static_cast<GByte>((1 << nBitDepth) - 1));
                 }
-                else if (eWorkDataType == GDT_UInt16)
+                else if (eWorkDataType == GDT_UInt16 && nBitDepth >= 0 &&
+                         nBitDepth <= 16)
                 {
                     ClampValues(
                         reinterpret_cast<GUInt16 *>(pUpsampledSpectralBuffer) +
@@ -1508,7 +1535,9 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
         }
     }
 
-    GUInt32 nMaxValue = (1 << nBitDepth) - 1;
+    const GUInt32 nMaxValue = (nBitDepth >= 0 && nBitDepth <= 31)
+                                  ? (1U << nBitDepth) - 1
+                                  : UINT32_MAX;
 
     double *padfTempBuffer = nullptr;
     GDALDataType eBufDataTypeOri = eBufDataType;
@@ -1611,8 +1640,6 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
 /*                   PansharpenResampleJobThreadFunc()                  */
 /************************************************************************/
 
-// static int acc=0;
-
 void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void *pUserData)
 {
     GDALPansharpenResampleJob *psJob =
@@ -1628,10 +1655,6 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void *pUserData)
                               static_cast<GIntBig>(tv.tv_usec);
 #endif
 
-#if 0
-    for(int i=0;i<1000000;i++)
-        acc += i * i;
-#else
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     // cppcheck-suppress redundantAssignment
@@ -1648,12 +1671,12 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void *pUserData)
     // This call to RasterIO() in a thread to poMEMDS shared between several
     // threads is really risky, but works given the implementation details...
     // Do not do this at home!
-    CPL_IGNORE_RET_VAL(psJob->poMEMDS->RasterIO(
+    psJob->eErr = psJob->poMEMDS->RasterIO(
         GF_Read, psJob->nXOff, psJob->nYOff, psJob->nXSize, psJob->nYSize,
         psJob->pBuffer, psJob->nBufXSize, psJob->nBufYSize, psJob->eDT,
-        psJob->nBandCount, anBands.data(), 0, 0, psJob->nBandSpace,
-        &sExtraArg));
-#endif
+        psJob->nBandCount, anBands.data(), 0, 0, psJob->nBandSpace, &sExtraArg);
+    if (CPLGetLastErrorType() == CE_Failure)
+        psJob->osLastErrorMsg = CPLGetLastErrorMsg();
 
 #ifdef DEBUG_TIMING
     struct timeval tv_end;
@@ -1777,6 +1800,13 @@ CPLErr GDALPansharpenOperation::PansharpenChunk(
             eErr = WeightedBrovey(
                 static_cast<const std::int64_t *>(pPanBuffer),
                 static_cast<const std::int64_t *>(pUpsampledSpectralBuffer),
+                pDataBuf, eBufDataType, nValues, nBandValues);
+            break;
+
+        case GDT_Float16:
+            eErr = WeightedBrovey(
+                static_cast<const GFloat16 *>(pPanBuffer),
+                static_cast<const GFloat16 *>(pUpsampledSpectralBuffer),
                 pDataBuf, eBufDataType, nValues, nBandValues);
             break;
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for OGR Parquet driver.
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2022, Planet Labs
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import json
@@ -1212,6 +1195,10 @@ def test_ogr_parquet_polygon_orientation(option_value, written_wkt, expected_wkt
     try:
         import numpy
 
+        from osgeo import gdal_array
+
+        str(gdal_array)
+
         numpy.zeros
 
         has_numpy = True
@@ -1259,7 +1246,7 @@ def test_ogr_parquet_statistics():
             sql += ", "
         else:
             sql = "SELECT "
-        sql += "MIN(" + name + "), MAX(" + name + ")"
+        sql += "MIN(" + name + "), MAX(" + name + ") AS my_max_" + name
     sql += ", COUNT(int32)"
     sql += " FROM test"
     sql_lyr = ds.ExecuteSQL(sql)
@@ -1275,7 +1262,7 @@ def test_ogr_parquet_statistics():
             i += 1
 
             fld_defn = sql_lyr.GetLayerDefn().GetFieldDefn(i)
-            assert fld_defn.GetName() == "MAX_" + name
+            assert fld_defn.GetName() == "my_max_" + name
             assert ogr.GetFieldTypeName(fld_defn.GetType()) == type, name
             assert ogr.GetFieldSubTypeName(fld_defn.GetSubType()) == subtype, name
             assert f[fld_defn.GetName()] == maxval, name
@@ -1848,7 +1835,7 @@ def test_ogr_parquet_write_crs_without_id_in_datum_ensemble_members():
 
 
 def test_ogr_parquet_arrow_stream_numpy():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     ds = ogr.Open("data/parquet/test.parquet")
@@ -2053,7 +2040,7 @@ def test_ogr_parquet_arrow_stream_empty_file():
 
 
 def test_ogr_parquet_arrow_stream_numpy_with_fid_column():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     filename = "/vsimem/test_ogr_parquet_arrow_stream_numpy_with_fid_column.parquet"
@@ -2083,7 +2070,7 @@ def test_ogr_parquet_arrow_stream_numpy_with_fid_column():
 
 
 def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
     import datetime
 
@@ -2198,7 +2185,7 @@ def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
 
 
 def test_ogr_parquet_arrow_stream_numpy_detailed_spatial_filter(tmp_vsimem):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     filename = str(
@@ -2344,7 +2331,7 @@ def test_ogr_parquet_arrow_stream_numpy_detailed_spatial_filter(tmp_vsimem):
     ],
 )
 def test_ogr_parquet_arrow_stream_numpy_fast_attribute_filter(filter):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     ds = ogr.Open("data/parquet/test.parquet")
@@ -2372,7 +2359,7 @@ def test_ogr_parquet_arrow_stream_numpy_fast_attribute_filter(filter):
 
 
 def test_ogr_parquet_arrow_stream_numpy_attribute_filter_on_fid_without_fid_column():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     ds = ogr.Open("data/parquet/test.parquet")
@@ -2419,7 +2406,7 @@ def test_ogr_parquet_arrow_stream_numpy_attribute_filter_on_fid_without_fid_colu
 
 
 def test_ogr_parquet_arrow_stream_numpy_attribute_filter_on_fid_with_fid_column():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     filename = "/vsimem/test_ogr_parquet_arrow_stream_numpy_attribute_filter_on_fid_with_fid_column.parquet"
@@ -2591,7 +2578,7 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_on_decimal128():
 
 
 def test_ogr_parquet_arrow_stream_numpy_fast_spatial_and_attribute_filter():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     ds = ogr.Open("data/parquet/test.parquet")
@@ -2699,7 +2686,7 @@ def test_ogr_parquet_field_alternative_name_comment():
 def test_ogr_parquet_read_wkt_as_wkt_arrow_array(
     nullable_geom, ignore_geom_field, ignore_geom_before
 ):
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     outfilename = "/vsimem/out.parquet"
@@ -2817,7 +2804,7 @@ def test_ogr_parquet_read_wkt_as_wkt_arrow_array(
 
 
 def test_ogr_parquet_read_wkt_with_dict_as_wkt_arrow_array():
-    pytest.importorskip("osgeo.gdal_array")
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     ds = ogr.Open("data/parquet/wkt_with_dict.parquet")
@@ -3317,13 +3304,22 @@ def test_ogr_parquet_bbox_double():
 
 
 @pytest.mark.require_geos
-def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata():
+@pytest.mark.parametrize("use_dataset", [True, False])
+def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata(use_dataset):
 
-    ds = ogr.Open("data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet")
+    if use_dataset and not _has_arrow_dataset():
+        pytest.skip("Test requires build with ArrowDataset")
+
+    prefix = "PARQUET:" if use_dataset else ""
+
+    ds = ogr.Open(
+        prefix + "data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet"
+    )
     lyr = ds.GetLayer(0)
     assert lyr.GetGeometryColumn() == "geometry"
     assert lyr.GetLayerDefn().GetFieldIndex("bbox.xmin") < 0
-    assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
+    if not use_dataset:
+        assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
     minx, maxx, miny, maxy = lyr.GetExtent()
     assert (minx, miny, maxx, maxy) == pytest.approx(
         (478315.53125, 4762880.5, 481645.3125, 4765610.5)
@@ -3337,14 +3333,16 @@ def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata():
         maxy - (maxy - miny) / 2,
     ):
         f = lyr.GetNextFeature()
-        assert f.GetFID() == 8
+        if not use_dataset:
+            assert f.GetFID() == 8
         assert lyr.GetNextFeature() is None
 
     ds = None
 
     with gdaltest.config_option("OGR_PARQUET_USE_BBOX", "NO"):
         ds = ogr.Open(
-            "data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet"
+            prefix
+            + "data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet"
         )
         lyr = ds.GetLayer(0)
         assert lyr.GetGeometryColumn() == "geometry"
@@ -3355,6 +3353,27 @@ def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata():
             (478315.53125, 4762880.5, 481645.3125, 4765610.5)
         )
         ds = None
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_curl
+def test_ogr_parquet_overture_from_azure():
+
+    if not _has_arrow_dataset():
+        pytest.skip("Test requires build with ArrowDataset")
+
+    url = "https://overturemapswestus2.blob.core.windows.net/release?comp=list&delimiter=%2F&prefix=2024-11-13.0%2Ftheme%3Ddivisions%2Ftype%3Ddivision_area%2F&restype=container"
+    if gdaltest.gdalurlopen(url, timeout=5) is None:
+        pytest.skip(reason=f"{url} is down")
+
+    with ogr.Open(
+        "PARQUET:/vsicurl/https://overturemapswestus2.blob.core.windows.net/release/2024-11-13.0/theme=divisions/type=division_area"
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() > 0
 
 
 ###############################################################################
@@ -3423,7 +3442,7 @@ def test_ogr_parquet_IsArrowSchemaSupported_float16(tmp_vsimem):
 @gdaltest.enable_exceptions()
 def test_ogr_parquet_write_arrow_rewind_polygon(tmp_vsimem):
 
-    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     src_lyr = src_ds.CreateLayer("test")
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 1,1 1,0 0))"))
@@ -3526,7 +3545,7 @@ def test_ogr_parquet_write_from_wkb_large_binary(tmp_vsimem):
 def test_ogr_parquet_write_to_mem(tmp_vsimem, where):
 
     src_ds = gdal.OpenEx("data/parquet/test.parquet")
-    ds = gdal.VectorTranslate("", src_ds, format="Memory", where=where)
+    ds = gdal.VectorTranslate("", src_ds, format="MEM", where=where)
     lyr = ds.GetLayer(0)
     if where is None:
         f = lyr.GetNextFeature()
@@ -3859,6 +3878,8 @@ def test_ogr_parquet_geoarrow(
     lyr = ds.GetLayer(0)
     lyr.SetIgnoredFields(["foo"])
     check(lyr)
+    lyr.SetSpatialFilter(geom)
+    assert lyr.GetFeatureCount() == (3 if geom.GetGeometryCount() > 1 else 2)
 
     ds = ogr.Open(filename_to_open)
     lyr = ds.GetLayer(0)
@@ -4045,6 +4066,30 @@ def test_ogr_parquet_read_arrow_json_extension():
 
 
 ###############################################################################
+# Test writing a file with the arrow.json extension
+
+
+def test_ogr_parquet_writing_arrow_json_extension(tmp_vsimem):
+
+    outfilename = str(tmp_vsimem / "out.parquet")
+    with ogr.GetDriverByName("Parquet").CreateDataSource(outfilename) as ds:
+        lyr = ds.CreateLayer("test")
+        fld_defn = ogr.FieldDefn("extension_json")
+        fld_defn.SetSubType(ogr.OFSTJSON)
+        lyr.CreateField(fld_defn)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["extension_json"] = '{"foo":"bar"}'
+        lyr.CreateFeature(f)
+
+    with gdal.config_option("OGR_PARQUET_READ_GDAL_SCHEMA", "NO"):
+        ds = ogr.Open(outfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTJSON
+    f = lyr.GetNextFeature()
+    assert f["extension_json"] == '{"foo":"bar"}'
+
+
+###############################################################################
 # Test ignored fields with arrow::dataset and bounding box column
 
 
@@ -4073,3 +4118,100 @@ def test_ogr_parquet_ignored_fields_bounding_box_column_arrow_dataset(tmp_path):
     lyr.SetSpatialFilterRect(0, 0, 0, 0)
     lyr.ResetReading()
     assert lyr.GetNextFeature() is None
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("ARROW")
+def test_ogr_parquet_vsi_arrow_file_system():
+
+    version = int(
+        ogr.GetDriverByName("ARROW").GetMetadataItem("ARROW_VERSION").split(".")[0]
+    )
+    if version < 16:
+        pytest.skip("requires Arrow >= 16.0.0")
+
+    ds = ogr.Open("PARQUET:gdalvsi://data/parquet/test.parquet")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() > 0
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("ARROW")
+@pytest.mark.parametrize(
+    "src_filename,expected_error_msg",
+    [
+        ("data/arrow/stringview.feather", "StringView not supported"),
+        ("data/arrow/binaryview.feather", "BinaryView not supported"),
+    ],
+)
+def test_ogr_parquet_IsArrowSchemaSupported_arrow_15_types(
+    src_filename, expected_error_msg, tmp_vsimem
+):
+
+    version = int(
+        ogr.GetDriverByName("ARROW").GetMetadataItem("ARROW_VERSION").split(".")[0]
+    )
+    if version < 15:
+        pytest.skip("requires Arrow >= 15.0.0")
+
+    src_ds = ogr.Open(src_filename)
+    src_lyr = src_ds.GetLayer(0)
+
+    outfilename = str(tmp_vsimem / "test.parquet")
+    with ogr.GetDriverByName("Parquet").CreateDataSource(outfilename) as dst_ds:
+        dst_lyr = dst_ds.CreateLayer(
+            "test", srs=src_lyr.GetSpatialRef(), geom_type=ogr.wkbPoint, options=[]
+        )
+
+        stream = src_lyr.GetArrowStream()
+        schema = stream.GetSchema()
+
+        success, error_msg = dst_lyr.IsArrowSchemaSupported(schema)
+        assert not success
+        assert error_msg == expected_error_msg
+
+
+###############################################################################
+
+
+def test_ogr_parquet_ogr2ogr_reprojection(tmp_vsimem):
+
+    outfilename = str(tmp_vsimem / "test.parquet")
+    gdal.VectorTranslate(
+        outfilename,
+        "data/parquet/poly.parquet",
+        srcSRS="EPSG:32632",
+        dstSRS="EPSG:4326",
+    )
+    with ogr.Open(outfilename) as ds:
+        assert ds.GetLayer(0).GetExtent() == pytest.approx(
+            (8.73380363499761, 8.774681944824946, 43.01833481785084, 43.04292637071279)
+        )
+
+
+###############################################################################
+# Test DATETIME_AS_STRING=YES GetArrowStream() option
+
+
+def test_ogr_parquet_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
+    gdaltest.importorskip_gdal_array()
+    pytest.importorskip("numpy")
+
+    with gdal.OpenEx(
+        "data/parquet/test.parquet", gdal.OF_VECTOR, allowed_drivers=["Parquet"]
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        stream = lyr.GetArrowStreamAsNumPy(
+            options=["USE_MASKED_ARRAYS=NO", "DATETIME_AS_STRING=YES"]
+        )
+        batches = [batch for batch in stream]
+        batch = batches[0]
+        assert (
+            batch["timestamp_ms_gmt_minus_0215"][0] == b"2019-01-01T14:00:00.500-02:15"
+        )

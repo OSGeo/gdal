@@ -8,23 +8,7 @@
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_string.h"
@@ -1004,7 +988,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Figure out the name of the target file.                         */
     /* -------------------------------------------------------------------- */
-    CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
+    CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
     CPLString osDataFile = poHeader->Find("DataFile", "");
 
     if (osDataFile.length() == 0)  // just strip off extension.
@@ -1013,7 +997,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
         osDataFile = osDataFile.substr(0, osDataFile.find_last_of('.'));
     }
 
-    CPLString osDataFilePath = CPLFormFilename(osPath, osDataFile, nullptr);
+    CPLString osDataFilePath = CPLFormFilenameSafe(osPath, osDataFile, nullptr);
 
     /* -------------------------------------------------------------------- */
     /*      DataSetType = Translated files are links to things like ecw     */
@@ -1366,7 +1350,7 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     CPLString osBinFile, osErsFile;
 
-    if (EQUAL(CPLGetExtension(pszFilename), "ers"))
+    if (EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "ers"))
     {
         osErsFile = pszFilename;
         osBinFile = osErsFile.substr(0, osErsFile.length() - 4);
@@ -1381,6 +1365,7 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /*      Work out some values we will write.                             */
     /* -------------------------------------------------------------------- */
     const char *pszCellType = "Unsigned8BitInteger";
+    CPL_IGNORE_RET_VAL(pszCellType);  // Make CSA happy
 
     if (eType == GDT_Byte)
         pszCellType = "Unsigned8BitInteger";

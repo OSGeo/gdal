@@ -8,23 +8,7 @@
  * Copyright (c) 1999, Intergraph Corporation
  * Copyright (c) 2007-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -190,10 +174,10 @@ CPLErr HFABand::LoadOverviews()
             if (psHFA == nullptr)
             {
                 char *pszBasename =
-                    CPLStrdup(CPLGetBasename(psInfo->pszFilename));
+                    CPLStrdup(CPLGetBasenameSafe(psInfo->pszFilename).c_str());
 
-                pszJustFilename =
-                    CPLStrdup(CPLFormFilename(nullptr, pszBasename, "rrd"));
+                pszJustFilename = CPLStrdup(
+                    CPLFormFilenameSafe(nullptr, pszBasename, "rrd").c_str());
                 CPLDebug("HFA",
                          "Failed to find overview file with "
                          "expected name, try %s instead.",
@@ -249,12 +233,13 @@ CPLErr HFABand::LoadOverviews()
     HFAEntry *poBandProxyNode = poNode;
     HFAInfo_t *psOvHFA = psInfo;
 
-    if (nOverviews == 0 && EQUAL(CPLGetExtension(psInfo->pszFilename), "aux"))
+    if (nOverviews == 0 &&
+        EQUAL(CPLGetExtensionSafe(psInfo->pszFilename).c_str(), "aux"))
     {
         const CPLString osRRDFilename =
-            CPLResetExtension(psInfo->pszFilename, "rrd");
+            CPLResetExtensionSafe(psInfo->pszFilename, "rrd");
         const CPLString osFullRRD =
-            CPLFormFilename(psInfo->pszPath, osRRDFilename, nullptr);
+            CPLFormFilenameSafe(psInfo->pszPath, osRRDFilename, nullptr);
         VSIStatBufL sStatBuf;
 
         if (VSIStatL(osFullRRD, &sStatBuf) == 0)
@@ -479,8 +464,8 @@ CPLErr HFABand::LoadExternalBlockInfo()
     nLayerStackIndex = poDMS->GetIntField("layerStackIndex");
 
     // Open raw data file.
-    const char *pszFullFilename = HFAGetIGEFilename(psInfo);
-    if (pszFullFilename == nullptr)
+    const std::string osFullFilename = HFAGetIGEFilename(psInfo);
+    if (osFullFilename.empty())
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Cannot find external data file name");
@@ -488,13 +473,14 @@ CPLErr HFABand::LoadExternalBlockInfo()
     }
 
     if (psInfo->eAccess == HFA_ReadOnly)
-        fpExternal = VSIFOpenL(pszFullFilename, "rb");
+        fpExternal = VSIFOpenL(osFullFilename.c_str(), "rb");
     else
-        fpExternal = VSIFOpenL(pszFullFilename, "r+b");
+        fpExternal = VSIFOpenL(osFullFilename.c_str(), "r+b");
     if (fpExternal == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Unable to open external data file: %s", pszFullFilename);
+                 "Unable to open external data file: %s",
+                 osFullFilename.c_str());
         return CE_Failure;
     }
 
@@ -505,7 +491,8 @@ CPLErr HFABand::LoadExternalBlockInfo()
         !STARTS_WITH(szHeader, "ERDAS_IMG_EXTERNAL_RASTER"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Raw data file %s appears to be corrupt.", pszFullFilename);
+                 "Raw data file %s appears to be corrupt.",
+                 osFullFilename.c_str());
         return CE_Failure;
     }
 
@@ -2044,16 +2031,11 @@ static int HFAGetOverviewBlockSize()
     if (nOvrBlockSize < 32 || nOvrBlockSize > 2048 ||
         !CPLIsPowerOfTwo(nOvrBlockSize))
     {
-        static bool bHasWarned = false;
-        if (!bHasWarned)
-        {
-            CPLError(CE_Warning, CPLE_NotSupported,
+        CPLErrorOnce(CE_Warning, CPLE_NotSupported,
                      "Wrong value for GDAL_HFA_OVR_BLOCKSIZE : %s. "
                      "Should be a power of 2 between 32 and 2048. "
                      "Defaulting to 64",
                      pszVal);
-            bHasWarned = true;
-        }
         nOvrBlockSize = 64;
     }
 

@@ -130,6 +130,6 @@ See Also
 --------
 
 -  `GDAL PostGISRaster driver
-   Wiki <https://trac.osgeo.org/gdal/wiki/frmts_wtkraster.html>`__
+   Wiki <http://web.archive.org/web/20240812045916/https://trac.osgeo.org/gdal/wiki/frmts_wtkraster.html>`__
 -  `PostGIS Raster
    documentation <https://postgis.net/docs/RT_reference.html>`__

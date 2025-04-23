@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test default implementation of GDALRasterBand::IRasterIO
@@ -10,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import math
@@ -37,14 +20,6 @@ import gdaltest
 import pytest
 
 from osgeo import gdal
-
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
-
 
 ###############################################################################
 # Test writing a 1x1 buffer to a 10x6 raster and read it back
@@ -233,6 +208,7 @@ def test_rasterio_4():
 # Test error cases of ReadRaster()
 
 
+@gdaltest.disable_exceptions()
 def test_rasterio_5():
 
     ds = gdal.Open("data/byte.tif")
@@ -300,6 +276,7 @@ def test_rasterio_5():
 # Test error cases of WriteRaster()
 
 
+@gdaltest.disable_exceptions()
 def test_rasterio_6():
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
@@ -732,6 +709,7 @@ def test_rasterio_9():
 
 def test_rasterio_overview_subpixel_resampling():
 
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     temp_path = "/vsimem/rasterio_ovr.tif"
@@ -773,6 +751,7 @@ def test_rasterio_overview_subpixel_resampling():
 # Test error when getting a block
 
 
+@gdaltest.disable_exceptions()
 def test_rasterio_10():
     ds = gdal.Open("data/byte_truncated.tif")
 
@@ -796,6 +775,8 @@ def test_rasterio_10():
 
 
 def test_rasterio_11():
+
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 4, 3)
@@ -832,6 +813,8 @@ def rasterio_12_progress_callback(pct, message, user_data):
 
 
 def test_rasterio_12():
+
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 4, 3, 4)
@@ -884,29 +867,155 @@ def test_rasterio_12():
 # Test cubic resampling with masking
 
 
-def test_rasterio_13():
+@pytest.mark.parametrize(
+    "dt",
+    [
+        "Byte",
+        "Int8",
+        "Int16",
+        "UInt16",
+        "Int32",
+        "UInt32",
+        "Int64",
+        "UInt64",
+        "Float32",
+        "Float64",
+    ],
+)
+def test_rasterio_13(dt):
+
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
-    for dt in [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32]:
+    dt = gdal.GetDataTypeByName(dt)
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 4, 3, 1, dt)
+    mem_ds.GetRasterBand(1).SetNoDataValue(0)
+    if dt == gdal.GDT_Int8:
+        x = (1 << 7) - 1
+    elif dt == gdal.GDT_Byte:
+        x = (1 << 8) - 1
+    elif dt == gdal.GDT_Int16:
+        x = (1 << 15) - 1
+    elif dt == gdal.GDT_UInt16:
+        x = (1 << 16) - 1
+    elif dt == gdal.GDT_Int32:
+        x = (1 << 31) - 1
+    elif dt == gdal.GDT_UInt32:
+        x = (1 << 32) - 1
+    elif dt == gdal.GDT_Int64:
+        x = (1 << 63) - 1
+    elif dt == gdal.GDT_UInt64:
+        x = (1 << 64) - 2048
+    elif dt == gdal.GDT_Float32:
+        x = 1.5
+    else:
+        x = 1.23456
+    mem_ds.GetRasterBand(1).WriteArray(
+        numpy.array([[0, 0, 0, 0], [0, x, 0, 0], [0, 0, 0, 0]])
+    )
 
-        mem_ds = gdal.GetDriverByName("MEM").Create("", 4, 3, 1, dt)
-        mem_ds.GetRasterBand(1).SetNoDataValue(0)
-        mem_ds.GetRasterBand(1).WriteArray(
-            numpy.array([[0, 0, 0, 0], [0, 255, 0, 0], [0, 0, 0, 0]])
-        )
+    ar_ds = mem_ds.ReadAsArray(
+        0, 0, 4, 3, buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic
+    )
 
-        ar_ds = mem_ds.ReadAsArray(
-            0, 0, 4, 3, buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic
-        )
+    expected_ar = numpy.array(
+        [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, x, x, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+        ]
+    )
+    assert numpy.array_equal(ar_ds, expected_ar)
 
-        expected_ar = numpy.array(
-            [
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 255, 255, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-            ]
-        )
-        assert numpy.array_equal(ar_ds, expected_ar), (ar_ds, dt)
+
+###############################################################################
+# Test nearest and mode resampling
+
+
+@pytest.mark.parametrize(
+    "dt",
+    [
+        "Byte",
+        "Int8",
+        "Int16",
+        "UInt16",
+        "Int32",
+        "UInt32",
+        "Int64",
+        "UInt64",
+        "Float32",
+        "Float64",
+        "CInt16",
+        "CInt32",
+        "CFloat32",
+        "CFloat64",
+    ],
+)
+@pytest.mark.parametrize(
+    "resample_alg", [gdal.GRIORA_NearestNeighbour, gdal.GRIORA_Mode]
+)
+@pytest.mark.parametrize("use_nan", [True, False])
+def test_rasterio_nearest_or_mode(dt, resample_alg, use_nan):
+    numpy = pytest.importorskip("numpy")
+    gdal_array = gdaltest.importorskip_gdal_array()
+
+    dt = gdal.GetDataTypeByName(dt)
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 4, 4, 1, dt)
+    if dt == gdal.GDT_Int8:
+        x = (1 << 7) - 1
+    elif dt == gdal.GDT_Byte:
+        x = (1 << 8) - 1
+    elif dt == gdal.GDT_Int16 or dt == gdal.GDT_CInt16:
+        x = (1 << 15) - 1
+    elif dt == gdal.GDT_UInt16:
+        x = (1 << 16) - 1
+    elif dt == gdal.GDT_Int32 or dt == gdal.GDT_CInt32:
+        x = (1 << 31) - 1
+    elif dt == gdal.GDT_UInt32:
+        x = (1 << 32) - 1
+    elif dt == gdal.GDT_Int64:
+        x = (1 << 63) - 1
+    elif dt == gdal.GDT_UInt64:
+        x = (1 << 64) - 1
+    elif dt == gdal.GDT_Float32 or dt == gdal.GDT_CFloat32:
+        x = float("nan") if use_nan else 1.5
+    else:
+        x = float("nan") if use_nan else 1.234567890123
+
+    if gdal.DataTypeIsComplex(dt):
+        val = complex(x, x)
+    else:
+        val = x
+
+    dtype = gdal_array.flip_code(dt)
+    mem_ds.GetRasterBand(1).WriteArray(numpy.full((4, 4), val, dtype=dtype))
+
+    ar_ds = mem_ds.ReadAsArray(
+        0, 0, 4, 4, buf_xsize=1, buf_ysize=1, resample_alg=resample_alg
+    )
+
+    expected_ar = numpy.array([[val]]).astype(dtype)
+    if math.isnan(x):
+        if gdal.DataTypeIsComplex(dt):
+            assert math.isnan(ar_ds[0][0].real) and math.isnan(ar_ds[0][0].imag)
+        else:
+            assert math.isnan(ar_ds[0][0])
+    else:
+        assert numpy.array_equal(ar_ds, expected_ar)
+
+    resample_alg_mapping = {
+        gdal.GRIORA_NearestNeighbour: "NEAR",
+        gdal.GRIORA_Mode: "MODE",
+    }
+    mem_ds.BuildOverviews(resample_alg_mapping[resample_alg], [4])
+    ar_ds = mem_ds.GetRasterBand(1).GetOverview(0).ReadAsArray()
+    if math.isnan(x):
+        if gdal.DataTypeIsComplex(dt):
+            assert math.isnan(ar_ds[0][0].real) and math.isnan(ar_ds[0][0].imag)
+        else:
+            assert math.isnan(ar_ds[0][0])
+    else:
+        assert numpy.array_equal(ar_ds, expected_ar)
 
 
 ###############################################################################
@@ -1104,6 +1213,8 @@ cellsize     0
 
 
 def test_rasterio_nodata():
+
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     ndv = 123
@@ -1311,6 +1422,8 @@ nodata_value 0
 
 
 def test_rasterio_dataset_readarray_cint16():
+
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2, gdal.GDT_CInt16)
@@ -1323,6 +1436,7 @@ def test_rasterio_dataset_readarray_cint16():
     assert got[1] == numpy.array([[3 + 4j]])
 
 
+@gdaltest.disable_exceptions()
 def test_rasterio_rasterband_write_on_readonly():
 
     ds = gdal.Open("data/byte.tif")
@@ -1332,6 +1446,7 @@ def test_rasterio_rasterband_write_on_readonly():
     assert err != 0
 
 
+@gdaltest.disable_exceptions()
 def test_rasterio_dataset_write_on_readonly():
 
     ds = gdal.Open("data/byte.tif")
@@ -1384,6 +1499,8 @@ def test_rasterio_floating_point_window_no_resampling():
 
 def test_rasterio_floating_point_window_no_resampling_numpy():
     # Same as above but using ReadAsArray() instead of ReadRaster()
+
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     ds = gdal.Translate(
@@ -2904,6 +3021,7 @@ def test_rasterio_writeraster_from_memoryview():
 # Test ReadRaster() in an existing buffer
 
 
+@gdaltest.disable_exceptions()
 def test_rasterio_readraster_in_existing_buffer():
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1)
@@ -2940,6 +3058,7 @@ def test_rasterio_readraster_in_existing_buffer():
 # Test ReadBlock() in an existing buffer
 
 
+@gdaltest.disable_exceptions()
 def test_rasterio_readblock_in_existing_buffer():
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1)
@@ -2966,6 +3085,7 @@ def test_rasterio_readblock_in_existing_buffer():
 # Test ReadRaster() in an existing buffer and alignment issues
 
 
+@gdaltest.disable_exceptions()
 @pytest.mark.parametrize(
     "datatype",
     [
@@ -3051,6 +3171,8 @@ def test_rasterio_gdal_rasterio_resampling():
 
 
 def test_rasterio_numpy_datatypes_for_xoff():
+
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     ds = gdal.Open("data/byte.tif")
@@ -3194,11 +3316,11 @@ def test_rasterio_overview_selection():
     assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 101, 101)[0] == 1
     assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 100, 100)[0] == 1
     assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 99, 99)[0] == 1
-    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 60, 60)[0] == 1
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 60, 60)[0] == 2
     assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 59, 59)[0] == 2
     assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 50, 50)[0] == 2
     assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 49, 49)[0] == 2
-    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 30, 30)[0] == 2
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 30, 30)[0] == 3
     assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 29, 29)[0] == 3
     assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 25, 25)[0] == 3
     assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 24, 24)[0] == 3
@@ -3282,3 +3404,18 @@ def test_rasterio_overview_selection():
         assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 29, 29)[0] == 2
         assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 25, 25)[0] == 3
         assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 24, 24)[0] == 3
+
+
+###############################################################################
+# Check robustness to GDT_Unknown
+
+
+def test_rasterio_gdt_unknown():
+
+    with gdal.GetDriverByName("MEM").Create("", 1, 1) as ds:
+        # Caught at the SWIG level
+        with pytest.raises(Exception, match="Illegal value for data type"):
+            ds.ReadRaster(buf_type=gdal.GDT_Unknown)
+        # Caught at the SWIG level
+        with pytest.raises(Exception, match="Illegal value for data type"):
+            ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Unknown)

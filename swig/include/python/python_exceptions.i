@@ -16,6 +16,7 @@ struct PythonBindingErrorHandlerContext
     std::string     osInitialMsg{};
     std::string     osFailureMsg{};
     CPLErrorNum     nLastCode = CPLE_None;
+    bool            bMemoryError = false;
 };
 
 static void CPL_STDCALL
@@ -46,16 +47,31 @@ PythonBindingErrorHandler(CPLErr eclass, CPLErrorNum err_no, const char *msg )
   }
   else {
     ctxt->nLastCode = err_no;
-    if( ctxt->osFailureMsg.empty() ) {
-      ctxt->osFailureMsg = msg;
-      ctxt->osInitialMsg = ctxt->osFailureMsg;
-    } else {
-      if( ctxt->osFailureMsg.size() < 10000 ) {
-        ctxt->osFailureMsg = std::string(msg) + "\nMay be caused by: " + ctxt->osFailureMsg;
-        ctxt->osInitialMsg = ctxt->osFailureMsg;
-      }
-      else
-        ctxt->osFailureMsg = std::string(msg) + "\n[...]\nMay be caused by: " + ctxt->osInitialMsg;
+    try
+    {
+        if( ctxt->osFailureMsg.empty() ) {
+          ctxt->osFailureMsg = msg;
+          ctxt->osInitialMsg = ctxt->osFailureMsg;
+        } else {
+          if( ctxt->osFailureMsg.size() < 10000 ) {
+            std::string osTmp(msg);
+            osTmp += "\nMay be caused by: ";
+            osTmp += ctxt->osFailureMsg;
+            ctxt->osFailureMsg = std::move(osTmp);
+            ctxt->osInitialMsg = ctxt->osFailureMsg;
+          }
+          else
+          {
+            std::string osTmp(msg);
+            osTmp += "\n[...]\nMay be caused by: ";
+            osTmp += ctxt->osInitialMsg;
+            ctxt->osFailureMsg = std::move(osTmp);
+          }
+        }
+    }
+    catch( const std::exception& )
+    {
+        ctxt->bMemoryError = true;
     }
   }
 }
@@ -167,7 +183,12 @@ static void popErrorHandler()
     PythonBindingErrorHandlerContext* ctxt = static_cast<
       PythonBindingErrorHandlerContext*>(CPLGetErrorHandlerUserData());
     CPLPopErrorHandler();
-    if( !ctxt->osFailureMsg.empty() )
+    if( ctxt->bMemoryError )
+    {
+        CPLErrorSetState(
+          CE_Failure, CPLE_OutOfMemory, "Out of memory");
+    }
+    else if( !ctxt->osFailureMsg.empty() )
     {
       CPLErrorSetState(
           CPLGetLastErrorType() == CE_Failure ? CE_Failure: CE_Warning,
@@ -272,7 +293,7 @@ static void popErrorHandler()
 }
 
 %pythoncode %{
-  class ExceptionMgr(object):
+  class ExceptionMgr:
       """
       Context manager to manage Python Exception state
       for GDAL/OGR/OSR/GNM.
@@ -337,6 +358,11 @@ static void popErrorHandler()
 
 %pythoncode %{
 
+import importlib.util
+
+def _has_gdal_array():
+    return importlib.util.find_spec("osgeo.gdal_array") and importlib.util.find_spec("numpy")
+
 def UseExceptions():
     """ Enable exceptions in all GDAL related modules (osgeo.gdal, osgeo.ogr, osgeo.osr, osgeo.gnm).
         Note: prior to GDAL 3.7, this only affected the calling module"""
@@ -346,21 +372,25 @@ def UseExceptions():
         gdal._UseExceptions()
     except ImportError:
         pass
-    try:
-        from . import gdal_array
-        gdal_array._UseExceptions()
-    except ImportError:
-        pass
+
+    if _has_gdal_array():
+        try:
+            from . import gdal_array
+            gdal_array._UseExceptions()
+        except ImportError:
+            pass
     try:
         from . import ogr
         ogr._UseExceptions()
     except ImportError:
         pass
+
     try:
         from . import osr
         osr._UseExceptions()
     except ImportError:
         pass
+
     try:
         from . import gnm
         gnm._UseExceptions()
@@ -376,21 +406,26 @@ def DontUseExceptions():
         gdal._DontUseExceptions()
     except ImportError:
         pass
-    try:
-        from . import gdal_array
-        gdal_array._DontUseExceptions()
-    except ImportError:
-        pass
+
+    if _has_gdal_array():
+        try:
+            from . import gdal_array
+            gdal_array._DontUseExceptions()
+        except ImportError:
+            pass
+
     try:
         from . import ogr
         ogr._DontUseExceptions()
     except ImportError:
         pass
+
     try:
         from . import osr
         osr._DontUseExceptions()
     except ImportError:
         pass
+
     try:
         from . import gnm
         gnm._DontUseExceptions()

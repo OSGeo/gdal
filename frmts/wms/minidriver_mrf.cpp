@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Mini Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -160,7 +159,7 @@ void *SectorCache::data(size_t address)
     // If this is the last sector, it could be a new sector with invalid data,
     // so we remove it Otherwise, the previous content is still good
     if (target == &store.back())
-        store.resize(store.size() - 1);
+        store.pop_back();
     // Signal invalid request
     return nullptr;
 }

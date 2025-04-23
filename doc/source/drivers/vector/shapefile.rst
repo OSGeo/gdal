@@ -166,9 +166,7 @@ terminated with an error.
 Note that this can make it very difficult to translate a mixed geometry
 layer from another format into Shapefile format using ogr2ogr, since
 ogr2ogr has no support for separating out geometries from a source
-layer. See the
-`FAQ <http://trac.osgeo.org/gdal/wiki/FAQVector#HowdoItranslateamixedgeometryfiletoshapefileformat>`__
-for a solution.
+layer.
 
 Shapefile feature attributes are stored in an associated .dbf file, and
 so attributes suffer a number of limitations:
@@ -484,5 +482,3 @@ See Also
 --------
 
 -  `Shapelib Page <http://shapelib.maptools.org/>`__
--  `User Notes on OGR Shapefile
-   Driver <http://trac.osgeo.org/gdal/wiki/UserDocs/Shapefiles>`__

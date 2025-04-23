@@ -9,8 +9,9 @@ VRT processed dataset
 A VRT processed dataset is a specific variant of the :ref:`raster.vrt` format,
 to apply chained processing steps that may apply to several bands at the same time.
 
-The following built-in algorithms are introduced, and may typically be applied
-in the following order:
+The following built-in algorithms are available:
+
+- Expression: evaluate a specified expression (e.g., "(B1+B2)/B3"). Available since GDAL 3.11.
 
 - LocalScaleOffset: apply per-pixel gain and offset coming (typically subsampled)
   from auxiliary datasets. Can be used for dehazing processing.
@@ -119,11 +120,9 @@ The ``VRTDataset`` root element must have a ``subClass="VRTProcessedDataset"`` a
 
 The following child elements of ``VRTDataset`` may be defined: ``SRS``, ``GeoTransform``, ``Metadata``. If they are not explicitly set, they are inferred from the input dataset.
 
-``VRTRasterBand`` elements may be explicitly defined, in particular if the data type of the virtual dataset after all processing steps is different from the input one, or if the number of output bands is different from the number of input bands. If there is no explicit ``VRTRasterBand`` element, the number and data types of input bands are used implicitly. When explicitly defined, ``VRTRasterBand`` elements must have a ``subClass="VRTProcessedRasterBand"`` attribute.
-`
-It must also have the 2 following child elements:
+The ``VRTDataset`` root element must also have the 2 following child elements:
 
-- ``Input``, which must have one and only one of the following ``SourceFilename`` or ``VRTDataset`` as child elements, to define the input dataset to which to apply the processing steps.
+- ``Input``, which must have one and only one of the following ``SourceFilename`` or ``VRTDataset`` as child elements, to define the input dataset to which to apply the processing steps. Starting with GDAL 3.11, values from the input dataset will be automatically unscaled; this can be disabled by setting the ``unscale`` attribute of ``Input`` to ``false``.
 
 - ``ProcessingSteps``, with at least one child ``Step`` element.
 
@@ -131,6 +130,48 @@ Each ``Step`` must have a ``Algorithm`` child element, and an optional ``name`` 
 The value of ``Algorithm`` must be a registered VRTProcessedDataset function. At time of writing, the following 4 algorithms are defined: ``LocalScaleOffset``, ``BandAffineCombination``, ``Trimming`` and ``LUT``.
 
 A ``Step`` will generally have one or several ``Argument`` child elements, some of them being required, others optional. Consult the documentation of each algorithm.
+
+Starting with GDAL 3.11, a ``OutputBands`` element can be
+defined as a child element of ``VRTDataset``, with the following 2 attributes:
+
+* ``count`` whose value can be ``FROM_SOURCE`` to indicate that the output band
+  count must be the same as the number of bands of the input dataset,
+  ``FROM_LAST_STEP`` to indicate that it must be the number of output bands
+  returned by the initialization function of the last step, or an integer value.
+
+* ``dataType`` whose value can be ``FROM_SOURCE`` to indicate that the output band
+  data type must be the same as the one of the input dataset,
+  ``FROM_LAST_STEP`` to indicate that it must be the one returned by the
+  initialization function of the last step, or a value among
+  Byte, Int8, UInt16, Int16, UInt32, Int32, UInt64, Int64, Float32, Float64, CInt16, CInt32, CFloat32 or CFloat64
+
+Example:
+
+.. code-block:: xml
+
+    <VRTDataset subClass="VRTProcessedDataset">
+      <Input>
+        <SourceFilename relativeToVRT="1">source.tif</SourceFilename>
+      </Input>
+      <OutputBands count="FROM_LAST_STEP" dataType="FROM_LAST_STEP"/>
+      <ProcessingSteps>...</ProcessingSteps>
+    </VRTDataset>
+
+
+If ``OutputBands`` is omitted,
+
+* if there are explicit ``VRTRasterBand`` elements, they must have a
+  ``subClass="VRTProcessedRasterBand"`` attribute
+
+* it there are no explicit ``VRTRasterBand`` elements, the number and data types
+  of input bands are used implicitly.
+
+Both ``OutputBands`` and  ``VRTRasterBand`` elements may be defined. The information
+specified by ``OutputBands`` will be used in priority, and ``VRTRasterBand`` elements
+will be used only if they are compatible with the band count and data type specified
+through ``OutputBands``. A situation where  ``OutputBands`` and  ``VRTRasterBand`` elements
+are both found is for example when computing statistics on a .vrt file with only
+``OutputBands`` initially set.
 
 LocalScaleOffset algorithm
 --------------------------
@@ -227,7 +268,7 @@ The following required arguments must be specified:
 
 - ``tone_ceil``: Maximum threshold beyond which we give up saturation.
 
-- ``top_margin``: Margin to allow for dynamics in brighest areas (between 0 and 1, should be close to 0)
+- ``top_margin``: Margin to allow for dynamics in brightest areas (between 0 and 1, should be close to 0)
 
 
 The following optional arguments may be specified:
@@ -267,3 +308,48 @@ The following optional arguments may be specified:
 - ``src_nodata``: Override the input nodata value coming from the previous step (or the input dataset for the first step).
 
 - ``dst_nodata``: Set the output nodata value.
+
+Expression
+----------
+
+Evaluate an expression using `muparser <https://beltoforion.de/en/muparser/>`__ or, if enabled at compile-time, `ExprTk <https://www.partow.net/programming/exprtk/index.html>`__.
+
+The following argument must be specified:
+
+- ``expression``: An expression to be evaluated. Band values can be accessed by the variables ``B1``, ``B2``, etc.
+  Although muparser does not support vector data types, the name ``BANDS`` will be expanded into a list of the
+  available bands, allowing the use of expressions such as ``sum(BANDS)``. When using ExprTk, the name ``BANDS``
+  will be a vector whose (0-indexed) elements can be accessed individually. Expressions may return more than one
+  value; one output band will be created for each value. The expression must return the same number of values
+  each time it is invoked.
+
+The following optional arguments may be specified:
+
+- ``dialect``: Indicates the library that should be used to evaluate the expression. Defaults to "muparser".
+
+- ``batch_size``: When set to a value ``N``, the expression will be evaluated independently in groups of
+  up to ``N`` bands. The result of the expression will be the concatenation of the results from each batch.
+
+When using ExprTk, the following configuration options are available:
+
+- .. config:: GDAL_EXPRTK_MAX_EXPRESSION_LENGTH
+     :default: 100000
+
+     Indicates the maximum number of characters expression that will be passed to the ExprTk parser.
+
+- .. config:: GDAL_EXPRTK_MAX_VECTOR_LENGTH
+     :default: 100000
+
+     Indicates the maximum length of a vector variables declared within an expression.
+
+- .. config:: GDAL_EXPRTK_ENABLE_LOOPS
+     :choices: YES, NO
+     :default: YES
+
+     Indicates whether looping constructs (for, while, etc.) may be used within an expression.
+
+- .. config:: GDAL_EXPRTK_TIMEOUT_SECONDS
+     :default: 1
+
+     Indicates the maximum per-pixel runtime of an ExprTk expression. ExprTk performs runtime
+     checks only when loops are used.

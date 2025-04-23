@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -137,6 +121,56 @@ OGRGeomFieldDefn::~OGRGeomFieldDefn()
 
     if (nullptr != poSRS)
         const_cast<OGRSpatialReference *>(poSRS)->Release();
+}
+
+/************************************************************************/
+/*                          OGRGeomFieldDefn::OGRGeomFieldDefn()        */
+/************************************************************************/
+
+/**
+ * @brief OGRGeomFieldDefn::OGRGeomFieldDefn Copy constructor
+ * @param oOther the OGRGeomFieldDefn to copy.
+ * @since GDAL 3.11
+ */
+OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn &oOther)
+    : pszName(CPLStrdup(oOther.pszName)), eGeomType(oOther.eGeomType),
+      poSRS(nullptr), bIgnore(oOther.bIgnore), bNullable(oOther.bNullable),
+      m_bSealed(oOther.m_bSealed), m_oCoordPrecision(oOther.m_oCoordPrecision)
+{
+    if (oOther.poSRS)
+    {
+        poSRS = oOther.poSRS->Clone();
+    }
+}
+
+/************************************************************************/
+/*                          OGRGeomFieldDefn::operator=()               */
+/************************************************************************/
+
+/**
+ * Copy assignment operator
+ * @param oOther the OGRGeomFieldDefn to copy.
+ * @return a reference to the current object.
+ * @since GDAL 3.11
+ */
+OGRGeomFieldDefn &OGRGeomFieldDefn::operator=(const OGRGeomFieldDefn &oOther)
+{
+    if (&oOther != this)
+    {
+        CPLFree(pszName);
+        pszName = CPLStrdup(oOther.pszName);
+        eGeomType = oOther.eGeomType;
+        if (oOther.poSRS)
+            const_cast<OGRSpatialReference *>(oOther.poSRS)->Reference();
+        if (poSRS)
+            const_cast<OGRSpatialReference *>(poSRS)->Dereference();
+        poSRS = oOther.poSRS;
+        bNullable = oOther.bNullable;
+        m_oCoordPrecision = oOther.m_oCoordPrecision;
+        m_bSealed = oOther.m_bSealed;
+        bIgnore = oOther.bIgnore;
+    }
+    return *this;
 }
 
 /************************************************************************/
@@ -536,6 +570,7 @@ OGRSpatialReferenceH OGR_GFld_GetSpatialRef(OGRGeomFieldDefnH hDefn)
  */
 void OGRGeomFieldDefn::SetSpatialRef(const OGRSpatialReference *poSRSIn)
 {
+
     if (m_bSealed)
     {
         CPLError(
@@ -543,9 +578,17 @@ void OGRGeomFieldDefn::SetSpatialRef(const OGRSpatialReference *poSRSIn)
             "OGRGeomFieldDefn::SetSpatialRef() not allowed on a sealed object");
         return;
     }
+
+    if (poSRS == poSRSIn)
+    {
+        return;
+    }
+
     if (poSRS != nullptr)
         const_cast<OGRSpatialReference *>(poSRS)->Release();
+
     poSRS = poSRSIn;
+
     if (poSRS != nullptr)
         const_cast<OGRSpatialReference *>(poSRS)->Reference();
 }

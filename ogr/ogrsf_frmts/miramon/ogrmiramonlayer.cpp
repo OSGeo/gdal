@@ -6,23 +6,7 @@
  ******************************************************************************
  * Copyright (c) 2024, Xavier Pons
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 #include "ogrmiramon.h"
 
@@ -51,7 +35,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Create the feature definition                                   */
     /* -------------------------------------------------------------------- */
-    m_poFeatureDefn = new OGRFeatureDefn(CPLGetBasename(pszFilename));
+    m_poFeatureDefn =
+        new OGRFeatureDefn(CPLGetBasenameSafe(pszFilename).c_str());
     SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->Reference();
 
@@ -171,8 +156,50 @@ OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
         // Saving the HRS in the layer structure
         if (poSRS)
         {
-            const char *pszAuthorityName = poSRS->GetAuthorityName(nullptr);
-            const char *pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
+            const char *pszTargetKey = nullptr;
+            const char *pszAuthorityName = nullptr;
+            const char *pszAuthorityCode = nullptr;
+
+            // Reading Z units (in case of 3D vector file)
+            if (poSRS->GetAuthorityCode("VERT_CS") != nullptr)
+            {
+                const char *pszUnits = nullptr;
+                const double dfUnits =
+                    poSRS->GetTargetLinearUnits("VERT_CS", &pszUnits);
+                const auto IsAlmostEqual = [](double x, double y)
+                { return std::fabs(x - y) <= 1e-10; };
+                if (pszUnits)
+                {
+                    if (!strcmp(pszUnits, "metre") && IsAlmostEqual(dfUnits, 1))
+                    {
+                        hMiraMonLayerPNT.pZUnit = strdup("m");
+                        hMiraMonLayerARC.pZUnit = strdup("m");
+                        hMiraMonLayerPOL.pZUnit = strdup("m");
+                    }
+                    else
+                    {
+                        hMiraMonLayerPNT.pZUnit = strdup(pszUnits);
+                        hMiraMonLayerARC.pZUnit = strdup(pszUnits);
+                        hMiraMonLayerPOL.pZUnit = strdup(pszUnits);
+                    }
+                }
+            }
+
+            // Reading horizontal reference system and horizontal units
+            if (poSRS->IsProjected())
+                pszTargetKey = "PROJCS";
+            else if (poSRS->IsGeographic() || poSRS->IsDerivedGeographic())
+                pszTargetKey = "GEOGCS";
+            else if (poSRS->IsGeocentric())
+                pszTargetKey = "GEOCCS";
+            else if (poSRS->IsLocal())
+                pszTargetKey = "LOCAL_CS";
+
+            if (!poSRS->IsLocal())
+            {
+                pszAuthorityName = poSRS->GetAuthorityName(pszTargetKey);
+                pszAuthorityCode = poSRS->GetAuthorityCode(pszTargetKey);
+            }
 
             if (pszAuthorityName && pszAuthorityCode &&
                 EQUAL(pszAuthorityName, "EPSG"))
@@ -327,7 +354,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
         {
             if (!phMiraMonLayer->pMMBDXP->pfDataBase)
             {
-                if ((phMiraMonLayer->pMMBDXP->pfDataBase = fopen_function(
+                if ((phMiraMonLayer->pMMBDXP->pfDataBase = VSIFOpenL(
                          phMiraMonLayer->pMMBDXP->szFileName, "r")) == nullptr)
                 {
                     CPLDebugOnly("MiraMon", "File '%s' cannot be opened.",
@@ -527,6 +554,9 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         if (MMCloseLayer(&hMiraMonLayerPOL))
         {
             CPLDebugOnly("MiraMon", "Error closing polygons layer");
+
+            // In case of closing we need to destroy memory
+            MMDestroyLayer(&hMiraMonLayerPOL);
         }
         if (hMiraMonLayerPOL.TopHeader.nElemCount)
         {
@@ -548,6 +578,9 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         if (MMCloseLayer(&hMiraMonLayerARC))
         {
             CPLDebugOnly("MiraMon", "Error closing arcs layer");
+
+            // In case of closing we need to destroy memory
+            MMDestroyLayer(&hMiraMonLayerARC);
         }
         if (hMiraMonLayerARC.TopHeader.nElemCount)
         {
@@ -570,6 +603,9 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         if (MMCloseLayer(&hMiraMonLayerPNT))
         {
             CPLDebugOnly("MiraMon", "Error closing points layer");
+
+            // In case of closing we need to destroy memory
+            MMDestroyLayer(&hMiraMonLayerPNT);
         }
         if (hMiraMonLayerPNT.TopHeader.nElemCount)
         {
@@ -593,7 +629,11 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
             {
                 CPLDebugOnly("MiraMon", "Closing MiraMon DBF table ...");
             }
-            MMCloseLayer(&hMiraMonLayerReadOrNonGeom);
+            if (MMCloseLayer(&hMiraMonLayerReadOrNonGeom))
+            {
+                // In case of closing we need to destroy memory
+                MMDestroyLayer(&hMiraMonLayerReadOrNonGeom);
+            }
             if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITING_MODE)
             {
                 CPLDebugOnly("MiraMon", "MiraMon DBF table closed");
@@ -610,7 +650,11 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         {
             CPLDebugOnly("MiraMon", "Closing MiraMon layer ...");
         }
-        MMCloseLayer(&hMiraMonLayerReadOrNonGeom);
+        if (MMCloseLayer(&hMiraMonLayerReadOrNonGeom))
+        {
+            // In case of closing we need to destroy memory
+            MMDestroyLayer(&hMiraMonLayerReadOrNonGeom);
+        }
         if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITING_MODE)
         {
             CPLDebugOnly("MiraMon", "MiraMon layer closed");
@@ -619,51 +663,51 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
 
     if (hMiraMonLayerPOL.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "Destroying MiraMon polygons layer memory");
+        CPLDebugOnly("MiraMon", "Destroying MiraMon polygons layer memory");
     }
     MMDestroyLayer(&hMiraMonLayerPOL);
     if (hMiraMonLayerPOL.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "MiraMon polygons layer memory destroyed");
+        CPLDebugOnly("MiraMon", "MiraMon polygons layer memory destroyed");
     }
 
     if (hMiraMonLayerARC.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "Destroying MiraMon arcs layer memory");
+        CPLDebugOnly("MiraMon", "Destroying MiraMon arcs layer memory");
     }
     MMDestroyLayer(&hMiraMonLayerARC);
     if (hMiraMonLayerARC.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "MiraMon arcs layer memory destroyed");
+        CPLDebugOnly("MiraMon", "MiraMon arcs layer memory destroyed");
     }
 
     if (hMiraMonLayerPNT.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "Destroying MiraMon points layer memory");
+        CPLDebugOnly("MiraMon", "Destroying MiraMon points layer memory");
     }
     MMDestroyLayer(&hMiraMonLayerPNT);
     if (hMiraMonLayerPNT.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "MiraMon points layer memory destroyed");
+        CPLDebugOnly("MiraMon", "MiraMon points layer memory destroyed");
     }
 
     if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "Destroying MiraMon DBF table layer memory");
+        CPLDebugOnly("MiraMon", "Destroying MiraMon DBF table layer memory");
     }
     else
     {
-        MMCPLDebug("MiraMon", "Destroying MiraMon layer memory");
+        CPLDebugOnly("MiraMon", "Destroying MiraMon layer memory");
     }
 
     MMDestroyLayer(&hMiraMonLayerReadOrNonGeom);
     if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITING_MODE)
     {
-        MMCPLDebug("MiraMon", "MiraMon DBF table layer memory destroyed");
+        CPLDebugOnly("MiraMon", "MiraMon DBF table layer memory destroyed");
     }
     else
     {
-        MMCPLDebug("MiraMon", "MiraMon layer memory destroyed");
+        CPLDebugOnly("MiraMon", "MiraMon layer memory destroyed");
     }
 
     memset(&hMiraMonLayerReadOrNonGeom, 0, sizeof(hMiraMonLayerReadOrNonGeom));
@@ -671,9 +715,9 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
     memset(&hMiraMonLayerARC, 0, sizeof(hMiraMonLayerARC));
     memset(&hMiraMonLayerPOL, 0, sizeof(hMiraMonLayerPOL));
 
-    MMCPLDebug("MiraMon", "Destroying MiraMon temporary feature memory");
+    CPLDebugOnly("MiraMon", "Destroying MiraMon temporary feature memory");
     MMDestroyFeature(&hMMFeature);
-    MMCPLDebug("MiraMon", "MiraMon temporary feature memory");
+    CPLDebugOnly("MiraMon", "MiraMon temporary feature memory");
     memset(&hMMFeature, 0, sizeof(hMMFeature));
 
     /* -------------------------------------------------------------------- */
@@ -743,12 +787,12 @@ void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
     if (!phMiraMonLayer->pMultRecordIndex)
         return;
 
-    fseek_function(
-        phMiraMonLayer->pMMBDXP->pfDataBase,
-        phMiraMonLayer->pMultRecordIndex[iFID].offset +
-            (MM_FILE_OFFSET)nIRecord * phMiraMonLayer->pMMBDXP->BytesPerRecord +
-            phMiraMonLayer->pMMBDXP->pField[nIField].AccumulatedBytes,
-        SEEK_SET);
+    VSIFSeekL(phMiraMonLayer->pMMBDXP->pfDataBase,
+              phMiraMonLayer->pMultRecordIndex[iFID].offset +
+                  (MM_FILE_OFFSET)nIRecord *
+                      phMiraMonLayer->pMMBDXP->BytesPerRecord +
+                  phMiraMonLayer->pMMBDXP->pField[nIField].AccumulatedBytes,
+              SEEK_SET);
 }
 
 /****************************************************************************/
@@ -1066,10 +1110,10 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     {
                         GoToFieldOfMultipleRecord(nIElem, nIRecord, nIField);
 
-                        fread_function(phMiraMonLayer->szStringToOperate,
-                                       phMiraMonLayer->pMMBDXP->pField[nIField]
-                                           .BytesPerField,
-                                       1, phMiraMonLayer->pMMBDXP->pfDataBase);
+                        VSIFReadL(phMiraMonLayer->szStringToOperate,
+                                  phMiraMonLayer->pMMBDXP->pField[nIField]
+                                      .BytesPerField,
+                                  1, phMiraMonLayer->pMMBDXP->pfDataBase);
                         phMiraMonLayer
                             ->szStringToOperate[phMiraMonLayer->pMMBDXP
                                                     ->pField[nIField]
@@ -1129,10 +1173,10 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         memset(phMiraMonLayer->szStringToOperate, 0,
                                phMiraMonLayer->pMMBDXP->pField[nIField]
                                    .BytesPerField);
-                        fread_function(phMiraMonLayer->szStringToOperate,
-                                       phMiraMonLayer->pMMBDXP->pField[nIField]
-                                           .BytesPerField,
-                                       1, phMiraMonLayer->pMMBDXP->pfDataBase);
+                        VSIFReadL(phMiraMonLayer->szStringToOperate,
+                                  phMiraMonLayer->pMMBDXP->pField[nIField]
+                                      .BytesPerField,
+                                  1, phMiraMonLayer->pMMBDXP->pfDataBase);
                         phMiraMonLayer
                             ->szStringToOperate[phMiraMonLayer->pMMBDXP
                                                     ->pField[nIField]
@@ -1209,7 +1253,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                 memset(phMiraMonLayer->szStringToOperate, 0,
                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
-                fread_function(
+                VSIFReadL(
                     phMiraMonLayer->szStringToOperate,
                     phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField, 1,
                     phMiraMonLayer->pMMBDXP->pfDataBase);
@@ -1261,7 +1305,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     memset(
                         phMiraMonLayer->szStringToOperate, 0,
                         phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
-                    fread_function(
+                    VSIFReadL(
                         phMiraMonLayer->szStringToOperate,
                         phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField,
                         1, phMiraMonLayer->pMMBDXP->pfDataBase);
@@ -1318,7 +1362,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     memset(
                         phMiraMonLayer->szStringToOperate, 0,
                         phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
-                    fread_function(
+                    VSIFReadL(
                         phMiraMonLayer->szStringToOperate,
                         phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField,
                         1, phMiraMonLayer->pMMBDXP->pfDataBase);
@@ -1388,7 +1432,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                 memset(phMiraMonLayer->szStringToOperate, 0,
                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
-                fread_function(
+                VSIFReadL(
                     phMiraMonLayer->szStringToOperate,
                     phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField, 1,
                     phMiraMonLayer->pMMBDXP->pfDataBase);
@@ -1469,7 +1513,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                 memset(phMiraMonLayer->szStringToOperate, 0,
                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
-                fread_function(
+                VSIFReadL(
                     phMiraMonLayer->szStringToOperate,
                     phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField, 1,
                     phMiraMonLayer->pMMBDXP->pfDataBase);
@@ -2216,6 +2260,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
     MM_EXT_DBF_N_FIELDS nNumFields = m_poFeatureDefn->GetFieldCount();
     MM_EXT_DBF_N_MULTIPLE_RECORDS nNumRecords, nRealNumRecords;
     hMMFeature.nNumMRecords = 0;
+#define MAX_SIZE_OF_FIELD_NUMBER_WITH_MINUS 22
 
     for (MM_EXT_DBF_N_FIELDS iField = 0; iField < nNumFields; iField++)
     {
@@ -2230,8 +2275,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             nRealNumRecords = nNumRecords = CSLCount(papszValues);
             if (nNumRecords == 0)
                 nNumRecords++;
-            hMMFeature.nNumMRecords =
-                max_function(hMMFeature.nNumMRecords, nNumRecords);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, nNumRecords);
             if (MMResizeMiraMonRecord(
                     &hMMFeature.pRecords, &hMMFeature.nMaxMRecords,
                     hMMFeature.nNumMRecords, MM_INC_NUMBER_OF_RECORDS,
@@ -2247,9 +2291,19 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         &(hMMFeature.pRecords[nIRecord].pField),
                         &hMMFeature.pRecords[nIRecord].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField,
-                        MM_INC_NUMBER_OF_FIELDS,
+                        (nIRecord == 0)
+                            ? MM_INC_NUMBER_OF_FIELDS
+                            : hMMFeature.pRecords[nIRecord - 1].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField))
                     return OGRERR_NOT_ENOUGH_MEMORY;
+
+                if (nIRecord > 0)
+                {
+                    // The number of fields of this new record is the same as the
+                    // last one
+                    hMMFeature.pRecords[nIRecord].nNumField =
+                        hMMFeature.pRecords[nIRecord - 1].nNumField;
+                }
 
                 if (phMiraMonLayer->nCharSet != MM_JOC_CARAC_UTF8_DBF)
                 {
@@ -2294,8 +2348,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             nRealNumRecords = nNumRecords = nCount;
             if (nNumRecords == 0)
                 nNumRecords++;
-            hMMFeature.nNumMRecords =
-                max_function(hMMFeature.nNumMRecords, nNumRecords);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, nNumRecords);
             if (MMResizeMiraMonRecord(
                     &hMMFeature.pRecords, &hMMFeature.nMaxMRecords,
                     hMMFeature.nNumMRecords, MM_INC_NUMBER_OF_RECORDS,
@@ -2309,9 +2362,19 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         &(hMMFeature.pRecords[nIRecord].pField),
                         &hMMFeature.pRecords[nIRecord].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField,
-                        MM_INC_NUMBER_OF_FIELDS,
+                        (nIRecord == 0)
+                            ? MM_INC_NUMBER_OF_FIELDS
+                            : hMMFeature.pRecords[nIRecord - 1].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField))
                     return OGRERR_NOT_ENOUGH_MEMORY;
+
+                if (nIRecord > 0)
+                {
+                    // The number of fields of this new record is the same as the
+                    // last one
+                    hMMFeature.pRecords[nIRecord].nNumField =
+                        hMMFeature.pRecords[nIRecord - 1].nNumField;
+                }
 
                 if (eFSType == OFSTBoolean)
                 {
@@ -2365,8 +2428,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             nRealNumRecords = nNumRecords = nCount;
             if (nNumRecords == 0)
                 nNumRecords++;
-            hMMFeature.nNumMRecords =
-                max_function(hMMFeature.nNumMRecords, nNumRecords);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, nNumRecords);
             if (MMResizeMiraMonRecord(
                     &hMMFeature.pRecords, &hMMFeature.nMaxMRecords,
                     hMMFeature.nNumMRecords, MM_INC_NUMBER_OF_RECORDS,
@@ -2380,9 +2442,19 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         &(hMMFeature.pRecords[nIRecord].pField),
                         &hMMFeature.pRecords[nIRecord].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField,
-                        MM_INC_NUMBER_OF_FIELDS,
+                        (nIRecord == 0)
+                            ? MM_INC_NUMBER_OF_FIELDS
+                            : hMMFeature.pRecords[nIRecord - 1].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField))
                     return OGRERR_NOT_ENOUGH_MEMORY;
+
+                if (nIRecord > 0)
+                {
+                    // The number of fields of this new record is the same as the
+                    // last one
+                    hMMFeature.pRecords[nIRecord].nNumField =
+                        hMMFeature.pRecords[nIRecord - 1].nNumField;
+                }
 
                 hMMFeature.pRecords[nIRecord].pField[iField].iValue =
                     panValues[nIRecord];
@@ -2408,8 +2480,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             nRealNumRecords = nNumRecords = nCount;
             if (nNumRecords == 0)
                 nNumRecords++;
-            hMMFeature.nNumMRecords =
-                max_function(hMMFeature.nNumMRecords, nNumRecords);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, nNumRecords);
             if (MMResizeMiraMonRecord(
                     &hMMFeature.pRecords, &hMMFeature.nMaxMRecords,
                     hMMFeature.nNumMRecords, MM_INC_NUMBER_OF_RECORDS,
@@ -2423,11 +2494,21 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         &(hMMFeature.pRecords[nIRecord].pField),
                         &hMMFeature.pRecords[nIRecord].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField,
-                        MM_INC_NUMBER_OF_FIELDS,
+                        (nIRecord == 0)
+                            ? MM_INC_NUMBER_OF_FIELDS
+                            : hMMFeature.pRecords[nIRecord - 1].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField))
                     return OGRERR_NOT_ENOUGH_MEMORY;
 
-                char szChain[21];
+                if (nIRecord > 0)
+                {
+                    // The number of fields of this new record is the same as the
+                    // last one
+                    hMMFeature.pRecords[nIRecord].nNumField =
+                        hMMFeature.pRecords[nIRecord - 1].nNumField;
+                }
+
+                char szChain[MAX_SIZE_OF_FIELD_NUMBER_WITH_MINUS];
                 MM_SprintfDoubleSignifFigures(
                     szChain, sizeof(szChain),
                     phMiraMonLayer->pLayerDB->pFields[iField].nNumberOfDecimals,
@@ -2445,7 +2526,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTString)
         {
-            hMMFeature.nNumMRecords = max_function(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2493,7 +2574,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         {
             char szDate[15];
 
-            hMMFeature.nNumMRecords = max_function(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2524,7 +2605,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTTime || eFType == OFTDateTime)
         {
-            hMMFeature.nNumMRecords = max_function(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2549,7 +2630,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTInteger)
         {
-            hMMFeature.nNumMRecords = max_function(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2604,7 +2685,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTInteger64)
         {
-            hMMFeature.nNumMRecords = max_function(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2630,7 +2711,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTReal)
         {
-            hMMFeature.nNumMRecords = max_function(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2643,7 +2724,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 0;
             else
             {
-                char szChain[21];
+                char szChain[MAX_SIZE_OF_FIELD_NUMBER_WITH_MINUS];
                 MM_SprintfDoubleSignifFigures(
                     szChain, sizeof(szChain),
                     phMiraMonLayer->pLayerDB->pFields[iField].nNumberOfDecimals,
@@ -2679,14 +2760,15 @@ OGRFeatureDefn *OGRMiraMonLayer::GetLayerDefn()
 }
 
 /****************************************************************************/
-/*                             GetExtent()                                  */
+/*                            IGetExtent()                                  */
 /*                                                                          */
 /*      Fetch extent of the data currently stored in the dataset.           */
 /*      The bForce flag has no effect on SHO files since that value         */
 /*      is always in the header.                                            */
 /****************************************************************************/
 
-OGRErr OGRMiraMonLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRMiraMonLayer::IGetExtent(int /* iGeomField*/, OGREnvelope *psExtent,
+                                   bool bForce)
 
 {
     if (phMiraMonLayer)
@@ -2816,98 +2898,123 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
     oFileList.AddStringDirectly(
         VSIGetCanonicalFilename(phMiraMonLayer->pszSrcLayerName));
     char *pszMMExt =
-        CPLStrdup(CPLGetExtension(phMiraMonLayer->pszSrcLayerName));
+        CPLStrdup(CPLGetExtensionSafe(phMiraMonLayer->pszSrcLayerName).c_str());
 
     if (phMiraMonLayer->bIsPoint)
     {
         // As it's explicit on documentation a point has also two more files:
 
         // FILE_NAME_WITHOUT_EXTENSION.pnt --> FILE_NAME_WITHOUT_EXTENSION + T.rel
-        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+        CPLStrlcpy(szAuxFile,
+                   CPLGetBasenameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "T.rel" : "T.REL",
                    MM_CPL_PATH_BUF_SIZE);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(
-            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
-                            szAuxFile, nullptr)));
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.pnt --> FILE_NAME_WITHOUT_EXTENSION + T.dbf
-        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+        CPLStrlcpy(szAuxFile,
+                   CPLGetBasenameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "T.dbf" : "T.DBF",
                    MM_CPL_PATH_BUF_SIZE);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(
-            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
-                            szAuxFile, nullptr)));
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
     }
     else if (phMiraMonLayer->bIsArc && !phMiraMonLayer->bIsPolygon)
     {
         // As it's explicit on documentation a point has also five more files:
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + A.rel
-        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+        CPLStrlcpy(szAuxFile,
+                   CPLGetBasenameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? "A.rel" : "A.REL",
                    MM_CPL_PATH_BUF_SIZE);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(
-            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
-                            szAuxFile, nullptr)));
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + A.dbf
-        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+        CPLStrlcpy(szAuxFile,
+                   CPLGetBasenameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? "A.dbf" : "A.DBF",
                    MM_CPL_PATH_BUF_SIZE);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(
-            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
-                            szAuxFile, nullptr)));
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + .nod
-        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+        CPLStrlcpy(szAuxFile,
+                   CPLGetBasenameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? ".nod" : ".NOD",
                    MM_CPL_PATH_BUF_SIZE);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(
-            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
-                            szAuxFile, nullptr)));
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + N.rel
-        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+        CPLStrlcpy(szAuxFile,
+                   CPLGetBasenameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? "N.rel" : "N.REL",
                    MM_CPL_PATH_BUF_SIZE);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(
-            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
-                            szAuxFile, nullptr)));
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + N.dbf
-        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+        CPLStrlcpy(szAuxFile,
+                   CPLGetBasenameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? "N.dbf" : "N.DBF",
                    MM_CPL_PATH_BUF_SIZE);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(
-            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
-                            szAuxFile, nullptr)));
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
     }
     else if (phMiraMonLayer->bIsPolygon)
     {
         // As it's explicit on documentation a point has also eight more files:
-        const char *szCompleteArcFileName;
         char szArcFileName[MM_CPL_PATH_BUF_SIZE];
 
         // FILE_NAME_WITHOUT_EXTENSION.pol --> FILE_NAME_WITHOUT_EXTENSION + P.rel
-        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+        CPLStrlcpy(szAuxFile,
+                   CPLGetBasenameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "P.rel" : "P.REL",
                    MM_CPL_PATH_BUF_SIZE);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(
-            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
-                            szAuxFile, nullptr)));
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // The name of the arc is in THIS metadata file
         char *pszArcLayerName = MMReturnValueFromSectionINIFile(
-            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
-                            szAuxFile, nullptr),
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str(),
             SECTION_OVVW_ASPECTES_TECNICS, KEY_ArcSource);
         if (!pszArcLayerName)
         {
@@ -2919,64 +3026,83 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
         MM_RemoveInitial_and_FinalQuotationMarks(szArcFileName);
 
         // If extension is not specified ".arc" will be used
-        if (MMIsEmptyString(CPLGetExtension(pszArcLayerName)))
+        if (MMIsEmptyString(CPLGetExtensionSafe(pszArcLayerName).c_str()))
             CPLStrlcat(szArcFileName, (pszMMExt[0] == 'p') ? ".arc" : ".ARC",
                        MM_CPL_PATH_BUF_SIZE);
 
         CPLFree(pszArcLayerName);
 
-        szCompleteArcFileName =
-            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
-                            szArcFileName, nullptr);
+        const std::string osCompleteArcFileName = CPLFormFilenameSafe(
+            CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+            szArcFileName, nullptr);
 
         // The arc that has the coordinates of the polygon
         oFileList.AddStringDirectly(
-            VSIGetCanonicalFilename(szCompleteArcFileName));
+            VSIGetCanonicalFilename(osCompleteArcFileName.c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.pol --> FILE_NAME_WITHOUT_EXTENSION + P.dbf
-        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+        CPLStrlcpy(szAuxFile,
+                   CPLGetBasenameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
                    MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "P.dbf" : "P.DBF",
                    MM_CPL_PATH_BUF_SIZE);
         oFileList.AddStringDirectly(VSIGetCanonicalFilename(
-            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
-                            szAuxFile, nullptr)));
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(phMiraMonLayer->pszSrcLayerName).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + A.rel
-        const char *pszBaseArcName = CPLGetBasename(szCompleteArcFileName);
-        CPLStrlcpy(szAuxFile, pszBaseArcName, MM_CPL_PATH_BUF_SIZE);
+        const std::string osBaseArcName =
+            CPLGetBasenameSafe(osCompleteArcFileName.c_str());
+        CPLStrlcpy(szAuxFile, osBaseArcName.c_str(), MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "A.rel" : "A.REL",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(osCompleteArcFileName.c_str()).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + A.dbf
-        CPLStrlcpy(szAuxFile, pszBaseArcName, MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcpy(szAuxFile, osBaseArcName.c_str(), MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "A.dbf" : "A.DBF",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(osCompleteArcFileName.c_str()).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + .nod
-        CPLStrlcpy(szAuxFile, pszBaseArcName, MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcpy(szAuxFile, osBaseArcName.c_str(), MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? ".nod" : ".NOD",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(osCompleteArcFileName.c_str()).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + N.rel
-        CPLStrlcpy(szAuxFile, pszBaseArcName, MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcpy(szAuxFile, osBaseArcName.c_str(), MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "N.rel" : "N.REL",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(osCompleteArcFileName.c_str()).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
 
         // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + N.dbf
-        CPLStrlcpy(szAuxFile, pszBaseArcName, MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcpy(szAuxFile, osBaseArcName.c_str(), MM_CPL_PATH_BUF_SIZE);
         CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "N.dbf" : "N.DBF",
                    MM_CPL_PATH_BUF_SIZE);
-        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
-            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilenameSafe(
+                CPLGetDirnameSafe(osCompleteArcFileName.c_str()).c_str(),
+                szAuxFile, nullptr)
+                .c_str()));
     }
     CPLFree(pszMMExt);
 }

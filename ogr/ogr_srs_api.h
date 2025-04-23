@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  C API and constant declarations for OGR Spatial References.
@@ -9,23 +8,7 @@
  * Copyright (c) 2000, Frank Warmerdam
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_SRS_API_H_INCLUDED
@@ -35,6 +18,7 @@
 
 #ifndef SWIG
 #include "ogr_core.h"
+#include "gdal_fwd.h"
 
 CPL_C_START
 
@@ -437,22 +421,6 @@ const char CPL_DLL *OSRAxisEnumToName(OGRAxisOrientation eOrientation);
 /* -------------------------------------------------------------------- */
 /*      C Wrappers for C++ objects and methods.                         */
 /* -------------------------------------------------------------------- */
-#ifndef DEFINED_OGRSpatialReferenceH
-/*! @cond Doxygen_Suppress */
-#define DEFINED_OGRSpatialReferenceH
-/*! @endcond */
-
-#ifdef DEBUG
-typedef struct OGRSpatialReferenceHS *OGRSpatialReferenceH;
-typedef struct OGRCoordinateTransformationHS *OGRCoordinateTransformationH;
-#else
-/** Opaque type for a Spatial Reference object */
-typedef void *OGRSpatialReferenceH;
-/** Opaque type for a coordinate transformation object */
-typedef void *OGRCoordinateTransformationH;
-#endif
-
-#endif
 
 void CPL_DLL OSRSetPROJSearchPaths(const char *const *papszPaths);
 char CPL_DLL **OSRGetPROJSearchPaths(void);
@@ -927,7 +895,7 @@ OGRErr CPL_DLL OSRSetTPED(OGRSpatialReferenceH hSRS, double dfLat1,
 OGRErr CPL_DLL OSRSetVDG(OGRSpatialReferenceH hSRS, double dfCenterLong,
                          double dfFalseEasting, double dfFalseNorthing);
 
-/** Wagner I -- VII */
+/** Wagner I \-- VII */
 OGRErr CPL_DLL OSRSetWagner(OGRSpatialReferenceH hSRS, int nVariation,
                             double dfCenterLat, double dfFalseEasting,
                             double dfFalseNorthing);
@@ -1021,15 +989,13 @@ OSRGetCRSInfoListFromDatabase(const char *pszAuthName,
 
 void CPL_DLL OSRDestroyCRSInfoList(OSRCRSInfo **list);
 
+char CPL_DLL **OSRGetAuthorityListFromDatabase(void);
+
 /* -------------------------------------------------------------------- */
 /*      OGRCoordinateTransform C API.                                   */
 /* -------------------------------------------------------------------- */
 OGRCoordinateTransformationH CPL_DLL CPL_STDCALL OCTNewCoordinateTransformation(
     OGRSpatialReferenceH hSourceSRS, OGRSpatialReferenceH hTargetSRS);
-
-/** Coordinate transformation options. */
-typedef struct OGRCoordinateTransformationOptions
-    *OGRCoordinateTransformationOptionsH;
 
 OGRCoordinateTransformationOptionsH CPL_DLL
 OCTNewCoordinateTransformationOptions(void);

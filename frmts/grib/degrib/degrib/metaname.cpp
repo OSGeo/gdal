@@ -25,34 +25,92 @@
 #include "cpl_port.h"
 #include "cpl_csv.h"
 
-static const char* GetGRIB2_CSVFilename(const char* pszFilename)
+#include <cmath>
+
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#include <map>
+#include <mutex>
+static std::mutex goMutex;
+static std::map<std::string, std::string>* pgoMapResourceFiles = nullptr;
+#endif
+
+void MetanameCleanup(void)
 {
+#ifdef EMBED_RESOURCE_FILES
+    std::lock_guard oGuard(goMutex);
+    if( pgoMapResourceFiles )
+    {
+        for( const auto& oIter: *pgoMapResourceFiles )
+        {
+            VSIUnlink(oIter.second.c_str());
+        }
+        delete pgoMapResourceFiles;
+    }
+    pgoMapResourceFiles = nullptr;
+#endif
+}
+
+static std::string GetGRIB2_CSVFilename(const char* pszFilename)
+{
+#ifdef EMBED_RESOURCE_FILES
+    std::lock_guard oGuard(goMutex);
+    if( !pgoMapResourceFiles )
+        pgoMapResourceFiles = new std::map<std::string, std::string>();
+    const auto oIter = pgoMapResourceFiles->find(pszFilename);
+    if( oIter != pgoMapResourceFiles->end() )
+        return oIter->second;
+#endif
     const char* pszGribTableDirectory = CPLGetConfigOption("GRIB_RESOURCE_DIR", nullptr);
     if( pszGribTableDirectory )
     {
-        const char* pszFullFilename = CPLFormFilename(pszGribTableDirectory, pszFilename, nullptr);
+        const std::string osFullFilename = CPLFormFilenameSafe(pszGribTableDirectory, pszFilename, nullptr);
         VSIStatBufL sStat;
-        if( VSIStatL(pszFullFilename, &sStat) == 0 )
-            return pszFullFilename;
-        return nullptr;
+        if( VSIStatL(osFullFilename.c_str(), &sStat) == 0 )
+            return osFullFilename;
+        return std::string();
     }
-    const char* pszRet = CSVFilename(pszFilename);
+    const char* pszRet = nullptr;
+    CPL_IGNORE_RET_VAL(pszRet);
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
+    pszRet = CSVFilename(pszFilename);
     // CSVFilename() returns the same content as pszFilename if it does not
     // find the file.
     if( pszRet && strcmp(pszRet, pszFilename) == 0 )
-        return nullptr;
-    return pszRet;
+#endif
+    {
+#ifdef EMBED_RESOURCE_FILES
+        const char* pszFileContent = GRIBGetCSVFileContent(pszFilename);
+        if( pszFileContent )
+        {
+            const std::string osTmpFilename = VSIMemGenerateHiddenFilename(pszFilename);
+            VSIFCloseL(VSIFileFromMemBuffer(
+                osTmpFilename.c_str(),
+                const_cast<GByte *>(
+                    reinterpret_cast<const GByte *>(pszFileContent)),
+                static_cast<int>(strlen(pszFileContent)),
+                /* bTakeOwnership = */ false));
+            (*pgoMapResourceFiles)[pszFilename] = osTmpFilename;
+            pszRet = (*pgoMapResourceFiles)[pszFilename].c_str();
+        }
+        else
+#endif
+        {
+            return std::string();
+        }
+    }
+    return std::string(pszRet ? pszRet : "");
 }
 
 const char *centerLookup (unsigned short int center)
 {
-    const char* pszFilename = GetGRIB2_CSVFilename("grib2_center.csv");
-    if( pszFilename == nullptr )
+    const std::string osFilename = GetGRIB2_CSVFilename("grib2_center.csv");
+    if( osFilename.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find grib2_center.csv");
         return nullptr;
     }
-    const char* pszName = CSVGetField( pszFilename, "code", CPLSPrintf("%d", center),
+    const char* pszName = CSVGetField( osFilename.c_str(), "code", CPLSPrintf("%d", center),
                                        CC_Integer, "name" );
     if( pszName && pszName[0] == 0 )
         pszName = nullptr;
@@ -62,22 +120,22 @@ const char *centerLookup (unsigned short int center)
 const char *subCenterLookup(unsigned short int center,
                             unsigned short int subcenter)
 {
-    const char* pszFilename = GetGRIB2_CSVFilename("grib2_subcenter.csv");
-    if( pszFilename == nullptr )
+    const std::string osFilename = GetGRIB2_CSVFilename("grib2_subcenter.csv");
+    if( osFilename.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find grib2_subcenter.csv");
         return nullptr;
     }
-    int iCenter = CSVGetFileFieldId(pszFilename,"center_code");
-    int iSubCenter = CSVGetFileFieldId(pszFilename,"subcenter_code");
-    int iName = CSVGetFileFieldId(pszFilename,"name");
+    int iCenter = CSVGetFileFieldId(osFilename.c_str(),"center_code");
+    int iSubCenter = CSVGetFileFieldId(osFilename.c_str(),"subcenter_code");
+    int iName = CSVGetFileFieldId(osFilename.c_str(),"name");
     if( iCenter < 0 || iSubCenter < 0 || iName < 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Bad structure for %s", pszFilename);
+        CPLError(CE_Failure, CPLE_AppDefined, "Bad structure for %s", osFilename.c_str());
         return nullptr;
     }
-    CSVRewind(pszFilename);
-    while( char** papszFields = CSVGetNextLine(pszFilename) )
+    CSVRewind(osFilename.c_str());
+    while( char** papszFields = CSVGetNextLine(osFilename.c_str()) )
     {
         if( atoi(papszFields[iCenter]) == static_cast<int>(center) &&
             atoi(papszFields[iSubCenter]) == static_cast<int>(subcenter) )
@@ -91,22 +149,22 @@ const char *subCenterLookup(unsigned short int center,
 #ifdef unused_by_GDAL
 const char *processLookup (unsigned short int center, unsigned char process)
 {
-    const char* pszFilename = GetGRIB2_CSVFilename("grib2_process.csv");
-    if( pszFilename == nullptr )
+    const std::string Filename = GetGRIB2_CSVFilename("grib2_process.csv");
+    if( osFilename.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find grib2_process.csv");
         return nullptr;
     }
-    int iCenter = CSVGetFileFieldId(pszFilename,"center_code");
-    int iProcess = CSVGetFileFieldId(pszFilename,"process_code");
-    int iName = CSVGetFileFieldId(pszFilename,"name");
+    int iCenter = CSVGetFileFieldId(osFilename.c_str(),"center_code");
+    int iProcess = CSVGetFileFieldId(osFilename.c_str(),"process_code");
+    int iName = CSVGetFileFieldId(osFilename.c_str(),"name");
     if( iCenter < 0 || iProcess < 0 || iName < 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Bad structure for %s", pszFilename);
+        CPLError(CE_Failure, CPLE_AppDefined, "Bad structure for %s", osFilename.c_str());
         return nullptr;
     }
-    CSVRewind(pszFilename);
-    while( char** papszFields = CSVGetNextLine(pszFilename) )
+    CSVRewind(osFilename.c_str());
+    while( char** papszFields = CSVGetNextLine(osFilename.c_str()) )
     {
         if( atoi(papszFields[iCenter]) == static_cast<int>(center) &&
             atoi(papszFields[iProcess]) == static_cast<int>(process) )
@@ -182,23 +240,23 @@ static int GetGrib2Table4_2_Record (int prodType, int cat, int subcat,
 {
     const char* pszBaseFilename = CPLSPrintf("grib2_table_4_2_%d_%d.csv",
                                              prodType, cat);
-    const char* pszFilename = GetGRIB2_CSVFilename(pszBaseFilename);
-    if( pszFilename == nullptr )
+    const std::string osFilename = GetGRIB2_CSVFilename(pszBaseFilename);
+    if( osFilename.empty() )
     {
         return FALSE;
     }
-    int iSubcat = CSVGetFileFieldId(pszFilename,"subcat");
-    int iShortName = CSVGetFileFieldId(pszFilename,"short_name");
-    int iName = CSVGetFileFieldId(pszFilename,"name");
-    int iUnit = CSVGetFileFieldId(pszFilename,"unit");
-    int iUnitConv = CSVGetFileFieldId(pszFilename,"unit_conv");
+    int iSubcat = CSVGetFileFieldId(osFilename.c_str(),"subcat");
+    int iShortName = CSVGetFileFieldId(osFilename.c_str(),"short_name");
+    int iName = CSVGetFileFieldId(osFilename.c_str(),"name");
+    int iUnit = CSVGetFileFieldId(osFilename.c_str(),"unit");
+    int iUnitConv = CSVGetFileFieldId(osFilename.c_str(),"unit_conv");
     if( iSubcat < 0 || iShortName < 0 || iName < 0 || iUnit < 0 || iUnitConv < 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Bad structure for %s", pszFilename);
+        CPLError(CE_Failure, CPLE_AppDefined, "Bad structure for %s", osFilename.c_str());
         return FALSE;
     }
-    CSVRewind(pszFilename);
-    while( char** papszFields = CSVGetNextLine(pszFilename) )
+    CSVRewind(osFilename.c_str());
+    while( char** papszFields = CSVGetNextLine(osFilename.c_str()) )
     {
         if( atoi(papszFields[iSubcat]) == subcat )
         {
@@ -254,24 +312,24 @@ int IsData_MOS (unsigned short int center, unsigned short int subcenter)
    return ((center == 7) && (subcenter == 14));
 }
 
-static const char* GetGrib2LocalTable4_2FileName(int center,
+static std::string GetGrib2LocalTable4_2FileName(int center,
                                                  int subcenter)
 {
-    const char* pszFilename = GetGRIB2_CSVFilename("grib2_table_4_2_local_index.csv");
-    if( pszFilename == nullptr )
+    const std::string osFilename = GetGRIB2_CSVFilename("grib2_table_4_2_local_index.csv");
+    if( osFilename.empty() )
     {
-        return nullptr;
+        return osFilename;
     }
-    int iCenter = CSVGetFileFieldId(pszFilename,"center_code");
-    int iSubCenter = CSVGetFileFieldId(pszFilename,"subcenter_code");
-    int iFilename = CSVGetFileFieldId(pszFilename,"filename");
+    int iCenter = CSVGetFileFieldId(osFilename.c_str(),"center_code");
+    int iSubCenter = CSVGetFileFieldId(osFilename.c_str(),"subcenter_code");
+    int iFilename = CSVGetFileFieldId(osFilename.c_str(),"filename");
     if( iCenter < 0 || iSubCenter < 0 || iFilename < 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Bad structure for %s", pszFilename);
-        return nullptr;
+        CPLError(CE_Failure, CPLE_AppDefined, "Bad structure for %s", osFilename.c_str());
+        return std::string();
     }
-    CSVRewind(pszFilename);
-    while( char** papszFields = CSVGetNextLine(pszFilename) )
+    CSVRewind(osFilename.c_str());
+    while( char** papszFields = CSVGetNextLine(osFilename.c_str()) )
     {
         if( atoi(papszFields[iCenter]) == center )
         {
@@ -282,7 +340,7 @@ static const char* GetGrib2LocalTable4_2FileName(int center,
             }
         }
     }
-    return nullptr;
+    return std::string();
 }
 
 /*****************************************************************************
@@ -321,26 +379,26 @@ static int GetGrib2LocalTable4_2_Record (int center,
                                          const char** unit,
                                          unit_convert* convert)
 {
-    const char* pszFilename = GetGrib2LocalTable4_2FileName(center, subcenter);
-    if( pszFilename == nullptr )
+    const std::string osFilename = GetGrib2LocalTable4_2FileName(center, subcenter);
+    if( osFilename.empty() )
     {
         return FALSE;
     }
-    int iProd = CSVGetFileFieldId(pszFilename,"prod");
-    int iCat = CSVGetFileFieldId(pszFilename,"cat");
-    int iSubcat = CSVGetFileFieldId(pszFilename,"subcat");
-    int iShortName = CSVGetFileFieldId(pszFilename,"short_name");
-    int iName = CSVGetFileFieldId(pszFilename,"name");
-    int iUnit = CSVGetFileFieldId(pszFilename,"unit");
-    int iUnitConv = CSVGetFileFieldId(pszFilename,"unit_conv");
+    int iProd = CSVGetFileFieldId(osFilename.c_str(),"prod");
+    int iCat = CSVGetFileFieldId(osFilename.c_str(),"cat");
+    int iSubcat = CSVGetFileFieldId(osFilename.c_str(),"subcat");
+    int iShortName = CSVGetFileFieldId(osFilename.c_str(),"short_name");
+    int iName = CSVGetFileFieldId(osFilename.c_str(),"name");
+    int iUnit = CSVGetFileFieldId(osFilename.c_str(),"unit");
+    int iUnitConv = CSVGetFileFieldId(osFilename.c_str(),"unit_conv");
     if( iProd < 0 || iCat < 0 || iSubcat < 0 || iShortName < 0 ||
         iName < 0 || iUnit < 0 || iUnitConv < 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Bad structure for %s", pszFilename);
+        CPLError(CE_Failure, CPLE_AppDefined, "Bad structure for %s", osFilename.c_str());
         return FALSE;
     }
-    CSVRewind(pszFilename);
-    while( char** papszFields = CSVGetNextLine(pszFilename) )
+    CSVRewind(osFilename.c_str());
+    while( char** papszFields = CSVGetNextLine(osFilename.c_str()) )
     {
         if( atoi(papszFields[iProd]) == prodType &&
             atoi(papszFields[iCat]) == cat &&
@@ -427,7 +485,7 @@ static void ElemNameProb (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
       if (upperProb > tmp ||
           tmp > std::numeric_limits<int>::max() ||
           tmp < std::numeric_limits<int>::min() ||
-          CPLIsNan(tmp) ) {
+          std::isnan(tmp) ) {
          // TODO(schwehr): What is the correct response?
          errSprintf ("ERROR: upperProb out of range.  Setting to 0.\n");
          upperProb = 0.0;
@@ -1728,23 +1786,23 @@ int  Table45Lookup (int code,
         return TRUE;
    }
 
-    const char* pszFilename = GetGRIB2_CSVFilename("grib2_table_4_5.csv");
-    if( pszFilename == nullptr )
+    const std::string osFilename = GetGRIB2_CSVFilename("grib2_table_4_5.csv");
+    if( osFilename.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find grib2_table_4_5.csv");
         return FALSE;
     }
-    int iCode = CSVGetFileFieldId(pszFilename,"code");
-    int iShortName = CSVGetFileFieldId(pszFilename,"short_name");
-    int iName = CSVGetFileFieldId(pszFilename,"name");
-    int iUnit = CSVGetFileFieldId(pszFilename,"unit");
+    int iCode = CSVGetFileFieldId(osFilename.c_str(),"code");
+    int iShortName = CSVGetFileFieldId(osFilename.c_str(),"short_name");
+    int iName = CSVGetFileFieldId(osFilename.c_str(),"name");
+    int iUnit = CSVGetFileFieldId(osFilename.c_str(),"unit");
     if( iCode < 0 || iShortName < 0 || iName < 0 || iUnit < 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Bad structure for %s", pszFilename);
+        CPLError(CE_Failure, CPLE_AppDefined, "Bad structure for %s", osFilename.c_str());
         return FALSE;
     }
-    CSVRewind(pszFilename);
-    while( char** papszFields = CSVGetNextLine(pszFilename) )
+    CSVRewind(osFilename.c_str());
+    while( char** papszFields = CSVGetNextLine(osFilename.c_str()) )
     {
         if( atoi(papszFields[iCode]) == code )
         {

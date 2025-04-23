@@ -8,23 +8,7 @@
  * Copyright (c) 2000, Frank Warmerdam
  * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ******************************************************************************
  *
  * ISSUES:
@@ -344,7 +328,7 @@ PNGDataset::~PNGDataset()
 #include "filter_sse2_intrinsics.c"
 #endif
 
-#if defined(__GNUC__) && !defined(__SSE2__)
+#if defined(__GNUC__) && !defined(__SSE2__) && !defined(USE_NEON_OPTIMIZATIONS)
 __attribute__((optimize("tree-vectorize"))) static inline void
 AddVectors(const GByte *CPL_RESTRICT pabyInputLine,
            GByte *CPL_RESTRICT pabyOutputLine, int nSize)
@@ -693,7 +677,7 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
                     const GByte *CPL_RESTRICT pabyOutputLineUp =
                         pabyOutputBuffer +
                         (static_cast<size_t>(iY) - 1) * nSamplesPerLine;
-#if defined(__GNUC__) && !defined(__SSE2__)
+#if defined(__GNUC__) && !defined(__SSE2__) && !defined(USE_NEON_OPTIMIZATIONS)
                     AddVectors(pabyInputLine, pabyOutputLineUp, pabyOutputLine,
                                nSamplesPerLine);
 #else
@@ -723,7 +707,7 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
                 }
                 else
                 {
-#if defined(__GNUC__) && !defined(__SSE2__)
+#if defined(__GNUC__) && !defined(__SSE2__) && !defined(USE_NEON_OPTIMIZATIONS)
                     AddVectors(pabyInputLine, pabyOutputLine, nSamplesPerLine);
 #else
                     int iX;
@@ -1421,6 +1405,21 @@ CPLErr PNGDataset::LoadInterlacedChunk(int iLine)
 
     bool bRet = safe_png_read_image(hPNG, png_rows, sSetJmpContext);
 
+    // Do swap on LSB machines. 16-bit PNG data is stored in MSB format.
+#ifdef CPL_LSB
+    if (bRet && nBitDepth == 16)
+    {
+        for (int i = 0; i < GetRasterYSize(); i++)
+        {
+            if (i >= nBufferStartLine && i < nBufferStartLine + nBufferLines)
+            {
+                GDALSwapWords(png_rows[i], 2,
+                              GetRasterXSize() * GetRasterCount(), 2);
+            }
+        }
+    }
+#endif
+
     CPLFree(png_rows);
     CPLFree(dummy_row);
     if (!bRet)
@@ -1604,11 +1603,12 @@ void PNGDataset::CollectXMPMetadata()
             if (memcmp(pszContent, "XML:com.adobe.xmp\0\0\0\0\0", 22) == 0)
             {
                 // Avoid setting the PAM dirty bit just for that.
-                int nOldPamFlags = nPamFlags;
+                const int nOldPamFlags = nPamFlags;
 
                 char *apszMDList[2] = {pszContent + 22, nullptr};
                 SetMetadata(apszMDList, "xml:XMP");
 
+                // cppcheck-suppress redundantAssignment
                 nPamFlags = nOldPamFlags;
 
                 VSIFree(pszContent);
@@ -1788,9 +1788,7 @@ GDALDataset *PNGDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The PNG driver does not support update access to existing"
-                 " datasets.\n");
+        ReportUpdateNotSupportedByDriver("PNG");
         return nullptr;
     }
 

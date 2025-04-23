@@ -1,5 +1,5 @@
 add_gdal_driver(TARGET gdal_HEIF
-                SOURCES heifdataset.cpp
+                SOURCES heifdataset.cpp heifdataset.h heifdatasetcreatecopy.cpp
                 CORE_SOURCES heifdrivercore.cpp
                 PLUGIN_CAPABLE
                 NO_SHARED_SYMBOL_WITH_CORE)

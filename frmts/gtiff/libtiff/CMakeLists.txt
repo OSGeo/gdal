@@ -154,12 +154,6 @@ if (RENAME_INTERNAL_TIFF_SYMBOLS)
   target_compile_definitions(libtiff PUBLIC -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
 endif ()
 
-if (MSVC)
-  if (CMAKE_CL_64)
-    target_compile_definitions(libtiff PRIVATE -D_WIN64)
-  endif ()
-endif ()
-
 set_target_properties(libtiff PROPERTIES CXX_STANDARD 11)
 set_property(TARGET libtiff PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:libtiff>)

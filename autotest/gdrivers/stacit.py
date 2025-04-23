@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test STACIT driver
@@ -9,23 +8,7 @@
 ###############################################################################
 # Copyright (c) 2021, Even Rouault <even.rouault@spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import json
@@ -162,7 +145,7 @@ def test_stacit_overlapping_sources():
     # Check that the source covered by another one is not listed
     vrt = ds.GetMetadata("xml:VRT")[0]
     only_one_simple_source = """
-    <ColorInterp>Gray</ColorInterp>
+    <ColorInterp>Coastal</ColorInterp>
     <SimpleSource>
       <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
       <SourceBand>1</SourceBand>
@@ -361,3 +344,45 @@ def test_stacit_force_opening_no_match():
 
     drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["STACIT"])
     assert drv is None
+
+
+###############################################################################
+# Test opening a top-level Feature
+
+
+def test_stacit_single_feature(tmp_vsimem):
+
+    j = json.loads(open("data/stacit/test.json", "rb").read())
+    j = j["features"][0]
+
+    filename = str(tmp_vsimem / "feature.json")
+    with gdaltest.tempfile(filename, json.dumps(j)):
+        ds = gdal.Open(filename)
+        assert ds is not None
+        assert ds.RasterXSize == 20
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+# Test STAC 1.1
+
+
+def test_stacit_stac_1_1(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "feature.json")
+    with gdaltest.tempfile(
+        filename, open("data/stacit/test_stac_1.1.json", "rb").read()
+    ):
+        ds = gdal.Open(filename)
+        assert ds is not None
+        assert ds.RasterXSize == 20
+        assert ds.GetSpatialRef().GetName() == "NAD27 / UTM zone 11N"
+        assert ds.GetGeoTransform() == pytest.approx(
+            [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8
+        )
+        assert ds.GetRasterBand(1).GetMetadata() == {
+            "eo:center_wavelength": "0.4439",
+            "eo:full_width_half_max": "0.027",
+        }
+        assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_CoastalBand
+        assert ds.GetRasterBand(1).Checksum() == 4672

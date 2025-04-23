@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright 2024 German Aerospace Center (DLR), Institute of Transportation Systems
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 import gdaltest
 import pytest
@@ -35,6 +19,19 @@ from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("XODR")
 xodr_file = "data/xodr/5g_living_lab_A39_Wolfsburg-West.xodr"
+
+
+def test_ogr_xodr_i_do_not_exist():
+
+    assert gdal.IdentifyDriverEx("i_do_not_exist.xodr") is None
+
+
+def test_ogr_xodr_empty():
+
+    gdal.ErrorReset()
+    with ogr.Open("data/xodr/empty.xodr") as ds:
+        assert gdal.GetLastErrorMsg() == ""
+        assert ds.GetLayerCount() == 6
 
 
 def test_ogr_xodr_test_ogrsf():

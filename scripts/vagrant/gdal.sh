@@ -31,4 +31,4 @@ cmake .. \
 ninja -j6
 sudo ninja install
 
-python3 -m pip install -r ../autotest/requirements.txt
+PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r ../autotest/requirements.txt

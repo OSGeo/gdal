@@ -38,6 +38,10 @@ else()
 target_include_directories(ogr_Arrow PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 endif()
 
+if(${Arrow_VERSION} VERSION_GREATER_EQUAL 16.0)
+    target_sources(ogr_Arrow PRIVATE vsifilesystemregistrar.cpp)
+endif()
+
 if(${Arrow_VERSION} VERSION_GREATER_EQUAL 10.0)
     if(ARROW_USE_STATIC_LIBRARIES)
         gdal_target_link_libraries(ogr_Arrow PRIVATE Arrow::arrow_static)

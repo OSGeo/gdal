@@ -7,27 +7,11 @@
  ******************************************************************************
  * Copyright (c) 2015, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogreditablelayer.h"
-#include "../mem/ogr_mem.h"
+#include "memdataset.h"
 
 #include <map>
 
@@ -567,60 +551,25 @@ bool OGREditableLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
 }
 
 /************************************************************************/
-/*                           SetSpatialFilter()                         */
+/*                          ISetSpatialFilter()                         */
 /************************************************************************/
 
-void OGREditableLayer::SetSpatialFilter(OGRGeometry *poGeom)
+OGRErr OGREditableLayer::ISetSpatialFilter(int iGeomField,
+                                           const OGRGeometry *poGeom)
 {
-    SetSpatialFilter(0, poGeom);
-}
-
-/************************************************************************/
-/*                           SetSpatialFilter()                         */
-/************************************************************************/
-
-void OGREditableLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
-{
-    if (iGeomField < 0 ||
-        (iGeomField != 0 && iGeomField >= GetLayerDefn()->GetGeomFieldCount()))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid geometry field index : %d", iGeomField);
-        return;
-    }
-
     m_iGeomFieldFilter = iGeomField;
     if (InstallFilter(poGeom))
         ResetReading();
 
-    int iSrcGeomFieldIdx = GetSrcGeomFieldIndex(iGeomField);
+    OGRErr eErr = OGRERR_NONE;
+    const int iSrcGeomFieldIdx = GetSrcGeomFieldIndex(iGeomField);
     if (iSrcGeomFieldIdx >= 0)
     {
-        m_poDecoratedLayer->SetSpatialFilter(iSrcGeomFieldIdx, poGeom);
+        eErr = m_poDecoratedLayer->SetSpatialFilter(iSrcGeomFieldIdx, poGeom);
     }
-    m_poMemLayer->SetSpatialFilter(iGeomField, poGeom);
-}
-
-/************************************************************************/
-/*                         SetSpatialFilterRect()                       */
-/************************************************************************/
-
-void OGREditableLayer::SetSpatialFilterRect(double dfMinX, double dfMinY,
-                                            double dfMaxX, double dfMaxY)
-{
-    return OGRLayer::SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
-}
-
-/************************************************************************/
-/*                         SetSpatialFilterRect()                       */
-/************************************************************************/
-
-void OGREditableLayer::SetSpatialFilterRect(int iGeomField, double dfMinX,
-                                            double dfMinY, double dfMaxX,
-                                            double dfMaxY)
-{
-    return OGRLayer::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX,
-                                          dfMaxY);
+    if (eErr == OGRERR_NONE)
+        eErr = m_poMemLayer->SetSpatialFilter(iGeomField, poGeom);
+    return eErr;
 }
 
 /************************************************************************/
@@ -645,20 +594,11 @@ GIntBig OGREditableLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                              IGetExtent()                            */
 /************************************************************************/
 
-OGRErr OGREditableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
-{
-    return GetExtent(0, psExtent, bForce);
-}
-
-/************************************************************************/
-/*                               GetExtent()                            */
-/************************************************************************/
-
-OGRErr OGREditableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                   int bForce)
+OGRErr OGREditableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                                    bool bForce)
 {
     if (!m_poDecoratedLayer)
         return OGRERR_FAILURE;
@@ -678,7 +618,7 @@ OGRErr OGREditableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         }
         return eErr;
     }
-    return GetExtentInternal(iGeomField, psExtent, bForce);
+    return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

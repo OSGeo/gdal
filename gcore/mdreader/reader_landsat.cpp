@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2014-2015 NextGIS <info@nextgis.ru>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -46,9 +30,9 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
                                          char **papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
-    const char *pszBaseName = CPLGetBasename(pszPath);
-    const char *pszDirName = CPLGetDirname(pszPath);
-    size_t nBaseNameLen = strlen(pszBaseName);
+    const std::string osBaseName = CPLGetBasenameSafe(pszPath);
+    const std::string osDirName = CPLGetDirnameSafe(pszPath);
+    size_t nBaseNameLen = osBaseName.size();
     if (nBaseNameLen > 511)
         return;
 
@@ -57,9 +41,8 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     size_t i;
     for (i = 0; i < nBaseNameLen; i++)
     {
-        szMetadataName[i] = pszBaseName[i];
-        if (STARTS_WITH_CI(pszBaseName + i, "_B") ||
-            STARTS_WITH_CI(pszBaseName + i, "_b"))
+        szMetadataName[i] = osBaseName[i];
+        if (STARTS_WITH_CI(osBaseName.c_str() + i, "_B"))
         {
             break;
         }
@@ -69,7 +52,7 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     CPLStrlcpy(szMetadataName + i, "_MTL.txt", 9);
 
     std::string osIMDSourceFilename =
-        CPLFormFilename(pszDirName, szMetadataName, nullptr);
+        CPLFormFilenameSafe(osDirName.c_str(), szMetadataName, nullptr);
     if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
         m_osIMDSourceFilename = std::move(osIMDSourceFilename);
@@ -78,7 +61,7 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     {
         CPLStrlcpy(szMetadataName + i, "_MTL.TXT", 9);
         osIMDSourceFilename =
-            CPLFormFilename(pszDirName, szMetadataName, nullptr);
+            CPLFormFilenameSafe(osDirName.c_str(), szMetadataName, nullptr);
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
             m_osIMDSourceFilename = std::move(osIMDSourceFilename);

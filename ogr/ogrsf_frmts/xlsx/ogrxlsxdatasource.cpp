@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2012-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_xlsx.h"
@@ -419,6 +403,18 @@ int OGRXLSXDataSource::Create(const char *pszFilename,
 }
 
 /************************************************************************/
+/*                           GetUnprefixed()                            */
+/************************************************************************/
+
+static const char *GetUnprefixed(const char *pszStr)
+{
+    const char *pszColumn = strchr(pszStr, ':');
+    if (pszColumn)
+        return pszColumn + 1;
+    return pszStr;
+}
+
+/************************************************************************/
 /*                           startElementCbk()                          */
 /************************************************************************/
 
@@ -433,6 +429,8 @@ void OGRXLSXDataSource::startElementCbk(const char *pszNameIn,
 {
     if (bStopParsing)
         return;
+
+    pszNameIn = GetUnprefixed(pszNameIn);
 
     nWithoutEventCounter = 0;
     switch (stateStack[nStackDepth].eVal)
@@ -473,6 +471,8 @@ void OGRXLSXDataSource::endElementCbk(const char *pszNameIn)
 {
     if (bStopParsing)
         return;
+
+    pszNameIn = GetUnprefixed(pszNameIn);
 
     nWithoutEventCounter = 0;
 
@@ -816,14 +816,22 @@ void OGRXLSXDataSource::startElementTable(const char *pszNameIn,
         apoCurLineValues.clear();
         apoCurLineTypes.clear();
 
-        int nNewCurLine = atoi(GetAttributeValue(ppszAttr, "r", "0"));
-        if (nNewCurLine <= 0)
+        int nNewCurLine;
+        if (const char *pszR = GetAttributeValue(ppszAttr, "r", nullptr))
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid row: %d",
-                     nNewCurLine);
-            return;
+            nNewCurLine = atoi(pszR);
+            if (nNewCurLine <= 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid row: %d",
+                         nNewCurLine);
+                return;
+            }
+            nNewCurLine--;
         }
-        nNewCurLine--;
+        else
+        {
+            nNewCurLine = nCurLine;
+        }
         const int nFields = std::max(
             static_cast<int>(apoFirstLineValues.size()),
             poCurLayer != nullptr ? poCurLayer->GetLayerDefn()->GetFieldCount()
@@ -1346,6 +1354,8 @@ void OGRXLSXDataSource::startElementSSCbk(const char *pszNameIn,
     if (bStopParsing)
         return;
 
+    pszNameIn = GetUnprefixed(pszNameIn);
+
     nWithoutEventCounter = 0;
     switch (stateStack[nStackDepth].eVal)
     {
@@ -1381,10 +1391,13 @@ static void XMLCALL endElementSSCbk(void *pUserData, const char *pszNameIn)
     ((OGRXLSXDataSource *)pUserData)->endElementSSCbk(pszNameIn);
 }
 
-void OGRXLSXDataSource::endElementSSCbk(CPL_UNUSED const char *pszNameIn)
+void OGRXLSXDataSource::endElementSSCbk(const char * /*pszNameIn*/)
 {
     if (bStopParsing)
         return;
+
+    // If we were to use pszNameIn, then we need:
+    // pszNameIn = GetUnprefixed(pszNameIn);
 
     nWithoutEventCounter = 0;
 
@@ -1529,6 +1542,8 @@ void OGRXLSXDataSource::startElementWBRelsCbk(const char *pszNameIn,
     if (bStopParsing)
         return;
 
+    pszNameIn = GetUnprefixed(pszNameIn);
+
     nWithoutEventCounter = 0;
     if (strcmp(pszNameIn, "Relationship") == 0)
     {
@@ -1594,18 +1609,6 @@ void OGRXLSXDataSource::AnalyseWorkbookRels(VSILFILE *fpWorkbookRels)
 }
 
 /************************************************************************/
-/*                           GetUnprefixed()                            */
-/************************************************************************/
-
-static const char *GetUnprefixed(const char *pszStr)
-{
-    const char *pszColumn = strchr(pszStr, ':');
-    if (pszColumn)
-        return pszColumn + 1;
-    return pszStr;
-}
-
-/************************************************************************/
 /*                          startElementWBCbk()                         */
 /************************************************************************/
 
@@ -1621,8 +1624,10 @@ void OGRXLSXDataSource::startElementWBCbk(const char *pszNameIn,
     if (bStopParsing)
         return;
 
+    pszNameIn = GetUnprefixed(pszNameIn);
+
     nWithoutEventCounter = 0;
-    if (strcmp(GetUnprefixed(pszNameIn), "sheet") == 0)
+    if (strcmp(pszNameIn, "sheet") == 0)
     {
         const char *pszSheetName = GetAttributeValue(ppszAttr, "name", nullptr);
         const char *pszId = GetAttributeValue(ppszAttr, "r:id", nullptr);
@@ -1725,6 +1730,8 @@ void OGRXLSXDataSource::startElementStylesCbk(const char *pszNameIn,
     if (bStopParsing)
         return;
 
+    pszNameIn = GetUnprefixed(pszNameIn);
+
     nWithoutEventCounter = 0;
     if (strcmp(pszNameIn, "numFmt") == 0)
     {
@@ -1809,6 +1816,8 @@ void OGRXLSXDataSource::endElementStylesCbk(const char *pszNameIn)
 {
     if (bStopParsing)
         return;
+
+    pszNameIn = GetUnprefixed(pszNameIn);
 
     nWithoutEventCounter = 0;
     if (strcmp(pszNameIn, "cellXfs") == 0)

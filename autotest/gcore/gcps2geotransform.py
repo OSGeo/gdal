@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2013 Frank Warmerdam
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import gdaltest
@@ -96,7 +80,7 @@ def test_gcps2gt_2():
 
 def test_gcps2gt_3():
 
-    approx_ok = 0
+    approx_ok = False
     gt = gdal.GCPsToGeoTransform(
         _list2gcps(
             [
@@ -211,3 +195,34 @@ def test_gcps2gt_8():
         1.596921026218e-05,
     )
     gdaltest.check_geotransform(gt, gt_expected, 0.00001)
+
+
+###############################################################################
+# Test case of https://github.com/OSGeo/gdal/issues/11618
+
+
+def test_gcps2gt_broken_hour_glass():
+
+    gt = gdal.GCPsToGeoTransform(
+        _list2gcps(
+            [
+                (0, 0, 0, 0),
+                (0, 10, 0, 10),
+                (10, 0, 10, 10),
+                (10, 10, 10, 0),
+            ]
+        )
+    )
+    assert gt is None
+
+    gt = gdal.GCPsToGeoTransform(
+        _list2gcps(
+            [
+                (0, 0, 0, 0),
+                (0, 10, 10, 0),
+                (10, 0, 0, 10),
+                (10, 10, 10, 10),
+            ]
+        )
+    )
+    assert gt is None
