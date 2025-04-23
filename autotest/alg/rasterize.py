@@ -1037,12 +1037,4 @@ def test_rasterize_bugfix_gh12129():
         options=["ALL_TOUCHED=YES"],
     )
 
-    print(target_ds.GetRasterBand(1))
-    checksum = target_ds.GetRasterBand(1).Checksum()
-    expected = 120
-    if checksum != expected:
-        print("checksum: " + str(checksum))
-        gdal.GetDriverByName("GTiff").CreateCopy(
-            "/tmp/rasterize_gh12129.tif", target_ds
-        )
-        pytest.fail("Did not get expected image checksum")
+    assert target_ds.GetRasterBand(1).Checksum() == 120
