@@ -215,7 +215,7 @@ The following open options are available:
       SQL statement(s) to
       send on the SQLite3 connection before any other ones. In
       case of several statements, they must be separated with the
-      semi-column (;) sign. This option may be useful to
+      semicolon (;) sign. This option may be useful to
       `attach another database <https://www.sqlite.org/lang_attach.html>`__
       to the current one and issue cross-database requests.
 
