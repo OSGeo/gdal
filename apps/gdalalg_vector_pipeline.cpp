@@ -548,6 +548,18 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
         inputArg->GetType() == GAAT_DATASET_LIST &&
         inputArg->Get<std::vector<GDALArgDatasetValue>>().size() == 1)
     {
+        if (inputArg->GetType() == GAAT_DATASET_LIST)
+        {
+            for (auto &value :
+                 inputArg->Get<std::vector<GDALArgDatasetValue>>())
+            {
+                value.SetType(GDAL_OF_VECTOR);
+            }
+        }
+        else
+        {
+            inputArg->Get<GDALArgDatasetValue>().SetType(GDAL_OF_VECTOR);
+        }
         steps.front().alg->ProcessDatasetArg(inputArg, steps.back().alg.get());
     }
 
