@@ -16,7 +16,7 @@
 #include <limits>
 #include <map>
 #include <optional>
-#include <muParser.h>
+#include "muparser_header.h"
 
 namespace gdal
 {
@@ -69,9 +69,7 @@ class MuParserExpression::Impl
 {
   public:
     explicit Impl(std::string_view osExpression)
-        : m_osExpression(std::string(osExpression)), m_oSubstitutions{},
-          m_oParser{}, m_adfResults{1}, m_bIsCompiled{false}, m_bCompileFailed{
-                                                                  false}
+        : m_osExpression(std::string(osExpression))
     {
     }
 
@@ -168,11 +166,11 @@ class MuParserExpression::Impl
     }
 
     const CPLString m_osExpression;
-    std::map<CPLString, CPLString> m_oSubstitutions;
-    mu::Parser m_oParser;
-    std::vector<double> m_adfResults;
-    bool m_bIsCompiled;
-    bool m_bCompileFailed;
+    std::map<CPLString, CPLString> m_oSubstitutions{};
+    mu::Parser m_oParser{};
+    std::vector<double> m_adfResults{1};
+    bool m_bIsCompiled = false;
+    bool m_bCompileFailed = false;
 };
 
 MuParserExpression::MuParserExpression(std::string_view osExpression)
