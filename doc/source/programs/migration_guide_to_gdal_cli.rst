@@ -247,4 +247,4 @@ Vector commands
 
     ==>
 
-    gdal vector concat --stack *.shp merged.gpkg
+    gdal vector concat --mode=stack *.shp merged.gpkg
