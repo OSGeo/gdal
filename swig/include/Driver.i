@@ -57,6 +57,15 @@ public:
     return ds;
   }
 
+%newobject Create;
+#ifndef SWIGJAVA
+%feature( "kwargs" ) CreateVector;
+#endif
+  GDALDatasetShadow *CreateVector(const char *utf8_path, char **options = 0) {
+    GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate(self, utf8_path, 0, 0, 0, GDT_Unknown, options);
+    return ds;
+  }
+
 %newobject CreateMultiDimensional;
 #ifndef SWIGJAVA
 %feature( "kwargs" ) CreateMultiDimensional;
