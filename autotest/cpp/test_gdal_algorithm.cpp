@@ -44,27 +44,31 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArgTypeName)
     EXPECT_STREQ(GDALAlgorithmArgTypeName(GAAT_DATASET_LIST), "dataset_list");
 }
 
-TEST_F(test_gdal_algorithm, GDALArgDatasetValueTypeName)
+TEST_F(test_gdal_algorithm, GDALAlgorithmArgDatasetTypeName)
 {
-    EXPECT_STREQ(GDALArgDatasetValueTypeName(GDAL_OF_RASTER).c_str(), "raster");
-    EXPECT_STREQ(GDALArgDatasetValueTypeName(GDAL_OF_VECTOR).c_str(), "vector");
-    EXPECT_STREQ(GDALArgDatasetValueTypeName(GDAL_OF_MULTIDIM_RASTER).c_str(),
-                 "multidimensional raster");
+    EXPECT_STREQ(GDALAlgorithmArgDatasetTypeName(GDAL_OF_RASTER).c_str(),
+                 "raster");
+    EXPECT_STREQ(GDALAlgorithmArgDatasetTypeName(GDAL_OF_VECTOR).c_str(),
+                 "vector");
     EXPECT_STREQ(
-        GDALArgDatasetValueTypeName(GDAL_OF_RASTER | GDAL_OF_VECTOR).c_str(),
-        "raster or vector");
+        GDALAlgorithmArgDatasetTypeName(GDAL_OF_MULTIDIM_RASTER).c_str(),
+        "multidimensional raster");
     EXPECT_STREQ(
-        GDALArgDatasetValueTypeName(GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER)
+        GDALAlgorithmArgDatasetTypeName(GDAL_OF_RASTER | GDAL_OF_VECTOR)
             .c_str(),
-        "raster or multidimensional raster");
-    EXPECT_STREQ(GDALArgDatasetValueTypeName(GDAL_OF_RASTER | GDAL_OF_VECTOR |
-                                             GDAL_OF_MULTIDIM_RASTER)
+        "raster or vector");
+    EXPECT_STREQ(GDALAlgorithmArgDatasetTypeName(GDAL_OF_RASTER |
+                                                 GDAL_OF_MULTIDIM_RASTER)
+                     .c_str(),
+                 "raster or multidimensional raster");
+    EXPECT_STREQ(GDALAlgorithmArgDatasetTypeName(
+                     GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER)
                      .c_str(),
                  "raster, vector or multidimensional raster");
-    EXPECT_STREQ(
-        GDALArgDatasetValueTypeName(GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER)
-            .c_str(),
-        "vector or multidimensional raster");
+    EXPECT_STREQ(GDALAlgorithmArgDatasetTypeName(GDAL_OF_VECTOR |
+                                                 GDAL_OF_MULTIDIM_RASTER)
+                     .c_str(),
+                 "vector or multidimensional raster");
 }
 
 TEST_F(test_gdal_algorithm, GDALAlgorithmArgDecl_SetMinCount)
@@ -3962,7 +3966,7 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
         auto hArg = GDALAlgorithmGetArg(hAlg.get(), "dataset");
         ASSERT_NE(hArg, nullptr);
         GDALArgDatasetValueH hVal = GDALArgDatasetValueCreate();
-        EXPECT_EQ(GDALArgDatasetValueGetType(hVal),
+        EXPECT_EQ(GDALAlgorithmArgGetDatasetType(hArg),
                   GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER);
         EXPECT_EQ(GDALArgDatasetValueGetInputFlags(hVal),
                   GADV_NAME | GADV_OBJECT);

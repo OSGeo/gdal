@@ -214,6 +214,13 @@ bool CPL_DLL GDALAlgorithmArgSetAsIntegerList(GDALAlgorithmArgH, size_t nCount,
 bool CPL_DLL GDALAlgorithmArgSetAsDoubleList(GDALAlgorithmArgH, size_t nCount,
                                              const double *pnValues);
 
+/** Binary-or combination of GDAL_OF_RASTER, GDAL_OF_VECTOR,
+ * GDAL_OF_MULTIDIM_RASTER, possibly with GDAL_OF_UPDATE.
+ */
+typedef int GDALArgDatasetType;
+
+GDALArgDatasetType CPL_DLL GDALAlgorithmArgGetDatasetType(GDALAlgorithmArgH);
+
 /************************************************************************/
 /*                    GDALArgDatasetValueH API                          */
 /************************************************************************/
@@ -233,14 +240,6 @@ GDALDatasetH
 #define GADV_NAME (1 << 0)
 /** Bit indicating that the dataset component of GDALArgDatasetValue is accepted. */
 #define GADV_OBJECT (1 << 1)
-
-/** Binary-or combination of GDAL_OF_RASTER, GDAL_OF_VECTOR and
- * GDAL_OF_MULTIDIM_RASTER.
- */
-typedef int GDALArgDatasetValueType;
-
-GDALArgDatasetValueType
-    CPL_DLL GDALArgDatasetValueGetType(GDALArgDatasetValueH);
 
 int CPL_DLL GDALArgDatasetValueGetInputFlags(GDALArgDatasetValueH);
 
@@ -325,8 +324,8 @@ constexpr const char *GDAL_ALG_DCAP_RASTER_OR_MULTIDIM_RASTER =
 /*                           GDALArgDatasetValue                        */
 /************************************************************************/
 
-/** Return the string representation of GDALArgDatasetValueType */
-std::string CPL_DLL GDALArgDatasetValueTypeName(GDALArgDatasetValueType);
+/** Return the string representation of GDALArgDatasetType */
+std::string CPL_DLL GDALAlgorithmArgDatasetTypeName(GDALArgDatasetType);
 
 class GDALAlgorithmArg;
 
@@ -472,24 +471,6 @@ class CPL_DLL GDALArgDatasetValue final
         m_outputFlags = flags;
     }
 
-    /** Get which type of dataset is allowed / generated.
-     * Binary-or combination of GDAL_OF_RASTER, GDAL_OF_VECTOR and
-     * GDAL_OF_MULTIDIM_RASTER, possibly combined with GDAL_OF_UPDATE.
-     */
-    GDALArgDatasetValueType GetType() const
-    {
-        return m_type;
-    }
-
-    /** Set which type of dataset is allowed / generated.
-     * Binary-or combination of GDAL_OF_RASTER, GDAL_OF_VECTOR and
-     * GDAL_OF_MULTIDIM_RASTER.
-     */
-    void SetType(GDALArgDatasetValueType type)
-    {
-        m_type = type;
-    }
-
   protected:
     friend class GDALAlgorithm;
 
@@ -512,10 +493,6 @@ class CPL_DLL GDALArgDatasetValue final
 
     /** Whether a dataset name (possibly empty for a MEM dataset...) has been set */
     bool m_nameSet = false;
-
-    /** Dataset type */
-    GDALArgDatasetValueType m_type =
-        GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER;
 
     /** Which components among name and dataset are accepted as
      * input, when this argument serves as an input.
@@ -1207,6 +1184,26 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return std::get<T>(m_defaultValue);
     }
 
+    /** Get which type of dataset is allowed / generated.
+     * Binary-or combination of GDAL_OF_RASTER, GDAL_OF_VECTOR and
+     * GDAL_OF_MULTIDIM_RASTER, possibly combined with GDAL_OF_UPDATE.
+     * Only applies to arguments of type GAAT_DATASET or GAAT_DATASET_LIST.
+     */
+    GDALArgDatasetType GetDatasetType() const
+    {
+        return m_datasetType;
+    }
+
+    /** Set which type of dataset is allowed / generated.
+     * Binary-or combination of GDAL_OF_RASTER, GDAL_OF_VECTOR and
+     * GDAL_OF_MULTIDIM_RASTER.
+     * Only applies to arguments of type GAAT_DATASET or GAAT_DATASET_LIST.
+     */
+    void SetDatasetType(GDALArgDatasetType type)
+    {
+        m_datasetType = type;
+    }
+
   private:
     const std::string m_longName;
     const std::string m_shortName;
@@ -1245,6 +1242,8 @@ class CPL_DLL GDALAlgorithmArgDecl final
     bool m_minValIsIncluded = false;
     bool m_maxValIsIncluded = false;
     int m_minCharCount = 0;
+    GDALArgDatasetType m_datasetType =
+        GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER;
 };
 
 /************************************************************************/
@@ -1509,6 +1508,12 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     inline bool AutoOpenDataset() const
     {
         return m_decl.AutoOpenDataset();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::GetDatasetType() */
+    inline GDALArgDatasetType GetDatasetType() const
+    {
+        return m_decl.GetDatasetType();
     }
 
     /** Return the value of the argument, which is by decreasing order of priority:
@@ -2100,6 +2105,14 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
         return *this;
     }
 
+    /** Alias for GDALAlgorithmArgDecl::SetDatasetType() */
+    GDALInConstructionAlgorithmArg &
+    SetDatasetType(GDALArgDatasetType datasetType)
+    {
+        m_decl.SetDatasetType(datasetType);
+        return *this;
+    }
+
     /** Register an action that is executed, once and exactly once, if the
      * argument is explicitly set, at the latest by the ValidateArguments()
      * method. */
@@ -2622,14 +2635,14 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Register an auto complete function for a filename argument */
     static void
     SetAutoCompleteFunctionForFilename(GDALInConstructionAlgorithmArg &arg,
-                                       GDALArgDatasetValueType type);
+                                       GDALArgDatasetType type);
 
     /** Add dataset argument. */
     GDALInConstructionAlgorithmArg &
     AddArg(const std::string &longName, char chShortName,
            const std::string &helpMessage, GDALArgDatasetValue *pValue,
-           GDALArgDatasetValueType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
-                                          GDAL_OF_MULTIDIM_RASTER);
+           GDALArgDatasetType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
+                                     GDAL_OF_MULTIDIM_RASTER);
 
     /** Add list of string argument. */
     GDALInConstructionAlgorithmArg &AddArg(const std::string &longName,
@@ -2654,21 +2667,21 @@ class CPL_DLL GDALAlgorithmRegistry
     AddArg(const std::string &longName, char chShortName,
            const std::string &helpMessage,
            std::vector<GDALArgDatasetValue> *pValue,
-           GDALArgDatasetValueType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
-                                          GDAL_OF_MULTIDIM_RASTER);
+           GDALArgDatasetType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
+                                     GDAL_OF_MULTIDIM_RASTER);
 
     /** Add input dataset argument. */
     GDALInConstructionAlgorithmArg &AddInputDatasetArg(
         GDALArgDatasetValue *pValue,
-        GDALArgDatasetValueType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
-                                       GDAL_OF_MULTIDIM_RASTER,
+        GDALArgDatasetType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
+                                  GDAL_OF_MULTIDIM_RASTER,
         bool positionalAndRequired = true, const char *helpMessage = nullptr);
 
     /** Add input dataset argument. */
     GDALInConstructionAlgorithmArg &AddInputDatasetArg(
         std::vector<GDALArgDatasetValue> *pValue,
-        GDALArgDatasetValueType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
-                                       GDAL_OF_MULTIDIM_RASTER,
+        GDALArgDatasetType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
+                                  GDAL_OF_MULTIDIM_RASTER,
         bool positionalAndRequired = true, const char *helpMessage = nullptr);
 
     /** Add open option(s) argument. */
@@ -2684,8 +2697,8 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Add output dataset argument. */
     GDALInConstructionAlgorithmArg &AddOutputDatasetArg(
         GDALArgDatasetValue *pValue,
-        GDALArgDatasetValueType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
-                                       GDAL_OF_MULTIDIM_RASTER,
+        GDALArgDatasetType type = GDAL_OF_RASTER | GDAL_OF_VECTOR |
+                                  GDAL_OF_MULTIDIM_RASTER,
         bool positionalAndRequired = true, const char *helpMessage = nullptr);
 
     /** Add \--overwrite argument. */

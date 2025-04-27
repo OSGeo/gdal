@@ -130,10 +130,10 @@ const char *GDALAlgorithmArgTypeName(GDALAlgorithmArgType type)
 }
 
 /************************************************************************/
-/*                     GDALArgDatasetValueTypeName()                    */
+/*                     GDALAlgorithmArgDatasetTypeName()                */
 /************************************************************************/
 
-std::string GDALArgDatasetValueTypeName(GDALArgDatasetValueType type)
+std::string GDALAlgorithmArgDatasetTypeName(GDALArgDatasetType type)
 {
     std::string ret;
     if ((type & GDAL_OF_RASTER) != 0)
@@ -1283,7 +1283,6 @@ GDALArgDatasetValue &GDALArgDatasetValue::operator=(GDALArgDatasetValue &&other)
     m_poDS = other.m_poDS;
     m_name = other.m_name;
     m_nameSet = other.m_nameSet;
-    m_type = other.m_type;
     m_inputFlags = other.m_inputFlags;
     m_outputFlags = other.m_outputFlags;
     other.m_poDS = nullptr;
@@ -1309,8 +1308,7 @@ GDALDataset *GDALArgDatasetValue::GetDatasetIncreaseRefCount()
 
 GDALArgDatasetValue::GDALArgDatasetValue(GDALArgDatasetValue &&other)
     : m_poDS(other.m_poDS), m_name(other.m_name), m_nameSet(other.m_nameSet),
-      m_type(other.m_type), m_inputFlags(other.m_inputFlags),
-      m_outputFlags(other.m_outputFlags)
+      m_inputFlags(other.m_inputFlags), m_outputFlags(other.m_outputFlags)
 {
     other.m_poDS = nullptr;
     other.m_name.clear();
@@ -2109,7 +2107,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
              (!arg->IsOutput() || (arg == outputArg && update && !overwrite) ||
               onlyInputSpecifiedInUpdateAndOutputNotRequired))
     {
-        int flags = val.GetType();
+        int flags = arg->GetDatasetType();
         bool assignToOutputArg = false;
 
         // Check if input and output parameters point to the same
@@ -2357,7 +2355,8 @@ bool GDALAlgorithm::ValidateArguments()
                     }
                     else if (!val.GetDatasetRef())
                     {
-                        int flags = val.GetType() | GDAL_OF_VERBOSE_ERROR;
+                        int flags =
+                            arg->GetDatasetType() | GDAL_OF_VERBOSE_ERROR;
 
                         CPLStringList aosOpenOptions;
                         CPLStringList aosAllowedDrivers;
@@ -2715,13 +2714,14 @@ GDALAlgorithm::AddArg(const std::string &longName, char chShortName,
 GDALInConstructionAlgorithmArg &
 GDALAlgorithm::AddArg(const std::string &longName, char chShortName,
                       const std::string &helpMessage,
-                      GDALArgDatasetValue *pValue, GDALArgDatasetValueType type)
+                      GDALArgDatasetValue *pValue, GDALArgDatasetType type)
 {
-    pValue->SetType(type);
     auto &arg = AddArg(std::make_unique<GDALInConstructionAlgorithmArg>(
-        this,
-        GDALAlgorithmArgDecl(longName, chShortName, helpMessage, GAAT_DATASET),
-        pValue));
+                           this,
+                           GDALAlgorithmArgDecl(longName, chShortName,
+                                                helpMessage, GAAT_DATASET),
+                           pValue))
+                    .SetDatasetType(type);
     pValue->SetOwnerArgument(&arg);
     return arg;
 }
@@ -2765,15 +2765,14 @@ GDALInConstructionAlgorithmArg &
 GDALAlgorithm::AddArg(const std::string &longName, char chShortName,
                       const std::string &helpMessage,
                       std::vector<GDALArgDatasetValue> *pValue,
-                      GDALArgDatasetValueType)
+                      GDALArgDatasetType type)
 {
-    // FIXME
-    // pValue->SetType(type);
     return AddArg(std::make_unique<GDALInConstructionAlgorithmArg>(
-        this,
-        GDALAlgorithmArgDecl(longName, chShortName, helpMessage,
-                             GAAT_DATASET_LIST),
-        pValue));
+                      this,
+                      GDALAlgorithmArgDecl(longName, chShortName, helpMessage,
+                                           GAAT_DATASET_LIST),
+                      pValue))
+        .SetDatasetType(type);
 }
 
 /************************************************************************/
@@ -2792,7 +2791,7 @@ inline const char *MsgOrDefault(const char *helpMessage,
 
 /* static */
 void GDALAlgorithm::SetAutoCompleteFunctionForFilename(
-    GDALInConstructionAlgorithmArg &arg, GDALArgDatasetValueType type)
+    GDALInConstructionAlgorithmArg &arg, GDALArgDatasetType type)
 {
     arg.SetAutoCompleteFunction(
         [type](const std::string &currentValue) -> std::vector<std::string>
@@ -2909,14 +2908,14 @@ void GDALAlgorithm::SetAutoCompleteFunctionForFilename(
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
-    GDALArgDatasetValue *pValue, GDALArgDatasetValueType type,
+    GDALArgDatasetValue *pValue, GDALArgDatasetType type,
     bool positionalAndRequired, const char *helpMessage)
 {
     auto &arg = AddArg(
         GDAL_ARG_NAME_INPUT, 'i',
         MsgOrDefault(helpMessage,
                      CPLSPrintf("Input %s dataset",
-                                GDALArgDatasetValueTypeName(type).c_str())),
+                                GDALAlgorithmArgDatasetTypeName(type).c_str())),
         pValue, type);
     if (positionalAndRequired)
         arg.SetPositional().SetRequired();
@@ -2931,14 +2930,14 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
-    std::vector<GDALArgDatasetValue> *pValue, GDALArgDatasetValueType type,
+    std::vector<GDALArgDatasetValue> *pValue, GDALArgDatasetType type,
     bool positionalAndRequired, const char *helpMessage)
 {
     auto &arg = AddArg(
         GDAL_ARG_NAME_INPUT, 'i',
         MsgOrDefault(helpMessage,
                      CPLSPrintf("Input %s datasets",
-                                GDALArgDatasetValueTypeName(type).c_str())),
+                                GDALAlgorithmArgDatasetTypeName(type).c_str())),
         pValue, type);
     if (positionalAndRequired)
         arg.SetPositional().SetRequired();
@@ -2950,18 +2949,18 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &GDALAlgorithm::AddOutputDatasetArg(
-    GDALArgDatasetValue *pValue, GDALArgDatasetValueType type,
+    GDALArgDatasetValue *pValue, GDALArgDatasetType type,
     bool positionalAndRequired, const char *helpMessage)
 {
     pValue->SetInputFlags(GADV_NAME);
     pValue->SetOutputFlags(GADV_OBJECT);
     auto &arg =
-        AddArg(
-            GDAL_ARG_NAME_OUTPUT, 'o',
-            MsgOrDefault(helpMessage,
-                         CPLSPrintf("Output %s dataset",
-                                    GDALArgDatasetValueTypeName(type).c_str())),
-            pValue, type)
+        AddArg(GDAL_ARG_NAME_OUTPUT, 'o',
+               MsgOrDefault(
+                   helpMessage,
+                   CPLSPrintf("Output %s dataset",
+                              GDALAlgorithmArgDatasetTypeName(type).c_str())),
+               pValue, type)
             .SetIsInput(true)
             .SetIsOutput(true);
     if (positionalAndRequired)
@@ -3191,10 +3190,10 @@ GDALAlgorithm::AddOpenOptionsArg(std::vector<std::string> *pValue,
             int datasetType =
                 GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER;
             auto inputArg = GetArg(GDAL_ARG_NAME_INPUT);
-            if (inputArg && inputArg->GetType() == GAAT_DATASET)
+            if (inputArg && (inputArg->GetType() == GAAT_DATASET ||
+                             inputArg->GetType() == GAAT_DATASET_LIST))
             {
-                auto &datasetValue = inputArg->Get<GDALArgDatasetValue>();
-                datasetType = datasetValue.GetType();
+                datasetType = inputArg->GetDatasetType();
             }
 
             auto inputFormat = GetArg(GDAL_ARG_NAME_INPUT_FORMAT);
@@ -3615,8 +3614,7 @@ GDALAlgorithm::AddBandArg(int *pValue, const char *helpMessage)
             if (arg.IsExplicitlySet() && inputDatasetArg &&
                 inputDatasetArg->GetType() == GAAT_DATASET &&
                 inputDatasetArg->IsExplicitlySet() &&
-                (inputDatasetArg->Get<GDALArgDatasetValue>().GetType() &
-                 GDAL_OF_RASTER) != 0)
+                (inputDatasetArg->GetDatasetType() & GDAL_OF_RASTER) != 0)
             {
                 auto poDS =
                     inputDatasetArg->Get<GDALArgDatasetValue>().GetDatasetRef();
@@ -3669,8 +3667,7 @@ GDALAlgorithm::AddBandArg(std::vector<int> *pValue, const char *helpMessage)
             if (arg.IsExplicitlySet() && inputDatasetArg &&
                 inputDatasetArg->GetType() == GAAT_DATASET &&
                 inputDatasetArg->IsExplicitlySet() &&
-                (inputDatasetArg->Get<GDALArgDatasetValue>().GetType() &
-                 GDAL_OF_RASTER) != 0)
+                (inputDatasetArg->GetDatasetType() & GDAL_OF_RASTER) != 0)
             {
                 auto poDS =
                     inputDatasetArg->Get<GDALArgDatasetValue>().GetDatasetRef();
@@ -3860,10 +3857,10 @@ GDALAlgorithm::AddCreationOptionsArg(std::vector<std::string> *pValue,
             int datasetType =
                 GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER;
             auto outputArg = GetArg(GDAL_ARG_NAME_OUTPUT);
-            if (outputArg && outputArg->GetType() == GAAT_DATASET)
+            if (outputArg && (outputArg->GetType() == GAAT_DATASET ||
+                              outputArg->GetType() == GAAT_DATASET_LIST))
             {
-                auto &datasetValue = outputArg->Get<GDALArgDatasetValue>();
-                datasetType = datasetValue.GetType();
+                datasetType = outputArg->GetDatasetType();
             }
 
             auto outputFormat = GetArg(GDAL_ARG_NAME_OUTPUT_FORMAT);
@@ -4843,20 +4840,22 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
         }
         jArg.Add("category", arg->GetCategory());
 
+        if (arg->GetType() == GAAT_DATASET ||
+            arg->GetType() == GAAT_DATASET_LIST)
+        {
+            CPLJSONArray jAr;
+            if (arg->GetDatasetType() & GDAL_OF_RASTER)
+                jAr.Add("raster");
+            if (arg->GetDatasetType() & GDAL_OF_VECTOR)
+                jAr.Add("vector");
+            if (arg->GetDatasetType() & GDAL_OF_MULTIDIM_RASTER)
+                jAr.Add("multidim_raster");
+            jArg.Add("dataset_type", jAr);
+        }
+
         if (arg->GetType() == GAAT_DATASET)
         {
             const auto &val = arg->Get<GDALArgDatasetValue>();
-            {
-                CPLJSONArray jAr;
-                if (val.GetType() & GDAL_OF_RASTER)
-                    jAr.Add("raster");
-                if (val.GetType() & GDAL_OF_VECTOR)
-                    jAr.Add("vector");
-                if (val.GetType() & GDAL_OF_MULTIDIM_RASTER)
-                    jAr.Add("multidim_raster");
-                jArg.Add("dataset_type", jAr);
-            }
-
             const auto GetFlags = [](int flags)
             {
                 CPLJSONArray jAr;
@@ -5794,6 +5793,25 @@ bool GDALAlgorithmArgIsOutput(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
+/*                 GDALAlgorithmArgGetDatasetType()                     */
+/************************************************************************/
+
+/** Get which type of dataset is allowed / generated.
+ *
+ * Binary-or combination of GDAL_OF_RASTER, GDAL_OF_VECTOR and
+ * GDAL_OF_MULTIDIM_RASTER.
+ * Only applies to arguments of type GAAT_DATASET or GAAT_DATASET_LIST.
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @since 3.11
+ */
+GDALArgDatasetType GDALAlgorithmArgGetDatasetType(GDALAlgorithmArgH hArg)
+{
+    VALIDATE_POINTER1(hArg, __func__, 0);
+    return hArg->ptr->GetDatasetType();
+}
+
+/************************************************************************/
 /*               GDALAlgorithmArgGetMutualExclusionGroup()              */
 /************************************************************************/
 
@@ -6345,24 +6363,6 @@ GDALArgDatasetValueGetDatasetIncreaseRefCount(GDALArgDatasetValueH hValue)
 {
     VALIDATE_POINTER1(hValue, __func__, nullptr);
     return GDALDataset::ToHandle(hValue->ptr->GetDatasetIncreaseRefCount());
-}
-
-/************************************************************************/
-/*                    GDALArgDatasetValueGetType()                      */
-/************************************************************************/
-
-/** Get which type of dataset is allowed / generated.
- *
- * Binary-or combination of GDAL_OF_RASTER, GDAL_OF_VECTOR and
- * GDAL_OF_MULTIDIM_RASTER.
- *
- * @param hValue Handle to a GDALArgDatasetValue. Must NOT be null.
- * @since 3.11
- */
-GDALArgDatasetValueType GDALArgDatasetValueGetType(GDALArgDatasetValueH hValue)
-{
-    VALIDATE_POINTER1(hValue, __func__, 0);
-    return hValue->ptr->GetType();
 }
 
 /************************************************************************/

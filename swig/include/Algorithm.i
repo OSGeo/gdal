@@ -148,6 +148,11 @@ public:
     return GDALAlgorithmArgIsOutput(self);
   }
 
+  int GetDatasetType()
+  {
+    return GDALAlgorithmArgGetDatasetType(self);
+  }
+
   const char* GetMutualExclusionGroup() {
     return GDALAlgorithmArgGetMutualExclusionGroup(self);
   }
@@ -385,15 +390,6 @@ public:
 %extend {
   ~GDALArgDatasetValueHS() {
     GDALArgDatasetValueRelease( self );
-  }
-
-#if defined(SWIGCSHARP)
-  int GetType_()
-#else
-  int GetType()
-#endif
-  {
-    return GDALArgDatasetValueGetType(self);
   }
 
   const char* GetName() {
