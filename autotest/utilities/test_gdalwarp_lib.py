@@ -4486,5 +4486,5 @@ def test_gdalwarp_lib_warn_different_coordinate_operations():
         )
         assert (
             gdal.GetLastErrorMsg()
-            == "Several coordinate operations are going to be used. Artifacts may appear. You may consider using the -wo ALLOW_BALLPARK=NO and/or -wo ONLY_BEST=YES warping options, or specify a particular coordinate operation with -ct"
+            == "Several coordinate operations are going to be used. Artifacts may appear. You may consider using the -to ALLOW_BALLPARK=NO and/or -to ONLY_BEST=YES transform options, or specify a particular coordinate operation with -ct"
         )

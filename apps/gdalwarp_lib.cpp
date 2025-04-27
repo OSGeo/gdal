@@ -4907,8 +4907,8 @@ static GDALDatasetH GDALWarpCreateOutput(
                             CE_Warning, CPLE_AppDefined,
                             "Several coordinate operations are going to be "
                             "used. Artifacts may appear. You may consider "
-                            "using the -wo ALLOW_BALLPARK=NO and/or "
-                            "-wo ONLY_BEST=YES warping options, or specify "
+                            "using the -to ALLOW_BALLPARK=NO and/or "
+                            "-to ONLY_BEST=YES transform options, or specify "
                             "a particular coordinate operation with -ct");
                     }
 
