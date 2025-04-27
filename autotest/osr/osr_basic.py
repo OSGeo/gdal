@@ -2489,3 +2489,179 @@ def test_osr_basic_GetAuthorityListFromDatabase():
     ret = osr.GetAuthorityListFromDatabase()
     assert "EPSG" in ret
     assert "PROJ" in ret
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "args,kwargs",
+    (
+        pytest.param([], {"epsg": 4326}, id="epsg"),
+        pytest.param(["+proj=utm +zone=18 +datum=WGS84"], {}, id="proj4"),
+        pytest.param(
+            [
+                'PROJCS["NAD83 / Vermont (ftUS)",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",42.5],PARAMETER["central_meridian",-72.5],PARAMETER["scale_factor",0.999964286],PARAMETER["false_easting",1640416.6667],PARAMETER["false_northing",0],UNIT["US survey foot",0.304800609601219,AUTHORITY["EPSG","9003"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","5646"]]'
+            ],
+            {},
+            id="wkt",
+        ),
+        pytest.param(
+            [
+                '{\n  "$schema": "https://proj.org/schemas/v0.7/projjson.schema.json",\n  "type": "ProjectedCRS",\n  "name": "NAD83 / Vermont (ftUS)",\n  "base_crs": {\n    "name": "NAD83",\n    "datum": {\n      "type": "GeodeticReferenceFrame",\n      "name": "North American Datum 1983",\n      "ellipsoid": {\n        "name": "GRS 1980",\n        "semi_major_axis": 6378137,\n        "inverse_flattening": 298.257222101\n      }\n    },\n    "coordinate_system": {\n      "subtype": "ellipsoidal",\n      "axis": [\n        {\n          "name": "Geodetic latitude",\n          "abbreviation": "Lat",\n          "direction": "north",\n          "unit": "degree"\n        },\n        {\n          "name": "Geodetic longitude",\n          "abbreviation": "Lon",\n          "direction": "east",\n          "unit": "degree"\n        }\n      ]\n    },\n    "id": {\n      "authority": "EPSG",\n      "code": 4269\n    }\n  },\n  "conversion": {\n    "name": "SPCS83 Vermont zone (US survey foot)",\n    "method": {\n      "name": "Transverse Mercator",\n      "id": {\n        "authority": "EPSG",\n        "code": 9807\n      }\n    },\n    "parameters": [\n      {\n        "name": "Latitude of natural origin",\n        "value": 42.5,\n        "unit": "degree",\n        "id": {\n          "authority": "EPSG",\n          "code": 8801\n        }\n      },\n      {\n        "name": "Longitude of natural origin",\n        "value": -72.5,\n        "unit": "degree",\n        "id": {\n          "authority": "EPSG",\n          "code": 8802\n        }\n      },\n      {\n        "name": "Scale factor at natural origin",\n        "value": 0.999964286,\n        "unit": "unity",\n        "id": {\n          "authority": "EPSG",\n          "code": 8805\n        }\n      },\n      {\n        "name": "False easting",\n        "value": 1640416.6667,\n        "unit": {\n          "type": "LinearUnit",\n          "name": "US survey foot",\n          "conversion_factor": 0.304800609601219\n        },\n        "id": {\n          "authority": "EPSG",\n          "code": 8806\n        }\n      },\n      {\n        "name": "False northing",\n        "value": 0,\n        "unit": {\n          "type": "LinearUnit",\n          "name": "US survey foot",\n          "conversion_factor": 0.304800609601219\n        },\n        "id": {\n          "authority": "EPSG",\n          "code": 8807\n        }\n      }\n    ]\n  },\n  "coordinate_system": {\n    "subtype": "Cartesian",\n    "axis": [\n      {\n        "name": "Easting",\n        "abbreviation": "X",\n        "direction": "east",\n        "unit": {\n          "type": "LinearUnit",\n          "name": "US survey foot",\n          "conversion_factor": 0.304800609601219\n        }\n      },\n      {\n        "name": "Northing",\n        "abbreviation": "Y",\n        "direction": "north",\n        "unit": {\n          "type": "LinearUnit",\n          "name": "US survey foot",\n          "conversion_factor": 0.304800609601219\n        }\n      }\n    ]\n  },\n  "scope": "Engineering survey, topographic mapping.",\n  "area": "United States (USA) - Vermont - counties of Addison; Bennington; Caledonia; Chittenden; Essex; Franklin; Grand Isle; Lamoille; Orange; Orleans; Rutland; Washington; Windham; Windsor.",\n  "bbox": {\n    "south_latitude": 42.72,\n    "west_longitude": -73.44,\n    "north_latitude": 45.03,\n    "east_longitude": -71.5\n  },\n  "id": {\n    "authority": "EPSG",\n    "code": 5646\n  }\n}'
+            ],
+            {},
+            id="projjson text",
+        ),
+        pytest.param(
+            [
+                {
+                    "$schema": "https://proj.org/schemas/v0.7/projjson.schema.json",
+                    "type": "ProjectedCRS",
+                    "name": "NAD83 / Vermont (ftUS)",
+                    "base_crs": {
+                        "name": "NAD83",
+                        "datum": {
+                            "type": "GeodeticReferenceFrame",
+                            "name": "North American Datum 1983",
+                            "ellipsoid": {
+                                "name": "GRS 1980",
+                                "semi_major_axis": 6378137,
+                                "inverse_flattening": 298.257222101,
+                            },
+                        },
+                        "coordinate_system": {
+                            "subtype": "ellipsoidal",
+                            "axis": [
+                                {
+                                    "name": "Geodetic latitude",
+                                    "abbreviation": "Lat",
+                                    "direction": "north",
+                                    "unit": "degree",
+                                },
+                                {
+                                    "name": "Geodetic longitude",
+                                    "abbreviation": "Lon",
+                                    "direction": "east",
+                                    "unit": "degree",
+                                },
+                            ],
+                        },
+                        "id": {"authority": "EPSG", "code": 4269},
+                    },
+                    "conversion": {
+                        "name": "SPCS83 Vermont zone (US survey foot)",
+                        "method": {
+                            "name": "Transverse Mercator",
+                            "id": {"authority": "EPSG", "code": 9807},
+                        },
+                        "parameters": [
+                            {
+                                "name": "Latitude of natural origin",
+                                "value": 42.5,
+                                "unit": "degree",
+                                "id": {"authority": "EPSG", "code": 8801},
+                            },
+                            {
+                                "name": "Longitude of natural origin",
+                                "value": -72.5,
+                                "unit": "degree",
+                                "id": {"authority": "EPSG", "code": 8802},
+                            },
+                            {
+                                "name": "Scale factor at natural origin",
+                                "value": 0.999964286,
+                                "unit": "unity",
+                                "id": {"authority": "EPSG", "code": 8805},
+                            },
+                            {
+                                "name": "False easting",
+                                "value": 1640416.6667,
+                                "unit": {
+                                    "type": "LinearUnit",
+                                    "name": "US survey foot",
+                                    "conversion_factor": 0.304800609601219,
+                                },
+                                "id": {"authority": "EPSG", "code": 8806},
+                            },
+                            {
+                                "name": "False northing",
+                                "value": 0,
+                                "unit": {
+                                    "type": "LinearUnit",
+                                    "name": "US survey foot",
+                                    "conversion_factor": 0.304800609601219,
+                                },
+                                "id": {"authority": "EPSG", "code": 8807},
+                            },
+                        ],
+                    },
+                    "coordinate_system": {
+                        "subtype": "Cartesian",
+                        "axis": [
+                            {
+                                "name": "Easting",
+                                "abbreviation": "X",
+                                "direction": "east",
+                                "unit": {
+                                    "type": "LinearUnit",
+                                    "name": "US survey foot",
+                                    "conversion_factor": 0.304800609601219,
+                                },
+                            },
+                            {
+                                "name": "Northing",
+                                "abbreviation": "Y",
+                                "direction": "north",
+                                "unit": {
+                                    "type": "LinearUnit",
+                                    "name": "US survey foot",
+                                    "conversion_factor": 0.304800609601219,
+                                },
+                            },
+                        ],
+                    },
+                    "scope": "Engineering survey, topographic mapping.",
+                    "area": "United States (USA) - Vermont - counties of Addison; Bennington; Caledonia; Chittenden; Essex; Franklin; Grand Isle; Lamoille; Orange; Orleans; Rutland; Washington; Windham; Windsor.",
+                    "bbox": {
+                        "south_latitude": 42.72,
+                        "west_longitude": -73.44,
+                        "north_latitude": 45.03,
+                        "east_longitude": -71.5,
+                    },
+                    "id": {"authority": "EPSG", "code": 5646},
+                }
+            ],
+            {},
+            id="projjson dict",
+        ),
+    ),
+)
+def test_osr_basic_constructor(args, kwargs):
+
+    srs = osr.SpatialReference(*args, **kwargs)
+
+    assert srs.ExportToWkt() != ""
+
+
+@pytest.mark.parametrize("arg", ("", None))
+def test_osr_basic_constructor_empty(arg):
+
+    srs = osr.SpatialReference(arg)
+    assert srs is not None
+
+
+def test_osr_basic_constructor_overspecified():
+
+    # The arguments provided here don't make any sense.
+    # But SpatialReference.SetFromUserInput doesn't seem to complain if we pass it
+    # unexpected options, so we have no way to catch this for now.
+
+    with pytest.raises(ValueError, match="Unexpected argument"):
+        osr.SpatialReference(proj4="+proj=utm +zone=18 +datum=WGS84", epsg=4326)
+
+
+def test_osr_basic_constructor_invalid_kwarg():
+
+    with pytest.raises(ValueError, match="Unexpected argument"):
+        osr.SpatialReference(description="VT State Plane")
