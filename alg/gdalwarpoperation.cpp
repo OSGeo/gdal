@@ -805,7 +805,8 @@ CPLErr GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
                 // See https://github.com/OSGeo/gdal/pull/12189
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "INIT_DEST was set to NO_DATA, but a NoData value was "
-                         "not defined.");
+                         "not defined. This warning will become a failure in a "
+                         "future GDAL release.");
                 return CE_Failure;
             }
 
