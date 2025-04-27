@@ -176,7 +176,7 @@ MathExpression::Create([[maybe_unused]] const char *pszExpression,
 #else
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "Dialect '%s' is not supported by this GDAL build. A GDAL "
-                 "build with ExprTk is be needed.",
+                 "build with ExprTk is needed.",
                  pszDialect);
 #endif
     }
@@ -187,7 +187,7 @@ MathExpression::Create([[maybe_unused]] const char *pszExpression,
 #else
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "Dialect '%s' is not supported by this GDAL build. A GDAL "
-                 "build with muparser is be needed.",
+                 "build with muparser is needed.",
                  pszDialect);
 #endif
     }
