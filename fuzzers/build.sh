@@ -163,6 +163,12 @@ curl -L https://sqlite.org/2024/sqlite-autoconf-3470000.tar.gz > sqlite-autoconf
     mv sqlite-autoconf-3470000 sqlite && \
     rm sqlite-autoconf-3470000.tar.gz
 
+rm -rf muparser
+curl -L https://github.com/beltoforion/muparser/archive/refs/tags/v2.3.5.tar.gz > v2.3.5.tar.gz && \
+  tar xzf v2.3.5.tar.gz && \
+  mv muparser-2.3.5 muparser && \
+  rm v2.3.5.tar.gz
+
 # libxerces-c-dev${ARCH_SUFFIX}
 # libsqlite3-dev${ARCH_SUFFIX}
 PACKAGES="zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_SUFFIX} \
@@ -186,6 +192,19 @@ if [ "$ARCHITECTURE" = "i386" ]; then
     NON_FUZZING_CFLAGS="-m32 ${NON_FUZZING_CFLAGS}"
 fi
 NON_FUZZING_CXXFLAGS="$NON_FUZZING_CFLAGS -stdlib=libc++"
+
+# build muparser
+cd muparser
+mkdir build
+cd build
+cmake .. -DBUILD_SHARED_LIBS:BOOL=OFF \
+        -DCMAKE_INSTALL_PREFIX=$SRC/install \
+        -DCMAKE_BUILD_TYPE=debug \
+        -DENABLE_OPENMP=OFF \
+        -DENABLE_SAMPLES=OFF
+make -j$(nproc) -s
+make install
+cd ../..
 
 # build sqlite
 cd sqlite
@@ -335,6 +354,8 @@ cd ..
 export EXTRA_LIBS="-Wl,-Bstatic "
 # curl related
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lcurl -lssl -lcrypto -lz"
+# muparser
+export EXTRA_LIBS="$EXTRA_LIBS -lmuparser "
 # PROJ
 export EXTRA_LIBS="$EXTRA_LIBS -lproj -ltiff "
 export EXTRA_LIBS="$EXTRA_LIBS -ljbig -lzstd -lwebp -llzma -lexpat -L$SRC/install/lib -lsqlite3 -lgif -ljpeg -lpng -lz"
