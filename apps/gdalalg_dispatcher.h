@@ -16,6 +16,7 @@
 #include "gdalalgorithm.h"
 
 #include "gdal_priv.h"
+#include "cpl_error.h"
 
 //! @cond Doxygen_Suppress
 
@@ -76,11 +77,16 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
     // with it. Otherwise try with the vector specific algorithm.
 
     bool ok;
+    std::string osLastError;
     if (args.size() > 1)
     {
         // Silence errors as it might be rather for the vector algorithm
         CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        const auto nCounter = CPLGetErrorCounter();
         ok = m_rasterDispatcher->ParseCommandLineArguments(args);
+        if (CPLGetErrorCounter() > nCounter &&
+            CPLGetLastErrorType() == CE_Failure)
+            osLastError = CPLGetLastErrorMsg();
     }
     else
     {
@@ -169,6 +175,7 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
     }
 
     bool ret = false;
+    bool managedToOpenDS = false;
     for (const auto &arg : args)
     {
         VSIStatBufL sStat;
@@ -178,6 +185,7 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
                 std::unique_ptr<GDALDataset>(GDALDataset::Open(arg.c_str()));
             if (poDS)
             {
+                managedToOpenDS = true;
                 if (poDS->GetRasterCount() > 0 ||
                     poDS->GetMetadata("SUBDATASETS"))
                 {
@@ -202,7 +210,6 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
                     m_selectedSubAlg->SetCallPath(callPath);
                     ret = m_selectedSubAlg->ParseCommandLineArguments(
                         argsWithoutInput);
-                    break;
                 }
                 else if (poDS->GetLayerCount() != 0)
                 {
@@ -216,10 +223,16 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
                     m_selectedSubAlg->SetCallPath(callPath);
                     ret = m_selectedSubAlg->ParseCommandLineArguments(
                         argsWithoutInput);
-                    break;
                 }
             }
+            break;
         }
+    }
+
+    if (!ret && !managedToOpenDS &&
+        osLastError.find("not recognized") != std::string::npos)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", osLastError.c_str());
     }
 
     return ret;
