@@ -3510,7 +3510,7 @@ error:
 /*                                                                      */
 /*      Create the output file based on various command line options,   */
 /*      and the input file.                                             */
-/*      If there's just one source file, then hUniqueTransformArg wil   */
+/*      If there's just one source file, then hUniqueTransformArg will  */
 /*      be set in order them to be reused by main function. This saves  */
 /*      transform recomputation, which can be expensive in the -tps case*/
 /************************************************************************/
