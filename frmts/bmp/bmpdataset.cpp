@@ -158,12 +158,14 @@ typedef struct
 } BMPInfoHeader;
 
 // Info header size in bytes:
-const unsigned int BIH_WIN4SIZE = 40;  // for BMPT_WIN4
-#if 0                                  /* Unused */
-const unsigned int  BIH_WIN5SIZE = 57; // for BMPT_WIN5
+constexpr unsigned int BIH_WIN4SIZE = 40;  // for BMPT_WIN4
+#if 0
+/* Unused */
+constexpr unsigned int  BIH_WIN5SIZE = 57; // for BMPT_WIN5
 #endif
-const unsigned int BIH_OS21SIZE = 12;  // for BMPT_OS21
-const unsigned int BIH_OS22SIZE = 64;  // for BMPT_OS22
+constexpr unsigned int BIH_OS21SIZE = 12;       // for BMPT_OS21
+constexpr unsigned int BIH_OS22SIZE = 64;       // for BMPT_OS22
+constexpr unsigned int BIH_BITMAPV5SIZE = 124;  // for BITMAPV5HEADER
 
 // We will use plain byte array instead of this structure, but declaration
 // provided for reference
@@ -1073,7 +1075,7 @@ int BMPDataset::Identify(GDALOpenInfo *poOpenInfo)
            sizeof(uint32_t));
     CPL_LSBPTR32(&nInfoHeaderSize);
     // Check against the maximum known size
-    if (nInfoHeaderSize > BIH_OS22SIZE)
+    if (nInfoHeaderSize > BIH_BITMAPV5SIZE)
         return FALSE;
 
     return TRUE;
