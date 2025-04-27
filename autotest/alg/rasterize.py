@@ -1037,4 +1037,5 @@ def test_rasterize_bugfix_gh12129():
         options=["ALL_TOUCHED=YES"],
     )
 
-    assert target_ds.GetRasterBand(1).Checksum() == 120
+    # 121 on s390x
+    assert target_ds.GetRasterBand(1).Checksum() in (120, 121)
