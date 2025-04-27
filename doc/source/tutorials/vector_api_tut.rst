@@ -43,6 +43,12 @@ all format drivers built into GDAL/OGR.
       {
           GDALAllRegister();
 
+   .. code-tab:: python
+
+      from osgeo import gdal
+      # when importing gdal in Python
+      # GDALAllRegister() is automatically called
+
 Next we need to open the input OGR datasource.  Datasources can be files,
 RDBMSes, directories full of files, or even remote web services depending on
 the driver being used.  However, the datasource name is always a single
@@ -76,6 +82,10 @@ we report an error.
           exit( 1 );
       }
 
+   .. code-tab:: python
+
+      ds = gdal.OpenEx("point", gdal.OF_VECTOR)
+
 A GDALDataset can potentially have many layers associated with it.  The
 number of layers available can be queried with :cpp:func:`GDALDataset::GetLayerCount`
 and individual layers fetched by index using :cpp:func:`GDALDataset::GetLayer`.
@@ -95,6 +105,9 @@ However, we will just fetch the layer by name.
 
       hLayer = GDALDatasetGetLayerByName( hDS, "point" );
 
+   .. code-tab:: python
+
+      lyr = ds.GetLayerByName("point")
 
 Now we want to start reading features from the layer.  Before we start we
 could assign an attribute or spatial filter to the layer to restrict the set
@@ -106,12 +119,23 @@ of feature we get back, but for now we are interested in getting all features.
 
       for( auto& poFeature: poLayer )
       {
+            // do something with each feature
+      }
 
    .. code-tab:: c
 
       OGR_FOR_EACH_FEATURE_BEGIN(hFeature, hLayer)
       {
+           // do something, including continue, break;
+           // do not explicitly destroy the feature (unless you use return or goto
+           // outside of the loop, in which case use OGR_F_Destroy(hFeat))
+      }
+      OGR_FOR_EACH_FEATURE_END(hFeat)
 
+   .. code-tab:: python
+
+      for feat in lyr:
+        # do something with each feature
 
 In order to dump all the attribute fields of the feature, it is helpful
 to get the :cpp:class:`OGRFeatureDefn`.  This is an object, associated with the layer,
@@ -198,6 +222,27 @@ and fetch and report the attributes based on their type.
           }
       }
 
+   .. code-tab:: python
+
+      feat_defn = lyr.GetLayerDefn()
+      for i in range(feat_defn.GetFieldCount()):
+          field_defn = feat_defn.GetFieldDefn(i)
+
+          # Tests below can be simplified with just :
+          # print feat.GetField(i)
+          if (
+              field_defn.GetType() == ogr.OFTInteger
+              or field_defn.GetType() == ogr.OFTInteger64
+          ):
+              print("%d" % feat.GetFieldAsInteger64(i))
+          elif field_defn.GetType() == ogr.OFTReal:
+              print("%.3f" % feat.GetFieldAsDouble(i))
+          elif field_defn.GetType() == ogr.OFTString:
+              print("%s" % feat.GetFieldAsString(i))
+          else:
+              print("%s" % feat.GetFieldAsString(i))
+
+
 There are a few more field types than those explicitly handled above, but
 a reasonable representation of them can be fetched with the
 :cpp:func:`OGRFeature::GetFieldAsString` method.  In fact we could shorten the above
@@ -246,6 +291,14 @@ placeholders.
       {
           printf( "no point geometry\n" );
       }
+
+   .. code-tab:: python
+
+      geom = feat.GetGeometryRef()
+      if geom is not None and geom.GetGeometryType() == ogr.wkbPoint:
+          print("%.3f, %.3f" % (geom.GetX(), geom.GetY()))
+      else:
+          print("no point geometry")
 
 The :cpp:func:`wkbFlatten` macro is used above to convert the type for a wkbPoint25D
 (a point with a z coordinate) into the base 2D geometry type code (wkbPoint).
@@ -308,33 +361,18 @@ Several geometry fields can be associated to a feature.
 
    .. code-tab:: python
 
-    nGeomFieldCount = feat.GetGeomFieldCount()
-    for iGeomField in range(nGeomFieldCount):
-        geom = feat.GetGeomFieldRef(iGeomField)
-        if geom is not None and geom.GetGeometryType() == ogr.wkbPoint:
-            print("%.3f, %.3f" % ( geom.GetX(), geom.GetY() ))
-        else:
-            print("no point geometry\n")
+      nGeomFieldCount = feat.GetGeomFieldCount()
+      for iGeomField in range(nGeomFieldCount):
+          geom = feat.GetGeomFieldRef(iGeomField)
+          if geom is not None and geom.GetGeometryType() == ogr.wkbPoint:
+              print("%.3f, %.3f" % ( geom.GetX(), geom.GetY() ))
+          else:
+              print("no point geometry\n")
 
 Note that :cpp:func:`OGRFeature::GetGeometryRef` and :cpp:func:`OGRFeature::GetGeomFieldRef`
 return a pointer to
 the internal geometry owned by the OGRFeature.  There we don't actually
 delete the return geometry.
-
-
-In C++ looping over features is simply terminated by a closing curly bracket.
-
-.. code-block:: c++
-
-    }
-
-In C, the looping over features is simply terminated by the following.
-
-.. code-block:: c
-
-    }
-    OGR_FOR_EACH_FEATURE_END(hFeature)
-
 
 The OGRLayer returned by :cpp:func:`GDALDataset::GetLayerByName` is also a reference
 to an internal layer owned by the GDALDataset so we don't need to delete
@@ -342,13 +380,21 @@ it.  But we do need to delete the datasource in order to close the input file.
 Once again we do this with a custom delete method to avoid special win32
 heap issues.
 
-In C/C++ :
+.. tabs::
 
-.. code-block:: c++
+   .. code-tab:: c++
 
-        GDALClose( poDS );
-    }
+      GDALClose( poDS );
+      }
 
+   .. code-tab:: c
+
+      GDALClose( poDS );
+      }
+
+   .. code-tab:: python
+
+      ds.Close()
 
 All together our program looks like this.
 
@@ -852,6 +898,17 @@ Shapefile driver as we will need it to create our output file.
               exit( 1 );
           }
 
+   .. code-tab:: python
+
+      from osgeo import gdal
+
+      gdal.UseExceptions()
+      driverName = "ESRI Shapefile"
+      drv = gdal.GetDriverByName(driverName)
+      if drv is None:
+          print("%s driver not available." % driverName)
+          sys.exit(1)
+
 Next we create the datasource.  The ESRI Shapefile driver allows us to create
 a directory full of shapefiles, or a single shapefile as a datasource.  In
 this case we will explicitly create a single file by including the extension
@@ -885,6 +942,10 @@ this case.  Details of the options supported are also format specific.
           exit( 1 );
       }
 
+   .. code-tab:: python
+
+      ds = drv.Create("point_out.shp", 0, 0, 0, gdal.GDT_Unknown)
+
 Now we create the output layer.  In this case since the datasource is a
 single file, we can only have one layer.  We pass wkbPoint to specify the
 type of geometry supported by this layer.  In this case we aren't passing
@@ -914,6 +975,9 @@ any coordinate system information or other special layer creation options.
           exit( 1 );
       }
 
+   .. code-tab:: python
+
+      lyr = ds.CreateLayer("point_out", None, ogr.wkbPoint)
 
 Now that the layer exists, we need to create any attribute fields that should
 appear on the layer.  Fields must be added to the layer before any features
@@ -956,20 +1020,44 @@ We retain ownership of the object.
 
       OGR_Fld_Destroy(hFieldDefn);
 
+   .. code-tab:: python
+
+      field_defn = ogr.FieldDefn("Name", ogr.OFTString)
+      field_defn.SetWidth(32)
+
+      lyr.CreateField(field_defn)
 
 The following snipping loops reading lines of the form "x,y,name" from stdin,
 and parsing them.
 
-In C++ and in C :
+.. tabs::
 
-.. code-block:: c
+   .. code-tab:: c++
 
-    double x, y;
-    char szName[33];
+      double x, y;
+      char szName[33];
 
-    while( !feof(stdin)
-           && fscanf( stdin, "%lf,%lf,%32s", &x, &y, szName ) == 3 )
-    {
+      while( !feof(stdin)
+             && fscanf( stdin, "%lf,%lf,%32s", &x, &y, szName ) == 3 )
+      {
+
+   .. code-tab:: c++
+
+      double x, y;
+      char szName[33];
+
+      while( !feof(stdin)
+             && fscanf( stdin, "%lf,%lf,%32s", &x, &y, szName ) == 3 )
+      {
+
+   .. code-tab:: python
+
+      # Expected format of user input: x y name
+      linestring = input()
+      linelist = linestring.split()
+
+      while len(linelist) == 3:
+        ...
 
 To write a feature to disk, we must create a local OGRFeature, set attributes
 and attach geometry before trying to write it to the layer.  It is
@@ -992,6 +1080,11 @@ associated with the layer it will be written to.
           hFeature = OGR_F_Create( OGR_L_GetLayerDefn( hLayer ) );
           OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, "Name"), szName );
 
+   .. code-tab:: python
+
+      feat = ogr.Feature(lyr.GetLayerDefn())
+      feat.SetField("Name", name)
+
 We create a local geometry object, and assign its copy (indirectly) to the feature.
 The :cpp:func:`OGRFeature::SetGeometryDirectly` differs from :cpp:func:`OGRFeature::SetGeometry`
 in that the direct method gives ownership of the geometry to the feature.
@@ -1002,21 +1095,27 @@ of the geometry.
 
    .. code-tab:: c++
 
-          OGRPoint pt;
-          pt.setX( x );
-          pt.setY( y );
+      OGRPoint pt;
+      pt.setX( x );
+      pt.setY( y );
 
-          poFeature->SetGeometry( &pt );
+      poFeature->SetGeometry( &pt );
 
    .. code-tab:: c
 
-          OGRGeometryH hPt;
-          hPt = OGR_G_CreateGeometry(wkbPoint);
-          OGR_G_SetPoint_2D(hPt, 0, x, y);
+      OGRGeometryH hPt;
+      hPt = OGR_G_CreateGeometry(wkbPoint);
+      OGR_G_SetPoint_2D(hPt, 0, x, y);
 
-          OGR_F_SetGeometry( hFeature, hPt );
-          OGR_G_DestroyGeometry(hPt);
+      OGR_F_SetGeometry( hFeature, hPt );
+      OGR_G_DestroyGeometry(hPt);
 
+   .. code-tab:: python
+
+      pt = ogr.Geometry(ogr.wkbPoint)
+      pt.SetPoint_2D(0, x, y)
+
+      feat.SetGeometry(pt)
 
 Now we create a feature in the file.  The :cpp:func:`OGRLayer::CreateFeature` does not
 take ownership of our feature so we clean it up when done with it.
@@ -1045,17 +1144,29 @@ take ownership of our feature so we clean it up when done with it.
           OGR_F_Destroy( hFeature );
      }
 
+   .. code-tab:: python
+
+      lyr.CreateFeature(feat)
+
 
 Finally we need to close down the datasource in order to ensure headers
 are written out in an orderly way and all resources are recovered.
 
-In C/C++ :
+.. tabs::
 
-.. code-block:: c
+   .. code-tab:: c++
 
         GDALClose( poDS );
-    }
+      }
 
+   .. code-tab:: c
+
+        GDALClose( poDS );
+      }
+
+   .. code-tab:: python
+
+      ds.Close()
 
 The same program all in one block looks like this:
 

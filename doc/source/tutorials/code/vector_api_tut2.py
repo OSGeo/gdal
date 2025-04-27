@@ -1,6 +1,6 @@
 import sys
-from osgeo import gdal
-from osgeo import ogr
+
+from osgeo import gdal, ogr
 
 gdal.UseExceptions()
 driverName = "ESRI Shapefile"
@@ -16,7 +16,7 @@ lyr = ds.CreateLayer("point_out", None, ogr.wkbPoint)
 field_defn = ogr.FieldDefn("Name", ogr.OFTString)
 field_defn.SetWidth(32)
 
-lyr.CreateField(field_defn
+lyr.CreateField(field_defn)
 
 # Expected format of user input: x y name
 linestring = input()
