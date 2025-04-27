@@ -78,8 +78,7 @@ GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool openForMixedRasterVector)
         .SetMinValueIncluded(1);
 
     AddInputDatasetArg(&m_dataset, openForMixedRasterVector
-                                       ? GDAL_OF_RASTER | GDAL_OF_VECTOR |
-                                             GDAL_OF_MULTIDIM_RASTER
+                                       ? GDAL_OF_RASTER | GDAL_OF_VECTOR
                                        : GDAL_OF_RASTER)
         .AddAlias("dataset");
 
