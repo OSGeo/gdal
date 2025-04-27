@@ -101,6 +101,170 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArgDecl_SetMaxCount)
               2);
 }
 
+class MyAlgorithmWithDummyRun : public GDALAlgorithm
+{
+  public:
+    MyAlgorithmWithDummyRun(const std::string &name = "test",
+                            const std::string &description = "",
+                            const std::string &url = "https://example.com")
+        : GDALAlgorithm(name, description, url)
+    {
+    }
+
+    bool RunImpl(GDALProgressFunc, void *) override
+    {
+        return true;
+    }
+};
+
+TEST_F(test_gdal_algorithm, GDALAlgorithmArg_SetDefault)
+{
+
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        MyAlgorithm()
+        {
+            {
+                bool v;
+                auto &arg = AddArg("", 0, "", &v);
+                arg.SetDefault(true);
+                EXPECT_TRUE(arg.GetDefault<bool>());
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault("invalid");
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                int v;
+                auto &arg = AddArg("", 0, "", &v);
+                arg.SetDefault(5);
+                EXPECT_EQ(arg.GetDefault<int>(), 5);
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault("invalid");
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                double v;
+                auto &arg = AddArg("", 0, "", &v);
+                arg.SetDefault(4.5);
+                EXPECT_EQ(arg.GetDefault<double>(), 4.5);
+
+                arg.SetDefault(5);
+                EXPECT_EQ(arg.GetDefault<double>(), 5);
+
+                arg.SetDefault(2.5f);
+                EXPECT_EQ(arg.GetDefault<double>(), 2.5);
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault("invalid");
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                std::string v;
+                auto &arg = AddArg("", 0, "", &v);
+
+                arg.SetDefault("ab");
+                EXPECT_STREQ(arg.GetDefault<std::string>().c_str(), "ab");
+
+                arg.SetDefault(std::string("cd"));
+                EXPECT_STREQ(arg.GetDefault<std::string>().c_str(), "cd");
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault(0);
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                std::vector<int> v;
+                auto &arg = AddArg("", 0, "", &v);
+                arg.SetDefault(5);
+                std::vector<int> expected{5};
+                EXPECT_EQ(arg.GetDefault<std::vector<int>>(), expected);
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault("invalid");
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                std::vector<double> v;
+                auto &arg = AddArg("", 0, "", &v);
+                arg.SetDefault(4.5);
+                {
+                    std::vector<double> expected{4.5};
+                    EXPECT_EQ(arg.GetDefault<std::vector<double>>(), expected);
+                }
+
+                arg.SetDefault(5);
+                {
+                    std::vector<double> expected{5};
+                    EXPECT_EQ(arg.GetDefault<std::vector<double>>(), expected);
+                }
+
+                arg.SetDefault(2.5f);
+                {
+                    std::vector<double> expected{2.5};
+                    EXPECT_EQ(arg.GetDefault<std::vector<double>>(), expected);
+                }
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault("invalid");
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                std::vector<std::string> v;
+                auto &arg = AddArg("", 0, "", &v);
+
+                arg.SetDefault("ab");
+                {
+                    std::vector<std::string> expected{"ab"};
+                    EXPECT_EQ(arg.GetDefault<std::vector<std::string>>(),
+                              expected);
+                }
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault(0);
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                GDALArgDatasetValue v;
+                auto &arg = AddArg("", 0, "", &v);
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault(0);
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                std::vector<GDALArgDatasetValue> v;
+                auto &arg = AddArg("", 0, "", &v);
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault(0);
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+        }
+    };
+
+    MyAlgorithm alg;
+}
+
 TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
 {
     {
@@ -782,22 +946,6 @@ TEST_F(test_gdal_algorithm, SetIsCRSArg_wrong_type)
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
     }
 }
-
-class MyAlgorithmWithDummyRun : public GDALAlgorithm
-{
-  public:
-    MyAlgorithmWithDummyRun(const std::string &name = "test",
-                            const std::string &description = "",
-                            const std::string &url = "https://example.com")
-        : GDALAlgorithm(name, description, url)
-    {
-    }
-
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        return true;
-    }
-};
 
 TEST_F(test_gdal_algorithm, wrong_long_name_dash)
 {
