@@ -2902,12 +2902,12 @@ void GDALDriver::DeclareAlgorithm(const std::vector<std::string> &aosPath)
             });
     }
 
-    const std::vector<std::string> driverCommandPath = {
-        "driver", CPLString(osDriverName).tolower()};
-    if (!singleton.HasDeclaredSubAlgorithm(driverCommandPath))
+    std::vector<std::string> path = {"driver",
+                                     CPLString(osDriverName).tolower()};
+    if (!singleton.HasDeclaredSubAlgorithm(path))
     {
         // coverity[copy_constructor_call]
-        const auto lambda = [osDriverName]() -> std::unique_ptr<GDALAlgorithm>
+        auto lambda = [osDriverName]() -> std::unique_ptr<GDALAlgorithm>
         {
             auto poDriver =
                 GetGDALDriverManager()->GetDriverByName(osDriverName.c_str());
@@ -2925,15 +2925,13 @@ void GDALDriver::DeclareAlgorithm(const std::vector<std::string> &aosPath)
             }
             return nullptr;
         };
-        singleton.DeclareAlgorithm(driverCommandPath, lambda);
+        singleton.DeclareAlgorithm(path, std::move(lambda));
     }
 
-    auto path = driverCommandPath;
     path.insert(path.end(), aosPath.begin(), aosPath.end());
 
     // coverity[copy_constructor_call]
-    const auto lambda = [osDriverName,
-                         aosPath]() -> std::unique_ptr<GDALAlgorithm>
+    auto lambda = [osDriverName, aosPath]() -> std::unique_ptr<GDALAlgorithm>
     {
         auto poDriver =
             GetGDALDriverManager()->GetDriverByName(osDriverName.c_str());
@@ -2943,7 +2941,7 @@ void GDALDriver::DeclareAlgorithm(const std::vector<std::string> &aosPath)
         return nullptr;
     };
 
-    singleton.DeclareAlgorithm(path, lambda);
+    singleton.DeclareAlgorithm(path, std::move(lambda));
 }
 
 //! @endcond

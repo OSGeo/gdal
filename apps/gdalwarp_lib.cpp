@@ -3245,6 +3245,7 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         /* --------------------------------------------------------------------
          */
         GDALWarpOperation oWO;
+        // coverity[escape]
         psWO->pTransformerArg = hTransformArg.get();
 
         if (oWO.Initialize(psWO.get()) == CE_None)
@@ -3751,12 +3752,13 @@ static GDALDatasetH GDALWarpCreateOutput(
                 for (const char *pszFilenameInList :
                      CPLStringList(poSrcDSTmp->GetFileList()))
                 {
-                    CPLString osFilename(pszFilenameInList);
-                    osFilename.replaceAll('\\', '/');
+                    std::string osFilename =
+                        CPLString(pszFilenameInList).replaceAll('\\', '/');
                     if (oSetExistingDestFiles.find(osFilename) !=
                         oSetExistingDestFiles.end())
                     {
-                        oSetExistingDestFilesFoundInSource.insert(osFilename);
+                        oSetExistingDestFilesFoundInSource.insert(
+                            std::move(osFilename));
                     }
                 }
             }
