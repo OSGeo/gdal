@@ -315,7 +315,9 @@ constexpr const char *GDAL_ARG_NAME_OVERWRITE = "overwrite";
 /** Name of the argument for read-only. */
 constexpr const char *GDAL_ARG_NAME_READ_ONLY = "read-only";
 
-/** Driver rmust expose GDAL_DCAP_RASTER or GDAL_DCAP_MULTIDIM_RASTER */
+/** Driver must expose GDAL_DCAP_RASTER or GDAL_DCAP_MULTIDIM_RASTER.
+ * This is a potential value of GetMetadataItem(GAAMDI_REQUIRED_CAPABILITIES)
+ */
 constexpr const char *GDAL_ALG_DCAP_RASTER_OR_MULTIDIM_RASTER =
     "raster-or-multidim-raster";
 
