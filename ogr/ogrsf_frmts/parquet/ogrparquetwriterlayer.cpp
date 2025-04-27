@@ -1076,7 +1076,11 @@ OGRErr OGRParquetWriterLayer::ICreateFeature(OGRFeature *poFeature)
 
 bool OGRParquetWriterLayer::FlushGroup()
 {
+#if PARQUET_VERSION_MAJOR >= 20
+    auto status = m_poFileWriter->NewRowGroup();
+#else
     auto status = m_poFileWriter->NewRowGroup(m_apoBuilders[0]->length());
+#endif
     if (!status.ok())
     {
         CPLError(CE_Failure, CPLE_AppDefined, "NewRowGroup() failed with %s",

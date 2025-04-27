@@ -2222,7 +2222,15 @@ bool VRTMDArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         std::vector<GByte *> abyStackDstPtr;
         size_t iDim = 0;
         abyStackDstPtr.push_back(static_cast<GByte *>(pDstBuffer));
+        // GCC 15.1 on msys2-mingw64
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
         abyStackDstPtr.resize(nDims + 1);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     lbl_next_depth:
         if (iDim == nDims)
         {
