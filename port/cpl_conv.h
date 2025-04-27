@@ -283,8 +283,8 @@ const char CPL_DLL *CPLDecToDMS(double dfAngle, const char *pszAxis,
 double CPL_DLL CPLPackedDMSToDec(double);
 double CPL_DLL CPLDecToPackedDMS(double dfDec);
 
-void CPL_DLL CPLStringToComplex(const char *pszString, double *pdfReal,
-                                double *pdfImag);
+CPLErr CPL_DLL CPLStringToComplex(const char *pszString, double *pdfReal,
+                                  double *pdfImag);
 
 /* -------------------------------------------------------------------- */
 /*      Misc other functions.                                           */

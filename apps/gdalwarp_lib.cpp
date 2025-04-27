@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, i3 - information integration and imaging
- *                          Fort Collin, CO
+ *                          Fort Collins, CO
  * Copyright (c) 2007-2015, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2015, Faza Mahamood
  *
@@ -1934,17 +1934,18 @@ static void ProcessMetadata(int iSrc, GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 /*                             SetupNoData()                            */
 /************************************************************************/
 
-static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
-                        GDALDatasetH hWrkSrcDS, GDALDatasetH hDstDS,
-                        GDALWarpOptions *psWO, GDALWarpAppOptions *psOptions,
-                        const bool bEnableDstAlpha,
-                        const bool bInitDestSetByUser)
+static CPLErr SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
+                          GDALDatasetH hWrkSrcDS, GDALDatasetH hDstDS,
+                          GDALWarpOptions *psWO, GDALWarpAppOptions *psOptions,
+                          const bool bEnableDstAlpha,
+                          const bool bInitDestSetByUser)
 {
     if (!psOptions->osSrcNodata.empty() &&
         !EQUAL(psOptions->osSrcNodata.c_str(), "none"))
     {
-        char **papszTokens = CSLTokenizeString(psOptions->osSrcNodata.c_str());
-        const int nTokenCount = CSLCount(papszTokens);
+        CPLStringList aosTokens(
+            CSLTokenizeString(psOptions->osSrcNodata.c_str()));
+        const int nTokenCount = aosTokens.Count();
 
         psWO->padfSrcNoDataReal =
             static_cast<double *>(CPLMalloc(psWO->nBandCount * sizeof(double)));
@@ -1954,28 +1955,29 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
         {
             if (i < nTokenCount)
             {
-                if (strchr(papszTokens[i], 'i') != nullptr)
+                double dfNoDataReal;
+                double dfNoDataImag;
+
+                if (CPLStringToComplex(aosTokens[i], &dfNoDataReal,
+                                       &dfNoDataImag) != CE_None)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Error parsing srcnodata for band %d", i + 1);
+                    return CE_Failure;
+                }
+
+                psWO->padfSrcNoDataReal[i] =
+                    GDALAdjustNoDataCloseToFloatMax(dfNoDataReal);
+
+                if (strchr(aosTokens[i], 'i') != nullptr)
                 {
                     if (psWO->padfSrcNoDataImag == nullptr)
                     {
                         psWO->padfSrcNoDataImag = static_cast<double *>(
                             CPLCalloc(psWO->nBandCount, sizeof(double)));
                     }
-                    CPLStringToComplex(papszTokens[i],
-                                       psWO->padfSrcNoDataReal + i,
-                                       psWO->padfSrcNoDataImag + i);
-                    psWO->padfSrcNoDataReal[i] =
-                        GDALAdjustNoDataCloseToFloatMax(
-                            psWO->padfSrcNoDataReal[i]);
                     psWO->padfSrcNoDataImag[i] =
-                        GDALAdjustNoDataCloseToFloatMax(
-                            psWO->padfSrcNoDataImag[i]);
-                }
-                else
-                {
-                    psWO->padfSrcNoDataReal[i] =
-                        GDALAdjustNoDataCloseToFloatMax(
-                            CPLAtof(papszTokens[i]));
+                        GDALAdjustNoDataCloseToFloatMax(dfNoDataImag);
                 }
             }
             else
@@ -1987,8 +1989,6 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
                 }
             }
         }
-
-        CSLDestroy(papszTokens);
 
         if (psWO->nBandCount > 1 &&
             CSLFetchNameValue(psWO->papszWarpOptions, "UNIFIED_SRC_NODATA") ==
@@ -2058,8 +2058,9 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
     if (!psOptions->osDstNodata.empty() &&
         !EQUAL(psOptions->osDstNodata.c_str(), "none"))
     {
-        char **papszTokens = CSLTokenizeString(psOptions->osDstNodata.c_str());
-        const int nTokenCount = CSLCount(papszTokens);
+        CPLStringList aosTokens(
+            CSLTokenizeString(psOptions->osDstNodata.c_str()));
+        const int nTokenCount = aosTokens.Count();
         bool bDstNoDataNone = true;
 
         psWO->padfDstNoDataReal =
@@ -2074,13 +2075,13 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
 
             if (i < nTokenCount)
             {
-                if (papszTokens[i] != nullptr && EQUAL(papszTokens[i], "none"))
+                if (aosTokens[i] != nullptr && EQUAL(aosTokens[i], "none"))
                 {
                     CPLDebug("WARP", "dstnodata of band %d not set", i);
                     bDstNoDataNone = true;
                     continue;
                 }
-                else if (papszTokens[i] ==
+                else if (aosTokens[i] ==
                          nullptr)  // this should not happen, but just in case
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -2088,8 +2089,17 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
                     bDstNoDataNone = true;
                     continue;
                 }
-                CPLStringToComplex(papszTokens[i], psWO->padfDstNoDataReal + i,
-                                   psWO->padfDstNoDataImag + i);
+
+                if (CPLStringToComplex(aosTokens[i],
+                                       psWO->padfDstNoDataReal + i,
+                                       psWO->padfDstNoDataImag + i) != CE_None)
+                {
+
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Error parsing dstnodata for band %d", i + 1);
+                    return CE_Failure;
+                }
+
                 psWO->padfDstNoDataReal[i] =
                     GDALAdjustNoDataCloseToFloatMax(psWO->padfDstNoDataReal[i]);
                 psWO->padfDstNoDataImag[i] =
@@ -2147,8 +2157,6 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
                     psWO->padfDstNoDataReal[i]);
             }
         }
-
-        CSLDestroy(papszTokens);
     }
 
     /* check if the output dataset has already nodata */
@@ -2272,6 +2280,8 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
                 CSLSetNameValue(psWO->papszWarpOptions, "INIT_DEST", "NO_DATA");
         }
     }
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -3080,13 +3090,17 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                     static_cast<int>(psOptions->anDstBands.size()) + 1;
         }
 
-        /* --------------------------------------------------------------------
-         */
-        /*      Setup NODATA options. */
-        /* --------------------------------------------------------------------
-         */
-        SetupNoData(pszDest, iSrc, hSrcDS, hWrkSrcDS, hDstDS, psWO.get(),
-                    psOptions, bEnableDstAlpha, bInitDestSetByUser);
+        /* ------------------------------------------------------------------ */
+        /*      Setup NODATA options.                                         */
+        /* ------------------------------------------------------------------ */
+        if (SetupNoData(pszDest, iSrc, hSrcDS, hWrkSrcDS, hDstDS, psWO.get(),
+                        psOptions, bEnableDstAlpha,
+                        bInitDestSetByUser) != CE_None)
+        {
+            GDALReleaseDataset(hWrkSrcDS);
+            GDALReleaseDataset(hDstDS);
+            return nullptr;
+        }
 
         oProgress.Do(0);
 
