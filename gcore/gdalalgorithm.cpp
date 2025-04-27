@@ -2858,7 +2858,7 @@ void GDALAlgorithm::SetAutoCompleteFunctionForFilename(
             {
                 osDir = CPLGetDirnameSafe(currentValue.c_str());
                 if (!osPrefix.empty() && osDir.size() < osPrefix.size())
-                    osDir = osPrefix;
+                    osDir = std::move(osPrefix);
             }
 
             auto psDir = VSIOpenDir(osDir.c_str(), 0, nullptr);
@@ -2894,7 +2894,7 @@ void GDALAlgorithm::SetAutoCompleteFunctionForFilename(
                                     osDir.c_str(), psEntry->pszName, nullptr);
                             if (VSI_ISDIR(psEntry->nMode))
                                 osVal += osSep;
-                            oRet.push_back(osVal);
+                            oRet.push_back(std::move(osVal));
                         }
                     }
                 }

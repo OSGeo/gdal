@@ -216,6 +216,7 @@ bool GDALVSICopyAlgorithm::CopyRecursive(const std::string &srcIn,
             }
         }
     }
+    totalAmount = std::max<uint64_t>(1, totalAmount);
 
     CPLDebug("gdal_vsi_copy", "Copying directory %s...", src.c_str());
     std::unique_ptr<VSIDIR, decltype(&VSICloseDir)> dir(
