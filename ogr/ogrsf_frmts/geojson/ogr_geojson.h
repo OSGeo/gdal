@@ -132,6 +132,11 @@ class OGRGeoJSONLayer final : public OGRMemLayer
         m_bSupportsMGeometries = bSupportsMGeometries;
     }
 
+    void SetSupportsZGeometries(bool bSupportsZGeometries)
+    {
+        m_bSupportsZGeometries = bSupportsZGeometries;
+    }
+
   private:
     OGRGeoJSONDataSource *poDS_;
     OGRGeoJSONReader *poReader_;
@@ -141,6 +146,7 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     GIntBig nTotalFeatureCount_;
     GIntBig nFeatureReadSinceReset_ = 0;
     bool m_bSupportsMGeometries = false;
+    bool m_bSupportsZGeometries = true;
 
     //! Write options used by ICreateFeature() in append scenarios
     OGRGeoJSONWriteOptions oWriteOptions_;
@@ -303,6 +309,11 @@ class OGRGeoJSONDataSource final : public GDALDataset
         m_bSupportsMGeometries = bSupportsMGeometries;
     }
 
+    void SetSupportsZGeometries(bool bSupportsZGeometries)
+    {
+        m_bSupportsZGeometries = bSupportsZGeometries;
+    }
+
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
     CPLErr Close() override;
@@ -339,6 +350,8 @@ class OGRGeoJSONDataSource final : public GDALDataset
     CPLString osJSonFlavor_;
 
     bool m_bSupportsMGeometries = false;
+    bool m_bSupportsZGeometries = true;
+
     //
     // Private utility functions
     //

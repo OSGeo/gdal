@@ -495,6 +495,7 @@ ParseObjectMain(const char *pszId, json_object *poObj,
                     OGRGeoJSONLayer *poLayer =
                         new OGRGeoJSONLayer(pszId ? pszId : "TopoJSON", nullptr,
                                             wkbUnknown, poDS, nullptr);
+                    poLayer->SetSupportsZGeometries(false);
                     OGRFeatureDefn *poDefn = poLayer->GetLayerDefn();
 
                     const auto nGeometries =
@@ -569,6 +570,9 @@ ParseObjectMain(const char *pszId, json_object *poObj,
                 {
                     *ppoMainLayer = new OGRGeoJSONLayer(
                         "TopoJSON", nullptr, wkbUnknown, poDS, nullptr);
+
+                    (*ppoMainLayer)->SetSupportsZGeometries(false);
+
                     apoFieldDefn.emplace_back(
                         std::make_unique<OGRFieldDefn>("id", OFTString));
                     oMapFieldNameToIdx["id"] = 0;
@@ -628,6 +632,8 @@ void OGRTopoJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS)
                  "Missing parsed TopoJSON data. Forgot to call Parse()?");
         return;
     }
+
+    poDS->SetSupportsZGeometries(false);
 
     ScalingParams sParams;
     sParams.dfScale0 = 1.0;

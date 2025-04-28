@@ -755,7 +755,7 @@ int OGRGeoJSONDataSource::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, ODsCMeasuredGeometries))
         return m_bSupportsMGeometries;
     else if (EQUAL(pszCap, ODsCZGeometries))
-        return TRUE;
+        return m_bSupportsZGeometries;
 
     return FALSE;
 }
