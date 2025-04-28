@@ -40,8 +40,8 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
     AddInputFormatsArg(&m_inputFormats)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR});
     AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR);
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
-    m_outputDataset.SetInputFlags(GADV_NAME | GADV_OBJECT);
+    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER)
+        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
     AddCreationOptionsArg(&m_datasetCreationOptions);
     AddBandArg(&m_bands, _("The band(s) to burn values into (1-based index)"));
     AddArg("invert", 0, _("Invert the rasterization"), &m_invert)
