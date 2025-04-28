@@ -983,12 +983,14 @@ def test_numpy_rw_band_read_as_array_getlasterrormsg():
 def test_numpy_rw_masked_array_1():
 
     ds = gdal.Open("data/byte.tif")
-
     band = ds.GetRasterBand(1)
 
     masked_arr = band.ReadAsMaskedArray()
-
     assert not numpy.any(masked_arr.mask)
+
+    ds_masked_arr = ds.ReadAsMaskedArray()
+    assert not numpy.any(ds_masked_arr.mask)
+    assert numpy.all(masked_arr == ds_masked_arr)
 
 
 def test_numpy_rw_masked_array_2():
@@ -1006,6 +1008,90 @@ def test_numpy_rw_masked_array_2():
     assert numpy.all(masked_arr.mask[mask != 255])
 
     assert masked_arr.sum() == arr[mask == 255].sum()
+
+    ds_masked_arr = ds.ReadAsMaskedArray()
+    assert numpy.all(ds_masked_arr.mask == masked_arr.mask)
+    assert numpy.all(ds_masked_arr.data == masked_arr.data)
+
+
+###############################################################################
+# Test dataset read into a masked array
+
+
+def test_numpy_rw_masked_array_3():
+
+    nx = 6
+    ny = 4
+    nz = 3
+    nodata = -999
+
+    ds = gdal.GetDriverByName("MEM").Create("", nx, ny, nz, eType=gdal.GDT_Int16)
+    for i in range(nz):
+        ds.GetRasterBand(i + 1).SetNoDataValue(nodata)
+
+    data = numpy.arange(nx * ny * nz).reshape(nz, ny, nx).astype(numpy.int16)
+    data[:, 1, 1] = nodata
+    ds.WriteArray(data)
+
+    masked_data = numpy.ma.masked_array(data, mask=data == nodata)
+
+    assert numpy.ma.allequal(masked_data, ds.ReadAsMaskedArray())
+
+    # read a single band
+    assert numpy.ma.allequal(masked_data[1, :, :], ds.ReadAsMaskedArray(band_list=[2]))
+
+    # read multiple bands
+    assert numpy.ma.allequal(
+        numpy.ma.stack((masked_data[2, :, :], masked_data[0, :, :])),
+        ds.ReadAsMaskedArray(band_list=[3, 1]),
+    )
+
+    # read a sub-window (square)
+    assert numpy.ma.allequal(
+        numpy.ma.stack((masked_data[2, 0:2, 1:3], masked_data[0, 0:2, 1:3])),
+        ds.ReadAsMaskedArray(band_list=[3, 1], xsize=2, ysize=2, xoff=1, yoff=0),
+    )
+
+    # read a sub-window (single pixel)
+    assert numpy.ma.allequal(
+        numpy.ma.stack((masked_data[2, 1:2, 1:2], masked_data[0, 1:2, 1:2])),
+        ds.ReadAsMaskedArray(band_list=[3, 1], xsize=1, ysize=1, xoff=1, yoff=1),
+    )
+
+    # read a sub-window (read 2x2 square into 4x4 square)
+    assert numpy.ma.allequal(
+        numpy.ma.repeat(
+            numpy.ma.repeat(
+                numpy.ma.stack((masked_data[2, 0:2, 1:3], masked_data[0, 0:2, 1:3])),
+                2,
+                axis=2,
+            ),
+            2,
+            axis=1,
+        ),
+        ds.ReadAsMaskedArray(
+            band_list=[3, 1], xsize=2, ysize=2, xoff=1, yoff=0, buf_xsize=4, buf_ysize=4
+        ),
+    )
+
+    # read a sub-window (read 2x2 square into single pixel)
+    assert numpy.ma.allequal(
+        numpy.ma.mean(
+            numpy.ma.stack((masked_data[2, 0:2, 1:3], masked_data[0, 0:2, 1:3])),
+            axis=(1, 2),
+            keepdims=True,
+        ).round(),
+        ds.ReadAsMaskedArray(
+            band_list=[3, 1],
+            xsize=2,
+            ysize=2,
+            xoff=1,
+            yoff=0,
+            buf_xsize=1,
+            buf_ysize=1,
+            resample_alg=gdal.GRIORA_Average,
+        ),
+    )
 
 
 ###############################################################################
