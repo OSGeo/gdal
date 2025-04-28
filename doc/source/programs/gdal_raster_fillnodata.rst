@@ -72,6 +72,7 @@ Examples
    The output will be saved in `output.tif`.
 
    .. code-block:: bash
-        gdal raster fillnodata -b 2 --max-distance 50 --smoothing-iterations 3 \
-            --strategy nearest --mask mask.tif \
-            input.tif output.tif
+
+    gdal raster fillnodata -b 2 --max-distance 50 --smoothing-iterations 3 \
+        --strategy nearest --mask mask.tif \
+        input.tif output.tif
