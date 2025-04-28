@@ -14,6 +14,7 @@
 #include "ogrgeojsonutils.h"
 #include "ogrlibjsonutils.h"
 #include "ogr_geojson.h"
+#include "ogrgeojsongeometry.h"
 #include <json.h>  // JSON-C
 #include "ogr_api.h"
 
@@ -456,9 +457,9 @@ EstablishLayerDefn(int nPrevFieldIdx, std::vector<int> &anCurFieldIndices,
 
 static bool
 ParseObjectMain(const char *pszId, json_object *poObj,
-                OGRGeoJSONDataSource *poDS, OGRGeoJSONLayer **ppoMainLayer,
-                json_object *poArcs, ScalingParams *psParams,
-                std::vector<int> &anCurFieldIndices,
+                const OGRSpatialReference *poSRS, OGRGeoJSONDataSource *poDS,
+                OGRGeoJSONLayer **ppoMainLayer, json_object *poArcs,
+                ScalingParams *psParams, std::vector<int> &anCurFieldIndices,
                 std::map<std::string, int> &oMapFieldNameToIdx,
                 std::vector<std::unique_ptr<OGRFieldDefn>> &apoFieldDefn,
                 gdal::DirectedAcyclicGraph<int, std::string> &dag,
@@ -497,6 +498,9 @@ ParseObjectMain(const char *pszId, json_object *poObj,
                                             wkbUnknown, poDS, nullptr);
                     poLayer->SetSupportsZGeometries(false);
                     OGRFeatureDefn *poDefn = poLayer->GetLayerDefn();
+
+                    whileUnsealing(poDefn)->GetGeomFieldDefn(0)->SetSpatialRef(
+                        poSRS);
 
                     const auto nGeometries =
                         json_object_array_length(poGeometries);
@@ -572,6 +576,10 @@ ParseObjectMain(const char *pszId, json_object *poObj,
                         "TopoJSON", nullptr, wkbUnknown, poDS, nullptr);
 
                     (*ppoMainLayer)->SetSupportsZGeometries(false);
+
+                    whileUnsealing((*ppoMainLayer)->GetLayerDefn())
+                        ->GetGeomFieldDefn(0)
+                        ->SetSpatialRef(poSRS);
 
                     apoFieldDefn.emplace_back(
                         std::make_unique<OGRFieldDefn>("id", OFTString));
@@ -701,6 +709,8 @@ void OGRTopoJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS)
     if (poObjects == nullptr)
         return;
 
+    OGRSpatialReference *poSRS = OGRGeoJSONReadSpatialReference(poGJObject_);
+
     std::vector<int> anCurFieldIndices;
     std::map<std::string, int> oMapFieldNameToIdx;
     std::vector<std::unique_ptr<OGRFieldDefn>> apoFieldDefn;
@@ -717,10 +727,10 @@ void OGRTopoJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS)
         json_object_object_foreachC(poObjects, it)
         {
             json_object *poObj = it.val;
-            bNeedSecondPass |=
-                ParseObjectMain(it.key, poObj, poDS, &poMainLayer, poArcs,
-                                &sParams, anCurFieldIndices, oMapFieldNameToIdx,
-                                apoFieldDefn, dag, aoSetUndeterminedTypeFields);
+            bNeedSecondPass |= ParseObjectMain(
+                it.key, poObj, poSRS, poDS, &poMainLayer, poArcs, &sParams,
+                anCurFieldIndices, oMapFieldNameToIdx, apoFieldDefn, dag,
+                aoSetUndeterminedTypeFields);
         }
         if (bNeedSecondPass)
         {
@@ -751,10 +761,10 @@ void OGRTopoJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS)
         for (auto i = decltype(nObjects){0}; i < nObjects; i++)
         {
             json_object *poObj = json_object_array_get_idx(poObjects, i);
-            bNeedSecondPass |=
-                ParseObjectMain(nullptr, poObj, poDS, &poMainLayer, poArcs,
-                                &sParams, anCurFieldIndices, oMapFieldNameToIdx,
-                                apoFieldDefn, dag, aoSetUndeterminedTypeFields);
+            bNeedSecondPass |= ParseObjectMain(
+                nullptr, poObj, poSRS, poDS, &poMainLayer, poArcs, &sParams,
+                anCurFieldIndices, oMapFieldNameToIdx, apoFieldDefn, dag,
+                aoSetUndeterminedTypeFields);
         }
         if (bNeedSecondPass)
         {
@@ -781,4 +791,7 @@ void OGRTopoJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS)
         poMainLayer->DetectGeometryType();
         poDS->AddLayer(poMainLayer);
     }
+
+    if (poSRS)
+        poSRS->Release();
 }
