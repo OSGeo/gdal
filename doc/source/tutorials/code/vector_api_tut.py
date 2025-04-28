@@ -1,6 +1,4 @@
-import sys
-from osgeo import gdal
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 gdal.UseExceptions()
 
