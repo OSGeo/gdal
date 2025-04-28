@@ -38,8 +38,7 @@ GDALRasterConvertAlgorithm::GDALRasterConvertAlgorithm(
     AddInputFormatsArg(&m_inputFormats)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
     AddInputDatasetArg(&m_inputDataset, openForMixedRasterVector
-                                            ? GDAL_OF_RASTER | GDAL_OF_VECTOR |
-                                                  GDAL_OF_MULTIDIM_RASTER
+                                            ? GDAL_OF_RASTER | GDAL_OF_VECTOR
                                             : GDAL_OF_RASTER);
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
     AddCreationOptionsArg(&m_creationOptions);
