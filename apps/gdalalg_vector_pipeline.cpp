@@ -94,8 +94,8 @@ void GDALVectorPipelineStepAlgorithm::AddOutputArgs(
         .SetHiddenForCLI(hiddenForCLI);
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR,
                         /* positionalAndRequired = */ !hiddenForCLI)
-        .SetHiddenForCLI(hiddenForCLI);
-    m_outputDataset.SetInputFlags(GADV_NAME | GADV_OBJECT);
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
     AddCreationOptionsArg(&m_creationOptions).SetHiddenForCLI(hiddenForCLI);
     AddLayerCreationOptionsArg(&m_layerCreationOptions)
         .SetHiddenForCLI(hiddenForCLI);

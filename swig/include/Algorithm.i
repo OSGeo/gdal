@@ -153,6 +153,14 @@ public:
     return GDALAlgorithmArgGetDatasetType(self);
   }
 
+  int GetDatasetInputFlags() {
+    return GDALAlgorithmArgGetDatasetInputFlags(self);
+  }
+
+  int GetDatasetOutputFlags() {
+    return GDALAlgorithmArgGetDatasetOutputFlags(self);
+  }
+
   const char* GetMutualExclusionGroup() {
     return GDALAlgorithmArgGetMutualExclusionGroup(self);
   }
@@ -399,14 +407,6 @@ public:
 %newobject GetDataset;
   GDALDatasetShadow* GetDataset() {
     return GDALArgDatasetValueGetDatasetIncreaseRefCount(self);
-  }
-
-  int GetInputFlags() {
-    return GDALArgDatasetValueGetInputFlags(self);
-  }
-
-  int GetOutputFlags() {
-    return GDALArgDatasetValueGetOutputFlags(self);
   }
 
   void SetName(const char* name) {

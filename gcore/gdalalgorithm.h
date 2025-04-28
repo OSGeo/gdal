@@ -221,6 +221,15 @@ typedef int GDALArgDatasetType;
 
 GDALArgDatasetType CPL_DLL GDALAlgorithmArgGetDatasetType(GDALAlgorithmArgH);
 
+/** Bit indicating that the name component of GDALArgDatasetValue is accepted. */
+#define GADV_NAME (1 << 0)
+/** Bit indicating that the dataset component of GDALArgDatasetValue is accepted. */
+#define GADV_OBJECT (1 << 1)
+
+int CPL_DLL GDALAlgorithmArgGetDatasetInputFlags(GDALAlgorithmArgH);
+
+int CPL_DLL GDALAlgorithmArgGetDatasetOutputFlags(GDALAlgorithmArgH);
+
 /************************************************************************/
 /*                    GDALArgDatasetValueH API                          */
 /************************************************************************/
@@ -235,15 +244,6 @@ GDALDatasetH CPL_DLL GDALArgDatasetValueGetDatasetRef(GDALArgDatasetValueH);
 
 GDALDatasetH
     CPL_DLL GDALArgDatasetValueGetDatasetIncreaseRefCount(GDALArgDatasetValueH);
-
-/** Bit indicating that the name component of GDALArgDatasetValue is accepted. */
-#define GADV_NAME (1 << 0)
-/** Bit indicating that the dataset component of GDALArgDatasetValue is accepted. */
-#define GADV_OBJECT (1 << 1)
-
-int CPL_DLL GDALArgDatasetValueGetInputFlags(GDALArgDatasetValueH);
-
-int CPL_DLL GDALArgDatasetValueGetOutputFlags(GDALArgDatasetValueH);
 
 void CPL_DLL GDALArgDatasetValueSetName(GDALArgDatasetValueH, const char *);
 
@@ -409,35 +409,6 @@ class CPL_DLL GDALArgDatasetValue final
         return m_nameSet;
     }
 
-    /** Indicates which components among name and dataset are accepted as
-     * input, when this argument serves as an input.
-     *
-     * If the GADV_NAME bit is set, it indicates a dataset name is accepted as
-     * input.
-     * If the GADV_OBJECT bit is set, it indicates a dataset object is
-     * accepted as input.
-     * If both bits are set, the algorithm can accept either a name or a dataset
-     * object.
-     */
-    int GetInputFlags() const
-    {
-        return m_inputFlags;
-    }
-
-    /** Indicates which components among name and dataset are modified,
-     * when this argument serves as an output.
-     *
-     * If the GADV_NAME bit is set, it indicates a dataset name is generated as
-     * output (that is the algorithm will generate the name. Rarely used).
-     * If the GADV_OBJECT bit is set, it indicates a dataset object is
-     * generated as output, and available for use after the algorithm has
-     * completed.
-     */
-    int GetOutputFlags() const
-    {
-        return m_outputFlags;
-    }
-
     /** Set dataset name */
     void Set(const std::string &name);
 
@@ -452,24 +423,6 @@ class CPL_DLL GDALArgDatasetValue final
      * GDALDataset object.
      */
     void SetFrom(const GDALArgDatasetValue &other);
-
-    /** Set which components among name and dataset are accepted as
-     * input, when this argument serves as an input.
-     * Should only be used by GDALAlgorithm sub-classes.
-     */
-    void SetInputFlags(int flags)
-    {
-        m_inputFlags = flags;
-    }
-
-    /** Set which components among name and dataset are modified when this
-     * argument serves as an output.
-     * Should only be used by GDALAlgorithm sub-classes.
-     */
-    void SetOutputFlags(int flags)
-    {
-        m_outputFlags = flags;
-    }
 
   protected:
     friend class GDALAlgorithm;
@@ -493,16 +446,6 @@ class CPL_DLL GDALArgDatasetValue final
 
     /** Whether a dataset name (possibly empty for a MEM dataset...) has been set */
     bool m_nameSet = false;
-
-    /** Which components among name and dataset are accepted as
-     * input, when this argument serves as an input.
-     */
-    int m_inputFlags = GADV_NAME | GADV_OBJECT;
-
-    /** Which components among name and dataset are generated as
-     * output, when this argument serves as an output.
-     */
-    int m_outputFlags = GADV_OBJECT;
 
     GDALArgDatasetValue(const GDALArgDatasetValue &) = delete;
     GDALArgDatasetValue &operator=(const GDALArgDatasetValue &) = delete;
@@ -1204,6 +1147,55 @@ class CPL_DLL GDALAlgorithmArgDecl final
         m_datasetType = type;
     }
 
+    /** Indicates which components among name and dataset are accepted as
+     * input, when this argument serves as an input.
+     *
+     * If the GADV_NAME bit is set, it indicates a dataset name is accepted as
+     * input.
+     * If the GADV_OBJECT bit is set, it indicates a dataset object is
+     * accepted as input.
+     * If both bits are set, the algorithm can accept either a name or a dataset
+     * object.
+     * Only applies to arguments of type GAAT_DATASET or GAAT_DATASET_LIST.
+     */
+    int GetDatasetInputFlags() const
+    {
+        return m_datasetInputFlags;
+    }
+
+    /** Indicates which components among name and dataset are modified,
+     * when this argument serves as an output.
+     *
+     * If the GADV_NAME bit is set, it indicates a dataset name is generated as
+     * output (that is the algorithm will generate the name. Rarely used).
+     * If the GADV_OBJECT bit is set, it indicates a dataset object is
+     * generated as output, and available for use after the algorithm has
+     * completed.
+     * Only applies to arguments of type GAAT_DATASET or GAAT_DATASET_LIST.
+     */
+    int GetDatasetOutputFlags() const
+    {
+        return m_datasetOutputFlags;
+    }
+
+    /** Set which components among name and dataset are accepted as
+     * input, when this argument serves as an input.
+     * Only applies to arguments of type GAAT_DATASET or GAAT_DATASET_LIST.
+     */
+    void SetDatasetInputFlags(int flags)
+    {
+        m_datasetInputFlags = flags;
+    }
+
+    /** Set which components among name and dataset are modified when this
+     * argument serves as an output.
+     * Only applies to arguments of type GAAT_DATASET or GAAT_DATASET_LIST.
+     */
+    void SetDatasetOutputFlags(int flags)
+    {
+        m_datasetOutputFlags = flags;
+    }
+
   private:
     const std::string m_longName;
     const std::string m_shortName;
@@ -1244,6 +1236,16 @@ class CPL_DLL GDALAlgorithmArgDecl final
     int m_minCharCount = 0;
     GDALArgDatasetType m_datasetType =
         GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER;
+
+    /** Which components among name and dataset are accepted as
+     * input, when this argument serves as an input.
+     */
+    int m_datasetInputFlags = GADV_NAME | GADV_OBJECT;
+
+    /** Which components among name and dataset are generated as
+     * output, when this argument serves as an output.
+     */
+    int m_datasetOutputFlags = GADV_OBJECT;
 };
 
 /************************************************************************/
@@ -1514,6 +1516,18 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     inline GDALArgDatasetType GetDatasetType() const
     {
         return m_decl.GetDatasetType();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::GetDatasetInputFlags() */
+    inline int GetDatasetInputFlags() const
+    {
+        return m_decl.GetDatasetInputFlags();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::GetDatasetOutputFlags() */
+    inline int GetDatasetOutputFlags() const
+    {
+        return m_decl.GetDatasetOutputFlags();
     }
 
     /** Return the value of the argument, which is by decreasing order of priority:
@@ -2110,6 +2124,20 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     SetDatasetType(GDALArgDatasetType datasetType)
     {
         m_decl.SetDatasetType(datasetType);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetDatasetInputFlags() */
+    GDALInConstructionAlgorithmArg &SetDatasetInputFlags(int flags)
+    {
+        m_decl.SetDatasetInputFlags(flags);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetDatasetOutputFlags() */
+    GDALInConstructionAlgorithmArg &SetDatasetOutputFlags(int flags)
+    {
+        m_decl.SetDatasetOutputFlags(flags);
         return *this;
     }
 

@@ -441,8 +441,8 @@ bool GDALAlgorithmArg::Set(GDALDataset *ds)
                  GetName().c_str(), GDALAlgorithmArgTypeName(m_decl.GetType()));
         return false;
     }
-    auto &val = *std::get<GDALArgDatasetValue *>(m_value);
-    if (val.GetInputFlags() == GADV_NAME && val.GetOutputFlags() == GADV_OBJECT)
+    if (m_decl.GetDatasetInputFlags() == GADV_NAME &&
+        m_decl.GetDatasetOutputFlags() == GADV_OBJECT)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -452,6 +452,7 @@ bool GDALAlgorithmArg::Set(GDALDataset *ds)
         return false;
     }
     m_explicitlySet = true;
+    auto &val = *std::get<GDALArgDatasetValue *>(m_value);
     val.Set(ds);
     return RunAllActions();
 }
@@ -466,8 +467,8 @@ bool GDALAlgorithmArg::Set(std::unique_ptr<GDALDataset> ds)
                  GetName().c_str(), GDALAlgorithmArgTypeName(m_decl.GetType()));
         return false;
     }
-    auto &val = *std::get<GDALArgDatasetValue *>(m_value);
-    if (val.GetInputFlags() == GADV_NAME && val.GetOutputFlags() == GADV_OBJECT)
+    if (m_decl.GetDatasetInputFlags() == GADV_NAME &&
+        m_decl.GetDatasetOutputFlags() == GADV_OBJECT)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -477,6 +478,7 @@ bool GDALAlgorithmArg::Set(std::unique_ptr<GDALDataset> ds)
         return false;
     }
     m_explicitlySet = true;
+    auto &val = *std::get<GDALArgDatasetValue *>(m_value);
     val.Set(std::move(ds));
     return RunAllActions();
 }
@@ -1283,8 +1285,6 @@ GDALArgDatasetValue &GDALArgDatasetValue::operator=(GDALArgDatasetValue &&other)
     m_poDS = other.m_poDS;
     m_name = other.m_name;
     m_nameSet = other.m_nameSet;
-    m_inputFlags = other.m_inputFlags;
-    m_outputFlags = other.m_outputFlags;
     other.m_poDS = nullptr;
     other.m_name.clear();
     other.m_nameSet = false;
@@ -1307,8 +1307,7 @@ GDALDataset *GDALArgDatasetValue::GetDatasetIncreaseRefCount()
 /************************************************************************/
 
 GDALArgDatasetValue::GDALArgDatasetValue(GDALArgDatasetValue &&other)
-    : m_poDS(other.m_poDS), m_name(other.m_name), m_nameSet(other.m_nameSet),
-      m_inputFlags(other.m_inputFlags), m_outputFlags(other.m_outputFlags)
+    : m_poDS(other.m_poDS), m_name(other.m_name), m_nameSet(other.m_nameSet)
 {
     other.m_poDS = nullptr;
     other.m_name.clear();
@@ -2118,7 +2117,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
             auto &outputVal = outputArg->Get<GDALArgDatasetValue>();
             if (!outputVal.GetDatasetRef() &&
                 outputVal.GetName() == val.GetName() &&
-                (outputVal.GetInputFlags() & GADV_OBJECT) != 0)
+                (outputArg->GetDatasetInputFlags() & GADV_OBJECT) != 0)
             {
                 assignToOutputArg = true;
                 flags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
@@ -2130,7 +2129,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
             }
         }
 
-        if (!arg->IsOutput() || val.GetInputFlags() == GADV_NAME)
+        if (!arg->IsOutput() || arg->GetDatasetInputFlags() == GADV_NAME)
             flags |= GDAL_OF_VERBOSE_ERROR;
         if ((arg == outputArg || !outputArg) && update)
             flags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
@@ -2227,7 +2226,7 @@ bool GDALAlgorithm::ValidateArguments()
         outputFormatArg->GetType() == GAAT_STRING &&
         EQUAL(outputFormatArg->Get<std::string>().c_str(), "MEM") &&
         outputArg->GetType() == GAAT_DATASET &&
-        (outputArg->Get<GDALArgDatasetValue>().GetInputFlags() & GADV_NAME))
+        (outputArg->GetDatasetInputFlags() & GADV_NAME))
     {
         outputArg->Get<GDALArgDatasetValue>().Set("");
     }
@@ -2952,8 +2951,6 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddOutputDatasetArg(
     GDALArgDatasetValue *pValue, GDALArgDatasetType type,
     bool positionalAndRequired, const char *helpMessage)
 {
-    pValue->SetInputFlags(GADV_NAME);
-    pValue->SetOutputFlags(GADV_OBJECT);
     auto &arg =
         AddArg(GDAL_ARG_NAME_OUTPUT, 'o',
                MsgOrDefault(
@@ -2962,7 +2959,9 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddOutputDatasetArg(
                               GDALAlgorithmArgDatasetTypeName(type).c_str())),
                pValue, type)
             .SetIsInput(true)
-            .SetIsOutput(true);
+            .SetIsOutput(true)
+            .SetDatasetInputFlags(GADV_NAME)
+            .SetDatasetOutputFlags(GADV_OBJECT);
     if (positionalAndRequired)
         arg.SetPositional().SetRequired();
 
@@ -4426,11 +4425,11 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                 }
             }
 
-            if (arg->GetType() == GAAT_DATASET)
+            if (arg->GetType() == GAAT_DATASET ||
+                arg->GetType() == GAAT_DATASET_LIST)
             {
-                auto &val = arg->Get<GDALArgDatasetValue>();
-                if (val.GetInputFlags() == GADV_NAME &&
-                    val.GetOutputFlags() == GADV_OBJECT)
+                if (arg->GetDatasetInputFlags() == GADV_NAME &&
+                    arg->GetDatasetOutputFlags() == GADV_OBJECT)
                 {
                     osRet += " (created by algorithm)";
                 }
@@ -4843,19 +4842,17 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
         if (arg->GetType() == GAAT_DATASET ||
             arg->GetType() == GAAT_DATASET_LIST)
         {
-            CPLJSONArray jAr;
-            if (arg->GetDatasetType() & GDAL_OF_RASTER)
-                jAr.Add("raster");
-            if (arg->GetDatasetType() & GDAL_OF_VECTOR)
-                jAr.Add("vector");
-            if (arg->GetDatasetType() & GDAL_OF_MULTIDIM_RASTER)
-                jAr.Add("multidim_raster");
-            jArg.Add("dataset_type", jAr);
-        }
+            {
+                CPLJSONArray jAr;
+                if (arg->GetDatasetType() & GDAL_OF_RASTER)
+                    jAr.Add("raster");
+                if (arg->GetDatasetType() & GDAL_OF_VECTOR)
+                    jAr.Add("vector");
+                if (arg->GetDatasetType() & GDAL_OF_MULTIDIM_RASTER)
+                    jAr.Add("multidim_raster");
+                jArg.Add("dataset_type", jAr);
+            }
 
-        if (arg->GetType() == GAAT_DATASET)
-        {
-            const auto &val = arg->Get<GDALArgDatasetValue>();
             const auto GetFlags = [](int flags)
             {
                 CPLJSONArray jAr;
@@ -4868,11 +4865,12 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
 
             if (arg->IsInput())
             {
-                jArg.Add("input_flags", GetFlags(val.GetInputFlags()));
+                jArg.Add("input_flags", GetFlags(arg->GetDatasetInputFlags()));
             }
             if (arg->IsOutput())
             {
-                jArg.Add("output_flags", GetFlags(val.GetOutputFlags()));
+                jArg.Add("output_flags",
+                         GetFlags(arg->GetDatasetOutputFlags()));
             }
         }
 
@@ -5812,6 +5810,57 @@ GDALArgDatasetType GDALAlgorithmArgGetDatasetType(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
+/*                   GDALAlgorithmArgGetDatasetInputFlags()             */
+/************************************************************************/
+
+/** Indicates which components among name and dataset are accepted as
+ * input, when this argument serves as an input.
+ *
+ * If the GADV_NAME bit is set, it indicates a dataset name is accepted as
+ * input.
+ * If the GADV_OBJECT bit is set, it indicates a dataset object is
+ * accepted as input.
+ * If both bits are set, the algorithm can accept either a name or a dataset
+ * object.
+ * Only applies to arguments of type GAAT_DATASET or GAAT_DATASET_LIST.
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @return string whose lifetime is bound to hAlg and which must not
+ * be freed.
+ * @since 3.11
+ */
+int GDALAlgorithmArgGetDatasetInputFlags(GDALAlgorithmArgH hArg)
+{
+    VALIDATE_POINTER1(hArg, __func__, 0);
+    return hArg->ptr->GetDatasetInputFlags();
+}
+
+/************************************************************************/
+/*                  GDALAlgorithmArgGetDatasetOutputFlags()             */
+/************************************************************************/
+
+/** Indicates which components among name and dataset are modified,
+ * when this argument serves as an output.
+ *
+ * If the GADV_NAME bit is set, it indicates a dataset name is generated as
+ * output (that is the algorithm will generate the name. Rarely used).
+ * If the GADV_OBJECT bit is set, it indicates a dataset object is
+ * generated as output, and available for use after the algorithm has
+ * completed.
+ * Only applies to arguments of type GAAT_DATASET or GAAT_DATASET_LIST.
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @return string whose lifetime is bound to hAlg and which must not
+ * be freed.
+ * @since 3.11
+ */
+int GDALAlgorithmArgGetDatasetOutputFlags(GDALAlgorithmArgH hArg)
+{
+    VALIDATE_POINTER1(hArg, __func__, 0);
+    return hArg->ptr->GetDatasetOutputFlags();
+}
+
+/************************************************************************/
 /*               GDALAlgorithmArgGetMutualExclusionGroup()              */
 /************************************************************************/
 
@@ -6363,55 +6412,6 @@ GDALArgDatasetValueGetDatasetIncreaseRefCount(GDALArgDatasetValueH hValue)
 {
     VALIDATE_POINTER1(hValue, __func__, nullptr);
     return GDALDataset::ToHandle(hValue->ptr->GetDatasetIncreaseRefCount());
-}
-
-/************************************************************************/
-/*                   GDALArgDatasetValueGetInputFlags()                 */
-/************************************************************************/
-
-/** Indicates which components among name and dataset are accepted as
- * input, when this argument serves as an input.
- *
- * If the GADV_NAME bit is set, it indicates a dataset name is accepted as
- * input.
- * If the GADV_OBJECT bit is set, it indicates a dataset object is
- * accepted as input.
- * If both bits are set, the algorithm can accept either a name or a dataset
- * object.
- *
- * @param hValue Handle to a GDALArgDatasetValue. Must NOT be null.
- * @return string whose lifetime is bound to hAlg and which must not
- * be freed.
- * @since 3.11
- */
-int GDALArgDatasetValueGetInputFlags(GDALArgDatasetValueH hValue)
-{
-    VALIDATE_POINTER1(hValue, __func__, 0);
-    return hValue->ptr->GetInputFlags();
-}
-
-/************************************************************************/
-/*                  GDALArgDatasetValueGetOutputFlags()                 */
-/************************************************************************/
-
-/** Indicates which components among name and dataset are modified,
- * when this argument serves as an output.
- *
- * If the GADV_NAME bit is set, it indicates a dataset name is generated as
- * output (that is the algorithm will generate the name. Rarely used).
- * If the GADV_OBJECT bit is set, it indicates a dataset object is
- * generated as output, and available for use after the algorithm has
- * completed.
- *
- * @param hValue Handle to a GDALArgDatasetValue. Must NOT be null.
- * @return string whose lifetime is bound to hAlg and which must not
- * be freed.
- * @since 3.11
- */
-int GDALArgDatasetValueGetOutputFlags(GDALArgDatasetValueH hValue)
-{
-    VALIDATE_POINTER1(hValue, __func__, 0);
-    return hValue->ptr->GetOutputFlags();
 }
 
 /************************************************************************/

@@ -1311,6 +1311,22 @@ Below is an extract of the beginning of https://github.com/rouault/gdal/blob/rfc
     bool CPL_DLL GDALAlgorithmArgSetAsDoubleList(GDALAlgorithmArgH, size_t nCount,
                                                  const double *pnValues);
 
+    /** Binary-or combination of GDAL_OF_RASTER, GDAL_OF_VECTOR,
+     * GDAL_OF_MULTIDIM_RASTER, possibly with GDAL_OF_UPDATE.
+     */
+    typedef int GDALArgDatasetType;
+
+    GDALArgDatasetType CPL_DLL GDALAlgorithmArgGetDatasetType(GDALAlgorithmArgH);
+
+    /** Bit indicating that the name component of GDALArgDatasetValue is accepted. */
+    #define GADV_NAME (1 << 0)
+    /** Bit indicating that the dataset component of GDALArgDatasetValue is accepted. */
+    #define GADV_OBJECT (1 << 1)
+
+    int CPL_DLL GDALAlgorithmArgGetDatasetInputFlags(GDALAlgorithmArgH);
+
+    int CPL_DLL GDALAlgorithmArgGetDatasetOutputFlags(GDALAlgorithmArgH);
+
     /************************************************************************/
     /*                    GDALArgDatasetValueH API                          */
     /************************************************************************/
@@ -1325,23 +1341,6 @@ Below is an extract of the beginning of https://github.com/rouault/gdal/blob/rfc
 
     GDALDatasetH
         CPL_DLL GDALArgDatasetValueGetDatasetIncreaseRefCount(GDALArgDatasetValueH);
-
-    /** Bit indicating that the name component of GDALArgDatasetValue is accepted. */
-    #define GADV_NAME (1 << 0)
-    /** Bit indicating that the dataset component of GDALArgDatasetValue is accepted. */
-    #define GADV_OBJECT (1 << 1)
-
-    /** Binary-or combination of GDAL_OF_RASTER, GDAL_OF_VECTOR and
-     * GDAL_OF_MULTIDIM_RASTER.
-     */
-    typedef int GDALArgDatasetValueType;
-
-    GDALArgDatasetValueType
-        CPL_DLL GDALArgDatasetValueGetType(GDALArgDatasetValueH);
-
-    int CPL_DLL GDALArgDatasetValueGetInputFlags(GDALArgDatasetValueH);
-
-    int CPL_DLL GDALArgDatasetValueGetOutputFlags(GDALArgDatasetValueH);
 
     void CPL_DLL GDALArgDatasetValueSetName(GDALArgDatasetValueH, const char *);
 

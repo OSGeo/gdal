@@ -507,6 +507,10 @@
 %constant GAAT_REAL_LIST    = GAAT_REAL_LIST;
 %constant GAAT_DATASET_LIST = GAAT_DATASET_LIST;
 
+// GDALArgDatasetValue
+%constant int GADV_NAME = GADV_NAME;
+%constant int GADV_OBJECT = GADV_OBJECT;
+
 #ifdef SWIGPYTHON
 %thread;
 #endif
