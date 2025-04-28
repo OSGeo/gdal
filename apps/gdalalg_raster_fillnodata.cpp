@@ -71,7 +71,7 @@ GDALRasterFillNodataAlgorithm::GDALRasterFillNodataAlgorithm() noexcept
     SetAutoCompleteFunctionForFilename(mask, GDAL_OF_RASTER);
 
     mask.AddValidationAction(
-        [this, &mask]()
+        [&mask]()
         {
             // Check if the mask dataset is a valid raster dataset descriptor
             // Try to open the dataset as a raster
