@@ -55,10 +55,9 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     std::vector<std::string> m_creationOptions{};
     bool m_overwrite = false;
     std::string m_outputLayerName{};
-
-  private:
     GDALInConstructionAlgorithmArg *m_outputFormatArg = nullptr;
 
+  private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
     GDALAlgorithm::ProcessGDALGOutputRet ProcessGDALGOutput() override;
     bool CheckSafeForStreamOutput() override;

@@ -17,6 +17,7 @@
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_color_map.h"
 #include "gdalalg_raster_edit.h"
+#include "gdalalg_raster_fillnodata.h"
 #include "gdalalg_raster_hillshade.h"
 #include "gdalalg_raster_reproject.h"
 #include "gdalalg_raster_resize.h"
