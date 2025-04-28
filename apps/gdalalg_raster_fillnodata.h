@@ -52,7 +52,7 @@ class GDALRasterFillNodataAlgorithm /* non final */
     // Use the first band of the specified file as a validity mask (zero is invalid, non-zero is valid).
     GDALArgDatasetValue m_maskDataset{};
     // By default, pixels are interpolated using an inverse distance weighting (inv_dist). It is also possible to choose a nearest neighbour (nearest) strategy.
-    std::string m_strategy = "inv_dist";
+    std::string m_strategy = "invdist";
 };
 
 //! @endcond

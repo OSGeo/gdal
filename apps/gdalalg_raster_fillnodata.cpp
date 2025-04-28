@@ -83,11 +83,11 @@ GDALRasterFillNodataAlgorithm::GDALRasterFillNodataAlgorithm() noexcept
 
     AddArg("strategy", 0,
            _("By default, pixels are interpolated using an inverse distance "
-             "weighting (inv_dist). It is also possible to choose a nearest "
+             "weighting (invdist). It is also possible to choose a nearest "
              "neighbour (nearest) strategy."),
            &m_strategy)
         .SetDefault(m_strategy)
-        .SetChoices("inv_dist", "nearest");
+        .SetChoices("invdist", "nearest");
 }
 
 /************************************************************************/
@@ -151,7 +151,12 @@ bool GDALRasterFillNodataAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     GDALRasterBand *dstBand{poRetDS->GetRasterBand(1)};
     // Prepare options to pass to GDALFillNodata
     CPLStringList aosFillOptions;
-    aosFillOptions.AddNameValue("INTERPOLATION", m_strategy.c_str());
+
+    if (EQUAL(m_strategy.c_str(), "nearest"))
+        aosFillOptions.AddNameValue("INTERPOLATION", "NEAREST");
+    else
+        aosFillOptions.AddNameValue("INTERPOLATION",
+                                    "INV_DIST");  // default strategy
 
     auto retVal{GDALFillNodata(
         dstBand, maskBand, m_maxDistance, 0, m_smoothingIterations,

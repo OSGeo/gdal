@@ -90,7 +90,7 @@ def test_gdalalg_raster_fillnodata_overwrite(tmp_path, tmp_vsimem):
 def test_gdalalg_raster_fillnodata_smoothing(tmp_path, tmp_vsimem):
 
     alg = get_alg()
-    alg["si"] = 2
+    alg["s"] = 2
     ds = run_alg(alg, tmp_path, tmp_vsimem)
     assert ds.ReadAsArray(1, 1, 1, 1)[0][0] == 122
     del ds
@@ -99,7 +99,7 @@ def test_gdalalg_raster_fillnodata_smoothing(tmp_path, tmp_vsimem):
 def test_gdalalg_raster_fillnodata_max_distance(tmp_path, tmp_vsimem):
 
     alg = get_alg()
-    alg["md"] = 1
+    alg["d"] = 1
     ds = run_alg(alg, tmp_path, tmp_vsimem)
     assert ds.ReadAsArray(1, 1, 1, 1)[0][0] == 123
     del ds
@@ -108,7 +108,7 @@ def test_gdalalg_raster_fillnodata_max_distance(tmp_path, tmp_vsimem):
 def test_gdalalg_raster_fillnodata_strategy(tmp_path, tmp_vsimem):
 
     alg = get_alg()
-    alg["strategy"] = "inv_dist"
+    alg["strategy"] = "invdist"
     ds = run_alg(alg, tmp_path, tmp_vsimem)
     assert ds.ReadAsArray(1, 1, 1, 1)[0][0] == 125
     del ds
