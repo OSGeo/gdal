@@ -2718,6 +2718,8 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
 
     OGRPolygon(double x1, double y1, double x2, double y2);
 
+    explicit OGRPolygon(const OGREnvelope &envelope);
+
     OGRPolygon(const OGRPolygon &other);
     /** Move constructor */
     OGRPolygon(OGRPolygon &&other) = default;

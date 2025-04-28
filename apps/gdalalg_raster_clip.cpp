@@ -16,6 +16,7 @@
 #include "gdal_utils.h"
 
 #include <algorithm>
+#include <cmath>
 
 //! @cond Doxygen_Suppress
 
@@ -32,17 +33,40 @@ GDALRasterClipAlgorithm::GDALRasterClipAlgorithm(bool standaloneStep)
                                       standaloneStep)
 {
     AddBBOXArg(&m_bbox, _("Clipping bounding box as xmin,ymin,xmax,ymax"))
-        .SetMutualExclusionGroup("exclusion-group");
+        .SetMutualExclusionGroup("bbox-geometry-like");
     AddArg("bbox-crs", 0, _("CRS of clipping bounding box"), &m_bboxCrs)
         .SetIsCRSArg()
         .AddHiddenAlias("bbox_srs");
-    AddArg("like", 0, _("Raster dataset to use as a template for bounds"),
-           &m_likeDataset, GDAL_OF_RASTER)
+    AddArg("geometry", 0, _("Clipping geometry (WKT or GeoJSON)"), &m_geometry)
+        .SetMutualExclusionGroup("bbox-geometry-like");
+    AddArg("geometry-crs", 0, _("CRS of clipping geometry"), &m_geometryCrs)
+        .SetIsCRSArg()
+        .AddHiddenAlias("geometry_srs");
+    AddArg("like", 0, _("Dataset to use as a template for bounds"),
+           &m_likeDataset, GDAL_OF_RASTER | GDAL_OF_VECTOR)
         .SetMetaVar("DATASET")
-        .SetMutualExclusionGroup("exclusion-group");
+        .SetMutualExclusionGroup("bbox-geometry-like");
+    AddArg("like-sql", 0, ("SELECT statement to run on the 'like' dataset"),
+           &m_likeSQL)
+        .SetMetaVar("SELECT-STATEMENT")
+        .SetMutualExclusionGroup("sql-where");
+    AddArg("like-layer", 0, ("Name of the layer of the 'like' dataset"),
+           &m_likeLayer)
+        .SetMetaVar("LAYER-NAME");
+    AddArg("like-where", 0, ("WHERE SQL clause to run on the 'like' dataset"),
+           &m_likeWhere)
+        .SetMetaVar("WHERE-EXPRESSION")
+        .SetMutualExclusionGroup("sql-where");
+    AddArg("only-bbox", 0,
+           _("For 'geometry' and 'like', only consider their bounding box"),
+           &m_onlyBBOX);
     AddArg("allow-bbox-outside-source", 0,
            _("Allow clipping box to include pixels outside input dataset"),
            &m_allowExtentOutsideSource);
+    AddArg("addalpha", 0,
+           _("Adds an alpha mask band to the destination when the source "
+             "raster have none."),
+           &m_addAlpha);
 }
 
 /************************************************************************/
@@ -51,105 +75,191 @@ GDALRasterClipAlgorithm::GDALRasterClipAlgorithm(bool standaloneStep)
 
 bool GDALRasterClipAlgorithm::RunStep(GDALProgressFunc, void *)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
+
+    double adfGT[6];
+    if (poSrcDS->GetGeoTransform(adfGT) != CE_None)
+    {
+        ReportError(
+            CE_Failure, CPLE_NotSupported,
+            "Clipping is not supported on a raster without a geotransform");
+        return false;
+    }
+    if (adfGT[2] != 0 && adfGT[4] != 0)
+    {
+        ReportError(CE_Failure, CPLE_NotSupported,
+                    "Clipping is not supported on a raster whose geotransform "
+                    "has rotation terms");
+        return false;
+    }
+
+    auto [poClipGeom, errMsg] = GetClipGeometry();
+    if (!poClipGeom)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined, "%s", errMsg.c_str());
+        return false;
+    }
+
+    auto poLikeDS = m_likeDataset.GetDatasetRef();
+    if (!poClipGeom->getSpatialReference() && poLikeDS &&
+        poLikeDS->GetLayerCount() == 0)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Dataset '%s' has no CRS. Its bounds cannot be used.",
+                    poLikeDS->GetDescription());
+        return false;
+    }
 
     CPLStringList aosOptions;
     aosOptions.AddString("-of");
     aosOptions.AddString("VRT");
-    if (!m_bbox.empty())
-    {
-        aosOptions.AddString("-projwin");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[0]));  // minx
-        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[3]));  // maxy
-        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[2]));  // maxx
-        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[1]));  // miny
 
-        if (!m_bboxCrs.empty())
-        {
-            aosOptions.AddString("-projwin_srs");
-            aosOptions.AddString(m_bboxCrs.c_str());
-        }
+    OGREnvelope env;
+    poClipGeom->getEnvelope(&env);
+
+    if (m_onlyBBOX)
+    {
+        auto poPoly = std::make_unique<OGRPolygon>(env);
+        poPoly->assignSpatialReference(poClipGeom->getSpatialReference());
+        poClipGeom = std::move(poPoly);
     }
-    else if (auto poLikeDS = m_likeDataset.GetDatasetRef())
+
+    const bool bBottomUpRaster = adfGT[5] > 0;
+
+    if (poClipGeom->IsRectangle() && !m_addAlpha && !bBottomUpRaster)
     {
-        double adfGT[6];
-        if (poLikeDS->GetGeoTransform(adfGT) != CE_None)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Dataset '%s' has no geotransform matrix. Its bounds "
-                        "cannot be established.",
-                        poLikeDS->GetDescription());
-            return false;
-        }
-        auto poLikeSRS = poLikeDS->GetSpatialRef();
-        if (!poLikeSRS)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Dataset '%s' has no SRS. Its bounds cannot be used.",
-                        poLikeDS->GetDescription());
-            return false;
-        }
-        const double dfTLX = adfGT[0];
-        const double dfTLY = adfGT[3];
-        const double dfTRX = adfGT[0] + poLikeDS->GetRasterXSize() * adfGT[1];
-        const double dfTRY = adfGT[3] + poLikeDS->GetRasterXSize() * adfGT[4];
-        const double dfBLX = adfGT[0] + poLikeDS->GetRasterYSize() * adfGT[2];
-        const double dfBLY = adfGT[3] + poLikeDS->GetRasterYSize() * adfGT[5];
-        const double dfBRX = adfGT[0] + poLikeDS->GetRasterXSize() * adfGT[1] +
-                             poLikeDS->GetRasterYSize() * adfGT[2];
-        const double dfBRY = adfGT[3] + poLikeDS->GetRasterXSize() * adfGT[4] +
-                             poLikeDS->GetRasterYSize() * adfGT[5];
-        const double dfMinX =
-            std::min(std::min(dfTLX, dfTRX), std::min(dfBLX, dfBRX));
-        const double dfMinY =
-            std::min(std::min(dfTLY, dfTRY), std::min(dfBLY, dfBRY));
-        const double dfMaxX =
-            std::max(std::max(dfTLX, dfTRX), std::max(dfBLX, dfBRX));
-        const double dfMaxY =
-            std::max(std::max(dfTLY, dfTRY), std::max(dfBLY, dfBRY));
-
         aosOptions.AddString("-projwin");
-        aosOptions.AddString(CPLSPrintf("%.17g", dfMinX));
-        aosOptions.AddString(CPLSPrintf("%.17g", dfMaxY));
-        aosOptions.AddString(CPLSPrintf("%.17g", dfMaxX));
-        aosOptions.AddString(CPLSPrintf("%.17g", dfMinY));
+        aosOptions.AddString(CPLSPrintf("%.17g", env.MinX));
+        aosOptions.AddString(CPLSPrintf("%.17g", env.MaxY));
+        aosOptions.AddString(CPLSPrintf("%.17g", env.MaxX));
+        aosOptions.AddString(CPLSPrintf("%.17g", env.MinY));
 
-        const char *const apszOptions[] = {"FORMAT=WKT2", nullptr};
-        const std::string osWKT = poLikeSRS->exportToWkt(apszOptions);
-        aosOptions.AddString("-projwin_srs");
-        aosOptions.AddString(osWKT.c_str());
+        auto poClipGeomSRS = poClipGeom->getSpatialReference();
+        if (poClipGeomSRS)
+        {
+            const char *const apszOptions[] = {"FORMAT=WKT2", nullptr};
+            const std::string osWKT = poClipGeomSRS->exportToWkt(apszOptions);
+            aosOptions.AddString("-projwin_srs");
+            aosOptions.AddString(osWKT.c_str());
+        }
+
+        if (!m_allowExtentOutsideSource)
+        {
+            // Unless we've specifically allowed the bounding box to extend beyond
+            // the source raster, raise an error.
+            aosOptions.AddString("-epo");
+        }
+
+        GDALTranslateOptions *psOptions =
+            GDALTranslateOptionsNew(aosOptions.List(), nullptr);
+
+        GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
+        auto poRetDS = GDALDataset::FromHandle(
+            GDALTranslate("", hSrcDS, psOptions, nullptr));
+        GDALTranslateOptionsFree(psOptions);
+
+        const bool bOK = poRetDS != nullptr;
+        if (bOK)
+        {
+            m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
+        }
+
+        return bOK;
     }
     else
     {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Either --bbox or --like must be specified");
-        return false;
+        if (bBottomUpRaster)
+        {
+            adfGT[3] += adfGT[5] * poSrcDS->GetRasterYSize();
+            adfGT[5] = -adfGT[5];
+        }
+
+        {
+            auto poClipGeomInSrcSRS =
+                std::unique_ptr<OGRGeometry>(poClipGeom->clone());
+            if (poClipGeom->getSpatialReference() && poSrcDS->GetSpatialRef())
+                poClipGeomInSrcSRS->transformTo(poSrcDS->GetSpatialRef());
+            poClipGeomInSrcSRS->getEnvelope(&env);
+        }
+
+        if (!m_allowExtentOutsideSource &&
+            !(env.MinX >= adfGT[0] &&
+              env.MaxX <= adfGT[0] + adfGT[1] * poSrcDS->GetRasterXSize() &&
+              env.MaxY >= adfGT[3] &&
+              env.MinY <= adfGT[3] + adfGT[5] * poSrcDS->GetRasterYSize()))
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Clipping geometry is partially or totally outside the "
+                        "extent of the raster. You can set the "
+                        "'allow-bbox-outside-source' argument to proceed.");
+            return false;
+        }
+
+        if (m_addAlpha)
+        {
+            aosOptions.AddString("-dstalpha");
+        }
+
+        aosOptions.AddString("-cutline");
+        aosOptions.AddString(poClipGeom->exportToWkt());
+
+        aosOptions.AddString("-wo");
+        aosOptions.AddString("CUTLINE_ALL_TOUCHED=YES");
+
+        auto poClipGeomSRS = poClipGeom->getSpatialReference();
+        if (poClipGeomSRS)
+        {
+            const char *const apszOptions[] = {"FORMAT=WKT2", nullptr};
+            const std::string osWKT = poClipGeomSRS->exportToWkt(apszOptions);
+            aosOptions.AddString("-cutline_srs");
+            aosOptions.AddString(osWKT.c_str());
+        }
+
+        constexpr double REL_EPS_PIXEL = 1e-3;
+        const double dfMinX =
+            adfGT[0] +
+            floor((env.MinX - adfGT[0]) / adfGT[1] + REL_EPS_PIXEL) * adfGT[1];
+        const double dfMinY =
+            adfGT[3] +
+            ceil((env.MinY - adfGT[3]) / adfGT[5] - REL_EPS_PIXEL) * adfGT[5];
+        const double dfMaxX =
+            adfGT[0] +
+            ceil((env.MaxX - adfGT[0]) / adfGT[1] - REL_EPS_PIXEL) * adfGT[1];
+        const double dfMaxY =
+            adfGT[3] +
+            floor((env.MaxY - adfGT[3]) / adfGT[5] + REL_EPS_PIXEL) * adfGT[5];
+
+        aosOptions.AddString("-te");
+        aosOptions.AddString(CPLSPrintf("%.17g", dfMinX));
+        aosOptions.AddString(
+            CPLSPrintf("%.17g", bBottomUpRaster ? dfMaxY : dfMinY));
+        aosOptions.AddString(CPLSPrintf("%.17g", dfMaxX));
+        aosOptions.AddString(
+            CPLSPrintf("%.17g", bBottomUpRaster ? dfMinY : dfMaxY));
+
+        aosOptions.AddString("-tr");
+        aosOptions.AddString(CPLSPrintf("%.17g", adfGT[1]));
+        aosOptions.AddString(CPLSPrintf("%.17g", std::fabs(adfGT[5])));
+
+        GDALWarpAppOptions *psOptions =
+            GDALWarpAppOptionsNew(aosOptions.List(), nullptr);
+
+        GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
+        auto poRetDS = GDALDataset::FromHandle(
+            GDALWarp("", nullptr, 1, &hSrcDS, psOptions, nullptr));
+        GDALWarpAppOptionsFree(psOptions);
+
+        const bool bOK = poRetDS != nullptr;
+        if (bOK)
+        {
+            m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
+        }
+
+        return bOK;
     }
-
-    if (!m_allowExtentOutsideSource)
-    {
-        // Unless we've specifically allowed the bounding box to extend beyond
-        // the source raster, raise an error.
-        aosOptions.AddString("-epo");
-    }
-
-    GDALTranslateOptions *psOptions =
-        GDALTranslateOptionsNew(aosOptions.List(), nullptr);
-
-    GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
-    auto poRetDS =
-        GDALDataset::FromHandle(GDALTranslate("", hSrcDS, psOptions, nullptr));
-    GDALTranslateOptionsFree(psOptions);
-
-    const bool bOK = poRetDS != nullptr;
-    if (bOK)
-    {
-        m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
-    }
-
-    return bOK;
 }
 
 //! @endcond

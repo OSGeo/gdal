@@ -60,19 +60,74 @@ Standard options
     Instead, the bounds are reprojected from the bbox-crs to the CRS of the
     input dataset.
 
+.. option:: --geometry <WKT_or_GeoJSON>
+
+    Geometry as a WKT or GeoJSON string of a polygon (or multipolygon) to which
+    to clip the dataset.
+    Raster areas within the bounding box of the geometry but not inside the
+    geometry itself will be set to the nodata value of the raster, or 0 if there
+    is none. All pixels overlapping the geometry will be selected.
+    If the input geometry is GeoJSON, its CRS is assumed to be WGS84, unless there is
+    a CRS defined in the GeoJSON geometry or :option:`--geometry-crs` is specified.
+    If the input geometry is WKT, its CRS is assumed to be the one of the input dataset,
+    unless :option:`--geometry-crs` is specified.
+    The X and Y axis are the "GIS friendly ones", that is X is longitude or easting,
+    and Y is latitude or northing.
+    Mutually exclusive with :option:`--bbox` and :option:`--like`.
+
+.. option:: --geometry-crs <CRS>
+
+    CRS in which the coordinates values of :option:`--geometry`
+    are expressed. If not specified, it is assumed to be the CRS of the input
+    dataset.
+    The bounds are reprojected from the geometry-crs to the CRS of the
+    input dataset.
+
+.. option:: --like <DATASET>
+
+    Vector or raster dataset to use as a template for bounds.
+    If the specified dataset is a raster, its rectangular bounds are used as
+    the clipping geometry.
+    If the specified dataset is a vector dataset, its polygonal geometries
+    are unioned together to form the clipping geometry. If several layers are present,
+    :option:`--like-sql` or :option:`--like-layer` must be specified.
+    Raster areas within the bounding box of the geometry but not inside the
+    geometry itself will be set to the nodata value of the raster, or 0 if there
+    is none.
+    Mutually exclusive with :option:`--bbox` and :option:`--geometry`.
+
+.. option:: --like-sql <SELECT-STATEMENT>
+
+    Select desired geometries from the vector clip dataset using an SQL query.
+    e.g ``SELECT geom FROM my_layer WHERE country = 'France'``.
+    The SQL dialect used will be the default one of the ``like`` dataset (OGR SQL
+    for Shapefile, SQLite for GeoPackage, PostgreSQL for PostGIS, etc.).
+    Mutually exclusive with :option:`--like-layer` and :option:`--like-where`
+
+.. option:: --like-layer <LAYER-NAME>
+
+    Select the named layer from the vector clip dataset.
+    Mutually exclusive with :option:`--like-sql`
+
+.. option:: --like-where <WHERE-EXPRESSION>
+
+    Restrict desired geometries from vector clip dataset layer based on an attribute query.
+    e.g ``country = 'France'``.
+
+.. option:: --only-bbox
+
+    For :option:`--geometry` and :option:`--like`, only consider the bounding box
+    of the geometry.
+
 .. option:: --allow-bbox-outside-source
 
     If set, allows the bounds indicated by :option:`--bbox` to cover an extent that is greater
     than the input dataset. Output pixels from areas beyond the input extent will be set to
     zero or the NoData value of the input dataset.
 
-.. option:: --like <DATASET>
+.. option:: --addalpha
 
-    Raster dataset to use as a template for bounds, forming a rectangular shape
-    following the geotransformation matrix (and thus potentially including
-    nodata collar).
-    This option is mutually
-    exclusive with :option:`--bbox` and :option:`--bbox-crs`.
+    Adds an alpha mask band to the destination when the source raster has none.
 
 Advanced options
 ++++++++++++++++
