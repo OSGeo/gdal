@@ -19,6 +19,7 @@ from osgeo import gdal
 pytest.importorskip("numpy")
 gdaltest.importorskip_gdal_array()
 
+
 def get_alg():
     return gdal.GetGlobalAlgorithmRegistry()["raster"]["fillnodata"]
 
