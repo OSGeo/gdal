@@ -27,7 +27,7 @@ def test_gdalalg_raster_fillnodata_cannot_open_file():
     alg["output"] = "/i_do/not/exist/out.tif"
     with pytest.raises(
         Exception,
-        match="No such file or directory",
+        match=r"No such file or directory|does not exist",
     ):
         alg.Run()
 
