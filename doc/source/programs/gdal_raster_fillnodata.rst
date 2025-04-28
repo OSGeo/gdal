@@ -53,7 +53,7 @@ The following options are available:
 
     Select the interpolation <STRATEGY> to use.
     By default, pixels are interpolated using an inverse distance
-    weighting (`inv_dist`). It is also possible to choose a nearest
+    weighting (`invdist`). It is also possible to choose a nearest
     neighbour (`nearest`) strategy.
 
 .. option:: --mask <MASK>
@@ -72,6 +72,6 @@ Examples
    The output will be saved in `output.tif`.
 
    .. code-block:: bash
-        gdal raster fillnodata -b 2 -max-distance 50 -smoothing-iterations 3 \
+        gdal raster fillnodata -b 2 --max-distance 50 --smoothing-iterations 3 \
             --strategy nearest --mask mask.tif \
             input.tif output.tif

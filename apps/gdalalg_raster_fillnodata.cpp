@@ -149,13 +149,6 @@ bool GDALRasterFillNodataAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
 
     GDALRasterBand *dstBand{poRetDS->GetRasterBand(1)};
-    if (!dstBand)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Cannot get destination band.");
-        return false;
-    }
-
     // Prepare options to pass to GDALFillNodata
     CPLStringList aosFillOptions;
     aosFillOptions.AddNameValue("INTERPOLATION", m_strategy.c_str());
