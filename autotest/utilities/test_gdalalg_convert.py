@@ -50,3 +50,11 @@ def test_gdalalg_convert_on_raster_invalid_arg():
         assert convert.ParseRunAndFinalize(
             ["--of=MEM", "--invalid", "data/utmsmall.tif", "out"]
         )
+
+
+def test_gdalalg_convert_on_unrecognized_input():
+    convert = get_convert_alg()
+    with pytest.raises(Exception, match="not recognized as being"):
+        assert convert.ParseRunAndFinalize(
+            ["--of=MEM", "test_gdalalg_convert.py", "out.tif"]
+        )
