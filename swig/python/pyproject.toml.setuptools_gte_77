@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=77.0.3",
+            "wheel",
+            "oldest-supported-numpy; python_version=='3.8'",
+            "numpy >=2.0.0rc1; python_version>='3.9'"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "GDAL"
+dynamic = ["version", "scripts"]
+authors = [
+    {name = "Frank Warmerdam"},
+    {name = "Howard Butler"},
+    {name = "Even Rouault"},
+]
+maintainers = [
+    {name = "GDAL contributors", email = "gdal-dev@lists.osgeo.org"},
+]
+description = "GDAL: Geospatial Data Abstraction Library"
+readme = "README.rst"
+keywords = ["gis", "raster", "vector"]
+license = "MIT"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C",
+    "Programming Language :: C++",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+numpy = ['numpy>1.0.0']
+
+[project.urls]
+Homepage = "https://gdal.org"
+Documentation = "https://gdal.org"
+Repository = "https://github.com/OSGeo/GDAL.git"
+Changelog = "https://github.com/OSGeo/gdal/blob/master/NEWS.md"
+Issues = "https://github.com/OSGeo/gdal/issues"
