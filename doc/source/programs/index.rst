@@ -48,6 +48,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_create
    gdal_raster_edit
    gdal_raster_footprint
+   gdal_raster_fillnodata
    gdal_raster_hillshade
    gdal_raster_index
    gdal_raster_mosaic
@@ -119,6 +120,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_create`: Create a new raster dataset
     - :ref:`gdal_raster_edit`: Edit in place a raster dataset
     - :ref:`gdal_raster_footprint`: Compute the footprint of a raster dataset.
+    - :ref:`gdal_raster_fillnodata`: Fill raster regions by interpolation from edges.
     - :ref:`gdal_raster_hillshade`: Generate a shaded relief map
     - :ref:`gdal_raster_index`: Create a vector index of raster datasets
     - :ref:`gdal_raster_mosaic`: Build a mosaic, either virtual (VRT) or materialized.

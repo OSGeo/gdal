@@ -131,6 +131,12 @@ def test_algorithm(tmp_path):
     with pytest.raises(Exception, match="must only be called on arguments of type"):
         arg.GetAsStringList()
     assert arg.Get() is False
+    assert (
+        arg.GetDatasetType()
+        == gdal.OF_RASTER | gdal.OF_VECTOR | gdal.OF_MULTIDIM_RASTER
+    )
+    assert arg.GetDatasetInputFlags() == gdal.GADV_NAME | gdal.GADV_OBJECT
+    assert arg.GetDatasetOutputFlags() == gdal.GADV_OBJECT
 
     arg = convert.GetArg("input")
     with pytest.raises(Exception, match="must only be called on arguments of type"):

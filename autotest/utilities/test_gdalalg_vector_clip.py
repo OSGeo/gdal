@@ -532,6 +532,35 @@ def test_gdalalg_vector_clip_like_vector_invalid_geom():
         clip.Run()
 
 
+def test_gdalalg_vector_clip_like_vector_no_srs():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    src_lyr = src_ds.CreateLayer("test", srs=srs)
+    src_lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["foo"] = "bar"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 1,1 1,1 0,0 0))"))
+    src_lyr.CreateFeature(f)
+
+    # Create "like" dataset
+    like_ds = gdal.GetDriverByName("MEM").Create("clip_ds", 1, 1)
+    like_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
+
+    clip = get_clip_alg()
+    clip["input"] = src_ds
+    clip["output"] = ""
+    clip["output-format"] = "MEM"
+    clip["like"] = like_ds
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        match="ataset 'clip_ds' has no CRS. Assuming its CRS is the same as the input vector",
+    ):
+        assert clip.Run()
+
+
 def test_gdalalg_vector_clip_like_vector_like_layer():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)

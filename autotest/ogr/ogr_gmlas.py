@@ -3434,14 +3434,19 @@ def test_ogr_gmlas_get_gml_and_iso_schemas(tmp_path):
 @pytest.mark.require_curl()
 def test_ogr_gmlas_bugfix_sf_2371():
 
-    url = (
-        "http://repository.gdi-de.org/schemas/adv/citygml/building/1.0/buildingLoD1.xsd"
+    urls = (
+        "http://repository.gdi-de.org/schemas/adv/citygml/building/1.0/buildingLoD1.xsd",
+        "http://docs.oasis-open.org/election/external/xAL.xsd",
     )
-    conn = gdaltest.gdalurlopen(url, timeout=4)
-    if conn is None:
-        pytest.skip(f"cannot open {url}")
 
     ds = gdal.OpenEx("GMLAS:data/gmlas/citygml_empty_lod1.gml")
+
+    if ds is None:
+        for url in urls:
+            conn = gdaltest.gdalurlopen(url, timeout=4)
+            if conn is None:
+                pytest.skip(f"cannot open {url}")
+
     lyr = ds.GetLayerByName("address1")
     assert lyr.GetFeatureCount() == 0
 
@@ -3514,10 +3519,17 @@ def test_ogr_gmlas_choice_inlined(filename, attrname, value):
 @pytest.mark.require_curl()
 def test_ogr_gmlas_citygml_lod2_no_schema_location():
 
-    url = "https://schemas.opengis.net/citygml/2.0/cityGMLBase.xsd"
-    conn = gdaltest.gdalurlopen(url, timeout=4)
-    if conn is None:
-        pytest.skip(f"cannot open {url}")
+    urls = (
+        "http://repository.gdi-de.org/schemas/adv/citygml/building/1.0/buildingLoD1.xsd",
+        "http://docs.oasis-open.org/election/external/xAL.xsd",
+    )
 
     ds = gdal.OpenEx("GMLAS:data/gmlas/lod2_empty_no_schema_location.gml")
+
+    if ds is None:
+        for url in urls:
+            conn = gdaltest.gdalurlopen(url, timeout=4)
+            if conn is None:
+                pytest.skip(f"cannot open {url}")
+
     assert ds.GetLayerCount() == 1537

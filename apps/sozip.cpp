@@ -219,7 +219,7 @@ MAIN_START(nArgc, papszArgv)
         }
         else
         {
-            args.push_back(osOptimizeFrom);
+            args.push_back(std::move(osOptimizeFrom));
         }
         args.push_back(pszZipFilename);
     }

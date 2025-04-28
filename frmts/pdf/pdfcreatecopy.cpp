@@ -4150,16 +4150,20 @@ GDALDataset *GDALPDFCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                                GDALProgressFunc pfnProgress,
                                void *pProgressData)
 {
-    int nBands = poSrcDS->GetRasterCount();
-    int nWidth = poSrcDS->GetRasterXSize();
-    int nHeight = poSrcDS->GetRasterYSize();
-
-    if (!pfnProgress(0.0, nullptr, pProgressData))
-        return nullptr;
+    const int nBands = poSrcDS->GetRasterCount();
+    const int nWidth = poSrcDS->GetRasterXSize();
+    const int nHeight = poSrcDS->GetRasterYSize();
 
     /* -------------------------------------------------------------------- */
     /*      Some some rudimentary checks                                    */
     /* -------------------------------------------------------------------- */
+    if (nWidth == 0 || nHeight == 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "nWidth == 0 || nHeight == 0 not supported");
+        return nullptr;
+    }
+
     if (nBands != 1 && nBands != 3 && nBands != 4)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -4490,6 +4494,9 @@ GDALDataset *GDALPDFCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     const char *pszJavascript = CSLFetchNameValue(papszOptions, "JAVASCRIPT");
     const char *pszJavascriptFile =
         CSLFetchNameValue(papszOptions, "JAVASCRIPT_FILE");
+
+    if (!pfnProgress(0.0, nullptr, pProgressData))
+        return nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Create file.                                                    */

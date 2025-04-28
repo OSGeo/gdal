@@ -6,6 +6,7 @@ add_library(
   commonutils.h
   gdal_utils.h
   gdalargumentparser.cpp
+  gdalalg_clip_common.cpp
   gdalalg_convert.cpp
   gdalalg_info.cpp
   gdalalg_main.cpp
@@ -26,6 +27,7 @@ add_library(
   gdalalg_raster_edit.cpp
   gdalalg_raster_contour.cpp
   gdalalg_raster_footprint.cpp
+  gdalalg_raster_fillnodata.cpp
   gdalalg_raster_hillshade.cpp
   gdalalg_raster_index.cpp
   gdalalg_raster_mosaic.cpp

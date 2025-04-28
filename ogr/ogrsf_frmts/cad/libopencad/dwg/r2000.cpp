@@ -18,6 +18,7 @@
 #include "r2000.h"
 
 #include <cassert>
+#include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <limits>

@@ -438,7 +438,8 @@ void GDALdllImageLineAllTouched(
             }
 
             // Special case for vertical lines.
-            if (floor(dfX) == floor(dfXEnd) || fabs(dfX - dfXEnd) < .01)
+
+            if (fabs(dfX - dfXEnd) < .01)
             {
                 if (bIntersectOnly)
                 {
@@ -518,7 +519,7 @@ void GDALdllImageLineAllTouched(
                 (dfXEnd - dfX);  // Per unit change in iX.
 
             // Special case for horizontal lines.
-            if (floor(dfY) == floor(dfYEnd) || fabs(dfY - dfYEnd) < .01)
+            if (fabs(dfY - dfYEnd) < .01)
             {
                 if (bIntersectOnly)
                 {

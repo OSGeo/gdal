@@ -59,15 +59,17 @@ Standard options
     CRS in which the <xmin>,<ymin>,<xmax>,<ymax> values of :option:`--bbox`
     are expressed. If not specified, it is assumed to be the CRS of the input
     dataset.
-    Not that specifying --bbox-crs does not involve doing vector reprojection.
+    Note that specifying --bbox-crs does not involve doing vector reprojection.
     Instead, the bounds are reprojected from the bbox-crs to the CRS of the
     input dataset.
 
 .. option:: --geometry <WKT_or_GeoJSON>
 
     Geometry as a WKT or GeoJSON string to which to clip the dataset.
-    It is assumed to be in the CRS of
-    the input dataset, unless :option:`--geometry-crs` is specified.
+    If the input geometry is GeoJSON, its CRS is assumed to be WGS84, unless there is
+    a CRS defined in the GeoJSON geometry or :option:`--geometry-crs` is specified.
+    If the input geometry is WKT, its CRS is assumed to be the one of the input dataset,
+    unless :option:`--geometry-crs` is specified.
     The X and Y axis are the "GIS friendly ones", that is X is longitude or easting,
     and Y is latitude or northing.
     Mutually exclusive with :option:`--bbox` and :option:`--like`.
@@ -77,14 +79,14 @@ Standard options
     CRS in which the coordinates values of :option:`--geometry`
     are expressed. If not specified, it is assumed to be the CRS of the input
     dataset.
-    Not that specifying --geometry-crs does not involve doing vector reprojection.
+    Note that specifying --geometry-crs does not involve doing vector reprojection.
     Instead, the bounds are reprojected from the geometry-crs to the CRS of the
     input dataset.
 
 .. option:: --like <DATASET>
 
     Vector or raster dataset to use as a template for bounds.
-    If the specified dataset is a raster, its rectangular bounds are use as
+    If the specified dataset is a raster, its rectangular bounds are used as
     the clipping geometry.
     If the specified dataset is a vector dataset, its polygonal geometries
     are unioned together to form the clipping geometry (beware that the result

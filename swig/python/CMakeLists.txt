@@ -180,7 +180,16 @@ if (Python_Interpreter_FOUND)
   endif ()
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/README.rst ${CMAKE_CURRENT_BINARY_DIR}/README.rst @ONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml @ONLY)
+
+  execute_process(
+    COMMAND ${Python_EXECUTABLE} -c "import setuptools; print(setuptools.__version__)"
+    OUTPUT_VARIABLE SETUPTOOLS_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if (SETUPTOOLS_VERSION VERSION_GREATER_EQUAL 77.0.3)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml.setuptools_gte_77 ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml @ONLY)
+  else()
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml @ONLY)
+  endif()
 
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_suffix.py
        "from importlib.machinery import EXTENSION_SUFFIXES; print(EXTENSION_SUFFIXES[0])\n")

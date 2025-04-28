@@ -3502,6 +3502,7 @@ vrf
 vrt
 VRT
 VRTDataset
+VRTDerivedRasterBand
 VRTPansharpenedDataset
 VRTWarpedDataset
 vsgis

@@ -201,9 +201,7 @@ bool GDALVSISOZIPCreateBaseAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         {
             if (!VSI_ISDIR(psEntry->nMode))
             {
-                const std::string osFilenameInZip =
-                    osRemovePrefix + psEntry->pszName;
-                aosFiles.push_back(osFilenameInZip);
+                aosFiles.push_back(osRemovePrefix + psEntry->pszName);
             }
         }
     }
@@ -226,7 +224,7 @@ bool GDALVSISOZIPCreateBaseAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                         if (osName.back() != '/')
                             osName += '/';
                         osName += psEntry->pszName;
-                        aosNewFiles.push_back(osName);
+                        aosNewFiles.push_back(std::move(osName));
                         if (aosNewFiles.size() > 10 * 1000 * 1000)
                         {
                             ReportError(CE_Failure, CPLE_NotSupported,

@@ -2796,35 +2796,76 @@ double CPLDecToPackedDMS(double dfDec)
 /************************************************************************/
 
 /** Fetch the real and imaginary part of a serialized complex number */
-void CPL_DLL CPLStringToComplex(const char *pszString, double *pdfReal,
-                                double *pdfImag)
+CPLErr CPL_DLL CPLStringToComplex(const char *pszString, double *pdfReal,
+                                  double *pdfImag)
 
 {
     while (*pszString == ' ')
         pszString++;
 
-    *pdfReal = CPLAtof(pszString);
-    *pdfImag = 0.0;
+    char *end;
+    *pdfReal = CPLStrtod(pszString, &end);
 
     int iPlus = -1;
     int iImagEnd = -1;
 
-    for (int i = 0; i < 100 && pszString[i] != '\0' && pszString[i] != ' '; i++)
+    if (pszString == end)
     {
-        if (pszString[i] == '+' && i > 0)
+        goto error;
+    }
+
+    *pdfImag = 0.0;
+
+    for (int i = static_cast<int>(end - pszString);
+         i < 100 && pszString[i] != '\0' && pszString[i] != ' '; i++)
+    {
+        if (pszString[i] == '+')
+        {
+            if (iPlus != -1)
+                goto error;
             iPlus = i;
-        if (pszString[i] == '-' && i > 0)
+        }
+        if (pszString[i] == '-')
+        {
+            if (iPlus != -1)
+                goto error;
             iPlus = i;
+        }
         if (pszString[i] == 'i')
+        {
+            if (iPlus == -1)
+                goto error;
             iImagEnd = i;
+        }
     }
 
-    if (iPlus > -1 && iImagEnd > -1 && iPlus < iImagEnd)
+    // If we have a "+" or "-" we must also have an "i"
+    if ((iPlus == -1) != (iImagEnd == -1))
     {
-        *pdfImag = CPLAtof(pszString + iPlus);
+        goto error;
     }
 
-    return;
+    // Parse imaginary component, if any
+    if (iPlus > -1)
+    {
+        *pdfImag = CPLStrtod(pszString + iPlus, &end);
+    }
+
+    // Check everything remaining is whitespace
+    for (; *end != '\0'; end++)
+    {
+        if (!isspace(*end) && end - pszString != iImagEnd)
+        {
+            goto error;
+        }
+    }
+
+    return CE_None;
+
+error:
+    CPLError(CE_Failure, CPLE_AppDefined, "Failed to parse number: %s",
+             pszString);
+    return CE_Failure;
 }
 
 /************************************************************************/

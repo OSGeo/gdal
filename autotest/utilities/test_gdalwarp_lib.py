@@ -4377,22 +4377,26 @@ def test_gdalwarp_lib_cubic_multiband_uint16_4sample_optim():
 # Test invalid values of INIT_DEST
 
 
-def test_gdalwarp_lib_init_dest_invalid(tmp_vsimem):
+@pytest.mark.parametrize("init_dest", ("NODATA", "32.6x"))
+def test_gdalwarp_lib_init_dest_invalid(tmp_vsimem, init_dest):
 
-    src_ds = gdal.Open("../gcore/data/byte.tif")
-
-    with pytest.raises(Exception, match="Unexpected value of BAND_INIT"):
+    with pytest.raises(Exception, match="Error parsing INIT_DEST"):
         gdal.Warp(
             tmp_vsimem / "out.tif",
-            src_ds,
+            "../gcore/data/byte.tif",
             outputBounds=(440000, 3750120, 441920, 3751320),
-            warpOptions={"INIT_DEST": "NODATA"},
+            warpOptions={"INIT_DEST": init_dest},
         )
 
-    with pytest.raises(Exception, match="NoData value was not defined"):
+
+def test_gdalwarp_lib_init_dest_nodata_invalid(tmp_vsimem):
+
+    # TODO: switch from warning to failure in GDAL 3.12
+    # with pytest.raises(Exception, match="NoData value was not defined"):
+    with gdaltest.error_raised(gdal.CE_Warning, "NoData value was not defined"):
         gdal.Warp(
             tmp_vsimem / "out.tif",
-            src_ds,
+            "../gcore/data/byte.tif",
             outputBounds=(440000, 3750120, 441920, 3751320),
             warpOptions={"INIT_DEST": "NO_DATA"},
         )
@@ -4486,5 +4490,21 @@ def test_gdalwarp_lib_warn_different_coordinate_operations():
         )
         assert (
             gdal.GetLastErrorMsg()
-            == "Several coordinate operations are going to be used. Artifacts may appear. You may consider using the -wo ALLOW_BALLPARK=NO and/or -wo ONLY_BEST=YES warping options, or specify a particular coordinate operation with -ct"
+            == "Several coordinate operations are going to be used. Artifacts may appear. You may consider using the -to ALLOW_BALLPARK=NO and/or -to ONLY_BEST=YES transform options, or specify a particular coordinate operation with -ct"
         )
+
+
+###############################################################################
+# Test that invalid NoData values cause an error
+
+
+def test_gdalwarp_lib_invalid_dstnodata(tmp_vsimem):
+
+    with pytest.raises(RuntimeError, match="Error parsing dstnodata"):
+        gdal.Warp(tmp_vsimem / "out.tif", "../gcore/data/byte.tif", dstNodata="bad")
+
+
+def test_gdalwarp_lib_invalid_srcnodata(tmp_vsimem):
+
+    with pytest.raises(RuntimeError, match="Error parsing srcnodata"):
+        gdal.Warp(tmp_vsimem / "out.tif", "../gcore/data/byte.tif", srcNodata="bad")

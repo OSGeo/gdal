@@ -44,27 +44,31 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArgTypeName)
     EXPECT_STREQ(GDALAlgorithmArgTypeName(GAAT_DATASET_LIST), "dataset_list");
 }
 
-TEST_F(test_gdal_algorithm, GDALArgDatasetValueTypeName)
+TEST_F(test_gdal_algorithm, GDALAlgorithmArgDatasetTypeName)
 {
-    EXPECT_STREQ(GDALArgDatasetValueTypeName(GDAL_OF_RASTER).c_str(), "raster");
-    EXPECT_STREQ(GDALArgDatasetValueTypeName(GDAL_OF_VECTOR).c_str(), "vector");
-    EXPECT_STREQ(GDALArgDatasetValueTypeName(GDAL_OF_MULTIDIM_RASTER).c_str(),
-                 "multidimensional raster");
+    EXPECT_STREQ(GDALAlgorithmArgDatasetTypeName(GDAL_OF_RASTER).c_str(),
+                 "raster");
+    EXPECT_STREQ(GDALAlgorithmArgDatasetTypeName(GDAL_OF_VECTOR).c_str(),
+                 "vector");
     EXPECT_STREQ(
-        GDALArgDatasetValueTypeName(GDAL_OF_RASTER | GDAL_OF_VECTOR).c_str(),
-        "raster or vector");
+        GDALAlgorithmArgDatasetTypeName(GDAL_OF_MULTIDIM_RASTER).c_str(),
+        "multidimensional raster");
     EXPECT_STREQ(
-        GDALArgDatasetValueTypeName(GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER)
+        GDALAlgorithmArgDatasetTypeName(GDAL_OF_RASTER | GDAL_OF_VECTOR)
             .c_str(),
-        "raster or multidimensional raster");
-    EXPECT_STREQ(GDALArgDatasetValueTypeName(GDAL_OF_RASTER | GDAL_OF_VECTOR |
-                                             GDAL_OF_MULTIDIM_RASTER)
+        "raster or vector");
+    EXPECT_STREQ(GDALAlgorithmArgDatasetTypeName(GDAL_OF_RASTER |
+                                                 GDAL_OF_MULTIDIM_RASTER)
+                     .c_str(),
+                 "raster or multidimensional raster");
+    EXPECT_STREQ(GDALAlgorithmArgDatasetTypeName(
+                     GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER)
                      .c_str(),
                  "raster, vector or multidimensional raster");
-    EXPECT_STREQ(
-        GDALArgDatasetValueTypeName(GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER)
-            .c_str(),
-        "vector or multidimensional raster");
+    EXPECT_STREQ(GDALAlgorithmArgDatasetTypeName(GDAL_OF_VECTOR |
+                                                 GDAL_OF_MULTIDIM_RASTER)
+                     .c_str(),
+                 "vector or multidimensional raster");
 }
 
 TEST_F(test_gdal_algorithm, GDALAlgorithmArgDecl_SetMinCount)
@@ -99,6 +103,170 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArgDecl_SetMaxCount)
                   .SetMaxCount(2)
                   .GetMaxCount(),
               2);
+}
+
+class MyAlgorithmWithDummyRun : public GDALAlgorithm
+{
+  public:
+    MyAlgorithmWithDummyRun(const std::string &name = "test",
+                            const std::string &description = "",
+                            const std::string &url = "https://example.com")
+        : GDALAlgorithm(name, description, url)
+    {
+    }
+
+    bool RunImpl(GDALProgressFunc, void *) override
+    {
+        return true;
+    }
+};
+
+TEST_F(test_gdal_algorithm, GDALAlgorithmArg_SetDefault)
+{
+
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        MyAlgorithm()
+        {
+            {
+                bool v;
+                auto &arg = AddArg("", 0, "", &v);
+                arg.SetDefault(true);
+                EXPECT_TRUE(arg.GetDefault<bool>());
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault("invalid");
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                int v;
+                auto &arg = AddArg("", 0, "", &v);
+                arg.SetDefault(5);
+                EXPECT_EQ(arg.GetDefault<int>(), 5);
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault("invalid");
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                double v;
+                auto &arg = AddArg("", 0, "", &v);
+                arg.SetDefault(4.5);
+                EXPECT_EQ(arg.GetDefault<double>(), 4.5);
+
+                arg.SetDefault(5);
+                EXPECT_EQ(arg.GetDefault<double>(), 5);
+
+                arg.SetDefault(2.5f);
+                EXPECT_EQ(arg.GetDefault<double>(), 2.5);
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault("invalid");
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                std::string v;
+                auto &arg = AddArg("", 0, "", &v);
+
+                arg.SetDefault("ab");
+                EXPECT_STREQ(arg.GetDefault<std::string>().c_str(), "ab");
+
+                arg.SetDefault(std::string("cd"));
+                EXPECT_STREQ(arg.GetDefault<std::string>().c_str(), "cd");
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault(0);
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                std::vector<int> v;
+                auto &arg = AddArg("", 0, "", &v);
+                arg.SetDefault(5);
+                std::vector<int> expected{5};
+                EXPECT_EQ(arg.GetDefault<std::vector<int>>(), expected);
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault("invalid");
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                std::vector<double> v;
+                auto &arg = AddArg("", 0, "", &v);
+                arg.SetDefault(4.5);
+                {
+                    std::vector<double> expected{4.5};
+                    EXPECT_EQ(arg.GetDefault<std::vector<double>>(), expected);
+                }
+
+                arg.SetDefault(5);
+                {
+                    std::vector<double> expected{5};
+                    EXPECT_EQ(arg.GetDefault<std::vector<double>>(), expected);
+                }
+
+                arg.SetDefault(2.5f);
+                {
+                    std::vector<double> expected{2.5};
+                    EXPECT_EQ(arg.GetDefault<std::vector<double>>(), expected);
+                }
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault("invalid");
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                std::vector<std::string> v;
+                auto &arg = AddArg("", 0, "", &v);
+
+                arg.SetDefault("ab");
+                {
+                    std::vector<std::string> expected{"ab"};
+                    EXPECT_EQ(arg.GetDefault<std::vector<std::string>>(),
+                              expected);
+                }
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault(0);
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                GDALArgDatasetValue v;
+                auto &arg = AddArg("", 0, "", &v);
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault(0);
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+
+            {
+                std::vector<GDALArgDatasetValue> v;
+                auto &arg = AddArg("", 0, "", &v);
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+                arg.SetDefault(0);
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+        }
+    };
+
+    MyAlgorithm alg;
 }
 
 TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
@@ -473,9 +641,14 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
         val2.Set("baz");
         arg.SetFrom(arg2);
         EXPECT_STREQ(val.GetName().c_str(), "baz");
+    }
 
-        val.SetInputFlags(GADV_NAME);
-        val.SetOutputFlags(GADV_OBJECT);
+    {
+        GDALArgDatasetValue val;
+        auto decl = GDALAlgorithmArgDecl("", 0, "", GAAT_DATASET);
+        decl.SetDatasetInputFlags(GADV_NAME);
+        decl.SetDatasetOutputFlags(GADV_OBJECT);
+        auto arg = GDALAlgorithmArg(decl, &val);
         {
             CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
             CPLErrorReset();
@@ -782,22 +955,6 @@ TEST_F(test_gdal_algorithm, SetIsCRSArg_wrong_type)
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
     }
 }
-
-class MyAlgorithmWithDummyRun : public GDALAlgorithm
-{
-  public:
-    MyAlgorithmWithDummyRun(const std::string &name = "test",
-                            const std::string &description = "",
-                            const std::string &url = "https://example.com")
-        : GDALAlgorithm(name, description, url)
-    {
-    }
-
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        return true;
-    }
-};
 
 TEST_F(test_gdal_algorithm, wrong_long_name_dash)
 {
@@ -1715,8 +1872,8 @@ TEST_F(test_gdal_algorithm, same_input_output_dataset_sqlite)
         MyAlgorithm()
         {
             AddInputDatasetArg(&m_input);
-            AddOutputDatasetArg(&m_output);
-            m_output.SetInputFlags(GADV_NAME | GADV_OBJECT);
+            AddOutputDatasetArg(&m_output).SetDatasetInputFlags(GADV_NAME |
+                                                                GADV_OBJECT);
             AddUpdateArg(&m_update);
         }
     };
@@ -1761,9 +1918,9 @@ TEST_F(test_gdal_algorithm, output_dataset_created_by_alg)
 
         MyAlgorithm()
         {
-            AddOutputDatasetArg(&m_output);
-            m_output.SetInputFlags(GADV_NAME);
-            m_output.SetOutputFlags(GADV_OBJECT);
+            AddOutputDatasetArg(&m_output)
+                .SetDatasetInputFlags(GADV_NAME)
+                .SetDatasetOutputFlags(GADV_OBJECT);
         }
     };
 
@@ -3813,12 +3970,12 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
     {
         auto hArg = GDALAlgorithmGetArg(hAlg.get(), "dataset");
         ASSERT_NE(hArg, nullptr);
-        GDALArgDatasetValueH hVal = GDALArgDatasetValueCreate();
-        EXPECT_EQ(GDALArgDatasetValueGetType(hVal),
+        EXPECT_EQ(GDALAlgorithmArgGetDatasetType(hArg),
                   GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER);
-        EXPECT_EQ(GDALArgDatasetValueGetInputFlags(hVal),
+        EXPECT_EQ(GDALAlgorithmArgGetDatasetInputFlags(hArg),
                   GADV_NAME | GADV_OBJECT);
-        EXPECT_EQ(GDALArgDatasetValueGetOutputFlags(hVal), GADV_OBJECT);
+        EXPECT_EQ(GDALAlgorithmArgGetDatasetOutputFlags(hArg), GADV_OBJECT);
+        GDALArgDatasetValueH hVal = GDALArgDatasetValueCreate();
         GDALArgDatasetValueSetName(hVal, "foo");
 
         {

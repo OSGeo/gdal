@@ -1,6 +1,12 @@
 MIGRATION GUIDE FROM GDAL 3.10 to GDAL 3.11
 -------------------------------------------
 
+- The introduction of the gdal_fwd.h header that normalizes forward declarations
+  of GDAL public opaque types may cause issues with downstream users of the
+  GDAL API that would have redefined themselves those types, particularly when
+  building against a GDAL built in DEBUG mode where the type aliases are stricter
+  than in release mode.
+
 - The OGRLayer::GetExtent(OGREnvelope*, int bForce) and
   OGRLayer::GetExtent(int iGeomField, OGREnvelope*, int bForce) methods are
   no longer virtual methods that are implemented by drivers, and the ``int bForce``

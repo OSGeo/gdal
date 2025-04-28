@@ -536,7 +536,7 @@ VSIVirtualHandle *VSIKerchunkParquetRefFileSystem::Open(
                 const int nSize =
                     info.poFeature->GetFieldAsInteger(info.iSizeField);
 
-                const std::string osVSIPath = VSIKerchunkMorphURIToVSIPath(
+                std::string osVSIPath = VSIKerchunkMorphURIToVSIPath(
                     info.poFeature->GetFieldAsString(info.iPathField),
                     info.osParquetFileDirectory);
                 if (osVSIPath.empty())
@@ -545,7 +545,7 @@ VSIVirtualHandle *VSIKerchunkParquetRefFileSystem::Open(
                 const std::string osPath =
                     nSize ? CPLSPrintf("/vsisubfile/%" PRIu64 "_%u,%s", nOffset,
                                        nSize, osVSIPath.c_str())
-                          : osVSIPath;
+                          : std::move(osVSIPath);
                 CPLDebugOnly("VSIKerchunkParquetRefFileSystem", "Opening %s",
                              osPath.c_str());
                 CPLConfigOptionSetter oSetter("GDAL_DISABLE_READDIR_ON_OPEN",
@@ -616,10 +616,8 @@ int VSIKerchunkParquetRefFileSystem::Stat(const char *pszFilename,
             return 0;
         }
 
-        if (cpl::contains(refFile->m_oMapKeys,
-                          std::string(osKey).append("/.zgroup")) ||
-            cpl::contains(refFile->m_oMapKeys,
-                          std::string(osKey).append("/.zarray")))
+        if (cpl::contains(refFile->m_oMapKeys, osKey + "/.zgroup") ||
+            cpl::contains(refFile->m_oMapKeys, osKey + "/.zarray"))
         {
             pStatBuf->st_mode = S_IFDIR;
             return 0;
@@ -670,7 +668,7 @@ char **VSIKerchunkParquetRefFileSystem::ReadDirEx(const char *pszDirname,
             std::string subKey = key.substr(osAskedKey.size() + 1);
             const auto nPos = subKey.find('/');
             if (nPos == std::string::npos)
-                set.insert(subKey);
+                set.insert(std::move(subKey));
             else
                 set.insert(subKey.substr(0, nPos));
         }

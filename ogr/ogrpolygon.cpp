@@ -49,6 +49,22 @@ OGRPolygon::OGRPolygon(double x1, double y1, double x2, double y2)
 }
 
 /************************************************************************/
+/*                OGRPolygon(const OGREnvelope &envelope)               */
+/************************************************************************/
+
+/**
+ * \brief Construct a rectangular polygon from opposite corner coordinates
+ * of a OGREnvelope.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRPolygon::OGRPolygon(const OGREnvelope &envelope)
+    : OGRPolygon(envelope.MinX, envelope.MinY, envelope.MaxX, envelope.MaxY)
+{
+}
+
+/************************************************************************/
 /*                     OGRPolygon( const OGRPolygon& )                  */
 /************************************************************************/
 

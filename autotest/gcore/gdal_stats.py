@@ -30,6 +30,7 @@ import math
 import os
 import shutil
 import struct
+import sys
 
 import gdaltest
 import pytest
@@ -926,3 +927,18 @@ def test_stats_mask_band():
     assert src_ds.GetRasterBand(1).ComputeRasterMinMax(False) == (2, 3)
     assert src_ds.GetRasterBand(1).ComputeStatistics(False) == [2, 3, 2.5, 0.5]
     assert src_ds.GetRasterBand(1).GetHistogram(False) == [0, 0, 1, 1] + ([0] * 252)
+
+
+###############################################################################
+# Test statistics on a band with all values to large values
+
+
+@pytest.mark.parametrize(
+    "value", [sys.float_info.max, -sys.float_info.max, float("inf"), -float("inf")]
+)
+def test_stats_all_large_values(value):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 1, gdal.GDT_Float64)
+    src_ds.WriteRaster(0, 0, 2, 1, struct.pack("d" * 2, value, value))
+    assert src_ds.GetRasterBand(1).ComputeRasterMinMax(False) == (value, value)
+    assert src_ds.GetRasterBand(1).ComputeStatistics(False) == [value, value, value, 0]

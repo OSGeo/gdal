@@ -610,14 +610,14 @@ inline __m128d sse2_hadd_pd(__m128d a, __m128d b)
 }
 #endif
 
-inline __m128d SQUARE(__m128d x)
+inline __m128d SQUARE_PD(__m128d x)
 {
     return _mm_mul_pd(x, x);
 }
 
 #ifdef __AVX2__
 
-inline __m256d SQUARE(__m256d x)
+inline __m256d SQUARE_PD(__m256d x)
 {
     return _mm256_mul_pd(x, x);
 }
@@ -735,10 +735,12 @@ QuadraticMeanUInt16SSE2(int nDstXWidth, int nChunkXSize,
 
 #ifdef __AVX2__
         // Multiplication of 32 bit values previously converted to 64 bit double
-        const auto firstLineLoDbl = SQUARE(_mm256_cvtepi32_pd(firstLineLo));
-        const auto firstLineHiDbl = SQUARE(_mm256_cvtepi32_pd(firstLineHi));
-        const auto secondLineLoDbl = SQUARE(_mm256_cvtepi32_pd(secondLineLo));
-        const auto secondLineHiDbl = SQUARE(_mm256_cvtepi32_pd(secondLineHi));
+        const auto firstLineLoDbl = SQUARE_PD(_mm256_cvtepi32_pd(firstLineLo));
+        const auto firstLineHiDbl = SQUARE_PD(_mm256_cvtepi32_pd(firstLineHi));
+        const auto secondLineLoDbl =
+            SQUARE_PD(_mm256_cvtepi32_pd(secondLineLo));
+        const auto secondLineHiDbl =
+            SQUARE_PD(_mm256_cvtepi32_pd(secondLineHi));
 
         // Vertical addition of squares
         const auto sumSquaresLo =
@@ -756,7 +758,7 @@ QuadraticMeanUInt16SSE2(int nDstXWidth, int nChunkXSize,
         auto rms = _mm256_cvttpd_epi32(_mm256_sqrt_pd(sumDivWeight));
         const auto rmsDouble = _mm256_cvtepi32_pd(rms);
         const auto right = _mm256_sub_pd(
-            sumDivWeight, _mm256_add_pd(SQUARE(rmsDouble), rmsDouble));
+            sumDivWeight, _mm256_add_pd(SQUARE_PD(rmsDouble), rmsDouble));
 
         auto mask =
             _mm256_castpd_ps(_mm256_cmp_pd(zeroDot5, right, _CMP_LT_OS));
@@ -773,19 +775,19 @@ QuadraticMeanUInt16SSE2(int nDstXWidth, int nChunkXSize,
         rms = _mm_packus_epi32(rms, rms /* could be anything */);
 #else
         // Multiplication of 32 bit values previously converted to 64 bit double
-        const auto firstLineLoLo = SQUARE(_mm_cvtepi32_pd(firstLineLo));
+        const auto firstLineLoLo = SQUARE_PD(_mm_cvtepi32_pd(firstLineLo));
         const auto firstLineLoHi =
-            SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(firstLineLo, 8)));
-        const auto firstLineHiLo = SQUARE(_mm_cvtepi32_pd(firstLineHi));
+            SQUARE_PD(_mm_cvtepi32_pd(_mm_srli_si128(firstLineLo, 8)));
+        const auto firstLineHiLo = SQUARE_PD(_mm_cvtepi32_pd(firstLineHi));
         const auto firstLineHiHi =
-            SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(firstLineHi, 8)));
+            SQUARE_PD(_mm_cvtepi32_pd(_mm_srli_si128(firstLineHi, 8)));
 
-        const auto secondLineLoLo = SQUARE(_mm_cvtepi32_pd(secondLineLo));
+        const auto secondLineLoLo = SQUARE_PD(_mm_cvtepi32_pd(secondLineLo));
         const auto secondLineLoHi =
-            SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(secondLineLo, 8)));
-        const auto secondLineHiLo = SQUARE(_mm_cvtepi32_pd(secondLineHi));
+            SQUARE_PD(_mm_cvtepi32_pd(_mm_srli_si128(secondLineLo, 8)));
+        const auto secondLineHiLo = SQUARE_PD(_mm_cvtepi32_pd(secondLineHi));
         const auto secondLineHiHi =
-            SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(secondLineHi, 8)));
+            SQUARE_PD(_mm_cvtepi32_pd(_mm_srli_si128(secondLineHi, 8)));
 
         // Vertical addition of squares
         const auto sumSquaresLoLo = _mm_add_pd(firstLineLoLo, secondLineLoLo);
@@ -809,9 +811,9 @@ QuadraticMeanUInt16SSE2(int nDstXWidth, int nChunkXSize,
         const auto rmsLoDouble = _mm_cvtepi32_pd(rmsLo);
         const auto rmsHiDouble = _mm_cvtepi32_pd(rmsHi);
         const auto rightLo = _mm_sub_pd(
-            sumDivWeightLo, _mm_add_pd(SQUARE(rmsLoDouble), rmsLoDouble));
+            sumDivWeightLo, _mm_add_pd(SQUARE_PD(rmsLoDouble), rmsLoDouble));
         const auto rightHi = _mm_sub_pd(
-            sumDivWeightHi, _mm_add_pd(SQUARE(rmsHiDouble), rmsHiDouble));
+            sumDivWeightHi, _mm_add_pd(SQUARE_PD(rmsHiDouble), rmsHiDouble));
 
         const auto maskLo = _mm_castpd_ps(_mm_cmplt_pd(zeroDot5, rightLo));
         const auto maskHi = _mm_castpd_ps(_mm_cmplt_pd(zeroDot5, rightHi));
@@ -938,7 +940,7 @@ static int AverageUInt16SSE2(int nDstXWidth, int nChunkXSize,
 #define unpackhi_ps _mm256_unpackhi_ps
 #define storeu_ps _mm256_storeu_ps
 
-inline __m256 SQUARE(__m256 x)
+inline __m256 SQUARE_PS(__m256 x)
 {
     return _mm256_mul_ps(x, x);
 }
@@ -974,7 +976,7 @@ inline __m128 sse2_hadd_ps(__m128 a, __m128 b)
 #define unpackhi_ps _mm_unpackhi_ps
 #define storeu_ps _mm_storeu_ps
 
-inline __m128 SQUARE(__m128 x)
+inline __m128 SQUARE_PS(__m128 x)
 {
     return _mm_mul_ps(x, x);
 }
@@ -1049,10 +1051,10 @@ QuadraticMeanFloatSSE2(int nDstXWidth, int nChunkXSize,
         secondLineOdd = mul_ps(secondLineOdd, invMax);
 
         // Compute squares
-        firstLineEven = SQUARE(firstLineEven);
-        firstLineOdd = SQUARE(firstLineOdd);
-        secondLineEven = SQUARE(secondLineEven);
-        secondLineOdd = SQUARE(secondLineOdd);
+        firstLineEven = SQUARE_PS(firstLineEven);
+        firstLineOdd = SQUARE_PS(firstLineOdd);
+        secondLineEven = SQUARE_PS(secondLineEven);
+        secondLineOdd = SQUARE_PS(secondLineOdd);
 
         const auto sumSquares = add_ps(add_ps(firstLineEven, firstLineOdd),
                                        add_ps(secondLineEven, secondLineOdd));

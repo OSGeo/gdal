@@ -17,6 +17,7 @@
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_color_map.h"
 #include "gdalalg_raster_edit.h"
+#include "gdalalg_raster_fillnodata.h"
 #include "gdalalg_raster_hillshade.h"
 #include "gdalalg_raster_reproject.h"
 #include "gdalalg_raster_resize.h"
@@ -97,8 +98,8 @@ void GDALRasterPipelineStepAlgorithm::AddOutputArgs(bool hiddenForCLI)
               .SetHiddenForCLI(hiddenForCLI));
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER,
                         /* positionalAndRequired = */ !hiddenForCLI)
-        .SetHiddenForCLI(hiddenForCLI);
-    m_outputDataset.SetInputFlags(GADV_NAME | GADV_OBJECT);
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
     AddCreationOptionsArg(&m_creationOptions).SetHiddenForCLI(hiddenForCLI);
     AddOverwriteArg(&m_overwrite).SetHiddenForCLI(hiddenForCLI);
 }

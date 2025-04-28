@@ -316,6 +316,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_fillnodata",
+        "gdal-raster-fillnodata",
+        "Fill nodata values in a raster dataset",
+        [author_elpaso],
+        1,
+    ),
+    (
         "programs/gdal_raster_hillshade",
         "gdal-raster-hillshade",
         "Generate a shaded relief map",

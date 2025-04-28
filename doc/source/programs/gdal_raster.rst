@@ -29,6 +29,7 @@ Available sub-commands
 - :ref:`gdal_raster_convert`
 - :ref:`gdal_raster_create`
 - :ref:`gdal_raster_footprint`
+- :ref:`gdal_raster_fillnodata`
 - :ref:`gdal_raster_hillshade`
 - :ref:`gdal_raster_index`
 - :ref:`gdal_raster_mosaic`

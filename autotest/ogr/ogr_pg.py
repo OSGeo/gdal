@@ -6329,3 +6329,26 @@ def test_ogr_pg_findfield(pg_ds):
             relaxedFieldNameMatch=True,
         )
     assert [f.GetField(0) for f in lyr] == ["foo", None, "foo"]
+
+
+###############################################################################
+# Test that we open the PG driver and not the PostGISRaster one with
+# "gdal vector pipeline"
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_pg_gdal_vector_pipeline(pg_ds):
+
+    pg_ds.CreateLayer("test")
+
+    with gdal.Run(
+        "vector",
+        "pipeline",
+        {
+            "pipeline": "read ! write",
+            "input": pg_ds,
+            "output_format": "stream",
+            "output": "",
+        },
+    ) as alg:
+        assert alg.Output().GetLayerCount() == 1

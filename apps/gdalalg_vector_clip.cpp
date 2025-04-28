@@ -179,79 +179,6 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 }  // namespace
 
 /************************************************************************/
-/*                           LoadGeometry()                             */
-/************************************************************************/
-
-static std::unique_ptr<OGRGeometry> LoadGeometry(GDALDataset *poDS,
-                                                 const std::string &osSQL,
-                                                 const std::string &osLyr,
-                                                 const std::string &osWhere)
-{
-    OGRLayer *poLyr = nullptr;
-    if (!osSQL.empty())
-        poLyr = poDS->ExecuteSQL(osSQL.c_str(), nullptr, nullptr);
-    else if (!osLyr.empty())
-        poLyr = poDS->GetLayerByName(osLyr.c_str());
-    else
-        poLyr = poDS->GetLayer(0);
-
-    if (poLyr == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Failed to identify source layer from clipping dataset.");
-        return nullptr;
-    }
-
-    if (!osWhere.empty())
-        poLyr->SetAttributeFilter(osWhere.c_str());
-
-    OGRGeometryCollection oGC;
-
-    const auto poSRSSrc = poLyr->GetSpatialRef();
-    if (poSRSSrc)
-    {
-        auto poSRSClone = poSRSSrc->Clone();
-        oGC.assignSpatialReference(poSRSClone);
-        poSRSClone->Release();
-    }
-
-    for (auto &poFeat : poLyr)
-    {
-        auto poSrcGeom = std::unique_ptr<OGRGeometry>(poFeat->StealGeometry());
-        if (poSrcGeom)
-        {
-            // Only take into account areal geometries.
-            if (poSrcGeom->getDimension() == 2)
-            {
-                if (!poSrcGeom->IsValid())
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Geometry of feature " CPL_FRMT_GIB " of %s "
-                             "is invalid.",
-                             poFeat->GetFID(), poDS->GetDescription());
-                    return nullptr;
-                }
-                else
-                {
-                    oGC.addGeometry(std::move(poSrcGeom));
-                }
-            }
-        }
-    }
-
-    if (!osSQL.empty())
-        poDS->ReleaseResultSet(poLyr);
-
-    if (oGC.IsEmpty())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "No clipping geometry found");
-        return nullptr;
-    }
-
-    return std::unique_ptr<OGRGeometry>(oGC.UnaryUnion());
-}
-
-/************************************************************************/
 /*                 GDALVectorClipAlgorithm::RunStep()                   */
 /************************************************************************/
 
@@ -262,8 +189,6 @@ bool GDALVectorClipAlgorithm::RunStep(GDALProgressFunc, void *)
 
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
-
-    std::unique_ptr<OGRGeometry> poClipGeom;
 
     const int nLayerCount = poSrcDS->GetLayerCount();
     bool bSrcLayerHasSRS = false;
@@ -280,139 +205,21 @@ bool GDALVectorClipAlgorithm::RunStep(GDALProgressFunc, void *)
         }
     }
 
-    if (!m_bbox.empty())
+    auto [poClipGeom, errMsg] = GetClipGeometry();
+    if (!poClipGeom)
     {
-        poClipGeom = std::make_unique<OGRPolygon>(m_bbox[0], m_bbox[1],
-                                                  m_bbox[2], m_bbox[3]);
-
-        if (!m_bboxCrs.empty())
-        {
-            auto poSRS = new OGRSpatialReference();
-            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            CPL_IGNORE_RET_VAL(poSRS->SetFromUserInput(m_bboxCrs.c_str()));
-            poClipGeom->assignSpatialReference(poSRS);
-            poSRS->Release();
-        }
-    }
-    else if (!m_geometry.empty())
-    {
-        {
-            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
-            auto [poGeom, eErr] =
-                OGRGeometryFactory::createFromWkt(m_geometry.c_str());
-            if (eErr == OGRERR_NONE)
-            {
-                poClipGeom = std::move(poGeom);
-            }
-            else
-            {
-                poClipGeom.reset(
-                    OGRGeometryFactory::createFromGeoJson(m_geometry.c_str()));
-                if (poClipGeom)
-                {
-                    auto poSRS = new OGRSpatialReference();
-                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    CPL_IGNORE_RET_VAL(poSRS->SetFromUserInput("WGS84"));
-                    poClipGeom->assignSpatialReference(poSRS);
-                    poSRS->Release();
-                }
-            }
-        }
-        if (!poClipGeom)
-        {
-            ReportError(
-                CE_Failure, CPLE_AppDefined,
-                "Clipping geometry is neither a valid WKT or GeoJSON geometry");
-            return false;
-        }
-
-        if (!m_geometryCrs.empty())
-        {
-            auto poSRS = new OGRSpatialReference();
-            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            CPL_IGNORE_RET_VAL(poSRS->SetFromUserInput(m_geometryCrs.c_str()));
-            poClipGeom->assignSpatialReference(poSRS);
-            poSRS->Release();
-        }
-    }
-    else if (auto poLikeDS = m_likeDataset.GetDatasetRef())
-    {
-        if (poLikeDS->GetLayerCount() > 1 && m_likeLayer.empty() &&
-            m_likeSQL.empty())
-        {
-            ReportError(
-                CE_Failure, CPLE_AppDefined,
-                "Only single layer dataset can be specified with --like when "
-                "neither --like-layer or --like-sql have been specified");
-            return false;
-        }
-        else if (poLikeDS->GetLayerCount() > 0)
-        {
-            poClipGeom =
-                LoadGeometry(poLikeDS, m_likeSQL, m_likeLayer, m_likeWhere);
-            if (!poClipGeom)
-                return false;
-        }
-        else if (poLikeDS->GetRasterCount() > 0)
-        {
-            double adfGT[6];
-            if (poLikeDS->GetGeoTransform(adfGT) != CE_None)
-            {
-                ReportError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Dataset '%s' has no geotransform matrix. Its bounds "
-                    "cannot be established.",
-                    poLikeDS->GetDescription());
-                return false;
-            }
-            auto poLikeSRS = poLikeDS->GetSpatialRef();
-            if (bSrcLayerHasSRS && !poLikeSRS)
-            {
-                ReportError(CE_Warning, CPLE_AppDefined,
-                            "Dataset '%s' has no SRS. Assuming its SRS is the "
-                            "same as the input vector.",
-                            poLikeDS->GetDescription());
-            }
-            const double dfTLX = adfGT[0];
-            const double dfTLY = adfGT[3];
-            const double dfTRX =
-                adfGT[0] + poLikeDS->GetRasterXSize() * adfGT[1];
-            const double dfTRY =
-                adfGT[3] + poLikeDS->GetRasterXSize() * adfGT[4];
-            const double dfBLX =
-                adfGT[0] + poLikeDS->GetRasterYSize() * adfGT[2];
-            const double dfBLY =
-                adfGT[3] + poLikeDS->GetRasterYSize() * adfGT[5];
-            const double dfBRX = adfGT[0] +
-                                 poLikeDS->GetRasterXSize() * adfGT[1] +
-                                 poLikeDS->GetRasterYSize() * adfGT[2];
-            const double dfBRY = adfGT[3] +
-                                 poLikeDS->GetRasterXSize() * adfGT[4] +
-                                 poLikeDS->GetRasterYSize() * adfGT[5];
-
-            auto poPoly = std::make_unique<OGRPolygon>();
-            auto poLR = std::make_unique<OGRLinearRing>();
-            poLR->addPoint(dfTLX, dfTLY);
-            poLR->addPoint(dfTRX, dfTRY);
-            poLR->addPoint(dfBRX, dfBRY);
-            poLR->addPoint(dfBLX, dfBLY);
-            poLR->addPoint(dfTLX, dfTLY);
-            poPoly->addRingDirectly(poLR.release());
-            poPoly->assignSpatialReference(poLikeSRS);
-            poClipGeom = std::move(poPoly);
-        }
-        else
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Cannot get extent from clip dataset");
-            return false;
-        }
-    }
-    else
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "--bbox, --geometry or --like must be specified");
+        ReportError(CE_Failure, CPLE_AppDefined, "%s", errMsg.c_str());
         return false;
+    }
+
+    auto poLikeDS = m_likeDataset.GetDatasetRef();
+    if (bSrcLayerHasSRS && !poClipGeom->getSpatialReference() && poLikeDS &&
+        poLikeDS->GetLayerCount() == 0)
+    {
+        ReportError(CE_Warning, CPLE_AppDefined,
+                    "Dataset '%s' has no CRS. Assuming its CRS is the "
+                    "same as the input vector.",
+                    poLikeDS->GetDescription());
     }
 
     auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
