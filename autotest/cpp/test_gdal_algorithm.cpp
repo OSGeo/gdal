@@ -1955,6 +1955,14 @@ TEST_F(test_gdal_algorithm, string_choices)
         MyAlgorithm alg;
         alg.GetUsageForCLI(false);
 
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=FOO"}));
+        EXPECT_STREQ(alg.m_val.c_str(), "foo");
+    }
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+
         EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=baz"}));
         EXPECT_STREQ(alg.m_val.c_str(), "baz");
     }
@@ -2180,6 +2188,13 @@ TEST_F(test_gdal_algorithm, vector_string_choices)
     {
         MyAlgorithm alg;
         EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=foo,bar"}));
+        auto expected = std::vector<std::string>{"foo", "bar"};
+        EXPECT_EQ(alg.m_val, expected);
+    }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=FOO,BAR"}));
         auto expected = std::vector<std::string>{"foo", "bar"};
         EXPECT_EQ(alg.m_val, expected);
     }
