@@ -40,6 +40,7 @@ Available sub-commands
 - :ref:`gdal_raster_roughness`
 - :ref:`gdal_raster_scale`
 - :ref:`gdal_raster_select`
+- :ref:`gdal_raster_sieve`
 - :ref:`gdal_raster_slope`
 - :ref:`gdal_raster_stack`
 - :ref:`gdal_raster_tpi`
