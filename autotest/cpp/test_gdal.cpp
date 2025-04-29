@@ -2180,8 +2180,9 @@ TEST_F(test_gdal, TileMatrixSet)
 
     {
         auto l = gdal::TileMatrixSet::listPredefinedTileMatrixSets();
-        EXPECT_TRUE(l.find("GoogleMapsCompatible") != l.end());
-        EXPECT_TRUE(l.find("NZTM2000") != l.end());
+        EXPECT_TRUE(std::find(l.begin(), l.end(), "GoogleMapsCompatible") !=
+                    l.end());
+        EXPECT_TRUE(std::find(l.begin(), l.end(), "NZTM2000") != l.end());
     }
 
     {

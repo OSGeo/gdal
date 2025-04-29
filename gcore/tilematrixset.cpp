@@ -28,14 +28,15 @@ namespace gdal
 /*                   listPredefinedTileMatrixSets()                     */
 /************************************************************************/
 
-std::set<std::string> TileMatrixSet::listPredefinedTileMatrixSets()
+std::vector<std::string> TileMatrixSet::listPredefinedTileMatrixSets()
 {
-    std::set<std::string> l{"GoogleMapsCompatible", "WorldCRS84Quad",
-                            "WorldMercatorWGS84Quad", "GoogleCRS84Quad",
-                            "PseudoTMS_GlobalMercator"};
+    std::vector<std::string> l{"GoogleMapsCompatible", "WorldCRS84Quad",
+                               "WorldMercatorWGS84Quad", "GoogleCRS84Quad",
+                               "PseudoTMS_GlobalMercator"};
     const char *pszSomeFile = CPLFindFile("gdal", "tms_NZTM2000.json");
     if (pszSomeFile)
     {
+        std::set<std::string> set;
         CPLStringList aosList(
             VSIReadDir(CPLGetDirnameSafe(pszSomeFile).c_str()));
         for (int i = 0; i < aosList.size(); i++)
@@ -47,9 +48,11 @@ std::set<std::string> TileMatrixSet::listPredefinedTileMatrixSets()
             {
                 std::string id(aosList[i] + strlen("tms_"),
                                nLen - (strlen("tms_") + strlen(".json")));
-                l.insert(id);
+                set.insert(id);
             }
         }
+        for (const std::string &id : set)
+            l.push_back(id);
     }
     return l;
 }
