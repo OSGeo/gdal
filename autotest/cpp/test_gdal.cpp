@@ -5260,4 +5260,24 @@ TEST_F(test_gdal, GDALExpandPackedBitsToByteAt0Or255)
     EXPECT_EQ(out, expectedOut);
 }
 
+TEST_F(test_gdal, GDALComputeOvFactor)
+{
+    EXPECT_EQ(GDALComputeOvFactor((1000 + 16 - 1) / 16, 1000, 1, 1), 16);
+    EXPECT_EQ(GDALComputeOvFactor(1, 1, (1000 + 16 - 1) / 16, 1000), 16);
+    EXPECT_EQ(GDALComputeOvFactor((1000 + 32 - 1) / 32, 1000,
+                                  (1000 + 32 - 1) / 32, 1000),
+              32);
+    EXPECT_EQ(GDALComputeOvFactor((1000 + 64 - 1) / 64, 1000,
+                                  (1000 + 64 - 1) / 64, 1000),
+              64);
+    EXPECT_EQ(GDALComputeOvFactor((1000 + 128 - 1) / 128, 1000,
+                                  (1000 + 128 - 1) / 128, 1000),
+              128);
+    EXPECT_EQ(GDALComputeOvFactor((1000 + 256 - 1) / 256, 1000,
+                                  (1000 + 256 - 1) / 256, 1000),
+              256);
+    EXPECT_EQ(GDALComputeOvFactor((1000 + 25 - 1) / 25, 1000, 1, 1), 25);
+    EXPECT_EQ(GDALComputeOvFactor(1, 1, (1000 + 25 - 1) / 25, 1000), 25);
+}
+
 }  // namespace
