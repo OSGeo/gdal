@@ -164,3 +164,14 @@ def test_gdalalg_vector_convert_error_output_not_set():
         match="convert: Argument 'output' has no dataset object or dataset name",
     ):
         convert.Run()
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdalalg_vector_convert_vsistdout(tmp_vsimem):
+    convert = get_convert_alg()
+    convert["input"] = "../ogr/data/poly.shp"
+    convert["output"] = f"/vsistdout_redirect/{tmp_vsimem}/tmp.json"
+    convert["output-format"] = "GeoJSON"
+    assert convert.Run()
+    assert convert.Finalize()
+    assert gdal.OpenEx(f"{tmp_vsimem}/tmp.json") is not None
