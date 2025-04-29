@@ -1731,6 +1731,166 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // ExprPixelFunc
 
+static const char pszReclassifyPixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument name='mapping' "
+    "             description='Lookup table for mapping, in format "
+    "from=to,from=to' "
+    "             type='string'></Argument>"
+    "   <Argument name='default' "
+    "             description='Default value to assign' "
+    "             type='string'></Argument>"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "</PixelFunctionArgumentsList>";
+
+static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
+                                  int nXSize, int nYSize, GDALDataType eSrcType,
+                                  GDALDataType eBufType, int nPixelSpace,
+                                  int nLineSpace, CSLConstList papszArgs)
+{
+    if (GDALDataTypeIsComplex(eSrcType))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "reclass cannot by applied to complex data types");
+        return CE_Failure;
+    }
+
+    if (nSources != 1)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "reclass only be applied to a single source at a time");
+        return CE_Failure;
+    }
+
+    const char *pszMappings = CSLFetchNameValue(papszArgs, "mapping");
+
+    const char *pszDefault = CSLFetchNameValue(papszArgs, "default");
+
+    bool bHasDefaultValue = false;
+    double dfDefaultValue{};
+    if (pszDefault != nullptr)
+    {
+        bHasDefaultValue = true;
+
+        if (EQUAL(pszDefault, "NO_DATA"))
+        {
+            const char *pszNoData = CSLFetchNameValue(papszArgs, "NoData");
+            if (pszNoData == nullptr)
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Reclassify default set to NO_DATA, but NoData value is "
+                    "not set");
+                return CE_Failure;
+            }
+
+            dfDefaultValue = CPLAtof(pszNoData);
+        }
+        else
+        {
+            char *end;
+            dfDefaultValue = CPLStrtod(pszDefault, &end);
+            if (end == pszDefault || *end != '\0')
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed to parse default");
+                return CE_Failure;
+            }
+
+            if (!GDALIsValueExactAs(dfDefaultValue, eBufType))
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Default value %g cannot be represented as data type %s",
+                    dfDefaultValue, GDALGetDataTypeName(eBufType));
+                return CE_Failure;
+            }
+        }
+    }
+
+    std::map<double, double> aoMappings;
+
+    const char *start = pszMappings;
+    char *end = const_cast<char *>(start);
+    while (*end != '\0')
+    {
+        double srcVal = CPLStrtod(start, &end);
+        if (end == start)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to parse mapping (expected number, got '%c')",
+                     *end);
+            return CE_Failure;
+        }
+
+        if (*end != '=')
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to parse mapping (expected '=', got '%c')", *end);
+            return CE_Failure;
+        }
+
+        double dstVal = CPLStrtod(end + 1, &end);
+        if (*end != '\0' && *end != ',')
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to parse mapping (expected ',' or end of string, "
+                     "got '%c')",
+                     *end);
+            return CE_Failure;
+        }
+
+        if (!GDALIsValueExactAs(dstVal, eBufType))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Value %g cannot be represented as data type %s", dstVal,
+                     GDALGetDataTypeName(eBufType));
+            return CE_Failure;
+        }
+
+        aoMappings[srcVal] = dstVal;
+        start = end + 1;
+    }
+
+    std::unique_ptr<double, VSIFreeReleaser> padfResults(
+        static_cast<double *>(VSI_MALLOC2_VERBOSE(nXSize, sizeof(double))));
+    if (!padfResults)
+        return CE_Failure;
+
+    size_t ii = 0;
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
+        {
+            double srcVal = GetSrcVal(papoSources[0], eSrcType, ii);
+            auto oDstValIt = aoMappings.find(srcVal);
+            if (oDstValIt == aoMappings.end())
+            {
+                if (!bHasDefaultValue)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Encountered value %g with no specified mapping",
+                             srcVal);
+                    return CE_Failure;
+                }
+
+                padfResults.get()[iCol] = dfDefaultValue;
+            }
+            else
+            {
+                padfResults.get()[iCol] = oDstValIt->second;
+            }
+        }
+
+        GDALCopyWords(padfResults.get(), GDT_Float64, sizeof(double),
+                      static_cast<GByte *>(pData) +
+                          static_cast<GSpacing>(nLineSpace) * iLine,
+                      eBufType, nPixelSpace, nXSize);
+    }
+
+    return CE_None;
+}  // ReclassifyPixelFunc
+
 /************************************************************************/
 /*                     GDALRegisterDefaultPixelFunc()                   */
 /************************************************************************/
@@ -1798,6 +1958,7 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
  * - "interpolate_exp": interpolate values between two raster bands using
  *                      exponential interpolation
  * - "scale": Apply the RasterBand metadata values of "offset" and "scale"
+ * - "reclassify": Reclassify values by exact matching to a lookup table
  * - "nan": Convert incoming NoData values to IEEE 754 nan
  *
  * @see GDALAddDerivedBandPixelFunc
@@ -1854,5 +2015,7 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszMinMaxFuncMetadataNodata);
     GDALAddDerivedBandPixelFuncWithArgs("expression", ExprPixelFunc,
                                         pszExprPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("reclassify", ReclassifyPixelFunc,
+                                        pszReclassifyPixelFuncMetadata);
     return CE_None;
 }
