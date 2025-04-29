@@ -5799,3 +5799,42 @@ std::string GDALGetCacheDirectory()
     }
     return std::string();
 }
+
+/************************************************************************/
+/*                      GDALDoesFileOrDatasetExist()                    */
+/************************************************************************/
+
+/** Return whether a file already exists.
+ */
+bool GDALDoesFileOrDatasetExist(const char *pszName, const char **ppszType)
+{
+    VSIStatBufL sStat;
+    if (VSIStatL(pszName, &sStat) == 0)
+    {
+        if (ppszType)
+            *ppszType = "File";
+        return true;
+    }
+
+    if (GDALIdentifyDriver(pszName, nullptr))
+    {
+        if (ppszType)
+            *ppszType = "Dataset";
+        return true;
+    }
+
+    bool bExists;
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        bExists =
+            std::unique_ptr<GDALDataset>(GDALDataset::Open(pszName)) != nullptr;
+    }
+    if (bExists)
+    {
+        if (ppszType)
+            *ppszType = "Dataset";
+        return true;
+    }
+
+    return false;
+}
