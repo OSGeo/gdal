@@ -21,11 +21,11 @@ Description
 -----------
 
 :program:`gdal raster sieve` removes raster polygons smaller than a provided threshold size (in pixels)
-    and replaces them with the pixel value of the largest neighbour polygon.
+and replaces them with the pixel value of the largest neighbour polygon.
 
-    The input dataset is read as integer data which means that floating point
-    values are rounded to integers. Re-scaling source data may be necessary in
-    some cases (e.g. 32-bit floating point data with min=0 and max=1).
+The input dataset is read as integer data which means that floating point
+values are rounded to integers. Re-scaling source data may be necessary in
+some cases (e.g. 32-bit floating point data with min=0 and max=1).
 
 Standard options
 ++++++++++++++++
@@ -50,7 +50,9 @@ Standard options
 
 .. option:: --mask <MASK>
 
-    Use the first band of the specified file as a validity mask (zero is invalid, non-zero is valid).
+    Use the first band of the specified file as a validity mask:
+    all pixels in the mask band with a value other than zero
+    will be considered suitable for inclusion in polygons.
 
 
 Examples

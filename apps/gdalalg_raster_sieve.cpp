@@ -49,10 +49,12 @@ GDALRasterSieveAlgorithm::GDALRasterSieveAlgorithm()
     AddCreationOptionsArg(&m_creationOptions);
     AddOverwriteArg(&m_overwrite);
 
-    auto &mask{AddArg("mask", 0,
-                      _("Use the first band of the specified file as a "
-                        "validity mask (zero is invalid, non-zero is valid)"),
-                      &m_maskDataset)};
+    auto &mask{
+        AddArg("mask", 0,
+               _("Use the first band of the specified file as a "
+                 "validity mask (all pixels with a value other than zero "
+                 "will be considered suitable for inclusion in polygons)"),
+               &m_maskDataset)};
 
     SetAutoCompleteFunctionForFilename(mask, GDAL_OF_RASTER);
 
@@ -119,53 +121,40 @@ bool GDALRasterSieveAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                     : m_outputDataset.GetName()};
     std::unique_ptr<GDALDataset> workingDSHandler;
 
+    CPLStringList options;
+    options.AddString("-b");
+    options.AddString(CPLSPrintf("%d", m_band));
+
     if (useTemporaryFile)
     {
         // Translate the single required band to uncompressed TILED GTiff
-        CPLStringList options;
-        options.AddString("-b");
-        options.AddString(CPLSPrintf("%d", m_band));
         options.AddString("-of");
         options.AddString("GTiff");
         options.AddString("-co");
         options.AddString("TILED=YES");
-        GDALTranslateOptions *translateOptions =
-            GDALTranslateOptionsNew(options.List(), nullptr);
-
-        GDALDatasetH hSrcDS =
-            GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
-        workingDSHandler.reset(GDALDataset::FromHandle(
-            GDALTranslate(m_outputDataset.GetName().c_str(), hSrcDS,
-                          translateOptions, nullptr)));
-        GDALTranslateOptionsFree(translateOptions);
     }
     else
     {
         // Translate the single required band to the destination format
-        CPLStringList options;
-        options.AddString("-b");
-        options.AddString(CPLSPrintf("%d", m_band));
-        options.AddString("-of");
-        options.AddString(m_format.c_str());
+        if (!m_format.empty())
+        {
+            options.AddString("-of");
+            options.AddString(m_format.c_str());
+        }
         for (const auto &co : m_creationOptions)
         {
-            if (co.find('=') != std::string::npos)
-            {
-                options.AddString(co.c_str());
-            }
-            else
-            {
-                options.AddString(CPLSPrintf("-co %s", co.c_str()));
-            }
+            options.AddString("-co");
+            options.AddString(co.c_str());
         }
-        GDALTranslateOptions *translateOptions =
-            GDALTranslateOptionsNew(options.List(), nullptr);
-        GDALDatasetH hSrcDS =
-            GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
-        workingDSHandler.reset(GDALDataset::FromHandle(GDALTranslate(
-            workingFileName.c_str(), hSrcDS, translateOptions, nullptr)));
-        GDALTranslateOptionsFree(translateOptions);
     }
+
+    GDALTranslateOptions *translateOptions =
+        GDALTranslateOptionsNew(options.List(), nullptr);
+
+    GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
+    workingDSHandler.reset(GDALDataset::FromHandle(GDALTranslate(
+        workingFileName.c_str(), hSrcDS, translateOptions, nullptr)));
+    GDALTranslateOptionsFree(translateOptions);
 
     if (!workingDSHandler)
     {
@@ -212,29 +201,26 @@ bool GDALRasterSieveAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     if (useTemporaryFile)
     {
         // Translate the temporary dataset to the final format
-        CPLStringList options;
+        options.Clear();
         options.AddString("-b");
         options.AddString(CPLSPrintf("%d", m_band));
-        options.AddString("-of");
-        options.AddString(m_format.c_str());
+        if (!m_format.empty())
+        {
+            options.AddString("-of");
+            options.AddString(m_format.c_str());
+        }
         for (const auto &co : m_creationOptions)
         {
-            if (co.find('=') != std::string::npos)
-            {
-                options.AddString(co.c_str());
-            }
-            else
-            {
-                options.AddString(CPLSPrintf("-co %s", co.c_str()));
-            }
+            options.AddString("-co");
+            options.AddString(co.c_str());
         }
-        GDALTranslateOptions *translateOptions =
+        GDALTranslateOptions *finalTranslateOptions =
             GDALTranslateOptionsNew(options.List(), nullptr);
         workingDSHandler.reset(GDALDataset::FromHandle(
-            GDALTranslate(workingFileName.c_str(),
+            GDALTranslate(m_outputDataset.GetName().c_str(),
                           GDALDataset::ToHandle(workingDSHandler.get()),
-                          translateOptions, nullptr)));
-        GDALTranslateOptionsFree(translateOptions);
+                          finalTranslateOptions, nullptr)));
+        GDALTranslateOptionsFree(finalTranslateOptions);
     }
 
     m_outputDataset.Set(std::move(workingDSHandler));

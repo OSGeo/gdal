@@ -36,7 +36,9 @@ def get_alg():
         (True, 370),
     ),
 )
-@pytest.mark.parametrize("creation_options", ("", "TILED=YES"))
+@pytest.mark.parametrize(
+    "creation_options", ({}, {"TILED": "YES"}, {"COMPRESS": "LZW"})
+)
 def test_gdalalg_raster_sieve(
     tmp_path, tmp_vsimem, connectedness, expected_checksum, creation_options
 ):
@@ -51,8 +53,7 @@ def test_gdalalg_raster_sieve(
     alg["output"] = result_tif
     alg["size-threshold"] = 2
     alg["connectedness"] = connectedness
-    if creation_options != "":
-        alg["co"] = creation_options
+    alg["creation-option"] = creation_options
     alg.Run()
 
     ds = gdal.Open(result_tif)
@@ -60,6 +61,14 @@ def test_gdalalg_raster_sieve(
     assert ds.RasterCount == 1
 
     dst_band = ds.GetRasterBand(1)
+
+    # Check if the output is TILED
+    if "COMPRESS" in creation_options and creation_options["COMPRESS"] == "LZW":
+        assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
+    if "TILED" in creation_options and creation_options["TILED"] == "YES":
+        assert dst_band.GetBlockSize() == [256, 256]
+    else:
+        assert dst_band.GetBlockSize() != [256, 256]
 
     assert dst_band.Checksum() == expected_checksum
 
