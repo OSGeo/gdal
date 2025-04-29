@@ -45,6 +45,7 @@ add_library(
   gdalalg_raster_sieve.cpp
   gdalalg_raster_slope.cpp
   gdalalg_raster_stack.cpp
+  gdalalg_raster_tile.cpp
   gdalalg_raster_tpi.cpp
   gdalalg_raster_tri.cpp
   gdalalg_raster_unscale.cpp
@@ -310,6 +311,7 @@ set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalinfo_output.schema.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalmdiminfo_output.schema.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/ogrinfo_output.schema.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/leaflet_template.html
 )
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}

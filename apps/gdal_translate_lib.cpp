@@ -2807,10 +2807,7 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
 
     argParser->add_output_format_argument(psOptions->osFormat);
 
-    // Written that way so that in library mode, users can still use the -q
-    // switch, even if it has no effect
-    argParser->add_quiet_argument(
-        psOptionsForBinary ? &(psOptionsForBinary->bQuiet) : nullptr);
+    argParser->add_quiet_argument(&(psOptions->bQuiet));
 
     argParser->add_argument("-b")
         .append()
@@ -3535,6 +3532,7 @@ GDALTranslateOptionsNew(char **papszArgv,
 
         if (psOptionsForBinary)
         {
+            psOptionsForBinary->bQuiet = psOptions->bQuiet;
             psOptionsForBinary->aosCreateOptions = psOptions->aosCreateOptions;
             if (!psOptions->osFormat.empty())
                 psOptionsForBinary->osFormat = psOptions->osFormat;

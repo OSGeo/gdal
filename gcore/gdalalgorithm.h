@@ -692,11 +692,23 @@ class CPL_DLL GDALAlgorithmArgDecl final
     /** Declares the allowed values (as strings) for the argument.
      * Only honored for GAAT_STRING and GAAT_STRING_LIST types.
      */
-    template <typename T, typename... U>
+    template <
+        typename T, typename... U,
+        typename std::enable_if<!std::is_same_v<T, std::vector<std::string> &>,
+                                bool>::type = true>
     GDALAlgorithmArgDecl &SetChoices(T &&first, U &&...rest)
     {
         m_choices.push_back(std::forward<T>(first));
         SetChoices(std::forward<U>(rest)...);
+        return *this;
+    }
+
+    /** Declares the allowed values (as strings) for the argument.
+     * Only honored for GAAT_STRING and GAAT_STRING_LIST types.
+     */
+    GDALAlgorithmArgDecl &SetChoices(const std::vector<std::string> &choices)
+    {
+        m_choices = choices;
         return *this;
     }
 
@@ -1995,10 +2007,21 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     }
 
     /** Alias for GDALAlgorithmArgDecl::SetChoices() */
-    template <typename T, typename... U>
+    template <
+        typename T, typename... U,
+        typename std::enable_if<!std::is_same_v<T, std::vector<std::string> &>,
+                                bool>::type = true>
     GDALInConstructionAlgorithmArg &SetChoices(T &&first, U &&...rest)
     {
         m_decl.SetChoices(std::forward<T>(first), std::forward<U>(rest)...);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetChoices() */
+    GDALInConstructionAlgorithmArg &
+    SetChoices(const std::vector<std::string> &choices)
+    {
+        m_decl.SetChoices(choices);
         return *this;
     }
 

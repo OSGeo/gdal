@@ -435,6 +435,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_tile",
+        "gdal-raster-tile",
+        "Generate tiles in separate files from a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_tpi",
         "gdal-raster-tpi",
         "Generate a Topographic Position Index (TPI) map",
