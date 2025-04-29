@@ -128,7 +128,7 @@ def test_gdalalg_raster_sieve_overwrite(tmp_path, tmp_vsimem):
     alg["output"] = result_tif
     alg["size-threshold"] = 2
     alg.Run()
-
+    alg.Finalize()  # ensure output file is closed, to be later overwritten
     with pytest.raises(Exception, match="already exists"):
         alg.Run()
 
