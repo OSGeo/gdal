@@ -2423,3 +2423,55 @@ GDALWarpOptions *CPL_STDCALL GDALDeserializeWarpOptions(CPLXMLNode *psTree)
 
     return psWO;
 }
+
+/************************************************************************/
+/*                        GDALGetWarpResampleAlg()                      */
+/************************************************************************/
+
+/** Return a GDALResampleAlg from a string */
+bool GDALGetWarpResampleAlg(const char *pszResampling,
+                            GDALResampleAlg &eResampleAlg, bool bThrow)
+{
+    if (STARTS_WITH_CI(pszResampling, "near"))
+        eResampleAlg = GRA_NearestNeighbour;
+    else if (EQUAL(pszResampling, "bilinear"))
+        eResampleAlg = GRA_Bilinear;
+    else if (EQUAL(pszResampling, "cubic"))
+        eResampleAlg = GRA_Cubic;
+    else if (EQUAL(pszResampling, "cubicspline"))
+        eResampleAlg = GRA_CubicSpline;
+    else if (EQUAL(pszResampling, "lanczos"))
+        eResampleAlg = GRA_Lanczos;
+    else if (EQUAL(pszResampling, "average"))
+        eResampleAlg = GRA_Average;
+    else if (EQUAL(pszResampling, "rms"))
+        eResampleAlg = GRA_RMS;
+    else if (EQUAL(pszResampling, "mode"))
+        eResampleAlg = GRA_Mode;
+    else if (EQUAL(pszResampling, "max"))
+        eResampleAlg = GRA_Max;
+    else if (EQUAL(pszResampling, "min"))
+        eResampleAlg = GRA_Min;
+    else if (EQUAL(pszResampling, "med"))
+        eResampleAlg = GRA_Med;
+    else if (EQUAL(pszResampling, "q1"))
+        eResampleAlg = GRA_Q1;
+    else if (EQUAL(pszResampling, "q3"))
+        eResampleAlg = GRA_Q3;
+    else if (EQUAL(pszResampling, "sum"))
+        eResampleAlg = GRA_Sum;
+    else
+    {
+        if (bThrow)
+        {
+            throw std::invalid_argument("Unknown resampling method");
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Unknown resampling method: %s.", pszResampling);
+            return false;
+        }
+    }
+    return true;
+}
