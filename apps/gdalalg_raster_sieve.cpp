@@ -74,8 +74,8 @@ GDALRasterSieveAlgorithm::GDALRasterSieveAlgorithm()
            &m_sizeThreshold)
         .SetDefault(m_sizeThreshold);
 
-    AddArg("connectedness", 'c', _("Consider diagonal pixels as connected"),
-           &m_connectDiagonalPixels)
+    AddArg("connect-diagonal-pixels", 'c',
+           _("Consider diagonal pixels as connected"), &m_connectDiagonalPixels)
         .SetDefault(m_connectDiagonalPixels);
 }
 

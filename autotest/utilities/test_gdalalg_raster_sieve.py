@@ -30,7 +30,7 @@ def get_alg():
 @pytest.mark.require_driver("AAIGRID")
 @pytest.mark.require_driver("GTiff")
 @pytest.mark.parametrize(
-    "connectedness,expected_checksum",
+    "connect_diagonal_pixels,expected_checksum",
     (
         (False, 364),
         (True, 370),
@@ -40,7 +40,7 @@ def get_alg():
     "creation_options", ({}, {"TILED": "YES"}, {"COMPRESS": "LZW"})
 )
 def test_gdalalg_raster_sieve(
-    tmp_path, tmp_vsimem, connectedness, expected_checksum, creation_options
+    tmp_path, tmp_vsimem, connect_diagonal_pixels, expected_checksum, creation_options
 ):
 
     result_tif = str(tmp_path / "test_gdal_sieve.tif")
@@ -52,7 +52,7 @@ def test_gdalalg_raster_sieve(
     alg["input"] = tmp_filename
     alg["output"] = result_tif
     alg["size-threshold"] = 2
-    alg["connectedness"] = connectedness
+    alg["connect-diagonal-pixels"] = connect_diagonal_pixels
     alg["creation-option"] = creation_options
     alg.Run()
 
