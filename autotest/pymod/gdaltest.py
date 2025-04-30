@@ -1967,13 +1967,20 @@ def _read_in_thread(f, q):
     f.close()
 
 
-def runexternal_out_and_err(cmd, check_memleak=True, encoding="ascii"):
+def runexternal_out_and_err(
+    cmd, check_memleak=True, encoding="ascii", stdin=None, close_stdin=False
+):
     # pylint: disable=unused-argument
     if sys.platform == "win32":
         command = cmd
     else:
         command = shlex.split(cmd)
-    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(
+        command, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+
+    if close_stdin:
+        p.stdin.close()
 
     if p.stdout is not None:
         q_stdout = Queue()

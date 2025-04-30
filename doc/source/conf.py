@@ -372,6 +372,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_pixelinfo",
+        "gdal-raster-pixelinfo",
+        "Return information on a pixel of a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_reproject",
         "gdal-raster-reproject",
         "Reproject a raster dataset",
