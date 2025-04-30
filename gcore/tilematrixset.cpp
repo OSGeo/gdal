@@ -423,9 +423,41 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
                 tm.mTopLeftY = oTopLeftCorner[1].ToDouble(NaN);
             }
             tm.mTileWidth = oTM.GetInteger("tileWidth");
+            if (tm.mTileWidth <= 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid tileWidth: %d",
+                         tm.mTileWidth);
+                return nullptr;
+            }
             tm.mTileHeight = oTM.GetInteger("tileHeight");
+            if (tm.mTileHeight <= 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid tileHeight: %d",
+                         tm.mTileHeight);
+                return nullptr;
+            }
+            if (tm.mTileWidth > INT_MAX / tm.mTileHeight)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "tileWidth(%d) x tileHeight(%d) larger than "
+                         "INT_MAX",
+                         tm.mTileWidth, tm.mTileHeight);
+                return nullptr;
+            }
             tm.mMatrixWidth = oTM.GetInteger("matrixWidth");
+            if (tm.mMatrixWidth <= 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid matrixWidth: %d",
+                         tm.mMatrixWidth);
+                return nullptr;
+            }
             tm.mMatrixHeight = oTM.GetInteger("matrixHeight");
+            if (tm.mMatrixHeight <= 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid matrixHeight: %d", tm.mMatrixHeight);
+                return nullptr;
+            }
 
             const auto oVariableMatrixWidths = oTM.GetArray(
                 bIsTMSv2 ? "variableMatrixWidths" : "variableMatrixWidth");
