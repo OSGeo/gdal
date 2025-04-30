@@ -25,6 +25,7 @@ CFLAGS="-Wextra -Werror" CXXFLAGS="-Wextra -Werror" cmake .. \
          -DGDAL_USE_POSTGRESQL=OFF \
          -DGDAL_USE_WEBP=OFF \
          -DBUILD_CSHARP_BINDINGS=OFF \
+         -DGDAL_USE_KEA=OFF \
          "-DUSE_PRECOMPILED_HEADERS=ON" \
          -DCMAKE_UNITY_BUILD=ON
 
