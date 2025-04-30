@@ -1221,6 +1221,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - 1
      - -
      - extract real part from a single raster band (just a copy if the input is non-complex)
+   * - **reclassify**
+     - = 1
+     - ``mapping``, ``default``
+     - reclassify values according to a mapping provided by ``mapping``. The format of the mapping is ``SOURCE=DEST;SOURCE=DEST;..`` where each ``SOURCE`` element is either a single value or an interval (e.g., ``(-inf,30]``). An error will be raised if a pixel value is not covered by any interval, unless the ```default`` argument has been specified. ``default`` may also be set any constant or ``NO_DATA``.
    * - **replace_nodata**
      - = 1
      - ``to`` (optional)

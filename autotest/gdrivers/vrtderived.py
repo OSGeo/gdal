@@ -1303,8 +1303,8 @@ def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
 
-    nx = 2
-    ny = 3
+    nx = 3
+    ny = 5
 
     data = np.arange(nx * ny).reshape(ny, nx)
 
@@ -1315,7 +1315,7 @@ def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
     <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
       <VRTRasterBand dataType="Float32" band="1" subclass="VRTDerivedRasterBand">
         <PixelFunctionType>reclassify</PixelFunctionType>
-        <PixelFunctionArguments mapping="1=2,3=4" default="{default}"/>
+        <PixelFunctionArguments mapping=" (-inf, 1)=8; 2=9 ; (3,5]=4; [11, Inf] = 11 " default="{default}"/>
         <SimpleSource>
           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
           <SourceBand>1</SourceBand>j
@@ -1326,9 +1326,9 @@ def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
 
     dst = gdal.Open(xml).ReadAsArray()
 
-    assert np.all(dst[np.where(data == 1)] == 2)
-    assert np.all(dst[np.where(data == 3)] == 4)
-    assert np.all(dst[np.where((data != 1) & (data != 3))] == 7)
+    np.testing.assert_array_equal(
+        dst, np.array([[8, 7, 9], [7, 4, 4], [7, 7, 7], [7, 7, 11], [11, 11, 11]])
+    )
 
 
 @gdaltest.enable_exceptions()
@@ -1349,7 +1349,7 @@ def test_vrt_pixelfn_reclassify_no_default(tmp_vsimem):
     <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
       <VRTRasterBand dataType="Float32" band="1" subclass="VRTDerivedRasterBand">
         <PixelFunctionType>reclassify</PixelFunctionType>
-        <PixelFunctionArguments mapping="1=2,3=4"/>
+        <PixelFunctionArguments mapping="1=2;3=4"/>
         <SimpleSource>
           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
           <SourceBand>1</SourceBand>j
@@ -1390,7 +1390,7 @@ def test_vrt_pixelfn_reclassify_bad_default(tmp_vsimem, default, error):
     <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
       <VRTRasterBand dataType="Byte" band="1" subclass="VRTDerivedRasterBand">
         <PixelFunctionType>reclassify</PixelFunctionType>
-        <PixelFunctionArguments mapping="1=2,3=4" default="{default}" />
+        <PixelFunctionArguments mapping="1=2;3=4" default="{default}" />
         <SimpleSource>
           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
           <SourceBand>1</SourceBand>j
@@ -1406,10 +1406,11 @@ def test_vrt_pixelfn_reclassify_bad_default(tmp_vsimem, default, error):
 @pytest.mark.parametrize(
     "mapping,error",
     [
-        ("1=2,3", "expected '='"),
-        ("1=2,3=4g", "expected ',' or end"),
-        ("1=2,", "expected number"),
-        ("1=3,3=256,", "cannot be represented"),
+        ("1=2;3", "expected '='"),
+        ("1=2;3=4g", "expected ';' or end"),
+        ("1=2;", "Interval must start with"),
+        ("1=3;3=256", "cannot be represented"),
+        ("(1,}=3;3=4,", "Interval must end with"),
     ],
 )
 def test_vrt_pixelfn_reclassify_invalid_mapping(tmp_vsimem, mapping, error):
