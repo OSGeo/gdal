@@ -142,15 +142,17 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()
                 {
                     if (nOvrCount == 0)
                     {
-                        ReportError(CE_Failure, CPLE_IllegalArg,
-                                    "Source dataset has no overviews. "
-                                    "Argument 'ovr' should not be specified.");
+                        ReportError(
+                            CE_Failure, CPLE_IllegalArg,
+                            "Source dataset has no overviews. "
+                            "Argument 'overview' should not be specified.");
                     }
                     else
                     {
                         ReportError(
                             CE_Failure, CPLE_IllegalArg,
-                            "Source dataset has only %d overview levels. 'ovr' "
+                            "Source dataset has only %d overview levels. "
+                            "'overview' "
                             "value should be strictly lower than this number.",
                             nOvrCount);
                     }
