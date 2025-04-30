@@ -500,6 +500,20 @@ int GDALOvLevelAdjust2(int nOvLevel, int nXSize, int nYSize)
 }
 
 /************************************************************************/
+/*                         GetFloorPowerOfTwo()                         */
+/************************************************************************/
+
+static int GetFloorPowerOfTwo(int n)
+{
+    int p2 = 1;
+    while ((n = n >> 1) > 0)
+    {
+        p2 <<= 1;
+    }
+    return p2;
+}
+
+/************************************************************************/
 /*                         GDALComputeOvFactor()                        */
 /************************************************************************/
 
@@ -511,12 +525,32 @@ int GDALComputeOvFactor(int nOvrXSize, int nRasterXSize, int nOvrYSize,
     // in an attempt to behave closer as previous behavior.
     if (nRasterXSize != 1 && nRasterXSize >= nRasterYSize / 2)
     {
-        return static_cast<int>(0.5 +
-                                nRasterXSize / static_cast<double>(nOvrXSize));
+        const int nVal = static_cast<int>(
+            0.5 + nRasterXSize / static_cast<double>(nOvrXSize));
+        // Try to return a power-of-two value
+        const int nValPowerOfTwo = GetFloorPowerOfTwo(nVal);
+        for (int fact = 1; fact <= 2; ++fact)
+        {
+            if ((nRasterXSize + fact * nValPowerOfTwo - 1) /
+                    (fact * nValPowerOfTwo) ==
+                nOvrXSize)
+                return fact * nValPowerOfTwo;
+        }
+        return nVal;
     }
 
-    return static_cast<int>(0.5 +
-                            nRasterYSize / static_cast<double>(nOvrYSize));
+    const int nVal =
+        static_cast<int>(0.5 + nRasterYSize / static_cast<double>(nOvrYSize));
+    // Try to return a power-of-two value
+    const int nValPowerOfTwo = GetFloorPowerOfTwo(nVal);
+    for (int fact = 1; fact <= 2; ++fact)
+    {
+        if ((nRasterYSize + fact * nValPowerOfTwo - 1) /
+                (fact * nValPowerOfTwo) ==
+            nOvrYSize)
+            return fact * nValPowerOfTwo;
+    }
+    return nVal;
 }
 
 /************************************************************************/
