@@ -28,7 +28,7 @@ It can also be used as a step of :ref:`gdal_vector_pipeline`.
 The following groups of options can be combined together:
 -  :option:`--multi` / :option:`--single`
 -  :option:`--linear` / :option:`--curve`
--  :option:`--xy` / :option:`--xyz` / :option:`--xym` / :option:`--xyzm`
+-  :option:`--dim`
 
 Standard options
 ++++++++++++++++
@@ -65,8 +65,7 @@ Standard options
    indicate the dimensionality.
 
    This option is mutually exclusive with :option:`--multi`, :option:`--single`,
-   :option:`--linear`, :option:`--curve`, :option:`--xy`, :option:`--xyz`,
-   :option:`--xym`, :option:`--xyzm`.
+   :option:`--linear`, :option:`--curve`, and :option:`--dim`.
 
 .. option:: --multi
 
@@ -97,28 +96,10 @@ Standard options
    or ``POLYGON`` ==> ``CURVEPOLYGON``. Points are kept unmodified.
    This option is mutually exclusive with :option:`--linear`.
 
-.. option:: --xy
+.. option:: --dim
 
-   Force geometries to XY dimension.
-   This option is mutually exclusive with :option:`--xyz`, :option:`--xym`, :option:`--xyzm`.
-
-.. option:: --xyz
-
-   Force geometries to XYZ dimension. If the input geometry lacks a Z component,
-   it will be set to 0.
-   This option is mutually exclusive with :option:`--xy`, :option:`--xym`, :option:`--xyzm`.
-
-.. option:: --xym
-
-   Force geometries to XYM dimension. If the input geometry lacks a M component,
-   it will be set to 0.
-   This option is mutually exclusive with :option:`--xy`, :option:`--xyz`, :option:`--xyzm`.
-
-.. option:: --xyzm
-
-   Force geometries to XYZM dimension. If the input geometry lacks a Z or M component,
-   it will be set to 0.
-   This option is mutually exclusive with :option:`--xy`, :option:`--xyz`, :option:`--xym`.
+   Force geometries to the specified dimension (XY, XYZ, XYM, or XYZM). If the input geometry lacks Z or M components, they will be set to 0. This option
+   is mutually exclusive with :option:`--geometry-type`.
 
 .. option:: --skip
 
@@ -128,8 +109,7 @@ Standard options
    the output layer if it does not support mix of geometry types).
    This option applies both when the target geometry type is defined with
    :option:`--geometry-type`, or with any of :option:`--multi`, :option:`--single`,
-   :option:`--linear`, :option:`--curve`, :option:`--xy`, :option:`--xyz`,
-   :option:`--xym` or :option:`--xyzm`.
+   :option:`--linear`, and :option:`--curve`.
 
 Advanced options
 ++++++++++++++++
