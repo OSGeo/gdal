@@ -196,8 +196,12 @@ add_library(main_gtest STATIC main_gtest.cpp)
 target_link_libraries(main_gtest PRIVATE gtest_for_gdal $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
 gdal_standard_includes(main_gtest)
 
-gdal_test_target(testblockcache FILES testblockcache.cpp)
-target_link_libraries(testblockcache PRIVATE gtest_for_gdal main_gtest)
+gdal_test_target(testblockcache
+    FILES
+        testblockcache.cpp)
+target_link_libraries(testblockcache
+    PRIVATE
+        gtest_for_gdal main_gtest)
 
 register_test(
   test-block-cache-1
