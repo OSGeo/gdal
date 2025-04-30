@@ -42,10 +42,7 @@ class GDALVectorGeomSetTypeAlgorithm final
         bool m_single = false;
         bool m_linear = false;
         bool m_curve = false;
-        bool m_xy = false;
-        bool m_xyz = false;
-        bool m_xym = false;
-        bool m_xyzm = false;
+        std::string m_dim{};
         bool m_skip = false;
 
         // Computed value from m_type
