@@ -307,40 +307,21 @@ bool GDALVectorGridAbstractAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     GDALGridOptionsSetProgress(psOptions.get(), pfnProgress, pProgressData);
 
-    VSIStatBufL sStat;
-    std::unique_ptr<GDALDataset> poDstDS;
-    const bool fileExists =
-        VSIStatL(m_outputDataset.GetName().c_str(), &sStat) == 0;
-
-    {
-        CPLErrorStateBackuper oCPLErrorHandlerPusher(CPLQuietErrorHandler);
-        poDstDS.reset(GDALDataset::Open(m_outputDataset.GetName().c_str(),
-                                        GDAL_OF_RASTER | GDAL_OF_UPDATE,
-                                        nullptr, nullptr, nullptr));
-    }
-
-    if (poDstDS)
+    const char *pszType = "";
+    if (!m_outputDataset.GetName().empty() &&
+        GDALDoesFileOrDatasetExist(m_outputDataset.GetName().c_str(), &pszType))
     {
         if (!m_overwrite)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Dataset '%s' already exists. Specify the --overwrite "
-                     "option to overwrite it",
-                     m_outputDataset.GetName().c_str());
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "%s '%s' already exists. Specify the --overwrite "
+                        "option to overwrite it, or --update to update it.",
+                        pszType, m_outputDataset.GetName().c_str());
             return false;
         }
-        else if (fileExists)
+        else
         {
-            poDstDS.reset();
-
-            // Delete the existing file
-            if (VSIUnlink(m_outputDataset.GetName().c_str()) != 0)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Failed to delete existing dataset '%s'.",
-                         m_outputDataset.GetName().c_str());
-                return false;
-            }
+            VSIUnlink(m_outputDataset.GetName().c_str());
         }
     }
 

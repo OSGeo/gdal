@@ -557,7 +557,7 @@ def test_gdalalg_vector_grid_overwrite_failed_unlink(tmp_path):
         alg["input"] = get_src_ds(True)
         alg["output"] = out_filename
         alg["overwrite"] = True
-        with pytest.raises(Exception, match="Failed to delete"):
+        with pytest.raises(Exception):
             alg.Run()
     except Exception:
         os.chmod(tmp_path, 0o755)

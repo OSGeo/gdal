@@ -18,6 +18,7 @@
 #include "cpl_conv.h"
 #include "cpl_json.h"
 #include "gdalalgorithm.h"
+#include "gdal_priv.h"
 
 #include <algorithm>
 
@@ -172,8 +173,8 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
             const auto &filename =
                 outputArg->GDALAlgorithmArg::template Get<GDALArgDatasetValue>()
                     .GetName();
-            VSIStatBufL sStat;
-            if (VSIStatL(filename.c_str(), &sStat) == 0)
+            const char *pszType = "";
+            if (GDALDoesFileOrDatasetExist(filename.c_str(), &pszType))
             {
                 const auto overwriteArg =
                     m_steps.back()->GetArg(GDAL_ARG_NAME_OVERWRITE);
@@ -182,9 +183,9 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
                     if (!overwriteArg->GDALAlgorithmArg::template Get<bool>())
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                 "File '%s' already exists. Specify the "
+                                 "%s '%s' already exists. Specify the "
                                  "--overwrite option to overwrite it.",
-                                 filename.c_str());
+                                 pszType, filename.c_str());
                         return false;
                     }
                 }
