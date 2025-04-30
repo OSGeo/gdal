@@ -224,13 +224,13 @@ def test_gdalalg_raster_polygonize_int64():
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger64
 
 
-def test_gdalalg_raster_polygonize_connectedness():
+def test_gdalalg_raster_polygonize_connect_diagonal_pixels():
 
     alg = get_alg()
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["connectedness"] = 8
+    alg["connect-diagonal-pixels"] = True
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayerByName("polygonize")

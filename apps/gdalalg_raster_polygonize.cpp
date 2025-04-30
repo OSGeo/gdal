@@ -73,11 +73,10 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm()
     AddArg("attribute-name", 0, _("Name of the field with the pixel value"),
            &m_attributeName)
         .SetDefault(m_attributeName);
-    AddArg("connectedness", 0,
-           _("Whether to use 4-connectedness or 8-connectedness"),
-           &m_connectedness)
-        .SetChoices("4", "8")
-        .SetDefault(m_connectedness);
+
+    AddArg("connect-diagonal-pixels", 'c',
+           _("Consider diagonal pixels as connected"), &m_connectDiagonalPixels)
+        .SetDefault(m_connectDiagonalPixels);
 }
 
 /************************************************************************/
@@ -238,7 +237,7 @@ bool GDALRasterPolygonizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
 
     CPLStringList aosPolygonizeOptions;
-    if (m_connectedness == 8)
+    if (m_connectDiagonalPixels)
     {
         aosPolygonizeOptions.SetNameValue("8CONNECTED", "8");
     }
