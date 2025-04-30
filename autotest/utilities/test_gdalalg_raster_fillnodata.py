@@ -63,13 +63,24 @@ def run_alg(alg, tmp_path, tmp_vsimem):
     return ds
 
 
-def test_gdalalg_raster_fillnodata(tmp_path, tmp_vsimem):
+@pytest.mark.parametrize("creation_option", ({}, {"TILED": "YES"}, {"COMPRESS": "LZW"}))
+def test_gdalalg_raster_fillnodata(tmp_path, tmp_vsimem, creation_option):
 
     alg = get_alg()
+    alg["creation-option"] = creation_option
     ds = run_alg(alg, tmp_path, tmp_vsimem)
 
     # Check the value of pixel 1 - 1
     assert ds.ReadAsArray(1, 1, 1, 1)[0][0] == 125
+
+    # Check the creation options
+    dst_band = ds.GetRasterBand(1)
+    if "COMPRESS" in creation_option and creation_option["COMPRESS"] == "LZW":
+        assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
+    if "TILED" in creation_option and creation_option["TILED"] == "YES":
+        assert dst_band.GetBlockSize() == [256, 256]
+    else:
+        assert dst_band.GetBlockSize() != [256, 256]
     del ds
 
 
