@@ -65,6 +65,14 @@ struct Options
     double targetHeight{0.0};  //!< target height above the DEM surface
     double maxDistance{
         0.0};  //!< maximum distance from observer to compute value
+    double minDistance{
+        0.0};  //!< minimum distance from observer to compute value.
+    double startAngle{0.0};  //!< start angle of observable range
+    double endAngle{0.0};    //!< end angle of observable range
+    double maxPitch{
+        90.0};  //!< maximum pitch (vertical angle) of observable points
+    double minPitch{
+        -90.0};  //!< minimum pitch (vertical angle) of observable points
     double curveCoeff{.85714};  //!< coefficient for atmospheric refraction
     OutputMode outputMode{OutputMode::Normal};  //!< Output information.
         //!< Normal, Height from DEM or Height from ground
@@ -85,6 +93,12 @@ struct Window
     int xStop{};   //!< X end position
     int yStart{};  //!< Y start position
     int yStop{};   //!< Y end position
+
+    bool operator==(const Window &w2) const
+    {
+        return xStart == w2.xStart && xStop == w2.xStop &&
+               yStart == w2.yStart && yStop == w2.yStop;
+    }
 
     /// \brief  Window size in the X direction.
     int xSize() const
@@ -152,6 +166,22 @@ struct Window
         xStart += nShift;
         xStop += nShift;
     }
+};
+
+// Processing limits based on min/max distance restrictions.
+// The left side processing range is [left, leftMin).
+// The right side processing range is [rightMin, right).
+struct LineLimits
+{
+    LineLimits(int left, int leftMin, int rightMin, int right)
+        : left(left), leftMin(leftMin), rightMin(rightMin), right(right)
+    {
+    }
+
+    int left;      //!< Starting (leftmost) cell on the left side.
+    int leftMin;   //!< One past the rightmost cell on the left side.
+    int rightMin;  //!< Starting (leftmost) cell on the right side.
+    int right;     //!< One past the rightmost cell on the right side.
 };
 
 }  // namespace viewshed

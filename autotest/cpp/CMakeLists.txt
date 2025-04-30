@@ -416,3 +416,12 @@ foreach (_test IN LISTS QUICKTEST_LIST)
   set_tests_properties(${_test} PROPERTIES LABELS "quicktest")
 endforeach ()
 
+###
+
+gdal_gtest_target(viewshed_internal_test vit
+    FILES
+        test_viewshed_internal.cpp
+        ../../alg/viewshed/viewshed.cpp
+        ../../alg/viewshed/progress.cpp
+        ../../alg/viewshed/viewshed_executor.cpp
+        ../../alg/viewshed/util.cpp)

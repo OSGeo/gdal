@@ -60,6 +60,7 @@ class ViewshedExecutor
     const Options oOpts;
     Progress &oProgress;
     double m_dfHeightAdjFactor{0};
+    double m_dfMinDistance2;
     double m_dfMaxDistance2;
     double m_dfZObserver{0};
     std::mutex iMutex{};
@@ -79,7 +80,7 @@ class ViewshedExecutor
     void processFirstLineRight(int iStart, int iEnd,
                                std::vector<double> &vResult,
                                std::vector<double> &vThisLineVal);
-    void processFirstLineTopOrBottom(int iLeft, int iRight,
+    void processFirstLineTopOrBottom(const LineLimits &ll,
                                      std::vector<double> &vResult,
                                      std::vector<double> &vThisLineVal);
     void processLineLeft(int nYOffset, int iStart, int iEnd,
@@ -90,8 +91,7 @@ class ViewshedExecutor
                           std::vector<double> &vResult,
                           std::vector<double> &vThisLineVal,
                           std::vector<double> &vLastLineVal);
-    std::pair<int, int> adjustHeight(int iLine,
-                                     std::vector<double> &thisLineVal);
+    LineLimits adjustHeight(int iLine, std::vector<double> &thisLineVal);
 };
 
 }  // namespace viewshed

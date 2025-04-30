@@ -14,6 +14,10 @@ namespace gdal
 namespace viewshed
 {
 
+double normalizeAngle(double maskAngle);
+double horizontalIntersect(double angle, int nX, int nY, int y);
+double verticalIntersect(double angle, int nX, int nY, int x);
+bool rayBetween(double start, double end, double test);
 size_t bandSize(GDALRasterBand &band);
 
 DatasetPtr createOutputDataset(GDALRasterBand &srcBand, const Options &opts,

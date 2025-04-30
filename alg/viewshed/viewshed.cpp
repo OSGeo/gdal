@@ -12,6 +12,9 @@
  ****************************************************************************/
 
 #include <algorithm>
+//ABELL
+#include <iostream>
+#include <iomanip>
 
 #include "gdal_alg.h"
 #include "gdal_priv_templates.hpp"
@@ -216,6 +219,77 @@ bool getTransforms(GDALRasterBand &band, double *pFwdTransform,
     return true;
 }
 
+void shrinkWindowForAngles(Window &oOutExtent, int nX, int nY,
+                           double startAngle, double endAngle)
+{
+    if (startAngle == endAngle)
+        return;
+
+    Window win = oOutExtent;
+
+    // Set the X boundaries for the angles
+    //ABELL - Verify for out-of-raster.
+    double xStart = horizontalIntersect(startAngle, nX, nY, win.yStart);
+    if (isnan(xStart))
+        xStart = horizontalIntersect(startAngle, nX, nY, win.yStop);
+
+    double xStop = horizontalIntersect(endAngle, nX, nY, win.yStart);
+    if (isnan(xStop))
+        xStop = horizontalIntersect(endAngle, nX, nY, win.yStop);
+
+    double xmax = nX;
+    if (!rayBetween(startAngle, endAngle, 0))
+    {
+        if (!isnan(xStart))
+            xmax = std::max(xmax, static_cast<double>(xStart));
+        if (!isnan(xStop))
+            xmax = std::max(xmax, static_cast<double>(xStop));
+        oOutExtent.xStop =
+            std::min(oOutExtent.xStop, static_cast<int>(std::round(xmax)));
+    }
+    double xmin = nX;
+    if (!rayBetween(startAngle, endAngle, M_PI))
+    {
+        if (!isnan(xStart))
+            xmin = std::min(xmin, xStart);
+        if (!isnan(xStop))
+            xmin = std::min(xmin, xStop);
+        oOutExtent.xStart =
+            std::max(oOutExtent.xStart, static_cast<int>(std::round(xmin)));
+    }
+
+    // Set the Y boundaries for the angles
+    //ABELL - Verify for out-of-raster.
+    double yStart = verticalIntersect(startAngle, nX, nY, win.xStart);
+    if (isnan(yStart))
+        yStart = verticalIntersect(startAngle, nX, nY, win.xStop);
+
+    double yStop = verticalIntersect(endAngle, nX, nY, win.xStart);
+    if (isnan(yStop))
+        yStop = verticalIntersect(endAngle, nX, nY, win.xStop);
+
+    double ymin = nY;
+    if (!rayBetween(startAngle, endAngle, M_PI / 2))
+    {
+        if (!isnan(yStart))
+            ymin = std::min(ymin, static_cast<double>(yStart));
+        if (!isnan(yStop))
+            ymin = std::min(ymin, static_cast<double>(yStop));
+        oOutExtent.yStart =
+            std::max(oOutExtent.yStart, static_cast<int>(std::round(ymin)));
+    }
+    double ymax = nY;
+    if (!rayBetween(startAngle, endAngle, 3 * M_PI / 2))
+    {
+        if (!isnan(yStart))
+            ymax = std::max(ymax, static_cast<double>(yStart));
+        if (!isnan(yStop))
+            ymax = std::max(ymax, static_cast<double>(yStop));
+        oOutExtent.yStop =
+            std::min(oOutExtent.yStop, static_cast<int>(std::round(ymax)));
+    }
+}
+
 }  // unnamed namespace
 
 Viewshed::Viewshed(const Options &opts) : oOpts{opts}
@@ -284,6 +358,8 @@ bool Viewshed::calcExtents(int nX, int nY,
         return false;
     }
 
+    shrinkWindowForAngles(oOutExtent, nX, nY, oOpts.startAngle, oOpts.endAngle);
+
     // normalize horizontal index to [ 0, oOutExtent.xSize() )
     oCurExtent = oOutExtent;
     oCurExtent.shiftX(-oOutExtent.xStart);
@@ -324,6 +400,17 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     }
     int nX = static_cast<int>(dfX);
     int nY = static_cast<int>(dfY);
+
+    if (oOpts.startAngle < 0 || oOpts.startAngle >= 360)
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Start angle out of range. Must be [0, 360).");
+    if (oOpts.endAngle < 0 || oOpts.endAngle >= 360)
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "End angle out of range. Must be [0, 360).");
+
+    // Normalize angle to radians and standard math arrangement.
+    oOpts.startAngle = normalizeAngle(oOpts.startAngle);
+    oOpts.endAngle = normalizeAngle(oOpts.endAngle);
 
     // Must calculate extents in order to make the output dataset.
     if (!calcExtents(nX, nY, adfInvTransform))
@@ -368,6 +455,12 @@ double adjustCurveCoeff(double curveCoeff, GDALDatasetH hSrcDS)
         }
     }
     return curveCoeff;
+}
+
+void testShrinkWindowForAngles(Window &oOutExtent, int nX, int nY,
+                               double startAngle, double endAngle)
+{
+    shrinkWindowForAngles(oOutExtent, nX, nY, startAngle, endAngle);
 }
 
 }  // namespace viewshed
