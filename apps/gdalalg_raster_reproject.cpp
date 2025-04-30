@@ -97,9 +97,10 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
             AddArg("warp-option", 0, _("Warping option(s)"), &m_warpOptions)
                 .AddAlias("wo")
                 .SetMetaVar("<NAME>=<VALUE>")
-                .SetCategory(GAAC_ADVANCED);
+                .SetCategory(GAAC_ADVANCED)
+                .SetPackedValuesAllowed(false);
         arg.AddValidationAction([this, &arg]()
-                                { return ValidateKeyValue(arg); });
+                                { return ParseAndValidateKeyValue(arg); });
         arg.SetAutoCompleteFunction(
             [](const std::string &currentValue)
             {
@@ -114,9 +115,10 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
                            &m_transformOptions)
                         .AddAlias("to")
                         .SetMetaVar("<NAME>=<VALUE>")
-                        .SetCategory(GAAC_ADVANCED);
+                        .SetCategory(GAAC_ADVANCED)
+                        .SetPackedValuesAllowed(false);
         arg.AddValidationAction([this, &arg]()
-                                { return ValidateKeyValue(arg); });
+                                { return ParseAndValidateKeyValue(arg); });
         arg.SetAutoCompleteFunction(
             [](const std::string &currentValue)
             {

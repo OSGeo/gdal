@@ -68,9 +68,10 @@ GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm()
 
     {
         auto &arg = AddArg("metadata", 0, _("Add metadata item"), &m_metadata)
-                        .SetMetaVar("<KEY>=<VALUE>");
+                        .SetMetaVar("<KEY>=<VALUE>")
+                        .SetPackedValuesAllowed(false);
         arg.AddValidationAction([this, &arg]()
-                                { return ValidateKeyValue(arg); });
+                                { return ParseAndValidateKeyValue(arg); });
         arg.AddHiddenAlias("mo");
     }
     AddArg("copy-metadata", 0, _("Copy metadata from input dataset"),
