@@ -47,7 +47,7 @@ Standard options
 .. option:: -c, --connect-diagonal-pixels
 
     Consider diagonal pixels (pixels at the corners) as connected.
-    The default behaviour is to only consider pixels that are touching the edges
+    The default behavior is to only consider pixels that are touching the edges
     as connected, which is the same as 4-connectivity. When this option is
     selected, the algorithm will also consider pixels at the corners as connected,
     which is the same as 8-connectivity.
