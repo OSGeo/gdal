@@ -1318,7 +1318,7 @@ def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
         <PixelFunctionArguments mapping=" (-inf, 1)=8; 2=9 ; (3,5]=4; [11, Inf] = 11 " default="{default}"/>
         <SimpleSource>
           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
-          <SourceBand>1</SourceBand>j
+          <SourceBand>1</SourceBand>
         </SimpleSource>
         <NoDataValue>7</NoDataValue>
       </VRTRasterBand>
@@ -1352,7 +1352,7 @@ def test_vrt_pixelfn_reclassify_no_default(tmp_vsimem):
         <PixelFunctionArguments mapping="1=2;3=4"/>
         <SimpleSource>
           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
-          <SourceBand>1</SourceBand>j
+          <SourceBand>1</SourceBand>
         </SimpleSource>
       </VRTRasterBand>
     </VRTDataset>"""
@@ -1393,7 +1393,7 @@ def test_vrt_pixelfn_reclassify_bad_default(tmp_vsimem, default, error):
         <PixelFunctionArguments mapping="1=2;3=4" default="{default}" />
         <SimpleSource>
           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
-          <SourceBand>1</SourceBand>j
+          <SourceBand>1</SourceBand>
         </SimpleSource>
       </VRTRasterBand>
     </VRTDataset>"""
