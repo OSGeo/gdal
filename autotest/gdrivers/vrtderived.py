@@ -1292,3 +1292,151 @@ def test_vrt_pixelfn_constant_factor(tmp_vsimem, fn):
         np.testing.assert_array_equal(dst, src + k)
     elif fn == "mul":
         np.testing.assert_array_equal(dst, src * k)
+
+
+###############################################################################
+# Test reclassification
+
+
+@pytest.mark.parametrize("default", (7, "NO_DATA"))
+def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    nx = 3
+    ny = 5
+
+    data = np.arange(nx * ny).reshape(ny, nx)
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", nx, ny, 1) as src:
+        src.WriteArray(data)
+
+    xml = f"""
+    <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
+      <VRTRasterBand dataType="Float32" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>reclassify</PixelFunctionType>
+        <PixelFunctionArguments mapping=" (-inf, 1)=8; 2=9 ; (3,5]=4; [11, Inf] = 11 " default="{default}"/>
+        <SimpleSource>
+          <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
+          <SourceBand>1</SourceBand>
+        </SimpleSource>
+        <NoDataValue>7</NoDataValue>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    dst = gdal.Open(xml).ReadAsArray()
+
+    np.testing.assert_array_equal(
+        dst, np.array([[8, 7, 9], [7, 4, 4], [7, 7, 7], [7, 7, 11], [11, 11, 11]])
+    )
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_pixelfn_reclassify_no_default(tmp_vsimem):
+
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    nx = 2
+    ny = 3
+
+    data = np.arange(nx * ny).reshape(ny, nx)
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", nx, ny, 1) as src:
+        src.WriteArray(data)
+
+    xml = f"""
+    <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
+      <VRTRasterBand dataType="Float32" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>reclassify</PixelFunctionType>
+        <PixelFunctionArguments mapping="1=2;3=4"/>
+        <SimpleSource>
+          <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
+          <SourceBand>1</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    with pytest.raises(
+        Exception, match="Encountered value .* with no specified mapping"
+    ):
+        gdal.Open(xml).ReadAsArray()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "default,error",
+    [
+        ("32k", "Failed to parse"),
+        ("", "Failed to parse"),
+        ("256", "cannot be represented"),
+        ("NO_DATA", "NoData value is not set"),
+    ],
+)
+def test_vrt_pixelfn_reclassify_bad_default(tmp_vsimem, default, error):
+
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    nx = 2
+    ny = 3
+
+    data = np.arange(nx * ny).reshape(ny, nx)
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", nx, ny, 1) as src:
+        src.WriteArray(data)
+
+    xml = f"""
+    <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
+      <VRTRasterBand dataType="Byte" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>reclassify</PixelFunctionType>
+        <PixelFunctionArguments mapping="1=2;3=4" default="{default}" />
+        <SimpleSource>
+          <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
+          <SourceBand>1</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    with pytest.raises(Exception, match=error):
+        gdal.Open(xml).ReadAsArray()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "mapping,error",
+    [
+        ("1=2;3", "expected '='"),
+        ("1=2;3=4g", "expected ';' or end"),
+        ("1=2;", "Interval must start with"),
+        ("1=3;3=256", "cannot be represented"),
+        ("(1,}=3;3=4,", "Interval must end with"),
+    ],
+)
+def test_vrt_pixelfn_reclassify_invalid_mapping(tmp_vsimem, mapping, error):
+
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    nx = 2
+    ny = 3
+
+    data = np.arange(nx * ny).reshape(ny, nx)
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", nx, ny, 1) as src:
+        src.WriteArray(data)
+
+    xml = f"""
+    <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
+      <VRTRasterBand dataType="Byte" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>reclassify</PixelFunctionType>
+        <PixelFunctionArguments mapping="{mapping}" default="7" />
+        <SimpleSource>
+          <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
+          <SourceBand>1</SourceBand>j
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    with pytest.raises(Exception, match=error):
+        gdal.Open(xml).ReadAsArray()
