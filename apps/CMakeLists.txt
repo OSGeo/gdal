@@ -41,6 +41,7 @@ add_library(
   gdalalg_raster_roughness.cpp
   gdalalg_raster_scale.cpp
   gdalalg_raster_select.cpp
+  gdalalg_raster_sieve.cpp
   gdalalg_raster_slope.cpp
   gdalalg_raster_stack.cpp
   gdalalg_raster_tpi.cpp

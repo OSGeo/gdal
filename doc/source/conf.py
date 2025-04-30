@@ -400,6 +400,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_sieve",
+        "gdal-raster-sieve",
+        "Remove small raster polygons",
+        [author_elpaso],
+        1,
+    ),
+    (
         "programs/gdal_raster_select",
         "gdal-raster-select",
         "Select a subset of bands from a raster dataset",

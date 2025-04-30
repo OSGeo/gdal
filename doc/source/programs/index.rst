@@ -63,6 +63,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_scale
    gdal_raster_select
    gdal_raster_slope
+   gdal_raster_sieve
    gdal_raster_stack
    gdal_raster_tpi
    gdal_raster_tri
@@ -134,6 +135,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_roughness`: Generate a roughness map.
     - :ref:`gdal_raster_scale`: Scale the values of the bands of a raster dataset.
     - :ref:`gdal_raster_select`: Select a subset of bands from a raster dataset.
+    - :ref:`gdal_raster_sieve`: Remove small raster polygons.
     - :ref:`gdal_raster_slope`: Generate a slope map.
     - :ref:`gdal_raster_stack`: Combine together input bands into a multi-band output, either virtual (VRT) or materialized.
     - :ref:`gdal_raster_tpi`: Generate a Topographic Position Index (TPI) map.

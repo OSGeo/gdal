@@ -36,6 +36,7 @@
 #include "gdalalg_raster_roughness.h"
 #include "gdalalg_raster_scale.h"
 #include "gdalalg_raster_select.h"
+#include "gdalalg_raster_sieve.h"
 #include "gdalalg_raster_slope.h"
 #include "gdalalg_raster_stack.h"
 #include "gdalalg_raster_tpi.h"
@@ -80,6 +81,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterContourAlgorithm>();
         RegisterSubAlgorithm<GDALRasterScaleAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterSelectAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALRasterSieveAlgorithm>();
         RegisterSubAlgorithm<GDALRasterSlopeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterStackAlgorithm>();
         RegisterSubAlgorithm<GDALRasterTPIAlgorithmStandalone>();
