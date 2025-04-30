@@ -3326,7 +3326,54 @@ TEST_F(test_gdal_algorithm, arg_co)
 
         EXPECT_TRUE(alg.ParseCommandLineArguments(
             {"--co", "foo=bar", "--co", "bar=baz"}));
-        EXPECT_EQ(alg.m_co.size(), 2U);
+        const std::vector<std::string> expected{"foo=bar", "bar=baz"};
+        EXPECT_EQ(alg.m_co, expected);
+    }
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--co", "foo=bar,bar=baz"}));
+        const std::vector<std::string> expected{"foo=bar", "bar=baz"};
+        EXPECT_EQ(alg.m_co, expected);
+    }
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--co", "foo=bar,baz"}));
+        const std::vector<std::string> expected{"foo=bar,baz"};
+        EXPECT_EQ(alg.m_co, expected);
+    }
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--co", "foo=bar=,a"}));
+        const std::vector<std::string> expected{"foo=bar=,a"};
+        EXPECT_EQ(alg.m_co, expected);
+    }
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--co", "foo=bar,,"}));
+        const std::vector<std::string> expected{"foo=bar,,"};
+        EXPECT_EQ(alg.m_co, expected);
+    }
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+
+        EXPECT_TRUE(
+            alg.ParseCommandLineArguments({"--co", "foo=bar,\"foo=baz\""}));
+        const std::vector<std::string> expected{"foo=bar,\"foo=baz\""};
+        EXPECT_EQ(alg.m_co, expected);
     }
 
     {

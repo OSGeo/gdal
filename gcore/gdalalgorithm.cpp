@@ -3178,8 +3178,12 @@ GDALAlgorithm::AddOpenOptionsArg(std::vector<std::string> *pValue,
     auto &arg = AddArg(GDAL_ARG_NAME_OPEN_OPTION, 0,
                        MsgOrDefault(helpMessage, _("Open options")), pValue)
                     .AddAlias("oo")
-                    .SetMetaVar("KEY=VALUE")
+                    .SetMetaVar("<KEY>=<VALUE>")
+                    .SetPackedValuesAllowed(false)
                     .SetCategory(GAAC_ADVANCED);
+
+    arg.AddValidationAction([this, &arg]()
+                            { return ParseAndValidateKeyValue(arg); });
 
     arg.SetAutoCompleteFunction(
         [this](const std::string &currentValue)
@@ -3692,10 +3696,10 @@ GDALAlgorithm::AddBandArg(std::vector<int> *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
-/*                          ValidateKeyValue()                          */
+/*                     ParseAndValidateKeyValue()                       */
 /************************************************************************/
 
-bool GDALAlgorithm::ValidateKeyValue(const GDALAlgorithmArg &arg) const
+bool GDALAlgorithm::ParseAndValidateKeyValue(GDALAlgorithmArg &arg)
 {
     const auto Validate = [this, &arg](const std::string &val)
     {
@@ -3717,7 +3721,60 @@ bool GDALAlgorithm::ValidateKeyValue(const GDALAlgorithmArg &arg) const
     }
     else if (arg.GetType() == GAAT_STRING_LIST)
     {
-        for (const auto &val : arg.Get<std::vector<std::string>>())
+        std::vector<std::string> &vals = arg.Get<std::vector<std::string>>();
+        if (vals.size() == 1)
+        {
+            // Try to split A=B,C=D into A=B and C=D if there is no ambiguity
+            std::vector<std::string> newVals;
+            std::string curToken;
+            bool canSplitOnComma = true;
+            char lastSep = 0;
+            bool inString = false;
+            bool equalFoundInLastToken = false;
+            for (char c : vals[0])
+            {
+                if (!inString && c == ',')
+                {
+                    if (lastSep != '=' || !equalFoundInLastToken)
+                    {
+                        canSplitOnComma = false;
+                        break;
+                    }
+                    lastSep = c;
+                    newVals.push_back(curToken);
+                    curToken.clear();
+                    equalFoundInLastToken = false;
+                }
+                else if (!inString && c == '=')
+                {
+                    if (lastSep == '=')
+                    {
+                        canSplitOnComma = false;
+                        break;
+                    }
+                    equalFoundInLastToken = true;
+                    lastSep = c;
+                    curToken += c;
+                }
+                else if (c == '"')
+                {
+                    inString = !inString;
+                    curToken += c;
+                }
+                else
+                {
+                    curToken += c;
+                }
+            }
+            if (canSplitOnComma && !inString && equalFoundInLastToken)
+            {
+                if (!curToken.empty())
+                    newVals.emplace_back(std::move(curToken));
+                vals = std::move(newVals);
+            }
+        }
+
+        for (const auto &val : vals)
         {
             if (!Validate(val))
                 return false;
@@ -3845,8 +3902,10 @@ GDALAlgorithm::AddCreationOptionsArg(std::vector<std::string> *pValue,
     auto &arg = AddArg("creation-option", 0,
                        MsgOrDefault(helpMessage, _("Creation option")), pValue)
                     .AddAlias("co")
-                    .SetMetaVar("<KEY>=<VALUE>");
-    arg.AddValidationAction([this, &arg]() { return ValidateKeyValue(arg); });
+                    .SetMetaVar("<KEY>=<VALUE>")
+                    .SetPackedValuesAllowed(false);
+    arg.AddValidationAction([this, &arg]()
+                            { return ParseAndValidateKeyValue(arg); });
 
     arg.SetAutoCompleteFunction(
         [this](const std::string &currentValue)
@@ -3945,8 +4004,10 @@ GDALAlgorithm::AddLayerCreationOptionsArg(std::vector<std::string> *pValue,
         AddArg("layer-creation-option", 0,
                MsgOrDefault(helpMessage, _("Layer creation option")), pValue)
             .AddAlias("lco")
-            .SetMetaVar("<KEY>=<VALUE>");
-    arg.AddValidationAction([this, &arg]() { return ValidateKeyValue(arg); });
+            .SetMetaVar("<KEY>=<VALUE>")
+            .SetPackedValuesAllowed(false);
+    arg.AddValidationAction([this, &arg]()
+                            { return ParseAndValidateKeyValue(arg); });
 
     arg.SetAutoCompleteFunction(
         [this](const std::string &currentValue)
