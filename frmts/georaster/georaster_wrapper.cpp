@@ -368,10 +368,10 @@ GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate)
     //  Query all the basic information at once to reduce round trips
     //  -------------------------------------------------------------------
 
-    char szOwner[OWCODE];
-    char szTable[OWCODE];
+    char szOwner[OWNAME];
+    char szTable[OWNAME];
     char szColumn[OWTEXT];
-    char szDataTable[OWCODE];
+    char szDataTable[OWNAME];
     char szWhere[OWTEXT];
     long long nRasterId = -1;
     OCILobLocator *phLocator = nullptr;
@@ -3209,7 +3209,7 @@ bool GeoRasterWrapper::SetNoData(int nLayer, const char *pszValue)
     //  Add NoData for all bands (layer=0) or for a specific band
     // ------------------------------------------------------------
 
-    char szRDT[OWCODE];
+    char szRDT[OWNAME];
     char szNoData[OWTEXT];
 
     snprintf(szRDT, sizeof(szRDT), "%s", sDataTable.c_str());
