@@ -4083,52 +4083,8 @@ retry:
                         "It could have been recognized by driver ";
                     osMsg += poMissingPluginDriver->GetDescription();
                     osMsg += ", but plugin ";
-                    osMsg += poMissingPluginDriver->GetMetadataItem(
-                        "MISSING_PLUGIN_FILENAME");
-                    osMsg += " is not available in your "
-                             "installation.";
-                    if (const char *pszInstallationMsg =
-                            poMissingPluginDriver->GetMetadataItem(
-                                GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE))
-                    {
-                        osMsg += " ";
-                        osMsg += pszInstallationMsg;
-                    }
-
-                    VSIStatBuf sStat;
-                    if (const char *pszGDALDriverPath =
-                            CPLGetConfigOption("GDAL_DRIVER_PATH", nullptr))
-                    {
-                        if (VSIStat(pszGDALDriverPath, &sStat) != 0)
-                        {
-                            if (osMsg.back() != '.')
-                                osMsg += ".";
-                            osMsg += " Directory '";
-                            osMsg += pszGDALDriverPath;
-                            osMsg +=
-                                "' pointed by GDAL_DRIVER_PATH does not exist.";
-                        }
-                    }
-                    else
-                    {
-                        if (osMsg.back() != '.')
-                            osMsg += ".";
-#ifdef INSTALL_PLUGIN_FULL_DIR
-                        if (VSIStat(INSTALL_PLUGIN_FULL_DIR, &sStat) != 0)
-                        {
-                            osMsg += " Directory '";
-                            osMsg += INSTALL_PLUGIN_FULL_DIR;
-                            osMsg += "' hardcoded in the GDAL library does not "
-                                     "exist and the GDAL_DRIVER_PATH "
-                                     "configuration option is not set.";
-                        }
-                        else
-#endif
-                        {
-                            osMsg += " The GDAL_DRIVER_PATH configuration "
-                                     "option is not set.";
-                        }
-                    }
+                    osMsg += GDALGetMessageAboutMissingPluginDriver(
+                        poMissingPluginDriver);
 
                     CPLError(CE_Failure, CPLE_OpenFailed, "%s", osMsg.c_str());
                 }

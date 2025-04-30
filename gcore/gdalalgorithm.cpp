@@ -3322,10 +3322,25 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
             auto hDriver = GDALGetDriverByName(val.c_str());
             if (!hDriver)
             {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Invalid value for argument '%s'. Driver '%s' does "
-                            "not exist",
-                            arg.GetName().c_str(), val.c_str());
+                auto poMissingDriver =
+                    GetGDALDriverManager()->GetHiddenDriverByName(val.c_str());
+                if (poMissingDriver)
+                {
+                    const std::string msg =
+                        GDALGetMessageAboutMissingPluginDriver(poMissingDriver);
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Invalid value for argument '%s'. Driver '%s' "
+                                "not found but it known. However plugin %s",
+                                arg.GetName().c_str(), val.c_str(),
+                                msg.c_str());
+                }
+                else
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Invalid value for argument '%s'. Driver '%s' "
+                                "does not exist.",
+                                arg.GetName().c_str(), val.c_str());
+                }
                 return false;
             }
 
