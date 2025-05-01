@@ -47,6 +47,7 @@ class GDALRasterTileAlgorithm final : public GDALAlgorithm
     std::string m_tilingScheme{};
     std::string m_convention = "xyz";
     std::string m_resampling{};
+    std::string m_overviewResampling{};
     int m_minZoomLevel = -1;
     int m_maxZoomLevel = -1;
     int m_tileSize = 0;

@@ -93,7 +93,14 @@ Standard options
 
 .. option:: -r, --resampling nearest|bilinear|cubic|cubicspline|lanczos|average|rms|mode|min|max|med|q1|q3|sum
 
-    Resampling method. Defaults to ``cubic``.
+    Resampling method used to generate maximum zoom level, and also lower zoom
+    levels if :option:`--overview-resampling` is not specified.
+    Defaults to ``cubic``.
+
+.. option:: --overview-resampling nearest|bilinear|cubic|cubicspline|lanczos|average|rms|mode|min|max|med|q1|q3|sum
+
+    Resampling method used to generate zoom levels lower than the maximum zoom
+    level. Defaults to the value of :option:`--resampling` is not specified.
 
 .. option:: --convention xyz|tms
 

@@ -173,7 +173,23 @@ def test_gdalalg_raster_tile_small_world_GoogleCRS84Quad(tmp_vsimem, xyz):
     ]
 
 
-def test_gdalalg_raster_tile_nodata(tmp_path):
+@pytest.mark.parametrize(
+    "resampling,overview_resampling,cs_11,cs_10",
+    [
+        (None, None, 4160, 1191),
+        ("cubic", None, 4160, 1191),
+        (None, "cubic", 4160, 1191),
+        ("cubic", "cubic", 4160, 1191),
+        ("cubic", "near", 4160, 1209),
+        ("cubic", "q1", 4160, 1281),  # q1 for overview go throw warp code
+        ("near", "cubic", 4217, 1223),
+        ("q1", None, 4896, 1228),
+        ("q1", "q1", 4896, 1228),
+    ],
+)
+def test_gdalalg_raster_tile_nodata_and_resampling(
+    tmp_path, resampling, overview_resampling, cs_11, cs_10
+):
 
     alg = get_alg()
     alg["input"] = gdal.Translate(
@@ -184,6 +200,10 @@ def test_gdalalg_raster_tile_nodata(tmp_path):
     alg["min-zoom"] = 10
     alg["skip-blank"] = True
     alg["webviewer"] = "none"
+    if resampling:
+        alg["resampling"] = resampling
+    if overview_resampling:
+        alg["overview-resampling"] = overview_resampling
     assert alg.Run()
 
     assert set([x.replace("\\", "/") for x in gdal.ReadDirRecursive(tmp_path)]) == set(
@@ -201,14 +221,14 @@ def test_gdalalg_raster_tile_nodata(tmp_path):
         assert ds.RasterCount == 1
         assert ds.RasterXSize == 256
         assert ds.RasterYSize == 256
-        assert ds.GetRasterBand(1).Checksum() == 4160
+        assert ds.GetRasterBand(1).Checksum() == cs_11
         assert ds.GetRasterBand(1).GetNoDataValue() == 0
 
     with gdal.Open(tmp_path / "10" / "177" / "409.tif") as ds:
         assert ds.RasterCount == 1
         assert ds.RasterXSize == 256
         assert ds.RasterYSize == 256
-        assert ds.GetRasterBand(1).Checksum() == 1191
+        assert ds.GetRasterBand(1).Checksum() == cs_10
         assert ds.GetRasterBand(1).GetNoDataValue() == 0
 
 

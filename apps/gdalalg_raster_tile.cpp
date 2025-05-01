@@ -84,11 +84,18 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
     AddArg("max-zoom", 0, _("Maximum zoom level"), &m_maxZoomLevel)
         .SetMinValueIncluded(0);
 
-    AddArg("resampling", 'r', _("Resampling method"), &m_resampling)
+    AddArg("resampling", 'r', _("Resampling method for max zoom"),
+           &m_resampling)
         .SetChoices("nearest", "bilinear", "cubic", "cubicspline", "lanczos",
                     "average", "rms", "mode", "min", "max", "med", "q1", "q3",
                     "sum")
         .SetDefault("cubic")
+        .SetHiddenChoices("near");
+    AddArg("overview-resampling", 0, _("Resampling method for overviews"),
+           &m_overviewResampling)
+        .SetChoices("nearest", "bilinear", "cubic", "cubicspline", "lanczos",
+                    "average", "rms", "mode", "min", "max", "med", "q1", "q3",
+                    "sum")
         .SetHiddenChoices("near");
 
     AddArg("convention", 0,
@@ -405,9 +412,10 @@ GenerateOverviewTile(GDALDataset &oSrcDS, const std::string &outputFormat,
             return true;
     }
 
-    CPLStringList aosOptions;
+    VSIMkdir(osDirZ.c_str(), 0755);
+    VSIMkdir(osDirX.c_str(), 0755);
 
-    aosOptions.AddString("-q");
+    CPLStringList aosOptions;
 
     aosOptions.AddString("-of");
     aosOptions.AddString(outputFormat.c_str());
@@ -417,43 +425,68 @@ GenerateOverviewTile(GDALDataset &oSrcDS, const std::string &outputFormat,
         aosOptions.AddString("-co");
         aosOptions.AddString(pszCO);
     }
-
-    aosOptions.AddString("-projwin");
-    const double dfMinX =
-        tileMatrix.mTopLeftX + iX * tileMatrix.mResX * tileMatrix.mTileWidth;
-    aosOptions.AddString(CPLSPrintf("%.17g", dfMinX));
-    const double dfMaxY =
-        tileMatrix.mTopLeftY - iY * tileMatrix.mResY * tileMatrix.mTileHeight;
-    aosOptions.AddString(CPLSPrintf("%.17g", dfMaxY));
-    const double dfMaxX = dfMinX + tileMatrix.mResX * tileMatrix.mTileWidth;
-    aosOptions.AddString(CPLSPrintf("%.17g", dfMaxX));
-    const double dfMinY = dfMaxY - tileMatrix.mResY * tileMatrix.mTileHeight;
-    aosOptions.AddString(CPLSPrintf("%.17g", dfMinY));
-
-    aosOptions.AddString("-outsize");
-    aosOptions.AddString(CPLSPrintf("%d", tileMatrix.mTileWidth));
-    aosOptions.AddString(CPLSPrintf("%d", tileMatrix.mTileHeight));
-
-    aosOptions.AddString("-r");
-    aosOptions.AddString(resampling == "nearest" || resampling == "average" ||
-                                 resampling == "bilinear" ||
-                                 resampling == "cubic" ||
-                                 resampling == "cubicspline" ||
-                                 resampling == "lanczos" || resampling == "mode"
-                             ? resampling.c_str()
-                             : "average");
-
-    VSIMkdir(osDirZ.c_str(), 0755);
-    VSIMkdir(osDirX.c_str(), 0755);
-
     CPLConfigOptionSetter oSetter("GDAL_PAM_ENABLED", bAuxXML ? "YES" : "NO",
                                   false);
-    GDALTranslateOptions *psOptions =
-        GDALTranslateOptionsNew(aosOptions.List(), nullptr);
-    auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
-        GDALTranslate((osFilename + ".tmp").c_str(),
-                      GDALDataset::ToHandle(&oSrcDS), psOptions, nullptr)));
-    GDALTranslateOptionsFree(psOptions);
+
+    aosOptions.AddString("-r");
+    aosOptions.AddString(resampling.c_str());
+
+    std::unique_ptr<GDALDataset> poOutDS;
+    const double dfMinX =
+        tileMatrix.mTopLeftX + iX * tileMatrix.mResX * tileMatrix.mTileWidth;
+    const double dfMaxY =
+        tileMatrix.mTopLeftY - iY * tileMatrix.mResY * tileMatrix.mTileHeight;
+    const double dfMaxX = dfMinX + tileMatrix.mResX * tileMatrix.mTileWidth;
+    const double dfMinY = dfMaxY - tileMatrix.mResY * tileMatrix.mTileHeight;
+
+    const bool resamplingCompatibleOfTranslate =
+        resampling == "nearest" || resampling == "average" ||
+        resampling == "bilinear" || resampling == "cubic" ||
+        resampling == "cubicspline" || resampling == "lanczos" ||
+        resampling == "mode";
+
+    if (resamplingCompatibleOfTranslate)
+    {
+        aosOptions.AddString("-q");
+
+        aosOptions.AddString("-projwin");
+        aosOptions.AddString(CPLSPrintf("%.17g", dfMinX));
+        aosOptions.AddString(CPLSPrintf("%.17g", dfMaxY));
+        aosOptions.AddString(CPLSPrintf("%.17g", dfMaxX));
+        aosOptions.AddString(CPLSPrintf("%.17g", dfMinY));
+
+        aosOptions.AddString("-outsize");
+        aosOptions.AddString(CPLSPrintf("%d", tileMatrix.mTileWidth));
+        aosOptions.AddString(CPLSPrintf("%d", tileMatrix.mTileHeight));
+
+        GDALTranslateOptions *psOptions =
+            GDALTranslateOptionsNew(aosOptions.List(), nullptr);
+        poOutDS.reset(GDALDataset::FromHandle(
+            GDALTranslate((osFilename + ".tmp").c_str(),
+                          GDALDataset::ToHandle(&oSrcDS), psOptions, nullptr)));
+        GDALTranslateOptionsFree(psOptions);
+    }
+    else
+    {
+        aosOptions.AddString("-te");
+        aosOptions.AddString(CPLSPrintf("%.17g", dfMinX));
+        aosOptions.AddString(CPLSPrintf("%.17g", dfMinY));
+        aosOptions.AddString(CPLSPrintf("%.17g", dfMaxX));
+        aosOptions.AddString(CPLSPrintf("%.17g", dfMaxY));
+
+        aosOptions.AddString("-ts");
+        aosOptions.AddString(CPLSPrintf("%d", tileMatrix.mTileWidth));
+        aosOptions.AddString(CPLSPrintf("%d", tileMatrix.mTileHeight));
+
+        GDALWarpAppOptions *psOptions =
+            GDALWarpAppOptionsNew(aosOptions.List(), nullptr);
+        GDALDatasetH hSrcDS = GDALDataset::ToHandle(&oSrcDS);
+        poOutDS.reset(GDALDataset::FromHandle(
+            GDALWarp((osFilename + ".tmp").c_str(), nullptr, 1, &hSrcDS,
+                     psOptions, nullptr)));
+        GDALWarpAppOptionsFree(psOptions);
+    }
+
     bool bRet = poOutDS != nullptr;
     if (bRet && bSkipBlank)
     {
@@ -1220,10 +1253,15 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     if (m_resampling == "near")
         m_resampling = "nearest";
+    if (m_overviewResampling == "near")
+        m_overviewResampling = "nearest";
+    else if (m_overviewResampling.empty())
+        m_overviewResampling = m_resampling;
 
     if (poSrcDS->GetRasterBand(1)->GetColorInterpretation() ==
             GCI_PaletteIndex &&
-        m_resampling != "nearest" && m_resampling != "mode")
+        ((m_resampling != "nearest" && m_resampling != "mode") ||
+         (m_overviewResampling != "nearest" && m_overviewResampling != "mode")))
     {
         ReportError(CE_Failure, CPLE_NotSupported,
                     "Datasets with color table not supported with non-nearest "
@@ -1776,7 +1814,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                      nullptr)
         {
             aosCreationOptions.SetNameValue("OVERVIEW_RESAMPLING",
-                                            m_resampling.c_str());
+                                            m_overviewResampling.c_str());
         }
         return aosCreationOptions;
     };
@@ -1869,9 +1907,9 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             {
                 bRet = GenerateOverviewTile(
                     oSrcDS, m_outputFormat, pszExtension,
-                    aosCreationOptions.List(), m_resampling, ovrTileMatrix,
-                    m_outputDirectory, iZ, iX, iY, m_convention, m_skipBlank,
-                    m_auxXML, m_resume);
+                    aosCreationOptions.List(), m_overviewResampling,
+                    ovrTileMatrix, m_outputDirectory, iZ, iX, iY, m_convention,
+                    m_skipBlank, m_auxXML, m_resume);
 
                 ++nCurTile;
                 bRet &= (!pfnProgress ||
