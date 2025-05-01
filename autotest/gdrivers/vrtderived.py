@@ -1298,7 +1298,7 @@ def test_vrt_pixelfn_constant_factor(tmp_vsimem, fn):
 # Test reclassification
 
 
-@pytest.mark.parametrize("default", (7, "NO_DATA"))
+@pytest.mark.parametrize("default", (7, "NO_DATA", 200))
 def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
@@ -1315,7 +1315,7 @@ def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
     <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
       <VRTRasterBand dataType="Float32" band="1" subclass="VRTDerivedRasterBand">
         <PixelFunctionType>reclassify</PixelFunctionType>
-        <PixelFunctionArguments mapping=" (-inf, 1)=8; 2=9 ; (3,5]=4; [11, Inf] = 11 " default="{default}"/>
+        <PixelFunctionArguments mapping=" (-inf, 1)=8; 2=9 ; (3,5]=4; 10=NO_DATA; [11, Inf] = 11 " default="{default}"/>
         <SimpleSource>
           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
           <SourceBand>1</SourceBand>
@@ -1326,9 +1326,19 @@ def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
 
     dst = gdal.Open(xml).ReadAsArray()
 
-    np.testing.assert_array_equal(
-        dst, np.array([[8, 7, 9], [7, 4, 4], [7, 7, 7], [7, 7, 11], [11, 11, 11]])
-    )
+    if default == 200:
+        np.testing.assert_array_equal(
+            dst,
+            np.array(
+                [[8, 200, 9], [200, 4, 4], [200, 200, 200], [200, 7, 11], [11, 11, 11]]
+            ),
+        )
+    elif default in (7, "NO_DATA"):
+        np.testing.assert_array_equal(
+            dst, np.array([[8, 7, 9], [7, 4, 4], [7, 7, 7], [7, 7, 11], [11, 11, 11]])
+        )
+    else:
+        pytest.fail()
 
 
 @gdaltest.enable_exceptions()
@@ -1411,6 +1421,7 @@ def test_vrt_pixelfn_reclassify_bad_default(tmp_vsimem, default, error):
         ("1=2;", "Interval must start with"),
         ("1=3;3=256", "cannot be represented"),
         ("(1,}=3;3=4,", "Interval must end with"),
+        ("3= ", "expected number or NO_DATA"),
     ],
 )
 def test_vrt_pixelfn_reclassify_invalid_mapping(tmp_vsimem, mapping, error):

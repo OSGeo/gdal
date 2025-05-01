@@ -1886,6 +1886,16 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
 
     const char *pszDefault = CSLFetchNameValue(papszArgs, "default");
 
+    bool bHasNoDataValue = false;
+    double dfNoDataValue{};
+
+    const char *pszNoData = CSLFetchNameValue(papszArgs, "NoData");
+    if (pszNoData != nullptr)
+    {
+        bHasNoDataValue = true;
+        dfNoDataValue = CPLAtof(pszNoData);
+    }
+
     bool bHasDefaultValue = false;
     double dfDefaultValue{};
     if (pszDefault != nullptr)
@@ -1894,8 +1904,7 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
 
         if (EQUAL(pszDefault, "NO_DATA"))
         {
-            const char *pszNoData = CSLFetchNameValue(papszArgs, "NoData");
-            if (pszNoData == nullptr)
+            if (!bHasNoDataValue)
             {
                 CPLError(
                     CE_Failure, CPLE_AppDefined,
@@ -1971,7 +1980,37 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
             return CE_Failure;
         }
 
-        double dfDstVal = CPLStrtod(end + 1, &end);
+        start = end + 1;
+
+        while (isspace(*start))
+        {
+            start++;
+        }
+
+        double dfDstVal{};
+        if (STARTS_WITH(start, "NO_DATA"))
+        {
+            if (!bHasNoDataValue)
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Value mapped to NO_DATA, but NoData value is not set");
+                return CE_Failure;
+            }
+            dfDstVal = dfNoDataValue;
+            end = const_cast<char *>(start) + 7;
+        }
+        else
+        {
+            dfDstVal = CPLStrtod(start, &end);
+            if (start == end)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed to parse output value (expected number or "
+                         "NO_DATA)");
+                return CE_Failure;
+            }
+        }
 
         while (isspace(*end))
         {
