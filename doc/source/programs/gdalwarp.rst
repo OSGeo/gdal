@@ -192,7 +192,7 @@ with control information.
     Refines the GCPs by automatically eliminating outliers.
     Outliers will be eliminated until minimum_gcps are left or when no outliers can be detected.
     The tolerance is passed to adjust when a GCP will be eliminated.
-    Not that GCP refinement only works with polynomial interpolation.
+    Note that GCP refinement only works with polynomial interpolation.
     The tolerance is in pixel units if no projection is available, otherwise it is in SRS units.
     If minimum_gcps is not provided, the minimum GCPs according to the polynomial model is used.
 
