@@ -14,6 +14,8 @@
 
 #include "cpl_conv.h"
 #include "cpl_mem_cache.h"
+#include "cpl_worker_thread_pool.h"
+#include "gdal_alg_priv.h"
 #include "gdal_priv.h"
 #include "gdalwarper.h"
 #include "gdal_utils.h"
@@ -21,7 +23,9 @@
 #include "tilematrixset.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
+#include <mutex>
 
 //! @cond Doxygen_Suppress
 
@@ -144,6 +148,15 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
     AddArg("aux-xml", 0, _("Generate .aux.xml sidecar files when needed"),
            &m_auxXML);
     AddArg("resume", 0, _("Generate only missing files"), &m_resume);
+
+    const char *pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
+    if (EQUAL(pszThreads, "ALL_CPUS"))
+        m_maxThreads = CPLGetNumCPUs();
+
+    AddArg("num-threads", 'j', _("Number of computation threads to use"),
+           &m_numThreads)
+        .SetDefault(m_maxThreads)
+        .SetMinValueIncluded(0);
 
     constexpr const char *PUBLICATION_CATEGORY = "Publication";
     AddArg("webviewer", 0, _("Web viewer to generate"), &m_webviewers)
@@ -667,15 +680,17 @@ class FakeMaxZoomRasterBand : public GDALRasterBand
 
 class FakeMaxZoomDataset : public GDALDataset
 {
+    const int m_nBlockXSize;
+    const int m_nBlockYSize;
     const OGRSpatialReference m_oSRS;
     double m_adfGT[6];
 
   public:
     FakeMaxZoomDataset(int nWidth, int nHeight, int nBandsIn, int nBlockXSize,
-                       int nBlockYSize, GDALDataType eDT, double adfGT[6],
+                       int nBlockYSize, GDALDataType eDT, const double adfGT[6],
                        const OGRSpatialReference &oSRS,
                        std::vector<GByte> &dstBuffer)
-        : m_oSRS(oSRS)
+        : m_nBlockXSize(nBlockXSize), m_nBlockYSize(nBlockYSize), m_oSRS(oSRS)
     {
         eAccess = GA_Update;
         nRasterXSize = nWidth;
@@ -701,6 +716,16 @@ class FakeMaxZoomDataset : public GDALDataset
     {
         memcpy(padfGT, m_adfGT, sizeof(double) * 6);
         return CE_None;
+    }
+
+    using GDALDataset::Clone;
+
+    std::unique_ptr<FakeMaxZoomDataset>
+    Clone(std::vector<GByte> &dstBuffer) const
+    {
+        return std::make_unique<FakeMaxZoomDataset>(
+            nRasterXSize, nRasterYSize, nBands, m_nBlockXSize, m_nBlockYSize,
+            GetRasterBand(1)->GetRasterDataType(), m_adfGT, m_oSRS, dstBuffer);
     }
 };
 
@@ -728,7 +753,8 @@ class MosaicRasterBand : public GDALRasterBand
                      const gdal::TileMatrixSet::TileMatrix &oTM,
                      const std::string &convention,
                      const std::string &directory, const std::string &extension,
-                     double *pdfDstNoData, const GDALColorTable *poColorTable)
+                     const double *pdfDstNoData,
+                     const GDALColorTable *poColorTable)
         : m_tileMinX(nTileMinX), m_tileMinY(nTileMinY),
           m_eColorInterp(eColorInterp), m_oTM(oTM), m_convention(convention),
           m_directory(directory), m_extension(extension),
@@ -776,9 +802,25 @@ class MosaicDataset : public GDALDataset
 {
     friend class MosaicRasterBand;
 
+    const std::string m_directory;
+    const std::string m_extension;
+    GDALDataset *const m_poSrcDS;
+    const gdal::TileMatrixSet::TileMatrix &m_oTM;
     const OGRSpatialReference m_oSRS;
+    const int m_nTileMinX;
+    const int m_nTileMinY;
+    const int m_nTileMaxX;
+    const int m_nTileMaxY;
+    const std::string m_convention;
+    const GDALDataType m_eDT;
+    const double *const m_pdfDstNoData;
+    const std::vector<std::string> &m_metadata;
+    const GDALColorTable *const m_poCT;
+
     double m_adfGT[6];
     lru11::Cache<std::string, std::shared_ptr<GDALDataset>> m_oCacheTile{};
+
+    CPL_DISALLOW_COPY_ASSIGN(MosaicDataset)
 
   public:
     MosaicDataset(const std::string &directory, const std::string &extension,
@@ -786,10 +828,14 @@ class MosaicDataset : public GDALDataset
                   const gdal::TileMatrixSet::TileMatrix &oTM,
                   const OGRSpatialReference &oSRS, int nTileMinX, int nTileMinY,
                   int nTileMaxX, int nTileMaxY, const std::string &convention,
-                  int nBandsIn, GDALDataType eDT, double *pdfDstNoData,
+                  int nBandsIn, GDALDataType eDT, const double *pdfDstNoData,
                   const std::vector<std::string> &metadata,
                   const GDALColorTable *poCT)
-        : m_oSRS(oSRS)
+        : m_directory(directory), m_extension(extension), m_poSrcDS(poSrcDS),
+          m_oTM(oTM), m_oSRS(oSRS), m_nTileMinX(nTileMinX),
+          m_nTileMinY(nTileMinY), m_nTileMaxX(nTileMaxX),
+          m_nTileMaxY(nTileMaxY), m_convention(convention), m_eDT(eDT),
+          m_pdfDstNoData(pdfDstNoData), m_metadata(metadata), m_poCT(poCT)
     {
         nRasterXSize = (nTileMaxX - nTileMinX + 1) * oTM.mTileWidth;
         nRasterYSize = (nTileMaxY - nTileMinY + 1) * oTM.mTileHeight;
@@ -828,6 +874,16 @@ class MosaicDataset : public GDALDataset
     {
         memcpy(padfGT, m_adfGT, sizeof(double) * 6);
         return CE_None;
+    }
+
+    using GDALDataset::Clone;
+
+    std::unique_ptr<MosaicDataset> Clone() const
+    {
+        return std::make_unique<MosaicDataset>(
+            m_directory, m_extension, m_poSrcDS, m_oTM, m_oSRS, m_nTileMinX,
+            m_nTileMinY, m_nTileMaxX, m_nTileMaxY, m_convention, nBands, m_eDT,
+            m_pdfDstNoData, m_metadata, m_poCT);
     }
 };
 
@@ -1329,6 +1385,195 @@ static void GenerateOpenLayers(
         VSIFCloseL(f);
     }
 }
+
+namespace
+{
+
+/************************************************************************/
+/*                            ResourceManager                           */
+/************************************************************************/
+
+// Generic cache managing resoures
+template <class Resource> class ResourceManager /* non final */
+{
+  public:
+    virtual ~ResourceManager() = default;
+
+    std::unique_ptr<Resource> AcquireResources()
+    {
+        std::lock_guard oLock(m_oMutex);
+        if (!m_oResources.empty())
+        {
+            auto ret = std::move(m_oResources.back());
+            m_oResources.pop_back();
+            return ret;
+        }
+
+        return CreateResources();
+    }
+
+    void ReleaseResources(std::unique_ptr<Resource> resources)
+    {
+        std::lock_guard oLock(m_oMutex);
+        m_oResources.push_back(std::move(resources));
+    }
+
+    void SetError()
+    {
+        std::lock_guard oLock(m_oMutex);
+        if (m_errorMsg.empty())
+            m_errorMsg = CPLGetLastErrorMsg();
+    }
+
+    const std::string &GetErrorMsg() const
+    {
+        return m_errorMsg;
+    }
+
+  protected:
+    virtual std::unique_ptr<Resource> CreateResources() = 0;
+
+  private:
+    std::mutex m_oMutex{};
+    std::vector<std::unique_ptr<Resource>> m_oResources{};
+    std::string m_errorMsg{};
+};
+
+/************************************************************************/
+/*                         PerThreadMaxZoomResources                    */
+/************************************************************************/
+
+// Per-thread resources for generation of tiles at full resolution
+struct PerThreadMaxZoomResources
+{
+    struct GDALDatasetReleaser
+    {
+        void operator()(GDALDataset *poDS)
+        {
+            if (poDS)
+                poDS->ReleaseRef();
+        }
+    };
+
+    std::unique_ptr<GDALDataset, GDALDatasetReleaser> poSrcDS{};
+    std::vector<GByte> dstBuffer{};
+    std::unique_ptr<FakeMaxZoomDataset> poFakeMaxZoomDS{};
+    std::unique_ptr<void, decltype(&GDALDestroyTransformer)> poTransformer{
+        nullptr, GDALDestroyTransformer};
+    std::unique_ptr<GDALWarpOperation> poWO{};
+};
+
+/************************************************************************/
+/*                      PerThreadMaxZoomResourceManager                 */
+/************************************************************************/
+
+// Manage a cache of PerThreadMaxZoomResources instances
+class PerThreadMaxZoomResourceManager final
+    : public ResourceManager<PerThreadMaxZoomResources>
+{
+  public:
+    PerThreadMaxZoomResourceManager(GDALDataset *poSrcDS,
+                                    const GDALWarpOptions *psWO,
+                                    void *pTransformerArg,
+                                    const FakeMaxZoomDataset &oFakeMaxZoomDS,
+                                    size_t nBufferSize)
+        : m_poSrcDS(poSrcDS), m_psWOSource(psWO),
+          m_pTransformerArg(pTransformerArg), m_oFakeMaxZoomDS(oFakeMaxZoomDS),
+          m_nBufferSize(nBufferSize)
+    {
+    }
+
+  protected:
+    std::unique_ptr<PerThreadMaxZoomResources> CreateResources() override
+    {
+        auto ret = std::make_unique<PerThreadMaxZoomResources>();
+
+        ret->poSrcDS.reset(GDALGetThreadSafeDataset(m_poSrcDS, GDAL_OF_RASTER));
+        if (!ret->poSrcDS)
+            return nullptr;
+
+        try
+        {
+            ret->dstBuffer.resize(m_nBufferSize);
+        }
+        catch (const std::exception &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory allocating temporary buffer");
+            return nullptr;
+        }
+
+        ret->poFakeMaxZoomDS = m_oFakeMaxZoomDS.Clone(ret->dstBuffer);
+
+        ret->poTransformer.reset(GDALCloneTransformer(m_pTransformerArg));
+        if (!ret->poTransformer)
+            return nullptr;
+
+        auto psWO =
+            std::unique_ptr<GDALWarpOptions, decltype(&GDALDestroyWarpOptions)>(
+                GDALCloneWarpOptions(m_psWOSource), GDALDestroyWarpOptions);
+        if (!psWO)
+            return nullptr;
+
+        psWO->hSrcDS = GDALDataset::ToHandle(ret->poSrcDS.get());
+        psWO->hDstDS = GDALDataset::ToHandle(ret->poFakeMaxZoomDS.get());
+        psWO->pTransformerArg = ret->poTransformer.get();
+        psWO->pfnTransformer = m_psWOSource->pfnTransformer;
+
+        ret->poWO = std::make_unique<GDALWarpOperation>();
+        if (ret->poWO->Initialize(psWO.get()) != CE_None)
+            return nullptr;
+
+        return ret;
+    }
+
+  private:
+    GDALDataset *const m_poSrcDS;
+    const GDALWarpOptions *const m_psWOSource;
+    void *const m_pTransformerArg;
+    const FakeMaxZoomDataset &m_oFakeMaxZoomDS;
+    const size_t m_nBufferSize;
+
+    CPL_DISALLOW_COPY_ASSIGN(PerThreadMaxZoomResourceManager)
+};
+
+/************************************************************************/
+/*                       PerThreadLowerZoomResources                    */
+/************************************************************************/
+
+// Per-thread resources for generation of tiles at zoom level < max
+struct PerThreadLowerZoomResources
+{
+    std::unique_ptr<GDALDataset> poSrcDS{};
+};
+
+/************************************************************************/
+/*                   PerThreadLowerZoomResourceManager                  */
+/************************************************************************/
+
+// Manage a cache of PerThreadLowerZoomResources instances
+class PerThreadLowerZoomResourceManager final
+    : public ResourceManager<PerThreadLowerZoomResources>
+{
+  public:
+    explicit PerThreadLowerZoomResourceManager(const MosaicDataset &oSrcDS)
+        : m_oSrcDS(oSrcDS)
+    {
+    }
+
+  protected:
+    std::unique_ptr<PerThreadLowerZoomResources> CreateResources() override
+    {
+        auto ret = std::make_unique<PerThreadLowerZoomResources>();
+        ret->poSrcDS = m_oSrcDS.Clone();
+        return ret;
+    }
+
+  private:
+    const MosaicDataset &m_oSrcDS;
+};
+
+}  // namespace
 
 /************************************************************************/
 /*                  GDALRasterTileAlgorithm::RunImpl()                  */
@@ -1950,7 +2195,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     /* -------------------------------------------------------------------- */
     uint64_t nTotalTiles = static_cast<uint64_t>(nMaxTileY - nMinTileY + 1) *
                            (nMaxTileX - nMinTileX + 1);
-    uint64_t nCurTile = 0;
+    const uint64_t nBaseTiles = nTotalTiles;
+    std::atomic<uint64_t> nCurTile = 0;
     bool bRet = true;
 
     for (int iZ = m_maxZoomLevel - 1;
@@ -2016,7 +2262,15 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
+    m_numThreads = std::min(m_numThreads, m_maxThreads);
+
+    CPLWorkerThreadPool oThreadPool;
+
     {
+        PerThreadMaxZoomResourceManager oResourceManager(
+            poSrcDS, psWO.get(), hTransformArg.get(), oFakeMaxZoomDS,
+            dstBuffer.size());
+
         const CPLStringList aosCreationOptions(
             GetUpdatedCreationOptions(tileMatrix));
 
@@ -2024,26 +2278,123 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                  "Generating tiles z=%d, y=%d...%d, x=%d...%d", m_maxZoomLevel,
                  nMinTileY, nMaxTileY, nMinTileX, nMaxTileX);
 
+        if (static_cast<uint64_t>(m_numThreads) > nBaseTiles)
+            m_numThreads = static_cast<int>(nBaseTiles);
+
+        if (bRet && m_numThreads > 1)
+        {
+            CPLDebug("gdal_raster_tile", "Using %d threads", m_numThreads);
+            bRet = oThreadPool.Setup(m_numThreads, nullptr, nullptr);
+        }
+
+        std::atomic<bool> bFailure = false;
+        std::atomic<int> nQueuedJobs = 0;
+
         for (int iY = nMinTileY; bRet && iY <= nMaxTileY; ++iY)
         {
             for (int iX = nMinTileX; bRet && iX <= nMaxTileX; ++iX)
             {
-                bRet = GenerateTile(
-                    poSrcDS, poMemDriver, poDstDriver, pszExtension,
-                    aosCreationOptions.List(), oWO, oSRS_TMS,
-                    psWO->eWorkingDataType, tileMatrix, m_outputDirectory,
-                    nDstBands,
-                    psWO->padfDstNoDataReal ? &(psWO->padfDstNoDataReal[0])
-                                            : nullptr,
-                    m_maxZoomLevel, iX, iY, m_convention, nMinTileX, nMinTileY,
-                    m_skipBlank, m_auxXML, m_resume, m_metadata, poColorTable,
-                    dstBuffer);
+                if (m_numThreads > 1)
+                {
+                    auto job = [this, &oResourceManager, &bFailure, &nCurTile,
+                                &nQueuedJobs, poMemDriver, poDstDriver,
+                                pszExtension, &aosCreationOptions, &psWO,
+                                &tileMatrix, nDstBands, iX, iY, nMinTileX,
+                                nMinTileY, poColorTable]()
+                    {
+                        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
 
-                ++nCurTile;
-                bRet &= (!pfnProgress ||
+                        --nQueuedJobs;
+                        auto resources = oResourceManager.AcquireResources();
+                        if (resources &&
+                            GenerateTile(
+                                resources->poSrcDS.get(), poMemDriver,
+                                poDstDriver, pszExtension,
+                                aosCreationOptions.List(),
+                                *(resources->poWO.get()),
+                                *(resources->poFakeMaxZoomDS->GetSpatialRef()),
+                                psWO->eWorkingDataType, tileMatrix,
+                                m_outputDirectory, nDstBands,
+                                psWO->padfDstNoDataReal
+                                    ? &(psWO->padfDstNoDataReal[0])
+                                    : nullptr,
+                                m_maxZoomLevel, iX, iY, m_convention, nMinTileX,
+                                nMinTileY, m_skipBlank, m_auxXML, m_resume,
+                                m_metadata, poColorTable, resources->dstBuffer))
+                        {
+                            oResourceManager.ReleaseResources(
+                                std::move(resources));
+                        }
+                        else
+                        {
+                            oResourceManager.SetError();
+                            bFailure = true;
+                        }
+                        ++nCurTile;
+                    };
+
+                    // Avoid queueing too many jobs at once
+                    while (bRet && nQueuedJobs / 10 > m_numThreads)
+                    {
+                        oThreadPool.WaitEvent();
+
+                        bRet &=
+                            !bFailure &&
+                            (!pfnProgress ||
+                             pfnProgress(static_cast<double>(nCurTile) /
+                                             static_cast<double>(nTotalTiles),
+                                         "", pProgressData));
+                    }
+
+                    ++nQueuedJobs;
+                    oThreadPool.SubmitJob(std::move(job));
+                }
+                else
+                {
+                    bRet = GenerateTile(
+                        poSrcDS, poMemDriver, poDstDriver, pszExtension,
+                        aosCreationOptions.List(), oWO, oSRS_TMS,
+                        psWO->eWorkingDataType, tileMatrix, m_outputDirectory,
+                        nDstBands,
+                        psWO->padfDstNoDataReal ? &(psWO->padfDstNoDataReal[0])
+                                                : nullptr,
+                        m_maxZoomLevel, iX, iY, m_convention, nMinTileX,
+                        nMinTileY, m_skipBlank, m_auxXML, m_resume, m_metadata,
+                        poColorTable, dstBuffer);
+
+                    ++nCurTile;
+                    bRet &= (!pfnProgress ||
+                             pfnProgress(static_cast<double>(nCurTile) /
+                                             static_cast<double>(nTotalTiles),
+                                         "", pProgressData));
+                }
+            }
+        }
+
+        if (m_numThreads > 1)
+        {
+            // Wait for completion of all jobs
+            while (bRet && nQueuedJobs > 0)
+            {
+                oThreadPool.WaitEvent();
+                bRet &= !bFailure &&
+                        (!pfnProgress ||
                          pfnProgress(static_cast<double>(nCurTile) /
                                          static_cast<double>(nTotalTiles),
                                      "", pProgressData));
+            }
+            oThreadPool.WaitCompletion();
+            bRet &=
+                !bFailure && (!pfnProgress ||
+                              pfnProgress(static_cast<double>(nCurTile) /
+                                              static_cast<double>(nTotalTiles),
+                                          "", pProgressData));
+
+            if (!oResourceManager.GetErrorMsg().empty())
+            {
+                // Re-emit error message from worker thread to main thread
+                ReportError(CE_Failure, CPLE_AppDefined, "%s",
+                            oResourceManager.GetErrorMsg().c_str());
             }
         }
     }
@@ -2093,21 +2444,105 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
         const CPLStringList aosCreationOptions(
             GetUpdatedCreationOptions(ovrTileMatrix));
+
+        PerThreadLowerZoomResourceManager oResourceManager(oSrcDS);
+        std::atomic<bool> bFailure = false;
+        std::atomic<int> nQueuedJobs = 0;
+
+        const bool bUseThreads =
+            m_numThreads > 1 &&
+            (nOvrMaxTileY > nOvrMinTileY || nOvrMaxTileX > nOvrMinTileX);
+
         for (int iY = nOvrMinTileY; bRet && iY <= nOvrMaxTileY; ++iY)
         {
             for (int iX = nOvrMinTileX; bRet && iX <= nOvrMaxTileX; ++iX)
             {
-                bRet = GenerateOverviewTile(
-                    oSrcDS, m_outputFormat, pszExtension,
-                    aosCreationOptions.List(), m_overviewResampling,
-                    ovrTileMatrix, m_outputDirectory, iZ, iX, iY, m_convention,
-                    m_skipBlank, m_auxXML, m_resume);
+                if (bUseThreads)
+                {
+                    auto job = [this, &oResourceManager, &bFailure, &nCurTile,
+                                &nQueuedJobs, pszExtension, &aosCreationOptions,
+                                &ovrTileMatrix, iZ, iX, iY]()
+                    {
+                        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
 
-                ++nCurTile;
-                bRet &= (!pfnProgress ||
+                        --nQueuedJobs;
+                        auto resources = oResourceManager.AcquireResources();
+                        if (resources &&
+                            GenerateOverviewTile(
+                                *(resources->poSrcDS.get()), m_outputFormat,
+                                pszExtension, aosCreationOptions.List(),
+                                m_overviewResampling, ovrTileMatrix,
+                                m_outputDirectory, iZ, iX, iY, m_convention,
+                                m_skipBlank, m_auxXML, m_resume))
+                        {
+                            oResourceManager.ReleaseResources(
+                                std::move(resources));
+                        }
+                        else
+                        {
+                            oResourceManager.SetError();
+                            bFailure = true;
+                        }
+                        ++nCurTile;
+                    };
+
+                    // Avoid queueing too many jobs at once
+                    while (bRet && nQueuedJobs / 10 > m_numThreads)
+                    {
+                        oThreadPool.WaitEvent();
+
+                        bRet &=
+                            !bFailure &&
+                            (!pfnProgress ||
+                             pfnProgress(static_cast<double>(nCurTile) /
+                                             static_cast<double>(nTotalTiles),
+                                         "", pProgressData));
+                    }
+
+                    ++nQueuedJobs;
+                    oThreadPool.SubmitJob(std::move(job));
+                }
+                else
+                {
+                    bRet = GenerateOverviewTile(
+                        oSrcDS, m_outputFormat, pszExtension,
+                        aosCreationOptions.List(), m_overviewResampling,
+                        ovrTileMatrix, m_outputDirectory, iZ, iX, iY,
+                        m_convention, m_skipBlank, m_auxXML, m_resume);
+
+                    ++nCurTile;
+                    bRet &= (!pfnProgress ||
+                             pfnProgress(static_cast<double>(nCurTile) /
+                                             static_cast<double>(nTotalTiles),
+                                         "", pProgressData));
+                }
+            }
+        }
+
+        if (bUseThreads)
+        {
+            // Wait for completion of all jobs
+            while (bRet && nQueuedJobs > 0)
+            {
+                oThreadPool.WaitEvent();
+                bRet &= !bFailure &&
+                        (!pfnProgress ||
                          pfnProgress(static_cast<double>(nCurTile) /
                                          static_cast<double>(nTotalTiles),
                                      "", pProgressData));
+            }
+            oThreadPool.WaitCompletion();
+            bRet &=
+                !bFailure && (!pfnProgress ||
+                              pfnProgress(static_cast<double>(nCurTile) /
+                                              static_cast<double>(nTotalTiles),
+                                          "", pProgressData));
+
+            if (!oResourceManager.GetErrorMsg().empty())
+            {
+                // Re-emit error message from worker thread to main thread
+                ReportError(CE_Failure, CPLE_AppDefined, "%s",
+                            oResourceManager.GetErrorMsg().c_str());
             }
         }
     }

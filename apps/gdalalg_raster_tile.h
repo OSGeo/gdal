@@ -62,6 +62,7 @@ class GDALRasterTileAlgorithm final : public GDALAlgorithm
     bool m_skipBlank = false;
     bool m_auxXML = false;
     bool m_resume = false;
+    int m_numThreads = 0;
 
     std::vector<std::string> m_webviewers{};
     std::string m_url{};
@@ -69,6 +70,8 @@ class GDALRasterTileAlgorithm final : public GDALAlgorithm
     std::string m_copyright{};
     std::string m_mapmlTemplate{};
 
+    // Work variables
+    int m_maxThreads = 0;
     std::map<std::string, std::string> m_mapTileMatrixIdentifierToScheme{};
 };
 

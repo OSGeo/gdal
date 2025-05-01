@@ -174,6 +174,11 @@ Standard options
     Generate only missing files. Can be used when interrupting a previous run
     to restart it.
 
+.. option:: -j, --num-threads <value>
+
+   Number of jobs to run at once.
+   Default: number of CPUs detected.
+
 
 Publication Options
 +++++++++++++++++++

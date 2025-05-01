@@ -650,6 +650,52 @@ def test_gdalalg_raster_tile_input_not_supported_by_output(
         alg.Run()
 
 
+@pytest.mark.require_driver("GTX")
+def test_gdalalg_raster_tile_input_not_supported_by_output_multithread(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["output-format"] = "GTX"
+    alg["max-zoom"] = 2
+    with pytest.raises(
+        Exception, match="Attempt to create gtx file with unsupported data type 'Byte'"
+    ):
+        alg.Run()
+
+
+def test_gdalalg_raster_tile_multithread(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 3
+    alg.Run()
+
+    assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 107
+
+
+def test_gdalalg_raster_tile_multithread_progress(tmp_vsimem):
+
+    last_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        last_pct[0] = pct
+        return True
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 3
+    alg.Run(my_progress)
+
+    assert last_pct[0] == 1.0
+
+    assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 107
+
+
 def check_12_bit_jpeg():
 
     if "UInt16" not in gdal.GetDriverByName("JPEG").GetMetadataItem(
