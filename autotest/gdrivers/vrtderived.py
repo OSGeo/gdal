@@ -1315,7 +1315,7 @@ def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
     <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
       <VRTRasterBand dataType="Float32" band="1" subclass="VRTDerivedRasterBand">
         <PixelFunctionType>reclassify</PixelFunctionType>
-        <PixelFunctionArguments mapping=" (-inf, 1)=8; 2=9 ; (3,5]=4; 10=NO_DATA; [11, Inf] = 11; default={default}"/>
+        <PixelFunctionArguments mapping=" (-inf, 1)=8; 2=9 ; (3,5]=4; NO_DATA=123; 10=NO_DATA; [11, Inf] = 11; default={default}"/>
         <SimpleSource>
           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
           <SourceBand>1</SourceBand>
@@ -1330,12 +1330,12 @@ def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
         np.testing.assert_array_equal(
             dst,
             np.array(
-                [[8, 200, 9], [200, 4, 4], [200, 200, 200], [200, 7, 11], [11, 11, 11]]
+                [[8, 200, 9], [200, 4, 4], [200, 123, 200], [200, 7, 11], [11, 11, 11]]
             ),
         )
     elif default in (7, "NO_DATA"):
         np.testing.assert_array_equal(
-            dst, np.array([[8, 7, 9], [7, 4, 4], [7, 7, 7], [7, 7, 11], [11, 11, 11]])
+            dst, np.array([[8, 7, 9], [7, 4, 4], [7, 123, 7], [7, 7, 11], [11, 11, 11]])
         )
     else:
         pytest.fail()
@@ -1379,10 +1379,13 @@ def test_vrt_pixelfn_reclassify_no_default(tmp_vsimem):
     [
         ("1=2;3", "expected '='"),
         ("1=2;3=4g", "expected ';' or end"),
-        ("1=2;", "Interval must start with"),
+        ("1=2;q", "Interval must start with"),
         ("1=3;3=256", "cannot be represented"),
-        ("(1,}=3;3=4,", "Interval must end with"),
+        ("(1, }=3;3=4,", "Interval must end with"),
+        ("(1,22k}=3;3=4,", "Interval must end with"),
         ("3= ", "expected number or NO_DATA"),
+        ("1=NO_DATA", "NoData value is not set"),
+        ("NO_DATA=15", "NoData value is not set"),
     ],
 )
 def test_vrt_pixelfn_reclassify_invalid_mapping(tmp_vsimem, mapping, error):
@@ -1405,7 +1408,7 @@ def test_vrt_pixelfn_reclassify_invalid_mapping(tmp_vsimem, mapping, error):
         <PixelFunctionArguments mapping="{mapping}" default="7" />
         <SimpleSource>
           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
-          <SourceBand>1</SourceBand>j
+          <SourceBand>1</SourceBand>
         </SimpleSource>
       </VRTRasterBand>
     </VRTDataset>"""

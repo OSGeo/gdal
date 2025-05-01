@@ -1738,6 +1738,14 @@ struct Interval
     bool bMinIncluded;
     bool bMaxIncluded;
 
+    void SetToConstant(double dfVal)
+    {
+        dfMin = dfVal;
+        dfMax = dfVal;
+        bMinIncluded = true;
+        bMaxIncluded = true;
+    }
+
     CPLErr Parse(const char *s, char **rest)
     {
         const char *start = s;
@@ -1759,7 +1767,7 @@ struct Interval
         }
         else
         {
-            dfMin = CPLStrtod(start, &end);
+            double dfVal = CPLStrtod(start, &end);
 
             if (end == start)
             {
@@ -1768,9 +1776,7 @@ struct Interval
                 return CE_Failure;
             }
 
-            dfMax = dfMin;
-            bMinIncluded = true;
-            bMaxIncluded = true;
+            SetToConstant(dfVal);
 
             if (rest != nullptr)
             {
@@ -1917,13 +1923,26 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
             start++;
         }
 
-        Interval sInt;
+        Interval sInt{};
         bool bFromIsDefault = false;
 
         if (STARTS_WITH_CI(start, "DEFAULT"))
         {
             bHasDefaultValue = true;
             bFromIsDefault = true;
+            end = const_cast<char *>(start + 7);
+        }
+        else if (STARTS_WITH_CI(start, "NO_DATA"))
+        {
+            if (!bHasNoDataValue)
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Value mapped from NO_DATA, but NoData value is not set");
+                return CE_Failure;
+            }
+
+            sInt.SetToConstant(dfNoDataValue);
             end = const_cast<char *>(start + 7);
         }
         else
