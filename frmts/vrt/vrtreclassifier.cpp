@@ -127,11 +127,12 @@ void Reclassifier::Interval::SetToConstant(double dfVal)
     bMaxIncluded = true;
 }
 
-void Reclassifier::AddMapping(const Interval &interval, double dfDstVal)
+void Reclassifier::AddMapping(const Interval &interval,
+                              std::optional<double> dfDstVal)
 {
     if (interval.IsConstant())
     {
-        m_oConstantMappings[interval.dfMin] = dfDstVal;
+        m_oConstantMappings[interval.dfMin] = dfDstVal.value_or(interval.dfMin);
     }
     else
     {
@@ -155,6 +156,7 @@ CPLErr Reclassifier::Init(const char *pszText,
 
         Interval sInt{};
         bool bFromIsDefault = false;
+        bool bPassThrough = false;
 
         if (STARTS_WITH_CI(start, "DEFAULT"))
         {
@@ -202,7 +204,7 @@ CPLErr Reclassifier::Init(const char *pszText,
             start++;
         }
 
-        double dfDstVal{};
+        std::optional<double> dfDstVal{};
         if (STARTS_WITH(start, "NO_DATA"))
         {
             if (!noDataValue.has_value())
@@ -214,6 +216,11 @@ CPLErr Reclassifier::Init(const char *pszText,
             }
             dfDstVal = noDataValue.value();
             end = const_cast<char *>(start) + 7;
+        }
+        else if (STARTS_WITH(start, "PASS_THROUGH"))
+        {
+            bPassThrough = true;
+            end = const_cast<char *>(start + 12);
         }
         else
         {
@@ -241,17 +248,25 @@ CPLErr Reclassifier::Init(const char *pszText,
             return CE_Failure;
         }
 
-        if (!GDALIsValueExactAs(dfDstVal, eBufType))
+        if (dfDstVal.has_value() &&
+            !GDALIsValueExactAs(dfDstVal.value(), eBufType))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Value %g cannot be represented as data type %s", dfDstVal,
-                     GDALGetDataTypeName(eBufType));
+                     "Value %g cannot be represented as data type %s",
+                     dfDstVal.value(), GDALGetDataTypeName(eBufType));
             return CE_Failure;
         }
 
         if (bFromIsDefault)
         {
-            SetDefaultValue(dfDstVal);
+            if (bPassThrough)
+            {
+                SetDefaultPassThrough(true);
+            }
+            else
+            {
+                SetDefaultValue(dfDstVal.value());
+            }
         }
         else
         {
@@ -279,7 +294,7 @@ double Reclassifier::Reclassify(double srcVal, bool &bFoundInterval) const
         if (sInt.Contains(srcVal))
         {
             bFoundInterval = true;
-            return dstVal;
+            return dstVal.value_or(srcVal);
         }
     }
 
@@ -287,6 +302,12 @@ double Reclassifier::Reclassify(double srcVal, bool &bFoundInterval) const
     {
         bFoundInterval = true;
         return m_defaultValue.value();
+    }
+
+    if (m_defaultPassThrough)
+    {
+        bFoundInterval = true;
+        return srcVal;
     }
 
     return CE_None;

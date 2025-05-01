@@ -90,12 +90,12 @@ class Reclassifier
     CPLErr Init(const char *pszText, std::optional<double> noDataValue,
                 GDALDataType eBufType);
 
-    void SetDefaultValue(double value)
-    {
-        m_defaultValue = value;
-    }
-
-    void AddMapping(const Interval &interval, double dfDstVal);
+    /** Set a mapping between an interval and (optionally) a destination value.
+     *  If no destination value is provided, values matching the interval
+     *  will be passed through unmodified. It will not be verified that these values
+     *  fit within the destination data type.
+     */
+    void AddMapping(const Interval &interval, std::optional<double> dfDstVal);
 
     /** Reclassify a value
      *
@@ -105,10 +105,27 @@ class Reclassifier
      */
     double Reclassify(double srcVal, bool &bFoundInterval) const;
 
-  private:
+    /** If true, values not matched by any interval will be
+     *  returned unmodified. It will not be verified that these values
+     *  fit within the destination data type.
+     */
+    void SetDefaultPassThrough(bool value)
+    {
+        m_defaultPassThrough = value;
+    }
+
+    /** Sets a default value for any value not matched by any interval.
+     */
+    void SetDefaultValue(double value)
+    {
+        m_defaultValue = value;
+    }
+
     std::map<double, double> m_oConstantMappings{};
-    std::vector<std::pair<Interval, double>> m_aoIntervalMappings{};
+    std::vector<std::pair<Interval, std::optional<double>>>
+        m_aoIntervalMappings{};
     std::optional<double> m_defaultValue{};
+    bool m_defaultPassThrough{false};
 };
 
 /*! @endcond */

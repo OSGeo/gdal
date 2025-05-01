@@ -1298,7 +1298,7 @@ def test_vrt_pixelfn_constant_factor(tmp_vsimem, fn):
 # Test reclassification
 
 
-@pytest.mark.parametrize("default", (7, "NO_DATA", 200))
+@pytest.mark.parametrize("default", (7, "NO_DATA", 200, "PASS_THROUGH"))
 def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
@@ -1315,7 +1315,7 @@ def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
     <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
       <VRTRasterBand dataType="Float32" band="1" subclass="VRTDerivedRasterBand">
         <PixelFunctionType>reclassify</PixelFunctionType>
-        <PixelFunctionArguments mapping=" (-inf, 1)=8; 2=9 ; (3,5]=4; NO_DATA=123; 10=NO_DATA; [11, Inf] = 11; default={default}"/>
+        <PixelFunctionArguments mapping=" (-inf, 1)=8; 2=9 ; (3,5]=4; NO_DATA=123; [8,9]=PASS_THROUGH; 10=NO_DATA; [11, Inf] = 11; default={default}"/>
         <SimpleSource>
           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
           <SourceBand>1</SourceBand>
@@ -1330,12 +1330,17 @@ def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
         np.testing.assert_array_equal(
             dst,
             np.array(
-                [[8, 200, 9], [200, 4, 4], [200, 123, 200], [200, 7, 11], [11, 11, 11]]
+                [[8, 200, 9], [200, 4, 4], [200, 123, 8], [9, 7, 11], [11, 11, 11]]
             ),
         )
     elif default in (7, "NO_DATA"):
         np.testing.assert_array_equal(
-            dst, np.array([[8, 7, 9], [7, 4, 4], [7, 123, 7], [7, 7, 11], [11, 11, 11]])
+            dst, np.array([[8, 7, 9], [7, 4, 4], [7, 123, 8], [9, 7, 11], [11, 11, 11]])
+        )
+    elif default == "PASS_THROUGH":
+        np.testing.assert_array_equal(
+            dst,
+            np.array([[8, 1, 9], [3, 4, 4], [6, 123, 8], [9, 7, 11], [11, 11, 11]]),
         )
     else:
         pytest.fail()
