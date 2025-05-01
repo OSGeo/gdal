@@ -50,6 +50,11 @@ class GDALRasterTileAlgorithm final : public GDALAlgorithm
     std::string m_overviewResampling{};
     int m_minZoomLevel = -1;
     int m_maxZoomLevel = -1;
+    bool m_noIntersectionIsOK = false;
+    int m_minTileX = -1;
+    int m_minTileY = -1;
+    int m_maxTileX = -1;
+    int m_maxTileY = -1;
     int m_tileSize = 0;
     bool m_addalpha = false;
     bool m_noalpha = false;

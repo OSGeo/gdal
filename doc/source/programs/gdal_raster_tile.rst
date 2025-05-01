@@ -91,6 +91,31 @@ Standard options
     comparing the resolution of the input dataset with the closest resolution in
     the list of tile matrix of the tile matrix set.
 
+.. option:: --min-x <MIN-X>
+
+    Minimum tile X coordinate, at maximum zoom level. Can be set to restrict
+    the tiling process.
+
+.. option:: --min-y <MIN-Y>
+
+    Minimum tile Y coordinate, at maximum zoom level. Can be set to restrict
+    the tiling process.
+
+.. option:: --max-x <MAX-X>
+
+    Maximum tile X coordinate, at maximum zoom level. Can be set to restrict
+    the tiling process.
+
+.. option:: --max-y <MAX-Y>
+
+    Maximum tile Y coordinate, at maximum zoom level. Can be set to restrict
+    the tiling process.
+
+.. option:: --no-intersection-ok
+
+    Whether the dataset extent not intersecting the tile matrix is only a warning.
+    Otherwise, by default, an error will be emitted if that occurs.
+
 .. option:: -r, --resampling nearest|bilinear|cubic|cubicspline|lanczos|average|rms|mode|min|max|med|q1|q3|sum
 
     Resampling method used to generate maximum zoom level, and also lower zoom

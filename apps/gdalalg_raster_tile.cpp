@@ -84,6 +84,19 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
     AddArg("max-zoom", 0, _("Maximum zoom level"), &m_maxZoomLevel)
         .SetMinValueIncluded(0);
 
+    AddArg("min-x", 0, _("Minimum tile X coordinate"), &m_minTileX)
+        .SetMinValueIncluded(0);
+    AddArg("max-x", 0, _("Maximum tile X coordinate"), &m_maxTileX)
+        .SetMinValueIncluded(0);
+    AddArg("min-y", 0, _("Minimum tile Y coordinate"), &m_minTileY)
+        .SetMinValueIncluded(0);
+    AddArg("max-y", 0, _("Maximum tile Y coordinate"), &m_maxTileY)
+        .SetMinValueIncluded(0);
+    AddArg("no-intersection-ok", 0,
+           _("Whether dataset extent not intersecting tile matrix is only a "
+             "warning"),
+           &m_noIntersectionIsOK);
+
     AddArg("resampling", 'r', _("Resampling method for max zoom"),
            &m_resampling)
         .SetChoices("nearest", "bilinear", "cubic", "cubicspline", "lanczos",
@@ -149,12 +162,25 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
     AddValidationAction(
         [this]()
         {
+            if (m_minTileX >= 0 && m_maxTileX >= 0 && m_minTileX > m_maxTileX)
+            {
+                ReportError(CE_Failure, CPLE_IllegalArg,
+                            "'min-x' must be lesser or equal to 'max-x'");
+                return false;
+            }
+
+            if (m_minTileY >= 0 && m_maxTileY >= 0 && m_minTileY > m_maxTileY)
+            {
+                ReportError(CE_Failure, CPLE_IllegalArg,
+                            "'min-y' must be lesser or equal to 'max-y'");
+                return false;
+            }
+
             if (m_minZoomLevel >= 0 && m_maxZoomLevel >= 0 &&
                 m_minZoomLevel > m_maxZoomLevel)
             {
-                ReportError(
-                    CE_Failure, CPLE_IllegalArg,
-                    "'min-zoom' should be lesser or equal to 'max-zoom'");
+                ReportError(CE_Failure, CPLE_IllegalArg,
+                            "'min-zoom' must be lesser or equal to 'max-zoom'");
                 return false;
             }
 
@@ -176,7 +202,9 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
 static bool GetTileIndices(gdal::TileMatrixSet::TileMatrix &tileMatrix,
                            bool bInvertAxisTMS, int tileSize,
                            const double adfExtent[4], int &nMinTileX,
-                           int &nMinTileY, int &nMaxTileX, int &nMaxTileY)
+                           int &nMinTileY, int &nMaxTileX, int &nMaxTileY,
+                           bool noIntersectionIsOK, bool &bIntersects,
+                           bool checkRasterOverflow = true)
 {
     if (tileSize > 0)
     {
@@ -216,22 +244,27 @@ static bool GetTileIndices(gdal::TileMatrixSet::TileMatrix &tileMatrix,
         std::clamp(std::floor(dfMaxTileY + EPSILON), 0.0,
                    static_cast<double>(tileMatrix.mMatrixHeight - 1)));
 
-    if (!((dfMinTileX <= tileMatrix.mMatrixWidth && dfMaxTileX >= 0 &&
-           dfMinTileY <= tileMatrix.mMatrixHeight && dfMaxTileY >= 0)))
+    bIntersects = (dfMinTileX <= tileMatrix.mMatrixWidth && dfMaxTileX >= 0 &&
+                   dfMinTileY <= tileMatrix.mMatrixHeight && dfMaxTileY >= 0);
+    if (!bIntersects)
     {
         CPLDebug("gdal_raster_tile",
                  "dfMinTileX=%g dfMinTileY=%g dfMaxTileX=%g dfMaxTileY=%g",
                  dfMinTileX, dfMinTileY, dfMaxTileX, dfMaxTileY);
-        CPLError(CE_Failure, CPLE_AppDefined,
+        CPLError(noIntersectionIsOK ? CE_Warning : CE_Failure, CPLE_AppDefined,
                  "Extent of source dataset is not compatible with extent of "
-                 "tiling scheme");
-        return false;
+                 "tile matrix %s",
+                 tileMatrix.mId.c_str());
+        return noIntersectionIsOK;
     }
-    if (nMaxTileX - nMinTileX + 1 > INT_MAX / tileMatrix.mTileWidth ||
-        nMaxTileY - nMinTileY + 1 > INT_MAX / tileMatrix.mTileHeight)
+    if (checkRasterOverflow)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Too large zoom level");
-        return false;
+        if (nMaxTileX - nMinTileX + 1 > INT_MAX / tileMatrix.mTileWidth ||
+            nMaxTileY - nMinTileY + 1 > INT_MAX / tileMatrix.mTileHeight)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too large zoom level");
+            return false;
+        }
     }
     return true;
 }
@@ -1559,10 +1592,10 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     {
         if (m_maxZoomLevel >= static_cast<int>(tileMatrixList.size()))
         {
-            ReportError(
-                CE_Failure, CPLE_AppDefined,
-                "max-zoom = %d is invalid. It should be in [0,%d] range",
-                m_maxZoomLevel, static_cast<int>(tileMatrixList.size()) - 1);
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "max-zoom = %d is invalid. It must be in [0,%d] range",
+                        m_maxZoomLevel,
+                        static_cast<int>(tileMatrixList.size()) - 1);
             return false;
         }
     }
@@ -1610,9 +1643,89 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     int nMinTileY = 0;
     int nMaxTileX = 0;
     int nMaxTileY = 0;
+    bool bIntersects = false;
     if (!GetTileIndices(tileMatrix, bInvertAxisTMS, m_tileSize, adfExtent,
-                        nMinTileX, nMinTileY, nMaxTileX, nMaxTileY))
+                        nMinTileX, nMinTileY, nMaxTileX, nMaxTileY,
+                        m_noIntersectionIsOK, bIntersects,
+                        /* checkRasterOverflow = */ false))
     {
+        return false;
+    }
+    if (!bIntersects)
+        return true;
+
+    // Potentially restrict tiling to user specified coordinates
+    if (m_minTileX >= tileMatrix.mMatrixWidth)
+    {
+        ReportError(CE_Failure, CPLE_IllegalArg,
+                    "'min-x' value must be in [0,%d] range",
+                    tileMatrix.mMatrixWidth - 1);
+        return false;
+    }
+    if (m_maxTileX >= tileMatrix.mMatrixWidth)
+    {
+        ReportError(CE_Failure, CPLE_IllegalArg,
+                    "'max-x' value must be in [0,%d] range",
+                    tileMatrix.mMatrixWidth - 1);
+        return false;
+    }
+    if (m_minTileY >= tileMatrix.mMatrixHeight)
+    {
+        ReportError(CE_Failure, CPLE_IllegalArg,
+                    "'min-y' value must be in [0,%d] range",
+                    tileMatrix.mMatrixHeight - 1);
+        return false;
+    }
+    if (m_maxTileY >= tileMatrix.mMatrixHeight)
+    {
+        ReportError(CE_Failure, CPLE_IllegalArg,
+                    "'max-y' value must be in [0,%d] range",
+                    tileMatrix.mMatrixHeight - 1);
+        return false;
+    }
+
+    if ((m_minTileX >= 0 && m_minTileX > nMaxTileX) ||
+        (m_minTileY >= 0 && m_minTileY > nMaxTileY) ||
+        (m_maxTileX >= 0 && m_maxTileX < nMinTileX) ||
+        (m_maxTileY >= 0 && m_maxTileY < nMinTileY))
+    {
+        ReportError(
+            m_noIntersectionIsOK ? CE_Warning : CE_Failure, CPLE_AppDefined,
+            "Dataset extent not intersecting specified min/max X/Y tile "
+            "coordinates");
+        return m_noIntersectionIsOK;
+    }
+    if (m_minTileX >= 0 && m_minTileX > nMinTileX)
+    {
+        nMinTileX = m_minTileX;
+        adfExtent[0] = tileMatrix.mTopLeftX +
+                       nMinTileX * tileMatrix.mResX * tileMatrix.mTileWidth;
+    }
+    if (m_minTileY >= 0 && m_minTileY > nMinTileY)
+    {
+        nMinTileY = m_minTileY;
+        adfExtent[3] = tileMatrix.mTopLeftY -
+                       nMinTileY * tileMatrix.mResY * tileMatrix.mTileHeight;
+    }
+    if (m_maxTileX >= 0 && m_maxTileX < nMaxTileX)
+    {
+        nMaxTileX = m_maxTileX;
+        adfExtent[2] = tileMatrix.mTopLeftX + (nMaxTileX + 1) *
+                                                  tileMatrix.mResX *
+                                                  tileMatrix.mTileWidth;
+    }
+    if (m_maxTileY >= 0 && m_maxTileY < nMaxTileY)
+    {
+        nMaxTileY = m_maxTileY;
+        adfExtent[1] = tileMatrix.mTopLeftY - (nMaxTileY + 1) *
+                                                  tileMatrix.mResY *
+                                                  tileMatrix.mTileHeight;
+    }
+
+    if (nMaxTileX - nMinTileX + 1 > INT_MAX / tileMatrix.mTileWidth ||
+        nMaxTileY - nMinTileY + 1 > INT_MAX / tileMatrix.mTileHeight)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined, "Too large zoom level");
         return false;
     }
 
@@ -1769,22 +1882,26 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     uint64_t nTotalTiles = static_cast<uint64_t>(nMaxTileY - nMinTileY + 1) *
                            (nMaxTileX - nMinTileX + 1);
     uint64_t nCurTile = 0;
+    bool bRet = true;
 
-    for (int iZ = m_minZoomLevel; iZ < m_maxZoomLevel; ++iZ)
+    for (int iZ = m_maxZoomLevel - 1;
+         bRet && bIntersects && iZ >= m_minZoomLevel; --iZ)
     {
         auto ovrTileMatrix = tileMatrixList[iZ];
         int nOvrMinTileX = 0;
         int nOvrMinTileY = 0;
         int nOvrMaxTileX = 0;
         int nOvrMaxTileY = 0;
-        if (!GetTileIndices(ovrTileMatrix, bInvertAxisTMS, m_tileSize,
-                            adfExtent, nOvrMinTileX, nOvrMinTileY, nOvrMaxTileX,
-                            nOvrMaxTileY))
+        bRet =
+            GetTileIndices(ovrTileMatrix, bInvertAxisTMS, m_tileSize, adfExtent,
+                           nOvrMinTileX, nOvrMinTileY, nOvrMaxTileX,
+                           nOvrMaxTileY, m_noIntersectionIsOK, bIntersects);
+        if (bIntersects)
         {
-            return false;
+            nTotalTiles +=
+                static_cast<uint64_t>(nOvrMaxTileY - nOvrMinTileY + 1) *
+                (nOvrMaxTileX - nOvrMinTileX + 1);
         }
-        nTotalTiles += static_cast<uint64_t>(nOvrMaxTileY - nOvrMinTileY + 1) *
-                       (nOvrMaxTileX - nOvrMinTileX + 1);
     }
 
     /* -------------------------------------------------------------------- */
@@ -1792,7 +1909,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     /* -------------------------------------------------------------------- */
     GDALWarpOperation oWO;
 
-    bool bRet = oWO.Initialize(psWO.get()) == CE_None;
+    bRet = oWO.Initialize(psWO.get()) == CE_None && bRet;
 
     const auto GetUpdatedCreationOptions =
         [this](const gdal::TileMatrixSet::TileMatrix &oTM)
@@ -1873,9 +1990,10 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         int nSrcMaxTileX = 0;
         int nSrcMaxTileY = 0;
 
-        CPL_IGNORE_RET_VAL(GetTileIndices(
-            srcTileMatrix, bInvertAxisTMS, m_tileSize, adfExtent, nSrcMinTileX,
-            nSrcMinTileY, nSrcMaxTileX, nSrcMaxTileY));
+        CPL_IGNORE_RET_VAL(
+            GetTileIndices(srcTileMatrix, bInvertAxisTMS, m_tileSize, adfExtent,
+                           nSrcMinTileX, nSrcMinTileY, nSrcMaxTileX,
+                           nSrcMaxTileY, m_noIntersectionIsOK, bIntersects));
 
         MosaicDataset oSrcDS(
             CPLFormFilenameSafe(m_outputDirectory.c_str(),
@@ -1891,13 +2009,18 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         int nOvrMinTileY = 0;
         int nOvrMaxTileX = 0;
         int nOvrMaxTileY = 0;
-        CPL_IGNORE_RET_VAL(GetTileIndices(
-            ovrTileMatrix, bInvertAxisTMS, m_tileSize, adfExtent, nOvrMinTileX,
-            nOvrMinTileY, nOvrMaxTileX, nOvrMaxTileY));
+        CPL_IGNORE_RET_VAL(
+            GetTileIndices(ovrTileMatrix, bInvertAxisTMS, m_tileSize, adfExtent,
+                           nOvrMinTileX, nOvrMinTileY, nOvrMaxTileX,
+                           nOvrMaxTileY, m_noIntersectionIsOK, bIntersects));
+        bRet = bIntersects;
 
-        CPLDebug("gdal_raster_tile",
-                 "Generating overview tiles z=%d, y=%d...%d, x=%d...%d", iZ,
-                 nOvrMinTileY, nOvrMaxTileY, nOvrMinTileX, nOvrMaxTileX);
+        if (bRet)
+        {
+            CPLDebug("gdal_raster_tile",
+                     "Generating overview tiles z=%d, y=%d...%d, x=%d...%d", iZ,
+                     nOvrMinTileY, nOvrMaxTileY, nOvrMinTileX, nOvrMaxTileX);
+        }
 
         const CPLStringList aosCreationOptions(
             GetUpdatedCreationOptions(ovrTileMatrix));

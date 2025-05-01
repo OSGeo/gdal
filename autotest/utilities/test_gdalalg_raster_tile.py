@@ -6,11 +6,12 @@
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2024, Even Rouault <even dot rouault at spatialys.com>
+# Copyright (c) 2025, Even Rouault <even dot rouault at spatialys.com>
 #
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, osr
@@ -171,6 +172,175 @@ def test_gdalalg_raster_tile_small_world_GoogleCRS84Quad(tmp_vsimem, xyz):
         "1/1/1.png",
         "openlayers.html",
     ]
+
+
+def test_gdalalg_raster_tile_invalid_tile_min_max_x(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["min-x"] = 1
+    alg["max-x"] = 0
+    with pytest.raises(Exception, match="'min-x' must be lesser or equal to 'max-x'"):
+        alg.Run()
+
+
+def test_gdalalg_raster_tile_invalid_tile_min_max_y(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["min-y"] = 1
+    alg["max-y"] = 0
+    with pytest.raises(Exception, match="'min-y' must be lesser or equal to 'max-y'"):
+        alg.Run()
+
+
+def test_gdalalg_raster_tile_invalid_tile_min_x(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["tiling-scheme"] = "GoogleCRS84Quad"
+    alg["min-x"] = 2
+    with pytest.raises(Exception, match=r"'min-x' value must be in \[0,1\] range"):
+        alg.Run()
+
+
+def test_gdalalg_raster_tile_invalid_tile_min_y(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["tiling-scheme"] = "GoogleCRS84Quad"
+    alg["min-y"] = 2
+    with pytest.raises(Exception, match=r"'min-y' value must be in \[0,1\] range"):
+        alg.Run()
+
+
+def test_gdalalg_raster_tile_invalid_tile_max_x(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["tiling-scheme"] = "GoogleCRS84Quad"
+    alg["max-x"] = 2
+    with pytest.raises(Exception, match=r"'max-x' value must be in \[0,1\] range"):
+        alg.Run()
+
+
+def test_gdalalg_raster_tile_invalid_tile_max_y(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["tiling-scheme"] = "GoogleCRS84Quad"
+    alg["max-y"] = 2
+    with pytest.raises(Exception, match=r"'max-y' value must be in \[0,1\] range"):
+        alg.Run()
+
+
+@pytest.mark.parametrize(
+    "min_x,min_y,max_x,max_y,expected_files",
+    [
+        (
+            0,
+            0,
+            1,
+            1,
+            ["1/", "1/0/", "1/0/0.png", "1/0/1.png", "1/1/", "1/1/0.png", "1/1/1.png"],
+        ),
+        (
+            None,
+            0,
+            1,
+            1,
+            ["1/", "1/0/", "1/0/0.png", "1/0/1.png", "1/1/", "1/1/0.png", "1/1/1.png"],
+        ),
+        (
+            0,
+            None,
+            1,
+            1,
+            ["1/", "1/0/", "1/0/0.png", "1/0/1.png", "1/1/", "1/1/0.png", "1/1/1.png"],
+        ),
+        (
+            0,
+            0,
+            None,
+            1,
+            ["1/", "1/0/", "1/0/0.png", "1/0/1.png", "1/1/", "1/1/0.png", "1/1/1.png"],
+        ),
+        (
+            0,
+            0,
+            1,
+            None,
+            ["1/", "1/0/", "1/0/0.png", "1/0/1.png", "1/1/", "1/1/0.png", "1/1/1.png"],
+        ),
+        (0, 0, 0, 0, ["1/", "1/0/", "1/0/0.png"]),
+        (0, 0, 1, 0, ["1/", "1/0/", "1/0/0.png", "1/1/", "1/1/0.png"]),
+        (0, 0, 0, 1, ["1/", "1/0/", "1/0/0.png", "1/0/1.png"]),
+        (1, 0, 1, 1, ["1/", "1/1/", "1/1/0.png", "1/1/1.png"]),
+        (1, 1, 1, 1, ["1/", "1/1/", "1/1/1.png"]),
+    ],
+)
+def test_gdalalg_raster_tile_min_max_xy_coordinate(
+    tmp_vsimem, min_x, min_y, max_x, max_y, expected_files
+):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["tiling-scheme"] = "GoogleCRS84Quad"
+    alg["webviewer"] = "none"
+    if min_x is not None:
+        alg["min-x"] = min_x
+    if min_y is not None:
+        alg["min-y"] = min_y
+    if max_x is not None:
+        alg["max-x"] = max_x
+    if max_y is not None:
+        alg["max-y"] = max_y
+    assert alg.Run()
+
+    assert gdal.ReadDirRecursive(tmp_vsimem) == expected_files
+
+
+def test_gdalalg_raster_tile_min_max_xy_coordinate_not_intersecting(tmp_vsimem):
+
+    alg = get_alg()
+    # West hemisphere
+    alg["input"] = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", options="-of MEM -srcwin 0 0 199 200"
+    )
+    alg["output"] = tmp_vsimem
+    alg["tiling-scheme"] = "GoogleCRS84Quad"
+    alg["min-x"] = 1
+    with pytest.raises(
+        Exception,
+        match="Dataset extent not intersecting specified min/max X/Y tile coordinates",
+    ):
+        alg.Run()
+
+
+def test_gdalalg_raster_tile_min_max_xy_coordinate_not_intersecting_ok(tmp_vsimem):
+
+    alg = get_alg()
+    # West hemisphere
+    alg["input"] = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", options="-of MEM -srcwin 0 0 199 200"
+    )
+    alg["output"] = tmp_vsimem
+    alg["tiling-scheme"] = "GoogleCRS84Quad"
+    alg["min-x"] = 1
+    alg["no-intersection-ok"] = True
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        match="Dataset extent not intersecting specified min/max X/Y tile coordinates",
+    ):
+        assert alg.Run()
+    assert gdal.ReadDirRecursive(tmp_vsimem) is None
 
 
 @pytest.mark.parametrize(
@@ -365,7 +535,7 @@ def test_gdalalg_raster_tile_min_zoom_larger_max_zoom(tmp_vsimem):
     alg["min-zoom"] = 1
     alg["max-zoom"] = 0
     with pytest.raises(
-        Exception, match="'min-zoom' should be lesser or equal to 'max-zoom'"
+        Exception, match="'min-zoom' must be lesser or equal to 'max-zoom'"
     ):
         alg.Run()
 
@@ -377,7 +547,7 @@ def test_gdalalg_raster_tile_too_large_max_zoom(tmp_vsimem):
     alg["output"] = tmp_vsimem
     alg["max-zoom"] = 31
     with pytest.raises(
-        Exception, match=r"max-zoom = 31 is invalid. It should be in \[0,30\] range"
+        Exception, match=r"max-zoom = 31 is invalid. It must be in \[0,30\] range"
     ):
         alg.Run()
 
@@ -545,7 +715,7 @@ def test_gdalalg_raster_tile_not_earth_crs(tmp_vsimem):
         alg.Run()
 
 
-def test_gdalalg_raster_tile_cannot_determine_extent_in_target_crs(tmp_vsimem):
+def test_gdalalg_raster_tile_extent_not_compatible_tile_matrix(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src_ds.SetSpatialRef(osr.SpatialReference("+proj=longlat +datum=WGS84"))
@@ -556,9 +726,26 @@ def test_gdalalg_raster_tile_cannot_determine_extent_in_target_crs(tmp_vsimem):
     alg["tiling-scheme"] = "NZTM2000"
     with pytest.raises(
         Exception,
-        match="Extent of source dataset is not compatible with extent of tiling scheme",
+        match="Extent of source dataset is not compatible with extent of tile matrix 7",
     ):
         alg.Run()
+
+
+def test_gdalalg_raster_tile_extent_not_compatible_tile_matrix_as_warning(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetSpatialRef(osr.SpatialReference("+proj=longlat +datum=WGS84"))
+    src_ds.SetGeoTransform([-180, 360, 0, 90, 0, -0.001])
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["tiling-scheme"] = "NZTM2000"
+    alg["no-intersection-ok"] = True
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        match="Extent of source dataset is not compatible with extent of tile matrix 7",
+    ):
+        assert alg.Run()
 
 
 def test_gdalalg_raster_tile_addalpha_dstnodata_exclusive(tmp_vsimem):
