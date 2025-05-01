@@ -17,6 +17,9 @@
 
 #include "ogrsf_frmts.h"
 
+#include <algorithm>
+#include <utility>
+
 /************************************************************************/
 /*                      OGRUnionLayerGeomFieldDefn                      */
 /************************************************************************/
@@ -49,13 +52,51 @@ typedef enum
 
 class CPL_DLL OGRUnionLayer final : public OGRLayer
 {
+  private:
     CPL_DISALLOW_COPY_ASSIGN(OGRUnionLayer)
 
-  protected:
+    struct Layer
+    {
+        std::unique_ptr<OGRLayer> poLayerKeeper{};
+        OGRLayer *poLayer = nullptr;
+        bool bModified = false;
+        bool bCheckIfAutoWrap = false;
+
+        CPL_DISALLOW_COPY_ASSIGN(Layer)
+
+        Layer(OGRLayer *poLayerIn, bool bOwnedIn)
+            : poLayerKeeper(bOwnedIn ? poLayerIn : nullptr),
+              poLayer(bOwnedIn ? poLayerKeeper.get() : poLayerIn)
+        {
+        }
+
+        Layer(Layer &&) = default;
+        Layer &operator=(Layer &&) = default;
+
+        OGRLayer *operator->()
+        {
+            return poLayer;
+        }
+
+        std::pair<OGRLayer *, bool> release()
+        {
+            const bool bOwnedBackup = poLayerKeeper != nullptr;
+            OGRLayer *poLayerBackup =
+                poLayerKeeper ? poLayerKeeper.release() : poLayer;
+            poLayerKeeper.reset();
+            return std::make_pair(poLayerBackup, bOwnedBackup);
+        }
+
+        void reset(std::unique_ptr<OGRLayer> poLayerIn)
+        {
+            poLayerKeeper = std::move(poLayerIn);
+            poLayer = poLayerKeeper.get();
+        }
+    };
+
     CPLString osName{};
-    int nSrcLayers = 0;
-    OGRLayer **papoSrcLayers = nullptr;
-    int bHasLayerOwnership = false;
+
+    std::vector<Layer> m_apoSrcLayers{};
 
     OGRFeatureDefn *poFeatureDefn = nullptr;
     int nFields = 0;
@@ -75,8 +116,6 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
     int *panMap = nullptr;
     CPLStringList m_aosIgnoredFields{};
     int bAttrFilterPassThroughValue = -1;
-    int *pabModifiedLayers = nullptr;
-    int *pabCheckIfAutoWrap = nullptr;
     const OGRSpatialReference *poGlobalSRS = nullptr;
 
     void AutoWarpLayerIfNecessary(int iSubLayer);
