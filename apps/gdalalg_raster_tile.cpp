@@ -439,14 +439,13 @@ static bool GenerateTile(GDALDataset *poSrcDS, GDALDriver *poMemDriver,
 /*                    GenerateOverviewTile()                            */
 /************************************************************************/
 
-static bool
-GenerateOverviewTile(GDALDataset &oSrcDS, const std::string &outputFormat,
-                     const char *pszExtension, CSLConstList creationOptions,
-                     const std::string &resampling,
-                     const gdal::TileMatrixSet::TileMatrix &tileMatrix,
-                     const std::string &outputDirectory, int nZoomLevel, int iX,
-                     int iY, const std::string &convention, bool bSkipBlank,
-                     bool bAuxXML, bool bResume)
+static bool GenerateOverviewTile(
+    GDALDataset &oSrcDS, GDALDriver *poMemDriver, GDALDriver *poDstDriver,
+    const std::string &outputFormat, const char *pszExtension,
+    CSLConstList creationOptions, const std::string &resampling,
+    const gdal::TileMatrixSet::TileMatrix &tileMatrix,
+    const std::string &outputDirectory, int nZoomLevel, int iX, int iY,
+    const std::string &convention, bool bSkipBlank, bool bAuxXML, bool bResume)
 {
     const std::string osDirZ = CPLFormFilenameSafe(
         outputDirectory.c_str(), CPLSPrintf("%d", nZoomLevel), nullptr);
@@ -497,26 +496,127 @@ GenerateOverviewTile(GDALDataset &oSrcDS, const std::string &outputFormat,
         resampling == "cubicspline" || resampling == "lanczos" ||
         resampling == "mode";
 
+    const std::string osTmpFilename = osFilename + ".tmp." + pszExtension;
+
     if (resamplingCompatibleOfTranslate)
     {
-        aosOptions.AddString("-q");
+        double adfUpperGT[6];
+        oSrcDS.GetGeoTransform(adfUpperGT);
+        const double dfMinXUpper = adfUpperGT[0];
+        const double dfMaxXUpper =
+            dfMinXUpper + adfUpperGT[1] * oSrcDS.GetRasterXSize();
+        const double dfMaxYUpper = adfUpperGT[3];
+        const double dfMinYUpper =
+            dfMaxXUpper + adfUpperGT[5] * oSrcDS.GetRasterYSize();
+        if (dfMinX >= dfMinXUpper && dfMaxX <= dfMaxXUpper &&
+            dfMinY >= dfMinYUpper && dfMaxY <= dfMaxYUpper)
+        {
+            // If the overview tile is fully within the extent of the
+            // upper zoom level, we can use GDALDataset::RasterIO() directly.
 
-        aosOptions.AddString("-projwin");
-        aosOptions.AddString(CPLSPrintf("%.17g", dfMinX));
-        aosOptions.AddString(CPLSPrintf("%.17g", dfMaxY));
-        aosOptions.AddString(CPLSPrintf("%.17g", dfMaxX));
-        aosOptions.AddString(CPLSPrintf("%.17g", dfMinY));
+            const auto eDT = oSrcDS.GetRasterBand(1)->GetRasterDataType();
+            const size_t nBytesPerBand =
+                static_cast<size_t>(tileMatrix.mTileWidth) *
+                tileMatrix.mTileHeight * GDALGetDataTypeSizeBytes(eDT);
+            std::vector<GByte> dstBuffer(nBytesPerBand *
+                                         oSrcDS.GetRasterCount());
 
-        aosOptions.AddString("-outsize");
-        aosOptions.AddString(CPLSPrintf("%d", tileMatrix.mTileWidth));
-        aosOptions.AddString(CPLSPrintf("%d", tileMatrix.mTileHeight));
+            const double dfXOff = (dfMinX - dfMinXUpper) / adfUpperGT[1];
+            const double dfYOff = (dfMaxYUpper - dfMaxY) / -adfUpperGT[5];
+            const double dfXSize = (dfMaxX - dfMinX) / adfUpperGT[1];
+            const double dfYSize = (dfMaxY - dfMinY) / -adfUpperGT[5];
+            GDALRasterIOExtraArg sExtraArg;
+            INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+            CPL_IGNORE_RET_VAL(sExtraArg.eResampleAlg);
+            sExtraArg.eResampleAlg =
+                GDALRasterIOGetResampleAlg(resampling.c_str());
+            sExtraArg.dfXOff = dfXOff;
+            sExtraArg.dfYOff = dfYOff;
+            sExtraArg.dfXSize = dfXSize;
+            sExtraArg.dfYSize = dfYSize;
+            sExtraArg.bFloatingPointWindowValidity =
+                sExtraArg.eResampleAlg != GRIORA_NearestNeighbour;
+            constexpr double EPSILON = 1e-3;
+            if (oSrcDS.RasterIO(GF_Read, static_cast<int>(dfXOff + EPSILON),
+                                static_cast<int>(dfYOff + EPSILON),
+                                static_cast<int>(dfXSize + 0.5),
+                                static_cast<int>(dfYSize + 0.5),
+                                dstBuffer.data(), tileMatrix.mTileWidth,
+                                tileMatrix.mTileHeight, eDT,
+                                oSrcDS.GetRasterCount(), nullptr, 0, 0, 0,
+                                &sExtraArg) == CE_None)
+            {
+                std::unique_ptr<GDALDataset> memDS(poMemDriver->Create(
+                    "", tileMatrix.mTileWidth, tileMatrix.mTileHeight, 0, eDT,
+                    nullptr));
+                for (int i = 0; i < oSrcDS.GetRasterCount(); ++i)
+                {
+                    char szBuffer[32] = {'\0'};
+                    int nRet = CPLPrintPointer(
+                        szBuffer, dstBuffer.data() + i * nBytesPerBand,
+                        sizeof(szBuffer));
+                    szBuffer[nRet] = 0;
 
-        GDALTranslateOptions *psOptions =
-            GDALTranslateOptionsNew(aosOptions.List(), nullptr);
-        poOutDS.reset(GDALDataset::FromHandle(
-            GDALTranslate((osFilename + ".tmp").c_str(),
-                          GDALDataset::ToHandle(&oSrcDS), psOptions, nullptr)));
-        GDALTranslateOptionsFree(psOptions);
+                    char szOption[64] = {'\0'};
+                    snprintf(szOption, sizeof(szOption), "DATAPOINTER=%s",
+                             szBuffer);
+
+                    char *apszOptions[] = {szOption, nullptr};
+
+                    memDS->AddBand(eDT, apszOptions);
+                    auto poSrcBand = oSrcDS.GetRasterBand(i + 1);
+                    auto poDstBand = memDS->GetRasterBand(i + 1);
+                    poDstBand->SetColorInterpretation(
+                        poSrcBand->GetColorInterpretation());
+                    int bHasNoData = false;
+                    const double dfNoData =
+                        poSrcBand->GetNoDataValue(&bHasNoData);
+                    if (bHasNoData)
+                        poDstBand->SetNoDataValue(dfNoData);
+                    if (auto poCT = poSrcBand->GetColorTable())
+                        poDstBand->SetColorTable(poCT);
+                }
+                memDS->SetMetadata(oSrcDS.GetMetadata());
+                double adfGT[6];
+                adfGT[0] = dfMinX;
+                adfGT[1] = tileMatrix.mResX;
+                adfGT[2] = 0;
+                adfGT[3] = dfMaxY;
+                adfGT[4] = 0;
+                adfGT[5] = -tileMatrix.mResY;
+                memDS->SetGeoTransform(adfGT);
+
+                memDS->SetSpatialRef(oSrcDS.GetSpatialRef());
+
+                poOutDS.reset(poDstDriver->CreateCopy(
+                    osTmpFilename.c_str(), memDS.get(), false, creationOptions,
+                    nullptr, nullptr));
+            }
+        }
+        else
+        {
+            // If the overview tile is not fully within the extent of the
+            // upper zoom level, use GDALTranslate() to use VRT padding
+
+            aosOptions.AddString("-q");
+
+            aosOptions.AddString("-projwin");
+            aosOptions.AddString(CPLSPrintf("%.17g", dfMinX));
+            aosOptions.AddString(CPLSPrintf("%.17g", dfMaxY));
+            aosOptions.AddString(CPLSPrintf("%.17g", dfMaxX));
+            aosOptions.AddString(CPLSPrintf("%.17g", dfMinY));
+
+            aosOptions.AddString("-outsize");
+            aosOptions.AddString(CPLSPrintf("%d", tileMatrix.mTileWidth));
+            aosOptions.AddString(CPLSPrintf("%d", tileMatrix.mTileHeight));
+
+            GDALTranslateOptions *psOptions =
+                GDALTranslateOptionsNew(aosOptions.List(), nullptr);
+            poOutDS.reset(GDALDataset::FromHandle(GDALTranslate(
+                osTmpFilename.c_str(), GDALDataset::ToHandle(&oSrcDS),
+                psOptions, nullptr)));
+            GDALTranslateOptionsFree(psOptions);
+        }
     }
     else
     {
@@ -533,9 +633,8 @@ GenerateOverviewTile(GDALDataset &oSrcDS, const std::string &outputFormat,
         GDALWarpAppOptions *psOptions =
             GDALWarpAppOptionsNew(aosOptions.List(), nullptr);
         GDALDatasetH hSrcDS = GDALDataset::ToHandle(&oSrcDS);
-        poOutDS.reset(GDALDataset::FromHandle(
-            GDALWarp((osFilename + ".tmp").c_str(), nullptr, 1, &hSrcDS,
-                     psOptions, nullptr)));
+        poOutDS.reset(GDALDataset::FromHandle(GDALWarp(
+            osTmpFilename.c_str(), nullptr, 1, &hSrcDS, psOptions, nullptr)));
         GDALWarpAppOptionsFree(psOptions);
     }
 
@@ -560,33 +659,28 @@ GenerateOverviewTile(GDALDataset &oSrcDS, const std::string &outputFormat,
             }
             if (bBlank)
             {
-                bRet = poOutDS->Close() == CE_None;
                 poOutDS.reset();
-                if (bRet)
-                {
-                    VSIUnlink((osFilename + ".tmp").c_str());
-                    if (bAuxXML)
-                        VSIUnlink((osFilename + ".tmp.aux.xml").c_str());
-                    return true;
-                }
+                VSIUnlink(osTmpFilename.c_str());
+                if (bAuxXML)
+                    VSIUnlink((osTmpFilename + ".aux.xml").c_str());
+                return true;
             }
         }
     }
-    bRet = bRet && poOutDS && poOutDS->Close() == CE_None;
+    bRet = bRet && poOutDS->Close() == CE_None;
     poOutDS.reset();
     if (bRet)
     {
-        bRet =
-            VSIRename((osFilename + ".tmp").c_str(), osFilename.c_str()) == 0;
+        bRet = VSIRename(osTmpFilename.c_str(), osFilename.c_str()) == 0;
         if (bAuxXML)
         {
-            VSIRename((osFilename + ".tmp.aux.xml").c_str(),
+            VSIRename((osTmpFilename + ".aux.xml").c_str(),
                       (osFilename + ".aux.xml").c_str());
         }
     }
     else
     {
-        VSIUnlink((osFilename + ".tmp").c_str());
+        VSIUnlink(osTmpFilename.c_str());
     }
     return bRet;
 }
@@ -2459,8 +2553,9 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             {
                 if (bUseThreads)
                 {
-                    auto job = [this, &oResourceManager, &bFailure, &nCurTile,
-                                &nQueuedJobs, pszExtension, &aosCreationOptions,
+                    auto job = [this, &oResourceManager, poMemDriver,
+                                poDstDriver, &bFailure, &nCurTile, &nQueuedJobs,
+                                pszExtension, &aosCreationOptions,
                                 &ovrTileMatrix, iZ, iX, iY]()
                     {
                         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
@@ -2469,11 +2564,11 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                         auto resources = oResourceManager.AcquireResources();
                         if (resources &&
                             GenerateOverviewTile(
-                                *(resources->poSrcDS.get()), m_outputFormat,
-                                pszExtension, aosCreationOptions.List(),
-                                m_overviewResampling, ovrTileMatrix,
-                                m_outputDirectory, iZ, iX, iY, m_convention,
-                                m_skipBlank, m_auxXML, m_resume))
+                                *(resources->poSrcDS.get()), poMemDriver,
+                                poDstDriver, m_outputFormat, pszExtension,
+                                aosCreationOptions.List(), m_overviewResampling,
+                                ovrTileMatrix, m_outputDirectory, iZ, iX, iY,
+                                m_convention, m_skipBlank, m_auxXML, m_resume))
                         {
                             oResourceManager.ReleaseResources(
                                 std::move(resources));
@@ -2505,10 +2600,11 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 else
                 {
                     bRet = GenerateOverviewTile(
-                        oSrcDS, m_outputFormat, pszExtension,
-                        aosCreationOptions.List(), m_overviewResampling,
-                        ovrTileMatrix, m_outputDirectory, iZ, iX, iY,
-                        m_convention, m_skipBlank, m_auxXML, m_resume);
+                        oSrcDS, poMemDriver, poDstDriver, m_outputFormat,
+                        pszExtension, aosCreationOptions.List(),
+                        m_overviewResampling, ovrTileMatrix, m_outputDirectory,
+                        iZ, iX, iY, m_convention, m_skipBlank, m_auxXML,
+                        m_resume);
 
                     ++nCurTile;
                     bRet &= (!pfnProgress ||
