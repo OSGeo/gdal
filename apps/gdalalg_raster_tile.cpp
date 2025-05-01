@@ -148,7 +148,7 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
     constexpr const char *PUBLICATION_CATEGORY = "Publication";
     AddArg("webviewer", 0, _("Web viewer to generate"), &m_webviewers)
         .SetDefault("all")
-        .SetChoices("none", "all", "leaflet", "openlayers")
+        .SetChoices("none", "all", "leaflet", "openlayers", "mapml")
         .SetCategory(PUBLICATION_CATEGORY);
     AddArg("url", 0,
            _("URL address where the generated tiles are going to be published"),
@@ -157,6 +157,12 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
     AddArg("title", 0, _("Title of the map"), &m_title)
         .SetCategory(PUBLICATION_CATEGORY);
     AddArg("copyright", 0, _("Copyright for the map"), &m_copyright)
+        .SetCategory(PUBLICATION_CATEGORY);
+    AddArg("mapml-template", 0,
+           _("Filename of a template mapml file where variables will be "
+             "substituted"),
+           &m_mapmlTemplate)
+        .SetMinCharCount(1)
         .SetCategory(PUBLICATION_CATEGORY);
 
     AddValidationAction(
@@ -873,6 +879,7 @@ static void ApplySubstitutions(CPLString &s,
         s.replaceAll("%(" + key + ")s", value);
         s.replaceAll("%(" + key + ")d", value);
         s.replaceAll("%(" + key + ")f", value);
+        s.replaceAll("${" + key + "}", value);
     }
 }
 
@@ -936,6 +943,68 @@ static void GenerateLeaflet(const std::string &osDirectory,
             if (f)
             {
                 VSIFWriteL(osHTML.data(), 1, osHTML.size(), f);
+                VSIFCloseL(f);
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                           GenerateMapML()                            */
+/************************************************************************/
+
+static void
+GenerateMapML(const std::string &osDirectory, const std::string &mapmlTemplate,
+              const std::string &osTitle, int nMinTileX, int nMinTileY,
+              int nMaxTileX, int nMaxTileY, int nMinZoom, int nMaxZoom,
+              const std::string &osExtension, const std::string &osURL,
+              const std::string &osCopyright, const gdal::TileMatrixSet &tms)
+{
+    if (const char *pszTemplate =
+            (mapmlTemplate.empty() ? CPLFindFile("gdal", "template_tiles.mapml")
+                                   : mapmlTemplate.c_str()))
+    {
+        const std::string osFilename(pszTemplate);
+        std::map<std::string, std::string> substs;
+
+        if (tms.identifier() == "GoogleMapsCompatible")
+            substs["TILING_SCHEME"] = "OSMTILE";
+        else if (tms.identifier() == "WorldCRS84Quad")
+            substs["TILING_SCHEME"] = "WGS84";
+        else
+            substs["TILING_SCHEME"] = tms.identifier();
+
+        substs["URL"] = osURL.empty() ? "./" : osURL;
+        substs["MINTILEX"] = CPLSPrintf("%d", nMinTileX);
+        substs["MINTILEY"] = CPLSPrintf("%d", nMinTileY);
+        substs["MAXTILEX"] = CPLSPrintf("%d", nMaxTileX);
+        substs["MAXTILEY"] = CPLSPrintf("%d", nMaxTileY);
+        substs["CURZOOM"] = CPLSPrintf("%d", nMaxZoom);
+        substs["MINZOOM"] = CPLSPrintf("%d", nMinZoom);
+        substs["MAXZOOM"] = CPLSPrintf("%d", nMaxZoom);
+        substs["TILEEXT"] = osExtension;
+        char *pszStr = CPLEscapeString(osTitle.c_str(), -1, CPLES_XML);
+        substs["TITLE"] = pszStr;
+        CPLFree(pszStr);
+        substs["COPYRIGHT"] = osCopyright;
+
+        GByte *pabyRet = nullptr;
+        CPL_IGNORE_RET_VAL(VSIIngestFile(nullptr, osFilename.c_str(), &pabyRet,
+                                         nullptr, 10 * 1024 * 1024));
+        if (pabyRet)
+        {
+            CPLString osMAPML(reinterpret_cast<char *>(pabyRet));
+            CPLFree(pabyRet);
+
+            ApplySubstitutions(osMAPML, substs);
+
+            VSILFILE *f = VSIFOpenL(
+                CPLFormFilenameSafe(osDirectory.c_str(), "mapml.mapml", nullptr)
+                    .c_str(),
+                "wb");
+            if (f)
+            {
+                VSIFWriteL(osMAPML.data(), 1, osMAPML.size(), f);
                 VSIFCloseL(f);
             }
         }
@@ -2098,6 +2167,14 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             adfExtent[2], adfExtent[3], m_minZoomLevel, m_maxZoomLevel,
             tileMatrix.mTileWidth, pszExtension, m_url, m_copyright,
             *(poTMS.get()), bInvertAxisTMS, oSRS_TMS, m_convention == "xyz");
+    }
+
+    if (bRet && IsWebViewerEnabled("mapml") && m_convention == "xyz")
+    {
+        GenerateMapML(m_outputDirectory, m_mapmlTemplate, m_title, nMinTileX,
+                      nMinTileY, nMaxTileX, nMaxTileY, m_minZoomLevel,
+                      m_maxZoomLevel, pszExtension, m_url, m_copyright,
+                      *(poTMS.get()));
     }
 
     return bRet;

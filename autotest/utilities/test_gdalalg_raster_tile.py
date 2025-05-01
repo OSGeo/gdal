@@ -53,6 +53,7 @@ def test_gdalalg_raster_tile_basic(tmp_vsimem, tiling_scheme, tilesize):
         "11/354/",
         "11/354/818.png",
         "leaflet.html",
+        "mapml.mapml",
         "openlayers.html",
     ]
 
@@ -67,6 +68,15 @@ def test_gdalalg_raster_tile_basic(tmp_vsimem, tiling_scheme, tilesize):
         # Uncomment below line to regenerate expected file
         # open("data/gdal_raster_tile_expected_leaflet.html", "wb").write(got)
         assert got == open("data/gdal_raster_tile_expected_leaflet.html", "rb").read()
+
+    if tiling_scheme is None:
+        with gdal.VSIFile(tmp_vsimem / "mapml.mapml", "rb") as f:
+            got = f.read()
+            # Uncomment below line to regenerate expected file
+            # open("data/gdal_raster_tile_expected_mapml.mapml", "wb").write(got)
+            assert (
+                got == open("data/gdal_raster_tile_expected_mapml.mapml", "rb").read()
+            )
 
     with gdal.VSIFile(tmp_vsimem / "openlayers.html", "rb") as f:
         got = f.read()
@@ -91,14 +101,27 @@ def test_gdalalg_raster_tile_small_world_geodetic(tmp_vsimem, tiling_scheme, xyz
     with gdal.config_option("GDAL_RASTER_TILE_HTML_PREC", "10"):
         assert alg.Run()
 
-    assert gdal.ReadDirRecursive(tmp_vsimem) == [
-        "0/",
-        "0/0/",
-        "0/0/0.png",
-        "0/1/",
-        "0/1/0.png",
-        "openlayers.html",
-    ]
+    assert (
+        gdal.ReadDirRecursive(tmp_vsimem)
+        == [
+            "0/",
+            "0/0/",
+            "0/0/0.png",
+            "0/1/",
+            "0/1/0.png",
+            "mapml.mapml",
+            "openlayers.html",
+        ]
+        if xyz
+        else [
+            "0/",
+            "0/0/",
+            "0/0/0.png",
+            "0/1/",
+            "0/1/0.png",
+            "openlayers.html",
+        ]
+    )
 
     with gdal.Open(tmp_vsimem / "0/0/0.png") as ds:
         assert ds.RasterCount == 4
@@ -127,6 +150,18 @@ def test_gdalalg_raster_tile_small_world_geodetic(tmp_vsimem, tiling_scheme, xyz
             ],
             abs=1,
         )
+
+    if xyz:
+        with gdal.VSIFile(tmp_vsimem / "mapml.mapml", "rb") as f:
+            got = f.read()
+            # Uncomment below line to regenerate expected file
+            # open("data/gdal_raster_tile_expected_geodetic_mapml.mapml", "wb").write(got)
+            assert (
+                got
+                == open(
+                    "data/gdal_raster_tile_expected_geodetic_mapml.mapml", "rb"
+                ).read()
+            )
 
     with gdal.VSIFile(tmp_vsimem / "openlayers.html", "rb") as f:
         got = f.read()
@@ -160,6 +195,7 @@ def test_gdalalg_raster_tile_small_world_GoogleCRS84Quad(tmp_vsimem, xyz):
     alg["tiling-scheme"] = "GoogleCRS84Quad"
     if not xyz:
         alg["convention"] = "tms"
+    alg["webviewer"] = ["openlayers", "leaflet"]
     assert alg.Run()
 
     assert gdal.ReadDirRecursive(tmp_vsimem) == [
@@ -502,6 +538,7 @@ def test_gdalalg_raster_tile_palette_nearest(tmp_vsimem):
         "11/354/",
         "11/354/818.png",
         "leaflet.html",
+        "mapml.mapml",
         "openlayers.html",
     ]
 

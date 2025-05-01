@@ -178,7 +178,7 @@ Standard options
 Publication Options
 +++++++++++++++++++
 
-.. option:: --webviewer none|all|leaflet|openlayers
+.. option:: --webviewer none|all|leaflet|openlayers|mapml
 
     Web viewer to generate. Defaults to ``all``.
 
@@ -194,6 +194,32 @@ Publication Options
 
     Copyright for the map.
 
+
+MapML options
++++++++++++++
+
+MapML webviewer can only be generated if :option:`--convention` is set to the
+default value ``xyz``.
+
+The following profiles are supported:
+
+- ``WebMercatorQuad``: mapped to OSMTILE MapML tiling scheme
+- ``GoogleCRS84Quad``: mapped to WGS84 MapML tiling scheme
+- ``APSTILE``: from the tms_MapML_APSTILE.json data file
+- ``CBMTILE``: from the tms_MapML_CBMTILE.json data file
+
+The generated MapML file in the output directory is ``mapml.mapl``
+
+Available options are:
+
+.. option:: --mapml-template <filename>
+
+    Filename of a template mapml file where variables will
+    be substituted. If not specified, the generic
+    template_tiles.mapml file from GDAL data resources
+    will be used
+
+The :option:`--url` option is also used to substitute ``${URL}`` in the template MapML file.
 
 Examples
 --------

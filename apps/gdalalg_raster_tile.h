@@ -67,6 +67,7 @@ class GDALRasterTileAlgorithm final : public GDALAlgorithm
     std::string m_url{};
     std::string m_title{};
     std::string m_copyright{};
+    std::string m_mapmlTemplate{};
 
     std::map<std::string, std::string> m_mapTileMatrixIdentifierToScheme{};
 };
