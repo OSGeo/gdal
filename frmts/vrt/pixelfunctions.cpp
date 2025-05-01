@@ -1859,9 +1859,6 @@ static const char pszReclassifyPixelFuncMetadata[] =
     "             description='Lookup table for mapping, in format "
     "from=to,from=to' "
     "             type='string'></Argument>"
-    "   <Argument name='default' "
-    "             description='Default value to assign' "
-    "             type='string'></Argument>"
     "   <Argument type='builtin' value='NoData' optional='true' />"
     "</PixelFunctionArgumentsList>";
 
@@ -1884,8 +1881,6 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
         return CE_Failure;
     }
 
-    const char *pszDefault = CSLFetchNameValue(papszArgs, "default");
-
     bool bHasNoDataValue = false;
     double dfNoDataValue{};
 
@@ -1898,44 +1893,6 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
 
     bool bHasDefaultValue = false;
     double dfDefaultValue{};
-    if (pszDefault != nullptr)
-    {
-        bHasDefaultValue = true;
-
-        if (EQUAL(pszDefault, "NO_DATA"))
-        {
-            if (!bHasNoDataValue)
-            {
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Reclassify default set to NO_DATA, but NoData value is "
-                    "not set");
-                return CE_Failure;
-            }
-
-            dfDefaultValue = CPLAtof(pszNoData);
-        }
-        else
-        {
-            char *end;
-            dfDefaultValue = CPLStrtod(pszDefault, &end);
-            if (end == pszDefault || *end != '\0')
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Failed to parse default");
-                return CE_Failure;
-            }
-
-            if (!GDALIsValueExactAs(dfDefaultValue, eBufType))
-            {
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Default value %g cannot be represented as data type %s",
-                    dfDefaultValue, GDALGetDataTypeName(eBufType));
-                return CE_Failure;
-            }
-        }
-    }
 
     std::map<double, double> oConstantMappings;
     std::vector<std::pair<Interval, double>> aoIntervalMappings;
@@ -1961,10 +1918,20 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
         }
 
         Interval sInt;
+        bool bFromIsDefault = false;
 
-        if (auto eErr = sInt.Parse(start, &end); eErr != CE_None)
+        if (STARTS_WITH_CI(start, "DEFAULT"))
         {
-            return eErr;
+            bHasDefaultValue = true;
+            bFromIsDefault = true;
+            end = const_cast<char *>(start + 7);
+        }
+        else
+        {
+            if (auto eErr = sInt.Parse(start, &end); eErr != CE_None)
+            {
+                return eErr;
+            }
         }
 
         while (isspace(*end))
@@ -2034,7 +2001,11 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
             return CE_Failure;
         }
 
-        if (sInt.IsConstant())
+        if (bFromIsDefault)
+        {
+            dfDefaultValue = dfDstVal;
+        }
+        else if (sInt.IsConstant())
         {
             oConstantMappings[sInt.dfMin] = dfDstVal;
         }

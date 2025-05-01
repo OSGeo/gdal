@@ -1315,7 +1315,7 @@ def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
     <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
       <VRTRasterBand dataType="Float32" band="1" subclass="VRTDerivedRasterBand">
         <PixelFunctionType>reclassify</PixelFunctionType>
-        <PixelFunctionArguments mapping=" (-inf, 1)=8; 2=9 ; (3,5]=4; 10=NO_DATA; [11, Inf] = 11 " default="{default}"/>
+        <PixelFunctionArguments mapping=" (-inf, 1)=8; 2=9 ; (3,5]=4; 10=NO_DATA; [11, Inf] = 11; default={default}"/>
         <SimpleSource>
           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
           <SourceBand>1</SourceBand>
@@ -1370,45 +1370,6 @@ def test_vrt_pixelfn_reclassify_no_default(tmp_vsimem):
     with pytest.raises(
         Exception, match="Encountered value .* with no specified mapping"
     ):
-        gdal.Open(xml).ReadAsArray()
-
-
-@gdaltest.enable_exceptions()
-@pytest.mark.parametrize(
-    "default,error",
-    [
-        ("32k", "Failed to parse"),
-        ("", "Failed to parse"),
-        ("256", "cannot be represented"),
-        ("NO_DATA", "NoData value is not set"),
-    ],
-)
-def test_vrt_pixelfn_reclassify_bad_default(tmp_vsimem, default, error):
-
-    np = pytest.importorskip("numpy")
-    gdaltest.importorskip_gdal_array()
-
-    nx = 2
-    ny = 3
-
-    data = np.arange(nx * ny).reshape(ny, nx)
-
-    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", nx, ny, 1) as src:
-        src.WriteArray(data)
-
-    xml = f"""
-    <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
-      <VRTRasterBand dataType="Byte" band="1" subclass="VRTDerivedRasterBand">
-        <PixelFunctionType>reclassify</PixelFunctionType>
-        <PixelFunctionArguments mapping="1=2;3=4" default="{default}" />
-        <SimpleSource>
-          <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
-          <SourceBand>1</SourceBand>
-        </SimpleSource>
-      </VRTRasterBand>
-    </VRTDataset>"""
-
-    with pytest.raises(Exception, match=error):
         gdal.Open(xml).ReadAsArray()
 
 
