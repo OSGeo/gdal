@@ -206,7 +206,7 @@ int inflate_table9(codetype type, unsigned short FAR *lens,
     for (;;) {
         /* create table entry */
         this.bits = (unsigned char)(len - drop);
-        if ((work[sym]) + 1 < match) {
+        if ((unsigned)(work[sym]) + 1 < match) {
             this.op = (unsigned char)0;
             this.val = work[sym];
         }
