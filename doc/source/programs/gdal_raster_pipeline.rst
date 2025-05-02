@@ -34,12 +34,6 @@ Potential steps are:
 
 Details for options can be found in :ref:`gdal_raster_aspect`.
 
-* astype
-
-.. program-output:: gdal raster pipeline --help-doc=astype
-
-Details for options can be found in :ref:`gdal_raster_astype`.
-
 * clip
 
 .. program-output:: gdal raster pipeline --help-doc=clip
@@ -93,6 +87,12 @@ Details for options can be found in :ref:`gdal_raster_scale`.
 .. program-output:: gdal raster pipeline --help-doc=select
 
 Details for options can be found in :ref:`gdal_raster_select`.
+
+* set-type
+
+.. program-output:: gdal raster pipeline --help-doc=set-type
+
+Details for options can be found in :ref:`gdal_raster_set_type`.
 
 * slope
 

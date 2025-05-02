@@ -17,7 +17,6 @@ add_library(
   gdalalg_raster.cpp
   gdalalg_raster_info.cpp
   gdalalg_raster_aspect.cpp
-  gdalalg_raster_astype.cpp
   gdalalg_raster_calc.cpp
   gdalalg_raster_clean_collar.cpp
   gdalalg_raster_clip.cpp
@@ -42,6 +41,7 @@ add_library(
   gdalalg_raster_roughness.cpp
   gdalalg_raster_scale.cpp
   gdalalg_raster_select.cpp
+  gdalalg_raster_set_type.cpp
   gdalalg_raster_sieve.cpp
   gdalalg_raster_slope.cpp
   gdalalg_raster_stack.cpp

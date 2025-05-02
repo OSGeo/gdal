@@ -13,17 +13,16 @@
 #include "gdalalg_raster_pipeline.h"
 #include "gdalalg_raster_read.h"
 #include "gdalalg_raster_aspect.h"
-#include "gdalalg_raster_astype.h"
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_color_map.h"
 #include "gdalalg_raster_edit.h"
-#include "gdalalg_raster_fillnodata.h"
 #include "gdalalg_raster_hillshade.h"
 #include "gdalalg_raster_reproject.h"
 #include "gdalalg_raster_resize.h"
 #include "gdalalg_raster_roughness.h"
 #include "gdalalg_raster_scale.h"
 #include "gdalalg_raster_select.h"
+#include "gdalalg_raster_set_type.h"
 #include "gdalalg_raster_slope.h"
 #include "gdalalg_raster_write.h"
 #include "gdalalg_raster_tpi.h"
@@ -262,7 +261,6 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     m_stepRegistry.Register<GDALRasterReadAlgorithm>();
     m_stepRegistry.Register<GDALRasterWriteAlgorithm>();
     m_stepRegistry.Register<GDALRasterAspectAlgorithm>();
-    m_stepRegistry.Register<GDALRasterAsTypeAlgorithm>();
     m_stepRegistry.Register<GDALRasterClipAlgorithm>();
     m_stepRegistry.Register<GDALRasterColorMapAlgorithm>();
     m_stepRegistry.Register<GDALRasterEditAlgorithm>();
@@ -272,6 +270,7 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     m_stepRegistry.Register<GDALRasterRoughnessAlgorithm>();
     m_stepRegistry.Register<GDALRasterScaleAlgorithm>();
     m_stepRegistry.Register<GDALRasterSelectAlgorithm>();
+    m_stepRegistry.Register<GDALRasterSetTypeAlgorithm>();
     m_stepRegistry.Register<GDALRasterSlopeAlgorithm>();
     m_stepRegistry.Register<GDALRasterTPIAlgorithm>();
     m_stepRegistry.Register<GDALRasterTRIAlgorithm>();
