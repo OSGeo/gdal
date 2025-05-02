@@ -1433,18 +1433,11 @@ GDALAlgorithm::GDALAlgorithm(const std::string &name,
            &m_helpDocRequested)
         .SetHidden()
         .AddAction([this]() { m_specialActionRequested = true; });
-    AddArg("version", 0, _("Display GDAL version and exit"), &m_dummyBoolean)
-        .SetOnlyForCLI()
-        .SetCategory(GAAC_COMMON);
     AddArg("json-usage", 0, _("Display usage as JSON document and exit"),
            &m_JSONUsageRequested)
         .SetOnlyForCLI()
         .SetCategory(GAAC_COMMON)
         .AddAction([this]() { m_specialActionRequested = true; });
-    AddArg("drivers", 0, _("Display driver list as JSON document and exit"),
-           &m_dummyBoolean)
-        .SetOnlyForCLI()
-        .SetCategory(GAAC_COMMON);
     AddArg("config", 0, _("Configuration option"), &m_dummyConfigOptions)
         .SetMetaVar("<KEY>=<VALUE>")
         .SetOnlyForCLI()
