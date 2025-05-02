@@ -2171,6 +2171,8 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
             osDatasetName = GDALDataset::BuildFilename(
                 osDatasetName.c_str(), m_referencePath.c_str(), true);
         }
+        if (osDatasetName == "-" && (flags & GDAL_OF_UPDATE) == 0)
+            osDatasetName = "/vsistdin/";
 
         auto poDS =
             GDALDataset::Open(osDatasetName.c_str(), flags,
@@ -2930,6 +2932,14 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
 
     SetAutoCompleteFunctionForFilename(arg, type);
 
+    AddValidationAction(
+        [pValue]()
+        {
+            if (pValue->GetName() == "-")
+                pValue->Set("/vsistdin/");
+            return true;
+        });
+
     return arg;
 }
 
@@ -2949,6 +2959,17 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
         pValue, type);
     if (positionalAndRequired)
         arg.SetPositional().SetRequired();
+
+    AddValidationAction(
+        [pValue]()
+        {
+            for (auto &val : *pValue)
+            {
+                if (val.GetName() == "-")
+                    val.Set("/vsistdin/");
+            }
+            return true;
+        });
     return arg;
 }
 
@@ -2977,6 +2998,9 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddOutputDatasetArg(
     AddValidationAction(
         [this, &arg, pValue]()
         {
+            if (pValue->GetName() == "-")
+                pValue->Set("/vsistdout/");
+
             auto outputFormatArg = GetArg(GDAL_ARG_NAME_OUTPUT_FORMAT);
             if (outputFormatArg && outputFormatArg->GetType() == GAAT_STRING &&
                 (!outputFormatArg->IsExplicitlySet() ||
