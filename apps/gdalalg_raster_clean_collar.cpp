@@ -91,10 +91,10 @@ GDALRasterCleanCollarAlgorithm::GDALRasterCleanCollarAlgorithm()
            &m_pixelDistance)
         .SetDefault(m_pixelDistance)
         .SetMinValueIncluded(0);
-    AddArg("addalpha", 0, _("Adds an alpha band to the output dataset."),
+    AddArg("add-alpha", 0, _("Adds an alpha band to the output dataset."),
            &m_addAlpha)
         .SetMutualExclusionGroup("addalpha-addmask");
-    AddArg("addmask", 0, _("Adds a mask band to the output dataset."),
+    AddArg("add-mask", 0, _("Adds a mask band to the output dataset."),
            &m_addMask)
         .SetMutualExclusionGroup("addalpha-addmask");
     AddArg("algorithm", 0, _("Algorithm to apply"), &m_algorithm)

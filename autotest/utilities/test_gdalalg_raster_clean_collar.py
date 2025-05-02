@@ -184,7 +184,7 @@ def test_gdalalg_raster_clean_collar_add_alpha():
     alg["input"] = ds
     alg["output"] = "my_name"
     alg["output-format"] = "MEM"
-    alg["addalpha"] = True
+    alg["add-alpha"] = True
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert out_ds.RasterCount == 2
@@ -212,7 +212,7 @@ def test_gdalalg_raster_clean_collar_add_mask():
     alg["input"] = ds
     alg["output"] = "my_name"
     alg["output-format"] = "MEM"
-    alg["addmask"] = True
+    alg["add-mask"] = True
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert out_ds.RasterCount == 1
@@ -241,7 +241,7 @@ def test_gdalalg_raster_clean_collar_add_mask_from_alpha():
     alg["input"] = ds
     alg["output"] = "my_name"
     alg["output-format"] = "MEM"
-    alg["addmask"] = True
+    alg["add-mask"] = True
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert out_ds.RasterCount == 1

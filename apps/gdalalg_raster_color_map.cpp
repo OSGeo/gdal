@@ -33,7 +33,7 @@ GDALRasterColorMapAlgorithm::GDALRasterColorMapAlgorithm(bool standaloneStep)
 {
     AddBandArg(&m_band).SetDefault(m_band);
     AddArg("color-map", 0, _("Color map filename"), &m_colorMap);
-    AddArg("addalpha", 0, _("Adds an alpha mask band to the destination."),
+    AddArg("add-alpha", 0, _("Adds an alpha mask band to the destination."),
            &m_addAlpha);
     AddArg("color-selection", 0,
            _("How to compute output colors from input values"),

@@ -217,7 +217,7 @@ def test_gdalalg_raster_viewshed_nodata(viewshed_input):
     alg["output"] = ""
     alg["output-format"] = "MEM"
     alg["position"] = [621528, 4817617, 100]
-    alg["dstnodata"] = 0
+    alg["dst-nodata"] = 0
     assert alg.Run()
     ds = alg["output"].GetDataset()
     assert ds.GetRasterBand(1).Checksum() == VIEWSHED_NOMINAL_CHECKSUM

@@ -21,8 +21,8 @@ Description
 -----------
 
 :program:`gdal raster scale` can be used to rescale the input pixels values
-from the range :option:`--srcmin` to :option:`--srcmax` to the range
-:option:`--dstmin` to :option:`--dstmax`.
+from the range :option:`--src-min` to :option:`--src-max` to the range
+:option:`--dst-min` to :option:`--dst-max`.
 It is also often necessary to reset the output datatype with the :option:`--ot` switch.
 If omitted the output range is from the minimum value to the maximum value allowed
 for integer data types (for example from 0 to 255 for Byte output) or from 0 to 1
@@ -61,29 +61,29 @@ Standard options
 
     Index (starting at 1) of the band to which the scaling must be only applied.
 
-.. option:: --srcmin <SRCMIN>
+.. option:: --src-min <SRCMIN>
 
     Minimum value of the source range. If not specified, it will be calculated from the input dataset.
-    This option must be used together with :option:`--srcmax`.
+    This option must be used together with :option:`--src-max`.
 
-.. option:: --srcmax <SRCMAX>
+.. option:: --src-max <SRCMAX>
 
     Maximum value of the source range. If not specified, it will be calculated from the source dataset.
-    This option must be used together with :option:`--srcmin`.
+    This option must be used together with :option:`--src-min`.
 
-.. option:: --dstmin <DSTMIN>
+.. option:: --dst-min <DSTMIN>
 
-    Minimum value of the output range. This option must be used together with :option:`--dstmax`.
+    Minimum value of the output range. This option must be used together with :option:`--dst-max`.
 
-.. option:: --dstmax <DSTMAX>
+.. option:: --dst-max <DSTMAX>
 
-    Maximum value of the output range. This option must be used together with :option:`--dstmin`.
+    Maximum value of the output range. This option must be used together with :option:`--dst-min`.
 
 .. option:: --exponent <EXPONENT>
 
     Apply non-linear scaling with a power function. ``exp_val`` is the exponent
     of the power function (must be positive). This option must be used with the
-    :option:`--srcmin` / :option:`--srcmax` / :option:`--dstmin` / :option:`--dstmax` options.
+    :option:`--src-min` / :option:`--src-max` / :option:`--dst-min` / :option:`--dst-max` options.
 
     The scaled value ``Dst`` is calculated from the source value ``Src`` with the following
     formula:
@@ -116,4 +116,4 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal raster scale --datatype Byte --srcmin 0 --srcmax 4095 uint16.tif byte.tif --overwrite
+        $ gdal raster scale --datatype Byte --src-min 0 --src-max 4095 uint16.tif byte.tif --overwrite

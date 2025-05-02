@@ -228,7 +228,7 @@ def test_gdalalg_raster_footprint_srcnodata():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["srcnodata"] = 255
+    alg["src-nodata"] = 255
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer(0)
@@ -252,7 +252,7 @@ def test_gdalalg_raster_footprint_srcnodata_several(use_setnodatavalue):
     alg["output"] = ""
     alg["output-format"] = "MEM"
     if not use_setnodatavalue:
-        alg["srcnodata"] = [0, 1]
+        alg["src-nodata"] = [0, 1]
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer(0)

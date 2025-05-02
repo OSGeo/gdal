@@ -38,7 +38,7 @@ def get_contour_alg():
             [5.0, 15.0, 25.0, 35.0],
         ),
         (
-            ["--interval", "10", "--elevation-name", "ELEV", "--srcnodata", "4"],
+            ["--interval", "10", "--elevation-name", "ELEV", "--src-nodata", "4"],
             False,
             [20.0, 30.0],
         ),

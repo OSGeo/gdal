@@ -179,7 +179,7 @@ def test_gdalalg_raster_clip_geometry_add_alpha():
     alg[
         "geometry"
     ] = "POLYGON ((440720 3750120,441920 3751320,441920 3750120,440720 3750120))"
-    alg["addalpha"] = True
+    alg["add-alpha"] = True
     with gdaltest.error_raised(gdal.CE_Warning):
         assert alg.Run()
     ds = alg["output"].GetDataset()
@@ -280,7 +280,7 @@ def test_gdalalg_raster_clip_geometry_srs():
     alg["output-format"] = "MEM"
     alg["geometry"] = f"POLYGON (({x1} {y1},{x1} {y2},{x2} {y2},{x2} {y1},{x1} {y1}))"
     alg["geometry-crs"] = "EPSG:4267"
-    alg["addalpha"] = True
+    alg["add-alpha"] = True
     alg["allow-bbox-outside-source"] = True
     assert alg.Run()
     ds = alg["output"].GetDataset()
