@@ -63,7 +63,6 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         GDALAlgorithmArg *arg = nullptr;
         while ((pszLine = CPLReadLineL(fp)) != nullptr)
         {
-            printf("%s\n", pszLine);
             if (!alg)
             {
                 alg = singleton.Instantiate(pszLine);
