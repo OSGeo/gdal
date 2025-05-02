@@ -166,7 +166,8 @@ class VSIUnixStdioFilesystemHandler final : public VSIFilesystemHandler
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
     int Unlink(const char *pszFilename) override;
-    int Rename(const char *oldpath, const char *newpath) override;
+    int Rename(const char *oldpath, const char *newpath, GDALProgressFunc,
+               void *) override;
     int Mkdir(const char *pszDirname, long nMode) override;
     int Rmdir(const char *pszDirname) override;
     char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
@@ -782,7 +783,8 @@ int VSIUnixStdioFilesystemHandler::Unlink(const char *pszFilename)
 /************************************************************************/
 
 int VSIUnixStdioFilesystemHandler::Rename(const char *oldpath,
-                                          const char *newpath)
+                                          const char *newpath, GDALProgressFunc,
+                                          void *)
 
 {
     return rename(oldpath, newpath);

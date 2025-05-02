@@ -177,6 +177,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, CPLErrorNum err_no, const c
 %rename (RmdirRecursive) VSIRmdirRecursive;
 %rename (AbortPendingUploads) VSIAbortPendingUploads;
 %rename (Rename) VSIRename;
+%rename (Move) wrapper_VSIMove;
 %rename (GetActualURL) VSIGetActualURL;
 %rename (GetSignedURL) wrapper_VSIGetSignedURL;
 %rename (GetFileSystemsPrefixes) VSIGetFileSystemsPrefixes;
@@ -667,11 +668,22 @@ VSI_RETVAL VSIRmdir(const char *utf8_path );
 VSI_RETVAL VSIMkdirRecursive(const char *utf8_path, int mode );
 VSI_RETVAL VSIRmdirRecursive(const char *utf8_path );
 
-%apply (const char* utf8_path) {(const char* pszOld)};
-%apply (const char* utf8_path) {(const char* pszNew)};
-VSI_RETVAL VSIRename(const char * pszOld, const char *pszNew );
-%clear (const char* pszOld);
-%clear (const char* pszNew);
+%apply (const char* utf8_path) {(const char* old_path)};
+%apply (const char* utf8_path) {(const char* new_path)};
+VSI_RETVAL VSIRename(const char * old_path, const char *new_path );
+#if !defined(SWIGJAVA)
+%feature( "kwargs" ) wrapper_VSIMove;
+#endif
+%inline {
+VSI_RETVAL wrapper_VSIMove(const char * old_path, const char *new_path, char** options = NULL,
+                           GDALProgressFunc callback=NULL,
+                           void* callback_data=NULL)
+{
+    return VSIMove(old_path, new_path, options, callback, callback_data);
+}
+}
+%clear (const char* old_path);
+%clear (const char* new_path);
 
 #if defined(SWIGPYTHON)
 %rename (Sync) wrapper_VSISync;

@@ -452,7 +452,8 @@ int VSIPluginFilesystemHandler::Unlink(const char *pszFilename)
     return unlink(GetCallbackFilename(pszFilename));
 }
 
-int VSIPluginFilesystemHandler::Rename(const char *oldpath, const char *newpath)
+int VSIPluginFilesystemHandler::Rename(const char *oldpath, const char *newpath,
+                                       GDALProgressFunc, void *)
 {
     if (m_cb->rename == nullptr || !IsValidFilename(oldpath) ||
         !IsValidFilename(newpath))
