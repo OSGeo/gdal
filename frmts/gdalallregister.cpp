@@ -180,7 +180,7 @@ void CPL_STDCALL GDALAllRegister()
 #endif
 #if defined(DEFERRED_KEA_DRIVER)
     // Must be registered before HDF5 so that when the plugin is not
-    // installe the proper suggestion message is displayed
+    // installer the proper suggestion message is displayed
     DeclareDeferredKEAPlugin();
 #endif
 #if defined(DEFERRED_HDF5_DRIVER)
