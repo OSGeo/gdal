@@ -27,6 +27,7 @@ Available sub-commands
 - :ref:`gdal_vsi_delete`
 - :ref:`gdal_vsi_list`
 - :ref:`gdal_vsi_move`
+- :ref:`gdal_vsi_sync`
 - :ref:`gdal_vsi_sozip`
 
 Examples

@@ -96,6 +96,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vsi_delete
    gdal_vsi_list
    gdal_vsi_move
+   gdal_vsi_sync
    gdal_vsi_sozip
 
 .. only:: html
@@ -172,6 +173,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vsi_delete`: Delete files located on GDAL Virtual System Interface (VSI)
     - :ref:`gdal_vsi_list`: List files of one of the GDAL Virtual System Interface (VSI)
     - :ref:`gdal_vsi_move`: Move/rename a file/directory located on GDAL Virtual System Interface (VSI)
+    - :ref:`gdal_vsi_sync`: Synchronize source and target file/directory located on GDAL Virtual System Interface (VSI)
     - :ref:`gdal_vsi_sozip`: SOZIP (Seek-Optimized ZIP) related commands
 
 

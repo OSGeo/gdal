@@ -638,6 +638,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vsi_sync",
+        "gdal-vsi-sync",
+        "Synchronize source and target file/directory located on GDAL Virtual System Interface (VSI)",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vsi_sozip",
         "gdal-vsi-sozip",
         "SOZIP (Seek-Optimized ZIP) related commands.",
