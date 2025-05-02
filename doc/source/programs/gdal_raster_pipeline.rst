@@ -92,7 +92,7 @@ Details for options can be found in :ref:`gdal_raster_select`.
 
 .. program-output:: gdal raster pipeline --help-doc=set-type
 
-Details for options can be found in :ref:`gdal_raster_settype`.
+Details for options can be found in :ref:`gdal_raster_set_type`.
 
 * slope
 
