@@ -56,7 +56,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_overview_add
    gdal_raster_overview_delete
    gdal_raster_pipeline
-   gdal_raster_pixelinfo
+   gdal_raster_pixel_info
    gdal_raster_polygonize
    gdal_raster_reproject
    gdal_raster_resize
@@ -131,7 +131,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_overview_delete`: Remove overviews of a raster dataset
     - :ref:`gdal_raster_pipeline`: Process a raster dataset
     - :ref:`gdal_raster_polygonize`: Create a polygon feature dataset from a raster band
-    - :ref:`gdal_raster_pixelinfo`: Return information on a pixel of a raster dataset
+    - :ref:`gdal_raster_pixel_info`: Return information on a pixel of a raster dataset
     - :ref:`gdal_raster_reproject`: Reproject a raster dataset
     - :ref:`gdal_raster_resize`: Resize a raster dataset without changing the georeferenced extents
     - :ref:`gdal_raster_roughness`: Generate a roughness map.

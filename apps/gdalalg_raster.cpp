@@ -30,7 +30,7 @@
 #include "gdalalg_raster_mosaic.h"
 #include "gdalalg_raster_overview.h"
 #include "gdalalg_raster_pipeline.h"
-#include "gdalalg_raster_pixelinfo.h"
+#include "gdalalg_raster_pixel_info.h"
 #include "gdalalg_raster_polygonize.h"
 #include "gdalalg_raster_reproject.h"
 #include "gdalalg_raster_resize.h"

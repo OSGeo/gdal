@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_raster_pixelinfo.h"
+#include "gdalalg_raster_pixel_info.h"
 
 #include "cpl_conv.h"
 #include "cpl_json.h"

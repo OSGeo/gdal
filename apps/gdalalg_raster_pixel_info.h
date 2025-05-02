@@ -24,11 +24,11 @@
 class GDALRasterPixelInfoAlgorithm final : public GDALAlgorithm
 {
   public:
-    static constexpr const char *NAME = "pixelinfo";
+    static constexpr const char *NAME = "pixel-info";
     static constexpr const char *DESCRIPTION =
         "Return information on a pixel of a raster dataset.";
     static constexpr const char *HELP_URL =
-        "/programs/gdal_raster_pixelinfo.html";
+        "/programs/gdal_raster_pixel_info.html";
 
     GDALRasterPixelInfoAlgorithm();
 

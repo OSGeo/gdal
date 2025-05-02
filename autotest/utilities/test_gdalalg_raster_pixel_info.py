@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal raster pixelinfo' testing
+# Purpose:  'gdal raster pixel-info' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -25,10 +25,10 @@ pytestmark = pytest.mark.skipif(
 
 
 def get_alg():
-    return gdal.GetGlobalAlgorithmRegistry()["raster"]["pixelinfo"]
+    return gdal.GetGlobalAlgorithmRegistry()["raster"]["pixel-info"]
 
 
-def test_gdalalg_raster_pixelinfo_missing_position():
+def test_gdalalg_raster_pixel_info_missing_position():
 
     alg = get_alg()
     alg["dataset"] = "../gcore/data/byte.tif"
@@ -36,14 +36,14 @@ def test_gdalalg_raster_pixelinfo_missing_position():
         alg.Run()
 
 
-def test_gdalalg_raster_pixelinfo_invalid_position():
+def test_gdalalg_raster_pixel_info_invalid_position():
 
     alg = get_alg()
     with pytest.raises(Exception, match="even number of values must be specified"):
         alg["position"] = 5
 
 
-def test_gdalalg_raster_pixelinfo_byte_json():
+def test_gdalalg_raster_pixel_info_byte_json():
 
     alg = get_alg()
     alg["dataset"] = "../gcore/data/byte.tif"
@@ -70,7 +70,7 @@ def test_gdalalg_raster_pixelinfo_byte_json():
     }
 
 
-def test_gdalalg_raster_pixelinfo_float64_json():
+def test_gdalalg_raster_pixel_info_float64_json():
 
     alg = get_alg()
     alg["dataset"] = "../gcore/data/float64.tif"
@@ -97,7 +97,7 @@ def test_gdalalg_raster_pixelinfo_float64_json():
     }
 
 
-def test_gdalalg_raster_pixelinfo_complex_json():
+def test_gdalalg_raster_pixel_info_complex_json():
 
     alg = get_alg()
     alg["dataset"] = "../gcore/data/cfloat32.tif"
@@ -127,7 +127,7 @@ def test_gdalalg_raster_pixelinfo_complex_json():
     }
 
 
-def test_gdalalg_raster_pixelinfo_byte_csv():
+def test_gdalalg_raster_pixel_info_byte_csv():
 
     alg = get_alg()
     alg["dataset"] = "../gcore/data/byte.tif"
@@ -140,7 +140,7 @@ def test_gdalalg_raster_pixelinfo_byte_csv():
     )
 
 
-def test_gdalalg_raster_pixelinfo_out_of_raster_csv():
+def test_gdalalg_raster_pixel_info_out_of_raster_csv():
 
     alg = get_alg()
     alg["dataset"] = "../gcore/data/byte.tif"
@@ -153,7 +153,7 @@ def test_gdalalg_raster_pixelinfo_out_of_raster_csv():
     )
 
 
-def test_gdalalg_raster_pixelinfo_complex_csv():
+def test_gdalalg_raster_pixel_info_complex_csv():
 
     alg = get_alg()
     alg["dataset"] = "../gcore/data/cfloat32.tif"
@@ -166,7 +166,7 @@ def test_gdalalg_raster_pixelinfo_complex_csv():
     )
 
 
-def test_gdalalg_raster_pixelinfo_complex_out_of_raster_csv():
+def test_gdalalg_raster_pixel_info_complex_out_of_raster_csv():
 
     alg = get_alg()
     alg["dataset"] = "../gcore/data/cfloat32.tif"
@@ -179,7 +179,7 @@ def test_gdalalg_raster_pixelinfo_complex_out_of_raster_csv():
     )
 
 
-def test_gdalalg_raster_pixelinfo_invalid_overview():
+def test_gdalalg_raster_pixel_info_invalid_overview():
 
     alg = get_alg()
     alg["dataset"] = "../gcore/data/byte.tif"
@@ -191,7 +191,7 @@ def test_gdalalg_raster_pixelinfo_invalid_overview():
         alg.Run()
 
 
-def test_gdalalg_raster_pixelinfo_invalid_overview_bis():
+def test_gdalalg_raster_pixel_info_invalid_overview_bis():
 
     src_ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
     src_ds.BuildOverviews("NEAR", [2])
@@ -206,7 +206,7 @@ def test_gdalalg_raster_pixelinfo_invalid_overview_bis():
         alg.Run()
 
 
-def test_gdalalg_raster_pixelinfo_overview():
+def test_gdalalg_raster_pixel_info_overview():
 
     src_ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
     src_ds.BuildOverviews("NEAR", [2])
@@ -237,7 +237,7 @@ def test_gdalalg_raster_pixelinfo_overview():
     }
 
 
-def test_gdalalg_raster_pixelinfo_unscaled():
+def test_gdalalg_raster_pixel_info_unscaled():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src_ds.GetRasterBand(1).Fill(1)
@@ -268,7 +268,7 @@ def test_gdalalg_raster_pixelinfo_unscaled():
     }
 
 
-def test_gdalalg_raster_pixelinfo_unscaled_csv():
+def test_gdalalg_raster_pixel_info_unscaled_csv():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Float32)
     src_ds.GetRasterBand(1).Fill(1.5)
@@ -286,7 +286,7 @@ def test_gdalalg_raster_pixelinfo_unscaled_csv():
     )
 
 
-def test_gdalalg_raster_pixelinfo_missing_crs():
+def test_gdalalg_raster_pixel_info_missing_crs():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
 
@@ -302,7 +302,7 @@ def test_gdalalg_raster_pixelinfo_missing_crs():
         alg.Run()
 
 
-def test_gdalalg_raster_pixelinfo_missing_gt():
+def test_gdalalg_raster_pixel_info_missing_gt():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     srs = osr.SpatialReference("WGS84")
@@ -317,7 +317,7 @@ def test_gdalalg_raster_pixelinfo_missing_gt():
         alg.Run()
 
 
-def test_gdalalg_raster_pixelinfo_wrong_gt():
+def test_gdalalg_raster_pixel_info_wrong_gt():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     srs = osr.SpatialReference("WGS84")
@@ -333,7 +333,7 @@ def test_gdalalg_raster_pixelinfo_wrong_gt():
         alg.Run()
 
 
-def test_gdalalg_raster_pixelinfo_position_crs_dataset():
+def test_gdalalg_raster_pixel_info_position_crs_dataset():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     srs = osr.SpatialReference("WGS84")
@@ -368,7 +368,7 @@ def test_gdalalg_raster_pixelinfo_position_crs_dataset():
     }
 
 
-def test_gdalalg_raster_pixelinfo_position_crs():
+def test_gdalalg_raster_pixel_info_position_crs():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     srs = osr.SpatialReference("WGS84")
@@ -403,7 +403,7 @@ def test_gdalalg_raster_pixelinfo_position_crs():
     }
 
 
-def test_gdalalg_raster_pixelinfo_non_epsg_crs():
+def test_gdalalg_raster_pixel_info_non_epsg_crs():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     srs = osr.SpatialReference("+proj=utm +zone=17")
@@ -437,7 +437,7 @@ def test_gdalalg_raster_pixelinfo_non_epsg_crs():
     }
 
 
-def test_gdalalg_raster_pixelinfo_files():
+def test_gdalalg_raster_pixel_info_files():
 
     alg = get_alg()
     alg["dataset"] = "../gcore/data/byte.vrt"
@@ -474,10 +474,11 @@ def gdal_path():
     return test_cli_utilities.get_gdal_path()
 
 
-def test_gdalalg_raster_pixelinfo_from_command_line(gdal_path):
+def test_gdalalg_raster_pixel_info_from_command_line(gdal_path):
 
     ret = gdaltest.runexternal(
-        f"{gdal_path} raster pixelinfo ../gcore/data/byte.tif", strin="5.5 10.5 foo bar"
+        f"{gdal_path} raster pixel-info ../gcore/data/byte.tif",
+        strin="5.5 10.5 foo bar",
     )
     assert json.loads(ret) == {
         "type": "FeatureCollection",
@@ -500,10 +501,10 @@ def test_gdalalg_raster_pixelinfo_from_command_line(gdal_path):
     }
 
 
-def test_gdalalg_raster_pixelinfo_from_command_line_csv(gdal_path):
+def test_gdalalg_raster_pixel_info_from_command_line_csv(gdal_path):
 
     ret = gdaltest.runexternal(
-        f"{gdal_path} raster pixelinfo --of=csv ../gcore/data/byte.tif",
+        f"{gdal_path} raster pixel-info --of=csv ../gcore/data/byte.tif",
         strin="5.5 10.5 foo bar",
     ).replace("\r\n", "\n")
     assert (
