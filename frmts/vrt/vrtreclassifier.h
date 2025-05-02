@@ -23,21 +23,36 @@
 namespace gdal
 {
 
-/*! @cond Doxygen_Suppress */
-
+/**
+ * Class to manage reclassification of pixel values
+ */
 class Reclassifier
 {
   public:
+    /// Character separating elements in a list of mapping
     static constexpr char MAPPING_INTERVAL_SEP_CHAR = ';';
+
+    /// Character separating source interval from target value
     static constexpr char MAPPING_FROMTO_SEP_CHAR = '=';
 
+    /**
+     * Internal struct to hold an interval of values to be reclassified
+     */
     struct Interval
     {
+        /// minimum value of range
         double dfMin;
+
+        /// maximum value of range
         double dfMax;
+
+        /// whether the minimum value is included (closed interval)
         bool bMinIncluded;
+
+        /// whether the maximum value is included (closed interval)
         bool bMaxIncluded;
 
+        /// Set the interval to represent a single value [x,x]
         void SetToConstant(double dfVal);
 
         /** Parse an interval. The interval may be either a single constant value,
@@ -50,11 +65,13 @@ class Reclassifier
          */
         CPLErr Parse(const char *pszText, char **end);
 
+        /// Returns true of the interval represents a single value [x,x]
         bool IsConstant() const
         {
             return dfMin == dfMax;
         }
 
+        /// Returns true if the interval contains a value
         bool Contains(double x) const
         {
             return (x > dfMin || (bMinIncluded && x == dfMin)) &&
@@ -121,13 +138,18 @@ class Reclassifier
         m_defaultValue = value;
     }
 
+    /// mapping of constant inputs to outputs
     std::map<double, double> m_oConstantMappings{};
+
+    /// mapping of ranges to outputs
     std::vector<std::pair<Interval, std::optional<double>>>
         m_aoIntervalMappings{};
+
+    /// output value for inputs not matching any Interval
     std::optional<double> m_defaultValue{};
+
+    /// whether to pass unmatched inputs through unmodified
     bool m_defaultPassThrough{false};
 };
-
-/*! @endcond */
 
 }  // namespace gdal

@@ -312,4 +312,5 @@ double Reclassifier::Reclassify(double srcVal, bool &bFoundInterval) const
 
     return CE_None;
 }
+
 }  // namespace gdal
