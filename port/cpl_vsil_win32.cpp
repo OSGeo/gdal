@@ -53,7 +53,8 @@ class VSIWin32FilesystemHandler final : public VSIFilesystemHandler
     virtual int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
                      int nFlags) override;
     virtual int Unlink(const char *pszFilename) override;
-    virtual int Rename(const char *oldpath, const char *newpath) override;
+    virtual int Rename(const char *oldpath, const char *newpath,
+                       GDALProgressFunc, void *) override;
     virtual int Mkdir(const char *pszDirname, long nMode) override;
     virtual int Rmdir(const char *pszDirname) override;
     virtual char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
@@ -968,7 +969,8 @@ int VSIWin32FilesystemHandler::Unlink(const char *pszFilename)
 /*                               Rename()                               */
 /************************************************************************/
 
-int VSIWin32FilesystemHandler::Rename(const char *oldpath, const char *newpath)
+int VSIWin32FilesystemHandler::Rename(const char *oldpath, const char *newpath,
+                                      GDALProgressFunc, void *)
 
 {
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
