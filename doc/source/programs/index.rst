@@ -47,7 +47,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_create
    gdal_raster_edit
    gdal_raster_footprint
-   gdal_raster_fillnodata
+   gdal_raster_fill_nodata
    gdal_raster_hillshade
    gdal_raster_index
    gdal_raster_mosaic
@@ -55,7 +55,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_overview_add
    gdal_raster_overview_delete
    gdal_raster_pipeline
-   gdal_raster_pixelinfo
+   gdal_raster_pixel_info
    gdal_raster_polygonize
    gdal_raster_reproject
    gdal_raster_resize
@@ -123,7 +123,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_create`: Create a new raster dataset
     - :ref:`gdal_raster_edit`: Edit in place a raster dataset
     - :ref:`gdal_raster_footprint`: Compute the footprint of a raster dataset.
-    - :ref:`gdal_raster_fillnodata`: Fill raster regions by interpolation from edges.
+    - :ref:`gdal_raster_fill_nodata`: Fill raster regions by interpolation from edges.
     - :ref:`gdal_raster_hillshade`: Generate a shaded relief map
     - :ref:`gdal_raster_index`: Create a vector index of raster datasets
     - :ref:`gdal_raster_mosaic`: Build a mosaic, either virtual (VRT) or materialized.
@@ -132,7 +132,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_overview_delete`: Remove overviews of a raster dataset
     - :ref:`gdal_raster_pipeline`: Process a raster dataset
     - :ref:`gdal_raster_polygonize`: Create a polygon feature dataset from a raster band
-    - :ref:`gdal_raster_pixelinfo`: Return information on a pixel of a raster dataset
+    - :ref:`gdal_raster_pixel_info`: Return information on a pixel of a raster dataset
     - :ref:`gdal_raster_reproject`: Reproject a raster dataset
     - :ref:`gdal_raster_resize`: Resize a raster dataset without changing the georeferenced extents
     - :ref:`gdal_raster_roughness`: Generate a roughness map.

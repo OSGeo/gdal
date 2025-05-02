@@ -1,7 +1,7 @@
-.. _gdal_raster_pixelinfo:
+.. _gdal_raster_pixel_info:
 
 ================================================================================
-``gdal raster pixelinfo``
+``gdal raster pixel-info``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -10,17 +10,17 @@
 
     Return information on a pixel of a raster dataset
 
-.. Index:: gdal raster pixelinfo
+.. Index:: gdal raster pixel-info
 
 Synopsis
 --------
 
-.. program-output:: gdal raster pixelinfo --help-doc
+.. program-output:: gdal raster pixel-info --help-doc
 
 Description
 -----------
 
-:program:`gdal raster pixelinfo` provide a mechanism to query information about
+:program:`gdal raster pixel-info` provide a mechanism to query information about
 a pixel given its location in one of a variety of coordinate systems.
 
 It supports outputting either as GeoJSON or CSV.
@@ -103,23 +103,23 @@ Examples
 .. example::
    :title: Reporting on pixel column=5, line=10 on the file :file:`byte.tif`
 
-   .. command-output:: gdal raster pixelinfo byte.tif 5 10
+   .. command-output:: gdal raster pixel-info byte.tif 5 10
       :cwd: ../../../autotest/gcore/data
 
 .. example::
    :title: Reporting on point at UTM 11N coordinates easting=441320 and northing=3750720 on the file :file:`byte.tif`
 
-   .. command-output:: gdal raster pixelinfo --position-crs=dataset byte.tif 441320 3750720
+   .. command-output:: gdal raster pixel-info --position-crs=dataset byte.tif 441320 3750720
       :cwd: ../../../autotest/gcore/data
 
 .. example::
    :title: Reporting on point at WGS84 coordinates longitude=-117.6355 and latitude=33.8970 on the file :file:`byte.tif`, with CSV output format
 
-   .. command-output:: gdal raster pixelinfo --of=csv --position-crs=WGS84 byte.tif -117.6355 33.8970
+   .. command-output:: gdal raster pixel-info --of=csv --position-crs=WGS84 byte.tif -117.6355 33.8970
       :cwd: ../../../autotest/gcore/data
 
 .. example::
    :title: Reporting on point at WGS84 coordinates provided on the standard input with longitude, latitude order.
 
-   .. command-output:: echo -117.6355 33.8970 | gdal raster pixelinfo --of=csv --position-crs=WGS84 byte.tif
+   .. command-output:: echo -117.6355 33.8970 | gdal raster pixel-info --of=csv --position-crs=WGS84 byte.tif
       :cwd: ../../../autotest/gcore/data

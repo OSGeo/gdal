@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal raster fillnodata' testing
+# Purpose:  'gdal raster fill-nodata' testing
 # Author:   Alessandro Pasotti <elpaso at itopen dot it>
 #
 ###############################################################################
@@ -21,10 +21,10 @@ gdaltest.importorskip_gdal_array()
 
 
 def get_alg():
-    return gdal.GetGlobalAlgorithmRegistry()["raster"]["fillnodata"]
+    return gdal.GetGlobalAlgorithmRegistry()["raster"]["fill-nodata"]
 
 
-def test_gdalalg_raster_fillnodata_cannot_open_file():
+def test_gdalalg_raster_fill_nodata_cannot_open_file():
 
     alg = get_alg()
     alg["input"] = "/i_do/not/exist/in.tif"
@@ -37,7 +37,7 @@ def test_gdalalg_raster_fillnodata_cannot_open_file():
 
 
 def run_alg(alg, tmp_path, tmp_vsimem):
-    result_tif = str(tmp_path / "test_gdal_fillnodata_1.tif")
+    result_tif = str(tmp_path / "test_gdal_fill_nodata_1.tif")
     tmp_filename = str(tmp_vsimem / "tmp.tif")
     gdal.FileFromMemBuffer(
         tmp_filename, open("../gcore/data/nodata_byte.tif", "rb").read()
@@ -64,7 +64,7 @@ def run_alg(alg, tmp_path, tmp_vsimem):
 
 
 @pytest.mark.parametrize("creation_option", ({}, {"TILED": "YES"}, {"COMPRESS": "LZW"}))
-def test_gdalalg_raster_fillnodata(tmp_path, tmp_vsimem, creation_option):
+def test_gdalalg_raster_fill_nodata(tmp_path, tmp_vsimem, creation_option):
 
     alg = get_alg()
     alg["creation-option"] = creation_option
@@ -84,7 +84,7 @@ def test_gdalalg_raster_fillnodata(tmp_path, tmp_vsimem, creation_option):
     del ds
 
 
-def test_gdalalg_raster_fillnodata_overwrite(tmp_path, tmp_vsimem):
+def test_gdalalg_raster_fill_nodata_overwrite(tmp_path, tmp_vsimem):
 
     alg = get_alg()
     ds = run_alg(alg, tmp_path, tmp_vsimem)
@@ -102,7 +102,7 @@ def test_gdalalg_raster_fillnodata_overwrite(tmp_path, tmp_vsimem):
     del ds
 
 
-def test_gdalalg_raster_fillnodata_smoothing(tmp_path, tmp_vsimem):
+def test_gdalalg_raster_fill_nodata_smoothing(tmp_path, tmp_vsimem):
 
     alg = get_alg()
     alg["s"] = 2
@@ -111,7 +111,7 @@ def test_gdalalg_raster_fillnodata_smoothing(tmp_path, tmp_vsimem):
     del ds
 
 
-def test_gdalalg_raster_fillnodata_max_distance(tmp_path, tmp_vsimem):
+def test_gdalalg_raster_fill_nodata_max_distance(tmp_path, tmp_vsimem):
 
     alg = get_alg()
     alg["d"] = 1
@@ -120,7 +120,7 @@ def test_gdalalg_raster_fillnodata_max_distance(tmp_path, tmp_vsimem):
     del ds
 
 
-def test_gdalalg_raster_fillnodata_strategy(tmp_path, tmp_vsimem):
+def test_gdalalg_raster_fill_nodata_strategy(tmp_path, tmp_vsimem):
 
     alg = get_alg()
     alg["strategy"] = "invdist"
@@ -135,7 +135,7 @@ def test_gdalalg_raster_fillnodata_strategy(tmp_path, tmp_vsimem):
     del ds
 
 
-def test_gdalalg_raster_fillnodata_mask(tmp_path, tmp_vsimem):
+def test_gdalalg_raster_fill_nodata_mask(tmp_path, tmp_vsimem):
 
     # Create a mask
     mask_tif = str(tmp_vsimem / "mask.tif")

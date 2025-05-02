@@ -29,13 +29,13 @@ Available sub-commands
 - :ref:`gdal_raster_convert`
 - :ref:`gdal_raster_create`
 - :ref:`gdal_raster_footprint`
-- :ref:`gdal_raster_fillnodata`
+- :ref:`gdal_raster_fill_nodata`
 - :ref:`gdal_raster_hillshade`
 - :ref:`gdal_raster_index`
 - :ref:`gdal_raster_mosaic`
 - :ref:`gdal_raster_overview`
 - :ref:`gdal_raster_pipeline`
-- :ref:`gdal_raster_pixelinfo`
+- :ref:`gdal_raster_pixel_info`
 - :ref:`gdal_raster_polygonize`
 - :ref:`gdal_raster_reproject`
 - :ref:`gdal_raster_resize`

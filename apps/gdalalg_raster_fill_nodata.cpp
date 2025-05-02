@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_raster_fillnodata.h"
+#include "gdalalg_raster_fill_nodata.h"
 
 #include "gdal_priv.h"
 #include "gdal_utils.h"
