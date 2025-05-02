@@ -253,8 +253,8 @@ man_pages = [
         1,
     ),
     (
-        "programs/gdal_raster_astype",
-        "gdal-raster-astype",
+        "programs/gdal_raster_set_type",
+        "gdal-raster-set_type",
         "Modify the data type of bands of a raster dataset",
         [author_evenr],
         1,

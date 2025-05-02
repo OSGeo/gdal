@@ -38,7 +38,6 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster
    gdal_raster_info
    gdal_raster_aspect
-   gdal_raster_astype
    gdal_raster_calc
    gdal_raster_clean_collar
    gdal_raster_clip
@@ -63,6 +62,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_roughness
    gdal_raster_scale
    gdal_raster_select
+   gdal_raster_set_type
    gdal_raster_slope
    gdal_raster_sieve
    gdal_raster_stack
@@ -112,7 +112,6 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster`: Entry point for raster commands
     - :ref:`gdal_raster_info`: Get information on a raster dataset
     - :ref:`gdal_raster_aspect`: Generate an aspect map.
-    - :ref:`gdal_raster_astype`: Modify the data type of bands of a raster dataset
     - :ref:`gdal_raster_calc`: Perform raster algebra
     - :ref:`gdal_raster_clean_collar`: Clean the collar of a raster dataset, removing noise
     - :ref:`gdal_raster_clip`: Clip a raster dataset
@@ -137,6 +136,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_roughness`: Generate a roughness map.
     - :ref:`gdal_raster_scale`: Scale the values of the bands of a raster dataset.
     - :ref:`gdal_raster_select`: Select a subset of bands from a raster dataset.
+    - :ref:`gdal_raster_set_type`: Modify the data type of bands of a raster dataset
     - :ref:`gdal_raster_sieve`: Remove small raster polygons.
     - :ref:`gdal_raster_slope`: Generate a slope map.
     - :ref:`gdal_raster_stack`: Combine together input bands into a multi-band output, either virtual (VRT) or materialized.
