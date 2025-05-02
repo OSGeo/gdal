@@ -189,6 +189,7 @@ html_favicon = "../images/favicon.png"
 author_frankw = "Frank Warmerdam <warmerdam@pobox.com>"
 author_silker = "Silke Reimer <silke@intevation.de>"
 author_mikhailg = "Mikhail Gusev <gusevmihs@gmail.com>"
+author_dbaston = "Dan Baston <dbaston@gmail.com>"
 author_dmitryb = "Dmitry Baryshnikov <polimax@mail.ru>"
 author_evenr = "Even Rouault <even.rouault@spatialys.com>"
 author_elpaso = "Alessandro Pasotti <elpaso@itopen.it>"
@@ -257,6 +258,13 @@ man_pages = [
         "gdal-raster-set-type",
         "Modify the data type of bands of a raster dataset",
         [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_calc",
+        "gdal-raster-calc",
+        "Perform pixel-wise calculations on a raster",
+        [author_dbaston],
         1,
     ),
     (
@@ -376,6 +384,13 @@ man_pages = [
         "gdal-raster-pixel-info",
         "Return information on a pixel of a raster dataset",
         [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_reclassify",
+        "gdal-raster-reclassify",
+        "Reclassify a raster dataset",
+        [author_dbaston],
         1,
     ),
     (

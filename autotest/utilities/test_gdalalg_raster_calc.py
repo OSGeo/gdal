@@ -42,7 +42,7 @@ def test_gdalalg_raster_calc_basic_1(calc, tmp_vsimem, output_format):
     np = pytest.importorskip("numpy")
 
     infile = "../gcore/data/rgbsmall.tif"
-    outfile = tmp_vsimem / "out.tif"
+    outfile = tmp_vsimem / "out.{output_format}"
 
     calc["input"] = [infile]
     calc["output"] = outfile

@@ -17,6 +17,7 @@
 #include "gdalalg_raster_color_map.h"
 #include "gdalalg_raster_edit.h"
 #include "gdalalg_raster_hillshade.h"
+#include "gdalalg_raster_reclassify.h"
 #include "gdalalg_raster_reproject.h"
 #include "gdalalg_raster_resize.h"
 #include "gdalalg_raster_roughness.h"
@@ -265,6 +266,7 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     m_stepRegistry.Register<GDALRasterColorMapAlgorithm>();
     m_stepRegistry.Register<GDALRasterEditAlgorithm>();
     m_stepRegistry.Register<GDALRasterHillshadeAlgorithm>();
+    m_stepRegistry.Register<GDALRasterReclassifyAlgorithm>();
     m_stepRegistry.Register<GDALRasterReprojectAlgorithm>();
     m_stepRegistry.Register<GDALRasterResizeAlgorithm>();
     m_stepRegistry.Register<GDALRasterRoughnessAlgorithm>();
