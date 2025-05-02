@@ -576,7 +576,8 @@ int GDALDriverManager::RegisterDriver(GDALDriver *poDriver, bool bHidden)
     oMapNameToDrivers[CPLString(poDriver->GetDescription()).toupper()] =
         poDriver;
 
-    if (EQUAL(poDriver->GetDescription(), "MEM"))
+    if (EQUAL(poDriver->GetDescription(), "MEM") &&
+        oMapNameToDrivers.find("MEMORY") == oMapNameToDrivers.end())
     {
         // Instantiate a Memory driver, that is the same as the MEM one,
         // for legacy purposes. It can be queried through GetDriverByName()
