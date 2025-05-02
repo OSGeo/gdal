@@ -938,6 +938,7 @@ class MosaicDataset : public GDALDataset
 
     const std::string m_directory;
     const std::string m_extension;
+    const std::string m_format;
     GDALDataset *const m_poSrcDS;
     const gdal::TileMatrixSet::TileMatrix &m_oTM;
     const OGRSpatialReference m_oSRS;
@@ -958,15 +959,15 @@ class MosaicDataset : public GDALDataset
 
   public:
     MosaicDataset(const std::string &directory, const std::string &extension,
-                  GDALDataset *poSrcDS,
+                  const std::string &format, GDALDataset *poSrcDS,
                   const gdal::TileMatrixSet::TileMatrix &oTM,
                   const OGRSpatialReference &oSRS, int nTileMinX, int nTileMinY,
                   int nTileMaxX, int nTileMaxY, const std::string &convention,
                   int nBandsIn, GDALDataType eDT, const double *pdfDstNoData,
                   const std::vector<std::string> &metadata,
                   const GDALColorTable *poCT)
-        : m_directory(directory), m_extension(extension), m_poSrcDS(poSrcDS),
-          m_oTM(oTM), m_oSRS(oSRS), m_nTileMinX(nTileMinX),
+        : m_directory(directory), m_extension(extension), m_format(format),
+          m_poSrcDS(poSrcDS), m_oTM(oTM), m_oSRS(oSRS), m_nTileMinX(nTileMinX),
           m_nTileMinY(nTileMinY), m_nTileMaxX(nTileMaxX),
           m_nTileMaxY(nTileMaxY), m_convention(convention), m_eDT(eDT),
           m_pdfDstNoData(pdfDstNoData), m_metadata(metadata), m_poCT(poCT)
@@ -1015,9 +1016,9 @@ class MosaicDataset : public GDALDataset
     std::unique_ptr<MosaicDataset> Clone() const
     {
         return std::make_unique<MosaicDataset>(
-            m_directory, m_extension, m_poSrcDS, m_oTM, m_oSRS, m_nTileMinX,
-            m_nTileMinY, m_nTileMaxX, m_nTileMaxY, m_convention, nBands, m_eDT,
-            m_pdfDstNoData, m_metadata, m_poCT);
+            m_directory, m_extension, m_format, m_poSrcDS, m_oTM, m_oSRS,
+            m_nTileMinX, m_nTileMinY, m_nTileMaxX, m_nTileMaxY, m_convention,
+            nBands, m_eDT, m_pdfDstNoData, m_metadata, m_poCT);
     }
 };
 
@@ -1037,7 +1038,25 @@ CPLErr MosaicRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pData)
     std::shared_ptr<GDALDataset> poTileDS;
     if (!poThisDS->m_oCacheTile.tryGet(filename, poTileDS))
     {
-        poTileDS.reset(GDALDataset::Open(filename.c_str(), GDAL_OF_RASTER));
+        const char *const apszAllowedDrivers[] = {poThisDS->m_format.c_str(),
+                                                  nullptr};
+        const char *const apszAllowedDriversForCOG[] = {"GTiff", "LIBERTIFF",
+                                                        nullptr};
+        poTileDS.reset(GDALDataset::Open(
+            filename.c_str(), GDAL_OF_RASTER,
+            EQUAL(poThisDS->m_format.c_str(), "COG") ? apszAllowedDriversForCOG
+                                                     : apszAllowedDrivers));
+        if (!poTileDS)
+        {
+            VSIStatBufL sStat;
+            if (VSIStatL(filename.c_str(), &sStat) == 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "File %s exists but cannot be opened with %s driver",
+                         filename.c_str(), poThisDS->m_format.c_str());
+                return CE_Failure;
+            }
+        }
         poThisDS->m_oCacheTile.insert(filename, poTileDS);
     }
     if (!poTileDS || nBand > poTileDS->GetRasterCount())
@@ -2548,9 +2567,9 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         MosaicDataset oSrcDS(
             CPLFormFilenameSafe(m_outputDirectory.c_str(),
                                 CPLSPrintf("%d", iZ + 1), nullptr),
-            pszExtension, poSrcDS, srcTileMatrix, oSRS_TMS, nSrcMinTileX,
-            nSrcMinTileY, nSrcMaxTileX, nSrcMaxTileY, m_convention, nDstBands,
-            psWO->eWorkingDataType,
+            pszExtension, m_outputFormat, poSrcDS, srcTileMatrix, oSRS_TMS,
+            nSrcMinTileX, nSrcMinTileY, nSrcMaxTileX, nSrcMaxTileY,
+            m_convention, nDstBands, psWO->eWorkingDataType,
             psWO->padfDstNoDataReal ? &(psWO->padfDstNoDataReal[0]) : nullptr,
             m_metadata, poColorTable);
 

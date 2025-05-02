@@ -1249,3 +1249,23 @@ def test_gdalalg_raster_tile_tilesize_too_large(tmp_vsimem):
         match="Tile size and/or number of bands too large compared to available RAM",
     ):
         alg.Run()
+
+
+def test_gdalalg_raster_tile_cannot_reopen_tile(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["max-zoom"] = 1
+    assert alg.Run()
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "1/0/0.png", "")
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 1
+    alg["resume"] = True
+    with pytest.raises(Exception, match="exists but cannot be opened with PNG driver"):
+        alg.Run()
