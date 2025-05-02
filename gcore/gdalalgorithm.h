@@ -2824,6 +2824,14 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddActiveLayerArg(std::string *pValue, const char *helpMessage = nullptr);
 
+    /** A number of thread argument. The final value is stored in *pValue.
+     * pStrValue must be provided as temporary storage, and its initial value
+     * (if not empty) is used as the SetDefault() value.
+     */
+    GDALInConstructionAlgorithmArg &
+    AddNumThreadsArg(int *pValue, std::string *pStrValue,
+                     const char *helpMessage = nullptr);
+
     /** Add \--progress argument. */
     GDALInConstructionAlgorithmArg &AddProgressArg();
 
