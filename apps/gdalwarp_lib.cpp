@@ -3629,6 +3629,18 @@ static GDALDatasetH GDALWarpCreateOutput(
          GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) ==
              nullptr))
     {
+        auto poMissingDriver =
+            GetGDALDriverManager()->GetHiddenDriverByName(pszFormat);
+        if (poMissingDriver)
+        {
+            const std::string msg =
+                GDALGetMessageAboutMissingPluginDriver(poMissingDriver);
+            printf("Output driver `%s' not found but is known. However plugin "
+                   "%s\n",
+                   pszFormat, msg.c_str());
+            return nullptr;
+        }
+
         printf("Output driver `%s' not recognised or does not support\n",
                pszFormat);
         printf("direct output file creation or CreateCopy. "

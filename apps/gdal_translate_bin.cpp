@@ -96,6 +96,21 @@ MAIN_START(argc, argv)
             GDALGetDriverByName(sOptionsForBinary.osFormat.c_str());
         if (hDriver == nullptr)
         {
+            auto poMissingDriver =
+                GetGDALDriverManager()->GetHiddenDriverByName(
+                    sOptionsForBinary.osFormat.c_str());
+            if (poMissingDriver)
+            {
+                const std::string msg =
+                    GDALGetMessageAboutMissingPluginDriver(poMissingDriver);
+                fprintf(stderr,
+                        "Output driver `%s' not found but is known. However "
+                        "plugin %s\n",
+                        sOptionsForBinary.osFormat.c_str(), msg.c_str());
+                GDALDestroyDriverManager();
+                exit(1);
+            }
+
             fprintf(stderr, "Output driver `%s' not recognised.\n",
                     sOptionsForBinary.osFormat.c_str());
             fprintf(stderr, "The following format drivers are enabled and "
