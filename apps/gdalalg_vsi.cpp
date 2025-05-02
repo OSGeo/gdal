@@ -15,6 +15,7 @@
 #include "gdalalg_vsi_copy.h"
 #include "gdalalg_vsi_delete.h"
 #include "gdalalg_vsi_list.h"
+#include "gdalalg_vsi_move.h"
 #include "gdalalg_vsi_sozip.h"
 
 /************************************************************************/
@@ -34,6 +35,7 @@ class GDALVSIAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALVSICopyAlgorithm>();
         RegisterSubAlgorithm<GDALVSIDeleteAlgorithm>();
         RegisterSubAlgorithm<GDALVSIListAlgorithm>();
+        RegisterSubAlgorithm<GDALVSIMoveAlgorithm>();
         RegisterSubAlgorithm<GDALVSISOZIPAlgorithm>();
     }
 
