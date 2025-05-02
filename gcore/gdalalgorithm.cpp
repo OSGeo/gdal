@@ -3382,7 +3382,9 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
             {
                 for (const std::string &cap : *caps)
                 {
-                    if (!GDALGetMetadataItem(hDriver, cap.c_str(), nullptr))
+                    const char *pszVal =
+                        GDALGetMetadataItem(hDriver, cap.c_str(), nullptr);
+                    if (!(pszVal && pszVal[0]))
                     {
                         if (cap == GDAL_DCAP_CREATECOPY &&
                             std::find(caps->begin(), caps->end(),
@@ -3393,6 +3395,16 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
                                                 nullptr))
                         {
                             // if it supports Create, it supports CreateCopy
+                        }
+                        else if (cap == GDAL_DMD_EXTENSIONS)
+                        {
+                            ReportError(
+                                CE_Failure, CPLE_AppDefined,
+                                "Invalid value for argument '%s'. Driver '%s' "
+                                "does "
+                                "not advertise any file format extension.",
+                                arg.GetName().c_str(), val.c_str());
+                            return false;
                         }
                         else
                         {
@@ -3464,7 +3476,9 @@ FormatAutoCompleteFunction(const GDALAlgorithmArg &arg,
                         break;
                     }
                 }
-                else if (poDriver->GetMetadataItem(cap.c_str()))
+                else if (const char *pszVal =
+                             poDriver->GetMetadataItem(cap.c_str());
+                         pszVal && pszVal[0])
                 {
                 }
                 else if (cap == GDAL_DCAP_CREATECOPY &&

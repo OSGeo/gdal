@@ -2180,8 +2180,9 @@ TEST_F(test_gdal, TileMatrixSet)
 
     {
         auto l = gdal::TileMatrixSet::listPredefinedTileMatrixSets();
-        EXPECT_TRUE(l.find("GoogleMapsCompatible") != l.end());
-        EXPECT_TRUE(l.find("NZTM2000") != l.end());
+        EXPECT_TRUE(std::find(l.begin(), l.end(), "GoogleMapsCompatible") !=
+                    l.end());
+        EXPECT_TRUE(std::find(l.begin(), l.end(), "NZTM2000") != l.end());
     }
 
     {
@@ -2245,7 +2246,11 @@ TEST_F(test_gdal, TileMatrixSet)
         auto poTMS = gdal::TileMatrixSet::parse(
             "{\"type\": \"TileMatrixSetType\", \"supportedCRS\": "
             "\"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", \"tileMatrix\": "
-            "[{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":1.0}] }");
+            "[{ \"topLeftCorner\": [-180, "
+            "90],\"scaleDenominator\":1.0,\"tileWidth\": 1,"
+            "\"tileHeight\": 1,"
+            "\"matrixWidth\": 1,"
+            "\"matrixHeight\": 1}] }");
         EXPECT_TRUE(poTMS != nullptr);
         if (poTMS)
         {
@@ -2256,14 +2261,91 @@ TEST_F(test_gdal, TileMatrixSet)
         }
     }
 
-    // Invalid scaleDenominator
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
         EXPECT_TRUE(gdal::TileMatrixSet::parse(
                         "{\"type\": \"TileMatrixSetType\", \"supportedCRS\": "
                         "\"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", "
                         "\"tileMatrix\": [{ \"topLeftCorner\": [-180, "
-                        "90],\"scaleDenominator\":0.0}] }") == nullptr);
+                        "90],\"scaleDenominator\":0.0,\"tileWidth\": 1,"
+                        "\"tileHeight\": 1,"
+                        "\"matrixWidth\": 1,"
+                        "\"matrixHeight\": 1}] }") == nullptr);
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "Invalid scale denominator or non-decreasing series of "
+                     "scale denominators");
+        CPLPopErrorHandler();
+    }
+
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        EXPECT_TRUE(gdal::TileMatrixSet::parse(
+                        "{\"type\": \"TileMatrixSetType\", \"supportedCRS\": "
+                        "\"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", "
+                        "\"tileMatrix\": [{ \"topLeftCorner\": [-180, "
+                        "90],\"scaleDenominator\":1.0,\"tileWidth\": 0,"
+                        "\"tileHeight\": 1,"
+                        "\"matrixWidth\": 1,"
+                        "\"matrixHeight\": 1}] }") == nullptr);
+        EXPECT_STREQ(CPLGetLastErrorMsg(), "Invalid tileWidth: 0");
+        CPLPopErrorHandler();
+    }
+
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        EXPECT_TRUE(gdal::TileMatrixSet::parse(
+                        "{\"type\": \"TileMatrixSetType\", \"supportedCRS\": "
+                        "\"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", "
+                        "\"tileMatrix\": [{ \"topLeftCorner\": [-180, "
+                        "90],\"scaleDenominator\":1.0,\"tileWidth\": 1,"
+                        "\"tileHeight\": 0,"
+                        "\"matrixWidth\": 1,"
+                        "\"matrixHeight\": 1}] }") == nullptr);
+        EXPECT_STREQ(CPLGetLastErrorMsg(), "Invalid tileHeight: 0");
+        CPLPopErrorHandler();
+    }
+
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        EXPECT_TRUE(gdal::TileMatrixSet::parse(
+                        "{\"type\": \"TileMatrixSetType\", \"supportedCRS\": "
+                        "\"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", "
+                        "\"tileMatrix\": [{ \"topLeftCorner\": [-180, "
+                        "90],\"scaleDenominator\":1.0,\"tileWidth\": 100000,"
+                        "\"tileHeight\": 100000,"
+                        "\"matrixWidth\": 1,"
+                        "\"matrixHeight\": 1}] }") == nullptr);
+        EXPECT_STREQ(
+            CPLGetLastErrorMsg(),
+            "tileWidth(100000) x tileHeight(100000) larger than INT_MAX");
+        CPLPopErrorHandler();
+    }
+
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        EXPECT_TRUE(gdal::TileMatrixSet::parse(
+                        "{\"type\": \"TileMatrixSetType\", \"supportedCRS\": "
+                        "\"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", "
+                        "\"tileMatrix\": [{ \"topLeftCorner\": [-180, "
+                        "90],\"scaleDenominator\":1.0,\"tileWidth\": 1,"
+                        "\"tileHeight\": 1,"
+                        "\"matrixWidth\": 0,"
+                        "\"matrixHeight\": 1}] }") == nullptr);
+        EXPECT_STREQ(CPLGetLastErrorMsg(), "Invalid matrixWidth: 0");
+        CPLPopErrorHandler();
+    }
+
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        EXPECT_TRUE(gdal::TileMatrixSet::parse(
+                        "{\"type\": \"TileMatrixSetType\", \"supportedCRS\": "
+                        "\"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", "
+                        "\"tileMatrix\": [{ \"topLeftCorner\": [-180, "
+                        "90],\"scaleDenominator\":1.0,\"tileWidth\": 1,"
+                        "\"tileHeight\": 1,"
+                        "\"matrixWidth\": 1,"
+                        "\"matrixHeight\": 0}] }") == nullptr);
+        EXPECT_STREQ(CPLGetLastErrorMsg(), "Invalid matrixHeight: 0");
         CPLPopErrorHandler();
     }
 

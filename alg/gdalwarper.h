@@ -333,6 +333,9 @@ CPL_C_END
 #include <vector>
 #include <utility>
 
+bool GDALGetWarpResampleAlg(const char *pszResampling,
+                            GDALResampleAlg &eResampleAlg, bool bThrow = false);
+
 /************************************************************************/
 /*                            GDALWarpKernel                            */
 /*                                                                      */

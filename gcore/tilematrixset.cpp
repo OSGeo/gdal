@@ -28,12 +28,15 @@ namespace gdal
 /*                   listPredefinedTileMatrixSets()                     */
 /************************************************************************/
 
-std::set<std::string> TileMatrixSet::listPredefinedTileMatrixSets()
+std::vector<std::string> TileMatrixSet::listPredefinedTileMatrixSets()
 {
-    std::set<std::string> l{"GoogleMapsCompatible", "InspireCRS84Quad"};
+    std::vector<std::string> l{"GoogleMapsCompatible", "WorldCRS84Quad",
+                               "WorldMercatorWGS84Quad", "GoogleCRS84Quad",
+                               "PseudoTMS_GlobalMercator"};
     const char *pszSomeFile = CPLFindFile("gdal", "tms_NZTM2000.json");
     if (pszSomeFile)
     {
+        std::set<std::string> set;
         CPLStringList aosList(
             VSIReadDir(CPLGetDirnameSafe(pszSomeFile).c_str()));
         for (int i = 0; i < aosList.size(); i++)
@@ -45,9 +48,11 @@ std::set<std::string> TileMatrixSet::listPredefinedTileMatrixSets()
             {
                 std::string id(aosList[i] + strlen("tms_"),
                                nLen - (strlen("tms_") + strlen(".json")));
-                l.insert(id);
+                set.insert(id);
             }
         }
+        for (const std::string &id : set)
+            l.push_back(id);
     }
     return l;
 }
@@ -62,13 +67,16 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
     std::unique_ptr<TileMatrixSet> poTMS(new TileMatrixSet());
 
     constexpr double HALF_CIRCUMFERENCE = 6378137 * M_PI;
+
     if (EQUAL(fileOrDef, "GoogleMapsCompatible") ||
+        EQUAL(fileOrDef, "WebMercatorQuad") ||
         EQUAL(
             fileOrDef,
             "http://www.opengis.net/def/tilematrixset/OGC/1.0/WebMercatorQuad"))
     {
         /* See http://portal.opengeospatial.org/files/?artifact_id=35326
          * (WMTS 1.0), Annex E.4 */
+        // or https://docs.ogc.org/is/17-083r4/17-083r4.html#toc49
         poTMS->mTitle = "GoogleMapsCompatible";
         poTMS->mIdentifier = "GoogleMapsCompatible";
         poTMS->mCrs = "http://www.opengis.net/def/crs/EPSG/0/3857";
@@ -97,7 +105,72 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
         return poTMS;
     }
 
+    if (EQUAL(fileOrDef, "WorldMercatorWGS84Quad") ||
+        EQUAL(fileOrDef, "http://www.opengis.net/def/tilematrixset/OGC/1.0/"
+                         "WorldMercatorWGS84Quad"))
+    {
+        // See https://docs.ogc.org/is/17-083r4/17-083r4.html#toc51
+        poTMS->mTitle = "WorldMercatorWGS84Quad";
+        poTMS->mIdentifier = "WorldMercatorWGS84Quad";
+        poTMS->mCrs = "http://www.opengis.net/def/crs/EPSG/0/3395";
+        poTMS->mBbox.mCrs = poTMS->mCrs;
+        poTMS->mBbox.mLowerCornerX = -HALF_CIRCUMFERENCE;
+        poTMS->mBbox.mLowerCornerY = -HALF_CIRCUMFERENCE;
+        poTMS->mBbox.mUpperCornerX = HALF_CIRCUMFERENCE;
+        poTMS->mBbox.mUpperCornerY = HALF_CIRCUMFERENCE;
+        poTMS->mWellKnownScaleSet =
+            "http://www.opengis.net/def/wkss/OGC/1.0/WorldMercatorWGS84Quad";
+        for (int i = 0; i <= 30; i++)
+        {
+            TileMatrix tm;
+            tm.mId = CPLSPrintf("%d", i);
+            tm.mResX = 2 * HALF_CIRCUMFERENCE / 256 / (1 << i);
+            tm.mResY = tm.mResX;
+            tm.mScaleDenominator = tm.mResX / 0.28e-3;
+            tm.mTopLeftX = -HALF_CIRCUMFERENCE;
+            tm.mTopLeftY = HALF_CIRCUMFERENCE;
+            tm.mTileWidth = 256;
+            tm.mTileHeight = 256;
+            tm.mMatrixWidth = 1 << i;
+            tm.mMatrixHeight = 1 << i;
+            poTMS->mTileMatrixList.emplace_back(std::move(tm));
+        }
+        return poTMS;
+    }
+
+    if (EQUAL(fileOrDef, "PseudoTMS_GlobalMercator"))
+    {
+        /* See global-mercator at
+           http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification */
+        poTMS->mTitle = "PseudoTMS_GlobalMercator";
+        poTMS->mIdentifier = "PseudoTMS_GlobalMercator";
+        poTMS->mCrs = "http://www.opengis.net/def/crs/EPSG/0/3857";
+        poTMS->mBbox.mCrs = poTMS->mCrs;
+        poTMS->mBbox.mLowerCornerX = -HALF_CIRCUMFERENCE;
+        poTMS->mBbox.mLowerCornerY = -HALF_CIRCUMFERENCE;
+        poTMS->mBbox.mUpperCornerX = HALF_CIRCUMFERENCE;
+        poTMS->mBbox.mUpperCornerY = HALF_CIRCUMFERENCE;
+        for (int i = 0; i <= 29; i++)
+        {
+            TileMatrix tm;
+            tm.mId = CPLSPrintf("%d", i);
+            tm.mResX = HALF_CIRCUMFERENCE / 256 / (1 << i);
+            tm.mResY = tm.mResX;
+            tm.mScaleDenominator = tm.mResX / 0.28e-3;
+            tm.mTopLeftX = -HALF_CIRCUMFERENCE;
+            tm.mTopLeftY = HALF_CIRCUMFERENCE;
+            tm.mTileWidth = 256;
+            tm.mTileHeight = 256;
+            tm.mMatrixWidth = 2 * (1 << i);
+            tm.mMatrixHeight = 2 * (1 << i);
+            poTMS->mTileMatrixList.emplace_back(std::move(tm));
+        }
+        return poTMS;
+    }
+
     if (EQUAL(fileOrDef, "InspireCRS84Quad") ||
+        EQUAL(fileOrDef, "PseudoTMS_GlobalGeodetic") ||
+        EQUAL(fileOrDef, "WorldCRS84Quad") ||
         EQUAL(
             fileOrDef,
             "http://www.opengis.net/def/tilematrixset/OGC/1.0/WorldCRS84Quad"))
@@ -109,8 +182,8 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
         /* See global-geodetic at
          * http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification */
         // See also http://docs.opengeospatial.org/is/17-083r2/17-083r2.html#76
-        poTMS->mTitle = "InspireCRS84Quad";
-        poTMS->mIdentifier = "InspireCRS84Quad";
+        poTMS->mTitle = "WorldCRS84Quad";
+        poTMS->mIdentifier = "WorldCRS84Quad";
         poTMS->mCrs = "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
         poTMS->mBbox.mCrs = poTMS->mCrs;
         poTMS->mBbox.mLowerCornerX = -180;
@@ -134,6 +207,41 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
             tm.mTileWidth = 256;
             tm.mTileHeight = 256;
             tm.mMatrixWidth = 2 * (1 << i);
+            tm.mMatrixHeight = 1 << i;
+            poTMS->mTileMatrixList.emplace_back(std::move(tm));
+        }
+        return poTMS;
+    }
+
+    if (EQUAL(fileOrDef, "GoogleCRS84Quad") ||
+        EQUAL(fileOrDef,
+              "http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad"))
+    {
+        /* See http://portal.opengeospatial.org/files/?artifact_id=35326 (WMTS 1.0),
+               Annex E.3 */
+        poTMS->mTitle = "GoogleCRS84Quad";
+        poTMS->mIdentifier = "GoogleCRS84Quad";
+        poTMS->mCrs = "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
+        poTMS->mBbox.mCrs = poTMS->mCrs;
+        poTMS->mBbox.mLowerCornerX = -180;
+        poTMS->mBbox.mLowerCornerY = -90;
+        poTMS->mBbox.mUpperCornerX = 180;
+        poTMS->mBbox.mUpperCornerY = 90;
+        poTMS->mWellKnownScaleSet =
+            "http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad";
+        for (int i = 0; i <= 30; i++)
+        {
+            TileMatrix tm;
+            tm.mId = CPLSPrintf("%d", i);
+            tm.mResX = 360. / 256 / (1 << i);
+            tm.mResY = tm.mResX;
+            tm.mScaleDenominator =
+                tm.mResX * (HALF_CIRCUMFERENCE / 180) / 0.28e-3;
+            tm.mTopLeftX = -180;
+            tm.mTopLeftY = 180;
+            tm.mTileWidth = 256;
+            tm.mTileHeight = 256;
+            tm.mMatrixWidth = 1 << i;
             tm.mMatrixHeight = 1 << i;
             poTMS->mTileMatrixList.emplace_back(std::move(tm));
         }
@@ -315,9 +423,41 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
                 tm.mTopLeftY = oTopLeftCorner[1].ToDouble(NaN);
             }
             tm.mTileWidth = oTM.GetInteger("tileWidth");
+            if (tm.mTileWidth <= 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid tileWidth: %d",
+                         tm.mTileWidth);
+                return nullptr;
+            }
             tm.mTileHeight = oTM.GetInteger("tileHeight");
+            if (tm.mTileHeight <= 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid tileHeight: %d",
+                         tm.mTileHeight);
+                return nullptr;
+            }
+            if (tm.mTileWidth > INT_MAX / tm.mTileHeight)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "tileWidth(%d) x tileHeight(%d) larger than "
+                         "INT_MAX",
+                         tm.mTileWidth, tm.mTileHeight);
+                return nullptr;
+            }
             tm.mMatrixWidth = oTM.GetInteger("matrixWidth");
+            if (tm.mMatrixWidth <= 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid matrixWidth: %d",
+                         tm.mMatrixWidth);
+                return nullptr;
+            }
             tm.mMatrixHeight = oTM.GetInteger("matrixHeight");
+            if (tm.mMatrixHeight <= 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid matrixHeight: %d", tm.mMatrixHeight);
+                return nullptr;
+            }
 
             const auto oVariableMatrixWidths = oTM.GetArray(
                 bIsTMSv2 ? "variableMatrixWidths" : "variableMatrixWidth");

@@ -1,9 +1,9 @@
 <mapml>
     <head>
-        <title>${TITLE}</title>
-        <base href="${URL}" />
+        <title>my title</title>
+        <base href="http://example.com/test_gdalalg_raster_tile_basic_None_None_" />
         <meta charset="utf-8" />
-        <meta content="text/mapml;projection=${TILING_SCHEME}" http-equiv="Content-Type" />
+        <meta content="text/mapml;projection=OSMTILE" http-equiv="Content-Type" />
         <!--
         <link href="http://localhost:8080/myservice/mapml/WGS84?style=" rel="alternate" projection="WGS84" />
         <link href="http://localhost:8080/myservice/mapml/OSMTILE?style=" rel="alternate" projection="OSMTILE" />
@@ -12,12 +12,12 @@
         -->
     </head>
     <body>
-        <extent units="${TILING_SCHEME}">
-            <input name="z" type="zoom" value="${CURZOOM}" min="${MINZOOM}" max="${MAXZOOM}" />
-            <input name="x" type="location" axis="column" units="tilematrix" min="${MINTILEX}" max="${MAXTILEX}" />
-            <input name="y" type="location" axis="row" units="tilematrix" min="${MINTILEY}" max="${MAXTILEY}" />
-            <link tref="${URL}{z}/{x}/{y}.${TILEEXT}" rel="tile" />
-            <!--<link tref="http://localhost:8080/myservice/wmts?layer=MYLAYER&amp;style=&amp;tilematrixset=${TILING_SCHEME}&amp;service=WMTS&amp;request=GetTile&amp;version=1.0.0&amp;tilematrix={z}&amp;TileCol={x}&amp;TileRow={y}&amp;format=image/png" rel="tile" />-->
+        <extent units="OSMTILE">
+            <input name="z" type="zoom" value="11" min="11" max="11" />
+            <input name="x" type="location" axis="column" units="tilematrix" min="354" max="354" />
+            <input name="y" type="location" axis="row" units="tilematrix" min="818" max="818" />
+            <link tref="http://example.com/test_gdalalg_raster_tile_basic_None_None_{z}/{x}/{y}.png" rel="tile" />
+            <!--<link tref="http://localhost:8080/myservice/wmts?layer=MYLAYER&amp;style=&amp;tilematrixset=OSMTILE&amp;service=WMTS&amp;request=GetTile&amp;version=1.0.0&amp;tilematrix={z}&amp;TileCol={x}&amp;TileRow={y}&amp;format=image/png" rel="tile" />-->
             <!--
             <input name="i" type="location" axis="i" units="tile" />
             <input name="j" type="location" axis="j" units="tile" />

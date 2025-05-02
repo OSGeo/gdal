@@ -67,6 +67,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_slope
    gdal_raster_sieve
    gdal_raster_stack
+   gdal_raster_tile
    gdal_raster_tpi
    gdal_raster_tri
    gdal_raster_unscale
@@ -144,6 +145,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_sieve`: Remove small raster polygons.
     - :ref:`gdal_raster_slope`: Generate a slope map.
     - :ref:`gdal_raster_stack`: Combine together input bands into a multi-band output, either virtual (VRT) or materialized.
+    - :ref:`gdal_raster_tile`: Generate tiles in separate files from a raster dataset.
     - :ref:`gdal_raster_tpi`: Generate a Topographic Position Index (TPI) map.
     - :ref:`gdal_raster_tri`: Generate a Terrain Ruggedness Index (TRI) map.
     - :ref:`gdal_raster_unscale`: Convert scaled values of a raster dataset into unscaled values.
