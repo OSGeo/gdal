@@ -1225,7 +1225,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **reclassify**
      - = 1
      - ``mapping``, ``default``
-     - reclassify values according to a mapping provided by ``mapping``. The format of the mapping is ``SOURCE=DEST;SOURCE=DEST;..`` where each ``SOURCE`` element is either a single value or an interval (e.g., ``(-inf,30]``). An error will be raised if a pixel value is not covered by any interval, unless the ```default`` argument has been specified. ``default`` may also be set any constant or ``NO_DATA``. A similar functionality, but with interpolation, is offered by the ``ComplexSource``.
+     - reclassify values according to a mapping provided by ``mapping``. The format of the mapping is ``SOURCE=DEST;SOURCE=DEST;...`` where each ``SOURCE`` element is either a single value, an interval (e.g., ``(-inf,30]``), ``NO_DATA``, or ``DEFAULT``. ``DEST`` may be any constant, ``PASS_THROUGH`` (to skip reclassification for certain values), or ``NO_DATA``. An error will be raised if a pixel value is not covered by any interval. A similar functionality, but with interpolation, is offered by the ``ComplexSource``.
    * - **replace_nodata**
      - = 1
      - ``to`` (optional)

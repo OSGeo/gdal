@@ -15,6 +15,7 @@
 #include "gdal.h"
 #include "vrtdataset.h"
 #include "vrtexpression.h"
+#include "vrtreclassifier.h"
 
 #include <limits>
 
@@ -1731,136 +1732,11 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // ExprPixelFunc
 
-struct Interval
-{
-    double dfMin;
-    double dfMax;
-    bool bMinIncluded;
-    bool bMaxIncluded;
-
-    CPLErr Parse(const char *s, char **rest)
-    {
-        const char *start = s;
-
-        while (isspace(*start))
-        {
-            start++;
-        }
-
-        char *end;
-
-        if (*start == '(')
-        {
-            bMinIncluded = false;
-        }
-        else if (*start == '[')
-        {
-            bMinIncluded = true;
-        }
-        else
-        {
-            dfMin = CPLStrtod(start, &end);
-
-            if (end == start)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Interval must start with '(' or ']'");
-                return CE_Failure;
-            }
-
-            dfMax = dfMin;
-            bMinIncluded = true;
-            bMaxIncluded = true;
-
-            if (rest != nullptr)
-            {
-                *rest = end;
-            }
-
-            return CE_None;
-        }
-        start++;
-
-        while (isspace(*start))
-        {
-            start++;
-        }
-
-        if (STARTS_WITH_CI(start, "-inf"))
-        {
-            dfMin = -std::numeric_limits<double>::infinity();
-            end = const_cast<char *>(start + 4);
-        }
-        else
-        {
-            dfMin = CPLStrtod(start, &end);
-        }
-
-        if (end == start || *end != ',')
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Expected a number");
-            return CE_Failure;
-        }
-        start = end + 1;
-
-        while (isspace(*start))
-        {
-            start++;
-        }
-
-        if (STARTS_WITH_CI(start, "inf"))
-        {
-            dfMax = std::numeric_limits<double>::infinity();
-            end = const_cast<char *>(start + 3);
-        }
-        else
-        {
-            dfMax = CPLStrtod(start, &end);
-        }
-
-        if (end == start || (*end != ')' && *end != ']'))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Interval must end with ')' or ']");
-            return CE_Failure;
-        }
-        if (*end == ')')
-        {
-            bMaxIncluded = false;
-        }
-        else
-        {
-            bMaxIncluded = true;
-        }
-
-        if (rest != nullptr)
-        {
-            *rest = end + 1;
-        }
-
-        return CE_None;
-    }
-
-    bool IsConstant() const
-    {
-        return dfMin == dfMax;
-    }
-
-    bool Contains(double x) const
-    {
-        return (x > dfMin || (bMinIncluded && x == dfMin)) &&
-               (x < dfMax || (bMaxIncluded && x == dfMax));
-    }
-};
-
 static const char pszReclassifyPixelFuncMetadata[] =
     "<PixelFunctionArgumentsList>"
     "   <Argument name='mapping' "
     "             description='Lookup table for mapping, in format "
     "from=to,from=to' "
-    "             type='string'></Argument>"
-    "   <Argument name='default' "
-    "             description='Default value to assign' "
     "             type='string'></Argument>"
     "   <Argument type='builtin' value='NoData' optional='true' />"
     "</PixelFunctionArgumentsList>";
@@ -1883,56 +1759,13 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
                  "reclassify only be applied to a single source at a time");
         return CE_Failure;
     }
+    std::optional<double> noDataValue{};
 
-    const char *pszDefault = CSLFetchNameValue(papszArgs, "default");
-
-    bool bHasDefaultValue = false;
-    double dfDefaultValue{};
-    if (pszDefault != nullptr)
+    const char *pszNoData = CSLFetchNameValue(papszArgs, "NoData");
+    if (pszNoData != nullptr)
     {
-        bHasDefaultValue = true;
-
-        if (EQUAL(pszDefault, "NO_DATA"))
-        {
-            const char *pszNoData = CSLFetchNameValue(papszArgs, "NoData");
-            if (pszNoData == nullptr)
-            {
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Reclassify default set to NO_DATA, but NoData value is "
-                    "not set");
-                return CE_Failure;
-            }
-
-            dfDefaultValue = CPLAtof(pszNoData);
-        }
-        else
-        {
-            char *end;
-            dfDefaultValue = CPLStrtod(pszDefault, &end);
-            if (end == pszDefault || *end != '\0')
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Failed to parse default");
-                return CE_Failure;
-            }
-
-            if (!GDALIsValueExactAs(dfDefaultValue, eBufType))
-            {
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Default value %g cannot be represented as data type %s",
-                    dfDefaultValue, GDALGetDataTypeName(eBufType));
-                return CE_Failure;
-            }
-        }
+        noDataValue = CPLAtof(pszNoData);
     }
-
-    std::map<double, double> oConstantMappings;
-    std::vector<std::pair<Interval, double>> aoIntervalMappings;
-
-    constexpr char MAPPING_INTERVAL_SEP_CHAR = ';';
-    constexpr char MAPPING_FROMTO_SEP_CHAR = '=';
 
     const char *pszMappings = CSLFetchNameValue(papszArgs, "mapping");
     if (pszMappings == nullptr)
@@ -1942,69 +1775,11 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
         return CE_Failure;
     }
 
-    const char *start = pszMappings;
-    char *end = const_cast<char *>(start);
-    while (*end != '\0')
+    gdal::Reclassifier oReclassifier;
+    if (auto eErr = oReclassifier.Init(pszMappings, noDataValue, eBufType);
+        eErr != CE_None)
     {
-        while (isspace(*start))
-        {
-            start++;
-        }
-
-        Interval sInt;
-
-        if (auto eErr = sInt.Parse(start, &end); eErr != CE_None)
-        {
-            return eErr;
-        }
-
-        while (isspace(*end))
-        {
-            end++;
-        }
-
-        if (*end != MAPPING_FROMTO_SEP_CHAR)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to parse mapping (expected '%c', got '%c')",
-                     MAPPING_FROMTO_SEP_CHAR, *end);
-            return CE_Failure;
-        }
-
-        double dfDstVal = CPLStrtod(end + 1, &end);
-
-        while (isspace(*end))
-        {
-            end++;
-        }
-
-        if (*end != '\0' && *end != MAPPING_INTERVAL_SEP_CHAR)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to parse mapping (expected '%c' or end of string, "
-                     "got '%c')",
-                     MAPPING_INTERVAL_SEP_CHAR, *end);
-            return CE_Failure;
-        }
-
-        if (!GDALIsValueExactAs(dfDstVal, eBufType))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Value %g cannot be represented as data type %s", dfDstVal,
-                     GDALGetDataTypeName(eBufType));
-            return CE_Failure;
-        }
-
-        if (sInt.IsConstant())
-        {
-            oConstantMappings[sInt.dfMin] = dfDstVal;
-        }
-        else
-        {
-            aoIntervalMappings.emplace_back(sInt, dfDstVal);
-        }
-
-        start = end + 1;
+        return eErr;
     }
 
     std::unique_ptr<double, VSIFreeReleaser> padfResults(
@@ -2013,42 +1788,20 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
         return CE_Failure;
 
     size_t ii = 0;
+    bool bSuccess = false;
     for (int iLine = 0; iLine < nYSize; ++iLine)
     {
         for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
         {
             double srcVal = GetSrcVal(papoSources[0], eSrcType, ii);
-            auto oDstValIt = oConstantMappings.find(srcVal);
-            if (oDstValIt == oConstantMappings.end())
+            padfResults.get()[iCol] =
+                oReclassifier.Reclassify(srcVal, bSuccess);
+            if (!bSuccess)
             {
-                bool bFoundInterval = false;
-                for (const auto &[sInt, dstVal] : aoIntervalMappings)
-                {
-                    if (sInt.Contains(srcVal))
-                    {
-                        padfResults.get()[iCol] = dstVal;
-                        bFoundInterval = true;
-                        break;
-                    }
-                }
-
-                if (!bFoundInterval)
-                {
-                    if (!bHasDefaultValue)
-                    {
-                        CPLError(
-                            CE_Failure, CPLE_AppDefined,
-                            "Encountered value %g with no specified mapping",
-                            srcVal);
-                        return CE_Failure;
-                    }
-
-                    padfResults.get()[iCol] = dfDefaultValue;
-                }
-            }
-            else
-            {
-                padfResults.get()[iCol] = oDstValIt->second;
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Encountered value %g with no specified mapping",
+                         srcVal);
+                return CE_Failure;
             }
         }
 

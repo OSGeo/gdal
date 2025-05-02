@@ -1298,7 +1298,7 @@ def test_vrt_pixelfn_constant_factor(tmp_vsimem, fn):
 # Test reclassification
 
 
-@pytest.mark.parametrize("default", (7, "NO_DATA"))
+@pytest.mark.parametrize("default", (7, "NO_DATA", 200, "PASS_THROUGH"))
 def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
@@ -1315,7 +1315,7 @@ def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
     <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
       <VRTRasterBand dataType="Float32" band="1" subclass="VRTDerivedRasterBand">
         <PixelFunctionType>reclassify</PixelFunctionType>
-        <PixelFunctionArguments mapping=" (-inf, 1)=8; 2=9 ; (3,5]=4; [11, Inf] = 11 " default="{default}"/>
+        <PixelFunctionArguments mapping=" (-inf, 1)=8; 2=9 ; (3,5]=4; NO_DATA=123; [8,9]=PASS_THROUGH; 10=NO_DATA; [11, Inf] = 11; default={default}"/>
         <SimpleSource>
           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
           <SourceBand>1</SourceBand>
@@ -1326,9 +1326,24 @@ def test_vrt_pixelfn_reclassify(tmp_vsimem, default):
 
     dst = gdal.Open(xml).ReadAsArray()
 
-    np.testing.assert_array_equal(
-        dst, np.array([[8, 7, 9], [7, 4, 4], [7, 7, 7], [7, 7, 11], [11, 11, 11]])
-    )
+    if default == 200:
+        np.testing.assert_array_equal(
+            dst,
+            np.array(
+                [[8, 200, 9], [200, 4, 4], [200, 123, 8], [9, 7, 11], [11, 11, 11]]
+            ),
+        )
+    elif default in (7, "NO_DATA"):
+        np.testing.assert_array_equal(
+            dst, np.array([[8, 7, 9], [7, 4, 4], [7, 123, 8], [9, 7, 11], [11, 11, 11]])
+        )
+    elif default == "PASS_THROUGH":
+        np.testing.assert_array_equal(
+            dst,
+            np.array([[8, 1, 9], [3, 4, 4], [6, 123, 8], [9, 7, 11], [11, 11, 11]]),
+        )
+    else:
+        pytest.fail()
 
 
 @gdaltest.enable_exceptions()
@@ -1365,52 +1380,17 @@ def test_vrt_pixelfn_reclassify_no_default(tmp_vsimem):
 
 @gdaltest.enable_exceptions()
 @pytest.mark.parametrize(
-    "default,error",
-    [
-        ("32k", "Failed to parse"),
-        ("", "Failed to parse"),
-        ("256", "cannot be represented"),
-        ("NO_DATA", "NoData value is not set"),
-    ],
-)
-def test_vrt_pixelfn_reclassify_bad_default(tmp_vsimem, default, error):
-
-    np = pytest.importorskip("numpy")
-    gdaltest.importorskip_gdal_array()
-
-    nx = 2
-    ny = 3
-
-    data = np.arange(nx * ny).reshape(ny, nx)
-
-    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", nx, ny, 1) as src:
-        src.WriteArray(data)
-
-    xml = f"""
-    <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
-      <VRTRasterBand dataType="Byte" band="1" subclass="VRTDerivedRasterBand">
-        <PixelFunctionType>reclassify</PixelFunctionType>
-        <PixelFunctionArguments mapping="1=2;3=4" default="{default}" />
-        <SimpleSource>
-          <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
-          <SourceBand>1</SourceBand>
-        </SimpleSource>
-      </VRTRasterBand>
-    </VRTDataset>"""
-
-    with pytest.raises(Exception, match=error):
-        gdal.Open(xml).ReadAsArray()
-
-
-@gdaltest.enable_exceptions()
-@pytest.mark.parametrize(
     "mapping,error",
     [
         ("1=2;3", "expected '='"),
         ("1=2;3=4g", "expected ';' or end"),
-        ("1=2;", "Interval must start with"),
+        ("1=2;q", "Interval must start with"),
         ("1=3;3=256", "cannot be represented"),
-        ("(1,}=3;3=4,", "Interval must end with"),
+        ("(1, }=3;3=4,", "Interval must end with"),
+        ("(1,22k}=3;3=4,", "Interval must end with"),
+        ("3= ", "expected number or NO_DATA"),
+        ("1=NO_DATA", "NoData value is not set"),
+        ("NO_DATA=15", "NoData value is not set"),
     ],
 )
 def test_vrt_pixelfn_reclassify_invalid_mapping(tmp_vsimem, mapping, error):
@@ -1433,7 +1413,7 @@ def test_vrt_pixelfn_reclassify_invalid_mapping(tmp_vsimem, mapping, error):
         <PixelFunctionArguments mapping="{mapping}" default="7" />
         <SimpleSource>
           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
-          <SourceBand>1</SourceBand>j
+          <SourceBand>1</SourceBand>
         </SimpleSource>
       </VRTRasterBand>
     </VRTDataset>"""
