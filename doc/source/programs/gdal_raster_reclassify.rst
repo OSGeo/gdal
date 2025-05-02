@@ -59,7 +59,7 @@ Options
 
    A definition of mappings between input and output pixel values, as described above.
    The mappings may either be provided as text (with each entry separate by a semicolon),
-   or they may be read from a file using ``filename.txt``.
+   or they may be read from a file using ``@filename.txt``.
 
 .. include:: gdal_options/co.rst
 
