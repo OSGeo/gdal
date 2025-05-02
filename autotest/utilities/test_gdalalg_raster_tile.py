@@ -40,7 +40,7 @@ def test_gdalalg_raster_tile_basic(tmp_vsimem, tiling_scheme, tilesize):
     if tiling_scheme:
         alg["tiling-scheme"] = tiling_scheme
     if tilesize:
-        alg["tilesize"] = tilesize
+        alg["tile-size"] = tilesize
     alg["url"] = "http://example.com"
     alg["title"] = "my title"
     with gdal.config_option("GDAL_RASTER_TILE_HTML_PREC", "10"):
@@ -102,7 +102,7 @@ def test_gdalalg_raster_tile_small_world_geodetic(
     if not xyz:
         alg["convention"] = "tms"
     if addalpha:
-        alg["addalpha"] = True
+        alg["add-alpha"] = True
         nbands = 4
     else:
         nbands = 3
@@ -833,10 +833,10 @@ def test_gdalalg_raster_tile_addalpha_dstnodata_exclusive(tmp_vsimem):
     alg = get_alg()
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = tmp_vsimem
-    alg["addalpha"] = True
-    alg["dstnodata"] = 0
+    alg["add-alpha"] = True
+    alg["dst-nodata"] = 0
     with pytest.raises(
-        Exception, match="'addalpha' and 'dstnodata' are mutually exclusive"
+        Exception, match="'add-alpha' and 'dst-nodata' are mutually exclusive"
     ):
         alg.Run()
 
@@ -1223,7 +1223,7 @@ def test_gdalalg_raster_tile_tilesize(tmp_vsimem):
         "", "../gcore/data/byte.tif", format="MEM", outputSRS="EPSG:32611"
     )
     alg["output"] = tmp_vsimem
-    alg["tilesize"] = 512
+    alg["tile-size"] = 512
     assert alg.Run()
 
     with gdal.Open(tmp_vsimem / "11/354/818.png") as ds:
@@ -1242,7 +1242,7 @@ def test_gdalalg_raster_tile_tilesize_too_large(tmp_vsimem):
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = tmp_vsimem
-    alg["tilesize"] = 32768
+    alg["tile-size"] = 32768
     alg["output-format"] = "GTiff"
     with pytest.raises(
         Exception,

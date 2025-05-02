@@ -121,16 +121,16 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
            &m_convention)
         .SetDefault(m_convention)
         .SetChoices("xyz", "tms");
-    AddArg("tilesize", 0, _("Override default tile size"), &m_tileSize)
+    AddArg("tile-size", 0, _("Override default tile size"), &m_tileSize)
         .SetMinValueIncluded(64)
         .SetMaxValueIncluded(32768);
-    AddArg("addalpha", 0, _("Whether to force adding an alpha channel"),
+    AddArg("add-alpha", 0, _("Whether to force adding an alpha channel"),
            &m_addalpha)
         .SetMutualExclusionGroup("alpha");
     AddArg("no-alpha", 0, _("Whether to disable adding an alpha channel"),
            &m_noalpha)
         .SetMutualExclusionGroup("alpha");
-    AddArg("dstnodata", 0, _("Destination nodata value"), &m_dstNoData);
+    AddArg("dst-nodata", 0, _("Destination nodata value"), &m_dstNoData);
     AddArg("skip-blank", 0, _("Do not generate blank tiles"), &m_skipBlank);
 
     {
@@ -204,11 +204,11 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
                 return false;
             }
 
-            if (m_addalpha && GetArg("dstnodata")->IsExplicitlySet())
+            if (m_addalpha && GetArg("dst-nodata")->IsExplicitlySet())
             {
                 ReportError(
                     CE_Failure, CPLE_IllegalArg,
-                    "'addalpha' and 'dstnodata' are mutually exclusive");
+                    "'add-alpha' and 'dst-nodata' are mutually exclusive");
                 return false;
             }
             return true;
@@ -2224,7 +2224,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     const bool bOutputSupportsAlpha = !EQUAL(m_outputFormat.c_str(), "JPEG");
     const bool bOutputSupportsNoData = EQUAL(m_outputFormat.c_str(), "GTiff");
-    const bool bDstNoDataSpecified = GetArg("dstnodata")->IsExplicitlySet();
+    const bool bDstNoDataSpecified = GetArg("dst-nodata")->IsExplicitlySet();
     const GDALColorTable *poColorTable =
         poSrcDS->GetRasterBand(1)->GetColorTable();
 

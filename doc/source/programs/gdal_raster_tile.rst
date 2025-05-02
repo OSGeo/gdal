@@ -135,17 +135,17 @@ Standard options
 
     - ``tms``: from bottom, as in OSGeo Tile Map Service (TMS) Specification.
 
-.. option:: --tilesize <PIXELS>
+.. option:: --tile-size <PIXELS>
 
     Width and height of a tile, in pixels. Default is 256 for default tiling schemes.
     Setting it to a higher value enables generating higher DPI tile sets.
 
-.. option:: --addalpha
+.. option:: --add-alpha
 
     Whether to force adding an alpha channel. An alpha channel is added by default,
     unless the source dataset has a nodata value and the output format supports it.
 
-.. option:: --noalpha
+.. option:: --no-alpha
 
     Disable the creation of an alpha channel.
 
