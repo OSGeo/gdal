@@ -24,7 +24,7 @@
 #include "gdalalg_raster_edit.h"
 #include "gdalalg_raster_contour.h"
 #include "gdalalg_raster_footprint.h"
-#include "gdalalg_raster_fillnodata.h"
+#include "gdalalg_raster_fill_nodata.h"
 #include "gdalalg_raster_hillshade.h"
 #include "gdalalg_raster_index.h"
 #include "gdalalg_raster_mosaic.h"

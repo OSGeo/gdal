@@ -316,8 +316,8 @@ man_pages = [
         1,
     ),
     (
-        "programs/gdal_raster_fillnodata",
-        "gdal-raster-fillnodata",
+        "programs/gdal_raster_fill_nodata",
+        "gdal-raster-fill-nodata",
         "Fill nodata values in a raster dataset",
         [author_elpaso],
         1,

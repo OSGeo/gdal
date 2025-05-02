@@ -1,7 +1,7 @@
-.. _gdal_raster_fillnodata:
+.. _gdal_raster_fill_nodata:
 
 ================================================================================
-``gdal raster fillnodata``
+``gdal raster fill-nodata``
 ================================================================================
 
 .. versionadded:: 3.11
@@ -10,17 +10,17 @@
 
     Fill nodata raster regions by interpolation from edges
 
-.. Index:: gdal raster fillnodata
+.. Index:: gdal raster fill-nodata
 
 Synopsis
 --------
 
-.. program-output:: gdal raster fillnodata --help-doc
+.. program-output:: gdal raster fill-nodata --help-doc
 
 Description
 -----------
 
-:program:`gdal raster fillnodata` fills nodata areas by interpolating
+:program:`gdal raster fill-nodata` fills nodata areas by interpolating
 from valid pixels around the edges of the area.
 
 The following options are available:
@@ -73,6 +73,6 @@ Examples
 
    .. code-block:: bash
 
-    gdal raster fillnodata -b 2 --max-distance 50 --smoothing-iterations 3 \
+    gdal raster fill-nodata -b 2 --max-distance 50 --smoothing-iterations 3 \
         --strategy nearest --mask mask.tif \
         input.tif output.tif
