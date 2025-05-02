@@ -917,20 +917,22 @@ def test_gdalalg_raster_tile_rgba_all_opaque(tmp_vsimem):
         )
 
 
-def test_gdalalg_raster_tile_rgba_partially_opaque(tmp_vsimem):
+@pytest.mark.parametrize("skip_blank", [True, False])
+def test_gdalalg_raster_tile_rgba_partially_opaque(tmp_vsimem, skip_blank):
 
     src_ds = gdal.Translate(
         "",
         "../gdrivers/data/small_world.tif",
         options="-of MEM -b 1 -b 2 -b 3 -b mask -colorinterp_4 alpha",
     )
-    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 10, 10, b"\x00" * 100)
+    src_ds.GetRasterBand(4).WriteRaster(0, 0, 10, 10, b"\x00" * 100)
     alg = get_alg()
     alg["input"] = src_ds
     alg["output"] = tmp_vsimem
     alg["webviewer"] = "none"
     alg["min-zoom"] = 0
     alg["max-zoom"] = 1
+    alg["skip-blank"] = skip_blank
     assert alg.Run()
 
     assert gdal.ReadDirRecursive(tmp_vsimem) == [
@@ -973,6 +975,26 @@ def test_gdalalg_raster_tile_rgba_partially_opaque(tmp_vsimem):
             ],
             abs=10,
         )
+
+
+def test_gdalalg_raster_tile_rgba_all_transparent_skip_blank(tmp_vsimem):
+
+    src_ds = gdal.Translate(
+        "",
+        "../gdrivers/data/small_world.tif",
+        options="-of MEM -b 1 -b 2 -b 3 -b mask -colorinterp_4 alpha",
+    )
+    src_ds.GetRasterBand(4).Fill(0)
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["webviewer"] = "none"
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 1
+    alg["skip-blank"] = True
+    assert alg.Run()
+
+    assert gdal.ReadDirRecursive(tmp_vsimem) == ["0/", "0/0/"]
 
 
 def test_gdalalg_raster_tile_no_alpha(tmp_vsimem):

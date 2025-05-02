@@ -557,9 +557,23 @@ GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *poDstDriver,
                                 &sExtraArg) == CE_None)
             {
                 int nDstBands = oSrcDS.GetRasterCount();
-                if (oSrcDS.GetRasterBand(nDstBands)->GetColorInterpretation() ==
-                        GCI_AlphaBand &&
-                    !bUserAskedForAlpha)
+                const bool bDstHasAlpha =
+                    oSrcDS.GetRasterBand(nDstBands)->GetColorInterpretation() ==
+                    GCI_AlphaBand;
+                if (bDstHasAlpha && bSkipBlank)
+                {
+                    bool bBlank = true;
+                    for (size_t i = 0; i < nBytesPerBand && bBlank; ++i)
+                    {
+                        bBlank =
+                            (dstBuffer[(nDstBands - 1) * nBytesPerBand + i] ==
+                             0);
+                    }
+                    if (bBlank)
+                        return true;
+                    bSkipBlank = false;
+                }
+                if (bDstHasAlpha && !bUserAskedForAlpha)
                 {
                     bool bAllOpaque = true;
                     for (size_t i = 0; i < nBytesPerBand && bAllOpaque; ++i)
