@@ -40,6 +40,7 @@ class GDALMainAlgorithm final : public GDALAlgorithm
   private:
     std::unique_ptr<GDALAlgorithm> m_subAlg{};
     bool m_showUsage = true;
+    bool m_dummyBoolean = false;  // Used for --version
 
     bool RunImpl(GDALProgressFunc, void *) override
     {

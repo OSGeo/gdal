@@ -2890,7 +2890,6 @@ class CPL_DLL GDALAlgorithmRegistry
     bool m_helpDocRequested = false;
 
     bool m_JSONUsageRequested = false;
-    bool m_dummyBoolean = false;  // Used for --version
     bool m_parseForAutoCompletion = false;
     std::string m_referencePath{};
     std::vector<std::string> m_dummyConfigOptions{};

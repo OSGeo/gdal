@@ -14,6 +14,10 @@
 
 //! @cond Doxygen_Suppress
 
+#ifndef _
+#define _(x) (x)
+#endif
+
 /************************************************************************/
 /*                  GDALMainAlgorithm::GDALMainAlgorithm()              */
 /************************************************************************/
@@ -31,6 +35,12 @@ GDALMainAlgorithm::GDALMainAlgorithm()
     }
 
     SetCallPath({NAME});
+
+    AddArg("version", 0, _("Display GDAL version and exit"), &m_dummyBoolean)
+        .SetOnlyForCLI();
+    AddArg("drivers", 0, _("Display driver list as JSON document and exit"),
+           &m_dummyBoolean)
+        .SetOnlyForCLI();
 
     m_longDescription = "'gdal <FILENAME>' can also be used as a shortcut for "
                         "'gdal info <FILENAME>'.\n"
@@ -74,6 +84,12 @@ bool GDALMainAlgorithm::ParseCommandLineArguments(
 
         return GDALAlgorithm::ParseCommandLineArguments(args);
     }
+    else if (args.size() == 1 && args[0].size() >= 2 && args[0][0] == '-' &&
+             args[0][1] == '-')
+    {
+        return GDALAlgorithm::ParseCommandLineArguments(args);
+    }
+
     // Generic case: "gdal {subcommand} arguments"
     // where subcommand is a known subcommand
     else if (args.size() >= 1)
