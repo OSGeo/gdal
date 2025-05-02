@@ -1548,7 +1548,7 @@ namespace
 /*                            ResourceManager                           */
 /************************************************************************/
 
-// Generic cache managing resoures
+// Generic cache managing resources
 template <class Resource> class ResourceManager /* non final */
 {
   public:
