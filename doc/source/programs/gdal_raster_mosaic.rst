@@ -79,8 +79,8 @@ The following options are available:
     Set georeferenced extents of output file. The values must be expressed in georeferenced units.
     If not specified, the extent of the output is the minimum bounding box of the set of source rasters.
     Pixels within the extent of the output but not covered by a source raster will be read as valid
-    pixels with a value of zero unless a NODATA value is specified using :option:`--dstnodata`
-    or an alpha mask band is added with :option:`--addalpha`.
+    pixels with a value of zero unless a NODATA value is specified using :option:`--dst-nodata`
+    or an alpha mask band is added with :option:`--add-alpha`.
 
 .. option:: --target-aligned-pixels
 
@@ -89,14 +89,14 @@ The following options are available:
     such that the aligned extent includes the minimum extent.
     Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
 
-.. option:: --srcnodata <value>[,<value>]...
+.. option:: --src-nodata <value>[,<value>]...
 
     Set nodata values for input bands (different values can be supplied for each band).
     If the option is not specified, the intrinsic nodata settings on the source datasets
     will be used (if they exist). The value set by this option is written in the NODATA element
     of each ``ComplexSource`` element.
 
-.. option:: --dstnodata <value>[,<value>]...
+.. option:: --dst-nodata <value>[,<value>]...
 
     Set nodata values at the output band level (different values can be supplied for each band).  If more
     than one value is supplied, all values should be quoted to keep them together
@@ -105,18 +105,18 @@ The following options are available:
     is written in the ``NoDataValue`` element of each ``VRTRasterBand element``. Use a value of
     `None` to ignore intrinsic nodata settings on the source datasets.
 
-.. option:: --addalpha
+.. option:: --add-alpha
 
     Adds an alpha mask band to the output when the source raster have none. Mainly useful for RGB sources (or grey-level sources).
     The alpha band is filled on-the-fly with the value 0 in areas without any source raster, and with value
     255 in areas with source raster. The effect is that a RGBA viewer will render
     the areas without source rasters as transparent and areas with source rasters as opaque.
 
-.. option:: --hidenodata
+.. option:: --hide-nodata
 
     Even if any band contains nodata value, giving this option makes the output band
     not report the NoData. Useful when you want to control the background color of
-    the dataset. By using along with the -addalpha option, you can prepare a
+    the dataset. By using along with the :option:`--add-alpha` option, you can prepare a
     dataset which doesn't report nodata value but is transparent in areas with no
     data.
 
@@ -137,7 +137,7 @@ Examples
 
    .. code-block:: bash
 
-       gdal raster mosaic --hidenodata --dstnodata=0,0,255 doq/*.tif doq_index.vrt
+       gdal raster mosaic --hide-nodata --dst-nodata=0,0,255 doq/*.tif doq_index.vrt
 
 
 .. below is an allow-list for spelling checker.

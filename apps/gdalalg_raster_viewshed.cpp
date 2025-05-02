@@ -95,7 +95,7 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm()
         .SetDefault(m_outOfRangeVal)
         .SetMinValueIncluded(0)
         .SetMaxValueIncluded(255);
-    AddArg("dstnodata", 0,
+    AddArg("dst-nodata", 0,
            _("The value to be set for the cells in the output raster that have "
              "no data."),
            &m_dstNoData)

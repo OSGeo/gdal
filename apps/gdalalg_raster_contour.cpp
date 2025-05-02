@@ -56,7 +56,7 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
     AddArg("max-name", 0, _("Name of the maximum elevation field"), &m_amax);
     AddArg("3d", 0, _("Force production of 3D vectors instead of 2D"), &m_3d);
 
-    AddArg("srcnodata", 0, _("Input pixel value to treat as 'nodata'"),
+    AddArg("src-nodata", 0, _("Input pixel value to treat as 'nodata'"),
            &m_sNodata);
     AddArg("interval", 0, _("Elevation interval between contours"), &m_interval)
         .SetMutualExclusionGroup("levels")

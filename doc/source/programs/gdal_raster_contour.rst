@@ -60,7 +60,7 @@ Standard options
 
     Forces the production of 3D vectors instead of 2D. Includes elevation at every vertex.
 
-.. option:: --srcnodata <SRCNODATA>
+.. option:: --src-nodata <SRCNODATA>
 
     Input pixel value to treat as 'nodata'.
 

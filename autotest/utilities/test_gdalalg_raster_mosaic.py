@@ -263,8 +263,8 @@ def test_gdalalg_raster_mosaic_srcnodata_dstnodata():
     alg = get_mosaic_alg()
     alg["input"] = [src1_ds]
     alg["output"] = ""
-    alg["srcnodata"] = [1]
-    alg["dstnodata"] = [2]
+    alg["src-nodata"] = [1]
+    alg["dst-nodata"] = [2]
     assert alg.Run()
     ds = alg["output"].GetDataset()
     assert ds.GetRasterBand(1).Checksum() == 2
@@ -280,9 +280,9 @@ def test_gdalalg_raster_mosaic_hidenodata():
     alg = get_mosaic_alg()
     alg["input"] = [src1_ds]
     alg["output"] = ""
-    alg["srcnodata"] = [1]
-    alg["dstnodata"] = [2]
-    alg["hidenodata"] = True
+    alg["src-nodata"] = [1]
+    alg["dst-nodata"] = [2]
+    alg["hide-nodata"] = True
     assert alg.Run()
     ds = alg["output"].GetDataset()
     assert ds.GetRasterBand(1).Checksum() == 2

@@ -27,7 +27,7 @@ def get_alg():
     "options,checksum",
     [
         ({}, [55066, 37594, 47768]),
-        ({"addalpha": True}, [55066, 37594, 47768, 48613]),
+        ({"add-alpha": True}, [55066, 37594, 47768, 48613]),
         ({"color-selection": "exact"}, [8073, 53707, 59536]),
         ({"color-selection": "nearest"}, [57296, 42926, 47181]),
     ],
@@ -98,7 +98,7 @@ def test_gdalalg_raster_color_map_gdalg(tmp_vsimem):
     [
         ({}, [4672, 4672, 4672]),
         ({"color-selection": "nearest"}, [4672, 4672, 4672]),
-        ({"addalpha": True}, [4672, 4672, 4672, 4873]),
+        ({"add-alpha": True}, [4672, 4672, 4672, 4873]),
     ],
 )
 @pytest.mark.parametrize("output_format", ["MEM", "VRT"])

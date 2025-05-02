@@ -61,7 +61,7 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()
            &m_overview)
         .SetMutualExclusionGroup("overview-srcnodata")
         .SetMinValueIncluded(0);
-    AddArg("srcnodata", 0, _("Set nodata values for input bands."),
+    AddArg("src-nodata", 0, _("Set nodata values for input bands."),
            &m_srcNoData)
         .SetMinCount(1)
         .SetRepeatedArgAllowed(false)
