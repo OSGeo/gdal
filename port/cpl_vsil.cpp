@@ -668,7 +668,7 @@ int VSIMkdirRecursive(const char *pszPathname, long mode)
         return -1;
     }
 
-    if (VSIStatL(osParentPath.c_str(), &sStat) != 0)
+    if (!osParentPath.empty() && VSIStatL(osParentPath.c_str(), &sStat) != 0)
     {
         if (VSIMkdirRecursive(osParentPath.c_str(), mode) != 0)
             return -1;
