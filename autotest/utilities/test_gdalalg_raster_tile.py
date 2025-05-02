@@ -88,9 +88,12 @@ def test_gdalalg_raster_tile_basic(tmp_vsimem, tiling_scheme, tilesize):
 
 
 @pytest.mark.parametrize(
-    "tiling_scheme,xyz", [("WorldCRS84Quad", True), ("geodetic", False)]
+    "tiling_scheme,xyz,addalpha",
+    [("WorldCRS84Quad", True, True), ("geodetic", False, False)],
 )
-def test_gdalalg_raster_tile_small_world_geodetic(tmp_vsimem, tiling_scheme, xyz):
+def test_gdalalg_raster_tile_small_world_geodetic(
+    tmp_vsimem, tiling_scheme, xyz, addalpha
+):
 
     alg = get_alg()
     alg["input"] = "../gdrivers/data/small_world.tif"
@@ -98,6 +101,11 @@ def test_gdalalg_raster_tile_small_world_geodetic(tmp_vsimem, tiling_scheme, xyz
     alg["tiling-scheme"] = tiling_scheme
     if not xyz:
         alg["convention"] = "tms"
+    if addalpha:
+        alg["addalpha"] = True
+        nbands = 4
+    else:
+        nbands = 3
     with gdal.config_option("GDAL_RASTER_TILE_HTML_PREC", "10"):
         assert alg.Run()
 
@@ -124,30 +132,34 @@ def test_gdalalg_raster_tile_small_world_geodetic(tmp_vsimem, tiling_scheme, xyz
     )
 
     with gdal.Open(tmp_vsimem / "0/0/0.png") as ds:
-        assert ds.RasterCount == 4
+        assert ds.RasterCount == nbands
         assert ds.RasterXSize == 256
         assert ds.RasterYSize == 256
-        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == pytest.approx(
+        assert [
+            ds.GetRasterBand(i + 1).Checksum() for i in range(nbands)
+        ] == pytest.approx(
             [
                 1315,
                 63955,
                 5106,
                 17849,
-            ],
+            ][0:nbands],
             abs=1,
         )
 
     with gdal.Open(tmp_vsimem / "0/1/0.png") as ds:
-        assert ds.RasterCount == 4
+        assert ds.RasterCount == nbands
         assert ds.RasterXSize == 256
         assert ds.RasterYSize == 256
-        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == pytest.approx(
+        assert [
+            ds.GetRasterBand(i + 1).Checksum() for i in range(nbands)
+        ] == pytest.approx(
             [
                 24456,
                 25846,
                 15674,
                 17849,
-            ],
+            ][0:nbands],
             abs=1,
         )
 
@@ -855,41 +867,127 @@ def test_gdalalg_raster_tile_rgb(tmp_vsimem):
     assert gdal.ReadDirRecursive(tmp_vsimem) == ["0/", "0/0/", "0/0/0.png"]
 
     with gdal.Open(tmp_vsimem / "0/0/0.png") as ds:
-        assert ds.RasterCount == 4
+        assert ds.RasterCount == 3
         assert ds.RasterXSize == 256
         assert ds.RasterYSize == 256
-        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == [
+        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
             24650,
             23280,
             16559,
-            17849,
         ]
 
 
-def test_gdalalg_raster_tile_rgba(tmp_vsimem):
+def test_gdalalg_raster_tile_rgba_all_opaque(tmp_vsimem):
 
-    alg = get_alg()
-    alg["input"] = gdal.Translate(
+    src_ds = gdal.Translate(
         "",
         "../gdrivers/data/small_world.tif",
         options="-of MEM -b 1 -b 2 -b 3 -b mask -colorinterp_4 alpha",
     )
+    alg = get_alg()
+    alg["input"] = src_ds
     alg["output"] = tmp_vsimem
     alg["webviewer"] = "none"
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 1
     assert alg.Run()
 
-    assert gdal.ReadDirRecursive(tmp_vsimem) == ["0/", "0/0/", "0/0/0.png"]
+    assert gdal.ReadDirRecursive(tmp_vsimem) == [
+        "0/",
+        "0/0/",
+        "0/0/0.png",
+        "1/",
+        "1/0/",
+        "1/0/0.png",
+        "1/0/1.png",
+        "1/1/",
+        "1/1/0.png",
+        "1/1/1.png",
+    ]
+
+    with gdal.Open(tmp_vsimem / "0/0/0.png") as ds:
+        assert ds.RasterCount == 3
+        assert ds.RasterXSize == 256
+        assert ds.RasterYSize == 256
+        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == pytest.approx(
+            [
+                25111,
+                24737,
+                16107,
+            ],
+            abs=10,
+        )
+
+    with gdal.Open(tmp_vsimem / "1/0/0.png") as ds:
+        assert ds.RasterCount == 3
+        assert ds.RasterXSize == 256
+        assert ds.RasterYSize == 256
+        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == pytest.approx(
+            [
+                6241,
+                4330,
+                13703,
+            ],
+            abs=10,
+        )
+
+
+def test_gdalalg_raster_tile_rgba_partially_opaque(tmp_vsimem):
+
+    src_ds = gdal.Translate(
+        "",
+        "../gdrivers/data/small_world.tif",
+        options="-of MEM -b 1 -b 2 -b 3 -b mask -colorinterp_4 alpha",
+    )
+    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 10, 10, b"\x00" * 100)
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["webviewer"] = "none"
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 1
+    assert alg.Run()
+
+    assert gdal.ReadDirRecursive(tmp_vsimem) == [
+        "0/",
+        "0/0/",
+        "0/0/0.png",
+        "1/",
+        "1/0/",
+        "1/0/0.png",
+        "1/0/1.png",
+        "1/1/",
+        "1/1/0.png",
+        "1/1/1.png",
+    ]
 
     with gdal.Open(tmp_vsimem / "0/0/0.png") as ds:
         assert ds.RasterCount == 4
         assert ds.RasterXSize == 256
         assert ds.RasterYSize == 256
-        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == [
-            24650,
-            23280,
-            16559,
-            17849,
-        ]
+        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == pytest.approx(
+            [
+                23761,
+                23390,
+                14544,
+                16124,
+            ],
+            abs=10,
+        )
+
+    with gdal.Open(tmp_vsimem / "1/0/0.png") as ds:
+        assert ds.RasterCount == 4
+        assert ds.RasterXSize == 256
+        assert ds.RasterYSize == 256
+        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == pytest.approx(
+            [
+                289,
+                63903,
+                6812,
+                10052,
+            ],
+            abs=10,
+        )
 
 
 def test_gdalalg_raster_tile_no_alpha(tmp_vsimem):

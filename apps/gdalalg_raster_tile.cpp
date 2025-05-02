@@ -302,19 +302,18 @@ static int GetFileY(int iY, const gdal::TileMatrixSet::TileMatrix &tileMatrix,
 /*                          GenerateTile()                              */
 /************************************************************************/
 
-static bool GenerateTile(GDALDataset *poSrcDS, GDALDriver *poMemDriver,
-                         GDALDriver *poDstDriver, const char *pszExtension,
-                         CSLConstList creationOptions, GDALWarpOperation &oWO,
-                         const OGRSpatialReference &oSRS_TMS,
-                         GDALDataType eWorkingDataType,
-                         const gdal::TileMatrixSet::TileMatrix &tileMatrix,
-                         const std::string &outputDirectory, int nBands,
-                         const double *pdfDstNoData, int nZoomLevel, int iX,
-                         int iY, const std::string &convention, int nMinTileX,
-                         int nMinTileY, bool bSkipBlank, bool bAuxXML,
-                         bool bResume, const std::vector<std::string> &metadata,
-                         const GDALColorTable *poColorTable,
-                         std::vector<GByte> &dstBuffer)
+static bool
+GenerateTile(GDALDataset *poSrcDS, GDALDriver *poMemDriver,
+             GDALDriver *poDstDriver, const char *pszExtension,
+             CSLConstList creationOptions, GDALWarpOperation &oWO,
+             const OGRSpatialReference &oSRS_TMS, GDALDataType eWorkingDataType,
+             const gdal::TileMatrixSet::TileMatrix &tileMatrix,
+             const std::string &outputDirectory, int nBands,
+             const double *pdfDstNoData, int nZoomLevel, int iX, int iY,
+             const std::string &convention, int nMinTileX, int nMinTileY,
+             bool bSkipBlank, bool bUserAskedForAlpha, bool bAuxXML,
+             bool bResume, const std::vector<std::string> &metadata,
+             const GDALColorTable *poColorTable, std::vector<GByte> &dstBuffer)
 {
     const std::string osDirZ = CPLFormFilenameSafe(
         outputDirectory.c_str(), CPLSPrintf("%d", nZoomLevel), nullptr);
@@ -357,6 +356,16 @@ static bool GenerateTile(GDALDataset *poSrcDS, GDALDriver *poMemDriver,
         }
         if (bBlank)
             return true;
+    }
+    if (bDstHasAlpha && !bUserAskedForAlpha)
+    {
+        bool bAllOpaque = true;
+        for (size_t i = 0; i < nBytesPerBand && bAllOpaque; ++i)
+        {
+            bAllOpaque = (dstBuffer[(nBands - 1) * nBytesPerBand + i] == 255);
+        }
+        if (bAllOpaque)
+            nBands--;
     }
 
     VSIMkdir(osDirZ.c_str(), 0755);
@@ -439,13 +448,15 @@ static bool GenerateTile(GDALDataset *poSrcDS, GDALDriver *poMemDriver,
 /*                    GenerateOverviewTile()                            */
 /************************************************************************/
 
-static bool GenerateOverviewTile(
-    GDALDataset &oSrcDS, GDALDriver *poMemDriver, GDALDriver *poDstDriver,
-    const std::string &outputFormat, const char *pszExtension,
-    CSLConstList creationOptions, const std::string &resampling,
-    const gdal::TileMatrixSet::TileMatrix &tileMatrix,
-    const std::string &outputDirectory, int nZoomLevel, int iX, int iY,
-    const std::string &convention, bool bSkipBlank, bool bAuxXML, bool bResume)
+static bool
+GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *poMemDriver,
+                     GDALDriver *poDstDriver, const std::string &outputFormat,
+                     const char *pszExtension, CSLConstList creationOptions,
+                     const std::string &resampling,
+                     const gdal::TileMatrixSet::TileMatrix &tileMatrix,
+                     const std::string &outputDirectory, int nZoomLevel, int iX,
+                     int iY, const std::string &convention, bool bSkipBlank,
+                     bool bUserAskedForAlpha, bool bAuxXML, bool bResume)
 {
     const std::string osDirZ = CPLFormFilenameSafe(
         outputDirectory.c_str(), CPLSPrintf("%d", nZoomLevel), nullptr);
@@ -546,10 +557,26 @@ static bool GenerateOverviewTile(
                                 oSrcDS.GetRasterCount(), nullptr, 0, 0, 0,
                                 &sExtraArg) == CE_None)
             {
+                int nDstBands = oSrcDS.GetRasterCount();
+                if (oSrcDS.GetRasterBand(nDstBands)->GetColorInterpretation() ==
+                        GCI_AlphaBand &&
+                    !bUserAskedForAlpha)
+                {
+                    bool bAllOpaque = true;
+                    for (size_t i = 0; i < nBytesPerBand && bAllOpaque; ++i)
+                    {
+                        bAllOpaque =
+                            (dstBuffer[(nDstBands - 1) * nBytesPerBand + i] ==
+                             255);
+                    }
+                    if (bAllOpaque)
+                        nDstBands--;
+                }
+
                 std::unique_ptr<GDALDataset> memDS(poMemDriver->Create(
                     "", tileMatrix.mTileWidth, tileMatrix.mTileHeight, 0, eDT,
                     nullptr));
-                for (int i = 0; i < oSrcDS.GetRasterCount(); ++i)
+                for (int i = 0; i < nDstBands; ++i)
                 {
                     char szBuffer[32] = {'\0'};
                     int nRet = CPLPrintPointer(
@@ -1002,7 +1029,9 @@ CPLErr MosaicRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pData)
     }
     if (!poTileDS || nBand > poTileDS->GetRasterCount())
     {
-        memset(pData, 0,
+        memset(pData,
+               (poTileDS && (nBand == poTileDS->GetRasterCount() + 1)) ? 255
+                                                                       : 0,
                static_cast<size_t>(nBlockXSize) * nBlockYSize *
                    GDALGetDataTypeSizeBytes(eDataType));
         return CE_None;
@@ -2174,6 +2203,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     const GDALColorTable *poColorTable =
         poSrcDS->GetRasterBand(1)->GetColorTable();
 
+    const bool bUserAskedForAlpha = m_addalpha;
     if (!m_noalpha && !m_addalpha)
     {
         m_addalpha = !(bHasSrcNoData && bOutputSupportsNoData) &&
@@ -2394,7 +2424,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                 &nQueuedJobs, poMemDriver, poDstDriver,
                                 pszExtension, &aosCreationOptions, &psWO,
                                 &tileMatrix, nDstBands, iX, iY, nMinTileX,
-                                nMinTileY, poColorTable]()
+                                nMinTileY, poColorTable, bUserAskedForAlpha]()
                     {
                         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
 
@@ -2413,8 +2443,9 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                     ? &(psWO->padfDstNoDataReal[0])
                                     : nullptr,
                                 m_maxZoomLevel, iX, iY, m_convention, nMinTileX,
-                                nMinTileY, m_skipBlank, m_auxXML, m_resume,
-                                m_metadata, poColorTable, resources->dstBuffer))
+                                nMinTileY, m_skipBlank, bUserAskedForAlpha,
+                                m_auxXML, m_resume, m_metadata, poColorTable,
+                                resources->dstBuffer))
                         {
                             oResourceManager.ReleaseResources(
                                 std::move(resources));
@@ -2453,8 +2484,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                         psWO->padfDstNoDataReal ? &(psWO->padfDstNoDataReal[0])
                                                 : nullptr,
                         m_maxZoomLevel, iX, iY, m_convention, nMinTileX,
-                        nMinTileY, m_skipBlank, m_auxXML, m_resume, m_metadata,
-                        poColorTable, dstBuffer);
+                        nMinTileY, m_skipBlank, bUserAskedForAlpha, m_auxXML,
+                        m_resume, m_metadata, poColorTable, dstBuffer);
 
                     ++nCurTile;
                     bRet &= (!pfnProgress ||
@@ -2556,7 +2587,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                     auto job = [this, &oResourceManager, poMemDriver,
                                 poDstDriver, &bFailure, &nCurTile, &nQueuedJobs,
                                 pszExtension, &aosCreationOptions,
-                                &ovrTileMatrix, iZ, iX, iY]()
+                                &ovrTileMatrix, iZ, iX, iY,
+                                bUserAskedForAlpha]()
                     {
                         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
 
@@ -2568,7 +2600,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                 poDstDriver, m_outputFormat, pszExtension,
                                 aosCreationOptions.List(), m_overviewResampling,
                                 ovrTileMatrix, m_outputDirectory, iZ, iX, iY,
-                                m_convention, m_skipBlank, m_auxXML, m_resume))
+                                m_convention, m_skipBlank, bUserAskedForAlpha,
+                                m_auxXML, m_resume))
                         {
                             oResourceManager.ReleaseResources(
                                 std::move(resources));
@@ -2603,8 +2636,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                         oSrcDS, poMemDriver, poDstDriver, m_outputFormat,
                         pszExtension, aosCreationOptions.List(),
                         m_overviewResampling, ovrTileMatrix, m_outputDirectory,
-                        iZ, iX, iY, m_convention, m_skipBlank, m_auxXML,
-                        m_resume);
+                        iZ, iX, iY, m_convention, m_skipBlank,
+                        bUserAskedForAlpha, m_auxXML, m_resume);
 
                     ++nCurTile;
                     bRet &= (!pfnProgress ||
