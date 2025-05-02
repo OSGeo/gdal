@@ -244,7 +244,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_DEFAULT_WMS_CACHE_PATH", // from gdalwmscache.cpp
    "GDAL_DISABLE_CPLLOCALEC", // from cpl_conv.cpp
    "GDAL_DISABLE_READDIR_ON_OPEN", // from cpl_vsil_curl.cpp, gdalopeninfo.cpp
-   "GDAL_DRIVER_PATH", // from gdaldataset.cpp, gdaldrivermanager.cpp, gdalpythondriverloader.cpp
+   "GDAL_DRIVER_PATH", // from gdaldriver.cpp, gdaldrivermanager.cpp, gdalpythondriverloader.cpp
    "GDAL_DTED_SINGLE_BLOCK", // from dteddataset.cpp
    "GDAL_ECW_CACHE_MAXMEM", // from ecwdataset.cpp
    "GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT", // from ecwdataset.cpp

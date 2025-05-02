@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "astype" step of "raster pipeline"
+ * Purpose:  "set-type" step of "raster pipeline"
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_raster_astype.h"
+#include "gdalalg_raster_set_type.h"
 
 #include "gdal_priv.h"
 #include "gdal_utils.h"
@@ -22,10 +22,10 @@
 #endif
 
 /************************************************************************/
-/*        GDALRasterAsTypeAlgorithm::GDALRasterAsTypeAlgorithm()        */
+/*       GDALRasterSetTypeAlgorithm::GDALRasterSetTypeAlgorithm()       */
 /************************************************************************/
 
-GDALRasterAsTypeAlgorithm::GDALRasterAsTypeAlgorithm(bool standaloneStep)
+GDALRasterSetTypeAlgorithm::GDALRasterSetTypeAlgorithm(bool standaloneStep)
     : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
@@ -33,10 +33,10 @@ GDALRasterAsTypeAlgorithm::GDALRasterAsTypeAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*              GDALRasterAsTypeAlgorithm::RunStep()                    */
+/*             GDALRasterSetTypeAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALRasterAsTypeAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterSetTypeAlgorithm::RunStep(GDALProgressFunc, void *)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());

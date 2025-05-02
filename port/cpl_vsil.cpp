@@ -668,7 +668,7 @@ int VSIMkdirRecursive(const char *pszPathname, long mode)
         return -1;
     }
 
-    if (VSIStatL(osParentPath.c_str(), &sStat) != 0)
+    if (!osParentPath.empty() && VSIStatL(osParentPath.c_str(), &sStat) != 0)
     {
         if (VSIMkdirRecursive(osParentPath.c_str(), mode) != 0)
             return -1;
@@ -757,11 +757,17 @@ int *VSIUnlinkBatch(CSLConstList papszFiles)
  * \brief Rename a file.
  *
  * Renames a file object in the file system.  It should be possible
- * to rename a file onto a new filesystem, but it is safest if this
+ * to rename a file onto a new directory, but it is safest if this
  * function is only used to rename files that remain in the same directory.
  *
+ * This function only works if the new path is located on the same VSI
+ * virtual file system than the old path. I not, use VSIMove() instead.
+ *
  * This method goes through the VSIFileHandler virtualization and may
- * work on unusual filesystems such as in memory.
+ * work on unusual filesystems such as in memory or cloud object storage.
+ * Note that for cloud object storage, renaming a directory may involve
+ * renaming all files it contains recursively, and is thus not an atomic
+ * operation (and could be expensive on directories with many files!)
  *
  * Analog of the POSIX rename() function.
  *
@@ -776,7 +782,113 @@ int VSIRename(const char *oldpath, const char *newpath)
 {
     VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(oldpath);
 
-    return poFSHandler->Rename(oldpath, newpath);
+    return poFSHandler->Rename(oldpath, newpath, nullptr, nullptr);
+}
+
+/************************************************************************/
+/*                             VSIMove()                                */
+/************************************************************************/
+
+/**
+ * \brief Move (or rename) a file.
+ *
+ * If the new path is an existing directory, the file will be moved to it.
+ *
+ * The function can work even if the files are not located on the same VSI
+ * virtual file system, but it will involve copying and deletion.
+ *
+ * Note that for cloud object storage, moving/renaming a directory may involve
+ * renaming all files it contains recursively, and is thus not an atomic
+ * operation (and could be slow and expensive on directories with many files!)
+ *
+ * @param oldpath the path of the file to be renamed/moved.  UTF-8 encoded.
+ * @param newpath the new path the file should be given.  UTF-8 encoded.
+ * @param papszOptions Null terminated list of options, or NULL.
+ * @param pProgressFunc Progress callback, or NULL.
+ * @param pProgressData User data of progress callback, or NULL.
+ *
+ * @return 0 on success or -1 on error.
+ * @since GDAL 3.11
+ */
+
+int VSIMove(const char *oldpath, const char *newpath,
+            const char *const *papszOptions, GDALProgressFunc pProgressFunc,
+            void *pProgressData)
+{
+
+    if (strcmp(oldpath, newpath) == 0)
+        return 0;
+
+    VSIFilesystemHandler *poOldFSHandler = VSIFileManager::GetHandler(oldpath);
+    VSIFilesystemHandler *poNewFSHandler = VSIFileManager::GetHandler(newpath);
+
+    VSIStatBufL sStat;
+    if (VSIStatL(oldpath, &sStat) != 0)
+    {
+        CPLDebug("VSI", "%s is not a object", oldpath);
+        errno = ENOENT;
+        return -1;
+    }
+
+    std::string sNewpath(newpath);
+    VSIStatBufL sStatNew;
+    if (VSIStatL(newpath, &sStatNew) == 0 && VSI_ISDIR(sStatNew.st_mode))
+    {
+        sNewpath =
+            CPLFormFilenameSafe(newpath, CPLGetFilename(oldpath), nullptr);
+    }
+
+    int ret = 0;
+
+    if (poOldFSHandler == poNewFSHandler)
+    {
+        ret = poOldFSHandler->Rename(oldpath, sNewpath.c_str(), pProgressFunc,
+                                     pProgressData);
+        if (ret == 0 && pProgressFunc)
+            ret = pProgressFunc(1.0, "", pProgressData) ? 0 : -1;
+        return ret;
+    }
+
+    if (VSI_ISDIR(sStat.st_mode))
+    {
+        const CPLStringList aosList(VSIReadDir(oldpath));
+        poNewFSHandler->Mkdir(sNewpath.c_str(), 0755);
+        bool bFoundFiles = false;
+        for (int i = 0; ret == 0 && i < aosList.size(); i++)
+        {
+            if (strcmp(aosList[i], ".") != 0 && strcmp(aosList[i], "..") != 0)
+            {
+                bFoundFiles = true;
+                const std::string osSrc =
+                    CPLFormFilenameSafe(oldpath, aosList[i], nullptr);
+                const std::string osTarget =
+                    CPLFormFilenameSafe(sNewpath.c_str(), aosList[i], nullptr);
+                void *pScaledProgress = GDALCreateScaledProgress(
+                    static_cast<double>(i) / aosList.size(),
+                    static_cast<double>(i + 1) / aosList.size(), pProgressFunc,
+                    pProgressData);
+                ret = VSIMove(osSrc.c_str(), osTarget.c_str(), papszOptions,
+                              pScaledProgress ? GDALScaledProgress : nullptr,
+                              pScaledProgress);
+                GDALDestroyScaledProgress(pScaledProgress);
+            }
+        }
+        if (!bFoundFiles)
+            ret = VSIStatL(sNewpath.c_str(), &sStat);
+        if (ret == 0)
+            ret = poOldFSHandler->Rmdir(oldpath);
+    }
+    else
+    {
+        ret = VSICopyFile(oldpath, sNewpath.c_str(), nullptr, sStat.st_size,
+                          nullptr, pProgressFunc, pProgressData) == 0 &&
+                      VSIUnlink(oldpath) == 0
+                  ? 0
+                  : -1;
+    }
+    if (ret == 0 && pProgressFunc)
+        ret = pProgressFunc(1.0, "", pProgressData) ? 0 : -1;
+    return ret;
 }
 
 /************************************************************************/

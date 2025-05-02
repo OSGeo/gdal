@@ -189,7 +189,7 @@ def test_gdalalg_raster_footprint_overview():
     alg["overview"] = 0
     with pytest.raises(
         Exception,
-        match="Source dataset has no overviews. Argument 'ovr' should not be specified",
+        match="Source dataset has no overviews. Argument 'overview' should not be specified",
     ):
         alg.Run()
 
@@ -214,7 +214,7 @@ def test_gdalalg_raster_footprint_overview():
     alg["overview"] = 1
     with pytest.raises(
         Exception,
-        match="Source dataset has only 1 overview levels. 'ovr' value should be strictly lower than this number",
+        match="Source dataset has only 1 overview levels. 'overview' value should be strictly lower than this number",
     ):
         alg.Run()
 

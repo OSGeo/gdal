@@ -14,15 +14,15 @@
 from osgeo import gdal
 
 
-def get_astype_alg():
-    return gdal.GetGlobalAlgorithmRegistry()["raster"]["astype"]
+def get_set_type_alg():
+    return gdal.GetGlobalAlgorithmRegistry()["raster"]["set-type"]
 
 
-def test_gdalalg_raster_astype(tmp_vsimem):
+def test_gdalalg_raster_set_type(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.tif")
 
-    alg = get_astype_alg()
+    alg = get_set_type_alg()
     alg["datatype"] = "UInt16"
     alg["input"] = "../gcore/data/rgbsmall.tif"
     alg["output"] = out_filename
@@ -32,11 +32,11 @@ def test_gdalalg_raster_astype(tmp_vsimem):
         assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
 
 
-def test_gdalalg_raster_astype_as_gdt(tmp_vsimem):
+def test_gdalalg_raster_set_type_as_gdt(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.tif")
 
-    alg = get_astype_alg()
+    alg = get_set_type_alg()
     alg["datatype"] = gdal.GDT_UInt16
     alg["input"] = "../gcore/data/rgbsmall.tif"
     alg["output"] = out_filename

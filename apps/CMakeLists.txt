@@ -17,7 +17,6 @@ add_library(
   gdalalg_raster.cpp
   gdalalg_raster_info.cpp
   gdalalg_raster_aspect.cpp
-  gdalalg_raster_astype.cpp
   gdalalg_raster_calc.cpp
   gdalalg_raster_clean_collar.cpp
   gdalalg_raster_clip.cpp
@@ -27,11 +26,12 @@ add_library(
   gdalalg_raster_edit.cpp
   gdalalg_raster_contour.cpp
   gdalalg_raster_footprint.cpp
-  gdalalg_raster_fillnodata.cpp
+  gdalalg_raster_fill_nodata.cpp
   gdalalg_raster_hillshade.cpp
   gdalalg_raster_index.cpp
   gdalalg_raster_mosaic.cpp
   gdalalg_raster_pipeline.cpp
+  gdalalg_raster_pixel_info.cpp
   gdalalg_raster_polygonize.cpp
   gdalalg_raster_overview_add.cpp
   gdalalg_raster_overview_delete.cpp
@@ -41,6 +41,7 @@ add_library(
   gdalalg_raster_roughness.cpp
   gdalalg_raster_scale.cpp
   gdalalg_raster_select.cpp
+  gdalalg_raster_set_type.cpp
   gdalalg_raster_sieve.cpp
   gdalalg_raster_slope.cpp
   gdalalg_raster_stack.cpp
@@ -83,7 +84,9 @@ add_library(
   gdalalg_vsi_copy.cpp
   gdalalg_vsi_delete.cpp
   gdalalg_vsi_list.cpp
+  gdalalg_vsi_move.cpp
   gdalalg_vsi_sozip.cpp
+  gdalalg_vsi_sync.cpp
   gdalinfo_lib.cpp
   gdalbuildvrt_lib.cpp
   gdal_grid_lib.cpp

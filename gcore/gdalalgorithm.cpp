@@ -782,13 +782,15 @@ void GDALAlgorithmArg::RunActions()
 /*                    GDALAlgorithmArg::ValidateChoice()                */
 /************************************************************************/
 
-bool GDALAlgorithmArg::ValidateChoice(const std::string &value) const
+// Returns the canonical value if matching a valid choice, or empty string
+// otherwise.
+std::string GDALAlgorithmArg::ValidateChoice(const std::string &value) const
 {
     for (const std::string &choice : GetChoices())
     {
         if (EQUAL(value.c_str(), choice.c_str()))
         {
-            return true;
+            return choice;
         }
     }
 
@@ -796,7 +798,7 @@ bool GDALAlgorithmArg::ValidateChoice(const std::string &value) const
     {
         if (EQUAL(value.c_str(), choice.c_str()))
         {
-            return true;
+            return choice;
         }
     }
 
@@ -813,7 +815,7 @@ bool GDALAlgorithmArg::ValidateChoice(const std::string &value) const
              "Invalid value '%s' for string argument '%s'. Should be "
              "one among %s.",
              value.c_str(), GetName().c_str(), expected.c_str());
-    return false;
+    return std::string();
 }
 
 /************************************************************************/
@@ -926,16 +928,23 @@ bool GDALAlgorithmArg::RunValidationActions()
 
     if (GetType() == GAAT_STRING && !GetChoices().empty())
     {
-        if (!ValidateChoice(Get<std::string>()))
+        auto &val = Get<std::string>();
+        const std::string validVal = ValidateChoice(val);
+        if (validVal.empty())
             ret = false;
+        else
+            val = validVal;
     }
     else if (GetType() == GAAT_STRING_LIST && !GetChoices().empty())
     {
-        const auto &values = Get<std::vector<std::string>>();
-        for (const std::string &value : values)
+        auto &values = Get<std::vector<std::string>>();
+        for (std::string &val : values)
         {
-            if (!ValidateChoice(value))
+            const std::string validVal = ValidateChoice(val);
+            if (validVal.empty())
                 ret = false;
+            else
+                val = validVal;
         }
     }
 
@@ -1317,8 +1326,8 @@ GDALArgDatasetValue::GDALArgDatasetValue(GDALArgDatasetValue &&other)
 /*              GDALInConstructionAlgorithmArg::SetIsCRSArg()           */
 /************************************************************************/
 
-GDALInConstructionAlgorithmArg &
-GDALInConstructionAlgorithmArg::SetIsCRSArg(bool noneAllowed)
+GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
+    bool noneAllowed, const std::vector<std::string> &specialValues)
 {
     if (GetType() != GAAT_STRING)
     {
@@ -1327,12 +1336,14 @@ GDALInConstructionAlgorithmArg::SetIsCRSArg(bool noneAllowed)
         return *this;
     }
     AddValidationAction(
-        [this, noneAllowed]()
+        [this, noneAllowed, specialValues]()
         {
             const std::string &osVal =
                 static_cast<const GDALInConstructionAlgorithmArg *>(this)
                     ->Get<std::string>();
-            if (!noneAllowed || (osVal != "none" && osVal != "null"))
+            if ((!noneAllowed || (osVal != "none" && osVal != "null")) &&
+                std::find(specialValues.begin(), specialValues.end(), osVal) ==
+                    specialValues.end())
             {
                 OGRSpatialReference oSRS;
                 if (oSRS.SetFromUserInput(osVal.c_str()) != OGRERR_NONE)
@@ -1347,27 +1358,33 @@ GDALInConstructionAlgorithmArg::SetIsCRSArg(bool noneAllowed)
         });
 
     SetAutoCompleteFunction(
-        [](const std::string &currentValue)
+        [noneAllowed, specialValues](const std::string &currentValue)
         {
             std::vector<std::string> oRet;
+            if (noneAllowed)
+                oRet.push_back("none");
+            oRet.insert(oRet.end(), specialValues.begin(), specialValues.end());
             if (!currentValue.empty())
             {
                 const CPLStringList aosTokens(
                     CSLTokenizeString2(currentValue.c_str(), ":", 0));
                 int nCount = 0;
-                OSRCRSInfo **pCRSList = OSRGetCRSInfoListFromDatabase(
-                    aosTokens[0], nullptr, &nCount);
+                std::unique_ptr<OSRCRSInfo *, decltype(&OSRDestroyCRSInfoList)>
+                    pCRSList(OSRGetCRSInfoListFromDatabase(aosTokens[0],
+                                                           nullptr, &nCount),
+                             OSRDestroyCRSInfoList);
                 std::string osCode;
                 for (int i = 0; i < nCount; ++i)
                 {
+                    const auto *entry = (pCRSList.get())[i];
                     if (aosTokens.size() == 1 ||
-                        STARTS_WITH(pCRSList[i]->pszCode, aosTokens[1]))
+                        STARTS_WITH(entry->pszCode, aosTokens[1]))
                     {
                         if (oRet.empty())
-                            osCode = pCRSList[i]->pszCode;
-                        oRet.push_back(std::string(pCRSList[i]->pszCode)
+                            osCode = entry->pszCode;
+                        oRet.push_back(std::string(entry->pszCode)
                                            .append(" -- ")
-                                           .append(pCRSList[i]->pszName));
+                                           .append(entry->pszName));
                     }
                 }
                 if (oRet.size() == 1)
@@ -1376,18 +1393,16 @@ GDALInConstructionAlgorithmArg::SetIsCRSArg(bool noneAllowed)
                     oRet.clear();
                     oRet.push_back(osCode);
                 }
-                OSRDestroyCRSInfoList(pCRSList);
             }
-            if (oRet.empty())
+            if (currentValue.empty() || oRet.empty())
             {
                 const CPLStringList aosAuthorities(
                     OSRGetAuthorityListFromDatabase());
                 for (const char *pszAuth : cpl::Iterate(aosAuthorities))
                 {
                     int nCount = 0;
-                    OSRCRSInfo **pCRSList = OSRGetCRSInfoListFromDatabase(
-                        pszAuth, nullptr, &nCount);
-                    OSRDestroyCRSInfoList(pCRSList);
+                    OSRDestroyCRSInfoList(OSRGetCRSInfoListFromDatabase(
+                        pszAuth, nullptr, &nCount));
                     if (nCount)
                         oRet.push_back(std::string(pszAuth).append(":"));
                 }
@@ -1760,7 +1775,8 @@ bool GDALAlgorithm::ParseCommandLineArguments(
                 value = strArg.substr(equalPos + 1);
             }
         }
-        else if (strArg.size() >= 2 && strArg[0] == '-')
+        else if (strArg.size() >= 2 && strArg[0] == '-' &&
+                 CPLGetValueType(strArg.c_str()) == CPL_VALUE_STRING)
         {
             for (size_t j = 1; j < strArg.size(); ++j)
             {
@@ -1801,9 +1817,9 @@ bool GDALAlgorithm::ParseCommandLineArguments(
             ++i;
             continue;
         }
-        assert(arg);
+        CPLAssert(arg);
 
-        if (arg->GetType() == GAAT_BOOLEAN)
+        if (arg && arg->GetType() == GAAT_BOOLEAN)
         {
             if (!hasValue)
             {
@@ -1831,7 +1847,7 @@ bool GDALAlgorithm::ParseCommandLineArguments(
             lArgs.erase(lArgs.begin() + i + 1);
         }
 
-        if (!ParseArgument(arg, name, value, inConstructionValues))
+        if (arg && !ParseArgument(arg, name, value, inConstructionValues))
             return false;
 
         lArgs.erase(lArgs.begin() + i);
@@ -3322,10 +3338,25 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
             auto hDriver = GDALGetDriverByName(val.c_str());
             if (!hDriver)
             {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Invalid value for argument '%s'. Driver '%s' does "
-                            "not exist",
-                            arg.GetName().c_str(), val.c_str());
+                auto poMissingDriver =
+                    GetGDALDriverManager()->GetHiddenDriverByName(val.c_str());
+                if (poMissingDriver)
+                {
+                    const std::string msg =
+                        GDALGetMessageAboutMissingPluginDriver(poMissingDriver);
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Invalid value for argument '%s'. Driver '%s' "
+                                "not found but it known. However plugin %s",
+                                arg.GetName().c_str(), val.c_str(),
+                                msg.c_str());
+                }
+                else
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Invalid value for argument '%s'. Driver '%s' "
+                                "does not exist.",
+                                arg.GetName().c_str(), val.c_str());
+                }
                 return false;
             }
 
@@ -4145,7 +4176,11 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddProgressArg()
 bool GDALAlgorithm::Run(GDALProgressFunc pfnProgress, void *pProgressData)
 {
     if (m_selectedSubAlg)
+    {
+        if (m_calledFromCommandLine)
+            m_selectedSubAlg->m_calledFromCommandLine = true;
         return m_selectedSubAlg->Run(pfnProgress, pProgressData);
+    }
 
     if (m_helpRequested || m_helpDocRequested)
     {

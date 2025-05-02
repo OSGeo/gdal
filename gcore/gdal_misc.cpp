@@ -5816,16 +5816,16 @@ bool GDALDoesFileOrDatasetExist(const char *pszName, const char **ppszType)
         return true;
     }
 
-    if (GDALIdentifyDriver(pszName, nullptr))
-    {
-        if (ppszType)
-            *ppszType = "Dataset";
-        return true;
-    }
-
     bool bExists;
     {
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        if (GDALIdentifyDriver(pszName, nullptr))
+        {
+            if (ppszType)
+                *ppszType = "Dataset";
+            return true;
+        }
+
         bExists =
             std::unique_ptr<GDALDataset>(GDALDataset::Open(pszName)) != nullptr;
     }

@@ -1415,14 +1415,14 @@ def create_base_tile(tile_job_info: "TileJobInfo", tile_detail: "TileDetail") ->
                 output,
                 str(tz),
                 str(tx),
-                "%d.kml" % GDAL2Tiles.getYTile(ty, tz, options),
+                "%d.kml" % ty,
             )
             if not options.resume or not isfile(kmlfilename):
                 with my_open(kmlfilename, "wb") as f:
                     f.write(
                         generate_kml(
                             tx,
-                            ty,
+                            tile_detail.ty_tms,
                             tz,
                             tile_job_info.tile_extension,
                             tile_job_info.tile_size,
@@ -2075,6 +2075,7 @@ def options_post_processing(
 class TileDetail:
     tx = 0
     ty = 0
+    ty_tms = 0
     tz = 0
     rx = 0
     ry = 0
@@ -2909,6 +2910,7 @@ class GDAL2Tiles:
                 tile_details.append(
                     TileDetail(
                         tx=tx,
+                        ty_tms=ty,
                         ty=ytile,
                         tz=tz,
                         rx=rx,

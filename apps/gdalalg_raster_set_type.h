@@ -10,27 +10,28 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_RASTER_ASTYPE_INCLUDED
-#define GDALALG_RASTER_ASTYPE_INCLUDED
+#ifndef GDALALG_RASTER_SET_TYPE_INCLUDED
+#define GDALALG_RASTER_SET_TYPE_INCLUDED
 
 #include "gdalalg_raster_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALRasterAsTypeAlgorithm                         */
+/*                   GDALRasterSetTypeAlgorithm                         */
 /************************************************************************/
 
-class GDALRasterAsTypeAlgorithm /* non final */
+class GDALRasterSetTypeAlgorithm /* non final */
     : public GDALRasterPipelineStepAlgorithm
 {
   public:
-    static constexpr const char *NAME = "astype";
+    static constexpr const char *NAME = "set-type";
     static constexpr const char *DESCRIPTION =
         "Modify the data type of bands of a raster dataset.";
-    static constexpr const char *HELP_URL = "/programs/gdal_raster_astype.html";
+    static constexpr const char *HELP_URL =
+        "/programs/gdal_raster_set_type.html";
 
-    explicit GDALRasterAsTypeAlgorithm(bool standaloneStep = false);
+    explicit GDALRasterSetTypeAlgorithm(bool standaloneStep = false);
 
   private:
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
@@ -39,19 +40,19 @@ class GDALRasterAsTypeAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterAsTypeAlgorithmStandalone                  */
+/*                GDALRasterSetTypeAlgorithmStandalone                  */
 /************************************************************************/
 
-class GDALRasterAsTypeAlgorithmStandalone final
-    : public GDALRasterAsTypeAlgorithm
+class GDALRasterSetTypeAlgorithmStandalone final
+    : public GDALRasterSetTypeAlgorithm
 {
   public:
-    GDALRasterAsTypeAlgorithmStandalone()
-        : GDALRasterAsTypeAlgorithm(/* standaloneStep = */ true)
+    GDALRasterSetTypeAlgorithmStandalone()
+        : GDALRasterSetTypeAlgorithm(/* standaloneStep = */ true)
     {
     }
 };
 
 //! @endcond
 
-#endif /* GDALALG_RASTER_ASTYPE_INCLUDED */
+#endif /* GDALALG_RASTER_SET_TYPE_INCLUDED */

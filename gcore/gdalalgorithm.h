@@ -1831,7 +1831,7 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     bool RunAllActions();
     void RunActions();
     bool RunValidationActions();
-    bool ValidateChoice(const std::string &value) const;
+    std::string ValidateChoice(const std::string &value) const;
     bool ValidateIntRange(int val) const;
     bool ValidateRealRange(double val) const;
 };
@@ -2176,8 +2176,12 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
      * CRS definition.
      * @param noneAllowed Set to true to mean that "null" or "none" are allowed
      * to mean to unset CRS.
+     * @param specialValues List of other allowed special values.
      */
-    GDALInConstructionAlgorithmArg &SetIsCRSArg(bool noneAllowed = false);
+    GDALInConstructionAlgorithmArg &
+    SetIsCRSArg(bool noneAllowed = false,
+                const std::vector<std::string> &specialValues =
+                    std::vector<std::string>());
 
   private:
     GDALAlgorithm *const m_owner;

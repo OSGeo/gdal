@@ -38,7 +38,6 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster
    gdal_raster_info
    gdal_raster_aspect
-   gdal_raster_astype
    gdal_raster_calc
    gdal_raster_clean_collar
    gdal_raster_clip
@@ -48,7 +47,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_create
    gdal_raster_edit
    gdal_raster_footprint
-   gdal_raster_fillnodata
+   gdal_raster_fill_nodata
    gdal_raster_hillshade
    gdal_raster_index
    gdal_raster_mosaic
@@ -56,12 +55,14 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_overview_add
    gdal_raster_overview_delete
    gdal_raster_pipeline
+   gdal_raster_pixel_info
    gdal_raster_polygonize
    gdal_raster_reproject
    gdal_raster_resize
    gdal_raster_roughness
    gdal_raster_scale
    gdal_raster_select
+   gdal_raster_set_type
    gdal_raster_slope
    gdal_raster_sieve
    gdal_raster_stack
@@ -94,6 +95,8 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_vsi_copy
    gdal_vsi_delete
    gdal_vsi_list
+   gdal_vsi_move
+   gdal_vsi_sync
    gdal_vsi_sozip
 
 .. only:: html
@@ -111,7 +114,6 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster`: Entry point for raster commands
     - :ref:`gdal_raster_info`: Get information on a raster dataset
     - :ref:`gdal_raster_aspect`: Generate an aspect map.
-    - :ref:`gdal_raster_astype`: Modify the data type of bands of a raster dataset
     - :ref:`gdal_raster_calc`: Perform raster algebra
     - :ref:`gdal_raster_clean_collar`: Clean the collar of a raster dataset, removing noise
     - :ref:`gdal_raster_clip`: Clip a raster dataset
@@ -121,7 +123,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_create`: Create a new raster dataset
     - :ref:`gdal_raster_edit`: Edit in place a raster dataset
     - :ref:`gdal_raster_footprint`: Compute the footprint of a raster dataset.
-    - :ref:`gdal_raster_fillnodata`: Fill raster regions by interpolation from edges.
+    - :ref:`gdal_raster_fill_nodata`: Fill raster regions by interpolation from edges.
     - :ref:`gdal_raster_hillshade`: Generate a shaded relief map
     - :ref:`gdal_raster_index`: Create a vector index of raster datasets
     - :ref:`gdal_raster_mosaic`: Build a mosaic, either virtual (VRT) or materialized.
@@ -130,11 +132,13 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_overview_delete`: Remove overviews of a raster dataset
     - :ref:`gdal_raster_pipeline`: Process a raster dataset
     - :ref:`gdal_raster_polygonize`: Create a polygon feature dataset from a raster band
+    - :ref:`gdal_raster_pixel_info`: Return information on a pixel of a raster dataset
     - :ref:`gdal_raster_reproject`: Reproject a raster dataset
     - :ref:`gdal_raster_resize`: Resize a raster dataset without changing the georeferenced extents
     - :ref:`gdal_raster_roughness`: Generate a roughness map.
     - :ref:`gdal_raster_scale`: Scale the values of the bands of a raster dataset.
     - :ref:`gdal_raster_select`: Select a subset of bands from a raster dataset.
+    - :ref:`gdal_raster_set_type`: Modify the data type of bands of a raster dataset
     - :ref:`gdal_raster_sieve`: Remove small raster polygons.
     - :ref:`gdal_raster_slope`: Generate a slope map.
     - :ref:`gdal_raster_stack`: Combine together input bands into a multi-band output, either virtual (VRT) or materialized.
@@ -168,6 +172,8 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vsi_copy`: Copy files located on GDAL Virtual System Interface (VSI)
     - :ref:`gdal_vsi_delete`: Delete files located on GDAL Virtual System Interface (VSI)
     - :ref:`gdal_vsi_list`: List files of one of the GDAL Virtual System Interface (VSI)
+    - :ref:`gdal_vsi_move`: Move/rename a file/directory located on GDAL Virtual System Interface (VSI)
+    - :ref:`gdal_vsi_sync`: Synchronize source and target file/directory located on GDAL Virtual System Interface (VSI)
     - :ref:`gdal_vsi_sozip`: SOZIP (Seek-Optimized ZIP) related commands
 
 

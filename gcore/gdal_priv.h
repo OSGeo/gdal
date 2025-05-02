@@ -2630,6 +2630,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     int GetDriverCount(bool bIncludeHidden) const;
     GDALDriver *GetDriver(int iDriver, bool bIncludeHidden);
     bool IsKnownDriver(const char *pszDriverName) const;
+    GDALDriver *GetHiddenDriverByName(const char *pszName);
     //! @endcond
 };
 
@@ -4720,6 +4721,9 @@ std::string CPL_DLL GDALGetCacheDirectory();
 
 bool GDALDoesFileOrDatasetExist(const char *pszName,
                                 const char **ppszType = nullptr);
+
+std::string CPL_DLL
+GDALGetMessageAboutMissingPluginDriver(GDALDriver *poMissingPluginDriver);
 
 // Macro used so that Identify and driver metadata methods in drivers built
 // as plugin can be duplicated in libgdal core and in the driver under different
