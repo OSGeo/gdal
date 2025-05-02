@@ -561,21 +561,6 @@ def test_gdalalg_raster_tile_palette_nearest(tmp_vsimem):
         assert ds.GetRasterBand(1).GetColorTable() is not None
 
 
-def test_gdalalg_raster_tile_no_mem(tmp_vsimem):
-
-    mem_drv = gdal.GetDriverByName("MEM")
-    try:
-        mem_drv.Deregister()
-
-        alg = get_alg()
-        alg["input"] = "../gcore/data/byte.tif"
-        alg["output"] = tmp_vsimem
-        with pytest.raises(Exception, match="Cannot find MEM driver"):
-            alg.Run()
-    finally:
-        mem_drv.Register()
-
-
 def test_gdalalg_raster_tile_min_zoom_larger_max_zoom(tmp_vsimem):
 
     alg = get_alg()

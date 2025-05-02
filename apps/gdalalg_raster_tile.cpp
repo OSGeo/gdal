@@ -20,6 +20,7 @@
 #include "gdalwarper.h"
 #include "gdal_utils.h"
 #include "ogr_spatialref.h"
+#include "memdataset.h"
 #include "tilematrixset.hpp"
 
 #include <algorithm>
@@ -302,18 +303,16 @@ static int GetFileY(int iY, const gdal::TileMatrixSet::TileMatrix &tileMatrix,
 /*                          GenerateTile()                              */
 /************************************************************************/
 
-static bool
-GenerateTile(GDALDataset *poSrcDS, GDALDriver *poMemDriver,
-             GDALDriver *poDstDriver, const char *pszExtension,
-             CSLConstList creationOptions, GDALWarpOperation &oWO,
-             const OGRSpatialReference &oSRS_TMS, GDALDataType eWorkingDataType,
-             const gdal::TileMatrixSet::TileMatrix &tileMatrix,
-             const std::string &outputDirectory, int nBands,
-             const double *pdfDstNoData, int nZoomLevel, int iX, int iY,
-             const std::string &convention, int nMinTileX, int nMinTileY,
-             bool bSkipBlank, bool bUserAskedForAlpha, bool bAuxXML,
-             bool bResume, const std::vector<std::string> &metadata,
-             const GDALColorTable *poColorTable, std::vector<GByte> &dstBuffer)
+static bool GenerateTile(
+    GDALDataset *poSrcDS, GDALDriver *poDstDriver, const char *pszExtension,
+    CSLConstList creationOptions, GDALWarpOperation &oWO,
+    const OGRSpatialReference &oSRS_TMS, GDALDataType eWorkingDataType,
+    const gdal::TileMatrixSet::TileMatrix &tileMatrix,
+    const std::string &outputDirectory, int nBands, const double *pdfDstNoData,
+    int nZoomLevel, int iX, int iY, const std::string &convention,
+    int nMinTileX, int nMinTileY, bool bSkipBlank, bool bUserAskedForAlpha,
+    bool bAuxXML, bool bResume, const std::vector<std::string> &metadata,
+    const GDALColorTable *poColorTable, std::vector<GByte> &dstBuffer)
 {
     const std::string osDirZ = CPLFormFilenameSafe(
         outputDirectory.c_str(), CPLSPrintf("%d", nZoomLevel), nullptr);
@@ -371,9 +370,9 @@ GenerateTile(GDALDataset *poSrcDS, GDALDriver *poMemDriver,
     VSIMkdir(osDirZ.c_str(), 0755);
     VSIMkdir(osDirX.c_str(), 0755);
 
-    std::unique_ptr<GDALDataset> memDS(
-        poMemDriver->Create("", tileMatrix.mTileWidth, tileMatrix.mTileHeight,
-                            0, eWorkingDataType, nullptr));
+    auto memDS = std::unique_ptr<GDALDataset>(
+        MEMDataset::Create("", tileMatrix.mTileWidth, tileMatrix.mTileHeight, 0,
+                           eWorkingDataType, nullptr));
     for (int i = 0; i < nBands; ++i)
     {
         char szBuffer[32] = {'\0'};
@@ -449,9 +448,9 @@ GenerateTile(GDALDataset *poSrcDS, GDALDriver *poMemDriver,
 /************************************************************************/
 
 static bool
-GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *poMemDriver,
-                     GDALDriver *poDstDriver, const std::string &outputFormat,
-                     const char *pszExtension, CSLConstList creationOptions,
+GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *poDstDriver,
+                     const std::string &outputFormat, const char *pszExtension,
+                     CSLConstList creationOptions,
                      const std::string &resampling,
                      const gdal::TileMatrixSet::TileMatrix &tileMatrix,
                      const std::string &outputDirectory, int nZoomLevel, int iX,
@@ -573,7 +572,7 @@ GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *poMemDriver,
                         nDstBands--;
                 }
 
-                std::unique_ptr<GDALDataset> memDS(poMemDriver->Create(
+                auto memDS = std::unique_ptr<GDALDataset>(MEMDataset::Create(
                     "", tileMatrix.mTileWidth, tileMatrix.mTileHeight, 0, eDT,
                     nullptr));
                 for (int i = 0; i < nDstBands; ++i)
@@ -1714,13 +1713,6 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
-    auto poMemDriver = GetGDALDriverManager()->GetDriverByName("MEM");
-    if (!poMemDriver)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined, "Cannot find MEM driver");
-        return false;
-    }
-
     if (m_resampling == "near")
         m_resampling = "nearest";
     if (m_overviewResampling == "near")
@@ -2421,10 +2413,10 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 if (m_numThreads > 1)
                 {
                     auto job = [this, &oResourceManager, &bFailure, &nCurTile,
-                                &nQueuedJobs, poMemDriver, poDstDriver,
-                                pszExtension, &aosCreationOptions, &psWO,
-                                &tileMatrix, nDstBands, iX, iY, nMinTileX,
-                                nMinTileY, poColorTable, bUserAskedForAlpha]()
+                                &nQueuedJobs, poDstDriver, pszExtension,
+                                &aosCreationOptions, &psWO, &tileMatrix,
+                                nDstBands, iX, iY, nMinTileX, nMinTileY,
+                                poColorTable, bUserAskedForAlpha]()
                     {
                         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
 
@@ -2432,9 +2424,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                         auto resources = oResourceManager.AcquireResources();
                         if (resources &&
                             GenerateTile(
-                                resources->poSrcDS.get(), poMemDriver,
-                                poDstDriver, pszExtension,
-                                aosCreationOptions.List(),
+                                resources->poSrcDS.get(), poDstDriver,
+                                pszExtension, aosCreationOptions.List(),
                                 *(resources->poWO.get()),
                                 *(resources->poFakeMaxZoomDS->GetSpatialRef()),
                                 psWO->eWorkingDataType, tileMatrix,
@@ -2477,7 +2468,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 else
                 {
                     bRet = GenerateTile(
-                        poSrcDS, poMemDriver, poDstDriver, pszExtension,
+                        poSrcDS, poDstDriver, pszExtension,
                         aosCreationOptions.List(), oWO, oSRS_TMS,
                         psWO->eWorkingDataType, tileMatrix, m_outputDirectory,
                         nDstBands,
@@ -2584,10 +2575,9 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             {
                 if (bUseThreads)
                 {
-                    auto job = [this, &oResourceManager, poMemDriver,
-                                poDstDriver, &bFailure, &nCurTile, &nQueuedJobs,
-                                pszExtension, &aosCreationOptions,
-                                &ovrTileMatrix, iZ, iX, iY,
+                    auto job = [this, &oResourceManager, poDstDriver, &bFailure,
+                                &nCurTile, &nQueuedJobs, pszExtension,
+                                &aosCreationOptions, &ovrTileMatrix, iZ, iX, iY,
                                 bUserAskedForAlpha]()
                     {
                         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
@@ -2596,8 +2586,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                         auto resources = oResourceManager.AcquireResources();
                         if (resources &&
                             GenerateOverviewTile(
-                                *(resources->poSrcDS.get()), poMemDriver,
-                                poDstDriver, m_outputFormat, pszExtension,
+                                *(resources->poSrcDS.get()), poDstDriver,
+                                m_outputFormat, pszExtension,
                                 aosCreationOptions.List(), m_overviewResampling,
                                 ovrTileMatrix, m_outputDirectory, iZ, iX, iY,
                                 m_convention, m_skipBlank, bUserAskedForAlpha,
@@ -2633,11 +2623,11 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 else
                 {
                     bRet = GenerateOverviewTile(
-                        oSrcDS, poMemDriver, poDstDriver, m_outputFormat,
-                        pszExtension, aosCreationOptions.List(),
-                        m_overviewResampling, ovrTileMatrix, m_outputDirectory,
-                        iZ, iX, iY, m_convention, m_skipBlank,
-                        bUserAskedForAlpha, m_auxXML, m_resume);
+                        oSrcDS, poDstDriver, m_outputFormat, pszExtension,
+                        aosCreationOptions.List(), m_overviewResampling,
+                        ovrTileMatrix, m_outputDirectory, iZ, iX, iY,
+                        m_convention, m_skipBlank, bUserAskedForAlpha, m_auxXML,
+                        m_resume);
 
                     ++nCurTile;
                     bRet &= (!pfnProgress ||
