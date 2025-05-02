@@ -1924,8 +1924,16 @@ TEST_F(test_gdal_algorithm, output_dataset_created_by_alg)
         }
     };
 
-    MyAlgorithm alg;
-    alg.GetUsageForCLI(false);
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+    }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--output=-"}));
+        EXPECT_STREQ(alg.m_output.GetName().c_str(), "/vsistdout/");
+    }
 }
 
 TEST_F(test_gdal_algorithm, string_choices)
@@ -3501,6 +3509,49 @@ TEST_F(test_gdal_algorithm, arg_band_with_input_dataset)
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         EXPECT_FALSE(alg.ParseCommandLineArguments(
             {"--input=i_do_not_exist", "--band=1"}));
+    }
+}
+
+TEST_F(test_gdal_algorithm, AddInputDatasetArg_single)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        GDALArgDatasetValue m_input{};
+
+        MyAlgorithm()
+        {
+            AddInputDatasetArg(&m_input, GDAL_OF_RASTER, false)
+                .SetAutoOpenDataset(false);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--input=-"}));
+        EXPECT_STREQ(alg.m_input.GetName().c_str(), "/vsistdin/");
+    }
+}
+
+TEST_F(test_gdal_algorithm, AddInputDatasetArg_several)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        std::vector<GDALArgDatasetValue> m_input{};
+
+        MyAlgorithm()
+        {
+            AddInputDatasetArg(&m_input, GDAL_OF_RASTER, false)
+                .SetAutoOpenDataset(false);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--input=-"}));
+        ASSERT_EQ(alg.m_input.size(), 1);
+        EXPECT_STREQ(alg.m_input[0].GetName().c_str(), "/vsistdin/");
     }
 }
 
