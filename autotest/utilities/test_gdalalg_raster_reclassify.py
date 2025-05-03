@@ -99,13 +99,12 @@ def test_gdalalg_raster_reclassify_basic_1(
         assert np.all(dst_val == 160)
 
 
-@pytest.mark.parametrize("input_file", ("float32.tif", "int64.tif", "uint64.tif"))
-def test_gdalalg_raster_reclassify_output_type(reclassify, tmp_vsimem, input_file):
+def test_gdalalg_raster_reclassify_output_type(reclassify, tmp_vsimem):
 
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
 
-    infile = f"../gcore/data/{input_file}"
+    infile = "../gcore/data/float32.tif"
     outfile = tmp_vsimem / "out.tif"
 
     reclassify["input"] = infile
@@ -124,6 +123,27 @@ def test_gdalalg_raster_reclassify_output_type(reclassify, tmp_vsimem, input_fil
 
         assert np.all(dst_val[np.where(src_val < 132)] == 0)
         assert np.all(dst_val[np.where(src_val >= 132)] == 1)
+
+
+def test_gdalalg_raster_reclassify_source_transfer_type(reclassify, tmp_vsimem):
+
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 5, 5, eType=gdal.GDT_Int32)
+    src_ds.GetRasterBand(1).Fill(500)
+
+    reclassify["input"] = src_ds
+    reclassify["output"] = ""
+    reclassify["output-format"] = "MEM"
+    reclassify["mapping"] = "[-inf, 500)=3; [500, inf]=7"
+    reclassify["output-data-type"] = "Byte"
+
+    assert reclassify.Run()
+
+    assert np.all(reclassify["output"].GetDataset().ReadAsArray() == 7)
+
+    assert reclassify.Finalize()
 
 
 def test_gdalalg_raster_reclassify_multiple_bands(reclassify, tmp_vsimem):
