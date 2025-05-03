@@ -60,48 +60,49 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     if (fp != nullptr)
     {
         const char *pszLine = nullptr;
-        GDALAlgorithmArg *arg = nullptr;
-        while ((pszLine = CPLReadLineL(fp)) != nullptr)
+        if ((pszLine = CPLReadLineL(fp)) != nullptr)
         {
-            if (!alg)
-            {
-                alg = singleton.Instantiate(pszLine);
-                if (!alg)
-                    break;
-            }
-            else
+            alg = singleton.Instantiate(pszLine);
+        }
+        if (alg)
+        {
+            while ((pszLine = CPLReadLineL(fp)) != nullptr)
             {
                 auto subalg = alg->InstantiateSubAlgorithm(pszLine);
                 if (subalg)
-                {
                     alg = std::move(subalg);
-                }
                 else
+                    break;
+            }
+        }
+        if (alg && pszLine)
+        {
+            GDALAlgorithmArg *arg = nullptr;
+            do
+            {
+                if (!arg)
                 {
+                    arg = alg->GetArg(pszLine);
                     if (!arg)
+                        break;
+                    if (arg->GetType() == GAAT_BOOLEAN)
                     {
-                        arg = alg->GetArg(pszLine);
-                        if (!arg)
-                            break;
-                        if (arg->GetType() == GAAT_BOOLEAN)
-                        {
-                            arg->Set(true);
-                            arg = nullptr;
-                        }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            arg->Set(pszLine);
-                        }
-                        catch (const std::exception &)
-                        {
-                        }
+                        arg->Set(true);
                         arg = nullptr;
                     }
                 }
-            }
+                else
+                {
+                    try
+                    {
+                        arg->Set(pszLine);
+                    }
+                    catch (const std::exception &)
+                    {
+                    }
+                    arg = nullptr;
+                }
+            } while ((pszLine = CPLReadLineL(fp)) != nullptr);
         }
         if (alg)
         {
