@@ -1379,14 +1379,14 @@ static void GenerateOpenLayers(
     }
     else
     {
-        const double base_res = tms.tileMatrixList()[0].mResX;
-        substs["maxres"] = CPLSPrintf("%d", nMinZoom);
+        substs["maxres"] =
+            CPLSPrintf(pszFmt, tms.tileMatrixList()[nMinZoom].mResX);
         std::string resolutions = "[";
         for (int i = 0; i <= nMaxZoom; ++i)
         {
             if (i > 0)
                 resolutions += ",";
-            resolutions += CPLSPrintf(pszFmt, base_res / (1 << i));
+            resolutions += CPLSPrintf(pszFmt, tms.tileMatrixList()[i].mResX);
         }
         resolutions += "]";
         substs["resolutions"] = std::move(resolutions);
