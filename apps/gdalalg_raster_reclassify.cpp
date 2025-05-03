@@ -55,10 +55,11 @@ GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
 
     for (int iBand = 1; iBand <= input.GetRasterCount(); ++iBand)
     {
+        const GDALDataType srcType =
+            input.GetRasterBand(iBand)->GetRasterDataType();
         const GDALDataType bandType =
-            eDstType == GDT_Unknown
-                ? input.GetRasterBand(iBand)->GetRasterDataType()
-                : eDstType;
+            eDstType == GDT_Unknown ? srcType : eDstType;
+        const GDALDataType xferType = GDALDataTypeUnion(srcType, bandType);
 
         CPLXMLNode *band =
             CPLCreateXMLNode(root.get(), CXT_Element, "VRTRasterBand");
@@ -72,6 +73,11 @@ GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
         CPLXMLNode *arguments =
             CPLCreateXMLNode(band, CXT_Element, "PixelFunctionArguments");
         CPLAddXMLAttributeAndValue(arguments, "mapping", mappings.c_str());
+
+        CPLXMLNode *sourceTransferType =
+            CPLCreateXMLNode(band, CXT_Element, "SourceTransferType");
+        CPLCreateXMLNode(sourceTransferType, CXT_Text,
+                         GDALGetDataTypeName(xferType));
     }
 
     auto ds = std::make_unique<VRTDataset>(nX, nY);
