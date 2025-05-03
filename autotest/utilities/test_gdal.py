@@ -95,7 +95,10 @@ def test_gdal_config_not_serialized_to_gdalg(tmp_path, gdal_path):
         f"{gdal_path} raster reproject --config FOO=BAR ../gcore/data/byte.tif {out_filename}"
     )
     # Test that configuration option is not serialized
-    assert json.loads(gdal.VSIFile(out_filename, "rb").read()) == {
+    j = json.loads(gdal.VSIFile(out_filename, "rb").read())
+    assert "gdal_version" in j
+    del j["gdal_version"]
+    assert j == {
         "command_line": "gdal raster reproject --input ../gcore/data/byte.tif --output-format stream --output streamed_dataset",
         "type": "gdal_streamed_alg",
     }
