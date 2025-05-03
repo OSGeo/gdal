@@ -795,6 +795,22 @@ def test_gdalalg_raster_tile_not_earth_crs(tmp_vsimem):
         alg.Run()
 
 
+def test_gdalalg_raster_tile_cannot_determine_target_extent(tmp_vsimem):
+
+    src_ds = gdal.Warp(
+        "", "../gdrivers/data/small_world.tif", options="-f MEM -t_srs +proj=ortho"
+    )
+    src_ds = gdal.Translate("", src_ds, options="-f MEM -srcwin 0 0 1 1")
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    with pytest.raises(
+        Exception,
+        match="Cannot determine extent of raster in target CRS",
+    ):
+        alg.Run()
+
+
 def test_gdalalg_raster_tile_extent_not_compatible_tile_matrix(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
