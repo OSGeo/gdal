@@ -103,15 +103,17 @@ GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
 
 bool GDALRasterReclassifyAlgorithm::RunStep(GDALProgressFunc, void *)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    const auto poSrcDS = m_inputDataset.GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
     // Already validated by argument parser
-    GDALDataType eDstType =
+    const GDALDataType eDstType =
         m_type.empty() ? GDT_Unknown : GDALGetDataTypeByName(m_type.c_str());
 
-    if (m_mapping.size() > 0 && m_mapping[0] == '@')
+    const auto nErrorCount = CPLGetErrorCounter();
+    if (!m_mapping.empty() && m_mapping[0] == '@')
     {
         auto f =
             VSIVirtualHandleUniquePtr(VSIFOpenL(m_mapping.c_str() + 1, "r"));
@@ -122,46 +124,57 @@ bool GDALRasterReclassifyAlgorithm::RunStep(GDALProgressFunc, void *)
             return false;
         }
 
-        std::string mappings_from_file;
-        while (const char *line = CPLReadLineL(f.get()))
+        m_mapping.clear();
+        try
         {
-            while (isspace(*line))
+            constexpr int MAX_CHARS_PER_LINE = 1000 * 1000;
+            constexpr size_t MAX_MAPPING_SIZE = 10 * 1000 * 1000;
+            while (const char *line =
+                       CPLReadLine2L(f.get(), MAX_CHARS_PER_LINE, nullptr))
             {
-                line++;
-            }
+                while (isspace(*line))
+                {
+                    line++;
+                }
 
-            if (strlen(line) == 0)
-            {
-                continue;
-            }
+                if (line[0])
+                {
+                    if (!m_mapping.empty())
+                    {
+                        m_mapping.append(";");
+                    }
 
-            if (!mappings_from_file.empty())
-            {
-                mappings_from_file.append(";");
+                    const char *comment = strchr(line, '#');
+                    if (!comment)
+                    {
+                        m_mapping.append(line);
+                    }
+                    else
+                    {
+                        m_mapping.append(line,
+                                         static_cast<size_t>(comment - line));
+                    }
+                    if (m_mapping.size() > MAX_MAPPING_SIZE)
+                    {
+                        ReportError(CE_Failure, CPLE_AppDefined,
+                                    "Too large mapping size");
+                        return false;
+                    }
+                }
             }
-
-            char *comment = const_cast<char *>(strchr(line, '#'));
-            if (comment != nullptr)
-            {
-                *comment = '\0';
-            }
-
-            mappings_from_file.append(line);
         }
-
-        m_mapping = mappings_from_file;
+        catch (const std::exception &)
+        {
+            ReportError(CE_Failure, CPLE_OutOfMemory,
+                        "Out of memory while ingesting mapping file");
+        }
     }
-
-    auto vrt = GDALReclassifyCreateVRTDerived(*m_inputDataset.GetDatasetRef(),
-                                              m_mapping, eDstType);
-
-    if (vrt == nullptr)
+    if (nErrorCount == CPLGetErrorCounter())
     {
-        return false;
+        m_outputDataset.Set(
+            GDALReclassifyCreateVRTDerived(*poSrcDS, m_mapping, eDstType));
     }
-
-    m_outputDataset.Set(std::move(vrt));
-    return true;
+    return m_outputDataset.GetDatasetRef() != nullptr;
 }
 
 //! @endcond

@@ -193,3 +193,38 @@ def test_gdalalg_raster_reclassify_bad_output_type(reclassify, tmp_vsimem):
 
     with pytest.raises(RuntimeError, match="Invalid value .*output-data-type"):
         reclassify["output-data-type"] = "Float128"
+
+
+def test_gdalalg_raster_reclassify_too_large_line(reclassify, tmp_vsimem):
+
+    infile = "../gcore/data/byte.tif"
+    outfile = tmp_vsimem / "out.tif"
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "mapping.txt", "x" * (1000 * 1000 + 1))
+
+    reclassify["input"] = infile
+    reclassify["output"] = outfile
+    reclassify["mapping"] = f"@{tmp_vsimem}/mapping.txt"
+
+    with pytest.raises(
+        RuntimeError, match="Maximum number of characters allowed reached"
+    ):
+        reclassify.Run()
+
+
+def test_gdalalg_raster_reclassify_too_large_mapping_file(reclassify, tmp_vsimem):
+
+    infile = "../gcore/data/byte.tif"
+    outfile = tmp_vsimem / "out.tif"
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "mapping.txt",
+        "\n".join(["x" * (1000 * 1000 - 1) for i in range(10)]) + "\n" + "x" * 10,
+    )
+
+    reclassify["input"] = infile
+    reclassify["output"] = outfile
+    reclassify["mapping"] = f"@{tmp_vsimem}/mapping.txt"
+
+    with pytest.raises(RuntimeError, match="Too large mapping size"):
+        reclassify.Run()
