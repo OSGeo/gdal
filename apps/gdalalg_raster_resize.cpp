@@ -29,15 +29,50 @@ GDALRasterResizeAlgorithm::GDALRasterResizeAlgorithm(bool standaloneStep)
     : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
-    AddArg("size", 0, _("Target size in pixels"), &m_size)
+    AddArg("size", 0,
+           _("Target size in pixels (or percentage if using '%' suffix)"),
+           &m_size)
         .SetMinCount(2)
         .SetMaxCount(2)
         .SetRequired()
         .SetMinValueIncluded(0)
         .SetRepeatedArgAllowed(false)
         .SetDisplayHintAboutRepetition(false)
-        .SetMetaVar("<width>,<height>")
-        .SetMutualExclusionGroup("resolution-size");
+        .SetMetaVar("<width[%]>,<height[%]>")
+        .AddValidationAction(
+            [this]()
+            {
+                for (const auto &s : m_size)
+                {
+                    char *endptr = nullptr;
+                    const double val = CPLStrtod(s.c_str(), &endptr);
+                    bool ok = false;
+                    if (endptr == s.c_str() + s.size())
+                    {
+                        if (val >= 0 && val <= INT_MAX &&
+                            static_cast<int>(val) == val)
+                        {
+                            ok = true;
+                        }
+                    }
+                    else if (endptr &&
+                             ((endptr[0] == ' ' && endptr[1] == '%') ||
+                              endptr[0] == '%'))
+                    {
+                        if (val >= 0)
+                        {
+                            ok = true;
+                        }
+                    }
+                    if (!ok)
+                    {
+                        ReportError(CE_Failure, CPLE_IllegalArg,
+                                    "Invalid size value: %s'", s.c_str());
+                        return false;
+                    }
+                }
+                return true;
+            });
     AddArg("resampling", 'r', _("Resampling method"), &m_resampling)
         .SetChoices("nearest", "bilinear", "cubic", "cubicspline", "lanczos",
                     "average", "mode")
@@ -61,9 +96,10 @@ bool GDALRasterResizeAlgorithm::RunStep(GDALProgressFunc, void *)
     if (!m_size.empty())
     {
         aosOptions.AddString("-outsize");
-        aosOptions.AddString(CPLSPrintf("%d", m_size[0]));
-        aosOptions.AddString(CPLSPrintf("%d", m_size[1]));
+        aosOptions.AddString(m_size[0]);
+        aosOptions.AddString(m_size[1]);
     }
+
     if (!m_resampling.empty())
     {
         aosOptions.AddString("-r");
