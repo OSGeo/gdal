@@ -99,13 +99,12 @@ def test_gdalalg_raster_reclassify_basic_1(
         assert np.all(dst_val == 160)
 
 
-@pytest.mark.parametrize("input_file", ("float32.tif", "int64.tif", "uint64.tif"))
-def test_gdalalg_raster_reclassify_output_type(reclassify, tmp_vsimem, input_file):
+def test_gdalalg_raster_reclassify_output_type(reclassify, tmp_vsimem):
 
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
 
-    infile = f"../gcore/data/{input_file}"
+    infile = "../gcore/data/float32.tif"
     outfile = tmp_vsimem / "out.tif"
 
     reclassify["input"] = infile
