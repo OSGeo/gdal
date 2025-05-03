@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import pytest
+
 from osgeo import gdal
 
 
@@ -30,8 +32,8 @@ def test_gdalalg_raster_resize(tmp_vsimem):
         last_pct[0] = pct
         return True
 
-    pipeline = get_resize_alg()
-    assert pipeline.ParseRunAndFinalize(
+    alg = get_resize_alg()
+    assert alg.ParseRunAndFinalize(
         [
             "--size=10,0",
             "../gcore/data/byte.tif",
@@ -57,8 +59,8 @@ def test_gdalalg_raster_resize_resampling(tmp_vsimem):
         last_pct[0] = pct
         return True
 
-    pipeline = get_resize_alg()
-    assert pipeline.ParseRunAndFinalize(
+    alg = get_resize_alg()
+    assert alg.ParseRunAndFinalize(
         [
             "--size=0,10",
             "-r",
@@ -74,3 +76,38 @@ def test_gdalalg_raster_resize_resampling(tmp_vsimem):
         assert ds.RasterXSize == 10
         assert ds.RasterYSize == 10
         assert ds.GetRasterBand(1).Checksum() == 1059
+
+
+def test_gdalalg_raster_resize_percent(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    alg = get_resize_alg()
+    assert alg.ParseRunAndFinalize(
+        [
+            "--size=50 %,25%",
+            "-r",
+            "cubic",
+            "../gcore/data/byte.tif",
+            out_filename,
+        ]
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.RasterXSize == 10
+        assert ds.RasterYSize == 5
+
+
+def test_gdalalg_raster_illegal_size():
+
+    alg = get_resize_alg()
+    with pytest.raises(Exception, match="Invalid size value"):
+        alg["size"] = ["-1", "1"]
+    with pytest.raises(Exception, match="Invalid size value"):
+        alg["size"] = ["1.5", "1"]
+    with pytest.raises(Exception, match="Invalid size value"):
+        alg["size"] = ["1.5x", "1"]
+    with pytest.raises(Exception, match="Invalid size value"):
+        alg["size"] = ["1.5 x", "1"]
+    with pytest.raises(Exception, match="Invalid size value"):
+        alg["size"] = ["2147483648", "1"]
