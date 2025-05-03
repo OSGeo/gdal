@@ -4725,6 +4725,8 @@ bool GDALDoesFileOrDatasetExist(const char *pszName,
 std::string CPL_DLL
 GDALGetMessageAboutMissingPluginDriver(GDALDriver *poMissingPluginDriver);
 
+std::string GDALPrintDriverList(int nOptions, bool bJSON);
+
 // Macro used so that Identify and driver metadata methods in drivers built
 // as plugin can be duplicated in libgdal core and in the driver under different
 // names

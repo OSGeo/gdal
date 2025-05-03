@@ -47,6 +47,12 @@
 #include "gdalalg_raster_unscale.h"
 #include "gdalalg_raster_viewshed.h"
 
+#include "gdal_priv.h"
+
+#ifndef _
+#define _(x) (x)
+#endif
+
 /************************************************************************/
 /*                         GDALRasterAlgorithm                          */
 /************************************************************************/
@@ -60,6 +66,11 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
 
     GDALRasterAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
+        AddArg("drivers", 0, _("Display raster driver list as JSON document"),
+               &m_drivers);
+
+        AddOutputStringArg(&m_output);
+
         RegisterSubAlgorithm<GDALRasterInfoAlgorithm>();
         RegisterSubAlgorithm<GDALRasterAspectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterCalcAlgorithm>();
@@ -97,12 +108,24 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
     }
 
   private:
+    std::string m_output{};
+    bool m_drivers = false;
+
     bool RunImpl(GDALProgressFunc, void *) override
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "The Run() method should not be called directly on the \"gdal "
-                 "raster\" program.");
-        return false;
+        if (m_drivers)
+        {
+            m_output = GDALPrintDriverList(GDAL_OF_RASTER, true);
+            return true;
+        }
+        else
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "The Run() method should not be called directly on the \"gdal "
+                "raster\" program.");
+            return false;
+        }
     }
 };
 

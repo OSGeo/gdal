@@ -67,3 +67,10 @@ Examples
    .. code-block:: console
 
        $ gdal raster convert utm.tif utm.gpkg
+
+.. example::
+   :title: Getting the list of raster drivers (with JSON output)
+
+   .. code-block:: console
+
+       $ gdal raster --drivers
