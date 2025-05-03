@@ -3945,6 +3945,7 @@ GDALAlgorithm::ProcessGDALGOutputRet GDALAlgorithm::ProcessGDALGOutput()
         CPLJSONDocument oDoc;
         oDoc.GetRoot().Add("type", "gdal_streamed_alg");
         oDoc.GetRoot().Add("command_line", osCommandLine);
+        oDoc.GetRoot().Add("gdal_version", GDALVersionInfo("VERSION_NUM"));
 
         return oDoc.Save(filename) ? ProcessGDALGOutputRet::GDALG_OK
                                    : ProcessGDALGOutputRet::GDALG_ERROR;
