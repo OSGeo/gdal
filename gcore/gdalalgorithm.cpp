@@ -4215,13 +4215,15 @@ bool GDALAlgorithm::Run(GDALProgressFunc pfnProgress, void *pProgressData)
 
     if (m_helpRequested || m_helpDocRequested)
     {
-        printf("%s", GetUsageForCLI(false).c_str()); /*ok*/
+        if (m_calledFromCommandLine)
+            printf("%s", GetUsageForCLI(false).c_str()); /*ok*/
         return true;
     }
 
     if (m_JSONUsageRequested)
     {
-        printf("%s", GetUsageAsJSON().c_str()); /*ok*/
+        if (m_calledFromCommandLine)
+            printf("%s", GetUsageAsJSON().c_str()); /*ok*/
         return true;
     }
 
