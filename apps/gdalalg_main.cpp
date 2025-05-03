@@ -12,6 +12,8 @@
 
 #include "gdalalg_main.h"
 
+#include "gdal_priv.h"
+
 //! @cond Doxygen_Suppress
 
 #ifndef _
@@ -36,11 +38,11 @@ GDALMainAlgorithm::GDALMainAlgorithm()
 
     SetCallPath({NAME});
 
-    AddArg("version", 0, _("Display GDAL version and exit"), &m_dummyBoolean)
+    AddArg("version", 0, _("Display GDAL version and exit"), &m_version)
         .SetOnlyForCLI();
-    AddArg("drivers", 0, _("Display driver list as JSON document and exit"),
-           &m_dummyBoolean)
-        .SetOnlyForCLI();
+    AddArg("drivers", 0, _("Display driver list as JSON document"), &m_drivers);
+
+    AddOutputStringArg(&m_output);
 
     m_longDescription = "'gdal <FILENAME>' can also be used as a shortcut for "
                         "'gdal info <FILENAME>'.\n"
@@ -155,6 +157,19 @@ GDALMainAlgorithm::GetUsageForCLI(bool shortUsage,
     if (m_showUsage)
         return GDALAlgorithm::GetUsageForCLI(shortUsage, usageOptions);
     return std::string();
+}
+
+/************************************************************************/
+/*                    GDALMainAlgorithm::RunImpl()                      */
+/************************************************************************/
+
+bool GDALMainAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    if (m_drivers)
+    {
+        m_output = GDALPrintDriverList(GDAL_OF_KIND_MASK, true);
+    }
+    return true;
 }
 
 //! @endcond

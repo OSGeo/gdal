@@ -5174,8 +5174,8 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
         {
             if (arg->IsHidden() || arg->IsHiddenForCLI() ||
                 (!showAllOptions &&
-                 (arg->GetName() == "help" || arg->GetName() == "drivers" ||
-                  arg->GetName() == "config" || arg->GetName() == "version" ||
+                 (arg->GetName() == "help" || arg->GetName() == "config" ||
+                  arg->GetName() == "version" ||
                   arg->GetName() == "json-usage")))
             {
                 continue;

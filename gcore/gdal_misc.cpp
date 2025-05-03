@@ -3532,6 +3532,186 @@ static void StripIrrelevantOptions(CPLXMLNode *psCOL, int nOptions)
 }
 
 /************************************************************************/
+/*                         GDALPrintDriverList()                        */
+/************************************************************************/
+
+/** Print on stdout the driver list */
+std::string GDALPrintDriverList(int nOptions, bool bJSON)
+{
+    if (nOptions == 0)
+        nOptions = GDAL_OF_RASTER;
+
+    if (bJSON)
+    {
+        auto poDM = GetGDALDriverManager();
+        CPLJSONArray oArray;
+        const int nDriverCount = poDM->GetDriverCount();
+        for (int iDr = 0; iDr < nDriverCount; ++iDr)
+        {
+            auto poDriver = poDM->GetDriver(iDr);
+            CSLConstList papszMD = poDriver->GetMetadata();
+
+            if (nOptions == GDAL_OF_RASTER &&
+                !CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
+                continue;
+            if (nOptions == GDAL_OF_VECTOR &&
+                !CPLFetchBool(papszMD, GDAL_DCAP_VECTOR, false))
+                continue;
+            if (nOptions == GDAL_OF_GNM &&
+                !CPLFetchBool(papszMD, GDAL_DCAP_GNM, false))
+                continue;
+            if (nOptions == GDAL_OF_MULTIDIM_RASTER &&
+                !CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER, false))
+                continue;
+
+            CPLJSONObject oJDriver;
+            oJDriver.Set("short_name", poDriver->GetDescription());
+            if (const char *pszLongName =
+                    CSLFetchNameValue(papszMD, GDAL_DMD_LONGNAME))
+                oJDriver.Set("long_name", pszLongName);
+            CPLJSONArray oJScopes;
+            if (CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
+                oJScopes.Add("raster");
+            if (CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER, false))
+                oJScopes.Add("multidimensional_raster");
+            if (CPLFetchBool(papszMD, GDAL_DCAP_VECTOR, false))
+                oJScopes.Add("vector");
+            oJDriver.Add("scopes", oJScopes);
+            CPLJSONArray oJCaps;
+            if (CPLFetchBool(papszMD, GDAL_DCAP_OPEN, false))
+                oJCaps.Add("open");
+            if (CPLFetchBool(papszMD, GDAL_DCAP_CREATE, false))
+                oJCaps.Add("create");
+            if (CPLFetchBool(papszMD, GDAL_DCAP_CREATECOPY, false))
+                oJCaps.Add("create_copy");
+            if (CPLFetchBool(papszMD, GDAL_DCAP_UPDATE, false))
+                oJCaps.Add("update");
+            if (CPLFetchBool(papszMD, GDAL_DCAP_VIRTUALIO, false))
+                oJCaps.Add("virtual_io");
+            oJDriver.Add("capabilities", oJCaps);
+
+            if (const char *pszExtensions = CSLFetchNameValueDef(
+                    papszMD, GDAL_DMD_EXTENSIONS,
+                    CSLFetchNameValue(papszMD, GDAL_DMD_EXTENSION)))
+            {
+                const CPLStringList aosExt(
+                    CSLTokenizeString2(pszExtensions, " ", 0));
+                CPLJSONArray oJExts;
+                for (int i = 0; i < aosExt.size(); ++i)
+                {
+                    oJExts.Add(aosExt[i]);
+                }
+                oJDriver.Add("file_extensions", oJExts);
+            }
+
+            oArray.Add(oJDriver);
+        }
+
+        return oArray.Format(CPLJSONObject::PrettyFormat::Pretty);
+    }
+
+    std::string ret;
+    ret = "Supported Formats: (ro:read-only, rw:read-write, "
+          "+:write from scratch, u:update, "
+          "v:virtual-I/O s:subdatasets)\n";
+    for (int iDr = 0; iDr < GDALGetDriverCount(); iDr++)
+    {
+        GDALDriverH hDriver = GDALGetDriver(iDr);
+
+        const char *pszRFlag = "", *pszWFlag, *pszVirtualIO, *pszSubdatasets;
+        CSLConstList papszMD = GDALGetMetadata(hDriver, nullptr);
+
+        if (nOptions == GDAL_OF_RASTER &&
+            !CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
+            continue;
+        if (nOptions == GDAL_OF_VECTOR &&
+            !CPLFetchBool(papszMD, GDAL_DCAP_VECTOR, false))
+            continue;
+        if (nOptions == GDAL_OF_GNM &&
+            !CPLFetchBool(papszMD, GDAL_DCAP_GNM, false))
+            continue;
+        if (nOptions == GDAL_OF_MULTIDIM_RASTER &&
+            !CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER, false))
+            continue;
+
+        if (CPLFetchBool(papszMD, GDAL_DCAP_OPEN, false))
+            pszRFlag = "r";
+
+        if (CPLFetchBool(papszMD, GDAL_DCAP_CREATE, false))
+            pszWFlag = "w+";
+        else if (CPLFetchBool(papszMD, GDAL_DCAP_CREATECOPY, false))
+            pszWFlag = "w";
+        else
+            pszWFlag = "o";
+
+        const char *pszUpdate = "";
+        if (CPLFetchBool(papszMD, GDAL_DCAP_UPDATE, false))
+            pszUpdate = "u";
+
+        if (CPLFetchBool(papszMD, GDAL_DCAP_VIRTUALIO, false))
+            pszVirtualIO = "v";
+        else
+            pszVirtualIO = "";
+
+        if (CPLFetchBool(papszMD, GDAL_DMD_SUBDATASETS, false))
+            pszSubdatasets = "s";
+        else
+            pszSubdatasets = "";
+
+        CPLString osKind;
+        if (CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
+            osKind = "raster";
+        if (CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER, false))
+        {
+            if (!osKind.empty())
+                osKind += ',';
+            osKind += "multidimensional raster";
+        }
+        if (CPLFetchBool(papszMD, GDAL_DCAP_VECTOR, false))
+        {
+            if (!osKind.empty())
+                osKind += ',';
+            osKind += "vector";
+        }
+        if (CPLFetchBool(papszMD, GDAL_DCAP_GNM, false))
+        {
+            if (!osKind.empty())
+                osKind += ',';
+            osKind += "geography network";
+        }
+        if (osKind.empty())
+            osKind = "unknown kind";
+
+        std::string osExtensions;
+        if (const char *pszExtensions = CSLFetchNameValueDef(
+                papszMD, GDAL_DMD_EXTENSIONS,
+                CSLFetchNameValue(papszMD, GDAL_DMD_EXTENSION)))
+        {
+            const CPLStringList aosExt(
+                CSLTokenizeString2(pszExtensions, " ", 0));
+            for (int i = 0; i < aosExt.size(); ++i)
+            {
+                if (i == 0)
+                    osExtensions = " (*.";
+                else
+                    osExtensions += ", *.";
+                osExtensions += aosExt[i];
+            }
+            if (!osExtensions.empty())
+                osExtensions += ')';
+        }
+
+        ret += CPLSPrintf("  %s -%s- (%s%s%s%s%s): %s%s\n", /*ok*/
+                          GDALGetDriverShortName(hDriver), osKind.c_str(),
+                          pszRFlag, pszWFlag, pszUpdate, pszVirtualIO,
+                          pszSubdatasets, GDALGetDriverLongName(hDriver),
+                          osExtensions.c_str());
+    }
+
+    return ret;
+}
+
+/************************************************************************/
 /*                    GDALGeneralCmdLineProcessor()                     */
 /************************************************************************/
 
@@ -3625,6 +3805,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             }
             else
             {
+                // cppcheck-suppress knownConditionTrueFalse
                 if (iArg + 2 >= nArgc)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -3891,13 +4072,9 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
         /*      --formats */
         /* --------------------------------------------------------------------
          */
-        else if (EQUAL(papszArgv[iArg], "--formats") ||
-                 EQUAL(papszArgv[iArg], "--drivers"))
+        else if (EQUAL(papszArgv[iArg], "--formats"))
         {
-            if (nOptions == 0)
-                nOptions = GDAL_OF_RASTER;
-
-            bool bJSON = EQUAL(papszArgv[iArg], "--drivers");
+            bool bJSON = false;
             for (int i = 1; i < nArgc; i++)
             {
                 if (strcmp(papszArgv[i], "-json") == 0 ||
@@ -3908,178 +4085,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 }
             }
 
-            if (bJSON)
-            {
-                auto poDM = GetGDALDriverManager();
-                CPLJSONArray oArray;
-                const int nDriverCount = poDM->GetDriverCount();
-                for (int iDr = 0; iDr < nDriverCount; ++iDr)
-                {
-                    auto poDriver = poDM->GetDriver(iDr);
-                    CSLConstList papszMD = poDriver->GetMetadata();
-
-                    if (nOptions == GDAL_OF_RASTER &&
-                        !CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
-                        continue;
-                    if (nOptions == GDAL_OF_VECTOR &&
-                        !CPLFetchBool(papszMD, GDAL_DCAP_VECTOR, false))
-                        continue;
-                    if (nOptions == GDAL_OF_GNM &&
-                        !CPLFetchBool(papszMD, GDAL_DCAP_GNM, false))
-                        continue;
-                    if (nOptions == GDAL_OF_MULTIDIM_RASTER &&
-                        !CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER,
-                                      false))
-                        continue;
-
-                    CPLJSONObject oJDriver;
-                    oJDriver.Set("short_name", poDriver->GetDescription());
-                    if (const char *pszLongName =
-                            CSLFetchNameValue(papszMD, GDAL_DMD_LONGNAME))
-                        oJDriver.Set("long_name", pszLongName);
-                    CPLJSONArray oJScopes;
-                    if (CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
-                        oJScopes.Add("raster");
-                    if (CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER, false))
-                        oJScopes.Add("multidimensional_raster");
-                    if (CPLFetchBool(papszMD, GDAL_DCAP_VECTOR, false))
-                        oJScopes.Add("vector");
-                    oJDriver.Add("scopes", oJScopes);
-                    CPLJSONArray oJCaps;
-                    if (CPLFetchBool(papszMD, GDAL_DCAP_OPEN, false))
-                        oJCaps.Add("open");
-                    if (CPLFetchBool(papszMD, GDAL_DCAP_CREATE, false))
-                        oJCaps.Add("create");
-                    if (CPLFetchBool(papszMD, GDAL_DCAP_CREATECOPY, false))
-                        oJCaps.Add("create_copy");
-                    if (CPLFetchBool(papszMD, GDAL_DCAP_UPDATE, false))
-                        oJCaps.Add("update");
-                    if (CPLFetchBool(papszMD, GDAL_DCAP_VIRTUALIO, false))
-                        oJCaps.Add("virtual_io");
-                    oJDriver.Add("capabilities", oJCaps);
-
-                    if (const char *pszExtensions = CSLFetchNameValueDef(
-                            papszMD, GDAL_DMD_EXTENSIONS,
-                            CSLFetchNameValue(papszMD, GDAL_DMD_EXTENSION)))
-                    {
-                        const CPLStringList aosExt(
-                            CSLTokenizeString2(pszExtensions, " ", 0));
-                        CPLJSONArray oJExts;
-                        for (int i = 0; i < aosExt.size(); ++i)
-                        {
-                            oJExts.Add(aosExt[i]);
-                        }
-                        oJDriver.Add("file_extensions", oJExts);
-                    }
-
-                    oArray.Add(oJDriver);
-                }
-                printf(/*ok*/
-                       "%s\n",
-                       oArray.Format(CPLJSONObject::PrettyFormat::Pretty)
-                           .c_str());
-
-                return 0;
-            }
-
-            printf(/*ok*/
-                   "Supported Formats: (ro:read-only, rw:read-write, "
-                   "+:write from scratch, u:update, "
-                   "v:virtual-I/O s:subdatasets)\n");
-            for (int iDr = 0; iDr < GDALGetDriverCount(); iDr++)
-            {
-                GDALDriverH hDriver = GDALGetDriver(iDr);
-
-                const char *pszRFlag = "", *pszWFlag, *pszVirtualIO,
-                           *pszSubdatasets;
-                CSLConstList papszMD = GDALGetMetadata(hDriver, nullptr);
-
-                if (nOptions == GDAL_OF_RASTER &&
-                    !CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
-                    continue;
-                if (nOptions == GDAL_OF_VECTOR &&
-                    !CPLFetchBool(papszMD, GDAL_DCAP_VECTOR, false))
-                    continue;
-                if (nOptions == GDAL_OF_GNM &&
-                    !CPLFetchBool(papszMD, GDAL_DCAP_GNM, false))
-                    continue;
-                if (nOptions == GDAL_OF_MULTIDIM_RASTER &&
-                    !CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER, false))
-                    continue;
-
-                if (CPLFetchBool(papszMD, GDAL_DCAP_OPEN, false))
-                    pszRFlag = "r";
-
-                if (CPLFetchBool(papszMD, GDAL_DCAP_CREATE, false))
-                    pszWFlag = "w+";
-                else if (CPLFetchBool(papszMD, GDAL_DCAP_CREATECOPY, false))
-                    pszWFlag = "w";
-                else
-                    pszWFlag = "o";
-
-                const char *pszUpdate = "";
-                if (CPLFetchBool(papszMD, GDAL_DCAP_UPDATE, false))
-                    pszUpdate = "u";
-
-                if (CPLFetchBool(papszMD, GDAL_DCAP_VIRTUALIO, false))
-                    pszVirtualIO = "v";
-                else
-                    pszVirtualIO = "";
-
-                if (CPLFetchBool(papszMD, GDAL_DMD_SUBDATASETS, false))
-                    pszSubdatasets = "s";
-                else
-                    pszSubdatasets = "";
-
-                CPLString osKind;
-                if (CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
-                    osKind = "raster";
-                if (CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER, false))
-                {
-                    if (!osKind.empty())
-                        osKind += ',';
-                    osKind += "multidimensional raster";
-                }
-                if (CPLFetchBool(papszMD, GDAL_DCAP_VECTOR, false))
-                {
-                    if (!osKind.empty())
-                        osKind += ',';
-                    osKind += "vector";
-                }
-                if (CPLFetchBool(papszMD, GDAL_DCAP_GNM, false))
-                {
-                    if (!osKind.empty())
-                        osKind += ',';
-                    osKind += "geography network";
-                }
-                if (osKind.empty())
-                    osKind = "unknown kind";
-
-                std::string osExtensions;
-                if (const char *pszExtensions = CSLFetchNameValueDef(
-                        papszMD, GDAL_DMD_EXTENSIONS,
-                        CSLFetchNameValue(papszMD, GDAL_DMD_EXTENSION)))
-                {
-                    const CPLStringList aosExt(
-                        CSLTokenizeString2(pszExtensions, " ", 0));
-                    for (int i = 0; i < aosExt.size(); ++i)
-                    {
-                        if (i == 0)
-                            osExtensions = " (*.";
-                        else
-                            osExtensions += ", *.";
-                        osExtensions += aosExt[i];
-                    }
-                    if (!osExtensions.empty())
-                        osExtensions += ')';
-                }
-
-                printf("  %s -%s- (%s%s%s%s%s): %s%s\n", /*ok*/
-                       GDALGetDriverShortName(hDriver), osKind.c_str(),
-                       pszRFlag, pszWFlag, pszUpdate, pszVirtualIO,
-                       pszSubdatasets, GDALGetDriverLongName(hDriver),
-                       osExtensions.c_str());
-            }
+            printf("%s", GDALPrintDriverList(nOptions, bJSON).c_str()); /*ok*/
 
             return 0;
         }

@@ -558,3 +558,11 @@ def test_gdal_run():
         },
     ) as alg:
         assert alg.Output().GetSpatialRef().GetAuthorityCode(None) == "4326"
+
+
+def test_gdal_drivers():
+
+    with gdal.Run([], drivers=True) as alg:
+        j = alg.Output()
+        assert "GTiff" in [x["short_name"] for x in j]
+        assert "ESRI Shapefile" in [x["short_name"] for x in j]

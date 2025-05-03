@@ -607,7 +607,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       Read a window of this raster band into a NumPy masked array.
 
       Values of the mask will be ``True`` where pixels are invalid.
-        
+
       Starting in GDAL 3.11, if resampling (``buf_xsize`` != ``xsize``, or ``buf_ysize`` != ``ysize``) the mask
       band will be resampled using the algorithm specified by ``mask_resample_alg``.
 
@@ -1114,7 +1114,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
 %pythoncode %{
 
-    def ReadAsMaskedArray(self, xoff=0, yoff=0, xsize=None, ysize=None, 
+    def ReadAsMaskedArray(self, xoff=0, yoff=0, xsize=None, ysize=None,
                     buf_xsize=None, buf_ysize=None, buf_type=None,
                     resample_alg=gdalconst.GRIORA_NearestNeighbour,
                     mask_resample_alg=gdalconst.GRIORA_NearestNeighbour,
@@ -1134,18 +1134,18 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
         import numpy as np
 
-        arr = self.ReadAsArray(xoff=xoff, yoff=yoff, xsize=xsize, ysize=ysize, 
+        arr = self.ReadAsArray(xoff=xoff, yoff=yoff, xsize=xsize, ysize=ysize,
                                buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
                                resample_alg=resample_alg, band_list=band_list)
-        
+
         if band_list is None:
             band_list = [i+1 for i in range(self.RasterCount)]
-        
+
         all_valid = all(self.GetRasterBand(band).GetMaskFlags() == GMF_ALL_VALID for band in band_list)
 
         if all_valid:
             return np.ma.masked_array(arr, False)
-       
+
         masks = [self.GetRasterBand(band).GetMaskBand().ReadAsArray(
                 xoff=xoff, yoff=yoff,
                 win_xsize=xsize, win_ysize=ysize,
@@ -5634,14 +5634,22 @@ class VSIFile(BytesIO):
         if len(path) == 1:
             if isinstance(path[0], list):
                 alg = GetGlobalAlgorithmRegistry()
+                alg_is_registry = True
                 for i, v in enumerate(path[0]):
                     if i == 0 and v == "gdal":
                         continue
+                    alg_is_registry = False
                     alg = alg[v]
+                if alg_is_registry:
+                    alg = alg["gdal"]
             elif isinstance(path[0], str):
                 alg = GetGlobalAlgorithmRegistry()
+                alg_is_registry = True
                 for v in path[0].lstrip("gdal ").split(' '):
+                    alg_is_registry = False
                     alg = alg[v]
+                if alg_is_registry:
+                    alg = alg["gdal"]
         elif len(path) > 1:
             alg = GetGlobalAlgorithmRegistry()
             for i, v in enumerate(path):
