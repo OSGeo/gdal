@@ -21,6 +21,8 @@
 #include "viewshed/cumulative.h"
 #include "viewshed/viewshed.h"
 
+#include <algorithm>
+
 //! @cond Doxygen_Suppress
 
 #ifndef _
@@ -105,11 +107,9 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm()
            &m_observerSpacing)
         .SetDefault(m_observerSpacing)
         .SetMinValueIncluded(1);
-    AddArg("num-threads", 'j', _("Number of computation threads to use"),
-           &m_numThreads)
-        .SetDefault(m_numThreads)
-        .SetMinValueIncluded(1)
-        .SetMaxValueIncluded(255);
+
+    m_numThreadsStr = std::to_string(m_numThreads);
+    AddNumThreadsArg(&m_numThreads, &m_numThreadsStr);
 }
 
 /************************************************************************/
@@ -174,7 +174,7 @@ bool GDALRasterViewshedAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         opts.outputMode = gdal::viewshed::OutputMode::Cumulative;
 
     opts.observerSpacing = m_observerSpacing;
-    opts.numJobs = static_cast<uint8_t>(m_numThreads);
+    opts.numJobs = static_cast<uint8_t>(std::clamp(m_numThreads, 0, 255));
 
     opts.outputFilename = m_outputDataset.GetName();
     opts.outputFormat = m_format;

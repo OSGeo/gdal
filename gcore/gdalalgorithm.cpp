@@ -16,6 +16,7 @@
 #include "cpl_json.h"
 #include "cpl_levenshtein.h"
 #include "cpl_minixml.h"
+#include "cpl_multiproc.h"
 
 #include "gdalalgorithm.h"
 #include "gdal_priv.h"
@@ -4186,6 +4187,57 @@ GDALAlgorithm::AddActiveLayerArg(std::string *pValue, const char *helpMessage)
                   MsgOrDefault(helpMessage,
                                _("Set active layer (if not specified, all)")),
                   pValue);
+}
+
+/************************************************************************/
+/*                  GDALAlgorithm::AddNumThreadsArg()                   */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddNumThreadsArg(int *pValue, std::string *pStrValue,
+                                const char *helpMessage)
+{
+    auto &arg =
+        AddArg("num-threads", 'j',
+               MsgOrDefault(helpMessage, _("Number of jobs (or ALL_CPUS)")),
+               pStrValue);
+    auto lambda = [this, &arg, pValue, pStrValue]
+    {
+        int nNumCPUs = std::max(1, CPLGetNumCPUs());
+        const char *pszThreads =
+            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+        if (pszThreads && !EQUAL(pszThreads, "ALL_CPUS"))
+        {
+            nNumCPUs = std::clamp(atoi(pszThreads), 1, nNumCPUs);
+        }
+        if (EQUAL(pStrValue->c_str(), "ALL_CPUS"))
+        {
+            *pValue = nNumCPUs;
+            return true;
+        }
+        else
+        {
+            char *endptr = nullptr;
+            const auto res = std::strtol(pStrValue->c_str(), &endptr, 10);
+            if (endptr == pStrValue->c_str() + pStrValue->size() && res >= 0 &&
+                res <= INT_MAX)
+            {
+                *pValue = std::min(static_cast<int>(res), nNumCPUs);
+                return true;
+            }
+            ReportError(CE_Failure, CPLE_IllegalArg,
+                        "Invalid value for '%s' argument",
+                        arg.GetName().c_str());
+            return false;
+        }
+    };
+    if (!pStrValue->empty())
+    {
+        arg.SetDefault(*pStrValue);
+        lambda();
+    }
+    arg.AddValidationAction(std::move(lambda));
+    return arg;
 }
 
 /************************************************************************/

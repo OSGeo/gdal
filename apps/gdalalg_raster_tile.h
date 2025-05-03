@@ -71,7 +71,7 @@ class GDALRasterTileAlgorithm final : public GDALAlgorithm
     std::string m_mapmlTemplate{};
 
     // Work variables
-    int m_maxThreads = 0;
+    std::string m_numThreadsStr{"ALL_CPUS"};
     std::map<std::string, std::string> m_mapTileMatrixIdentifierToScheme{};
 };
 

@@ -73,8 +73,7 @@ GDALVSISyncAlgorithm::GDALVSISyncAlgorithm()
         .SetDefault(m_strategy)
         .SetChoices("timestamp", "ETag", "overwrite");
 
-    AddArg("num-threads", 'j', _("Number of threads to use"), &m_numThreads)
-        .SetMinValueIncluded(0);
+    AddNumThreadsArg(&m_numThreads, &m_numThreadsStr);
 }
 
 /************************************************************************/

@@ -58,6 +58,9 @@ class GDALRasterViewshedAlgorithm final : public GDALAlgorithm
     int m_visibleVal = 255;
     int m_invisibleVal = 0;
     int m_outOfRangeVal = 0;
+
+    // Work variables
+    std::string m_numThreadsStr{};
 };
 
 //! @endcond

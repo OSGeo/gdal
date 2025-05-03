@@ -14,6 +14,7 @@
 
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "gdalalgorithm.h"
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
@@ -4475,6 +4476,77 @@ TEST_F(test_gdal_algorithm, register_plugin_algorithms)
     singleton.DeclareAlgorithm({"foo", "bar"},
                                []() -> std::unique_ptr<GDALAlgorithm>
                                { return nullptr; });
+}
+
+TEST_F(test_gdal_algorithm, AddNumThreadsArg)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        int m_numThreads = 0;
+        std::string m_numThreadsStr{"ALL_CPUS"};
+
+        MyAlgorithm()
+        {
+            AddNumThreadsArg(&m_numThreads, &m_numThreadsStr);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({}));
+        EXPECT_EQ(alg.m_numThreads, CPLGetNumCPUs());
+    }
+
+    {
+        CPLConfigOptionSetter oSetter("GDAL_NUM_THREADS", "1", false);
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({}));
+        EXPECT_EQ(alg.m_numThreads, 1);
+    }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--num-threads=1"}));
+        EXPECT_EQ(alg.m_numThreads, 1);
+    }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(
+            alg.ParseCommandLineArguments({"--num-threads=2147483647"}));
+        EXPECT_EQ(alg.m_numThreads, CPLGetNumCPUs());
+    }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--num-threads=ALL_CPUS"}));
+        EXPECT_EQ(alg.m_numThreads, CPLGetNumCPUs());
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"num-threads=invalid"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"num-threads=-1"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"num-threads=2147483648"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
 }
 
 }  // namespace test_gdal_algorithm
