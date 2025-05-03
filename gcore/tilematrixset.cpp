@@ -13,6 +13,7 @@
 #include "cpl_json.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cfloat>
 #include <limits>
@@ -552,6 +553,51 @@ bool TileMatrixSet::hasVariableMatrixWidth() const
         }
     }
     return false;
+}
+
+/************************************************************************/
+/*                            createRaster()                            */
+/************************************************************************/
+
+/* static */
+std::unique_ptr<TileMatrixSet>
+TileMatrixSet::createRaster(int width, int height, int tileSize,
+                            int zoomLevelCount, double dfTopLeftX,
+                            double dfTopLeftY, double dfResXFull,
+                            double dfResYFull, const std::string &crs)
+{
+    CPLAssert(width > 0);
+    CPLAssert(height > 0);
+    CPLAssert(tileSize > 0);
+    CPLAssert(zoomLevelCount > 0);
+    std::unique_ptr<TileMatrixSet> poTMS(new TileMatrixSet());
+    poTMS->mTitle = "raster";
+    poTMS->mIdentifier = "raster";
+    poTMS->mCrs = crs;
+    poTMS->mBbox.mCrs = poTMS->mCrs;
+    poTMS->mBbox.mLowerCornerX = dfTopLeftX;
+    poTMS->mBbox.mLowerCornerY = dfTopLeftY - height * dfResYFull;
+    poTMS->mBbox.mUpperCornerX = dfTopLeftX + width * dfResYFull;
+    poTMS->mBbox.mUpperCornerY = dfTopLeftY;
+    for (int i = 0; i < zoomLevelCount; i++)
+    {
+        TileMatrix tm;
+        tm.mId = CPLSPrintf("%d", i);
+        tm.mResX = dfResXFull * (1 << (zoomLevelCount - 1 - i));
+        tm.mResY = dfResYFull * (1 << (zoomLevelCount - 1 - i));
+        tm.mScaleDenominator = tm.mResX / 0.28e-3;
+        tm.mTopLeftX = poTMS->mBbox.mLowerCornerX;
+        tm.mTopLeftY = poTMS->mBbox.mUpperCornerY;
+        tm.mTileWidth = tileSize;
+        tm.mTileHeight = tileSize;
+        tm.mMatrixWidth = std::max(
+            1, ((width >> (zoomLevelCount - 1 - i)) + tileSize - 1) / tileSize);
+        tm.mMatrixHeight =
+            std::max(1, ((height >> (zoomLevelCount - 1 - i)) + tileSize - 1) /
+                            tileSize);
+        poTMS->mTileMatrixList.emplace_back(std::move(tm));
+    }
+    return poTMS;
 }
 
 }  // namespace gdal
