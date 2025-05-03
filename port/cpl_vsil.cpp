@@ -854,7 +854,8 @@ int VSIMove(const char *oldpath, const char *newpath,
         const CPLStringList aosList(VSIReadDir(oldpath));
         poNewFSHandler->Mkdir(sNewpath.c_str(), 0755);
         bool bFoundFiles = false;
-        for (int i = 0; ret == 0 && i < aosList.size(); i++)
+        const int nListSize = aosList.size();
+        for (int i = 0; ret == 0 && i < nListSize; i++)
         {
             if (strcmp(aosList[i], ".") != 0 && strcmp(aosList[i], "..") != 0)
             {
@@ -864,8 +865,8 @@ int VSIMove(const char *oldpath, const char *newpath,
                 const std::string osTarget =
                     CPLFormFilenameSafe(sNewpath.c_str(), aosList[i], nullptr);
                 void *pScaledProgress = GDALCreateScaledProgress(
-                    static_cast<double>(i) / aosList.size(),
-                    static_cast<double>(i + 1) / aosList.size(), pProgressFunc,
+                    static_cast<double>(i) / nListSize,
+                    static_cast<double>(i + 1) / nListSize, pProgressFunc,
                     pProgressData);
                 ret = VSIMove(osSrc.c_str(), osTarget.c_str(), papszOptions,
                               pScaledProgress ? GDALScaledProgress : nullptr,
