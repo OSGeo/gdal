@@ -24,6 +24,7 @@
 #include "tilematrixset.hpp"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <cmath>
 #include <mutex>
@@ -59,7 +60,7 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
         .SetMinCharCount(1)
         .SetPositional();
 
-    std::vector<std::string> tilingSchemes;
+    std::vector<std::string> tilingSchemes{"raster"};
     for (const std::string &scheme :
          gdal::TileMatrixSet::listPredefinedTileMatrixSets())
     {
@@ -836,7 +837,7 @@ class FakeMaxZoomDataset : public GDALDataset
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
-        return &m_oSRS;
+        return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
     CPLErr GetGeoTransform(double *padfGT) override
@@ -995,7 +996,7 @@ class MosaicDataset : public GDALDataset
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
-        return &m_oSRS;
+        return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
     CPLErr GetGeoTransform(double *padfGT) override
@@ -1016,7 +1017,7 @@ class MosaicDataset : public GDALDataset
 };
 
 /************************************************************************/
-/*                  MosaicRasterBand::IReadBlock()                     */
+/*                   MosaicRasterBand::IReadBlock()                     */
 /************************************************************************/
 
 CPLErr MosaicRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pData)
@@ -1036,7 +1037,7 @@ CPLErr MosaicRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pData)
         const char *const apszAllowedDriversForCOG[] = {"GTiff", "LIBERTIFF",
                                                         nullptr};
         poTileDS.reset(GDALDataset::Open(
-            filename.c_str(), GDAL_OF_RASTER,
+            filename.c_str(), GDAL_OF_RASTER | GDAL_OF_INTERNAL,
             EQUAL(poThisDS->m_format.c_str(), "COG") ? apszAllowedDriversForCOG
                                                      : apszAllowedDrivers));
         if (!poTileDS)
@@ -1485,7 +1486,7 @@ static void GenerateOpenLayers(
     else
     {
         s += R"raw(
-                resolution: %(maxres)f)raw";
+                resolution: %(maxres)f,)raw";
     }
 
     if (tms.identifier() == "WorldCRS84Quad")
@@ -1493,15 +1494,27 @@ static void GenerateOpenLayers(
         s += R"raw(
                 projection: 'EPSG:4326',)raw";
     }
-    else if (tms.identifier() != "GoogleMapsCompatible")
+    else if (!oSRS_TMS.IsEmpty() && tms.identifier() != "GoogleMapsCompatible")
     {
         const char *pszAuthName = oSRS_TMS.GetAuthorityName(nullptr);
         const char *pszAuthCode = oSRS_TMS.GetAuthorityCode(nullptr);
         if (pszAuthName && pszAuthCode && EQUAL(pszAuthName, "EPSG"))
         {
             substs["epsg_code"] = pszAuthCode;
+            if (oSRS_TMS.IsGeographic())
+            {
+                substs["units"] = "deg";
+            }
+            else
+            {
+                const char *pszUnits = "";
+                if (oSRS_TMS.GetLinearUnits(&pszUnits) == 1.0)
+                    substs["units"] = "m";
+                else
+                    substs["units"] = pszUnits;
+            }
             s += R"raw(
-                projection: new ol.proj.Projection({code: 'EPSG:%(epsg_code)s', units:'m'}),)raw";
+                projection: new ol.proj.Projection({code: 'EPSG:%(epsg_code)s', units:'%(units)s'}),)raw";
         }
     }
 
@@ -1732,8 +1745,9 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 {
     auto poSrcDS = m_dataset.GetDatasetRef();
     CPLAssert(poSrcDS);
-    if (poSrcDS->GetRasterCount() == 0 || poSrcDS->GetRasterXSize() == 0 ||
-        poSrcDS->GetRasterYSize() == 0)
+    const int nSrcWidth = poSrcDS->GetRasterXSize();
+    const int nSrcHeight = poSrcDS->GetRasterYSize();
+    if (poSrcDS->GetRasterCount() == 0 || nSrcWidth == 0 || nSrcHeight == 0)
     {
         ReportError(CE_Failure, CPLE_AppDefined, "Invalid source dataset");
         return false;
@@ -1855,16 +1869,28 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     const CPLStringList aosExtensions(
         CSLTokenizeString2(pszExtensions, " ", 0));
     const char *pszExtension = aosExtensions[0];
+    std::array<double, 6> adfSrcGeoTransform;
+    const bool bHasSrcGT =
+        poSrcDS->GetGeoTransform(adfSrcGeoTransform.data()) == CE_None;
+    const bool bHasNorthUpSrcGT = bHasSrcGT && adfSrcGeoTransform[2] == 0 &&
+                                  adfSrcGeoTransform[4] == 0 &&
+                                  adfSrcGeoTransform[5] < 0;
+    OGRSpatialReference oSRS_TMS;
 
+    if (m_tilingScheme == "raster")
     {
-        double adfSrcGeoTransform[6];
-        if (poSrcDS->GetGeoTransform(adfSrcGeoTransform) != CE_None &&
-            poSrcDS->GetGCPCount() == 0 &&
+        if (const auto poSRS = poSrcDS->GetSpatialRef())
+            oSRS_TMS = *poSRS;
+    }
+    else
+    {
+        if (!bHasSrcGT && poSrcDS->GetGCPCount() == 0 &&
             poSrcDS->GetMetadata("GEOLOCATION") == nullptr &&
             poSrcDS->GetMetadata("RPC") == nullptr)
         {
             ReportError(CE_Failure, CPLE_NotSupported,
-                        "Ungeoreferenced datasets are not supported");
+                        "Ungeoreferenced datasets are not supported, unless "
+                        "'tiling-scheme' is set to 'raster'");
             return false;
         }
 
@@ -1874,7 +1900,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             poSrcDS->GetGCPSpatialRef() == nullptr)
         {
             ReportError(CE_Failure, CPLE_NotSupported,
-                        "Ungeoreferenced datasets are not supported");
+                        "Ungeoreferenced datasets are not supported, unless "
+                        "'tiling-scheme' is set to 'raster'");
             return false;
         }
     }
@@ -1890,18 +1917,50 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         m_metadata = aosMD;
     }
 
+    std::array<double, 6> adfSrcGeoTransformModif{0, 1, 0, 0, 0, -1};
+
     if (m_tilingScheme == "mercator")
         m_tilingScheme = "WebMercatorQuad";
     else if (m_tilingScheme == "geodetic")
         m_tilingScheme = "WorldCRS84Quad";
+    else if (m_tilingScheme == "raster")
+    {
+        if (m_tileSize == 0)
+            m_tileSize = 256;
+        if (m_maxZoomLevel < 0)
+        {
+            m_maxZoomLevel = static_cast<int>(std::ceil(std::log2(std::max(
+                1.0, static_cast<double>(std::max(nSrcWidth, nSrcHeight) /
+                                         m_tileSize)))));
+        }
+        if (bHasNorthUpSrcGT)
+        {
+            adfSrcGeoTransformModif = adfSrcGeoTransform;
+        }
+    }
 
-    auto poTMS = gdal::TileMatrixSet::parse(
-        m_mapTileMatrixIdentifierToScheme[m_tilingScheme].c_str());
+    auto poTMS =
+        m_tilingScheme == "raster"
+            ? gdal::TileMatrixSet::createRaster(
+                  nSrcWidth, nSrcHeight, m_tileSize, 1 + m_maxZoomLevel,
+                  adfSrcGeoTransformModif[0], adfSrcGeoTransformModif[3],
+                  adfSrcGeoTransformModif[1], -adfSrcGeoTransformModif[5],
+                  oSRS_TMS.IsEmpty() ? std::string() : oSRS_TMS.exportToWkt())
+            : gdal::TileMatrixSet::parse(
+                  m_mapTileMatrixIdentifierToScheme[m_tilingScheme].c_str());
     // Enforced by SetChoices() on the m_tilingScheme argument
     CPLAssert(poTMS && !poTMS->hasVariableMatrixWidth());
 
-    OGRSpatialReference oSRS_TMS;
-    CPL_IGNORE_RET_VAL(oSRS_TMS.SetFromUserInput(poTMS->crs().c_str()));
+    CPLStringList aosTO;
+    if (m_tilingScheme == "raster")
+    {
+        aosTO.SetNameValue("SRC_METHOD", "GEOTRANSFORM");
+    }
+    else
+    {
+        CPL_IGNORE_RET_VAL(oSRS_TMS.SetFromUserInput(poTMS->crs().c_str()));
+        aosTO.SetNameValue("DST_SRS", oSRS_TMS.exportToWkt().c_str());
+    }
 
     const char *pszAuthName = oSRS_TMS.GetAuthorityName(nullptr);
     const char *pszAuthCode = oSRS_TMS.GetAuthorityCode(nullptr);
@@ -1910,13 +1969,12 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             ? atoi(pszAuthCode)
             : 0;
 
-    const bool bInvertAxisTMS = oSRS_TMS.EPSGTreatsAsLatLong() != FALSE ||
-                                oSRS_TMS.EPSGTreatsAsNorthingEasting() != FALSE;
+    const bool bInvertAxisTMS =
+        m_tilingScheme != "raster" &&
+        (oSRS_TMS.EPSGTreatsAsLatLong() != FALSE ||
+         oSRS_TMS.EPSGTreatsAsNorthingEasting() != FALSE);
 
     oSRS_TMS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-
-    CPLStringList aosTO;
-    aosTO.SetNameValue("DST_SRS", oSRS_TMS.exportToWkt().c_str());
 
     std::unique_ptr<void, decltype(&GDALDestroyTransformer)> hTransformArg(
         nullptr, GDALDestroyTransformer);
@@ -1924,20 +1982,16 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     // Hack to compensate for GDALSuggestedWarpOutput2() failure (or not
     // ideal suggestion with PROJ 8) when reprojecting latitude = +/- 90 to
     // EPSG:3857.
-    double adfSrcGeoTransform[6];
     std::unique_ptr<GDALDataset> poTmpDS;
     bool bEPSG3857Adjust = false;
-    if (nEPSGCode == 3857 &&
-        poSrcDS->GetGeoTransform(adfSrcGeoTransform) == CE_None &&
-        adfSrcGeoTransform[2] == 0 && adfSrcGeoTransform[4] == 0 &&
-        adfSrcGeoTransform[5] < 0)
+    if (nEPSGCode == 3857 && bHasNorthUpSrcGT)
     {
         const auto poSrcSRS = poSrcDS->GetSpatialRef();
         if (poSrcSRS && poSrcSRS->IsGeographic())
         {
             double maxLat = adfSrcGeoTransform[3];
-            double minLat = adfSrcGeoTransform[3] +
-                            poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5];
+            double minLat =
+                adfSrcGeoTransform[3] + nSrcHeight * adfSrcGeoTransform[5];
             // Corresponds to the latitude of below MAX_GM
             constexpr double MAX_LAT = 85.0511287798066;
             bool bModified = false;
@@ -1962,8 +2016,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 aosOptions.AddString(CPLSPrintf("%.17g", maxLat));
                 aosOptions.AddString(
                     CPLSPrintf("%.17g", adfSrcGeoTransform[0] +
-                                            poSrcDS->GetRasterXSize() *
-                                                adfSrcGeoTransform[1]));
+                                            nSrcWidth * adfSrcGeoTransform[1]));
                 aosOptions.AddString(CPLSPrintf("%.17g", minLat));
                 auto psOptions =
                     GDALTranslateOptionsNew(aosOptions.List(), nullptr);
@@ -1980,30 +2033,44 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
         }
     }
-    if (!hTransformArg)
-    {
-        hTransformArg.reset(
-            GDALCreateGenImgProjTransformer2(poSrcDS, nullptr, aosTO.List()));
-    }
-    if (!hTransformArg)
-    {
-        return false;
-    }
 
-    double adfGeoTransform[6];
+    std::array<double, 6> adfDstGeoTransform;
     double adfExtent[4];
     int nXSize, nYSize;
 
     bool bSuggestOK;
+    if (m_tilingScheme == "raster")
     {
+        bSuggestOK = true;
+        nXSize = nSrcWidth;
+        nYSize = nSrcHeight;
+        adfDstGeoTransform = adfSrcGeoTransformModif;
+        adfExtent[0] = adfDstGeoTransform[0];
+        adfExtent[1] =
+            adfDstGeoTransform[3] + nSrcHeight * adfDstGeoTransform[5];
+        adfExtent[2] =
+            adfDstGeoTransform[0] + nSrcWidth * adfDstGeoTransform[1];
+        adfExtent[3] = adfDstGeoTransform[3];
+    }
+    else
+    {
+        if (!hTransformArg)
+        {
+            hTransformArg.reset(GDALCreateGenImgProjTransformer2(
+                poSrcDS, nullptr, aosTO.List()));
+        }
+        if (!hTransformArg)
+        {
+            return false;
+        }
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         bSuggestOK =
             (GDALSuggestedWarpOutput2(
                  poSrcDS,
                  static_cast<GDALTransformerInfo *>(hTransformArg.get())
                      ->pfnTransform,
-                 hTransformArg.get(), adfGeoTransform, &nXSize, &nYSize,
-                 adfExtent, 0) == CE_None);
+                 hTransformArg.get(), adfDstGeoTransform.data(), &nXSize,
+                 &nYSize, adfExtent, 0) == CE_None);
     }
     if (!bSuggestOK)
     {
@@ -2019,8 +2086,9 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         constexpr double SPHERICAL_RADIUS = 6378137.0;
         constexpr double MAX_GM =
             SPHERICAL_RADIUS * M_PI;  // 20037508.342789244
-        double maxNorthing = adfGeoTransform[3];
-        double minNorthing = adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
+        double maxNorthing = adfDstGeoTransform[3];
+        double minNorthing =
+            adfDstGeoTransform[3] + adfDstGeoTransform[5] * nYSize;
         bool bChanged = false;
         if (maxNorthing > MAX_GM)
         {
@@ -2034,10 +2102,10 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
         if (bChanged)
         {
-            adfGeoTransform[3] = maxNorthing;
-            nYSize =
-                int((maxNorthing - minNorthing) / (-adfGeoTransform[5]) + 0.5);
-            adfExtent[1] = maxNorthing + nYSize * adfGeoTransform[5];
+            adfDstGeoTransform[3] = maxNorthing;
+            nYSize = int(
+                (maxNorthing - minNorthing) / (-adfDstGeoTransform[5]) + 0.5);
+            adfExtent[1] = maxNorthing + nYSize * adfDstGeoTransform[5];
             adfExtent[3] = maxNorthing;
         }
     }
@@ -2056,7 +2124,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     else
     {
-        const double dfComputedRes = adfGeoTransform[1];
+        const double dfComputedRes = adfDstGeoTransform[1];
         double dfPrevRes = 0.0;
         double dfRes = 0.0;
         constexpr double EPSILON = 1e-8;
@@ -2184,7 +2252,6 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
-    double adfDstGeoTransform[6];
     adfDstGeoTransform[0] = tileMatrix.mTopLeftX + nMinTileX *
                                                        tileMatrix.mResX *
                                                        tileMatrix.mTileWidth;
@@ -2312,14 +2379,44 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         (nMaxTileX - nMinTileX + 1) * tileMatrix.mTileWidth,
         (nMaxTileY - nMinTileY + 1) * tileMatrix.mTileHeight, nDstBands,
         tileMatrix.mTileWidth, tileMatrix.mTileHeight, psWO->eWorkingDataType,
-        adfDstGeoTransform, oSRS_TMS, dstBuffer);
+        adfDstGeoTransform.data(), oSRS_TMS, dstBuffer);
     CPL_IGNORE_RET_VAL(oFakeMaxZoomDS.GetSpatialRef());
 
     psWO->hSrcDS = GDALDataset::ToHandle(poSrcDS);
     psWO->hDstDS = GDALDataset::ToHandle(&oFakeMaxZoomDS);
 
+    std::unique_ptr<GDALDataset> tmpSrcDS;
+    if (m_tilingScheme == "raster" && !bHasNorthUpSrcGT)
+    {
+        CPLStringList aosOptions;
+        aosOptions.AddString("-of");
+        aosOptions.AddString("VRT");
+        aosOptions.AddString("-a_ullr");
+        aosOptions.AddString(CPLSPrintf("%.17g", adfSrcGeoTransformModif[0]));
+        aosOptions.AddString(CPLSPrintf("%.17g", adfSrcGeoTransformModif[3]));
+        aosOptions.AddString(
+            CPLSPrintf("%.17g", adfSrcGeoTransformModif[0] +
+                                    nSrcWidth * adfSrcGeoTransformModif[1]));
+        aosOptions.AddString(
+            CPLSPrintf("%.17g", adfSrcGeoTransformModif[3] +
+                                    nSrcHeight * adfSrcGeoTransformModif[5]));
+        if (oSRS_TMS.IsEmpty())
+        {
+            aosOptions.AddString("-a_srs");
+            aosOptions.AddString("none");
+        }
+
+        GDALTranslateOptions *psOptions =
+            GDALTranslateOptionsNew(aosOptions.List(), nullptr);
+
+        tmpSrcDS.reset(GDALDataset::FromHandle(GDALTranslate(
+            "", GDALDataset::ToHandle(poSrcDS), psOptions, nullptr)));
+        GDALTranslateOptionsFree(psOptions);
+        if (!tmpSrcDS)
+            return false;
+    }
     hTransformArg.reset(GDALCreateGenImgProjTransformer2(
-        poSrcDS, &oFakeMaxZoomDS, aosTO.List()));
+        tmpSrcDS ? tmpSrcDS.get() : poSrcDS, &oFakeMaxZoomDS, aosTO.List()));
     CPLAssert(hTransformArg);
 
     /* -------------------------------------------------------------------- */

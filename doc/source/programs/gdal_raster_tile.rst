@@ -32,6 +32,10 @@ It generates PNG files by default, but other output formats can be selected
 JPEG and WEBP only support Byte. PNG supports Byte and UInt16. GeoTiff can
 support all data types.
 
+It can also use a tiling scheme fully adapted to the input raster, in terms of
+origin and resolution, when using the ``raster`` tiling scheme. In that scheme,
+tiles at the maximum zoom level will have the same resolution as the raster.
+
 Standard options
 ++++++++++++++++
 
@@ -60,6 +64,8 @@ Standard options
     Tile cutting scheme. Defaults to WebMercatorQuad (also known as Google Maps compatible).
 
     The following base profiles are available:
+
+    - ``raster``: CRS = CRS of raster, tile size = 256 pixels, raster coverage at all zoom levels.
 
     - ``WebMercatorQuad``: CRS = EPSG:3857 ("WGS 84 / Pseudo-Mercator"), tile size: 256 pixels, whole world coverage at zoom level 0, one single tile at zoom level 0.
 
@@ -235,3 +241,10 @@ Examples
    .. code-block:: bash
 
       gdal raster tile --min-zoom=2 --max-zoom=5 input.tif output_folder
+
+.. example::
+   :title: Retile a raster using its origin and resolution
+
+   .. code-block:: bash
+
+      gdal raster tile --tiling-scheme raster input.tif output_folder
