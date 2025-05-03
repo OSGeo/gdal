@@ -33,10 +33,13 @@ def test_gdalalg_raster_reclassify_basic_1(
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
 
-    infile = "../gcore/data/nodata_byte.tif"
+    if output_format == "vrt":
+        src = gdal.Open("../gcore/data/nodata_byte.tif")
+    else:
+        src = gdal.Translate("", "../gcore/data/nodata_byte.tif", format="MEM")
     outfile = tmp_vsimem / f"out.{output_format}"
 
-    reclassify["input"] = infile
+    reclassify["input"] = src
     reclassify["output"] = outfile
 
     if mapping_format == "text":
@@ -47,8 +50,8 @@ def test_gdalalg_raster_reclassify_basic_1(
         gdal.FileFromMemBuffer(
             tmp_vsimem / "mapping.txt",
             """
-           # A sample reclassification 
-           165         = 120 
+           # A sample reclassification
+           165         = 120
            (-inf, 100] = 140 # Match everything <= 100
            (100,  130] = PASS_THROUGH
            DEFAULT     = 160
@@ -59,8 +62,9 @@ def test_gdalalg_raster_reclassify_basic_1(
         reclassify["mapping"] = f"@{tmp_vsimem}/mapping.txt"
 
     assert reclassify.Run()
+    assert reclassify.Finalize()
 
-    with gdal.Open(infile) as src, gdal.Open(outfile) as dst:
+    with gdal.Open(outfile) as dst:
         assert src.GetGeoTransform() == dst.GetGeoTransform()
         assert src.GetSpatialRef().IsSame(dst.GetSpatialRef())
         assert (
@@ -110,6 +114,7 @@ def test_gdalalg_raster_reclassify_output_type(reclassify, tmp_vsimem, input_fil
     reclassify["output-data-type"] = "Int16"
 
     assert reclassify.Run()
+    assert reclassify.Finalize()
 
     with gdal.Open(infile) as src, gdal.Open(outfile) as dst:
         assert dst.GetRasterBand(1).DataType == gdal.GDT_Int16
@@ -134,6 +139,7 @@ def test_gdalalg_raster_reclassify_multiple_bands(reclassify, tmp_vsimem):
     reclassify["mapping"] = "(-inf, 128)=0; [128, inf)=1"
 
     assert reclassify.Run()
+    assert reclassify.Finalize()
 
     with gdal.Open(infile) as src, gdal.Open(outfile) as dst:
         assert src.RasterCount == dst.RasterCount
