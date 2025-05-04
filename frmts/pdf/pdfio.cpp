@@ -77,12 +77,25 @@ BaseStream *VSIPDFFileStream::copy()
 /************************************************************************/
 /*                             makeSubStream()                          */
 /************************************************************************/
+
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 5)
+std::unique_ptr<Stream> VSIPDFFileStream::makeSubStream(Goffset startA,
+                                                        bool limitedA,
+                                                        Goffset lengthA,
+                                                        Object &&dictA)
+{
+    return std::make_unique<VSIPDFFileStream>(this, startA, limitedA, lengthA,
+                                              std::move(dictA));
+}
+#else
 Stream *VSIPDFFileStream::makeSubStream(Goffset startA, bool limitedA,
                                         Goffset lengthA, Object &&dictA)
 {
     return new VSIPDFFileStream(this, startA, limitedA, lengthA,
                                 std::move(dictA));
 }
+#endif
 
 /************************************************************************/
 /*                                 getPos()                             */
