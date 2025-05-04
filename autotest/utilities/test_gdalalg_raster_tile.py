@@ -1142,8 +1142,10 @@ def test_gdalalg_raster_tile_min_zoom_metadata_aux_xml(tmp_vsimem):
 
 @pytest.mark.require_driver("GTiff")
 @pytest.mark.require_driver("COG")
-@pytest.mark.parametrize("output_format", ["GTiff", "COG"])
-def test_gdalalg_raster_tile_output_format_gtiff(tmp_vsimem, output_format):
+@pytest.mark.parametrize(
+    "output_format,tile_size", [("GTiff", None), ("GTiff", 1024), ("COG", None)]
+)
+def test_gdalalg_raster_tile_output_format_gtiff(tmp_vsimem, output_format, tile_size):
 
     alg = get_alg()
     alg["input"] = gdal.Translate(
@@ -1156,7 +1158,12 @@ def test_gdalalg_raster_tile_output_format_gtiff(tmp_vsimem, output_format):
     alg["copy-src-metadata"] = True
     alg["metadata"] = {"FOO": "BAR"}
     alg["webviewer"] = "none"
+    if tile_size:
+        alg["tile-size"] = tile_size
     assert alg.Run()
+
+    if not tile_size:
+        tile_size = 256
 
     assert gdal.ReadDirRecursive(tmp_vsimem) == [
         "10/",
@@ -1168,32 +1175,42 @@ def test_gdalalg_raster_tile_output_format_gtiff(tmp_vsimem, output_format):
     ]
 
     with gdal.Open(tmp_vsimem / "10/177/409.tif") as ds:
+        assert ds.RasterXSize == tile_size
+        assert ds.RasterYSize == tile_size
         assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
         assert list(ds.GetGeoTransform()) == pytest.approx(
             [
                 -13110479.09147343,
-                152.8740565703556,
+                152.8740565703556 / tile_size * 256,
                 0.0,
                 4030983.1236470547,
                 0.0,
-                -152.87405657035197,
+                -152.87405657035197 / tile_size * 256,
             ]
         )
         assert ds.GetMetadata_Dict() == {"AREA_OR_POINT": "Area", "FOO": "BAR"}
+        assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
+        assert ds.GetRasterBand(1).GetBlockSize() == (
+            [tile_size, tile_size] if tile_size <= 512 else [256, 256]
+        )
 
     with gdal.Open(tmp_vsimem / "11/354/818.tif") as ds:
         assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
         assert list(ds.GetGeoTransform()) == pytest.approx(
             [
                 -13110479.09147343,
-                76.43702828517625,
+                76.43702828517625 / tile_size * 256,
                 0.0,
                 4030983.1236470547,
                 0.0,
-                -76.43702828517625,
+                -76.43702828517625 / tile_size * 256,
             ]
         )
         assert ds.GetMetadata_Dict() == {"AREA_OR_POINT": "Area", "FOO": "BAR"}
+        assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
+        assert ds.GetRasterBand(1).GetBlockSize() == (
+            [tile_size, tile_size] if tile_size <= 512 else [256, 256]
+        )
 
 
 def test_gdalalg_raster_tile_resume(tmp_vsimem):

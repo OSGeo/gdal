@@ -2474,18 +2474,33 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             if (aosCreationOptions.FetchNameValue("TILED") == nullptr &&
                 aosCreationOptions.FetchNameValue("BLOCKYSIZE") == nullptr)
             {
-                aosCreationOptions.SetNameValue(
-                    "BLOCKYSIZE", CPLSPrintf("%d", oTM.mTileHeight));
+                if (oTM.mTileWidth <= 512 && oTM.mTileHeight <= 512)
+                {
+                    aosCreationOptions.SetNameValue(
+                        "BLOCKYSIZE", CPLSPrintf("%d", oTM.mTileHeight));
+                }
+                else
+                {
+                    aosCreationOptions.SetNameValue("TILED", "YES");
+                }
             }
             if (aosCreationOptions.FetchNameValue("COMPRESS") == nullptr)
                 aosCreationOptions.SetNameValue("COMPRESS", "LZW");
         }
-        else if (m_outputFormat == "COG" &&
-                 aosCreationOptions.FetchNameValue("OVERVIEW_RESAMPLING") ==
-                     nullptr)
+        else if (m_outputFormat == "COG")
         {
-            aosCreationOptions.SetNameValue("OVERVIEW_RESAMPLING",
-                                            m_overviewResampling.c_str());
+            if (aosCreationOptions.FetchNameValue("OVERVIEW_RESAMPLING") ==
+                nullptr)
+            {
+                aosCreationOptions.SetNameValue("OVERVIEW_RESAMPLING",
+                                                m_overviewResampling.c_str());
+            }
+            if (aosCreationOptions.FetchNameValue("BLOCKSIZE") == nullptr &&
+                oTM.mTileWidth <= 512 && oTM.mTileWidth == oTM.mTileHeight)
+            {
+                aosCreationOptions.SetNameValue(
+                    "BLOCKSIZE", CPLSPrintf("%d", oTM.mTileWidth));
+            }
         }
         return aosCreationOptions;
     };
