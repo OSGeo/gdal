@@ -543,6 +543,8 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
 GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
+    m_supportsStreamedOutput = true;
+
     AddProgressArg();
 
     AddArg(GDAL_ARG_NAME_INPUT, 'i', _("Input raster datasets"), &m_inputs)
@@ -551,7 +553,8 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
         .SetAutoOpenDataset(false)
         .SetMetaVar("INPUTS");
 
-    AddOutputFormatArg(&m_format);
+    AddOutputFormatArg(&m_format, /* bStreamAllowed = */ true,
+                       /* bGDALGAllowed = */ true);
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
     AddCreationOptionsArg(&m_creationOptions);
     AddOverwriteArg(&m_overwrite);
@@ -584,14 +587,21 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
 
     const char *pszType = "";
-    if (!m_overwrite && !m_outputDataset.GetName().empty() &&
+    if (!m_outputDataset.GetName().empty() &&
         GDALDoesFileOrDatasetExist(m_outputDataset.GetName().c_str(), &pszType))
     {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "%s '%s' already exists. Specify the --overwrite "
-                    "option to overwrite it.",
-                    pszType, m_outputDataset.GetName().c_str());
-        return false;
+        if (!m_overwrite)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "%s '%s' already exists. Specify the --overwrite "
+                        "option to overwrite it.",
+                        pszType, m_outputDataset.GetName().c_str());
+            return false;
+        }
+        else
+        {
+            VSIUnlink(m_outputDataset.GetName().c_str());
+        }
     }
 
     GDALCalcOptions options;
@@ -608,10 +618,15 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
 
     auto vrt = GDALCalcCreateVRTDerived(m_inputs, m_expr, options);
-
     if (vrt == nullptr)
     {
         return false;
+    }
+
+    if (m_format == "stream")
+    {
+        m_outputDataset.Set(std::move(vrt));
+        return true;
     }
 
     CPLStringList translateArgs;
@@ -637,14 +652,10 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             translateOptions, nullptr)));
     GDALTranslateOptionsFree(translateOptions);
 
-    if (!poOutDS)
-    {
-        return false;
-    }
-
+    const bool bOK = poOutDS != nullptr;
     m_outputDataset.Set(std::move(poOutDS));
 
-    return true;
+    return bOK;
 }
 
 //! @endcond
