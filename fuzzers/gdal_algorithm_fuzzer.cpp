@@ -15,6 +15,9 @@
 
 #include "gdal.h"
 #include "gdalalgorithm.h"
+#include "gdal_alg.h"
+#include "gdal_priv.h"
+#include "ogrsf_frmts.h"
 
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
@@ -107,6 +110,33 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         if (alg)
         {
             alg->Run();
+
+            auto outputArg = alg->GetArg("output");
+            if (outputArg && outputArg->GetType() == GAAT_DATASET)
+            {
+                auto &val = outputArg->Get<GDALArgDatasetValue>();
+                if (auto poDS = val.GetDatasetRef())
+                {
+                    if (poDS->GetRasterCount() > 0)
+                    {
+                        auto poBand = poDS->GetRasterBand(1);
+                        int nXSizeToRead =
+                            std::min(1024, poDS->GetRasterXSize());
+                        int nYSizeToRead =
+                            std::min(1024, poDS->GetRasterYSize());
+                        GDALChecksumImage(poBand, 0, 0, nXSizeToRead,
+                                          nYSizeToRead);
+                    }
+
+                    for (auto *poLayer : poDS->GetLayers())
+                    {
+                        for (auto &poFeat : *poLayer)
+                        {
+                        }
+                    }
+                }
+            }
+
             alg->Finalize();
         }
         VSIFCloseL(fp);
