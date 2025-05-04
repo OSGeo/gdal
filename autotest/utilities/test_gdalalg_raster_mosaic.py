@@ -334,20 +334,6 @@ def test_gdalalg_raster_mosaic_at_filename_error():
         alg.Run()
 
 
-def test_gdalalg_raster_mosaic_output_ds_alread_set():
-
-    out_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
-
-    alg = get_mosaic_alg()
-    alg["input"] = ["../gcore/data/byte.tif"]
-    alg["output"] = out_ds
-    with pytest.raises(
-        Exception,
-        match="mosaic: gdal raster mosaic does not support outputting to an already opened output dataset",
-    ):
-        alg.Run()
-
-
 def test_gdalalg_raster_mosaic_co():
 
     alg = get_mosaic_alg()

@@ -377,6 +377,15 @@ class CPL_DLL GDALArgDatasetValue final
         return m_poDS;
     }
 
+    /** Get a GDALDataset* instance (may be null). This does not modify the
+     * reference counter, hence the lifetime of the returned object is not
+     * guaranteed to exceed the one of this instance.
+     */
+    const GDALDataset *GetDatasetRef() const
+    {
+        return m_poDS;
+    }
+
     /** Borrow the GDALDataset* instance (may be null), leaving its reference
      * counter unchanged.
      */

@@ -650,13 +650,89 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
         decl.SetDatasetInputFlags(GADV_NAME);
         decl.SetDatasetOutputFlags(GADV_OBJECT);
         auto arg = GDALAlgorithmArg(decl, &val);
+
         {
             CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
             CPLErrorReset();
             arg.Set(static_cast<GDALDataset *>(nullptr));
+            EXPECT_TRUE(strstr(
+                CPLGetLastErrorMsg(),
+                "is created by algorithm and cannot be set as an input"));
+            EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        }
+
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            CPLErrorReset();
+            arg.Set(std::unique_ptr<GDALDataset>(nullptr));
+            EXPECT_TRUE(strstr(
+                CPLGetLastErrorMsg(),
+                "is created by algorithm and cannot be set as an input"));
+            EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        }
+
+        {
+            GDALArgDatasetValue val2;
+            val2.Set(std::unique_ptr<GDALDataset>(
+                GetGDALDriverManager()->GetDriverByName("MEM")->Create(
+                    "", 1, 1, 1, GDT_Byte, nullptr)));
+
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            CPLErrorReset();
+            arg.SetFrom(val2);
+            EXPECT_TRUE(strstr(
+                CPLGetLastErrorMsg(),
+                "is created by algorithm and cannot be set as an input"));
             EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
         }
     }
+
+    {
+        GDALArgDatasetValue val;
+        auto decl = GDALAlgorithmArgDecl("", 0, "", GAAT_DATASET);
+        decl.SetDatasetInputFlags(0);
+        decl.SetDatasetOutputFlags(0);
+        auto arg = GDALAlgorithmArg(decl, &val);
+
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            CPLErrorReset();
+            arg.Set(static_cast<GDALDataset *>(nullptr));
+            EXPECT_TRUE(
+                strstr(CPLGetLastErrorMsg(),
+                       "A dataset cannot be set as an input argument of"));
+            EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        }
+    }
+
+    {
+        class MyAlgorithm : public MyAlgorithmWithDummyRun
+        {
+          public:
+            MyAlgorithm()
+            {
+                GDALArgDatasetValue val;
+                AddArg("", 0, "", &val).SetDatasetInputFlags(0);
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+
+                val.Set(std::unique_ptr<GDALDataset>(
+                    GetGDALDriverManager()->GetDriverByName("MEM")->Create(
+                        "", 1, 1, 1, GDT_Byte, nullptr)));
+
+                Run();
+
+                EXPECT_TRUE(
+                    strstr(CPLGetLastErrorMsg(),
+                           "A dataset cannot be set as an input argument of"));
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+        };
+
+        MyAlgorithm alg;
+    }
+
     {
         std::vector<std::string> val;
         auto arg = GDALAlgorithmArg(

@@ -55,19 +55,6 @@ def test_gdalalg_raster_viewshed(viewshed_input):
     assert ds.GetRasterBand(1).Checksum() == VIEWSHED_NOMINAL_CHECKSUM
 
 
-def test_gdalalg_raster_update_output_ds_by_ref(viewshed_input):
-
-    alg = get_alg()
-    alg["input"] = viewshed_input
-    alg["output"] = gdal.GetDriverByName("MEM").Create("", 1, 1)
-    alg["position"] = [621528, 4817617, 100]
-    with pytest.raises(
-        Exception,
-        match="gdal raster viewshed does not support outputting to an already opened output dataset",
-    ):
-        alg.Run()
-
-
 def test_gdalalg_raster_viewshed_overwrite_and_creation_option(
     viewshed_input, tmp_vsimem
 ):
