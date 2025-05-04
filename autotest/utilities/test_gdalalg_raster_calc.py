@@ -497,3 +497,18 @@ def test_gdalalg_raster_calc_expression_rewriting(
         node.attrib["expression"] for node in root.findall(".//PixelFunctionArguments")
     ]
     assert expr == expected
+
+
+@pytest.mark.require_driver("GDALG")
+def test_gdalalg_raster_calc_gdalg_json(calc, tmp_vsimem):
+
+    outfile = tmp_vsimem / "out.gdalg.json"
+
+    calc["input"] = "../gcore/data/byte.tif"
+    calc["output"] = outfile
+    calc["calc"] = "X"
+    assert calc.Run()
+    assert calc.Finalize()
+
+    with gdal.Open(outfile) as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672

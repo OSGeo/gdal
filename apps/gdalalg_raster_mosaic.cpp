@@ -181,14 +181,21 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
 
     const char *pszType = "";
-    if (!m_overwrite && !m_outputDataset.GetName().empty() &&
+    if (!m_outputDataset.GetName().empty() &&
         GDALDoesFileOrDatasetExist(m_outputDataset.GetName().c_str(), &pszType))
     {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "%s '%s' already exists. Specify the --overwrite "
-                    "option to overwrite it.",
-                    pszType, m_outputDataset.GetName().c_str());
-        return false;
+        if (!m_overwrite)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "%s '%s' already exists. Specify the --overwrite "
+                        "option to overwrite it.",
+                        pszType, m_outputDataset.GetName().c_str());
+            return false;
+        }
+        else
+        {
+            VSIUnlink(m_outputDataset.GetName().c_str());
+        }
     }
 
     const bool bVRTOutput =
