@@ -51,11 +51,7 @@ Standard options
 
 .. include:: gdal_options/overwrite.rst
 
-.. option:: --ot, --datatype, --output-data-type <OUTPUT-DATA-TYPE>
-
-  Override output data type among ``Byte``, ``Int8``, ``UInt16``, ``Int16``, ``UInt32``,
-  ``Int32``, ``UInt64``, ``Int64``, ``CInt16``, ``CInt32``, ``Float32``,
-  ``Float64``, ``CFloat32``, ``CFloat64``.
+.. include:: gdal_options/ot.rst
 
 
 .. GDALG output (on-the-fly / streamed dataset)
