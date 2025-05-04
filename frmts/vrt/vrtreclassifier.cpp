@@ -14,6 +14,7 @@
 #include "vrtreclassifier.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 namespace gdal
@@ -129,6 +130,21 @@ CPLErr Reclassifier::Interval::Parse(const char *s, char **rest)
         *rest = end + 1;
     }
 
+    if (std::isnan(dfMin) || std::isnan(dfMax))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "NaN is not a valid value for bounds of interval");
+        return CE_Failure;
+    }
+
+    if (dfMin > dfMax)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Lower bound of interval must be lower or equal to upper bound");
+        return CE_Failure;
+    }
+
     if (!bMinIncluded)
     {
         dfMin = std::nextafter(dfMin, std::numeric_limits<double>::infinity());
@@ -200,6 +216,7 @@ CPLErr Reclassifier::Init(const char *pszText,
         Interval sInt{};
         bool bFromIsDefault = false;
         bool bPassThrough = false;
+        bool bFromNaN = false;
 
         if (STARTS_WITH_CI(start, "DEFAULT"))
         {
@@ -218,6 +235,11 @@ CPLErr Reclassifier::Init(const char *pszText,
 
             sInt.SetToConstant(noDataValue.value());
             end = const_cast<char *>(start + 7);
+        }
+        else if (STARTS_WITH_CI(start, "NAN"))
+        {
+            bFromNaN = true;
+            end = const_cast<char *>(start + 3);
         }
         else
         {
@@ -300,7 +322,12 @@ CPLErr Reclassifier::Init(const char *pszText,
             return CE_Failure;
         }
 
-        if (bFromIsDefault)
+        if (bFromNaN)
+        {
+            SetNaNValue(bPassThrough ? std::numeric_limits<double>::quiet_NaN()
+                                     : dfDstVal.value());
+        }
+        else if (bFromIsDefault)
         {
             if (bPassThrough)
             {
@@ -367,11 +394,23 @@ double Reclassifier::Reclassify(double srcVal, bool &bFoundInterval) const
 {
     bFoundInterval = false;
 
-    auto nInterval = FindInterval(m_aoIntervalMappings, srcVal);
-    if (nInterval.has_value())
+    if (std::isnan(srcVal))
     {
-        bFoundInterval = true;
-        return m_aoIntervalMappings[nInterval.value()].second.value_or(srcVal);
+        if (m_NaNValue.has_value())
+        {
+            bFoundInterval = true;
+            return m_NaNValue.value();
+        }
+    }
+    else
+    {
+        auto nInterval = FindInterval(m_aoIntervalMappings, srcVal);
+        if (nInterval.has_value())
+        {
+            bFoundInterval = true;
+            return m_aoIntervalMappings[nInterval.value()].second.value_or(
+                srcVal);
+        }
     }
 
     if (m_defaultValue.has_value())
