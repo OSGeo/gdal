@@ -134,6 +134,13 @@ class Reclassifier
         m_defaultValue = value;
     }
 
+    /** Sets a value for an input NaN value
+     */
+    void SetNaNValue(double value)
+    {
+        m_NaNValue = value;
+    }
+
     /** Prepare reclassifier for use. No more mappings may be added.
      */
     CPLErr Finalize();
@@ -142,6 +149,9 @@ class Reclassifier
     /// mapping of ranges to outputs
     std::vector<std::pair<Interval, std::optional<double>>>
         m_aoIntervalMappings{};
+
+    /// output value for NaN inputs
+    std::optional<double> m_NaNValue{};
 
     /// output value for inputs not matching any Interval
     std::optional<double> m_defaultValue{};
