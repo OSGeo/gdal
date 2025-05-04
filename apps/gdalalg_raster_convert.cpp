@@ -58,13 +58,7 @@ bool GDALRasterConvertAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                          void *pProgressData)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
-    if (m_outputDataset.GetDatasetRef())
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "gdal raster convert does not support outputting to an "
-                 "already opened output dataset");
-        return false;
-    }
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     CPLStringList aosOptions;
     if (!m_outputFormat.empty())

@@ -119,13 +119,7 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm()
 bool GDALRasterViewshedAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                           void *pProgressData)
 {
-    if (m_outputDataset.GetDatasetRef())
-    {
-        ReportError(CE_Failure, CPLE_NotSupported,
-                    "gdal raster viewshed does not support outputting to an "
-                    "already opened output dataset");
-        return false;
-    }
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     const char *pszType = "";
     if (!m_overwrite && !m_outputDataset.GetName().empty() &&

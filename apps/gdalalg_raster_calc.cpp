@@ -575,13 +575,7 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
 bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                       void *pProgressData)
 {
-    if (m_outputDataset.GetDatasetRef())
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "gdal raster calc does not support outputting to an "
-                 "already opened output dataset");
-        return false;
-    }
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     const char *pszType = "";
     if (!m_overwrite && !m_outputDataset.GetName().empty() &&

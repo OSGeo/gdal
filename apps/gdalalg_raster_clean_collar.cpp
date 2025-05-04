@@ -40,7 +40,8 @@ GDALRasterCleanCollarAlgorithm::GDALRasterCleanCollarAlgorithm()
 
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER,
                         /* positionalAndRequired = */ false)
-        .SetPositional();
+        .SetPositional()
+        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
     AddOutputFormatArg(&m_format, /* bStreamAllowed = */ false,
                        /* bGDALGAllowed = */ false)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,

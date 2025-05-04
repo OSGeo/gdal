@@ -432,6 +432,29 @@ bool GDALAlgorithmArg::Set(double value)
     return SetInternal(value);
 }
 
+static bool CheckCanSetDatasetObject(const GDALAlgorithmArg *arg)
+{
+    if (arg->GetDatasetInputFlags() == GADV_NAME &&
+        arg->GetDatasetOutputFlags() == GADV_OBJECT)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Dataset object '%s' is created by algorithm and cannot be set "
+            "as an input.",
+            arg->GetName().c_str());
+        return false;
+    }
+    else if ((arg->GetDatasetInputFlags() & GADV_OBJECT) == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "A dataset cannot be set as an input argument of '%s'.",
+                 arg->GetName().c_str());
+        return false;
+    }
+
+    return true;
+}
+
 bool GDALAlgorithmArg::Set(GDALDataset *ds)
 {
     if (m_decl.GetType() != GAAT_DATASET)
@@ -442,16 +465,8 @@ bool GDALAlgorithmArg::Set(GDALDataset *ds)
                  GetName().c_str(), GDALAlgorithmArgTypeName(m_decl.GetType()));
         return false;
     }
-    if (m_decl.GetDatasetInputFlags() == GADV_NAME &&
-        m_decl.GetDatasetOutputFlags() == GADV_OBJECT)
-    {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Dataset object '%s' is created by algorithm and cannot be set "
-            "as an input.",
-            GetName().c_str());
+    if (!CheckCanSetDatasetObject(this))
         return false;
-    }
     m_explicitlySet = true;
     auto &val = *std::get<GDALArgDatasetValue *>(m_value);
     val.Set(ds);
@@ -468,16 +483,8 @@ bool GDALAlgorithmArg::Set(std::unique_ptr<GDALDataset> ds)
                  GetName().c_str(), GDALAlgorithmArgTypeName(m_decl.GetType()));
         return false;
     }
-    if (m_decl.GetDatasetInputFlags() == GADV_NAME &&
-        m_decl.GetDatasetOutputFlags() == GADV_OBJECT)
-    {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Dataset object '%s' is created by algorithm and cannot be set "
-            "as an input.",
-            GetName().c_str());
+    if (!CheckCanSetDatasetObject(this))
         return false;
-    }
     m_explicitlySet = true;
     auto &val = *std::get<GDALArgDatasetValue *>(m_value);
     val.Set(std::move(ds));
@@ -509,6 +516,8 @@ bool GDALAlgorithmArg::SetFrom(const GDALArgDatasetValue &other)
                  GetName().c_str(), GDALAlgorithmArgTypeName(m_decl.GetType()));
         return false;
     }
+    if (!CheckCanSetDatasetObject(this))
+        return false;
     m_explicitlySet = true;
     std::get<GDALArgDatasetValue *>(m_value)->SetFrom(other);
     return RunAllActions();
@@ -2111,6 +2120,10 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                     "Argument '%s' has no dataset object or dataset name.",
                     arg->GetName().c_str());
         ret = false;
+    }
+    else if (val.GetDatasetRef() && !CheckCanSetDatasetObject(arg))
+    {
+        return false;
     }
     else if (!val.GetDatasetRef() && arg->AutoOpenDataset() &&
              (!arg->IsOutput() || (arg == outputArg && update && !overwrite) ||

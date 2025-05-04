@@ -90,11 +90,12 @@ def test_gdalalg_raster_fill_nodata_overwrite(tmp_path, tmp_vsimem):
     ds = run_alg(alg, tmp_path, tmp_vsimem)
     del ds
 
+    alg = get_alg()
     with pytest.raises(
         Exception,
         match="already exists",
     ):
-        alg.Run()
+        run_alg(alg, tmp_path, tmp_vsimem)
 
     alg["overwrite"] = True
     ds = run_alg(alg, tmp_path, tmp_vsimem)

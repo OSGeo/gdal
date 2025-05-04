@@ -112,13 +112,7 @@ GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm()
 bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                         void *pProgressData)
 {
-    if (m_outputDataset.GetDatasetRef())
-    {
-        ReportError(CE_Failure, CPLE_NotSupported,
-                    "gdal raster mosaic does not support outputting to an "
-                    "already opened output dataset");
-        return false;
-    }
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     std::vector<GDALDatasetH> ahInputDatasets;
     CPLStringList aosInputDatasetNames;

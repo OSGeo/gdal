@@ -87,13 +87,7 @@ GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm()
 bool GDALRasterCreateAlgorithm::RunImpl(GDALProgressFunc /* pfnProgress */,
                                         void * /*pProgressData */)
 {
-    if (m_outputDataset.GetDatasetRef())
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "gdal raster create does not support outputting to an "
-                 "already opened output dataset");
-        return false;
-    }
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     const char *pszType = "";
     if (!m_append && !m_outputDataset.GetName().empty() &&
